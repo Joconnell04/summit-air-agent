@@ -21,12 +21,4 @@ Would change if: LiveKit wins the platform decision and our harness grows past a
 Discussion: docs/decisions/06-eval-design.md
 Issue: #6
 
-## 001. Separate speech-to-text, model and voice stages, not one speech-to-speech model
-
-Decided: a cascaded pipeline (Deepgram to hear, a Claude Haiku-class model to decide, Cartesia to speak). The gas and carbon monoxide safety lines are spoken from code as fixed text, with no model in between. Side models (an urgency or vulnerability classifier, a typed decision model) run beside each turn, off the reply path; we launch with the fixed list and server gates and test OpenAI Decisions and Jev in the evals before adding either.
-Why: speech-to-speech is not faster. Published first-audio times for OpenAI Realtime and Gemini Live are 0.96 to 1.14 s (SOURCE, in the readout) against about 1.0 s MEASURED for the cascaded stack on the earlier practice agent. It also costs more (about $0.025 to $0.18 per minute against about $0.02 to $0.04, SOURCE and ASSUMED), can't guarantee the safety wording word for word, and its caller transcript can arrive after the reply has started, too late for the server's checks.
-Considered: speech-to-speech (OpenAI Realtime, Gemini Live); a hybrid where speech-to-speech talks and a cascade runs the checks (two stacks to pay for and test); Laya as a side model (missed 6 of 10 emergencies in the earlier practice agent's eval, English only).
-Would change if: a speech-to-speech profile matches the cascade on tool success and the persona evals, or Haiku 5.5 with thinking off measures over 1.5 s to first audio (fall back to Haiku 4.5, the measured control).
-Discussion: docs/decisions/05-pipeline-and-models.md
-Issue: #5
 

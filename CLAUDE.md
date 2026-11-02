@@ -11,6 +11,7 @@ The assignment, word for word: `docs/assignment.md`. Reread it before any design
 - No em dashes in any file. Use commas, semicolons or full stops.
 - Rules that must happen (safety script, priority, service area, booking gates) live in server code, never only in the prompt. A flag the model can set is not a gate.
 - Every behavior change adds or updates a test. `make check` must pass before a commit; the ratchet blocks a lower test count.
+- Retell API: use only the versioned endpoints (`POST /v2/list-agents`, `GET /v2/list-phone-numbers`, `/v2/...` for LLMs and flows, `POST /v3/list-calls`) and read the paginated `items` field. The unversioned list endpoints are removed and Retell emails a warning for every use.
 - Prompts live in `prompts/`, split by job. Models are named profiles in `config/models.yaml`. Never hard-code a model id elsewhere.
 - Reviewers have never heard of Bobert. In docs, call it "the earlier practice agent" and link from-other-projects/bobert the first time, or leave the name out.
 - Numbers in docs carry their source: SOURCE (with link or file), MEASURED (with how), or ASSUMED.
@@ -28,7 +29,7 @@ The assignment, word for word: `docs/assignment.md`. Reread it before any design
 
 ## Driving the session
 
-Claude drives; Jackson steers. The route is docs/ai-process/phases.md. After any step closes, tick it, move its issue on the board, commit, and say "Unless there's anything else, next is <step>." Then wait. New ideas mid-step go to `/consider`; anything needing research goes to `/explore`. Keep chat short and put substance in files.
+Claude drives; Jackson steers. The route is docs/ai-process/phases.md. After any step closes, tick it, move its issue on the board, commit, and say "Unless there's anything else, next is <step>." Then wait. New ideas mid-step go to `/consider`; anything needing research goes to `/explore`. Keep chat short and put substance in files. Surface one decision at a time: point Jackson at the readout file (or the section of it) that holds the question and its context, take his answer, implement it, then surface the next one.
 
 ## Voice transcription glossary
 

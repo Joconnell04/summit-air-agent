@@ -1,3 +1,4 @@
+# Proposed in docs/decisions/05-pipeline-and-models.md; not decided yet (#5).
 # Named model profiles. Switching models is a one-line change to `default`
 # or MODEL_PROFILE=<name> at runtime. Every profile runs the same eval suite.
 # Live profiles keep thinking off: it adds seconds before the first word
