@@ -1,6 +1,6 @@
 # 10. Which considerations are in scope for the demo build
 
-Issue: #10. Status: ready (refreshed after decisions 004 to 007)
+Issue: #10. Status: decided, option A with changes (DECISIONS.md 008)
 
 ## Question
 
@@ -45,16 +45,16 @@ The demo is judged on whether the agent meets the requirements, handles the unex
 | C-23 Reading back | in | Earlier practice agent lesson |
 | C-24 Latency and interruptions | in | Judged directly |
 | C-25 Disclosure | in | Cheap, and a likely question |
-| C-26 Surge mode | later | Needs real volume data; for the demo, calls stay short and urgent slots are held |
+| C-26 Surge mode | out | Covered by the scaling plan (docs/scaling.md) |
 | C-27 Business and after hours | in | Changes who gets the flag |
 | C-28 Swappable models and prompts | in | Already set up |
 | C-29 Hosting | in (phase 4) | The demo number must stay up |
-| C-30 Privacy | later | State a retention policy in the README; build it after go-live |
-| C-31 Rollout and success measures | later | Presented in the meeting, not built |
+| C-30 Privacy | in | Retention policy in code; full logs in development |
+| C-31 Rollout and success measures | in | Tracked by the system, shown on the owner view |
 | C-32 Playbooks | later | Unverified idea; revisit after evals show where calls go wrong |
 | C-33 Asking who's home, naturally | in | Prompt wording plus eval lines |
 | C-34 Idempotent by default | in | Earlier practice agent lesson |
-| C-35 Decision models | decided | None at launch, slot built, bake-off when a bottleneck shows (DECISIONS.md 006) |
+| C-35 Decision models | later | Slot built, come back once the system works (DECISIONS.md 006) |
 | C-37 A template, not a one-off | in | docs/template.md; tenant config already used by the mock ServiceTitan |
 | C-38 One phone number | decided | One number after the bake-off (DECISIONS.md 004) |
 | C-39 Least privilege for the agent | in | docs/architecture.md (DECISIONS.md 006) |
