@@ -78,3 +78,13 @@ Changed:
 - All open items from r1 settled as recommended.
 Commit: d3692e0
 Status: open
+
+## call-journeys r3
+Feedback (verbatim):
+> Your recommendation for Journey 12 looks good. and good to implement the C42-46 stuff, just make sure you document the rationale and the blog posts corroborating the story. and im confused what you're asking by "Which outbound calls should V1 place automatically?" so rephrase and ill give an answer and then progress forward
+Changed:
+- Journey 12 settled as recommended: the earlier-slot offer and requested callbacks are automatic; the safety follow-up is a task for a person.
+- Findings from Revin's blog folded in, each with its reason and the post it comes from (exploration 005), marked as vendor practice: owner view shows booking rate by call type, callbacks promised vs done, and booked-and-kept (C-42); after-hours no-heat ends in one of three named outcomes with temperature cutoffs in tenant config (C-43); heat pump defrost and furnace lockout look-alikes, with no reset instructions (C-44); every callback names a time (C-45); cancels ask why and offer two windows, second-opinion, refrigerant and rebate calls handled, and a new complaint or warranty journey (C-46).
+- No open items remain.
+Commit: 4d4de20
+Status: open

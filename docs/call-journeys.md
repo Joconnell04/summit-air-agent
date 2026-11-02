@@ -2,7 +2,7 @@
 
 The paths a call takes, one per caller type in docs/users.md, for calls Summit Air receives and the few it makes. Each journey says how the call starts, what the agent asks, which server check fires, how it ends, and what the owner view records. Calls can move between journeys at any point: a maintenance call can become a safety call, and a safety call that turns out to be a false alarm goes back to where it was.
 
-Scope follows DECISIONS.md 008. Deferred items (texts, other languages, playbooks, warm transfer) are in docs/later.md and left out here.
+Scope follows DECISIONS.md 008. Where a detail comes from field practice described on Revin's blog, it is cited inline as vendor practice, not as measured fact (docs/explorations/005-revin-blog.md). Deferred items (texts, other languages, playbooks, warm transfer) are in docs/later.md and left out here.
 
 ## The spine every call shares
 
@@ -21,7 +21,8 @@ Scope follows DECISIONS.md 008. Deferred items (texts, other languages, playbook
 8. **Offer times like a person would.** First the shape of availability: "I've got openings Tuesday and Thursday afternoon, and Thursday morning. What works best?" Then the exact arrival windows for the day they pick. Urgent calls get the earliest urgent window offered first.
 9. **Book and confirm out loud.** Day, arrival window, what happens next. Booking is idempotent on call and slot. No text in V1.
 10. **"Anything else?"** before ending; the agent never ends in the same turn as the confirmation.
-11. **Owner view and logs.** Every call records caller, type, priority with reason, member or not, outcome (booked, flagged, declined, callback, not a customer), any refused tool calls, any journey switches, and the full trace for debugging.
+11. **Owner view and logs.** Every call records caller, type, priority with reason, member or not, outcome (booked, flagged, declined, callback, not a customer), any refused tool calls, any journey switches, and the full trace for debugging. The owner view also shows booking rate by call type rather than one blended number, callbacks promised against callbacks done, and bookings still on the schedule when the technician arrives ("booked and kept"), because a message isn't a booked job and answered calls with nobody asking for the booking are where revenue leaks (C-42; Revin blog: https://revin.ai/blog/hvac-booking-rate-vs-answer-rate, https://revin.ai/blog/hvac-ai-answering-service-pilot).
+12. **Callbacks have a time.** Any promised callback names a time ("by 9:30" or "within 20 minutes"), gets an owner and a timer on the server, and an overdue one is flagged. "Shortly" is never said (C-45; Revin blog: https://revin.ai/blog/hvac-callback-queue).
 
 **How it sounds.** Short turns, plain words, one question at a time. Acknowledgments vary and fit the moment ("Oh no, in this weather?", "Okay, let's get someone out to you", "Got it"); the same phrase isn't used twice in a call, and the evals check for it.
 
@@ -31,6 +32,7 @@ Scope follows DECISIONS.md 008. Deferred items (texts, other languages, playbook
 
 1. Caller: "The heat's out." The lookup already has the address and any open job.
 2. The agent acknowledges it like a person and asks when it stopped, then how cold it's getting inside. Service first: what's wrong, how bad, where.
+   - Look-alikes: a heat pump that has just stopped and is steaming outside may be in a normal defrost and restart within about 10 minutes, and a furnace can lock itself out after repeated failed starts. The agent asks how long it has been off, may mention that heat pumps pause to defrost, and still offers to book; it never walks the caller through a reset (a gas appliance and a liability), and a defrost description alone doesn't make the call urgent (C-44; Revin blog: https://revin.ai/blog/hvac-after-hours-no-heat-calls).
 3. Who's affected comes up naturally once the agent understands the problem (journey 2), never as the opening question.
 4. Own or rent, only when it matters for who approves the visit (journey 6).
 5. ZIP checked against the service area. Out of area: "I'm sorry, that's outside the area we cover, so we're not able to send someone. A local heating company should be able to help." No supervisor flag; turning away out-of-area calls is normal practice.
@@ -93,7 +95,7 @@ How to ask: call-takers in this trade routinely screen for people at risk (older
 1. The lookup shows an open job or a recent visit.
 2. "Where's my tech?": status from the FSM, never guessed. If the window has passed, flag a person.
 3. Same problem came back: book a return visit linked to the earlier job, priority reviewed by a person.
-4. Reschedule or cancel: only a booking that belongs to this caller (server check). One reschedule and one cancel per call.
+4. Reschedule or cancel: only a booking that belongs to this caller (server check). One reschedule and one cancel per call. On a cancel the agent asks why and offers two specific new windows before ending, and logs the reason; a cancellation is often a rebooking (C-46; Revin blog: https://revin.ai/blog/hvac-same-day-cancellations).
 5. Dropped and called back within a few minutes: the server links the calls and the agent picks up where the last call stopped: "I think we got cut off, you were telling me about the furnace." Nothing already done is done again.
 6. Keeps getting cut off (two or more drops in about ten minutes): "Looks like we keep getting cut off, the signal might be spotty. Want me to have someone call you back in a few minutes instead?" A yes creates a callback (journey 12).
 7. Several calls with no progress and no drops: flag a person.
@@ -111,9 +113,11 @@ How to ask: call-takers in this trade routinely screen for people at risk (older
 ## 9. Replacement or install quote
 
 1. Caller asks for a new system, a heat pump, a conversion or rebates.
-2. The agent takes what a comfort advisor needs: system age, what they want, how soon, home type.
-3. Ends with a callback from a comfort advisor (decided in round 2; the mock has no advisor calendar). Never a price or a rebate promise.
-4. Owner view: lead for a comfort advisor.
+2. The agent takes what a comfort advisor needs: system age, what they want, how soon, home type. For rebate questions also fuel type, utility, owner or renter, and ZIP; only the advisor ever states a dollar amount.
+3. Second opinion (the caller holds another company's replacement quote): the agent captures what was recommended, which part failed, the system's age and whether it still runs, and never criticizes the other company. A system that still runs goes to a comfort advisor; one that doesn't is booked as a repair visit.
+4. Refrigerant questions ("isn't R-410A being banned?"): the agent doesn't state regulations or prices, which change; it books a diagnostic with a leak check and asks the system's age (C-46; Revin blog: https://revin.ai/blog/hvac-second-opinion-calls, https://revin.ai/blog/hvac-refrigerant-recharge-calls, https://revin.ai/blog/hvac-heat-pump-rebate-calls).
+5. Ends with a callback from a comfort advisor at a named time (decided in round 2; the mock has no advisor calendar). Never a price or a rebate promise.
+6. Owner view: lead for a comfort advisor.
 
 ## 10. Not a customer call
 
@@ -126,8 +130,12 @@ How to ask: call-takers in this trade routinely screen for people at risk (older
 ## 11. After hours
 
 1. Same spine. The agent says the office is closed and what it can still do.
-2. Routine calls: booked for the next business day.
-3. Urgent calls (no heat with a vulnerable person, no cooling with a medical condition): the on-call technician gets an email alert with what, where, who and why it's urgent, and the agent tells the caller someone will call them back shortly. The on-call technician decides whether to go out tonight; the agent never promises it (decided in round 2).
+2. A no-heat or no-cooling call ends in one of three named outcomes, chosen by the inside temperature, how fast it is changing, and who is home (C-43; Revin blog: https://revin.ai/blog/hvac-after-hours-no-heat-calls):
+   - **Tonight, if the on-call technician agrees:** inside below 50 F or falling fast, or an infant, an older person or a medical need at home. The on-call technician gets an email alert with what, where, who and why, and the agent tells the caller the technician will call them by a named time (within 20 minutes) to confirm. The agent never promises a tonight visit itself (decided in round 2).
+   - **First morning slot:** inside above 55 F and holding, nobody at extra risk. Booked now.
+   - **Callback at a named time:** anything in between, or when the caller would rather wait.
+   The cutoffs are Summit Air settings in tenant config, marked ASSUMED, not hard-coded. An after-hours fee, if Summit Air sets one, is mentioned only after this triage.
+3. Other routine calls: booked for the next business day.
 4. Safety calls: journey 3, always.
 
 ## 12. Calls Summit Air makes
@@ -140,7 +148,14 @@ The system can also place calls, with the same spine (greeting names Summit Air 
 
 Rules: only to people who called Summit Air about this service request, only between 8 a.m. and 9 p.m. local time, never to a number marked "do not call", one attempt and one voicemail at most. Voicemails say only that Summit Air is calling about the appointment and give the number.
 
-Open: which of these V1 places automatically, and which go to a person as a callback task. Recommend: the earlier-slot offer and the requested callback are automatic (they're the "proactive" part of journey 2 and the dropped-call fix); the safety follow-up goes to a person, because it can involve a gas leak still being sorted out.
+Who places them (decided in round 3): the earlier-slot offer and the requested callback are placed automatically by the system; the safety follow-up is a task for a person, because it can involve a gas leak still being sorted out.
+
+## 13. Complaint or warranty
+
+1. The caller is unhappy with finished work, a price, or wants a warranty or credit exception.
+2. The agent listens, doesn't argue or promise anything, and says what happens next: "I'm sorry that happened. I'll get this to a manager now, and they'll call you by" a named time.
+3. Flags a person with a short summary (who, which job, what they want), so the caller doesn't have to repeat it (C-46; Revin blog: https://revin.ai/blog/hvac-ai-call-transfer-to-human).
+4. Owner view: complaint, flagged, callback time.
 
 ## Traits on any call
 
