@@ -17,6 +17,7 @@ Status: version 1, written before the build. The mock ServiceTitan's template vs
 | Who gets told | Flags, handoffs, on-call texts | Who the on-call person is, office hours, after-hours rules |
 | Commercial and out of scope | Decline-and-log flow | What counts as out of scope (Summit Air: commercial) |
 | Systems | The FSM adapter interface and the mock ServiceTitan | Which adapter and credentials (ServiceTitan, Housecall Pro, Jobber, or a sheet) |
+| Company knowledge | How the agent reads a knowledge folder and uses it in answers | `tenants/<company>/knowledge/*.md`: slogan or sign-off, plan descriptions, equipment brands they service, common questions |
 | Local context | How area facts are used in the conversation | The boroughs, neighborhoods, housing types and local rules (NYC heat law) |
 | Evals | Harness, scoring, gates, the persona structure | The scenarios and caller personas for that trade |
 
