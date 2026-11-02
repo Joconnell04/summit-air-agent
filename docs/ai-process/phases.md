@@ -18,9 +18,12 @@ Exit: spec locked, the three decisions in DECISIONS.md, briefs merged. Export th
 
 ## 2. Build (parallel sessions, one per brief)
 
-- [ ] Integration layer and mock FSM, with tests
-- [ ] Voice agent and prompts
-- [ ] Eval suite and grader
+- [x] Mock FSM, with tests (brief 01, #13)
+- [ ] Tool server, the integration layer (brief 02, #19); first, the others code against docs/tools.md
+- [ ] Voice agent on LiveKit, prompts, phone line (brief 03, #20)
+- [ ] Eval suite and grader (brief 04, #21)
+- [ ] Retell baseline (brief 05, #22)
+- [ ] Owner view and background jobs (brief 06, #23)
 - [ ] First end-to-end call on a test number
 - [ ] Live go/no-go, 10 calls (#9)
 
