@@ -12,3 +12,4 @@ Things Jackson set aside on purpose. Nothing here is dropped; each item gets wal
 | Privacy and retention policy built into the system | State it in the README for V1, build it after go-live | C-30 | open |
 | Warm transfer to a person | No real staff to transfer to in the demo | C-11 | open |
 | Production capacity: more than 5 calls at once, LiveKit paid plan, second server | Demo needs about 5; production sizing is in exploration 003 | #4 and #16 discussions | open |
+| Booking confirmation texts | Not asked for by the assignment; business texting needs carrier registration (1 to 3 weeks); terms and privacy pages already live | DECISIONS.md 007, #15 | open |

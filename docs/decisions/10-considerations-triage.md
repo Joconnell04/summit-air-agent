@@ -1,6 +1,6 @@
 # 10. Which considerations are in scope for the demo build
 
-Issue: #10. Status: ready
+Issue: #10. Status: ready (refreshed after decisions 004 to 007)
 
 ## Question
 
@@ -9,7 +9,7 @@ Each item in docs/considerations.md gets one status: in (built before the demo),
 ## Options
 
 ### A. Proposed triage below
-Everything that touches the six requirements, safety or call quality is in; things that only matter once real staff and real volume exist go to later. Seven items are later, none are out.
+Everything that touches the six requirements, safety or call quality is in; things that only matter once real staff and real volume exist go to later. Eight items are later, none are out; four are already settled by a decision.
 
 ### B. Leaner
 Also move C-04 (owner view), C-16 (live Spanish) and C-18 (repeat callers) to later. Faster to build, but the owner view and Spanish are strong demo moments and repeat callers are a likely Paul test.
@@ -27,7 +27,7 @@ The demo is judged on whether the agent meets the requirements, handles the unex
 | C-05 Residential vs commercial | in | Requirement 2 |
 | C-06 Membership | in | Requirement 3 |
 | C-07 What the technician needs | in | Requirement 4 |
-| C-08 Booking | in | Requirement 6; SMS confirmation included |
+| C-08 Booking | in | Requirement 6; confirmed out loud and on the owner view, no texts (DECISIONS.md 007) |
 | C-09 How priority is judged | in | Requirement 5 |
 | C-10 Confidence | in | Low-confidence urgent calls round up |
 | C-11 Flagging a human | in: board + SMS to on-call. Later: warm transfer | No real staff to transfer to in a demo |
@@ -35,7 +35,7 @@ The demo is judged on whether the agent meets the requirements, handles the unex
 | C-13 NYC heat rules | in, one line | Tenants are about half of two-family homes |
 | C-14 Caller state | in | Paul will push |
 | C-15 Special assistance | in | Prompt and pacing, little code |
-| C-16 Language | in: Spanish live, others get a callback | Depends on #4 and #5 supporting Spanish |
+| C-16 Language | later | Not a deciding factor for V1 (docs/later.md) |
 | C-17 Who decides for the household | in | Needed to book a renter correctly |
 | C-18 Repeat callers | in | Likely test; mostly server lookups |
 | C-19 Relevance guard | in | Likely test |
@@ -54,12 +54,15 @@ The demo is judged on whether the agent meets the requirements, handles the unex
 | C-32 Playbooks | later | Unverified idea; revisit after evals show where calls go wrong |
 | C-33 Asking who's home, naturally | in | Prompt wording plus eval lines |
 | C-34 Idempotent by default | in | Bobert lesson |
-| C-35 Decision models | decided by #5 | The pipeline readout covers it |
+| C-35 Decision models | decided | None at launch, slot built, bake-off when a bottleneck shows (DECISIONS.md 006) |
+| C-37 A template, not a one-off | in | docs/template.md; tenant config already used by the mock ServiceTitan |
+| C-38 One phone number | decided | One number after the bake-off (DECISIONS.md 004) |
+| C-39 Least privilege for the agent | in | docs/architecture.md (DECISIONS.md 006) |
 | C-36 Local context, lightly | in | Service-area config |
 
 ## Recommendation
 
-Option A. It builds everything the six requirements and Paul's likely tests touch, and turns the rest into a credible rollout plan; if the build lanes slip, C-04 and C-16 are the first to move to later.
+Option A. It builds everything the six requirements and Paul's likely tests touch, and turns the rest into a credible rollout plan; if the build lanes slip, C-04 (owner view) is the first to move to later.
 
 ## Research notes
 

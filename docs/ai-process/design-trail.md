@@ -23,4 +23,5 @@ How the design was reached, in order, so a reader can follow each choice back to
 | Server | A new Vultr server in New Jersey, separate from the shared one | DECISIONS.md 005, docs/decisions/16-server.md |
 | Pipeline and models | Three separate steps, a right-sized model per job, no side model at launch, least-privilege harness | DECISIONS.md 006, docs/decisions/05-pipeline-and-models.md, docs/architecture.md |
 | Bake-offs | Hypotheses and pass rules set before any run | docs/bakeoffs.md |
-| Phone number and texting | (646) 624-0418 bought; texting registration prepared, public terms and privacy pages live | docs/decisions/15-texting-registration.md |
+| Phone number | (646) 624-0418 bought for our stack; the 678 Retell number is the bake-off baseline; one number after the bake-off | DECISIONS.md 004 |
+| Texting | Left out of V1: not in the assignment, and registration takes weeks; terms pages kept for later | DECISIONS.md 007, docs/decisions/15-texting-registration.md |
