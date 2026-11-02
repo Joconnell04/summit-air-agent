@@ -5,7 +5,6 @@ description = "Inbound phone agent for Summit Air, a residential HVAC company in
 requires-python = ">=3.12"
 dependencies = [
     "fastapi>=0.162.0",
-    "langsmith>=0.14.17",
     "pydantic>=2.14.2",
     "python-multipart>=0.0.33",
     "pyyaml>=6",
@@ -16,6 +15,7 @@ dependencies = [
 [dependency-groups]
 dev = [
     "httpx>=0.28.1",
+    "langsmith>=0.14.17",
     "pytest>=8",
     "ruff>=0.6",
 ]
