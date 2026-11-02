@@ -55,6 +55,23 @@ def test_idempotency_key_with_a_different_body_is_rejected(small):
     assert response.json()["code"] == "idempotency_key_reused"
 
 
+def test_a_failed_request_is_not_stored_under_its_key_so_a_retry_can_succeed(small):
+    api, ids = small
+    holder = book(api, ids).json()  # takes the only normal slot in the morning window
+    failed = book(api, ids, key="retry-me")
+    assert failed.status_code == 409
+    assert failed.json()["code"] == "no_capacity"
+    conn = sqlite3.connect(api.app.state.db_path)
+    assert conn.execute("SELECT COUNT(*) FROM idempotency").fetchone()[0] == 0
+    conn.close()
+
+    api.request("PUT", f"/jpm/jobs/{holder['id']}/cancel", json={"reasonId": 401})
+    retried = book(api, ids, key="retry-me")
+    assert retried.status_code == 201
+    assert "Idempotent-Replayed" not in retried.headers
+    assert book(api, ids, key="retry-me").headers["Idempotent-Replayed"] == "true"
+
+
 def test_same_key_in_parallel_books_once(small):
     api, ids = small
     with ThreadPoolExecutor(8) as pool:
@@ -185,7 +202,7 @@ def test_commercial_customers_cannot_get_appointments(small):
     api, ids = small
     response = book(api, ids, who="commercial")
     assert response.status_code == 422
-    assert response.json()["code"] == "commercial_not_supported"
+    assert response.json()["code"] == "customer_type_not_supported"
     assert api.get("/jpm/appointments").json()["totalCount"] == 0
 
 
