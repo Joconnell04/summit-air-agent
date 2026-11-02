@@ -2,6 +2,8 @@
 
 Inbound phone agent for a residential HVAC company. This repo is also reviewed as an interview case study, so the code and docs must read like a careful engineer wrote them.
 
+The assignment, word for word: `docs/assignment.md`. Reread it before any design, scope or demo decision. Never edit it.
+
 ## Build standard
 
 - Small, boring, conventional code. No clever abstractions, no "AI-powered" naming, no emoji, no banner comments.

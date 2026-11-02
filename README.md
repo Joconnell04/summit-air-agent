@@ -13,7 +13,8 @@ make check    # lint, tests, test-count ratchet
 
 ## Where things are
 
-- `docs/brief.md`: the assignment and the assumptions made about it
+- `docs/assignment.md`: the assignment, verbatim
+- `docs/brief.md`: assumptions made about it
 - `docs/users.md`, `docs/call-journeys.md`, `docs/spec.md`: who it serves and what it must do
 - `DECISIONS.md`: choices made and why
 - `from-other-projects/`: lessons carried in from earlier agent builds
