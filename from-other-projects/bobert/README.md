@@ -1,5 +1,7 @@
 # Bobert
 
+An earlier personal practice project, not a person: the name is just what the project was called.
+
 An earlier voice agent for a made-up Atlanta HVAC company ("Summit Comfort"). Inbound: qualifies the caller, books, moves or cancels a visit, hands emergencies to a person. Outbound: calls back customers with an unsold estimate. Two voice layers, one tool server.
 
 - **Retell layer.** Agent config as code (prompt, LLM, tools), pushed with a script. Phone number bound to the agent.

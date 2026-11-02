@@ -1,6 +1,6 @@
 # From other projects
 
-Summit Air is not a first attempt. Jackson built a voice agent for a made-up Atlanta HVAC company (Bobert), a receipt-reconciliation agent that takes input by email and SMS, and a local call copilot (Presage); this folder records what each one taught and where the lesson lands in this build.
+Summit Air is not a first attempt. "Bobert" throughout this folder is the name of an earlier personal practice project, not a person: a voice agent Jackson built for a made-up Atlanta HVAC company before this assignment arrived. Jackson built a voice agent for a made-up Atlanta HVAC company (Bobert), a receipt-reconciliation agent that takes input by email and SMS, and a local call copilot (Presage); this folder records what each one taught and where the lesson lands in this build.
 The table is the index. The subfolders hold the evidence: Bobert's architecture, prompt, latency notes and test logs are copied unchanged (phone numbers redacted); the other two are written up without client detail.
 
 | Lesson | From | Where it shows up in Summit Air |

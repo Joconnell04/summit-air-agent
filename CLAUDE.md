@@ -13,7 +13,7 @@ The assignment, word for word: `docs/assignment.md`. Reread it before any design
 - Every behavior change adds or updates a test. `make check` must pass before a commit; the ratchet blocks a lower test count.
 - Retell API: use only the versioned endpoints (`POST /v2/list-agents`, `GET /v2/list-phone-numbers`, `/v2/...` for LLMs and flows, `POST /v3/list-calls`) and read the paginated `items` field. The unversioned list endpoints are removed and Retell emails a warning for every use.
 - Prompts live in `prompts/`, split by job. Models are named profiles in `config/models.yaml`. Never hard-code a model id elsewhere.
-- Reviewers have never heard of Bobert. In docs, call it "the earlier practice agent" and link from-other-projects/bobert the first time, or leave the name out.
+- Reviewers have never heard of Bobert. In each doc, the first mention says it is an earlier personal practice project, not a person (or use "the earlier practice agent"), and links from-other-projects/bobert.
 - Numbers in docs carry their source: SOURCE (with link or file), MEASURED (with how), or ASSUMED.
 
 ## Working agreements
@@ -40,7 +40,7 @@ Jackson often speaks through transcription. Read these as:
 - "live kit" = LiveKit
 - "deep gram" = Deepgram; "cartesia", "cartesian" = Cartesia
 - "service titan" = ServiceTitan
-- "Robert" in a build context = Bobert, the earlier agent (see from-other-projects)
+- "Robert" or "Bobbert" in a build context = Bobert, an earlier personal practice project (see from-other-projects)
 - "Paul" = Paul Appleby, the Revin FDE playing the Summit Air owner
 - "evals", "evil suite" = the eval suite
 

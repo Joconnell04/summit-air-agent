@@ -9,7 +9,7 @@ Where test calls run, who scores them, what tool runs it all, and how both voice
 ## Options
 
 ### A. Our own harness: a simulated caller against the real tool server (chosen)
-A cheap model plays a caller persona against our real prompts and tools on a scratch database. Code checks on tool calls and saved records decide pass or fail; an LLM grader scores only how the call felt. Reuses the simulator and replay ideas from Bobert, an earlier personal practice project (a voice agent for a made-up HVAC company, built before this assignment).
+A cheap model plays a caller persona against our real prompts and tools on a scratch database. Code checks on tool calls and saved records decide pass or fail; an LLM grader scores only how the call felt. Reuses the simulator and replay ideas from Bobert (an earlier personal practice project: a voice agent for a made-up HVAC company, built before this assignment; the name is the project's, not a person's).
 
 ### B. The voice platform's own simulator
 Retell or LiveKit plays the caller and an LLM judges the transcript. Little to build, but Retell can't check tool arguments or the database, and scoring each stack with its own simulator wouldn't be a fair comparison.
