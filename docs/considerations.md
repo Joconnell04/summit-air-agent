@@ -15,26 +15,29 @@ Each item: `- [status] **C-NN Title.** One or two lines. Links.`
 
 ## The six requirements
 
-- [open] **C-05 Residential vs commercial.** Signals: business name, "property manager", "our building", rooftop or multi-unit equipment, an FSM account type. What a commercial caller gets: a polite decline with a referral or a message for the office, never a booking.
+- [open] **C-05 Residential vs commercial.** Signals: business name, "property manager", "our building", rooftop or multi-unit equipment, an FSM account type. What a commercial caller gets: a polite decline with a referral or a message for the office, never a booking. Still log a one-line lead (company, contact, what they needed) in the same end-of-call write, with no extra tool calls, in case Summit Air ever wants that list.
 - [open] **C-06 Membership.** Look up by phone first, then address or name. Handle the caller who doesn't know they're a member, an expired plan, and two plans at one address. Name the benefit back ("you're on the Comfort plan, so you get priority scheduling").
 - [open] **C-07 What the technician needs.** System type, brand and rough age, symptoms and when they started, thermostat reading, what's been tried, access (doorman, super, gate, parking), pets, best contact on site.
 - [open] **C-08 Booking.** Arrival windows, capacity by priority, confirmation by SMS, reschedule and cancel, no double booking, idempotent tools (retries are normal on voice platforms).
 
 ## Priority and safety
 
-- [open] **C-09 How priority is judged.** Hard rules in code (gas smell, CO alarm or symptoms, no heat below a temperature, vulnerable person plus no heat or no AC) plus a classifier for softer signals, plus live outdoor temperature. Rules can only raise priority, never lower it.
+- [open] **C-09 How priority is judged.** Hard rules in code (gas smell, CO alarm or symptoms, no heat below a temperature, vulnerable person plus no heat or no AC) plus a classifier for softer signals, plus live outdoor temperature. Rules can only raise priority, never lower it. Vulnerability signals: a phrase list as the floor (an age over 70, "my mother", oxygen, dialysis, newborn, pregnant, wheelchair, heart condition), plus a small classifier and a distress or sentiment score run beside the turn, off the reply path, so the latency budget is untouched.
 - [open] **C-10 Confidence.** The priority decision carries a reason and a confidence. Low confidence on a possibly urgent call rounds up and flags a person.
 - [open] **C-11 Flagging a human.** What a flag does: dispatcher board, SMS to on-call, warm transfer during hours. Who gets it after hours.
-- [open] **C-12 Safety script.** Gas or CO: tell the caller to leave and call 911 or the utility from outside, before any other question. Fixed wording, signed off by a person.
+- [open] **C-12 Safety script.** Gas or CO: tell the caller to leave and call 911 or the utility from outside, before any other question. Fixed wording, signed off by a person. No dead ends: once a safety signal is seen, the end-call and spam paths refuse until the script was said and a person was flagged, and a dropped safety call gets a callback.
 - [open] **C-13 NYC heat rules.** Renters in NYC are owed heat by the landlord during heat season; a tenant with no heat may need the landlord or 311, not a booking. Check the rules before relying on this.
 
 ## The caller
 
 - [open] **C-14 Caller state.** Rude, upset, panicked, adversarial, or confused callers. Adapt tone, stay calm, offer a person.
 - [open] **C-15 Special assistance.** Hard of hearing, elderly, slow speech, a caller on behalf of someone else. Slower pace, shorter questions, read-backs.
-- [open] **C-16 Language.** NYC callers who prefer Spanish or another language. Detect and switch, or hand off.
+- [open] **C-16 Language.** NYC callers who prefer Spanish or another language. Detect and switch, or hand off. One agent, not one per language: speech-to-text with language detection, a multilingual model told to answer in the caller's language, and the safety script pre-translated for the top languages. Test the top two or three in evals.
 - [open] **C-17 Who decides for the household.** Renter vs owner, landlord approval, adult child calling for a parent, spouses who both decide, who will be home. Book with the person who can authorize, and record who the tech should ask for.
-- [open] **C-18 Repeat callers.** "Where's my tech?", an open job, a callback about a past visit.
+- [open] **C-18 Repeat callers.** "Where's my tech?", an open job, a callback about a past visit. Track calls per number: several calls in a few minutes (dropped line, panic, prank) are linked, and the agent picks up where the last call stopped instead of starting over.
+
+- [open] **C-32 Playbooks.** The server picks a playbook per call from facts it already has (ZIP in a current surge, member, open job, after hours, outdoor temperature, safety or vulnerability flag) and the prompt loads that section. Example: a caller from a ZIP with a surge gets the short urgent path and no upsell or maintenance-plan pitch. Rules choose the playbook; the model doesn't. Builds on C-26.
+- [open] **C-33 Asking who's home, naturally.** The vulnerable-person question is asked on every no-heat or no-cooling call in plain words ("Is anyone at home who's older, very young, or has a health condition the heat would affect?"), never as a checklist, and the answer is read back only as "I've marked this as a priority."
 
 ## Staying on purpose
 
