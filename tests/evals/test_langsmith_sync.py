@@ -16,8 +16,10 @@ class FakeClient:
         self.examples = {}
         self.projects = {}
         self.project_ids = {}
-        self.runs = []
-        self.feedback = []
+        self.created_runs = []
+        self.feedback = {}
+        self.query_calls = []
+        self.runs = SimpleNamespace(query_v2=self.query_v2)
         self.created_runs_total = 0
 
     def has_dataset(self, *, dataset_name):
@@ -52,20 +54,29 @@ class FakeClient:
     def read_project(self, *, project_name):
         return SimpleNamespace(id=self.project_ids[project_name])
 
-    def list_runs(self, *, project_id, **kwargs):
-        names = [n for n, pid in self.project_ids.items() if pid == project_id]
-        return [SimpleNamespace(id=r["id"]) for r in self.runs if r["project_name"] in names]
+    def list_runs(self, **kwargs):
+        raise AssertionError("list_runs is deprecated; use runs.query_v2")
+
+    async def query_v2(self, **kwargs):
+        self.query_calls.append(kwargs)
+        # The real endpoint returns only runs that start inside the window, one day by default.
+        assert "min_start_time" in kwargs, "the default one-day window would hide older runs"
+        names = [n for n, pid in self.project_ids.items() if str(pid) in kwargs["project_ids"]]
+        for r in self.created_runs:
+            if r["project_name"] in names:
+                yield SimpleNamespace(id=r["id"])
 
     def create_run(self, **kwargs):
-        self.runs.append(kwargs)
+        self.created_runs.append(kwargs)
         self.created_runs_total += 1
 
     def flush(self):
         pass
 
-    def create_feedback(self, run_id, key, *, score, session_id):
+    def create_feedback(self, run_id, key, *, score, session_id, feedback_id):
         assert session_id in self.project_ids.values()
-        self.feedback.append((run_id, key, score))
+        # Like LangSmith, a repeated feedback id replaces the earlier score.
+        self.feedback[feedback_id] = (run_id, key, score)
 
 
 @pytest.fixture
@@ -123,8 +134,8 @@ def test_experiment_is_a_project_on_the_dataset_with_run_metadata(client, make_r
 
 def test_each_scenario_becomes_a_run_linked_to_its_example(client, make_run):
     ls.sync(make_run(["a", "b"]), client)
-    assert len(client.runs) == 2
-    first = client.runs[0]
+    assert len(client.created_runs) == 2
+    first = client.created_runs[0]
     assert first["name"] == "a"
     assert first["reference_example_id"] == ls.example_id("a")
     assert first["outputs"]["transcript"][0] == {
@@ -168,13 +179,13 @@ def test_run_outputs_carry_the_outcome(client, make_run):
     run = make_run(["a"])
     run.scenarios[0].outcome = "error"
     ls.sync(run, client)
-    assert client.runs[0]["outputs"]["outcome"] == "error"
+    assert client.created_runs[0]["outputs"]["outcome"] == "error"
 
 
 def test_sync_posts_six_feedback_scores_per_scenario(client, make_run):
     ls.sync(make_run(["a", "b"]), client)
     assert len(client.feedback) == 12
-    keys = {key for _, key, _ in client.feedback}
+    keys = {key for _, key, _ in client.feedback.values()}
     assert keys == {
         "passed", "must_pass_failed", "grader_score",
         "reply_delay_p50_ms", "reply_delay_p90_ms", "cost_usd",
@@ -184,10 +195,10 @@ def test_sync_posts_six_feedback_scores_per_scenario(client, make_run):
 def test_syncing_the_same_run_twice_changes_nothing(client, make_run):
     run = make_run(["a", "b"])
     ls.sync(run, client)
-    snapshot = (len(client.projects), len(client.examples), len(client.runs), len(client.feedback))
+    snapshot = (len(client.projects), len(client.examples), len(client.created_runs), len(client.feedback))
     ls.sync(run, client)
     assert (
-        len(client.projects), len(client.examples), len(client.runs), len(client.feedback)
+        len(client.projects), len(client.examples), len(client.created_runs), len(client.feedback)
     ) == snapshot
     assert client.created_runs_total == 2
 
@@ -195,11 +206,54 @@ def test_syncing_the_same_run_twice_changes_nothing(client, make_run):
 def test_resync_finishes_a_partly_uploaded_experiment(client, make_run):
     run = make_run(["a", "b"])
     ls.sync(run, client)
-    client.runs.pop()
+    client.created_runs.pop()
     client.feedback.clear()
     ls.sync(run, client)
-    assert len(client.runs) == 2
-    assert len(client.feedback) == 6
+    assert len(client.created_runs) == 2
+    assert len(client.feedback) == 12
+
+
+def test_resync_restores_scores_for_runs_that_already_exist(client, make_run):
+    run = make_run(["a", "b"])
+    ls.sync(run, client)
+    client.feedback.clear()
+    ls.sync(run, client)
+    assert len(client.created_runs) == 2
+    assert len(client.feedback) == 12
+    per_run = {}
+    for rid, key, _ in client.feedback.values():
+        per_run.setdefault(rid, []).append(key)
+    assert all(len(keys) == 6 and len(set(keys)) == 6 for keys in per_run.values())
+
+
+def test_feedback_ids_are_the_same_on_every_sync(client, make_run):
+    run = make_run(["a"])
+    ls.sync(run, client)
+    first = set(client.feedback)
+    ls.sync(run, client)
+    assert set(client.feedback) == first
+
+
+def test_existing_runs_are_found_with_the_supported_query_over_all_time(client, make_run):
+    ls.sync(make_run(["a"]), client)
+    project_id = next(iter(client.project_ids.values()))
+    call = client.query_calls[0]
+    assert call["project_ids"] == [str(project_id)]
+    assert call["is_root"] is True
+    assert call["selects"] == ["ID"]
+    assert call["min_start_time"].year == 2000
+    assert call["min_start_time"].tzinfo is not None
+
+
+def test_a_scenario_with_a_duration_gets_a_matching_start_and_end(client, make_run):
+    run = make_run(["a", "b"])
+    run.scenarios[0].duration_ms = 90_000
+    ls.sync(run, client)
+    timed, untimed = client.created_runs
+    assert timed["start_time"] == run.created
+    assert (timed["end_time"] - timed["start_time"]).total_seconds() == 90
+    assert "start_time" not in untimed
+    assert "end_time" not in untimed
 
 
 def test_no_key_does_nothing_and_prints_one_line(monkeypatch, capsys, make_run):
@@ -220,7 +274,7 @@ def test_cli_with_a_key_uploads_the_file(monkeypatch, tmp_path, make_run, client
     monkeypatch.setattr(ls, "connect", lambda: client)
     path = results.save(make_run(["a"]), tmp_path)
     assert ls.main(["langsmith_sync", str(path)]) == 0
-    assert len(client.runs) == 1
+    assert len(client.created_runs) == 1
 
 
 def test_cli_rejects_an_invalid_file(monkeypatch, tmp_path, capsys, client):
@@ -229,7 +283,7 @@ def test_cli_rejects_an_invalid_file(monkeypatch, tmp_path, capsys, client):
     bad.write_text(json.dumps({"run_id": "x"}))
     assert ls.main(["langsmith_sync", str(bad)]) == 1
     assert "not a valid results file" in capsys.readouterr().err
-    assert client.runs == []
+    assert client.created_runs == []
 
 
 def test_cli_needs_exactly_one_path(capsys):

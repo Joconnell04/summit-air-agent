@@ -3,10 +3,11 @@
 Viewer only. The results JSON stays the source of truth, nothing here runs during a call, and with
 no LANGSMITH_API_KEY set this does nothing. Usage: python -m evals.langsmith_sync <results.json>
 """
+import asyncio
 import os
 import sys
 import uuid
-import warnings
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from evals.results import ResultsError, Run, ScenarioResult, load
@@ -27,6 +28,10 @@ def example_id(scenario_id: str) -> uuid.UUID:
 
 def run_id_for(run: Run, scenario_id: str) -> uuid.UUID:
     return uuid.uuid5(NAMESPACE, f"run/{experiment_name(run)}/{scenario_id}")
+
+
+def feedback_id_for(rid: uuid.UUID, key: str) -> uuid.UUID:
+    return uuid.uuid5(NAMESPACE, f"{rid}/{key}")
 
 
 def example_inputs(result: ScenarioResult) -> dict[str, Any]:
@@ -94,42 +99,69 @@ def upload_experiment(client: Any, run: Run, dataset: Any) -> str:
         project = client.create_project(
             name, reference_dataset_id=dataset.id, metadata=experiment_metadata(run)
         )
-    # A half-finished earlier sync is completed, not repeated: only missing runs are created.
-    # The SDK marks list_runs deprecated (removal after 2027-01-31) and the warning would print on
-    # every sync. Move to client.runs.query before then.
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        done = {str(r.id) for r in client.list_runs(project_id=project.id, is_root=True)}
-    created = []
+    done = existing_run_ids(client, project.id)
     for result in run.scenarios:
         rid = run_id_for(run, result.scenario_id)
-        if str(rid) in done:
-            continue
-        client.create_run(
-            id=rid,
-            name=result.scenario_id,
-            run_type="chain",
-            project_name=name,
-            reference_example_id=example_id(result.scenario_id),
-            inputs=example_inputs(result),
-            outputs={
-                "outcome": result.outcome,
-                "must_pass_failures": result.must_pass_failures,
-                "transcript": [t.model_dump() for t in result.transcript],
-                "tool_calls": [c.model_dump() for c in result.tool_calls],
-            },
-            start_time=run.created,
-            end_time=run.created,
-            extra={"metadata": {**experiment_metadata(run), "call_id": result.call_id}},
-            tags=[f"stack:{run.stack}", f"profile:{run.profile}", f"suite:{run.suite}"],
-        )
-        created.append((rid, result))
+        if str(rid) not in done:
+            create_scenario_run(client, run, result, rid, name)
     # Runs are sent in the background; feedback needs them to exist first.
     client.flush()
-    for rid, result in created:
+    # Feedback ids are fixed, so posting every score on every sync fills in whatever a crashed
+    # earlier sync missed and replaces, rather than duplicates, what is already there.
+    for result in run.scenarios:
+        rid = run_id_for(run, result.scenario_id)
         for key, score in feedback_for(result).items():
-            client.create_feedback(rid, key, score=score, session_id=project.id)
+            client.create_feedback(
+                rid, key, score=score, session_id=project.id, feedback_id=feedback_id_for(rid, key)
+            )
     return name
+
+
+def existing_run_ids(client: Any, project_id: Any) -> set[str]:
+    """Ids of the root runs already in the experiment, so an earlier partial sync is completed."""
+
+    async def collect() -> set[str]:
+        found = set()
+        # min_start_time is explicit because the default window is one day, which would hide
+        # runs from an earlier day and make every later sync create them again.
+        async for r in client.runs.query_v2(
+            project_ids=[str(project_id)],
+            is_root=True,
+            selects=["ID"],
+            min_start_time=datetime(2000, 1, 1, tzinfo=UTC),
+        ):
+            found.add(str(r.id))
+        return found
+
+    return asyncio.run(collect())
+
+
+def create_scenario_run(
+    client: Any, run: Run, result: ScenarioResult, rid: uuid.UUID, project_name: str
+) -> None:
+    timing = {}
+    if result.duration_ms is not None:
+        timing = {
+            "start_time": run.created,
+            "end_time": run.created + timedelta(milliseconds=result.duration_ms),
+        }
+    client.create_run(
+        id=rid,
+        name=result.scenario_id,
+        run_type="chain",
+        project_name=project_name,
+        reference_example_id=example_id(result.scenario_id),
+        inputs=example_inputs(result),
+        outputs={
+            "outcome": result.outcome,
+            "must_pass_failures": result.must_pass_failures,
+            "transcript": [t.model_dump() for t in result.transcript],
+            "tool_calls": [c.model_dump() for c in result.tool_calls],
+        },
+        extra={"metadata": {**experiment_metadata(run), "call_id": result.call_id}},
+        tags=[f"stack:{run.stack}", f"profile:{run.profile}", f"suite:{run.suite}"],
+        **timing,
+    )
 
 
 def connect() -> Any:

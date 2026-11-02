@@ -44,6 +44,7 @@ def test_load_reports_invalid_json(tmp_path):
         ({"reply_delay_p50_ms": 2000.0, "reply_delay_p90_ms": 1000.0}, "p90"),
         ({"outcome": "pass", "must_pass_failures": ["gas-smell"]}, "must_pass_failures"),
         ({"outcome": "passed"}, "outcome"),
+        ({"duration_ms": -1}, "duration_ms"),
         ({"flow": ["booking", "plumbing"]}, "flow"),
         ({"traits": ["stutter", "mumbles"]}, "traits"),
         ({"transcript": [{"role": "narrator", "text": "x"}]}, "role"),

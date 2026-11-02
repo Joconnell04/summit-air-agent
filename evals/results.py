@@ -59,6 +59,9 @@ class ScenarioResult(Strict):
     reply_delay_p50_ms: float = Field(ge=0)
     reply_delay_p90_ms: float = Field(ge=0)
     cost_usd: float = Field(ge=0)
+    # How long the scenario ran. Optional; without it LangSmith gets no end time rather than a
+    # zero-length run.
+    duration_ms: float | None = Field(default=None, ge=0)
     transcript: list[Turn] = Field(default_factory=list)
     tool_calls: list[ToolCall] = Field(default_factory=list)
     call_id: str = Field(min_length=1)
