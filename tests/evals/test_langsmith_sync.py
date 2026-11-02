@@ -2,7 +2,9 @@ import json
 from types import SimpleNamespace
 from uuid import uuid4
 
+import langsmith
 import pytest
+from langsmith.utils import LangSmithAuthError
 
 from evals import langsmith_sync as ls
 from evals import results
@@ -289,3 +291,20 @@ def test_cli_rejects_an_invalid_file(monkeypatch, tmp_path, capsys, client):
 def test_cli_needs_exactly_one_path(capsys):
     assert ls.main(["langsmith_sync"]) == 2
     assert "usage" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize("error", [LangSmithAuthError, langsmith.LangsmithError])
+def test_cli_reports_an_api_failure_in_one_line(
+    error, monkeypatch, tmp_path, capsys, make_run, client
+):
+    def refuse(**kwargs):
+        raise error("401 Unauthorized\nrequest id abc\nmore detail")
+
+    monkeypatch.setattr(client, "has_dataset", refuse)
+    monkeypatch.setattr(ls, "connect", lambda: client)
+    path = results.save(make_run(["a"]), tmp_path)
+    assert ls.main(["langsmith_sync", str(path)]) == 1
+    err = capsys.readouterr().err
+    assert err.count("\n") == 1
+    assert f"LangSmith sync failed ({error.__name__}: 401 Unauthorized)" in err
+    assert "Traceback" not in err

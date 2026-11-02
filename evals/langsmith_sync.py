@@ -174,6 +174,14 @@ def connect() -> Any:
     return Client()
 
 
+def api_errors() -> tuple[type[Exception], ...]:
+    """The SDK's two error families (its new generated client and its older hand-written one)."""
+    import langsmith
+    from langsmith.utils import LangSmithError
+
+    return (langsmith.LangsmithError, LangSmithError)
+
+
 def sync(run: Run, client: Any = None) -> str | None:
     """Return the experiment name, or None when LangSmith is off."""
     client = client or connect()
@@ -196,7 +204,16 @@ def main(argv: list[str]) -> int:
     except ResultsError as err:
         print(err, file=sys.stderr)
         return 1
-    sync(run, client)
+    try:
+        sync(run, client)
+    except api_errors() as err:
+        detail = str(err).strip().splitlines()
+        print(
+            f"LangSmith sync failed ({type(err).__name__}: {detail[0] if detail else 'no detail'}); "
+            "the results file is unchanged, run the upload again to finish it",
+            file=sys.stderr,
+        )
+        return 1
     return 0
 
 

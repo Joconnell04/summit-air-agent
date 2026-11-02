@@ -71,7 +71,7 @@ Each run writes `evals/results/<run>.json` (schema and validation in `evals/resu
 
 ## Results in LangSmith
 
-An optional viewer for bake-offs. The results JSON is the source of truth. LangSmith holds a copy, is never in the call path, and the upload does nothing but print one line when `LANGSMITH_API_KEY` is not set. `.env.example` lists the two variables.
+An optional viewer for bake-offs. The results JSON is the source of truth. LangSmith holds a copy, is never in the call path, and the upload does nothing but print one line when `LANGSMITH_API_KEY` is not set. `.env.example` lists the one variable, `LANGSMITH_API_KEY`. If the API call fails, the command prints one line and exits 1; run it again to finish.
 
 ```
 make eval-upload RUN=evals/results/<run>.json
@@ -81,7 +81,8 @@ make eval-upload RUN=evals/results/<run>.json
 - Dataset `summit-air-scenarios`: one example per scenario id, with the persona, the tags (`flow:booking`, `difficulty:rigorous`, `trait:stutter`) and the difficulty. A new run adds missing scenarios and updates changed ones; it never duplicates.
 - One experiment per run, named `<stack>-<profile>-<suite>-<run id>`, with metadata for stack, profile, suite, prompt-and-scenario hash and run id. Each scenario is one run inside it, carrying the transcript, tool calls, outcome (pass, fail or error), must-pass failures and call id.
 - Six scores on every scenario: `passed` (0 or 1; an `error` outcome gets `errored` = 1 instead, so it never counts as a fail), `must_pass_failed` (0 or 1), `grader_score` (1 to 5), `reply_delay_p50_ms`, `reply_delay_p90_ms` and `cost_usd`.
-- Uploading the same file again changes nothing. An upload that stopped halfway is finished by running it again.
+- Uploading the same file again changes nothing: runs and scores have fixed ids, so a repeat replaces what is there. An upload that stopped halfway is finished by running it again, including scores for runs that already exist.
+- A scenario's end time is set only when the results file has `duration_ms` for it; without it the run has no end time rather than a zero-length one.
 
 **What stays local**
 - The results files, `baseline.json` and the ratchet. A LangSmith outage or a lapsed free plan (5,000 traces a month, 14-day retention) cannot fail `make check`.
