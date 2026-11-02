@@ -34,4 +34,4 @@ Changed:
 - New caller type for replacement and install quotes (NYC Clean Heat questions); renter section grounded in the NYC heat law.
 - Plain wording throughout, e.g. the surge line for tune-ups.
 Commit: d9d04b7
-Status: open
+Status: locked

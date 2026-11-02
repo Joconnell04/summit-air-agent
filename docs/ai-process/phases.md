@@ -4,7 +4,7 @@ The route through the build. Claude drives it: after each step closes, Claude ch
 
 ## 1. Design (one voice-driven session)
 
-- [ ] Users: `/round users` until locked (#1)
+- [x] Users: `/round users` until locked (#1)
 - [ ] Call journeys: `/round call-journeys` until locked (#2)
 - [ ] Considerations: walk docs/considerations.md, mark each item in, later, out or decided (#10)
 - [ ] Spec: the six requirements plus in-scope considerations as testable statements; assumptions into docs/brief.md (#3)
