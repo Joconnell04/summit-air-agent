@@ -78,9 +78,9 @@ I could not read developer.servicetitan.io (it is a JavaScript portal; the fetch
 
 **SOURCE** (ServiceTitan's own documentation, as recorded in the earlier practice agent's notes, `revin-interview/research/servicetitan-mapping.md`):
 - OAuth 2.0 client credentials, a `Bearer` token plus an `ST-App-Key` header, tokens that last 15 minutes.
-- Token URL `https://auth.servicetitan.io/connect/token`; the sandbox uses `auth-integration.servicetitan.io` and `api-integration.servicetitan.io`.
 
-**SECONDARY** (third-party docs and connectors seen in search results, not ServiceTitan's own pages; names likely right, shapes unconfirmed):
+**SECONDARY** (third-party docs and connectors seen in search results, not ServiceTitan's own pages; names likely right, shapes unconfirmed; `revin-interview/research/servicetitan-mapping.md` marks these the same way):
+- Production URLs `https://auth.servicetitan.io/connect/token` and `https://api.servicetitan.io`; the sandbox uses `auth-integration.servicetitan.io` and `api-integration.servicetitan.io`.
 - The path pattern `/{module}/v2/tenant/{tenantId}/...` and these resources: `crm` customers, locations, location contacts, bookings; `jpm` jobs, job types, appointments (`PATCH .../reschedule`), `PUT jobs/{id}/cancel`; `dispatch` capacity and technician shifts; the booking-provider booking path.
 
 **ASSUMED** (guessed from memory or invented for the mock; each needs one sandbox call to confirm):
