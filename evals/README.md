@@ -7,7 +7,7 @@ How the agent is tested before anyone calls it. Decision and reasoning: DECISION
 1. A simulated caller (a cheap model, profile `offline.caller` in config/models.yaml) gets a persona, hidden facts (name, address, phone, what's wrong) and a behavior script.
 2. It talks, turn by turn, to the agent under test: our stack in process, or the Retell baseline through its text chat interface. Both use the same tool server on a fresh scratch copy of the mock ServiceTitan, with a unique call id.
 3. A transcription layer roughens the caller's lines the way speech-to-text does before the agent sees them.
-4. When the call ends, code checks read the tool-call log and the saved records. They decide pass or fail.
+4. When the call ends, code checks read the tool-call log and the saved records. They decide pass or fail. A run where the simulated caller loops or the harness breaks is marked `error`, not `fail` (decision 06), and is left out of pass rates.
 5. An LLM grader (profile `offline.grader`) scores how the call felt. It can fail a run the code passed, never rescue one the code failed.
 
 ## Scenario file
@@ -35,6 +35,8 @@ should:
 ```
 
 ## Labels
+
+A results file with a flow, difficulty or trait outside these lists fails validation, and a test keeps the lists in `evals/results.py` and this file the same.
 
 - **flow:** booking, safety, priority, membership, commercial, renter, repeat-caller, after-hours, off-topic, injection, spam.
 - **difficulty:**
@@ -65,7 +67,34 @@ make eval SUITE=smoke PROFILES=fast,quality         # model comparison
 make replay CALL=<id>                               # re-run a recorded call's caller turns
 ```
 
-Each run writes `evals/results/<run>.json` and a short table (pass rate by flow and difficulty, reply delay, cost), and can optionally send the run to LangSmith as an experiment for side-by-side comparison.
+Each run writes `evals/results/<run>.json` (schema and validation in `evals/results.py`) and a short table (pass rate by flow and difficulty, reply delay, cost), and can optionally send the run to LangSmith as an experiment for side-by-side comparison.
+
+## Results in LangSmith
+
+An optional viewer for bake-offs. The results JSON is the source of truth. LangSmith holds a copy, is never in the call path, and the upload does nothing but print one line when `LANGSMITH_API_KEY` is not set. `.env.example` lists the one variable, `LANGSMITH_API_KEY`. If the API call fails, the command prints one line and exits 1; run it again to finish.
+
+```
+make eval-upload RUN=evals/results/<run>.json
+```
+
+**What goes up**
+- Dataset `summit-air-scenarios`: one example per scenario id, with the persona, the tags (`flow:booking`, `difficulty:rigorous`, `trait:stutter`) and the difficulty. A new run adds missing scenarios and updates changed ones; it never duplicates.
+- One experiment per run, named `<stack>-<profile>-<suite>-<run id>`, with metadata for stack, profile, suite, prompt-and-scenario hash and run id. Each scenario is one run inside it, carrying the transcript, tool calls, outcome (pass, fail or error), must-pass failures and call id.
+- Six scores on every scenario: `passed` (0 or 1; an `error` outcome gets `errored` = 1 instead, so it never counts as a fail), `must_pass_failed` (0 or 1), `grader_score` (1 to 5), `reply_delay_p50_ms`, `reply_delay_p90_ms` and `cost_usd`.
+- Uploading the same file again changes nothing: runs and scores have fixed ids, so a repeat replaces what is there. An upload that stopped halfway is finished by running it again, including scores for runs that already exist.
+- A scenario's end time is set only when the results file has `duration_ms` for it; without it the run has no end time rather than a zero-length one.
+
+**What stays local**
+- The results files, `baseline.json` and the ratchet. A LangSmith outage or a lapsed free plan (5,000 traces a month, 14-day retention) cannot fail `make check`.
+- The scenario YAML, hidden facts and code checks. Only the persona text and tags are copied.
+- Live calls. Nothing from the call path is traced.
+- Transcripts do go up. They come from simulated callers with made-up details, so upload only runs made by the harness, never recordings of real calls.
+
+**Comparing a bake-off**
+1. Run the same suite for each setup, for example `make eval SUITE=standard STACKS=livekit,retell`, and upload each results file.
+2. In LangSmith open Datasets & Experiments, then `summit-air-scenarios`, then Experiments. Tick the experiments to compare and choose Compare.
+3. Rows are scenarios and columns are experiments. Filter on `passed` = 0 or `must_pass_failed` = 1 to see where setups split (and on `errored` = 1 for runs with no verdict), and sort on `reply_delay_p90_ms` or `cost_usd` for the speed and cost side.
+4. Compare experiments from the same suite only; the metadata `hash` shows whether the prompts and scenarios behind two runs matched.
 
 ## Must-pass cases
 
