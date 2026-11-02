@@ -1,6 +1,6 @@
 # 06. How we test the agent
 
-Issue: #6. Status: ready
+Issue: #6. Status: decided (DECISIONS.md 002)
 
 ## Question
 Where test calls run, who scores them, and what tool runs it all. Blocks the eval build brief (#8) and the eval floor in `make check`.

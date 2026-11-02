@@ -1,34 +1,51 @@
-# 04. Which platform answers the phone?
+# 04. Which platform answers the phone
 
-Issue: #4. Status: ready
+Issue: #4. Status: ready (revised after Jackson's questions)
 
 ## Question
-Which service takes the call and runs the conversation: LiveKit (we build the worker) or Retell (managed)? This blocks the build briefs (#8) and the pipeline and latency decisions (#5, #7).
+
+What runs the phone call: a stack we build ourselves on LiveKit, Retell's managed platform, or both built and measured against each other. Blocks the build briefs (#8) and the latency budget (#7).
+
+A phone agent has four jobs: the **ears** (speech to text), the **brain** (the model deciding what to say), the **mouth** (text to speech), and the **switchboard** (connecting the phone line and deciding when the caller has finished talking). The options differ in who runs each job.
 
 ## Options
-### A. LiveKit Agents, self-built
-Reuse Bobert's LiveKit worker (Deepgram, Cartesia, Haiku) on LiveKit Cloud, with a Twilio or Telnyx SIP trunk. We own the worker, hang-up, transfer and turn settings; the tool server stays the only place rules live, and the worker's own `end_call` and transfer tools can refuse until the server says the safety line was spoken.
 
-### B. Retell, managed
-Prompt, model and tools as config pushed to Retell, which owns telephony, turn-taking and simulations; the tool server is unchanged. Fastest to a working number, but Retell's built-in transfer and end-call never reach our server, so the safety hand-off depends on prompt order unless every exit goes through a wrapper tool (as Bobert's `log_handoff` did).
+### A. Our own stack on LiveKit
+We wire Deepgram (ears), Claude Haiku (brain) and Cartesia (mouth) together in a program on our Vultr server; LiveKit's free plan is the switchboard. We control everything, including how long to wait when someone reads out a phone number, and every hang-up and transfer goes through our own code, so the server can stop the agent hanging up on a gas call. We also own every bug.
 
-### C. LiveKit primary, Retell standby on the same tool server (issue #4's current plan)
-A, plus a second number on Retell, both calling the same tool endpoints and the same prompt files in `prompts/`. The live go/no-go (#9) decides which one the demo number points at; the cost is keeping two voice configs in step.
+### B. Retell does it all
+Retell runs the ears, mouth, switchboard and the model; our server only answers tool calls (look up, book, flag). Fastest to a working number and polished turn-taking, but you can only turn Retell's dials, not change how it works, and our server can't veto a hang-up or transfer (a tool can't end a call; we can only remove the agent's ability to hang up at all).
 
-### D. Vapi or Pipecat
-Not a real contender. Vapi is the same managed trade as Retell with no Bobert history; Pipecat is the same build burden as LiveKit with no tie to Revin.
+### C. Retell's ears, mouth and switchboard, our brain
+Retell's "custom LLM" mode: Retell handles the phone and the voice, and sends each caller line to our server, which runs the model and replies. Keeps Retell's turn-taking and gives our code the hang-up and transfer decisions. Still tied to Retell's platform and pricing.
+
+### D. Bake-off: build A, use B as the baseline, keep the winner
+Most of the work (tool server, mock ServiceTitan, prompts, evals) is shared either way. Add a thin Retell config (hours) as the baseline to beat, build A properly, score both on the same tests plus 10 real calls each, keep one and delete the other folder.
+
+### Looked at and not chosen
+**Vapi** is a managed platform like Retell where you pick your own speech vendors: the same trade as Retell, with no head start. **Pipecat** is free open-source software for building voice agents, like LiveKit: the same trade as LiveKit, with less sign that Revin uses it. Neither does anything A or B doesn't.
 
 ## Context
-| | A. LiveKit only | B. Retell only | C. LiveKit + Retell standby |
-|---|---|---|---|
-| What you give up | A managed safety net; every phone problem is yours to debug | Control of hang-up and transfer; the live-debug story is "their platform" | One extra day and two configs to keep in step |
-| Cost per minute | about $0.065, plus $50/mo plan (SOURCE pricing; LLM ASSUMED $0.01) | about $0.11 with Haiku (SOURCE pricing) | A's cost; Retell billed only on standby minutes |
-| Latency evidence | MEASURED in Bobert: 1.0 s plain turns, 2.3 s tool turns, clean audio, laptop | None measured by us; vendor claims about 600 ms (unverified) | Both of the left |
-| Effort and risk to the demo date | Worker and 23 tests exist; new work is trunk, transfer, hosting. Risk: real phone audio untested | Hours; Bobert's push script exists. Risk: platform behavior you cannot change | Highest effort, lowest risk of no working number |
-| Signal to Revin | Likely matches their stack, but the only evidence is one Revin job post ("LiveKit + OpenAI Realtime"), since taken down | Reads as assembling a vendor product (ASSUMED) | Matches their stack, and shows a fallback plan |
+
+| | A. LiveKit, ours | B. Retell, all | C. Retell + our brain | D. Bake-off |
+|---|---|---|---|---|
+| Control of rules and hang-ups | Full | Partial | Full | Full in the winner |
+| Turn-taking quality | Ours to tune | Polished, fixed | Polished, fixed | Measured, not guessed |
+| Effort | Most (worker exists from the earlier practice agent) | Least | Middle | A plus a few hours |
+| Cost per minute | about $0.065 (SOURCE pricing, LLM ASSUMED) | about $0.11 | about $0.10 (ASSUMED) | A's |
+| Fixed monthly | $0 LiveKit (free plan) + Vultr we already pay for | $0 | $0 | same |
+| Signal to Revin | Their voice team appears to use LiveKit (one job post, since removed) | Assembling a vendor product | Middle | Shows we measured |
+
+Things that hold for every option:
+
+- **One phone number.** A new NYC Twilio number (212, 646, 718, 347, 917...), $1.15 a month (SOURCE). The old 678 number lives inside Retell's own Twilio account and can't be moved or pointed at LiveKit (SOURCE: Retell staff, exploration 004), so it can only serve Retell; in a bake-off it is the Retell test line, and the NYC number goes to the winner. Booking texts from the NYC number need a one-time business texting registration (A2P 10DLC, about $20 and up to 5 business days, SOURCE), so it should start early.
+- **No $50 LiveKit plan for the demo.** That plan only keeps LiveKit-hosted agents awake; our program runs on our own always-on Vultr server, so the free plan works. Production would need it: the free plan's 1,000 phone minutes cover only about 285 calls a month (exploration 003). The Vultr server (2 CPUs, 2 GB memory) is short on memory for 5 calls at once; expect 2 to 3 (ASSUMED until load-tested). Moving it to 4 GB costs $20 a month, billed hourly (SOURCE: Vultr). It also reboots itself at 4:30 or 5:30 a.m. New York time for updates, so the program restarts on boot and a health check alerts if it doesn't. Call number 6 goes to a safety line and voicemail in the demo, and to a short hold with a callback offer in production (exploration 003).
+- **Backup.** Twilio can send calls to a second destination, but only if the first one's phone connection is completely dead (exploration 004). If our program crashes while LiveKit itself is up, calls won't fail over on their own; a health check has to flip the number to the backup. That check is part of the build.
+- **Tidy repo.** Both voice layers sit in `voice/livekit/` and `voice/retell/`, hold no rules or prompts, and the losing one is deleted in one step (docs/architecture.md).
 
 ## Recommendation
-Pick C, with LiveKit on the $50/mo Ship plan (the free plan cold-starts an idle agent for 10 to 20 s, which would wreck the first demo call), and a written cut-over rule in #9: any wrong booking or missed flag, or median first response above 1.5 s (ASSUMED target), moves the demo number to Retell. This changes to B if the 10 calls fail on latency (tool turns are 2.3 s today) or if call transfer on the SIP trunk is not working a few days before handover.
+
+D: build our own LiveKit stack (A) as the product, with a quick Retell setup on the existing 678 number as the baseline it has to beat, then keep whichever wins on the same tests and 10 real calls. This gets the control and Revin fit of A, with evidence instead of a guess, for a few extra hours; it changes to B or C if our stack can't match Retell's turn-taking or reply speed on real phone calls.
 
 ## Research notes
 

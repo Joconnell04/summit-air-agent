@@ -21,10 +21,12 @@ dev = [
 
 [tool.ruff]
 line-length = 100
+extend-exclude = [".claude/worktrees"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
+norecursedirs = [".claude"]
 
 [tool.ruff.lint.flake8-bugbear]
 extend-immutable-calls = ["fastapi.Depends", "fastapi.Header", "fastapi.Form"]

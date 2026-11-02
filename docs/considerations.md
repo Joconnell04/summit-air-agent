@@ -32,7 +32,7 @@ Each item: `- [status] **C-NN Title.** One or two lines. Links.`
 
 - [open] **C-14 Caller state.** Rude, upset, panicked, adversarial, or confused callers. Adapt tone, stay calm, offer a person.
 - [open] **C-15 Special assistance.** Hard of hearing, elderly, slow speech, a caller on behalf of someone else. Slower pace, shorter questions, read-backs.
-- [open] **C-16 Language.** NYC callers who prefer Spanish or another language. Detect and switch, or hand off. One agent, not one per language: speech-to-text with language detection, a multilingual model told to answer in the caller's language, and the safety script pre-translated for the top languages. Test the top two or three in evals.
+- [open] **C-16 Language.** NYC callers who prefer Spanish or another language. Detect and switch, or hand off. One agent, not one per language: speech-to-text with language detection, a multilingual model told to answer in the caller's language, and the safety script pre-translated for the top languages. Test the top two or three in evals. Not a deciding factor in the stack choice; Deepgram Flux Multilingual is the candidate to come back to.
 - [open] **C-17 Who decides for the household.** Renter vs owner, landlord approval, adult child calling for a parent, spouses who both decide, who will be home. Book with the person who can authorize, and record who the tech should ask for.
 - [open] **C-18 Repeat callers.** "Where's my tech?", an open job, a callback about a past visit. Track calls per number: several calls in a few minutes (dropped line, panic, prank) are linked, and the agent picks up where the last call stopped instead of starting over.
 
