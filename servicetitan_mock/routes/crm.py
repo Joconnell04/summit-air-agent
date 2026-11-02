@@ -73,8 +73,8 @@ class BookingIn(BaseModel):
 
 
 class LeadIn(BaseModel):
-    kind: Literal["Replacement", "Install", "Estimate", "Commercial", "Other"]
-    customerType: Literal["Residential", "Commercial"] = "Residential"
+    kind: str  # one of the tenant's lead_kinds, checked in the route
+    customerType: Literal["Residential", "Commercial"] = "Residential"  # ServiceTitan's own enum
     customerId: int | None = None
     name: str = Field(min_length=1)
     phone: str = ""
@@ -82,12 +82,6 @@ class LeadIn(BaseModel):
     zip: str = ""
     summary: str = Field(min_length=1)
     campaignId: int | None = None
-
-    @model_validator(mode="after")
-    def commercial_kind_matches_type(self):
-        if (self.kind == "Commercial") != (self.customerType == "Commercial"):
-            raise ValueError("kind Commercial and customerType Commercial go together")
-        return self
 
 
 def _route(request: Request) -> str:
@@ -331,7 +325,7 @@ def create_booking(
             if existing:
                 return 200, shape_booking(existing)
         if body.customerId is not None:
-            rules.require_residential(rules.require_customer(c, body.customerId))
+            rules.require_bookable_type(cfg, rules.require_customer(c, body.customerId))
         rules.require_in_area(cfg, body.address.zip)
         rules.check_refs(cfg, body.businessUnitId, body.jobTypeId, body.campaignId)
         cur = c.execute(
@@ -401,6 +395,14 @@ def create_lead(
 ):
     """Replacement and install interest, or a commercial caller. Real ServiceTitan ties a lead to an
     existing customer; this mock also takes a bare name and phone (ASSUMED)."""
+    rejected = cfg.rejected_customer_types
+    if body.kind not in cfg.lead_kinds:
+        raise ApiError(400, "validation_error", "The request was not valid.",
+                       {"kind": f"must be one of {', '.join(cfg.lead_kinds)}"})
+    if (body.kind in rejected) != (body.customerType in rejected):
+        raise ApiError(400, "validation_error", "The request was not valid.",
+                       {"kind": "a lead of a customer type the company does not book carries "
+                                "that type as its kind, and no other lead does"})
 
     def run(c):
         if body.customerId is not None:

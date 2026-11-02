@@ -240,7 +240,7 @@ def build() -> dict:
                 capacity_check("Capacity went down", "pm.test('one fewer open', () => pm.expect(open(1)).to.eql(Number(pm.collectionVariables.get('win1_open')) - 1));"),
                 item("Commercial customer is refused", "POST", "jobs", module="jpm", code=422,
                      body=bad_job("commercial_customer_id", "commercial_location_id"),
-                     check="pm.test('commercial_not_supported', () => pm.expect(pm.response.json().code).to.eql('commercial_not_supported'));"),
+                     check="pm.test('customer_type_not_supported', () => pm.expect(pm.response.json().code).to.eql('customer_type_not_supported'));"),
                 item("Out-of-area customer is refused", "POST", "jobs", module="jpm", code=422,
                      body=bad_job("far_customer_id", "far_location_id"),
                      check="pm.test('out_of_area', () => pm.expect(pm.response.json().code).to.eql('out_of_area'));"),

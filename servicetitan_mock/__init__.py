@@ -1,1 +1,1 @@
-"""A mock of the systems a residential HVAC company runs on, shaped like ServiceTitan's API."""
+"""A mock of the systems a home-services company runs on, shaped like ServiceTitan's API."""

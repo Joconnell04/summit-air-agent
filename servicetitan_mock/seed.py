@@ -9,7 +9,7 @@ import json
 from datetime import date, datetime
 from pathlib import Path
 
-from .config import TenantConfig
+from .config import DEFAULT_TENANT_DIR, TenantConfig
 from .db import connect, create_schema
 
 
@@ -40,7 +40,7 @@ def build_world(db_path: str | Path, tenant_dir: str | Path, start: date | None 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Rebuild the mock ServiceTitan database.")
-    parser.add_argument("--tenant", default="tenants/summit-air")
+    parser.add_argument("--tenant", default=DEFAULT_TENANT_DIR)
     parser.add_argument("--db", default="data/servicetitan_mock.db")
     parser.add_argument("--start-date", help="First day of capacity, YYYY-MM-DD. Default: today.")
     args = parser.parse_args()

@@ -134,7 +134,7 @@ class World:
         def install(system: str, brands: list[str], prefix: str) -> None:
             brand = rng.choice(brands)
             installed = date(rng.randint(1996, self.start.year - 1), rng.randint(1, 12), rng.randint(1, 28))
-            wk.add_equipment(self.conn, customer_id, location_id, system, brand,
+            wk.add_equipment(self.conn, self.cfg, customer_id, location_id, system, brand,
                              f"{prefix}-{rng.randint(1000, 9999)}", installed)
 
         if kind == "house":
@@ -194,10 +194,10 @@ class World:
                     skills.append("heating")
                 if i % 4 == 0:
                     skills.append("heat_pump")
-                wk.add_technician(self.conn, tech_id, names[i], SERVICE_UNIT, zone_id, skills, phone)
+                wk.add_technician(self.conn, self.cfg, tech_id, names[i], SERVICE_UNIT, zone_id, skills, phone)
                 self.service_techs.append(tech_id)
             else:
-                wk.add_technician(self.conn, tech_id, names[i] + " (comfort advisor)", INSTALL_UNIT, zone_id, [], phone)
+                wk.add_technician(self.conn, self.cfg, tech_id, names[i] + " (comfort advisor)", INSTALL_UNIT, zone_id, [], phone)
                 self.advisors.append(tech_id)
 
     def shifts(self) -> None:
@@ -247,7 +247,7 @@ class World:
             created=wk.local_dt(cfg, self.start, "08:15"),
         )
         for hhmm, link in (("08:12", False), ("08:31", True), ("08:47", True)):
-            wk.add_call(self.conn, wk.local_dt(cfg, self.start, hhmm), DELGADO_PHONE, cid, job_id if link else None,
+            wk.add_call(self.conn, cfg, wk.local_dt(cfg, self.start, hhmm), DELGADO_PHONE, cid, job_id if link else None,
                         "Booked" if link else "Unbooked", "No heat", 240 if link else 35)
         s["repeatCallerOpenJob"] = {"name": "Maria Delgado", "phone": DELGADO_PHONE, "customerId": cid,
                                     "locationId": lid, "jobId": job_id, "appointmentId": appt_id}
@@ -260,7 +260,7 @@ class World:
             tech_id=self.service_techs[3], summary="AC not cooling. Replaced capacitor.",
             created=wk.local_dt(cfg, done_day - timedelta(days=1), "10:00"),
         )
-        wk.add_call(self.conn, wk.local_dt(cfg, done_day - timedelta(days=1), "10:05"), BRENNAN_PHONE, cid,
+        wk.add_call(self.conn, cfg, wk.local_dt(cfg, done_day - timedelta(days=1), "10:05"), BRENNAN_PHONE, cid,
                     job_id, "Booked", "No cooling")
         s["jobDoneLastWeek"] = {"name": "Thomas Brennan", "phone": BRENNAN_PHONE, "customerId": cid,
                                 "locationId": lid, "jobId": job_id}
@@ -396,10 +396,10 @@ class World:
             if rng.random() < 0.5:
                 for _ in range(rng.randint(1, 3)):
                     when = wk.local_dt(cfg, self.start - timedelta(days=rng.randint(2, 90)), f"{rng.randint(8, 19):02d}:{rng.randint(0, 59):02d}")
-                    wk.add_call(conn, when, p["phone"], p["cid"], None, rng.choice(["Booked", "Unbooked"]), rng.choice(CALL_REASONS))
+                    wk.add_call(conn, cfg, when, p["phone"], p["cid"], None, rng.choice(["Booked", "Unbooked"]), rng.choice(CALL_REASONS))
         for _ in range(25):
             when = wk.local_dt(cfg, self.start - timedelta(days=rng.randint(1, 90)), f"{rng.randint(8, 19):02d}:{rng.randint(0, 59):02d}")
-            wk.add_call(conn, when, self.phone(), None, None, "Unbooked", rng.choice(CALL_REASONS), 20)
+            wk.add_call(conn, cfg, when, self.phone(), None, None, "Unbooked", rng.choice(CALL_REASONS), 20)
 
     def fill_capacity(self) -> None:
         """Book filler appointments so some days are busy and a few are nearly full."""

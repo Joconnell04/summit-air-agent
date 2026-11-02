@@ -1,6 +1,6 @@
 # ServiceTitan mock
 
-A stand-in for the systems a 40-technician residential HVAC company runs on, shaped like ServiceTitan's public API. The agent's integration layer talks to this today. Moving to real ServiceTitan later changes the adapter's base URL and auth, not the agent (C-03). This is the customer's system, not ours: it holds no agent logic.
+A stand-in for the systems a 40-technician residential HVAC company (Summit Air, the first tenant) runs on, shaped like ServiceTitan's public API. The agent's integration layer talks to this today. Moving to real ServiceTitan later changes the adapter's base URL and auth, not the agent (C-03). This is the customer's system, not ours: it holds no agent logic.
 
 Python 3.12, FastAPI, SQLite. Brief: `docs/ai-process/briefs/01-mock-servicetitan.md`.
 
@@ -45,10 +45,10 @@ About 300 customers (owners, tenants, apartment owners), 40 technicians (36 serv
 - **Cancel and reschedule give capacity back.** A failed reschedule leaves the old booking in place.
 - **Phone lookup returns every match,** in any format, at customer or location level. Address lookup normalizes `St` and `Street`; leave `unit` out to get the whole building.
 - **Expired reads as expired.** A membership stored as Active whose end date has passed reads as Expired. Lists return every status unless one is asked for.
-- **Commercial customers cannot get appointments or intake bookings** (422 `commercial_not_supported`) but can be stored as leads.
+- **Refused customer types cannot get appointments or intake bookings** (422 `customer_type_not_supported`) but can be stored as leads. Which types are refused, and the message returned, come from `company.rejected_customer_types` in the tenant config; Summit Air refuses Commercial. Lead kinds come from `lead_kinds`. The two customer types themselves (`Residential`, `Commercial`) are ServiceTitan's own.
 - **Out-of-area ZIPs are rejected on jobs and intake bookings** (422 `out_of_area`).
 - **After-hours windows are urgent-only** and only the on-call technician covers them.
-- **One error shape:** `{"status", "code", "title", "detail", "errors", "requestId"}`. Codes: `validation_error`, `invalid_window`, `unauthorized`, `invalid_app_key`, `not_found`, `slot_taken`, `no_capacity`, `invalid_state`, `commercial_not_supported`, `out_of_area`, `after_hours_urgent_only`, `slot_in_past`, `unknown_reference`, `idempotency_key_reused`.
+- **One error shape:** `{"status", "code", "title", "detail", "errors", "requestId"}`. Codes: `validation_error`, `invalid_window`, `unauthorized`, `invalid_app_key`, `not_found`, `slot_taken`, `no_capacity`, `invalid_state`, `customer_type_not_supported`, `out_of_area`, `after_hours_urgent_only`, `slot_in_past`, `unknown_reference`, `idempotency_key_reused`.
 
 ## Logs
 
@@ -113,6 +113,6 @@ The adapter owns every difference, so the agent does not change.
 Template (works for any trade; do not edit per company):
 `servicetitan_mock/` (code, `schema.sql`, `worldkit.py`), `scripts/build_postman_st.py`, `scripts/run_postman_st.sh`, `postman/`, and everything under `tests/servicetitan_mock/` except the fixtures that name Summit Air.
 
-Tenant (Summit Air only): `tenants/summit-air/config.yaml` (company, hours, fees, counties and ZIPs, business units, job types, arrival windows, urgent holds, membership plans, mock credentials) and `tenants/summit-air/seed.py` (names, streets, scenarios). A second company is a new folder under `tenants/` with the same two files; point `ST_MOCK_TENANT` at it. `tests/servicetitan_mock/test_st_platform.py` proves company facts come from the config by serving a different company from a copied folder.
+Tenant (Summit Air only): `tenants/summit-air/config.yaml` (company name, phone, email domain, hours and refused customer types; fees; counties and ZIPs; business units; job types; arrival windows; urgent holds by day and business unit; lead kinds; equipment names; membership plans and the names of their visits; mock credentials) and `tenants/summit-air/seed.py` (names, streets, scenarios). A second company is a new folder under `tenants/` with the same two files; point `ST_MOCK_TENANT` at it. `tests/servicetitan_mock/test_st_platform.py` proves company facts come from the config by serving a different company from a copied folder.
 
 The Postman collection and the scenario names in `test_st_world.py` read `/debug/scenarios`, which the tenant seed fills. A new tenant's seed must plant the same scenario keys or those two need editing.

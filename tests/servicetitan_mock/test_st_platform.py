@@ -1,11 +1,15 @@
 """Errors, auth, request logs, paging and per-company config."""
 import json
 import shutil
+from datetime import UTC, date, datetime
 
 import yaml
-from conftest import TENANT_DIR, TOMORROW, Api, build_small_world, job_body
+from conftest import NOW, TENANT_DIR, TOMORROW, Api, build_small_world, job_body
 
+from servicetitan_mock import worldkit
 from servicetitan_mock.app import create_app
+from servicetitan_mock.config import TenantConfig
+from servicetitan_mock.db import connect
 
 ERROR_KEYS = {"status", "code", "title", "detail", "errors", "requestId"}
 
@@ -93,9 +97,9 @@ def test_logs_can_be_filtered_by_call_id_request_id_and_errors(small):
     assert by_call["count"] == 2
     assert {r["callId"] for r in by_call["data"]} == {"call-A"}
     errors = api.client.get("/debug/logs", params={"callId": "call-A", "errors": True}).json()["data"]
-    assert [r["error"] for r in errors] == ["commercial_not_supported"]
+    assert [r["error"] for r in errors] == ["customer_type_not_supported"]
     one = api.client.get("/debug/logs", params={"requestId": failed.headers["X-Request-Id"]}).json()
-    assert one["count"] == 1 and one["data"][0]["responseBody"]["code"] == "commercial_not_supported"
+    assert one["count"] == 1 and one["data"][0]["responseBody"]["code"] == "customer_type_not_supported"
     assert api.client.get("/debug/logs", params={"callId": "nobody"}).json()["count"] == 0
 
 
@@ -151,3 +155,93 @@ def test_calls_can_be_logged_and_a_repeated_external_id_returns_the_first(small)
     assert second.json()["id"] == first.json()["id"]
     assert api.get("/telecom/calls", phone="7185550111").json()["totalCount"] == 1
     assert api.post("/telecom/calls", {**body, "fromNumber": "123"}).status_code == 400
+
+
+def tenant_copy(tmp_path, edit) -> TenantConfig:
+    """A copy of the Summit Air tenant folder with its config changed by edit(config)."""
+    tenant = tmp_path / "other-co"
+    shutil.copytree(TENANT_DIR, tenant)
+    config = yaml.safe_load((tenant / "config.yaml").read_text())
+    edit(config)
+    (tenant / "config.yaml").write_text(yaml.safe_dump(config))
+    return TenantConfig.load(tenant)
+
+
+def test_the_customer_types_a_company_refuses_come_from_the_config(tmp_path):
+    cfg = tenant_copy(tmp_path, lambda c: c["company"].update(
+        rejected_customer_types={"Residential": "We only book commercial accounts."}))
+    ids = build_small_world(tmp_path / "w.db")
+    api = Api(create_app(tmp_path / "w.db", tmp_path / "other-co", tmp_path / "w.log", clock=lambda: NOW))
+
+    refused = api.post("/jpm/jobs", job_body(*ids["home"], TOMORROW, "morning"))
+    assert refused.status_code == 422
+    assert refused.json()["code"] == "customer_type_not_supported"
+    assert refused.json()["detail"] == "We only book commercial accounts."
+    # Summit Air refuses commercial customers; this company does not.
+    assert api.post("/jpm/jobs", job_body(*ids["commercial"], TOMORROW, "morning")).status_code == 201
+    assert cfg.rejected_customer_types == {"Residential": "We only book commercial accounts."}
+
+
+def test_lead_kinds_come_from_the_config(small):
+    api, _ = small
+    lead = {"kind": "Replacement", "name": "Pat Home", "phone": "(718) 555-0123", "summary": "New boiler."}
+    assert api.post("/crm/leads", lead).status_code == 201
+    unknown = api.post("/crm/leads", {**lead, "kind": "Roof inspection"})
+    assert unknown.status_code == 400
+    assert "Replacement" in unknown.json()["errors"]["kind"]
+    # A refused customer type must be recorded as that kind, and no other lead may use it.
+    wrong_type = api.post("/crm/leads", {**lead, "kind": "Commercial"})
+    assert wrong_type.status_code == 400
+
+
+def test_the_world_builder_reads_names_and_contact_details_from_the_config(tmp_path):
+    cfg = tenant_copy(tmp_path, lambda c: (
+        c["company"].update(phone="(516) 555-0100", email_domain="frostline.example"),
+        c["equipment_labels"].update(furnace="gas furnace"),
+        c["membership_types"][0].update(visits=[{"name": "Seasonal check", "months": list(range(1, 13))}]),
+    ))
+    db = tmp_path / "w.db"
+    ids = build_small_world(db)
+    conn = connect(db)
+    worldkit.add_technician(conn, cfg, 9001, "Sam Rivera", 11, 1, ["heating"])
+    worldkit.add_equipment(conn, cfg, *ids["home"], "furnace", "Carrier", "F-1", date(2020, 1, 1))
+    worldkit.add_equipment(conn, cfg, *ids["home"], "wood_stove", "Jotul", "W-1", date(2020, 1, 1))
+    worldkit.add_call(conn, cfg, datetime(2026, 11, 2, 14, tzinfo=UTC), "(718) 555-0111")
+    assert conn.execute("SELECT email FROM technicians WHERE id = 9001").fetchone()[0] == (
+        "sam.rivera@frostline.example")
+    assert [r[0] for r in conn.execute("SELECT name FROM installed_equipment ORDER BY id")] == [
+        "Carrier gas furnace", "Jotul wood stove"]
+    assert conn.execute("SELECT to_number FROM calls").fetchone()[0] == "(516) 555-0100"
+    conn.close()
+
+
+def test_membership_visit_names_come_from_the_config(tmp_path):
+    cfg = tenant_copy(tmp_path, lambda c: c["membership_types"][0].update(
+        visits=[{"name": "Spring check", "months": [3, 4, 5]}, {"name": "Autumn check", "months": [9, 10, 11]}]))
+    plan = cfg.membership_types[0]
+    assert cfg.visit_name(plan, date(2026, 4, 1)) == "Spring check"
+    assert cfg.visit_name(plan, date(2026, 10, 1)) == "Autumn check"
+    try:
+        cfg.visit_name(plan, date(2026, 1, 1))
+    except ValueError as error:
+        assert "month 1" in str(error)
+    else:
+        raise AssertionError("a month with no visit name should be an error")
+    # Summit Air names its visits by season.
+    summit = TenantConfig.load(TENANT_DIR)
+    assert summit.visit_name(summit.membership_types[0], date(2026, 11, 1)) == "Heating system tune-up"
+    assert summit.visit_name(summit.membership_types[0], date(2026, 6, 1)) == "Cooling system tune-up"
+
+
+def test_the_urgent_hold_comes_from_the_config(tmp_path):
+    cfg = tenant_copy(tmp_path, lambda c: c["urgent_hold"].update(
+        business_unit_ids=[12], per_day={"tue": {"morning": 1}}))
+    tuesday, wednesday = date(2026, 11, 3), date(2026, 11, 4)
+    assert cfg.hold_for(tuesday, "morning", 12) == 1
+    assert cfg.hold_for(tuesday, "morning", 11) == 0  # business unit not listed
+    assert cfg.hold_for(tuesday, "afternoon", 12) == 0  # window not listed
+    assert cfg.hold_for(wednesday, "morning", 12) == 0  # day not listed
+    summit = TenantConfig.load(TENANT_DIR)
+    assert summit.hold_for(tuesday, "morning", 11) == 2
+    assert summit.hold_for(date(2026, 11, 7), "morning", 11) == 1  # Saturday
+    assert summit.hold_for(date(2026, 11, 8), "morning", 11) == 0  # Sunday

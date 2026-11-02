@@ -12,12 +12,12 @@ def require_customer(conn: sqlite3.Connection, customer_id: int) -> sqlite3.Row:
     return row
 
 
-def require_residential(customer: sqlite3.Row) -> None:
-    if customer["type"] != "Residential":
+def require_bookable_type(cfg: TenantConfig, customer: sqlite3.Row) -> None:
+    """Refuse customer types the company does not book. The message comes from the config."""
+    message = cfg.rejected_customer_types.get(customer["type"])
+    if message:
         raise ApiError(
-            422, "commercial_not_supported",
-            "This company only books residential customers. Record a commercial lead instead.",
-            {"customerId": "commercial"},
+            422, "customer_type_not_supported", message, {"customerId": customer["type"].lower()}
         )
 
 

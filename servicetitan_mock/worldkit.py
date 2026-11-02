@@ -17,10 +17,10 @@ def local_dt(cfg: TenantConfig, day: date, hhmm: str) -> datetime:
 
 
 def add_technician(
-    conn: sqlite3.Connection, tech_id: int, name: str, business_unit_id: int, home_zone_id: int,
-    skills: list[str], phone: str = "",
+    conn: sqlite3.Connection, cfg: TenantConfig, tech_id: int, name: str, business_unit_id: int,
+    home_zone_id: int, skills: list[str], phone: str = "",
 ) -> None:
-    email = name.lower().replace(" ", ".") + "@summit-air.example"
+    email = name.lower().replace(" ", ".") + "@" + cfg.company["email_domain"]
     conn.execute(
         """INSERT INTO technicians (id, name, business_unit_id, phone, email, home_zone_id, skills_json)
            VALUES (?, ?, ?, ?, ?, ?, ?)""",
@@ -109,10 +109,11 @@ def add_membership(
         (customer_id, location_id, type_id, status, start.isoformat(), end.isoformat(), stamp, stamp),
     ).lastrowid
     if status != "Canceled":
-        visits = next(t for t in cfg.membership_types if t["id"] == type_id)["perks"]["visitsPerYear"]
+        membership_type = next(t for t in cfg.membership_types if t["id"] == type_id)
+        visits = membership_type["perks"]["visitsPerYear"]
         for n in range(visits):
             due = start + timedelta(days=(365 // (visits + 1)) * (n + 1))
-            name = "Heating system tune-up" if due.month in (8, 9, 10, 11, 12, 1, 2) else "Cooling system tune-up"
+            name = cfg.visit_name(membership_type, due)
             conn.execute(
                 """INSERT INTO recurring_service_events (membership_id, location_id, name, date, status)
                    VALUES (?, ?, ?, ?, ?)""",
@@ -122,10 +123,10 @@ def add_membership(
 
 
 def add_equipment(
-    conn: sqlite3.Connection, customer_id: int, location_id: int, system_type: str, manufacturer: str,
-    model: str, installed_on: date,
+    conn: sqlite3.Connection, cfg: TenantConfig, customer_id: int, location_id: int, system_type: str,
+    manufacturer: str, model: str, installed_on: date,
 ) -> None:
-    label = system_type.replace("_", " ").replace("ac", "AC")
+    label = cfg.equipment_label(system_type)
     conn.execute(
         """INSERT INTO installed_equipment (location_id, customer_id, name, system_type, manufacturer, model,
                                             installed_on)
@@ -136,14 +137,15 @@ def add_equipment(
 
 
 def add_call(
-    conn: sqlite3.Connection, when: datetime, from_number: str, customer_id: int | None = None,
-    job_id: int | None = None, call_type: str = "Unbooked", reason: str = "", duration: int = 180,
-    to_number: str = "(718) 555-0100",
+    conn: sqlite3.Connection, cfg: TenantConfig, when: datetime, from_number: str,
+    customer_id: int | None = None, job_id: int | None = None, call_type: str = "Unbooked",
+    reason: str = "", duration: int = 180, to_number: str | None = None,
 ) -> None:
+    """Insert an inbound call. Without to_number, it is the company's main line."""
     conn.execute(
         """INSERT INTO calls (direction, from_number, from_key, to_number, received_on, duration, call_type,
                               customer_id, job_id, reason)
            VALUES ('Inbound', ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-        (from_number, phone_key(from_number), to_number, iso(when), duration, call_type, customer_id,
+        (from_number, phone_key(from_number), to_number or cfg.company["phone"], iso(when), duration, call_type, customer_id,
          job_id, reason),
     )

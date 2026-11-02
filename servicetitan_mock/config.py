@@ -6,6 +6,9 @@ from zoneinfo import ZoneInfo
 
 import yaml
 
+DEFAULT_TENANT_DIR = "tenants/summit-air"
+DAY_NAMES = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")
+
 
 def iso(dt: datetime) -> str:
     return dt.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -44,6 +47,9 @@ class TenantConfig:
         self.booking_providers: list[dict] = raw["booking_providers"]
         self.membership_types: list[dict] = raw["membership_types"]
         self.urgent_hold: dict = raw["urgent_hold"]
+        self.rejected_customer_types: dict[str, str] = self.company["rejected_customer_types"]
+        self.lead_kinds: list[str] = raw["lead_kinds"]
+        self.equipment_labels: dict[str, str] = raw["equipment_labels"]
         self.windows = [
             Window(
                 w["id"], time.fromisoformat(w["start"]), time.fromisoformat(w["end"]),
@@ -80,7 +86,7 @@ class TenantConfig:
         windows are always offered; who can take them is decided by the on-call shifts."""
         if window.after_hours:
             return True
-        hours = self.company["hours"][("mon", "tue", "wed", "thu", "fri", "sat", "sun")[day.weekday()]]
+        hours = self.company["hours"][DAY_NAMES[day.weekday()]]
         if not hours:
             return False
         return time.fromisoformat(hours[0]) <= window.start and window.end <= time.fromisoformat(hours[1])
@@ -89,11 +95,20 @@ class TenantConfig:
         return next((j for j in self.job_types if j["id"] == job_type_id), None)
 
     def hold_for(self, day: date, window_id: str, business_unit_id: int) -> int:
-        """Technicians held back for urgent jobs. Only the first business unit holds any."""
-        if business_unit_id != self.business_units[0]["id"]:
+        """Technicians held back for urgent jobs, from the urgent_hold block of the config."""
+        if business_unit_id not in self.urgent_hold["business_unit_ids"]:
             return 0
-        table = self.urgent_hold["saturday" if day.weekday() == 5 else "weekday"]
-        return table.get(window_id, 0)
+        return self.urgent_hold["per_day"].get(DAY_NAMES[day.weekday()], {}).get(window_id, 0)
+
+    def visit_name(self, membership_type: dict, due: date) -> str:
+        """The name of an included service visit that falls on the due date."""
+        for visit in membership_type["visits"]:
+            if due.month in visit["months"]:
+                return visit["name"]
+        raise ValueError(f"{membership_type['name']} has no visit name for month {due.month}")
+
+    def equipment_label(self, system_type: str) -> str:
+        return self.equipment_labels.get(system_type, system_type.replace("_", " "))
 
     def profile(self) -> dict:
         """The company profile endpoint body. No credentials."""

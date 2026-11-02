@@ -1836,7 +1836,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('status is 422', () => pm.response.to.have.status(422));",
-                  "pm.test('commercial_not_supported', () => pm.expect(pm.response.json().code).to.eql('commercial_not_supported'));",
+                  "pm.test('customer_type_not_supported', () => pm.expect(pm.response.json().code).to.eql('customer_type_not_supported'));",
                   "",
                   "if (pm.response.code >= 400) {",
                   "  pm.test('error uses the standard shape', () => {",

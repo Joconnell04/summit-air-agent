@@ -11,7 +11,7 @@ from pathlib import Path
 from fastapi import Depends, FastAPI, Form, Request
 
 from . import logs
-from .config import TenantConfig, parse_dt
+from .config import DEFAULT_TENANT_DIR, TenantConfig, parse_dt
 from .deps import get_conn
 from .errors import ApiError, install_handlers
 from .routes import crm, dispatch, jpm, memberships, settings
@@ -28,7 +28,7 @@ def create_app(
     """Defaults come from ST_MOCK_DB, ST_MOCK_TENANT and ST_MOCK_NOW (an ISO time with an offset that
     freezes the clock, for repeatable evals)."""
     db_path = Path(db_path or os.environ.get("ST_MOCK_DB", "data/servicetitan_mock.db"))
-    tenant_dir = tenant_dir or os.environ.get("ST_MOCK_TENANT", "tenants/summit-air")
+    tenant_dir = tenant_dir or os.environ.get("ST_MOCK_TENANT", DEFAULT_TENANT_DIR)
     if clock is None:
         frozen = os.environ.get("ST_MOCK_NOW")
         clock = (lambda: parse_dt(frozen)) if frozen else (lambda: datetime.now(UTC))

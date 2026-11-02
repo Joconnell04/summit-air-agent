@@ -76,7 +76,7 @@ def build_small_world(path: Path, techs: int = 3, skills=("maintenance", "heatin
     conn = connect(path)
     conn.execute("BEGIN")
     for i in range(techs):
-        worldkit.add_technician(conn, 7001 + i, f"Tech {i}", SERVICE, 1, list(skills))
+        worldkit.add_technician(conn, CFG, 7001 + i, f"Tech {i}", SERVICE, 1, list(skills))
     days = [date(2026, 11, d) for d in (3, 4, 5)]
     for day in days:
         for i in range(techs):

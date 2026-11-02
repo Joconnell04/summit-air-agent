@@ -263,7 +263,7 @@ def create_job(
             raise ApiError(422, "unknown_reference",
                            f"Location {body.locationId} does not belong to customer {body.customerId}.",
                            {"locationId": "unknown"})
-        rules.require_residential(customer)
+        rules.require_bookable_type(cfg, customer)
         rules.require_in_area(cfg, location["zip"])
         rules.check_refs(cfg, body.businessUnitId, body.jobTypeId, body.campaignId)
         job_type = cfg.job_type(body.jobTypeId)

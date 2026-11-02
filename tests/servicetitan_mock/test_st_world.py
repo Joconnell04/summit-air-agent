@@ -139,7 +139,7 @@ def test_the_commercial_account_exists_and_has_a_lead(world):
     assert leads[0]["kind"] == "Commercial"
     from conftest import job_body
     response = api.post("/jpm/jobs", job_body(bakery["customerId"], bakery["locationId"], TOMORROW, "morning"))
-    assert response.json()["code"] == "commercial_not_supported"
+    assert response.json()["code"] == "customer_type_not_supported"
 
 
 def test_a_repeat_caller_has_several_recent_calls_and_an_open_job(world):

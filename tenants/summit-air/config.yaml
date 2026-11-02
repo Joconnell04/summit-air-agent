@@ -6,6 +6,14 @@ tenant_id: 1000
 company:
   name: Summit Air
   timezone: America/New_York
+  # Main line and the domain used for generated technician email addresses. ASSUMED; the
+  # 555-01xx numbers and .example are reserved for fiction.
+  phone: "(718) 555-0100"
+  email_domain: summit-air.example
+  # Customer types the company does not book. Each key maps to the message the API returns. These
+  # customers can still be stored and can leave a lead.
+  rejected_customer_types:
+    Commercial: This company only books residential customers. Record a commercial lead instead.
   # ASSUMED hours. Arrival windows below stay inside them.
   hours:
     mon: ["08:00", "20:00"]
@@ -78,11 +86,30 @@ arrival_windows:
   - {id: evening, start: "16:00", end: "20:00"}
   - {id: after_hours, start: "20:00", end: "08:00", ends_next_day: true, after_hours: true}
 
-# Technicians kept free for urgent jobs, per arrival window, per business unit.
-# Applied on weekdays; Saturday uses the saturday value.
+# Technicians kept free for urgent jobs, per arrival window. Only the business units listed in
+# business_unit_ids hold any. per_day is keyed by the same day names as company.hours; a day or
+# window left out holds none.
 urgent_hold:
-  weekday: {morning: 2, afternoon: 2, evening: 2}
-  saturday: {morning: 1, afternoon: 1}
+  business_unit_ids: [11]
+  per_day:
+    mon: &weekday_hold {morning: 2, afternoon: 2, evening: 2}
+    tue: *weekday_hold
+    wed: *weekday_hold
+    thu: *weekday_hold
+    fri: *weekday_hold
+    sat: {morning: 1, afternoon: 1}
+    sun: {}
+
+# What a lead can be about. A lead whose kind is a rejected customer type (Commercial) must also
+# have that customer type.
+lead_kinds: [Replacement, Install, Estimate, Commercial, Other]
+
+# Names for the system_type values on installed equipment. A type left out is shown as its id with
+# underscores replaced by spaces.
+equipment_labels:
+  central_ac: central AC
+  ductless_mini_split: ductless mini split
+  heat_pump: heat pump
 
 campaigns:
   - {id: 301, name: AI phone agent, active: true}
@@ -98,16 +125,23 @@ booking_providers:
 
 # ASSUMED perks, from docs/explorations/001-hvac-shop-operations.md. In real ServiceTitan these
 # live in discounts and recurring service templates, not on the membership type.
+# visits names the included service visits: a visit falling in one of the listed months (1 to 12)
+# gets that name, so a plan with two visits a year gets one of each season.
 membership_types:
   - id: 601
     name: Comfort Club
     active: true
+    visits: &seasonal_visits
+      - {name: Heating system tune-up, months: [8, 9, 10, 11, 12, 1, 2]}
+      - {name: Cooling system tune-up, months: [3, 4, 5, 6, 7]}
     perks: {prioritySched: true, visitsPerYear: 2, repairDiscountPercent: 15, afterHoursFeeWaived: true}
   - id: 602
     name: Essential Care
     active: true
+    visits: *seasonal_visits
     perks: {prioritySched: false, visitsPerYear: 1, repairDiscountPercent: 10, afterHoursFeeWaived: false}
   - id: 603
     name: Heritage Plan (closed to new members)
     active: false
+    visits: *seasonal_visits
     perks: {prioritySched: false, visitsPerYear: 1, repairDiscountPercent: 5, afterHoursFeeWaived: false}
