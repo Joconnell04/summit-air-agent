@@ -3,6 +3,7 @@
 The tenant's own script (tenants/<name>/seed.py) decides what is in the world. This module only
 loads it, wraps it in one transaction and records what it planted.
 """
+
 import argparse
 import importlib.util
 import json
@@ -28,7 +29,10 @@ def build_world(db_path: str | Path, tenant_dir: str | Path, start: date | None 
     conn.execute("BEGIN")
     try:
         scenarios = module.build(conn, cfg, start)
-        conn.execute("INSERT INTO meta VALUES ('scenarios', ?)", (json.dumps({"startDate": start.isoformat(), **scenarios}),))
+        conn.execute(
+            "INSERT INTO meta VALUES ('scenarios', ?)",
+            (json.dumps({"startDate": start.isoformat(), **scenarios}),),
+        )
         conn.execute("COMMIT")
     except BaseException:
         conn.execute("ROLLBACK")
@@ -49,8 +53,18 @@ def main() -> None:
     Path(args.db).with_suffix(".log").unlink(missing_ok=True)
 
     conn = connect(args.db)
-    counts = {t: conn.execute(f"SELECT COUNT(*) FROM {t}").fetchone()[0]
-              for t in ("customers", "locations", "memberships", "technicians", "jobs", "appointments", "calls")}
+    counts = {
+        t: conn.execute(f"SELECT COUNT(*) FROM {t}").fetchone()[0]
+        for t in (
+            "customers",
+            "locations",
+            "memberships",
+            "technicians",
+            "jobs",
+            "appointments",
+            "calls",
+        )
+    }
     print("seeded", args.db, counts)
 
 

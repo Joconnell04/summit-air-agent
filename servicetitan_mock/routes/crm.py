@@ -1,4 +1,5 @@
 """CRM: customers, locations, contacts, bookings and leads."""
+
 import json
 import sqlite3
 from typing import Literal
@@ -125,7 +126,9 @@ def list_customers(
         where.append("c.name LIKE ?")
         params.append(f"%{name}%")
     if phone:
-        where.append("EXISTS (SELECT 1 FROM contacts k WHERE k.customer_id = c.id AND k.phone_key = ?)")
+        where.append(
+            "EXISTS (SELECT 1 FROM contacts k WHERE k.customer_id = c.id AND k.phone_key = ?)"
+        )
         params.append(phone_key(phone))
     if street or unit or zip:
         sub, sub_params = _location_filter(street, unit, zip)
@@ -137,7 +140,11 @@ def list_customers(
     if active is not None:
         where.append("c.active = ?")
         params.append(int(active))
-    sql = "SELECT c.* FROM customers c" + (" WHERE " + " AND ".join(where) if where else "") + " ORDER BY c.id"
+    sql = (
+        "SELECT c.* FROM customers c"
+        + (" WHERE " + " AND ".join(where) if where else "")
+        + " ORDER BY c.id"
+    )
     return page_of(conn, sql, params, lambda r: repo.shape_customer(conn, r), *pg)
 
 
@@ -164,14 +171,18 @@ def create_customer(
         result = repo.shape_customer(c, _one(c, "customers", customer_id, "Customer"))
         result["locations"] = [
             repo.shape_location(r)
-            for r in c.execute("SELECT * FROM locations WHERE customer_id = ? ORDER BY id", (customer_id,))
+            for r in c.execute(
+                "SELECT * FROM locations WHERE customer_id = ? ORDER BY id", (customer_id,)
+            )
         ]
         return 201, result
 
     return write(conn, run, idem_key=idempotency_key, route=_route(request), body=body.model_dump())
 
 
-def _location_filter(street: str | None, unit: str | None, zip_code: str | None) -> tuple[str, list]:
+def _location_filter(
+    street: str | None, unit: str | None, zip_code: str | None
+) -> tuple[str, list]:
     where, params = ["1 = 1"], []
     if street:
         where.append("l.street_key = ?")
@@ -232,11 +243,19 @@ def create_location(
 
 
 @router.get("/customers/{customer_id}/contacts")
-def customer_contacts(customer_id: int, conn: sqlite3.Connection = Depends(get_conn),
-                      pg: tuple[int, int] = Depends(paging)):
+def customer_contacts(
+    customer_id: int,
+    conn: sqlite3.Connection = Depends(get_conn),
+    pg: tuple[int, int] = Depends(paging),
+):
     _one(conn, "customers", customer_id, "Customer")
-    return page_of(conn, "SELECT * FROM contacts WHERE customer_id = ? ORDER BY id", [customer_id],
-                   repo.shape_contact, *pg)
+    return page_of(
+        conn,
+        "SELECT * FROM contacts WHERE customer_id = ? ORDER BY id",
+        [customer_id],
+        repo.shape_contact,
+        *pg,
+    )
 
 
 @router.post("/customers/{customer_id}/contacts", status_code=201)
@@ -257,11 +276,19 @@ def add_customer_contact(
 
 
 @router.get("/locations/{location_id}/contacts")
-def location_contacts(location_id: int, conn: sqlite3.Connection = Depends(get_conn),
-                      pg: tuple[int, int] = Depends(paging)):
+def location_contacts(
+    location_id: int,
+    conn: sqlite3.Connection = Depends(get_conn),
+    pg: tuple[int, int] = Depends(paging),
+):
     _one(conn, "locations", location_id, "Location")
-    return page_of(conn, "SELECT * FROM contacts WHERE location_id = ? ORDER BY id", [location_id],
-                   repo.shape_contact, *pg)
+    return page_of(
+        conn,
+        "SELECT * FROM contacts WHERE location_id = ? ORDER BY id",
+        [location_id],
+        repo.shape_contact,
+        *pg,
+    )
 
 
 # ---- bookings ----------------------------------------------------------------------------------
@@ -269,13 +296,29 @@ def location_contacts(location_id: int, conn: sqlite3.Connection = Depends(get_c
 
 def shape_booking(r: sqlite3.Row) -> dict:
     return {
-        "id": r["id"], "providerId": r["provider_id"], "externalId": r["external_id"],
-        "source": r["source"], "status": r["status"], "customerId": r["customer_id"], "name": r["name"],
-        "address": {"street": r["street"], "unit": r["unit"], "city": r["city"], "state": r["state"],
-                    "zip": r["zip"], "country": "USA"},
-        "contacts": json.loads(r["contacts_json"]), "summary": r["summary"], "priority": r["priority"],
-        "start": r["requested_start"], "businessUnitId": r["business_unit_id"],
-        "jobTypeId": r["job_type_id"], "campaignId": r["campaign_id"], "createdOn": r["created_on"],
+        "id": r["id"],
+        "providerId": r["provider_id"],
+        "externalId": r["external_id"],
+        "source": r["source"],
+        "status": r["status"],
+        "customerId": r["customer_id"],
+        "name": r["name"],
+        "address": {
+            "street": r["street"],
+            "unit": r["unit"],
+            "city": r["city"],
+            "state": r["state"],
+            "zip": r["zip"],
+            "country": "USA",
+        },
+        "contacts": json.loads(r["contacts_json"]),
+        "summary": r["summary"],
+        "priority": r["priority"],
+        "start": r["requested_start"],
+        "businessUnitId": r["business_unit_id"],
+        "jobTypeId": r["job_type_id"],
+        "campaignId": r["campaign_id"],
+        "createdOn": r["created_on"],
     }
 
 
@@ -288,11 +331,19 @@ def list_bookings(
     customerId: int | None = None,
 ):
     where, params = [], []
-    for column, value in (("status", status), ("external_id", externalId), ("customer_id", customerId)):
+    for column, value in (
+        ("status", status),
+        ("external_id", externalId),
+        ("customer_id", customerId),
+    ):
         if value is not None:
             where.append(f"{column} = ?")
             params.append(value)
-    sql = "SELECT * FROM bookings" + (" WHERE " + " AND ".join(where) if where else "") + " ORDER BY id"
+    sql = (
+        "SELECT * FROM bookings"
+        + (" WHERE " + " AND ".join(where) if where else "")
+        + " ORDER BY id"
+    )
     return page_of(conn, sql, params, shape_booking, *pg)
 
 
@@ -334,11 +385,26 @@ def create_booking(
                                      business_unit_id, job_type_id, campaign_id, created_on)
                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
-                provider_id, body.externalId, body.source, body.customerId, body.name, body.address.street,
-                body.address.unit, body.address.city, body.address.state, body.address.zip,
-                json.dumps([k.model_dump(include={"type", "value", "memo"}) for k in body.contacts]),
-                body.summary, body.priority, body.start, body.businessUnitId, body.jobTypeId,
-                body.campaignId, iso(now),
+                provider_id,
+                body.externalId,
+                body.source,
+                body.customerId,
+                body.name,
+                body.address.street,
+                body.address.unit,
+                body.address.city,
+                body.address.state,
+                body.address.zip,
+                json.dumps(
+                    [k.model_dump(include={"type", "value", "memo"}) for k in body.contacts]
+                ),
+                body.summary,
+                body.priority,
+                body.start,
+                body.businessUnitId,
+                body.jobTypeId,
+                body.campaignId,
+                iso(now),
             ),
         )
         return 201, shape_booking(_one(c, "bookings", cur.lastrowid, "Booking"))
@@ -351,10 +417,17 @@ def create_booking(
 
 def shape_lead(r: sqlite3.Row) -> dict:
     return {
-        "id": r["id"], "status": r["status"], "kind": r["kind"], "customerType": r["customer_type"],
-        "customerId": r["customer_id"], "name": r["name"], "phone": r["phone"],
-        "address": {"street": r["street"], "zip": r["zip"]}, "summary": r["summary"],
-        "campaignId": r["campaign_id"], "createdOn": r["created_on"],
+        "id": r["id"],
+        "status": r["status"],
+        "kind": r["kind"],
+        "customerType": r["customer_type"],
+        "customerId": r["customer_id"],
+        "name": r["name"],
+        "phone": r["phone"],
+        "address": {"street": r["street"], "zip": r["zip"]},
+        "summary": r["summary"],
+        "campaignId": r["campaign_id"],
+        "createdOn": r["created_on"],
     }
 
 
@@ -375,7 +448,9 @@ def list_leads(
     if phone:
         where.append("phone_key = ?")
         params.append(phone_key(phone))
-    sql = "SELECT * FROM leads" + (" WHERE " + " AND ".join(where) if where else "") + " ORDER BY id"
+    sql = (
+        "SELECT * FROM leads" + (" WHERE " + " AND ".join(where) if where else "") + " ORDER BY id"
+    )
     return page_of(conn, sql, params, shape_lead, *pg)
 
 
@@ -397,12 +472,22 @@ def create_lead(
     existing customer; this mock also takes a bare name and phone (ASSUMED)."""
     rejected = cfg.rejected_customer_types
     if body.kind not in cfg.lead_kinds:
-        raise ApiError(400, "validation_error", "The request was not valid.",
-                       {"kind": f"must be one of {', '.join(cfg.lead_kinds)}"})
+        raise ApiError(
+            400,
+            "validation_error",
+            "The request was not valid.",
+            {"kind": f"must be one of {', '.join(cfg.lead_kinds)}"},
+        )
     if (body.kind in rejected) != (body.customerType in rejected):
-        raise ApiError(400, "validation_error", "The request was not valid.",
-                       {"kind": "a lead of a customer type the company does not book carries "
-                                "that type as its kind, and no other lead does"})
+        raise ApiError(
+            400,
+            "validation_error",
+            "The request was not valid.",
+            {
+                "kind": "a lead of a customer type the company does not book carries "
+                "that type as its kind, and no other lead does"
+            },
+        )
 
     def run(c):
         if body.customerId is not None:
@@ -413,8 +498,17 @@ def create_lead(
                                   summary, campaign_id, created_on)
                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
-                body.kind, body.customerType, body.customerId, body.name, body.phone,
-                phone_key(body.phone), body.street, body.zip, body.summary, body.campaignId, iso(now),
+                body.kind,
+                body.customerType,
+                body.customerId,
+                body.name,
+                body.phone,
+                phone_key(body.phone),
+                body.street,
+                body.zip,
+                body.summary,
+                body.campaignId,
+                iso(now),
             ),
         )
         return 201, shape_lead(_one(c, "leads", cur.lastrowid, "Lead"))

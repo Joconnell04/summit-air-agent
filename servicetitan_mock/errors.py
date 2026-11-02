@@ -4,6 +4,7 @@
 
 The shape is modeled on ServiceTitan's problem-details bodies; the exact real shape is ASSUMED.
 """
+
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
@@ -30,7 +31,9 @@ class ApiError(Exception):
         self.errors = errors or {}
 
 
-def error_body(request: Request, status: int, code: str, detail: str, errors: dict | None = None) -> dict:
+def error_body(
+    request: Request, status: int, code: str, detail: str, errors: dict | None = None
+) -> dict:
     return {
         "status": status,
         "code": code,
@@ -44,7 +47,9 @@ def error_body(request: Request, status: int, code: str, detail: str, errors: di
 def install_handlers(app: FastAPI) -> None:
     @app.exception_handler(ApiError)
     async def api_error(request: Request, exc: ApiError):
-        return JSONResponse(error_body(request, exc.status, exc.code, exc.detail, exc.errors), exc.status)
+        return JSONResponse(
+            error_body(request, exc.status, exc.code, exc.detail, exc.errors), exc.status
+        )
 
     @app.exception_handler(RequestValidationError)
     async def validation_error(request: Request, exc: RequestValidationError):
@@ -56,8 +61,12 @@ def install_handlers(app: FastAPI) -> None:
     @app.exception_handler(StarletteHTTPException)
     async def http_error(request: Request, exc: StarletteHTTPException):
         code = {404: "not_found", 405: "method_not_allowed"}.get(exc.status_code, "http_error")
-        return JSONResponse(error_body(request, exc.status_code, code, str(exc.detail)), exc.status_code)
+        return JSONResponse(
+            error_body(request, exc.status_code, code, str(exc.detail)), exc.status_code
+        )
 
     @app.exception_handler(Exception)
     async def unexpected(request: Request, exc: Exception):
-        return JSONResponse(error_body(request, 500, "server_error", "Unexpected server error."), 500)
+        return JSONResponse(
+            error_body(request, 500, "server_error", "Unexpected server error."), 500
+        )

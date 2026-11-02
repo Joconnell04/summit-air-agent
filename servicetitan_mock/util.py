@@ -1,9 +1,20 @@
 import re
 
 STREET_WORDS = {
-    "street": "st", "avenue": "ave", "road": "rd", "place": "pl", "boulevard": "blvd",
-    "drive": "dr", "lane": "ln", "court": "ct", "terrace": "ter", "parkway": "pkwy",
-    "north": "n", "south": "s", "east": "e", "west": "w",
+    "street": "st",
+    "avenue": "ave",
+    "road": "rd",
+    "place": "pl",
+    "boulevard": "blvd",
+    "drive": "dr",
+    "lane": "ln",
+    "court": "ct",
+    "terrace": "ter",
+    "parkway": "pkwy",
+    "north": "n",
+    "south": "s",
+    "east": "e",
+    "west": "w",
 }
 
 

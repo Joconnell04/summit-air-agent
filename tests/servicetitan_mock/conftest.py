@@ -28,10 +28,14 @@ class Api:
         self.client = TestClient(app, raise_server_exceptions=False)
         self.tenant_id = tenant_id
         auth = app.state.cfg.auth
-        token = self.client.post("/connect/token", data={
-            "grant_type": "client_credentials", "client_id": auth["client_id"],
-            "client_secret": auth["client_secret"],
-        }).json()["access_token"]
+        token = self.client.post(
+            "/connect/token",
+            data={
+                "grant_type": "client_credentials",
+                "client_id": auth["client_id"],
+                "client_secret": auth["client_secret"],
+            },
+        ).json()["access_token"]
         self.headers = {"Authorization": f"Bearer {token}", "ST-App-Key": auth["app_key"]}
         self.app = app
 
@@ -40,7 +44,9 @@ class Api:
         return f"/{module}/v2/tenant/{self.tenant_id}/{rest}"
 
     def request(self, method: str, path: str, headers: dict | None = None, **kwargs):
-        return self.client.request(method, self.url(path), headers={**self.headers, **(headers or {})}, **kwargs)
+        return self.client.request(
+            method, self.url(path), headers={**self.headers, **(headers or {})}, **kwargs
+        )
 
     def get(self, path: str, **params):
         return self.request("GET", path, params=params)
@@ -52,25 +58,49 @@ class Api:
 
 def window_times(day: date, window_id: str) -> dict:
     start, end = CFG.window_bounds(day, CFG.window(window_id))
-    return {"arrivalWindowStart": start.strftime("%Y-%m-%dT%H:%M:%SZ"),
-            "arrivalWindowEnd": end.strftime("%Y-%m-%dT%H:%M:%SZ")}
+    return {
+        "arrivalWindowStart": start.strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "arrivalWindowEnd": end.strftime("%Y-%m-%dT%H:%M:%SZ"),
+    }
 
 
-def job_body(customer_id: int, location_id: int, day: date, window_id: str, job_type: int = TUNE_UP,
-             unit: int = SERVICE, **extra) -> dict:
-    return {"customerId": customer_id, "locationId": location_id, "businessUnitId": unit,
-            "jobTypeId": job_type, "summary": "test", "appointments": [window_times(day, window_id)], **extra}
+def job_body(
+    customer_id: int,
+    location_id: int,
+    day: date,
+    window_id: str,
+    job_type: int = TUNE_UP,
+    unit: int = SERVICE,
+    **extra,
+) -> dict:
+    return {
+        "customerId": customer_id,
+        "locationId": location_id,
+        "businessUnitId": unit,
+        "jobTypeId": job_type,
+        "summary": "test",
+        "appointments": [window_times(day, window_id)],
+        **extra,
+    }
 
 
-def open_slots(api: Api, day: date, window_id: str, priority: str = "Normal", job_type: int = TUNE_UP) -> int:
+def open_slots(
+    api: Api, day: date, window_id: str, priority: str = "Normal", job_type: int = TUNE_UP
+) -> int:
     start, end = CFG.window_bounds(day, CFG.window(window_id))
-    body = {"startsOnOrAfter": start.isoformat(), "endsOnOrBefore": (end).isoformat(),
-            "jobTypeId": job_type, "priority": priority}
+    body = {
+        "startsOnOrAfter": start.isoformat(),
+        "endsOnOrBefore": (end).isoformat(),
+        "jobTypeId": job_type,
+        "priority": priority,
+    }
     slots = api.post("/dispatch/capacity", body).json()["availabilities"][0]["timeslots"]
     return next(s for s in slots if s["windowId"] == window_id)["openAvailability"]
 
 
-def build_small_world(path: Path, techs: int = 3, skills=("maintenance", "heating", "cooling")) -> dict:
+def build_small_world(
+    path: Path, techs: int = 3, skills=("maintenance", "heating", "cooling")
+) -> dict:
     """A tiny company: a few technicians, three days of shifts, and one customer of each kind."""
     create_schema(path)
     conn = connect(path)
@@ -91,7 +121,11 @@ def build_small_world(path: Path, techs: int = 3, skills=("maintenance", "heatin
     ):
         customer_id = repo.insert_customer(conn, NOW, name, kind)
         location_id = repo.insert_location(
-            conn, CFG, NOW, customer_id, "1 Main St",
+            conn,
+            CFG,
+            NOW,
+            customer_id,
+            "1 Main St",
             {"street": "1 Main St", "city": "Brooklyn", "state": "NY", "zip": zip_code},
         )
         ids[key] = (customer_id, location_id)

@@ -1,4 +1,5 @@
 """Tenant configuration: everything that differs between companies."""
+
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, time, timedelta
 from pathlib import Path
@@ -52,8 +53,11 @@ class TenantConfig:
         self.equipment_labels: dict[str, str] = raw["equipment_labels"]
         self.windows = [
             Window(
-                w["id"], time.fromisoformat(w["start"]), time.fromisoformat(w["end"]),
-                w.get("ends_next_day", False), w.get("after_hours", False),
+                w["id"],
+                time.fromisoformat(w["start"]),
+                time.fromisoformat(w["end"]),
+                w.get("ends_next_day", False),
+                w.get("after_hours", False),
             )
             for w in raw["arrival_windows"]
         ]
@@ -89,7 +93,9 @@ class TenantConfig:
         hours = self.company["hours"][DAY_NAMES[day.weekday()]]
         if not hours:
             return False
-        return time.fromisoformat(hours[0]) <= window.start and window.end <= time.fromisoformat(hours[1])
+        return time.fromisoformat(hours[0]) <= window.start and window.end <= time.fromisoformat(
+            hours[1]
+        )
 
     def job_type(self, job_type_id: int) -> dict | None:
         return next((j for j in self.job_types if j["id"] == job_type_id), None)
@@ -124,8 +130,13 @@ class TenantConfig:
             },
             "fees": self.fees,
             "arrivalWindows": [
-                {"id": w.id, "start": w.start.strftime("%H:%M"), "end": w.end.strftime("%H:%M"),
-                 "endsNextDay": w.ends_next_day, "afterHours": w.after_hours}
+                {
+                    "id": w.id,
+                    "start": w.start.strftime("%H:%M"),
+                    "end": w.end.strftime("%H:%M"),
+                    "endsNextDay": w.ends_next_day,
+                    "afterHours": w.after_hours,
+                }
                 for w in self.windows
             ],
         }

@@ -1,4 +1,5 @@
 """The FastAPI app. Run with: uvicorn servicetitan_mock.app:create_app --factory"""
+
 import json
 import os
 import secrets
@@ -65,8 +66,11 @@ def create_app(
 
     @app.get("/health")
     def health(request: Request):
-        return {"status": "ok", "tenantId": request.app.state.cfg.tenant_id,
-                "now": request.app.state.clock().strftime("%Y-%m-%dT%H:%M:%SZ")}
+        return {
+            "status": "ok",
+            "tenantId": request.app.state.cfg.tenant_id,
+            "now": request.app.state.clock().strftime("%Y-%m-%dT%H:%M:%SZ"),
+        }
 
     @app.get("/debug/logs")
     def debug_logs(
@@ -77,8 +81,13 @@ def create_app(
         limit: int = 100,
     ):
         """Every request and response, filtered. Open to anyone; it is a developer tool."""
-        rows = logs.read_logs(request.app.state.log_path, call_id=callId, request_id=requestId,
-                              errors_only=errors, limit=limit)
+        rows = logs.read_logs(
+            request.app.state.log_path,
+            call_id=callId,
+            request_id=requestId,
+            errors_only=errors,
+            limit=limit,
+        )
         return {"count": len(rows), "data": rows}
 
     @app.get("/debug/scenarios")

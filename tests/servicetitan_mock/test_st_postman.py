@@ -1,4 +1,5 @@
 """The Postman collection must cover every endpoint, and must match its generator."""
+
 import importlib.util
 import json
 import re
@@ -7,7 +8,9 @@ from conftest import ROOT, TENANT_DIR
 
 from servicetitan_mock.app import create_app
 
-spec = importlib.util.spec_from_file_location("build_postman_st", ROOT / "scripts" / "build_postman_st.py")
+spec = importlib.util.spec_from_file_location(
+    "build_postman_st", ROOT / "scripts" / "build_postman_st.py"
+)
 builder = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(builder)
 
@@ -33,7 +36,8 @@ def test_the_collection_has_a_request_for_every_endpoint(tmp_path):
     app = create_app(tmp_path / "x.db", TENANT_DIR, tmp_path / "x.log")
     endpoints = {
         (method, normalize(route.path))
-        for route in app.routes if hasattr(route, "methods") and route.path not in SKIPPED
+        for route in app.routes
+        if hasattr(route, "methods") and route.path not in SKIPPED
         for method in route.methods - {"HEAD", "OPTIONS"}
     }
     covered = collection_requests(json.loads(COLLECTION.read_text())["item"])

@@ -38,7 +38,9 @@ def authorize(
         raise ApiError(404, "unknown_tenant", f"No tenant {tenant_id} on this server.")
     token = authorization.removeprefix("Bearer ").strip() if authorization else ""
     if not token or state.tokens.get(token, 0) <= time.time():
-        raise ApiError(401, "unauthorized", "Missing or unknown bearer token. Request one at /connect/token.")
+        raise ApiError(
+            401, "unauthorized", "Missing or unknown bearer token. Request one at /connect/token."
+        )
     if st_app_key != state.cfg.auth["app_key"]:
         raise ApiError(403, "invalid_app_key", "Missing or wrong ST-App-Key header.")
 

@@ -1,4 +1,5 @@
 """Settings (business units, technicians, company profile), marketing campaigns, and telecom."""
+
 import json
 import sqlite3
 from datetime import datetime
@@ -21,7 +22,13 @@ telecom_router = tenant_router("telecom")
 
 
 def _list(data: list) -> dict:
-    return {"page": 1, "pageSize": len(data), "hasMore": False, "totalCount": len(data), "data": data}
+    return {
+        "page": 1,
+        "pageSize": len(data),
+        "hasMore": False,
+        "totalCount": len(data),
+        "data": data,
+    }
 
 
 @router.get("/business-units")
@@ -31,8 +38,13 @@ def list_business_units(cfg: TenantConfig = Depends(get_cfg)):
 
 def shape_technician(r: sqlite3.Row) -> dict:
     return {
-        "id": r["id"], "name": r["name"], "businessUnitId": r["business_unit_id"], "active": bool(r["active"]),
-        "phoneNumber": r["phone"], "email": r["email"], "homeZoneId": r["home_zone_id"],
+        "id": r["id"],
+        "name": r["name"],
+        "businessUnitId": r["business_unit_id"],
+        "active": bool(r["active"]),
+        "phoneNumber": r["phone"],
+        "email": r["email"],
+        "homeZoneId": r["home_zone_id"],
         "skills": json.loads(r["skills_json"]),
     }
 
@@ -51,7 +63,11 @@ def list_technicians(
     if active is not None:
         where.append("active = ?")
         params.append(int(active))
-    sql = "SELECT * FROM technicians" + (" WHERE " + " AND ".join(where) if where else "") + " ORDER BY id"
+    sql = (
+        "SELECT * FROM technicians"
+        + (" WHERE " + " AND ".join(where) if where else "")
+        + " ORDER BY id"
+    )
     return page_of(conn, sql, params, shape_technician, *pg)
 
 
@@ -93,10 +109,17 @@ class CallIn(BaseModel):
 
 def shape_call(r: sqlite3.Row) -> dict:
     return {
-        "id": r["id"], "externalId": r["external_id"], "direction": r["direction"],
-        "from": r["from_number"], "to": r["to_number"], "receivedOn": r["received_on"],
-        "duration": r["duration"], "callType": r["call_type"], "customerId": r["customer_id"],
-        "jobId": r["job_id"], "reason": r["reason"],
+        "id": r["id"],
+        "externalId": r["external_id"],
+        "direction": r["direction"],
+        "from": r["from_number"],
+        "to": r["to_number"],
+        "receivedOn": r["received_on"],
+        "duration": r["duration"],
+        "callType": r["call_type"],
+        "customerId": r["customer_id"],
+        "jobId": r["job_id"],
+        "reason": r["reason"],
     }
 
 
@@ -123,7 +146,11 @@ def list_calls(
     if receivedOnOrAfter:
         where.append("received_on >= ?")
         params.append(receivedOnOrAfter)
-    sql = "SELECT * FROM calls" + (" WHERE " + " AND ".join(where) if where else "") + " ORDER BY received_on DESC, id DESC"
+    sql = (
+        "SELECT * FROM calls"
+        + (" WHERE " + " AND ".join(where) if where else "")
+        + " ORDER BY received_on DESC, id DESC"
+    )
     return page_of(conn, sql, params, shape_call, *pg)
 
 
@@ -146,25 +173,52 @@ def log_call(
     """Record a call. Real ServiceTitan fills its call log from the phone system, so this write
     endpoint is ASSUMED. A repeated externalId returns the first record."""
     if len(phone_key(body.fromNumber)) != 10:
-        raise ApiError(400, "validation_error", "fromNumber needs 10 digits.", {"fromNumber": "bad phone"})
+        raise ApiError(
+            400, "validation_error", "fromNumber needs 10 digits.", {"fromNumber": "bad phone"}
+        )
 
     def run(c: sqlite3.Connection):
         if body.externalId:
-            existing = c.execute("SELECT * FROM calls WHERE external_id = ?", (body.externalId,)).fetchone()
+            existing = c.execute(
+                "SELECT * FROM calls WHERE external_id = ?", (body.externalId,)
+            ).fetchone()
             if existing:
                 return 200, shape_call(existing)
         if body.customerId is not None:
             rules.require_customer(c, body.customerId)
-        if body.jobId is not None and not c.execute("SELECT 1 FROM jobs WHERE id = ?", (body.jobId,)).fetchone():
-            raise ApiError(422, "unknown_reference", f"Job {body.jobId} does not exist.", {"jobId": "unknown"})
+        if (
+            body.jobId is not None
+            and not c.execute("SELECT 1 FROM jobs WHERE id = ?", (body.jobId,)).fetchone()
+        ):
+            raise ApiError(
+                422, "unknown_reference", f"Job {body.jobId} does not exist.", {"jobId": "unknown"}
+            )
         cur = c.execute(
             """INSERT INTO calls (external_id, direction, from_number, from_key, to_number, received_on,
                                   duration, call_type, customer_id, job_id, reason)
                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-            (body.externalId, body.direction, body.fromNumber, phone_key(body.fromNumber), body.toNumber,
-             iso(body.receivedOn or now), body.duration, body.callType, body.customerId, body.jobId, body.reason),
+            (
+                body.externalId,
+                body.direction,
+                body.fromNumber,
+                phone_key(body.fromNumber),
+                body.toNumber,
+                iso(body.receivedOn or now),
+                body.duration,
+                body.callType,
+                body.customerId,
+                body.jobId,
+                body.reason,
+            ),
         )
-        return 201, shape_call(c.execute("SELECT * FROM calls WHERE id = ?", (cur.lastrowid,)).fetchone())
+        return 201, shape_call(
+            c.execute("SELECT * FROM calls WHERE id = ?", (cur.lastrowid,)).fetchone()
+        )
 
-    return write(conn, run, idem_key=idempotency_key, route=f"{request.method} {request.url.path}",
-                 body=body.model_dump(mode="json"))
+    return write(
+        conn,
+        run,
+        idem_key=idempotency_key,
+        route=f"{request.method} {request.url.path}",
+        body=body.model_dump(mode="json"),
+    )

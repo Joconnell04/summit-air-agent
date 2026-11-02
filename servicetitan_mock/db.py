@@ -57,7 +57,8 @@ def write(
             if row:
                 if row["request_hash"] != request_hash:
                     raise ApiError(
-                        422, "idempotency_key_reused",
+                        422,
+                        "idempotency_key_reused",
                         "That Idempotency-Key was already used with a different request body.",
                     )
                 conn.execute("COMMIT")
@@ -78,12 +79,18 @@ def write(
 
 
 def page_of(
-    conn: sqlite3.Connection, sql: str, params: list, shape: Callable[[sqlite3.Row], dict],
-    page: int, page_size: int,
+    conn: sqlite3.Connection,
+    sql: str,
+    params: list,
+    shape: Callable[[sqlite3.Row], dict],
+    page: int,
+    page_size: int,
 ) -> dict:
     """Wrap a query in ServiceTitan's list envelope."""
     total = conn.execute(f"SELECT COUNT(*) FROM ({sql})", params).fetchone()[0]
-    rows = conn.execute(f"{sql} LIMIT ? OFFSET ?", [*params, page_size, (page - 1) * page_size]).fetchall()
+    rows = conn.execute(
+        f"{sql} LIMIT ? OFFSET ?", [*params, page_size, (page - 1) * page_size]
+    ).fetchall()
     return {
         "page": page,
         "pageSize": page_size,

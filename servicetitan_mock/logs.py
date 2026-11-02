@@ -1,4 +1,5 @@
 """One JSON line per request, and the read side behind GET /debug/logs."""
+
 import json
 import threading
 import time
@@ -54,7 +55,8 @@ class RequestLogMiddleware(BaseHTTPMiddleware):
             upstream = await call_next(request)
             response_bytes = b"".join([chunk async for chunk in upstream.body_iterator])
             response = Response(
-                response_bytes, upstream.status_code,
+                response_bytes,
+                upstream.status_code,
                 {k: v for k, v in upstream.headers.items() if k.lower() != "content-length"},
                 upstream.media_type,
             )
@@ -65,7 +67,9 @@ class RequestLogMiddleware(BaseHTTPMiddleware):
             response_bytes = response.body
         response.headers["X-Request-Id"] = request_id
 
-        response_body = _parse(response_bytes, response.headers.get("content-type", ""), ("access_token",))
+        response_body = _parse(
+            response_bytes, response.headers.get("content-type", ""), ("access_token",)
+        )
         record = {
             "ts": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
             "requestId": request_id,
@@ -75,19 +79,29 @@ class RequestLogMiddleware(BaseHTTPMiddleware):
             "query": request.url.query or None,
             "status": response.status_code,
             "durationMs": round((time.perf_counter() - started) * 1000, 1),
-            "requestBody": _parse(request_bytes, request.headers.get("content-type", ""), ("client_secret",)),
+            "requestBody": _parse(
+                request_bytes, request.headers.get("content-type", ""), ("client_secret",)
+            ),
             "responseBody": response_body,
-            "error": response_body.get("code") if response.status_code >= 400 and isinstance(response_body, dict) else None,
+            "error": response_body.get("code")
+            if response.status_code >= 400 and isinstance(response_body, dict)
+            else None,
         }
         with _write_lock, Path(request.app.state.log_path).open("a") as f:  # noqa: ASYNC230 - tiny append
             f.write(json.dumps(record) + "\n")
         return response
 
 
-def read_logs(path: str | Path, *, call_id=None, request_id=None, errors_only=False, limit=100) -> list[dict]:
+def read_logs(
+    path: str | Path, *, call_id=None, request_id=None, errors_only=False, limit=100
+) -> list[dict]:
     if not 1 <= limit <= MAX_LIMIT:
-        raise ApiError(422, "validation_error", f"limit must be from 1 to {MAX_LIMIT}.",
-                       {"limit": "out of range"})
+        raise ApiError(
+            422,
+            "validation_error",
+            f"limit must be from 1 to {MAX_LIMIT}.",
+            {"limit": "out of range"},
+        )
     path = Path(path)
     if not path.exists():
         return []

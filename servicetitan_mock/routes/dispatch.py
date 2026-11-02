@@ -1,4 +1,5 @@
 """Dispatch: capacity, zones, technician shifts."""
+
 import sqlite3
 from datetime import datetime, timedelta
 from typing import Literal
@@ -70,33 +71,63 @@ def get_capacity(
                     continue
                 open_to_all = not (window.after_hours and cfg.urgent_only_after_hours)
                 usable = body.priority == "Urgent" or open_to_all
-                s = capacity.slots(conn, cfg, day, window, unit_id, skills, body.priority,
-                                   zone["id"] if zone else None)
+                s = capacity.slots(
+                    conn,
+                    cfg,
+                    day,
+                    window,
+                    unit_id,
+                    skills,
+                    body.priority,
+                    zone["id"] if zone else None,
+                )
                 open_ids = s.open_ids if usable else []
-                timeslots.append({
-                    "windowId": window.id, "start": iso(start), "end": iso(end),
-                    "afterHours": window.after_hours, "totalAvailability": s.total,
-                    "bookedCount": s.booked, "heldForUrgent": s.held,
-                    "openAvailability": len(open_ids), "isAvailable": bool(open_ids),
-                    "technicianIds": open_ids,
-                })
+                timeslots.append(
+                    {
+                        "windowId": window.id,
+                        "start": iso(start),
+                        "end": iso(end),
+                        "afterHours": window.after_hours,
+                        "totalAvailability": s.total,
+                        "bookedCount": s.booked,
+                        "heldForUrgent": s.held,
+                        "openAvailability": len(open_ids),
+                        "isAvailable": bool(open_ids),
+                        "technicianIds": open_ids,
+                    }
+                )
             if timeslots:
-                availabilities.append({"date": day.isoformat(), "businessUnitId": unit_id, "timeslots": timeslots})
+                availabilities.append(
+                    {"date": day.isoformat(), "businessUnitId": unit_id, "timeslots": timeslots}
+                )
         day += timedelta(days=1)
     return {"availabilities": availabilities}
 
 
 @router.get("/zones")
 def list_zones(cfg: TenantConfig = Depends(get_cfg)):
-    data = [{"id": z["id"], "name": z["name"], "county": z["county"], "zips": z["zips"], "active": True}
-            for z in cfg.zones]
-    return {"page": 1, "pageSize": len(data), "hasMore": False, "totalCount": len(data), "data": data}
+    data = [
+        {"id": z["id"], "name": z["name"], "county": z["county"], "zips": z["zips"], "active": True}
+        for z in cfg.zones
+    ]
+    return {
+        "page": 1,
+        "pageSize": len(data),
+        "hasMore": False,
+        "totalCount": len(data),
+        "data": data,
+    }
 
 
 def shape_shift(r: sqlite3.Row) -> dict:
     return {
-        "id": r["id"], "technicianId": r["technician_id"], "shiftType": r["shift_type"],
-        "start": r["start"], "end": r["end"], "note": r["note"], "active": True,
+        "id": r["id"],
+        "technicianId": r["technician_id"],
+        "shiftType": r["shift_type"],
+        "start": r["start"],
+        "end": r["end"],
+        "note": r["note"],
+        "active": True,
     }
 
 
@@ -123,5 +154,9 @@ def list_shifts(
     if endsOnOrBefore:
         where.append("end <= ?")
         params.append(iso(endsOnOrBefore))
-    sql = "SELECT * FROM technician_shifts" + (" WHERE " + " AND ".join(where) if where else "") + " ORDER BY start, id"
+    sql = (
+        "SELECT * FROM technician_shifts"
+        + (" WHERE " + " AND ".join(where) if where else "")
+        + " ORDER BY start, id"
+    )
     return page_of(conn, sql, params, shape_shift, *pg)
