@@ -1,0 +1,113 @@
+# Everything specific to Summit Air lives here and in seed.py. The mock's code reads this file
+# and works for any trade. Values marked ASSUMED are guesses until Summit Air confirms them.
+
+tenant_id: 1000
+
+company:
+  name: Summit Air
+  timezone: America/New_York
+  # ASSUMED hours. Arrival windows below stay inside them.
+  hours:
+    mon: ["08:00", "20:00"]
+    tue: ["08:00", "20:00"]
+    wed: ["08:00", "20:00"]
+    thu: ["08:00", "20:00"]
+    fri: ["08:00", "20:00"]
+    sat: ["08:00", "16:00"]
+    sun: null
+
+# Fees are null because Summit Air's real fees are unknown. The agent never states a fee
+# unless one is configured here.
+fees:
+  diagnostic: null
+  after_hours: null
+
+after_hours:
+  # Outside the arrival windows, only the on-call technician works, and only urgent jobs.
+  urgent_only: true
+
+# Mock credentials for the OAuth client-credentials flow. Not real secrets.
+auth:
+  client_id: cid.summit-air-mock
+  client_secret: cs.summit-air-mock
+  app_key: ak1.summit-air-mock
+
+# ASSUMED county list (Brooklyn, Queens, Staten Island). The ZIPs are real ZIP codes in those
+# counties; zone names are ours.
+zones:
+  - id: 1
+    name: Brooklyn North
+    county: Kings
+    zips: ["11201", "11205", "11206", "11211", "11216", "11221", "11222", "11237", "11238", "11231"]
+  - id: 2
+    name: Brooklyn South
+    county: Kings
+    zips: ["11204", "11209", "11210", "11214", "11218", "11223", "11228", "11229", "11230", "11234", "11235"]
+  - id: 3
+    name: Queens West
+    county: Queens
+    zips: ["11101", "11102", "11103", "11104", "11105", "11106", "11368", "11372", "11373", "11377"]
+  - id: 4
+    name: Queens East
+    county: Queens
+    zips: ["11354", "11355", "11361", "11364", "11365", "11366", "11375", "11412", "11423", "11432"]
+  - id: 5
+    name: Staten Island North
+    county: Richmond
+    zips: ["10301", "10302", "10303", "10304", "10310"]
+  - id: 6
+    name: Staten Island South
+    county: Richmond
+    zips: ["10306", "10307", "10308", "10309", "10312", "10314"]
+
+business_units:
+  - {id: 11, name: Residential Service, active: true}
+  - {id: 12, name: Residential Install, active: true}
+
+# duration is in seconds, as in ServiceTitan. code is ours (ASSUMED field).
+job_types:
+  - {id: 201, code: no_heat, name: No heat, duration: 7200, priority: Urgent, businessUnitIds: [11], skills: [heating], active: true}
+  - {id: 202, code: no_cooling, name: No cooling, duration: 7200, priority: Urgent, businessUnitIds: [11], skills: [cooling], active: true}
+  - {id: 203, code: tune_up, name: Maintenance tune-up, duration: 5400, priority: Normal, businessUnitIds: [11], skills: [maintenance], active: true}
+  - {id: 204, code: safety_check, name: Safety check, duration: 5400, priority: High, businessUnitIds: [11], skills: [heating], active: true}
+  - {id: 205, code: estimate, name: Replacement estimate, duration: 5400, priority: Normal, businessUnitIds: [12], skills: [], active: true}
+
+arrival_windows:
+  - {id: morning, start: "08:00", end: "12:00"}
+  - {id: afternoon, start: "12:00", end: "16:00"}
+  - {id: evening, start: "16:00", end: "20:00"}
+  - {id: after_hours, start: "20:00", end: "08:00", ends_next_day: true, after_hours: true}
+
+# Technicians kept free for urgent jobs, per arrival window, per business unit.
+# Applied on weekdays; Saturday uses the saturday value.
+urgent_hold:
+  weekday: {morning: 2, afternoon: 2, evening: 2}
+  saturday: {morning: 1, afternoon: 1}
+
+campaigns:
+  - {id: 301, name: AI phone agent, active: true}
+  - {id: 302, name: Phone, active: true}
+
+cancel_reasons:
+  - {id: 401, name: Customer cancelled, active: true}
+  - {id: 402, name: Rescheduled elsewhere, active: true}
+  - {id: 403, name: Duplicate booking, active: true}
+
+booking_providers:
+  - {id: 501, name: Summit Air phone agent, active: true}
+
+# ASSUMED perks, from docs/explorations/001-hvac-shop-operations.md. In real ServiceTitan these
+# live in discounts and recurring service templates, not on the membership type.
+membership_types:
+  - id: 601
+    name: Comfort Club
+    active: true
+    perks: {prioritySched: true, visitsPerYear: 2, repairDiscountPercent: 15, afterHoursFeeWaived: true}
+  - id: 602
+    name: Essential Care
+    active: true
+    perks: {prioritySched: false, visitsPerYear: 1, repairDiscountPercent: 10, afterHoursFeeWaived: false}
+  - id: 603
+    name: Heritage Plan (closed to new members)
+    active: false
+    perks: {prioritySched: false, visitsPerYear: 1, repairDiscountPercent: 5, afterHoursFeeWaived: false}
