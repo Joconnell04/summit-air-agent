@@ -6,7 +6,7 @@ from datetime import UTC, date, datetime
 import yaml
 from conftest import NOW, TENANT_DIR, TOMORROW, Api, build_small_world, job_body
 
-from servicetitan_mock import worldkit
+from servicetitan_mock import logs, worldkit
 from servicetitan_mock.app import create_app
 from servicetitan_mock.config import TenantConfig
 from servicetitan_mock.db import connect
@@ -245,3 +245,27 @@ def test_the_urgent_hold_comes_from_the_config(tmp_path):
     assert summit.hold_for(tuesday, "morning", 11) == 2
     assert summit.hold_for(date(2026, 11, 7), "morning", 11) == 1  # Saturday
     assert summit.hold_for(date(2026, 11, 8), "morning", 11) == 0  # Sunday
+
+
+def test_debug_logs_limit_must_be_from_1_to_1000(small):
+    api, _ = small
+    api.get("/crm/customers")
+    for bad in (0, -1, 1001):
+        response = api.client.get("/debug/logs", params={"limit": bad})
+        assert response.status_code == 422
+        assert set(response.json()) == ERROR_KEYS
+    assert api.client.get("/debug/logs", params={"limit": 1000}).status_code == 200
+    assert api.client.get("/debug/logs", params={"limit": 1}).json()["count"] == 1
+
+
+def test_a_log_line_that_cannot_be_parsed_is_skipped(small):
+    api, _ = small
+    api.get("/crm/customers")
+    with api.app.state.log_path.open("a") as f:
+        f.write('{"ts": "2026-11-02T14:00:00Z", "requ\n')  # a write cut off by a crash
+    api.get("/crm/customers", phone="718-555-0111")
+    lines = api.app.state.log_path.read_text().splitlines()
+    rows = logs.read_logs(api.app.state.log_path)
+    assert len(rows) == len(lines) - 1
+    assert rows[-1]["query"] == "phone=718-555-0111"
+    assert api.client.get("/debug/logs").json()["count"] == len(rows)

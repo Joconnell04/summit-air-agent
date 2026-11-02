@@ -11,10 +11,11 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
 
-from .errors import error_body
+from .errors import ApiError, error_body
 
 SKIP_PREFIXES = ("/debug", "/docs", "/openapi.json", "/redoc")
 MAX_BODY_CHARS = 4000
+MAX_LIMIT = 1000
 _write_lock = threading.Lock()
 
 
@@ -84,12 +85,18 @@ class RequestLogMiddleware(BaseHTTPMiddleware):
 
 
 def read_logs(path: str | Path, *, call_id=None, request_id=None, errors_only=False, limit=100) -> list[dict]:
+    if not 1 <= limit <= MAX_LIMIT:
+        raise ApiError(422, "validation_error", f"limit must be from 1 to {MAX_LIMIT}.",
+                       {"limit": "out of range"})
     path = Path(path)
     if not path.exists():
         return []
     rows = []
     for line in path.read_text().splitlines():
-        row = json.loads(line)
+        try:
+            row = json.loads(line)
+        except ValueError:
+            continue  # a half-written line from a crash must not hide every other entry
         if call_id and row["callId"] != call_id:
             continue
         if request_id and row["requestId"] != request_id:
