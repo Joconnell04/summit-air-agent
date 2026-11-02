@@ -196,7 +196,7 @@ def build() -> dict:
             ]),
             folder("3 Memberships and equipment", [
                 item("Membership types", "GET", "membership-types", module="memberships",
-                     check="pm.test('Comfort Club has priority scheduling', () => pm.expect(pm.response.json().data.find(t => t.name === 'Comfort Club').perks.prioritySched).to.eql(true));"),
+                     check="pm.test('Summit Premium Membership has priority scheduling', () => pm.expect(pm.response.json().data.find(t => t.name === 'Summit Premium Membership').perks.prioritySched).to.eql(true));"),
                 item("Membership type", "GET", "membership-types/601", module="memberships"),
                 item("Expired membership reads as expired", "GET", "memberships", module="memberships",
                      query={"customerId": "{{moretti_customer_id}}"},

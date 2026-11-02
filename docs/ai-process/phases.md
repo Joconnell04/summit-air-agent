@@ -7,7 +7,7 @@ The route through the build. Claude drives it: after each step closes, Claude ch
 - [x] Users: `/round users` until locked (#1)
 - [x] Call journeys: `/round call-journeys` until locked (#2)
 - [x] Considerations: walk docs/considerations.md, mark each item in, later, out or decided (#10)
-- [ ] Spec: the six requirements plus in-scope considerations as testable statements; assumptions into docs/brief.md (#3)
+- [x] Spec: the six requirements plus in-scope considerations as testable statements; assumptions into docs/brief.md (#3)
 - [ ] Voice platform: explore, bake-off plan, decide (#4)
 - [ ] Pipeline shape and model profiles (#5)
 - [ ] Eval design: scenarios, scoring, tooling (#6)

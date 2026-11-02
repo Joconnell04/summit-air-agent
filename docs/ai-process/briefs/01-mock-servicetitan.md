@@ -15,7 +15,7 @@ Python 3.12, FastAPI, SQLite, in a new top-level package `servicetitan_mock/`, r
 Model it on ServiceTitan's API groups and field names where they are public (check developer.servicetitan.io; note anything guessed as ASSUMED in the README):
 
 - **CRM:** customers (residential or commercial type), locations (a customer can have several; address, ZIP, borough or county), contacts (phone, email, role such as owner, tenant, adult child), bookings (an intake request that isn't a job yet), leads (for replacement and install interest, and the one-line commercial record).
-- **Memberships:** membership types (e.g. Comfort Club with priority scheduling, two tune-ups a year, repair discount, waived after-hours fee), customer memberships attached to a location, status active, expired or cancelled, recurring service visits due.
+- **Memberships:** membership types (e.g. Summit Premium Membership with priority scheduling, two tune-ups a year, repair discount, waived after-hours fee), customer memberships attached to a location, status active, expired or cancelled, recurring service visits due.
 - **Equipment systems:** per location: system type (boiler with radiators, furnace, central AC, ductless mini-split, heat pump), brand, install year.
 - **Jobs and appointments (JPM):** job types (no heat, no cooling, maintenance tune-up, estimate, safety check), business units (residential service, residential install), priority, summary notes, arrival windows, status (scheduled, dispatched, working, done, cancelled), job history.
 - **Dispatch:** technicians (40, with skills and home zone), zones by ZIP, capacity by day and arrival window and business unit, held urgent capacity, technician shifts including the weekly on-call technician.

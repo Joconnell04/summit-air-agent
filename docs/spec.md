@@ -27,9 +27,10 @@ Sources: the six requirements in docs/assignment.md (R1 to R6), docs/users.md, d
 | Id | Statement | Tested by | From |
 |---|---|---|---|
 | S-09 | Membership is looked up by the calling number before the greeting, then by address if there's no match. | Unit, eval [membership] | R3, C-06 |
-| S-10 | A member is thanked briefly and told the benefit that applies; no perk is promised that the plan doesn't include. | Eval [membership], grader | J5 |
+| S-10 | A member is thanked briefly and told the benefit that applies; no perk is promised that the plan doesn't include. Plans: Summit Premium Membership and Summit Standard Membership (tenant config). | Eval [membership], grader | J5 |
 | S-11 | An expired plan reads as expired, not missing, and is said kindly. | Unit, eval [membership] | J5 |
 | S-12 | The membership question is never asked while the caller is describing an emergency. | Eval [membership], grader | J5 |
+| S-12a | A caller who wants to join hears one or two lines about the plan from the knowledge folder (price only if config sets one), and the agent records a sign-up lead with a named callback time; it never takes payment or creates a paid membership itself. A plan is offered only at the natural end of a routine call, never on a broken-system or safety call. | Unit, eval [membership] | J14, C-50 |
 
 ## R4. Collect what a technician needs
 
@@ -44,10 +45,10 @@ Sources: the six requirements in docs/assignment.md (R1 to R6), docs/users.md, d
 
 | Id | Statement | Tested by | From |
 |---|---|---|---|
-| S-17 **M** | A clear gas or carbon monoxide signal on any turn makes the agent say the fixed safety lines before anything else, word for word, and flags a person. | Unit, eval [safety] | R5, C-12, J3 |
-| S-18 **M** | After a safety signal the server refuses booking tools until the safety lines have been said. | Unit | J3 |
+| S-17 **M** | A clear gas or carbon monoxide signal on any turn makes the agent say the fixed safety lines before anything else, word for word, and flags a person. If the caller raises it again, the agent uses a shorter signed-off variant instead of repeating the same lines verbatim. | Unit, eval [safety] | R5, C-12, J3 |
+| S-18 **M** | After a safety signal the server refuses booking tools until the safety lines have been said and a person flagged. After that, if the caller clearly insists on booking, the agent books it; the override is logged and shown on the owner view. Nothing a caller says can skip the lines themselves. | Unit, eval [safety, injection] | J3 |
 | S-19 **M** | The end-call tool refuses on a safety call until the lines were said and the flag raised; the agent signs off rather than hangs up. | Unit, eval [safety] | J3 |
-| S-20 | An unclear gas mention ("gas bill", "gas furnace") gets one check question; a clear no returns the call to its journey and is logged. | Eval [safety] | J spine |
+| S-20 | The word "gas" alone, a gas bill or a gas furnace triggers nothing. Only a described smell, leak, alarm or symptom does; a vague one ("something smells off") gets one check question, and a clear no returns the call to its journey and is logged. | Eval [safety] | J spine |
 | S-21 | No heat or no cooling with an older person, a baby, a medical condition or medical equipment at home is urgent, with the reason recorded. Rules and the score can only raise priority. | Unit, eval [priority] | R5, C-09 |
 | S-22 | The vulnerable-person question is asked once the problem is understood, in the wording of J2, never as the opening question. | Eval [priority], grader | J2, C-33 |
 | S-23 | The agent says it notified someone only after the server confirms the notification was sent. | Unit | J2 |
@@ -60,8 +61,8 @@ Sources: the six requirements in docs/assignment.md (R1 to R6), docs/users.md, d
 |---|---|---|---|
 | S-26 **M** | The server refuses to book until the address and phone number have been read back and confirmed on this call. | Unit, eval [booking] | R6, C-23 |
 | S-27 **M** | Booking is idempotent: a retried booking returns the first result, and a slot can't be booked twice. | Unit (race test) | C-08, C-34 |
-| S-28 **M** | Out-of-area ZIPs are refused by the server, and the caller is declined kindly with no supervisor flag. | Unit, eval [booking] | C-05, J1 |
-| S-29 | Times are offered as the shape of availability first, then exact windows for the chosen day. | Eval [booking], grader | J spine |
+| S-28 **M** | Out-of-area ZIPs are refused by the server, and the caller is declined kindly with no supervisor flag. Each out-of-area call is recorded with its ZIP, and the owner view counts them by ZIP so demand outside the area can inform a decision to expand. | Unit, eval [booking] | C-05, J1 |
+| S-29 | Times are offered as the shape of availability first, then exact windows for the chosen day. A day or time of day the caller mentioned earlier in the call ("mornings are better") shapes the first options offered. | Eval [booking], grader | J spine |
 | S-30 | The agent confirms day, window and next steps out loud, asks "anything else?", and never ends in the same turn as the confirmation. | Eval [booking] | J spine |
 | S-31 | Reschedule and cancel act only on the caller's own booking, at most once each per call; a cancel asks why and offers two windows. | Unit, eval [repeat-caller] | J7, C-46 |
 | S-32 | Every promised callback names a time and is tracked until done; an overdue callback is flagged. | Unit | C-45 |
@@ -85,3 +86,6 @@ Sources: the six requirements in docs/assignment.md (R1 to R6), docs/users.md, d
 | S-45 | Transcripts are deleted after 30 days and call records after 12 months; development keeps full logs. | Unit | C-30 |
 | S-46 | Everything specific to Summit Air lives in `tenants/summit-air/`; a test serves a second tenant from a copied folder. | Unit | C-37 |
 | S-47 | When every line is busy, the next caller hears a recorded safety line and can leave a voicemail that's flagged on the owner view. | Unit, live | docs/scaling.md |
+| S-48 | Every failed tool call is logged with the error. If the FSM is down or a booking fails, the agent says so honestly ("I can't book it right now, I've noted it and someone will call you by" a named time), the server queues the request, retries it once the FSM is back (idempotently), and flags a person if it still fails. | Unit, eval [booking] | C-47 |
+| S-49 | A caller who says not to call them again is marked do-not-call at once; any pending callback to that number is cancelled, and the agent says so kindly ("Understood, we won't call you. That means the callback is off, so give us a call any time you need us"). | Unit, eval [repeat-caller] | C-49, J12 |
+| S-50 | Background noise doesn't make the agent stop talking: an interruption needs recognized words, and a false interruption resumes the reply. | Live (noisy audio cases) | C-48 |

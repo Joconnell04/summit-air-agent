@@ -120,7 +120,7 @@ def test_two_plans_at_one_address_are_both_returned(world):
 def test_a_membership_type_lists_its_perks(world):
     api, _ = world
     club = api.get("/memberships/membership-types/601").json()
-    assert club["name"] == "Comfort Club"
+    assert club["name"] == "Summit Premium Membership"
     assert club["perks"] == {
         "prioritySched": True,
         "visitsPerYear": 2,

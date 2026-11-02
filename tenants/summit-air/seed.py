@@ -20,7 +20,7 @@ SEED = 20261102
 CUSTOMER_TOTAL = 300
 SERVICE_UNIT, INSTALL_UNIT = 11, 12
 NO_HEAT, NO_COOLING, TUNE_UP, SAFETY_CHECK, ESTIMATE = 201, 202, 203, 204, 205
-COMFORT_CLUB, ESSENTIAL_CARE, HERITAGE = 601, 602, 603
+PREMIUM, STANDARD, LEGACY = 601, 602, 603
 FIRST_TECH_ID = 5001
 SERVICE_TECHS, ADVISORS = 36, 4
 
@@ -326,7 +326,7 @@ class World:
         if self.rng.random() >= chance:
             return
         status = self.rng.choices(["Active", "Expired", "Canceled"], [65, 22, 13])[0]
-        types = [COMFORT_CLUB, ESSENTIAL_CARE] + ([HERITAGE] if status != "Active" else [])
+        types = [PREMIUM, STANDARD] + ([LEGACY] if status != "Active" else [])
         weights = [55, 40, 5][: len(types)]
         self.membership(customer_id, location_id, self.rng.choices(types, weights)[0], status)
 
@@ -521,7 +521,7 @@ class World:
             ],
         )
         self.equipment(cid, lid, "house")
-        member_id = self.membership(cid, lid, COMFORT_CLUB, "Active")
+        member_id = self.membership(cid, lid, PREMIUM, "Active")
         s["activeMemberWithAdultChild"] = {
             "name": "Linda Park",
             "phone": PARK_PHONE,
@@ -539,7 +539,7 @@ class World:
             cfg,
             cid,
             lid,
-            COMFORT_CLUB,
+            PREMIUM,
             "Expired",
             end - timedelta(days=365),
             end,
@@ -561,7 +561,7 @@ class World:
             cfg,
             cid,
             lid,
-            ESSENTIAL_CARE,
+            STANDARD,
             "Active",
             end - timedelta(days=365),
             end,
@@ -577,8 +577,8 @@ class World:
 
         cid, lid = self.add_person("Raymond Okafor", self.address(zone[4]), "owner", [OKAFOR_PHONE])
         self.equipment(cid, lid, "house")
-        first = self.membership(cid, lid, COMFORT_CLUB, "Active")
-        second = self.membership(cid, lid, ESSENTIAL_CARE, "Active")
+        first = self.membership(cid, lid, PREMIUM, "Active")
+        second = self.membership(cid, lid, STANDARD, "Active")
         s["twoPlansOneAddress"] = {
             "name": "Raymond Okafor",
             "phone": OKAFOR_PHONE,

@@ -11,3 +11,4 @@ Things Jackson set aside on purpose. Nothing here is dropped; each item gets wal
 | Warm transfer to a person | No real staff to transfer to in the demo | C-11 | open |
 | Production capacity: 5 then 15 calls at once | Demo runs about 3; the step-by-step plan is docs/scaling.md | #4, #16, DECISIONS.md 008 | open |
 | Booking confirmation texts | Not asked for by the assignment; business texting needs carrier registration (1 to 3 weeks); terms and privacy pages already live | DECISIONS.md 007, #15 | open |
+| Reply delay targets (spec S-36) | Accepted for now; revisit whenever Jackson gives feedback on delays or pauses | spec r2 | open |

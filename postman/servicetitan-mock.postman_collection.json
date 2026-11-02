@@ -993,7 +993,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('status is 200', () => pm.response.to.have.status(200));",
-                  "pm.test('Comfort Club has priority scheduling', () => pm.expect(pm.response.json().data.find(t => t.name === 'Comfort Club').perks.prioritySched).to.eql(true));",
+                  "pm.test('Summit Premium Membership has priority scheduling', () => pm.expect(pm.response.json().data.find(t => t.name === 'Summit Premium Membership').perks.prioritySched).to.eql(true));",
                   "",
                   "if (pm.response.code >= 400) {",
                   "  pm.test('error uses the standard shape', () => {",

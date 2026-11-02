@@ -9,7 +9,7 @@ Scope follows DECISIONS.md 008. Where a detail comes from field practice describ
 1. **Lookup before hello.** The server looks up the calling number: customer, address, membership, open jobs, calls in the last few minutes. The result goes to the agent with its first turn.
 2. **Greeting.** Always names the company. Unknown number: "Thanks for calling Summit Air, this is the virtual assistant. How can I help?" Known number: "Hi, this is Summit Air. Is this Maria?" The agent says it's an AI assistant whenever asked and never denies it.
 3. **Listen first.** The caller tells the story once, without interruption. If the caller goes quiet for about 5 seconds, a gentle check-in ("Take your time. Are you still there?"), not a stream of prompts. After a long silence the agent says it will hang up and that they can call back any time.
-4. **Safety check on every caller turn.** The server checks each line against the fixed list. A clear signal ("I smell gas", "the CO alarm is going off") switches to journey 3 at once. An unclear one ("gas" with nothing else, a gas furnace, a gas bill) gets one check first: "Just to be safe, are you smelling gas in the house right now?" A clear no puts the call back where it was, and the false alarm is logged for review.
+4. **Safety check on every caller turn.** The server checks each line against the fixed list. A clear signal ("I smell gas", "the CO alarm is going off") switches to journey 3 at once. The word "gas" alone, a gas bill or a gas furnace triggers nothing. A vague description ("something smells off, kind of like eggs") gets one check first: "Just to be safe, are you smelling gas in the house right now?" A clear no puts the call back where it was, and the false alarm is logged for review.
 5. **Questions in order of need, only when needed.** The agent asks what it needs to help, in this order, and skips anything already known or not useful for this call:
    1. What's wrong and since when.
    2. Where: address, checked against the service area by ZIP. The phone's area code is never used to guess where someone lives.
@@ -35,7 +35,7 @@ Scope follows DECISIONS.md 008. Where a detail comes from field practice describ
    - Look-alikes: a heat pump that has just stopped and is steaming outside may be in a normal defrost and restart within about 10 minutes, and a furnace can lock itself out after repeated failed starts. The agent asks how long it has been off, may mention that heat pumps pause to defrost, and still offers to book; it never walks the caller through a reset (a gas appliance and a liability), and a defrost description alone doesn't make the call urgent (C-44; Revin blog: https://revin.ai/blog/hvac-after-hours-no-heat-calls).
 3. Who's affected comes up naturally once the agent understands the problem (journey 2), never as the opening question.
 4. Own or rent, only when it matters for who approves the visit (journey 6).
-5. ZIP checked against the service area. Out of area: "I'm sorry, that's outside the area we cover, so we're not able to send someone. A local heating company should be able to help." No supervisor flag; turning away out-of-area calls is normal practice.
+5. ZIP checked against the service area. Out of area: "I'm sorry, that's outside the area we cover, so we're not able to send someone. A local heating company should be able to help." No supervisor flag; turning away out-of-area calls is normal practice. The ZIP is recorded, and the owner view counts out-of-area calls by ZIP so demand can inform a decision to expand.
 6. Read-back gate, then the earliest window for that priority.
 7. Ends booked. No maintenance-plan pitch on this call.
 8. Owner view: priority (urgent if the inside temperature or the people affected call for it), reason, booked window.
@@ -56,9 +56,10 @@ How to ask: call-takers in this trade routinely screen for people at risk (older
 ## 3. Safety caller (gas, carbon monoxide, smoke)
 
 1. Starts anywhere, often mid-sentence: "it smells a bit like gas, but anyway the heat's out."
-2. Clear signal: the server's check fires on that turn and refuses booking tools until the safety lines have been said. Unclear signal: the one check question from the spine first.
+2. Clear signal: the server's check fires on that turn and refuses booking tools until the safety lines have been said and a person flagged. Vague signal: the one check question from the spine first.
 3. The agent says the fixed lines, spoken from code, word for word, in a calm voice (wording signed off by a person before launch). Gas: get everyone out now, don't flip switches or use the stove, call 911 or the gas company from outside. Carbon monoxide: open a window if one is right there, get everyone out, call 911 from outside.
-4. The server flags a person immediately.
+4. The server flags a person immediately. If the caller brings it up again, the agent uses a shorter signed-off variant ("Please get outside and call 911 from there") rather than repeating the full lines word for word.
+   - If the caller insists on booking after hearing the lines ("stop, just book the appointment"), the agent books it. The server allows this only after the lines were said and the flag raised, and logs it as a safety override on the owner view.
 5. The agent doesn't hang up on them. It signs off: "Please head outside now and call 911 from there. I'll stay on if you need me, but the safest thing is to go now. We'll follow up once you're safe." If the caller keeps talking, it repeats the instruction once, briefly. The end-call tool refuses until the lines were said and the flag raised; the call ends when the caller hangs up or says goodbye.
 6. If the call drops before the lines finish: a person is flagged to call back.
 7. False alarm: if the caller says clearly that they don't smell gas and nothing is going off, the call returns to the journey it came from and the owner view shows "safety check cleared" for review.
@@ -77,7 +78,7 @@ How to ask: call-takers in this trade routinely screen for people at risk (older
 ## 5. Member
 
 1. Same as the journey for their reason for calling, with the lookup showing an active plan.
-2. A short, real thank-you and the benefit that applies, without a script feel: "I see you're on the Comfort plan, thanks for sticking with us. That gets you priority scheduling, so let me find you the earliest spot."
+2. A short, real thank-you and the benefit that applies, without a script feel: "I see you're a Summit Premium member, thanks for sticking with us. That gets you priority scheduling, so let me find you the earliest spot."
 3. Not found by phone: once the urgent part of the call is handled, "Are you on one of our maintenance plans, by any chance?" Then the server checks by address. Never asked while the caller is describing an emergency.
 4. Expired plan: said plainly and kindly, with an offer for someone to help renew; no promised perk.
 5. Owner view: member status on every call.
@@ -146,7 +147,7 @@ The system can also place calls, with the same spine (greeting names Summit Air 
 2. **Safety follow-up** after a gas or carbon monoxide call: checks they're safe and offers a top-priority visit.
 3. **Callback requested** after repeated drops or when the caller asked for one.
 
-Rules: only to people who called Summit Air about this service request, only between 8 a.m. and 9 p.m. local time, never to a number marked "do not call", one attempt and one voicemail at most. Voicemails say only that Summit Air is calling about the appointment and give the number.
+Rules: only to people who called Summit Air about this service request, only between 8 a.m. and 9 p.m. local time, never to a number marked "do not call", one attempt and one voicemail at most. If a caller says not to call them again, the number is marked do-not-call at once, any pending callback is cancelled, and the agent says so kindly: "Understood, we won't call you. That means the callback is off, so give us a call any time you need us." Voicemails say only that Summit Air is calling about the appointment and give the number.
 
 Who places them (decided in round 3): the earlier-slot offer and the requested callback are placed automatically by the system; the safety follow-up is a task for a person, because it can involve a gas leak still being sorted out.
 
@@ -156,6 +157,17 @@ Who places them (decided in round 3): the earlier-slot offer and the requested c
 2. The agent listens, doesn't argue or promise anything, and says what happens next: "I'm sorry that happened. I'll get this to a manager now, and they'll call you by" a named time.
 3. Flags a person with a short summary (who, which job, what they want), so the caller doesn't have to repeat it (C-46; Revin blog: https://revin.ai/blog/hvac-ai-call-transfer-to-human).
 4. Owner view: complaint, flagged, callback time.
+
+## 14. Wants to become a member
+
+1. The caller asks about joining, or a routine call (a tune-up booking) ends with a natural opening: "By the way, we have a Summit Premium Membership that covers two tune-ups a year and priority scheduling. Want me to have someone tell you more?" Never offered on a broken-system or safety call.
+2. One or two lines about the plan from the knowledge folder; a price only if tenant config sets one.
+3. The agent can't take payment or create a paid membership. It records a sign-up lead and tells the caller someone will call them by a named time.
+4. Owner view: membership leads, with which call they came from.
+
+## When a tool fails
+
+If a lookup or booking fails (the FSM is down, a timeout), the agent says so honestly and keeps the caller's details: "I can't book that right now, but I've written it all down and someone will call you by 4 to confirm." The server queues the request, retries it once the FSM is back without double-booking, and flags a person if it still fails. Every failed tool call is logged.
 
 ## Traits on any call
 

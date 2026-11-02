@@ -129,19 +129,19 @@ booking_providers:
 # gets that name, so a plan with two visits a year gets one of each season.
 membership_types:
   - id: 601
-    name: Comfort Club
+    name: Summit Premium Membership
     active: true
     visits: &seasonal_visits
       - {name: Heating system tune-up, months: [8, 9, 10, 11, 12, 1, 2]}
       - {name: Cooling system tune-up, months: [3, 4, 5, 6, 7]}
     perks: {prioritySched: true, visitsPerYear: 2, repairDiscountPercent: 15, afterHoursFeeWaived: true}
   - id: 602
-    name: Essential Care
+    name: Summit Standard Membership
     active: true
     visits: *seasonal_visits
     perks: {prioritySched: false, visitsPerYear: 1, repairDiscountPercent: 10, afterHoursFeeWaived: false}
   - id: 603
-    name: Heritage Plan (closed to new members)
+    name: Summit Legacy Plan (closed to new members)
     active: false
     visits: *seasonal_visits
     perks: {prioritySched: false, visitsPerYear: 1, repairDiscountPercent: 5, afterHoursFeeWaived: false}
