@@ -209,6 +209,8 @@ def _resolve_window(cfg: TenantConfig, now: datetime, priority: str, start: date
             {"arrivalWindowStart": "no matching window"},
         )
     day, window = matched
+    if not cfg.window_offered(day, window):
+        raise ApiError(422, "window_not_offered", f"The {window.id} window is not offered on {day}.")
     window_start, window_end = cfg.window_bounds(day, window)
     still_open = window_end > now if window.after_hours else window_start >= now
     if not still_open:

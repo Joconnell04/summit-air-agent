@@ -2,6 +2,7 @@
 (three technicians, two held for urgent jobs)."""
 import sqlite3
 from concurrent.futures import ThreadPoolExecutor
+from datetime import date
 
 import pytest
 from conftest import (
@@ -218,6 +219,16 @@ def test_an_arrival_window_must_match_a_configured_window(small):
     response = api.post("/jpm/jobs", body)
     assert response.status_code == 400
     assert response.json()["code"] == "invalid_window"
+
+
+@pytest.mark.parametrize("day, window", [(date(2026, 11, 7), "evening"), (date(2026, 11, 8), "morning")])
+def test_a_window_outside_business_hours_cannot_be_booked(small, day, window):
+    """Saturday evening and Sunday morning are never offered by capacity, so booking refuses them too."""
+    api, ids = small
+    customer_id, location_id = ids["home"]
+    response = api.post("/jpm/jobs", job_body(customer_id, location_id, day, window))
+    assert response.status_code == 422
+    assert response.json()["code"] == "window_not_offered"
 
 
 def test_a_window_that_has_started_cannot_be_booked(small):
