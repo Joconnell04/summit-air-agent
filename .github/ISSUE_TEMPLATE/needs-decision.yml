@@ -14,6 +14,9 @@ body:
     id: recommendation
     attributes: {label: Recommendation and why}
     validations: {required: true}
+  - type: input
+    id: readout
+    attributes: {label: Readout file, description: "docs/decisions/NN-<slug>.md, written before Jackson is asked"}
   - type: textarea
     id: blocked
     attributes: {label: What is blocked until this is decided}

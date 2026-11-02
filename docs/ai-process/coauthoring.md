@@ -35,3 +35,15 @@ Changed:
 - Plain wording throughout, e.g. the surge line for tune-ups.
 Commit: d9d04b7
 Status: locked
+
+## users r3
+Feedback (verbatim, given after the r2 lock):
+> I'm going to give you more feedback and stuff, but just another consideration to throw on to the ideas or consideration stuff is if we could use Jev or Laya or a decisioning model at any point without breaking the latency budget to make the system better. That's just something I want to throw out there. Yeah, and regarding what I said about like a zip code based surge, I'm not really confident that's like how that really works, but that was just an idea to throw down. So every time I have an idea to throw down, it doesn't mean just go and implement verbatim what I said or based on your interpretation. It's just like look into stuff and whatnot. But I do think Jev or decisioning model would be a good way to show the interviewer that I'm up to date on those types of things and am constantly looking for the best ways to do stuff. Yeah, make sure that the fix list of phrases to raise priority isn't like overly ambitious and stuff. And make sure that the safety caller wording is not too weird or like overly formal. Should still sound like a human, properly explain things without going overly too technical, stuff like that. Yeah, and regarding the repeat callers, I think that's like just a good point to approach this work with in general is like item potency. So keep that in mind. And this system shouldn't be overly specific to New York City, but like obviously it should be somewhat specific. Like it should have proper context on each of the boroughs and neighborhoods and stuff like that, if it makes sense. But it shouldn't be like mentioning state programs unless it's like super relevant.
+Changed:
+- ZIP-based surge playbook taken out as a design; C-32 now says it is an unverified idea.
+- The fixed list is cut to gas, CO, smoke or burning, and medical equipment like oxygen. Age, babies and illness go to the score or a decision model (C-35).
+- Safety scripts rewritten as two short lines a calm person would say, with the agent ending the call so the caller can get outside.
+- Idempotency stated for repeat callers and made a general rule (C-34).
+- Service-area context comes from config; state programs mentioned only when they change what the caller does (Clean Heat line removed, C-36).
+Commit: 2c8e355
+Status: locked

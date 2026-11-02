@@ -4,17 +4,19 @@ Who the agent serves, what each of them needs from a call, how the agent can tel
 
 What the kickoff tells us (SOURCE: docs/assignment.md): residential only, 40 technicians, three counties in NYC, phones overwhelmed on the first heat wave or cold snap, and most calls are an AC that went out, a furnace that won't start, or annual maintenance.
 
+The agent knows the service area from config, not from the prompt: which boroughs and neighborhoods are covered, what housing is typical there (two-family houses, co-ops, detached houses), how people give addresses, and building access like a super or a shared basement. It mentions a city or state program only when that changes what the caller should do, such as a tenant's right to heat (C-36).
+
 Background research behind this doc: docs/explorations/001-hvac-shop-operations.md (how a shop this size runs) and docs/explorations/002-nyc-callers.md (who calls in NYC). Numbers stay in those files.
 
 ## How the agent tells callers apart
 
 Most signals are not certain, so the agent uses three kinds, in this order:
 
-1. **Facts the server already has.** The phone number matches a customer, a membership, an open job, or a recent call. The service ZIP is in an area with a current surge. These are certain and cost nothing on the call.
-2. **Fixed phrases.** A short list that always triggers a response, whatever the model thinks: gas smell, carbon monoxide alarm, smoke, and plain statements about a vulnerable person ("she's 85", "he's on oxygen", "the baby is three weeks old"). A phrase can only raise priority, never lower it.
-3. **A score.** A small classifier reads each finished caller turn for softer signs of urgency or distress. It runs beside the conversation, not in the reply path, so it adds no delay (C-09, C-10).
+1. **Facts the server already has.** The phone number matches a customer, a membership, an open job, or a recent call. These are certain and cost nothing on the call.
+2. **A short fixed list.** Only the few things that must never depend on a model: a gas smell, a carbon monoxide alarm, smoke or a burning smell, and someone on oxygen or other medical equipment. These always raise priority and can never lower it. The list stays short on purpose, because every entry needs eval cases for its false alarms ("gas bill").
+3. **A score.** Everything softer, including most vulnerable-person cues ("my mother is 85", "the baby is three weeks old"), is judged by a small classifier or decision model that reads each finished caller turn beside the conversation, not in the reply path, so it adds no delay (C-09, C-10, C-35).
 
-The server uses these to pick a playbook for the call: which questions to ask, what to skip, and which slots to offer (C-32). The model follows the playbook; it doesn't choose it.
+Whether these facts should also pick a playbook for the call (which questions to ask, what to skip) is an idea under review, not a decision (C-32).
 
 ## Callers
 
@@ -26,7 +28,7 @@ The most common call. Usually stressed, often calling during a surge when the wa
 - Worries: hold music, being upsold, a window that slips.
 - How the agent knows: the caller's opening words ("the heat's out", "the AC stopped").
 - Good call: tells the story once, hears the window and what happens next, gets a text confirming it.
-- For the build: let the caller talk first and fill gaps after. Offer the earliest real slot. On these calls the agent does not pitch a maintenance plan or other services. During a surge in the caller's area, the playbook keeps the call short.
+- For the build: let the caller talk first and fill gaps after. Offer the earliest real slot. On these calls the agent does not pitch a maintenance plan or other services. During a surge, the call stays short.
 
 ### 2. Vulnerable household
 
@@ -34,7 +36,7 @@ The same broken system, plus someone at risk from heat or cold: an older person,
 
 - Wants: to be taken seriously at once.
 - Worries: being handled like a routine booking.
-- How the agent knows: callers describe a person, not a diagnosis. Fixed phrases catch the clear cases; the score catches the rest. Callers rarely volunteer it, so the agent asks on every no-heat or no-cooling call.
+- How the agent knows: callers describe a person, not a diagnosis. The fixed list catches medical equipment like oxygen; the score catches age, babies and illness, and the agent's own question catches what neither does. Callers rarely volunteer it, so the agent asks on every no-heat or no-cooling call.
 - How it asks: in plain words, once, in the flow of the call. For example: "Is anyone at home who's older, very young, or has a health condition the heat would affect?" Then, if yes: "Where are they right now?" No checklist of conditions.
 - For the build: a priority flag with the reason. The agent says only "I've marked this as a priority" and doesn't repeat the details back. The person on site is the technician's contact; the caller may be the one authorizing the visit. If the caller says someone is struggling to breathe or their oxygen equipment has stopped, the agent tells them to call 911.
 
@@ -44,7 +46,10 @@ Gas smell, a carbon monoxide alarm, a burning smell or smoke. Often mentioned in
 
 - Needs: the safety instruction before any other question, and to get off the phone and outside.
 - How the agent knows: a fixed phrase check on every caller turn, not only the first. No model decision is needed to start the safety script.
-- What the agent says: two separate scripts in fixed wording. Gas: leave now without touching switches or appliances, and call 911 or the gas utility from outside. Carbon monoxide: open windows, leave, get to fresh air, call 911. Wording follows Con Edison, National Grid and NYC Health (002) and is signed off by a person before launch (C-12).
+- What the agent says: two short scripts in fixed wording that sound like a calm person, not a notice. The content follows Con Edison, National Grid and NYC Health (002); the exact words are signed off by a person before launch (C-12). Roughly:
+  - Gas: "Okay, that comes first. Please get everyone out of the house now, and don't flip any switches or use the stove on the way. Once you're outside, call 911 or your gas company. We'll sort out the heat after you're safe."
+  - Carbon monoxide: "If your CO alarm is going off, open a window if one's right there, get everyone outside, and call 911 from outside. Once you're out, we can sort out the system."
+- After the script the agent ends the call so the caller can leave and use the phone outside; it doesn't keep them talking.
 - Checks so the agent never drops a safety caller:
   - The server records that the script was said. Booking questions stay blocked until it has been.
   - The end-call and spam paths refuse to run on a call with a safety signal until the script was said and a person was flagged.
@@ -61,7 +66,7 @@ Calm. An annual tune-up, often a member whose plan includes it, sometimes prompt
 
 ### 5. Replacement or install quote
 
-Wants a new system, a heat pump, an oil-to-gas conversion, or asks about rebates. In NYC these questions are common because of the state Clean Heat program (SOURCE: 002).
+Wants a new system, a heat pump, an oil-to-gas conversion, or asks about rebates. Heat pumps and rebates come up often in NYC.
 
 - Wants: someone to come and quote it.
 - For the build: this is a sales lead for a comfort advisor, not a repair slot. The agent takes the details and books an estimate visit or a callback. It never states a price or promises a rebate (C-21).
@@ -86,7 +91,7 @@ A tenant, a house-sitter, a relative staying over. In NYC about half of two-fami
 Has an open job or a recent visit: "where's my tech?", "the same problem came back", reschedule, cancel. Or called a minute ago and the line dropped.
 
 - How the agent knows: the server logs every call by phone number and links calls from the same number. Several calls within a few minutes mean a dropped line, a panicking caller, or a prank.
-- For the build: find the open job first and never create a duplicate. Give status from the FSM rather than guessing. If the caller rang a few minutes ago, pick up where that call stopped ("I think we got cut off, you were telling me about the furnace") instead of starting over. A caller who keeps calling with no progress is flagged to a person.
+- For the build: find the open job first and never create a duplicate. Give status from the FSM rather than guessing. If the caller rang a few minutes ago, pick up where that call stopped ("I think we got cut off, you were telling me about the furnace") instead of starting over. A caller who keeps calling with no progress is flagged to a person. Every action is keyed to the call and the caller, so a second or fifth call never books, texts or flags twice (C-34).
 
 ### 9. Commercial caller
 

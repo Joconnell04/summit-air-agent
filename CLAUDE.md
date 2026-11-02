@@ -19,6 +19,8 @@ The assignment, word for word: `docs/assignment.md`. Reread it before any design
 - Work is tracked in GitHub Issues on the "Summit Air" project board. Use `gh`.
 - A build session starts from a brief in `docs/ai-process/briefs/`, works on a branch, and ends with a pull request that says `Closes #N`.
 - If blocked on a choice that is the human's to make, open an issue with the needs-decision template, label `needs-decision`, put it in the Needs decision column, and continue with other work.
+- Every needs-decision issue gets a readout in `docs/decisions/NN-<slug>.md` (format in that folder's README), researched in the background before Jackson is asked. GitHub issues aren't visible in the Claude app, so the readout is what he reads beside the chat; he answers in chat.
+- Ideas Jackson throws out mid-step are prompts to look into, not decisions. Record them as open considerations or explorations, never write them into a doc as settled.
 - Decisions go in `DECISIONS.md` as one short entry each.
 - High-touch docs (`docs/users.md`, `docs/call-journeys.md`, `docs/spec.md`, prompt voice, safety script) change only through `/round`, which logs the round in `docs/ai-process/coauthoring.md`.
 - Side research goes through `/explore`; results land in `docs/explorations/`.
