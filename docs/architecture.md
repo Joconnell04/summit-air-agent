@@ -60,7 +60,7 @@ Built in from the first commit, because QA and live debugging depend on it.
 
 ## Hosting
 
-The tool server and the LiveKit voice worker run on their own Vultr server (DECISIONS.md 005): `summit-air`, 2 vCPU, 4 GB memory plus 2 GB swap, Ubuntu 24.04, New Jersey, $20 a month billed hourly. Admin rights, Caddy for HTTPS, a firewall open only to SSH and web traffic, SSH by key only with no root login. Capacity limits and cost are in docs/explorations/003-capacity-and-cost.md and docs/cost.md.
+The tool server and the LiveKit voice worker run on their own Vultr server (DECISIONS.md 005): `summit-air`, 2 vCPU, 4 GB memory plus swap, Ubuntu 24.04, New Jersey, IP 45.77.105.247, $20 a month billed hourly. Admin rights, Caddy for HTTPS, a firewall open only to SSH and web traffic, SSH by key only with no root login. Capacity limits and cost are in docs/explorations/003-capacity-and-cost.md and docs/cost.md.
 
 ### Planned reboots
 
