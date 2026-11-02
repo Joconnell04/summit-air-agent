@@ -1,6 +1,6 @@
 # 15. How do we send the booking confirmation text without a rejected registration?
 
-Issue: #15. Status: ready
+Issue: #15. Status: ready. Public pages are live at https://joconnell04.github.io/summit-air-demo-line/ (home, /terms/, /privacy/), name and email filled in; contact email jt272004@gmail.com, retention 30 days for transcripts and 12 months for consent records.
 
 ## Question
 

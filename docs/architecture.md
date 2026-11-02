@@ -47,15 +47,14 @@ Built in from the first commit, because QA and live debugging depend on it.
 
 ## Hosting
 
-The tool server and the LiveKit voice worker run on an always-on Vultr server. Whether that is the existing shared server or a new one for this project is open (see the readout surfaced after decision 004). Capacity limits and cost are in docs/explorations/003-capacity-and-cost.md and docs/cost.md.
+The tool server and the LiveKit voice worker run on their own Vultr server (DECISIONS.md 005): `summit-air`, 2 vCPU, 4 GB memory plus 2 GB swap, Ubuntu 24.04, New Jersey, $20 a month billed hourly. Admin rights, Caddy for HTTPS, a firewall open only to SSH and web traffic, SSH by key only with no root login. Capacity limits and cost are in docs/explorations/003-capacity-and-cost.md and docs/cost.md.
 
 ### Planned reboots
 
-The existing server installs security updates on its own and reboots when an update needs it, at 09:30 UTC (4:30 a.m. New York time in winter, 5:30 a.m. in summer). The setting is `Unattended-Upgrade::Automatic-Reboot-Time "09:30"` in `/etc/apt/apt.conf.d/52epic-reboot`, owned by another project on the same server, so we leave it alone.
+The server installs security updates on its own and reboots only when an update needs it, at 08:00 UTC (3 a.m. New York time in winter, 4 a.m. in summer), set in `/etc/apt/apt.conf.d/52summit-reboot`. We picked the time ourselves: the quietest hour for a residential HVAC line.
 
-- How often: 5 reboots between Sep 5 and Oct 14 (MEASURED, `last -x`), only on days an update required one.
-- How long the server is down: 10 to 12 seconds from shutdown to boot (MEASURED, `last -x -F`, all five reboots). Our services start on boot and are taking calls about 30 to 60 seconds after that (ASSUMED until measured on the first reboot; Python start-up plus loading the voice models).
-- Impact: a call in progress at that moment drops, and a new call in that minute isn't answered. At 4:30 or 5:30 a.m. that is rare, and a caller can call straight back. Low impact, so we accept it rather than turn updates off.
+- How long it's down: a Vultr server of this type is down 10 to 12 seconds from shutdown to boot (MEASURED on the shared server, `last -x -F`, five reboots between Sep 5 and Oct 14). Our services start on boot and should be taking calls about 30 to 60 seconds after that (ASSUMED until measured on the first reboot).
+- Impact: a call in progress at that moment drops, and a call in that minute isn't answered. At 3 or 4 a.m. that is rare and the caller can call straight back, so we accept it rather than turn updates off.
 
 ### Knowing it's back
 
