@@ -18,7 +18,7 @@ Each item: `- [status] **C-NN Title.** One or two lines. Links.`
 - [open] **C-05 Residential vs commercial.** Signals: business name, "property manager", "our building", rooftop or multi-unit equipment, an FSM account type. What a commercial caller gets: a polite decline with a referral or a message for the office, never a booking. Still log a one-line lead (company, contact, what they needed) in the same end-of-call write, with no extra tool calls, in case Summit Air ever wants that list.
 - [open] **C-06 Membership.** Look up by phone first, then address or name. Handle the caller who doesn't know they're a member, an expired plan, and two plans at one address. Name the benefit back ("you're on the Comfort plan, so you get priority scheduling").
 - [open] **C-07 What the technician needs.** System type, brand and rough age, symptoms and when they started, thermostat reading, what's been tried, access (doorman, super, gate, parking), pets, best contact on site.
-- [open] **C-08 Booking.** Arrival windows, capacity by priority, confirmation by SMS, reschedule and cancel, no double booking, idempotent tools (retries are normal on voice platforms).
+- [open] **C-08 Booking.** Arrival windows, capacity by priority, confirmation by SMS, reschedule and cancel, no double booking, idempotent tools (retries are normal on voice platforms). See C-34.
 
 ## Priority and safety
 
@@ -36,8 +36,10 @@ Each item: `- [status] **C-NN Title.** One or two lines. Links.`
 - [open] **C-17 Who decides for the household.** Renter vs owner, landlord approval, adult child calling for a parent, spouses who both decide, who will be home. Book with the person who can authorize, and record who the tech should ask for.
 - [open] **C-18 Repeat callers.** "Where's my tech?", an open job, a callback about a past visit. Track calls per number: several calls in a few minutes (dropped line, panic, prank) are linked, and the agent picks up where the last call stopped instead of starting over.
 
-- [open] **C-32 Playbooks.** The server picks a playbook per call from facts it already has (ZIP in a current surge, member, open job, after hours, outdoor temperature, safety or vulnerability flag) and the prompt loads that section. Example: a caller from a ZIP with a surge gets the short urgent path and no upsell or maintenance-plan pitch. Rules choose the playbook; the model doesn't. Builds on C-26.
+- [open] **C-32 Playbooks.** Idea to look into: the server picks a playbook per call from facts it already has (member, open job, after hours, outdoor temperature, safety or vulnerability flag, possibly a surge) and the prompt loads that section, e.g. no upsell on a surge-day breakdown call. Unverified: whether surges are local enough to detect by ZIP, or are citywide weather events. Rules would choose the playbook, not the model. Builds on C-26.
 - [open] **C-33 Asking who's home, naturally.** The vulnerable-person question is asked on every no-heat or no-cooling call in plain words ("Is anyone at home who's older, very young, or has a health condition the heat would affect?"), never as a checklist, and the answer is read back only as "I've marked this as a priority."
+
+- [open] **C-34 Idempotent by default.** Every side effect (booking, flag, text, commercial lead, call record) is keyed to the call and the caller, so a platform retry, a double tool call or the same person calling back five times never does anything twice.
 
 ## Staying on purpose
 
@@ -56,6 +58,8 @@ Each item: `- [status] **C-NN Title.** One or two lines. Links.`
 
 - [open] **C-26 Surge mode.** First heat wave or cold snap: shorter calls, urgent and members first, routine pushed to next available.
 - [open] **C-27 Business hours and after hours.** What changes at night and on weekends.
+- [open] **C-35 Decision models.** Could a small typed decision model (Laya, OpenAI Decisions, or "Jev" as Jackson said it; to identify) answer narrow questions like "did the caller agree" or "is this an emergency" beside the turn, off the reply path, so the latency budget holds? Bobert's eval (from-other-projects/bobert/decision-model-eval.md) found OpenAI Decisions accurate and stock Laya not. Part of #5.
+- [open] **C-36 Local context, lightly.** Know the service area (boroughs, neighborhoods, housing types, how people say addresses, building access like a super or a shared basement) from config, without hard-coding NYC. Mention state or city programs only when they change what the caller should do.
 - [open] **C-28 Swappable models and prompts.** Named profiles, prompt files by job, one eval matrix across them.
 - [open] **C-29 Hosting.** Always-on tool server and agent worker, a backup number, how a failure is noticed.
 - [open] **C-30 Privacy.** What is stored from calls, for how long, and who can see it.
