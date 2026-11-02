@@ -87,4 +87,4 @@ Changed:
 - Findings from Revin's blog folded in, each with its reason and the post it comes from (exploration 005), marked as vendor practice: owner view shows booking rate by call type, callbacks promised vs done, and booked-and-kept (C-42); after-hours no-heat ends in one of three named outcomes with temperature cutoffs in tenant config (C-43); heat pump defrost and furnace lockout look-alikes, with no reset instructions (C-44); every callback names a time (C-45); cancels ask why and offer two windows, second-opinion, refrigerant and rebate calls handled, and a new complaint or warranty journey (C-46).
 - No open items remain.
 Commit: 4d4de20
-Status: open
+Status: locked

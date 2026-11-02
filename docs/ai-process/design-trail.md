@@ -26,3 +26,4 @@ How the design was reached, in order, so a reader can follow each choice back to
 | Phone number | (646) 624-0418 bought for our stack; the 678 Retell number is the bake-off baseline; one number after the bake-off | DECISIONS.md 004 |
 | Texting | Left out of V1: not in the assignment, and registration takes weeks; terms pages kept for later | DECISIONS.md 007, docs/decisions/15-texting-registration.md |
 | Scope | Every consideration triaged: privacy and success measures in, surge mode out (scaling plan instead), languages, decision models and playbooks later | DECISIONS.md 008, docs/decisions/10-considerations-triage.md |
+| Call journeys | Shared spine, thirteen journeys including calls Summit Air makes, server checks named in each, Revin field practice cited; locked after three rounds | docs/call-journeys.md, coauthoring.md (call-journeys r1 to r3), exploration 005 |
