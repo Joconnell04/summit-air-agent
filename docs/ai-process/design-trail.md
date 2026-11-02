@@ -28,3 +28,5 @@ How the design was reached, in order, so a reader can follow each choice back to
 | Scope | Every consideration triaged: privacy and success measures in, surge mode out (scaling plan instead), languages, decision models and playbooks later | DECISIONS.md 008, docs/decisions/10-considerations-triage.md |
 | Call journeys | Shared spine, thirteen journeys including calls Summit Air makes, server checks named in each, Revin field practice cited; locked after three rounds | docs/call-journeys.md, coauthoring.md (call-journeys r1 to r3), exploration 005 |
 | Spec | 51 testable statements with must-pass marked; assumptions in the brief; plans renamed Summit Premium and Standard; joining flow, tool-failure queue, do-not-call added; locked after two rounds | docs/spec.md, docs/brief.md, coauthoring.md (spec r1 and r2) |
+| Latency budget | Per-stage targets with sources, bridge line only for slow tools, delay changes flagged across eval runs, on-prem estimate; thinking on only off the live path (technician summary, grader) | docs/latency.md, DECISIONS.md 006 |
+| Membership | One plan, Summit Standard Membership: a caller is a member or not | coauthoring.md (spec r3) |

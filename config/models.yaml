@@ -33,11 +33,20 @@ profiles:
     model: gemini-3.8-flash
     thinking: false
 
-# Offline only: simulated callers and the grader. Never in the live path.
+# Off the live path: nobody is waiting, so thinking is on where quality matters.
 offline:
   caller:
     provider: anthropic
     model: claude-haiku-5-5
+    thinking: false
   grader:
     provider: anthropic
     model: claude-opus-5-5
+    thinking: true
+
+# After the call ends: the technician's job summary.
+post_call:
+  summary:
+    provider: anthropic
+    model: claude-sonnet-5-5
+    thinking: true

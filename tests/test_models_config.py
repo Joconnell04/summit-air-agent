@@ -13,7 +13,7 @@ def test_default_profile_exists():
 
 
 def test_every_profile_uses_a_known_provider():
-    for name, profile in {**CONFIG["profiles"], **CONFIG["offline"]}.items():
+    for name, profile in {**CONFIG["profiles"], **CONFIG["offline"], **CONFIG["post_call"]}.items():
         assert profile["provider"] in CONFIG["providers"], name
         assert profile["model"], name
 
@@ -31,3 +31,8 @@ def test_every_provider_key_is_listed_in_env_example():
 
 def test_the_default_brain_is_anthropic():
     assert CONFIG["profiles"][CONFIG["default"]]["provider"] == "anthropic"
+
+
+def test_thinking_is_on_for_the_grader_and_the_technician_summary():
+    assert CONFIG["offline"]["grader"]["thinking"] is True
+    assert CONFIG["post_call"]["summary"]["thinking"] is True

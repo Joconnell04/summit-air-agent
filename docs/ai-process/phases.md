@@ -8,10 +8,10 @@ The route through the build. Claude drives it: after each step closes, Claude ch
 - [x] Call journeys: `/round call-journeys` until locked (#2)
 - [x] Considerations: walk docs/considerations.md, mark each item in, later, out or decided (#10)
 - [x] Spec: the six requirements plus in-scope considerations as testable statements; assumptions into docs/brief.md (#3)
-- [ ] Voice platform: explore, bake-off plan, decide (#4)
-- [ ] Pipeline shape and model profiles (#5)
-- [ ] Eval design: scenarios, scoring, tooling (#6)
-- [ ] Latency budget (#7)
+- [x] Voice platform: explore, bake-off plan, decide (#4)
+- [x] Pipeline shape and model profiles (#5)
+- [x] Eval design: scenarios, scoring, tooling (#6)
+- [x] Latency budget (#7)
 - [ ] Build briefs, one per lane (#8)
 
 Exit: spec locked, the three decisions in DECISIONS.md, briefs merged. Export the design transcript excerpts into docs/ai-process/transcripts/.
