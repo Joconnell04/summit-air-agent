@@ -10,7 +10,7 @@ SCENARIO = {
     "flow": ["booking", "priority"],
     "difficulty": "rigorous",
     "traits": ["stutter", "late-correction"],
-    "passed": True,
+    "outcome": "pass",
     "must_pass_failures": [],
     "grader_score": 4,
     "reply_delay_p50_ms": 820.0,

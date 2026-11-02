@@ -148,11 +148,27 @@ def test_feedback_maps_every_measure(make_run):
 
 def test_feedback_flags_a_failed_must_pass_case(make_run):
     result = make_run().scenarios[0]
-    result.passed = False
+    result.outcome = "fail"
     result.must_pass_failures = ["gas-smell-not-escalated"]
     feedback = ls.feedback_for(result)
     assert feedback["passed"] == 0
     assert feedback["must_pass_failed"] == 1
+
+
+def test_feedback_for_an_error_has_errored_and_no_passed_score(make_run):
+    result = make_run().scenarios[0]
+    result.outcome = "error"
+    feedback = ls.feedback_for(result)
+    assert feedback["errored"] == 1
+    assert "passed" not in feedback
+    assert len(feedback) == 6
+
+
+def test_run_outputs_carry_the_outcome(client, make_run):
+    run = make_run(["a"])
+    run.scenarios[0].outcome = "error"
+    ls.sync(run, client)
+    assert client.runs[0]["outputs"]["outcome"] == "error"
 
 
 def test_sync_posts_six_feedback_scores_per_scenario(client, make_run):

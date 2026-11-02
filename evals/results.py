@@ -17,6 +17,22 @@ class ResultsError(ValueError):
     """A results file is missing, unreadable or fails validation."""
 
 
+# The labels in evals/README.md. A typo here would silently split one tag into two in LangSmith.
+Flow = Literal[
+    "booking", "safety", "priority", "membership", "commercial", "renter",
+    "repeat-caller", "after-hours", "off-topic", "injection", "spam",
+]
+Difficulty = Literal["easy", "standard", "rigorous", "adversarial"]
+Trait = Literal[
+    "stutter", "filler", "self-correction", "late-correction", "split-digits",
+    "transcription-errors", "interruption", "vague", "side-question", "two-speakers",
+    "mind-change", "rude", "hard-of-hearing",
+]
+# "error" means the run produced no verdict, for example the simulated caller looped (decision 06).
+# It is not a failure and is left out of pass rates.
+Outcome = Literal["pass", "fail", "error"]
+
+
 class Strict(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -34,10 +50,10 @@ class ToolCall(Strict):
 class ScenarioResult(Strict):
     scenario_id: str = Field(pattern=SLUG)
     persona: str = Field(min_length=1)
-    flow: list[str] = Field(min_length=1)
-    difficulty: Literal["easy", "standard", "rigorous", "adversarial"]
-    traits: list[str] = Field(default_factory=list)
-    passed: bool
+    flow: list[Flow] = Field(min_length=1)
+    difficulty: Difficulty
+    traits: list[Trait] = Field(default_factory=list)
+    outcome: Outcome
     must_pass_failures: list[str] = Field(default_factory=list)
     grader_score: int = Field(ge=1, le=5)
     reply_delay_p50_ms: float = Field(ge=0)
@@ -49,8 +65,8 @@ class ScenarioResult(Strict):
 
     @model_validator(mode="after")
     def check_consistency(self) -> "ScenarioResult":
-        if self.must_pass_failures and self.passed:
-            raise ValueError(f"{self.scenario_id}: passed is true but must_pass_failures is not empty")
+        if self.must_pass_failures and self.outcome == "pass":
+            raise ValueError(f"{self.scenario_id}: outcome is pass but must_pass_failures is not empty")
         if self.reply_delay_p90_ms < self.reply_delay_p50_ms:
             raise ValueError(f"{self.scenario_id}: reply_delay_p90_ms is below reply_delay_p50_ms")
         return self

@@ -37,8 +37,14 @@ def example_inputs(result: ScenarioResult) -> dict[str, Any]:
 
 
 def feedback_for(result: ScenarioResult) -> dict[str, float]:
+    # An error is not a fail, so it gets its own score and no "passed" score: filtering on
+    # passed = 0 then finds real failures only.
+    if result.outcome == "error":
+        verdict = {"errored": 1}
+    else:
+        verdict = {"passed": int(result.outcome == "pass")}
     return {
-        "passed": int(result.passed),
+        **verdict,
         "must_pass_failed": int(bool(result.must_pass_failures)),
         "grader_score": result.grader_score,
         "reply_delay_p50_ms": result.reply_delay_p50_ms,
@@ -107,7 +113,7 @@ def upload_experiment(client: Any, run: Run, dataset: Any) -> str:
             reference_example_id=example_id(result.scenario_id),
             inputs=example_inputs(result),
             outputs={
-                "passed": result.passed,
+                "outcome": result.outcome,
                 "must_pass_failures": result.must_pass_failures,
                 "transcript": [t.model_dump() for t in result.transcript],
                 "tool_calls": [c.model_dump() for c in result.tool_calls],
