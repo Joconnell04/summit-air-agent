@@ -9,6 +9,9 @@ Status: design phase. The number, scoreboard and architecture go here as they la
 ```
 make setup    # install, enable the pre-commit hook
 make check    # lint, tests, test-count ratchet
+make seed-st  # rebuild the mock ServiceTitan world
+make mock-st  # serve the mock ServiceTitan on :8101
+make postman-st  # run the Postman collection against it with Newman
 ```
 
 ## Where things are
@@ -18,5 +21,6 @@ make check    # lint, tests, test-count ratchet
 - `docs/users.md`, `docs/call-journeys.md`, `docs/spec.md`: who it serves and what it must do
 - `DECISIONS.md`: choices made and why
 - `from-other-projects/`: lessons carried in from earlier agent builds
+- `servicetitan_mock/`: the mock ServiceTitan the agent's integration layer talks to; see its README. Company-specific parts live in `tenants/summit-air/`
 - `docs/ai-process/`: how this was built with AI (briefs, co-authoring log, transcripts)
 - Work is tracked in GitHub Issues and the project board

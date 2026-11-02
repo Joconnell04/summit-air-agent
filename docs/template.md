@@ -2,7 +2,7 @@
 
 The agent is built as a template for any home-services trade, with Summit Air as the first tenant. A tenant is one company: its facts, area, jobs and rules. Adapting the build for a roofing or kitchen remodeling company should mean writing a new tenant folder and an FSM adapter if they don't use ServiceTitan, not changing the template.
 
-Status: version 1, written before the build. Each build lane keeps this table current; a reviewer flags any tenant fact found in template code.
+Status: version 1, written before the build. The mock ServiceTitan's template vs tenant split is in `servicetitan_mock/README.md`. Each build lane keeps this table current; a reviewer flags any tenant fact found in template code.
 
 ## What lives where
 
