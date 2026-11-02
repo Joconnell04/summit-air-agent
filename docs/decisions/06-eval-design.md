@@ -1,35 +1,42 @@
 # 06. How we test the agent
 
-Issue: #6. Status: decided (DECISIONS.md 002)
+Issue: #6. Status: decided, our own harness (DECISIONS.md 002), revised after Jackson's review; LangSmith as a results viewer is the one open sub-choice
 
 ## Question
-Where test calls run, who scores them, and what tool runs it all. Blocks the eval build brief (#8) and the eval floor in `make check`.
+
+Where test calls run, who scores them, what tool runs it all, and how both voice stacks are scored the same way. Blocks the eval build brief (#8) and the eval floor in `make check`.
 
 ## Options
-### A. Our own harness: a simulated caller in text against the real tool server
-A cheap model plays a caller persona against our real prompts and tools on a scratch database. Code checks on tool calls and saved records decide pass or fail; an LLM grader scores only how the call felt. About two days to build (ASSUMED), reusing Bobert's simulator and replay.
+
+### A. Our own harness: a simulated caller against the real tool server (chosen)
+A cheap model plays a caller persona against our real prompts and tools on a scratch database. Code checks on tool calls and saved records decide pass or fail; an LLM grader scores only how the call felt. Reuses the simulator and replay ideas from Bobert, an earlier personal practice project (a voice agent for a made-up HVAC company, built before this assignment).
 
 ### B. The voice platform's own simulator
-Retell or LiveKit plays the caller and an LLM judges the transcript. Little to build, but Retell can't check tool arguments or the database, and LiveKit's version only works if LiveKit wins #4.
+Retell or LiveKit plays the caller and an LLM judges the transcript. Little to build, but Retell can't check tool arguments or the database, and scoring each stack with its own simulator wouldn't be a fair comparison.
 
 ### C. A general eval framework (promptfoo, Braintrust, LangSmith)
-Nice dashboards and rubric grading, but a multi-turn caller against our server still needs custom glue, so it adds a dependency without removing the harness.
+Good dashboards and experiment comparison, but a multi-turn caller against our server still needs our own driver, so on its own it adds a dependency without removing the harness.
 
 ### D. Hosted voice testing (Cekura, Coval, Hamming)
-Places real synthetic phone calls and scores speech, interruptions and latency, which text can't. Sees only the outside of the call, no database checks, and pricing is mostly unpublished.
+Places real synthetic phone calls and scores speech and interruptions. Sees only the outside of the call, no database checks, and pricing is mostly unpublished.
 
-## Context
-The real trade is control versus convenience. Safety and booking rules live in server code, so only A (or B on LiveKit) can prove them directly; B and D are easier to start but judge from the transcript, which is where Bobert's worst bugs hid (a callback saved before the read-back, a gas line spoken after a tool call). Text tests are cheap, about $1 for a quick 8-scenario run and $15 for the full 40 scenarios three times (ASSUMED), but miss audio problems, so a small audio pass is needed either way.
+## How it works
 
-| | Checks the server directly | Full run | Depends on #4 |
-|---|---|---|---|
-| A | Yes | about $15 (ASSUMED) | Barely |
-| B | LiveKit yes, Retell no | similar | Fully |
-| C | Yes, with glue | A plus fees | No |
-| D | No | unpublished | Somewhat |
+- **One harness, both stacks.** The same scenarios run against our LiveKit stack (in process) and against the Retell baseline (through Retell's text chat interface, same tools on the same server), so the voice-platform bake-off compares like with like. Retell's own simulator isn't used for scoring.
+- **Audio pass.** The same 10 scripted calls are placed to both phone numbers, by an automated caller that speaks the script (ASSUMED feasible with an outbound call from our own caller agent) or by hand from the script if that isn't ready.
+- **Realistic callers.** Scenarios aren't clean text. The simulated caller stutters, trails off, gives a wrong ZIP and corrects it straight away, gives a wrong address and only corrects it after the agent reads it back, splits a phone number across turns, interrupts, answers vaguely, or has someone else in the room. A transcription layer adds the kind of errors speech-to-text makes ("for one one two oh one").
+- **Labelled and tiered.** Every scenario carries a flow tag (booking, safety, membership, commercial, renter, repeat caller, after hours, off topic, injection) and a difficulty: easy, standard, rigorous, adversarial. Suites are just tag filters, so a run can be picked on the fly: `make eval SUITE=smoke`, `make eval TAGS=flow:safety,difficulty:rigorous`, `make eval SUITE=standard STACKS=livekit,retell` for a bake-off table.
+- **Cheap by default.** The smoke suite is about 8 scenarios for about $1 (ASSUMED); the full suite runs only at a release gate (about $15, ASSUMED).
+
+## LangChain tools (named in the job description)
+
+- **LangSmith:** fits as a results viewer. The harness stays the source of truth, but each run can be sent to LangSmith as an experiment, which gives side-by-side comparison of bake-off setups and traces of each simulated call. Free Developer plan: 5,000 traces a month, 14-day retention, 1 seat (SOURCE: langchain.com/pricing). Off the live call path, so no effect on reply speed.
+- **LangGraph:** not used. LiveKit Agents already runs the conversation loop, and the rules live in server gates; a graph framework in the live path adds a layer and delay without adding a step the call needs.
+- **Langflow:** not used. A visual builder for prototypes, not for a tested, code-reviewed agent.
 
 ## Recommendation
-A, plus about 10 audio test calls once #4 is decided: it is the only option that checks the rules where they actually live, with the least tooling for a repo Revin will read. Switch to B if LiveKit wins and our harness grows past about 500 lines.
+
+Our own harness (A), the same harness for both voice stacks, realistic tiered scenarios selectable by tag, and a 10-call audio pass. Add LangSmith as an optional results viewer for the bake-offs, since it costs nothing on the free plan and shows the comparison clearly.
 
 ## Research notes
 
