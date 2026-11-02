@@ -88,3 +88,11 @@ Changed:
 - No open items remain.
 Commit: 4d4de20
 Status: locked
+
+## spec r1
+Feedback (verbatim):
+> (none; version 1 drafted from the six requirements, docs/users.md, docs/call-journeys.md, docs/considerations.md and DECISIONS.md 001 to 008)
+Changed:
+- First draft: 47 testable statements grouped under the six requirements plus cross-cutting rules, each with how it's tested (unit, eval tags, grader, live) and where it comes from; 13 marked must-pass. Assumptions behind the numbers moved into docs/brief.md.
+Commit: bd77be5
+Status: open
