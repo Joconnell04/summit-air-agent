@@ -35,6 +35,15 @@ Until approval, Twilio blocks every text from an unregistered 646 number to US p
 
 Start A now, registered honestly as Jackson, using the fields below, because approval takes days to weeks and the build does not have to wait. Build the text behind an on/off switch so the owner view and email always show the confirmation (C is the free fallback); drop to C, not a blind re-file, if the first campaign is rejected or the demo comes before approval, and consider B only if Jackson does not want his name on a public page for A.
 
+## If approval doesn't land before the demo
+
+Registration only affects texts. The 646 number takes and makes calls today, so the demo line works either way.
+
+1. **Texts behind a switch.** The agent still asks for consent and the server still records it. With texting off, the confirmation it would have sent shows on the owner view, marked "text queued, waiting on carrier approval", and goes out automatically once the campaign is approved.
+2. **Email as the second channel.** If the caller gives an email, the same confirmation goes there instead (no carrier registration needed).
+3. **In the meeting:** show the queued text on screen and say plainly that US business texting needs carrier registration, which is filed and pending. That is a real rollout step a customer would face, so it reads as honest rather than as a gap.
+4. **Optional hedge:** toll-free verification on a second, texts-only number is free and usually takes 3 to 5 business days (SOURCE, research notes), but Twilio discourages it for hobby senders and the text would come from a different number than the one the caller dialed. Worth it only if texts in the demo matter enough for $2.15 a month and a second number.
+
 ## Research notes
 
 Tools: built-in search and fetch, plus curl on Twilio's public help-center JSON (support.twilio.com returns 403 to plain fetch). No Exa or Firecrawl calls. Carrier codes of conduct (AT&T, T-Mobile): current versions not found; the CTIA text and Twilio's reviewer rules carry the same consent and privacy requirements. This is not legal advice.
