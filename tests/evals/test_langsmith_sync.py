@@ -1,4 +1,5 @@
 import json
+from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
 from uuid import uuid4
 
@@ -63,6 +64,8 @@ class FakeClient:
         self.query_calls.append(kwargs)
         # The real endpoint returns only runs that start inside the window, one day by default.
         assert "min_start_time" in kwargs, "the default one-day window would hide older runs"
+        window = datetime.now(UTC) - kwargs["min_start_time"]
+        assert window <= timedelta(days=401), "the API rejects a window longer than 401 days"
         names = [n for n, pid in self.project_ids.items() if str(pid) in kwargs["project_ids"]]
         for r in self.created_runs:
             if r["project_name"] in names:
@@ -236,15 +239,14 @@ def test_feedback_ids_are_the_same_on_every_sync(client, make_run):
     assert set(client.feedback) == first
 
 
-def test_existing_runs_are_found_with_the_supported_query_over_all_time(client, make_run):
+def test_existing_runs_are_found_with_the_supported_query_over_the_widest_window(client, make_run):
     ls.sync(make_run(["a"]), client)
     project_id = next(iter(client.project_ids.values()))
     call = client.query_calls[0]
     assert call["project_ids"] == [str(project_id)]
     assert call["is_root"] is True
     assert call["selects"] == ["ID"]
-    assert call["min_start_time"].year == 2000
-    assert call["min_start_time"].tzinfo is not None
+    assert timedelta(days=300) < datetime.now(UTC) - call["min_start_time"] <= timedelta(days=401)
 
 
 def test_a_scenario_with_a_duration_gets_a_matching_start_and_end(client, make_run):

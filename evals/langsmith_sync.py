@@ -12,6 +12,8 @@ from typing import Any
 
 from evals.results import ResultsError, Run, ScenarioResult, load
 
+MAX_LOOKBACK_DAYS = 400
+
 DATASET_NAME = "summit-air-scenarios"
 
 # Fixed, so the same scenario or run maps to the same LangSmith id on every sync.
@@ -123,12 +125,13 @@ def existing_run_ids(client: Any, project_id: Any) -> set[str]:
     async def collect() -> set[str]:
         found = set()
         # min_start_time is explicit because the default window is one day, which would hide
-        # runs from an earlier day and make every later sync create them again.
+        # runs from an earlier day and make every later sync create them again. The API rejects
+        # a window longer than 401 days, so 400 is the furthest back it can look.
         async for r in client.runs.query_v2(
             project_ids=[str(project_id)],
             is_root=True,
             selects=["ID"],
-            min_start_time=datetime(2000, 1, 1, tzinfo=UTC),
+            min_start_time=datetime.now(UTC) - timedelta(days=MAX_LOOKBACK_DAYS),
         ):
             found.add(str(r.id))
         return found
