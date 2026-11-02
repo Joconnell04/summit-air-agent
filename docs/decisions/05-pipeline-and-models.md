@@ -1,6 +1,6 @@
 # 05. Pipeline shape and which model does which job
 
-Issue: #5. Status: ready (second revision)
+Issue: #5. Status: decided, A with a right-sized model per job and no side model at launch (DECISIONS.md 006)
 
 ## Question
 
@@ -57,6 +57,8 @@ The model never reaches into ServiceTitan itself. Our tool server is its harness
 - **A few small tools.** About six tools (find customer, check area, find slots, book, flag a person, text a confirmation), each returning a short result plus a sentence the agent can say. Fewer, clearer tools mean fewer wrong calls and faster model turns.
 - **Slots ready to read.** Open slots for the next few days are cached on the server and refreshed after every booking, so "find slots" answers in milliseconds instead of a round trip to the FSM.
 - **Gates live here.** No booking until the address and phone have been read back and confirmed by the caller; nothing but the safety lines after gas or carbon monoxide comes up; no booking for a commercial caller. The server refuses and returns what to say instead.
+- **Slots can't be taken twice.** Booking a slot is idempotent: the same call retrying the same booking gets the first result back, and the database refuses a second live booking in the same slot.
+- **Least privilege.** The agent can only do what a phone intake person could: look up, book, reschedule or cancel its own caller's booking, flag a person, text a confirmation. No tool deletes or bulk-changes anything. Every write is checked on the server (see docs/architecture.md, "What the agent is allowed to do").
 - **Time limits and retries.** Every FSM call has a time limit; on a timeout the tool says "I'm having trouble pulling up the schedule, let me take your details and have the office call you back" rather than stalling. Bookings are idempotent, so a retry never double-books.
 - **Target:** tool turns at or under about 2.3 s (MEASURED on the earlier practice agent) and lookups inside the server well under 100 ms (ASSUMED). The latency budget (#7) sets the final numbers.
 
