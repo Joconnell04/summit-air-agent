@@ -32,6 +32,7 @@ Exit: every lane merged through review, scoreboard running, go/no-go passed or t
 - [ ] Model and prompt matrix
 - [ ] Human test pass, notes logged
 - [ ] Bake-off result recorded in DECISIONS.md
+- [ ] Walk docs/later.md with Jackson: each item done, scheduled after V1, or dropped with a reason
 
 ## 4. Deploy and demo prep
 

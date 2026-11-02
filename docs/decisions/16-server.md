@@ -1,6 +1,6 @@
 # 16. Where the Summit Air server runs
 
-Issue: #16. Status: ready
+Issue: #16. Status: decided, option B (DECISIONS.md 005)
 
 ## Question
 

@@ -12,6 +12,15 @@ Discussion: docs/ai-process/transcripts/... or docs/explorations/...
 Issue: #N
 -->
 
+## 005. A new Vultr server in New Jersey, just for Summit Air
+
+Decided: run the tool server and the voice program on a new Vultr server (2 vCPU, 4 GB, New Jersey, Ubuntu 24.04, $20 a month billed hourly), not on the existing shared server.
+Why: the shared server runs Epic's client services, is too small for 5 calls at once, gives us no admin rights (so it needed an ngrok tunnel) and sits in Atlanta. The new one is the cheapest option in the New York area, uses the existing Vultr account, isolates Summit Air from client work, and can be deleted after the interview.
+Considered: keeping or resizing the shared server; DigitalOcean (New York) and Akamai Linode (Newark) at about $24 a month; Hetzner (prices unclear after its 2026 increases, not near New York); usage-billed platforms such as Fly.io (no saving for an always-on program).
+Would change if: call volume needs more than about 5 calls at once (resize, or add a second server as a hot spare).
+Discussion: docs/decisions/16-server.md
+Issue: #16
+
 ## 004. Build our own LiveKit stack, with Retell as the baseline it has to beat
 
 Decided: option D. The product is our own stack: Deepgram, a Claude model and Cartesia, run by our program on our own server, with LiveKit's free plan connecting the phone line. A quick Retell setup on the existing 678 number is the baseline. Both are scored on the same eval scenarios plus 10 real phone calls each; the winner keeps the new NYC Twilio number and the other voice folder is deleted.
