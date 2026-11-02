@@ -1,81 +1,92 @@
 # Call journeys
 
-The paths a call takes, one per caller type in docs/users.md. Each journey says how the call starts, what the agent asks, which server check fires, how it ends, and what the owner view records. Items marked "Open:" are Jackson's call, with a recommendation.
+The paths a call takes, one per caller type in docs/users.md, for calls Summit Air receives and the few it makes. Each journey says how the call starts, what the agent asks, which server check fires, how it ends, and what the owner view records. Calls can move between journeys at any point: a maintenance call can become a safety call, and a safety call that turns out to be a false alarm goes back to where it was.
 
-Scope follows docs/decisions/10-considerations-triage.md. Deferred items (texts, Spanish, playbooks, warm transfer) are in docs/later.md and left out here.
+Scope follows DECISIONS.md 008. Deferred items (texts, other languages, playbooks, warm transfer) are in docs/later.md and left out here.
 
 ## The spine every call shares
 
 1. **Lookup before hello.** The server looks up the calling number: customer, address, membership, open jobs, calls in the last few minutes. The result goes to the agent with its first turn.
-2. **Greeting.** "Thanks for calling Summit Air, this is the virtual assistant. How can I help?" If the number matched: "Hi, is this Maria?" The agent says it's an AI assistant whenever asked and never denies it.
-3. **Listen first.** The caller tells the story once. The agent fills gaps afterwards, one question at a time.
-4. **Safety and priority check on every caller turn.** The fixed list (gas, carbon monoxide, smoke or burning, oxygen or medical equipment) is checked by the server on every line. A match switches the call to the safety journey at once.
-5. **What the technician needs.** System, symptoms and since when, what's been tried, access (super, gate, parking), pets, who will be home, who approves the work.
-6. **Read-back gate.** Before any booking the agent reads back the address and phone number in groups and the caller confirms. The server refuses to book until that read-back happened on this call.
-7. **Book.** The agent offers the earliest real windows for that priority. Booking is idempotent on call and slot.
-8. **Confirm out loud.** Day, arrival window, what happens next. No text in V1.
-9. **"Anything else?"** before ending; never end in the same turn as the confirmation.
-10. **Owner view.** Every call records: caller, type, priority with reason, member or not, outcome (booked, flagged, declined, callback, not a customer), refused tool calls if any.
+2. **Greeting.** Always names the company. Unknown number: "Thanks for calling Summit Air, this is the virtual assistant. How can I help?" Known number: "Hi, this is Summit Air. Is this Maria?" The agent says it's an AI assistant whenever asked and never denies it.
+3. **Listen first.** The caller tells the story once, without interruption. If the caller goes quiet for about 5 seconds, a gentle check-in ("Take your time. Are you still there?"), not a stream of prompts. After a long silence the agent says it will hang up and that they can call back any time.
+4. **Safety check on every caller turn.** The server checks each line against the fixed list. A clear signal ("I smell gas", "the CO alarm is going off") switches to journey 3 at once. An unclear one ("gas" with nothing else, a gas furnace, a gas bill) gets one check first: "Just to be safe, are you smelling gas in the house right now?" A clear no puts the call back where it was, and the false alarm is logged for review.
+5. **Questions in order of need, only when needed.** The agent asks what it needs to help, in this order, and skips anything already known or not useful for this call:
+   1. What's wrong and since when.
+   2. Where: address, checked against the service area by ZIP. The phone's area code is never used to guess where someone lives.
+   3. How bad: how warm or cold it is inside, and who's affected (journey 2).
+   4. What the technician needs: system type and rough age, what's been tried.
+   5. One open question at the end: "Anything the tech should know when they get there, like a gate code, a buzzer or a dog?" Pets, access and parking come up here, not as separate questions.
+6. **Contact number.** "The number I'm calling from" means the caller ID the call arrived with, which the agent reads back in groups. If the customer has several numbers on file, shorthand works: "the one ending in 4024" picks the matching number, read back to confirm.
+7. **Read-back gate.** Before any booking the agent reads back the address and phone number and the caller confirms. The server refuses to book until that read-back happened on this call.
+8. **Offer times like a person would.** First the shape of availability: "I've got openings Tuesday and Thursday afternoon, and Thursday morning. What works best?" Then the exact arrival windows for the day they pick. Urgent calls get the earliest urgent window offered first.
+9. **Book and confirm out loud.** Day, arrival window, what happens next. Booking is idempotent on call and slot. No text in V1.
+10. **"Anything else?"** before ending; the agent never ends in the same turn as the confirmation.
+11. **Owner view and logs.** Every call records caller, type, priority with reason, member or not, outcome (booked, flagged, declined, callback, not a customer), any refused tool calls, any journey switches, and the full trace for debugging.
+
+**How it sounds.** Short turns, plain words, one question at a time. Acknowledgments vary and fit the moment ("Oh no, in this weather?", "Okay, let's get someone out to you", "Got it"); the same phrase isn't used twice in a call, and the evals check for it.
+
+**Company knowledge.** Summit Air's own facts live in `tenants/summit-air/knowledge/` as plain markdown: a sign-off line or slogan, how they describe their plans, notes on equipment brands they service, answers to common questions. The agent can use them; a different company swaps the folder (docs/template.md).
 
 ## 1. No heat or no cooling
 
-1. Caller: "The heat's out." The server looks up the address and any open job.
-2. Agent: "I'm sorry, that's no fun. When did it stop?" Then, one at a time: what kind of system (if not on file), what the thermostat reads, whether they've tried anything.
-3. Agent asks who's home (see journey 2) and whether they own or rent (see journey 6). Both are asked once, plainly.
-4. Server checks the ZIP is in the service area. Out of area: polite decline and the call is logged.
-5. Read-back gate, then the earliest window for that priority.
-6. Ends booked. No maintenance-plan pitch on this call.
-7. Owner view: priority (urgent if outdoor temperature or the answers call for it), reason, booked window.
+1. Caller: "The heat's out." The lookup already has the address and any open job.
+2. The agent acknowledges it like a person and asks when it stopped, then how cold it's getting inside. Service first: what's wrong, how bad, where.
+3. Who's affected comes up naturally once the agent understands the problem (journey 2), never as the opening question.
+4. Own or rent, only when it matters for who approves the visit (journey 6).
+5. ZIP checked against the service area. Out of area: "I'm sorry, that's outside the area we cover, so we're not able to send someone. A local heating company should be able to help." No supervisor flag; turning away out-of-area calls is normal practice.
+6. Read-back gate, then the earliest window for that priority.
+7. Ends booked. No maintenance-plan pitch on this call.
+8. Owner view: priority (urgent if the inside temperature or the people affected call for it), reason, booked window.
 
 ## 2. Vulnerable household
 
-1. Starts as journey 1. The agent asks: "Is anyone at home who's older, very young, or has a health condition the heat would affect?"
-2. If yes: "Where are they right now?" No checklist of conditions.
-3. The score (a classifier beside the turn) or the fixed list for medical equipment raises priority. Rules can only raise it.
-4. If someone is struggling to breathe or their oxygen equipment has stopped: the agent tells the caller to call 911 first.
-5. Agent: "I've marked this as a priority." It does not repeat the details back.
-6. Ends booked in the earliest urgent window, or flagged to a person if no urgent window is open today.
-7. Owner view: urgent, reason ("85-year-old at home, no heat, 52 F inside").
+How to ask: call-takers in this trade routinely screen for people at risk (older adults, babies, someone with a medical condition) on no-heat and no-cooling calls (SOURCE: vendor HVAC intake guides, e.g. https://getnextphone.com/blog/hvac-lead-qualification-workflow and https://www.fieldproxy.ai/blueprints/hvac-no-heat-emergency-flow; no authoritative industry script was found). The wording here is ours. It asks about the people, not for a reason to rank them:
 
-Open: if no urgent window is open today, does the agent book tomorrow's first window and flag a person, or only flag? Recommend both: book the first window so the caller has something certain, and flag a person to try to move it up.
+1. After the agent understands the problem and how cold or hot it is inside: "Who's at home with it right now? Anyone who'd have a harder time with the cold?"
+2. The caller's answer decides priority; the agent doesn't ask for a list of conditions. If they mention someone older, a baby, an illness or medical equipment, one follow-up at most: "Are they doing okay at the moment?"
+3. The score beside the turn, or the fixed list for medical equipment, raises priority. Rules can only raise it.
+4. If someone is struggling to breathe or their oxygen equipment has stopped, the agent tells the caller to call 911 first. The agent itself never places a call to 911 or anyone else; there is no tool for it.
+5. The agent says what it actually did, which the server returns as a sentence only once it's true: "I've marked this as urgent and let our on-call team know, so someone's keeping an eye on it." It doesn't repeat the medical details back.
+6. If an urgent window is open today, book it. If not, book tomorrow's first window so the caller has something certain, and flag a person to try to move it up (decided in round 2).
+7. A background job watches for earlier openings (cancellations, a technician freed up) and offers them to flagged urgent bookings first, by an outbound call (journey 12).
+8. Owner view: urgent, reason ("84-year-old at home, no heat, 52 F inside"), whether an earlier slot is being sought.
 
 ## 3. Safety caller (gas, carbon monoxide, smoke)
 
 1. Starts anywhere, often mid-sentence: "it smells a bit like gas, but anyway the heat's out."
-2. The server's fixed-list check fires on that turn. From here the server refuses booking tools until the safety script has been said.
-3. Agent says the fixed script, spoken from code, word for word (signed off by a person before launch). Gas: get everyone out now, don't flip switches or use the stove, call 911 or the gas company from outside. Carbon monoxide: open a window if one is right there, get everyone out, call 911 from outside.
-4. Server flags a person immediately.
-5. Agent ends the call so the caller can leave and use the phone outside. The end-call tool refuses until the script was said and the flag raised.
-6. If the call drops before the script finishes: a person is flagged to call back.
-7. A spam or wrong-number label can never apply to a call with a safety signal.
-8. Owner view: safety call, what was said, time the script finished, flag status.
-
-Open: after the caller is safe, should Summit Air offer a follow-up visit on a later call? Recommend yes, by a person calling back, not by the agent on this call.
+2. Clear signal: the server's check fires on that turn and refuses booking tools until the safety lines have been said. Unclear signal: the one check question from the spine first.
+3. The agent says the fixed lines, spoken from code, word for word, in a calm voice (wording signed off by a person before launch). Gas: get everyone out now, don't flip switches or use the stove, call 911 or the gas company from outside. Carbon monoxide: open a window if one is right there, get everyone out, call 911 from outside.
+4. The server flags a person immediately.
+5. The agent doesn't hang up on them. It signs off: "Please head outside now and call 911 from there. I'll stay on if you need me, but the safest thing is to go now. We'll follow up once you're safe." If the caller keeps talking, it repeats the instruction once, briefly. The end-call tool refuses until the lines were said and the flag raised; the call ends when the caller hangs up or says goodbye.
+6. If the call drops before the lines finish: a person is flagged to call back.
+7. False alarm: if the caller says clearly that they don't smell gas and nothing is going off, the call returns to the journey it came from and the owner view shows "safety check cleared" for review.
+8. Follow-up: once the caller is safe, a person (or journey 12) calls back to offer a visit, treated as top priority. The agent doesn't offer one on the safety call (decided in round 2).
+9. A spam or wrong-number label can never apply to a call with a safety signal.
+10. Owner view: safety call, what was said, when the lines finished, flag status, follow-up status.
 
 ## 4. Maintenance scheduler
 
-1. Caller: "I need my annual tune-up." Lookup has already found them.
-2. Agent uses what's on file: "I've got you at 42 Elm Street, is that still right?"
-3. Agent offers windows that suit them (mornings, a day of the week). During a surge, tune-ups are offered a later day so today's slots stay open for broken systems.
+1. Caller: "I need my annual tune-up." The lookup has already found them.
+2. The agent uses what's on file: "I've got you at 42 Elm Street, is that still right?"
+3. Times offered the way the spine describes, around what suits them. Urgent slots are held back for broken systems, so tune-ups get the regular windows.
 4. Read-back gate, book, confirm.
 5. Owner view: routine, booked.
 
 ## 5. Member
 
 1. Same as the journey for their reason for calling, with the lookup showing an active plan.
-2. Agent greets them as a member and names the benefit that applies: "You're on the Comfort plan, so you get priority scheduling."
-3. Expired plan: the agent says it plainly and offers a person to renew, without promising the perk.
-4. Unknown member (no phone match): the agent asks for the address and the server checks membership by address.
-5. Owner view: member status recorded on every call.
+2. A short, real thank-you and the benefit that applies, without a script feel: "I see you're on the Comfort plan, thanks for sticking with us. That gets you priority scheduling, so let me find you the earliest spot."
+3. Not found by phone: once the urgent part of the call is handled, "Are you on one of our maintenance plans, by any chance?" Then the server checks by address. Never asked while the caller is describing an emergency.
+4. Expired plan: said plainly and kindly, with an offer for someone to help renew; no promised perk.
+5. Owner view: member status on every call.
 
 ## 6. Renter, or someone who can't approve the work
 
-1. On every no-heat or no-cooling call the agent asks: "Do you own the home or rent it?"
+1. Asked only when it matters: "Is it your place, or are you renting?"
 2. If they rent, the agent records who approves the work separately from the caller.
-3. Owner present or approving: book as usual, with the owner as the approver.
-4. Owner unknown or unreachable: the agent takes details and flags a person.
-
-Open: what a tenant with no heat in heat season (October 1 to May 31, five boroughs) is offered. Recommend: say one neutral line ("In New York City, landlords are required to provide heat in season, and 311 takes complaints"), then offer to book if the tenant or landlord can approve the visit, or take details and flag a person if not. No legal advice beyond that line.
+3. Owner approving: book as usual, with the owner as the approver.
+4. Owner unknown or unreachable: take details and flag a person.
+5. Tenant with no heat in heat season (October 1 to May 31, five boroughs): one neutral line ("In the city, landlords have to provide heat in season, and 311 takes complaints"), then book if the tenant or landlord can approve, or take details and flag a person. No legal advice beyond that line (decided in round 2).
 
 ## 7. Repeat caller
 
@@ -84,32 +95,30 @@ Open: what a tenant with no heat in heat season (October 1 to May 31, five borou
 3. Same problem came back: book a return visit linked to the earlier job, priority reviewed by a person.
 4. Reschedule or cancel: only a booking that belongs to this caller (server check). One reschedule and one cancel per call.
 5. Dropped and called back within a few minutes: the server links the calls and the agent picks up where the last call stopped: "I think we got cut off, you were telling me about the furnace." Nothing already done is done again.
-6. Several calls in a few minutes with no progress: flag a person.
-7. Owner view: linked calls shown as one thread.
+6. Keeps getting cut off (two or more drops in about ten minutes): "Looks like we keep getting cut off, the signal might be spotty. Want me to have someone call you back in a few minutes instead?" A yes creates a callback (journey 12).
+7. Several calls with no progress and no drops: flag a person.
+8. Owner view: linked calls shown as one thread.
 
 ## 8. Commercial caller
 
 1. Signals: a business name, "our building", "our tenants", rooftop or multi-unit equipment, or a commercial account in the FSM.
-2. Agent, early and politely: "Summit Air only works on homes, so we're not the right fit for this one."
-3. The server refuses any booking for a commercial customer type.
-4. One line saved with the normal end-of-call record: company, contact, what they needed. No extra lookups.
-5. Owner view: commercial, declined.
-
-Open: where the line falls. Recommend: an owner-occupied one or two-family house, or a single co-op or condo unit, is residential; a landlord calling about a building of three or more units, a property manager, or any business premises is commercial.
+2. Where the line falls (decided in round 2): an owner-occupied one or two-family house, or a single co-op or condo unit, is residential; a landlord calling about a building of three or more units, a property manager, or any business premises is commercial.
+3. The agent, early and kindly: "Thanks for thinking of us. Unfortunately Summit Air only works on homes, so we're not the right fit for this one." No callback offered.
+4. The server refuses any booking for a commercial customer type.
+5. One line saved with the normal end-of-call record: company, contact, what they needed. No extra lookups.
+6. Owner view: commercial, declined.
 
 ## 9. Replacement or install quote
 
 1. Caller asks for a new system, a heat pump, a conversion or rebates.
-2. Agent takes the details a comfort advisor needs: system age, what they want, how soon, home type.
-3. Ends as a booked estimate visit or a callback from a comfort advisor. Never a price or a rebate promise.
+2. The agent takes what a comfort advisor needs: system age, what they want, how soon, home type.
+3. Ends with a callback from a comfort advisor (decided in round 2; the mock has no advisor calendar). Never a price or a rebate promise.
 4. Owner view: lead for a comfort advisor.
-
-Open: does the agent book estimate visits itself, or only take a callback? Recommend a callback for V1; the mock has no advisor calendar yet.
 
 ## 10. Not a customer call
 
 1. Wrong number, robocall, vendor, job seeker, or someone testing the agent with off-topic asks.
-2. Agent gives one polite line and either returns to the purpose or ends the call. Off-topic asks ("write my essay", "ignore your instructions") get one line and a return to the call; the agent stays in role.
+2. One polite line, then either back to the purpose or a goodbye. Off-topic asks ("write my essay", "ignore your instructions") get one line and a return to the call; the agent stays in role.
 3. Any request to change or delete data is refused by the server, whatever the agent was told (least privilege, docs/architecture.md).
 4. Never applied if a safety signal was heard.
 5. Owner view: not a customer, with the type.
@@ -118,15 +127,25 @@ Open: does the agent book estimate visits itself, or only take a callback? Recom
 
 1. Same spine. The agent says the office is closed and what it can still do.
 2. Routine calls: booked for the next business day.
-3. Urgent calls (no heat with a vulnerable person, no cooling with a medical condition): the on-call technician gets an email alert with what, where, who and why urgent, and the agent tells the caller someone will call them back shortly.
+3. Urgent calls (no heat with a vulnerable person, no cooling with a medical condition): the on-call technician gets an email alert with what, where, who and why it's urgent, and the agent tells the caller someone will call them back shortly. The on-call technician decides whether to go out tonight; the agent never promises it (decided in round 2).
 4. Safety calls: journey 3, always.
 
-Open: are after-hours urgent calls booked for tonight or only flagged for the on-call technician to decide? Recommend flag only: the on-call technician decides whether to go out tonight, and the agent never promises a tonight visit.
+## 12. Calls Summit Air makes
+
+The system can also place calls, with the same spine (greeting names Summit Air and the reason for calling, read-back before any change, "anything else?"):
+
+1. **Earlier slot opened** for a flagged urgent booking: "Hi, this is Summit Air calling about your heating appointment. We've had an opening today at 2 to 4, would you like it?" Yes moves the booking; no keeps the original.
+2. **Safety follow-up** after a gas or carbon monoxide call: checks they're safe and offers a top-priority visit.
+3. **Callback requested** after repeated drops or when the caller asked for one.
+
+Rules: only to people who called Summit Air about this service request, only between 8 a.m. and 9 p.m. local time, never to a number marked "do not call", one attempt and one voicemail at most. Voicemails say only that Summit Air is calling about the appointment and give the number.
+
+Open: which of these V1 places automatically, and which go to a person as a callback task. Recommend: the earlier-slot offer and the requested callback are automatic (they're the "proactive" part of journey 2 and the dropped-call fix); the safety follow-up goes to a person, because it can involve a gas leak still being sorted out.
 
 ## Traits on any call
 
 - Upset or rude: calm, no arguing, offer a person.
-- Hard of hearing or slow to answer: slower pace, shorter questions, more read-backs.
+- Hard of hearing or slow to answer: slower pace, shorter questions, more read-backs, longer wait before a check-in.
 - Two people on the line or someone relaying: confirm who is approving and who will be home.
 - "Am I talking to a robot?": "Yes, I'm an AI assistant for Summit Air." Never denied.
 - Wants a person: during hours, take details and flag a person for a callback (no live transfer in V1); after hours, as journey 11.
