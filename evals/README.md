@@ -65,7 +65,33 @@ make eval SUITE=smoke PROFILES=fast,quality         # model comparison
 make replay CALL=<id>                               # re-run a recorded call's caller turns
 ```
 
-Each run writes `evals/results/<run>.json` and a short table (pass rate by flow and difficulty, reply delay, cost), and can optionally send the run to LangSmith as an experiment for side-by-side comparison.
+Each run writes `evals/results/<run>.json` (schema and validation in `evals/results.py`) and a short table (pass rate by flow and difficulty, reply delay, cost), and can optionally send the run to LangSmith as an experiment for side-by-side comparison.
+
+## Results in LangSmith
+
+An optional viewer for bake-offs. The results JSON is the source of truth. LangSmith holds a copy, is never in the call path, and the upload does nothing but print one line when `LANGSMITH_API_KEY` is not set. `.env.example` lists the two variables.
+
+```
+make eval-upload RUN=evals/results/<run>.json
+```
+
+**What goes up**
+- Dataset `summit-air-scenarios`: one example per scenario id, with the persona, the tags (`flow:booking`, `difficulty:rigorous`, `trait:stutter`) and the difficulty. A new run adds missing scenarios and updates changed ones; it never duplicates.
+- One experiment per run, named `<stack>-<profile>-<suite>-<run id>`, with metadata for stack, profile, suite, prompt-and-scenario hash and run id. Each scenario is one run inside it, carrying the transcript, tool calls, pass or fail, must-pass failures and call id.
+- Six scores on every scenario: `passed` (0 or 1), `must_pass_failed` (0 or 1), `grader_score` (1 to 5), `reply_delay_p50_ms`, `reply_delay_p90_ms` and `cost_usd`.
+- Uploading the same file again changes nothing. An upload that stopped halfway is finished by running it again.
+
+**What stays local**
+- The results files, `baseline.json` and the ratchet. A LangSmith outage or a lapsed free plan (5,000 traces a month, 14-day retention) cannot fail `make check`.
+- The scenario YAML, hidden facts and code checks. Only the persona text and tags are copied.
+- Live calls. Nothing from the call path is traced.
+- Transcripts do go up. They come from simulated callers with made-up details, so upload only runs made by the harness, never recordings of real calls.
+
+**Comparing a bake-off**
+1. Run the same suite for each setup, for example `make eval SUITE=standard STACKS=livekit,retell`, and upload each results file.
+2. In LangSmith open Datasets & Experiments, then `summit-air-scenarios`, then Experiments. Tick the experiments to compare and choose Compare.
+3. Rows are scenarios and columns are experiments. Filter on `passed` = 0 or `must_pass_failed` = 1 to see where setups split, and sort on `reply_delay_p90_ms` or `cost_usd` for the speed and cost side.
+4. Compare experiments from the same suite only; the metadata `hash` shows whether the prompts and scenarios behind two runs matched.
 
 ## Must-pass cases
 
