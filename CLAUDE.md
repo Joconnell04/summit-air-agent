@@ -12,6 +12,7 @@ The assignment, word for word: `docs/assignment.md`. Reread it before any design
 - Rules that must happen (safety script, priority, service area, booking gates) live in server code, never only in the prompt. A flag the model can set is not a gate.
 - Every behavior change adds or updates a test. `make check` must pass before a commit; the ratchet blocks a lower test count.
 - Prompts live in `prompts/`, split by job. Models are named profiles in `config/models.yaml`. Never hard-code a model id elsewhere.
+- Reviewers have never heard of Bobert. In docs, call it "the earlier practice agent" and link from-other-projects/bobert the first time, or leave the name out.
 - Numbers in docs carry their source: SOURCE (with link or file), MEASURED (with how), or ASSUMED.
 
 ## Working agreements
