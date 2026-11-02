@@ -1,0 +1,25 @@
+# From other projects
+
+Summit Air is not a first attempt. Jackson built a voice agent for a made-up Atlanta HVAC company (Bobert), a receipt-reconciliation agent that takes input by email and SMS, and a local call copilot (Presage); this folder records what each one taught and where the lesson lands in this build.
+The table is the index. The subfolders hold the evidence: Bobert's architecture, prompt, latency notes and test logs are copied unchanged (phone numbers redacted); the other two are written up without client detail.
+
+| Lesson | From | Where it shows up in Summit Air |
+|---|---|---|
+| A flag the model can set is not a gate. The model set `confirmed: true` without asking, so the server now tracks whether the question was actually asked on this call. | Bobert | Server rule: booking and callback tools refuse until the read-back question has been returned on this call. |
+| Anything safety-related is said before any tool runs. Bobert's `log_handoff` refuses until the agent has spoken the safety line. | Bobert | Spec: safety script before any question; server rule: `assess_priority` runs first and can only raise urgency, never lower it. |
+| Voice tools get called twice because Retell keeps running a tool when the caller interrupts. Booking needs an idempotency key and a database-level backstop. | Bobert | Server rule: `book_appointment` keyed on call_id + slot_id, unique index on active slots, 8-way race test. |
+| Return HTTP 200 with `ok: false` and a sentence the agent can say. A non-2xx makes the platform retry and the caller hears dead air. | Bobert | Server contract: every tool returns `{ok, message}`; exceptions become a spoken fallback that tells the agent not to confirm anything. |
+| Rules the prompt states and the model sometimes ignores belong on the server (slot kind vs service type, out of area, phone must be ten digits). | Bobert | Server rules: `wrong_kind` rejection for a residential vs commercial slot, ZIP check on every booking call, phone and address cleaning. |
+| Never say a booking is done before the tool returns ok with a booking id, and never end the call in the turn that confirms it; callers change their mind right then. | Bobert | Spec: confirmation wording; prompt: ask "anything else?" after booking; evals: change-of-mind-after-confirm case. |
+| Test with adversarial caller personas, read every result in full, and turn each real failure into a permanent case. A passing score once hid an invented policy. | Bobert | Evals: persona suite (no-heat in winter, gas smell mentioned in passing, two people talking, renter vs owner, commercial caller). |
+| Build a replay harness: re-run a recorded call's caller turns against the current prompt and tools, and diff the tool-call sequence. | Bobert | Evals: replay harness; exit non-zero on divergence. |
+| Measure latency end to end and check the harness first. A timestamp bug accounted for 2 to 4 s of a "slow STT" that was really 0.2 to 0.4 s. | Bobert, Presage | Latency budget: per-stage numbers from a real run; harness validated before any tuning. |
+| A filler line at tool start made the real reply wait 7 to 10 s behind it. Do not ship a trick without measuring it on the turn it targets. | Bobert | Latency budget: no filler by default; tool turns budgeted as two model hops. |
+| Pick the model by measured first audio, not by name: about 1.0 s with Haiku against 2.1 s with GPT-4.1 mini on plain turns. | Bobert, Presage | Latency budget and model routing: small fast model on every live turn, no large model in the live path. |
+| A cheap, fast typed decision (did the caller say yes, did they mention gas) beats a regex, and failures must fall back to the old behaviour. Stock open-weights model failed the safety gate; a keyword rule false-alarmed on "gas bill". | Bobert, Presage | Server rule: urgency classifier with a keyword floor for gas, CO and smoke; evals: labelled lines for emergency vs routine. |
+| One intake function behind every channel, with the channel only changing how input arrives. Photo plus follow-up text within two minutes become one item. | Receipts agent | Spec: SMS confirmation after booking and a text-in path that call the same booking logic as voice. |
+| The reviewer's reply is the approval, and their corrections teach the system. No new login or screen. | Receipts agent | Spec: dispatcher or owner approval by reply for non-routine jobs (commercial, after hours); corrections logged for the next prompt revision. |
+| Label every number by source (SOURCE, FROM <person>, ASSUMED). | Receipts agent, Bobert | Docs: every latency, cost and call-volume figure in the Summit Air write-up carries its provenance. |
+| Transcription mangles numbers and spelled digits ("twelve percent", phone numbers split across turns), and the speech pipeline can hold a turn open on digits. | Presage, Bobert | Server rule: phone and ZIP validation with a read-back in groups; latency budget: separate end-of-turn cap for digit answers. |
+
+Folders: `bobert/` (copied files and a write-up), `receipts-sms-agent/`, `presage/`.
