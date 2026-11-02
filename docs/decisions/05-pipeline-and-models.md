@@ -1,6 +1,6 @@
 # 05. Pipeline shape and model profiles
 
-Issue: #5. Status: ready
+Issue: #5. Status: decided (DECISIONS.md 001)
 
 ## Question
 Should a call run as separate speech-to-text, LLM and text-to-speech stages or as one speech-to-speech model; which model profiles does the eval matrix compare; and can a typed decision model (Jev, OpenAI Decisions, Laya) run beside the turn without costing latency? Blocks `config/models.yaml`, the latency budget (#7) and the build briefs (#8).

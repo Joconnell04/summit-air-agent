@@ -1,14 +1,29 @@
 # Named model profiles. Switching models is a one-line change to `default`
 # or MODEL_PROFILE=<name> at runtime. Every profile runs the same eval suite.
-# Placeholders until the design session picks the stack.
+# Live profiles keep thinking off: it adds seconds before the first word
+# (see docs/decisions/05-pipeline-and-models.md).
 default: fast
 
 profiles:
   fast:
     provider: anthropic
+    model: claude-haiku-5-5
+    thinking: false
+  fast-prev:
+    # Control: the model the earlier practice agent measured at about 1.0 s to first audio.
+    provider: anthropic
     model: claude-haiku-4-5-20251001
-    reasoning: false
+    thinking: false
   quality:
     provider: anthropic
     model: claude-sonnet-5-5
-    reasoning: false
+    thinking: false
+
+# Offline only: simulated callers and the grader. Never in the live path.
+offline:
+  caller:
+    provider: anthropic
+    model: claude-haiku-5-5
+  grader:
+    provider: anthropic
+    model: claude-opus-5-5
