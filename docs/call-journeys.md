@@ -40,7 +40,7 @@ Scope follows DECISIONS.md 008. Deferred items (texts, other languages, playbook
 
 ## 2. Vulnerable household
 
-How to ask: call-takers in this trade routinely screen for people at risk (older adults, babies, someone with a medical condition) on no-heat and no-cooling calls (SOURCE: HVAC call-handling guides, in research notes for round 2). The wording here is ours. It asks about the people, not for a reason to rank them:
+How to ask: call-takers in this trade routinely screen for people at risk (older adults, babies, someone with a medical condition) on no-heat and no-cooling calls (SOURCE: vendor HVAC intake guides, e.g. https://getnextphone.com/blog/hvac-lead-qualification-workflow and https://www.fieldproxy.ai/blueprints/hvac-no-heat-emergency-flow; no authoritative industry script was found). The wording here is ours. It asks about the people, not for a reason to rank them:
 
 1. After the agent understands the problem and how cold or hot it is inside: "Who's at home with it right now? Anyone who'd have a harder time with the cold?"
 2. The caller's answer decides priority; the agent doesn't ask for a list of conditions. If they mention someone older, a baby, an illness or medical equipment, one follow-up at most: "Are they doing okay at the moment?"
