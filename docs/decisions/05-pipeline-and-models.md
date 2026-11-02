@@ -1,10 +1,10 @@
 # 05. Pipeline shape and which model does which job
 
-Issue: #5. Status: ready (revised after Jackson's first read)
+Issue: #5. Status: ready (second revision)
 
 ## Question
 
-Three linked choices. (1) How a call is wired: separate hear, think and speak steps, or one model that does all three. (2) Which size of model does each job, so we never pay for a big model on a small task. (3) Whether small side models judge narrow questions now or later. Blocks the latency budget (#7) and the build briefs (#8).
+Four linked choices. (1) How a call is wired: separate hear, think and speak steps, or one model that does all three. (2) Which size of model does each job, so we never pay for a big model on a small task. (3) Whether small side models judge narrow questions now or later. (4) How the brain gets data fast enough to book on a live call. Blocks the latency budget (#7) and the build briefs (#8).
 
 ## 1. How a call is wired
 
@@ -15,7 +15,7 @@ Deepgram turns the caller's voice into text, Claude Haiku decides what to say, C
 One model hears audio and answers in audio. It isn't faster: published first-reply times are 0.96 to 1.14 s against about 1.0 s measured for option A on the earlier practice agent. It is more expensive, can't promise the safety wording word for word, and we only get the caller's words as text after the fact, so the server can't check a line before the model replies to it.
 
 ### C. Both at once (hybrid)
-The speech-to-speech model talks while a separate text pipeline listens alongside for the server's checks. The problem isn't only complexity: the talking model has already started its reply by the time the text pipeline catches "gas", so the check can only interrupt after the wrong thing is half said. Two systems also hear the caller separately and can disagree on what was said, with no clear source of truth, and every call is paid for twice.
+The speech-to-speech model talks while a separate text pipeline listens alongside for the server's checks. Every part of a call now has two of something (two listeners, two vendors, two bills), so there are many more ways for a call to fail. Worse, the talking model has already started its reply by the time the text pipeline catches "gas", so a check can only interrupt after the wrong thing is half said, and the two listeners can disagree on what the caller said with no clear source of truth.
 
 **What "caller text for gates" means.** A gate is a server rule that blocks an action until a condition is met (no booking until the address is read back; nothing but the safety lines once gas is mentioned). Gates read the caller's words as text. In A the text exists before the agent answers; in B and C it can arrive after the answer has started, which is too late for a gate.
 
@@ -47,17 +47,37 @@ The same model, asked separately and in parallel: "Did the caller just agree to 
 ### F. A dedicated decision model (OpenAI Decisions, Jev, Laya)
 Purpose-built for quick typed answers with a probability. OpenAI Decisions was perfect on 30 emergency lines in the earlier practice agent's eval at about 0.16 s; stock Laya missed 6 of 10 emergencies; Jev (TypeSafe AI's hosted decision model) hasn't been tested here.
 
-Where one could plug in later: "did the caller agree to the read-back" before booking, "is someone vulnerable" for priority, "is this commercial" early in the call, "did they ask for a person". A test suite for these is being designed now (`evals/decision-models/PLAN.md`) to measure accuracy, added time, and whether any beats plain Haiku.
+The rule for adding one: find a real bottleneck first (a gate that's slow, or a judgment the main model gets wrong in evals), then test whether a side model removes it. A decision model is one possible fix, not a goal. Candidate spots: "did the caller agree to the read-back" before booking, "is someone vulnerable" for priority, "is this commercial" early in the call, "did they ask for a person". The side-model bake-off (`evals/decision-models/PLAN.md`) compares none, a second Haiku call and dedicated decision models (Jev, a post-trained Laya, OpenAI Decisions), each used the way its vendor intends, on accuracy and added time. A second Haiku call is close to a decision model in what it does but slower and without a confidence score, so the bake-off shows whether the specialist is worth adding.
+
+## 4. The brain's harness: getting data fast enough to book
+
+The model never reaches into ServiceTitan itself. Our tool server is its harness, built so a lookup or booking doesn't leave dead air:
+
+- **Look up before hello.** When the call connects, the server looks up the caller's number (customer, membership, open jobs, recent calls) and hands the result to the model with the first turn, so most calls need no lookup tool at all.
+- **A few small tools.** About six tools (find customer, check area, find slots, book, flag a person, text a confirmation), each returning a short result plus a sentence the agent can say. Fewer, clearer tools mean fewer wrong calls and faster model turns.
+- **Slots ready to read.** Open slots for the next few days are cached on the server and refreshed after every booking, so "find slots" answers in milliseconds instead of a round trip to the FSM.
+- **Gates live here.** No booking until the address and phone have been read back and confirmed by the caller; nothing but the safety lines after gas or carbon monoxide comes up; no booking for a commercial caller. The server refuses and returns what to say instead.
+- **Time limits and retries.** Every FSM call has a time limit; on a timeout the tool says "I'm having trouble pulling up the schedule, let me take your details and have the office call you back" rather than stalling. Bookings are idempotent, so a retry never double-books.
+- **Target:** tool turns at or under about 2.3 s (MEASURED on the earlier practice agent) and lookups inside the server well under 100 ms (ASSUMED). The latency budget (#7) sets the final numbers.
+
+## Bake-offs
+
+Measured, not guessed, and kept small so they don't burn credits (list in docs/bakeoffs.md):
+
+1. **Voice platform** (decision 004): our stack against Retell.
+2. **Speech-to-speech check:** OpenAI Realtime and Gemini Live on a handful of the same scenarios and a few calls, only to confirm or overturn the choice below.
+3. **Side models:** none, a second Haiku call, dedicated decision models (above).
+4. **Model matrix, later:** Haiku, Sonnet and Opus, plus OpenAI and Gemini equivalents, on the full eval suite, designed once the agent works end to end.
 
 ## Context
 
 Picking A over B gives up the "one model that just talks" simplicity and a possibly more natural voice, and gains control: the server checks every line, the safety words are exact, and each part can be swapped or right-sized. Picking D now gives up softer detection at launch, and gains a simpler first build; the scaffold leaves a slot so a side model drops in without rework.
 
-Spanish and other languages aren't a deciding factor now. Deepgram's Flux Multilingual and Cartesia both handle Spanish, so option A doesn't close that door (noted under C-16 to come back to).
+Spanish and other languages aren't a deciding factor and aren't part of the bake-offs for now. Deepgram's Flux Multilingual and Cartesia both handle Spanish, so option A doesn't close that door (C-16, later).
 
 ## Recommendation
 
-Wire calls as three separate steps (A) with the safety lines spoken from code, and give each job its own right-sized model as in the table, with nothing large in the live path. Launch with no side model (D) but build the slot for one, and add a decision model only if the test suite shows it beats plain Haiku on accuracy without adding a delay a caller would notice.
+Wire calls as three separate steps (A), with the safety lines spoken from code, the server as the brain's fast harness, and a right-sized model for each job. Launch with no side model (D) but build the slot for one, and run the small speech-to-speech and side-model bake-offs to confirm both choices with numbers.
 
 ## Research notes
 
