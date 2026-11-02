@@ -1,0 +1,14 @@
+# Named model profiles. Switching models is a one-line change to `default`
+# or MODEL_PROFILE=<name> at runtime. Every profile runs the same eval suite.
+# Placeholders until the design session picks the stack.
+default: fast
+
+profiles:
+  fast:
+    provider: anthropic
+    model: claude-haiku-4-5-20251001
+    reasoning: false
+  quality:
+    provider: anthropic
+    model: claude-sonnet-5-5
+    reasoning: false

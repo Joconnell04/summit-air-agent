@@ -1,0 +1,15 @@
+[project]
+name = "summit-air-agent"
+version = "0.1.0"
+description = "Inbound phone agent for Summit Air, a residential HVAC company in NYC"
+requires-python = ">=3.12"
+dependencies = ["pyyaml>=6"]
+
+[dependency-groups]
+dev = ["pytest>=8", "ruff>=0.6"]
+
+[tool.ruff]
+line-length = 100
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

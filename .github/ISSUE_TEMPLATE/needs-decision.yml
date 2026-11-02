@@ -1,0 +1,19 @@
+name: Needs decision
+description: A choice that is Jackson's to make
+labels: ["needs-decision"]
+body:
+  - type: textarea
+    id: question
+    attributes: {label: Question}
+    validations: {required: true}
+  - type: textarea
+    id: options
+    attributes: {label: Options, description: Two to four, each with its tradeoff}
+    validations: {required: true}
+  - type: textarea
+    id: recommendation
+    attributes: {label: Recommendation and why}
+    validations: {required: true}
+  - type: textarea
+    id: blocked
+    attributes: {label: What is blocked until this is decided}

@@ -1,0 +1,11 @@
+name: Exploration
+description: Side research started with /explore
+labels: ["exploration"]
+body:
+  - type: textarea
+    id: idea
+    attributes: {label: Idea or question}
+    validations: {required: true}
+  - type: textarea
+    id: context
+    attributes: {label: What prompted it}

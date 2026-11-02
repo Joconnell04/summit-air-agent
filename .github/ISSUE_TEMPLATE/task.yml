@@ -1,0 +1,15 @@
+name: Task
+description: A piece of work an agent or Jackson will do
+labels: ["task"]
+body:
+  - type: textarea
+    id: goal
+    attributes: {label: Goal}
+    validations: {required: true}
+  - type: textarea
+    id: done
+    attributes: {label: Done when, description: Tests or checks that prove it}
+    validations: {required: true}
+  - type: input
+    id: brief
+    attributes: {label: Brief, description: Path under docs/ai-process/briefs/ if any}
