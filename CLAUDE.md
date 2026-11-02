@@ -23,6 +23,10 @@ The assignment, word for word: `docs/assignment.md`. Reread it before any design
 - High-touch docs (`docs/users.md`, `docs/call-journeys.md`, `docs/spec.md`, prompt voice, safety script) change only through `/round`, which logs the round in `docs/ai-process/coauthoring.md`.
 - Side research goes through `/explore`; results land in `docs/explorations/`.
 
+## Driving the session
+
+Claude drives; Jackson steers. The route is docs/ai-process/phases.md. After any step closes, tick it, move its issue on the board, commit, and say "Unless there's anything else, next is <step>." Then wait. New ideas mid-step go to `/consider`; anything needing research goes to `/explore`. Keep chat short and put substance in files.
+
 ## Voice transcription glossary
 
 Jackson often speaks through transcription. Read these as:
@@ -39,7 +43,8 @@ Log his words verbatim in co-authoring and transcripts; apply the glossary only 
 ## Commands
 
 - `make setup`, `make check`, `make ratchet-update`
-- `/next` what's open and what needs Jackson
+- `/next` where we are, what needs Jackson, what's next
+- `/consider <idea>` add to docs/considerations.md and keep going
 - `/round <doc>` revise a high-touch doc from feedback and log it
 - `/explore <idea>` background research into docs/explorations
 - `/discuss <NNN>` load an exploration to talk through and decide
