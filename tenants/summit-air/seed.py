@@ -20,7 +20,7 @@ SEED = 20261102
 CUSTOMER_TOTAL = 300
 SERVICE_UNIT, INSTALL_UNIT = 11, 12
 NO_HEAT, NO_COOLING, TUNE_UP, SAFETY_CHECK, ESTIMATE = 201, 202, 203, 204, 205
-PREMIUM, STANDARD, LEGACY = 601, 602, 603
+MEMBERSHIP = 601
 FIRST_TECH_ID = 5001
 SERVICE_TECHS, ADVISORS = 36, 4
 
@@ -177,7 +177,6 @@ PARK_PHONE = "(718) 555-0123"
 DAVID_PARK_PHONE = "(917) 555-0168"
 MORETTI_PHONE = "(718) 555-0131"
 SANTOS_PHONE = "(929) 555-0114"
-OKAFOR_PHONE = "(718) 555-0156"
 RUIZ_PHONE = "(718) 555-0119"
 OCASIO_PHONE = "(347) 555-0162"
 NAIR_PHONE = "(347) 555-0173"
@@ -191,7 +190,6 @@ RESERVED = {
     DAVID_PARK_PHONE,
     MORETTI_PHONE,
     SANTOS_PHONE,
-    OKAFOR_PHONE,
     RUIZ_PHONE,
     OCASIO_PHONE,
     NAIR_PHONE,
@@ -326,9 +324,7 @@ class World:
         if self.rng.random() >= chance:
             return
         status = self.rng.choices(["Active", "Expired", "Canceled"], [65, 22, 13])[0]
-        types = [PREMIUM, STANDARD] + ([LEGACY] if status != "Active" else [])
-        weights = [55, 40, 5][: len(types)]
-        self.membership(customer_id, location_id, self.rng.choices(types, weights)[0], status)
+        self.membership(customer_id, location_id, MEMBERSHIP, status)
 
     # ---- technicians and shifts -----------------------------------------------------------
 
@@ -521,7 +517,7 @@ class World:
             ],
         )
         self.equipment(cid, lid, "house")
-        member_id = self.membership(cid, lid, PREMIUM, "Active")
+        member_id = self.membership(cid, lid, MEMBERSHIP, "Active")
         s["activeMemberWithAdultChild"] = {
             "name": "Linda Park",
             "phone": PARK_PHONE,
@@ -539,7 +535,7 @@ class World:
             cfg,
             cid,
             lid,
-            PREMIUM,
+            MEMBERSHIP,
             "Expired",
             end - timedelta(days=365),
             end,
@@ -561,7 +557,7 @@ class World:
             cfg,
             cid,
             lid,
-            STANDARD,
+            MEMBERSHIP,
             "Active",
             end - timedelta(days=365),
             end,
@@ -573,18 +569,6 @@ class World:
             "customerId": cid,
             "locationId": lid,
             "membershipId": member_id,
-        }
-
-        cid, lid = self.add_person("Raymond Okafor", self.address(zone[4]), "owner", [OKAFOR_PHONE])
-        self.equipment(cid, lid, "house")
-        first = self.membership(cid, lid, PREMIUM, "Active")
-        second = self.membership(cid, lid, STANDARD, "Active")
-        s["twoPlansOneAddress"] = {
-            "name": "Raymond Okafor",
-            "phone": OKAFOR_PHONE,
-            "customerId": cid,
-            "locationId": lid,
-            "membershipIds": [first, second],
         }
 
         address = self.address(zone[2])

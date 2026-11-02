@@ -102,8 +102,11 @@ def test_sync_creates_the_dataset_with_one_example_per_scenario(client, make_run
     assert example.inputs == {
         "persona": "Adult child calling for their 84-year-old father; anxious, talks fast.",
         "tags": [
-            "flow:booking", "flow:priority", "difficulty:rigorous",
-            "trait:stutter", "trait:late-correction",
+            "flow:booking",
+            "flow:priority",
+            "difficulty:rigorous",
+            "trait:stutter",
+            "trait:late-correction",
         ],
         "difficulty": "rigorous",
     }
@@ -133,7 +136,11 @@ def test_experiment_is_a_project_on_the_dataset_with_run_metadata(client, make_r
     project = client.projects[name]
     assert project["reference_dataset_id"] == client.datasets["summit-air-scenarios"].id
     assert project["metadata"] == {
-        "stack": "retell", "profile": "quality", "suite": "smoke", "hash": "h1", "run_id": "r9",
+        "stack": "retell",
+        "profile": "quality",
+        "suite": "smoke",
+        "hash": "h1",
+        "run_id": "r9",
     }
 
 
@@ -144,7 +151,8 @@ def test_each_scenario_becomes_a_run_linked_to_its_example(client, make_run):
     assert first["name"] == "a"
     assert first["reference_example_id"] == ls.example_id("a")
     assert first["outputs"]["transcript"][0] == {
-        "role": "caller", "text": "Hi, um, my dad's heat is out",
+        "role": "caller",
+        "text": "Hi, um, my dad's heat is out",
     }
     assert first["outputs"]["tool_calls"][0]["name"] == "lookup_customer"
     assert first["extra"]["metadata"]["call_id"] == "call-a"
@@ -192,18 +200,30 @@ def test_sync_posts_six_feedback_scores_per_scenario(client, make_run):
     assert len(client.feedback) == 12
     keys = {key for _, key, _ in client.feedback.values()}
     assert keys == {
-        "passed", "must_pass_failed", "grader_score",
-        "reply_delay_p50_ms", "reply_delay_p90_ms", "cost_usd",
+        "passed",
+        "must_pass_failed",
+        "grader_score",
+        "reply_delay_p50_ms",
+        "reply_delay_p90_ms",
+        "cost_usd",
     }
 
 
 def test_syncing_the_same_run_twice_changes_nothing(client, make_run):
     run = make_run(["a", "b"])
     ls.sync(run, client)
-    snapshot = (len(client.projects), len(client.examples), len(client.created_runs), len(client.feedback))
+    snapshot = (
+        len(client.projects),
+        len(client.examples),
+        len(client.created_runs),
+        len(client.feedback),
+    )
     ls.sync(run, client)
     assert (
-        len(client.projects), len(client.examples), len(client.created_runs), len(client.feedback)
+        len(client.projects),
+        len(client.examples),
+        len(client.created_runs),
+        len(client.feedback),
     ) == snapshot
     assert client.created_runs_total == 2
 

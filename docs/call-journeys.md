@@ -78,7 +78,7 @@ How to ask: call-takers in this trade routinely screen for people at risk (older
 ## 5. Member
 
 1. Same as the journey for their reason for calling, with the lookup showing an active plan.
-2. A short, real thank-you and the benefit that applies, without a script feel: "I see you're a Summit Premium member, thanks for sticking with us. That gets you priority scheduling, so let me find you the earliest spot."
+2. A short, real thank-you and the benefit that applies, without a script feel: "I see you're a Summit member, thanks for sticking with us. That gets you priority scheduling, so let me find you the earliest spot."
 3. Not found by phone: once the urgent part of the call is handled, "Are you on one of our maintenance plans, by any chance?" Then the server checks by address. Never asked while the caller is describing an emergency.
 4. Expired plan: said plainly and kindly, with an offer for someone to help renew; no promised perk.
 5. Owner view: member status on every call.
@@ -160,7 +160,7 @@ Who places them (decided in round 3): the earlier-slot offer and the requested c
 
 ## 14. Wants to become a member
 
-1. The caller asks about joining, or a routine call (a tune-up booking) ends with a natural opening: "By the way, we have a Summit Premium Membership that covers two tune-ups a year and priority scheduling. Want me to have someone tell you more?" Never offered on a broken-system or safety call.
+1. The caller asks about joining, or a routine call (a tune-up booking) ends with a natural opening: "By the way, we have a Summit Standard Membership that covers two tune-ups a year and priority scheduling. Want me to have someone tell you more?" Never offered on a broken-system or safety call.
 2. One or two lines about the plan from the knowledge folder; a price only if tenant config sets one.
 3. The agent can't take payment or create a paid membership. It records a sign-up lead and tells the caller someone will call them by a named time.
 4. Owner view: membership leads, with which call they came from.

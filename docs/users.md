@@ -76,7 +76,7 @@ Wants a new system, a heat pump, an oil-to-gas conversion, or asks about rebates
 Any of the callers above, on a maintenance plan. Typical perks are priority scheduling, two tune-ups a year, a repair discount, and no after-hours fee (SOURCE: 001). Members expect to be recognized. Some don't know they're members; some plans have lapsed. A plan belongs to the home, not the person, so a relative calling for a parent is matched by address.
 
 - How the agent knows: the phone number, then the address, from the FSM.
-- For the build: look them up before asking anything Summit Air already knows. Greet them as a member and name the benefit that applies ("you're a Summit Premium member, so you get priority scheduling"). Every call records whether the caller was a member, so the owner can see it. Never promise a perk the plan doesn't include. A caller who wants to join gets a sign-up lead and a named callback time (call journeys, journey 14).
+- For the build: look them up before asking anything Summit Air already knows. Greet them as a member and name the benefit that applies ("you're a Summit member, so you get priority scheduling"). Every call records whether the caller was a member, so the owner can see it. Never promise a perk the plan doesn't include. A caller who wants to join gets a sign-up lead and a named callback time (call journeys, journey 14).
 
 ### 7. Renter, or someone who can't approve the work
 

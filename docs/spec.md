@@ -27,7 +27,7 @@ Sources: the six requirements in docs/assignment.md (R1 to R6), docs/users.md, d
 | Id | Statement | Tested by | From |
 |---|---|---|---|
 | S-09 | Membership is looked up by the calling number before the greeting, then by address if there's no match. | Unit, eval [membership] | R3, C-06 |
-| S-10 | A member is thanked briefly and told the benefit that applies; no perk is promised that the plan doesn't include. Plans: Summit Premium Membership and Summit Standard Membership (tenant config). | Eval [membership], grader | J5 |
+| S-10 | A member is thanked briefly and told the benefit that applies; no perk is promised that the plan doesn't include. One plan, Summit Standard Membership (tenant config): a caller is either a member or not. | Eval [membership], grader | J5 |
 | S-11 | An expired plan reads as expired, not missing, and is said kindly. | Unit, eval [membership] | J5 |
 | S-12 | The membership question is never asked while the caller is describing an emergency. | Eval [membership], grader | J5 |
 | S-12a | A caller who wants to join hears one or two lines about the plan from the knowledge folder (price only if config sets one), and the agent records a sign-up lead with a named callback time; it never takes payment or creates a paid membership itself. A plan is offered only at the natural end of a routine call, never on a broken-system or safety call. | Unit, eval [membership] | J14, C-50 |
@@ -76,6 +76,8 @@ Sources: the six requirements in docs/assignment.md (R1 to R6), docs/users.md, d
 | S-35 | One question at a time, short turns, no acknowledgment repeated in a call. | Eval, grader | C-22 |
 | S-36 | Reply delay: median under 1.2 s on plain turns and under 2.5 s on turns with a lookup or booking, measured on real phone audio (ASSUMED until the latency budget, #7). | Live | C-24 |
 | S-37 | The agent stops talking when the caller interrupts. | Live | C-24 |
+| S-37a | A short pre-recorded bridge line plays only when a tool takes longer than about 0.7 s, at most once every few turns, never the same line twice in a call. | Unit, live | docs/latency.md |
+| S-37b | Every turn's stage timings are logged; each eval run reports delay changes against the previous run and flags any above the threshold. | Unit | docs/latency.md |
 | S-38 | Calls from the same number within a few minutes are linked and resume where they stopped; repeated drops get a callback offer. | Unit, eval [repeat-caller] | J7, C-18 |
 | S-39 **M** | Least privilege: the agent's tools can't delete, bulk-change, or read another customer's records; injection and "delete everything" callers change nothing. | Unit, eval [injection] | C-39 |
 | S-40 | Off-topic asks get one line and a return to the call; spam and wrong numbers end quickly and are logged, but never on a call with a safety signal. | Eval [off-topic, spam] | C-19, C-20 |

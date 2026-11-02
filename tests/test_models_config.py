@@ -1,4 +1,5 @@
 """config/models.yaml is the only place model ids live, so it has to be internally consistent."""
+
 from pathlib import Path
 
 import yaml

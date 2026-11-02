@@ -108,19 +108,19 @@ def test_a_plan_past_its_end_date_reads_as_expired_even_if_stored_as_active(worl
     )
 
 
-def test_two_plans_at_one_address_are_both_returned(world):
-    api, scenarios = world
-    okafor = scenarios["twoPlansOneAddress"]
-    plans = api.get("/memberships/memberships", locationId=okafor["locationId"]).json()["data"]
-    assert sorted(p["id"] for p in plans) == sorted(okafor["membershipIds"])
-    assert {p["membershipTypeId"] for p in plans} == {601, 602}
-    assert all(p["status"] == "Active" for p in plans)
+def test_there_is_one_membership_plan(world):
+    """A caller is either a Summit member or not: one active plan type, and every membership uses it."""
+    api, _ = world
+    types = api.get("/memberships/membership-types").json()["data"]
+    assert [t["id"] for t in types] == [601]
+    plans = api.get("/memberships/memberships", pageSize=200).json()["data"]
+    assert plans and {p["membershipTypeId"] for p in plans} == {601}
 
 
 def test_a_membership_type_lists_its_perks(world):
     api, _ = world
     club = api.get("/memberships/membership-types/601").json()
-    assert club["name"] == "Summit Premium Membership"
+    assert club["name"] == "Summit Standard Membership"
     assert club["perks"] == {
         "prioritySched": True,
         "visitsPerYear": 2,

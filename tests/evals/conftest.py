@@ -57,9 +57,7 @@ def make_run(run_data, scenario_data):
     """A valid Run with one scenario per id given."""
 
     def build(scenario_ids=("s1",), **overrides) -> Run:
-        scenarios = [
-            scenario_data(scenario_id=sid, call_id=f"call-{sid}") for sid in scenario_ids
-        ]
+        scenarios = [scenario_data(scenario_id=sid, call_id=f"call-{sid}") for sid in scenario_ids]
         return Run.model_validate(run_data(scenarios=scenarios, **overrides))
 
     return build

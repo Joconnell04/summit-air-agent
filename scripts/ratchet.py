@@ -3,6 +3,7 @@
 The eval pass-rate floor is wired in once the eval suite exists.
 Run with --update to raise the baseline after adding tests.
 """
+
 import json
 import subprocess
 import sys
@@ -14,7 +15,9 @@ BASELINE = Path(__file__).resolve().parent.parent / "evals" / "baseline.json"
 def count_tests() -> int:
     out = subprocess.run(
         [sys.executable, "-m", "pytest", "--collect-only", "-q"],
-        capture_output=True, text=True, check=False,
+        capture_output=True,
+        text=True,
+        check=False,
     ).stdout
     return sum(1 for line in out.splitlines() if "::" in line)
 

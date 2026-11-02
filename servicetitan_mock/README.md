@@ -35,7 +35,7 @@ The seed takes `--start-date YYYY-MM-DD` and a fixed random seed, so one start d
 
 ## What is in the world
 
-About 300 customers (owners, tenants, apartment owners), 40 technicians (36 service, 4 comfort advisors), two weeks of shifts and capacity, and named scenarios you can look up at `GET /debug/scenarios`: a repeat caller with three recent calls and an open job, a caller with a job done last week, an active member whose adult child calls from another number, an expired member, a plan stored as active whose end date has passed, two plans at one address, one phone number shared by two customers, an owner and a tenant in one building, an out-of-area address (Mineola, 11501), one commercial account, and a replacement lead. Three days are nearly full (offsets 2, 3 and 9 from the start date). One technician is on call each week from 8 p.m. to 8 a.m.
+About 300 customers (owners, tenants, apartment owners), 40 technicians (36 service, 4 comfort advisors), two weeks of shifts and capacity, and named scenarios you can look up at `GET /debug/scenarios`: a repeat caller with three recent calls and an open job, a caller with a job done last week, an active member whose adult child calls from another number, an expired member, a plan stored as active whose end date has passed, one phone number shared by two customers, an owner and a tenant in one building, an out-of-area address (Mineola, 11501), one commercial account, and a replacement lead. Three days are nearly full (offsets 2, 3 and 9 from the start date). One technician is on call each week from 8 p.m. to 8 a.m.
 
 ## Rules the mock enforces
 

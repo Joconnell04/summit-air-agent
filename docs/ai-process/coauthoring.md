@@ -113,3 +113,12 @@ Changed:
 - Locked docs amended for consistency (users.md and call-journeys.md: plan name, joining flow, gas trigger, override, do-not-call, tool failures), recorded in this round.
 Commit: 2cec070
 Status: locked
+
+## spec r3 (amendment after lock)
+Feedback (verbatim):
+> Cut out the Summit legacy plan. That just is creating confusion. And let's just have one membership category, a Summit standard membership. So cut out the Summit premium membership too. So it should be like, you know, net new callers that are in the area scope and then Summit members. And that's it. But tell me if the assignment said something that makes you want to do something differently, because maybe I'm missing something, but I don't want to overcomplicate this. Everything else looks good.
+Changed:
+- One plan only, Summit Standard Membership (priority scheduling, two tune-ups a year, 15% off repairs, no after-hours fee); a caller is a member or not. Premium and Legacy removed from the docs, tenant config, seed, tests and Postman collection; the two-plans-at-one-address scenario replaced by a test that every membership uses the one plan (128 tests, 101 Postman checks pass).
+- Spec S-37a (bridge line only for slow tools) and S-37b (stage timings logged, eval runs flag delay changes) added from the latency feedback.
+Commit: 7bd624b
+Status: locked

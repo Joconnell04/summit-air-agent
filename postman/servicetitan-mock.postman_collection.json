@@ -146,7 +146,6 @@
                   "v.set('maria_customer_id', s.repeatCallerOpenJob.customerId);",
                   "v.set('maria_job_id', s.repeatCallerOpenJob.jobId);",
                   "v.set('moretti_customer_id', s.expiredMember.customerId);",
-                  "v.set('okafor_location_id', s.twoPlansOneAddress.locationId);",
                   "v.set('commercial_customer_id', s.commercial.customerId);",
                   "v.set('commercial_location_id', s.commercial.locationId);",
                   "v.set('far_customer_id', s.outOfArea.customerId);",
@@ -993,7 +992,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('status is 200', () => pm.response.to.have.status(200));",
-                  "pm.test('Summit Premium Membership has priority scheduling', () => pm.expect(pm.response.json().data.find(t => t.name === 'Summit Premium Membership').perks.prioritySched).to.eql(true));",
+                  "pm.test('Summit Standard Membership has priority scheduling', () => pm.expect(pm.response.json().data.find(t => t.name === 'Summit Standard Membership').perks.prioritySched).to.eql(true));",
                   "",
                   "if (pm.response.code >= 400) {",
                   "  pm.test('error uses the standard shape', () => {",
@@ -1096,7 +1095,7 @@
           }
         },
         {
-          "name": "Two plans at one address",
+          "name": "Member found by address",
           "event": [
             {
               "listen": "test",
@@ -1104,7 +1103,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('status is 200', () => pm.response.to.have.status(200));",
-                  "pm.test('two memberships', () => pm.expect(pm.response.json().totalCount).to.eql(2));",
+                  "pm.test('one active membership', () => pm.expect(pm.response.json().data[0].status).to.eql('Active'));",
                   "",
                   "if (pm.response.code >= 400) {",
                   "  pm.test('error uses the standard shape', () => {",
@@ -1129,7 +1128,7 @@
                 "value": "{{app_key}}"
               }
             ],
-            "url": "{{base_url}}/memberships/v2/tenant/{{tenant_id}}/memberships?locationId={{okafor_location_id}}"
+            "url": "{{base_url}}/memberships/v2/tenant/{{tenant_id}}/memberships?locationId={{park_location_id}}"
           }
         },
         {

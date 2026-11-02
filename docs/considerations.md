@@ -16,7 +16,7 @@ Each item: `- [status] **C-NN Title.** One or two lines. Links.`
 ## The six requirements
 
 - [in] **C-05 Residential vs commercial.** Signals: business name, "property manager", "our building", rooftop or multi-unit equipment, an FSM account type. What a commercial caller gets: a polite decline with a referral or a message for the office, never a booking. Still log a one-line lead (company, contact, what they needed) in the same end-of-call write, with no extra tool calls, in case Summit Air ever wants that list.
-- [in] **C-06 Membership.** Look up by phone first, then address or name. Handle the caller who doesn't know they're a member, an expired plan, and two plans at one address. Name the benefit back ("you're a Summit Premium member, so you get priority scheduling").
+- [in] **C-06 Membership.** Look up by phone first, then address or name. Handle the caller who doesn't know they're a member and an expired membership. One plan only (Summit Standard Membership). Name the benefit back ("you're a Summit member, so you get priority scheduling").
 - [in] **C-07 What the technician needs.** System type, brand and rough age, symptoms and when they started, thermostat reading, what's been tried, access (doorman, super, gate, parking), pets, best contact on site.
 - [in] **C-08 Booking.** Arrival windows, capacity by priority, confirmation out loud and on the owner view (no texts in V1, DECISIONS.md 007), reschedule and cancel, no double booking, idempotent tools (retries are normal on voice platforms). See C-34.
 

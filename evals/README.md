@@ -67,6 +67,8 @@ make eval SUITE=smoke PROFILES=fast,quality         # model comparison
 make replay CALL=<id>                               # re-run a recorded call's caller turns
 ```
 
+Every scenario records per-turn timings (model first token, tool time, second model hop, cost). A run is compared with the previous run of the same suite and stack: changes in pass rate, median and slowest-10% delay per turn type, and cost are printed side by side, and a delay change of more than 100 ms or 10% (ASSUMED threshold) is flagged, so a model or prompt change that only affects speed is still caught.
+
 Each run writes `evals/results/<run>.json` (schema and validation in `evals/results.py`) and a short table (pass rate by flow and difficulty, reply delay, cost), and can optionally send the run to LangSmith as an experiment for side-by-side comparison.
 
 ## Results in LangSmith
