@@ -47,3 +47,11 @@ Changed:
 - Service-area context comes from config; state programs mentioned only when they change what the caller does (Clean Heat line removed, C-36).
 Commit: 2c8e355
 Status: locked
+
+## call-journeys r1
+Feedback (verbatim):
+> (none; version 1 drafted from docs/users.md, docs/considerations.md, the #10 triage proposal and DECISIONS.md 001 to 007)
+Changed:
+- First draft: a shared routine every call follows, eleven journeys with the server check that fires in each, and six open choices marked inline with a recommendation.
+Commit: f0ccc61
+Status: open
