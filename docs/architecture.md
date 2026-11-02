@@ -47,4 +47,19 @@ Built in from the first commit, because QA and live debugging depend on it.
 
 ## Hosting
 
-The tool server and, if LiveKit is built, the voice worker run on an always-on Vultr server we already have. Its specs, whether it is big enough, and how failures are caught are in docs/explorations/003-capacity-and-cost.md.
+The tool server and the LiveKit voice worker run on an always-on Vultr server. Whether that is the existing shared server or a new one for this project is open (see the readout surfaced after decision 004). Capacity limits and cost are in docs/explorations/003-capacity-and-cost.md and docs/cost.md.
+
+### Planned reboots
+
+The existing server installs security updates on its own and reboots when an update needs it, at 09:30 UTC (4:30 a.m. New York time in winter, 5:30 a.m. in summer). The setting is `Unattended-Upgrade::Automatic-Reboot-Time "09:30"` in `/etc/apt/apt.conf.d/52epic-reboot`, owned by another project on the same server, so we leave it alone.
+
+- How often: 5 reboots between Sep 5 and Oct 14 (MEASURED, `last -x`), only on days an update required one.
+- How long the server is down: 10 to 12 seconds from shutdown to boot (MEASURED, `last -x -F`, all five reboots). Our services start on boot and are taking calls about 30 to 60 seconds after that (ASSUMED until measured on the first reboot; Python start-up plus loading the voice models).
+- Impact: a call in progress at that moment drops, and a new call in that minute isn't answered. At 4:30 or 5:30 a.m. that is rare, and a caller can call straight back. Low impact, so we accept it rather than turn updates off.
+
+### Knowing it's back
+
+- Services start on boot (`@reboot` in the user crontab, no root needed) and a watchdog run every minute restarts anything that has stopped.
+- A health endpoint (`GET /healthz`) checks the tool server, the database and that the voice worker is registered with LiveKit.
+- An outside monitor (Healthchecks.io free plan) expects a ping from the watchdog every minute and alerts by email and text if pings stop for 5 minutes. Every reboot therefore shows up as a short gap, and a server that doesn't come back raises an alert.
+- If the worker is down while LiveKit is up, Twilio won't fail over on its own (docs/explorations/004-call-control-and-numbers.md), so the watchdog also switches the Twilio number to its backup destination when the health check fails twice in a row, and back when it passes.

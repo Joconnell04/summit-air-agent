@@ -1,9 +1,14 @@
-# Proposed in docs/decisions/05-pipeline-and-models.md; not decided yet (#5).
-# Named model profiles. Switching models is a one-line change to `default`
-# or MODEL_PROFILE=<name> at runtime. Every profile runs the same eval suite.
-# Live profiles keep thinking off: it adds seconds before the first word
-# (see docs/decisions/05-pipeline-and-models.md).
+# Named model profiles. The live "brain" is chosen by `default` or MODEL_PROFILE=<name> at runtime,
+# so switching provider or model is a one-line change. Every profile runs the same eval suite.
+# Live profiles keep thinking or reasoning at its lowest: it adds seconds before the first word.
+# Which profiles win is decided in docs/decisions/05-pipeline-and-models.md (#5); until then the
+# non-Anthropic ids are candidates to measure, not choices.
 default: fast
+
+providers:
+  anthropic: {key_env: ANTHROPIC_API_KEY}
+  openai: {key_env: OPENAI_API_KEY}
+  gemini: {key_env: GEMINI_API_KEY}
 
 profiles:
   fast:
@@ -18,6 +23,14 @@ profiles:
   quality:
     provider: anthropic
     model: claude-sonnet-5-5
+    thinking: false
+  openai-fast:
+    provider: openai
+    model: gpt-5.4-mini
+    thinking: false
+  gemini-fast:
+    provider: gemini
+    model: gemini-3.8-flash
     thinking: false
 
 # Offline only: simulated callers and the grader. Never in the live path.

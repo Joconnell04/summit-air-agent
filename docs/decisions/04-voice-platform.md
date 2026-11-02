@@ -1,6 +1,6 @@
 # 04. Which platform answers the phone
 
-Issue: #4. Status: ready (revised after Jackson's questions)
+Issue: #4. Status: decided, option D (DECISIONS.md 004)
 
 ## Question
 
