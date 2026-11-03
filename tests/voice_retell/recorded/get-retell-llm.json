@@ -1,0 +1,762 @@
+{
+ "begin_message": "{{greeting}}",
+ "general_prompt": "{{instructions}}",
+ "general_tools": [
+  {
+   "args_at_root": false,
+   "description": "Look up a customer by a phone number or an address the caller gave. Returns only records that match, with membership, open jobs, last service date, recent calls and notes. The number the call came from was already looked up before hello.",
+   "max_retry": 1,
+   "method": "POST",
+   "name": "find_customer",
+   "parameters": {
+    "additionalProperties": false,
+    "properties": {
+     "address": {
+      "anyOf": [
+       {
+        "additionalProperties": false,
+        "properties": {
+         "city": {
+          "default": "",
+          "maxLength": 60,
+          "type": "string"
+         },
+         "street": {
+          "maxLength": 120,
+          "minLength": 1,
+          "type": "string"
+         },
+         "unit": {
+          "default": "",
+          "maxLength": 20,
+          "type": "string"
+         },
+         "zip": {
+          "pattern": "^\\d{5}$",
+          "type": "string"
+         }
+        },
+        "required": [
+         "street",
+         "zip"
+        ],
+        "type": "object"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "phone": {
+      "anyOf": [
+       {
+        "maxLength": 40,
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     }
+    },
+    "type": "object"
+   },
+   "speak_after_execution": true,
+   "speak_during_execution": false,
+   "timeout_ms": 10000,
+   "type": "custom",
+   "url": "https://45-77-105-247.sslip.io/retell/tools/find_customer"
+  },
+  {
+   "args_at_root": false,
+   "description": "Older history for a customer already matched on this call: past jobs, past calls or equipment. Use it for questions like \"when were you last out here?\" that the call context doesn't answer.",
+   "max_retry": 1,
+   "method": "POST",
+   "name": "get_customer_history",
+   "parameters": {
+    "additionalProperties": false,
+    "properties": {
+     "customer_id": {
+      "type": "integer"
+     },
+     "months_back": {
+      "type": "integer"
+     },
+     "what": {
+      "enum": [
+       "jobs",
+       "calls",
+       "equipment"
+      ],
+      "type": "string"
+     }
+    },
+    "required": [
+     "customer_id",
+     "what"
+    ],
+    "type": "object"
+   },
+   "speak_after_execution": true,
+   "speak_during_execution": false,
+   "timeout_ms": 10000,
+   "type": "custom",
+   "url": "https://45-77-105-247.sslip.io/retell/tools/get_customer_history"
+  },
+  {
+   "args_at_root": false,
+   "description": "Check a five-digit ZIP against the service area. Call it as soon as you have the ZIP.",
+   "max_retry": 1,
+   "method": "POST",
+   "name": "check_service_area",
+   "parameters": {
+    "additionalProperties": false,
+    "properties": {
+     "zip": {
+      "pattern": "^\\d{5}$",
+      "type": "string"
+     }
+    },
+    "required": [
+     "zip"
+    ],
+    "type": "object"
+   },
+   "speak_after_execution": true,
+   "speak_during_execution": false,
+   "timeout_ms": 10000,
+   "type": "custom",
+   "url": "https://45-77-105-247.sslip.io/retell/tools/check_service_area"
+  },
+  {
+   "args_at_root": false,
+   "description": "Availability for a job type. Without `day` it returns the shape of availability over the coming days; with `day` it returns that day's exact arrival windows. Pass what you've heard that bears on priority in `facts`.",
+   "max_retry": 1,
+   "method": "POST",
+   "name": "find_slots",
+   "parameters": {
+    "additionalProperties": false,
+    "properties": {
+     "day": {
+      "anyOf": [
+       {
+        "format": "date",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "description": "Ask for one day's exact windows"
+     },
+     "facts": {
+      "additionalProperties": false,
+      "description": "What the agent has heard that bears on priority. The server also reads every caller line.",
+      "properties": {
+       "inside_temp_f": {
+        "anyOf": [
+         {
+          "maximum": 130,
+          "minimum": 0,
+          "type": "number"
+         },
+         {
+          "type": "null"
+         }
+        ]
+       },
+       "issue": {
+        "maxLength": 300,
+        "type": "string"
+       },
+       "temp_falling_fast": {
+        "type": "boolean"
+       },
+       "who_home": {
+        "maxLength": 300,
+        "type": "string"
+       }
+      },
+      "type": "object"
+     },
+     "job_type": {
+      "enum": [
+       "no_heat",
+       "no_cooling",
+       "tune_up",
+       "safety_check",
+       "estimate"
+      ],
+      "maxLength": 40,
+      "type": "string"
+     },
+     "preferred_days": {
+      "items": {
+       "type": "string"
+      },
+      "maxItems": 7,
+      "type": "array"
+     },
+     "priority": {
+      "anyOf": [
+       {
+        "enum": [
+         "Low",
+         "Normal",
+         "High",
+         "Urgent"
+        ],
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "description": "The agent's view; logged, not used"
+     },
+     "time_of_day": {
+      "anyOf": [
+       {
+        "enum": [
+         "morning",
+         "afternoon",
+         "evening"
+        ],
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     }
+    },
+    "required": [
+     "job_type"
+    ],
+    "type": "object"
+   },
+   "speak_after_execution": true,
+   "speak_during_execution": false,
+   "timeout_ms": 10000,
+   "type": "custom",
+   "url": "https://45-77-105-247.sslip.io/retell/tools/find_slots"
+  },
+  {
+   "args_at_root": false,
+   "description": "The read-back before booking. First call returns the exact sentence to say. After the caller clearly says yes, call again with the same address and phone and `confirmed: true`.",
+   "max_retry": 1,
+   "method": "POST",
+   "name": "read_back",
+   "parameters": {
+    "additionalProperties": false,
+    "properties": {
+     "address": {
+      "additionalProperties": false,
+      "properties": {
+       "city": {
+        "maxLength": 60,
+        "type": "string"
+       },
+       "street": {
+        "maxLength": 120,
+        "minLength": 1,
+        "type": "string"
+       },
+       "unit": {
+        "maxLength": 20,
+        "type": "string"
+       },
+       "zip": {
+        "pattern": "^\\d{5}$",
+        "type": "string"
+       }
+      },
+      "required": [
+       "street",
+       "zip"
+      ],
+      "type": "object"
+     },
+     "confirmed": {
+      "type": "boolean"
+     },
+     "phone": {
+      "description": "Ten digits, caller_id for the number calling, or the last four digits of a number on file",
+      "maxLength": 40,
+      "type": "string"
+     }
+    },
+    "required": [
+     "address",
+     "phone"
+    ],
+    "type": "object"
+   },
+   "speak_after_execution": true,
+   "speak_during_execution": false,
+   "timeout_ms": 10000,
+   "type": "custom",
+   "url": "https://45-77-105-247.sslip.io/retell/tools/read_back"
+  },
+  {
+   "args_at_root": false,
+   "description": "Book the window the caller chose, with the intake details. Only after the read-back was confirmed. Confirm out loud only after it returns ok.",
+   "max_retry": 1,
+   "method": "POST",
+   "name": "book_appointment",
+   "parameters": {
+    "additionalProperties": false,
+    "properties": {
+     "details": {
+      "additionalProperties": false,
+      "description": "The intake every booking carries (spec S-13). Address and phone come from the read-back.",
+      "properties": {
+       "approver": {
+        "maxLength": 120,
+        "minLength": 1,
+        "type": "string"
+       },
+       "arrival_notes": {
+        "maxLength": 300,
+        "type": "string"
+       },
+       "inside_temp_f": {
+        "anyOf": [
+         {
+          "maximum": 130,
+          "minimum": 0,
+          "type": "number"
+         },
+         {
+          "type": "null"
+         }
+        ]
+       },
+       "issue": {
+        "maxLength": 300,
+        "minLength": 1,
+        "type": "string"
+       },
+       "name": {
+        "description": "Needed only for a caller not on file",
+        "maxLength": 80,
+        "type": "string"
+       },
+       "since": {
+        "maxLength": 100,
+        "minLength": 1,
+        "type": "string"
+       },
+       "system_type": {
+        "maxLength": 120,
+        "type": "string"
+       },
+       "tried": {
+        "maxLength": 300,
+        "minLength": 1,
+        "type": "string"
+       },
+       "who_home": {
+        "maxLength": 120,
+        "minLength": 1,
+        "type": "string"
+       }
+      },
+      "required": [
+       "issue",
+       "since",
+       "tried",
+       "who_home",
+       "approver"
+      ],
+      "type": "object"
+     },
+     "job_type": {
+      "enum": [
+       "no_heat",
+       "no_cooling",
+       "tune_up",
+       "safety_check",
+       "estimate"
+      ],
+      "maxLength": 40,
+      "type": "string"
+     },
+     "priority": {
+      "anyOf": [
+       {
+        "enum": [
+         "Low",
+         "Normal",
+         "High",
+         "Urgent"
+        ],
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "description": "The agent's view; logged, not used"
+     },
+     "slot": {
+      "additionalProperties": false,
+      "properties": {
+       "date": {
+        "type": "string"
+       },
+       "window": {
+        "maxLength": 40,
+        "type": "string"
+       }
+      },
+      "required": [
+       "date",
+       "window"
+      ],
+      "type": "object"
+     }
+    },
+    "required": [
+     "job_type",
+     "slot",
+     "details"
+    ],
+    "type": "object"
+   },
+   "speak_after_execution": true,
+   "speak_during_execution": false,
+   "timeout_ms": 10000,
+   "type": "custom",
+   "url": "https://45-77-105-247.sslip.io/retell/tools/book_appointment"
+  },
+  {
+   "args_at_root": false,
+   "description": "Move a booking that belongs to this caller to a new window, with the reason.",
+   "max_retry": 1,
+   "method": "POST",
+   "name": "reschedule_appointment",
+   "parameters": {
+    "additionalProperties": false,
+    "properties": {
+     "booking_id": {
+      "type": "integer"
+     },
+     "reason": {
+      "maxLength": 200,
+      "minLength": 1,
+      "type": "string"
+     },
+     "slot": {
+      "additionalProperties": false,
+      "properties": {
+       "date": {
+        "type": "string"
+       },
+       "window": {
+        "maxLength": 40,
+        "type": "string"
+       }
+      },
+      "required": [
+       "date",
+       "window"
+      ],
+      "type": "object"
+     }
+    },
+    "required": [
+     "booking_id",
+     "slot",
+     "reason"
+    ],
+    "type": "object"
+   },
+   "speak_after_execution": true,
+   "speak_during_execution": false,
+   "timeout_ms": 10000,
+   "type": "custom",
+   "url": "https://45-77-105-247.sslip.io/retell/tools/reschedule_appointment"
+  },
+  {
+   "args_at_root": false,
+   "description": "Cancel a booking that belongs to this caller, after a clear yes and the reason. Returns two windows to offer instead.",
+   "max_retry": 1,
+   "method": "POST",
+   "name": "cancel_appointment",
+   "parameters": {
+    "additionalProperties": false,
+    "properties": {
+     "booking_id": {
+      "type": "integer"
+     },
+     "reason": {
+      "maxLength": 200,
+      "minLength": 3,
+      "type": "string"
+     }
+    },
+    "required": [
+     "booking_id",
+     "reason"
+    ],
+    "type": "object"
+   },
+   "speak_after_execution": true,
+   "speak_during_execution": false,
+   "timeout_ms": 10000,
+   "type": "custom",
+   "url": "https://45-77-105-247.sslip.io/retell/tools/cancel_appointment"
+  },
+  {
+   "args_at_root": false,
+   "description": "Ask a person to follow up: a callback the caller wants, a complaint, a reschedule that needs a person, someone at risk. Give a callback time when the caller named one. Say the sentence it returns.",
+   "max_retry": 1,
+   "method": "POST",
+   "name": "flag_person",
+   "parameters": {
+    "additionalProperties": false,
+    "properties": {
+     "callback_in_minutes": {
+      "anyOf": [
+       {
+        "maximum": 10080,
+        "minimum": 1,
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "callback_time": {
+      "anyOf": [
+       {
+        "maxLength": 40,
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "description": "A local time such as \"4:30 PM\", or ISO with an offset"
+     },
+     "priority": {
+      "enum": [
+       "Normal",
+       "High",
+       "Urgent"
+      ],
+      "type": "string"
+     },
+     "reason": {
+      "maxLength": 300,
+      "minLength": 3,
+      "type": "string"
+     }
+    },
+    "required": [
+     "reason"
+    ],
+    "type": "object"
+   },
+   "speak_after_execution": true,
+   "speak_during_execution": false,
+   "timeout_ms": 10000,
+   "type": "custom",
+   "url": "https://45-77-105-247.sslip.io/retell/tools/flag_person"
+  },
+  {
+   "args_at_root": false,
+   "description": "Save one lead: commercial (company, contact, need), membership sign-up interest, or an install or replacement quote. Say the callback time it returns.",
+   "max_retry": 1,
+   "method": "POST",
+   "name": "record_lead",
+   "parameters": {
+    "additionalProperties": false,
+    "properties": {
+     "details": {
+      "additionalProperties": false,
+      "properties": {
+       "callback_in_minutes": {
+        "anyOf": [
+         {
+          "maximum": 10080,
+          "minimum": 1,
+          "type": "integer"
+         },
+         {
+          "type": "null"
+         }
+        ]
+       },
+       "callback_time": {
+        "anyOf": [
+         {
+          "maxLength": 40,
+          "type": "string"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "description": "A local time such as \"4:30 PM\", or ISO with an offset"
+       },
+       "company": {
+        "maxLength": 120,
+        "type": "string"
+       },
+       "contact_name": {
+        "maxLength": 80,
+        "minLength": 1,
+        "type": "string"
+       },
+       "need": {
+        "maxLength": 300,
+        "minLength": 3,
+        "type": "string"
+       }
+      },
+      "required": [
+       "contact_name",
+       "need"
+      ],
+      "type": "object"
+     },
+     "kind": {
+      "enum": [
+       "commercial",
+       "membership",
+       "install"
+      ],
+      "type": "string"
+     }
+    },
+    "required": [
+     "kind",
+     "details"
+    ],
+    "type": "object"
+   },
+   "speak_after_execution": true,
+   "speak_during_execution": false,
+   "timeout_ms": 10000,
+   "type": "custom",
+   "url": "https://45-77-105-247.sslip.io/retell/tools/record_lead"
+  },
+  {
+   "args_at_root": false,
+   "description": "Append a short note for the team about this customer or this call's job.",
+   "max_retry": 1,
+   "method": "POST",
+   "name": "add_note",
+   "parameters": {
+    "additionalProperties": false,
+    "properties": {
+     "attach_to": {
+      "enum": [
+       "customer",
+       "job"
+      ],
+      "type": "string"
+     },
+     "customer_id": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "text": {
+      "maxLength": 500,
+      "minLength": 1,
+      "type": "string"
+     }
+    },
+    "required": [
+     "text"
+    ],
+    "type": "object"
+   },
+   "speak_after_execution": true,
+   "speak_during_execution": false,
+   "timeout_ms": 10000,
+   "type": "custom",
+   "url": "https://45-77-105-247.sslip.io/retell/tools/add_note"
+  },
+  {
+   "args_at_root": false,
+   "description": "The caller asked not to be called again. Say the sentence it returns.",
+   "max_retry": 1,
+   "method": "POST",
+   "name": "mark_do_not_call",
+   "parameters": {
+    "additionalProperties": false,
+    "properties": {},
+    "type": "object"
+   },
+   "speak_after_execution": true,
+   "speak_during_execution": false,
+   "timeout_ms": 10000,
+   "type": "custom",
+   "url": "https://45-77-105-247.sslip.io/retell/tools/mark_do_not_call"
+  },
+  {
+   "args_at_root": false,
+   "description": "Ask to end the call, with the reason. Call it after your goodbye. If it says not to hang up yet, say its sentence and keep listening.",
+   "max_retry": 1,
+   "method": "POST",
+   "name": "end_call",
+   "parameters": {
+    "additionalProperties": false,
+    "properties": {
+     "reason": {
+      "enum": [
+       "resolved",
+       "caller_goodbye",
+       "wrong_number",
+       "spam",
+       "not_a_customer",
+       "declined",
+       "other"
+      ],
+      "type": "string"
+     }
+    },
+    "required": [
+     "reason"
+    ],
+    "type": "object"
+   },
+   "speak_after_execution": true,
+   "speak_during_execution": false,
+   "timeout_ms": 10000,
+   "type": "custom",
+   "url": "https://45-77-105-247.sslip.io/retell/tools/end_call"
+  }
+ ],
+ "is_published": false,
+ "kb_config": {
+  "filter_score": 0.6,
+  "top_k": 3
+ },
+ "last_modification_timestamp": 1793670558268,
+ "llm_id": "llm_8507322d201bd00a1e3d4d6c3b00",
+ "model": "claude-5.5-haiku",
+ "model_config": {
+  "primary": {
+   "model": "claude-5.5-haiku",
+   "tier": "standard"
+  },
+  "temperature": 0.3,
+  "type": "cascading"
+ },
+ "model_high_priority": false,
+ "model_temperature": 0.3,
+ "model_ultrafast": false,
+ "start_speaker": "agent",
+ "version": 0
+}

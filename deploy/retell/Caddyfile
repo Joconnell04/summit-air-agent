@@ -1,0 +1,25 @@
+# Public HTTPS for the Retell baseline, installed as /etc/caddy/sites/summit-retell.caddy by
+# deploy/retell/deploy.sh. Only the bridge is public: every request to it is signed by Retell and
+# checked. The tool server itself stays on 127.0.0.1.
+45-77-105-247.sslip.io {
+	handle /retell/* {
+		reverse_proxy 127.0.0.1:8102
+	}
+	# The eval instance (scratch mock and tool server) for Retell chat runs. Its tool server is
+	# reachable only with the eval token (also its DEBUG_TOKEN), since its endpoints are not signed.
+	handle /eval/retell/* {
+		uri strip_prefix /eval
+		reverse_proxy 127.0.0.1:8112
+	}
+	@eval_tools {
+		path /eval/*
+		header X-Debug-Token {$SUMMIT_EVAL_TOKEN}
+	}
+	handle @eval_tools {
+		uri strip_prefix /eval
+		reverse_proxy 127.0.0.1:8110
+	}
+	handle {
+		respond 404
+	}
+}

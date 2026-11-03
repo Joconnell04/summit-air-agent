@@ -1,5 +1,6 @@
 .PHONY: setup test lint check ratchet ratchet-update eval replay eval-upload seed-st mock-st postman-st server postman trace \
-	owner-demo voice-livekit phone-setup deploy test-call
+	owner-demo voice-livekit phone-setup deploy test-call \
+	retell-push retell-bridge retell-deploy retell-report
 
 setup:
 	uv sync
@@ -88,3 +89,19 @@ deploy:
 # One real call to the agent's number from a simulated caller (a few cents)
 test-call:
 	uv run --env-file .env python -m voice.livekit.test_call
+
+# The Retell baseline (voice/retell/README.md). The bridge's public URL defaults to the server.
+RETELL_BRIDGE_URL ?= https://45-77-105-247.sslip.io
+
+retell-push:
+	RETELL_BRIDGE_URL=$(RETELL_BRIDGE_URL) uv run $(if $(wildcard .env),--env-file .env) \
+	  python -m voice.retell.push $(if $(EVAL_URL),--eval-url $(EVAL_URL))
+
+retell-bridge:
+	uv run $(if $(wildcard .env),--env-file .env) uvicorn voice.retell.bridge:create_app --factory --port 8102
+
+retell-deploy:
+	sh deploy/retell/deploy.sh
+
+retell-report:
+	uv run python -m voice.retell.report $(if $(DB),--db $(DB))
