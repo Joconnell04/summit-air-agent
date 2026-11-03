@@ -18,7 +18,7 @@ Lane sessions are linked from the coordinating session; each has its own worktre
 
 ## Waiting on Jackson
 
-1. Eval co-authoring round 3 of 3, `evals/rounds/03-judge-labels.md` (being drafted): mark 10 transcripts pass or fail with a line why.
+1. Eval co-authoring round 3 of 3, `evals/rounds/03-judge-labels.md` (ready): mark 10 transcripts pass or fail with a line why.
 2. The 10 live calls in `evals/live-calls.md` to (646) 624-0418 (#9), after the round 2 changes and the endpointing change are deployed.
 3. A yes or no on a free Supabase storage bucket for call recordings.
 
