@@ -24,9 +24,11 @@ def test_a_happy_booking_creates_one_job_with_the_intake_fields(agent, mock):
     booked = book(agent, call, first_open(agent, call), arrival_notes="Side door, small dog")
     assert booked["ok"], booked
     assert fsm_jobs(mock) == before + 1
-    summary = sqlite3.connect(mock[0].state.db_path).execute(
-        "SELECT summary FROM jobs WHERE id = ?", (booked["data"]["booking_id"],)
-    ).fetchone()[0]
+    summary = (
+        sqlite3.connect(mock[0].state.db_path)
+        .execute("SELECT summary FROM jobs WHERE id = ?", (booked["data"]["booking_id"],))
+        .fetchone()[0]
+    )
     for label in (
         "Issue:",
         "Since:",
@@ -50,18 +52,24 @@ def test_booking_is_refused_until_the_read_back_was_returned_and_answered(agent,
     assert refused["refused"] == "gate_read_back"
 
     # confirmed: true before the sentence was ever returned does nothing
-    skipped = agent.tool("read_back", call, address=in_area_address(), phone="caller_id", confirmed=True)
+    skipped = agent.tool(
+        "read_back", call, address=in_area_address(), phone="caller_id", confirmed=True
+    )
     assert skipped["refused"] == "gate_read_back"
     # and right after it was returned, with no caller line in between, does nothing either
     asked = agent.tool("read_back", call, address=in_area_address(), phone="caller_id")
-    too_soon = agent.tool("read_back", call, address=in_area_address(), phone="caller_id", confirmed=True)
+    too_soon = agent.tool(
+        "read_back", call, address=in_area_address(), phone="caller_id", confirmed=True
+    )
     assert too_soon["refused"] == "gate_read_back"
     assert book(agent, call, slot)["refused"] == "gate_read_back"
     assert fsm_jobs(mock) == before
 
     agent.say(call, asked["say"])
     agent.turn(call, "Yep.")
-    assert agent.tool("read_back", call, address=in_area_address(), phone="caller_id", confirmed=True)["ok"]
+    assert agent.tool(
+        "read_back", call, address=in_area_address(), phone="caller_id", confirmed=True
+    )["ok"]
     assert book(agent, call, slot)["ok"]
 
 
@@ -169,7 +177,9 @@ def test_a_commercial_customer_found_by_address_is_refused_by_the_fsm_check(agen
         "SELECT street, zip FROM locations WHERE id = ?", (school["locationId"],)
     ).fetchone()
     before = fsm_jobs(mock)
-    call = ready_to_book(agent, UNKNOWN, {"street": street, "unit": "", "city": "", "zip": zip_code})
+    call = ready_to_book(
+        agent, UNKNOWN, {"street": street, "unit": "", "city": "", "zip": zip_code}
+    )
     refused = book(agent, call, first_open(agent, call))
     assert refused["refused"] == "customer_type"
     assert fsm_jobs(mock) == before
@@ -210,15 +220,24 @@ def test_every_intake_field_is_required_except_system_and_arrival_notes(agent):
         assert response["refused"] == "invalid_arguments", field
         assert any(field in key for key in response["data"]["errors"]), field
     optional = {k: v for k, v in DETAILS.items() if k not in ("system_type", "arrival_notes")}
-    assert agent.tool("book_appointment", call, job_type="tune_up", slot=slot, details=optional)["ok"]
+    assert agent.tool("book_appointment", call, job_type="tune_up", slot=slot, details=optional)[
+        "ok"
+    ]
 
 
 def test_a_slot_that_is_not_offered_is_refused(agent):
     call = ready_to_book(agent)
-    assert book(agent, call, {"date": "2026-11-03", "window": "brunch"})["refused"] == "invalid_slot"
-    assert book(agent, call, {"date": "2027-01-01", "window": "morning"})["refused"] == "invalid_slot"
+    assert (
+        book(agent, call, {"date": "2026-11-03", "window": "brunch"})["refused"] == "invalid_slot"
+    )
+    assert (
+        book(agent, call, {"date": "2027-01-01", "window": "morning"})["refused"] == "invalid_slot"
+    )
     # Normal jobs never get the after-hours window or the held urgent slots.
-    assert book(agent, call, {"date": "2026-11-03", "window": "after_hours"})["refused"] == "invalid_slot"
+    assert (
+        book(agent, call, {"date": "2026-11-03", "window": "after_hours"})["refused"]
+        == "invalid_slot"
+    )
     assert book(agent, call, FULL_DAY)["refused"] == "slot_taken"
 
 
@@ -246,7 +265,9 @@ def test_reschedule_and_cancel_only_act_on_the_callers_own_booking(agent, scenar
         "reschedule_appointment", call, booking_id=maria["jobId"], slot=ONE_LEFT, reason="x"
     )
     assert moved["refused"] == "not_owner"
-    cancelled = agent.tool("cancel_appointment", call, booking_id=maria["jobId"], reason="no longer needed")
+    cancelled = agent.tool(
+        "cancel_appointment", call, booking_id=maria["jobId"], reason="no longer needed"
+    )
     assert cancelled["refused"] == "not_owner"
     unknown = agent.tool("cancel_appointment", call, booking_id=999999, reason="no longer needed")
     assert unknown["refused"] == "not_owner"
@@ -276,7 +297,9 @@ def test_a_cancel_needs_a_reason_and_offers_two_windows(agent, scenarios):
     no_reason = agent.tool("cancel_appointment", call, booking_id=maria["jobId"], reason="")
     assert no_reason["refused"] == "invalid_arguments"
     # Maria's job is already dispatched, so it can't be cancelled from the phone.
-    dispatched = agent.tool("cancel_appointment", call, booking_id=maria["jobId"], reason="fixed itself")
+    dispatched = agent.tool(
+        "cancel_appointment", call, booking_id=maria["jobId"], reason="fixed itself"
+    )
     assert dispatched["refused"] == "invalid_state"
 
     other = ready_to_book(agent, "(212) 555-0901")
