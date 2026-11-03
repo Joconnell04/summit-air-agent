@@ -95,6 +95,6 @@ The first standard run (`20261103-224702`, 28 of 30 judged, $0.64) had the out-o
 
 ## Left open
 
-- The grader at one sample still fails one or two must-pass calls a round on manner, a different one each time. Ordinary runs count a grader fail on a must-pass scenario as a must-pass failure, so a standard reference with one of those can't be adopted. Proposed in the PR: count only code checks as must-pass failures, as the gate already does (DECISIONS.md 031), and keep the grader in the pass rate.
+- The grader at one sample still fails one or two must-pass calls a round on manner, a different one each time. Settled after this round: a grader fail on a must-pass scenario counts against the pass rate but is not a must-pass failure, as in the publish gate, so a reference run can be adopted when every must-pass code check passed.
 - Renter intake runs long enough to hit 16 caller turns (above).
 - `baby-no-heat-standard`: "layers, blankets" from `prompts/safety.md`'s staying-warm list reads as infant care advice to the grader when the person at risk is a baby.

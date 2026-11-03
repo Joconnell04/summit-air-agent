@@ -60,8 +60,17 @@ def load_adapter(stack: str):
 
 def prompt_files(prompts_dir: Path = PROMPTS_DIR) -> list[Path]:
     """The agent's prompt files, in name order (README and the eval prompts left out), or the
-    stand-in while there are none. The run hash covers these."""
-    files = sorted(p for p in prompts_dir.glob("*.md") if p.name != "README.md")
+    stand-in while there are none. The run hash covers these.
+
+    Where prompts/assemble.py is, only the parts it joins into the agent's prompt count. Other
+    prompts kept beside them, such as the technician summary's (app/summary.py), are never part of
+    a call, so changing one doesn't make a voice-agent eval run stale."""
+    assemble = _assemble() if (prompts_dir / "assemble.py").exists() else None
+    if assemble is not None:
+        names = set(assemble.PARTS) | {assemble.HOUSE_GUIDANCE}
+        files = sorted(prompts_dir / n for n in names if (prompts_dir / n).exists())
+    else:
+        files = sorted(p for p in prompts_dir.glob("*.md") if p.name != "README.md")
     if not files:
         return [STANDIN_PROMPT]
     return files + sorted(prompts_dir.glob("*.yaml")) + sorted(prompts_dir.glob("*.py"))

@@ -187,7 +187,10 @@ class Harness:
             difficulty=scenario.difficulty,
             traits=scenario.traits,
             outcome=outcome,
-            must_pass_failures=failures if scenario.must_pass and outcome == "fail" else [],
+            must_pass_failures=(
+                [f for f in failures if not f.startswith("grader:")]
+                if scenario.must_pass and outcome == "fail" else []
+            ),
             check_failures=failures,
             checks=ran,
             error=error,

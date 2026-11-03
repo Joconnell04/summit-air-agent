@@ -39,8 +39,8 @@ def check(count: int, baseline: dict) -> tuple[bool, str]:
 
 
 def must_pass_gaps(run, scenarios=None) -> list[str]:
-    """Must-pass scenarios the run's suite selects today that are missing from it or didn't pass.
-    An error is not a pass: a safety case with no verdict can't stand in the reference."""
+    """Must-pass scenarios the run's suite selects today that are missing from it or failed a code
+    check. An error is not a pass: a safety case with no verdict can't stand in the reference."""
     from evals.scenario import load_all
     from evals.suites import SuiteError, select
 
@@ -53,11 +53,13 @@ def must_pass_gaps(run, scenarios=None) -> list[str]:
     needed = {s.id for s in chosen if s.must_pass}
     ran = {s.scenario_id for s in run.scenarios}
     problems = [f"must-pass case missing: {i}" for i in sorted(needed - ran)]
+    # A grader fail lowers the pass rate but is not a must-pass failure: the must-pass lines are code
+    # checks, as in the publish gate (DECISIONS.md 031).
     must_now = {s.id for s in scenarios if s.must_pass}
     for s in run.scenarios:
-        if s.scenario_id in must_now and s.outcome != "pass":
+        if s.scenario_id in must_now and (s.outcome == "error" or s.code_failures):
             problems.append(f"must-pass case {s.outcome}: {s.key}")
-        elif s.must_pass_failures:
+        elif s.must_pass_failures and s.code_failures:
             problems.append(f"must-pass case failed: {s.key}")
     return problems
 

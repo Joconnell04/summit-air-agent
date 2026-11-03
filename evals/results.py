@@ -67,6 +67,8 @@ class ScenarioResult(Strict):
     difficulty: Difficulty
     traits: list[Trait] = Field(default_factory=list)
     outcome: Outcome
+    # The failed code checks on a must-pass scenario. A grader fail lowers the pass rate but is not
+    # a must-pass failure: the must-pass lines are code checks (docs/spec.md).
     must_pass_failures: list[str] = Field(default_factory=list)
     # Every failed code check, must-pass or not, and why an error run produced no verdict.
     check_failures: list[str] = Field(default_factory=list)
@@ -91,6 +93,11 @@ class ScenarioResult(Strict):
     tool_calls: list[ToolCall] = Field(default_factory=list)
     turn_timings: list[TurnTiming] = Field(default_factory=list)
     call_id: str = Field(min_length=1)
+
+    @property
+    def code_failures(self) -> list[str]:
+        """The failed code checks, without a grader fail. Only these are must-pass failures."""
+        return [f for f in self.check_failures if not f.startswith("grader:")]
 
     @model_validator(mode="after")
     def check_consistency(self) -> "ScenarioResult":
