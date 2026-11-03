@@ -1,0 +1,24 @@
+{
+ "has_more": false,
+ "items": [
+  {
+   "area_code": 678,
+   "country_code": "US",
+   "creation_timestamp": 1792690174306,
+   "custom_sms_enabled": false,
+   "inbound_agents": [
+    {
+     "agent_id": "agent_5c00ceef6a443a4ffa7f7cbeed",
+     "agent_version": "latest",
+     "weight": 1
+    }
+   ],
+   "inbound_webhook_url": "https://45-77-105-247.sslip.io/retell/inbound",
+   "last_modification_timestamp": 1793670520961,
+   "phone_number": "+16783366730",
+   "phone_number_pretty": "(678) 336-6730",
+   "phone_number_type": "retell-twilio",
+   "toll_free": false
+  }
+ ]
+}

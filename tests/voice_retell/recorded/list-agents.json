@@ -1,0 +1,21 @@
+{
+ "has_more": false,
+ "items": [
+  {
+   "agent_id": "agent_5c00ceef6a443a4ffa7f7cbeed",
+   "agent_name": "Summit Air (Retell baseline)",
+   "channel": "voice",
+   "is_multi_prompt": false,
+   "is_suspended": false,
+   "response_engine_type": "retell-llm",
+   "tags": {
+    "prod": {},
+    "staging": {}
+   },
+   "user_modified_timestamp": 1793670520613,
+   "voice_avatar_url": "https://retell-utils-public.s3.us-west-2.amazonaws.com/customvoice-icon.png",
+   "voice_id": "custom_voice_ba846b45c9c664cd6d7f1c8523",
+   "voice_name": "Katie"
+  }
+ ]
+}
