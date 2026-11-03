@@ -42,21 +42,23 @@ def tenant_name() -> str:
     return only
 
 
+def switch(http, mode: str, number: str, tenant: str) -> str:
+    """Where the number points after the switch: "worker" or "fallback"."""
+    line = twilio.number(http, number)
+    if mode == "on" and line["trunk_sid"]:
+        twilio.update_number(http, line["sid"], TrunkSid="", VoiceUrl=fallback_url(tenant))
+        return "fallback"
+    if mode == "off" and not line["trunk_sid"]:
+        trunks = http.get(f"{twilio.TRUNKING}/Trunks").raise_for_status().json()["trunks"]
+        trunk = next(t for t in trunks if t["friendly_name"] == NAME)
+        twilio.update_number(http, line["sid"], TrunkSid=trunk["sid"])
+        return "worker"
+    return "worker" if line["trunk_sid"] else "fallback"
+
+
 def main(mode: str) -> None:
-    tenant = tenant_name()
-    number = e164(os.environ["TWILIO_PHONE_NUMBER"])
     with twilio.client() as http:
-        line = twilio.number(http, number)
-        if mode == "status":
-            print("worker" if line["trunk_sid"] else "fallback")
-            return
-        if mode == "on" and line["trunk_sid"]:
-            twilio.update_number(http, line["sid"], TrunkSid="", VoiceUrl=fallback_url(tenant))
-        elif mode == "off" and not line["trunk_sid"]:
-            trunks = http.get(f"{twilio.TRUNKING}/Trunks").raise_for_status().json()["trunks"]
-            trunk = next(t for t in trunks if t["friendly_name"] == NAME)
-            twilio.update_number(http, line["sid"], TrunkSid=trunk["sid"])
-    print(f"fallback {mode}")
+        print(switch(http, mode, e164(os.environ["TWILIO_PHONE_NUMBER"]), tenant_name()))
 
 
 if __name__ == "__main__":
