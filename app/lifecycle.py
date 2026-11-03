@@ -78,7 +78,9 @@ def start(
     recent = (
         [
             c
-            for c in records.recent_calls(conn, known, now, tenant.repeat["link_within_minutes"])
+            for c in records.recent_calls(
+                conn, tenant.slug, known, now, tenant.repeat["link_within_minutes"]
+            )
             if c["id"] != args.call_id
         ]
         if known
