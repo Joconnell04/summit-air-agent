@@ -125,7 +125,8 @@ class Harness:
         failures, violations, tool_calls, grade_score, notes = [], [], [], None, ""
         if server is not None:
             try:
-                trace = server.trace(call_id)
+                retell = self.stack == "retell"
+                trace = server.final_trace(call_id) if retell else server.trace(call_id)
                 tool_calls = [
                     ToolCall(name=e["tool"], arguments=e["args"])
                     for e in trace["events"] if e["type"] == "tool" and e["tool"] in TOOLS

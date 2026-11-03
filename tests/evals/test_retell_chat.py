@@ -89,3 +89,26 @@ def test_the_eval_servers_token_goes_on_every_request_and_to_open_chat(monkeypat
     assert server.client.headers["X-Debug-Token"] == "tok"
     assert server.debug_token == "tok"
     assert agent.env["DEBUG_TOKEN"] == "tok"
+
+
+def test_the_record_is_read_once_the_webhook_has_ended_the_call():
+    from evals.world import ToolServer
+
+    states = iter([None, None, "2026-11-02T14:05:00Z"])
+
+    def handler(request):
+        return httpx.Response(200, json={"call": {"ended_at": next(states)}})
+
+    server = ToolServer(httpx.Client(base_url="https://eval.example",
+                                     transport=httpx.MockTransport(handler)), "tok")
+    assert server.final_trace("eval-x", wait_s=5, every_s=0)["call"]["ended_at"]
+
+
+def test_a_call_that_never_ends_is_returned_after_the_wait():
+    from evals.world import ToolServer
+
+    server = ToolServer(httpx.Client(
+        base_url="https://eval.example",
+        transport=httpx.MockTransport(lambda r: httpx.Response(200, json={"call": {"ended_at": None}})),
+    ), "tok")
+    assert server.final_trace("eval-x", wait_s=0, every_s=0)["call"]["ended_at"] is None
