@@ -11,11 +11,11 @@ hidden_facts:
   address: 1847 East 36th St, Brooklyn, 11234
   phone: the number Mike is calling from
   problem: furnace runs but the house won't get above 62, three days now
-  final_choice: Wednesday morning, because only Carla is home then; Carla approves the work
+  final_choice: Tuesday morning, because only Carla is home then; Carla approves the work
 opening: "Mike: Hi, the furnace is running but the house won't warm up. Carla: Tell them it's been three days."
 script:
-  - Mike wants Thursday afternoon. Carla is only home Wednesday and cuts in.
-  - Switch to Thursday afternoon after the agent offers it, then back to Wednesday morning after Carla objects. Do this before any read-back.
+  - Mike wants Thursday afternoon. Carla is only home Tuesday morning and cuts in.
+  - Switch to Thursday afternoon after the agent offers it, then back to Tuesday morning after Carla objects. Do this before any read-back.
   - Answer who is home and who approves only when asked, and let Carla answer ("I'll be home, I decide").
   - Say yes to the read-back once the address and number are right. Say goodbye after the confirmation.
 max_turns: 20

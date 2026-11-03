@@ -25,7 +25,7 @@ from evals.caller import SimulatedCaller
 from evals.checks import Evidence, check_names, run_checks, safety_config
 from evals.compare import percentile
 from evals.fingerprint import prompt_hash, run_hash
-from evals.grader import grade
+from evals.grader import grade, set_up
 from evals.models import Model, Usage, for_profile, load_config
 from evals.models import profile as models_profile
 from evals.results import RESULTS_DIR, Run, ScenarioResult, ToolCall, Turn
@@ -131,6 +131,7 @@ class Harness:
     def _score(self, scenario, sample, call_id, server, transcript, timings, usage, error, began):
         failures, violations, tool_calls, grade_score, notes = [], [], [], None, ""
         ran: list[str] = []
+        done: list[str] = []
         if server is not None:
             try:
                 retell = self.stack == "retell"
@@ -140,6 +141,7 @@ class Harness:
                     for e in trace["events"] if e["type"] == "tool" and e["tool"] in TOOLS
                 ]
                 evidence = Evidence(trace, self.safety)
+                done = set_up(trace, self.safety)
                 if not error.startswith("harness"):
                     failures = run_checks(scenario.must, evidence)
                     violations = run_checks(scenario.must, evidence, prohibitions_only=True)
@@ -161,7 +163,7 @@ class Harness:
             outcome = "fail" if failures else "pass"
         if not error:
             try:
-                g = grade(self.models.grader, transcript, scenario.should)
+                g = grade(self.models.grader, transcript, scenario.should, done)
                 usage.add(g.usage)
                 grade_score, notes = g.score, g.notes
                 if g.failed and outcome == "pass":
