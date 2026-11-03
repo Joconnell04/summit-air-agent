@@ -69,3 +69,8 @@ How the design was reached, in order, so a reader can follow each choice back to
 | Unsafe heat advice | Kept as a prompt rule with evals, since the server sees agent lines only after they are spoken | DECISIONS.md 030, #64 |
 | Publish gate rule | Code checks only, one rerun of a miss, both runs kept; never relative to the live version | DECISIONS.md 031, #65 |
 | Owner guidance limits | Four stages, locked subjects refused, AI disclosure kept, booking and closing guidance only when the server reaches the stage | DECISIONS.md 032, #65 |
+| Safety posture | Escalate politely and get off the line; no on-the-fly coaching or new safety logic | DECISIONS.md 033 |
+| V1 scope for phase 3 | Technician summary, model matrix, side model, warm transfer, recordings, eval floor and delay targets in; Spanish, playbooks, capacity, texting and extra owner editing after V1 | DECISIONS.md 034 |
+| Co-authoring rounds | Three rounds: failures, then seeds with a hold-out, then judge labels with the floor | DECISIONS.md 035 |
+| Model matrix | Haiku stays live: higher pass rate, a third of Sonnet's delay, a fraction of the cost | DECISIONS.md 036, #68 |
+| Side model | OpenAI Decisions reads "someone at risk at home" on each line; it can only raise priority | DECISIONS.md 037, #68 |

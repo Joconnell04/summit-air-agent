@@ -77,15 +77,18 @@ class FakeSideModel:
     def __init__(self, score):
         self.value = score
 
-    def score(self, text):
+    def score(self, question, text):
+        self.asked = (question, text)
         return self.value
 
 
-def test_the_side_model_slot_is_off_by_default_and_can_only_raise():
-    assert CFG["side_model"] is None
-    # Off by default: a model that would score high changes nothing without the config slot.
-    assert decide("tune_up", model=FakeSideModel(0.99)).level == "Normal"
-    slot = {**CFG, "side_model": {"threshold": 0.8, "raise_to": "Urgent", "reason": "side model"}}
+def test_the_side_model_slot_needs_its_config_and_can_only_raise():
+    # Without the config slot, a model that would score high changes nothing.
+    no_slot = {**CFG, "side_model": None}
+    tune_up = prio.decide(prio.Facts("tune_up"), no_slot, FakeSideModel(0.99))
+    assert tune_up.level == "Normal"
+    slot = {**CFG, "side_model": {"question": "q", "threshold": 0.8, "raise_to": "Urgent",
+                                  "reason": "side model"}}
     high = prio.decide(prio.Facts("tune_up"), slot, FakeSideModel(0.95))
     assert high.level == "Urgent" and "side_model" in high.rules
     low = prio.decide(prio.Facts("no_heat", "", 50), slot, FakeSideModel(0.0))

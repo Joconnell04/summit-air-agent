@@ -13,13 +13,14 @@ def test_default_profile_exists():
 
 
 def test_every_profile_uses_a_known_provider():
-    for name, profile in {**CONFIG["profiles"], **CONFIG["offline"], **CONFIG["post_call"]}.items():
+    every = {**CONFIG["profiles"], **CONFIG["offline"], **CONFIG["post_call"], **CONFIG["side"]}
+    for name, profile in every.items():
         assert profile["provider"] in CONFIG["providers"], name
         assert profile["model"], name
 
 
 def test_live_profiles_keep_thinking_off():
-    for name, profile in CONFIG["profiles"].items():
+    for name, profile in {**CONFIG["profiles"], **CONFIG["side"]}.items():
         assert profile["thinking"] is False, name
 
 

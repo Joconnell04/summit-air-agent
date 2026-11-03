@@ -42,7 +42,7 @@ Exit: every lane merged through review, scoreboard running, go/no-go passed or t
 ## 4. Deploy and demo prep
 
 - [ ] Hosting: always-on server and worker, backup number, failure alerts
-- [ ] Owner view, runbook, planted-bug drills
+- [ ] Owner view, runbook, feasibility questions ("how would you do X"), kept outside the repo
 - [ ] Rehearsal with a skeptical owner
 - [ ] README: number, scoreboard, diagram, what's cut
 

@@ -28,9 +28,10 @@ DECADES = {"seventies": 70, "eighties": 80, "nineties": 90}
 
 
 class SideModel(Protocol):
-    """A model that scores a call's caller lines for urgency (DECISIONS.md 006). Off at launch."""
+    """A model that answers one question about the caller's lines with the probability of yes
+    (app/side_model.py, DECISIONS.md 006). None means no answer in time: the rules decide alone."""
 
-    def score(self, text: str) -> float | None: ...
+    def score(self, question: str, text: str) -> float | None: ...
 
 
 @dataclass
@@ -42,6 +43,7 @@ class Facts:
     outside_now_f: float | None = None
     outside_coldest_f: float | None = None  # the lower of now and the next 12 hours
     heating_indoors: bool = False  # the safety check heard fuel-burning heat indoors
+    caller_text: str = ""  # the caller's lines alone, what the side model reads
 
 
 @dataclass
@@ -141,10 +143,12 @@ def decide(facts: Facts, cfg: dict, side_model: SideModel | None = None) -> Prio
     if combine and not mild and groups >= combine["groups"]:
         result.raise_to(combine["raise_to"], "combined", combine["reason"])
     slot = cfg.get("side_model")
-    if side_model is not None and slot:
-        score = side_model.score(facts.text)
+    applies = slot and facts.job_type in slot.get("job_types", [facts.job_type])
+    if side_model is not None and applies:
+        score = side_model.score(slot["question"], facts.caller_text or facts.text)
         if score is not None and score >= slot["threshold"]:
-            result.raise_to(slot["raise_to"], "side_model", slot["reason"])
+            level = slot.get("raise_to_when_mild", slot["raise_to"]) if mild else slot["raise_to"]
+            result.raise_to(level, "side_model", slot["reason"])
     return result
 
 
