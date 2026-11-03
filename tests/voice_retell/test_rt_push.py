@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 
 import pytest
+import yaml
 from fake_retell import FakeRetell
 
 from app.tools import TOOLS
@@ -15,6 +16,7 @@ from voice.retell.push import PHONE_NUMBER, push
 BASE = "https://bridge.example.com"
 VOICE = {"voice_id": "f786b574-daa5-4673-aa0c-cbe3e8534c02", "model": "sonic-3", "name": "Katie"}
 OLD_AGENT = "agent_8e083a54718dcabbbe2c5c4f3d"
+MODELS = Path(__file__).resolve().parents[2] / "config" / "models.yaml"
 
 
 def specs(note: str = "") -> list[dict]:
@@ -113,7 +115,8 @@ def test_the_tenants_local_names_reach_the_retell_agent():
 
 
 def test_an_agent_without_names_sends_no_pronunciation_dictionary():
-    body = build.agent_body("llm_1", BASE, "custom_voice_1", "sonic-3", local_names.Names([]))
+    model = yaml.safe_load(MODELS.read_text())["voice"]["tts"]["model"]
+    body = build.agent_body("llm_1", BASE, "custom_voice_1", model, local_names.Names([]))
     assert "pronunciation_dictionary" not in body
     assert body["boosted_keywords"] == build.SPEECH["boosted_keywords"]
 

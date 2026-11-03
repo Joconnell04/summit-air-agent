@@ -29,7 +29,13 @@ How the two files merge:
 
 - Mappings merge key by key, and the tenant's value wins.
 - A list of mappings that all carry an `id` (the priority rules) merges by id: a tenant entry with a trade id is merged into that rule, and new ids come after the trade's. Summit Air uses this once, adding `age_at_least: 60` to the trade's `vulnerable_person` rule.
-- Any other list (phrases, job types) is the trade's items, then the tenant's new ones. A tenant can add a phrase but cannot drop one the trade lists; dropping one is a change to the trade.
+- Any other list (phrases, job types) is the trade's items, then the tenant's new ones.
+
+What a tenant can and can't change. The server refuses to load a tenant that breaks these, so the mistake shows at start, not on a call:
+
+- Can: add phrases to any trade list (safety signals, vague phrases, a rule's phrases), add job types or new conditions to a trade rule, add its own rules, raise a trade rule's `raise_to` or `raise_to_when_mild`, raise a job type's `base` level, and set anything the trade leaves out.
+- Can't: drop a trade phrase or rule; lower a trade rule's level or a job type's base level; change any other value the trade set on a rule (turning off `group` or `safety_signal`, say); add `safety.denials`, since a denial turns the answer to a safety check into a no (Summit Air has no denials of its own, so all of them are the trade's); replace a trade list or mapping with another shape; mix entries with and without an `id` in a rules list. Loosening any of these is a change to the trade, reviewed like any rule change.
+- Must: give every safety kind its `lines` and `variants`, every vague kind its check `question`, and the `sign_off` and `flag_reason` lines. The trade lists the signals but none of the words, so these are checked when the tenant loads.
 
 `trades/hvac/agent.yaml` holds the safety signal phrases (gas and carbon monoxide, the vague smells and symptoms that get a check question, the denials), the priority rules for who is at risk with each job type's default level, and which job types and rules the after-hours rules apply to.
 
@@ -41,7 +47,7 @@ The move was kept narrow. These stay with the tenant even though another HVAC co
 - `config.yaml` as a whole: it is the company as its own ServiceTitan account knows it, ids included, and the mock reads it directly.
 - `knowledge/`, the `voice` lines and `names.yaml`.
 
-Checks: `tests/tool_server/test_ts_trades.py` holds Summit Air's merged config to a golden copy of what the server read before the split (`tests/tool_server/golden/summit-air-agent.yaml`; a trade edit that changes Summit Air shows up there), checks that the trade folder names no company or place, and loads a tenant that inherits the trade with one override. The eval run hash covers `trades/` as well as `tenants/` (`evals/fingerprint.py`).
+Checks: `tests/tool_server/test_ts_trades.py` holds Summit Air's merged config to a golden copy of what the server read before the split (`tests/tool_server/golden/summit-air-agent.yaml`; a trade edit that changes Summit Air shows up there), checks that the trade folder names no company or place, loads a tenant that inherits the trade with one override, and tries each change a tenant can't make. The eval run hash covers `trades/` as well as `tenants/` (`evals/fingerprint.py`).
 
 ## How a new company is added
 

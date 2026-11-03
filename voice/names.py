@@ -69,7 +69,8 @@ class Names:
 
 
 def load(tenant_dir: Path) -> Names:
-    """The tenant's list, or an empty one when it has none."""
+    """The tenant's list, or an empty one when it has none. A list that breaks a rule in
+    problems() (Deepgram's limits included) is refused here, before any call uses it."""
     path = Path(tenant_dir) / FILE
     if not path.exists():
         return Names([])
@@ -78,7 +79,11 @@ def load(tenant_dir: Path) -> Names:
         Name(n["written"], list(n["match"]), n["ipa"], n["says"], list(n.get("heard_as", [])))
         for n in raw["names"]
     ]
-    return Names(names, raw.get("cartesia_dictionary_id"))
+    loaded = Names(names, raw.get("cartesia_dictionary_id"))
+    wrong = problems(loaded)
+    if wrong:
+        raise ValueError(f"{path}: " + "; ".join(wrong))
+    return loaded
 
 
 def plain_ipa(ipa: str) -> str:
@@ -125,9 +130,6 @@ def push(tenant_dir: Path, api_key: str, client: httpx.Client) -> str:
     """Create the tenant's Cartesia dictionary, or replace the items of the one it has, and save its
     id in names.yaml."""
     names = load(tenant_dir)
-    wrong = problems(names)
-    if wrong:
-        raise ValueError("; ".join(wrong))
     headers = {"X-API-Key": api_key, "Cartesia-Version": CARTESIA_DICT_VERSION}
     body = {"items": names.cartesia_items()}
     if names.cartesia_dictionary_id:

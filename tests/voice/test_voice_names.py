@@ -11,7 +11,7 @@ from livekit.plugins import cartesia, deepgram
 from tests.tool_server.toolkit import TENANT_DIR
 from voice import names as local_names
 from voice.livekit.settings import load_voice
-from voice.livekit.worker import stt_options, tts_options
+from voice.livekit.worker import check_names, stt_options, tts_options
 
 NAMES = local_names.load(TENANT_DIR)
 RAW = yaml.safe_load((TENANT_DIR / "names.yaml").read_text())
@@ -75,6 +75,25 @@ def test_a_bad_entry_is_reported(entry, problem):
 def test_too_many_keyterms_for_deepgram_is_reported():
     many = [local_names.Name(f"Street{i}", [f"street{i}"], "<<ˈ|s|t>>", "ST") for i in range(101)]
     assert any("over Deepgram's 100" in p for p in local_names.problems(local_names.Names(many)))
+
+
+def test_an_over_limit_list_stops_the_worker_at_start(tmp_path):
+    folder = tmp_path / "tenants" / "big-city-heat"
+    folder.mkdir(parents=True)
+    (folder / "agent.yaml").write_text("{}\n")
+    many = [
+        {"written": f"Street{i}", "match": [f"street{i}"], "ipa": "<<ˈ|s|t>>", "says": "ST"}
+        for i in range(101)
+    ]
+    (folder / "names.yaml").write_text(yaml.safe_dump({"names": many}, allow_unicode=True))
+    with pytest.raises(ValueError, match="over Deepgram's 100"):
+        local_names.load(folder)
+    with pytest.raises(ValueError, match="over Deepgram's 100"):
+        check_names(tmp_path / "tenants")
+
+
+def test_every_tenant_list_in_the_repo_loads():
+    check_names(TENANT_DIR.parent)
 
 
 def test_a_tenant_without_a_list_gets_none(tmp_path):

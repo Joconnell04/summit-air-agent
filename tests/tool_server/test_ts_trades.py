@@ -102,3 +102,91 @@ def test_extending_a_trade_that_does_not_exist_fails_at_load(tmp_path):
     (tmp_path / "agent.yaml").write_text("extends: roofing\n")
     with pytest.raises(ValueError, match="roofing"):
         load_agent(tmp_path, TRADES_DIR)
+
+
+def tenant_with(tmp_path, change) -> Tenant:
+    """Summit Air copied with one change to its own agent.yaml, then loaded."""
+    folder = tmp_path / "north-heat"
+    shutil.copytree(TENANT_DIR, folder)
+    agent = yaml.safe_load((folder / "agent.yaml").read_text())
+    change(agent)
+    (folder / "agent.yaml").write_text(yaml.safe_dump(agent))
+    return Tenant.load(folder, TRADES_DIR)
+
+
+@pytest.mark.parametrize(
+    "drop, named",
+    [
+        (lambda s: s["kinds"]["gas"].pop("lines"), "kinds.gas.lines"),
+        (lambda s: s["kinds"]["co"].pop("variants"), "kinds.co.variants"),
+        (lambda s: s["vague"]["gas"].pop("question"), "vague.gas.question"),
+        (lambda s: s.pop("vague"), "vague.co.question"),
+        (lambda s: s.pop("sign_off"), "sign_off"),
+        (lambda s: s.pop("flag_reason"), "flag_reason"),
+    ],
+)
+def test_a_tenant_missing_safety_wording_fails_at_load(tmp_path, drop, named):
+    with pytest.raises(ValueError, match=re.escape(named)):
+        tenant_with(tmp_path, lambda agent: drop(agent["safety"]))
+
+
+@pytest.mark.parametrize(
+    "change, named",
+    [
+        (
+            lambda a: a["priority"]["rules"].append({"id": "medical_equipment", "raise_to": "Normal"}),
+            "medical_equipment].raise_to",
+        ),
+        (
+            lambda a: a["priority"]["rules"].append(
+                {"id": "bedbound", "raise_to_when_mild": "Normal"}
+            ),
+            "bedbound].raise_to_when_mild",
+        ),
+        (
+            lambda a: a["priority"]["rules"].append({"id": "safety_signal", "safety_signal": False}),
+            "safety_signal].safety_signal",
+        ),
+        (
+            lambda a: a["priority"]["rules"].append({"id": "young_child", "group": False}),
+            "young_child].group",
+        ),
+        (lambda a: a["priority"].update(base={"safety_check": "Normal"}), "base.safety_check"),
+        (lambda a: a["safety"].update(denials=["not really"]), "safety.denials"),
+    ],
+)
+def test_a_tenant_cannot_loosen_what_the_trade_sets(tmp_path, change, named):
+    with pytest.raises(ValueError, match=re.escape(named)):
+        tenant_with(tmp_path, change)
+
+
+def test_a_tenant_can_raise_a_level_and_add_to_a_rule(tmp_path):
+    def change(agent):
+        agent["priority"]["rules"].append(
+            {"id": "young_child", "raise_to": "Urgent", "phrases": ["twins"]}
+        )
+        agent["priority"]["base"] = {"tune_up": "High"}
+
+    tenant = tenant_with(tmp_path, change)
+    young = next(r for r in tenant.priority["rules"] if r["id"] == "young_child")
+    assert young["raise_to"] == "Urgent" and young["phrases"][-1] == "twins"
+    assert "toddler" in young["phrases"]
+    assert tenant.priority["base"]["tune_up"] == "High"
+
+
+def test_a_rules_list_where_only_some_entries_have_an_id_fails_at_load(tmp_path):
+    with pytest.raises(ValueError, match="some entries have an id"):
+        tenant_with(tmp_path, lambda a: a["priority"]["rules"].append({"raise_to": "High"}))
+
+
+def test_a_tenant_list_without_ids_over_the_trades_rules_fails():
+    with pytest.raises(ValueError, match="every entry needs an id"):
+        merge({"rules": [{"id": "a"}]}, {"rules": ["b"]})
+
+
+def test_a_tenant_cannot_replace_a_trade_list_with_another_shape(tmp_path):
+    def change(agent):
+        agent["safety"]["kinds"]["gas"]["clear"] = "gas"
+
+    with pytest.raises(ValueError, match="safety.kinds.gas.clear"):
+        tenant_with(tmp_path, change)

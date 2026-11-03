@@ -16,36 +16,91 @@ from zoneinfo import ZoneInfo
 
 import yaml
 
+from .priority import LEVELS
 from .text import phone_key
 
 DAY_NAMES = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")
 TRADES_DIR = Path(__file__).resolve().parent.parent / "trades"
 
 
-def merge(trade, tenant):
+def merge(trade, tenant, path: str = ""):
     """The tenant's value laid over the trade's.
 
     Mappings merge key by key. A list of mappings that all carry an `id` merges by id: an entry with
     a trade id is merged into that entry, and new ids follow the trade's, in the tenant's order. Any
     other list is the trade's items then the tenant's new ones, so a tenant can add a phrase but not
-    drop one the trade lists. Anything else is the tenant's value."""
-    if isinstance(trade, dict) and isinstance(tenant, dict):
+    drop one the trade lists. A scalar is the tenant's value. A tenant value of another shape than
+    the trade's (a phrase list replaced by a string) and a list where only some entries carry an
+    `id` are errors, since either would quietly drop what the trade set."""
+    where = path or "the top level"
+    if isinstance(trade, (dict, list)) and type(tenant) is not type(trade):
+        raise ValueError(f"{where}: the trade has a {type(trade).__name__} here")
+    if isinstance(trade, dict):
         merged = dict(trade)
         for key, value in tenant.items():
-            merged[key] = merge(trade[key], value) if key in trade else value
+            sub = f"{path}.{key}" if path else str(key)
+            merged[key] = merge(trade[key], value, sub) if key in trade else value
         return merged
-    if isinstance(trade, list) and isinstance(tenant, list):
-        if _by_id(trade) and _by_id(tenant):
+    if isinstance(trade, list):
+        keyed = {_ids(trade, where), _ids(tenant, where)} - {"empty"}
+        if keyed == {"all"}:
             ours = {item["id"]: item for item in tenant}
-            merged = [merge(item, ours.pop(item["id"])) if item["id"] in ours else item
-                      for item in trade]
+            merged = [
+                merge(item, ours.pop(item["id"]), f"{path}[{item['id']}]")
+                if item["id"] in ours
+                else item
+                for item in trade
+            ]
             return merged + list(ours.values())
+        if "all" in keyed:
+            raise ValueError(f"{where}: every entry needs an id when the other file's entries have one")
         return trade + [item for item in tenant if item not in trade]
     return tenant
 
 
-def _by_id(items: list) -> bool:
-    return bool(items) and all(isinstance(item, dict) and "id" in item for item in items)
+def _ids(items: list, where: str) -> str:
+    """Whether every entry of a list carries an id ("all"), none does ("none"), or it is empty."""
+    has = [isinstance(item, dict) and "id" in item for item in items]
+    if not has:
+        return "empty"
+    if all(has):
+        return "all"
+    if any(has):
+        raise ValueError(f"{where}: some entries have an id and some don't")
+    return "none"
+
+
+def loosened(trade: dict, tenant: dict) -> list[str]:
+    """How a tenant's agent.yaml would weaken what its trade sets, which no tenant may do. A tenant
+    may add phrases, job types and conditions to a trade rule and raise its level or a job type's
+    base level. It may not lower a level, change another value the trade set on a rule (turning a
+    rule's `group` or `safety_signal` off, say) or add denials, since a denial turns a safety
+    check's answer into a no."""
+    found = []
+    if tenant.get("safety", {}).get("denials"):
+        found.append("safety.denials: denials are the trade's alone")
+    priority, trade_priority = tenant.get("priority", {}), trade.get("priority", {})
+    for job_type, level in priority.get("base", {}).items():
+        floor = trade_priority.get("base", {}).get(job_type)
+        if floor and _rank(level) < _rank(floor):
+            found.append(f"priority.base.{job_type}: {level} is below the trade's {floor}")
+    rules = {r["id"]: r for r in trade_priority.get("rules", [])}
+    for rule in priority.get("rules", []):
+        base = rules.get(rule.get("id"), {})
+        for key, value in rule.items():
+            if key == "id" or key not in base or isinstance(base[key], list):
+                continue
+            where = f"priority.rules[{rule['id']}].{key}"
+            if key in ("raise_to", "raise_to_when_mild"):
+                if _rank(value) < _rank(base[key]):
+                    found.append(f"{where}: {value} is below the trade's {base[key]}")
+            elif value != base[key]:
+                found.append(f"{where}: the trade sets {base[key]!r}; a tenant may only add to it")
+    return found
+
+
+def _rank(level: str) -> int:
+    return LEVELS.index(level) if level in LEVELS else -1
 
 
 def load_agent(folder: Path, trades_dir: Path = TRADES_DIR) -> tuple[dict, str | None]:
@@ -57,7 +112,32 @@ def load_agent(folder: Path, trades_dir: Path = TRADES_DIR) -> tuple[dict, str |
     path = Path(trades_dir) / trade / "agent.yaml"
     if not path.exists():
         raise ValueError(f"{folder}/agent.yaml extends {trade!r}, but {path} does not exist")
-    return merge(yaml.safe_load(path.read_text()), agent), trade
+    shared = yaml.safe_load(path.read_text())
+    try:
+        problems = loosened(shared, agent)
+        if problems:
+            raise ValueError("; ".join(problems))
+        return merge(shared, agent), trade
+    except ValueError as err:
+        raise ValueError(f"{folder}/agent.yaml over {path}: {err}") from None
+
+
+def missing_safety_wording(safety: dict) -> list[str]:
+    """The safety wording the server says word for word. The trade lists the signals but not the
+    words, so a tenant that leaves one out would fail only once a caller mentions gas."""
+    missing = []
+    for kind, cfg in safety.get("kinds", {}).items():
+        if not cfg.get("lines"):
+            missing.append(f"kinds.{kind}.lines")
+        if not cfg.get("variants"):
+            missing.append(f"kinds.{kind}.variants")
+    for kind, cfg in safety.get("vague", {}).items():
+        if kind not in safety.get("kinds", {}):
+            missing.append(f"kinds.{kind} (vague.{kind} has no kind)")
+        if not cfg.get("question"):
+            missing.append(f"vague.{kind}.question")
+    missing += [key for key in ("sign_off", "flag_reason") if not safety.get(key)]
+    return missing
 
 
 @dataclass(frozen=True)
@@ -116,6 +196,9 @@ class Tenant:
         ]
         self.phone_keys = {phone_key(n) for n in agent["phone_numbers"]}
         self.safety: dict = agent["safety"]
+        missing = missing_safety_wording(self.safety)
+        if missing:
+            raise ValueError(f"{folder}/agent.yaml safety needs {missing}")
         self.commercial: dict = agent["commercial"]
         self.priority: dict = agent["priority"]
         # Where to read the outside temperature (app/weather.py). None leaves it unknown.

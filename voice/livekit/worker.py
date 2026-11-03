@@ -96,7 +96,16 @@ def load_vad(voice: dict):
     )
 
 
+def check_names(tenants_dir: Path) -> None:
+    """Loads every tenant's local names, so a list Deepgram or Cartesia would refuse stops the
+    worker when it starts rather than on a call."""
+    for folder in sorted(tenants_dir.iterdir()):
+        if (folder / "agent.yaml").exists():
+            local_names.load(folder)
+
+
 def prewarm(proc: JobProcess) -> None:
+    check_names(settings.tenants_dir)
     proc.userdata["vad"] = load_vad(load_voice())
 
 
