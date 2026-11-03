@@ -1,5 +1,6 @@
 """Deleting the losing voice folder after the bake-off must be clean (docs/architecture.md):
-nothing outside voice/ imports the LiveKit layer or the Retell layer."""
+nothing outside voice/ imports a voice layer: our LiveKit stack, Retell, or the audio-rig
+entrants (ElevenLabs, OpenAI Realtime, Gemini Live)."""
 
 import re
 from pathlib import Path
@@ -8,7 +9,7 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
 SHARED = ["app", "prompts", "servicetitan_mock", "evals", "scripts", "tenants"]
-LAYERS = ["livekit", "retell"]
+LAYERS = ["livekit", "retell", "elevenlabs", "openai_realtime", "gemini_live"]
 
 
 def import_pattern(layer: str) -> re.Pattern:

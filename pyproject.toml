@@ -16,10 +16,12 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "aiortc>=1.15.0",
     "anthropic>=2.4.0",
     "langsmith>=0.14.17",
     "pytest>=8",
     "ruff>=0.6",
+    "websockets>=17.4",
 ]
 livekit = [
     "livekit-agents~=1.8.10",

@@ -219,7 +219,7 @@ def create_scenario_run(
             "grader_notes": result.grader_notes,
             "error": result.error,
             "checks": result.checks,
-            "transcript": [t.model_dump() for t in result.transcript],
+            "transcript": [t.model_dump(exclude_none=True) for t in result.transcript],
             "tool_calls": [c.model_dump() for c in result.tool_calls],
         },
         extra={

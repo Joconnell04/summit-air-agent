@@ -120,3 +120,49 @@ post_call:
     model: claude-sonnet-5-5
     thinking: true
     price: {input: 2.00, output: 10.00}
+
+# The simulated audio bake-off (evals/audio_rig, DECISIONS.md 026). The rig's own voice for the
+# simulated caller and ears for the agent's replies, the voice-activity threshold that times the
+# agent's first sound, and per-minute prices for the parts a platform doesn't report itself.
+audio_rig:
+  # SOURCE for both Deepgram prices: https://deepgram.com/pricing (via docs/explorations/013).
+  caller_voice: {provider: deepgram, model: aura-2-thalia-en, price_per_1k_chars: 0.030}
+  agent_ears: {provider: deepgram, model: nova-3, price_per_minute: 0.0077}
+  # ASSUMED: speech sits well above -40 dBFS and codec noise well below it; 40 ms of it is a word.
+  vad: {threshold_dbfs: -40, min_voiced_ms: 40}
+  # Our LiveKit stack's speech parts, to cost a rig call: Deepgram streaming (SOURCE as above) and
+  # Cartesia Sonic (ASSUMED from the Startup plan, docs/cost.md). Its Claude tokens are counted
+  # from the call record.
+  livekit: {stt_per_minute: 0.0077, tts_per_1k_chars: 0.031}
+
+# Speech-to-speech and managed-voice entrants on the rig. Profile names are dotted
+# ("realtime.openai") so a results file names them like any other profile.
+realtime:
+  openai:
+    provider: openai
+    model: gpt-realtime-2.1
+    # The caller's words reach the tool server's turn check through this transcription model.
+    transcribe_model: gpt-4o-mini-transcribe
+    voice: marin
+    # OpenAI's server-side turn detection; 500 ms of silence is its default (ASSUMED as default).
+    silence_ms: 500
+    # USD per million tokens. SOURCE: https://developers.openai.com/api/docs/models/gpt-realtime-2.1
+    # (read 2026-11-03). Transcription ASSUMED at gpt-4o-mini-transcribe's audio input rate.
+    price: {text_input: 4.00, audio_input: 32.00, cached_input: 0.40, text_output: 24.00,
+            audio_output: 64.00, transcribe_per_minute: 0.003}
+  gemini:
+    provider: gemini
+    model: gemini-3.8-live
+    voice: Kore
+    # USD per million tokens. SOURCE: https://ai.google.dev/gemini-api/docs/pricing (read
+    # 2026-11-03), paid tier.
+    price: {text_input: 0.75, audio_input: 3.00, text_output: 4.50, audio_output: 12.00}
+  elevenlabs:
+    provider: elevenlabs
+    # The brain behind ElevenLabs' custom-LLM mode is our own live profile.
+    brain: fast
+    tts_model: eleven_flash_v2
+    voice_id: cgSgspJ2msm6clMCkdW9
+    # USD per minute for the platform. SOURCE: https://elevenlabs.io/pricing/api (via exploration
+    # 013); Claude tokens for the brain are counted separately.
+    price_per_minute: 0.08
