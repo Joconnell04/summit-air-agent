@@ -56,16 +56,17 @@ def build_llm():
         from livekit.plugins import anthropic
 
         # Prompt caching keeps the long, fixed instructions from adding to every reply's delay.
-        return anthropic.LLM(model=profile.model, temperature=0.3, caching="ephemeral")
+        # No temperature: current Claude models refuse it.
+        return anthropic.LLM(model=profile.model, caching="ephemeral")
     if profile.provider == "openai":
         from livekit.plugins import openai
 
         # The plugin keeps reasoning at its lowest for reasoning models.
-        return openai.LLM(model=profile.model, temperature=0.3)
+        return openai.LLM(model=profile.model)
     if profile.provider == "gemini":
         from livekit.plugins import google
 
-        return google.LLM(model=profile.model, temperature=0.3)
+        return google.LLM(model=profile.model)
     raise ValueError(f"unknown provider {profile.provider}")
 
 
@@ -201,6 +202,10 @@ async def entrypoint(ctx: JobContext) -> None:
             await ctx.delete_room()
 
         call.hang_up_task = asyncio.create_task(run())
+
+    # The session closes when the caller hangs up; end the job then, so the call is closed on the
+    # server at once rather than when LiveKit empties the room.
+    session.on("close", lambda _ev: ctx.shutdown("session closed"))
 
     @session.on("conversation_item_added")
     def on_item(ev: ConversationItemAddedEvent) -> None:

@@ -28,6 +28,10 @@ def test_asking_for_digits_is_noticed(line):
     "line",
     [
         "So that's 646, 624, 0418.",  # a read-back is not a question for digits
+        (
+            "Let me read that back: 142 Union Street, Brooklyn, 11231, and the best number is "
+            "646, 624, 0418. Is that right?"
+        ),
         "What's going on with the heat?",
         "Got it, thanks.",
     ],

@@ -12,9 +12,12 @@ rsync -az --delete --exclude .venv --exclude .git --exclude data --exclude '.env
 scp -q "$ENV_FILE" "$HOST:summit-air/.env"
 ssh "$HOST" 'set -e; chmod 600 ~/summit-air/.env; cd ~/summit-air/app
   ~/.local/bin/uv sync -q
-  ~/.local/bin/uv run --env-file ../.env python -m voice.livekit.worker download-files >/dev/null 2>&1
-  pkill -u "$(id -u)" -f "uvicorn app.main|voice.livekit.worker" || true
+  ~/.local/bin/uv run --env-file ../.env python -m livekit.agents download-files >/dev/null 2>&1
+  # Bracketed so the pattern never matches this shell; ports so the Retell stack is left alone.
+  pkill -u "$(id -u)" -f "[a]pp.main.*--port 8100|[v]oice.livekit.worker start" || true
   sleep 2
   sh deploy/summit-air/run.sh
-  crontab deploy/summit-air/crontab'
+  # Replace only our own lines; anything else in the crontab stays.
+  { crontab -l 2>/dev/null | grep -v "summit-air/app/deploy" | grep -v "^# Installed by deploy/summit-air"
+    cat deploy/summit-air/crontab; } | crontab -'
 echo "deployed to $HOST"

@@ -12,8 +12,11 @@ DIGITS = re.compile(
 
 
 def asked_for_digits(agent_text: str) -> bool:
-    """Did the agent's line ask for a number? Only a question counts, not a read-back."""
-    return "?" in agent_text and bool(DIGITS.search(agent_text))
+    """Did the agent's line ask for a number? Only a question counts, and a line that already
+    carries the digits is a read-back, answered with a yes or no."""
+    if "?" not in agent_text or re.search(r"\d{3}", agent_text):
+        return False
+    return bool(DIGITS.search(agent_text))
 
 
 def _ms(value: float | None) -> float | None:

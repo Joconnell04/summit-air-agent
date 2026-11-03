@@ -1,4 +1,5 @@
-.PHONY: setup test lint check ratchet ratchet-update eval-upload seed-st mock-st postman-st server postman trace
+.PHONY: setup test lint check ratchet ratchet-update eval-upload seed-st mock-st postman-st server postman trace \
+	voice-livekit phone-setup deploy test-call
 
 setup:
 	uv sync
@@ -50,3 +51,19 @@ postman:
 trace:
 	@test -n "$(CALL)" || { echo "usage: make trace CALL=<call id>"; exit 2; }
 	uv run python -m app.trace $(CALL) $(if $(DB),--db $(DB))
+
+# The LiveKit voice worker (voice/livekit/README.md), against make server and make mock-st
+voice-livekit:
+	uv run --env-file .env python -m voice.livekit.worker dev
+
+# Twilio trunk, LiveKit trunks and dispatch rule for the phone number (scripts/phone/setup.py)
+phone-setup:
+	uv run --env-file .env python -m scripts.phone.setup
+
+# Copy, install and restart everything on the summit-air server: make deploy [ENV=path/to/.env]
+deploy:
+	sh deploy/summit-air/deploy.sh $(or $(ENV),.env)
+
+# One real call to the agent's number from a simulated caller (a few cents)
+test-call:
+	uv run --env-file .env python -m voice.livekit.test_call

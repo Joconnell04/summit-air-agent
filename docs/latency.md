@@ -37,6 +37,21 @@ How long a caller waits for the agent to start answering, split by stage, so eve
   - Measured in the live pass: kept only if it shortens how long the caller hears nothing.
 - **Thinking off** on every live profile (config/models.yaml).
 
+## First real call (MEASURED)
+
+One call on 2026-11-03 (call `call-_+16466240418_mKdAaWweCvS2`): a simulated caller (`make test-call`) dialed (646) 624-0418 over the phone network, so both directions were real phone audio; profile `fast` (Haiku 5.5). Stage timings from the call trace (`make trace`), 11 agent turns. One call is a smoke test, not a median for S-36.
+
+| Stage | Measured |
+|---|---|
+| Final transcript after speech ends (Deepgram) | about 250 ms (88 to 434) |
+| Turn end decided (normal wait) | about 354 ms |
+| Model's first token | median 1.5 s (0.55 to 2.1 s) |
+| Voice first byte (Cartesia) | median 216 ms |
+| Reply delay, plain turns | median 2.7 s (2.1 to 2.8 s, 4 turns) |
+| Reply delay, turns with a tool | 1.4 to 3.4 s (6 turns) |
+
+The model's first token is the gap: about 1.5 s against the 500 ms budgeted, so plain turns run about twice the 1.2 s target. Turns whose first step follows a tool result in the same turn answer in about 0.55 s, which points at the first model request of each turn (prompt caching or preemptive generation restarting) rather than the model itself; that is the next thing to measure. The bridge line never fired: no tool took longer than 0.7 s (the slowest was 68 ms).
+
 ## On-prem option (a possible upsell)
 
 For a client who wants every last bit of speed: running the ears (speech-to-text) and the voice (text-to-speech) on a GPU server in the same building or data center as the phone line, instead of calling Deepgram and Cartesia over the internet, removes two network round trips per reply.
