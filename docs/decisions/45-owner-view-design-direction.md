@@ -6,7 +6,7 @@ Issue: #45. Status: decided
 
 Five design directions for the owner view, each drawn as the Today, Call and Results pages from the stories in DECISIONS.md 014, are on the design canvas: https://claude.ai/artifact/MFSZ4p6oo871gh7U2Ss8hL (private to Jackson). Which should be refined? This blocks the build brief for the new owner view.
 
-All five share the same base, from exploration 009: Revin's real logo, a light page, Revin's Ember orange (#FA3500) only for the brand and the main action, ServiceTitan's status colors (Urgent red, High amber, Done green, Scheduled blue) and ServiceTitan's words (Job, Arrival window, Service location).
+All five share the same base, from exploration 012: Revin's real logo, a light page, Revin's Ember orange (#FA3500) only for the brand and the main action, ServiceTitan's status colors (Urgent red, High amber, Done green, Scheduled blue) and ServiceTitan's words (Job, Arrival window, Service location).
 
 ## Options
 
@@ -41,7 +41,7 @@ Develop 1 and 3. Dispatch desk is what Paul, playing a ServiceTitan owner, will 
 
 ## Research notes
 
-- Brand values and ServiceTitan conventions: docs/explorations/009-revin-brand-and-servicetitan-ui.md.
+- Brand values and ServiceTitan conventions: docs/explorations/012-revin-brand-and-servicetitan-ui.md.
 - Data on every page is the seeded demo day from the current owner view (Mon Nov 2, 23 calls, 9 jobs). The agent's lines on the call pages are sample copy, not a real transcript.
 - The canvas is private until shared from its Share menu.
 
