@@ -1,0 +1,204 @@
+# How the phone agent works for Summit Air. The tool server reads this file and config.yaml (the
+# company as its field service system knows it: hours, area, job types, plans). Nothing here is
+# hard-coded in app/. Values marked ASSUMED are guesses until Summit Air confirms them.
+
+# The numbers callers dial. The dialed number picks the tenant.
+phone_numbers:
+  - "(646) 624-0418"  # our LiveKit stack (DECISIONS.md 004)
+  - "(678) 336-6730"  # the Retell baseline, during the bake-off
+
+fsm:
+  adapter: servicetitan
+  # The mock (make mock-st). FSM_BASE_URL overrides it. The mock's credentials are in config.yaml
+  # (auth); real ones come from FSM_CLIENT_ID, FSM_CLIENT_SECRET and FSM_APP_KEY.
+  base_url: http://127.0.0.1:8101
+  booking_provider_id: 501
+  campaign_id: 301  # "AI phone agent"
+  cancel_reason_id: 401  # "Customer cancelled"
+  # What record_lead's kinds are called in the FSM (config.yaml lead_kinds).
+  lead_kinds: {commercial: Commercial, install: Install, membership: Other}
+
+# Safety script. Wording follows docs/call-journeys.md journey 3 and must be signed off by a person
+# before launch (signed_off). The server returns these lines word for word; the agent never writes
+# its own.
+safety:
+  signed_off: false
+  kinds:
+    gas:
+      label: gas smell
+      lines: >-
+        Please get everyone out of the house now. Don't flip any switches or use the stove, and call
+        911 or the gas company once you're outside.
+      # Said instead of the full lines when the caller raises it again, in turn, never the same one
+      # twice in a row.
+      variants:
+        - Please get outside and call 911 from there.
+        - The safest thing is to head outside now and call 911 or the gas company.
+      clear:
+        - smell gas
+        - smelling gas
+        - smells like gas
+        - smell like gas
+        - a bit like gas
+        - kind of like gas
+        - kinda like gas
+        - sort of like gas
+        - little like gas
+        - smelled gas
+        - gas smell
+        - smell of gas
+        - gas leak
+        - leaking gas
+        - gas is leaking
+        - hissing gas
+        - hiss of gas
+    co:
+      label: carbon monoxide
+      lines: >-
+        If a window is right there, open it. Then get everyone out of the house now and call 911
+        once you're outside.
+      variants:
+        - Please get outside and call 911 from there.
+        - The safest thing is to get everyone outside now and call 911.
+      clear:
+        - carbon monoxide
+        - monoxide
+        - co alarm
+        - co detector
+  # A vague description gets one check question first. A yes counts as a clear signal of that kind;
+  # a clear no returns the call to its journey and is logged.
+  vague:
+    gas:
+      question: Just to be safe, are you smelling gas in the house right now?
+      phrases:
+        - smells off
+        - smell something off
+        - weird smell
+        - strange smell
+        - funny smell
+        - rotten egg
+        - rotten eggs
+        - like eggs
+        - sulfur
+    co:
+      question: Just to be safe, is a carbon monoxide alarm going off, or is anyone feeling sick or dizzy?
+      phrases:
+        - dizzy
+        - light headed
+        - lightheaded
+        - headaches
+        - nauseous
+        - alarm is beeping
+        - alarm keeps beeping
+  # Said when the agent wants to end a safety call: it signs off rather than hangs up.
+  sign_off: >-
+    Please head outside now and call 911 from there. I'll stay on if you need me, but the safest
+    thing is to go now. We'll follow up once you're safe.
+  flag_reason: "{label} reported on the call"
+
+# A caller line that describes a business marks the call commercial: it can't book (spec S-05,
+# journey 8). Three ways to match: "my restaurant" or "our bakery" (my or our right before a
+# business), "I run a restaurant" or "we manage the building" (a running word, then a, an or the and
+# at most one more word, then a business), and fixed phrases. A landlord of a two-family house or a
+# co-op unit owner is residential, so "my tenants" and "our building" are left to the agent and the
+# FSM account type. Exclusions are removed before matching, so "my business partner" stays a home.
+commercial:
+  owned: [restaurant, bakery, deli, cafe, bar, store, shop, salon, gym, clinic, daycare, warehouse, business]
+  run: [restaurant, bakery, deli, cafe, bar, store, shop, salon, gym, clinic, daycare, warehouse,
+        business, company, school, church, hotel, office, building, property, properties]
+  phrases: [property manager, property management, office building, commercial property, rooftop unit]
+  not: [business partner, business trip, business card, home office, my own business hours]
+
+# Rules can only raise priority (spec S-21). Each fires on words the caller said on this call, or on
+# facts the agent passed. ASSUMED: no heat or no cooling alone is High; the rules make it Urgent.
+priority:
+  base: {no_heat: High, no_cooling: High, tune_up: Normal, safety_check: High, estimate: Normal}
+  rules:
+    - id: vulnerable_person
+      job_types: [no_heat, no_cooling]
+      phrases: [elderly, baby, infant, newborn, grandmother, grandfather]
+      age_at_least: 70  # "my 84-year-old mother"
+      raise_to: Urgent
+      reason: someone at home who would struggle with the cold or heat
+    - id: medical_equipment
+      job_types: [no_heat, no_cooling]
+      phrases: [oxygen, cpap, dialysis, nebulizer, ventilator, medical equipment]
+      raise_to: Urgent
+      reason: medical equipment at home
+    - id: cold_inside
+      job_types: [no_heat]
+      inside_temp_below_f: 55
+      raise_to: Urgent
+      reason: below 55 F inside
+    - id: hot_inside
+      job_types: [no_cooling]
+      inside_temp_above_f: 85
+      raise_to: Urgent
+      reason: above 85 F inside
+    - id: safety_signal
+      safety_signal: true
+      raise_to: Urgent
+      reason: gas or carbon monoxide reported on the call
+  # A side model that scores each caller line (DECISIONS.md 006). Off at launch; when set, its score
+  # can only raise priority, like the rules.
+  side_model: null
+
+# Journey 11: how a no-heat or no-cooling call ends after hours. ASSUMED cutoffs.
+after_hours:
+  heating_job_types: [no_heat]
+  cooling_job_types: [no_cooling]
+  # Priority rules that mean someone at home is at extra risk.
+  at_risk_rules: [vulnerable_person, medical_equipment]
+  tonight_below_f: 50
+  morning_above_f: 55
+  cooling_tonight_above_f: 85
+  cooling_morning_below_f: 80
+  on_call_confirms_within_minutes: 20
+
+callbacks:
+  owner_in_hours: office
+  owner_after_hours: on_call
+  # Outbound calls only between these local times, one attempt (spec S-42).
+  outbound_hours: ["08:00", "21:00"]
+  max_attempts: 1
+  # A dropped safety call gets a callback this soon.
+  dropped_safety_minutes: 10
+  # When the FSM is down or refuses a booking, someone calls back within this.
+  fsm_down_minutes: 60
+
+repeat_callers:
+  link_within_minutes: 10
+  drops_before_callback_offer: 2
+
+retention:
+  transcript_days: 30
+  call_record_days: 365
+
+# Lines the server returns as `say`. {time} is a named callback time, such as "4:30 PM".
+lines:
+  fsm_unavailable: >-
+    I can't book that right now, but I've written it all down and someone will call you by {time} to
+    confirm.
+  fsm_unavailable_no_callback: I can't get to that right now, but I've written it all down for the team.
+  flag_stored: I've let our team know, and someone will call you by {time}.
+  flag_stored_urgent: >-
+    I've marked this as urgent and let our on-call team know, so someone's keeping an eye on it.
+    Someone will call you by {time}.
+  flag_stored_no_callback: I've let our team know.
+  lead_stored: Someone from our team will call you by {time} to tell you more.
+  commercial: >-
+    Thanks for thinking of us. Unfortunately Summit Air only works on homes, so we're not the right
+    fit for this one.
+  out_of_area: >-
+    I'm sorry, that's outside the area we cover, so we're not able to send someone. A local heating
+    company should be able to help.
+  do_not_call: Understood, we won't call you.
+  do_not_call_with_callback: >-
+    Understood, we won't call you. That means the callback is off, so give us a call any time you
+    need us.
+  repeated_drops: >-
+    Looks like we keep getting cut off, the signal might be spotty. Want me to have someone call you
+    back in a few minutes instead?
+  limit: I've already got that taken care of on this call, so let me have someone from the team follow up.
+  slot_taken: That window just filled up.
+  anything_else_first: Is there anything else I can help with?

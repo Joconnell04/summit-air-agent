@@ -22,6 +22,7 @@ Every endpoint returns HTTP 200 with:
 | `POST /calls/{id}/turn` | Every final caller transcript and every agent line | Safety action if any (`speak_safety_lines` with the exact text or a variant), journey switch hints, and the turn is logged with timings |
 | `POST /calls/{id}/end` | Call ends | Ok; triggers the after-call summary and callbacks |
 | `GET /healthz` | Watchdog | Tool server, database, FSM reachability, worker heartbeat |
+| `POST /healthz/heartbeat` | The voice worker, every minute; `worker` | Ok; `/healthz` marks a worker stale after two minutes without one |
 
 ## Tools the model can call
 
@@ -41,6 +42,20 @@ Every endpoint returns HTTP 200 with:
 | `end_call` | reason | Refused on a safety call until the lines were said and a person flagged |
 
 There is no tool that deletes, bulk-changes, queries freely, or places a call to an outside number.
+
+## Calling the server
+
+How the built server (`app/`, brief 02) takes these, so the voice lanes can code against it:
+
+- Model tools are `POST /tools/<name>` with `call_id` and the arguments in the JSON body; unknown fields are refused. The request models are in `app/schemas.py` and at `/docs` on a running server.
+- Writes (`book_appointment`, `reschedule_appointment`, `cancel_appointment`, `flag_person`, `record_lead`, `add_note`, `mark_do_not_call`, `end_call`) take an `Idempotency-Key` header. A result that changed something is stored and returned again for the same key and body; a refusal is not stored, so the same request can pass once its gate is met. The same key with a different body is refused (`idempotency_key_reused`).
+- `/calls/start` takes `caller_id` (the other party's number as delivered) and `dialed_number` (ours, which picks the tenant). `/calls/{id}/turn` takes `speaker` (`caller` or `agent`), `text` and `timings` (stage timings in ms, docs/latency.md). The agent's own lines must be posted too: the server marks the safety lines said only when an agent turn contains them word for word.
+- `read_back` takes `phone` as ten digits, `caller_id` for the number the call came from, or the last four digits of a number on file ("the one ending in 4024").
+- `find_slots` and `book_appointment` take facts (inside temperature, who is home) and the agent's view of priority; the server decides priority from its rules and every caller line, and logs the agent's view.
+- The turn check also marks the call commercial when a caller line describes a business by the patterns in tenant config (hint `commercial`) and marks the number do-not-call on "don't call me" and similar (hint `do_not_call`; the agent then calls `mark_do_not_call` for the line to say).
+- Reschedule and cancel need the booking to be from this call, from a customer matched by the number the call came from, or at the address the caller confirmed in the read-back.
+- `end_call` is also refused right after a booking is confirmed until a caller turn follows (spec S-30), and on a safety call it returns the sign-off with `hang_up: false` unless the caller said goodbye.
+- Refusal codes: `gate_read_back`, `gate_safety`, `out_of_area`, `customer_type`, `limit`, `not_owner`, `slot_taken` (with two `alternatives`), `invalid_slot`, `invalid_state`, `invalid_phone`, `invalid_callback_time`, `invalid_arguments` (with `errors`), `fsm_unavailable`, `fsm_rejected`, `anything_else_first`, `idempotency_key_reused`, `unknown_call`, `call_ended`, `server_error`.
 
 ## Customer notes
 

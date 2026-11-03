@@ -9,8 +9,12 @@ import pytest
 from conftest import (
     NO_COOLING,
     NO_HEAT,
+    NOW,
+    START,
+    TENANT_DIR,
     TOMORROW,
     TUNE_UP,
+    Api,
     build_small_world,
     job_body,
     open_slots,
@@ -205,7 +209,6 @@ def test_after_hours_is_for_urgent_jobs_and_uses_the_on_call_technician(small):
 
 
 def test_a_job_needs_a_technician_with_the_right_skill(tmp_path):
-    from conftest import NOW, TENANT_DIR, Api
 
     from servicetitan_mock.app import create_app
 
@@ -281,7 +284,6 @@ def test_a_window_outside_business_hours_cannot_be_booked(small, day, window):
 
 
 def test_a_window_that_has_started_cannot_be_booked(small):
-    from conftest import START
 
     api, ids = small
     customer_id, location_id = ids["home"]

@@ -54,6 +54,11 @@ class CustomerIn(BaseModel):
     contacts: list[ContactIn] = []
 
 
+class NoteIn(BaseModel):
+    text: str = Field(min_length=1, max_length=2000)
+    createdBy: str = Field("staff", min_length=1, max_length=40)  # ASSUMED field
+
+
 class LocationCreate(LocationIn):
     customerId: int
 
@@ -289,6 +294,45 @@ def location_contacts(
         repo.shape_contact,
         *pg,
     )
+
+
+# ---- customer notes ----------------------------------------------------------------------------
+
+
+@router.get("/customers/{customer_id}/notes")
+def customer_notes(
+    customer_id: int,
+    conn: sqlite3.Connection = Depends(get_conn),
+    pg: tuple[int, int] = Depends(paging),
+):
+    """Every note on the customer, including notes about its jobs, oldest first."""
+    _one(conn, "customers", customer_id, "Customer")
+    return page_of(
+        conn,
+        "SELECT * FROM notes WHERE customer_id = ? ORDER BY id",
+        [customer_id],
+        repo.shape_note,
+        *pg,
+    )
+
+
+@router.post("/customers/{customer_id}/notes", status_code=201)
+def add_customer_note(
+    customer_id: int,
+    body: NoteIn,
+    request: Request,
+    conn: sqlite3.Connection = Depends(get_conn),
+    now=Depends(get_now),
+    idempotency_key: str | None = Header(None),
+):
+    """Notes are append-only: there is no endpoint that edits or removes one."""
+
+    def run(c):
+        rules.require_customer(c, customer_id)
+        note_id = repo.insert_note(c, now, customer_id, body.text, body.createdBy)
+        return 201, repo.shape_note(_one(c, "notes", note_id, "Note"))
+
+    return write(conn, run, idem_key=idempotency_key, route=_route(request), body=body.model_dump())
 
 
 # ---- bookings ----------------------------------------------------------------------------------

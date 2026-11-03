@@ -1,4 +1,4 @@
-.PHONY: setup test lint check ratchet ratchet-update eval-upload seed-st mock-st postman-st
+.PHONY: setup test lint check ratchet ratchet-update eval-upload seed-st mock-st postman-st server postman trace
 
 setup:
 	uv sync
@@ -35,3 +35,18 @@ mock-st:
 
 postman-st:
 	sh scripts/run_postman_st.sh
+
+# The tool server (docs/tools.md). It talks to the mock on ST_PORT unless FSM_BASE_URL says otherwise.
+PORT ?= 8100
+
+server:
+	FSM_BASE_URL=$${FSM_BASE_URL:-http://127.0.0.1:$(ST_PORT)} DEBUG_TOKEN=$${DEBUG_TOKEN:-dev-debug-token} \
+	  uv run uvicorn app.main:create_app --factory --port $(PORT)
+
+postman:
+	sh scripts/run_postman_tools.sh
+
+# A call's timeline in plain text: make trace CALL=<call id> [DB=data/tool_server.db]
+trace:
+	@test -n "$(CALL)" || { echo "usage: make trace CALL=<call id>"; exit 2; }
+	uv run python -m app.trace $(CALL) $(if $(DB),--db $(DB))

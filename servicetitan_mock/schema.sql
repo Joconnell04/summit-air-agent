@@ -222,6 +222,18 @@ CREATE TABLE calls (
 );
 CREATE INDEX ix_calls_from ON calls (from_key, received_on);
 
+-- Customer notes, as ServiceTitan keeps them: free text on a customer, optionally about one of its
+-- jobs. The API can add a note and read notes, never change or remove one.
+CREATE TABLE notes (
+    id INTEGER PRIMARY KEY,
+    customer_id INTEGER NOT NULL REFERENCES customers (id),
+    job_id INTEGER REFERENCES jobs (id),
+    text TEXT NOT NULL,
+    created_by TEXT NOT NULL DEFAULT 'staff',
+    created_on TEXT NOT NULL
+);
+CREATE INDEX ix_notes_customer ON notes (customer_id);
+
 CREATE TABLE idempotency (
     key TEXT NOT NULL,
     route TEXT NOT NULL,

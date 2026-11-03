@@ -2,7 +2,7 @@
 
 The agent is built as a template for any home-services trade, with Summit Air as the first tenant. A tenant is one company: its facts, area, jobs and rules. Adapting the build for a roofing or kitchen remodeling company should mean writing a new tenant folder and an FSM adapter if they don't use ServiceTitan, not changing the template.
 
-Status: version 1, written before the build. The mock ServiceTitan's template vs tenant split is in `servicetitan_mock/README.md`. Each build lane keeps this table current; a reviewer flags any tenant fact found in template code.
+Status: version 2, updated with the tool server. The mock ServiceTitan's template vs tenant split is in `servicetitan_mock/README.md`; the tool server's is in `app/README.md`, and `tests/tool_server/test_ts_platform.py` checks that no Summit Air fact is in `app/` and serves a second tenant from a copied folder. Each build lane keeps this table current; a reviewer flags any tenant fact found in template code.
 
 ## What lives where
 
@@ -23,7 +23,7 @@ Status: version 1, written before the build. The mock ServiceTitan's template vs
 
 ## How a new company is added
 
-1. Copy `tenants/summit-air/` to `tenants/<company>/` and edit the config and scripts.
+1. Copy `tenants/summit-air/` to `tenants/<company>/` and edit it: `config.yaml` (the company as its field service system knows it), `agent.yaml` (dialed numbers, safety lines and signals, priority rules, after-hours cutoffs, callback owners, retention, the lines the agent says), `knowledge/*.md` and the mock's `seed.py`.
 2. Write or reuse an FSM adapter.
 3. Write that trade's persona scenarios and run the eval suite.
 4. Point a phone number at the tenant. One running deployment serves several tenants; the dialed number picks which one.
