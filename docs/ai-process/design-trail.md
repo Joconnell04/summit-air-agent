@@ -67,3 +67,5 @@ How the design was reached, in order, so a reader can follow each choice back to
 | On-call before after-hours booking | A cold house after hours alerts the on-call technician before the morning fallback is booked | DECISIONS.md 028, #64 |
 | Softer safety sign-off | "For your safety, I'd recommend hanging up now, getting outside, and calling 911 from there" | DECISIONS.md 029, #64 |
 | Unsafe heat advice | Kept as a prompt rule with evals, since the server sees agent lines only after they are spoken | DECISIONS.md 030, #64 |
+| Publish gate rule | Code checks only, one rerun of a miss, both runs kept; never relative to the live version | DECISIONS.md 031, #65 |
+| Owner guidance limits | Four stages, locked subjects refused, AI disclosure kept, booking and closing guidance only when the server reaches the stage | DECISIONS.md 032, #65 |

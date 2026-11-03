@@ -12,6 +12,24 @@ Discussion: docs/ai-process/transcripts/... or docs/explorations/...
 Issue: #N
 -->
 
+## 032. Owner guidance has four stages and steers clear of locked subjects
+
+Decided: owners can add guidance for the opening, the whole call, booking and closing; nothing runs a model before hello, and after-call guidance waits for the technician summary. Guidance that names a locked subject (safety, gas, carbon monoxide, 911, the read-back, commercial, price, fees, priority, urgent, service area, cancelling, or words that try to talk the model out of its instructions) is refused. Text is folded to plain ASCII first, so look-alike characters can't slip past. The four editable lines are six fields, since the greeting and the callback opening each have a known-caller and an unknown-caller form; the unknown-caller greeting must keep its AI disclosure. Booking and closing guidance reaches the model only when the server says the call has reached that stage.
+Why: guidance can't break a server gate, but it could contradict one in what the agent says, and a leaked edit login would otherwise be a path for prompt injection. The filter is a keyword list and a reviewer found phrasings that pass it, so the real containment is the server gates plus the eval gate; the filter only keeps the obvious cases out of the history.
+Considered: any text, relying on the prompt preamble; after-call guidance stored now and shown as pending.
+Would change if: real owners hit false refusals ("free" and "emergency" are the likely ones), or the technician summary is built.
+Discussion: PR #65, docs/template.md ("Owner edits")
+Issue: #56
+
+## 031. The publish gate blocks on code checks, with one rerun of a miss
+
+Decided: a draft is published only if every must-pass scenario passes its code checks. A scenario that fails or ends with no verdict is run once more on the same draft, and a second miss blocks. Both runs are kept on the version with the rerun count and cost. Grader fails are kept as notes but don't block. This applies to the publish gate only; an ordinary eval run still fails on a single must-pass miss.
+Why: at one sample per scenario the must-pass set is noisy: three gate runs failed five different must-pass scenarios, none twice (MEASURED, PR #65). A rerun of only the misses costs about $0.02 a scenario, and a failure that repeats still blocks, so a known failure can't ride along. A gate relative to the live version was ruled out: it doubles the cost of a publish and lets an existing failure go live again. The must-pass lines are code checks; the grader is the noisiest signal and an owner edit may change manner on purpose.
+Considered: blocking on a single miss (blocked every edit tried); comparing against the live version; blocking on grader fails too.
+Would change if: a scenario keeps passing only on its rerun across publishes (flakiness to fix in the scenario), or a grader-only fail turns out to be a real regression the code checks missed.
+Discussion: PR #65; the flakiness is a phase 3 finding in docs/ai-process/brief-phase-3-onward.md
+Issue: #56
+
 ## 030. "Never suggest unsafe heat" is a prompt rule, checked by evals
 
 Decided: the rule that the agent never suggests an oven, stove, generator or grill for warmth lives in the prompt (`prompts/safety.md`) and is covered by eval scenarios, not by a server check.
