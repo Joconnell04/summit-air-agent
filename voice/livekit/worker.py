@@ -137,9 +137,12 @@ async def entrypoint(ctx: JobContext) -> None:
     tools_server = ToolServer(settings.tool_server, call_id, settings.tool_timeout_s)
     voice = load_voice()
     lines = Lines(settings.lines_dir, settings.max_calls)
+    # A call the system places carries the claim from /outbound/claim (voice/livekit/outbound.py).
+    outbound = meta if meta.get("outbound_id") else None
     if not lines.take(call_id):
-        if meta.get("callback_id"):
-            # Every line is busy: don't dial out. The callback stays pending for its job to retry.
+        if outbound:
+            # The poller only claims below the cap, so this is a race: report it as not placed.
+            await tools_server.outbound_done(outbound["outbound_id"], False, False)
             await tools_server.aclose()
             ctx.shutdown("at capacity")
             return
@@ -151,10 +154,8 @@ async def entrypoint(ctx: JobContext) -> None:
 
     ctx.add_shutdown_callback(free_line)
 
-    if meta.get("callback_id"):
-        start = await tools_server.start(
-            meta["phone"], settings.our_number, "outbound", meta["callback_id"]
-        )
+    if outbound:
+        start = await tools_server.start(outbound["phone"], outbound["dialed_from"], "outbound")
     else:
         caller = await ctx.wait_for_participant(kind=SIP)
         start = await tools_server.start(
@@ -164,8 +165,8 @@ async def entrypoint(ctx: JobContext) -> None:
     if not start["ok"]:
         log.warning("call %s: start refused (%s)", call_id, start["refused"])
         await tools_server.aclose()
-        if start["refused"] == "outbound_not_allowed":
-            ctx.shutdown("outbound not allowed")
+        if outbound:
+            ctx.shutdown("tool server unreachable")
             return
         await say_and_hang_up(ctx, voice, voice_lines(tenant_dir(None))["server_down"])
         return
@@ -242,10 +243,8 @@ async def entrypoint(ctx: JobContext) -> None:
         build_tools(specs, tools_server, bridge, tool_log, hang_up, speak),
     )
 
-    if meta.get("callback_id"):
-        # The callback's stored reason is a note for staff; the scheduler passes the spoken one.
-        about = meta.get("reason") or "your recent call"
-        await place_outbound(ctx, session, agent, player, data["callback"]["phone"], about, spoken)
+    if outbound:
+        await place_outbound(ctx, session, agent, player, outbound, spoken, tools_server)
         return
 
     await session.start(room=ctx.room, agent=agent)
@@ -259,11 +258,14 @@ async def entrypoint(ctx: JobContext) -> None:
         session.say(start["say"])
 
 
-async def place_outbound(ctx, session, agent, player, phone: str, about: str, spoken: dict) -> None:
-    """Journey 12. The server has already allowed this callback and counted the attempt; one dial,
-    to the number the server holds for it, and a voicemail at most."""
+async def place_outbound(
+    ctx, session, agent, player, claim: dict, spoken: dict, tools_server: ToolServer
+) -> None:
+    """Journey 12. The server chose this call and checked its rules when it was claimed; one dial,
+    a voicemail at most, and the result goes back to the server."""
     if not settings.outbound_trunk_id:
         log.warning("outbound call skipped: LIVEKIT_OUTBOUND_TRUNK_ID is not set")
+        await tools_server.outbound_done(claim["outbound_id"], False, False)
         ctx.shutdown("no outbound trunk")
         return
     await session.start(room=ctx.room, agent=agent)
@@ -273,26 +275,28 @@ async def place_outbound(ctx, session, agent, player, phone: str, about: str, sp
                 api.CreateSIPParticipantRequest(
                     room_name=ctx.room.name,
                     sip_trunk_id=settings.outbound_trunk_id,
-                    sip_call_to=phone,
+                    sip_call_to=claim["phone"],
                     participant_identity="callee",
                     wait_until_answered=True,
                 )
             )
         except api.TwirpError as exc:
             log.warning("outbound call not answered: %s", exc.message)
+            await tools_server.outbound_done(claim["outbound_id"], False, False)
             ctx.shutdown("not answered")
             return
         result = await detector.execute()
     await player.start(room=ctx.room, agent_session=session)
-    if result.category == AMDCategory.MACHINE_VM:
-        line = spoken["outbound_voicemail"].format(phone=settings.our_number)
-        await session.say(line, allow_interruptions=False).wait_for_playout()
-        await ctx.delete_room()
-        return
     if result.category != AMDCategory.HUMAN:
+        voicemail = result.category == AMDCategory.MACHINE_VM
+        if voicemail:
+            line = spoken["outbound_voicemail"].format(phone=claim["dialed_from"])
+            await session.say(line, allow_interruptions=False).wait_for_playout()
+        await tools_server.outbound_done(claim["outbound_id"], False, voicemail)
         await ctx.delete_room()
         return
-    session.say(spoken["outbound_greeting"].format(reason=about))
+    await tools_server.outbound_done(claim["outbound_id"], True, False)
+    session.say(claim["opening_line"])
 
 
 class VoicemailAgent(Agent):

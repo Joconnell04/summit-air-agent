@@ -186,3 +186,49 @@ CREATE TABLE IF NOT EXISTS heartbeats (
     worker TEXT PRIMARY KEY,
     at TEXT NOT NULL
 );
+
+-- Calls the system places (journey 12): an earlier opening offered to a flagged urgent booking, or
+-- a callback the caller asked for. A callback waits until its time; the voice layer claims a
+-- queued one, dials it and reports back. One attempt each (spec S-42).
+CREATE TABLE IF NOT EXISTS outbound (
+    id INTEGER PRIMARY KEY,
+    tenant TEXT NOT NULL,
+    call_id TEXT REFERENCES calls (id) ON DELETE CASCADE,
+    kind TEXT NOT NULL CHECK (kind IN ('earlier_slot', 'callback')),
+    phone TEXT NOT NULL,
+    booking_id INTEGER REFERENCES bookings (id) ON DELETE CASCADE,
+    callback_id INTEGER REFERENCES callbacks (id) ON DELETE CASCADE,
+    offer_json TEXT,
+    due_at TEXT NOT NULL,
+    -- waiting (a callback before its time), queued, dialing, done, skipped (not allowed to dial).
+    status TEXT NOT NULL CHECK (status IN ('waiting', 'queued', 'dialing', 'done', 'skipped')),
+    -- accepted, declined, answered, no_answer, voicemail, no_report, or why it was skipped.
+    result TEXT,
+    placed_call_id TEXT,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS ix_outbound_status ON outbound (status, due_at);
+
+-- Whether a booking was still on the schedule when its window came (booked-and-kept, C-42).
+CREATE TABLE IF NOT EXISTS kept (
+    booking_id INTEGER PRIMARY KEY REFERENCES bookings (id) ON DELETE CASCADE,
+    kept INTEGER NOT NULL,
+    fsm_status TEXT NOT NULL,
+    checked_at TEXT NOT NULL
+);
+
+-- Email alerts to the on-call person for urgent flags raised after hours. Held when no mail server
+-- is set, so development never sends mail and the owner view still shows what would have gone.
+CREATE TABLE IF NOT EXISTS alerts (
+    id INTEGER PRIMARY KEY,
+    flag_id INTEGER NOT NULL UNIQUE REFERENCES flags (id) ON DELETE CASCADE,
+    to_address TEXT NOT NULL,
+    subject TEXT NOT NULL,
+    body TEXT NOT NULL,
+    status TEXT NOT NULL CHECK (status IN ('sent', 'held', 'failed')),
+    attempts INTEGER NOT NULL DEFAULT 0,
+    error TEXT,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);

@@ -1,0 +1,27 @@
+id: wants-membership
+flow: [membership]
+difficulty: easy
+journeys: [J14]
+spec: [S-12a]
+caller_id: "(332) 555-0117"
+persona: Yusuf Demir, a homeowner on Staten Island who heard about a maintenance plan from a neighbor. Clear, curious, polite.
+hidden_facts:
+  name: Yusuf Demir
+  address: 412 Huguenot Ave, Staten Island, 10312
+  phone: the number being called from
+  wants: to join the maintenance plan, and to know roughly what it costs
+opening: Hi, I'd like to know about your maintenance plan, I think it's called a membership?
+script:
+  - Ask once how much the plan costs.
+  - Say you would like someone to follow up about signing up, and give a time that works.
+  - Do not offer a card number or ask to pay on the call.
+  - Say goodbye.
+must:
+  - lead: membership
+  - callback: promised
+  - booking: none
+  - agent_never_says: "\\$\\s?\\d"
+should:
+  - Gives one or two lines about the plan from the knowledge folder and no price unless one is configured.
+  - Records a sign-up lead and names a callback time.
+  - Does not take payment or say the caller is now a member.

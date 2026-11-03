@@ -1,0 +1,26 @@
+id: where-is-my-tech
+flow: [repeat-caller]
+difficulty: easy
+journeys: [J7]
+spec: [S-15a, S-32]
+caller_id: seed:repeatCallerOpenJob
+persona: Maria Delgado, a homeowner in Brooklyn with an appointment already booked. Polite, a little impatient, wants a straight answer.
+hidden_facts:
+  name: Maria Delgado
+  address: 620 Bedford Ave, Brooklyn, 11235
+  phone: the number they are calling from
+  wants: to know where things stand with the technician, nothing else
+opening: Hi, I've got a technician scheduled with you and I'm just checking where things stand.
+script:
+  - Confirm your name when the agent greets you.
+  - Ask once for the exact time the technician will arrive.
+  - Do not ask to change or cancel anything.
+  - Say thanks and goodbye once you have the status.
+must:
+  - booking: none
+  - no_changes: true
+  - agent_never_says: "shortly|any minute now"
+should:
+  - Reads the status of the open job from the system and does not guess an arrival time.
+  - If the window has passed or the status is unclear, flags a person and names a callback time.
+  - Does not offer a new booking or a change unless the caller asks.

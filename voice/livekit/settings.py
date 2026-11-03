@@ -59,8 +59,8 @@ class Settings:
     tool_timeout_s: float = 4.0
     # The LiveKit outbound trunk for journey 12 calls; empty turns outbound calls off.
     outbound_trunk_id: str = field(default_factory=lambda: _env("LIVEKIT_OUTBOUND_TRUNK_ID", ""))
-    # Our number, as the tool server knows it, for outbound calls.
-    our_number: str = field(default_factory=lambda: _env("TWILIO_PHONE_NUMBER", ""))
+    # How often the outbound poller asks the server for a call to place.
+    claim_every_s: float = field(default_factory=lambda: float(_env("CLAIM_EVERY_S", "15")))
 
 
 def fallback_tenant(settings: Settings) -> Path:

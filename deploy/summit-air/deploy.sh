@@ -14,7 +14,7 @@ ssh "$HOST" 'set -e; chmod 600 ~/summit-air/.env; cd ~/summit-air/app
   ~/.local/bin/uv sync -q
   ~/.local/bin/uv run --env-file ../.env python -m livekit.agents download-files >/dev/null 2>&1
   # Bracketed so the pattern never matches this shell; ports so the Retell stack is left alone.
-  pkill -u "$(id -u)" -f "[a]pp.main.*--port 8100|[v]oice.livekit.worker start" || true
+  pkill -u "$(id -u)" -f "[a]pp.main.*--port 8100|[v]oice.livekit.worker start|[v]oice.livekit.outbound" || true
   sleep 2
   sh deploy/summit-air/run.sh
   # Replace only our own lines; anything else in the crontab stays.

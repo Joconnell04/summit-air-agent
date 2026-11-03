@@ -1,6 +1,6 @@
 #!/bin/sh
-# Start any of the three services that isn't running: the mock ServiceTitan, the tool server and
-# the LiveKit worker. Run from cron at boot and by the watchdog; safe to run at any time.
+# Start any of the four services that isn't running: the mock ServiceTitan, the tool server, the
+# LiveKit worker and its outbound poller. Run from cron at boot and by the watchdog; safe to run at any time.
 set -u
 APP="$HOME/summit-air/app"
 LOGS="$HOME/summit-air/logs"
@@ -19,4 +19,5 @@ if ! running "servicetitan_mock.app.*--port 8101"; then
 fi
 running "app.main.*--port 8100" || launch tool-server.log uvicorn app.main:create_app --factory --host 127.0.0.1 --port 8100
 running "voice.livekit.worker start" || launch worker.log python -m voice.livekit.worker start
+running "voice.livekit.outbound" || launch outbound.log python -m voice.livekit.outbound
 exit 0

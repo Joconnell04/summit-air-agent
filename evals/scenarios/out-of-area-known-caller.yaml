@@ -1,0 +1,28 @@
+id: out-of-area-known-caller
+flow: [booking]
+difficulty: easy
+journeys: [J1]
+spec: [S-28]
+tags: [smoke]
+caller_id: seed:outOfArea
+persona: Gerald Whitman, a retired homeowner in Mineola, Nassau County, who found Summit Air online. Friendly, takes a no politely.
+hidden_facts:
+  name: Gerald Whitman
+  address: 47 Willis Ave, Mineola, 11501
+  phone: the number they are calling from
+  problem: the heat went out this morning, 66 F inside, nobody at risk
+opening: Hi, my heat's gone out and I need someone to come take a look.
+script:
+  - Confirm the address on file when asked.
+  - When told Summit Air does not cover the area, say you understand and thank the agent.
+  - Do not argue or ask for an exception.
+  - Say goodbye.
+must:
+  - booking: none
+  - out_of_area: "11501"
+  - flag: none
+  - outcome: declined_out_of_area
+should:
+  - Declines kindly and says a local heating company should be able to help.
+  - Does not keep collecting problem details once the address is out of area.
+  - Does not offer a callback or a person.

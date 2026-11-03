@@ -45,7 +45,7 @@ The clips play on a separate audio track (`BackgroundAudioPlayer`), not through 
 
 ## Calls Summit Air makes (journey 12)
 
-The worker never decides to dial. Whatever schedules a callback (the background jobs, brief 06) asks LiveKit to dispatch this worker into a new room with metadata `{"callback_id": N, "phone": "+1...", "reason": "your heating appointment"}`. The worker then calls `/calls/start` with `direction: outbound` and the `callback_id`; the server refuses unless `records.outbound_allowed` passes now (8 a.m. to 9 p.m., the person who called, one attempt, never do-not-call) and counts the attempt before the dial. Only then does the worker dial through the LiveKit outbound trunk (`LIVEKIT_OUTBOUND_TRUNK_ID`), with answering-machine detection: a voicemail greeting gets the tenant's one voicemail line, a person gets the outbound greeting and the normal conversation.
+The worker never decides to dial. The tool server's jobs queue the calls (earlier openings, requested callbacks) and check the rules when a call is claimed (spec S-42; docs/tools.md, `/outbound/claim`). `outbound.py` runs beside the worker: every `CLAIM_EVERY_S` it claims the next call, only while a line is free under the capacity cap, and dispatches the worker into a room named by the claim's `call_id` with the claim as metadata. The worker then starts the call with `direction: outbound`, dials through the LiveKit outbound trunk (`LIVEKIT_OUTBOUND_TRUNK_ID`) with answering-machine detection, and reports `/outbound/{id}/done`: a person hears the server's `opening_line` and the normal conversation follows; a voicemail greeting gets the tenant's one voicemail line.
 
 ## Settings
 
@@ -58,7 +58,7 @@ The worker never decides to dial. Whatever schedules a callback (the background 
 | `MODEL_PROFILE` | `default` in config/models.yaml | The brain; `openai-fast` or `gemini-fast` switch provider |
 | `DEFAULT_TENANT` | the only tenant folder | Whose recorded lines play when the server is unreachable |
 | `LIVEKIT_OUTBOUND_TRUNK_ID` | empty (outbound off) | From `scripts/phone/setup.py` |
-| `TWILIO_PHONE_NUMBER` | | Our number, for outbound calls |
+| `CLAIM_EVERY_S` | 15 | How often the outbound poller asks for a call to place |
 
 Plus the provider keys: `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET`, `DEEPGRAM_API_KEY`, `ANTHROPIC_API_KEY`, `CARTESIA_API_KEY`.
 
@@ -71,12 +71,12 @@ Plus the provider keys: `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET`, 
 `deploy/summit-air/` (docs/architecture.md, hosting):
 
 - `deploy.sh` copies the checkout and `.env` to the server, installs, restarts, and installs the crontab.
-- `run.sh` starts the mock, the tool server and the worker if they aren't running; cron runs it at boot.
+- `run.sh` starts the mock, the tool server, the worker and the outbound poller if they aren't running; cron runs it at boot.
 - `watchdog.sh` runs every minute: restarts anything stopped, checks the worker's own health page (`:8081/`, 200 only once registered with LiveKit) and the tool server's `/healthz`, posts the worker heartbeat, pings `HEALTHCHECK_URL` when set, and after two failed checks in a row moves the number to the recorded fallback (`scripts/phone/fallback.py`: Twilio plays the tenant's fallback line and records a voicemail), and back when the worker passes again. Fallback voicemails stay in Twilio's call log; they don't reach the owner view.
 
 ## Not done here
 
 - The outside monitor needs a Healthchecks.io check created and its ping URL set as `HEALTHCHECK_URL` on the server.
-- Outbound calls: the server gate is tested, but the dial, answering-machine and voicemail branches of `place_outbound` have no test with a fake LiveKit API and have not run end to end; nothing schedules a callback dispatch yet (brief 06).
+- Outbound calls: the claim, dispatch and report are tested against the real server, but the dial and answering-machine branches of `place_outbound` have no test with a fake LiveKit API and have not run end to end.
 - OpenAI and Gemini profiles are wired but untested on a live call; Gemini's thinking setting is left at the plugin default.
 - The bridge clip waits 0.4 s after its last frame (`CLIP_TAIL_S`, the audio buffer LiveKit keeps) before the reply's audio may start; measure it once a tool is slow enough to trigger a clip.

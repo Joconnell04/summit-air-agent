@@ -6,6 +6,7 @@ requires-python = ">=3.12"
 dependencies = [
     "fastapi>=0.162.0",
     "httpx>=0.28.1",
+    "jinja2>=3.1.6",
     "pydantic>=2.14.2",
     "python-multipart>=0.0.33",
     "pyyaml>=6",
@@ -15,6 +16,7 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "anthropic>=2.4.0",
     "langsmith>=0.14.17",
     "pytest>=8",
     "ruff>=0.6",
@@ -35,6 +37,10 @@ livekit = [
 # The LiveKit worker's packages are their own group, so deleting voice/livekit after the bake-off
 # (docs/architecture.md) also drops them; they install by default so its tests run in make check.
 default-groups = ["dev", "livekit"]
+# livekit-plugins-anthropic 1.8 still declares anthropic<2, but the eval harness needs 2.x. The
+# plugin runs on 2.4 (tests/voice/test_voice_llm.py streams a reply through it), so the pin is
+# overridden here rather than holding the evals back.
+override-dependencies = ["anthropic>=2.4.0"]
 
 [tool.ruff]
 line-length = 100

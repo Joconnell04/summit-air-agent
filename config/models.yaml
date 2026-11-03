@@ -3,6 +3,9 @@
 # Live profiles keep thinking or reasoning at its lowest: it adds seconds before the first word.
 # Which profiles win is decided in docs/decisions/05-pipeline-and-models.md (#5); until then the
 # non-Anthropic ids are candidates to measure, not choices.
+# price is USD per million input and output tokens, used by the eval harness to cost each run.
+# SOURCE for Anthropic: https://platform.claude.com/docs/en/about-claude/pricing (Oct 2026).
+# OpenAI and Gemini prices are ASSUMED placeholders until a run uses those profiles.
 default: fast
 
 providers:
@@ -15,23 +18,30 @@ profiles:
     provider: anthropic
     model: claude-haiku-5-5
     thinking: false
+    price: {input: 0.10, output: 0.50}
   fast-prev:
     # Control: the model the earlier practice agent measured at about 1.0 s to first audio.
     provider: anthropic
     model: claude-haiku-4-5-20251001
     thinking: false
+    price: {input: 1.00, output: 5.00}
   quality:
     provider: anthropic
     model: claude-sonnet-5-5
+    # Sonnet 5.5 refuses thinking "disabled"; "between_tools" is its off switch.
     thinking: false
+    thinking_off: between_tools
+    price: {input: 2.00, output: 10.00}
   openai-fast:
     provider: openai
     model: gpt-5.4-mini
     thinking: false
+    price: {input: 0.25, output: 2.00}
   gemini-fast:
     provider: gemini
     model: gemini-3.8-flash
     thinking: false
+    price: {input: 0.30, output: 2.50}
 
 # The ears and the voice for live calls (voice/livekit). The turn-taking values are ASSUMED starting
 # points from the earlier practice agent (from-other-projects/bobert/latency-notes.md) until
@@ -64,10 +74,12 @@ offline:
     provider: anthropic
     model: claude-haiku-5-5
     thinking: false
+    price: {input: 0.10, output: 0.50}
   grader:
     provider: anthropic
     model: claude-opus-5-5
     thinking: true
+    price: {input: 4.00, output: 20.00}
 
 # After the call ends: the technician's job summary.
 post_call:
@@ -75,3 +87,4 @@ post_call:
     provider: anthropic
     model: claude-sonnet-5-5
     thinking: true
+    price: {input: 2.00, output: 10.00}

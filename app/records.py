@@ -5,7 +5,7 @@ import re
 import sqlite3
 from datetime import datetime, time, timedelta
 
-from .db import iso
+from .db import iso, parse_iso
 from .tenant import Tenant
 from .text import phone_key
 
@@ -205,11 +205,30 @@ def outbound_allowed(
         return False, "do_not_call"
     if callback["attempts"] >= tenant.callbacks["max_attempts"]:
         return False, "attempted"
-    call = get_call(conn, callback["call_id"]) if callback["call_id"] else None
-    if not call or call["caller_key"] != callback["phone_key"]:
-        return False, "not_the_caller"
+    return _reachable(conn, tenant, callback["call_id"], callback["phone_key"], now)
+
+
+def dial_allowed(
+    conn: sqlite3.Connection, tenant: Tenant, call_id: str, phone: str, now: datetime
+) -> tuple[bool, str]:
+    """The same rules for a call that isn't a promised callback, such as an earlier opening."""
+    if is_do_not_call(conn, phone):
+        return False, "do_not_call"
+    return _reachable(conn, tenant, call_id, phone_key(phone), now)
+
+
+def in_outbound_hours(tenant: Tenant, now: datetime) -> bool:
     start, end = (time.fromisoformat(t) for t in tenant.callbacks["outbound_hours"])
-    if not start <= tenant.local(now).time() < end:
+    return start <= tenant.local(now).time() < end
+
+
+def _reachable(
+    conn: sqlite3.Connection, tenant: Tenant, call_id: str | None, key: str, now: datetime
+) -> tuple[bool, str]:
+    call = get_call(conn, call_id) if call_id else None
+    if not call or call["caller_key"] != key:
+        return False, "not_the_caller"
+    if not in_outbound_hours(tenant, now):
         return False, "outside_hours"
     return True, "ok"
 
@@ -222,10 +241,15 @@ def record_attempt(conn: sqlite3.Connection, callback_id: int, now: datetime) ->
     )
 
 
-def mark_overdue(conn: sqlite3.Connection, now: datetime) -> list[int]:
-    """Flag every pending callback whose time has passed (spec S-32)."""
+def mark_overdue(conn: sqlite3.Connection, tenant: Tenant, now: datetime) -> list[int]:
+    """Flag every pending callback whose time has passed (spec S-32). One the system is about to
+    dial is left to the dial, which hands it to a person if it fails (app/outbound.py)."""
     due = conn.execute(
-        "SELECT * FROM callbacks WHERE status = 'pending' AND due_at < ?", (iso(now),)
+        "SELECT c.* FROM callbacks c JOIN calls k ON k.id = c.call_id WHERE k.tenant = ? "
+        "AND c.status = 'pending' AND c.due_at < ? AND NOT EXISTS "
+        "(SELECT 1 FROM outbound o WHERE o.callback_id = c.id "
+        "AND o.status IN ('waiting', 'queued', 'dialing'))",
+        (tenant.slug, iso(now)),
     ).fetchall()
     for row in due:
         conn.execute(
@@ -236,7 +260,8 @@ def mark_overdue(conn: sqlite3.Connection, now: datetime) -> list[int]:
             conn,
             row["call_id"],
             "overdue_callback",
-            f"Callback promised by {row['due_at']} not done: {row['reason']}",
+            f"Callback promised by {tenant.time_spoken(parse_iso(row['due_at']), now)} not done: "
+            f"{row['reason']}",
             now,
             "High",
         )

@@ -1,0 +1,27 @@
+id: cancel-offers-windows
+flow: [repeat-caller]
+difficulty: standard
+traits: [filler]
+journeys: [J7]
+spec: [S-31]
+caller_id: seed:repeatCallerOpenJob
+persona: Maria Delgado, a homeowner in Brooklyn who wants to cancel because a relative offered to look at the problem. Polite and firm, says um.
+hidden_facts:
+  name: Maria Delgado
+  address: 620 Bedford Ave, Brooklyn, 11235
+  phone: the number they are calling from
+  reason: a family member who works in HVAC says they can take a look this weekend
+opening: Hi, um, I need to cancel the appointment I have with you.
+script:
+  - When asked why, give the family member reason.
+  - When the agent offers two other windows, politely decline both.
+  - Do not ask to rebook or reschedule.
+  - Say thanks and goodbye after the agent confirms the cancellation.
+must:
+  - tool_ok: cancel_appointment
+  - tool_not_called: [book_appointment, reschedule_appointment]
+  - outcome: changed_booking
+should:
+  - Asks why before cancelling and records the reason.
+  - Offers two specific new windows before ending, without pressure.
+  - Confirms the cancellation out loud and asks if there is anything else.

@@ -12,7 +12,7 @@ import sqlite3
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 
-from . import booking, lookup, records
+from . import booking, lookup, outbound, records
 from . import priority as prio
 from .db import iso, parse_iso, tx
 from .envelope import Refused, Result, ok
@@ -179,23 +179,32 @@ def _fsm_down_say(ctx: Ctx, callback_id: int | None, due: datetime) -> str:
 # ---- slots ---------------------------------------------------------------------------------
 
 
-def _open_windows(ctx: Ctx, job_type: dict, level: str, zip_code: str | None) -> list[dict]:
-    """Open windows from now to the end of the booking range, earliest first, via the cache."""
-    today = ctx.tenant.local(ctx.now).date()
+def open_windows(
+    tenant: Tenant,
+    fsm: FsmAdapter,
+    cache: SlotCache,
+    now: datetime,
+    job_type: dict,
+    level: str,
+    zip_code: str | None,
+) -> list[dict]:
+    """Open windows from now to the end of the booking range, earliest first, via the cache. Also
+    used by the job that offers earlier openings, so both read the same cached capacity."""
+    today = tenant.local(now).date()
     end_day = today + timedelta(days=BOOKING_DAYS_AHEAD)
     unit = job_type["businessUnitIds"][0]
 
     def fetch():
-        return ctx.fsm.capacity(
-            ctx.now,
-            datetime.combine(end_day, datetime.max.time(), ctx.tenant.tz),
+        return fsm.capacity(
+            now,
+            datetime.combine(end_day, datetime.max.time(), tenant.tz),
             unit,
             job_type["id"],
             level,
             zip_code,
         )
 
-    days = ctx.cache.get((ctx.tenant.slug, job_type["code"], level, zip_code, today), fetch)
+    days = cache.get((tenant.slug, job_type["code"], level, zip_code, today), fetch)
     found = []
     for day in days:
         for slot in day["timeslots"]:
@@ -210,6 +219,10 @@ def _open_windows(ctx: Ctx, job_type: dict, level: str, zip_code: str | None) ->
                     }
                 )
     return sorted(found, key=lambda w: w["start"])
+
+
+def _open_windows(ctx: Ctx, job_type: dict, level: str, zip_code: str | None) -> list[dict]:
+    return open_windows(ctx.tenant, ctx.fsm, ctx.cache, ctx.now, job_type, level, zip_code)
 
 
 def _describe(ctx: Ctx, window: dict) -> dict:
@@ -584,7 +597,8 @@ def book_appointment(ctx: Ctx, args: BookIn) -> Result:
                 ctx.conn,
                 ctx.call["id"],
                 "seek_earlier",
-                f"Urgent job {sent['job_id']} booked for {args.slot.date}; look for an earlier slot",
+                f"Urgent job {sent['job_id']} booked for {args.slot.date.strftime('%a %b %-d')}; "
+                "look for an earlier slot",
                 ctx.now,
                 "Urgent",
             )
@@ -778,13 +792,25 @@ def _callback_due(ctx: Ctx, time_value: str | None, minutes: int | None) -> date
 def flag_person(ctx: Ctx, args: FlagIn) -> Result:
     """The sentence comes back only after the flag and the callback are stored (spec S-23)."""
     due = _callback_due(ctx, args.callback_time, args.callback_in_minutes)
+    # A callback the system places needs no person unless the dial fails (app/outbound.py). The
+    # server only allows it for a plain request: never an urgent or high flag, a safety call or a
+    # commercial one, which a person must handle whatever the agent asked for.
+    system = (
+        args.system_calls_back
+        and args.priority == "Normal"
+        and ctx.call["safety_state"] in ("none", "cleared")
+        and not ctx.call["commercial"]
+    )
+    kind = "callback_requested" if system else "person"
     with tx(ctx.conn):
         flag_id = records.add_flag(
-            ctx.conn, ctx.call["id"], "person", args.reason, ctx.now, args.priority
+            ctx.conn, ctx.call["id"], kind, args.reason, ctx.now, args.priority
         )
         callback_id = records.add_callback(
             ctx.conn, ctx.tenant, ctx.call, due, args.reason, ctx.now
         )
+        if callback_id and system:
+            outbound.add_callback_dial(ctx.conn, ctx.tenant, ctx.call, callback_id, due, ctx.now)
     spoken = ctx.tenant.time_spoken(due, ctx.now)
     if callback_id is None:
         say = ctx.tenant.line("flag_stored_no_callback")

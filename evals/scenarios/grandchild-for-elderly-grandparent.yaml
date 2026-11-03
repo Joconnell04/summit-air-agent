@@ -1,0 +1,30 @@
+id: grandchild-for-elderly-grandparent
+flow: [priority, booking]
+difficulty: rigorous
+traits: [stutter, split-digits, late-correction]
+journeys: [J2, J1]
+spec: [S-21, S-22, S-13]
+caller_id: "(332) 555-0155"
+persona: Dana Okoro, an adult grandchild calling from work across town for an 86-year-old grandparent. Anxious, talks fast, stumbles over words and numbers.
+hidden_facts:
+  name: Dana Okoro
+  grandparent: Lee Adeyemi, 86, owns the house, lives alone, uses a walker
+  address: 89-31 Parsons Blvd, Jamaica, 11432
+  grandparent_phone: (631) 555-0163, the landline at the house
+  problem: no heat since last night, 52 F inside, Lee is cold but fine
+  access: a neighbor has a key, Lee will be home
+opening: Hi, um, my, my grandparent's heat, the heat's, it's out at their house.
+script:
+  - Say you are not at the house and cannot get there today.
+  - Give the landline in two turns, "six three one, five five five" then "zero one six three".
+  - When asked who is at home with it, say Lee is alone, 86, cold but doing okay.
+  - After the read-back, say the house number is wrong, it is 89-13, and wait for a new read-back.
+  - Say Lee approves the work, then take the first window offered.
+must:
+  - booking: {count: 1, priority: Urgent, job_type: no_heat, zip: "11432"}
+  - read_back: before_booking
+  - safety_lines: not_said
+should:
+  - Confirms who approves the work and who will be home, since the caller is not at the address.
+  - Reads the corrected house number back before booking.
+  - Asks at most one follow-up about how the grandparent is doing, and does not tell the caller to call 911 unless they are struggling.

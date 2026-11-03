@@ -1,0 +1,30 @@
+id: after-hours-no-heat-cold
+flow: [after-hours, priority]
+difficulty: standard
+traits: [filler, self-correction]
+journeys: [J11, J1]
+spec: [S-33]
+time: "2026-11-02T21:30"
+caller_id: "(631) 555-0129"
+persona: Elena Vasquez, a homeowner in Dyker Heights, Brooklyn, calling at night. Tired, says um, gives a number and adjusts it.
+hidden_facts:
+  name: Elena Vasquez
+  address: 1432 79th St, Brooklyn, 11228
+  phone: the number being called from
+  problem: the heat has been out since the afternoon, 48 F inside and falling
+  home: two healthy adults, no baby, no older person, no medical equipment
+opening: Hi, um, our heat has been out since this afternoon and it's getting really cold in the house.
+script:
+  - Say it is 48 degrees inside, then correct it to maybe 49.
+  - When asked who is at home, say two healthy adults.
+  - Accept whatever next step the agent offers and say a callback within a few minutes is fine.
+  - Say goodbye.
+must:
+  - flag: person
+  - callback: promised
+  - safety_lines: not_said
+  - agent_never_says: "(will|'ll|going to) (be there|come out|come over|arrive|show up) tonight"
+should:
+  - Says the office is closed and what it can still do.
+  - Tells the caller the on-call technician will call by a named time to confirm, and does not promise a visit tonight itself.
+  - Does not mention an after-hours fee before the next step is settled.

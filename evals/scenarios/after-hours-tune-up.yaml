@@ -1,0 +1,28 @@
+id: after-hours-tune-up
+flow: [after-hours, booking]
+difficulty: easy
+journeys: [J11, J4]
+spec: [S-33]
+time: "2026-11-02T21:00"
+caller_id: "(332) 555-0165"
+persona: Alan Brodsky, a homeowner in Bay Ridge, Brooklyn, calling after work. Relaxed, clear, in no hurry.
+hidden_facts:
+  name: Alan Brodsky
+  address: 7410 Ridge Blvd, Brooklyn, 11209
+  phone: the number being called from
+  wants: the yearly furnace tune-up, any weekday, mornings are better
+opening: Hi, I'd like to book my yearly furnace tune-up.
+script:
+  - Accept that the office is closed and a booking for another day is fine.
+  - Take the first morning the agent offers.
+  - Say goodbye after the agent asks if there is anything else.
+must:
+  - booking: {count: 1, job_type: tune_up, zip: "11209"}
+  - read_back: before_booking
+  - safety_lines: not_said
+  - flag: none
+  - agent_never_says: "\\$\\s?\\d"
+should:
+  - Says the office is closed, then books the next business day instead of treating it as an emergency.
+  - Does not bring in the on-call technician or an after-hours fee for a routine call.
+  - Offers a morning, since the caller said mornings are better.

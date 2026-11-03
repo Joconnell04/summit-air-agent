@@ -8,6 +8,7 @@ ST_PORT="${ST_TEST_PORT:-8104}"
 PORT="${TOOL_TEST_PORT:-8103}"
 DIR="data/postman-tools"
 TOKEN="postman-debug-token"
+OWNER="postman-owner-token"
 mkdir -p "$DIR"
 rm -f "$DIR"/*
 
@@ -17,7 +18,7 @@ ST_MOCK_DB="$DIR/world.db" uv run uvicorn servicetitan_mock.app:create_app --fac
   --port "$ST_PORT" > "$DIR/mock.log" 2>&1 &
 MOCK=$!
 TOOL_DB="$DIR/tool.db" FSM_BASE_URL="http://127.0.0.1:$ST_PORT" DEBUG_TOKEN="$TOKEN" \
-  JOBS_INTERVAL_SECONDS=0 uv run uvicorn app.main:create_app --factory \
+  OWNER_TOKEN="$OWNER" JOBS_INTERVAL_SECONDS=0 uv run uvicorn app.main:create_app --factory \
   --port "$PORT" > "$DIR/server.log" 2>&1 &
 SERVER=$!
 trap 'kill $SERVER $MOCK 2>/dev/null || true' EXIT
@@ -34,4 +35,4 @@ command -v newman > /dev/null || NEWMAN="npx -y newman"
 $NEWMAN run postman/tool-server.postman_collection.json \
   -e postman/tool-server.postman_environment.json \
   --env-var "base_url=http://127.0.0.1:$PORT" --env-var "st_url=http://127.0.0.1:$ST_PORT" \
-  --env-var "debug_token=$TOKEN" --color off
+  --env-var "debug_token=$TOKEN" --env-var "owner_token=$OWNER" --color off

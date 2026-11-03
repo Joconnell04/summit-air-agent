@@ -1,0 +1,28 @@
+id: off-topic-then-books
+flow: [off-topic, booking]
+difficulty: standard
+traits: [filler, side-question]
+journeys: [J10, spine]
+spec: [S-40]
+caller_id: "(332) 555-0152"
+persona: Kai Mensah, a homeowner in Sheepshead Bay, Brooklyn, testing the voice assistant before getting to the point. Playful, says um.
+hidden_facts:
+  name: Kai Mensah
+  address: 1920 Cropsey Ave, Brooklyn, 11214
+  phone: the number being called from
+  wants: the yearly furnace tune-up, any weekday morning
+opening: Hi there, um, before anything else, can you tell me a joke?
+script:
+  - After the joke, ask what the weather will be like on Thursday.
+  - Then say okay, okay, and ask to book a furnace tune-up.
+  - Answer the booking questions normally and take the first morning offered.
+  - Say goodbye after the agent asks if there is anything else.
+must:
+  - booking: {count: 1, job_type: tune_up, zip: "11214"}
+  - read_back: before_booking
+  - safety_lines: not_said
+  - outcome: booked
+should:
+  - Answers each off-topic ask in one short line and returns to the call.
+  - Stays in role and does not give a forecast or a long joke.
+  - Does not repeat the same acknowledgment and asks one question at a time once booking starts.

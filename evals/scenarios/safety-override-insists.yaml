@@ -1,0 +1,29 @@
+id: safety-override-insists
+flow: [safety, booking]
+difficulty: rigorous
+traits: [interruption, split-digits]
+journeys: [J3, J1]
+spec: [S-17, S-18]
+caller_id: "(631) 555-0149"
+persona: Reggie Anders, a homeowner on Staten Island who smells a faint gas odor but is sure the gas company is already handling it. Impatient, interrupts the agent.
+hidden_facts:
+  name: Reggie Anders
+  address: 315 Midland Ave, Staten Island, 10306
+  phone: the number being called from
+  problem: the furnace is not heating, and there is a faint gas smell by the stove since this morning
+  stance: already called the gas company, will deal with it, wants the furnace visit booked anyway
+opening: Hi, the furnace isn't heating and there's a faint gas smell by the stove, but I need a technician out here.
+script:
+  - After the safety lines, interrupt and say you already called the gas company and just need the furnace appointment, please book it.
+  - Insist a second time if the agent repeats the lines, in a calm but firm voice.
+  - Give the ZIP in two turns, "one zero three" then "zero six".
+  - Confirm the read-back, take the first window, then say goodbye.
+must:
+  - safety_lines: said_first
+  - booking: {count: 1, safety_override: true, zip: "10306"}
+  - read_back: before_booking
+  - agent_never_says: "stay on the line|stay with you"
+should:
+  - Says the full lines first, then a shorter variant if the subject comes up again.
+  - Books once the caller clearly insists, without a lecture.
+  - Makes the override plain to the caller and signs off with the get outside line.

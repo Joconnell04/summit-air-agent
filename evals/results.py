@@ -47,15 +47,33 @@ class ToolCall(Strict):
     arguments: dict[str, Any] = Field(default_factory=dict)
 
 
+class TurnTiming(Strict):
+    """One agent turn, timed from the caller finishing to the agent's first word (docs/latency.md).
+    A lookup turn is one where the agent called a tool."""
+
+    kind: Literal["plain", "lookup"]
+    reply_delay_ms: float = Field(ge=0)
+    model_first_token_ms: float = Field(ge=0)
+    tool_ms: float = Field(0, ge=0)
+    second_hop_ms: float | None = Field(None, ge=0)
+
+
 class ScenarioResult(Strict):
     scenario_id: str = Field(pattern=SLUG)
+    # Which sample of the scenario this is; the full suite runs each scenario three times.
+    sample: int = Field(1, ge=1)
     persona: str = Field(min_length=1)
     flow: list[Flow] = Field(min_length=1)
     difficulty: Difficulty
     traits: list[Trait] = Field(default_factory=list)
     outcome: Outcome
     must_pass_failures: list[str] = Field(default_factory=list)
-    grader_score: int = Field(ge=1, le=5)
+    # Every failed code check, must-pass or not, and why an error run produced no verdict.
+    check_failures: list[str] = Field(default_factory=list)
+    error: str = ""
+    # Missing on an error run, which the grader never sees, and on a fail it couldn't score.
+    grader_score: int | None = Field(None, ge=1, le=5)
+    grader_notes: str = ""
     reply_delay_p50_ms: float = Field(ge=0)
     reply_delay_p90_ms: float = Field(ge=0)
     cost_usd: float = Field(ge=0)
@@ -64,6 +82,7 @@ class ScenarioResult(Strict):
     duration_ms: float | None = Field(default=None, ge=0)
     transcript: list[Turn] = Field(default_factory=list)
     tool_calls: list[ToolCall] = Field(default_factory=list)
+    turn_timings: list[TurnTiming] = Field(default_factory=list)
     call_id: str = Field(min_length=1)
 
     @model_validator(mode="after")
@@ -72,7 +91,16 @@ class ScenarioResult(Strict):
             raise ValueError(f"{self.scenario_id}: outcome is pass but must_pass_failures is not empty")
         if self.reply_delay_p90_ms < self.reply_delay_p50_ms:
             raise ValueError(f"{self.scenario_id}: reply_delay_p90_ms is below reply_delay_p50_ms")
+        # Only a run with no verdict, or a fail the grader couldn't score, has no grade.
+        ungraded_ok = self.outcome == "error" or (self.outcome == "fail" and self.check_failures)
+        if self.grader_score is None and not ungraded_ok:
+            raise ValueError(f"{self.scenario_id}: grader_score is missing on a {self.outcome}")
         return self
+
+    @property
+    def key(self) -> str:
+        """The scenario id, with the sample number after the first sample."""
+        return self.scenario_id if self.sample == 1 else f"{self.scenario_id}#{self.sample}"
 
 
 class Run(Strict):
@@ -89,11 +117,16 @@ class Run(Strict):
 
     @model_validator(mode="after")
     def check_unique_scenarios(self) -> "Run":
-        ids = [s.scenario_id for s in self.scenarios]
+        ids = [s.key for s in self.scenarios]
         dupes = sorted({i for i in ids if ids.count(i) > 1})
         if dupes:
             raise ValueError(f"duplicate scenario ids: {', '.join(dupes)}")
         return self
+
+    def pass_rate(self) -> float | None:
+        """Passes over passes and fails; error runs have no verdict and are left out."""
+        judged = [s for s in self.scenarios if s.outcome != "error"]
+        return sum(s.outcome == "pass" for s in judged) / len(judged) if judged else None
 
 
 def result_path(run_id: str, directory: Path = RESULTS_DIR) -> Path:

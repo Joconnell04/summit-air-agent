@@ -54,7 +54,6 @@ class ToolServer:
         caller_id: str,
         dialed_number: str,
         direction: str = "inbound",
-        callback_id: int | None = None,
     ) -> dict:
         body = {
             "call_id": self.call_id,
@@ -62,8 +61,6 @@ class ToolServer:
             "dialed_number": dialed_number,
             "direction": direction,
         }
-        if callback_id is not None:
-            body["callback_id"] = callback_id
         return await self._post("/calls/start", body)
 
     async def turn(self, speaker: str, text: str, timings: dict[str, float]) -> dict:
@@ -72,6 +69,15 @@ class ToolServer:
 
     async def end(self, reason: str) -> dict:
         return await self._post(f"/calls/{self.call_id}/end", {"reason": reason})
+
+    async def outbound_done(self, outbound_id: int, answered: bool, voicemail: bool) -> dict:
+        body = {"answered": answered, "voicemail": voicemail}
+        return await self._post(f"/outbound/{outbound_id}/done", body)
+
+    async def claim(self, worker: str) -> dict | None:
+        """The next call the system places, or None (docs/tools.md, /outbound/claim)."""
+        result = await self._post("/outbound/claim", {"worker": worker})
+        return (result.get("data") or {}).get("outbound")
 
     async def tool(self, name: str, args: dict, write: bool) -> dict:
         headers = {"Idempotency-Key": idempotency_key(self.call_id, name, args)} if write else None

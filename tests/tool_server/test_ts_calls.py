@@ -3,46 +3,11 @@ S-23, S-32, S-38, S-42, S-48, S-49)."""
 
 import sqlite3
 
-import httpx
 import pytest
 from toolkit import UNKNOWN, book, count, first_open, ready_to_book
 
 from app import jobs, records
-from app.fsm import FsmUnavailable
 from app.settings import QUEUE_MAX_ATTEMPTS
-
-
-class Down(httpx.BaseTransport):
-    def handle_request(self, request):
-        raise httpx.ConnectError("connection refused", request=request)
-
-
-@pytest.fixture
-def fsm(agent):
-    """The adapter, with a way to swap its HTTP client and put it back."""
-    adapter = agent.app.state.services.fsm["summit-air"]
-    original = adapter.http
-
-    class Switch:
-        def down(self):
-            adapter.http = httpx.Client(transport=Down(), base_url="http://testserver")
-
-        def losing_job_responses(self):
-            """The job reaches the FSM, but the answer never comes back."""
-            real = adapter.create_job
-
-            def create_job(*args, **kwargs):
-                real(*args, **kwargs)
-                raise FsmUnavailable("create_job: ReadTimeout")
-
-            adapter.create_job = create_job
-
-        def up(self):
-            adapter.http = original
-            adapter.__dict__.pop("create_job", None)
-
-    yield Switch()
-    Switch().up()
 
 
 def run_jobs(agent):
@@ -172,46 +137,6 @@ def test_outbound_calls_go_only_to_the_caller_in_hours_once_and_never_to_do_not_
     conn.execute("UPDATE callbacks SET status = 'pending'")
     assert allowed() == (False, "do_not_call")
     conn.close()
-
-
-def _outbound_start(agent, callback_id, phone=UNKNOWN, call_id="out-1"):
-    body = {
-        "call_id": call_id,
-        "caller_id": phone,
-        "dialed_number": "(646) 624-0418",
-        "direction": "outbound",
-        "callback_id": callback_id,
-    }
-    return agent.client.post("/calls/start", json=body).json()
-
-
-def test_an_outbound_call_starts_only_for_a_callback_the_server_allows(agent, clock):
-    call = agent.start(UNKNOWN)["data"]["call_id"]
-    agent.tool("flag_person", call, reason="Call back about the quote", callback_in_minutes=60)
-    callback_id = count(agent, "SELECT id FROM callbacks")
-    assert _outbound_start(agent, None)["refused"] == "outbound_not_allowed"
-    assert _outbound_start(agent, callback_id, phone="(718) 555-0000")["data"] == {
-        "why": "not_the_callback_number"
-    }
-    started = _outbound_start(agent, callback_id)
-    assert started["ok"] is True
-    assert started["data"]["callback"]["reason"] == "Call back about the quote"
-    # The voice layer dials the number the server holds, not one it was handed.
-    assert started["data"]["callback"]["phone"] == UNKNOWN
-    # The attempt is counted before the worker dials: a second call for it is refused, while a
-    # retried start for the same call is not a second attempt.
-    assert count(agent, "SELECT attempts FROM callbacks") == 1
-    assert _outbound_start(agent, callback_id)["ok"] is True
-    assert _outbound_start(agent, callback_id, call_id="out-2")["data"] == {"why": "attempted"}
-
-
-def test_no_outbound_call_outside_calling_hours(agent, clock):
-    call = agent.start(UNKNOWN)["data"]["call_id"]
-    agent.tool("flag_person", call, reason="Call back about the quote", callback_in_minutes=60)
-    clock.advance(hours=13)  # 10 p.m. in New York
-    started = _outbound_start(agent, count(agent, "SELECT id FROM callbacks"))
-    assert started["refused"] == "outbound_not_allowed"
-    assert count(agent, "SELECT attempts FROM callbacks") == 0
 
 
 def test_there_is_no_tool_that_calls_911_or_an_outside_number(agent):
