@@ -164,3 +164,14 @@ Changed:
 - New `callback_opening_unknown` keeps the old line for a caller with no single first name on file, so the opening never guesses between people.
 Commit: 34dcda1
 Status: open
+
+## call-journeys r4 (amendment after lock: heating with an oven or generator)
+Feedback (verbatim):
+> don't let the agent recommend sloppy/potentially unsafe solutions like using an oven to heat the house. but yes, that question should be asked when relevant but not overly hard coded...i don't want it to come up more than it needs to
+Changed:
+- Spine step 4 and journey 3: a caller who says they're heating the home with something that burns fuel indoors (oven on or open for heat, stove, grill, generator, kerosene or propane heater) gets the existing carbon monoxide check question once per call. Only wording that says it's used for heat counts, so "my oven works", a gas stove or "the generator is outside" asks nothing. Symptoms or an alarm in the answer fire the carbon monoxide lines as today; a clear no carries on. This settles the open question left in spec r5.
+- Journey 3 step 9: the agent never suggests an oven, stove, grill, generator or unvented heater to get warm and never agrees one is fine to keep using; if asked, layers, blankets, one warm room or somewhere warm to go.
+- Journey 3 step 5: the safety sign-off says "get outside", not "get everyone outside", because by then the caller may have said they're alone (eval round 1, `co-alarm-clear`). Wording taken from the signed-off variants; needs Jackson's sign-off like any safety line change.
+- users.md (the fixed list) and spec S-20 amended to match. Server rule in `app/safety.py` and `tenants/summit-air/agent.yaml` (`safety.heating_check`); prompt rule in `prompts/safety.md`.
+Commit: 6bf8359
+Status: open
