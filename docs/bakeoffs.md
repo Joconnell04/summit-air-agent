@@ -39,3 +39,11 @@ The same scorecard, so results compare across bake-offs. Numbers in brackets are
 - Haiku, Sonnet and Opus, plus the OpenAI and Gemini profiles, as the live brain, on the full eval suite.
 - **Hypothesis:** a larger model improves feels-like-a-person a little and costs too much reply delay to use live; Haiku stays the live model.
 - Designed once the agent works end to end (docs/later.md).
+
+### 5. Vapi: a written comparison and one test call (DECISIONS.md 020)
+
+- **Hypothesis:** a Vapi tool result spoken word for word, with the model skipped, keeps the safety lines exact where Retell paraphrased them; otherwise Vapi is the same trade as Retell.
+- **Run:** after the main run, one gas call on Vapi's free number against our tool server (about $0.20, ASSUMED), plus the written comparison in docs/explorations/010-vapi.md.
+- **Decide:** promote Vapi to a full entrant only if the lines come out exact and reply delay matches our stack.
+
+Further entrants, and how to compare them without real phone calls, are in docs/explorations/013-more-bakeoff-entrants.md.

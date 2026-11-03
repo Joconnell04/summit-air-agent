@@ -58,7 +58,7 @@ This box (MEASURED by ssh today): 2 vCPU Cascade Lake with AVX-512, 1,961 MB RAM
 | H3. New vc2-4c-8gb | 2 h | $40/mo, $0.055/h (LiveKit's baseline); high-performance Intel 4c/8GB is $48 | One more box |
 | H4. Worker on LiveKit Cloud | 0.5 day | Ship $50/mo plus $0.01/min past 5,000 | Per-minute cost |
 
-**Reboots.** MEASURED: `/etc/apt/apt.conf.d/52epic-reboot` sets Automatic-Reboot true at 09:30 and the clock is UTC, so reboots land at 05:30 EDT or 04:30 EST; five in 40 days (Sep 5, 11, 24, Oct 9, 14). That is outside business hours, but the file is root-owned, we have no sudo, and it looks like another project's. A dedicated box (H3) lets us choose.
+**Reboots.** MEASURED: a file in `/etc/apt/apt.conf.d/` from another project sets Automatic-Reboot true at 09:30 and the clock is UTC, so reboots land at 05:30 EDT or 04:30 EST; five in 40 days (Sep 5, 11, 24, Oct 9, 14). That is outside business hours, but the file is root-owned, we have no sudo, and it looks like another project's. A dedicated box (H3) lets us choose.
 
 **Make it safe.** (1) Start on boot with user-crontab `@reboot` plus a per-minute watchdog (user crontab works, MEASURED; Bobert (an earlier personal practice project: a voice agent for a made-up HVAC company, built before this assignment; the name is the project's, not a person's)'s `watchdog.sh` is the pattern). systemd user units need lingering, which is off (MEASURED); `loginctl enable-linger` is allowed for yourself by default (secondary source, untested here). (2) Twilio: the number's webhook is the gate; "Primary handler fails" is a Twilio-hosted TwiML Bin that apologises, then dials the office or takes a voicemail (SOURCE). The gate dials LiveKit only if the worker heartbeat is under 30 s old. Whether LiveKit answers a call with no worker, leaving silence, is untested. (3) Alert: the watchdog pings Healthchecks.io each minute only when `/health` and the heartbeat are good; a missed ping emails Jackson (free tier, 20 checks, third-party summary). UptimeRobot's free plan is non-commercial. Add a daily early-morning test call (outbound $0.014/min, SOURCE).
 
@@ -72,7 +72,7 @@ Changes if: Paul's volume is far from 150 a day; the load test passes at 5 on 2 
 
 1. Is 150 calls a day a fair stand-in, or ask Paul?
 2. Resize now (+$5/mo, short restart) or build a dedicated $40 box?
-3. Does `52epic-reboot` belong to the other project, and may it stay?
+3. Does that reboot file belong to the other project, and may it stay?
 4. Update decision 04's Ship-plan reasoning, since Build suffices for a self-hosted demo?
 5. Who gets overflow voicemails and urgent keypresses: office line or on-call phone?
 6. Approve a small paid load test (5 simulated rooms, a few dollars of speech and model usage)?
