@@ -1,5 +1,5 @@
 .PHONY: setup test lint check ratchet ratchet-update eval replay langsmith eval-upload seed-st mock-st postman-st server postman trace \
-	owner-demo rules-gate voice-livekit phone-setup deploy test-call measure-delay \
+	owner-demo rules-gate summary-check voice-livekit phone-setup deploy test-call measure-delay \
 	retell-push retell-bridge retell-deploy retell-report
 
 setup:
@@ -84,6 +84,11 @@ owner-demo:
 # 18 must-pass scenarios (MEASURED). make rules-gate [DB=data/tool_server.db]
 rules-gate:
 	uv run $(EVAL_ENV) python -m evals.gate --db $${DB:-data/tool_server.db}
+
+# Paid: one scripted booked call, then the technician summary from the real post_call.summary model
+# (scripts/summary_check.py), one model call.
+summary-check:
+	uv run $(EVAL_ENV) python -m scripts.summary_check
 
 # The LiveKit voice worker (voice/livekit/README.md), against make server and make mock-st
 voice-livekit:

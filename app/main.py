@@ -30,6 +30,7 @@ from . import (
     records,
     reports,
     rules,
+    summary,
     trace,
     weather,
 )
@@ -61,6 +62,7 @@ class Services:
         fsm_clients: dict[str, httpx.Client] | None = None,
         side_model: SideModel | None = None,
         weather_clients: dict[str, httpx.Client] | None = None,
+        summary_model: summary.SummaryModel | None = None,
     ):
         self.settings = settings
         if clock is None and settings.fixed_now:
@@ -78,6 +80,9 @@ class Services:
         self.fsm = {t.slug: make_adapter(t, settings, clients.get(t.slug)) for t in self.tenants}
         self.caches = {t.slug: SlotCache(settings.slot_cache_seconds) for t in self.tenants}
         self.side_model = side_model
+        self.summary_model = summary_model or (
+            summary.model_from_config() if settings.summaries else None
+        )
         self.report_poster = reports.github_poster(settings)
         self.weather = weather_clients or (
             {t.slug: weather.client(t.weather) for t in self.tenants} if settings.weather else {}

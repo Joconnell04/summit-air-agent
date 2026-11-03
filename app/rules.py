@@ -31,8 +31,8 @@ STAGES = {
     "closing": "Closing",
     "after_call": "After the call",
 }
-# Stages the owner can add guidance to. Before hello has no model, and after the call there is no
-# model step yet that would read it (the technician summary is not built).
+# Stages the owner can add guidance to. Before hello has no model, and the technician summary after
+# the call does not read owner guidance yet (docs/later.md).
 GUIDANCE_STAGES = ("opening", "whole_call", "booking", "closing")
 GUIDANCE_PER_STAGE = 5
 GUIDANCE_MAX_CHARS = 300

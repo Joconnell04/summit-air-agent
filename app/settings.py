@@ -36,6 +36,9 @@ class Settings:
     # Read the outside temperature from the National Weather Service (app/weather.py). Off in
     # tests and development so nothing calls out; on for the deployed server.
     weather: bool = field(default_factory=lambda: os.environ.get("WEATHER", "") == "1")
+    # Write the technician's summary after each booked call (app/summary.py). Off in tests and
+    # development so nothing calls out; it needs ANTHROPIC_API_KEY as well.
+    summaries: bool = field(default_factory=lambda: os.environ.get("SUMMARIES", "") == "1")
     # The owner view refuses every request when this is empty.
     owner_token: str = field(default_factory=lambda: os.environ.get("OWNER_TOKEN", ""))
     # Who may edit the agent's rules on the owner view, as name=code pairs separated by commas
