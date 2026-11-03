@@ -1,6 +1,6 @@
 # Build brief: owner-editable rules by call stage
 
-Branch: `joco/rules-by-stage-7503c4`. Depends on brief 07 (the owner view redesign and its design system). Issue #56.
+Branch: `joco/rules-by-stage-7503c4`. Depends on brief 07 (the owner view redesign and its design system). Issue #56, spec S-51, DECISIONS.md 022.
 
 ## Goal
 

@@ -86,8 +86,8 @@ The owner view is three pages for the owner and dispatcher: Today (`/owner`, the
 | Urgent holds and the urgent-only night window are the company's rules, applied to what ServiceTitan's capacity returns, again right before a job is created or moved | S-25, decision 003 | `capacity.usable_technicians`, `capacity.pick_technician`, `booking.send` |
 | A booking counts as kept if its job was still on the schedule when its current window came | C-42 | `jobs.check_kept` |
 | An urgent flag raised while the company is closed is emailed to the on-call person, once, with what, where, who and why | Journey 11 | `jobs.alert_on_call` |
-| An owner edit changes only the six editable lines and guidance for four stages; anything else in a draft (the read-back, priority, the safety script, any other line) is refused, a stored version is validated again before a call uses it, and a draft goes live only when the eval gate passes on it | Exploration 009 | `rules.validate`, `rules.applied`, `rules.record_gate` |
-| The call stage comes from the server's records, and booking and closing guidance is sent as a `[server]` note when the stage starts, never on a safety call | Exploration 009 | `rules.stage_now`, `rules.advance_stage`, `lifecycle.turn` |
+| An owner edit changes only the six editable lines and guidance for four stages; anything else in a draft (the read-back, priority, the safety script, any other line) is refused, a stored version is validated again before a call uses it, and a draft goes live only when the eval gate passes on it | S-51 | `rules.validate`, `rules.applied`, `rules.record_gate` |
+| The call stage comes from the server's records, and booking and closing guidance is sent as a `[server]` note when the stage starts, never on a safety call | S-51 | `rules.stage_now`, `rules.advance_stage`, `lifecycle.turn` |
 | Do-not-call marked on the caller's words, cancelling pending callbacks; the tool returns the line to say | S-49 | `lifecycle.turn`, `records.mark_do_not_call` |
 
 ## Template and tenant
