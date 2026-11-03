@@ -72,8 +72,10 @@ def test_missing_settings_stop_with_a_clear_message():
         open_retell("eval-x", "(212) 555-0999", env={"RETELL_API_KEY": "k"})
 
 
-def test_without_the_retell_lane_module_a_run_stops_with_a_clear_message():
-    env = {k: "x" for k in ("RETELL_API_KEY", "RETELL_CHAT_AGENT_ID", "RETELL_EVAL_TOOL_SERVER",
-                            "DEBUG_TOKEN")}
-    with pytest.raises(RetellNotReady, match="brief 05"):
-        open_retell("eval-x", "(212) 555-0999", env=env)
+def test_with_the_retell_lane_here_a_run_opens_its_chats_through_it():
+    from voice.retell.chat import open_chat
+
+    env = {k: "https://x" for k in ("RETELL_API_KEY", "RETELL_CHAT_AGENT_ID",
+                                    "RETELL_EVAL_TOOL_SERVER", "DEBUG_TOKEN")}
+    retell_agent, _server = open_retell("eval-x", "(212) 555-0999", env=env)
+    assert retell_agent.open_chat is open_chat
