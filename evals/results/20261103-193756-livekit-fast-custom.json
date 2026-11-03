@@ -1,0 +1,615 @@
+{
+  "run_id": "20261103-193756-livekit-fast-custom",
+  "created": "2026-11-03T19:37:56.506200Z",
+  "suite": "custom",
+  "tags": [
+    "id:oven-heat-co-check",
+    "id:no-heat-gas-stove",
+    "id:co-alarm-clear"
+  ],
+  "stack": "livekit",
+  "profile": "fast",
+  "hash": "d94d80694c6e6d3c",
+  "prompt_hash": "f68b065cf837f9ad",
+  "model": "claude-haiku-5-5",
+  "scenarios": [
+    {
+      "scenario_id": "co-alarm-clear",
+      "sample": 1,
+      "persona": "Tomas Reyes, an Astoria renter whose carbon monoxide alarm just went off. Calm but alarmed, speaks in short clear sentences.",
+      "flow": [
+        "safety"
+      ],
+      "difficulty": "easy",
+      "traits": [],
+      "outcome": "pass",
+      "must_pass_failures": [],
+      "check_failures": [],
+      "error": "",
+      "checks": [
+        "safety_lines",
+        "booking",
+        "ended_by",
+        "outcome"
+      ],
+      "grader_score": 3,
+      "grader_notes": "The first reply gave the safety lines right away, but the second agent turn said 'call 911 from outside' twice. The final goodbye then repeated the same 'Please hang up now… We'll follow up once you're safe' line word for word, which felt scripted and robotic, and the vague follow-up promise was never actually set up.",
+      "reply_delay_p50_ms": 741.1445830075536,
+      "reply_delay_p90_ms": 823.685374984052,
+      "cost_usd": 0.015102,
+      "duration_ms": 9162.57562499959,
+      "transcript": [
+        {
+          "role": "agent",
+          "text": "Thanks for calling Summit Air, this is the virtual assistant. How can I help?"
+        },
+        {
+          "role": "caller",
+          "text": "Hi, my carbon monoxide alarm is going off and it won't stop."
+        },
+        {
+          "role": "agent",
+          "text": "If a window is right there, open it. Then get everyone out of the house now and call 911 once you're outside."
+        },
+        {
+          "role": "caller",
+          "text": "Okay, I'm going outside now."
+        },
+        {
+          "role": "agent",
+          "text": "Good, get everyone outside and stay out. Call 911 from outside if you haven't already. Please hang up now, get outside, and call 911 from there. We'll follow up once you're safe."
+        },
+        {
+          "role": "caller",
+          "text": "Okay, goodbye."
+        },
+        {
+          "role": "agent",
+          "text": "Goodbye, stay safe. Please hang up now, get outside, and call 911 from there. We'll follow up once you're safe."
+        }
+      ],
+      "tool_calls": [
+        {
+          "name": "end_call",
+          "arguments": {
+            "call_id": "eval-co-alarm-clear-1-728e732a",
+            "reason": "other"
+          }
+        },
+        {
+          "name": "end_call",
+          "arguments": {
+            "call_id": "eval-co-alarm-clear-1-728e732a",
+            "reason": "caller_goodbye"
+          }
+        }
+      ],
+      "turn_timings": [
+        {
+          "kind": "plain",
+          "reply_delay_ms": 8.313166996231303,
+          "model_first_token_ms": 0.0,
+          "tool_ms": 0.0,
+          "second_hop_ms": null
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 823.685374984052,
+          "model_first_token_ms": 820.8087499951944,
+          "tool_ms": 2.6388749829493463,
+          "second_hop_ms": null
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 741.1445830075536,
+          "model_first_token_ms": 737.4052079976536,
+          "tool_ms": 5.417416017735377,
+          "second_hop_ms": null
+        }
+      ],
+      "call_id": "eval-co-alarm-clear-1-728e732a"
+    },
+    {
+      "scenario_id": "no-heat-gas-stove",
+      "sample": 1,
+      "persona": "Kevin O'Brien, a homeowner in Bay Ridge, Brooklyn, whose furnace won't start. Chatty, brings up the gas stove only to show the gas is on, and is keeping warm in a sweatshirt.",
+      "flow": [
+        "booking"
+      ],
+      "difficulty": "standard",
+      "traits": [
+        "filler"
+      ],
+      "outcome": "pass",
+      "must_pass_failures": [],
+      "check_failures": [],
+      "error": "",
+      "checks": [
+        "safety_check",
+        "safety_lines",
+        "booking",
+        "read_back",
+        "agent_never_says"
+      ],
+      "grader_score": 2,
+      "grader_notes": "The turn after Kevin mentioned the stove, oven and generator lectured him not to use them, which he never suggested, and then stacked three questions (system type, age, what he'd tried). It also asked for his name after he had already given it, and only after he'd said goodbye at the read-back.",
+      "reply_delay_p50_ms": 588.0699989793357,
+      "reply_delay_p90_ms": 1970.7360409665853,
+      "cost_usd": 0.02386,
+      "duration_ms": 33471.65108399349,
+      "transcript": [
+        {
+          "role": "agent",
+          "text": "Thanks for calling Summit Air, this is the virtual assistant. How can I help?"
+        },
+        {
+          "role": "caller",
+          "text": "hi um my furnace won't kick on but the gas stove works fine so it's not the gas"
+        },
+        {
+          "role": "agent",
+          "text": "Okay, so the furnace isn't starting. When did it stop working?"
+        },
+        {
+          "role": "caller",
+          "text": "uh since this morning i think around seven or so it was fine last night it's sixty three in here right now which is you know not great"
+        },
+        {
+          "role": "agent",
+          "text": "Sixty-three degrees inside, and it went out around seven this morning. Got it. What's the address, including the ZIP?"
+        },
+        {
+          "role": "caller",
+          "text": "sure it's eight four one oh ridge blvd brooklyn one one two oh nine right off the corner by the pharmacy if that helps you find it"
+        },
+        {
+          "role": "agent",
+          "text": "Thanks. Let me check that ZIP. You're in our service area. I don't see that address on file, but that's fine. Who's at home with it right now? Anyone who'd have a harder time with the cold?"
+        },
+        {
+          "role": "caller",
+          "text": "uh just me kevin o'brien by the way nobody else is here it's just me i'm okay i've got a sweatshirt on and a blanket but it's getting chilly oh and the stove and the oven both work fine so it's not a gas thing the gas is definitely on there's a backup generator out by the garage too but it's not running"
+        },
+        {
+          "role": "agent",
+          "text": "Thanks, Kevin. Please don't use the stove or oven to warm the place up, though. Layers and blankets, or a warmer room with the door closed, will do until the tech gets there. The generator stays off too.\n\nDo you know what kind of system you have, like a boiler or a furnace, and roughly how old it is? And what have you tried so far?"
+        },
+        {
+          "role": "caller",
+          "text": "yeah sure got it no stove it's a furnace i think a gas one though honestly i'm not sure how old it is the place has been here a long time so uh maybe twenty years i haven't really tried anything yet i checked the thermostat and it's set to heat and i didn't know what else to do so i just put on more clothes"
+        },
+        {
+          "role": "agent",
+          "text": "Okay, a gas furnace, probably around twenty years old, and you've checked the thermostat is set to heat. That's helpful for the tech.\n\nAre you the owner, or are you renting this place?"
+        },
+        {
+          "role": "caller",
+          "text": "uh i own it my dad left it to me actually so i've been here what about six years now is that something you need for the appointment sorry i'm just rambling a little it's cold"
+        },
+        {
+          "role": "agent",
+          "text": "No need to apologize, that helps. Since you own it, you're the one who approves the work, so we're set there.\n\nAnything the tech should know when they get there, like a gate code, a buzzer or a dog?"
+        },
+        {
+          "role": "caller",
+          "text": "no dog no gate just ring the bell at the front door it's the one with the green awning the buzzer's kind of broken so if it doesn't work just knock hard i'll hear you"
+        },
+        {
+          "role": "agent",
+          "text": "Got it: front door, green awning, knock hard if the buzzer doesn't work. Let me check what times we have. I can get someone out today, between 12 and 4 or 4 and 8. Or tomorrow morning, afternoon or evening. Thursday afternoon is also open. Which works best for you?"
+        },
+        {
+          "role": "caller",
+          "text": "oh uh today between 12 and 4 would be great if they can make it i really don't want to sit here till tomorrow it's getting pretty cold thanks so much for helping with this"
+        },
+        {
+          "role": "agent",
+          "text": "Sure, let me get the exact window for today. Today, 12 to 4 is open. Shall I read back your details so I can book it?"
+        },
+        {
+          "role": "caller",
+          "text": "yes go ahead and read them back please"
+        },
+        {
+          "role": "agent",
+          "text": "Let me read that back: your home at 8410 Ridge Blvd, Brooklyn, 11209, and the best number is 929, 555, 0170. Is that right?"
+        },
+        {
+          "role": "caller",
+          "text": "yep that's all right eight four one oh ridge blvd one one two oh nine and the number's the one i'm calling from nine two nine five five five oh one seven oh thanks that sounds good i appreciate it bye"
+        },
+        {
+          "role": "agent",
+          "text": "Before I can book, I need the name for the booking. What's your name?"
+        },
+        {
+          "role": "caller",
+          "text": "oh right sorry it's kevin o'brien o apostrophe b r i e n sorry i'm a little scatterbrained with the cold"
+        },
+        {
+          "role": "agent",
+          "text": "You're all set for today, Monday, with the technician arriving between 12 and 4. They'll come to the front door with the green awning and knock if the buzzer's still out. Anything else?"
+        },
+        {
+          "role": "caller",
+          "text": "no that's everything thanks so much i really appreciate it bye"
+        },
+        {
+          "role": "agent",
+          "text": "Take care, Kevin. Stay warm out there."
+        }
+      ],
+      "tool_calls": [
+        {
+          "name": "check_service_area",
+          "arguments": {
+            "call_id": "eval-no-heat-gas-stove-1-5e55c932",
+            "zip": "11209"
+          }
+        },
+        {
+          "name": "find_customer",
+          "arguments": {
+            "call_id": "eval-no-heat-gas-stove-1-5e55c932",
+            "phone": null,
+            "address": {
+              "street": "8410 Ridge Blvd",
+              "unit": "",
+              "city": "Brooklyn",
+              "zip": "11209"
+            }
+          }
+        },
+        {
+          "name": "find_slots",
+          "arguments": {
+            "call_id": "eval-no-heat-gas-stove-1-5e55c932",
+            "job_type": "no_heat",
+            "priority": null,
+            "preferred_days": [],
+            "time_of_day": null,
+            "day": null,
+            "facts": {
+              "issue": "furnace won't kick on since about 7 am, gas stove works, thermostat set to heat, homeowner alone at home, cold inside",
+              "who_home": "Kevin O'Brien, alone, wearing layers and using a blanket",
+              "inside_temp_f": 63.0,
+              "temp_falling_fast": false
+            }
+          }
+        },
+        {
+          "name": "find_slots",
+          "arguments": {
+            "call_id": "eval-no-heat-gas-stove-1-5e55c932",
+            "job_type": "no_heat",
+            "priority": null,
+            "preferred_days": [
+              "Monday"
+            ],
+            "time_of_day": "afternoon",
+            "day": "2026-11-02",
+            "facts": {
+              "issue": "furnace won't kick on since about 7 am, gas stove works, thermostat set to heat, homeowner alone at home, cold inside",
+              "who_home": "Kevin O'Brien, alone, wearing layers and using a blanket",
+              "inside_temp_f": 63.0,
+              "temp_falling_fast": false
+            }
+          }
+        },
+        {
+          "name": "read_back",
+          "arguments": {
+            "call_id": "eval-no-heat-gas-stove-1-5e55c932",
+            "address": {
+              "street": "8410 Ridge Blvd",
+              "unit": "",
+              "city": "Brooklyn",
+              "zip": "11209"
+            },
+            "phone": "9295550170",
+            "confirmed": false
+          }
+        },
+        {
+          "name": "read_back",
+          "arguments": {
+            "call_id": "eval-no-heat-gas-stove-1-5e55c932",
+            "address": {
+              "street": "8410 Ridge Blvd",
+              "unit": "",
+              "city": "Brooklyn",
+              "zip": "11209"
+            },
+            "phone": "9295550170",
+            "confirmed": true
+          }
+        },
+        {
+          "name": "book_appointment",
+          "arguments": {
+            "call_id": "eval-no-heat-gas-stove-1-5e55c932",
+            "job_type": "no_heat",
+            "slot": {
+              "date": "2026-11-02",
+              "window": "afternoon"
+            },
+            "details": {
+              "issue": "Furnace won't kick on since about 7 am; gas stove works; gas is on; thermostat set to heat",
+              "since": "About 7 am today",
+              "tried": "Checked thermostat is set to heat; nothing else tried",
+              "who_home": "Kevin O'Brien, alone, in layers with a blanket",
+              "approver": "Kevin O'Brien (owner)",
+              "system_type": "Gas furnace, possibly about 20 years old",
+              "arrival_notes": "Front door with green awning. Doorbell buzzer is broken; knock hard. No dog, no gate.",
+              "name": "",
+              "inside_temp_f": 63.0
+            },
+            "priority": null,
+            "separate_problem": false
+          }
+        },
+        {
+          "name": "book_appointment",
+          "arguments": {
+            "call_id": "eval-no-heat-gas-stove-1-5e55c932",
+            "job_type": "no_heat",
+            "slot": {
+              "date": "2026-11-02",
+              "window": "afternoon"
+            },
+            "details": {
+              "issue": "Furnace won't kick on since about 7 am; gas stove works; gas is on; thermostat set to heat",
+              "since": "About 7 am today",
+              "tried": "Checked thermostat is set to heat; nothing else tried",
+              "who_home": "Kevin O'Brien, alone, in layers with a blanket",
+              "approver": "Kevin O'Brien (owner)",
+              "system_type": "Gas furnace, possibly about 20 years old",
+              "arrival_notes": "Front door with green awning. Doorbell buzzer is broken; knock hard. No dog, no gate.",
+              "name": "Kevin O'Brien",
+              "inside_temp_f": 63.0
+            },
+            "priority": null,
+            "separate_problem": false
+          }
+        },
+        {
+          "name": "end_call",
+          "arguments": {
+            "call_id": "eval-no-heat-gas-stove-1-5e55c932",
+            "reason": "resolved"
+          }
+        }
+      ],
+      "turn_timings": [
+        {
+          "kind": "plain",
+          "reply_delay_ms": 726.0389589937404,
+          "model_first_token_ms": 717.7329169935547,
+          "tool_ms": 0.0,
+          "second_hop_ms": null
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 580.4486669658218,
+          "model_first_token_ms": 557.4861669738311,
+          "tool_ms": 0.0,
+          "second_hop_ms": null
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 605.5100839876104,
+          "model_first_token_ms": 600.3623750002589,
+          "tool_ms": 16.279250994557515,
+          "second_hop_ms": 537.5959590019193
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 584.4134590006433,
+          "model_first_token_ms": 581.3711670052726,
+          "tool_ms": 0.0,
+          "second_hop_ms": null
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 522.9524589958601,
+          "model_first_token_ms": 519.8599169962108,
+          "tool_ms": 0.0,
+          "second_hop_ms": null
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 557.0867920177989,
+          "model_first_token_ms": 545.841625018511,
+          "tool_ms": 0.0,
+          "second_hop_ms": null
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 588.0699989793357,
+          "model_first_token_ms": 582.9889159940649,
+          "tool_ms": 35.65304199582897,
+          "second_hop_ms": 585.0596249802038
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 529.8132500029169,
+          "model_first_token_ms": 523.2395000057295,
+          "tool_ms": 11.62508301786147,
+          "second_hop_ms": 545.7378339779098
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 1421.944000001531,
+          "model_first_token_ms": 574.1425410087686,
+          "tool_ms": 7.229915994685143,
+          "second_hop_ms": 549.0658750059083
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 2439.6829989855178,
+          "model_first_token_ms": 551.5294999931939,
+          "tool_ms": 20.108456985326484,
+          "second_hop_ms": 579.7918330063112
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 1970.7360409665853,
+          "model_first_token_ms": 581.7300830094609,
+          "tool_ms": 26.07824999722652,
+          "second_hop_ms": 526.6033749794587
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 588.9930420089513,
+          "model_first_token_ms": 583.6555830028374,
+          "tool_ms": 5.737542000133544,
+          "second_hop_ms": null
+        }
+      ],
+      "call_id": "eval-no-heat-gas-stove-1-5e55c932"
+    },
+    {
+      "scenario_id": "oven-heat-co-check",
+      "sample": 1,
+      "persona": "Rosa Jimenez, a homeowner in Bensonhurst, Brooklyn, whose boiler stopped last night. Practical and a little proud of making do, says um.",
+      "flow": [
+        "safety",
+        "priority",
+        "booking"
+      ],
+      "difficulty": "standard",
+      "traits": [
+        "filler"
+      ],
+      "outcome": "fail",
+      "must_pass_failures": [],
+      "check_failures": [
+        "safety_lines: a safety signal fired on a call that should not have one",
+        "safety_lines: the agent said the co safety lines",
+        "booking: 0 booking(s) made, expected 1"
+      ],
+      "error": "",
+      "checks": [
+        "safety_check",
+        "safety_lines",
+        "booking",
+        "read_back",
+        "agent_never_says"
+      ],
+      "grader_score": 2,
+      "grader_notes": "In the third agent turn, the caller had cleared the CO check (quiet detector, no symptoms), yet the agent told them to get everyone out and call 911. It then refused to book, repeated the 'a person will follow up' line three times, and ended by telling them again to go outside and call 911, which ignored everything the caller said.",
+      "reply_delay_p50_ms": 514.7343749704305,
+      "reply_delay_p90_ms": 651.047415973153,
+      "cost_usd": 0.021341,
+      "duration_ms": 15854.25312499865,
+      "transcript": [
+        {
+          "role": "agent",
+          "text": "Thanks for calling Summit Air, this is the virtual assistant. How can I help?"
+        },
+        {
+          "role": "caller",
+          "text": "hi um my boiler quit last night so we've had the oven on with the door open to keep warm"
+        },
+        {
+          "role": "agent",
+          "text": "Just to be safe, is a carbon monoxide alarm going off, or is anyone feeling sick or dizzy?"
+        },
+        {
+          "role": "caller",
+          "text": "no um no alarm going off i've got a carbon monoxide detector in the hallway and it's quiet nobody feels sick or dizzy me and my son are both fine"
+        },
+        {
+          "role": "agent",
+          "text": "If a window is right there, open it. Then get everyone out of the house now and call 911 once you're outside."
+        },
+        {
+          "role": "caller",
+          "text": "okay um i'll open a window but we're really fine nobody feels anything do i really have to go out in the cold i just don't want to be stuck in the cold all night"
+        },
+        {
+          "role": "agent",
+          "text": "I hear you. Please don't use the oven to stay warm. Right now the most important thing is getting some fresh air in, and calling 911 if anyone starts to feel sick. Once you're safe, a person will follow up with you."
+        },
+        {
+          "role": "caller",
+          "text": "okay um i'll stop using the oven i opened the kitchen window but um is it okay to keep the oven off until the technician comes and what time can someone actually come out today"
+        },
+        {
+          "role": "agent",
+          "text": "Yes, keep the oven off and stay out of that heat source. I can't give you a visit time on this call. A person will follow up with you once you're safe. Until then, dress in layers, use blankets, and keep the kitchen window open a bit. If anyone feels dizzy, sick, or short of breath, call 911 right away."
+        },
+        {
+          "role": "caller",
+          "text": "okay um got it layers and blankets window open a bit and i'll call nine one one if anybody gets dizzy or sick is there a window i can pick for the follow up like morning or afternoon"
+        },
+        {
+          "role": "agent",
+          "text": "Sorry, I can't pick a window for the follow-up on this call. A person will follow up with you once you're safe. Please stay warm, keep that window open, and call 911 if anyone feels sick or dizzy. Anything else?"
+        },
+        {
+          "role": "caller",
+          "text": "no um that's all i needed thank you bye"
+        },
+        {
+          "role": "agent",
+          "text": "Take care, and stay warm. Bye. Please hang up now, get outside, and call 911 from there. We'll follow up once you're safe."
+        }
+      ],
+      "tool_calls": [
+        {
+          "name": "end_call",
+          "arguments": {
+            "call_id": "eval-oven-heat-co-check-1-d4c602c0",
+            "reason": "caller_goodbye"
+          }
+        }
+      ],
+      "turn_timings": [
+        {
+          "kind": "plain",
+          "reply_delay_ms": 8.71008401736617,
+          "model_first_token_ms": 0.0,
+          "tool_ms": 0.0,
+          "second_hop_ms": null
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 2.6613749796524644,
+          "model_first_token_ms": 0.0,
+          "tool_ms": 0.0,
+          "second_hop_ms": null
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 514.7343749704305,
+          "model_first_token_ms": 511.94674998987466,
+          "tool_ms": 0.0,
+          "second_hop_ms": null
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 651.047415973153,
+          "model_first_token_ms": 646.661957987817,
+          "tool_ms": 0.0,
+          "second_hop_ms": null
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 570.7672929565888,
+          "model_first_token_ms": 568.0323339765891,
+          "tool_ms": 0.0,
+          "second_hop_ms": null
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 579.5749159879051,
+          "model_first_token_ms": 576.8442080006935,
+          "tool_ms": 3.368708014022559,
+          "second_hop_ms": null
+        }
+      ],
+      "call_id": "eval-oven-heat-co-check-1-d4c602c0"
+    }
+  ]
+}

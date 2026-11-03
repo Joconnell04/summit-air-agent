@@ -20,6 +20,7 @@
       <a href="/owner{{ q(slug, day if day is defined and not is_today else none) }}"{% if tab == "today" %} aria-current="page"{% endif %}>Today</a>
       <a href="/owner/calls{{ q(slug, day if day is defined and not is_today else none) }}"{% if tab == "calls" %} aria-current="page"{% endif %}>Calls</a>
       <a href="/owner/results{{ q(slug, day if day is defined and not is_today else none) }}"{% if tab == "results" %} aria-current="page"{% endif %}>Results</a>
+      <a href="/owner/rules{{ q(slug) }}"{% if tab == "rules" %} aria-current="page"{% endif %}>Rules</a>
     </nav>
     <div class="end">
       <form class="search" role="search" method="get" action="/owner/search" data-suggest="/owner/search/suggest{{ q(slug) }}">

@@ -1,14 +1,14 @@
-"""The safety check and its gates (spec S-17 to S-20)."""
+"""The safety check and its gates (spec S-17 to S-20, and S-21b for indoor fuel heating)."""
 
 import itertools
 
 import pytest
-import yaml
 from toolkit import TENANT_DIR, UNKNOWN, book, count, first_open, ready_to_book
 
 from app import safety
+from app.tenant import load_agent
 
-CFG = yaml.safe_load((TENANT_DIR / "agent.yaml").read_text())["safety"]
+CFG = load_agent(TENANT_DIR)[0]["safety"]
 GAS_LINES = " ".join(CFG["kinds"]["gas"]["lines"].split())
 CO_LINES = " ".join(CFG["kinds"]["co"]["lines"].split())
 
@@ -230,3 +230,224 @@ def test_the_cleared_call_books_through_the_server(agent):
     assert agent.turn(call, MARCIA_NO)["data"]["safety"]["action"] == "cleared"
     assert book(agent, call, first_open(agent, call))["ok"]
     assert agent.turn(call, "hang on, I smell gas now")["data"]["safety"]["action"] == "speak_lines"
+
+
+CO_QUESTION = CFG["vague"]["co"]["question"]
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "the heat's out so we've had the oven on to keep warm",
+        "I opened the oven to heat the kitchen",
+        "we're heating with the stove right now",
+        "we've been using the burners for warmth",
+        "my brother set up a generator in the basement",
+        "we're running a kerosene heater in the bedroom",
+        "keeping warm with the grill, it's in the living room",
+        "my boiler quit so we've had the oven on with the door open to keep warm",
+        "I've been leaving the oven door open a crack",
+        # A negator elsewhere in the line ("no heat") doesn't cancel the use.
+        "We have no heat, oven on to keep warm",
+        "we have no heat and the stove is on for warmth",
+        "No heat, so the oven's on to keep warm.",
+    ],
+)
+def test_heating_with_a_fuel_burning_source_asks_the_co_check(line):
+    """S-21b: heating with an oven, stove, grill or generator indoors asks the CO check."""
+    assert safety.heating_signal(line, CFG)
+    action = safety.check_caller_turn(line, "none", None, 0, CFG)
+    assert action.action == "ask_check"
+    assert action.kind == "co"
+    assert action.text == CO_QUESTION
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "my oven works fine, it's just the heat",
+        "I have a gas stove and the heat is out",
+        "the generator is outside on the patio",
+        "I was using the oven to cook when the heat went out",
+        "I'd never use the oven for heat",
+        "the kids are warm with blankets",
+        "the stove is on the same gas line as the furnace",
+        "My oven works fine, to keep warm we use blankets",
+        "we don't have the stove on for heat",
+    ],
+)
+def test_ordinary_mentions_of_an_oven_stove_or_generator_ask_nothing(line):
+    """S-21b: the trigger is narrow, so an ordinary mention asks nothing."""
+    assert not safety.heating_signal(line, CFG)
+    assert safety.check_caller_turn(line, "none", None, 0, CFG).action == "none"
+
+
+@pytest.mark.parametrize(
+    "answer,kind",
+    [
+        ("No, a little bit of a smell near the water heater", "gas"),
+        ("No, just a bit", "gas"),
+        ("No, but it smells a little off", "gas"),
+        ("no alarm but my head hurts a bit", "co"),
+        ("No, but my chest feels a bit tight", "co"),
+        ("No, sick and dizzy", "co"),
+    ],
+)
+def test_a_no_followed_by_a_smell_or_symptom_still_fires_the_lines(answer, kind):
+    """Review of PR #64: a leading "no" must not clear a check when a smell or symptom follows."""
+    action = safety.check_caller_turn(answer, "checking", kind, 0, CFG)
+    assert action.action == "speak_lines"
+    assert action.kind == kind
+
+
+def test_person_negators_count_only_in_the_check_answer():
+    """Outside the check answer, "nobody's dizzy" is left as the existing rules read it."""
+    assert safety.vague_signal("nobody's feeling sick or dizzy", CFG) == "co"
+    assert safety.vague_signal("nobody's feeling sick or dizzy", CFG, answering_check=True) is None
+
+
+def test_the_heating_check_is_asked_once_per_call():
+    """S-21b: asked once per call, never more than it needs to be."""
+    line = "we have the oven open for heat"
+    # Asked already on this call, or the same question was already cleared: not asked again.
+    assert safety.check_caller_turn(line, "none", None, 0, CFG, heating_asked=True).action == "none"
+    assert safety.check_caller_turn(line, "cleared", "co", 0, CFG).action == "none"
+    # A cleared gas question is a different one, so the carbon monoxide question is still asked.
+    assert safety.check_caller_turn(line, "cleared", "gas", 0, CFG).action == "ask_check"
+
+
+KEVIN_NO = (
+    "no alarm going off that i've heard and nobody's feeling sick or dizzy i'm fine i just feel a "
+    "little chilled"
+)
+ROSA_NO = (
+    "um no nobody's sick no headaches we're both fine there's a carbon monoxide detector in the "
+    "hallway and it's been quiet the whole time"
+)
+ROSA_NO_AGAIN = (
+    "no um no alarm going off i've got a carbon monoxide detector in the hallway and it's quiet "
+    "nobody feels sick or dizzy me and my son are both fine"
+)
+
+
+@pytest.mark.parametrize(
+    "answer,result",
+    [
+        ("No, no alarm, nobody's dizzy, we're fine.", "cleared"),
+        ("no one is feeling dizzy, the alarm is quiet", "cleared"),
+        ("Nope, we're okay.", "cleared"),
+        ("Actually yeah, I've got headaches and feel dizzy.", "speak_lines"),
+        ("The CO detector just started beeping.", "speak_lines"),
+        ("I'm not sure, maybe a little lightheaded.", "speak_lines"),
+        # Eval runs 20261103-193421 and -193756: clear noes that still fired the lines.
+        (KEVIN_NO, "cleared"),
+        (ROSA_NO, "cleared"),
+        (ROSA_NO_AGAIN, "cleared"),
+        ("No, wait, yes, a little dizzy.", "speak_lines"),
+        ("No, but I do feel dizzy.", "speak_lines"),
+        ("The CO alarm is going off, it was quiet before.", "speak_lines"),
+    ],
+)
+def test_the_answer_to_the_heating_check_decides(answer, result):
+    assert safety.check_caller_turn(answer, "checking", "co", 0, CFG).action == result
+
+
+def test_the_server_asks_the_heating_check_once_and_a_no_carries_on(agent):
+    call = ready_to_book(agent)
+    asked = agent.turn(call, "No heat since last night, so we've got the oven on to keep warm.")
+    assert asked["data"]["safety"] == {"action": "ask_check", "kind": "co", "text": CO_QUESTION}
+    agent.say(call, CO_QUESTION)
+    cleared = agent.turn(call, "No, the alarm's quiet and nobody's dizzy.")
+    assert cleared["data"]["safety"]["action"] == "cleared"
+    again = agent.turn(call, "Like I said, the oven is on to keep warm.")
+    assert again["data"]["safety"] is None
+    assert book(agent, call, first_open(agent, call))["ok"]
+
+
+def test_the_oven_priority_rule_hears_the_heating_check_wording(agent):
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    # "heating with the stove" is not one of the rule's own phrases.
+    agent.turn(call, "The heat's out and we're heating with the stove.")
+    found = agent.tool("find_slots", call, job_type="no_heat", facts={"inside_temp_f": 66})
+    assert found["data"]["priority"]["level"] == "Urgent"
+    assert "heating with an oven, stove, generator or grill indoors" in (
+        found["data"]["priority"]["reasons"]
+    )
+
+
+def test_the_heating_check_is_asked_once_across_a_linked_repeat_call(agent, clock):
+    first = agent.start(UNKNOWN)["data"]["call_id"]
+    assert agent.turn(first, "No heat, so the oven's on to keep warm.")["data"]["safety"][
+        "action"
+    ] == "ask_check"
+    agent.say(first, CO_QUESTION)
+    agent.turn(first, "No, nobody's dizzy and the alarm is quiet.")
+    agent.end(first, "dropped")
+    clock.advance(minutes=2)
+    second = agent.start(UNKNOWN)["data"]
+    assert second["linked_call"]["call_id"] == first
+    again = agent.turn(second["call_id"], "Sorry, cut off. The oven is still on to keep warm.")
+    assert again["data"]["safety"] is None
+
+
+def test_symptoms_in_the_answer_to_the_heating_check_fire_the_co_lines(agent):
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "The furnace died so we're heating with the stove.")
+    agent.say(call, CO_QUESTION)
+    lines = agent.turn(call, "Now that you mention it, I do have headaches and feel dizzy.")
+    assert lines["data"]["safety"] == {"action": "speak_lines", "kind": "co", "text": CO_LINES}
+    assert count(agent, "SELECT COUNT(*) FROM flags WHERE kind = 'safety'") == 1
+
+
+def test_a_no_heat_call_that_mentions_a_gas_stove_gets_no_check(agent):
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    for line in (
+        "My heat's out, it's a gas furnace.",
+        "The gas stove still works so the gas is on.",
+        "My oven works fine too.",
+    ):
+        assert agent.turn(call, line)["data"]["safety"] is None
+
+
+def test_a_safety_call_flags_a_person_without_asking_for_a_callback_time(agent):
+    """Eval round 1, co-alarm-clear: the caller leaving the house was asked for a callback time."""
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "My carbon monoxide alarm is going off and it won't stop.")
+    agent.say(call, CO_LINES)
+    flagged = agent.tool("flag_person", call, reason="CO alarm, caller outside", priority="Urgent")
+    assert flagged["ok"], flagged
+    assert flagged["say"] == "I've let our team know."
+    assert flagged["data"]["callback_id"] is None
+    assert count(agent, "SELECT COUNT(*) FROM callbacks WHERE call_id = ?", call) == 0
+
+
+def test_after_the_lines_each_caller_line_reminds_the_agent_not_to_book(agent):
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    before = agent.turn(call, "Hi, my carbon monoxide alarm is going off.")
+    assert "safety_call" not in before["data"]["hints"]
+    agent.say(call, CO_LINES)
+    after = agent.turn(call, "Okay, I'm going outside now.")
+    assert "safety_call" in after["data"]["hints"]
+    from prompts.assemble import server_notes
+
+    assert "Don't offer a visit" in server_notes(after["data"]["hints"])[0]
+
+
+def test_the_sign_off_suits_a_caller_who_is_alone_and_recommends_rather_than_orders():
+    sign_off = " ".join(CFG["sign_off"].split())
+    assert "everyone" not in sign_off
+    assert sign_off.startswith("For your safety, I'd recommend hanging up now, getting outside")
+
+
+def test_a_caller_saying_goodbye_after_the_sign_off_does_not_hear_it_again(agent):
+    """Eval run 20261103-193421, co-alarm-clear: the sign-off was said twice in a row."""
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "My carbon monoxide alarm is going off.")
+    agent.say(call, CO_LINES)
+    sign_off = agent.tool("end_call", call, reason="resolved")["say"]
+    agent.say(call, sign_off)
+    agent.turn(call, "Okay, goodbye.")
+    bye = agent.tool("end_call", call, reason="caller_goodbye")
+    assert bye["say"] == ""
+    assert bye["data"]["hang_up"] is True
+

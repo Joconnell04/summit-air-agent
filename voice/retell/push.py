@@ -17,6 +17,7 @@ from pathlib import Path
 import yaml
 
 from prompts.assemble import job_types, tool_specs
+from voice import names as local_names
 
 from . import build
 from .api import Retell
@@ -100,6 +101,7 @@ def push(
     model_id: str,
     voice: dict,
     eval_url: str | None = None,
+    names: local_names.Names | None = None,
 ) -> list[str]:
     """Bring Retell in line with the code. Returns what changed; empty when nothing did."""
     log: list[str] = []
@@ -108,7 +110,7 @@ def push(
         retell,
         "agent",
         build.AGENT_NAME,
-        lambda llm_id: build.agent_body(llm_id, base_url, voice_id, voice["model"]),
+        lambda llm_id: build.agent_body(llm_id, base_url, voice_id, voice["model"], names),
         build.llm_body(specs, base_url, model_id),
         log,
     )
@@ -149,7 +151,7 @@ def main() -> int:
     specs = tool_specs(job_types(tenant))
     retell = Retell(os.environ["RETELL_API_KEY"])
     eval_url = args.eval_url.rstrip("/") if args.eval_url else None
-    log = push(retell, specs, base_url, model_id, voice, eval_url)
+    log = push(retell, specs, base_url, model_id, voice, eval_url, local_names.load(tenant))
     print("\n".join(log) if log else "Retell already matches the code; nothing sent.")
     return 0
 

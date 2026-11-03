@@ -63,3 +63,12 @@ How the design was reached, in order, so a reader can follow each choice back to
 | Carbon monoxide check for unsafe heating | Asked once when the caller heats with an oven, generator or similar; never suggested as a way to get warm | DECISIONS.md 024 |
 | Who tests | Jackson makes the real calls; non-Anthropic callers and graders are allowed in a limited scope | DECISIONS.md 025 |
 | More bake-off entrants | ElevenLabs Agents on our brain, OpenAI Realtime and Gemini Live, scored on a simulated audio rig before any real call | DECISIONS.md 026, #62 |
+| Trade layer merge rules | Tenant wins key by key, rules merge by id, lists only grow; a tenant that drops safety wording or lowers a trade rule fails to load | DECISIONS.md 027, #63 |
+| On-call before after-hours booking | A cold house after hours alerts the on-call technician before the morning fallback is booked | DECISIONS.md 028, #64 |
+| Softer safety sign-off | "For your safety, I'd recommend hanging up now, getting outside, and calling 911 from there" | DECISIONS.md 029, #64 |
+| Unsafe heat advice | Kept as a prompt rule with evals, since the server sees agent lines only after they are spoken | DECISIONS.md 030, #64 |
+| Publish gate rule | Code checks only, one rerun of a miss, both runs kept; never relative to the live version | DECISIONS.md 031, #65 |
+| Owner guidance limits | Four stages, locked subjects refused, AI disclosure kept, booking and closing guidance only when the server reaches the stage | DECISIONS.md 032, #65 |
+| Safety posture | Escalate politely and get off the line; no on-the-fly coaching or new safety logic | DECISIONS.md 033 |
+| V1 scope for phase 3 | Technician summary, model matrix, side model, warm transfer, recordings, eval floor and delay targets in; Spanish, playbooks, capacity, texting and extra owner editing after V1 | DECISIONS.md 034 |
+| Co-authoring rounds | Three rounds: failures, then seeds with a hold-out, then judge labels with the floor | DECISIONS.md 035 |

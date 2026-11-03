@@ -14,6 +14,8 @@ class Settings:
     tenants_dir: Path = field(
         default_factory=lambda: Path(os.environ.get("TENANTS_DIR", "tenants"))
     )
+    # What a tenant's agent.yaml `extends` names (app/tenant.py).
+    trades_dir: Path = field(default_factory=lambda: Path(os.environ.get("TRADES_DIR", "trades")))
     # Used when the dialed number matches no tenant. Empty is fine when there is only one tenant.
     default_tenant: str = field(default_factory=lambda: os.environ.get("DEFAULT_TENANT", ""))
     # Debug endpoints refuse every request when this is empty.
@@ -36,6 +38,12 @@ class Settings:
     weather: bool = field(default_factory=lambda: os.environ.get("WEATHER", "") == "1")
     # The owner view refuses every request when this is empty.
     owner_token: str = field(default_factory=lambda: os.environ.get("OWNER_TOKEN", ""))
+    # Who may edit the agent's rules on the owner view, as name=code pairs separated by commas
+    # ("Dana=...,Sam=..."). The owner token above stays read-only. Empty refuses every edit.
+    rules_editors: str = field(default_factory=lambda: os.environ.get("RULES_EDITORS", ""))
+    # Start the eval gate (evals/gate.py) in the background when an owner publishes. Off, a draft
+    # waits as checking until someone runs make rules-gate. It needs ANTHROPIC_API_KEY.
+    rules_gate: bool = field(default_factory=lambda: os.environ.get("RULES_GATE", "") == "1")
     # Where the owner view is served, for links in alert emails. Empty leaves the links out.
     owner_view_url: str = field(default_factory=lambda: os.environ.get("OWNER_VIEW_URL", ""))
     # Alert email. With no SMTP_HOST, alerts are held, not sent (app/mail.py).
@@ -55,9 +63,19 @@ class Settings:
     # owner demo sets it to the evening of the seeded day so "now" sits on the board.
     fixed_now: str = field(default_factory=lambda: os.environ.get("FIXED_NOW", ""))
 
+    def editors(self) -> dict[str, str]:
+        """Edit code to name, from rules_editors."""
+        found = {}
+        for pair in self.rules_editors.split(","):
+            name, _, code = pair.partition("=")
+            if name.strip() and code.strip():
+                found[code.strip()] = name.strip()
+        return found
+
     def __post_init__(self):
         self.db_path = Path(self.db_path)
         self.tenants_dir = Path(self.tenants_dir)
+        self.trades_dir = Path(self.trades_dir)
         if self.log_path is None:
             self.log_path = self.db_path.with_suffix(".log")
         self.log_path = Path(self.log_path)

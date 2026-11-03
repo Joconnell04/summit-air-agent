@@ -37,6 +37,7 @@ How the monthly totals add up (ASSUMED volume, SOURCE rates):
 - Recommended: phone $176, LiveKit Ship plan $86 ($50 plus $0.004 a minute past 5,000), Deepgram $109, Cartesia $189 (Startup plan, 5 simultaneous voices), Claude $30, a small side model $5, texts $31 plus $1.50 registration, server $20 (Vultr 2 vCPU, 4 GB, SOURCE).
 - Half budget: phone $49, LiveKit $86, speech to text $67, voice $131, Claude $30, side model $5, server $20. The cheapest voice we found, Amazon Polly Neural at $16 per million characters, would bring the voice to $70 and the total to about $327; it sounds more robotic and is untested.
 - Managed: $0.11 a minute is Retell's list sum ($0.055 platform, $0.015 voice, $0.025 Claude Haiku 4.5, $0.015 phone), plus $2 for the number and $24 for texts at $0.01 each.
+- Deepgram keyterms for local street names (voice/livekit/README.md, "Local names") add $0.0013 a minute (SOURCE: deepgram.com/pricing), about $12 a month at 150 two-minute calls a day (ASSUMED volume); not in the Deepgram $109 above.
 - Raising the Recommended setup from 5 to 15 lines adds about $130 a month (Cartesia Scale $299 instead of $189, Vultr 4 vCPU 8 GB $40 instead of $20). Using Claude Haiku 4.5 instead of 5.5 adds about $205 a month. LiveKit's free plan covers a pilot of about 1,000 minutes (285 calls) for roughly $47 a month, but not full volume.
 
 ## Phone and text rates (Twilio, SOURCE)

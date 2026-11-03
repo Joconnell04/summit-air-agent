@@ -76,7 +76,7 @@ def check_eval(baseline: dict, root: Path = ROOT, current_hash=None, scenarios=N
         from evals.fingerprint import run_hash
 
         def current_hash(r):
-            return run_hash([s.scenario_id for s in r.scenarios], r.profile)
+            return run_hash([s.scenario_id for s in r.scenarios], r.profile, overlay=r.overlay)
 
     problems = []
     try:

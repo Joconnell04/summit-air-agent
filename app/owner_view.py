@@ -1,14 +1,19 @@
 """The owner view: three read-only pages for the owner and dispatcher (Today, Calls, Results), each
-call's page, the one write (a report to Revin, story O-8), and the design system's live specimen.
-The numbers come from app/owner.py and the plain notes from app/plain.py; this module handles the
-login token and renders HTML. Design: docs/design-system.md.
+call's page, the one write (a report to Revin, story O-8), the Rules page and its editor, and the
+design system's live specimen. The numbers come from app/owner.py, the plain notes from
+app/plain.py, the rulebook from app/rulebook.py and owner edits from app/rules.py; this module
+handles the login tokens and renders HTML. Design: docs/design-system.md.
 
-The token is OWNER_TOKEN. Opening /owner?token=... once sets a cookie and drops the token from the
-address bar; without either, the page shows a one-field form. An empty OWNER_TOKEN refuses all.
+The read token is OWNER_TOKEN. Opening /owner?token=... once sets a cookie and drops the token from
+the address bar; without either, the page shows a one-field form. An empty OWNER_TOKEN refuses all.
+Editing rules takes a separate code per person (RULES_EDITORS); the owner token stays read-only,
+and an edit code also opens the read-only pages.
 """
 
 import hmac
 import json
+import subprocess
+import sys
 from datetime import date, timedelta
 from pathlib import Path
 
@@ -17,11 +22,15 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Resp
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from . import owner, plain, reports, search, trace
+from . import owner, plain, reports, rulebook, rules, search, trace
+from .db import parse_iso
 from .settings import REPORT_MAX_CHARS, WORKER_STALE_SECONDS
 
 COOKIE = "owner_token"
-COOKIE_DAYS = 30
+EDIT_COOKIE = "owner_edit"
+RULE_FILTERS = ("all", "editable", "locked")
+# Logins last as long as browsers allow (Chrome caps a cookie at 400 days); the demo shouldn't log anyone out.
+COOKIE_DAYS = 400
 SEARCH_MAX_CHARS = 80
 HERE = Path(__file__).parent
 templates = Jinja2Templates(directory=HERE / "templates")
@@ -32,10 +41,21 @@ def _valid(request: Request, given: str | None) -> bool:
     return bool(token and given and hmac.compare_digest(given.encode(), token.encode()))
 
 
-def _remember(request: Request, response: Response, token: str) -> Response:
+def _editor(request: Request) -> str | None:
+    """The name behind the edit code in the cookie, or None. Compared against every code so the
+    time taken says nothing about which one matched."""
+    given = request.cookies.get(EDIT_COOKIE) or ""
+    found = None
+    for code, name in request.app.state.services.settings.editors().items():
+        if given and hmac.compare_digest(given.encode(), code.encode()):
+            found = name
+    return found
+
+
+def _remember(request: Request, response: Response, token: str, cookie: str = COOKIE) -> Response:
     # Secure when served over HTTPS, so the cookie never travels in clear text there.
     response.set_cookie(
-        COOKIE,
+        cookie,
         token,
         httponly=True,
         samesite="strict",
@@ -50,11 +70,57 @@ def _render(request: Request, name: str, context: dict, status: int = 200) -> Re
 
 
 def _signed_in(request: Request) -> bool:
-    return _valid(request, request.cookies.get(COOKIE))
+    return _valid(request, request.cookies.get(COOKIE)) or _editor(request) is not None
 
 
 def _login(request: Request) -> Response:
     return _render(request, "login.html", {"failed": False}, 401)
+
+
+def _edit_login(request: Request, failed: bool = False) -> Response:
+    context = {
+        "failed": failed,
+        "title": "Edit rules",
+        "label": "Edit code",
+        "action": "/owner/rules/login",
+    }
+    return _render(request, "login.html", context, 401)
+
+
+def _start_gate(services) -> None:
+    """Run the eval gate in its own process, so a publish answers at once and the check takes as
+    long as it takes. Its output goes beside the server's log."""
+    if not services.settings.rules_gate:
+        return
+    log = open(services.settings.log_path.with_suffix(".gate.log"), "a")  # noqa: SIM115
+    subprocess.Popen(
+        [sys.executable, "-m", "evals.gate", "--db", str(services.settings.db_path)],
+        stdout=log,
+        stderr=subprocess.STDOUT,
+        start_new_session=True,
+    )
+    log.close()
+
+
+def _edit_form(form) -> tuple[dict, str]:
+    """A draft's content and note from the edit form: line.<key> and guide.<stage>.<n> fields.
+    Any field name is read, so a locked key sent by hand reaches validation and is refused there."""
+    content: dict = {"lines": {}, "guidance": {}}
+    for name, value in form.multi_items():
+        kind, _, rest = name.partition(".")
+        if kind == "line" and rest:
+            content["lines"][rest] = value
+        elif kind == "guide" and rest:
+            stage = rest.split(".")[0]
+            content["guidance"].setdefault(stage, []).append(value)
+        elif kind == "set" and rest:
+            # A raw setting, such as set.priority: there is no field for one, so it is refused.
+            content[rest] = value
+    return content, str(form.get("note", ""))
+
+
+def _tenant_q(slug: str) -> str:
+    return f"?tenant={slug}" if slug else ""
 
 
 def _common(request: Request, tenant, slug: str, tab: str, conn) -> dict:
@@ -286,6 +352,190 @@ def add_routes(app: FastAPI) -> None:
         finally:
             conn.close()
         return _render(request, "results.html", context)
+
+    def rules_context(request: Request, tenant, slug: str, conn) -> dict:
+        found = rules.live(conn, tenant.slug)
+        return {
+            **_common(request, tenant, slug, "rules", conn),
+            "live": found,
+            "versions": rules.history(conn, tenant.slug),
+            "local": lambda value: tenant.local(parse_iso(value)),
+            "editor": _editor(request),
+        }
+
+    @app.get("/owner/rules", response_class=HTMLResponse)
+    def owner_rules(request: Request, show: str = "all", tenant: str = ""):
+        """Every rule the agent follows, by call stage, each locked or editable (exploration 009)."""
+        if not _signed_in(request):
+            return _login(request)
+        found = tenant_for(request, tenant)
+        if found is None:
+            return HTMLResponse("No such company.", 404)
+        show = show if show in RULE_FILTERS else "all"
+        conn = request.app.state.services.connect()
+        try:
+            context = rules_context(request, found, tenant, conn)
+            book = rulebook.rulebook(found, context["live"]["content"] if context["live"] else {})
+            shown = [
+                r for r in book
+                if show == "all" or (show == "editable") == r.editable
+            ]
+            context |= {
+                "show": show,
+                "stages": [s for s in rulebook.by_stage(shown) if s[2]],
+                "counts": {
+                    "all": len(book),
+                    "editable": sum(r.editable for r in book),
+                    "locked": sum(not r.editable for r in book),
+                },
+            }
+        finally:
+            conn.close()
+        return _render(request, "rules.html", context)
+
+    def edit_page(request: Request, found, slug: str, conn, content=None, note: str = "",
+                  errors=None, status: int = 200) -> Response:
+        rules.expire_checks(conn, found.slug, request.app.state.services.clock())
+        context = rules_context(request, found, slug, conn)
+        draft = rules.open_draft(conn, found.slug)
+        newest = context["versions"][0] if context["versions"] else None
+        blocked = newest if newest and newest["status"] == "blocked" else None
+        if content is None:
+            base = draft or blocked or context["live"]
+            content = base["content"] if base else {}
+            note = base["note"] if (draft or blocked) else ""
+        lines = content.get("lines") or {}
+        guidance = content.get("guidance") or {}
+        errors = errors or {}
+        # Errors with no field on the page, such as a locked rule sent by hand, show at the top.
+        fields = {f"lines.{k}" for k in rules.EDITABLE_LINES}
+        general = [
+            message for key, message in errors.items()
+            if key not in fields
+            and not any(key.startswith(f"guidance.{s}") for s in rules.GUIDANCE_STAGES)
+        ]
+        context |= {
+            "draft": draft,
+            "blocked": blocked,
+            "note": note,
+            "errors": errors,
+            "general": general,
+            "lines": [
+                (key, label, stage, lines.get(key) or rules.default_line(found, key),
+                 rules.default_line(found, key))
+                for key, (_where, stage, label) in rules.EDITABLE_LINES.items()
+            ],
+            "guidance": [
+                (stage, rules.STAGES[stage],
+                 (list(guidance.get(stage) or []) + [""] * rules.GUIDANCE_PER_STAGE)[
+                     : rules.GUIDANCE_PER_STAGE])
+                for stage in rules.GUIDANCE_STAGES
+            ],
+            "max_line": rules.LINE_MAX_CHARS,
+            "max_guide": rules.GUIDANCE_MAX_CHARS,
+        }
+        return _render(request, "rules_edit.html", context, status)
+
+    @app.get("/owner/rules/edit", response_class=HTMLResponse)
+    def owner_rules_edit(request: Request, tenant: str = ""):
+        if _editor(request) is None:
+            return _edit_login(request)
+        found = tenant_for(request, tenant)
+        if found is None:
+            return HTMLResponse("No such company.", 404)
+        conn = request.app.state.services.connect()
+        try:
+            return edit_page(request, found, tenant, conn)
+        finally:
+            conn.close()
+
+    @app.post("/owner/rules/login")
+    def owner_rules_login(request: Request, token: str = Form("")):
+        editors = request.app.state.services.settings.editors()
+        if not any(token and hmac.compare_digest(token.encode(), c.encode()) for c in editors):
+            return _edit_login(request, failed=True)
+        return _remember(request, RedirectResponse("/owner/rules/edit", 303), token, EDIT_COOKIE)
+
+    @app.post("/owner/rules/draft")
+    async def owner_rules_draft(request: Request, tenant: str = ""):
+        """Save the draft, and with publish=1 send it to the eval gate. Validation is here, on the
+        server, whatever the page sent."""
+        author = _editor(request)
+        if author is None:
+            return _edit_login(request)
+        found = tenant_for(request, tenant)
+        if found is None:
+            return HTMLResponse("No such company.", 404)
+        services = request.app.state.services
+        form = await request.form()
+        content, note = _edit_form(form)
+        conn = services.connect()
+        try:
+            _saved, errors = rules.save_draft(conn, found, content, author, note, services.clock())
+            if errors:
+                return edit_page(request, found, tenant, conn, content, note, errors, 422)
+            if form.get("publish"):
+                try:
+                    rules.request_publish(conn, found.slug, author, services.clock())
+                except rules.RulesError as err:
+                    return edit_page(request, found, tenant, conn, content, note,
+                                     {"content": str(err)}, 422)
+                _start_gate(services)
+        finally:
+            conn.close()
+        return RedirectResponse(f"/owner/rules/edit{_tenant_q(tenant)}", 303)
+
+    @app.post("/owner/rules/discard")
+    def owner_rules_discard(request: Request, tenant: str = ""):
+        if _editor(request) is None:
+            return _edit_login(request)
+        found = tenant_for(request, tenant)
+        if found is None:
+            return HTMLResponse("No such company.", 404)
+        services = request.app.state.services
+        conn = services.connect()
+        try:
+            rules.discard_draft(conn, found.slug, services.clock())
+        finally:
+            conn.close()
+        return RedirectResponse(f"/owner/rules/edit{_tenant_q(tenant)}", 303)
+
+    @app.post("/owner/rules/cancel")
+    def owner_rules_cancel(request: Request, tenant: str = ""):
+        """Stop waiting for a check and get the draft back; a late result is refused."""
+        if _editor(request) is None:
+            return _edit_login(request)
+        found = tenant_for(request, tenant)
+        if found is None:
+            return HTMLResponse("No such company.", 404)
+        services = request.app.state.services
+        conn = services.connect()
+        try:
+            rules.cancel_check(conn, found.slug, services.clock())
+        except rules.RulesError as err:
+            return edit_page(request, found, tenant, conn, errors={"content": str(err)}, status=422)
+        finally:
+            conn.close()
+        return RedirectResponse(f"/owner/rules/edit{_tenant_q(tenant)}", 303)
+
+    @app.post("/owner/rules/rollback")
+    def owner_rules_rollback(request: Request, number: int = Form(...), tenant: str = ""):
+        """Make an earlier live version live again, as a new version (nothing is deleted)."""
+        author = _editor(request)
+        if author is None:
+            return _edit_login(request)
+        found = tenant_for(request, tenant)
+        if found is None:
+            return HTMLResponse("No such company.", 404)
+        services = request.app.state.services
+        conn = services.connect()
+        try:
+            rules.rollback(conn, found.slug, number, author, services.clock())
+        except rules.RulesError as err:
+            return edit_page(request, found, tenant, conn, errors={"content": str(err)}, status=422)
+        finally:
+            conn.close()
+        return RedirectResponse(f"/owner/rules/edit{_tenant_q(tenant)}", 303)
 
     @app.get("/owner/design", response_class=HTMLResponse)
     def owner_design(request: Request):

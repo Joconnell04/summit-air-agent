@@ -1,5 +1,5 @@
 .PHONY: setup test lint check ratchet ratchet-update eval replay langsmith eval-upload seed-st mock-st postman-st server postman trace \
-	owner-demo voice-livekit phone-setup deploy test-call measure-delay \
+	owner-demo rules-gate voice-livekit phone-setup deploy test-call measure-delay \
 	retell-push retell-bridge retell-deploy retell-report rig rig-report
 
 setup:
@@ -87,8 +87,14 @@ trace:
 owner-demo:
 	uv run python -m scripts.seed_owner_day --dir data/owner-demo
 	TOOL_DB=data/owner-demo/tool.db OWNER_TOKEN=$${OWNER_TOKEN:-dev-owner-token} JOBS_INTERVAL_SECONDS=0 \
+	  RULES_EDITORS=$${RULES_EDITORS:-Owner=dev-edit-code} \
 	  FIXED_NOW=$$(cat data/owner-demo/now) \
 	  uv run uvicorn app.main:create_app --factory --port $(PORT)
+
+# Paid: the eval gate on every owner draft waiting for a check (evals/gate.py), about $0.39 for the
+# 18 must-pass scenarios (MEASURED). make rules-gate [DB=data/tool_server.db]
+rules-gate:
+	uv run $(EVAL_ENV) python -m evals.gate --db $${DB:-data/tool_server.db}
 
 # The LiveKit voice worker (voice/livekit/README.md), against make server and make mock-st
 voice-livekit:

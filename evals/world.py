@@ -13,6 +13,7 @@ from pathlib import Path
 
 from fastapi.testclient import TestClient
 
+from app import rules
 from app.main import create_app
 from app.settings import Settings
 from servicetitan_mock.app import create_app as create_mock
@@ -96,7 +97,8 @@ class ToolServer:
 
 
 class World:
-    def __init__(self, workdir: Path, seed: tuple[Path, dict], start: datetime):
+    def __init__(self, workdir: Path, seed: tuple[Path, dict], start: datetime,
+                 overlay: dict | None = None):
         workdir.mkdir(parents=True, exist_ok=True)
         st_db = workdir / "servicetitan.db"
         shutil.copy(seed[0], st_db)
@@ -112,6 +114,14 @@ class World:
         )
         fsm = TestClient(mock, raise_server_exceptions=False)
         app = create_app(settings, clock=self.clock, fsm_clients={"summit-air": fsm})
+        if overlay is not None:
+            # An owner draft under the eval gate is live in this world, so every call goes through
+            # the same path a real call takes (app/rules.py).
+            conn = app.state.services.connect()
+            try:
+                rules.install_for_eval(conn, TENANT_DIR.name, overlay, self.clock())
+            finally:
+                conn.close()
         self.server = ToolServer(TestClient(app, raise_server_exceptions=False), DEBUG_TOKEN)
 
 

@@ -87,3 +87,24 @@
 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
 {%- endif -%}
 {%- endmacro %}
+
+{# Where an owner edit stands: its eval check, a rollback, or a draft (app/rules.py). A scenario
+   that missed once is run again; the tooltip says which passed on that rerun and which failed twice. #}
+{% macro gate_result(v) -%}
+{%- set g = v.gate or {} -%}
+{%- set again = g.passed_on_rerun or [] -%}
+{%- set rerun_note = ("Failed, then passed on a rerun: " ~ (again | join(", ") | replace("-", " ")) ~ ".") if again else "" -%}
+{%- if v.status == "checking" -%}<span class="tag high">Checking</span>
+{%- elif v.status == "blocked" and g.stale -%}<span class="tag outline" tabindex="0" data-tip="Another version went live while this was checked, so it wasn't published over it. Publish it again to check it against what's live now.">Not published, live changed</span>
+{%- elif v.status == "blocked" -%}<span class="tag urgent" tabindex="0" data-tip="{% if g.reruns %}Failed twice{% else %}Failed{% endif %}: {{ (g.failed + g.errors) | join(', ') | replace('-', ' ') }}. {{ rerun_note }}">Blocked, {{ (g.failed | length) + (g.errors | length) }} of {{ g.scenarios }} failed</span>
+{%- elif v.status == "draft" -%}<span class="tag outline">Draft</span>
+{%- elif v.rollback_of is not none -%}<span class="tag outline">Rolled back</span>
+{%- elif g.scenarios -%}<span class="tags"><span class="tag done"{% if g.grader_flags %} tabindex="0" data-tip="The grader also noted: {{ g.grader_flags | join(', ') | replace('-', ' ') }}"{% endif %}>Passed {{ g.passed_count }} of {{ g.scenarios }}</span>{% if again %}<span class="tag outline" tabindex="0" data-tip="{{ rerun_note }}">{{ again | length }} on a rerun</span>{% endif %}</span>
+{%- else -%}<span class="tag outline">Published</span>
+{%- endif -%}
+{%- endmacro %}
+
+{# A rule's status on the Rules page; a locked one says why in its tooltip. #}
+{% macro rule_status(r) -%}
+{%- if r.editable %}<span class="tag info">Editable</span>{% else %}<span class="tag outline" tabindex="0" data-tip="{{ r.why }}" aria-label="Locked: {{ r.why }}">Locked</span>{% endif -%}
+{%- endmacro %}

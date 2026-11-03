@@ -75,6 +75,10 @@ Every scenario records per-turn timings (model first token, tool time, second mo
 
 Each run writes `evals/results/<run>.json` (schema and validation in `evals/results.py`) and a short table (pass rate by flow and difficulty, reply delay, cost), and sends the run to LangSmith as an experiment when `LANGSMITH_API_KEY` is set (`--no-upload` skips it).
 
+## The eval gate for owner edits
+
+A draft an owner publishes from the Rules page (app/rules.py) goes live only through `evals/gate.py`: every must-pass scenario, once, on our stack, with the draft served as the live version in each scratch world, so calls take the same path as on the phone. A scenario that fails a code check or ends with no verdict is run once more on the same draft, and a second miss blocks it; both runs are saved (`<run>-gate.json` and `<run>-gate-rerun.json`) and the version keeps which passed on the rerun, how many were rerun and what that cost. The grader's notes are kept but do not block, since the must-pass lines are code checks and an owner may change manner on purpose. The run is saved as `evals/results/<run>-gate.json` with the draft in `overlay`, which is part of its hash. `make rules-gate` runs it on every draft waiting; the server starts it itself when `RULES_GATE=1`. Cost: $0.38 to $0.39 for the 18 must-pass scenarios on `fast` (MEASURED, runs `20261103-193944-livekit-fast-gate` and `20261103-200110-livekit-fast-gate`). Those two runs, from before the rerun, failed five different must-pass scenarios between them, none in both, and the first run's two failures passed on the defaults (`20261103-195832-livekit-fast-custom`); the rerun is there so a one-off miss doesn't block an edit that didn't cause it. A rerun adds about $0.02 a scenario (MEASURED, the same runs).
+
 ## Running it
 
 - **Keys.** `make eval` reads `.env` (or `ENV_FILE=<path>`): `ANTHROPIC_API_KEY`, and `LANGSMITH_API_KEY` for the upload. The harness calls Anthropic profiles only for now; an OpenAI or Gemini profile stops with a clear message until the model bake-off adds them.

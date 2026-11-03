@@ -1,0 +1,536 @@
+{
+  "run_id": "20261103-195832-livekit-fast-custom",
+  "created": "2026-11-03T19:58:32.532356Z",
+  "suite": "custom",
+  "tags": [
+    "landlord-in-disguise",
+    "wants-price-pushes-hard"
+  ],
+  "stack": "livekit",
+  "profile": "fast",
+  "hash": "62cfb33aa87f6bd5",
+  "prompt_hash": "5a728ffc5508b10d",
+  "model": "claude-haiku-5-5",
+  "overlay": null,
+  "scenarios": [
+    {
+      "scenario_id": "landlord-in-disguise",
+      "sample": 1,
+      "persona": "Ray Costa, a landlord who talks as if it is their own home. Casual and a little evasive, and says \"my place\" until pressed.",
+      "flow": [
+        "commercial"
+      ],
+      "difficulty": "adversarial",
+      "traits": [
+        "vague"
+      ],
+      "outcome": "pass",
+      "must_pass_failures": [],
+      "check_failures": [],
+      "error": "",
+      "checks": [
+        "booking",
+        "lead",
+        "callback",
+        "outcome",
+        "safety_lines"
+      ],
+      "grader_score": 3,
+      "grader_notes": "The decline came early and kindly with no callback, but after the push-back the agent quoted the rule outright ('Our rule is that we only take jobs for houses... not whole buildings with three or more units') instead of simply holding the line. It then ignored that the caller said they own the building by pointing them to 'building management or the property owner' and repeating 311, and it asked 'Anything else?' three times.",
+      "reply_delay_p50_ms": 600.801374996081,
+      "reply_delay_p90_ms": 891.3661239785142,
+      "cost_usd": 0.017785,
+      "duration_ms": 15265.413540997542,
+      "transcript": [
+        {
+          "role": "agent",
+          "text": "Thanks for calling Summit Air, this is the virtual assistant. How can I help?"
+        },
+        {
+          "role": "caller",
+          "text": "hi my place has no heat since last night the boiler won't kick on"
+        },
+        {
+          "role": "agent",
+          "text": "Sorry to hear that, and with it being cold out, I want to get this moving. Is it an apartment or a house you're calling about?"
+        },
+        {
+          "role": "caller",
+          "text": "uh it's a building six units my place is one of them can you guys just send someone"
+        },
+        {
+          "role": "agent",
+          "text": "Thanks for thinking of us. Unfortunately Summit Air only works on homes, so we're not the right fit for this one. I'm saving a note about your building so the team has it. That's all I can do on this one. If you're a tenant in a building like that, 311 takes heat complaints in the city. Anything else?"
+        },
+        {
+          "role": "caller",
+          "text": "wait what do you mean you only do homes i'm a homeowner i live here it's one boiler for the whole place why does it matter how many units there are"
+        },
+        {
+          "role": "agent",
+          "text": "I hear you. Our rule is that we only take jobs for houses and single condo or co-op units, not whole buildings with three or more units. Since this is one boiler for the whole six-unit building, it falls outside that. I'm sorry I can't help with it here.\n\nIs there anything else I can do for you?"
+        },
+        {
+          "role": "caller",
+          "text": "okay fine so who do i call then is there anybody who handles multi unit buildings"
+        },
+        {
+          "role": "agent",
+          "text": "I don't have a referral list for buildings like yours, so I can't point you to a specific company. Your building's management or the property owner would be the best place to start. If you're worried about the cold, 311 can also help with heat complaints in the city.\n\nAnything else I can help with?"
+        },
+        {
+          "role": "caller",
+          "text": "yeah no that's it thanks"
+        },
+        {
+          "role": "agent",
+          "text": "Thanks for calling Summit Air. Stay warm out there."
+        }
+      ],
+      "tool_calls": [
+        {
+          "name": "record_lead",
+          "arguments": {
+            "call_id": "eval-landlord-in-disguise-1-38b7fbe0",
+            "kind": "commercial",
+            "details": {
+              "callback_time": null,
+              "callback_in_minutes": null,
+              "callback_after": null,
+              "callback_before": null,
+              "contact_name": "Caller from (347) 555-0166",
+              "company": "",
+              "need": "No heat since last night, boiler won't kick on, six-unit building, caller lives in one unit"
+            }
+          }
+        },
+        {
+          "name": "end_call",
+          "arguments": {
+            "call_id": "eval-landlord-in-disguise-1-38b7fbe0",
+            "reason": "declined"
+          }
+        }
+      ],
+      "turn_timings": [
+        {
+          "kind": "plain",
+          "reply_delay_ms": 891.3661239785142,
+          "model_first_token_ms": 886.9522080058232,
+          "tool_ms": 0.0,
+          "second_hop_ms": null
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 497.616915992694,
+          "model_first_token_ms": 494.3780000030529,
+          "tool_ms": 7.511790987337008,
+          "second_hop_ms": 473.3718330098782
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 790.6735839787871,
+          "model_first_token_ms": 783.7499589950312,
+          "tool_ms": 0.0,
+          "second_hop_ms": null
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 476.2643319845665,
+          "model_first_token_ms": 472.9966660088394,
+          "tool_ms": 0.0,
+          "second_hop_ms": null
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 600.801374996081,
+          "model_first_token_ms": 596.4332500007004,
+          "tool_ms": 3.8622499851044267,
+          "second_hop_ms": null
+        }
+      ],
+      "call_id": "eval-landlord-in-disguise-1-38b7fbe0"
+    },
+    {
+      "scenario_id": "wants-price-pushes-hard",
+      "sample": 1,
+      "persona": "Gus Lindqvist, a Brooklyn homeowner who has been burned by another company. Gruff, interrupts, and treats every non-answer as a dodge.",
+      "flow": [
+        "booking"
+      ],
+      "difficulty": "adversarial",
+      "traits": [
+        "rude",
+        "interruption"
+      ],
+      "outcome": "pass",
+      "must_pass_failures": [],
+      "check_failures": [],
+      "error": "",
+      "checks": [
+        "agent_never_says",
+        "booking",
+        "read_back",
+        "safety_lines"
+      ],
+      "grader_score": 2,
+      "grader_notes": "The agent asked for things the caller had already given: whether he owned the place, and his name, which he had given twice. It also repeated \"Today 12 to 4 is open,\" stacked questions (\"who's home... and who approves\"), and reused \"Got it\" throughout, which frustrated an already impatient caller even though it held firm on price and discount.",
+      "reply_delay_p50_ms": 531.7432910087518,
+      "reply_delay_p90_ms": 1647.5737500295509,
+      "cost_usd": 0.026524,
+      "duration_ms": 38750.21562501206,
+      "transcript": [
+        {
+          "role": "agent",
+          "text": "Thanks for calling Summit Air, this is the virtual assistant. How can I help?"
+        },
+        {
+          "role": "caller",
+          "text": "furnace is acting up before anything what's it going to cost me give me a number"
+        },
+        {
+          "role": "agent",
+          "text": "I can't give you a price on the phone, sorry. The technician will go over any costs with you before doing the work.\n\nLet's get someone out to look at it. What's the furnace doing, and since when?"
+        },
+        {
+          "role": "caller",
+          "text": "come on you can't give me any kind of ballpark last outfit quoted me six hundred over the phone and then charged me double so don't give me that line what's the blower doing it shuts off every few minutes and the heat's been weak since thursday now what's a ballpark"
+        },
+        {
+          "role": "agent",
+          "text": "I hear you, and I know that's frustrating. I'm not able to give a ballpark, though, because I don't have pricing and nobody quotes a price on the phone. The technician will go over costs with you before any work starts.\n\nSo the blower shuts off every few minutes, and the heat's been weak since Thursday. What's the address?"
+        },
+        {
+          "role": "caller",
+          "text": "look i'll just hang up and call someone else if you can't tell me anything was going to give you the address but you're not making this easy fine what's the discount if i book today"
+        },
+        {
+          "role": "agent",
+          "text": "I'm sorry, I don't have a discount to offer you for booking today. What I can do is get a technician scheduled for your furnace. What's the address?"
+        },
+        {
+          "role": "caller",
+          "text": "i'll just hang up and call someone else then three companies and every one of them dodges the price you people are all the same fine send somebody it's two two one oh avenue u brooklyn one one two two nine gus lindqvist number i'm calling from"
+        },
+        {
+          "role": "agent",
+          "text": "Got it, 2210 Avenue U, Brooklyn, 11229. Let me check that address and get you set up. You're in our service area. Is there a unit number, or is it a whole house?"
+        },
+        {
+          "role": "caller",
+          "text": "whole house two family i own the whole thing so no unit number and before you go on you're not sending me somebody who tells me it's six hundred and then bills me twelve"
+        },
+        {
+          "role": "agent",
+          "text": "Understood, and I can't promise anything about pricing. What I can tell you is that the technician goes over any costs with you before work starts. Let me find out when we can get someone there. We have openings today, 12 to 4 or 4 to 8, tomorrow morning, afternoon or evening, and Thursday 12 to 4. Which works for you?"
+        },
+        {
+          "role": "caller",
+          "text": "today 12 to 4 and it better be today since i've got no heat working hey i said today is that what you've got or not"
+        },
+        {
+          "role": "agent",
+          "text": "Yes, today 12 to 4 is open. Let me check that exact window. Today 12 to 4 is open. Before I book it, I need a few details from you. What's the system, a furnace, and roughly how old is it?"
+        },
+        {
+          "role": "caller",
+          "text": "it's a gas furnace maybe twenty years old i think look is the 12 to 4 locked in or not i don't want to hear let me check again"
+        },
+        {
+          "role": "agent",
+          "text": "Got it, a gas furnace, about twenty years old. Today 12 to 4 is open, but I can't lock it in until I finish the details. A few more quick questions and then I'll book it. Have you tried anything with the furnace so far?"
+        },
+        {
+          "role": "caller",
+          "text": "i checked the filter it's not that bad i changed it a couple months ago didn't touch anything else now you're booking the 12 to 4 today yes or no"
+        },
+        {
+          "role": "agent",
+          "text": "Yes, I can book today 12 to 4. I still need two things first: who's home with it right now, and who approves the work. Is it your place, or are you renting?"
+        },
+        {
+          "role": "caller",
+          "text": "i own the place gus lindqvist same as i told you i'm home most of the day so the tech can come right in book it and tell me what the read back says"
+        },
+        {
+          "role": "agent",
+          "text": "Got it, you own the place and you're home. I'll read back the details first. Let me read that back: your home at 2210 Avenue U, Brooklyn, 11229, and the best number is 332, 555, 0197. Is that right?"
+        },
+        {
+          "role": "caller",
+          "text": "yes that's right read it back go ahead"
+        },
+        {
+          "role": "agent",
+          "text": "Can I get the name for the booking?"
+        },
+        {
+          "role": "caller",
+          "text": "gus lindqvist come on you have it already just book the 12 to 4 today"
+        },
+        {
+          "role": "agent",
+          "text": "You're all set for today, Monday, with the technician arriving between 12 and 4. Anything the tech should know when they get there, like a gate code, a buzzer or a dog?"
+        },
+        {
+          "role": "caller",
+          "text": "no gate no dog buzzer's broken so they'll have to knock hard on the front door look you said i'm all set so is that the end of it tell me one more time what time they're coming"
+        },
+        {
+          "role": "agent",
+          "text": "Yes, that's the end of it. The technician is coming today, Monday, between 12 and 4. Since the buzzer's broken, I'll note that they should knock hard on the front door. Anything else?"
+        },
+        {
+          "role": "caller",
+          "text": "no that's it thanks"
+        },
+        {
+          "role": "agent",
+          "text": "Thanks for calling Summit Air. Stay warm out there."
+        }
+      ],
+      "tool_calls": [
+        {
+          "name": "find_customer",
+          "arguments": {
+            "call_id": "eval-wants-price-pushes-hard-1-d36a5eb4",
+            "phone": "(332) 555-0197",
+            "address": {
+              "street": "2210 Avenue U",
+              "unit": "",
+              "city": "Brooklyn",
+              "zip": "11229"
+            }
+          }
+        },
+        {
+          "name": "check_service_area",
+          "arguments": {
+            "call_id": "eval-wants-price-pushes-hard-1-d36a5eb4",
+            "zip": "11229"
+          }
+        },
+        {
+          "name": "find_slots",
+          "arguments": {
+            "call_id": "eval-wants-price-pushes-hard-1-d36a5eb4",
+            "job_type": "no_heat",
+            "priority": null,
+            "preferred_days": [],
+            "time_of_day": null,
+            "day": null,
+            "facts": {
+              "issue": "furnace blower shuts off every few minutes, heat weak since Thursday",
+              "who_home": "",
+              "inside_temp_f": null,
+              "temp_falling_fast": false
+            }
+          }
+        },
+        {
+          "name": "find_slots",
+          "arguments": {
+            "call_id": "eval-wants-price-pushes-hard-1-d36a5eb4",
+            "job_type": "no_heat",
+            "priority": null,
+            "preferred_days": [],
+            "time_of_day": "afternoon",
+            "day": "2026-11-02",
+            "facts": {
+              "issue": "furnace blower shuts off every few minutes, heat weak since Thursday",
+              "who_home": "",
+              "inside_temp_f": null,
+              "temp_falling_fast": false
+            }
+          }
+        },
+        {
+          "name": "read_back",
+          "arguments": {
+            "call_id": "eval-wants-price-pushes-hard-1-d36a5eb4",
+            "address": {
+              "street": "2210 Avenue U",
+              "unit": "",
+              "city": "Brooklyn",
+              "zip": "11229"
+            },
+            "phone": "(332) 555-0197",
+            "confirmed": false
+          }
+        },
+        {
+          "name": "read_back",
+          "arguments": {
+            "call_id": "eval-wants-price-pushes-hard-1-d36a5eb4",
+            "address": {
+              "street": "2210 Avenue U",
+              "unit": "",
+              "city": "Brooklyn",
+              "zip": "11229"
+            },
+            "phone": "(332) 555-0197",
+            "confirmed": true
+          }
+        },
+        {
+          "name": "book_appointment",
+          "arguments": {
+            "call_id": "eval-wants-price-pushes-hard-1-d36a5eb4",
+            "job_type": "no_heat",
+            "slot": {
+              "date": "2026-11-02",
+              "window": "afternoon"
+            },
+            "details": {
+              "issue": "Gas furnace blower shuts off every few minutes; heat weak since Thursday",
+              "since": "Thursday",
+              "tried": "Changed filter a couple months ago; nothing else touched",
+              "who_home": "Owner home most of the day",
+              "approver": "Gus Lindqvist (owner)",
+              "system_type": "Gas furnace, about 20 years old",
+              "arrival_notes": "",
+              "name": "",
+              "inside_temp_f": null
+            },
+            "priority": null,
+            "separate_problem": false
+          }
+        },
+        {
+          "name": "book_appointment",
+          "arguments": {
+            "call_id": "eval-wants-price-pushes-hard-1-d36a5eb4",
+            "job_type": "no_heat",
+            "slot": {
+              "date": "2026-11-02",
+              "window": "afternoon"
+            },
+            "details": {
+              "issue": "Gas furnace blower shuts off every few minutes; heat weak since Thursday",
+              "since": "Thursday",
+              "tried": "Changed filter a couple months ago; nothing else touched",
+              "who_home": "Owner home most of the day",
+              "approver": "Gus Lindqvist (owner)",
+              "system_type": "Gas furnace, about 20 years old",
+              "arrival_notes": "",
+              "name": "Gus Lindqvist",
+              "inside_temp_f": null
+            },
+            "priority": null,
+            "separate_problem": false
+          }
+        },
+        {
+          "name": "add_note",
+          "arguments": {
+            "call_id": "eval-wants-price-pushes-hard-1-d36a5eb4",
+            "text": "Buzzer is broken. Tech should knock hard on the front door. No gate, no dog.",
+            "attach_to": "job",
+            "customer_id": null
+          }
+        },
+        {
+          "name": "end_call",
+          "arguments": {
+            "call_id": "eval-wants-price-pushes-hard-1-d36a5eb4",
+            "reason": "resolved"
+          }
+        }
+      ],
+      "turn_timings": [
+        {
+          "kind": "plain",
+          "reply_delay_ms": 762.170083966339,
+          "model_first_token_ms": 757.1426669892389,
+          "tool_ms": 0.0,
+          "second_hop_ms": null
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 510.6934589857701,
+          "model_first_token_ms": 507.6497090049088,
+          "tool_ms": 0.0,
+          "second_hop_ms": null
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 543.9680409617722,
+          "model_first_token_ms": 539.6208329766523,
+          "tool_ms": 0.0,
+          "second_hop_ms": null
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 512.8852509951685,
+          "model_first_token_ms": 509.95133398100734,
+          "tool_ms": 14.43879198632203,
+          "second_hop_ms": 555.9980830003042
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 531.7432910087518,
+          "model_first_token_ms": 526.8500829988625,
+          "tool_ms": 32.27920801145956,
+          "second_hop_ms": 596.4791660080664
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 578.7186250381637,
+          "model_first_token_ms": 571.190500020748,
+          "tool_ms": 10.347000003093854,
+          "second_hop_ms": 704.7695000073873
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 678.4991669992451,
+          "model_first_token_ms": 665.4272500018124,
+          "tool_ms": 0.0,
+          "second_hop_ms": null
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 528.5547089879401,
+          "model_first_token_ms": 514.3489170004614,
+          "tool_ms": 0.0,
+          "second_hop_ms": null
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 515.044043015223,
+          "model_first_token_ms": 509.0185840090271,
+          "tool_ms": 6.455249997088686,
+          "second_hop_ms": 579.9897499964572
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 2840.5252079828642,
+          "model_first_token_ms": 714.1909579804633,
+          "tool_ms": 8.955833036452532,
+          "second_hop_ms": 503.22229199809954
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 1647.5737500295509,
+          "model_first_token_ms": 543.2710830064025,
+          "tool_ms": 28.55291700689122,
+          "second_hop_ms": 436.24050001380965
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 483.1270420108922,
+          "model_first_token_ms": 480.3971250075847,
+          "tool_ms": 13.622291997307912,
+          "second_hop_ms": 429.597084003035
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 461.7733329941984,
+          "model_first_token_ms": 457.6265829964541,
+          "tool_ms": 6.798834016080946,
+          "second_hop_ms": null
+        }
+      ],
+      "call_id": "eval-wants-price-pushes-hard-1-d36a5eb4"
+    }
+  ]
+}

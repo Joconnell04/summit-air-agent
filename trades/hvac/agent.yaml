@@ -1,0 +1,195 @@
+# What every residential HVAC company shares: the words callers use for the trade's two dangers,
+# and how the trade ranks a no-heat or no-cooling call. A tenant's agent.yaml starts with
+# `extends: hvac` and adds its own values on top; docs/template.md says how the two files merge.
+#
+# What the agent says stays with each company (the safety lines, the check questions): each one signs
+# off its own script (docs/decisions/24-safety-lines-signoff.md). Numbers sourced to one city, such
+# as temperature cutoffs and the age a person counts as older, stay with the tenant too.
+
+# Safety signals. The server matches these on every caller line; the tenant's lines say what to do.
+safety:
+  kinds:
+    gas:
+      label: gas smell
+      clear:
+        - smell gas
+        - smelling gas
+        - smells like gas
+        - smell like gas
+        - a bit like gas
+        - kind of like gas
+        - kinda like gas
+        - sort of like gas
+        - little like gas
+        - smelled gas
+        - gas smell
+        - smell of gas
+        - gas leak
+        - leaking gas
+        - gas is leaking
+        - hissing gas
+        - hiss of gas
+    co:
+      label: carbon monoxide
+      clear:
+        - carbon monoxide
+        - monoxide
+        - co alarm
+        - co detector
+  # A vague description gets one check question first (the tenant's `question`). A yes counts as a
+  # clear signal of that kind; a clear no returns the call to its journey and is logged.
+  vague:
+    gas:
+      phrases:
+        - smells off
+        - smell something off
+        - weird smell
+        - strange smell
+        - funny smell
+        - rotten egg
+        - rotten eggs
+        - like eggs
+        - sulfur
+    co:
+      phrases:
+        - dizzy
+        - light headed
+        - lightheaded
+        - headaches
+        - nauseous
+        - alarm is beeping
+        - alarm keeps beeping
+  # Heating the home with something that burns fuel indoors gets the tenant's carbon monoxide check
+  # question, once per call. Only wording that says it is being used for heat counts, so "my oven
+  # works", "a gas stove" or "the generator is outside" ask nothing. Matched three ways: a source
+  # followed within three words by a use phrase ("the oven on to keep warm", "the oven on with the
+  # door open"), heating "with" a source ("heating with the stove"), or a fixed phrase.
+  heating_check:
+    kind: co
+    sources: [oven, stove, burners, burner, grill, generator, kerosene heater, propane heater,
+              charcoal]
+    used_for_heat: [for heat, to heat, for warmth, to keep warm, to stay warm, to warm,
+                    to keep us warm, to keep the house warm, to keep the place warm,
+                    to keep the apartment warm, door open, door opened, door cracked, door ajar]
+    phrases: [oven open, oven door open, opened the oven, generator inside, generator in the house,
+              generator in the basement, generator in the garage, generator in the apartment,
+              grill inside, grill in the house, grill in the apartment, using a kerosene heater,
+              running a kerosene heater, using a propane heater, running a propane heater]
+  # A plain denial in the answer to a check question is a no, even with a yes word in it
+  # ("definitely not gas"). An unsure word in the same answer still counts as a yes.
+  denials: [not gas, no gas, isnt gas, definitely not, not a gas, no smell of gas]
+
+# Priority (spec S-21). `base` is the level for a job type the tenant gives no temperature brackets.
+# Each rule fires on words the caller said on this call or facts the agent passed, and can only raise
+# priority. On a mild day (the call starts at Normal) an Urgent rule raises to High instead. A "group"
+# rule counts toward the tenant's `combine` rule, if it has one.
+priority:
+  base: {no_heat: High, no_cooling: High, tune_up: Normal, safety_check: High, estimate: Normal}
+  rules:
+    - id: vulnerable_person
+      job_types: [no_heat, no_cooling]
+      phrases: [elderly, senior, seniors, grandmother, grandfather, grandma, grandpa, baby, infant,
+                newborn, months old, weeks old]
+      raise_to: Urgent
+      raise_to_when_mild: High
+      reason: an older person or a baby at home
+    - id: medical_equipment
+      job_types: [no_heat, no_cooling]
+      phrases: [oxygen, concentrator, cpap, bipap, dialysis, nebulizer, ventilator, hospital bed,
+                medical equipment]
+      raise_to: Urgent
+      raise_to_when_mild: High
+      reason: medical equipment at home
+    - id: bedbound
+      job_types: [no_heat, no_cooling]
+      phrases: [bedridden, bedbound, bed bound, cant get up, cant walk, hospice, home health aide]
+      raise_to: Urgent
+      raise_to_when_mild: High
+      reason: someone at home who can't get up
+    - id: symptoms_now
+      job_types: [no_heat, no_cooling]
+      phrases: [shivering, cant stop shaking, dizzy, short of breath, feels faint, feeling faint,
+                heat exhaustion]
+      raise_to: Urgent
+      raise_to_when_mild: High
+      reason: someone feeling unwell from the temperature now
+    - id: improvised_heating
+      job_types: [no_heat]
+      phrases: [using the oven, oven on, oven open, stove on, kerosene heater, generator inside,
+                grill inside]
+      heating_indoors: true  # also the safety check's heating wording (safety.heating_check)
+      raise_to: Urgent
+      reason: heating with an oven, stove, generator or grill indoors
+    - id: young_child
+      job_types: [no_heat, no_cooling]
+      phrases: [toddler, little kids, little ones, preschooler, small children, young kids]
+      raise_to: High
+      group: true
+      reason: young children at home
+    - id: parent_no_age
+      job_types: [no_heat, no_cooling]
+      phrases: [my mom, my dad, my mother, my father, my parents]
+      raise_to: High
+      group: true
+      reason: a parent at home, age not given
+    - id: limited_mobility
+      job_types: [no_heat, no_cooling]
+      phrases: [wheelchair, walker, disabled, disability, paralyzed, special needs, cant get around]
+      raise_to: High
+      group: true
+      reason: someone with limited mobility or a disability
+    - id: lives_alone
+      job_types: [no_heat, no_cooling]
+      phrases: [lives alone, live alone, by herself, by himself, by myself, no one else]
+      raise_to: High
+      group: true
+      reason: someone at home alone
+    - id: chronic_illness
+      job_types: [no_heat, no_cooling]
+      phrases: [heart condition, heart problems, copd, asthma, lung disease, emphysema, diabetic,
+                diabetes, kidney disease, medical condition]
+      raise_to: High
+      group: true
+      reason: a chronic illness at home
+    - id: cognitive
+      job_types: [no_heat, no_cooling]
+      phrases: [dementia, alzheimers, memory problems, gets confused]
+      raise_to: High
+      group: true
+      reason: someone with dementia or memory problems
+    - id: pregnancy
+      job_types: [no_heat, no_cooling]
+      phrases: [pregnant, expecting a baby, third trimester]
+      raise_to: High
+      group: true
+      reason: someone pregnant at home
+    - id: recovering
+      job_types: [no_heat, no_cooling]
+      phrases: [just had surgery, recovering from surgery, post op, chemo, chemotherapy, transplant,
+                immunocompromised, weak immune system]
+      raise_to: High
+      group: true
+      reason: someone recovering or with a weak immune system
+    - id: pipes_or_only_heat
+      job_types: [no_heat]
+      phrases: [pipes froze, frozen pipes, pipes are freezing, no other heat, only heat, only source of heat]
+      raise_to: High
+      reason: pipes at risk or no other heat
+    - id: safety_signal
+      safety_signal: true
+      raise_to: Urgent
+      reason: gas or carbon monoxide reported on the call
+
+# Journey 11: which job types the after-hours rules apply to, and which priority rules mean someone
+# at home is at extra risk. The tenant sets the temperature cutoffs.
+after_hours:
+  heating_job_types: [no_heat]
+  cooling_job_types: [no_cooling]
+  at_risk_rules: [vulnerable_person, medical_equipment]
+
+# Owner edits from the owner view (app/rules.py). Guidance an owner writes may not mention these,
+# because the safety script covers them; the template adds its own list (prices, priority, the
+# read-back and so on).
+owner_rules:
+  locked_topics: [gas, carbon monoxide, monoxide, smoke, fumes, co alarm, co detector, sulfur,
+                  rotten egg]

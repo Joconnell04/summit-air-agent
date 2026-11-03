@@ -12,6 +12,81 @@ Discussion: docs/ai-process/transcripts/... or docs/explorations/...
 Issue: #N
 -->
 
+## 035. Eval co-authoring in three rounds, not five
+
+Decided: the co-authoring plan in exploration 008, section 7, shrinks to three rounds. Round 1 (real failures) is done. Round 2 combines seeds and the hold-out: Jackson edits or rejects about 10 seed scenarios drafted from his round 1 notes, and dictates 5 short caller cases that stay unread until a release gate. Round 3 combines judge labels and the scoreboard: he marks about 10 graded transcripts pass or fail with the grader's verdict hidden, then reads the standard-run summary and agrees the floor.
+Why: Jackson's time; the two dropped rounds fold into the others without losing their purpose (seeds from a human, a hold-out the AI never saw, a grader checked against a person).
+Considered: the original five rounds (more of his time for a small gain at this size).
+Would change if: round 3 shows the grader disagrees with Jackson often, in which case a second labelling round is added.
+Discussion: docs/explorations/008-eval-set-quality.md, section 7
+
+## 034. What's in V1 and what waits
+
+Decided: in V1, built in phase 3: the technician summary (S-16), the model matrix (Haiku against Sonnet), a side model where the evals show a bottleneck, warm transfer to a person, call recordings on the call page, the eval floor, and reply-delay targets with measured latency values. After V1: Spanish and other languages, playbooks per call, production capacity past the demo, booking texts and anything else that needs SMS, and the extra owner-view editing (editable numbers, condition rules, after-call guidance). The local-name pronunciation is closed as good enough: Houston Street is said HOW-stun, which is the one that matters; the 30 clips weren't reviewed by ear. Owner logins last as long as a browser keeps a cookie, with no limit on wrong guesses.
+Why: the assignment is a voice agent, not a front-end platform, so phase 3 time goes to what callers and technicians notice. Texting waits on carrier registration (decision 007), and the owner view stays as built.
+Considered: keeping the earlier later-list as it was; building the extra owner-view editing now.
+Would change if: the interview asks for one of the deferred items, or phase 3 runs out of time before the in-V1 items land.
+Discussion: Jackson's notes on docs/ai-process/brief-phase-3-onward.md
+
+## 033. The agent's safety job is to escalate politely, not to coach
+
+Decided: on a safety call the agent says the fixed lines, politely recommends getting safe, flags a person and gets off the line. It doesn't give on-the-fly safety guidance or grow new safety logic; fixes to failing safety scenarios prefer simplifying over adding rules.
+Why: it's an AI voice agent that tells callers what it is, and its value on these calls is a fast, calm handoff to 911 and a person. Jackson: "It doesn't need to give, like, on-the-fly safety guidance. It just needs to, like, politely elevate the situation to the caller or person being called, and then politely instruct them to, you know, be careful or whatever. But it doesn't need some crazy logic."
+Considered: more trigger phrases and follow-up questions per hazard (more chances to overfire, as eval round 1 showed).
+Would change if: real calls show a hazard the fixed lines and the check questions miss.
+Discussion: Jackson's notes on the phase 3 brief
+
+## 032. Owner guidance has four stages and steers clear of locked subjects
+
+Decided: owners can add guidance for the opening, the whole call, booking and closing; nothing runs a model before hello, and after-call guidance waits for the technician summary. Guidance that names a locked subject (safety, gas, carbon monoxide, 911, the read-back, commercial, price, fees, priority, urgent, service area, cancelling, or words that try to talk the model out of its instructions) is refused. Text is folded to plain ASCII first, so look-alike characters can't slip past. The four editable lines are six fields, since the greeting and the callback opening each have a known-caller and an unknown-caller form; the unknown-caller greeting must keep its AI disclosure. Booking and closing guidance reaches the model only when the server says the call has reached that stage.
+Why: guidance can't break a server gate, but it could contradict one in what the agent says, and a leaked edit login would otherwise be a path for prompt injection. The filter is a keyword list and a reviewer found phrasings that pass it, so the real containment is the server gates plus the eval gate; the filter only keeps the obvious cases out of the history.
+Considered: any text, relying on the prompt preamble; after-call guidance stored now and shown as pending.
+Would change if: real owners hit false refusals ("free" and "emergency" are the likely ones), or the technician summary is built.
+Discussion: PR #65, docs/template.md ("Owner edits")
+Issue: #56
+
+## 031. The publish gate blocks on code checks, with one rerun of a miss
+
+Decided: a draft is published only if every must-pass scenario passes its code checks. A scenario that fails or ends with no verdict is run once more on the same draft, and a second miss blocks. Both runs are kept on the version with the rerun count and cost. Grader fails are kept as notes but don't block. This applies to the publish gate only; an ordinary eval run still fails on a single must-pass miss.
+Why: at one sample per scenario the must-pass set is noisy: three gate runs failed five different must-pass scenarios, none twice (MEASURED, PR #65). A rerun of only the misses costs about $0.02 a scenario, and a failure that repeats still blocks, so a known failure can't ride along. A gate relative to the live version was ruled out: it doubles the cost of a publish and lets an existing failure go live again. The must-pass lines are code checks; the grader is the noisiest signal and an owner edit may change manner on purpose.
+Considered: blocking on a single miss (blocked every edit tried); comparing against the live version; blocking on grader fails too.
+Would change if: a scenario keeps passing only on its rerun across publishes (flakiness to fix in the scenario), or a grader-only fail turns out to be a real regression the code checks missed.
+Discussion: PR #65; the flakiness is a phase 3 finding in docs/ai-process/brief-phase-3-onward.md
+Issue: #56
+
+## 030. "Never suggest unsafe heat" is a prompt rule, checked by evals
+
+Decided: the rule that the agent never suggests an oven, stove, generator or grill for warmth lives in the prompt (`prompts/safety.md`) and is covered by eval scenarios, not by a server check.
+Why: agent lines reach the server only after they are spoken, so the server has no point at which to stop one. The gates that matter on these calls (the check question, priority, the safety lines) are still server code.
+Considered: a filter in the LiveKit worker's speech step (LiveKit only, not Retell, and it would be the voice layer holding a rule).
+Would change if: a voice layer gives the server a hook before speech, or evals catch the agent suggesting unsafe heat.
+Discussion: PR #64
+
+## 029. The safety sign-off is a polite recommendation
+
+Decided: the sign-off is "For your safety, I'd recommend hanging up now, getting outside, and calling 911 from there. We'll follow up once you're safe." The first safety lines are unchanged.
+Why: by the sign-off the caller may have said they are alone, and the first lines already say to get everyone out. Jackson signed off on "get outside" and asked for a polite recommendation rather than a demand.
+Considered: "Please hang up now, get outside, and call 911 from there" (a demand); a second sign-off for callers alone (the server would have to guess from words).
+Would change if: evals or real calls show callers treating the softer wording as optional.
+Discussion: PR #64, call-journeys r4 in docs/ai-process/coauthoring.md
+
+## 028. After hours, the on-call technician is alerted before a booking
+
+Decided: after hours, a no-heat or no-cooling call that needs the on-call technician tonight can be booked only after an urgent flag has alerted them; the morning visit is then held as the fallback.
+Why: journey 11 says the on-call technician is asked first. The server already worked out the "tonight" outcome but nothing enforced it, and eval round 1 caught a 48 F house booked for the morning with no alert.
+Considered: refusing the booking on the tonight path (leaves the caller with nothing certain if the technician can't come); a prompt rule only (the round 1 failure).
+Would change if: the office wants no morning booking held when the on-call technician is coming.
+Discussion: PR #64, evals/rounds/01-real-failures.md
+
+## 027. How a company folder sits on its trade
+
+Decided: a tenant's `agent.yaml` is laid over its trade's. Mappings merge key by key with the tenant winning, rule lists merge by `id`, and other lists are the trade's items plus the tenant's own. The trade holds safety signals and at-risk priority rules only; the signed-off safety wording, NYC-sourced numbers, commercial phrases, `config.yaml`, knowledge and voice lines stay with the company. A tenant fails to load if it lacks its safety lines, check questions or sign-off, drops or lowers a trade rule, adds denials, or mixes rules with and without ids. Summit Air's merged config is checked against a committed golden copy.
+Why: a company adding a local phrase is common; a company quietly dropping a gas phrase or lowering a priority would loosen a gate, so the loader refuses it rather than trusting review. Each company signs off its own safety script (decision 009), so a trade edit must never change signed words. The golden copy proved the split changed nothing and shows when a trade edit changes a company's behavior.
+Considered: tenants replacing whole lists (one edit could drop every trade phrase); moving the safety wording and job types into the trade (ties signed-off words and ServiceTitan ids to the trade).
+Would change if: a second HVAC company signs off on shared wording, or genuinely needs to drop a trade item, in which case an explicit, tested removal list is added.
+Discussion: PR #63, docs/template.md
+Issue: #57
+
 ## 026. Three more bake-off entrants, scored on a simulated audio rig
 
 Decided: ElevenLabs Agents (in custom-LLM mode, on our Haiku brain and tool server), OpenAI Realtime and Gemini Live join the bake-off beside our stack, Retell and the Vapi test call. All are scored first on a simulated audio rig that streams synthesized caller speech to each platform and times the first sound back, so nobody dials. Real calls go only to the final two. A newcomer is chosen only if its plain-turn median is at least 0.3 s lower and every must-pass scenario passes with the safety lines word for word on three repeats; anything less is a tie, and a tie keeps our stack.

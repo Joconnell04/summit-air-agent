@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% from "_ui.html" import q, count, empty, gate_result with context %}
+{% set checking = draft and draft.status == "checking" %}
+{% block head %}{% if checking %}<meta http-equiv="refresh" content="30">{% endif %}{% endblock %}
+{% block title %}{{ tenant }}: edit rules{% endblock %}
+{% block body %}
+<main class="page">
+  <form class="stack" method="post" action="/owner/rules/draft{{ q(slug) }}">
+  <div class="page-head">
+    <div class="lead">
+      <div class="crumbs"><a href="/owner/rules{{ q(slug) }}">Rules</a><span>/</span><span>Edit</span></div>
+      <h1 class="page-title">Edit rules</h1>
+    </div>
+    <div class="actions">
+      {% if checking %}<span class="tag high">Checking</span>{% elif draft %}<span class="tag outline">Draft saved</span>{% elif blocked %}{{ gate_result(blocked) }}{% endif %}
+      <label class="sr-only" for="note">What changed</label>
+      <input class="field" id="note" name="note" value="{{ note }}" maxlength="200" placeholder="What changed"{% if checking %} disabled{% endif %}>
+      {% if checking %}<button class="btn quiet" type="submit" formaction="/owner/rules/cancel{{ q(slug) }}" formnovalidate>Stop check</button>{% endif %}
+      {% if draft and not checking %}<button class="btn quiet" type="submit" formaction="/owner/rules/discard{{ q(slug) }}" formnovalidate>Discard</button>{% endif %}
+      <button class="btn" type="submit"{% if checking %} disabled{% endif %}>Save draft</button>
+      <button class="btn primary" type="submit" name="publish" value="1"{% if checking %} disabled{% endif %}>Publish</button>
+    </div>
+  </div>
+  {% for message in general %}<p class="error" role="alert">{{ message }}</p>{% endfor %}
+
+  <section class="panel">
+    <div class="panel-head"><h2>Wording</h2>{{ count(lines | length) }}<span class="sub">said word for word</span></div>
+    <div class="table-wrap">
+    <table class="table form">
+      <thead><tr><th>Line</th><th>When</th><th>Wording</th></tr></thead>
+      <tbody>
+      {% for key, label, stage, value, default in lines %}
+        {% set err = errors.get("lines." ~ key) %}
+        <tr>
+          <td class="fit"><label class="what" for="line-{{ key }}">{{ label }}</label></td>
+          <td class="fit muted">{{ "Opening" if stage == "opening" else "Closing" }}</td>
+          <td><input class="field" id="line-{{ key }}" name="line.{{ key }}" value="{{ value }}" maxlength="{{ max_line }}" placeholder="{{ default }}"{% if err %} aria-invalid="true" aria-describedby="err-{{ key }}"{% endif %}{% if checking %} disabled{% endif %}>{% if err %}<span class="error field-error" id="err-{{ key }}">{{ err }}</span>{% endif %}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head"><h2>Guidance</h2><span class="sub">followed most of the time; never overrides a locked rule</span></div>
+    <div class="table-wrap">
+    <table class="table form">
+      <thead><tr><th>Stage</th><th>Note to the agent</th></tr></thead>
+      <tbody>
+      {% for stage, name, items in guidance %}
+        {% set filled = items | select | list %}
+        {% set shown = (filled | length) + (1 if filled | length < items | length else 0) %}
+        {% for text in items[:shown] %}
+        {% set err = errors.get("guidance." ~ stage ~ "." ~ loop.index0) or (errors.get("guidance." ~ stage) if loop.first else none) %}
+        <tr>
+          <td class="fit">{% if loop.first %}<span class="what">{{ name }}</span>{% endif %}</td>
+          <td><label class="sr-only" for="guide-{{ stage }}-{{ loop.index0 }}">{{ name }} note {{ loop.index }}</label><input class="field" id="guide-{{ stage }}-{{ loop.index0 }}" name="guide.{{ stage }}.{{ loop.index0 }}" value="{{ text }}" maxlength="{{ max_guide }}" placeholder="{% if not text %}Add a note{% endif %}"{% if err %} aria-invalid="true"{% endif %}{% if checking %} disabled{% endif %}>{% if err %}<span class="error field-error">{{ err }}</span>{% endif %}</td>
+        </tr>
+        {% endfor %}
+      {% endfor %}
+      </tbody>
+    </table>
+    </div>
+    <div class="panel-foot">Publishing runs the must-pass test calls on the draft. It goes live only if every one passes.</div>
+  </section>
+  </form>
+
+  <section class="panel" id="versions">
+    <div class="panel-head"><h2>Versions</h2>{{ count(versions | length) }}<span class="sub">every change, kept</span></div>
+    <div class="table-wrap">
+    <table class="table">
+      <thead><tr><th>Version</th><th>Changed</th><th>By</th><th>What changed</th><th class="right">Check</th><th><span class="sr-only">Roll back</span></th></tr></thead>
+      <tbody>
+      {% for v in versions %}
+        <tr>
+          <td class="fit"><span class="what">{{ v.number }}</span>{% if v.live %} <span class="tag done">Live</span>{% endif %}</td>
+          <td class="time">{{ local(v.updated_at).strftime("%b %-d, %-I:%M %p") }}</td>
+          <td class="fit">{{ v.author }}</td>
+          <td>{{ v.note or "No note" }}</td>
+          <td class="fit right">{{ gate_result(v) }}</td>
+          <td class="fit right">{% if v.status == "published" and not v.live %}<form method="post" action="/owner/rules/rollback{{ q(slug) }}"><input type="hidden" name="number" value="{{ v.number }}"><button class="btn" type="submit">Roll back</button></form>{% endif %}</td>
+        </tr>
+      {% endfor %}
+        <tr>
+          <td class="fit"><span class="what">0</span>{% if not live %} <span class="tag done">Live</span>{% endif %}</td>
+          <td class="time"></td>
+          <td class="fit">Revin</td>
+          <td>As set up</td>
+          <td class="fit right"></td>
+          <td class="fit right">{% if live %}<form method="post" action="/owner/rules/rollback{{ q(slug) }}"><input type="hidden" name="number" value="0"><button class="btn" type="submit">Roll back</button></form>{% endif %}</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+  </section>
+</main>
+{% endblock %}

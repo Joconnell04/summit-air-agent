@@ -67,6 +67,16 @@ def test_safety_check_asked_and_cleared():
     assert failures("safety_check", "asked", trace()) != []
 
 
+def test_safety_check_asked_once_and_not_asked():
+    once = trace([("caller", "the oven is on for heat", "ask_check"), ("caller", "no", "cleared")])
+    assert failures("safety_check", "asked_once", once) == []
+    assert failures("safety_check", "not_asked", once) != []
+    twice = trace([("caller", "oven on for heat", "ask_check")] * 2)
+    assert failures("safety_check", "asked_once", twice) == ["the check question was asked 2 times"]
+    assert failures("safety_check", "not_asked", trace([("caller", "gas stove", None)])) == []
+    assert CHECKS["safety_check"].prohibits("not_asked")
+
+
 def booked(priority="Normal", **extra):
     return {"kind": "book", "status": "booked", "priority": priority, "seek_earlier": 0,
             "safety_override": 0, **extra}

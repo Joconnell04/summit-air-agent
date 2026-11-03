@@ -138,6 +138,9 @@ class Run(Strict):
     # "text" for the text harness, "audio" for the simulated audio rig, where every delay is
     # measured on the audio itself.
     transport: Literal["text", "audio"] = "text"
+    # The owner's draft a gate run tested (app/rules.py, evals/gate.py), part of the hash. None for
+    # a run on the shipped defaults.
+    overlay: dict | None = None
     scenarios: list[ScenarioResult] = Field(min_length=1)
 
     @model_validator(mode="after")

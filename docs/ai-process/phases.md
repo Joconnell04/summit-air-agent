@@ -27,7 +27,7 @@ Exit: spec locked, the three decisions in DECISIONS.md, briefs merged. Export th
 - [x] First end-to-end call on a test number
 - [ ] Live go/no-go, 10 calls (#9)
 - [x] Ideas round, decided after the build and before testing (DECISIONS.md 019 to 025)
-- [ ] Ideas-round build: rules by stage (#56), trade layer and local names (#57, #58), carbon monoxide check
+- [x] Ideas-round build: rules by stage (#56), trade layer and local names (#57, #58), carbon monoxide check (PRs #63 to #65)
 
 Exit: every lane merged through review, scoreboard running, go/no-go passed or the fallback chosen.
 
@@ -42,7 +42,7 @@ Exit: every lane merged through review, scoreboard running, go/no-go passed or t
 ## 4. Deploy and demo prep
 
 - [ ] Hosting: always-on server and worker, backup number, failure alerts
-- [ ] Owner view, runbook, planted-bug drills
+- [ ] Owner view, runbook, feasibility questions ("how would you do X"), kept outside the repo
 - [ ] Rehearsal with a skeptical owner
 - [ ] README: number, scoreboard, diagram, what's cut
 

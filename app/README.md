@@ -52,7 +52,9 @@ The owner view is three pages for the owner and dispatcher: Today (`/owner`, the
 | `plain.py` | Each tool call on a call page said in plain words (story O-7) |
 | `reports.py` | Reports to Revin from the owner view, and filing them as issues (story O-8) |
 | `search.py` | The owner view's search: a SQLite full-text index of calls, jobs, flags, leads and lines said, refreshed by the jobs loop |
-| `owner_view.py`, `templates/`, `static/owner/` | The owner view's token, routes, HTML and design system (docs/design-system.md) |
+| `rules.py` | Owner edits (exploration 009): the editable lines and guidance, validation that keeps every gate out of reach, versions with their eval gate result, rollback, the version a call runs under, and the call stage the server decides |
+| `rulebook.py` | Every rule the agent follows, by stage, built from the tenant files, the prompt files and the live version, for the Rules page |
+| `owner_view.py`, `templates/`, `static/owner/` | The owner view's tokens (read, and edit per person), routes, HTML and design system (docs/design-system.md) |
 | `mail.py` | Sending alert email over SMTP, or holding it when no server is set |
 | `tenant.py` | Loading `tenants/<company>/` and picking one by dialed number |
 | `fsm/` | The adapter interface, the ServiceTitan adapter and the slot cache |
@@ -84,15 +86,21 @@ The owner view is three pages for the owner and dispatcher: Today (`/owner`, the
 | Urgent holds and the urgent-only night window are the company's rules, applied to what ServiceTitan's capacity returns, again right before a job is created or moved | S-25, decision 003 | `capacity.usable_technicians`, `capacity.pick_technician`, `booking.send` |
 | A booking counts as kept if its job was still on the schedule when its current window came | C-42 | `jobs.check_kept` |
 | An urgent flag raised while the company is closed is emailed to the on-call person, once, with what, where, who and why | Journey 11 | `jobs.alert_on_call` |
+| An owner edit changes only the six editable lines and guidance for four stages; anything else in a draft (the read-back, priority, the safety script, any other line) is refused, a stored version is validated again before a call uses it, and a draft goes live only when the eval gate passes on it | S-51 | `rules.validate`, `rules.applied`, `rules.record_gate` |
+| The call stage comes from the server's records, and booking and closing guidance is sent as a `[server]` note when the stage starts, never on a safety call | S-51 | `rules.stage_now`, `rules.advance_stage`, `lifecycle.turn` |
 | Do-not-call marked on the caller's words, cancelling pending callbacks; the tool returns the line to say | S-49 | `lifecycle.turn`, `records.mark_do_not_call` |
 
 ## Template and tenant
 
-Nothing about Summit Air is in `app/`; a test checks for the company name, its ZIPs, numbers, job types and rule ids. A tenant folder holds `config.yaml` (shared with the mock: hours, area, job types, plans, refused customer types), `agent.yaml` (dialed numbers, FSM ids, safety lines and phrases, priority rules, after-hours cutoffs, callback owners and timings, repeat-caller window, retention, every line the server returns as `say`) and `knowledge/*.md`, which `/calls/start` returns for the prompts. The only text in `app/` the agent may say is a handful of neutral fallbacks ("Sorry, give me just a moment.").
+Nothing about Summit Air is in `app/`; a test checks for the company name, its ZIPs, numbers, job types and rule ids. A tenant folder holds `config.yaml` (shared with the mock: hours, area, job types, plans, refused customer types), `agent.yaml` (dialed numbers, FSM ids, safety lines, temperature brackets, after-hours cutoffs, callback owners and timings, repeat-caller window, retention, every line the server returns as `say`) and `knowledge/*.md`, which `/calls/start` returns for the prompts. `agent.yaml` starts with `extends: hvac`, so it is laid over `trades/hvac/agent.yaml`, which holds what every HVAC company shares: the safety signal phrases and the priority rules (`app/tenant.py`, `merge`; docs/template.md). `python -m app.tenant tenants/<slug>` prints the merged result. The only text in `app/` the agent may say is a handful of neutral fallbacks ("Sorry, give me just a moment.").
 
 ## Owner view: redesign in progress
 
 Jackson is redesigning the owner view in a separate session. The first version, Claude's first attempt, read as a cluttered, generic AI dashboard with a back-end debugging-log feel, and didn't give the owner the right level of detail. The numbers behind it (`app/owner.py`) stay and can keep growing; expect the pages and templates (`app/owner_view.py`, `app/templates/`) to change.
+
+## Owner edits
+
+`/calls/start` pins the live version to the call (`call_stages`) and returns it as `house_rules`: the version number, the guidance by stage and the spoken lines it overrides (greeting, goodbye). `prompts/assemble.py` adds the guidance to the prompt and lays the lines over the tenant's `voice:` lines; the server's own lines (anything else, the callback opening) come from the call's version through `rules.tenant_for_call`. Publishing marks a draft `checking`; `evals/gate.py` (`make rules-gate`, or started by the server when `RULES_GATE=1`) runs the must-pass scenarios on it and writes the result back. Editors are `RULES_EDITORS` (`name=code` pairs); the owner token can't edit. A result never publishes over a rollback made while it ran, a check can be stopped from the editor, and one that hasn't reported back in an hour (`rules.CHECK_TIMEOUT_MINUTES`) returns to draft. One gate process runs at a time per database (a lock file beside it). What contains an edit: docs/template.md, "Owner edits".
 
 ## Known limits
 

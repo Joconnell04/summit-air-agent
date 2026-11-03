@@ -46,7 +46,8 @@ class Models:
 
 
 class Harness:
-    def __init__(self, models: Models, stack: str, workdir: Path, open_agent: Callable | None = None):
+    def __init__(self, models: Models, stack: str, workdir: Path, open_agent: Callable | None = None,
+                 overlay: dict | None = None):
         if stack not in STACKS:
             raise ValueError(f"unknown stack {stack!r}; known: {', '.join(STACKS)}")
         self.models = models
@@ -55,13 +56,15 @@ class Harness:
         self.seed = seeded_db(workdir / "seed")
         self.safety = safety_config()
         self.open_agent = open_agent or self._open_agent
+        # The owner's draft under test (evals/gate.py), served as the live version in each world.
+        self.overlay = overlay
 
     def _open_agent(self, scenario: Scenario, call_id: str):
         """The agent under test and the tool server whose record the checks read."""
         caller_id = resolve_caller(scenario.caller_id, self.seed[1])
         if self.stack != "livekit":
             return load_adapter(self.stack).open_agent(call_id, caller_id)
-        world = World(self.workdir / call_id, self.seed, scenario.start_time)
+        world = World(self.workdir / call_id, self.seed, scenario.start_time, self.overlay)
         agent = InProcessAgent(world.server, self.models.agent, call_id, caller_id, world.clock)
         return agent, world.server
 
@@ -78,7 +81,12 @@ class Harness:
         try:
             agent, server = self.open_agent(scenario, call_id)
             call_id = getattr(agent, "call_id", call_id)
-            caller = SimulatedCaller(scenario, self.models.caller)
+            # The caller knows the digits of the phone they're on, so a read-back of the caller ID
+            # can be confirmed or corrected instead of guessed at.
+            calling_from = resolve_caller(scenario.caller_id, self.seed[1])
+            caller = SimulatedCaller(
+                scenario, self.models.caller, extra_facts={"calling_from": calling_from}
+            )
             rng = seeded(scenario.id, sample)
             level = level_for(scenario.difficulty, scenario.traits)
             turn = agent.start()
@@ -221,7 +229,8 @@ def profile_model(profile: str) -> str | None:
 
 
 def build_run(suite: str, tags: list[str], stack: str, profile: str, scenario_results,
-              now: datetime | None = None, transport: str = "text") -> Run:
+              now: datetime | None = None, overlay: dict | None = None,
+              transport: str = "text") -> Run:
     now = now or datetime.now(UTC)
     ids = sorted({r.scenario_id for r in scenario_results})
     return Run(
@@ -231,10 +240,11 @@ def build_run(suite: str, tags: list[str], stack: str, profile: str, scenario_re
         tags=tags,
         stack=stack,
         profile=profile,
-        hash=run_hash(ids, profile),
+        hash=run_hash(ids, profile, overlay=overlay),
         prompt_hash=prompt_hash(),
         model=profile_model(profile),
         transport=transport,
+        overlay=overlay,
         scenarios=scenario_results,
     )
 

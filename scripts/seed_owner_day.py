@@ -15,15 +15,24 @@ from zoneinfo import ZoneInfo
 
 from fastapi.testclient import TestClient
 
-from app import jobs
+from app import jobs, rules
 from app.main import create_app
 from app.settings import Settings
+from evals import gate, results
 from servicetitan_mock.app import create_app as create_mock
 from servicetitan_mock.seed import build_world
 
 ROOT = Path(__file__).resolve().parents[1]
 TENANT_DIR = ROOT / "tenants" / "summit-air"
 DIALED = "(646) 624-0418"
+# The real eval gate runs on owner drafts (paid, $0.39 and $0.38 MEASURED): each draft and its result
+# become a version on the Rules page, so the demo shows checked versions without a live run.
+# Each entry is the gate run, its rerun of the scenarios that missed (None for the runs made before
+# the gate had one), the note and the time it was saved.
+GATE_RUNS = [
+    ("20261103-193944-livekit-fast-gate.json", None, "Ask about pets; clear a path", time(14, 10)),
+    ("20261103-200110-livekit-fast-gate.json", None, "Clear a path only", time(15, 40)),
+]
 NEW_YORK = ZoneInfo("America/New_York")
 DETAILS = {
     "since": "this morning",
@@ -151,15 +160,16 @@ def today(voice: Voice, clock: Clock, day: date, gas_lines: str, co_lines: str) 
     voice.caller(c, "They're 84 years old and it's 52 degrees in their place.")
     voice.read_back(c, "412 Ovington Ave", "11209")
     slot = voice.first_slot(c, "no_heat", inside_temp_f=52)
-    voice.book(
-        c, "no_heat", slot, "No heat since last night", inside_temp_f=52, who_home="Parent, 84"
-    )
+    # The on-call technician is alerted before a tonight booking (journey 11, tools._on_call_first).
     voice.tool(
         "flag_person",
         c,
         reason="84-year-old at home, no heat, 52 F inside",
         priority="Urgent",
         callback_in_minutes=20,
+    )
+    voice.book(
+        c, "no_heat", slot, "No heat since last night", inside_temp_f=52, who_home="Parent, 84"
     )
     voice.end(c)
     clock.at(day, 7, 43)
@@ -413,6 +423,27 @@ def placed_call(voice: Voice, accept: bool) -> None:
     voice.client.post(f"/outbound/{claimed['outbound_id']}/done", json={"answered": True})
 
 
+def rule_history(app, clock: Clock, day: date) -> None:
+    """The Rules page's versions: each draft a gate run tested, saved, sent to the gate and given
+    that run's real result, through app/rules.py as the editor does it."""
+    tenant = app.state.services.tenants.default
+    conn = app.state.services.connect()
+    try:
+        for name, rerun_name, note, at in GATE_RUNS:
+            run = results.load(ROOT / "evals" / "results" / name)
+            rerun = results.load(ROOT / "evals" / "results" / rerun_name) if rerun_name else None
+            clock.now = datetime.combine(day, at, NEW_YORK)
+            _draft, errors = rules.save_draft(conn, tenant, run.overlay, "Owner", note, clock())
+            assert not errors, errors
+            clock.now += timedelta(minutes=2)
+            checking = rules.request_publish(conn, tenant.slug, "Owner", clock())
+            clock.now += timedelta(minutes=6)
+            found = gate.summary(run, run.overlay, rerun)
+            rules.record_gate(conn, checking["id"], found, clock(), len(gate.scenarios()))
+    finally:
+        conn.close()
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Seed a day of calls for the owner view.")
     parser.add_argument("--dir", default="data/owner-demo")
@@ -442,6 +473,7 @@ def main() -> None:
     voice = Voice(app, clock, mock_client)
     earlier_week(voice, clock, day)
     today(voice, clock, day, gas, co)
+    rule_history(app, clock, day)
     # make owner-demo serves the page as if it were this moment, so "now" sits on the board.
     evening = datetime.combine(day, time(17, 20), NEW_YORK)
     (folder / "now").write_text(evening.isoformat())
