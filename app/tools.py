@@ -707,6 +707,15 @@ def reschedule_appointment(ctx: Ctx, args: RescheduleIn) -> Result:
             "That visit is already underway, so let me get someone to help with it.",
         )
     window_start, window_end = _slot_bounds(ctx, args.slot, job["priority"])
+    job_type = ctx.tenant.job_types[ctx.tenant.job_type_codes[job["jobTypeId"]]]
+    # Checked before the move is recorded, so a window that went by doesn't use up the one move.
+    if _window_over(ctx, args.slot.window, window_start, window_end):
+        ctx.cache.invalidate()
+        raise Refused(
+            "slot_taken",
+            ctx.tenant.line("slot_taken"),
+            alternatives=_alternatives(ctx, job_type, job["priority"]),
+        )
     key = _attempt_key(ctx, "reschedule", args.model_dump(mode="json"))
     row_id = _record_action(ctx, "reschedule", key, job, args.model_dump(mode="json"), args.reason)
     try:
@@ -725,7 +734,6 @@ def reschedule_appointment(ctx: Ctx, args: RescheduleIn) -> Result:
             with tx(ctx.conn):
                 booking.mark_attempt(ctx.conn, row_id, "failed", exc.code, ctx.now)
             ctx.cache.invalidate()
-            job_type = ctx.tenant.job_types[ctx.tenant.job_type_codes[job["jobTypeId"]]]
             raise Refused(
                 "slot_taken",
                 ctx.tenant.line("slot_taken"),
