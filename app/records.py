@@ -300,13 +300,15 @@ def mark_overdue(conn: sqlite3.Connection, tenant: Tenant, now: datetime) -> lis
 
 
 def recent_calls(
-    conn: sqlite3.Connection, caller_key: str, before: datetime, minutes: int
+    conn: sqlite3.Connection, tenant: str, caller_key: str, before: datetime, minutes: int
 ) -> list[sqlite3.Row]:
+    """Calls from this number to this tenant shortly before, so a call to another company on the
+    same server is never linked or resumed."""
     since = iso(before - timedelta(minutes=minutes))
     return conn.execute(
-        "SELECT * FROM calls WHERE caller_key = ? AND started_at >= ? AND started_at < ? "
-        "ORDER BY started_at DESC",
-        (caller_key, since, iso(before)),
+        "SELECT * FROM calls WHERE tenant = ? AND caller_key = ? AND started_at >= ? "
+        "AND started_at < ? ORDER BY started_at DESC",
+        (tenant, caller_key, since, iso(before)),
     ).fetchall()
 
 
