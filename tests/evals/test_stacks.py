@@ -144,3 +144,18 @@ def test_a_safety_gate_refusal_is_spoken_and_the_model_gets_no_reply_step():
     assert server.lines[-1] == "One moment. Please get outside first."
     # The greeting is spoken from the tenant's voice lines; the one model call is the tool hop.
     assert len(model.calls) == 1
+
+
+def test_a_stack_without_an_eval_adapter_says_so():
+    import pytest
+
+    from evals.stacks import load_adapter
+
+    with pytest.raises(RuntimeError, match="no eval adapter"):
+        load_adapter("nonesuch")
+
+
+def test_the_retell_adapter_is_loaded_by_name():
+    from evals.stacks import load_adapter
+
+    assert load_adapter("retell").__name__ == "voice.retell.eval_adapter"

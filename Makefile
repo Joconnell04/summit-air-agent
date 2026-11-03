@@ -1,4 +1,4 @@
-.PHONY: setup test lint check ratchet ratchet-update eval replay eval-upload seed-st mock-st postman-st server postman trace \
+.PHONY: setup test lint check ratchet ratchet-update eval replay langsmith eval-upload seed-st mock-st postman-st server postman trace \
 	owner-demo voice-livekit phone-setup deploy test-call \
 	retell-push retell-bridge retell-deploy retell-report
 
@@ -20,7 +20,7 @@ ratchet:
 ratchet-update:
 	uv run python scripts/ratchet.py --update
 
-# Paid: runs scenarios against a stack (evals/README.md). The smoke suite is about $1 (ASSUMED).
+# Paid: runs scenarios against a stack (evals/README.md). The smoke suite is about $0.15 (MEASURED).
 # make eval SUITE=smoke | TAGS=flow:safety,difficulty:rigorous | STACKS=livekit,retell | PROFILES=fast
 ENV_FILE ?= .env
 EVAL_ENV = $(if $(wildcard $(ENV_FILE)),--env-file $(ENV_FILE))
@@ -35,10 +35,13 @@ replay:
 	@test -n "$(CALL)" || { echo "usage: make replay CALL=<call id>"; exit 2; }
 	uv run $(EVAL_ENV) python -m evals.replay $(CALL)
 
-# Mirror a results file into LangSmith (optional viewer; does nothing without LANGSMITH_API_KEY)
-eval-upload:
-	@test -n "$(RUN)" || { echo "usage: make eval-upload RUN=evals/results/<run>.json"; exit 2; }
+# Mirror a results file into LangSmith (optional viewer; does nothing without LANGSMITH_API_KEY).
+# make langsmith                                  the newest file in evals/results
+# make langsmith RUN=evals/results/<run>.json     a named one
+langsmith:
 	uv run $(EVAL_ENV) python -m evals.langsmith_sync $(RUN)
+
+eval-upload: langsmith
 
 # The mock ServiceTitan (see servicetitan_mock/README.md)
 ST_PORT ?= 8101

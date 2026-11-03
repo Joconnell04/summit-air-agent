@@ -33,7 +33,7 @@ If both voice layers are built, the rule is that everything except the two folde
 - Both layers call the same tool server endpoints with the same payloads and load the same prompt files.
 - Each layer is one folder plus one Makefile target (`make voice-livekit`, `make voice-retell`) and one entry in the deploy config.
 - The evals run against the tool server and prompts, so the same scenarios score both layers; only the 10 audio calls differ.
-- Picking the winner: delete the losing folder and its Makefile target, set the Twilio trunk's destination, record the decision. Nothing else changes. A test checks that no file outside `voice/` imports from either layer, so the delete stays clean.
+- Picking the winner: delete the losing folder and its Makefile target, set the Twilio trunk's destination, record the decision. Nothing else changes. A test checks that no file outside `voice/` imports from either layer (`from voice.retell`, `from voice import retell`, `import voice.retell` or a literal `import_module("voice.retell...")`, and the same for `voice.livekit`), so the delete stays clean. The eval harness reaches a layer's text-chat side through `voice/<stack>/eval_adapter.py`, loaded by name (`evals/stacks.py` `load_adapter`).
 
 ## What the agent is allowed to do
 

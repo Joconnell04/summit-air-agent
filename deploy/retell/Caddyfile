@@ -11,6 +11,16 @@
 		uri strip_prefix /eval
 		reverse_proxy 127.0.0.1:8112
 	}
+	# The eval mock's reset, and nothing else on the mock. The mock refuses it unless it was started
+	# with ST_MOCK_ALLOW_RESET=1, which only the eval instance is.
+	@eval_mock_reset {
+		path /eval/mock/debug/reset
+		header X-Debug-Token {$SUMMIT_EVAL_TOKEN}
+	}
+	handle @eval_mock_reset {
+		uri strip_prefix /eval/mock
+		reverse_proxy 127.0.0.1:8111
+	}
 	@eval_tools {
 		path /eval/*
 		header X-Debug-Token {$SUMMIT_EVAL_TOKEN}

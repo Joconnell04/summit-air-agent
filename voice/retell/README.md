@@ -46,7 +46,7 @@ On the server: Retell's own stage latencies (median and slowest 10%) and cost pe
 make retell-push EVAL_URL=https://45-77-105-247.sslip.io/eval
 ```
 
-Also builds the chat agent the eval harness drives through Retell's text chat API (`voice/retell/chat.py`, used by `evals/retell_chat.py` on the eval lane's branch, brief 04). It calls the eval bridge, which forwards to a separate tool server and mock ServiceTitan on the same host.
+Also builds the chat agent the eval harness drives through Retell's text chat API (`voice/retell/chat.py`, used by `voice/retell/eval_adapter.py`, which the eval harness loads by name). It calls the eval bridge, which forwards to a separate tool server and mock ServiceTitan on the same host.
 
 ## Settings, and why
 
@@ -108,7 +108,7 @@ The LiveKit lane fixed the window mistake in the shared tool descriptions after 
 
 ## Eval smoke suite
 
-`make eval SUITE=smoke STACKS=retell` runs through the Retell chat agent and the eval instance. On the first run with the eval lane's timing fix: 8 scenarios, 0 harness errors, 2 passed (MEASURED by the eval lane, 2026-11-03). Among the failures, the gas-in-passing scenario had the model paraphrase the gas lines instead of saying them as signed off, and promise an on-call callback time that nothing had set. The eval instance is one shared mock ServiceTitan, so earlier runs leave bookings behind; reseed it before a scored run: `ssh summit-air 'sudo systemctl stop summit-retell@eval-mock; rm ~/summit-air/retell-data/eval_mock.db; sudo systemctl start summit-retell@eval-mock'`.
+`make eval SUITE=smoke STACKS=retell` runs through the Retell chat agent and the eval instance. On the first run with the eval lane's timing fix: 8 scenarios, 0 harness errors, 2 passed (MEASURED by the eval lane, 2026-11-03). Among the failures, the gas-in-passing scenario had the model paraphrase the gas lines instead of saying them as signed off, and promise an on-call callback time that nothing had set. The eval instance is one shared mock ServiceTitan, so the harness resets it before every scenario (`POST /debug/reset` on `summit-retell@eval-mock`, the only mock started with `ST_MOCK_ALLOW_RESET=1`; every other mock refuses it). The reset reaches the mock at `$RETELL_EVAL_TOOL_SERVER/mock/debug/reset` through the eval route in `deploy/retell/Caddyfile`, which a full `make retell-deploy` installs; until then point `RETELL_EVAL_MOCK_RESET_URL` at an ssh tunnel to the server's `127.0.0.1:8111` (`ssh -L 8111:127.0.0.1:8111 summit-air`, then `http://127.0.0.1:8111/debug/reset`). The old manual reseed (`ssh summit-air 'sudo systemctl stop summit-retell@eval-mock; rm ~/summit-air/retell-data/eval_mock.db; sudo systemctl start summit-retell@eval-mock'`) still works and is no longer needed between runs.
 
 Retell's own numbers for the booked call: median end-to-end reply 1.88 s, LLM 0.55 s, voice first byte 0.11 s, transcription 0.19 s; $0.19 for 112 s (MEASURED, Retell call data for `call_d570d98c180ab7ac1587b999d12`, `latency` and `call_cost`). The overlapping scripted caller inflates the end-to-end figure; the bake-off calls replace it.
 
@@ -122,5 +122,6 @@ Retell's own numbers for the booked call: median end-to-end reply 1.88 s, LLM 0.
 | `conversation.py` | Prompt, greeting and server-down variables, from prompts/ and agent.yaml |
 | `build.py`, `push.py`, `api.py` | Config as code, the idempotent push, the endpoint allowlist |
 | `chat.py` | Opens a Retell chat for an eval scenario |
+| `eval_adapter.py` | The Retell side of the eval harness: the chat agent under test, and the mock reset before each scenario |
 | `report.py` | Retell's latency and cost per call, for the bake-off report |
 | `signature.py` | `X-Retell-Signature` |

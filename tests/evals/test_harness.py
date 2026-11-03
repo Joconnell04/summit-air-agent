@@ -200,6 +200,21 @@ def test_build_run_hashes_and_names_the_run(seed_dir, tmp_path):
     built = build_run("smoke", [], "livekit", "fast", [result])
     assert built.run_id.endswith("-livekit-fast-smoke")
     assert len(built.hash) == 16
+    assert len(built.prompt_hash) == 16 and built.prompt_hash != built.hash
+    assert built.model == "claude-haiku-5-5"
+
+
+def test_a_scored_call_records_which_checks_ran(seed_dir, tmp_path):
+    s = scenario(must=[{"booking": "none"}, {"flag": "person"}, {"booking": "none"}])
+    result, *_ = run(seed_dir, tmp_path, s, [say("Okay.")], [say("[END]")])
+    assert result.checks == ["booking", "flag"]
+    assert result.check_failures == ["flag: no person was flagged"]
+
+
+def test_an_error_run_records_no_checks(seed_dir, tmp_path):
+    lines = [say(f"line {i}") for i in range(10)]
+    result, *_ = run(seed_dir, tmp_path, scenario(max_turns=3), [], lines)
+    assert result.outcome == "error" and result.checks == []
 
 
 
@@ -219,3 +234,30 @@ def test_replay_reruns_the_recorded_caller_lines_and_finds_a_changed_tool_sequen
         "  step 1: was check_service_area, now -"
     ]
 
+
+
+def test_a_stack_other_than_livekit_is_opened_through_its_voice_layers_adapter(
+    seed_dir, tmp_path, monkeypatch
+):
+    opened = []
+
+    class Adapter:
+        @staticmethod
+        def open_agent(call_id, caller_id):
+            opened.append((call_id, caller_id))
+            raise RuntimeError("stop here")
+
+    monkeypatch.setattr("evals.run.load_adapter", lambda stack: Adapter)
+    h = Harness(Models(ScriptedModel([]), ScriptedModel([]), ScriptedModel([])), "retell", seed_dir)
+    h.workdir = tmp_path
+    result = h.run(scenario())
+    assert len(opened) == 1 and opened[0][0].startswith("eval-test-call-1-")
+    assert result.outcome == "error" and "stop here" in result.error
+
+
+def test_retell_runs_go_one_scenario_at_a_time(capsys):
+    from evals.run import workers_for
+
+    assert workers_for("retell", 4) == 1
+    assert "one scenario at a time" in capsys.readouterr().out
+    assert workers_for("livekit", 4) == 4

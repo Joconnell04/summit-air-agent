@@ -13,6 +13,15 @@ from evals.stacks import PROMPTS_DIR, prompt_files
 EVAL_PROMPTS = PROMPTS_DIR / "evals"
 
 
+def prompt_hash(prompts_dir: Path = PROMPTS_DIR) -> str:
+    """The agent's prompt files alone (and the eval prompts), so a LangSmith experiment says
+    whether the prompt changed between two runs."""
+    digest = hashlib.sha256()
+    for path in prompt_files(prompts_dir) + sorted((prompts_dir / "evals").glob("*.md")):
+        digest.update(path.name.encode() + b"\0" + path.read_bytes() + b"\0")
+    return digest.hexdigest()[:16]
+
+
 def run_hash(
     scenario_ids: list[str],
     profile_name: str,

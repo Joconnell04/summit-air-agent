@@ -15,7 +15,9 @@ builder = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(builder)
 
 COLLECTION = ROOT / "postman" / "servicetitan-mock.postman_collection.json"
-SKIPPED = {"/docs", "/redoc", "/openapi.json", "/docs/oauth2-redirect"}
+# /debug/reset wipes the world and exists only for the eval instance (tests/servicetitan_mock/
+# test_st_reset.py), so a collection that runs against any mock must not call it.
+SKIPPED = {"/docs", "/redoc", "/openapi.json", "/docs/oauth2-redirect", "/debug/reset"}
 
 
 def normalize(path: str) -> str:

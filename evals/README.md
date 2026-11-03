@@ -56,7 +56,7 @@ Suites are saved tag filters in `evals/suites.yaml`, so a run can be reshaped in
 
 | Suite | What's in it | Use |
 |---|---|---|
-| smoke | 8: one easy case per main flow, covering each must-pass rule (safety, injection, commercial, out of area, read-back) | Every prompt change, about $1 (ASSUMED) |
+| smoke | 8: one easy case per main flow, covering each must-pass rule (safety, injection, commercial, out of area, read-back) | Every prompt change, about $0.15 on `livekit` (MEASURED, three runs, $0.14 to $0.16) |
 | standard | All easy and standard | Before merging a build lane |
 | rigorous | All rigorous and adversarial | Before a demo or a release gate |
 | full | Everything, 3 samples each | Release gate only, about $15 (ASSUMED) |
@@ -79,25 +79,37 @@ Each run writes `evals/results/<run>.json` (schema and validation in `evals/resu
 
 - **Keys.** `make eval` reads `.env` (or `ENV_FILE=<path>`): `ANTHROPIC_API_KEY`, and `LANGSMITH_API_KEY` for the upload. The harness calls Anthropic profiles only for now; an OpenAI or Gemini profile stops with a clear message until the model bake-off adds them.
 - **Our stack (`livekit`).** Runs in process: the worker's own prompt, tool list, greeting and server notes from `prompts/assemble.py` (`instructions`, `tool_specs`, `greeting`, `server_notes`), the real tool server and a fresh copy of the seeded mock per scenario, on a clock that starts at the scenario's `time`. Safety text the server returns (the lines, a `gate_safety` refusal, the end-call sign-off) is spoken as given with no model step, as the worker does. Until the voice lane's prompts are in the tree, a short stand-in (`evals/standin_prompt.md`) with every tool in `app/tools.py` is used so the harness can run end to end; the hash covers whichever prompt files ran.
-- **Retell (`retell`).** Opens a Retell chat through the Retell lane's `voice.retell.chat.open_chat` (which starts the call on the eval tool server under the harness's call id), sends each caller line with `/create-chat-completion`, ends with `PATCH /end-chat/{chat_id}`, and reads the call record from that tool server's `/debug/calls/{id}` (`evals/retell_chat.py`). It needs `RETELL_API_KEY`, `RETELL_CHAT_AGENT_ID`, `RETELL_EVAL_TOOL_SERVER` (a tool server with its own mock) and `RETELL_EVAL_DEBUG_TOKEN`, set up by the Retell lane (brief 05); without them a Retell run stops with a message saying so. That server has one shared mock, so run Retell with `--workers 1`; earlier scenarios' bookings stay in the world until the Retell lane reseeds it. On Retell the safety lines are said by its model, which the server checks word for word, rather than spoken from code: a real difference in the bake-off.
+- **Retell (`retell`).** The Retell side lives in `voice/retell/eval_adapter.py`, which the harness loads by name (`evals/stacks.py` `load_adapter`, so shared code never imports a voice folder; a test checks it). It opens a Retell chat through `voice.retell.chat.open_chat` (which starts the call on the eval tool server under the harness's call id), sends each caller line with `/create-chat-completion`, ends with `PATCH /end-chat/{chat_id}`, and reads the call record from that tool server's `/debug/calls/{id}`. It needs `RETELL_API_KEY`, `RETELL_CHAT_AGENT_ID`, `RETELL_EVAL_TOOL_SERVER` (a tool server with its own mock) and `RETELL_EVAL_DEBUG_TOKEN`, set up by the Retell lane (brief 05); without them a Retell run stops with a message saying so.
+  - **Clean mock per scenario.** The eval instance has one shared mock ServiceTitan, so before every Retell scenario the adapter calls the mock's `POST /debug/reset` (at `$RETELL_EVAL_TOOL_SERVER/mock/debug/reset`, or `RETELL_EVAL_MOCK_RESET_URL`, with the same token). The mock rebuilds its seeded world in place, so no earlier booking is left. The endpoint exists only when the mock was started with `ST_MOCK_ALLOW_RESET=1`, which only `summit-retell@eval-mock` sets; every other mock answers 403. If the reset is refused or unreachable the scenario ends as an `error` (no verdict) rather than being scored on a dirty world. Retell scenarios run one at a time (the harness forces `--workers 1`), because they share that one mock.
+  - On Retell the safety lines are said by its model, which the server checks word for word, rather than spoken from code: a real difference in the bake-off.
 - **Simulated caller and grader prompts** live in `prompts/evals/`.
 - **Cost.** Every scenario records the agent, caller and grader tokens at the prices in `config/models.yaml`; the report prints the total.
 - **Live audio pass.** The ten scripted phone calls for noise, interruptions and real reply delay are in `evals/live-calls.md`.
 
 ## Results in LangSmith
 
-An optional viewer for bake-offs. The results JSON is the source of truth. LangSmith holds a copy, is never in the call path, and the upload does nothing but print one line when `LANGSMITH_API_KEY` is not set. `.env.example` lists the one variable, `LANGSMITH_API_KEY`. If the API call fails, the command prints one line and exits 1; run it again to finish.
+An optional viewer for bake-offs and prompt changes. The results JSON is the source of truth. LangSmith holds a copy, is never in the call path, and the upload does nothing but print one line when `LANGSMITH_API_KEY` is not set. `.env.example` lists the one variable, `LANGSMITH_API_KEY`. If the API call fails, the command prints one line and exits 1; run it again to finish.
+
+`make eval` sends each run when the key is set (`--no-upload` skips it). To send a results file that already exists, or to finish an upload that failed:
 
 ```
-make eval-upload RUN=evals/results/<run>.json
+make langsmith                                  # the newest file in evals/results
+make langsmith RUN=evals/results/<run>.json     # a named one
 ```
 
 **What goes up**
 - Dataset `summit-air-scenarios`: one example per scenario id, with the persona, the tags (`flow:booking`, `difficulty:rigorous`, `trait:stutter`) and the difficulty. A new run adds missing scenarios and updates changed ones; it never duplicates.
-- One experiment per run, named `<stack>-<profile>-<suite>-<run id>`, with metadata for stack, profile, suite, prompt-and-scenario hash and run id. Each scenario is one run inside it, carrying the transcript, tool calls, outcome (pass, fail or error), must-pass failures and call id.
-- Six scores on every scenario: `passed` (0 or 1; an `error` outcome gets `errored` = 1 instead, so it never counts as a fail), `must_pass_failed` (0 or 1), `grader_score` (1 to 5), `reply_delay_p50_ms`, `reply_delay_p90_ms` and `cost_usd`.
+- One experiment per run, named by the run id (`<time>-<stack>-<profile>-<suite>`, so they sort by time), linked to the dataset. Its metadata is `stack`, `profile`, `model`, `suite`, `hash` (prompts, scenarios and model profile), `prompt_hash` (the agent's prompt files alone) and `run_id`. Each scenario is one run inside it, linked to its dataset example, carrying the transcript, tool calls, the code checks that ran, outcome (pass, fail or error), must-pass failures and call id. Runs are tagged for filtering: `stack:`, `profile:`, `suite:`, `outcome:`, `flow:`, `difficulty:`, `trait:`. An `error` run is marked as errored in LangSmith.
+- Scores (feedback) on every scenario, each with the reason as a comment when it is not a plain pass:
+  - `passed`: 1 or 0. An `error` outcome gets `errored` = 1 instead, so it never counts as a fail.
+  - `must_pass_failed`: 1 when a must-pass rule broke.
+  - `check:<name>`: 1 or 0 for each code check the scenario ran (`check:booking`, `check:read_back`, `check:safety_lines`, and so on). Not sent for an `error` run.
+  - `grader_score`: the LLM grader's 1 to 5 for how the call felt.
+  - `reply_delay_p50_ms` and `reply_delay_p90_ms`: the median and slowest-10% wait between the caller finishing and the agent's first word, over the scenario's turns.
+  - `cost_usd`: agent, simulated caller and grader tokens for the scenario.
 - Uploading the same file again changes nothing: runs and scores have fixed ids, so a repeat replaces what is there. An upload that stopped halfway is finished by running it again, including scores for runs that already exist.
 - A scenario's end time is set only when the results file has `duration_ms` for it; without it the run has no end time rather than a zero-length one.
+- Files written before `checks`, `prompt_hash` and `model` existed still upload; they just lack those scores and fields.
 
 **What stays local**
 - The results files, `baseline.json` and the ratchet. A LangSmith outage or a lapsed free plan (5,000 traces a month, 14-day retention) cannot fail `make check`.
@@ -105,11 +117,31 @@ make eval-upload RUN=evals/results/<run>.json
 - Live calls. Nothing from the call path is traced.
 - Transcripts do go up. They come from simulated callers with made-up details, so upload only runs made by the harness, never recordings of real calls.
 
-**Comparing a bake-off**
-1. Run the same suite for each setup, for example `make eval SUITE=standard STACKS=livekit,retell`, and upload each results file.
-2. In LangSmith open Datasets & Experiments, then `summit-air-scenarios`, then Experiments. Tick the experiments to compare and choose Compare.
-3. Rows are scenarios and columns are experiments. Filter on `passed` = 0 or `must_pass_failed` = 1 to see where setups split (and on `errored` = 1 for runs with no verdict), and sort on `reply_delay_p90_ms` or `cost_usd` for the speed and cost side.
-4. Compare experiments from the same suite only; the metadata `hash` shows whether the prompts and scenarios behind two runs matched.
+### Reading the results in LangSmith
+
+**Where to click**
+1. Open LangSmith, then Datasets & Experiments, then the dataset `summit-air-scenarios`. The Examples tab is the scenario list; the Experiments tab has one row per run.
+2. The experiment table shows the average of each score across the run. `passed` is the pass rate; `must_pass_failed` should be 0; `cost_usd` is the average per scenario.
+3. Open one experiment to see its scenarios. Click a row for the transcript and tool calls, and open a score's comment for its reason (for a failed `passed`, the failed checks; for `grader_score`, the grader's notes).
+4. To find what broke: filter on `passed` = 0 for real failures, `errored` = 1 for runs with no verdict (a harness or caller problem, not the agent), or `must_pass_failed` = 1 for the rules that block a release. The tags narrow it further, for example `flow:safety`.
+
+**What each score means**
+
+| Score | Good | Read it as |
+|---|---|---|
+| `passed` | 1 | The code checks and the grader both passed. The grader can fail a call the checks passed, never rescue one they failed. |
+| `errored` | absent | The run produced no verdict. Left out of pass rates. |
+| `must_pass_failed` | 0 | A safety, injection, commercial, out-of-area or read-back rule broke. One is enough to fail a release. |
+| `check:<name>` | 1 | One code check, read from the tool server's record of the call. The name says which rule: `check:read_back` is "no booking before the address and phone were read back". |
+| `grader_score` | 4 or 5 | How the call felt. Below 3 usually comes with a grader note about tone, repeated questions or a promise the call never set up. |
+| `reply_delay_p50_ms`, `reply_delay_p90_ms` | lower | The typical wait and the slow turns. On the `livekit` stack this is the model's time to first word plus tool time; on `retell` it is the whole chat reply, so compare delay across stacks only with that in mind. |
+| `cost_usd` | lower | Tokens at the prices in `config/models.yaml`. |
+
+**Comparing two runs side by side**
+1. Run the same suite twice (for example before and after a prompt change, or `make eval SUITE=smoke STACKS=livekit,retell`). Both runs must be the same suite, so they cover the same examples.
+2. In Datasets & Experiments, open `summit-air-scenarios` and its Experiments tab. Tick the two experiments and choose Compare.
+3. Rows are scenarios and columns are experiments, each showing its scores. Sort or filter on `passed` to see the scenarios where the two split, and on `reply_delay_p90_ms` or `cost_usd` for speed and cost.
+4. Check the metadata before trusting a comparison. The same `hash` means the prompts, scenarios and model profile were identical, so any difference is run-to-run noise (a single smoke run is 8 scenarios, so expect a flip or two). A different `prompt_hash` with the same suite means the prompt is what changed. `model` shows which model ran.
 
 ## Must-pass cases
 

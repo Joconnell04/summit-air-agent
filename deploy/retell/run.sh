@@ -14,7 +14,9 @@ case "$1" in
       exec uv run uvicorn --factory --host 127.0.0.1 --port 8102 voice.retell.bridge:create_app ;;
   eval-mock)
     test -f "$DATA/eval_mock.db" || uv run python -m servicetitan_mock.seed --db "$DATA/eval_mock.db"
-    ST_MOCK_DB="$DATA/eval_mock.db" \
+    # Only this process allows POST /debug/reset (the eval harness rebuilds the seeded world with it
+    # before each Retell scenario); the shared mock on 8101 never sets the flag.
+    ST_MOCK_DB="$DATA/eval_mock.db" ST_MOCK_ALLOW_RESET=1 ST_MOCK_RESET_TOKEN="$SUMMIT_EVAL_TOKEN" \
       exec uv run uvicorn --factory --host 127.0.0.1 --port 8111 servicetitan_mock.app:create_app ;;
   eval-tools)
     FSM_BASE_URL=http://127.0.0.1:8111 TOOL_DB="$DATA/eval_tools.db" DEBUG_TOKEN="$SUMMIT_EVAL_TOKEN" \

@@ -319,3 +319,15 @@ def run_checks(must: list[dict], ev: Evidence, prohibitions_only: bool = False) 
             continue
         failures += [f"{name}: {p}" for p in CHECKS[name].run(arg, ev)]
     return failures
+
+
+def check_names(must: list[dict], prohibitions_only: bool = False) -> list[str]:
+    """The names of the checks run_checks evaluates for these `must` entries, once each, in order."""
+    names: list[str] = []
+    for item in must:
+        (name, arg), = item.items()
+        if prohibitions_only and not CHECKS[name].prohibits(arg):
+            continue
+        if name not in names:
+            names.append(name)
+    return names

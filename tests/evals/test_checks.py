@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from evals.checks import CHECKS, Evidence, run_checks, safety_config
+from evals.checks import CHECKS, Evidence, check_names, run_checks, safety_config
 
 SAFETY = safety_config()
 GAS = SAFETY["kinds"]["gas"]["lines"]
@@ -170,6 +170,12 @@ def test_prohibitions_only_skips_checks_that_need_the_call_to_finish():
     assert run_checks(must, Evidence(t, SAFETY), prohibitions_only=True) == [
         "booking: 2 booking(s) made, expected none"
     ]
+
+
+def test_check_names_lists_each_check_once_in_order():
+    must = [{"booking": "none"}, {"flag": "person"}, {"booking": "none"}]
+    assert check_names(must) == ["booking", "flag"]
+    assert check_names(must, prohibitions_only=True) == ["booking"]
 
 
 def test_run_checks_prefixes_each_failure_with_its_check():
