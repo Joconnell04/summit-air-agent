@@ -7,6 +7,8 @@ values chosen here are Retell's own dials; voice/retell/README.md says why each 
 it is.
 """
 
+from voice.names import Names
+
 # Our model ids to Retell's names for the same models (create-retell-llm, model enum).
 RETELL_MODELS = {
     "claude-haiku-5-5": "claude-5.5-haiku",
@@ -119,8 +121,12 @@ def llm_body(specs: list[dict], base_url: str, model_id: str) -> dict:
     }
 
 
-def agent_body(llm_id: str, base_url: str, voice_id: str, voice_model: str) -> dict:
-    return {
+def agent_body(
+    llm_id: str, base_url: str, voice_id: str, voice_model: str, names: Names | None = None
+) -> dict:
+    """The tenant's local names (voice/names.py) go in Retell's own fields: boosted keywords for
+    hearing them, a pronunciation dictionary for saying them."""
+    body = {
         "agent_name": AGENT_NAME,
         "response_engine": {"type": "retell-llm", "llm_id": llm_id},
         "voice_id": voice_id,
@@ -129,6 +135,10 @@ def agent_body(llm_id: str, base_url: str, voice_id: str, voice_model: str) -> d
         "webhook_events": CALL_EVENTS,
         **SPEECH,
     }
+    if names and names.names:
+        body["boosted_keywords"] = SPEECH["boosted_keywords"] + names.keyterms()
+        body["pronunciation_dictionary"] = names.retell_dictionary()
+    return body
 
 
 def chat_agent_body(llm_id: str, base_url: str) -> dict:

@@ -49,6 +49,20 @@ Values live in `config/models.yaml` under `voice`, all ASSUMED starting points f
 
 The clips play on a separate audio track (`BackgroundAudioPlayer`), not through the session's speech queue: the earlier practice agent queued its filler line as speech, and the real reply waited 7 to 10 s behind it. Re-record after changing a clip's text: `uv run --env-file .env python -m voice.livekit.clips`.
 
+## Local names
+
+`tenants/<tenant>/names.yaml` lists the street and neighborhood names locals say differently from their spelling (Houston Street is HOW-stun; docs/explorations/011-local-pronunciation.md). `voice/names.py` reads it for every voice stack. Here it feeds two things:
+
+- **Saying them:** a Cartesia pronunciation dictionary, whose id is passed as `pronunciation_dict_id`. Cartesia swaps the names inside its own service, so the server's text, the read-back included, is stored as written. Matching is case-sensitive on `sonic-3`, so `match` lists each spelling the server or Deepgram writes. After editing the list: `uv run --env-file .env python -m voice.names push`, which creates or updates the dictionary and saves its id in the file.
+- **Hearing them:** each name's `written` spelling as a Deepgram keyterm (15 of the 100 allowed). Keyterms cost $0.0013 a minute on top of streaming, about $12 a month at 150 two-minute calls a day (SOURCE: deepgram.com/pricing; volume ASSUMED, docs/brief.md).
+
+**Clip test** (`uv run --env-file .env python -m voice.livekit.name_clips OUT_DIR`; 30 clips, each name in a read-back sentence without and with the dictionary, every clip transcribed back with Nova-3 with and without keyterms; about $0.09 of Cartesia and a few cents of Deepgram, ASSUMED from list prices). The clips from the first run are outside git in `data/name-clips/` of the main checkout. MEASURED on that run:
+
+- The dictionary works with the Cartesia-Version the plugin sends on speech (2025-04-16), although the dictionary itself must be created with 2026-08-14. The transcripts moved toward the local reading for Schermerhorn ("Skermerhorn"), Todt Hill ("Tote Hill"), Arrochar ("a brochure", uh-ROH-sher), Van Wyck ("Van Wyke" became "Van Wyck") and Cortelyou. No version change in the worker.
+- Without keyterms, Deepgram spelled 7 of 15 plain clips and 8 of 15 dictionary clips right; with keyterms, 15 of 15 and 14 of 15. The miss is Todt Hill said TOHT, heard as "Tote Hill" even with the keyterm, so a caller who says it that way may get a read-back of the wrong spelling and has to correct it.
+- Four dictionary clips (Houston Street, Kosciuszko, Schermerhorn, Conselyea) ran 1.0 to 1.5 s longer than the plain ones; listen for a pause around the name.
+- A transcript can't tell HOW-stun from HYOO-stun, so whether each name sounds right is a listening check, not this test. The clips are clean synthetic audio, not phone audio.
+
 ## Calls Summit Air makes (journey 12)
 
 The worker never decides to dial. The tool server's jobs queue the calls (earlier openings, requested callbacks) and check the rules when a call is claimed (spec S-42; docs/tools.md, `/outbound/claim`). `outbound.py` runs beside the worker: every `CLAIM_EVERY_S` it claims the next call, only while a line is free under the capacity cap, and dispatches the worker into a room named by the claim's `call_id` with the claim as metadata. The worker then starts the call with `direction: outbound`, dials through the LiveKit outbound trunk (`LIVEKIT_OUTBOUND_TRUNK_ID`) with answering-machine detection, and reports `/outbound/{id}/done`: a person hears the server's `opening_line` and the normal conversation follows; a voicemail greeting gets the tenant's one voicemail line.

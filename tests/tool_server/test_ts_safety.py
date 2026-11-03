@@ -3,12 +3,12 @@
 import itertools
 
 import pytest
-import yaml
 from toolkit import TENANT_DIR, UNKNOWN, book, count, first_open, ready_to_book
 
 from app import safety
+from app.tenant import load_agent
 
-CFG = yaml.safe_load((TENANT_DIR / "agent.yaml").read_text())["safety"]
+CFG = load_agent(TENANT_DIR)[0]["safety"]
 GAS_LINES = " ".join(CFG["kinds"]["gas"]["lines"].split())
 CO_LINES = " ".join(CFG["kinds"]["co"]["lines"].split())
 

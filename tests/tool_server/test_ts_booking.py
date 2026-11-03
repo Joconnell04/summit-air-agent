@@ -6,7 +6,6 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
 
 import pytest
-import yaml
 from toolkit import (
     DETAILS,
     TENANT_DIR,
@@ -21,8 +20,9 @@ from toolkit import (
 from app import lifecycle
 from app.db import iso
 from app.lifecycle import sounds_commercial
+from app.tenant import load_agent
 
-AGENT = yaml.safe_load((TENANT_DIR / "agent.yaml").read_text())
+AGENT = load_agent(TENANT_DIR)[0]
 
 FULL_DAY = {"date": "2026-11-04", "window": "morning"}  # nearly-full day: no normal slots
 ONE_LEFT = {"date": "2026-11-05", "window": "afternoon"}  # exactly one normal slot open
