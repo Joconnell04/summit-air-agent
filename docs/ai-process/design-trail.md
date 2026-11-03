@@ -41,3 +41,4 @@ How the design was reached, in order, so a reader can follow each choice back to
 | Eval floor waits for the real prompts | Set from the first standard-suite run on the real prompts, rounded down to the nearest 5%, ratchet up only | DECISIONS.md 011, #27 |
 | Owner view stories | Rebuilt for a non-technical owner: ten stories on three pages (Today, Call, Results), technical detail behind a toggle | DECISIONS.md 012, #40 |
 | Owner view design direction | Day timeline mixed with the dispatch desk tables; two versions drawn to choose between | DECISIONS.md 013, #45 |
+| Owner view: dispatch board | Version A chosen; decluttered board, no metric cards, filters, Public Sans, a full design system | DECISIONS.md 014, #53 |
