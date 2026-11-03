@@ -388,8 +388,10 @@ def test_after_the_lines_each_caller_line_reminds_the_agent_not_to_book(agent):
     assert "Don't offer a visit" in server_notes(after["data"]["hints"])[0]
 
 
-def test_the_sign_off_suits_a_caller_who_is_alone():
-    assert "get everyone" not in CFG["sign_off"]
+def test_the_sign_off_suits_a_caller_who_is_alone_and_recommends_rather_than_orders():
+    sign_off = " ".join(CFG["sign_off"].split())
+    assert "everyone" not in sign_off
+    assert sign_off.startswith("For your safety, I'd recommend hanging up now, getting outside")
 
 
 def test_a_caller_saying_goodbye_after_the_sign_off_does_not_hear_it_again(agent):

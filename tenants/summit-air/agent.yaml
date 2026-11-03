@@ -121,11 +121,12 @@ safety:
   # A plain denial in the answer to a check question is a no, even with a yes word in it
   # ("definitely not gas"). An unsure word in the same answer still counts as a yes.
   denials: [not gas, no gas, isnt gas, definitely not, not a gas, no smell of gas]
-  # Said when the agent wants to end a safety call: it signs off rather than hangs up. "Get outside",
-  # not "get everyone outside": by the sign-off the caller may have said they're alone.
+  # Said when the agent wants to end a safety call: it signs off rather than hangs up. A polite
+  # recommendation, and "getting outside", not "everyone": by the sign-off the caller may have said
+  # they're alone. Signed off by Jackson (call-journeys r4).
   sign_off: >-
-    Please hang up now, get outside, and call 911 from there. We'll follow up once
-    you're safe.
+    For your safety, I'd recommend hanging up now, getting outside, and calling 911 from there.
+    We'll follow up once you're safe.
   flag_reason: "{label} reported on the call"
 
 # A caller line that describes a business marks the call commercial: it can't book (spec S-05,
