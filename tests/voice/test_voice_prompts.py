@@ -82,3 +82,5 @@ def test_instructions_keep_the_fixes_from_the_must_pass_reliability_round(agent)
     assert "A caller who threatens to hang up hasn't" in text
     assert "without asking the caller's permission or mentioning it" in text
     assert "No follow-up, referral or advice." in text
+    assert "An out-of-area caller gets no lead." in text
+    assert "don't bring up gas safety yourself" in text

@@ -11,6 +11,7 @@ Run with --update to raise the test baseline after adding tests, and with
 """
 
 import json
+import math
 import subprocess
 import sys
 from pathlib import Path
@@ -115,7 +116,14 @@ def adopt(path: str, baseline: dict, root: Path = ROOT, scenarios=None) -> tuple
         return False, "refusing to adopt a run with fewer scenarios than the floor"
     baseline["eval_results"] = path
     baseline["min_eval_scenarios"] = len(run.scenarios)
-    return True, f"eval reference is now {path} ({len(run.scenarios)} scenarios)"
+    # The pass rate rounded down to the nearest 5% absorbs a noisy call or two (DECISIONS.md 011).
+    rate = run.pass_rate() or 0.0
+    floor = math.floor(round(rate * 100, 6) / 5) * 5 / 100
+    baseline["min_eval_pass_rate"] = max(floor, baseline.get("min_eval_pass_rate") or 0.0)
+    return True, (
+        f"eval reference is now {path} ({len(run.scenarios)} scenarios, pass rate {rate:.0%}, "
+        f"floor {baseline['min_eval_pass_rate']:.0%})"
+    )
 
 
 def main() -> int:

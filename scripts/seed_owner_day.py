@@ -25,13 +25,16 @@ from servicetitan_mock.seed import build_world
 ROOT = Path(__file__).resolve().parents[1]
 TENANT_DIR = ROOT / "tenants" / "summit-air"
 DIALED = "(646) 624-0418"
-# The real eval gate runs on owner drafts (paid, $0.39 and $0.38 MEASURED): each draft and its result
-# become a version on the Rules page, so the demo shows checked versions without a live run.
-# Each entry is the gate run, its rerun of the scenarios that missed (None for the runs made before
-# the gate had one), the note and the time it was saved.
+# The real eval gate runs on owner drafts (paid, $0.39, $0.38 and $0.38 MEASURED): each draft and its
+# result become a version on the Rules page, so the demo shows checked versions without a live run.
+# Each entry is the gate run, its rerun of the scenarios that missed (None when nothing missed, or
+# for the runs made before the gate had one), the note and the time it was saved. The third is the
+# second's edit sent again after the must-pass fixes (evals/rounds/reliability-01.md): it was the
+# scenarios and the prompt that failed, not the edit.
 GATE_RUNS = [
     ("20261103-193944-livekit-fast-gate.json", None, "Ask about pets; clear a path", time(14, 10)),
     ("20261103-200110-livekit-fast-gate.json", None, "Clear a path only", time(15, 40)),
+    ("20261103-225314-livekit-fast-gate.json", None, "Clear a path, checked again", time(16, 50)),
 ]
 NEW_YORK = ZoneInfo("America/New_York")
 DETAILS = {
