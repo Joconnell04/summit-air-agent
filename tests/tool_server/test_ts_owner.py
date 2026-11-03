@@ -129,7 +129,7 @@ def test_bookings_show_window_priority_reasons_and_the_earlier_slot_search(agent
     assert book(agent, call, tomorrow, job_type="no_heat", inside_temp_f=52)["ok"]
     urgent, routine = page(agent)["bookings"]
     assert urgent["priority"] == "Urgent"
-    assert "someone at home who would struggle" in urgent["reasons"]
+    assert "an older person or a baby at home" in urgent["reasons"]
     assert "below 55 F inside" in urgent["reasons"]
     assert urgent["window"]["day"] == "tomorrow" and urgent["window"]["label"] == "8 to 12"
     assert urgent["seek_earlier"] is True and urgent["offer"] is None
@@ -269,6 +269,22 @@ def test_a_zip_asked_about_on_a_call_that_booked_is_not_out_of_area_demand(agent
     agent.end(call, "agent_end")
     out_of_area(agent, 2, "07030")
     assert page(agent)["out_of_area"] == [{"zip": "07030", "calls": 1}]
+
+
+def test_a_zip_asked_about_before_a_drop_is_not_demand_when_the_call_back_booked(agent, clock):
+    first = agent.start(caller(1))["data"]["call_id"]
+    agent.turn(first, "Do you go out to Hoboken? That's my mom's place.")
+    agent.tool("check_service_area", first, zip="07030")
+    agent.end(first, "dropped")
+    clock.advance(minutes=1)
+    started = agent.start(caller(1))["data"]
+    assert started["linked_call"]["call_id"] == first
+    second = started["call_id"]
+    agent.turn(second, "Sorry, we got cut off. I need a tune-up at my place.")
+    agent.confirm_read_back(second, in_area_address())
+    assert book(agent, second, first_open(agent, second))["ok"]
+    agent.end(second, "agent_end")
+    assert page(agent)["out_of_area"] == []
 
 
 def test_safety_overrides_and_refused_tool_calls_are_counted(agent):

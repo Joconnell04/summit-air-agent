@@ -5,10 +5,14 @@ import json
 import sqlite3
 from datetime import datetime
 
+from . import capacity
 from .db import iso, parse_iso
 from .fsm import FsmAdapter, FsmRejected
 from .tenant import Tenant
 from .text import phone_display, street_key, unit_key
+
+# Tries at naming a technician for one window when others book the same window at the same moment.
+BOOKING_ATTEMPTS = 4
 
 
 def same_address(location: dict, address: dict) -> bool:
@@ -78,18 +82,39 @@ def send(fsm: FsmAdapter, tenant: Tenant, request: dict, key: str) -> dict:
     if message:
         raise FsmRejected(422, "customer_type_not_supported", message)
     job_type = tenant.job_types[request["job_type"]]
-    job = fsm.create_job(
-        f"{key}:job",
-        customer["id"],
-        location_id,
-        job_type["businessUnitIds"][0],
-        job_type["id"],
-        request["priority"],
-        tenant.fsm["campaign_id"],
-        job_summary(request),
-        parse_iso(request["window_start"]),
-        parse_iso(request["window_end"]),
-    )
+    unit = job_type["businessUnitIds"][0]
+    start, end = parse_iso(request["window_start"]), parse_iso(request["window_end"])
+    # An earlier attempt may have made the job and lost the answer; ServiceTitan would book twice.
+    job = fsm.find_job(customer["id"], f"{key}:job")
+    for attempt in range(1, BOOKING_ATTEMPTS + 1):
+        if job is not None:
+            break
+        # ServiceTitan's capacity is advisory, so look again right before booking, and apply the
+        # company's rules to who may take the window (app/capacity.py).
+        technician = capacity.pick_technician(
+            tenant, fsm.capacity(start, end, unit, job_type["id"]), start, end, request["priority"]
+        )
+        if technician is None:
+            raise FsmRejected(409, "slot_taken", "No technician may take that window.")
+        try:
+            job = fsm.create_job(
+                f"{key}:job",
+                customer["id"],
+                location_id,
+                unit,
+                job_type["id"],
+                request["priority"],
+                tenant.fsm["campaign_id"],
+                job_summary(request),
+                start,
+                end,
+                [technician],
+            )
+        except FsmRejected as exc:
+            # Someone else just took that technician. Look again: another may still be free, and
+            # only a window with no one left is a taken slot.
+            if exc.code != "slot_taken" or attempt == BOOKING_ATTEMPTS:
+                raise
     return {
         "customer_id": customer["id"],
         "job_id": job["id"],

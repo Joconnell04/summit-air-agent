@@ -1,5 +1,10 @@
 # Build review: what needs Jackson
 
+## Status after Jackson's answers
+
+Done and merged: #26 and #27 decided (DECISIONS.md 010 and 011); Healthchecks.io monitor live; the four fixes (reply delay cause found and fixed offline, ages and broad risk groups, out-of-area at start, first eval run on the real prompts: smoke 7 of 8); the residence check in every read-back; out-of-area demand fixed; temperature brackets with live outside temperature; Retell eval mock reset; LangSmith scores and metadata; a deploy bug that had been wiping the server's crontab. Notes for the owner in docs/client-notes.md. In progress: matching the mock to ServiceTitan's real field names, with the #26 callback outcome built on call tags. Open for Jackson: #32 (cost in its readout), the eval co-authoring questions (docs/explorations/008-eval-set-quality.md), the live calls (evals/live-calls.md).
+
+
 Everything the six build lanes left open, in one place: questions to answer, things only a person can do, and things worth a look. Gathered from every lane's pull request, the decision readouts, the eval lane's smoke-run notes and the open issues. Written at the end of phase 2 (docs/ai-process/phases.md).
 
 ## Where things stand

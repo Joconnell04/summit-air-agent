@@ -6,7 +6,7 @@ Branch: `joco/summit-air-owner-view-7aab0a`. Depends on brief 06 (the owner view
 
 Rebuild the owner view for the person who runs Summit Air: someone who knows HVAC and ServiceTitan well, and has never read a log. Brief 06 built a page for an engineer. This one keeps every number brief 06 computes and shows them the way a dispatcher reads a day.
 
-Read first: CLAUDE.md, DECISIONS.md 012 to 014, docs/decisions/40-owner-view-stories.md (the ten stories, O-1 to O-10), docs/decisions/45-owner-view-design-direction.md, docs/explorations/008-revin-brand-and-servicetitan-ui.md, docs/users.md (owner, dispatcher). The design canvas (version A, "Dispatch board") is the reference: https://claude.ai/artifact/MFSZ4p6oo871gh7U2Ss8hL.
+Read first: CLAUDE.md, DECISIONS.md 014 to 016, docs/decisions/40-owner-view-stories.md (the ten stories, O-1 to O-10), docs/decisions/45-owner-view-design-direction.md, docs/explorations/009-revin-brand-and-servicetitan-ui.md, docs/users.md (owner, dispatcher). The design canvas (version A, "Dispatch board") is the reference: https://claude.ai/artifact/MFSZ4p6oo871gh7U2Ss8hL.
 
 ## Scope
 
@@ -18,7 +18,7 @@ Read first: CLAUDE.md, DECISIONS.md 012 to 014, docs/decisions/40-owner-view-sto
 
 ## Not in scope
 
-Call recordings (O-6's audio): none are stored today, and DECISIONS.md 012 says this is the first cut if time runs short. The page says the recording isn't kept. Recorded in docs/later.md.
+Call recordings (O-6's audio): none are stored today, and DECISIONS.md 014 says this is the first cut if time runs short. The page says the recording isn't kept. Recorded in docs/later.md.
 
 ## Done when
 

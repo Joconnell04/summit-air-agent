@@ -6,6 +6,7 @@ import sqlite3
 from datetime import datetime, time, timedelta
 
 from .db import iso, parse_iso
+from .settings import TAG_RETRY_MINUTES
 from .tenant import Tenant
 from .text import phone_key
 
@@ -35,6 +36,24 @@ def thread(conn: sqlite3.Connection, call_id: str) -> list[str]:
     return ids
 
 
+def thread_both_ways(conn: sqlite3.Connection, call_id: str) -> list[str]:
+    """The call's thread plus any later calls linked back to it (a caller who called back)."""
+    ids = thread(conn, call_id)
+    frontier = list(ids)
+    while frontier:
+        later = [
+            r["id"]
+            for r in conn.execute(
+                f"SELECT id FROM calls WHERE linked_call_id IN ({','.join('?' * len(frontier))})",
+                frontier,
+            )
+            if r["id"] not in ids
+        ]
+        ids += later
+        frontier = later
+    return ids
+
+
 def scoped_customers(conn: sqlite3.Connection, call_id: str) -> dict[int, sqlite3.Row]:
     """Customers matched on this call or its thread. Every customer read and write is limited to
     these (spec S-39)."""
@@ -61,6 +80,19 @@ def caller_turn_after(conn: sqlite3.Connection, call_id: str, seq: int) -> bool:
             "SELECT 1 FROM turns WHERE call_id = ? AND speaker = 'caller' AND seq > ?",
             (call_id, seq),
         ).fetchone()
+    )
+
+
+def agent_said(conn: sqlite3.Connection, call_id: str, line: str) -> bool:
+    """Whether an agent turn on this call's thread already contained the line."""
+    ids = thread(conn, call_id)
+    return any(
+        line in r["text"]
+        for r in conn.execute(
+            f"SELECT text FROM turns WHERE speaker = 'agent' AND call_id IN "
+            f"({','.join('?' * len(ids))})",
+            ids,
+        )
     )
 
 
@@ -242,14 +274,20 @@ def record_attempt(conn: sqlite3.Connection, callback_id: int, now: datetime) ->
 
 
 def mark_overdue(conn: sqlite3.Connection, tenant: Tenant, now: datetime) -> list[int]:
-    """Flag every pending callback whose time has passed (spec S-32). One the system is about to
-    dial is left to the dial, which hands it to a person if it fails (app/outbound.py)."""
+    """Flag every pending callback whose time has passed (spec S-32). One the system is dialing is
+    left to the dial, which hands it to a person if it fails, and so is one it answered whose call
+    has not been judged yet, or was judged resolved with the tag still on its way (app/outbound.py)."""
+    tag_cutoff = iso(now - timedelta(minutes=TAG_RETRY_MINUTES))
     due = conn.execute(
         "SELECT c.* FROM callbacks c JOIN calls k ON k.id = c.call_id WHERE k.tenant = ? "
         "AND c.status = 'pending' AND c.due_at < ? AND NOT EXISTS "
-        "(SELECT 1 FROM outbound o WHERE o.callback_id = c.id "
-        "AND o.status IN ('waiting', 'queued', 'dialing'))",
-        (tenant.slug, iso(now)),
+        "(SELECT 1 FROM outbound o WHERE o.callback_id = c.id AND ("
+        "o.status IN ('waiting', 'queued', 'dialing') "
+        "OR (o.status = 'done' AND o.result = 'answered' AND NOT EXISTS "
+        "(SELECT 1 FROM call_outcomes x WHERE x.outbound_id = o.id)) "
+        "OR EXISTS (SELECT 1 FROM call_outcomes x WHERE x.outbound_id = o.id "
+        "AND x.outcome = 'resolved' AND x.tagged = 0 AND x.created_at >= ?)))",
+        (tenant.slug, iso(now), tag_cutoff),
     ).fetchall()
     for row in due:
         conn.execute(
@@ -269,13 +307,15 @@ def mark_overdue(conn: sqlite3.Connection, tenant: Tenant, now: datetime) -> lis
 
 
 def recent_calls(
-    conn: sqlite3.Connection, caller_key: str, before: datetime, minutes: int
+    conn: sqlite3.Connection, tenant: str, caller_key: str, before: datetime, minutes: int
 ) -> list[sqlite3.Row]:
+    """Calls from this number to this tenant shortly before, so a call to another company on the
+    same server is never linked or resumed."""
     since = iso(before - timedelta(minutes=minutes))
     return conn.execute(
-        "SELECT * FROM calls WHERE caller_key = ? AND started_at >= ? AND started_at < ? "
-        "ORDER BY started_at DESC",
-        (caller_key, since, iso(before)),
+        "SELECT * FROM calls WHERE tenant = ? AND caller_key = ? AND started_at >= ? "
+        "AND started_at < ? ORDER BY started_at DESC",
+        (tenant, caller_key, since, iso(before)),
     ).fetchall()
 
 

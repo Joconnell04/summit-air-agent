@@ -132,3 +132,35 @@ Changed:
 - Stale texting wording fixed in users.md, architecture.md, template.md and considerations.md.
 Commit: 897fddd
 Status: locked
+
+## spec r5 (amendment after lock: build review)
+Feedback (verbatim, the parts this round acts on):
+> Make no heat on its own, make that rule like bracketed. So if it's like under 45, it's urgent. If it's between 45 and, or if it's 45 and under, it's urgent. If it's, or no, maybe if it's under 55 inside, it's urgent. If it's 55 to, I don't know, like 75, it's high. And if it's above 75 outside, then it's like medium or something. Look up, maybe there's like a standard for that. Let's see. But yeah, implement that stage gating if you can.
+
+> Make sure you also implement proper questioning so that if it's very vague, if it's a business or a resident that the voice agent just asks, and then maybe also make it, just throw in like a confirmation question, like, and just confirm this is a residence or individual household or something like that, right? That way we can satisfy the assignment's bullet point on that.
+
+> And figure out a fix to the and as if the caller only asks about but doesn't live there still counts towards the out of area demand.
+
+> regarding the number two about the I'm 84 years old, review the assignment text and don't take that example so literally. It should just be like compromising individual or situation for a family or something and issue, you know, that elevates priority, not strictly old and no heating. You know, there's other situations, so maybe we can ideate like some way to like consistently serve proper priority.
+Changed:
+- S-21: temperature brackets set where a no-heat or no-cooling call starts (no heat: below 55 F inside Urgent, below 65 F High, warm inside with cold outside or tonight High, otherwise Normal; no cooling: above 85 F Urgent, 79 F or more High, 80 F or more outside High, otherwise Normal; unknown fails safe to High). Cutoffs come from the sourced bands in exploration 007 rather than the 45/55/75 first guess, all ASSUMED in tenant config. Outside temperature is read hourly from the National Weather Service (app/weather.py), never during a turn.
+- S-21: "vulnerable" read broadly: older adults (65, CDC; however the age is said), infants, medical equipment, bedbound, symptoms now and indoor oven or generator heating are Urgent; young children, a parent of unknown age, limited mobility, living alone, chronic illness, dementia, pregnancy, recovering from surgery, and frozen pipes are High, and two of those together are Urgent. On a mild day the Urgent ones raise to High.
+- S-07: the agent asks once when home or business is unclear, and the read-back sentence names the address as the caller's home, so every booking confirms it; a caller who says it's a business can't book.
+- S-28: a known caller whose every address on file is out of area is counted at the start of the call; a call that booked a visit isn't counted toward out-of-area demand.
+Not changed: the carbon monoxide check question on oven or generator heating (exploration 007's suggestion) would change the safety list in docs/users.md, so it is left as an open question.
+Status: open
+
+## spec r6 (amendment after lock: telling the caller about urgency)
+Feedback (verbatim):
+> Make sure that when like that vulnerable situation is identified, that it is mentioned to the user that their case has been put or labeled as like the highest urgency ones. And then you just don't mention urgency for when it's not that. Or give them reassurance without saying you labeled it urgent. Maybe just say you labeled it high urgency.
+Changed:
+- S-21a: when the server marks a call Urgent, `find_slots` opens its sentence once per call with the tenant line "I've marked this as one of our most urgent calls, so you get our soonest opening." Below Urgent nothing names a priority; the prompt (prompts/tool-use.md) says to reassure without a label. The line comes from the server, so the model can't overstate it.
+Status: open
+
+## agent voice r1 (callback opening line)
+Feedback (verbatim): Jackson picked option A on the #49 readout ("A. Ask by name (Recommended)").
+Changed:
+- `callback_opening` in tenants/summit-air/agent.yaml: "Hi, this is Summit Air calling back for {first_name}. Is that you?" so a yes confirms the person (DECISIONS.md 010, 013).
+- New `callback_opening_unknown` keeps the old line for a caller with no single first name on file, so the opening never guesses between people.
+Commit: 34dcda1
+Status: open

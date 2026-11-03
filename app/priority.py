@@ -1,6 +1,9 @@
-"""The priority engine: a job type's base priority, raised by rules from tenant config.
+"""The priority engine: a starting level from the job type and the temperature brackets, raised by
+rules from tenant config (docs/explorations/007-priority-brackets.md).
 
-Rules and the side model can only raise priority (spec S-21). The agent passes facts (the inside
+The brackets set where a no-heat or no-cooling call starts, from the inside temperature the caller
+gives and the outside temperature now and tonight. Rules and the side model then can only raise
+it (spec S-21). The agent passes facts (the inside
 temperature, who is home) and the server also reads every caller line on the call, so a priority
 the agent asks for is logged but never used on its own: the model asks, the server decides.
 """
@@ -36,6 +39,8 @@ class Facts:
     text: str = ""  # every caller line on the call, plus what the agent passed
     inside_temp_f: float | None = None
     safety_signal: bool = False
+    outside_now_f: float | None = None
+    outside_coldest_f: float | None = None  # the lower of now and the next 12 hours
 
 
 @dataclass
@@ -86,11 +91,52 @@ def _rule_fires(rule: dict, facts: Facts) -> bool:
     return False
 
 
+def _bracket(facts: Facts, brackets: list[dict]) -> dict:
+    """The first bracket whose conditions all hold. Each condition is skipped when its temperature
+    is unknown only if the bracket says so (`if_unknown: match`); the last bracket has none."""
+    temps = {
+        "inside_below_f": facts.inside_temp_f,
+        "inside_at_least_f": facts.inside_temp_f,
+        "inside_above_f": facts.inside_temp_f,
+        "outside_coldest_below_f": facts.outside_coldest_f,
+        "outside_now_at_least_f": facts.outside_now_f,
+    }
+    for bracket in brackets:
+        conditions = {k: v for k, v in bracket.items() if k in temps}
+        if all(_holds(k, v, temps[k], bracket.get("if_unknown")) for k, v in conditions.items()):
+            return bracket
+    raise ValueError("the last bracket must have no conditions")
+
+
+def _holds(key: str, limit: float, value: float | None, if_unknown: str | None) -> bool:
+    if value is None:
+        return if_unknown == "match"
+    if key.endswith("_below_f"):
+        return value < limit
+    if key.endswith("_above_f"):
+        return value > limit
+    return value >= limit
+
+
 def decide(facts: Facts, cfg: dict, side_model: SideModel | None = None) -> Priority:
-    result = Priority(cfg["base"].get(facts.job_type, "Normal"))
+    brackets = cfg.get("brackets", {}).get(facts.job_type)
+    if brackets:
+        bracket = _bracket(facts, brackets)
+        result = Priority(bracket["level"], [bracket["reason"]], [f"bracket:{bracket['id']}"])
+    else:
+        result = Priority(cfg["base"].get(facts.job_type, "Normal"))
+    mild = result.level == "Normal"
+    groups = 0
     for rule in cfg["rules"]:
         if _rule_fires(rule, facts):
-            result.raise_to(rule["raise_to"], rule["id"], rule["reason"])
+            # On a mild day a household at risk is High, not Urgent: the house isn't getting
+            # dangerous, but they still go ahead of routine work.
+            level = rule.get("raise_to_when_mild", rule["raise_to"]) if mild else rule["raise_to"]
+            result.raise_to(level, rule["id"], rule["reason"])
+            groups += rule.get("group", False)
+    combine = cfg.get("combine")
+    if combine and not mild and groups >= combine["groups"]:
+        result.raise_to(combine["raise_to"], "combined", combine["reason"])
     slot = cfg.get("side_model")
     if side_model is not None and slot:
         score = side_model.score(facts.text)

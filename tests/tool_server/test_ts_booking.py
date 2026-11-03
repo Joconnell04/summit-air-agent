@@ -17,6 +17,7 @@ from toolkit import (
     ready_to_book,
 )
 
+from app import lifecycle
 from app.lifecycle import sounds_commercial
 
 AGENT = yaml.safe_load((TENANT_DIR / "agent.yaml").read_text())
@@ -219,6 +220,16 @@ def test_known_caller_with_every_location_out_of_area_is_recorded_at_start(agent
         resident["zip"],
     )
     assert recorded == 1
+
+
+def test_a_known_caller_with_several_locations_waits_for_the_calls_zip(agent):
+    away = [{"zip": "07030", "in_service_area": False}, {"zip": "10001", "in_service_area": False}]
+    conn = agent.db()
+    try:
+        lifecycle._record_known_out_of_area(conn, "multi", [{"locations": away}], agent.clock())
+    finally:
+        conn.close()
+    assert count(agent, "SELECT COUNT(*) FROM out_of_area WHERE call_id = 'multi'") == 0
 
 
 def test_out_of_area_is_refused_and_recorded_with_its_zip(agent, mock, scenarios):

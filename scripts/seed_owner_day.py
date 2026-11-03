@@ -49,10 +49,11 @@ class Clock:
 class Voice:
     """What a voice layer sends the tool server, without the voice."""
 
-    def __init__(self, app, clock: Clock):
+    def __init__(self, app, clock: Clock, mock: TestClient):
         self.client = TestClient(app)
         self.app = app
         self.clock = clock
+        self.mock = mock  # the mock ServiceTitan, to log the calls its phone system would
 
     def start(self, call_id: str, caller: str, direction: str = "inbound") -> str:
         body = {"call_id": call_id, "caller_id": caller, "dialed_number": DIALED}
@@ -354,14 +355,32 @@ def today(voice: Voice, clock: Clock, day: date, gas_lines: str, co_lines: str) 
 
 
 def office_returned(voice: Voice, call_id: str) -> None:
-    """Stands in for a person at the office marking a callback done, which has no mechanism yet
-    (decision #26, docs/decisions/26-callback-done.md)."""
-    conn = voice.app.state.services.connect()
-    conn.execute("UPDATE callbacks SET status = 'done' WHERE call_id = ?", (call_id,))
-    conn.execute(
-        "UPDATE flags SET status = 'done' WHERE call_id = ? AND kind = 'person'", (call_id,)
-    )
+    """A person at the office calls the customer back from ServiceTitan's phone system and tags the
+    call "Callback resolved". The call lands in the call log, and the callbacks job marks the
+    callback done from it (decision #26, docs/decisions/26-callback-done.md)."""
+    services = voice.app.state.services
+    conn = services.connect()
+    callback = conn.execute("SELECT phone FROM callbacks WHERE call_id = ?", (call_id,)).fetchone()
     conn.close()
+    tenant = services.tenants.default
+    logged = voice.mock.post(
+        "/debug/calls",
+        json={
+            "sid": f"office-{call_id}",
+            "direction": "Outbound",
+            "fromNumber": tenant.raw["company"]["phone"],
+            "toNumber": callback["phone"],
+            "receivedOn": voice.clock().isoformat(),
+            "durationSeconds": 240,
+            "tags": [tenant.fsm["callback_tags"]["resolved"]],
+        },
+    )
+    assert logged.status_code == 200, logged.text
+    conn = services.connect()
+    try:
+        jobs.confirm_callbacks(conn, tenant, services.fsm[tenant.slug], voice.clock())
+    finally:
+        conn.close()
 
 
 def placed_call(voice: Voice, accept: bool) -> None:
@@ -383,7 +402,13 @@ def placed_call(voice: Voice, accept: bool) -> None:
             reason="Earlier opening",
         )
     else:
-        voice.caller(call, "Thanks for calling back. I just wanted to pick a tune-up day.")
+        # The callback is about a tune-up: the person is confirmed by the read-back and the
+        # booking is the reason handled, so the call ends resolved.
+        voice.caller(call, "Thanks for calling back. I'd like to book my tune-up.")
+        voice.read_back(call, "61 Wilson Ave", "11237")
+        voice.book(call, "tune_up", voice.first_slot(call, "tune_up"), "Annual tune-up")
+        voice.agent(call, "Anything else I can help with?")
+        voice.caller(call, "No, that's it, thanks.")
     voice.end(call)
     voice.client.post(f"/outbound/{claimed['outbound_id']}/done", json={"answered": True})
 
@@ -408,12 +433,13 @@ def main() -> None:
         default_tenant="summit-air",
         jobs_interval_seconds=0,
     )
-    app = create_app(settings, clock=clock, fsm_clients={"summit-air": TestClient(mock)})
+    mock_client = TestClient(mock)
+    app = create_app(settings, clock=clock, fsm_clients={"summit-air": mock_client})
     tenant = app.state.services.tenants.default
     gas = " ".join(tenant.safety["kinds"]["gas"]["lines"].split())
     co = " ".join(tenant.safety["kinds"]["co"]["lines"].split())
 
-    voice = Voice(app, clock)
+    voice = Voice(app, clock, mock_client)
     earlier_week(voice, clock, day)
     today(voice, clock, day, gas, co)
     # make owner-demo serves the page as if it were this moment, so "now" sits on the board.

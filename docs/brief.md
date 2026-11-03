@@ -15,6 +15,6 @@ The assignment, word for word, is in `assignment.md`. This file holds how it is 
 | Call volume | About 150 calls a day, 1 to 2 at once in the busiest hour, up to about 15 at once on a bad surge morning (ASSUMED; exploration 003) | Capacity plan in docs/scaling.md scales up or down without stack changes |
 | After-hours cutoffs | Tonight if inside below 50 F or falling fast or someone at risk; first morning slot if above 55 F and holding (ASSUMED; vendor practice, exploration 005) | Edit the cutoffs in config |
 | Commercial line | Owner-occupied one or two-family house or a single co-op or condo unit is residential; three or more units, a property manager or a business is commercial (decided, call journeys round 2) | Edit the rule in config |
-| FSM | ServiceTitan, emulated by our mock with the same shapes (ASSUMED field names, servicetitan_mock/README.md) | Point the adapter at the real API; agent code doesn't change |
+| FSM | ServiceTitan, emulated by our mock with ServiceTitan's own field names (SOURCE: its OpenAPI documents, exploration 006; what the mock adds is listed in servicetitan_mock/README.md) | Point the adapter at the real API; agent code doesn't change |
 | Texting | Not required by the assignment; none in V1 (DECISIONS.md 007) | Register a business texting brand and switch confirmations on |
 | Language | English for V1; other languages later (docs/later.md) | Add Spanish through the same stack; evals add a Spanish slice |

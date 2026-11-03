@@ -1,4 +1,4 @@
-# 008. Revin brand and ServiceTitan UI patterns for the owner view
+# 009. Revin brand and ServiceTitan UI patterns for the owner view
 
 Issue: none opened yet. Researched 2026-11-02 and 2026-11-03 with WebSearch, WebFetch, curl and a local headless Chrome (no paid calls). Labels: SOURCE (URL given), MEASURED (computed style read from the live page in headless Chrome on those dates), ASSUMED (my judgment). Assets are in `docs/images/brand/`. Longer than two pages because it carries two reference tables the redesign will copy from.
 

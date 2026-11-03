@@ -135,3 +135,88 @@ def test_find_slots_returns_the_after_hours_outcome_only_after_hours(agent, cloc
         "find_slots", night["call_id"], job_type="no_heat", facts={"inside_temp_f": 60}
     )
     assert found["data"]["after_hours_outcome"] == "first_morning_slot"
+
+
+def facts(job_type, text="", inside=None, now=None, coldest=None):
+    return prio.Facts(job_type, text, inside, False, now, coldest if coldest is not None else now)
+
+
+@pytest.mark.parametrize(
+    "job_type,inside,outside,level",
+    [
+        ("no_heat", 50, 70, "Urgent"),  # below 55 inside, whatever the weather
+        ("no_heat", 60, 70, "High"),  # 55 to 64 inside
+        ("no_heat", 68, 40, "High"),  # warm inside, but cold out: the house keeps cooling
+        ("no_heat", None, 40, "High"),
+        ("no_heat", 68, 62, "Normal"),  # warm inside, mild day
+        ("no_heat", None, 62, "Normal"),
+        ("no_heat", 68, None, "High"),  # weather unknown fails safe
+        ("no_cooling", 90, 70, "Urgent"),
+        ("no_cooling", 80, 70, "High"),
+        ("no_cooling", 75, 88, "High"),
+        ("no_cooling", 75, 72, "Normal"),
+        ("no_cooling", None, None, "High"),
+    ],
+)
+def test_the_starting_level_follows_the_temperature_brackets(job_type, inside, outside, level):
+    assert prio.decide(facts(job_type, inside=inside, now=outside), CFG).level == level
+
+
+def test_tonights_low_counts_for_no_heat():
+    mild_now_cold_tonight = facts("no_heat", inside=68, now=60, coldest=45)
+    assert prio.decide(mild_now_cold_tonight, CFG).level == "High"
+
+
+def test_an_older_person_on_a_mild_day_is_high_not_urgent():
+    result = prio.decide(facts("no_heat", "my 84-year-old mother", inside=68, now=64), CFG)
+    assert result.level == "High" and "vulnerable_person" in result.rules
+
+
+@pytest.mark.parametrize(
+    "text,level",
+    [
+        ("she lives alone", "High"),
+        ("my husband has COPD and he lives alone", "Urgent"),  # two risk factors together
+        ("I'm pregnant", "High"),
+        ("my son is in a wheelchair and has diabetes", "Urgent"),
+        ("we've been using the oven to stay warm", "Urgent"),
+        ("my dad's bedridden", "Urgent"),
+        ("the pipes froze last night", "High"),
+    ],
+)
+def test_risk_groups_raise_priority_on_a_cold_day(text, level):
+    assert prio.decide(facts("no_heat", text, inside=66, now=45), CFG).level == level
+
+
+def test_two_risk_factors_on_a_mild_day_stay_below_urgent():
+    result = prio.decide(facts("no_heat", "she lives alone and has COPD", inside=68, now=64), CFG)
+    assert result.level == "High"
+
+
+def test_find_slots_reads_the_stored_outside_temperature(agent, clock):
+    conn = agent.db()
+    with conn:
+        conn.execute(
+            "INSERT INTO weather (tenant, fetched_at, now_f, low_f) VALUES ('summit-air', ?, 64, 60)",
+            (clock().isoformat(),),
+        )
+    conn.close()
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "The heat's not coming on, but it's 68 in here.")
+    found = agent.tool("find_slots", call, job_type="no_heat", facts={"inside_temp_f": 68})
+    assert found["data"]["priority"]["level"] == "Normal"
+
+
+def test_an_urgent_caller_hears_it_once_and_a_routine_caller_never_does(agent):
+    line = "one of our most urgent calls"
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "No heat, and my 84-year-old mother lives with me.")
+    first = agent.tool("find_slots", call, job_type="no_heat")
+    assert line in first["say"]
+    agent.say(call, first["say"])
+    again = agent.tool("find_slots", call, job_type="no_heat")
+    assert line not in again["say"]
+
+    routine = agent.start("(212) 555-0177")["data"]["call_id"]
+    agent.turn(routine, "I'd like my annual tune-up.")
+    assert line not in agent.tool("find_slots", routine, job_type="tune_up")["say"]

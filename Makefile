@@ -89,7 +89,7 @@ phone-setup:
 
 # Copy, install and restart everything on the summit-air server: make deploy [ENV=path/to/.env]
 deploy:
-	sh deploy/summit-air/deploy.sh $(or $(ENV),.env)
+	sh deploy/summit-air/deploy.sh $(ENV)
 
 # One real call to the agent's number from a simulated caller (a few cents)
 test-call:

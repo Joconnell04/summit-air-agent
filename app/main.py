@@ -20,7 +20,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from . import db, jobs, lifecycle, logs, outbound, owner_view, records, reports, trace
+from . import db, jobs, lifecycle, logs, outbound, owner_view, records, reports, trace, weather
 from .envelope import Refused, Result
 from .fsm import FsmUnavailable, SlotCache, make_adapter
 from .fsm.base import fsm_timings
@@ -48,6 +48,7 @@ class Services:
         clock: Callable[[], datetime] | None = None,
         fsm_clients: dict[str, httpx.Client] | None = None,
         side_model: SideModel | None = None,
+        weather_clients: dict[str, httpx.Client] | None = None,
     ):
         self.settings = settings
         if clock is None and settings.fixed_now:
@@ -61,6 +62,9 @@ class Services:
         self.caches = {t.slug: SlotCache(settings.slot_cache_seconds) for t in self.tenants}
         self.side_model = side_model
         self.report_poster = reports.github_poster(settings)
+        self.weather = weather_clients or (
+            {t.slug: weather.client(t.weather) for t in self.tenants} if settings.weather else {}
+        )
         self.mailer = Mailer(settings)
         self._locks: dict[str, threading.Lock] = {}
         self._locks_guard = threading.Lock()
@@ -298,7 +302,15 @@ def create_app(
             if call is None:
                 raise Refused("unknown_call", "")
             tenant = services.tenants.by_slug[call["tenant"]]
-            return lifecycle.end(conn, tenant, call, body, services.clock())
+            ended = lifecycle.end(conn, tenant, call, body, services.clock())
+            # A callback the system placed is judged when its call ends (app/outbound.py).
+            try:
+                outbound.settle_answered(
+                    conn, tenant, services.fsm[tenant.slug], services.clock(), call_id
+                )
+            except Exception:
+                log.exception("settling the callback on call %s failed", call_id)
+            return ended
 
         result = run(services, request, "calls.end", call_id, body.model_dump(), fn)
         services.release(call_id)
@@ -346,7 +358,9 @@ def create_app(
         caller_id = phone, direction outbound; open with opening_line. Then report /outbound/{id}/done."""
         conn = services.connect()
         try:
-            found = outbound.claim(conn, services.tenants.by_slug, services.clock())
+            found = outbound.claim(
+                conn, services.tenants.by_slug, services.fsm, services.clock()
+            )
         finally:
             conn.close()
         return {"ok": True, "say": "", "data": {"outbound": found}, "refused": None}
@@ -355,8 +369,21 @@ def create_app(
     def outbound_done(outbound_id: int, body: OutboundDoneIn):
         conn = services.connect()
         try:
-            found = outbound.finish(
-                conn, outbound_id, body.answered, body.voicemail, services.clock()
+            row = conn.execute(
+                "SELECT tenant FROM outbound WHERE id = ?", (outbound_id,)
+            ).fetchone()
+            found = (
+                outbound.finish(
+                    conn,
+                    services.tenants.by_slug[row["tenant"]],
+                    services.fsm[row["tenant"]],
+                    outbound_id,
+                    body.answered,
+                    body.voicemail,
+                    services.clock(),
+                )
+                if row
+                else None
             )
         finally:
             conn.close()

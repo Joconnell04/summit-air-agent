@@ -11,11 +11,12 @@ from pathlib import Path
 
 from fastapi import Depends, FastAPI, Form, Header, Request
 
-from . import logs
+from . import logs, worldkit
 from .config import DEFAULT_TENANT_DIR, TenantConfig, parse_dt
 from .deps import get_conn
 from .errors import ApiError, install_handlers
 from .routes import crm, dispatch, jpm, memberships, settings
+from .routes.settings import CallIn, shape_call
 from .seed import reseed
 
 TOKEN_SECONDS = 900  # ServiceTitan tokens last 15 minutes
@@ -55,7 +56,14 @@ def create_app(
     install_handlers(app)
     app.add_middleware(logs.RequestLogMiddleware)
     for module in (crm, memberships, jpm, dispatch, settings):
-        for name in ("router", "equipment_router", "marketing_router", "telecom_router"):
+        for name in (
+            "router",
+            "equipment_router",
+            "marketing_router",
+            "jbce_router",
+            "telecom_router",
+            "telecom_v3_router",
+        ):
             if hasattr(module, name):
                 app.include_router(getattr(module, name))
 
@@ -100,6 +108,48 @@ def create_app(
             limit=limit,
         )
         return {"count": len(rows), "data": rows}
+
+    @app.post("/debug/calls")
+    def debug_log_call(
+        body: CallIn, request: Request, conn: sqlite3.Connection = Depends(get_conn)
+    ):
+        """Log a call the way ServiceTitan's phone system does when a call happens. Not in the real
+        API, where the phone system writes the call log and nothing else can. It stands in for the
+        phone system in the mock, so a callback the agent placed shows up in the call log. A
+        repeated sid returns the first record. Open to anyone, like the other /debug endpoints."""
+        cfg = request.app.state.cfg
+        if body.sid:
+            existing = conn.execute("SELECT id FROM calls WHERE sid = ?", (body.sid,)).fetchone()
+            if existing:
+                return shape_call(
+                    conn,
+                    cfg,
+                    conn.execute("SELECT * FROM calls WHERE id = ?", (existing[0],)).fetchone(),
+                )
+        conn.execute("BEGIN IMMEDIATE")
+        try:
+            call_id = worldkit.add_call(
+                conn,
+                cfg,
+                body.receivedOn or request.app.state.clock(),
+                body.fromNumber,
+                body.customerId,
+                body.jobId,
+                body.callType,
+                body.reason or "",
+                body.durationSeconds,
+                body.toNumber,
+                body.direction,
+                body.sid,
+                tuple(body.tags),
+            )
+            conn.execute("COMMIT")
+        except BaseException:
+            conn.execute("ROLLBACK")
+            raise
+        return shape_call(
+            conn, cfg, conn.execute("SELECT * FROM calls WHERE id = ?", (call_id,)).fetchone()
+        )
 
     @app.get("/debug/scenarios")
     def debug_scenarios(conn: sqlite3.Connection = Depends(get_conn)):

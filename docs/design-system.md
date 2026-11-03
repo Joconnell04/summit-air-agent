@@ -1,6 +1,6 @@
 # Owner view design system
 
-The owner view is built for the person who runs Summit Air: someone who knows HVAC and ServiceTitan, reads a dispatch board every morning, and has never read a log (docs/users.md, DECISIONS.md 012). Every page is drawn from the two files below, and `/owner/design` shows each token and component live, from the same CSS.
+The owner view is built for the person who runs Summit Air: someone who knows HVAC and ServiceTitan, reads a dispatch board every morning, and has never read a log (docs/users.md, DECISIONS.md 014). Every page is drawn from the two files below, and `/owner/design` shows each token and component live, from the same CSS.
 
 | File | What it holds |
 |---|---|
@@ -39,7 +39,7 @@ The owner view is built for the person who runs Summit Air: someone who knows HV
 | `--info`, `--info-ink`, `--info-wash` | #0265DC, #0B4A9E, #E3EEFD | Scheduled jobs, arrival windows, links |
 | `--neutral`, `--neutral-ink`, `--neutral-wash` | #A3A09B, #4A4845, #F1EFEC | Normal priority, other calls, segmented control track |
 
-The brand values come from Revin's site and app (SOURCE: docs/explorations/008-revin-brand-and-servicetitan-ui.md). The status values are ServiceTitan's Anvil palette (SOURCE: the same exploration), with `--high` darkened from Anvil's #FFBE00 to #E5A800 so a yellow dot holds up on white (ASSUMED: judged by eye at desktop size). Text on a wash always uses the matching `-ink` value.
+The brand values come from Revin's site and app (SOURCE: docs/explorations/009-revin-brand-and-servicetitan-ui.md). The status values are ServiceTitan's Anvil palette (SOURCE: the same exploration), with `--high` darkened from Anvil's #FFBE00 to #E5A800 so a yellow dot holds up on white (ASSUMED: judged by eye at desktop size). Text on a wash always uses the matching `-ink` value.
 
 ### Type
 
@@ -54,7 +54,7 @@ One family, Public Sans, from 100 to 900 weight in one variable file. Hierarchy 
 | `--text-sm` | 13 px | Controls, captions, notes in a call |
 | `--text-xs` | 12 px | Tags, table headings, hour labels |
 
-Why Public Sans: Revin uses GT America, a paid font that can't ship here (ASSUMED license). GT America is built from Franklin Gothic and News Gothic; Public Sans comes from Libre Franklin, a Franklin Gothic revival, so it keeps the same American gothic shape. It was made by the US Web Design System for dense, plain government pages, and Google's file carries tabular figures (MEASURED: its GSUB table lists `tnum`). Inter, the old choice, is the default of half the dashboards on the web, which is part of why the old page read as generic. Schibsted Grotesk, Instrument Sans and Archivo were compared on the same sample (DECISIONS.md 014).
+Why Public Sans: Revin uses GT America, a paid font that can't ship here (ASSUMED license). GT America is built from Franklin Gothic and News Gothic; Public Sans comes from Libre Franklin, a Franklin Gothic revival, so it keeps the same American gothic shape. It was made by the US Web Design System for dense, plain government pages, and Google's file carries tabular figures (MEASURED: its GSUB table lists `tnum`). Inter, the old choice, is the default of half the dashboards on the web, which is part of why the old page read as generic. Schibsted Grotesk, Instrument Sans and Archivo were compared on the same sample (DECISIONS.md 016).
 
 Times, phone numbers and counts use `.num` (tabular figures) so columns line up. Tabular figures are not turned on for running text, where they space commas and colons oddly.
 

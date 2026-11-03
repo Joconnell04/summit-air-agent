@@ -26,7 +26,14 @@ class Settings:
     jobs_interval_seconds: float = field(
         default_factory=lambda: float(os.environ.get("JOBS_INTERVAL_SECONDS", "60"))
     )
-    slot_cache_seconds: float = 60.0
+    # 0 turns the slot cache off, as on the Retell eval instance, whose mock is reset between
+    # scenarios and must never be answered from the previous world.
+    slot_cache_seconds: float = field(
+        default_factory=lambda: float(os.environ.get("SLOT_CACHE_SECONDS", "60"))
+    )
+    # Read the outside temperature from the National Weather Service (app/weather.py). Off in
+    # tests and development so nothing calls out; on for the deployed server.
+    weather: bool = field(default_factory=lambda: os.environ.get("WEATHER", "") == "1")
     # The owner view refuses every request when this is empty.
     owner_token: str = field(default_factory=lambda: os.environ.get("OWNER_TOKEN", ""))
     # Where the owner view is served, for links in alert emails. Empty leaves the links out.
@@ -72,3 +79,9 @@ REPORT_MAX_ATTEMPTS = 3
 # A voice worker that hasn't sent a heartbeat for this long counts as down (healthz, owner view).
 WORKER_STALE_SECONDS = 120
 REPORT_MAX_CHARS = 2000
+# A tag on a callback's call is tried again for this long, since a phone system may log a
+# call some minutes late; after that a resolved callback is flagged for a person.
+TAG_RETRY_MINUTES = 120
+# A dialed call the voice layer never reported on, or an answered one that never ended, is settled
+# after this, so it can't block a person.
+STUCK_DIALING_MINUTES = 30

@@ -78,7 +78,9 @@ The owner view is three pages for the owner and dispatcher: Today (`/owner`, the
 | Outbound only to the caller, 8 a.m. to 9 p.m., one attempt, never do-not-call | S-42 | `records.outbound_allowed` |
 | A booking the FSM couldn't take is queued, retried with the same keys, and flagged if it still fails; a booking still being sent (`sending`) is left to its request | S-48 | `tools.book_appointment`, `jobs.retry_queue` |
 | An urgent booking flagged for an earlier slot is offered the first opening before its window, one booking per opening, one offer call each, never an after-hours window | S-25, journey 12 | `jobs.offer_earlier_slots`, `outbound` |
-| A callback the caller asked for is dialed by the system at its time if allowed, otherwise handed to a person; a failed dial hands it to a person | S-32, S-42, journey 12 | `jobs.schedule_callbacks`, `outbound.claim`, `outbound.finish` |
+| A callback the caller asked for is dialed by the system at its time if allowed, otherwise handed to a person; a failed dial, a voicemail or an answer that did not confirm the person and handle the reason hands it to a person | S-32, S-42, journey 12 | `jobs.schedule_callbacks`, `outbound.claim`, `outbound.finish`, `outbound.callback_outcome` |
+| A callback is done only when ServiceTitan's call log shows a call to that number after the promise, tagged resolved. The server tags the callbacks it places (resolved only if a person answered, the right person was confirmed, and the reason was handled); the office tags the ones it makes | S-32, C-45, decision 010 | `jobs.confirm_callbacks`, `outbound.settle_callback`, `outbound.apply_tag`, `outbound.retry_tags` |
+| Urgent holds and the urgent-only night window are the company's rules, applied to what ServiceTitan's capacity returns, again right before a job is created or moved | S-25, decision 003 | `capacity.usable_technicians`, `capacity.pick_technician`, `booking.send` |
 | A booking counts as kept if its job was still on the schedule when its current window came | C-42 | `jobs.check_kept` |
 | An urgent flag raised while the company is closed is emailed to the on-call person, once, with what, where, who and why | Journey 11 | `jobs.alert_on_call` |
 | Do-not-call marked on the caller's words, cancelling pending callbacks; the tool returns the line to say | S-49 | `lifecycle.turn`, `records.mark_do_not_call` |
@@ -87,15 +89,21 @@ The owner view is three pages for the owner and dispatcher: Today (`/owner`, the
 
 Nothing about Summit Air is in `app/`; a test checks for the company name, its ZIPs, numbers, job types and rule ids. A tenant folder holds `config.yaml` (shared with the mock: hours, area, job types, plans, refused customer types), `agent.yaml` (dialed numbers, FSM ids, safety lines and phrases, priority rules, after-hours cutoffs, callback owners and timings, repeat-caller window, retention, every line the server returns as `say`) and `knowledge/*.md`, which `/calls/start` returns for the prompts. The only text in `app/` the agent may say is a handful of neutral fallbacks ("Sorry, give me just a moment.").
 
+## Owner view: redesign in progress
+
+Jackson is redesigning the owner view in a separate session. The first version, Claude's first attempt, read as a cluttered, generic AI dashboard with a back-end debugging-log feel, and didn't give the owner the right level of detail. The numbers behind it (`app/owner.py`) stay and can keep growing; expect the pages and templates (`app/owner_view.py`, `app/templates/`) to change.
+
 ## Known limits
 
-- One server process: a per-call lock serializes a call's requests so a retried booking can't race its first attempt. A second process would need that claim in the database.
+- The outside temperature is one point, NYC's Central Park station and its forecast grid, which can differ from Staten Island or Nassau by a few degrees; the 55 F and 80 F brackets absorb that (exploration 007). It is read only on a server with `WEATHER=1`, hourly at most, and is unknown (so priority fails safe to High) after three hours without a good read.
+
+- One server process: a per-call lock serializes a call's requests so a retried booking can't race its first attempt. A second process would need that claim in the database; out of scope at Summit Air's size (docs/scaling.md).
 - The JSON log file is never rotated or purged here; retention covers the database. Production log rotation belongs to the deploy.
 - FSM credentials from the environment apply to every tenant; a second real tenant needs per-tenant secrets.
 - `find_customer` by a number or address the caller states returns that customer's lookup, notes included, as the contract says. Changing their visit needs the read-back of its address, but reading the notes doesn't; worth an eval case.
 - `check_service_area` records whatever ZIP the agent passes as out of area, so a ZIP the caller only asked about counts in the owner view's demand by ZIP.
 - `end_call(reason="caller_goodbye")` on a safety call hangs up on the agent's word; it is only reachable after the lines were said and a person flagged.
-- The owner view is read-only apart from reports to Revin, so a callback a person returns is never marked done there; only the system's own callbacks become done (decision #26, `docs/decisions/26-callback-done.md`). Flags have no close action either, except those the jobs settle themselves.
+- The owner view is read-only apart from reports to Revin. A callback becomes done from ServiceTitan's call log (decision #26, `docs/decisions/26-callback-done.md`): the office tags its calls there, and the callbacks job reads them. If the office calls back from a phone ServiceTitan does not log, the callback stays open. Flags have no close action, except those the jobs settle themselves; a callback marked done closes the flags it left on its call. A callback opens by asking for the customer on that number by first name (decision 013), so a yes confirms the person; with no single name on the number, it is confirmed only by the read-back or a later name check.
 - The job that offers earlier openings checks for an existing offer outside its write, which is safe with one server process (the timer runs one job at a time) but not with two.
 - The booked-and-kept check reads at most 50 bookings per run, oldest window first; bookings the FSM keeps refusing to read, or moved later, are read again each run and could crowd out newer ones in a large backlog.
 - One `OWNER_TOKEN` opens every tenant's owner view (`?tenant=<slug>`); a second real tenant needs its own token.

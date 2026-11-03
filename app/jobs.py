@@ -4,21 +4,22 @@ checking which bookings were kept, emailing the on-call person after hours, refr
 cache, and the retention policy. run_once is what the server's own timer runs."""
 
 import json
+import logging
 import smtplib
 import sqlite3
 from datetime import datetime, timedelta
 
-from . import booking, outbound, records, reports
+from . import booking, outbound, records, reports, weather
 from .db import iso, parse_iso, tx
 from .fsm import FsmAdapter, FsmRejected, FsmUnavailable, SlotCache
 from .mail import Mailer
-from .settings import ALERT_MAX_ATTEMPTS, QUEUE_MAX_ATTEMPTS
+from .settings import ALERT_MAX_ATTEMPTS, QUEUE_MAX_ATTEMPTS, STUCK_DIALING_MINUTES
 from .tenant import Tenant
 from .tools import open_windows, send_lead
 
+log = logging.getLogger(__name__)
+
 STUCK_SENDING_MINUTES = 5
-# A dialed call the voice layer never reported on is settled after this, so it can't block a person.
-STUCK_DIALING_MINUTES = 30
 # A queued call nobody claimed (the voice worker is down) expires after this and goes to a person.
 UNCLAIMED_MINUTES = 15
 # FSM reads per run for the booked-and-kept check, so a backlog can't hold up the other jobs.
@@ -122,9 +123,8 @@ def offer_earlier_slots(
         allowed, _ = records.dial_allowed(conn, tenant, call["id"], call["caller_id"], now)
         if not allowed:
             continue
-        zip_code = json.loads(row["request_json"])["address"]["zip"]
         try:
-            windows = open_windows(tenant, fsm, cache, now, job_type, row["priority"], zip_code)
+            windows = open_windows(tenant, fsm, cache, now, job_type, row["priority"])
         except (FsmUnavailable, FsmRejected):
             return made
         # An after-hours window is the on-call technician's to give, never an automatic offer.
@@ -187,6 +187,84 @@ def schedule_callbacks(conn: sqlite3.Connection, tenant: Tenant, now: datetime) 
         for row in unclaimed:
             outbound.skip(conn, row, "not_claimed", now)
             counts["not_claimed"] += 1
+    return counts
+
+
+# Open callbacks looked up in the call log per run, so a backlog can't hold up the other jobs, and
+# how far back a callback is still looked for (a promise may be at most a week out, plus a late return).
+CALLBACK_CHECKS_PER_RUN = 50
+CALLBACK_LOOKBACK_DAYS = 14
+# The flags a callback leaves on its call, closed together with it.
+CALLBACK_FLAG_KINDS = (
+    "callback_requested",
+    "person",
+    "overdue_callback",
+    "callback_needs_person",
+    "callback_tag_failed",
+)
+
+
+def confirm_callbacks(
+    conn: sqlite3.Connection, tenant: Tenant, fsm: FsmAdapter, now: datetime
+) -> dict:
+    """A promised callback is done when ServiceTitan's call log shows an outbound call to that
+    number after the promise, tagged as resolved (decision 010). A call that failed, went to voicemail
+    or reached the wrong person is never tagged resolved, so it never marks a callback done. The
+    office tags the calls it makes; outbound.finish tags the ones the system places. One resolved
+    call settles every open callback promised to that number before it."""
+    counts = {"checked": 0, "done": 0}
+    resolved_tag = tenant.fsm["callback_tags"]["resolved"]
+    rows = conn.execute(
+        "SELECT cb.* FROM callbacks cb JOIN calls c ON c.id = cb.call_id "
+        "LEFT JOIN callback_checks k ON k.callback_id = cb.id "
+        "WHERE c.tenant = ? AND cb.status IN ('pending', 'overdue') AND cb.created_at >= ? "
+        "ORDER BY COALESCE(k.checked_at, ''), cb.id LIMIT ?",
+        (
+            tenant.slug,
+            iso(now - timedelta(days=CALLBACK_LOOKBACK_DAYS)),
+            CALLBACK_CHECKS_PER_RUN,
+        ),
+    ).fetchall()
+    by_phone: dict[str, list[sqlite3.Row]] = {}
+    for row in rows:
+        by_phone.setdefault(row["phone"], []).append(row)
+    for phone, callbacks in by_phone.items():
+        # Stamped before the read, so a number ServiceTitan keeps refusing goes to the back of the
+        # line instead of holding the front of it.
+        with tx(conn):
+            for cb in callbacks:
+                conn.execute(
+                    "INSERT INTO callback_checks (callback_id, checked_at) VALUES (?, ?) "
+                    "ON CONFLICT (callback_id) DO UPDATE SET checked_at = excluded.checked_at",
+                    (cb["id"], iso(now)),
+                )
+        try:
+            calls = fsm.calls_to(phone, parse_iso(min(cb["created_at"] for cb in callbacks)))
+        except FsmUnavailable:
+            break
+        except FsmRejected:
+            continue
+        resolved = [
+            parse_iso(c["leadCall"]["receivedOn"])
+            for c in calls
+            if resolved_tag in [t["typeName"] for t in c["leadCall"].get("tags") or []]
+        ]
+        for cb in callbacks:
+            counts["checked"] += 1
+            if not any(at >= parse_iso(cb["created_at"]) for at in resolved):
+                continue
+            with tx(conn):
+                conn.execute(
+                    "UPDATE callbacks SET status = 'done', updated_at = ? WHERE id = ? "
+                    "AND status IN ('pending', 'overdue')",
+                    (iso(now), cb["id"]),
+                )
+                conn.execute(
+                    f"UPDATE flags SET status = 'done' WHERE call_id = ? AND status = 'open' "
+                    f"AND kind IN ({','.join('?' * len(CALLBACK_FLAG_KINDS))})",
+                    (cb["call_id"], *CALLBACK_FLAG_KINDS),
+                )
+            counts["done"] += 1
     return counts
 
 
@@ -332,6 +410,16 @@ def purge(conn: sqlite3.Connection, tenant: Tenant, now: datetime, environment: 
     return {"turns": turns, "calls": len(old)}
 
 
+def _guarded(job, *args):
+    """Run a job that reads ServiceTitan's call log. A reply it does not understand is reported
+    and logged, and does not stop the jobs after it (the overdue and alert jobs matter more)."""
+    try:
+        return job(*args)
+    except Exception as exc:
+        log.exception("job failed")
+        return {"error": f"{type(exc).__name__}: {exc}"}
+
+
 def run_once(services) -> dict:
     now = services.clock()
     conn = services.connect()
@@ -342,8 +430,16 @@ def run_once(services) -> dict:
             report[tenant.slug] = {
                 "queue": retry_queue(conn, tenant, fsm, cache, now),
                 "cache_refreshed": cache.refresh(),
+                "weather": (
+                    weather.refresh(conn, tenant, services.weather[tenant.slug], now)
+                    if services.weather.get(tenant.slug)
+                    else "off"
+                ),
                 "earlier_slots_offered": offer_earlier_slots(conn, tenant, fsm, cache, now),
                 "callbacks": schedule_callbacks(conn, tenant, now),
+                "callbacks_settled": _guarded(outbound.settle_answered, conn, tenant, fsm, now),
+                "call_tags": _guarded(outbound.retry_tags, conn, tenant, fsm, now),
+                "callbacks_done": _guarded(confirm_callbacks, conn, tenant, fsm, now),
                 "kept": check_kept(conn, tenant, fsm, now),
                 "alerts": alert_on_call(
                     conn, tenant, services.mailer, now, services.settings.owner_view_url

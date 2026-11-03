@@ -9,6 +9,9 @@ from fastapi.responses import JSONResponse
 from .errors import ApiError
 
 SCHEMA = Path(__file__).with_name("schema.sql")
+# Raised whenever schema.sql changes, so a database seeded under an older one is rebuilt
+# (python -m servicetitan_mock.seed --if-stale) instead of failing on a missing column.
+SCHEMA_VERSION = 2
 
 
 def connect(path: str | Path) -> sqlite3.Connection:
@@ -29,7 +32,22 @@ def create_schema(path: str | Path) -> None:
     conn = connect(path)
     conn.execute("PRAGMA journal_mode = WAL")
     conn.executescript(SCHEMA.read_text())
+    conn.execute("INSERT INTO meta VALUES ('schema_version', ?)", (str(SCHEMA_VERSION),))
     conn.close()
+
+
+def schema_is_current(path: str | Path) -> bool:
+    """Does the database exist and was it built under the current schema?"""
+    if not Path(path).exists():
+        return False
+    conn = connect(path)
+    try:
+        row = conn.execute("SELECT value FROM meta WHERE key = 'schema_version'").fetchone()
+    except sqlite3.OperationalError:
+        return False
+    finally:
+        conn.close()
+    return bool(row) and row[0] == str(SCHEMA_VERSION)
 
 
 def write(

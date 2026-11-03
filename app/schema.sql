@@ -249,3 +249,32 @@ CREATE TABLE IF NOT EXISTS owner_reports (
     updated_at TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS ix_owner_reports_call ON owner_reports (call_id);
+-- The latest outside temperature per tenant, for priority (app/weather.py).
+CREATE TABLE IF NOT EXISTS weather (
+    tenant TEXT PRIMARY KEY,
+    fetched_at TEXT NOT NULL,
+    now_f REAL,
+    low_f REAL
+);
+
+-- How a callback call the system placed went, and whether that reached ServiceTitan as a tag on
+-- the call (docs/decisions/26-callback-done.md). outcome is resolved, open (answered, but the
+-- person or the reason was not confirmed) or no_contact (no answer, voicemail, failed). The tag
+-- is retried until it lands.
+CREATE TABLE IF NOT EXISTS call_outcomes (
+    outbound_id INTEGER PRIMARY KEY REFERENCES outbound (id) ON DELETE CASCADE,
+    sid TEXT NOT NULL,
+    outcome TEXT NOT NULL CHECK (outcome IN ('resolved', 'open', 'no_contact')),
+    why TEXT NOT NULL,
+    tagged INTEGER NOT NULL DEFAULT 0,
+    attempts INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
+
+-- When the call log was last read for a callback, so a backlog of unreachable callbacks cannot keep
+-- the newer ones from being checked (jobs.confirm_callbacks takes the least recently checked).
+CREATE TABLE IF NOT EXISTS callback_checks (
+    callback_id INTEGER PRIMARY KEY REFERENCES callbacks (id) ON DELETE CASCADE,
+    checked_at TEXT NOT NULL
+);

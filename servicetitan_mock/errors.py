@@ -1,8 +1,11 @@
-"""One JSON error shape for every failure.
+"""One JSON error shape for every failure, ServiceTitan's problem-details body.
 
-{"status": 409, "code": "slot_taken", "title": "...", "detail": "...", "errors": {}, "requestId": "..."}
+{"type": "...", "title": "...", "status": 409, "traceId": "...", "errors": {"field": ["..."]}, "data": {}}
 
-The shape is modeled on ServiceTitan's problem-details bodies; the exact real shape is ASSUMED.
+The field names are the real ones (SOURCE: the `ApiErrorResponse` schema in every ServiceTitan
+OpenAPI document, docs/explorations/006-servicetitan-field-names.md). Not in the real API: a short
+machine code in `data.code` (for example `slot_taken`), kept so the mock's own tests can tell two
+409s apart. The adapter never reads it.
 """
 
 from fastapi import FastAPI, Request
@@ -10,15 +13,16 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-TITLES = {
-    400: "Bad request",
-    401: "Unauthorized",
-    403: "Forbidden",
-    404: "Not found",
-    405: "Method not allowed",
-    409: "Conflict",
-    422: "Rejected by a business rule",
-    500: "Server error",
+# ASP.NET problem-details type links, by status.
+TYPES = {
+    400: "https://tools.ietf.org/html/rfc7231#section-6.5.1",
+    401: "https://tools.ietf.org/html/rfc7235#section-3.1",
+    403: "https://tools.ietf.org/html/rfc7231#section-6.5.3",
+    404: "https://tools.ietf.org/html/rfc7231#section-6.5.4",
+    405: "https://tools.ietf.org/html/rfc7231#section-6.5.5",
+    409: "https://tools.ietf.org/html/rfc7231#section-6.5.8",
+    422: "https://tools.ietf.org/html/rfc4918#section-11.2",
+    500: "https://tools.ietf.org/html/rfc7231#section-6.6.1",
 }
 
 
@@ -35,12 +39,12 @@ def error_body(
     request: Request, status: int, code: str, detail: str, errors: dict | None = None
 ) -> dict:
     return {
+        "type": TYPES.get(status, TYPES[500]),
+        "title": detail,
         "status": status,
-        "code": code,
-        "title": TITLES.get(status, "Error"),
-        "detail": detail,
-        "errors": errors or {},
-        "requestId": getattr(request.state, "request_id", None),
+        "traceId": getattr(request.state, "request_id", None),
+        "errors": {field: [message] for field, message in (errors or {}).items()},
+        "data": {"code": code},
     }
 
 

@@ -35,7 +35,7 @@ Tool names, JSON, call ids, millisecond timings and status codes move behind "Te
 
 ## Decision
 
-A, all ten stories on three pages. DECISIONS.md 012.
+A, all ten stories on three pages. DECISIONS.md 014.
 
 ## Options
 
@@ -59,7 +59,7 @@ Adds a page where the owner changes the service area, the on-call person and bus
 | What happens when it breaks | O-5, O-8 |
 | Is it worth the money | O-9 |
 
-Design inputs from Jackson for the next step, recorded as inputs, not decisions: "looks very AI sloppy, generic, and too dark mode GitHub coder vibe"; "on brand with Revin and somewhat similar to ServiceTitan, but keep it Revin branded"; use the real logos. Brand research is running into docs/explorations/008.
+Design inputs from Jackson for the next step, recorded as inputs, not decisions: "looks very AI sloppy, generic, and too dark mode GitHub coder vibe"; "on brand with Revin and somewhat similar to ServiceTitan, but keep it Revin branded"; use the real logos. Brand research is running into docs/explorations/009.
 
 ## Recommendation
 

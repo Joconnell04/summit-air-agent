@@ -123,10 +123,10 @@ def test_add_note_appends_to_the_matched_customer_and_cannot_edit_or_delete(agen
     assert added["ok"] and added["data"]["stored_in"] == "customer"
     conn = sqlite3.connect(mock[0].state.db_path)
     rows = conn.execute(
-        "SELECT text, created_by FROM notes WHERE customer_id = ? ORDER BY id",
+        "SELECT text, created_by_id FROM notes WHERE customer_id = ? ORDER BY id",
         (maria["customerId"],),
     ).fetchall()
-    assert rows[-1] == ("Daughter Ana usually answers.", "agent")
+    assert rows[-1] == ("Daughter Ana usually answers.", 9001), "added by the integration user"
     assert fsm_counts(mock)["notes"] == before + 1
     # No tool changes or removes a note.
     assert not any(name.startswith(("edit", "delete", "update", "remove")) for name in TOOLS)
@@ -222,7 +222,14 @@ def test_the_adapter_exposes_no_delete_bulk_or_free_query_call():
         "jobs",
         "job",
         "appointments",
-        "calls",
+        "calls_from",
+        "calls_to",
+        "find_call",
+        "find_outbound_call",
+        "tag_call",
+        "record_outbound_call",
+        "contacts",
+        "find_job",
         "notes",
         "equipment",
         "capacity",

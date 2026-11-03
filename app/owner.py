@@ -11,6 +11,7 @@ import sqlite3
 from collections import Counter
 from datetime import date, datetime, time, timedelta
 
+from . import records
 from .db import iso, parse_iso
 from .tenant import Tenant
 
@@ -355,14 +356,27 @@ def out_of_area(conn: sqlite3.Connection, tenant: Tenant, day: date) -> list[dic
     _, end = day_bounds(tenant, day)
     since = iso(parse_iso(end) - timedelta(days=LOOKBACK_DAYS))
     rows = conn.execute(
-        "SELECT o.zip, COUNT(DISTINCT o.call_id) AS calls FROM out_of_area o "
+        "SELECT o.zip, o.call_id FROM out_of_area o "
         "JOIN calls c ON c.id = o.call_id WHERE c.tenant = ? AND o.at >= ? AND o.at < ? "
-        "AND NOT EXISTS (SELECT 1 FROM bookings b WHERE b.call_id = o.call_id AND b.kind = 'book' "
-        "AND b.status IN ('booked', 'queued', 'sending')) "
-        "GROUP BY o.zip ORDER BY calls DESC, o.zip",
+        "GROUP BY o.zip, o.call_id ORDER BY o.zip",
         (tenant.slug, since, end),
     ).fetchall()
-    return [dict(r) for r in rows]
+    booked = {
+        r["call_id"]
+        for r in conn.execute(
+            "SELECT DISTINCT call_id FROM bookings WHERE kind = 'book' "
+            "AND status IN ('booked', 'queued', 'sending')"
+        )
+    }
+    # A booking anywhere on the linked thread counts, so a caller who dropped and booked on the
+    # call back isn't counted under the ZIP they asked about first.
+    counts: dict[str, int] = {}
+    for r in rows:
+        if not booked & set(records.thread_both_ways(conn, r["call_id"])):
+            counts[r["zip"]] = counts.get(r["zip"], 0) + 1
+    return [
+        {"zip": z, "calls": n} for z, n in sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))
+    ]
 
 
 def refusals(conn: sqlite3.Connection, tenant: Tenant, day: date) -> dict:

@@ -39,17 +39,17 @@ class TenantConfig:
         self.tz = ZoneInfo(self.company["timezone"])
         self.auth: dict = raw["auth"]
         self.fees: dict = raw["fees"]
-        self.urgent_only_after_hours: bool = raw["after_hours"]["urgent_only"]
         self.zones: list[dict] = raw["zones"]
         self.business_units: list[dict] = raw["business_units"]
         self.job_types: list[dict] = raw["job_types"]
         self.campaigns: list[dict] = raw["campaigns"]
         self.cancel_reasons: list[dict] = raw["cancel_reasons"]
+        self.call_reasons: list[dict] = raw["call_reasons"]
+        self.tag_types: list[dict] = raw["tag_types"]
         self.booking_providers: list[dict] = raw["booking_providers"]
         self.membership_types: list[dict] = raw["membership_types"]
         self.urgent_hold: dict = raw["urgent_hold"]
         self.rejected_customer_types: dict[str, str] = self.company["rejected_customer_types"]
-        self.lead_kinds: list[str] = raw["lead_kinds"]
         self.equipment_labels: dict[str, str] = raw["equipment_labels"]
         self.windows = [
             Window(
@@ -101,7 +101,9 @@ class TenantConfig:
         return next((j for j in self.job_types if j["id"] == job_type_id), None)
 
     def hold_for(self, day: date, window_id: str, business_unit_id: int) -> int:
-        """Technicians held back for urgent jobs, from the urgent_hold block of the config."""
+        """Technicians held back for urgent jobs, from the urgent_hold block of the config. This is
+        the company's own rule, not ServiceTitan's: the mock never applies it, the seed uses it to
+        shape a believable schedule, and the tool server applies it when it offers times."""
         if business_unit_id not in self.urgent_hold["business_unit_ids"]:
             return 0
         return self.urgent_hold["per_day"].get(DAY_NAMES[day.weekday()], {}).get(window_id, 0)
@@ -115,28 +117,3 @@ class TenantConfig:
 
     def equipment_label(self, system_type: str) -> str:
         return self.equipment_labels.get(system_type, system_type.replace("_", " "))
-
-    def profile(self) -> dict:
-        """The company profile endpoint body. No credentials."""
-        return {
-            "name": self.company["name"],
-            "timezone": self.company["timezone"],
-            "hours": self.company["hours"],
-            "serviceAreaZips": self.service_area_zips,
-            "counties": sorted({z["county"] for z in self.zones}),
-            "afterHours": {
-                "urgentOnly": self.urgent_only_after_hours,
-                "windows": [w.id for w in self.windows if w.after_hours],
-            },
-            "fees": self.fees,
-            "arrivalWindows": [
-                {
-                    "id": w.id,
-                    "start": w.start.strftime("%H:%M"),
-                    "end": w.end.strftime("%H:%M"),
-                    "endsNextDay": w.ends_next_day,
-                    "afterHours": w.after_hours,
-                }
-                for w in self.windows
-            ],
-        }

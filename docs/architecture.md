@@ -56,7 +56,7 @@ Built in from the first commit, because QA and live debugging depend on it.
 - `GET /debug/calls/{call_id}` returns a call's full timeline: what the caller said, what the agent said, each tool call and result, flags raised. `GET /debug/logs` filters by call, request, tool or errors. Both need a debug token.
 - **Postman.** A collection under `postman/` covers every tool endpoint with assertions, plus a Triage folder that calls the debug endpoints for a given call id. Newman runs it locally and in CI (`make postman`). The mock ServiceTitan has its own collection.
 - **For dev agents.** `make trace CALL=<id>` prints a call's timeline in plain text, so a reviewing agent can read what happened without a browser. The `reviewer` agent and eval failures link to it.
-- **Owner view.** The same data feeds the owner and dispatcher view (C-04): Today as a dispatch board, each call in plain words with the technical detail behind a toggle, and Results over a day, 7 or 30 days. It is read-only except for one write, a report to Revin about a call, which the jobs loop files as a GitHub issue carrying the call's replay command (docs/design-system.md, DECISIONS.md 012 to 014).
+- **Owner view.** The same data feeds the owner and dispatcher view (C-04): Today as a dispatch board, each call in plain words with the technical detail behind a toggle, and Results over a day, 7 or 30 days. It is read-only except for one write, a report to Revin about a call, which the jobs loop files as a GitHub issue carrying the call's replay command (docs/design-system.md, DECISIONS.md 014 to 016).
 
 ## Hosting
 

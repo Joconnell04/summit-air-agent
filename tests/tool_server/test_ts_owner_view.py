@@ -1,4 +1,4 @@
-"""The redesigned owner view (brief 07, DECISIONS.md 012 to 014): the dispatch board, the status
+"""The redesigned owner view (brief 07, DECISIONS.md 014 to 016): the dispatch board, the status
 line, the summary sentence, the plain notes on a call, the report to Revin, and Results."""
 
 from datetime import date, timedelta

@@ -12,7 +12,7 @@ Discussion: docs/ai-process/transcripts/... or docs/explorations/...
 Issue: #N
 -->
 
-## 014. The owner view is the dispatch board, on a full design system
+## 016. The owner view is the dispatch board, on a full design system
 
 Decided: version A of the timeline and dispatch desk mix (the day across the top, the tables below), with five changes Jackson asked for: a less cluttered board, no row of metric cards, filters on the board and on Results, a better font than Inter, and a full design system the pages are built from. Public Sans replaces Inter: it comes from Franklin Gothic, one of GT America's two parents, and Google's file has tabular figures (MEASURED: its GSUB table lists `tnum`).
 Why: the dispatch board reads like the board a ServiceTitan dispatcher already uses, and version B pushed the jobs table down the page. A design system keeps three pages and any later one consistent, and is what a reviewer reads to see the choices were made on purpose.
@@ -21,7 +21,7 @@ Would change if: Revin licenses GT America for the product, in which case the ty
 Discussion: docs/decisions/45-owner-view-design-direction.md
 Issue: #53
 
-## 013. The owner view is a day timeline with the dispatch desk's tables
+## 015. The owner view is a day timeline with the dispatch desk's tables
 
 Decided: direction 5 (Day timeline) mixed with direction 1 (Dispatch desk). The day is drawn on a timeline like a dispatch board, and the dispatch desk's number tiles, "Needs attention" table and jobs table carry the detail. Two versions of the mix go on the design canvas; the choice between them comes next.
 Why: the timeline shows the shape of the day at a glance, which a table of rows doesn't, and the dispatch desk's tables are what an owner who uses ServiceTitan reads fastest. Together they cover both the glance and the follow-up.
@@ -30,7 +30,7 @@ Would change if: the timeline proves too hard to read on a phone, in which case 
 Discussion: docs/decisions/45-owner-view-design-direction.md
 Issue: #45
 
-## 012. The owner view is rebuilt from ten stories for a non-technical owner
+## 014. The owner view is rebuilt from ten stories for a non-technical owner
 
 Decided: option A. Ten stories on three pages: Today (morning check, emergencies first, the team's to-do list, what the agent put on the schedule, whether it is answering now), Call (read or hear the call, why it did each thing in plain words, tell Revin something was wrong) and Results (is it paying off, what it turned away). Tool names, JSON and ids move behind a technical details toggle.
 Why: the brief 06 page was built for a software engineer; the owner knows HVAC, not logs. Each owner worry in docs/users.md gets a place on screen, and the "tell Revin" note shows how the agent improves.
@@ -38,6 +38,24 @@ Considered: a lean seven-story cut without the status line, recordings or the no
 Would change if: build time runs short, in which case call recordings are cut first.
 Discussion: docs/decisions/40-owner-view-stories.md
 Issue: #40
+
+## 013. A callback the system places opens by asking for the caller by name
+
+Decided: option A. The opening is "Hi, this is Summit Air calling back for {first_name}. Is that you?", with the first name of the customer on the number being called, the same match the placed call makes. With no name on that number, two customers with different first names, or ServiceTitan unreachable, it keeps the plain line.
+Why: a callback is resolved only when the right person is confirmed on the call (010). The plain opening never checked who answered, so most system callbacks would have been tagged open and handed to a person. A short yes to the name is the confirmation the server already accepts, and it mirrors the inbound greeting for a known caller.
+Considered: keep the line and confirm later in the call; leave it and let a person close most callbacks.
+Would change if: callers find the name question off-putting on live calls, in which case the check moves after the reason for the call.
+Discussion: docs/decisions/49-callback-opening-name.md
+Issue: #49
+
+## 012. Retell's bake-off calls run on the same brain, with a few on fast fallback
+
+Decided: option C. The 10 Retell bake-off calls use the same setup as our stack (Haiku 5.5, standard capacity, no backup), and about 3 more run with Retell's fast fallback on, reported separately. Retell offers no faster tier for Claude 5.5 Haiku, so fast fallback is the only extra.
+Why: the 10 calls keep the bake-off fair under its own rule (keep our stack unless Retell is more than 0.3 s faster), and the few extra calls answer "did you give Retell a fair shot?". The extras cost little: about $0.20 to $0.24 a two-minute call against $0.19 (readout). They don't apply to chat, so they don't change a suite run.
+Considered: the same brain only; Retell's extras on every call.
+Would change if: Retell adds a fast tier for Haiku 5.5, in which case the variant calls use it too.
+Discussion: docs/decisions/32-retell-speed-extras.md
+Issue: #32
 
 ## 011. The eval pass-rate floor comes from the first standard run on the real prompts
 
@@ -51,6 +69,7 @@ Issue: #27
 ## 010. A callback counts as done only when ServiceTitan logs a call back that resolved it
 
 Decided: option B, with an outcome on every call log entry. A background job marks a promised callback done when ServiceTitan's call log shows an outbound call to that number after the promise whose outcome is resolved. Every call log entry carries an outcome: resolved, still open (the caller needs more, or the wrong person answered) or no contact (no answer, voicemail, failed). When the system places the callback itself, the server writes the outcome at the end of the call: resolved only if the right person answered and the reason for the callback was handled; anything else leaves the callback open. When the office calls back, the person records the outcome in ServiceTitan as they would a call disposition. A failed call, a voicemail or the wrong person answering can never mark a callback done.
+Built as: ServiceTitan has no outcome field on a call (its call type is empty for outbound calls, and its phone system creates the call), so the outcome is a call tag: three tag types per tenant ("Callback resolved", "Callback open", "No contact", named in `tenants/<company>/config.yaml` and `agent.yaml`). The office puts one on a call in ServiceTitan as it would dispose any call; the server puts one on the callbacks it places, resolved only when a person answered, the person who asked was confirmed (the read-back or a name check) and the reason was handled (a booking, reschedule or cancel went through, or the agent ended the call as resolved and the server saw nothing against it). The callbacks job marks a callback done from the call log. Detail in docs/decisions/26-callback-done.md.
 Why: the owner view stays read-only and counts calls that actually happened and resolved something, which is what an owner means by "do callbacks happen". Without the outcome, any call to the number, including a missed one, would count.
 Considered: a Done button on the owner view (counts clicks, and the page stops being read-only); leaving it for later (every person callback reads as overdue).
 Would change if: Summit Air's office calls back from cell phones that ServiceTitan doesn't log, in which case the Done button is added as the fallback.
