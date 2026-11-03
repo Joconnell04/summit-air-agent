@@ -19,7 +19,8 @@ book_appointment: >-
   Book the window the caller chose, with the intake details. Only after the read-back was confirmed
   and after find_slots with `day` returned that day's windows. `slot.date` and `slot.window` are the
   `date` and `window` code from that result (such as "morning"), never the spoken label ("8 to 12").
-  Confirm out loud only after it returns ok.
+  Confirm out loud only after it returns ok. To move a visit the caller already has, use
+  reschedule_appointment instead.
 reschedule_appointment: >-
   Move a booking that belongs to this caller to a new window, with the reason. `slot.window` is the
   window code from find_slots, not the spoken label.
@@ -28,11 +29,13 @@ cancel_appointment: >-
   to offer instead.
 flag_person: >-
   Ask a person to follow up: a callback the caller wants, a complaint, a reschedule that needs a
-  person, someone at risk. Give a callback time when the caller named one. Say the sentence it
-  returns.
+  person, someone at risk. When the caller asked for a window ("after 5", "before 3", "between 1
+  and 3"), pass it as callback_after and callback_before, not callback_time. Say the sentence it
+  returns as written; it names the time.
 record_lead: >-
   Save one lead: commercial (company, contact, need), membership sign-up interest, or an install or
-  replacement quote. Say the callback time it returns.
+  replacement quote. A window the caller asked for goes in callback_after and callback_before. Say
+  the sentence it returns as written.
 add_note: Append a short note for the team about this customer or this call's job.
 mark_do_not_call: The caller asked not to be called again. Say the sentence it returns.
 end_call: >-

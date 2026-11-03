@@ -102,6 +102,9 @@ safety:
         - nauseous
         - alarm is beeping
         - alarm keeps beeping
+  # A plain denial in the answer to a check question is a no, even with a yes word in it
+  # ("definitely not gas"). An unsure word in the same answer still counts as a yes.
+  denials: [not gas, no gas, isnt gas, definitely not, not a gas, no smell of gas]
   # Said when the agent wants to end a safety call: it signs off rather than hangs up.
   sign_off: >-
     Please hang up now, get everyone outside, and call 911 from there. We'll follow up once
@@ -118,8 +121,12 @@ commercial:
   owned: [restaurant, bakery, deli, cafe, bar, store, shop, salon, gym, clinic, daycare, warehouse, business]
   run: [restaurant, bakery, deli, cafe, bar, store, shop, salon, gym, clinic, daycare, warehouse,
         business, company, school, church, hotel, office, building, property, properties]
+  # Owning "the building" alone is not commercial (an owner-occupied two-family house is a home);
+  # a count of three or more units is.
   phrases: [property manager, property management, office building, commercial property, rooftop unit,
-            "it's a business", it is a business, "it's commercial", not a home, "not my home"]
+            "it's a business", it is a business, "it's commercial", not a home, "not my home",
+            three units, four units, five units, six units, 3 units, 4 units, three family,
+            four family, 3 family, 4 family, three apartments, four apartments, apartment building]
   not: [business partner, business trip, business card, home office, my own business hours]
 
 # Priority (spec S-21, docs/explorations/007-priority-brackets.md). A no-heat or no-cooling call
@@ -300,12 +307,19 @@ lines:
     I can't book that right now, but I've written it all down and someone will call you by {time} to
     confirm.
   fsm_unavailable_no_callback: I can't get to that right now, but I've written it all down for the team.
-  flag_stored: I've let our team know, and someone will call you by {time}.
+  # {when} is how the callback time is said, from the callback_ lines below.
+  flag_stored: I've let our team know, and someone will call you {when}.
   flag_stored_urgent: >-
     I've marked this as urgent and let our on-call team know, so someone's keeping an eye on it.
-    Someone will call you by {time}.
+    Someone will call you {when}.
   flag_stored_no_callback: I've let our team know.
-  lead_stored: Someone from our team will call you by {time} to tell you more.
+  lead_stored: Someone from our team will call you {when} to tell you more.
+  # The callback time as said: a time we named, or the window the caller asked for.
+  callback_by: by {time}
+  callback_after: after {time}
+  callback_before: before {time}
+  callback_between: between {start} and {end}
+  callback_outside_hours: Our team makes calls between {opens} and {closes}. What time in there works?
   # {address} is street, unit, city and ZIP; {phone} is read in groups. Naming it a home is how
   # every booking confirms the caller is residential.
   read_back: >-

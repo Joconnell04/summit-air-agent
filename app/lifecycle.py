@@ -13,7 +13,10 @@ from .schemas import EndIn, StartIn, TurnIn
 from .tenant import Tenant
 from .text import has_phrase, phone_key, words
 
-RUN_WORDS = r"(?:i|we) (?:run|manage|own|operate|work at)"
+RUN_WORDS = r"(?:i|we) (?:run|manage|operate|work at)"
+# Owning is matched only against businesses: "I own the building" is a landlord of a one or
+# two-family house as often as not, which is a home (spec S-05, journey 8).
+OWN_WORDS = r"(?:i|we) own"
 
 
 def sounds_commercial(text: str, cfg: dict) -> bool:
@@ -29,6 +32,7 @@ def sounds_commercial(text: str, cfg: dict) -> bool:
     return bool(
         re.search(rf" (?:my|our) (?:{owned}) ", text_words)
         or re.search(rf" {RUN_WORDS} (?:a|an|the) (?:\w+ )?(?:{run}) ", text_words)
+        or re.search(rf" {OWN_WORDS} (?:a|an|the) (?:\w+ )?(?:{owned}) ", text_words)
     )
 
 

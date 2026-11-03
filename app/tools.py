@@ -20,6 +20,7 @@ from .envelope import Refused, Result, ok
 from .fsm import FsmAdapter, FsmRejected, FsmUnavailable, SlotCache
 from .schemas import (
     BookIn,
+    CallbackTime,
     CancelIn,
     DoNotCallIn,
     EndCallIn,
@@ -500,6 +501,8 @@ def book_appointment(ctx: Ctx, args: BookIn) -> Result:
         )
     readback = records.readback(ctx.call)
     _out_of_area(ctx, readback["zip"])
+    if not args.separate_problem:
+        _open_job_here(ctx, readback)
     job_type = _job_type(ctx, args.job_type)
     details = args.details.model_dump()
     _, decided = _priority(
@@ -638,6 +641,40 @@ def book_appointment(ctx: Ctx, args: BookIn) -> Result:
     if override:
         result.gate = "safety_override"
     return result
+
+
+def _open_job_here(ctx: Ctx, readback: dict) -> None:
+    """A caller with an open visit at this address wants it moved, not a second one, unless the
+    agent says it is a separate problem (eval round 1, reschedule-own-booking). Jobs booked on this
+    call don't count, and a lookup that fails leaves the booking to go ahead."""
+    thread = records.thread(ctx.conn, ctx.call["id"])
+    booked_here = {
+        r["fsm_job_id"]
+        for r in ctx.conn.execute(
+            f"SELECT fsm_job_id FROM bookings WHERE fsm_job_id IS NOT NULL "
+            f"AND call_id IN ({','.join('?' * len(thread))})",
+            thread,
+        )
+    }
+    try:
+        for customer_id in records.scoped_customers(ctx.conn, ctx.call["id"]):
+            here = {
+                loc["id"]
+                for loc in ctx.fsm.locations(customer_id)
+                if booking.same_address(loc, readback)
+            }
+            for job in ctx.fsm.jobs(customer_id, lookup.OPEN_JOB_STATUSES):
+                if job["locationId"] in here and job["id"] not in booked_here:
+                    raise Refused(
+                        "open_job",
+                        "You already have a visit booked there. Should I move that one instead?",
+                        job_id=job["id"],
+                        use="reschedule_appointment with this job_id as booking_id, or "
+                        "book_appointment with separate_problem true if the caller confirms a "
+                        "different problem",
+                    )
+    except (FsmUnavailable, FsmRejected):
+        return
 
 
 def _owned_job(ctx: Ctx, job_id: int) -> dict:
@@ -808,20 +845,61 @@ def cancel_appointment(ctx: Ctx, args: CancelIn) -> Result:
     )
 
 
-def _callback_due(ctx: Ctx, time_value: str | None, minutes: int | None) -> datetime:
+@dataclass
+class CallbackWhen:
+    due: datetime  # when the callback is overdue
+    dial_at: datetime  # when the system may place it, for a callback it dials itself
+    spoken: str  # "by 4:30 PM", "after 5 PM", "between 1 PM and 3 PM"
+
+
+def _callback_due(ctx: Ctx, asked: CallbackTime) -> CallbackWhen:
+    """The callback time and the words for it. The words always come from here, never the model."""
+    tenant, now = ctx.tenant, ctx.now
     try:
-        return records.parse_callback_time(time_value, minutes, ctx.tenant, ctx.now)
+        if asked.callback_after or asked.callback_before:
+            earliest, latest = records.parse_callback_window(
+                asked.callback_after, asked.callback_before, tenant, now
+            )
+        else:
+            due = records.parse_callback_time(
+                asked.callback_time, asked.callback_in_minutes, tenant, now
+            )
+            spoken = tenant.line("callback_by", time=tenant.time_spoken(due, now))
+            return CallbackWhen(due, due, spoken)
     except ValueError as exc:
-        raise Refused(
-            "invalid_callback_time",
-            "What time should I tell them someone will call by?",
-            errors={"callback_time": str(exc)},
-        ) from None
+        reason = str(exc)
+        if reason == "outside callback hours":
+            opens, closes = (
+                tenant.time_spoken(
+                    datetime.combine(tenant.local(now).date(), time.fromisoformat(t), tenant.tz),
+                    now,
+                )
+                for t in tenant.callbacks["outbound_hours"]
+            )
+            say = tenant.line("callback_outside_hours", opens=opens, closes=closes)
+        else:
+            say = "What time should I tell them someone will call by?"
+        raise Refused("invalid_callback_time", say, errors={"callback_time": reason}) from None
+    if earliest and latest:
+        spoken = tenant.line(
+            "callback_between",
+            start=tenant.time_spoken(earliest, now),
+            end=tenant.time_spoken(latest, now),
+        )
+    elif earliest:
+        spoken = tenant.line("callback_after", time=tenant.time_spoken(earliest, now))
+    else:
+        spoken = tenant.line("callback_before", time=tenant.time_spoken(latest, now))
+    closes = datetime.combine(
+        tenant.local(now).date(), time.fromisoformat(tenant.callbacks["outbound_hours"][1]), tenant.tz
+    )
+    return CallbackWhen(latest or closes, max(earliest or now, now), spoken)
 
 
 def flag_person(ctx: Ctx, args: FlagIn) -> Result:
     """The sentence comes back only after the flag and the callback are stored (spec S-23)."""
-    due = _callback_due(ctx, args.callback_time, args.callback_in_minutes)
+    when = _callback_due(ctx, args)
+    due = when.due
     # A callback the system places needs no person unless the dial fails (app/outbound.py). The
     # server only allows it for a plain request: never an urgent or high flag, a safety call or a
     # commercial one, which a person must handle whatever the agent asked for.
@@ -840,14 +918,16 @@ def flag_person(ctx: Ctx, args: FlagIn) -> Result:
             ctx.conn, ctx.tenant, ctx.call, due, args.reason, ctx.now
         )
         if callback_id and system:
-            outbound.add_callback_dial(ctx.conn, ctx.tenant, ctx.call, callback_id, due, ctx.now)
-    spoken = ctx.tenant.time_spoken(due, ctx.now)
+            outbound.add_callback_dial(
+                ctx.conn, ctx.tenant, ctx.call, callback_id, when.dial_at, ctx.now
+            )
+    spoken = when.spoken
     if callback_id is None:
         say = ctx.tenant.line("flag_stored_no_callback")
     elif args.priority == "Urgent":
-        say = ctx.tenant.line("flag_stored_urgent", time=spoken)
+        say = ctx.tenant.line("flag_stored_urgent", when=spoken)
     else:
-        say = ctx.tenant.line("flag_stored", time=spoken)
+        say = ctx.tenant.line("flag_stored", when=spoken)
     return ok(
         say, flag_id=flag_id, callback_id=callback_id, callback_at=iso(due), callback_spoken=spoken
     )
@@ -857,9 +937,10 @@ def record_lead(ctx: Ctx, args: LeadIn) -> Result:
     """One write, no extra lookups (spec S-08). A commercial lead marks the call, so it can never
     become a booking."""
     details = args.details
-    due = None
+    due = when = None
     if args.kind != "commercial":
-        due = _callback_due(ctx, details.callback_time, details.callback_in_minutes)
+        when = _callback_due(ctx, details)
+        due = when.due
     scoped = records.scoped_customers(ctx.conn, ctx.call["id"])
     summary = "; ".join(
         part
@@ -903,7 +984,7 @@ def record_lead(ctx: Ctx, args: LeadIn) -> Result:
     elif callback_id is None:
         say = ctx.tenant.line("flag_stored_no_callback")
     else:
-        say = ctx.tenant.line("lead_stored", time=ctx.tenant.time_spoken(due, ctx.now))
+        say = ctx.tenant.line("lead_stored", when=when.spoken)
     return ok(say, lead_id=lead_id, queued=not stored, callback_id=callback_id)
 
 
