@@ -33,3 +33,5 @@ How the design was reached, in order, so a reader can follow each choice back to
 | Build briefs | Tool contract plus five lanes (tool server first, then voice, evals, Retell baseline, owner view); design phase closed | docs/tools.md, docs/ai-process/briefs/, docs/ai-process/transcripts/design-session.md |
 | Tool server built | Every gate, safety check, priority engine, tool-failure queue, notes and history, logging and trace; 274 tests; safety wording sign-off open in #24 | pull request 25, brief 02 |
 | Safety wording signed off | Caller told to hang up and call 911 from outside; no offer to stay on the line, per the gas utility | DECISIONS.md 009, #24 |
+| Owner view and jobs built | Dashboard, earlier-slot offers, callbacks, queued-booking retries, retention; callback-done question open in #26 | pull request 28, brief 06 |
+| Eval suite built | Harness, tiered scenarios, grader, suites by tag, delay comparison, replay, ratchet; pass-rate floor question open in #27 | pull request 29, brief 04 |
