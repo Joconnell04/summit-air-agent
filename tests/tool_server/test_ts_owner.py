@@ -129,7 +129,7 @@ def test_bookings_show_window_priority_reasons_and_the_earlier_slot_search(agent
     assert book(agent, call, tomorrow, job_type="no_heat", inside_temp_f=52)["ok"]
     urgent, routine = page(agent)["bookings"]
     assert urgent["priority"] == "Urgent"
-    assert "someone at home who would struggle" in urgent["reasons"]
+    assert "an older person or a baby at home" in urgent["reasons"]
     assert "below 55 F inside" in urgent["reasons"]
     assert urgent["window"] == {"day": "tomorrow", "label": "8 to 12"}
     assert urgent["seek_earlier"] is True and urgent["offer"] is None

@@ -20,7 +20,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from . import db, jobs, lifecycle, logs, outbound, owner_view, records, trace
+from . import db, jobs, lifecycle, logs, outbound, owner_view, records, trace, weather
 from .envelope import Refused, Result
 from .fsm import FsmUnavailable, SlotCache, make_adapter
 from .fsm.base import fsm_timings
@@ -49,6 +49,7 @@ class Services:
         clock: Callable[[], datetime] | None = None,
         fsm_clients: dict[str, httpx.Client] | None = None,
         side_model: SideModel | None = None,
+        weather_clients: dict[str, httpx.Client] | None = None,
     ):
         self.settings = settings
         self.clock = clock or (lambda: datetime.now(UTC))
@@ -58,6 +59,9 @@ class Services:
         self.fsm = {t.slug: make_adapter(t, settings, clients.get(t.slug)) for t in self.tenants}
         self.caches = {t.slug: SlotCache(settings.slot_cache_seconds) for t in self.tenants}
         self.side_model = side_model
+        self.weather = weather_clients or (
+            {t.slug: weather.client(t.weather) for t in self.tenants} if settings.weather else {}
+        )
         self.mailer = Mailer(settings)
         self._locks: dict[str, threading.Lock] = {}
         self._locks_guard = threading.Lock()

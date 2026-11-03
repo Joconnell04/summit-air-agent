@@ -12,7 +12,7 @@ import sqlite3
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 
-from . import booking, lookup, outbound, records
+from . import booking, lookup, outbound, records, weather
 from . import priority as prio
 from .db import iso, parse_iso, tx
 from .envelope import Refused, Result, ok
@@ -132,11 +132,14 @@ def _job_type(ctx: Ctx, code: str) -> dict:
 
 
 def _priority(ctx: Ctx, job_type: str, extra_text: str, inside_temp_f: float | None):
+    outside = weather.current(ctx.conn, ctx.tenant, ctx.now)
     facts = prio.Facts(
         job_type,
         records.caller_text(ctx.conn, ctx.call["id"]) + "\n" + extra_text,
         inside_temp_f,
         ctx.call["safety_state"] in ("signal", "lines_said"),
+        outside.now_f,
+        outside.coldest_f,
     )
     return facts, prio.decide(facts, ctx.tenant.priority, ctx.side_model)
 
