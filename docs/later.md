@@ -13,3 +13,4 @@ Things Jackson set aside on purpose. Nothing here is dropped; each item gets wal
 | Booking confirmation texts | Not asked for by the assignment; business texting needs carrier registration (1 to 3 weeks); terms and privacy pages already live | DECISIONS.md 007, #15 | open |
 | Reply delay targets (spec S-36) | Accepted for now; revisit whenever Jackson gives feedback on delays or pauses | spec r2 | open |
 | Replace ASSUMED latency values with measured ones | Needs the first real calls | latency.md, #7 | open |
+| Set the eval pass-rate floor: run the standard suite on the real prompts, adopt it, floor at its rate rounded down to 5% | Waits for the server and prompt fixes from the build review to land | #27, DECISIONS.md 011 | open |

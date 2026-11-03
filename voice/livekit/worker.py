@@ -20,6 +20,7 @@ from livekit.agents import (
     ConversationItemAddedEvent,
     JobContext,
     JobProcess,
+    MetricsCollectedEvent,
     RunContext,
     StopResponse,
     UserInputTranscribedEvent,
@@ -32,12 +33,14 @@ from livekit.agents.voice.amd import AMD, AMDCategory
 from prompts import assemble
 
 from . import clips
+from .brain import build_llm
 from .bridge import Bridge
 from .call import Call, SummitAgent
 from .capacity import Lines
 from .server import ToolServer
-from .settings import Settings, fallback_tenant, load_profile, load_voice
+from .settings import Settings, fallback_tenant, load_voice
 from .tools import ToolLog, build_tools
+from .turns import LlmLog
 
 log = logging.getLogger("voice.worker")
 
@@ -47,26 +50,6 @@ VOICEMAIL_SECONDS = 60
 SIP = rtc.ParticipantKind.PARTICIPANT_KIND_SIP
 
 settings = Settings()
-
-
-def build_llm():
-    profile = load_profile()
-    if profile.provider == "anthropic":
-        from livekit.plugins import anthropic
-
-        # Prompt caching keeps the long, fixed instructions from adding to every reply's delay.
-        # No temperature: current Claude models refuse it.
-        return anthropic.LLM(model=profile.model, caching="ephemeral")
-    if profile.provider == "openai":
-        from livekit.plugins import openai
-
-        # The plugin keeps reasoning at its lowest for reasoning models.
-        return openai.LLM(model=profile.model)
-    if profile.provider == "gemini":
-        from livekit.plugins import google
-
-        return google.LLM(model=profile.model)
-    raise ValueError(f"unknown provider {profile.provider}")
 
 
 def build_session(vad, voice: dict) -> AgentSession:
@@ -176,7 +159,8 @@ async def entrypoint(ctx: JobContext) -> None:
         min_turns_between=voice["bridge"]["min_turns_between"],
     )
     tool_log = ToolLog()
-    call = Call(tools_server, bridge, tool_log, voice["endpointing"])
+    llm_log = LlmLog()
+    call = Call(tools_server, bridge, tool_log, voice["endpointing"], llm_log)
     call.session = session
     ended = {"reason": "caller_hangup"}
 
@@ -222,6 +206,10 @@ async def entrypoint(ctx: JobContext) -> None:
     # The session closes when the caller hangs up; end the job then, so the call is closed on the
     # server at once rather than when LiveKit empties the room.
     session.on("close", lambda _ev: ctx.shutdown("session closed"))
+
+    @session.on("metrics_collected")
+    def on_metrics(ev: MetricsCollectedEvent) -> None:
+        llm_log.record(ev.metrics)
 
     @session.on("conversation_item_added")
     def on_item(ev: ConversationItemAddedEvent) -> None:

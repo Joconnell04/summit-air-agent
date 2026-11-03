@@ -52,6 +52,30 @@ One call on 2026-11-02 New York time (call `call-_+16466240418_mKdAaWweCvS2`): a
 
 The model's first token is the gap: about 1.5 s against the 500 ms budgeted, so plain turns run about twice the 1.2 s target. Turns whose first step follows a tool result in the same turn answer in about 0.55 s, which points at the first model request of each turn (prompt caching or preemptive generation restarting) rather than the model itself; that is the next thing to measure. The bridge line never fired: no tool took longer than 0.7 s (the slowest was 68 ms).
 
+## Cause of the slow first token, and the fix (issue #30)
+
+**Cause: the model was thinking before it spoke.** Claude Haiku 5.5 runs adaptive thinking whenever a request leaves out the `thinking` field. The LiveKit Anthropic plugin has no setting for that field and the worker passed only `caching`, so the profile's `thinking: false` never reached the live model (only the eval harness sent it). A plain reply of about 40 tokens (the length with thinking off) came back with a median of 151 output tokens, most of them hidden reasoning, and the first spoken word waited for them. The step after a tool result thinks less (57 to 99 output tokens in the same runs), which is why it answered in about 0.55 s.
+
+**Ruled out:**
+- *Prompt cache miss.* The cache works: on turns 2 and on, 99% of the prompt was read from cache (about 9.3k of 9.4k tokens), with breakpoints on the tool list, the system prompt and the last turn pair. The first request of each call writes the instructions (about 5k tokens) because they carry the time and the call context, while the tool list (about 4.3k) is read; that costs a little more per call (1.25x on 5k tokens), not time.
+- *Preemptive generation restarting on plain turns.* LiveKit keeps the preemptive reply only if the final transcript equals the caller line the worker hands back. The worker appends `[server]` notes to that line, so a turn whose server result has a hint (commercial caller, do-not-call, safety check declined) throws the early start away and asks again. Plain turns carry no note, so they keep it. Hint turns are rare, and the note has to reach the model, so this is left as is.
+
+**Fix:** `voice/livekit/brain.py` builds the model for the worker and sends the profile's thinking setting on every request (`disabled` for Haiku, `between_tools` for Sonnet 5.5, via `thinking_off` in config/models.yaml). Each agent line now carries the first model request's prompt tokens, cache reads and writes, output tokens and request counts in its stage timings, so `make trace` shows them.
+
+**Before and after (MEASURED).** `make measure-delay`: a scripted 8-line heat-out call replayed through the worker's own request building (`voice/livekit/measure.py`) against the Anthropic API, 2 s between caller lines, tools answered by the real tool server and the mock. It makes no phone call and no LiveKit connection. Time to the first token the model sends, run from a laptop in New York on 2026-11-02 New York time, profile `fast`, so the absolute numbers carry that network path (the server's path to Anthropic may differ).
+
+| Profile and request | Plain turns | Slowest 10% | First step of a turn that calls a tool | Step after a tool result |
+|---|---|---|---|---|
+| `fast`, before (no `thinking` field), 2 runs | median 1,326 ms (n=12) | 1,585 ms | median 1,831 ms (n=4) | median 699 ms (n=4) |
+| `fast`, after (`thinking` disabled), 3 runs | median 565 ms (n=20) | 635 ms | median 543 ms (n=4) | median 490 ms (n=4) |
+| `fast-prev` (Haiku 4.5), before and after, 2 runs | median 472 ms (n=16) | 508 ms | no tool call in either run | no tool call in either run |
+
+Other variants of the same script, one run each (n=8 plain turns): `thinking` off 496 ms; effort `low` with thinking on 880 ms, so lowering effort is not enough. Haiku 5.5 with thinking off (565 ms) is about 90 ms slower than Haiku 4.5 (472 ms) on the same prompt, so `fast-prev` stays available as the control.
+
+Expected effect on a phone call (ASSUMED, not measured): the model's median first token drops from 1.5 s to about 0.6 s, which puts the first-call plain-turn reply delay of 2.7 s near 1.8 s. That is still above the 1.2 s target, and the remaining gap needs a live call to locate.
+
+**Still to confirm on a live call:** the reply-delay median on plain turns in `make trace`, whether preemptive generation is used on plain turns (the worker log says "using preemptive generation"), and the cache numbers per turn now in the trace.
+
 ## On-prem option (a possible upsell)
 
 For a client who wants every last bit of speed: running the ears (speech-to-text) and the voice (text-to-speech) on a GPU server in the same building or data center as the phone line, instead of calling Deepgram and Cartesia over the internet, removes two network round trips per reply.

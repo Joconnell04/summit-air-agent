@@ -12,8 +12,16 @@ from typing import Protocol
 from .text import has_phrase, words
 
 LEVELS = ["Low", "Normal", "High", "Urgent"]
-# "84-year-old", "84 years old". Only older ages count: "it's 2 years old" is usually the system.
-AGE = re.compile(r"\b(\d{1,3})(?:-|\s)(?:year|yr)s?(?:-|\s)old\b")
+# How callers say someone's age: "84-year-old", "84 years old", "I'm 84", "she's 90", "my dad is
+# 78", "age 84" (as the agent passes it), "in her 80s". Only ages over the rule's floor count, so
+# "it's 2 years old" (usually the system) never fires.
+AGE = re.compile(
+    r"\b(\d{2,3})(?:-|\s)(?:year|yr)s?(?:-|\s)old\b"
+    r"|\b(?:i|she|he|they|who|mom|dad|mother|father|grandma|grandpa)(?:['’]s|['’]m| is| am| are|['’]re)\s+(\d{2,3})\b"
+    r"|\bage[d]?\s+(\d{2,3})\b"
+    r"|\bin (?:his|her|their|my|our) (\d)0s\b"
+)
+DECADES = {"seventies": 70, "eighties": 80, "nineties": 90}
 
 
 class SideModel(Protocol):
@@ -44,7 +52,19 @@ class Priority:
 
 
 def _ages(text: str) -> list[int]:
-    return [int(m[1]) for m in AGE.finditer(text.lower())]
+    text = text.lower()
+    ages = []
+    for m in AGE.finditer(text):
+        if m[4]:
+            ages.append(int(m[4]) * 10)
+        else:
+            ages.append(int(next(g for g in m.groups()[:3] if g)))
+    ages += [
+        age
+        for word, age in DECADES.items()
+        if re.search(rf"\bin (?:his|her|their|my|our) {word}\b", text)
+    ]
+    return ages
 
 
 def _rule_fires(rule: dict, facts: Facts) -> bool:

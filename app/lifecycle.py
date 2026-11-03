@@ -133,6 +133,7 @@ def start(
             customers = [lookup.customer_bundle(fsm, tenant, conn, c, now) for c in found]
         except (FsmUnavailable, FsmRejected):
             fsm_ok = False
+    _record_known_out_of_area(conn, args.call_id, customers, now)
 
     drops = sum(1 for c in recent if records.dropped(c))
     offer_callback = drops >= tenant.repeat["drops_before_callback_offer"]
@@ -157,6 +158,23 @@ def start(
         data["safety"] = {"action": "speak_lines", "kind": call["safety_kind"], "text": lines}
         say = lines
     return ok(say, **data)
+
+
+def _record_known_out_of_area(
+    conn: sqlite3.Connection, call_id: str, customers: list[dict], now: datetime
+) -> None:
+    """A known caller whose every location on file is outside the area is counted as out of area
+    at the start, so the count doesn't depend on the agent checking the ZIP (spec S-28). If they
+    give a new address inside the area and book, the owner view leaves the call out of the count."""
+    locations = [loc for c in customers for loc in c["locations"]]
+    if not locations or any(loc["in_service_area"] for loc in locations):
+        return
+    with tx(conn):
+        for loc in locations:
+            conn.execute(
+                "INSERT OR IGNORE INTO out_of_area (call_id, zip, at) VALUES (?, ?, ?)",
+                (call_id, loc["zip"], iso(now)),
+            )
 
 
 def turn(
