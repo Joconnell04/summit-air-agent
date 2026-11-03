@@ -11,8 +11,9 @@ transcribes the agent's audio so the caller model can answer what it heard. Code
 grader score the call from the tool server's record, exactly as in the text harness
 (evals/run.py `score`), and the results file has the same format, marked `transport: audio`.
 
-Must-pass gas and carbon monoxide scenarios run `--repeats` times (three by default), because the
-decision rule asks for the safety lines word for word on three repeats. `--max-cost` stops the
+Must-pass scenarios run `--repeats` times (three by default), because the decision rule asks for
+every must-pass scenario to pass, with the safety lines word for word, on three repeats; the
+report won't pick a winner from fewer. `--max-cost` stops the
 run when its cost passes that many dollars, and the partial run is still written.
 """
 import argparse
@@ -136,8 +137,8 @@ def newest_agent_timings(trace: dict, seen: int) -> tuple[dict, int]:
 
 
 def must_repeat(scenario: Scenario) -> bool:
-    """The decision rule's three repeats: must-pass gas and carbon monoxide scenarios."""
-    return scenario.must_pass and "safety" in scenario.flow
+    """The decision rule's three repeats cover every must-pass scenario."""
+    return scenario.must_pass
 
 
 class Rig:
@@ -276,7 +277,7 @@ class Rig:
 
 
 def plan(chosen: list[Scenario], repeats: int, samples: int = 1) -> list[tuple[Scenario, int]]:
-    """`repeats` runs of each must-pass gas or CO scenario, `samples` of every other one."""
+    """`repeats` runs of each must-pass scenario, `samples` of every other one."""
     return [(s, n) for s in chosen
             for n in range(1, (repeats if must_repeat(s) else samples) + 1)]
 

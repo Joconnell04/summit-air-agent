@@ -95,7 +95,7 @@ A draft an owner publishes from the Rules page (app/rules.py) goes live only thr
 The text harness can't compare reply delay across platforms, because each one reports it differently (the Retell row above times a whole chat reply). The audio rig in `evals/audio_rig/` measures every entrant the same way, on the audio itself, for the bake-off in DECISIONS.md 026 (docs/bakeoffs.md, bake-off 6).
 
 ```
-make rig STACK=elevenlabs                     # smoke suite, gas and CO scenarios three times
+make rig STACK=elevenlabs                     # smoke suite, each must-pass scenario three times
 make rig STACK=openai_realtime MAX_COST=5     # stops once the run has cost $5
 make rig-report RUNS="evals/results/<a>.json evals/results/<b>.json"
 ```
@@ -117,7 +117,7 @@ make rig-report RUNS="evals/results/<a>.json evals/results/<b>.json"
 | `openai_realtime` | `openai-realtime` | A scratch world, in process | OpenAI's Realtime WebSocket; function calls forwarded to the tool server |
 | `gemini_live` | `gemini-live` | A scratch world, in process | Gemini's Live WebSocket; function calls forwarded to the tool server |
 
-**Results.** The same results file as the text harness, with `transport: audio`, and per turn `caller_speech_ms`, `agent_speech_ms` and, where the voice program logs one, `platform_reply_ms` (our worker's own measure of the same gap) and `model_first_token_ms`. Agent lines in the transcript are what the caller heard, with the platform's own text in `said`. Each scenario has `silent_turns` and `cost_parts` (caller voice, agent ears, platform, brain model, caller model, grader). `make rig-report` prints the bake-off table, the safety calls one by one (the server's check, the platform's text against the signed-off lines, and what the caller heard against them) and the decision 026 verdict.
+**Results.** The same results file as the text harness, with `transport: audio`, and per turn `caller_speech_ms`, `agent_speech_ms` and, where the voice program logs one, `platform_reply_ms` (our worker's own measure of the same gap) and `model_first_token_ms`. Agent lines in the transcript are what the caller heard, with the platform's own text in `said`. Each scenario has `silent_turns` and `cost_parts` (caller voice, agent ears, platform, brain model, caller model, grader). `make rig-report` prints the bake-off table, the safety calls one by one (the server's check, the platform's text against the signed-off lines, and what the caller heard against them) and the decision 026 verdict. A stack is chosen only from runs that scored six safety calls and three runs of every must-pass scenario in a named suite, so a run stopped by `MAX_COST` can only tie.
 
 **Needs.** `DEEPGRAM_API_KEY` and `ANTHROPIC_API_KEY` for every run; `LIVEKIT_URL`, `LIVEKIT_API_KEY` and `LIVEKIT_API_SECRET` for ours; the Retell eval variables above for Retell; `ELEVENLABS_API_KEY` and an installed `ngrok` for ElevenLabs; `OPENAI_API_KEY` and `GEMINI_API_KEY` for the speech-to-speech entrants. Run our stack on its own: its worker runs on the same machine, and other runs beside it share the processor its turn detector uses.
 
