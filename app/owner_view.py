@@ -29,7 +29,8 @@ from .settings import REPORT_MAX_CHARS, WORKER_STALE_SECONDS
 COOKIE = "owner_token"
 EDIT_COOKIE = "owner_edit"
 RULE_FILTERS = ("all", "editable", "locked")
-COOKIE_DAYS = 30
+# Logins last as long as browsers allow (Chrome caps a cookie at 400 days); the demo shouldn't log anyone out.
+COOKIE_DAYS = 400
 SEARCH_MAX_CHARS = 80
 HERE = Path(__file__).parent
 templates = Jinja2Templates(directory=HERE / "templates")
