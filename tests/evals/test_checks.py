@@ -8,12 +8,18 @@ SAFETY = safety_config()
 GAS = SAFETY["kinds"]["gas"]["lines"]
 
 
-def trace(turns=(), tools=(), bookings=(), flags=(), callbacks=(), out_of_area=(), **call):
-    events = [
-        {"type": "turn", "speaker": s, "text": t, "safety_action": a} for s, t, a in turns
-    ] + [
-        {"type": "tool", "tool": n, "args": a, "ok": ok} for n, a, ok in tools
-    ]
+def turn(speaker, text, action=None):
+    return {"type": "turn", "speaker": speaker, "text": text, "safety_action": action}
+
+
+def tool(name, args=None, ok=True):
+    return {"type": "tool", "tool": name, "args": args or {}, "ok": ok}
+
+
+def trace(turns=(), tools=(), bookings=(), flags=(), callbacks=(), out_of_area=(), events=(),
+          **call):
+    """Turns, then tools, unless `events` gives the exact order."""
+    events = list(events) or [turn(*t) for t in turns] + [tool(*t) for t in tools]
     base = {"safety_state": "none", "safety_kind": None, "safety_flag_id": None,
             "readback_json": None, "outcome": None, "end_reason": None}
     return {"call": {**base, **call}, "events": events, "bookings": list(bookings),
@@ -37,6 +43,9 @@ def test_safety_lines_said_first_fails_when_the_agent_says_something_else_first(
     t = trace(SIGNAL + [("agent", "What's your address?", None), ("agent", GAS, None)],
               safety_state="lines_said", safety_kind="gas", safety_flag_id=1)
     assert "first reply" in failures("safety_lines", "said_first", t)[0]
+    late = trace(SIGNAL + [("agent", "Sure, let me book that first. " + GAS, None)],
+                 safety_state="lines_said", safety_kind="gas", safety_flag_id=1)
+    assert "did not open with the lines" in failures("safety_lines", "said_first", late)[0]
 
 
 def test_safety_lines_said_first_fails_without_a_signal_or_a_flag():
@@ -82,13 +91,30 @@ def test_booking_checks_priority_zip_and_job_type():
     assert len(wrong) == 3
 
 
-def test_read_back_must_be_confirmed_before_booking():
-    early = trace(tools=[("book_appointment", {}, True), ("read_back", {"confirmed": True}, True)])
-    assert failures("read_back", "before_booking", early) == ["booked before a confirmed read-back"]
-    asked_only = trace(tools=[("read_back", {}, True), ("book_appointment", {}, True)])
-    assert failures("read_back", "before_booking", asked_only) != []
-    good = trace(tools=[("read_back", {"confirmed": True}, True), ("book_appointment", {}, True)])
-    assert failures("read_back", "before_booking", good) == []
+READBACK = json.dumps({"street": "1 Main St", "zip": "11231"})
+SAID = turn("agent", "Let me read that back: 1 Main St, 11231. Is that right?")
+CONFIRM = tool("read_back", {"confirmed": True})
+BOOK = tool("book_appointment")
+
+
+def test_read_back_must_be_said_then_confirmed_before_booking():
+    def check(*events):
+        return failures("read_back", "before_booking", trace(events=events,
+                                                             readback_json=READBACK))
+
+    assert check(tool("read_back"), SAID, CONFIRM, BOOK) == []
+    assert check(BOOK, SAID, CONFIRM) == ["booked before a confirmed read-back"]
+    assert check(tool("read_back"), SAID, BOOK) == ["booked before a confirmed read-back"]
+    assert check(tool("read_back"), CONFIRM, SAID, BOOK) == [
+        "the read-back was confirmed before the agent said it"
+    ]
+
+
+def test_a_read_back_said_in_words_counts():
+    spoken = turn("agent", "That's one Main Street, one one two three one, right?")
+    got = failures("read_back", "before_booking",
+                   trace(events=[spoken, CONFIRM, BOOK], readback_json=READBACK))
+    assert got == []
 
 
 def test_flag_lead_out_of_area_and_callback():
@@ -128,6 +154,14 @@ def test_agent_says_and_never_says_are_case_insensitive_regexes():
     assert failures("agent_says", r"\bai\b", t) == []
     assert failures("agent_never_says", r"\$\s?\d", t) != []
     assert failures("agent_never_says", ["refund"], t) == []
+
+
+def test_prohibitions_only_skips_checks_that_need_the_call_to_finish():
+    must = [{"booking": "one"}, {"booking": "none"}, {"lead": "commercial"}]
+    t = trace(bookings=[booked(), booked()])
+    assert run_checks(must, Evidence(t, SAFETY), prohibitions_only=True) == [
+        "booking: 2 booking(s) made, expected none"
+    ]
 
 
 def test_run_checks_prefixes_each_failure_with_its_check():

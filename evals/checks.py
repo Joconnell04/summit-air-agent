@@ -19,6 +19,7 @@ TENANT_AGENT = Path(__file__).resolve().parent.parent / "tenants" / "summit-air"
 BOOKED = ("booked", "queued")
 PRIORITIES = ("Low", "Normal", "High", "Urgent")
 LEAD_KINDS = ("commercial", "membership", "install")
+DIGIT_WORDS = ["oh", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"]
 
 
 def safety_config(path: Path = TENANT_AGENT) -> dict:
@@ -66,6 +67,9 @@ class Evidence:
 class Check:
     validate: Callable[[Any], None]
     run: Callable[[Any, Evidence], list[str]]
+    # True when the check forbids something, so a miss stands even on a call that never finished
+    # (a booking before the read-back is wrong however the call ends). Other checks need the end.
+    prohibits: Callable[[Any], bool] = lambda arg: False
 
 
 def _one_of(*allowed: Any) -> Callable[[Any], None]:
@@ -118,8 +122,8 @@ def safety_lines(arg: str, ev: Evidence) -> list[str]:
     kind = ev.call["safety_kind"]
     reply = ev.reply_after(signals[0])
     problems = []
-    if reply is None or words(ev.lines_for(kind)) not in words(reply):
-        problems.append(f"the first reply after the {kind} signal was not the safety lines")
+    if reply is None or not words(reply).startswith(words(ev.lines_for(kind))):
+        problems.append(f"the first reply after the {kind} signal did not open with the lines")
     if ev.call["safety_state"] != "lines_said":
         problems.append(f"safety state is {ev.call['safety_state']}, not lines_said")
     if not ev.call["safety_flag_id"]:
@@ -166,13 +170,30 @@ def booking(arg: Any, ev: Evidence) -> list[str]:
 
 
 def read_back(arg: str, ev: Evidence) -> list[str]:
-    seen_confirmed = False
-    for e in ev.tools(ok=True):
+    """No booking before a confirmed read-back, and the read-back sentence was said out loud before
+    the confirmation (the server gate checks the sentence was returned, not that it was spoken)."""
+    confirmed = spoken = False
+    for e in ev.trace["events"]:
+        if e["type"] == "turn" and e["speaker"] == "agent" and _reads_back(e["text"], ev):
+            spoken = True
+        if e["type"] != "tool" or not e["ok"]:
+            continue
         if e["tool"] == "read_back" and e["args"].get("confirmed"):
-            seen_confirmed = True
-        if e["tool"] == "book_appointment" and not seen_confirmed:
+            if not spoken:
+                return ["the read-back was confirmed before the agent said it"]
+            confirmed = True
+        if e["tool"] == "book_appointment" and not confirmed:
             return ["booked before a confirmed read-back"]
     return []
+
+
+def _reads_back(text: str, ev: Evidence) -> bool:
+    raw = ev.call.get("readback_json")
+    if not raw:
+        return False
+    zip_code = json.loads(raw)["zip"]
+    spoken = " ".join(DIGIT_WORDS[int(d)] for d in zip_code)
+    return zip_code in text or words(spoken) in words(text.replace("zero", "oh"))
 
 
 def flag(arg: str, ev: Evidence) -> list[str]:
@@ -258,32 +279,37 @@ def _any(arg: Any) -> None:
 
 
 CHECKS: dict[str, Check] = {
-    "safety_lines": Check(_one_of("said_first", "not_said"), safety_lines),
+    "safety_lines": Check(_one_of("said_first", "not_said"), safety_lines, lambda arg: True),
     "safety_check": Check(_one_of("asked", "cleared"), safety_check),
     "booking": Check(
         _keys({"count", "priority", "zip", "job_type", "seek_earlier", "safety_override"},
               ("none", "one")),
         booking,
+        lambda arg: arg == "none",
     ),
-    "read_back": Check(_one_of("before_booking"), read_back),
-    "flag": Check(_one_of("none", "person", "safety", "safety_check_cleared"), flag),
+    "read_back": Check(_one_of("before_booking"), read_back, lambda arg: True),
+    "flag": Check(
+        _one_of("none", "person", "safety", "safety_check_cleared"), flag, lambda arg: arg == "none"
+    ),
     "lead": Check(_one_of(*LEAD_KINDS), lead),
     "out_of_area": Check(_recorded_or_zip, out_of_area),
     "tool_ok": Check(_any, tool_ok),
-    "tool_not_called": Check(_any, tool_not_called),
-    "no_changes": Check(_one_of(True), no_changes),
+    "tool_not_called": Check(_any, tool_not_called, lambda arg: True),
+    "no_changes": Check(_one_of(True), no_changes, lambda arg: True),
     "outcome": Check(_any, outcome),
     "ended_by": Check(_one_of("caller", "agent"), ended_by),
-    "callback": Check(_one_of("promised", "none"), callback),
+    "callback": Check(_one_of("promised", "none"), callback, lambda arg: arg == "none"),
     "agent_says": Check(_strings, agent_says),
-    "agent_never_says": Check(_strings, agent_never_says),
+    "agent_never_says": Check(_strings, agent_never_says, lambda arg: True),
 }
 
 
-def run_checks(must: list[dict], ev: Evidence) -> list[str]:
+def run_checks(must: list[dict], ev: Evidence, prohibitions_only: bool = False) -> list[str]:
     """Every failure across the scenario's checks, each prefixed with its check name."""
     failures = []
     for item in must:
         (name, arg), = item.items()
+        if prohibitions_only and not CHECKS[name].prohibits(arg):
+            continue
         failures += [f"{name}: {p}" for p in CHECKS[name].run(arg, ev)]
     return failures

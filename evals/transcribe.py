@@ -1,7 +1,8 @@
 """Roughen a caller's line the way phone speech-to-text does, before the agent sees it.
 
 Seeded, so a scenario produces the same transcript every time. Easy scenarios pass through clean;
-harder ones lose punctuation and casing and have digits spelled out ("for one one two oh one");
+harder ones lose punctuation and casing and have digit strings spelled out ("one one two oh one"),
+while short numbers, ages and temperatures stay as numbers, as phone speech-to-text writes them;
 the transcription-errors trait also swaps sound-alike words and drops the odd word.
 """
 import random
@@ -22,8 +23,19 @@ def level_for(difficulty: str, traits: list[str]) -> str:
     return "none" if difficulty == "easy" else "light"
 
 
+NUMBER = re.compile(r"\d+")
+# "84-year-old", "52 degrees": kept as written, since the server reads ages and temperatures.
+MEASURE = re.compile(r"[\s-]*(year|yr|degree|percent)", re.IGNORECASE)
+
+
 def spell_digits(text: str) -> str:
-    return re.sub(r"\d", lambda m: f" {DIGITS[int(m.group())]} ", text)
+    def spell(m: re.Match) -> str:
+        digits = m.group()
+        if len(digits) <= 2 or MEASURE.match(text, m.end()):
+            return digits
+        return " " + " ".join(DIGITS[int(d)] for d in digits) + " "
+
+    return NUMBER.sub(spell, text)
 
 
 def roughen(text: str, level: str, rng: random.Random) -> str:

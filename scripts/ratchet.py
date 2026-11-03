@@ -3,7 +3,8 @@ a model.
 
 The eval floor reads the results file named by `eval_results` in evals/baseline.json and fails on a
 stale hash (prompts, those scenarios or the model profiles changed since the run), fewer scenarios
-than `min_eval_scenarios`, any failed must-pass case, or a pass rate under `min_eval_pass_rate`.
+than `min_eval_scenarios`, a must-pass case the run's suite selects that is missing, errored or
+failed, or a pass rate under `min_eval_pass_rate`.
 
 Run with --update to raise the test baseline after adding tests, and with
 --adopt evals/results/<run>.json to make a paid run the eval reference.
@@ -36,7 +37,32 @@ def check(count: int, baseline: dict) -> tuple[bool, str]:
     return True, f"test count {count} (baseline {floor})"
 
 
-def check_eval(baseline: dict, root: Path = ROOT, current_hash=None) -> tuple[bool, str]:
+def must_pass_gaps(run, scenarios=None) -> list[str]:
+    """Must-pass scenarios the run's suite selects today that are missing from it or didn't pass.
+    An error is not a pass: a safety case with no verdict can't stand in the reference."""
+    from evals.scenario import load_all
+    from evals.suites import SuiteError, select
+
+    scenarios = scenarios if scenarios is not None else load_all()
+    suite = None if run.suite == "custom" else run.suite
+    try:
+        chosen, _ = select(scenarios, suite, run.tags)
+    except SuiteError as err:
+        return [f"cannot tell which must-pass cases the run needs: {err}"]
+    needed = {s.id for s in chosen if s.must_pass}
+    ran = {s.scenario_id for s in run.scenarios}
+    problems = [f"must-pass case missing: {i}" for i in sorted(needed - ran)]
+    must_now = {s.id for s in scenarios if s.must_pass}
+    for s in run.scenarios:
+        if s.scenario_id in must_now and s.outcome != "pass":
+            problems.append(f"must-pass case {s.outcome}: {s.key}")
+        elif s.must_pass_failures:
+            problems.append(f"must-pass case failed: {s.key}")
+    return problems
+
+
+def check_eval(baseline: dict, root: Path = ROOT, current_hash=None, scenarios=None
+               ) -> tuple[bool, str]:
     from evals.results import ResultsError, load
 
     reference = baseline.get("eval_results")
@@ -64,9 +90,7 @@ def check_eval(baseline: dict, root: Path = ROOT, current_hash=None) -> tuple[bo
     floor = baseline.get("min_eval_scenarios") or 0
     if len(run.scenarios) < floor:
         problems.append(f"{len(run.scenarios)} scenarios, fewer than the floor of {floor}")
-    failed = [s.key for s in run.scenarios if s.must_pass_failures]
-    if failed:
-        problems.append(f"must-pass case(s) failed: {', '.join(failed)}")
+    problems += must_pass_gaps(run, scenarios)
     rate, min_rate = run.pass_rate(), baseline.get("min_eval_pass_rate")
     if min_rate is not None and (rate is None or rate < min_rate):
         shown = "none" if rate is None else f"{rate:.0%}"
@@ -76,7 +100,7 @@ def check_eval(baseline: dict, root: Path = ROOT, current_hash=None) -> tuple[bo
     return True, f"eval floor: {reference} ({len(run.scenarios)} scenarios, hash current)"
 
 
-def adopt(path: str, baseline: dict, root: Path = ROOT) -> tuple[bool, str]:
+def adopt(path: str, baseline: dict, root: Path = ROOT, scenarios=None) -> tuple[bool, str]:
     """Make a results file the eval reference. Floors only go up."""
     from evals.results import ResultsError, load
 
@@ -84,8 +108,9 @@ def adopt(path: str, baseline: dict, root: Path = ROOT) -> tuple[bool, str]:
         run = load(root / path)
     except ResultsError as err:
         return False, str(err)
-    if any(s.must_pass_failures for s in run.scenarios):
-        return False, "refusing to adopt a run with a failed must-pass case"
+    gaps = must_pass_gaps(run, scenarios)
+    if gaps:
+        return False, "refusing to adopt: " + "; ".join(gaps)
     if len(run.scenarios) < (baseline.get("min_eval_scenarios") or 0):
         return False, "refusing to adopt a run with fewer scenarios than the floor"
     baseline["eval_results"] = path

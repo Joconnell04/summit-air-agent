@@ -1,5 +1,6 @@
 """Re-run a recorded call's caller turns against the current prompts and tools, and diff the
-tool-call sequence. Exits 1 when it differs, so a prompt change that changes behavior shows up.
+tool-call sequence. Exits 1 when it differs or a pass became a fail, so a prompt change that
+changes behavior shows up.
 
 Usage: python -m evals.replay <call id> [--results-dir evals/results] [--stack livekit]
 """
@@ -71,9 +72,13 @@ def main(argv: list[str] | None = None) -> int:
           f"{fresh.outcome}")
     if changes:
         print("tool calls differ:\n" + "\n".join(changes))
-        return 1
-    print(f"tool calls match ({len(recorded.tool_calls)})")
-    return 0
+    else:
+        print(f"tool calls match ({len(recorded.tool_calls)})")
+    return 1 if changes or regressed(recorded, fresh) else 0
+
+
+def regressed(before: ScenarioResult, after: ScenarioResult) -> bool:
+    return before.outcome == "pass" and after.outcome == "fail"
 
 
 if __name__ == "__main__":

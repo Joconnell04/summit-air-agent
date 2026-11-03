@@ -1,5 +1,5 @@
 from evals import results
-from evals.replay import diff, find_call, tool_sequence
+from evals.replay import diff, find_call, regressed, tool_sequence
 from evals.results import ToolCall
 
 
@@ -23,3 +23,10 @@ def test_replay_cli_reports_an_unknown_call(tmp_path, capsys):
 
     assert main(["call-nope", "--results-dir", str(tmp_path)]) == 2
     assert "no call call-nope" in capsys.readouterr().err
+
+
+def test_a_pass_that_became_a_fail_is_a_regression(make_run):
+    passed = make_run().scenarios[0]
+    failed = passed.model_copy(update={"outcome": "fail", "check_failures": ["x"]})
+    assert regressed(passed, failed)
+    assert not regressed(failed, passed)

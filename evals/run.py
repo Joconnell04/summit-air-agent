@@ -121,7 +121,7 @@ class Harness:
                            began)
 
     def _score(self, scenario, sample, call_id, server, transcript, timings, usage, error, began):
-        failures, tool_calls, grade_score, notes = [], [], None, ""
+        failures, violations, tool_calls, grade_score, notes = [], [], [], None, ""
         if server is not None:
             try:
                 trace = server.trace(call_id)
@@ -129,14 +129,23 @@ class Harness:
                     ToolCall(name=e["tool"], arguments=e["args"])
                     for e in trace["events"] if e["type"] == "tool" and e["tool"] in TOOLS
                 ]
-                if not error:
-                    failures = run_checks(scenario.must, Evidence(trace, self.safety))
+                evidence = Evidence(trace, self.safety)
+                if not error.startswith("harness"):
+                    failures = run_checks(scenario.must, evidence)
+                    violations = run_checks(scenario.must, evidence, prohibitions_only=True)
             except Exception as err:  # noqa: BLE001
                 error = error or f"harness: could not read the call record: {err}"
         elif not error:
             error = "harness: no tool server record"
-        outcome = "error" if error else ("fail" if failures else "pass")
-        if outcome != "error":
+        if error:
+            # No verdict, unless the call broke a rule before it stopped (a booking before the
+            # read-back stays wrong however the call ends).
+            outcome = "fail" if violations and not error.startswith("harness") else "error"
+            if outcome == "fail":
+                failures = violations
+        else:
+            outcome = "fail" if failures else "pass"
+        if not error:
             try:
                 g = grade(self.models.grader, transcript, scenario.should)
                 usage.add(g.usage)
@@ -145,7 +154,11 @@ class Harness:
                     outcome = "fail"
                     failures.append(f"grader: {g.notes}")
             except Exception as err:  # noqa: BLE001
-                outcome, error = "error", f"grader: {err}"
+                # A broken grader never hides a failed check: the fail stands, ungraded.
+                if outcome == "pass":
+                    outcome, error = "error", f"grader: {err}"
+                else:
+                    notes = f"grader unavailable: {err}"
         delays = [t.reply_delay_ms for t in timings]
         return ScenarioResult(
             scenario_id=scenario.id,
@@ -158,7 +171,7 @@ class Harness:
             must_pass_failures=failures if scenario.must_pass and outcome == "fail" else [],
             check_failures=failures,
             error=error,
-            grader_score=grade_score if outcome != "error" else None,
+            grader_score=grade_score,
             grader_notes=notes,
             reply_delay_p50_ms=percentile(delays, 0.5),
             reply_delay_p90_ms=percentile(delays, 0.9),

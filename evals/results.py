@@ -71,7 +71,7 @@ class ScenarioResult(Strict):
     # Every failed code check, must-pass or not, and why an error run produced no verdict.
     check_failures: list[str] = Field(default_factory=list)
     error: str = ""
-    # Missing only on an error run, which the grader never sees.
+    # Missing on an error run, which the grader never sees, and on a fail it couldn't score.
     grader_score: int | None = Field(None, ge=1, le=5)
     grader_notes: str = ""
     reply_delay_p50_ms: float = Field(ge=0)
@@ -91,7 +91,9 @@ class ScenarioResult(Strict):
             raise ValueError(f"{self.scenario_id}: outcome is pass but must_pass_failures is not empty")
         if self.reply_delay_p90_ms < self.reply_delay_p50_ms:
             raise ValueError(f"{self.scenario_id}: reply_delay_p90_ms is below reply_delay_p50_ms")
-        if self.grader_score is None and self.outcome != "error":
+        # Only a run with no verdict, or a fail the grader couldn't score, has no grade.
+        ungraded_ok = self.outcome == "error" or (self.outcome == "fail" and self.check_failures)
+        if self.grader_score is None and not ungraded_ok:
             raise ValueError(f"{self.scenario_id}: grader_score is missing on a {self.outcome}")
         return self
 

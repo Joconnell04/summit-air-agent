@@ -79,8 +79,19 @@ def test_a_looping_caller_is_an_error_not_a_fail(seed_dir, tmp_path):
     result, _, _, grader = run(seed_dir, tmp_path, s, [], [say("Hello?")] * 5)
     assert result.outcome == "error"
     assert "repeated the same line" in result.error
-    assert result.grader_score is None and result.check_failures == []
+    assert result.grader_score is None
+    # The miss is kept for the record, but a call that never finished has no verdict.
+    assert result.check_failures == ["flag: no person was flagged"]
     assert grader.calls == []
+
+
+def test_a_rule_broken_before_the_caller_looped_is_still_a_fail(seed_dir, tmp_path):
+    s = scenario(max_turns=8, spec=["S-41"], must=[{"agent_never_says": r"\$\s?\d"},
+                                                  {"flag": "person"}])
+    result, *_ = run(seed_dir, tmp_path, s, [say("That will be $89.")], [say("Hello?")] * 5)
+    assert result.outcome == "fail"
+    assert result.check_failures == ["agent_never_says: the agent said /\\$\\s?\\d/: 'That will be $89.'"]
+    assert "repeated the same line" in result.error
 
 
 def test_a_call_that_never_finishes_is_an_error(seed_dir, tmp_path):
@@ -97,6 +108,15 @@ def test_a_broken_harness_is_an_error(seed_dir, tmp_path):
     result, *_ = run(seed_dir, tmp_path, scenario(), [], [], open_agent=broken)
     assert result.outcome == "error"
     assert result.error == "harness: RuntimeError: tool server down"
+
+
+def test_a_broken_grader_never_hides_a_failed_check(seed_dir, tmp_path):
+    s = scenario(spec=["S-26"], must=[{"booking": "one"}])
+    result, *_ = run(seed_dir, tmp_path, s, [say("Okay.")], [say("[END]")], grade=say("junk"))
+    assert result.outcome == "fail"
+    assert result.must_pass_failures == ["booking: 0 booking(s) made, expected 1"]
+    assert result.grader_score is None
+    assert result.grader_notes.startswith("grader unavailable")
 
 
 def test_unreadable_grader_output_is_an_error(seed_dir, tmp_path):
