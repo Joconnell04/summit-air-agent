@@ -4,6 +4,7 @@ calls that get none."""
 
 import json
 import logging
+from datetime import timedelta
 
 import pytest
 from test_ts_safety import GAS_LINES
@@ -17,7 +18,8 @@ from toolkit import (
     ready_to_book,
 )
 
-from app import jobs, summary
+from app import jobs, records, summary
+from app.db import tx
 
 TOKEN = "owner-token"
 DRAFT = {
@@ -199,6 +201,30 @@ def test_problem_and_told_come_from_the_record_when_the_model_leaves_them_out(ag
     assert lines["Problem"] == "No heat since last night, radiators are cold, since last night"
     assert lines["Told"].startswith("Arrival window Monday 2026-11-02")
 
+
+
+def test_the_told_fallback_keeps_a_promised_callback(agent):
+    call = ready_to_book(agent)
+    assert book(agent, call, first_open(agent, call))["ok"]
+    conn = agent.db()
+    try:
+        with tx(conn):
+            records.add_callback(
+                conn,
+                services(agent).tenants.default,
+                records.get_call(conn, call),
+                agent.clock() + timedelta(hours=2),
+                "Office to confirm the part",
+                agent.clock(),
+            )
+    finally:
+        conn.close()
+    agent.end(call)
+    # A Told line with a number the record doesn't hold is dropped, so the fallback stands in.
+    run(agent, FakeModel({**DRAFT, "told": "Window 9 to 13"}))
+    told = dict(json.loads(stored(agent, call)["lines_json"]))["Told"]
+    assert told.startswith("Arrival window Monday 2026-11-02")
+    assert "call back by 11:00 AM (Office to confirm the part)" in told
 
 # ---- the write to ServiceTitan ------------------------------------------------------------------
 

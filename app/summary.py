@@ -213,7 +213,9 @@ def lines(fields: dict, rec: dict) -> tuple[list[list[str]], list[dict]]:
             continue
         dropped.append({"field": field, "text": text, "reason": reason})
     kept.setdefault("problem", clip(f"{rec['issue']}, since {rec['since']}"))
-    kept.setdefault("told", clip(f"Arrival window {rec['arrival_window']}"))
+    told = [f"Arrival window {rec['arrival_window']}"]
+    told += [f"call back by {c['by']} ({c['why']})" for c in rec["callbacks_promised"]]
+    kept.setdefault("told", clip("; ".join(told)))
     return [[FIELDS[f], kept[f]] for f in FIELDS if f in kept], dropped
 
 
