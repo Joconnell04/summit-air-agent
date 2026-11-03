@@ -1,12 +1,12 @@
 """The priority engine and the after-hours outcome (spec S-04, S-21, S-33; DECISIONS.md 006)."""
 
 import pytest
-import yaml
 from toolkit import TENANT_DIR, UNKNOWN
 
 from app import priority as prio
+from app.tenant import load_agent
 
-AGENT = yaml.safe_load((TENANT_DIR / "agent.yaml").read_text())
+AGENT = load_agent(TENANT_DIR)[0]
 CFG = AGENT["priority"]
 CUTOFFS = AGENT["after_hours"]
 

@@ -11,19 +11,19 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-import yaml
-
+from app.tenant import load_agent
 from app.text import words
 
-TENANT_AGENT = Path(__file__).resolve().parent.parent / "tenants" / "summit-air" / "agent.yaml"
+TENANT_DIR = Path(__file__).resolve().parent.parent / "tenants" / "summit-air"
 BOOKED = ("booked", "queued")
 PRIORITIES = ("Low", "Normal", "High", "Urgent")
 LEAD_KINDS = ("commercial", "membership", "install")
 DIGIT_WORDS = ["oh", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"]
 
 
-def safety_config(path: Path = TENANT_AGENT) -> dict:
-    return yaml.safe_load(path.read_text())["safety"]
+def safety_config(folder: Path = TENANT_DIR) -> dict:
+    """The tenant's safety config with its trade's phrases, as the server reads it."""
+    return load_agent(folder)[0]["safety"]
 
 
 @dataclass

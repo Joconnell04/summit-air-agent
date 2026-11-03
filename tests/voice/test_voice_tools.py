@@ -4,9 +4,9 @@ import asyncio
 import json
 
 import httpx
-import yaml
 from livekit.agents.beta.tools.end_call import EndCallTool
 
+from app.tenant import load_agent
 from app.tools import TOOLS
 from prompts import assemble
 from tests.tool_server.toolkit import DIALED, TENANT_DIR, in_area_address
@@ -14,7 +14,7 @@ from voice.livekit.bridge import Bridge
 from voice.livekit.server import UNREACHABLE, ToolServer, idempotency_key
 from voice.livekit.tools import ToolLog, build_tools
 
-SAFETY = yaml.safe_load((TENANT_DIR / "agent.yaml").read_text())["safety"]
+SAFETY = load_agent(TENANT_DIR)[0]["safety"]
 JOB_TYPES = ["no_heat", "no_cooling", "tune_up", "safety_check", "estimate"]
 
 

@@ -13,6 +13,7 @@ import yaml
 from toolkit import ROOT, UNKNOWN, Agent, book, count, first_open, make_server, ready_to_book
 
 from app import jobs
+from app.tenant import load_agent
 from app.tools import TOOLS
 
 DEBUG = {"X-Debug-Token": "test-token"}
@@ -290,7 +291,7 @@ def _code_strings(path) -> str:
 
 def test_no_summit_air_fact_lives_in_the_template_code():
     config = yaml.safe_load((ROOT / "tenants" / "summit-air" / "config.yaml").read_text())
-    agent_cfg = yaml.safe_load((ROOT / "tenants" / "summit-air" / "agent.yaml").read_text())
+    agent_cfg = load_agent(ROOT / "tenants" / "summit-air")[0]
     facts = {
         config["company"]["name"],
         "Brooklyn",
