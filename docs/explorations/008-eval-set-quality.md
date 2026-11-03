@@ -122,3 +122,15 @@ Read in full unless marked snippet. Accessed 2026-11-02.
 - Earlier work: DECISIONS.md 002 and 011, `docs/decisions/06-eval-design.md`, `evals/README.md`, `docs/considerations.md` C-52.
 
 Gaps: I did not read the Coval, Bluejay, Vapi or Retell testing pages beyond search summaries; no independent source says what persona mix is right for a phone agent; I read only 2 of the 16 smoke transcripts, so the cooperative-caller observation is a pointer, not a measured rate; the Sim2Real paper's score numbers and the MIMESIS figures were not verified at source.
+
+## 7. The plan sized to Jackson's time
+
+Jackson's answer to question 1: one to two hours in all, given as 4 or 5 rounds of 10 to 20 minutes of feedback, not long sittings. So he reacts and Claude prepares; each round is something he can read and answer by voice in one burst. Proposed rounds (a plan, open to change):
+
+1. **Look at real failures.** Five transcripts from the first standard run on the real prompts, with the checks that failed. He says what's wrong in each, plus the one failure that would embarrass him most in front of Revin. Claude clusters the notes into failure types.
+2. **Seeds.** Claude drafts about 10 seed scenarios from his notes and the clusters; he edits or rejects each in a line. AI writes the variants from the approved seeds only.
+3. **Judge labels.** About 15 graded transcripts with the grader's verdict hidden; he marks pass or fail with one line why. That calibrates the grader against him (it stays able to fail a run only if it agrees with him often enough).
+4. **Hold-out.** He dictates 5 short caller cases that Claude never reads until a release gate.
+5. **Scoreboard.** The standard suite on the new seeds; he reads the summary and agrees the pass-rate floor (DECISIONS.md 011).
+
+The remaining questions in section 5 (outside callers, a non-Anthropic caller or judge) are asked in round 1, one at a time.
