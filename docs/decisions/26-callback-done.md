@@ -1,10 +1,14 @@
 # 26. How a person marks a callback done
 
-Issue: #26. Status: ready
+Issue: #26. Status: decided
 
 ## Question
 
 The owner view counts callbacks promised against done (C-45, spec S-32), but brief 06 makes the page read-only. Today a callback only becomes done when the system places it itself and the caller answers (journey 12). Every callback a person owes (a complaint, a billing question, the on-call technician's call back) ends up overdue and flagged, even when the office returned it. How should a returned callback be recorded?
+
+## Decision
+
+B, with an outcome on each call log entry (resolved, still open, no contact); only a resolved outbound call after the promise marks the callback done, so a missed call or the wrong person answering can't. DECISIONS.md 010.
 
 ## Options
 

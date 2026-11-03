@@ -76,7 +76,7 @@ Plus the provider keys: `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET`, 
 
 ## Not done here
 
-- The outside monitor needs a Healthchecks.io check created and its ping URL set as `HEALTHCHECK_URL` on the server.
+- The outside monitor is a Healthchecks.io check on the free plan, owned by the project's Gmail account (jt272004@gmail.com, the same contact as the public terms page). Its ping URL is `HEALTHCHECK_URL` in the server's `.env` and in the Notion vault, never in the repo, because anyone holding it could ping the check and hide an outage. The check expects a ping every minute with a 5-minute grace period, so a stopped worker, a stopped tool server or a server that doesn't come back from its nightly reboot sends an email. Chosen because the watchdog already knows whether the stack is healthy, so the outside monitor only has to notice silence; an uptime probe from outside (UptimeRobot) would have to reach a public health page, and UptimeRobot's free plan is non-commercial (docs/explorations/003-capacity-and-cost.md).
 - Outbound calls: the claim, dispatch and report are tested against the real server, but the dial and answering-machine branches of `place_outbound` have no test with a fake LiveKit API and have not run end to end.
 - OpenAI and Gemini profiles are wired but untested on a live call; Gemini's thinking setting is left at the plugin default.
 - The bridge clip waits 0.4 s after its last frame (`CLIP_TAIL_S`, the audio buffer LiveKit keeps) before the reply's audio may start; measure it once a tool is slow enough to trigger a clip.

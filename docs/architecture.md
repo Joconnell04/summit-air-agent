@@ -73,5 +73,5 @@ The server installs security updates on its own and reboots only when an update 
 
 - Services start on boot (`@reboot` in the user crontab, no root needed) and a watchdog run every minute restarts anything that has stopped.
 - A health endpoint (`GET /healthz`) checks the tool server, the database and that the voice worker is registered with LiveKit.
-- An outside monitor (Healthchecks.io free plan) expects a ping from the watchdog every minute and alerts by email and text if pings stop for 5 minutes. Every reboot therefore shows up as a short gap, and a server that doesn't come back raises an alert.
+- An outside monitor (Healthchecks.io free plan, set up; voice/livekit/README.md) expects a ping from the watchdog every minute and alerts by email if pings stop for 5 minutes. The watchdog pings only when the worker and tool server both pass, so the monitor hears silence for any failure. Every reboot therefore shows up as a short gap, and a server that doesn't come back raises an alert.
 - If the worker is down while LiveKit is up, Twilio won't fail over on its own (docs/explorations/004-call-control-and-numbers.md), so the watchdog also switches the Twilio number to its backup destination when the health check fails twice in a row, and back when it passes.

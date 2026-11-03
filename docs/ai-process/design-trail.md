@@ -37,3 +37,5 @@ How the design was reached, in order, so a reader can follow each choice back to
 | Eval suite built | Harness, tiered scenarios, grader, suites by tag, delay comparison, replay, ratchet; pass-rate floor question open in #27 | pull requests 29 and 34, brief 04 |
 | LiveKit voice agent built | Worker, prompts, phone wiring and deploy; a real call to (646) 624-0418 booked a job; reply delay 2.7 s against 1.2 s, being worked in #30 | pull request 31, brief 03 |
 | Retell baseline built | Same tools, prompts and traces on the 678 number; a real call booked and a gas call held the safety gate; speed-extras question open in #32 | pull requests 33 and 35, brief 05 |
+| Callback done read from ServiceTitan | Only an outbound call logged as resolved marks a callback done; missed calls, voicemail or the wrong person leave it open | DECISIONS.md 010, #26 |
+| Eval floor waits for the real prompts | Set from the first standard-suite run on the real prompts, rounded down to the nearest 5%, ratchet up only | DECISIONS.md 011, #27 |

@@ -1,10 +1,14 @@
 # 27. What pass-rate floor should the eval ratchet enforce?
 
-Issue: #27. Status: ready
+Issue: #27. Status: decided
 
 ## Question
 
 `make check` now fails on a stale eval run, fewer scenarios, or any failed must-pass case. The last piece is the pass-rate floor (`min_eval_pass_rate` in `evals/baseline.json`, null today) and which run becomes the first reference. Nothing in the harness waits on this.
+
+## Decision
+
+C, set once the standard suite has run on the real prompts; that run becomes the reference. DECISIONS.md 011.
 
 ## Options
 
