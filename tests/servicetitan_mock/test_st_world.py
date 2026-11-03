@@ -3,7 +3,17 @@
 import sqlite3
 from datetime import timedelta
 
-from conftest import CFG, NOW, START, TENANT_DIR, TOMORROW, TUNE_UP, Api, open_slots
+from conftest import (
+    CFG,
+    NOW,
+    START,
+    TENANT_DIR,
+    TOMORROW,
+    TUNE_UP,
+    Api,
+    job_body,
+    open_slots,
+)
 
 from servicetitan_mock.app import create_app
 from servicetitan_mock.seed import build_world
@@ -160,7 +170,6 @@ def test_the_out_of_area_customer_exists_but_cannot_be_booked(world):
     whitman = scenarios["outOfArea"]
     assert api.get(f"/crm/locations/{whitman['locationId']}").json()["address"]["zip"] == "11501"
     assert "11501" not in api.get("/settings/company-profile").json()["serviceAreaZips"]
-    from conftest import job_body
 
     response = api.post(
         "/jpm/jobs", job_body(whitman["customerId"], whitman["locationId"], TOMORROW, "morning")
@@ -174,7 +183,6 @@ def test_the_commercial_account_exists_and_has_a_lead(world):
     assert api.get(f"/crm/customers/{bakery['customerId']}").json()["type"] == "Commercial"
     leads = api.get("/crm/leads", phone=bakery["phone"]).json()["data"]
     assert leads[0]["kind"] == "Commercial"
-    from conftest import job_body
 
     response = api.post(
         "/jpm/jobs", job_body(bakery["customerId"], bakery["locationId"], TOMORROW, "morning")
@@ -256,7 +264,6 @@ def test_one_technician_carries_the_on_call_phone_each_week(world):
 def test_a_booking_in_the_full_world_works_end_to_end(world):
     api, scenarios = world
     park = scenarios["activeMemberWithAdultChild"]
-    from conftest import job_body
 
     before = open_slots(api, TOMORROW, "afternoon")
     response = api.post(
@@ -350,9 +357,12 @@ def test_notes_can_be_added_but_never_changed_or_removed(world):
     added = api.post(path, {"text": "Prefers mornings.", "createdBy": "agent"}, key="note-1")
     assert added.status_code == 201
     assert added.json()["createdBy"] == "agent"
-    assert api.post(path, {"text": "Prefers mornings.", "createdBy": "agent"}, key="note-1").json()[
-        "id"
-    ] == added.json()["id"]
+    assert (
+        api.post(path, {"text": "Prefers mornings.", "createdBy": "agent"}, key="note-1").json()[
+            "id"
+        ]
+        == added.json()["id"]
+    )
     note_id = added.json()["id"]
     for method in ("PUT", "PATCH", "DELETE"):
         assert api.request(method, f"{path}/{note_id}").status_code in (404, 405)
