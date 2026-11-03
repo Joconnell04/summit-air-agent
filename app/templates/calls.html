@@ -43,7 +43,7 @@
           <td>{{ c.type_label }}</td>
           <td>{{ c.outcome_label }}</td>
           <td class="fit right num muted">{% if c.seconds is not none %}{{ c.seconds // 60 }}:{{ "%02d" | format(c.seconds % 60) }}{% endif %}</td>
-          <td class="fit right"><span class="tags">{% if c.direction == "outbound" %}<span class="tag outline">Placed by us</span>{% endif %}{% if c.open_flags %}<span class="tag high">{{ c.open_flags }} open</span>{% endif %}{% if c.safety_kind %}<span class="tag urgent">Safety</span>{% endif %}</span></td>
+          <td class="fit right"><span class="tags">{% if c.direction == "outbound" %}<span class="tag outline">Placed by us</span>{% endif %}{% if c.safety_kind %}<span class="tag urgent">Safety</span>{% endif %}{% if c.open_flags %}<span class="tag high">Needs a person</span>{% endif %}</span></td>
           <td class="fit right"><a href="/owner/calls/{{ c.id }}">Open call</a></td>
         </tr>
       {% endfor %}
