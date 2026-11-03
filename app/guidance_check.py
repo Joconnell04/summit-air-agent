@@ -68,14 +68,19 @@ def load_profile(path: Path = CONFIG_PATH) -> dict:
 def locked_rules(tenant: Tenant) -> list[str]:
     """The locked rules in plain lines, from the rulebook: every server check, the read-back, the
     safety lines, the fees the agent may say and where the company works."""
-    shown = {"line.read_back", "setting.fees"}
     found = []
     for rule in rulebook.rulebook(tenant):
         safety_lines = rule.id.startswith("safety.") and rule.id.endswith(".lines")
-        if rule.kind == "server" or rule.id in shown or safety_lines:
+        if rule.kind == "server" or rule.id == "line.read_back" or safety_lines:
             found.append(f"{rule.title}: {rule.detail}" if rule.detail else rule.title)
     found.append(rules.LOCKED["read_back"])
     found.append(rules.LOCKED["priority"])
+    # The rulebook's fee row reads "None" to an owner; the check needs it as a rule.
+    fees = [k.replace("_", " ") for k, v in tenant.fees.items() if v is not None]
+    found.append(
+        f"The agent may quote only these fees, and no other price: {', '.join(fees)}" if fees
+        else "The agent never quotes a fee or a price"
+    )
     zones = sorted({zone["name"] for zone in tenant.service_area.values()})
     found.append(f"Works only on homes, and only in these areas: {', '.join(zones)}")
     return found
@@ -98,17 +103,21 @@ def message(tenant: Tenant, items: dict[str, str]) -> str:
 
 
 def check_with(ask: Ask, tenant: Tenant, items: dict[str, str]) -> dict[str, str]:
-    """What's wrong with each item, by field; empty when all pass. An answer that doesn't cover
-    every item, or any failure, refuses the save as unchecked."""
+    """What's wrong with each item, by field; empty when all pass. Anything but exactly one
+    well-formed result per item (a missing, extra or repeated id, a refuse that isn't true or
+    false) or any failure refuses the save as unchecked."""
     try:
-        results = {str(r["id"]): r for r in json.loads(ask(PROMPT.read_text(),
-                                                          message(tenant, items)))["results"]}
+        answer = json.loads(ask(PROMPT.read_text(), message(tenant, items)))["results"]
         fields = {str(n): field for n, field in enumerate(items, 1)}
-        if set(results) != set(fields):
+        ids = [str(r["id"]) for r in answer]
+        well_formed = all(
+            isinstance(r["refuse"], bool) and isinstance(r["reason"], str) for r in answer
+        )
+        if not well_formed or len(ids) != len(fields) or set(ids) != set(fields):
             return {"content": UNAVAILABLE}
         return {
-            fields[n]: " ".join(r["reason"].split()) or "That runs into a locked rule."
-            for n, r in results.items() if r["refuse"]
+            fields[str(r["id"])]: " ".join(r["reason"].split()) or "That runs into a locked rule."
+            for r in answer if r["refuse"]
         }
     except Exception:  # noqa: BLE001 - any failure means the draft wasn't checked
         return {"content": UNAVAILABLE}
