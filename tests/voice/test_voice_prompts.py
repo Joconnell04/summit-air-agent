@@ -42,3 +42,21 @@ def test_job_types_are_limited_to_the_tenants_own():
     specs = {s["name"]: s for s in assemble.tool_specs(assemble.job_types(TENANT_DIR))}
     allowed = specs["book_appointment"]["parameters"]["properties"]["job_type"]["enum"]
     assert set(allowed) == {"no_heat", "no_cooling", "tune_up", "safety_check", "estimate"}
+
+
+def test_server_hints_become_notes_and_unknown_hints_are_dropped():
+    notes = assemble.server_notes(["commercial", "journey:safety"])
+    assert len(notes) == 1 and notes[0].startswith("[server]")
+
+
+def test_first_name():
+    assert assemble.first_name("Maria Lopez") == "Maria"
+    assert assemble.first_name("  ") == ""
+
+
+def test_booking_tools_say_the_window_is_the_code_not_the_spoken_label():
+    specs = {s["name"]: s for s in assemble.tool_specs(assemble.job_types(TENANT_DIR))}
+    for name in ("book_appointment", "reschedule_appointment"):
+        window = specs[name]["parameters"]["properties"]["slot"]["properties"]["window"]
+        assert "code" in window["description"] and "label" in window["description"], name
+        assert "label" in specs[name]["description"], name

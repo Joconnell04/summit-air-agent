@@ -1,7 +1,7 @@
 """Builds what the model sees on a call from the files in this folder, so every voice layer runs
 the same conversation: the instructions (the prompt files plus the call context the server returned
-from /calls/start) and the tool list (descriptions from tools.yaml, arguments from the tool
-server's own request models)."""
+from /calls/start), the tool list (descriptions from tools.yaml, arguments from the tool server's
+own request models), the greeting, and the `[server]` notes added to caller lines."""
 
 import copy
 import json
@@ -57,6 +57,35 @@ def tool_specs(job_types: list[str]) -> list[dict]:
             }
         )
     return specs
+
+
+def first_name(full_name: str) -> str:
+    return full_name.split()[0] if full_name.strip() else ""
+
+
+def greeting(start: dict, voice: dict) -> str:
+    """The opening line from the tenant's `voice` lines: by first name when exactly one residential
+    customer matched the calling number, otherwise the general greeting."""
+    customers = [c for c in start.get("customers", []) if c.get("residential")]
+    if len(customers) == 1 and first_name(customers[0]["name"]):
+        return voice["greeting_known"].format(first_name=first_name(customers[0]["name"]))
+    return voice["greeting_unknown"]
+
+
+SERVER_NOTES = {
+    "commercial": (
+        "The caller described a business, so this call can't book. Decline kindly and record a "
+        "commercial lead."
+    ),
+    "do_not_call": "The caller asked not to be called. Call mark_do_not_call and say its sentence.",
+    "safety_check_cleared": "The caller said no to the safety check. Carry on where the call was.",
+}
+
+
+def server_notes(hints: list[str]) -> list[str]:
+    """`[server]` lines added to a caller's line for the model, from a turn result's hints (the
+    tool-use prompt explains them). Safety lines are spoken by the voice layer, not described."""
+    return [f"[server] {SERVER_NOTES[h]}" for h in hints if h in SERVER_NOTES]
 
 
 def job_types(tenant_dir: Path) -> list[str]:

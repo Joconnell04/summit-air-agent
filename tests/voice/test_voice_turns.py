@@ -7,8 +7,6 @@ from voice.livekit.turns import (
     agent_timings,
     asked_for_digits,
     caller_timings,
-    first_name,
-    server_notes,
 )
 
 
@@ -48,16 +46,6 @@ def test_reply_delay_runs_from_the_caller_going_quiet_to_the_first_audio():
     timings = agent_timings({"started_speaking_at": 12.0}, 10.8, tool_ms=0.0, bridge=False)
     assert timings["reply_ms"] == 1200.0
     assert agent_timings({}, None, 5.0, True) == {"tool_ms": 5.0, "bridge": 1.0}
-
-
-def test_server_hints_become_notes_and_unknown_hints_are_dropped():
-    notes = server_notes(["commercial", "journey:safety"])
-    assert len(notes) == 1 and notes[0].startswith("[server]")
-
-
-def test_first_name():
-    assert first_name("Maria Lopez") == "Maria"
-    assert first_name("  ") == ""
 
 
 def test_the_profile_is_switched_by_one_setting(monkeypatch):

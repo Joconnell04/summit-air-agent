@@ -10,10 +10,12 @@ from livekit import rtc
 from livekit.agents import Agent, ModelSettings, StopResponse
 from livekit.agents.llm import ChatContext, ChatMessage
 
+from prompts.assemble import server_notes
+
 from .bridge import Bridge
 from .server import UNREACHABLE, ToolServer
 from .tools import ToolLog
-from .turns import agent_timings, asked_for_digits, caller_timings, server_notes
+from .turns import agent_timings, asked_for_digits, caller_timings
 
 log = logging.getLogger("voice.call")
 

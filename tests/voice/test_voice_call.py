@@ -9,13 +9,14 @@ import yaml
 from livekit.agents import Agent, StopResponse
 from livekit.agents.llm import ChatMessage
 
+from prompts.assemble import greeting
 from tests.tool_server.toolkit import TENANT_DIR
 from voice.livekit.bridge import Bridge
 from voice.livekit.call import Call, SummitAgent
 from voice.livekit.server import ToolServer
 from voice.livekit.settings import load_voice
 from voice.livekit.tools import ToolLog
-from voice.livekit.worker import greeting, leave_voicemail
+from voice.livekit.worker import leave_voicemail
 
 SAFETY = yaml.safe_load((TENANT_DIR / "agent.yaml").read_text())["safety"]
 GAS_LINES = " ".join(SAFETY["kinds"]["gas"]["lines"].split())

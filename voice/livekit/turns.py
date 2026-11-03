@@ -48,23 +48,3 @@ def agent_timings(
     if started and caller_stopped_at:
         timings["reply_ms"] = _ms(started - caller_stopped_at)
     return {k: v for k, v in timings.items() if v is not None}
-
-
-SERVER_NOTES = {
-    "commercial": (
-        "The caller described a business, so this call can't book. Decline kindly and record a "
-        "commercial lead."
-    ),
-    "do_not_call": "The caller asked not to be called. Call mark_do_not_call and say its sentence.",
-    "safety_check_cleared": "The caller said no to the safety check. Carry on where the call was.",
-}
-
-
-def server_notes(hints: list[str]) -> list[str]:
-    """`[server]` lines for the model from a turn result's hints. Safety lines are spoken by the
-    worker, not described to the model."""
-    return [f"[server] {SERVER_NOTES[h]}" for h in hints if h in SERVER_NOTES]
-
-
-def first_name(full_name: str) -> str:
-    return full_name.split()[0] if full_name.strip() else ""

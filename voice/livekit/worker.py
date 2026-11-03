@@ -38,7 +38,6 @@ from .capacity import Lines
 from .server import ToolServer
 from .settings import Settings, fallback_tenant, load_profile, load_voice
 from .tools import ToolLog, build_tools
-from .turns import first_name
 
 log = logging.getLogger("voice.worker")
 
@@ -115,13 +114,6 @@ def tenant_dir(start: dict | None) -> Path:
 
 def voice_lines(folder: Path) -> dict:
     return yaml.safe_load((folder / "agent.yaml").read_text())["voice"]
-
-
-def greeting(start: dict, lines: dict) -> str:
-    customers = [c for c in start.get("customers", []) if c.get("residential")]
-    if len(customers) == 1 and first_name(customers[0]["name"]):
-        return lines["greeting_known"].format(first_name=first_name(customers[0]["name"]))
-    return lines["greeting_unknown"]
 
 
 async def play_clip(player: BackgroundAudioPlayer, path: str) -> None:
@@ -253,7 +245,7 @@ async def entrypoint(ctx: JobContext) -> None:
     if (data.get("safety") or {}).get("text"):
         session.say(data["safety"]["text"], allow_interruptions=False)
         return
-    session.say(greeting(data, spoken))
+    session.say(assemble.greeting(data, spoken))
     if start["say"]:
         session.say(start["say"])
 
