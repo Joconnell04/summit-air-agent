@@ -74,13 +74,18 @@ LOCKED_TOPICS = (
     # The read-back and booking checks
     "read back", "readback", "address", "verify",
     "verified", "skip", "never ask", "without", "cancel", "delete",
+    # Talking the model past a step in other words
+    "confirm", "confirms", "confirmed", "confirming", "confirmation", "bypass", "omit", "dont ask",
+    "do not ask", "no need", "no longer", "already", "act as", "assume", "from now on", "accept all",
+    "every job", "all jobs", "check", "checks",
     # Residential only
     "commercial", "business", "residential", "rental", "rentals", "renter", "renting", "landlord",
     "tenant", "tenants", "office", "offices", "store", "shop", "restaurant", "building",
     "apartment", "apartments", "units", "company", "service area", "zip", "out of area",
     # Prices and promises
     "price", "prices", "pricing", "fee", "fees", "cost", "costs", "charge", "discount", "free",
-    "coupon", "refund", "promise", "guarantee",
+    "coupon", "refund", "promise", "guarantee", "complimentary", "on the house", "half off", "waive",
+    "no charge",
     # Talking the model out of its instructions
     "ignore", "disregard", "forget", "instruction", "instructions", "rule", "rules", "override",
     "system", "server", "pretend",
