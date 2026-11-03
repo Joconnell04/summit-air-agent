@@ -12,6 +12,24 @@ Discussion: docs/ai-process/transcripts/... or docs/explorations/...
 Issue: #N
 -->
 
+## 039. Owner guidance is refused only when a model finds it contradicts a locked rule
+
+Decided: the keyword filter on owner guidance is gone; no single word refuses a note. When a draft is saved, one call to a small fast model (profile `owner_edits.guidance_check`, thinking off, JSON) reads the new or changed notes and lines against the locked rules built from the rulebook, and refuses only one that contradicts a locked rule, tells the agent to skip or override one, or has it tell callers something a locked rule makes untrue, with a one-sentence reason on the editor. A note that only mentions a subject passes. If the check can't run or answers out of shape, the save is refused, never let through. Structural checks stay in code: plain ASCII after NFKC, no markup characters, length and per-stage limits, exact `{first_name}`, the AI disclosure in the greeting. This supersedes the keyword part of decision 032.
+Why: the word list refused reasonable notes ("if someone mentions 911, stay calm") and a reviewer found phrasings that passed it, so it was wrong both ways. Containment never rested on it: the server gates hold whatever the prompt says, and the eval gate runs the must-pass calls on every draft (031). In a live check the model got 33 of 33 right at about $0.002 and 1.4 s a save (MEASURED, PR #71).
+Considered: a shorter word list (still refuses mentions, still misses rewordings); no check, leaving it to the eval gate (the owner waits minutes for a blocked publish with no reason).
+Would change if: owners hit refusals they think are wrong, or a contradiction passes the check and only the eval gate catches it.
+Discussion: PR #71, docs/template.md ("Owner edits")
+Issue: #56
+
+## 038. Audio bake-off round 1: our stack stays
+
+Decided: under the rule in decision 026, no newcomer is chosen. Gemini Live, OpenAI Realtime and Retell are out of the real-call round: Gemini Live never said the safety lines first (0 of 6), OpenAI Realtime was slowest (2.47 s plain median) and missed the lines twice, and Retell said them word for word on 1 of 6 (a safety failure rules a candidate out, docs/bakeoffs.md). ElevenLabs on our brain was 0.44 s faster with the lines exact on 6 of 6 but misread addresses and numbers on read-back ("St" as "Saint", digits run together) and booked 2 of 4 tune-ups; it gets a fix and a rerun before it can be a finalist. Our stack's plain median was 1.89 s on the rig (MEASURED, evals/rounds/bakeoff-audio-01.md), above the 1.2 s bar; the same Claude model answered in about the same time in both stacks, so the gap is our end-of-turn wait, which is tuned next.
+Why: the rule was set before the run, and the results were read against it. The rig reads about 0.4 s above the worker's own `reply_ms`, since the worker starts timing after its silence wait, so real-call traces need that added.
+Considered: promoting ElevenLabs on speed alone (it would read wrong addresses back to callers).
+Would change if: ElevenLabs reads back cleanly after its fix and stays ahead after our endpointing is tuned, in which case the two get the real calls.
+Discussion: PR #70, evals/rounds/bakeoff-audio-01.md
+Issue: #62
+
 ## 037. A side model reads whether someone at risk is home
 
 Decided: a side model (OpenAI Decisions) answers one question on each caller line of a no-heat or no-cooling call: is someone at risk at home? The priority gate reads whatever answer is back within 0.4 s. A yes raises priority the way the vulnerable-person rule does (Urgent, or High on a mild day); a late, failed or missing answer leaves today's rules to decide, and it can never lower priority. On on the server with `SIDE_MODEL=openai-decisions`.

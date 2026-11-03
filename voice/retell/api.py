@@ -21,6 +21,8 @@ ALLOWED = (
     ("POST", r"/create-retell-llm"),
     ("PATCH", r"/update-retell-llm/[\w-]+"),
     ("POST", r"/create-agent"),
+    # The audio rig's web calls (voice/retell/rig_adapter.py).
+    ("POST", r"/v3/create-web-call"),
     ("GET", r"/get-agent/[\w-]+"),
     ("PATCH", r"/update-agent/[\w-]+"),
     ("POST", r"/create-chat-agent"),

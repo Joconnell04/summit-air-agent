@@ -10,6 +10,7 @@ What the model is told on a call, split by job so each part can be changed and t
 | `tool-use.md` | How to read tool results and refusals, and the `[server]` notes |
 | `safety.md` | What the model does around the safety lines, which the voice layer speaks for it |
 | `house-guidance.md` | The fixed preamble over the owner's own guidance by stage (app/rules.py); added after the journeys only when there is some |
+| `guidance-check.md` | Not part of a call: the instructions for the check on an owner's saved draft (app/guidance_check.py), which refuses only a note or line that contradicts a locked rule |
 | `tools.yaml` | One description per tool; the arguments come from the tool server's request models |
 | `side/questions.yaml` | The one question a side model answers beside the call (app/side_model.py); not part of the agent's prompt or its hash |
 

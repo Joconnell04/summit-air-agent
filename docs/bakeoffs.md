@@ -51,6 +51,7 @@ The same scorecard, so results compare across bake-offs. Numbers in brackets are
 - **Hypothesis:** none beats our stack by 0.3 s on plain turns while keeping the safety lines exact and hang-ups on our server; ElevenLabs on our brain comes closest.
 - **Run:** the rig in `evals/audio_rig/` streams synthesized caller audio to each entrant over its WebSocket for 8 scenarios, three repeats of each must-pass one, and times the first agent sound; our stack and Retell run the same set to calibrate (about $15 in all, ASSUMED). The final two then get the real calls. This supersedes the 3 real calls each planned in bake-off 2.
 - **Decide:** the rule in DECISIONS.md 026. Research: docs/explorations/013-more-bakeoff-entrants.md.
+- **Round 1 results:** evals/rounds/bakeoff-audio-01.md. No newcomer chosen under the rule; ElevenLabs on our brain was 0.44 s faster on plain turns with the safety lines exact, and failed on reading addresses and numbers back (MEASURED there).
 
 ## Considered and not tested
 

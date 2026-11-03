@@ -90,6 +90,39 @@ A draft an owner publishes from the Rules page (app/rules.py) goes live only thr
 - **Cost.** Every scenario records the agent, caller and grader tokens at the prices in `config/models.yaml`; the report prints the total.
 - **Live audio pass.** The ten scripted phone calls for noise, interruptions and real reply delay are in `evals/live-calls.md`.
 
+## Audio rig (bake-off 6)
+
+The text harness can't compare reply delay across platforms, because each one reports it differently (the Retell row above times a whole chat reply). The audio rig in `evals/audio_rig/` measures every entrant the same way, on the audio itself, for the bake-off in DECISIONS.md 026 (docs/bakeoffs.md, bake-off 6).
+
+```
+make rig STACK=elevenlabs                     # smoke suite, gas and CO scenarios three times
+make rig STACK=openai_realtime MAX_COST=5     # stops once the run has cost $5
+make rig-report RUNS="evals/results/<a>.json evals/results/<b>.json"
+```
+
+**How a call runs.**
+1. The same simulated caller and scenarios as the text harness. Its lines are rendered by Deepgram Aura-2 and streamed to the entrant at real speed, 20 ms at a time, with silence between lines as a phone line carries; nothing is roughened, since the entrant's own ears now do the hearing.
+2. The rig marks when the caller's speech ends (the last voiced frame leaving the rig, plus anything still buffered on our side) and when the agent's first sound plays: the first 40 ms above -40 dBFS (`audio_rig.vad` in config/models.yaml, ASSUMED values), with a burst of audio played at real speed from when it arrived. Sound the agent makes while the caller is still talking, such as Retell's "mm-hmm", is not counted as the reply. The gap is `reply_delay_ms`.
+3. The agent's turn ends when the platform says it is listening again and the audio has played, or after 2 s of silence for a platform that says nothing; no sound within 15 s is a silent turn, counted apart and left out of the delays.
+4. The agent's audio is transcribed by Deepgram Nova-3, and the caller model answers what it heard.
+5. The code checks and the grader then score the call from the tool server's record, exactly as in the text harness (`evals/run.py` `score`). A turn is a lookup turn when the record shows a model tool call during it.
+
+**Entrants.** Each one's adapter is `voice/<name>/rig_adapter.py`, loaded by name, so shared code never imports a voice layer (`tests/voice/test_voice_layers.py`).
+
+| Stack | Run label | Tool server | How the audio flows |
+|---|---|---|---|
+| `livekit` | `livekit-rig` | A scratch world per scenario, through the rig's router | The real worker runs locally under its own agent name; the rig joins each call's room as the SIP caller |
+| `retell` | `retell-rig` | The eval instance, reset before each call | A Retell web call (WebRTC) on a voice agent named as a rig test agent, using the eval LLM and bridge |
+| `elevenlabs` | `elevenlabs` | A scratch world, through the rig's router | ElevenLabs' conversation WebSocket; its model is our brain (`voice/elevenlabs/brain.py`) behind a temporary ngrok tunnel; the test agent is deleted after the run |
+| `openai_realtime` | `openai-realtime` | A scratch world, in process | OpenAI's Realtime WebSocket; function calls forwarded to the tool server |
+| `gemini_live` | `gemini-live` | A scratch world, in process | Gemini's Live WebSocket; function calls forwarded to the tool server |
+
+**Results.** The same results file as the text harness, with `transport: audio`, and per turn `caller_speech_ms`, `agent_speech_ms` and, where the voice program logs one, `platform_reply_ms` (our worker's own measure of the same gap) and `model_first_token_ms`. Agent lines in the transcript are what the caller heard, with the platform's own text in `said`. Each scenario has `silent_turns` and `cost_parts` (caller voice, agent ears, platform, brain model, caller model, grader). `make rig-report` prints the bake-off table, the safety calls one by one (the server's check, the platform's text against the signed-off lines, and what the caller heard against them) and the decision 026 verdict.
+
+**Needs.** `DEEPGRAM_API_KEY` and `ANTHROPIC_API_KEY` for every run; `LIVEKIT_URL`, `LIVEKIT_API_KEY` and `LIVEKIT_API_SECRET` for ours; the Retell eval variables above for Retell; `ELEVENLABS_API_KEY` and an installed `ngrok` for ElevenLabs; `OPENAI_API_KEY` and `GEMINI_API_KEY` for the speech-to-speech entrants. Run our stack on its own: its worker runs on the same machine, and other runs beside it share the processor its turn detector uses.
+
+**Limits.** No phone network or codec on most paths, so a phone call adds its own delay on top (bake-off 6 sends the final two to real calls for that). The caller answers adaptively, so each entrant hears different turns; the checks still read the same record.
+
 ## Results in LangSmith
 
 An optional viewer for bake-offs and prompt changes. The results JSON is the source of truth. LangSmith holds a copy, is never in the call path, and the upload does nothing but print one line when `LANGSMITH_API_KEY` is not set. `.env.example` lists the one variable, `LANGSMITH_API_KEY`. If the API call fails, the command prints one line and exits 1; run it again to finish.
