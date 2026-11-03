@@ -132,75 +132,86 @@ class Harness:
 
     def _score(self, scenario, sample, call_id, server, transcript, timings, usage, error, began,
                agent_cost=0.0):
-        failures, violations, tool_calls, grade_score, notes = [], [], [], None, ""
-        ran: list[str] = []
-        if server is not None:
-            try:
-                retell = self.stack == "retell"
-                trace = server.final_trace(call_id) if retell else server.trace(call_id)
-                tool_calls = [
-                    ToolCall(name=e["tool"], arguments=e["args"])
-                    for e in trace["events"] if e["type"] == "tool" and e["tool"] in TOOLS
-                ]
-                evidence = Evidence(trace, self.safety)
-                if not error.startswith("harness"):
-                    failures = run_checks(scenario.must, evidence)
-                    violations = run_checks(scenario.must, evidence, prohibitions_only=True)
-                    ran = check_names(scenario.must)
-            except Exception as err:  # noqa: BLE001
-                error = error or f"harness: could not read the call record: {err}"
-        elif not error:
-            error = "harness: no tool server record"
-        if error:
-            # No verdict, unless the call broke a rule before it stopped (a booking before the
-            # read-back stays wrong however the call ends).
-            outcome = "fail" if violations and not error.startswith("harness") else "error"
-            if outcome == "fail":
-                failures = violations
-                ran = check_names(scenario.must, prohibitions_only=True)
-            else:
-                ran = []
+        return score(scenario, sample, call_id, server, transcript, timings, usage, error, began,
+                     safety=self.safety, grader=self.models.grader,
+                     final=self.stack == "retell", agent_cost=agent_cost)
+
+
+def score(scenario, sample, call_id, server, transcript, timings, usage, error, began, *,
+          safety: dict, grader: Model, final: bool = False, agent_cost: float = 0.0,
+          **extra) -> ScenarioResult:
+    """Code checks on the tool server's record, then the grader, for one finished call. `final`
+    waits for a call that is closed by webhook (Retell); `extra` are further result fields, such
+    as the audio rig's."""
+    failures, violations, tool_calls, grade_score, notes = [], [], [], None, ""
+    ran: list[str] = []
+    if server is not None:
+        try:
+            trace = server.final_trace(call_id) if final else server.trace(call_id)
+            tool_calls = [
+                ToolCall(name=e["tool"], arguments=e["args"])
+                for e in trace["events"] if e["type"] == "tool" and e["tool"] in TOOLS
+            ]
+            evidence = Evidence(trace, safety)
+            if not error.startswith("harness"):
+                failures = run_checks(scenario.must, evidence)
+                violations = run_checks(scenario.must, evidence, prohibitions_only=True)
+                ran = check_names(scenario.must)
+        except Exception as err:  # noqa: BLE001
+            error = error or f"harness: could not read the call record: {err}"
+    elif not error:
+        error = "harness: no tool server record"
+    if error:
+        # No verdict, unless the call broke a rule before it stopped (a booking before the
+        # read-back stays wrong however the call ends).
+        outcome = "fail" if violations and not error.startswith("harness") else "error"
+        if outcome == "fail":
+            failures = violations
+            ran = check_names(scenario.must, prohibitions_only=True)
         else:
-            outcome = "fail" if failures else "pass"
-        if not error:
-            try:
-                g = grade(self.models.grader, transcript, scenario.should)
-                usage.add(g.usage)
-                grade_score, notes = g.score, g.notes
-                if g.failed and outcome == "pass":
-                    outcome = "fail"
-                    failures.append(f"grader: {g.notes}")
-            except Exception as err:  # noqa: BLE001
-                # A broken grader never hides a failed check: the fail stands, ungraded.
-                if outcome == "pass":
-                    outcome, error = "error", f"grader: {err}"
-                else:
-                    notes = f"grader unavailable: {err}"
-        delays = [t.reply_delay_ms for t in timings]
-        return ScenarioResult(
-            scenario_id=scenario.id,
-            sample=sample,
-            persona=scenario.persona.strip(),
-            flow=scenario.flow,
-            difficulty=scenario.difficulty,
-            traits=scenario.traits,
-            outcome=outcome,
-            must_pass_failures=failures if scenario.must_pass and outcome == "fail" else [],
-            check_failures=failures,
-            checks=ran,
-            error=error,
-            grader_score=grade_score,
-            grader_notes=notes,
-            reply_delay_p50_ms=percentile(delays, 0.5),
-            reply_delay_p90_ms=percentile(delays, 0.9),
-            cost_usd=round(usage.cost_usd, 6),
-            agent_cost_usd=round(agent_cost, 6),
-            duration_ms=(time.perf_counter() - began) * 1000,
-            transcript=transcript,
-            tool_calls=tool_calls,
-            turn_timings=timings,
-            call_id=call_id,
-        )
+            ran = []
+    else:
+        outcome = "fail" if failures else "pass"
+    if not error:
+        try:
+            g = grade(grader, transcript, scenario.should)
+            usage.add(g.usage)
+            grade_score, notes = g.score, g.notes
+            if g.failed and outcome == "pass":
+                outcome = "fail"
+                failures.append(f"grader: {g.notes}")
+        except Exception as err:  # noqa: BLE001
+            # A broken grader never hides a failed check: the fail stands, ungraded.
+            if outcome == "pass":
+                outcome, error = "error", f"grader: {err}"
+            else:
+                notes = f"grader unavailable: {err}"
+    delays = [t.reply_delay_ms for t in timings]
+    return ScenarioResult(
+        scenario_id=scenario.id,
+        sample=sample,
+        persona=scenario.persona.strip(),
+        flow=scenario.flow,
+        difficulty=scenario.difficulty,
+        traits=scenario.traits,
+        outcome=outcome,
+        must_pass_failures=failures if scenario.must_pass and outcome == "fail" else [],
+        check_failures=failures,
+        checks=ran,
+        error=error,
+        grader_score=grade_score,
+        grader_notes=notes,
+        reply_delay_p50_ms=percentile(delays, 0.5),
+        reply_delay_p90_ms=percentile(delays, 0.9),
+        cost_usd=round(usage.cost_usd, 6),
+        agent_cost_usd=round(agent_cost, 6),
+        duration_ms=(time.perf_counter() - began) * 1000,
+        transcript=transcript,
+        tool_calls=tool_calls,
+        turn_timings=timings,
+        call_id=call_id,
+        **extra,
+    )
 
 
 def run_suite(harness: Harness, chosen: list[Scenario], samples: int, workers: int
@@ -223,7 +234,8 @@ def profile_model(profile: str) -> str | None:
 
 
 def build_run(suite: str, tags: list[str], stack: str, profile: str, scenario_results,
-              now: datetime | None = None, overlay: dict | None = None) -> Run:
+              now: datetime | None = None, overlay: dict | None = None,
+              transport: str = "text") -> Run:
     now = now or datetime.now(UTC)
     ids = sorted({r.scenario_id for r in scenario_results})
     return Run(
@@ -236,6 +248,7 @@ def build_run(suite: str, tags: list[str], stack: str, profile: str, scenario_re
         hash=run_hash(ids, profile, overlay=overlay),
         prompt_hash=prompt_hash(),
         model=profile_model(profile),
+        transport=transport,
         overlay=overlay,
         scenarios=scenario_results,
     )

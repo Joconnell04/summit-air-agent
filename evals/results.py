@@ -40,6 +40,9 @@ class Strict(BaseModel):
 class Turn(Strict):
     role: Literal["caller", "agent"]
     text: str
+    # On the audio rig an agent line's `text` is what the caller heard (the rig's transcription of
+    # the agent audio); `said` is the platform's own text of that line, when it reports one.
+    said: str | None = None
 
 
 class ToolCall(Strict):
@@ -56,6 +59,13 @@ class TurnTiming(Strict):
     model_first_token_ms: float = Field(ge=0)
     tool_ms: float = Field(0, ge=0)
     second_hop_ms: float | None = Field(None, ge=0)
+    # Audio rig only (evals/audio_rig): how long the caller's line and the agent's reply lasted.
+    # There `reply_delay_ms` runs from the end of the caller's speech to the agent's first sound.
+    caller_speech_ms: float | None = Field(None, ge=0)
+    agent_speech_ms: float | None = Field(None, ge=0)
+    # The voice program's own measure of the same gap, when it logs one with its line (our
+    # worker's `reply_ms`, voice/livekit/turns.py), to calibrate the rig against it.
+    platform_reply_ms: float | None = Field(None, ge=0)
 
 
 class ScenarioResult(Strict):
@@ -91,6 +101,10 @@ class ScenarioResult(Strict):
     tool_calls: list[ToolCall] = Field(default_factory=list)
     turn_timings: list[TurnTiming] = Field(default_factory=list)
     call_id: str = Field(min_length=1)
+    # Audio rig only: agent turns with no sound before the rig's timeout (left out of the delays),
+    # and the cost split by part (caller voice, agent ears, platform, models), in USD.
+    silent_turns: int = Field(0, ge=0)
+    cost_parts: dict[str, float] = Field(default_factory=dict)
 
     @model_validator(mode="after")
     def check_consistency(self) -> "ScenarioResult":
@@ -124,6 +138,9 @@ class Run(Strict):
     prompt_hash: str | None = None
     # The agent model id behind the profile, for reading a profile comparison.
     model: str | None = None
+    # "text" for the text harness, "audio" for the simulated audio rig, where every delay is
+    # measured on the audio itself.
+    transport: Literal["text", "audio"] = "text"
     # The owner's draft a gate run tested (app/rules.py, evals/gate.py), part of the hash. None for
     # a run on the shipped defaults.
     overlay: dict | None = None
