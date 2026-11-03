@@ -45,6 +45,8 @@ class Tenant:
         self.fsm_tenant_id: int = company["tenant_id"]
         self.name: str = company["company"]["name"]
         self.tz = ZoneInfo(company["company"]["timezone"])
+        self.state: str = company["company"].get("state", "")
+        self.country: str = company["company"].get("country", "USA")
         self.hours: dict = company["company"]["hours"]
         self.fees: dict = company["fees"]
         self.rejected_customer_types: dict[str, str] = company["company"]["rejected_customer_types"]
@@ -76,6 +78,10 @@ class Tenant:
         self.after_hours_cutoffs: dict = agent["after_hours"]
         self.fsm: dict = agent["fsm"]
         self.mock_auth: dict = company.get("auth", {})
+        # Technicians held back from normal jobs, per day and window (config.yaml urgent_hold).
+        self.urgent_hold: dict = company.get(
+            "urgent_hold", {"business_unit_ids": [], "per_day": {}}
+        )
 
     @classmethod
     def load(cls, folder: str | Path) -> "Tenant":
@@ -94,6 +100,13 @@ class Tenant:
 
     def window(self, window_id: str) -> Window | None:
         return next((w for w in self.windows if w.id == window_id), None)
+
+    def hold_for(self, day: date, window_id: str, business_unit_id: int) -> int:
+        """How many technicians stay free for urgent jobs in this window. It is the company's rule,
+        not ServiceTitan's, so it is applied here to the technicians ServiceTitan says are free."""
+        if business_unit_id not in self.urgent_hold["business_unit_ids"]:
+            return 0
+        return self.urgent_hold["per_day"].get(DAY_NAMES[day.weekday()], {}).get(window_id, 0)
 
     def local(self, moment: datetime) -> datetime:
         return moment.astimezone(self.tz)

@@ -83,7 +83,7 @@ class RequestLogMiddleware(BaseHTTPMiddleware):
                 request_bytes, request.headers.get("content-type", ""), ("client_secret",)
             ),
             "responseBody": response_body,
-            "error": response_body.get("code")
+            "error": (response_body.get("data") or {}).get("code")
             if response.status_code >= 400 and isinstance(response_body, dict)
             else None,
         }

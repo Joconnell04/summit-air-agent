@@ -206,12 +206,16 @@ def test_a_commercial_call_saves_one_line_with_no_extra_lookups(agent, mock):
     assert [f["op"] for f in log["fsm"]] == ["create_lead"]
     row = (
         sqlite3.connect(mock[0].state.db_path)
-        .execute("SELECT kind, customer_type, summary FROM leads ORDER BY id DESC LIMIT 1")
+        .execute(
+            "SELECT call_reason_id, lead_customer_name, lead_phone, summary FROM leads "
+            "ORDER BY id DESC LIMIT 1"
+        )
         .fetchone()
     )
     assert row == (
-        "Commercial",
-        "Commercial",
+        704,
+        "Lou's Bakery",
+        "(212) 555-0999",
         "Lou's Bakery; contact Lou (212) 555-0999; Rooftop unit not cooling",
     )
     assert count(agent, "SELECT COUNT(*) FROM callbacks") == 0, (
@@ -232,10 +236,10 @@ def test_a_membership_lead_needs_a_named_callback_time(agent, mock):
     assert count(agent, "SELECT COUNT(*) FROM callbacks") == 1
     row = (
         sqlite3.connect(mock[0].state.db_path)
-        .execute("SELECT kind, customer_type FROM leads ORDER BY id DESC LIMIT 1")
+        .execute("SELECT call_reason_id, lead_customer_name FROM leads ORDER BY id DESC LIMIT 1")
         .fetchone()
     )
-    assert row == ("Other", "Residential")
+    assert row == (705, "Pat"), "a membership lead carries the Other call reason"
 
 
 # ---- the tool-failure queue --------------------------------------------------------------------

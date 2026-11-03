@@ -2,12 +2,16 @@
 
 A slot is one technician in one arrival window on one day. Capacity for a window is the
 technicians whose shift covers it (and whose skills fit the job type) minus the ones already
-booked. A few technicians per window are held for urgent jobs; normal jobs cannot use them.
-The database enforces the final rule: one live appointment per technician per window.
+booked. The database enforces the final rule: one live appointment per technician per window.
+
+Nothing here knows about priority, ZIPs or urgent holds. Those are the company's rules, not
+ServiceTitan's, and the tool server applies them (app/capacity.py) to the technicians this answers
+with.
 """
 
 import json
 import sqlite3
+from collections import Counter
 from dataclasses import dataclass
 from datetime import date
 
@@ -17,14 +21,26 @@ from .errors import ApiError
 
 @dataclass
 class Slots:
-    total: int  # technicians on shift with the right skills
-    booked: int
-    held: int  # technicians kept back for urgent jobs
-    open_ids: list[int]  # free technicians a job of the asked priority may use, best first
+    staff: list[sqlite3.Row]  # technicians on shift, least booked that day first
+    busy: set[int]  # technician ids with a live appointment in the window
+    fit: set[int]  # technician ids whose skills fit the job type
 
     @property
-    def open(self) -> int:
-        return len(self.open_ids)
+    def total(self) -> int:
+        return len(self.fit)
+
+    @property
+    def booked(self) -> int:
+        return len(self.fit & self.busy)
+
+    @property
+    def free_ids(self) -> list[int]:
+        """Free technicians whatever their skills, in the same order as staff."""
+        return [t["id"] for t in self.staff if t["id"] not in self.busy]
+
+    @property
+    def free_fit_ids(self) -> list[int]:
+        return [i for i in self.free_ids if i in self.fit]
 
 
 def _on_shift(conn: sqlite3.Connection, cfg: TenantConfig, day: date, window: Window, bu_id: int):
@@ -52,44 +68,25 @@ def slots(
     window: Window,
     bu_id: int,
     skills: list[str],
-    priority: str,
-    zone_id: int | None = None,
     exclude_appointment: int | None = None,
 ) -> Slots:
     staff = _on_shift(conn, cfg, day, window, bu_id)
+    # One statement for both, so a booking that commits meanwhile cannot make the busy list and the
+    # day's load disagree (the order of technicians depends on the load).
+    live = conn.execute(
+        """SELECT id, technician_id, window_id FROM appointments
+           WHERE window_date = ? AND status <> 'Canceled'""",
+        (day.isoformat(),),
+    ).fetchall()
     busy = {
-        r[0]
-        for r in conn.execute(
-            """SELECT technician_id FROM appointments
-               WHERE window_date = ? AND window_id = ? AND status <> 'Canceled' AND id IS NOT ?""",
-            (day.isoformat(), window.id, exclude_appointment),
-        )
+        r["technician_id"]
+        for r in live
+        if r["window_id"] == window.id and r["id"] != exclude_appointment
     }
-    fits = [t for t in staff if set(skills) <= set(json.loads(t["skills_json"]))]
-    free_fit = [t for t in fits if t["id"] not in busy]
-    free_any = [t for t in staff if t["id"] not in busy]
-    row = conn.execute(
-        "SELECT held FROM urgent_holds WHERE window_date = ? AND window_id = ? AND business_unit_id = ?",
-        (day.isoformat(), window.id, bu_id),
-    ).fetchone()
-    held = row["held"] if row else 0
-
-    if priority == "Urgent":
-        usable = free_fit
-    else:
-        usable = free_fit[: max(0, len(free_any) - held)]
-    daily = {
-        r[0]: r[1]
-        for r in conn.execute(
-            """SELECT technician_id, COUNT(*) FROM appointments
-               WHERE window_date = ? AND status <> 'Canceled' GROUP BY technician_id""",
-            (day.isoformat(),),
-        )
-    }
-    usable.sort(key=lambda t: (t["home_zone_id"] != zone_id, daily.get(t["id"], 0), t["id"]))
-    return Slots(
-        len(fits), len([t for t in fits if t["id"] in busy]), held, [t["id"] for t in usable]
-    )
+    daily = Counter(r["technician_id"] for r in live)
+    staff = sorted(staff, key=lambda t: (daily.get(t["id"], 0), t["id"]))
+    fit = {t["id"] for t in staff if set(skills) <= set(json.loads(t["skills_json"]))}
+    return Slots(staff, busy, fit)
 
 
 def allocate(
@@ -99,22 +96,23 @@ def allocate(
     window: Window,
     bu_id: int,
     skills: list[str],
-    priority: str,
-    zone_id: int | None,
     technician_ids: list[int] | None = None,
     exclude_appointment: int | None = None,
 ) -> int:
-    """Pick the technician for an appointment, or raise 409 when the slot is not free."""
-    free = slots(conn, cfg, day, window, bu_id, skills, priority, zone_id, exclude_appointment)
+    """The technician for an appointment, or 409 when the slot is not free. With technician_ids it
+    takes the first of them who is free and fits; without, it picks the least booked free technician
+    who fits. The pick without ids is not in the real API: there an appointment created without
+    technicianIds stays unassigned until a dispatcher assigns it."""
+    free = slots(conn, cfg, day, window, bu_id, skills, exclude_appointment)
     if technician_ids:
         for tech_id in technician_ids:
-            if tech_id in free.open_ids:
+            if tech_id in free.free_fit_ids:
                 return tech_id
         raise ApiError(
             409,
             "slot_taken",
             f"Technician {technician_ids[0]} is not free in the {window.id} window on {day}.",
         )
-    if not free.open_ids:
+    if not free.free_fit_ids:
         raise ApiError(409, "no_capacity", f"No capacity left in the {window.id} window on {day}.")
-    return free.open_ids[0]
+    return free.free_fit_ids[0]

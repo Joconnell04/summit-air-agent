@@ -356,8 +356,21 @@ def create_app(
     def outbound_done(outbound_id: int, body: OutboundDoneIn):
         conn = services.connect()
         try:
-            found = outbound.finish(
-                conn, outbound_id, body.answered, body.voicemail, services.clock()
+            row = conn.execute(
+                "SELECT tenant FROM outbound WHERE id = ?", (outbound_id,)
+            ).fetchone()
+            found = (
+                outbound.finish(
+                    conn,
+                    services.tenants.by_slug[row["tenant"]],
+                    services.fsm[row["tenant"]],
+                    outbound_id,
+                    body.answered,
+                    body.voicemail,
+                    services.clock(),
+                )
+                if row
+                else None
             )
         finally:
             conn.close()

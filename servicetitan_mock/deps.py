@@ -26,6 +26,11 @@ def get_now(request: Request) -> datetime:
     return request.app.state.clock()
 
 
+def get_user_id(request: Request) -> int:
+    """The ServiceTitan user the integration acts as; it is createdById on what it adds."""
+    return request.app.state.cfg.auth.get("user_id", 9001)
+
+
 def authorize(
     request: Request,
     tenant_id: int,

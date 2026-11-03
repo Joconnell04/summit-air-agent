@@ -56,11 +56,17 @@ class Api:
         return self.request("POST", path, headers={**extra, **headers}, json=body)
 
 
+def _z(moment: datetime) -> str:
+    return moment.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
 def window_times(day: date, window_id: str) -> dict:
     start, end = CFG.window_bounds(day, CFG.window(window_id))
     return {
-        "arrivalWindowStart": start.strftime("%Y-%m-%dT%H:%M:%SZ"),
-        "arrivalWindowEnd": end.strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "start": _z(start),
+        "end": _z(end),
+        "arrivalWindowStart": _z(start),
+        "arrivalWindowEnd": _z(end),
     }
 
 
@@ -78,24 +84,35 @@ def job_body(
         "locationId": location_id,
         "businessUnitId": unit,
         "jobTypeId": job_type,
+        "priority": "Normal",
+        "campaignId": 301,
         "summary": "test",
         "appointments": [window_times(day, window_id)],
         **extra,
     }
 
 
-def open_slots(
-    api: Api, day: date, window_id: str, priority: str = "Normal", job_type: int = TUNE_UP
-) -> int:
+def capacity_frame(
+    api: Api, day: date, window_id: str, job_type: int = TUNE_UP, unit: int = SERVICE
+) -> dict:
+    """The one time frame for a window, as capacity answers it."""
     start, end = CFG.window_bounds(day, CFG.window(window_id))
     body = {
         "startsOnOrAfter": start.isoformat(),
-        "endsOnOrBefore": (end).isoformat(),
+        "endsOnOrBefore": end.isoformat(),
+        "businessUnitIds": [unit],
         "jobTypeId": job_type,
-        "priority": priority,
+        "skillBasedAvailability": True,
     }
-    slots = api.post("/dispatch/capacity", body).json()["availabilities"][0]["timeslots"]
-    return next(s for s in slots if s["windowId"] == window_id)["openAvailability"]
+    frames = api.post("/dispatch/capacity", body).json()["availabilities"]
+    assert len(frames) == 1, frames
+    return frames[0]
+
+
+def open_slots(api: Api, day: date, window_id: str, job_type: int = TUNE_UP) -> int:
+    """Technicians free in the window who have the skills for the job type."""
+    frame = capacity_frame(api, day, window_id, job_type)
+    return sum(t["status"] == "Available" and t["hasRequiredSkills"] for t in frame["technicians"])
 
 
 def build_small_world(
@@ -112,7 +129,6 @@ def build_small_world(
         for i in range(techs):
             worldkit.add_shift(conn, CFG, 7001 + i, day, "08:00", "20:00")
         worldkit.add_shift(conn, CFG, 7001, day, "20:00", "08:00", "OnCall", ends_next_day=True)
-    worldkit.add_holds(conn, CFG, days)
     ids = {}
     for key, name, kind, zip_code in (
         ("home", "Pat Home", "Residential", "11201"),
@@ -136,7 +152,7 @@ def build_small_world(
 
 @pytest.fixture
 def small(tmp_path):
-    """(api, ids) for a three-technician company. With a hold of 2, one normal slot is open per window."""
+    """(api, ids) for a three-technician company: three technicians are free in every window."""
     ids = build_small_world(tmp_path / "small.db")
     app = create_app(tmp_path / "small.db", TENANT_DIR, tmp_path / "small.log", clock=lambda: NOW)
     return Api(app), ids

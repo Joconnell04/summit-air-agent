@@ -122,9 +122,8 @@ def offer_earlier_slots(
         allowed, _ = records.dial_allowed(conn, tenant, call["id"], call["caller_id"], now)
         if not allowed:
             continue
-        zip_code = json.loads(row["request_json"])["address"]["zip"]
         try:
-            windows = open_windows(tenant, fsm, cache, now, job_type, row["priority"], zip_code)
+            windows = open_windows(tenant, fsm, cache, now, job_type, row["priority"])
         except (FsmUnavailable, FsmRejected):
             return made
         # An after-hours window is the on-call technician's to give, never an automatic offer.
@@ -187,6 +186,62 @@ def schedule_callbacks(conn: sqlite3.Connection, tenant: Tenant, now: datetime) 
         for row in unclaimed:
             outbound.skip(conn, row, "not_claimed", now)
             counts["not_claimed"] += 1
+    return counts
+
+
+# Open callbacks looked up in the call log per run, so a backlog can't hold up the other jobs.
+CALLBACK_CHECKS_PER_RUN = 50
+# The flags a callback leaves on its call, closed together with it.
+CALLBACK_FLAG_KINDS = ("callback_requested", "person", "overdue_callback", "callback_needs_person")
+
+
+def confirm_callbacks(
+    conn: sqlite3.Connection, tenant: Tenant, fsm: FsmAdapter, now: datetime
+) -> dict:
+    """A promised callback is done when ServiceTitan's call log shows an outbound call to that
+    number after the promise, tagged as resolved (decision 010). A call that failed, went to voicemail
+    or reached the wrong person is never tagged resolved, so it never marks a callback done. The
+    office tags the calls it makes; outbound.finish tags the ones the system places. One resolved
+    call settles every open callback promised to that number before it."""
+    counts = {"checked": 0, "done": 0}
+    resolved_tag = tenant.fsm["callback_tags"]["resolved"]
+    rows = conn.execute(
+        "SELECT cb.* FROM callbacks cb JOIN calls c ON c.id = cb.call_id "
+        "WHERE c.tenant = ? AND cb.status IN ('pending', 'overdue') ORDER BY cb.created_at, cb.id "
+        "LIMIT ?",
+        (tenant.slug, CALLBACK_CHECKS_PER_RUN),
+    ).fetchall()
+    by_phone: dict[str, list[sqlite3.Row]] = {}
+    for row in rows:
+        by_phone.setdefault(row["phone"], []).append(row)
+    for phone, callbacks in by_phone.items():
+        try:
+            calls = fsm.calls_to(phone, parse_iso(min(cb["created_at"] for cb in callbacks)))
+        except FsmUnavailable:
+            break
+        except FsmRejected:
+            continue
+        resolved = [
+            parse_iso(c["leadCall"]["receivedOn"])
+            for c in calls
+            if resolved_tag in [t["typeName"] for t in c["tags"] or []]
+        ]
+        for cb in callbacks:
+            counts["checked"] += 1
+            if not any(at >= parse_iso(cb["created_at"]) for at in resolved):
+                continue
+            with tx(conn):
+                conn.execute(
+                    "UPDATE callbacks SET status = 'done', updated_at = ? WHERE id = ? "
+                    "AND status IN ('pending', 'overdue')",
+                    (iso(now), cb["id"]),
+                )
+                conn.execute(
+                    f"UPDATE flags SET status = 'done' WHERE call_id = ? AND status = 'open' "
+                    f"AND kind IN ({','.join('?' * len(CALLBACK_FLAG_KINDS))})",
+                    (cb["call_id"], *CALLBACK_FLAG_KINDS),
+                )
+            counts["done"] += 1
     return counts
 
 
@@ -349,6 +404,8 @@ def run_once(services) -> dict:
                 ),
                 "earlier_slots_offered": offer_earlier_slots(conn, tenant, fsm, cache, now),
                 "callbacks": schedule_callbacks(conn, tenant, now),
+                "call_tags": outbound.retry_tags(conn, tenant, fsm, now),
+                "callbacks_done": confirm_callbacks(conn, tenant, fsm, now),
                 "kept": check_kept(conn, tenant, fsm, now),
                 "alerts": alert_on_call(
                     conn, tenant, services.mailer, now, services.settings.owner_view_url

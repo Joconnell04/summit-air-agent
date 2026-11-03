@@ -21,7 +21,6 @@ CREATE TABLE locations (
     city TEXT NOT NULL DEFAULT '',
     state TEXT NOT NULL DEFAULT '',
     zip TEXT NOT NULL,
-    county TEXT,
     zone_id INTEGER,
     active INTEGER NOT NULL DEFAULT 1,
     created_on TEXT NOT NULL,
@@ -35,11 +34,9 @@ CREATE TABLE contacts (
     id INTEGER PRIMARY KEY,
     customer_id INTEGER NOT NULL REFERENCES customers (id),
     location_id INTEGER REFERENCES locations (id),
-    type TEXT NOT NULL CHECK (type IN ('Phone', 'MobilePhone', 'Email')),
+    type TEXT NOT NULL CHECK (type IN ('Phone', 'MobilePhone', 'Email', 'Fax')),
     value TEXT NOT NULL,
     phone_key TEXT NOT NULL DEFAULT '',
-    role TEXT,
-    name TEXT,
     memo TEXT NOT NULL DEFAULT '',
     created_on TEXT NOT NULL
 );
@@ -51,8 +48,11 @@ CREATE TABLE bookings (
     provider_id INTEGER NOT NULL,
     external_id TEXT,
     source TEXT NOT NULL DEFAULT '',
-    status TEXT NOT NULL DEFAULT 'New',
+    status TEXT NOT NULL DEFAULT 'New' CHECK (status IN ('New', 'Converted', 'Dismissed', 'Accepted')),
     customer_id INTEGER REFERENCES customers (id),
+    customer_type TEXT,
+    is_first_time_client INTEGER NOT NULL DEFAULT 0,
+    job_id INTEGER,
     name TEXT NOT NULL,
     street TEXT NOT NULL DEFAULT '',
     unit TEXT NOT NULL DEFAULT '',
@@ -66,26 +66,35 @@ CREATE TABLE bookings (
     business_unit_id INTEGER,
     job_type_id INTEGER,
     campaign_id INTEGER,
-    created_on TEXT NOT NULL
+    created_on TEXT NOT NULL,
+    modified_on TEXT NOT NULL DEFAULT ''
 );
 CREATE UNIQUE INDEX ux_bookings_external ON bookings (provider_id, external_id)
     WHERE external_id IS NOT NULL;
 
--- Replacement and install interest, and the one-line commercial record.
+-- Replacement and install interest, and the one-line commercial record. Field names follow
+-- ServiceTitan's lead: what kind of lead it is lives in the call reason.
 CREATE TABLE leads (
     id INTEGER PRIMARY KEY,
-    status TEXT NOT NULL DEFAULT 'Open',
-    kind TEXT NOT NULL,
-    customer_type TEXT NOT NULL CHECK (customer_type IN ('Residential', 'Commercial')),
+    status TEXT NOT NULL DEFAULT 'Open' CHECK (status IN ('Open', 'Dismissed', 'Converted')),
+    priority TEXT NOT NULL DEFAULT 'Normal',
     customer_id INTEGER REFERENCES customers (id),
-    name TEXT NOT NULL,
-    phone TEXT NOT NULL DEFAULT '',
+    location_id INTEGER,
+    business_unit_id INTEGER,
+    job_type_id INTEGER,
+    call_reason_id INTEGER,
+    lead_customer_name TEXT,
+    lead_phone TEXT,
     phone_key TEXT NOT NULL DEFAULT '',
-    street TEXT NOT NULL DEFAULT '',
-    zip TEXT NOT NULL DEFAULT '',
+    lead_street TEXT,
+    lead_unit TEXT,
+    lead_city TEXT,
+    lead_state TEXT,
+    lead_zip TEXT,
     summary TEXT NOT NULL,
-    campaign_id INTEGER,
-    created_on TEXT NOT NULL
+    campaign_id INTEGER NOT NULL,
+    created_on TEXT NOT NULL,
+    modified_on TEXT NOT NULL
 );
 
 -- status is what was stored. The API reads it together with to_date; see memberships.py.
@@ -110,7 +119,7 @@ CREATE TABLE recurring_service_events (
     location_id INTEGER NOT NULL REFERENCES locations (id),
     name TEXT NOT NULL,
     date TEXT NOT NULL,
-    status TEXT NOT NULL CHECK (status IN ('NotAttempted', 'Scheduled', 'Completed')),
+    status TEXT NOT NULL CHECK (status IN ('NotAttempted', 'Unreachable', 'Contacted', 'Won', 'Dismissed')),
     job_id INTEGER
 );
 
@@ -123,7 +132,8 @@ CREATE TABLE installed_equipment (
     manufacturer TEXT NOT NULL,
     model TEXT NOT NULL DEFAULT '',
     installed_on TEXT NOT NULL,
-    memo TEXT NOT NULL DEFAULT ''
+    memo TEXT NOT NULL DEFAULT '',
+    status TEXT NOT NULL DEFAULT 'Installed' CHECK (status IN ('Installed', 'Replaced'))
 );
 CREATE INDEX ix_equipment_location ON installed_equipment (location_id);
 
@@ -148,14 +158,6 @@ CREATE TABLE technician_shifts (
 );
 CREATE INDEX ix_shifts_start ON technician_shifts (start);
 
-CREATE TABLE urgent_holds (
-    window_date TEXT NOT NULL,
-    window_id TEXT NOT NULL,
-    business_unit_id INTEGER NOT NULL,
-    held INTEGER NOT NULL,
-    PRIMARY KEY (window_date, window_id, business_unit_id)
-);
-
 CREATE TABLE jobs (
     id INTEGER PRIMARY KEY,
     job_number TEXT NOT NULL,
@@ -166,7 +168,7 @@ CREATE TABLE jobs (
     priority TEXT NOT NULL,
     campaign_id INTEGER,
     summary TEXT NOT NULL DEFAULT '',
-    status TEXT NOT NULL CHECK (status IN ('Scheduled', 'Dispatched', 'Working', 'Done', 'Canceled')),
+    status TEXT NOT NULL CHECK (status IN ('Scheduled', 'Dispatched', 'InProgress', 'Hold', 'Completed', 'Canceled')),
     cancel_reason_id INTEGER,
     completed_on TEXT,
     created_on TEXT NOT NULL,
@@ -187,7 +189,7 @@ CREATE TABLE appointments (
     end TEXT NOT NULL,
     arrival_window_start TEXT NOT NULL,
     arrival_window_end TEXT NOT NULL,
-    status TEXT NOT NULL CHECK (status IN ('Scheduled', 'Dispatched', 'Working', 'Done', 'Canceled')),
+    status TEXT NOT NULL CHECK (status IN ('Scheduled', 'Dispatched', 'Working', 'Hold', 'Done', 'Canceled')),
     created_on TEXT NOT NULL,
     modified_on TEXT NOT NULL
 );
@@ -206,21 +208,34 @@ CREATE TABLE job_history (
 );
 CREATE INDEX ix_history_job ON job_history (job_id);
 
+-- The call log. ServiceTitan's phone system writes it; the API only classifies a call (callType,
+-- reason, tags). callType stays NULL until someone classifies the call, and always for outbound.
 CREATE TABLE calls (
     id INTEGER PRIMARY KEY,
-    external_id TEXT UNIQUE,
-    direction TEXT NOT NULL DEFAULT 'Inbound',
+    sid TEXT UNIQUE,
+    direction TEXT NOT NULL DEFAULT 'Inbound' CHECK (direction IN ('Inbound', 'Outbound')),
     from_number TEXT NOT NULL,
     from_key TEXT NOT NULL,
     to_number TEXT NOT NULL DEFAULT '',
+    to_key TEXT NOT NULL DEFAULT '',
     received_on TEXT NOT NULL,
     duration INTEGER NOT NULL DEFAULT 0,
-    call_type TEXT NOT NULL DEFAULT 'Unbooked',
+    call_type TEXT CHECK (call_type IN ('Abandoned', 'Unbooked', 'Excused', 'Booked', 'NotLead')),
     customer_id INTEGER REFERENCES customers (id),
     job_id INTEGER REFERENCES jobs (id),
-    reason TEXT NOT NULL DEFAULT ''
+    reason_id INTEGER,
+    campaign_id INTEGER,
+    modified_on TEXT NOT NULL DEFAULT ''
 );
 CREATE INDEX ix_calls_from ON calls (from_key, received_on);
+CREATE INDEX ix_calls_to ON calls (to_key, received_on);
+
+-- Tags on a call: one row per tag, the tag type being a name from the tenant's tag types.
+CREATE TABLE call_tags (
+    call_id INTEGER NOT NULL REFERENCES calls (id),
+    tag_type_id INTEGER NOT NULL,
+    PRIMARY KEY (call_id, tag_type_id)
+);
 
 -- Customer notes, as ServiceTitan keeps them: free text on a customer, optionally about one of its
 -- jobs. The API can add a note and read notes, never change or remove one.
@@ -229,7 +244,8 @@ CREATE TABLE notes (
     customer_id INTEGER NOT NULL REFERENCES customers (id),
     job_id INTEGER REFERENCES jobs (id),
     text TEXT NOT NULL,
-    created_by TEXT NOT NULL DEFAULT 'staff',
+    is_pinned INTEGER NOT NULL DEFAULT 0,
+    created_by_id INTEGER NOT NULL,
     created_on TEXT NOT NULL
 );
 CREATE INDEX ix_notes_customer ON notes (customer_id);

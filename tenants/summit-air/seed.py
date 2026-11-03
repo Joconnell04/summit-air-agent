@@ -26,6 +26,8 @@ SERVICE_TECHS, ADVISORS = 36, 4
 
 AREA_CODES = ["718", "347", "929", "917", "646", "212"]
 CITY_BY_COUNTY = {"Kings": "Brooklyn", "Queens": "Queens", "Richmond": "Staten Island"}
+# ServiceTitan contacts carry no role, so who a number belongs to is written in the memo.
+ROLE_LABELS = {"owner": "Owner", "tenant": "Tenant", "adult_child": "Adult child"}
 
 FIRST = [
     "Maria",
@@ -290,18 +292,53 @@ class World:
                 {
                     "type": "MobilePhone" if i == 0 else "Phone",
                     "value": number,
-                    "role": role,
-                    "name": name,
+                    "memo": f"{ROLE_LABELS[role]}: {name}",
                 },
             )
         email = name.lower().replace(" ", ".").replace("'", "") + "@example.com"
         repo.insert_contact(
-            self.conn, when, customer_id, {"type": "Email", "value": email, "role": role}
+            self.conn,
+            when,
+            customer_id,
+            {"type": "Email", "value": email, "memo": ROLE_LABELS[role]},
         )
         for contact in extra or []:
             repo.insert_contact(self.conn, when, customer_id, contact)
         self.customers += 1
         return customer_id, location_id
+
+    def lead(
+        self,
+        reason: str,
+        name: str,
+        phone: str,
+        summary: str,
+        days_ago: int,
+        customer_id: int | None = None,
+        street: str = "",
+        zip_code: str = "",
+    ) -> None:
+        """A lead as ServiceTitan keeps it: the lead's own name, phone and address, and a call reason
+        that says what it is about."""
+        reason_id = next(r["id"] for r in self.cfg.call_reasons if r["name"] == reason)
+        stamp = iso(self.stamp(days_ago))
+        self.conn.execute(
+            """INSERT INTO leads (customer_id, call_reason_id, lead_customer_name, lead_phone, phone_key,
+                                  lead_street, lead_zip, summary, campaign_id, created_on, modified_on)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, 302, ?, ?)""",
+            (
+                customer_id,
+                reason_id,
+                name,
+                phone,
+                phone_key(phone),
+                street,
+                zip_code,
+                summary,
+                stamp,
+                stamp,
+            ),
+        )
 
     def equipment(self, customer_id: int, location_id: int, kind: str) -> None:
         rng = self.rng
@@ -448,7 +485,6 @@ class World:
                 ends_next_day=True,
                 note="Weekly on-call",
             )
-        wk.add_holds(conn, cfg, days)
         self.scenarios["onCall"] = {
             day.isoformat(): all_skilled[
                 ((day - timedelta(days=day.weekday())).toordinal() // 7) % len(all_skilled)
@@ -511,7 +547,7 @@ class World:
             NO_COOLING,
             done_day,
             "morning",
-            "Done",
+            "Completed",
             tech_id=self.service_techs[3],
             summary="AC not cooling. Replaced capacitor.",
             created=wk.local_dt(cfg, done_day - timedelta(days=1), "10:00"),
@@ -543,8 +579,7 @@ class World:
                 {
                     "type": "MobilePhone",
                     "value": DAVID_PARK_PHONE,
-                    "role": "adult_child",
-                    "name": "David Park",
+                    "memo": "Adult child: David Park",
                 }
             ],
         )
@@ -653,11 +688,13 @@ class World:
         cid, lid = self.add_person(
             "Harbor Bakery Group", self.address(zone[1]), "owner", [BAKERY_PHONE], kind="Commercial"
         )
-        self.conn.execute(
-            """INSERT INTO leads (kind, customer_type, customer_id, name, phone, phone_key, street, zip, summary,
-                                  created_on) VALUES ('Commercial', 'Commercial', ?, 'Harbor Bakery Group', ?, ?,
-                                  '', '', 'Rooftop unit over the ovens stopped cooling. Wants a quote for service.', ?)""",
-            (cid, BAKERY_PHONE, phone_key(BAKERY_PHONE), iso(self.stamp(4))),
+        self.lead(
+            "Commercial",
+            "Harbor Bakery Group",
+            BAKERY_PHONE,
+            "Rooftop unit over the ovens stopped cooling. Wants a quote for service.",
+            4,
+            customer_id=cid,
         )
         s["commercial"] = {
             "name": "Harbor Bakery Group",
@@ -693,11 +730,14 @@ class World:
             )
         s["outOfAreaResidents"] = residents
 
-        self.conn.execute(
-            """INSERT INTO leads (kind, customer_type, name, phone, phone_key, street, zip, summary, created_on)
-               VALUES ('Replacement', 'Residential', 'Naomi Feld', ?, ?, '212 Dahill Rd', '11204',
-                       'Oil boiler is 30 years old. Wants a heat pump quote.', ?)""",
-            (FELD_PHONE, phone_key(FELD_PHONE), iso(self.stamp(2))),
+        self.lead(
+            "Replacement",
+            "Naomi Feld",
+            FELD_PHONE,
+            "Oil boiler is 30 years old. Wants a heat pump quote.",
+            2,
+            street="212 Dahill Rd",
+            zip_code="11204",
         )
         s["replacementLead"] = {"name": "Naomi Feld", "phone": FELD_PHONE}
 
@@ -752,8 +792,7 @@ class World:
                         {
                             "type": "MobilePhone",
                             "value": self.phone(),
-                            "role": "adult_child",
-                            "name": self.name(),
+                            "memo": f"Adult child: {self.name()}",
                         }
                     ]
                 cid, lid = self.add_person(name, address, "owner", phones, extra=extra)
@@ -814,7 +853,7 @@ class World:
                                 job_type,
                                 day,
                                 rng.choice(["morning", "afternoon", "evening"]),
-                                "Done",
+                                "Completed",
                                 tech_id=rng.choice(self.service_techs),
                                 summary="Completed visit.",
                                 created=wk.local_dt(cfg, day - timedelta(days=2), "11:00"),
@@ -859,16 +898,17 @@ class World:
             for window in cfg.windows:
                 if window.after_hours or not cfg.window_offered(day, window):
                     continue
-                free = capacity.slots(conn, cfg, day, window, SERVICE_UNIT, [], "Urgent")
+                free = capacity.slots(conn, cfg, day, window, SERVICE_UNIT, [])
+                # The urgent hold is the company's rule, not the mock's, but the schedule is shaped
+                # around it so normal slots run out first.
+                held = cfg.hold_for(day, window.id, SERVICE_UNIT)
                 if offset in NEARLY_FULL:
                     keep_open = NEARLY_FULL[offset].get(window.id, 0)
                 else:
-                    keep_open = int(free.total * (1 - rng.uniform(0.2, 0.6))) - free.held
+                    keep_open = int(free.total * (1 - rng.uniform(0.2, 0.6))) - held
                 keep_open = max(keep_open, 0)
-                for _ in range(max(0, free.open - free.held - keep_open)):
-                    options = capacity.slots(
-                        conn, cfg, day, window, SERVICE_UNIT, [], "Urgent"
-                    ).open_ids
+                for _ in range(max(0, len(free.free_fit_ids) - held - keep_open)):
+                    options = capacity.slots(conn, cfg, day, window, SERVICE_UNIT, []).free_fit_ids
                     tech_id = rng.choice(options)
                     skills = set(
                         json.loads(
@@ -898,8 +938,8 @@ class World:
                 if not cfg.window_offered(day, window):
                     continue
                 for tech_id in capacity.slots(
-                    conn, cfg, day, window, INSTALL_UNIT, [], "Urgent"
-                ).open_ids:
+                    conn, cfg, day, window, INSTALL_UNIT, []
+                ).free_fit_ids:
                     if rng.random() < 0.35:
                         person = rng.choice(pool)
                         wk.add_job(

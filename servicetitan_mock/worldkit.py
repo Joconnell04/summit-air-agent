@@ -12,6 +12,9 @@ from . import capacity
 from .config import TenantConfig, iso
 from .util import phone_key
 
+# The appointment status that goes with a job status, for seeding history.
+APPOINTMENT_OF_JOB = {"InProgress": "Working", "Completed": "Done"}
+
 
 def local_dt(cfg: TenantConfig, day: date, hhmm: str) -> datetime:
     return datetime.combine(day, time.fromisoformat(hhmm), tzinfo=cfg.tz)
@@ -59,19 +62,6 @@ def add_shift(
     )
 
 
-def add_holds(conn: sqlite3.Connection, cfg: TenantConfig, days: list[date]) -> None:
-    """Write the configured urgent hold for each day, window and business unit."""
-    for day in days:
-        for window in cfg.windows:
-            for unit in cfg.business_units:
-                held = cfg.hold_for(day, window.id, unit["id"])
-                if held:
-                    conn.execute(
-                        "INSERT OR REPLACE INTO urgent_holds VALUES (?, ?, ?, ?)",
-                        (day.isoformat(), window.id, unit["id"], held),
-                    )
-
-
 def add_job(
     conn: sqlite3.Connection,
     cfg: TenantConfig,
@@ -86,21 +76,18 @@ def add_job(
     summary: str = "",
     created: datetime | None = None,
 ) -> tuple[int, int]:
-    """Insert a job with one appointment. Without tech_id, takes any free technician who fits,
-    ignoring urgent holds. Returns (job_id, appointment_id)."""
+    """Insert a job with one appointment; status is the job's (Scheduled, Dispatched, InProgress,
+    Completed...) and the appointment gets the matching one. Without tech_id, takes any free
+    technician who fits. Returns (job_id, appointment_id)."""
     job_type = cfg.job_type(job_type_id)
     unit_id = job_type["businessUnitIds"][0]
     window = cfg.window(window_id)
-    zone_id = conn.execute("SELECT zone_id FROM locations WHERE id = ?", (location_id,)).fetchone()[
-        0
-    ]
     if tech_id is None:
-        tech_id = capacity.allocate(
-            conn, cfg, day, window, unit_id, job_type["skills"], "Urgent", zone_id
-        )
+        tech_id = capacity.allocate(conn, cfg, day, window, unit_id, job_type["skills"])
     start, end = cfg.window_bounds(day, window)
     stamp = iso(created or start - timedelta(days=3))
-    completed = iso(end) if status == "Done" else None
+    completed = iso(end) if status == "Completed" else None
+    appointment_status = APPOINTMENT_OF_JOB.get(status, status)
     job_id = conn.execute(
         """INSERT INTO jobs (job_number, customer_id, location_id, business_unit_id, job_type_id, priority,
                              summary, status, completed_on, created_on, modified_on)
@@ -134,7 +121,7 @@ def add_job(
             iso(end),
             iso(start),
             iso(end),
-            status,
+            appointment_status,
             stamp,
             stamp,
         ),
@@ -143,7 +130,7 @@ def add_job(
         "INSERT INTO job_history (job_id, date, event_type, text) VALUES (?, ?, 'JobCreated', ?)",
         (job_id, stamp, f"Job created with priority {priority or job_type['priority']}."),
     )
-    if status == "Done":
+    if status == "Completed":
         conn.execute(
             "INSERT INTO job_history (job_id, date, event_type, text) VALUES (?, ?, 'JobCompleted', 'Work completed.')",
             (job_id, completed),
@@ -194,7 +181,7 @@ def add_membership(
                     location_id,
                     name,
                     due.isoformat(),
-                    "Completed" if due < today else "NotAttempted",
+                    "Won" if due < today else "NotAttempted",
                 ),
             )
     return member_id
@@ -234,25 +221,50 @@ def add_call(
     from_number: str,
     customer_id: int | None = None,
     job_id: int | None = None,
-    call_type: str = "Unbooked",
+    call_type: str | None = "Unbooked",
     reason: str = "",
     duration: int = 180,
     to_number: str | None = None,
-) -> None:
-    """Insert an inbound call. Without to_number, it is the company's main line."""
-    conn.execute(
-        """INSERT INTO calls (direction, from_number, from_key, to_number, received_on, duration, call_type,
-                              customer_id, job_id, reason)
-           VALUES ('Inbound', ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+    direction: str = "Inbound",
+    sid: str | None = None,
+    tags: tuple[str, ...] = (),
+) -> int:
+    """Insert a call as ServiceTitan's phone system would log it. An inbound call without to_number
+    came in on the company's main line. For an outbound call from_number is the company line and
+    to_number the customer's number; ServiceTitan leaves its call type empty. The reason is a name
+    from the tenant's call reasons; tags are names from its tag types."""
+    reason_id = next((r["id"] for r in cfg.call_reasons if r["name"] == reason), None)
+    if reason and reason_id is None:
+        raise ValueError(f"no call reason called {reason!r} in the tenant config")
+    tag_ids = []
+    for name in tags:
+        tag_id = next((t["id"] for t in cfg.tag_types if t["name"] == name), None)
+        if tag_id is None:
+            raise ValueError(f"no tag type called {name!r} in the tenant config")
+        tag_ids.append(tag_id)
+    to_number = to_number or cfg.company["phone"]
+    call_id = conn.execute(
+        """INSERT INTO calls (sid, direction, from_number, from_key, to_number, to_key, received_on,
+                              duration, call_type, customer_id, job_id, reason_id, modified_on)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
         (
+            sid,
+            direction,
             from_number,
             phone_key(from_number),
-            to_number or cfg.company["phone"],
+            to_number,
+            phone_key(to_number),
             iso(when),
             duration,
-            call_type,
+            None if direction == "Outbound" else call_type,
             customer_id,
             job_id,
-            reason,
+            reason_id,
+            iso(when),
         ),
-    )
+    ).lastrowid
+    for tag_id in tag_ids:
+        conn.execute(
+            "INSERT INTO call_tags (call_id, tag_type_id) VALUES (?, ?)", (call_id, tag_id)
+        )
+    return call_id

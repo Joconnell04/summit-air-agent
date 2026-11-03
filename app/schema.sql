@@ -240,3 +240,18 @@ CREATE TABLE IF NOT EXISTS weather (
     now_f REAL,
     low_f REAL
 );
+
+-- How a callback call the system placed went, and whether that reached ServiceTitan as a tag on
+-- the call (docs/decisions/26-callback-done.md). outcome is resolved, open (answered, but the
+-- person or the reason was not confirmed) or no_contact (no answer, voicemail, failed). The tag
+-- is retried until it lands.
+CREATE TABLE IF NOT EXISTS call_outcomes (
+    outbound_id INTEGER PRIMARY KEY REFERENCES outbound (id) ON DELETE CASCADE,
+    sid TEXT NOT NULL,
+    outcome TEXT NOT NULL CHECK (outcome IN ('resolved', 'open', 'no_contact')),
+    why TEXT NOT NULL,
+    tagged INTEGER NOT NULL DEFAULT 0,
+    attempts INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);

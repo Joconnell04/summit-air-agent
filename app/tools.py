@@ -10,9 +10,10 @@ import hashlib
 import json
 import sqlite3
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime, time, timedelta
 
 from . import booking, lookup, outbound, records, weather
+from . import capacity as capacity_rules
 from . import priority as prio
 from .db import iso, parse_iso, tx
 from .envelope import Refused, Result, ok
@@ -189,43 +190,26 @@ def open_windows(
     now: datetime,
     job_type: dict,
     level: str,
-    zip_code: str | None,
 ) -> list[dict]:
-    """Open windows from now to the end of the booking range, earliest first, via the cache. Also
-    used by the job that offers earlier openings, so both read the same cached capacity."""
+    """Open windows from now to the end of the booking range, earliest first. ServiceTitan's time
+    frames come through the cache, and the company's rules (urgent holds, after-hours) are applied
+    for this priority (app/capacity.py). Also used by the job that offers earlier openings, so
+    both read the same cached capacity."""
     today = tenant.local(now).date()
     end_day = today + timedelta(days=BOOKING_DAYS_AHEAD)
     unit = job_type["businessUnitIds"][0]
+    # Frames must end by the range's end; the last day's night window ends at 8 the next morning.
+    range_end = datetime.combine(end_day + timedelta(days=1), time(8), tenant.tz)
 
     def fetch():
-        return fsm.capacity(
-            now,
-            datetime.combine(end_day, datetime.max.time(), tenant.tz),
-            unit,
-            job_type["id"],
-            level,
-            zip_code,
-        )
+        return fsm.capacity(now, range_end, unit, job_type["id"])
 
-    days = cache.get((tenant.slug, job_type["code"], level, zip_code, today), fetch)
-    found = []
-    for day in days:
-        for slot in day["timeslots"]:
-            if slot["isAvailable"]:
-                found.append(
-                    {
-                        "date": day["date"],
-                        "window": slot["windowId"],
-                        "after_hours": slot["afterHours"],
-                        "start": slot["start"],
-                        "end": slot["end"],
-                    }
-                )
-    return sorted(found, key=lambda w: w["start"])
+    frames = cache.get((tenant.slug, job_type["code"], today), fetch)
+    return capacity_rules.open_windows(tenant, frames, level, today, end_day)
 
 
-def _open_windows(ctx: Ctx, job_type: dict, level: str, zip_code: str | None) -> list[dict]:
-    return open_windows(ctx.tenant, ctx.fsm, ctx.cache, ctx.now, job_type, level, zip_code)
+def _open_windows(ctx: Ctx, job_type: dict, level: str) -> list[dict]:
+    return open_windows(ctx.tenant, ctx.fsm, ctx.cache, ctx.now, job_type, level)
 
 
 def _describe(ctx: Ctx, window: dict) -> dict:
@@ -255,7 +239,7 @@ def _join(items: list[str], word: str) -> str:
 
 def _alternatives(ctx: Ctx, job_type: dict, level: str, n: int = 2) -> list[dict]:
     try:
-        windows = _open_windows(ctx, job_type, level, None)
+        windows = _open_windows(ctx, job_type, level)
     except (FsmUnavailable, FsmRejected):
         return []
     return [_describe(ctx, w) for w in windows[:n]]
@@ -338,8 +322,7 @@ def find_slots(ctx: Ctx, args: FindSlotsIn) -> Result:
     facts, decided = _priority(
         ctx, args.job_type, f"{args.facts.issue}\n{args.facts.who_home}", args.facts.inside_temp_f
     )
-    readback = records.readback(ctx.call)
-    windows = _open_windows(ctx, job_type, decided.level, readback["zip"] if readback else None)
+    windows = _open_windows(ctx, job_type, decided.level)
     priority = {"level": decided.level, "reasons": decided.reasons, "requested": args.priority}
     data: dict = {"priority": priority}
 
@@ -412,7 +395,7 @@ def _resolve_phone(ctx: Ctx, value: str) -> str:
     if len(digits) == 4 and len(value.replace("-", "").strip()) <= 6:
         on_file = set()
         for customer_id in records.scoped_customers(ctx.conn, ctx.call["id"]):
-            for contact in ctx.fsm.customer(customer_id)["contacts"]:
+            for contact in ctx.fsm.contacts(customer_id):
                 if contact["type"] != "Email" and phone_key(contact["value"]).endswith(digits):
                     on_file.add(phone_key(contact["value"]))
         if len(on_file) == 1:
@@ -577,17 +560,14 @@ def book_appointment(ctx: Ctx, args: BookIn) -> Result:
             booking.mark_attempt(
                 ctx.conn, booking_id, "failed", f"{exc.code}: {exc.detail}", ctx.now
             )
-        if exc.code in ("slot_taken", "no_capacity", "slot_in_past", "after_hours_urgent_only"):
+        if exc.code == "slot_taken":
             ctx.cache.invalidate()
             alternatives = _alternatives(ctx, job_type, decided.level)
             raise Refused(
                 "slot_taken", ctx.tenant.line("slot_taken"), alternatives=alternatives
             ) from None
-        if exc.code == "customer_type_not_supported":
+        if exc.code == "customer_type_not_supported":  # raised by booking.send, not the FSM
             raise Refused("customer_type", ctx.tenant.line("commercial")) from None
-        if exc.code == "out_of_area":
-            _record_out_of_area(ctx, readback["zip"])
-            raise Refused("out_of_area", ctx.tenant.line("out_of_area")) from None
         callback_id, due = _callback(
             ctx, "fsm_down_minutes", f"Booking refused by the FSM: {exc.code}"
         )
@@ -709,9 +689,18 @@ def reschedule_appointment(ctx: Ctx, args: RescheduleIn) -> Result:
     key = _attempt_key(ctx, "reschedule", args.model_dump(mode="json"))
     row_id = _record_action(ctx, "reschedule", key, job, args.model_dump(mode="json"), args.reason)
     try:
-        ctx.fsm.reschedule(key, appointments[-1]["id"], window_start, window_end)
+        technician = capacity_rules.pick_technician(
+            ctx.tenant,
+            ctx.fsm.capacity(window_start, window_end, job["businessUnitId"], job["jobTypeId"]),
+            window_start,
+            window_end,
+            job["priority"],
+        )
+        if technician is None:
+            raise FsmRejected(409, "slot_taken", "No technician may take that window.")
+        ctx.fsm.reschedule(key, appointments[-1]["id"], window_start, window_end, technician)
     except FsmRejected as exc:
-        if exc.code in ("slot_taken", "no_capacity"):
+        if exc.code == "slot_taken":
             with tx(ctx.conn):
                 booking.mark_attempt(ctx.conn, row_id, "failed", exc.code, ctx.now)
             ctx.cache.invalidate()
@@ -837,7 +826,6 @@ def record_lead(ctx: Ctx, args: LeadIn) -> Result:
     if args.kind != "commercial":
         due = _callback_due(ctx, details.callback_time, details.callback_in_minutes)
     scoped = records.scoped_customers(ctx.conn, ctx.call["id"])
-    customer_type = "Commercial" if args.kind == "commercial" else "Residential"
     summary = "; ".join(
         part
         for part in (
@@ -848,13 +836,12 @@ def record_lead(ctx: Ctx, args: LeadIn) -> Result:
         if part
     )
     lead = {
-        "kind": ctx.tenant.fsm["lead_kinds"][args.kind],
-        "customerType": customer_type,
+        "callReasonId": ctx.tenant.fsm["lead_call_reason_ids"][args.kind],
         "customerId": next(iter(scoped))
         if len(scoped) == 1 and args.kind != "commercial"
         else None,
-        "name": details.company or details.contact_name,
-        "phone": ctx.call["caller_id"] if len(ctx.call["caller_key"]) == 10 else "",
+        "leadCustomerName": details.company or details.contact_name,
+        "leadPhone": ctx.call["caller_id"] if len(ctx.call["caller_key"]) == 10 else None,
         "summary": summary,
         "campaignId": ctx.tenant.fsm["campaign_id"],
     }
@@ -928,7 +915,7 @@ def add_note(ctx: Ctx, args: NoteIn) -> Result:
                 "not_owner", "", gate="scope", errors={"customer_id": "not matched on this call"}
             )
         note = ctx.fsm.add_note(_key(ctx, "note", args.model_dump()), customer_id, text)
-        fsm_note_id, where = note["id"], "customer"
+        fsm_note_id, where = note.get("id"), "customer"
     else:
         thread = records.thread(ctx.conn, ctx.call["id"])
         job = ctx.conn.execute(
@@ -941,7 +928,7 @@ def add_note(ctx: Ctx, args: NoteIn) -> Result:
             note = ctx.fsm.add_note(
                 _key(ctx, "note", args.model_dump()), customer_id, text, job["fsm_job_id"]
             )
-            fsm_note_id, where = note["id"], "job"
+            fsm_note_id, where = note.get("id"), "job"
         else:
             # Not booked yet: the note goes into the job summary when it is.
             fsm_note_id, where = None, "pending_job"

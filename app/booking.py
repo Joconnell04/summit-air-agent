@@ -5,6 +5,7 @@ import json
 import sqlite3
 from datetime import datetime
 
+from . import capacity
 from .db import iso, parse_iso
 from .fsm import FsmAdapter, FsmRejected
 from .tenant import Tenant
@@ -78,18 +79,31 @@ def send(fsm: FsmAdapter, tenant: Tenant, request: dict, key: str) -> dict:
     if message:
         raise FsmRejected(422, "customer_type_not_supported", message)
     job_type = tenant.job_types[request["job_type"]]
-    job = fsm.create_job(
-        f"{key}:job",
-        customer["id"],
-        location_id,
-        job_type["businessUnitIds"][0],
-        job_type["id"],
-        request["priority"],
-        tenant.fsm["campaign_id"],
-        job_summary(request),
-        parse_iso(request["window_start"]),
-        parse_iso(request["window_end"]),
-    )
+    unit = job_type["businessUnitIds"][0]
+    start, end = parse_iso(request["window_start"]), parse_iso(request["window_end"])
+    # An earlier attempt may have made the job and lost the answer; ServiceTitan would book twice.
+    job = fsm.find_job(customer["id"], f"{key}:job")
+    if job is None:
+        # ServiceTitan's capacity is advisory, so look again right before booking, and apply the
+        # company's rules to who may take the window (app/capacity.py).
+        technician = capacity.pick_technician(
+            tenant, fsm.capacity(start, end, unit, job_type["id"]), start, end, request["priority"]
+        )
+        if technician is None:
+            raise FsmRejected(409, "slot_taken", "No technician may take that window.")
+        job = fsm.create_job(
+            f"{key}:job",
+            customer["id"],
+            location_id,
+            unit,
+            job_type["id"],
+            request["priority"],
+            tenant.fsm["campaign_id"],
+            job_summary(request),
+            start,
+            end,
+            [technician],
+        )
     return {
         "customer_id": customer["id"],
         "job_id": job["id"],

@@ -15,8 +15,20 @@ fsm:
   booking_provider_id: 501
   campaign_id: 301  # "AI phone agent"
   cancel_reason_id: 401  # "Customer cancelled"
-  # What record_lead's kinds are called in the FSM (config.yaml lead_kinds).
-  lead_kinds: {commercial: Commercial, install: Install, membership: Other}
+  # The ServiceTitan user the integration acts as: notes it adds carry this createdById.
+  agent_user_id: 9001
+  # The call reason a lead carries for each of record_lead's kinds (config.yaml call_reasons).
+  lead_call_reason_ids: {commercial: 704, install: 702, membership: 705}
+  # Tag types (config.yaml tag_types) that say how a callback call went. A person at the office
+  # puts one on the call in ServiceTitan; the server puts one on the callbacks it places itself.
+  # Only "resolved" marks a callback done (docs/decisions/26-callback-done.md).
+  callback_tags:
+    resolved: Callback resolved
+    open: Callback open
+    no_contact: No contact
+  # The mock's stand-in for the phone system logging a call (POST /debug/calls). Real ServiceTitan
+  # logs calls itself, so a real tenant leaves this out or false.
+  log_calls_via_debug: true
 
 # Safety script. Wording follows docs/call-journeys.md journey 3 and must be signed off by a person
 # before launch (signed_off). The server returns these lines word for word; the agent never writes

@@ -11,7 +11,7 @@ from datetime import date, datetime
 from pathlib import Path
 
 from .config import DEFAULT_TENANT_DIR, TenantConfig
-from .db import connect, create_schema
+from .db import connect, create_schema, schema_is_current
 
 
 def build_world(db_path: str | Path, tenant_dir: str | Path, start: date | None = None) -> dict:
@@ -67,7 +67,15 @@ def main() -> None:
     parser.add_argument("--tenant", default=DEFAULT_TENANT_DIR)
     parser.add_argument("--db", default="data/servicetitan_mock.db")
     parser.add_argument("--start-date", help="First day of capacity, YYYY-MM-DD. Default: today.")
+    parser.add_argument(
+        "--if-stale",
+        action="store_true",
+        help="Do nothing when the database exists and matches the current schema.",
+    )
     args = parser.parse_args()
+    if args.if_stale and schema_is_current(args.db):
+        print("up to date", args.db)
+        return
     start = date.fromisoformat(args.start_date) if args.start_date else None
     build_world(args.db, args.tenant, start)
     Path(args.db).with_suffix(".log").unlink(missing_ok=True)

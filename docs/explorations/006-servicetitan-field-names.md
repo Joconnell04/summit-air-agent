@@ -2,6 +2,8 @@
 
 Researched 2026-11-02. Free tools only (WebSearch, WebFetch, curl, `gh`); no Exa or Firecrawl credit was spent. Provenance: SOURCE means seen in a ServiceTitan OpenAPI document, SECONDARY means seen only in third-party material, ASSUMED is my estimate. The mock README's "I could not read developer.servicetitan.io" is out of date: the portal's page is a JavaScript shell, but the specs behind it download with plain `curl`.
 
+Update: option B was built on branch `fix/servicetitan-shapes`. The mock and the adapter now use the real names, enums and shapes in the table below, and `servicetitan_mock/README.md` lists what the mock still does that ServiceTitan does not ("Not in the real API"). Still open: a sandbox call, and the contract test of option C.
+
 ## 1. Question
 
 Which of the names, paths, enums and shapes in `servicetitan_mock/` match ServiceTitan's real public API, and which do not? In particular: the capacity request and response, the telecom call record (is there an outcome or disposition field?), and how job priority and arrival windows are named.
