@@ -1,6 +1,6 @@
 # 62. Which extra entrants join the bake-off, and how they're tested without phone calls
 
-Issue: #62. Status: ready
+Issue: #62. Status: decided (DECISIONS.md 026: all three, Gemini Live kept in)
 
 ## Question
 Besides our LiveKit stack, Retell and Vapi (a written comparison plus one test call, DECISIONS.md 020), which other platforms are worth testing, and can they be scored without Jackson calling each one?

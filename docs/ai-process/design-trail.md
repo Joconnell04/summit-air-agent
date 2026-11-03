@@ -62,3 +62,4 @@ How the design was reached, in order, so a reader can follow each choice back to
 | Local names | One tenant list of 15 names feeds Cartesia's pronunciation and Deepgram's keyterms; the read-back keeps the written form | DECISIONS.md 023, #58 |
 | Carbon monoxide check for unsafe heating | Asked once when the caller heats with an oven, generator or similar; never suggested as a way to get warm | DECISIONS.md 024 |
 | Who tests | Jackson makes the real calls; non-Anthropic callers and graders are allowed in a limited scope | DECISIONS.md 025 |
+| More bake-off entrants | ElevenLabs Agents on our brain, OpenAI Realtime and Gemini Live, scored on a simulated audio rig before any real call | DECISIONS.md 026, #62 |
