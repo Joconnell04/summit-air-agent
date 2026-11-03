@@ -104,6 +104,12 @@ Scripted test calls from a Twilio number with a text-to-speech caller on fixed p
 | `retell_call_d570d98c180ab7ac1587b999d12` | Booked: FSM job 626, tomorrow 8 to 12, after one `gate_read_back` refusal while the read-back sentence was cut by the caller |
 | `retell_call_936dbf645c5e077694bfd666ccc` | Gas: safety lines injected, flags and an urgent callback stored, `end_call` refused until the exact lines were said |
 
+The LiveKit lane fixed the window mistake in the shared tool descriptions after these calls (window is the code from `find_slots`, never the spoken label).
+
+## Eval smoke suite
+
+`make eval SUITE=smoke STACKS=retell` runs through the Retell chat agent and the eval instance. On the first run with the eval lane's timing fix: 8 scenarios, 0 harness errors, 2 passed (MEASURED by the eval lane, 2026-11-03). Among the failures, the gas-in-passing scenario had the model paraphrase the gas lines instead of saying them as signed off, and promise an on-call callback time that nothing had set. The eval instance is one shared mock ServiceTitan, so earlier runs leave bookings behind; reseed it before a scored run: `ssh summit-air 'sudo systemctl stop summit-retell@eval-mock; rm ~/summit-air/retell-data/eval_mock.db; sudo systemctl start summit-retell@eval-mock'`.
+
 Retell's own numbers for the booked call: median end-to-end reply 1.88 s, LLM 0.55 s, voice first byte 0.11 s, transcription 0.19 s; $0.19 for 112 s (MEASURED, Retell call data for `call_d570d98c180ab7ac1587b999d12`, `latency` and `call_cost`). The overlapping scripted caller inflates the end-to-end figure; the bake-off calls replace it.
 
 ## Files

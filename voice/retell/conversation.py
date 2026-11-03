@@ -9,20 +9,11 @@ from pathlib import Path
 
 import yaml
 
-from voice.livekit.turns import first_name
+from prompts.assemble import greeting
 
 
 def spoken_lines(tenants_dir: Path, slug: str) -> dict:
     return yaml.safe_load((tenants_dir / slug / "agent.yaml").read_text())["voice"]
-
-
-def greeting(start: dict, lines: dict) -> str:
-    """The same rule as the LiveKit worker: a first name only when exactly one home customer
-    matched the number."""
-    customers = [c for c in start.get("customers", []) if c.get("residential")]
-    if len(customers) == 1 and first_name(customers[0]["name"]):
-        return lines["greeting_known"].format(first_name=first_name(customers[0]["name"]))
-    return lines["greeting_unknown"]
 
 
 def opening(start: dict, say: str, lines: dict) -> str:

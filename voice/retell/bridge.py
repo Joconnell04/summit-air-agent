@@ -33,8 +33,7 @@ from fastapi.responses import JSONResponse, Response
 from starlette.concurrency import run_in_threadpool
 
 from app.tools import TOOLS
-from prompts.assemble import instructions
-from voice.livekit.turns import server_notes
+from prompts.assemble import instructions, server_notes
 
 from . import conversation, signature
 from .api import Retell, RetellError
