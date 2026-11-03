@@ -254,8 +254,13 @@ def test_a_second_tenant_is_served_from_a_copied_folder(tmp_path, clock, mock):
         details={"contact_name": "A", "need": "Office roof leak"},
     )
     assert lead["say"] == "Peak Roofing only does homes."
+    other = agent.start("(212) 555-0904", dialed="(555) 010-2000")["data"]["call_id"]
+    agent.end(other, "dropped")
+    clock.advance(minutes=1)
     summit = agent.start("(212) 555-0904", dialed="(646) 624-0418")["data"]
     assert summit["tenant"]["name"] == "Summit Air"
+    # A call to another company on the same server is never linked or resumed.
+    assert summit["linked_call"] is None
 
 
 def _code_strings(path) -> str:
@@ -318,3 +323,10 @@ def test_healthz_reports_database_fsm_and_worker_heartbeat(agent, clock):
     assert agent.client.get("/healthz").json()["data"]["workers"]["livekit"]["stale"] is False
     clock.now += timedelta(minutes=5)
     assert agent.client.get("/healthz").json()["data"]["workers"]["livekit"]["stale"] is True
+
+
+def test_the_slot_cache_can_be_turned_off_by_environment(monkeypatch):
+    from app.settings import Settings
+
+    monkeypatch.setenv("SLOT_CACHE_SECONDS", "0")
+    assert Settings().slot_cache_seconds == 0

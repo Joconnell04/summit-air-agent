@@ -35,6 +35,24 @@ def thread(conn: sqlite3.Connection, call_id: str) -> list[str]:
     return ids
 
 
+def thread_both_ways(conn: sqlite3.Connection, call_id: str) -> list[str]:
+    """The call's thread plus any later calls linked back to it (a caller who called back)."""
+    ids = thread(conn, call_id)
+    frontier = list(ids)
+    while frontier:
+        later = [
+            r["id"]
+            for r in conn.execute(
+                f"SELECT id FROM calls WHERE linked_call_id IN ({','.join('?' * len(frontier))})",
+                frontier,
+            )
+            if r["id"] not in ids
+        ]
+        ids += later
+        frontier = later
+    return ids
+
+
 def scoped_customers(conn: sqlite3.Connection, call_id: str) -> dict[int, sqlite3.Row]:
     """Customers matched on this call or its thread. Every customer read and write is limited to
     these (spec S-39)."""
@@ -61,6 +79,19 @@ def caller_turn_after(conn: sqlite3.Connection, call_id: str, seq: int) -> bool:
             "SELECT 1 FROM turns WHERE call_id = ? AND speaker = 'caller' AND seq > ?",
             (call_id, seq),
         ).fetchone()
+    )
+
+
+def agent_said(conn: sqlite3.Connection, call_id: str, line: str) -> bool:
+    """Whether an agent turn on this call's thread already contained the line."""
+    ids = thread(conn, call_id)
+    return any(
+        line in r["text"]
+        for r in conn.execute(
+            f"SELECT text FROM turns WHERE speaker = 'agent' AND call_id IN "
+            f"({','.join('?' * len(ids))})",
+            ids,
+        )
     )
 
 
@@ -269,13 +300,15 @@ def mark_overdue(conn: sqlite3.Connection, tenant: Tenant, now: datetime) -> lis
 
 
 def recent_calls(
-    conn: sqlite3.Connection, caller_key: str, before: datetime, minutes: int
+    conn: sqlite3.Connection, tenant: str, caller_key: str, before: datetime, minutes: int
 ) -> list[sqlite3.Row]:
+    """Calls from this number to this tenant shortly before, so a call to another company on the
+    same server is never linked or resumed."""
     since = iso(before - timedelta(minutes=minutes))
     return conn.execute(
-        "SELECT * FROM calls WHERE caller_key = ? AND started_at >= ? AND started_at < ? "
-        "ORDER BY started_at DESC",
-        (caller_key, since, iso(before)),
+        "SELECT * FROM calls WHERE tenant = ? AND caller_key = ? AND started_at >= ? "
+        "AND started_at < ? ORDER BY started_at DESC",
+        (tenant, caller_key, since, iso(before)),
     ).fetchall()
 
 

@@ -325,6 +325,8 @@ lines:
     back in a few minutes instead?
   limit: I've already got that taken care of on this call, so let me have someone from the team follow up.
   slot_taken: That window just filled up.
+  # Said once when the server marks a call Urgent (spec S-21a). Below Urgent, no priority is named.
+  urgent_priority: I've marked this as one of our most urgent calls, so you get our soonest opening.
   anything_else_first: Is there anything else I can help with?
   # The first line of a call the system places (journey 12). {day} is "today", "tomorrow" or a
   # weekday; {window} is spoken, such as "2 to 4".

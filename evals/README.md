@@ -119,6 +119,8 @@ make langsmith RUN=evals/results/<run>.json     # a named one
 
 ### Reading the results in LangSmith
 
+Experiments whose name starts with `archived-` are early runs kept for the record: two smoke runs on the harness's stand-in prompt and one fake run from the viewer's own check. They predate the per-check scores and aren't comparable with later runs.
+
 **Where to click**
 1. Open LangSmith, then Datasets & Experiments, then the dataset `summit-air-scenarios`. The Examples tab is the scenario list; the Experiments tab has one row per run.
 2. The experiment table shows the average of each score across the run. `passed` is the pass rate; `must_pass_failed` should be 0; `cost_usd` is the average per scenario.

@@ -11,3 +11,7 @@ Built with Claude Code, mostly by voice through transcription. The structure is 
 - **Transcripts.** Exported from the design sessions into `transcripts/`.
 - **Considerations.** A running list in `/docs/considerations.md`, added to by voice with `/consider` and triaged into scope during design.
 - **Phases.** `phases.md` is the route; Claude proposes each next step and Jackson says go.
+
+## Finished branches
+
+A build or fix branch is kept as a tag once its pull request merges: `archive/<branch>` (for example `archive/build/tool-server`), then the branch is deleted, so the branch list shows only work in progress and every lane's history stays on GitHub under Tags.

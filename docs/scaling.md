@@ -19,6 +19,10 @@ At about 150 calls a day (ASSUMED, exploration 003), the busiest hour has 1 to 2
 
 Correction to an earlier note: LiveKit's free plan limits 5 calls at once only for agents LiveKit hosts. Our agent runs on our own server, so the free plan limits monthly minutes, not calls at once.
 
+## One tool server process (a known limit, kept out of scope)
+
+The tool server runs as one program. It stops a retried booking from racing its first attempt with a lock held in that program's memory, so two copies behind a load balancer would each have their own lock and a retry could slip through as a second booking. Moving that lock into the database would fix it. It isn't built because Summit Air doesn't need it: each call sends the tool server a few short requests a minute, so one process should carry roughly 100 calls at once (ASSUMED, not load-tested). Sizing is calls at once = busiest-hour calls x minutes per call / 60; at about 150 calls a day that is 1 to 2 at once, so 100 at once means something like 10,000 calls a day, about 65 times Summit Air's volume (ASSUMED). The voice lines (Cartesia, the server size) run out long before that.
+
 ## Plan to reach 5 at once (a full rollout for Summit Air on a normal day)
 
 1. Cartesia Pro to Startup ($49/mo): 5 voice streams.

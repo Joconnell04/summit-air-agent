@@ -36,7 +36,7 @@ from servicetitan_mock.app import create_app as create_mock
 from servicetitan_mock.seed import build_world
 from voice.livekit.bridge import Bridge
 from voice.livekit.settings import load_profile
-from voice.livekit.tools import ToolLog, build_tools
+from voice.livekit.tools import ToolLog, build_tools, compact
 
 ROOT = Path(__file__).resolve().parents[2]
 TENANT_DIR = ROOT / "tenants" / "summit-air"
@@ -151,22 +151,31 @@ async def run(args) -> list[dict]:
         for turn, line in enumerate(CALLER_LINES[: args.turns], start=1):
             result = stack.turn(call_id, "caller", line)
             notes = assemble.server_notes((result.get("data") or {}).get("hints", []))
-            ctx.add_message(role="user", content=[line] + (["\n" + "\n".join(notes)] if notes else []))
+            ctx.add_message(
+                role="user", content=[line] + (["\n" + "\n".join(notes)] if notes else [])
+            )
             for index in range(MAX_STEPS):
                 out = await step(model, ctx, tools, extra)
-                rows.append({"turn": turn, "step": index, **{k: v for k, v in out.items() if k != "calls"}})
+                rows.append(
+                    {"turn": turn, "step": index, **{k: v for k, v in out.items() if k != "calls"}}
+                )
                 if out["text"]:
                     ctx.add_message(role="assistant", content=out["text"])
                 if not out["calls"]:
                     break
                 for call in out["calls"]:
                     ctx.insert(
-                        llm.FunctionCall(call_id=call.call_id, name=call.name, arguments=call.arguments)
+                        llm.FunctionCall(
+                            call_id=call.call_id, name=call.name, arguments=call.arguments
+                        )
                     )
                     result = stack.tool(call_id, call.name, json.loads(call.arguments or "{}"))
                     ctx.insert(
                         llm.FunctionCallOutput(
-                            call_id=call.call_id, name=call.name, output=json.dumps(result), is_error=False
+                            call_id=call.call_id,
+                            name=call.name,
+                            output=compact(result),
+                            is_error=False,
                         )
                     )
             if out["text"]:
@@ -214,7 +223,9 @@ def main() -> None:
         "--as-deployed", action="store_true", help="the worker's request before the fix"
     )
     parser.add_argument(
-        "--variant", default="none", choices=["none", "thinking-off", "effort-low"],
+        "--variant",
+        default="none",
+        choices=["none", "thinking-off", "effort-low"],
         help="with --as-deployed: one extra request field to test",
     )
     parser.add_argument("--out", help="write the rows as JSON here")
