@@ -247,6 +247,10 @@ CO_QUESTION = CFG["vague"]["co"]["question"]
         "keeping warm with the grill, it's in the living room",
         "my boiler quit so we've had the oven on with the door open to keep warm",
         "I've been leaving the oven door open a crack",
+        # A negator elsewhere in the line ("no heat") doesn't cancel the use.
+        "We have no heat, oven on to keep warm",
+        "we have no heat and the stove is on for warmth",
+        "No heat, so the oven's on to keep warm.",
     ],
 )
 def test_heating_with_a_fuel_burning_source_asks_the_co_check(line):
@@ -268,12 +272,38 @@ def test_heating_with_a_fuel_burning_source_asks_the_co_check(line):
         "I'd never use the oven for heat",
         "the kids are warm with blankets",
         "the stove is on the same gas line as the furnace",
+        "My oven works fine, to keep warm we use blankets",
+        "we don't have the stove on for heat",
     ],
 )
 def test_ordinary_mentions_of_an_oven_stove_or_generator_ask_nothing(line):
     """S-21b: the trigger is narrow, so an ordinary mention asks nothing."""
     assert not safety.heating_signal(line, CFG)
     assert safety.check_caller_turn(line, "none", None, 0, CFG).action == "none"
+
+
+@pytest.mark.parametrize(
+    "answer,kind",
+    [
+        ("No, a little bit of a smell near the water heater", "gas"),
+        ("No, just a bit", "gas"),
+        ("No, but it smells a little off", "gas"),
+        ("no alarm but my head hurts a bit", "co"),
+        ("No, but my chest feels a bit tight", "co"),
+        ("No, sick and dizzy", "co"),
+    ],
+)
+def test_a_no_followed_by_a_smell_or_symptom_still_fires_the_lines(answer, kind):
+    """Review of PR #64: a leading "no" must not clear a check when a smell or symptom follows."""
+    action = safety.check_caller_turn(answer, "checking", kind, 0, CFG)
+    assert action.action == "speak_lines"
+    assert action.kind == kind
+
+
+def test_person_negators_count_only_in_the_check_answer():
+    """Outside the check answer, "nobody's dizzy" is left as the existing rules read it."""
+    assert safety.vague_signal("nobody's feeling sick or dizzy", CFG) == "co"
+    assert safety.vague_signal("nobody's feeling sick or dizzy", CFG, answering_check=True) is None
 
 
 def test_the_heating_check_is_asked_once_per_call():
@@ -343,6 +373,21 @@ def test_the_oven_priority_rule_hears_the_heating_check_wording(agent):
     assert "heating with an oven, stove, generator or grill indoors" in (
         found["data"]["priority"]["reasons"]
     )
+
+
+def test_the_heating_check_is_asked_once_across_a_linked_repeat_call(agent, clock):
+    first = agent.start(UNKNOWN)["data"]["call_id"]
+    assert agent.turn(first, "No heat, so the oven's on to keep warm.")["data"]["safety"][
+        "action"
+    ] == "ask_check"
+    agent.say(first, CO_QUESTION)
+    agent.turn(first, "No, nobody's dizzy and the alarm is quiet.")
+    agent.end(first, "dropped")
+    clock.advance(minutes=2)
+    second = agent.start(UNKNOWN)["data"]
+    assert second["linked_call"]["call_id"] == first
+    again = agent.turn(second["call_id"], "Sorry, cut off. The oven is still on to keep warm.")
+    assert again["data"]["safety"] is None
 
 
 def test_symptoms_in_the_answer_to_the_heating_check_fire_the_co_lines(agent):

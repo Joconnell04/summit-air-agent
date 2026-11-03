@@ -31,19 +31,27 @@ NEGATORS = (
     "cannot",
     "isnt",
     "no longer",
-    # The carbon monoxide question asks whether anyone feels sick or dizzy: "nobody's dizzy".
+)
+# In the answer to the check question only: the carbon monoxide question asks whether anyone feels
+# sick or dizzy, so "nobody's feeling sick or dizzy" is a no for "dizzy" as "nobody's dizzy" is.
+PERSON_NEGATORS = (
     "nobody",
     "nobodys",
     "nobody is",
+    "nobody feels",
     "nobodys feeling",
     "nobody is feeling",
     "no one",
     "no ones",
     "no one is",
+    "no one feels",
     "no ones feeling",
     "no one is feeling",
     "not feeling",
 )
+# Words that can sit between a person negator and a symptom: "nobody's feeling sick or dizzy". A
+# plain "no" before them negates nothing ("no, sick and dizzy").
+LIST_WORDS = {"sick", "or", "and", "feeling", "feel", "feels"}
 YES = (
     "yes",
     "yeah",
@@ -59,12 +67,10 @@ YES = (
     "a bit",
     "definitely",
 )
-# Words that can sit between a negator and a symptom in a list: "not feeling sick or dizzy".
-LIST_WORDS = {"sick", "or", "and", "feeling", "feel", "feels"}
+# "A little" and the like are a yes ("yes, a little", "no, just a bit"), except right before a word
+# that says how the caller feels about the cold: "I just feel a little chilled".
+NOT_A_SIGN = {"chilled", "chilly", "cold", "cool", "annoyed", "frustrated", "worried", "nervous"}
 UNSURE = ("dont know", "not sure", "no idea", "cant tell")
-# A clear yes, even after an opening "no" ("no, wait, yes").
-STRONG_YES = ("yes", "yeah", "yep", "yup", "maybe", "i think so", "actually")
-FILLERS = {"um", "uh", "er", "well", "oh", "so"}
 NO = ("no", "nope", "nah", "not really", "nothing", "i dont", "dont smell", "not smelling")
 # Words after a mention that say it is not happening: "the CO alarm is quiet", "the carbon monoxide
 # detector in the hallway has been quiet". Counted only in the answer to the check question, so the
@@ -107,28 +113,32 @@ def _quiet_after(rest: str) -> bool:
     return False
 
 
-def _drop_list_words(before: str) -> str:
-    """The text before a mention without the list words that sit between a negator and it, so
-    "nobody's feeling sick or dizzy" negates "dizzy" as "nobody's dizzy" does."""
+def _person_negated(before: str) -> bool:
+    """Check answers only: a person negator before the mention, past any list words, so "nobody's
+    feeling sick or dizzy" negates "dizzy"."""
     kept = before.split()
     while kept and kept[-1] in LIST_WORDS:
         kept.pop()
-    return " " + " ".join(kept) + " "
+    trimmed = " " + " ".join(kept) + " "
+    return any(trimmed.endswith(words(n)) for n in PERSON_NEGATORS)
 
 
-def _negated(text_words: str, phrase: str, quiet: bool = False) -> bool:
+def _negated(text_words: str, phrase: str, answering: bool = False) -> bool:
     """True only when every mention of the phrase comes straight after a negating word, as in
-    "I don't smell gas" or "no gas smell". "I don't know, I smell gas" is not negated. With quiet,
-    a mention followed by words like "is quiet" also counts as negated."""
+    "I don't smell gas" or "no gas smell". "I don't know, I smell gas" is not negated. In the answer
+    to the check question, a person negator ("nobody's feeling sick or dizzy") and a mention followed
+    by words like "is quiet" also count as negated."""
     target = words(phrase)
     start = text_words.find(target)
     if start < 0:
         return False
     while start >= 0:
-        before = _drop_list_words(text_words[: start + 1])
+        before = text_words[: start + 1]
         after = text_words[start + len(target) - 1 :]
-        negated = any(before.endswith(words(n)) for n in NEGATORS)
-        if not negated and not (quiet and _quiet_after(after)):
+        negated = any(before.endswith(words(n)) for n in NEGATORS) or (
+            answering and _person_negated(before)
+        )
+        if not negated and not (answering and _quiet_after(after)):
             return False
         start = text_words.find(target, start + 1)
     return True
@@ -147,19 +157,30 @@ def clear_signal(text: str, cfg: dict, answering_check: bool = False) -> str | N
     return None
 
 
-def vague_signal(text: str, cfg: dict) -> str | None:
+def vague_signal(text: str, cfg: dict, answering_check: bool = False) -> str | None:
     text_words = words(text)
     for kind, spec in cfg["vague"].items():
-        if any(has_phrase(text_words, p) and not _negated(text_words, p) for p in spec["phrases"]):
+        if any(
+            has_phrase(text_words, p) and not _negated(text_words, p, answering_check)
+            for p in spec["phrases"]
+        ):
             return kind
     return None
 
 
-def _near_negator(text_words: str, start: int) -> bool:
-    """A negating word in the three words before a match: "I'd never use the oven for heat"."""
-    before = text_words[:start].split()[-3:]
-    window = " " + " ".join(before) + " "
-    return any(words(n) in window for n in NEGATORS)
+# Words that end the thought about a source: "my oven works fine, to keep warm we use blankets".
+GAP_STOPS = ("works", "work", "working", "worked", "fine", "but", "because", "though")
+USE_WORDS = r"(?:use|using|used|run|running|have|had|turn on|turned on|put|leave|leaving)"
+
+
+def _use_negated(text_words: str, start: int) -> bool:
+    """A negator right on the use: "I'd never use the oven for heat", "we don't have the stove on".
+    A negator elsewhere, as in "we have no heat, so the oven's on to keep warm", doesn't count."""
+    before = text_words[:start]
+    negators = "|".join(re.escape(words(n).strip()) for n in NEGATORS)
+    return bool(
+        re.search(rf" (?:{negators}) (?:{USE_WORDS} )?(?:the |a |an |my |our )?$", before)
+    )
 
 
 def heating_signal(text: str, cfg: dict) -> bool:
@@ -171,14 +192,17 @@ def heating_signal(text: str, cfg: dict) -> bool:
     sources = "|".join(re.escape(words(s).strip()) for s in spec["sources"])
     used = "|".join(re.escape(words(p).strip()) for p in spec["used_for_heat"])
     heat_with = r"(?:heat|heating|warm|warming) (?:\w+ ){0,2}with (?:the |a |an |my |our )?"
+    # Up to three words between a source and its use, none of which starts a new thought.
+    gap = rf"(?:(?!(?:{'|'.join(GAP_STOPS)}) )\w+ ){{0,3}}"
     patterns = [
-        rf" (?:{sources}) (?:\w+ ){{0,3}}(?:{used}) ",
+        # "s?" for "the oven's on", which reads as "ovens on" once the apostrophe is dropped.
+        rf" (?:{sources})s? {gap}(?:{used}) ",
         rf" {heat_with}(?:{sources}) ",
         *(re.escape(words(p)) for p in spec["phrases"]),
     ]
     for pattern in patterns:
         for match in re.finditer(pattern, text_words):
-            if not _near_negator(text_words, match.start() + 1):
+            if not _use_negated(text_words, match.start() + 1):
                 return True
     return False
 
@@ -196,7 +220,9 @@ def answer_to_check(text: str, cfg: dict) -> str:
     """yes, no or unclear. Anything that sounds like a yes, an unsure answer, or a mention of the
     smell again counts as a yes: a false alarm costs a few seconds, a missed leak costs much more."""
     text_words = words(text)
-    if clear_signal(text, cfg, answering_check=True) or vague_signal(text, cfg):
+    if clear_signal(text, cfg, answering_check=True) or vague_signal(
+        text, cfg, answering_check=True
+    ):
         return "yes"
     if _negated_clear(text, cfg):
         return "no"
@@ -206,20 +232,23 @@ def answer_to_check(text: str, cfg: dict) -> str:
     # alone sounds like a yes.
     if any(has_phrase(text_words, w) for w in cfg.get("denials", [])):
         return "no"
-    # An answer that opens with "no" is a no, so "no, I just feel a little chilled" isn't heard as
-    # "a little". A clear yes later in the answer still counts.
-    spoken = [w for w in text_words.split() if w not in FILLERS]
-    if (
-        spoken
-        and spoken[0] in ("no", "nope", "nah")
-        and not any(has_phrase(text_words, w) for w in STRONG_YES)
-    ):
-        return "no"
-    if any(has_phrase(text_words, w) for w in YES):
+    if any(_says_yes(text_words, w) for w in YES):
         return "yes"
     if any(has_phrase(text_words, w) for w in NO):
         return "no"
     return "unclear"
+
+
+def _says_yes(text_words: str, word: str) -> bool:
+    """The yes word is there, and isn't "a little" describing the cold ("a little chilled")."""
+    target = words(word)
+    start = text_words.find(target)
+    while start >= 0:
+        following = text_words[start + len(target) :].split()[:1]
+        if not following or following[0] not in NOT_A_SIGN:
+            return True
+        start = text_words.find(target, start + 1)
+    return False
 
 
 def lines_for(cfg: dict, kind: str) -> str:

@@ -186,7 +186,7 @@ Status: open
 
 ## call-journeys r4 (amendment after lock: heating with an oven or generator)
 Feedback (verbatim):
-> don't let the agent recommend sloppy/potentially unsafe solutions like using an oven to heat the house. but yes, that question should be asked when relevant but not overly hard coded...i don't want it to come up more than it needs to
+> regarding your question on a caller and heating the house: don't let the agent recommend sloppy/potentially unsafe solutions like using an oven to heat the house. but yes, that question should be asked when relevant but not overly hard coded...i don't want it to come up more than it needs to
 Changed:
 - Spine step 4 and journey 3: a caller who says they're heating the home with something that burns fuel indoors (oven on or open for heat, stove, grill, generator, kerosene or propane heater) gets the existing carbon monoxide check question once per call. Only wording that says it's used for heat counts, so "my oven works", a gas stove or "the generator is outside" asks nothing. Symptoms or an alarm in the answer fire the carbon monoxide lines as today; a clear no carries on.
 - Journey 3 step 9: the agent never suggests an oven, stove, grill, generator or unvented heater to get warm and never agrees one is fine to keep using; if asked, layers, blankets, one warm room or somewhere warm to go.

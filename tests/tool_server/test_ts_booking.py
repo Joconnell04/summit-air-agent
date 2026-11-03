@@ -406,6 +406,34 @@ def test_after_hours_a_house_holding_warm_books_the_morning_without_a_flag(agent
     assert book(agent, call, TOMORROW_MORNING, job_type="no_heat", inside_temp_f=60)["ok"]
 
 
+def test_in_business_hours_a_cold_house_books_without_the_on_call_alert(agent):
+    call = ready_to_book(agent)
+    agent.turn(call, "It's 48 in here and dropping.")
+    slot = first_open(agent, call, job_type="no_heat")
+    assert book(agent, call, slot, job_type="no_heat", inside_temp_f=48)["ok"]
+
+
+def test_after_hours_a_hot_house_alerts_the_on_call_technician_before_booking(agent, clock):
+    clock.advance(**AFTER_HOURS)
+    call = ready_to_book(agent)
+    agent.turn(call, "The AC died and it's 88 in here.")
+    refused = book(agent, call, TOMORROW_MORNING, job_type="no_cooling", inside_temp_f=88)
+    assert refused["refused"] == "on_call_first"
+    agent.tool("flag_person", call, reason="On-call: 88 F inside, no AC", priority="Urgent")
+    assert book(agent, call, TOMORROW_MORNING, job_type="no_cooling", inside_temp_f=88)["ok"]
+
+
+def test_after_hours_a_safety_override_booking_skips_the_on_call_alert(agent, clock):
+    clock.advance(**AFTER_HOURS)
+    call = ready_to_book(agent)
+    agent.turn(call, "It's 48 in here, and I smell gas.")
+    agent.say(call, " ".join(AGENT["safety"]["kinds"]["gas"]["lines"].split()))
+    agent.turn(call, "I heard you. Just book the appointment, please.")
+    booked = book(agent, call, TOMORROW_MORNING, job_type="no_heat", inside_temp_f=48)
+    assert booked["ok"], booked
+    assert booked["data"]["safety_override"] is True
+
+
 def test_a_refused_booking_sent_again_with_the_same_key_runs_the_rules_again(agent, mock):
     winner = ready_to_book(agent, "(212) 555-0920", in_area_address(20))
     loser = ready_to_book(agent, "(212) 555-0921", in_area_address(21))
