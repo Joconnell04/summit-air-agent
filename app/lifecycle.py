@@ -34,7 +34,7 @@ def _resume(conn: sqlite3.Connection, previous: sqlite3.Row) -> dict:
     }
     booked = conn.execute(
         "SELECT fsm_job_id, status, window_start FROM bookings WHERE call_id = ? AND kind = 'book' "
-        "AND status IN ('booked', 'queued')",
+        "AND status IN ('sending', 'booked', 'queued')",
         (previous["id"],),
     ).fetchone()
     return {
@@ -180,8 +180,17 @@ def turn(
                     now,
                     "Low",
                 )
-            if any(has_phrase(words(args.text), p) for p in DO_NOT_CALL_PHRASES):
+            text_words = words(args.text)
+            # Marked at once on the caller's words (spec S-49); the agent still says the line.
+            if len(call["caller_key"]) == 10 and any(
+                has_phrase(text_words, p) for p in DO_NOT_CALL_PHRASES
+            ):
+                records.mark_do_not_call(conn, call, now)
                 hints.append("do_not_call")
+            # A caller who describes a business can't book, whatever the agent does next (S-05).
+            if any(has_phrase(text_words, p) for p in tenant.commercial_phrases):
+                changes["commercial"] = 1
+                hints.append("commercial")
         elif call["safety_state"] == "signal" and safety.agent_said_lines(
             args.text, call["safety_kind"], cfg
         ):

@@ -13,6 +13,8 @@ from .settings import QUEUE_MAX_ATTEMPTS
 from .tenant import Tenant
 from .tools import send_lead
 
+STUCK_SENDING_MINUTES = 5
+
 
 def retry_queue(
     conn: sqlite3.Connection, tenant: Tenant, fsm: FsmAdapter, cache: SlotCache, now: datetime
@@ -23,8 +25,10 @@ def retry_queue(
     counts = {"booked": 0, "still_queued": 0, "failed": 0, "leads_sent": 0}
     queued = conn.execute(
         "SELECT b.* FROM bookings b JOIN calls c ON c.id = b.call_id "
-        "WHERE b.kind = 'book' AND b.status = 'queued' AND c.tenant = ? ORDER BY b.id",
-        (tenant.slug,),
+        "WHERE b.kind = 'book' AND c.tenant = ? AND (b.status = 'queued' "
+        # A live request that died mid-send (a crash) is picked up once it is clearly abandoned.
+        "OR (b.status = 'sending' AND b.updated_at < ?)) ORDER BY b.id",
+        (tenant.slug, iso(now - timedelta(minutes=STUCK_SENDING_MINUTES))),
     ).fetchall()
     for row in queued:
         try:

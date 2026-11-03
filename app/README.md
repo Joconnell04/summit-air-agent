@@ -47,7 +47,7 @@ make trace CALL=<call id>   # a call's timeline in plain text, read straight fro
 
 | Rule | Spec | Code |
 |---|---|---|
-| No booking for a commercial customer, whatever the agent asks: a commercial lead on the call, a caller ID that matches only commercial accounts, or the customer the address resolves to | S-05 | `tools._commercial`, `booking.send` |
+| No booking for a commercial customer, whatever the agent asks: a caller line with a business phrase from `agent.yaml`, a commercial lead on the call, a caller ID that matches only commercial accounts, or the customer the address resolves to | S-05 | `lifecycle.turn`, `tools._commercial`, `booking.send` |
 | Safety lines word for word before anything else; a person flagged at once; a shorter variant on a repeat, never the same one twice in a row | S-17 | `safety.check_caller_turn`, `lifecycle.turn` |
 | Booking tools refused until the lines were said (an agent turn containing them) and the flag raised; after that a booking is an override, logged as `gate=safety_override` | S-18 | `tools._safety_gate` |
 | End call refused on a safety call until the lines were said; then the sign-off, and no spam or wrong-number label | S-19 | `tools.end_call` |
@@ -57,13 +57,13 @@ make trace CALL=<call id>   # a call's timeline in plain text, read straight fro
 | Read-back: confirmed only after the server returned the sentence on this call and a caller line followed | S-26 | `tools.read_back` |
 | Idempotent booking; the FSM's one-appointment-per-technician-window rule decides a race | S-27 | `main.run`, `booking.send`, the mock's `ux_appointments_slot` |
 | Out-of-area refused and recorded with its ZIP, no flag | S-28 | `tools._out_of_area` |
-| Reschedule and cancel only the caller's own booking, once each per call | S-31 | `tools._owned_job`, `tools._limit` |
+| Reschedule and cancel only the caller's own booking, once each per call: booked on this thread, matched by the number the call came from, or at the address confirmed in the read-back; a number the caller only states is not enough | S-31 | `tools._owned_job`, `tools._limit` |
 | Every callback names a time and an owner; overdue ones are flagged | S-32 | `records.parse_callback_time`, `records.mark_overdue` |
 | Linked calls within minutes; repeated drops get a callback offer | S-38 | `lifecycle.start` |
 | Reads and writes scoped to customers matched on the call; no delete, bulk or free-query call in the adapter | S-39 | `records.scoped_customers`, `fsm/base.py` |
 | Outbound only to the caller, 8 a.m. to 9 p.m., one attempt, never do-not-call | S-42 | `records.outbound_allowed` |
-| A booking the FSM couldn't take is queued, retried with the same keys, and flagged if it still fails | S-48 | `tools.book_appointment`, `jobs.retry_queue` |
-| Do-not-call cancels pending callbacks | S-49 | `records.mark_do_not_call` |
+| A booking the FSM couldn't take is queued, retried with the same keys, and flagged if it still fails; a booking still being sent (`sending`) is left to its request | S-48 | `tools.book_appointment`, `jobs.retry_queue` |
+| Do-not-call marked on the caller's words, cancelling pending callbacks; the tool returns the line to say | S-49 | `lifecycle.turn`, `records.mark_do_not_call` |
 
 ## Template and tenant
 
@@ -74,5 +74,8 @@ Nothing about Summit Air is in `app/`; a test checks for the company name, its Z
 - One server process: a per-call lock serializes a call's requests so a retried booking can't race its first attempt. A second process would need that claim in the database.
 - The JSON log file is never rotated or purged here; retention covers the database. Production log rotation belongs to the deploy.
 - FSM credentials from the environment apply to every tenant; a second real tenant needs per-tenant secrets.
+- `find_customer` by a number or address the caller states returns that customer's lookup, notes included, as the contract says. Changing their visit needs the read-back of its address, but reading the notes doesn't; worth an eval case.
+- `check_service_area` records whatever ZIP the agent passes as out of area, so a ZIP the caller only asked about counts in the owner view's demand by ZIP.
+- `end_call(reason="caller_goodbye")` on a safety call hangs up on the agent's word; it is only reachable after the lines were said and a person flagged.
 - `/calls/end` marks the technician summary as pending (spec S-16); the summary job itself is not built yet.
 - Against real ServiceTitan the adapter still needs the changes listed in `servicetitan_mock/README.md` (our own idempotency keys, a capacity recheck before creating a job).

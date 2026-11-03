@@ -14,9 +14,8 @@ class Settings:
     tenants_dir: Path = field(
         default_factory=lambda: Path(os.environ.get("TENANTS_DIR", "tenants"))
     )
-    default_tenant: str = field(
-        default_factory=lambda: os.environ.get("DEFAULT_TENANT", "summit-air")
-    )
+    # Used when the dialed number matches no tenant. Empty is fine when there is only one tenant.
+    default_tenant: str = field(default_factory=lambda: os.environ.get("DEFAULT_TENANT", ""))
     # Debug endpoints refuse every request when this is empty.
     debug_token: str = field(default_factory=lambda: os.environ.get("DEBUG_TOKEN", ""))
     # development keeps full logs and transcripts (spec S-45).

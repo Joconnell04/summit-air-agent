@@ -235,7 +235,11 @@ def test_a_second_tenant_is_served_from_a_copied_folder(tmp_path, clock, mock):
     from app.settings import Settings
 
     settings = Settings(
-        db_path=tmp_path / "t.db", tenants_dir=tenants, debug_token="t", jobs_interval_seconds=0
+        db_path=tmp_path / "t.db",
+        tenants_dir=tenants,
+        default_tenant="summit-air",
+        debug_token="t",
+        jobs_interval_seconds=0,
     )
     fsm = TestClient(mock[0])
     app = create_app(settings, clock=clock, fsm_clients={"summit-air": fsm, "peak-roofing": fsm})

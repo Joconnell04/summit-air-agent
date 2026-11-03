@@ -64,6 +64,7 @@ class Tenant:
         ]
         self.phone_keys = {phone_key(n) for n in agent["phone_numbers"]}
         self.safety: dict = agent["safety"]
+        self.commercial_phrases: list[str] = agent["commercial_phrases"]
         self.priority: dict = agent["priority"]
         self.lines: dict = agent["lines"]
         self.callbacks: dict = agent["callbacks"]
@@ -123,6 +124,10 @@ class Tenants:
 
     def __init__(self, tenants: list[Tenant], default: str):
         self.by_slug = {t.slug: t for t in tenants}
+        if not default and len(tenants) == 1:
+            default = tenants[0].slug
+        if default not in self.by_slug:
+            raise ValueError(f"set DEFAULT_TENANT to one of {sorted(self.by_slug)}")
         self.default = self.by_slug[default]
 
     @classmethod

@@ -310,3 +310,61 @@ def test_a_cancel_needs_a_reason_and_offers_two_windows(agent, scenarios):
     assert len(cancelled["data"]["alternatives"]) == 2
     second = agent.tool("cancel_appointment", other, booking_id=job_id, reason="again please")
     assert second["refused"] == "limit"
+
+
+def test_a_refused_booking_sent_again_with_the_same_key_runs_the_rules_again(agent, mock):
+    winner = ready_to_book(agent, "(212) 555-0920", in_area_address(20))
+    loser = ready_to_book(agent, "(212) 555-0921", in_area_address(21))
+    assert book(agent, winner, ONE_LEFT)["ok"]
+    taken = book(agent, loser, ONE_LEFT, key="kb")
+    assert taken["refused"] == "slot_taken"
+    assert book(agent, loser, ONE_LEFT, key="kb")["refused"] == "slot_taken"
+    # The winner cancels, the slot frees up, and the loser's same request now books.
+    job_id = count(
+        agent, "SELECT fsm_job_id FROM bookings WHERE call_id = ? AND status = 'booked'", winner
+    )
+    agent.turn(winner, "Actually I need to cancel.")
+    assert agent.tool("cancel_appointment", winner, booking_id=job_id, reason="away that day")["ok"]
+    assert book(agent, loser, ONE_LEFT, key="kb")["ok"]
+
+
+def test_an_unknown_caller_who_describes_a_business_cannot_book(agent, mock):
+    before = fsm_jobs(mock)
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    turn = agent.turn(
+        call, "I manage a property, well, I'm the property manager, and the heat's out."
+    )
+    assert "commercial" in turn["data"]["hints"]
+    agent.confirm_read_back(call, in_area_address())
+    refused = book(agent, call, first_open(agent, call), job_type="no_heat")
+    assert refused["refused"] == "customer_type"
+    assert fsm_jobs(mock) == before
+
+
+def test_a_landlord_of_a_two_family_house_is_not_marked_commercial(agent):
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    turn = agent.turn(call, "I own a two-family house and my tenants upstairs have no heat.")
+    assert "commercial" not in turn["data"]["hints"]
+
+
+def test_a_number_the_caller_only_states_is_not_enough_to_change_a_visit(agent):
+    owner = ready_to_book(agent, "(212) 555-0930", in_area_address(30))
+    job_id = book(agent, owner, first_open(agent, owner))["data"]["booking_id"]
+    agent.end(owner)
+    other = agent.start("(212) 555-0931")["data"]["call_id"]
+    found = agent.tool("find_customer", other, phone="(212) 555-0930")
+    assert found["data"]["matches"]
+    refused = agent.tool("cancel_appointment", other, booking_id=job_id, reason="not needed")
+    assert refused["refused"] == "not_owner"
+    # Confirming the visit's address in the read-back is what a call-taker would ask for.
+    agent.turn(other, "It's for my mother's place.")
+    agent.confirm_read_back(other, in_area_address(30))
+    assert agent.tool("cancel_appointment", other, booking_id=job_id, reason="not needed")["ok"]
+
+
+def test_a_limit_flags_a_person_once_however_often_it_is_hit(agent):
+    call = ready_to_book(agent)
+    assert book(agent, call, first_open(agent, call))["ok"]
+    for _ in range(3):
+        assert book(agent, call, ONE_LEFT)["refused"] == "limit"
+    assert count(agent, "SELECT COUNT(*) FROM flags WHERE kind = 'limit'") == 1

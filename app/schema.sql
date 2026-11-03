@@ -60,7 +60,8 @@ CREATE TABLE IF NOT EXISTS bookings (
     id INTEGER PRIMARY KEY,
     call_id TEXT NOT NULL REFERENCES calls (id) ON DELETE CASCADE,
     kind TEXT NOT NULL CHECK (kind IN ('book', 'reschedule', 'cancel')),
-    status TEXT NOT NULL CHECK (status IN ('booked', 'queued', 'failed', 'done')),
+    -- sending: the live request is talking to the FSM; the retry job leaves it alone.
+    status TEXT NOT NULL CHECK (status IN ('sending', 'booked', 'queued', 'failed', 'done')),
     fsm_key TEXT NOT NULL UNIQUE,
     request_json TEXT NOT NULL,
     fsm_job_id INTEGER,

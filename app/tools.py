@@ -67,15 +67,16 @@ def _flag_and_refuse(ctx: Ctx, code: str, say: str, kind: str, reason: str, **da
 
 
 def _limit(ctx: Ctx, kind: str, count: int) -> None:
-    if count >= LIMITS[kind]:
-        _flag_and_refuse(
-            ctx,
-            "limit",
-            ctx.tenant.line("limit"),
-            "limit",
-            f"Per-call limit reached: {kind}",
-            limit=kind,
-        )
+    if count < LIMITS[kind]:
+        return
+    reason = f"Per-call limit reached: {kind}"
+    flagged = ctx.conn.execute(
+        "SELECT 1 FROM flags WHERE call_id = ? AND kind = 'limit' AND reason = ?",
+        (ctx.call["id"], reason),
+    ).fetchone()
+    if flagged:  # one flag per limit per call, however often the model retries
+        raise Refused("limit", ctx.tenant.line("limit"), limit=kind)
+    _flag_and_refuse(ctx, "limit", ctx.tenant.line("limit"), "limit", reason, limit=kind)
 
 
 def _safety_gate(ctx: Ctx) -> bool:
@@ -146,6 +147,18 @@ def _key(ctx: Ctx, tool: str, args: dict) -> str:
         return f"{ctx.call['id']}:{tool}:{ctx.idempotency_key}"
     digest = hashlib.sha256(json.dumps(args, sort_keys=True, default=str).encode()).hexdigest()
     return f"{ctx.call['id']}:{tool}:{digest[:16]}"
+
+
+def _attempt_key(ctx: Ctx, tool: str, args: dict) -> str:
+    """The key for a new booking, reschedule or cancel row. A request refused or failed before
+    (a taken slot, an FSM error) may be sent again with the same Idempotency-Key once the cause is
+    gone, so each new attempt gets its own key."""
+    base = _key(ctx, tool, args)
+    tried = ctx.conn.execute(
+        "SELECT COUNT(*) FROM bookings WHERE fsm_key = ? OR fsm_key LIKE ?",
+        (base, f"{base}:retry%"),
+    ).fetchone()[0]
+    return f"{base}:retry{tried}" if tried else base
 
 
 def _callback(ctx: Ctx, minutes_key: str, reason: str) -> tuple[int | None, datetime]:
@@ -448,7 +461,7 @@ def book_appointment(ctx: Ctx, args: BookIn) -> Result:
     existing = [
         r
         for r in ctx.conn.execute(
-            f"SELECT * FROM bookings WHERE kind = 'book' AND status IN ('booked', 'queued') "
+            f"SELECT * FROM bookings WHERE kind = 'book' AND status IN ('sending', 'booked', 'queued') "
             f"AND call_id IN ({','.join('?' * len(records.thread(ctx.conn, ctx.call['id'])))})",
             records.thread(ctx.conn, ctx.call["id"]),
         )
@@ -502,14 +515,14 @@ def book_appointment(ctx: Ctx, args: BookIn) -> Result:
         "window_start": iso(window_start),
         "window_end": iso(window_end),
     }
-    key = _key(ctx, "book", args.model_dump(mode="json"))
+    key = _attempt_key(ctx, "book", args.model_dump(mode="json"))
     seek_earlier = decided.level == "Urgent" and args.slot.date > ctx.tenant.local(ctx.now).date()
     with tx(ctx.conn):
         booking_id = ctx.conn.execute(
             """INSERT INTO bookings (call_id, kind, status, fsm_key, request_json, window_start,
                    window_end, job_type, priority, priority_reasons, safety_override, seek_earlier,
                    turn_seq, created_at, updated_at)
-               VALUES (?, 'book', 'queued', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+               VALUES (?, 'book', 'sending', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 ctx.call["id"],
                 key,
@@ -598,7 +611,9 @@ def book_appointment(ctx: Ctx, args: BookIn) -> Result:
 
 
 def _owned_job(ctx: Ctx, job_id: int) -> dict:
-    """The job, if it belongs to a customer matched on this call or was booked on this thread."""
+    """The job, if it was booked on this thread, belongs to a customer matched by the number the
+    call came from, or is at the address the caller confirmed in the read-back. A number or address
+    the caller only states is not enough to change someone's visit."""
     thread = records.thread(ctx.conn, ctx.call["id"])
     booked_here = ctx.conn.execute(
         f"SELECT 1 FROM bookings WHERE fsm_job_id = ? AND call_id IN ({','.join('?' * len(thread))})",
@@ -609,7 +624,16 @@ def _owned_job(ctx: Ctx, job_id: int) -> dict:
     except FsmRejected:
         job = None
     scoped = records.scoped_customers(ctx.conn, ctx.call["id"])
-    if not job or not (booked_here or job["customerId"] in scoped):
+    owned = bool(booked_here)
+    if job and not owned and job["customerId"] in scoped:
+        owned = scoped[job["customerId"]]["matched_by"] == "caller_id"
+        readback = records.readback(ctx.call) if ctx.call["readback_confirmed_at"] else None
+        if not owned and readback:
+            owned = any(
+                loc["id"] == job["locationId"] and booking.same_address(loc, readback)
+                for loc in ctx.fsm.locations(job["customerId"])
+            )
+    if not job or not owned:
         raise Refused(
             "not_owner", "I can only change a visit that's booked for you.", gate="ownership"
         )
@@ -621,7 +645,7 @@ def _record_action(ctx: Ctx, kind: str, key: str, job: dict, args: dict, reason:
         return ctx.conn.execute(
             """INSERT INTO bookings (call_id, kind, status, fsm_key, request_json, fsm_job_id,
                    customer_id, job_type, reason, turn_seq, created_at, updated_at)
-               VALUES (?, ?, 'queued', ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+               VALUES (?, ?, 'sending', ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 ctx.call["id"],
                 kind,
@@ -660,7 +684,7 @@ def reschedule_appointment(ctx: Ctx, args: RescheduleIn) -> Result:
             "That visit is already underway, so let me get someone to help with it.",
         )
     window_start, window_end = _slot_bounds(ctx, args.slot, job["priority"])
-    key = _key(ctx, "reschedule", args.model_dump(mode="json"))
+    key = _attempt_key(ctx, "reschedule", args.model_dump(mode="json"))
     row_id = _record_action(ctx, "reschedule", key, job, args.model_dump(mode="json"), args.reason)
     try:
         ctx.fsm.reschedule(key, appointments[-1]["id"], window_start, window_end)
@@ -714,7 +738,7 @@ def cancel_appointment(ctx: Ctx, args: CancelIn) -> Result:
             "invalid_state",
             "That visit can't be cancelled from here, so let me get someone to help.",
         )
-    key = _key(ctx, "cancel", args.model_dump(mode="json"))
+    key = _attempt_key(ctx, "cancel", args.model_dump(mode="json"))
     row_id = _record_action(ctx, "cancel", key, job, args.model_dump(mode="json"), args.reason)
     try:
         ctx.fsm.cancel_job(
@@ -900,7 +924,13 @@ def mark_do_not_call(ctx: Ctx, args: DoNotCallIn) -> Result:
     if len(ctx.call["caller_key"]) != 10:
         raise Refused("invalid_phone", ctx.tenant.line("do_not_call"))
     with tx(ctx.conn):
-        cancelled = records.mark_do_not_call(ctx.conn, ctx.call, ctx.now)
+        records.mark_do_not_call(ctx.conn, ctx.call, ctx.now)
+    # The caller's own words may already have marked it on their turn, so count what this call
+    # cancelled rather than what this request did.
+    cancelled = ctx.conn.execute(
+        "SELECT COUNT(*) FROM callbacks WHERE phone_key = ? AND status = 'cancelled' AND updated_at >= ?",
+        (ctx.call["caller_key"], ctx.call["started_at"]),
+    ).fetchone()[0]
     say = ctx.tenant.line("do_not_call_with_callback" if cancelled else "do_not_call")
     return ok(say, cancelled_callbacks=cancelled)
 
@@ -925,7 +955,7 @@ def end_call(ctx: Ctx, args: EndCallIn) -> Result:
                 records.update_call(ctx.conn, ctx.call["id"], end_requested=1)
         return ok(" ".join(safety["sign_off"].split()), hang_up=hang_up)
     last = ctx.conn.execute(
-        "SELECT turn_seq FROM bookings WHERE call_id = ? AND kind = 'book' AND status IN ('booked', 'queued') "
+        "SELECT turn_seq FROM bookings WHERE call_id = ? AND kind = 'book' AND status IN ('sending', 'booked', 'queued') "
         "ORDER BY id DESC LIMIT 1",
         (ctx.call["id"],),
     ).fetchone()

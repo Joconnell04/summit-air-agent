@@ -96,6 +96,27 @@ safety:
     thing is to go now. We'll follow up once you're safe.
   flag_reason: "{label} reported on the call"
 
+# A caller line with one of these marks the call commercial: it can't book (spec S-05, journey 8).
+# Only phrases that can't describe a home: a landlord of a two-family house or a co-op unit owner is
+# residential, so "my tenants" and "our building" are left to the agent and the FSM account type.
+commercial_phrases:
+  - my restaurant
+  - our restaurant
+  - my business
+  - our business
+  - my store
+  - our store
+  - my company
+  - our company
+  - property manager
+  - property management
+  - our school
+  - my school
+  - our office building
+  - commercial property
+  - rooftop unit
+  - our warehouse
+
 # Rules can only raise priority (spec S-21). Each fires on words the caller said on this call, or on
 # facts the agent passed. ASSUMED: no heat or no cooling alone is High; the rules make it Urgent.
 priority:

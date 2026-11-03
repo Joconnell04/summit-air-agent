@@ -186,11 +186,14 @@ def test_there_is_no_tool_that_calls_911_or_an_outside_number(agent):
 # ---- do not call -------------------------------------------------------------------------------
 
 
-def test_do_not_call_cancels_pending_callbacks_and_says_so(agent):
+def test_do_not_call_is_marked_on_the_callers_words_and_cancels_callbacks(agent):
     call = agent.start(UNKNOWN)["data"]["call_id"]
     agent.tool("flag_person", call, reason="Callback requested", callback_in_minutes=30)
     turn = agent.turn(call, "Actually, don't call me, I'll call you.")
     assert "do_not_call" in turn["data"]["hints"]
+    # Marked at once, before the agent does anything.
+    assert count(agent, "SELECT COUNT(*) FROM do_not_call") == 1
+    assert count(agent, "SELECT COUNT(*) FROM callbacks WHERE status = 'pending'") == 0
     marked = agent.tool("mark_do_not_call", call)
     assert marked["say"] == (
         "Understood, we won't call you. That means the callback is off, so give us a call any "
@@ -368,3 +371,21 @@ def test_the_slot_cache_is_used_between_turns_and_cleared_by_a_booking(agent):
     assert len(cache) == 0, "a booking clears the cache"
     first_open(agent, call)
     assert cache.refresh() == 1, "the timer refreshes what is cached"
+
+
+def test_the_retry_job_leaves_a_booking_that_is_still_being_sent_alone(agent, clock):
+    call = ready_to_book(agent)
+    services = agent.app.state.services
+    conn = services.connect()
+    conn.execute(
+        "INSERT INTO bookings (call_id, kind, status, fsm_key, request_json, created_at, updated_at) "
+        "VALUES (?, 'book', 'sending', 'k-live', '{}', ?, ?)",
+        (call, "2026-11-02T14:00:00Z", "2026-11-02T14:00:00Z"),
+    )
+    report = run_jobs(agent)
+    assert report["summit-air"]["queue"]["failed"] == 0
+    assert (
+        conn.execute("SELECT status FROM bookings WHERE fsm_key = 'k-live'").fetchone()[0]
+        == "sending"
+    )
+    conn.close()
