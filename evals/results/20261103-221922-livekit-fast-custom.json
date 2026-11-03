@@ -1,0 +1,1176 @@
+{
+  "run_id": "20261103-221922-livekit-fast-custom",
+  "created": "2026-11-03T22:19:22.407243Z",
+  "suite": "custom",
+  "tags": [
+    "id:stroke-in-passing-no-heat"
+  ],
+  "stack": "livekit",
+  "profile": "fast",
+  "hash": "a44dceaf3914c8a9",
+  "prompt_hash": "da2743f33ac30526",
+  "model": "claude-haiku-5-5",
+  "overlay": null,
+  "scenarios": [
+    {
+      "scenario_id": "stroke-in-passing-no-heat",
+      "sample": 1,
+      "persona": "Marisol Vega, a homeowner in Forest Hills, Queens, calling about the heat. Her mother-in-law moved in after a stroke; she mentions it in passing, never says \"elderly\" or an age, and doesn't ask for anything special.",
+      "flow": [
+        "priority",
+        "booking"
+      ],
+      "difficulty": "rigorous",
+      "traits": [
+        "filler",
+        "vague"
+      ],
+      "outcome": "error",
+      "must_pass_failures": [],
+      "check_failures": [],
+      "error": "the call did not finish within 16 caller turns",
+      "checks": [],
+      "grader_score": null,
+      "grader_notes": "",
+      "reply_delay_p50_ms": 865.251959010493,
+      "reply_delay_p90_ms": 1777.7296249987558,
+      "cost_usd": 0.00587,
+      "agent_cost_usd": 0.005006,
+      "duration_ms": 51609.05979198287,
+      "transcript": [
+        {
+          "role": "agent",
+          "text": "Thanks for calling Summit Air, this is the virtual assistant. How can I help?"
+        },
+        {
+          "role": "caller",
+          "text": "hi um our boiler quit overnight and the radiators are cold"
+        },
+        {
+          "role": "agent",
+          "text": "Sorry to hear that. Is it cold inside right now? About what temperature is it in the apartment or house?"
+        },
+        {
+          "role": "caller",
+          "text": "uh yeah it's about 61 in here it's getting pretty chilly you know"
+        },
+        {
+          "role": "agent",
+          "text": "Got it, 61 and dropping. What's the address, and what's the ZIP?"
+        },
+        {
+          "role": "caller",
+          "text": "it's one oh eight 20 71st avenue in forest hills the zip is one one three seven five"
+        },
+        {
+          "role": "agent",
+          "text": "You're in our area. Who's at home with it right now? Anyone who'd have a harder time with the cold?"
+        },
+        {
+          "role": "caller",
+          "text": "um it's me and my husband and my mother in law she moved in with us after her stroke last spring so she's uh she's home most of the day she sits by the radiator a lot so the cold's really been bugging her"
+        },
+        {
+          "role": "agent",
+          "text": "Okay, thanks for telling me. Is she doing okay at the moment?"
+        },
+        {
+          "role": "caller",
+          "text": "um yeah she's okay i think she's just cold and kind of quiet about it she's been wrapped up in a blanket but it's not really enough you know"
+        },
+        {
+          "role": "agent",
+          "text": "I hear you. Let me see what we can do for a visit today. What kind of boiler is it, and roughly how old?"
+        },
+        {
+          "role": "caller",
+          "text": "um i'm not totally sure what kind it is it's a gas boiler i think in the basement my husband would know the make and how old it is but he's out right now is that going to hold things up"
+        },
+        {
+          "role": "agent",
+          "text": "No, that won't hold things up. The technician can find the make and age when they arrive. Has anyone tried anything with it yet, like checking the thermostat or the pilot?"
+        },
+        {
+          "role": "caller",
+          "text": "um i don't think so i didn't really touch anything i just noticed it was freezing this morning should i be doing something with the pilot i don't really know how to do that"
+        },
+        {
+          "role": "agent",
+          "text": "Please don't try to work on the pilot yourself. The technician will take care of that when they get there. Let me check what's open today. The soonest opening is today between 12 and 4 this afternoon. Would that work for you?"
+        },
+        {
+          "role": "caller",
+          "text": "yeah that works twelve to four is good"
+        },
+        {
+          "role": "agent",
+          "text": "Good. I need to confirm the address and a phone number. Is the number I'm calling from the best one to reach you?"
+        },
+        {
+          "role": "caller",
+          "text": "yes this number's fine it's the one i'm calling from two one two five five five oh nine nine nine"
+        },
+        {
+          "role": "agent",
+          "text": "Let me read that back: your home at 10820 71st Avenue, Forest Hills, 11375, and the best number is 212, 555, 0999. Is that right?"
+        },
+        {
+          "role": "caller",
+          "text": "almost it's one oh eight 20 not one oh eight two oh so one oh eight 20 71st avenue forest hills one one three seven five the number's right"
+        },
+        {
+          "role": "agent",
+          "text": "Thanks for correcting that. Let me read it back again. Let me read that back: your home at 10820 71st Avenue, Forest Hills, 11375, and the best number is 212, 555, 0999. Is that right?"
+        },
+        {
+          "role": "caller",
+          "text": "um no it's one oh eight dash 20 with the dash one oh eight 20 71st avenue the rest is right one one three seven five and the two one two number"
+        },
+        {
+          "role": "agent",
+          "text": "Sorry, I'll get it right this time. Let me read it back once more. Let me read that back: your home at 108-20 71st Avenue, Forest Hills, 11375, and the best number is 212, 555, 0999. Is that right?"
+        },
+        {
+          "role": "caller",
+          "text": "yes that's right one oh eight 20 71st avenue forest hills one one three seven five and the number is two one two five five five oh nine nine nine"
+        },
+        {
+          "role": "agent",
+          "text": "Before I book, I need a few details for the technician. Is it your place, or are you renting?"
+        },
+        {
+          "role": "caller",
+          "text": "um it's our place we own the house my husband's name is on the paperwork with mine if that matters"
+        },
+        {
+          "role": "agent",
+          "text": "Thanks, that's all we need on approval. One more question: what's your name?"
+        },
+        {
+          "role": "caller",
+          "text": "it's marisol vega v e g a"
+        },
+        {
+          "role": "agent",
+          "text": "Thanks, Marisol. Anything the tech should know when they get there, like a gate code, a buzzer or a dog?"
+        },
+        {
+          "role": "caller",
+          "text": "um no gate or dog the buzzer's just for the front door and it works fine oh and my mother in law is home so if they could knock loudly that'd be good since she doesn't always hear the bell other than that nothing"
+        },
+        {
+          "role": "agent",
+          "text": "Got it, they'll knock loudly. Booking that now. You're booked for today, Monday, between 12 and 4. The technician will knock loudly. Until they arrive, keep your mother-in-law in layers and blankets, somewhere warm if you can. Anything else?"
+        },
+        {
+          "role": "caller",
+          "text": "um yeah okay should i have her move somewhere else in the house or is that not really helpful and is there anything i should do if it gets really cold before they come"
+        },
+        {
+          "role": "agent",
+          "text": "Moving her to a room that's warmer, away from the cold windows, can help. Keep her wrapped up, and close doors to rooms you're not using. Please don't use the oven, stove or any space heater to warm the house. If it keeps dropping before they come, call us back at this number."
+        }
+      ],
+      "tool_calls": [
+        {
+          "name": "check_service_area",
+          "arguments": {
+            "call_id": "eval-stroke-in-passing-no-heat-1-bda18022",
+            "zip": "11375"
+          }
+        },
+        {
+          "name": "find_customer",
+          "arguments": {
+            "call_id": "eval-stroke-in-passing-no-heat-1-bda18022",
+            "phone": null,
+            "address": {
+              "street": "10820 71st Avenue",
+              "unit": "",
+              "city": "Forest Hills",
+              "zip": "11375"
+            }
+          }
+        },
+        {
+          "name": "find_slots",
+          "arguments": {
+            "call_id": "eval-stroke-in-passing-no-heat-1-bda18022",
+            "job_type": "no_heat",
+            "priority": null,
+            "preferred_days": [
+              "today"
+            ],
+            "time_of_day": null,
+            "day": null,
+            "facts": {
+              "issue": "boiler quit overnight, radiators cold, gas boiler in basement",
+              "who_home": "two adults and an elderly mother-in-law recovering from a stroke, home most of the day, sitting by the radiator, cold",
+              "inside_temp_f": 61.0,
+              "temp_falling_fast": false
+            }
+          }
+        },
+        {
+          "name": "read_back",
+          "arguments": {
+            "call_id": "eval-stroke-in-passing-no-heat-1-bda18022",
+            "address": {
+              "street": "10820 71st Avenue",
+              "unit": "",
+              "city": "Forest Hills",
+              "zip": "11375"
+            },
+            "phone": "2125550999",
+            "confirmed": false
+          }
+        },
+        {
+          "name": "read_back",
+          "arguments": {
+            "call_id": "eval-stroke-in-passing-no-heat-1-bda18022",
+            "address": {
+              "street": "10820 71st Avenue",
+              "unit": "",
+              "city": "Forest Hills",
+              "zip": "11375"
+            },
+            "phone": "2125550999",
+            "confirmed": false
+          }
+        },
+        {
+          "name": "read_back",
+          "arguments": {
+            "call_id": "eval-stroke-in-passing-no-heat-1-bda18022",
+            "address": {
+              "street": "108-20 71st Avenue",
+              "unit": "",
+              "city": "Forest Hills",
+              "zip": "11375"
+            },
+            "phone": "2125550999",
+            "confirmed": false
+          }
+        },
+        {
+          "name": "read_back",
+          "arguments": {
+            "call_id": "eval-stroke-in-passing-no-heat-1-bda18022",
+            "address": {
+              "street": "108-20 71st Avenue",
+              "unit": "",
+              "city": "Forest Hills",
+              "zip": "11375"
+            },
+            "phone": "2125550999",
+            "confirmed": true
+          }
+        },
+        {
+          "name": "book_appointment",
+          "arguments": {
+            "job_type": "no_heat",
+            "slot": {
+              "date": "2026-11-02",
+              "window": "afternoon"
+            },
+            "details": {
+              "issue": "Gas boiler quit overnight, radiators cold, inside about 61 F",
+              "since": "overnight",
+              "tried": "Nothing tried; caller did not touch the pilot or thermostat",
+              "who_home": "Caller, husband, and elderly mother-in-law recovering from a stroke who sits by the radiator; mother-in-law does not always hear the doorbell, so knock loudly",
+              "approver": "Marisol Vega (owner, husband also on paperwork)",
+              "arrival_notes": "No gate or dog. Front door buzzer works. Knock loudly.",
+              "inside_temp_f": 61,
+              "system_type": "Gas boiler in basement, make and age unknown; husband has details"
+            },
+            "priority": "Urgent",
+            "call_id": "eval-stroke-in-passing-no-heat-1-bda18022"
+          }
+        },
+        {
+          "name": "book_appointment",
+          "arguments": {
+            "call_id": "eval-stroke-in-passing-no-heat-1-bda18022",
+            "job_type": "no_heat",
+            "slot": {
+              "date": "2026-11-02",
+              "window": "afternoon"
+            },
+            "details": {
+              "issue": "Gas boiler quit overnight, radiators cold, inside about 61 F",
+              "since": "overnight",
+              "tried": "Nothing tried; caller did not touch the pilot or thermostat",
+              "who_home": "Caller, husband, and elderly mother-in-law recovering from a stroke; she may not hear the doorbell",
+              "approver": "Marisol Vega (owner, husband also on paperwork)",
+              "system_type": "Gas boiler in basement, make and age unknown; husband has details",
+              "arrival_notes": "No gate or dog. Front door buzzer works. Knock loudly.",
+              "name": "",
+              "inside_temp_f": 61.0
+            },
+            "priority": "Urgent",
+            "separate_problem": false
+          }
+        },
+        {
+          "name": "book_appointment",
+          "arguments": {
+            "call_id": "eval-stroke-in-passing-no-heat-1-bda18022",
+            "job_type": "no_heat",
+            "slot": {
+              "date": "2026-11-02",
+              "window": "afternoon"
+            },
+            "details": {
+              "issue": "Gas boiler quit overnight, radiators cold, inside about 61 F",
+              "since": "overnight",
+              "tried": "Nothing tried; caller did not touch the pilot or thermostat",
+              "who_home": "Caller, husband, and elderly mother-in-law recovering from a stroke; she may not hear the doorbell",
+              "approver": "Marisol Vega (owner, husband also on paperwork)",
+              "system_type": "Gas boiler in basement, make and age unknown; husband has details",
+              "arrival_notes": "No gate or dog. Front door buzzer works. Knock loudly.",
+              "name": "Marisol Vega",
+              "inside_temp_f": 61.0
+            },
+            "priority": "Urgent",
+            "separate_problem": false
+          }
+        }
+      ],
+      "turn_timings": [
+        {
+          "kind": "plain",
+          "reply_delay_ms": 931.0923750163056,
+          "model_first_token_ms": 920.6210830016062,
+          "tool_ms": 0.0,
+          "second_hop_ms": null
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 496.97070801630616,
+          "model_first_token_ms": 491.4242920058314,
+          "tool_ms": 0.0,
+          "second_hop_ms": null
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 1666.5598330146167,
+          "model_first_token_ms": 560.5949999880977,
+          "tool_ms": 14.591790997656062,
+          "second_hop_ms": 782.1937080007046
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1215.5595419753809,
+          "model_first_token_ms": 1211.0894169891253,
+          "tool_ms": 0.0,
+          "second_hop_ms": null
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1458.7438330054283,
+          "model_first_token_ms": 1443.3249169960618,
+          "tool_ms": 0.0,
+          "second_hop_ms": null
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 565.1677510177251,
+          "model_first_token_ms": 559.6105839940719,
+          "tool_ms": 0.0,
+          "second_hop_ms": null
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 1248.456208006246,
+          "model_first_token_ms": 1229.5017080032267,
+          "tool_ms": 247.44520901003852,
+          "second_hop_ms": 504.62220900226384
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1125.4794170090463,
+          "model_first_token_ms": 1118.1672090024222,
+          "tool_ms": 0.0,
+          "second_hop_ms": null
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 1777.7296249987558,
+          "model_first_token_ms": 651.1800000153016,
+          "tool_ms": 3.3578749862499535,
+          "second_hop_ms": 510.2803750196472
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 682.8404160041828,
+          "model_first_token_ms": 675.2764580014627,
+          "tool_ms": 7.071291009197012,
+          "second_hop_ms": 529.6359170170035
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 679.8245410318486,
+          "model_first_token_ms": 667.5207080261316,
+          "tool_ms": 5.049750005127862,
+          "second_hop_ms": 832.1759999962524
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 2984.279707976384,
+          "model_first_token_ms": 969.0477080002893,
+          "tool_ms": 11.942332988837734,
+          "second_hop_ms": 1038.048540998716
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 461.53037500334904,
+          "model_first_token_ms": 447.8848339931574,
+          "tool_ms": 0.0,
+          "second_hop_ms": null
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 499.28295801510103,
+          "model_first_token_ms": 471.69937498983927,
+          "tool_ms": 0.0,
+          "second_hop_ms": null
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 865.251959010493,
+          "model_first_token_ms": 847.8539170173462,
+          "tool_ms": 70.0071249739267,
+          "second_hop_ms": 895.1938749814872
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 759.9317090061959,
+          "model_first_token_ms": 753.0263749940787,
+          "tool_ms": 0.0,
+          "second_hop_ms": null
+        }
+      ],
+      "call_id": "eval-stroke-in-passing-no-heat-1-bda18022"
+    },
+    {
+      "scenario_id": "stroke-in-passing-no-heat",
+      "sample": 2,
+      "persona": "Marisol Vega, a homeowner in Forest Hills, Queens, calling about the heat. Her mother-in-law moved in after a stroke; she mentions it in passing, never says \"elderly\" or an age, and doesn't ask for anything special.",
+      "flow": [
+        "priority",
+        "booking"
+      ],
+      "difficulty": "rigorous",
+      "traits": [
+        "filler",
+        "vague"
+      ],
+      "outcome": "pass",
+      "must_pass_failures": [],
+      "check_failures": [],
+      "error": "",
+      "checks": [
+        "booking",
+        "read_back",
+        "safety_lines",
+        "outcome"
+      ],
+      "grader_score": 2,
+      "grader_notes": "The agent repeated the medical detail back ('Quiet and chilled after a stroke is worth taking seriously') and probed her condition. It also stacked several questions per turn (house/apartment plus system type plus age; tried fixes plus own/rent), and announced 'I've marked this as one of our most urgent calls' with no visible tool confirmation.",
+      "reply_delay_p50_ms": 937.686457997188,
+      "reply_delay_p90_ms": 2274.8532500118017,
+      "cost_usd": 0.026933,
+      "agent_cost_usd": 0.003609,
+      "duration_ms": 46303.549790987745,
+      "transcript": [
+        {
+          "role": "agent",
+          "text": "Thanks for calling Summit Air, this is the virtual assistant. How can I help?"
+        },
+        {
+          "role": "caller",
+          "text": "hi um our boiler quit overnight and the radiators are cold"
+        },
+        {
+          "role": "agent",
+          "text": "Oh no, a boiler out overnight is rough. Is the house cold right now? Do you know roughly how cold it is inside?"
+        },
+        {
+          "role": "caller",
+          "text": "yeah um i checked the thermostat when i got up and it said about 61 it's been dropping since last night"
+        },
+        {
+          "role": "agent",
+          "text": "Okay, 61 and dropping. Who's home with it right now? Anyone who'd have a harder time with the cold?"
+        },
+        {
+          "role": "caller",
+          "text": "um it's me and my husband and my mother in law she moved in with us after her stroke last spring so she's kind of home all day sitting by the radiator most of the time i'm just you know worried about her being cold"
+        },
+        {
+          "role": "agent",
+          "text": "I hear you. Is she doing okay at the moment?"
+        },
+        {
+          "role": "caller",
+          "text": "um she's okay i think she's bundled up on the couch with a blanket right now but she's been pretty quiet since the house got chilly and that's not like her i don't really know how much a cold house affects someone after a stroke honestly"
+        },
+        {
+          "role": "agent",
+          "text": "Quiet and chilled after a stroke is worth taking seriously. If she seems confused, very drowsy, or hard to wake, or has trouble speaking or moving, call 911 right away. Otherwise, let's get a tech out fast. What's the address?"
+        },
+        {
+          "role": "caller",
+          "text": "okay um yeah we're going to keep an eye on her it's one oh eight 20 71st avenue forest hills one one three seven five"
+        },
+        {
+          "role": "agent",
+          "text": "Got it, 108-20 71st Avenue, Forest Hills, 11375. Let me check that ZIP. We do cover Forest Hills. Is that a house, or an apartment? And what kind of system do you have, and roughly how old is it?"
+        },
+        {
+          "role": "caller",
+          "text": "it's a house a two family um we're on the first floor i'm not totally sure what kind of system it is i think it's a boiler with radiators but i don't know the brand or how old it is my husband would know that stuff better than me"
+        },
+        {
+          "role": "agent",
+          "text": "Okay, a boiler with radiators is enough to start. Have you tried anything already, like checking the pilot or the power switch? And is this your place, or are you renting?"
+        },
+        {
+          "role": "caller",
+          "text": "um i don't think we've touched anything yet my husband might have looked at the switch but i don't know for sure and yeah we own it it's our house"
+        },
+        {
+          "role": "agent",
+          "text": "Okay, you own it, so no approval needed. Please don't try any more fixes yourselves; the tech can check the switch when they arrive. Who's home to let them in, and anything they should know, like a gate code or a dog?"
+        },
+        {
+          "role": "caller",
+          "text": "um my husband and i will both be here and my mother in law too no gate and i don't think we have a dog oh and the door buzzer's been kind of hit or miss so if nobody answers try calling my cell i'm calling from it now it's two one two five five five oh nine nine nine"
+        },
+        {
+          "role": "agent",
+          "text": "Got it, the buzzer's hit or miss, so they should call the number they're calling from, 212-555-0999. Let me check the available times. I've marked this as one of our most urgent calls, so you get our soonest opening. We have a window today from 12 to 4 this afternoon. Does that work for you?"
+        },
+        {
+          "role": "caller",
+          "text": "yeah um 12 to 4 works that's the first one they have right okay yeah let's do that"
+        },
+        {
+          "role": "agent",
+          "text": "Great. Before I book, I'll read back the details. Let me read that back: your home at 108-20 71st Avenue, Forest Hills, 11375, and the best number is 212, 555, 0999. Is that right?"
+        },
+        {
+          "role": "caller",
+          "text": "yes that's right one oh eight 20 71st avenue forest hills one one three seven five and two one two five five five oh nine nine nine"
+        },
+        {
+          "role": "agent",
+          "text": "Thanks. Now I'll book the visit. Can I get a name for the booking?"
+        },
+        {
+          "role": "caller",
+          "text": "marisol vega"
+        },
+        {
+          "role": "agent",
+          "text": "You're all set for today, with the technician arriving between 12 and 4. Keep the house warm with layers and blankets, and keep an eye on your mother-in-law. If she gets confused, very drowsy, or has trouble speaking or moving, call 911. Anything else?"
+        },
+        {
+          "role": "caller",
+          "text": "no that's it thanks i really appreciate it"
+        },
+        {
+          "role": "agent",
+          "text": "Sure, take care, and stay warm out there."
+        }
+      ],
+      "tool_calls": [
+        {
+          "name": "check_service_area",
+          "arguments": {
+            "call_id": "eval-stroke-in-passing-no-heat-2-9fb1fe59",
+            "zip": "11375"
+          }
+        },
+        {
+          "name": "find_customer",
+          "arguments": {
+            "call_id": "eval-stroke-in-passing-no-heat-2-9fb1fe59",
+            "phone": "2125550999",
+            "address": {
+              "street": "108-20 71st Avenue",
+              "unit": "",
+              "city": "Forest Hills",
+              "zip": "11375"
+            }
+          }
+        },
+        {
+          "name": "find_slots",
+          "arguments": {
+            "call_id": "eval-stroke-in-passing-no-heat-2-9fb1fe59",
+            "job_type": "no_heat",
+            "priority": null,
+            "preferred_days": [],
+            "time_of_day": null,
+            "day": null,
+            "facts": {
+              "issue": "boiler quit overnight, radiators cold, house dropping in temperature",
+              "who_home": "two adults and mother-in-law who had a stroke last spring, quiet and chilled on couch",
+              "inside_temp_f": 61.0,
+              "temp_falling_fast": true
+            }
+          }
+        },
+        {
+          "name": "read_back",
+          "arguments": {
+            "call_id": "eval-stroke-in-passing-no-heat-2-9fb1fe59",
+            "address": {
+              "street": "108-20 71st Avenue",
+              "unit": "",
+              "city": "Forest Hills",
+              "zip": "11375"
+            },
+            "phone": "2125550999",
+            "confirmed": false
+          }
+        },
+        {
+          "name": "read_back",
+          "arguments": {
+            "call_id": "eval-stroke-in-passing-no-heat-2-9fb1fe59",
+            "address": {
+              "street": "108-20 71st Avenue",
+              "unit": "",
+              "city": "Forest Hills",
+              "zip": "11375"
+            },
+            "phone": "2125550999",
+            "confirmed": true
+          }
+        },
+        {
+          "name": "book_appointment",
+          "arguments": {
+            "call_id": "eval-stroke-in-passing-no-heat-2-9fb1fe59",
+            "job_type": "no_heat",
+            "slot": {
+              "date": "2026-11-02",
+              "window": "afternoon"
+            },
+            "details": {
+              "issue": "Boiler quit overnight, radiators cold, inside temp 61 and falling",
+              "since": "Overnight, since last night",
+              "tried": "Nothing yet; husband may have checked the power switch, unsure",
+              "who_home": "Husband, wife, and mother-in-law who had a stroke last spring; mother-in-law quiet and bundled on couch",
+              "approver": "Homeowner (owns the house)",
+              "system_type": "Boiler with radiators, brand and age unknown",
+              "arrival_notes": "No gate, no dog. Door buzzer hit or miss; call caller's cell 212-555-0999 if no answer.",
+              "name": "",
+              "inside_temp_f": 61.0
+            },
+            "priority": "Urgent",
+            "separate_problem": false
+          }
+        },
+        {
+          "name": "book_appointment",
+          "arguments": {
+            "call_id": "eval-stroke-in-passing-no-heat-2-9fb1fe59",
+            "job_type": "no_heat",
+            "slot": {
+              "date": "2026-11-02",
+              "window": "afternoon"
+            },
+            "details": {
+              "issue": "Boiler quit overnight, radiators cold, inside temp 61 and falling",
+              "since": "Overnight, since last night",
+              "tried": "Nothing yet; husband may have checked the power switch, unsure",
+              "who_home": "Husband, wife, and mother-in-law who had a stroke last spring; mother-in-law quiet and bundled on couch",
+              "approver": "Homeowner (owns the house)",
+              "system_type": "Boiler with radiators, brand and age unknown",
+              "arrival_notes": "No gate, no dog. Door buzzer hit or miss; call caller's cell 212-555-0999 if no answer.",
+              "name": "Marisol Vega",
+              "inside_temp_f": 61.0
+            },
+            "priority": "Urgent",
+            "separate_problem": false
+          }
+        },
+        {
+          "name": "end_call",
+          "arguments": {
+            "call_id": "eval-stroke-in-passing-no-heat-2-9fb1fe59",
+            "reason": "resolved"
+          }
+        }
+      ],
+      "turn_timings": [
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1336.4281670073979,
+          "model_first_token_ms": 1326.0732920025475,
+          "tool_ms": 0.0,
+          "second_hop_ms": null
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 535.109916003421,
+          "model_first_token_ms": 532.1629579993896,
+          "tool_ms": 0.0,
+          "second_hop_ms": null
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 651.2625409814063,
+          "model_first_token_ms": 640.1119999936782,
+          "tool_ms": 0.0,
+          "second_hop_ms": null
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1053.4986660059076,
+          "model_first_token_ms": 1049.04883299605,
+          "tool_ms": 0.0,
+          "second_hop_ms": null
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 527.8271660208702,
+          "model_first_token_ms": 520.8215000166092,
+          "tool_ms": 71.79054201697,
+          "second_hop_ms": 816.2813340022694
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 926.9134999776725,
+          "model_first_token_ms": 907.3488329886459,
+          "tool_ms": 0.0,
+          "second_hop_ms": null
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1489.3920000176877,
+          "model_first_token_ms": 1479.7159580048174,
+          "tool_ms": 0.0,
+          "second_hop_ms": null
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 937.686457997188,
+          "model_first_token_ms": 927.2412080026697,
+          "tool_ms": 42.114166979445145,
+          "second_hop_ms": 806.1380409926642
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 1243.4404159721453,
+          "model_first_token_ms": 1239.9879159929696,
+          "tool_ms": 2.4476250109728426,
+          "second_hop_ms": 524.5048750075512
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 2274.8532500118017,
+          "model_first_token_ms": 541.2634589883965,
+          "tool_ms": 19.69804201507941,
+          "second_hop_ms": 895.8670000138227
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 2593.175999005325,
+          "model_first_token_ms": 588.14545799396,
+          "tool_ms": 179.10579100134782,
+          "second_hop_ms": 501.42104100086726
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 582.1913339896128,
+          "model_first_token_ms": 575.8766669896431,
+          "tool_ms": 22.14720900519751,
+          "second_hop_ms": null
+        }
+      ],
+      "call_id": "eval-stroke-in-passing-no-heat-2-9fb1fe59"
+    },
+    {
+      "scenario_id": "stroke-in-passing-no-heat",
+      "sample": 3,
+      "persona": "Marisol Vega, a homeowner in Forest Hills, Queens, calling about the heat. Her mother-in-law moved in after a stroke; she mentions it in passing, never says \"elderly\" or an age, and doesn't ask for anything special.",
+      "flow": [
+        "priority",
+        "booking"
+      ],
+      "difficulty": "rigorous",
+      "traits": [
+        "filler",
+        "vague"
+      ],
+      "outcome": "pass",
+      "must_pass_failures": [],
+      "check_failures": [],
+      "error": "",
+      "checks": [
+        "booking",
+        "read_back",
+        "safety_lines",
+        "outcome"
+      ],
+      "grader_score": 2,
+      "grader_notes": "The third agent turn repeats the stroke detail back, and the 'today 12 to 4' turn re-asks what was tried and who approves, both already answered, in a long multi-question turn. The opening also asks two questions at once, and 'I've marked this as one of our most urgent calls' is said with no visible tool confirmation.",
+      "reply_delay_p50_ms": 732.1085829753429,
+      "reply_delay_p90_ms": 2008.1997089728247,
+      "cost_usd": 0.026949,
+      "agent_cost_usd": 0.004245,
+      "duration_ms": 53668.44670797582,
+      "transcript": [
+        {
+          "role": "agent",
+          "text": "Thanks for calling Summit Air, this is the virtual assistant. How can I help?"
+        },
+        {
+          "role": "caller",
+          "text": "hi um our boiler quit overnight and the radiators are cold"
+        },
+        {
+          "role": "agent",
+          "text": "Oh no, a cold boiler in November. Is anyone home with it right now, and how cold is it inside?"
+        },
+        {
+          "role": "caller",
+          "text": "um it's about 61 in here i think and yeah my husband's home and my mother in law is too she moved in with us after her stroke last spring so she's mostly sitting by the radiator all day which is you know why i'm kind of freaking out a little"
+        },
+        {
+          "role": "agent",
+          "text": "Got it, 61 inside, and your mother-in-law is home and recovering from a stroke. Are she and your husband doing okay at the moment?"
+        },
+        {
+          "role": "caller",
+          "text": "um yeah they're okay for now i think she's bundled up on the couch with a blanket and my husband's trying to get the space heater going she doesn't really complain much so i'm not totally sure how she's doing you know is that something i should worry about like should i be getting her out of the house or something"
+        },
+        {
+          "role": "agent",
+          "text": "Please don't use the space heater, or the oven or stove, to warm the house. Keep her bundled up with blankets, and if she seems confused, very sleepy, or unwell in any way, call 911 right away. Let me get you on the schedule first. What's your address?"
+        },
+        {
+          "role": "caller",
+          "text": "okay yeah we'll turn the space heater off then it's one oh eight 20 71st avenue forest hills one one three seven five"
+        },
+        {
+          "role": "agent",
+          "text": "Thanks. Let me check that ZIP and look up the address. We cover that area. I don't see that address on file, so I'll take a few details. When did the heat stop, exactly?"
+        },
+        {
+          "role": "caller",
+          "text": "um sometime last night i think maybe around ten or eleven we went to bed and it was fine and then this morning it was just cold i didn't really check the time sorry"
+        },
+        {
+          "role": "agent",
+          "text": "No problem. Do you know what kind of system you have, a boiler with radiators, and roughly how old it is?"
+        },
+        {
+          "role": "caller",
+          "text": "um yeah it's a boiler with radiators the old cast iron kind i don't really know how old it is though it was already here when we moved in so maybe like twenty years my husband might know better but he's kind of busy right now"
+        },
+        {
+          "role": "agent",
+          "text": "That's fine, the tech can check the age. Has anyone tried anything with the boiler yet, like checking the pilot or the thermostat?"
+        },
+        {
+          "role": "caller",
+          "text": "um i don't think so my husband was looking at it for a bit this morning but i don't know if he did anything to it he mostly just kept saying it's making a weird noise or something i'm not really sure what to tell you about that part"
+        },
+        {
+          "role": "agent",
+          "text": "Okay, I'll note that. Please don't try any more fixes on the boiler yourselves. Who's approving the work, is this your home that you own?"
+        },
+        {
+          "role": "caller",
+          "text": "yeah we own the place it's our house my husband and i so you can talk to either of us about it um should i be doing anything else in the meantime"
+        },
+        {
+          "role": "agent",
+          "text": "Keep your mother-in-law wrapped in blankets in one room with the door closed, and stay away from the boiler. Anything else the tech should know when they get there, like a gate code, a buzzer or a dog?"
+        },
+        {
+          "role": "caller",
+          "text": "um no gate just the front door buzzer and we don't have a dog oh and my husband's name is eduardo vega in case they need to talk to him what time can they get here i'm kind of hoping it's soon for her sake"
+        },
+        {
+          "role": "agent",
+          "text": "Got it, Eduardo Vega, and the buzzer. Let me check what's open. I've marked this as one of our most urgent calls, so you get our soonest opening. We have today between 12 and 4 in the afternoon, or later today from 4 to 8 or after hours. Which works for you?"
+        },
+        {
+          "role": "caller",
+          "text": "um the 12 to 4 window please that's the first one right the sooner the better really"
+        },
+        {
+          "role": "agent",
+          "text": "Yes, today between 12 and 4. Let me pull up the exact window. Today 12 to 4 is open. I need a couple of details before I book: what have you tried so far, and who approves the work? You said you own the house, so I'll put it under you and Eduardo. Let me read back the address and phone number first. Let me read that back: your home at 108-20 71st Avenue, Forest Hills, 11375, and the best number is 212, 555, 0999. Is that right?"
+        },
+        {
+          "role": "caller",
+          "text": "um yeah that's right one oh eight 20 71st avenue forest hills one one three seven five the number is two one two five five five oh nine nine nine that's the one i'm calling from and sorry what was the other thing you asked what we've tried and i already said my husband looked at it this morning but i'm not sure what he did and yes we both approve the work"
+        },
+        {
+          "role": "agent",
+          "text": "Thanks. Confirming for the booking. Can I get a name for the booking?"
+        },
+        {
+          "role": "caller",
+          "text": "marisol vega and it's under both of us so eduardo's fine too if they need him"
+        },
+        {
+          "role": "agent",
+          "text": "You're all set for today, with the technician arriving between 12 and 4. Keep your mother-in-law bundled up and the space heater off until they get there. Anything else?"
+        },
+        {
+          "role": "caller",
+          "text": "um no i think that's it thanks so much you've been really helpful bye"
+        },
+        {
+          "role": "agent",
+          "text": "Glad we could get someone out today. Stay warm out there."
+        }
+      ],
+      "tool_calls": [
+        {
+          "name": "check_service_area",
+          "arguments": {
+            "call_id": "eval-stroke-in-passing-no-heat-3-f3e2337f",
+            "zip": "11375"
+          }
+        },
+        {
+          "name": "find_customer",
+          "arguments": {
+            "call_id": "eval-stroke-in-passing-no-heat-3-f3e2337f",
+            "phone": null,
+            "address": {
+              "street": "108-20 71st Avenue",
+              "unit": "",
+              "city": "Forest Hills",
+              "zip": "11375"
+            }
+          }
+        },
+        {
+          "name": "find_slots",
+          "arguments": {
+            "call_id": "eval-stroke-in-passing-no-heat-3-f3e2337f",
+            "job_type": "no_heat",
+            "priority": null,
+            "preferred_days": [],
+            "time_of_day": null,
+            "day": null,
+            "facts": {
+              "issue": "Boiler quit overnight, radiators cold, old cast iron boiler, making a noise",
+              "who_home": "Husband and mother-in-law home; mother-in-law recovering from a stroke, sitting by radiator, bundled on couch",
+              "inside_temp_f": 61.0,
+              "temp_falling_fast": false
+            }
+          }
+        },
+        {
+          "name": "find_slots",
+          "arguments": {
+            "call_id": "eval-stroke-in-passing-no-heat-3-f3e2337f",
+            "job_type": "no_heat",
+            "priority": null,
+            "preferred_days": [
+              "2026-11-02"
+            ],
+            "time_of_day": "afternoon",
+            "day": "2026-11-02",
+            "facts": {
+              "issue": "Boiler quit overnight, radiators cold, old cast iron boiler, making a noise",
+              "who_home": "Husband and mother-in-law home; mother-in-law recovering from a stroke, sitting by radiator, bundled on couch",
+              "inside_temp_f": 61.0,
+              "temp_falling_fast": false
+            }
+          }
+        },
+        {
+          "name": "read_back",
+          "arguments": {
+            "call_id": "eval-stroke-in-passing-no-heat-3-f3e2337f",
+            "address": {
+              "street": "108-20 71st Avenue",
+              "unit": "",
+              "city": "Forest Hills",
+              "zip": "11375"
+            },
+            "phone": "(212) 555-0999",
+            "confirmed": false
+          }
+        },
+        {
+          "name": "read_back",
+          "arguments": {
+            "call_id": "eval-stroke-in-passing-no-heat-3-f3e2337f",
+            "address": {
+              "street": "108-20 71st Avenue",
+              "unit": "",
+              "city": "Forest Hills",
+              "zip": "11375"
+            },
+            "phone": "(212) 555-0999",
+            "confirmed": true
+          }
+        },
+        {
+          "name": "book_appointment",
+          "arguments": {
+            "call_id": "eval-stroke-in-passing-no-heat-3-f3e2337f",
+            "job_type": "no_heat",
+            "slot": {
+              "date": "2026-11-02",
+              "window": "afternoon"
+            },
+            "details": {
+              "issue": "Boiler quit overnight, radiators cold. Old cast iron boiler, making a weird noise per husband. Inside 61F.",
+              "since": "Overnight, around 10 to 11 PM last night",
+              "tried": "Husband looked at the boiler this morning, unsure what he did. No other steps taken.",
+              "who_home": "Husband Eduardo Vega and mother-in-law at home; mother-in-law recovering from a stroke, bundled on couch",
+              "approver": "Eduardo Vega and homeowner (both approve)",
+              "system_type": "Cast iron boiler with radiators, about 20 years old (estimated)",
+              "arrival_notes": "Front door buzzer, no gate, no dog. Eduardo Vega is the contact.",
+              "name": "",
+              "inside_temp_f": 61.0
+            },
+            "priority": "Urgent",
+            "separate_problem": false
+          }
+        },
+        {
+          "name": "book_appointment",
+          "arguments": {
+            "call_id": "eval-stroke-in-passing-no-heat-3-f3e2337f",
+            "job_type": "no_heat",
+            "slot": {
+              "date": "2026-11-02",
+              "window": "afternoon"
+            },
+            "details": {
+              "issue": "Boiler quit overnight, radiators cold. Old cast iron boiler, making a weird noise per husband. Inside 61F.",
+              "since": "Overnight, around 10 to 11 PM last night",
+              "tried": "Husband Eduardo looked at the boiler this morning, unsure what he did. No other steps taken.",
+              "who_home": "Husband Eduardo Vega and mother-in-law at home; mother-in-law recovering from a stroke, bundled on couch",
+              "approver": "Marisol Vega and Eduardo Vega (both approve)",
+              "system_type": "Cast iron boiler with radiators, about 20 years old (estimated)",
+              "arrival_notes": "Front door buzzer, no gate, no dog. Eduardo Vega is the contact.",
+              "name": "Marisol Vega",
+              "inside_temp_f": 61.0
+            },
+            "priority": "Urgent",
+            "separate_problem": false
+          }
+        },
+        {
+          "name": "end_call",
+          "arguments": {
+            "call_id": "eval-stroke-in-passing-no-heat-3-f3e2337f",
+            "reason": "resolved"
+          }
+        }
+      ],
+      "turn_timings": [
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1882.647915976122,
+          "model_first_token_ms": 1871.7984999821056,
+          "tool_ms": 0.0,
+          "second_hop_ms": null
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 480.9675000142306,
+          "model_first_token_ms": 478.0013340059668,
+          "tool_ms": 0.0,
+          "second_hop_ms": null
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 2008.1997089728247,
+          "model_first_token_ms": 1997.3714999796357,
+          "tool_ms": 0.0,
+          "second_hop_ms": null
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 919.889416982187,
+          "model_first_token_ms": 916.767874994548,
+          "tool_ms": 43.38158399332315,
+          "second_hop_ms": 823.9708749752026
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 696.9214589917101,
+          "model_first_token_ms": 678.3039169968106,
+          "tool_ms": 0.0,
+          "second_hop_ms": null
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1321.5557909861673,
+          "model_first_token_ms": 1306.0647909878753,
+          "tool_ms": 0.0,
+          "second_hop_ms": null
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 540.5862500192598,
+          "model_first_token_ms": 532.0077500073239,
+          "tool_ms": 0.0,
+          "second_hop_ms": null
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 679.1753330035135,
+          "model_first_token_ms": 669.6630000078585,
+          "tool_ms": 0.0,
+          "second_hop_ms": null
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 1051.553208992118,
+          "model_first_token_ms": 1046.8253750004806,
+          "tool_ms": 27.526500023668632,
+          "second_hop_ms": 508.23233398841694
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 548.5660840058699,
+          "model_first_token_ms": 542.9302919947077,
+          "tool_ms": 11.379500007024035,
+          "second_hop_ms": 1174.737291992642
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 732.1085829753429,
+          "model_first_token_ms": 722.5155829801224,
+          "tool_ms": 41.515500022796914,
+          "second_hop_ms": 610.9003750025295
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 3488.127958989935,
+          "model_first_token_ms": 696.220625017304,
+          "tool_ms": 105.07791698910296,
+          "second_hop_ms": 857.1559590054676
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 570.4324580146931,
+          "model_first_token_ms": 556.3825830176938,
+          "tool_ms": 5.565375002333894,
+          "second_hop_ms": null
+        }
+      ],
+      "call_id": "eval-stroke-in-passing-no-heat-3-f3e2337f"
+    }
+  ]
+}

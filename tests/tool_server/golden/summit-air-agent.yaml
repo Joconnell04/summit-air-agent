@@ -408,7 +408,15 @@ priority:
     raise_to: Urgent
     reason: gas or carbon monoxide reported on the call
     safety_signal: true
-  side_model: null
+  side_model:
+    job_types:
+    - no_heat
+    - no_cooling
+    question: vulnerable_person
+    raise_to: Urgent
+    raise_to_when_mild: High
+    reason: someone at home at risk from the heat or cold
+    threshold: 0.5
 repeat_callers:
   drops_before_callback_offer: 2
   link_within_minutes: 10

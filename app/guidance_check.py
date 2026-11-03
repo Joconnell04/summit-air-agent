@@ -10,19 +10,24 @@ draft (docs/template.md, "Owner edits").
 
 import json
 import os
+from collections.abc import Callable
 from pathlib import Path
 from typing import Protocol
 
-from evals import models
+import httpx
+import yaml
 
 from . import rulebook, rules
 from .tenant import Tenant
 
-PROFILE = "owner_edits.guidance_check"
+CONFIG_PATH = Path(__file__).resolve().parent.parent / "config" / "models.yaml"
+PROFILE = "guidance_check"  # under owner_edits in config/models.yaml
 PROMPT = Path(__file__).resolve().parent.parent / "prompts" / "guidance-check.md"
 UNAVAILABLE = "Couldn't check this right now, try again."
-# The owner is waiting on the save. One retry inside this, then the save is refused.
-TIMEOUT_SECONDS = 20
+# The owner is waiting on the save (ASSUMED budget; the live check measured about 1 to 2 s an item,
+# with one at 5.9 s). A request is tried at most twice, then the save is refused.
+TIMEOUT_SECONDS = 15
+ATTEMPTS = 2
 SCHEMA = {
     "type": "object",
     "properties": {
@@ -47,6 +52,17 @@ SCHEMA = {
 
 class Check(Protocol):
     def __call__(self, tenant: Tenant, items: dict[str, str]) -> dict[str, str]: ...
+
+
+# Given the system prompt and the user message, the model's JSON answer as text.
+Ask = Callable[[str, str], str]
+
+
+def load_profile(path: Path = CONFIG_PATH) -> dict:
+    config = yaml.safe_load(path.read_text())
+    cfg = dict(config["owner_edits"][PROFILE])
+    cfg["key_env"] = config["providers"][cfg["provider"]]["key_env"]
+    return cfg
 
 
 def locked_rules(tenant: Tenant) -> list[str]:
@@ -81,16 +97,13 @@ def message(tenant: Tenant, items: dict[str, str]) -> str:
     return f"Locked rules:\n{locked}\n\nItems:\n{listed}"
 
 
-def check_with(model: models.Model, tenant: Tenant, items: dict[str, str]) -> dict[str, str]:
+def check_with(ask: Ask, tenant: Tenant, items: dict[str, str]) -> dict[str, str]:
     """What's wrong with each item, by field; empty when all pass. An answer that doesn't cover
     every item, or any failure, refuses the save as unchecked."""
     try:
-        reply = model.complete(
-            PROMPT.read_text(), [{"role": "user", "content": message(tenant, items)}],
-            max_tokens=600, json_schema=SCHEMA,
-        )
-        results = {str(r["id"]): r for r in json.loads(reply.text)["results"]}
-        fields = dict(zip((str(n) for n in range(1, len(items) + 1)), items, strict=True))
+        results = {str(r["id"]): r for r in json.loads(ask(PROMPT.read_text(),
+                                                          message(tenant, items)))["results"]}
+        fields = {str(n): field for n, field in enumerate(items, 1)}
         if set(results) != set(fields):
             return {"content": UNAVAILABLE}
         return {
@@ -101,21 +114,40 @@ def check_with(model: models.Model, tenant: Tenant, items: dict[str, str]) -> di
         return {"content": UNAVAILABLE}
 
 
-def real_model() -> models.Model:
-    import anthropic
+def anthropic_ask(cfg: dict, key: str, http: httpx.Client) -> Ask:
+    """One Messages API call with thinking off and the answer held to SCHEMA."""
 
-    cfg = models.profile(PROFILE)
-    key = models.load_config()["providers"][cfg["provider"]]["key_env"]
-    client = anthropic.Anthropic(
-        api_key=os.environ.get(key), timeout=TIMEOUT_SECONDS, max_retries=1
-    )
-    return models.AnthropicModel(cfg, client)
+    def ask(system: str, user: str) -> str:
+        body = {
+            "model": cfg["model"],
+            "max_tokens": 600,
+            "thinking": {"type": "disabled"},
+            "system": system,
+            "messages": [{"role": "user", "content": user}],
+            "output_config": {"format": {"type": "json_schema", "schema": SCHEMA}},
+        }
+        for attempt in range(ATTEMPTS):
+            try:
+                r = http.post(
+                    "https://api.anthropic.com/v1/messages",
+                    json=body,
+                    headers={"x-api-key": key, "anthropic-version": "2023-06-01"},
+                )
+                r.raise_for_status()
+                break
+            except httpx.HTTPError:
+                if attempt == ATTEMPTS - 1:
+                    raise
+        return "".join(b.get("text", "") for b in r.json()["content"] if b["type"] == "text")
+
+    return ask
 
 
 def check(tenant: Tenant, items: dict[str, str]) -> dict[str, str]:
     """The check the server runs, on the named profile in config/models.yaml."""
-    try:
-        model = real_model()
-    except Exception:  # noqa: BLE001 - no key or no client: refuse, never skip
+    cfg = load_profile()
+    key = os.environ.get(cfg["key_env"], "")
+    if cfg["provider"] != "anthropic" or not key:
         return {"content": UNAVAILABLE}
-    return check_with(model, tenant, items)
+    with httpx.Client(timeout=TIMEOUT_SECONDS) as http:
+        return check_with(anthropic_ask(cfg, key, http), tenant, items)

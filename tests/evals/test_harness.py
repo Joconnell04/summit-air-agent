@@ -194,6 +194,7 @@ def test_cost_adds_the_agent_the_caller_and_the_grader(seed_dir, tmp_path):
                      [say("[END]", cost=0.002)], grade=grade_reply())
     # reply 0.01 + caller 0.002 + grader 0.001; the greeting is spoken from code and costs nothing
     assert result.cost_usd == pytest.approx(0.013)
+    assert result.agent_cost_usd == pytest.approx(0.01)
 
 
 def test_each_scenario_gets_its_own_call_and_database(seed_dir, tmp_path):

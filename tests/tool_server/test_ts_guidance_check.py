@@ -2,8 +2,9 @@
 gives its reason, a pass passes, and a check that can't run refuses the save."""
 
 import json
-from types import SimpleNamespace
 
+import httpx
+import pytest
 from toolkit import ROOT
 
 from app import guidance_check
@@ -17,16 +18,15 @@ ITEMS = {
 WHY = "The agent reads the address back on every booking to check it's a home."
 
 
-class FakeModel:
+class FakeAsk:
     def __init__(self, answer=None, error: Exception | None = None):
         self.answer, self.error, self.asked = answer, error, []
 
-    def complete(self, system, messages, tools=None, max_tokens=1024, json_schema=None):
-        self.asked.append({"system": system, "messages": messages, "schema": json_schema})
+    def __call__(self, system: str, user: str) -> str:
+        self.asked.append((system, user))
         if self.error:
             raise self.error
-        text = self.answer if isinstance(self.answer, str) else json.dumps(self.answer)
-        return SimpleNamespace(text=text)
+        return self.answer if isinstance(self.answer, str) else json.dumps(self.answer)
 
 
 def results(*rows):
@@ -34,38 +34,84 @@ def results(*rows):
 
 
 def test_a_refused_item_gets_the_models_reason_on_its_field():
-    model = FakeModel(results(("1", False, ""), ("2", True, WHY)))
-    assert guidance_check.check_with(model, TENANT, ITEMS) == {"guidance.booking.1": WHY}
-    asked = model.asked[0]
-    assert asked["schema"] == guidance_check.SCHEMA
-    assert "1. (Booking note) Ask if there's a pet at home." in asked["messages"][0]["content"]
+    ask = FakeAsk(results(("1", False, ""), ("2", True, WHY)))
+    assert guidance_check.check_with(ask, TENANT, ITEMS) == {"guidance.booking.1": WHY}
+    system, user = ask.asked[0]
+    assert system == guidance_check.PROMPT.read_text()
+    assert "1. (Booking note) Ask if there's a pet at home." in user
+    assert "2. (Booking note) Skip the address read-back for regulars." in user
 
 
 def test_items_that_pass_come_back_empty():
-    model = FakeModel(results(("1", False, ""), ("2", False, "")))
-    assert guidance_check.check_with(model, TENANT, ITEMS) == {}
+    ask = FakeAsk(results(("1", False, ""), ("2", False, "")))
+    assert guidance_check.check_with(ask, TENANT, ITEMS) == {}
 
 
 def test_a_refusal_with_no_reason_still_says_something():
-    model = FakeModel(results(("1", True, "  "), ("2", False, "")))
-    assert guidance_check.check_with(model, TENANT, ITEMS)["guidance.booking.0"]
+    ask = FakeAsk(results(("1", True, "  "), ("2", False, "")))
+    assert guidance_check.check_with(ask, TENANT, ITEMS)["guidance.booking.0"]
 
 
-def test_a_check_that_cannot_run_refuses_the_save():
-    unavailable = {"content": guidance_check.UNAVAILABLE}
-    for model in (
-        FakeModel(error=TimeoutError("read timed out")),
-        FakeModel("not json"),
-        FakeModel(results(("1", False, ""))),  # an item left out is an item not checked
-        FakeModel(results(("1", False, ""), ("2", False, ""), ("3", True, "x"))),
-    ):
-        assert guidance_check.check_with(model, TENANT, ITEMS) == unavailable
+def test_a_line_is_labelled_by_its_name():
+    ask = FakeAsk(results(("1", False, "")))
+    guidance_check.check_with(ask, TENANT, {"lines.goodbye": "Take care now."})
+    assert "1. (Goodbye line) Take care now." in ask.asked[0][1]
+
+
+@pytest.mark.parametrize("ask", [
+    FakeAsk(error=httpx.ReadTimeout("read timed out")),
+    FakeAsk("not json"),
+    FakeAsk({"verdict": "fine"}),
+    FakeAsk(results(("1", False, ""))),  # an item left out is an item not checked
+    FakeAsk(results(("1", False, ""), ("2", False, ""), ("3", True, "x"))),
+])
+def test_a_check_that_cannot_run_refuses_the_save(ask):
+    assert guidance_check.check_with(ask, TENANT, ITEMS) == {"content": guidance_check.UNAVAILABLE}
 
 
 def test_no_key_refuses_the_save(monkeypatch):
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
-    monkeypatch.delenv("ANTHROPIC_AUTH_TOKEN", raising=False)
     assert guidance_check.check(TENANT, ITEMS) == {"content": guidance_check.UNAVAILABLE}
+
+
+def answer(body: dict) -> dict:
+    return {"content": [{"type": "text", "text": json.dumps(body)}]}
+
+
+def test_the_call_has_thinking_off_and_holds_the_answer_to_the_schema():
+    sent = []
+
+    def handler(request):
+        sent.append(json.loads(request.content))
+        return httpx.Response(200, json=answer(results(("1", False, ""))))
+
+    cfg = guidance_check.load_profile()
+    http = httpx.Client(transport=httpx.MockTransport(handler))
+    text = guidance_check.anthropic_ask(cfg, "k", http)("system", "user")
+    assert json.loads(text) == results(("1", False, ""))
+    body = sent[0]
+    assert body["model"] == cfg["model"] and body["thinking"] == {"type": "disabled"}
+    assert body["output_config"]["format"]["schema"] == guidance_check.SCHEMA
+
+
+def test_a_failed_request_is_tried_once_more_and_no_further():
+    calls = []
+
+    def flaky(request):
+        calls.append(1)
+        return httpx.Response(529 if len(calls) == 1 else 200,
+                              json=answer(results(("1", False, ""))))
+
+    ask = guidance_check.anthropic_ask(guidance_check.load_profile(), "k",
+                                       httpx.Client(transport=httpx.MockTransport(flaky)))
+    assert guidance_check.check_with(ask, TENANT, {"lines.goodbye": "Take care."}) == {}
+    assert len(calls) == 2
+
+    calls.clear()
+    down = guidance_check.anthropic_ask(guidance_check.load_profile(), "k", httpx.Client(
+        transport=httpx.MockTransport(lambda r: calls.append(1) or httpx.Response(529))))
+    assert guidance_check.check_with(down, TENANT, ITEMS) == {"content": guidance_check.UNAVAILABLE}
+    assert len(calls) == 2
 
 
 def test_the_locked_rules_come_from_the_rulebook():
@@ -79,8 +125,9 @@ def test_the_locked_rules_come_from_the_rulebook():
 
 
 def test_the_check_runs_on_a_named_profile_with_thinking_off():
-    cfg = guidance_check.models.profile(guidance_check.PROFILE)
+    cfg = guidance_check.load_profile()
     assert cfg["provider"] == "anthropic" and cfg["thinking"] is False
+    assert cfg["key_env"] == "ANTHROPIC_API_KEY"
 
 
 def test_the_check_prompt_says_a_mention_passes():
