@@ -74,3 +74,4 @@ How the design was reached, in order, so a reader can follow each choice back to
 | Co-authoring rounds | Three rounds: failures, then seeds with a hold-out, then judge labels with the floor | DECISIONS.md 035 |
 | Model matrix | Haiku stays live: higher pass rate, a third of Sonnet's delay, a fraction of the cost | DECISIONS.md 036, #68 |
 | Side model | OpenAI Decisions reads "someone at risk at home" on each line; it can only raise priority | DECISIONS.md 037, #68 |
+| Audio bake-off round 1 | Our stack stays; Retell, Gemini Live and OpenAI Realtime out on the safety lines or speed; ElevenLabs needs a read-back fix; our end-of-turn wait gets tuned | DECISIONS.md 038, #70 |
