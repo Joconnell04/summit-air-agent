@@ -183,3 +183,19 @@ Changed:
 - S-51 (new): rules by call stage in the owner view, editable guidance and four lines behind the must-pass evals, gates never loosened (DECISIONS.md 022).
 - S-52 (new): local names spoken and heard the local way, with the written form kept in the read-back (DECISIONS.md 023).
 Status: open
+
+## call-journeys r4 (amendment after lock: heating with an oven or generator)
+Feedback (verbatim):
+> regarding your question on a caller and heating the house: don't let the agent recommend sloppy/potentially unsafe solutions like using an oven to heat the house. but yes, that question should be asked when relevant but not overly hard coded...i don't want it to come up more than it needs to
+Changed:
+- Spine step 4 and journey 3: a caller who says they're heating the home with something that burns fuel indoors (oven on or open for heat, stove, grill, generator, kerosene or propane heater) gets the existing carbon monoxide check question once per call. Only wording that says it's used for heat counts, so "my oven works", a gas stove or "the generator is outside" asks nothing. Symptoms or an alarm in the answer fire the carbon monoxide lines as today; a clear no carries on.
+- Journey 3 step 9: the agent never suggests an oven, stove, grill, generator or unvented heater to get warm and never agrees one is fine to keep using; if asked, layers, blankets, one warm room or somewhere warm to go.
+- Journey 3 step 5: the safety sign-off no longer says "get everyone outside", because by then the caller may have said they're alone (eval round 1, `co-alarm-clear`).
+- users.md (the fixed list) amended to match; the spec line is S-21b from spec r7 (DECISIONS.md 024). Server rule in `app/safety.py` and `tenants/summit-air/agent.yaml` (`safety.heating_check`); prompt rule in `prompts/safety.md`.
+Commit: 6bf8359
+Sign-off feedback (verbatim, Jackson on the sign-off wording):
+> get outside is fine...but should also be polite and more like a recommendation than a demand.
+Changed:
+- Sign-off signed off by Jackson as a polite recommendation: "For your safety, I'd recommend hanging up now, getting outside, and calling 911 from there. We'll follow up once you're safe." In `tenants/summit-air/agent.yaml` (`safety.sign_off`) and journey 3 step 5. The first safety lines and their shorter variants are unchanged.
+Commit: c019538
+Status: open

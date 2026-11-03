@@ -363,9 +363,16 @@ def test_no_email_in_hours_for_a_routine_flag_or_for_seek_earlier(agent, clock):
     clock.advance(hours=12)
     call = ready_to_book(agent)
     agent.tool("flag_person", call, reason="Billing question", callback_in_minutes=30)
-    urgent_booked_tomorrow(agent, "(212) 555-0907")
+    # After hours an older person at home needs the on-call alert before the booking (journey
+    # 11): that alert is the one email, never the routine flag or the seek_earlier one.
+    late = ready_to_book(agent, "(212) 555-0907")
+    agent.turn(late, "My 84-year-old parent lives with me and it's 52 in here.")
+    agent.tool("flag_person", late, reason="On-call: 84 at home, 52 F", priority="Urgent")
+    booked = book(agent, late, TOMORROW_MORNING, job_type="no_heat", inside_temp_f=52)
+    assert booked["ok"] and booked["data"]["seek_earlier"], booked
     alert(agent)
-    assert mailer.sent == []
+    assert len(mailer.sent) == 1
+    assert "On-call: 84 at home" in mailer.sent[0][2]
 
 
 def test_without_a_mail_server_the_alert_is_held_and_recorded(agent, clock):

@@ -12,7 +12,7 @@ import sqlite3
 from dataclasses import dataclass
 from datetime import datetime, time, timedelta
 
-from . import booking, lookup, outbound, records, weather
+from . import booking, lookup, outbound, records, safety, weather
 from . import capacity as capacity_rules
 from . import priority as prio
 from .db import iso, parse_iso, tx
@@ -135,13 +135,15 @@ def _job_type(ctx: Ctx, code: str) -> dict:
 
 def _priority(ctx: Ctx, job_type: str, extra_text: str, inside_temp_f: float | None):
     outside = weather.current(ctx.conn, ctx.tenant, ctx.now)
+    caller_text = records.caller_text(ctx.conn, ctx.call["id"])
     facts = prio.Facts(
         job_type,
-        records.caller_text(ctx.conn, ctx.call["id"]) + "\n" + extra_text,
+        caller_text + "\n" + extra_text,
         inside_temp_f,
         ctx.call["safety_state"] in ("signal", "lines_said"),
         outside.now_f,
         outside.coldest_f,
+        heating_indoors=safety.heating_signal(caller_text, ctx.tenant.safety),
     )
     return facts, prio.decide(facts, ctx.tenant.priority, ctx.side_model)
 
@@ -505,9 +507,11 @@ def book_appointment(ctx: Ctx, args: BookIn) -> Result:
         _open_job_here(ctx, readback)
     job_type = _job_type(ctx, args.job_type)
     details = args.details.model_dump()
-    _, decided = _priority(
+    facts, decided = _priority(
         ctx, args.job_type, f"{details['issue']}\n{details['who_home']}", details["inside_temp_f"]
     )
+    if not override:
+        _on_call_first(ctx, facts, decided)
     window_start, window_end = _slot_bounds(ctx, args.slot, decided.level)
     if _window_over(ctx, args.slot.window, window_start, window_end):
         ctx.cache.invalidate()
@@ -641,6 +645,31 @@ def book_appointment(ctx: Ctx, args: BookIn) -> Result:
     if override:
         result.gate = "safety_override"
     return result
+
+
+def _on_call_first(ctx: Ctx, facts: prio.Facts, decided: prio.Priority) -> None:
+    """After hours, a no-heat or no-cooling call that needs the on-call technician tonight (journey
+    11) books only once an urgent person flag has alerted them. The morning visit is then the
+    fallback if the technician can't come."""
+    cutoffs = ctx.tenant.after_hours_cutoffs
+    if not ctx.call["after_hours"] or facts.job_type not in (
+        cutoffs["heating_job_types"] + cutoffs["cooling_job_types"]
+    ):
+        return
+    if prio.after_hours_outcome(facts, decided, cutoffs, False) != "tonight_if_on_call_agrees":
+        return
+    thread = records.thread(ctx.conn, ctx.call["id"])
+    alerted = ctx.conn.execute(
+        f"SELECT 1 FROM flags WHERE kind = 'person' AND priority = 'Urgent' "
+        f"AND call_id IN ({','.join('?' * len(thread))})",
+        thread,
+    ).fetchone()
+    if not alerted:
+        raise Refused(
+            "on_call_first",
+            "Let me get this to our on-call technician first.",
+            need="flag_person with priority Urgent",
+        )
 
 
 def _open_job_here(ctx: Ctx, readback: dict) -> None:
@@ -896,8 +925,31 @@ def _callback_due(ctx: Ctx, asked: CallbackTime) -> CallbackWhen:
     return CallbackWhen(latest or closes, max(earliest or now, now), spoken)
 
 
+def _no_time(asked: CallbackTime) -> bool:
+    return not (
+        asked.callback_time
+        or asked.callback_in_minutes
+        or asked.callback_after
+        or asked.callback_before
+    )
+
+
 def flag_person(ctx: Ctx, args: FlagIn) -> Result:
     """The sentence comes back only after the flag and the callback are stored (spec S-23)."""
+    if _no_time(args):
+        # A safety call already has a person flagged who follows up once the caller is safe, so
+        # the caller is never asked for a callback time while they leave the house (journey 3).
+        if ctx.call["safety_signal_at"] and ctx.call["safety_state"] != "cleared":
+            with tx(ctx.conn):
+                flag_id = records.add_flag(
+                    ctx.conn, ctx.call["id"], "person", args.reason, ctx.now, args.priority
+                )
+            return ok(ctx.tenant.line("flag_stored_no_callback"), flag_id=flag_id, callback_id=None)
+        # After hours the on-call technician calls an urgent caller back within a set time
+        # (journey 11), so no time needs to be asked for.
+        if ctx.call["after_hours"] and args.priority == "Urgent":
+            minutes = ctx.tenant.after_hours_cutoffs["on_call_confirms_within_minutes"]
+            args = args.model_copy(update={"callback_in_minutes": minutes})
     when = _callback_due(ctx, args)
     due = when.due
     # A callback the system places needs no person unless the dial fails (app/outbound.py). The
@@ -1090,7 +1142,11 @@ def end_call(ctx: Ctx, args: EndCallIn) -> Result:
         if hang_up:
             with tx(ctx.conn):
                 records.update_call(ctx.conn, ctx.call["id"], end_requested=1)
-        return ok(" ".join(safety["sign_off"].split()), hang_up=hang_up)
+        sign_off = " ".join(safety["sign_off"].split())
+        # A caller saying goodbye after the sign-off doesn't hear it a second time.
+        if hang_up and records.agent_said(ctx.conn, ctx.call["id"], sign_off):
+            return ok("", hang_up=True)
+        return ok(sign_off, hang_up=hang_up)
     last = ctx.conn.execute(
         "SELECT turn_seq FROM bookings WHERE call_id = ? AND kind = 'book' AND status IN ('sending', 'booked', 'queued') "
         "ORDER BY id DESC LIMIT 1",

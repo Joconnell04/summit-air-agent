@@ -13,7 +13,7 @@ Background research behind this doc: docs/explorations/001-hvac-shop-operations.
 Most signals are not certain, so the agent uses three kinds, in this order:
 
 1. **Facts the server already has.** The phone number matches a customer, a membership, an open job, or a recent call. These are certain and cost nothing on the call.
-2. **A short fixed list.** Only the few things that must never depend on a model: a gas smell, a carbon monoxide alarm, smoke or a burning smell, and someone on oxygen or other medical equipment. These always raise priority and can never lower it. The list stays short on purpose, because every entry needs eval cases for its false alarms ("gas bill").
+2. **A short fixed list.** Only the few things that must never depend on a model: a gas smell, a carbon monoxide alarm, smoke or a burning smell, someone on oxygen or other medical equipment, and heating the home with an oven, stove, grill or generator indoors (which gets the carbon monoxide check question once, not the lines). These always raise priority and can never lower it. The list stays short on purpose, because every entry needs eval cases for its false alarms ("gas bill").
 3. **A score.** Everything softer, including most vulnerable-person cues ("my mother is 85", "the baby is three weeks old"), is judged by a small classifier or decision model that reads each finished caller turn beside the conversation, not in the reply path, so it adds no delay (C-09, C-10, C-35).
 
 Whether these facts should also pick a playbook for the call (which questions to ask, what to skip) is an idea under review, not a decision (C-32).

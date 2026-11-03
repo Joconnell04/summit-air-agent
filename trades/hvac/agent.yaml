@@ -59,6 +59,22 @@ safety:
         - nauseous
         - alarm is beeping
         - alarm keeps beeping
+  # Heating the home with something that burns fuel indoors gets the tenant's carbon monoxide check
+  # question, once per call. Only wording that says it is being used for heat counts, so "my oven
+  # works", "a gas stove" or "the generator is outside" ask nothing. Matched three ways: a source
+  # followed within three words by a use phrase ("the oven on to keep warm", "the oven on with the
+  # door open"), heating "with" a source ("heating with the stove"), or a fixed phrase.
+  heating_check:
+    kind: co
+    sources: [oven, stove, burners, burner, grill, generator, kerosene heater, propane heater,
+              charcoal]
+    used_for_heat: [for heat, to heat, for warmth, to keep warm, to stay warm, to warm,
+                    to keep us warm, to keep the house warm, to keep the place warm,
+                    to keep the apartment warm, door open, door opened, door cracked, door ajar]
+    phrases: [oven open, oven door open, opened the oven, generator inside, generator in the house,
+              generator in the basement, generator in the garage, generator in the apartment,
+              grill inside, grill in the house, grill in the apartment, using a kerosene heater,
+              running a kerosene heater, using a propane heater, running a propane heater]
   # A plain denial in the answer to a check question is a no, even with a yes word in it
   # ("definitely not gas"). An unsure word in the same answer still counts as a yes.
   denials: [not gas, no gas, isnt gas, definitely not, not a gas, no smell of gas]
@@ -101,6 +117,7 @@ priority:
       job_types: [no_heat]
       phrases: [using the oven, oven on, oven open, stove on, kerosene heater, generator inside,
                 grill inside]
+      heating_indoors: true  # also the safety check's heating wording (safety.heating_check)
       raise_to: Urgent
       reason: heating with an oven, stove, generator or grill indoors
     - id: young_child

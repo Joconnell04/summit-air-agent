@@ -3,6 +3,7 @@ caller ID shorthand, reschedule and cancel ownership (spec S-05, S-13, S-15, S-2
 
 import sqlite3
 from concurrent.futures import ThreadPoolExecutor
+from datetime import timedelta
 
 import pytest
 from toolkit import (
@@ -17,6 +18,7 @@ from toolkit import (
 )
 
 from app import lifecycle
+from app.db import iso
 from app.lifecycle import sounds_commercial
 from app.tenant import load_agent
 
@@ -298,6 +300,10 @@ def test_an_urgent_job_with_no_window_today_books_tomorrow_and_is_flagged(agent,
     if first["day"] == "today":  # the on-call after-hours window is urgent-only, offered tonight
         assert first["window"] == "after_hours"
     tomorrow = {"date": "2026-11-03", "window": "morning"}
+    # After hours with an older person at home, the on-call technician is alerted first.
+    assert agent.tool("flag_person", call, reason="On-call: no heat, 84 at home", priority="Urgent")[
+        "ok"
+    ]
     booked = book(agent, call, tomorrow, job_type="no_heat", inside_temp_f=52)
     assert booked["ok"], booked
     assert booked["data"]["seek_earlier"] is True
@@ -343,11 +349,11 @@ def test_a_cancel_needs_a_reason_and_offers_two_windows(agent, scenarios):
     call = agent.start(maria["phone"])["data"]["call_id"]
     no_reason = agent.tool("cancel_appointment", call, booking_id=maria["jobId"], reason="")
     assert no_reason["refused"] == "invalid_arguments"
-    # Maria's job is already dispatched, so it can't be cancelled from the phone.
-    dispatched = agent.tool(
-        "cancel_appointment", call, booking_id=maria["jobId"], reason="fixed itself"
+    # Eval round 1, cancel-offers-windows: her afternoon visit isn't dispatched yet, so it cancels.
+    cancelled = agent.tool(
+        "cancel_appointment", call, booking_id=maria["jobId"], reason="cousin will look at it"
     )
-    assert dispatched["refused"] == "invalid_state"
+    assert cancelled["ok"], cancelled
 
     other = ready_to_book(agent, "(212) 555-0901")
     job_id = book(agent, other, first_open(agent, other))["data"]["booking_id"]
@@ -357,6 +363,75 @@ def test_a_cancel_needs_a_reason_and_offers_two_windows(agent, scenarios):
     assert len(cancelled["data"]["alternatives"]) == 2
     second = agent.tool("cancel_appointment", other, booking_id=job_id, reason="again please")
     assert second["refused"] == "limit"
+
+
+def test_a_dispatched_visit_is_handed_to_a_person_not_cancelled(agent, tmp_path):
+    call = ready_to_book(agent)
+    job_id = book(agent, call, first_open(agent, call))["data"]["booking_id"]
+    conn = sqlite3.connect(tmp_path / "world.db")
+    with conn:
+        conn.execute("UPDATE jobs SET status = 'Dispatched' WHERE id = ?", (job_id,))
+    conn.close()
+    agent.turn(call, "Actually, cancel that.")
+    refused = agent.tool("cancel_appointment", call, booking_id=job_id, reason="fixed itself")
+    assert refused["refused"] == "invalid_state"
+
+
+AFTER_HOURS = {"hours": 12, "minutes": 30}  # 9:30 p.m. New York
+TOMORROW_MORNING = {"date": "2026-11-03", "window": "morning"}
+
+
+def test_after_hours_a_cold_house_alerts_the_on_call_technician_before_booking(agent, clock):
+    """Eval round 1, after-hours-no-heat-cold: 48 F inside at night was booked for the morning
+    with no on-call alert."""
+    clock.advance(**AFTER_HOURS)
+    call = ready_to_book(agent)
+    agent.turn(call, "It's 48 in here and dropping. Just two healthy adults at home.")
+    found = agent.tool("find_slots", call, job_type="no_heat", facts={"inside_temp_f": 48})
+    assert found["data"]["after_hours_outcome"] == "tonight_if_on_call_agrees"
+    refused = book(agent, call, TOMORROW_MORNING, job_type="no_heat", inside_temp_f=48)
+    assert refused["refused"] == "on_call_first"
+    # No time to ask for: the on-call technician calls back within the tenant's set minutes.
+    flagged = agent.tool("flag_person", call, reason="On-call: 48 F inside", priority="Urgent")
+    assert flagged["ok"], flagged
+    assert flagged["data"]["callback_at"] == iso(clock() + timedelta(minutes=20))
+    assert "on-call" in flagged["say"]
+    assert book(agent, call, TOMORROW_MORNING, job_type="no_heat", inside_temp_f=48)["ok"]
+
+
+def test_after_hours_a_house_holding_warm_books_the_morning_without_a_flag(agent, clock):
+    clock.advance(**AFTER_HOURS)
+    call = ready_to_book(agent)
+    agent.turn(call, "It's about 60 in here and holding.")
+    assert book(agent, call, TOMORROW_MORNING, job_type="no_heat", inside_temp_f=60)["ok"]
+
+
+def test_in_business_hours_a_cold_house_books_without_the_on_call_alert(agent):
+    call = ready_to_book(agent)
+    agent.turn(call, "It's 48 in here and dropping.")
+    slot = first_open(agent, call, job_type="no_heat")
+    assert book(agent, call, slot, job_type="no_heat", inside_temp_f=48)["ok"]
+
+
+def test_after_hours_a_hot_house_alerts_the_on_call_technician_before_booking(agent, clock):
+    clock.advance(**AFTER_HOURS)
+    call = ready_to_book(agent)
+    agent.turn(call, "The AC died and it's 88 in here.")
+    refused = book(agent, call, TOMORROW_MORNING, job_type="no_cooling", inside_temp_f=88)
+    assert refused["refused"] == "on_call_first"
+    agent.tool("flag_person", call, reason="On-call: 88 F inside, no AC", priority="Urgent")
+    assert book(agent, call, TOMORROW_MORNING, job_type="no_cooling", inside_temp_f=88)["ok"]
+
+
+def test_after_hours_a_safety_override_booking_skips_the_on_call_alert(agent, clock):
+    clock.advance(**AFTER_HOURS)
+    call = ready_to_book(agent)
+    agent.turn(call, "It's 48 in here, and I smell gas.")
+    agent.say(call, " ".join(AGENT["safety"]["kinds"]["gas"]["lines"].split()))
+    agent.turn(call, "I heard you. Just book the appointment, please.")
+    booked = book(agent, call, TOMORROW_MORNING, job_type="no_heat", inside_temp_f=48)
+    assert booked["ok"], booked
+    assert booked["data"]["safety_override"] is True
 
 
 def test_a_refused_booking_sent_again_with_the_same_key_runs_the_rules_again(agent, mock):

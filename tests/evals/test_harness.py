@@ -61,6 +61,15 @@ def test_a_failed_check_fails_the_call_and_the_grader_cannot_rescue_it(seed_dir,
     assert result.grader_score == 5
 
 
+def test_the_caller_knows_the_number_they_are_calling_from(seed_dir, tmp_path):
+    """Eval round 1, gas-furnace-no-trigger: a caller who knew only "the number being called from"
+    rejected a correct read-back of it."""
+    s = scenario(caller_id="(332) 555-0131")
+    _, _, caller, _ = run(seed_dir, tmp_path, s, [say("What's the best number?")],
+                          [say("[END]")])
+    assert "calling_from: (332) 555-0131" in caller.calls[0]["system"]
+
+
 def test_the_grader_can_fail_a_call_the_code_passed(seed_dir, tmp_path):
     result, *_ = run(seed_dir, tmp_path, scenario(), [say("Okay.")], [say("[END]")],
                      grade=grade_reply(2, "fail", "Quoted a price."))

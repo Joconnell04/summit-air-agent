@@ -62,10 +62,12 @@ safety:
       question: Just to be safe, are you smelling gas in the house right now?
     co:
       question: Just to be safe, is a carbon monoxide alarm going off, or is anyone feeling sick or dizzy?
-  # Said when the agent wants to end a safety call: it signs off rather than hangs up.
+  # Said when the agent wants to end a safety call: it signs off rather than hangs up. A polite
+  # recommendation, and "getting outside", not "everyone": by the sign-off the caller may have said
+  # they're alone. Signed off by Jackson (call-journeys r4).
   sign_off: >-
-    Please hang up now, get everyone outside, and call 911 from there. We'll follow up once
-    you're safe.
+    For your safety, I'd recommend hanging up now, getting outside, and calling 911 from there.
+    We'll follow up once you're safe.
   flag_reason: "{label} reported on the call"
 
 # A caller line that describes a business marks the call commercial: it can't book (spec S-05,
