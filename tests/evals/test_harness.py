@@ -1,5 +1,4 @@
 """The runner with fake models against the real tool server and mock, so scoring is tested offline."""
-
 import pytest
 from fakes import ScriptedModel, grade_reply, say, use
 
@@ -45,9 +44,8 @@ def run(seed_dir, tmp_path, s, agent_replies, caller_replies, grade=None, **kw):
 
 
 def test_a_call_that_meets_its_checks_passes(seed_dir, tmp_path):
-    result, *_ = run(
-        seed_dir, tmp_path, scenario(), [say("Sorry to hear that. Bye for now.")], [say("[END]")]
-    )
+    result, *_ = run(seed_dir, tmp_path, scenario(), [say("Sorry to hear that. Bye for now.")],
+                     [say("[END]")])
     assert result.outcome == "pass"
     assert result.grader_score == 4
     assert [t.role for t in result.transcript] == ["agent", "caller", "agent"]
@@ -56,28 +54,16 @@ def test_a_call_that_meets_its_checks_passes(seed_dir, tmp_path):
 
 
 def test_a_failed_check_fails_the_call_and_the_grader_cannot_rescue_it(seed_dir, tmp_path):
-    result, *_ = run(
-        seed_dir,
-        tmp_path,
-        scenario(must=[{"flag": "person"}]),
-        [say("Okay.")],
-        [say("[END]")],
-        grade=grade_reply(5),
-    )
+    result, *_ = run(seed_dir, tmp_path, scenario(must=[{"flag": "person"}]), [say("Okay.")],
+                     [say("[END]")], grade=grade_reply(5))
     assert result.outcome == "fail"
     assert result.check_failures == ["flag: no person was flagged"]
     assert result.grader_score == 5
 
 
 def test_the_grader_can_fail_a_call_the_code_passed(seed_dir, tmp_path):
-    result, *_ = run(
-        seed_dir,
-        tmp_path,
-        scenario(),
-        [say("Okay.")],
-        [say("[END]")],
-        grade=grade_reply(2, "fail", "Quoted a price."),
-    )
+    result, *_ = run(seed_dir, tmp_path, scenario(), [say("Okay.")], [say("[END]")],
+                     grade=grade_reply(2, "fail", "Quoted a price."))
     assert result.outcome == "fail"
     assert result.check_failures == ["grader: Quoted a price."]
 
@@ -103,14 +89,11 @@ def test_a_looping_caller_is_an_error_not_a_fail(seed_dir, tmp_path):
 
 
 def test_a_rule_broken_before_the_caller_looped_is_still_a_fail(seed_dir, tmp_path):
-    s = scenario(
-        max_turns=8, spec=["S-41"], must=[{"agent_never_says": r"\$\s?\d"}, {"flag": "person"}]
-    )
+    s = scenario(max_turns=8, spec=["S-41"], must=[{"agent_never_says": r"\$\s?\d"},
+                                                  {"flag": "person"}])
     result, *_ = run(seed_dir, tmp_path, s, [say("That will be $89.")], [say("Hello?")] * 5)
     assert result.outcome == "fail"
-    assert result.check_failures == [
-        "agent_never_says: the agent said /\\$\\s?\\d/: 'That will be $89.'"
-    ]
+    assert result.check_failures == ["agent_never_says: the agent said /\\$\\s?\\d/: 'That will be $89.'"]
     assert "repeated the same line" in result.error
 
 
@@ -140,17 +123,15 @@ def test_a_broken_grader_never_hides_a_failed_check(seed_dir, tmp_path):
 
 
 def test_unreadable_grader_output_is_an_error(seed_dir, tmp_path):
-    result, *_ = run(
-        seed_dir, tmp_path, scenario(), [say("Okay.")], [say("[END]")], grade=say("five stars")
-    )
+    result, *_ = run(seed_dir, tmp_path, scenario(), [say("Okay.")], [say("[END]")],
+                     grade=say("five stars"))
     assert result.outcome == "error"
     assert result.error.startswith("grader:")
 
 
 def test_safety_lines_come_from_the_server_not_the_model(seed_dir, tmp_path):
-    s = scenario(
-        opening="I smell gas in the kitchen.", must=[{"safety_lines": "said_first"}], spec=["S-17"]
-    )
+    s = scenario(opening="I smell gas in the kitchen.", must=[{"safety_lines": "said_first"}],
+                 spec=["S-17"])
     result, agent, *_ = run(seed_dir, tmp_path, s, [], [say("Okay, going out. Bye."), say("[END]")])
     assert result.outcome == "pass", result.check_failures
     assert result.transcript[2].text.startswith("Please get everyone out of the house now.")
@@ -160,10 +141,8 @@ def test_safety_lines_come_from_the_server_not_the_model(seed_dir, tmp_path):
 
 def test_a_tool_call_reaches_the_server_and_is_recorded(seed_dir, tmp_path):
     s = scenario(must=[{"tool_ok": "check_service_area"}])
-    replies = [
-        use("check_service_area", "Let me check.", zip="11231"),
-        say("Good news, we cover your area."),
-    ]
+    replies = [use("check_service_area", "Let me check.", zip="11231"),
+               say("Good news, we cover your area.")]
     result, *_ = run(seed_dir, tmp_path, s, replies, [say("[END]")])
     assert result.outcome == "pass", result.check_failures
     assert [c.name for c in result.tool_calls] == ["check_service_area"]
@@ -182,9 +161,8 @@ def test_an_out_of_area_refusal_is_recorded_by_zip(seed_dir, tmp_path):
 
 def test_server_hints_reach_the_model(seed_dir, tmp_path):
     s = scenario(opening="Hi, I manage a restaurant in Bushwick and the heat is out.")
-    _, agent, *_ = run(
-        seed_dir, tmp_path, s, [say("Sorry, we only work on homes.")], [say("[END]")]
-    )
+    _, agent, *_ = run(seed_dir, tmp_path, s, [say("Sorry, we only work on homes.")],
+                       [say("[END]")])
     assert "can't book" in agent.calls[0]["messages"][-1]["content"]
     assert "[server]" in agent.calls[0]["messages"][-1]["content"]
 
@@ -203,14 +181,8 @@ def test_replayed_turns_are_used_word_for_word(seed_dir, tmp_path):
 
 
 def test_cost_adds_the_agent_the_caller_and_the_grader(seed_dir, tmp_path):
-    result, *_ = run(
-        seed_dir,
-        tmp_path,
-        scenario(),
-        [say("Okay.", cost=0.01)],
-        [say("[END]", cost=0.002)],
-        grade=grade_reply(),
-    )
+    result, *_ = run(seed_dir, tmp_path, scenario(), [say("Okay.", cost=0.01)],
+                     [say("[END]", cost=0.002)], grade=grade_reply())
     # reply 0.01 + caller 0.002 + grader 0.001; the greeting is spoken from code and costs nothing
     assert result.cost_usd == pytest.approx(0.013)
 
@@ -223,36 +195,27 @@ def test_each_scenario_gets_its_own_call_and_database(seed_dir, tmp_path):
 
 
 def test_build_run_hashes_and_names_the_run(seed_dir, tmp_path):
-    result, *_ = run(
-        seed_dir, tmp_path, scenario(id="tune-up-known-caller"), [say("Okay.")], [say("[END]")]
-    )
+    result, *_ = run(seed_dir, tmp_path, scenario(id="tune-up-known-caller"), [say("Okay.")],
+                     [say("[END]")])
     built = build_run("smoke", [], "livekit", "fast", [result])
     assert built.run_id.endswith("-livekit-fast-smoke")
     assert len(built.hash) == 16
+
 
 
 def test_replay_reruns_the_recorded_caller_lines_and_finds_a_changed_tool_sequence(
     seed_dir, tmp_path
 ):
     s = scenario(id="tune-up-known-caller", must=[{"tool_ok": "check_service_area"}])
-    first, *_ = run(
-        seed_dir, tmp_path, s, [use("check_service_area", zip="11231"), say("Yes.")], [say("[END]")]
-    )
-    same = harness(
-        seed_dir,
-        tmp_path,
-        ScriptedModel([use("check_service_area", zip="11231"), say("Yes.")]),
-        ScriptedModel([]),
-        ScriptedModel([grade_reply()]),
-    )
+    first, *_ = run(seed_dir, tmp_path, s, [use("check_service_area", zip="11231"), say("Yes.")],
+                    [say("[END]")])
+    same = harness(seed_dir, tmp_path, ScriptedModel(
+        [use("check_service_area", zip="11231"), say("Yes.")]),
+        ScriptedModel([]), ScriptedModel([grade_reply()]))
     assert diff(tool_sequence(first), tool_sequence(replay(first, same))) == []
-    changed = harness(
-        seed_dir,
-        tmp_path,
-        ScriptedModel([say("Yes.")]),
-        ScriptedModel([]),
-        ScriptedModel([grade_reply()]),
-    )
+    changed = harness(seed_dir, tmp_path, ScriptedModel([say("Yes.")]),
+                      ScriptedModel([]), ScriptedModel([grade_reply()]))
     assert diff(tool_sequence(first), tool_sequence(replay(first, changed))) == [
         "  step 1: was check_service_area, now -"
     ]
+

@@ -119,16 +119,11 @@ def test_only_an_error_run_may_have_no_grader_score(tmp_path, run_data, scenario
 
 def test_samples_of_one_scenario_are_distinct_and_keyed(run_data, scenario_data):
     run = Run.model_validate(run_data(scenarios=[scenario_data(), scenario_data(sample=2)]))
-    assert [s.key for s in run.scenarios] == [
-        "no-heat-elderly-wrong-zip",
-        "no-heat-elderly-wrong-zip#2",
-    ]
+    assert [s.key for s in run.scenarios] == ["no-heat-elderly-wrong-zip",
+                                              "no-heat-elderly-wrong-zip#2"]
 
 
 def test_pass_rate_leaves_errors_out(run_data, scenario_data):
-    rows = [
-        scenario_data(scenario_id="a"),
-        scenario_data(scenario_id="b", outcome="fail"),
-        scenario_data(scenario_id="c", outcome="error", grader_score=None),
-    ]
+    rows = [scenario_data(scenario_id="a"), scenario_data(scenario_id="b", outcome="fail"),
+            scenario_data(scenario_id="c", outcome="error", grader_score=None)]
     assert Run.model_validate(run_data(scenarios=rows)).pass_rate() == 0.5
