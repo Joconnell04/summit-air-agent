@@ -1,16 +1,18 @@
 """Mirror one results file into LangSmith so bake-offs can be compared side by side there.
 
 Viewer only. The results JSON stays the source of truth, nothing here runs during a call, and with
-no LANGSMITH_API_KEY set this does nothing. Usage: python -m evals.langsmith_sync <results.json>
+no LANGSMITH_API_KEY set this does nothing. Usage: python -m evals.langsmith_sync [results.json]
+(the newest file in evals/results when none is named; `make langsmith`).
 """
 import asyncio
 import os
 import sys
 import uuid
 from datetime import UTC, datetime, timedelta
+from pathlib import Path
 from typing import Any
 
-from evals.results import ResultsError, Run, ScenarioResult, load
+from evals.results import RESULTS_DIR, ResultsError, Run, ScenarioResult, load
 
 MAX_LOOKBACK_DAYS = 400
 
@@ -21,7 +23,8 @@ NAMESPACE = uuid.UUID("5a1e5a1e-0000-4000-8000-5a1e5a1e0001")
 
 
 def experiment_name(run: Run) -> str:
-    return f"{run.stack}-{run.profile}-{run.suite}-{run.run_id}"
+    """The run id, which already reads <time>-<stack>-<profile>-<suite>, so experiments sort by time."""
+    return run.run_id
 
 
 def example_id(scenario_id: str) -> uuid.UUID:
@@ -44,6 +47,14 @@ def example_inputs(result: ScenarioResult) -> dict[str, Any]:
     return {"persona": result.persona, "tags": tags, "difficulty": result.difficulty}
 
 
+def check_scores(result: ScenarioResult) -> dict[str, int]:
+    """One 0 or 1 per code check that ran, keyed `check:<name>`. An error run had no verdict."""
+    if result.outcome == "error":
+        return {}
+    failed = {line.split(":", 1)[0] for line in result.check_failures}
+    return {f"check:{name}": int(name not in failed) for name in result.checks}
+
+
 def feedback_for(result: ScenarioResult) -> dict[str, float]:
     # An error is not a fail, so it gets its own score and no "passed" score: filtering on
     # passed = 0 then finds real failures only.
@@ -58,19 +69,52 @@ def feedback_for(result: ScenarioResult) -> dict[str, float]:
         "reply_delay_p50_ms": result.reply_delay_p50_ms,
         "reply_delay_p90_ms": result.reply_delay_p90_ms,
         "cost_usd": result.cost_usd,
+        **check_scores(result),
     }
     # An error run was never graded.
     return {k: v for k, v in scores.items() if v is not None}
 
 
+def feedback_comments(result: ScenarioResult) -> dict[str, str]:
+    """The reason behind a score, shown beside it in LangSmith."""
+    comments = {}
+    if result.outcome == "error":
+        comments["errored"] = result.error
+    elif result.outcome == "fail":
+        comments["passed"] = "; ".join(result.check_failures)
+    if result.must_pass_failures:
+        comments["must_pass_failed"] = "; ".join(result.must_pass_failures)
+    if result.grader_notes:
+        comments["grader_score"] = result.grader_notes
+    for name in result.checks:
+        lines = [x for x in result.check_failures if x.startswith(f"{name}: ")]
+        if lines and result.outcome != "error":
+            comments[f"check:{name}"] = "; ".join(lines)
+    return {k: v for k, v in comments.items() if v}
+
+
 def experiment_metadata(run: Run) -> dict[str, Any]:
-    return {
+    metadata = {
         "stack": run.stack,
         "profile": run.profile,
         "suite": run.suite,
         "hash": run.hash,
         "run_id": run.run_id,
     }
+    # Missing on results files written before these fields existed.
+    if run.prompt_hash:
+        metadata["prompt_hash"] = run.prompt_hash
+    if run.model:
+        metadata["model"] = run.model
+    return metadata
+
+
+def experiment_description(run: Run) -> str:
+    model = f" ({run.model})" if run.model else ""
+    return (
+        f"{run.suite} suite, {len(run.scenarios)} scenarios, on the {run.stack} stack with the "
+        f"{run.profile} profile{model}. Compare it with another experiment of the same suite."
+    )
 
 
 def upsert_dataset(client: Any, run: Run) -> Any:
@@ -96,13 +140,17 @@ def upsert_dataset(client: Any, run: Run) -> Any:
     return dataset
 
 
-def upload_experiment(client: Any, run: Run, dataset: Any) -> str:
+def upload_experiment(client: Any, run: Run, dataset: Any) -> Any:
+    """Create or complete the experiment and return its project."""
     name = experiment_name(run)
     if client.has_project(name):
         project = client.read_project(project_name=name)
     else:
         project = client.create_project(
-            name, reference_dataset_id=dataset.id, metadata=experiment_metadata(run)
+            name,
+            reference_dataset_id=dataset.id,
+            description=experiment_description(run),
+            metadata=experiment_metadata(run),
         )
     done = existing_run_ids(client, project.id)
     for result in run.scenarios:
@@ -115,11 +163,17 @@ def upload_experiment(client: Any, run: Run, dataset: Any) -> str:
     # earlier sync missed and replaces, rather than duplicates, what is already there.
     for result in run.scenarios:
         rid = run_id_for(run, result)
+        comments = feedback_comments(result)
         for key, score in feedback_for(result).items():
             client.create_feedback(
-                rid, key, score=score, session_id=project.id, feedback_id=feedback_id_for(rid, key)
+                rid,
+                key,
+                score=score,
+                comment=comments.get(key),
+                session_id=project.id,
+                feedback_id=feedback_id_for(rid, key),
             )
-    return name
+    return project
 
 
 def existing_run_ids(client: Any, project_id: Any) -> set[str]:
@@ -164,6 +218,7 @@ def create_scenario_run(
             "check_failures": result.check_failures,
             "grader_notes": result.grader_notes,
             "error": result.error,
+            "checks": result.checks,
             "transcript": [t.model_dump() for t in result.transcript],
             "tool_calls": [c.model_dump() for c in result.tool_calls],
         },
@@ -174,7 +229,14 @@ def create_scenario_run(
                 "sample": result.sample,
             }
         },
-        tags=[f"stack:{run.stack}", f"profile:{run.profile}", f"suite:{run.suite}"],
+        error=result.error or None,
+        tags=[
+            f"stack:{run.stack}",
+            f"profile:{run.profile}",
+            f"suite:{run.suite}",
+            f"outcome:{result.outcome}",
+            *example_inputs(result)["tags"],
+        ],
         **timing,
     )
 
@@ -202,20 +264,39 @@ def sync(run: Run, client: Any = None) -> str | None:
     client = client or connect()
     if client is None:
         return None
-    name = upload_experiment(client, run, upsert_dataset(client, run))
+    project = upload_experiment(client, run, upsert_dataset(client, run))
+    name = experiment_name(run)
     print(f"LangSmith experiment {name} is up to date ({len(run.scenarios)} scenarios)")
+    url = getattr(project, "url", None)
+    if url:
+        print(f"  {url}")
     return name
 
 
+def latest_results(directory: Path | None = None) -> Path | None:
+    """The results file with the newest run, by the time inside it."""
+    found = []
+    for path in (directory or RESULTS_DIR).glob("*.json"):
+        try:
+            found.append((load(path).created, path))
+        except ResultsError:
+            continue
+    return max(found)[1] if found else None
+
+
 def main(argv: list[str]) -> int:
-    if len(argv) != 2:
-        print("usage: python -m evals.langsmith_sync <results.json>", file=sys.stderr)
+    if len(argv) > 2:
+        print("usage: python -m evals.langsmith_sync [results.json]", file=sys.stderr)
         return 2
     client = connect()
     if client is None:
         return 0
+    path = argv[1] if len(argv) == 2 else latest_results()
+    if path is None:
+        print(f"no results files in {RESULTS_DIR}; run make eval first", file=sys.stderr)
+        return 1
     try:
-        run = load(argv[1])
+        run = load(path)
     except ResultsError as err:
         print(err, file=sys.stderr)
         return 1

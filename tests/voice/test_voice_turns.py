@@ -1,9 +1,12 @@
 """Turn helpers: the longer wait after asking for digits (C-48), stage timings (docs/latency.md)."""
 
+from types import SimpleNamespace
+
 import pytest
 
 from voice.livekit.settings import load_profile
 from voice.livekit.turns import (
+    LlmLog,
     agent_timings,
     asked_for_digits,
     caller_timings,
@@ -53,3 +56,52 @@ def test_the_profile_is_switched_by_one_setting(monkeypatch):
     monkeypatch.setenv("MODEL_PROFILE", "openai-fast")
     assert load_profile().provider == "openai"
     assert load_profile().thinking is False
+
+
+def llm_request(**fields):
+    base = {
+        "type": "llm_metrics",
+        "cancelled": False,
+        "prompt_tokens": 9400,
+        "prompt_cached_tokens": 9300,
+        "cache_creation_tokens": 40,
+        "completion_tokens": 30,
+    }
+    return SimpleNamespace(**{**base, **fields})
+
+
+def test_an_agent_line_carries_the_first_requests_cache_numbers():
+    log = LlmLog()
+    log.record(llm_request())
+    log.record(llm_request(prompt_cached_tokens=9500, cache_creation_tokens=0))  # after a tool
+    taken = log.take()
+    assert taken == {
+        "llm_requests": 2,
+        "llm_cancelled": 0,
+        "prompt_tokens": 9400,
+        "cache_read_tokens": 9300,
+        "cache_write_tokens": 40,
+        "llm_output_tokens": 30,
+    }
+    assert log.take() == {}  # taken once per agent line
+    assert agent_timings({}, None, 0.0, False, taken)["cache_read_tokens"] == 9300
+
+
+def test_a_thrown_away_preemptive_request_is_counted_but_not_measured():
+    log = LlmLog()
+    log.record(llm_request(cancelled=True, prompt_cached_tokens=0, cache_creation_tokens=0))
+    log.record(llm_request())
+    taken = log.take()
+    assert taken["llm_cancelled"] == 1 and taken["llm_requests"] == 1
+    assert taken["cache_read_tokens"] == 9300
+
+
+def test_only_model_metrics_are_recorded():
+    log = LlmLog()
+    log.record(SimpleNamespace(type="stt_metrics"))
+    assert log.take() == {}
+
+
+def test_a_profile_reads_how_to_turn_its_thinking_off():
+    assert load_profile("quality").thinking_off == "between_tools"
+    assert load_profile("fast").thinking_off == "disabled"

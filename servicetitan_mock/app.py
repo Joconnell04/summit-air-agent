@@ -9,13 +9,14 @@ from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path
 
-from fastapi import Depends, FastAPI, Form, Request
+from fastapi import Depends, FastAPI, Form, Header, Request
 
 from . import logs
 from .config import DEFAULT_TENANT_DIR, TenantConfig, parse_dt
 from .deps import get_conn
 from .errors import ApiError, install_handlers
 from .routes import crm, dispatch, jpm, memberships, settings
+from .seed import reseed
 
 TOKEN_SECONDS = 900  # ServiceTitan tokens last 15 minutes
 
@@ -25,9 +26,12 @@ def create_app(
     tenant_dir: str | Path | None = None,
     log_path: str | Path | None = None,
     clock: Callable[[], datetime] | None = None,
+    allow_reset: bool | None = None,
+    reset_token: str | None = None,
 ) -> FastAPI:
     """Defaults come from ST_MOCK_DB, ST_MOCK_TENANT and ST_MOCK_NOW (an ISO time with an offset that
-    freezes the clock, for repeatable evals)."""
+    freezes the clock, for repeatable evals). POST /debug/reset exists only when ST_MOCK_ALLOW_RESET
+    is 1; ST_MOCK_RESET_TOKEN, if set, must come in the X-Debug-Token header."""
     db_path = Path(db_path or os.environ.get("ST_MOCK_DB", "data/servicetitan_mock.db"))
     tenant_dir = tenant_dir or os.environ.get("ST_MOCK_TENANT", DEFAULT_TENANT_DIR)
     if clock is None:
@@ -40,6 +44,13 @@ def create_app(
     app.state.log_path = Path(log_path) if log_path else db_path.with_suffix(".log")
     app.state.clock = clock
     app.state.tokens = {}
+    app.state.allow_reset = (
+        allow_reset if allow_reset is not None else os.environ.get("ST_MOCK_ALLOW_RESET") == "1"
+    )
+    app.state.reset_token = (
+        reset_token if reset_token is not None else os.environ.get("ST_MOCK_RESET_TOKEN", "")
+    )
+    app.state.tenant_dir = Path(tenant_dir)
 
     install_handlers(app)
     app.add_middleware(logs.RequestLogMiddleware)
@@ -95,5 +106,19 @@ def create_app(
         """Named people and ids the seed script planted, so tests and evals can find them."""
         row = conn.execute("SELECT value FROM meta WHERE key = 'scenarios'").fetchone()
         return json.loads(row["value"]) if row else {}
+
+    @app.post("/debug/reset")
+    def debug_reset(request: Request, x_debug_token: str | None = Header(None)):
+        """Rebuild the seeded world in place, so an eval run starts without the bookings earlier
+        runs left. Refused unless the process was started with ST_MOCK_ALLOW_RESET=1, which only
+        the eval instance sets; the live mock never does."""
+        state = request.app.state
+        if not state.allow_reset:
+            raise ApiError(403, "reset_disabled", "This mock does not allow resets.")
+        if state.reset_token and not secrets.compare_digest(x_debug_token or "", state.reset_token):
+            raise ApiError(403, "reset_forbidden", "Missing or wrong X-Debug-Token.")
+        today = state.clock().astimezone(state.cfg.tz).date()
+        scenarios = reseed(state.db_path, state.tenant_dir, today)
+        return {"reset": True, "startDate": today.isoformat(), "scenarios": sorted(scenarios)}
 
     return app

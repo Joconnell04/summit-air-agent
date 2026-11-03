@@ -30,6 +30,8 @@ Settings, all optional:
 | `ST_MOCK_DB` | `data/servicetitan_mock.db` | SQLite file |
 | `ST_MOCK_TENANT` | `tenants/summit-air` | Folder holding `config.yaml` and `seed.py` |
 | `ST_MOCK_NOW` | real time | Freeze the clock (ISO time with offset) so evals see the same "now" |
+| `ST_MOCK_ALLOW_RESET` | off | Set to `1` to enable `POST /debug/reset`, which rebuilds the seeded world in place (start date = today on the mock's clock). Only the Retell eval instance sets it (`deploy/retell/run.sh`); without it the endpoint answers 403 `reset_disabled` |
+| `ST_MOCK_RESET_TOKEN` | none | If set, `POST /debug/reset` needs the same value in `X-Debug-Token` |
 
 The seed takes `--start-date YYYY-MM-DD` and a fixed random seed, so one start date always gives one world. Pair it with `ST_MOCK_NOW` for repeatable evals.
 
@@ -69,7 +71,7 @@ All tenant routes live under `/{module}/v2/tenant/{tenantId}/`. Lists use Servic
 | `settings` | `GET business-units`, `GET technicians`, `GET technicians/{id}`, `GET company-profile` |
 | `marketing` | `GET campaigns` |
 | `telecom` | `GET calls`, `GET calls/{id}`, `POST calls` |
-| root | `POST /connect/token`, `GET /health`, `GET /debug/logs`, `GET /debug/scenarios` |
+| root | `POST /connect/token`, `GET /health`, `GET /debug/logs`, `GET /debug/scenarios`, `POST /debug/reset` (eval instance only; not in the Postman collection because it wipes the world) |
 
 Query filters that matter to the agent: `customers?phone=`, `customers?street=&unit=&zip=`, `locations?street=&unit=&zip=`, `memberships?customerId=&locationId=&status=`, `jobs?customerId=&jobStatus=Scheduled,Dispatched,Working`, `calls?phone=&receivedOnOrAfter=`.
 

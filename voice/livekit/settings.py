@@ -22,6 +22,8 @@ class Profile:
     provider: str
     model: str
     thinking: bool
+    # How the profile switches thinking off when `thinking` is false (config/models.yaml).
+    thinking_off: str = "disabled"
 
 
 def load_profile(name: str = "", path: Path = ROOT / "config/models.yaml") -> Profile:
@@ -29,7 +31,13 @@ def load_profile(name: str = "", path: Path = ROOT / "config/models.yaml") -> Pr
     config = yaml.safe_load(path.read_text())
     chosen = name or os.environ.get("MODEL_PROFILE") or config["default"]
     entry = config["profiles"][chosen]
-    return Profile(chosen, entry["provider"], entry["model"], entry["thinking"])
+    return Profile(
+        chosen,
+        entry["provider"],
+        entry["model"],
+        entry["thinking"],
+        entry.get("thinking_off", "disabled"),
+    )
 
 
 def load_voice(path: Path = ROOT / "config/models.yaml") -> dict:

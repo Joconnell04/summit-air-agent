@@ -71,6 +71,10 @@ class ScenarioResult(Strict):
     # Every failed code check, must-pass or not, and why an error run produced no verdict.
     check_failures: list[str] = Field(default_factory=list)
     error: str = ""
+    # The code checks that ran on this call, by name (`must:` in the scenario). A check failed when
+    # a line in check_failures starts with its name and a colon; the rest passed. Empty on an error
+    # run, which had no verdict, and on files written before this field existed.
+    checks: list[str] = Field(default_factory=list)
     # Missing on an error run, which the grader never sees, and on a fail it couldn't score.
     grader_score: int | None = Field(None, ge=1, le=5)
     grader_notes: str = ""
@@ -113,6 +117,10 @@ class Run(Strict):
     profile: str = Field(pattern=SLUG)
     # Hash of the prompts, scenarios and model profile, as the ratchet checks it.
     hash: str = Field(min_length=1)
+    # Hash of the agent's prompt files alone, so two runs can be told apart by prompt change.
+    prompt_hash: str | None = None
+    # The agent model id behind the profile, for reading a profile comparison.
+    model: str | None = None
     scenarios: list[ScenarioResult] = Field(min_length=1)
 
     @model_validator(mode="after")

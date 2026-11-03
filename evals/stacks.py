@@ -4,7 +4,9 @@ which tools it called and how long the caller waited, so every stack is scored t
 - `livekit`: our stack's brain in process. The same prompt and tool list as the LiveKit worker
   (prompts/assemble.py, built from prompts/ and app/tools.py) and the same tool server, without
   audio. Safety text from the server is spoken as given, never generated, as the worker does.
-- `retell`: the Retell baseline through Retell's text chat API (evals/retell_chat.py).
+- `retell`: the Retell baseline through Retell's text chat API. Its adapter lives in
+  voice/retell/eval_adapter.py and is loaded by name (`load_adapter`), so shared code never imports
+  a voice layer (docs/architecture.md).
 """
 import hashlib
 import importlib
@@ -41,6 +43,19 @@ class AgentTurn:
     timing: TurnTiming
     usage: Usage = field(default_factory=Usage)
     ended: bool = False
+
+
+def load_adapter(stack: str):
+    """The voice layer's own eval adapter, `voice.<stack>.eval_adapter`, which offers
+    `open_agent(call_id, caller_id)` and returns the agent and the tool server whose record the
+    checks read. Loaded by name so this file never imports a voice folder."""
+    try:
+        return importlib.import_module(f"voice.{stack}.eval_adapter")
+    except ModuleNotFoundError as err:
+        if err.name and err.name.startswith(f"voice.{stack}"):
+            raise RuntimeError(f"stack {stack!r} has no eval adapter (voice/{stack}/eval_adapter.py)"
+                               ) from err
+        raise
 
 
 def prompt_files(prompts_dir: Path = PROMPTS_DIR) -> list[Path]:

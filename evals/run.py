@@ -22,14 +22,15 @@ from pathlib import Path
 from app.tools import TOOLS
 from evals import compare, langsmith_sync, results, suites
 from evals.caller import SimulatedCaller
-from evals.checks import Evidence, run_checks, safety_config
+from evals.checks import Evidence, check_names, run_checks, safety_config
 from evals.compare import percentile
-from evals.fingerprint import run_hash
+from evals.fingerprint import prompt_hash, run_hash
 from evals.grader import grade
 from evals.models import Model, Usage, for_profile, load_config
+from evals.models import profile as models_profile
 from evals.results import RESULTS_DIR, Run, ScenarioResult, ToolCall, Turn
 from evals.scenario import Scenario, load_all
-from evals.stacks import InProcessAgent
+from evals.stacks import InProcessAgent, load_adapter
 from evals.transcribe import level_for, roughen, seeded
 from evals.world import World, resolve_caller, seeded_db
 
@@ -58,10 +59,8 @@ class Harness:
     def _open_agent(self, scenario: Scenario, call_id: str):
         """The agent under test and the tool server whose record the checks read."""
         caller_id = resolve_caller(scenario.caller_id, self.seed[1])
-        if self.stack == "retell":
-            from evals.retell_chat import open_retell
-
-            return open_retell(call_id, caller_id)
+        if self.stack != "livekit":
+            return load_adapter(self.stack).open_agent(call_id, caller_id)
         world = World(self.workdir / call_id, self.seed, scenario.start_time)
         agent = InProcessAgent(world.server, self.models.agent, call_id, caller_id, world.clock)
         return agent, world.server
@@ -123,6 +122,7 @@ class Harness:
 
     def _score(self, scenario, sample, call_id, server, transcript, timings, usage, error, began):
         failures, violations, tool_calls, grade_score, notes = [], [], [], None, ""
+        ran: list[str] = []
         if server is not None:
             try:
                 retell = self.stack == "retell"
@@ -135,6 +135,7 @@ class Harness:
                 if not error.startswith("harness"):
                     failures = run_checks(scenario.must, evidence)
                     violations = run_checks(scenario.must, evidence, prohibitions_only=True)
+                    ran = check_names(scenario.must)
             except Exception as err:  # noqa: BLE001
                 error = error or f"harness: could not read the call record: {err}"
         elif not error:
@@ -145,6 +146,9 @@ class Harness:
             outcome = "fail" if violations and not error.startswith("harness") else "error"
             if outcome == "fail":
                 failures = violations
+                ran = check_names(scenario.must, prohibitions_only=True)
+            else:
+                ran = []
         else:
             outcome = "fail" if failures else "pass"
         if not error:
@@ -172,6 +176,7 @@ class Harness:
             outcome=outcome,
             must_pass_failures=failures if scenario.must_pass and outcome == "fail" else [],
             check_failures=failures,
+            checks=ran,
             error=error,
             grader_score=grade_score,
             grader_notes=notes,
@@ -193,6 +198,18 @@ def run_suite(harness: Harness, chosen: list[Scenario], samples: int, workers: i
         return list(pool.map(lambda job: harness.run(*job), jobs))
 
 
+def workers_for(stack: str, asked: int) -> int:
+    """Retell scenarios share one mock that is reset before each, so they go one at a time."""
+    if stack != "livekit" and asked > 1:
+        print(f"{stack}: running one scenario at a time (they share one mock world)", flush=True)
+        return 1
+    return asked
+
+
+def profile_model(profile: str) -> str | None:
+    return models_profile(profile).get("model")
+
+
 def build_run(suite: str, tags: list[str], stack: str, profile: str, scenario_results,
               now: datetime | None = None) -> Run:
     now = now or datetime.now(UTC)
@@ -205,6 +222,8 @@ def build_run(suite: str, tags: list[str], stack: str, profile: str, scenario_re
         stack=stack,
         profile=profile,
         hash=run_hash(ids, profile),
+        prompt_hash=prompt_hash(),
+        model=profile_model(profile),
         scenarios=scenario_results,
     )
 
@@ -214,7 +233,7 @@ def upload(run: Run, path: Path) -> None:
     try:
         langsmith_sync.sync(run)
     except langsmith_sync.api_errors() as err:
-        print(f"LangSmith upload failed ({type(err).__name__}); retry: make eval-upload RUN={path}")
+        print(f"LangSmith upload failed ({type(err).__name__}); retry: make langsmith RUN={path}")
 
 
 def default_models(profile: str) -> Models:
@@ -250,7 +269,8 @@ def main(argv: list[str] | None = None) -> int:
             print(f"{stack} / {profile}: {len(chosen)} scenario(s) x {samples}", flush=True)
             with tempfile.TemporaryDirectory(prefix="summit-eval-") as tmp:
                 harness = Harness(default_models(profile), stack, Path(tmp))
-                scenario_results = run_suite(harness, chosen, samples, args.workers)
+                workers = workers_for(stack, args.workers)
+                scenario_results = run_suite(harness, chosen, samples, workers)
             run = build_run(suite, tags, stack, profile, scenario_results)
             path = results.save(run, results_dir)
             print("\n".join(compare.report(run, compare.previous(run, results_dir))))

@@ -1,15 +1,18 @@
 """The Retell baseline as an agent under test, through Retell's text chat API.
 
-Retell runs its own model and calls our tool server through its custom functions, so the code
-checks read the same record they read for our stack, from that server's /debug/calls/{id}. The
-Retell lane (brief 05) provides the chat agent, an eval tool server with its own mock, and
-`voice.retell.chat.open_chat`, which starts the call on that server under our call id, creates the
-chat and returns its id and opening line. Its bridge posts every line to the tool server from
-Retell's webhooks, so the harness posts none. Until those exist a Retell run stops with a clear
-message instead of guessing.
+This is the Retell side of the eval harness (evals/stacks.py `load_adapter`, which loads
+`voice.<stack>.eval_adapter` by name), so nothing outside voice/ imports this folder and deleting it
+after the bake-off stays clean (docs/architecture.md).
 
-The eval server has one shared mock, not a fresh copy per scenario, so Retell runs go one scenario
-at a time (`--workers 1`) and bookings from earlier scenarios stay in the world.
+Retell runs its own model and calls our tool server through its custom functions, so the code
+checks read the same record they read for our stack, from that server's /debug/calls/{id}.
+`chat.open_chat` starts the call on the eval tool server under our call id, creates the chat and
+returns its id and opening line. The eval bridge posts every line to the tool server from Retell's
+webhooks, so the harness posts none.
+
+The eval instance has one mock ServiceTitan, shared by every scenario, so `open_agent` first asks
+it to rebuild the seeded world (`reset_world`), and Retell runs go one scenario at a time
+(`--workers 1`). Without that, bookings from earlier scenarios would change what later ones see.
 
 On Retell the safety lines are said by its model (the server checks the wording), not spoken from
 code: Retell chat can't insert them mid-reply. That is a real bake-off difference.
@@ -28,18 +31,12 @@ from evals.results import TurnTiming
 from evals.stacks import AgentTurn
 from evals.world import ToolServer
 
+from .chat import open_chat
+
 BASE_URL = "https://api.retellai.com"
 NEEDED = (
     "RETELL_API_KEY", "RETELL_CHAT_AGENT_ID", "RETELL_EVAL_TOOL_SERVER", "RETELL_EVAL_DEBUG_TOKEN"
 )
-
-
-def _open_chat():
-    try:
-        from voice.retell.chat import open_chat
-    except ImportError as err:
-        raise RetellNotReady("voice.retell.chat is not here yet; it comes with brief 05") from err
-    return open_chat
 
 
 class RetellNotReady(RuntimeError):
@@ -99,14 +96,36 @@ def _hang_up(messages: list[dict], tool_call_id: str) -> bool:
     return False
 
 
-def open_retell(call_id: str, caller_id: str, env: dict | None = None):
+def reset_world(env: dict, client: httpx.Client | None = None) -> None:
+    """Ask the eval instance's mock to rebuild its seeded world (POST /debug/reset, which the mock
+    allows only when started with ST_MOCK_ALLOW_RESET=1). The default address is the mock behind the
+    eval tool server's proxy; RETELL_EVAL_MOCK_RESET_URL overrides it, for example with an ssh
+    tunnel to the server's 127.0.0.1:8111."""
+    url = env.get("RETELL_EVAL_MOCK_RESET_URL") or (
+        env["RETELL_EVAL_TOOL_SERVER"].rstrip("/") + "/mock/debug/reset"
+    )
+    client = client or httpx.Client(timeout=60)
+    try:
+        response = client.post(url, headers={"X-Debug-Token": env["RETELL_EVAL_DEBUG_TOKEN"]})
+    except httpx.HTTPError as err:
+        raise RetellNotReady(f"could not reach the eval mock's reset at {url}: {err}") from err
+    if response.status_code != 200:
+        raise RetellNotReady(
+            f"the eval mock refused its reset ({response.status_code} at {url}): "
+            f"{response.text[:200]}. It needs ST_MOCK_ALLOW_RESET=1 and a route to it "
+            "(deploy/retell/Caddyfile, voice/retell/README.md)"
+        )
+
+
+def open_agent(call_id: str, caller_id: str, env: dict | None = None):
+    """The agent under test and the tool server whose record the checks read, on a clean mock."""
     env = env if env is not None else os.environ
     missing = [k for k in NEEDED if not env.get(k)]
     if missing:
         raise RetellNotReady(
             f"Retell runs need {', '.join(missing)}; the Retell lane (brief 05) sets them up"
         )
-    open_chat = _open_chat()
+    reset_world(env)
     http = httpx.Client(
         base_url=BASE_URL, headers={"Authorization": f"Bearer {env['RETELL_API_KEY']}"},
         timeout=30,

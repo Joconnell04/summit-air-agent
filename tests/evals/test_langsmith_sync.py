@@ -21,6 +21,7 @@ class FakeClient:
         self.project_ids = {}
         self.created_runs = []
         self.feedback = {}
+        self.comments = {}
         self.query_calls = []
         self.runs = SimpleNamespace(query_v2=self.query_v2)
         self.created_runs_total = 0
@@ -52,10 +53,12 @@ class FakeClient:
     def create_project(self, name, **kwargs):
         self.projects[name] = kwargs
         self.project_ids[name] = uuid4()
-        return SimpleNamespace(id=self.project_ids[name])
+        return SimpleNamespace(id=self.project_ids[name], url=f"https://smith.example/p/{name}")
 
     def read_project(self, *, project_name):
-        return SimpleNamespace(id=self.project_ids[project_name])
+        return SimpleNamespace(
+            id=self.project_ids[project_name], url=f"https://smith.example/p/{project_name}"
+        )
 
     def list_runs(self, **kwargs):
         raise AssertionError("list_runs is deprecated; use runs.query_v2")
@@ -78,10 +81,11 @@ class FakeClient:
     def flush(self):
         pass
 
-    def create_feedback(self, run_id, key, *, score, session_id, feedback_id):
+    def create_feedback(self, run_id, key, *, score, comment=None, session_id, feedback_id):
         assert session_id in self.project_ids.values()
         # Like LangSmith, a repeated feedback id replaces the earlier score.
         self.feedback[feedback_id] = (run_id, key, score)
+        self.comments[feedback_id] = comment
 
 
 @pytest.fixture
@@ -89,9 +93,9 @@ def client():
     return FakeClient()
 
 
-def test_experiment_is_named_stack_profile_suite_run_id(make_run):
-    run = make_run(stack="retell", profile="quality", suite="rigorous", run_id="r7")
-    assert ls.experiment_name(run) == "retell-quality-rigorous-r7"
+def test_experiment_is_named_by_the_run_id(make_run):
+    run = make_run(run_id="20261103-015651-retell-quality-rigorous")
+    assert ls.experiment_name(run) == "20261103-015651-retell-quality-rigorous"
 
 
 def test_sync_creates_the_dataset_with_one_example_per_scenario(client, make_run):
@@ -130,9 +134,12 @@ def test_a_changed_persona_updates_the_example_in_place(client, make_run):
 
 
 def test_experiment_is_a_project_on_the_dataset_with_run_metadata(client, make_run):
-    run = make_run(["a"], stack="retell", profile="quality", suite="smoke", run_id="r9", hash="h1")
+    run = make_run(
+        ["a"], stack="retell", profile="quality", suite="smoke", run_id="r9", hash="h1",
+        prompt_hash="p1", model="claude-sonnet-5-5",
+    )
     name = ls.sync(run, client)
-    assert name == "retell-quality-smoke-r9"
+    assert name == "r9"
     project = client.projects[name]
     assert project["reference_dataset_id"] == client.datasets["summit-air-scenarios"].id
     assert project["metadata"] == {
@@ -140,8 +147,21 @@ def test_experiment_is_a_project_on_the_dataset_with_run_metadata(client, make_r
         "profile": "quality",
         "suite": "smoke",
         "hash": "h1",
+        "prompt_hash": "p1",
+        "model": "claude-sonnet-5-5",
         "run_id": "r9",
     }
+    assert "smoke suite, 1 scenarios" in project["description"]
+
+
+def test_an_old_results_file_without_prompt_hash_or_model_still_syncs(client, make_run):
+    name = ls.sync(make_run(["a"], run_id="old"), client)
+    assert set(client.projects[name]["metadata"]) == {"stack", "profile", "suite", "hash", "run_id"}
+
+
+def test_sync_prints_the_experiment_link(client, make_run, capsys):
+    ls.sync(make_run(["a"], run_id="r1"), client)
+    assert "https://smith.example/p/r1" in capsys.readouterr().out
 
 
 def test_each_scenario_becomes_a_run_linked_to_its_example(client, make_run):
@@ -156,6 +176,63 @@ def test_each_scenario_becomes_a_run_linked_to_its_example(client, make_run):
     }
     assert first["outputs"]["tool_calls"][0]["name"] == "lookup_customer"
     assert first["extra"]["metadata"]["call_id"] == "call-a"
+
+
+def with_checks(make_run, outcome="pass", failures=(), checks=("booking", "read_back")):
+    result = make_run().scenarios[0]
+    result.outcome, result.check_failures, result.checks = outcome, list(failures), list(checks)
+    return result
+
+
+def test_every_code_check_that_ran_gets_its_own_score(make_run):
+    result = with_checks(make_run)
+    feedback = ls.feedback_for(result)
+    assert feedback["check:booking"] == 1 and feedback["check:read_back"] == 1
+
+
+def test_a_failed_check_scores_zero_with_its_reason_and_the_others_stay_one(make_run):
+    result = with_checks(
+        make_run, "fail", ["read_back: booked before the read-back", "read_back: again"]
+    )
+    feedback = ls.feedback_for(result)
+    assert (feedback["check:booking"], feedback["check:read_back"]) == (1, 0)
+    comments = ls.feedback_comments(result)
+    assert comments["check:read_back"] == "read_back: booked before the read-back; read_back: again"
+    assert "check:booking" not in comments
+    assert comments["passed"].startswith("read_back: booked")
+
+
+def test_an_error_run_has_no_check_scores(make_run):
+    result = with_checks(make_run, "error")
+    assert not [k for k in ls.feedback_for(result) if k.startswith("check:")]
+
+
+def test_a_check_name_that_starts_like_another_is_not_mistaken_for_it(make_run):
+    result = with_checks(make_run, "fail", ["safety_lines_said: nope"], ("safety_lines", "safety_lines_said"))
+    feedback = ls.feedback_for(result)
+    assert (feedback["check:safety_lines"], feedback["check:safety_lines_said"]) == (1, 0)
+
+
+def test_comments_carry_the_error_the_grader_notes_and_must_pass_reasons(make_run):
+    result = make_run().scenarios[0]
+    result.grader_notes = "Warm and clear."
+    assert ls.feedback_comments(result) == {"grader_score": "Warm and clear."}
+    result.outcome, result.error = "error", "the call did not finish"
+    result.must_pass_failures = ["gas not escalated"]
+    comments = ls.feedback_comments(result)
+    assert comments["errored"] == "the call did not finish"
+    assert comments["must_pass_failed"] == "gas not escalated"
+
+
+def test_sync_sends_the_comments_with_the_scores(client, make_run):
+    run = make_run(["a"])
+    run.scenarios[0].outcome = "fail"
+    run.scenarios[0].check_failures = ["booking: none made"]
+    run.scenarios[0].checks = ["booking"]
+    ls.sync(run, client)
+    by_key = {key: client.comments[fid] for fid, (_, key, _) in client.feedback.items()}
+    assert by_key["check:booking"] == "booking: none made"
+    assert by_key["cost_usd"] is None
 
 
 def test_feedback_maps_every_measure(make_run):
@@ -186,6 +263,17 @@ def test_feedback_for_an_error_has_errored_and_no_passed_score(make_run):
     assert feedback["errored"] == 1
     assert "passed" not in feedback
     assert len(feedback) == 6
+
+
+def test_scenario_runs_are_tagged_for_filtering_and_errors_are_marked(client, make_run):
+    run = make_run(["a", "b"])
+    run.scenarios[1].outcome, run.scenarios[1].error = "error", "harness: boom"
+    ls.sync(run, client)
+    ok, bad = client.created_runs
+    assert {"stack:livekit", "suite:smoke", "outcome:pass", "flow:booking", "difficulty:rigorous",
+            "trait:stutter"} <= set(ok["tags"])
+    assert "outcome:error" in bad["tags"]
+    assert ok["error"] is None and bad["error"] == "harness: boom"
 
 
 def test_run_outputs_carry_the_outcome(client, make_run):
@@ -311,8 +399,29 @@ def test_cli_rejects_an_invalid_file(monkeypatch, tmp_path, capsys, client):
 
 
 def test_cli_needs_exactly_one_path(capsys):
-    assert ls.main(["langsmith_sync"]) == 2
+    assert ls.main(["langsmith_sync", "a.json", "b.json"]) == 2
     assert "usage" in capsys.readouterr().err
+
+
+def test_cli_without_a_path_uploads_the_newest_results_file(
+    monkeypatch, tmp_path, make_run, client
+):
+    monkeypatch.setattr(ls, "connect", lambda: client)
+    monkeypatch.setattr(ls, "RESULTS_DIR", tmp_path)
+    older = make_run(["a"], run_id="r1", created="2026-11-02T15:00:00Z")
+    newer = make_run(["a"], run_id="r2", created="2026-11-02T16:00:00Z")
+    results.save(newer, tmp_path)
+    results.save(older, tmp_path)
+    (tmp_path / "notes.json").write_text("{}")
+    assert ls.main(["langsmith_sync"]) == 0
+    assert list(client.projects) == ["r2"]
+
+
+def test_cli_without_a_path_and_no_results_says_so(monkeypatch, tmp_path, capsys, client):
+    monkeypatch.setattr(ls, "connect", lambda: client)
+    monkeypatch.setattr(ls, "RESULTS_DIR", tmp_path)
+    assert ls.main(["langsmith_sync"]) == 1
+    assert "run make eval first" in capsys.readouterr().err
 
 
 @pytest.mark.parametrize("error", [LangSmithAuthError, langsmith.LangsmithError])
@@ -346,3 +455,26 @@ def test_each_sample_is_its_own_run_and_the_first_keeps_its_old_id(make_run):
     expected = uuid5(ls.NAMESPACE,
                           f"run/{ls.experiment_name(run)}/{first.scenario_id}")
     assert ls.run_id_for(run, first) == expected
+
+
+def test_the_sync_calls_no_langsmith_method_the_sdk_marks_deprecated():
+    import inspect
+    import re
+    from pathlib import Path
+
+    source = Path(inspect.getfile(langsmith.Client)).read_text()
+    deprecated = set(re.findall(r'@_deprecated\(\s*"(\w+)\(\)', source))
+    assert "list_runs" in deprecated  # the pattern still finds the SDK's markers
+    used = set(re.findall(r"client\.(\w+)\(", Path(ls.__file__).read_text()))
+    assert used, "no client calls found"
+    assert used <= set(dir(langsmith.Client)), "a call names a method the SDK no longer has"
+    assert not used & deprecated
+    assert "runs.query_v2" in Path(ls.__file__).read_text()
+
+
+def test_a_full_sync_raises_no_deprecation_warning(client, make_run):
+    import warnings
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", DeprecationWarning)
+        ls.sync(make_run(["a", "b"]), client)
