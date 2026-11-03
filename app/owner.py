@@ -869,8 +869,9 @@ def ledger(now: dict, before: dict) -> list[dict]:
         row(
             "Safety lines said first",
             f"{lines} of {safety} safety calls",
-            lines if safety else None,
-            before["safety"][0] if before["safety"][1] else None,
+            pct(lines / safety) if safety else None,
+            pct(before["safety"][0] / before["safety"][1]) if before["safety"][1] else None,
+            "%",
         ),
         row(
             "Booked and kept",

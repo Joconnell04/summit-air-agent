@@ -344,6 +344,8 @@ def test_results_list_every_inbound_call_by_hour_and_what_was_turned_away(agent,
     ]
     assert r["zips"] == [{"zip": "10001", "calls": 1}]
     assert r["held"] == {"calls": 1, "lines_first": 1, "booked": 1}
+    rows = {row["label"]: row for row in owner.ledger(r["now"], r["before"])}
+    assert rows["Safety lines said first"]["now"] == "100%", "a share of safety calls, not a count"
     assert len(r["overrides"]) == 1
     assert r["types"][0]["code"] == "safety", "safety sorts first in the filter"
 
