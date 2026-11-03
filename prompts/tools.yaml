@@ -1,0 +1,40 @@
+# What the model is told about each tool. Arguments come from the tool server's request models
+# (app/schemas.py), so a description here can't drift from what the server accepts.
+find_customer: >-
+  Look up a customer by a phone number or an address the caller gave. Returns only records that
+  match, with membership, open jobs, last service date, recent calls and notes. The number the call
+  came from was already looked up before hello.
+get_customer_history: >-
+  Older history for a customer already matched on this call: past jobs, past calls or equipment.
+  Use it for questions like "when were you last out here?" that the call context doesn't answer.
+check_service_area: Check a five-digit ZIP against the service area. Call it as soon as you have the ZIP.
+find_slots: >-
+  Availability for a job type. Without `day` it returns the shape of availability over the coming
+  days; with `day` it returns that day's exact arrival windows. Pass what you've heard that bears on
+  priority in `facts`.
+read_back: >-
+  The read-back before booking. First call returns the exact sentence to say. After the caller
+  clearly says yes, call again with the same address and phone and `confirmed: true`.
+book_appointment: >-
+  Book the window the caller chose, with the intake details. Only after the read-back was confirmed
+  and after find_slots with `day` returned that day's windows. `slot.date` and `slot.window` are the
+  `date` and `window` code from that result (such as "morning"), never the spoken label ("8 to 12").
+  Confirm out loud only after it returns ok.
+reschedule_appointment: >-
+  Move a booking that belongs to this caller to a new window, with the reason. `slot.window` is the
+  window code from find_slots, not the spoken label.
+cancel_appointment: >-
+  Cancel a booking that belongs to this caller, after a clear yes and the reason. Returns two windows
+  to offer instead.
+flag_person: >-
+  Ask a person to follow up: a callback the caller wants, a complaint, a reschedule that needs a
+  person, someone at risk. Give a callback time when the caller named one. Say the sentence it
+  returns.
+record_lead: >-
+  Save one lead: commercial (company, contact, need), membership sign-up interest, or an install or
+  replacement quote. Say the callback time it returns.
+add_note: Append a short note for the team about this customer or this call's job.
+mark_do_not_call: The caller asked not to be called again. Say the sentence it returns.
+end_call: >-
+  Ask to end the call, with the reason. Call it after your goodbye. If it says not to hang up yet,
+  say its sentence and keep listening.

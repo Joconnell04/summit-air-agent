@@ -6,6 +6,8 @@ from evals.replay import diff, replay, tool_sequence
 from evals.run import Harness, Models, build_run
 from evals.scenario import Scenario
 
+# The worker says the greeting from the tenant's `voice` lines with no model step, so the in-process
+# agent does too and the scripted agent model is never asked for one.
 GREETING = "Thanks for calling Summit Air, this is the virtual assistant. How can I help?"
 
 
@@ -35,7 +37,7 @@ def harness(seed_dir, tmp_path, agent, caller, grader, **kw):
 
 
 def run(seed_dir, tmp_path, s, agent_replies, caller_replies, grade=None, **kw):
-    agent = ScriptedModel([say(GREETING)] + agent_replies)
+    agent = ScriptedModel(agent_replies)
     caller = ScriptedModel(caller_replies)
     grader = ScriptedModel([grade or grade_reply()])
     return harness(seed_dir, tmp_path, agent, caller, grader, **kw).run(s), agent, caller, grader
@@ -47,6 +49,7 @@ def test_a_call_that_meets_its_checks_passes(seed_dir, tmp_path):
     assert result.outcome == "pass"
     assert result.grader_score == 4
     assert [t.role for t in result.transcript] == ["agent", "caller", "agent"]
+    assert result.transcript[0].text == GREETING
     assert result.call_id.startswith("eval-test-call-1-")
 
 
@@ -132,8 +135,8 @@ def test_safety_lines_come_from_the_server_not_the_model(seed_dir, tmp_path):
     result, agent, *_ = run(seed_dir, tmp_path, s, [], [say("Okay, going out. Bye."), say("[END]")])
     assert result.outcome == "pass", result.check_failures
     assert result.transcript[2].text.startswith("Please get everyone out of the house now.")
-    # The greeting and the reply to the goodbye; the lines themselves needed no model call.
-    assert len(agent.calls) == 2
+    # Only the reply to the goodbye; the greeting and the safety lines needed no model call.
+    assert len(agent.calls) == 1
 
 
 def test_a_tool_call_reaches_the_server_and_is_recorded(seed_dir, tmp_path):
@@ -153,14 +156,15 @@ def test_an_out_of_area_refusal_is_recorded_by_zip(seed_dir, tmp_path):
     replies = [use("check_service_area", zip="11501"), say("Sorry, that's outside our area.")]
     result, agent, *_ = run(seed_dir, tmp_path, s, replies, [say("[END]")])
     assert result.outcome == "pass", result.check_failures
-    assert '"refused": "out_of_area"' in agent.calls[2]["messages"][-1]["content"][0]["content"]
+    assert '"refused": "out_of_area"' in agent.calls[1]["messages"][-1]["content"][0]["content"]
 
 
 def test_server_hints_reach_the_model(seed_dir, tmp_path):
     s = scenario(opening="Hi, I manage a restaurant in Bushwick and the heat is out.")
     _, agent, *_ = run(seed_dir, tmp_path, s, [say("Sorry, we only work on homes.")],
                        [say("[END]")])
-    assert "marked this caller as commercial" in agent.calls[1]["messages"][-1]["content"]
+    assert "can't book" in agent.calls[0]["messages"][-1]["content"]
+    assert "[server]" in agent.calls[0]["messages"][-1]["content"]
 
 
 def test_caller_lines_are_roughened_for_harder_scenarios(seed_dir, tmp_path):
@@ -170,7 +174,7 @@ def test_caller_lines_are_roughened_for_harder_scenarios(seed_dir, tmp_path):
 
 
 def test_replayed_turns_are_used_word_for_word(seed_dir, tmp_path):
-    agent = ScriptedModel([say(GREETING), say("Okay."), say("Bye.")])
+    agent = ScriptedModel([say("Okay."), say("Bye.")])
     h = harness(seed_dir, tmp_path, agent, ScriptedModel([]), ScriptedModel([grade_reply()]))
     result = h.run(scenario(difficulty="rigorous"), caller_turns=["Line ONE.", "line two"])
     assert [t.text for t in result.transcript if t.role == "caller"] == ["Line ONE.", "line two"]
@@ -179,8 +183,8 @@ def test_replayed_turns_are_used_word_for_word(seed_dir, tmp_path):
 def test_cost_adds_the_agent_the_caller_and_the_grader(seed_dir, tmp_path):
     result, *_ = run(seed_dir, tmp_path, scenario(), [say("Okay.", cost=0.01)],
                      [say("[END]", cost=0.002)], grade=grade_reply())
-    # greeting 0.001 + reply 0.01 + caller 0.002 + grader 0.001
-    assert result.cost_usd == pytest.approx(0.014)
+    # reply 0.01 + caller 0.002 + grader 0.001; the greeting is spoken from code and costs nothing
+    assert result.cost_usd == pytest.approx(0.013)
 
 
 def test_each_scenario_gets_its_own_call_and_database(seed_dir, tmp_path):
@@ -206,10 +210,10 @@ def test_replay_reruns_the_recorded_caller_lines_and_finds_a_changed_tool_sequen
     first, *_ = run(seed_dir, tmp_path, s, [use("check_service_area", zip="11231"), say("Yes.")],
                     [say("[END]")])
     same = harness(seed_dir, tmp_path, ScriptedModel(
-        [say(GREETING), use("check_service_area", zip="11231"), say("Yes.")]),
+        [use("check_service_area", zip="11231"), say("Yes.")]),
         ScriptedModel([]), ScriptedModel([grade_reply()]))
     assert diff(tool_sequence(first), tool_sequence(replay(first, same))) == []
-    changed = harness(seed_dir, tmp_path, ScriptedModel([say(GREETING), say("Yes.")]),
+    changed = harness(seed_dir, tmp_path, ScriptedModel([say("Yes.")]),
                       ScriptedModel([]), ScriptedModel([grade_reply()]))
     assert diff(tool_sequence(first), tool_sequence(replay(first, changed))) == [
         "  step 1: was check_service_area, now -"

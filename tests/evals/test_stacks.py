@@ -28,7 +28,10 @@ def test_prompt_files_skip_the_readme_and_fall_back_to_the_stand_in(tmp_path):
     assert [p.name for p in prompt_files(tmp_path)] == ["10-voice.md", "20-booking.md"]
 
 
-def test_system_prompt_ends_with_the_call_context(tmp_path):
+def test_system_prompt_ends_with_the_call_context(tmp_path, monkeypatch):
+    from evals import stacks
+
+    monkeypatch.setattr(stacks, "_assemble", lambda: None)
     (tmp_path / "10-voice.md").write_text("Be kind.")
     text = system_prompt({"caller": {"known_number": False}}, tmp_path)
     assert text.startswith("Be kind.")
@@ -75,9 +78,10 @@ def test_the_worker_greeting_and_server_notes_come_from_assemble(monkeypatch):
     assert stacks.server_notes(["commercial"]) == ["[server] commercial"]
 
 
-def test_without_assemble_there_is_no_fixed_greeting_and_notes_are_the_harness_own():
+def test_without_assemble_there_is_no_fixed_greeting_and_notes_are_the_harness_own(monkeypatch):
     from evals import stacks
 
+    monkeypatch.setattr(stacks, "_assemble", lambda: None)
     assert stacks.greeting({"tenant": {"slug": "summit-air"}}) is None
     assert stacks.server_notes(["commercial", "unknown"]) == [
         "(Server note: The server marked this caller as commercial; Summit Air doesn't book them.)"
@@ -116,7 +120,8 @@ class StubServer:
         self.lines = []
 
     def start(self, call_id, caller_id):
-        return {"ok": True, "say": "", "data": {"tenant": {"slug": "summit-air"}}}
+        tenant = {"slug": "summit-air", "name": "Summit Air", "timezone": "America/New_York"}
+        return {"ok": True, "say": "", "data": {"tenant": tenant, "knowledge": {}}}
 
     def turn(self, call_id, speaker, text, timings=None):
         if speaker == "agent":
@@ -129,7 +134,7 @@ class StubServer:
 
 
 def test_a_safety_gate_refusal_is_spoken_and_the_model_gets_no_reply_step():
-    model = ScriptedModel([say("Hello."), use("find_slots", "One moment.", job_type="no_heat"),
+    model = ScriptedModel([use("find_slots", "One moment.", job_type="no_heat"),
                            say("never said")])
     server = StubServer()
     agent = InProcessAgent(server, model, "c1", "(212) 555-0999")
@@ -137,4 +142,5 @@ def test_a_safety_gate_refusal_is_spoken_and_the_model_gets_no_reply_step():
     turn = agent.hear("Book me now.")
     assert turn.text == "One moment. Please get outside first."
     assert server.lines[-1] == "One moment. Please get outside first."
-    assert len(model.calls) == 2
+    # The greeting is spoken from the tenant's voice lines; the one model call is the tool hop.
+    assert len(model.calls) == 1
