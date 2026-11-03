@@ -140,6 +140,12 @@ class BookIn(CallRef):
     slot: Slot
     details: JobDetails
     priority: Priority | None = Field(None, description="The agent's view; logged, not used")
+    separate_problem: bool = Field(
+        False,
+        description="True only when the caller has an open visit at this address and confirmed "
+        "this is a different problem that needs its own visit. To move a visit, use "
+        "reschedule_appointment.",
+    )
 
 
 class RescheduleIn(CallRef):
@@ -158,6 +164,25 @@ class CallbackTime(Body):
         None, max_length=40, description='A local time such as "4:30 PM", or ISO with an offset'
     )
     callback_in_minutes: int | None = Field(None, ge=1, le=10080)
+    callback_after: str | None = Field(
+        None,
+        max_length=40,
+        description='The caller asked to be called after this local time today, such as "5 PM". '
+        "Only what the caller said; use it instead of callback_time.",
+    )
+    callback_before: str | None = Field(
+        None,
+        max_length=40,
+        description='The caller asked to be called before this local time today, such as "3 PM". '
+        "Only what the caller said; use it instead of callback_time.",
+    )
+
+    @model_validator(mode="after")
+    def window_or_time(self):
+        window = self.callback_after or self.callback_before
+        if window and (self.callback_time or self.callback_in_minutes is not None):
+            raise ValueError("give callback_after or callback_before, or a callback time, not both")
+        return self
 
 
 class FlagIn(CallRef, CallbackTime):

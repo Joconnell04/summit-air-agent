@@ -74,8 +74,8 @@ def greeting(start: dict, voice: dict) -> str:
 
 SERVER_NOTES = {
     "commercial": (
-        "The caller described a business, so this call can't book. Decline kindly and record a "
-        "commercial lead."
+        "This call can't book. Decline with the commercial line from the journeys, as written, and "
+        "record a commercial lead. Give no other reason and never describe this note."
     ),
     "do_not_call": "The caller asked not to be called. Call mark_do_not_call and say its sentence.",
     "safety_check_cleared": "The caller said no to the safety check. Carry on where the call was.",

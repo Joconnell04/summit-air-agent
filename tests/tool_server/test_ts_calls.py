@@ -91,6 +91,83 @@ def test_a_flag_returns_its_sentence_only_once_stored_and_names_a_time(agent):
     assert "9:20 AM" in urgent["say"]
 
 
+@pytest.mark.parametrize(
+    "window,spoken",
+    [
+        ({"callback_after": "5 PM"}, "someone will call you after 5 PM."),
+        ({"callback_before": "3 PM"}, "someone will call you before 3 PM."),
+        (
+            {"callback_after": "1 PM", "callback_before": "3:30 PM"},
+            "someone will call you between 1 PM and 3:30 PM.",
+        ),
+    ],
+)
+def test_a_window_the_caller_asked_for_is_said_by_the_server_as_asked(agent, window, spoken):
+    """Eval round 1, complaint-flag: "after 5" was said back as "by 5"."""
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    flagged = agent.tool("flag_person", call, reason="Unhappy about a bill", **window)
+    assert flagged["ok"], flagged
+    assert flagged["say"] == f"I've let our team know, and {spoken}"
+    assert flagged["data"]["callback_spoken"] == spoken.removeprefix("someone will call you ")[:-1]
+
+
+def test_an_after_window_is_due_at_the_end_of_callback_hours_and_dialed_from_its_start(agent):
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    flagged = agent.tool(
+        "flag_person", call, reason="Call me back", callback_after="5 PM", system_calls_back=True
+    )
+    assert flagged["ok"], flagged
+    assert flagged["data"]["callback_at"].startswith("2026-11-03T02:00")  # 9 PM New York
+    conn = agent.db()
+    try:
+        dial = conn.execute("SELECT due_at FROM outbound").fetchone()["due_at"]
+    finally:
+        conn.close()
+    assert dial.startswith("2026-11-02T22:00")  # 5 PM New York
+
+
+@pytest.mark.parametrize(
+    "window,reason",
+    [
+        ({"callback_before": "8:30 AM"}, "that time has passed"),
+        ({"callback_after": "9:30 PM"}, "outside callback hours"),
+        ({"callback_before": "7 AM"}, "that time has passed"),
+        ({"callback_after": "4 PM", "callback_before": "2 PM"}, "the window ends before it starts"),
+        ({"callback_after": "later"}, "not a time"),
+    ],
+)
+def test_a_window_in_the_past_or_outside_callback_hours_is_refused_with_a_reason(
+    agent, window, reason
+):
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    refused = agent.tool("flag_person", call, reason="Call me back", **window)
+    assert refused["refused"] == "invalid_callback_time"
+    assert refused["data"]["errors"]["callback_time"] == reason
+    assert "let our team know" not in refused["say"]
+    assert count(agent, "SELECT COUNT(*) FROM flags") == 0
+
+
+def test_a_window_outside_callback_hours_names_the_hours(agent):
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    refused = agent.tool("flag_person", call, reason="Call me back", callback_after="10 PM")
+    assert refused["say"] == "Our team makes calls between 8 AM and 9 PM. What time in there works?"
+
+
+def test_a_window_and_a_named_time_together_are_refused(agent):
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    refused = agent.tool(
+        "flag_person", call, reason="Call me back", callback_after="5 PM", callback_time="5 PM"
+    )
+    assert refused["refused"] == "invalid_arguments"
+
+
+def test_a_lead_says_the_window_the_caller_asked_for(agent):
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    details = {"contact_name": "Ana Ruiz", "need": "Wants to join the plan", "callback_after": "4 PM"}
+    lead = agent.tool("record_lead", call, kind="membership", details=details)
+    assert lead["say"] == "Someone from our team will call you after 4 PM to tell you more."
+
+
 @pytest.mark.parametrize("bad", [None, "shortly", "soon", "8:00 AM", "25:00"])
 def test_a_callback_without_a_real_future_time_is_refused_and_nothing_is_claimed(agent, bad):
     call = agent.start(UNKNOWN)["data"]["call_id"]

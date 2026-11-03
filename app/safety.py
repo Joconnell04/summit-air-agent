@@ -44,6 +44,17 @@ YES = (
 )
 UNSURE = ("dont know", "not sure", "no idea", "cant tell")
 NO = ("no", "nope", "nah", "not really", "nothing", "i dont", "dont smell", "not smelling")
+# Words right after a mention that say it is not happening: "the CO alarm is quiet". Counted only
+# in the answer to the check question, so the same words outside that answer still fire.
+QUIET_AFTER = (
+    "is quiet",
+    "is silent",
+    "isnt going off",
+    "is not going off",
+    "hasnt gone off",
+    "has not gone off",
+    "didnt go off",
+)
 
 
 @dataclass
@@ -54,27 +65,43 @@ class SafetyAction:
     variant: int = 0
 
 
-def _negated(text_words: str, phrase: str) -> bool:
+def _quiet_after(rest: str) -> bool:
+    """The words after a mention say it is quiet, allowing one word between ("alarm is quiet")."""
+    following = rest.split()
+    for skip in (0, 1):
+        tail = " " + " ".join(following[skip:]) + " "
+        if any(tail.startswith(words(q)) for q in QUIET_AFTER):
+            return True
+    return False
+
+
+def _negated(text_words: str, phrase: str, quiet: bool = False) -> bool:
     """True only when every mention of the phrase comes straight after a negating word, as in
-    "I don't smell gas" or "no gas smell". "I don't know, I smell gas" is not negated."""
+    "I don't smell gas" or "no gas smell". "I don't know, I smell gas" is not negated. With quiet,
+    a mention followed by words like "is quiet" also counts as negated."""
     target = words(phrase)
     start = text_words.find(target)
     if start < 0:
         return False
     while start >= 0:
         before = text_words[: start + 1]
-        if not any(before.endswith(words(n)) for n in NEGATORS):
+        after = text_words[start + len(target) - 1 :]
+        negated = any(before.endswith(words(n)) for n in NEGATORS)
+        if not negated and not (quiet and _quiet_after(after)):
             return False
         start = text_words.find(target, start + 1)
     return True
 
 
-def clear_signal(text: str, cfg: dict) -> str | None:
-    """The kind of the first clear, not negated signal in the text, or None."""
+def clear_signal(text: str, cfg: dict, answering_check: bool = False) -> str | None:
+    """The kind of the first clear, not negated signal in the text, or None. answering_check is
+    True for the caller's answer to the check question, where "the CO alarm is quiet" is a no."""
     text_words = words(text)
     for kind, spec in cfg["kinds"].items():
         for phrase in spec["clear"]:
-            if has_phrase(text_words, phrase) and not _negated(text_words, phrase):
+            if has_phrase(text_words, phrase) and not _negated(
+                text_words, phrase, answering_check
+            ):
                 return kind
     return None
 
@@ -100,11 +127,17 @@ def answer_to_check(text: str, cfg: dict) -> str:
     """yes, no or unclear. Anything that sounds like a yes, an unsure answer, or a mention of the
     smell again counts as a yes: a false alarm costs a few seconds, a missed leak costs much more."""
     text_words = words(text)
-    if clear_signal(text, cfg) or vague_signal(text, cfg):
+    if clear_signal(text, cfg, answering_check=True) or vague_signal(text, cfg):
         return "yes"
     if _negated_clear(text, cfg):
         return "no"
-    if any(has_phrase(text_words, w) for w in UNSURE + YES):
+    if any(has_phrase(text_words, w) for w in UNSURE):
+        return "yes"
+    # A plain denial from the tenant's list ("definitely not gas") is a no, though "definitely"
+    # alone sounds like a yes.
+    if any(has_phrase(text_words, w) for w in cfg.get("denials", [])):
+        return "no"
+    if any(has_phrase(text_words, w) for w in YES):
         return "yes"
     if any(has_phrase(text_words, w) for w in NO):
         return "no"
@@ -119,7 +152,7 @@ def check_caller_turn(
     text: str, state: str, kind: str | None, variant: int, cfg: dict
 ) -> SafetyAction:
     """What the agent must do after this caller line, given the call's safety state."""
-    signal = clear_signal(text, cfg)
+    signal = clear_signal(text, cfg, answering_check=state == "checking")
     if signal:
         if state == "lines_said" and signal == kind:
             variants = cfg["kinds"][kind]["variants"]
