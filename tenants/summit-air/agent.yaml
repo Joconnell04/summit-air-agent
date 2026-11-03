@@ -166,6 +166,16 @@ callbacks:
   # When the FSM is down or refuses a booking, someone calls back within this.
   fsm_down_minutes: 60
 
+# Email to the on-call person when an urgent flag is raised after hours (journey 11). ASSUMED
+# address until Summit Air gives one. seek_earlier is left out: that booking already has a time,
+# and the office looks for an earlier one in the morning.
+on_call_alerts:
+  email: on-call@summit-air.example
+  priorities: [Urgent]
+  skip_kinds: [seek_earlier]
+  # A flag older than this when the job first sees it is not emailed: the moment has passed.
+  max_age_minutes: 120
+
 repeat_callers:
   link_within_minutes: 10
   drops_before_callback_offer: 2
@@ -202,3 +212,9 @@ lines:
   limit: I've already got that taken care of on this call, so let me have someone from the team follow up.
   slot_taken: That window just filled up.
   anything_else_first: Is there anything else I can help with?
+  # The first line of a call the system places (journey 12). {day} is "today", "tomorrow" or a
+  # weekday; {window} is spoken, such as "2 to 4".
+  earlier_slot_offer: >-
+    Hi, this is Summit Air calling about your appointment. We've had an opening {day} at {window},
+    would you like it?
+  callback_opening: Hi, this is Summit Air calling you back, like we said we would.

@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Owner view{% endblock %}
+{% block head %}
+<style>
+form { display: flex; gap: 8px; align-items: center; margin: 22vh auto 0; width: 320px; }
+input {
+  flex: 1; height: var(--control-h); padding: 0 8px; border-radius: var(--radius);
+  border: 1px solid var(--border); background: var(--raised); color: var(--text); font: inherit;
+  font-size: var(--small);
+}
+input:focus { outline: none; border-color: var(--accent); }
+button.btn { cursor: pointer; font: inherit; font-size: var(--small); }
+p { text-align: center; color: var(--urgent); font-size: var(--small); }
+</style>
+{% endblock %}
+{% block body %}
+<form method="post" action="/owner/login">
+  <input name="token" type="password" placeholder="Token" autofocus>
+  <button class="btn" type="submit">Open</button>
+</form>
+{% if failed %}<p>Wrong token</p>{% endif %}
+{% endblock %}

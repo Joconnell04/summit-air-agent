@@ -52,6 +52,15 @@ class HeartbeatIn(Body):
     worker: str = Field(min_length=1, max_length=60)
 
 
+class OutboundClaimIn(Body):
+    worker: str = Field(min_length=1, max_length=60)
+
+
+class OutboundDoneIn(Body):
+    answered: bool = Field(description="Someone picked up and the call went ahead")
+    voicemail: bool = Field(False, description="Not answered, and a voicemail was left")
+
+
 # ---- tools -------------------------------------------------------------------------------------
 
 
@@ -151,6 +160,12 @@ class CallbackTime(Body):
 class FlagIn(CallRef, CallbackTime):
     reason: str = Field(min_length=3, max_length=300)
     priority: Literal["Normal", "High", "Urgent"] = "Normal"
+    system_calls_back: bool = Field(
+        False,
+        description="True when the caller only asked to be called back (after dropped calls, or a "
+        "plain 'call me back'): the system dials them at that time (journey 12). False when a "
+        "person has to handle it.",
+    )
 
 
 class LeadDetails(CallbackTime):

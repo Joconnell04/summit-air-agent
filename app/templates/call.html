@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% set call = trace.call %}
+{% block title %}{{ tenant }} · call {{ call.id }}{% endblock %}
+{% block head %}
+<style>
+main { max-width: 980px; }
+.meta { display: flex; gap: 6px; flex-wrap: wrap; padding: 10px 14px; }
+.who { color: var(--muted); width: 64px; }
+.event td { vertical-align: top; padding-top: 8px; padding-bottom: 8px; height: auto; }
+.event.agent .text { color: var(--muted); }
+.tool { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: var(--small); }
+.args { color: var(--faint); font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: var(--small); word-break: break-word; margin-top: 3px; }
+</style>
+{% endblock %}
+{% block body %}
+<header class="bar">
+  <a class="btn" href="/owner?day={{ call.started_at[:10] }}">Back</a>
+  <span class="name">Call {{ call.id }}</span>
+  <span class="muted num">{{ call.caller_id }}</span>
+  <span class="spacer"></span>
+  <span class="faint num">{{ clock(call.started_at) }}{% if call.ended_at %} to {{ clock(call.ended_at) }}{% endif %}</span>
+</header>
+<main>
+  <section class="panel">
+    <div class="meta">
+      <span class="chip">{{ call.direction | capitalize }}</span>
+      <span class="chip">{{ (call.outcome or "in progress") | replace("_", " ") | capitalize }}</span>
+      {% if call.after_hours %}<span class="chip">After hours</span>{% endif %}
+      {% if call.safety_state not in ("none", "cleared") %}<span class="chip urgent">Safety: {{ call.safety_kind or "check" }}</span>{% endif %}
+      {% if call.commercial %}<span class="chip">Commercial</span>{% endif %}
+      {% if call.linked_call_id %}<a class="chip accent" href="/owner/calls/{{ call.linked_call_id }}">Linked call</a>{% endif %}
+    </div>
+  </section>
+
+  {% if trace.flags %}
+  <section class="panel">
+    <h2>Flags</h2>
+    <table><tbody>
+    {% for f in trace.flags %}
+      <tr><td class="tight num muted">{{ clock(f.created_at) }}</td><td class="tight">{{ f.kind | replace("_", " ") | capitalize }}</td><td class="wrap">{{ f.reason }}</td><td class="tight right"><span class="chip{% if f.priority == 'Urgent' %} urgent{% elif f.priority == 'High' %} high{% endif %}">{{ f.priority }}</span></td></tr>
+    {% endfor %}
+    </tbody></table>
+  </section>
+  {% endif %}
+
+  <section class="panel">
+    <h2>Timeline <span class="count">{{ trace.events | length }}</span></h2>
+    <table><tbody>
+    {% for e in trace.events %}
+      {% if e.type == "turn" %}
+      <tr class="event {{ e.speaker }}">
+        <td class="tight num faint">{{ clock(e.at) }}</td>
+        <td class="tight who">{{ e.speaker | capitalize }}</td>
+        <td class="wrap text">{{ e.text }}{% if e.safety_action %} <span class="chip urgent">Safety {{ e.safety_action | replace("_", " ") }}</span>{% endif %}</td>
+      </tr>
+      {% else %}
+      <tr class="event">
+        <td class="tight num faint">{{ clock(e.at) }}</td>
+        <td class="tight who">Tool</td>
+        <td class="wrap">
+          <span class="tool">{{ e.tool }}</span>
+          {% if e.ok %}<span class="chip good">ok</span>{% else %}<span class="chip high">{{ e.refused }}</span>{% endif %}
+          {% if e.gate %}<span class="chip accent">{{ e.gate }}</span>{% endif %}
+          <span class="faint num">{{ e.ms | round | int }} ms</span>
+          <div class="args">{{ e.args | tojson }}</div>
+          {% if e.say %}<div class="muted">{{ e.say }}</div>{% endif %}
+          {% if e.error %}<div class="args">{{ e.error }}</div>{% endif %}
+        </td>
+      </tr>
+      {% endif %}
+    {% endfor %}
+    </tbody></table>
+  </section>
+</main>
+{% endblock %}

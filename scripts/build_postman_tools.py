@@ -455,6 +455,55 @@ def build() -> dict:
             "Worker heartbeat", "POST", "healthz/heartbeat", body={"worker": "postman"}, check=ok()
         ),
     ]
+    html = "pm.test('is HTML', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('text/html'));"
+    outbound_and_owner = [
+        item(
+            "Claim the next outbound call",
+            "POST",
+            "outbound/claim",
+            body={"worker": "postman"},
+            check=ok(
+                "pm.test('returns a call or none', () => pm.expect(pm.response.json().data).to.have.property('outbound'));"
+            ),
+        ),
+        item(
+            "Report an outbound call that was never claimed",
+            "POST",
+            "outbound/{{outbound_id}}/done",
+            body={"answered": False},
+            check=refused("invalid_state"),
+            pre="pm.collectionVariables.set('outbound_id', '999999');",
+        ),
+        item(
+            "Owner view without a token",
+            "GET",
+            "owner",
+            envelope=False,
+            check="pm.test('shows the token form', () => pm.response.to.have.status(401));\n" + html,
+        ),
+        item(
+            "Owner view login with a wrong token",
+            "POST",
+            "owner/login",
+            envelope=False,
+            check="pm.test('is refused', () => pm.response.to.have.status(401));",
+        ),
+        item(
+            "Owner view with the token",
+            "GET",
+            "owner?token={{owner_token}}",
+            envelope=False,
+            check="pm.test('opens the page', () => pm.response.to.have.status(200));\n"
+            + "pm.test('shows the bookings', () => pm.expect(pm.response.text()).to.include('Bookings'));",
+        ),
+        item(
+            "A call's timeline",
+            "GET",
+            "owner/calls/{{call_id}}",
+            envelope=False,
+            check="pm.test('opens the timeline', () => pm.response.to.have.status(200));\n" + html,
+        ),
+    ]
     scenarios = booking_flow[0]
     scenarios["request"]["url"] = "{{st_url}}/debug/scenarios"
     return {
@@ -470,6 +519,7 @@ def build() -> dict:
             folder("3 Safety call", safety_flow),
             folder("4 Known caller", known_flow),
             folder("5 Triage", triage),
+            folder("6 Outbound and owner view", outbound_and_owner),
         ],
     }
 
@@ -479,6 +529,7 @@ def environment() -> dict:
         "base_url": "http://127.0.0.1:8100",
         "st_url": "http://127.0.0.1:8101",
         "debug_token": "dev-debug-token",
+        "owner_token": "dev-owner-token",
     }
     return {
         "name": "Tool server (local)",

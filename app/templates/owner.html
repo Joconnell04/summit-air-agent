@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+{% macro pct(value) %}{% if value is none %}–{% else %}{{ (value * 100) | round | int }}%{% endif %}{% endmacro %}
+{% macro priority_chip(level) %}{% if level == "Urgent" %}<span class="chip urgent">Urgent</span>{% elif level == "High" %}<span class="chip high">High</span>{% else %}<span class="chip">{{ level }}</span>{% endif %}{% endmacro %}
+{% macro day_link(d) %}/owner?day={{ d.isoformat() }}{% if slug %}&tenant={{ slug }}{% endif %}{% endmacro %}
+{% block head %}{% if is_today %}<meta http-equiv="refresh" content="30">{% endif %}
+<style>
+.day { display: flex; align-items: center; gap: 6px; }
+.day .label { min-width: 120px; text-align: center; }
+.tiles { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; margin-bottom: 14px; }
+.tile { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; }
+.tile .k { color: var(--muted); font-size: var(--small); }
+.tile .v { font-size: 22px; margin-top: 4px; }
+.tile .s { color: var(--faint); font-size: var(--small); margin-top: 2px; }
+.tile.alert .v { color: var(--urgent); }
+.cols { display: grid; grid-template-columns: minmax(0, 1.75fr) minmax(0, 1fr); gap: 14px; align-items: start; }
+.bar { height: 4px; border-radius: 2px; background: var(--raised); width: 72px; display: inline-block; vertical-align: middle; }
+.bar i { display: block; height: 100%; border-radius: 2px; background: var(--accent); }
+@media (max-width: 1100px) { .cols { grid-template-columns: 1fr; } .tiles { grid-template-columns: repeat(3, 1fr); } }
+</style>
+{% endblock %}
+{% block title %}{{ tenant }} · {{ day.strftime("%b %-d") }}{% endblock %}
+{% block body %}
+<header class="bar">
+  <span class="name">{{ tenant }}</span>
+  <span class="spacer"></span>
+  <nav class="day">
+    <a class="btn" href="{{ day_link(day - timedelta(days=1)) }}" title="Previous day">‹</a>
+    <span class="label">{{ day.strftime("%a %b %-d") }}</span>
+    <a class="btn" href="{{ day_link(day + timedelta(days=1)) }}" title="Next day">›</a>
+    {% if not is_today %}<a class="btn" href="/owner{% if slug %}?tenant={{ slug }}{% endif %}">Today</a>{% endif %}
+  </nav>
+  <span class="faint" title="Refreshes every 30 seconds on today">{{ clock(now) }}</span>
+</header>
+<main>
+  <div class="tiles">
+    <div class="tile"><div class="k">Calls</div><div class="v num">{{ calls | length }}</div>
+      <div class="s">{{ calls | selectattr("direction", "equalto", "outbound") | list | length }} placed by us</div></div>
+    <div class="tile"><div class="k">Booked</div><div class="v num">{{ rates.booked }}</div>
+      <div class="s">of {{ rates.calls }} wanting a visit</div></div>
+    <div class="tile"><div class="k">Booking rate</div><div class="v num">{{ pct(rates.rate) }}</div>
+      <div class="s">visit calls booked</div></div>
+    <div class="tile{% if needs_person %} alert{% endif %}"><div class="k">Need a person</div><div class="v num">{{ needs_person }}</div>
+      <div class="s">calls with open flags</div></div>
+    <div class="tile"><div class="k">Callbacks done</div><div class="v num">{{ callbacks.done }}/{{ callbacks.promised }}</div>
+      <div class="s">{{ callbacks.overdue }} overdue</div></div>
+    <div class="tile"><div class="k">Booked and kept</div><div class="v num">{{ pct(kept.rate) }}</div>
+      <div class="s">{{ kept.kept }} of {{ kept.checked }}, 30 days</div></div>
+  </div>
+
+  <div class="cols">
+    <div>
+      <section class="panel">
+        <h2>Flags <span class="count">{{ flags | length }}</span></h2>
+        {% if flags %}
+        <table>
+          <tbody>
+          {% for f in flags %}
+            <tr class="{% if not f.open %}closed{% endif %}">
+              <td class="tight num muted">{{ clock(f.at) }}</td>
+              <td class="tight">{{ priority_chip(f.priority) }}</td>
+              <td class="tight">{{ f.kind }}</td>
+              <td class="wrap">{{ f.reason }}</td>
+              <td class="tight right"><span class="chips">
+                {% if not f.open %}<span class="chip">Done</span>{% endif %}
+                {% if f.alert == "sent" %}<span class="chip accent" title="Emailed to on call">Emailed</span>{% elif f.alert == "held" %}<span class="chip" title="No mail server set; email held">Email held</span>{% elif f.alert == "failed" %}<span class="chip urgent">Email failed</span>{% endif %}
+              </span></td>
+              <td class="tight right"><a class="btn" href="/owner/calls/{{ f.call_id }}">Call</a></td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+        {% else %}<div class="empty">None</div>{% endif %}
+      </section>
+
+      <section class="panel">
+        <h2>Bookings <span class="count">{{ bookings | length }}</span></h2>
+        {% if bookings %}
+        <table>
+          <thead><tr><th>Booked</th><th>Job</th><th>Address</th><th>Window</th><th>Priority</th><th></th><th></th></tr></thead>
+          <tbody>
+          {% for b in bookings %}
+            <tr>
+              <td class="tight num muted">{{ clock(b.at) }}</td>
+              <td class="tight">{{ b.job_type }}</td>
+              <td>{{ b.address }} <span class="faint">{{ b.zip }}</span></td>
+              <td class="tight">{% if b.window %}{{ b.window.day | capitalize }} {{ b.window.label }}{% endif %}</td>
+              <td class="wrap">{{ priority_chip(b.priority) }}{% if b.reasons %} <span class="muted">{{ b.reasons }}</span>{% endif %}</td>
+              <td class="tight right"><span class="chips">
+                {% if b.status == "queued" %}<span class="chip high" title="The FSM was down; the retry job will send it">Queued</span>{% elif b.status == "failed" %}<span class="chip urgent">Failed</span>{% elif b.status == "sending" %}<span class="chip">Sending</span>{% endif %}
+                {% if b.offer == "accepted" %}<span class="chip good">Moved earlier</span>{% elif b.offer in ("queued", "dialing") %}<span class="chip accent">Offering earlier</span>{% elif b.offer %}<span class="chip" title="Earlier opening offered">Offer {{ b.offer | replace("_", " ") }}</span>{% elif b.seek_earlier %}<span class="chip accent">Seeking earlier</span>{% endif %}
+                {% if b.safety_override %}<span class="chip urgent" title="Booked after the safety lines, at the caller's insistence">Safety override</span>{% endif %}
+              </span></td>
+              <td class="tight right"><a class="btn" href="/owner/calls/{{ b.call_id }}">Call</a></td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+        {% else %}<div class="empty">None</div>{% endif %}
+      </section>
+
+      <section class="panel">
+        <h2>Calls <span class="count">{{ calls | length }}</span></h2>
+        {% if calls %}
+        <table>
+          <thead><tr><th>Started</th><th>Caller</th><th>Type</th><th>Outcome</th><th class="right">Length</th><th></th><th></th></tr></thead>
+          <tbody>
+          {% for c in calls %}
+            <tr>
+              <td class="tight num muted">{{ clock(c.at) }}</td>
+              <td class="tight num">{{ c.caller }}{% if c.direction == "outbound" %} <span class="chip accent">Placed</span>{% endif %}</td>
+              <td>{{ c.type_label }}</td>
+              <td>{{ c.outcome | replace("_", " ") | capitalize }}</td>
+              <td class="tight right num muted">{% if c.seconds is not none %}{{ c.seconds // 60 }}:{{ "%02d" | format(c.seconds % 60) }}{% endif %}</td>
+              <td class="tight right">{% if c.open_flags %}<span class="chip high">{{ c.open_flags }} open</span>{% endif %}</td>
+              <td class="tight right"><a class="btn" href="/owner/calls/{{ c.id }}">Timeline</a></td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+        {% else %}<div class="empty">None</div>{% endif %}
+      </section>
+    </div>
+
+    <div>
+      <section class="panel">
+        <h2>Booking rate</h2>
+        {% if rates.rows %}
+        <table>
+          <thead><tr><th>Type</th><th class="right">Calls</th><th class="right">Booked</th><th class="right">Rate</th><th></th></tr></thead>
+          <tbody>
+          {% for r in rates.rows %}
+            <tr>
+              <td>{{ r.label }}</td>
+              <td class="right num">{{ r.calls }}</td>
+              <td class="right num">{{ r.booked }}</td>
+              <td class="right num">{{ pct(r.rate) }}</td>
+              <td class="tight"><span class="bar"><i style="width: {{ (r.rate * 100) | round | int }}%"></i></span></td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+        {% else %}<div class="empty">None</div>{% endif %}
+      </section>
+
+      <section class="panel">
+        <h2>Callbacks <span class="count">{{ callbacks.done }} of {{ callbacks.promised }} done</span></h2>
+        {% if callbacks["items"] %}
+        <table>
+          <tbody>
+          {% for cb in callbacks["items"] %}
+            <tr class="{% if cb.status in ('done', 'cancelled') %}closed{% endif %}">
+              <td class="tight num muted">{{ clock(cb.due) }}</td>
+              <td class="wrap">{{ cb.reason }}</td>
+              <td class="tight muted">{{ cb.owner | capitalize }}</td>
+              <td class="tight right">{% if cb.status == "overdue" %}<span class="chip urgent">Overdue</span>{% elif cb.status == "done" %}<span class="chip good">Done</span>{% elif cb.status == "cancelled" %}<span class="chip">Cancelled</span>{% else %}<span class="chip">Pending</span>{% endif %}</td>
+              <td class="tight right"><a class="btn" href="/owner/calls/{{ cb.call_id }}">Call</a></td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+        {% else %}<div class="empty">None</div>{% endif %}
+      </section>
+
+      <section class="panel">
+        <h2>Leads <span class="count">{{ leads | length }}</span></h2>
+        {% if leads %}
+        <table>
+          <tbody>
+          {% for l in leads %}
+            <tr>
+              <td class="tight"><span class="chip{% if l.kind == 'membership' %} accent{% endif %}">{{ type_label(l.kind) | replace(" lead", "") }}</span></td>
+              <td class="wrap">{{ l.summary }}</td>
+              <td class="tight num muted">{% if l.callback %}{{ clock(l.callback) }}{% endif %}</td>
+              <td class="tight right"><a class="btn" href="/owner/calls/{{ l.call_id }}">Call</a></td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+        {% else %}<div class="empty">None</div>{% endif %}
+      </section>
+
+      <section class="panel">
+        <h2>Out of area <span class="count">30 days</span></h2>
+        {% if out_of_area %}
+        <table>
+          <tbody>
+          {% for z in out_of_area %}
+            <tr><td class="num">{{ z.zip }}</td><td class="right num">{{ z.calls }}</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+        {% else %}<div class="empty">None</div>{% endif %}
+      </section>
+
+      <section class="panel">
+        <h2>Overrides and refusals</h2>
+        {% if refusals.overrides or refusals.refused %}
+        <table>
+          <tbody>
+          {% for o in refusals.overrides %}
+            <tr>
+              <td><span class="chip urgent">Safety override</span></td>
+              <td class="muted">Job {{ o.job }}</td>
+              <td class="right num muted">{{ clock(o.at) }}</td>
+              <td class="tight right"><a class="btn" href="/owner/calls/{{ o.call_id }}">Call</a></td>
+            </tr>
+          {% endfor %}
+          {% for r in refusals.refused %}
+            <tr>
+              <td class="num">{{ r.code }}</td>
+              <td class="muted">{{ r.tool }}</td>
+              <td class="right num">{{ r.count }}</td>
+              <td class="tight right"><a class="btn" href="/owner/calls/{{ r.call_id }}">Latest</a></td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+        {% else %}<div class="empty">None</div>{% endif %}
+      </section>
+    </div>
+  </div>
+</main>
+{% endblock %}

@@ -1592,6 +1592,167 @@
           }
         }
       ]
+    },
+    {
+      "name": "6 Outbound and owner view",
+      "item": [
+        {
+          "name": "Claim the next outbound call",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('ok', () => pm.expect(pm.response.json().ok).to.eql(true));",
+                  "pm.test('returns a call or none', () => pm.expect(pm.response.json().data).to.have.property('outbound'));",
+                  "pm.test('HTTP 200 with the envelope', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  const b = pm.response.json();",
+                  "  ['ok', 'say', 'data', 'refused'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/outbound/claim",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"worker\": \"postman\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Report an outbound call that was never claimed",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('outbound_id', '999999');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('refused: invalid_state', () => pm.expect(pm.response.json().refused).to.eql('invalid_state'));",
+                  "",
+                  "pm.test('HTTP 200 with the envelope', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  const b = pm.response.json();",
+                  "  ['ok', 'say', 'data', 'refused'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/outbound/{{outbound_id}}/done",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"answered\": false\n}"
+            }
+          }
+        },
+        {
+          "name": "Owner view without a token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('shows the token form', () => pm.response.to.have.status(401));",
+                  "pm.test('is HTML', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('text/html'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/owner"
+          }
+        },
+        {
+          "name": "Owner view login with a wrong token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('is refused', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{base_url}}/owner/login"
+          }
+        },
+        {
+          "name": "Owner view with the token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('opens the page', () => pm.response.to.have.status(200));",
+                  "pm.test('shows the bookings', () => pm.expect(pm.response.text()).to.include('Bookings'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/owner?token={{owner_token}}"
+          }
+        },
+        {
+          "name": "A call's timeline",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('opens the timeline', () => pm.response.to.have.status(200));",
+                  "pm.test('is HTML', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('text/html'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/owner/calls/{{call_id}}"
+          }
+        }
+      ]
     }
   ]
 }

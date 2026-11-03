@@ -68,6 +68,7 @@ class Tenant:
         self.priority: dict = agent["priority"]
         self.lines: dict = agent["lines"]
         self.callbacks: dict = agent["callbacks"]
+        self.on_call_alerts: dict = agent["on_call_alerts"]
         self.repeat: dict = agent["repeat_callers"]
         self.retention: dict = agent["retention"]
         self.after_hours_cutoffs: dict = agent["after_hours"]
@@ -107,6 +108,15 @@ class Tenant:
         start = datetime.combine(day, window.start, tzinfo=self.tz)
         end_day = day + timedelta(days=1) if window.end <= window.start else day
         return start, datetime.combine(end_day, window.end, tzinfo=self.tz)
+
+    def day_spoken(self, day: date, now: datetime) -> str:
+        """"today", "tomorrow" or the weekday."""
+        today = self.local(now).date()
+        if day == today:
+            return "today"
+        if day == today + timedelta(days=1):
+            return "tomorrow"
+        return day.strftime("%A")
 
     def time_spoken(self, moment: datetime, now: datetime) -> str:
         """A named time a person would say: "4:30 PM", "tomorrow at 9 AM", "Friday at 10 AM"."""
