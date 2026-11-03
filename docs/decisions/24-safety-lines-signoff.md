@@ -1,6 +1,6 @@
 # 24. Sign off the safety lines the server speaks
 
-Issue: #24. Status: ready
+Issue: #24. Status: decided, option B (DECISIONS.md 009)
 
 ## Question
 

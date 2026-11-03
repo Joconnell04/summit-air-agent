@@ -22,7 +22,7 @@ fsm:
 # before launch (signed_off). The server returns these lines word for word; the agent never writes
 # its own.
 safety:
-  signed_off: false
+  signed_off: true
   kinds:
     gas:
       label: gas smell
@@ -92,8 +92,8 @@ safety:
         - alarm keeps beeping
   # Said when the agent wants to end a safety call: it signs off rather than hangs up.
   sign_off: >-
-    Please head outside now and call 911 from there. I'll stay on if you need me, but the safest
-    thing is to go now. We'll follow up once you're safe.
+    Please hang up now, get everyone outside, and call 911 from there. We'll follow up once
+    you're safe.
   flag_reason: "{label} reported on the call"
 
 # A caller line that describes a business marks the call commercial: it can't book (spec S-05,

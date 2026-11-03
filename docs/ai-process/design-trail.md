@@ -32,3 +32,4 @@ How the design was reached, in order, so a reader can follow each choice back to
 | Membership | One plan, Summit Standard Membership: a caller is a member or not | coauthoring.md (spec r3) |
 | Build briefs | Tool contract plus five lanes (tool server first, then voice, evals, Retell baseline, owner view); design phase closed | docs/tools.md, docs/ai-process/briefs/, docs/ai-process/transcripts/design-session.md |
 | Tool server built | Every gate, safety check, priority engine, tool-failure queue, notes and history, logging and trace; 274 tests; safety wording sign-off open in #24 | pull request 25, brief 02 |
+| Safety wording signed off | Caller told to hang up and call 911 from outside; no offer to stay on the line, per the gas utility | DECISIONS.md 009, #24 |
