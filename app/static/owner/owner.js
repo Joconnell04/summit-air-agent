@@ -35,7 +35,9 @@
       var first = minute === start, last = minute === end;
       el.classList.toggle("first", first);
       el.classList.toggle("last", last);
-      el.textContent = (first || last || (hour - start / 60) % step === 0) ? hourName(hour) : "";
+      // The "now" label sits on the axis; an hour label right beside it would collide.
+      var nearNow = board.dataset.now !== "" && Math.abs(minute - +board.dataset.now) <= span / 24;
+      el.textContent = !nearNow && (first || last || (hour - start / 60) % step === 0) ? hourName(hour) : "";
     });
     each(board, ".hour", function (el) {
       el.classList.toggle("major", (+el.dataset.min - start) / 60 % 2 === 0);

@@ -45,7 +45,7 @@
         <div class="head"></div>
         <div class="track" data-hours>
           {% for h in range(0, 25) %}{% set out = h * 60 < b.start or h * 60 > b.end %}
-          <span class="hour-label{% if h * 60 == b.start %} first{% elif h * 60 == b.end %} last{% endif %}" data-min="{{ h * 60 }}" style="left: {{ position(h * 60, b.start, b.end) }}%"{% if out %} hidden{% endif %}>{% if not out and ((h - b.start // 60) % 2 == 0 or h * 60 == b.end) %}{{ hour_name(h) }}{% endif %}</span>
+          <span class="hour-label{% if h * 60 == b.start %} first{% elif h * 60 == b.end %} last{% endif %}" data-min="{{ h * 60 }}" style="left: {{ position(h * 60, b.start, b.end) }}%"{% if out %} hidden{% endif %}>{% if not out and ((h - b.start // 60) % 2 == 0 or h * 60 == b.end) and (b.now is none or (h * 60 - b.now) | abs > 35) %}{{ hour_name(h) }}{% endif %}</span>
           {% endfor %}
           {% if b.now is not none %}<span class="now-label" data-min="{{ b.now }}" style="left: {{ position(b.now, b.start, b.end) }}%">{{ clock(now) }}</span>{% endif %}
         </div>

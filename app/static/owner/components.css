@@ -256,7 +256,7 @@ a.figure:hover .label { color: var(--ink); text-decoration: underline; text-unde
   border-radius: var(--r-md); background: var(--info-wash); box-shadow: inset 0 0 0 1px var(--info-line);
   color: var(--info-ink); display: flex; flex-direction: column; justify-content: center; overflow: hidden; min-width: 0;
 }
-.window .w-name, .window .w-jobs { font-size: var(--text-xs); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.window .w-name, .window .w-jobs { flex: none; font-size: var(--text-xs); line-height: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .window .w-name { font-weight: var(--semibold); }
 .window .w-jobs b { color: var(--urgent-ink); font-weight: var(--semibold); }
 .window.past { background: var(--sunken); box-shadow: inset 0 0 0 1px var(--line); color: var(--muted); }
