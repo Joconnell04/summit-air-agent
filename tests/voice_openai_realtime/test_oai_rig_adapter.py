@@ -52,6 +52,14 @@ def opened_line(app, call_id="rt-1"):
     return line, sock, listener
 
 
+def greeted(app, call_id="rt-1"):
+    """A line whose greeting has finished, so nothing is under way."""
+    line, sock, listener = opened_line(app, call_id)
+    asyncio.run(line.handle({"type": "response.done", "response": {"output": [], "usage": {}}}))
+    listener.done_count = 0
+    return line, sock, listener
+
+
 def test_the_session_has_our_prompt_and_tools_and_never_answers_on_its_own(app):
     _, sock, _ = opened_line(app)
     session = sock.of_type("session.update")[0]["session"]
@@ -69,7 +77,7 @@ def test_the_greeting_is_asked_for_word_for_word(app):
 
 
 def test_a_caller_line_reaches_the_server_before_a_reply_is_asked_for(app):
-    line, sock, _ = opened_line(app)
+    line, sock, _ = greeted(app)
     sock.sent.clear()
     event = {"type": "conversation.item.input_audio_transcription.completed",
              "transcript": "My heat is out."}
@@ -79,7 +87,7 @@ def test_a_caller_line_reaches_the_server_before_a_reply_is_asked_for(app):
 
 
 def test_a_gas_smell_asks_for_the_signed_off_lines_exactly_with_no_tools(app):
-    line, sock, _ = opened_line(app)
+    line, sock, _ = greeted(app)
     sock.sent.clear()
     event = {"type": "conversation.item.input_audio_transcription.completed",
              "transcript": "I smell gas in the kitchen."}
@@ -91,7 +99,7 @@ def test_a_gas_smell_asks_for_the_signed_off_lines_exactly_with_no_tools(app):
 
 
 def test_function_calls_go_to_the_tool_server_and_the_reply_continues(app):
-    line, sock, listener = opened_line(app)
+    line, sock, listener = greeted(app)
     sock.sent.clear()
     done = {"type": "response.done", "response": {"output": [
         {"type": "function_call", "name": "check_service_area", "call_id": "fc_1",
@@ -106,7 +114,7 @@ def test_function_calls_go_to_the_tool_server_and_the_reply_continues(app):
 
 
 def test_a_finished_reply_posts_the_agent_line_and_hands_the_turn_back(app):
-    line, _, listener = opened_line(app)
+    line, _, listener = greeted(app)
     asyncio.run(line.handle({"type": "response.output_audio_transcript.done",
                              "transcript": "What's your ZIP code?"}))
     asyncio.run(line.handle({"type": "response.done", "response": {"output": [], "usage": {}}}))
@@ -115,7 +123,7 @@ def test_a_finished_reply_posts_the_agent_line_and_hands_the_turn_back(app):
 
 
 def test_end_call_on_a_safety_call_is_refused_and_the_lines_are_asked_for(app):
-    line, sock, _ = opened_line(app)
+    line, sock, _ = greeted(app)
     asyncio.run(line.handle({"type": "conversation.item.input_audio_transcription.completed",
                              "transcript": "I smell gas."}))
     sock.sent.clear()
@@ -125,6 +133,28 @@ def test_end_call_on_a_safety_call_is_refused_and_the_lines_are_asked_for(app):
     asyncio.run(line.handle(done))
     assert line.hang_up_after is False
     assert sock.sent[-1]["response"]["instructions"].startswith("Say exactly")
+
+
+def test_a_caller_line_during_a_reply_cuts_it_short_and_waits_for_it(app):
+    line, sock, _ = opened_line(app)
+    asyncio.run(line.handle({"type": "response.done", "response": {"output": [], "usage": {}}}))
+    asyncio.run(line.caller_line("My heat is out."))  # a reply is now under way
+    sock.sent.clear()
+    asyncio.run(line.caller_line("Actually, it's the boiler."))
+    assert [m["type"] for m in sock.sent] == ["response.cancel"]
+    cancelled = {"type": "response.done", "response": {"status": "cancelled", "usage": {},
+                                                       "output": []}}
+    asyncio.run(line.handle(cancelled))
+    assert sock.sent[-1] == {"type": "response.create", "response": {}}
+
+
+def test_fixed_text_is_not_cut_short_by_a_caller_line(app):
+    line, sock, _ = opened_line(app)  # the greeting, fixed text, is under way
+    sock.sent.clear()
+    asyncio.run(line.caller_line("Hello?"))
+    assert sock.sent == []
+    asyncio.run(line.handle({"type": "response.done", "response": {"output": [], "usage": {}}}))
+    assert sock.sent[-1] == {"type": "response.create", "response": {}}
 
 
 def test_writes_carry_an_idempotency_key(app):

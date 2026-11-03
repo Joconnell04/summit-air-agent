@@ -102,7 +102,12 @@ class Line:
         self.writes: set[str] = set()
         self.voice: dict = {}
         self._agent_text: list[str] = []
-        self._tools_used = False
+        # OpenAI takes one response at a time. A reply asked for while one is under way waits
+        # for it, and cuts it short unless it is fixed text (as the worker can't be interrupted
+        # while it speaks the safety lines).
+        self._active = False
+        self._fixed = False
+        self._queued: dict | None = None
 
     async def _send(self, event: dict) -> None:
         await self.ws.send(json.dumps(event))
@@ -137,6 +142,17 @@ class Line:
             response["instructions"] = instructions
         if not tools:
             response["tool_choice"] = "none"
+        if not self._active:
+            await self._create(response)
+            return
+        if self._queued is None or self._queued.get("tool_choice") != "none":
+            self._queued = response
+        if not self._fixed:
+            await self._send({"type": "response.cancel"})
+
+    async def _create(self, response: dict) -> None:
+        self._active = True
+        self._fixed = response.get("tool_choice") == "none"
         await self._send({"type": "response.create", "response": response})
 
     async def _read(self) -> None:
@@ -180,11 +196,14 @@ class Line:
         await self._respond()
 
     async def response_done(self, response: dict) -> None:
+        self._active = False
         self.cost_usd += usage_cost(response.get("usage") or {}, self.cfg["price"])
-        calls = [o for o in response.get("output", []) if o.get("type") == "function_call"]
+        # A reply cut short by a newer caller line runs none of its function calls.
+        cancelled = response.get("status") == "cancelled"
+        calls = [] if cancelled else [o for o in response.get("output", [])
+                                      if o.get("type") == "function_call"]
         spoken = None
         for call in calls:
-            self._tools_used = True
             args = json.loads(call.get("arguments") or "{}")
             envelope = await self.tool(call["name"], args)
             if call["name"] == "end_call" and envelope.get("ok"):
@@ -198,17 +217,21 @@ class Line:
             await self._send({"type": "conversation.item.create", "item": {
                 "type": "function_call_output", "call_id": call["call_id"],
                 "output": json.dumps(compact, default=str)}})
-        if spoken:
-            await self._respond(say_exactly(spoken), tools=False)
-            return
-        if calls and not self.hang_up_after:
-            await self._respond()
-            return
         text = " ".join(self._agent_text).strip()
         self._agent_text = []
         if text:
             self.listener.said(text)
             await self._server("turn", self.call_id, "agent", text)
+        if spoken:
+            await self._respond(say_exactly(spoken), tools=False)
+            return
+        if self._queued is not None:
+            queued, self._queued = self._queued, None
+            await self._create(queued)
+            return
+        if calls and not self.hang_up_after:
+            await self._respond()
+            return
         if self.hang_up_after:
             if not text:
                 await self._respond(say_exactly(self.voice["goodbye"]), tools=False)
