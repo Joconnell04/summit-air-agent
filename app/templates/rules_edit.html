@@ -15,6 +15,7 @@
       {% if checking %}<span class="tag high">Checking</span>{% elif draft %}<span class="tag outline">Draft saved</span>{% elif blocked %}{{ gate_result(blocked) }}{% endif %}
       <label class="sr-only" for="note">What changed</label>
       <input class="field" id="note" name="note" value="{{ note }}" maxlength="200" placeholder="What changed"{% if checking %} disabled{% endif %}>
+      {% if checking %}<button class="btn quiet" type="submit" formaction="/owner/rules/cancel{{ q(slug) }}" formnovalidate>Stop check</button>{% endif %}
       {% if draft and not checking %}<button class="btn quiet" type="submit" formaction="/owner/rules/discard{{ q(slug) }}" formnovalidate>Discard</button>{% endif %}
       <button class="btn" type="submit"{% if checking %} disabled{% endif %}>Save draft</button>
       <button class="btn primary" type="submit" name="publish" value="1"{% if checking %} disabled{% endif %}>Publish</button>

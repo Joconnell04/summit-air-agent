@@ -247,14 +247,15 @@ def turn(
             if sounds_commercial(args.text, tenant.commercial):
                 changes["commercial"] = 1
                 hints.append("commercial")
-            # The server, not the model, says when the call reaches booking or closing, so the
-            # owner's guidance for that stage applies from then. Never on a safety call.
-            stage = rules.advance_stage(conn, call, now)
+            # The server, not the model, says when the call reaches booking or closing, and only
+            # then sends the owner's guidance for that stage, as a [server] note. Never on a safety
+            # call; a stage reached during one gets its note once the safety state clears.
+            rules.advance_stage(conn, call, now)
             on_safety = call["safety_state"] not in ("none", "cleared") or action.action != "none"
-            if stage and not on_safety and rules.for_call(conn, tenant, call["id"])["guidance"].get(
-                stage
-            ):
-                hints.append(f"stage_{stage}")
+            if not on_safety:
+                stage, items = rules.note_due(conn, tenant, call)
+                if stage:
+                    hints += [f"stage_{stage}"] + [f"guidance:{item}" for item in items]
         elif call["safety_state"] == "signal" and safety.agent_said_lines(
             args.text, call["safety_kind"], cfg
         ):

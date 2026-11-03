@@ -607,6 +607,14 @@ def build() -> dict:
             check="pm.test('refused', () => pm.response.to.have.status(401));",
         ),
         item(
+            "Stopping a rules check needs the edit login",
+            "POST",
+            "owner/rules/cancel",
+            envelope=False,
+            form={},
+            check="pm.test('refused', () => pm.response.to.have.status(401));",
+        ),
+        item(
             "Rolling back the rules needs the edit login",
             "POST",
             "owner/rules/rollback",

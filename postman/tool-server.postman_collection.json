@@ -2041,6 +2041,29 @@
           }
         },
         {
+          "name": "Stopping a rules check needs the edit login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('refused', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{base_url}}/owner/rules/cancel",
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": []
+            }
+          }
+        },
+        {
           "name": "Rolling back the rules needs the edit login",
           "event": [
             {

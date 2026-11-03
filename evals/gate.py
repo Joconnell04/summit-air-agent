@@ -17,8 +17,11 @@ Paid: about $0.02 a scenario on the fast profile (MEASURED, evals/README.md smok
 $0.39 for the 18 must-pass scenarios (MEASURED, evals/README.md), plus about $0.02 a rerun.
 """
 import argparse
+import fcntl
 import sys
 import tempfile
+from collections.abc import Iterator
+from contextlib import contextmanager
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -101,23 +104,55 @@ def run_gate(content: dict, profile: str, results_dir: Path = RESULTS_DIR, worke
     return first, summary(first, content, rerun)
 
 
+class Busy(RuntimeError):
+    """Another gate process holds the lock."""
+
+
+@contextmanager
+def single_runner(db_path: Path) -> Iterator[None]:
+    """One gate process per database, so two publishes close together don't pay for two runs. The
+    second process finds the lock held and leaves; the first picks up every draft waiting."""
+    lock = open(db_path.with_suffix(".gate.lock"), "w")  # noqa: SIM115
+    try:
+        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except BlockingIOError:
+        lock.close()
+        raise Busy(f"a gate run already holds {lock.name}") from None
+    try:
+        yield
+    finally:
+        fcntl.flock(lock, fcntl.LOCK_UN)
+        lock.close()
+
+
 def check_waiting(db_path: Path, profile: str, results_dir: Path = RESULTS_DIR, run=run_gate
                   ) -> list[dict]:
     """Run the gate on every version waiting for one and record each result. The draft is tested
-    exactly as saved; the server applies it the same way on a real call."""
-    conn = db.connect(db_path)
+    exactly as saved; the server applies it the same way on a real call. A version cancelled or
+    timed out while it ran is skipped: its late result is refused."""
     done = []
-    try:
-        waiting = conn.execute(
-            "SELECT id, tenant FROM rule_versions WHERE status = 'checking' ORDER BY id"
-        ).fetchall()
-        for row in waiting:
-            version = rules.get(conn, row["id"])
-            _run, found = run(version["content"], profile, results_dir)
-            done.append(rules.record_gate(conn, row["id"], found, datetime.now(UTC)))
-    finally:
-        conn.close()
-    return done
+    with single_runner(db_path):
+        conn = db.connect(db_path)
+        try:
+            while True:
+                row = conn.execute(
+                    "SELECT id FROM rule_versions WHERE status = 'checking' AND id NOT IN "
+                    f"({','.join(str(v['id']) for v in done) or '0'}) ORDER BY id LIMIT 1"
+                ).fetchone()
+                if row is None:
+                    break
+                version = rules.get(conn, row["id"])
+                _run, found = run(version["content"], profile, results_dir)
+                try:
+                    done.append(rules.record_gate(
+                        conn, row["id"], found, datetime.now(UTC), len(scenarios())
+                    ))
+                except rules.RulesError as err:
+                    print(f"version {version['number']}: result not recorded ({err})")
+                    done.append({**rules.get(conn, row["id"]), "skipped": True})
+        finally:
+            conn.close()
+    return [v for v in done if not v.get("skipped")]
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -127,7 +162,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--results-dir", default=str(RESULTS_DIR))
     args = parser.parse_args(argv)
     profile = args.profile or load_config()["default"]
-    done = check_waiting(Path(args.db), profile, Path(args.results_dir))
+    try:
+        done = check_waiting(Path(args.db), profile, Path(args.results_dir))
+    except Busy as err:
+        print(err)
+        return 0
     for version in done:
         gate = version["gate"]
         print(

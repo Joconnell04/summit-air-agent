@@ -144,6 +144,8 @@ on_call_alerts:
   skip_kinds:
   - seek_earlier
 owner_rules:
+  disclosure:
+  - virtual assistant
   locked_topics:
   - gas
   - carbon monoxide

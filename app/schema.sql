@@ -321,6 +321,8 @@ CREATE TABLE IF NOT EXISTS rule_versions (
     author TEXT NOT NULL,
     note TEXT NOT NULL DEFAULT '',
     published_by TEXT,
+    -- The live version's number when the draft was sent to the gate (0 for the defaults).
+    base_live INTEGER,
     gate_json TEXT,
     gate_at TEXT,
     published_at TEXT,
@@ -337,5 +339,7 @@ CREATE TABLE IF NOT EXISTS call_stages (
     stage TEXT NOT NULL,
     version_id INTEGER REFERENCES rule_versions (id),
     at TEXT NOT NULL,
+    -- 1 once the owner's guidance for this stage went to the model as a [server] note.
+    noted INTEGER NOT NULL DEFAULT 0,
     PRIMARY KEY (call_id, stage)
 );

@@ -394,6 +394,7 @@ def add_routes(app: FastAPI) -> None:
 
     def edit_page(request: Request, found, slug: str, conn, content=None, note: str = "",
                   errors=None, status: int = 200) -> Response:
+        rules.expire_checks(conn, found.slug, request.app.state.services.clock())
         context = rules_context(request, found, slug, conn)
         draft = rules.open_draft(conn, found.slug)
         newest = context["versions"][0] if context["versions"] else None
@@ -494,6 +495,24 @@ def add_routes(app: FastAPI) -> None:
         conn = services.connect()
         try:
             rules.discard_draft(conn, found.slug, services.clock())
+        finally:
+            conn.close()
+        return RedirectResponse(f"/owner/rules/edit{_tenant_q(tenant)}", 303)
+
+    @app.post("/owner/rules/cancel")
+    def owner_rules_cancel(request: Request, tenant: str = ""):
+        """Stop waiting for a check and get the draft back; a late result is refused."""
+        if _editor(request) is None:
+            return _edit_login(request)
+        found = tenant_for(request, tenant)
+        if found is None:
+            return HTMLResponse("No such company.", 404)
+        services = request.app.state.services
+        conn = services.connect()
+        try:
+            rules.cancel_check(conn, found.slug, services.clock())
+        except rules.RulesError as err:
+            return edit_page(request, found, tenant, conn, errors={"content": str(err)}, status=422)
         finally:
             conn.close()
         return RedirectResponse(f"/owner/rules/edit{_tenant_q(tenant)}", 303)

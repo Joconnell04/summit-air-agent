@@ -49,6 +49,16 @@ The move was kept narrow. These stay with the tenant even though another HVAC co
 
 Checks: `tests/tool_server/test_ts_trades.py` holds Summit Air's merged config to a golden copy of what the server read before the split (`tests/tool_server/golden/summit-air-agent.yaml`; a trade edit that changes Summit Air shows up there), checks that the trade folder names no company or place, loads a tenant that inherits the trade with one override, and tries each change a tenant can't make. The eval run hash covers `trades/` as well as `tenants/` (`evals/fingerprint.py`).
 
+## Owner edits
+
+An owner can change six wording lines and add short guidance for four call stages from the owner view (app/rules.py, spec S-51). What contains those edits, in order of how much it is relied on:
+
+1. **The server gates.** The read-back, the safety lines, residential only, the service area, priority only going up and every other must-happen rule are enforced in server code on every call, whatever the prompt says. No edit reaches them: a draft can only name the editable lines and stages, and a stored version is validated again before a call uses it.
+2. **The eval gate.** A draft goes live only after every must-pass scenario passes on it (evals/gate.py), with one rerun of a scenario that misses.
+3. **The text filter, last and least.** Lines must keep their exact `{fields}`, say the AI disclosure if their default does, and quote no number or price. Guidance must be plain ASCII after NFKC folding, with no digits or prompt symbols, and must not name a subject a locked rule covers (`LOCKED_TOPICS` in app/rules.py, plus the trade's `owner_rules.locked_topics`). This is a denylist. It catches honest mistakes and the obvious attempt, and it will miss a determined rewording. That is why it is not what keeps a caller safe.
+
+A trade's `agent.yaml` lists its own safety words under `owner_rules.locked_topics`. A tenant's lists the phrase its greeting uses to say it is an AI under `owner_rules.disclosure`.
+
 ## How a new company is added
 
 1. Copy `tenants/summit-air/` to `tenants/<company>/` and edit it: `config.yaml` (the company as its field service system knows it), `agent.yaml` (keep `extends: hvac` for an HVAC company and write what differs: dialed numbers, the safety lines, temperature brackets, after-hours cutoffs, callback owners, retention, the lines the agent says), `names.yaml` (local names, or delete it), `knowledge/*.md` and the mock's `seed.py`. A company in a new trade starts by writing `trades/<trade>/agent.yaml`.

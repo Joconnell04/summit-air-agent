@@ -15,7 +15,8 @@ import json
 import re
 import sqlite3
 import string
-from datetime import datetime
+import unicodedata
+from datetime import datetime, timedelta
 
 from .db import iso, tx
 from .tenant import Tenant
@@ -62,20 +63,43 @@ LOCKED = {
 LOCKED_DEFAULT = "This is locked. Only engineers change it."
 
 # Guidance is soft, so it may not touch a subject a locked rule covers, and it may not try to talk
-# the model out of its instructions. Matched as whole words. The trade's own safety words (a gas
-# smell, say) come from the tenant's agent.yaml (owner_rules.locked_topics).
+# the model out of its instructions. Matched as whole words, after the text is folded to plain
+# ASCII. The trade's own safety words (a gas smell, say) come from its agent.yaml
+# (owner_rules.locked_topics). This list is a filter for honest mistakes and the obvious attempt,
+# not the containment: the server gates hold whatever the prompt says, and the eval gate runs the
+# must-pass calls on every draft (docs/template.md, "Owner edits").
 LOCKED_TOPICS = (
-    "911", "safety", "evacuate", "read back", "readback", "commercial", "business", "price",
-    "prices", "pricing", "fee", "fees", "cost", "costs", "discount", "free", "priority", "urgent",
-    "emergency", "service area", "zip", "out of area", "delete", "cancel", "refund", "promise",
-    "guarantee", "ignore", "instruction", "instructions", "override", "system prompt", "server",
+    # Safety
+    "911", "safety", "evacuate", "alarm", "detector", "emergency", "urgent", "priority",
+    # The read-back and booking checks
+    "read back", "readback", "address", "verify",
+    "verified", "skip", "never ask", "without", "cancel", "delete",
+    # Residential only
+    "commercial", "business", "residential", "rental", "rentals", "renter", "renting", "landlord",
+    "tenant", "tenants", "office", "offices", "store", "shop", "restaurant", "building",
+    "apartment", "apartments", "units", "company", "service area", "zip", "out of area",
+    # Prices and promises
+    "price", "prices", "pricing", "fee", "fees", "cost", "costs", "charge", "discount", "free",
+    "coupon", "refund", "promise", "guarantee",
+    # Talking the model out of its instructions
+    "ignore", "disregard", "forget", "instruction", "instructions", "rule", "rules", "override",
+    "system", "server", "pretend",
 )
 # Wording lines are said as written, so they may not quote a price either.
-LINE_TOPICS = ("price", "prices", "fee", "fees", "cost", "costs", "discount", "free", "$")
-# Characters that could pass for prompt structure or a template field.
-NOT_PLAIN = re.compile(r"[{}\[\]#`<>\\|*_]")
+LINE_TOPICS = (
+    "price", "prices", "fee", "fees", "cost", "costs", "charge", "discount", "free", "coupon",
+)
+# Characters that could pass for prompt structure, a template field, a role label or an amount.
+NOT_PLAIN = re.compile(r"[{}\[\]#`<>\\|*_:$]")
+DIGIT = re.compile(r"\d")
+# What a line's fields are filled with when it is checked, so a line that can't be said is caught
+# here and not at hello or on a callback.
+SAMPLE = {"first_name": "Maria"}
 
 STATUSES = ("draft", "checking", "published", "blocked", "discarded")
+# A check that hasn't reported back in this long is taken as dead and the draft returned to the
+# owner, so a crashed gate process can't leave it stuck. A full gate run takes a few minutes.
+CHECK_TIMEOUT_MINUTES = 60
 
 
 class RulesError(ValueError):
@@ -88,19 +112,48 @@ def default_line(tenant: Tenant, key: str) -> str:
     return " ".join(source[key].split())
 
 
+def _ascii(text: str) -> str | None:
+    """Text folded with NFKC and whitespace collapsed, or None if anything is left that isn't
+    printable ASCII: a zero-width space, a look-alike letter from another alphabet, an emoji."""
+    folded = " ".join(unicodedata.normalize("NFKC", str(text or "")).split())
+    return folded if all(" " <= c <= "~" for c in folded) else None
+
+
 def _fields(text: str) -> set[str] | None:
-    """The {name} fields in a line, or None if its braces don't parse."""
+    """The {name} fields in a line, or None unless every one is a bare {name}: no format spec, no
+    conversion, no index, since those can fail, change or blow up what is said."""
+    found = set()
     try:
-        return {name for _, name, _, _ in string.Formatter().parse(text) if name is not None}
+        for _literal, name, spec, conversion in string.Formatter().parse(text):
+            if name is None:
+                continue
+            if spec or conversion or not name.isidentifier():
+                return None
+            found.add(name)
     except ValueError:
         return None
+    return found
+
+
+def _renders(text: str) -> bool:
+    """The line fills with sample values to something of a sane length."""
+    fields = _fields(text)
+    if fields is None:
+        return False
+    try:
+        said = text.format(**{f: SAMPLE.get(f, "Maria") for f in fields})
+    except (KeyError, IndexError, ValueError):
+        return False
+    return len(said) <= LINE_MAX_CHARS + 50
 
 
 def _topic(text: str, topics) -> str | None:
-    if "$" in topics and "$" in text:
-        return "$"
     text_words = words(text)
-    return next((t for t in topics if t != "$" and has_phrase(text_words, t)), None)
+    return next((t for t in topics if has_phrase(text_words, t)), None)
+
+
+def _disclosure(tenant: Tenant) -> tuple[str, ...]:
+    return tuple(tenant.agent.get("owner_rules", {}).get("disclosure", ()))
 
 
 def validate(tenant: Tenant, content: dict) -> tuple[dict, dict[str, str]]:
@@ -118,26 +171,38 @@ def validate(tenant: Tenant, content: dict) -> tuple[dict, dict[str, str]]:
     lines = content.get("lines") or {}
     if not isinstance(lines, dict):
         lines, errors["lines"] = {}, "Not a list of lines."
-    for key, text in lines.items():
+    for key, given in lines.items():
         field = f"lines.{key}"
         if key not in EDITABLE_LINES:
             errors[field] = LOCKED.get(key, LOCKED_DEFAULT)
             continue
-        text = " ".join(str(text or "").split())
         default = default_line(tenant, key)
+        text = _ascii(given)
+        if text is None:
+            errors[field] = "Plain letters only. Retype it without special characters."
+            continue
         if not text or text == default:
             continue
-        wanted, found = _fields(default), _fields(text)
+        wanted = _fields(default)
+        keep = ", ".join("{" + f + "}" for f in sorted(wanted))
         topic = _topic(text, LINE_TOPICS)
+        dropped = next(
+            (p for p in _disclosure(tenant)
+             if has_phrase(words(default), p) and not has_phrase(words(text), p)),
+            None,
+        )
         if len(text) > LINE_MAX_CHARS:
             errors[field] = f"Keep it under {LINE_MAX_CHARS} characters."
-        elif found is None or found != wanted:
-            keep = ", ".join("{" + f + "}" for f in sorted(wanted))
+        elif _fields(text) != wanted or not _renders(text):
             errors[field] = f"Keep {keep} in the line, and no other braces." if wanted else (
                 "No braces in this line."
             )
+        elif "$" in text or DIGIT.search(text):
+            errors[field] = "No numbers or amounts in a line."
         elif topic:
             errors[field] = f"No prices or fees in a line (found \"{topic}\")."
+        elif dropped:
+            errors[field] = f"Keep \"{dropped}\" in the line, so callers know it's an AI."
         else:
             clean["lines"][key] = text
 
@@ -149,21 +214,27 @@ def validate(tenant: Tenant, content: dict) -> tuple[dict, dict[str, str]]:
         if stage not in GUIDANCE_STAGES:
             errors[f"guidance.{stage}"] = "Nothing can be added at this stage."
             continue
-        items = [" ".join(str(i or "").split()) for i in (items or [])]
-        items = [i for i in items if i]
-        if len(items) > GUIDANCE_PER_STAGE:
-            errors[f"guidance.{stage}"] = f"At most {GUIDANCE_PER_STAGE} per stage."
-        for n, text in enumerate(items):
+        if not isinstance(items, list):
+            errors[f"guidance.{stage}"] = "Not a list of notes."
+            continue
+        kept = []
+        for n, given in enumerate(i for i in items if str(i or "").strip()):
             field = f"guidance.{stage}.{n}"
-            topic = _topic(text, topics)
-            if len(text) > GUIDANCE_MAX_CHARS:
+            text = _ascii(given)
+            topic = _topic(text, topics) if text else None
+            if text is None:
+                errors[field] = "Plain letters only. Retype it without special characters."
+            elif len(text) > GUIDANCE_MAX_CHARS:
                 errors[field] = f"Keep it under {GUIDANCE_MAX_CHARS} characters."
-            elif NOT_PLAIN.search(text):
-                errors[field] = "Plain words only, no symbols like braces or #."
+            elif NOT_PLAIN.search(text) or DIGIT.search(text):
+                errors[field] = "Plain words only, no numbers or symbols like $, : or #."
             elif topic:
                 errors[field] = f"That touches a locked rule (\"{topic}\"). Ask Revin to change it."
-        if items:
-            clean["guidance"][stage] = items[:GUIDANCE_PER_STAGE]
+            kept.append(text or "")
+        if len(kept) > GUIDANCE_PER_STAGE:
+            errors[f"guidance.{stage}"] = f"At most {GUIDANCE_PER_STAGE} per stage."
+        if kept:
+            clean["guidance"][stage] = kept[:GUIDANCE_PER_STAGE]
     return clean, errors
 
 
@@ -171,12 +242,22 @@ def content_hash(content: dict) -> str:
     return hashlib.sha256(json.dumps(content, sort_keys=True).encode()).hexdigest()[:16]
 
 
+def _json(text: str | None, empty):
+    """A stored JSON value, or `empty` if it is missing or unreadable: a damaged row reads as the
+    shipped defaults rather than failing every call."""
+    try:
+        value = json.loads(text) if text else empty
+    except ValueError:
+        return empty
+    return value if isinstance(value, type(empty)) else empty
+
+
 def _row(row: sqlite3.Row | None) -> dict | None:
     if row is None:
         return None
     found = dict(row)
-    found["content"] = json.loads(found.pop("content_json"))
-    found["gate"] = json.loads(found.pop("gate_json")) if found["gate_json"] else None
+    found["content"] = _json(found.pop("content_json"), {})
+    found["gate"] = _json(found.pop("gate_json"), {}) or None
     return found
 
 
@@ -255,6 +336,7 @@ def save_draft(
     if errors:
         return None, errors
     note = " ".join(note.split())[:200]
+    expire_checks(conn, tenant.slug, now)
     with tx(conn):
         draft = open_draft(conn, tenant.slug)
         if draft and draft["status"] == "checking":
@@ -291,36 +373,53 @@ def request_publish(conn: sqlite3.Connection, slug: str, author: str, now: datet
         current = live(conn, slug)
         if content_hash(draft["content"]) == content_hash(current["content"] if current else {}):
             raise RulesError("The draft is the same as what's live.")
+        # What was live when the check started: if it changes before the result comes back (a
+        # rollback), the result must not publish over it.
         conn.execute(
-            "UPDATE rule_versions SET status = 'checking', published_by = ?, updated_at = ? "
-            "WHERE id = ?",
-            (author, iso(now), draft["id"]),
+            "UPDATE rule_versions SET status = 'checking', published_by = ?, base_live = ?, "
+            "updated_at = ? WHERE id = ?",
+            (author, current["number"] if current else 0, iso(now), draft["id"]),
         )
     return get(conn, draft["id"])
 
 
-def gate_passed(result: dict) -> bool:
-    """The gate's own reading of a run: at least one scenario, and no must-pass failure and no
-    error among them. A run with no verdict never opens the gate."""
-    return result.get("scenarios", 0) > 0 and not result.get("failed") and not result.get("errors")
+def gate_passed(result: dict, expected: int) -> bool:
+    """The gate's own reading of a run: every one of the `expected` must-pass scenarios ran, and the
+    result lists its failures and errors, and both are empty. A partial or malformed result, or a
+    run with no verdict, never opens the gate."""
+    failed, errors = result.get("failed"), result.get("errors")
+    return (
+        expected > 0
+        and result.get("scenarios") == expected
+        and isinstance(failed, list)
+        and isinstance(errors, list)
+        and not failed
+        and not errors
+    )
 
 
-def record_gate(conn: sqlite3.Connection, version_id: int, result: dict, now: datetime) -> dict:
+def record_gate(
+    conn: sqlite3.Connection, version_id: int, result: dict, now: datetime, expected: int
+) -> dict:
     """Store the gate's result on the version it checked. Passed, it goes live; otherwise it is
-    blocked and what's live stays as it was. The result must be for this exact content."""
+    blocked and what's live stays as it was. The result must be for this exact content, and it
+    never publishes over a version made live while it ran (a rollback): that draft is blocked as
+    stale, and the owner publishes it again if they still want it."""
     with tx(conn):
         row = get(conn, version_id)
         if row is None or row["status"] != "checking":
             raise RulesError("That version isn't waiting for a check.")
         if result.get("content_hash") != row["content_hash"]:
             raise RulesError("That check ran on different content.")
-        passed = gate_passed(result)
+        current = live(conn, row["tenant"])
+        stale = (current["number"] if current else 0) != row["base_live"]
+        passed = gate_passed(result, expected) and not stale
         conn.execute(
             "UPDATE rule_versions SET status = ?, gate_json = ?, gate_at = ?, published_at = ?, "
             "updated_at = ? WHERE id = ?",
             (
                 "published" if passed else "blocked",
-                json.dumps({**result, "passed": passed}, sort_keys=True),
+                json.dumps({**result, "passed": passed, "stale": stale}, sort_keys=True),
                 iso(now),
                 iso(now) if passed else None,
                 iso(now),
@@ -328,6 +427,31 @@ def record_gate(conn: sqlite3.Connection, version_id: int, result: dict, now: da
             ),
         )
     return get(conn, version_id)
+
+
+def cancel_check(conn: sqlite3.Connection, slug: str, now: datetime) -> dict:
+    """Stop waiting for a check and return the draft to the owner. A result that arrives later is
+    refused by record_gate, since the version is no longer checking."""
+    with tx(conn):
+        draft = open_draft(conn, slug)
+        if not draft or draft["status"] != "checking":
+            raise RulesError("No check is running.")
+        conn.execute(
+            "UPDATE rule_versions SET status = 'draft', updated_at = ? WHERE id = ?",
+            (iso(now), draft["id"]),
+        )
+    return get(conn, draft["id"])
+
+
+def expire_checks(conn: sqlite3.Connection, slug: str, now: datetime) -> None:
+    """Return a check older than CHECK_TIMEOUT_MINUTES to draft: its process has died."""
+    cutoff = iso(now - timedelta(minutes=CHECK_TIMEOUT_MINUTES))
+    with tx(conn):
+        conn.execute(
+            "UPDATE rule_versions SET status = 'draft', updated_at = ? WHERE tenant = ? AND "
+            "status = 'checking' AND updated_at < ?",
+            (iso(now), slug, cutoff),
+        )
 
 
 def discard_draft(conn: sqlite3.Connection, slug: str, now: datetime) -> None:
@@ -380,10 +504,13 @@ def install_for_eval(conn: sqlite3.Connection, slug: str, content: dict, now: da
 def applied(tenant: Tenant, content: dict | None) -> dict:
     """Content as calls use it: validated again, so a row edited outside this module can still only
     change the editable lines and guidance, and a line that would fail to fill is dropped."""
-    clean, _errors = validate(tenant, content or {})
+    try:
+        clean, _errors = validate(tenant, content or {})
+    except (TypeError, ValueError, AttributeError, KeyError):
+        return {"lines": {}, "guidance": {}}
     lines = {
         k: v for k, v in clean["lines"].items()
-        if _fields(v) == _fields(default_line(tenant, k))
+        if _fields(v) == _fields(default_line(tenant, k)) and _renders(v)
     }
     return {"lines": lines, "guidance": clean["guidance"]}
 
@@ -410,7 +537,7 @@ def for_call(conn: sqlite3.Connection, tenant: Tenant, call_id: str) -> dict:
         "ON v.id = s.version_id WHERE s.call_id = ? AND s.stage = 'opening'",
         (call_id,),
     ).fetchone()
-    content = json.loads(row["content_json"]) if row and row["content_json"] else {}
+    content = _json(row["content_json"] if row else None, {})
     return {"number": row["number"] if row else None, **applied(tenant, content)}
 
 
@@ -467,3 +594,26 @@ def advance_stage(conn: sqlite3.Connection, call: sqlite3.Row, now: datetime) ->
         (call["id"], stage, version["version_id"] if version else None, iso(now)),
     )
     return stage
+
+
+def note_due(conn: sqlite3.Connection, tenant: Tenant, call: sqlite3.Row) -> tuple[str, list[str]]:
+    """The owner's guidance for the stage the call is in now, the first time it is due: the call
+    has reached booking or closing, has guidance for it, and is not a safety call (the caller
+    passes that in by calling only outside one). Marked sent, so it goes once; a stage reached
+    during a safety call gets its note on the next caller line after the safety state clears.
+    Returns ("", []) when nothing is due."""
+    row = conn.execute(
+        "SELECT stage, noted FROM call_stages WHERE call_id = ? AND stage IN ('booking', 'closing') "
+        "ORDER BY CASE stage WHEN 'closing' THEN 0 ELSE 1 END LIMIT 1",
+        (call["id"],),
+    ).fetchone()
+    if row is None or row["noted"]:
+        return "", []
+    items = for_call(conn, tenant, call["id"])["guidance"].get(row["stage"], [])
+    if not items:
+        return "", []
+    conn.execute(
+        "UPDATE call_stages SET noted = 1 WHERE call_id = ? AND stage = ?",
+        (call["id"], row["stage"]),
+    )
+    return row["stage"], items

@@ -159,7 +159,7 @@ def test_a_version_that_passed_on_a_rerun_says_so(agent):
             "scenarios": 18, "passed_count": 18, "failed": [], "errors": [], "run_id": "r1",
             "passed_on_rerun": ["landlord-in-disguise"], "reruns": 1, "rerun_cost_usd": 0.02,
             "content_hash": checking["content_hash"],
-        }, agent.clock())
+        }, agent.clock(), 18)
     finally:
         conn.close()
     page = reader(agent).client.get("/owner/rules").text
@@ -266,6 +266,34 @@ def test_rollback_from_the_editor(agent):
     assert "Rolled back" in page and page.count(">Roll back</button>") == 3
 
 
+@pytest.mark.parametrize("path, form", [
+    ("/owner/rules/discard", {}),
+    ("/owner/rules/rollback", {"number": "0"}),
+    ("/owner/rules/cancel", {}),
+])
+def test_every_edit_action_needs_the_edit_login(agent, path, form):
+    publish(agent, {"guidance": {"booking": [PETS]}})
+    response = reader(agent).client.post(path, data=form)
+    assert response.status_code == 401 and "Edit code" in response.text
+    conn = agent.db()
+    try:
+        assert rules.live(conn, TENANT.slug)["number"] == 1
+    finally:
+        conn.close()
+
+
+def test_stop_check_returns_the_draft(agent):
+    editor(agent).client.post("/owner/rules/draft", data={"guide.booking.0": PETS, "publish": "1"})
+    page = agent.client.get("/owner/rules/edit").text
+    assert ">Stop check</button>" in page
+    agent.client.post("/owner/rules/cancel")
+    conn = agent.db()
+    try:
+        assert rules.open_draft(conn, TENANT.slug)["status"] == "draft"
+    finally:
+        conn.close()
+
+
 def test_discard_drops_the_draft(agent):
     editor(agent).client.post("/owner/rules/draft", data={"guide.booking.0": PETS})
     agent.client.post("/owner/rules/discard")
@@ -288,7 +316,7 @@ def test_the_rules_pages_use_only_design_system_classes(agent, path):
     assert not undefined, sorted(undefined)
 
 
-@pytest.mark.parametrize("name", ["rules.html", "rules_edit.html"])
+@pytest.mark.parametrize("name", ["rules.html", "rules_edit.html", "login.html"])
 def test_the_rules_templates_set_no_style_of_their_own(name):
     text = (ROOT / "app" / "templates" / name).read_text()
     assert "style=" not in text and "<style" not in text

@@ -158,6 +158,7 @@ a.figure:hover .label { color: var(--ink); }
 .btn.quiet:hover { background: var(--hover); color: var(--ink); }
 .btn.icon { width: var(--control-h); padding: 0; }
 .btn[disabled], .btn[aria-disabled="true"] { color: var(--disabled); cursor: default; background: var(--surface); }
+.btn.primary[disabled], .btn.primary[aria-disabled="true"] { border-color: var(--line-strong); font-weight: var(--medium); }
 .btn svg { width: 16px; height: 16px; flex: none; }
 
 /* Filters: segmented choice and on/off toggles, one height */
@@ -534,6 +535,8 @@ div.note {
 .login input { height: 40px; padding: 0 var(--s-3); border: 1px solid var(--line-strong); border-radius: var(--r-md); font: inherit; }
 .login input:focus { outline: none; border-color: var(--info); box-shadow: var(--focus); }
 .login .btn { height: 40px; }
+.login .page-title { font-size: var(--text-xl); }
+.login label { color: var(--muted); font-size: var(--text-sm); }
 .error { color: var(--urgent-ink); font-size: var(--text-sm); }
 
 /* Specimen page only */

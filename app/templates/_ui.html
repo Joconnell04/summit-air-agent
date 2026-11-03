@@ -95,6 +95,7 @@
 {%- set again = g.passed_on_rerun or [] -%}
 {%- set rerun_note = ("Failed, then passed on a rerun: " ~ (again | join(", ") | replace("-", " ")) ~ ".") if again else "" -%}
 {%- if v.status == "checking" -%}<span class="tag high">Checking</span>
+{%- elif v.status == "blocked" and g.stale -%}<span class="tag outline" tabindex="0" data-tip="Another version went live while this was checked, so it wasn't published over it. Publish it again to check it against what's live now.">Not published, live changed</span>
 {%- elif v.status == "blocked" -%}<span class="tag urgent" tabindex="0" data-tip="{% if g.reruns %}Failed twice{% else %}Failed{% endif %}: {{ (g.failed + g.errors) | join(', ') | replace('-', ' ') }}. {{ rerun_note }}">Blocked, {{ (g.failed | length) + (g.errors | length) }} of {{ g.scenarios }} failed</span>
 {%- elif v.status == "draft" -%}<span class="tag outline">Draft</span>
 {%- elif v.rollback_of is not none -%}<span class="tag outline">Rolled back</span>
