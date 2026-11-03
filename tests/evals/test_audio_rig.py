@@ -137,6 +137,32 @@ def test_first_sound_is_when_the_caller_hears_the_voice_not_when_the_packet_came
     assert lst.first_sound() == pytest.approx(50.3)
 
 
+def test_a_backchannel_while_the_caller_talks_is_not_the_reply(monkeypatch):
+    monkeypatch.setattr(line_mod, "QUIET_S", 0.0)
+    clock = Clock(50.0)
+    lst = listener(clock)
+    lst.new_turn()
+    lst.audio(tone(300), RATE)  # "mm-hmm" from 50.0 while the caller is still speaking
+    clock.t = 51.0
+    lst.audio(silence(500) + tone(400), RATE)  # the reply starts at 51.5
+
+    async def go():
+        clock.t = 53.0
+        return await lst.turn(signals_done=False, since=50.8)
+
+    heard = asyncio.run(go())
+    assert heard.first_sound == pytest.approx(51.5)
+
+
+def test_sample_at_finds_the_sample_playing_at_a_time():
+    p = Playout(RATE)
+    p.add(tone(100), arrived=10.0)
+    p.add(tone(100), arrived=11.0)
+    assert p.sample_at(10.05) == RATE // 20
+    assert p.sample_at(10.5) == RATE // 10  # in the gap: the next chunk's first sample
+    assert p.sample_at(20.0) == RATE // 5
+
+
 def test_without_a_platform_signal_the_turn_ends_after_quiet():
     clock = Clock(50.0)
     lst = listener(clock)

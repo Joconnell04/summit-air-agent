@@ -95,14 +95,16 @@ class Line:
                                   headers={"Authorization": f"Bearer {self.token}"})
 
     async def cost(self) -> dict[str, float]:
-        """Retell's own billed cost for the call, once it has it."""
-        for _ in range(15):
+        """Retell's own billed cost for the call, in cents, once it has it: it stays at zero for
+        up to a minute after the call ends (MEASURED on the first rig calls)."""
+        for _ in range(30):
             call = await asyncio.to_thread(self.entrant.retell.request, "GET",
                                            f"/v2/get-call/{self.retell_call_id}")
             combined = (call.get("call_cost") or {}).get("combined_cost")
-            if combined is not None:
+            if combined:
                 return {"platform": combined / 100}
-            await asyncio.sleep(2)
+            await asyncio.sleep(3)
+        print(f"{self.retell_call_id}: Retell had no cost for the call yet", flush=True)
         return {}
 
 

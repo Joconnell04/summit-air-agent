@@ -112,6 +112,15 @@ class Playout:
             offset, start = first, t
         return start + (sample - offset) / self.rate
 
+    def sample_at(self, t: float) -> int:
+        """Index of the first sample that plays at or after time t (the end if none does)."""
+        total = len(self.pcm) // SAMPLE_BYTES
+        for i, (first, start) in enumerate(self.chunks):
+            last = self.chunks[i + 1][0] if i + 1 < len(self.chunks) else total
+            if start + (last - first) / self.rate > t:
+                return first + max(0, round((t - start) * self.rate))
+        return total
+
     def new_turn(self) -> None:
         """Keep the clock, drop the audio: anything still playing delays the next turn too."""
         self.chunks = []

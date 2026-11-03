@@ -67,6 +67,7 @@ class Listener:
         self._last_audio: float | None = None
         self._rate_set = False
         self._onset: float | None = None
+        self._after: float | None = None
 
     # Called by the adapter.
     def audio(self, pcm: bytes, rate: int, live: bool = False) -> None:
@@ -102,12 +103,17 @@ class Listener:
         self._done = False
         self._last_audio = None
         self._onset = None
+        self._after = None
 
     def first_sound(self) -> float | None:
+        """When the reply's first sound plays. Only sound after the caller stopped counts: a
+        platform that says "mm-hmm" while the caller talks (Retell's backchannel) has not started
+        its reply."""
         if self._onset is None and self.playout.pcm:
-            onset = self.vad.onset(bytes(self.playout.pcm), self.playout.rate)
+            skip = self.playout.sample_at(self._after) if self._after is not None else 0
+            onset = self.vad.onset(bytes(self.playout.pcm[skip * 2:]), self.playout.rate)
             if onset is not None:
-                self._onset = self.playout.heard_at(onset)
+                self._onset = self.playout.heard_at(skip + onset)
         return self._onset
 
     def finished(self, now: float, signals_done: bool) -> bool:
@@ -124,6 +130,8 @@ class Listener:
     async def turn(self, signals_done: bool, since: float) -> HeardTurn:
         """Wait for the agent's whole turn. `since` is when the caller stopped (or the call
         connected); no sound by FIRST_SOUND_TIMEOUT_S after it is a silent turn."""
+        self._after = since
+        self._onset = None
         while True:
             now = self.clock()
             if self.finished(now, signals_done):
