@@ -230,9 +230,10 @@ def finish(
     """Settle a dialed call from what the voice layer reports. Returns None for an unknown or
     settled id.
 
-    The voice layer reports as soon as the line is picked up, before anyone has spoken, so for a
-    callback this only records that it was answered. How the callback went is decided when the
-    call ends (settle_answered), from what the server saw on it. A voicemail, no answer or a failed
+    The voice layer reports as soon as the line is picked up, before anyone has spoken, so this
+    only records that it was answered. How the call went is decided when it ends (settle_answered),
+    from what the server saw on it: for a callback its outcome, for an earlier opening whether the
+    booking was moved. A voicemail, no answer or a failed
     call is settled here, since there is nothing more to see. Nothing in this module marks a
     callback done: the outcome goes on the call in ServiceTitan as a tag, and the callbacks job
     marks the callback done once the call log shows a call tagged resolved."""
@@ -242,8 +243,6 @@ def finish(
     answered = answered and not voicemail  # a voicemail is never a person
     result = "answered" if answered else "voicemail" if voicemail else "no_answer"
     with tx(conn):
-        if row["kind"] == "earlier_slot" and answered:
-            result = "accepted" if _accepted(conn, row, now) else "declined"
         conn.execute(
             "UPDATE outbound SET status = 'done', result = ?, updated_at = ? WHERE id = ?",
             (result, iso(now), outbound_id),
@@ -251,7 +250,32 @@ def finish(
     outcome = None
     if row["kind"] == "callback":
         outcome = settle_callback(conn, tenant, fsm, outbound_id, now)
+    elif answered:
+        result = settle_offer(conn, outbound_id, now) or result
     return {"outbound_id": outbound_id, "result": result, "outcome": outcome}
+
+
+def settle_offer(
+    conn: sqlite3.Connection, outbound_id: int, now: datetime, force: bool = False
+) -> str | None:
+    """Decide whether an answered earlier-opening offer was taken, once its call has ended (or,
+    with force, when the end is not coming). Returns accepted or declined, or None while it is
+    still waiting or was settled before."""
+    row = conn.execute("SELECT * FROM outbound WHERE id = ?", (outbound_id,)).fetchone()
+    placed = records.get_call(conn, row["placed_call_id"])
+    if not force and (placed is None or not placed["ended_at"]):
+        return None
+    with tx(conn):
+        # Read again inside the write: the end of the call and the job can overlap.
+        row = conn.execute("SELECT * FROM outbound WHERE id = ?", (outbound_id,)).fetchone()
+        if row["status"] != "done" or row["result"] != "answered":
+            return None
+        result = "accepted" if _accepted(conn, row, now) else "declined"
+        conn.execute(
+            "UPDATE outbound SET result = ?, updated_at = ? WHERE id = ?",
+            (result, iso(now), outbound_id),
+        )
+    return result
 
 
 def settle_callback(
@@ -301,13 +325,14 @@ def settle_answered(
     now: datetime,
     call_id: str | None = None,
 ) -> int:
-    """Settle the answered callbacks whose call has ended. Given a call id, the call that has just
-    ended; without one, every answered callback whose call ended, or whose end never came (the
-    voice worker died) once it has been waiting as long as a dial may go unreported."""
+    """Settle the answered calls the system placed whose call has ended: a callback's outcome, an
+    earlier opening's accepted or declined. Given a call id, the call that has just ended; without
+    one, every answered call that ended, or whose end never came (the voice worker died) once it
+    has been waiting as long as a dial may go unreported."""
     stuck = iso(now - timedelta(minutes=STUCK_DIALING_MINUTES))
     rows = conn.execute(
-        "SELECT o.id, o.updated_at, o.placed_call_id FROM outbound o "
-        "WHERE o.tenant = ? AND o.kind = 'callback' "
+        "SELECT o.id, o.kind, o.updated_at, o.placed_call_id FROM outbound o "
+        "WHERE o.tenant = ? "
         "AND o.status = 'done' AND o.result = 'answered' AND NOT EXISTS "
         "(SELECT 1 FROM call_outcomes c WHERE c.outbound_id = o.id) "
         "AND (? IS NULL OR o.placed_call_id = ?)",
@@ -322,9 +347,13 @@ def settle_answered(
         waited_too_long = (
             call_id is None and row["updated_at"] < stuck and (last_turn or "") < stuck
         )
-        settled += (
-            settle_callback(conn, tenant, fsm, row["id"], now, force=waited_too_long) is not None
-        )
+        if row["kind"] == "earlier_slot":
+            settled += settle_offer(conn, row["id"], now, force=waited_too_long) is not None
+        else:
+            settled += (
+                settle_callback(conn, tenant, fsm, row["id"], now, force=waited_too_long)
+                is not None
+            )
     return settled
 
 

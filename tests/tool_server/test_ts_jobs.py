@@ -112,9 +112,46 @@ def test_an_answered_offer_with_no_move_is_declined_and_keeps_the_booking(agent,
     claimed = claim(agent)
     place(agent, claimed)
     agent.turn(claimed["call_id"], "No thanks, tomorrow is fine.")
+    agent.end(claimed["call_id"], "agent_end")
     assert done(agent, claimed["outbound_id"], answered=True)["data"]["result"] == "declined"
     assert count(agent, "SELECT seek_earlier FROM bookings WHERE call_id = ?", call) == 1
     assert done(agent, claimed["outbound_id"], answered=True)["refused"] == "invalid_state"
+
+
+def test_an_offer_reported_at_pickup_is_judged_when_its_call_ends(agent, clock):
+    """The voice layer reports the pickup before anyone speaks (spec S-25, journey 12)."""
+    call, _ = urgent_booked_tomorrow(agent)
+    offer(agent)
+    clock.advance(minutes=15)
+    claimed = claim(agent)
+    placed = place(agent, claimed)
+    assert done(agent, claimed["outbound_id"], answered=True)["data"]["result"] == "answered"
+    agent.turn(placed, "Yes, today works, thank you.")
+    moved = agent.tool(
+        "reschedule_appointment",
+        placed,
+        booking_id=claimed["booking_id"],
+        slot=claimed["offer"],
+        reason="earlier opening",
+    )
+    assert moved["ok"], moved
+    agent.end(placed, "agent_end")
+    assert count(agent, "SELECT result FROM outbound") == "accepted"
+    assert count(agent, "SELECT seek_earlier FROM bookings WHERE call_id = ?", call) == 0
+
+
+def test_an_offer_whose_call_never_reports_its_end_is_judged_by_the_job(agent, clock):
+    call, _ = urgent_booked_tomorrow(agent)
+    offer(agent)
+    claimed = claim(agent)
+    place(agent, claimed)
+    done(agent, claimed["outbound_id"], answered=True)
+    jobs.run_once(services(agent))
+    assert count(agent, "SELECT result FROM outbound") == "answered", "still waiting for the end"
+    clock.advance(hours=1)
+    jobs.run_once(services(agent))
+    assert count(agent, "SELECT result FROM outbound") == "declined"
+    assert count(agent, "SELECT seek_earlier FROM bookings WHERE call_id = ?", call) == 1
 
 
 def test_no_offer_outside_outbound_hours_or_to_a_do_not_call_number(agent, clock):
