@@ -2,6 +2,8 @@
 text, never generated (spec S-17)."""
 
 import asyncio
+import json
+from types import SimpleNamespace
 
 import httpx
 import pytest
@@ -9,6 +11,7 @@ import yaml
 from livekit.agents import Agent, StopResponse
 from livekit.agents.llm import ChatMessage
 
+from app.trace import as_text, timeline
 from prompts.assemble import greeting
 from tests.tool_server.toolkit import TENANT_DIR
 from voice.livekit.bridge import Bridge
@@ -149,6 +152,36 @@ def test_every_agent_line_carries_its_stage_timings(agent, connect):
     ).fetchone()[0]
     conn.close()
     assert '"reply_ms": 1100.0' in timings and '"tool_ms": 42.0' in timings
+
+
+def test_the_trace_shows_whether_the_prompt_cache_was_hit(agent, connect):
+    agent.start(call_id="call-1")
+    call = make_call(connect)
+    call.llm_log.record(
+        SimpleNamespace(
+            type="llm_metrics",
+            cancelled=False,
+            prompt_tokens=9400,
+            prompt_cached_tokens=9300,
+            cache_creation_tokens=40,
+            completion_tokens=30,
+        )
+    )
+
+    async def run():
+        call.agent_line(agent_says("I've got Tuesday morning open."))
+        await call.flush()
+
+    asyncio.run(run())
+    conn = agent.db()
+    timings = json.loads(
+        conn.execute(
+            "SELECT timings_json FROM turns WHERE call_id = 'call-1' AND speaker = 'agent'"
+        ).fetchone()[0]
+    )
+    conn.close()
+    assert timings["cache_read_tokens"] == 9300 and timings["cache_write_tokens"] == 40
+    assert "cache_read_tokens" in as_text(timeline(agent.db(), "call-1"))
 
 
 def test_the_greeting_names_a_single_matched_customer(scenarios, agent):

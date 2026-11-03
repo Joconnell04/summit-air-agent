@@ -15,7 +15,7 @@ from prompts.assemble import server_notes
 from .bridge import Bridge
 from .server import UNREACHABLE, ToolServer
 from .tools import ToolLog
-from .turns import agent_timings, asked_for_digits, caller_timings
+from .turns import LlmLog, agent_timings, asked_for_digits, caller_timings
 
 log = logging.getLogger("voice.call")
 
@@ -26,10 +26,18 @@ SPOKEN_ACTIONS = ("speak_lines", "speak_variant", "ask_check")
 class Call:
     """What the worker knows about one call, shared by the agent and the session's events."""
 
-    def __init__(self, server: ToolServer, bridge: Bridge, tool_log: ToolLog, endpointing: dict):
+    def __init__(
+        self,
+        server: ToolServer,
+        bridge: Bridge,
+        tool_log: ToolLog,
+        endpointing: dict,
+        llm_log: LlmLog | None = None,
+    ):
         self.server = server
         self.bridge = bridge
         self.tool_log = tool_log
+        self.llm_log = llm_log or LlmLog()
         self.endpointing = endpointing
         self.session = None
         self.caller_stopped_at: float | None = None
@@ -79,7 +87,9 @@ class Call:
         if not text.strip():
             return
         tool_ms, bridge = self.tool_log.take()
-        timings = agent_timings(message.metrics, self.caller_stopped_at, tool_ms, bridge)
+        timings = agent_timings(
+            message.metrics, self.caller_stopped_at, tool_ms, bridge, self.llm_log.take()
+        )
         self.post("agent", text, timings)
         mode = "digits" if asked_for_digits(text) else "normal"
         self.session.update_options(endpointing_opts=self.endpointing[mode])

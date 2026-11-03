@@ -1,5 +1,5 @@
 """Small pure helpers for each turn: when to wait longer, the stage timings sent with every turn
-(docs/latency.md), and the notes the server's turn result adds for the model."""
+(docs/latency.md), and the model requests behind an agent line (prompt cache numbers)."""
 
 import re
 
@@ -33,17 +33,53 @@ def caller_timings(metrics: dict) -> dict[str, float]:
     return {k: v for k, v in timings.items() if v is not None}
 
 
+class LlmLog:
+    """The model requests made since the last agent line, from LiveKit's per-request metrics.
+
+    A turn can make several requests: a preemptive one that is thrown away, the one that counts,
+    and one more after each tool result. The numbers sent with the agent line come from the first
+    request that was not thrown away, because that one decides how long the caller waits."""
+
+    def __init__(self):
+        self._requests: list = []
+
+    def record(self, metrics) -> None:
+        if getattr(metrics, "type", "") == "llm_metrics":
+            self._requests.append(metrics)
+
+    def take(self) -> dict[str, float]:
+        requests, self._requests = self._requests, []
+        if not requests:
+            return {}
+        kept = [r for r in requests if not r.cancelled]
+        first = (kept or requests)[0]
+        return {
+            "llm_requests": len(kept),
+            "llm_cancelled": len(requests) - len(kept),
+            "prompt_tokens": first.prompt_tokens,
+            "cache_read_tokens": first.prompt_cached_tokens,
+            "cache_write_tokens": first.cache_creation_tokens,
+            "llm_output_tokens": first.completion_tokens,
+        }
+
+
 def agent_timings(
-    metrics: dict, caller_stopped_at: float | None, tool_ms: float, bridge: bool
+    metrics: dict,
+    caller_stopped_at: float | None,
+    tool_ms: float,
+    bridge: bool,
+    llm: dict[str, float] | None = None,
 ) -> dict[str, float]:
     """Stage timings for an agent line. `reply_ms` runs from the caller going quiet to the agent's
-    first audio, the number spec S-36 sets targets for."""
+    first audio, the number spec S-36 sets targets for. `llm` is `LlmLog.take()`: the first model
+    request's prompt cache numbers, so `make trace` shows whether the cache was hit."""
     timings = {
         "llm_first_token_ms": _ms(metrics.get("llm_node_ttft")),
         "tts_first_byte_ms": _ms(metrics.get("tts_node_ttfb")),
         "tool_ms": round(tool_ms, 1),
         "bridge": 1.0 if bridge else 0.0,
     }
+    timings.update(llm or {})
     started = metrics.get("started_speaking_at")
     if started and caller_stopped_at:
         timings["reply_ms"] = _ms(started - caller_stopped_at)
