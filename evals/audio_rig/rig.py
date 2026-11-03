@@ -1,7 +1,7 @@
 """The simulated audio bake-off (DECISIONS.md 026, docs/bakeoffs.md bake-off 6).
 
     uv run --env-file .env python -m evals.audio_rig --stack elevenlabs [--suite smoke]
-        [--repeats 3] [--max-cost 3.0] [--only id,id] [--no-upload]
+        [--repeats 3] [--samples 1] [--max-cost 3.0] [--only id,id] [--no-upload]
 
 The harness's simulated caller writes each line; Deepgram renders it to audio, which streams to
 the entrant at real speed, 20 ms at a time, with silence between lines as a phone line has. The
@@ -273,12 +273,14 @@ class Rig:
         return result
 
 
-def plan(chosen: list[Scenario], repeats: int) -> list[tuple[Scenario, int]]:
-    return [(s, n) for s in chosen for n in range(1, (repeats if must_repeat(s) else 1) + 1)]
+def plan(chosen: list[Scenario], repeats: int, samples: int = 1) -> list[tuple[Scenario, int]]:
+    """`repeats` runs of each must-pass gas or CO scenario, `samples` of every other one."""
+    return [(s, n) for s in chosen
+            for n in range(1, (repeats if must_repeat(s) else samples) + 1)]
 
 
 async def run_entrant(name: str, chosen: list[Scenario], repeats: int, max_cost: float | None,
-                      env: dict, workdir: Path) -> tuple[list[ScenarioResult], object]:
+                      env: dict, workdir: Path, samples: int = 1) -> tuple[list[ScenarioResult], object]:
     config = load_config()
     worlds = Worlds()
     with Serving(build_app(worlds)) as router:
@@ -289,7 +291,7 @@ async def run_entrant(name: str, chosen: list[Scenario], repeats: int, max_cost:
         done: list[ScenarioResult] = []
         await entrant.start()
         try:
-            for scenario, sample in plan(chosen, repeats):
+            for scenario, sample in plan(chosen, repeats, samples):
                 try:
                     result = await rig.call(scenario, sample)
                 except (KeyboardInterrupt, asyncio.CancelledError):
@@ -325,6 +327,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--suite", default="smoke")
     parser.add_argument("--only", default="", help="scenario ids, comma separated")
     parser.add_argument("--repeats", type=int, default=3)
+    parser.add_argument("--samples", type=int, default=1, help="runs of every other scenario")
     parser.add_argument("--max-cost", type=float, default=None)
     parser.add_argument("--no-upload", action="store_true")
     parser.add_argument("--results-dir", default=str(RESULTS_DIR))
@@ -337,7 +340,7 @@ def main(argv: list[str] | None = None) -> int:
     with tempfile.TemporaryDirectory(prefix="summit-rig-") as tmp:
         done, entrant = asyncio.run(
             run_entrant(args.stack, chosen, args.repeats, args.max_cost, dict(os.environ),
-                        Path(tmp))
+                        Path(tmp), args.samples)
         )
     if not done:
         print("no scenario finished", file=sys.stderr)

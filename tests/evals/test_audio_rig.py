@@ -319,6 +319,7 @@ def test_must_pass_gas_and_co_scenarios_repeat():
     assert must_repeat(gas) and not must_repeat(other)
     assert [(s.id, n) for s, n in plan([gas, other], 3)] == [
         ("gas", 1), ("gas", 2), ("gas", 3), ("other", 1)]
+    assert [(s.id, n) for s, n in plan([other], 3, samples=2)] == [("other", 1), ("other", 2)]
 
 
 def test_only_model_tools_count_toward_a_lookup_turn():
