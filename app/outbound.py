@@ -197,7 +197,7 @@ def _describe(
             "SELECT * FROM callbacks WHERE id = ?", (row["callback_id"],)
         ).fetchone()
         data["reason"] = callback["reason"]
-        first_name = callback_name(conn, fsm, callback)
+        first_name = callback_name(fsm, callback)
         data["opening_line"] = (
             tenant.line("callback_opening", first_name=first_name)
             if first_name
@@ -206,19 +206,15 @@ def _describe(
     return data
 
 
-def callback_name(conn: sqlite3.Connection, fsm: FsmAdapter, callback: sqlite3.Row) -> str | None:
-    """The first name to ask for when calling back: the customer matched on the call that asked.
-    None when nobody was matched, or the matches have different first names, so the opening never
-    guesses between people. A yes to the name is what lets the callback count as resolved
-    (person_confirmed; docs/decisions/49-callback-opening-name.md)."""
-    if not callback["call_id"]:
+def callback_name(fsm: FsmAdapter, callback: sqlite3.Row) -> str | None:
+    """The first name to ask for when calling back: the customer on the number being called, the
+    same match the placed call makes, so a yes to the name confirms the person (person_confirmed;
+    docs/decisions/49-callback-opening-name.md). None when nobody is on the number, the matches
+    have different first names, or ServiceTitan can't be read, so the opening never guesses."""
+    try:
+        names = {c["name"].split()[0] for c in fsm.customers_by_phone(callback["phone"])}
+    except (FsmUnavailable, FsmRejected, KeyError, IndexError, AttributeError):
         return None
-    names = set()
-    for customer_id in records.scoped_customers(conn, callback["call_id"]):
-        try:
-            names.add(fsm.customer(customer_id)["name"].split()[0])
-        except (FsmUnavailable, FsmRejected, KeyError, IndexError):
-            return None
     return names.pop() if len(names) == 1 else None
 
 

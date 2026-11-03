@@ -14,7 +14,7 @@ from test_ts_jobs import claim, done, place, services
 from toolkit import UNKNOWN, book, count, first_open, in_area_address
 
 from app import jobs, outbound, owner, records
-from app.fsm import FsmAdapter, FsmRejected
+from app.fsm import FsmAdapter, FsmRejected, FsmUnavailable
 from app.settings import TAG_RETRY_MINUTES
 from servicetitan_mock import worldkit
 
@@ -222,6 +222,23 @@ def test_a_callback_to_a_caller_with_no_name_on_file_opens_without_one(agent, cl
     agent.tool("end_call", placed, reason="resolved")
     finish(agent, claimed, placed)
     assert outcome(agent, claimed["outbound_id"]) == ("open", "the person was not confirmed")
+
+
+def test_a_callback_claimed_while_servicetitan_is_down_opens_without_a_name(
+    agent, clock, scenarios, monkeypatch
+):
+    maria = scenarios["repeatCallerOpenJob"]
+    promise_callback(agent, maria["phone"])
+    clock.advance(minutes=31)
+    jobs.run_once(services(agent))
+
+    def down(phone):
+        raise FsmUnavailable("connection refused")
+
+    monkeypatch.setattr(services(agent).fsm["summit-air"], "customers_by_phone", down)
+    assert claim(agent)["opening_line"] == (
+        "Hi, this is Summit Air calling you back, like we said we would."
+    )
 
 
 def test_a_yes_to_a_question_that_does_not_name_the_customer_is_not_a_name_check(

@@ -14,7 +14,7 @@ Issue: #N
 
 ## 013. A callback the system places opens by asking for the caller by name
 
-Decided: option A. The opening is "Hi, this is Summit Air calling back for {first_name}. Is that you?", with the first name of the customer matched on the call that asked. With no name on file, or two matched customers with different first names, it keeps the plain line.
+Decided: option A. The opening is "Hi, this is Summit Air calling back for {first_name}. Is that you?", with the first name of the customer on the number being called, the same match the placed call makes. With no name on that number, two customers with different first names, or ServiceTitan unreachable, it keeps the plain line.
 Why: a callback is resolved only when the right person is confirmed on the call (010). The plain opening never checked who answered, so most system callbacks would have been tagged open and handed to a person. A short yes to the name is the confirmation the server already accepts, and it mirrors the inbound greeting for a known caller.
 Considered: keep the line and confirm later in the call; leave it and let a person close most callbacks.
 Would change if: callers find the name question off-putting on live calls, in which case the check moves after the reason for the call.
