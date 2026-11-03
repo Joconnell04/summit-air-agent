@@ -333,7 +333,10 @@ lines:
   earlier_slot_offer: >-
     Hi, this is Summit Air calling about your appointment. We've had an opening {day} at {window},
     would you like it?
-  callback_opening: Hi, this is Summit Air calling you back, like we said we would.
+  # A callback opens by asking for the person who asked for it, so a yes confirms who answered
+  # (docs/decisions/49-callback-opening-name.md). Without one known name, the plain line.
+  callback_opening: Hi, this is Summit Air calling back for {first_name}. Is that you?
+  callback_opening_unknown: Hi, this is Summit Air calling you back, like we said we would.
 
 # What the voice worker says on its own, without the model (voice/livekit). {first_name} is the
 # matched customer's first name; {phone} is our number, on outbound calls.
