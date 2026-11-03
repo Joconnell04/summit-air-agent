@@ -3,46 +3,11 @@ S-23, S-32, S-38, S-42, S-48, S-49)."""
 
 import sqlite3
 
-import httpx
 import pytest
 from toolkit import UNKNOWN, book, count, first_open, ready_to_book
 
 from app import jobs, records
-from app.fsm import FsmUnavailable
 from app.settings import QUEUE_MAX_ATTEMPTS
-
-
-class Down(httpx.BaseTransport):
-    def handle_request(self, request):
-        raise httpx.ConnectError("connection refused", request=request)
-
-
-@pytest.fixture
-def fsm(agent):
-    """The adapter, with a way to swap its HTTP client and put it back."""
-    adapter = agent.app.state.services.fsm["summit-air"]
-    original = adapter.http
-
-    class Switch:
-        def down(self):
-            adapter.http = httpx.Client(transport=Down(), base_url="http://testserver")
-
-        def losing_job_responses(self):
-            """The job reaches the FSM, but the answer never comes back."""
-            real = adapter.create_job
-
-            def create_job(*args, **kwargs):
-                real(*args, **kwargs)
-                raise FsmUnavailable("create_job: ReadTimeout")
-
-            adapter.create_job = create_job
-
-        def up(self):
-            adapter.http = original
-            adapter.__dict__.pop("create_job", None)
-
-    yield Switch()
-    Switch().up()
 
 
 def run_jobs(agent):
