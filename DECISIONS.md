@@ -12,6 +12,30 @@ Discussion: docs/ai-process/transcripts/... or docs/explorations/...
 Issue: #N
 -->
 
+## 035. Eval co-authoring in three rounds, not five
+
+Decided: the co-authoring plan in exploration 008, section 7, shrinks to three rounds. Round 1 (real failures) is done. Round 2 combines seeds and the hold-out: Jackson edits or rejects about 10 seed scenarios drafted from his round 1 notes, and dictates 5 short caller cases that stay unread until a release gate. Round 3 combines judge labels and the scoreboard: he marks about 10 graded transcripts pass or fail with the grader's verdict hidden, then reads the standard-run summary and agrees the floor.
+Why: Jackson's time; the two dropped rounds fold into the others without losing their purpose (seeds from a human, a hold-out the AI never saw, a grader checked against a person).
+Considered: the original five rounds (more of his time for a small gain at this size).
+Would change if: round 3 shows the grader disagrees with Jackson often, in which case a second labelling round is added.
+Discussion: docs/explorations/008-eval-set-quality.md, section 7
+
+## 034. What's in V1 and what waits
+
+Decided: in V1, built in phase 3: the technician summary (S-16), the model matrix (Haiku against Sonnet), a side model where the evals show a bottleneck, warm transfer to a person, call recordings on the call page, the eval floor, and reply-delay targets with measured latency values. After V1: Spanish and other languages, playbooks per call, production capacity past the demo, booking texts and anything else that needs SMS, and the extra owner-view editing (editable numbers, condition rules, after-call guidance). The local-name pronunciation is closed as good enough: Houston Street is said HOW-stun, which is the one that matters; the 30 clips weren't reviewed by ear. Owner logins last as long as a browser keeps a cookie, with no limit on wrong guesses.
+Why: the assignment is a voice agent, not a front-end platform, so phase 3 time goes to what callers and technicians notice. Texting waits on carrier registration (decision 007), and the owner view stays as built.
+Considered: keeping the earlier later-list as it was; building the extra owner-view editing now.
+Would change if: the interview asks for one of the deferred items, or phase 3 runs out of time before the in-V1 items land.
+Discussion: Jackson's notes on docs/ai-process/brief-phase-3-onward.md
+
+## 033. The agent's safety job is to escalate politely, not to coach
+
+Decided: on a safety call the agent says the fixed lines, politely recommends getting safe, flags a person and gets off the line. It doesn't give on-the-fly safety guidance or grow new safety logic; fixes to failing safety scenarios prefer simplifying over adding rules.
+Why: it's an AI voice agent that tells callers what it is, and its value on these calls is a fast, calm handoff to 911 and a person. Jackson: "It doesn't need to give, like, on-the-fly safety guidance. It just needs to, like, politely elevate the situation to the caller or person being called, and then politely instruct them to, you know, be careful or whatever. But it doesn't need some crazy logic."
+Considered: more trigger phrases and follow-up questions per hazard (more chances to overfire, as eval round 1 showed).
+Would change if: real calls show a hazard the fixed lines and the check questions miss.
+Discussion: Jackson's notes on the phase 3 brief
+
 ## 032. Owner guidance has four stages and steers clear of locked subjects
 
 Decided: owners can add guidance for the opening, the whole call, booking and closing; nothing runs a model before hello, and after-call guidance waits for the technician summary. Guidance that names a locked subject (safety, gas, carbon monoxide, 911, the read-back, commercial, price, fees, priority, urgent, service area, cancelling, or words that try to talk the model out of its instructions) is refused. Text is folded to plain ASCII first, so look-alike characters can't slip past. The four editable lines are six fields, since the greeting and the callback opening each have a known-caller and an unknown-caller form; the unknown-caller greeting must keep its AI disclosure. Booking and closing guidance reaches the model only when the server says the call has reached that stage.

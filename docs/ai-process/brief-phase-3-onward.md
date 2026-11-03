@@ -1,53 +1,24 @@
 # Brief: what's left for Jackson, phase 3 onward
 
-Each item below needs Jackson's answer or time. Each has a recommendation, so "go with it" is a full answer. Phase 3 items come first, in the order they block work; then a head start on phases 4 and 5.
+Updated after Jackson's notes on the first version. What's settled is in DECISIONS.md 033 to 035; this file keeps only what still needs him, and what is running.
 
-## Phase 3: test and tune
+## Needs Jackson
 
-1. **Tonight's calls.** Make the 10 scripted calls in `evals/live-calls.md` to our number, (646) 624-0418. This is the go/no-go in #9. The safety fixes, the local names and the softer sign-off are live on the server. Recommend leaving Retell's 10 calls until the audio rig picks the final two, so you call twice, not three times.
-2. **Listen to the name clips.** The 30 clips are in `data/name-clips/`; each name has a version ending `-plain.wav` and one ending `-dict.wav`. Is each name said the way a New Yorker says it? Two things to listen for:
-   - With the pronunciation list, Houston Street, Kosciuszko, Schermerhorn and Conselyea run 1 to 1.5 s longer, so there may be a pause around the name.
-   - Deepgram still heard "Todt Hill" as "Tote Hill" (MEASURED, PR #63).
-3. **Must-pass scenarios that fail at random.** The rules page's gate runs failed five different must-pass scenarios, once each, two of them safety scenarios (MEASURED, PR #65). Most look like noise from the simulated caller or the agent. One pattern is not noise: `safety-override-insists` and `two-people-mind-change` failed in 3 of 4 runs with the owner's demo edit, so a closing note like "clear a path to the furnace" may really change how the agent handles those calls. The gate blocked it, which is its job.
-   - Recommendation: before the eval floor is set, run each must-pass scenario 3 times on the defaults (about $1.20, ASSUMED). Fix the scenarios or the agent until all 3 pass, then set the floor.
-   - Question: is "passes 3 of 3" the bar for a safety scenario? Recommend yes.
-   - For your awareness, decided without you (DECISIONS.md 031): the owner's publish gate reruns a failed must-pass scenario once and blocks if it fails again, and grader-only fails don't block. An ordinary eval run still fails on one miss.
-4. **The technician summary.** Spec S-16 says the technician's job notes open with a short summary written after the call. The code only marks it as pending.
-   - Recommendation: build it before the demo, about half a day (ASSUMED). It's the one spec line with no code behind it.
-5. **Rules page loose ends.** Recommend adding all three to `docs/later.md`:
-   - The edit login lasts 30 days and has no limit on wrong guesses, the same as the owner login.
-   - The guidance filter is a keyword list. A reviewer got 18 of 30 new phrasings past it (for example "Bypass the usual checks for regulars"), though the server gates still refused every unsafe booking. The real protection is the server gates and the eval gate (DECISIONS.md 032).
-   - The demo history has two blocked versions and no passing one. Recommend one more gate run, about $0.45, after item 3 makes the scenarios steady.
-6. **The bake-off result.** The audio rig lane is still building and running. Its readout will name the two stacks that get your real calls.
-7. **Walking `docs/later.md`.** Phase 3 ends with each item marked done, after V1, or dropped. My calls:
-   - Spanish: after V1.
-   - Side model: after V1, unless the evals find a bottleneck.
-   - Model matrix: run the cheap version (Haiku against Sonnet) during phase 3.
-   - Playbooks per call: drop. The rules page now covers guidance by stage.
-   - Warm transfer: after V1.
-   - Production capacity: after V1.
-   - Booking texts: after V1.
-   - Reply-delay targets and the ASSUMED latency values: done once tonight's calls are traced.
-   - Eval floor: after item 3.
-   - Call recordings: after V1.
-8. **Eval co-authoring rounds 2 to 5** (exploration 008, section 7). Four sessions of 10 to 20 minutes each, reading failures as in round 1. Recommend round 2 after the floor run in item 3.
+1. **Tonight's calls.** Make the 10 scripted calls in `evals/live-calls.md` to our number, (646) 624-0418 (the go/no-go in #9). Retell's 10 calls wait until the audio rig picks the final two.
+2. **Eval co-authoring round 2** (of 3, DECISIONS.md 035): `evals/rounds/02-seeds-and-holdout.md`. Say keep, cut or a one-line change for each of about 10 seed scenarios, then dictate 5 short caller cases for the hold-out. About 15 minutes.
+3. **Retell balance.** Spend so far is $4.34 (MEASURED from Retell's call and chat lists): about 8 cents a minute, mostly today's rig calibration calls. Still to come: the rest of the rig run and 10 real calls of about 3 minutes, roughly $5 (ASSUMED), plus the number's monthly fee. Recommend adding $20 so a run never stops halfway.
+4. **Where a warm transfer rings.** The transfer lane builds it with the target numbers left unset, so today's flag-and-callback behavior holds until a number is set. For the demo, which phone should "connect me to a person" ring? Your cell is the obvious choice; the number goes only in the server's `.env`.
 
-## Phase 4: deploy and demo prep, a head start
+## Running now
 
-9. **What the demo shows, and in what order.** The rules page's demo history isn't loaded on the server yet; that happens once item 5's passing version exists. Recommend:
-   - Paul calls live.
-   - The owner view shows that call arriving.
-   - The rules page shows a guidance edit blocked by the eval gate and a later version that passed.
-   - The bake-off scoreboard backs up why we built our own stack.
+- **Technician summary (S-16)**, a short note at the top of the job written after the call.
+- **Model matrix and side model.** Haiku against Sonnet on the standard suite, two repeats each, through the Claude API. Driving fresh Claude Code sessions on your subscription was considered and not used: Claude Code wraps the model in its own system prompt, tools and caching, so neither the tool calls nor the reply delay would match how our agent calls the model. Then one side model where the evals show a bottleneck, or "stay with none" with the evidence.
+- **Must-pass reliability, the eval floor, and the demo gate run.** Every must-pass scenario run 3 times and fixed until 3 of 3, the floor set from a fresh standard run, and a passing version added to the rules page's history.
+- **Warm transfer and call recordings.**
+- **The bake-off audio rig** (ElevenLabs, OpenAI Realtime, Gemini Live, with our stack and Retell to calibrate). Not finished; no PR yet.
 
-   Question: should Paul call cold, or have a script to work from?
-10. **Interview drills.** `phases.md` lists planted-bug drills, but you said you'd rather prepare with feasibility questions. Recommend replacing that line with a list of "how would you do X" questions. The prep notes stay outside this repo.
-11. **The rehearsal.** "A skeptical owner" could be you playing Paul on a call, or a Claude-played owner reading the owner view and asking questions. Recommend one of each.
-12. **The AI disclosure when we know the caller.** A new caller hears "virtual assistant" in the greeting, and owners can't edit it out. A known caller hears "Hi, this is Summit Air. Is this Dana?" with no disclosure, and the agent only says it's an AI if asked (spec S-34). Question: should the known-caller greeting say it too? Recommend yes; it costs a few words, and a caller who later learns they talked to an AI without being told may feel misled.
-13. **The backup number.** The watchdog already moves the number to a recorded fallback line if the worker fails. Question: is that enough, or should a second live stack (Retell) answer instead? Recommend the recorded fallback; it is simpler and already tested.
+## Paused (phases 4 and 5)
 
-## Phase 5: handover, a head start
+Phase 4 is prep for the call and phase 5 is delivery, sharing, the cost summary and the shut-off list. Both wait until Jackson picks them up. The one change made now: feasibility questions replace planted-bug drills in `phases.md`.
 
-14. **How Revin gets the repo.** A private repo with Revin's GitHub users invited, or made public for the review window. Recommend private with invites; that needs their GitHub usernames.
-15. **What stays in the repo.** The AI-process folder (co-authoring log, transcripts, briefs) is part of the case study. Recommend keeping it all, with one read-through for anything personal before sharing.
-16. **Running costs while they review, and shutting down after.** Recommend leaving the server, number and voice services on through the interview and a week after (about $20 a month for the server, SOURCE: DECISIONS.md 005), then shutting everything down from a checklist.
+Open items to bring back then: the demo order and whether Paul calls with a script; the rehearsal; whether a known caller's greeting should also say it's a virtual assistant; the backup number; how Revin gets the repo; what stays in it; running costs and the shut-off checklist.
