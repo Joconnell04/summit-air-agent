@@ -122,3 +122,13 @@ Changed:
 - Spec S-37a (bridge line only for slow tools) and S-37b (stage timings logged, eval runs flag delay changes) added from the latency feedback.
 Commit: 7bd624b
 Status: locked
+
+## spec r4 (amendment after lock: tool contract)
+Feedback (verbatim):
+> Okay, some thoughts and questions for you to address. First, is there not a check membership tool? And if not, why not? Would that like speed that process up? I'm not really sure. Yeah, I feel like find customer should do that. Also, I just think it would be helpful if there could be like notes attached to a customer, like in the CRM. I'm thinking if someone's like had a note of like they prefer warm and friendly, you know, then warm and friendly intro should be used, or I don't know, something like that. But just an idea. Maybe you can throw it on the later markdown file, but I'm sure. Also, stuff like find last service date or find last call. I feel like the model should be able to, if it wants to like know that information too, which is just pretty structured queries to the CRM and other connected databases, right? Maybe it could also document like just free text notes. I don't know, like record note. I don't know. I want to make sure that this system is very versatile and good at handling a wide variety of requests while still holding true to its like underlying contract, if that makes sense. All of that feedback was for the tools markdown file.
+Changed:
+- No separate membership tool: the first lookup and `find_customer` already return membership, open jobs, last service date, recent calls and customer notes in one round trip (faster than two calls).
+- New `get_customer_history` (read-only, caller's own records) and `add_note` (append-only, never an instruction); customer notes shape tone and save questions but never bypass a gate. Spec S-15a, C-51, docs/tools.md.
+- Stale texting wording fixed in users.md, architecture.md, template.md and considerations.md.
+Commit: 897fddd
+Status: locked

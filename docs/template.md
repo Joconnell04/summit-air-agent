@@ -13,7 +13,7 @@ Status: version 1, written before the build. The mock ServiceTitan's template vs
 | Intake | The intake fields every job needs (who, where, what's wrong, since when, access, contact on site, who approves) | Trade-specific questions (HVAC: system type, thermostat reading; roofing: leak location, roof age, storm damage) |
 | Priority and safety | The priority engine: fixed list, score, rules that can only raise priority, the safety-script gate | What counts as urgent and the safety scripts themselves (HVAC: gas, CO, no heat with a vulnerable person; roofing: active leak, structural damage) |
 | Customers and members | Lookup by phone then address, repeat-caller linking, member recognition | Membership plans and their perks |
-| Booking | Idempotent booking, slot offering, read-back gate, confirmation text | Job types, arrival windows, capacity rules, service-area ZIPs, fees if any |
+| Booking | Idempotent booking, slot offering, read-back gate, spoken confirmation | Job types, arrival windows, capacity rules, service-area ZIPs, fees if any |
 | Who gets told | Flags, handoffs, on-call texts | Who the on-call person is, office hours, after-hours rules |
 | Commercial and out of scope | Decline-and-log flow | What counts as out of scope (Summit Air: commercial) |
 | Systems | The FSM adapter interface and the mock ServiceTitan | Which adapter and credentials (ServiceTitan, Housecall Pro, Jobber, or a sheet) |

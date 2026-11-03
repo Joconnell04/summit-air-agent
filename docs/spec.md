@@ -39,6 +39,7 @@ Sources: the six requirements in docs/assignment.md (R1 to R6), docs/users.md, d
 | S-13 | Every booking carries: issue, since when, address, contact number, system type if known, what's been tried, who will be home, who approves the work, and anything the technician should know on arrival. | Unit (booking schema), eval [booking] | R4, C-07, C-17 |
 | S-14 | The agent asks only for what's missing and needed, in the order in the call journeys, and folds access, pets and parking into one question at the end. | Eval [booking], grader | J spine |
 | S-15 | "The number I'm calling from" uses the real caller ID; "the one ending in 4024" matches a number on file. | Unit, eval [booking] | J spine |
+| S-15a | The first lookup returns membership, open jobs, last service date, recent calls and customer notes in one round trip; `get_customer_history` reads older history only for a customer matched on this call; `add_note` appends text and can't edit or delete. A note shapes tone or saves a question but never bypasses a gate. | Unit, eval [membership, repeat-caller, injection] | docs/tools.md, C-51 |
 | S-16 | The technician's job notes start with a short summary (what's happening, recent work, access, what the customer was told), not a transcript, written after the call by a model with thinking on (profile `post_call.summary`). | Unit | users.md |
 
 ## R5. Routine or urgent, and safety

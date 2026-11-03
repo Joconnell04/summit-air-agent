@@ -14,7 +14,7 @@ Read first: CLAUDE.md, docs/call-journeys.md, docs/spec.md (Eval, grader and Liv
 - Calls `/calls/start` before the greeting, `/calls/{id}/turn` on every final transcript and agent line, and the model tools in docs/tools.md. Our own end-call and transfer tools that ask the server first; no built-in end-call tool.
 - Safety lines spoken from the text the server returns, never generated.
 - Turn handling: adaptive interruptions, a minimum-words threshold so noise doesn't interrupt, resume after false interruptions, a longer end-of-turn wait right after asking for digits (docs/latency.md, C-48).
-- Bridge line: a pre-recorded clip played only when a tool takes longer than about 0.7 s, rules in docs/latency.md.
+- Bridge line: a pre-recorded clip played only when a tool takes longer than about 0.7 s, rules in docs/latency.md. It must never cut the agent off or overlap it: it plays only when the agent is silent, each clip is under about 1 second of audio, and if the tool answers mid-clip the reply starts right after the clip ends instead of interrupting it. Tested with a fake slow tool.
 - Capacity cap as one setting; at the cap, a pre-recorded safety line and voicemail (S-47).
 - Outbound dialing for journey 12 through a LiveKit outbound trunk, only when the tool server schedules a call.
 - `prompts/`: split by job (identity and voice, the spine, journeys, tool use, safety hand-off), using tenant config and the knowledge folder; no Summit Air fact hard-coded.

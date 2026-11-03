@@ -27,7 +27,7 @@ The most common call. Usually stressed, often calling during a surge when the wa
 - Wants: someone out today or tomorrow, a real arrival window, and to know it's handled.
 - Worries: hold music, being upsold, a window that slips.
 - How the agent knows: the caller's opening words ("the heat's out", "the AC stopped").
-- Good call: tells the story once, hears the window and what happens next, gets a text confirming it.
+- Good call: tells the story once, hears the window and what happens next, said back clearly before the call ends.
 - For the build: let the caller talk first and fill gaps after. Offer the earliest real slot. On these calls the agent does not pitch a maintenance plan or other services. During a surge, the call stays short.
 
 ### 2. Vulnerable household
@@ -161,7 +161,7 @@ Reads the job before arriving.
 
 At night and on weekends, one technician carries the on-call phone for a week at a time; the service manager backs them up (ASSUMED; this is the most common set-up, SOURCE: 001).
 
-- Needs: a short text saying what, where, who, and why it's urgent, so they can decide whether to go out tonight. The agent never promises a tonight visit; the on-call technician decides.
+- Needs: a short email alert saying what, where, who, and why it's urgent, so they can decide whether to go out tonight. The agent never promises a tonight visit; the on-call technician decides.
 
 ### Comfort advisor
 

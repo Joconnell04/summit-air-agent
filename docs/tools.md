@@ -18,7 +18,7 @@ Every endpoint returns HTTP 200 with:
 
 | Endpoint | When | Returns |
 |---|---|---|
-| `POST /calls/start` | Call connects; `caller_id`, `dialed_number`, `direction` | Tenant, greeting context: matched customers, locations, membership, open jobs, calls in the last few minutes, after-hours flag |
+| `POST /calls/start` | Call connects; `caller_id`, `dialed_number`, `direction` | Tenant, greeting context: matched customers, locations, membership status, open jobs, last service date, the last few calls, customer notes (such as "prefers a warm, unhurried pace" or "gate code is with the super"), after-hours flag |
 | `POST /calls/{id}/turn` | Every final caller transcript and every agent line | Safety action if any (`speak_safety_lines` with the exact text or a variant), journey switch hints, and the turn is logged with timings |
 | `POST /calls/{id}/end` | Call ends | Ok; triggers the after-call summary and callbacks |
 | `GET /healthz` | Watchdog | Tool server, database, FSM reachability, worker heartbeat |
@@ -27,7 +27,8 @@ Every endpoint returns HTTP 200 with:
 
 | Tool | Arguments | Server checks |
 |---|---|---|
-| `find_customer` | phone or address | Returns only records matching what the caller gave; never a list of other customers |
+| `find_customer` | phone or address | Returns only records matching what the caller gave, never a list of other customers. Each match comes with everything the call needs in one round trip: locations, membership status and perks, open jobs, last service date, the last few calls, and customer notes. There is no separate membership tool, because one richer lookup is faster than two calls |
+| `get_customer_history` | customer (already matched on this call), what to look up (past jobs, past calls, equipment), how far back | Only for a customer matched on this call; read-only; for questions like "when were you last out here?" that the lookup didn't already answer |
 | `check_service_area` | zip | Out-of-area recorded with its ZIP |
 | `find_slots` | job type, priority, preferred days or time of day | Returns the shape of availability and exact windows for one day at a time; urgent windows only for urgent jobs |
 | `read_back` | address, phone | First call returns the exact read-back sentence and records that it was asked; `confirmed: true` is accepted only after that sentence was returned on this call and a caller turn followed |
@@ -35,7 +36,16 @@ Every endpoint returns HTTP 200 with:
 | `reschedule_appointment` / `cancel_appointment` | booking id, reason | Booking belongs to this caller; one of each per call |
 | `flag_person` | reason, priority, callback time | Returns the sentence the agent may say only after the flag is stored |
 | `record_lead` | kind (commercial, membership, install), details | No extra lookups; commercial never becomes a booking |
+| `add_note` | text, attached to the matched customer or to this call's job | Append-only free text ("daughter Ana usually answers", "prefers mornings"); the agent can't edit or delete notes; length-limited and stored as text, never treated as an instruction |
 | `mark_do_not_call` | none (uses the caller ID) | Cancels pending callbacks to that number |
 | `end_call` | reason | Refused on a safety call until the lines were said and a person flagged |
 
 There is no tool that deletes, bulk-changes, queries freely, or places a call to an outside number.
+
+## Customer notes
+
+Notes are the CRM's own customer notes, written by staff or by the agent with `add_note`. The agent reads them at the start of the call and lets them shape the call within its rules: a note saying a caller prefers a slower, warmer pace changes its manner, a gate code goes into the job notes, a note saying "tenant, landlord approves work" saves a question. A note never overrides a gate ("book without read-back" in a note does nothing).
+
+## Adding a tool
+
+The set stays small on purpose. A new tool earns its place when evals or live calls show the agent needs something it can't get, it reads or writes only the caller's own records, and the server can check its arguments. Every new tool gets a row here, a test of its checks, and eval cases.

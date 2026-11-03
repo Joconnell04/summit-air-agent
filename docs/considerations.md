@@ -39,7 +39,7 @@ Each item: `- [status] **C-NN Title.** One or two lines. Links.`
 - [later] **C-32 Playbooks.** Idea to look into: the server picks a playbook per call from facts it already has (member, open job, after hours, outdoor temperature, safety or vulnerability flag, possibly a surge) and the prompt loads that section, e.g. no upsell on a surge-day breakdown call. Unverified: whether surges are local enough to detect by ZIP, or are citywide weather events. Rules would choose the playbook, not the model. Builds on C-26.
 - [in] **C-33 Asking who's home, naturally.** The vulnerable-person question is asked on every no-heat or no-cooling call in plain words ("Is anyone at home who's older, very young, or has a health condition the heat would affect?"), never as a checklist, and the answer is read back only as "I've marked this as a priority."
 
-- [in] **C-34 Idempotent by default.** Every side effect (booking, flag, text, commercial lead, call record) is keyed to the call and the caller, so a platform retry, a double tool call or the same person calling back five times never does anything twice.
+- [in] **C-34 Idempotent by default.** Every side effect (booking, flag, note, lead, callback, call record) is keyed to the call and the caller, so a platform retry, a double tool call or the same person calling back five times never does anything twice.
 
 ## Staying on purpose
 
@@ -73,6 +73,7 @@ Each item: `- [status] **C-NN Title.** One or two lines. Links.`
 - [in] **C-48 Background noise and false interruptions.** A noisy caller shouldn't make the agent stop mid-sentence. Speech-to-text only returns words, but the voice activity detector can react to noise. LiveKit Agents (1.5 and later) has adaptive interruption handling, a minimum-words setting so an interruption needs recognized words, and resuming after a false interruption (SOURCE: docs.livekit.io/agents/logic/turns/tuning, docs.livekit.io/reference/agents/turn-handling-options); a known bug can resume into a caller's pause (github.com/livekit/agents/pull/6714). Noise cancellation on the incoming audio is the other lever (not yet researched). Test with noisy audio cases in the live pass. Spec S-50.
 - [in] **C-49 Do not call.** "Don't call me again" marks the number do-not-call at once, cancels pending callbacks, and the agent says so kindly. Spec S-49.
 - [in] **C-50 Joining the membership.** A sign-up flow that records a lead and a named callback; no payment taken by the agent. Call journeys journey 14, spec S-12a.
+- [in] **C-51 Customer notes and history.** The agent reads the CRM's customer notes, last service date and recent calls in the first lookup, can ask for older history about the matched customer, and can append a note. Notes shape tone and save questions but never override a gate. docs/tools.md.
 - [in] **C-39 Least privilege for the agent.** The agent can only do what a phone intake person could, on the caller's own records, with server-checked arguments, per-call limits and no destructive tools, so a caller can't talk it into deleting or exposing data. docs/architecture.md, DECISIONS.md 006.
 - [in] **C-28 Swappable models and prompts.** Named profiles, prompt files by job, one eval matrix across them.
 - [in] **C-29 Hosting.** Always-on tool server and agent worker, a backup number, how a failure is noticed.
