@@ -31,3 +31,4 @@ How the design was reached, in order, so a reader can follow each choice back to
 | Latency budget | Per-stage targets with sources, bridge line only for slow tools, delay changes flagged across eval runs, on-prem estimate; thinking on only off the live path (technician summary, grader) | docs/latency.md, DECISIONS.md 006 |
 | Membership | One plan, Summit Standard Membership: a caller is a member or not | coauthoring.md (spec r3) |
 | Build briefs | Tool contract plus five lanes (tool server first, then voice, evals, Retell baseline, owner view); design phase closed | docs/tools.md, docs/ai-process/briefs/, docs/ai-process/transcripts/design-session.md |
+| Tool server built | Every gate, safety check, priority engine, tool-failure queue, notes and history, logging and trace; 274 tests; safety wording sign-off open in #24 | pull request 25, brief 02 |
