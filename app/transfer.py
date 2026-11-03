@@ -5,8 +5,9 @@ A call goes to a person only when all of these hold:
 - the tenant has a transfer section and a number set for the role, in the server's environment;
 - it isn't a safety call (the lines tell the caller to leave and call 911) or a commercial one;
 - during office hours, the caller asked for a person on this call (their own words, matched here,
-  not a flag the model sets); after hours, the flag is Urgent, which today means the on-call
-  technician calls back within minutes (journey 11);
+  not a flag the model sets); after hours, the server's own priority and after-hours cutoffs say
+  the on-call technician is needed tonight (journey 11, `tools.needs_on_call_tonight`), never the
+  priority the model put on the flag;
 - the flag is one a person handles, and no transfer was tried on this call yet.
 
 The flag and its callback are stored before anyone is dialed, so a transfer nobody answers falls
@@ -73,10 +74,11 @@ def role_for(
     conn: sqlite3.Connection,
     tenant: Tenant,
     call: sqlite3.Row,
-    priority: str,
+    needs_on_call: bool,
     environ: Mapping[str, str] = os.environ,
 ) -> str | None:
-    """Who a person flag on this call goes to now, or None to keep the flag and callback alone."""
+    """Who a person flag on this call goes to now, or None to keep the flag and callback alone.
+    `needs_on_call` is the server's own after-hours judgement, never the flag's priority."""
     if not tenant.transfer:
         return None
     if call["safety_signal_at"] and call["safety_state"] != "cleared":
@@ -84,7 +86,7 @@ def role_for(
     if call["commercial"]:
         return None
     if call["after_hours"]:
-        role = "on_call" if priority == "Urgent" else None
+        role = "on_call" if needs_on_call else None
     else:
         role = "office" if asked_for_person(conn, call["id"]) else None
     if role is None or not number(tenant, role, environ):
@@ -93,10 +95,10 @@ def role_for(
 
 
 def _summary(tenant: Tenant, call: sqlite3.Row, flag: sqlite3.Row, role: str) -> str:
-    priority = f"{flag['priority']}. " if flag["priority"] in ("Urgent", "High") else ""
+    # Urgent only when the server decided the on-call technician is needed, not from the flag.
+    priority = "Urgent. " if role == "on_call" else ""
     return tenant.line(
         "transfer_summary",
-        role=ROLE_NAMES.get(role, role),
         priority=priority,
         phone=phone_spoken(call["caller_id"]),
         reason=flag["reason"].rstrip("."),
@@ -110,11 +112,13 @@ def plan(
     flag_id: int,
     callback_id: int | None,
     now: datetime,
+    needs_on_call: bool,
     environ: Mapping[str, str] = os.environ,
 ) -> Result:
     """Asked by the voice layer right after a person flag. `transfer` is null when the call stays
-    with the agent; otherwise it carries the number to dial, how long to ring, the summary for the
-    person answering, and the handoff line the caller hears first."""
+    with the agent; otherwise it carries the number to dial, how long to ring, the line the person
+    hears when they pick up (no caller details, since it may be a voicemail greeting), the summary
+    they hear once they press 1, and the handoff line the caller hears first."""
     flag = conn.execute(
         "SELECT * FROM flags WHERE id = ? AND call_id = ?", (flag_id, call["id"])
     ).fetchone()
@@ -129,7 +133,7 @@ def plan(
         raise Refused("invalid_state", "")
     tried = conn.execute("SELECT 1 FROM transfers WHERE call_id = ?", (call["id"],)).fetchone()
     role = None if tried or flag["kind"] != "person" else role_for(
-        conn, tenant, call, flag["priority"], environ
+        conn, tenant, call, needs_on_call, environ
     )
     if role is None:
         return ok(transfer=None)
@@ -149,6 +153,7 @@ def plan(
             "phone": number(tenant, role, environ),
             "ring_seconds": cfg["ring_seconds"],
             "accept_seconds": cfg["accept_seconds"],
+            "prompt": tenant.line("transfer_prompt", role=ROLE_NAMES.get(role, role)),
             "summary": summary,
         },
     )

@@ -197,6 +197,7 @@ async def entrypoint(ctx: JobContext) -> None:
     egress = {"id": None}
 
     async def close() -> None:
+        transfer.cancel()
         await recording.stop(ctx.api, egress["id"])
         await call.flush()
         await tools_server.end(ended["reason"])

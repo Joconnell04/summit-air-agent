@@ -229,7 +229,7 @@ def add_routes(app: FastAPI) -> None:
                 "call": found["call"],
                 "page": owner.call_page(conn, tenant, found, services.clock()),
                 "thread": plain.conversation(found, tenant),
-                "recorded": recordings.stored_path(conn, call_id) is not None,
+                "recorded": recordings.stored_path(conn, call_id, request.app.state.services.settings.recordings_dir) is not None,
                 "reports": reports.for_call(conn, call_id),
                 "sent": bool(sent),
                 "max_chars": REPORT_MAX_CHARS,
@@ -263,7 +263,7 @@ def add_routes(app: FastAPI) -> None:
             return _login(request)
         conn = request.app.state.services.connect()
         try:
-            path = recordings.stored_path(conn, call_id)
+            path = recordings.stored_path(conn, call_id, request.app.state.services.settings.recordings_dir)
         finally:
             conn.close()
         if path is None:

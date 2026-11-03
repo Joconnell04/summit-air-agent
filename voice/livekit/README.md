@@ -65,14 +65,16 @@ The clips play on a separate audio track (`BackgroundAudioPlayer`), not through 
 
 ## Warm transfer (C-11)
 
-The server decides; the model never asks for a transfer. After every `flag_person` that returns ok, the worker posts `/calls/{id}/transfer` with the flag and callback ids (docs/tools.md). The server says go only in office hours when the caller asked for a person in their own words, or after hours on an Urgent flag, which today is the on-call technician's 20-minute callback; never on a safety or commercial call, never when the role's number is unset, once per call (app/transfer.py). The flag and callback are already stored, so whatever happens next, nobody is left without a named callback. When the server says go, `transfer.py`:
+The server decides; the model never asks for a transfer. After every `flag_person` that returns ok, the worker posts `/calls/{id}/transfer` with the flag and callback ids (docs/tools.md). The server says go only in office hours when the caller asked for a person in their own words, or after hours when the server's own priority and after-hours cutoffs say the on-call technician is needed tonight (the same judgement that holds a tonight booking until the technician is alerted; the priority the model puts on the flag is never read); never on a safety or commercial call, never when the role's number is unset, once per call (app/transfer.py). The flag and callback are already stored, so whatever happens next, nobody is left without a named callback. When the server says go, `transfer.py`:
 
 1. Lets the agent's turn finish, then says the server's handoff line ("I'm connecting you with someone from our team now").
 2. Puts the caller on hold: the session's audio in and out are off and LiveKit's built-in hold music plays on the background track.
 3. Dials the person through the outbound trunk (`LIVEKIT_OUTBOUND_TRUNK_ID`) into a room of their own, `<call>-transfer`, ringing for the tenant's `ring_seconds` (20, ASSUMED).
-4. When they answer, says the server's summary into that room only (who is calling, the priority, the flag's reason, "Press 1 to take the call"), and waits `accept_seconds` (10, ASSUMED) for the 1.
-5. On a 1, moves them into the caller's room (`MoveParticipant`), reports `connected`, and leaves without hanging up; the server closes the flag and callback.
+4. When they answer, says one line into that room that names no caller ("Summit Air has a caller for the office. Press 1 to take the call"), since a voicemail greeting may be what answered, and waits `accept_seconds` (10, ASSUMED) for the 1.
+5. On a 1, says the summary (the caller's number and the flag's reason, "Urgent" when the server sent it to on-call), moves them into the caller's room (`MoveParticipant`), reports `connected`, and leaves without hanging up; the server closes the flag and callback.
 6. Otherwise (no answer, a voicemail that never presses 1, an error) it hangs up the person's leg by deleting their room, takes the caller off hold, reports the outcome, and says the server's line with the callback time stored with the flag ("I couldn't reach anyone just now, so I've let the team know and someone will call you by 9:30 AM").
+
+Nothing leaves the caller on hold: any error in the transfer takes them off hold and says the flag's own callback sentence, and the server is told the transfer failed. A caller who hangs up mid-transfer cancels it, which hangs up the person's leg.
 
 Why a key press and a separate room: the caller never hears ringing, a voicemail greeting or the summary, and a voicemail box is never put through. LiveKit's `WarmTransferTask` (livekit-agents 1.8) joins calls the same way, but a model talking to the person decides when to connect; here the key press does.
 

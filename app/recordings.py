@@ -21,6 +21,8 @@ log = logging.getLogger("app.recordings")
 # this long never will be.
 GIVE_UP_AFTER = timedelta(hours=2)
 MEDIA_TYPE = "audio/mp4"
+# What S3-compatible stores answer for an object that isn't there yet.
+NOT_THERE = {"404", "NoSuchKey", "NotFound"}
 
 
 class Bucket:
@@ -41,10 +43,14 @@ class Bucket:
         self.client = client
 
     def fetch(self, key: str, dest: Path) -> bool:
-        """Copy the object to dest. False when it isn't there yet."""
+        """Copy the object to dest. False when it isn't there yet, or the bucket refused, which is
+        logged: a wrong key or bucket shows up in the log, not as a recording quietly missing."""
         try:
             self.client.head_object(Bucket=self.name, Key=key)
-        except self.client.exceptions.ClientError:
+        except self.client.exceptions.ClientError as exc:
+            code = str(exc.response.get("Error", {}).get("Code", ""))
+            if code not in NOT_THERE:
+                log.warning("bucket refused %s: %s", key, code or exc)
             return False
         dest.parent.mkdir(parents=True, exist_ok=True)
         partial = dest.with_suffix(".part")
@@ -63,6 +69,13 @@ def bucket(settings: Settings) -> Bucket | None:
 
 def object_key(tenant: Tenant, call_id: str) -> str:
     return f"{tenant.slug}/{call_id}.mp4"
+
+
+def inside(folder: Path, path: Path) -> Path | None:
+    """The path, resolved, if it is inside the recordings folder. A call id comes from the voice
+    layer, so a file name built from it is checked before anything is written, read or deleted."""
+    resolved = path.resolve()
+    return resolved if resolved.is_relative_to(folder.resolve()) else None
 
 
 def wanted(tenant: Tenant, configured: bool) -> bool:
@@ -99,7 +112,16 @@ def collect(
     ).fetchall()
     stored = missing = 0
     for row in rows:
-        dest = folder / row["object_key"]
+        dest = inside(folder, folder / row["object_key"])
+        if dest is None:
+            log.warning("recording for call %s has a name outside the folder", row["call_id"])
+            with tx(conn):
+                conn.execute(
+                    "UPDATE recordings SET status = 'missing', updated_at = ? WHERE call_id = ?",
+                    (iso(now), row["call_id"]),
+                )
+            missing += 1
+            continue
         if store.fetch(row["object_key"], dest):
             store.delete(row["object_key"])
             with tx(conn):
@@ -120,7 +142,9 @@ def collect(
     return {"stored": stored, "missing": missing}
 
 
-def purge(conn: sqlite3.Connection, tenant: Tenant, before: datetime, now: datetime) -> int:
+def purge(
+    conn: sqlite3.Connection, tenant: Tenant, folder: Path, before: datetime, now: datetime
+) -> int:
     """Delete the audio of calls that started before `before`, the transcript cutoff. The row stays
     as 'deleted' until the call record itself goes."""
     rows = conn.execute(
@@ -129,8 +153,9 @@ def purge(conn: sqlite3.Connection, tenant: Tenant, before: datetime, now: datet
         (tenant.slug, iso(before)),
     ).fetchall()
     for row in rows:
-        if row["path"]:
-            Path(row["path"]).unlink(missing_ok=True)
+        path = inside(folder, Path(row["path"])) if row["path"] else None
+        if path is not None:
+            path.unlink(missing_ok=True)
         with tx(conn):
             conn.execute(
                 "UPDATE recordings SET status = 'deleted', path = NULL, updated_at = ? "
@@ -140,12 +165,12 @@ def purge(conn: sqlite3.Connection, tenant: Tenant, before: datetime, now: datet
     return len(rows)
 
 
-def stored_path(conn: sqlite3.Connection, call_id: str) -> Path | None:
-    """The call's audio file on this server, or None."""
+def stored_path(conn: sqlite3.Connection, call_id: str, folder: Path) -> Path | None:
+    """The call's audio file on this server, or None. Only ever a file inside the folder."""
     row = conn.execute(
         "SELECT path FROM recordings WHERE call_id = ? AND status = 'stored'", (call_id,)
     ).fetchone()
     if row is None or not row["path"]:
         return None
-    path = Path(row["path"])
-    return path if path.exists() else None
+    path = inside(folder, Path(row["path"]))
+    return path if path is not None and path.exists() else None

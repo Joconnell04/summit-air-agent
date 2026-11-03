@@ -60,9 +60,10 @@ def test_a_caller_who_asks_for_a_person_in_office_hours_goes_to_the_office(agent
     plan = found["data"]["transfer"]
     assert plan["role"] == "office" and plan["phone"] == OFFICE
     assert (plan["ring_seconds"], plan["accept_seconds"]) == (20, 10)
+    # What they hear on picking up names no caller, in case a voicemail greeting answered.
+    assert plan["prompt"] == "Summit Air has a caller for the office. Press 1 to take the call."
     assert plan["summary"] == (
-        "Summit Air call for the office. Caller at 212, 555, 0999: Caller wants to talk to "
-        "someone. Press 1 to take the call."
+        "Caller at 212, 555, 0999: Caller wants to talk to someone. Putting you through now."
     )
 
 
@@ -108,15 +109,50 @@ def test_never_on_a_commercial_call(agent, numbers):
     assert ask(agent, call, flagged)["data"]["transfer"] is None
 
 
-def test_after_hours_an_urgent_call_goes_to_the_on_call_technician(agent, clock, numbers):
+def no_heat_tonight(agent: Agent, call: str, who_home: str, inside_temp_f: float | None = None):
+    """The agent looks for openings the way it does on journey 11; the server scores it."""
+    facts = {"issue": "No heat since this afternoon", "who_home": who_home}
+    if inside_temp_f is not None:
+        facts["inside_temp_f"] = inside_temp_f
+    return agent.tool("find_slots", call, job_type="no_heat", facts=facts)
+
+
+def test_after_hours_a_call_the_server_sends_to_on_call_goes_to_the_on_call_technician(
+    agent, clock, numbers
+):
     clock.now = EVENING
     call = agent.start(UNKNOWN)["data"]["call_id"]
     agent.turn(call, "The heat's out and my mother is 88.")
+    found = no_heat_tonight(agent, call, "My mother, she's 88")
+    assert found["data"]["after_hours_outcome"] == "tonight_if_on_call_agrees"
     flagged = flag(agent, call, priority="Urgent")
     assert flagged["data"]["callback_spoken"] == "by 10:20 PM"
     plan = ask(agent, call, flagged)["data"]["transfer"]
     assert plan["role"] == "on_call" and plan["phone"] == ON_CALL
-    assert plan["summary"].startswith("Summit Air call for the on-call technician. Urgent.")
+    assert plan["prompt"] == (
+        "Summit Air has a caller for the on-call technician. Press 1 to take the call."
+    )
+    assert plan["summary"].startswith("Urgent. Caller at 212, 555, 0999:")
+
+
+def test_after_hours_an_urgent_flag_from_the_model_alone_rings_nobody(agent, clock, numbers):
+    """The flag's priority is the model's to set, so it is never what wakes the technician."""
+    clock.now = EVENING
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "I'd like to book my yearly tune-up.")
+    agent.tool("find_slots", call, job_type="tune_up")
+    flagged = flag(agent, call, priority="Urgent")
+    assert ask(agent, call, flagged)["data"]["transfer"] is None
+
+
+def test_after_hours_no_heat_that_can_wait_for_morning_rings_nobody(agent, clock, numbers):
+    clock.now = EVENING
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "The heat stopped, it's still 64 in here. Just me at home.")
+    found = no_heat_tonight(agent, call, "Just me", inside_temp_f=64)
+    assert found["data"]["after_hours_outcome"] != "tonight_if_on_call_agrees"
+    flagged = flag(agent, call, priority="Urgent")
+    assert ask(agent, call, flagged)["data"]["transfer"] is None
 
 
 def test_after_hours_a_caller_who_asks_for_a_person_on_a_routine_call_gets_a_callback(
@@ -132,6 +168,8 @@ def test_after_hours_with_no_on_call_number_the_urgent_callback_stays(agent, clo
     monkeypatch.setenv("TRANSFER_OFFICE_NUMBER", OFFICE)
     clock.now = EVENING
     call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "The heat's out and my mother is 88.")
+    no_heat_tonight(agent, call, "My mother, she's 88")
     flagged = flag(agent, call, priority="Urgent")
     assert ask(agent, call, flagged)["data"]["transfer"] is None
 

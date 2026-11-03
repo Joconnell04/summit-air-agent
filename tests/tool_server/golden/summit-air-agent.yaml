@@ -138,8 +138,8 @@ lines:
   transfer_handoff: I'm connecting you with someone from our team now.
   transfer_no_answer: I couldn't reach anyone just now, so I've let the team know and someone will call
     you {when}.
-  transfer_summary: 'Summit Air call for the {role}. {priority}Caller at {phone}: {reason}. Press 1 to
-    take the call.'
+  transfer_prompt: Summit Air has a caller for the {role}. Press 1 to take the call.
+  transfer_summary: '{priority}Caller at {phone}: {reason}. Putting you through now.'
   urgent_priority: I've marked this as one of our most urgent calls, so you get our soonest opening.
 on_call_alerts:
   email: on-call@summit-air.example

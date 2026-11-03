@@ -672,6 +672,38 @@ def _on_call_first(ctx: Ctx, facts: prio.Facts, decided: prio.Priority) -> None:
         )
 
 
+def needs_on_call_tonight(ctx: Ctx) -> bool:
+    """After hours, whether the server's own priority sends this call to the on-call technician
+    tonight (journey 11), as `_on_call_first` decides for a booking: the last heating or cooling job
+    the agent looked up or booked, scored again from every caller line. The priority the model
+    puts on a flag is never read."""
+    cutoffs = ctx.tenant.after_hours_cutoffs
+    if not ctx.call["after_hours"]:
+        return False
+    job_types = cutoffs["heating_job_types"] + cutoffs["cooling_job_types"]
+    rows = ctx.conn.execute(
+        "SELECT tool, args_json FROM tool_calls WHERE call_id = ? "
+        "AND tool IN ('find_slots', 'book_appointment') ORDER BY id DESC",
+        (ctx.call["id"],),
+    )
+    for row in rows:
+        args = json.loads(row["args_json"])
+        if args.get("job_type") not in job_types:
+            continue
+        heard = args.get("facts") or args.get("details") or {}
+        facts, decided = _priority(
+            ctx,
+            args["job_type"],
+            f"{heard.get('issue', '')}\n{heard.get('who_home', '')}",
+            heard.get("inside_temp_f"),
+        )
+        falling = bool(heard.get("temp_falling_fast"))
+        return prio.after_hours_outcome(facts, decided, cutoffs, falling) == (
+            "tonight_if_on_call_agrees"
+        )
+    return False
+
+
 def _open_job_here(ctx: Ctx, readback: dict) -> None:
     """A caller with an open visit at this address wants it moved, not a second one, unless the
     agent says it is a separate problem (eval round 1, reschedule-own-booking). Jobs booked on this
@@ -952,7 +984,7 @@ def flag_person(ctx: Ctx, args: FlagIn) -> Result:
             args = args.model_copy(update={"callback_in_minutes": minutes})
         # A caller who asked for a person in office hours is about to be put through, so they
         # aren't asked for a time first; this callback is the one kept if nobody answers.
-        elif transfer.role_for(ctx.conn, ctx.tenant, ctx.call, args.priority) == "office":
+        elif transfer.role_for(ctx.conn, ctx.tenant, ctx.call, False) == "office":
             minutes = ctx.tenant.transfer["fallback_callback_minutes"]
             args = args.model_copy(update={"callback_in_minutes": minutes})
     when = _callback_due(ctx, args)

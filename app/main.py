@@ -53,7 +53,7 @@ from .schemas import (
 )
 from .settings import WORKER_STALE_SECONDS, Settings
 from .tenant import Tenants
-from .tools import TOOLS, Ctx
+from .tools import TOOLS, Ctx, needs_on_call_tonight
 
 log = logging.getLogger("app")
 
@@ -336,7 +336,15 @@ def create_app(
     def call_transfer(request: Request, call_id: str, body: TransferIn):
         def fn(conn, key):
             ctx = _ctx(services, conn, call_id, key)
-            return transfer.plan(conn, ctx.tenant, ctx.call, body.flag_id, body.callback_id, ctx.now)
+            return transfer.plan(
+                conn,
+                ctx.tenant,
+                ctx.call,
+                body.flag_id,
+                body.callback_id,
+                ctx.now,
+                needs_on_call_tonight(ctx),
+            )
 
         return run(services, request, "calls.transfer", call_id, body.model_dump(), fn)
 

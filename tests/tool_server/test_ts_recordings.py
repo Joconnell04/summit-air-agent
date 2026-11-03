@@ -227,6 +227,57 @@ def test_the_bucket_copies_through_a_partial_file_and_deletes(tmp_path):
     assert s3.objects == {}
 
 
+def test_a_bucket_that_refuses_is_logged_not_taken_for_not_there_yet(tmp_path, caplog):
+    class Refusing(FakeS3):
+        def head_object(self, Bucket, Key):
+            raise ClientError({"Error": {"Code": "403"}}, "HeadObject")
+
+    bucket = recordings.Bucket(
+        Settings(db_path=tmp_path / "t.db", recording_bucket="calls"), Refusing({})
+    )
+    assert not bucket.fetch("summit-air/a.mp4", tmp_path / "a.mp4")
+    assert "bucket refused summit-air/a.mp4: 403" in caplog.text
+    caplog.clear()
+    assert not recordings.Bucket(
+        Settings(db_path=tmp_path / "t.db", recording_bucket="calls"), FakeS3({})
+    ).fetch("summit-air/a.mp4", tmp_path / "a.mp4")
+    assert caplog.text == ""
+
+
+def test_a_call_id_that_climbs_out_of_the_folder_is_never_written(recorded, tmp_path):
+    agent, bucket = recorded
+    # A call id is the voice layer's; one shaped like a path still can't place a file elsewhere.
+    call = "../../outside"
+    agent.start(UNKNOWN, call_id=call)
+    key = f"summit-air/{call}.mp4"
+    conn = agent.db()
+    conn.execute(
+        "INSERT INTO recordings (call_id, object_key, egress_id, started_at, updated_at) "
+        "VALUES (?, ?, 'EG_1', '2026-11-02T14:00:00Z', '2026-11-02T14:00:00Z')",
+        (call, key),
+    )
+    conn.execute("UPDATE calls SET ended_at = '2026-11-02T14:05:00Z' WHERE id = ?", (call,))
+    conn.close()
+    bucket.objects[key] = AUDIO
+    assert collect(agent) == {"stored": 0, "missing": 1}
+    folder = agent.app.state.services.settings.recordings_dir
+    assert not (folder / key).resolve().exists()
+    assert bucket.objects == {key: AUDIO}
+
+
+def test_a_stored_path_outside_the_folder_is_never_served(recorded, tmp_path):
+    agent, bucket = recorded
+    call = a_recorded_call(agent, bucket)
+    collect(agent)
+    elsewhere = tmp_path / "elsewhere.mp4"
+    elsewhere.write_bytes(AUDIO)
+    conn = agent.db()
+    conn.execute("UPDATE recordings SET path = ? WHERE call_id = ?", (str(elsewhere), call))
+    conn.close()
+    agent.client.get(f"/owner?token={TOKEN}")
+    assert agent.client.get(f"/owner/calls/{call}/recording").status_code == 404
+
+
 def test_recordings_live_beside_the_database_unless_set(tmp_path):
     assert Settings(db_path=tmp_path / "data" / "t.db").recordings_dir == tmp_path / "data" / (
         "recordings"

@@ -8,6 +8,7 @@ import logging
 import smtplib
 import sqlite3
 from datetime import datetime, timedelta
+from pathlib import Path
 
 from . import booking, outbound, recordings, records, reports, search, weather
 from .db import iso, parse_iso, tx
@@ -384,13 +385,15 @@ def _alert_text(
     return subject, "\n".join(lines)
 
 
-def purge(conn: sqlite3.Connection, tenant: Tenant, now: datetime, environment: str) -> dict:
+def purge(
+    conn: sqlite3.Connection, tenant: Tenant, now: datetime, environment: str, folder: Path
+) -> dict:
     """Transcripts and recordings go after transcript_days, call records after call_record_days
     (spec S-45). Development keeps everything, because QA and debugging read full logs."""
     if environment == "development":
         return {"turns": 0, "recordings": 0, "calls": 0}
     audio = recordings.purge(
-        conn, tenant, now - timedelta(days=tenant.retention["transcript_days"]), now
+        conn, tenant, folder, now - timedelta(days=tenant.retention["transcript_days"]), now
     )
     transcripts = iso(now - timedelta(days=tenant.retention["transcript_days"]))
     records_before = iso(now - timedelta(days=tenant.retention["call_record_days"]))
@@ -457,7 +460,13 @@ def run_once(services) -> dict:
                     services.settings.recordings_dir,
                     now,
                 ),
-                "purged": purge(conn, tenant, now, services.settings.environment),
+                "purged": purge(
+                    conn,
+                    tenant,
+                    now,
+                    services.settings.environment,
+                    services.settings.recordings_dir,
+                ),
             }
         report["overdue_callbacks"] = []
         for tenant in services.tenants:

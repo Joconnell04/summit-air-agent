@@ -3,9 +3,10 @@ and writes every word said; this module dials, plays hold music, gives the perso
 joins them to the caller, or brings the agent back when nobody takes the call.
 
 The person is dialed into a room of their own through the outbound trunk, so the caller never
-hears the ringing or the summary. Only after they press 1 are they moved into the caller's room
-(LiveKit's MoveParticipant), and the agent leaves. A voicemail box never presses 1, so it is never
-put through. LiveKit's own WarmTransferTask joins the calls the same way, but there a model talking
+hears the ringing or the summary. When they pick up they hear one line that names no caller, since
+a voicemail greeting may be what answered; only after they press 1 do they hear who is calling and
+why, and are moved into the caller's room (LiveKit's MoveParticipant), and the agent leaves. A
+voicemail box never presses 1, so it is never put through and never hears the caller's details. LiveKit's own WarmTransferTask joins the calls the same way, but there a model talking
 to the person decides when to connect; here the key press does, and the server decides who is
 called.
 """
@@ -96,11 +97,12 @@ async def dial_and_join(
         except (api.TwirpError, TimeoutError) as exc:
             log.info("transfer %s not answered: %s", plan["id"], type(exc).__name__)
             return "no_answer"
-        await consult.say(plan["summary"])
+        await consult.say(plan["prompt"])
         try:
             await asyncio.wait_for(pressed.wait(), plan["accept_seconds"])
         except TimeoutError:
             return "not_accepted"
+        await consult.say(plan["summary"])
         await lk.room.move_participant(
             api.MoveParticipantRequest(
                 room=consult.name, identity=PERSON, destination_room=caller_room
@@ -157,21 +159,46 @@ class Transfer:
         self.task = asyncio.create_task(self.run(turn, asked["say"], plan, flagged["say"]))
         return True
 
+    def cancel(self) -> None:
+        """The caller hung up: stop dialing. The person's room is deleted on the way out."""
+        if self.task and not self.task.done():
+            self.task.cancel()
+
     async def run(self, turn, handoff: str, plan: dict, fallback: str) -> str:
-        if turn is not None:
-            await turn.wait_for_playout()
-        await self.speak(handoff).wait_for_playout()
-        self.hold(True)
-        outcome = await dial_and_join(
-            self.lk, self.open_consult(f"{self.caller_room}-transfer"), plan, self.caller_room,
-            self.trunk_id,
-        )
-        done = await self.server.transfer_done(plan["id"], outcome)
-        if outcome == "connected":
-            await self.hand_over()
+        """Never leaves the caller on hold: any error takes them off it and says the flag's own
+        callback sentence, which the server stored before anyone was dialed."""
+        reported = False
+        try:
+            if turn is not None:
+                await turn.wait_for_playout()
+            await self.speak(handoff).wait_for_playout()
+            self.hold(True)
+            outcome = await dial_and_join(
+                self.lk,
+                self.open_consult(f"{self.caller_room}-transfer"),
+                plan,
+                self.caller_room,
+                self.trunk_id,
+            )
+            done = await self.server.transfer_done(plan["id"], outcome)
+            reported = True
+            if outcome == "connected":
+                await self.hand_over()
+                return outcome
+            self.hold(False)
+            # The server's line names the callback time; if it couldn't be reached, the flag's own
+            # sentence says the same.
+            await self.speak(done["say"] or fallback).wait_for_playout()
             return outcome
-        self.hold(False)
-        # The server's line names the callback time; if it couldn't be reached, the flag's own
-        # sentence says the same.
-        await self.speak(done["say"] or fallback).wait_for_playout()
-        return outcome
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            log.exception("transfer %s broke off; back to the caller", plan["id"])
+            if not reported:
+                await self.server.transfer_done(plan["id"], "failed")
+            try:
+                self.hold(False)
+                await self.speak(fallback).wait_for_playout()
+            except Exception:
+                log.exception("transfer %s: could not take the caller off hold", plan["id"])
+            return "failed"
