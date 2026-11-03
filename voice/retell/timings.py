@@ -14,10 +14,11 @@ REPLY_DELAY = "reply_ms"
 
 def turn_timings(previous: list[Line], words: list[dict]) -> dict[str, float]:
     """Timings for an agent turn: words are the ones this turn added; previous is what came
-    before it in the call. Empty when the words haven't been spoken yet or there was no caller
-    line to answer."""
-    caller = next((line for line in reversed(previous) if line.speaker == "caller"), None)
-    if not words or caller is None or not caller.words:
+    before it in the call. Only an agent line that answers a caller line has a reply delay; the
+    rest of a reply Retell split into more lines (around a tool call or an interruption) has none.
+    Empty too when the words haven't been spoken yet."""
+    caller = previous[-1] if previous else None
+    if not words or caller is None or caller.speaker != "caller" or not caller.words:
         return {}
     first = words[0].get("start")
     caller_end = caller.words[-1].get("end")

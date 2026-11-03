@@ -32,6 +32,9 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse, Response
 from starlette.concurrency import run_in_threadpool
 
+from prompts.assemble import instructions
+from voice.livekit.turns import server_notes
+
 from . import conversation, signature
 from .api import Retell, RetellError
 from .ledger import Ledger
@@ -39,6 +42,7 @@ from .timings import call_summary
 from .transcript import PREFIX, lines, our_call_id, retell_id
 
 log = logging.getLogger("retell.bridge")
+logging.basicConfig(level=logging.INFO)
 
 SAY_RETRY = "Sorry, give me just a moment."
 SAFETY_ACTIONS = ("speak_lines", "speak_variant", "ask_check")
@@ -217,6 +221,7 @@ class Bridge:
         rid = retell_id(call)
         if not rid:
             return
+        log.info("%s %s: %d lines", name, rid, len(lines(call)))
         call_id = self.ensure_started(call, "call")
         if name == "transcript_updated":
             safety, notes = self.sync(call, call_id)
@@ -349,11 +354,6 @@ def build_app(bridge: Bridge) -> FastAPI:
 
 
 def create_app() -> FastAPI:
-    # Imported here: prompts/assemble.py comes with the LiveKit lane (build/voice-livekit).
-    from prompts.assemble import instructions
-
-    from voice.livekit.turns import server_notes
-
     api_key = os.environ["RETELL_API_KEY"]
     tool_server = os.environ.get("TOOL_SERVER_URL", "http://127.0.0.1:8100")
     tenants_dir = Path(os.environ.get("TENANTS_DIR", "tenants"))

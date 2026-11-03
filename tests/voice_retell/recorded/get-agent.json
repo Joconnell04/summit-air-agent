@@ -1,0 +1,65 @@
+{
+ "agent_id": "agent_5c00ceef6a443a4ffa7f7cbeed",
+ "agent_name": "Summit Air (Retell baseline)",
+ "allow_user_dtmf": true,
+ "assigned_tags": [],
+ "backchannel_frequency": 0.4,
+ "backchannel_words": [
+  "mm-hmm",
+  "okay",
+  "uh-huh"
+ ],
+ "boosted_keywords": [
+  "Summit Air",
+  "HVAC",
+  "furnace",
+  "boiler",
+  "heat pump",
+  "thermostat",
+  "carbon monoxide",
+  "condenser",
+  "radiator"
+ ],
+ "channel": "voice",
+ "contact_memory_config": {
+  "enable_read": true,
+  "enable_update": false
+ },
+ "data_storage_setting": "everything",
+ "denoising_mode": "noise-cancellation",
+ "enable_backchannel": true,
+ "enable_dynamic_responsiveness": true,
+ "end_call_after_silence_ms": 45000,
+ "interruption_sensitivity": 0.8,
+ "is_published": false,
+ "language": "en-US",
+ "last_modification_timestamp": 1793670520613,
+ "max_call_duration_ms": 1200000,
+ "opt_in_signed_url": false,
+ "pii_config": {
+  "categories": [],
+  "mode": "post_call"
+ },
+ "post_call_analysis_model": "gpt-5.6-terra",
+ "reminder_max_count": 2,
+ "reminder_trigger_ms": 10000,
+ "response_engine": {
+  "llm_id": "llm_8507322d201bd00a1e3d4d6c3b00",
+  "type": "retell-llm",
+  "version": 0
+ },
+ "responsiveness": 0.9,
+ "stt_mode": "fast",
+ "user_dtmf_options": {},
+ "version": 0,
+ "voice_id": "custom_voice_ba846b45c9c664cd6d7f1c8523",
+ "voice_model": "sonic-3",
+ "voice_speed": 1,
+ "webhook_events": [
+  "call_started",
+  "call_ended",
+  "call_analyzed",
+  "transcript_updated"
+ ],
+ "webhook_url": "https://45-77-105-247.sslip.io/retell/webhook"
+}

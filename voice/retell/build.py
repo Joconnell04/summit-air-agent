@@ -58,6 +58,29 @@ def retell_model(model_id: str) -> str:
     return RETELL_MODELS[model_id]
 
 
+# Keywords Retell drops from a tool's parameters when it stores them (MEASURED on the first push:
+# get-retell-llm returned the schemas without them). The model on Retell never sees them; the
+# tool server still enforces every one.
+DROPPED_BY_RETELL = ("default", "minimum", "maximum", "format")
+
+
+def retell_schema(schema: dict) -> dict:
+    """A parameter schema as Retell stores it, so a push compares like with like."""
+    out = {}
+    for key, value in schema.items():
+        if key in DROPPED_BY_RETELL or (key == "required" and not value):
+            continue
+        if key == "properties":
+            out[key] = {name: retell_schema(sub) for name, sub in value.items()}
+        elif key in ("items", "additionalProperties") and isinstance(value, dict):
+            out[key] = retell_schema(value)
+        elif key in ("anyOf", "oneOf", "allOf"):
+            out[key] = [retell_schema(sub) for sub in value]
+        else:
+            out[key] = value
+    return out
+
+
 def custom_tools(specs: list[dict], base_url: str) -> list[dict]:
     """Every model tool as a Retell custom function, posting to the bridge, which adds call_id
     and an Idempotency-Key and forwards it to the tool server."""
@@ -68,7 +91,7 @@ def custom_tools(specs: list[dict], base_url: str) -> list[dict]:
             "description": spec["description"],
             "url": f"{base_url}/retell/tools/{spec['name']}",
             "method": "POST",
-            "parameters": spec["parameters"],
+            "parameters": retell_schema(spec["parameters"]),
             "args_at_root": False,
             "speak_during_execution": False,
             "speak_after_execution": True,

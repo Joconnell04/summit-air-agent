@@ -27,10 +27,13 @@ def our_call_id(obj: dict) -> str:
 
 
 def lines(obj: dict) -> list[Line]:
-    """Caller and agent lines in order. Calls use transcript_object, which every call payload
-    carries, so line numbers stay stable from one event to the next; chats use
-    message_with_tool_calls."""
+    """Caller and agent lines in order. A call payload carries transcript_object,
+    transcript_with_tool_calls or both; with the tool entries left out they hold the same lines in
+    the same order (MEASURED on the first real call), so line numbers stay stable from one event to
+    the next. Chats carry message_with_tool_calls."""
     raw = obj.get("transcript_object")
+    if raw is None:
+        raw = obj.get("transcript_with_tool_calls")
     if raw is None:
         raw = obj.get("message_with_tool_calls") or []
     out = []

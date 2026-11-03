@@ -9,13 +9,11 @@ from pathlib import Path
 
 import yaml
 
+from voice.livekit.turns import first_name
+
 
 def spoken_lines(tenants_dir: Path, slug: str) -> dict:
     return yaml.safe_load((tenants_dir / slug / "agent.yaml").read_text())["voice"]
-
-
-def first_name(full_name: str) -> str:
-    return full_name.split()[0] if full_name.strip() else ""
 
 
 def greeting(start: dict, lines: dict) -> str:

@@ -1,5 +1,8 @@
 """The push script: config as code, idempotent, versioned list endpoints only."""
 
+import json
+from pathlib import Path
+
 import pytest
 from fake_retell import FakeRetell
 
@@ -131,3 +134,43 @@ def test_contains_ignores_fields_retell_adds_but_not_ones_we_set():
     assert not build.contains({"b": {"c": 2}}, {"b": {"c": 3}})
     assert not build.contains({"l": [1, 2]}, {"l": [1]})
     assert build.changes({"a": 1, "b": 2}, {"a": 1, "b": 3}) == {"b": 3}
+
+
+def recorded(name: str):
+    return json.loads((Path(__file__).parent / "recorded" / f"{name}.json").read_text())
+
+
+def test_against_retells_recorded_responses_a_push_sends_no_writes():
+    """The account as Retell returned it after the first real push, with every field Retell
+    fills in on its side (tests/voice_retell/recorded)."""
+    llm, agent = recorded("get-retell-llm"), recorded("get-agent")
+    fake = FakeRetell(
+        {
+            "llms": {llm["llm_id"]: llm},
+            "agents": {agent["agent_id"]: agent},
+            "numbers": recorded("list-phone-numbers")["items"],
+            "voices": recorded("list-voices"),
+        }
+    )
+    tools = [
+        {"name": t["name"], "description": t["description"], "parameters": t["parameters"]}
+        for t in llm["general_tools"]
+    ]
+    base = agent["webhook_url"].removesuffix("/retell/webhook")
+    assert push(fake.client(), tools, base, "claude-haiku-5-5", VOICE) == []
+    assert fake.writes() == []
+
+
+def test_parameters_are_compared_in_the_form_retell_stores_them():
+    """Retell drops default, minimum, maximum and format (seen on the first push)."""
+    from app.schemas import HistoryIn
+
+    stored = next(t for t in recorded("get-retell-llm")["general_tools"]
+                  if t["name"] == "get_customer_history")["parameters"]
+    ours = HistoryIn.model_json_schema()
+    ours["properties"].pop("call_id")
+    ours["required"].remove("call_id")
+    for prop in ours["properties"].values():
+        prop.pop("title", None)
+    ours.pop("title")
+    assert build.retell_schema(ours) == stored

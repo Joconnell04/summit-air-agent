@@ -16,6 +16,8 @@ from pathlib import Path
 
 import yaml
 
+from prompts.assemble import job_types, tool_specs
+
 from . import build
 from .api import Retell
 
@@ -57,14 +59,16 @@ def ensure_llm(retell: Retell, llm_id: str | None, desired: dict, log: list[str]
 
 def ensure_agent(retell: Retell, kind: str, name: str, body_for, llm_body: dict, log: list[str]):
     """kind is "agent" (voice) or "chat-agent"."""
-    agent = find_agent(retell, name)
-    llm_id = ensure_llm(retell, agent["response_engine"]["llm_id"] if agent else None, llm_body, log)
+    listed = find_agent(retell, name)
+    # The list leaves out the response engine; the agent itself has it.
+    current = retell.request("GET", f"/get-{kind}/{listed['agent_id']}") if listed else None
+    llm_id = ensure_llm(retell, current["response_engine"]["llm_id"] if current else None, llm_body, log)
     desired = body_for(llm_id)
-    if agent is None:
+    if current is None:
         agent = retell.request("POST", f"/create-{kind}", json=desired)
         log.append(f"created {kind} {agent['agent_id']}")
         return agent["agent_id"]
-    current = retell.request("GET", f"/get-{kind}/{agent['agent_id']}")
+    agent = current
     diff = build.changes(current, desired)
     if diff:
         retell.request("PATCH", f"/update-{kind}/{agent['agent_id']}", json=diff)
@@ -126,8 +130,6 @@ def live_profile(config: dict) -> tuple[str, dict]:
 
 
 def main() -> int:
-    from prompts.assemble import job_types, tool_specs
-
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--eval-url", help="public base URL of a bridge for eval runs")
     args = parser.parse_args()

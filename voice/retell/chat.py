@@ -12,6 +12,8 @@ from pathlib import Path
 
 import httpx
 
+from prompts.assemble import instructions
+
 from . import conversation
 from .api import Retell
 from .bridge import ToolServer
@@ -22,8 +24,6 @@ RETELL_NUMBER = "(678) 336-6730"
 def open_chat(call_id: str, caller_id: str, env: dict | None = None) -> tuple[str, str]:
     """Start the call on the tool server, then the chat with the per-call prompt and greeting.
     Returns the Retell chat id and the agent's opening line."""
-    from prompts.assemble import instructions
-
     env = env if env is not None else os.environ
     tools = ToolServer(httpx.Client(base_url=env["RETELL_EVAL_TOOL_SERVER"], timeout=30))
     start = tools.start(call_id, caller_id, RETELL_NUMBER, "inbound")

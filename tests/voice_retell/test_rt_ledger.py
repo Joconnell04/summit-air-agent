@@ -120,3 +120,27 @@ def test_the_call_summary_maps_retell_latency_and_cost():
         "cost_usd": 0.234,
         "duration_s": 150,
     }
+
+
+def test_transcript_with_tool_calls_gives_the_same_lines_without_the_tool_entries():
+    spoken = [utterance("agent", "Hi."), utterance("user", "My heat is out.")]
+    with_tools = [
+        spoken[0],
+        spoken[1],
+        {"role": "tool_call_invocation", "name": "find_slots", "arguments": "{}"},
+        {"role": "tool_call_result", "content": "{}"},
+        utterance("agent", "I can help."),
+    ]
+    a = lines({"transcript_object": [*spoken, utterance("agent", "I can help.")]})
+    b = lines({"transcript_with_tool_calls": with_tools})
+    assert [(x.speaker, x.text) for x in a] == [(x.speaker, x.text) for x in b]
+
+
+def test_the_rest_of_a_reply_split_into_two_lines_has_no_reply_delay(tmp_path):
+    ledger, posts = Ledger(tmp_path / "l.db"), Posts()
+    caller = utterance("user", "my heat is out", start=1.0)
+    first = utterance("agent", "Sorry", start=3.0)
+    rest = utterance("agent", "about that, let me check.", start=4.0)
+    ledger.sync("c1", lines(call(caller, first, rest)), posts)
+    assert posts.sent[1][2] == {REPLY_DELAY: 850.0}
+    assert posts.sent[2][2] == {}

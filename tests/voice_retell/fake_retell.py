@@ -49,7 +49,10 @@ class FakeRetell:
 
     def route(self, method: str, path: str, body):
         if (method, path) == ("POST", "/v2/list-agents"):
-            return {"items": list(self.agents.values()), "has_more": False}
+            # Like Retell, the list carries a summary of each agent, not its response engine.
+            summary = ("agent_id", "agent_name", "channel", "voice_id")
+            items = [{k: a[k] for k in summary if k in a} for a in self.agents.values()]
+            return {"items": items, "has_more": False}
         if (method, path) == ("GET", "/v2/list-phone-numbers"):
             return {"items": self.numbers, "has_more": False}
         if (method, path) == ("GET", "/list-voices"):

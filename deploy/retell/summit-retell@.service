@@ -1,0 +1,21 @@
+# One Retell-lane process, run as jackson from ~/summit-air/retell (deploy/retell/deploy.sh):
+#   summit-retell@bridge       the bridge for the 678 number, in front of the shared tool server
+#   summit-retell@eval-mock    the eval instance's mock ServiceTitan
+#   summit-retell@eval-tools   the eval instance's tool server
+#   summit-retell@eval-bridge  the bridge the Retell chat agent calls during eval runs
+# systemd rather than the user crontab because deploy/summit-air/deploy.sh replaces that crontab.
+[Unit]
+Description=Summit Air Retell lane: %i
+After=network-online.target
+
+[Service]
+User=jackson
+WorkingDirectory=/home/jackson/summit-air/retell
+EnvironmentFile=/home/jackson/summit-air/.env
+EnvironmentFile=/home/jackson/summit-air/retell.env
+ExecStart=/bin/sh deploy/retell/run.sh %i
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
