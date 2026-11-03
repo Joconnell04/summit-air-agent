@@ -22,7 +22,7 @@ The phone line is wired by `scripts/phone/setup.py` and the server is deployed w
 5. **Every caller line** is posted to `/calls/{id}/turn` before the model answers. If the result carries a safety action, the worker speaks its text word for word with interruptions off and the model doesn't answer that turn. Hints (commercial, do-not-call) are added to the caller's line as `[server]` notes for the model.
 6. **Every agent line** is posted too, with its stage timings, so the server can mark the safety lines said and the trace shows where the time went. The timings include the first model request's prompt tokens, `cache_read_tokens` and `cache_write_tokens`, so `make trace` shows whether the prompt cache was hit.
 7. **Tools** are the server's model tools, built from `prompts/tools.yaml` and the server's request models. Each posts to `/tools/<name>`; writes carry an `Idempotency-Key` from call, tool and arguments.
-8. **Ending.** `end_call` asks the server. Any safety text in a tool result (the lines, the check question, the safety sign-off) is spoken by the worker word for word, not handed to the model. The worker hangs up only when the result says `hang_up: true`, after the agent's last words have played (or after the tenant's goodbye line if the model said nothing). There is no built-in end-call tool and no live transfer in V1 (DECISIONS.md 008); a caller who wants a person gets `flag_person`.
+8. **Ending.** `end_call` asks the server. Any safety text in a tool result (the lines, the check question, the safety sign-off) is spoken by the worker word for word, not handed to the model. The worker hangs up only when the result says `hang_up: true`, after the agent's last words have played (or after the tenant's goodbye line if the model said nothing). There is no built-in end-call or transfer tool; a caller who wants a person gets `flag_person`, and the worker then asks the server whether to put them through (below).
 9. `POST /calls/{id}/end` runs when the room closes.
 
 ## The model
@@ -63,6 +63,27 @@ The clips play on a separate audio track (`BackgroundAudioPlayer`), not through 
 - Four dictionary clips (Houston Street, Kosciuszko, Schermerhorn, Conselyea) ran 1.0 to 1.5 s longer than the plain ones; listen for a pause around the name.
 - A transcript can't tell HOW-stun from HYOO-stun, so whether each name sounds right is a listening check, not this test. The clips are clean synthetic audio, not phone audio.
 
+## Warm transfer (C-11)
+
+The server decides; the model never asks for a transfer. After every `flag_person` that returns ok, the worker posts `/calls/{id}/transfer` with the flag and callback ids (docs/tools.md). The server says go only in office hours when the caller asked for a person in their own words, or after hours on an Urgent flag, which today is the on-call technician's 20-minute callback; never on a safety or commercial call, never when the role's number is unset, once per call (app/transfer.py). The flag and callback are already stored, so whatever happens next, nobody is left without a named callback. When the server says go, `transfer.py`:
+
+1. Lets the agent's turn finish, then says the server's handoff line ("I'm connecting you with someone from our team now").
+2. Puts the caller on hold: the session's audio in and out are off and LiveKit's built-in hold music plays on the background track.
+3. Dials the person through the outbound trunk (`LIVEKIT_OUTBOUND_TRUNK_ID`) into a room of their own, `<call>-transfer`, ringing for the tenant's `ring_seconds` (20, ASSUMED).
+4. When they answer, says the server's summary into that room only (who is calling, the priority, the flag's reason, "Press 1 to take the call"), and waits `accept_seconds` (10, ASSUMED) for the 1.
+5. On a 1, moves them into the caller's room (`MoveParticipant`), reports `connected`, and leaves without hanging up; the server closes the flag and callback.
+6. Otherwise (no answer, a voicemail that never presses 1, an error) it hangs up the person's leg by deleting their room, takes the caller off hold, reports the outcome, and says the server's line with the callback time stored with the flag ("I couldn't reach anyone just now, so I've let the team know and someone will call you by 9:30 AM").
+
+Why a key press and a separate room: the caller never hears ringing, a voicemail greeting or the summary, and a voicemail box is never put through. LiveKit's `WarmTransferTask` (livekit-agents 1.8) joins calls the same way, but a model talking to the person decides when to connect; here the key press does.
+
+Off unless both are set: the server's `TRANSFER_OFFICE_NUMBER` or `TRANSFER_ON_CALL_NUMBER`, and the worker's outbound trunk. The person's leg is an outbound call on the Twilio trunk, $0.014 a minute while it lasts (SOURCE: docs/explorations/003-capacity-and-cost.md), plus LiveKit SIP minutes for that leg.
+
+## Recordings (story O-6)
+
+When `/calls/start` returns a `recording.object_key` and the worker has a bucket (`RECORDING_S3_*`), `recording.py` starts one LiveKit room-composite egress, audio only, as an MP4 into that bucket under that name, and reports the egress id to the server. It starts in the background after the session, so the greeting doesn't wait; the first second or so of the greeting may be missed while the recorder joins (ASSUMED until a recorded call is checked). It stops when the agent leaves, so after a transfer the conversation with the person isn't recorded. LiveKit Cloud can only upload to cloud storage (SOURCE: https://docs.livekit.io/transport/media/ingress-egress/egress/outputs.md, "local storage isn't available"), so the tool server's jobs loop copies each finished file into `data/recordings/` and deletes it from the bucket (app/recordings.py); the owner view plays the copy and deletes it with the transcript after 30 days.
+
+Cost and limits (SOURCE: https://livekit.com/pricing and https://docs.livekit.io/deploy/admin/quotas-and-limits.md, read for this change): audio-only composite recording is billed as transcode minutes. The Build plan the project is on includes 60 a month as a hard cap, with 2 recordings at once, so the third simultaneous call and every call after about 60 recorded minutes a month goes unrecorded (the call itself is unaffected). Ship ($50 a month) includes 600 minutes, then $0.005 a minute audio-only, with 100 at once: about $0.01 for a two-minute call (call length ASSUMED, docs/brief.md). The bucket holds a file only until the next jobs run.
+
 ## Calls Summit Air makes (journey 12)
 
 The worker never decides to dial. The tool server's jobs queue the calls (earlier openings, requested callbacks) and check the rules when a call is claimed (spec S-42; docs/tools.md, `/outbound/claim`). `outbound.py` runs beside the worker: every `CLAIM_EVERY_S` it claims the next call, only while a line is free under the capacity cap, and dispatches the worker into a room named by the claim's `call_id` with the claim as metadata. The worker then starts the call with `direction: outbound`, dials through the LiveKit outbound trunk (`LIVEKIT_OUTBOUND_TRUNK_ID`) with answering-machine detection, and reports `/outbound/{id}/done`: a person hears the server's `opening_line` and the normal conversation follows; a voicemail greeting gets the tenant's one voicemail line.
@@ -79,6 +100,8 @@ The worker never decides to dial. The tool server's jobs queue the calls (earlie
 | `DEFAULT_TENANT` | the only tenant folder | Whose recorded lines play when the server is unreachable |
 | `LIVEKIT_OUTBOUND_TRUNK_ID` | empty (outbound off) | From `scripts/phone/setup.py` |
 | `CLAIM_EVERY_S` | 15 | How often the outbound poller asks for a call to place |
+| `LIVEKIT_URL` | empty | The project URL, for joining a transfer's own room; also read by the LiveKit SDK |
+| `RECORDING_S3_BUCKET`, `RECORDING_S3_ENDPOINT`, `RECORDING_S3_REGION`, `RECORDING_S3_ACCESS_KEY`, `RECORDING_S3_SECRET` | empty (no recording) | The bucket LiveKit uploads each call's audio to; the tool server reads the same variables to collect it |
 
 Plus the provider keys: `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET`, `DEEPGRAM_API_KEY`, `ANTHROPIC_API_KEY`, `CARTESIA_API_KEY`.
 
@@ -97,6 +120,8 @@ Plus the provider keys: `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET`, 
 ## Not done here
 
 - The outside monitor is a Healthchecks.io check on the free plan, owned by the project's Gmail account (jt272004@gmail.com, the same contact as the public terms page). Its ping URL is `HEALTHCHECK_URL` in the server's `.env` and in the Notion vault, never in the repo, because anyone holding it could ping the check and hide an outage. The check expects a ping every minute with a 5-minute grace period, so a stopped worker, a stopped tool server or a server that doesn't come back from its nightly reboot sends an email. Chosen because the watchdog already knows whether the stack is healthy, so the outside monitor only has to notice silence; an uptime probe from outside (UptimeRobot) would have to reach a public health page, and UptimeRobot's free plan is non-commercial (docs/explorations/003-capacity-and-cost.md).
+- Warm transfer has not run end to end: the decision, the outcomes and the fallback are tested against the real server with a fake LiveKit (`tests/voice/test_voice_transfer.py`), but `ConsultRoom` (joining the second room, the summary audio, the key press) and the real dial and move have not. Running it needs a number to put through in the server's `.env`, the Twilio trunk allowed to call it, and someone to answer and press 1.
+- Recording has not run end to end with a bucket: none is set up. The egress request was checked against LiveKit Cloud (PR description); the upload, the copy into `data/recordings/` and playback on a real call have not.
 - Outbound calls: the claim, dispatch and report are tested against the real server, but the dial and answering-machine branches of `place_outbound` have no test with a fake LiveKit API and have not run end to end.
 - OpenAI and Gemini profiles are wired but untested on a live call; Gemini's thinking setting is left at the plugin default.
 - The bridge clip waits 0.4 s after its last frame (`CLIP_TAIL_S`, the audio buffer LiveKit keeps) before the reply's audio may start; measure it once a tool is slow enough to trigger a clip.

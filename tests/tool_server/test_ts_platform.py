@@ -35,6 +35,9 @@ def test_the_tools_are_exactly_the_ones_in_the_contract(agent):
         "/calls/start",
         "/calls/{call_id}/turn",
         "/calls/{call_id}/end",
+        "/calls/{call_id}/transfer",
+        "/calls/{call_id}/transfer/{transfer_id}/done",
+        "/calls/{call_id}/recording",
         "/healthz",
         "/healthz/heartbeat",
     }

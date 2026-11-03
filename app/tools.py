@@ -12,7 +12,7 @@ import sqlite3
 from dataclasses import dataclass
 from datetime import datetime, time, timedelta
 
-from . import booking, lookup, outbound, records, safety, weather
+from . import booking, lookup, outbound, records, safety, transfer, weather
 from . import capacity as capacity_rules
 from . import priority as prio
 from .db import iso, parse_iso, tx
@@ -949,6 +949,11 @@ def flag_person(ctx: Ctx, args: FlagIn) -> Result:
         # (journey 11), so no time needs to be asked for.
         if ctx.call["after_hours"] and args.priority == "Urgent":
             minutes = ctx.tenant.after_hours_cutoffs["on_call_confirms_within_minutes"]
+            args = args.model_copy(update={"callback_in_minutes": minutes})
+        # A caller who asked for a person in office hours is about to be put through, so they
+        # aren't asked for a time first; this callback is the one kept if nobody answers.
+        elif transfer.role_for(ctx.conn, ctx.tenant, ctx.call, args.priority) == "office":
+            minutes = ctx.tenant.transfer["fallback_callback_minutes"]
             args = args.model_copy(update={"callback_in_minutes": minutes})
     when = _callback_due(ctx, args)
     due = when.due

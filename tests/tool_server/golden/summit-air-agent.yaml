@@ -135,6 +135,11 @@ lines:
   repeated_drops: Looks like we keep getting cut off, the signal might be spotty. Want me to have someone
     call you back in a few minutes instead?
   slot_taken: That window just filled up.
+  transfer_handoff: I'm connecting you with someone from our team now.
+  transfer_no_answer: I couldn't reach anyone just now, so I've let the team know and someone will call
+    you {when}.
+  transfer_summary: 'Summit Air call for the {role}. {priority}Caller at {phone}: {reason}. Press 1 to
+    take the call.'
   urgent_priority: I've marked this as one of our most urgent calls, so you get our soonest opening.
 on_call_alerts:
   email: on-call@summit-air.example
@@ -424,6 +429,7 @@ repeat_callers:
   link_within_minutes: 10
 retention:
   call_record_days: 365
+  record_calls: true
   transcript_days: 30
 safety:
   denials:
@@ -541,6 +547,13 @@ safety:
       - like eggs
       - sulfur
       question: Just to be safe, are you smelling gas in the house right now?
+transfer:
+  accept_seconds: 10
+  fallback_callback_minutes: 30
+  ring_seconds: 20
+  targets:
+    office: TRANSFER_OFFICE_NUMBER
+    on_call: TRANSFER_ON_CALL_NUMBER
 voice:
   clips:
     at_capacity: Thanks for calling Summit Air. If you smell gas, hang up and call 911 from outside. All

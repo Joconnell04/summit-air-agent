@@ -70,6 +70,19 @@ class ToolServer:
     async def end(self, reason: str) -> dict:
         return await self._post(f"/calls/{self.call_id}/end", {"reason": reason})
 
+    async def transfer(self, flag_id: int, callback_id: int | None) -> dict:
+        """Whether a person flag goes to a person now (docs/tools.md, /calls/{id}/transfer)."""
+        body = {"flag_id": flag_id, "callback_id": callback_id}
+        return await self._post(f"/calls/{self.call_id}/transfer", body)
+
+    async def transfer_done(self, transfer_id: int, outcome: str) -> dict:
+        body = {"outcome": outcome}
+        return await self._post(f"/calls/{self.call_id}/transfer/{transfer_id}/done", body)
+
+    async def recording(self, egress_id: str, object_key: str) -> dict:
+        body = {"egress_id": egress_id, "object_key": object_key}
+        return await self._post(f"/calls/{self.call_id}/recording", body)
+
     async def outbound_done(self, outbound_id: int, answered: bool, voicemail: bool) -> dict:
         body = {"answered": answered, "voicemail": voicemail}
         return await self._post(f"/outbound/{outbound_id}/done", body)

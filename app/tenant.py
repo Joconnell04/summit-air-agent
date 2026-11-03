@@ -210,6 +210,8 @@ class Tenant:
         self.repeat: dict = agent["repeat_callers"]
         self.retention: dict = agent["retention"]
         self.after_hours_cutoffs: dict = agent["after_hours"]
+        # Warm transfer to a person (app/transfer.py). None turns it off.
+        self.transfer: dict | None = agent.get("transfer")
         self.fsm: dict = agent["fsm"]
         missing = {"resolved", "open", "no_contact"} - set(self.fsm.get("callback_tags", {}))
         if missing:

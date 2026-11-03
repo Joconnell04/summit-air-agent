@@ -27,10 +27,12 @@ from . import (
     logs,
     outbound,
     owner_view,
+    recordings,
     records,
     reports,
     rules,
     trace,
+    transfer,
     weather,
 )
 from .envelope import Refused, Result
@@ -38,7 +40,17 @@ from .fsm import FsmUnavailable, SlotCache, make_adapter
 from .fsm.base import fsm_timings
 from .mail import Mailer
 from .priority import SideModel
-from .schemas import EndIn, HeartbeatIn, OutboundClaimIn, OutboundDoneIn, StartIn, TurnIn
+from .schemas import (
+    EndIn,
+    HeartbeatIn,
+    OutboundClaimIn,
+    OutboundDoneIn,
+    RecordingIn,
+    StartIn,
+    TransferDoneIn,
+    TransferIn,
+    TurnIn,
+)
 from .settings import WORKER_STALE_SECONDS, Settings
 from .tenant import Tenants
 from .tools import TOOLS, Ctx
@@ -83,6 +95,7 @@ class Services:
             {t.slug: weather.client(t.weather) for t in self.tenants} if settings.weather else {}
         )
         self.mailer = Mailer(settings)
+        self.bucket = recordings.bucket(settings)
         self._locks: dict[str, threading.Lock] = {}
         self._locks_guard = threading.Lock()
 
@@ -300,7 +313,14 @@ def create_app(
     def call_start(request: Request, body: StartIn):
         def fn(conn, key):
             tenant = services.tenants.for_number(body.dialed_number)
-            return lifecycle.start(conn, tenant, services.fsm[tenant.slug], body, services.clock())
+            return lifecycle.start(
+                conn,
+                tenant,
+                services.fsm[tenant.slug],
+                body,
+                services.clock(),
+                record=services.bucket is not None,
+            )
 
         return run(services, request, "calls.start", body.call_id, body.model_dump(), fn)
 
@@ -311,6 +331,30 @@ def create_app(
             return lifecycle.turn(conn, ctx.tenant, ctx.call, body, ctx.now)
 
         return run(services, request, "turn", call_id, body.model_dump(), fn)
+
+    @app.post("/calls/{call_id}/transfer")
+    def call_transfer(request: Request, call_id: str, body: TransferIn):
+        def fn(conn, key):
+            ctx = _ctx(services, conn, call_id, key)
+            return transfer.plan(conn, ctx.tenant, ctx.call, body.flag_id, body.callback_id, ctx.now)
+
+        return run(services, request, "calls.transfer", call_id, body.model_dump(), fn)
+
+    @app.post("/calls/{call_id}/transfer/{transfer_id}/done")
+    def call_transfer_done(request: Request, call_id: str, transfer_id: int, body: TransferDoneIn):
+        def fn(conn, key):
+            ctx = _ctx(services, conn, call_id, key)
+            return transfer.finish(conn, ctx.tenant, ctx.call, transfer_id, body.outcome, ctx.now)
+
+        return run(services, request, "calls.transfer_done", call_id, body.model_dump(), fn)
+
+    @app.post("/calls/{call_id}/recording")
+    def call_recording(request: Request, call_id: str, body: RecordingIn):
+        def fn(conn, key):
+            ctx = _ctx(services, conn, call_id, key)
+            return recordings.started(conn, ctx.call, body.egress_id, body.object_key, ctx.now)
+
+        return run(services, request, "calls.recording", call_id, body.model_dump(), fn)
 
     @app.post("/calls/{call_id}/end")
     def call_end(request: Request, call_id: str, body: EndIn):
