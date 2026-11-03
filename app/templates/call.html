@@ -117,7 +117,7 @@ error: {{ item.tech.error }}{% endif %}</div>
             <dt>Arrival window</dt><dd>{{ window_text(p.job) }}</dd>
             <dt>Priority</dt><dd>{{ priority(p.booking.priority) }}</dd>
             {% if p.booking.priority_reasons %}<dt>Why</dt><dd>{{ p.booking.priority_reasons[:1] | upper }}{{ p.booking.priority_reasons[1:] }}</dd>{% endif %}
-            <dt>Status</dt><dd>{% if p.booking.status == "booked" %}Scheduled{% elif p.booking.status == "queued" %}Waiting on ServiceTitan{% else %}{{ p.booking.status | capitalize }}{% endif %}{% if p.booking.safety_override %}, safety override logged{% endif %}</dd>
+            <dt>Status</dt><dd>{% if p.booking.status == "booked" %}Scheduled{% elif p.booking.status == "queued" %}Waiting on ServiceTitan{% else %}{{ p.booking.status | capitalize }}{% endif %}{% if p.booking.safety_override %}, booked on a safety call{% endif %}</dd>
           </dl>
         </div>
       </section>

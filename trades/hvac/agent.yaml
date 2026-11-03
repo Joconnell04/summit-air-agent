@@ -50,6 +50,19 @@ safety:
         - rotten eggs
         - like eggs
         - sulfur
+      # Usually harmless, but worth one lighter question: the tenant's `confirm_question`, asked
+      # once per call. The first heating of the season smells of burning dust (eval round 2,
+      # burning-dust-first-heat).
+      confirm_phrases:
+        - burning dust
+        - burnt dust
+        - dusty smell
+        - burning smell
+        - burnt smell
+        - smells like burning
+        - smelled like burning
+        - smell of burning
+        - smells burnt
     co:
       phrases:
         - dizzy

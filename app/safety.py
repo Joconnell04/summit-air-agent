@@ -5,6 +5,9 @@ switches the call to the safety lines at once. "Gas" alone, a gas bill or a gas 
 nothing, because only phrases describing a smell, leak, alarm or symptom are listed. A vague
 description gets one check question; a yes is a clear signal and a clear no clears the call.
 
+A smell that is usually harmless but sometimes hides gas (burning dust the first time the heat runs)
+gets a lighter confirm question once per call, with the same yes and no rules.
+
 Heating the home with an oven, stove, generator or grill indoors gets the carbon monoxide check
 question once per call. Only wording that says it is used for heat counts ("the oven on to keep
 warm"), never a plain mention ("my oven works", "the generator is outside").
@@ -71,7 +74,31 @@ YES = (
 # that says how the caller feels about the cold: "I just feel a little chilled".
 NOT_A_SIGN = {"chilled", "chilly", "cold", "cool", "annoyed", "frustrated", "worried", "nervous"}
 UNSURE = ("dont know", "not sure", "no idea", "cant tell")
-NO = ("no", "nope", "nah", "not really", "nothing", "i dont", "dont smell", "not smelling")
+NO = (
+    "no",
+    "nope",
+    "nah",
+    "not really",
+    "nothing",
+    "i dont",
+    "dont smell",
+    "doesnt smell",
+    "does not smell",
+    "not smelling",
+)
+# In the answer to a check question only: a caller who echoes the question ("no rotten eggs or
+# sulfur", "it doesn't smell like sulfur") is saying no. These words can sit between the negator
+# and the mention, and these endings negate what follows them.
+ECHO_WORDS = {"or", "and", "any", "rotten", "egg", "eggs", "sulfur", "sulphur"}
+ECHO_NEGATORS = (
+    "not like",
+    "nothing like",
+    "doesnt smell like",
+    "does not smell like",
+    "dont smell like",
+    "not smelling like",
+    "no smell of",
+)
 # Words after a mention that say it is not happening: "the CO alarm is quiet", "the carbon monoxide
 # detector in the hallway has been quiet". Counted only in the answer to the check question, so the
 # same words outside that answer still fire, and never after words saying the alarm is going off.
@@ -123,6 +150,16 @@ def _person_negated(before: str) -> bool:
     return any(trimmed.endswith(words(n)) for n in PERSON_NEGATORS)
 
 
+def _echo_negated(before: str) -> bool:
+    """Check answers only: a negator before the mention, past any echoed question words, so "no
+    rotten eggs or sulfur" negates "sulfur". "No, it smells like rotten eggs" is not negated."""
+    kept = before.split()
+    while kept and kept[-1] in ECHO_WORDS:
+        kept.pop()
+    trimmed = " " + " ".join(kept) + " "
+    return any(trimmed.endswith(words(n)) for n in NEGATORS + ECHO_NEGATORS)
+
+
 def _negated(text_words: str, phrase: str, answering: bool = False) -> bool:
     """True only when every mention of the phrase comes straight after a negating word, as in
     "I don't smell gas" or "no gas smell". "I don't know, I smell gas" is not negated. In the answer
@@ -136,7 +173,7 @@ def _negated(text_words: str, phrase: str, answering: bool = False) -> bool:
         before = text_words[: start + 1]
         after = text_words[start + len(target) - 1 :]
         negated = any(before.endswith(words(n)) for n in NEGATORS) or (
-            answering and _person_negated(before)
+            answering and (_person_negated(before) or _echo_negated(before))
         )
         if not negated and not (answering and _quiet_after(after)):
             return False
@@ -163,6 +200,18 @@ def vague_signal(text: str, cfg: dict, answering_check: bool = False) -> str | N
         if any(
             has_phrase(text_words, p) and not _negated(text_words, p, answering_check)
             for p in spec["phrases"]
+        ):
+            return kind
+    return None
+
+
+def confirm_signal(text: str, cfg: dict) -> str | None:
+    """The kind whose confirm phrases ("burning dust") the caller used, not negated, or None."""
+    text_words = words(text)
+    for kind, spec in cfg["vague"].items():
+        if any(
+            has_phrase(text_words, p) and not _negated(text_words, p)
+            for p in spec.get("confirm_phrases", [])
         ):
             return kind
     return None
@@ -262,9 +311,10 @@ def check_caller_turn(
     variant: int,
     cfg: dict,
     heating_asked: bool = False,
+    confirm_asked: bool = False,
 ) -> SafetyAction:
     """What the agent must do after this caller line, given the call's safety state. heating_asked
-    is True once the heating check question has been asked on this call."""
+    and confirm_asked are True once that question has been asked on this call."""
     signal = clear_signal(text, cfg, answering_check=state == "checking")
     if signal:
         if state == "lines_said" and signal == kind:
@@ -286,6 +336,9 @@ def check_caller_turn(
     vague = vague_signal(text, cfg)
     if vague and state in ("none", "cleared"):
         return SafetyAction("ask_check", vague, cfg["vague"][vague]["question"])
+    confirm = confirm_signal(text, cfg)
+    if confirm and not confirm_asked and state in ("none", "cleared"):
+        return SafetyAction("ask_check", confirm, cfg["vague"][confirm]["confirm_question"])
     if not heating_asked and heating_signal(text, cfg):
         check = cfg["heating_check"]["kind"]
         # A call that already cleared this same question isn't asked it again.

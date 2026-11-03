@@ -483,6 +483,7 @@ FLAG_TITLES = {
     "person": "Asked for a person",
     "callback_requested": "Asked to be called back",
     "limit": "Hit a per-call limit",
+    "approval_check": "Confirm who approves before dispatch",
 }
 
 

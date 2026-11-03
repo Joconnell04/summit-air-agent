@@ -95,11 +95,11 @@ Has an open job or a recent visit: "where's my tech?", "the same problem came ba
 
 ### 9. Commercial caller
 
-A property manager, a restaurant, an office, a super for a large building. Summit Air doesn't serve them.
+A restaurant, a store, an office: a business with commercial-grade equipment. Summit Air doesn't serve them. A super or building manager calling about an apartment building's residential systems is not in this group; an apartment building is residential (eval round 2).
 
 - Wants: to know quickly whether Summit Air can help.
-- How the agent knows: the signals in C-05, such as a business name, "our building", "our tenants", or rooftop equipment.
-- For the build: tell them early and politely that Summit Air only does homes, and never book them. Save one line (company, contact, what they needed) with the normal end-of-call record, with no extra lookups, in case the owner ever wants that list. Where the line falls (a small landlord, a two-family, a co-op unit) is drawn in call journeys.
+- How the agent knows: the signals in C-05, such as a business name or commercial rooftop equipment. "Our building" and "our tenants" alone point to an apartment building, which is residential.
+- For the build: tell them early and politely that Summit Air works on homes and apartments, not businesses, and never book them. A caller unsure which they are gets a short explanation. Save one line (company, contact, what they needed) with the normal end-of-call record, with no extra lookups, in case the owner ever wants that list. Where the line falls (a small landlord, a two-family, a co-op unit) is drawn in call journeys.
 
 ### 10. Not a customer call
 

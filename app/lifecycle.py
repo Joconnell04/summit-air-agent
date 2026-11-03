@@ -14,13 +14,14 @@ from .tenant import Tenant
 from .text import has_phrase, phone_key, words
 
 RUN_WORDS = r"(?:i|we) (?:run|manage|operate|work at)"
-# Owning is matched only against businesses: "I own the building" is a landlord of a one or
-# two-family house as often as not, which is a home (spec S-05, journey 8).
+# Owning is matched only against businesses: "I own the building" or "I manage the building" is a
+# landlord or a super, and an apartment building is residential (spec S-05, journey 8).
 OWN_WORDS = r"(?:i|we) own"
 
 
 def sounds_commercial(text: str, cfg: dict) -> bool:
-    """Does the caller describe a business? Best effort by design: the agent and the FSM account
+    """Does the caller describe a business, with commercial equipment? Homes, apartments, co-ops and
+    whole apartment buildings are residential. Best effort by design: the agent and the FSM account
     type catch the rest, and a false positive costs a booking, so the tenant's lists stay narrow."""
     text_words = words(text)
     for phrase in cfg["not"]:
@@ -34,6 +35,13 @@ def sounds_commercial(text: str, cfg: dict) -> bool:
         or re.search(rf" {RUN_WORDS} (?:a|an|the) (?:\w+ )?(?:{run}) ", text_words)
         or re.search(rf" {OWN_WORDS} (?:a|an|the) (?:\w+ )?(?:{owned}) ", text_words)
     )
+
+
+def approval_unclear(text: str, cfg: dict) -> bool:
+    """The caller says someone else, such as a co-op board or a landlord, has to approve the work
+    (eval round 2, co-op-owner-mentions-board)."""
+    text_words = words(text)
+    return any(has_phrase(text_words, p) for p in cfg["unclear_phrases"])
 
 
 DO_NOT_CALL_PHRASES = (
@@ -201,6 +209,11 @@ def turn(
             heating_asked = bool(heating) and records.agent_said(
                 conn, call["id"], cfg["vague"][heating["kind"]]["question"]
             )
+            confirm_asked = any(
+                records.agent_said(conn, call["id"], spec["confirm_question"])
+                for spec in cfg["vague"].values()
+                if spec.get("confirm_question")
+            )
             action = safety.check_caller_turn(
                 args.text,
                 call["safety_state"],
@@ -208,6 +221,7 @@ def turn(
                 call["safety_variant"],
                 cfg,
                 heating_asked,
+                confirm_asked,
             )
             if action.action == "speak_lines":
                 changes.update(safety_state="signal", safety_kind=action.kind)
@@ -247,6 +261,10 @@ def turn(
             if sounds_commercial(args.text, tenant.commercial):
                 changes["commercial"] = 1
                 hints.append("commercial")
+            # Who can approve isn't settled: the agent offers a callback, and a booking the caller
+            # asks for gets a call before dispatch (tools.book_appointment reads the same lines).
+            if approval_unclear(args.text, tenant.approval):
+                hints.append("approval_unclear")
             # The server, not the model, says when the call reaches booking or closing, and only
             # then sends the owner's guidance for that stage, as a [server] note. Never on a safety
             # call; a stage reached during one gets its note once the safety state clears.

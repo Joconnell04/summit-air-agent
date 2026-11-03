@@ -18,6 +18,7 @@ from . import priority as prio
 from .db import iso, parse_iso, tx
 from .envelope import Refused, Result, ok
 from .fsm import FsmAdapter, FsmRejected, FsmUnavailable, SlotCache
+from .lifecycle import approval_unclear
 from .schemas import (
     BookIn,
     CallbackTime,
@@ -37,7 +38,7 @@ from .schemas import (
 )
 from .settings import BOOKING_DAYS_AHEAD, LIMITS
 from .tenant import Tenant
-from .text import phone_key, phone_spoken, street_key, unit_key
+from .text import has_phrase, phone_key, phone_spoken, street_key, unit_key, words
 
 MAX_MATCHES = 5
 SHAPE_DAYS = 3
@@ -82,8 +83,10 @@ def _limit(ctx: Ctx, kind: str, count: int) -> None:
 
 
 def _safety_gate(ctx: Ctx) -> bool:
-    """Booking tools wait until the safety lines were said and a person flagged (spec S-18).
-    Returns True when this is a safety call past that point, so the action is an override."""
+    """Booking tools wait until the safety lines were said and a person flagged (spec S-18). After
+    that the agent may offer a visit for once the problem is shut off, without the caller having to
+    insist (eval round 2). Returns True when this is a safety call past that point, so the booking
+    is logged as made on a safety call."""
     state, safety = ctx.call["safety_state"], ctx.tenant.safety
     if state == "signal":
         lines = " ".join(safety["kinds"][ctx.call["safety_kind"]]["lines"].split())
@@ -120,6 +123,36 @@ def _commercial(ctx: Ctx) -> None:
     only_commercial = by_caller_id and all(r["customer_type"] in rejected for r in by_caller_id)
     if ctx.call["commercial"] or only_commercial:
         raise Refused("customer_type", ctx.tenant.line("commercial"))
+
+
+def _approval_unclear(ctx: Ctx, approver: str) -> bool:
+    """Who can approve the work isn't settled: the caller said a co-op board or a landlord has to
+    approve, on this call or one linked to it, or the approver the agent recorded says so."""
+    cfg = ctx.tenant.approval
+    if any(has_phrase(words(approver), p) for p in cfg["unclear_approver"]):
+        return True
+    thread = records.thread(ctx.conn, ctx.call["id"])
+    rows = ctx.conn.execute(
+        f"SELECT text FROM turns WHERE speaker = 'caller' "
+        f"AND call_id IN ({','.join('?' * len(thread))})",
+        thread,
+    )
+    return any(approval_unclear(r["text"], cfg) for r in rows)
+
+
+def _before_dispatch(ctx: Ctx, window_start: datetime) -> datetime:
+    """When to call about approval: a set time before the window opens, moved back into calling
+    hours (the evening before, for an early window), and never in the past."""
+    tenant = ctx.tenant
+    due = tenant.local(
+        window_start - timedelta(hours=tenant.approval["callback_hours_before_window"])
+    )
+    opens, closes = (time.fromisoformat(t) for t in tenant.callbacks["outbound_hours"])
+    if due.time() > closes:
+        due = datetime.combine(due.date(), closes, tenant.tz)
+    elif due.time() < opens:
+        due = datetime.combine(due.date() - timedelta(days=1), closes, tenant.tz)
+    return max(due, ctx.now)
 
 
 def _job_type(ctx: Ctx, code: str) -> dict:
@@ -536,6 +569,9 @@ def book_appointment(ctx: Ctx, args: BookIn) -> Result:
             thread,
         )
     ]
+    check_approval = _approval_unclear(ctx, details["approver"])
+    if check_approval:
+        pending_notes.append("Confirm who can approve the work before dispatch.")
     request = {
         "call_id": ctx.call["id"],
         "job_type": args.job_type,
@@ -633,15 +669,36 @@ def book_appointment(ctx: Ctx, args: BookIn) -> Result:
             "start": request["window_start"],
         },
     )
-    result = ok(
+    say = (
         f"You're all set for {when['day']}, with the technician arriving between "
-        f"{when['label'].replace(' to ', ' and ')}.",
+        f"{when['label'].replace(' to ', ' and ')}."
+    )
+    # A visit booked on a safety call goes ahead only once the problem is shut off (eval round 2).
+    if override and ctx.tenant.safety.get("booking_note"):
+        say += " " + " ".join(ctx.tenant.safety["booking_note"].split())
+    # Approval unclear: a person calls before dispatch to confirm who can approve (eval round 2).
+    approval_callback_at = None
+    if check_approval:
+        due = _before_dispatch(ctx, window_start)
+        reason = f"Confirm who can approve job {sent['job_id']} before dispatch"
+        with tx(ctx.conn):
+            records.add_flag(ctx.conn, ctx.call["id"], "approval_check", reason, ctx.now, "High")
+            callback_id = records.add_callback(
+                ctx.conn, ctx.tenant, ctx.call, due, reason, ctx.now
+            )
+        if callback_id:
+            approval_callback_at = iso(due)
+            spoken = ctx.tenant.line("callback_by", time=ctx.tenant.time_spoken(due, ctx.now))
+            say += " " + ctx.tenant.line("approval_callback", when=spoken)
+    result = ok(
+        say,
         booking_id=sent["job_id"],
         appointment_id=sent["appointment_id"],
         window=when,
         priority={"level": decided.level, "reasons": decided.reasons},
         seek_earlier=seek_earlier,
         safety_override=override,
+        approval_callback_at=approval_callback_at,
     )
     if override:
         result.gate = "safety_override"

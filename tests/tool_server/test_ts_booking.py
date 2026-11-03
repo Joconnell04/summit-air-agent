@@ -3,7 +3,8 @@ caller ID shorthand, reschedule and cancel ownership (spec S-05, S-13, S-15, S-2
 
 import sqlite3
 from concurrent.futures import ThreadPoolExecutor
-from datetime import timedelta
+from datetime import datetime, time, timedelta
+from zoneinfo import ZoneInfo
 
 import pytest
 from toolkit import (
@@ -181,7 +182,7 @@ def test_a_commercial_account_cannot_book_whatever_the_agent_asks(agent, mock, s
         call = ready_to_book(agent, account["phone"])
         refused = book(agent, call, first_open(agent, call), job_type="no_heat")
         assert refused["refused"] == "customer_type", account["name"]
-        assert "only works on homes" in refused["say"]
+        assert "works on homes and apartments" in refused["say"]
     assert fsm_jobs(mock) == before
 
 
@@ -453,9 +454,7 @@ def test_a_refused_booking_sent_again_with_the_same_key_runs_the_rules_again(age
 def test_an_unknown_caller_who_describes_a_business_cannot_book(agent, mock):
     before = fsm_jobs(mock)
     call = agent.start(UNKNOWN)["data"]["call_id"]
-    turn = agent.turn(
-        call, "I manage a property, well, I'm the property manager, and the heat's out."
-    )
+    turn = agent.turn(call, "I manage a restaurant, well, I'm the manager, and the heat's out.")
     assert "commercial" in turn["data"]["hints"]
     agent.confirm_read_back(call, in_area_address())
     refused = book(agent, call, first_open(agent, call), job_type="no_heat")
@@ -525,10 +524,31 @@ def test_an_owner_who_lives_downstairs_with_a_tenant_upstairs_can_book(agent):
 
 @pytest.mark.parametrize(
     "line",
-    ["We own the building, it's a three-family", "I own an apartment building in Flatbush"],
+    [
+        "We own the building, it's a three-family",
+        "I own an apartment building in Flatbush",
+        "I manage a six-unit walk-up in Crown Heights and my tenants have no heat",
+        "I'm the super, the boiler for the whole apartment building is out",
+        "I'm the property manager for a few apartment buildings",
+        "We manage the building, it's not my home, it's twelve units",
+        "I live in a co-op and the board has to approve any work",
+    ],
 )
-def test_an_owner_of_three_or_more_units_is_still_commercial(line):
-    assert sounds_commercial(line, AGENT["commercial"]), line
+def test_apartment_buildings_and_their_managers_are_residential(line):
+    """Eval round 2: residential means residential-grade equipment, so an apartment building, its
+    super and its manager are residential, whatever the count of units."""
+    assert not sounds_commercial(line, AGENT["commercial"]), line
+
+
+def test_a_building_manager_can_book_for_an_apartment_building(agent):
+    """Eval round 2, property-manager-books-building (seed 1)."""
+    call = ready_to_book(agent)
+    for line in (
+        "I run a six-unit walk-up in Crown Heights, my tenants have no heat.",
+        "Yes, I manage the building and I approve the work.",
+    ):
+        assert "commercial" not in agent.turn(call, line)["data"]["hints"]
+    assert book(agent, call, first_open(agent, call))["ok"]
 
 
 def test_the_commercial_note_and_refusal_give_the_model_nothing_to_parrot():
@@ -581,10 +601,10 @@ def test_a_limit_flags_a_person_once_however_often_it_is_hit(agent):
     [
         "I manage a restaurant and our heat is out",
         "I run a restaurant and the heat is out",
-        "We own the building on Flatbush, three units",
         "It's for my bakery on Church Ave",
-        "I'm the property manager for a few buildings",
+        "It's an office building on Court Street",
         "The rooftop unit over our kitchen died",
+        "It's a storefront, the heat in the shop is out",
     ],
 )
 def test_business_callers_are_recognized_from_their_words(line):
@@ -604,3 +624,64 @@ def test_business_callers_are_recognized_from_their_words(line):
 )
 def test_home_callers_are_not_marked_commercial(line):
     assert not sounds_commercial(line, AGENT["commercial"]), line
+
+
+# ---- eval round 2: who can approve the work ------------------------------------------------------
+
+
+def _approval_callbacks(agent, call):
+    conn = agent.db()
+    try:
+        return conn.execute(
+            "SELECT due_at, reason FROM callbacks WHERE call_id = ? AND reason LIKE 'Confirm who%'",
+            (call,),
+        ).fetchall()
+    finally:
+        conn.close()
+
+
+def test_a_co_op_board_that_must_approve_is_residential_and_gets_the_approval_note(agent):
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    turn = agent.turn(call, "I own my unit in a co-op, but the co-op board has to approve any work.")
+    assert "approval_unclear" in turn["data"]["hints"]
+    assert "commercial" not in turn["data"]["hints"]
+
+
+def test_a_booking_with_approval_unclear_gets_a_call_before_dispatch(agent, clock):
+    """Eval round 2, co-op-owner-mentions-board: booked only because the caller asked, so a person
+    calls before the technician heads out, inside calling hours and before the window."""
+    call = ready_to_book(agent)
+    agent.turn(call, "The co-op board has to approve any work, but please just book it.")
+    booked = book(agent, call, first_open(agent, call))
+    assert booked["ok"], booked
+    callbacks = _approval_callbacks(agent, call)
+    assert len(callbacks) == 1
+    due = datetime.fromisoformat(callbacks[0]["due_at"])
+    assert booked["data"]["approval_callback_at"] == callbacks[0]["due_at"]
+    conn = agent.db()
+    try:
+        row = conn.execute("SELECT window_start FROM bookings WHERE call_id = ?", (call,)).fetchone()
+    finally:
+        conn.close()
+    window_start = datetime.fromisoformat(row["window_start"])
+    local = due.astimezone(ZoneInfo("America/New_York"))
+    assert clock.now <= due < window_start
+    assert time(8) <= local.time() <= time(21)
+    assert "to confirm who can approve the work" in booked["say"]
+    assert count(agent, "SELECT COUNT(*) FROM flags WHERE kind = 'approval_check'") == 1
+
+
+def test_an_approver_the_agent_records_as_unsure_also_gets_the_call(agent):
+    call = ready_to_book(agent)
+    booked = book(agent, call, first_open(agent, call), approver="Not sure, maybe the board")
+    assert booked["ok"], booked
+    assert len(_approval_callbacks(agent, call)) == 1
+
+
+def test_a_caller_who_approves_gets_no_approval_call(agent):
+    call = ready_to_book(agent)
+    booked = book(agent, call, first_open(agent, call))
+    assert booked["ok"], booked
+    assert booked["data"]["approval_callback_at"] is None
+    assert "approve" not in booked["say"]
+    assert _approval_callbacks(agent, call) == []

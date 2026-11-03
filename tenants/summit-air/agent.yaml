@@ -60,6 +60,10 @@ safety:
   vague:
     gas:
       question: Just to be safe, are you smelling gas in the house right now?
+      # Proposed in eval round 2 (Jackson: "just to confirm, it doesn't smell like sulfur or egg or
+      # anything, right?"), asked as a yes or no question so a "yeah" can't mean both. Not yet
+      # signed off.
+      confirm_question: Just to confirm, does it smell at all like sulfur or rotten eggs?
     co:
       question: Just to be safe, is a carbon monoxide alarm going off, or is anyone feeling sick or dizzy?
   # Said when the agent wants to end a safety call: it signs off rather than hangs up. A polite
@@ -69,24 +73,44 @@ safety:
     For your safety, I'd recommend hanging up now, getting outside, and calling 911 from there.
     We'll follow up once you're safe.
   flag_reason: "{label} reported on the call"
+  # Added to the booking sentence when a visit is booked on a safety call (eval round 2, Jackson: "we'll
+  # book a technician for you, but first it's important that whatever the problem is shut off").
+  # Proposed, not yet signed off.
+  booking_note: >-
+    The technician can only work on it once the gas company or 911 has shut it off and said it's
+    safe, so please stay outside until then.
 
 # A caller line that describes a business marks the call commercial: it can't book (spec S-05,
-# journey 8). Three ways to match: "my restaurant" or "our bakery" (my or our right before a
-# business), "I run a restaurant" or "we manage the building" (a running word, then a, an or the and
-# at most one more word, then a business), and fixed phrases. A landlord of a two-family house or a
-# co-op unit owner is residential, so "my tenants" and "our building" are left to the agent and the
-# FSM account type. Exclusions are removed before matching, so "my business partner" stays a home.
+# journey 8). Commercial means commercial-grade equipment: offices, stores, restaurants and the like.
+# Homes, apartments, co-ops, condos and whole apartment buildings are residential, including a super
+# or building manager calling about the building's residential systems (eval round 2), so "my
+# tenants", "our building", "the building I manage" and a count of units mark nothing. Three ways to
+# match: "my restaurant" or "our bakery" (my or our right before a business), "I run a restaurant"
+# (a running word, then a, an or the and at most one more word, then a business), and fixed phrases.
+# Exclusions are removed before matching, so "my business partner" stays a home.
 commercial:
   owned: [restaurant, bakery, deli, cafe, bar, store, shop, salon, gym, clinic, daycare, warehouse, business]
   run: [restaurant, bakery, deli, cafe, bar, store, shop, salon, gym, clinic, daycare, warehouse,
-        business, company, school, church, hotel, office, building, property, properties]
-  # Owning "the building" alone is not commercial (an owner-occupied two-family house is a home);
-  # a count of three or more units is.
-  phrases: [property manager, property management, office building, commercial property, rooftop unit,
-            "it's a business", it is a business, "it's commercial", not a home, "not my home",
-            three units, four units, five units, six units, 3 units, 4 units, three family,
-            four family, 3 family, 4 family, three apartments, four apartments, apartment building]
+        business, company, school, church, hotel, office]
+  phrases: [office building, office space, commercial property, commercial space, commercial unit,
+            commercial building, retail space, storefront, rooftop unit, "it's a business",
+            it is a business, "it's commercial"]
   not: [business partner, business trip, business card, home office, my own business hours]
+
+# Who can approve the work (eval round 2, co-op-owner-mentions-board). A caller who says a board or
+# a landlord has to approve is offered a callback to settle it; if they ask to book anyway, the
+# booking gets a call this many hours before the window opens (moved into calling hours) to confirm
+# approval before dispatch. unclear_approver is matched in the approver the agent records. ASSUMED.
+approval:
+  unclear_phrases: [co-op board, coop board, condo board, building board, board approval,
+                    board has to approve, board needs to approve, board to approve, board has to be told,
+                    board has to know, tell the board, ask the board, check with the board,
+                    landlord has to approve, landlord needs to approve, ask my landlord,
+                    check with my landlord, check with the landlord, management has to approve,
+                    need permission, needs permission, not sure who approves, not sure if i can approve,
+                    "not sure i can approve"]
+  unclear_approver: [board, not sure, unclear, unknown, to confirm, to be confirmed, tbd, needs approval]
+  callback_hours_before_window: 2
 
 # Priority (spec S-21, docs/explorations/007-priority-brackets.md). A no-heat or no-cooling call
 # starts at the first bracket that fits the inside temperature the caller gives and the outside
@@ -198,8 +222,12 @@ lines:
   read_back: >-
     Let me read that back: your home at {address}, and the best number is {phone}. Is that right?
   commercial: >-
-    Thanks for thinking of us. Unfortunately Summit Air only works on homes, so we're not the right
-    fit for this one.
+    Thanks for thinking of us. Unfortunately Summit Air works on homes and apartments, not
+    businesses, so we're not the right fit for this one.
+  # Added to a booking's sentence when who can approve isn't settled. {when} is "by 9 PM".
+  approval_callback: >-
+    Before the technician heads out, someone from our team will call you {when} to confirm who can
+    approve the work.
   out_of_area: >-
     I'm sorry, that's outside the area we cover, so we're not able to send someone. A local heating
     company should be able to help.

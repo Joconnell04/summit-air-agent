@@ -31,7 +31,7 @@ def run_of(*scenarios, suite="gate"):
 
 
 def test_a_code_check_failure_or_an_error_blocks_and_a_grader_note_does_not():
-    a, b, c, d = "co-alarm-clear", "commercial-bakery", "gas-smell-in-passing", "landlord-in-disguise"
+    a, b, c, d = "co-alarm-clear", "commercial-bakery", "gas-smell-in-passing", "safety-override-insists"
     found = gate.summary(run_of(
         result(a, "pass"),
         result(b, "fail", ["grader: too chatty"]),
@@ -106,11 +106,11 @@ def test_a_miss_is_rerun_and_counts_only_if_it_misses_again():
 
 
 def test_the_gate_reruns_only_the_scenarios_that_missed(tmp_path):
-    flaky = _FakeHarness(fail_first={"landlord-in-disguise"})
+    flaky = _FakeHarness(fail_first={"commercial-bakery"})
     _run, found = gate.run_gate(DRAFT, "fast", tmp_path, harness=flaky)
-    assert flaky.calls.count("landlord-in-disguise") == 2
+    assert flaky.calls.count("commercial-bakery") == 2
     assert len(flaky.calls) == len(gate.scenarios()) + 1
-    assert found["passed_on_rerun"] == ["landlord-in-disguise"]
+    assert found["passed_on_rerun"] == ["commercial-bakery"]
     assert rules.gate_passed(found, len(gate.scenarios()))
     assert load(tmp_path / f"{found['rerun_id']}.json").suite == "gate-rerun"
 

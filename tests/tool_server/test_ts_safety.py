@@ -421,7 +421,7 @@ def test_a_safety_call_flags_a_person_without_asking_for_a_callback_time(agent):
     assert count(agent, "SELECT COUNT(*) FROM callbacks WHERE call_id = ?", call) == 0
 
 
-def test_after_the_lines_each_caller_line_reminds_the_agent_not_to_book(agent):
+def test_after_the_lines_each_caller_line_reminds_the_agent_how_to_carry_on(agent):
     call = agent.start(UNKNOWN)["data"]["call_id"]
     before = agent.turn(call, "Hi, my carbon monoxide alarm is going off.")
     assert "safety_call" not in before["data"]["hints"]
@@ -430,7 +430,7 @@ def test_after_the_lines_each_caller_line_reminds_the_agent_not_to_book(agent):
     assert "safety_call" in after["data"]["hints"]
     from prompts.assemble import server_notes
 
-    assert "Don't offer a visit" in server_notes(after["data"]["hints"])[0]
+    assert "offer once to book" in server_notes(after["data"]["hints"])[0]
 
 
 def test_the_sign_off_suits_a_caller_who_is_alone_and_recommends_rather_than_orders():
@@ -451,3 +451,83 @@ def test_a_caller_saying_goodbye_after_the_sign_off_does_not_hear_it_again(agent
     assert bye["say"] == ""
     assert bye["data"]["hang_up"] is True
 
+
+
+# ---- eval round 2: a lighter confirm question, and a visit booked on a safety call --------------
+
+CONFIRM = CFG["vague"]["gas"]["confirm_question"]
+BOOKING_NOTE = " ".join(CFG["booking_note"].split())
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "It smelled like burning dust for a few minutes, it's gone now",
+        "there was a burning smell when the heat came on",
+    ],
+)
+def test_a_burning_dust_smell_gets_the_confirm_question(line):
+    action = safety.check_caller_turn(line, "none", None, 0, CFG)
+    assert action.action == "ask_check"
+    assert action.kind == "gas"
+    assert action.text == CONFIRM
+
+
+def test_the_confirm_question_is_asked_once_per_call():
+    line = "it smelled like burning dust again this morning"
+    assert safety.check_caller_turn(line, "none", None, 0, CFG, confirm_asked=True).action == "none"
+    assert safety.check_caller_turn("no burning smell at all", "none", None, 0, CFG).action == "none"
+
+
+@pytest.mark.parametrize(
+    "answer,result",
+    [
+        ("Nope, just dusty, you know", "cleared"),
+        ("No, nothing like that", "cleared"),
+        ("No rotten eggs or sulfur, just dust", "cleared"),
+        ("It doesn't smell like sulfur or rotten eggs", "cleared"),
+        ("not like rotten eggs, no", "cleared"),
+        ("Yeah, a bit like eggs", "speak_lines"),
+        ("No, it smells like rotten eggs", "speak_lines"),
+        ("I'm not sure", "speak_lines"),
+    ],
+)
+def test_answers_that_echo_the_question_are_read_right(answer, result):
+    assert safety.check_caller_turn(answer, "checking", "gas", 0, CFG).action == result
+
+
+def test_a_cleared_burning_dust_check_books_without_the_lines(agent):
+    """Eval round 2, burning-dust-first-heat."""
+    call = ready_to_book(agent)
+    asked = agent.turn(call, "It smelled like burning dust for a few minutes, it's gone now.")
+    assert asked["data"]["safety"]["text"] == CONFIRM
+    agent.say(call, CONFIRM)
+    assert agent.turn(call, "No, nothing like that.")["data"]["safety"]["action"] == "cleared"
+    again = agent.turn(call, "Yeah the burning dust smell only lasted a minute.")
+    assert again["data"]["safety"] is None
+    booked = book(agent, call, first_open(agent, call))
+    assert booked["ok"], booked
+    assert BOOKING_NOTE not in booked["say"]
+
+
+def test_after_the_lines_a_visit_can_be_booked_without_insisting(agent):
+    """Eval round 2, already-outside-asks-for-visit: the lines and the flag come first, then the
+    agent may offer a visit for after the problem is shut off, and the server says so."""
+    call = ready_to_book(agent)
+    agent.turn(call, "My carbon monoxide alarm went off.")
+    agent.say(call, CO_LINES)
+    turn = agent.turn(call, "Okay, I'm outside now.")
+    assert "safety_call" in turn["data"]["hints"]
+    booked = book(agent, call, first_open(agent, call, "safety_check"), job_type="safety_check")
+    assert booked["ok"], booked
+    assert booked["say"].endswith(BOOKING_NOTE)
+    assert booked["data"]["safety_override"] is True
+    assert count(agent, "SELECT COUNT(*) FROM flags WHERE kind = 'safety'") == 1
+
+
+def test_the_safety_call_note_offers_a_visit_and_never_a_callback_time():
+    from prompts.assemble import SERVER_NOTES
+
+    note = SERVER_NOTES["safety_call"]
+    assert "offer once to book" in note and "Never ask for a callback time" in note
+    assert "insist" not in note
