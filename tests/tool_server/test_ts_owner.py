@@ -458,3 +458,8 @@ def test_the_login_redirect_is_relative_and_keeps_the_day(agent):
     opened = agent.client.get(f"/owner?token={TOKEN}&day=2026-11-01", follow_redirects=False)
     assert opened.headers["location"] == "/owner?day=2026-11-01"
     assert "max-age" in opened.headers["set-cookie"].lower()
+
+
+def test_a_login_lasts_as_long_as_a_browser_allows(agent):
+    opened = agent.client.get(f"/owner?token={TOKEN}", follow_redirects=False)
+    assert f"max-age={400 * 86400}" in opened.headers["set-cookie"].lower()
