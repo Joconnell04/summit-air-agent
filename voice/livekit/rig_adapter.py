@@ -25,6 +25,7 @@ from .settings import ROOT
 RATE = 24000
 DIALED = "(646) 624-0418"
 READY = "registered worker"
+JOIN_TIMEOUT_S = 30
 
 
 def caller_token(room: str, caller_id: str, key: str, secret: str) -> str:
@@ -77,6 +78,11 @@ class Line:
             await lk.aclose()
         token = caller_token(call_id, caller_id, env["LIVEKIT_API_KEY"], env["LIVEKIT_API_SECRET"])
         await self.phone.connect(env["LIVEKIT_URL"], token, listener)
+        # The rig times the greeting from here, so wait for the worker to join the room (a cold
+        # worker took more than the greeting wait once, MEASURED).
+        deadline = time.monotonic() + JOIN_TIMEOUT_S
+        while not self.phone.room.remote_participants and time.monotonic() < deadline:
+            await asyncio.sleep(0.1)
         self.opened = time.perf_counter()
         return world.server
 
