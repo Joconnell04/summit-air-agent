@@ -141,6 +141,15 @@ def test_a_plain_reply_streams_the_model_text_and_both_lines_are_recorded(app):
     assert claude.requests[0]["thinking"] == {"type": "disabled"}
 
 
+def test_the_voice_hears_the_read_back_spelled_out_and_the_server_keeps_it_as_written(app):
+    written = "Your home at 801 Fenimore St, Brooklyn, 11206. Is that right?"
+    brain, _ = brain_for(app, [[text(written[:20]), text(written[20:])]])
+    start(brain)
+    chunks = completions(brain, "el-1", "Yes, book it.")
+    assert spoken(chunks) == "Your home at 801 Fenimore Street, Brooklyn, 1 1 2 0 6. Is that right?"
+    assert turns(app, "el-1")[-1] == ("agent", written)
+
+
 def test_the_safety_lines_are_streamed_as_given_without_the_model(app):
     brain, claude = brain_for(app, [])
     start(brain)

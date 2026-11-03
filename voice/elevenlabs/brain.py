@@ -31,6 +31,7 @@ from fastapi.responses import StreamingResponse
 from prompts import assemble
 
 from .server import UNREACHABLE, ToolServer
+from .speakable import SpeakableStream
 
 ROOT = Path(__file__).resolve().parents[2]
 MAX_HOPS = 6
@@ -277,11 +278,19 @@ async def completion_events(brain: Brain, call_id: str, heard: str, model: str):
     # A request with no new caller words (ElevenLabs asking again after its own tool ran) gets an
     # empty reply rather than a turn the caller never spoke.
     pieces = brain.reply(call_id, heard) if heard else _nothing()
+    # The voice gets street words and numbers spelled out (speakable.py); the tool server already
+    # has the text as written.
+    voice = SpeakableStream()
     async for kind, text in pieces:
         if kind == "text" and text:
-            yield chunk(cid, model, {"content": text})
+            said = voice.feed(text)
+            if said:
+                yield chunk(cid, model, {"content": said})
         elif kind == "end_call":
             ended = True
+    rest = voice.flush()
+    if rest:
+        yield chunk(cid, model, {"content": rest})
     if ended:
         # ElevenLabs' own end-call tool; it hangs up after what was said above has played.
         call = {"index": 0, "id": f"call_{uuid.uuid4().hex[:12]}", "type": "function",
