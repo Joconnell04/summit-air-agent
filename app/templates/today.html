@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+{% from "_ui.html" import priority, window_tag, figure, pct, empty, day_nav, q with context %}
+{% block head %}{% if is_today %}<meta http-equiv="refresh" content="30">{% endif %}{% endblock %}
+{% block title %}{{ tenant }}: {{ day.strftime("%a %b %-d") }}{% endblock %}
+{% block body %}
+{% set b = board %}
+{% macro hour_name(h) %}{% if h % 24 == 0 %}12 AM{% elif h == 12 %}12 PM{% elif h < 12 %}{{ h }} AM{% else %}{{ h - 12 }} PM{% endif %}{% endmacro %}
+<main class="page">
+  <div class="page-head">
+    <div class="lead">
+      <div class="crumbs">{% if is_today %}Today{% else %}{{ day.strftime("%A") }}{% endif %}</div>
+      <div style="display: flex; align-items: center; gap: var(--s-4); flex-wrap: wrap;">
+        <h1 class="page-title">{{ day.strftime("%A, %b %-d") }}</h1>
+        {{ day_nav("/owner", slug, day, is_today) }}
+      </div>
+      <p class="summary">{% for text, style in summary %}{% if style == "b" %}<b>{{ text }}</b>{% elif style == "alarm" %}<span class="alarm">{{ text }}</span>{% else %}{{ text }}{% endif %}{% endfor %}</p>
+    </div>
+    <div class="figures">
+      {{ figure(needs_person, "need a person", "#attention", needs_person > 0) }}
+      {{ figure(pct(rates.rate), "booking rate, " ~ rates.booked ~ " of " ~ rates.calls) }}
+      {{ figure(callbacks.done ~ " of " ~ callbacks.promised, "callbacks done") }}
+      {{ figure(pct(kept.rate), "booked and kept, 30 days") }}
+    </div>
+  </div>
+
+  <section class="panel board" id="board" data-start="{{ b.start }}" data-end="{{ b.end }}" data-now="{{ b.now if b.now is not none else '' }}" data-show-handled="false" aria-label="Day board">
+    <div class="panel-head">
+      <h2>Day board</h2>
+      <div class="filters" role="group" aria-label="Board filters">
+        <button type="button" class="toggle" aria-pressed="true" data-lane="needs" style="--sw: var(--urgent)"><span class="swatch"></span>Needs a person <span class="n">{{ b.open }}</span></button>
+        <button type="button" class="toggle" aria-pressed="true" data-lane="jobs" style="--sw: var(--info)"><span class="swatch"></span>Jobs booked <span class="n">{{ b.lanes.jobs | length }}</span></button>
+        <button type="button" class="toggle" aria-pressed="true" data-lane="others" style="--sw: var(--neutral)"><span class="swatch"></span>Other calls <span class="n">{{ b.lanes.others | length }}</span></button>
+        <span class="rule"></span>
+        <button type="button" class="toggle" aria-pressed="false" data-handled>Handled too</button>
+      </div>
+      <div class="end">
+        <div class="seg" role="group" aria-label="Hours shown">
+          <button type="button" aria-pressed="true" data-range="{{ b.start }}-{{ b.end }}">{{ hour_name(b.start // 60) }} to {{ hour_name(b.end // 60) }}</button>
+          <button type="button" aria-pressed="false" data-range="0-1440">Whole day</button>
+        </div>
+      </div>
+    </div>
+    <div class="board-grid">
+      <div class="board-row axis">
+        <div class="head"></div>
+        <div class="track" data-hours>
+          {% for h in range(0, 25) %}{% set out = h * 60 < b.start or h * 60 > b.end %}
+          <span class="hour-label{% if h * 60 == b.start %} first{% elif h * 60 == b.end %} last{% endif %}" data-min="{{ h * 60 }}" style="left: {{ position(h * 60, b.start, b.end) }}%"{% if out %} hidden{% endif %}>{% if not out and ((h - b.start // 60) % 2 == 0 or h * 60 == b.end) %}{{ hour_name(h) }}{% endif %}</span>
+          {% endfor %}
+          {% if b.now is not none %}<span class="now-label" data-min="{{ b.now }}" style="left: {{ position(b.now, b.start, b.end) }}%">{{ clock(now) }}</span>{% endif %}
+        </div>
+      </div>
+      {% set lanes = [
+        ("needs", "Needs a person", b.open ~ " open", "var(--urgent)"),
+        ("jobs", "Jobs booked", "when the call booked it", "var(--info)"),
+        ("others", "Other calls", "questions, leads, turned away", "var(--neutral)"),
+      ] %}
+      {% for key, name, sub, sw in lanes %}
+      <div class="board-row lane" data-lane-row="{{ key }}">
+        <div class="head"><span class="name"><span class="swatch" style="--sw: {{ sw }}"></span>{{ name }}</span><span class="sub">{{ sub }}</span></div>
+        <div class="track" data-pack>
+          {% for h in range(0, 25) %}<span class="hour{% if (h - b.start // 60) % 2 == 0 %} major{% endif %}" data-min="{{ h * 60 }}" style="left: {{ position(h * 60, b.start, b.end) }}%"{% if h * 60 < b.start or h * 60 > b.end %} hidden{% endif %}></span>{% endfor %}
+          {% if b.now is not none %}<span class="now" data-min="{{ b.now }}" style="left: {{ position(b.now, b.start, b.end) }}%"></span>{% endif %}
+          {% for m in b.lanes[key] %}
+            {% set when = minute_clock(m.minute) %}
+            {% if key == "needs" %}
+            <div class="mark {{ m.tone }}{% if m.handled %} handled{% endif %}" data-min="{{ m.minute }}" style="left: {{ position(m.minute, b.start, b.end) }}%">
+              <a href="/owner/calls/{{ m.call_id }}" title="{{ when }}: {{ m.tip }}{% if m.handled %} (handled){% endif %}"><span class="dot"></span>{{ m.label }}</a>
+            </div>
+            {% else %}
+            <div class="mark {{ m.tone }}" data-min="{{ m.minute }}" style="left: {{ position(m.minute, b.start, b.end) }}%">
+              <a class="dot-only" href="/owner/calls/{{ m.call_id }}" title="{{ when }}: {{ m.tip }}"><span class="dot"></span><span class="sr-only">{{ when }}: {{ m.tip }}</span></a>
+            </div>
+            {% endif %}
+          {% endfor %}
+        </div>
+      </div>
+      {% endfor %}
+      <div class="board-row">
+        <div class="head"><span class="name"><span class="swatch" style="--sw: var(--info-ink)"></span>Arrival windows</span><span class="sub">{{ b.scheduled }} on the schedule{% if b.later %}, {{ b.later }} later{% endif %}</span></div>
+        <div class="track" style="min-height: 60px;">
+          {% for h in range(0, 25) %}<span class="hour{% if (h - b.start // 60) % 2 == 0 %} major{% endif %}" data-min="{{ h * 60 }}" style="left: {{ position(h * 60, b.start, b.end) }}%"{% if h * 60 < b.start or h * 60 > b.end %} hidden{% endif %}></span>{% endfor %}
+          {% if b.now is not none %}<span class="now" data-min="{{ b.now }}" style="left: {{ position(b.now, b.start, b.end) }}%"></span>{% endif %}
+          {% for w in b.windows %}
+          {% set left = position(w.start, b.start, b.end) %}
+          <div class="window{% if w.past %} past{% endif %}{% if not w.jobs %} empty{% endif %}" data-from="{{ w.start }}" data-to="{{ w.end }}" style="left: calc({{ left }}% + 2px); width: calc({{ position(w.end, b.start, b.end) - left }}% - 4px);" title="{{ w.name }}: {{ w.jobs }} job{{ 's' if w.jobs != 1 }}{% if w.urgent %}, {{ w.urgent }} urgent{% endif %}">
+            <span class="w-name">{{ w.name }}</span>
+            <span class="w-jobs">{% if w.jobs %}{{ w.jobs }} job{{ 's' if w.jobs != 1 }}{% if w.urgent %}, <b>{{ w.urgent }} urgent</b>{% endif %}{% else %}None{% endif %}</span>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="split">
+    <div class="stack">
+      {% set open_flags = flags | selectattr("open") | rejectattr("code", "equalto", "callback_requested") | list %}
+      {% set handled = flags | rejectattr("open") | list %}
+      <section class="panel" id="attention">
+        <div class="panel-head"><h2>Needs attention</h2><span class="count">{{ open_flags | length }} open</span></div>
+        {% if open_flags %}
+        <div class="table-wrap">
+        <table class="table">
+          <tbody>
+          {% for f in open_flags %}
+            <tr class="{% if f.priority == 'Urgent' %}urgent-open{% endif %}">
+              <td class="time">{{ clock(f.at) }}</td>
+              <td class="fit">{{ priority(f.priority) }}</td>
+              <td><div class="what">{{ flag_titles[f.id] }}</div><div class="why">{{ f.reason }}</div></td>
+              <td class="fit num muted">{{ callers.get(f.call_id, "") }}</td>
+              <td class="fit right">
+                {% if f.alert == "sent" %}<span class="tag info" title="Emailed to the on-call person">Emailed</span>{% elif f.alert == "held" %}<span class="tag outline" title="No mail server is set, so the email was held">Email held</span>{% elif f.alert == "failed" %}<span class="tag urgent">Email failed</span>{% endif %}
+              </td>
+              <td class="fit right"><a href="/owner/calls/{{ f.call_id }}">Open call</a></td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+        </div>
+        {% else %}{{ empty("Nothing needs a person right now.") }}{% endif %}
+        {% if handled %}
+        <details class="panel-foot">
+          <summary>{{ handled | length }} handled today</summary>
+          <table class="table" style="margin-top: var(--s-2);">
+            <tbody>
+            {% for f in handled %}
+              <tr class="closed"><td class="time">{{ clock(f.at) }}</td><td><div class="what">{{ flag_titles[f.id] }}</div><div class="why small">{{ f.reason }}</div></td><td class="fit right"><a href="/owner/calls/{{ f.call_id }}">Open call</a></td></tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        </details>
+        {% endif %}
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Jobs booked</h2><span class="count">{{ bookings | length }}</span>
+          <span class="end source"><img src="/owner/static/servicetitan-logo.svg" alt="ServiceTitan" width="64" height="11">{{ bookings | selectattr("fsm_job_id") | list | length }} in ServiceTitan</span>
+        </div>
+        {% if bookings %}
+        <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th>Booked</th><th>Job</th><th>Service location</th><th>Arrival window</th><th>Priority</th><th></th></tr></thead>
+          <tbody>
+          {% for j in bookings %}
+            <tr>
+              <td class="time">{{ clock(j.at) }}</td>
+              <td>
+                <div class="what">{{ j.job_type }}</div>
+                {% if j.reasons %}<div class="why small">{{ j.reasons[:1] | upper }}{{ j.reasons[1:] }}</div>{% endif %}
+                {% set extra = [] %}
+                {% if j.status == "queued" %}{% set _ = extra.append(("high", "Waiting on ServiceTitan", "ServiceTitan was down; the retry job will send it")) %}{% elif j.status == "failed" %}{% set _ = extra.append(("urgent", "Didn't reach ServiceTitan", "")) %}{% endif %}
+                {% if j.offer == "accepted" %}{% set _ = extra.append(("done", "Moved earlier", "")) %}{% elif j.offer in ("queued", "dialing") %}{% set _ = extra.append(("info", "Offering an earlier time", "")) %}{% elif j.seek_earlier and not j.offer %}{% set _ = extra.append(("info", "Looking for earlier", "")) %}{% endif %}
+                {% if j.safety_override %}{% set _ = extra.append(("urgent", "Safety override", "Booked after the safety lines, because the caller asked")) %}{% endif %}
+                {% if extra %}<div class="tags" style="margin-top: 6px;">{% for tone, text, tip in extra %}<span class="tag {{ tone }}"{% if tip %} title="{{ tip }}"{% endif %}>{{ text }}</span>{% endfor %}</div>{% endif %}
+              </td>
+              <td class="fit">{{ j.address }} <span class="faint num">{{ j.zip }}</span></td>
+              <td class="fit">{{ window_tag(j.window) }}</td>
+              <td class="fit">{{ priority(j.priority) }}</td>
+              <td class="fit right"><a href="/owner/calls/{{ j.call_id }}">Open call</a></td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+        </div>
+        {% else %}{{ empty("No jobs booked yet.") }}{% endif %}
+      </section>
+    </div>
+
+    <aside class="panel tray" data-tray>
+      <div class="tray-tabs" role="tablist">
+        <button type="button" role="tab" aria-selected="true" aria-controls="tray-callbacks" id="tab-callbacks">Callbacks<span class="n">{{ callbacks["items"] | length }}</span></button>
+        <button type="button" role="tab" aria-selected="false" aria-controls="tray-leads" id="tab-leads">Leads<span class="n">{{ leads | length }}</span></button>
+        <button type="button" role="tab" aria-selected="false" aria-controls="tray-away" id="tab-away">Turned away<span class="n">{{ turned_away | length }}</span></button>
+      </div>
+      <div class="tray-panel" role="tabpanel" id="tray-callbacks" aria-labelledby="tab-callbacks">
+        {% if callbacks["items"] %}
+        <ul class="list">
+        {% for cb in callbacks["items"] | sort(attribute="status", reverse=true) %}
+          <li class="{% if cb.status == 'overdue' %}late{% endif %}">
+            <span class="what">{{ cb.reason[:1] | upper }}{{ cb.reason[1:] }}</span>
+            <span class="meta">{{ cb.owner | capitalize }}, by {{ clock(cb.due) }}</span>
+            <span class="end">
+              {% if cb.status == "overdue" %}<span class="tag urgent">Late</span>{% elif cb.status == "done" %}<span class="tag done">Done</span>{% elif cb.status == "cancelled" %}<span class="tag">Cancelled</span>{% else %}<span class="tag outline">Due {{ clock(cb.due) }}</span>{% endif %}
+              <a href="/owner/calls/{{ cb.call_id }}">Open call</a>
+            </span>
+          </li>
+        {% endfor %}
+        </ul>
+        {% else %}{{ empty("No callbacks promised today.") }}{% endif %}
+      </div>
+      <div class="tray-panel" role="tabpanel" id="tray-leads" aria-labelledby="tab-leads" hidden>
+        {% if leads %}
+        <ul class="list">
+        {% for l in leads %}
+          <li>
+            <span class="what">{{ type_label(l.kind) }}</span>
+            <span class="meta">{{ l.summary }}</span>
+            <span class="end"><span class="tag {{ 'done' if l.status == 'sent' else 'high' }}">{{ "Sent to sales" if l.status == "sent" else l.status | capitalize }}</span><a href="/owner/calls/{{ l.call_id }}">Open call</a></span>
+          </li>
+        {% endfor %}
+        </ul>
+        {% else %}{{ empty("No leads today.") }}{% endif %}
+      </div>
+      <div class="tray-panel" role="tabpanel" id="tray-away" aria-labelledby="tab-away" hidden>
+        {% if turned_away %}
+        <ul class="list">
+        {% for c in turned_away %}
+          <li>
+            <span class="what">{{ c.outcome_label | replace("Turned away: ", "") | capitalize }}</span>
+            <span class="meta num">{{ clock(c.at) }}, {{ c.caller }}</span>
+            <span class="end"><a href="/owner/calls/{{ c.id }}">Open call</a></span>
+          </li>
+        {% endfor %}
+        </ul>
+        {% else %}{{ empty("Nobody turned away today.") }}{% endif %}
+      </div>
+    </aside>
+  </div>
+</main>
+{% endblock %}

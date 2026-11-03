@@ -37,6 +37,16 @@ class Settings:
     smtp_user: str = field(default_factory=lambda: os.environ.get("SMTP_USER", ""))
     smtp_password: str = field(default_factory=lambda: os.environ.get("SMTP_PASSWORD", ""))
     mail_from: str = field(default_factory=lambda: os.environ.get("MAIL_FROM", ""))
+    # Owner reports (story O-8). With no token they are held, not filed (app/reports.py).
+    reports_github_token: str = field(
+        default_factory=lambda: os.environ.get("REPORTS_GITHUB_TOKEN", "")
+    )
+    reports_github_repo: str = field(
+        default_factory=lambda: os.environ.get("REPORTS_GITHUB_REPO", "")
+    )
+    # Development only: serve every request as if it were this moment (ISO, with offset). The
+    # owner demo sets it to the evening of the seeded day so "now" sits on the board.
+    fixed_now: str = field(default_factory=lambda: os.environ.get("FIXED_NOW", ""))
 
     def __post_init__(self):
         self.db_path = Path(self.db_path)
@@ -58,3 +68,7 @@ NOTE_MAX_CHARS = 500
 BOOKING_DAYS_AHEAD = 14
 QUEUE_MAX_ATTEMPTS = 5
 ALERT_MAX_ATTEMPTS = 3
+REPORT_MAX_ATTEMPTS = 3
+# A voice worker that hasn't sent a heartbeat for this long counts as down (healthz, owner view).
+WORKER_STALE_SECONDS = 120
+REPORT_MAX_CHARS = 2000

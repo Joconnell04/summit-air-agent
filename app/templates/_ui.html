@@ -1,0 +1,56 @@
+{# Component macros for the owner view. Each matches a component in docs/design-system.md. #}
+
+{# A query string carrying the company and day, so every link stays on the same day. #}
+{% macro q(slug, day=none, days=none) -%}
+{%- set parts = [] -%}
+{%- if slug %}{% set _ = parts.append("tenant=" ~ slug) %}{% endif -%}
+{%- if day %}{% set _ = parts.append("day=" ~ day.isoformat()) %}{% endif -%}
+{%- if days and days != 1 %}{% set _ = parts.append("days=" ~ days) %}{% endif -%}
+{%- if parts %}?{{ parts | join("&") }}{% endif -%}
+{%- endmacro %}
+
+{% macro status_line(status) -%}
+{%- if status.state == "ok" -%}
+<span class="status ok" role="status"><span class="dot"></span>Answering calls{% if status.last_call %}<span class="faint">, last one {{ status.last_call }}</span>{% endif %}</span>
+{%- elif status.state == "down" -%}
+<span class="status down" role="status"><span class="dot"></span>Not answering since {{ status.since }}</span>
+{%- else -%}
+<span class="status" role="status" title="No voice worker has reported in on this server"><span class="dot"></span>{% if status.last_call %}Last call {{ status.last_call }}{% else %}No calls yet{% endif %}</span>
+{%- endif -%}
+{%- endmacro %}
+
+{% macro priority(level) -%}
+{%- if level == "Urgent" %}<span class="tag urgent">Urgent</span>{% elif level == "High" %}<span class="tag high">High</span>{% else %}<span class="tag">{{ level }}</span>{% endif -%}
+{%- endmacro %}
+
+{% macro window_tag(window) -%}
+{%- if window %}<span class="tag info">{{ window.day | capitalize }}{% if window.label == "after hours" %}, after hours{% else %} {{ window.label }}{% endif %}</span>{% endif -%}
+{%- endmacro %}
+
+{% macro figure(value, label, href=none, alarm=false) -%}
+{%- if href %}<a class="figure{% if alarm %} alarm{% endif %}" href="{{ href }}">{% else %}<div class="figure{% if alarm %} alarm{% endif %}">{% endif -%}
+<span class="value">{{ value }}</span><span class="label">{{ label }}</span>
+{%- if href %}</a>{% else %}</div>{% endif -%}
+{%- endmacro %}
+
+{% macro pct(value) %}{% if value is none %}-{% else %}{{ (value * 100) | round | int }}%{% endif %}{% endmacro %}
+
+{% macro empty(text) %}<div class="empty">{{ text }}</div>{% endmacro %}
+
+{% macro day_nav(path, slug, day, is_today) -%}
+<nav class="day-nav" aria-label="Day">
+  <a class="btn icon" href="{{ path }}{{ q(slug, day - timedelta(days=1)) }}" aria-label="Previous day"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></a>
+  <a class="btn icon" href="{{ path }}{{ q(slug, day + timedelta(days=1)) }}" aria-label="Next day"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></a>
+  {% if not is_today %}<a class="btn" href="{{ path }}{{ q(slug) }}">Back to today</a>{% endif %}
+</nav>
+{%- endmacro %}
+
+{% macro note_icon(tone) -%}
+{%- if tone == "ok" -%}
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
+{%- elif tone == "warn" -%}
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v4M12 17h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg>
+{%- else -%}
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
+{%- endif -%}
+{%- endmacro %}

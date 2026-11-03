@@ -26,6 +26,7 @@ def timeline(conn: sqlite3.Connection, call_id: str) -> dict | None:
                 "at": t["at"],
                 "order": (t["seq"], 0),
                 "type": "turn",
+                "seq": t["seq"],
                 "speaker": t["speaker"],
                 "text": t["text"],
                 "safety_action": t["safety_action"],

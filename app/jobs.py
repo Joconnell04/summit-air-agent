@@ -8,7 +8,7 @@ import smtplib
 import sqlite3
 from datetime import datetime, timedelta
 
-from . import booking, outbound, records
+from . import booking, outbound, records, reports
 from .db import iso, parse_iso, tx
 from .fsm import FsmAdapter, FsmRejected, FsmUnavailable, SlotCache
 from .mail import Mailer
@@ -348,6 +348,7 @@ def run_once(services) -> dict:
                 "alerts": alert_on_call(
                     conn, tenant, services.mailer, now, services.settings.owner_view_url
                 ),
+                "reports": reports.file_held(conn, tenant, services.report_poster, now),
                 "purged": purge(conn, tenant, now, services.settings.environment),
             }
         report["overdue_callbacks"] = []

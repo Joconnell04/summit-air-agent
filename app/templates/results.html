@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% from "_ui.html" import pct, empty, q with context %}
+{% set r = results %}
+{% block title %}{{ tenant }}: results{% endblock %}
+{% block body %}
+{% set period = "Today" if r.days == 1 and is_today else (r.end_day.strftime("%a %b %-d") if r.days == 1 else r.start_day.strftime("%b %-d") ~ " to " ~ r.end_day.strftime("%b %-d")) %}
+{% set before = "the day before" if r.days == 1 else "the " ~ r.days ~ " days before" %}
+<main class="page">
+  <div class="page-head">
+    <div class="lead">
+      <div class="crumbs">Results</div>
+      <h1 class="page-title">{{ period }}</h1>
+    </div>
+    <div class="seg" role="group" aria-label="Period">
+      {% for d, name in [(1, "Day"), (7, "7 days"), (30, "30 days")] %}
+      <a href="/owner/results{{ q(slug, day if not is_today else none, d) }}"{% if r.days == d %} aria-current="true"{% endif %}>{{ name }}</a>
+      {% endfor %}
+    </div>
+  </div>
+
+  <section class="panel">
+    <div class="panel-head"><h2>Is it paying off</h2><span class="count">against {{ before }}</span></div>
+    <div class="table-wrap">
+    <table class="table ledger">
+      <thead><tr><th>Measure</th><th class="right">{{ "This day" if r.days == 1 else "These " ~ r.days ~ " days" }}</th><th class="right">{{ before[:1] | upper }}{{ before[1:] }}</th><th class="right">Change</th></tr></thead>
+      <tbody>
+      {% for row in ledger %}
+        <tr>
+          <td><div class="what">{{ row.label }}</div><div class="why small">{{ row.sub }}</div></td>
+          <td class="value right">{{ row.now if row.now is not none else "-" }}</td>
+          <td class="prev right">{{ row.before if row.before is not none else "-" }}</td>
+          <td class="right">{% if row.delta %}<span class="delta {{ row.direction }}">{{ row.delta }}</span>{% else %}<span class="delta flat">-</span>{% endif %}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    </div>
+  </section>
+
+  <section class="panel" data-hours-chart>
+    <div class="panel-head">
+      <h2>Calls by hour</h2><span class="count" data-hours-total>{{ r.hours | length }} calls</span>
+      <span class="legend" style="margin-left: var(--s-4);"><span><i style="--sw: var(--info)"></i>Booked a job</span><span><i style="--sw: var(--urgent)"></i>Safety call</span><span><i style="--sw: #BCD3F3"></i>Other</span></span>
+      <div class="end">
+        <label class="sr-only" for="hours-type">Call type</label>
+        <select class="select" id="hours-type">
+          <option value="all">All call types</option>
+          {% for t in r.types %}<option value="{{ t.code }}">{{ t.label }}</option>{% endfor %}
+        </select>
+      </div>
+    </div>
+    {% set first = [r.hours | map(attribute="hour") | min, 7] | min if r.hours else 7 %}
+    {% set last = [r.hours | map(attribute="hour") | max, 19] | max if r.hours else 19 %}
+    {% set hours = range(first, last + 1) | list %}
+    <script type="application/json" id="hours-data">{{ {"hours": hours, "calls": r.hours} | tojson }}</script>
+    <div style="padding-top: var(--s-6);">
+      <div class="bars" style="--cols: {{ hours | length }}">
+        {% for h in hours %}
+        {% set in_hour = r.hours | selectattr("hour", "equalto", h) | list %}
+        <div class="bar"><span class="n{% if not in_hour %} zero{% endif %}">{{ in_hour | length }}</span><div class="pile"><div class="seg-other"></div><div class="seg-safety"></div><div class="seg-booked"></div></div></div>
+        {% endfor %}
+      </div>
+      <div class="bar-labels" style="--cols: {{ hours | length }}">{% for h in hours %}<span>{% if h == 12 %}12 PM{% elif h == 0 %}12 AM{% elif h < 12 %}{{ h }}{% if loop.first %} AM{% endif %}{% else %}{{ h - 12 }}{% endif %}</span>{% endfor %}</div>
+    </div>
+    <div class="panel-foot">By the hour each call came in. Calls the system placed are left out.</div>
+  </section>
+
+  <div class="split wide-side">
+    <section class="panel">
+      <div class="panel-head"><h2>Booking rate by call type</h2></div>
+      {% if r.rates.rows %}
+      <div class="table-wrap">
+      <table class="table">
+        <thead><tr><th>Call type</th><th class="right">Calls</th><th class="right">Booked</th><th style="width: 36%;">Rate</th></tr></thead>
+        <tbody>
+        {% for row in r.rates.rows %}
+          <tr>
+            <td>{{ row.label }}</td>
+            <td class="right num">{{ row.calls }}</td>
+            <td class="right num">{{ row.booked }}</td>
+            <td><div style="display: flex; align-items: center; gap: var(--s-3);"><div class="meter" style="flex: 1;"><i style="width: {{ (row.rate * 100) | round | int }}%"></i></div><span class="num" style="width: 40px; text-align: right;">{{ pct(row.rate) }}</span></div></td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+      </div>
+      <div class="panel-foot">The headline booking rate counts only calls that wanted a visit: {{ r.rates.booked }} of {{ r.rates.calls }}.</div>
+      {% else %}{{ empty("No calls in this period.") }}{% endif %}
+    </section>
+
+    <div class="stack">
+      <section class="panel">
+        <div class="panel-head"><h2>Turned away or held back</h2></div>
+        <ul class="list">
+          <li><span class="what">Commercial callers</span><span class="meta">{% if r.commercial %}{{ r.commercial | map(attribute="summary") | map("truncate", 48) | join("; ") }}{% else %}None{% endif %}</span><span class="end"><span class="num" style="font-size: var(--text-lg); font-weight: var(--semibold);">{{ r.commercial | length }}</span></span></li>
+          <li><span class="what">Outside the service area</span><span class="meta">{% if r.zips %}{% for z in r.zips %}{{ z.zip }}{% if z.calls > 1 %} ({{ z.calls }}){% endif %}{% if not loop.last %}, {% endif %}{% endfor %}{% else %}None{% endif %}</span><span class="end"><span class="num" style="font-size: var(--text-lg); font-weight: var(--semibold);">{{ r.zips | sum(attribute="calls") }}</span></span></li>
+          <li><span class="what">Booking held for safety</span><span class="meta">Safety lines said first on {{ r.held.lines_first }} of {{ r.held.calls }}{% if r.held.booked %}; {{ r.held.booked }} booked after, at the caller's request{% endif %}</span><span class="end"><span class="num" style="font-size: var(--text-lg); font-weight: var(--semibold);">{{ r.held.calls }}</span></span></li>
+          {% for o in r.overrides %}<li><span class="what">Safety override</span><span class="meta">Job {{ o.job }}, {{ clock(o.at) }}</span><span class="end"><a href="/owner/calls/{{ o.call_id }}">Open call</a></span></li>{% endfor %}
+        </ul>
+        {% if r.refused %}
+        <details class="panel-foot">
+          <summary>What the server held back, {{ r.refused | sum(attribute="count") }} times</summary>
+          <ul class="list" style="margin: var(--s-2) calc(-1 * var(--s-4)) 0;">
+            {% for x in r.refused %}<li><span class="what" style="font-weight: var(--medium);">{{ refused_label(x.code) }}</span><span class="end"><span class="num">{{ x.count }}</span><a href="/owner/calls/{{ x.call_id }}">Latest</a></span></li>{% endfor %}
+          </ul>
+        </details>
+        {% endif %}
+      </section>
+
+      <section class="panel">
+        <div class="panel-head"><h2>Sent to Revin</h2><span class="count">{{ reports | length }}</span></div>
+        {% if reports %}
+        <ul class="list">
+          {% for rep in reports %}
+          <li>
+            <span class="what" style="font-weight: var(--medium);">{{ rep.text | truncate(90) }}</span>
+            <span class="meta">{{ rep.at.strftime("%b %-d") }}, <a href="/owner/calls/{{ rep.call_id }}">the call</a></span>
+            <span class="end">{% if rep.status == "filed" %}<span class="tag done">With Revin, #{{ rep.issue_number }}</span>{% elif rep.status == "failed" %}<span class="tag high">Retrying</span>{% else %}<span class="tag outline">Held here</span>{% endif %}</span>
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}{{ empty("Nothing sent yet. Use \"This was wrong\" on any call.") }}{% endif %}
+      </section>
+    </div>
+  </div>
+</main>
+{% endblock %}

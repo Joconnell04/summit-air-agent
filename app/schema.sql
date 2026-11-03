@@ -232,3 +232,20 @@ CREATE TABLE IF NOT EXISTS alerts (
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL
 );
+
+-- What the owner told Revin was wrong on a call (story O-8), the one thing the owner view writes.
+-- Filed as a GitHub issue when REPORTS_GITHUB_TOKEN and REPORTS_GITHUB_REPO are set; held
+-- otherwise, the way alert email is held without a mail server.
+CREATE TABLE IF NOT EXISTS owner_reports (
+    id INTEGER PRIMARY KEY,
+    call_id TEXT NOT NULL REFERENCES calls (id) ON DELETE CASCADE,
+    turn_seq INTEGER,
+    text TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'held' CHECK (status IN ('held', 'filed', 'failed')),
+    issue_number INTEGER,
+    attempts INTEGER NOT NULL DEFAULT 0,
+    error TEXT,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS ix_owner_reports_call ON owner_reports (call_id);

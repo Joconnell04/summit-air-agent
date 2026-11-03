@@ -28,12 +28,19 @@ def refused(code: str, extra: str = "") -> str:
     )
 
 
-def item(name, method, path, *, body=None, check="", headers=None, pre="", envelope=True):
+def item(
+    name, method, path, *, body=None, form=None, check="", headers=None, pre="", envelope=True
+):
     header = [{"key": "Content-Type", "value": "application/json"}] if body is not None else []
     header += [{"key": k, "value": v} for k, v in (headers or {}).items()]
     request = {"method": method, "header": header, "url": "{{base_url}}/" + path}
     if body is not None:
         request["body"] = {"mode": "raw", "raw": json.dumps(body, indent=2)}
+    if form is not None:
+        request["body"] = {
+            "mode": "urlencoded",
+            "urlencoded": [{"key": k, "value": v} for k, v in form.items()],
+        }
     script = check + (ENVELOPE if envelope else "")
     events = [{"listen": "test", "script": {"type": "text/javascript", "exec": script.split("\n")}}]
     if pre:
@@ -495,14 +502,43 @@ def build() -> dict:
             "owner?token={{owner_token}}",
             envelope=False,
             check="pm.test('opens the page', () => pm.response.to.have.status(200));\n"
-            + "pm.test('shows the bookings', () => pm.expect(pm.response.text()).to.include('Bookings'));",
+            + "pm.test('shows the day board', () => pm.expect(pm.response.text()).to.include('Day board'));",
         ),
         item(
-            "A call's timeline",
+            "The day's calls",
+            "GET",
+            "owner/calls",
+            envelope=False,
+            check="pm.test('opens the list', () => pm.response.to.have.status(200));\n" + html,
+        ),
+        item(
+            "A call's page",
             "GET",
             "owner/calls/{{call_id}}",
             envelope=False,
-            check="pm.test('opens the timeline', () => pm.response.to.have.status(200));\n" + html,
+            check="pm.test('opens the call', () => pm.response.to.have.status(200));\n" + html,
+        ),
+        item(
+            "Tell Revin something was wrong on a call",
+            "POST",
+            "owner/calls/{{call_id}}/report",
+            envelope=False,
+            form={"text": "It should have asked who is at home.", "turn": ""},
+            check="pm.test('stores it and goes back to the call', () => pm.expect(pm.response.code).to.be.oneOf([200, 303]));",
+        ),
+        item(
+            "Results for seven days",
+            "GET",
+            "owner/results?days=7",
+            envelope=False,
+            check="pm.test('opens results', () => pm.response.to.have.status(200));\n" + html,
+        ),
+        item(
+            "The design system specimen",
+            "GET",
+            "owner/design",
+            envelope=False,
+            check="pm.test('opens the specimen', () => pm.response.to.have.status(200));\n" + html,
         ),
     ]
     scenarios = booking_flow[0]
