@@ -190,6 +190,7 @@ a.figure:hover .label { color: var(--ink); text-decoration: underline; text-unde
 .table .why.small { font-size: var(--text-sm); }
 .table tr.urgent-open td { background: var(--urgent-wash); }
 .table tr.urgent-open:hover td { background: #FBE2DE; }
+.table tr.urgent-open .tag.urgent, .list li.late .tag.urgent { background: var(--surface); box-shadow: inset 0 0 0 1px var(--urgent-line); }
 .table tr.closed td { color: var(--faint); }
 .table tr.closed .what { font-weight: var(--medium); }
 .table tr.group td { background: var(--sunken); padding-top: var(--s-2); padding-bottom: var(--s-2); font-size: var(--text-sm); color: var(--muted); }
@@ -220,7 +221,7 @@ a.figure:hover .label { color: var(--ink); text-decoration: underline; text-unde
 .hour-label.first { transform: none; }
 .hour-label.last { transform: translateX(-100%); }
 
-.now { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: var(--ember); z-index: 2; pointer-events: none; }
+.now { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: var(--ember); z-index: 0; pointer-events: none; }
 .now-label {
   position: absolute; top: 5px; transform: translateX(-50%); z-index: 3;
   padding: 1px 6px; border-radius: var(--r-sm); background: var(--ember-action); color: #FFFFFF;
