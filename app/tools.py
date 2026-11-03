@@ -245,6 +245,13 @@ def _alternatives(ctx: Ctx, job_type: dict, level: str, n: int = 2) -> list[dict
     return [_describe(ctx, w) for w in windows[:n]]
 
 
+def _job_alternatives(ctx: Ctx, job: dict) -> list[dict]:
+    """Other windows for an existing job. A job whose type the company no longer books (inactive
+    in the tenant config) gets none, rather than failing the tool."""
+    job_type = ctx.tenant.job_types.get(ctx.tenant.job_type_codes.get(job["jobTypeId"]))
+    return _alternatives(ctx, job_type, job["priority"]) if job_type else []
+
+
 def _slot_bounds(ctx: Ctx, slot: Slot, level: str) -> tuple[datetime, datetime]:
     window = ctx.tenant.window(slot.window)
     today = ctx.tenant.local(ctx.now).date()
@@ -707,14 +714,13 @@ def reschedule_appointment(ctx: Ctx, args: RescheduleIn) -> Result:
             "That visit is already underway, so let me get someone to help with it.",
         )
     window_start, window_end = _slot_bounds(ctx, args.slot, job["priority"])
-    job_type = ctx.tenant.job_types[ctx.tenant.job_type_codes[job["jobTypeId"]]]
     # Checked before the move is recorded, so a window that went by doesn't use up the one move.
     if _window_over(ctx, args.slot.window, window_start, window_end):
         ctx.cache.invalidate()
         raise Refused(
             "slot_taken",
             ctx.tenant.line("slot_taken"),
-            alternatives=_alternatives(ctx, job_type, job["priority"]),
+            alternatives=_job_alternatives(ctx, job),
         )
     key = _attempt_key(ctx, "reschedule", args.model_dump(mode="json"))
     row_id = _record_action(ctx, "reschedule", key, job, args.model_dump(mode="json"), args.reason)
@@ -737,7 +743,7 @@ def reschedule_appointment(ctx: Ctx, args: RescheduleIn) -> Result:
             raise Refused(
                 "slot_taken",
                 ctx.tenant.line("slot_taken"),
-                alternatives=_alternatives(ctx, job_type, job["priority"]),
+                alternatives=_job_alternatives(ctx, job),
             ) from None
         _action_failed(ctx, row_id, exc, "reschedule")
     except FsmUnavailable as exc:
