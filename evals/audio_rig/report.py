@@ -80,8 +80,17 @@ class Stack:
         return [s for r in self.runs for s in r.scenarios]
 
     def delays(self, kind: str) -> list[float]:
+        """Reply delays of one kind. A reply that started before the caller finished (recorded as
+        zero) talked over the caller; it is counted by `talk_overs`, not as a fast reply."""
         return [t.reply_delay_ms for s in self.scenarios if s.outcome != "error"
-                for t in s.turn_timings if t.kind == kind]
+                for t in s.turn_timings if t.kind == kind and t.reply_delay_ms > 0]
+
+    def talk_overs(self) -> int:
+        return sum(1 for s in self.scenarios if s.outcome != "error"
+                   for t in s.turn_timings if t.reply_delay_ms == 0)
+
+    def silent(self) -> int:
+        return sum(s.silent_turns for s in self.scenarios)
 
     def platform_delays(self) -> list[float]:
         return [t.platform_reply_ms for s in self.scenarios for t in s.turn_timings
@@ -125,9 +134,9 @@ def ms(values: list[float], share: float) -> str:
 def table(stacks: list[Stack]) -> list[str]:
     signed_off = lines_by_kind()
     header = ("| Stack | Calls | Plain median | Plain slowest 10% | Lookup median "
-              "| Lookup slowest 10% | Must-pass checks held | Grader passed "
+              "| Lookup slowest 10% | Talked over / silent | Must-pass checks held | Grader passed "
               "| Safety lines word for word | Stack cost per call | All-in per call |")
-    rows = [header, "|---|---|---|---|---|---|---|---|---|---|---|"]
+    rows = [header, "|---|---|---|---|---|---|---|---|---|---|---|---|"]
     for st in stacks:
         plain, lookup = st.delays("plain"), st.delays("lookup")
         safety = st.safety(signed_off)
@@ -140,7 +149,7 @@ def table(stacks: list[Stack]) -> list[str]:
         rows.append(
             f"| {st.name} | {len(st.scenarios)} | {ms(plain, .5)} ({len(plain)}) | {ms(plain, .9)} "
             f"| {ms(lookup, .5)} ({len(lookup)}) | {ms(lookup, .9)} "
-            f"| {held} of {len(must)} | {liked} of {len(graded)} | {exact} of {len(safety)} "
+            f"| {st.talk_overs()} / {st.silent()} | {held} of {len(must)} | {liked} of {len(graded)} | {exact} of {len(safety)} "
             f"| ${stack_cost:.3f} | ${all_in:.3f} |"
         )
     return rows

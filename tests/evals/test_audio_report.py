@@ -80,7 +80,14 @@ def test_the_table_has_a_row_per_stack_with_its_medians():
     rows = table([stack("livekit-rig", [1000, 2000, 3000])])
     assert len(rows) == 3
     assert "| livekit-rig | 4 | 2.00 s (12) | 3.00 s |" in rows[2]
+    assert "| 0 / 0 |" in rows[2]
     assert "3 of 3" in rows[2]  # safety lines word for word
+
+
+def test_a_reply_over_the_caller_is_a_talk_over_not_a_fast_reply():
+    st = stack("x", [0, 1200, 1400])
+    assert st.delays("plain") == [1200, 1400] * 4
+    assert st.talk_overs() == 4
 
 
 @pytest.mark.parametrize("missing", ["nobody"])
