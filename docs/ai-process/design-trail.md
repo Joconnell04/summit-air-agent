@@ -72,3 +72,5 @@ How the design was reached, in order, so a reader can follow each choice back to
 | Safety posture | Escalate politely and get off the line; no on-the-fly coaching or new safety logic | DECISIONS.md 033 |
 | V1 scope for phase 3 | Technician summary, model matrix, side model, warm transfer, recordings, eval floor and delay targets in; Spanish, playbooks, capacity, texting and extra owner editing after V1 | DECISIONS.md 034 |
 | Co-authoring rounds | Three rounds: failures, then seeds with a hold-out, then judge labels with the floor | DECISIONS.md 035 |
+| Model matrix | Haiku stays live: higher pass rate, a third of Sonnet's delay, a fraction of the cost | DECISIONS.md 036, #68 |
+| Side model | OpenAI Decisions reads "someone at risk at home" on each line; it can only raise priority | DECISIONS.md 037, #68 |
