@@ -447,8 +447,6 @@ def page(conn: sqlite3.Connection, tenant: Tenant, day: date, now: datetime) -> 
     }
 
 
-# ---- the dispatch board (O-1, O-2, O-4) --------------------------------------------------------
-
 # The board's default span in local hours. It widens to the hour for any call outside it.
 BOARD_HOURS = (7, 21)
 FLAG_LABELS = {
@@ -504,15 +502,37 @@ def flag_label(tenant: Tenant, flag: dict, safety_kind: str | None) -> str:
 
 
 def scheduled(conn: sqlite3.Connection, tenant: Tenant, day: date) -> list[dict]:
-    """Booked jobs whose arrival window starts on the day, whenever they were booked."""
+    """Booked jobs whose arrival window starts on the day, whenever they were booked. A job later
+    cancelled is left out, and a rescheduled one counts in its newest window: a cancel or a
+    reschedule is its own bookings row with the same FSM job id, and the book row keeps its
+    first window."""
     start, end = day_bounds(tenant, day)
     rows = conn.execute(
-        "SELECT b.window_start, b.priority FROM bookings b JOIN calls c ON c.id = b.call_id "
-        "WHERE c.tenant = ? AND b.kind = 'book' AND b.status IN ('booked', 'queued', 'sending') "
-        "AND b.window_start >= ? AND b.window_start < ?",
-        (tenant.slug, start, end),
+        "SELECT b.fsm_job_id, b.window_start, b.priority FROM bookings b JOIN calls c "
+        "ON c.id = b.call_id WHERE c.tenant = ? AND b.kind = 'book' "
+        "AND b.status IN ('booked', 'queued', 'sending')",
+        (tenant.slug,),
     ).fetchall()
-    return [{"at": parse_iso(r["window_start"]), "priority": r["priority"]} for r in rows]
+    changes = conn.execute(
+        "SELECT b.fsm_job_id, b.kind, b.window_start FROM bookings b JOIN calls c "
+        "ON c.id = b.call_id WHERE c.tenant = ? AND b.kind IN ('reschedule', 'cancel') "
+        "AND b.status = 'done' AND b.fsm_job_id IS NOT NULL ORDER BY b.id",
+        (tenant.slug,),
+    ).fetchall()
+    latest = {}
+    for change in changes:
+        latest[change["fsm_job_id"]] = change
+    found = []
+    for row in rows:
+        window_start = row["window_start"]
+        change = latest.get(row["fsm_job_id"]) if row["fsm_job_id"] else None
+        if change is not None and change["kind"] == "cancel":
+            continue
+        if change is not None and change["window_start"]:
+            window_start = change["window_start"]
+        if window_start and start <= window_start < end:
+            found.append({"at": parse_iso(window_start), "priority": row["priority"]})
+    return found
 
 
 def board(
@@ -602,9 +622,6 @@ def board(
     }
 
 
-# ---- the status line and the summary sentence (O-1, O-5) ---------------------------------------
-
-
 def status(conn: sqlite3.Connection, tenant: Tenant, now: datetime, stale_seconds: int) -> dict:
     """Whether the agent is answering, read from the voice workers' heartbeats, and when the last
     call came in. With no heartbeat ever (a development server, the demo) it says only the last
@@ -645,8 +662,6 @@ def turned_away(day_calls: list[dict]) -> list[dict]:
     """Calls the agent turned away on the day: commercial callers and ZIPs outside the area."""
     return [c for c in day_calls if c["outcome"].startswith("declined")]
 
-
-# ---- Results: a period against the one before it (O-9, O-10) ----------------------------------
 
 PERIODS = (1, 7, 30)
 
@@ -747,9 +762,6 @@ def results(conn: sqlite3.Connection, tenant: Tenant, end_day: date, days: int, 
     }
 
 
-# ---- a call's page (O-6, O-7, O-8) -------------------------------------------------------------
-
-
 def call_summary(tenant: Tenant, trace: dict, kind: str, now: datetime) -> str:
     """What happened on the call in a sentence or two, from what the server recorded."""
     call = trace["call"]
@@ -764,14 +776,20 @@ def call_summary(tenant: Tenant, trace: dict, kind: str, now: datetime) -> str:
     parts = []
     if call["safety_kind"]:
         what = safety_label(tenant, call["safety_kind"])
-        parts.append(f"Safety call: {what.lower()}. The agent said the safety lines first.")
+        if call["safety_lines_at"]:
+            parts.append(f"Safety call: {what.lower()}. The agent said the safety lines first.")
+        else:
+            parts.append(
+                f"Safety call: {what.lower()}. The safety lines were not said before the call "
+                "ended."
+            )
         if job and job["safety_override"]:
             parts.append(
                 f"The caller asked to book anyway, so it booked a safety check{window} "
                 "and logged a safety override."
             )
         elif not job:
-            parts.append("Nothing was booked; the call ended so they could get out.")
+            parts.append("Nothing was booked.")
     elif job:
         parts.append(f"Booked: {type_label(tenant, kind)}{window}, {job['priority']} priority.")
         if job["priority_reasons"]:

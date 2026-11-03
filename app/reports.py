@@ -2,6 +2,9 @@
 happened." The owner view stores them; the jobs loop files each one as a GitHub issue carrying the
 replay command for the call, so the fix arrives with an eval case (`make replay CALL=...`).
 
+An issue carries the reported line of the transcript, so the repository it goes to must stay
+private: the transcript purge in app/jobs.py doesn't reach it.
+
 With no REPORTS_GITHUB_TOKEN a report is held: it stays on the owner view with that status, the
 way an alert email is held without a mail server. A filing that fails is tried again on the next
 runs, up to REPORT_MAX_ATTEMPTS.
@@ -58,7 +61,8 @@ def issue_text(report: sqlite3.Row, tenant: Tenant, turn: str | None) -> tuple[s
         "> " + "\n> ".join(report["text"].splitlines()),
     ]
     if turn:
-        lines += ["", f"About this line of the call (turn {report['turn_seq']}):", "", f"> {turn}"]
+        lines += ["", f"About this line of the call (turn {report['turn_seq']}):", ""]
+        lines += ["> " + line for line in turn.splitlines()]
     lines += [
         "",
         "Reproduce and keep as an eval case:",
@@ -108,8 +112,9 @@ def file_held(conn: sqlite3.Connection, tenant: Tenant, post: Poster | None, now
         ).fetchone()
         title, body = issue_text(report, tenant, turn["text"] if turn else None)
         try:
-            number, status, error = post(title, body), "filed", None
-        except (httpx.HTTPError, KeyError, ValueError) as exc:
+            number, status, error = int(post(title, body)), "filed", None
+        except Exception as exc:  # noqa: BLE001
+            # A bad setting or reply fails this report only; the rest of the jobs run still runs.
             number, status, error = None, "failed", f"{type(exc).__name__}: {exc}"
         with tx(conn):
             conn.execute(

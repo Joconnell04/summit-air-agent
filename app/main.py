@@ -52,7 +52,12 @@ class Services:
     ):
         self.settings = settings
         if clock is None and settings.fixed_now:
+            # Only for development: a frozen clock would stop bookings, jobs and purges moving.
+            if settings.environment != "development":
+                raise ValueError("FIXED_NOW is for development only; unset it")
             fixed = datetime.fromisoformat(settings.fixed_now)
+            if fixed.tzinfo is None:
+                raise ValueError("FIXED_NOW needs a UTC offset, such as 2026-11-03T17:20:00-05:00")
             clock = lambda: fixed
         self.clock = clock or (lambda: datetime.now(UTC))
         db.init(settings.db_path)

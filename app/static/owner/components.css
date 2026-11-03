@@ -1,7 +1,7 @@
 /* Owner view components, built only from tokens.css. Each block is one component; its name,
    parts and states are in docs/design-system.md, and /owner/design shows every one. */
 
-/* ---- Base ---------------------------------------------------------------------------------- */
+/* Base */
 
 *, *::before, *::after { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
@@ -27,7 +27,7 @@ button { font: inherit; color: inherit; }
   position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
 }
 
-/* ---- App header: logo, company, tabs, status -------------------------------------------- */
+/* App header: logo, company, tabs, status */
 
 .app-header { background: var(--surface); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 20; }
 .app-header .inner {
@@ -56,7 +56,7 @@ button { font: inherit; color: inherit; }
 .status.down { color: var(--urgent-ink); font-weight: var(--semibold); }
 .status.down .dot { background: var(--urgent); box-shadow: 0 0 0 3px var(--urgent-wash); }
 
-/* ---- Page layout ---------------------------------------------------------------------------- */
+/* Page layout */
 
 .page { max-width: var(--page-w); margin: 0 auto; padding: var(--s-6) var(--gutter) var(--s-12); display: flex; flex-direction: column; gap: var(--s-6); }
 .split { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: var(--s-6); align-items: start; }
@@ -78,7 +78,7 @@ button { font: inherit; color: inherit; }
 .day-nav { display: inline-flex; align-items: center; gap: var(--s-2); }
 .day-nav .day { min-width: 112px; text-align: center; font-weight: var(--medium); }
 
-/* ---- Figures: a few numbers on one ruled line, in place of metric cards ---------------- */
+/* Figures: a few numbers on one ruled line, in place of metric cards */
 
 .figures { display: flex; flex-wrap: wrap; align-items: stretch; }
 .figure { display: flex; flex-direction: column; gap: 2px; padding: 0 var(--s-5); border-left: 1px solid var(--line); }
@@ -90,7 +90,7 @@ a.figure { color: inherit; }
 a.figure:hover { text-decoration: none; }
 a.figure:hover .label { color: var(--ink); text-decoration: underline; text-underline-offset: 2px; }
 
-/* ---- Panel: a white surface with a head ------------------------------------------------- */
+/* Panel: a white surface with a head */
 
 .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); min-width: 0; }
 .panel-head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2) var(--s-3); min-height: 52px; padding: var(--s-2) var(--s-4); border-bottom: 1px solid var(--line); }
@@ -102,7 +102,7 @@ a.figure:hover .label { color: var(--ink); text-decoration: underline; text-unde
 .source { display: inline-flex; align-items: center; gap: 6px; font-size: var(--text-sm); color: var(--muted); }
 .source img { height: 11px; width: auto; opacity: 0.75; }
 
-/* ---- Buttons ---------------------------------------------------------------------------- */
+/* Buttons */
 
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: var(--s-2);
@@ -120,7 +120,7 @@ a.figure:hover .label { color: var(--ink); text-decoration: underline; text-unde
 .btn[disabled], .btn[aria-disabled="true"] { color: var(--disabled); cursor: default; background: var(--surface); }
 .btn svg { width: 16px; height: 16px; flex: none; }
 
-/* ---- Filters: segmented choice and on/off toggles, one height ---------------------------- */
+/* Filters: segmented choice and on/off toggles, one height */
 
 .filters { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2); }
 .filters .rule { width: 1px; height: 20px; background: var(--line); margin: 0 var(--s-1); }
@@ -169,7 +169,7 @@ a.figure:hover .label { color: var(--ink); text-decoration: underline; text-unde
 .tags { display: inline-flex; flex-wrap: wrap; gap: var(--s-1); }
 .table .fit .tags { flex-wrap: nowrap; }
 
-/* ---- Tables: dense, scannable rows ------------------------------------------------------ */
+/* Tables: dense, scannable rows */
 
 .table-wrap { overflow-x: auto; }
 .table { width: 100%; border-collapse: collapse; font-size: var(--text-md); }
@@ -196,7 +196,7 @@ a.figure:hover .label { color: var(--ink); text-decoration: underline; text-unde
 .table tr.group td { background: var(--sunken); padding-top: var(--s-2); padding-bottom: var(--s-2); font-size: var(--text-sm); color: var(--muted); }
 .table tr.group:hover td { background: var(--sunken); }
 
-/* ---- Dispatch board: the day across, a lane per kind of thing ------------------------- */
+/* Dispatch board: the day across, a lane per kind of thing */
 
 .board { overflow-x: auto; }
 .board-grid { min-width: 920px; position: relative; }
@@ -264,7 +264,7 @@ a.figure:hover .label { color: var(--ink); text-decoration: underline; text-unde
 .window.past { background: var(--sunken); box-shadow: inset 0 0 0 1px var(--line); color: var(--muted); }
 .window.empty { background: transparent; box-shadow: none; border: 1px dashed var(--line-strong); color: var(--faint); }
 
-/* ---- Tray: tabs inside a panel ---------------------------------------------------------- */
+/* Tray: tabs inside a panel */
 
 .tray-tabs { display: flex; gap: var(--s-1); padding: 0 var(--s-3); border-bottom: 1px solid var(--line); }
 .tray-tabs button {
@@ -282,17 +282,17 @@ a.figure:hover .label { color: var(--ink); text-decoration: underline; text-unde
 .list .end { grid-row: 1 / span 2; grid-column: 2; display: flex; flex-direction: column; align-items: flex-end; gap: var(--s-1); }
 .list li.late { background: var(--urgent-wash); }
 
-/* ---- Empty state ------------------------------------------------------------------------ */
+/* Empty state */
 
 .empty { padding: var(--s-6) var(--s-4); color: var(--faint); text-align: center; font-size: var(--text-sm); }
 
-/* ---- Key-value list --------------------------------------------------------------------- */
+/* Key-value list */
 
 .kv { display: grid; grid-template-columns: 128px minmax(0, 1fr); gap: var(--s-2) var(--s-3); font-size: var(--text-md); }
 .kv dt { color: var(--muted); }
 .kv dd { margin: 0; min-width: 0; }
 
-/* ---- Call page: header, summary, conversation, report ---------------------------------- */
+/* Call page: header, summary, conversation, report */
 
 .call-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--s-3) var(--s-6); align-items: end; }
 .call-head .who { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2) var(--s-3); }
@@ -348,7 +348,7 @@ a.figure:hover .label { color: var(--ink); text-decoration: underline; text-unde
 .sent { display: flex; flex-direction: column; gap: var(--s-2); }
 .sent li { font-size: var(--text-sm); }
 
-/* ---- Charts ----------------------------------------------------------------------------- */
+/* Charts */
 
 .bars { display: grid; grid-template-columns: repeat(var(--cols, 15), minmax(0, 1fr)); gap: var(--s-2); align-items: end; height: 200px; padding: 0 var(--s-4); }
 .bar { display: flex; flex-direction: column; justify-content: flex-end; height: 100%; gap: 4px; min-width: 0; }
@@ -375,7 +375,7 @@ a.figure:hover .label { color: var(--ink); text-decoration: underline; text-unde
 .ledger .delta.down { color: var(--urgent-ink); }
 .ledger .delta.flat { color: var(--faint); }
 
-/* ---- Login ------------------------------------------------------------------------------ */
+/* Login */
 
 .login { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: var(--s-6); }
 .login .panel { width: 360px; padding: var(--s-6); display: flex; flex-direction: column; gap: var(--s-4); }
@@ -384,7 +384,7 @@ a.figure:hover .label { color: var(--ink); text-decoration: underline; text-unde
 .login .btn { height: 40px; }
 .error { color: var(--urgent-ink); font-size: var(--text-sm); }
 
-/* ---- Specimen page only ----------------------------------------------------------------- */
+/* Specimen page only */
 
 .spec-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: var(--s-3); }
 .swatch-card { border: 1px solid var(--line); border-radius: var(--r-md); overflow: hidden; background: var(--surface); }

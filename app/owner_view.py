@@ -171,13 +171,16 @@ def add_routes(app: FastAPI) -> None:
         services = request.app.state.services
         conn = services.connect()
         try:
-            if trace.timeline(conn, call_id) is None:
+            found = trace.timeline(conn, call_id)
+            if found is None:
                 return HTMLResponse("No such call.", 404)
             text = text.strip()[:REPORT_MAX_CHARS]
             if not text:
                 return RedirectResponse(f"/owner/calls/{call_id}#report", 303)
-            seq = int(turn) if turn.isdigit() else None
-            reports.add(conn, call_id, seq, text, services.clock())
+            # Keep the line only if the call has it, so a stray value can't fail the write.
+            seqs = {e["seq"] for e in found["events"] if e["type"] == "turn"}
+            seq = int(turn) if turn.isascii() and turn.isdigit() and len(turn) < 6 else None
+            reports.add(conn, call_id, seq if seq in seqs else None, text, services.clock())
         finally:
             conn.close()
         return RedirectResponse(f"/owner/calls/{call_id}?sent=1#report", 303)

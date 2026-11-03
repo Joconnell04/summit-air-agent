@@ -15,7 +15,7 @@
   function each(root, selector, fn) { Array.prototype.forEach.call(root.querySelectorAll(selector), fn); }
   function press(button, on) { button.setAttribute("aria-pressed", on ? "true" : "false"); }
 
-  // ---- Day board -------------------------------------------------------------------------------
+  // Day board
 
   var ROW = 30;     // px between stacked rows of marks in a lane
   var GAP = 6;      // px kept clear between marks in one row
@@ -127,7 +127,7 @@
     window.addEventListener("resize", function () { packBoard(board); });
   }
 
-  // ---- Tabs inside a panel ---------------------------------------------------------------------
+  // Tabs inside a panel
 
   function setupTray(tray) {
     var tabs = tray.querySelectorAll('[role="tab"]');
@@ -142,7 +142,7 @@
     });
   }
 
-  // ---- Call page -------------------------------------------------------------------------------
+  // Call page
 
   function setupCall(conv) {
     var buttons = document.querySelectorAll("[data-view]");
@@ -167,7 +167,7 @@
     });
   }
 
-  // ---- Calls list filter -----------------------------------------------------------------------
+  // Calls list filter
 
   function setupCallList(table) {
     var buttons = document.querySelectorAll("[data-show]");
@@ -187,7 +187,7 @@
     });
   }
 
-  // ---- Results: calls by hour, filtered by call type -------------------------------------------
+  // Results: calls by hour, filtered by call type
 
   function setupHours(chart) {
     var data = JSON.parse(document.getElementById("hours-data").textContent);

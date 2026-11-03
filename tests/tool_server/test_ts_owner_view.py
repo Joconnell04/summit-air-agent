@@ -7,7 +7,7 @@ import httpx
 import pytest
 from test_ts_owner import TOKEN, booked_tune_up, caller, commercial, out_of_area, page
 from test_ts_safety import GAS_LINES
-from toolkit import Agent, book, count, first_open, make_server, ready_to_book
+from toolkit import ROOT, Agent, book, count, first_open, make_server, ready_to_book
 
 from app import jobs, owner, plain, reports, trace
 
@@ -38,9 +38,6 @@ def gas_call_that_booked(agent: Agent, n: int) -> str:
 
 def tenant(agent: Agent):
     return agent.app.state.services.tenants.default
-
-
-# ---- the board ---------------------------------------------------------------------------------
 
 
 def test_a_minute_of_the_day_is_placed_on_the_board_and_kept_on_it():
@@ -109,7 +106,35 @@ def test_arrival_windows_count_the_jobs_landing_in_them(agent, clock):
     assert {w["name"]: w["past"] for w in page(agent)["board"]["windows"]}["8 to 12"] is True
 
 
-# ---- the header and the first sentence --------------------------------------------------------
+def change(agent: Agent, booked_call: str, kind: str, window_start: str | None = None) -> None:
+    """Record a cancel or reschedule of the call's job the way the tools do: its own done row."""
+    conn = agent.db()
+    job = conn.execute(
+        "SELECT fsm_job_id FROM bookings WHERE call_id = ? AND kind = 'book'", (booked_call,)
+    ).fetchone()["fsm_job_id"]
+    conn.execute(
+        "INSERT INTO bookings (call_id, kind, status, fsm_key, request_json, fsm_job_id, "
+        "window_start, created_at, updated_at) VALUES (?, ?, 'done', ?, '{}', ?, ?, '', '')",
+        (booked_call, kind, f"{kind}-{booked_call}", job, window_start),
+    )
+    conn.close()
+
+
+def test_a_cancelled_job_leaves_its_window_and_a_moved_one_follows_its_new_window(agent):
+    kept = ready_to_book(agent, caller(1))
+    assert book(agent, kept, {"date": "2026-11-02", "window": "afternoon"}, job_type="no_heat")[
+        "ok"
+    ]
+    gone = ready_to_book(agent, caller(2))
+    assert book(agent, gone, {"date": "2026-11-02", "window": "afternoon"})["ok"]
+    moved = ready_to_book(agent, caller(3))
+    assert book(agent, moved, {"date": "2026-11-03", "window": "morning"})["ok"]
+    change(agent, gone, "cancel")
+    change(agent, moved, "reschedule", "2026-11-02T21:00:00Z")  # 4 p.m. New York, today
+    by_name = {w["name"]: w["jobs"] for w in page(agent)["board"]["windows"]}
+    assert by_name["12 to 4"] == 1, "the cancelled job is gone"
+    assert by_name["4 to 8"] == 1, "the moved job counts in its new window"
+    assert page(agent)["board"]["scheduled"] == 2
 
 
 def test_the_status_line_reads_the_voice_workers_heartbeats(agent, clock):
@@ -142,9 +167,6 @@ def test_the_summary_sentence_counts_what_matters_and_flags_what_is_late(agent):
 
 def test_an_empty_day_says_so(agent):
     assert page(agent)["summary"] == [("No calls yet.", "")]
-
-
-# ---- a call in plain words (O-7) --------------------------------------------------------------
 
 
 def event(tool, ok=True, refused=None, gate=None, **args):
@@ -203,9 +225,6 @@ def test_the_call_page_places_the_call_in_its_day_and_sums_it_up(agent, clock):
     assert "logged a safety override" in p["summary"]
     assert p["name"] == "Pat Caller" and p["address"]["zip"] == "11231"
     assert p["job_type"] == "Safety check" and p["safety_label"] == "Gas smell"
-
-
-# ---- telling Revin (O-8) ----------------------------------------------------------------------
 
 
 def test_a_report_is_stored_against_the_call_and_shown_on_it(agent):
@@ -299,9 +318,6 @@ def test_the_github_poster_opens_an_issue_with_the_label(tmp_path):
     assert seen["auth"] == "Bearer t0k" and "owner-report" in seen["json"]
 
 
-# ---- Results (O-9, O-10) ----------------------------------------------------------------------
-
-
 def results(agent: Agent, days: int, day: date = TODAY) -> dict:
     s = agent.app.state.services
     conn = s.connect()
@@ -350,9 +366,6 @@ def test_results_list_every_inbound_call_by_hour_and_what_was_turned_away(agent,
     assert r["types"][0]["code"] == "safety", "safety sorts first in the filter"
 
 
-# ---- the pages ---------------------------------------------------------------------------------
-
-
 def test_every_page_renders_behind_the_token(agent):
     call = booked_tune_up(agent, 1)
     for path in ("/owner/calls", f"/owner/calls/{call}", "/owner/results", "/owner/design"):
@@ -371,3 +384,53 @@ def test_the_design_system_files_are_served(agent):
     for path in ("tokens.css", "components.css", "owner.js", "fonts/PublicSans-latin.woff2"):
         assert agent.client.get(f"/owner/static/{path}").status_code == 200, path
     assert "--ember: #FA3500" in agent.client.get("/owner/static/tokens.css").text
+
+
+def test_a_poster_that_breaks_in_any_way_fails_that_report_only(agent, clock):
+    call = booked_tune_up(agent, 1)
+
+    def odd_reply(title, body):
+        return [{"number": 1}]  # a list where an issue number was expected
+
+    conn = agent.db()
+    reports.add(conn, call, None, "Wrong window.", clock())
+    assert reports.file_held(conn, tenant(agent), odd_reply, clock())["failed"] == 1
+    row = reports.for_call(conn, call)[0]
+    conn.close()
+    assert row["status"] == "failed" and "TypeError" in row["error"]
+
+
+def test_a_safety_call_that_ended_before_the_lines_does_not_claim_they_were_said(agent, clock):
+    call = ready_to_book(agent, caller(1))
+    agent.turn(call, "Wait, I smell gas.")
+    agent.end(call, "caller_hangup")
+    conn = agent.db()
+    p = owner.call_page(conn, tenant(agent), trace.timeline(conn, call), clock())
+    conn.close()
+    assert "The safety lines were not said before the call ended." in p["summary"]
+    assert "said the safety lines first" not in p["summary"]
+
+
+def test_a_report_keeps_only_a_line_the_call_has_and_caps_its_length(agent):
+    call = booked_tune_up(agent, 1)
+    signed_in(agent)
+    for turn in ("²", "9" * 30, "99", "1"):
+        agent.client.post(f"/owner/calls/{call}/report", data={"text": "x" * 3000, "turn": turn})
+    conn = agent.db()
+    stored = reports.for_call(conn, call)
+    conn.close()
+    assert [r["turn_seq"] for r in stored] == [None, None, None, 1]
+    assert {len(r["text"]) for r in stored} == {2000}
+
+
+def test_a_fixed_clock_is_refused_outside_development_and_needs_an_offset(tmp_path):
+    from app.main import Services
+    from app.settings import Settings
+
+    base = {"db_path": tmp_path / "x.db", "tenants_dir": ROOT / "tenants"}
+    with pytest.raises(ValueError, match="development only"):
+        Services(Settings(**base, environment="production", fixed_now="2026-11-03T17:20:00-05:00"))
+    with pytest.raises(ValueError, match="UTC offset"):
+        Services(Settings(**base, fixed_now="2026-11-03T17:20:00"))
+    fixed = Services(Settings(**base, fixed_now="2026-11-03T17:20:00-05:00"))
+    assert fixed.clock().isoformat() == "2026-11-03T17:20:00-05:00"
