@@ -214,6 +214,7 @@ def flags(conn: sqlite3.Connection, tenant: Tenant, day: date) -> list[dict]:
             "id": r["id"],
             "call_id": r["call_id"],
             "at": parse_iso(r["created_at"]),
+            "code": r["kind"],
             "kind": r["kind"].replace("_", " ").capitalize(),
             "reason": r["reason"],
             "priority": r["priority"],
@@ -228,13 +229,16 @@ def flags(conn: sqlite3.Connection, tenant: Tenant, day: date) -> list[dict]:
 
 
 def needs_person(day_flags: list[dict]) -> int:
-    """Calls needing a person: distinct calls from the day with a flag still open."""
-    return len({f["call_id"] for f in day_flags if f["open"]})
+    """Calls needing a person: distinct calls from the day with a flag still open, leaving out a
+    callback the system is placing itself (it becomes a person's flag if the dial fails)."""
+    return len({f["call_id"] for f in day_flags if f["open"] and f["code"] != "callback_requested"})
 
 
 def callbacks(conn: sqlite3.Connection, tenant: Tenant, day: date) -> dict:
     """Callbacks promised on the day against done (C-45). A cancelled one (the caller asked not to
-    be called) is left out of the rate; an overdue one counts as not done."""
+    be called) is left out of the rate; an overdue one counts as not done, and so does one whose
+    time hasn't come yet, so early in the day the rate reads low and the overdue count is the
+    number to watch."""
     start, end = day_bounds(tenant, day)
     rows = conn.execute(
         "SELECT cb.*, o.id AS dial_id, o.status AS dial_status, o.result AS dial_result "

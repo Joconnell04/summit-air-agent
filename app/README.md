@@ -92,6 +92,8 @@ Nothing about Summit Air is in `app/`; a test checks for the company name, its Z
 - `check_service_area` records whatever ZIP the agent passes as out of area, so a ZIP the caller only asked about counts in the owner view's demand by ZIP.
 - `end_call(reason="caller_goodbye")` on a safety call hangs up on the agent's word; it is only reachable after the lines were said and a person flagged.
 - The owner view is read-only, so a callback a person returns is never marked done there; only the system's own callbacks become done (decision #26, `docs/decisions/26-callback-done.md`). Flags have no close action either, except those the jobs settle themselves.
+- The job that offers earlier openings checks for an existing offer outside its write, which is safe with one server process (the timer runs one job at a time) but not with two.
+- The booked-and-kept check reads at most 50 bookings per run, oldest window first; bookings the FSM keeps refusing to read, or moved later, are read again each run and could crowd out newer ones in a large backlog.
 - One `OWNER_TOKEN` opens every tenant's owner view (`?tenant=<slug>`); a second real tenant needs its own token.
 - Flags with no call (a lead the FSM refused) belong to no tenant and don't show on the owner view.
 - `/calls/end` marks the technician summary as pending (spec S-16); the summary job itself is not built yet.

@@ -375,3 +375,77 @@ def test_retention_removes_outbound_kept_and_alert_rows_with_their_call(tmp_path
 def test_the_new_jobs_run_on_the_server_timer(agent):
     report = jobs.run_once(services(agent))["summit-air"]
     assert {"earlier_slots_offered", "callbacks", "kept", "alerts"} <= set(report)
+
+
+# ---- reviewer findings ------------------------------------------------------------------------
+
+
+def test_a_queued_callback_nobody_claims_goes_to_a_person(agent, clock):
+    system_callback(agent)
+    clock.advance(minutes=31)
+    jobs.run_once(services(agent))
+    clock.advance(minutes=jobs.UNCLAIMED_MINUTES + 1)
+    assert jobs.run_once(services(agent))["summit-air"]["callbacks"]["not_claimed"] == 1
+    assert count(agent, "SELECT status FROM callbacks") == "overdue"
+    assert count(agent, "SELECT COUNT(*) FROM flags WHERE kind = 'callback_needs_person'") == 1
+
+
+def test_the_system_never_takes_an_urgent_or_safety_callback_off_a_person(agent):
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.tool(
+        "flag_person",
+        call,
+        reason="No heat, baby at home",
+        priority="Urgent",
+        callback_in_minutes=20,
+        system_calls_back=True,
+    )
+    other = agent.start("(212) 555-0911")["data"]["call_id"]
+    agent.turn(other, "I smell gas in the kitchen.")
+    agent.tool(
+        "flag_person", other, reason="Call me back", callback_in_minutes=20, system_calls_back=True
+    )
+    assert count(agent, "SELECT COUNT(*) FROM outbound") == 0
+    assert count(agent, "SELECT COUNT(*) FROM flags WHERE kind = 'callback_requested'") == 0
+
+
+def test_a_flag_reason_with_a_newline_doesnt_stop_the_jobs(agent, clock):
+    clock.advance(hours=12)
+    urgent_flag(agent, reason="Elderly caller\nno heat")
+    report = jobs.run_once(services(agent))
+    assert report["summit-air"]["alerts"]["held"] == 1
+    assert "\n" not in count(agent, "SELECT subject FROM alerts")
+
+
+def test_a_header_error_from_the_mail_server_is_recorded_not_raised(agent, clock):
+    class Broken:
+        def send(self, to, subject, body):
+            raise ValueError("bad header")
+
+    services(agent).mailer = Broken()
+    clock.advance(hours=12)
+    urgent_flag(agent)
+    assert alert(agent) == {"sent": 0, "held": 0, "failed": 1}
+
+
+def test_an_offer_is_not_dialed_once_the_booking_was_cancelled(agent, clock):
+    call, job_id = urgent_booked_tomorrow(agent)
+    offer(agent)
+    agent.turn(call, "Actually, cancel it, it's working again.")
+    assert agent.tool("cancel_appointment", call, booking_id=job_id, reason="fixed itself")["ok"]
+    conn = agent.db()
+    conn.execute("UPDATE bookings SET status = 'done' WHERE kind = 'book'")
+    conn.close()
+    assert claim(agent) is None
+    assert count(agent, "SELECT result FROM outbound") == "stale"
+
+
+def test_a_caller_who_says_dont_call_on_the_callback_stays_cancelled(agent, clock):
+    system_callback(agent)
+    clock.advance(minutes=31)
+    jobs.run_once(services(agent))
+    claimed = claim(agent)
+    placed = place(agent, claimed)
+    agent.turn(placed, "Please don't call me again.")
+    done(agent, claimed["outbound_id"], answered=True)
+    assert count(agent, "SELECT status FROM callbacks") == "cancelled"

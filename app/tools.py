@@ -792,8 +792,16 @@ def _callback_due(ctx: Ctx, time_value: str | None, minutes: int | None) -> date
 def flag_person(ctx: Ctx, args: FlagIn) -> Result:
     """The sentence comes back only after the flag and the callback are stored (spec S-23)."""
     due = _callback_due(ctx, args.callback_time, args.callback_in_minutes)
-    # A callback the system places needs no person unless the dial fails (app/outbound.py).
-    kind = "callback_requested" if args.system_calls_back else "person"
+    # A callback the system places needs no person unless the dial fails (app/outbound.py). The
+    # server only allows it for a plain request: never an urgent or high flag, a safety call or a
+    # commercial one, which a person must handle whatever the agent asked for.
+    system = (
+        args.system_calls_back
+        and args.priority == "Normal"
+        and ctx.call["safety_state"] in ("none", "cleared")
+        and not ctx.call["commercial"]
+    )
+    kind = "callback_requested" if system else "person"
     with tx(ctx.conn):
         flag_id = records.add_flag(
             ctx.conn, ctx.call["id"], kind, args.reason, ctx.now, args.priority
@@ -801,7 +809,7 @@ def flag_person(ctx: Ctx, args: FlagIn) -> Result:
         callback_id = records.add_callback(
             ctx.conn, ctx.tenant, ctx.call, due, args.reason, ctx.now
         )
-        if callback_id and args.system_calls_back:
+        if callback_id and system:
             outbound.add_callback_dial(ctx.conn, ctx.tenant, ctx.call, callback_id, due, ctx.now)
     spoken = ctx.tenant.time_spoken(due, ctx.now)
     if callback_id is None:

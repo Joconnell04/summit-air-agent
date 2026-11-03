@@ -401,3 +401,22 @@ def test_the_timeline_links_back_to_the_local_day(agent, clock):
     agent.client.get(f"/owner?token={TOKEN}")
     html = agent.client.get(f"/owner/calls/{call}").text
     assert 'href="/owner?day=2026-11-02"' in html
+
+
+def test_a_callback_the_system_is_placing_doesnt_count_as_needing_a_person(agent):
+    call = agent.start(caller(1))["data"]["call_id"]
+    agent.tool(
+        "flag_person", call, reason="Call me back", callback_in_minutes=30, system_calls_back=True
+    )
+    assert page(agent)["needs_person"] == 0
+
+
+def test_an_odd_token_is_refused_not_an_error(agent):
+    assert agent.client.get("/owner?token=é", follow_redirects=False).status_code == 401
+    assert agent.client.post("/owner/login", data={"token": "é"}).status_code == 401
+
+
+def test_the_login_redirect_is_relative_and_keeps_the_day(agent):
+    opened = agent.client.get(f"/owner?token={TOKEN}&day=2026-11-01", follow_redirects=False)
+    assert opened.headers["location"] == "/owner?day=2026-11-01"
+    assert "max-age" in opened.headers["set-cookie"].lower()

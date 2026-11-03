@@ -14,7 +14,7 @@ import sqlite3
 from datetime import date, datetime
 
 from . import records
-from .db import iso, tx
+from .db import iso, parse_iso, tx
 from .tenant import Tenant
 
 
@@ -58,6 +58,8 @@ def add_offer(
 def allowed(
     conn: sqlite3.Connection, tenant: Tenant, row: sqlite3.Row, now: datetime
 ) -> tuple[bool, str]:
+    if row["kind"] == "earlier_slot" and not _offer_current(conn, row, now):
+        return False, "stale"
     if row["callback_id"]:
         callback = conn.execute(
             "SELECT * FROM callbacks WHERE id = ?", (row["callback_id"],)
@@ -66,13 +68,28 @@ def allowed(
     return records.dial_allowed(conn, tenant, row["call_id"], row["phone"], now)
 
 
+def _offer_current(conn: sqlite3.Connection, row: sqlite3.Row, now: datetime) -> bool:
+    """The booking is still booked and still waiting for an earlier slot, and the opening is both
+    ahead of now and earlier than the booking. A caller who moved or cancelled meanwhile gets no
+    call about it."""
+    booking = conn.execute("SELECT * FROM bookings WHERE id = ?", (row["booking_id"],)).fetchone()
+    offer = json.loads(row["offer_json"])
+    return bool(
+        booking
+        and booking["status"] == "booked"
+        and booking["seek_earlier"]
+        and parse_iso(offer["start"]) > now
+        and parse_iso(offer["start"]) < parse_iso(booking["window_start"])
+    )
+
+
 def skip(conn: sqlite3.Connection, row: sqlite3.Row, reason: str, now: datetime) -> None:
     """Not allowed to dial. A callback still owed to the caller goes to a person instead."""
     conn.execute(
         "UPDATE outbound SET status = 'skipped', result = ?, updated_at = ? WHERE id = ?",
         (reason, iso(now), row["id"]),
     )
-    if row["kind"] == "callback" and reason in ("outside_hours", "not_the_caller"):
+    if row["kind"] == "callback" and reason in ("outside_hours", "not_the_caller", "not_claimed"):
         to_person(conn, row, f"the system couldn't place it ({reason})", now)
 
 
@@ -163,7 +180,8 @@ def finish(
                 result = "accepted" if _accepted(conn, row, now) else "declined"
         elif answered:
             conn.execute(
-                "UPDATE callbacks SET status = 'done', updated_at = ? WHERE id = ?",
+                "UPDATE callbacks SET status = 'done', updated_at = ? WHERE id = ? "
+                "AND status IN ('pending', 'overdue')",
                 (iso(now), row["callback_id"]),
             )
             conn.execute(

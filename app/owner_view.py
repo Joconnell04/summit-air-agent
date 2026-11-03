@@ -16,12 +16,26 @@ from fastapi.templating import Jinja2Templates
 from . import owner, trace
 
 COOKIE = "owner_token"
+COOKIE_DAYS = 30
 templates = Jinja2Templates(directory=Path(__file__).with_name("templates"))
 
 
 def _valid(request: Request, given: str | None) -> bool:
     token = request.app.state.services.settings.owner_token
-    return bool(token and given and hmac.compare_digest(given, token))
+    return bool(token and given and hmac.compare_digest(given.encode(), token.encode()))
+
+
+def _remember(request: Request, response: Response, token: str) -> Response:
+    # Secure when served over HTTPS, so the cookie never travels in clear text there.
+    response.set_cookie(
+        COOKIE,
+        token,
+        httponly=True,
+        samesite="strict",
+        secure=request.url.scheme == "https",
+        max_age=COOKIE_DAYS * 86400,
+    )
+    return response
 
 
 def _clock(value: datetime, tenant) -> str:
@@ -44,10 +58,11 @@ def add_routes(app: FastAPI) -> None:
         if token is not None:
             if not _valid(request, token):
                 return _render(request, "login.html", {"failed": True}, 401)
-            # Keep the token out of the address bar and the browser history.
-            response = RedirectResponse(request.url.remove_query_params("token"), 303)
-            response.set_cookie(COOKIE, token, httponly=True, samesite="strict")
-            return response
+            # Keep the token out of the address bar and the browser history. A relative URL, so
+            # it stays on https behind a TLS proxy.
+            rest = request.url.remove_query_params("token")
+            target = rest.path + (f"?{rest.query}" if rest.query else "")
+            return _remember(request, RedirectResponse(target, 303), token)
         if not _valid(request, request.cookies.get(COOKIE)):
             return _render(request, "login.html", {"failed": False}, 401)
         services = request.app.state.services
@@ -75,9 +90,7 @@ def add_routes(app: FastAPI) -> None:
     def owner_login(request: Request, token: str = Form("")):
         if not _valid(request, token):
             return _render(request, "login.html", {"failed": True}, 401)
-        response = RedirectResponse("/owner", 303)
-        response.set_cookie(COOKIE, token, httponly=True, samesite="strict")
-        return response
+        return _remember(request, RedirectResponse("/owner", 303), token)
 
     @app.get("/owner/calls/{call_id}", response_class=HTMLResponse)
     def owner_call(request: Request, call_id: str):

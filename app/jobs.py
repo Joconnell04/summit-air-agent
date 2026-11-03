@@ -19,6 +19,8 @@ from .tools import open_windows, send_lead
 STUCK_SENDING_MINUTES = 5
 # A dialed call the voice layer never reported on is settled after this, so it can't block a person.
 STUCK_DIALING_MINUTES = 30
+# A queued call nobody claimed (the voice worker is down) expires after this and goes to a person.
+UNCLAIMED_MINUTES = 15
 # FSM reads per run for the booked-and-kept check, so a backlog can't hold up the other jobs.
 KEPT_CHECKS_PER_RUN = 50
 
@@ -146,8 +148,8 @@ def offer_earlier_slots(
 def schedule_callbacks(conn: sqlite3.Connection, tenant: Tenant, now: datetime) -> dict:
     """A callback the system places waits until its time, then is queued for the voice layer if it
     may still be dialed; one that may not goes to a person. A dialed call never reported on is
-    settled as no_report, and its callback goes to a person."""
-    counts = {"queued": 0, "skipped": 0, "no_report": 0}
+    settled as no_report, and one nobody claims expires; either way its callback goes to a person."""
+    counts = {"queued": 0, "skipped": 0, "no_report": 0, "not_claimed": 0}
     with tx(conn):
         due = conn.execute(
             "SELECT * FROM outbound WHERE tenant = ? AND status = 'waiting' AND due_at <= ?",
@@ -177,6 +179,14 @@ def schedule_callbacks(conn: sqlite3.Connection, tenant: Tenant, now: datetime) 
             if row["kind"] == "callback":
                 outbound.to_person(conn, row, "dialed but never reported back", now)
             counts["no_report"] += 1
+        # Queued but never claimed: the voice worker is down or not polling.
+        unclaimed = conn.execute(
+            "SELECT * FROM outbound WHERE tenant = ? AND status = 'queued' AND updated_at < ?",
+            (tenant.slug, iso(now - timedelta(minutes=UNCLAIMED_MINUTES))),
+        ).fetchall()
+        for row in unclaimed:
+            outbound.skip(conn, row, "not_claimed", now)
+            counts["not_claimed"] += 1
     return counts
 
 
@@ -265,7 +275,7 @@ def alert_on_call(
 def _send(mailer: Mailer, to: str, subject: str, body: str) -> tuple[str, str | None]:
     try:
         return mailer.send(to, subject, body), None
-    except (OSError, smtplib.SMTPException) as exc:
+    except (OSError, ValueError, smtplib.SMTPException) as exc:
         return "failed", f"{type(exc).__name__}: {exc}"
 
 
@@ -292,7 +302,7 @@ def _alert_text(
         lines.append(f"Caller was told: someone will call by {due}")
     if owner_view_url:
         lines.append(f"Call: {owner_view_url.rstrip('/')}/owner/calls/{call['id']}")
-    subject = f"{tenant.name} urgent: {flag['reason']}"[:120]
+    subject = " ".join(f"{tenant.name} urgent: {flag['reason']}".split())[:120]
     return subject, "\n".join(lines)
 
 
