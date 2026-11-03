@@ -115,7 +115,10 @@ class ReadBackIn(CallRef):
 
 class Slot(Body):
     date: dt.date
-    window: str = Field(max_length=40)
+    window: str = Field(
+        max_length=40,
+        description="The window code find_slots returned (such as morning), not its spoken label",
+    )
 
 
 class JobDetails(Body):
