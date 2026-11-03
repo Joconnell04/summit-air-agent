@@ -46,4 +46,8 @@ The same scorecard, so results compare across bake-offs. Numbers in brackets are
 - **Run:** after the main run, one gas call on Vapi's free number against our tool server (about $0.20, ASSUMED), plus the written comparison in docs/explorations/010-vapi.md.
 - **Decide:** promote Vapi to a full entrant only if the lines come out exact and reply delay matches our stack.
 
-Further entrants, and how to compare them without real phone calls, are in docs/explorations/013-more-bakeoff-entrants.md.
+### 6. ElevenLabs Agents, OpenAI Realtime and Gemini Live on a simulated audio rig (DECISIONS.md 026)
+
+- **Hypothesis:** none beats our stack by 0.3 s on plain turns while keeping the safety lines exact and hang-ups on our server; ElevenLabs on our brain comes closest.
+- **Run:** the rig in `evals/audio_rig/` streams synthesized caller audio to each entrant over its WebSocket for 8 scenarios, three repeats of each must-pass one, and times the first agent sound; our stack and Retell run the same set to calibrate (about $15 in all, ASSUMED). The final two then get the real calls. This supersedes the 3 real calls each planned in bake-off 2.
+- **Decide:** the rule in DECISIONS.md 026. Research: docs/explorations/013-more-bakeoff-entrants.md.
