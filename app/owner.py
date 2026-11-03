@@ -7,7 +7,6 @@ LOOKBACK_DAYS from the end of that day, because a single day is too few to read.
 """
 
 import json
-import re
 import sqlite3
 from collections import Counter
 from datetime import date, datetime, time, timedelta
@@ -661,43 +660,14 @@ def headline(day_calls: list[dict], day_bookings: list[dict], day_callbacks: dic
     }
 
 
-SEARCH_DAYS = 30
-SEARCH_LIMIT = 50
-
-
-def search(conn: sqlite3.Connection, tenant: Tenant, query: str, now: datetime) -> list[dict]:
-    """Calls from the last SEARCH_DAYS days that match every word of the query, newest first: by
-    caller number, customer name, service address, ZIP, job number or what the call was about.
-    Digits match a phone number however it is written. A run of one or two digits alone is left
-    out, since it would match nearly every call."""
-    terms = [t for t in query.lower().split() if not (t.isdigit() and len(t) < 3)]
-    if not terms:
-        return []
-    today = tenant.local(now).date()
-    found = []
-    for back in range(SEARCH_DAYS):
-        day = today - timedelta(days=back)
-        jobs = {b["call_id"]: b for b in bookings(conn, tenant, day, now)}
-        for call in calls(conn, tenant, day):
-            job = jobs.get(call["id"])
-            fields = [call["caller"], call["type_label"], call["outcome_label"]]
-            if job:
-                fields += [job["name"], job["address"], job["zip"], str(job["fsm_job_id"] or "")]
-            text = " ".join(fields).lower()
-            # Per field, so digits from two fields never run together into a false match.
-            digits = " ".join(re.sub(r"\D", "", f) for f in fields)
-            if all(t in text or (t.isdigit() and t in digits) for t in terms):
-                found.append({**call, "day": day, "name": job["name"] if job else "", "job": job})
-    found.sort(key=lambda c: c["at"], reverse=True)
-    return found[:SEARCH_LIMIT]
-
-
 def turned_away(day_calls: list[dict]) -> list[dict]:
     """Calls the agent turned away on the day: commercial callers and ZIPs outside the area."""
     return [c for c in day_calls if c["outcome"].startswith("declined")]
 
 
 PERIODS = (1, 7, 30)
+# The longest custom range on Results, about a quarter.
+MAX_DAYS = 92
 
 
 def _period(conn: sqlite3.Connection, tenant: Tenant, end_day: date, days: int, now: datetime):

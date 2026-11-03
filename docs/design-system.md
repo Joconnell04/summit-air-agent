@@ -7,7 +7,7 @@ The owner view is built for the person who runs Summit Air: someone who knows HV
 | `app/static/owner/tokens.css` | Every color, size, space, radius, shadow and timing, as CSS custom properties |
 | `app/static/owner/components.css` | Every component, built only from tokens |
 | `app/templates/_ui.html` | Jinja macros for the components that repeat (tags, counts, figures, a call row, the status line, day navigation, note icons) |
-| `app/static/owner/owner.js` | The few interactions: board filters and layout, tabs, whole-row links, tooltips, the Results filter. Each page works without it |
+| `app/static/owner/owner.js` | The few interactions: board filters and layout, tabs, whole-row links, tooltips, search as you type, resizable columns, the technical details switch, the Results filter. Each page works without it, apart from search as you type and the technical details |
 | `app/static/owner/fonts/` | Public Sans, served from the app, with its license |
 
 ## Principles
@@ -16,7 +16,7 @@ The owner view is built for the person who runs Summit Air: someone who knows HV
 2. **Words first; color backs them up.** Every status is written out ("Late", "Urgent", "Held here"). Color repeats it for a glance and is never the only signal.
 3. **Revin's brand, used sparingly.** Ember (`--ember`, #FA3500) marks the brand, the active tab, the one primary action on a page ("Send to Revin") and the "now" line. Where white text sits on it, a slightly darker Ember (`--ember-action`) keeps the text readable. It never marks a status, because ServiceTitan's red already means urgent and two reds would compete.
 4. **No metric cards.** Numbers sit on one ruled line (the figures component) or in a ruled table (the Results ledger). A row of boxed numbers is the look this redesign set out to replace.
-5. **Plain words on the surface; detail one click away.** Tool names, arguments and refusal codes stay on the call page behind each step's "Details", and the whole record downloads as a log. The owner reads "Held the booking until the safety lines were said", and Revin's engineer opens that step to read `book_appointment refused gate_safety` in the same place.
+5. **Plain words on the surface; detail one click away.** Tool names, arguments and refusal codes stay on the call page behind the "Technical details" switch, which also offers the whole record as a log. The owner reads "Held the booking until the safety lines were said", and Revin's engineer turns the switch on to read `book_appointment refused gate_safety` in the same place.
 6. **A row is the link.** A row that opens a call opens it anywhere on the row, and a chevron at its end says so. The row's name is the real link, for keyboards and for pages without the script.
 7. **One line per row.** Longer detail, such as why a job is urgent, waits in a tooltip so rows stay the same height and a column reads straight down.
 8. **Read-only except one thing.** The only write is the report to Revin (story O-8). Nothing on the page changes a call, a job or a flag.
@@ -77,7 +77,9 @@ Each component lists its parts, its states and when to use it. All of them are o
 Revin logo, a rule, the company name, the three tabs (Today, Calls, Results) with Ember under the current one, then search and the status line on the right. Sticky. The tabs carry the day being looked at, so moving between pages stays on the same day.
 
 ### Search
-One field in the header on every page. It finds calls from the last 30 days by caller number (digits match however the number is written), customer name, service location, ZIP, job number or what the call was about; every word has to match, and a lone one- or two-digit number is ignored because it would match nearly everything (`owner.search`). Each match shows the service location and job number, so it is clear why it matched. Results list like the Calls page, with the day added.
+One field in the header on every page, backed by a full-text index of every call on record (`app/search.py`, SQLite FTS5): the call (caller name and number, what it was about, how it ended), its job (service location, ZIP, job number, priority and why, arrival window), the flags it raised, its leads and callbacks, and every line said on it. Every word typed has to match, each as the start of a word; a phone number matches however it is written; a lone one- or two-digit number is ignored because it would match nearly everything; punctuation never reaches the index's own query syntax. The index is kept current by the jobs loop and again before each search, and only calls that changed since they were indexed are redone, so a refresh with nothing new is three reads (MEASURED: `test_a_refresh_with_nothing_new_is_three_reads` counts the statements). Calls are indexed a hundred to a transaction, so a first build never holds the write lock for long. A transcript removed by retention leaves the index on the next refresh. Each kind of result is its own query, so many matches of one kind never crowd out another, and the counts are the true totals. At about 5,800 calls (the demo day copied 130 times), a refresh with nothing new takes 19 ms, a search 36 ms and a suggestion 19 ms (MEASURED on a laptop with a scratch timing script).
+- **As you type**: after two characters, a popover under the field shows the best few matches across kinds (`/owner/search/suggest`), each with its kind and time. Arrow keys move, Enter opens the highlighted match or the full results, Escape closes.
+- **Results page**: matches grouped as Calls, Jobs, Needs a person, Leads and callbacks, and Said on a call, with jump links and the matched words highlighted in each snippet. A line said on a call opens the call at that line.
 
 ### Status line (story O-5)
 A dot and a few words. Three states from the voice workers' heartbeats (`owner.status`): **ok** (green, "Answering calls, last one 5:15 PM"), **down** (red, "Not answering since 4:12 PM") and **unknown** (grey, "Last call 5:15 PM"), which is what a development server or the demo shows because no voice worker reports to it.
@@ -115,7 +117,7 @@ A word on a wash, 22 px high: **urgent**, **high**, **done**, **info**, **ember*
 Longer detail on hover, focus or a tap, in a small dark box placed by `owner.js` so a table's edge never clips it, from a small "i" after the row's name. Escape or a scroll closes it, and the same words are the icon's label for screen readers.
 
 ### Table
-Dense rows with a 13 px heading in faint ink. Columns that hold times or short values shrink to fit (`.time`, `.fit`); the main column takes the rest and shows a bold heading with its reason under it (`.what`, `.why`). A **fixed** table (Jobs booked) sets its column widths and keeps every row to one 44 px line, with the reason in a tooltip. A row that opens a call carries `data-href` and ends in a chevron (`.go`). An open urgent row is washed red. A resolved row goes faint. Group rows (`.group`) split a table by window or day.
+Dense rows with a 13 px heading in faint ink. Columns that hold times or short values shrink to fit (`.time`, `.fit`); the main column takes the rest and shows a bold heading with its reason under it (`.what`, `.why`). A **fixed** table (Jobs booked) sets its column widths and keeps every row to one 44 px line, with the reason in a tooltip. Its columns can be **resized**: dragging the edge between two headings moves width from one to the other, the widths are kept per browser, and a double-click on an edge puts them back. Job gets the most room by default. A row that opens a call carries `data-href` and ends in a chevron (`.go`). An open urgent row is washed red. A resolved row goes faint. Group rows (`.group`) split a table by window or day.
 
 ### Dispatch board
 The day from 7 AM to 9 PM, widening to the hour for any call outside it (`owner.board`).
@@ -140,16 +142,19 @@ Labels in muted ink on the left, values on the right. Used for the job and custo
 Crumbs back to the day and the call list, the caller's name (or address, or number) with one tag for where the call stands (Needs a person, Booked or Placed by us), a facts line (time and length, number, what it was about with a warning sign for a safety call, the job number, "Call 22 of 23 that day") and "Earlier" and "Later" buttons with the times of the calls either side. An earlier version put safety, priority, job number and status in four tags, which read as clutter. This replaced a strip of dots across the day, which showed where the call sat but not what was around it.
 
 ### Conversation (stories O-6, O-7)
-Drawn like a commit graph: the turns run down a rail with the time from the start of the call on the left, a hollow node for the caller and a filled Ember node for the agent. What the agent did between turns branches off the rail on a short edge, as a note from `plain.py`: a check mark for done, a pause sign for held back, a warning sign for safety and overrides. "Said the signed-off safety lines" appears only on the turn the server accepted as the lines; a safety call where they never came ends with a warning saying so. A note for a tool call opens ("Details") to show the call's name, result, gate, timing and arguments, and "Download log" in the panel head saves the call's whole record as JSON (`/owner/calls/{id}/log`). This replaced a page-wide "Technical details" switch, which showed the same notes with the raw data mixed in and didn't earn a view of its own. The recording isn't kept, and the panel foot says so.
+Drawn like a commit graph: the turns run down a rail with the time from the start of the call on the left, a hollow node for the caller and a filled Ember node for the agent. What the agent did between turns branches off the rail on a short edge, as a note from `plain.py`: a check mark for done, a pause sign for held back, a warning sign for safety and overrides. "Said the signed-off safety lines" appears only on the turn the server accepted as the lines; a safety call where they never came ends with a warning saying so. **Technical details** is a switch in the conversation head, off by default and remembered per browser: on, each step shows the tool's name and, under its note, what the agent sent and got back (name, result, gate, timing, arguments), and "Download log" appears to save the call's whole record as JSON (`/owner/calls/{id}/log`). Off, the owner sees only the plain notes. An earlier version put a "Details" disclosure on every step, which left a control on every row of the plain view. The recording isn't kept, and the panel foot says so.
 
 ### Report box (story O-8)
-An Ember-washed form under the conversation, so it is read after the call: which line (or the whole call), what should have happened in a two-line box, and "Send to Revin", on one row. Hovering an agent line shows "This was wrong", which picks that line and focuses the box. Sent reports list under it with their state: **Held here** (no GitHub token on the server), **With Revin, #41** (filed as an issue) or **Retrying**.
+An Ember-washed form under the conversation, so it is read after the call: which line (or the whole call), what should have happened, and "Send to Revin", on one row at one height. The text box starts one line high, level with the select and the button, and grows as you type. Hovering an agent line shows "This was wrong", which picks that line and focuses the box. Sent reports list under it with their state: **Held here** (no GitHub token on the server), **With Revin, #41** (filed as an issue) or **Retrying**.
 
 ### Bar chart
-Calls by hour as stacked bars: booked (blue), safety (red), other (light blue), with the count on top and a zero greyed. The call type select redraws it from the calls embedded in the page.
+First on Results. Calls by hour as stacked bars: booked (blue), safety (red), other (light blue), with the count on top and a zero greyed. The call type select redraws it from the calls embedded in the page.
 
 ### Results ledger
-A table of measures down the side and periods across: this period, the period before, and the change (green up, red down, a dash when either side has nothing to measure). Rates change in percentage points. Built by `owner.ledger`.
+Titled "Performance", under the chart. A table of measures down the side and periods across: this period, the period before, and the change (green up, red down, a dash when either side has nothing to measure). One line per measure, with what it counts beside its name in faint ink. Rates change in percentage points. Built by `owner.ledger`.
+
+### Range picker
+The Results period: Day, 7 days or 30 days, and "Custom", a disclosure whose popover takes a from and a to date and Apply. Up to 92 days; the dates can come in either order, an end after today is read as today, and a longer range shows its last 92 days and says so. The period before is the same number of days.
 
 ### Empty state
 One centred line in faint ink that says what isn't there ("Nothing needs a person right now."). Never an illustration.
@@ -168,9 +173,10 @@ One centred line in faint ink that says what isn't there ("Nothing needs a perso
 | Tell Revin, Send to Revin | Report a bug, feedback |
 | Safety override | Override flag |
 | Resolved, Show resolved | Handled, closed |
+| Performance | Is it paying off |
 | The office calls back by 1:40 PM | Office, by 1:40 PM |
 
-Sentence case everywhere. No ids, tool names or codes outside a step's "Details" and the log. Numbers carry their unit in the label ("booking rate, 8 of 9"), not in a tooltip. "Resolved" for a flag a person has dealt with, not "handled".
+Sentence case everywhere. No ids, tool names or codes outside "Technical details" and the log. Name ServiceTitan once in a place: the logo does it, so the words beside it say "all 10 sent", not "10 in ServiceTitan". Numbers carry their unit in the label ("booking rate, 8 of 9"), not in a tooltip. "Resolved" for a flag a person has dealt with, not "handled".
 
 ## Accessibility
 

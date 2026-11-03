@@ -145,8 +145,27 @@
   // Call page
 
   function setupCall(conv) {
-    var select = document.querySelector("#report-turn");
+    var panel = conv.closest("[data-conv]");
+    var tech = panel && panel.querySelector("[data-tech]");
+    function techMode(on) { panel.classList.toggle("tech", on); press(tech, on); }
+    if (tech) {
+      techMode(recall("call.tech", false));
+      tech.addEventListener("click", function () {
+        var on = tech.getAttribute("aria-pressed") !== "true";
+        remember("call.tech", on);
+        techMode(on);
+      });
+    }
     var text = document.querySelector("#report-text");
+    if (text) {
+      text.addEventListener("input", function () {
+        text.style.height = "auto";
+        text.style.height = Math.min(text.scrollHeight + 2, 160) + "px";
+        text.style.overflowY = text.scrollHeight > 160 ? "auto" : "hidden";
+      });
+    }
+
+    var select = document.querySelector("#report-turn");
     each(conv, "[data-report-turn]", function (button) {
       button.addEventListener("click", function () {
         if (select) select.value = button.dataset.reportTurn;
@@ -258,7 +277,118 @@
     document.addEventListener("keydown", function (e) { if (e.key === "Escape") hide(); });
   }
 
+  // Resizable table columns. Dragging the edge between two headings moves width from one to the
+  // other, so the table keeps its width; the widths are kept per browser.
+  function setupResize(table) {
+    var key = "cols." + table.dataset.resize;
+    var cols = table.querySelectorAll("col");
+    var heads = table.querySelectorAll("thead th");
+    var start = Array.prototype.map.call(cols, function (c) { return c.style.width; });
+    function freeze() {
+      Array.prototype.forEach.call(heads, function (th, i) { cols[i].style.width = th.getBoundingClientRect().width + "px"; });
+    }
+    var saved = recall(key, null);
+    if (saved && saved.length === cols.length) {
+      Array.prototype.forEach.call(cols, function (c, i) { c.style.width = saved[i]; });
+    }
+    Array.prototype.forEach.call(heads, function (th, i) {
+      if (i >= heads.length - 2) return;
+      var grip = document.createElement("span");
+      grip.className = "grip";
+      grip.setAttribute("aria-hidden", "true");
+      th.appendChild(grip);
+      grip.addEventListener("dblclick", function () {
+        Array.prototype.forEach.call(cols, function (c, n) { c.style.width = start[n]; });
+        remember(key, null);
+      });
+      grip.addEventListener("pointerdown", function (e) {
+        e.preventDefault();
+        freeze();
+        var x = e.clientX, a = parseFloat(cols[i].style.width), b = parseFloat(cols[i + 1].style.width);
+        grip.classList.add("on");
+        grip.setPointerCapture(e.pointerId);
+        function move(ev) {
+          var dx = Math.max(64 - a, Math.min(ev.clientX - x, b - 64));
+          cols[i].style.width = a + dx + "px";
+          cols[i + 1].style.width = b - dx + "px";
+        }
+        function up() {
+          grip.classList.remove("on");
+          grip.removeEventListener("pointermove", move);
+          grip.removeEventListener("pointerup", up);
+          remember(key, Array.prototype.map.call(cols, function (c) { return c.style.width; }));
+        }
+        grip.addEventListener("pointermove", move);
+        grip.addEventListener("pointerup", up);
+      });
+    });
+  }
+
+  // Search box: the best matches as it is typed, from /owner/search/suggest. Arrow keys move,
+  // Enter opens the highlighted match or, with none, the full results page.
+  function setupSuggest(form) {
+    var input = form.querySelector("input[name=q]");
+    var list = form.querySelector(".suggest");
+    var timer = null, asked = "", pick = -1;
+    function rows() { return list.querySelectorAll("li"); }
+    function close() { list.hidden = true; input.setAttribute("aria-expanded", "false"); pick = -1; }
+    function mark(i) {
+      var all = rows();
+      pick = Math.max(-1, Math.min(i, all.length - 1));
+      Array.prototype.forEach.call(all, function (li, n) { li.setAttribute("aria-selected", n === pick ? "true" : "false"); });
+    }
+    function row(cls, href, parts) {
+      var li = document.createElement("li");
+      li.setAttribute("role", "option");
+      li.className = cls;
+      li.dataset.go = href;
+      parts.forEach(function (p) {
+        var span = document.createElement("span");
+        span.className = p[0];
+        span.textContent = p[1];
+        li.appendChild(span);
+      });
+      li.addEventListener("mousedown", function (e) { e.preventDefault(); window.location.href = href; });
+      return li;
+    }
+    function show(items, q) {
+      list.textContent = "";
+      items.forEach(function (it) {
+        list.appendChild(row("", it.href, [["t", it.title], ["k", it.kind + ", " + it.when], ["x", it.text]]));
+      });
+      var company = form.querySelector("input[name=tenant]");
+      var all = form.action + "?q=" + encodeURIComponent(q) + (company ? "&tenant=" + encodeURIComponent(company.value) : "");
+      list.appendChild(row("all", all, [["t", items.length ? "See all results" : "No quick matches. Search everything"]]));
+      list.hidden = false;
+      input.setAttribute("aria-expanded", "true");
+      pick = -1;
+    }
+    input.addEventListener("input", function () {
+      clearTimeout(timer);
+      var q = input.value.trim();
+      if (q.length < 2) { close(); return; }
+      timer = setTimeout(function () {
+        asked = q;
+        var url = form.dataset.suggest + (form.dataset.suggest.indexOf("?") < 0 ? "?" : "&") + "q=" + encodeURIComponent(q);
+        fetch(url, { credentials: "same-origin" })
+          .then(function (r) { return r.ok ? r.json() : { items: [] }; })
+          .then(function (data) { if (asked === q && input.value.trim() === q) show(data.items, q); })
+          .catch(close);
+      }, 120);
+    });
+    input.addEventListener("keydown", function (e) {
+      if (list.hidden) return;
+      if (e.key === "ArrowDown") { e.preventDefault(); mark(pick + 1); }
+      else if (e.key === "ArrowUp") { e.preventDefault(); mark(pick - 1); }
+      else if (e.key === "Escape") { close(); }
+      else if (e.key === "Enter" && pick >= 0) { e.preventDefault(); window.location.href = rows()[pick].dataset.go; }
+    });
+    input.addEventListener("blur", function () { setTimeout(close, 100); });
+  }
+
   document.addEventListener("DOMContentLoaded", function () {
+    each(document, "form.search[data-suggest]", setupSuggest);
+    each(document, "table[data-resize]", setupResize);
     setupRowLinks();
     setupTips();
     each(document, "#board", setupBoard);

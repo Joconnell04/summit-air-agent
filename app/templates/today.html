@@ -97,7 +97,7 @@
     </div>
   </section>
 
-  <div class="split">
+  <div class="split narrow-side">
     <div class="stack">
       {% set open_flags = flags | selectattr("open") | rejectattr("code", "equalto", "callback_requested") | list %}
       {% set handled = flags | rejectattr("open") | list %}
@@ -140,12 +140,13 @@
       <section class="panel">
         <div class="panel-head">
           <h2>Jobs booked</h2>{{ count(bookings | length) }}
-          <span class="end source"><img src="/owner/static/servicetitan-logo.svg" alt="ServiceTitan" width="93" height="16">{{ bookings | selectattr("fsm_job_id") | list | length }} in ServiceTitan</span>
+          {% set sent = bookings | selectattr("fsm_job_id") | list | length %}
+          <span class="end source" title="Jobs that reached ServiceTitan"><img src="/owner/static/servicetitan-logo.svg" alt="ServiceTitan" width="93" height="16">{% if sent == bookings | length %}all {{ sent }} sent{% else %}{{ sent }} of {{ bookings | length }} sent{% endif %}</span>
         </div>
         {% if bookings %}
         <div class="table-wrap">
-        <table class="table fixed jobs">
-          <colgroup><col style="width: 104px"><col><col style="width: 210px"><col style="width: 150px"><col style="width: 92px"><col style="width: 40px"></colgroup>
+        <table class="table fixed jobs" data-resize="jobs">
+          <colgroup><col style="width: 92px"><col><col style="width: 206px"><col style="width: 150px"><col style="width: 80px"><col style="width: 36px"></colgroup>
           <thead><tr><th>Booked</th><th>Job</th><th>Service location</th><th>Arrival window</th><th>Priority</th><th><span class="sr-only">Open</span></th></tr></thead>
           <tbody>
           {% for j in bookings %}
@@ -160,8 +161,8 @@
                 <span class="what"><a href="/owner/calls/{{ j.call_id }}">{{ j.job_type }}</a></span>{% if why %}<span class="tip-i" data-tip="{{ why }}" aria-label="Why: {{ why }}">{{ info() }}</span>{% endif %}
                 {% for text, tip in note %}<span class="tag outline" data-tip="{{ tip }}" style="margin-left: var(--s-2);">{{ text }}</span>{% endfor %}
               </td>
-              <td>{{ j.address }} <span class="faint num">{{ j.zip }}</span></td>
-              <td>{{ window_text(j.window) }}</td>
+              <td title="{{ j.address }} {{ j.zip }}">{{ j.address }} <span class="faint num">{{ j.zip }}</span></td>
+              <td title="{{ window_text(j.window) }}">{{ window_text(j.window) }}</td>
               <td>{{ priority_text(j.priority) }}</td>
               <td class="go">{{ go() }}</td>
             </tr>

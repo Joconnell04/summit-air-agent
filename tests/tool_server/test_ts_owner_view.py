@@ -18,7 +18,7 @@ from toolkit import (
     ready_to_book,
 )
 
-from app import jobs, owner, plain, reports, trace
+from app import jobs, owner, plain, reports, search, trace
 
 TODAY = date(2026, 11, 2)
 
@@ -183,43 +183,156 @@ def test_an_empty_day_shows_zeros_not_a_sentence(agent):
     assert "Calls answered" in html and "Need a person" in html
 
 
-def search(agent: Agent, query: str) -> list[dict]:
+def find(agent: Agent, query: str) -> dict:
     s = agent.app.state.services
     conn = s.connect()
     try:
-        return owner.search(conn, tenant(agent), query, s.clock())
+        return search.find(conn, tenant(agent), query)["groups"]
     finally:
         conn.close()
 
 
-def test_search_finds_a_call_by_name_number_address_zip_or_job(agent):
+def ids(hits: list[dict]) -> list[str]:
+    return [h["call_id"] for h in hits]
+
+
+def test_search_finds_calls_by_name_number_address_zip_job_and_words_said(agent):
     call = booked_tune_up(agent, 1)
     other = booked_tune_up(agent, 2)
     job = page(agent)["bookings"][-1]["fsm_job_id"]
-    assert [c["id"] for c in search(agent, "pat caller")] == [other, call]
-    assert [c["id"] for c in search(agent, "5550801")] == [call], "digits match however written"
-    assert [c["id"] for c in search(agent, "555-0802")] == [other]
-    assert len(search(agent, "Union St 11231")) == 2, "every word has to match"
-    assert [c["id"] for c in search(agent, str(job))] == [call]
-    assert search(agent, "nobody") == [] and search(agent, "  ") == []
-    assert search(agent, "5") == [] and search(agent, "11") == [], "a lone short number is ignored"
-    assert search(agent, "Union")[0]["job"]["address"] == "101 Union St", "a match carries its job"
+    assert set(ids(find(agent, "pat caller")["call"])) == {call, other}
+    assert ids(find(agent, "2125550801")["call"]) == [call], "the digits run together"
+    assert ids(find(agent, "555-0802")["call"]) == [other], "or written with punctuation"
+    assert len(find(agent, "Union 11231")["job"]) == 2, "every word has to match"
+    assert ids(find(agent, f"job {job}")["job"]) == [call]
+    assert set(ids(find(agent, "heat")["said"])) == {call, other}, "lines said on the call"
+    assert ids(find(agent, "uni")["job"]), "words match as prefixes"
+    assert find(agent, "nobody")["call"] == [] and find(agent, "  ")["call"] == []
+    assert find(agent, "5")["call"] == [], "a lone short number is ignored"
 
 
-def test_search_digits_never_run_across_two_fields(agent):
+def test_search_marks_the_match_and_links_to_the_line(agent):
+    call = booked_tune_up(agent, 1)
+    hit = find(agent, "heat")["said"][0]
+    assert "<mark>heat</mark>" in str(hit["snippet"]).lower()
+    assert hit["href"].startswith(f"/owner/calls/{call}#turn-")
+
+
+def test_search_text_cannot_reach_the_query_syntax_or_the_page(agent):
     booked_tune_up(agent, 1)
-    # The street number ends in 1 and the ZIP starts with 1; together they are not a match.
-    assert search(agent, "11123") == []
+    for query in ('"', "pat OR", "NEAR(pat", "pat*)", "col:pat", "<script>"):
+        find(agent, query)
+    assert search.match_expression('pat" OR x') == '"pat"* "or"* "x"*'
+    html = signed_in(agent).client.get("/owner/search?q=%3Cscript%3E").text
+    assert "<script>alert" not in html and "&lt;script&gt;" in html
 
 
-def test_the_search_page_lists_matches_and_says_when_there_are_none(agent):
+def test_marks_a_caller_says_cannot_fake_a_match(agent):
+    call = agent.start(caller(1))["data"]["call_id"]
+    agent.turn(call, "My boiler \ue000\ue001 is leaking")
+    agent.end(call)
+    hit = find(agent, "leaking")["said"][0]
+    assert str(hit["snippet"]).count("<mark>") == 1 and "\ue000" not in hit["text"]
+
+
+def test_the_index_only_redoes_calls_that_changed_and_drops_purged_ones(agent):
+    call = booked_tune_up(agent, 1)
+    s = agent.app.state.services
+    conn = s.connect()
+    try:
+        assert search.refresh(conn, tenant(agent)) == 1
+        assert search.refresh(conn, tenant(agent)) == 0, "nothing changed"
+        booked_tune_up(agent, 2)
+        assert search.refresh(conn, tenant(agent)) == 1, "only the new call"
+        conn.execute("DELETE FROM calls WHERE id = ?", (call,))
+        search.refresh(conn, tenant(agent))
+        assert (
+            conn.execute("SELECT COUNT(*) FROM search_docs WHERE call_id = ?", (call,)).fetchone()[
+                0
+            ]
+            == 0
+        )
+    finally:
+        conn.close()
+
+
+def test_a_refresh_with_nothing_new_is_three_reads(agent):
+    booked_tune_up(agent, 1)
+    s = agent.app.state.services
+    conn = s.connect()
+    try:
+        search.refresh(conn, tenant(agent))
+        statements = []
+        conn.set_trace_callback(statements.append)
+        assert search.refresh(conn, tenant(agent)) == 0
+        assert len(statements) == 3, statements
+    finally:
+        conn.close()
+
+
+def test_a_transcript_removed_by_retention_leaves_the_index(agent):
+    call = booked_tune_up(agent, 1)
+    assert find(agent, "heat")["said"]
+    s = agent.app.state.services
+    conn = s.connect()
+    conn.execute("DELETE FROM turns WHERE call_id = ?", (call,))
+    conn.close()
+    assert find(agent, "heat")["said"] == [], "the lines are gone"
+    assert find(agent, "pat")["call"], "the call record stays"
+
+
+def test_one_kind_with_many_matches_cannot_hide_the_others(agent):
+    for n in range(1, 4):
+        booked_tune_up(agent, n)
+    s = agent.app.state.services
+    conn = s.connect()
+    try:
+        found = search.find(conn, tenant(agent), "pat", per_kind=1)
+    finally:
+        conn.close()
+    assert found["counts"]["call"] == 3 and len(found["groups"]["call"]) == 1
+    assert found["groups"]["job"], "jobs still show beside the calls"
+    assert find(agent, "caller")["said"] == [], "the speaker heads a line but is not searched"
+
+
+def test_an_index_from_an_earlier_layout_is_built_again(agent):
+    booked_tune_up(agent, 1)
+    s = agent.app.state.services
+    conn = s.connect()
+    try:
+        conn.execute("DROP TABLE search_docs")
+        conn.execute("CREATE VIRTUAL TABLE search_docs USING fts5(tenant, call_id, title, body)")
+        conn.execute("INSERT INTO search_indexed VALUES ('stale', 'summit-air', 'x')")
+        assert search.refresh(conn, tenant(agent)) == 1
+    finally:
+        conn.close()
+    assert find(agent, "pat")["call"]
+
+
+def test_the_jobs_loop_keeps_the_index_current(agent):
+    booked_tune_up(agent, 1)
+    report = jobs.run_once(agent.app.state.services)
+    assert report[tenant(agent).slug]["search_indexed"] == 1
+
+
+def test_the_search_page_groups_matches_and_says_when_there_are_none(agent):
     call = booked_tune_up(agent, 1)
     assert agent.client.get("/owner/search?q=pat").status_code == 401
     signed_in(agent)
     html = agent.client.get("/owner/search?q=pat").text
-    assert 'Calls matching "pat"' in html and f'data-href="/owner/calls/{call}"' in html
-    assert "No calls match that" in agent.client.get("/owner/search?q=nobody").text
+    assert 'Results for "pat"' in html and f'data-href="/owner/calls/{call}"' in html
+    assert 'id="call"' in html and 'id="job"' in html
+    assert "Nothing on record matches that" in agent.client.get("/owner/search?q=nobody").text
     assert 'name="q"' in agent.client.get("/owner").text, "every page has the search field"
+
+
+def test_the_search_box_suggests_matches_as_it_is_typed(agent):
+    call = booked_tune_up(agent, 1)
+    assert agent.client.get("/owner/search/suggest?q=pat").status_code == 401
+    items = signed_in(agent).client.get("/owner/search/suggest?q=pat").json()["items"]
+    assert items and items[0]["kind"] == "Calls" and items[0]["href"] == f"/owner/calls/{call}"
+    assert len(items) <= search.SUGGEST
+    assert agent.client.get("/owner/search/suggest?q=").json() == {"items": []}
 
 
 def test_a_calls_log_downloads_as_json_behind_the_token(agent):
@@ -244,14 +357,15 @@ def test_rows_open_their_call_without_an_open_call_link(agent):
     assert "Show resolved" in today and "Handled too" not in today
 
 
-def test_the_call_page_has_one_status_tag_and_details_per_step(agent):
+def test_the_call_page_has_one_status_tag_and_a_technical_mode(agent):
     call = gas_call_that_booked(agent, 1)
     html = signed_in(agent).client.get(f"/owner/calls/{call}").text
     head = html[html.index('class="who"') : html.index('class="facts"')]
     assert head.count('class="tag') == 1 and "Needs a person" in head
     assert "Safety call: gas smell" in html, "the safety kind moves to the facts line"
-    assert "data-view" not in html, "no separate technical view"
-    assert '<details class="note">' in html and "Download log" in html
+    assert "data-tech" in html, "technical details are a mode on the same page"
+    assert 'class="tech-block tech-only"' in html and 'tech-only" href="/owner/calls/' in html
+    assert "<details" not in html[html.index('class="conv"') : html.index('id="report"')]
     assert html.index('class="conv"') < html.index('id="report"'), "the report sits under the call"
 
 
@@ -458,7 +572,7 @@ def test_every_page_renders_behind_the_token(agent):
         assert agent.client.get(path).status_code == 401, path
     signed_in(agent)
     assert "Calls, Monday Nov 2" in agent.client.get("/owner/calls").text
-    assert "Is it paying off" in agent.client.get("/owner/results?days=7").text
+    assert "Performance" in agent.client.get("/owner/results?days=7").text
     assert "Owner view design system" in agent.client.get("/owner/design").text
     assert "Looked for openings" in agent.client.get(f"/owner/calls/{call}").text
     assert agent.client.get("/owner/results?days=12").status_code == 200, (
@@ -581,3 +695,24 @@ def test_results_leave_out_a_zip_when_the_call_back_on_the_thread_booked(agent, 
     assert book(agent, second, first_open(agent, second))["ok"]
     agent.end(second)
     assert results(agent, 1)["zips"] == []
+
+
+def test_results_take_a_custom_range_in_either_order_capped_and_never_in_the_future(agent, clock):
+    signed_in(agent)
+    html = agent.client.get("/owner/results?start=2026-10-24&day=2026-11-02").text
+    assert "These 10 days" in html and "Oct 24 to Nov 2" in html
+    assert (
+        "These 10 days" in agent.client.get("/owner/results?start=2026-11-02&day=2026-10-24").text
+    )
+    long = agent.client.get("/owner/results?start=2025-01-01&day=2026-11-02").text
+    assert f"These {owner.MAX_DAYS} days" in long and "of the range asked for" in long
+    ahead = agent.client.get("/owner/results?start=2026-10-30&day=2027-01-01").text
+    assert "These 4 days" in ahead, "a future end is today"
+
+
+def test_the_jobs_head_names_servicetitan_once(agent):
+    booked_tune_up(agent, 1)
+    html = signed_in(agent).client.get("/owner").text
+    head = html[html.index("<h2>Jobs booked</h2>") : html.index("</thead>")]
+    assert head.count("ServiceTitan") == 2, "the logo's alt text and its title, not a third time"
+    assert "all 1 sent" in head

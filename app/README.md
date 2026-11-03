@@ -14,7 +14,7 @@ make trace CALL=<call id>   # a call's timeline in plain text, read straight fro
 make owner-demo             # seed a day of calls and serve the owner view on :8100
 ```
 
-The owner view is three pages for the owner and dispatcher: Today (`/owner`, the dispatch board, what needs a person, the jobs booked), Calls (`/owner/calls`, and each call at `/owner/calls/{id}` in plain words, with each step's detail behind "Details" and the full record at `/owner/calls/{id}/log`), Results (`/owner/results?days=1|7|30`) and search (`/owner/search?q=`, calls from the last 30 days by name, number, address, ZIP or job). Open `/owner?token=<OWNER_TOKEN>` once; a cookie keeps it. The one write is a report to Revin from a call page, filed as a GitHub issue by the jobs loop when `REPORTS_GITHUB_TOKEN` is set. The design system behind the pages is `docs/design-system.md`, shown live at `/owner/design`. `make owner-demo` seeds `data/owner-demo/` with a week of earlier bookings and a scripted day of calls (`scripts/seed_owner_day.py`), serves it as if it were 5:20 PM that day, and uses the token `dev-owner-token`. What it looks like: `docs/images/owner-view.png`.
+The owner view is three pages for the owner and dispatcher: Today (`/owner`, the dispatch board, what needs a person, the jobs booked), Calls (`/owner/calls`, and each call at `/owner/calls/{id}` in plain words, with a technical details switch and the full record at `/owner/calls/{id}/log`), Results (`/owner/results?days=1|7|30`, or a custom range with `start` and `day`) and search (`/owner/search?q=` and, as you type, `/owner/search/suggest?q=`, over a full-text index of every call, job, flag, lead and line said, `app/search.py`). Open `/owner?token=<OWNER_TOKEN>` once; a cookie keeps it. The one write is a report to Revin from a call page, filed as a GitHub issue by the jobs loop when `REPORTS_GITHUB_TOKEN` is set. The design system behind the pages is `docs/design-system.md`, shown live at `/owner/design`. `make owner-demo` seeds `data/owner-demo/` with a week of earlier bookings and a scripted day of calls (`scripts/seed_owner_day.py`), serves it as if it were 5:20 PM that day, and uses the token `dev-owner-token`. What it looks like: `docs/images/owner-view.png`.
 
 `GET /debug/calls/{id}` and `GET /debug/logs` (filter by `call_id`, `request_id`, `tool`, `errors=true`) need the `X-Debug-Token` header; `make server` sets `dev-debug-token` unless `DEBUG_TOKEN` is set.
 
@@ -46,11 +46,12 @@ The owner view is three pages for the owner and dispatcher: Today (`/owner`, the
 | `lookup.py` | The richer lookup (membership, open jobs, last service, recent calls, notes, equipment) and history |
 | `booking.py` | Sending a booking to the FSM, shared by the live path and the retry queue |
 | `records.py` | The server's own tables: calls, scope, flags, callbacks (named time, owner, outbound rules, overdue), do-not-call |
-| `jobs.py` | Retry of queued bookings and leads, earlier openings for flagged urgent bookings, queuing the callbacks the system places, booked-and-kept, on-call email after hours, cache refresh, overdue callbacks, retention |
+| `jobs.py` | Retry of queued bookings and leads, earlier openings for flagged urgent bookings, queuing the callbacks the system places, booked-and-kept, on-call email after hours, cache refresh, the search index, overdue callbacks, retention |
 | `outbound.py` | Calls the system places (journey 12): what the voice layer claims, and settling each one from what happened on it |
 | `owner.py` | Every number and list on the owner view, each defined in its docstring: the board, the status line, Results |
 | `plain.py` | Each tool call on a call page said in plain words (story O-7) |
 | `reports.py` | Reports to Revin from the owner view, and filing them as issues (story O-8) |
+| `search.py` | The owner view's search: a SQLite full-text index of calls, jobs, flags, leads and lines said, refreshed by the jobs loop |
 | `owner_view.py`, `templates/`, `static/owner/` | The owner view's token, routes, HTML and design system (docs/design-system.md) |
 | `mail.py` | Sending alert email over SMTP, or holding it when no server is set |
 | `tenant.py` | Loading `tenants/<company>/` and picking one by dialed number |

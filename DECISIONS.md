@@ -12,6 +12,15 @@ Discussion: docs/ai-process/transcripts/... or docs/explorations/...
 Issue: #N
 -->
 
+## 018. Owner view second markup round: indexed search, technical mode, custom ranges
+
+Decided: from Jackson's notes on the revised pages. Search moves to a full-text index of every call on record (SQLite FTS5, `app/search.py`): calls, jobs, flags, leads and callbacks, and every line said, kept current by the jobs loop and before each search, with results grouped by kind, matches highlighted, and suggestions as you type. Technical details return as a switch on the call page, off by default, in place of a "Details" disclosure on every step. Results puts the chart first, renames the ledger "Performance" with one line per measure, and takes a custom range up to 92 days. The Jobs table's columns can be resized and Job is widest by default. The report box sits at one height with its select and button, and the Jobs head names ServiceTitan once.
+Why: the notes asked for search that is "pre-indexed" and finds "a wide variety of stuff", a plain call page with technical detail as a mode rather than a control on every step, and a Results page that leads with the picture. FTS5 ships inside SQLite, so the index needs no new service, and indexing only the calls that changed keeps each refresh to one query when nothing is new.
+Considered: a separate search service (another moving part for a few thousand calls); scanning every call per search, as the first version did (slow as calls grow and blind to what was said); keeping per-step "Details".
+Would change if: calls grow past what one SQLite file serves well, in which case the index moves with the database to Postgres full-text search.
+Discussion: Jackson's notes on the design canvas, "Revised" row (https://claude.ai/artifact/MFSZ4p6oo871gh7U2Ss8hL)
+Issue: #53
+
 ## 017. Owner view markup round: rows are links, one tag, the call as a graph
 
 Decided: the changes from Jackson's notes on the built pages. Today opens with five figures (label, number, what it is made of) instead of a generated sentence; counts sit in pills apart from their labels; a whole row opens its call and the "Open call" links go; the Jobs table keeps each row to one line with the reason in a tooltip, priority a tag only at Urgent and High, and windows as plain text; "Handled too" becomes "Show resolved"; callbacks say who calls back and by when; the now line runs over the marks; the ServiceTitan logo is larger. On a call: one status tag with the rest as facts, the conversation drawn as a commit graph, the report box under the conversation, compact side panels, and each step's detail behind its own "Details" plus a downloadable log in place of the page-wide technical toggle. A search field in the header finds calls by name, number, address, ZIP or job over the last 30 days.

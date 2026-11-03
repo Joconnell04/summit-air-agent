@@ -20,6 +20,8 @@ Read first: CLAUDE.md, DECISIONS.md 014 to 016, docs/decisions/40-owner-view-sto
 
 After the first build, Jackson marked up the built pages on the design canvas. Those notes, applied as DECISIONS.md 017: figures in place of the summary sentence, counts in pills, whole-row links, a one-line Jobs table with tooltips, one tag in the call header, the conversation as a graph with per-step details and a downloadable log in place of the technical toggle, the report under the conversation, and a search field in the header.
 
+A second round of notes on the revised pages, as DECISIONS.md 018: search over a full-text index with suggestions as you type, technical details as a switch on the call page, Results with the chart first, a "Performance" ledger and a custom range, resizable Jobs columns, and the report box at one height.
+
 ## Not in scope
 
 Call recordings (O-6's audio): none are stored today, and DECISIONS.md 014 says this is the first cut if time runs short. The page says the recording isn't kept. Recorded in docs/later.md.

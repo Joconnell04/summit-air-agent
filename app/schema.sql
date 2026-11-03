@@ -278,3 +278,29 @@ CREATE TABLE IF NOT EXISTS callback_checks (
     callback_id INTEGER PRIMARY KEY REFERENCES callbacks (id) ON DELETE CASCADE,
     checked_at TEXT NOT NULL
 );
+
+-- The owner view's search index (app/search.py): one row per thing a person might look for on a
+-- call (the call, its job, its flags, its leads and callbacks, each line said); extra holds words
+-- that should match but are not shown, such as a phone number's bare digits. search_indexed holds
+-- a fingerprint of each call when it was indexed, so only calls that changed are indexed again.
+CREATE VIRTUAL TABLE IF NOT EXISTS search_docs USING fts5(
+    tenant UNINDEXED,
+    call_id UNINDEXED,
+    kind UNINDEXED,
+    anchor UNINDEXED,
+    at UNINDEXED,
+    label UNINDEXED,
+    title,
+    body,
+    extra,
+    tokenize = 'unicode61 remove_diacritics 2',
+    prefix = '2 3'
+);
+CREATE INDEX IF NOT EXISTS ix_flags_call ON flags (call_id);
+CREATE INDEX IF NOT EXISTS ix_leads_call ON leads (call_id);
+CREATE INDEX IF NOT EXISTS ix_callbacks_call ON callbacks (call_id);
+CREATE TABLE IF NOT EXISTS search_indexed (
+    call_id TEXT PRIMARY KEY,
+    tenant TEXT NOT NULL,
+    signature TEXT NOT NULL
+);

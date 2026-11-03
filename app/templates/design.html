@@ -154,21 +154,21 @@
   </div>
 
   <div class="split wide-side">
-    <section class="panel">
-      <div class="panel-head"><h2>Conversation</h2><span class="sub">turns down the rail, what the agent did branching off it</span></div>
+    <section class="panel conv-panel tech">
+      <div class="panel-head"><h2>Conversation</h2><span class="sub">turns down the rail, what the agent did branching off it; technical details on</span><div class="end"><button type="button" class="toggle" aria-pressed="true">Technical details</button></div></div>
       <ol class="conv">
         <li class="turn caller"><span class="at">0:06</span><span class="rail" aria-hidden="true"></span><span class="speaker">Caller</span><span class="text">The carbon monoxide alarm went off earlier.</span></li>
         <li class="step warn"><span class="at"></span><span class="rail" aria-hidden="true"></span><div class="note">{{ note_icon("warn") }}<span class="say">Heard a carbon monoxide alarm. Booking is locked until the safety lines are said.</span></div></li>
         <li class="turn agent"><span class="at">0:15</span><span class="rail" aria-hidden="true"></span><span class="speaker">Agent</span><span class="text">Please get everyone out of the house now.</span></li>
-        <li class="step ok"><span class="at"></span><span class="rail" aria-hidden="true"></span><details class="note"><summary>{{ note_icon("ok") }}<span class="say">Looked for openings: Safety check.</span><span class="detail">Details</span></summary><div class="tech-block">find_slots ok  8 ms
-{"job_type": "safety_check"}</div></details></li>
+        <li class="step ok"><span class="at"></span><span class="rail" aria-hidden="true"></span><div class="note">{{ note_icon("ok") }}<span class="say">Looked for openings: Safety check.</span><span class="tool tech-only">find_slots</span></div><div class="tech-block tech-only">find_slots ok  8 ms
+{"job_type": "safety_check"}</div></li>
         <li class="step hold"><span class="at"></span><span class="rail" aria-hidden="true"></span><div class="note">{{ note_icon("hold") }}<span class="say">Held the booking until the address and phone were read back.</span></div></li>
       </ol>
     </section>
     <div class="stack">
       <form class="report" onsubmit="return false">
         <div class="report-head"><h2>Something wrong on this call?</h2><span class="hint">Goes to Revin with the call.</span></div>
-        <div class="report-fields" style="grid-template-columns: minmax(0, 1fr) auto;"><label class="sr-only" for="spec-report">What should have happened</label><textarea id="spec-report" rows="2" placeholder="What should have happened?"></textarea><button class="btn primary" type="button">Send to Revin</button></div>
+        <div class="report-fields" style="grid-template-columns: minmax(0, 1fr) auto;"><label class="sr-only" for="spec-report">What should have happened</label><textarea id="spec-report" rows="1" placeholder="What should have happened?"></textarea><button class="btn primary" type="button">Send to Revin</button></div>
       </form>
       <section class="panel compact"><div class="panel-head"><h2>Compact panel</h2></div><div class="panel-body"><p>A few lines in a side panel: no ruled head.</p></div></section>
       <section class="panel">{{ empty("Nothing needs a person right now.") }}</section>

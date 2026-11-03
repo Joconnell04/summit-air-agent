@@ -35,10 +35,13 @@
 
   <div class="split wide-side">
     <div class="stack">
-      <section class="panel">
+      <section class="panel conv-panel" data-conv>
         <div class="panel-head">
           <h2>Conversation</h2>
-          <div class="end"><a class="btn quiet" href="/owner/calls/{{ call.id }}/log" download><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>Download log</a></div>
+          <div class="end">
+            <a class="btn quiet tech-only" href="/owner/calls/{{ call.id }}/log" download><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>Download log</a>
+            <button type="button" class="toggle" aria-pressed="false" data-tech title="Show what the agent sent and got back at each step">Technical details</button>
+          </div>
         </div>
         {% if thread %}
         <ol class="conv">
@@ -54,16 +57,12 @@
             <li class="step {{ item.tone }}">
               <span class="at"></span>
               <span class="rail" aria-hidden="true"></span>
+              <div class="note">{{ note_icon(item.tone) }}<span class="say">{{ item.text }}</span>{% if item.tech %}<span class="tool tech-only">{{ item.tech.tool }}</span>{% endif %}</div>
               {% if item.tech %}
-              <details class="note">
-                <summary>{{ note_icon(item.tone) }}<span class="say">{{ item.text }}</span><span class="detail">Details</span></summary>
-                <div class="tech-block">{{ item.tech.tool }} {% if item.tech.ok %}ok{% else %}refused {{ item.tech.refused }}{% endif %}{% if item.tech.gate %} gate={{ item.tech.gate }}{% endif %}  {{ item.tech.ms | round | int }} ms
+              <div class="tech-block tech-only">{{ item.tech.tool }} {% if item.tech.ok %}ok{% else %}refused {{ item.tech.refused }}{% endif %}{% if item.tech.gate %} gate={{ item.tech.gate }}{% endif %}  {{ item.tech.ms | round | int }} ms
 {{ item.tech.args | tojson }}{% if item.tech.say %}
 say: {{ item.tech.say }}{% endif %}{% if item.tech.error %}
 error: {{ item.tech.error }}{% endif %}</div>
-              </details>
-              {% else %}
-              <div class="note">{{ note_icon(item.tone) }}<span class="say">{{ item.text }}</span></div>
               {% endif %}
             </li>
             {% endif %}
@@ -83,7 +82,7 @@ error: {{ item.tech.error }}{% endif %}</div>
             {% for item in thread if item.kind == "turn" %}<option value="{{ item.seq }}">{{ item.at }} {{ "Agent" if item.speaker == "agent" else "Caller" }}: {{ item.text | truncate(48) }}</option>{% endfor %}
           </select>
           <label class="sr-only" for="report-text">What should have happened</label>
-          <textarea id="report-text" name="text" rows="2" maxlength="{{ max_chars }}" placeholder="What should have happened?" required></textarea>
+          <textarea id="report-text" name="text" rows="1" maxlength="{{ max_chars }}" placeholder="What should have happened?" required></textarea>
           <button class="btn primary" type="submit">Send to Revin</button>
         </div>
         {% if reports %}
@@ -110,7 +109,7 @@ error: {{ item.tech.error }}{% endif %}</div>
       <section class="panel compact">
         <div class="panel-head">
           <h2>Job booked</h2>
-          <span class="end source"><img src="/owner/static/servicetitan-logo.svg" alt="ServiceTitan" width="93" height="16">{% if p.booking.fsm_job_id %}Job {{ p.booking.fsm_job_id }}{% else %}Not in ServiceTitan yet{% endif %}</span>
+          <span class="end source"><img src="/owner/static/servicetitan-logo.svg" alt="ServiceTitan" width="93" height="16">{% if p.booking.fsm_job_id %}Job {{ p.booking.fsm_job_id }}{% else %}not sent yet{% endif %}</span>
         </div>
         <div class="panel-body">
           <dl class="kv">

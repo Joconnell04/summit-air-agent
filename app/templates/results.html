@@ -3,39 +3,33 @@
 {% set r = results %}
 {% block title %}{{ tenant }}: results{% endblock %}
 {% block body %}
-{% set period = "Today" if r.days == 1 and is_today else (r.end_day.strftime("%a %b %-d") if r.days == 1 else r.start_day.strftime("%b %-d") ~ " to " ~ r.end_day.strftime("%b %-d")) %}
+{% set period = "Today" if r.days == 1 and is_today and not custom else (r.end_day.strftime("%a %b %-d") if r.days == 1 else r.start_day.strftime("%b %-d") ~ " to " ~ r.end_day.strftime("%b %-d")) %}
 {% set before = "the day before" if r.days == 1 else "the " ~ r.days ~ " days before" %}
 <main class="page">
   <div class="page-head">
     <div class="lead">
-      <div class="crumbs">Results</div>
+      <div class="crumbs">Results{% if capped %}<span>/</span><span>the last {{ max_days }} days of the range asked for</span>{% endif %}</div>
       <h1 class="page-title">{{ period }}</h1>
     </div>
-    <div class="seg" role="group" aria-label="Period">
-      {% for d, name in [(1, "Day"), (7, "7 days"), (30, "30 days")] %}
-      <a href="/owner/results{{ q(slug, day if not is_today else none, d) }}"{% if r.days == d %} aria-current="true"{% endif %}>{{ name }}</a>
-      {% endfor %}
+    <div class="filters">
+      <div class="seg" role="group" aria-label="Period">
+        {% for d, name in [(1, "Day"), (7, "7 days"), (30, "30 days")] %}
+        <a href="/owner/results{{ q(slug, day if not is_today else none, d) }}"{% if r.days == d and not custom %} aria-current="true"{% endif %}>{{ name }}</a>
+        {% endfor %}
+      </div>
+      {# A custom range: two dates and Apply, in a popover under the button. #}
+      <details class="more range"{% if custom %} data-on{% endif %}>
+        <summary><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg>{% if custom %}{{ r.start_day.strftime("%b %-d") }} to {{ r.end_day.strftime("%b %-d") }}{% else %}Custom{% endif %}</summary>
+        <form class="range-pop" method="get" action="/owner/results">
+          <label>From <input type="date" name="start" value="{{ r.start_day.isoformat() }}" max="{{ today.isoformat() }}" required></label>
+          <label>To <input type="date" name="day" value="{{ r.end_day.isoformat() }}" max="{{ today.isoformat() }}" required></label>
+          {% if slug %}<input type="hidden" name="tenant" value="{{ slug }}">{% endif %}
+          <button class="btn primary" type="submit">Apply</button>
+          <span class="hint">Up to {{ max_days }} days.</span>
+        </form>
+      </details>
     </div>
   </div>
-
-  <section class="panel">
-    <div class="panel-head"><h2>Is it paying off</h2><span class="sub">against {{ before }}</span></div>
-    <div class="table-wrap">
-    <table class="table ledger">
-      <thead><tr><th>Measure</th><th class="right">{{ "This day" if r.days == 1 else "These " ~ r.days ~ " days" }}</th><th class="right">{{ before[:1] | upper }}{{ before[1:] }}</th><th class="right">Change</th></tr></thead>
-      <tbody>
-      {% for row in ledger %}
-        <tr>
-          <td><div class="what">{{ row.label }}</div><div class="why small">{{ row.sub }}</div></td>
-          <td class="value right">{{ row.now if row.now is not none else "-" }}</td>
-          <td class="prev right">{{ row.before if row.before is not none else "-" }}</td>
-          <td class="right">{% if row.delta %}<span class="delta {{ row.direction }}">{{ row.delta }}</span>{% else %}<span class="delta flat">-</span>{% endif %}</td>
-        </tr>
-      {% endfor %}
-      </tbody>
-    </table>
-    </div>
-  </section>
 
   <section class="panel" data-hours-chart>
     <div class="panel-head">
@@ -63,6 +57,25 @@
       <div class="bar-labels" style="--cols: {{ hours | length }}">{% for h in hours %}<span>{% if h == 12 %}12 PM{% elif h == 0 %}12 AM{% elif h < 12 %}{{ h }}{% if loop.first %} AM{% endif %}{% else %}{{ h - 12 }}{% endif %}</span>{% endfor %}</div>
     </div>
     <div class="panel-foot">By the hour each call came in. Calls the system placed are left out.</div>
+  </section>
+  <section class="panel">
+    <div class="panel-head"><h2>Performance</h2><span class="sub">against {{ before }}</span></div>
+    <div class="table-wrap">
+    <table class="table ledger">
+      <colgroup><col><col style="width: 140px"><col style="width: 160px"><col style="width: 104px"></colgroup>
+      <thead><tr><th>Measure</th><th class="right">{{ "This day" if r.days == 1 else "These " ~ r.days ~ " days" }}</th><th class="right">{{ before[:1] | upper }}{{ before[1:] }}</th><th class="right">Change</th></tr></thead>
+      <tbody>
+      {% for row in ledger %}
+        <tr>
+          <td><span class="what">{{ row.label }}</span><span class="why small">{{ row.sub }}</span></td>
+          <td class="value right">{{ row.now if row.now is not none else "-" }}</td>
+          <td class="prev right">{{ row.before if row.before is not none else "-" }}</td>
+          <td class="right">{% if row.delta %}<span class="delta {{ row.direction }}">{{ row.delta }}</span>{% else %}<span class="delta flat">-</span>{% endif %}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    </div>
   </section>
 
   <div class="split wide-side">

@@ -13,15 +13,16 @@ from datetime import date, timedelta
 from pathlib import Path
 
 from fastapi import FastAPI, Form, Request
-from fastapi.responses import HTMLResponse, RedirectResponse, Response
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from . import owner, plain, reports, trace
+from . import owner, plain, reports, search, trace
 from .settings import REPORT_MAX_CHARS, WORKER_STALE_SECONDS
 
 COOKIE = "owner_token"
 COOKIE_DAYS = 30
+SEARCH_MAX_CHARS = 80
 HERE = Path(__file__).parent
 templates = Jinja2Templates(directory=HERE / "templates")
 
@@ -190,17 +191,34 @@ def add_routes(app: FastAPI) -> None:
         if found is None:
             return HTMLResponse("No such company.", 404)
         services = request.app.state.services
+        q = q.strip()[:SEARCH_MAX_CHARS]
         conn = services.connect()
         try:
             context = {
                 **_common(request, found, tenant, "search", conn),
-                "query": q.strip()[:80],
-                "matches": owner.search(conn, found, q[:80], services.clock()),
-                "search_days": owner.SEARCH_DAYS,
+                "query": q,
+                "found": search.find(conn, found, q),
+                "kinds": search.KINDS,
             }
         finally:
             conn.close()
         return _render(request, "search.html", context)
+
+    @app.get("/owner/search/suggest")
+    def owner_search_suggest(request: Request, q: str = "", tenant: str = ""):
+        """The search box's matches as it is typed, as JSON."""
+        if not _signed_in(request):
+            return JSONResponse({"items": []}, 401)
+        found = tenant_for(request, tenant)
+        if found is None:
+            return JSONResponse({"items": []}, 404)
+        services = request.app.state.services
+        conn = services.connect()
+        try:
+            items = search.suggest(conn, found, q.strip()[:SEARCH_MAX_CHARS], services.clock())
+        finally:
+            conn.close()
+        return JSONResponse({"items": items})
 
     @app.post("/owner/calls/{call_id}/report")
     def owner_report(request: Request, call_id: str, text: str = Form(""), turn: str = Form("")):
@@ -225,22 +243,41 @@ def add_routes(app: FastAPI) -> None:
         return RedirectResponse(f"/owner/calls/{call_id}?sent=1#report", 303)
 
     @app.get("/owner/results", response_class=HTMLResponse)
-    def owner_results(request: Request, days: int = 1, day: date | None = None, tenant: str = ""):
+    def owner_results(
+        request: Request,
+        days: int = 1,
+        day: date | None = None,
+        start: date | None = None,
+        tenant: str = "",
+    ):
+        """A day, 7 or 30 days ending with day, or a custom range from start to day."""
         if not _signed_in(request):
             return _login(request)
         found = tenant_for(request, tenant)
         if found is None:
             return HTMLResponse("No such company.", 404)
-        days = days if days in owner.PERIODS else 1
         services = request.app.state.services
-        day = day_of(found, day)
+        today = found.local(services.clock()).date()
+        day = min(day_of(found, day), today)
+        custom = start is not None
+        capped = False
+        if custom:
+            start, day = sorted((min(start, today), day))
+            days = min((day - start).days + 1, owner.MAX_DAYS)
+            capped = days < (day - start).days + 1
+        else:
+            days = days if days in owner.PERIODS else 1
         conn = services.connect()
         try:
             results = owner.results(conn, found, day, days, services.clock())
             context = {
                 **_common(request, found, tenant, "results", conn),
                 "day": day,
-                "is_today": day == found.local(services.clock()).date(),
+                "is_today": day == today,
+                "today": today,
+                "custom": custom,
+                "capped": capped,
+                "max_days": owner.MAX_DAYS,
                 "results": results,
                 "ledger": owner.ledger(results["now"], results["before"]),
                 "refused_label": lambda code: plain.REFUSED.get(code, (code, ""))[0],

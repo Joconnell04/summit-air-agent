@@ -53,3 +53,4 @@ How the design was reached, in order, so a reader can follow each choice back to
 | Owner view design direction | Day timeline mixed with the dispatch desk tables; two versions drawn to choose between | DECISIONS.md 015, #45 |
 | Owner view: dispatch board | Version A chosen; decluttered board, no metric cards, filters, Public Sans, a full design system | DECISIONS.md 016, #53 |
 | Owner view markup round | Notes on the built pages: figures for the sentence, row links, one tag per call, the call as a graph, per-step details and a log, header search | DECISIONS.md 017, #53 |
+| Owner view second markup round | Indexed search with suggestions, technical details as a switch, chart-first Results with a custom range, resizable Jobs columns | DECISIONS.md 018, #53 |

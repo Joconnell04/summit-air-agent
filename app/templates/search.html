@@ -1,28 +1,38 @@
 {% extends "base.html" %}
-{% from "_ui.html" import empty, count, call_row with context %}
+{% from "_ui.html" import empty, count, go with context %}
 {% block title %}{{ tenant }}: search{% endblock %}
 {% block body %}
+{% set g = found.groups %}
 <main class="page">
   <div class="page-head">
     <div class="lead">
-      <div class="crumbs"><span>Search</span><span>/</span><span>last {{ search_days }} days</span></div>
-      <h1 class="page-title">{% if query %}Calls matching "{{ query }}"{% else %}Search calls{% endif %}</h1>
+      <div class="crumbs"><span>Search</span><span>/</span><span>every call on record</span></div>
+      <h1 class="page-title">{% if query %}Results for "{{ query }}"{% else %}Search{% endif %}</h1>
     </div>
   </div>
 
-  <section class="panel">
-    <div class="panel-head"><h2>Matches</h2>{{ count(matches | length) }}<span class="sub">by name, phone, address, ZIP, job number or what the call was about</span></div>
-    {% if matches %}
-    <div class="table-wrap">
-    <table class="table">
-      <thead><tr><th>Day</th><th>Started</th><th>Caller</th><th>About</th><th>What happened</th><th class="right">Length</th><th></th><th><span class="sr-only">Open</span></th></tr></thead>
-      <tbody>
-      {% for c in matches %}{{ call_row(c, show_day=true) }}{% endfor %}
-      </tbody>
-    </table>
-    </div>
-    {% elif query %}{{ empty("No calls match that in the last " ~ search_days ~ " days.") }}
-    {% else %}{{ empty("Type a name, phone number, address or job number in the search box.") }}{% endif %}
+  {% if not query %}
+  <section class="panel">{{ empty("Type a name, phone number, street, ZIP, job number, or words said on a call.") }}</section>
+  {% elif not found.total %}
+  <section class="panel">{{ empty("Nothing on record matches that.") }}</section>
+  {% else %}
+  <nav class="filters" aria-label="Jump to">
+    {% for kind, label in kinds.items() if g[kind] %}<a class="toggle" aria-pressed="false" href="#{{ kind }}">{{ label }} {{ count(found.counts[kind]) }}</a>{% endfor %}
+  </nav>
+  {% for kind, label in kinds.items() if g[kind] %}
+  <section class="panel" id="{{ kind }}">
+    <div class="panel-head"><h2>{{ label }}</h2>{{ count(found.counts[kind]) }}{% if found.counts[kind] > g[kind] | length %}<span class="sub">best {{ g[kind] | length }} shown</span>{% endif %}</div>
+    <ul class="list hits">
+      {% for hit in g[kind] %}
+      <li data-href="{{ hit.href }}">
+        <span class="what"><a href="{{ hit.href }}">{{ hit.title }}</a></span>
+        <span class="meta">{{ hit.snippet }}</span>
+        <span class="end"><span class="faint num">{{ hit.day }}, {{ clock(hit.at) }}</span><span class="go">{{ go() }}</span></span>
+      </li>
+      {% endfor %}
+    </ul>
   </section>
+  {% endfor %}
+  {% endif %}
 </main>
 {% endblock %}

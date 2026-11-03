@@ -22,10 +22,11 @@
       <a href="/owner/results{{ q(slug, day if day is defined and not is_today else none) }}"{% if tab == "results" %} aria-current="page"{% endif %}>Results</a>
     </nav>
     <div class="end">
-      <form class="search" role="search" method="get" action="/owner/search">
+      <form class="search" role="search" method="get" action="/owner/search" data-suggest="/owner/search/suggest{{ q(slug) }}">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
         <label class="sr-only" for="search-q">Search calls</label>
-        <input id="search-q" type="search" name="q" value="{{ query if query is defined else '' }}" placeholder="Search name, phone, address, job" autocomplete="off">
+        <input id="search-q" type="search" name="q" value="{{ query if query is defined else '' }}" placeholder="Search calls, people, jobs, words said" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="search-list" aria-autocomplete="list">
+        <ul class="suggest" id="search-list" role="listbox" aria-label="Matches" hidden></ul>
         {% if slug %}<input type="hidden" name="tenant" value="{{ slug }}">{% endif %}
       </form>
       {{ status_line(status) }}

@@ -526,11 +526,25 @@ def build() -> dict:
             check="pm.test('downloads the log', () => pm.response.to.have.status(200));",
         ),
         item(
-            "Search calls by name, number, address or job",
+            "Search calls, jobs, flags and words said",
             "GET",
             "owner/search?q=Union",
             envelope=False,
             check="pm.test('opens the matches', () => pm.response.to.have.status(200));\n" + html,
+        ),
+        item(
+            "Search suggestions as JSON",
+            "GET",
+            "owner/search/suggest?q=Union",
+            envelope=False,
+            check="pm.test('suggests matches', () => pm.response.to.have.status(200));",
+        ),
+        item(
+            "Results for a custom range",
+            "GET",
+            "owner/results?start=2026-10-27&day=2026-11-02",
+            envelope=False,
+            check="pm.test('opens results', () => pm.response.to.have.status(200));\n" + html,
         ),
         item(
             "Tell Revin something was wrong on a call",
