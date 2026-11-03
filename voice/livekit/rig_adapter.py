@@ -6,6 +6,10 @@ worker never picks up a rig room. Its tool server is the rig's router, which sen
 that scenario's scratch world. Each call is a room named by the call id; the rig joins it as a SIP
 participant carrying the caller's number, as a phone call through the trunk would, and the worker
 is dispatched to it.
+
+`RIG_VOICE` (JSON, merged into the `voice` section of config/models.yaml) runs the worker on other
+turn-taking values from a temporary copy of the file, labelled by `RIG_LABEL` in the run name, so
+a setting can be measured before it becomes the default.
 """
 
 import asyncio
@@ -17,6 +21,8 @@ import sys
 import tempfile
 import time
 from pathlib import Path
+
+import yaml
 
 from evals.audio_rig.room import RoomPhone
 
@@ -40,6 +46,23 @@ def caller_token(room: str, caller_id: str, key: str, secret: str) -> str:
         .with_grants(api.VideoGrants(room_join=True, room=room))
         .to_jwt()
     )
+
+
+def merged(base: dict, changes: dict) -> dict:
+    """`base` with `changes` laid over it, key by key at every level."""
+    out = dict(base)
+    for key, value in changes.items():
+        out[key] = merged(base.get(key) or {}, value) if isinstance(value, dict) else value
+    return out
+
+
+def trial_config(changes: dict, folder: Path) -> Path:
+    """A copy of config/models.yaml with `changes` merged into its `voice` section."""
+    config = yaml.safe_load((ROOT / "config/models.yaml").read_text())
+    config["voice"] = merged(config["voice"], changes)
+    path = folder / "models.yaml"
+    path.write_text(yaml.safe_dump(config, sort_keys=False))
+    return path
 
 
 def token_counts(trace: dict) -> dict[str, int]:
@@ -141,6 +164,9 @@ class Entrant:
         if missing:
             raise RuntimeError(f"LiveKit rig runs need {', '.join(missing)}")
         self.agent_name = f"summit-air-rig-{secrets.token_hex(3)}"
+        self.voice_changes = json.loads(self.env.get("RIG_VOICE") or "{}")
+        if self.voice_changes:
+            self.name = f"livekit-rig-{self.env.get('RIG_LABEL') or 'trial'}"
         self.worker = None
         self.log_path = Path(tempfile.mkstemp(prefix="rig-worker-", suffix=".log")[1])
 
@@ -148,6 +174,9 @@ class Entrant:
         env = {**os.environ, **self.env, "TOOL_SERVER_URL": self.ctx.router_url,
                "AGENT_NAME": self.agent_name, "LINES_DIR": tempfile.mkdtemp(prefix="rig-lines-"),
                "LIVEKIT_OUTBOUND_TRUNK_ID": ""}
+        if self.voice_changes:
+            folder = Path(tempfile.mkdtemp(prefix="rig-config-"))
+            env["MODELS_CONFIG"] = str(trial_config(self.voice_changes, folder))
         log = self.log_path.open("w")
         self.worker = subprocess.Popen(
             [sys.executable, "-m", "voice.livekit.worker", "start"],
