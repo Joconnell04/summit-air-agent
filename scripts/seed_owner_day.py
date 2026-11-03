@@ -160,15 +160,16 @@ def today(voice: Voice, clock: Clock, day: date, gas_lines: str, co_lines: str) 
     voice.caller(c, "They're 84 years old and it's 52 degrees in their place.")
     voice.read_back(c, "412 Ovington Ave", "11209")
     slot = voice.first_slot(c, "no_heat", inside_temp_f=52)
-    voice.book(
-        c, "no_heat", slot, "No heat since last night", inside_temp_f=52, who_home="Parent, 84"
-    )
+    # The on-call technician is alerted before a tonight booking (journey 11, tools._on_call_first).
     voice.tool(
         "flag_person",
         c,
         reason="84-year-old at home, no heat, 52 F inside",
         priority="Urgent",
         callback_in_minutes=20,
+    )
+    voice.book(
+        c, "no_heat", slot, "No heat since last night", inside_temp_f=52, who_home="Parent, 84"
     )
     voice.end(c)
     clock.at(day, 7, 43)
