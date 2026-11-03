@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% macro pct(value) %}{% if value is none %}–{% else %}{{ (value * 100) | round | int }}%{% endif %}{% endmacro %}
+{% macro pct(value) %}{% if value is none %}-{% else %}{{ (value * 100) | round | int }}%{% endif %}{% endmacro %}
 {% macro priority_chip(level) %}{% if level == "Urgent" %}<span class="chip urgent">Urgent</span>{% elif level == "High" %}<span class="chip high">High</span>{% else %}<span class="chip">{{ level }}</span>{% endif %}{% endmacro %}
 {% macro day_link(d) %}/owner?day={{ d.isoformat() }}{% if slug %}&tenant={{ slug }}{% endif %}{% endmacro %}
 {% block head %}{% if is_today %}<meta http-equiv="refresh" content="30">{% endif %}
