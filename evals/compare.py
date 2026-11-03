@@ -74,6 +74,8 @@ def report(run: Run, prev: Run | None = None) -> list[str]:
         ),
         f"pass rate {_pct(run.pass_rate())}"
         + (f" (previous {_pct(prev.pass_rate())})" if prev else ""),
+        *(["audio rig: delay is end of caller speech to the agent's first sound"]
+          if run.transport == "audio" else []),
         "by flow:       " + "  ".join(f"{k} {v}" for k, v in rates(run, lambda s: s.flow).items()),
         "by difficulty: "
         + "  ".join(f"{k} {v}" for k, v in rates(run, lambda s: [s.difficulty]).items()),
@@ -87,6 +89,9 @@ def report(run: Run, prev: Run | None = None) -> list[str]:
             if flagged(o50, p50) or flagged(o90, p90):
                 line += "  FLAG: delay changed"
         lines.append(line)
+    silent = sum(s.silent_turns for s in run.scenarios)
+    if silent:
+        lines.append(f"silent agent turns (no sound before the timeout): {silent}")
     if prev:
         old_cost = sum(s.cost_usd for s in prev.scenarios)
         lines.append(f"cost ${cost:.2f} (previous ${old_cost:.2f})")
