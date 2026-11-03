@@ -11,6 +11,7 @@ import yaml
 from livekit.agents import Agent, StopResponse
 from livekit.agents.llm import ChatMessage
 
+from app.tenant import load_agent
 from app.trace import as_text, timeline
 from prompts.assemble import greeting
 from tests.tool_server.toolkit import TENANT_DIR
@@ -21,7 +22,7 @@ from voice.livekit.settings import load_voice
 from voice.livekit.tools import ToolLog
 from voice.livekit.worker import leave_voicemail
 
-SAFETY = yaml.safe_load((TENANT_DIR / "agent.yaml").read_text())["safety"]
+SAFETY = load_agent(TENANT_DIR)[0]["safety"]
 GAS_LINES = " ".join(SAFETY["kinds"]["gas"]["lines"].split())
 ENDPOINTING = load_voice()["endpointing"]
 

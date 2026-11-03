@@ -31,6 +31,7 @@ from livekit.agents.llm import ChatMessage
 from livekit.agents.voice.amd import AMD, AMDCategory
 
 from prompts import assemble
+from voice import names as local_names
 
 from . import clips
 from .brain import build_llm
@@ -52,15 +53,30 @@ SIP = rtc.ParticipantKind.PARTICIPANT_KIND_SIP
 settings = Settings()
 
 
-def build_session(vad, voice: dict) -> AgentSession:
+def stt_options(voice: dict, names: local_names.Names) -> dict:
+    """Deepgram's settings: the tenant's local names as keyterms, so they are written as spelled."""
+    options = {"model": voice["stt"]["model"], "endpointing_ms": voice["stt"]["endpointing_ms"]}
+    if names.keyterms():
+        options["keyterm"] = names.keyterms()
+    return options
+
+
+def tts_options(voice: dict, names: local_names.Names) -> dict:
+    """Cartesia's settings: the tenant's pronunciation dictionary, when it has one. Cartesia swaps
+    the names inside its own service, so the text the server wrote is never changed."""
+    options = {"model": voice["tts"]["model"], "voice": voice["tts"]["voice_id"]}
+    if names.cartesia_dictionary_id:
+        options["pronunciation_dict_id"] = names.cartesia_dictionary_id
+    return options
+
+
+def build_session(vad, voice: dict, names: local_names.Names) -> AgentSession:
     from livekit.plugins import cartesia, deepgram
 
-    stt = voice["stt"]
-    tts = voice["tts"]
     return AgentSession(
-        stt=deepgram.STT(model=stt["model"], endpointing_ms=stt["endpointing_ms"]),
+        stt=deepgram.STT(**stt_options(voice, names)),
         llm=build_llm(),
-        tts=cartesia.TTS(model=tts["model"], voice=tts["voice_id"]),
+        tts=cartesia.TTS(**tts_options(voice, names)),
         vad=vad,
         turn_handling={
             "turn_detection": inference.TurnDetector(),
@@ -150,7 +166,9 @@ async def entrypoint(ctx: JobContext) -> None:
     folder = tenant_dir(data)
     spoken = voice_lines(folder)
     player = BackgroundAudioPlayer()
-    session = build_session(ctx.proc.userdata.get("vad") or load_vad(voice), voice)
+    session = build_session(
+        ctx.proc.userdata.get("vad") or load_vad(voice), voice, local_names.load(folder)
+    )
     bridge = Bridge(
         clips.bridge_clips(folder),
         play=lambda path: play_clip(player, path),

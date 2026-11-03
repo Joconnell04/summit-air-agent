@@ -63,7 +63,8 @@ Also builds the chat agent the eval harness drives through Retell's text chat AP
 | Reminders | after 10 s of silence, at most twice | Retell's default interval, 10,000 ms (SOURCE: https://docs.retellai.com/api-references/create-agent.md, `reminder_trigger_ms`). |
 | End on silence | 45 s | Retell's own timeout; it ends the call without asking the server (see gaps). A dropped safety call still gets a person flagged at `/calls/{id}/end`. |
 | Max call length | 20 min | Cost cap. |
-| Boosted keywords | Summit Air, HVAC terms | Recognition of the company name and equipment words. |
+| Boosted keywords | Summit Air, HVAC terms, the tenant's local names | Recognition of the company name, equipment words and the street names in `tenants/<tenant>/names.yaml` (voice/names.py). |
+| Pronunciation dictionary | The tenant's local names, in IPA | The same list the LiveKit stack sends to Cartesia, in Retell's `pronunciation_dictionary` field. Not pushed yet and unverified: Retell says only some voice providers honor it and the dashboard shows which, so the next `make retell-push` sends it and one call checks whether the Cartesia voice says HOW-stun. If Retell refuses the field for this voice, drop it in `build.agent_body` and note the gap here. |
 | Tools | custom, `speak_during_execution: false`, 10 s timeout, one retry | The worker plays a short clip only when a tool is slow (0.7 s); Retell can only speak on every call or never, so never. Retries are safe because writes are idempotent. |
 
 All values are ASSUMED starting points until the 10 bake-off calls; changes go here with the reason.

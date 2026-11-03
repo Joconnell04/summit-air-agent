@@ -4,6 +4,9 @@ A tenant folder holds config.yaml (the company as its field service system knows
 job types, plans, refused customer types), agent.yaml (how the agent works for this company:
 safety lines, priority rules, lines it says) and knowledge/*.md. Nothing company-specific lives in
 app/.
+
+An agent.yaml may start with `extends: <trade>`: it is then laid over trades/<trade>/agent.yaml,
+what every company in that trade shares (merge() says how). docs/template.md has the layout.
 """
 
 from dataclasses import dataclass
@@ -16,6 +19,45 @@ import yaml
 from .text import phone_key
 
 DAY_NAMES = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")
+TRADES_DIR = Path(__file__).resolve().parent.parent / "trades"
+
+
+def merge(trade, tenant):
+    """The tenant's value laid over the trade's.
+
+    Mappings merge key by key. A list of mappings that all carry an `id` merges by id: an entry with
+    a trade id is merged into that entry, and new ids follow the trade's, in the tenant's order. Any
+    other list is the trade's items then the tenant's new ones, so a tenant can add a phrase but not
+    drop one the trade lists. Anything else is the tenant's value."""
+    if isinstance(trade, dict) and isinstance(tenant, dict):
+        merged = dict(trade)
+        for key, value in tenant.items():
+            merged[key] = merge(trade[key], value) if key in trade else value
+        return merged
+    if isinstance(trade, list) and isinstance(tenant, list):
+        if _by_id(trade) and _by_id(tenant):
+            ours = {item["id"]: item for item in tenant}
+            merged = [merge(item, ours.pop(item["id"])) if item["id"] in ours else item
+                      for item in trade]
+            return merged + list(ours.values())
+        return trade + [item for item in tenant if item not in trade]
+    return tenant
+
+
+def _by_id(items: list) -> bool:
+    return bool(items) and all(isinstance(item, dict) and "id" in item for item in items)
+
+
+def load_agent(folder: Path, trades_dir: Path = TRADES_DIR) -> tuple[dict, str | None]:
+    """A tenant's agent.yaml merged over its trade's, and the trade's name (None without one)."""
+    agent = yaml.safe_load((Path(folder) / "agent.yaml").read_text())
+    trade = agent.pop("extends", None)
+    if trade is None:
+        return agent, None
+    path = Path(trades_dir) / trade / "agent.yaml"
+    if not path.exists():
+        raise ValueError(f"{folder}/agent.yaml extends {trade!r}, but {path} does not exist")
+    return merge(yaml.safe_load(path.read_text()), agent), trade
 
 
 @dataclass(frozen=True)
@@ -36,9 +78,17 @@ class Window:
 
 
 class Tenant:
-    def __init__(self, folder: Path, company: dict, agent: dict, knowledge: dict[str, str]):
+    def __init__(
+        self,
+        folder: Path,
+        company: dict,
+        agent: dict,
+        knowledge: dict[str, str],
+        trade: str | None = None,
+    ):
         self.folder = folder
         self.slug = folder.name
+        self.trade = trade
         self.raw = company
         self.agent = agent
         self.knowledge = knowledge
@@ -87,16 +137,16 @@ class Tenant:
         )
 
     @classmethod
-    def load(cls, folder: str | Path) -> "Tenant":
+    def load(cls, folder: str | Path, trades_dir: Path = TRADES_DIR) -> "Tenant":
         folder = Path(folder)
         company = yaml.safe_load((folder / "config.yaml").read_text())
-        agent = yaml.safe_load((folder / "agent.yaml").read_text())
+        agent, trade = load_agent(folder, trades_dir)
         knowledge = {
             p.stem: p.read_text()
             for p in sorted((folder / "knowledge").glob("*.md"))
             if p.name != "README.md"
         }
-        return cls(folder, company, agent, knowledge)
+        return cls(folder, company, agent, knowledge, trade)
 
     def line(self, key: str, **values) -> str:
         return self.lines[key].format(**values)
@@ -159,9 +209,9 @@ class Tenants:
         self.default = self.by_slug[default]
 
     @classmethod
-    def load(cls, directory: str | Path, default: str) -> "Tenants":
+    def load(cls, directory: str | Path, default: str, trades_dir: Path = TRADES_DIR) -> "Tenants":
         folders = sorted(p.parent for p in Path(directory).glob("*/agent.yaml"))
-        return cls([Tenant.load(f) for f in folders], default)
+        return cls([Tenant.load(f, trades_dir) for f in folders], default)
 
     def for_number(self, dialed: str) -> Tenant:
         key = phone_key(dialed)
@@ -172,3 +222,12 @@ class Tenants:
 
     def __iter__(self):
         return iter(self.by_slug.values())
+
+
+if __name__ == "__main__":
+    # Prints a tenant's agent config as the server sees it, trade included:
+    #   uv run python -m app.tenant tenants/summit-air
+    import sys
+
+    merged, _trade = load_agent(Path(sys.argv[1]))
+    sys.stdout.write(yaml.safe_dump(merged, sort_keys=True, allow_unicode=True, width=100))

@@ -7,6 +7,7 @@ import pytest
 from fake_retell import FakeRetell
 
 from app.tools import TOOLS
+from voice import names as local_names
 from voice.retell import build
 from voice.retell.api import Retell, RetellError, allowed
 from voice.retell.push import PHONE_NUMBER, push
@@ -98,6 +99,23 @@ def test_a_changed_tool_description_updates_only_the_llm():
     log = run(fake, note=" Changed.")
     assert log == [f"updated LLM {next(iter(fake.llms))}: general_tools"]
     assert len(fake.writes()) == before + 1
+
+
+def test_the_tenants_local_names_reach_the_retell_agent():
+    names = local_names.load(Path(__file__).resolve().parents[2] / "tenants" / "summit-air")
+    fake = account()
+    push(fake.client(), specs(), BASE, "claude-haiku-5-5", VOICE, names=names)
+    agent = next(iter(fake.agents.values()))
+    assert "Kosciuszko Street" in agent["boosted_keywords"]
+    assert "Summit Air" in agent["boosted_keywords"]
+    houston = next(e for e in agent["pronunciation_dictionary"] if e["word"] == "Houston Street")
+    assert houston == {"word": "Houston Street", "alphabet": "ipa", "phoneme": "ˈhaʊstən ˈstɹit"}
+
+
+def test_an_agent_without_names_sends_no_pronunciation_dictionary():
+    body = build.agent_body("llm_1", BASE, "custom_voice_1", "sonic-3", local_names.Names([]))
+    assert "pronunciation_dictionary" not in body
+    assert body["boosted_keywords"] == build.SPEECH["boosted_keywords"]
 
 
 def test_no_builtin_end_call_or_transfer_tool_is_pushed():
