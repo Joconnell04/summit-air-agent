@@ -115,7 +115,7 @@ def test_bookings_show_window_priority_reasons_and_the_earlier_slot_search(agent
     booked_tune_up(agent, 1)
     clock.advance(minutes=5)
     call = ready_to_book(agent, caller(2))
-    agent.turn(call, "My 84-year-old mother lives with me and it's 52 in here.")
+    agent.turn(call, "My 84-year-old parent lives with me and it's 52 in here.")
     tomorrow = {"date": "2026-11-03", "window": "morning"}
     assert book(agent, call, tomorrow, job_type="no_heat", inside_temp_f=52)["ok"]
     urgent, routine = page(agent)["bookings"]
@@ -140,7 +140,9 @@ def test_flags_list_reasons_open_first_most_urgent_first(agent, clock):
     agent.tool("flag_person", a, reason="Billing question", callback_in_minutes=60)
     clock.advance(minutes=1)
     b = agent.start(caller(2))["data"]["call_id"]
-    agent.tool("flag_person", b, reason="No heat, baby at home", priority="Urgent", callback_in_minutes=20)
+    agent.tool(
+        "flag_person", b, reason="No heat, baby at home", priority="Urgent", callback_in_minutes=20
+    )
     conn = agent.db()
     conn.execute("UPDATE flags SET status = 'done' WHERE call_id = ?", (a,))
     clock.advance(minutes=1)
@@ -200,7 +202,9 @@ def test_booked_and_kept_over_thirty_days(agent, clock):
     calls = []
     for n in range(1, 4):
         call = ready_to_book(agent, caller(n))
-        job_id = book(agent, call, {"date": "2026-11-03", "window": "morning"})["data"]["booking_id"]
+        job_id = book(agent, call, {"date": "2026-11-03", "window": "morning"})["data"][
+            "booking_id"
+        ]
         calls.append((call, job_id))
     agent.turn(calls[0][0], "Please cancel it.")
     agent.tool("cancel_appointment", calls[0][0], booking_id=calls[0][1], reason="not needed")
@@ -221,7 +225,11 @@ def test_leads_of_the_day_with_their_callback(agent):
         "record_lead",
         call,
         kind="membership",
-        details={"contact_name": "Pat", "need": "Wants to join the plan", "callback_in_minutes": 60},
+        details={
+            "contact_name": "Pat",
+            "need": "Wants to join the plan",
+            "callback_in_minutes": 60,
+        },
     )
     commercial(agent, 2)
     leads = page(agent)["leads"]
@@ -234,7 +242,10 @@ def test_out_of_area_calls_by_zip_most_first_over_thirty_days(agent, clock):
     out_of_area(agent, 1, "10001")
     out_of_area(agent, 2, "07030")
     out_of_area(agent, 3, "10001")
-    assert page(agent)["out_of_area"] == [{"zip": "10001", "calls": 2}, {"zip": "07030", "calls": 1}]
+    assert page(agent)["out_of_area"] == [
+        {"zip": "10001", "calls": 2},
+        {"zip": "07030", "calls": 1},
+    ]
     clock.advance(days=31)
     out_of_area(agent, 4, "07030")
     assert page(agent, date(2026, 12, 3))["out_of_area"] == [{"zip": "07030", "calls": 1}]
@@ -306,7 +317,14 @@ def test_the_page_renders_a_seeded_day(agent, clock):
     out_of_area(agent, 3, "10001")
     agent.client.get(f"/owner?token={TOKEN}")
     html = agent.client.get("/owner").text
-    for text in ("Bookings", "Booking rate", "Callbacks", "Out of area", "10001", "Court St Offices"):
+    for text in (
+        "Bookings",
+        "Booking rate",
+        "Callbacks",
+        "Out of area",
+        "10001",
+        "Court St Offices",
+    ):
         assert text in html, text
     assert f'href="/owner/calls/{booked}"' in html
     assert '<meta http-equiv="refresh"' in html, "today refreshes itself"
@@ -332,3 +350,54 @@ def test_caller_text_is_escaped(agent):
     html = agent.client.get(f"/owner/calls/{call}").text
     assert "<script>alert(1)</script>" not in html
     assert count(agent, "SELECT COUNT(*) FROM turns") == 1
+
+
+def test_an_overdue_callback_reads_in_local_time(agent, clock):
+    call = agent.start(caller(1))["data"]["call_id"]
+    agent.tool("flag_person", call, reason="Billing question", callback_in_minutes=30)
+    clock.advance(minutes=31)
+    jobs.run_once(agent.app.state.services)
+    overdue = next(f for f in page(agent)["flags"] if f["kind"] == "Overdue callback")
+    assert overdue["reason"] == "Callback promised by 9:30 AM not done: Billing question"
+
+
+def test_an_after_hours_window_reads_as_after_hours(agent, clock):
+    call = ready_to_book(agent, caller(1))
+    agent.turn(call, "Wait, I smell gas.")
+    agent.say(call, GAS_LINES)
+    agent.turn(call, "We're outside. Please just book a check.")
+    tonight = {"date": "2026-11-02", "window": "after_hours"}
+    assert book(agent, call, tonight, job_type="safety_check")["ok"]
+    assert page(agent)["bookings"][0]["window"] == {"day": "today", "label": "after hours"}
+
+
+def test_a_call_the_system_placed_is_typed_by_what_it_was_for(agent, clock):
+    call = agent.start(caller(1))["data"]["call_id"]
+    agent.tool(
+        "flag_person", call, reason="Call me back", callback_in_minutes=30, system_calls_back=True
+    )
+    clock.advance(minutes=31)
+    jobs.run_once(agent.app.state.services)
+    claimed = agent.client.post("/outbound/claim", json={"worker": "t"}).json()["data"]["outbound"]
+    body = {
+        "call_id": claimed["call_id"],
+        "caller_id": claimed["phone"],
+        "dialed_number": claimed["dialed_from"],
+        "direction": "outbound",
+    }
+    agent.client.post("/calls/start", json=body)
+    placed = next(c for c in page(agent)["calls"] if c["id"] == claimed["call_id"])
+    assert (placed["direction"], placed["type"], placed["type_label"]) == (
+        "outbound",
+        "callback",
+        "Callback",
+    )
+    assert page(agent)["rates"]["rows"][0]["calls"] == 1, "placed calls stay out of booking rate"
+
+
+def test_the_timeline_links_back_to_the_local_day(agent, clock):
+    clock.advance(hours=11)  # 8 p.m. New York, already the next day in UTC
+    call = agent.start(caller(1))["data"]["call_id"]
+    agent.client.get(f"/owner?token={TOKEN}")
+    html = agent.client.get(f"/owner/calls/{call}").text
+    assert 'href="/owner?day=2026-11-02"' in html

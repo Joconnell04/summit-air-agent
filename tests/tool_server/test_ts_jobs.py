@@ -35,7 +35,7 @@ def offer(agent: Agent) -> int:
 def urgent_booked_tomorrow(agent: Agent, caller: str = UNKNOWN) -> tuple[str, int]:
     """An urgent no-heat booking for tomorrow, flagged to look for an earlier slot (S-25)."""
     call = ready_to_book(agent, caller)
-    agent.turn(call, "My 84-year-old mother lives with me and it's 52 in here.")
+    agent.turn(call, "My 84-year-old parent lives with me and it's 52 in here.")
     booked = book(agent, call, TOMORROW_MORNING, job_type="no_heat", inside_temp_f=52)
     assert booked["ok"] and booked["data"]["seek_earlier"], booked
     return call, booked["data"]["booking_id"]
@@ -98,7 +98,10 @@ def test_an_accepted_opening_moves_the_booking_through_the_normal_tool(agent, cl
     agent.end(placed, "agent_end")
     assert done(agent, claimed["outbound_id"], answered=True)["data"]["result"] == "accepted"
     assert count(agent, "SELECT seek_earlier FROM bookings WHERE call_id = ?", call) == 0
-    assert count(agent, "SELECT COUNT(*) FROM flags WHERE kind = 'seek_earlier' AND status = 'open'") == 0
+    assert (
+        count(agent, "SELECT COUNT(*) FROM flags WHERE kind = 'seek_earlier' AND status = 'open'")
+        == 0
+    )
     start = count(agent, "SELECT window_start FROM bookings WHERE call_id = ?", call)
     assert start.startswith("2026-11-02")
 
@@ -167,6 +170,8 @@ def test_a_requested_callback_waits_for_its_time_then_is_dialed_once(agent, cloc
     agent.turn(claimed["call_id"], "Hi, thanks for calling back.")
     assert done(agent, claimed["outbound_id"], answered=True)["data"]["result"] == "answered"
     assert count(agent, "SELECT status FROM callbacks") == "done"
+    open_flags = "SELECT COUNT(*) FROM flags WHERE status = 'open'"
+    assert count(agent, open_flags) == 0, "nobody needs to act on an answered system callback"
 
 
 def test_an_unanswered_callback_goes_to_a_person_and_is_flagged_once(agent, clock):
@@ -254,7 +259,9 @@ def test_a_booking_moved_later_waits_for_its_new_window(agent, clock):
     job_id = book(agent, call, TOMORROW_MORNING)["data"]["booking_id"]
     later = {"date": "2026-11-06", "window": "morning"}
     agent.turn(call, "Can we do Friday instead?")
-    assert agent.tool("reschedule_appointment", call, booking_id=job_id, slot=later, reason="x")["ok"]
+    assert agent.tool("reschedule_appointment", call, booking_id=job_id, slot=later, reason="x")[
+        "ok"
+    ]
     clock.advance(days=1)
     assert kept_check(agent) == {"kept": 0, "cancelled": 0}
     clock.advance(days=3)
@@ -284,9 +291,9 @@ def urgent_flag(
     agent: Agent, reason: str = "Elderly caller, no heat, 48 F inside", caller: str = UNKNOWN
 ) -> str:
     call = ready_to_book(agent, caller)
-    assert agent.tool("flag_person", call, reason=reason, priority="Urgent", callback_in_minutes=20)[
-        "ok"
-    ]
+    assert agent.tool(
+        "flag_person", call, reason=reason, priority="Urgent", callback_in_minutes=20
+    )["ok"]
     return call
 
 

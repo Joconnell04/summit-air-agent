@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:,">
 {% block head %}{% endblock %}
 <title>{% block title %}{{ tenant }}{% endblock %}</title>
 <style>
@@ -55,7 +56,7 @@ header.bar .spacer { flex: 1; }
 .chip.high { color: var(--high); border-color: rgba(240, 166, 58, .35); background: rgba(240, 166, 58, .08); }
 .chip.good { color: var(--good); border-color: rgba(79, 194, 138, .35); background: rgba(79, 194, 138, .08); }
 .chip.accent { color: var(--accent); border-color: rgba(125, 155, 255, .35); background: rgba(125, 155, 255, .08); }
-.chips { display: inline-flex; gap: 4px; flex-wrap: wrap; }
+.chips { display: inline-flex; gap: 4px; }
 
 main { padding: 16px 20px 40px; max-width: 1480px; margin: 0 auto; }
 section.panel {

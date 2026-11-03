@@ -5,7 +5,7 @@ import re
 import sqlite3
 from datetime import datetime, time, timedelta
 
-from .db import iso
+from .db import iso, parse_iso
 from .tenant import Tenant
 from .text import phone_key
 
@@ -241,14 +241,15 @@ def record_attempt(conn: sqlite3.Connection, callback_id: int, now: datetime) ->
     )
 
 
-def mark_overdue(conn: sqlite3.Connection, now: datetime) -> list[int]:
+def mark_overdue(conn: sqlite3.Connection, tenant: Tenant, now: datetime) -> list[int]:
     """Flag every pending callback whose time has passed (spec S-32). One the system is about to
     dial is left to the dial, which hands it to a person if it fails (app/outbound.py)."""
     due = conn.execute(
-        "SELECT * FROM callbacks c WHERE c.status = 'pending' AND c.due_at < ? AND NOT EXISTS "
+        "SELECT c.* FROM callbacks c JOIN calls k ON k.id = c.call_id WHERE k.tenant = ? "
+        "AND c.status = 'pending' AND c.due_at < ? AND NOT EXISTS "
         "(SELECT 1 FROM outbound o WHERE o.callback_id = c.id "
         "AND o.status IN ('waiting', 'queued', 'dialing'))",
-        (iso(now),),
+        (tenant.slug, iso(now)),
     ).fetchall()
     for row in due:
         conn.execute(
@@ -259,7 +260,8 @@ def mark_overdue(conn: sqlite3.Connection, now: datetime) -> list[int]:
             conn,
             row["call_id"],
             "overdue_callback",
-            f"Callback promised by {row['due_at']} not done: {row['reason']}",
+            f"Callback promised by {tenant.time_spoken(parse_iso(row['due_at']), now)} not done: "
+            f"{row['reason']}",
             now,
             "High",
         )

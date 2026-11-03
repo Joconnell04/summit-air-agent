@@ -214,7 +214,11 @@ def check_kept(conn: sqlite3.Connection, tenant: Tenant, fsm: FsmAdapter, now: d
 
 
 def alert_on_call(
-    conn: sqlite3.Connection, tenant: Tenant, mailer: Mailer, now: datetime, owner_view_url: str = ""
+    conn: sqlite3.Connection,
+    tenant: Tenant,
+    mailer: Mailer,
+    now: datetime,
+    owner_view_url: str = "",
 ) -> dict:
     """Email the on-call person about each urgent flag raised while the company is closed: what,
     where, who and why (journey 11). A send that fails is tried again on the next runs."""
@@ -336,8 +340,10 @@ def run_once(services) -> dict:
                 ),
                 "purged": purge(conn, tenant, now, services.settings.environment),
             }
-        with tx(conn):
-            report["overdue_callbacks"] = records.mark_overdue(conn, now)
+        report["overdue_callbacks"] = []
+        for tenant in services.tenants:
+            with tx(conn):
+                report["overdue_callbacks"] += records.mark_overdue(conn, tenant, now)
     finally:
         conn.close()
     return report

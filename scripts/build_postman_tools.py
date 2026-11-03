@@ -479,7 +479,8 @@ def build() -> dict:
             "GET",
             "owner",
             envelope=False,
-            check="pm.test('shows the token form', () => pm.response.to.have.status(401));\n" + html,
+            check="pm.test('shows the token form', () => pm.response.to.have.status(401));\n"
+            + html,
         ),
         item(
             "Owner view login with a wrong token",

@@ -12,9 +12,10 @@
 .tile .v { font-size: 22px; margin-top: 4px; }
 .tile .s { color: var(--faint); font-size: var(--small); margin-top: 2px; }
 .tile.alert .v { color: var(--urgent); }
+.reason { font-size: var(--small); margin-top: 1px; }
 .cols { display: grid; grid-template-columns: minmax(0, 1.75fr) minmax(0, 1fr); gap: 14px; align-items: start; }
-.bar { height: 4px; border-radius: 2px; background: var(--raised); width: 72px; display: inline-block; vertical-align: middle; }
-.bar i { display: block; height: 100%; border-radius: 2px; background: var(--accent); }
+.meter { height: 4px; border-radius: 2px; background: var(--raised); width: 72px; display: inline-block; vertical-align: middle; }
+.meter i { display: block; height: 100%; border-radius: 2px; background: var(--accent); }
 @media (max-width: 1100px) { .cols { grid-template-columns: 1fr; } .tiles { grid-template-columns: repeat(3, 1fr); } }
 </style>
 {% endblock %}
@@ -81,10 +82,10 @@
           {% for b in bookings %}
             <tr>
               <td class="tight num muted">{{ clock(b.at) }}</td>
-              <td class="tight">{{ b.job_type }}</td>
-              <td>{{ b.address }} <span class="faint">{{ b.zip }}</span></td>
+              <td class="wrap">{{ b.job_type }}{% if b.reasons %}<div class="faint reason">{{ b.reasons[:1] | upper }}{{ b.reasons[1:] }}</div>{% endif %}</td>
+              <td class="tight">{{ b.address }} <span class="faint">{{ b.zip }}</span></td>
               <td class="tight">{% if b.window %}{{ b.window.day | capitalize }} {{ b.window.label }}{% endif %}</td>
-              <td class="wrap">{{ priority_chip(b.priority) }}{% if b.reasons %} <span class="muted">{{ b.reasons }}</span>{% endif %}</td>
+              <td class="tight">{{ priority_chip(b.priority) }}</td>
               <td class="tight right"><span class="chips">
                 {% if b.status == "queued" %}<span class="chip high" title="The FSM was down; the retry job will send it">Queued</span>{% elif b.status == "failed" %}<span class="chip urgent">Failed</span>{% elif b.status == "sending" %}<span class="chip">Sending</span>{% endif %}
                 {% if b.offer == "accepted" %}<span class="chip good">Moved earlier</span>{% elif b.offer in ("queued", "dialing") %}<span class="chip accent">Offering earlier</span>{% elif b.offer %}<span class="chip" title="Earlier opening offered">Offer {{ b.offer | replace("_", " ") }}</span>{% elif b.seek_earlier %}<span class="chip accent">Seeking earlier</span>{% endif %}
@@ -134,7 +135,7 @@
               <td class="right num">{{ r.calls }}</td>
               <td class="right num">{{ r.booked }}</td>
               <td class="right num">{{ pct(r.rate) }}</td>
-              <td class="tight"><span class="bar"><i style="width: {{ (r.rate * 100) | round | int }}%"></i></span></td>
+              <td class="tight"><span class="meter"><i style="width: {{ (r.rate * 100) | round | int }}%"></i></span></td>
             </tr>
           {% endfor %}
           </tbody>

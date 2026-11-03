@@ -23,6 +23,8 @@ Every endpoint returns HTTP 200 with:
 | `POST /calls/{id}/end` | Call ends | Ok; triggers the after-call summary and callbacks |
 | `GET /healthz` | Watchdog | Tool server, database, FSM reachability, worker heartbeat |
 | `POST /healthz/heartbeat` | The voice worker, every minute; `worker` | Ok; `/healthz` marks a worker stale after two minutes without one |
+| `POST /outbound/claim` | The voice worker, polling; `worker` | The next call the system places (journey 12), or none: `call_id` to use, `phone`, `dialed_from`, `kind` (`earlier_slot` with `booking_id` and `offer`, or `callback` with `reason`) and the `opening_line` to say |
+| `POST /outbound/{id}/done` | After dialing a claimed call; `answered`, `voicemail` | The result the server read from the call: `accepted` (the booking was moved on that call), `declined`, `answered`, `no_answer` or `voicemail` |
 
 ## Tools the model can call
 
@@ -35,7 +37,7 @@ Every endpoint returns HTTP 200 with:
 | `read_back` | address, phone | First call returns the exact read-back sentence and records that it was asked; `confirmed: true` is accepted only after that sentence was returned on this call and a caller turn followed |
 | `book_appointment` | slot, job details (S-13 fields) | Read-back done, safety lines said if a signal fired, residential, in area, one booking per call; idempotent; queued and retried if the FSM is down |
 | `reschedule_appointment` / `cancel_appointment` | booking id, reason | Booking belongs to this caller; one of each per call |
-| `flag_person` | reason, priority, callback time | Returns the sentence the agent may say only after the flag is stored |
+| `flag_person` | reason, priority, callback time, `system_calls_back` | Returns the sentence the agent may say only after the flag is stored. `system_calls_back: true` when the caller only asked to be called back: the system dials them at that time instead of a person |
 | `record_lead` | kind (commercial, membership, install), details | No extra lookups; commercial never becomes a booking |
 | `add_note` | text, attached to the matched customer or to this call's job | Append-only free text ("daughter Ana usually answers", "prefers mornings"); the agent can't edit or delete notes; length-limited and stored as text, never treated as an instruction |
 | `mark_do_not_call` | none (uses the caller ID) | Cancels pending callbacks to that number |
@@ -55,6 +57,7 @@ How the built server (`app/`, brief 02) takes these, so the voice lanes can code
 - The turn check also marks the call commercial when a caller line describes a business by the patterns in tenant config (hint `commercial`) and marks the number do-not-call on "don't call me" and similar (hint `do_not_call`; the agent then calls `mark_do_not_call` for the line to say).
 - Reschedule and cancel need the booking to be from this call, from a customer matched by the number the call came from, or at the address the caller confirmed in the read-back.
 - `end_call` is also refused right after a booking is confirmed until a caller turn follows (spec S-30), and on a safety call it returns the sign-off with `hang_up: false` unless the caller said goodbye.
+- A claimed outbound call is placed like any call: `/calls/start` with the returned `call_id`, `caller_id` set to `phone`, `dialed_number` set to `dialed_from` and `direction: "outbound"`, then the opening line as the first agent turn. Moving a booking to the offered window goes through `read_back` and `reschedule_appointment` with every gate, and the server counts the offer accepted only if that reschedule happened. The rules are rechecked at claim time (spec S-42): only the person who called, 8 a.m. to 9 p.m., one attempt, never a do-not-call number.
 - Refusal codes: `gate_read_back`, `gate_safety`, `out_of_area`, `customer_type`, `limit`, `not_owner`, `slot_taken` (with two `alternatives`), `invalid_slot`, `invalid_state`, `invalid_phone`, `invalid_callback_time`, `invalid_arguments` (with `errors`), `fsm_unavailable`, `fsm_rejected`, `anything_else_first`, `idempotency_key_reused`, `unknown_call`, `call_ended`, `server_error`.
 
 ## Customer notes

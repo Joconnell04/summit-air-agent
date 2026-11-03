@@ -14,7 +14,7 @@ main { max-width: 980px; }
 {% endblock %}
 {% block body %}
 <header class="bar">
-  <a class="btn" href="/owner?day={{ call.started_at[:10] }}">Back</a>
+  <a class="btn" href="/owner?day={{ day }}">Back</a>
   <span class="name">Call {{ call.id }}</span>
   <span class="muted num">{{ call.caller_id }}</span>
   <span class="spacer"></span>

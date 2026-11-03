@@ -166,6 +166,10 @@ def finish(
                 "UPDATE callbacks SET status = 'done', updated_at = ? WHERE id = ?",
                 (iso(now), row["callback_id"]),
             )
+            conn.execute(
+                "UPDATE flags SET status = 'done' WHERE call_id = ? AND kind = 'callback_requested'",
+                (row["call_id"],),
+            )
         else:
             to_person(conn, row, f"not answered ({result})", now)
         conn.execute(

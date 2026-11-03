@@ -597,7 +597,8 @@ def book_appointment(ctx: Ctx, args: BookIn) -> Result:
                 ctx.conn,
                 ctx.call["id"],
                 "seek_earlier",
-                f"Urgent job {sent['job_id']} booked for {args.slot.date}; look for an earlier slot",
+                f"Urgent job {sent['job_id']} booked for {args.slot.date.strftime('%a %b %-d')}; "
+                "look for an earlier slot",
                 ctx.now,
                 "Urgent",
             )
@@ -791,9 +792,11 @@ def _callback_due(ctx: Ctx, time_value: str | None, minutes: int | None) -> date
 def flag_person(ctx: Ctx, args: FlagIn) -> Result:
     """The sentence comes back only after the flag and the callback are stored (spec S-23)."""
     due = _callback_due(ctx, args.callback_time, args.callback_in_minutes)
+    # A callback the system places needs no person unless the dial fails (app/outbound.py).
+    kind = "callback_requested" if args.system_calls_back else "person"
     with tx(ctx.conn):
         flag_id = records.add_flag(
-            ctx.conn, ctx.call["id"], "person", args.reason, ctx.now, args.priority
+            ctx.conn, ctx.call["id"], kind, args.reason, ctx.now, args.priority
         )
         callback_id = records.add_callback(
             ctx.conn, ctx.tenant, ctx.call, due, args.reason, ctx.now

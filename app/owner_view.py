@@ -92,9 +92,11 @@ def add_routes(app: FastAPI) -> None:
         if found is None:
             return HTMLResponse("No such call.", 404)
         tenant = services.tenants.by_slug[found["call"]["tenant"]]
+        started = tenant.local(datetime.fromisoformat(found["call"]["started_at"]))
         context = {
             "trace": found,
             "tenant": tenant.name,
+            "day": started.date().isoformat(),
             "clock": lambda value: tenant.local(datetime.fromisoformat(value)).strftime(
                 "%-I:%M:%S %p"
             ),

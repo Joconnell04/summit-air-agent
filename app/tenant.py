@@ -110,7 +110,7 @@ class Tenant:
         return start, datetime.combine(end_day, window.end, tzinfo=self.tz)
 
     def day_spoken(self, day: date, now: datetime) -> str:
-        """"today", "tomorrow" or the weekday."""
+        """ "today", "tomorrow" or the weekday."""
         today = self.local(now).date()
         if day == today:
             return "today"

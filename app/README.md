@@ -11,7 +11,10 @@ make mock-st   # the mock ServiceTitan on :8101
 make server    # the tool server on :8100
 make postman   # seed a throwaway world, start both on spare ports, run postman/tool-server.postman_collection.json
 make trace CALL=<call id>   # a call's timeline in plain text, read straight from the database
+make owner-demo             # seed a day of calls and serve the owner view on :8100
 ```
+
+The owner view is at `/owner` (open `/owner?token=<OWNER_TOKEN>` once; a cookie keeps it), with each call's timeline at `/owner/calls/{id}`. `make owner-demo` seeds `data/owner-demo/` with a week of earlier bookings and a scripted day of calls (`scripts/seed_owner_day.py`) and uses the token `dev-owner-token`. What it looks like: `docs/images/owner-view.png`.
 
 `GET /debug/calls/{id}` and `GET /debug/logs` (filter by `call_id`, `request_id`, `tool`, `errors=true`) need the `X-Debug-Token` header; `make server` sets `dev-debug-token` unless `DEBUG_TOKEN` is set.
 
@@ -24,7 +27,10 @@ make trace CALL=<call id>   # a call's timeline in plain text, read straight fro
 | `FSM_CLIENT_ID`, `FSM_CLIENT_SECRET`, `FSM_APP_KEY`, `FSM_TOKEN_URL` | the mock's values in `config.yaml` | FSM credentials; real ones come from the secret store |
 | `DEBUG_TOKEN` | empty, which refuses every debug request | Token for `/debug/*` |
 | `APP_ENV` | `development` | Anything else turns on the retention policy |
-| `JOBS_INTERVAL_SECONDS` | `60` | Background jobs (queue retry, slot cache refresh, overdue callbacks, retention); `0` turns them off |
+| `JOBS_INTERVAL_SECONDS` | `60` | Background jobs (`app/jobs.py`); `0` turns them off |
+| `OWNER_TOKEN` | empty, which refuses every owner view request | Token for `/owner` |
+| `OWNER_VIEW_URL` | empty | Where the owner view is served, for the call link in alert emails |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `MAIL_FROM` | empty, `587` | The mail server for on-call alerts. With no host, alerts are held and shown on the owner view, not sent |
 
 ## Modules
 
@@ -38,7 +44,11 @@ make trace CALL=<call id>   # a call's timeline in plain text, read straight fro
 | `lookup.py` | The richer lookup (membership, open jobs, last service, recent calls, notes, equipment) and history |
 | `booking.py` | Sending a booking to the FSM, shared by the live path and the retry queue |
 | `records.py` | The server's own tables: calls, scope, flags, callbacks (named time, owner, outbound rules, overdue), do-not-call |
-| `jobs.py` | Retry of queued bookings and leads, cache refresh, overdue callbacks, retention |
+| `jobs.py` | Retry of queued bookings and leads, earlier openings for flagged urgent bookings, queuing the callbacks the system places, booked-and-kept, on-call email after hours, cache refresh, overdue callbacks, retention |
+| `outbound.py` | Calls the system places (journey 12): what the voice layer claims, and settling each one from what happened on it |
+| `owner.py` | Every number and list on the owner view, each defined in its docstring |
+| `owner_view.py`, `templates/` | The owner view's token, routes and HTML |
+| `mail.py` | Sending alert email over SMTP, or holding it when no server is set |
 | `tenant.py` | Loading `tenants/<company>/` and picking one by dialed number |
 | `fsm/` | The adapter interface, the ServiceTitan adapter and the slot cache |
 | `trace.py` | The call timeline behind `/debug/calls/{id}` and `make trace` |
@@ -63,6 +73,10 @@ make trace CALL=<call id>   # a call's timeline in plain text, read straight fro
 | Reads and writes scoped to customers matched on the call; no delete, bulk or free-query call in the adapter | S-39 | `records.scoped_customers`, `fsm/base.py` |
 | Outbound only to the caller, 8 a.m. to 9 p.m., one attempt, never do-not-call | S-42 | `records.outbound_allowed` |
 | A booking the FSM couldn't take is queued, retried with the same keys, and flagged if it still fails; a booking still being sent (`sending`) is left to its request | S-48 | `tools.book_appointment`, `jobs.retry_queue` |
+| An urgent booking flagged for an earlier slot is offered the first opening before its window, one booking per opening, one offer call each, never an after-hours window | S-25, journey 12 | `jobs.offer_earlier_slots`, `outbound` |
+| A callback the caller asked for is dialed by the system at its time if allowed, otherwise handed to a person; a failed dial hands it to a person | S-32, S-42, journey 12 | `jobs.schedule_callbacks`, `outbound.claim`, `outbound.finish` |
+| A booking counts as kept if its job was still on the schedule when its current window came | C-42 | `jobs.check_kept` |
+| An urgent flag raised while the company is closed is emailed to the on-call person, once, with what, where, who and why | Journey 11 | `jobs.alert_on_call` |
 | Do-not-call marked on the caller's words, cancelling pending callbacks; the tool returns the line to say | S-49 | `lifecycle.turn`, `records.mark_do_not_call` |
 
 ## Template and tenant
@@ -77,5 +91,8 @@ Nothing about Summit Air is in `app/`; a test checks for the company name, its Z
 - `find_customer` by a number or address the caller states returns that customer's lookup, notes included, as the contract says. Changing their visit needs the read-back of its address, but reading the notes doesn't; worth an eval case.
 - `check_service_area` records whatever ZIP the agent passes as out of area, so a ZIP the caller only asked about counts in the owner view's demand by ZIP.
 - `end_call(reason="caller_goodbye")` on a safety call hangs up on the agent's word; it is only reachable after the lines were said and a person flagged.
+- The owner view is read-only, so a callback a person returns is never marked done there; only the system's own callbacks become done (decision #26, `docs/decisions/26-callback-done.md`). Flags have no close action either, except those the jobs settle themselves.
+- One `OWNER_TOKEN` opens every tenant's owner view (`?tenant=<slug>`); a second real tenant needs its own token.
+- Flags with no call (a lead the FSM refused) belong to no tenant and don't show on the owner view.
 - `/calls/end` marks the technician summary as pending (spec S-16); the summary job itself is not built yet.
 - Against real ServiceTitan the adapter still needs the changes listed in `servicetitan_mock/README.md` (our own idempotency keys, a capacity recheck before creating a job).

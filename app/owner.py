@@ -24,6 +24,8 @@ TYPE_LABELS = {
     "membership": "Membership lead",
     "install": "Install lead",
     "change": "Reschedule or cancel",
+    "earlier_slot": "Earlier opening",
+    "callback": "Callback",
     "other": "Other",
 }
 
@@ -92,9 +94,16 @@ def calls(conn: sqlite3.Connection, tenant: Tenant, day: date) -> list[dict]:
     found = []
     for call in rows:
         code = call_type(conn, call)
+        if call["direction"] == "outbound":
+            placed = conn.execute(
+                "SELECT kind FROM outbound WHERE placed_call_id = ?", (call["id"],)
+            ).fetchone()
+            code = placed["kind"] if placed else code
         seconds = None
         if call["ended_at"]:
-            seconds = int((parse_iso(call["ended_at"]) - parse_iso(call["started_at"])).total_seconds())
+            seconds = int(
+                (parse_iso(call["ended_at"]) - parse_iso(call["started_at"])).total_seconds()
+            )
         open_flags = conn.execute(
             "SELECT COUNT(*) FROM flags WHERE call_id = ? AND status = 'open'", (call["id"],)
         ).fetchone()[0]
@@ -125,7 +134,8 @@ def booking_rates(tenant: Tenant, day_calls: list[dict]) -> dict:
     by_type: dict[str, dict] = {}
     for call in inbound:
         row = by_type.setdefault(
-            call["type"], {"type": call["type"], "label": call["type_label"], "calls": 0, "booked": 0}
+            call["type"],
+            {"type": call["type"], "label": call["type_label"], "calls": 0, "booked": 0},
         )
         row["calls"] += 1
         row["booked"] += int(call["booked"])
@@ -164,9 +174,10 @@ def bookings(conn: sqlite3.Connection, tenant: Tenant, day: date, now: datetime)
         if row["window_start"]:
             local = tenant.local(parse_iso(row["window_start"]))
             spec = next((w for w in tenant.windows if w.start == local.time()), None)
+            label = spec.label() if spec else local.strftime("%-I:%M %p")
             window = {
                 "day": tenant.day_spoken(local.date(), now),
-                "label": spec.label() if spec else local.strftime("%-I:%M %p"),
+                "label": "after hours" if spec and spec.after_hours else label,
             }
         found.append(
             {

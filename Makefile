@@ -1,4 +1,4 @@
-.PHONY: setup test lint check ratchet ratchet-update eval-upload seed-st mock-st postman-st server postman trace
+.PHONY: setup test lint check ratchet ratchet-update eval-upload seed-st mock-st postman-st server postman trace owner-demo
 
 setup:
 	uv sync
@@ -50,3 +50,9 @@ postman:
 trace:
 	@test -n "$(CALL)" || { echo "usage: make trace CALL=<call id>"; exit 2; }
 	uv run python -m app.trace $(CALL) $(if $(DB),--db $(DB))
+
+# A seeded day of calls on the owner view: http://127.0.0.1:$(PORT)/owner?token=dev-owner-token
+owner-demo:
+	uv run python -m scripts.seed_owner_day --dir data/owner-demo
+	TOOL_DB=data/owner-demo/tool.db OWNER_TOKEN=$${OWNER_TOKEN:-dev-owner-token} JOBS_INTERVAL_SECONDS=0 \
+	  uv run uvicorn app.main:create_app --factory --port $(PORT)
