@@ -5,7 +5,16 @@ from datetime import date
 
 import pytest
 from test_ts_safety import GAS_LINES
-from toolkit import UNKNOWN, Agent, book, count, first_open, make_server, ready_to_book
+from toolkit import (
+    UNKNOWN,
+    Agent,
+    book,
+    count,
+    first_open,
+    in_area_address,
+    make_server,
+    ready_to_book,
+)
 
 from app import jobs, owner
 
@@ -249,6 +258,17 @@ def test_out_of_area_calls_by_zip_most_first_over_thirty_days(agent, clock):
     clock.advance(days=31)
     out_of_area(agent, 4, "07030")
     assert page(agent, date(2026, 12, 3))["out_of_area"] == [{"zip": "07030", "calls": 1}]
+
+
+def test_a_zip_asked_about_on_a_call_that_booked_is_not_out_of_area_demand(agent):
+    call = agent.start(caller(1))["data"]["call_id"]
+    agent.turn(call, "Do you cover Hoboken? My mom lives there. Mine's the tune-up though.")
+    agent.tool("check_service_area", call, zip="07030")
+    agent.confirm_read_back(call, in_area_address())
+    assert book(agent, call, first_open(agent, call))["ok"]
+    agent.end(call, "agent_end")
+    out_of_area(agent, 2, "07030")
+    assert page(agent)["out_of_area"] == [{"zip": "07030", "calls": 1}]
 
 
 def test_safety_overrides_and_refused_tool_calls_are_counted(agent):

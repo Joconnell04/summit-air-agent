@@ -99,9 +99,18 @@ def test_the_read_back_sentence_reads_the_number_in_groups(agent):
     call = agent.start(UNKNOWN)["data"]["call_id"]
     asked = agent.tool("read_back", call, address=in_area_address(), phone="caller_id")
     assert asked["say"] == (
-        "Let me read that back: 101 Union St, Brooklyn, 11231, and the best number is "
-        "212, 555, 0999. Is that right?"
+        "Let me read that back: your home at 101 Union St, Brooklyn, 11231, and the best number "
+        "is 212, 555, 0999. Is that right?"
     )
+
+
+def test_a_caller_who_answers_the_read_back_with_a_business_cannot_book(agent):
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "The heat's out.")
+    agent.tool("read_back", call, address=in_area_address(), phone="caller_id")
+    agent.turn(call, "Well, it's a business, it's our office upstairs.")
+    agent.tool("read_back", call, address=in_area_address(), phone="caller_id", confirmed=True)
+    assert book(agent, call, first_open(agent, call))["refused"] == "customer_type"
 
 
 def test_the_number_im_calling_from_is_the_real_caller_id(agent):
@@ -198,6 +207,18 @@ def test_a_commercial_customer_found_by_address_is_refused_by_the_fsm_check(agen
     refused = book(agent, call, first_open(agent, call))
     assert refused["refused"] == "customer_type"
     assert fsm_jobs(mock) == before
+
+
+def test_known_caller_with_every_location_out_of_area_is_recorded_at_start(agent, scenarios):
+    resident = scenarios["outOfAreaResidents"][0]
+    call = agent.start(resident["phone"])["data"]["call_id"]
+    recorded = count(
+        agent,
+        "SELECT COUNT(*) FROM out_of_area WHERE call_id = ? AND zip = ?",
+        call,
+        resident["zip"],
+    )
+    assert recorded == 1
 
 
 def test_out_of_area_is_refused_and_recorded_with_its_zip(agent, mock, scenarios):

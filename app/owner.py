@@ -316,12 +316,15 @@ def leads(conn: sqlite3.Connection, tenant: Tenant, day: date) -> list[dict]:
 
 def out_of_area(conn: sqlite3.Connection, tenant: Tenant, day: date) -> list[dict]:
     """Out-of-area calls by ZIP over the LOOKBACK_DAYS up to the end of the day, most first (S-28),
-    so demand outside the area can inform a decision to expand."""
+    so demand outside the area can inform a decision to expand. A call that booked a visit is
+    left out: the caller lives inside the area, and the ZIP they asked about was someone else's."""
     _, end = day_bounds(tenant, day)
     since = iso(parse_iso(end) - timedelta(days=LOOKBACK_DAYS))
     rows = conn.execute(
         "SELECT o.zip, COUNT(DISTINCT o.call_id) AS calls FROM out_of_area o "
         "JOIN calls c ON c.id = o.call_id WHERE c.tenant = ? AND o.at >= ? AND o.at < ? "
+        "AND NOT EXISTS (SELECT 1 FROM bookings b WHERE b.call_id = o.call_id AND b.kind = 'book' "
+        "AND b.status IN ('booked', 'queued', 'sending')) "
         "GROUP BY o.zip ORDER BY calls DESC, o.zip",
         (tenant.slug, since, end),
     ).fetchall()

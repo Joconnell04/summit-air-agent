@@ -32,6 +32,26 @@ def test_no_heat_with_someone_vulnerable_or_a_cold_house_is_urgent_with_a_reason
     assert result.reasons
 
 
+@pytest.mark.parametrize(
+    "text",
+    [
+        "I'm 84 and I use a cane",
+        "my mother’s 91",
+        "she is 78",
+        "age 84",
+        "my dad's in his 80s",
+        "grandma is in her nineties",
+    ],
+)
+def test_an_older_person_is_recognized_however_the_age_is_said(text):
+    assert decide("no_heat", text).level == "Urgent"
+
+
+@pytest.mark.parametrize("text", ["the boiler is 30 years old", "I'm 35", "it's 55 in here"])
+def test_younger_ages_and_temperatures_are_not_ages_that_count(text):
+    assert "vulnerable_person" not in decide("no_heat", text).rules
+
+
 def test_no_heat_alone_and_a_defrost_or_lockout_story_stay_high():
     assert decide("no_heat").level == "High"
     story = "the heat pump is steaming outside and stopped, maybe it's defrosting; the furnace locked out"

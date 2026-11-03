@@ -106,7 +106,8 @@ commercial:
   owned: [restaurant, bakery, deli, cafe, bar, store, shop, salon, gym, clinic, daycare, warehouse, business]
   run: [restaurant, bakery, deli, cafe, bar, store, shop, salon, gym, clinic, daycare, warehouse,
         business, company, school, church, hotel, office, building, property, properties]
-  phrases: [property manager, property management, office building, commercial property, rooftop unit]
+  phrases: [property manager, property management, office building, commercial property, rooftop unit,
+            "it's a business", it is a business, "it's commercial", not a home, "not my home"]
   not: [business partner, business trip, business card, home office, my own business hours]
 
 # Rules can only raise priority (spec S-21). Each fires on words the caller said on this call, or on
@@ -196,6 +197,10 @@ lines:
     Someone will call you by {time}.
   flag_stored_no_callback: I've let our team know.
   lead_stored: Someone from our team will call you by {time} to tell you more.
+  # {address} is street, unit, city and ZIP; {phone} is read in groups. Naming it a home is how
+  # every booking confirms the caller is residential.
+  read_back: >-
+    Let me read that back: your home at {address}, and the best number is {phone}. Is that right?
   commercial: >-
     Thanks for thinking of us. Unfortunately Summit Air only works on homes, so we're not the right
     fit for this one.
