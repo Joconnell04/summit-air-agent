@@ -5,14 +5,15 @@ import shutil
 from datetime import UTC, date, datetime
 
 import yaml
-from conftest import NOW, TENANT_DIR, TOMORROW, Api, build_small_world, job_body
+from conftest import TENANT_DIR, TOMORROW, Api, build_small_world, job_body
 
 from servicetitan_mock import logs, worldkit
 from servicetitan_mock.app import create_app
 from servicetitan_mock.config import TenantConfig
 from servicetitan_mock.db import connect
 
-ERROR_KEYS = {"status", "code", "title", "detail", "errors", "requestId"}
+# ServiceTitan's problem-details body. data.code is the mock's own (not in the real API).
+ERROR_KEYS = {"type", "title", "status", "traceId", "errors", "data"}
 
 
 def test_every_kind_of_failure_uses_one_json_shape(small):
@@ -22,9 +23,10 @@ def test_every_kind_of_failure_uses_one_json_shape(small):
         400: api.post("/jpm/jobs", {"customerId": "not a number"}),
         404: api.get("/crm/customers/99999"),
         409: None,
-        422: api.post("/jpm/jobs", job_body(*ids["commercial"], TOMORROW, "morning")),
+        422: api.post("/jpm/jobs", job_body(*ids["home"], TOMORROW, "morning", job_type=999)),
     }
-    api.post("/jpm/jobs", job_body(customer_id, location_id, TOMORROW, "morning"))
+    for _ in range(3):  # all three technicians
+        api.post("/jpm/jobs", job_body(customer_id, location_id, TOMORROW, "morning"))
     failures[409] = api.post("/jpm/jobs", job_body(customer_id, location_id, TOMORROW, "morning"))
     failures[401] = api.client.get(api.url("/crm/customers"))
     failures[403] = api.client.get(
@@ -35,8 +37,12 @@ def test_every_kind_of_failure_uses_one_json_shape(small):
         body = response.json()
         assert set(body) == ERROR_KEYS, expected
         assert body["status"] == response.status_code == int(expected)
-        assert body["requestId"] == response.headers["X-Request-Id"]
+        assert body["traceId"] == response.headers["X-Request-Id"]
+        assert body["type"].startswith("https://tools.ietf.org/html/")
+        assert isinstance(body["errors"], dict) and isinstance(body["data"], dict)
     assert failures[400].json()["errors"]  # says which field was wrong
+    assert all(isinstance(v, list) for v in failures[400].json()["errors"].values())
+    assert failures[409].json()["data"]["code"] == "no_capacity"
 
 
 def test_the_token_endpoint_checks_credentials(small):
@@ -45,11 +51,11 @@ def test_the_token_endpoint_checks_credentials(small):
         "/connect/token",
         data={"grant_type": "client_credentials", "client_id": "x", "client_secret": "y"},
     )
-    assert bad.status_code == 400 and bad.json()["code"] == "invalid_client"
+    assert bad.status_code == 400 and bad.json()["data"]["code"] == "invalid_client"
     wrong_grant = api.client.post(
         "/connect/token", data={"grant_type": "password", "client_id": "x", "client_secret": "y"}
     )
-    assert wrong_grant.json()["code"] == "unsupported_grant_type"
+    assert wrong_grant.json()["data"]["code"] == "unsupported_grant_type"
     auth = api.app.state.cfg.auth
     good = api.client.post(
         "/connect/token",
@@ -68,14 +74,14 @@ def test_an_expired_token_is_refused(small):
     api.app.state.tokens[token] = 0
     response = api.get("/crm/customers")
     assert response.status_code == 401
-    assert response.json()["code"] == "unauthorized"
+    assert response.json()["data"]["code"] == "unauthorized"
 
 
 def test_a_request_for_another_tenant_is_refused(small):
     api, _ = small
     response = api.client.get("/crm/v2/tenant/999/customers", headers=api.headers)
     assert response.status_code == 404
-    assert response.json()["code"] == "unknown_tenant"
+    assert response.json()["data"]["code"] == "unknown_tenant"
 
 
 def test_lists_page_like_servicetitan(world):
@@ -129,7 +135,9 @@ def test_logs_can_be_filtered_by_call_id_request_id_and_errors(small):
         **{"X-Call-Id": "call-A"},
     )
     failed = api.post(
-        "/jpm/jobs", job_body(*ids["commercial"], TOMORROW, "morning"), **{"X-Call-Id": "call-A"}
+        "/jpm/jobs",
+        job_body(customer_id, location_id, TOMORROW, "morning", job_type=999),
+        **{"X-Call-Id": "call-A"},
     )
     api.get("/crm/customers")
     api.request("GET", "/crm/customers", headers={"X-Call-Id": "call-B"})
@@ -140,11 +148,10 @@ def test_logs_can_be_filtered_by_call_id_request_id_and_errors(small):
     errors = api.client.get("/debug/logs", params={"callId": "call-A", "errors": True}).json()[
         "data"
     ]
-    assert [r["error"] for r in errors] == ["customer_type_not_supported"]
+    assert [r["error"] for r in errors] == ["unknown_reference"]
     one = api.client.get("/debug/logs", params={"requestId": failed.headers["X-Request-Id"]}).json()
     assert (
-        one["count"] == 1
-        and one["data"][0]["responseBody"]["code"] == "customer_type_not_supported"
+        one["count"] == 1 and one["data"][0]["responseBody"]["data"]["code"] == "unknown_reference"
     )
     assert api.client.get("/debug/logs", params={"callId": "nobody"}).json()["count"] == 0
 
@@ -172,48 +179,42 @@ def test_company_facts_come_from_the_config_file_not_the_code(tmp_path):
     tenant = tmp_path / "frostline"
     shutil.copytree(TENANT_DIR, tenant)
     config = yaml.safe_load((tenant / "config.yaml").read_text())
-    config["company"]["name"] = "Frostline Heating"
-    config["fees"]["diagnostic"] = 89
     config["zones"] = [{"id": 1, "name": "Nassau", "county": "Nassau", "zips": ["11501", "11550"]}]
+    config["tag_types"] = [{"id": 9, "name": "Called back", "code": "CB", "active": True}]
+    config["call_reasons"] = [{"id": 5, "name": "Boiler", "isLead": False, "active": True}]
     (tenant / "config.yaml").write_text(yaml.safe_dump(config))
 
-    ids = build_small_world(tmp_path / "w.db")
+    build_small_world(tmp_path / "w.db")
     api = Api(create_app(tmp_path / "w.db", tenant, tmp_path / "w.log"))
-    profile = api.get("/settings/company-profile").json()
-    assert profile["name"] == "Frostline Heating"
-    assert profile["fees"]["diagnostic"] == 89
-    assert profile["serviceAreaZips"] == ["11501", "11550"]
-    assert profile["counties"] == ["Nassau"]
-    # 11201 is no longer in the service area, so the booking is refused for that reason.
-    assert (
-        api.post("/jpm/jobs", job_body(*ids["home"], TOMORROW, "morning")).json()["code"]
-        == "out_of_area"
-    )
+    zones = api.get("/dispatch/zones").json()["data"]
+    assert [(z["name"], z["zips"]) for z in zones] == [("Nassau", ["11501", "11550"])]
+    assert "county" not in zones[0], "ServiceTitan zones carry zips and cities, not counties"
+    assert [t["name"] for t in api.get("/settings/tag-types").json()["data"]] == ["Called back"]
+    assert [r["name"] for r in api.get("/jbce/call-reasons").json()["data"]] == ["Boiler"]
 
 
-def test_summit_air_leaves_fees_unset_so_the_agent_never_quotes_one(small):
+def test_there_is_no_company_profile_endpoint_because_servicetitan_has_none(small):
     api, _ = small
-    profile = api.get("/settings/company-profile").json()
-    assert profile["fees"] == {"diagnostic": None, "after_hours": None}
-    assert profile["afterHours"] == {"urgentOnly": True, "windows": ["after_hours"]}
-    assert profile["counties"] == ["Kings", "Queens", "Richmond"]
-    assert profile["hours"]["sun"] is None
+    assert api.get("/settings/company-profile").status_code == 404
 
 
-def test_calls_can_be_logged_and_a_repeated_external_id_returns_the_first(small):
-    api, ids = small
-    body = {
-        "externalId": "ext-1",
-        "fromNumber": "(718) 555-0111",
-        "customerId": ids["home"][0],
-        "callType": "Booked",
-    }
-    first = api.post("/telecom/calls", body)
-    second = api.post("/telecom/calls", body)
-    assert (first.status_code, second.status_code) == (201, 200)
-    assert second.json()["id"] == first.json()["id"]
-    assert api.get("/telecom/calls", phone="7185550111").json()["totalCount"] == 1
-    assert api.post("/telecom/calls", {**body, "fromNumber": "123"}).status_code == 400
+def test_summit_air_leaves_fees_unset_so_the_agent_never_quotes_one():
+    cfg = TenantConfig.load(TENANT_DIR)
+    assert cfg.fees == {"diagnostic": None, "after_hours": None}
+    assert cfg.company["hours"]["sun"] is None
+    assert sorted({z["county"] for z in cfg.zones}) == ["Kings", "Queens", "Richmond"]
+
+
+def test_the_arrival_windows_are_listed_the_way_servicetitan_lists_them(small):
+    api, _ = small
+    windows = api.get("/dispatch/arrival-windows").json()["data"]
+    assert [(w["start"], w["duration"]) for w in windows] == [
+        ("08:00:00", "04:00:00"),
+        ("12:00:00", "04:00:00"),
+        ("16:00:00", "04:00:00"),
+        ("20:00:00", "12:00:00"),
+    ]
+    assert set(windows[0]) == {"id", "start", "duration", "businessUnitIds", "active"}
 
 
 def tenant_copy(tmp_path, edit) -> TenantConfig:
@@ -226,44 +227,37 @@ def tenant_copy(tmp_path, edit) -> TenantConfig:
     return TenantConfig.load(tenant)
 
 
-def test_the_customer_types_a_company_refuses_come_from_the_config(tmp_path):
-    cfg = tenant_copy(
-        tmp_path,
-        lambda c: c["company"].update(
-            rejected_customer_types={"Residential": "We only book commercial accounts."}
-        ),
-    )
-    ids = build_small_world(tmp_path / "w.db")
-    api = Api(
-        create_app(tmp_path / "w.db", tmp_path / "other-co", tmp_path / "w.log", clock=lambda: NOW)
-    )
-
-    refused = api.post("/jpm/jobs", job_body(*ids["home"], TOMORROW, "morning"))
-    assert refused.status_code == 422
-    assert refused.json()["code"] == "customer_type_not_supported"
-    assert refused.json()["detail"] == "We only book commercial accounts."
-    # Summit Air refuses commercial customers; this company does not.
-    assert (
-        api.post("/jpm/jobs", job_body(*ids["commercial"], TOMORROW, "morning")).status_code == 201
-    )
-    assert cfg.rejected_customer_types == {"Residential": "We only book commercial accounts."}
-
-
-def test_lead_kinds_come_from_the_config(small):
-    api, _ = small
+def test_a_lead_carries_a_call_reason_from_the_config_and_servicetitans_field_names(small):
+    api, ids = small
     lead = {
-        "kind": "Replacement",
-        "name": "Pat Home",
-        "phone": "(718) 555-0123",
+        "campaignId": 301,
+        "callReasonId": 701,
+        "leadCustomerName": "Pat Home",
+        "leadPhone": "(718) 555-0123",
+        "leadStreet": "1 Main St",
+        "leadZip": "11201",
         "summary": "New boiler.",
     }
-    assert api.post("/crm/leads", lead).status_code == 201
-    unknown = api.post("/crm/leads", {**lead, "kind": "Roof inspection"})
-    assert unknown.status_code == 400
-    assert "Replacement" in unknown.json()["errors"]["kind"]
-    # A refused customer type must be recorded as that kind, and no other lead may use it.
-    wrong_type = api.post("/crm/leads", {**lead, "kind": "Commercial"})
-    assert wrong_type.status_code == 400
+    made = api.post("/crm/leads", lead)
+    assert made.status_code == 200
+    body = made.json()
+    assert body["status"] == "Open" and body["callReasonId"] == 701
+    assert body["leadCustomerName"] == "Pat Home" and body["leadZip"] == "11201"
+    assert not {"kind", "customerType", "name", "phone"} & set(body)
+    unknown = api.post("/crm/leads", {**lead, "callReasonId": 999})
+    assert unknown.status_code == 422
+    assert unknown.json()["errors"]["callReasonId"]
+    assert (
+        api.post("/crm/leads", {k: v for k, v in lead.items() if k != "campaignId"}).status_code
+        == 400
+    )
+    found = api.get("/crm/leads", leadPhone="7185550123").json()["data"]
+    assert [lead_["id"] for lead_ in found] == [body["id"]]
+    # The company's rule that a commercial caller leaves a lead and cannot book is not ServiceTitan's.
+    commercial = api.post(
+        "/crm/leads", {**lead, "callReasonId": 704, "customerId": ids["commercial"][0]}
+    )
+    assert commercial.status_code == 200
 
 
 def test_the_world_builder_reads_names_and_contact_details_from_the_config(tmp_path):

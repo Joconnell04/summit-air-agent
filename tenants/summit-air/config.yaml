@@ -6,12 +6,15 @@ tenant_id: 1000
 company:
   name: Summit Air
   timezone: America/New_York
+  state: NY
+  country: USA
   # Main line and the domain used for generated technician email addresses. ASSUMED; the
   # 555-01xx numbers and .example are reserved for fiction.
   phone: "(718) 555-0100"
   email_domain: summit-air.example
-  # Customer types the company does not book. Each key maps to the message the API returns. These
-  # customers can still be stored and can leave a lead.
+  # Customer types the company does not book. Each key maps to the message the agent says (not
+  # ServiceTitan: its API takes any customer type). These customers can still be stored and can
+  # leave a lead.
   rejected_customer_types:
     Commercial: This company only books residential customers. Record a commercial lead instead.
   # ASSUMED hours. Arrival windows below stay inside them.
@@ -30,15 +33,13 @@ fees:
   diagnostic: null
   after_hours: null
 
-after_hours:
-  # Outside the arrival windows, only the on-call technician works, and only urgent jobs.
-  urgent_only: true
-
-# Mock credentials for the OAuth client-credentials flow. Not real secrets.
+# Mock credentials for the OAuth client-credentials flow. Not real secrets. user_id is the
+# ServiceTitan user the integration acts as; it shows as createdById on notes it adds.
 auth:
   client_id: cid.summit-air-mock
   client_secret: cs.summit-air-mock
   app_key: ak1.summit-air-mock
+  user_id: 9001
 
 # ASSUMED county list (Brooklyn, Queens, Staten Island). The ZIPs are real ZIP codes in those
 # counties; zone names are ours.
@@ -86,8 +87,10 @@ arrival_windows:
   - {id: evening, start: "16:00", end: "20:00"}
   - {id: after_hours, start: "20:00", end: "08:00", ends_next_day: true, after_hours: true}
 
-# Technicians kept free for urgent jobs, per arrival window. Only the business units listed in
-# business_unit_ids hold any. per_day is keyed by the same day names as company.hours; a day or
+# Technicians kept free for urgent jobs, per arrival window. This is Summit Air's own rule, applied
+# by the tool server when it offers times (app/capacity.py); ServiceTitan's capacity has no such
+# hold and the mock does not apply it. After-hours windows (the on-call technician) are urgent-only
+# the same way. Only the business units listed in business_unit_ids hold any. per_day is keyed by the same day names as company.hours; a day or
 # window left out holds none.
 urgent_hold:
   business_unit_ids: [11]
@@ -100,9 +103,29 @@ urgent_hold:
     sat: {morning: 1, afternoon: 1}
     sun: {}
 
-# What a lead can be about. A lead whose kind is a rejected customer type (Commercial) must also
-# have that customer type.
-lead_kinds: [Replacement, Install, Estimate, Commercial, Other]
+# Call reasons, as ServiceTitan's jbce call-reasons list returns them. A lead carries one of the
+# lead reasons (isLead) as its callReasonId; the agent's lead kinds map onto these in agent.yaml.
+call_reasons:
+  - {id: 701, name: Replacement, isLead: true, active: true}
+  - {id: 702, name: Install, isLead: true, active: true}
+  - {id: 703, name: Estimate, isLead: true, active: true}
+  - {id: 704, name: Commercial, isLead: true, active: true}
+  - {id: 705, name: Other, isLead: true, active: true}
+  - {id: 710, name: No heat, isLead: false, active: true}
+  - {id: 711, name: No cooling, isLead: false, active: true}
+  - {id: 712, name: Tune-up, isLead: false, active: true}
+  - {id: 713, name: Quote for new system, isLead: true, active: true}
+  - {id: 714, name: Question about my visit, isLead: false, active: true}
+  - {id: 715, name: Billing question, isLead: false, active: true}
+
+# Tag types, as ServiceTitan's settings tag-types list returns them. The three callback tags are how
+# an outbound callback is dispositioned: a person at the office applies one in ServiceTitan the way
+# they would mark any call, and the tool server applies one to the callbacks it places itself
+# (docs/decisions/26-callback-done.md). agent.yaml names which tag means what.
+tag_types:
+  - {id: 801, name: Callback resolved, code: CB-RES, color: "#2e7d32", active: true}
+  - {id: 802, name: Callback open, code: CB-OPEN, color: "#ef6c00", active: true}
+  - {id: 803, name: No contact, code: CB-NONE, color: "#757575", active: true}
 
 # Names for the system_type values on installed equipment. A type left out is shown as its id with
 # underscores replaced by spaces.

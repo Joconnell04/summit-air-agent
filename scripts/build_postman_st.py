@@ -9,35 +9,33 @@ import json
 from pathlib import Path
 
 OUT = Path(__file__).resolve().parent.parent / "postman"
-TENANT = "{{base_url}}/%s/v2/tenant/{{tenant_id}}"
+TENANT = "{{base_url}}/%s/%s/tenant/{{tenant_id}}"
 
 ERROR_SHAPE = """
 if (pm.response.code >= 400) {
   pm.test('error uses the standard shape', () => {
     const b = pm.response.json();
-    ['status', 'code', 'title', 'detail', 'errors', 'requestId'].forEach(k => pm.expect(b).to.have.property(k));
+    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));
     pm.expect(b.status).to.eql(pm.response.code);
   });
 }"""
 
 PICK_WINDOWS = """
-const open = [];
-pm.response.json().availabilities.forEach(d => d.timeslots.forEach(s => {
-  if (s.isAvailable && !s.afterHours) open.push(s);
-}));
+const free = (f) => f.technicians.filter(t => t.status === 'Available' && t.hasRequiredSkills).length;
+const open = pm.response.json().availabilities.filter(f => f.isAvailable && !f.start.includes('T20:00:00'));
 pm.test('at least two open windows in the next ten days', () => pm.expect(open.length).to.be.at.least(2));
 const v = pm.collectionVariables;
-v.set('win1_start', open[0].start); v.set('win1_end', open[0].end); v.set('win1_open', open[0].openAvailability);
-v.set('win2_start', open[1].start); v.set('win2_end', open[1].end); v.set('win2_open', open[1].openAvailability);
+v.set('win1_start', open[0].startUtc); v.set('win1_end', open[0].endUtc); v.set('win1_open', free(open[0]));
+v.set('win2_start', open[1].startUtc); v.set('win2_end', open[1].endUtc); v.set('win2_open', free(open[1]));
 """
 
 
 def open_of(var_prefix: str) -> str:
-    """JS that reads the open count for window 1 or 2 from a capacity response."""
+    """JS that reads how many technicians are free in window 1 or 2 from a capacity response."""
     return (
-        "const find = (start) => { let hit = null; pm.response.json().availabilities.forEach(d => "
-        "d.timeslots.forEach(s => { if (s.start === start) hit = s; })); return hit; };\n"
-        f"const open{var_prefix} = (n) => find(pm.collectionVariables.get('win' + n + '_start')).openAvailability;\n"
+        "const find = (start) => pm.response.json().availabilities.find(f => f.startUtc === start);\n"
+        "const free = (f) => f.technicians.filter(t => t.status === 'Available' && t.hasRequiredSkills).length;\n"
+        f"const open{var_prefix} = (n) => free(find(pm.collectionVariables.get('win' + n + '_start')));\n"
     )
 
 
@@ -62,8 +60,9 @@ def item(
     pre="",
     headers=None,
     raw_url=None,
+    version="v2",
 ) -> dict:
-    url = raw_url or (TENANT % module + "/" + path if module else "{{base_url}}/" + path)
+    url = raw_url or (TENANT % (module, version) + "/" + path if module else "{{base_url}}/" + path)
     header = [{"key": "Content-Type", "value": "application/json"}] if body is not None else []
     if auth and module:
         header += [
@@ -118,6 +117,16 @@ def form_item(name: str, fields: dict, code: int, check: str) -> dict:
     }
 
 
+TEST_ADDRESS = {
+    "street": "9 Test St",
+    "unit": "",
+    "city": "Brooklyn",
+    "state": "NY",
+    "zip": "11201",
+    "country": "USA",
+}
+
+
 def folder(name: str, items: list[dict]) -> dict:
     return {"name": name, "item": items}
 
@@ -152,7 +161,7 @@ def build() -> dict:
             "endsOnOrBefore": "{{cap_to}}",
             "businessUnitIds": [11],
             "jobTypeId": 203,
-            "priority": "Normal",
+            "skillBasedAvailability": True,
         },
         indent=2,
     )
@@ -163,9 +172,15 @@ def build() -> dict:
             "businessUnitId": 11,
             "jobTypeId": 203,
             "priority": "Normal",
+            "campaignId": 301,
             "summary": "Newman check",
             "appointments": [
-                {"arrivalWindowStart": "{{win1_start}}", "arrivalWindowEnd": "{{win1_end}}"}
+                {
+                    "start": "{{win1_start}}",
+                    "end": "{{win1_end}}",
+                    "arrivalWindowStart": "{{win1_start}}",
+                    "arrivalWindowEnd": "{{win1_end}}",
+                }
             ],
         },
         indent=2,
@@ -173,24 +188,6 @@ def build() -> dict:
     # Numbers must not be quoted in the raw body; Postman substitutes the text.
     for name in ("park_customer_id", "park_location_id"):
         job_body = job_body.replace(f'"{{{{{name}}}}}"', f"{{{{{name}}}}}")
-
-    def bad_job(customer: str, location: str) -> str:
-        return (
-            json.dumps(
-                {
-                    "customerId": f"{{{{{customer}}}}}",
-                    "locationId": f"{{{{{location}}}}}",
-                    "businessUnitId": 11,
-                    "jobTypeId": 203,
-                    "appointments": [
-                        {"arrivalWindowStart": "{{win1_start}}", "arrivalWindowEnd": "{{win1_end}}"}
-                    ],
-                },
-                indent=2,
-            )
-            .replace(f'"{{{{{customer}}}}}"', f"{{{{{customer}}}}}")
-            .replace(f'"{{{{{location}}}}}"', f"{{{{{location}}}}}")
-        )
 
     def capacity_check(name, code_lines):
         return item(
@@ -231,7 +228,7 @@ def build() -> dict:
                         "Bad token request",
                         {"client_id": "nobody", "client_secret": "wrong"},
                         400,
-                        "pm.test('says invalid_client', () => pm.expect(pm.response.json().code).to.eql('invalid_client'));",
+                        "pm.test('says invalid_client', () => pm.expect(pm.response.json().data.code).to.eql('invalid_client'));",
                     ),
                     item("Scenarios", "GET", "debug/scenarios", check=SET_VARS),
                     item(
@@ -243,12 +240,12 @@ def build() -> dict:
                         auth=False,
                     ),
                     item(
-                        "Company profile",
+                        "No company profile",
                         "GET",
                         "company-profile",
                         module="settings",
-                        check="pm.test('fees are not invented', () => pm.expect(pm.response.json().fees.diagnostic).to.eql(null));\n"
-                        "pm.test('has a service area', () => pm.expect(pm.response.json().serviceAreaZips.length).to.be.above(10));",
+                        code=404,
+                        check="pm.test('ServiceTitan has no such endpoint', () => pm.expect(pm.response.json().status).to.eql(404));",
                     ),
                 ],
             ),
@@ -275,15 +272,14 @@ def build() -> dict:
                         "GET",
                         "customers/{{park_customer_id}}/contacts",
                         module="crm",
-                        check="pm.test('includes the adult child', () => pm.expect(pm.response.json().data.map(c => c.role)).to.include('adult_child'));",
+                        check="pm.test('includes the adult child', () => pm.expect(pm.response.json().data.map(c => c.memo)).to.include('Adult child: David Park'));",
                     ),
                     item(
                         "Add customer contact",
                         "POST",
                         "customers/{{park_customer_id}}/contacts",
                         module="crm",
-                        code=201,
-                        body={"type": "Phone", "value": "(718) 555-0199", "role": "owner"},
+                        body={"type": "Phone", "value": "(718) 555-0199", "memo": "Owner"},
                     ),
                     item(
                         "Customer notes",
@@ -297,8 +293,7 @@ def build() -> dict:
                         "POST",
                         "customers/{{park_customer_id}}/notes",
                         module="crm",
-                        code=201,
-                        body={"text": "Prefers mornings.", "createdBy": "agent"},
+                        body={"text": "Prefers mornings.", "pinToTop": False},
                         check="pm.test('keeps the text as given', () => pm.expect(pm.response.json().text).to.eql('Prefers mornings.'));",
                     ),
                     item(
@@ -322,19 +317,11 @@ def build() -> dict:
                         "POST",
                         "customers",
                         module="crm",
-                        code=201,
                         body={
                             "name": "Newman Test",
-                            "locations": [
-                                {
-                                    "address": {
-                                        "street": "9 Test St",
-                                        "city": "Brooklyn",
-                                        "state": "NY",
-                                        "zip": "11201",
-                                    }
-                                }
-                            ],
+                            "type": "Residential",
+                            "address": TEST_ADDRESS,
+                            "locations": [{"name": "9 Test St", "address": TEST_ADDRESS}],
                             "contacts": [{"type": "MobilePhone", "value": "(646) 555-0100"}],
                         },
                         headers={"Idempotency-Key": "newman-customer-{{run_id}}"},
@@ -347,8 +334,9 @@ def build() -> dict:
                         "POST",
                         "locations",
                         module="crm",
-                        code=201,
-                        body='{"customerId": {{new_customer_id}}, "address": {"street": "10 Test St", "zip": "11201"}}',
+                        body='{"customerId": {{new_customer_id}}, "name": "10 Test St", "address": '
+                        + json.dumps({**TEST_ADDRESS, "street": "10 Test St"})
+                        + "}",
                     ),
                     item(
                         "Customers",
@@ -363,43 +351,32 @@ def build() -> dict:
                         "POST",
                         "booking-provider/501/bookings",
                         module="crm",
-                        code=201,
                         body={
                             "externalId": "newman-{{run_id}}",
                             "source": "newman",
                             "name": "Newman Test",
                             "summary": "No heat",
-                            "address": {"street": "9 Test St", "zip": "11201"},
+                            "isFirstTimeClient": True,
+                            "address": TEST_ADDRESS,
                             "contacts": [{"type": "MobilePhone", "value": "(646) 555-0100"}],
                         },
-                        check="pm.collectionVariables.set('booking_id', pm.response.json().id);",
+                        check="pm.collectionVariables.set('booking_id', pm.response.json().id);\n"
+                        "pm.test('is new, under the provider', () => pm.expect([pm.response.json().status, pm.response.json().bookingProviderId]).to.eql(['New', 501]));",
                     ),
                     item(
                         "Repeat booking returns the first",
                         "POST",
                         "booking-provider/501/bookings",
                         module="crm",
-                        code=200,
                         body={
                             "externalId": "newman-{{run_id}}",
                             "source": "newman",
                             "name": "Newman Test",
                             "summary": "No heat",
-                            "address": {"street": "9 Test St", "zip": "11201"},
+                            "isFirstTimeClient": True,
+                            "address": TEST_ADDRESS,
                         },
                         check="pm.test('same booking', () => pm.expect(pm.response.json().id).to.eql(Number(pm.collectionVariables.get('booking_id'))));",
-                    ),
-                    item(
-                        "Out-of-area booking",
-                        "POST",
-                        "booking-provider/501/bookings",
-                        module="crm",
-                        code=422,
-                        body={
-                            "name": "Far",
-                            "address": {"street": "47 Willis Ave", "zip": "11501"},
-                        },
-                        check="pm.test('says out_of_area', () => pm.expect(pm.response.json().code).to.eql('out_of_area'));",
                     ),
                     item(
                         "Bookings",
@@ -414,18 +391,18 @@ def build() -> dict:
                         "POST",
                         "leads",
                         module="crm",
-                        code=201,
                         body={
-                            "kind": "Commercial",
-                            "customerType": "Commercial",
-                            "name": "Newman Deli",
-                            "phone": "(718) 555-0199",
+                            "campaignId": 302,
+                            "callReasonId": 704,
+                            "leadCustomerName": "Newman Deli",
+                            "leadPhone": "(718) 555-0199",
                             "summary": "Walk-in cooler down.",
                         },
-                        check="pm.collectionVariables.set('lead_id', pm.response.json().id);",
+                        check="pm.collectionVariables.set('lead_id', pm.response.json().id);\n"
+                        "pm.test('open, with the Commercial call reason', () => pm.expect([pm.response.json().status, pm.response.json().callReasonId]).to.eql(['Open', 704]));",
                     ),
                     item(
-                        "Leads", "GET", "leads", module="crm", query={"customerType": "Commercial"}
+                        "Leads", "GET", "leads", module="crm", query={"leadPhone": "(718) 555-0199"}
                     ),
                     item("Lead", "GET", "leads/{{lead_id}}", module="crm"),
                 ],
@@ -438,7 +415,7 @@ def build() -> dict:
                         "GET",
                         "membership-types",
                         module="memberships",
-                        check="pm.test('Summit Standard Membership has priority scheduling', () => pm.expect(pm.response.json().data.find(t => t.name === 'Summit Standard Membership').perks.prioritySched).to.eql(true));",
+                        check="pm.test('Summit Standard Membership has no perks block, only ServiceTitan fields', () => { const t = pm.response.json().data.find(t => t.name === 'Summit Standard Membership'); pm.expect(t).to.not.have.property('perks'); pm.expect(t.recurringServices.length).to.eql(2); });",
                     ),
                     item("Membership type", "GET", "membership-types/601", module="memberships"),
                     item(
@@ -446,15 +423,15 @@ def build() -> dict:
                         "GET",
                         "memberships",
                         module="memberships",
-                        query={"customerId": "{{moretti_customer_id}}"},
+                        query={"customerIds": "{{moretti_customer_id}}"},
                         check="pm.test('listed and Expired', () => pm.expect(pm.response.json().data[0].status).to.eql('Expired'));",
                     ),
                     item(
-                        "Member found by address",
+                        "Member found by customer",
                         "GET",
                         "memberships",
                         module="memberships",
-                        query={"locationId": "{{park_location_id}}"},
+                        query={"customerIds": "{{park_customer_id}}"},
                         check="pm.test('one active membership', () => pm.expect(pm.response.json().data[0].status).to.eql('Active'));",
                     ),
                     item(
@@ -469,15 +446,16 @@ def build() -> dict:
                         "GET",
                         "recurring-service-events",
                         module="memberships",
-                        query={"membershipId": "{{park_membership_id}}"},
+                        query={"locationId": "{{park_location_id}}"},
+                        check="pm.test('visits are named', () => pm.expect(pm.response.json().data[0].locationRecurringServiceName).to.be.a('string'));",
                     ),
                     item(
                         "Installed equipment",
                         "GET",
                         "installed-equipment",
                         module="equipmentsystems",
-                        query={"locationId": "{{park_location_id}}"},
-                        check="pm.test('has a system type', () => pm.expect(pm.response.json().data[0].systemType).to.be.a('string'));",
+                        query={"locationIds": "{{park_location_id}}"},
+                        check="pm.test('has a type object', () => pm.expect(pm.response.json().data[0].type.name).to.be.a('string'));",
                     ),
                 ],
             ),
@@ -485,6 +463,27 @@ def build() -> dict:
                 "4 Dispatch",
                 [
                     item("Zones", "GET", "zones", module="dispatch"),
+                    item(
+                        "Arrival windows",
+                        "GET",
+                        "arrival-windows",
+                        module="dispatch",
+                        check="pm.test('four windows', () => pm.expect(pm.response.json().totalCount).to.eql(4));",
+                    ),
+                    item(
+                        "Tag types",
+                        "GET",
+                        "tag-types",
+                        module="settings",
+                        check="pm.test('has the callback tags', () => pm.expect(pm.response.json().data.map(t => t.name)).to.include('Callback resolved'));",
+                    ),
+                    item(
+                        "Call reasons",
+                        "GET",
+                        "call-reasons",
+                        module="jbce",
+                        check="pm.test('has lead reasons', () => pm.expect(pm.response.json().data.filter(r => r.isLead).length).to.be.at.least(1));",
+                    ),
                     item(
                         "Technician shifts (on call)",
                         "GET",
@@ -498,7 +497,6 @@ def build() -> dict:
                         "GET",
                         "technicians",
                         module="settings",
-                        query={"businessUnitId": 11},
                         check="pm.collectionVariables.set('technician_id', pm.response.json().data[0].id);",
                     ),
                     item("Technician", "GET", "technicians/{{technician_id}}", module="settings"),
@@ -531,7 +529,6 @@ def build() -> dict:
                         "POST",
                         "jobs",
                         module="jpm",
-                        code=201,
                         body=job_body,
                         pre="pm.collectionVariables.set('idem_key', 'newman-job-' + Date.now());",
                         headers={"Idempotency-Key": "{{idem_key}}", "X-Call-Id": "newman-call-1"},
@@ -544,7 +541,6 @@ def build() -> dict:
                         "POST",
                         "jobs",
                         module="jpm",
-                        code=201,
                         body=job_body,
                         headers={"Idempotency-Key": "{{idem_key}}", "X-Call-Id": "newman-call-1"},
                         check="pm.test('replayed', () => pm.expect(pm.response.headers.get('Idempotent-Replayed')).to.eql('true'));\n"
@@ -555,22 +551,21 @@ def build() -> dict:
                         "pm.test('one fewer open', () => pm.expect(open(1)).to.eql(Number(pm.collectionVariables.get('win1_open')) - 1));",
                     ),
                     item(
-                        "Commercial customer is refused",
-                        "POST",
-                        "jobs",
-                        module="jpm",
-                        code=422,
-                        body=bad_job("commercial_customer_id", "commercial_location_id"),
-                        check="pm.test('customer_type_not_supported', () => pm.expect(pm.response.json().code).to.eql('customer_type_not_supported'));",
+                        "Who is on the appointment",
+                        "GET",
+                        "appointment-assignments",
+                        module="dispatch",
+                        query={"jobId": "{{job_id}}"},
+                        check="pm.test('one technician', () => pm.expect(pm.response.json().totalCount).to.eql(1));\n"
+                        "pm.collectionVariables.set('assigned_technician_id', pm.response.json().data[0].technicianId);",
                     ),
                     item(
-                        "Out-of-area customer is refused",
+                        "Assign the same technician",
                         "POST",
-                        "jobs",
-                        module="jpm",
-                        code=422,
-                        body=bad_job("far_customer_id", "far_location_id"),
-                        check="pm.test('out_of_area', () => pm.expect(pm.response.json().code).to.eql('out_of_area'));",
+                        "appointment-assignments/assign-technicians",
+                        module="dispatch",
+                        body='{"jobAppointmentId": {{appointment_id}}, "technicianIds": [{{assigned_technician_id}}]}',
+                        check="pm.test('answers with the appointment', () => pm.expect(pm.response.json().id).to.eql(Number(pm.collectionVariables.get('appointment_id'))));",
                     ),
                     item("Job", "GET", "jobs/{{job_id}}", module="jpm"),
                     item(
@@ -578,10 +573,8 @@ def build() -> dict:
                         "GET",
                         "jobs",
                         module="jpm",
-                        query={
-                            "customerId": "{{park_customer_id}}",
-                            "jobStatus": "Scheduled,Dispatched,Working",
-                        },
+                        query={"customerId": "{{park_customer_id}}", "jobStatus": "Scheduled"},
+                        check="pm.test('the new job is open', () => pm.expect(pm.response.json().data.map(j => j.id)).to.include(Number(pm.collectionVariables.get('job_id'))));",
                     ),
                     item(
                         "Appointments for the job",
@@ -597,9 +590,8 @@ def build() -> dict:
                         "POST",
                         "jobs/{{job_id}}/notes",
                         module="jpm",
-                        code=201,
                         body={"text": "Use the side gate."},
-                        check="pm.test('is also a customer note', () => pm.expect(pm.response.json().customerId).to.eql(Number(pm.collectionVariables.get('park_customer_id'))));",
+                        check="pm.test('a job note has no id', () => pm.expect(pm.response.json()).to.not.have.property('id'));",
                     ),
                     item(
                         "Job notes",
@@ -614,6 +606,8 @@ def build() -> dict:
                         "appointments/{{appointment_id}}/reschedule",
                         module="jpm",
                         body={
+                            "start": "{{win2_start}}",
+                            "end": "{{win2_end}}",
                             "arrivalWindowStart": "{{win2_start}}",
                             "arrivalWindowEnd": "{{win2_end}}",
                         },
@@ -637,6 +631,13 @@ def build() -> dict:
                         "jobs/{{job_id}}/cancel",
                         module="jpm",
                         body={"reasonId": 401, "memo": "Newman cleanup"},
+                        check="pm.test('answers with no body', () => pm.expect(pm.response.json()).to.eql({}));",
+                    ),
+                    item(
+                        "Job after cancel",
+                        "GET",
+                        "jobs/{{job_id}}",
+                        module="jpm",
                         check="pm.test('canceled', () => pm.expect(pm.response.json().jobStatus).to.eql('Canceled'));",
                     ),
                     item(
@@ -644,7 +645,7 @@ def build() -> dict:
                         "PUT",
                         "jobs/{{job_id}}/cancel",
                         module="jpm",
-                        body={"reasonId": 401},
+                        body={"reasonId": 401, "memo": "Newman cleanup again"},
                     ),
                     capacity_check(
                         "Capacity came back",
@@ -656,27 +657,78 @@ def build() -> dict:
                 "6 Calls and logs",
                 [
                     item(
-                        "Log a call",
+                        "Phone system logs a call (mock only)",
                         "POST",
-                        "calls",
-                        module="telecom",
-                        code=201,
+                        "debug/calls",
                         body={
-                            "externalId": "newman-call-{{run_id}}",
-                            "fromNumber": "(718) 555-0142",
-                            "callType": "Booked",
+                            "sid": "newman-call-{{run_id}}",
+                            "direction": "Outbound",
+                            "fromNumber": "(718) 555-0100",
+                            "toNumber": "{{maria_phone}}",
+                            "durationSeconds": 95,
+                            "customerId": "{{maria_customer_id}}",
                         },
-                        check="pm.collectionVariables.set('call_id', pm.response.json().id);",
+                        check="pm.collectionVariables.set('call_id', pm.response.json().id);\n"
+                        "pm.test('an outbound call has no call type', () => pm.expect(pm.response.json().leadCall.callType).to.eql(null));\n"
+                        "pm.test('duration is a time span', () => pm.expect(pm.response.json().leadCall.duration).to.eql('00:01:35'));",
                     ),
                     item(
                         "Calls from the repeat caller",
                         "GET",
                         "calls",
                         module="telecom",
-                        query={"phone": "{{maria_phone}}"},
-                        check="pm.test('at least three calls', () => pm.expect(pm.response.json().totalCount).to.be.at.least(3));",
+                        version="v3",
+                        query={"callerPhoneNumber": "{{maria_phone}}"},
+                        check="pm.test('at least three calls', () => pm.expect(pm.response.json().totalCount).to.be.at.least(3));\n"
+                        "pm.test('the call sits inside leadCall', () => pm.expect(pm.response.json().data[0].leadCall.from).to.be.a('string'));",
                     ),
-                    item("Call", "GET", "calls/{{call_id}}", module="telecom"),
+                    item(
+                        "Find a call by sid",
+                        "GET",
+                        "calls",
+                        module="telecom",
+                        version="v3",
+                        query={"sid": "newman-call-{{run_id}}"},
+                        check="pm.test('found', () => pm.expect(pm.response.json().totalCount).to.eql(1));",
+                    ),
+                    item(
+                        "Outbound calls to a number",
+                        "GET",
+                        "calls",
+                        module="telecom",
+                        version="v3",
+                        query={"phoneNumberCalled": "{{maria_phone}}"},
+                        check="pm.test('includes the outbound call', () => pm.expect(pm.response.json().data.map(c => c.leadCall.direction)).to.include('Outbound'));",
+                    ),
+                    item(
+                        "Call",
+                        "GET",
+                        "calls/{{call_id}}",
+                        module="telecom",
+                        check="pm.test('has a sid', () => pm.expect(pm.response.json().sid).to.be.a('string'));",
+                    ),
+                    item(
+                        "Tag a call (how a callback is dispositioned)",
+                        "PUT",
+                        "calls/{{call_id}}",
+                        module="telecom",
+                        body={
+                            "callType": None,
+                            "excuseMemo": "",
+                            "reason": {"name": "", "lead": False},
+                            "tag": "Callback resolved",
+                        },
+                        check="pm.test('carries the tag', () => pm.expect(pm.response.json().tags.map(t => t.typeName)).to.include('Callback resolved'));",
+                    ),
+                    item(
+                        "Calls tagged resolved",
+                        "GET",
+                        "calls",
+                        module="telecom",
+                        version="v3",
+                        query={"tag": "Callback resolved"},
+                        check="pm.test('the tagged call is listed', () => pm.expect(pm.response.json().data.map(c => c.leadCall.sid)).to.include('newman-call-' + pm.collectionVariables.get('run_id')));",
+                    ),
                     item(
                         "Logs for a call id",
                         "GET",

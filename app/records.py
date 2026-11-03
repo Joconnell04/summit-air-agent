@@ -6,6 +6,7 @@ import sqlite3
 from datetime import datetime, time, timedelta
 
 from .db import iso, parse_iso
+from .settings import TAG_RETRY_MINUTES
 from .tenant import Tenant
 from .text import phone_key
 
@@ -273,14 +274,20 @@ def record_attempt(conn: sqlite3.Connection, callback_id: int, now: datetime) ->
 
 
 def mark_overdue(conn: sqlite3.Connection, tenant: Tenant, now: datetime) -> list[int]:
-    """Flag every pending callback whose time has passed (spec S-32). One the system is about to
-    dial is left to the dial, which hands it to a person if it fails (app/outbound.py)."""
+    """Flag every pending callback whose time has passed (spec S-32). One the system is dialing is
+    left to the dial, which hands it to a person if it fails, and so is one it answered whose call
+    has not been judged yet, or was judged resolved with the tag still on its way (app/outbound.py)."""
+    tag_cutoff = iso(now - timedelta(minutes=TAG_RETRY_MINUTES))
     due = conn.execute(
         "SELECT c.* FROM callbacks c JOIN calls k ON k.id = c.call_id WHERE k.tenant = ? "
         "AND c.status = 'pending' AND c.due_at < ? AND NOT EXISTS "
-        "(SELECT 1 FROM outbound o WHERE o.callback_id = c.id "
-        "AND o.status IN ('waiting', 'queued', 'dialing'))",
-        (tenant.slug, iso(now)),
+        "(SELECT 1 FROM outbound o WHERE o.callback_id = c.id AND ("
+        "o.status IN ('waiting', 'queued', 'dialing') "
+        "OR (o.status = 'done' AND o.result = 'answered' AND NOT EXISTS "
+        "(SELECT 1 FROM call_outcomes x WHERE x.outbound_id = o.id)) "
+        "OR EXISTS (SELECT 1 FROM call_outcomes x WHERE x.outbound_id = o.id "
+        "AND x.outcome = 'resolved' AND x.tagged = 0 AND x.created_at >= ?)))",
+        (tenant.slug, iso(now), tag_cutoff),
     ).fetchall()
     for row in due:
         conn.execute(

@@ -4,7 +4,7 @@ the system places, booked-and-kept, on-call email after hours, and retention ove
 
 import smtplib
 
-from toolkit import UNKNOWN, Agent, book, count, make_server, ready_to_book
+from toolkit import UNKNOWN, Agent, book, count, in_area_address, make_server, ready_to_book
 
 from app import jobs
 
@@ -166,9 +166,17 @@ def test_a_requested_callback_waits_for_its_time_then_is_dialed_once(agent, cloc
     claimed = claim(agent)
     assert claimed["kind"] == "callback"
     assert count(agent, "SELECT attempts FROM callbacks") == 1
-    place(agent, claimed)
-    agent.turn(claimed["call_id"], "Hi, thanks for calling back.")
-    assert done(agent, claimed["outbound_id"], answered=True)["data"]["result"] == "answered"
+    placed = place(agent, claimed)
+    agent.turn(placed, "Hi, thanks for calling back.")
+    agent.confirm_read_back(placed, in_area_address())
+    agent.tool("end_call", placed, reason="resolved")
+    agent.end(placed)
+    finished = done(agent, claimed["outbound_id"], answered=True)["data"]
+    assert (finished["result"], finished["outcome"]) == ("answered", "resolved")
+    # Answering is not enough: the callback is done once the call log shows it resolved
+    # (docs/decisions/26-callback-done.md; the cases are in test_ts_callback_done.py).
+    assert count(agent, "SELECT status FROM callbacks") == "pending"
+    assert jobs.run_once(services(agent))["summit-air"]["callbacks_done"]["done"] == 1
     assert count(agent, "SELECT status FROM callbacks") == "done"
     open_flags = "SELECT COUNT(*) FROM flags WHERE status = 'open'"
     assert count(agent, open_flags) == 0, "nobody needs to act on an answered system callback"

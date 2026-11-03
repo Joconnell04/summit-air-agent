@@ -7,15 +7,31 @@ the booking means the opening was accepted.
 The rules are the same as every outbound call (spec S-42): only the person who called about it,
 inside the outbound hours, one attempt, never a do-not-call number. They are checked again at
 claim time, because a number can be marked do-not-call between scheduling and dialing.
+
+A callback counts as done only when ServiceTitan's call log shows a call back that resolved it
+(docs/decisions/26-callback-done.md). ServiceTitan has no outcome field on a call, so the outcome
+is a tag on the call, one of the tenant's callback tags. A person at the office puts one on the
+calls they make; for the calls placed here, finish() decides the tag from what the server saw on
+the call and applies it, and jobs.confirm_callbacks marks the callback done from the log.
 """
 
 import json
+import re
 import sqlite3
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 from . import records
 from .db import iso, parse_iso, tx
+from .fsm import FsmAdapter, FsmRejected, FsmUnavailable
+from .settings import STUCK_DIALING_MINUTES, TAG_RETRY_MINUTES
 from .tenant import Tenant
+from .text import has_phrase, words
+
+# What a person says to "Am I speaking with Pat?" when it is them, and when it is not. A reply of
+# more than a few words ("yeah, hold on, let me get him") is not a confirmation.
+YES_WORDS = ("yes", "yeah", "yep", "yup", "speaking", "thats me", "that is me", "correct")
+NO_WORDS = ("no", "not", "wrong", "nope", "isnt", "dont know")
+NAME_REPLY_MAX_WORDS = 8
 
 
 def add_callback_dial(
@@ -95,7 +111,13 @@ def skip(conn: sqlite3.Connection, row: sqlite3.Row, reason: str, now: datetime)
 
 def to_person(conn: sqlite3.Connection, row: sqlite3.Row, why: str, now: datetime) -> None:
     """A callback the system couldn't complete is overdue at once and flagged with the reason, so
-    a person picks it up and records.mark_overdue doesn't flag it a second time."""
+    a person picks it up and records.mark_overdue doesn't flag it a second time. A callback that is
+    already done or cancelled needs no one."""
+    callback = conn.execute(
+        "SELECT status FROM callbacks WHERE id = ?", (row["callback_id"],)
+    ).fetchone()
+    if callback is None or callback["status"] not in ("pending", "overdue"):
+        return
     conn.execute(
         "UPDATE callbacks SET status = 'overdue', updated_at = ? WHERE id = ? AND status = 'pending'",
         (iso(now), row["callback_id"]),
@@ -167,34 +189,276 @@ def _describe(conn, tenant: Tenant, row: sqlite3.Row, placed: str, now: datetime
 
 
 def finish(
-    conn: sqlite3.Connection, outbound_id: int, answered: bool, voicemail: bool, now: datetime
+    conn: sqlite3.Connection,
+    tenant: Tenant,
+    fsm: FsmAdapter,
+    outbound_id: int,
+    answered: bool,
+    voicemail: bool,
+    now: datetime,
 ) -> dict | None:
-    """Settle a dialed call from what happened on it. Returns None for an unknown or settled id."""
+    """Settle a dialed call from what the voice layer reports. Returns None for an unknown or
+    settled id.
+
+    The voice layer reports as soon as the line is picked up, before anyone has spoken, so for a
+    callback this only records that it was answered. How the callback went is decided when the
+    call ends (settle_answered), from what the server saw on it. A voicemail, no answer or a failed
+    call is settled here, since there is nothing more to see. Nothing in this module marks a
+    callback done: the outcome goes on the call in ServiceTitan as a tag, and the callbacks job
+    marks the callback done once the call log shows a call tagged resolved."""
     row = conn.execute("SELECT * FROM outbound WHERE id = ?", (outbound_id,)).fetchone()
     if not row or row["status"] != "dialing":
         return None
+    answered = answered and not voicemail  # a voicemail is never a person
     result = "answered" if answered else "voicemail" if voicemail else "no_answer"
     with tx(conn):
-        if row["kind"] == "earlier_slot":
-            if answered:
-                result = "accepted" if _accepted(conn, row, now) else "declined"
-        elif answered:
-            conn.execute(
-                "UPDATE callbacks SET status = 'done', updated_at = ? WHERE id = ? "
-                "AND status IN ('pending', 'overdue')",
-                (iso(now), row["callback_id"]),
-            )
-            conn.execute(
-                "UPDATE flags SET status = 'done' WHERE call_id = ? AND kind = 'callback_requested'",
-                (row["call_id"],),
-            )
-        else:
-            to_person(conn, row, f"not answered ({result})", now)
+        if row["kind"] == "earlier_slot" and answered:
+            result = "accepted" if _accepted(conn, row, now) else "declined"
         conn.execute(
             "UPDATE outbound SET status = 'done', result = ?, updated_at = ? WHERE id = ?",
             (result, iso(now), outbound_id),
         )
-    return {"outbound_id": outbound_id, "result": result}
+    outcome = None
+    if row["kind"] == "callback":
+        outcome = settle_callback(conn, tenant, fsm, outbound_id, now)
+    return {"outbound_id": outbound_id, "result": result, "outcome": outcome}
+
+
+def settle_callback(
+    conn: sqlite3.Connection,
+    tenant: Tenant,
+    fsm: FsmAdapter,
+    outbound_id: int,
+    now: datetime,
+    force: bool = False,
+) -> str | None:
+    """Decide how a reported callback went and put it on the call as a tag. An answered callback
+    waits for its call to end, unless force says the end is not coming. Returns the outcome, or
+    None while it is still waiting or was settled before."""
+    row = conn.execute("SELECT * FROM outbound WHERE id = ?", (outbound_id,)).fetchone()
+    if (
+        row["status"] != "done"
+        or conn.execute(
+            "SELECT 1 FROM call_outcomes WHERE outbound_id = ?", (outbound_id,)
+        ).fetchone()
+    ):
+        return None
+    answered = row["result"] == "answered"
+    placed = records.get_call(conn, row["placed_call_id"])
+    if answered and not force and (placed is None or not placed["ended_at"]):
+        return None
+    outcome, why = callback_outcome(conn, fsm, row, placed, answered, row["result"])
+    with tx(conn):
+        # Settled by someone else while the checks above were running (the end of the call and the
+        # job can overlap): the first insert stands.
+        inserted = conn.execute(
+            "INSERT INTO call_outcomes (outbound_id, sid, outcome, why, created_at, updated_at) "
+            "VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT (outbound_id) DO NOTHING",
+            (outbound_id, row["placed_call_id"], outcome, why, iso(now), iso(now)),
+        ).rowcount
+        if inserted and outcome != "resolved":
+            to_person(conn, row, f"{why} ({outcome.replace('_', ' ')})", now)
+    if not inserted:
+        return None
+    apply_tag(conn, tenant, fsm, outbound_id, now)
+    return outcome
+
+
+def settle_answered(
+    conn: sqlite3.Connection,
+    tenant: Tenant,
+    fsm: FsmAdapter,
+    now: datetime,
+    call_id: str | None = None,
+) -> int:
+    """Settle the answered callbacks whose call has ended. Given a call id, the call that has just
+    ended; without one, every answered callback whose call ended, or whose end never came (the
+    voice worker died) once it has been waiting as long as a dial may go unreported."""
+    stuck = iso(now - timedelta(minutes=STUCK_DIALING_MINUTES))
+    rows = conn.execute(
+        "SELECT o.id, o.updated_at, o.placed_call_id FROM outbound o "
+        "WHERE o.tenant = ? AND o.kind = 'callback' "
+        "AND o.status = 'done' AND o.result = 'answered' AND NOT EXISTS "
+        "(SELECT 1 FROM call_outcomes c WHERE c.outbound_id = o.id) "
+        "AND (? IS NULL OR o.placed_call_id = ?)",
+        (tenant.slug, call_id, call_id),
+    ).fetchall()
+    settled = 0
+    for row in rows:
+        # Judged without waiting for the end only when the line has been quiet for a long time.
+        last_turn = conn.execute(
+            "SELECT MAX(at) FROM turns WHERE call_id = ?", (row["placed_call_id"],)
+        ).fetchone()[0]
+        waited_too_long = (
+            call_id is None and row["updated_at"] < stuck and (last_turn or "") < stuck
+        )
+        settled += (
+            settle_callback(conn, tenant, fsm, row["id"], now, force=waited_too_long) is not None
+        )
+    return settled
+
+
+def callback_outcome(
+    conn: sqlite3.Connection,
+    fsm: FsmAdapter,
+    row: sqlite3.Row,
+    placed: sqlite3.Row | None,
+    answered: bool,
+    result: str,
+) -> tuple[str, str]:
+    """How a callback the system placed went, as (outcome, why). Resolved needs all three: a person
+    answered (not a voicemail or no answer), the person who called is the one reached, and what the
+    callback was for was handled on the call. Anything less is open, or no contact when nobody
+    answered."""
+    if not answered:
+        return "no_contact", result
+    callback = conn.execute(
+        "SELECT * FROM callbacks WHERE id = ?", (row["callback_id"],)
+    ).fetchone()
+    if callback["status"] == "cancelled":
+        return "open", "the caller asked not to be called"
+    if placed is None or placed["caller_key"] != callback["phone_key"]:
+        return "open", "the call was not to the number that asked"
+    if not person_confirmed(conn, fsm, placed):
+        return "open", "the person was not confirmed"
+    if not reason_handled(conn, placed):
+        return "open", "the reason for the callback was not handled"
+    return "resolved", "the right person answered and the reason was handled"
+
+
+def person_confirmed(conn: sqlite3.Connection, fsm: FsmAdapter, placed: sqlite3.Row) -> bool:
+    """Did the person who answered confirm who they are? Either the agent's read-back was confirmed
+    on the call, or the agent asked for a customer's name (matched on this number) and the next
+    caller line, a short one, said yes. The number matching is checked by the caller."""
+    if placed["readback_confirmed_at"]:
+        return True
+    names = []
+    for customer_id in records.scoped_customers(conn, placed["id"]):
+        try:
+            names.append(fsm.customer(customer_id)["name"].split()[0].lower())
+        except (FsmUnavailable, FsmRejected, KeyError, IndexError):
+            continue
+    turns = conn.execute(
+        "SELECT speaker, text FROM turns WHERE call_id = ? ORDER BY seq", (placed["id"],)
+    ).fetchall()
+    for i, turn in enumerate(turns[:-1]):
+        asked = turn["speaker"] == "agent" and "?" in turn["text"]
+        if asked and any(re.search(rf"\b{re.escape(n)}\b", turn["text"].lower()) for n in names):
+            reply = turns[i + 1]
+            if reply["speaker"] == "caller":
+                said = words(reply["text"])
+                says_yes = any(has_phrase(said, w) for w in YES_WORDS) or any(
+                    has_phrase(said, f"this is {n}") for n in names
+                )
+                if (
+                    len(said.split()) <= NAME_REPLY_MAX_WORDS
+                    and says_yes
+                    and not any(has_phrase(said, w) for w in NO_WORDS)
+                ):
+                    return True
+    return False
+
+
+def reason_handled(conn: sqlite3.Connection, placed: sqlite3.Row) -> bool:
+    """Was what the callback was for dealt with on the call? A booking, a reschedule or a cancel
+    went through, or the agent ended the call saying it was resolved and the server saw nothing
+    against that: the caller spoke, no person was flagged, and no further callback was promised."""
+    call_id = placed["id"]
+    if conn.execute(
+        "SELECT 1 FROM bookings WHERE call_id = ? AND ((kind = 'book' AND status = 'booked') "
+        "OR (kind IN ('reschedule', 'cancel') AND status = 'done'))",
+        (call_id,),
+    ).fetchone():
+        return True
+    said_resolved = conn.execute(
+        "SELECT 1 FROM tool_calls WHERE call_id = ? AND tool = 'end_call' AND ok = 1 "
+        "AND json_extract(args_json, '$.reason') = 'resolved'",
+        (call_id,),
+    ).fetchone()
+    if not said_resolved or placed["safety_signal_at"]:
+        return False
+    spoke = conn.execute(
+        "SELECT 1 FROM turns WHERE call_id = ? AND speaker = 'caller'", (call_id,)
+    ).fetchone()
+    escalated = conn.execute(
+        "SELECT 1 FROM flags WHERE call_id = ? UNION SELECT 1 FROM callbacks WHERE call_id = ?",
+        (call_id, call_id),
+    ).fetchone()
+    return bool(spoke) and not escalated
+
+
+def apply_tag(
+    conn: sqlite3.Connection, tenant: Tenant, fsm: FsmAdapter, outbound_id: int, now: datetime
+) -> bool:
+    """Put the outcome on the call in ServiceTitan as the tenant's tag for it. True once it has
+    landed. A call ServiceTitan does not show yet, or an FSM that is down, leaves it to be tried
+    again by the callbacks job (retry_tags)."""
+    out = conn.execute(
+        "SELECT o.*, c.phone, c.placed_call_id FROM call_outcomes o "
+        "JOIN outbound c ON c.id = o.outbound_id WHERE o.outbound_id = ?",
+        (outbound_id,),
+    ).fetchone()
+    if not out or out["tagged"]:
+        return bool(out)
+    placed = records.get_call(conn, out["placed_call_id"])
+    landed = False
+    try:
+        started = parse_iso(placed["started_at"]) if placed else now
+        if placed is not None:
+            ended = parse_iso(placed["ended_at"]) if placed["ended_at"] else now
+            scoped = list(records.scoped_customers(conn, placed["id"]))
+            fsm.record_outbound_call(
+                out["sid"],
+                placed["dialed_number"],
+                out["phone"],
+                started,
+                max(0, int((ended - started).total_seconds())),
+                scoped[0] if len(scoped) == 1 else None,
+            )
+        call = fsm.find_outbound_call(out["sid"], out["phone"], started)
+        if call is not None:
+            fsm.tag_call(call["leadCall"]["id"], tenant.fsm["callback_tags"][out["outcome"]])
+            landed = True
+    except (FsmUnavailable, FsmRejected):
+        landed = False
+    conn.execute(
+        "UPDATE call_outcomes SET tagged = ?, attempts = attempts + 1, updated_at = ? "
+        "WHERE outbound_id = ?",
+        (int(landed), iso(now), outbound_id),
+    )
+    return landed
+
+
+def retry_tags(conn: sqlite3.Connection, tenant: Tenant, fsm: FsmAdapter, now: datetime) -> dict:
+    """Try again the tags that have not landed, for TAG_RETRY_MINUTES after the call (a phone
+    system may log a call some minutes late). A resolved callback whose tag never landed is flagged
+    once for a person, since the callback cannot be marked done without it."""
+    cutoff = iso(now - timedelta(minutes=TAG_RETRY_MINUTES))
+    waiting = conn.execute(
+        "SELECT o.outbound_id FROM call_outcomes o JOIN outbound b ON b.id = o.outbound_id "
+        "WHERE b.tenant = ? AND o.tagged = 0 AND o.created_at >= ? ORDER BY o.outbound_id",
+        (tenant.slug, cutoff),
+    ).fetchall()
+    landed = sum(apply_tag(conn, tenant, fsm, r["outbound_id"], now) for r in waiting)
+    abandoned = conn.execute(
+        "SELECT b.call_id, b.callback_id FROM call_outcomes o JOIN outbound b ON b.id = o.outbound_id "
+        "WHERE b.tenant = ? AND o.tagged = 0 AND o.created_at < ? AND o.outcome = 'resolved' "
+        "AND NOT EXISTS (SELECT 1 FROM flags f WHERE f.call_id = b.call_id "
+        "AND f.kind = 'callback_tag_failed')",
+        (tenant.slug, cutoff),
+    ).fetchall()
+    with tx(conn):
+        for row in abandoned:
+            records.add_flag(
+                conn,
+                row["call_id"],
+                "callback_tag_failed",
+                f"Callback {row['callback_id']} was resolved on the call but ServiceTitan never "
+                "showed the call to tag. Tag the call in ServiceTitan, or close the callback by hand.",
+                now,
+                "High",
+            )
+    return {"tried": len(waiting), "tagged": landed, "flagged": len(abandoned)}
 
 
 def _accepted(conn: sqlite3.Connection, row: sqlite3.Row, now: datetime) -> bool:

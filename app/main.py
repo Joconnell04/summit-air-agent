@@ -299,7 +299,15 @@ def create_app(
             if call is None:
                 raise Refused("unknown_call", "")
             tenant = services.tenants.by_slug[call["tenant"]]
-            return lifecycle.end(conn, tenant, call, body, services.clock())
+            ended = lifecycle.end(conn, tenant, call, body, services.clock())
+            # A callback the system placed is judged when its call ends (app/outbound.py).
+            try:
+                outbound.settle_answered(
+                    conn, tenant, services.fsm[tenant.slug], services.clock(), call_id
+                )
+            except Exception:
+                log.exception("settling the callback on call %s failed", call_id)
+            return ended
 
         result = run(services, request, "calls.end", call_id, body.model_dump(), fn)
         services.release(call_id)
@@ -356,8 +364,21 @@ def create_app(
     def outbound_done(outbound_id: int, body: OutboundDoneIn):
         conn = services.connect()
         try:
-            found = outbound.finish(
-                conn, outbound_id, body.answered, body.voicemail, services.clock()
+            row = conn.execute(
+                "SELECT tenant FROM outbound WHERE id = ?", (outbound_id,)
+            ).fetchone()
+            found = (
+                outbound.finish(
+                    conn,
+                    services.tenants.by_slug[row["tenant"]],
+                    services.fsm[row["tenant"]],
+                    outbound_id,
+                    body.answered,
+                    body.voicemail,
+                    services.clock(),
+                )
+                if row
+                else None
             )
         finally:
             conn.close()

@@ -1,4 +1,5 @@
-"""Business rules shared by bookings and jobs."""
+"""Checks shared by bookings, jobs and leads: ids that exist. The company's own rules (which
+customer types it books, which ZIPs it serves) are not ServiceTitan's and live in the tool server."""
 
 import sqlite3
 
@@ -16,25 +17,6 @@ def require_customer(conn: sqlite3.Connection, customer_id: int) -> sqlite3.Row:
             {"customerId": "unknown"},
         )
     return row
-
-
-def require_bookable_type(cfg: TenantConfig, customer: sqlite3.Row) -> None:
-    """Refuse customer types the company does not book. The message comes from the config."""
-    message = cfg.rejected_customer_types.get(customer["type"])
-    if message:
-        raise ApiError(
-            422, "customer_type_not_supported", message, {"customerId": customer["type"].lower()}
-        )
-
-
-def require_in_area(cfg: TenantConfig, zip_code: str) -> None:
-    if zip_code not in cfg.zone_by_zip:
-        raise ApiError(
-            422,
-            "out_of_area",
-            f"ZIP {zip_code} is outside the service area.",
-            {"zip": "out of area"},
-        )
 
 
 def check_refs(

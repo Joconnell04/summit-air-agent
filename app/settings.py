@@ -65,3 +65,9 @@ NOTE_MAX_CHARS = 500
 BOOKING_DAYS_AHEAD = 14
 QUEUE_MAX_ATTEMPTS = 5
 ALERT_MAX_ATTEMPTS = 3
+# A tag on a callback's call is tried again for this long, since a phone system may log a
+# call some minutes late; after that a resolved callback is flagged for a person.
+TAG_RETRY_MINUTES = 120
+# A dialed call the voice layer never reported on, or an answered one that never ended, is settled
+# after this, so it can't block a person.
+STUCK_DIALING_MINUTES = 30

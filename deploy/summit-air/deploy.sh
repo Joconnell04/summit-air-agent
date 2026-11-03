@@ -15,7 +15,10 @@ ssh "$HOST" 'set -e; chmod 600 ~/summit-air/.env; cd ~/summit-air/app
   ~/.local/bin/uv sync -q
   ~/.local/bin/uv run --env-file ../.env python -m livekit.agents download-files >/dev/null 2>&1
   # Bracketed so the pattern never matches this shell; ports so the Retell stack is left alone.
-  pkill -u "$(id -u)" -f "[a]pp.main.*--port 8100|[v]oice.livekit.worker start|[v]oice.livekit.outbound" || true
+  # The mock ServiceTitan too: its code and database schema go with the tool server, and run.sh
+  # reseeds it if its database is from an older schema. A reseed starts the mock world over, so job
+  # ids the tool server holds from before no longer match anything there.
+  pkill -u "$(id -u)" -f "[a]pp.main.*--port 8100|[s]ervicetitan_mock.app.*--port 8101|[v]oice.livekit.worker start|[v]oice.livekit.outbound" || true
   sleep 2
   sh deploy/summit-air/run.sh
   sh deploy/summit-air/install-crontab.sh

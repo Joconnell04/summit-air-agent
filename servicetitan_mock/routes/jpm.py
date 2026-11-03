@@ -10,22 +10,27 @@ from pydantic import AwareDatetime, BaseModel, Field
 from .. import capacity, repo, rules
 from ..config import TenantConfig, Window, iso
 from ..db import page_of, write
-from ..deps import get_cfg, get_conn, get_now, paging
+from ..deps import get_cfg, get_conn, get_now, get_user_id, paging
 from ..errors import ApiError
 from . import tenant_router
 
 router = tenant_router("jpm")
 
 Priority = Literal["Low", "Normal", "High", "Urgent"]
-OPEN_STATUSES = ("Scheduled", "Dispatched", "Working")
+JOB_STATUSES = ("Scheduled", "Dispatched", "InProgress", "Hold", "Completed", "Canceled")
+APPOINTMENT_STATUSES = ("Scheduled", "Dispatched", "Working", "Hold", "Done", "Canceled")
 
 
 class AppointmentIn(BaseModel):
-    start: AwareDatetime | None = None
-    end: AwareDatetime | None = None
-    arrivalWindowStart: AwareDatetime
-    arrivalWindowEnd: AwareDatetime
-    technicianIds: list[int] = []
+    """start and end are required, as in ServiceTitan. The arrival window is optional there; the
+    mock sells arrival windows, so it reads the window from the arrival times when they are sent
+    and from start and end otherwise."""
+
+    start: AwareDatetime
+    end: AwareDatetime
+    arrivalWindowStart: AwareDatetime | None = None
+    arrivalWindowEnd: AwareDatetime | None = None
+    technicianIds: list[int] | None = None  # the mock picks one when this is left out (not real)
 
 
 class JobIn(BaseModel):
@@ -33,28 +38,46 @@ class JobIn(BaseModel):
     locationId: int
     businessUnitId: int
     jobTypeId: int
-    priority: Priority | None = None
-    campaignId: int | None = None
-    summary: str = ""
+    priority: Priority
+    campaignId: int
+    summary: str | None = None
     appointments: list[AppointmentIn] = Field(min_length=1)
 
 
 class CancelIn(BaseModel):
-    reasonId: int | None = None
-    memo: str = ""
+    reasonId: int
+    memo: str
 
 
 class JobNoteIn(BaseModel):
     text: str = Field(min_length=1, max_length=2000)
-    createdBy: str = Field("staff", min_length=1, max_length=40)  # ASSUMED field
+    pinToTop: bool | None = None
 
 
 class RescheduleIn(BaseModel):
     start: AwareDatetime | None = None
     end: AwareDatetime | None = None
-    arrivalWindowStart: AwareDatetime
-    arrivalWindowEnd: AwareDatetime
-    technicianIds: list[int] = []
+    arrivalWindowStart: AwareDatetime | None = None
+    arrivalWindowEnd: AwareDatetime | None = None
+
+
+def _times(
+    start: datetime | None,
+    end: datetime | None,
+    window_start: datetime | None,
+    window_end: datetime | None,
+) -> tuple[datetime, datetime]:
+    """The times that name the arrival window: the arrival times if sent, otherwise start and end."""
+    if window_start and window_end:
+        return window_start, window_end
+    if start and end:
+        return start, end
+    raise ApiError(
+        400,
+        "validation_error",
+        "Send start and end, or arrivalWindowStart and arrivalWindowEnd.",
+        {"start": "required"},
+    )
 
 
 def _route(request: Request) -> str:
@@ -90,8 +113,14 @@ def shape_job(conn: sqlite3.Connection, r: sqlite3.Row) -> dict:
         "firstAppointmentId": appts[0]["id"] if appts else None,
         "lastAppointmentId": appts[-1]["id"] if appts else None,
         "appointmentCount": len(appts),
+        "noCharge": False,
+        "notificationsEnabled": True,
         "createdOn": r["created_on"],
+        "createdById": 4001,
         "modifiedOn": r["modified_on"],
+        "tagTypeIds": [],
+        "customFields": [],
+        "externalData": [],
     }
 
 
@@ -105,9 +134,14 @@ def shape_appointment(r: sqlite3.Row) -> dict:
         "arrivalWindowStart": r["arrival_window_start"],
         "arrivalWindowEnd": r["arrival_window_end"],
         "status": r["status"],
-        "technicianIds": [r["technician_id"]],
+        "specialInstructions": None,
         "createdOn": r["created_on"],
         "modifiedOn": r["modified_on"],
+        "customerId": dict(r).get("customer_id"),
+        "unused": False,
+        "createdById": 4001,
+        "isConfirmed": False,
+        "active": r["status"] != "Canceled",
     }
 
 
@@ -163,10 +197,12 @@ def list_jobs(
     customerId: int | None = None,
     locationId: int | None = None,
     jobStatus: str | None = None,
+    appointmentStatus: str | None = None,
+    priority: str | None = None,
     createdOnOrAfter: str | None = None,
 ):
-    """jobStatus takes one status or a comma-separated list (ASSUMED), for example
-    Scheduled,Dispatched,Working for open jobs."""
+    """jobStatus takes one status, as in ServiceTitan; ask for open jobs by reading the customer's
+    jobs and keeping the statuses you want."""
     where, params = [], []
     if customerId is not None:
         where.append("customer_id = ?")
@@ -175,9 +211,21 @@ def list_jobs(
         where.append("location_id = ?")
         params.append(locationId)
     if jobStatus:
-        statuses = jobStatus.split(",")
-        where.append(f"status IN ({','.join('?' * len(statuses))})")
-        params += statuses
+        if jobStatus not in JOB_STATUSES:
+            raise ApiError(
+                400,
+                "validation_error",
+                "The request was not valid.",
+                {"jobStatus": f"one of {', '.join(JOB_STATUSES)}"},
+            )
+        where.append("status = ?")
+        params.append(jobStatus)
+    if appointmentStatus:
+        where.append("id IN (SELECT job_id FROM appointments WHERE status = ?)")
+        params.append(appointmentStatus)
+    if priority:
+        where.append("priority = ?")
+        params.append(priority)
     if createdOnOrAfter:
         where.append("created_on >= ?")
         params.append(createdOnOrAfter)
@@ -216,27 +264,38 @@ def job_notes(
 ):
     _one(conn, "jobs", job_id, "Job")
     return page_of(
-        conn, "SELECT * FROM notes WHERE job_id = ? ORDER BY id", [job_id], repo.shape_note, *pg
+        conn,
+        "SELECT * FROM notes WHERE job_id = ? ORDER BY id",
+        [job_id],
+        lambda r: repo.shape_note(r, with_id=False),
+        *pg,
     )
 
 
-@router.post("/jobs/{job_id}/notes", status_code=201)
+@router.post("/jobs/{job_id}/notes")
 def add_job_note(
     job_id: int,
     body: JobNoteIn,
     request: Request,
     conn: sqlite3.Connection = Depends(get_conn),
     now: datetime = Depends(get_now),
+    user_id: int = Depends(get_user_id),
     idempotency_key: str | None = Header(None),
 ):
-    """A job note is also a note on the job's customer, so it shows when the customer is read."""
+    """A job note belongs to the job; ServiceTitan's job note has no id."""
 
     def run(c: sqlite3.Connection):
         job = _one(c, "jobs", job_id, "Job")
         note_id = repo.insert_note(
-            c, now, job["customer_id"], body.text, body.createdBy, job_id=job_id
+            c,
+            now,
+            job["customer_id"],
+            body.text,
+            user_id,
+            job_id=job_id,
+            pin_to_top=bool(body.pinToTop),
         )
-        return 201, repo.shape_note(_one(c, "notes", note_id, "Note"))
+        return 200, repo.shape_note(_one(c, "notes", note_id, "Note"), with_id=False)
 
     return write(conn, run, idem_key=idempotency_key, route=_route(request), body=body.model_dump())
 
@@ -247,41 +306,46 @@ def list_appointments(
     pg: tuple[int, int] = Depends(paging),
     jobId: int | None = None,
     technicianId: int | None = None,
+    customerId: int | None = None,
     status: str | None = None,
     startsOnOrAfter: str | None = None,
-    startsOnOrBefore: str | None = None,
+    startsBefore: str | None = None,
 ):
     where, params = [], []
     for sql, value in (
-        ("job_id = ?", jobId),
-        ("technician_id = ?", technicianId),
-        ("status = ?", status),
-        ("start >= ?", startsOnOrAfter),
-        ("start <= ?", startsOnOrBefore),
+        ("a.job_id = ?", jobId),
+        ("a.technician_id = ?", technicianId),
+        ("j.customer_id = ?", customerId),
+        ("a.status = ?", status),
+        ("a.start >= ?", startsOnOrAfter),
+        ("a.start < ?", startsBefore),
     ):
         if value is not None:
             where.append(sql)
             params.append(value)
     sql = (
-        "SELECT * FROM appointments"
+        "SELECT a.*, j.customer_id AS customer_id FROM appointments a JOIN jobs j ON j.id = a.job_id"
         + (" WHERE " + " AND ".join(where) if where else "")
-        + " ORDER BY start, id"
+        + " ORDER BY a.start, a.id"
     )
     return page_of(conn, sql, params, shape_appointment, *pg)
 
 
 @router.get("/appointments/{appointment_id}")
 def get_appointment(appointment_id: int, conn: sqlite3.Connection = Depends(get_conn)):
-    return shape_appointment(_one(conn, "appointments", appointment_id, "Appointment"))
+    row = _one(conn, "appointments", appointment_id, "Appointment")
+    customer = conn.execute(
+        "SELECT customer_id FROM jobs WHERE id = ?", (row["job_id"],)
+    ).fetchone()
+    return shape_appointment({**dict(row), "customer_id": customer["customer_id"]})
 
 
 # ---- booking -----------------------------------------------------------------------------------
 
 
-def _resolve_window(
-    cfg: TenantConfig, now: datetime, priority: str, start: datetime, end: datetime
-):
-    """Map the arrival window on the request to a configured window, and apply the timing rules."""
+def _resolve_window(cfg: TenantConfig, now: datetime, start: datetime, end: datetime):
+    """Map the arrival window on the request to a configured window, and apply the timing rules.
+    Who may take an after-hours window is the company's rule, not the mock's."""
     matched = cfg.match_window(start, end)
     if not matched:
         names = ", ".join(w.id for w in cfg.windows)
@@ -300,10 +364,6 @@ def _resolve_window(
     still_open = window_end > now if window.after_hours else window_start >= now
     if not still_open:
         raise ApiError(422, "slot_in_past", f"The {window.id} window on {day} has already started.")
-    if window.after_hours and cfg.urgent_only_after_hours and priority != "Urgent":
-        raise ApiError(
-            422, "after_hours_urgent_only", "After-hours slots are only for urgent jobs."
-        )
     return day, window
 
 
@@ -351,7 +411,7 @@ def _insert_appointment(
     return cur.lastrowid
 
 
-@router.post("/jobs", status_code=201)
+@router.post("/jobs")
 def create_job(
     body: JobIn,
     request: Request,
@@ -361,11 +421,12 @@ def create_job(
     idempotency_key: str | None = Header(None),
 ):
     """Create a job and its appointments. Capacity is taken in the same transaction, so a slot
-    cannot be sold twice. Send an Idempotency-Key header (ASSUMED; real ServiceTitan has none) so a
-    retried call returns the first job instead of booking again."""
+    cannot be sold twice (real ServiceTitan lets a job save past capacity). An Idempotency-Key
+    header makes a retried call return the first job; it is not in the real API, and callers must
+    not depend on it."""
 
     def run(c: sqlite3.Connection):
-        customer = rules.require_customer(c, body.customerId)
+        rules.require_customer(c, body.customerId)
         location = c.execute(
             "SELECT * FROM locations WHERE id = ? AND customer_id = ?",
             (body.locationId, body.customerId),
@@ -377,11 +438,9 @@ def create_job(
                 f"Location {body.locationId} does not belong to customer {body.customerId}.",
                 {"locationId": "unknown"},
             )
-        rules.require_bookable_type(cfg, customer)
-        rules.require_in_area(cfg, location["zip"])
         rules.check_refs(cfg, body.businessUnitId, body.jobTypeId, body.campaignId)
         job_type = cfg.job_type(body.jobTypeId)
-        priority = body.priority or job_type["priority"]
+        priority = body.priority
 
         stamp = iso(now)
         job_id = c.execute(
@@ -395,7 +454,7 @@ def create_job(
                 body.jobTypeId,
                 priority,
                 body.campaignId,
-                body.summary,
+                body.summary or "",
                 stamp,
                 stamp,
             ),
@@ -403,18 +462,12 @@ def create_job(
         c.execute("UPDATE jobs SET job_number = ? WHERE id = ?", (str(job_id), job_id))
         for n, appt in enumerate(body.appointments, 1):
             day, window = _resolve_window(
-                cfg, now, priority, appt.arrivalWindowStart, appt.arrivalWindowEnd
+                cfg,
+                now,
+                *_times(appt.start, appt.end, appt.arrivalWindowStart, appt.arrivalWindowEnd),
             )
             tech_id = capacity.allocate(
-                c,
-                cfg,
-                day,
-                window,
-                body.businessUnitId,
-                job_type["skills"],
-                priority,
-                location["zone_id"],
-                appt.technicianIds,
+                c, cfg, day, window, body.businessUnitId, job_type["skills"], appt.technicianIds
             )
             _insert_appointment(
                 c,
@@ -437,7 +490,7 @@ def create_job(
                 f"Scheduled in the {window.id} window on {day} with technician {tech_id}.",
             )
         _history(c, job_id, now, "JobCreated", f"Job created with priority {priority}.")
-        return 201, shape_job(c, _one(c, "jobs", job_id, "Job"))
+        return 200, shape_job(c, _one(c, "jobs", job_id, "Job"))
 
     return write(
         conn,
@@ -452,20 +505,18 @@ def create_job(
 def cancel_job(
     job_id: int,
     request: Request,
-    body: CancelIn | None = None,
+    body: CancelIn,
     conn: sqlite3.Connection = Depends(get_conn),
     cfg: TenantConfig = Depends(get_cfg),
     now: datetime = Depends(get_now),
     idempotency_key: str | None = Header(None),
 ):
-    """Cancel a job and free its technicians. Cancelling a cancelled job is a no-op."""
-    body = body or CancelIn()
+    """Cancel a job and free its technicians. Cancelling a cancelled job is a no-op. Like the real
+    endpoint it answers with an empty body."""
 
     def run(c: sqlite3.Connection):
         job = _one(c, "jobs", job_id, "Job")
-        if body.reasonId is not None and not any(
-            r["id"] == body.reasonId for r in cfg.cancel_reasons
-        ):
+        if not any(r["id"] == body.reasonId for r in cfg.cancel_reasons):
             raise ApiError(
                 422,
                 "unknown_reference",
@@ -473,8 +524,8 @@ def cancel_job(
                 {"reasonId": "unknown"},
             )
         if job["status"] == "Canceled":
-            return 200, shape_job(c, job)
-        if job["status"] in ("Done", "Working"):
+            return 200, {}
+        if job["status"] in ("Completed", "InProgress"):
             raise ApiError(
                 409, "invalid_state", f"A job that is {job['status']} cannot be cancelled."
             )
@@ -488,7 +539,7 @@ def cancel_job(
             (body.reasonId, stamp, job_id),
         )
         _history(c, job_id, now, "JobCanceled", body.memo or "Job cancelled.")
-        return 200, shape_job(c, _one(c, "jobs", job_id, "Job"))
+        return 200, {}
 
     return write(
         conn,
@@ -509,7 +560,10 @@ def reschedule_appointment(
     now: datetime = Depends(get_now),
     idempotency_key: str | None = Header(None),
 ):
-    """Move an appointment to another window. A failed move leaves the booking where it was."""
+    """Move an appointment to another window. A failed move leaves the booking where it was. The
+    appointment keeps its technician when that technician is free in the new window and otherwise
+    gets the least booked free one; both are the mock's doing (a real appointment is reassigned by
+    dispatch). To choose, call dispatch appointment-assignments/assign-technicians afterwards."""
 
     def run(c: sqlite3.Connection):
         appt = _one(c, "appointments", appointment_id, "Appointment")
@@ -518,10 +572,11 @@ def reschedule_appointment(
                 409, "invalid_state", f"A {appt['status']} appointment cannot be rescheduled."
             )
         job = _one(c, "jobs", appt["job_id"], "Job")
-        location = _one(c, "locations", job["location_id"], "Location")
         job_type = cfg.job_type(job["job_type_id"])
         day, window = _resolve_window(
-            cfg, now, job["priority"], body.arrivalWindowStart, body.arrivalWindowEnd
+            cfg,
+            now,
+            *_times(body.start, body.end, body.arrivalWindowStart, body.arrivalWindowEnd),
         )
 
         def take(technician_ids: list[int]) -> int:
@@ -532,19 +587,14 @@ def reschedule_appointment(
                 window,
                 appt["business_unit_id"],
                 job_type["skills"],
-                job["priority"],
-                location["zone_id"],
                 technician_ids,
                 exclude_appointment=appointment_id,
             )
 
-        if body.technicianIds:
-            tech_id = take(body.technicianIds)
-        else:
-            try:
-                tech_id = take([appt["technician_id"]])  # keep the same technician when possible
-            except ApiError:
-                tech_id = take([])
+        try:
+            tech_id = take([appt["technician_id"]])  # keep the same technician when possible
+        except ApiError:
+            tech_id = take([])
         window_start, window_end = cfg.window_bounds(day, window)
         try:
             c.execute(
@@ -575,7 +625,12 @@ def reschedule_appointment(
             "AppointmentRescheduled",
             f"Moved to the {window.id} window on {day} with technician {tech_id}.",
         )
-        return 200, shape_appointment(_one(c, "appointments", appointment_id, "Appointment"))
+        return 200, shape_appointment(
+            {
+                **dict(_one(c, "appointments", appointment_id, "Appointment")),
+                "customer_id": job["customer_id"],
+            }
+        )
 
     return write(
         conn,

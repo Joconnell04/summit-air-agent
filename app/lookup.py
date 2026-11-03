@@ -9,7 +9,7 @@ from .fsm import FsmAdapter
 from .tenant import Tenant
 from .text import phone_display, phone_key
 
-OPEN_JOB_STATUSES = ["Scheduled", "Dispatched", "Working"]
+OPEN_JOB_STATUSES = ["Scheduled", "Dispatched", "InProgress", "Hold"]
 RECENT_CALLS = 3
 RECENT_NOTES = 10
 LOCAL_CALL_DAYS = 30
@@ -44,6 +44,32 @@ def window_text(tenant: Tenant, start: str, end: str) -> dict:
     }
 
 
+def fsm_calls(
+    fsm: FsmAdapter, customer_id: int, phones: list[str], since: datetime | None = None
+) -> list[dict]:
+    """The customer's calls in ServiceTitan's log, newest first. The call feed is filtered by phone
+    number, so this reads each of the customer's numbers and keeps the calls ServiceTitan matched to
+    this customer or to nobody."""
+    seen, found = set(), []
+    for number in dict.fromkeys(phones):
+        for call in fsm.calls_from(number, since):
+            customer = call["leadCall"].get("customer")
+            if call["id"] in seen or (customer and customer["id"] != customer_id):
+                continue
+            seen.add(call["id"])
+            found.append(call)
+    return sorted(found, key=lambda c: c["leadCall"]["receivedOn"], reverse=True)
+
+
+def call_line(call: dict) -> dict:
+    lead_call = call["leadCall"]
+    return {
+        "at": lead_call["receivedOn"],
+        "reason": (lead_call.get("reason") or {}).get("name", ""),
+        "call_type": lead_call.get("callType"),
+    }
+
+
 def open_jobs(fsm: FsmAdapter, tenant: Tenant, customer_id: int) -> list[dict]:
     jobs = []
     for job in fsm.jobs(customer_id, OPEN_JOB_STATUSES):
@@ -72,13 +98,14 @@ def customer_bundle(
     fsm: FsmAdapter, tenant: Tenant, conn: sqlite3.Connection, customer: dict, now: datetime
 ) -> dict:
     customer_id = customer["id"]
-    phones = [c for c in customer["contacts"] if c["type"] in ("Phone", "MobilePhone")]
-    done = [j for j in fsm.jobs(customer_id, ["Done"]) if j.get("completedOn")]
+    phones = [c for c in fsm.contacts(customer_id) if c["type"] in ("Phone", "MobilePhone")]
+    done = [j for j in fsm.jobs(customer_id, ["Completed"]) if j.get("completedOn")]
     last_service = max((j["completedOn"] for j in done), default=None)
     calls = [
-        {"at": c["receivedOn"], "reason": c["reason"], "call_type": c["callType"]}
-        for c in fsm.calls(customer_id)[:RECENT_CALLS]
+        call_line(c)
+        for c in fsm_calls(fsm, customer_id, [p["value"] for p in phones])[:RECENT_CALLS]
     ]
+    locations = fsm.locations(customer_id)
     keys = [phone_key(p["value"]) for p in phones]
     if keys:
         # Calls this agent handled are in our own records, not the FSM's call log.
@@ -102,8 +129,9 @@ def customer_bundle(
             {
                 "number": phone_display(p["value"]),
                 "ending": phone_key(p["value"])[-4:],
-                "role": p["role"],
-                "name": p["name"],
+                # Who the number belongs to (owner, a son who calls for his mother) is whatever the
+                # office wrote in the contact's memo; ServiceTitan contacts have no role or name.
+                "memo": p.get("memo") or "",
             }
             for p in phones
         ],
@@ -116,25 +144,27 @@ def customer_bundle(
                 "zip": loc["address"]["zip"],
                 "in_service_area": loc["address"]["zip"] in tenant.service_area,
             }
-            for loc in fsm.locations(customer_id)
+            for loc in locations
         ],
         "membership": membership_summary(tenant, fsm.memberships(customer_id)),
         "open_jobs": open_jobs(fsm, tenant, customer_id),
         "last_service_date": last_service[:10] if last_service else None,
         "recent_calls": calls,
         "notes": [
-            {"text": n["text"], "at": n["createdOn"], "by": n["createdBy"]}
+            {
+                "text": n["text"],
+                "at": n["createdOn"],
+                "by": "agent" if n["createdById"] == tenant.fsm.get("agent_user_id") else "staff",
+            }
             for n in fsm.notes(customer_id)[-RECENT_NOTES:]
         ],
         "equipment": [
             {
-                "system": tenant.equipment_labels.get(
-                    e["systemType"], e["systemType"].replace("_", " ")
-                ),
+                "system": (e.get("type") or {}).get("name") or e["name"],
                 "brand": e["manufacturer"],
-                "install_year": e["installYear"],
+                "install_year": int(e["installedOn"][:4]) if e.get("installedOn") else None,
             }
-            for e in fsm.equipment(customer_id)
+            for e in fsm.equipment(customer_id, [loc["id"] for loc in locations])
         ],
     }
 
@@ -158,15 +188,13 @@ def history(
             if parse_iso(j["createdOn"]) >= since
         ]
     if what == "calls":
-        return [
-            {"at": c["receivedOn"], "reason": c["reason"], "call_type": c["callType"]}
-            for c in fsm.calls(customer_id, since)
+        numbers = [
+            c["value"] for c in fsm.contacts(customer_id) if c["type"] in ("Phone", "MobilePhone")
         ]
+        return [call_line(c) for c in fsm_calls(fsm, customer_id, numbers, since)]
     return [
         {
-            "system": tenant.equipment_labels.get(
-                e["systemType"], e["systemType"].replace("_", " ")
-            ),
+            "system": (e.get("type") or {}).get("name") or e["name"],
             "brand": e["manufacturer"],
             "model": e["model"],
             "installed": e["installedOn"],

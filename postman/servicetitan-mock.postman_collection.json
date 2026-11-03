@@ -22,7 +22,7 @@
                   "if (pm.response.code >= 400) {",
                   "  pm.test('error uses the standard shape', () => {",
                   "    const b = pm.response.json();",
-                  "    ['status', 'code', 'title', 'detail', 'errors', 'requestId'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
                   "    pm.expect(b.status).to.eql(pm.response.code);",
                   "  });",
                   "}"
@@ -51,7 +51,7 @@
                   "if (pm.response.code >= 400) {",
                   "  pm.test('error uses the standard shape', () => {",
                   "    const b = pm.response.json();",
-                  "    ['status', 'code', 'title', 'detail', 'errors', 'requestId'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
                   "    pm.expect(b.status).to.eql(pm.response.code);",
                   "  });",
                   "}"
@@ -91,12 +91,12 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('status is 400', () => pm.response.to.have.status(400));",
-                  "pm.test('says invalid_client', () => pm.expect(pm.response.json().code).to.eql('invalid_client'));",
+                  "pm.test('says invalid_client', () => pm.expect(pm.response.json().data.code).to.eql('invalid_client'));",
                   "",
                   "if (pm.response.code >= 400) {",
                   "  pm.test('error uses the standard shape', () => {",
                   "    const b = pm.response.json();",
-                  "    ['status', 'code', 'title', 'detail', 'errors', 'requestId'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
                   "    pm.expect(b.status).to.eql(pm.response.code);",
                   "  });",
                   "}"
@@ -156,7 +156,7 @@
                   "if (pm.response.code >= 400) {",
                   "  pm.test('error uses the standard shape', () => {",
                   "    const b = pm.response.json();",
-                  "    ['status', 'code', 'title', 'detail', 'errors', 'requestId'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
                   "    pm.expect(b.status).to.eql(pm.response.code);",
                   "  });",
                   "}"
@@ -184,7 +184,7 @@
                   "if (pm.response.code >= 400) {",
                   "  pm.test('error uses the standard shape', () => {",
                   "    const b = pm.response.json();",
-                  "    ['status', 'code', 'title', 'detail', 'errors', 'requestId'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
                   "    pm.expect(b.status).to.eql(pm.response.code);",
                   "  });",
                   "}"
@@ -199,21 +199,20 @@
           }
         },
         {
-          "name": "Company profile",
+          "name": "No company profile",
           "event": [
             {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
-                  "pm.test('fees are not invented', () => pm.expect(pm.response.json().fees.diagnostic).to.eql(null));",
-                  "pm.test('has a service area', () => pm.expect(pm.response.json().serviceAreaZips.length).to.be.above(10));",
+                  "pm.test('status is 404', () => pm.response.to.have.status(404));",
+                  "pm.test('ServiceTitan has no such endpoint', () => pm.expect(pm.response.json().status).to.eql(404));",
                   "",
                   "if (pm.response.code >= 400) {",
                   "  pm.test('error uses the standard shape', () => {",
                   "    const b = pm.response.json();",
-                  "    ['status', 'code', 'title', 'detail', 'errors', 'requestId'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
                   "    pm.expect(b.status).to.eql(pm.response.code);",
                   "  });",
                   "}"
@@ -255,7 +254,7 @@
                   "if (pm.response.code >= 400) {",
                   "  pm.test('error uses the standard shape', () => {",
                   "    const b = pm.response.json();",
-                  "    ['status', 'code', 'title', 'detail', 'errors', 'requestId'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
                   "    pm.expect(b.status).to.eql(pm.response.code);",
                   "  });",
                   "}"
@@ -292,7 +291,7 @@
                   "if (pm.response.code >= 400) {",
                   "  pm.test('error uses the standard shape', () => {",
                   "    const b = pm.response.json();",
-                  "    ['status', 'code', 'title', 'detail', 'errors', 'requestId'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
                   "    pm.expect(b.status).to.eql(pm.response.code);",
                   "  });",
                   "}"
@@ -324,12 +323,12 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('status is 200', () => pm.response.to.have.status(200));",
-                  "pm.test('includes the adult child', () => pm.expect(pm.response.json().data.map(c => c.role)).to.include('adult_child'));",
+                  "pm.test('includes the adult child', () => pm.expect(pm.response.json().data.map(c => c.memo)).to.include('Adult child: David Park'));",
                   "",
                   "if (pm.response.code >= 400) {",
                   "  pm.test('error uses the standard shape', () => {",
                   "    const b = pm.response.json();",
-                  "    ['status', 'code', 'title', 'detail', 'errors', 'requestId'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
                   "    pm.expect(b.status).to.eql(pm.response.code);",
                   "  });",
                   "}"
@@ -360,13 +359,13 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('status is 201', () => pm.response.to.have.status(201));",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
                   "",
                   "",
                   "if (pm.response.code >= 400) {",
                   "  pm.test('error uses the standard shape', () => {",
                   "    const b = pm.response.json();",
-                  "    ['status', 'code', 'title', 'detail', 'errors', 'requestId'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
                   "    pm.expect(b.status).to.eql(pm.response.code);",
                   "  });",
                   "}"
@@ -393,7 +392,7 @@
             "url": "{{base_url}}/crm/v2/tenant/{{tenant_id}}/customers/{{park_customer_id}}/contacts",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"type\": \"Phone\",\n  \"value\": \"(718) 555-0199\",\n  \"role\": \"owner\"\n}"
+              "raw": "{\n  \"type\": \"Phone\",\n  \"value\": \"(718) 555-0199\",\n  \"memo\": \"Owner\"\n}"
             }
           }
         },
@@ -411,7 +410,7 @@
                   "if (pm.response.code >= 400) {",
                   "  pm.test('error uses the standard shape', () => {",
                   "    const b = pm.response.json();",
-                  "    ['status', 'code', 'title', 'detail', 'errors', 'requestId'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
                   "    pm.expect(b.status).to.eql(pm.response.code);",
                   "  });",
                   "}"
@@ -442,13 +441,13 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('status is 201', () => pm.response.to.have.status(201));",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
                   "pm.test('keeps the text as given', () => pm.expect(pm.response.json().text).to.eql('Prefers mornings.'));",
                   "",
                   "if (pm.response.code >= 400) {",
                   "  pm.test('error uses the standard shape', () => {",
                   "    const b = pm.response.json();",
-                  "    ['status', 'code', 'title', 'detail', 'errors', 'requestId'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
                   "    pm.expect(b.status).to.eql(pm.response.code);",
                   "  });",
                   "}"
@@ -475,7 +474,7 @@
             "url": "{{base_url}}/crm/v2/tenant/{{tenant_id}}/customers/{{park_customer_id}}/notes",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"text\": \"Prefers mornings.\",\n  \"createdBy\": \"agent\"\n}"
+              "raw": "{\n  \"text\": \"Prefers mornings.\",\n  \"pinToTop\": false\n}"
             }
           }
         },
@@ -494,7 +493,7 @@
                   "if (pm.response.code >= 400) {",
                   "  pm.test('error uses the standard shape', () => {",
                   "    const b = pm.response.json();",
-                  "    ['status', 'code', 'title', 'detail', 'errors', 'requestId'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
                   "    pm.expect(b.status).to.eql(pm.response.code);",
                   "  });",
                   "}"
@@ -531,7 +530,7 @@
                   "if (pm.response.code >= 400) {",
                   "  pm.test('error uses the standard shape', () => {",
                   "    const b = pm.response.json();",
-                  "    ['status', 'code', 'title', 'detail', 'errors', 'requestId'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
                   "    pm.expect(b.status).to.eql(pm.response.code);",
                   "  });",
                   "}"
@@ -568,7 +567,7 @@
                   "if (pm.response.code >= 400) {",
                   "  pm.test('error uses the standard shape', () => {",
                   "    const b = pm.response.json();",
-                  "    ['status', 'code', 'title', 'detail', 'errors', 'requestId'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
                   "    pm.expect(b.status).to.eql(pm.response.code);",
                   "  });",
                   "}"
@@ -608,14 +607,14 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('status is 201', () => pm.response.to.have.status(201));",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
                   "pm.collectionVariables.set('new_customer_id', pm.response.json().id);",
                   "pm.collectionVariables.set('new_location_id', pm.response.json().locations[0].id);",
                   "",
                   "if (pm.response.code >= 400) {",
                   "  pm.test('error uses the standard shape', () => {",
                   "    const b = pm.response.json();",
-                  "    ['status', 'code', 'title', 'detail', 'errors', 'requestId'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
                   "    pm.expect(b.status).to.eql(pm.response.code);",
                   "  });",
                   "}"
@@ -646,7 +645,7 @@
             "url": "{{base_url}}/crm/v2/tenant/{{tenant_id}}/customers",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Newman Test\",\n  \"locations\": [\n    {\n      \"address\": {\n        \"street\": \"9 Test St\",\n        \"city\": \"Brooklyn\",\n        \"state\": \"NY\",\n        \"zip\": \"11201\"\n      }\n    }\n  ],\n  \"contacts\": [\n    {\n      \"type\": \"MobilePhone\",\n      \"value\": \"(646) 555-0100\"\n    }\n  ]\n}"
+              "raw": "{\n  \"name\": \"Newman Test\",\n  \"type\": \"Residential\",\n  \"address\": {\n    \"street\": \"9 Test St\",\n    \"unit\": \"\",\n    \"city\": \"Brooklyn\",\n    \"state\": \"NY\",\n    \"zip\": \"11201\",\n    \"country\": \"USA\"\n  },\n  \"locations\": [\n    {\n      \"name\": \"9 Test St\",\n      \"address\": {\n        \"street\": \"9 Test St\",\n        \"unit\": \"\",\n        \"city\": \"Brooklyn\",\n        \"state\": \"NY\",\n        \"zip\": \"11201\",\n        \"country\": \"USA\"\n      }\n    }\n  ],\n  \"contacts\": [\n    {\n      \"type\": \"MobilePhone\",\n      \"value\": \"(646) 555-0100\"\n    }\n  ]\n}"
             }
           }
         },
@@ -658,13 +657,13 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('status is 201', () => pm.response.to.have.status(201));",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
                   "",
                   "",
                   "if (pm.response.code >= 400) {",
                   "  pm.test('error uses the standard shape', () => {",
                   "    const b = pm.response.json();",
-                  "    ['status', 'code', 'title', 'detail', 'errors', 'requestId'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
                   "    pm.expect(b.status).to.eql(pm.response.code);",
                   "  });",
                   "}"
@@ -691,7 +690,7 @@
             "url": "{{base_url}}/crm/v2/tenant/{{tenant_id}}/locations",
             "body": {
               "mode": "raw",
-              "raw": "{\"customerId\": {{new_customer_id}}, \"address\": {\"street\": \"10 Test St\", \"zip\": \"11201\"}}"
+              "raw": "{\"customerId\": {{new_customer_id}}, \"name\": \"10 Test St\", \"address\": {\"street\": \"10 Test St\", \"unit\": \"\", \"city\": \"Brooklyn\", \"state\": \"NY\", \"zip\": \"11201\", \"country\": \"USA\"}}"
             }
           }
         },
@@ -709,7 +708,7 @@
                   "if (pm.response.code >= 400) {",
                   "  pm.test('error uses the standard shape', () => {",
                   "    const b = pm.response.json();",
-                  "    ['status', 'code', 'title', 'detail', 'errors', 'requestId'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
                   "    pm.expect(b.status).to.eql(pm.response.code);",
                   "  });",
                   "}"
@@ -740,13 +739,14 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('status is 201', () => pm.response.to.have.status(201));",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
                   "pm.collectionVariables.set('booking_id', pm.response.json().id);",
+                  "pm.test('is new, under the provider', () => pm.expect([pm.response.json().status, pm.response.json().bookingProviderId]).to.eql(['New', 501]));",
                   "",
                   "if (pm.response.code >= 400) {",
                   "  pm.test('error uses the standard shape', () => {",
                   "    const b = pm.response.json();",
-                  "    ['status', 'code', 'title', 'detail', 'errors', 'requestId'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
                   "    pm.expect(b.status).to.eql(pm.response.code);",
                   "  });",
                   "}"
@@ -773,7 +773,7 @@
             "url": "{{base_url}}/crm/v2/tenant/{{tenant_id}}/booking-provider/501/bookings",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"externalId\": \"newman-{{run_id}}\",\n  \"source\": \"newman\",\n  \"name\": \"Newman Test\",\n  \"summary\": \"No heat\",\n  \"address\": {\n    \"street\": \"9 Test St\",\n    \"zip\": \"11201\"\n  },\n  \"contacts\": [\n    {\n      \"type\": \"MobilePhone\",\n      \"value\": \"(646) 555-0100\"\n    }\n  ]\n}"
+              "raw": "{\n  \"externalId\": \"newman-{{run_id}}\",\n  \"source\": \"newman\",\n  \"name\": \"Newman Test\",\n  \"summary\": \"No heat\",\n  \"isFirstTimeClient\": true,\n  \"address\": {\n    \"street\": \"9 Test St\",\n    \"unit\": \"\",\n    \"city\": \"Brooklyn\",\n    \"state\": \"NY\",\n    \"zip\": \"11201\",\n    \"country\": \"USA\"\n  },\n  \"contacts\": [\n    {\n      \"type\": \"MobilePhone\",\n      \"value\": \"(646) 555-0100\"\n    }\n  ]\n}"
             }
           }
         },
@@ -791,7 +791,7 @@
                   "if (pm.response.code >= 400) {",
                   "  pm.test('error uses the standard shape', () => {",
                   "    const b = pm.response.json();",
-                  "    ['status', 'code', 'title', 'detail', 'errors', 'requestId'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
                   "    pm.expect(b.status).to.eql(pm.response.code);",
                   "  });",
                   "}"
@@ -818,52 +818,7 @@
             "url": "{{base_url}}/crm/v2/tenant/{{tenant_id}}/booking-provider/501/bookings",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"externalId\": \"newman-{{run_id}}\",\n  \"source\": \"newman\",\n  \"name\": \"Newman Test\",\n  \"summary\": \"No heat\",\n  \"address\": {\n    \"street\": \"9 Test St\",\n    \"zip\": \"11201\"\n  }\n}"
-            }
-          }
-        },
-        {
-          "name": "Out-of-area booking",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('status is 422', () => pm.response.to.have.status(422));",
-                  "pm.test('says out_of_area', () => pm.expect(pm.response.json().code).to.eql('out_of_area'));",
-                  "",
-                  "if (pm.response.code >= 400) {",
-                  "  pm.test('error uses the standard shape', () => {",
-                  "    const b = pm.response.json();",
-                  "    ['status', 'code', 'title', 'detail', 'errors', 'requestId'].forEach(k => pm.expect(b).to.have.property(k));",
-                  "    pm.expect(b.status).to.eql(pm.response.code);",
-                  "  });",
-                  "}"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{access_token}}"
-              },
-              {
-                "key": "ST-App-Key",
-                "value": "{{app_key}}"
-              }
-            ],
-            "url": "{{base_url}}/crm/v2/tenant/{{tenant_id}}/booking-provider/501/bookings",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Far\",\n  \"address\": {\n    \"street\": \"47 Willis Ave\",\n    \"zip\": \"11501\"\n  }\n}"
+              "raw": "{\n  \"externalId\": \"newman-{{run_id}}\",\n  \"source\": \"newman\",\n  \"name\": \"Newman Test\",\n  \"summary\": \"No heat\",\n  \"isFirstTimeClient\": true,\n  \"address\": {\n    \"street\": \"9 Test St\",\n    \"unit\": \"\",\n    \"city\": \"Brooklyn\",\n    \"state\": \"NY\",\n    \"zip\": \"11201\",\n    \"country\": \"USA\"\n  }\n}"
             }
           }
         },
@@ -881,7 +836,7 @@
                   "if (pm.response.code >= 400) {",
                   "  pm.test('error uses the standard shape', () => {",
                   "    const b = pm.response.json();",
-                  "    ['status', 'code', 'title', 'detail', 'errors', 'requestId'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
                   "    pm.expect(b.status).to.eql(pm.response.code);",
                   "  });",
                   "}"
@@ -918,7 +873,7 @@
                   "if (pm.response.code >= 400) {",
                   "  pm.test('error uses the standard shape', () => {",
                   "    const b = pm.response.json();",
-                  "    ['status', 'code', 'title', 'detail', 'errors', 'requestId'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
                   "    pm.expect(b.status).to.eql(pm.response.code);",
                   "  });",
                   "}"
@@ -949,13 +904,14 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('status is 201', () => pm.response.to.have.status(201));",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
                   "pm.collectionVariables.set('lead_id', pm.response.json().id);",
+                  "pm.test('open, with the Commercial call reason', () => pm.expect([pm.response.json().status, pm.response.json().callReasonId]).to.eql(['Open', 704]));",
                   "",
                   "if (pm.response.code >= 400) {",
                   "  pm.test('error uses the standard shape', () => {",
                   "    const b = pm.response.json();",
-                  "    ['status', 'code', 'title', 'detail', 'errors', 'requestId'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
                   "    pm.expect(b.status).to.eql(pm.response.code);",
                   "  });",
                   "}"
@@ -982,7 +938,7 @@
             "url": "{{base_url}}/crm/v2/tenant/{{tenant_id}}/leads",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"kind\": \"Commercial\",\n  \"customerType\": \"Commercial\",\n  \"name\": \"Newman Deli\",\n  \"phone\": \"(718) 555-0199\",\n  \"summary\": \"Walk-in cooler down.\"\n}"
+              "raw": "{\n  \"campaignId\": 302,\n  \"callReasonId\": 704,\n  \"leadCustomerName\": \"Newman Deli\",\n  \"leadPhone\": \"(718) 555-0199\",\n  \"summary\": \"Walk-in cooler down.\"\n}"
             }
           }
         },
@@ -1000,7 +956,7 @@
                   "if (pm.response.code >= 400) {",
                   "  pm.test('error uses the standard shape', () => {",
                   "    const b = pm.response.json();",
-                  "    ['status', 'code', 'title', 'detail', 'errors', 'requestId'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
                   "    pm.expect(b.status).to.eql(pm.response.code);",
                   "  });",
                   "}"
@@ -1020,7 +976,7 @@
                 "value": "{{app_key}}"
               }
             ],
-            "url": "{{base_url}}/crm/v2/tenant/{{tenant_id}}/leads?customerType=Commercial"
+            "url": "{{base_url}}/crm/v2/tenant/{{tenant_id}}/leads?leadPhone=(718) 555-0199"
           }
         },
         {
@@ -1037,7 +993,7 @@
                   "if (pm.response.code >= 400) {",
                   "  pm.test('error uses the standard shape', () => {",
                   "    const b = pm.response.json();",
-                  "    ['status', 'code', 'title', 'detail', 'errors', 'requestId'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
                   "    pm.expect(b.status).to.eql(pm.response.code);",
                   "  });",
                   "}"
@@ -1074,12 +1030,12 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('status is 200', () => pm.response.to.have.status(200));",
-                  "pm.test('Summit Standard Membership has priority scheduling', () => pm.expect(pm.response.json().data.find(t => t.name === 'Summit Standard Membership').perks.prioritySched).to.eql(true));",
+                  "pm.test('Summit Standard Membership has no perks block, only ServiceTitan fields', () => { const t = pm.response.json().data.find(t => t.name === 'Summit Standard Membership'); pm.expect(t).to.not.have.property('perks'); pm.expect(t.recurringServices.length).to.eql(2); });",
                   "",
                   "if (pm.response.code >= 400) {",
                   "  pm.test('error uses the standard shape', () => {",
                   "    const b = pm.response.json();",
-                  "    ['status', 'code', 'title', 'detail', 'errors', 'requestId'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
                   "    pm.expect(b.status).to.eql(pm.response.code);",
                   "  });",
                   "}"
@@ -1116,7 +1072,7 @@
                   "if (pm.response.code >= 400) {",
                   "  pm.test('error uses the standard shape', () => {",
                   "    const b = pm.response.json();",
-                  "    ['status', 'code', 'title', 'detail', 'errors', 'requestId'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
                   "    pm.expect(b.status).to.eql(pm.response.code);",
                   "  });",
                   "}"
@@ -1153,7 +1109,7 @@
                   "if (pm.response.code >= 400) {",
                   "  pm.test('error uses the standard shape', () => {",
                   "    const b = pm.response.json();",
-                  "    ['status', 'code', 'title', 'detail', 'errors', 'requestId'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
                   "    pm.expect(b.status).to.eql(pm.response.code);",
                   "  });",
                   "}"
@@ -1173,11 +1129,11 @@
                 "value": "{{app_key}}"
               }
             ],
-            "url": "{{base_url}}/memberships/v2/tenant/{{tenant_id}}/memberships?customerId={{moretti_customer_id}}"
+            "url": "{{base_url}}/memberships/v2/tenant/{{tenant_id}}/memberships?customerIds={{moretti_customer_id}}"
           }
         },
         {
-          "name": "Member found by address",
+          "name": "Member found by customer",
           "event": [
             {
               "listen": "test",
@@ -1190,7 +1146,7 @@
                   "if (pm.response.code >= 400) {",
                   "  pm.test('error uses the standard shape', () => {",
                   "    const b = pm.response.json();",
-                  "    ['status', 'code', 'title', 'detail', 'errors', 'requestId'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
                   "    pm.expect(b.status).to.eql(pm.response.code);",
                   "  });",
                   "}"
@@ -1210,7 +1166,7 @@
                 "value": "{{app_key}}"
               }
             ],
-            "url": "{{base_url}}/memberships/v2/tenant/{{tenant_id}}/memberships?locationId={{park_location_id}}"
+            "url": "{{base_url}}/memberships/v2/tenant/{{tenant_id}}/memberships?customerIds={{park_customer_id}}"
           }
         },
         {
@@ -1227,7 +1183,7 @@
                   "if (pm.response.code >= 400) {",
                   "  pm.test('error uses the standard shape', () => {",
                   "    const b = pm.response.json();",
-                  "    ['status', 'code', 'title', 'detail', 'errors', 'requestId'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
                   "    pm.expect(b.status).to.eql(pm.response.code);",
                   "  });",
                   "}"
@@ -1259,12 +1215,12 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('status is 200', () => pm.response.to.have.status(200));",
-                  "",
+                  "pm.test('visits are named', () => pm.expect(pm.response.json().data[0].locationRecurringServiceName).to.be.a('string'));",
                   "",
                   "if (pm.response.code >= 400) {",
                   "  pm.test('error uses the standard shape', () => {",
                   "    const b = pm.response.json();",
-                  "    ['status', 'code', 'title', 'detail', 'errors', 'requestId'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
                   "    pm.expect(b.status).to.eql(pm.response.code);",
                   "  });",
                   "}"
@@ -1284,7 +1240,7 @@
                 "value": "{{app_key}}"
               }
             ],
-            "url": "{{base_url}}/memberships/v2/tenant/{{tenant_id}}/recurring-service-events?membershipId={{park_membership_id}}"
+            "url": "{{base_url}}/memberships/v2/tenant/{{tenant_id}}/recurring-service-events?locationId={{park_location_id}}"
           }
         },
         {
@@ -1296,12 +1252,12 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('status is 200', () => pm.response.to.have.status(200));",
-                  "pm.test('has a system type', () => pm.expect(pm.response.json().data[0].systemType).to.be.a('string'));",
+                  "pm.test('has a type object', () => pm.expect(pm.response.json().data[0].type.name).to.be.a('string'));",
                   "",
                   "if (pm.response.code >= 400) {",
                   "  pm.test('error uses the standard shape', () => {",
                   "    const b = pm.response.json();",
-                  "    ['status', 'code', 'title', 'detail', 'errors', 'requestId'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
                   "    pm.expect(b.status).to.eql(pm.response.code);",
                   "  });",
                   "}"
@@ -1321,7 +1277,7 @@
                 "value": "{{app_key}}"
               }
             ],
-            "url": "{{base_url}}/equipmentsystems/v2/tenant/{{tenant_id}}/installed-equipment?locationId={{park_location_id}}"
+            "url": "{{base_url}}/equipmentsystems/v2/tenant/{{tenant_id}}/installed-equipment?locationIds={{park_location_id}}"
           }
         }
       ]
@@ -1343,7 +1299,7 @@
                   "if (pm.response.code >= 400) {",
                   "  pm.test('error uses the standard shape', () => {",
                   "    const b = pm.response.json();",
-                  "    ['status', 'code', 'title', 'detail', 'errors', 'requestId'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
                   "    pm.expect(b.status).to.eql(pm.response.code);",
                   "  });",
                   "}"
@@ -1367,6 +1323,117 @@
           }
         },
         {
+          "name": "Arrival windows",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('four windows', () => pm.expect(pm.response.json().totalCount).to.eql(4));",
+                  "",
+                  "if (pm.response.code >= 400) {",
+                  "  pm.test('error uses the standard shape', () => {",
+                  "    const b = pm.response.json();",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    pm.expect(b.status).to.eql(pm.response.code);",
+                  "  });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "ST-App-Key",
+                "value": "{{app_key}}"
+              }
+            ],
+            "url": "{{base_url}}/dispatch/v2/tenant/{{tenant_id}}/arrival-windows"
+          }
+        },
+        {
+          "name": "Tag types",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('has the callback tags', () => pm.expect(pm.response.json().data.map(t => t.name)).to.include('Callback resolved'));",
+                  "",
+                  "if (pm.response.code >= 400) {",
+                  "  pm.test('error uses the standard shape', () => {",
+                  "    const b = pm.response.json();",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    pm.expect(b.status).to.eql(pm.response.code);",
+                  "  });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "ST-App-Key",
+                "value": "{{app_key}}"
+              }
+            ],
+            "url": "{{base_url}}/settings/v2/tenant/{{tenant_id}}/tag-types"
+          }
+        },
+        {
+          "name": "Call reasons",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('has lead reasons', () => pm.expect(pm.response.json().data.filter(r => r.isLead).length).to.be.at.least(1));",
+                  "",
+                  "if (pm.response.code >= 400) {",
+                  "  pm.test('error uses the standard shape', () => {",
+                  "    const b = pm.response.json();",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    pm.expect(b.status).to.eql(pm.response.code);",
+                  "  });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "ST-App-Key",
+                "value": "{{app_key}}"
+              }
+            ],
+            "url": "{{base_url}}/jbce/v2/tenant/{{tenant_id}}/call-reasons"
+          }
+        },
+        {
           "name": "Technician shifts (on call)",
           "event": [
             {
@@ -1380,7 +1447,7 @@
                   "if (pm.response.code >= 400) {",
                   "  pm.test('error uses the standard shape', () => {",
                   "    const b = pm.response.json();",
-                  "    ['status', 'code', 'title', 'detail', 'errors', 'requestId'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
                   "    pm.expect(b.status).to.eql(pm.response.code);",
                   "  });",
                   "}"
@@ -1417,7 +1484,7 @@
                   "if (pm.response.code >= 400) {",
                   "  pm.test('error uses the standard shape', () => {",
                   "    const b = pm.response.json();",
-                  "    ['status', 'code', 'title', 'detail', 'errors', 'requestId'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
                   "    pm.expect(b.status).to.eql(pm.response.code);",
                   "  });",
                   "}"
@@ -1454,7 +1521,7 @@
                   "if (pm.response.code >= 400) {",
                   "  pm.test('error uses the standard shape', () => {",
                   "    const b = pm.response.json();",
-                  "    ['status', 'code', 'title', 'detail', 'errors', 'requestId'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
                   "    pm.expect(b.status).to.eql(pm.response.code);",
                   "  });",
                   "}"
@@ -1474,7 +1541,7 @@
                 "value": "{{app_key}}"
               }
             ],
-            "url": "{{base_url}}/settings/v2/tenant/{{tenant_id}}/technicians?businessUnitId=11"
+            "url": "{{base_url}}/settings/v2/tenant/{{tenant_id}}/technicians"
           }
         },
         {
@@ -1491,7 +1558,7 @@
                   "if (pm.response.code >= 400) {",
                   "  pm.test('error uses the standard shape', () => {",
                   "    const b = pm.response.json();",
-                  "    ['status', 'code', 'title', 'detail', 'errors', 'requestId'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
                   "    pm.expect(b.status).to.eql(pm.response.code);",
                   "  });",
                   "}"
@@ -1528,7 +1595,7 @@
                   "if (pm.response.code >= 400) {",
                   "  pm.test('error uses the standard shape', () => {",
                   "    const b = pm.response.json();",
-                  "    ['status', 'code', 'title', 'detail', 'errors', 'requestId'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
                   "    pm.expect(b.status).to.eql(pm.response.code);",
                   "  });",
                   "}"
@@ -1572,20 +1639,18 @@
                 "exec": [
                   "pm.test('status is 200', () => pm.response.to.have.status(200));",
                   "",
-                  "const open = [];",
-                  "pm.response.json().availabilities.forEach(d => d.timeslots.forEach(s => {",
-                  "  if (s.isAvailable && !s.afterHours) open.push(s);",
-                  "}));",
+                  "const free = (f) => f.technicians.filter(t => t.status === 'Available' && t.hasRequiredSkills).length;",
+                  "const open = pm.response.json().availabilities.filter(f => f.isAvailable && !f.start.includes('T20:00:00'));",
                   "pm.test('at least two open windows in the next ten days', () => pm.expect(open.length).to.be.at.least(2));",
                   "const v = pm.collectionVariables;",
-                  "v.set('win1_start', open[0].start); v.set('win1_end', open[0].end); v.set('win1_open', open[0].openAvailability);",
-                  "v.set('win2_start', open[1].start); v.set('win2_end', open[1].end); v.set('win2_open', open[1].openAvailability);",
+                  "v.set('win1_start', open[0].startUtc); v.set('win1_end', open[0].endUtc); v.set('win1_open', free(open[0]));",
+                  "v.set('win2_start', open[1].startUtc); v.set('win2_end', open[1].endUtc); v.set('win2_open', free(open[1]));",
                   "",
                   "",
                   "if (pm.response.code >= 400) {",
                   "  pm.test('error uses the standard shape', () => {",
                   "    const b = pm.response.json();",
-                  "    ['status', 'code', 'title', 'detail', 'errors', 'requestId'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
                   "    pm.expect(b.status).to.eql(pm.response.code);",
                   "  });",
                   "}"
@@ -1612,7 +1677,7 @@
             "url": "{{base_url}}/dispatch/v2/tenant/{{tenant_id}}/capacity",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"startsOnOrAfter\": \"{{cap_from}}\",\n  \"endsOnOrBefore\": \"{{cap_to}}\",\n  \"businessUnitIds\": [\n    11\n  ],\n  \"jobTypeId\": 203,\n  \"priority\": \"Normal\"\n}"
+              "raw": "{\n  \"startsOnOrAfter\": \"{{cap_from}}\",\n  \"endsOnOrBefore\": \"{{cap_to}}\",\n  \"businessUnitIds\": [\n    11\n  ],\n  \"jobTypeId\": 203,\n  \"skillBasedAvailability\": true\n}"
             }
           }
         }
@@ -1635,7 +1700,7 @@
                   "if (pm.response.code >= 400) {",
                   "  pm.test('error uses the standard shape', () => {",
                   "    const b = pm.response.json();",
-                  "    ['status', 'code', 'title', 'detail', 'errors', 'requestId'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
                   "    pm.expect(b.status).to.eql(pm.response.code);",
                   "  });",
                   "}"
@@ -1672,7 +1737,7 @@
                   "if (pm.response.code >= 400) {",
                   "  pm.test('error uses the standard shape', () => {",
                   "    const b = pm.response.json();",
-                  "    ['status', 'code', 'title', 'detail', 'errors', 'requestId'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
                   "    pm.expect(b.status).to.eql(pm.response.code);",
                   "  });",
                   "}"
@@ -1709,7 +1774,7 @@
                   "if (pm.response.code >= 400) {",
                   "  pm.test('error uses the standard shape', () => {",
                   "    const b = pm.response.json();",
-                  "    ['status', 'code', 'title', 'detail', 'errors', 'requestId'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
                   "    pm.expect(b.status).to.eql(pm.response.code);",
                   "  });",
                   "}"
@@ -1749,7 +1814,7 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('status is 201', () => pm.response.to.have.status(201));",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
                   "pm.collectionVariables.set('job_id', pm.response.json().id);",
                   "pm.collectionVariables.set('appointment_id', pm.response.json().firstAppointmentId);",
                   "pm.test('scheduled', () => pm.expect(pm.response.json().jobStatus).to.eql('Scheduled'));",
@@ -1757,7 +1822,7 @@
                   "if (pm.response.code >= 400) {",
                   "  pm.test('error uses the standard shape', () => {",
                   "    const b = pm.response.json();",
-                  "    ['status', 'code', 'title', 'detail', 'errors', 'requestId'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
                   "    pm.expect(b.status).to.eql(pm.response.code);",
                   "  });",
                   "}"
@@ -1792,7 +1857,7 @@
             "url": "{{base_url}}/jpm/v2/tenant/{{tenant_id}}/jobs",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"customerId\": {{park_customer_id}},\n  \"locationId\": {{park_location_id}},\n  \"businessUnitId\": 11,\n  \"jobTypeId\": 203,\n  \"priority\": \"Normal\",\n  \"summary\": \"Newman check\",\n  \"appointments\": [\n    {\n      \"arrivalWindowStart\": \"{{win1_start}}\",\n      \"arrivalWindowEnd\": \"{{win1_end}}\"\n    }\n  ]\n}"
+              "raw": "{\n  \"customerId\": {{park_customer_id}},\n  \"locationId\": {{park_location_id}},\n  \"businessUnitId\": 11,\n  \"jobTypeId\": 203,\n  \"priority\": \"Normal\",\n  \"campaignId\": 301,\n  \"summary\": \"Newman check\",\n  \"appointments\": [\n    {\n      \"start\": \"{{win1_start}}\",\n      \"end\": \"{{win1_end}}\",\n      \"arrivalWindowStart\": \"{{win1_start}}\",\n      \"arrivalWindowEnd\": \"{{win1_end}}\"\n    }\n  ]\n}"
             }
           }
         },
@@ -1804,14 +1869,14 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('status is 201', () => pm.response.to.have.status(201));",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
                   "pm.test('replayed', () => pm.expect(pm.response.headers.get('Idempotent-Replayed')).to.eql('true'));",
                   "pm.test('same job', () => pm.expect(pm.response.json().id).to.eql(Number(pm.collectionVariables.get('job_id'))));",
                   "",
                   "if (pm.response.code >= 400) {",
                   "  pm.test('error uses the standard shape', () => {",
                   "    const b = pm.response.json();",
-                  "    ['status', 'code', 'title', 'detail', 'errors', 'requestId'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
                   "    pm.expect(b.status).to.eql(pm.response.code);",
                   "  });",
                   "}"
@@ -1846,7 +1911,7 @@
             "url": "{{base_url}}/jpm/v2/tenant/{{tenant_id}}/jobs",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"customerId\": {{park_customer_id}},\n  \"locationId\": {{park_location_id}},\n  \"businessUnitId\": 11,\n  \"jobTypeId\": 203,\n  \"priority\": \"Normal\",\n  \"summary\": \"Newman check\",\n  \"appointments\": [\n    {\n      \"arrivalWindowStart\": \"{{win1_start}}\",\n      \"arrivalWindowEnd\": \"{{win1_end}}\"\n    }\n  ]\n}"
+              "raw": "{\n  \"customerId\": {{park_customer_id}},\n  \"locationId\": {{park_location_id}},\n  \"businessUnitId\": 11,\n  \"jobTypeId\": 203,\n  \"priority\": \"Normal\",\n  \"campaignId\": 301,\n  \"summary\": \"Newman check\",\n  \"appointments\": [\n    {\n      \"start\": \"{{win1_start}}\",\n      \"end\": \"{{win1_end}}\",\n      \"arrivalWindowStart\": \"{{win1_start}}\",\n      \"arrivalWindowEnd\": \"{{win1_end}}\"\n    }\n  ]\n}"
             }
           }
         },
@@ -1870,14 +1935,15 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('status is 200', () => pm.response.to.have.status(200));",
-                  "const find = (start) => { let hit = null; pm.response.json().availabilities.forEach(d => d.timeslots.forEach(s => { if (s.start === start) hit = s; })); return hit; };",
-                  "const open = (n) => find(pm.collectionVariables.get('win' + n + '_start')).openAvailability;",
+                  "const find = (start) => pm.response.json().availabilities.find(f => f.startUtc === start);",
+                  "const free = (f) => f.technicians.filter(t => t.status === 'Available' && t.hasRequiredSkills).length;",
+                  "const open = (n) => free(find(pm.collectionVariables.get('win' + n + '_start')));",
                   "pm.test('one fewer open', () => pm.expect(open(1)).to.eql(Number(pm.collectionVariables.get('win1_open')) - 1));",
                   "",
                   "if (pm.response.code >= 400) {",
                   "  pm.test('error uses the standard shape', () => {",
                   "    const b = pm.response.json();",
-                  "    ['status', 'code', 'title', 'detail', 'errors', 'requestId'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
                   "    pm.expect(b.status).to.eql(pm.response.code);",
                   "  });",
                   "}"
@@ -1904,25 +1970,63 @@
             "url": "{{base_url}}/dispatch/v2/tenant/{{tenant_id}}/capacity",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"startsOnOrAfter\": \"{{cap_from}}\",\n  \"endsOnOrBefore\": \"{{cap_to}}\",\n  \"businessUnitIds\": [\n    11\n  ],\n  \"jobTypeId\": 203,\n  \"priority\": \"Normal\"\n}"
+              "raw": "{\n  \"startsOnOrAfter\": \"{{cap_from}}\",\n  \"endsOnOrBefore\": \"{{cap_to}}\",\n  \"businessUnitIds\": [\n    11\n  ],\n  \"jobTypeId\": 203,\n  \"skillBasedAvailability\": true\n}"
             }
           }
         },
         {
-          "name": "Commercial customer is refused",
+          "name": "Who is on the appointment",
           "event": [
             {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('status is 422', () => pm.response.to.have.status(422));",
-                  "pm.test('customer_type_not_supported', () => pm.expect(pm.response.json().code).to.eql('customer_type_not_supported'));",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('one technician', () => pm.expect(pm.response.json().totalCount).to.eql(1));",
+                  "pm.collectionVariables.set('assigned_technician_id', pm.response.json().data[0].technicianId);",
                   "",
                   "if (pm.response.code >= 400) {",
                   "  pm.test('error uses the standard shape', () => {",
                   "    const b = pm.response.json();",
-                  "    ['status', 'code', 'title', 'detail', 'errors', 'requestId'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    pm.expect(b.status).to.eql(pm.response.code);",
+                  "  });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "ST-App-Key",
+                "value": "{{app_key}}"
+              }
+            ],
+            "url": "{{base_url}}/dispatch/v2/tenant/{{tenant_id}}/appointment-assignments?jobId={{job_id}}"
+          }
+        },
+        {
+          "name": "Assign the same technician",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('answers with the appointment', () => pm.expect(pm.response.json().id).to.eql(Number(pm.collectionVariables.get('appointment_id'))));",
+                  "",
+                  "if (pm.response.code >= 400) {",
+                  "  pm.test('error uses the standard shape', () => {",
+                  "    const b = pm.response.json();",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
                   "    pm.expect(b.status).to.eql(pm.response.code);",
                   "  });",
                   "}"
@@ -1946,55 +2050,10 @@
                 "value": "{{app_key}}"
               }
             ],
-            "url": "{{base_url}}/jpm/v2/tenant/{{tenant_id}}/jobs",
+            "url": "{{base_url}}/dispatch/v2/tenant/{{tenant_id}}/appointment-assignments/assign-technicians",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"customerId\": {{commercial_customer_id}},\n  \"locationId\": {{commercial_location_id}},\n  \"businessUnitId\": 11,\n  \"jobTypeId\": 203,\n  \"appointments\": [\n    {\n      \"arrivalWindowStart\": \"{{win1_start}}\",\n      \"arrivalWindowEnd\": \"{{win1_end}}\"\n    }\n  ]\n}"
-            }
-          }
-        },
-        {
-          "name": "Out-of-area customer is refused",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('status is 422', () => pm.response.to.have.status(422));",
-                  "pm.test('out_of_area', () => pm.expect(pm.response.json().code).to.eql('out_of_area'));",
-                  "",
-                  "if (pm.response.code >= 400) {",
-                  "  pm.test('error uses the standard shape', () => {",
-                  "    const b = pm.response.json();",
-                  "    ['status', 'code', 'title', 'detail', 'errors', 'requestId'].forEach(k => pm.expect(b).to.have.property(k));",
-                  "    pm.expect(b.status).to.eql(pm.response.code);",
-                  "  });",
-                  "}"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{access_token}}"
-              },
-              {
-                "key": "ST-App-Key",
-                "value": "{{app_key}}"
-              }
-            ],
-            "url": "{{base_url}}/jpm/v2/tenant/{{tenant_id}}/jobs",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"customerId\": {{far_customer_id}},\n  \"locationId\": {{far_location_id}},\n  \"businessUnitId\": 11,\n  \"jobTypeId\": 203,\n  \"appointments\": [\n    {\n      \"arrivalWindowStart\": \"{{win1_start}}\",\n      \"arrivalWindowEnd\": \"{{win1_end}}\"\n    }\n  ]\n}"
+              "raw": "{\"jobAppointmentId\": {{appointment_id}}, \"technicianIds\": [{{assigned_technician_id}}]}"
             }
           }
         },
@@ -2012,7 +2071,7 @@
                   "if (pm.response.code >= 400) {",
                   "  pm.test('error uses the standard shape', () => {",
                   "    const b = pm.response.json();",
-                  "    ['status', 'code', 'title', 'detail', 'errors', 'requestId'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
                   "    pm.expect(b.status).to.eql(pm.response.code);",
                   "  });",
                   "}"
@@ -2044,12 +2103,12 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('status is 200', () => pm.response.to.have.status(200));",
-                  "",
+                  "pm.test('the new job is open', () => pm.expect(pm.response.json().data.map(j => j.id)).to.include(Number(pm.collectionVariables.get('job_id'))));",
                   "",
                   "if (pm.response.code >= 400) {",
                   "  pm.test('error uses the standard shape', () => {",
                   "    const b = pm.response.json();",
-                  "    ['status', 'code', 'title', 'detail', 'errors', 'requestId'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
                   "    pm.expect(b.status).to.eql(pm.response.code);",
                   "  });",
                   "}"
@@ -2069,7 +2128,7 @@
                 "value": "{{app_key}}"
               }
             ],
-            "url": "{{base_url}}/jpm/v2/tenant/{{tenant_id}}/jobs?customerId={{park_customer_id}}&jobStatus=Scheduled,Dispatched,Working"
+            "url": "{{base_url}}/jpm/v2/tenant/{{tenant_id}}/jobs?customerId={{park_customer_id}}&jobStatus=Scheduled"
           }
         },
         {
@@ -2086,7 +2145,7 @@
                   "if (pm.response.code >= 400) {",
                   "  pm.test('error uses the standard shape', () => {",
                   "    const b = pm.response.json();",
-                  "    ['status', 'code', 'title', 'detail', 'errors', 'requestId'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
                   "    pm.expect(b.status).to.eql(pm.response.code);",
                   "  });",
                   "}"
@@ -2123,7 +2182,7 @@
                   "if (pm.response.code >= 400) {",
                   "  pm.test('error uses the standard shape', () => {",
                   "    const b = pm.response.json();",
-                  "    ['status', 'code', 'title', 'detail', 'errors', 'requestId'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
                   "    pm.expect(b.status).to.eql(pm.response.code);",
                   "  });",
                   "}"
@@ -2154,13 +2213,13 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('status is 201', () => pm.response.to.have.status(201));",
-                  "pm.test('is also a customer note', () => pm.expect(pm.response.json().customerId).to.eql(Number(pm.collectionVariables.get('park_customer_id'))));",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('a job note has no id', () => pm.expect(pm.response.json()).to.not.have.property('id'));",
                   "",
                   "if (pm.response.code >= 400) {",
                   "  pm.test('error uses the standard shape', () => {",
                   "    const b = pm.response.json();",
-                  "    ['status', 'code', 'title', 'detail', 'errors', 'requestId'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
                   "    pm.expect(b.status).to.eql(pm.response.code);",
                   "  });",
                   "}"
@@ -2205,7 +2264,7 @@
                   "if (pm.response.code >= 400) {",
                   "  pm.test('error uses the standard shape', () => {",
                   "    const b = pm.response.json();",
-                  "    ['status', 'code', 'title', 'detail', 'errors', 'requestId'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
                   "    pm.expect(b.status).to.eql(pm.response.code);",
                   "  });",
                   "}"
@@ -2242,7 +2301,7 @@
                   "if (pm.response.code >= 400) {",
                   "  pm.test('error uses the standard shape', () => {",
                   "    const b = pm.response.json();",
-                  "    ['status', 'code', 'title', 'detail', 'errors', 'requestId'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
                   "    pm.expect(b.status).to.eql(pm.response.code);",
                   "  });",
                   "}"
@@ -2269,7 +2328,7 @@
             "url": "{{base_url}}/jpm/v2/tenant/{{tenant_id}}/appointments/{{appointment_id}}/reschedule",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"arrivalWindowStart\": \"{{win2_start}}\",\n  \"arrivalWindowEnd\": \"{{win2_end}}\"\n}"
+              "raw": "{\n  \"start\": \"{{win2_start}}\",\n  \"end\": \"{{win2_end}}\",\n  \"arrivalWindowStart\": \"{{win2_start}}\",\n  \"arrivalWindowEnd\": \"{{win2_end}}\"\n}"
             }
           }
         },
@@ -2293,15 +2352,16 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('status is 200', () => pm.response.to.have.status(200));",
-                  "const find = (start) => { let hit = null; pm.response.json().availabilities.forEach(d => d.timeslots.forEach(s => { if (s.start === start) hit = s; })); return hit; };",
-                  "const open = (n) => find(pm.collectionVariables.get('win' + n + '_start')).openAvailability;",
+                  "const find = (start) => pm.response.json().availabilities.find(f => f.startUtc === start);",
+                  "const free = (f) => f.technicians.filter(t => t.status === 'Available' && t.hasRequiredSkills).length;",
+                  "const open = (n) => free(find(pm.collectionVariables.get('win' + n + '_start')));",
                   "pm.test('window 1 is back', () => pm.expect(open(1)).to.eql(Number(pm.collectionVariables.get('win1_open'))));",
                   "pm.test('window 2 is one down', () => pm.expect(open(2)).to.eql(Number(pm.collectionVariables.get('win2_open')) - 1));",
                   "",
                   "if (pm.response.code >= 400) {",
                   "  pm.test('error uses the standard shape', () => {",
                   "    const b = pm.response.json();",
-                  "    ['status', 'code', 'title', 'detail', 'errors', 'requestId'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
                   "    pm.expect(b.status).to.eql(pm.response.code);",
                   "  });",
                   "}"
@@ -2328,7 +2388,7 @@
             "url": "{{base_url}}/dispatch/v2/tenant/{{tenant_id}}/capacity",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"startsOnOrAfter\": \"{{cap_from}}\",\n  \"endsOnOrBefore\": \"{{cap_to}}\",\n  \"businessUnitIds\": [\n    11\n  ],\n  \"jobTypeId\": 203,\n  \"priority\": \"Normal\"\n}"
+              "raw": "{\n  \"startsOnOrAfter\": \"{{cap_from}}\",\n  \"endsOnOrBefore\": \"{{cap_to}}\",\n  \"businessUnitIds\": [\n    11\n  ],\n  \"jobTypeId\": 203,\n  \"skillBasedAvailability\": true\n}"
             }
           }
         },
@@ -2346,7 +2406,7 @@
                   "if (pm.response.code >= 400) {",
                   "  pm.test('error uses the standard shape', () => {",
                   "    const b = pm.response.json();",
-                  "    ['status', 'code', 'title', 'detail', 'errors', 'requestId'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
                   "    pm.expect(b.status).to.eql(pm.response.code);",
                   "  });",
                   "}"
@@ -2378,12 +2438,12 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('status is 200', () => pm.response.to.have.status(200));",
-                  "pm.test('canceled', () => pm.expect(pm.response.json().jobStatus).to.eql('Canceled'));",
+                  "pm.test('answers with no body', () => pm.expect(pm.response.json()).to.eql({}));",
                   "",
                   "if (pm.response.code >= 400) {",
                   "  pm.test('error uses the standard shape', () => {",
                   "    const b = pm.response.json();",
-                  "    ['status', 'code', 'title', 'detail', 'errors', 'requestId'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
                   "    pm.expect(b.status).to.eql(pm.response.code);",
                   "  });",
                   "}"
@@ -2415,6 +2475,43 @@
           }
         },
         {
+          "name": "Job after cancel",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('canceled', () => pm.expect(pm.response.json().jobStatus).to.eql('Canceled'));",
+                  "",
+                  "if (pm.response.code >= 400) {",
+                  "  pm.test('error uses the standard shape', () => {",
+                  "    const b = pm.response.json();",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    pm.expect(b.status).to.eql(pm.response.code);",
+                  "  });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "ST-App-Key",
+                "value": "{{app_key}}"
+              }
+            ],
+            "url": "{{base_url}}/jpm/v2/tenant/{{tenant_id}}/jobs/{{job_id}}"
+          }
+        },
+        {
           "name": "Cancel again",
           "event": [
             {
@@ -2428,7 +2525,7 @@
                   "if (pm.response.code >= 400) {",
                   "  pm.test('error uses the standard shape', () => {",
                   "    const b = pm.response.json();",
-                  "    ['status', 'code', 'title', 'detail', 'errors', 'requestId'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
                   "    pm.expect(b.status).to.eql(pm.response.code);",
                   "  });",
                   "}"
@@ -2455,7 +2552,7 @@
             "url": "{{base_url}}/jpm/v2/tenant/{{tenant_id}}/jobs/{{job_id}}/cancel",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"reasonId\": 401\n}"
+              "raw": "{\n  \"reasonId\": 401,\n  \"memo\": \"Newman cleanup again\"\n}"
             }
           }
         },
@@ -2479,14 +2576,15 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('status is 200', () => pm.response.to.have.status(200));",
-                  "const find = (start) => { let hit = null; pm.response.json().availabilities.forEach(d => d.timeslots.forEach(s => { if (s.start === start) hit = s; })); return hit; };",
-                  "const open = (n) => find(pm.collectionVariables.get('win' + n + '_start')).openAvailability;",
+                  "const find = (start) => pm.response.json().availabilities.find(f => f.startUtc === start);",
+                  "const free = (f) => f.technicians.filter(t => t.status === 'Available' && t.hasRequiredSkills).length;",
+                  "const open = (n) => free(find(pm.collectionVariables.get('win' + n + '_start')));",
                   "pm.test('window 2 is restored', () => pm.expect(open(2)).to.eql(Number(pm.collectionVariables.get('win2_open'))));",
                   "",
                   "if (pm.response.code >= 400) {",
                   "  pm.test('error uses the standard shape', () => {",
                   "    const b = pm.response.json();",
-                  "    ['status', 'code', 'title', 'detail', 'errors', 'requestId'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
                   "    pm.expect(b.status).to.eql(pm.response.code);",
                   "  });",
                   "}"
@@ -2513,7 +2611,7 @@
             "url": "{{base_url}}/dispatch/v2/tenant/{{tenant_id}}/capacity",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"startsOnOrAfter\": \"{{cap_from}}\",\n  \"endsOnOrBefore\": \"{{cap_to}}\",\n  \"businessUnitIds\": [\n    11\n  ],\n  \"jobTypeId\": 203,\n  \"priority\": \"Normal\"\n}"
+              "raw": "{\n  \"startsOnOrAfter\": \"{{cap_from}}\",\n  \"endsOnOrBefore\": \"{{cap_to}}\",\n  \"businessUnitIds\": [\n    11\n  ],\n  \"jobTypeId\": 203,\n  \"skillBasedAvailability\": true\n}"
             }
           }
         }
@@ -2523,20 +2621,22 @@
       "name": "6 Calls and logs",
       "item": [
         {
-          "name": "Log a call",
+          "name": "Phone system logs a call (mock only)",
           "event": [
             {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('status is 201', () => pm.response.to.have.status(201));",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
                   "pm.collectionVariables.set('call_id', pm.response.json().id);",
+                  "pm.test('an outbound call has no call type', () => pm.expect(pm.response.json().leadCall.callType).to.eql(null));",
+                  "pm.test('duration is a time span', () => pm.expect(pm.response.json().leadCall.duration).to.eql('00:01:35'));",
                   "",
                   "if (pm.response.code >= 400) {",
                   "  pm.test('error uses the standard shape', () => {",
                   "    const b = pm.response.json();",
-                  "    ['status', 'code', 'title', 'detail', 'errors', 'requestId'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
                   "    pm.expect(b.status).to.eql(pm.response.code);",
                   "  });",
                   "}"
@@ -2550,20 +2650,12 @@
               {
                 "key": "Content-Type",
                 "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{access_token}}"
-              },
-              {
-                "key": "ST-App-Key",
-                "value": "{{app_key}}"
               }
             ],
-            "url": "{{base_url}}/telecom/v2/tenant/{{tenant_id}}/calls",
+            "url": "{{base_url}}/debug/calls",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"externalId\": \"newman-call-{{run_id}}\",\n  \"fromNumber\": \"(718) 555-0142\",\n  \"callType\": \"Booked\"\n}"
+              "raw": "{\n  \"sid\": \"newman-call-{{run_id}}\",\n  \"direction\": \"Outbound\",\n  \"fromNumber\": \"(718) 555-0100\",\n  \"toNumber\": \"{{maria_phone}}\",\n  \"durationSeconds\": 95,\n  \"customerId\": \"{{maria_customer_id}}\"\n}"
             }
           }
         },
@@ -2577,11 +2669,12 @@
                 "exec": [
                   "pm.test('status is 200', () => pm.response.to.have.status(200));",
                   "pm.test('at least three calls', () => pm.expect(pm.response.json().totalCount).to.be.at.least(3));",
+                  "pm.test('the call sits inside leadCall', () => pm.expect(pm.response.json().data[0].leadCall.from).to.be.a('string'));",
                   "",
                   "if (pm.response.code >= 400) {",
                   "  pm.test('error uses the standard shape', () => {",
                   "    const b = pm.response.json();",
-                  "    ['status', 'code', 'title', 'detail', 'errors', 'requestId'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
                   "    pm.expect(b.status).to.eql(pm.response.code);",
                   "  });",
                   "}"
@@ -2601,7 +2694,81 @@
                 "value": "{{app_key}}"
               }
             ],
-            "url": "{{base_url}}/telecom/v2/tenant/{{tenant_id}}/calls?phone={{maria_phone}}"
+            "url": "{{base_url}}/telecom/v3/tenant/{{tenant_id}}/calls?callerPhoneNumber={{maria_phone}}"
+          }
+        },
+        {
+          "name": "Find a call by sid",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('found', () => pm.expect(pm.response.json().totalCount).to.eql(1));",
+                  "",
+                  "if (pm.response.code >= 400) {",
+                  "  pm.test('error uses the standard shape', () => {",
+                  "    const b = pm.response.json();",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    pm.expect(b.status).to.eql(pm.response.code);",
+                  "  });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "ST-App-Key",
+                "value": "{{app_key}}"
+              }
+            ],
+            "url": "{{base_url}}/telecom/v3/tenant/{{tenant_id}}/calls?sid=newman-call-{{run_id}}"
+          }
+        },
+        {
+          "name": "Outbound calls to a number",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('includes the outbound call', () => pm.expect(pm.response.json().data.map(c => c.leadCall.direction)).to.include('Outbound'));",
+                  "",
+                  "if (pm.response.code >= 400) {",
+                  "  pm.test('error uses the standard shape', () => {",
+                  "    const b = pm.response.json();",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    pm.expect(b.status).to.eql(pm.response.code);",
+                  "  });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "ST-App-Key",
+                "value": "{{app_key}}"
+              }
+            ],
+            "url": "{{base_url}}/telecom/v3/tenant/{{tenant_id}}/calls?phoneNumberCalled={{maria_phone}}"
           }
         },
         {
@@ -2613,12 +2780,12 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('status is 200', () => pm.response.to.have.status(200));",
-                  "",
+                  "pm.test('has a sid', () => pm.expect(pm.response.json().sid).to.be.a('string'));",
                   "",
                   "if (pm.response.code >= 400) {",
                   "  pm.test('error uses the standard shape', () => {",
                   "    const b = pm.response.json();",
-                  "    ['status', 'code', 'title', 'detail', 'errors', 'requestId'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
                   "    pm.expect(b.status).to.eql(pm.response.code);",
                   "  });",
                   "}"
@@ -2642,6 +2809,88 @@
           }
         },
         {
+          "name": "Tag a call (how a callback is dispositioned)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('carries the tag', () => pm.expect(pm.response.json().tags.map(t => t.typeName)).to.include('Callback resolved'));",
+                  "",
+                  "if (pm.response.code >= 400) {",
+                  "  pm.test('error uses the standard shape', () => {",
+                  "    const b = pm.response.json();",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    pm.expect(b.status).to.eql(pm.response.code);",
+                  "  });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "ST-App-Key",
+                "value": "{{app_key}}"
+              }
+            ],
+            "url": "{{base_url}}/telecom/v2/tenant/{{tenant_id}}/calls/{{call_id}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"callType\": null,\n  \"excuseMemo\": \"\",\n  \"reason\": {\n    \"name\": \"\",\n    \"lead\": false\n  },\n  \"tag\": \"Callback resolved\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Calls tagged resolved",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('the tagged call is listed', () => pm.expect(pm.response.json().data.map(c => c.leadCall.sid)).to.include('newman-call-' + pm.collectionVariables.get('run_id')));",
+                  "",
+                  "if (pm.response.code >= 400) {",
+                  "  pm.test('error uses the standard shape', () => {",
+                  "    const b = pm.response.json();",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    pm.expect(b.status).to.eql(pm.response.code);",
+                  "  });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "ST-App-Key",
+                "value": "{{app_key}}"
+              }
+            ],
+            "url": "{{base_url}}/telecom/v3/tenant/{{tenant_id}}/calls?tag=Callback resolved"
+          }
+        },
+        {
           "name": "Logs for a call id",
           "event": [
             {
@@ -2655,7 +2904,7 @@
                   "if (pm.response.code >= 400) {",
                   "  pm.test('error uses the standard shape', () => {",
                   "    const b = pm.response.json();",
-                  "    ['status', 'code', 'title', 'detail', 'errors', 'requestId'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
                   "    pm.expect(b.status).to.eql(pm.response.code);",
                   "  });",
                   "}"
@@ -2683,7 +2932,7 @@
                   "if (pm.response.code >= 400) {",
                   "  pm.test('error uses the standard shape', () => {",
                   "    const b = pm.response.json();",
-                  "    ['status', 'code', 'title', 'detail', 'errors', 'requestId'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
                   "    pm.expect(b.status).to.eql(pm.response.code);",
                   "  });",
                   "}"

@@ -1,6 +1,8 @@
 # ServiceTitan mock
 
-A stand-in for the systems a 40-technician residential HVAC company (Summit Air, the first tenant) runs on, shaped like ServiceTitan's public API. The agent's integration layer talks to this today. Moving to real ServiceTitan later changes the adapter's base URL and auth, not the agent (C-03). This is the customer's system, not ours: it holds no agent logic.
+A stand-in for the systems a 40-technician residential HVAC company (Summit Air, the first tenant) runs on, shaped like ServiceTitan's public API: the paths, field names, enums and error body come from ServiceTitan's own OpenAPI documents (`docs/explorations/006-servicetitan-field-names.md`). The agent's integration layer talks to this today. Moving to real ServiceTitan later changes the adapter's base URL, token URL and credentials, not the agent (C-03). This is the customer's system, not ours: it holds no agent logic and none of Summit Air's own rules (urgent holds, the night window, which customers it books and which ZIPs it serves). Those live in the tool server and the tenant config.
+
+What the mock does that the real API does not is listed in one place, [Not in the real API](#not-in-the-real-api), with what the adapter does about each.
 
 Python 3.12, FastAPI, SQLite. Brief: `docs/ai-process/briefs/01-mock-servicetitan.md`.
 
@@ -8,6 +10,7 @@ Python 3.12, FastAPI, SQLite. Brief: `docs/ai-process/briefs/01-mock-servicetita
 
 ```
 make seed-st      # rebuild the world in data/servicetitan_mock.db (start date = today)
+                  # (python -m servicetitan_mock.seed --if-stale rebuilds only when the file is missing or older than schema.sql, which the deploy script uses)
 make mock-st      # serve it on http://127.0.0.1:8101 (ST_PORT=... to change)
 make postman-st   # seed a throwaway world, start the mock on :8102, run the Postman collection with Newman
 ```
@@ -41,17 +44,19 @@ The seed takes `--start-date YYYY-MM-DD` and a fixed random seed, so one start d
 
 ## Rules the mock enforces
 
-- **Capacity is technician-windows.** A slot is one technician in one arrival window on one day. Open capacity is technicians on shift with the right skills, minus those already booked. A few technicians per window are held for urgent jobs; normal jobs cannot use them.
-- **No double booking.** Every write runs inside one `BEGIN IMMEDIATE` transaction (`db.write`). SQLite allows one write transaction at a time, so writes are serialized: a booking checks capacity and inserts while no other write can interleave, and that serialization is what decides a race. `ux_appointments_slot` (one live appointment per technician per window) is the backstop that stops a bug in the capacity check from double booking. On Postgres the write lock goes away, so capacity would have to be claimed with a row lock (`SELECT ... FOR UPDATE` on the technician-window) or a serializable transaction, and the unique index would become the thing that decides a race and turns the loser into a 409. Tests fire 8 parallel requests at one open slot and exactly one wins.
-- **Idempotent writes.** Send `Idempotency-Key`; the same key and body returns the first result with `Idempotent-Replayed: true`. The same key with a different body is a 422. Only successful results are stored: a request that fails (409, 422) leaves no record, so retrying the same key runs the rules again and succeeds once the cause is gone, for example when capacity frees up. Intake bookings and calls also dedupe on `externalId`.
-- **Notes are append-only.** A note is free text on a customer, optionally about one of its jobs. Notes can be added and read (`customers/{id}/notes` returns job notes too); no endpoint edits or removes one.
-- **Cancel and reschedule give capacity back.** A failed reschedule leaves the old booking in place.
+- **Capacity is technician-windows.** A slot is one technician in one arrival window on one day (DECISIONS 003). `POST dispatch/capacity` answers with one flat list of time frames, one per arrival window and business unit; each lists the named technicians on shift, `status` `Available` or `Unavailable` (booked) and `hasRequiredSkills`. A free slot is a technician with status `Available` and the skills. There is no priority, ZIP, window id or urgent hold in the request or the answer, because ServiceTitan has none: the company's rules are applied to this answer by the tool server (`app/capacity.py`).
+- **No double booking.** Every write runs inside one `BEGIN IMMEDIATE` transaction (`db.write`). SQLite allows one write transaction at a time, so writes are serialized: a booking checks capacity and inserts while no other write can interleave, and that serialization is what decides a race. `ux_appointments_slot` (one live appointment per technician per window) is the backstop that stops a bug in the capacity check from double booking. On Postgres the write lock goes away, so capacity would have to be claimed with a row lock (`SELECT ... FOR UPDATE` on the technician-window) or a serializable transaction, and the unique index would become the thing that decides a race and turns the loser into a 409. Tests fire 8 parallel requests at one open slot and exactly one wins. Real ServiceTitan lets a job save past capacity, so the adapter looks at capacity again right before it creates a job.
+- **A job needs what ServiceTitan needs.** `appointments[].start` and `end`, `priority` and `campaignId` are required; `technicianIds` names who goes (see below for when it is left out). Creates answer `200`, as ServiceTitan does.
+- **Statuses are ServiceTitan's.** A job is `Scheduled`, `Dispatched`, `InProgress`, `Hold`, `Completed` or `Canceled`; an appointment is `Scheduled`, `Dispatched`, `Working`, `Hold`, `Done` or `Canceled`. `jobStatus` filters on one value. Who is on an appointment is read from `GET dispatch/appointment-assignments`; `POST .../assign-technicians` changes it (409 when the technician is busy).
+- **Notes are separate and append-only.** A customer note (`customers/{id}/notes`, has an id) and a job note (`jobs/{id}/notes`, no id) are different lists with `text`, `pinToTop` and `createdById`. Notes can be added and read; no endpoint edits or removes one.
+- **Cancel and reschedule give capacity back.** A failed reschedule leaves the old booking in place. Cancel answers `200` with no body.
+- **Contacts are their own call.** `customers/{id}/contacts` is the only place a customer's phone numbers come from; the customer record holds none. A contact is a type, a value and a memo, so who a number belongs to is written in the memo.
 - **Phone lookup returns every match,** in any format, at customer or location level. Address lookup normalizes `St` and `Street`; leave `unit` out to get the whole building.
 - **Expired reads as expired.** A membership stored as Active whose end date has passed reads as Expired. Lists return every status unless one is asked for.
-- **Refused customer types cannot get appointments or intake bookings** (422 `customer_type_not_supported`) but can be stored as leads. Which types are refused, and the message returned, come from `company.rejected_customer_types` in the tenant config; Summit Air refuses Commercial. Lead kinds come from `lead_kinds`. The two customer types themselves (`Residential`, `Commercial`) are ServiceTitan's own.
-- **Out-of-area ZIPs are rejected on jobs and intake bookings** (422 `out_of_area`).
-- **After-hours windows are urgent-only** and only the on-call technician covers them.
-- **One error shape:** `{"status", "code", "title", "detail", "errors", "requestId"}`. Codes: `validation_error`, `invalid_window`, `unauthorized`, `invalid_app_key`, `not_found`, `slot_taken`, `no_capacity`, `invalid_state`, `customer_type_not_supported`, `out_of_area`, `after_hours_urgent_only`, `slot_in_past`, `unknown_reference`, `idempotency_key_reused`.
+- **The call log is the phone system's.** `GET telecom/v3/.../calls` lists calls as bundles with the call inside `leadCall`: `duration` as `HH:MM:SS`, `reason` as an object, and the `sid` and `tags` (the v2 single call has them at the top level). An outbound call has no `callType`; the others are `Abandoned`, `Unbooked`, `Excused`, `Booked` or `NotLead`. The API cannot create a call; `PUT telecom/v2/.../calls/{id}` classifies one, and a tag is how a person dispositions a call. The tags are the tenant's tag types (`GET settings/tag-types`).
+- **Leads and bookings use ServiceTitan's field names.** A lead has `leadCustomerName`, `leadPhone`, `leadStreet`, `leadZip`, `campaignId`, `callReasonId` and a status of `Open`, `Dismissed` or `Converted`. What a lead is about is its call reason (`GET jbce/.../call-reasons`). A booking has `bookingProviderId`, `externalId`, `isFirstTimeClient` and the status `New`, `Converted`, `Dismissed` or `Accepted`.
+- **The mock books any customer and any ZIP.** Which customer types the company books and which ZIPs it serves are Summit Air's rules (`config.yaml`), checked by the tool server before it asks ServiceTitan for anything.
+- **One error shape,** ServiceTitan's: `{"type", "title", "status", "traceId", "errors", "data"}`, where `errors` maps a field to a list of messages and `traceId` is the request id.
 
 ## Logs
 
@@ -59,7 +64,7 @@ Every request and response is one JSON line in `data/servicetitan_mock.log` (nex
 
 ## Endpoints
 
-All tenant routes live under `/{module}/v2/tenant/{tenantId}/`. Lists use ServiceTitan's envelope (`page`, `pageSize`, `hasMore`, `totalCount`, `data`).
+All tenant routes live under `/{module}/v2/tenant/{tenantId}/` (the call feed is `/telecom/v3/...`). Lists use ServiceTitan's envelope (`page`, `pageSize`, `hasMore`, `totalCount`, `data`).
 
 | Module | Endpoints |
 |---|---|
@@ -67,50 +72,66 @@ All tenant routes live under `/{module}/v2/tenant/{tenantId}/`. Lists use Servic
 | `memberships` | `GET membership-types`, `GET membership-types/{id}`, `GET memberships`, `GET memberships/{id}`, `GET recurring-service-events` |
 | `equipmentsystems` | `GET installed-equipment` |
 | `jpm` | `GET job-types`, `GET job-types/{id}`, `GET job-cancel-reasons`, `GET/POST jobs`, `GET jobs/{id}`, `GET jobs/{id}/history`, `GET/POST jobs/{id}/notes`, `PUT jobs/{id}/cancel`, `GET appointments`, `GET appointments/{id}`, `PATCH appointments/{id}/reschedule` |
-| `dispatch` | `POST capacity`, `GET zones`, `GET technician-shifts` |
-| `settings` | `GET business-units`, `GET technicians`, `GET technicians/{id}`, `GET company-profile` |
+| `dispatch` | `POST capacity`, `GET appointment-assignments`, `POST appointment-assignments/assign-technicians`, `GET arrival-windows`, `GET zones`, `GET technician-shifts` |
+| `settings` | `GET business-units`, `GET technicians`, `GET technicians/{id}`, `GET tag-types` |
+| `jbce` | `GET call-reasons` |
 | `marketing` | `GET campaigns` |
-| `telecom` | `GET calls`, `GET calls/{id}`, `POST calls` |
-| root | `POST /connect/token`, `GET /health`, `GET /debug/logs`, `GET /debug/scenarios`, `POST /debug/reset` (eval instance only; not in the Postman collection because it wipes the world) |
+| `telecom` | v3: `GET calls`; v2: `GET calls/{id}`, `PUT calls/{id}` |
+| root (not ServiceTitan) | `POST /connect/token` (ServiceTitan's is on `auth.servicetitan.io`), `GET /health`, `GET /debug/logs`, `GET /debug/scenarios`, `POST /debug/calls`, `POST /debug/reset` (eval instance only; not in the Postman collection because it wipes the world) |
 
-Query filters that matter to the agent: `customers?phone=`, `customers?street=&unit=&zip=`, `locations?street=&unit=&zip=`, `memberships?customerId=&locationId=&status=`, `jobs?customerId=&jobStatus=Scheduled,Dispatched,Working`, `calls?phone=&receivedOnOrAfter=`.
+Query filters that matter to the agent: `customers?phone=`, `customers?street=&unit=&zip=`, `locations?street=&unit=&zip=`, `memberships?customerIds=&status=`, `jobs?customerId=&jobStatus=Scheduled`, `installed-equipment?locationIds=`, and on the call feed `callerPhoneNumber=`, `phoneNumberCalled=`, `createdOnOrAfter=`, `sid=`, `tag=`.
+
+## Not in the real API
+
+Everything the mock does that ServiceTitan does not, kept on purpose, and what the adapter does about it. The adapter (`app/fsm/servicetitan.py`) does not depend on any of these for anything a real tenant could not do.
+
+| In the mock | Why it is there | What the adapter does |
+|---|---|---|
+| `Idempotency-Key` header and `Idempotent-Replayed` on every write | Tests and the Postman collection retry writes safely | Never sends it. A retry after a lost answer finds the job again by the `Ref:` token it put in the job summary (`find_job`), so a real tenant gets the same protection |
+| `data.code` in the error body (`slot_taken`, `no_capacity`, ...) | Lets two 409s be told apart in the mock's tests | Never reads it. It names an error from the status: 409 is `slot_taken`, 404 `not_found`, 401 and 403 `unauthorized`, anything else `rejected` |
+| `GET /health` | The Postman runner and the deploy script wait on it | Never calls it. Health is whether it can sign in |
+| `POST /debug/calls` | ServiceTitan's phone system writes the call log and nothing else can; this stands in for it so a callback the agent placed shows up in the log | Calls it only when the tenant sets `fsm.log_calls_via_debug` (true for the mock, false or absent for a real tenant, where `record_outbound_call` does nothing). It then finds the call, by `sid` or else by the number and the time it started, and tags it, which is what a real tenant needs too |
+| `/debug/logs`, `/debug/scenarios`, `/debug/reset`, `X-Call-Id` | Tests, evals and traces | Never calls them. `X-Call-Id` is not sent |
+| A job created without `technicianIds` gets the least booked free technician; a rescheduled appointment keeps its technician or gets one | The slot model needs a technician on every appointment; ServiceTitan leaves it unassigned for dispatch | Always names the technician on create, and after a reschedule assigns one through `assign-technicians` |
+| A second booking for a taken slot is refused (409) | Makes a race decidable in tests (DECISIONS 003). ServiceTitan's capacity is advisory | Looks at capacity again right before it creates or moves a job and chooses the technician itself |
+| Only the configured arrival windows can be booked (400 `invalid_window`), only inside business hours (422 `window_not_offered`), none that has started (422 `slot_in_past`) | The window is the slot in this model | Offers only windows the tool server computed from capacity, so it never asks for others |
+| A booking provider's repeated `externalId` returns the first booking | Convenience (ASSUMED; ServiceTitan's rule is not documented) | Does not use intake bookings |
+| `PUT calls/{id}` takes a partial body | ServiceTitan also requires `customer` and `location` objects | Sends the matched customer and a location of theirs when the call is matched to a customer, and neither when it is not (a real tenant may refuse that; the callback then stays open for a person). A sandbox call should confirm what the real PUT accepts |
+| Technicians in a capacity frame are listed least booked first | Keeps the day's work spread in the mock | Does not rely on the order for who is booked: it picks at random among the technicians the company's rules allow. The order only decides which technicians count as the held ones when some are held for urgent jobs, so a real tenant's arbitrary order holds back arbitrary technicians |
+| `openAvailability` and `totalAvailability` are technicians times the frame's hours | The unit is hours in ServiceTitan's current spec and unconfirmed in practice | Reads the technicians, not the numbers |
+| Technicians list `skills` as `{id, name}` objects | ServiceTitan keeps skills on `dispatch/technician-skills` | Does not read technicians |
 
 ## What is modeled on real ServiceTitan, and what is ASSUMED
 
-I could not read developer.servicetitan.io (it is a JavaScript portal; the fetch returned only the page title) and have no sandbox tenant. So the labels below are honest about confidence.
+Source for every SOURCE line: ServiceTitan's own OpenAPI documents, downloaded and read for `docs/explorations/006-servicetitan-field-names.md` (table of 56 rows, each with a verdict). Nothing here has been run against a live tenant, and a published spec can lag the running service, so one sandbox call per area is still the way to settle what remains.
 
-**SOURCE** (ServiceTitan's own documentation, as recorded in the earlier practice agent's notes, `revin-interview/research/servicetitan-mapping.md`):
-- OAuth 2.0 client credentials, a `Bearer` token plus an `ST-App-Key` header, tokens that last 15 minutes.
+**SOURCE** (the OpenAPI documents; exploration 006):
+- OAuth 2.0 client credentials, a `Bearer` token plus an `ST-App-Key` header; production hosts `api.servicetitan.io` and `auth.servicetitan.io/connect/token`, sandbox `api-integration.servicetitan.io`.
+- The path pattern `/{module}/v2/tenant/{tenantId}/...` and every resource in the Endpoints table above except the ones marked as not ServiceTitan, with the same field names: customers, locations, contacts as their own list, bookings, leads, jobs, appointments, job types, cancel reasons, capacity, appointment assignments, zones, technician shifts, memberships, installed equipment, campaigns, call reasons, tag types, and the telecom call feed.
+- The list envelope, `200` on creates, the error body, the job and appointment status words, job `PUT cancel` and appointment `PATCH reschedule` bodies, the five call types, the capacity request and the shape of its answer.
+- The request needs: job `appointments[].start` and `end`, `priority` and `campaignId`; booking `source`, `name`, `summary`, `isFirstTimeClient` and `externalId`; address `street`, `city`, `state`, `zip` and `country`.
 
-**SECONDARY** (third-party docs and connectors seen in search results, not ServiceTitan's own pages; names likely right, shapes unconfirmed; `revin-interview/research/servicetitan-mapping.md` marks these the same way):
-- Production URLs `https://auth.servicetitan.io/connect/token` and `https://api.servicetitan.io`; the sandbox uses `auth-integration.servicetitan.io` and `api-integration.servicetitan.io`.
-- The path pattern `/{module}/v2/tenant/{tenantId}/...` and these resources: `crm` customers, locations, location contacts, bookings; `jpm` jobs, job types, appointments (`PATCH .../reschedule`), `PUT jobs/{id}/cancel`; `dispatch` capacity and technician shifts; the booking-provider booking path.
-
-**ASSUMED** (guessed from memory or invented for the mock; each needs one sandbox call to confirm):
-- Every response and request field name beyond the ones above, including the camelCase names, the `Scheduled/Dispatched/Working/Done/Canceled` status words, and `Active/Expired/Canceled` membership status.
-- The capacity response: `availabilities[].timeslots[]` with `windowId`, `openAvailability`, `heldForUrgent`, `technicianIds`. It follows the practice agent's adapter, not a verified response. The `priority` and `zip` fields on the request are inventions.
-- `Idempotency-Key` on writes. Real ServiceTitan has no known idempotency support (practice agent notes: assumed none), so production needs the key stored on our side.
-- Membership perks on the membership type (`prioritySched`, `visitsPerYear`, `repairDiscountPercent`, `afterHoursFeeWaived`). Real perks live in discounts and recurring service templates.
-- The notes endpoints and their fields (`text`, `createdBy`, `jobId`). ServiceTitan has customer and job notes; the paths and shapes here are guesses.
-- Contact `role` (owner, tenant, adult_child), address `county`, location `zoneId`, technician `skills` and `homeZoneId`, `systemType` and `installYear` on installed equipment, `kind` on leads, and leads that carry a bare name and phone.
-- `GET settings/company-profile`, `POST telecom/calls`, `GET jobs?jobStatus=` with a comma-separated list, `GET customers?street=`, the `/debug/*` endpoints, and `X-Call-Id`.
-- 201 on creates (real ServiceTitan may return 200), and the single error body shape.
+**ASSUMED** (guessed for the mock; each needs one sandbox call to confirm):
+- The unit of `openAvailability` (hours in the spec; the mock fills technicians times hours).
+- That `appointments[].start` and `end` may equal the arrival window (the adapter sends them that way).
+- That the call feed's `sid` is the id our telephony gives the call (the server finds its callback's call by `sid`, and otherwise by the number called and the time).
+- That `PUT calls/{id}` with a call type, a reason and a tag is enough to tag a call.
+- Membership `status` words beyond Active, Expired and Canceled, and the shape of a membership type's discount.
 - Arrival windows (8 to 12, 12 to 4, 4 to 8, plus an after-hours window), hours, the 36/4 split of service technicians and comfort advisors, urgent holds of two per window, the three counties, perk values, and every fee. Fees are null on purpose: Summit Air's real fees are unknown, and the agent never states a fee that is not configured.
 - Time zone and the weekly on-call rotation.
 
-**Where the mock is stricter than the real thing.** Real ServiceTitan capacity is advisory: two callers can both see the last slot and the second job still saves (practice agent notes). The mock refuses the second booking. An agent that passes against the mock still needs the recheck-before-booking step against real ServiceTitan, and a dispatcher process for overbooking.
+**Where the mock is stricter than the real thing.** Real ServiceTitan capacity is advisory: two callers can both see the last slot and the second job still saves (practice agent notes). The mock refuses the second booking. The adapter looks at capacity again right before it creates a job, and a real tenant still needs a dispatcher process for overbooking.
 
 ## Pointing the adapter at real ServiceTitan
 
 The adapter owns every difference, so the agent does not change.
 
-1. Base URL `https://api.servicetitan.io` (sandbox `https://api-integration.servicetitan.io`) and token URL `https://auth.servicetitan.io/connect/token`. Keep the `/{module}/v2/tenant/{tenantId}` paths.
-2. Credentials: the customer's admin creates the client ID and secret; the app key belongs to the registered app. All three come from the secret store, never from the repo.
-3. Read the company profile from the per-company config file instead of `company-profile`. Read membership perks from config instead of the membership type.
-4. Drop `Idempotency-Key` and keep the key in our own table; put it in the job summary so a person can find it.
-5. Map the capacity response, and recheck capacity right before creating a job.
-6. Write calls to our own store (no write endpoint on `telecom` is assumed), and drop the `/debug/*` endpoints and `X-Call-Id` from production traffic.
-7. Look up each customer's business unit, job type, campaign and cancel reason IDs during onboarding; the mock uses the IDs in `tenants/summit-air/config.yaml`.
+1. Base URL `https://api.servicetitan.io` (sandbox `https://api-integration.servicetitan.io`) and token URL `https://auth.servicetitan.io/connect/token` (`FSM_BASE_URL`, `FSM_TOKEN_URL`). Keep the paths.
+2. Credentials: the customer's admin creates the client ID and secret; the app key belongs to the registered app (`FSM_CLIENT_ID`, `FSM_CLIENT_SECRET`, `FSM_APP_KEY`). All three come from the secret store, never from the repo.
+3. In `tenants/<company>/agent.yaml` `fsm`: set `log_calls_via_debug` to false (or leave it out), and fill in the customer's own ids from onboarding: business unit and job type ids and the `campaign_id`, `cancel_reason_id`, `agent_user_id`, `lead_call_reason_ids`, and `callback_tags` (the tag type names to create in ServiceTitan). The mock uses the ids in `tenants/summit-air/config.yaml`.
+4. Company facts (hours, service area, windows, urgent holds, perks, refused customer types) come from the tenant config; ServiceTitan has no company profile endpoint and no perks on a membership type.
+5. Nothing to drop: the adapter sends no `Idempotency-Key`, `X-Call-Id` or `/debug` traffic already.
+6. Callbacks: the call must reach ServiceTitan's call log through its phone system for the tag to land. If it does not, the callback stays open for a person; see `docs/decisions/26-callback-done.md`.
 
 ## Template files and tenant files
 

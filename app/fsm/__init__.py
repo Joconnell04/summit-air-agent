@@ -30,4 +30,7 @@ def make_adapter(
         os.environ.get("FSM_CLIENT_SECRET", auth.get("client_secret", "")),
         os.environ.get("FSM_APP_KEY", auth.get("app_key", "")),
         token_url=os.environ.get("FSM_TOKEN_URL", "/connect/token"),
+        state=tenant.state,
+        country=tenant.country,
+        log_calls_via_debug=bool(tenant.fsm.get("log_calls_via_debug", False)),
     )
