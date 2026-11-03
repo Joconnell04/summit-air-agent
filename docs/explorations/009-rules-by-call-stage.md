@@ -1,6 +1,6 @@
 # 009. Rules by call stage that the owner can view and edit
 
-Issue: #56. Consideration: C-53. Status: first draft, for `/discuss 009`. Numbers carry SOURCE (link), MEASURED (how) or ASSUMED.
+Issue: #56. Consideration: C-56. Status: first draft, for `/discuss 009`. Numbers carry SOURCE (link), MEASURED (how) or ASSUMED.
 
 ## 1. Question
 
