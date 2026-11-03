@@ -46,7 +46,11 @@ logging.basicConfig(level=logging.INFO)
 
 SAY_RETRY = "Sorry, give me just a moment."
 SAFETY_ACTIONS = ("speak_lines", "speak_variant", "ask_check")
-SAY_NOW = "Say this to the caller now, word for word, before anything else: {text}"
+# The server counts the safety lines as said only when the agent's words contain them exactly.
+SAY_NOW = (
+    "Say this to the caller now, before anything else, exactly as written with no word or "
+    "punctuation changed: {text}"
+)
 
 # How long to let the agent's goodbye play before stopping the call: a fixed allowance plus a rate
 # per word of the agent's last line (ASSUMED; checked against the first real calls).
@@ -197,11 +201,14 @@ class Bridge:
                 self.ledger.mark(rid, started=1)
         return call_id
 
-    def sync(self, obj: dict, call_id: str) -> tuple[list[dict], list[str]]:
+    def sync(
+        self, obj: dict, call_id: str, settled: bool = True
+    ) -> tuple[list[dict], list[str]]:
         """Post new lines. Returns the safety actions the turn check asked for, and the notes for
         the model from its hints (commercial, do-not-call)."""
         actions, hints = [], []
-        for speaker, answer in self.ledger.sync(call_id, lines(obj), self.tools.turn):
+        posted = self.ledger.sync(call_id, lines(obj), self.tools.turn, settled)
+        for speaker, answer in posted:
             if speaker == "caller":
                 # The caller spoke after an allowed end_call: keep the call open.
                 self.ledger.mark(retell_id(obj), hangup_pending=0)
@@ -217,14 +224,24 @@ class Bridge:
         if "chat" in event:
             self.chat_event(name, event["chat"] or {})
             return
-        call = event.get("call") or {}
+        call = dict(event.get("call") or {})
         rid = retell_id(call)
         if not rid:
             return
-        log.info("%s %s: %d lines", name, rid, len(lines(call)))
+        # transcript_updated sends the transcript beside the call object, not inside it.
+        if event.get("transcript_with_tool_calls") and not call.get("transcript_with_tool_calls"):
+            call["transcript_with_tool_calls"] = event["transcript_with_tool_calls"]
+        log.info(
+            "%s %s: %d lines (event keys %s; call has %s)",
+            name,
+            rid,
+            len(lines(call)),
+            sorted(event),
+            sorted(k for k in call if k.startswith("transcript")),
+        )
         call_id = self.ensure_started(call, "call")
         if name == "transcript_updated":
-            safety, notes = self.sync(call, call_id)
+            safety, notes = self.sync(call, call_id, settled=False)
             if safety:
                 self.say_now(rid, SAY_NOW.format(text=safety[-1]["text"]))
             elif notes:
@@ -247,7 +264,7 @@ class Bridge:
         if name == "transcript_updated":
             # A chat can't be told to say anything mid-reply, so a safety action here reaches the
             # model only through its next tool result (and the server's gates).
-            self.sync(chat, call_id)
+            self.sync(chat, call_id, settled=False)
         elif name == "chat_ended":
             self.sync(chat, call_id)
             row = self.ledger.get(rid)

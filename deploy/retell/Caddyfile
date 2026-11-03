@@ -6,14 +6,14 @@
 		reverse_proxy 127.0.0.1:8102
 	}
 	# The eval instance (scratch mock and tool server) for Retell chat runs. Its tool server is
-	# reachable only with the eval token, since its endpoints are not signed.
+	# reachable only with the eval token (also its DEBUG_TOKEN), since its endpoints are not signed.
 	handle /eval/retell/* {
 		uri strip_prefix /eval
 		reverse_proxy 127.0.0.1:8112
 	}
 	@eval_tools {
 		path /eval/*
-		header X-Eval-Token {$SUMMIT_EVAL_TOKEN}
+		header X-Debug-Token {$SUMMIT_EVAL_TOKEN}
 	}
 	handle @eval_tools {
 		uri strip_prefix /eval

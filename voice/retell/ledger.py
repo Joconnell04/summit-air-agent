@@ -54,7 +54,9 @@ class Ledger:
         finally:
             conn.close()
 
-    def sync(self, call_id: str, lines: list[Line], post: Post) -> list[tuple[str, dict]]:
+    def sync(
+        self, call_id: str, lines: list[Line], post: Post, settled: bool = True
+    ) -> list[tuple[str, dict]]:
         """Post every line not posted yet, in order, and return (speaker, tool server answer)
         for each.
 
@@ -62,7 +64,13 @@ class Ledger:
         split by a pause ("I smell... gas") reaches the safety check in one piece. An agent line
         that grew (Retell joins the agent's words before and after a tool call into one line) is
         posted as the new part only, so the trace shows each thing the agent said once.
+
+        Not settled (a transcript_updated in the middle of a call): a last line from the agent may
+        still be playing, and Retell's transcript holds only the words spoken so far, so it waits
+        for the next event rather than going in half said. Caller lines never wait.
         """
+        if not settled and lines and lines[-1].speaker == "agent":
+            lines = lines[:-1]
         answers = []
         with self.connect() as conn:
             conn.execute("BEGIN IMMEDIATE")

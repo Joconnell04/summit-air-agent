@@ -75,6 +75,7 @@ All values are ASSUMED starting points until the 10 bake-off calls; changes go h
 | Timeouts | Ours | Retell's silence timeout and max duration can end a call without the server |
 | Per-turn timings | `reply_ms`, `llm_first_token_ms`, `tts_first_byte_ms`, `tool_ms`, caller `transcript_ms`, `end_of_turn_ms` | `reply_ms` only (caller's last word to agent's first, from Retell's word timestamps); stage latencies only as per-call medians and slowest 10% after the call |
 | Server-down | Says `server_down` and hangs up | Same line as the greeting, then stop-call |
+| Eval runs (text) | In process, the greeting is in the model's history | Retell chat API; Retell chat starts with the caller, so the greeting is shown to the simulated caller but is not in the model's history |
 | Outbound callbacks (journey 12) | Yes | Not built |
 | Phone number | (646) 624-0418 on our Twilio trunk | (678) 336-6730, Retell's own Twilio number; can't move (exploration 004) |
 
@@ -82,7 +83,20 @@ All values are ASSUMED starting points until the 10 bake-off calls; changes go h
 
 - **No veto on Retell's own hang-ups.** Silence timeout, max duration and voicemail detection end calls without asking the server; the stop-call API is a kill switch, not a gate (docs/explorations/004-call-control-and-numbers.md). The model has no built-in end-call, so the safety gate on `end_call` holds for model-initiated hang-ups.
 - **The safety check runs after the reply has started.** `transcript_updated` is not blocking, so on a gas mention the agent may begin its normal reply before the injection cuts in. The eval safety scenarios and the real calls measure how often and how long. The custom-LLM socket would close this (the server would answer each turn) but means running the model ourselves; not built, because Retell offers the same model, so the brief's condition for it doesn't apply.
-- **Safety lines are model-spoken.** A paraphrase isn't counted as said, so `end_call` and booking stay refused, but the caller heard something other than the exact script.
+- **Safety lines are model-spoken.** A paraphrase isn't counted as said, so `end_call` and booking stay refused, but the caller heard something other than the exact script. MEASURED on the first scripted gas call (`retell_call_936dbf645c5e077694bfd666ccc`): the agent's next reply, 2.4 s after the caller stopped (`reply_ms`), opened with the lines, but changed ", and call 911" to ". Call 911"; the exact lines came only on its fourth reply.
+
+## Calls so far
+
+Scripted test calls from a Twilio number with a text-to-speech caller on fixed pauses (so the caller often talks over the agent); not the bake-off's 10 real calls. Traces on the server: `make trace CALL=<id> DB=data/tool_server.db` in `~/summit-air/app`.
+
+| Call | What happened |
+|---|---|
+| `retell_call_9d6182c10f4b47630e70f4fbe4d` | Lookup, tools and read-back gate worked; booking refused `invalid_slot` (the model sent the label "8 to 12" for the window) |
+| `retell_call_1889f3f95c0f62ffb0ce0508ef6` | Same slot mistake, then refused for a missing name; live line posting was not yet working (fixed) |
+| `retell_call_d570d98c180ab7ac1587b999d12` | Booked: FSM job 626, tomorrow 8 to 12, after one `gate_read_back` refusal while the read-back sentence was cut by the caller |
+| `retell_call_936dbf645c5e077694bfd666ccc` | Gas: safety lines injected, flags and an urgent callback stored, `end_call` refused until the exact lines were said |
+
+Retell's own numbers for the booked call: median end-to-end reply 1.88 s, LLM 0.55 s, voice first byte 0.11 s, transcription 0.19 s; $0.19 for 112 s (MEASURED, Retell call data for `call_d570d98c180ab7ac1587b999d12`, `latency` and `call_cost`). The overlapping scripted caller inflates the end-to-end figure; the bake-off calls replace it.
 
 ## Files
 

@@ -3,8 +3,9 @@ the same Retell LLM, prompt and tools as a phone call. The harness then sends ca
 /create-chat-completion; the eval bridge posts every line to the tool server from Retell's chat
 webhooks and custom functions, as it does for calls.
 
-Needs RETELL_API_KEY, RETELL_CHAT_AGENT_ID (printed by `make retell-push EVAL_URL=...`) and
-RETELL_EVAL_TOOL_SERVER, the eval tool server that the chat agent's bridge forwards to.
+Needs RETELL_API_KEY, RETELL_CHAT_AGENT_ID (printed by `make retell-push EVAL_URL=...`),
+RETELL_EVAL_TOOL_SERVER, the eval tool server that the chat agent's bridge forwards to, and
+DEBUG_TOKEN, that server's token (the proxy in front of it asks for it on every request).
 """
 
 import os
@@ -25,7 +26,12 @@ def open_chat(call_id: str, caller_id: str, env: dict | None = None) -> tuple[st
     """Start the call on the tool server, then the chat with the per-call prompt and greeting.
     Returns the Retell chat id and the agent's opening line."""
     env = env if env is not None else os.environ
-    tools = ToolServer(httpx.Client(base_url=env["RETELL_EVAL_TOOL_SERVER"], timeout=30))
+    http = httpx.Client(
+        base_url=env["RETELL_EVAL_TOOL_SERVER"],
+        headers={"X-Debug-Token": env["DEBUG_TOKEN"]},
+        timeout=30,
+    )
+    tools = ToolServer(http)
     start = tools.start(call_id, caller_id, RETELL_NUMBER, "inbound")
     if not start or not start.get("ok"):
         raise RuntimeError(f"/calls/start failed for {call_id}: {start}")

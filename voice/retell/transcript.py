@@ -31,11 +31,8 @@ def lines(obj: dict) -> list[Line]:
     transcript_with_tool_calls or both; with the tool entries left out they hold the same lines in
     the same order (MEASURED on the first real call), so line numbers stay stable from one event to
     the next. Chats carry message_with_tool_calls."""
-    raw = obj.get("transcript_object")
-    if raw is None:
-        raw = obj.get("transcript_with_tool_calls")
-    if raw is None:
-        raw = obj.get("message_with_tool_calls") or []
+    sources = ("transcript_object", "transcript_with_tool_calls", "message_with_tool_calls")
+    raw = next((obj[k] for k in sources if obj.get(k)), [])
     out = []
     for entry in raw:
         speaker = SPEAKERS.get(entry.get("role"))

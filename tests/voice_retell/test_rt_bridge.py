@@ -120,9 +120,13 @@ def test_a_turn_posted_from_a_webhook_carries_the_reply_delay(client, tool_app):
     inbound(client, "abc")
     reply = utterance("agent", "Oh no, let's get someone out to you.", start=8.4)
     event(client, "transcript_updated", call_obj("abc", GREETING, HEAT_OUT, reply))
+    # The agent may still be talking, so its line waits for the next event.
+    assert len(rows(tool_app, "SELECT 1 FROM turns WHERE call_id = 'retell_abc'")) == 2
+    thanks = utterance("user", "Thank you.")
+    event(client, "transcript_updated", call_obj("abc", GREETING, HEAT_OUT, reply, thanks))
     turns = rows(tool_app, "SELECT speaker, timings_json FROM turns WHERE call_id = 'retell_abc'")
     # The caller's line ends at 5.0 + 9 words * 0.3 - 0.05 = 7.65 s.
-    assert json.loads(turns[-1]["timings_json"]) == {"reply_ms": 750.0}
+    assert json.loads(turns[2]["timings_json"]) == {"reply_ms": 750.0}
 
 
 def test_a_gas_smell_makes_the_agent_say_the_safety_lines_now(client, retell, tool_app):
@@ -135,8 +139,9 @@ def test_a_gas_smell_makes_the_agent_say_the_safety_lines_now(client, retell, to
     assert rid == "abc" and lines_ == [{"safety_state": "signal"}]
     assert "Please get everyone out of the house now." in context
     # The model says them; the server marks them said only from the agent's words.
-    spoken = context.split("before anything else: ", 1)[1]
-    event(client, "transcript_updated", call_obj("abc", GREETING, gas, utterance("agent", spoken)))
+    spoken = utterance("agent", context.split("punctuation changed: ", 1)[1])
+    okay = utterance("user", "Okay, we're going outside.")
+    event(client, "transcript_updated", call_obj("abc", GREETING, gas, spoken, okay))
     state = rows(tool_app, "SELECT safety_state FROM calls WHERE id = 'retell_abc'")
     assert state == [{"safety_state": "lines_said"}]
 
@@ -281,4 +286,16 @@ def test_a_chat_maps_to_the_eval_call_id_and_its_end_closes_the_call(client, too
     call = rows(tool_app, "SELECT ended_at FROM calls WHERE id = 'eval-42'")[0]
     assert call["ended_at"]
     turns = rows(tool_app, "SELECT speaker FROM turns WHERE call_id = 'eval-42'")
+    assert [t["speaker"] for t in turns] == ["agent", "caller"]
+
+
+def test_transcript_updated_reads_the_transcript_sent_beside_the_call(client, tool_app):
+    inbound(client, "abc")
+    payload = {
+        "event": "transcript_updated",
+        "call": {**call_obj("abc"), "transcript_object": []},
+        "transcript_with_tool_calls": [GREETING, HEAT_OUT],
+    }
+    assert signed(client, "/retell/webhook", payload).status_code == 204
+    turns = rows(tool_app, "SELECT speaker FROM turns WHERE call_id = 'retell_abc'")
     assert [t["speaker"] for t in turns] == ["agent", "caller"]

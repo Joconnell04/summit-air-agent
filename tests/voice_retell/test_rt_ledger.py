@@ -144,3 +144,22 @@ def test_the_rest_of_a_reply_split_into_two_lines_has_no_reply_delay(tmp_path):
     ledger.sync("c1", lines(call(caller, first, rest)), posts)
     assert posts.sent[1][2] == {REPLY_DELAY: 850.0}
     assert posts.sent[2][2] == {}
+
+
+def test_an_empty_transcript_object_falls_back_to_the_one_with_tool_calls():
+    found = lines({"transcript_object": [], "transcript_with_tool_calls": [utterance("user", "Hi")]})
+    assert [(x.speaker, x.text) for x in found] == [("caller", "Hi")]
+
+
+def test_mid_call_an_agent_line_still_playing_waits_for_the_next_event(tmp_path):
+    ledger, posts = Ledger(tmp_path / "l.db"), Posts()
+    partial = call(utterance("user", "My heat is out."), utterance("agent", "Let me read back your"))
+    ledger.sync("c1", lines(partial), posts, settled=False)
+    assert [t for _, t, _ in posts.sent] == ["My heat is out."]
+    whole = call(
+        utterance("user", "My heat is out."),
+        utterance("agent", "Let me read back your address."),
+        utterance("user", "Yes"),
+    )
+    ledger.sync("c1", lines(whole), posts, settled=False)
+    assert [t for _, t, _ in posts.sent][1:] == ["Let me read back your address.", "Yes"]
