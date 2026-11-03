@@ -39,26 +39,49 @@ def test_every_profile_has_provider_and_model():
 # The eval floor
 
 SCENARIO = {
-    "scenario_id": "s1", "persona": "p", "flow": ["booking"], "difficulty": "easy",
-    "outcome": "pass", "grader_score": 4, "reply_delay_p50_ms": 1, "reply_delay_p90_ms": 2,
-    "cost_usd": 0.1, "call_id": "c1",
+    "scenario_id": "s1",
+    "persona": "p",
+    "flow": ["booking"],
+    "difficulty": "easy",
+    "outcome": "pass",
+    "grader_score": 4,
+    "reply_delay_p50_ms": 1,
+    "reply_delay_p90_ms": 2,
+    "cost_usd": 0.1,
+    "call_id": "c1",
 }
 
 
 def saved_run(tmp_path, scenarios=None, hash="h1"):
-    run = Run.model_validate({
-        "run_id": "r1", "created": "2026-11-02T15:00:00Z", "suite": "smoke", "stack": "livekit",
-        "profile": "fast", "hash": hash, "scenarios": scenarios or [SCENARIO],
-    })
+    run = Run.model_validate(
+        {
+            "run_id": "r1",
+            "created": "2026-11-02T15:00:00Z",
+            "suite": "smoke",
+            "stack": "livekit",
+            "profile": "fast",
+            "hash": hash,
+            "scenarios": scenarios or [SCENARIO],
+        }
+    )
     results_file.save(run, tmp_path / "evals" / "results")
     return "evals/results/r1.json"
 
 
 def scenario(id, spec=(), tags=("smoke",)):
-    return Scenario.model_validate({
-        "id": id, "flow": ["safety"], "difficulty": "easy", "journeys": ["J3"], "spec": list(spec),
-        "tags": list(tags), "persona": "p", "opening": "o", "must": [{"booking": "none"}],
-    })
+    return Scenario.model_validate(
+        {
+            "id": id,
+            "flow": ["safety"],
+            "difficulty": "easy",
+            "journeys": ["J3"],
+            "spec": list(spec),
+            "tags": list(tags),
+            "persona": "p",
+            "opening": "o",
+            "must": [{"booking": "none"}],
+        }
+    )
 
 
 # s1 is an ordinary smoke case; gas is a must-pass smoke case; deep is must-pass but not smoke.
@@ -67,8 +90,9 @@ GAS = {**SCENARIO, "scenario_id": "gas", "call_id": "c2"}
 
 
 def eval_check(tmp_path, baseline, current="h1", scenarios=POOL):
-    return ratchet.check_eval(baseline, tmp_path, current_hash=lambda run: current,
-                              scenarios=scenarios)
+    return ratchet.check_eval(
+        baseline, tmp_path, current_hash=lambda run: current, scenarios=scenarios
+    )
 
 
 def test_no_reference_run_passes(tmp_path):
@@ -110,9 +134,13 @@ def test_a_failed_must_pass_case_fails(tmp_path):
 
 
 def test_a_pass_rate_under_the_floor_fails_and_errors_are_left_out(tmp_path):
-    rows = [SCENARIO, GAS, {**SCENARIO, "scenario_id": "s2", "outcome": "fail"},
-            {**SCENARIO, "scenario_id": "s3", "outcome": "fail"},
-            {**SCENARIO, "scenario_id": "s4", "outcome": "error", "grader_score": None}]
+    rows = [
+        SCENARIO,
+        GAS,
+        {**SCENARIO, "scenario_id": "s2", "outcome": "fail"},
+        {**SCENARIO, "scenario_id": "s3", "outcome": "fail"},
+        {**SCENARIO, "scenario_id": "s4", "outcome": "error", "grader_score": None},
+    ]
     path = saved_run(tmp_path, rows)
     ok, msg = eval_check(tmp_path, {"eval_results": path, "min_eval_pass_rate": 0.6})
     assert not ok and "pass rate 50%" in msg, msg

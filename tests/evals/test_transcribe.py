@@ -11,10 +11,12 @@ def test_light_drops_punctuation_and_casing_and_spells_digits():
 
 
 def test_ages_and_temperatures_stay_as_numbers():
-    got = roughen("My 104-year-old dad, it's 52 degrees, call 718 555 0142.", "light",
-                  seeded("x", 1))
-    assert got == ("my 104 year old dad it's 52 degrees call seven one eight five five five "
-                   "oh one four two")
+    got = roughen(
+        "My 104-year-old dad, it's 52 degrees, call 718 555 0142.", "light", seeded("x", 1)
+    )
+    assert got == (
+        "my 104 year old dad it's 52 degrees call seven one eight five five five oh one four two"
+    )
 
 
 def test_heavy_is_rougher_but_the_same_for_the_same_seed():

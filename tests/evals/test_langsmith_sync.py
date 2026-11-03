@@ -343,6 +343,5 @@ def test_each_sample_is_its_own_run_and_the_first_keeps_its_old_id(make_run):
     first = run.scenarios[0]
     second = first.model_copy(update={"sample": 2})
     assert ls.run_id_for(run, first) != ls.run_id_for(run, second)
-    expected = uuid5(ls.NAMESPACE,
-                          f"run/{ls.experiment_name(run)}/{first.scenario_id}")
+    expected = uuid5(ls.NAMESPACE, f"run/{ls.experiment_name(run)}/{first.scenario_id}")
     assert ls.run_id_for(run, first) == expected

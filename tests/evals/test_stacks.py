@@ -45,10 +45,16 @@ def test_the_voice_lanes_assemble_module_supplies_the_prompt_and_tools(monkeypat
     from evals import stacks
 
     fake = types.ModuleType("prompts.assemble")
-    fake.instructions = lambda start, now=None: f"Real prompt for {start['tenant']['name']} at {now}"
+    fake.instructions = lambda start, now=None: (
+        f"Real prompt for {start['tenant']['name']} at {now}"
+    )
     fake.tool_specs = lambda job_types: [
-        {"name": "find_slots", "description": "d", "parameters": {"type": "object",
-         "properties": {"job_type": {"enum": job_types}}}, "write": False}
+        {
+            "name": "find_slots",
+            "description": "d",
+            "parameters": {"type": "object", "properties": {"job_type": {"enum": job_types}}},
+            "write": False,
+        }
     ]
     monkeypatch.setitem(sys.modules, "prompts.assemble", fake)
     assert stacks.system_prompt({"tenant": {"name": "Summit Air"}}, now="9am") == (
@@ -56,7 +62,11 @@ def test_the_voice_lanes_assemble_module_supplies_the_prompt_and_tools(monkeypat
     )
     (spec,) = stacks.assembled_tool_specs("summit-air")
     assert spec["input_schema"]["properties"]["job_type"]["enum"] == [
-        "no_heat", "no_cooling", "tune_up", "safety_check", "estimate"
+        "no_heat",
+        "no_cooling",
+        "tune_up",
+        "safety_check",
+        "estimate",
     ]
     assert "write" not in spec
 
@@ -129,13 +139,16 @@ class StubServer:
         return {"ok": True, "say": "", "data": {"hints": []}}
 
     def tool(self, name, call_id, args, key=None):
-        return {"ok": False, "say": "Please get outside first.", "data": {},
-                "refused": "gate_safety"}
+        return {
+            "ok": False,
+            "say": "Please get outside first.",
+            "data": {},
+            "refused": "gate_safety",
+        }
 
 
 def test_a_safety_gate_refusal_is_spoken_and_the_model_gets_no_reply_step():
-    model = ScriptedModel([use("find_slots", "One moment.", job_type="no_heat"),
-                           say("never said")])
+    model = ScriptedModel([use("find_slots", "One moment.", job_type="no_heat"), say("never said")])
     server = StubServer()
     agent = InProcessAgent(server, model, "c1", "(212) 555-0999")
     agent.start()

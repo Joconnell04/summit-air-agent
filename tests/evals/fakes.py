@@ -1,4 +1,5 @@
 """Fake models for the harness tests: scripted replies, no network."""
+
 import json
 from collections.abc import Callable
 
@@ -6,9 +7,15 @@ from evals.models import Reply, Usage
 
 
 def say(text: str, cost: float = 0.001) -> Reply:
-    return Reply(text=text, tool_uses=[], content=[{"type": "text", "text": text}],
-                 first_token_ms=50.0, total_ms=80.0, stop_reason="end_turn",
-                 usage=Usage(100, 20, cost))
+    return Reply(
+        text=text,
+        tool_uses=[],
+        content=[{"type": "text", "text": text}],
+        first_token_ms=50.0,
+        total_ms=80.0,
+        stop_reason="end_turn",
+        usage=Usage(100, 20, cost),
+    )
 
 
 def use(name: str, text: str = "", **args) -> Reply:
@@ -17,9 +24,15 @@ def use(name: str, text: str = "", **args) -> Reply:
     content = ([{"type": "text", "text": text}] if text else []) + [
         {"type": "tool_use", "id": tool_id, "name": name, "input": args}
     ]
-    return Reply(text=text, tool_uses=[{"id": tool_id, "name": name, "input": args}],
-                 content=content, first_token_ms=40.0, total_ms=60.0, stop_reason="tool_use",
-                 usage=Usage(100, 20, 0.001))
+    return Reply(
+        text=text,
+        tool_uses=[{"id": tool_id, "name": name, "input": args}],
+        content=content,
+        first_token_ms=40.0,
+        total_ms=60.0,
+        stop_reason="tool_use",
+        usage=Usage(100, 20, 0.001),
+    )
 
 
 class ScriptedModel:

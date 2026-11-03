@@ -25,8 +25,9 @@ def test_every_journey_has_a_scenario():
 
 
 def test_every_must_pass_line_tested_by_eval_has_a_scenario():
-    eval_lines = set(re.findall(r"^\| (S-\d+[a-z]?) \*\*M\*\* \|[^|]*\| [^|]*[Ee]val", SPEC,
-                                flags=re.MULTILINE))
+    eval_lines = set(
+        re.findall(r"^\| (S-\d+[a-z]?) \*\*M\*\* \|[^|]*\| [^|]*[Ee]val", SPEC, flags=re.MULTILINE)
+    )
     covered = {s for sc in SCENARIOS for s in sc.spec}
     assert eval_lines and eval_lines <= covered, eval_lines - covered
 
@@ -62,7 +63,9 @@ def test_literal_caller_numbers_are_not_seeded_customers(tmp_path):
     seeded = {r[0] for r in conn.execute("SELECT phone_key FROM contacts WHERE phone_key != ''")}
     for s in SCENARIOS:
         if s.caller_id != "unknown" and not s.caller_id.startswith("seed:"):
-            assert phone_key(s.caller_id) not in seeded, f"{s.id}: use seed:<key> for a known caller"
+            assert phone_key(s.caller_id) not in seeded, (
+                f"{s.id}: use seed:<key> for a known caller"
+            )
 
 
 def test_seed_references_resolve(tmp_path):
@@ -107,11 +110,28 @@ def test_an_unknown_check_or_argument_is_rejected(tmp_path, check):
 
 
 def test_tags_include_flow_difficulty_trait_journey_spec_and_must_pass():
-    s = Scenario.model_validate({
-        "id": "x", "flow": ["safety"], "difficulty": "rigorous", "traits": ["stutter"],
-        "journeys": ["J3"], "spec": ["S-17"], "tags": ["smoke"], "persona": "p", "opening": "o",
-        "must": [{"booking": "none"}],
-    })
-    assert s.all_tags() >= {"flow:safety", "difficulty:rigorous", "trait:stutter", "journey:J3",
-                            "spec:S-17", "smoke", "must-pass", "id:x"}
+    s = Scenario.model_validate(
+        {
+            "id": "x",
+            "flow": ["safety"],
+            "difficulty": "rigorous",
+            "traits": ["stutter"],
+            "journeys": ["J3"],
+            "spec": ["S-17"],
+            "tags": ["smoke"],
+            "persona": "p",
+            "opening": "o",
+            "must": [{"booking": "none"}],
+        }
+    )
+    assert s.all_tags() >= {
+        "flow:safety",
+        "difficulty:rigorous",
+        "trait:stutter",
+        "journey:J3",
+        "spec:S-17",
+        "smoke",
+        "must-pass",
+        "id:x",
+    }
     assert s.start_time.isoformat() == "2026-11-02T09:00:00-05:00"

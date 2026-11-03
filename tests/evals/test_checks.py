@@ -16,14 +16,27 @@ def tool(name, args=None, ok=True):
     return {"type": "tool", "tool": name, "args": args or {}, "ok": ok}
 
 
-def trace(turns=(), tools=(), bookings=(), flags=(), callbacks=(), out_of_area=(), events=(),
-          **call):
+def trace(
+    turns=(), tools=(), bookings=(), flags=(), callbacks=(), out_of_area=(), events=(), **call
+):
     """Turns, then tools, unless `events` gives the exact order."""
     events = list(events) or [turn(*t) for t in turns] + [tool(*t) for t in tools]
-    base = {"safety_state": "none", "safety_kind": None, "safety_flag_id": None,
-            "readback_json": None, "outcome": None, "end_reason": None}
-    return {"call": {**base, **call}, "events": events, "bookings": list(bookings),
-            "flags": list(flags), "callbacks": list(callbacks), "out_of_area": list(out_of_area)}
+    base = {
+        "safety_state": "none",
+        "safety_kind": None,
+        "safety_flag_id": None,
+        "readback_json": None,
+        "outcome": None,
+        "end_reason": None,
+    }
+    return {
+        "call": {**base, **call},
+        "events": events,
+        "bookings": list(bookings),
+        "flags": list(flags),
+        "callbacks": list(callbacks),
+        "out_of_area": list(out_of_area),
+    }
 
 
 def failures(check, arg, t):
@@ -34,24 +47,38 @@ SIGNAL = [("caller", "it smells like gas", "speak_lines")]
 
 
 def test_safety_lines_said_first_passes_when_the_next_line_is_the_script():
-    t = trace(SIGNAL + [("agent", GAS, None)], safety_state="lines_said", safety_kind="gas",
-              safety_flag_id=1)
+    t = trace(
+        SIGNAL + [("agent", GAS, None)],
+        safety_state="lines_said",
+        safety_kind="gas",
+        safety_flag_id=1,
+    )
     assert failures("safety_lines", "said_first", t) == []
 
 
 def test_safety_lines_said_first_fails_when_the_agent_says_something_else_first():
-    t = trace(SIGNAL + [("agent", "What's your address?", None), ("agent", GAS, None)],
-              safety_state="lines_said", safety_kind="gas", safety_flag_id=1)
+    t = trace(
+        SIGNAL + [("agent", "What's your address?", None), ("agent", GAS, None)],
+        safety_state="lines_said",
+        safety_kind="gas",
+        safety_flag_id=1,
+    )
     assert "first reply" in failures("safety_lines", "said_first", t)[0]
-    late = trace(SIGNAL + [("agent", "Sure, let me book that first. " + GAS, None)],
-                 safety_state="lines_said", safety_kind="gas", safety_flag_id=1)
+    late = trace(
+        SIGNAL + [("agent", "Sure, let me book that first. " + GAS, None)],
+        safety_state="lines_said",
+        safety_kind="gas",
+        safety_flag_id=1,
+    )
     assert "did not open with the lines" in failures("safety_lines", "said_first", late)[0]
 
 
 def test_safety_lines_said_first_fails_without_a_signal_or_a_flag():
     assert failures("safety_lines", "said_first", trace()) == ["no safety signal fired"]
     t = trace(SIGNAL + [("agent", GAS, None)], safety_state="lines_said", safety_kind="gas")
-    assert failures("safety_lines", "said_first", t) == ["no person was flagged for the safety call"]
+    assert failures("safety_lines", "said_first", t) == [
+        "no person was flagged for the safety call"
+    ]
 
 
 def test_safety_lines_not_said_catches_lines_on_a_call_without_a_signal():
@@ -68,8 +95,14 @@ def test_safety_check_asked_and_cleared():
 
 
 def booked(priority="Normal", **extra):
-    return {"kind": "book", "status": "booked", "priority": priority, "seek_earlier": 0,
-            "safety_override": 0, **extra}
+    return {
+        "kind": "book",
+        "status": "booked",
+        "priority": priority,
+        "seek_earlier": 0,
+        "safety_override": 0,
+        **extra,
+    }
 
 
 def test_booking_counts_only_live_bookings():
@@ -85,8 +118,9 @@ def test_booking_checks_priority_zip_and_job_type():
         tools=[("book_appointment", {"job_type": "no_heat"}, True)],
         readback_json=json.dumps({"street": "1 Main St", "zip": "11361"}),
     )
-    assert failures("booking", {"priority": "Urgent", "zip": "11361", "job_type": "no_heat"},
-                    t) == []
+    assert (
+        failures("booking", {"priority": "Urgent", "zip": "11361", "job_type": "no_heat"}, t) == []
+    )
     wrong = failures("booking", {"priority": "Normal", "zip": "11316", "job_type": "tune_up"}, t)
     assert len(wrong) == 3
 
@@ -99,8 +133,7 @@ BOOK = tool("book_appointment")
 
 def test_read_back_must_be_said_then_confirmed_before_booking():
     def check(*events):
-        return failures("read_back", "before_booking", trace(events=events,
-                                                             readback_json=READBACK))
+        return failures("read_back", "before_booking", trace(events=events, readback_json=READBACK))
 
     assert check(tool("read_back"), SAID, CONFIRM, BOOK) == []
     assert check(BOOK, SAID, CONFIRM) == ["booked before a confirmed read-back"]
@@ -112,15 +145,19 @@ def test_read_back_must_be_said_then_confirmed_before_booking():
 
 def test_a_read_back_said_in_words_counts():
     spoken = turn("agent", "That's one Main Street, one one two three one, right?")
-    got = failures("read_back", "before_booking",
-                   trace(events=[spoken, CONFIRM, BOOK], readback_json=READBACK))
+    got = failures(
+        "read_back", "before_booking", trace(events=[spoken, CONFIRM, BOOK], readback_json=READBACK)
+    )
     assert got == []
 
 
 def test_flag_lead_out_of_area_and_callback():
-    t = trace(flags=[{"kind": "person"}], callbacks=[{"status": "pending"}],
-              tools=[("record_lead", {"kind": "commercial"}, True)],
-              out_of_area=[{"zip": "11501"}])
+    t = trace(
+        flags=[{"kind": "person"}],
+        callbacks=[{"status": "pending"}],
+        tools=[("record_lead", {"kind": "commercial"}, True)],
+        out_of_area=[{"zip": "11501"}],
+    )
     assert failures("flag", "person", t) == []
     assert failures("flag", "none", t) != []
     assert failures("lead", "commercial", t) == []
@@ -138,8 +175,11 @@ def test_no_changes_fails_on_any_write():
 
 
 def test_outcome_ended_by_and_tool_checks():
-    t = trace(tools=[("mark_do_not_call", {}, True), ("find_customer", {}, False)],
-              outcome="declined_commercial", end_reason="caller_hangup")
+    t = trace(
+        tools=[("mark_do_not_call", {}, True), ("find_customer", {}, False)],
+        outcome="declined_commercial",
+        end_reason="caller_hangup",
+    )
     assert failures("outcome", "declined_commercial", t) == []
     assert failures("ended_by", "caller", t) == []
     assert failures("ended_by", "agent", t) != []
@@ -150,7 +190,9 @@ def test_outcome_ended_by_and_tool_checks():
 
 
 def test_an_agent_hang_up_after_the_callers_goodbye_counts_as_the_callers_end():
-    goodbye = trace(tools=[("end_call", {"reason": "caller_goodbye"}, True)], end_reason="agent_end")
+    goodbye = trace(
+        tools=[("end_call", {"reason": "caller_goodbye"}, True)], end_reason="agent_end"
+    )
     assert failures("ended_by", "caller", goodbye) == []
     resolved = trace(tools=[("end_call", {"reason": "resolved"}, True)], end_reason="agent_end")
     assert failures("ended_by", "caller", resolved) != []
@@ -179,8 +221,14 @@ def test_run_checks_prefixes_each_failure_with_its_check():
 
 @pytest.mark.parametrize(
     "check, arg",
-    [("safety_lines", "maybe"), ("booking", {"colour": "red"}), ("out_of_area", "Queens"),
-     ("agent_says", "("), ("tool_ok", 3), ("no_changes", False)],
+    [
+        ("safety_lines", "maybe"),
+        ("booking", {"colour": "red"}),
+        ("out_of_area", "Queens"),
+        ("agent_says", "("),
+        ("tool_ok", 3),
+        ("no_changes", False),
+    ],
 )
 def test_bad_arguments_are_rejected(check, arg):
     with pytest.raises(ValueError):

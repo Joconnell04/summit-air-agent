@@ -436,9 +436,12 @@ def read_back(ctx: Ctx, args: ReadBackIn) -> Result:
     address = args.address.model_dump()
     place = address["street"] + (f", unit {address['unit']}" if address["unit"] else "")
     city = f", {address['city']}" if address["city"] else ""
-    sentence = (
-        f"Let me read that back: {place}{city}, {address['zip']}, "
-        f"and the best number is {phone_spoken(phone)}. Is that right?"
+    # The sentence names the address as a home, so every booking has the caller confirm it's
+    # residential (assignment; spec S-07). A caller who corrects it is caught by the turn check.
+    sentence = ctx.tenant.line(
+        "read_back",
+        address=f"{place}{city}, {address['zip']}",
+        phone=phone_spoken(phone),
     )
     asked = records.readback(ctx.call)
     current = {**address, "phone": phone, "sentence": sentence}
