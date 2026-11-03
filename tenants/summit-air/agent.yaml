@@ -158,7 +158,7 @@ priority:
       job_types: [no_heat, no_cooling]
       phrases: [elderly, senior, seniors, grandmother, grandfather, grandma, grandpa, baby, infant,
                 newborn, months old, weeks old]
-      age_at_least: 65  # CDC older adults; "my 84-year-old mother", "I'm 84"
+      age_at_least: 60  # NYC Health heat and cold guidance names adults 60 and over; "I'm 84"
       raise_to: Urgent
       raise_to_when_mild: High
       reason: an older person or a baby at home

@@ -220,3 +220,9 @@ def test_an_urgent_caller_hears_it_once_and_a_routine_caller_never_does(agent):
     routine = agent.start("(212) 555-0177")["data"]["call_id"]
     agent.turn(routine, "I'd like my annual tune-up.")
     assert line not in agent.tool("find_slots", routine, job_type="tune_up")["say"]
+
+
+@pytest.mark.parametrize("text,urgent", [("my 61-year-old dad lives here", True), ("I'm 59", False)])
+def test_older_adult_starts_at_60_in_line_with_nyc_health(text, urgent):
+    result = decide("no_heat", text, None)
+    assert (result.level == "Urgent") is urgent
