@@ -39,3 +39,8 @@ How the design was reached, in order, so a reader can follow each choice back to
 | Retell baseline built | Same tools, prompts and traces on the 678 number; a real call booked and a gas call held the safety gate; speed-extras question open in #32 | pull requests 33 and 35, brief 05 |
 | Callback done read from ServiceTitan | Only an outbound call logged as resolved marks a callback done; missed calls, voicemail or the wrong person leave it open | DECISIONS.md 010, #26 |
 | Eval floor waits for the real prompts | Set from the first standard-suite run on the real prompts, rounded down to the nearest 5%, ratchet up only | DECISIONS.md 011, #27 |
+| Server fixes from the build review | Read-back names the address as the caller's home; known out-of-area callers counted at start; asked-about ZIPs left out of demand when the call booked; ages however they're said | pull request 36 |
+| Reply delay cause found | Thinking was never switched off on the live model (the LiveKit plugin dropped the setting); first token 1,326 ms to 565 ms offline | pull request 38, #30 |
+| Eval cleanup and LangSmith | Retell adapter behind the stack boundary, mock reset per Retell scenario, per-check scores and run metadata in LangSmith; smoke 7 of 8 on the real prompts | pull request 37 |
+| Priority from temperature brackets | Inside and outside temperature set the starting level; risk read broadly, two risk factors together urgent; outside temperature from the National Weather Service | pull request 39, spec r5, exploration 007 |
+| Server monitor live, deploy bug fixed | Healthchecks.io watches the watchdog's pings; every deploy had been installing an empty crontab, now fixed and tested | pull request 41 |
