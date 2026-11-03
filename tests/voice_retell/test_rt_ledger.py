@@ -89,8 +89,10 @@ def test_an_agent_turn_carries_the_reply_delay_from_the_word_timings(tmp_path):
 
 
 def test_the_reply_delay_key_is_the_one_the_livekit_worker_writes():
-    # voice/livekit/turns.py agent_timings: "reply_ms", from the caller going quiet to first audio.
-    assert REPLY_DELAY == "reply_ms"
+    from voice.livekit.turns import agent_timings
+
+    livekit = agent_timings({"started_speaking_at": 12.0}, 11.2, 0.0, False)
+    assert REPLY_DELAY in livekit
 
 
 def test_agent_text_not_yet_spoken_has_no_timing(tmp_path):
@@ -147,13 +149,17 @@ def test_the_rest_of_a_reply_split_into_two_lines_has_no_reply_delay(tmp_path):
 
 
 def test_an_empty_transcript_object_falls_back_to_the_one_with_tool_calls():
-    found = lines({"transcript_object": [], "transcript_with_tool_calls": [utterance("user", "Hi")]})
+    found = lines(
+        {"transcript_object": [], "transcript_with_tool_calls": [utterance("user", "Hi")]}
+    )
     assert [(x.speaker, x.text) for x in found] == [("caller", "Hi")]
 
 
 def test_mid_call_an_agent_line_still_playing_waits_for_the_next_event(tmp_path):
     ledger, posts = Ledger(tmp_path / "l.db"), Posts()
-    partial = call(utterance("user", "My heat is out."), utterance("agent", "Let me read back your"))
+    partial = call(
+        utterance("user", "My heat is out."), utterance("agent", "Let me read back your")
+    )
     ledger.sync("c1", lines(partial), posts, settled=False)
     assert [t for _, t, _ in posts.sent] == ["My heat is out."]
     whole = call(
@@ -163,3 +169,35 @@ def test_mid_call_an_agent_line_still_playing_waits_for_the_next_event(tmp_path)
     )
     ledger.sync("c1", lines(whole), posts, settled=False)
     assert [t for _, t, _ in posts.sent][1:] == ["Let me read back your address.", "Yes"]
+
+
+def test_a_late_shorter_copy_of_a_line_is_not_posted_again(tmp_path):
+    ledger, posts = Ledger(tmp_path / "l.db"), Posts()
+    long = call(utterance("user", "Hi."), utterance("agent", "Let me check. You are set."))
+    short = call(utterance("user", "Hi."), utterance("agent", "Let me check."))
+    ledger.sync("c1", lines(long), posts)
+    ledger.sync("c1", lines(short), posts)
+    ledger.sync("c1", lines(long), posts)
+    assert [t for _, t, _ in posts.sent] == ["Hi.", "Let me check. You are set."]
+
+
+def test_both_transcript_fields_of_a_real_call_give_the_same_lines():
+    """The webhook reads transcript_with_tool_calls and a custom function reads
+    transcript_object; on a real call with tool calls between agent lines they match."""
+    import json
+    from pathlib import Path
+
+    real = json.loads((Path(__file__).parent / "recorded" / "get-call.json").read_text())
+    from_object = lines({"transcript_object": real["transcript_object"]})
+    from_tools = lines({"transcript_with_tool_calls": real["transcript_with_tool_calls"]})
+    assert len(from_object) > 20
+    assert [(x.speaker, x.text) for x in from_object] == [(x.speaker, x.text) for x in from_tools]
+
+
+def test_the_call_summary_of_a_real_call():
+    import json
+    from pathlib import Path
+
+    real = json.loads((Path(__file__).parent / "recorded" / "get-call.json").read_text())
+    summary = call_summary(real)
+    assert summary["e2e_p50_ms"] == 1370.5 and summary["cost_usd"] == 0.2032

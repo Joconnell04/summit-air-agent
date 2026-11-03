@@ -7,6 +7,7 @@ from fastapi.testclient import TestClient
 from retell_kit import SPOKEN, call_obj, event, inbound, signed, tool, utterance
 from toolkit import DETAILS, in_area_address
 
+from app.tools import TOOLS
 from voice.retell.bridge import Bridge, ToolServer, build_app, end_reason, idempotency_key
 from voice.retell.ledger import Ledger
 
@@ -84,7 +85,9 @@ def test_the_read_back_gate_passes_because_the_callers_yes_is_posted_first(clien
 def test_booking_without_the_callers_yes_is_refused(client):
     inbound(client, "abc")
     address = in_area_address()
-    tool(client, "read_back", call_obj("abc", GREETING, HEAT_OUT), address=address, phone="caller_id")
+    tool(
+        client, "read_back", call_obj("abc", GREETING, HEAT_OUT), address=address, phone="caller_id"
+    )
     early = tool(
         client,
         "read_back",
@@ -184,7 +187,11 @@ def test_the_caller_speaking_after_end_call_keeps_the_call_open(client, retell, 
     said = booked_call(client)
     bye = [*said, utterance("user", "That's all."), utterance("agent", "Bye now.")]
     tool(client, "end_call", call_obj("abc", *bye), reason="resolved")
-    event(client, "transcript_updated", call_obj("abc", *bye, utterance("user", "Oh wait, one more thing")))
+    event(
+        client,
+        "transcript_updated",
+        call_obj("abc", *bye, utterance("user", "Oh wait, one more thing")),
+    )
     later.run()
     assert retell.stopped == []
 
@@ -209,6 +216,7 @@ def test_with_the_tool_server_down_the_agent_says_so_and_the_call_ends(tmp_path,
         spoken=lambda slug: SPOKEN,
         notes=lambda hints: [],
         default_tenant="summit-air",
+        tool_names=set(TOOLS),
         now_ms=lambda: 1_793_000_000_000,
         later=later,
     )
@@ -299,3 +307,74 @@ def test_transcript_updated_reads_the_transcript_sent_beside_the_call(client, to
     assert signed(client, "/retell/webhook", payload).status_code == 204
     turns = rows(tool_app, "SELECT speaker FROM turns WHERE call_id = 'retell_abc'")
     assert [t["speaker"] for t in turns] == ["agent", "caller"]
+
+
+def test_a_call_end_the_tool_server_missed_is_asked_for_again(tmp_path, retell, later):
+    down = Bridge(
+        "key_test_retell",
+        ToolServer(TestClient(build_app_down())),
+        Ledger(tmp_path / "b.db"),
+        retell,
+        instructions=lambda start: "unused",
+        spoken=lambda slug: SPOKEN,
+        notes=lambda hints: [],
+        default_tenant="summit-air",
+        tool_names=set(TOOLS),
+        now_ms=lambda: 1_793_000_000_000,
+        later=later,
+    )
+    ended = call_obj("abc", disconnection_reason="user_hangup")
+    response = signed(
+        TestClient(build_app(down)), "/retell/webhook", {"event": "call_ended", "call": ended}
+    )
+    assert response.status_code == 503
+
+
+def test_a_refused_start_is_tried_again_on_the_next_event(tmp_path, retell, later):
+    calls = []
+
+    class Refusing(ToolServer):
+        def start(self, *args):
+            calls.append(args)
+            return {"ok": False, "refused": "server_error"}
+
+    bridge = Bridge(
+        "key_test_retell",
+        Refusing(None),
+        Ledger(tmp_path / "b.db"),
+        retell,
+        instructions=lambda start: "unused",
+        spoken=lambda slug: SPOKEN,
+        notes=lambda hints: [],
+        default_tenant="summit-air",
+        tool_names=set(TOOLS),
+        later=later,
+    )
+    bridge.ensure_started(call_obj("abc"), "call")
+    bridge.ensure_started(call_obj("abc"), "call")
+    assert len(calls) == 2
+
+
+def test_a_tool_the_server_does_not_have_is_refused(client):
+    body = {"name": "delete_everything", "call": call_obj("abc"), "args": {}}
+    assert signed(client, "/retell/tools/delete_everything", body).status_code == 404
+
+
+def test_call_analyzed_keeps_retells_latency_and_cost_for_the_report(client, bridge):
+    inbound(client, "abc")
+    analyzed = call_obj(
+        "abc",
+        latency={"e2e": {"p50": 1200, "p90": 1900}},
+        call_cost={"combined_cost": 19.3, "total_duration_seconds": 112},
+    )
+    event(client, "call_analyzed", analyzed)
+    assert bridge.ledger.summaries() == [
+        {
+            "call_id": "retell_abc",
+            "retell_id": "abc",
+            "e2e_p50_ms": 1200,
+            "e2e_p90_ms": 1900,
+            "cost_usd": 0.193,
+            "duration_s": 112,
+        }
+    ]

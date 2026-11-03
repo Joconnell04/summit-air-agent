@@ -1,0 +1,482 @@
+{
+ "call_cost": {
+  "combined_cost": 20.32,
+  "product_costs": [
+   {
+    "cost": 11.000004,
+    "product": "retell_voice_engine",
+    "unit_price": 0.0916667
+   },
+   {
+    "cost": 3,
+    "product": "cartesia_tts_new",
+    "unit_price": 0.025
+   },
+   {
+    "cost": 0.639996,
+    "product": "claude_5_5_haiku",
+    "unit_price": 0.0053333
+   },
+   {
+    "cost": 0.6,
+    "product": "llm_token_surcharge",
+    "unit_price": 0.1
+   },
+   {
+    "cost": 3,
+    "product": "us_twilio_telephony",
+    "unit_price": 0.025
+   },
+   {
+    "cost": 2.08,
+    "product": "gpt_5_6_terra_text_testing",
+    "unit_price": 2.08
+   }
+  ],
+  "total_duration_seconds": 120,
+  "total_duration_unit_price": 0.152
+ },
+ "call_id": "call_9d6182c10f4b47630e70f4fbe4d",
+ "disconnection_reason": "user_hangup",
+ "latency": {
+  "asr": {
+   "max": 271,
+   "min": 106,
+   "num": 7,
+   "p50": 207,
+   "p90": 252.4,
+   "p95": 261.7,
+   "p99": 269.14,
+   "sum": 1372
+  },
+  "e2e": {
+   "max": 2192,
+   "min": 904,
+   "num": 6,
+   "p50": 1370.5,
+   "p90": 2170,
+   "p95": 2181,
+   "p99": 2189.8,
+   "sum": 9109
+  },
+  "llm": {
+   "max": 3394,
+   "min": 1,
+   "num": 10,
+   "p50": 610,
+   "p90": 1006.299999999999,
+   "p95": 2200.149999999997,
+   "p99": 3155.2300000000005,
+   "sum": 8346
+  },
+  "tts": {
+   "max": 145,
+   "min": 93,
+   "num": 10,
+   "p50": 106,
+   "p90": 122.49999999999999,
+   "p95": 133.74999999999997,
+   "p99": 142.75,
+   "sum": 1080
+  }
+ },
+ "transcript_object": [
+  {
+   "content": "Thanks for calling Summit Air, this is the virtual assistant. How can I help?",
+   "metadata": {
+    "response_id": 0
+   },
+   "role": "agent"
+  },
+  {
+   "content": "Hi. My heat stopped working last night, and the radiators are cold. I'm at one zero one Union Street in Brooklyn, ZIP code one one two three one. It's about sixty degrees inside. It's just me at home, and I'm the owner. It's a gas boiler, maybe ten years old, and I already checked the thermostat. ",
+   "role": "user"
+  },
+  {
+   "content": "Sorry ",
+   "metadata": {
+    "response_id": 7
+   },
+   "role": "agent"
+  },
+  {
+   "content": "about that, sixty degrees inside is no fun. Let me check your ZIP.Thanks. We're closed for the night, but the first opening is tomorrow, Tuesday. ",
+   "metadata": {
+    "response_id": 7
+   },
+   "role": "agent"
+  },
+  {
+   "content": "No. ",
+   "role": "user"
+  },
+  {
+   "content": "Would you like ",
+   "metadata": {
+    "response_id": 7
+   },
+   "role": "agent"
+  },
+  {
+   "content": "Nothing special. Just ring the bell. ",
+   "role": "user"
+  },
+  {
+   "content": "Okay, I'll make sure the team knows. Which window works best tomorrow: morning, 8 to 12, afternoon, ",
+   "metadata": {
+    "response_id": 9
+   },
+   "role": "agent"
+  },
+  {
+   "content": "You ",
+   "role": "user"
+  },
+  {
+   "content": "12 to ",
+   "metadata": {
+    "response_id": 9
+   },
+   "role": "agent"
+  },
+  {
+   "content": "can use the number I'm calling from. ",
+   "role": "user"
+  },
+  {
+   "content": "Got it, I'll use the number you're calling from. Which window works for tomorrow, Tuesday: morning 8 to 12, afternoon 12 to 4, or evening 4 to 8?",
+   "metadata": {
+    "response_id": 10
+   },
+   "role": "agent"
+  },
+  {
+   "content": "Yes. That's right. ",
+   "role": "user"
+  },
+  {
+   "content": "I'm not sure which part you mean. Did you want the morning, afternoon, or evening window tomorrow?",
+   "metadata": {
+    "response_id": 11
+   },
+   "role": "agent"
+  },
+  {
+   "content": "Whichever's earliest works for me. ",
+   "role": "user"
+  },
+  {
+   "content": "Earliest ",
+   "metadata": {
+    "response_id": 12
+   },
+   "role": "agent"
+  },
+  {
+   "content": "is tomorrow morning, 8 to 12. Let me read back the details.Let me read that back: 101 Union Street, Brooklyn, ",
+   "metadata": {
+    "response_id": 12
+   },
+   "role": "agent"
+  },
+  {
+   "content": "Yes. That ",
+   "role": "user"
+  },
+  {
+   "content": "11231, and the best ",
+   "metadata": {
+    "response_id": 12
+   },
+   "role": "agent"
+  },
+  {
+   "content": "one is good. ",
+   "role": "user"
+  },
+  {
+   "content": "Let ",
+   "metadata": {
+    "response_id": 13
+   },
+   "role": "agent"
+  },
+  {
+   "content": "me check the morning ",
+   "metadata": {
+    "response_id": 13
+   },
+   "role": "agent"
+  },
+  {
+   "content": "window again.Tomorrow's windows are still open. The earliest is 8 to 12. Shall I book that one?",
+   "metadata": {
+    "response_id": 13
+   },
+   "role": "agent"
+  },
+  {
+   "content": "No. That's everything. Thanks. Bye. ",
+   "role": "user"
+  },
+  {
+   "content": "Hmm, I didn't book it yet, so nothing is scheduled. Do you want me to book tomorrow's 8 to 12 window, or would you rather call back?",
+   "metadata": {
+    "response_id": 16
+   },
+   "role": "agent"
+  }
+ ],
+ "transcript_with_tool_calls": [
+  {
+   "content": "Thanks for calling Summit Air, this is the virtual assistant. How can I help?",
+   "metadata": {
+    "response_id": 0
+   },
+   "role": "agent"
+  },
+  {
+   "content": "Hi. My heat stopped working last night, and the radiators are cold. I'm at one zero one Union Street in Brooklyn, ZIP code one one two three one. It's about sixty degrees inside. It's just me at home, and I'm the owner. It's a gas boiler, maybe ten years old, and I already checked the thermostat. ",
+   "role": "user"
+  },
+  {
+   "arguments": "{\"zip\":\"11231\"}",
+   "name": "check_service_area",
+   "role": "tool_call_invocation",
+   "time_sec": 28.818,
+   "tool_call_id": "toolu_01NTBBmCnqPvg38DZmrGRKo3",
+   "type": "custom"
+  },
+  {
+   "arguments": "{\"address\":{\"street\":\"101 Union Street\",\"zip\":\"11231\",\"city\":\"Brooklyn\"}}",
+   "name": "find_customer",
+   "role": "tool_call_invocation",
+   "time_sec": 28.818,
+   "tool_call_id": "toolu_015Vs5KnLQuq4XUon85EQcuW",
+   "type": "custom"
+  },
+  {
+   "arguments": "{\"job_type\":\"no_heat\",\"facts\":{\"inside_temp_f\":60,\"issue\":\"No heat since last night, radiators cold, gas boiler about 10 years old, thermostat already checked\",\"who_home\":\"Just the owner, alone\"}}",
+   "name": "find_slots",
+   "role": "tool_call_invocation",
+   "time_sec": 28.818,
+   "tool_call_id": "toolu_01YatKHJmVSzHPr98tgtne9t",
+   "type": "custom"
+  },
+  {
+   "content": "Sorry ",
+   "metadata": {
+    "response_id": 7
+   },
+   "role": "agent"
+  },
+  {
+   "content": "{\"ok\":true,\"say\":\"I've got openings tomorrow morning, afternoon or evening, Thursday afternoon and Friday morning, afternoon or evening.\",\"data\":{\"priority\":{\"level\":\"High\",\"reasons\":[],\"requested\":null},\"after_hours_outcome\":\"first_morning_slot\",\"days\":[{\"date\":\"2026-11-03\",\"weekday\":\"Tuesday\",\"day\":\"tomorrow\",\"windows\":[\"morning\",\"afternoon\",\"evening\"],\"labels\":[\"8 to 12\",\"12 to 4\",\"4 to 8\"]},{\"date\":\"2026-11-05\",\"weekday\":\"Thursday\",\"day\":\"Thursday\",\"windows\":[\"afternoon\"],\"labels\":[\"12 to 4\"]},{\"date\":\"2026-11-06\",\"weekday\":\"Friday\",\"day\":\"Friday\",\"windows\":[\"morning\",\"afternoon\",\"evening\"],\"labels\":[\"8 to 12\",\"12 to 4\",\"4 to 8\"]}]}}",
+   "role": "tool_call_result",
+   "successful": true,
+   "time_sec": 29.192,
+   "tool_call_id": "toolu_01YatKHJmVSzHPr98tgtne9t"
+  },
+  {
+   "content": "{\"ok\":true,\"data\":{\"matches\":[],\"needs_unit\":false}}",
+   "role": "tool_call_result",
+   "successful": true,
+   "time_sec": 29.203,
+   "tool_call_id": "toolu_015Vs5KnLQuq4XUon85EQcuW"
+  },
+  {
+   "content": "{\"ok\":true,\"data\":{\"zip\":\"11231\",\"in_area\":true,\"area\":\"Brooklyn North\"}}",
+   "role": "tool_call_result",
+   "successful": true,
+   "time_sec": 29.207,
+   "tool_call_id": "toolu_01NTBBmCnqPvg38DZmrGRKo3"
+  },
+  {
+   "content": "about that, sixty degrees inside is no fun. Let me check your ZIP.Thanks. We're closed for the night, but the first opening is tomorrow, Tuesday. ",
+   "metadata": {
+    "response_id": 7
+   },
+   "role": "agent"
+  },
+  {
+   "content": "No. ",
+   "role": "user"
+  },
+  {
+   "content": "Would you like ",
+   "metadata": {
+    "response_id": 7
+   },
+   "role": "agent"
+  },
+  {
+   "content": "Nothing special. Just ring the bell. ",
+   "role": "user"
+  },
+  {
+   "content": "Okay, I'll make sure the team knows. Which window works best tomorrow: morning, 8 to 12, afternoon, ",
+   "metadata": {
+    "response_id": 9
+   },
+   "role": "agent"
+  },
+  {
+   "content": "You ",
+   "role": "user"
+  },
+  {
+   "content": "12 to ",
+   "metadata": {
+    "response_id": 9
+   },
+   "role": "agent"
+  },
+  {
+   "content": "can use the number I'm calling from. ",
+   "role": "user"
+  },
+  {
+   "content": "Got it, I'll use the number you're calling from. Which window works for tomorrow, Tuesday: morning 8 to 12, afternoon 12 to 4, or evening 4 to 8?",
+   "metadata": {
+    "response_id": 10
+   },
+   "role": "agent"
+  },
+  {
+   "content": "Yes. That's right. ",
+   "role": "user"
+  },
+  {
+   "content": "I'm not sure which part you mean. Did you want the morning, afternoon, or evening window tomorrow?",
+   "metadata": {
+    "response_id": 11
+   },
+   "role": "agent"
+  },
+  {
+   "content": "Whichever's earliest works for me. ",
+   "role": "user"
+  },
+  {
+   "arguments": "{\"address\":{\"street\":\"101 Union Street\",\"city\":\"Brooklyn\",\"zip\":\"11231\"},\"phone\":\"+16787376865\"}",
+   "name": "read_back",
+   "role": "tool_call_invocation",
+   "time_sec": 80.854,
+   "tool_call_id": "toolu_01VWPT7YeZ2dt7CbYUHpovCW",
+   "type": "custom"
+  },
+  {
+   "content": "Earliest ",
+   "metadata": {
+    "response_id": 12
+   },
+   "role": "agent"
+  },
+  {
+   "content": "{\"ok\":true,\"say\":\"Let me read that back: 101 Union Street, Brooklyn, 11231, and the best number is 678, 737, 6865. Is that right?\",\"data\":{\"confirmed\":false,\"sentence\":\"Let me read that back: 101 Union Street, Brooklyn, 11231, and the best number is 678, 737, 6865. Is that right?\"}}",
+   "role": "tool_call_result",
+   "successful": true,
+   "time_sec": 81.347,
+   "tool_call_id": "toolu_01VWPT7YeZ2dt7CbYUHpovCW"
+  },
+  {
+   "content": "is tomorrow morning, 8 to 12. Let me read back the details.Let me read that back: 101 Union Street, Brooklyn, ",
+   "metadata": {
+    "response_id": 12
+   },
+   "role": "agent"
+  },
+  {
+   "content": "Yes. That ",
+   "role": "user"
+  },
+  {
+   "content": "11231, and the best ",
+   "metadata": {
+    "response_id": 12
+   },
+   "role": "agent"
+  },
+  {
+   "content": "one is good. ",
+   "role": "user"
+  },
+  {
+   "arguments": "{\"address\":{\"street\":\"101 Union Street\",\"city\":\"Brooklyn\",\"zip\":\"11231\"},\"phone\":\"+16787376865\",\"confirmed\":true}",
+   "name": "read_back",
+   "role": "tool_call_invocation",
+   "time_sec": 93.284,
+   "tool_call_id": "toolu_01BD1BsRwfzZ7GLJUiTyb7GZ",
+   "type": "custom"
+  },
+  {
+   "content": "{\"ok\":true,\"data\":{\"confirmed\":true,\"address\":{\"street\":\"101 Union Street\",\"unit\":\"\",\"city\":\"Brooklyn\",\"zip\":\"11231\"},\"phone\":\"6787376865\"}}",
+   "role": "tool_call_result",
+   "successful": true,
+   "time_sec": 93.694,
+   "tool_call_id": "toolu_01BD1BsRwfzZ7GLJUiTyb7GZ"
+  },
+  {
+   "arguments": "{\"job_type\":\"no_heat\",\"slot\":{\"date\":\"2026-11-03\",\"window\":\"8 to 12\"},\"details\":{\"issue\":\"No heat since last night, radiators cold, gas boiler about 10 years old\",\"since\":\"Last night\",\"tried\":\"Checked the thermostat\",\"who_home\":\"Just the owner, alone\",\"approver\":\"Owner\",\"inside_temp_f\":60,\"system_type\":\"Gas boiler, about 10 years old\",\"arrival_notes\":\"Ring the bell\"}}",
+   "name": "book_appointment",
+   "role": "tool_call_invocation",
+   "time_sec": 94.878,
+   "tool_call_id": "toolu_01ECccXqPtTAJbjGxbq3kHba",
+   "type": "custom"
+  },
+  {
+   "content": "{\"ok\":false,\"say\":\"Let me look at the open times again.\",\"data\":{\"errors\":{\"slot\":\"not a window the company offers in the booking range\"}},\"refused\":\"invalid_slot\"}",
+   "role": "tool_call_result",
+   "successful": true,
+   "time_sec": 95.238,
+   "tool_call_id": "toolu_01ECccXqPtTAJbjGxbq3kHba"
+  },
+  {
+   "content": "Let ",
+   "metadata": {
+    "response_id": 13
+   },
+   "role": "agent"
+  },
+  {
+   "arguments": "{\"job_type\":\"no_heat\",\"day\":\"2026-11-03\",\"facts\":{\"inside_temp_f\":60,\"issue\":\"No heat since last night, radiators cold, gas boiler about 10 years old, thermostat already checked\",\"who_home\":\"Just the owner, alone\"},\"time_of_day\":\"morning\"}",
+   "name": "find_slots",
+   "role": "tool_call_invocation",
+   "time_sec": 96.341,
+   "tool_call_id": "toolu_01NGJKaBE8k6QGQCgs7dqHdi",
+   "type": "custom"
+  },
+  {
+   "content": "me check the morning ",
+   "metadata": {
+    "response_id": 13
+   },
+   "role": "agent"
+  },
+  {
+   "content": "{\"ok\":true,\"say\":\"Tomorrow I have 8 to 12, 12 to 4 or 4 to 8.\",\"data\":{\"priority\":{\"level\":\"High\",\"reasons\":[],\"requested\":null},\"after_hours_outcome\":\"first_morning_slot\",\"windows\":[{\"date\":\"2026-11-03\",\"window\":\"morning\",\"weekday\":\"Tuesday\",\"day\":\"tomorrow\",\"label\":\"8 to 12\",\"after_hours\":false},{\"date\":\"2026-11-03\",\"window\":\"afternoon\",\"weekday\":\"Tuesday\",\"day\":\"tomorrow\",\"label\":\"12 to 4\",\"after_hours\":false},{\"date\":\"2026-11-03\",\"window\":\"evening\",\"weekday\":\"Tuesday\",\"day\":\"tomorrow\",\"label\":\"4 to 8\",\"after_hours\":false}]}}",
+   "role": "tool_call_result",
+   "successful": true,
+   "time_sec": 96.751,
+   "tool_call_id": "toolu_01NGJKaBE8k6QGQCgs7dqHdi"
+  },
+  {
+   "content": "window again.Tomorrow's windows are still open. The earliest is 8 to 12. Shall I book that one?",
+   "metadata": {
+    "response_id": 13
+   },
+   "role": "agent"
+  },
+  {
+   "content": "No. That's everything. Thanks. Bye. ",
+   "role": "user"
+  },
+  {
+   "content": "Hmm, I didn't book it yet, so nothing is scheduled. Do you want me to book tomorrow's 8 to 12 window, or would you rather call back?",
+   "metadata": {
+    "response_id": 16
+   },
+   "role": "agent"
+  }
+ ]
+}

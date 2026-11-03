@@ -15,8 +15,11 @@ ssh "$HOST" 'set -e; cd ~/summit-air/retell; ~/.local/bin/uv sync -q
   sudo install -m 644 deploy/retell/summit-retell@.service /etc/systemd/system/
   sudo mkdir -p /etc/caddy/sites
   sudo install -m 644 deploy/retell/Caddyfile /etc/caddy/sites/summit-retell.caddy
-  grep -q "^import /etc/caddy/sites/" /etc/caddy/Caddyfile || \
-    printf "import /etc/caddy/sites/*.caddy\n" | sudo tee /etc/caddy/Caddyfile >/dev/null
+  # Add the import line once, keeping whatever else the Caddyfile serves.
+  if ! grep -q "^import /etc/caddy/sites/" /etc/caddy/Caddyfile; then
+    sudo cp /etc/caddy/Caddyfile "/etc/caddy/Caddyfile.$(date +%Y%m%d%H%M%S).bak"
+    printf "\nimport /etc/caddy/sites/*.caddy\n" | sudo tee -a /etc/caddy/Caddyfile >/dev/null
+  fi
   # Caddy reads the eval token from its own environment.
   sudo mkdir -p /etc/systemd/system/caddy.service.d
   printf "[Service]\nEnvironmentFile=/home/jackson/summit-air/retell.env\n" | \

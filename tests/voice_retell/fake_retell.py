@@ -31,8 +31,11 @@ class FakeRetell:
         return Retell("key_test", httpx.Client(base_url=BASE_URL, transport=transport))
 
     def writes(self) -> list[tuple[str, str, dict | None]]:
-        return [r for r in self.requests if r[0] in ("PATCH", "DELETE") or "/create-" in r[1]
-                or r[1] == "/add-community-voice"]
+        return [
+            r
+            for r in self.requests
+            if r[0] in ("PATCH", "DELETE") or "/create-" in r[1] or r[1] == "/add-community-voice"
+        ]
 
     def new_id(self, prefix: str) -> str:
         self.ids += 1
@@ -58,8 +61,12 @@ class FakeRetell:
         if (method, path) == ("GET", "/list-voices"):
             return self.voices
         if (method, path) == ("POST", "/add-community-voice"):
-            voice = {"voice_id": self.new_id("custom_voice"), "voice_type": "custom",
-                     "provider": body["voice_provider"], "voice_name": body["voice_name"]}
+            voice = {
+                "voice_id": self.new_id("custom_voice"),
+                "voice_type": "custom",
+                "provider": body["voice_provider"],
+                "voice_name": body["voice_name"],
+            }
             self.voices.append(voice)
             return voice
         if (method, path) == ("POST", "/create-retell-llm"):

@@ -1,7 +1,7 @@
 #!/bin/sh
 # Start one Retell-lane process (see summit-retell@.service). Ports: 8102 bridge; eval instance
 # 8110 tool server, 8111 mock, 8112 bridge. The shared mock (8101) and tool server (8100) are
-# started by deploy/summit-air/run.sh, which finds them with `pgrep -f "uvicorn app.main"` and
+# started by deploy/summit-air/run.sh (the LiveKit lane, brief 03), which finds them with `pgrep -f "uvicorn app.main"` and
 # "uvicorn servicetitan_mock"; the app comes last on the command lines below so those patterns
 # never match an eval process and hide a stopped shared server.
 set -eu

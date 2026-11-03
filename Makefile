@@ -102,3 +102,6 @@ retell-bridge:
 
 retell-deploy:
 	sh deploy/retell/deploy.sh
+
+retell-report:
+	uv run python -m voice.retell.report $(if $(DB),--db $(DB))

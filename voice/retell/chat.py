@@ -1,7 +1,7 @@
-"""Opening a Retell chat for the eval harness (evals/retell_chat.py), so a scenario runs through
-the same Retell LLM, prompt and tools as a phone call. The harness then sends caller lines with
-/create-chat-completion; the eval bridge posts every line to the tool server from Retell's chat
-webhooks and custom functions, as it does for calls.
+"""Opening a Retell chat for the eval harness (evals/retell_chat.py, brief 04), so a scenario
+runs through the same Retell LLM, prompt and tools as a phone call. The harness then sends caller
+lines with /create-chat-completion; the eval bridge posts every line to the tool server from
+Retell's chat webhooks and custom functions, as it does for calls.
 
 Needs RETELL_API_KEY, RETELL_CHAT_AGENT_ID (printed by `make retell-push EVAL_URL=...`),
 RETELL_EVAL_TOOL_SERVER, the eval tool server that the chat agent's bridge forwards to, and

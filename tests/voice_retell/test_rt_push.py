@@ -46,8 +46,14 @@ def account() -> FakeRetell:
                     ],
                 }
             ],
-            "voices": [{"voice_id": "cartesia-Katie", "provider": "cartesia",
-                        "voice_type": "standard", "voice_name": "Katie"}],
+            "voices": [
+                {
+                    "voice_id": "cartesia-Katie",
+                    "provider": "cartesia",
+                    "voice_type": "standard",
+                    "voice_name": "Katie",
+                }
+            ],
         }
     )
 
@@ -63,7 +69,9 @@ def test_a_first_push_creates_the_llm_agent_and_voice_and_binds_the_number():
     assert any(line.startswith("created agent") for line in log)
     number = fake.numbers[0]
     agent_id = next(iter(fake.agents))
-    assert number["inbound_agents"] == [{"agent_id": agent_id, "agent_version": "latest", "weight": 1}]
+    assert number["inbound_agents"] == [
+        {"agent_id": agent_id, "agent_version": "latest", "weight": 1}
+    ]
     assert number["inbound_webhook_url"] == f"{BASE}/retell/inbound"
     llm = next(iter(fake.llms.values()))
     assert llm["model_config"]["primary"]["model"] == "claude-5.5-haiku"
@@ -165,8 +173,11 @@ def test_parameters_are_compared_in_the_form_retell_stores_them():
     """Retell drops default, minimum, maximum and format (seen on the first push)."""
     from app.schemas import HistoryIn
 
-    stored = next(t for t in recorded("get-retell-llm")["general_tools"]
-                  if t["name"] == "get_customer_history")["parameters"]
+    stored = next(
+        t
+        for t in recorded("get-retell-llm")["general_tools"]
+        if t["name"] == "get_customer_history"
+    )["parameters"]
     ours = HistoryIn.model_json_schema()
     ours["properties"].pop("call_id")
     ours["required"].remove("call_id")

@@ -14,6 +14,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tool_server"))
 from retell_kit import KEY, NOW_MS, SPOKEN
 from toolkit import START, TENANT_DIR, Clock, make_server
 
+from app.tools import TOOLS
 from servicetitan_mock.app import create_app as create_mock
 from servicetitan_mock.seed import build_world
 from voice.retell.bridge import Bridge, ToolServer, build_app
@@ -91,6 +92,7 @@ def bridge(tool_app, tmp_path, retell, later):
         spoken=lambda slug: SPOKEN,
         notes=lambda hints: [f"[server] {h}" for h in hints if h in ("commercial", "do_not_call")],
         default_tenant="summit-air",
+        tool_names=set(TOOLS),
         now_ms=lambda: NOW_MS,
         later=later,
     )

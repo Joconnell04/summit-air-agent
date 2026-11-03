@@ -20,7 +20,7 @@ caller -> Retell (ears, turn-taking, Claude Haiku 5.5, Cartesia voice)
 4. **`end_call`** is the server's. Retell's built-in end-call and transfer tools are not configured, so the model has no other way to hang up. When the server allows a hang-up, the bridge stops the call through Retell's API once the goodbye has had time to play, and cancels that if the caller speaks again first.
 5. **`call_ended`** posts the last lines and calls `/calls/{id}/end` with Retell's disconnection reason mapped to ours; **`call_analyzed`** keeps Retell's per-call latency and cost in the bridge's database.
 
-Every request from Retell carries `X-Retell-Signature` (HMAC-SHA256 of body and timestamp with the API key, five minutes valid); anything unsigned gets 401. The tool server is never public.
+Every request from Retell carries `X-Retell-Signature` (HMAC-SHA256 of body and timestamp with the API key, five minutes valid); anything unsigned gets 401, and a function the server doesn't have gets 404. The shared tool server is never public. The eval instance's tool server is reachable through Caddy at `/eval/` only with its token in `X-Debug-Token`, because its endpoints are not signed and it holds only scratch data.
 
 ## Commands
 
@@ -34,13 +34,19 @@ Builds the LLM, voice agent and number binding from code and sends only what dif
 make retell-deploy
 ```
 
-Copies this checkout to `~/summit-air/retell` on the summit-air server and runs the bridge and an eval instance under systemd (`deploy/retell/`), beside the shared tool server that `deploy/summit-air/` runs. HTTPS is Caddy on `45-77-105-247.sslip.io`.
+Copies this checkout to `~/summit-air/retell` on the summit-air server and runs the bridge and an eval instance under systemd (`deploy/retell/`), beside the shared tool server and mock that the LiveKit lane's `deploy/summit-air/` runs on ports 8100 and 8101 (brief 03, its own branch). HTTPS is Caddy on `45-77-105-247.sslip.io`.
+
+```bash
+make retell-report DB=~/summit-air/retell-data/bridge.db
+```
+
+On the server: Retell's own stage latencies (median and slowest 10%) and cost per call, from `call_analyzed`, for the bake-off report beside the per-turn `reply_ms` in `make trace`.
 
 ```bash
 make retell-push EVAL_URL=https://45-77-105-247.sslip.io/eval
 ```
 
-Also builds the chat agent the eval harness drives through Retell's text chat API (`evals/retell_chat.py`, `voice/retell/chat.py`). It calls the eval bridge, which forwards to a separate tool server and mock ServiceTitan on the same host.
+Also builds the chat agent the eval harness drives through Retell's text chat API (`voice/retell/chat.py`, used by `evals/retell_chat.py` on the eval lane's branch, brief 04). It calls the eval bridge, which forwards to a separate tool server and mock ServiceTitan on the same host.
 
 ## Settings, and why
 
@@ -52,9 +58,9 @@ Also builds the chat agent the eval harness drives through Retell's text chat AP
 | Voice | Cartesia Sonic 3, voice `f786b574-...` ("Katie") | The worker's voice, added to Retell by its Cartesia id, so both stacks sound the same. |
 | Transcription | `stt_mode: fast`, noise cancellation | Retell's own turn-taking stack. Its custom mode (Deepgram with fixed endpointing) would copy our ears but drop Retell's turn detection, which is what this bake-off measures. |
 | Responsiveness | 0.9, dynamic responsiveness on | Slightly slower than Retell's default 1.0 so callers reading digits in groups aren't cut off; dynamic mode adapts to each caller's pace. Retell has no per-question setting like the worker's longer wait after asking for digits (C-48). |
-| Interruption sensitivity | 0.8 | Retell's guidance for phone audio with background noise (from 0.9 to 0.8). |
+| Interruption sensitivity | 0.8 | Retell's guidance for background noise: lower it from 0.9 to 0.8 (SOURCE: https://docs.retellai.com/build/handle-background-noise.md). |
 | Backchannel | on, frequency 0.4, "mm-hmm", "okay", "uh-huh" | Retell's feature; kept rare. The worker has none. |
-| Reminders | after 10 s of silence, at most twice | Retell's default interval. |
+| Reminders | after 10 s of silence, at most twice | Retell's default interval, 10,000 ms (SOURCE: https://docs.retellai.com/api-references/create-agent.md, `reminder_trigger_ms`). |
 | End on silence | 45 s | Retell's own timeout; it ends the call without asking the server (see gaps). A dropped safety call still gets a person flagged at `/calls/{id}/end`. |
 | Max call length | 20 min | Cost cap. |
 | Boosted keywords | Summit Air, HVAC terms | Recognition of the company name and equipment words. |
@@ -70,7 +76,9 @@ All values are ASSUMED starting points until the 10 bake-off calls; changes go h
 | Brain | Claude Haiku 5.5 through Anthropic's API, prompt caching on | Same model through Retell (`claude-5.5-haiku`); Retell controls caching and the request |
 | Tool parameters | Full JSON schema | Retell drops `default`, `minimum`, `maximum` and `format` (MEASURED on the first push); the server still enforces them |
 | Safety lines | Spoken from code as fixed text, can't be interrupted | Injected through Update Live Call and said by the model; counted as said only if the agent's line has them word for word. In text chat (evals) there is no injection; the lines reach the model only through the next tool result and the server's refusals |
-| Hang-up | Worker deletes the room after the server's `end_call` | Bridge calls Retell's stop-call after an estimated goodbye (3 s plus 0.35 s a word, ASSUMED) |
+| Hang-up | Worker deletes the room after the server's `end_call` | Bridge calls Retell's stop-call after an estimated goodbye (3 s plus 0.35 s a word, ASSUMED). Any caller line before then cancels it, a "bye" said over the goodbye included, so the call can stay open until the model calls `end_call` again or the 45 s silence timeout; the timer is lost if the bridge restarts |
+| Tool latency | Tools called directly | Each function first posts any transcript lines not yet sent, one short request each to the tool server on the same host, before the tool runs (adds to Retell's tool time; MEASURED tool times on the server were 2 to 55 ms) |
+| Caller lines in the trace | Each final transcript once | A caller line that grew between Retell's events is posted again whole, so the safety check sees "I think I smell gas" in one piece; the trace and owner view show both copies, and on a safety call each copy can make the bridge send the lines again |
 | Bridge line | Pre-recorded clip only for tools slower than 0.7 s | None |
 | Timeouts | Ours | Retell's silence timeout and max duration can end a call without the server |
 | Per-turn timings | `reply_ms`, `llm_first_token_ms`, `tts_first_byte_ms`, `tool_ms`, caller `transcript_ms`, `end_of_turn_ms` | `reply_ms` only (caller's last word to agent's first, from Retell's word timestamps); stage latencies only as per-call medians and slowest 10% after the call |
@@ -108,4 +116,5 @@ Retell's own numbers for the booked call: median end-to-end reply 1.88 s, LLM 0.
 | `conversation.py` | Prompt, greeting and server-down variables, from prompts/ and agent.yaml |
 | `build.py`, `push.py`, `api.py` | Config as code, the idempotent push, the endpoint allowlist |
 | `chat.py` | Opens a Retell chat for an eval scenario |
+| `report.py` | Retell's latency and cost per call, for the bake-off report |
 | `signature.py` | `X-Retell-Signature` |

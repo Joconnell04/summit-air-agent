@@ -40,7 +40,11 @@ def ensure_voice(retell: Retell, provider_voice_id: str, name: str) -> str:
             and voice.get("voice_name") == name
         ):
             return voice["voice_id"]
-    body = {"voice_provider": "cartesia", "provider_voice_id": provider_voice_id, "voice_name": name}
+    body = {
+        "voice_provider": "cartesia",
+        "provider_voice_id": provider_voice_id,
+        "voice_name": name,
+    }
     return retell.request("POST", "/add-community-voice", json=body)["voice_id"]
 
 
@@ -62,7 +66,9 @@ def ensure_agent(retell: Retell, kind: str, name: str, body_for, llm_body: dict,
     listed = find_agent(retell, name)
     # The list leaves out the response engine; the agent itself has it.
     current = retell.request("GET", f"/get-{kind}/{listed['agent_id']}") if listed else None
-    llm_id = ensure_llm(retell, current["response_engine"]["llm_id"] if current else None, llm_body, log)
+    llm_id = ensure_llm(
+        retell, current["response_engine"]["llm_id"] if current else None, llm_body, log
+    )
     desired = body_for(llm_id)
     if current is None:
         agent = retell.request("POST", f"/create-{kind}", json=desired)

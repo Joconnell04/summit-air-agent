@@ -32,6 +32,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse, Response
 from starlette.concurrency import run_in_threadpool
 
+from app.tools import TOOLS
 from prompts.assemble import instructions
 from voice.livekit.turns import server_notes
 
@@ -144,6 +145,7 @@ class Bridge:
         spoken: Callable[[str], dict],
         notes: Callable[[list[str]], list[str]],
         default_tenant: str,
+        tool_names: set[str],
         now_ms: Callable[[], int] | None = None,
         later: Callable[[float, Callable[[], None]], None] | None = None,
     ):
@@ -156,6 +158,7 @@ class Bridge:
         self.spoken = spoken
         self.notes = notes
         self.default_tenant = default_tenant
+        self.tool_names = tool_names
         self.now_ms = now_ms or (lambda: int(time.time() * 1000))
         self.later = later or _timer
 
@@ -197,13 +200,12 @@ class Bridge:
         if not row["started"]:
             caller = obj.get("from_number") or kind
             dialed = obj.get("to_number") or ""
-            if self.tools.start(call_id, caller, dialed, obj.get("direction") or "inbound"):
+            start = self.tools.start(call_id, caller, dialed, obj.get("direction") or "inbound")
+            if start and start.get("ok"):
                 self.ledger.mark(rid, started=1)
         return call_id
 
-    def sync(
-        self, obj: dict, call_id: str, settled: bool = True
-    ) -> tuple[list[dict], list[str]]:
+    def sync(self, obj: dict, call_id: str, settled: bool = True) -> tuple[list[dict], list[str]]:
         """Post new lines. Returns the safety actions the turn check asked for, and the notes for
         the model from its hints (commercial, do-not-call)."""
         actions, hints = [], []
@@ -219,15 +221,16 @@ class Bridge:
             hints += data.get("hints") or []
         return actions, self.notes(hints)
 
-    def webhook(self, event: dict) -> None:
+    def webhook(self, event: dict) -> bool:
+        """Handle one call or chat event. False when the call could not be closed on the tool
+        server, so Retell sends the event again."""
         name = event.get("event", "")
         if "chat" in event:
-            self.chat_event(name, event["chat"] or {})
-            return
+            return self.chat_event(name, event["chat"] or {})
         call = dict(event.get("call") or {})
         rid = retell_id(call)
         if not rid:
-            return
+            return True
         # transcript_updated sends the transcript beside the call object, not inside it.
         if event.get("transcript_with_tool_calls") and not call.get("transcript_with_tool_calls"):
             call["transcript_with_tool_calls"] = event["transcript_with_tool_calls"]
@@ -251,15 +254,17 @@ class Bridge:
             row = self.ledger.get(rid)
             if not row["ended"]:
                 reason = end_reason(call.get("disconnection_reason"), bool(row["hung_up"]))
-                if self.tools.end(call_id, reason) is not None:
-                    self.ledger.mark(rid, ended=1, hangup_pending=0)
+                if self.tools.end(call_id, reason) is None:
+                    return False
+                self.ledger.mark(rid, ended=1, hangup_pending=0)
         elif name == "call_analyzed":
             self.ledger.mark(rid, summary_json=json.dumps(call_summary(call)))
+        return True
 
-    def chat_event(self, name: str, chat: dict) -> None:
+    def chat_event(self, name: str, chat: dict) -> bool:
         rid = retell_id(chat)
         if not rid:
-            return
+            return True
         call_id = self.ensure_started(chat, "chat")
         if name == "transcript_updated":
             # A chat can't be told to say anything mid-reply, so a safety action here reaches the
@@ -268,8 +273,11 @@ class Bridge:
         elif name == "chat_ended":
             self.sync(chat, call_id)
             row = self.ledger.get(rid)
-            if not row["ended"] and self.tools.end(call_id, "agent_end") is not None:
+            if not row["ended"]:
+                if self.tools.end(call_id, "agent_end") is None:
+                    return False
                 self.ledger.mark(rid, ended=1)
+        return True
 
     # ---- custom functions ----------------------------------------------------------------------
 
@@ -353,7 +361,8 @@ def build_app(bridge: Bridge) -> FastAPI:
         body = await signed_json(request)
         if body is None:
             return JSONResponse({"detail": "bad signature"}, 401)
-        await run_in_threadpool(bridge.webhook, body)
+        if not await run_in_threadpool(bridge.webhook, body):
+            return JSONResponse({"detail": "tool server unavailable"}, 503)
         return Response(status_code=204)
 
     @app.post("/retell/tools/{name}")
@@ -361,6 +370,8 @@ def build_app(bridge: Bridge) -> FastAPI:
         body = await signed_json(request)
         if body is None:
             return JSONResponse({"detail": "bad signature"}, 401)
+        if name not in bridge.tool_names:
+            return JSONResponse({"detail": f"no tool {name}"}, 404)
         return await run_in_threadpool(bridge.tool, name, body)
 
     @app.get("/retell/healthz")
@@ -385,5 +396,6 @@ def create_app() -> FastAPI:
         spoken=lambda slug: conversation.spoken_lines(tenants_dir, slug),
         notes=server_notes,
         default_tenant=os.environ.get("DEFAULT_TENANT", "summit-air"),
+        tool_names=set(TOOLS),
     )
     return build_app(bridge)

@@ -55,9 +55,7 @@ class Retell:
     def request(self, method: str, path: str, json: dict | None = None, params=None):
         if not allowed(method, path):
             raise RetellError(f"{method} {path} is not an endpoint this project uses")
-        response = self.client.request(
-            method, path, json=json, params=params, headers=self.headers
-        )
+        response = self.client.request(method, path, json=json, params=params, headers=self.headers)
         if response.status_code >= 400:
             raise RetellError(f"{method} {path}: {response.status_code} {response.text[:300]}")
         return response.json() if response.content else None
