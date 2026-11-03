@@ -38,6 +38,12 @@ class Settings:
     weather: bool = field(default_factory=lambda: os.environ.get("WEATHER", "") == "1")
     # The owner view refuses every request when this is empty.
     owner_token: str = field(default_factory=lambda: os.environ.get("OWNER_TOKEN", ""))
+    # Who may edit the agent's rules on the owner view, as name=code pairs separated by commas
+    # ("Dana=...,Sam=..."). The owner token above stays read-only. Empty refuses every edit.
+    rules_editors: str = field(default_factory=lambda: os.environ.get("RULES_EDITORS", ""))
+    # Start the eval gate (evals/gate.py) in the background when an owner publishes. Off, a draft
+    # waits as checking until someone runs make rules-gate. It needs ANTHROPIC_API_KEY.
+    rules_gate: bool = field(default_factory=lambda: os.environ.get("RULES_GATE", "") == "1")
     # Where the owner view is served, for links in alert emails. Empty leaves the links out.
     owner_view_url: str = field(default_factory=lambda: os.environ.get("OWNER_VIEW_URL", ""))
     # Alert email. With no SMTP_HOST, alerts are held, not sent (app/mail.py).
@@ -56,6 +62,15 @@ class Settings:
     # Development only: serve every request as if it were this moment (ISO, with offset). The
     # owner demo sets it to the evening of the seeded day so "now" sits on the board.
     fixed_now: str = field(default_factory=lambda: os.environ.get("FIXED_NOW", ""))
+
+    def editors(self) -> dict[str, str]:
+        """Edit code to name, from rules_editors."""
+        found = {}
+        for pair in self.rules_editors.split(","):
+            name, _, code = pair.partition("=")
+            if name.strip() and code.strip():
+                found[code.strip()] = name.strip()
+        return found
 
     def __post_init__(self):
         self.db_path = Path(self.db_path)

@@ -33,3 +33,15 @@ def test_a_trade_edit_makes_the_run_stale(tmp_path):
     agent = trades / "hvac" / "agent.yaml"
     agent.write_text(agent.read_text().replace("- sulfur", "- sulphur"))
     assert run_hash([], "fast", trades_dir=trades) != before
+
+
+def test_an_owner_draft_is_part_of_a_gate_runs_hash(tmp_path):
+    tenants = copy_tenants(tmp_path)
+    plain = run_hash([], "fast", tenants_dir=tenants)
+    draft = {"guidance": {"booking": ["Ask about pets."]}, "lines": {}}
+    with_draft = run_hash([], "fast", tenants_dir=tenants, overlay=draft)
+    assert with_draft != plain
+    assert run_hash([], "fast", tenants_dir=tenants, overlay=dict(draft)) == with_draft
+    other = {"guidance": {"booking": ["Ask about the dog."]}, "lines": {}}
+    assert run_hash([], "fast", tenants_dir=tenants, overlay=other) != with_draft
+    assert run_hash([], "fast", tenants_dir=tenants, overlay=None) == plain

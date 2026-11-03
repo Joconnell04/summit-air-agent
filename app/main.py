@@ -20,7 +20,19 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from . import db, jobs, lifecycle, logs, outbound, owner_view, records, reports, trace, weather
+from . import (
+    db,
+    jobs,
+    lifecycle,
+    logs,
+    outbound,
+    owner_view,
+    records,
+    reports,
+    rules,
+    trace,
+    weather,
+)
 from .envelope import Refused, Result
 from .fsm import FsmUnavailable, SlotCache, make_adapter
 from .fsm.base import fsm_timings
@@ -179,7 +191,7 @@ def _ctx(services: Services, conn, call_id: str, key: str | None) -> Ctx:
         raise Refused("unknown_call", SAY_RETRY)
     if call["ended_at"]:
         raise Refused("call_ended", "")
-    tenant = services.tenants.by_slug[call["tenant"]]
+    tenant = rules.tenant_for_call(conn, services.tenants.by_slug[call["tenant"]], call_id)
     return Ctx(
         conn,
         call,

@@ -3,10 +3,10 @@
 {% block header %}{% endblock %}
 {% block body %}
 <main class="login">
-  <form class="panel" method="post" action="/owner/login">
+  <form class="panel" method="post" action="{{ action | default('/owner/login') }}">
     <img src="/owner/static/revin-logo.svg" alt="Revin" width="88" height="15">
-    <h1 class="page-title" style="font-size: var(--text-xl);">Owner view</h1>
-    <label for="token" class="muted" style="font-size: var(--text-sm);">Access code</label>
+    <h1 class="page-title">{{ title | default("Owner view") }}</h1>
+    <label for="token">{{ label | default("Access code") }}</label>
     <input id="token" name="token" type="password" autocomplete="current-password" autofocus required>
     {% if failed %}<p class="error" role="alert">That code didn't work.</p>{% endif %}
     <button class="btn primary" type="submit">Open</button>

@@ -246,3 +246,8 @@ voice:
       Thanks for calling Summit Air. If you smell gas, hang up and call 911 from outside. All our
       lines are busy right now. Please leave your name, number and what's going on after the tone,
       and we'll call you back.
+
+# Owner edits (app/rules.py). A wording line whose default says this must keep it, so an owner can't
+# reword away the line that tells callers they're talking to an AI.
+owner_rules:
+  disclosure: [virtual assistant]

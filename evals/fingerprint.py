@@ -1,5 +1,5 @@
-"""The hash a results file carries: the prompts, the tenant and trade folders, the scenarios it ran
-and the model profiles.
+"""The hash a results file carries: the prompts, the tenant and trade folders, the scenarios it ran,
+the model profiles and, for an eval gate run, the owner's draft it tested (app/rules.py).
 
 The ratchet recomputes it offline, so a committed run goes stale the moment any of these change.
 """
@@ -43,6 +43,7 @@ def run_hash(
     config: dict | None = None,
     tenants_dir: Path = TENANTS_DIR,
     trades_dir: Path = TRADES_DIR,
+    overlay: dict | None = None,
 ) -> str:
     config = config or load_config()
     digest = hashlib.sha256()
@@ -58,4 +59,8 @@ def run_hash(
         name: profile(name, config) for name in (profile_name, "offline.caller", "offline.grader")
     }
     digest.update(json.dumps(profiles, sort_keys=True).encode())
+    # An owner edit changes what every call hears as much as a tenant file does. None leaves the
+    # hash of a run on the defaults as it was.
+    if overlay is not None:
+        digest.update(b"overlay\0" + json.dumps(overlay, sort_keys=True).encode())
     return digest.hexdigest()[:16]

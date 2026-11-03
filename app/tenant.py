@@ -9,6 +9,7 @@ An agent.yaml may start with `extends: <trade>`: it is then laid over trades/<tr
 what every company in that trade shares (merge() says how). docs/template.md has the layout.
 """
 
+import copy
 from dataclasses import dataclass
 from datetime import date, datetime, time, timedelta
 from pathlib import Path
@@ -233,6 +234,15 @@ class Tenant:
 
     def line(self, key: str, **values) -> str:
         return self.lines[key].format(**values)
+
+    def with_lines(self, lines: dict[str, str]) -> "Tenant":
+        """A copy that says these lines instead of the defaults (owner edits, app/rules.py). The
+        shared tenant is never changed, so each call keeps the version it started under."""
+        if not lines:
+            return self
+        changed = copy.copy(self)
+        changed.lines = {**self.lines, **lines}
+        return changed
 
     def window(self, window_id: str) -> Window | None:
         return next((w for w in self.windows if w.id == window_id), None)

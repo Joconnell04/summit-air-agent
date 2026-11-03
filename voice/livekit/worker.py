@@ -173,7 +173,7 @@ async def entrypoint(ctx: JobContext) -> None:
 
     data = start["data"]
     folder = tenant_dir(data)
-    spoken = voice_lines(folder)
+    spoken = assemble.spoken(data, voice_lines(folder))
     player = BackgroundAudioPlayer()
     session = build_session(
         ctx.proc.userdata.get("vad") or load_vad(voice), voice, local_names.load(folder)
