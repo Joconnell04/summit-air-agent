@@ -14,7 +14,7 @@ make trace CALL=<call id>   # a call's timeline in plain text, read straight fro
 make owner-demo             # seed a day of calls and serve the owner view on :8100
 ```
 
-The owner view is at `/owner` (open `/owner?token=<OWNER_TOKEN>` once; a cookie keeps it), with each call's timeline at `/owner/calls/{id}`. `make owner-demo` seeds `data/owner-demo/` with a week of earlier bookings and a scripted day of calls (`scripts/seed_owner_day.py`) and uses the token `dev-owner-token`. What it looks like: `docs/images/owner-view.png`.
+The owner view is three pages for the owner and dispatcher: Today (`/owner`, the dispatch board, what needs a person, the jobs booked), Calls (`/owner/calls`, and each call at `/owner/calls/{id}` in plain words with the technical detail behind a toggle) and Results (`/owner/results?days=1|7|30`). Open `/owner?token=<OWNER_TOKEN>` once; a cookie keeps it. The one write is a report to Revin from a call page, filed as a GitHub issue by the jobs loop when `REPORTS_GITHUB_TOKEN` is set. The design system behind the pages is `docs/design-system.md`, shown live at `/owner/design`. `make owner-demo` seeds `data/owner-demo/` with a week of earlier bookings and a scripted day of calls (`scripts/seed_owner_day.py`), serves it as if it were 5:20 PM that day, and uses the token `dev-owner-token`. What it looks like: `docs/images/owner-view.png`.
 
 `GET /debug/calls/{id}` and `GET /debug/logs` (filter by `call_id`, `request_id`, `tool`, `errors=true`) need the `X-Debug-Token` header; `make server` sets `dev-debug-token` unless `DEBUG_TOKEN` is set.
 
@@ -31,6 +31,8 @@ The owner view is at `/owner` (open `/owner?token=<OWNER_TOKEN>` once; a cookie 
 | `OWNER_TOKEN` | empty, which refuses every owner view request | Token for `/owner` |
 | `OWNER_VIEW_URL` | empty | Where the owner view is served, for the call link in alert emails |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `MAIL_FROM` | empty, `587` | The mail server for on-call alerts. With no host, alerts are held and shown on the owner view, not sent |
+| `REPORTS_GITHUB_TOKEN`, `REPORTS_GITHUB_REPO` | empty | Where owner reports are filed as issues (`owner/repo`). Without them reports are held and shown on the owner view |
+| `FIXED_NOW` | empty | Development only: serve every request as if it were this moment (ISO with offset). `make owner-demo` sets it |
 
 ## Modules
 
@@ -46,8 +48,10 @@ The owner view is at `/owner` (open `/owner?token=<OWNER_TOKEN>` once; a cookie 
 | `records.py` | The server's own tables: calls, scope, flags, callbacks (named time, owner, outbound rules, overdue), do-not-call |
 | `jobs.py` | Retry of queued bookings and leads, earlier openings for flagged urgent bookings, queuing the callbacks the system places, booked-and-kept, on-call email after hours, cache refresh, overdue callbacks, retention |
 | `outbound.py` | Calls the system places (journey 12): what the voice layer claims, and settling each one from what happened on it |
-| `owner.py` | Every number and list on the owner view, each defined in its docstring |
-| `owner_view.py`, `templates/` | The owner view's token, routes and HTML |
+| `owner.py` | Every number and list on the owner view, each defined in its docstring: the board, the status line, Results |
+| `plain.py` | Each tool call on a call page said in plain words (story O-7) |
+| `reports.py` | Reports to Revin from the owner view, and filing them as issues (story O-8) |
+| `owner_view.py`, `templates/`, `static/owner/` | The owner view's token, routes, HTML and design system (docs/design-system.md) |
 | `mail.py` | Sending alert email over SMTP, or holding it when no server is set |
 | `tenant.py` | Loading `tenants/<company>/` and picking one by dialed number |
 | `fsm/` | The adapter interface, the ServiceTitan adapter and the slot cache |
@@ -91,7 +95,7 @@ Nothing about Summit Air is in `app/`; a test checks for the company name, its Z
 - `find_customer` by a number or address the caller states returns that customer's lookup, notes included, as the contract says. Changing their visit needs the read-back of its address, but reading the notes doesn't; worth an eval case.
 - `check_service_area` records whatever ZIP the agent passes as out of area, so a ZIP the caller only asked about counts in the owner view's demand by ZIP.
 - `end_call(reason="caller_goodbye")` on a safety call hangs up on the agent's word; it is only reachable after the lines were said and a person flagged.
-- The owner view is read-only, so a callback a person returns is never marked done there; only the system's own callbacks become done (decision #26, `docs/decisions/26-callback-done.md`). Flags have no close action either, except those the jobs settle themselves.
+- The owner view is read-only apart from reports to Revin, so a callback a person returns is never marked done there; only the system's own callbacks become done (decision #26, `docs/decisions/26-callback-done.md`). Flags have no close action either, except those the jobs settle themselves.
 - The job that offers earlier openings checks for an existing offer outside its write, which is safe with one server process (the timer runs one job at a time) but not with two.
 - The booked-and-kept check reads at most 50 bookings per run, oldest window first; bookings the FSM keeps refusing to read, or moved later, are read again each run and could crowd out newer ones in a large backlog.
 - One `OWNER_TOKEN` opens every tenant's owner view (`?tenant=<slug>`); a second real tenant needs its own token.

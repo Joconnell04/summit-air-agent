@@ -26,12 +26,14 @@
   --ink: #1A1919;
   --ink-2: #3B3A38;
   --muted: #5E5C59;
-  --faint: #86837E;
+  --faint: #706D68;
   --disabled: #B5B2AD;
 
   /* Revin. Ember is the brand: the logo, the active tab, the one primary action, and "now". */
   --ember: #FA3500;
   --ember-ink: #BA2500;
+  /* Ember darkened just enough for white button text to pass 4.5:1; the brand value is 3.8:1. */
+  --ember-action: #DE2F00;
   --ember-wash: #FFF3EE;
   --ember-line: #FFC6B3;
 

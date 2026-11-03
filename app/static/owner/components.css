@@ -112,7 +112,7 @@ a.figure:hover .label { color: var(--ink); text-decoration: underline; text-unde
   transition: background var(--fast) var(--ease), border-color var(--fast) var(--ease);
 }
 .btn:hover { background: var(--hover); color: var(--ink); text-decoration: none; }
-.btn.primary { background: var(--ember); border-color: var(--ember); color: #FFFFFF; font-weight: var(--semibold); }
+.btn.primary { background: var(--ember-action); border-color: var(--ember-action); color: #FFFFFF; font-weight: var(--semibold); }
 .btn.primary:hover { background: var(--ember-ink); border-color: var(--ember-ink); color: #FFFFFF; }
 .btn.quiet { border-color: transparent; background: transparent; color: var(--muted); }
 .btn.quiet:hover { background: var(--hover); color: var(--ink); }
@@ -222,7 +222,7 @@ a.figure:hover .label { color: var(--ink); text-decoration: underline; text-unde
 .now { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: var(--ember); z-index: 2; pointer-events: none; }
 .now-label {
   position: absolute; top: 5px; transform: translateX(-50%); z-index: 3;
-  padding: 1px 6px; border-radius: var(--r-sm); background: var(--ember); color: #FFFFFF;
+  padding: 1px 6px; border-radius: var(--r-sm); background: var(--ember-action); color: #FFFFFF;
   font-size: 11px; font-weight: var(--semibold); white-space: nowrap; font-variant-numeric: tabular-nums;
 }
 

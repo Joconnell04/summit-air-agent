@@ -22,4 +22,4 @@ Call recordings (O-6's audio): none are stored today, and DECISIONS.md 012 says 
 
 ## Done when
 
-`make check` passes with tests for the board positions, the filters' data, the plain notes, the report write and filing, the status line and every Results number; the pages render from `make owner-demo` and are screenshot-checked at desktop size; the reviewer agent has checked the branch; README, docs/architecture.md and docs/spec.md point at the new pages.
+`make check` passes with tests for the board positions, the filters' data, the plain notes, the report write and filing, the status line and every Results number; the pages render from `make owner-demo` and are screenshot-checked at desktop size; the reviewer agent has checked the branch; README, app/README.md and docs/architecture.md point at the new pages. Spec S-44 is unchanged: every number it lists is still on the page, and docs/spec.md changes only through `/round`.
