@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:,">
+{% block head %}{% endblock %}
+<title>{% block title %}{{ tenant }}{% endblock %}</title>
+<style>
+:root {
+  --bg: #0e0e10;
+  --panel: #151518;
+  --raised: #1c1c20;
+  --border: #26262c;
+  --text: #e9e9ec;
+  --muted: #8d8d97;
+  --faint: #5d5d66;
+  --accent: #7d9bff;
+  --urgent: #ff6363;
+  --high: #f0a63a;
+  --good: #4fc28a;
+  --control-h: 22px;
+  --radius: 6px;
+  --small: 11.5px;
+  --body: 13px;
+  --row-h: 32px;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--text); }
+body {
+  font: var(--body)/1.4 -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: inherit; text-decoration: none; }
+a:hover { color: var(--accent); }
+.num { font-variant-numeric: tabular-nums; font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+.muted { color: var(--muted); }
+.faint { color: var(--faint); }
+
+header.bar {
+  display: flex; align-items: center; gap: 12px; height: 48px; padding: 0 20px;
+  border-bottom: 1px solid var(--border); background: var(--panel);
+  position: sticky; top: 0; z-index: 1;
+}
+header.bar .name { font-weight: 600; }
+header.bar .spacer { flex: 1; }
+
+/* One control size for chips, pills and buttons. */
+.chip, .btn {
+  display: inline-flex; align-items: center; height: var(--control-h); padding: 0 8px;
+  border-radius: var(--radius); font-size: var(--small); line-height: 1; white-space: nowrap;
+  border: 1px solid var(--border); background: var(--raised); color: var(--muted);
+}
+.btn:hover { color: var(--text); border-color: var(--faint); }
+.chip.urgent { color: var(--urgent); border-color: rgba(255, 99, 99, .35); background: rgba(255, 99, 99, .08); }
+.chip.high { color: var(--high); border-color: rgba(240, 166, 58, .35); background: rgba(240, 166, 58, .08); }
+.chip.good { color: var(--good); border-color: rgba(79, 194, 138, .35); background: rgba(79, 194, 138, .08); }
+.chip.accent { color: var(--accent); border-color: rgba(125, 155, 255, .35); background: rgba(125, 155, 255, .08); }
+.chips { display: inline-flex; gap: 4px; }
+
+main { padding: 16px 20px 40px; max-width: 1480px; margin: 0 auto; }
+section.panel {
+  background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+  margin-bottom: 14px; overflow: hidden;
+}
+section.panel > h2 {
+  display: flex; align-items: center; gap: 8px; margin: 0; padding: 10px 14px;
+  font-size: var(--body); font-weight: 600; border-bottom: 1px solid var(--border);
+}
+section.panel > h2 .count { color: var(--muted); font-weight: 400; }
+.empty { padding: 12px 14px; color: var(--faint); }
+
+table { width: 100%; border-collapse: collapse; }
+td, th { padding: 0 14px; height: var(--row-h); text-align: left; vertical-align: middle; }
+th { font-weight: 500; color: var(--faint); font-size: var(--small); height: 28px; }
+tr + tr td { border-top: 1px solid var(--border); }
+tbody tr:hover td { background: var(--raised); }
+td.right, th.right { text-align: right; }
+td.wrap { white-space: normal; padding-top: 7px; padding-bottom: 7px; }
+td.tight { width: 1%; white-space: nowrap; }
+tr.closed td { color: var(--faint); }
+</style>
+</head>
+<body>
+{% block body %}{% endblock %}
+</body>
+</html>

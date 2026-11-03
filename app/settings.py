@@ -22,11 +22,21 @@ class Settings:
     environment: str = field(default_factory=lambda: os.environ.get("APP_ENV", "development"))
     fsm_base_url: str = field(default_factory=lambda: os.environ.get("FSM_BASE_URL", ""))
     fsm_timeout_seconds: float = 4.0
-    # Background jobs (queue retry, slot cache refresh, overdue callbacks). 0 turns them off.
+    # Background jobs (app/jobs.py). 0 turns them off.
     jobs_interval_seconds: float = field(
         default_factory=lambda: float(os.environ.get("JOBS_INTERVAL_SECONDS", "60"))
     )
     slot_cache_seconds: float = 60.0
+    # The owner view refuses every request when this is empty.
+    owner_token: str = field(default_factory=lambda: os.environ.get("OWNER_TOKEN", ""))
+    # Where the owner view is served, for links in alert emails. Empty leaves the links out.
+    owner_view_url: str = field(default_factory=lambda: os.environ.get("OWNER_VIEW_URL", ""))
+    # Alert email. With no SMTP_HOST, alerts are held, not sent (app/mail.py).
+    smtp_host: str = field(default_factory=lambda: os.environ.get("SMTP_HOST", ""))
+    smtp_port: int = field(default_factory=lambda: int(os.environ.get("SMTP_PORT", "587")))
+    smtp_user: str = field(default_factory=lambda: os.environ.get("SMTP_USER", ""))
+    smtp_password: str = field(default_factory=lambda: os.environ.get("SMTP_PASSWORD", ""))
+    mail_from: str = field(default_factory=lambda: os.environ.get("MAIL_FROM", ""))
 
     def __post_init__(self):
         self.db_path = Path(self.db_path)
@@ -47,3 +57,4 @@ LIMITS = {
 NOTE_MAX_CHARS = 500
 BOOKING_DAYS_AHEAD = 14
 QUEUE_MAX_ATTEMPTS = 5
+ALERT_MAX_ATTEMPTS = 3

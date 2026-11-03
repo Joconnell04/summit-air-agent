@@ -20,12 +20,13 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from . import db, jobs, lifecycle, logs, records, trace
+from . import db, jobs, lifecycle, logs, outbound, owner_view, records, trace
 from .envelope import Refused, Result
 from .fsm import FsmUnavailable, SlotCache, make_adapter
 from .fsm.base import fsm_timings
+from .mail import Mailer
 from .priority import SideModel
-from .schemas import EndIn, HeartbeatIn, StartIn, TurnIn
+from .schemas import EndIn, HeartbeatIn, OutboundClaimIn, OutboundDoneIn, StartIn, TurnIn
 from .settings import Settings
 from .tenant import Tenants
 from .tools import TOOLS, Ctx
@@ -57,6 +58,7 @@ class Services:
         self.fsm = {t.slug: make_adapter(t, settings, clients.get(t.slug)) for t in self.tenants}
         self.caches = {t.slug: SlotCache(settings.slot_cache_seconds) for t in self.tenants}
         self.side_model = side_model
+        self.mailer = Mailer(settings)
         self._locks: dict[str, threading.Lock] = {}
         self._locks_guard = threading.Lock()
 
@@ -332,6 +334,34 @@ def create_app(
             )
         conn.close()
         return {"ok": True, "say": "", "data": {"worker": body.worker}, "refused": None}
+
+    # ---- calls the system places (journey 12; the voice layer dials them) ----------------------
+
+    @app.post("/outbound/claim")
+    def outbound_claim(body: OutboundClaimIn):
+        """The next call to place, or none. Start it with /calls/start using the returned call_id,
+        caller_id = phone, direction outbound; open with opening_line. Then report /outbound/{id}/done."""
+        conn = services.connect()
+        try:
+            found = outbound.claim(conn, services.tenants.by_slug, services.clock())
+        finally:
+            conn.close()
+        return {"ok": True, "say": "", "data": {"outbound": found}, "refused": None}
+
+    @app.post("/outbound/{outbound_id}/done")
+    def outbound_done(outbound_id: int, body: OutboundDoneIn):
+        conn = services.connect()
+        try:
+            found = outbound.finish(
+                conn, outbound_id, body.answered, body.voicemail, services.clock()
+            )
+        finally:
+            conn.close()
+        if found is None:
+            return {"ok": False, "say": "", "data": {}, "refused": "invalid_state"}
+        return {"ok": True, "say": "", "data": found, "refused": None}
+
+    owner_view.add_routes(app)
 
     # ---- tools the model can call ------------------------------------------------------------
 
