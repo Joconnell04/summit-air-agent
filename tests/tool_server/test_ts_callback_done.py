@@ -198,6 +198,32 @@ def test_a_name_check_the_person_confirms_counts_as_the_right_person(agent, cloc
     assert callback_status(agent) == "done"
 
 
+def test_a_callback_opens_by_asking_for_the_caller_and_a_yes_confirms_them(
+    agent, clock, mock, scenarios
+):
+    maria = scenarios["repeatCallerOpenJob"]
+    claimed, placed = dial(agent, clock, maria["phone"])
+    first_name = maria["name"].split()[0]
+    assert claimed["opening_line"] == (
+        f"Hi, this is Summit Air calling back for {first_name}. Is that you?"
+    )
+    agent.turn(placed, "Yes, that's me.")
+    agent.tool("end_call", placed, reason="resolved")
+    assert finish(agent, claimed, placed)["data"]["outcome"] == "resolved"
+    assert tags_on(mock, placed) == [RESOLVED]
+
+
+def test_a_callback_to_a_caller_with_no_name_on_file_opens_without_one(agent, clock):
+    claimed, placed = dial(agent, clock)
+    assert claimed["opening_line"] == (
+        "Hi, this is Summit Air calling you back, like we said we would."
+    )
+    agent.turn(placed, "Yes.")
+    agent.tool("end_call", placed, reason="resolved")
+    finish(agent, claimed, placed)
+    assert outcome(agent, claimed["outbound_id"]) == ("open", "the person was not confirmed")
+
+
 def test_a_yes_to_a_question_that_does_not_name_the_customer_is_not_a_name_check(
     agent, clock, scenarios
 ):

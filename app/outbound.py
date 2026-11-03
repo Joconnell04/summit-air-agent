@@ -132,9 +132,15 @@ def to_person(conn: sqlite3.Connection, row: sqlite3.Row, why: str, now: datetim
     )
 
 
-def claim(conn: sqlite3.Connection, tenants: dict[str, Tenant], now: datetime) -> dict | None:
+def claim(
+    conn: sqlite3.Connection,
+    tenants: dict[str, Tenant],
+    fsms: dict[str, FsmAdapter],
+    now: datetime,
+) -> dict | None:
     """The next queued call to dial, marked as dialing, with what the voice layer needs to start it.
     Rows that may no longer be dialed are skipped on the way."""
+    claimed = None
     with tx(conn):
         rows = conn.execute(
             "SELECT * FROM outbound WHERE status = 'queued' AND due_at <= ? ORDER BY due_at, id",
@@ -154,11 +160,18 @@ def claim(conn: sqlite3.Connection, tenants: dict[str, Tenant], now: datetime) -
             )
             if row["callback_id"]:
                 records.record_attempt(conn, row["callback_id"], now)
-            return _describe(conn, tenant, row, placed, now)
-    return None
+            claimed = (tenant, row, placed)
+            break
+    if claimed is None:
+        return None
+    # Described after the claim is committed: a callback's opening reads ServiceTitan for the name.
+    tenant, row, placed = claimed
+    return _describe(conn, tenant, fsms[tenant.slug], row, placed, now)
 
 
-def _describe(conn, tenant: Tenant, row: sqlite3.Row, placed: str, now: datetime) -> dict:
+def _describe(
+    conn, tenant: Tenant, fsm: FsmAdapter, row: sqlite3.Row, placed: str, now: datetime
+) -> dict:
     data = {
         "outbound_id": row["id"],
         "kind": row["kind"],
@@ -184,8 +197,29 @@ def _describe(conn, tenant: Tenant, row: sqlite3.Row, placed: str, now: datetime
             "SELECT * FROM callbacks WHERE id = ?", (row["callback_id"],)
         ).fetchone()
         data["reason"] = callback["reason"]
-        data["opening_line"] = tenant.line("callback_opening")
+        first_name = callback_name(conn, fsm, callback)
+        data["opening_line"] = (
+            tenant.line("callback_opening", first_name=first_name)
+            if first_name
+            else tenant.line("callback_opening_unknown")
+        )
     return data
+
+
+def callback_name(conn: sqlite3.Connection, fsm: FsmAdapter, callback: sqlite3.Row) -> str | None:
+    """The first name to ask for when calling back: the customer matched on the call that asked.
+    None when nobody was matched, or the matches have different first names, so the opening never
+    guesses between people. A yes to the name is what lets the callback count as resolved
+    (person_confirmed; docs/decisions/49-callback-opening-name.md)."""
+    if not callback["call_id"]:
+        return None
+    names = set()
+    for customer_id in records.scoped_customers(conn, callback["call_id"]):
+        try:
+            names.add(fsm.customer(customer_id)["name"].split()[0])
+        except (FsmUnavailable, FsmRejected, KeyError, IndexError):
+            return None
+    return names.pop() if len(names) == 1 else None
 
 
 def finish(

@@ -355,7 +355,9 @@ def create_app(
         caller_id = phone, direction outbound; open with opening_line. Then report /outbound/{id}/done."""
         conn = services.connect()
         try:
-            found = outbound.claim(conn, services.tenants.by_slug, services.clock())
+            found = outbound.claim(
+                conn, services.tenants.by_slug, services.fsm, services.clock()
+            )
         finally:
             conn.close()
         return {"ok": True, "say": "", "data": {"outbound": found}, "refused": None}

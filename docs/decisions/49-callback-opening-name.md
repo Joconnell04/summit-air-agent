@@ -1,10 +1,14 @@
 # 49. Should the callback opening line ask for the caller by name?
 
-Issue: #49. Status: ready
+Issue: #49. Status: decided and built
 
 ## Question
 
 A callback the system places counts as done only if the right person was confirmed on the call (DECISIONS.md 010). Today's opening line, "Hi, this is Summit Air calling you back, like we said we would.", never checks who answered, so most system callbacks will be tagged open and sent to a person. Should the line ask for the caller by name? It's agent wording, so the change goes through `/round`.
+
+## Decision
+
+A, ask by name. The name is read from ServiceTitan when the call is claimed; with no single known first name the plain line stays. DECISIONS.md 013.
 
 ## Options
 

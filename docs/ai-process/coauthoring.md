@@ -156,3 +156,11 @@ Feedback (verbatim):
 Changed:
 - S-21a: when the server marks a call Urgent, `find_slots` opens its sentence once per call with the tenant line "I've marked this as one of our most urgent calls, so you get our soonest opening." Below Urgent nothing names a priority; the prompt (prompts/tool-use.md) says to reassure without a label. The line comes from the server, so the model can't overstate it.
 Status: open
+
+## agent voice r1 (callback opening line)
+Feedback (verbatim): Jackson picked option A on the #49 readout ("A. Ask by name (Recommended)").
+Changed:
+- `callback_opening` in tenants/summit-air/agent.yaml: "Hi, this is Summit Air calling back for {first_name}. Is that you?" so a yes confirms the person (DECISIONS.md 010, 013).
+- New `callback_opening_unknown` keeps the old line for a caller with no single first name on file, so the opening never guesses between people.
+Commit: 34dcda1
+Status: open
