@@ -30,6 +30,13 @@ HEARD_SHARE = 0.9
 STACK_PARTS = ("platform", "platform_transcription", "brain_model")
 
 
+def gates_held(s: ScenarioResult) -> bool:
+    """Every code check passed. The grader's notes are scored apart: on the rig it reads the
+    caller's transcription of the agent, so a mishearing can look like an agent's slip."""
+    return s.outcome != "error" and not [f for f in s.check_failures
+                                         if not f.startswith("grader:")]
+
+
 def must_pass(scenario_id: str) -> bool:
     return load_scenario(scenario_path(scenario_id)).must_pass
 
@@ -118,20 +125,22 @@ def ms(values: list[float], share: float) -> str:
 def table(stacks: list[Stack]) -> list[str]:
     signed_off = lines_by_kind()
     header = ("| Stack | Calls | Plain median | Plain slowest 10% | Lookup median "
-              "| Lookup slowest 10% | Must-pass | Safety lines word for word "
-              "| Stack cost per call | All-in per call |")
-    rows = [header, "|---|---|---|---|---|---|---|---|---|---|"]
+              "| Lookup slowest 10% | Must-pass checks held | Grader passed "
+              "| Safety lines word for word | Stack cost per call | All-in per call |")
+    rows = [header, "|---|---|---|---|---|---|---|---|---|---|---|"]
     for st in stacks:
         plain, lookup = st.delays("plain"), st.delays("lookup")
         safety = st.safety(signed_off)
         must = [s for s in st.scenarios if must_pass(s.scenario_id)]
-        failed = sum(1 for s in must if s.outcome != "pass")
+        held = sum(1 for s in must if gates_held(s))
+        graded = [s for s in st.scenarios if gates_held(s)]
+        liked = sum(1 for s in graded if s.outcome == "pass")
         exact = sum(1 for s in safety if s.server_ok and s.heard >= HEARD_SHARE)
         stack_cost, all_in = st.cost_per_call()
         rows.append(
             f"| {st.name} | {len(st.scenarios)} | {ms(plain, .5)} ({len(plain)}) | {ms(plain, .9)} "
             f"| {ms(lookup, .5)} ({len(lookup)}) | {ms(lookup, .9)} "
-            f"| {len(must) - failed} of {len(must)} pass | {exact} of {len(safety)} "
+            f"| {held} of {len(must)} | {liked} of {len(graded)} | {exact} of {len(safety)} "
             f"| ${stack_cost:.3f} | ${all_in:.3f} |"
         )
     return rows
@@ -165,10 +174,13 @@ def verdict(stacks: list[Stack], ours: str) -> list[str]:
         faster = bool(plain) and ours_ms - percentile(plain, 0.5) >= MARGIN_MS
         safety = st.safety(signed_off)
         clean = bool(safety) and all(s.server_ok and s.heard >= HEARD_SHARE for s in safety)
-        result = "chosen" if faster and clean else "tie, keep ours"
+        must = [s for s in st.scenarios if must_pass(s.scenario_id)]
+        held = all(gates_held(s) for s in must)
+        result = "chosen" if faster and clean and held else "tie, keep ours"
         gap = (ours_ms - percentile(plain, 0.5)) / 1000 if plain else 0
-        out.append(f"- {st.name}: {result} (plain median {gap:+.2f} s against ours; "
-                   f"safety {'clean' if clean else 'not clean'} on {len(safety)} calls)")
+        out.append(f"- {st.name}: {result} (plain median {gap:+.2f} s faster than ours; "
+                   f"safety lines {'clean' if clean else 'not clean'} on {len(safety)} calls; "
+                   f"must-pass checks {'all held' if held else 'not all held'})")
     return out
 
 
