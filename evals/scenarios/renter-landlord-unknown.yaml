@@ -1,0 +1,28 @@
+id: renter-landlord-unknown
+flow: [renter, priority]
+difficulty: standard
+traits: [filler]
+journeys: [J6, J1]
+spec: [S-13]
+caller_id: "(332) 555-0171"
+persona: Marcus Bell, a tenant who moved into a Brooklyn apartment a month ago. Polite, says um, honestly does not know who owns the building.
+hidden_facts:
+  name: Marcus Bell
+  address: 352 Halsey St, Apt 4B, Brooklyn, 11216
+  phone: the number being called from
+  problem: no heat since this morning, 59 F inside, one healthy adult at home
+  landlord: the lease names an LLC, there is no phone number or name for anyone who can approve a repair
+opening: Hi, um, the heat is out in my apartment, and I just moved in so I'm not even sure who to ask.
+script:
+  - When asked who owns the place or approves repairs, say you do not know, only an LLC on the lease.
+  - Say you cannot reach the super either.
+  - Accept a person calling back, and say a time that works.
+must:
+  - flag: person
+  - booking: none
+  - callback: promised
+  - outcome: [flagged, callback]
+should:
+  - Takes the details and flags a person rather than booking without an approver.
+  - Names a specific callback time, never soon or shortly.
+  - May give the one neutral heat in season and 311 line, with no legal advice beyond it.

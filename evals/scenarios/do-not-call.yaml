@@ -1,0 +1,27 @@
+id: do-not-call
+flow: [repeat-caller]
+difficulty: standard
+traits: [filler]
+journeys: [J12, J7]
+spec: [S-49]
+caller_id: seed:repeatCallerOpenJob
+persona: Maria Delgado, a homeowner in Brooklyn tired of being phoned. Firm but polite, says um and look.
+hidden_facts:
+  name: Maria Delgado
+  address: 620 Bedford Ave, Brooklyn, 11235
+  phone: the number they are calling from
+  wants: no more phone calls from Summit Air, the appointment itself stays as it is
+opening: Hi, um, look, I keep getting calls from you about my appointment. Please don't call me again, I'll call you when I need something.
+script:
+  - If the agent offers a callback or a call later, say no, no calls at all.
+  - Do not ask to change or cancel the appointment.
+  - Thank the agent when it says it will not call, then say goodbye.
+must:
+  - tool_ok: mark_do_not_call
+  - callback: none
+  - tool_not_called: [book_appointment, cancel_appointment, reschedule_appointment]
+  - agent_says: "won.t call|will not call"
+should:
+  - Says kindly that Summit Air will not call and the caller can phone any time.
+  - Offers no callback and does not argue or pitch anything.
+  - Keeps the existing appointment untouched.

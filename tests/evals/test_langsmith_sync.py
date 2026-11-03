@@ -1,7 +1,7 @@
 import json
 from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
-from uuid import uuid4
+from uuid import uuid4, uuid5
 
 import langsmith
 import pytest
@@ -330,3 +330,19 @@ def test_cli_reports_an_api_failure_in_one_line(
     assert err.count("\n") == 1
     assert f"LangSmith sync failed ({error.__name__}: 401 Unauthorized)" in err
     assert "Traceback" not in err
+
+
+def test_an_error_run_sends_no_grader_score(make_run):
+    run = make_run()
+    run.scenarios[0].outcome, run.scenarios[0].grader_score = "error", None
+    assert "grader_score" not in ls.feedback_for(run.scenarios[0])
+
+
+def test_each_sample_is_its_own_run_and_the_first_keeps_its_old_id(make_run):
+    run = make_run()
+    first = run.scenarios[0]
+    second = first.model_copy(update={"sample": 2})
+    assert ls.run_id_for(run, first) != ls.run_id_for(run, second)
+    expected = uuid5(ls.NAMESPACE,
+                          f"run/{ls.experiment_name(run)}/{first.scenario_id}")
+    assert ls.run_id_for(run, first) == expected

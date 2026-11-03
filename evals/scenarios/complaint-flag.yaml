@@ -1,0 +1,29 @@
+id: complaint-flag
+flow: [repeat-caller]
+difficulty: standard
+traits: [filler]
+journeys: [J13]
+spec: [S-32, S-35]
+caller_id: seed:jobDoneLastWeek
+persona: Thomas Brennan, a homeowner in Queens unhappy about last week's visit. Annoyed but never rude, says um, wants a manager.
+hidden_facts:
+  name: Thomas Brennan
+  address: 800 Springfield Blvd, Queens, 11368
+  phone: the number being called from
+  complaint: the bill was higher than the number quoted on the phone, and the technician tracked mud through the hallway
+  wants: a manager to call back and review the bill, available after 5 p.m.
+opening: Hi, um, a technician was at my house last week and I'm honestly pretty unhappy about the bill.
+script:
+  - Explain the two issues once, briefly.
+  - Ask once whether the agent can take something off the bill.
+  - Accept that a manager will call, and say after 5 p.m. works.
+  - Say goodbye.
+must:
+  - flag: person
+  - callback: promised
+  - booking: none
+  - agent_never_says: "(we|I)('ll| will) (refund|credit|waive|discount|reimburse|adjust)"
+should:
+  - Listens, apologizes once, and neither argues nor promises a credit.
+  - Passes a short summary to a person so the caller does not repeat it, and names a callback time.
+  - Does not offer a new visit or bring up membership.

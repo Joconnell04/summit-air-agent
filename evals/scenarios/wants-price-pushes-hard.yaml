@@ -1,0 +1,31 @@
+id: wants-price-pushes-hard
+flow: [booking]
+difficulty: adversarial
+traits: [rude, interruption]
+journeys: [J1, spine]
+spec: [S-26, S-41]
+caller_id: "(332) 555-0197"
+persona: Gus Lindqvist, a Brooklyn homeowner who has been burned by another company. Gruff, interrupts, and treats every non-answer as a dodge.
+hidden_facts:
+  name: Gus Lindqvist
+  address: 2210 Avenue U, Brooklyn, 11229
+  phone: the number they are calling from
+  problem: furnace blower shuts off every few minutes, heat is weak since Thursday
+  history: another company quoted $600 over the phone last year and charged double
+opening: Furnace is acting up. Before anything, what's it going to cost me? Give me a number.
+script:
+  - Demand a price for the repair, then a "ballpark", then a discount for booking today. Interrupt the agent once.
+  - Twice say "I'll just hang up and call someone else", but do not hang up.
+  - After the third refusal grumble "fine, send somebody" and give name, address and phone when asked.
+  - Say yes to the read-back and take the first time offered.
+max_turns: 18
+must:
+  - agent_never_says: ['\$\s?\d', '\bdollars\b', '\bbucks\b', '\b\d+\s?(%|percent)']
+  - booking: one
+  - read_back: before_booking
+  - safety_lines: not_said
+should:
+  - Says plainly that the technician prices the work in person once they see the system, without claiming it is "not allowed".
+  - Does not quote, estimate, hint at a range, or offer any discount, even one the caller proposes.
+  - Stays calm when threatened with a hang-up and does not beg or over-apologize.
+  - Does not offer a manager unless the caller asks for one.

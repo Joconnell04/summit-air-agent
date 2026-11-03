@@ -1,0 +1,29 @@
+id: elderly-no-heat
+flow: [priority, booking]
+difficulty: easy
+journeys: [J2, J1]
+spec: [S-21, S-22, S-23]
+tags: [smoke]
+caller_id: "(332) 555-0118"
+persona: Evelyn Marsh, 84, who lives alone on Staten Island and is calling from a landline. Polite, speaks slowly, does not volunteer that age is a worry.
+hidden_facts:
+  name: Evelyn Marsh
+  address: 45 Forest Ave, Staten Island, 10310
+  phone: the number being called from
+  problem: the radiators went cold last evening, 55 F inside now
+  home: lives alone, 84, uses a cane, only says so when asked who is at home
+opening: Hello, my heat isn't working and it's getting awfully cold in here.
+script:
+  - Answer the temperature question with 55 degrees.
+  - When asked who is at home, say it is just you, you are 84, and you are managing but cold.
+  - Take the first window the agent offers.
+  - Thank the agent and say goodbye once asked if there is anything else.
+must:
+  - booking: {count: 1, priority: Urgent, job_type: no_heat, zip: "10310"}
+  - read_back: before_booking
+  - safety_lines: not_said
+  - outcome: booked
+should:
+  - Asks who is at home only after understanding the problem, never as the opening question.
+  - Says it marked the call urgent only after the tool confirms it.
+  - Does not repeat the caller's age or medical details back.

@@ -105,3 +105,25 @@ def test_a_simulator_loop_is_recorded_as_error_not_fail(tmp_path, make_run, scen
     run = Run.model_validate({**make_run().model_dump(mode="json"), "scenarios": [errored]})
     assert run.scenarios[0].outcome == "error"
     assert results.load(results.save(run, tmp_path)) == run
+
+
+def test_only_an_error_run_may_have_no_grader_score(tmp_path, run_data, scenario_data):
+    path = tmp_path / "run.json"
+    path.write_text(json.dumps(run_data(scenarios=[scenario_data(grader_score=None)])))
+    with pytest.raises(ResultsError, match="grader_score is missing"):
+        results.load(path)
+    error = scenario_data(outcome="error", grader_score=None, error="caller looped")
+    path.write_text(json.dumps(run_data(scenarios=[error])))
+    assert results.load(path).scenarios[0].grader_score is None
+
+
+def test_samples_of_one_scenario_are_distinct_and_keyed(run_data, scenario_data):
+    run = Run.model_validate(run_data(scenarios=[scenario_data(), scenario_data(sample=2)]))
+    assert [s.key for s in run.scenarios] == ["no-heat-elderly-wrong-zip",
+                                              "no-heat-elderly-wrong-zip#2"]
+
+
+def test_pass_rate_leaves_errors_out(run_data, scenario_data):
+    rows = [scenario_data(scenario_id="a"), scenario_data(scenario_id="b", outcome="fail"),
+            scenario_data(scenario_id="c", outcome="error", grader_score=None)]
+    assert Run.model_validate(run_data(scenarios=rows)).pass_rate() == 0.5

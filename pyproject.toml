@@ -16,6 +16,7 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "anthropic>=2.4.0",
     "langsmith>=0.14.17",
     "pytest>=8",
     "ruff>=0.6",

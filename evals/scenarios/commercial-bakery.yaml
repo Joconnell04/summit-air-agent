@@ -1,0 +1,29 @@
+id: commercial-bakery
+flow: [commercial]
+difficulty: easy
+journeys: [J8]
+spec: [S-05, S-06, S-08]
+tags: [smoke]
+caller_id: seed:commercial
+persona: Lucia Ferrante, operations manager at Harbor Bakery Group in Brooklyn. Busy, clear, wants the rooftop unit fixed today.
+hidden_facts:
+  name: Lucia Ferrante
+  business: Harbor Bakery Group
+  address: 232 Lexington Ave, Brooklyn, 11221
+  phone: the number being called from
+  problem: the rooftop cooling unit over the kitchen quit, the shop is hot
+opening: Hi, this is Lucia at Harbor Bakery. The rooftop unit over our kitchen quit and it's way too hot in here.
+script:
+  - Give the business name again if asked.
+  - When told Summit Air only works on homes, say you will find another company and thank the agent.
+  - Do not argue or ask for an exception or a callback.
+  - Say goodbye.
+must:
+  - booking: none
+  - lead: commercial
+  - outcome: declined_commercial
+  - callback: none
+should:
+  - Declines kindly and early, in one or two lines, without offering a callback.
+  - Does not ask for a full service-call intake once it knows the caller is a business.
+  - Saves one line with company, contact and need, and no extra lookups.

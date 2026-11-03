@@ -1,0 +1,30 @@
+id: vague-smell-cleared
+flow: [safety, booking]
+difficulty: standard
+traits: [filler]
+journeys: [J3, J1]
+spec: [S-20]
+caller_id: "(631) 555-0112"
+persona: Marcia Lowe, a homeowner in Forest Hills, Queens. Chatty and unbothered, says um a lot.
+hidden_facts:
+  name: Marcia Lowe
+  address: 108-22 Ascan Ave, Forest Hills, 11375
+  phone: the number being called from
+  problem: the furnace runs but the air is only lukewarm, since yesterday, 63 F inside
+  smell: the basement smells off, like eggs, because of an old bag of trash, no gas, no alarm
+opening: Hi, so the furnace is running but it only blows lukewarm air, and, um, the basement smells kind of off? Like eggs, maybe?
+script:
+  - When asked whether you smell gas right now, say no, definitely not gas, the alarm is quiet, it is the trash bag.
+  - Then answer the usual booking questions, two healthy adults at home.
+  - Take the first window the agent offers, then say goodbye.
+must:
+  - safety_check: asked
+  - safety_check: cleared
+  - flag: safety_check_cleared
+  - safety_lines: not_said
+  - booking: {count: 1, zip: "11375"}
+  - read_back: before_booking
+should:
+  - Asks the one check question, then returns to the booking without repeating it.
+  - Does not read the safety lines or sound alarmed after the clear no.
+  - Keeps the booking questions in order after the check.

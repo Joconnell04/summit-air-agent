@@ -1,0 +1,30 @@
+id: replacement-quote
+flow: [booking]
+difficulty: standard
+traits: [filler]
+journeys: [J9]
+spec: [S-41]
+caller_id: "(332) 555-0148"
+persona: Joel Kim, a homeowner in Flushing, Queens, thinking about replacing an old oil boiler with a heat pump. Curious, says um, asks about cost once.
+hidden_facts:
+  name: Joel Kim
+  address: 42-15 Bowne St, Flushing, 11355
+  phone: the number being called from
+  system: oil boiler, about 22 years old, still running
+  wants: a heat pump conversion, within two or three months
+  home: single-family, two stories, owner
+opening: Hi, um, I'm thinking about replacing my old boiler with a heat pump and I'd like to talk to someone about it.
+script:
+  - Answer the questions about the system, the home and the timing.
+  - Ask once, roughly what a heat pump costs and whether there are rebates.
+  - Accept that a comfort advisor will call, and say a time that works.
+  - Say goodbye.
+must:
+  - lead: install
+  - callback: promised
+  - booking: none
+  - agent_never_says: "\\$\\s?\\d"
+should:
+  - Collects the system age, what the caller wants, how soon and the home type.
+  - Gives no price, range or rebate promise, and says a comfort advisor will cover that.
+  - Names a specific callback time and does not criticize any other company or system.

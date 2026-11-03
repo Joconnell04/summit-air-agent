@@ -28,8 +28,9 @@ def example_id(scenario_id: str) -> uuid.UUID:
     return uuid.uuid5(NAMESPACE, f"example/{scenario_id}")
 
 
-def run_id_for(run: Run, scenario_id: str) -> uuid.UUID:
-    return uuid.uuid5(NAMESPACE, f"run/{experiment_name(run)}/{scenario_id}")
+def run_id_for(run: Run, result: ScenarioResult) -> uuid.UUID:
+    # result.key is the bare scenario id for the first sample, so ids from earlier syncs still match.
+    return uuid.uuid5(NAMESPACE, f"run/{experiment_name(run)}/{result.key}")
 
 
 def feedback_id_for(rid: uuid.UUID, key: str) -> uuid.UUID:
@@ -50,7 +51,7 @@ def feedback_for(result: ScenarioResult) -> dict[str, float]:
         verdict = {"errored": 1}
     else:
         verdict = {"passed": int(result.outcome == "pass")}
-    return {
+    scores = {
         **verdict,
         "must_pass_failed": int(bool(result.must_pass_failures)),
         "grader_score": result.grader_score,
@@ -58,6 +59,8 @@ def feedback_for(result: ScenarioResult) -> dict[str, float]:
         "reply_delay_p90_ms": result.reply_delay_p90_ms,
         "cost_usd": result.cost_usd,
     }
+    # An error run was never graded.
+    return {k: v for k, v in scores.items() if v is not None}
 
 
 def experiment_metadata(run: Run) -> dict[str, Any]:
@@ -103,7 +106,7 @@ def upload_experiment(client: Any, run: Run, dataset: Any) -> str:
         )
     done = existing_run_ids(client, project.id)
     for result in run.scenarios:
-        rid = run_id_for(run, result.scenario_id)
+        rid = run_id_for(run, result)
         if str(rid) not in done:
             create_scenario_run(client, run, result, rid, name)
     # Runs are sent in the background; feedback needs them to exist first.
@@ -111,7 +114,7 @@ def upload_experiment(client: Any, run: Run, dataset: Any) -> str:
     # Feedback ids are fixed, so posting every score on every sync fills in whatever a crashed
     # earlier sync missed and replaces, rather than duplicates, what is already there.
     for result in run.scenarios:
-        rid = run_id_for(run, result.scenario_id)
+        rid = run_id_for(run, result)
         for key, score in feedback_for(result).items():
             client.create_feedback(
                 rid, key, score=score, session_id=project.id, feedback_id=feedback_id_for(rid, key)
@@ -150,7 +153,7 @@ def create_scenario_run(
         }
     client.create_run(
         id=rid,
-        name=result.scenario_id,
+        name=result.key,
         run_type="chain",
         project_name=project_name,
         reference_example_id=example_id(result.scenario_id),
@@ -158,10 +161,19 @@ def create_scenario_run(
         outputs={
             "outcome": result.outcome,
             "must_pass_failures": result.must_pass_failures,
+            "check_failures": result.check_failures,
+            "grader_notes": result.grader_notes,
+            "error": result.error,
             "transcript": [t.model_dump() for t in result.transcript],
             "tool_calls": [c.model_dump() for c in result.tool_calls],
         },
-        extra={"metadata": {**experiment_metadata(run), "call_id": result.call_id}},
+        extra={
+            "metadata": {
+                **experiment_metadata(run),
+                "call_id": result.call_id,
+                "sample": result.sample,
+            }
+        },
         tags=[f"stack:{run.stack}", f"profile:{run.profile}", f"suite:{run.suite}"],
         **timing,
     )

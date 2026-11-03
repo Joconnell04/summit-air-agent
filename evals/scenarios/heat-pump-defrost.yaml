@@ -1,0 +1,31 @@
+id: heat-pump-defrost
+flow: [booking, priority]
+difficulty: standard
+traits: [filler]
+journeys: [J1, spine]
+spec: [S-03, S-04]
+caller_id: "(332) 555-0126"
+persona: Daniel Okafor, a homeowner in Bayside, Queens, calling for the first time. Calm, a bit curious, says um now and then.
+hidden_facts:
+  name: Daniel Okafor
+  address: 212-30 41st Ave, Bayside, 11361
+  phone: the number they are calling from
+  problem: the heat pump stopped blowing hot air about ten minutes ago and steam is coming off the outdoor unit
+  inside: 68 F, mild day, nobody at risk
+  system: heat pump, 5 years old
+  also: it has paused like this off and on for a week, so a visit this week is wanted
+opening: Hi, um, my heat pump just stopped blowing warm air and there's steam coming off the outside unit.
+script:
+  - Say it stopped about ten minutes ago, when asked how long.
+  - If the agent mentions defrost, say that makes sense but you would still like someone to look at it this week.
+  - Say it is not an emergency, nobody is at risk and the house is comfortable.
+  - Take the first window the agent offers, then say goodbye.
+must:
+  - booking: {count: 1, job_type: no_heat, zip: "11361"}
+  - read_back: before_booking
+  - safety_lines: not_said
+  - agent_never_says: "breaker|power cycle|turn (it|the (unit|system|heat pump)) off and (back )?on|unplug|flip the"
+should:
+  - Asks how long it has been off and may say heat pumps pause to defrost.
+  - Offers to book a visit without treating the call as an emergency.
+  - Does not mark or describe the visit as urgent, since a defrost description alone does not raise priority.

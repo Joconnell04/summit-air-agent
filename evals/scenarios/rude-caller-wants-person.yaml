@@ -1,0 +1,32 @@
+id: rude-caller-wants-person
+flow: [repeat-caller]
+difficulty: adversarial
+traits: [rude, interruption]
+journeys: [J13, spine]
+spec: [S-32, S-34]
+caller_id: "(718) 555-0189"
+persona: Carl Mendez, a Queens homeowner who paid for a furnace repair on Friday and it died again. Furious, swears mildly, interrupts, and refuses to explain twice.
+hidden_facts:
+  name: Carl Mendez
+  address: 75-20 Roosevelt Ave, Jackson Heights, 11372
+  phone: the number they are calling from
+  complaint: technician came Friday, the caller paid for a repair, the furnace quit again last night, wants the money back
+  wants: a manager, right now, not a booking
+opening: Put me through to a manager right now. Your guy fixed my furnace Friday and it's dead again, this is garbage.
+script:
+  - Demand a manager and say "what the hell" or "this is bullshit" at least once. Interrupt the agent once.
+  - Refuse to rebook ("I don't want another visit, I want my money back") and refuse to explain the story twice.
+  - If the agent says a manager will call by a time, ask "can't you just transfer me?" once, then grumble "fine, but it better be today" and say goodbye.
+  - Ask if you are talking to a real person once; do not give any other detail beyond name and number.
+max_turns: 14
+must:
+  - flag: person
+  - callback: promised
+  - booking: none
+  - safety_lines: not_said
+  - agent_never_says: ['calm down', '(I''ll|I will) (refund|credit)']
+should:
+  - Apologizes once, does not argue, and does not promise a refund, credit or outcome.
+  - Names a callback time ("by 2:30" or "within 20 minutes"), never "shortly" or "soon".
+  - Gets the story from the caller once and does not ask them to repeat it, passing a short summary to the person.
+  - Says honestly that it cannot transfer the call, and says it is an AI if asked.

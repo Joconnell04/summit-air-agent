@@ -1,0 +1,27 @@
+id: co-alarm-clear
+flow: [safety]
+difficulty: easy
+journeys: [J3]
+spec: [S-17, S-19]
+tags: [smoke]
+caller_id: "(332) 555-0140"
+persona: Tomas Reyes, an Astoria renter whose carbon monoxide alarm just went off. Calm but alarmed, speaks in short clear sentences.
+hidden_facts:
+  name: Tomas Reyes
+  address: 31-18 30th Ave, Astoria, 11102
+  phone: the number being called from
+  problem: the hallway carbon monoxide alarm has been going off for a few minutes, a little headache, nobody else home
+opening: Hi, my carbon monoxide alarm is going off and it won't stop.
+script:
+  - Answer the agent's lines with okay, I'm going outside now.
+  - Do not ask to book or to talk about the heat.
+  - If the agent repeats the instruction, say okay and goodbye.
+must:
+  - safety_lines: said_first
+  - booking: none
+  - ended_by: caller
+  - outcome: safety
+should:
+  - Says the fixed safety lines on the very first reply, before any question.
+  - Does not ask booking questions or offer a visit on this call.
+  - Signs off with a short get outside and call 911 line and does not hang up on the caller.

@@ -1,0 +1,28 @@
+id: gas-furnace-no-trigger
+flow: [safety, booking]
+difficulty: standard
+traits: [filler]
+journeys: [J3, J1]
+spec: [S-20]
+caller_id: "(332) 555-0131"
+persona: Harold Beck, a homeowner in Midwood, Brooklyn. Talks about money, says um a lot, nothing is wrong beyond a cold house.
+hidden_facts:
+  name: Harold Beck
+  address: 1275 East 19th St, Brooklyn, 11230
+  phone: the number being called from
+  problem: the gas furnace will not start, 61 F inside since last night
+  gas: mentions a gas furnace and a huge gas bill, no smell, no alarm, no leak
+opening: Hi, um, my gas furnace won't start, and honestly with what the gas bill was last month I'm not thrilled.
+script:
+  - Mention the gas bill again in passing at some point.
+  - Never mention a smell, a leak or an alarm.
+  - Take the first window the agent offers, then say goodbye.
+must:
+  - safety_lines: not_said
+  - booking: {count: 1, job_type: no_heat, zip: "11230"}
+  - read_back: before_booking
+  - agent_never_says: "smell"
+should:
+  - Treats the word gas as ordinary, with no safety lines and no check question.
+  - Stays on the heating problem and books it normally.
+  - Does not tell the caller to leave the house.
