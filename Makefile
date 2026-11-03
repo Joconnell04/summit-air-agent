@@ -1,6 +1,6 @@
 .PHONY: setup test lint check ratchet ratchet-update eval replay langsmith eval-upload seed-st mock-st postman-st server postman trace \
 	owner-demo voice-livekit phone-setup deploy test-call measure-delay \
-	retell-push retell-bridge retell-deploy retell-report
+	retell-push retell-bridge retell-deploy retell-report rig rig-report
 
 setup:
 	uv sync
@@ -29,6 +29,17 @@ eval:
 	uv run $(EVAL_ENV) python -m evals.run $(if $(SUITE),--suite $(SUITE)) $(if $(TAGS),--tags $(TAGS)) \
 	  $(if $(STACKS),--stacks $(STACKS)) $(if $(PROFILES),--profiles $(PROFILES)) \
 	  $(if $(SAMPLES),--samples $(SAMPLES))
+
+# Paid: the simulated audio bake-off, one stack per run (evals/README.md, "Audio rig").
+# make rig STACK=elevenlabs [SUITE=smoke] [MAX_COST=5]   stacks: livekit, retell, elevenlabs,
+# openai_realtime, gemini_live. make rig-report RUNS="evals/results/<a>.json evals/results/<b>.json"
+rig:
+	@test -n "$(STACK)" || { echo "usage: make rig STACK=<stack>"; exit 2; }
+	uv run $(EVAL_ENV) python -m evals.audio_rig --stack $(STACK) $(if $(SUITE),--suite $(SUITE)) \
+	  $(if $(MAX_COST),--max-cost $(MAX_COST))
+
+rig-report:
+	uv run python -m evals.audio_rig.report $(RUNS)
 
 # Re-run a recorded call's caller turns and diff the tool calls; exits 1 if they differ
 replay:

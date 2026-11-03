@@ -287,8 +287,9 @@ async def run_entrant(name: str, chosen: list[Scenario], repeats: int, max_cost:
                 done.append(result)
                 spent = sum(r.cost_usd for r in done)
                 delays = ", ".join(f"{t.reply_delay_ms:.0f}" for t in result.turn_timings)
+                why = result.error or "; ".join(result.check_failures)
                 print(f"{result.key}: {result.outcome} ${result.cost_usd:.3f} "
-                      f"(run ${spent:.2f}) delays ms [{delays}] {result.error}", flush=True)
+                      f"(run ${spent:.2f}) delays ms [{delays}] {why}", flush=True)
                 if max_cost is not None and spent > max_cost:
                     print(f"stopping: cost ${spent:.2f} passed the cap ${max_cost:.2f}", flush=True)
                     break
