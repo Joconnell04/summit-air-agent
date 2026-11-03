@@ -460,4 +460,5 @@ def test_a_whole_call_is_timed_on_the_audio_and_scored_on_the_record(tmp_path, m
     assert [t.role for t in result.transcript] == ["agent", "caller", "agent"]
     assert result.transcript[-1].said == "Sorry to hear that. Goodbye."
     assert result.cost_parts["platform"] == 0.01
+    assert result.agent_cost_usd == 0.01
     assert result.cost_usd >= 0.01

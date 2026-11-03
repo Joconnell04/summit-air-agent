@@ -91,6 +91,9 @@ class ScenarioResult(Strict):
     reply_delay_p50_ms: float = Field(ge=0)
     reply_delay_p90_ms: float = Field(ge=0)
     cost_usd: float = Field(ge=0)
+    # The agent's own tokens, without the simulated caller and the grader, for comparing model
+    # profiles. Missing on files written before this field existed.
+    agent_cost_usd: float | None = Field(None, ge=0)
     # How long the scenario ran. Optional; without it LangSmith gets no end time rather than a
     # zero-length run.
     duration_ms: float | None = Field(default=None, ge=0)

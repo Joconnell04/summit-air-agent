@@ -12,6 +12,7 @@ providers:
   anthropic: {key_env: ANTHROPIC_API_KEY}
   openai: {key_env: OPENAI_API_KEY}
   gemini: {key_env: GEMINI_API_KEY}
+  typesafe: {key_env: JEV_API_KEY}
 
 profiles:
   fast:
@@ -80,6 +81,28 @@ offline:
     model: claude-opus-5-5
     thinking: true
     price: {input: 4.00, output: 20.00}
+
+# Side models: one narrow question each, answered beside the live call (app/side_model.py,
+# DECISIONS.md 006). SIDE_MODEL=<name> turns one on for the tool server; empty is off. Compared in
+# evals/decision-models (make eval-decisions). Prices SOURCE: docs/decisions/05-pipeline-and-models.md;
+# OpenAI Decisions output is free (from-other-projects/bobert/decision-model-eval.md); Jev's output
+# price is ASSUMED equal to its input price.
+side:
+  haiku:
+    provider: anthropic
+    model: claude-haiku-5-5
+    thinking: false
+    price: {input: 0.10, output: 0.50}
+  openai-decisions:
+    provider: openai
+    model: gpt-6-luna
+    thinking: false
+    price: {input: 0.10, output: 0.00}
+  jev:
+    provider: typesafe
+    model: jev-latest
+    thinking: false
+    price: {input: 0.042, output: 0.042}
 
 # After the call ends: the technician's job summary.
 post_call:

@@ -40,6 +40,8 @@ from evals.run import LOOP_REPEATS, build_run, score, upload
 from evals.scenario import Scenario, load_all
 from evals.world import World, resolve_caller, seeded_db
 
+# The parts of a call's cost that are the stack's own; the rest is the rig's.
+STACK_PARTS = ("platform", "platform_transcription", "brain_model")
 ENTRANTS = ("livekit", "retell", "elevenlabs", "openai_realtime", "gemini_live")
 
 
@@ -265,7 +267,7 @@ class Rig:
         result = await asyncio.to_thread(
             score, scenario, sample, call_id, server, transcript, timings, usage, error, began,
             safety=self.safety, grader=self.grader, final=self.entrant.final_record,
-            silent_turns=silent,
+            agent_cost=sum(v for k, v in parts.items() if k in STACK_PARTS), silent_turns=silent,
         )
         parts["grader"] = max(0.0, result.cost_usd - sum(parts.values()))
         result.cost_parts = {k: round(v, 6) for k, v in parts.items()}

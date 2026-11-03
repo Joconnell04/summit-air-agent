@@ -1,4 +1,4 @@
-.PHONY: setup test lint check ratchet ratchet-update eval replay langsmith eval-upload seed-st mock-st postman-st server postman trace \
+.PHONY: setup test lint check ratchet ratchet-update eval eval-decisions replay langsmith eval-upload seed-st mock-st postman-st server postman trace \
 	owner-demo rules-gate voice-livekit phone-setup deploy test-call measure-delay \
 	retell-push retell-bridge retell-deploy retell-report rig rig-report
 
@@ -40,6 +40,11 @@ rig:
 
 rig-report:
 	uv run python -m evals.audio_rig.report $(RUNS)
+
+# Paid, cents: the side-model quick run on one question (evals/decision-models/PLAN.md section 6).
+# make eval-decisions [SYSTEMS=rules,haiku,openai-decisions,jev]
+eval-decisions:
+	PYTHONPATH=. uv run $(EVAL_ENV) python evals/decision-models/run.py $(if $(SYSTEMS),--systems $(SYSTEMS))
 
 # Re-run a recorded call's caller turns and diff the tool calls; exits 1 if they differ
 replay:

@@ -76,6 +76,7 @@ class Harness:
         transcript: list[Turn] = []
         timings = []
         usage = Usage()
+        agent_usage = Usage()
         error = ""
         server = None
         try:
@@ -90,7 +91,7 @@ class Harness:
             rng = seeded(scenario.id, sample)
             level = level_for(scenario.difficulty, scenario.traits)
             turn = agent.start()
-            usage.add(turn.usage)
+            agent_usage.add(turn.usage)
             if turn.text:
                 transcript.append(Turn(role="agent", text=turn.text))
             replay = list(caller_turns) if caller_turns is not None else None
@@ -101,7 +102,7 @@ class Harness:
                 heard = said if replay is not None else roughen(said, level, rng)
                 transcript.append(Turn(role="caller", text=heard))
                 turn = agent.hear(heard)
-                usage.add(turn.usage)
+                agent_usage.add(turn.usage)
                 timings.append(turn.timing)
                 if turn.text:
                     transcript.append(Turn(role="agent", text=turn.text))
@@ -125,17 +126,20 @@ class Harness:
             usage.add(caller.usage)
         except Exception as err:  # noqa: BLE001 - a broken harness run is an error, not a fail
             error = f"harness: {type(err).__name__}: {err}"
+        usage.add(agent_usage)
         return self._score(scenario, sample, call_id, server, transcript, timings, usage, error,
-                           began)
+                           began, agent_usage.cost_usd)
 
-    def _score(self, scenario, sample, call_id, server, transcript, timings, usage, error, began):
+    def _score(self, scenario, sample, call_id, server, transcript, timings, usage, error, began,
+               agent_cost=0.0):
         return score(scenario, sample, call_id, server, transcript, timings, usage, error, began,
                      safety=self.safety, grader=self.models.grader,
-                     final=self.stack == "retell")
+                     final=self.stack == "retell", agent_cost=agent_cost)
 
 
 def score(scenario, sample, call_id, server, transcript, timings, usage, error, began, *,
-          safety: dict, grader: Model, final: bool = False, **extra) -> ScenarioResult:
+          safety: dict, grader: Model, final: bool = False, agent_cost: float = 0.0,
+          **extra) -> ScenarioResult:
     """Code checks on the tool server's record, then the grader, for one finished call. `final`
     waits for a call that is closed by webhook (Retell); `extra` are further result fields, such
     as the audio rig's."""
@@ -200,6 +204,7 @@ def score(scenario, sample, call_id, server, transcript, timings, usage, error, 
         reply_delay_p50_ms=percentile(delays, 0.5),
         reply_delay_p90_ms=percentile(delays, 0.9),
         cost_usd=round(usage.cost_usd, 6),
+        agent_cost_usd=round(agent_cost, 6),
         duration_ms=(time.perf_counter() - began) * 1000,
         transcript=transcript,
         tool_calls=tool_calls,

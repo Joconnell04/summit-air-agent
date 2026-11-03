@@ -15,6 +15,7 @@ import sys
 from collections import defaultdict
 from dataclasses import dataclass, field
 
+from evals.audio_rig.rig import STACK_PARTS
 from evals.checks import safety_config
 from evals.compare import percentile
 from evals.results import Run, ScenarioResult, load
@@ -26,8 +27,6 @@ MARGIN_MS = 300
 # Share of the signed-off words the caller must hear, in order, to count as heard word for word.
 # Below 1.0 only for the rig's own transcription errors (ASSUMED).
 HEARD_SHARE = 0.9
-# Parts of a call's cost that are the stack's own, not the rig's (caller voice, ears, models).
-STACK_PARTS = ("platform", "platform_transcription", "brain_model")
 
 
 def gates_held(s: ScenarioResult) -> bool:
