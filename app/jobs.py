@@ -195,7 +195,13 @@ def schedule_callbacks(conn: sqlite3.Connection, tenant: Tenant, now: datetime) 
 CALLBACK_CHECKS_PER_RUN = 50
 CALLBACK_LOOKBACK_DAYS = 14
 # The flags a callback leaves on its call, closed together with it.
-CALLBACK_FLAG_KINDS = ("callback_requested", "person", "overdue_callback", "callback_needs_person")
+CALLBACK_FLAG_KINDS = (
+    "callback_requested",
+    "person",
+    "overdue_callback",
+    "callback_needs_person",
+    "callback_tag_failed",
+)
 
 
 def confirm_callbacks(
@@ -223,12 +229,8 @@ def confirm_callbacks(
     for row in rows:
         by_phone.setdefault(row["phone"], []).append(row)
     for phone, callbacks in by_phone.items():
-        try:
-            calls = fsm.calls_to(phone, parse_iso(min(cb["created_at"] for cb in callbacks)))
-        except FsmUnavailable:
-            break
-        except FsmRejected:
-            continue
+        # Stamped before the read, so a number ServiceTitan keeps refusing goes to the back of the
+        # line instead of holding the front of it.
         with tx(conn):
             for cb in callbacks:
                 conn.execute(
@@ -236,6 +238,12 @@ def confirm_callbacks(
                     "ON CONFLICT (callback_id) DO UPDATE SET checked_at = excluded.checked_at",
                     (cb["id"], iso(now)),
                 )
+        try:
+            calls = fsm.calls_to(phone, parse_iso(min(cb["created_at"] for cb in callbacks)))
+        except FsmUnavailable:
+            break
+        except FsmRejected:
+            continue
         resolved = [
             parse_iso(c["leadCall"]["receivedOn"])
             for c in calls

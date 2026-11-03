@@ -111,7 +111,13 @@ def skip(conn: sqlite3.Connection, row: sqlite3.Row, reason: str, now: datetime)
 
 def to_person(conn: sqlite3.Connection, row: sqlite3.Row, why: str, now: datetime) -> None:
     """A callback the system couldn't complete is overdue at once and flagged with the reason, so
-    a person picks it up and records.mark_overdue doesn't flag it a second time."""
+    a person picks it up and records.mark_overdue doesn't flag it a second time. A callback that is
+    already done or cancelled needs no one."""
+    callback = conn.execute(
+        "SELECT status FROM callbacks WHERE id = ?", (row["callback_id"],)
+    ).fetchone()
+    if callback is None or callback["status"] not in ("pending", "overdue"):
+        return
     conn.execute(
         "UPDATE callbacks SET status = 'overdue', updated_at = ? WHERE id = ? AND status = 'pending'",
         (iso(now), row["callback_id"]),
@@ -243,17 +249,17 @@ def settle_callback(
         return None
     outcome, why = callback_outcome(conn, fsm, row, placed, answered, row["result"])
     with tx(conn):
-        conn.execute(
+        # Settled by someone else while the checks above were running (the end of the call and the
+        # job can overlap): the first insert stands.
+        inserted = conn.execute(
             "INSERT INTO call_outcomes (outbound_id, sid, outcome, why, created_at, updated_at) "
-            "VALUES (?, ?, ?, ?, ?, ?)",
+            "VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT (outbound_id) DO NOTHING",
             (outbound_id, row["placed_call_id"], outcome, why, iso(now), iso(now)),
-        )
-        callback = conn.execute(
-            "SELECT status FROM callbacks WHERE id = ?", (row["callback_id"],)
-        ).fetchone()
-        # A caller who said not to call again has no callback left to hand to anyone.
-        if outcome != "resolved" and callback["status"] in ("pending", "overdue"):
+        ).rowcount
+        if inserted and outcome != "resolved":
             to_person(conn, row, f"{why} ({outcome.replace('_', ' ')})", now)
+    if not inserted:
+        return None
     apply_tag(conn, tenant, fsm, outbound_id, now)
     return outcome
 
@@ -270,7 +276,8 @@ def settle_answered(
     voice worker died) once it has been waiting as long as a dial may go unreported."""
     stuck = iso(now - timedelta(minutes=STUCK_DIALING_MINUTES))
     rows = conn.execute(
-        "SELECT o.id, o.updated_at FROM outbound o WHERE o.tenant = ? AND o.kind = 'callback' "
+        "SELECT o.id, o.updated_at, o.placed_call_id FROM outbound o "
+        "WHERE o.tenant = ? AND o.kind = 'callback' "
         "AND o.status = 'done' AND o.result = 'answered' AND NOT EXISTS "
         "(SELECT 1 FROM call_outcomes c WHERE c.outbound_id = o.id) "
         "AND (? IS NULL OR o.placed_call_id = ?)",
@@ -278,7 +285,13 @@ def settle_answered(
     ).fetchall()
     settled = 0
     for row in rows:
-        waited_too_long = call_id is None and row["updated_at"] < stuck
+        # Judged without waiting for the end only when the line has been quiet for a long time.
+        last_turn = conn.execute(
+            "SELECT MAX(at) FROM turns WHERE call_id = ?", (row["placed_call_id"],)
+        ).fetchone()[0]
+        waited_too_long = (
+            call_id is None and row["updated_at"] < stuck and (last_turn or "") < stuck
+        )
         settled += (
             settle_callback(conn, tenant, fsm, row["id"], now, force=waited_too_long) is not None
         )
@@ -334,9 +347,12 @@ def person_confirmed(conn: sqlite3.Connection, fsm: FsmAdapter, placed: sqlite3.
             reply = turns[i + 1]
             if reply["speaker"] == "caller":
                 said = words(reply["text"])
+                says_yes = any(has_phrase(said, w) for w in YES_WORDS) or any(
+                    has_phrase(said, f"this is {n}") for n in names
+                )
                 if (
                     len(said.split()) <= NAME_REPLY_MAX_WORDS
-                    and any(has_phrase(said, w) for w in YES_WORDS)
+                    and says_yes
                     and not any(has_phrase(said, w) for w in NO_WORDS)
                 ):
                     return True

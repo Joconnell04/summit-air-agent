@@ -301,9 +301,12 @@ def create_app(
             tenant = services.tenants.by_slug[call["tenant"]]
             ended = lifecycle.end(conn, tenant, call, body, services.clock())
             # A callback the system placed is judged when its call ends (app/outbound.py).
-            outbound.settle_answered(
-                conn, tenant, services.fsm[tenant.slug], services.clock(), call_id
-            )
+            try:
+                outbound.settle_answered(
+                    conn, tenant, services.fsm[tenant.slug], services.clock(), call_id
+                )
+            except Exception:
+                log.exception("settling the callback on call %s failed", call_id)
             return ended
 
         result = run(services, request, "calls.end", call_id, body.model_dump(), fn)

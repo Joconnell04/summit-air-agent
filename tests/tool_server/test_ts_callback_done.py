@@ -6,6 +6,7 @@ office tags the calls they make; the server tags the callbacks it places itself,
 it saw on the call. A background job reads the call log and marks the callback done."""
 
 import sqlite3
+from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
 
 import pytest
@@ -13,7 +14,7 @@ from test_ts_jobs import claim, done, place, services
 from toolkit import UNKNOWN, book, count, first_open, in_area_address
 
 from app import jobs, outbound, owner, records
-from app.fsm import FsmAdapter
+from app.fsm import FsmAdapter, FsmRejected
 from app.settings import TAG_RETRY_MINUTES
 from servicetitan_mock import worldkit
 
@@ -675,3 +676,137 @@ def test_a_tenant_must_name_all_three_callback_tags(tmp_path):
     (folder / "agent.yaml").write_text(text.replace("    no_contact: No contact\n", ""))
     with pytest.raises(ValueError, match="no_contact"):
         Tenant.load(folder)
+
+
+# ---- the callback while the call is going, and the corners of settling -------------------------
+
+
+def test_a_callback_is_not_overdue_while_its_answered_call_is_still_going(agent, clock, mock):
+    claimed, placed = dial(agent, clock)
+    done(agent, claimed["outbound_id"], answered=True)  # reported at pickup
+    clock.advance(minutes=3)
+    report = jobs.run_once(services(agent))
+    assert report["overdue_callbacks"] == []
+    assert count(agent, "SELECT COUNT(*) FROM flags WHERE kind = 'overdue_callback'") == 0
+    confirm_person_and_resolve(agent, placed)
+    agent.end(placed)
+    assert outcome(agent, claimed["outbound_id"])[0] == "resolved"
+    assert count(agent, "SELECT COUNT(*) FROM flags WHERE kind = 'callback_needs_person'") == 0
+    # Resolved, with the tag not yet in the log: still not overdue.
+    clock.advance(minutes=1)
+    conn = agent.db()
+    conn.execute("UPDATE call_outcomes SET tagged = 0")
+    conn.close()
+    assert jobs.run_once(services(agent))["overdue_callbacks"] == []
+
+
+def test_a_callback_the_office_closed_is_not_handed_to_a_person_by_a_stuck_dial(agent, clock, mock):
+    promise_callback(agent)
+    clock.advance(minutes=31)
+    jobs.run_once(services(agent))
+    claim(agent)  # dialing, and the voice layer never reports back
+    office_call(mock, clock)
+    run_jobs(agent)
+    assert callback_status(agent) == "done"
+    clock.advance(minutes=jobs.STUCK_DIALING_MINUTES + 1)
+    assert run_jobs(agent)["callbacks"]["no_report"] == 1
+    assert count(agent, "SELECT COUNT(*) FROM flags WHERE kind = 'callback_needs_person'") == 0
+
+
+def test_two_settles_of_one_call_at_once_leave_one_outcome_and_one_tag(agent, clock, mock):
+    claimed, placed = dial(agent, clock)
+    confirm_person_and_resolve(agent, placed)
+    agent.end(placed)
+    s = services(agent)
+    tenant = s.tenants.default
+    done_by_hand = agent.db()
+    done_by_hand.execute(
+        "UPDATE outbound SET status = 'done', result = 'answered' WHERE id = ?",
+        (claimed["outbound_id"],),
+    )
+    done_by_hand.close()
+
+    def settle(_):
+        conn = agent.db()
+        try:
+            return outbound.settle_callback(
+                conn, tenant, s.fsm[tenant.slug], claimed["outbound_id"], clock(), force=True
+            )
+        finally:
+            conn.close()
+
+    with ThreadPoolExecutor(2) as pool:
+        results = list(pool.map(settle, range(2)))
+    assert sorted(r or "" for r in results) in (["", "resolved"], ["resolved", "resolved"])
+    assert count(agent, "SELECT COUNT(*) FROM call_outcomes") == 1
+    assert tags_on(mock, placed) == [RESOLVED]
+
+
+def test_ending_a_call_never_fails_because_settling_its_callback_did(agent, clock, monkeypatch):
+    claimed, placed = dial(agent, clock)
+    done(agent, claimed["outbound_id"], answered=True)
+
+    def broken(*args, **kwargs):
+        raise RuntimeError("the call log is not what we expected")
+
+    monkeypatch.setattr(outbound, "settle_answered", broken)
+    ended = agent.end(placed)
+    assert (
+        ended["ok"]
+        and agent.db()
+        .execute("SELECT ended_at FROM calls WHERE id = ?", (placed,))
+        .fetchone()["ended_at"]
+    )
+
+
+def test_a_call_that_is_still_talking_is_not_judged_by_the_sweep(agent, clock):
+    claimed, placed = dial(agent, clock)
+    done(agent, claimed["outbound_id"], answered=True)
+    confirm_person_and_resolve(agent, placed)
+    clock.advance(minutes=jobs.STUCK_DIALING_MINUTES + 5)
+    agent.turn(placed, "And one more thing about the tune-up.")  # spoken a moment ago
+    assert run_jobs(agent)["callbacks_settled"] == 0
+    clock.advance(minutes=jobs.STUCK_DIALING_MINUTES + 1)  # then the line goes quiet
+    assert run_jobs(agent)["callbacks_settled"] == 1
+
+
+def test_this_is_followed_by_the_name_confirms_and_a_voicemail_greeting_does_not(
+    agent, clock, scenarios
+):
+    maria = scenarios["repeatCallerOpenJob"]
+    claimed, placed = dial(agent, clock, maria["phone"])
+    agent.say(placed, "Am I speaking with Maria?")
+    agent.turn(placed, "This is Maria.")
+    agent.tool("end_call", placed, reason="resolved")
+    finish(agent, claimed, placed)
+    assert outcome(agent, claimed["outbound_id"])[0] == "resolved"
+
+
+def test_a_number_servicetitan_keeps_refusing_still_goes_to_the_back_of_the_line(
+    agent, clock, monkeypatch
+):
+    promise_callback(agent, system=False)
+    clock.advance(minutes=5)
+
+    def refuse(phone, since=None):
+        raise FsmRejected(400, "rejected", "no")
+
+    monkeypatch.setattr(services(agent).fsm["summit-air"], "calls_to", refuse)
+    run_jobs(agent)
+    assert count(agent, "SELECT COUNT(*) FROM callback_checks") == 1
+
+
+def test_a_tag_that_never_landed_is_flagged_and_the_flag_closes_with_the_callback(
+    agent, clock, mock
+):
+    services(agent).fsm["summit-air"].log_calls_via_debug = False
+    claimed, placed = dial(agent, clock)
+    confirm_person_and_resolve(agent, placed)
+    finish(agent, claimed, placed)
+    clock.advance(minutes=TAG_RETRY_MINUTES + 1)
+    run_jobs(agent)
+    flags = "SELECT COUNT(*) FROM flags WHERE kind = 'callback_tag_failed' AND status = 'open'"
+    assert count(agent, flags) == 1
+    office_call(mock, clock)  # the office tags the call by hand
+    run_jobs(agent)
+    assert callback_status(agent) == "done" and count(agent, flags) == 0
