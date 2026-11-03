@@ -174,3 +174,59 @@ def test_a_dropped_safety_call_that_calls_back_hears_the_lines_first(agent, cloc
     second = agent.start(UNKNOWN)
     assert second["say"] == GAS_LINES
     assert second["data"]["safety"]["action"] == "speak_lines"
+
+
+MARCIA_NO = (
+    "no um definitely not gas the carbon monoxide alarm is quiet too i think it's an old bag of "
+    "trash down there that i forgot about"
+)
+
+
+def test_a_clear_no_to_the_check_stands_the_lines_down_even_naming_a_quiet_alarm():
+    """Eval round 1, vague-smell-cleared: "definitely not gas" and "the alarm is quiet" are a no."""
+    asked = safety.check_caller_turn(
+        "the basement smells kind of off like eggs maybe", "none", None, 0, CFG
+    )
+    assert asked.action == "ask_check"
+    assert safety.check_caller_turn(MARCIA_NO, "checking", "gas", 0, CFG).action == "cleared"
+
+
+@pytest.mark.parametrize(
+    "line,kind",
+    [
+        ("Actually wait, now I smell gas in the kitchen", "gas"),
+        ("I can hear gas hissing, there's a gas leak", "gas"),
+        ("oh no the carbon monoxide alarm is going off now", "co"),
+    ],
+)
+def test_real_gas_wording_after_a_cleared_check_still_fires(line, kind):
+    assert safety.check_caller_turn(line, "cleared", "gas", 0, CFG).action == "speak_lines"
+    assert safety.clear_signal(line, CFG) == kind
+
+
+@pytest.mark.parametrize(
+    "answer",
+    [
+        "um maybe, I'm not sure, it's not gas I think",
+        "definitely not gas, but I don't know, it's kind of strong",
+        "the CO alarm is quiet but I'm not sure about the smell",
+    ],
+)
+def test_an_ambiguous_answer_to_the_check_still_fires(answer):
+    assert safety.check_caller_turn(answer, "checking", "gas", 0, CFG).action == "speak_lines"
+
+
+def test_a_quiet_alarm_outside_the_check_answer_is_not_softened():
+    """The quiet wording only counts as a no in the answer to the check question."""
+    line = "the carbon monoxide alarm is quiet"
+    assert safety.check_caller_turn(line, "none", None, 0, CFG).action == "speak_lines"
+
+
+def test_the_cleared_call_books_through_the_server(agent):
+    call = ready_to_book(agent)
+    assert agent.turn(call, "the basement smells kind of off like eggs maybe")["data"]["safety"][
+        "action"
+    ] == "ask_check"
+    assert agent.turn(call, MARCIA_NO)["data"]["safety"]["action"] == "cleared"
+    assert book(agent, call, first_open(agent, call))["ok"]
+    assert agent.turn(call, "hang on, I smell gas now")["data"]["safety"]["action"] == "speak_lines"

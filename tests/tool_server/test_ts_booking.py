@@ -394,6 +394,90 @@ def test_a_landlord_of_a_two_family_house_is_not_marked_commercial(agent):
     assert "commercial" not in turn["data"]["hints"]
 
 
+def _maria_ready(agent, maria) -> str:
+    started = agent.start(maria["phone"])["data"]
+    loc = started["customers"][0]["locations"][0]
+    call = started["call_id"]
+    agent.turn(call, "I need to move my appointment, something came up at work")
+    agent.confirm_read_back(call, {k: loc[k] for k in ("street", "unit", "city", "zip")})
+    return call
+
+
+def test_a_caller_with_an_open_visit_is_sent_to_reschedule_not_a_second_booking(
+    agent, mock, scenarios
+):
+    """Eval round 1, reschedule-own-booking: book_appointment made a second visit."""
+    maria = scenarios["repeatCallerOpenJob"]
+    call = _maria_ready(agent, maria)
+    before = fsm_jobs(mock)
+    refused = book(agent, call, first_open(agent, call, "no_heat"), job_type="no_heat")
+    assert refused["refused"] == "open_job"
+    assert refused["data"]["job_id"] == maria["jobId"]
+    assert "reschedule_appointment" in refused["data"]["use"]
+    assert fsm_jobs(mock) == before
+
+
+def test_a_confirmed_separate_problem_can_still_be_booked(agent, scenarios):
+    call = _maria_ready(agent, scenarios["repeatCallerOpenJob"])
+    booked = agent.tool(
+        "book_appointment",
+        call,
+        job_type="tune_up",
+        slot=first_open(agent, call),
+        details=DETAILS,
+        separate_problem=True,
+    )
+    assert booked["ok"], booked
+
+
+def test_an_open_visit_at_another_address_does_not_block_a_booking(agent, scenarios):
+    call = agent.start(scenarios["repeatCallerOpenJob"]["phone"])["data"]["call_id"]
+    agent.turn(call, "Hi, the heat's out at my other place.")
+    agent.confirm_read_back(call, in_area_address(41))
+    assert book(agent, call, first_open(agent, call))["ok"]
+
+
+def test_an_owner_who_lives_downstairs_with_a_tenant_upstairs_can_book(agent):
+    """Eval round 1, tune-up-known-caller: "I own the building" with one tenant is a home."""
+    call = ready_to_book(agent)
+    for line in (
+        "I'm in the downstairs unit, and the boiler's in the basement. My tenant lives upstairs.",
+        "Yes, that's right. And yes, I own the building and I approve the work.",
+    ):
+        assert "commercial" not in agent.turn(call, line)["data"]["hints"]
+    assert book(agent, call, first_open(agent, call))["ok"]
+
+
+@pytest.mark.parametrize(
+    "line",
+    ["We own the building, it's a three-family", "I own an apartment building in Flatbush"],
+)
+def test_an_owner_of_three_or_more_units_is_still_commercial(line):
+    assert sounds_commercial(line, AGENT["commercial"]), line
+
+
+def test_the_commercial_note_and_refusal_give_the_model_nothing_to_parrot():
+    """The model once read out "the caller describes this as a business". The note it gets says
+    what to do, never why, and the refusal it gets is the caller-facing line itself."""
+    from prompts.assemble import SERVER_NOTES
+
+    note = SERVER_NOTES["commercial"]
+    assert "caller describ" not in note.lower() and "building you manage" not in note
+    assert "as written" in note
+    line = " ".join(AGENT["lines"]["commercial"].split())
+    assert line.startswith("Thanks for thinking of us.")
+    for internal in ("caller", "system", "describ", "treat", "manage", "flag"):
+        assert internal not in line.lower(), internal
+
+
+def test_the_server_refusal_for_a_commercial_call_is_the_journey_line(agent):
+    call = ready_to_book(agent)
+    agent.turn(call, "I run a restaurant and the heat is out")
+    refused = book(agent, call, first_open(agent, call))
+    assert refused["refused"] == "customer_type"
+    assert refused["say"] == " ".join(AGENT["lines"]["commercial"].split())
+
+
 def test_a_number_the_caller_only_states_is_not_enough_to_change_a_visit(agent):
     owner = ready_to_book(agent, "(212) 555-0930", in_area_address(30))
     job_id = book(agent, owner, first_open(agent, owner))["data"]["booking_id"]

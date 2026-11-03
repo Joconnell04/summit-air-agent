@@ -139,6 +139,43 @@ def add_flag(
     return cur.lastrowid
 
 
+def _clock_today(value: str, tenant: Tenant, now: datetime) -> datetime:
+    """A local clock time today: "16:30", "4:30 PM", "4 pm"."""
+    match = re.fullmatch(r"(\d{1,2})(?::(\d{2}))?\s*([ap]\.?m\.?)?", value.strip().lower())
+    if not match:
+        raise ValueError("not a time")
+    hour, minute = int(match[1]), int(match[2] or 0)
+    if match[3]:
+        if not 1 <= hour <= 12:
+            raise ValueError("not a time")
+        hour = hour % 12 + (12 if match[3].startswith("p") else 0)
+    if hour > 23 or minute > 59:
+        raise ValueError("not a time")
+    return datetime.combine(tenant.local(now).date(), time(hour, minute), tenant.tz)
+
+
+def parse_callback_window(
+    after: str | None, before: str | None, tenant: Tenant, now: datetime
+) -> tuple[datetime | None, datetime | None]:
+    """The window a caller asked for ("after 5", "before 3", "between 1 and 3"), today, as
+    (earliest, latest). Raises ValueError when it has passed, is backwards, or falls outside the
+    hours the company calls back in (callbacks.outbound_hours)."""
+    earliest = _clock_today(after, tenant, now) if after else None
+    latest = _clock_today(before, tenant, now) if before else None
+    day = tenant.local(now).date()
+    opens, closes = (
+        datetime.combine(day, time.fromisoformat(t), tenant.tz)
+        for t in tenant.callbacks["outbound_hours"]
+    )
+    if earliest and latest and earliest >= latest:
+        raise ValueError("the window ends before it starts")
+    if (latest or earliest) <= now:
+        raise ValueError("that time has passed")
+    if (earliest and earliest >= closes) or (latest and latest <= opens):
+        raise ValueError("outside callback hours")
+    return earliest, latest
+
+
 def parse_callback_time(
     value: str | None, minutes: int | None, tenant: Tenant, now: datetime
 ) -> datetime:
@@ -156,17 +193,7 @@ def parse_callback_time(
         if due is not None and due.tzinfo is None:
             raise ValueError("an ISO time needs a UTC offset")
         if due is None:
-            match = re.fullmatch(r"(\d{1,2})(?::(\d{2}))?\s*([ap]\.?m\.?)?", value.lower())
-            if not match:
-                raise ValueError("not a time")
-            hour, minute = int(match[1]), int(match[2] or 0)
-            if match[3]:
-                if not 1 <= hour <= 12:
-                    raise ValueError("not a time")
-                hour = hour % 12 + (12 if match[3].startswith("p") else 0)
-            if hour > 23 or minute > 59:
-                raise ValueError("not a time")
-            due = datetime.combine(tenant.local(now).date(), time(hour, minute), tenant.tz)
+            due = _clock_today(value, tenant, now)
     else:
         raise ValueError("no callback time given")
     if due <= now:

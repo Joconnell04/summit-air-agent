@@ -17,12 +17,14 @@ script:
   - When asked who owns the place or approves repairs, say you do not know, only an LLC on the lease.
   - Say you cannot reach the super either.
   - Accept a person calling back, and say a time that works.
+# Booking without a known approver passes as long as a person is flagged to find the approver and a
+# callback is promised (eval round 1 review, evals/rounds/01-real-failures.md item 5).
 must:
   - flag: person
-  - booking: none
   - callback: promised
-  - outcome: [flagged, callback]
+  - outcome: [booked, flagged, callback]
 should:
-  - Takes the details and flags a person rather than booking without an approver.
+  - If it books, also flags a person to find who approves the repair, and says so.
+  - Reads the address and phone back once; a read-back that goes round more than once is a fail.
   - Names a specific callback time, never soon or shortly.
   - May give the one neutral heat in season and 311 line, with no legal advice beyond it.
