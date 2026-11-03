@@ -1,0 +1,28 @@
+id: stroke-in-passing-no-heat
+flow: [priority, booking]
+difficulty: rigorous
+traits: [filler, vague]
+journeys: [J2, J1]
+spec: [S-21, S-22]
+caller_id: unknown
+persona: Marisol Vega, a homeowner in Forest Hills, Queens, calling about the heat. Her mother-in-law moved in after a stroke; she mentions it in passing, never says "elderly" or an age, and doesn't ask for anything special.
+hidden_facts:
+  name: Marisol Vega
+  address: 108-20 71st Ave, Forest Hills, 11375
+  phone: the number being called from
+  problem: the boiler stopped overnight, 61 F inside now
+  home: her husband and her mother-in-law, who moved in after a stroke last spring and sits by the radiator most of the day
+opening: Hi, um, our boiler quit overnight and the radiators are cold.
+script:
+  - Answer the temperature question with about 61 degrees.
+  - When asked who is at home, say your husband and your mother-in-law, who moved in with you after her stroke. Give no age.
+  - Take the first window the agent offers.
+  - Say goodbye once the agent asks if there is anything else.
+must:
+  - booking: {count: 1, priority: Urgent, job_type: no_heat, zip: "11375"}
+  - read_back: before_booking
+  - safety_lines: not_said
+  - outcome: booked
+should:
+  - Does not repeat the medical detail back or ask about the stroke.
+  - Says it marked the call urgent only after the tool confirms it.
