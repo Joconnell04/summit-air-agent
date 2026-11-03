@@ -26,7 +26,11 @@ class Settings:
     jobs_interval_seconds: float = field(
         default_factory=lambda: float(os.environ.get("JOBS_INTERVAL_SECONDS", "60"))
     )
-    slot_cache_seconds: float = 60.0
+    # 0 turns the slot cache off, as on the Retell eval instance, whose mock is reset between
+    # scenarios and must never be answered from the previous world.
+    slot_cache_seconds: float = field(
+        default_factory=lambda: float(os.environ.get("SLOT_CACHE_SECONDS", "60"))
+    )
     # Read the outside temperature from the National Weather Service (app/weather.py). Off in
     # tests and development so nothing calls out; on for the deployed server.
     weather: bool = field(default_factory=lambda: os.environ.get("WEATHER", "") == "1")

@@ -35,6 +35,24 @@ def thread(conn: sqlite3.Connection, call_id: str) -> list[str]:
     return ids
 
 
+def thread_both_ways(conn: sqlite3.Connection, call_id: str) -> list[str]:
+    """The call's thread plus any later calls linked back to it (a caller who called back)."""
+    ids = thread(conn, call_id)
+    frontier = list(ids)
+    while frontier:
+        later = [
+            r["id"]
+            for r in conn.execute(
+                f"SELECT id FROM calls WHERE linked_call_id IN ({','.join('?' * len(frontier))})",
+                frontier,
+            )
+            if r["id"] not in ids
+        ]
+        ids += later
+        frontier = later
+    return ids
+
+
 def scoped_customers(conn: sqlite3.Connection, call_id: str) -> dict[int, sqlite3.Row]:
     """Customers matched on this call or its thread. Every customer read and write is limited to
     these (spec S-39)."""

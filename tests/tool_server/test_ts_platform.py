@@ -318,3 +318,10 @@ def test_healthz_reports_database_fsm_and_worker_heartbeat(agent, clock):
     assert agent.client.get("/healthz").json()["data"]["workers"]["livekit"]["stale"] is False
     clock.now += timedelta(minutes=5)
     assert agent.client.get("/healthz").json()["data"]["workers"]["livekit"]["stale"] is True
+
+
+def test_the_slot_cache_can_be_turned_off_by_environment(monkeypatch):
+    from app.settings import Settings
+
+    monkeypatch.setenv("SLOT_CACHE_SECONDS", "0")
+    assert Settings().slot_cache_seconds == 0
