@@ -163,11 +163,12 @@ def start(
 def _record_known_out_of_area(
     conn: sqlite3.Connection, call_id: str, customers: list[dict], now: datetime
 ) -> None:
-    """A known caller whose every location on file is outside the area is counted as out of area
-    at the start, so the count doesn't depend on the agent checking the ZIP (spec S-28). If they
+    """A known caller whose one location on file is outside the area is counted as out of area at
+    the start, so the count doesn't depend on the agent checking the ZIP (spec S-28). With several
+    locations the call's ZIP isn't known yet, so it waits for the read-back or a ZIP check. If they
     give a new address inside the area and book, the owner view leaves the call out of the count."""
     locations = [loc for c in customers for loc in c["locations"]]
-    if not locations or any(loc["in_service_area"] for loc in locations):
+    if len(locations) != 1 or locations[0]["in_service_area"]:
         return
     with tx(conn):
         for loc in locations:
