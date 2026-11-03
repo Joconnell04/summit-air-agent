@@ -12,9 +12,9 @@ The route through the build. Claude drives it: after each step closes, Claude ch
 - [x] Pipeline shape and model profiles (#5)
 - [x] Eval design: scenarios, scoring, tooling (#6)
 - [x] Latency budget (#7)
-- [ ] Build briefs, one per lane (#8)
+- [x] Build briefs, one per lane (#8)
 
-Exit: spec locked, the three decisions in DECISIONS.md, briefs merged. Export the design transcript excerpts into docs/ai-process/transcripts/.
+Exit: spec locked, the three decisions in DECISIONS.md, briefs merged. Export the design transcript excerpts into docs/ai-process/transcripts/. Done: docs/ai-process/transcripts/design-session.md.
 
 ## 2. Build (parallel sessions, one per brief)
 
