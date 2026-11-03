@@ -1,0 +1,3 @@
+# Installed by deploy/summit-air/deploy.sh into the user crontab (no root needed).
+@reboot sleep 15 && sh $HOME/summit-air/app/deploy/summit-air/run.sh
+* * * * * sh $HOME/summit-air/app/deploy/summit-air/watchdog.sh

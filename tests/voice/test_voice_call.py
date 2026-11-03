@@ -53,7 +53,9 @@ def test_a_gas_smell_makes_the_worker_say_the_servers_lines_word_for_word(agent,
     agent.start(call_id="call-1")
     call = make_call(connect)
     with pytest.raises(StopResponse):
-        asyncio.run(call.caller_line(caller("It kind of smells like gas in here, and the heat's out")))
+        asyncio.run(
+            call.caller_line(caller("It kind of smells like gas in here, and the heat's out"))
+        )
     assert call.session.said == [(GAS_LINES, False)]
 
 
@@ -104,7 +106,9 @@ def test_lines_are_posted_in_the_order_they_happened(agent, connect):
 
     asyncio.run(conversation())
     conn = agent.db()
-    rows = conn.execute("SELECT speaker FROM turns WHERE call_id = 'call-1' ORDER BY seq").fetchall()
+    rows = conn.execute(
+        "SELECT speaker FROM turns WHERE call_id = 'call-1' ORDER BY seq"
+    ).fetchall()
     conn.close()
     assert [r[0] for r in rows] == ["agent", "caller", "agent", "caller"]
 

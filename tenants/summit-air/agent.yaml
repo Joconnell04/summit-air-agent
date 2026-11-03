@@ -216,6 +216,11 @@ voice:
     smell gas, hang up and call 911 from outside.
   # A voicemail left while every line was busy gets a callback within this. ASSUMED.
   voicemail_callback_minutes: 60
+  # Played by Twilio when the voice worker is down (scripts/phone/fallback.py), then a voicemail.
+  fallback: >-
+    Thanks for calling Summit Air. If you smell gas, hang up and call 911 from outside. We can't take
+    your call right now. Please leave your name, number and what's going on after the tone, and we'll
+    call you back.
   outbound_greeting: Hi, this is Summit Air calling about {reason}.
   outbound_voicemail: >-
     Hi, this is Summit Air calling about your appointment. Please give us a call back at {phone}.

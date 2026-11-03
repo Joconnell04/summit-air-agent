@@ -45,7 +45,9 @@ def test_a_tool_call_posts_to_the_server_with_the_call_id(agent, connect):
     result = json.loads(asyncio.run(tools["check_service_area"]({"zip": "11231"}, None)))
     assert result["ok"] is True
     conn = agent.db()
-    row = conn.execute("SELECT * FROM tool_calls WHERE call_id = 'call-1' AND tool = 'check_service_area'").fetchone()
+    row = conn.execute(
+        "SELECT * FROM tool_calls WHERE call_id = 'call-1' AND tool = 'check_service_area'"
+    ).fetchone()
     conn.close()
     assert row is not None
 
