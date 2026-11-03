@@ -471,7 +471,9 @@ def add_routes(app: FastAPI) -> None:
         content, note = _edit_form(form)
         conn = services.connect()
         try:
-            _saved, errors = rules.save_draft(conn, found, content, author, note, services.clock())
+            _saved, errors = rules.save_draft(
+                conn, found, content, author, note, services.clock(), services.guidance_check
+            )
             if errors:
                 return edit_page(request, found, tenant, conn, content, note, errors, 422)
             if form.get("publish"):
