@@ -84,6 +84,16 @@ class ToolServer:
         response.raise_for_status()
         return response.json()
 
+    def final_trace(self, call_id: str, wait_s: float = 30, every_s: float = 1) -> dict:
+        """The call's record once the call has ended. On Retell the end arrives by webhook a
+        moment after the chat ends; a call that never ends is returned as it is."""
+        deadline = time.monotonic() + wait_s
+        trace = self.trace(call_id)
+        while trace["call"]["ended_at"] is None and time.monotonic() < deadline:
+            time.sleep(every_s)
+            trace = self.trace(call_id)
+        return trace
+
 
 class World:
     def __init__(self, workdir: Path, seed: tuple[Path, dict], start: datetime):

@@ -1,9 +1,9 @@
 """The agents under test. Each one is driven a caller line at a time and answers with what it said,
 which tools it called and how long the caller waited, so every stack is scored the same way.
 
-- `livekit`: our stack's brain in process. The same prompts (prompts/*.md), the same tools
-  (app/tools.py) and the same tool server as the LiveKit worker, without audio. Safety text from
-  the server is spoken as given, never generated, as the worker does.
+- `livekit`: our stack's brain in process. The same prompt and tool list as the LiveKit worker
+  (prompts/assemble.py, built from prompts/ and app/tools.py) and the same tool server, without
+  audio. Safety text from the server is spoken as given, never generated, as the worker does.
 - `retell`: the Retell baseline through Retell's text chat API (evals/retell_chat.py).
 """
 import hashlib
@@ -14,6 +14,8 @@ import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
+import yaml
+
 from app.tools import TOOLS
 from evals.models import Model, Usage
 from evals.results import TurnTiming
@@ -21,6 +23,7 @@ from evals.world import ToolServer
 
 ROOT = Path(__file__).resolve().parent.parent
 PROMPTS_DIR = ROOT / "prompts"
+TENANTS_DIR = ROOT / "tenants"
 # Used only while prompts/ holds no agent prompt yet, so the harness can be run end to end.
 STANDIN_PROMPT = Path(__file__).resolve().parent / "standin_prompt.md"
 MAX_HOPS = 6
@@ -41,9 +44,12 @@ class AgentTurn:
 
 
 def prompt_files(prompts_dir: Path = PROMPTS_DIR) -> list[Path]:
-    """The agent's prompt files, in name order; README and the eval prompts are not part of it."""
+    """The agent's prompt files, in name order (README and the eval prompts left out), or the
+    stand-in while there are none. The run hash covers these."""
     files = sorted(p for p in prompts_dir.glob("*.md") if p.name != "README.md")
-    return files or [STANDIN_PROMPT]
+    if not files:
+        return [STANDIN_PROMPT]
+    return files + sorted(prompts_dir.glob("*.yaml")) + sorted(prompts_dir.glob("*.py"))
 
 
 def tool_specs() -> list[dict]:
@@ -64,18 +70,23 @@ def tool_specs() -> list[dict]:
     return specs
 
 
-def _brain():
-    """The voice lane's own prompt and tool builders, if it ships them (voice/brain.py)."""
+def _assemble():
+    """The voice lane's prompt and tool builder (prompts/assemble.py), when it is in the tree."""
     try:
-        return importlib.import_module("voice.brain")
+        return importlib.import_module("prompts.assemble")
     except ImportError:
         return None
 
 
-def system_prompt(start_data: dict, prompts_dir: Path = PROMPTS_DIR) -> str:
-    brain = _brain()
-    if brain and hasattr(brain, "system_prompt"):
-        return brain.system_prompt(start_data)
+def job_types(tenant_slug: str) -> list[str]:
+    config = yaml.safe_load((TENANTS_DIR / tenant_slug / "config.yaml").read_text())
+    return [j["code"] for j in config["job_types"] if j.get("active", True)]
+
+
+def system_prompt(start_data: dict, prompts_dir: Path = PROMPTS_DIR, now=None) -> str:
+    assemble = _assemble()
+    if assemble:
+        return assemble.instructions(start_data, now)
     parts = [p.read_text().strip() for p in prompt_files(prompts_dir)]
     context = json.dumps(start_data, indent=1, default=str)
     parts.append(f"## This call\n\nWhat the server found before the greeting:\n\n{context}")
@@ -88,25 +99,72 @@ def idempotency_key(call_id: str, name: str, args: dict) -> str:
     return hashlib.sha256(raw.encode()).hexdigest()[:32]
 
 
+def assembled_tool_specs(tenant_slug: str) -> list[dict]:
+    """The worker's tool list, in the Messages API shape."""
+    assemble = _assemble()
+    codes = assemble.job_types(TENANTS_DIR / tenant_slug) if hasattr(assemble, "job_types") else (
+        job_types(tenant_slug))
+    return [
+        {"name": t["name"], "description": t["description"], "input_schema": t["parameters"]}
+        for t in assemble.tool_specs(codes)
+    ]
+
+
+def greeting(start_data: dict) -> str | None:
+    """The worker's fixed opening line from the tenant's `voice` lines, when both exist."""
+    assemble = _assemble()
+    agent_yaml = TENANTS_DIR / start_data["tenant"]["slug"] / "agent.yaml"
+    voice = yaml.safe_load(agent_yaml.read_text()).get("voice")
+    if assemble is None or not hasattr(assemble, "greeting") or not voice:
+        return None
+    return assemble.greeting(start_data, voice)
+
+
+def server_notes(hints: list[str]) -> list[str]:
+    assemble = _assemble()
+    if assemble is not None and hasattr(assemble, "server_notes"):
+        return assemble.server_notes(hints)
+    return [f"(Server note: {HINT_NOTES[h]})" for h in hints if h in HINT_NOTES]
+
+
+def spoken_by_code(name: str, envelope: dict) -> str | None:
+    """Tool results the worker speaks word for word with no model step: a refusal by the safety
+    gate, and the safety sign-off an end_call returns."""
+    say = envelope.get("say") or ""
+    if envelope.get("refused") == "gate_safety" and say:
+        return say
+    if name == "end_call" and envelope.get("ok") and say:
+        return say
+    return None
+
+
 class InProcessAgent:
-    def __init__(self, server: ToolServer, model: Model, call_id: str, caller_id: str):
+    def __init__(self, server: ToolServer, model: Model, call_id: str, caller_id: str,
+                 clock=None):
         self.server = server
         self.model = model
         self.call_id = call_id
         self.caller_id = caller_id
+        self.clock = clock
         self.messages: list[dict] = []
         self.system = ""
-        brain = _brain()
-        self.tools = brain.tool_specs() if brain and hasattr(brain, "tool_specs") else tool_specs()
+        self.tools: list[dict] = []
 
     def start(self) -> AgentTurn:
         started = self.server.start(self.call_id, self.caller_id)
-        self.system = system_prompt(started["data"])
+        now = self.clock() if self.clock else None
+        self.system = system_prompt(started["data"], now=now)
+        slug = started["data"]["tenant"]["slug"]
+        self.tools = assembled_tool_specs(slug) if _assemble() else tool_specs()
         safety = started["data"].get("safety")
         if safety and started["say"]:
             # A dropped safety call carries on: the lines come first on this call too.
             self.messages.append({"role": "user", "content": "(The call has connected.)"})
             return self._speak_from_code(started["say"], time.perf_counter())
+        opening = greeting(started["data"])
+        if opening:
+            self.messages.append({"role": "user", "content": "(The call has connected.)"})
+            return self._speak_from_code(opening, time.perf_counter())
         return self._think("(The call has connected. Greet the caller.)", time.perf_counter())
 
     def hear(self, caller_text: str) -> AgentTurn:
@@ -116,9 +174,8 @@ class InProcessAgent:
         if safety.get("action") in SPOKEN_FROM_CODE and result["say"]:
             self.messages.append({"role": "user", "content": caller_text})
             return self._speak_from_code(result["say"], t0)
-        notes = [HINT_NOTES[h] for h in result["data"].get("hints", []) if h in HINT_NOTES]
-        content = caller_text + "".join(f"\n(Server note: {n})" for n in notes)
-        return self._think(content, t0)
+        notes = server_notes(result["data"].get("hints", []))
+        return self._think("\n".join([caller_text, *notes]), t0)
 
     def _speak_from_code(self, text: str, t0: float) -> AgentTurn:
         self.messages.append({"role": "assistant", "content": text})
@@ -145,18 +202,24 @@ class InProcessAgent:
                     first_word = hop_start + reply.first_token_ms / 1000
             if not reply.tool_uses:
                 break
-            results = []
+            results, from_code = [], None
             for use in reply.tool_uses:
                 called = time.perf_counter()
                 envelope = self._call_tool(use["name"], use["input"])
                 tool_ms += (time.perf_counter() - called) * 1000
                 if use["name"] == "end_call" and envelope.get("ok"):
                     ended = bool((envelope.get("data") or {}).get("hang_up"))
+                from_code = from_code or spoken_by_code(use["name"], envelope)
                 results.append(
                     {"type": "tool_result", "tool_use_id": use["id"],
                      "content": json.dumps(envelope)}
                 )
             self.messages.append({"role": "user", "content": results})
+            if from_code:
+                self.messages.append({"role": "assistant", "content": from_code})
+                spoken.append(from_code)
+                first_word = first_word or time.perf_counter()
+                break
             if ended:
                 break
         text = " ".join(spoken)

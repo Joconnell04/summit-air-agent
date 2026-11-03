@@ -76,6 +76,41 @@ def test_with_the_retell_lane_here_a_run_opens_its_chats_through_it():
     from voice.retell.chat import open_chat
 
     env = {k: "https://x" for k in ("RETELL_API_KEY", "RETELL_CHAT_AGENT_ID",
-                                    "RETELL_EVAL_TOOL_SERVER", "DEBUG_TOKEN")}
+                                    "RETELL_EVAL_TOOL_SERVER", "RETELL_EVAL_DEBUG_TOKEN")}
     retell_agent, _server = open_retell("eval-x", "(212) 555-0999", env=env)
     assert retell_agent.open_chat is open_chat
+
+
+def test_the_eval_servers_token_goes_on_every_request_and_to_open_chat(monkeypatch):
+    import evals.retell_chat as rc
+
+    monkeypatch.setattr(rc, "_open_chat", lambda: "opener")
+    env = {"RETELL_API_KEY": "k", "RETELL_CHAT_AGENT_ID": "a",
+           "RETELL_EVAL_TOOL_SERVER": "https://eval.example", "RETELL_EVAL_DEBUG_TOKEN": "tok"}
+    agent, server = open_retell("eval-x", "(212) 555-0999", env=env)
+    assert server.client.headers["X-Debug-Token"] == "tok"
+    assert server.debug_token == "tok"
+    assert agent.env["DEBUG_TOKEN"] == "tok"
+
+
+def test_the_record_is_read_once_the_webhook_has_ended_the_call():
+    from evals.world import ToolServer
+
+    states = iter([None, None, "2026-11-02T14:05:00Z"])
+
+    def handler(request):
+        return httpx.Response(200, json={"call": {"ended_at": next(states)}})
+
+    server = ToolServer(httpx.Client(base_url="https://eval.example",
+                                     transport=httpx.MockTransport(handler)), "tok")
+    assert server.final_trace("eval-x", wait_s=5, every_s=0)["call"]["ended_at"]
+
+
+def test_a_call_that_never_ends_is_returned_after_the_wait():
+    from evals.world import ToolServer
+
+    server = ToolServer(httpx.Client(
+        base_url="https://eval.example",
+        transport=httpx.MockTransport(lambda r: httpx.Response(200, json={"call": {"ended_at": None}})),
+    ), "tok")
+    assert server.final_trace("eval-x", wait_s=0, every_s=0)["call"]["ended_at"] is None
