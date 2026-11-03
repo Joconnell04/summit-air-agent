@@ -12,6 +12,76 @@ Discussion: docs/ai-process/transcripts/... or docs/explorations/...
 Issue: #N
 -->
 
+## 026. Three more bake-off entrants, scored on a simulated audio rig
+
+Decided: ElevenLabs Agents (in custom-LLM mode, on our Haiku brain and tool server), OpenAI Realtime and Gemini Live join the bake-off beside our stack, Retell and the Vapi test call. All are scored first on a simulated audio rig that streams synthesized caller speech to each platform and times the first sound back, so nobody dials. Real calls go only to the final two. A newcomer is chosen only if its plain-turn median is at least 0.3 s lower and every must-pass scenario passes with the safety lines word for word on three repeats; anything less is a tie, and a tie keeps our stack.
+Why: nothing published beats our design's reply delay (about 1.0 s, DECISIONS.md 006, against a best managed median of 1.30 s, SOURCE: OpenBenchmarks via exploration 013), so the claim needs measuring against the strongest alternatives on the same brain and scenarios. ElevenLabs keeps hang-ups on our server in custom-LLM mode; the two speech-to-speech models test whether one model doing everything can be fast enough. Gemini Live stays in although it was slow in one independent test (3.05 s mean, SOURCE: exploration 013), since on the rig it costs little to measure ourselves.
+Considered: ElevenLabs only; adding nothing; Pipecat, Deepgram's Voice Agent API and Telnyx (kept as reserves); Bland, Synthflow, Hume and Cartesia's managed agents (our server can't control the call).
+Would change if: the rig's delays disagree with real calls by more than the gap between entrants, in which case the phone loop is used for every entrant.
+Discussion: docs/decisions/62-bakeoff-entrants.md, docs/explorations/013-more-bakeoff-entrants.md
+Issue: #62
+
+## 025. Real test calls by Jackson; non-Anthropic seats in the eval harness
+
+Decided: Jackson makes the real test calls himself (the 10 live calls in #9 and the human test pass) rather than recruiting 6 to 8 outside callers. The eval harness may use a non-Anthropic model as the simulated caller or the grader, in a limited scope, and paid runs that test a hypothesis or compare options are approved when kept small.
+Why: outside callers need scheduling and briefing for little gain at this size, while the self-grading risk in exploration 008 is better reduced by not having Claude play every seat: a caller or grader from another provider is less likely to share the agent's blind spots.
+Considered: outside callers who haven't seen the spec (exploration 008, section 5); keeping every seat on Claude (cheapest, but the suite would grade itself).
+Would change if: Jackson's calls and the mixed-provider runs keep passing while real calls later find failures, a sign the suite needs callers who think less like its author.
+Discussion: docs/explorations/008-eval-set-quality.md, section 5
+Issue: #9
+
+## 024. Carbon monoxide check for unsafe heating, asked only when it applies
+
+Decided: when a caller says the home is being heated with an oven, stove, generator, grill or another fuel-burning source indoors, the agent asks the carbon monoxide check question once; symptoms or an alarm in the answer bring the fixed lines as today. The trigger is narrow, so an ordinary mention ("the gas stove works") asks nothing. The agent never suggests one of those as a way to get warm.
+Why: indoor fuel-burning heat is a common cause of carbon monoxide poisoning in a no-heat emergency, and the question costs one turn on the calls where it matters. Asked on every no-heat call, it would alarm callers for no reason and slow the call.
+Considered: no question, only the raised priority already in place (misses a caller already feeling symptoms); asking on every no-heat call (overfires).
+Would change if: evals or real calls show the question firing on ordinary mentions, or a caller with symptoms getting past it.
+Discussion: morning brief, item 3; the round logged in docs/ai-process/coauthoring.md
+
+## 023. Local names said and heard right from one tenant list
+
+Decided: 15 sourced NYC street and neighborhood names in one per-tenant pronunciation list that feeds both the voice (a Cartesia pronunciation dictionary) and hearing (Deepgram keyterms, on now). Kosciuszko is spoken koss-ee-OSS-koh, and all three common readings are accepted when heard. Substitution happens at the voice, never inside the server's read-back text, so the stored address stays as written. A 30-clip Cartesia check (about $0.09, ASSUMED) confirms the readings; more names are added as real calls turn up misses.
+Why: a wrong "HOUSE-ton" or a misheard street name marks the agent as not local within one sentence, and a misheard street can book the wrong address. One list keeps speaking and hearing in step.
+Considered: spelling names phonetically in the prompt (the model would write the phonetic form into the read-back); a larger unsourced list (guesses about how locals say names).
+Would change if: keyterms cost more than about $12 a month at real volume (SOURCE: deepgram.com/pricing, exploration 011) without fewer misheard streets, or Cartesia's dictionary changes meaning between API versions.
+Discussion: docs/explorations/011-local-pronunciation.md
+Issue: #58
+
+## 022. Rules by call stage: a rulebook the owner reads, guidance the owner edits, gates nobody loosens
+
+Decided: the owner view shows every rule the agent follows, grouped by call stage (before hello, opening, whole call, booking, closing, after the call), each marked locked or editable and showing where it is enforced. The owner can then add short guidance per stage and reword four lines (greeting, callback opening, anything-else and goodbye). An edit is a draft until the must-pass evals pass against it; only then can it be published. No screen loosens a gate or changes the safety script; those change only through engineers and `/round`. Edits use a separate edit login, live in a versioned SQLite table over the YAML defaults (audit trail and rollback, no git writes from the server), and the server, not the model, decides the stage. The demo shows a version already in the history with its gate result rather than a live edit.
+Why: owners of HVAC shops tune their call scripts, and ServiceTitan's own voice agent lets them edit opening and closing messages and follow-up questions (exploration 009). Of the 28 rules, 13 include a server gate and only 4 rest on the prompt alone, so the editable part is the manner of the call, not its rules. Two edits that look harmless would break a gate without touching code: rewording the read-back, which doubles as the home-or-business check, and lowering a priority bracket, so both are locked.
+Considered: a read-only rulebook only (cheaper, but the owner can't make the agent theirs); condition and action rules from a fixed menu (powerful, but an owner could build a rule that undoes a gate); edits written straight to YAML (no audit trail, and the server would commit to git).
+Would change if: owners ask to change numbers such as callback windows, in which case tighten-only numbers are added behind the same gate.
+Discussion: docs/explorations/009-rules-by-call-stage.md, docs/ai-process/ideas-round-questions.md
+Issue: #56
+
+## 021. Templates layered by trade, then by company, in the repo
+
+Decided: a `trades/hvac/` layer holds what any residential HVAC shop shares, and each company folder under `tenants/` extends it with its own values. Not built as Vapi assistants.
+Why: a second HVAC company then starts from the trade, not from a copy of Summit Air, and a plumbing trade is one new folder. Vapi has no inheritance between assistants (exploration 010), and building templates there would move rules out of server code into the prompt.
+Considered: Vapi assistants per trade and company; copying the tenant folder, as S-46 does today (works, but every fix has to be made in each copy).
+Would change if: the bake-off chooses a managed platform, in which case its own template features are weighed against this layer.
+Discussion: docs/explorations/010-vapi.md
+Issue: #57
+
+## 020. Vapi in the bake-off as a comparison and one test call
+
+Decided: Vapi is added to the bake-off as a written comparison plus one test call on Vapi's free number after the main run (about $0.20, ASSUMED), not a full entrant (about $3 and 2 to 3 days, ASSUMED).
+Why: Vapi's one advantage over Retell for this build is that a tool result can be spoken word for word with the model skipped, which could solve the paraphrased safety lines Retell showed. One gas call tests that claim directly; the rest of Vapi is the same trade as Retell.
+Considered: a full entrant on the eval suite; leaving Vapi out (decision 004 set it aside before this capability was known).
+Would change if: the test call shows the exact-wording claim holds and Vapi matches our stack on reply delay, in which case it becomes a full entrant.
+Discussion: docs/explorations/010-vapi.md
+Issue: #57
+
+## 019. An older adult is 60 and over, in line with NYC Health
+
+Decided: for priority, an older adult is 60 and over (was 65, the CDC line).
+Why: alignment with local standards: NYC Health's heat and cold guidance names adults 60 and over as at risk (exploration 007), and Summit Air serves New York callers under New York rules.
+Considered: 65 (CDC); 70 (the first draft).
+Would change if: NYC Health changes its line.
+Discussion: docs/explorations/007-priority-brackets.md, morning brief item 2
+
 ## 018. Owner view second markup round: indexed search, technical mode, custom ranges
 
 Decided: from Jackson's notes on the revised pages. Search moves to a full-text index of every call on record (SQLite FTS5, `app/search.py`): calls, jobs, flags, leads and callbacks, and every line said, kept current by the jobs loop and before each search, with results grouped by kind, matches highlighted, and suggestions as you type. Technical details return as a switch on the call page, off by default, in place of a "Details" disclosure on every step. Results puts the chart first, renames the ledger "Performance" with one line per measure, and takes a custom range up to 92 days. The Jobs table's columns can be resized and Job is widest by default. The report box sits at one height with its select and button, and the Jobs head names ServiceTitan once.
@@ -133,7 +203,7 @@ Issue: #5
 ## 005. A new Vultr server in New Jersey, just for Summit Air
 
 Decided: run the tool server and the voice program on a new Vultr server (2 vCPU, 4 GB, New Jersey, Ubuntu 24.04, $20 a month billed hourly), not on the existing shared server.
-Why: the shared server runs Epic's client services, is too small for 5 calls at once, gives us no admin rights (so it needed an ngrok tunnel) and sits in Atlanta. The new one is the cheapest option in the New York area, uses the existing Vultr account, isolates Summit Air from client work, and can be deleted after the interview.
+Why: the shared server runs another project's services, is too small for 5 calls at once, gives us no admin rights (so it needed an ngrok tunnel) and sits in Atlanta. The new one is the cheapest option in the New York area, uses the existing Vultr account, isolates Summit Air from other work, and can be deleted after the interview.
 Considered: keeping or resizing the shared server; DigitalOcean (New York) and Akamai Linode (Newark) at about $24 a month; Hetzner (prices unclear after its 2026 increases, not near New York); usage-billed platforms such as Fly.io (no saving for an always-on program).
 Would change if: call volume needs more than about 5 calls at once (resize, or add a second server as a hot spare).
 Discussion: docs/decisions/16-server.md

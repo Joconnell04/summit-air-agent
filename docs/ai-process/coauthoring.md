@@ -164,3 +164,22 @@ Changed:
 - New `callback_opening_unknown` keeps the old line for a caller with no single first name on file, so the opening never guesses between people.
 Commit: 34dcda1
 Status: open
+
+## spec r7 (amendment after lock: the ideas round, before phase 3)
+Feedback (verbatim, the parts this round acts on):
+> i approve of all of them but cut out idea 5 completely.
+
+> properly document and backfill the system design with those ideas, though note politely/subtly they were after thoughts that were retroactively put back into the design stuff before testing was done. frame it as a good thing tho because it is.
+
+> use 60 as the age thing for older adult tho to be in line with NYC Health, note that as a decision and the rationale is alignment with local standards/laws.
+
+> regarding your question on a caller and heating the house: don't let the agent recommend sloppy/potentially unsafe solutions like using an oven to heat the house. but yes, that question should be asked when relevant but not overly hard coded...i don't want it to come up more than it needs to
+
+> also i approve of all the recommendations so go forward with that too.
+Changed:
+- S-21: an older person is 60 and over, NYC Health's line (DECISIONS.md 019).
+- S-21b (new): the carbon monoxide check question on indoor fuel-burning heat, asked once and only then; the agent never suggests unsafe heat (DECISIONS.md 024). This settles the question r3 left open.
+- S-46: tenants extend the shared `trades/hvac/` layer (DECISIONS.md 021).
+- S-51 (new): rules by call stage in the owner view, editable guidance and four lines behind the must-pass evals, gates never loosened (DECISIONS.md 022).
+- S-52 (new): local names spoken and heard the local way, with the written form kept in the read-back (DECISIONS.md 023).
+Status: open

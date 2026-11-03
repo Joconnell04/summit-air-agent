@@ -9,10 +9,10 @@ Run the tool server and the voice program on the existing shared Vultr server, o
 ## Options
 
 ### A. Keep the existing shared server
-No extra cost, but it's small (2 CPUs, 2 GB, about 2 to 3 calls at once), runs Epic's client services, gives us no admin rights (so public web access needs ngrok), and sits in Atlanta.
+No extra cost, but it's small (2 CPUs, 2 GB, about 2 to 3 calls at once), runs another project's services, gives us no admin rights (so public web access needs ngrok), and sits in Atlanta.
 
 ### B. New Vultr server in New Jersey (recommended)
-2 CPUs, 4 GB, $20 a month billed by the hour (SOURCE: Vultr, exploration 003). Your account already exists, so no sign-up. Admin rights, our own HTTPS, our own update schedule, no risk to Epic, and it sits next to New York.
+2 CPUs, 4 GB, $20 a month billed by the hour (SOURCE: Vultr, exploration 003). Your account already exists, so no sign-up. Admin rights, our own HTTPS, our own update schedule, no risk to the other project, and it sits next to New York.
 
 ### C. DigitalOcean (New York) or Akamai Linode (Newark)
 Same size for about $24 a month, also hourly and also in the New York area (SOURCE, comparison sites, 2026). Equal capability for $4 more and a new account.
@@ -37,11 +37,11 @@ Hourly billing means the server only costs what it's up: about $0.027 an hour, s
 
 ## Recommendation
 
-B, a new Vultr server in New Jersey: the cheapest option in the New York area, no new account, and nothing shared with Epic. To create it, either add a Vultr API key to the vault and I'll set it up, or create it in the Vultr console (Cloud Compute, Regular Performance, 2 vCPU and 4 GB, New Jersey, Ubuntu 24.04, with the vultr_personal SSH key).
+B, a new Vultr server in New Jersey: the cheapest option in the New York area, no new account, and nothing shared with the other project. To create it, either add a Vultr API key to the vault and I'll set it up, or create it in the Vultr console (Cloud Compute, Regular Performance, 2 vCPU and 4 GB, New Jersey, Ubuntu 24.04, with the vultr_personal SSH key).
 
 ## Research notes
 
-- Existing server, MEASURED over ssh: Ubuntu 24.04, 2 vCPU, 1.9 GiB memory, Atlanta (ipinfo for 96.30.198.9), runs Epic services, user account without sudo, automatic reboots at 09:30 UTC set by another project.
+- Existing server, MEASURED over ssh: Ubuntu 24.04, 2 vCPU, 1.9 GiB memory, Atlanta (ipinfo for 96.30.198.9), runs another project's services, user account without sudo, automatic reboots at 09:30 UTC set by another project.
 - Memory per call and the 2 to 3 call estimate: docs/explorations/003-capacity-and-cost.md (ASSUMED; LiveKit publishes no memory figure for its turn-detector model).
 - ngrok free plan: 20,000 requests a month (from the earlier practice agent's notes); account balance $0 (FROM JACKSON).
 - Hetzner 2026 price changes (SECONDARY): https://findstack.com/resources/hetzner-price-increase-2026, https://wz-it.com/en/blog/hetzner-price-increase-june-2026-cpx-ccx-alternatives/

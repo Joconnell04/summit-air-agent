@@ -1,0 +1,82 @@
+# 013. More bake-off entrants, and a way to test them without phone calls
+
+Researched 2026-11-03 with built-in search, fetch, curl and `gh`; nothing sent to any vendor, no paid calls, no Exa or Firecrawl needed. Jackson's question, investigated, not decided. Numbers are SOURCE, MEASURED or ASSUMED.
+
+**Recommendation in short.** Add one new entrant, ElevenLabs Agents in custom-LLM mode, and promote OpenAI Realtime from "3 real calls" to a simulated-audio entrant; do not promote Gemini Live. Both can be scored without anyone dialing, by a small WebSocket audio rig that streams synthesized caller speech and times the first agent sound (about $2 per entrant, ASSUMED). Nothing published beats our stack's reply delay (about 1.0 s on the earlier practice agent, SOURCE: DECISIONS 006; the best independent median for any default managed stack is 1.30 s), so a newcomer earns its place only by tying us on speed while keeping exact safety words and server-owned hang-ups. Pipecat, Deepgram Voice Agent API and Telnyx are the reserves.
+
+## 1. Question
+
+Besides our LiveKit stack, Retell (the baseline) and Vapi (exploration 010), which one or two other providers belong in the bake-off if the goal is the best solution, cheaply, and can they be scored in a simulated environment instead of Jackson dialing for each? Should the OpenAI Realtime and Gemini Live check in bake-off 2 be promoted?
+
+## 2. Why it matters to Summit Air
+
+Bake-off 1 (docs/bakeoffs.md, DECISIONS 004) is the evidence that building our own stack was right. Its weak point is that Retell is the only managed rival, and in the one independent test that includes both, Retell was the slowest of five (SOURCE: [OpenBenchmarks](https://github.com/openbenchmarks-labs/voice-agent-latency), 2026-08-01). Beating the slowest rival proves little. The gates in docs/spec.md (R5 exact safety words, R6 booking only after read-back) mean a rival counts only if our server can still speak a fixed line and veto a hang-up. And our text harness (evals/stacks.py) cannot compare reply delay across stacks: the Retell adapter times a whole chat reply, which the README itself says is not comparable (evals/README.md). Audio timing needs its own rig.
+
+## 3. Options
+
+### Part A: who to add
+
+What was checked for each (SOURCE links in section 6, all read 2026-11-03 unless noted). "Exact" is whether the server can make the platform say a fixed line; "Veto" is whether our code decides hang-ups and transfers.
+
+| Entrant | Exact | Veto | Our tool server | Reply delay (SOURCE) | $/min | Test without a human |
+|---|---|---|---|---|---|---|
+| ElevenLabs Agents | Custom LLM streams our text to its voice; verbatim not stated, test once | Yes in custom-LLM mode: the end-call tool only fires if our endpoint emits it | Tools run in our endpoint, or webhook tools | p50 1,424 ms, p95 1,768 ms (OpenBenchmarks); mean 1.27 s (Cekura via Telnyx, secondhand) | $0.08 plus LLM; burst $0.16; billed $0.0794 (OpenBenchmarks) | Text-only chat mode; tests API with simulated user and tool-call argument checks; WebSocket audio |
+| OpenAI Realtime (gpt-realtime-2.1) | "Say exactly" is an instruction to the model, so not guaranteed | Yes, we are the client | Function calls come to us | Mean 1.58 s (Cekura via Telnyx) | Audio $32 in, $64 out per 1M tokens; about $0.10 (ASSUMED, third-party token mix) | Text input and text-only output; WebSocket audio; no built-in simulator |
+| Gemini Live | Not verified | Yes, we are the client | Not verified | Mean 3.05 s (Cekura via Telnyx) | Audio $0.005 in, $0.018 out per minute (preview models; free tier) | Not researched |
+| Deepgram Voice Agent API | `InjectAgentMessage` with interrupt speaks our text | Yes: function calls go to our client; `defer_until_eot` guards end-call | Client-side functions | Per-turn `LatencyReport`; no independent test found | $0.075; $0.065 with our LLM; $0.050 with our LLM and TTS | `InjectUserMessage` text; WebSocket audio |
+| Pipecat (and Pipecat Cloud) | Our code | Yes | Yes | Mean 1.97 s against LiveKit 2.59 s, each on its own config (Cekura via Telnyx) | Framework free; Cloud $0.01 active agent-1x plus Daily PSTN $0.018 | Built-in Pipecat Evals: scripted and simulated callers, text or audio, function-call arguments, latency budgets |
+| Ultravox | `forced_agent_message` | Yes: hang-up is a tool response type we return | Data-connection tools | None found | $0.05, 5 concurrent calls (SOURCE: pricing) | Text-only calls; its own testing page says "Under Construction" |
+| Telnyx AI Assistants | Not verified | Hangup tool is on by default; veto not verified | Webhook tools | p50 1,296 ms, p95 1,856 ms, best median (OpenBenchmarks) | $0.05 billed; $0.0722 per conversation minute | Assistant Chat API runs server tools in text |
+| Twilio ConversationRelay | Our text, but not "strictly as-is" | Yes: our `end` message | Yes | None found | $0.07 plus voice | None built in |
+| Bland, Synthflow, Hume EVI, Cartesia Managed Agents | Bland owns the whole stack; Synthflow takes only an OpenAI key; Cartesia offers a managed model list and a model-driven end-call tool; Hume not verified | No | Webhooks only | Bland p50 1,520 ms (OpenBenchmarks) | Bland $0.14 or $0.12 plus $299 a month; Cartesia $0.03 plus LLM plus $0.014 telephony | Bland and Synthflow have simulation APIs |
+
+Models in the table are those the vendor lists today. Ultravox runs its own open-weight model (Llama 3.3 70B based, SOURCE: its repo, snippet), so Claude is not an option there. Cartesia ends hosting of code-first Line agents on 2026-12-01. Delay figures come from different test designs and are not a ranking: OpenBenchmarks used real phone calls on each platform's default stack; Cekura let each provider choose its own stack and reports means only.
+
+**A1. ElevenLabs Agents in custom-LLM mode (add).** It has the best tail in the independent test and a text chat mode, a tests API and a WebSocket. Plug-in: `voice/elevenlabs/` holds an OpenAI-style streaming endpoint that wraps the existing brain (the same Haiku 5.5 profile, the same turn check and gates, the same tool server), plus `eval_adapter.py` in the pattern of voice/retell/eval_adapter.py (text-only session, tool server record read afterward, mock reset per scenario). The existing code checks work unchanged because they read the tool server's record, not the platform's. Effort 2 days (ASSUMED). Cost: about $1.35 for 8 scenarios (ASSUMED, below). Risks: its voice is not Cartesia, so voice and ears are confounded with turn-taking; a custom LLM cannot be combined with its speech-to-speech model (SOURCE: custom LLM page); the text-only override needs a Security-tab switch; whether it speaks our text verbatim is untested; plan limits for custom LLM were not found.
+
+**A2. OpenAI Realtime promoted to a simulated entrant (add), Gemini Live not.** Bake-off 2 already plans it; the rig makes 8 scenarios cheap and the gas scenarios, repeated, test the exact-words hypothesis directly. Plug-in: a rig adapter whose function calls are forwarded to the tool server as the LiveKit worker does. Effort 1.5 days (ASSUMED). Cost about $1.60, up to $3.20 if context re-billing doubles it (ASSUMED). Gemini Live stays a free-tier text and audio line only if the rig exists anyway; its 3.05 s mean and preview-model status do not justify real calls.
+
+**A3. Reserves.** Deepgram Voice Agent API (same ears, one socket, cheapest honest "assembled by a vendor" comparison), Pipecat (changes only the framework; strongest built-in evals; Revin postings name Daily, per exploration 010), Telnyx (cheapest and fastest median, but no Cartesia voice and the veto is unverified). Each needs a new voice layer, 3 to 4 days (ASSUMED). Build one only if A1 and A2 leave a gap.
+
+**A4. Add nothing.** Keep Retell and LiveKit, with Vapi as a documented note. Cheapest, and the claim "better than the best managed platform" would rest on the slowest one.
+
+### Part B: simulated audio bake-off
+
+**B1. WebSocket rig (recommended for new entrants).** One script, `evals/audio_rig/`. The harness's simulated caller produces text; a TTS (Deepgram Aura-2, $0.030 per 1,000 characters, SOURCE) renders it; the audio streams to the entrant at real-time pace over its WebSocket (ElevenLabs, OpenAI Realtime and Deepgram take raw audio; our LiveKit stack takes it by joining a room). The rig marks the end of the last caller sample, detects the first agent audio above a voice-activity threshold, and records the gap. Agent audio goes through Deepgram Nova-3 ($0.0077 a minute, SOURCE) so the caller model can answer, and so the exact safety words can be diffed against the platform's own spoken-text event as well. Because the caller answers adaptively, each entrant hears different turns; the checks (tool log, bookings, safety words) still run on the tool server's record. Cost per entrant for 8 scenarios, about 80 turns and 16 minutes on the line (ASSUMED volumes): caller speech $0.22, agent transcription $0.06, caller model $0.02; platform minutes $1.28 on ElevenLabs plus Haiku, about $1.60 on OpenAI Realtime. About $1.70 and $1.90, wall time 16 minutes each, run in the background. Limits: it skips the phone network and codec, so add a calibration run of our own stack through both paths and subtract the offset; 80 turns separate differences of about 0.3 s, not 50 ms (ASSUMED; OpenBenchmarks calls 38 ms inside its error at about 400 turns), so run each scenario three times when a result is close.
+
+**B2. Phone loop for finalists.** OpenBenchmarks publishes an MIT-licensed caller harness, an offline analyzer (a voice-activity model measuring the gap on the saved two-channel recording) and adapters for ElevenLabs, Retell, Vapi, Bland and Telnyx; it originates calls from Plivo. Reuse the analyzer on Twilio recordings of a scripted caller calling each number. Extra cost per entrant about $0.40 for 16 minutes: outbound $0.014, inbound $0.0085 (or SIP $0.004), recording $0.0025 a minute (SOURCE: Twilio). This measures what B1 skips and could replace part of the manual calls for delay, but not noise or interruptions by a second person.
+
+**B3. Hosted test platforms (Cekura, Coval, Hamming, Bluejay, Roark).** They already plug into Pipecat and ElevenLabs. Pricing is unpublished, and DECISIONS 002 set them aside; nothing here changes that.
+
+Built-in simulators (ElevenLabs tests, Pipecat Evals, Bland and Synthflow suites) judge from the platform's side. They cannot read our tool server, so they are extra signal, not the gate.
+
+## 4. Recommendation, and what would change it
+
+Take A1 and A2 with B1, and use B2 for the finalists. A newcomer beats our setup only if, on the same brain and the same eight scenarios: plain-turn median at least 0.3 s lower (the bake-off 1 rule), lookup turns under 2.5 s and slowest 10% under 2 s; every must-pass scenario passes with the signed-off words spoken exactly across three repeats; hang-ups and transfers happen only on the server's say; and all-in cost no higher than Retell's measured $0.134 a minute (SOURCE: OpenBenchmarks billing; ASSUMED as the ceiling). Anything else is a tie, and a tie keeps our stack.
+
+This changes if: ElevenLabs paraphrases our text on the first gas run (drop it, move Telnyx up); the calibration offset between B1 and B2 is larger than the gap between entrants (use the phone loop for everything); OpenAI Realtime speaks the exact lines and holds the gates (then reopen 006 as its own question); or Retell and ours differ by under 0.3 s (the extra entrants then matter more).
+
+## 5. Open questions for Jackson
+
+1. **ElevenLabs.** (a) Skip. (b) Simulated only. (c) Simulated, then 3 real calls if it clears the bar. (d) Full 10 calls. Recommend (b), moving to (c) on a pass.
+2. **OpenAI Realtime and Gemini Live.** (a) Keep the 3 real calls each. (b) Simulated first; real calls only on a pass. (c) Drop Gemini Live. Recommend (b) for OpenAI Realtime, (c) for Gemini Live.
+3. **Build the audio rig.** (a) No; rely on the 10 manual calls. (b) WebSocket rig plus a calibration run. (c) Phone loop for every stack. Recommend (b), with B2 only for the final two.
+4. **Manual calls.** Do automated phone-loop calls replace some of the 10 per stack in DECISIONS 004? Recommend no change: keep 10 for the finalist pair, use none for non-finalists.
+5. **ElevenLabs brain.** (a) Our Haiku 5.5 behind custom LLM (same brain, fair). (b) Its own hosted model, as a one-run extra. Recommend (a), with (b) reported apart as in decision 012.
+6. **Spend.** Approve about $15 for the simulated round across four stacks (ASSUMED: B1 for ElevenLabs and OpenAI Realtime, a repeat for both Retell and ours). Recommend yes.
+
+## 6. Sources
+
+All read 2026-11-03. Latency: [OpenBenchmarks](https://github.com/openbenchmarks-labs/voice-agent-latency) (generated 2026-08-01, MIT licensed, 550 calls); [Telnyx's summary of Cekura](https://telnyx.com/resources/voice-ai-latency-benchmark) (September 2026, 246 calls, competitor page, Cekura's own table not read); [Cekura article](https://www.cekura.ai/blogs/voice-ai-agent-cost-performance-optimization) (updated 2026-08-28).
+
+ElevenLabs: [agent testing](https://elevenlabs.io/docs/eleven-agents/customization/agent-testing), [run tests API](https://elevenlabs.io/docs/eleven-agents/api-reference/tests/run-tests), [custom LLM](https://elevenlabs.io/docs/eleven-agents/customization/llm/custom-llm), [chat mode](https://elevenlabs.io/docs/eleven-agents/guides/chat-mode.md), [WebSocket](https://elevenlabs.io/docs/eleven-agents/libraries/web-sockets), [end call](https://elevenlabs.io/docs/eleven-agents/customization/tools/system-tools/end-call), [pricing](https://elevenlabs.io/pricing/api).
+
+OpenAI and Google: [gpt-realtime-2.1](https://developers.openai.com/api/docs/models/gpt-realtime-2.1), [realtime conversations](https://developers.openai.com/api/docs/guides/realtime-conversations), [Gemini pricing](https://aistudio.google.com/docs/pricing).
+
+Deepgram: [pricing](https://deepgram.com/pricing), [InjectAgentMessage](https://developers.deepgram.com/docs/voice-agent-inject-agent-message.md), [InjectUserMessage](https://developers.deepgram.com/docs/voice-agent-inject-user-message.md), [function calling](https://developers.deepgram.com/docs/voice-agents-function-calling.md), [LLM models](https://developers.deepgram.com/docs/voice-agent-llm-models.md), [latency report](https://developers.deepgram.com/docs/voice-agent-latency-report.md).
+
+Others: Pipecat [evals](https://docs.pipecat.ai/pipecat/evals/overview.md), [scripted scenarios](https://docs.pipecat.ai/pipecat/evals/scripted-scenarios.md), [Cloud pricing](https://www.daily.co/pricing/pipecat-cloud/); Ultravox [data messages](https://docs.ultravox.ai/apps/datamessages.md), [call state](https://docs.ultravox.ai/tools/custom/changing-call-state.md), [pricing](https://www.ultravox.ai/pricing), [testing page](https://docs.ultravox.ai/agents/testing-and-debugging.md), [repo](https://github.com/fixie-ai/ultravox); Telnyx [assistants docs](https://developers.telnyx.com/public/llms/ai/assistants-full.txt); Twilio [ConversationRelay messages](https://www.twilio.com/docs/voice/conversationrelay/websocket-messages), [TwiML](https://www.twilio.com/docs/voice/twiml/connect/conversationrelay), [pricing](https://www.twilio.com/en-us/products/conversational-ai/pricing), [US voice](https://www.twilio.com/en-us/voice/pricing/us); Bland [pricing](https://www.bland.ai/pricing), [docs index](https://docs.bland.ai/llms.txt); Synthflow [docs index](https://docs.synthflow.ai/llms.txt); Cartesia [pricing](https://cartesia.ai/pricing), [models](https://docs.cartesia.ai/agents/models.md), [system tools](https://docs.cartesia.ai/agents/system-tools.md), [Line migration](https://docs.cartesia.ai/agents/migrate-from-line-sdk.md).
+
+Repo: DECISIONS 002, 004, 006, 012; docs/bakeoffs.md; docs/explorations/010-vapi.md; evals/README.md; evals/stacks.py; config/models.yaml; voice/retell/README.md; the earlier practice agent (a personal practice project, not a person) in from-other-projects/bobert.
+
+Not verified: ElevenLabs verbatim speech and custom-LLM plan limits; Gemini Live tools and exact text; Telnyx hang-up veto and exact text; Hume EVI (price sources conflict, docs page fetched was the wrong product); Ultravox latency; Amazon Nova Sonic, Azure Voice Live and Google's agent products were not researched. The $0.10 a minute for OpenAI Realtime is a third-party token estimate, not a rate card. Tools: built-in search and fetch, curl, `gh`; no paid fallback used.

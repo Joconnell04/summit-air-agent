@@ -54,3 +54,12 @@ How the design was reached, in order, so a reader can follow each choice back to
 | Owner view: dispatch board | Version A chosen; decluttered board, no metric cards, filters, Public Sans, a full design system | DECISIONS.md 016, #53 |
 | Owner view markup round | Notes on the built pages: figures for the sentence, row links, one tag per call, the call as a graph, per-step details and a log, header search | DECISIONS.md 017, #53 |
 | Owner view second markup round | Indexed search with suggestions, technical details as a switch, chart-first Results with a custom range, resizable Jobs columns | DECISIONS.md 018, #53 |
+| Ideas round after phase 2 | Four ideas that came from using the built agent were researched and folded back into the design before phase 3 testing, while a design change still cost little and before the eval floor is set | docs/ai-process/ideas-round-questions.md, explorations 009 to 011 |
+| Older adult at 60 | Priority's older-adult line moves from 65 (CDC) to 60 to match NYC Health | DECISIONS.md 019 |
+| Vapi in the bake-off | A written comparison plus one test call on whether a tool result is spoken word for word | DECISIONS.md 020, #57 |
+| Templates by trade and company | A `trades/hvac/` layer each tenant folder extends, kept in the repo rather than in Vapi | DECISIONS.md 021, #57 |
+| Rules by call stage | A rulebook the owner reads by stage; guidance and four lines the owner edits behind the must-pass evals; no screen loosens a gate | DECISIONS.md 022, #56 |
+| Local names | One tenant list of 15 names feeds Cartesia's pronunciation and Deepgram's keyterms; the read-back keeps the written form | DECISIONS.md 023, #58 |
+| Carbon monoxide check for unsafe heating | Asked once when the caller heats with an oven, generator or similar; never suggested as a way to get warm | DECISIONS.md 024 |
+| Who tests | Jackson makes the real calls; non-Anthropic callers and graders are allowed in a limited scope | DECISIONS.md 025 |
+| More bake-off entrants | ElevenLabs Agents on our brain, OpenAI Realtime and Gemini Live, scored on a simulated audio rig before any real call | DECISIONS.md 026, #62 |

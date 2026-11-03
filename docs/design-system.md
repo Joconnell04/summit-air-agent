@@ -41,7 +41,7 @@ The owner view is built for the person who runs Summit Air: someone who knows HV
 | `--info`, `--info-ink`, `--info-wash` | #0265DC, #0B4A9E, #E3EEFD | Scheduled jobs, arrival windows, links |
 | `--neutral`, `--neutral-ink`, `--neutral-wash` | #A3A09B, #4A4845, #F1EFEC | Normal priority, other calls, segmented control track |
 
-The brand values come from Revin's site and app (SOURCE: docs/explorations/009-revin-brand-and-servicetitan-ui.md). The status values are ServiceTitan's Anvil palette (SOURCE: the same exploration), with `--high` darkened from Anvil's #FFBE00 to #E5A800 so a yellow dot holds up on white (ASSUMED: judged by eye at desktop size). Text on a wash always uses the matching `-ink` value.
+The brand values come from Revin's site and app (SOURCE: docs/explorations/012-revin-brand-and-servicetitan-ui.md). The status values are ServiceTitan's Anvil palette (SOURCE: the same exploration), with `--high` darkened from Anvil's #FFBE00 to #E5A800 so a yellow dot holds up on white (ASSUMED: judged by eye at desktop size). Text on a wash always uses the matching `-ink` value.
 
 ### Type
 

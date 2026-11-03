@@ -1,6 +1,8 @@
 # Questions from the post-phase-2 ideas
 
-Jackson raised five ideas after phase 2 (C-53 to C-55, and a new angle on C-37). Three were researched in explorations 009 to 011. Each question below has a recommendation. A one-line answer is enough, and "go with the recommendation" is fine.
+Jackson raised these ideas after phase 2, from working with the built agent (C-54 to C-56, and a new angle on C-37), and they were researched in explorations 009 to 011 before phase 3 testing began. Folding them in at this point meant the design changed before the eval floor was set, so nothing tested had to be retested.
+
+**Answered:** Jackson approved every recommendation below. The decisions are DECISIONS.md 020 to 023.
 
 ## Vapi (exploration 010, section 5)
 
@@ -23,13 +25,6 @@ Jackson raised five ideas after phase 2 (C-53 to C-55, and a new angle on C-37).
 11. **List size.** Recommend the 15 names that have a source, adding more as real calls turn up misses.
 12. **Deepgram keyterms for hearing the names.** Recommend turning them on now, about $12 a month at assumed volume (SOURCE: deepgram.com/pricing).
 13. **The clip test.** May I generate 30 Cartesia clips to check the pronunciations (about $0.09)?
-
-## Epic (kept out of this repo)
-
-The notes are at `~/Downloads/AI Consulting/docs/voice-agent-template-pitch.md`.
-
-14. Is the pitch for Epic itself, or for other consulting prospects?
-15. Pitch now, or after the Revin process?
 
 ## Found along the way
 
