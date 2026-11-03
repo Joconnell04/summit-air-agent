@@ -25,9 +25,12 @@ from servicetitan_mock.seed import build_world
 ROOT = Path(__file__).resolve().parents[1]
 TENANT_DIR = ROOT / "tenants" / "summit-air"
 DIALED = "(646) 624-0418"
-# The one real eval gate run on an owner draft (paid, $0.39 MEASURED): its draft and result become
-# version 1 on the Rules page, so the demo shows a checked version without a live run.
-GATE_RUN = ROOT / "evals" / "results" / "20261103-193944-livekit-fast-gate.json"
+# The real eval gate runs on owner drafts (paid, $0.39 and $0.38 MEASURED): each draft and its result
+# become a version on the Rules page, so the demo shows checked versions without a live run.
+GATE_RUNS = (
+    ("20261103-193944-livekit-fast-gate.json", "Ask about pets; clear a path", time(14, 10)),
+    ("20261103-200110-livekit-fast-gate.json", "Clear a path only", time(15, 40)),
+)
 NEW_YORK = ZoneInfo("America/New_York")
 DETAILS = {
     "since": "this morning",
@@ -418,21 +421,20 @@ def placed_call(voice: Voice, accept: bool) -> None:
 
 
 def rule_history(app, clock: Clock, day: date) -> None:
-    """Version 1 on the Rules page: the draft the gate run tested, saved, sent to the gate and given
+    """The Rules page's versions: each draft a gate run tested, saved, sent to the gate and given
     that run's real result, through app/rules.py as the editor does it."""
-    run = results.load(GATE_RUN)
     tenant = app.state.services.tenants.default
     conn = app.state.services.connect()
     try:
-        clock.now = datetime.combine(day, time(14, 10), NEW_YORK)
-        _draft, errors = rules.save_draft(
-            conn, tenant, run.overlay, "Owner", "Ask about pets; clear a path", clock()
-        )
-        assert not errors, errors
-        clock.now += timedelta(minutes=2)
-        checking = rules.request_publish(conn, tenant.slug, "Owner", clock())
-        clock.now += timedelta(minutes=6)
-        rules.record_gate(conn, checking["id"], gate.summary(run, run.overlay), clock())
+        for name, note, at in GATE_RUNS:
+            run = results.load(ROOT / "evals" / "results" / name)
+            clock.now = datetime.combine(day, at, NEW_YORK)
+            _draft, errors = rules.save_draft(conn, tenant, run.overlay, "Owner", note, clock())
+            assert not errors, errors
+            clock.now += timedelta(minutes=2)
+            checking = rules.request_publish(conn, tenant.slug, "Owner", clock())
+            clock.now += timedelta(minutes=6)
+            rules.record_gate(conn, checking["id"], gate.summary(run, run.overlay), clock())
     finally:
         conn.close()
 
