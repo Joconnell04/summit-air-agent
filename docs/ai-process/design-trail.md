@@ -64,3 +64,6 @@ How the design was reached, in order, so a reader can follow each choice back to
 | Who tests | Jackson makes the real calls; non-Anthropic callers and graders are allowed in a limited scope | DECISIONS.md 025 |
 | More bake-off entrants | ElevenLabs Agents on our brain, OpenAI Realtime and Gemini Live, scored on a simulated audio rig before any real call | DECISIONS.md 026, #62 |
 | Trade layer merge rules | Tenant wins key by key, rules merge by id, lists only grow; a tenant that drops safety wording or lowers a trade rule fails to load | DECISIONS.md 027, #63 |
+| On-call before after-hours booking | A cold house after hours alerts the on-call technician before the morning fallback is booked | DECISIONS.md 028, #64 |
+| Softer safety sign-off | "For your safety, I'd recommend hanging up now, getting outside, and calling 911 from there" | DECISIONS.md 029, #64 |
+| Unsafe heat advice | Kept as a prompt rule with evals, since the server sees agent lines only after they are spoken | DECISIONS.md 030, #64 |

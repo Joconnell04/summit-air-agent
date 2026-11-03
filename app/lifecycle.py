@@ -197,8 +197,17 @@ def turn(
     hints = []
     with tx(conn):
         if args.speaker == "caller":
+            heating = cfg.get("heating_check")
+            heating_asked = bool(heating) and records.agent_said(
+                conn, call["id"], cfg["vague"][heating["kind"]]["question"]
+            )
             action = safety.check_caller_turn(
-                args.text, call["safety_state"], call["safety_kind"], call["safety_variant"], cfg
+                args.text,
+                call["safety_state"],
+                call["safety_kind"],
+                call["safety_variant"],
+                cfg,
+                heating_asked,
             )
             if action.action == "speak_lines":
                 changes.update(safety_state="signal", safety_kind=action.kind)
@@ -268,6 +277,9 @@ def turn(
         hints.append("journey:safety")
     if action.action == "cleared":
         hints.append("safety_check_cleared")
+    # After the lines, every caller line carries a reminder that the safety call doesn't book.
+    if args.speaker == "caller" and action.action == "none" and call["safety_state"] == "lines_said":
+        hints.append("safety_call")
     payload = None
     if action.action != "none":
         payload = {"action": action.action, "kind": action.kind, "text": action.text}

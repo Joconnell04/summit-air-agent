@@ -77,6 +77,8 @@ GATES = (
     ("booking", "Books only openings ServiceTitan offered, and never the same one twice",
      ("invalid_slot", "slot_taken"), ("S-27",)),
     ("booking", "Changes only the caller's own visits", ("invalid_state", "open_job"), ()),
+    ("booking", "After hours, books a tonight visit only once the on-call technician is alerted",
+     ("on_call_first",), ()),
     ("booking", "When ServiceTitan is down, keeps the booking and sets a callback",
      ("fsm_unavailable", "fsm_rejected"), ()),
     ("closing", "Asks if there's anything else before hanging up on a booked call",

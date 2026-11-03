@@ -41,6 +41,7 @@ class Facts:
     safety_signal: bool = False
     outside_now_f: float | None = None
     outside_coldest_f: float | None = None  # the lower of now and the next 12 hours
+    heating_indoors: bool = False  # the safety check heard fuel-burning heat indoors
 
 
 @dataclass
@@ -77,6 +78,8 @@ def _rule_fires(rule: dict, facts: Facts) -> bool:
         return False
     if rule.get("safety_signal"):
         return facts.safety_signal
+    if rule.get("heating_indoors") and facts.heating_indoors:
+        return True
     text_words = words(facts.text)
     if any(has_phrase(text_words, p) for p in rule.get("phrases", [])):
         return True

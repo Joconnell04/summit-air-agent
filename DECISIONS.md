@@ -12,6 +12,30 @@ Discussion: docs/ai-process/transcripts/... or docs/explorations/...
 Issue: #N
 -->
 
+## 030. "Never suggest unsafe heat" is a prompt rule, checked by evals
+
+Decided: the rule that the agent never suggests an oven, stove, generator or grill for warmth lives in the prompt (`prompts/safety.md`) and is covered by eval scenarios, not by a server check.
+Why: agent lines reach the server only after they are spoken, so the server has no point at which to stop one. The gates that matter on these calls (the check question, priority, the safety lines) are still server code.
+Considered: a filter in the LiveKit worker's speech step (LiveKit only, not Retell, and it would be the voice layer holding a rule).
+Would change if: a voice layer gives the server a hook before speech, or evals catch the agent suggesting unsafe heat.
+Discussion: PR #64
+
+## 029. The safety sign-off is a polite recommendation
+
+Decided: the sign-off is "For your safety, I'd recommend hanging up now, getting outside, and calling 911 from there. We'll follow up once you're safe." The first safety lines are unchanged.
+Why: by the sign-off the caller may have said they are alone, and the first lines already say to get everyone out. Jackson signed off on "get outside" and asked for a polite recommendation rather than a demand.
+Considered: "Please hang up now, get outside, and call 911 from there" (a demand); a second sign-off for callers alone (the server would have to guess from words).
+Would change if: evals or real calls show callers treating the softer wording as optional.
+Discussion: PR #64, call-journeys r4 in docs/ai-process/coauthoring.md
+
+## 028. After hours, the on-call technician is alerted before a booking
+
+Decided: after hours, a no-heat or no-cooling call that needs the on-call technician tonight can be booked only after an urgent flag has alerted them; the morning visit is then held as the fallback.
+Why: journey 11 says the on-call technician is asked first. The server already worked out the "tonight" outcome but nothing enforced it, and eval round 1 caught a 48 F house booked for the morning with no alert.
+Considered: refusing the booking on the tonight path (leaves the caller with nothing certain if the technician can't come); a prompt rule only (the round 1 failure).
+Would change if: the office wants no morning booking held when the on-call technician is coming.
+Discussion: PR #64, evals/rounds/01-real-failures.md
+
 ## 027. How a company folder sits on its trade
 
 Decided: a tenant's `agent.yaml` is laid over its trade's. Mappings merge key by key with the tenant winning, rule lists merge by `id`, and other lists are the trade's items plus the tenant's own. The trade holds safety signals and at-risk priority rules only; the signed-off safety wording, NYC-sourced numbers, commercial phrases, `config.yaml`, knowledge and voice lines stay with the company. A tenant fails to load if it lacks its safety lines, check questions or sign-off, drops or lowers a trade rule, adds denials, or mixes rules with and without ids. Summit Air's merged config is checked against a committed golden copy.

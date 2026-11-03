@@ -81,7 +81,12 @@ class Harness:
         try:
             agent, server = self.open_agent(scenario, call_id)
             call_id = getattr(agent, "call_id", call_id)
-            caller = SimulatedCaller(scenario, self.models.caller)
+            # The caller knows the digits of the phone they're on, so a read-back of the caller ID
+            # can be confirmed or corrected instead of guessed at.
+            calling_from = resolve_caller(scenario.caller_id, self.seed[1])
+            caller = SimulatedCaller(
+                scenario, self.models.caller, extra_facts={"calling_from": calling_from}
+            )
             rng = seeded(scenario.id, sample)
             level = level_for(scenario.difficulty, scenario.traits)
             turn = agent.start()
