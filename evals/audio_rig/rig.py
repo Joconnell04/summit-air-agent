@@ -104,6 +104,10 @@ class Sender:
     async def speak(self, pcm: bytes, on_start=None) -> tuple[float, float]:
         """Queue a line and wait for its last frame to go out. Returns when the caller started and
         stopped speaking. `on_start` runs just before the first frame is queued."""
+        if self.stopped:
+            # The line dropped (the agent hung up) after the caller decided to speak.
+            now = self.clock()
+            return now, now
         self._spoken = asyncio.get_running_loop().create_future()
         self._started = None
         if on_start:
@@ -197,6 +201,9 @@ class Rig:
                 transcript.append(Turn(role="caller", text=said))
                 self.log(call_id, f"caller: {said}")
                 start, end = await sender.speak(pcm, on_start=listener.new_turn)
+                if sender.stopped and listener.is_hung_up:
+                    reason = "agent_end"
+                    break
                 heard_turn = await listener.turn(self.entrant.signals_done, end)
                 heard = await speech.hear(heard_turn.pcm, heard_turn.rate)
                 trace = await asyncio.to_thread(server.trace, call_id)
@@ -283,7 +290,11 @@ async def run_entrant(name: str, chosen: list[Scenario], repeats: int, max_cost:
         await entrant.start()
         try:
             for scenario, sample in plan(chosen, repeats):
-                result = await rig.call(scenario, sample)
+                try:
+                    result = await rig.call(scenario, sample)
+                except (KeyboardInterrupt, asyncio.CancelledError):
+                    print("stopped: the finished calls are still written", flush=True)
+                    break
                 done.append(result)
                 spent = sum(r.cost_usd for r in done)
                 delays = ", ".join(f"{t.reply_delay_ms:.0f}" for t in result.turn_timings)

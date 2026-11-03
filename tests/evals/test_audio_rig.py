@@ -235,6 +235,19 @@ def test_the_sender_paces_frames_and_reports_when_speech_ended():
     assert (start, end) == (pytest.approx(speech[0]), pytest.approx(speech[-1]))
 
 
+def test_speaking_on_a_dropped_line_returns_at_once():
+    async def send(frame):
+        raise ConnectionError("closed")
+
+    async def go():
+        sender = Sender(send, RATE)
+        await sender.run()  # the first send fails, so the stream stops
+        return await asyncio.wait_for(sender.speak(tone(100)), timeout=1)
+
+    start, end = asyncio.run(go())
+    assert start == end
+
+
 def test_audio_still_buffered_on_our_side_dates_the_end_of_speech_later():
     clock = Clock(0.0)
 
