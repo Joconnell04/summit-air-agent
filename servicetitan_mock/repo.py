@@ -78,6 +78,33 @@ def insert_contact(
     return cur.lastrowid
 
 
+def insert_note(
+    conn: sqlite3.Connection,
+    now: datetime,
+    customer_id: int,
+    text: str,
+    created_by: str = "staff",
+    job_id: int | None = None,
+) -> int:
+    cur = conn.execute(
+        """INSERT INTO notes (customer_id, job_id, text, created_by, created_on)
+           VALUES (?, ?, ?, ?, ?)""",
+        (customer_id, job_id, text, created_by, iso(now)),
+    )
+    return cur.lastrowid
+
+
+def shape_note(r: sqlite3.Row) -> dict:
+    return {
+        "id": r["id"],
+        "customerId": r["customer_id"],
+        "jobId": r["job_id"],
+        "text": r["text"],
+        "createdBy": r["created_by"],
+        "createdOn": r["created_on"],
+    }
+
+
 def shape_address(r: sqlite3.Row) -> dict:
     return {
         "street": r["street"],

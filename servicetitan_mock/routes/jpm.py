@@ -7,7 +7,7 @@ from typing import Literal
 from fastapi import Depends, Header, Request
 from pydantic import AwareDatetime, BaseModel, Field
 
-from .. import capacity, rules
+from .. import capacity, repo, rules
 from ..config import TenantConfig, Window, iso
 from ..db import page_of, write
 from ..deps import get_cfg, get_conn, get_now, paging
@@ -42,6 +42,11 @@ class JobIn(BaseModel):
 class CancelIn(BaseModel):
     reasonId: int | None = None
     memo: str = ""
+
+
+class JobNoteIn(BaseModel):
+    text: str = Field(min_length=1, max_length=2000)
+    createdBy: str = Field("staff", min_length=1, max_length=40)  # ASSUMED field
 
 
 class RescheduleIn(BaseModel):
@@ -203,6 +208,37 @@ def job_history(
         },
         *pg,
     )
+
+
+@router.get("/jobs/{job_id}/notes")
+def job_notes(
+    job_id: int, conn: sqlite3.Connection = Depends(get_conn), pg: tuple[int, int] = Depends(paging)
+):
+    _one(conn, "jobs", job_id, "Job")
+    return page_of(
+        conn, "SELECT * FROM notes WHERE job_id = ? ORDER BY id", [job_id], repo.shape_note, *pg
+    )
+
+
+@router.post("/jobs/{job_id}/notes", status_code=201)
+def add_job_note(
+    job_id: int,
+    body: JobNoteIn,
+    request: Request,
+    conn: sqlite3.Connection = Depends(get_conn),
+    now: datetime = Depends(get_now),
+    idempotency_key: str | None = Header(None),
+):
+    """A job note is also a note on the job's customer, so it shows when the customer is read."""
+
+    def run(c: sqlite3.Connection):
+        job = _one(c, "jobs", job_id, "Job")
+        note_id = repo.insert_note(
+            c, now, job["customer_id"], body.text, body.createdBy, job_id=job_id
+        )
+        return 201, repo.shape_note(_one(c, "notes", note_id, "Note"))
+
+    return write(conn, run, idem_key=idempotency_key, route=_route(request), body=body.model_dump())
 
 
 @router.get("/appointments")

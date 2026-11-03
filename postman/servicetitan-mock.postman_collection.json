@@ -398,6 +398,88 @@
           }
         },
         {
+          "name": "Customer notes",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('has the seeded note', () => pm.expect(pm.response.json().totalCount).to.be.at.least(1));",
+                  "",
+                  "if (pm.response.code >= 400) {",
+                  "  pm.test('error uses the standard shape', () => {",
+                  "    const b = pm.response.json();",
+                  "    ['status', 'code', 'title', 'detail', 'errors', 'requestId'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    pm.expect(b.status).to.eql(pm.response.code);",
+                  "  });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "ST-App-Key",
+                "value": "{{app_key}}"
+              }
+            ],
+            "url": "{{base_url}}/crm/v2/tenant/{{tenant_id}}/customers/{{park_customer_id}}/notes"
+          }
+        },
+        {
+          "name": "Add customer note",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 201', () => pm.response.to.have.status(201));",
+                  "pm.test('keeps the text as given', () => pm.expect(pm.response.json().text).to.eql('Prefers mornings.'));",
+                  "",
+                  "if (pm.response.code >= 400) {",
+                  "  pm.test('error uses the standard shape', () => {",
+                  "    const b = pm.response.json();",
+                  "    ['status', 'code', 'title', 'detail', 'errors', 'requestId'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    pm.expect(b.status).to.eql(pm.response.code);",
+                  "  });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "ST-App-Key",
+                "value": "{{app_key}}"
+              }
+            ],
+            "url": "{{base_url}}/crm/v2/tenant/{{tenant_id}}/customers/{{park_customer_id}}/notes",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"Prefers mornings.\",\n  \"createdBy\": \"agent\"\n}"
+            }
+          }
+        },
+        {
           "name": "Locations by address",
           "event": [
             {
@@ -2062,6 +2144,88 @@
               }
             ],
             "url": "{{base_url}}/jpm/v2/tenant/{{tenant_id}}/appointments/{{appointment_id}}"
+          }
+        },
+        {
+          "name": "Add job note",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 201', () => pm.response.to.have.status(201));",
+                  "pm.test('is also a customer note', () => pm.expect(pm.response.json().customerId).to.eql(Number(pm.collectionVariables.get('park_customer_id'))));",
+                  "",
+                  "if (pm.response.code >= 400) {",
+                  "  pm.test('error uses the standard shape', () => {",
+                  "    const b = pm.response.json();",
+                  "    ['status', 'code', 'title', 'detail', 'errors', 'requestId'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    pm.expect(b.status).to.eql(pm.response.code);",
+                  "  });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "ST-App-Key",
+                "value": "{{app_key}}"
+              }
+            ],
+            "url": "{{base_url}}/jpm/v2/tenant/{{tenant_id}}/jobs/{{job_id}}/notes",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"Use the side gate.\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Job notes",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('has the note', () => pm.expect(pm.response.json().totalCount).to.eql(1));",
+                  "",
+                  "if (pm.response.code >= 400) {",
+                  "  pm.test('error uses the standard shape', () => {",
+                  "    const b = pm.response.json();",
+                  "    ['status', 'code', 'title', 'detail', 'errors', 'requestId'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    pm.expect(b.status).to.eql(pm.response.code);",
+                  "  });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "ST-App-Key",
+                "value": "{{app_key}}"
+              }
+            ],
+            "url": "{{base_url}}/jpm/v2/tenant/{{tenant_id}}/jobs/{{job_id}}/notes"
           }
         },
         {

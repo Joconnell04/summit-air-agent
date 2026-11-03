@@ -16,7 +16,8 @@ def ids(response) -> list[int]:
 def test_the_world_has_the_promised_shape(world):
     api, _ = world
     assert api.get("/crm/customers", pageSize=1).json()["totalCount"] == 300
-    assert api.get("/crm/customers", type="Commercial").json()["totalCount"] == 1
+    assert api.get("/crm/customers", type="Commercial").json()["totalCount"] == 6
+    assert api.get("/crm/customers", type="Residential").json()["totalCount"] >= 200
     assert api.get("/settings/technicians", pageSize=1).json()["totalCount"] == 40
     statuses = {
         m["status"] for m in api.get("/memberships/memberships", pageSize=200).json()["data"]
@@ -294,4 +295,87 @@ def test_every_customer_location_is_inside_or_deliberately_outside_the_service_a
     api, scenarios = world
     locations = api.get("/crm/locations", pageSize=200).json()["data"]
     outside = [loc["id"] for loc in locations if loc["address"]["zip"] not in CFG.service_area_zips]
-    assert outside == [scenarios["outOfArea"]["locationId"]]
+    assert outside == [r["locationId"] for r in scenarios["outOfAreaResidents"]]
+
+
+def test_there_are_a_few_commercial_accounts_of_different_kinds(world):
+    api, scenarios = world
+    accounts = scenarios["commercialAccounts"]
+    assert {a["kind"] for a in accounts} >= {
+        "property manager",
+        "restaurant",
+        "school",
+        "office",
+        "co-op board",
+    }
+    for account in accounts:
+        assert api.get(f"/crm/customers/{account['customerId']}").json()["type"] == "Commercial"
+
+
+def test_a_few_residents_live_outside_the_service_area(world):
+    api, scenarios = world
+    residents = scenarios["outOfAreaResidents"]
+    assert {r["region"] for r in residents} == {"Nassau", "Westchester", "New Jersey"}
+    assert len(residents) >= 5
+    area = set(api.get("/settings/company-profile").json()["serviceAreaZips"])
+    for resident in residents:
+        location = api.get(f"/crm/locations/{resident['locationId']}").json()
+        assert location["address"]["zip"] == resident["zip"]
+        assert resident["zip"] not in area
+
+
+def test_seeded_customer_notes_are_read_with_the_customer(world):
+    api, scenarios = world
+    notes = scenarios["customerNotes"]
+    assert set(notes) == {
+        "tonePreference",
+        "gateCode",
+        "tenantLandlordApproves",
+        "adultChildCalls",
+        "noteThatAsksToSkipAGate",
+    }
+    for planted in notes.values():
+        texts = [
+            n["text"]
+            for n in api.get(f"/crm/customers/{planted['customerId']}/notes").json()["data"]
+        ]
+        assert planted["text"] in texts
+
+
+def test_notes_can_be_added_but_never_changed_or_removed(world):
+    api, scenarios = world
+    maria = scenarios["repeatCallerOpenJob"]
+    path = f"/crm/customers/{maria['customerId']}/notes"
+    before = api.get(path).json()["totalCount"]
+    added = api.post(path, {"text": "Prefers mornings.", "createdBy": "agent"}, key="note-1")
+    assert added.status_code == 201
+    assert added.json()["createdBy"] == "agent"
+    assert api.post(path, {"text": "Prefers mornings.", "createdBy": "agent"}, key="note-1").json()[
+        "id"
+    ] == added.json()["id"]
+    note_id = added.json()["id"]
+    for method in ("PUT", "PATCH", "DELETE"):
+        assert api.request(method, f"{path}/{note_id}").status_code in (404, 405)
+        assert api.request(method, path).status_code == 405
+    assert api.get(path).json()["totalCount"] == before + 1
+
+
+def test_a_job_note_also_shows_on_the_customer(world):
+    api, scenarios = world
+    maria = scenarios["repeatCallerOpenJob"]
+    added = api.post(f"/jpm/jobs/{maria['jobId']}/notes", {"text": "Use the side gate."})
+    assert added.status_code == 201
+    assert added.json()["customerId"] == maria["customerId"]
+    on_job = api.get(f"/jpm/jobs/{maria['jobId']}/notes").json()["data"]
+    on_customer = api.get(f"/crm/customers/{maria['customerId']}/notes").json()["data"]
+    assert added.json() in on_job
+    assert added.json() in on_customer
+
+
+def test_a_note_must_have_text_and_a_known_customer(world):
+    api, _ = world
+    assert api.post("/crm/customers/1/notes", {"text": ""}).status_code == 400
+    assert api.post("/crm/customers/1/notes", {"text": "x" * 2001}).status_code == 400
+    assert api.post("/crm/customers/999999/notes", {"text": "hi"}).json()["code"] == (
+        "unknown_reference"
+    )
