@@ -4,7 +4,8 @@ does on our stack.
 Round 1 of the audio bake-off found ElevenLabs reading "Fenimore St" as "Fenimore Saint" and
 running ZIP and phone digits together, so callers could not confirm the read-back
 (evals/rounds/bakeoff-audio-01.md, section 4). These rules spell out a street abbreviation after a
-street name, and space the digits of a ZIP code and a phone number so each is said on its own.
+street name, and space the digits of a ZIP code, a phone number and its last four so each is said
+on its own.
 
 As with the tenant's local names (DECISIONS.md 023), the change is made only on the way to the
 voice. The tool server is sent the text as the brain wrote it, so the stored read-back and the
@@ -20,6 +21,8 @@ STREET_WORDS = {"St": "Street", "Ave": "Avenue", "Blvd": "Boulevard", "Rd": "Roa
 STREET = re.compile(r"\b([A-Z][a-z']+) (St|Ave|Blvd|Rd|Pl|Pkwy)\b(?=[\s.,;:!?]|$)")
 PHONE = re.compile(r"\(?\b(\d{3})\)?[\s,.-]+(\d{3})[\s,.-]+(\d{4})\b")
 ZIP = re.compile(r"(?<![\d-])\b(\d{5})\b(?![\d-])")
+# "the number ending 0114": the last four of a phone number, said digit by digit.
+LAST_FOUR = re.compile(r"\b(ending(?: in)?) (\d{4})\b")
 # Text that may change once more of it arrives: a digit or a street abbreviation.
 RISKY = re.compile(r"\d|\b(?:St|Ave|Blvd|Rd|Pl|Pkwy)\b")
 SENTENCE_END = re.compile(r"[.!?](?=\s)")
@@ -32,6 +35,7 @@ def spaced(digits: str) -> str:
 def speakable(text: str) -> str:
     text = STREET.sub(lambda m: f"{m.group(1)} {STREET_WORDS[m.group(2)]}", text)
     text = PHONE.sub(lambda m: ", ".join(spaced(g) for g in m.groups()), text)
+    text = LAST_FOUR.sub(lambda m: f"{m.group(1)} {spaced(m.group(2))}", text)
     return ZIP.sub(lambda m: spaced(m.group(1)), text)
 
 

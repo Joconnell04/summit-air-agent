@@ -22,6 +22,8 @@ def test_the_read_back_is_spelled_out_for_the_voice():
     ("We're at 801 St Marks Pl", "We're at 801 St Marks Place"),
     ("call (718) 555-0147 today", "call 7 1 8, 5 5 5, 0 1 4 7 today"),
     ("hang up and call 911 from outside", "hang up and call 911 from outside"),
+    ("the number ending 0114?", "the number ending 0 1 1 4?"),
+    ("the one ending in 0162.", "the one ending in 0 1 6 2."),
     ("between 8 and 12 tomorrow", "between 8 and 12 tomorrow"),
 ])
 def test_street_words_and_numbers(text, said):
