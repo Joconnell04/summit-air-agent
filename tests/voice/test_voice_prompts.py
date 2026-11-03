@@ -60,3 +60,25 @@ def test_booking_tools_say_the_window_is_the_code_not_the_spoken_label():
         window = specs[name]["parameters"]["properties"]["slot"]["properties"]["window"]
         assert "code" in window["description"] and "label" in window["description"], name
         assert "label" in specs[name]["description"], name
+
+
+def test_instructions_keep_the_fixes_from_the_must_pass_reliability_round(agent):
+    # Each line here fixed a must-pass miss in evals/rounds/reliability-01.md; losing one brings
+    # the miss back.
+    text = assemble.instructions(agent.start()["data"], datetime(2026, 11, 2, 14, 0, tzinfo=UTC))
+    assert "If the caller asks for a visit anyway, book it the normal way" in text
+    assert "offer to stay on the line" in text
+    assert "call `end_call` without saying anything first" in text
+    assert "the technician prices the work in person" in text
+    assert "Never say whether that person is a customer" in text
+    assert "to a renter only, never to an owner or landlord" in text
+    assert "A yes still counts when the caller says more in the same turn" in text
+    assert 'Give no medical advice, not even "keep them upright"' in text
+    assert "if they ask what to do for the person, the 911 operator will tell them" in text
+    assert "never an owner or landlord: one neutral line" in text
+    assert "Once someone is calling 911, carry on to booking the visit as usual." in text
+    assert "Add no other reason, referral, advice or follow-up" in assemble.server_notes(["commercial"])[0]
+    assert "it's the soonest there is: say so plainly rather than offering to move it up" in text
+    assert "A caller who threatens to hang up hasn't" in text
+    assert "without asking the caller's permission or mentioning it" in text
+    assert "No follow-up, referral or advice." in text

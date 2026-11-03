@@ -6,6 +6,7 @@ import json
 from dataclasses import dataclass
 from pathlib import Path
 
+from evals.checks import BOOKED
 from evals.models import Model, ModelError, Usage
 from evals.results import Turn
 
@@ -52,6 +53,9 @@ def set_up(trace: dict, safety: dict) -> list[str]:
         kind = safety["kinds"][call["safety_kind"]]
         found.append(f"Safety lines (fixed wording): {' '.join(kind['lines'].split())}")
         found.append(f"Safety sign-off (fixed wording): {' '.join(safety['sign_off'].split())}")
+    for b in trace["bookings"]:
+        if b["kind"] == "book" and b["status"] in BOOKED:
+            found.append(f"A visit was booked (job {b['fsm_job_id']}, starting {b['window_start']}).")
     for e in trace["events"]:
         if e["type"] == "tool" and e["tool"] in SETS_UP and e["ok"] and e["say"]:
             found.append(f"{e['tool']} returned: {e['say']}")

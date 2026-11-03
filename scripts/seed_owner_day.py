@@ -444,11 +444,11 @@ def rule_history(app, clock: Clock, day: date) -> None:
         conn.close()
 
 
-def main() -> None:
+def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description="Seed a day of calls for the owner view.")
     parser.add_argument("--dir", default="data/owner-demo")
     parser.add_argument("--day", help="YYYY-MM-DD, default today in New York")
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     folder = Path(args.dir)
     shutil.rmtree(folder, ignore_errors=True)
     folder.mkdir(parents=True)
