@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% from "_ui.html" import empty, count, call_row with context %}
+{% block title %}{{ tenant }}: search{% endblock %}
+{% block body %}
+<main class="page">
+  <div class="page-head">
+    <div class="lead">
+      <div class="crumbs"><span>Search</span><span>/</span><span>last {{ search_days }} days</span></div>
+      <h1 class="page-title">{% if query %}Calls matching "{{ query }}"{% else %}Search calls{% endif %}</h1>
+    </div>
+  </div>
+
+  <section class="panel">
+    <div class="panel-head"><h2>Matches</h2>{{ count(matches | length) }}<span class="sub">by name, phone, address, ZIP, job number or what the call was about</span></div>
+    {% if matches %}
+    <div class="table-wrap">
+    <table class="table">
+      <thead><tr><th>Day</th><th>Started</th><th>Caller</th><th>About</th><th>What happened</th><th class="right">Length</th><th></th><th><span class="sr-only">Open</span></th></tr></thead>
+      <tbody>
+      {% for c in matches %}{{ call_row(c, show_day=true) }}{% endfor %}
+      </tbody>
+    </table>
+    </div>
+    {% elif query %}{{ empty("No calls match that in the last " ~ search_days ~ " days.") }}
+    {% else %}{{ empty("Type a name, phone number, address or job number in the search box.") }}{% endif %}
+  </section>
+</main>
+{% endblock %}

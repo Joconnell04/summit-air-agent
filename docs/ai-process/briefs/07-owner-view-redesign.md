@@ -16,6 +16,10 @@ Read first: CLAUDE.md, DECISIONS.md 014 to 016, docs/decisions/40-owner-view-sto
 - **Results** (O-9, O-10). Today, 7 days or 30 days: the measures in a ruled table with the period before beside them, calls by hour with a call type filter, booking rate by call type, and what was turned away or held back.
 - **Tell Revin (O-8).** The only write. A report is stored against the call with the moment it is about. When `REPORTS_GITHUB_TOKEN` and `REPORTS_GITHUB_REPO` are set, the jobs loop files it as a GitHub issue with the replay command for the call, so the fix gets an eval case; without them the report is held, the same way alert email is held without a mail server.
 
+## Markup round
+
+After the first build, Jackson marked up the built pages on the design canvas. Those notes, applied as DECISIONS.md 017: figures in place of the summary sentence, counts in pills, whole-row links, a one-line Jobs table with tooltips, one tag in the call header, the conversation as a graph with per-step details and a downloadable log in place of the technical toggle, the report under the conversation, and a search field in the header.
+
 ## Not in scope
 
 Call recordings (O-6's audio): none are stored today, and DECISIONS.md 014 says this is the first cut if time runs short. The page says the recording isn't kept. Recorded in docs/later.md.

@@ -164,18 +164,95 @@ def test_the_status_line_reads_the_voice_workers_heartbeats(agent, clock):
     assert status() == {"state": "down", "last_call": "9 AM", "since": "9 AM"}
 
 
-def test_the_summary_sentence_counts_what_matters_and_flags_what_is_late(agent):
+def test_the_figures_count_calls_jobs_safety_and_late_callbacks(agent):
     booked_tune_up(agent, 1)
     gas_call_that_booked(agent, 2)
-    parts = page(agent)["summary"]
-    assert parts[0] == ("2 calls came in. ", "")
-    assert ("2 jobs booked.", "b") in parts
-    assert (" 1 safety call handled.", "") in parts
-    assert (" 1 needs a person.", "alarm") in parts
+    h = page(agent)["headline"]
+    assert (h["calls"], h["booked"], h["safety"], h["late_callbacks"]) == (2, 2, 1, 0)
 
 
-def test_an_empty_day_says_so(agent):
-    assert page(agent)["summary"] == [("No calls yet.", "")]
+def test_an_empty_day_shows_zeros_not_a_sentence(agent):
+    assert page(agent)["headline"] == {
+        "calls": 0,
+        "after_hours": 0,
+        "booked": 0,
+        "safety": 0,
+        "late_callbacks": 0,
+    }
+    html = signed_in(agent).client.get("/owner").text
+    assert "Calls answered" in html and "Need a person" in html
+
+
+def search(agent: Agent, query: str) -> list[dict]:
+    s = agent.app.state.services
+    conn = s.connect()
+    try:
+        return owner.search(conn, tenant(agent), query, s.clock())
+    finally:
+        conn.close()
+
+
+def test_search_finds_a_call_by_name_number_address_zip_or_job(agent):
+    call = booked_tune_up(agent, 1)
+    other = booked_tune_up(agent, 2)
+    job = page(agent)["bookings"][-1]["fsm_job_id"]
+    assert [c["id"] for c in search(agent, "pat caller")] == [other, call]
+    assert [c["id"] for c in search(agent, "5550801")] == [call], "digits match however written"
+    assert [c["id"] for c in search(agent, "555-0802")] == [other]
+    assert len(search(agent, "Union St 11231")) == 2, "every word has to match"
+    assert [c["id"] for c in search(agent, str(job))] == [call]
+    assert search(agent, "nobody") == [] and search(agent, "  ") == []
+    assert search(agent, "5") == [] and search(agent, "11") == [], "a lone short number is ignored"
+    assert search(agent, "Union")[0]["job"]["address"] == "101 Union St", "a match carries its job"
+
+
+def test_search_digits_never_run_across_two_fields(agent):
+    booked_tune_up(agent, 1)
+    # The street number ends in 1 and the ZIP starts with 1; together they are not a match.
+    assert search(agent, "11123") == []
+
+
+def test_the_search_page_lists_matches_and_says_when_there_are_none(agent):
+    call = booked_tune_up(agent, 1)
+    assert agent.client.get("/owner/search?q=pat").status_code == 401
+    signed_in(agent)
+    html = agent.client.get("/owner/search?q=pat").text
+    assert 'Calls matching "pat"' in html and f'data-href="/owner/calls/{call}"' in html
+    assert "No calls match that" in agent.client.get("/owner/search?q=nobody").text
+    assert 'name="q"' in agent.client.get("/owner").text, "every page has the search field"
+
+
+def test_a_calls_log_downloads_as_json_behind_the_token(agent):
+    call = booked_tune_up(agent, 1)
+    assert agent.client.get(f"/owner/calls/{call}/log").status_code == 401
+    signed_in(agent)
+    got = agent.client.get(f"/owner/calls/{call}/log")
+    assert got.status_code == 200 and got.headers["content-type"] == "application/json"
+    assert f'filename="call-{call}.json"' in got.headers["content-disposition"]
+    assert got.json()["call"]["id"] == call
+    assert agent.client.get("/owner/calls/nope/log").status_code == 404
+
+
+def test_rows_open_their_call_without_an_open_call_link(agent):
+    call = gas_call_that_booked(agent, 1)
+    signed_in(agent)
+    for path in ("/owner", "/owner/calls"):
+        html = agent.client.get(path).text
+        assert "Open call" not in html, path
+        assert f'data-href="/owner/calls/{call}"' in html, path
+    today = agent.client.get("/owner").text
+    assert "Show resolved" in today and "Handled too" not in today
+
+
+def test_the_call_page_has_one_status_tag_and_details_per_step(agent):
+    call = gas_call_that_booked(agent, 1)
+    html = signed_in(agent).client.get(f"/owner/calls/{call}").text
+    head = html[html.index('class="who"') : html.index('class="facts"')]
+    assert head.count('class="tag') == 1 and "Needs a person" in head
+    assert "Safety call: gas smell" in html, "the safety kind moves to the facts line"
+    assert "data-view" not in html, "no separate technical view"
+    assert '<details class="note">' in html and "Download log" in html
+    assert html.index('class="conv"') < html.index('id="report"'), "the report sits under the call"
 
 
 def event(tool, ok=True, refused=None, gate=None, **args):

@@ -12,6 +12,15 @@ Discussion: docs/ai-process/transcripts/... or docs/explorations/...
 Issue: #N
 -->
 
+## 017. Owner view markup round: rows are links, one tag, the call as a graph
+
+Decided: the changes from Jackson's notes on the built pages. Today opens with five figures (label, number, what it is made of) instead of a generated sentence; counts sit in pills apart from their labels; a whole row opens its call and the "Open call" links go; the Jobs table keeps each row to one line with the reason in a tooltip, priority a tag only at Urgent and High, and windows as plain text; "Handled too" becomes "Show resolved"; callbacks say who calls back and by when; the now line runs over the marks; the ServiceTitan logo is larger. On a call: one status tag with the rest as facts, the conversation drawn as a commit graph, the report box under the conversation, compact side panels, and each step's detail behind its own "Details" plus a downloadable log in place of the page-wide technical toggle. A search field in the header finds calls by name, number, address, ZIP or job over the last 30 days.
+Why: the notes asked for less clutter (fewer colors and tag kinds, steady row heights), the AI-generic sentence gone, rows that act like ServiceTitan's, and technical detail either different enough to earn its own view or folded into the call. The toggle only added the raw data under the same notes, so it is folded in.
+Considered: keeping the technical view as its own page (it would repeat the conversation with JSON added); a summary sentence rewritten in a warmer voice (still a generated sentence on top of the numbers).
+Would change if: the owner wants the day summed up in words again, in which case it comes from the post-call summaries rather than a template.
+Discussion: Jackson's notes on the design canvas, "Built" row (https://claude.ai/artifact/MFSZ4p6oo871gh7U2Ss8hL)
+Issue: #53
+
 ## 016. The owner view is the dispatch board, on a full design system
 
 Decided: version A of the timeline and dispatch desk mix (the day across the top, the tables below), with five changes Jackson asked for: a less cluttered board, no row of metric cards, filters on the board and on Results, a better font than Inter, and a full design system the pages are built from. Public Sans replaces Inter: it comes from Franklin Gothic, one of GT America's two parents, and Google's file has tabular figures (MEASURED: its GSUB table lists `tnum`).

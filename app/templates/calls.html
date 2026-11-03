@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_ui.html" import day_nav, empty, q with context %}
+{% from "_ui.html" import day_nav, empty, q, count, call_row with context %}
 {% block title %}{{ tenant }}: calls, {{ day.strftime("%b %-d") }}{% endblock %}
 {% block body %}
 {% set needing = calls | selectattr("open_flags") | list %}
@@ -19,34 +19,19 @@
   <section class="panel" data-call-list>
     <div class="panel-head">
       <div class="seg" role="group" aria-label="Show">
-        <button type="button" aria-pressed="true" data-show="all">All <span class="faint num">{{ calls | length }}</span></button>
-        <button type="button" aria-pressed="false" data-show="needs">Needs a person <span class="faint num">{{ needing | length }}</span></button>
-        <button type="button" aria-pressed="false" data-show="booked">Booked <span class="faint num">{{ booked | length }}</span></button>
-        <button type="button" aria-pressed="false" data-show="away">Turned away <span class="faint num">{{ away | length }}</span></button>
-        <button type="button" aria-pressed="false" data-show="placed">Placed by us <span class="faint num">{{ calls | selectattr("direction", "equalto", "outbound") | list | length }}</span></button>
+        <button type="button" aria-pressed="true" data-show="all">All {{ count(calls | length) }}</button>
+        <button type="button" aria-pressed="false" data-show="needs">Needs a person {{ count(needing | length) }}</button>
+        <button type="button" aria-pressed="false" data-show="booked">Booked {{ count(booked | length) }}</button>
+        <button type="button" aria-pressed="false" data-show="away">Turned away {{ count(away | length) }}</button>
+        <button type="button" aria-pressed="false" data-show="placed">Placed by us {{ count(calls | selectattr("direction", "equalto", "outbound") | list | length) }}</button>
       </div>
     </div>
     {% if calls %}
     <div class="table-wrap">
     <table class="table">
-      <thead><tr><th>Started</th><th>Caller</th><th>About</th><th>What happened</th><th class="right">Length</th><th></th><th></th></tr></thead>
+      <thead><tr><th>Started</th><th>Caller</th><th>About</th><th>What happened</th><th class="right">Length</th><th></th><th><span class="sr-only">Open</span></th></tr></thead>
       <tbody>
-      {% for c in calls %}
-        {% set tags = [] %}
-        {% if c.open_flags %}{% set _ = tags.append("needs") %}{% endif %}
-        {% if c.booked %}{% set _ = tags.append("booked") %}{% endif %}
-        {% if c.outcome.startswith("declined") %}{% set _ = tags.append("away") %}{% endif %}
-        {% if c.direction == "outbound" %}{% set _ = tags.append("placed") %}{% endif %}
-        <tr data-tags="{{ tags | join(' ') }}">
-          <td class="time">{{ clock(c.at) }}</td>
-          <td class="fit num">{{ c.caller }}</td>
-          <td>{{ c.type_label }}</td>
-          <td>{{ c.outcome_label }}</td>
-          <td class="fit right num muted">{% if c.seconds is not none %}{{ c.seconds // 60 }}:{{ "%02d" | format(c.seconds % 60) }}{% endif %}</td>
-          <td class="fit right"><span class="tags">{% if c.direction == "outbound" %}<span class="tag outline">Placed by us</span>{% endif %}{% if c.safety_kind %}<span class="tag urgent">Safety</span>{% endif %}{% if c.open_flags %}<span class="tag high">Needs a person</span>{% endif %}</span></td>
-          <td class="fit right"><a href="/owner/calls/{{ c.id }}">Open call</a></td>
-        </tr>
-      {% endfor %}
+      {% for c in calls %}{{ call_row(c) }}{% endfor %}
       </tbody>
     </table>
     </div>

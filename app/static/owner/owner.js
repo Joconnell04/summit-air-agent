@@ -1,5 +1,5 @@
 // The owner view's few interactions. Every page works without this file; it adds the board's
-// filters and layout, tabs, the plain and technical call views, and the Results chart filter.
+// filters and layout, tabs, whole-row links, tooltips, and the Results chart filter.
 (function () {
   "use strict";
 
@@ -145,16 +145,6 @@
   // Call page
 
   function setupCall(conv) {
-    var buttons = document.querySelectorAll("[data-view]");
-    function view(name) {
-      conv.classList.toggle("plain", name === "plain");
-      Array.prototype.forEach.call(buttons, function (b) { press(b, b.dataset.view === name); });
-    }
-    Array.prototype.forEach.call(buttons, function (b) {
-      b.addEventListener("click", function () { remember("call.view", b.dataset.view); view(b.dataset.view); });
-    });
-    view(recall("call.view", "plain"));
-
     var select = document.querySelector("#report-turn");
     var text = document.querySelector("#report-text");
     each(conv, "[data-report-turn]", function (button) {
@@ -222,7 +212,55 @@
     draw(select ? select.value : "all");
   }
 
+  // Rows that open a call. The name in the row is the real link; this makes the rest of the row
+  // act the same, and leaves other controls in the row alone.
+  function setupRowLinks() {
+    document.addEventListener("click", function (e) {
+      var row = e.target.closest("[data-href]");
+      if (!row || e.target.closest("a, button, summary, input, select, textarea, label, [data-tip]")) return;
+      if (window.getSelection && String(window.getSelection())) return;
+      if (e.metaKey || e.ctrlKey) { window.open(row.dataset.href, "_blank"); return; }
+      window.location.href = row.dataset.href;
+    });
+    document.addEventListener("auxclick", function (e) {
+      var row = e.target.closest("[data-href]");
+      if (e.button !== 1 || !row || e.target.closest("a")) return;
+      window.open(row.dataset.href, "_blank");
+    });
+  }
+
+  // Tooltips for [data-tip]: one floating box, placed under the element, kept on screen.
+  function setupTips() {
+    var tip = document.createElement("div");
+    tip.className = "tooltip";
+    tip.setAttribute("role", "tooltip");
+    document.body.appendChild(tip);
+    function show(el) {
+      tip.textContent = el.dataset.tip;
+      var r = el.getBoundingClientRect();
+      tip.style.left = "0px"; tip.style.top = "0px";
+      tip.classList.add("on");
+      var w = tip.offsetWidth, h = tip.offsetHeight;
+      var left = Math.min(Math.max(r.left, 8), window.innerWidth - w - 8);
+      var top = r.bottom + 6 + h > window.innerHeight ? r.top - h - 6 : r.bottom + 6;
+      tip.style.left = left + "px"; tip.style.top = top + "px";
+    }
+    function hide() { tip.classList.remove("on"); }
+    each(document, "[data-tip]", function (el) {
+      if (!el.matches("a, button")) el.tabIndex = 0;
+      el.addEventListener("mouseenter", function () { show(el); });
+      el.addEventListener("focus", function () { show(el); });
+      el.addEventListener("mouseleave", hide);
+      el.addEventListener("blur", hide);
+    });
+    // Capture, so a table scrolling sideways hides it too, not only the page.
+    window.addEventListener("scroll", hide, { capture: true, passive: true });
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape") hide(); });
+  }
+
   document.addEventListener("DOMContentLoaded", function () {
+    setupRowLinks();
+    setupTips();
     each(document, "#board", setupBoard);
     each(document, "[data-tray]", setupTray);
     each(document, ".conv", setupCall);

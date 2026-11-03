@@ -519,6 +519,20 @@ def build() -> dict:
             check="pm.test('opens the call', () => pm.response.to.have.status(200));\n" + html,
         ),
         item(
+            "A call's full log as JSON",
+            "GET",
+            "owner/calls/{{call_id}}/log",
+            envelope=False,
+            check="pm.test('downloads the log', () => pm.response.to.have.status(200));",
+        ),
+        item(
+            "Search calls by name, number, address or job",
+            "GET",
+            "owner/search?q=Union",
+            envelope=False,
+            check="pm.test('opens the matches', () => pm.response.to.have.status(200));\n" + html,
+        ),
+        item(
             "Tell Revin something was wrong on a call",
             "POST",
             "owner/calls/{{call_id}}/report",

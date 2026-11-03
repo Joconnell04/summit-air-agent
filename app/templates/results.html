@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_ui.html" import pct, empty, q with context %}
+{% from "_ui.html" import pct, empty, q, count, go with context %}
 {% set r = results %}
 {% block title %}{{ tenant }}: results{% endblock %}
 {% block body %}
@@ -19,7 +19,7 @@
   </div>
 
   <section class="panel">
-    <div class="panel-head"><h2>Is it paying off</h2><span class="count">against {{ before }}</span></div>
+    <div class="panel-head"><h2>Is it paying off</h2><span class="sub">against {{ before }}</span></div>
     <div class="table-wrap">
     <table class="table ledger">
       <thead><tr><th>Measure</th><th class="right">{{ "This day" if r.days == 1 else "These " ~ r.days ~ " days" }}</th><th class="right">{{ before[:1] | upper }}{{ before[1:] }}</th><th class="right">Change</th></tr></thead>
@@ -39,7 +39,7 @@
 
   <section class="panel" data-hours-chart>
     <div class="panel-head">
-      <h2>Calls by hour</h2><span class="count" data-hours-total>{{ r.hours | length }} calls</span>
+      <h2>Calls by hour</h2><span class="sub" data-hours-total>{{ r.hours | length }} calls</span>
       <span class="legend" style="margin-left: var(--s-4);"><span><i style="--sw: var(--info)"></i>Booked a job</span><span><i style="--sw: var(--urgent)"></i>Safety call</span><span><i style="--sw: #BCD3F3"></i>Other</span></span>
       <div class="end">
         <label class="sr-only" for="hours-type">Call type</label>
@@ -95,20 +95,20 @@
           <li><span class="what">Commercial callers</span><span class="meta">{% if r.commercial %}{{ r.commercial | map(attribute="summary") | map("truncate", 48) | join("; ") }}{% else %}None{% endif %}</span><span class="end"><span class="num" style="font-size: var(--text-lg); font-weight: var(--semibold);">{{ r.commercial | length }}</span></span></li>
           <li><span class="what">Outside the service area</span><span class="meta">{% if r.zips %}{% for z in r.zips %}{{ z.zip }}{% if z.calls > 1 %} ({{ z.calls }}){% endif %}{% if not loop.last %}, {% endif %}{% endfor %}{% else %}None{% endif %}</span><span class="end"><span class="num" style="font-size: var(--text-lg); font-weight: var(--semibold);">{{ r.zips | sum(attribute="calls") }}</span></span></li>
           <li><span class="what">Booking held for safety</span><span class="meta">Safety lines said first on {{ r.held.lines_first }} of {{ r.held.calls }}{% if r.held.booked %}; {{ r.held.booked }} booked after, at the caller's request{% endif %}</span><span class="end"><span class="num" style="font-size: var(--text-lg); font-weight: var(--semibold);">{{ r.held.calls }}</span></span></li>
-          {% for o in r.overrides %}<li><span class="what">Safety override</span><span class="meta">Job {{ o.job }}, {{ clock(o.at) }}</span><span class="end"><a href="/owner/calls/{{ o.call_id }}">Open call</a></span></li>{% endfor %}
+          {% for o in r.overrides %}<li data-href="/owner/calls/{{ o.call_id }}"><span class="what"><a href="/owner/calls/{{ o.call_id }}">Safety override</a></span><span class="meta">Job {{ o.job }}, {{ clock(o.at) }}</span><span class="end"><span class="go">{{ go() }}</span></span></li>{% endfor %}
         </ul>
         {% if r.refused %}
-        <details class="panel-foot">
-          <summary>What the server held back, {{ r.refused | sum(attribute="count") }} times</summary>
+        <details class="panel-foot more">
+          <summary><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>What the server held back, {{ r.refused | sum(attribute="count") }} times</summary>
           <ul class="list" style="margin: var(--s-2) calc(-1 * var(--s-4)) 0;">
-            {% for x in r.refused %}<li><span class="what" style="font-weight: var(--medium);">{{ refused_label(x.code) }}</span><span class="end"><span class="num">{{ x.count }}</span><a href="/owner/calls/{{ x.call_id }}">Latest</a></span></li>{% endfor %}
+            {% for x in r.refused %}<li data-href="/owner/calls/{{ x.call_id }}" title="Opens the latest call it happened on"><span class="what" style="font-weight: var(--medium);"><a href="/owner/calls/{{ x.call_id }}">{{ refused_label(x.code) }}</a></span><span class="end">{{ count(x.count) }}<span class="go">{{ go() }}</span></span></li>{% endfor %}
           </ul>
         </details>
         {% endif %}
       </section>
 
       <section class="panel">
-        <div class="panel-head"><h2>Sent to Revin</h2><span class="count">{{ reports | length }}</span></div>
+        <div class="panel-head"><h2>Sent to Revin</h2>{{ count(reports | length) }}</div>
         {% if reports %}
         <ul class="list">
           {% for rep in reports %}

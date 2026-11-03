@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_ui.html" import priority, window_tag, figure, empty, note_icon with context %}
+{% from "_ui.html" import priority, priority_text, window_text, figure, empty, note_icon, count, go, info with context %}
 {% block title %}Design system{% endblock %}
 {% block body %}
 {% set colors = [
@@ -18,7 +18,7 @@
   </div>
 
   <section class="panel">
-    <div class="panel-head"><h2>Color</h2><span class="count">tokens.css</span></div>
+    <div class="panel-head"><h2>Color</h2><span class="sub">tokens.css</span></div>
     <div class="panel-body stack" style="gap: var(--s-5);">
       {% for group, items in colors %}
       <div>
@@ -35,11 +35,12 @@
 
   <div class="split wide-side">
     <section class="panel">
-      <div class="panel-head"><h2>Type</h2><span class="count">Public Sans, one family</span></div>
+      <div class="panel-head"><h2>Type</h2><span class="sub">Public Sans, one family</span></div>
       <div class="panel-body spec-type">
+        <code>--text-3xl 32</code><span style="font-size: var(--text-3xl); font-weight: var(--semibold); letter-spacing: var(--tracking-tight); font-variant-numeric: tabular-nums;">21</span>
         <code>--text-2xl 26</code><span style="font-size: var(--text-2xl); font-weight: var(--semibold); letter-spacing: var(--tracking-tight);">Tuesday, Nov 3</span>
-        <code>--text-xl 20</code><span style="font-size: var(--text-xl); font-weight: var(--semibold);">89% booking rate</span>
-        <code>--text-lg 16</code><span style="font-size: var(--text-lg);">21 calls came in. <b>9 jobs booked.</b></span>
+        <code>--text-xl 20</code><span style="font-size: var(--text-xl); font-weight: var(--semibold);">Owner view</span>
+        <code>--text-lg 16</code><span style="font-size: var(--text-lg);">Values in the Results ledger</span>
         <code>--text-md 14</code><span>Body copy and table rows. Safety lines given first.</span>
         <code>--text-sm 13</code><span style="font-size: var(--text-sm);">Controls, captions, notes in a call</span>
         <code>--text-xs 12</code><span style="font-size: var(--text-xs); color: var(--muted);">Tags, table headings, hour labels</span>
@@ -57,26 +58,33 @@
   </div>
 
   <section class="panel">
-    <div class="panel-head"><h2>Controls</h2><span class="count">one height in a row</span></div>
+    <div class="panel-head"><h2>Controls</h2><span class="sub">one height in a row</span></div>
     <div class="panel-body stack" style="gap: var(--s-4);">
       <div class="spec-row"><button class="btn primary" type="button">Send to Revin</button><button class="btn" type="button">Back to today</button><button class="btn quiet" type="button">This was wrong</button><button class="btn icon" type="button" aria-label="Next"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></button><span class="btn" aria-disabled="true">Later</span></div>
       <div class="filters">
-        <button type="button" class="toggle" aria-pressed="true" style="--sw: var(--urgent)"><span class="swatch"></span>Needs a person <span class="n">5</span></button>
-        <button type="button" class="toggle" aria-pressed="false" style="--sw: var(--info)"><span class="swatch"></span>Jobs booked <span class="n">9</span></button>
+        <button type="button" class="toggle" aria-pressed="true" style="--sw: var(--urgent)"><span class="swatch"></span>Needs a person {{ count(5) }}</button>
+        <button type="button" class="toggle" aria-pressed="false" style="--sw: var(--info)"><span class="swatch"></span>Jobs booked {{ count(9) }}</button>
         <span class="rule"></span>
         <div class="seg" role="group"><button type="button" aria-pressed="true">7 AM to 9 PM</button><button type="button" aria-pressed="false">Whole day</button></div>
         <select class="select"><option>All call types</option></select>
+      </div>
+      <div class="spec-row">
+        <form class="search" role="search" onsubmit="return false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><label class="sr-only" for="spec-q">Search calls</label><input id="spec-q" type="search" placeholder="Search name, phone, address, job"></form>
+        <details class="more"><summary><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>Show 4 resolved</summary></details>
+        <span class="tray-tabs" style="border: 0; padding: 0;"><button type="button" role="tab" aria-selected="true">Callbacks{{ count(6, true) }}</button><button type="button" role="tab" aria-selected="false">Leads{{ count(3) }}</button></span>
+        <span>No heat<span class="tip-i" data-tip="Longer detail waits in a tooltip, so the row stays one line." aria-label="Why: longer detail waits in a tooltip">{{ info() }}</span></span>
       </div>
     </div>
   </section>
 
   <div class="split wide-side">
     <section class="panel">
-      <div class="panel-head"><h2>Tags</h2><span class="count">the word names the state; color backs it up</span></div>
+      <div class="panel-head"><h2>Tags</h2><span class="sub">the word names the state; color backs it up</span></div>
       <div class="panel-body stack" style="gap: var(--s-3);">
         <div class="tags">{{ priority("Urgent") }}{{ priority("High") }}{{ priority("Normal") }}</div>
-        <div class="tags"><span class="tag done">Done</span><span class="tag urgent">Late</span><span class="tag info">Today 4 to 8</span><span class="tag info">Job 653</span><span class="tag outline">Held here</span><span class="tag outline">Placed by us</span></div>
-        <div class="tags"><span class="tag urgent">Safety override</span><span class="tag done">Moved earlier</span><span class="tag high">Waiting on ServiceTitan</span></div>
+        <div class="tags"><span class="tag done">Done</span><span class="tag done">Booked</span><span class="tag urgent">Late</span><span class="tag high">Needs a person</span></div>
+        <div class="tags"><span class="tag outline">Moved earlier</span><span class="tag outline">Safety override</span><span class="tag outline">Held here</span><span class="tag outline">Placed by us</span></div>
+        <div class="tags">{{ count(4) }}{{ count(2, true) }}<span class="sub faint" style="font-size: var(--text-sm);">counts sit apart from their labels</span></div>
       </div>
     </section>
     <section class="panel">
@@ -90,14 +98,14 @@
   </div>
 
   <section class="panel">
-    <div class="panel-head"><h2>Figures</h2><span class="count">numbers on a ruled line, never cards</span></div>
+    <div class="panel-head"><h2>Figures</h2><span class="sub">numbers on a ruled line, never cards</span></div>
     <div class="panel-body">
-      <div class="figures">{{ figure(4, "need a person", "#", true) }}{{ figure("89%", "booking rate, 8 of 9") }}{{ figure("4 of 6", "callbacks done") }}{{ figure("93%", "booked and kept, 30 days") }}</div>
+      <div class="figures">{{ figure("Need a person", 4, "calls, 5 items open, 2 urgent", "#", true, true) }}{{ figure("Calls answered", 21, "5 after hours") }}{{ figure("Jobs booked", 10, "89% booking rate: 8 of 9 who wanted a visit") }}{{ figure("Callbacks done", "4 of 6", "2 late", none, false, true) }}{{ figure("Booked and kept", "93%", "jobs not cancelled, last 30 days") }}</div>
     </div>
   </section>
 
   <section class="panel board">
-    <div class="panel-head"><h2>Board marks</h2><span class="count">a flag, a dot, a window, now</span></div>
+    <div class="panel-head"><h2>Board marks</h2><span class="sub">a flag, a dot, a window, now</span></div>
     <div class="board-grid" style="min-width: 0;">
       <div class="board-row">
         <div class="head"><span class="name"><span class="swatch" style="--sw: var(--urgent)"></span>Needs a person</span><span class="sub">labelled</span></div>
@@ -105,7 +113,7 @@
           <div class="mark urgent" style="left: 4%"><a href="#"><span class="dot"></span>Gas smell</a></div>
           <div class="mark high" style="left: 24%"><a href="#"><span class="dot"></span>Late callback</a></div>
           <div class="mark normal" style="left: 46%"><a href="#"><span class="dot"></span>Billing question</a></div>
-          <div class="mark urgent handled" style="left: 70%"><a href="#"><span class="dot"></span>Handled</a></div>
+          <div class="mark urgent handled" style="left: 70%"><a href="#"><span class="dot"></span>Resolved</a></div>
           <span class="now" style="left: 92%"></span>
         </div>
       </div>
@@ -131,37 +139,38 @@
     <section class="panel">
       <div class="panel-head"><h2>Table</h2></div>
       <table class="table">
-        <thead><tr><th>Time</th><th>Priority</th><th>What</th><th></th></tr></thead>
+        <thead><tr><th>Time</th><th>Priority</th><th>What</th><th><span class="sr-only">Open</span></th></tr></thead>
         <tbody>
-          <tr class="urgent-open"><td class="time">4:30 PM</td><td class="fit">{{ priority("Urgent") }}</td><td><div class="what">CO alarm</div><div class="why">An open urgent row is washed red.</div></td><td class="fit right"><a href="#">Open call</a></td></tr>
-          <tr><td class="time">5:18 PM</td><td class="fit">{{ priority("High") }}</td><td><div class="what">Late callback</div><div class="why">The reason sits under the heading.</div></td><td class="fit right"><a href="#">Open call</a></td></tr>
-          <tr class="closed"><td class="time">7:42 AM</td><td class="fit">{{ priority("Urgent") }}</td><td><div class="what">Handled</div><div class="why small">Closed rows go faint.</div></td><td class="fit right"><a href="#">Open call</a></td></tr>
+          <tr class="urgent-open" data-href="#"><td class="time">4:30 PM</td><td class="fit">{{ priority("Urgent") }}</td><td><div class="what"><a href="#">CO alarm</a></div><div class="why small">An open urgent row is washed red.</div></td><td class="go">{{ go() }}</td></tr>
+          <tr data-href="#"><td class="time">5:18 PM</td><td class="fit">{{ priority("High") }}</td><td><div class="what"><a href="#">Late callback</a></div><div class="why small">The whole row opens the call; the chevron says so.</div></td><td class="go">{{ go() }}</td></tr>
+          <tr class="closed" data-href="#"><td class="time">7:42 AM</td><td class="fit">{{ priority_text("Normal") }}</td><td><div class="what"><a href="#">Resolved</a></div><div class="why small">Resolved rows go faint. Normal priority is plain text.</div></td><td class="go">{{ go() }}</td></tr>
         </tbody>
       </table>
     </section>
     <section class="panel">
       <div class="panel-head"><h2>Key-value list</h2></div>
-      <div class="panel-body"><dl class="kv"><dt>Job type</dt><dd>Safety check</dd><dt>Arrival window</dt><dd>{{ window_tag({"day": "today", "label": "after hours"}) }}</dd><dt>Priority</dt><dd>{{ priority("Urgent") }}</dd></dl></div>
+      <div class="panel-body"><dl class="kv"><dt>Job type</dt><dd>Safety check</dd><dt>Arrival window</dt><dd>{{ window_text({"day": "today", "label": "after hours"}) }}</dd><dt>Priority</dt><dd>{{ priority("Urgent") }}</dd></dl></div>
     </section>
   </div>
 
   <div class="split wide-side">
     <section class="panel">
-      <div class="panel-head"><h2>Conversation</h2><span class="count">a turn, and a note for what the agent did</span></div>
-      <div class="conv plain">
-        <div class="turn caller"><span class="at">0:06</span><span class="speaker">Caller</span><span class="text">The carbon monoxide alarm went off earlier.</span></div>
-        <div class="note warn">{{ note_icon("warn") }}<span>Heard a carbon monoxide alarm. Booking is locked until the safety lines are said.</span></div>
-        <div class="turn agent"><span class="at">0:15</span><span class="speaker">Agent</span><span class="text">Please get everyone out of the house now.</span></div>
-        <div class="note ok">{{ note_icon("ok") }}<span>Said the signed-off safety lines, word for word.</span></div>
-        <div class="note hold">{{ note_icon("hold") }}<span>Held the booking until the address and phone were read back.</span></div>
-      </div>
+      <div class="panel-head"><h2>Conversation</h2><span class="sub">turns down the rail, what the agent did branching off it</span></div>
+      <ol class="conv">
+        <li class="turn caller"><span class="at">0:06</span><span class="rail" aria-hidden="true"></span><span class="speaker">Caller</span><span class="text">The carbon monoxide alarm went off earlier.</span></li>
+        <li class="step warn"><span class="at"></span><span class="rail" aria-hidden="true"></span><div class="note">{{ note_icon("warn") }}<span class="say">Heard a carbon monoxide alarm. Booking is locked until the safety lines are said.</span></div></li>
+        <li class="turn agent"><span class="at">0:15</span><span class="rail" aria-hidden="true"></span><span class="speaker">Agent</span><span class="text">Please get everyone out of the house now.</span></li>
+        <li class="step ok"><span class="at"></span><span class="rail" aria-hidden="true"></span><details class="note"><summary>{{ note_icon("ok") }}<span class="say">Looked for openings: Safety check.</span><span class="detail">Details</span></summary><div class="tech-block">find_slots ok  8 ms
+{"job_type": "safety_check"}</div></details></li>
+        <li class="step hold"><span class="at"></span><span class="rail" aria-hidden="true"></span><div class="note">{{ note_icon("hold") }}<span class="say">Held the booking until the address and phone were read back.</span></div></li>
+      </ol>
     </section>
     <div class="stack">
       <form class="report" onsubmit="return false">
-        <h2>Something wrong on this call?</h2>
-        <textarea placeholder="What should have happened?"></textarea>
-        <div class="actions"><span class="hint">Goes to Revin with this call.</span><button class="btn primary" type="button">Send to Revin</button></div>
+        <div class="report-head"><h2>Something wrong on this call?</h2><span class="hint">Goes to Revin with the call.</span></div>
+        <div class="report-fields" style="grid-template-columns: minmax(0, 1fr) auto;"><label class="sr-only" for="spec-report">What should have happened</label><textarea id="spec-report" rows="2" placeholder="What should have happened?"></textarea><button class="btn primary" type="button">Send to Revin</button></div>
       </form>
+      <section class="panel compact"><div class="panel-head"><h2>Compact panel</h2></div><div class="panel-body"><p>A few lines in a side panel: no ruled head.</p></div></section>
       <section class="panel">{{ empty("Nothing needs a person right now.") }}</section>
     </div>
   </div>

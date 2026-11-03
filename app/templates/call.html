@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_ui.html" import priority, window_tag, note_icon, empty, q with context %}
+{% from "_ui.html" import priority, window_text, note_icon, empty, q with context %}
 {% set p = page %}
 {% set title = p.name or (p.address.street if p.address else none) or call.caller_id %}
 {% block title %}{{ tenant }}: {{ title }}, {{ clock(p.started) }}{% endblock %}
@@ -13,18 +13,17 @@
       </div>
       <div class="who">
         <h1 class="page-title">{{ title }}</h1>
-        <span class="tags">
-          {% if p.safety_label %}<span class="tag urgent">Safety: {{ p.safety_label | lower }}</span>{% endif %}
-          {% if p.booking %}{{ priority(p.booking.priority) }}{% endif %}
-          {% if p.booking and p.booking.fsm_job_id %}<span class="tag info">Job {{ p.booking.fsm_job_id }}</span>{% endif %}
-          {% if call.direction == "outbound" %}<span class="tag outline">Placed by us</span>{% endif %}
-          {% if p.open_flags %}<span class="tag high">Needs a person</span>{% endif %}
-        </span>
+        {# One tag: where the call stands now. Everything else is a plain fact on the line below. #}
+        {% if p.open_flags %}<span class="tag {{ 'urgent' if p.booking and p.booking.priority == 'Urgent' or p.safety_label else 'high' }}">Needs a person</span>
+        {% elif p.booking %}<span class="tag done">Booked</span>
+        {% elif call.direction == "outbound" %}<span class="tag outline">Placed by us</span>{% endif %}
       </div>
       <div class="facts">
         <span class="num">{{ clock(p.started) }}{% if p.seconds is not none %}, {{ p.seconds // 60 }} min {{ p.seconds % 60 }} s{% endif %}</span>
         <span class="num">{{ call.caller_id }}</span>
-        <span>{{ p.type_label }}</span>
+        {% if p.safety_label %}<span class="alarm">{{ note_icon("warn") }}Safety call: {{ p.safety_label | lower }}</span>{% else %}<span>{{ p.type_label }}</span>{% endif %}
+        {% if p.booking and p.booking.fsm_job_id %}<span class="num">Job {{ p.booking.fsm_job_id }}</span>{% endif %}
+        {% if call.direction == "outbound" and (p.open_flags or p.booking) %}<span>Placed by us</span>{% endif %}
         <span>Call {{ p.position }} of {{ p.of }} that day</span>
       </div>
     </div>
@@ -35,79 +34,60 @@
   </div>
 
   <div class="split wide-side">
-    <section class="panel">
-      <div class="panel-head">
-        <h2>Conversation</h2>
-        <div class="end">
-          <div class="seg" role="group" aria-label="View">
-            <button type="button" aria-pressed="true" data-view="plain">Plain</button>
-            <button type="button" aria-pressed="false" data-view="tech">Technical details</button>
-          </div>
-        </div>
-      </div>
-      <div class="conv plain">
-        {% for item in thread %}
-          {% if item.kind == "turn" %}
-          <div class="turn {{ item.speaker }}" id="turn-{{ item.seq }}">
-            <span class="at">{{ item.at }}</span>
-            <span class="speaker">{{ "Agent" if item.speaker == "agent" else "Caller" }}</span>
-            <span class="text">{{ item.text }}{% if item.speaker == "agent" %} <button type="button" class="btn quiet report-line" data-report-turn="{{ item.seq }}" title="Tell Revin this line was wrong">This was wrong</button>{% endif %}</span>
-          </div>
-          {% else %}
-          <div class="note {{ item.tone }}">
-            {{ note_icon(item.tone) }}<span>{{ item.text }}</span>{% if item.tech %}<span class="tech">{{ item.tech.tool }}</span>{% endif %}
-          </div>
-          {% if item.tech %}
-          <div class="tech-row"><div class="tech-block">{{ item.tech.tool }} {% if item.tech.ok %}ok{% else %}refused {{ item.tech.refused }}{% endif %}{% if item.tech.gate %} gate={{ item.tech.gate }}{% endif %}  {{ item.tech.ms | round | int }} ms
-{{ item.tech.args | tojson }}{% if item.tech.say %}
-say: {{ item.tech.say }}{% endif %}{% if item.tech.error %}
-error: {{ item.tech.error }}{% endif %}</div></div>
-          {% endif %}
-          {% endif %}
-        {% else %}
-        {{ empty("Nothing was said on this call.") }}
-        {% endfor %}
-      </div>
-      <div class="panel-foot">The recording isn't kept; this is the transcript the agent heard and said.</div>
-    </section>
-
-    <aside class="stack">
-      <section class="panel">
-        <div class="panel-head"><h2>What happened</h2></div>
-        <div class="panel-body"><p>{{ p.summary }}</p></div>
-      </section>
-
-      {% if p.booking %}
+    <div class="stack">
       <section class="panel">
         <div class="panel-head">
-          <h2>Job booked</h2>
-          <span class="end source"><img src="/owner/static/servicetitan-logo.svg" alt="ServiceTitan" width="64" height="11">{% if p.booking.fsm_job_id %}Job {{ p.booking.fsm_job_id }}{% else %}Not in ServiceTitan yet{% endif %}</span>
+          <h2>Conversation</h2>
+          <div class="end"><a class="btn quiet" href="/owner/calls/{{ call.id }}/log" download><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>Download log</a></div>
         </div>
-        <div class="panel-body">
-          <dl class="kv">
-            <dt>Job type</dt><dd>{{ p.job_type }}</dd>
-            <dt>Arrival window</dt><dd>{{ window_tag(p.job) }}</dd>
-            <dt>Priority</dt><dd>{{ priority(p.booking.priority) }}</dd>
-            {% if p.booking.priority_reasons %}<dt>Why</dt><dd>{{ p.booking.priority_reasons[:1] | upper }}{{ p.booking.priority_reasons[1:] }}</dd>{% endif %}
-            <dt>Status</dt><dd>{% if p.booking.status == "booked" %}Scheduled{% elif p.booking.status == "queued" %}Waiting on ServiceTitan{% else %}{{ p.booking.status | capitalize }}{% endif %}{% if p.booking.safety_override %}, safety override logged{% endif %}</dd>
-          </dl>
-        </div>
+        {% if thread %}
+        <ol class="conv">
+          {% for item in thread %}
+            {% if item.kind == "turn" %}
+            <li class="turn {{ item.speaker }}" id="turn-{{ item.seq }}">
+              <span class="at">{{ item.at }}</span>
+              <span class="rail" aria-hidden="true"></span>
+              <span class="speaker">{{ "Agent" if item.speaker == "agent" else "Caller" }}</span>
+              <span class="text">{{ item.text }}{% if item.speaker == "agent" %} <button type="button" class="btn quiet report-line" data-report-turn="{{ item.seq }}" title="Tell Revin this line was wrong">This was wrong</button>{% endif %}</span>
+            </li>
+            {% else %}
+            <li class="step {{ item.tone }}">
+              <span class="at"></span>
+              <span class="rail" aria-hidden="true"></span>
+              {% if item.tech %}
+              <details class="note">
+                <summary>{{ note_icon(item.tone) }}<span class="say">{{ item.text }}</span><span class="detail">Details</span></summary>
+                <div class="tech-block">{{ item.tech.tool }} {% if item.tech.ok %}ok{% else %}refused {{ item.tech.refused }}{% endif %}{% if item.tech.gate %} gate={{ item.tech.gate }}{% endif %}  {{ item.tech.ms | round | int }} ms
+{{ item.tech.args | tojson }}{% if item.tech.say %}
+say: {{ item.tech.say }}{% endif %}{% if item.tech.error %}
+error: {{ item.tech.error }}{% endif %}</div>
+              </details>
+              {% else %}
+              <div class="note">{{ note_icon(item.tone) }}<span class="say">{{ item.text }}</span></div>
+              {% endif %}
+            </li>
+            {% endif %}
+          {% endfor %}
+        </ol>
+        {% else %}{{ empty("Nothing was said on this call.") }}{% endif %}
+        <div class="panel-foot">The recording isn't kept; this is the transcript the agent heard and said.</div>
       </section>
-      {% endif %}
 
       <form class="report" id="report" method="post" action="/owner/calls/{{ call.id }}/report">
-        <h2>Something wrong on this call?</h2>
+        <div class="report-head"><h2>Something wrong on this call?</h2><span class="hint">Goes to Revin with the call, and becomes a test.</span></div>
         {% if sent %}<p class="muted" role="status">Sent. Revin will fix it and add this call to the tests.</p>{% endif %}
-        <label class="sr-only" for="report-turn">Which line</label>
-        <select id="report-turn" name="turn">
-          <option value="">The whole call</option>
-          {% for item in thread if item.kind == "turn" %}<option value="{{ item.seq }}">{{ item.at }} {{ "Agent" if item.speaker == "agent" else "Caller" }}: {{ item.text | truncate(60) }}</option>{% endfor %}
-        </select>
-        <label class="sr-only" for="report-text">What should have happened</label>
-        <textarea id="report-text" name="text" maxlength="{{ max_chars }}" placeholder="What should have happened?" required></textarea>
-        <div class="actions"><span class="hint">Goes to Revin with this call.</span><button class="btn primary" type="submit">Send to Revin</button></div>
+        <div class="report-fields">
+          <label class="sr-only" for="report-turn">Which line</label>
+          <select id="report-turn" name="turn" class="select">
+            <option value="">The whole call</option>
+            {% for item in thread if item.kind == "turn" %}<option value="{{ item.seq }}">{{ item.at }} {{ "Agent" if item.speaker == "agent" else "Caller" }}: {{ item.text | truncate(48) }}</option>{% endfor %}
+          </select>
+          <label class="sr-only" for="report-text">What should have happened</label>
+          <textarea id="report-text" name="text" rows="2" maxlength="{{ max_chars }}" placeholder="What should have happened?" required></textarea>
+          <button class="btn primary" type="submit">Send to Revin</button>
+        </div>
         {% if reports %}
-        <ul class="list sent" aria-label="Sent about this call" style="margin: 0 calc(-1 * var(--s-4)) calc(-1 * var(--s-4)); background: var(--surface); border-top: 1px solid var(--ember-line); border-radius: 0 0 var(--r-lg) var(--r-lg);">
+        <ul class="list sent" aria-label="Sent about this call">
           {% for r in reports | reverse %}
           <li>
             <span class="what" style="font-weight: var(--medium);">{{ r.text }}</span>
@@ -118,9 +98,34 @@ error: {{ item.tech.error }}{% endif %}</div></div>
         </ul>
         {% endif %}
       </form>
+    </div>
+
+    <aside class="stack">
+      <section class="panel compact">
+        <div class="panel-head"><h2>What happened</h2></div>
+        <div class="panel-body"><p>{{ p.summary }}</p></div>
+      </section>
+
+      {% if p.booking %}
+      <section class="panel compact">
+        <div class="panel-head">
+          <h2>Job booked</h2>
+          <span class="end source"><img src="/owner/static/servicetitan-logo.svg" alt="ServiceTitan" width="93" height="16">{% if p.booking.fsm_job_id %}Job {{ p.booking.fsm_job_id }}{% else %}Not in ServiceTitan yet{% endif %}</span>
+        </div>
+        <div class="panel-body">
+          <dl class="kv">
+            <dt>Job type</dt><dd>{{ p.job_type }}</dd>
+            <dt>Arrival window</dt><dd>{{ window_text(p.job) }}</dd>
+            <dt>Priority</dt><dd>{{ priority(p.booking.priority) }}</dd>
+            {% if p.booking.priority_reasons %}<dt>Why</dt><dd>{{ p.booking.priority_reasons[:1] | upper }}{{ p.booking.priority_reasons[1:] }}</dd>{% endif %}
+            <dt>Status</dt><dd>{% if p.booking.status == "booked" %}Scheduled{% elif p.booking.status == "queued" %}Waiting on ServiceTitan{% else %}{{ p.booking.status | capitalize }}{% endif %}{% if p.booking.safety_override %}, safety override logged{% endif %}</dd>
+          </dl>
+        </div>
+      </section>
+      {% endif %}
 
       {% if p.name or p.address %}
-      <section class="panel">
+      <section class="panel compact">
         <div class="panel-head"><h2>Customer</h2></div>
         <div class="panel-body">
           <dl class="kv">
@@ -133,7 +138,6 @@ error: {{ item.tech.error }}{% endif %}</div></div>
         </div>
       </section>
       {% endif %}
-
     </aside>
   </div>
 </main>

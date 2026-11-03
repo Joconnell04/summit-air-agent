@@ -21,7 +21,15 @@
       <a href="/owner/calls{{ q(slug, day if day is defined and not is_today else none) }}"{% if tab == "calls" %} aria-current="page"{% endif %}>Calls</a>
       <a href="/owner/results{{ q(slug, day if day is defined and not is_today else none) }}"{% if tab == "results" %} aria-current="page"{% endif %}>Results</a>
     </nav>
-    <div class="end">{{ status_line(status) }}</div>
+    <div class="end">
+      <form class="search" role="search" method="get" action="/owner/search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+        <label class="sr-only" for="search-q">Search calls</label>
+        <input id="search-q" type="search" name="q" value="{{ query if query is defined else '' }}" placeholder="Search name, phone, address, job" autocomplete="off">
+        {% if slug %}<input type="hidden" name="tenant" value="{{ slug }}">{% endif %}
+      </form>
+      {{ status_line(status) }}
+    </div>
   </div>
 </header>
 {% endblock %}

@@ -8,6 +8,7 @@ address bar; without either, the page shows a one-field form. An empty OWNER_TOK
 """
 
 import hmac
+import json
 from datetime import date, timedelta
 from pathlib import Path
 
@@ -162,6 +163,44 @@ def add_routes(app: FastAPI) -> None:
         finally:
             conn.close()
         return _render(request, "call.html", context)
+
+    @app.get("/owner/calls/{call_id}/log")
+    def owner_call_log(request: Request, call_id: str):
+        """The call's full record as JSON, for whoever wants the technical detail behind a page."""
+        if not _signed_in(request):
+            return _login(request)
+        conn = request.app.state.services.connect()
+        try:
+            found = trace.timeline(conn, call_id)
+        finally:
+            conn.close()
+        if found is None:
+            return HTMLResponse("No such call.", 404)
+        return Response(
+            json.dumps(found, indent=2, default=str),
+            media_type="application/json",
+            headers={"Content-Disposition": f'attachment; filename="call-{call_id}.json"'},
+        )
+
+    @app.get("/owner/search", response_class=HTMLResponse)
+    def owner_search(request: Request, q: str = "", tenant: str = ""):
+        if not _signed_in(request):
+            return _login(request)
+        found = tenant_for(request, tenant)
+        if found is None:
+            return HTMLResponse("No such company.", 404)
+        services = request.app.state.services
+        conn = services.connect()
+        try:
+            context = {
+                **_common(request, found, tenant, "search", conn),
+                "query": q.strip()[:80],
+                "matches": owner.search(conn, found, q[:80], services.clock()),
+                "search_days": owner.SEARCH_DAYS,
+            }
+        finally:
+            conn.close()
+        return _render(request, "search.html", context)
 
     @app.post("/owner/calls/{call_id}/report")
     def owner_report(request: Request, call_id: str, text: str = Form(""), turn: str = Form("")):
