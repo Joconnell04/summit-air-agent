@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% from "_ui.html" import q, count, empty, info, gate_result, rule_status with context %}
+{% block title %}{{ tenant }}: rules{% endblock %}
+{% block body %}
+{% set notes = {
+  "before_hello": "Before the agent speaks",
+  "opening": "The first lines of a call",
+  "whole_call": "All through the call",
+  "booking": "Address, times and the job",
+  "closing": "Wrapping up",
+  "after_call": "Once the line drops",
+} %}
+<main class="page">
+  <div class="page-head">
+    <div class="lead">
+      <div class="crumbs">Rules<span>/</span><span>{% if live %}Version {{ live.number }} live{% else %}As set up{% endif %}</span></div>
+      <h1 class="page-title">Agent rules</h1>
+    </div>
+    <div class="filters">
+      <div class="seg" role="group" aria-label="Show">
+        {% for key, name in [("all", "All"), ("editable", "Editable"), ("locked", "Locked")] %}
+        <a href="/owner/rules?show={{ key }}{% if slug %}&tenant={{ slug }}{% endif %}"{% if show == key %} aria-current="true"{% endif %}>{{ name }} {{ count(counts[key]) }}</a>
+        {% endfor %}
+      </div>
+      <a class="btn primary" href="/owner/rules/edit{{ q(slug) }}">Edit rules</a>
+    </div>
+  </div>
+
+  {% for stage, name, items in stages %}
+  <section class="panel" id="stage-{{ stage }}">
+    <div class="panel-head"><h2>{{ name }}</h2>{{ count(items | length) }}<span class="sub">{{ notes[stage] }}</span></div>
+    <div class="table-wrap">
+    <table class="table">
+      <thead><tr><th>Rule</th><th>Kept by</th><th class="right">Change</th></tr></thead>
+      <tbody>
+      {% for r in items %}
+        {% set long = r.detail | length > 140 %}
+        <tr>
+          <td><span class="what">{{ r.title }}</span>{% if long %}<span class="tip-i" tabindex="0" data-tip="{{ r.detail }}" aria-label="More: {{ r.detail }}">{{ info() }}</span>{% endif %}{% if r.detail %}<div class="why small">{% if r.kind == "wording" %}&ldquo;{{ r.detail | truncate(140) }}&rdquo;{% else %}{{ r.detail | truncate(140) }}{% endif %}</div>{% endif %}</td>
+          <td class="fit muted">{{ r.kind_label }}</td>
+          <td class="fit right">{{ rule_status(r) }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    </div>
+  </section>
+  {% else %}
+  <section class="panel">{{ empty("No rules match.") }}</section>
+  {% endfor %}
+
+  <section class="panel" id="versions">
+    <div class="panel-head"><h2>Versions</h2>{{ count(versions | length) }}<span class="sub">every change, kept</span></div>
+    {% if versions %}
+    <div class="table-wrap">
+    <table class="table">
+      <thead><tr><th>Version</th><th>Changed</th><th>By</th><th>What changed</th><th class="right">Check</th></tr></thead>
+      <tbody>
+      {% for v in versions %}
+        <tr>
+          <td class="fit"><span class="what">{{ v.number }}</span>{% if v.live %} <span class="tag done">Live</span>{% endif %}</td>
+          <td class="time">{{ local(v.updated_at).strftime("%b %-d, %-I:%M %p") }}</td>
+          <td class="fit">{{ v.author }}</td>
+          <td>{{ v.note or "No note" }}</td>
+          <td class="fit right">{{ gate_result(v) }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    </div>
+    {% else %}{{ empty("No changes yet. Calls use the rules as set up.") }}{% endif %}
+  </section>
+</main>
+{% endblock %}

@@ -19,7 +19,7 @@ The owner view is built for the person who runs Summit Air: someone who knows HV
 5. **Plain words on the surface; detail one click away.** Tool names, arguments and refusal codes stay on the call page behind the "Technical details" switch, which also offers the whole record as a log. The owner reads "Held the booking until the safety lines were said", and Revin's engineer turns the switch on to read `book_appointment refused gate_safety` in the same place.
 6. **A row is the link.** A row that opens a call opens it anywhere on the row, and a chevron at its end says so. The row's name is the real link, for keyboards and for pages without the script.
 7. **One line per row.** Longer detail, such as why a job is urgent, waits in a tooltip so rows stay the same height and a column reads straight down.
-8. **Read-only except one thing.** The only write is the report to Revin (story O-8). Nothing on the page changes a call, a job or a flag.
+8. **Read-only except two things.** The report to Revin (story O-8), and the rules editor behind its own edit login (exploration 009), which changes only wording and guidance and goes live only after the eval gate. Nothing on the page changes a call, a job or a flag.
 
 ## Tokens
 
@@ -74,7 +74,7 @@ Times, phone numbers and counts use `.num` (tabular figures) so columns line up.
 Each component lists its parts, its states and when to use it. All of them are on `/owner/design`.
 
 ### App header
-Revin logo, a rule, the company name, the three tabs (Today, Calls, Results) with Ember under the current one, then search and the status line on the right. Sticky. The tabs carry the day being looked at, so moving between pages stays on the same day.
+Revin logo, a rule, the company name, the four tabs (Today, Calls, Results, Rules) with Ember under the current one, then search and the status line on the right. Sticky. The first three tabs carry the day being looked at, so moving between pages stays on the same day; Rules has no day.
 
 ### Search
 One field in the header on every page, backed by a full-text index of every call on record (`app/search.py`, SQLite FTS5): the call (caller name and number, what it was about, how it ended), its job (service location, ZIP, job number, priority and why, arrival window), the flags it raised, its leads and callbacks, and every line said on it. Every word typed has to match, each as the start of a word; a phone number matches however it is written; a lone one- or two-digit number is ignored because it would match nearly everything; punctuation never reaches the index's own query syntax. The index is kept current by the jobs loop and again before each search, and only calls that changed since they were indexed are redone, so a refresh with nothing new is three reads (MEASURED: `test_a_refresh_with_nothing_new_is_three_reads` counts the statements). Calls are indexed a hundred to a transaction, so a first build never holds the write lock for long. A transcript removed by retention leaves the index on the next refresh. Each kind of result is its own query, so many matches of one kind never crowd out another, and the counts are the true totals. At about 5,800 calls (the demo day copied 130 times), a refresh with nothing new takes 19 ms, a search 36 ms and a suggestion 19 ms (MEASURED on a laptop with a scratch timing script).
@@ -156,6 +156,18 @@ Titled "Performance", under the chart. A table of measures down the side and per
 ### Range picker
 The Results period: Day, 7 days or 30 days, and "Custom", a disclosure whose popover takes a from and a to date and Apply. Up to 92 days; the dates can come in either order, an end after today is read as today, and a longer range shows its last 92 days and says so. The period before is the same number of days.
 
+### Field
+One line of text an owner types: 32 px high, the same edge and radius as a select, a blue focus ring. An invalid field gets a red edge (`aria-invalid`) and the reason under it in red (`.error.field-error`), written by the server, never a browser alert. Used on the rules editor.
+
+### Form table
+A table (`.table.form`) whose rows are a label and its field, centred on the field's line so a label reads level with its box. The rules editor's Wording and Guidance panels.
+
+### Actions
+A page's controls on one row at one height (`.actions`): a status tag, a field at a fixed 280 px, then the buttons, the primary last. The rules editor's head: "What changed", Discard, Save draft, Publish.
+
+### Rules page
+`/owner/rules` lists every rule by call stage (Before hello, Opening, Whole call, Booking, Closing, After the call), one panel each, built from the tenant files and prompts (`app/rulebook.py`). Each row is the rule, how it is kept (Server check, Exact wording, Company setting, Agent guidance, Your guidance) and a tag: **Editable** (info) or **Locked** (outline), whose tooltip says why. A segmented control shows All, Editable or Locked. Versions sit under the stages with their check: **Passed 18 of 18** (done), **Blocked, 2 of 18 failed** (urgent, the failed calls in the tooltip), **Checking** (high), **Rolled back** and **Draft** (outline). The editor (`/owner/rules/edit`) needs an edit code; the Rules page opens with the read token.
+
 ### Empty state
 One centred line in faint ink that says what isn't there ("Nothing needs a person right now."). Never an illustration.
 
@@ -175,6 +187,9 @@ One centred line in faint ink that says what isn't there ("Nothing needs a perso
 | Resolved, Show resolved | Handled, closed |
 | Performance | Is it paying off |
 | The office calls back by 1:40 PM | Office, by 1:40 PM |
+| Locked, Editable | Gated, overridable |
+| Publish, Roll back | Deploy, revert |
+| Note to the agent, guidance | Prompt, instruction |
 
 Sentence case everywhere. No ids, tool names or codes outside "Technical details" and the log. Name ServiceTitan once in a place: the logo does it, so the words beside it say "all 10 sent", not "10 in ServiceTitan". Numbers carry their unit in the label ("booking rate, 8 of 9"), not in a tooltip. "Resolved" for a flag a person has dealt with, not "handled".
 

@@ -5,7 +5,7 @@ import re
 import sqlite3
 from datetime import datetime, timedelta
 
-from . import lookup, records, safety
+from . import lookup, records, rules, safety
 from .db import iso, tx
 from .envelope import Result, ok
 from .fsm import FsmAdapter, FsmRejected, FsmUnavailable
@@ -157,6 +157,8 @@ def start(
         "linked_call": _resume(conn, previous) if previous else None,
         "offer_callback": offer_callback,
         "knowledge": tenant.knowledge,
+        # The owner's live edits, pinned to this call (app/rules.py).
+        "house_rules": rules.start_call(conn, tenant, args.call_id, now),
     }
     say = tenant.line("repeated_drops") if offer_callback else ""
     if call["safety_state"] == "signal":
@@ -236,6 +238,14 @@ def turn(
             if sounds_commercial(args.text, tenant.commercial):
                 changes["commercial"] = 1
                 hints.append("commercial")
+            # The server, not the model, says when the call reaches booking or closing, so the
+            # owner's guidance for that stage applies from then. Never on a safety call.
+            stage = rules.advance_stage(conn, call, now)
+            on_safety = call["safety_state"] not in ("none", "cleared") or action.action != "none"
+            if stage and not on_safety and rules.for_call(conn, tenant, call["id"])["guidance"].get(
+                stage
+            ):
+                hints.append(f"stage_{stage}")
         elif call["safety_state"] == "signal" and safety.agent_said_lines(
             args.text, call["safety_kind"], cfg
         ):

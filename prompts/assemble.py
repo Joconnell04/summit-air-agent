@@ -17,23 +17,51 @@ PROMPTS = Path(__file__).resolve().parent
 # Order matters: who you are, how every call goes, the journeys, the tools, then safety last so it
 # sits closest to the call context.
 PARTS = ("identity.md", "spine.md", "journeys.md", "tool-use.md", "safety.md")
+# The owner's guidance by stage (app/rules.py) goes after the journeys, under a fixed preamble that
+# says it is soft. Only stages that have guidance appear, so a call with none gets the same prompt.
+HOUSE_GUIDANCE = "house-guidance.md"
+HOUSE_AFTER = "journeys.md"
+STAGE_TITLES = {
+    "opening": "Opening",
+    "whole_call": "Whole call",
+    "booking": "Booking",
+    "closing": "Closing",
+}
 
 
 def instructions(start: dict, now: datetime | None = None) -> str:
     """The system prompt for one call. `start` is the data of the /calls/start result."""
     tenant = start["tenant"]
-    text = "\n\n".join((PROMPTS / p).read_text().strip() for p in PARTS)
+    parts = [(PROMPTS / p).read_text().strip() for p in PARTS]
+    house = house_guidance((start.get("house_rules") or {}).get("guidance") or {})
+    if house:
+        parts.insert(PARTS.index(HOUSE_AFTER) + 1, house)
+    text = "\n\n".join(parts)
     text = text.replace("{company}", tenant["name"])
     local = (now or datetime.now(ZoneInfo(tenant["timezone"]))).astimezone(
         ZoneInfo(tenant["timezone"])
     )
     knowledge = "\n\n".join(body.strip() for body in start.get("knowledge", {}).values())
-    context = {k: v for k, v in start.items() if k not in ("knowledge", "tenant", "call_id")}
+    context = {
+        k: v for k, v in start.items() if k not in ("knowledge", "tenant", "call_id", "house_rules")
+    }
     return (
         f"{text}\n\n# Company knowledge\n\n{knowledge}\n\n# This call\n\n"
         f"Now: {local:%A %-d %B %Y, %-I:%M %p} ({tenant['timezone']}).\n\n"
         f"What the server found before hello:\n{json.dumps(context, default=str)}\n"
     )
+
+
+def house_guidance(guidance: dict[str, list[str]]) -> str:
+    """The owner's guidance as a prompt section, by stage, or "" when there is none."""
+    sections = [
+        f"## {title}\n\n" + "\n".join(f"- {item}" for item in guidance[stage])
+        for stage, title in STAGE_TITLES.items()
+        if guidance.get(stage)
+    ]
+    if not sections:
+        return ""
+    return "\n\n".join([(PROMPTS / HOUSE_GUIDANCE).read_text().strip(), *sections])
 
 
 def tool_specs(job_types: list[str]) -> list[dict]:
@@ -63,9 +91,16 @@ def first_name(full_name: str) -> str:
     return full_name.split()[0] if full_name.strip() else ""
 
 
+def spoken(start: dict, voice: dict) -> dict:
+    """The tenant's `voice` lines with the owner's live edits for this call (greeting, goodbye)
+    laid over them, as /calls/start returned them."""
+    return {**voice, **((start.get("house_rules") or {}).get("lines") or {})}
+
+
 def greeting(start: dict, voice: dict) -> str:
     """The opening line from the tenant's `voice` lines: by first name when exactly one residential
     customer matched the calling number, otherwise the general greeting."""
+    voice = spoken(start, voice)
     customers = [c for c in start.get("customers", []) if c.get("residential")]
     if len(customers) == 1 and first_name(customers[0]["name"]):
         return voice["greeting_known"].format(first_name=first_name(customers[0]["name"]))
@@ -79,6 +114,8 @@ SERVER_NOTES = {
     ),
     "do_not_call": "The caller asked not to be called. Call mark_do_not_call and say its sentence.",
     "safety_check_cleared": "The caller said no to the safety check. Carry on where the call was.",
+    "stage_booking": "The call has reached booking. The house guidance for booking applies now.",
+    "stage_closing": "The call is closing. The house guidance for closing applies now.",
 }
 
 

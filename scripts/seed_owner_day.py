@@ -15,15 +15,19 @@ from zoneinfo import ZoneInfo
 
 from fastapi.testclient import TestClient
 
-from app import jobs
+from app import jobs, rules
 from app.main import create_app
 from app.settings import Settings
+from evals import gate, results
 from servicetitan_mock.app import create_app as create_mock
 from servicetitan_mock.seed import build_world
 
 ROOT = Path(__file__).resolve().parents[1]
 TENANT_DIR = ROOT / "tenants" / "summit-air"
 DIALED = "(646) 624-0418"
+# The one real eval gate run on an owner draft (paid, $0.39 MEASURED): its draft and result become
+# version 1 on the Rules page, so the demo shows a checked version without a live run.
+GATE_RUN = ROOT / "evals" / "results" / "20261103-193944-livekit-fast-gate.json"
 NEW_YORK = ZoneInfo("America/New_York")
 DETAILS = {
     "since": "this morning",
@@ -413,6 +417,26 @@ def placed_call(voice: Voice, accept: bool) -> None:
     voice.client.post(f"/outbound/{claimed['outbound_id']}/done", json={"answered": True})
 
 
+def rule_history(app, clock: Clock, day: date) -> None:
+    """Version 1 on the Rules page: the draft the gate run tested, saved, sent to the gate and given
+    that run's real result, through app/rules.py as the editor does it."""
+    run = results.load(GATE_RUN)
+    tenant = app.state.services.tenants.default
+    conn = app.state.services.connect()
+    try:
+        clock.now = datetime.combine(day, time(14, 10), NEW_YORK)
+        _draft, errors = rules.save_draft(
+            conn, tenant, run.overlay, "Owner", "Ask about pets; clear a path", clock()
+        )
+        assert not errors, errors
+        clock.now += timedelta(minutes=2)
+        checking = rules.request_publish(conn, tenant.slug, "Owner", clock())
+        clock.now += timedelta(minutes=6)
+        rules.record_gate(conn, checking["id"], gate.summary(run, run.overlay), clock())
+    finally:
+        conn.close()
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Seed a day of calls for the owner view.")
     parser.add_argument("--dir", default="data/owner-demo")
@@ -442,6 +466,7 @@ def main() -> None:
     voice = Voice(app, clock, mock_client)
     earlier_week(voice, clock, day)
     today(voice, clock, day, gas, co)
+    rule_history(app, clock, day)
     # make owner-demo serves the page as if it were this moment, so "now" sits on the board.
     evening = datetime.combine(day, time(17, 20), NEW_YORK)
     (folder / "now").write_text(evening.isoformat())

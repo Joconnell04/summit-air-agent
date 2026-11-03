@@ -382,3 +382,10 @@ voice:
       Thanks for calling Summit Air. If you smell gas, hang up and call 911 from outside. All our
       lines are busy right now. Please leave your name, number and what's going on after the tone,
       and we'll call you back.
+
+# Owner edits from the owner view (app/rules.py). Guidance an owner writes may not mention these,
+# because a locked rule covers them; the template adds its own list (prices, priority, the
+# read-back and so on).
+owner_rules:
+  locked_topics: [gas, carbon monoxide, monoxide, smoke, fumes, co alarm, co detector, sulfur,
+                  rotten egg]

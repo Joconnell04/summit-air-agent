@@ -20,7 +20,7 @@ import re
 import sqlite3
 from datetime import date, datetime, timedelta
 
-from . import records
+from . import records, rules
 from .db import iso, parse_iso, tx
 from .fsm import FsmAdapter, FsmRejected, FsmUnavailable
 from .settings import STUCK_DIALING_MINUTES, TAG_RETRY_MINUTES
@@ -166,7 +166,8 @@ def claim(
         return None
     # Described after the claim is committed: a callback's opening reads ServiceTitan for the name.
     tenant, row, placed = claimed
-    return _describe(conn, tenant, fsms[tenant.slug], row, placed, now)
+    # The opening line is the owner's live wording, if they changed it (app/rules.py).
+    return _describe(conn, rules.tenant_live(conn, tenant), fsms[tenant.slug], row, placed, now)
 
 
 def _describe(

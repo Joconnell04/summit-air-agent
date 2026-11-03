@@ -304,3 +304,38 @@ CREATE TABLE IF NOT EXISTS search_indexed (
     tenant TEXT NOT NULL,
     signature TEXT NOT NULL
 );
+
+-- Owner edits to how the agent works (app/rules.py, exploration 009): the editable wording lines
+-- and guidance by call stage, as whole versions over the tenant's YAML defaults. Rows are never
+-- deleted: a rollback is a new published row that copies an older one (rollback_of is its
+-- number). A draft goes live only through the eval gate, whose result is kept in gate_json.
+CREATE TABLE IF NOT EXISTS rule_versions (
+    id INTEGER PRIMARY KEY,
+    tenant TEXT NOT NULL,
+    number INTEGER NOT NULL,
+    status TEXT NOT NULL CHECK (status IN ('draft', 'checking', 'published', 'blocked', 'discarded')),
+    content_json TEXT NOT NULL,
+    content_hash TEXT NOT NULL,
+    parent_id INTEGER REFERENCES rule_versions (id),
+    rollback_of INTEGER,
+    author TEXT NOT NULL,
+    note TEXT NOT NULL DEFAULT '',
+    published_by TEXT,
+    gate_json TEXT,
+    gate_at TEXT,
+    published_at TEXT,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    UNIQUE (tenant, number)
+);
+CREATE INDEX IF NOT EXISTS ix_rule_versions_live ON rule_versions (tenant, status, published_at);
+
+-- The stages a call reached, as the server saw them (app/rules.py stage_now), and the rule version
+-- it started under, so a bad call traces to an edit.
+CREATE TABLE IF NOT EXISTS call_stages (
+    call_id TEXT NOT NULL REFERENCES calls (id) ON DELETE CASCADE,
+    stage TEXT NOT NULL,
+    version_id INTEGER REFERENCES rule_versions (id),
+    at TEXT NOT NULL,
+    PRIMARY KEY (call_id, stage)
+);

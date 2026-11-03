@@ -15,3 +15,6 @@ Things Jackson set aside on purpose. Nothing here is dropped; each item gets wal
 | Replace ASSUMED latency values with measured ones | Needs the first real calls | latency.md, #7 | open |
 | Set the eval pass-rate floor: run the standard suite on the real prompts, adopt it, floor at its rate rounded down to 5% | Waits for the server and prompt fixes from the build review to land | #27, DECISIONS.md 011 | open |
 | Call recordings on the call page (story O-6) | None are stored today; DECISIONS.md 014 named this the first cut. The call page says the recording isn't kept | brief 07, #53 | open |
+| Editable numbers on the owner view: hours, urgent hold, outbound hours, tighten-only brackets (exploration 009 option B in full) | V1 edits wording and guidance only; numbers wait until Summit Air asks to change them | Exploration 009, questions 4 and 5; #56 | open |
+| "If the caller says X then Y" rules from a fixed menu (exploration 009 option D) | A rule engine is 8 to 12 days (ASSUMED) and waits for three real asks | Exploration 009; #56 | open |
+| Owner guidance for after the call | Nothing reads it until the technician summary is built (spec S-43, code only marks it pending) | #56 build | open |

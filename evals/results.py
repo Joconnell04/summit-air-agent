@@ -121,6 +121,9 @@ class Run(Strict):
     prompt_hash: str | None = None
     # The agent model id behind the profile, for reading a profile comparison.
     model: str | None = None
+    # The owner's draft a gate run tested (app/rules.py, evals/gate.py), part of the hash. None for
+    # a run on the shipped defaults.
+    overlay: dict | None = None
     scenarios: list[ScenarioResult] = Field(min_length=1)
 
     @model_validator(mode="after")

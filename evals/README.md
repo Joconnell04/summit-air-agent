@@ -75,6 +75,10 @@ Every scenario records per-turn timings (model first token, tool time, second mo
 
 Each run writes `evals/results/<run>.json` (schema and validation in `evals/results.py`) and a short table (pass rate by flow and difficulty, reply delay, cost), and sends the run to LangSmith as an experiment when `LANGSMITH_API_KEY` is set (`--no-upload` skips it).
 
+## The eval gate for owner edits
+
+A draft an owner publishes from the Rules page (app/rules.py) goes live only through `evals/gate.py`: every must-pass scenario, once, on our stack, with the draft served as the live version in each scratch world, so calls take the same path as on the phone. Any failed code check or any run with no verdict blocks it; the grader's notes are kept but do not block, since the must-pass lines are code checks and an owner may change manner on purpose. The run is saved as `evals/results/<run>-gate.json` with the draft in `overlay`, which is part of its hash. `make rules-gate` runs it on every draft waiting; the server starts it itself when `RULES_GATE=1`. Cost: $0.39 for the 18 must-pass scenarios on `fast` (MEASURED, run `20261103-193944-livekit-fast-gate`).
+
 ## Running it
 
 - **Keys.** `make eval` reads `.env` (or `ENV_FILE=<path>`): `ANTHROPIC_API_KEY`, and `LANGSMITH_API_KEY` for the upload. The harness calls Anthropic profiles only for now; an OpenAI or Gemini profile stops with a clear message until the model bake-off adds them.

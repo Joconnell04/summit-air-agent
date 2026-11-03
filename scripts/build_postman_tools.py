@@ -568,6 +568,52 @@ def build() -> dict:
             envelope=False,
             check="pm.test('opens the specimen', () => pm.response.to.have.status(200));\n" + html,
         ),
+        item(
+            "The rules by call stage",
+            "GET",
+            "owner/rules?show=editable",
+            envelope=False,
+            check="pm.test('opens the rules', () => pm.response.to.have.status(200));\n" + html,
+        ),
+        item(
+            "The rules editor asks for an edit code",
+            "GET",
+            "owner/rules/edit",
+            envelope=False,
+            check="pm.test('the owner token is read-only', () => pm.response.to.have.status(401));",
+        ),
+        item(
+            "A wrong edit code is refused",
+            "POST",
+            "owner/rules/login",
+            envelope=False,
+            form={"token": "not-an-edit-code"},
+            check="pm.test('refused', () => pm.response.to.have.status(401));",
+        ),
+        item(
+            "Saving a rules draft needs the edit login",
+            "POST",
+            "owner/rules/draft",
+            envelope=False,
+            form={"guide.booking.0": "Ask about pets."},
+            check="pm.test('refused', () => pm.response.to.have.status(401));",
+        ),
+        item(
+            "Discarding a rules draft needs the edit login",
+            "POST",
+            "owner/rules/discard",
+            envelope=False,
+            form={},
+            check="pm.test('refused', () => pm.response.to.have.status(401));",
+        ),
+        item(
+            "Rolling back the rules needs the edit login",
+            "POST",
+            "owner/rules/rollback",
+            envelope=False,
+            form={"number": "0"},
+            check="pm.test('refused', () => pm.response.to.have.status(401));",
+        ),
     ]
     scenarios = booking_flow[0]
     scenarios["request"]["url"] = "{{st_url}}/debug/scenarios"

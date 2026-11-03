@@ -87,3 +87,20 @@
 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
 {%- endif -%}
 {%- endmacro %}
+
+{# Where an owner edit stands: its eval check, a rollback, or a draft (app/rules.py). #}
+{% macro gate_result(v) -%}
+{%- set g = v.gate or {} -%}
+{%- if v.status == "checking" -%}<span class="tag high">Checking</span>
+{%- elif v.status == "blocked" -%}<span class="tag urgent" tabindex="0" data-tip="Test calls that failed: {{ (g.failed + g.errors) | join(', ') | replace('-', ' ') }}">Blocked, {{ (g.failed | length) + (g.errors | length) }} of {{ g.scenarios }} failed</span>
+{%- elif v.status == "draft" -%}<span class="tag outline">Draft</span>
+{%- elif v.rollback_of is not none -%}<span class="tag outline">Rolled back</span>
+{%- elif g.scenarios -%}<span class="tag done"{% if g.grader_flags %} tabindex="0" data-tip="The grader also noted: {{ g.grader_flags | join(', ') | replace('-', ' ') }}"{% endif %}>Passed {{ g.passed_count }} of {{ g.scenarios }}</span>
+{%- else -%}<span class="tag outline">Published</span>
+{%- endif -%}
+{%- endmacro %}
+
+{# A rule's status on the Rules page; a locked one says why in its tooltip. #}
+{% macro rule_status(r) -%}
+{%- if r.editable %}<span class="tag info">Editable</span>{% else %}<span class="tag outline" tabindex="0" data-tip="{{ r.why }}" aria-label="Locked: {{ r.why }}">Locked</span>{% endif -%}
+{%- endmacro %}

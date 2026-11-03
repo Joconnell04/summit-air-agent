@@ -192,6 +192,27 @@ a.figure:hover .label { color: var(--ink); }
   font: inherit; font-size: var(--text-sm); color: var(--ink); appearance: none;
 }
 
+/* Field: one line of text an owner types, the same height and edge as a select. An invalid field
+   gets a red edge and the reason under it in .error. */
+.field {
+  width: 100%; height: var(--control-h); padding: 0 var(--s-3); border-radius: var(--r-md);
+  border: 1px solid var(--line-strong); background: var(--surface);
+  font: inherit; font-size: var(--text-sm); color: var(--ink);
+}
+.field::placeholder { color: var(--faint); }
+.field:hover { border-color: var(--ink-2); }
+.field:focus, .select:focus { outline: none; border-color: var(--info); box-shadow: var(--focus); }
+.field[aria-invalid="true"] { border-color: var(--urgent); }
+.field-error { display: block; margin-top: var(--s-1); }
+/* A form table: a label and its field on each row, centred on the field's line. */
+.table.form td { vertical-align: middle; padding-top: var(--s-2); padding-bottom: var(--s-2); }
+.table.form td .field-error { margin-bottom: calc(-1 * var(--s-1)); }
+
+/* Actions: a page's controls on one row, the same height; a field in the row keeps a fixed width. */
+.actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2); }
+.actions .field { width: 280px; }
+.actions form { display: contents; }
+
 /* ---- Tags: priority, status, window. Text always names the state; color only reinforces -- */
 
 .tag {
