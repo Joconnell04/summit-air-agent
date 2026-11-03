@@ -115,9 +115,18 @@ priority:
   # Two different "group" rules together make Urgent (NYC Health's cold alert: no heat and a risk
   # factor).
   combine: {groups: 2, raise_to: Urgent, reason: two risk factors at home together}
-  # A side model that scores each caller line (DECISIONS.md 006). Off at launch; when set, its score
-  # can only raise priority, like the rules.
-  side_model: null
+  # A side model reads the caller's lines for someone at risk the phrase rules above miss ("my pop
+  # turned ninety", "she's on dialysis"). It answers one question (prompts/side/questions.yaml) and
+  # can only raise priority, like the rules. Used only when the server runs with SIDE_MODEL set
+  # (app/side_model.py); a late or failed answer leaves the rules to decide. Threshold ASSUMED from
+  # the quick run in evals/decision-models (no dev and test split yet).
+  side_model:
+    question: vulnerable_person
+    job_types: [no_heat, no_cooling]
+    threshold: 0.5
+    raise_to: Urgent
+    raise_to_when_mild: High
+    reason: someone at home at risk from the heat or cold
 
 # Where the outside temperature comes from (app/weather.py, exploration 007): the National Weather
 # Service's Central Park station and the forecast grid point over New York City. The service asks

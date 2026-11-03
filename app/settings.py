@@ -36,6 +36,9 @@ class Settings:
     # Read the outside temperature from the National Weather Service (app/weather.py). Off in
     # tests and development so nothing calls out; on for the deployed server.
     weather: bool = field(default_factory=lambda: os.environ.get("WEATHER", "") == "1")
+    # A side model for the vulnerable-person read (app/side_model.py): a profile name under `side`
+    # in config/models.yaml. Empty is off, and the phrase rules decide alone.
+    side_model: str = field(default_factory=lambda: os.environ.get("SIDE_MODEL", ""))
     # The owner view refuses every request when this is empty.
     owner_token: str = field(default_factory=lambda: os.environ.get("OWNER_TOKEN", ""))
     # Who may edit the agent's rules on the owner view, as name=code pairs separated by commas

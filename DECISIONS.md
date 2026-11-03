@@ -12,6 +12,31 @@ Discussion: docs/ai-process/transcripts/... or docs/explorations/...
 Issue: #N
 -->
 
+## 038. Audio bake-off round 1: our stack stays
+
+Decided: under the rule in decision 026, no newcomer is chosen. Gemini Live, OpenAI Realtime and Retell are out of the real-call round: Gemini Live never said the safety lines first (0 of 6), OpenAI Realtime was slowest (2.47 s plain median) and missed the lines twice, and Retell said them word for word on 1 of 6 (a safety failure rules a candidate out, docs/bakeoffs.md). ElevenLabs on our brain was 0.44 s faster with the lines exact on 6 of 6 but misread addresses and numbers on read-back ("St" as "Saint", digits run together) and booked 2 of 4 tune-ups; it gets a fix and a rerun before it can be a finalist. Our stack's plain median was 1.89 s on the rig (MEASURED, evals/rounds/bakeoff-audio-01.md), above the 1.2 s bar; the same Claude model answered in about the same time in both stacks, so the gap is our end-of-turn wait, which is tuned next.
+Why: the rule was set before the run, and the results were read against it. The rig reads about 0.4 s above the worker's own `reply_ms`, since the worker starts timing after its silence wait, so real-call traces need that added.
+Considered: promoting ElevenLabs on speed alone (it would read wrong addresses back to callers).
+Would change if: ElevenLabs reads back cleanly after its fix and stays ahead after our endpointing is tuned, in which case the two get the real calls.
+Discussion: PR #70, evals/rounds/bakeoff-audio-01.md
+Issue: #62
+
+## 037. A side model reads whether someone at risk is home
+
+Decided: a side model (OpenAI Decisions) answers one question on each caller line of a no-heat or no-cooling call: is someone at risk at home? The priority gate reads whatever answer is back within 0.4 s. A yes raises priority the way the vulnerable-person rule does (Urgent, or High on a mild day); a late, failed or missing answer leaves today's rules to decide, and it can never lower priority. On on the server with `SIDE_MODEL=openai-decisions`.
+Why: on 80 test lines written without seeing the phrase lists, the rules found 24 of 37 people at risk; the side model with the rules found 36 or 37 (recall 1.00, precision 0.84 to 0.86, MEASURED, evals/rounds/side-model-01.md). It was back in time on 47 of 47 gate reads (p50 about 250 ms). The new scenario `stroke-in-passing-no-heat` went from High on 3 of 3 runs to Urgent on 3 of 3. Callers here are test callers, so sending lines to the provider is acceptable for the demo; a real deployment would confirm zero retention on the account first.
+Considered: Jev (as accurate and faster, no retention answer yet); a narrow Haiku call (accurate, p50 1.0 s, too slow for the gate); none (misses a third of at-risk people said in passing).
+Would change if: the full plan run (480 lines, a second labeller) puts recall under 0.95 or false alarms up by more than 5 points, or Jev confirms zero retention.
+Discussion: PR #68, evals/rounds/side-model-01.md, evals/decision-models/PLAN.md
+
+## 036. Haiku 5.5 stays the live model
+
+Decided: after the model matrix, Haiku 5.5 with thinking off stays the live brain.
+Why: on the standard suite, two runs each, Haiku passed 91% against Sonnet's 84 to 87%, tied on must-pass, answered plain turns in 0.57 s against 1.6 s (the bar is 1.2 s) and cost about 26 times less per call (MEASURED, evals/rounds/model-matrix-01.md). Sonnet scored 0.14 higher with the grader, within noise, but told callers about its tools and pushed the residence check until it turned renters away.
+Considered: Sonnet 5.5 as the live model.
+Would change if: a faster Sonnet-class model appears, or a prompt change makes Haiku's question pacing clearly worse.
+Discussion: PR #68, evals/rounds/model-matrix-01.md
+
 ## 035. Eval co-authoring in three rounds, not five
 
 Decided: the co-authoring plan in exploration 008, section 7, shrinks to three rounds. Round 1 (real failures) is done. Round 2 combines seeds and the hold-out: Jackson edits or rejects about 10 seed scenarios drafted from his round 1 notes, and dictates 5 short caller cases that stay unread until a release gate. Round 3 combines judge labels and the scoreboard: he marks about 10 graded transcripts pass or fail with the grader's verdict hidden, then reads the standard-run summary and agrees the floor.

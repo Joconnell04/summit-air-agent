@@ -35,6 +35,7 @@ from . import (
     transfer,
     weather,
 )
+from . import side_model as side_models
 from .envelope import Refused, Result
 from .fsm import FsmUnavailable, SlotCache, make_adapter
 from .fsm.base import fsm_timings
@@ -89,7 +90,7 @@ class Services:
         clients = fsm_clients or {}
         self.fsm = {t.slug: make_adapter(t, settings, clients.get(t.slug)) for t in self.tenants}
         self.caches = {t.slug: SlotCache(settings.slot_cache_seconds) for t in self.tenants}
-        self.side_model = side_model
+        self.side_model = side_model or side_models.from_settings(settings.side_model)
         self.report_poster = reports.github_poster(settings)
         self.weather = weather_clients or (
             {t.slug: weather.client(t.weather) for t in self.tenants} if settings.weather else {}
@@ -328,7 +329,12 @@ def create_app(
     def call_turn(request: Request, call_id: str, body: TurnIn):
         def fn(conn, key):
             ctx = _ctx(services, conn, call_id, key)
-            return lifecycle.turn(conn, ctx.tenant, ctx.call, body, ctx.now)
+            result = lifecycle.turn(conn, ctx.tenant, ctx.call, body, ctx.now)
+            # Ask the side model now, so its answer is back before find_slots or book needs it.
+            slot = ctx.tenant.priority.get("side_model")
+            if body.speaker == "caller" and services.side_model and slot:
+                services.side_model.prefetch(slot["question"], records.caller_text(conn, call_id))
+            return result
 
         return run(services, request, "turn", call_id, body.model_dump(), fn)
 
