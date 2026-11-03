@@ -393,6 +393,48 @@ def test_a_window_that_has_started_is_offered_back_as_a_taken_slot_with_other_ti
     assert book(agent, call, first_open(agent, call))["ok"], "and the call can still book"
 
 
+def test_moving_a_visit_into_a_window_that_has_started_offers_other_times(agent):
+    call = ready_to_book(agent)
+    job_id = book(agent, call, first_open(agent, call))["data"]["booking_id"]
+    started = agent.tool(
+        "reschedule_appointment",
+        call,
+        booking_id=job_id,
+        slot={"date": "2026-11-02", "window": "morning"},  # it is 9 a.m.
+        reason="works better",
+    )
+    assert started["refused"] == "slot_taken"
+    assert started["data"]["alternatives"], "other windows come back"
+    assert count(agent, "SELECT COUNT(*) FROM flags WHERE kind = 'reschedule_failed'") == 0
+    assert count(agent, "SELECT COUNT(*) FROM callbacks") == 0, "nobody is promised a callback"
+    later = {"date": "2026-11-06", "window": "morning"}
+    moved = agent.tool(
+        "reschedule_appointment", call, booking_id=job_id, slot=later, reason="works better"
+    )
+    assert moved["ok"], "the refused window didn't use up the one move"
+
+
+def test_a_job_of_a_type_no_longer_booked_can_still_be_moved(agent, monkeypatch):
+    call = ready_to_book(agent)
+    job_id = book(agent, call, first_open(agent, call))["data"]["booking_id"]
+    tenant = agent.app.state.services.tenants.default
+    for code in list(tenant.job_types):
+        monkeypatch.delitem(tenant.job_types, code)
+    started = agent.tool(
+        "reschedule_appointment",
+        call,
+        booking_id=job_id,
+        slot={"date": "2026-11-02", "window": "morning"},  # it is 9 a.m.
+        reason="works better",
+    )
+    assert started["refused"] == "slot_taken" and started["data"]["alternatives"] == []
+    later = {"date": "2026-11-06", "window": "morning"}
+    moved = agent.tool(
+        "reschedule_appointment", call, booking_id=job_id, slot=later, reason="works better"
+    )
+    assert moved["ok"], moved
+
+
 def test_a_list_is_read_page_by_page_until_it_runs_out():
     seen = []
 
