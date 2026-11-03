@@ -37,6 +37,10 @@ How long a caller waits for the agent to start answering, split by stage, so eve
   - Measured in the live pass: kept only if it shortens how long the caller hears nothing.
 - **Thinking off** on every live profile (config/models.yaml).
 
+## What `reply_ms` leaves out (MEASURED)
+
+The `reply_ms` the worker logs with each agent line (`make trace`, voice/livekit/turns.py) runs from LiveKit's `stopped_speaking_at` to the agent starting to speak. LiveKit sets `stopped_speaking_at` only once its voice-activity detector has heard `voice.vad.min_silence_s` of silence (0.35 s, config/models.yaml), so that wait, and the audio's trip to the worker, are not in it. On the simulated audio rig, which times the gap on the audio a caller would hear, our stack read a median of 0.39 s above its own `reply_ms` (60 turns: rig 1.90 s, worker 1.47 s; evals/rounds/bakeoff-audio-01.md, section 5). Read every `reply_ms` below, and in `make trace`, as about 0.4 s short of what the caller waits; the S-36 targets are measured against what the caller hears.
+
 ## First real call (MEASURED)
 
 One call on 2026-11-02 New York time (call `call-_+16466240418_mKdAaWweCvS2`): a simulated caller (`make test-call`) dialed (646) 624-0418 over the phone network, so both directions were real phone audio; profile `fast` (Haiku 5.5). Stage timings from the call trace (`make trace`), 11 agent turns. One call is a smoke test, not a median for S-36.
@@ -47,8 +51,8 @@ One call on 2026-11-02 New York time (call `call-_+16466240418_mKdAaWweCvS2`): a
 | Turn end decided (normal wait) | about 354 ms |
 | Model's first token | median 1.5 s (0.55 to 2.1 s) |
 | Voice first byte (Cartesia) | median 216 ms |
-| Reply delay, plain turns | median 2.7 s (2.1 to 2.8 s, 4 turns) |
-| Reply delay, turns with a tool | 1.4 to 3.4 s (6 turns) |
+| Reply delay, plain turns (worker's `reply_ms`, about 0.4 s short, see above) | median 2.7 s (2.1 to 2.8 s, 4 turns) |
+| Reply delay, turns with a tool (same) | 1.4 to 3.4 s (6 turns) |
 
 The model's first token is the gap: about 1.5 s against the 500 ms budgeted, so plain turns run about twice the 1.2 s target. Turns whose first step follows a tool result in the same turn answer in about 0.55 s, which points at the first model request of each turn (prompt caching or preemptive generation restarting) rather than the model itself; that is the next thing to measure. The bridge line never fired: no tool took longer than 0.7 s (the slowest was 68 ms).
 
