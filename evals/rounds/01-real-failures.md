@@ -58,3 +58,19 @@ Failed: expected a flag or callback, not a booking. The read-back of his number 
 
 1. For each of the five: what's wrong, in a line or two. Say "agree" if my read is right.
 2. Which failure would embarrass you most in front of Revin?
+
+## Jackson's notes (verbatim, transcribed)
+
+> Okay, I'm reading through round one failures. Yeah, all of these are definitely failures, and they all need fixes that don't overcorrect the issues at hand. And definitely, I'm just looking at the transcript where it's like, I'm sorry, but the caller describes this as a business or a building you manage. If the agent was saying this to the caller, it shouldn't say, but the caller describes dot, dot, dot. Yeah, don't over-sensitize yourself for the 911 stuff. That should be pretty rare. And yeah, implement better logic for the reschedule booking thing. Yeah, and definitely fix the timing thing. Maybe we can like stage gate that with like a verification system. I don't know. Implement and surface to me the fix you use for that briefly. Number five isn't that bad, though. That's to me, that doesn't sound like crazy to have somebody come to service your equipment without actually being the approver. As long as a follow-up call is properly scheduled. Anyway, review what I said.
+
+## What the notes mean for the suite
+
+| # | Verdict | Fix |
+|---|---|---|
+| 1 | Failure, agreed | Refusal never repeats internal wording; an owner who lives in a two-family house with a tenant is a home (spec already says so). |
+| 2 | Failure, agreed | A clear "not gas" answer to the check question stands the gas lines down. Real gas wording after that still fires. Keep it narrow: don't make the trigger less sensitive in general. |
+| 3 | Failure, agreed | The server refuses a new booking for a caller who already has an open job at that address and points the agent to reschedule. |
+| 4 | Failure, agreed | Callback times are checked by the server against what the caller asked for (see the fix note in the PR). |
+| 5 | Not a failure | Booking a renter whose approver is unknown is fine as long as a follow-up call to find the approver is scheduled. The scenario's expectation changes to that; the repeated phone read-back is still a defect. |
+
+Failure types so far: wording that leaks internal process (1, and `gas-furnace-no-trigger`); safety rules that overfire (2, `co-alarm-clear`); the server trusting the agent's tool choice (3); promises that don't match what the caller asked (4).
