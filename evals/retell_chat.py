@@ -4,8 +4,12 @@ Retell runs its own model and calls our tool server through its custom functions
 checks read the same record they read for our stack, from that server's /debug/calls/{id}. The
 Retell lane (brief 05) provides the chat agent, an eval tool server with its own mock, and
 `voice.retell.chat.open_chat`, which starts the call on that server under our call id, creates the
-chat and returns its id and opening line. Until those exist a Retell run stops with a clear message
-instead of guessing.
+chat and returns its id and opening line. Its bridge posts every line to the tool server from
+Retell's webhooks, so the harness posts none. Until those exist a Retell run stops with a clear
+message instead of guessing.
+
+The eval server has one shared mock, not a fresh copy per scenario, so Retell runs go one scenario
+at a time (`--workers 1`) and bookings from earlier scenarios stay in the world.
 
 On Retell the safety lines are said by its model (the server checks the wording), not spoken from
 code: Retell chat can't insert them mid-reply. That is a real bake-off difference.
@@ -25,7 +29,9 @@ from evals.stacks import AgentTurn
 from evals.world import ToolServer
 
 BASE_URL = "https://api.retellai.com"
-NEEDED = ("RETELL_API_KEY", "RETELL_CHAT_AGENT_ID", "RETELL_EVAL_TOOL_SERVER", "DEBUG_TOKEN")
+NEEDED = (
+    "RETELL_API_KEY", "RETELL_CHAT_AGENT_ID", "RETELL_EVAL_TOOL_SERVER", "RETELL_EVAL_DEBUG_TOKEN"
+)
 
 
 def _open_chat():
@@ -105,6 +111,12 @@ def open_retell(call_id: str, caller_id: str, env: dict | None = None):
         base_url=BASE_URL, headers={"Authorization": f"Bearer {env['RETELL_API_KEY']}"},
         timeout=30,
     )
-    server = ToolServer(httpx.Client(base_url=env["RETELL_EVAL_TOOL_SERVER"], timeout=30),
-                        env["DEBUG_TOKEN"])
-    return RetellChatAgent(http, open_chat, caller_id, call_id, dict(env)), server
+    # The proxy in front of the eval tool server wants its token on every request.
+    token = env["RETELL_EVAL_DEBUG_TOKEN"]
+    server = ToolServer(
+        httpx.Client(base_url=env["RETELL_EVAL_TOOL_SERVER"], headers={"X-Debug-Token": token},
+                     timeout=30),
+        token,
+    )
+    chat_env = {**env, "DEBUG_TOKEN": token}
+    return RetellChatAgent(http, open_chat, caller_id, call_id, chat_env), server

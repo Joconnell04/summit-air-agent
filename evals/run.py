@@ -63,7 +63,8 @@ class Harness:
 
             return open_retell(call_id, caller_id)
         world = World(self.workdir / call_id, self.seed, scenario.start_time)
-        return InProcessAgent(world.server, self.models.agent, call_id, caller_id), world.server
+        agent = InProcessAgent(world.server, self.models.agent, call_id, caller_id, world.clock)
+        return agent, world.server
 
     def run(self, scenario: Scenario, sample: int = 1, caller_turns: list[str] | None = None
             ) -> ScenarioResult:
@@ -124,7 +125,8 @@ class Harness:
         failures, violations, tool_calls, grade_score, notes = [], [], [], None, ""
         if server is not None:
             try:
-                trace = server.trace(call_id)
+                retell = self.stack == "retell"
+                trace = server.final_trace(call_id) if retell else server.trace(call_id)
                 tool_calls = [
                     ToolCall(name=e["tool"], arguments=e["args"])
                     for e in trace["events"] if e["type"] == "tool" and e["tool"] in TOOLS
