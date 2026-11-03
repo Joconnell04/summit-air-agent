@@ -83,11 +83,15 @@ The owner view is at `/owner` (open `/owner?token=<OWNER_TOKEN>` once; a cookie 
 
 Nothing about Summit Air is in `app/`; a test checks for the company name, its ZIPs, numbers, job types and rule ids. A tenant folder holds `config.yaml` (shared with the mock: hours, area, job types, plans, refused customer types), `agent.yaml` (dialed numbers, FSM ids, safety lines and phrases, priority rules, after-hours cutoffs, callback owners and timings, repeat-caller window, retention, every line the server returns as `say`) and `knowledge/*.md`, which `/calls/start` returns for the prompts. The only text in `app/` the agent may say is a handful of neutral fallbacks ("Sorry, give me just a moment.").
 
+## Owner view: redesign in progress
+
+Jackson is redesigning the owner view in a separate session. The first version, Claude's first attempt, read as a cluttered, generic AI dashboard with a back-end debugging-log feel, and didn't give the owner the right level of detail. The numbers behind it (`app/owner.py`) stay and can keep growing; expect the pages and templates (`app/owner_view.py`, `app/templates/`) to change.
+
 ## Known limits
 
 - The outside temperature is one point, NYC's Central Park station and its forecast grid, which can differ from Staten Island or Nassau by a few degrees; the 55 F and 80 F brackets absorb that (exploration 007). It is read only on a server with `WEATHER=1`, hourly at most, and is unknown (so priority fails safe to High) after three hours without a good read.
 
-- One server process: a per-call lock serializes a call's requests so a retried booking can't race its first attempt. A second process would need that claim in the database.
+- One server process: a per-call lock serializes a call's requests so a retried booking can't race its first attempt. A second process would need that claim in the database; out of scope at Summit Air's size (docs/scaling.md).
 - The JSON log file is never rotated or purged here; retention covers the database. Production log rotation belongs to the deploy.
 - FSM credentials from the environment apply to every tenant; a second real tenant needs per-tenant secrets.
 - `find_customer` by a number or address the caller states returns that customer's lookup, notes included, as the contract says. Changing their visit needs the read-back of its address, but reading the notes doesn't; worth an eval case.

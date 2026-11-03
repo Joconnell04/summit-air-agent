@@ -205,3 +205,18 @@ def test_find_slots_reads_the_stored_outside_temperature(agent, clock):
     agent.turn(call, "The heat's not coming on, but it's 68 in here.")
     found = agent.tool("find_slots", call, job_type="no_heat", facts={"inside_temp_f": 68})
     assert found["data"]["priority"]["level"] == "Normal"
+
+
+def test_an_urgent_caller_hears_it_once_and_a_routine_caller_never_does(agent):
+    line = "one of our most urgent calls"
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "No heat, and my 84-year-old mother lives with me.")
+    first = agent.tool("find_slots", call, job_type="no_heat")
+    assert line in first["say"]
+    agent.say(call, first["say"])
+    again = agent.tool("find_slots", call, job_type="no_heat")
+    assert line not in again["say"]
+
+    routine = agent.start("(212) 555-0177")["data"]["call_id"]
+    agent.turn(routine, "I'd like my annual tune-up.")
+    assert line not in agent.tool("find_slots", routine, job_type="tune_up")["say"]

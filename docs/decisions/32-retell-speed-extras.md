@@ -1,10 +1,14 @@
 # 32. Run the Retell baseline with Retell's paid speed extras, or with the same brain as our stack?
 
-Issue: #32. Status: ready
+Issue: #32. Status: decided
 
 ## Question
 
 Retell can run Claude Haiku 5.5 on a faster capacity tier and start a backup model alongside it that takes over when the first one is slow. Our LiveKit stack has neither. Should the Retell side of the bake-off use them? This only changes how the 10 Retell bake-off calls are set up; nothing in the build waits on it.
+
+## Decision
+
+C: the 10 calls on the same brain, plus about 3 with fast fallback on, reported apart. Fast fallback is the only extra, since Retell has no fast tier for Haiku 5.5. DECISIONS.md 012.
 
 ## Options
 

@@ -149,3 +149,10 @@ Changed:
 - S-28: a known caller whose every address on file is out of area is counted at the start of the call; a call that booked a visit isn't counted toward out-of-area demand.
 Not changed: the carbon monoxide check question on oven or generator heating (exploration 007's suggestion) would change the safety list in docs/users.md, so it is left as an open question.
 Status: open
+
+## spec r6 (amendment after lock: telling the caller about urgency)
+Feedback (verbatim):
+> Make sure that when like that vulnerable situation is identified, that it is mentioned to the user that their case has been put or labeled as like the highest urgency ones. And then you just don't mention urgency for when it's not that. Or give them reassurance without saying you labeled it urgent. Maybe just say you labeled it high urgency.
+Changed:
+- S-21a: when the server marks a call Urgent, `find_slots` opens its sentence once per call with the tenant line "I've marked this as one of our most urgent calls, so you get our soonest opening." Below Urgent nothing names a priority; the prompt (prompts/tool-use.md) says to reassure without a label. The line comes from the server, so the model can't overstate it.
+Status: open
