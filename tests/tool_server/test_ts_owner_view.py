@@ -7,7 +7,16 @@ import httpx
 import pytest
 from test_ts_owner import TOKEN, booked_tune_up, caller, commercial, out_of_area, page
 from test_ts_safety import GAS_LINES
-from toolkit import ROOT, Agent, book, count, first_open, make_server, ready_to_book
+from toolkit import (
+    ROOT,
+    Agent,
+    book,
+    count,
+    first_open,
+    in_area_address,
+    make_server,
+    ready_to_book,
+)
 
 from app import jobs, owner, plain, reports, trace
 
@@ -434,3 +443,64 @@ def test_a_fixed_clock_is_refused_outside_development_and_needs_an_offset(tmp_pa
         Services(Settings(**base, fixed_now="2026-11-03T17:20:00"))
     fixed = Services(Settings(**base, fixed_now="2026-11-03T17:20:00-05:00"))
     assert fixed.clock().isoformat() == "2026-11-03T17:20:00-05:00"
+
+
+def test_the_lines_note_follows_the_servers_record_of_the_lines(agent):
+    call = ready_to_book(agent, caller(1))
+    agent.turn(call, "Wait, I smell gas.")
+    agent.say(call, "Let me check something for you.")
+    agent.say(call, GAS_LINES)
+    agent.end(call)
+    conn = agent.db()
+    thread = plain.conversation(trace.timeline(conn, call), tenant(agent))
+    conn.close()
+    turns_then_notes = [
+        (i["kind"], i.get("text", "")[:24]) for i in thread if i["kind"] in ("turn", "note")
+    ]
+    said = turns_then_notes.index(("note", "Said the signed-off safe"))
+    assert turns_then_notes[said - 1][1].startswith(GAS_LINES[:24]), (
+        "noted on the turn that said them"
+    )
+
+
+def test_a_safety_call_where_the_lines_never_came_says_so(agent):
+    call = ready_to_book(agent, caller(1))
+    agent.turn(call, "Wait, I smell gas.")
+    agent.say(call, "Okay, let me look at openings.")
+    agent.end(call)
+    conn = agent.db()
+    notes = [i["text"] for i in plain.conversation(trace.timeline(conn, call), tenant(agent))]
+    conn.close()
+    assert "Said the signed-off safety lines, word for word." not in notes
+    assert notes[-1] == "The signed-off safety lines were not said on this call."
+
+
+def test_a_callback_done_after_it_went_late_is_not_on_time(agent, clock):
+    late, prompt = (agent.start(caller(n))["data"]["call_id"] for n in (1, 2))
+    for call in (late, prompt):
+        agent.tool("flag_person", call, reason="Call back please", callback_in_minutes=30)
+    conn = agent.db()
+    conn.execute("UPDATE callbacks SET status = 'done' WHERE call_id = ?", (prompt,))
+    conn.close()
+    clock.advance(minutes=31)
+    jobs.run_once(agent.app.state.services)
+    conn = agent.db()
+    conn.execute("UPDATE callbacks SET status = 'done' WHERE call_id = ?", (late,))
+    conn.close()
+    callbacks = page(agent)["callbacks"]
+    assert (callbacks["done"], callbacks["on_time"]) == (2, 1)
+    assert results(agent, 1)["now"]["callbacks"] == (1, 2)
+
+
+def test_results_leave_out_a_zip_when_the_call_back_on_the_thread_booked(agent, clock):
+    first = agent.start(caller(1))["data"]["call_id"]
+    agent.turn(first, "Do you go out to Hoboken? That's my mom's place.")
+    agent.tool("check_service_area", first, zip="07030")
+    agent.end(first, "dropped")
+    clock.advance(minutes=1)
+    second = agent.start(caller(1))["data"]["call_id"]
+    agent.turn(second, "Sorry, we got cut off. I need a tune-up at my place.")
+    agent.confirm_read_back(second, in_area_address())
+    assert book(agent, second, first_open(agent, second))["ok"]
+    agent.end(second)
+    assert results(agent, 1)["zips"] == []

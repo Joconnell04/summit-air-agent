@@ -276,7 +276,10 @@ def callbacks(conn: sqlite3.Connection, tenant: Tenant, day: date) -> dict:
     number to watch."""
     start, end = day_bounds(tenant, day)
     rows = conn.execute(
-        "SELECT cb.*, o.id AS dial_id, o.status AS dial_status, o.result AS dial_result "
+        "SELECT cb.*, o.id AS dial_id, o.status AS dial_status, o.result AS dial_result, "
+        # Overdue once: records.mark_overdue raised its flag, whatever the status says now.
+        "EXISTS (SELECT 1 FROM flags f WHERE f.call_id = cb.call_id AND f.kind = 'overdue_callback' "
+        "AND substr(f.reason, -length(cb.reason)) = cb.reason) AS went_late "
         "FROM callbacks cb JOIN calls c ON c.id = cb.call_id "
         "LEFT JOIN outbound o ON o.callback_id = cb.id "
         "WHERE c.tenant = ? AND cb.created_at >= ? AND cb.created_at < ? ORDER BY cb.due_at",
@@ -290,6 +293,7 @@ def callbacks(conn: sqlite3.Connection, tenant: Tenant, day: date) -> dict:
             "reason": r["reason"],
             "status": r["status"],
             "dial": r["dial_result"] or r["dial_status"],
+            "on_time": r["status"] == "done" and not r["went_late"],
         }
         for r in rows
     ]
@@ -299,6 +303,7 @@ def callbacks(conn: sqlite3.Connection, tenant: Tenant, day: date) -> dict:
         "items": items,
         "promised": promised,
         "done": counts["done"],
+        "on_time": sum(1 for i in items if i["on_time"]),
         "overdue": counts["overdue"],
         "pending": counts["pending"],
         "rate": counts["done"] / promised if promised else None,
@@ -349,12 +354,14 @@ def leads(conn: sqlite3.Connection, tenant: Tenant, day: date) -> list[dict]:
     ]
 
 
-def out_of_area(conn: sqlite3.Connection, tenant: Tenant, day: date) -> list[dict]:
-    """Out-of-area calls by ZIP over the LOOKBACK_DAYS up to the end of the day, most first (S-28),
+def out_of_area(
+    conn: sqlite3.Connection, tenant: Tenant, day: date, days: int = LOOKBACK_DAYS
+) -> list[dict]:
+    """Out-of-area calls by ZIP over the days up to the end of the day, most first (S-28),
     so demand outside the area can inform a decision to expand. A call that booked a visit is
     left out: the caller lives inside the area, and the ZIP they asked about was someone else's."""
     _, end = day_bounds(tenant, day)
-    since = iso(parse_iso(end) - timedelta(days=LOOKBACK_DAYS))
+    since = iso(parse_iso(end) - timedelta(days=days))
     rows = conn.execute(
         "SELECT o.zip, o.call_id FROM out_of_area o "
         "JOIN calls c ON c.id = o.call_id WHERE c.tenant = ? AND o.at >= ? AND o.at < ? "
@@ -695,9 +702,9 @@ def measures(conn: sqlite3.Connection, tenant: Tenant, end_day: date, days: int,
         "booked": sum(1 for b in period_bookings if b["status"] == "booked") if inbound else None,
         "rate": rates["rate"],
         "rate_of": (rates["booked"], rates["calls"]),
-        "callbacks": (sum(1 for c in promised if c["status"] == "done"), len(promised)),
+        "callbacks": (sum(1 for c in promised if c["on_time"]), len(promised)),
         "callback_rate": (
-            sum(1 for c in promised if c["status"] == "done") / len(promised) if promised else None
+            sum(1 for c in promised if c["on_time"]) / len(promised) if promised else None
         ),
         "leads": len(period_leads) if inbound else None,
         "safety": (sum(1 for c in safety if c["safety_lines"]), len(safety)),
@@ -732,15 +739,6 @@ def results(conn: sqlite3.Connection, tenant: Tenant, end_day: date, days: int, 
         for r in found["refused"]:
             refused.setdefault(r["code"], {"code": r["code"], "count": 0, "call_id": r["call_id"]})
             refused[r["code"]]["count"] += r["count"]
-    since = iso(datetime.combine(start_day, time.min, tenant.tz))
-    _, until = day_bounds(tenant, end_day)
-    zips = conn.execute(
-        "SELECT o.zip, COUNT(DISTINCT o.call_id) AS calls FROM out_of_area o "
-        "JOIN calls c ON c.id = o.call_id WHERE c.tenant = ? AND o.at >= ? AND o.at < ? "
-        "AND NOT EXISTS (SELECT 1 FROM bookings b WHERE b.call_id = o.call_id AND b.kind = 'book' "
-        "AND b.status IN ('booked', 'queued', 'sending')) GROUP BY o.zip ORDER BY calls DESC, o.zip",
-        (tenant.slug, since, until),
-    ).fetchall()
     return {
         "days": days,
         "start_day": start_day,
@@ -751,7 +749,7 @@ def results(conn: sqlite3.Connection, tenant: Tenant, end_day: date, days: int, 
         "types": [{"code": code, "label": label} for code, label in types],
         "rates": booking_rates(tenant, period_calls),
         "commercial": [lead for lead in period_leads if lead["kind"] == "commercial"],
-        "zips": [dict(r) for r in zips],
+        "zips": out_of_area(conn, tenant, end_day, days),
         "held": {
             "calls": len(held),
             "lines_first": sum(1 for c in held if c["safety_lines"]),

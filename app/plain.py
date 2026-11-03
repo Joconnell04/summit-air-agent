@@ -7,6 +7,7 @@ doing its job. The tool name and arguments stay on the page behind "Technical de
 
 from datetime import datetime
 
+from . import safety
 from .owner import LEAD_PHRASES, type_label
 from .tenant import Tenant
 
@@ -114,6 +115,9 @@ def conversation(trace: dict, tenant: Tenant) -> list[dict]:
         seconds = max(int((datetime.fromisoformat(at) - started).total_seconds()), 0)
         return f"{seconds // 60}:{seconds % 60:02d}"
 
+    # Only the turn the server accepted as the lines gets the note: the same word-for-word check
+    # lifecycle.turn runs before it records safety_lines_at.
+    lines_recorded = bool(trace["call"]["safety_lines_at"])
     items: list[dict] = []
     lines_due = False
     for event in trace["events"]:
@@ -131,7 +135,12 @@ def conversation(trace: dict, tenant: Tenant) -> list[dict]:
             if event["speaker"] == "caller" and event["safety_action"] == "speak_lines":
                 items.append({"kind": "note", "at": at, **safety_note(tenant, kind), "tech": None})
                 lines_due = True
-            elif event["speaker"] == "agent" and lines_due:
+            elif (
+                event["speaker"] == "agent"
+                and lines_due
+                and lines_recorded
+                and safety.agent_said_lines(event["text"], kind, tenant.safety)
+            ):
                 items.append(
                     {
                         "kind": "note",
@@ -147,4 +156,14 @@ def conversation(trace: dict, tenant: Tenant) -> list[dict]:
         if note is None:
             continue
         items.append({"kind": "note", "at": at, **note, "tech": event})
+    if lines_due:
+        items.append(
+            {
+                "kind": "note",
+                "at": items[-1]["at"],
+                "text": "The signed-off safety lines were not said on this call.",
+                "tone": "warn",
+                "tech": None,
+            }
+        )
     return items
