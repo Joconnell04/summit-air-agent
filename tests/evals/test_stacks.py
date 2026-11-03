@@ -1,6 +1,9 @@
+from fakes import ScriptedModel, say, use
+
 from app.tools import TOOLS
 from evals.stacks import (
     STANDIN_PROMPT,
+    InProcessAgent,
     idempotency_key,
     prompt_files,
     system_prompt,
@@ -55,6 +58,45 @@ def test_the_voice_lanes_assemble_module_supplies_the_prompt_and_tools(monkeypat
     assert "write" not in spec
 
 
+def test_the_worker_greeting_and_server_notes_come_from_assemble(monkeypatch):
+    import sys
+    import types
+
+    from evals import stacks
+
+    fake = types.ModuleType("prompts.assemble")
+    fake.greeting = lambda start, voice: f"Hi, this is {start['tenant']['name']}."
+    fake.server_notes = lambda hints: [f"[server] {h}" for h in hints]
+    monkeypatch.setitem(sys.modules, "prompts.assemble", fake)
+    monkeypatch.setattr(stacks.yaml, "safe_load", lambda text: {"voice": {"greeting_unknown": "x"}})
+    assert stacks.greeting({"tenant": {"slug": "summit-air", "name": "Summit Air"}}) == (
+        "Hi, this is Summit Air."
+    )
+    assert stacks.server_notes(["commercial"]) == ["[server] commercial"]
+
+
+def test_without_assemble_there_is_no_fixed_greeting_and_notes_are_the_harness_own():
+    from evals import stacks
+
+    assert stacks.greeting({"tenant": {"slug": "summit-air"}}) is None
+    assert stacks.server_notes(["commercial", "unknown"]) == [
+        "(Server note: The server marked this caller as commercial; Summit Air doesn't book them.)"
+    ]
+
+
+def test_safety_refusals_and_the_sign_off_are_spoken_word_for_word():
+    from evals.stacks import spoken_by_code
+
+    assert spoken_by_code("book_appointment", {"refused": "gate_safety", "say": "Get out."}) == (
+        "Get out."
+    )
+    assert spoken_by_code("end_call", {"ok": True, "say": "Please head outside."}) == (
+        "Please head outside."
+    )
+    assert spoken_by_code("end_call", {"ok": True, "say": ""}) is None
+    assert spoken_by_code("find_slots", {"ok": True, "say": "Tuesday works."}) is None
+
+
 def test_prompt_files_include_the_tool_descriptions_once_there_are_prompts(tmp_path):
     (tmp_path / "spine.md").write_text("s")
     (tmp_path / "tools.yaml").write_text("t")
@@ -65,3 +107,34 @@ def test_idempotency_key_is_stable_and_depends_on_the_arguments():
     a = idempotency_key("c1", "book_appointment", {"x": 1, "y": 2})
     assert a == idempotency_key("c1", "book_appointment", {"y": 2, "x": 1})
     assert a != idempotency_key("c1", "book_appointment", {"x": 2, "y": 2})
+
+
+class StubServer:
+    """Answers every tool with a safety-gate refusal and records the agent's lines."""
+
+    def __init__(self):
+        self.lines = []
+
+    def start(self, call_id, caller_id):
+        return {"ok": True, "say": "", "data": {"tenant": {"slug": "summit-air"}}}
+
+    def turn(self, call_id, speaker, text, timings=None):
+        if speaker == "agent":
+            self.lines.append(text)
+        return {"ok": True, "say": "", "data": {"hints": []}}
+
+    def tool(self, name, call_id, args, key=None):
+        return {"ok": False, "say": "Please get outside first.", "data": {},
+                "refused": "gate_safety"}
+
+
+def test_a_safety_gate_refusal_is_spoken_and_the_model_gets_no_reply_step():
+    model = ScriptedModel([say("Hello."), use("find_slots", "One moment.", job_type="no_heat"),
+                           say("never said")])
+    server = StubServer()
+    agent = InProcessAgent(server, model, "c1", "(212) 555-0999")
+    agent.start()
+    turn = agent.hear("Book me now.")
+    assert turn.text == "One moment. Please get outside first."
+    assert server.lines[-1] == "One moment. Please get outside first."
+    assert len(model.calls) == 2

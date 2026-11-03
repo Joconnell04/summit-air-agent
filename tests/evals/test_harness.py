@@ -214,3 +214,4 @@ def test_replay_reruns_the_recorded_caller_lines_and_finds_a_changed_tool_sequen
     assert diff(tool_sequence(first), tool_sequence(replay(first, changed))) == [
         "  step 1: was check_service_area, now -"
     ]
+
