@@ -34,6 +34,6 @@ How the design was reached, in order, so a reader can follow each choice back to
 | Tool server built | Every gate, safety check, priority engine, tool-failure queue, notes and history, logging and trace; 274 tests; safety wording sign-off open in #24 | pull request 25, brief 02 |
 | Safety wording signed off | Caller told to hang up and call 911 from outside; no offer to stay on the line, per the gas utility | DECISIONS.md 009, #24 |
 | Owner view and jobs built | Dashboard, earlier-slot offers, callbacks, queued-booking retries, retention; callback-done question open in #26 | pull request 28, brief 06 |
-| Eval suite built | Harness, tiered scenarios, grader, suites by tag, delay comparison, replay, ratchet; pass-rate floor question open in #27 | pull request 29, brief 04 |
+| Eval suite built | Harness, tiered scenarios, grader, suites by tag, delay comparison, replay, ratchet; pass-rate floor question open in #27 | pull requests 29 and 34, brief 04 |
 | LiveKit voice agent built | Worker, prompts, phone wiring and deploy; a real call to (646) 624-0418 booked a job; reply delay 2.7 s against 1.2 s, being worked in #30 | pull request 31, brief 03 |
-| Retell baseline built | Same tools, prompts and traces on the 678 number; a real call booked and a gas call held the safety gate; speed-extras question open in #32 | pull request 33, brief 05 |
+| Retell baseline built | Same tools, prompts and traces on the 678 number; a real call booked and a gas call held the safety gate; speed-extras question open in #32 | pull requests 33 and 35, brief 05 |
