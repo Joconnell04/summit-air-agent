@@ -47,3 +47,4 @@ How the design was reached, in order, so a reader can follow each choice back to
 | Server monitor live, deploy bug fixed | Healthchecks.io watches the watchdog's pings; every deploy had been installing an empty crontab, now fixed and tested | pull request 41 |
 | Retell bake-off setup | Same brain for the 10 calls, about 3 more with fast fallback; Retell has no fast tier for Haiku 5.5 | DECISIONS.md 012, #32 |
 | Owner view redesign started | Jackson is redesigning it in a separate session: the first version was cluttered, generic and read like a debugging log, with the wrong level of detail for an owner | app/README.md |
+| Mock matched to ServiceTitan's real API; callbacks done by call tags | Field names, statuses, capacity, telecom calls and errors follow ServiceTitan's published specs; a callback is done only when a call back is tagged resolved; company rules moved out of the mock | pull request 46, DECISIONS.md 010, exploration 006 |
