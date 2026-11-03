@@ -51,3 +51,15 @@ The same scorecard, so results compare across bake-offs. Numbers in brackets are
 - **Hypothesis:** none beats our stack by 0.3 s on plain turns while keeping the safety lines exact and hang-ups on our server; ElevenLabs on our brain comes closest.
 - **Run:** the rig in `evals/audio_rig/` streams synthesized caller audio to each entrant over its WebSocket for 8 scenarios, three repeats of each must-pass one, and times the first agent sound; our stack and Retell run the same set to calibrate (about $15 in all, ASSUMED). The final two then get the real calls. This supersedes the 3 real calls each planned in bake-off 2.
 - **Decide:** the rule in DECISIONS.md 026. Research: docs/explorations/013-more-bakeoff-entrants.md.
+
+## Considered and not tested
+
+The bake-off tests one entrant per kind of architecture, so each hypothesis is checked once at the lowest cost. With more time we would run every option below; we don't expect them to change the result, for these reasons (research in docs/explorations/013-more-bakeoff-entrants.md).
+
+- **Pipecat.** It is the same architecture as our LiveKit stack (we pick the ears, brain and voice; the framework handles turn-taking), so swapping frameworks with the same parts mostly changes the plumbing, not the delay or the gates. Our LiveKit stack stands in for it.
+- **Deepgram Voice Agent API.** A vendor-hosted version of the same cascade with the same Deepgram ears; ElevenLabs Agents on our brain already tests "a vendor runs the turn-taking, our server runs the rules".
+- **Ultravox.** A speech-native model, the same bet as OpenAI Realtime and Gemini Live, which are tested. It runs only its own open-weight model, so Claude can't be the brain, and its testing tools were unfinished when checked.
+- **Telnyx AI Assistants.** The fastest published median for a managed stack (1.30 s, SOURCE: OpenBenchmarks via exploration 013), but vendor-assembled like Retell and ElevenLabs, with no Cartesia voice and no confirmed way for our server to veto a hang-up. Kept as the first reserve if ElevenLabs drops out.
+- **Twilio ConversationRelay.** A transport, like LiveKit, that doesn't promise to speak our text exactly as written.
+- **Bland, Synthflow, Hume EVI, Cartesia's managed agents.** Our server can't own the hang-ups or force the exact safety lines, so they would fail the must-pass gate by design.
+- **Amazon Nova Sonic, Azure Voice Live.** Speech-to-speech models, the same bet as Realtime and Gemini Live; not researched.
