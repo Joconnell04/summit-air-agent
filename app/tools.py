@@ -312,9 +312,12 @@ def find_slots(ctx: Ctx, args: FindSlotsIn) -> Result:
     priority = {"level": decided.level, "reasons": decided.reasons, "requested": args.priority}
     data: dict = {"priority": priority}
 
-    if ctx.call["after_hours"] and args.job_type in ("no_heat", "no_cooling"):
+    cutoffs = ctx.tenant.after_hours_cutoffs
+    if ctx.call["after_hours"] and args.job_type in (
+        cutoffs["heating_job_types"] + cutoffs["cooling_job_types"]
+    ):
         data["after_hours_outcome"] = prio.after_hours_outcome(
-            facts, decided, ctx.tenant.after_hours_cutoffs, args.facts.temp_falling_fast
+            facts, decided, cutoffs, args.facts.temp_falling_fast
         )
     if decided.level == "Urgent" and windows:
         first = _describe(ctx, windows[0])

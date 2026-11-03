@@ -130,8 +130,12 @@ priority:
   # can only raise priority, like the rules.
   side_model: null
 
-# Journey 11, ASSUMED cutoffs for a no-heat or no-cooling call after hours.
+# Journey 11: how a no-heat or no-cooling call ends after hours. ASSUMED cutoffs.
 after_hours:
+  heating_job_types: [no_heat]
+  cooling_job_types: [no_cooling]
+  # Priority rules that mean someone at home is at extra risk.
+  at_risk_rules: [vulnerable_person, medical_equipment]
   tonight_below_f: 50
   morning_above_f: 55
   cooling_tonight_above_f: 85

@@ -80,15 +80,16 @@ def decide(facts: Facts, cfg: dict, side_model: SideModel | None = None) -> Prio
 
 
 def after_hours_outcome(facts: Facts, priority: Priority, cfg: dict, falling_fast: bool) -> str:
-    """Journey 11: how a no-heat or no-cooling call ends after hours, by tenant cutoffs.
+    """Journey 11: how a no-heat or no-cooling call ends after hours, by tenant cutoffs. The job
+    types and cutoffs are in the tenant's after_hours block.
 
     tonight_if_on_call_agrees: the on-call technician is asked and calls back to confirm.
     first_morning_slot: booked now.
     callback: someone calls back at a named time.
     """
-    at_risk = any(r in priority.rules for r in ("vulnerable_person", "medical_equipment"))
+    at_risk = any(r in priority.rules for r in cfg["at_risk_rules"])
     temp = facts.inside_temp_f
-    if facts.job_type == "no_cooling":
+    if facts.job_type in cfg["cooling_job_types"]:
         if at_risk or (temp is not None and temp >= cfg["cooling_tonight_above_f"]):
             return "tonight_if_on_call_agrees"
         if temp is not None and temp < cfg["cooling_morning_below_f"]:

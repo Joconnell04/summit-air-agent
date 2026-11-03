@@ -5,6 +5,9 @@ from pathlib import Path
 
 from fastapi.testclient import TestClient
 
+from app.main import create_app
+from app.settings import Settings
+
 ROOT = Path(__file__).resolve().parents[2]
 TENANT_DIR = ROOT / "tenants" / "summit-air"
 START = date(2026, 11, 2)  # a Monday
@@ -128,3 +131,16 @@ def count(agent: Agent, sql: str, *params) -> int:
         return conn.execute(sql, params).fetchone()[0]
     finally:
         conn.close()
+
+
+def make_server(tmp_path, clock, mock_app, **settings):
+    """The tool server on a scratch database, talking to the in-process mock."""
+    config = Settings(
+        db_path=tmp_path / "tool.db",
+        tenants_dir=TENANT_DIR.parent,
+        debug_token="test-token",
+        jobs_interval_seconds=0,
+        **settings,
+    )
+    fsm = TestClient(mock_app, raise_server_exceptions=False)
+    return create_app(config, clock=clock, fsm_clients={"summit-air": fsm})
