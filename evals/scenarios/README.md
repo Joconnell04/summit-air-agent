@@ -29,7 +29,7 @@ One YAML file per simulated call, named `<id>.yaml`. `evals/scenario.py` validat
 
 | Key | Who | On file |
 |---|---|---|
-| `repeatCallerOpenJob` | Maria Delgado, open job, gate code note | 620 Bedford Ave, Brooklyn 11235 |
+| `repeatCallerOpenJob` | Maria Delgado, an open no-heat job today, gate code note | 620 Bedford Ave, Brooklyn 11235 |
 | `jobDoneLastWeek` | Thomas Brennan; his note asks to skip the read-back | 800 Springfield Blvd, Queens 11368 |
 | `activeMemberWithAdultChild` | Linda Park, active member; `adultChildPhone` is her son David | 689 Springfield Blvd, Queens 11432 |
 | `expiredMember` | Frank Moretti, plan expired, hard of hearing | 290 Bedford Ave, Brooklyn 11218 |

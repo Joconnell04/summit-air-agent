@@ -13,7 +13,8 @@ PROMPT = Path(__file__).resolve().parent.parent / "prompts" / "evals" / "grader.
 SCHEMA = {
     "type": "object",
     "properties": {
-        "score": {"type": "integer", "minimum": 1, "maximum": 5},
+        # Structured outputs take no integer bounds; the range is checked after parsing.
+        "score": {"type": "integer"},
         "verdict": {"type": "string", "enum": ["pass", "fail"]},
         "notes": {"type": "string"},
     },
