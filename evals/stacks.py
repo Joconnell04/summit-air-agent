@@ -1,9 +1,9 @@
 """The agents under test. Each one is driven a caller line at a time and answers with what it said,
 which tools it called and how long the caller waited, so every stack is scored the same way.
 
-- `livekit`: our stack's brain in process. The same prompts (prompts/*.md), the same tools
-  (app/tools.py) and the same tool server as the LiveKit worker, without audio. Safety text from
-  the server is spoken as given, never generated, as the worker does.
+- `livekit`: our stack's brain in process. The same prompt and tool list as the LiveKit worker
+  (prompts/assemble.py, built from prompts/ and app/tools.py) and the same tool server, without
+  audio. Safety text from the server is spoken as given, never generated, as the worker does.
 - `retell`: the Retell baseline through Retell's text chat API (evals/retell_chat.py).
 """
 import hashlib
@@ -14,6 +14,8 @@ import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
+import yaml
+
 from app.tools import TOOLS
 from evals.models import Model, Usage
 from evals.results import TurnTiming
@@ -21,6 +23,7 @@ from evals.world import ToolServer
 
 ROOT = Path(__file__).resolve().parent.parent
 PROMPTS_DIR = ROOT / "prompts"
+TENANTS_DIR = ROOT / "tenants"
 # Used only while prompts/ holds no agent prompt yet, so the harness can be run end to end.
 STANDIN_PROMPT = Path(__file__).resolve().parent / "standin_prompt.md"
 MAX_HOPS = 6
@@ -41,9 +44,12 @@ class AgentTurn:
 
 
 def prompt_files(prompts_dir: Path = PROMPTS_DIR) -> list[Path]:
-    """The agent's prompt files, in name order; README and the eval prompts are not part of it."""
+    """The agent's prompt files, in name order (README and the eval prompts left out), or the
+    stand-in while there are none. The run hash covers these."""
     files = sorted(p for p in prompts_dir.glob("*.md") if p.name != "README.md")
-    return files or [STANDIN_PROMPT]
+    if not files:
+        return [STANDIN_PROMPT]
+    return files + sorted(prompts_dir.glob("*.yaml")) + sorted(prompts_dir.glob("*.py"))
 
 
 def tool_specs() -> list[dict]:
@@ -64,18 +70,23 @@ def tool_specs() -> list[dict]:
     return specs
 
 
-def _brain():
-    """The voice lane's own prompt and tool builders, if it ships them (voice/brain.py)."""
+def _assemble():
+    """The voice lane's prompt and tool builder (prompts/assemble.py), when it is in the tree."""
     try:
-        return importlib.import_module("voice.brain")
+        return importlib.import_module("prompts.assemble")
     except ImportError:
         return None
 
 
-def system_prompt(start_data: dict, prompts_dir: Path = PROMPTS_DIR) -> str:
-    brain = _brain()
-    if brain and hasattr(brain, "system_prompt"):
-        return brain.system_prompt(start_data)
+def job_types(tenant_slug: str) -> list[str]:
+    config = yaml.safe_load((TENANTS_DIR / tenant_slug / "config.yaml").read_text())
+    return [j["code"] for j in config["job_types"] if j.get("active", True)]
+
+
+def system_prompt(start_data: dict, prompts_dir: Path = PROMPTS_DIR, now=None) -> str:
+    assemble = _assemble()
+    if assemble:
+        return assemble.instructions(start_data, now)
     parts = [p.read_text().strip() for p in prompt_files(prompts_dir)]
     context = json.dumps(start_data, indent=1, default=str)
     parts.append(f"## This call\n\nWhat the server found before the greeting:\n\n{context}")
@@ -88,20 +99,32 @@ def idempotency_key(call_id: str, name: str, args: dict) -> str:
     return hashlib.sha256(raw.encode()).hexdigest()[:32]
 
 
+def assembled_tool_specs(tenant_slug: str) -> list[dict]:
+    """The worker's tool list, in the Messages API shape."""
+    return [
+        {"name": t["name"], "description": t["description"], "input_schema": t["parameters"]}
+        for t in _assemble().tool_specs(job_types(tenant_slug))
+    ]
+
+
 class InProcessAgent:
-    def __init__(self, server: ToolServer, model: Model, call_id: str, caller_id: str):
+    def __init__(self, server: ToolServer, model: Model, call_id: str, caller_id: str,
+                 clock=None):
         self.server = server
         self.model = model
         self.call_id = call_id
         self.caller_id = caller_id
+        self.clock = clock
         self.messages: list[dict] = []
         self.system = ""
-        brain = _brain()
-        self.tools = brain.tool_specs() if brain and hasattr(brain, "tool_specs") else tool_specs()
+        self.tools: list[dict] = []
 
     def start(self) -> AgentTurn:
         started = self.server.start(self.call_id, self.caller_id)
-        self.system = system_prompt(started["data"])
+        now = self.clock() if self.clock else None
+        self.system = system_prompt(started["data"], now=now)
+        slug = started["data"]["tenant"]["slug"]
+        self.tools = assembled_tool_specs(slug) if _assemble() else tool_specs()
         safety = started["data"].get("safety")
         if safety and started["say"]:
             # A dropped safety call carries on: the lines come first on this call too.

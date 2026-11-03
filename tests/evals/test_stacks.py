@@ -32,6 +32,35 @@ def test_system_prompt_ends_with_the_call_context(tmp_path):
     assert '"known_number": false' in text
 
 
+def test_the_voice_lanes_assemble_module_supplies_the_prompt_and_tools(monkeypatch):
+    import sys
+    import types
+
+    from evals import stacks
+
+    fake = types.ModuleType("prompts.assemble")
+    fake.instructions = lambda start, now=None: f"Real prompt for {start['tenant']['name']} at {now}"
+    fake.tool_specs = lambda job_types: [
+        {"name": "find_slots", "description": "d", "parameters": {"type": "object",
+         "properties": {"job_type": {"enum": job_types}}}, "write": False}
+    ]
+    monkeypatch.setitem(sys.modules, "prompts.assemble", fake)
+    assert stacks.system_prompt({"tenant": {"name": "Summit Air"}}, now="9am") == (
+        "Real prompt for Summit Air at 9am"
+    )
+    (spec,) = stacks.assembled_tool_specs("summit-air")
+    assert spec["input_schema"]["properties"]["job_type"]["enum"] == [
+        "no_heat", "no_cooling", "tune_up", "safety_check", "estimate"
+    ]
+    assert "write" not in spec
+
+
+def test_prompt_files_include_the_tool_descriptions_once_there_are_prompts(tmp_path):
+    (tmp_path / "spine.md").write_text("s")
+    (tmp_path / "tools.yaml").write_text("t")
+    assert [p.name for p in prompt_files(tmp_path)] == ["spine.md", "tools.yaml"]
+
+
 def test_idempotency_key_is_stable_and_depends_on_the_arguments():
     a = idempotency_key("c1", "book_appointment", {"x": 1, "y": 2})
     assert a == idempotency_key("c1", "book_appointment", {"y": 2, "x": 1})

@@ -63,7 +63,8 @@ class Harness:
 
             return open_retell(call_id, caller_id)
         world = World(self.workdir / call_id, self.seed, scenario.start_time)
-        return InProcessAgent(world.server, self.models.agent, call_id, caller_id), world.server
+        agent = InProcessAgent(world.server, self.models.agent, call_id, caller_id, world.clock)
+        return agent, world.server
 
     def run(self, scenario: Scenario, sample: int = 1, caller_turns: list[str] | None = None
             ) -> ScenarioResult:
