@@ -241,9 +241,15 @@ def outcome(arg: Any, ev: Evidence) -> list[str]:
 
 
 def ended_by(arg: str, ev: Evidence) -> list[str]:
+    """Who ended the call. Hanging up after the caller said goodbye counts as the caller's end
+    (journey 3: the call ends when the caller hangs up or says goodbye)."""
     reason = ev.call["end_reason"]
-    expected = {"caller": ("caller_hangup",), "agent": ("agent_end",)}[arg]
-    return [] if reason in expected else [f"call ended by {reason}, expected the {arg}"]
+    ends = ev.tools("end_call", ok=True)
+    after_goodbye = bool(ends) and ends[-1]["args"].get("reason") == "caller_goodbye"
+    by_caller = reason == "caller_hangup" or (reason == "agent_end" and after_goodbye)
+    if (arg == "caller") == by_caller:
+        return []
+    return [f"call ended by {reason}, expected the {arg}"]
 
 
 def callback(arg: str, ev: Evidence) -> list[str]:

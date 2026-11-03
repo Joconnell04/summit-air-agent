@@ -149,6 +149,14 @@ def test_outcome_ended_by_and_tool_checks():
     assert failures("tool_not_called", "find_customer", t) == ["find_customer was called"]
 
 
+def test_an_agent_hang_up_after_the_callers_goodbye_counts_as_the_callers_end():
+    goodbye = trace(tools=[("end_call", {"reason": "caller_goodbye"}, True)], end_reason="agent_end")
+    assert failures("ended_by", "caller", goodbye) == []
+    resolved = trace(tools=[("end_call", {"reason": "resolved"}, True)], end_reason="agent_end")
+    assert failures("ended_by", "caller", resolved) != []
+    assert failures("ended_by", "agent", resolved) == []
+
+
 def test_agent_says_and_never_says_are_case_insensitive_regexes():
     t = trace([("agent", "Yes, I'm an AI assistant.", None), ("agent", "That's $120.", None)])
     assert failures("agent_says", r"\bai\b", t) == []
