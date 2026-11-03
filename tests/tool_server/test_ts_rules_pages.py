@@ -150,6 +150,23 @@ def test_the_rules_page_shows_versions_with_their_check(agent):
     assert "Passed 18 of 18" in page and "Version 1 live" in page and PETS[:20] in page
 
 
+def test_a_version_that_passed_on_a_rerun_says_so(agent):
+    conn = agent.db()
+    try:
+        rules.save_draft(conn, TENANT, {"guidance": {"booking": [PETS]}}, "Dana", "", agent.clock())
+        checking = rules.request_publish(conn, TENANT.slug, "Dana", agent.clock())
+        rules.record_gate(conn, checking["id"], {
+            "scenarios": 18, "passed_count": 18, "failed": [], "errors": [], "run_id": "r1",
+            "passed_on_rerun": ["landlord-in-disguise"], "reruns": 1, "rerun_cost_usd": 0.02,
+            "content_hash": checking["content_hash"],
+        }, agent.clock())
+    finally:
+        conn.close()
+    page = reader(agent).client.get("/owner/rules").text
+    assert "Passed 18 of 18" in page and "1 on a rerun" in page
+    assert "Failed, then passed on a rerun: landlord in disguise." in page
+
+
 # ---- The editor (edit login) --------------------------------------------------------------------
 
 

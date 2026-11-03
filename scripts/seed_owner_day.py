@@ -27,10 +27,12 @@ TENANT_DIR = ROOT / "tenants" / "summit-air"
 DIALED = "(646) 624-0418"
 # The real eval gate runs on owner drafts (paid, $0.39 and $0.38 MEASURED): each draft and its result
 # become a version on the Rules page, so the demo shows checked versions without a live run.
-GATE_RUNS = (
-    ("20261103-193944-livekit-fast-gate.json", "Ask about pets; clear a path", time(14, 10)),
-    ("20261103-200110-livekit-fast-gate.json", "Clear a path only", time(15, 40)),
-)
+# Each entry is the gate run, its rerun of the scenarios that missed (None for the runs made before
+# the gate had one), the note and the time it was saved.
+GATE_RUNS = [
+    ("20261103-193944-livekit-fast-gate.json", None, "Ask about pets; clear a path", time(14, 10)),
+    ("20261103-200110-livekit-fast-gate.json", None, "Clear a path only", time(15, 40)),
+]
 NEW_YORK = ZoneInfo("America/New_York")
 DETAILS = {
     "since": "this morning",
@@ -426,15 +428,17 @@ def rule_history(app, clock: Clock, day: date) -> None:
     tenant = app.state.services.tenants.default
     conn = app.state.services.connect()
     try:
-        for name, note, at in GATE_RUNS:
+        for name, rerun_name, note, at in GATE_RUNS:
             run = results.load(ROOT / "evals" / "results" / name)
+            rerun = results.load(ROOT / "evals" / "results" / rerun_name) if rerun_name else None
             clock.now = datetime.combine(day, at, NEW_YORK)
             _draft, errors = rules.save_draft(conn, tenant, run.overlay, "Owner", note, clock())
             assert not errors, errors
             clock.now += timedelta(minutes=2)
             checking = rules.request_publish(conn, tenant.slug, "Owner", clock())
             clock.now += timedelta(minutes=6)
-            rules.record_gate(conn, checking["id"], gate.summary(run, run.overlay), clock())
+            found = gate.summary(run, run.overlay, rerun)
+            rules.record_gate(conn, checking["id"], found, clock())
     finally:
         conn.close()
 

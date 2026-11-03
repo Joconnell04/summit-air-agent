@@ -25,8 +25,8 @@ def result(sid, outcome, failures=(), error=""):
     )
 
 
-def run_of(*scenarios):
-    return build_run("gate", ["must-pass"], "livekit", "fast", list(scenarios), NOW, overlay=DRAFT)
+def run_of(*scenarios, suite="gate"):
+    return build_run(suite, ["must-pass"], "livekit", "fast", list(scenarios), NOW, overlay=DRAFT)
 
 
 def test_a_code_check_failure_or_an_error_blocks_and_a_grader_note_does_not():
@@ -88,6 +88,49 @@ def test_a_gate_run_is_saved_with_its_draft(tmp_path):
     )
 
 
+def test_a_miss_is_rerun_and_counts_only_if_it_misses_again():
+    a, b, c = "co-alarm-clear", "commercial-bakery", "gas-smell-in-passing"
+    first = run_of(result(a, "pass"), result(b, "fail", ["booking: none made"]),
+                   result(c, "error", error="harness: broke"))
+    rerun = run_of(result(b, "pass"), result(c, "fail", ["lead: none"]), suite="gate-rerun")
+    found = gate.summary(first, DRAFT, rerun)
+    assert found["first_missed"] == [b, c]
+    assert found["passed_on_rerun"] == [b] and found["failed"] == [c] and found["errors"] == []
+    assert found["reruns"] == 2 and found["rerun_cost_usd"] == 0.04
+    assert found["cost_usd"] == 0.1 and found["passed_count"] == 2
+    assert not rules.gate_passed(found)
+    assert rules.gate_passed(gate.summary(first, DRAFT, run_of(
+        result(b, "pass"), result(c, "pass"), suite="gate-rerun")))
+
+
+def test_the_gate_reruns_only_the_scenarios_that_missed(tmp_path):
+    flaky = _FakeHarness(fail_first={"landlord-in-disguise"})
+    _run, found = gate.run_gate(DRAFT, "fast", tmp_path, harness=flaky)
+    assert flaky.calls.count("landlord-in-disguise") == 2
+    assert len(flaky.calls) == len(gate.scenarios()) + 1
+    assert found["passed_on_rerun"] == ["landlord-in-disguise"] and rules.gate_passed(found)
+    assert load(tmp_path / f"{found['rerun_id']}.json").suite == "gate-rerun"
+
+    broken = _FakeHarness(fail_always={"co-alarm-clear"})
+    _run, found = gate.run_gate(DRAFT, "fast", tmp_path, harness=broken)
+    assert found["failed"] == ["co-alarm-clear"] and not rules.gate_passed(found)
+
+
+def test_a_clean_run_needs_no_rerun(tmp_path):
+    clean = _FakeHarness()
+    _run, found = gate.run_gate(DRAFT, "fast", tmp_path, harness=clean)
+    assert found["reruns"] == 0 and found["rerun_id"] is None
+    assert len(clean.calls) == len(gate.scenarios())
+
+
 class _FakeHarness:
+    def __init__(self, fail_first=(), fail_always=()):
+        self.fail_first, self.fail_always = set(fail_first), set(fail_always)
+        self.calls: list[str] = []
+
     def run(self, scenario, sample=1):
+        first = scenario.id not in self.calls
+        self.calls.append(scenario.id)
+        if scenario.id in self.fail_always or (first and scenario.id in self.fail_first):
+            return result(scenario.id, "fail", ["booking: 0 booking(s) made, expected 1"])
         return result(scenario.id, "pass")
