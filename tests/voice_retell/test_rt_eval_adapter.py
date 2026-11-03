@@ -3,7 +3,7 @@ import json
 import httpx
 import pytest
 
-from evals.retell_chat import RetellChatAgent, RetellNotReady, open_retell
+from voice.retell.eval_adapter import RetellChatAgent, RetellNotReady, open_agent, reset_world
 
 
 def agent(handler, opened=None):
@@ -67,30 +67,70 @@ def test_an_end_call_that_hangs_up_ends_the_turn():
     assert turn.ended
 
 
+ENV = {"RETELL_API_KEY": "k", "RETELL_CHAT_AGENT_ID": "a",
+       "RETELL_EVAL_TOOL_SERVER": "https://eval.example", "RETELL_EVAL_DEBUG_TOKEN": "tok"}
+
+
+def reset_client(seen, status=200):
+    def handler(request):
+        seen.append((request.method, str(request.url), request.headers.get("x-debug-token")))
+        return httpx.Response(status, json={"reset": status == 200})
+
+    return httpx.Client(transport=httpx.MockTransport(handler))
+
+
 def test_missing_settings_stop_with_a_clear_message():
     with pytest.raises(RetellNotReady, match="RETELL_CHAT_AGENT_ID"):
-        open_retell("eval-x", "(212) 555-0999", env={"RETELL_API_KEY": "k"})
+        open_agent("eval-x", "(212) 555-0999", env={"RETELL_API_KEY": "k"})
 
 
-def test_with_the_retell_lane_here_a_run_opens_its_chats_through_it():
+def test_a_run_opens_its_chats_through_the_retell_lanes_open_chat(monkeypatch):
     from voice.retell.chat import open_chat
 
-    env = {k: "https://x" for k in ("RETELL_API_KEY", "RETELL_CHAT_AGENT_ID",
-                                    "RETELL_EVAL_TOOL_SERVER", "RETELL_EVAL_DEBUG_TOKEN")}
-    retell_agent, _server = open_retell("eval-x", "(212) 555-0999", env=env)
+    monkeypatch.setattr("voice.retell.eval_adapter.reset_world", lambda env: None)
+    retell_agent, _server = open_agent("eval-x", "(212) 555-0999", env=ENV)
     assert retell_agent.open_chat is open_chat
 
 
 def test_the_eval_servers_token_goes_on_every_request_and_to_open_chat(monkeypatch):
-    import evals.retell_chat as rc
-
-    monkeypatch.setattr(rc, "_open_chat", lambda: "opener")
-    env = {"RETELL_API_KEY": "k", "RETELL_CHAT_AGENT_ID": "a",
-           "RETELL_EVAL_TOOL_SERVER": "https://eval.example", "RETELL_EVAL_DEBUG_TOKEN": "tok"}
-    agent, server = open_retell("eval-x", "(212) 555-0999", env=env)
+    monkeypatch.setattr("voice.retell.eval_adapter.reset_world", lambda env: None)
+    agent, server = open_agent("eval-x", "(212) 555-0999", env=ENV)
     assert server.client.headers["X-Debug-Token"] == "tok"
     assert server.debug_token == "tok"
     assert agent.env["DEBUG_TOKEN"] == "tok"
+
+
+def test_the_mock_is_reset_before_the_chat_opens(monkeypatch):
+    order = []
+    monkeypatch.setattr("voice.retell.eval_adapter.reset_world", lambda env: order.append("reset"))
+    open_agent("eval-x", "(212) 555-0999", env=ENV)
+    assert order == ["reset"]
+
+
+def test_a_reset_asks_the_mock_behind_the_eval_server_with_the_token():
+    seen = []
+    reset_world(ENV, reset_client(seen))
+    assert seen == [("POST", "https://eval.example/mock/debug/reset", "tok")]
+
+
+def test_the_reset_address_can_be_overridden_for_a_tunnel():
+    seen = []
+    env = {**ENV, "RETELL_EVAL_MOCK_RESET_URL": "http://127.0.0.1:8111/debug/reset"}
+    reset_world(env, reset_client(seen))
+    assert seen[0][1] == "http://127.0.0.1:8111/debug/reset"
+
+
+def test_a_refused_reset_stops_the_scenario_instead_of_scoring_a_dirty_world():
+    with pytest.raises(RetellNotReady, match=r"refused its reset \(403"):
+        reset_world(ENV, reset_client([], status=403))
+
+
+def test_an_unreachable_reset_stops_the_scenario():
+    def down(request):
+        raise httpx.ConnectError("no route", request=request)
+
+    with pytest.raises(RetellNotReady, match="could not reach"):
+        reset_world(ENV, httpx.Client(transport=httpx.MockTransport(down)))
 
 
 def test_the_record_is_read_once_the_webhook_has_ended_the_call():

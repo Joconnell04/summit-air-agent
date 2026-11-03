@@ -42,6 +42,26 @@ def build_world(db_path: str | Path, tenant_dir: str | Path, start: date | None 
     return scenarios
 
 
+def reseed(db_path: str | Path, tenant_dir: str | Path, start: date | None = None) -> dict:
+    """Replace the contents of a live database with a fresh world, without deleting the file.
+
+    The world is built beside it and copied in with SQLite's backup API, which takes the database's
+    own locks, so a request that arrives during the copy sees the old world or the new one, never a
+    mix. Used by the debug reset on the eval instance's mock."""
+    db_path = Path(db_path)
+    fresh = db_path.with_name(db_path.name + ".fresh")
+    scenarios = build_world(fresh, tenant_dir, start)
+    source, target = connect(fresh), connect(db_path)
+    try:
+        source.backup(target)
+    finally:
+        source.close()
+        target.close()
+        for suffix in ("", "-wal", "-shm"):
+            Path(str(fresh) + suffix).unlink(missing_ok=True)
+    return scenarios
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Rebuild the mock ServiceTitan database.")
     parser.add_argument("--tenant", default=DEFAULT_TENANT_DIR)
