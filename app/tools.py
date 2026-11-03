@@ -330,7 +330,7 @@ def find_slots(ctx: Ctx, args: FindSlotsIn) -> Result:
         data["windows"] = on_day
         if not on_day:
             return ok("Nothing's open that day.", **data)
-        labels = " or ".join(w["label"] for w in on_day)
+        labels = _join([w["label"] for w in on_day], "or")
         return ok(f"{on_day[0]['day'].capitalize()} I have {labels}.", **data)
 
     by_day: dict[str, list[dict]] = {}
