@@ -1,4 +1,4 @@
-"""The safety check and its gates (spec S-17 to S-20)."""
+"""The safety check and its gates (spec S-17 to S-20, and S-21b for indoor fuel heating)."""
 
 import itertools
 
@@ -250,6 +250,7 @@ CO_QUESTION = CFG["vague"]["co"]["question"]
     ],
 )
 def test_heating_with_a_fuel_burning_source_asks_the_co_check(line):
+    """S-21b: heating with an oven, stove, grill or generator indoors asks the CO check."""
     assert safety.heating_signal(line, CFG)
     action = safety.check_caller_turn(line, "none", None, 0, CFG)
     assert action.action == "ask_check"
@@ -270,11 +271,13 @@ def test_heating_with_a_fuel_burning_source_asks_the_co_check(line):
     ],
 )
 def test_ordinary_mentions_of_an_oven_stove_or_generator_ask_nothing(line):
+    """S-21b: the trigger is narrow, so an ordinary mention asks nothing."""
     assert not safety.heating_signal(line, CFG)
     assert safety.check_caller_turn(line, "none", None, 0, CFG).action == "none"
 
 
 def test_the_heating_check_is_asked_once_per_call():
+    """S-21b: asked once per call, never more than it needs to be."""
     line = "we have the oven open for heat"
     # Asked already on this call, or the same question was already cleared: not asked again.
     assert safety.check_caller_turn(line, "none", None, 0, CFG, heating_asked=True).action == "none"
