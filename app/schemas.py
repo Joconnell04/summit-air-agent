@@ -34,6 +34,9 @@ class StartIn(CallRef):
     caller_id: str = Field(max_length=40, description="The other party's number, as delivered")
     dialed_number: str = Field(max_length=40, description="Our number: the one the caller dialed")
     direction: Literal["inbound", "outbound"] = "inbound"
+    callback_id: int | None = Field(
+        None, description="Outbound only: the callback this call places, checked by the server"
+    )
 
 
 class TurnIn(Body):

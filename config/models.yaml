@@ -33,6 +33,31 @@ profiles:
     model: gemini-3.8-flash
     thinking: false
 
+# The ears and the voice for live calls (voice/livekit). The turn-taking values are ASSUMED starting
+# points from the earlier practice agent (from-other-projects/bobert/latency-notes.md) until
+# measured on real phone audio (docs/latency.md).
+voice:
+  stt: {provider: deepgram, model: nova-3, endpointing_ms: 100}
+  # Katie, the Cartesia plugin default. The pre-recorded clips (voice/livekit/clips.py) use the same voice.
+  tts: {provider: cartesia, model: sonic-3, voice_id: f786b574-daa5-4673-aa0c-cbe3e8534c02}
+  vad: {min_silence_s: 0.35, activation: 0.5}
+  # How long to wait after the caller stops before answering. "digits" applies right after the agent
+  # asks for a phone number or ZIP, because people pause between groups of digits (C-48).
+  endpointing:
+    normal: {min_delay: 0.3, max_delay: 1.5}
+    digits: {min_delay: 0.9, max_delay: 3.0}
+  # Background noise must not stop the agent (S-50): an interruption needs recognized words, and a
+  # false one resumes the reply.
+  interruption:
+    mode: adaptive
+    min_words: 2
+    min_duration: 0.5
+    resume_false_interruption: true
+    false_interruption_timeout: 1.5
+  # Bridge line (docs/latency.md): played only when a tool hasn't answered after this long, and at
+  # most once every this many caller turns.
+  bridge: {after_s: 0.7, min_turns_between: 3}
+
 # Off the live path: nobody is waiting, so thinking is on where quality matters.
 offline:
   caller:

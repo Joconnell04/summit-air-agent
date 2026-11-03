@@ -174,6 +174,44 @@ def test_outbound_calls_go_only_to_the_caller_in_hours_once_and_never_to_do_not_
     conn.close()
 
 
+def _outbound_start(agent, callback_id, phone=UNKNOWN, call_id="out-1"):
+    body = {
+        "call_id": call_id,
+        "caller_id": phone,
+        "dialed_number": "(646) 624-0418",
+        "direction": "outbound",
+        "callback_id": callback_id,
+    }
+    return agent.client.post("/calls/start", json=body).json()
+
+
+def test_an_outbound_call_starts_only_for_a_callback_the_server_allows(agent, clock):
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.tool("flag_person", call, reason="Call back about the quote", callback_in_minutes=60)
+    callback_id = count(agent, "SELECT id FROM callbacks")
+    assert _outbound_start(agent, None)["refused"] == "outbound_not_allowed"
+    assert _outbound_start(agent, callback_id, phone="(718) 555-0000")["data"] == {
+        "why": "not_the_callback_number"
+    }
+    started = _outbound_start(agent, callback_id)
+    assert started["ok"] is True
+    assert started["data"]["callback"]["reason"] == "Call back about the quote"
+    # The attempt is counted before the worker dials: a second call for it is refused, while a
+    # retried start for the same call is not a second attempt.
+    assert count(agent, "SELECT attempts FROM callbacks") == 1
+    assert _outbound_start(agent, callback_id)["ok"] is True
+    assert _outbound_start(agent, callback_id, call_id="out-2")["data"] == {"why": "attempted"}
+
+
+def test_no_outbound_call_outside_calling_hours(agent, clock):
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.tool("flag_person", call, reason="Call back about the quote", callback_in_minutes=60)
+    clock.advance(hours=13)  # 10 p.m. in New York
+    started = _outbound_start(agent, count(agent, "SELECT id FROM callbacks"))
+    assert started["refused"] == "outbound_not_allowed"
+    assert count(agent, "SELECT attempts FROM callbacks") == 0
+
+
 def test_there_is_no_tool_that_calls_911_or_an_outside_number(agent):
     tools = {r.path for r in agent.app.routes if r.path.startswith("/tools/")}
     assert not {

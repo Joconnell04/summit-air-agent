@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 
 from . import lookup, records, safety
 from .db import iso, tx
-from .envelope import Result, ok
+from .envelope import Refused, Result, ok
 from .fsm import FsmAdapter, FsmRejected, FsmUnavailable
 from .schemas import EndIn, StartIn, TurnIn
 from .tenant import Tenant
@@ -73,6 +73,7 @@ def start(
 ) -> Result:
     """Lookup before hello: the caller's records, a recent call to resume, and the safety state
     carried from a dropped safety call. Calling it twice for one call id is harmless."""
+    callback = _outbound_callback(conn, tenant, args, now) if args.direction == "outbound" else None
     caller_key = phone_key(args.caller_id)
     known = caller_key if len(caller_key) == 10 else ""
     recent = (
@@ -151,12 +152,38 @@ def start(
         "offer_callback": offer_callback,
         "knowledge": tenant.knowledge,
     }
+    if callback:
+        data["callback"] = {"id": callback["id"], "reason": callback["reason"]}
     say = tenant.line("repeated_drops") if offer_callback else ""
     if call["safety_state"] == "signal":
         lines = safety.lines_for(tenant.safety, call["safety_kind"])
         data["safety"] = {"action": "speak_lines", "kind": call["safety_kind"], "text": lines}
         say = lines
     return ok(say, **data)
+
+
+def _outbound_callback(
+    conn: sqlite3.Connection, tenant: Tenant, args: StartIn, now: datetime
+) -> sqlite3.Row:
+    """An outbound call is placed only for a callback the server allows now, to that callback's
+    number (spec S-42). The attempt is counted before the voice layer dials, so a retried start
+    can't place a second call."""
+    row = None
+    if args.callback_id is not None:
+        row = conn.execute("SELECT * FROM callbacks WHERE id = ?", (args.callback_id,)).fetchone()
+    if row is None:
+        raise Refused("outbound_not_allowed", "", why="no_callback")
+    already = conn.execute("SELECT 1 FROM calls WHERE id = ?", (args.call_id,)).fetchone()
+    if already:
+        return row
+    if row["phone_key"] != phone_key(args.caller_id):
+        raise Refused("outbound_not_allowed", "", why="not_the_callback_number")
+    allowed, why = records.outbound_allowed(conn, tenant, row, now)
+    if not allowed:
+        raise Refused("outbound_not_allowed", "", why=why)
+    with tx(conn):
+        records.record_attempt(conn, row["id"], now)
+    return row
 
 
 def turn(

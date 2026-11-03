@@ -202,3 +202,30 @@ lines:
   limit: I've already got that taken care of on this call, so let me have someone from the team follow up.
   slot_taken: That window just filled up.
   anything_else_first: Is there anything else I can help with?
+
+# What the voice worker says on its own, without the model (voice/livekit). {first_name} is the
+# matched customer's first name; {reason} and {phone} are filled on outbound calls.
+voice:
+  greeting_known: Hi, this is Summit Air. Is this {first_name}?
+  greeting_unknown: Thanks for calling Summit Air, this is the virtual assistant. How can I help?
+  # Said when the model ends the call without a goodbye of its own (knowledge/sign-off.md).
+  goodbye: Thanks for calling Summit Air. Stay warm out there.
+  # Said by the worker when the tool server can't be reached, then the call ends.
+  server_down: >-
+    Sorry, our system is having trouble right now. Please call us back in a few minutes, and if you
+    smell gas, hang up and call 911 from outside.
+  # A voicemail left while every line was busy gets a callback within this. ASSUMED.
+  voicemail_callback_minutes: 60
+  outbound_greeting: Hi, this is Summit Air calling about {reason}.
+  outbound_voicemail: >-
+    Hi, this is Summit Air calling about your appointment. Please give us a call back at {phone}.
+  # Pre-recorded, so they need no voice stream (docs/scaling.md). Regenerate the clips after a change:
+  # uv run python -m voice.livekit.clips. Each bridge clip must stay under about 1 second.
+  clips:
+    bridge_check: Let me check.
+    bridge_sec: One sec.
+    bridge_look: Okay, checking now.
+    at_capacity: >-
+      Thanks for calling Summit Air. If you smell gas, hang up and call 911 from outside. All our
+      lines are busy right now. Please leave your name, number and what's going on after the tone,
+      and we'll call you back.

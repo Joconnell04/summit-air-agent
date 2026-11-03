@@ -19,6 +19,22 @@ dev = [
     "pytest>=8",
     "ruff>=0.6",
 ]
+livekit = [
+    "livekit-agents~=1.8.10",
+    "livekit-api>=1",
+    "livekit-plugins-anthropic~=1.8.10",
+    "livekit-plugins-cartesia~=1.8.10",
+    "livekit-plugins-deepgram~=1.8.10",
+    "livekit-plugins-google~=1.8.10",
+    "livekit-plugins-openai~=1.8.10",
+    "livekit-plugins-silero~=1.8.10",
+    "livekit-plugins-turn-detector~=1.8.10",
+]
+
+[tool.uv]
+# The LiveKit worker's packages are their own group, so deleting voice/livekit after the bake-off
+# (docs/architecture.md) also drops them; they install by default so its tests run in make check.
+default-groups = ["dev", "livekit"]
 
 [tool.ruff]
 line-length = 100
