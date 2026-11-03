@@ -99,7 +99,7 @@ make langsmith RUN=evals/results/<run>.json     # a named one
 
 **What goes up**
 - Dataset `summit-air-scenarios`: one example per scenario id, with the persona, the tags (`flow:booking`, `difficulty:rigorous`, `trait:stutter`) and the difficulty. A new run adds missing scenarios and updates changed ones; it never duplicates.
-- One experiment per run, named by the run id (`<time>-<stack>-<profile>-<suite>`, so they sort by time), linked to the dataset. Its metadata is `stack`, `profile`, `model`, `suite`, `hash` (prompts, scenarios and model profile), `prompt_hash` (the agent's prompt files alone) and `run_id`. Each scenario is one run inside it, linked to its dataset example, carrying the transcript, tool calls, the code checks that ran, outcome (pass, fail or error), must-pass failures and call id. Runs are tagged for filtering: `stack:`, `profile:`, `suite:`, `outcome:`, `flow:`, `difficulty:`, `trait:`. An `error` run is marked as errored in LangSmith.
+- One experiment per run, named by the run id (`<time>-<stack>-<profile>-<suite>`, so they sort by time), linked to the dataset. Its metadata is `stack`, `profile`, `model`, `suite`, `hash` (prompts, tenant folders, scenarios and model profile), `prompt_hash` (the agent's prompt files alone) and `run_id`. Each scenario is one run inside it, linked to its dataset example, carrying the transcript, tool calls, the code checks that ran, outcome (pass, fail or error), must-pass failures and call id. Runs are tagged for filtering: `stack:`, `profile:`, `suite:`, `outcome:`, `flow:`, `difficulty:`, `trait:`. An `error` run is marked as errored in LangSmith.
 - Scores (feedback) on every scenario, each with the reason as a comment when it is not a plain pass:
   - `passed`: 1 or 0. An `error` outcome gets `errored` = 1 instead, so it never counts as a fail.
   - `must_pass_failed`: 1 when a must-pass rule broke.
@@ -143,7 +143,7 @@ Experiments whose name starts with `archived-` are early runs kept for the recor
 1. Run the same suite twice (for example before and after a prompt change, or `make eval SUITE=smoke STACKS=livekit,retell`). Both runs must be the same suite, so they cover the same examples.
 2. In Datasets & Experiments, open `summit-air-scenarios` and its Experiments tab. Tick the two experiments and choose Compare.
 3. Rows are scenarios and columns are experiments, each showing its scores. Sort or filter on `passed` to see the scenarios where the two split, and on `reply_delay_p90_ms` or `cost_usd` for speed and cost.
-4. Check the metadata before trusting a comparison. The same `hash` means the prompts, scenarios and model profile were identical, so any difference is run-to-run noise (a single smoke run is 8 scenarios, so expect a flip or two). A different `prompt_hash` with the same suite means the prompt is what changed. `model` shows which model ran.
+4. Check the metadata before trusting a comparison. The same `hash` means the prompts, tenant folders, scenarios and model profile were identical, so any difference is run-to-run noise (a single smoke run is 8 scenarios, so expect a flip or two). A different `prompt_hash` with the same suite means the prompt is what changed. `model` shows which model ran.
 
 ## Must-pass cases
 
@@ -151,4 +151,4 @@ Safety (gas, carbon monoxide, gas mentioned in passing), injection and "delete e
 
 ## Ratchet
 
-`make check` stays offline and never calls a model. A paid run commits its results with a hash of the prompts, the scenarios it ran and the model profiles (`evals/fingerprint.py`). `baseline.json` names the reference run in `eval_results`; the ratchet fails on a stale hash, fewer scenarios than `min_eval_scenarios`, any failed must-pass case, or a pass rate below `min_eval_pass_rate`. A run becomes the reference with `uv run python scripts/ratchet.py --adopt evals/results/<run>.json`, which refuses a run with a must-pass failure and never lowers a floor. Until a run is adopted the eval floor reports that and passes.
+`make check` stays offline and never calls a model. A paid run commits its results with a hash of the prompts, the tenant folders (wording, rules, knowledge and seed; not the audio clips), the scenarios it ran and the model profiles (`evals/fingerprint.py`). `baseline.json` names the reference run in `eval_results`; the ratchet fails on a stale hash, fewer scenarios than `min_eval_scenarios`, any failed must-pass case, or a pass rate below `min_eval_pass_rate`. A run becomes the reference with `uv run python scripts/ratchet.py --adopt evals/results/<run>.json`, which refuses a run with a must-pass failure and never lowers a floor. Until a run is adopted the eval floor reports that and passes.
