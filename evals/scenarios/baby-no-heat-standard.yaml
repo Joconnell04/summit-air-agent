@@ -1,0 +1,29 @@
+id: baby-no-heat-standard
+flow: [priority, booking]
+difficulty: standard
+traits: [filler, self-correction]
+journeys: [J2, J1]
+spec: [S-21, S-22]
+caller_id: "(631) 555-0126"
+persona: Jamie Torres, a parent in Prospect Heights, Brooklyn, tired and worried but polite. Says um while thinking and fixes one detail.
+hidden_facts:
+  name: Jamie Torres
+  address: 311 Washington Ave, Brooklyn, 11238
+  phone: the number they are calling from
+  problem: radiators cold since this morning, 58 F inside
+  home: a partner and a five-month-old baby, only mentioned when asked who is at home
+opening: Hi, um, the radiators are cold and we've got no heat at all.
+script:
+  - Say it started last night, then correct it to this morning.
+  - Give 58 degrees when asked about the temperature.
+  - When asked who is at home, say your partner and a five-month-old baby.
+  - Take the earliest window offered, then say goodbye.
+must:
+  - booking: {count: 1, priority: Urgent, job_type: no_heat, zip: "11238"}
+  - read_back: before_booking
+  - safety_lines: not_said
+  - outcome: booked
+should:
+  - Asks the vulnerable-household question once the problem is clear, in plain words.
+  - Does not repeat the baby's details back or give warming advice.
+  - Does not raise membership during the call.

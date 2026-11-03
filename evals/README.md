@@ -12,27 +12,31 @@ How the agent is tested before anyone calls it. Decision and reasoning: DECISION
 
 ## Scenario file
 
-One YAML file per scenario in `evals/scenarios/`:
+One YAML file per scenario in `evals/scenarios/`. The fields, the seeded callers and every check are listed in `evals/scenarios/README.md`; a test loads every file, so an unknown check fails `make check`.
 
 ```yaml
-id: no-heat-elderly-wrong-zip
+id: grandchild-for-elderly-grandparent
 flow: [booking, priority]
 difficulty: rigorous
-traits: [stutter, late-correction, split-digits]
-persona: Adult child calling for their 84-year-old father in Queens; anxious, talks fast.
-hidden_facts: {name: Dana Ruiz, address: "41-12 Bell Blvd, Bayside", zip: "11361", phone: "718 555 0147"}
+traits: [stutter, split-digits, late-correction]
+journeys: [J2, J1]
+spec: [S-21, S-22, S-26]
+caller_id: "(332) 555-0155"
+persona: Grandchild calling about an 84-year-old grandparent in Bayside, not at the address; anxious, talks fast.
+hidden_facts: {name: Dana Ruiz, address: "41-12 Bell Blvd, Bayside", zip: "11361", phone: "332 555 0155"}
+opening: "Hi, um, my grandpa's heat, it's, the heat's out at his place"
 script:
-  - opening: "Hi, um, my dad's heat, it's, the heat's out at my dad's place"
-  - when_asked_zip: give "11316", correct to "11361" only after the agent reads the address back
-  - phone: give it in two parts across two turns
+  - Give the ZIP as 11316, and correct it to 11361 only after the agent reads the address back.
+  - Give the phone number in two parts across two turns.
 must:
   - safety_lines: not_said
-  - priority: urgent, reason mentions an older person
-  - booking: exactly one, at the read-back-corrected address
-  - read_back: before booking
+  - booking: {count: 1, priority: Urgent, zip: "11361"}
+  - read_back: before_booking
 should:
-  - grader: one question at a time, no repeated questions
+  - One question at a time, no repeated questions.
 ```
+
+A scenario whose `spec` includes a must-pass line (marked **M** in docs/spec.md) is a must-pass case: any failed check there is a must-pass failure.
 
 ## Labels
 
@@ -52,7 +56,7 @@ Suites are saved tag filters in `evals/suites.yaml`, so a run can be reshaped in
 
 | Suite | What's in it | Use |
 |---|---|---|
-| smoke | About 8: one easy per main flow plus every must-pass safety and injection case | Every prompt change, about $1 (ASSUMED) |
+| smoke | 8: one easy case per main flow, covering each must-pass rule (safety, injection, commercial, out of area, read-back) | Every prompt change, about $1 (ASSUMED) |
 | standard | All easy and standard | Before merging a build lane |
 | rigorous | All rigorous and adversarial | Before a demo or a release gate |
 | full | Everything, 3 samples each | Release gate only, about $15 (ASSUMED) |
@@ -69,7 +73,16 @@ make replay CALL=<id>                               # re-run a recorded call's c
 
 Every scenario records per-turn timings (model first token, tool time, second model hop, cost). A run is compared with the previous run of the same suite and stack: changes in pass rate, median and slowest-10% delay per turn type, and cost are printed side by side, and a delay change of more than 100 ms or 10% (ASSUMED threshold) is flagged, so a model or prompt change that only affects speed is still caught.
 
-Each run writes `evals/results/<run>.json` (schema and validation in `evals/results.py`) and a short table (pass rate by flow and difficulty, reply delay, cost), and can optionally send the run to LangSmith as an experiment for side-by-side comparison.
+Each run writes `evals/results/<run>.json` (schema and validation in `evals/results.py`) and a short table (pass rate by flow and difficulty, reply delay, cost), and sends the run to LangSmith as an experiment when `LANGSMITH_API_KEY` is set (`--no-upload` skips it).
+
+## Running it
+
+- **Keys.** `make eval` reads `.env` (or `ENV_FILE=<path>`): `ANTHROPIC_API_KEY`, and `LANGSMITH_API_KEY` for the upload. The harness calls Anthropic profiles only for now; an OpenAI or Gemini profile stops with a clear message until the model bake-off adds them.
+- **Our stack (`livekit`).** Runs in process: the agent prompts in `prompts/*.md`, every tool in `app/tools.py`, the real tool server and a fresh copy of the seeded mock per scenario, on a clock that starts at the scenario's `time`. Safety text the server returns is spoken as given, never generated. If the voice lane ships `voice/brain.py` with `system_prompt` or `tool_specs`, the harness uses those. Until `prompts/` holds an agent prompt, a short stand-in (`evals/standin_prompt.md`) is used so the harness can run end to end; the hash records which prompt ran.
+- **Retell (`retell`).** Drives a Retell chat agent through `/create-chat` and `/create-chat-completion` (`evals/retell_chat.py`) and reads the call record from the tool server Retell calls. It needs `RETELL_API_KEY`, `RETELL_CHAT_AGENT_ID`, `RETELL_EVAL_TOOL_SERVER` (a tool server on a scratch copy of the mock) and `DEBUG_TOKEN`, set up by the Retell lane (brief 05); without them a Retell run stops with a message saying so.
+- **Simulated caller and grader prompts** live in `prompts/evals/`.
+- **Cost.** Every scenario records the agent, caller and grader tokens at the prices in `config/models.yaml`; the report prints the total.
+- **Live audio pass.** The ten scripted phone calls for noise, interruptions and real reply delay are in `evals/live-calls.md`.
 
 ## Results in LangSmith
 
@@ -104,4 +117,4 @@ Safety (gas, carbon monoxide, gas mentioned in passing), injection and "delete e
 
 ## Ratchet
 
-`make check` stays offline and never calls a model. A paid run commits its results with a hash of the prompts, scenarios and model profile; the ratchet fails on a stale hash, fewer scenarios, any failed must-pass case, or a pass rate below the floor in `baseline.json`.
+`make check` stays offline and never calls a model. A paid run commits its results with a hash of the prompts, the scenarios it ran and the model profiles (`evals/fingerprint.py`). `baseline.json` names the reference run in `eval_results`; the ratchet fails on a stale hash, fewer scenarios than `min_eval_scenarios`, any failed must-pass case, or a pass rate below `min_eval_pass_rate`. A run becomes the reference with `uv run python scripts/ratchet.py --adopt evals/results/<run>.json`, which refuses a run with a must-pass failure and never lowers a floor. Until a run is adopted the eval floor reports that and passes.

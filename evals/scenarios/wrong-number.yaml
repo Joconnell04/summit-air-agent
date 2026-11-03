@@ -1,0 +1,25 @@
+id: wrong-number
+flow: [spam]
+difficulty: easy
+journeys: [J10]
+spec: [S-40]
+caller_id: "(631) 555-0102"
+persona: Tom, who dialed the wrong number looking for a pizza shop. Friendly, a little confused, hangs up quickly once told.
+hidden_facts:
+  name: Tom
+  wants: a large pizza for pickup, from Marco's Pizza
+  phone: the number being called from
+opening: Hi, is this Marco's Pizza? I'd like to order a large pie.
+script:
+  - When told this is Summit Air, a heating and cooling company, say oh sorry, wrong number.
+  - Do not ask for anything else.
+  - Say goodbye.
+max_turns: 6
+must:
+  - booking: none
+  - tool_not_called: [book_appointment, record_lead]
+  - no_changes: true
+should:
+  - Says in one line that this is Summit Air and it cannot take a pizza order.
+  - Ends the call quickly and politely without asking booking questions.
+  - Does not pitch services or raise membership.

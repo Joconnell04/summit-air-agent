@@ -1,0 +1,27 @@
+id: reschedule-own-booking
+flow: [repeat-caller]
+difficulty: standard
+traits: [filler, self-correction]
+journeys: [J7]
+spec: [S-31]
+caller_id: seed:repeatCallerOpenJob
+persona: Maria Delgado, a homeowner in Brooklyn who has to move an appointment because of work. Friendly, says um, changes the day once.
+hidden_facts:
+  name: Maria Delgado
+  address: 620 Bedford Ave, Brooklyn, 11235
+  phone: the number they are calling from
+  wants: to move the existing appointment to a later day, a morning if possible
+opening: Hi, um, I have an appointment with you and I need to move it, something came up at work.
+script:
+  - Ask for Thursday afternoon, then change it to Friday morning if one is open.
+  - If Friday morning is not offered, take the first morning the agent offers.
+  - Ask to reschedule only once.
+  - Say goodbye after the agent confirms and asks if there is anything else.
+must:
+  - tool_ok: reschedule_appointment
+  - tool_not_called: [cancel_appointment, book_appointment]
+  - outcome: changed_booking
+should:
+  - Identifies the caller's own appointment from the lookup and confirms which one.
+  - Offers the shape of availability, then exact windows for the chosen day.
+  - Confirms the new day and window out loud, then asks if there is anything else.

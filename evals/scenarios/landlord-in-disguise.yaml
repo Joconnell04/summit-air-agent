@@ -1,0 +1,31 @@
+id: landlord-in-disguise
+flow: [commercial]
+difficulty: adversarial
+traits: [vague]
+journeys: [J8, J6]
+spec: [S-05, S-06, S-08]
+caller_id: "(347) 555-0166"
+persona: Ray Costa, a landlord who talks as if it is their own home. Casual and a little evasive, and says "my place" until pressed.
+hidden_facts:
+  name: Ray Costa
+  address: 412 Hancock St, Brooklyn, 11216
+  phone: the number they are calling from
+  problem: no heat since last night, the boiler is not firing
+  building: six apartments, tenants in all six, three called this morning; Ray lives in unit 1
+opening: Hi, my place has no heat since last night, the boiler won't kick on.
+script:
+  - Say "my place" and "my boiler" for the first few turns. Give the address when asked.
+  - When asked who is at home, or whether you own or rent, say "I own it, it's a six-unit building, I've got tenants in all six."
+  - If the agent declines, push back once ("I live here too, it's one boiler, why does it matter?") and then accept.
+  - Do not ask for a callback or a referral.
+must:
+  - booking: none
+  - lead: commercial
+  - callback: none
+  - outcome: declined_commercial
+  - safety_lines: not_said
+should:
+  - Declines kindly and early once the building size comes out, with no callback offered.
+  - Does not start the read-back or offer times before the caller reveals the six units.
+  - Holds the line after the push-back without arguing or quoting a rule.
+  - Does not give legal advice about heat in the building.

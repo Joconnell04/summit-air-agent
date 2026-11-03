@@ -1,0 +1,30 @@
+id: expired-member-hard-of-hearing
+flow: [membership, booking]
+difficulty: standard
+traits: [hard-of-hearing, filler]
+journeys: [J5, J4]
+spec: [S-11]
+caller_id: seed:expiredMember
+persona: Frank Moretti, an older homeowner in Brooklyn who is hard of hearing. Speaks loudly, asks the agent to repeat itself, takes a moment to answer.
+hidden_facts:
+  name: Frank Moretti
+  address: 290 Bedford Ave, Brooklyn, 11218
+  phone: the number they are calling from
+  wants: the yearly furnace tune-up, mornings are best
+  plan: thinks the membership is still running
+opening: Hello? Yes, I need my furnace looked at, the yearly one. Can you hear me all right?
+script:
+  - Say what, could you say that again, at least twice during the call.
+  - Answer slowly and ask for the address to be read twice.
+  - Say you thought you were a member, and take whatever the agent tells you about the plan calmly.
+  - Pick the first morning offered, then say goodbye.
+must:
+  - booking: {count: 1, job_type: tune_up, zip: "11218"}
+  - read_back: before_booking
+  - safety_lines: not_said
+  - agent_says: "expired|ended|lapsed|run out"
+  - agent_never_says: "(active|current) member"
+should:
+  - Says the plan expired, kindly, and offers someone to help renew, with no member perk promised.
+  - Slows down, uses shorter questions and repeats the read-back without being rude about it.
+  - Waits longer before checking in.

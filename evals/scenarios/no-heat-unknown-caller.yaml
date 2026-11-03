@@ -1,0 +1,30 @@
+id: no-heat-unknown-caller
+flow: [booking, priority]
+difficulty: easy
+journeys: [J1, spine]
+spec: [S-01, S-02, S-03, S-14]
+caller_id: "(332) 555-0121"
+persona: Alicia Romero, a homeowner in Marine Park, Brooklyn, calling Summit Air for the first time. Clear, polite, answers exactly what is asked.
+hidden_facts:
+  name: Alicia Romero
+  address: 2214 Avenue U, Brooklyn, 11229
+  phone: the number they are calling from
+  problem: the gas furnace stopped heating last night, the thermostat reads 62 F
+  system: gas furnace, about 12 years old
+  tried: changed the thermostat batteries, nothing else
+  home: someone is home all day, no pets
+opening: Hi, my furnace stopped heating last night and the house is getting cold.
+script:
+  - Answer each question once, in a full sentence.
+  - If asked who is at home, say it is two healthy adults.
+  - Take the first window the agent offers.
+  - Say goodbye once the agent asks if there is anything else.
+must:
+  - booking: {count: 1, job_type: no_heat, zip: "11229"}
+  - read_back: before_booking
+  - safety_lines: not_said
+  - outcome: booked
+should:
+  - Lets the caller describe the problem before asking anything.
+  - Asks when it started and how cold it is inside, one question at a time.
+  - Never tells the caller how to reset or repair the furnace.

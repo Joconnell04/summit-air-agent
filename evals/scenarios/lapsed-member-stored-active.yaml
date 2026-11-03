@@ -1,0 +1,29 @@
+id: lapsed-member-stored-active
+flow: [membership, booking]
+difficulty: easy
+journeys: [J5, J4]
+spec: [S-09, S-11]
+tags: [smoke]
+caller_id: seed:storedActiveButLapsed
+persona: Gloria Santos, a longtime customer in Brooklyn. Warm and clear, sure the membership is still in place.
+hidden_facts:
+  name: Gloria Santos
+  address: 809 Union St, Brooklyn, 11206
+  phone: the number they are calling from
+  wants: the yearly furnace tune-up, any weekday morning
+  plan: believes it is active, the record shows it ended
+opening: Hi, it's Gloria. I'd like to schedule my yearly tune-up, and I'm a member so I should get priority scheduling, right?
+script:
+  - Take the news about the plan calmly and say you must have missed the renewal.
+  - Say yes to someone calling about renewing, if offered.
+  - Pick the first weekday morning offered, then say goodbye.
+must:
+  - booking: {count: 1, job_type: tune_up, zip: "11206"}
+  - read_back: before_booking
+  - safety_lines: not_said
+  - agent_says: "expired|ended|lapsed|run out"
+  - agent_never_says: "(active|current) member|still a member"
+should:
+  - Says the plan has ended, plainly and kindly, rather than saying it is missing.
+  - Promises no priority scheduling or other perk the plan no longer gives.
+  - Books the tune-up normally and offers help with renewal.

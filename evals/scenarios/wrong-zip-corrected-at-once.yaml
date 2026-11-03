@@ -1,0 +1,28 @@
+id: wrong-zip-corrected-at-once
+flow: [booking, priority]
+difficulty: rigorous
+traits: [stutter, self-correction, split-digits]
+journeys: [J1, spine]
+spec: [S-13, S-14]
+caller_id: "(631) 555-0138"
+persona: Tess Moreau, a homeowner in Williamsburg, Brooklyn, calling from the landline. Nervous, repeats the first syllable of some words, corrects a number as soon as it comes out.
+hidden_facts:
+  name: Tess Moreau
+  address: 214 Bedford Ave, Brooklyn, 11211
+  zip_said_first: 11221, corrected in the same breath to 11211
+  phone: the landline is the number called from, but the best number is a cell, (332) 555-0162
+  problem: no heat since this morning, 60 F inside, two healthy adults at home
+opening: Hi, uh, the, the heat's not, not coming on at my place.
+script:
+  - When asked the ZIP say "one one two two one, no sorry, one one two one one".
+  - When asked for a contact number, say to use the cell and give it in two turns, "three three two, five five five" first, then "zero one six two" after the agent waits.
+  - Stutter on a word or two per turn but answer every question.
+  - Confirm the read-back when it is right, then take the first window offered.
+must:
+  - booking: {count: 1, job_type: no_heat, zip: "11211"}
+  - read_back: before_booking
+  - safety_lines: not_said
+should:
+  - Uses the corrected ZIP and does not ask for it again.
+  - Joins the two halves of the cell number and reads the full number back.
+  - Asks one question at a time and never repeats an acknowledgment.

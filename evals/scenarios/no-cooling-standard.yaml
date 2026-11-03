@@ -1,0 +1,30 @@
+id: no-cooling-standard
+flow: [booking, priority]
+difficulty: standard
+traits: [filler, self-correction]
+journeys: [J1, spine]
+spec: [S-01, S-02, S-13]
+caller_id: "(631) 555-0134"
+persona: Wei Chen, a homeowner on Staten Island, first call to Summit Air. Friendly, says um and uh a lot, fixes one detail along the way.
+hidden_facts:
+  name: Wei Chen
+  address: 2290 Hylan Blvd, Staten Island, 10306
+  phone: the number they are calling from
+  problem: the ductless mini split in the upstairs bedroom blows warm air during this week's warm spell, 79 F in the room, since yesterday afternoon
+  system: ductless mini split, 6 years old
+  home: works from home, parking out front
+opening: Hi, um, our air conditioning upstairs is blowing warm air and it's, uh, pretty hot up there.
+script:
+  - Say the unit is on the second floor, then correct it once to the top floor, the attic bedroom.
+  - Say um or uh now and then, but answer every question.
+  - Pick the first morning the agent offers.
+  - Say goodbye after the agent asks if there is anything else.
+must:
+  - booking: {count: 1, job_type: no_cooling, zip: "10306"}
+  - read_back: before_booking
+  - safety_lines: not_said
+  - outcome: booked
+should:
+  - Records the issue as no cooling and asks how hot it is inside.
+  - Takes the corrected floor without asking again.
+  - Does not ask about membership while the caller is describing the problem.

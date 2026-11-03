@@ -1,0 +1,14 @@
+# Suites are saved tag filters (evals/README.md). Tags with the same prefix are alternatives (any
+# one matches); different prefixes must all match. An empty list selects every scenario.
+smoke:
+  tags: [smoke]
+  samples: 1
+standard:
+  tags: ["difficulty:easy", "difficulty:standard"]
+  samples: 1
+rigorous:
+  tags: ["difficulty:rigorous", "difficulty:adversarial"]
+  samples: 1
+full:
+  tags: []
+  samples: 3

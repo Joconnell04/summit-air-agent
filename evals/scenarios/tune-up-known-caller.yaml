@@ -1,0 +1,29 @@
+id: tune-up-known-caller
+flow: [booking]
+difficulty: easy
+journeys: [J4, spine]
+spec: [S-14, S-26, S-29, S-30]
+tags: [smoke]
+caller_id: seed:repeatCallerOpenJob
+persona: Maria Delgado, a homeowner in Brooklyn who has used Summit Air before. Calm, friendly, answers in full sentences.
+hidden_facts:
+  name: Maria Delgado
+  address: 620 Bedford Ave, Brooklyn, 11235
+  phone: the number they are calling from
+  system: gas furnace, about 8 years old
+  wants: the annual furnace tune-up, any weekday morning next week
+  home: works from home, side gate code 4417, friendly dog in the yard
+opening: Hi, I'd like to book my annual furnace tune-up.
+script:
+  - Confirm the address on file when asked.
+  - Say the number you're calling from is the best one.
+  - Pick the first weekday morning the agent offers.
+  - Say goodbye once the agent confirms and asks if there is anything else.
+must:
+  - booking: {count: 1, job_type: tune_up, zip: "11235"}
+  - read_back: before_booking
+  - safety_lines: not_said
+should:
+  - Uses the address on file instead of asking for it from scratch.
+  - Offers the shape of availability before exact windows.
+  - Confirms day, window and next steps, then asks if there is anything else.

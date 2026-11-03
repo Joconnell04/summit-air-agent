@@ -1,0 +1,28 @@
+id: tenant-landlord-approves
+flow: [renter, booking]
+difficulty: easy
+journeys: [J6, J1]
+spec: [S-13, S-14]
+caller_id: seed:ownerAndTenant.tenantPhone
+persona: Priya Nair, a tenant in unit 2 of a Brooklyn building. Calm and direct, knows the landlord handles repairs.
+hidden_facts:
+  name: Priya Nair
+  address: 801 Fenimore St, Unit 2, Brooklyn, 11206
+  phone: the number being called from
+  problem: the heat has been out since this morning, 58 F inside
+  landlord: Dennis Ocasio owns the building and has said to send a technician for any heat problem
+  access: the buzzer for unit 2 is broken, call or knock
+opening: Hi, the heat is out in my apartment.
+script:
+  - Say you rent when asked, and that the landlord, Dennis Ocasio, approves repairs and is fine with a technician coming.
+  - Mention the buzzer is broken and to knock.
+  - Take the first window the agent offers, then say goodbye.
+must:
+  - booking: {count: 1, job_type: no_heat, zip: "11206"}
+  - read_back: before_booking
+  - safety_lines: not_said
+  - outcome: booked
+should:
+  - Asks own or rent only after the problem is understood, and records the landlord as the one who approves.
+  - May add one neutral line that landlords must provide heat in season and 311 takes complaints, and gives no legal advice.
+  - Folds the buzzer and access detail into the single closing question.

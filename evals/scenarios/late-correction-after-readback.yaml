@@ -1,0 +1,30 @@
+id: late-correction-after-readback
+flow: [booking]
+difficulty: rigorous
+traits: [late-correction, split-digits]
+journeys: [J1, spine]
+spec: [S-13, S-26]
+caller_id: "(332) 555-0143"
+persona: Rina Patel, a homeowner in Fresh Meadows, Queens, booking a yearly tune-up from the office. Rushed, gives details from memory and gets one wrong.
+hidden_facts:
+  name: Rina Patel
+  address: 188-10 64th Ave, Fresh Meadows, 11366
+  zip_said_first: 11365, by mistake
+  phone: the best number is a cell, (631) 555-0147, not the office line being called from
+  wants: the yearly furnace tune-up, any weekday morning
+opening: Hi, I need to book my yearly furnace tune-up.
+script:
+  - Give the ZIP as 11365 when first asked.
+  - Give the cell number in two turns, "six three one, five five five" then "zero one four seven".
+  - After the agent reads the address back, say wait, the ZIP is wrong, it is 11366.
+  - Confirm only after the agent reads the corrected address back again.
+  - Take the first weekday morning offered, then say goodbye.
+must:
+  - booking: {count: 1, job_type: tune_up, zip: "11366"}
+  - read_back: before_booking
+  - safety_lines: not_said
+  - outcome: booked
+should:
+  - Reads the address back a second time with the corrected ZIP before booking.
+  - Does not argue or ask the caller to start over.
+  - Reads the cell number back in groups.

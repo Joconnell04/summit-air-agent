@@ -1,0 +1,29 @@
+id: two-family-owner-residential
+flow: [commercial, booking]
+difficulty: standard
+traits: [filler, self-correction]
+journeys: [J8, J4]
+spec: [S-07]
+caller_id: "(631) 555-0133"
+persona: Hollis Grant, owner of a two-family house in Brooklyn who lives on the first floor and rents out the upstairs apartment. Friendly, says um, fixes one thing.
+hidden_facts:
+  name: Hollis Grant
+  address: 3221 Avenue N, Brooklyn, 11234
+  phone: the number being called from
+  building: two-family house, owner lives on the first floor, one tenant upstairs
+  wants: the yearly furnace tune-up, a weekday morning
+opening: Hi, um, I own a two-family house and I'd like my furnace serviced before it gets colder.
+script:
+  - Say you live downstairs and rent the upstairs, as soon as it matters.
+  - Offer Tuesday, then correct it to Wednesday morning.
+  - Take the first Wednesday window offered, then say goodbye.
+must:
+  - booking: {count: 1, job_type: tune_up, zip: "11234"}
+  - read_back: before_booking
+  - safety_lines: not_said
+  - tool_not_called: record_lead
+  - outcome: booked
+should:
+  - Treats an owner-occupied two-family house as residential and does not decline.
+  - Does not use commercial wording or ask about the tenant's account.
+  - Confirms who approves the work and who will be home.
