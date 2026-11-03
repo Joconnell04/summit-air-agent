@@ -44,3 +44,5 @@ How the design was reached, in order, so a reader can follow each choice back to
 | Eval cleanup and LangSmith | Retell adapter behind the stack boundary, mock reset per Retell scenario, per-check scores and run metadata in LangSmith; smoke 7 of 8 on the real prompts | pull request 37 |
 | Priority from temperature brackets | Inside and outside temperature set the starting level; risk read broadly, two risk factors together urgent; outside temperature from the National Weather Service | pull request 39, spec r5, exploration 007 |
 | Server monitor live, deploy bug fixed | Healthchecks.io watches the watchdog's pings; every deploy had been installing an empty crontab, now fixed and tested | pull request 41 |
+| Retell bake-off setup | Same brain for the 10 calls, about 3 more with fast fallback; Retell has no fast tier for Haiku 5.5 | DECISIONS.md 012, #32 |
+| Owner view redesign started | Jackson is redesigning it in a separate session: the first version was cluttered, generic and read like a debugging log, with the wrong level of detail for an owner | app/README.md |

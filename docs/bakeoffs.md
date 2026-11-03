@@ -18,7 +18,7 @@ The same scorecard, so results compare across bake-offs. Numbers in brackets are
 ### 1. Voice platform: our LiveKit stack against Retell (DECISIONS.md 004)
 
 - **Hypothesis:** our stack matches Retell on books-correctly and feels-like-a-person, beats it on control (the safety gates hold because the server owns hang-ups and transfers), and is within about 0.3 s on reply delay. Retell may sound smoother at turn-taking out of the box.
-- **Run:** the same eval scenarios through each, plus 10 real calls each from a script of mixed callers.
+- **Run:** the same eval scenarios through each, plus 10 real calls each from a script of mixed callers (evals/live-calls.md). Retell's 10 use the same brain as our stack; about 3 more run with Retell's fast fallback on and are reported apart (DECISIONS.md 012).
 - **Decide:** keep our stack unless Retell beats it by more than 0.3 s median reply delay or clearly on interruptions; a safety failure on either side rules that side out.
 - **Known Retell limit, found in the build:** Retell's own model speaks the safety lines, so it can't guarantee the signed-off wording; on the first gas call it changed ", and call 911" to ". Call 911" and gave the exact lines only on its fourth reply (MEASURED, voice/retell/README.md, "Gaps Retell can't close"). Our server still refused to book or hang up until the exact lines were said, so the gate held, but the caller heard a paraphrase. On our stack the worker speaks the server's text as given. The same limit applies to any fixed wording a customer wants said exactly: greetings, disclosures, slogans, the brand's own phrases (docs/client-notes.md).
 

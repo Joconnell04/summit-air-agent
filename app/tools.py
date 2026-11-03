@@ -350,6 +350,13 @@ def find_slots(ctx: Ctx, args: FindSlotsIn) -> Result:
         data["after_hours_outcome"] = prio.after_hours_outcome(
             facts, decided, cutoffs, args.facts.temp_falling_fast
         )
+    # The caller hears once that their call went to the top (spec S-21a); below Urgent the agent
+    # never names a priority.
+    urgent_said = ""
+    if decided.level == "Urgent":
+        line = ctx.tenant.line("urgent_priority")
+        if not records.agent_said(ctx.conn, ctx.call["id"], line):
+            urgent_said = line + " "
     if decided.level == "Urgent" and windows:
         first = _describe(ctx, windows[0])
         data["first_urgent"] = first
@@ -360,9 +367,9 @@ def find_slots(ctx: Ctx, args: FindSlotsIn) -> Result:
         on_day = [_describe(ctx, w) for w in windows if w["date"] == args.day.isoformat()]
         data["windows"] = on_day
         if not on_day:
-            return ok("Nothing's open that day.", **data)
+            return ok(urgent_said + "Nothing's open that day.", **data)
         labels = _join([w["label"] for w in on_day], "or")
-        return ok(f"{on_day[0]['day'].capitalize()} I have {labels}.", **data)
+        return ok(f"{urgent_said}{on_day[0]['day'].capitalize()} I have {labels}.", **data)
 
     by_day: dict[str, list[dict]] = {}
     for window in windows:
@@ -392,12 +399,12 @@ def find_slots(ctx: Ctx, args: FindSlotsIn) -> Result:
         )
     data["days"] = shape
     if not shape:
-        return ok("I don't have anything open in the next two weeks.", **data)
+        return ok(urgent_said + "I don't have anything open in the next two weeks.", **data)
     parts = []
     for d in shape:
         names = _join([w.replace("_", " ") for w in d["windows"]], "or")
         parts.append(f"this {names}" if d["day"] == "today" else f"{d['day']} {names}")
-    return ok(f"I've got openings {_join(parts, 'and')}.", **data)
+    return ok(f"{urgent_said}I've got openings {_join(parts, 'and')}.", **data)
 
 
 def _resolve_phone(ctx: Ctx, value: str) -> str:
