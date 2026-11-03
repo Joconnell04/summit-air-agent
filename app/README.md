@@ -47,7 +47,7 @@ make trace CALL=<call id>   # a call's timeline in plain text, read straight fro
 
 | Rule | Spec | Code |
 |---|---|---|
-| No booking for a commercial customer, whatever the agent asks: a caller line with a business phrase from `agent.yaml`, a commercial lead on the call, a caller ID that matches only commercial accounts, or the customer the address resolves to | S-05 | `lifecycle.turn`, `tools._commercial`, `booking.send` |
+| No booking for a commercial customer, whatever the agent asks: a caller line that describes a business by the patterns in `agent.yaml` (`lifecycle.sounds_commercial`, best effort, kept narrow because a false positive costs a booking), a commercial lead on the call, a caller ID that matches only commercial accounts, or the customer the address resolves to | S-05 | `lifecycle.turn`, `tools._commercial`, `booking.send` |
 | Safety lines word for word before anything else; a person flagged at once; a shorter variant on a repeat, never the same one twice in a row | S-17 | `safety.check_caller_turn`, `lifecycle.turn` |
 | Booking tools refused until the lines were said (an agent turn containing them) and the flag raised; after that a booking is an override, logged as `gate=safety_override` | S-18 | `tools._safety_gate` |
 | End call refused on a safety call until the lines were said; then the sign-off, and no spam or wrong-number label | S-19 | `tools.end_call` |

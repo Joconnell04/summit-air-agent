@@ -154,9 +154,11 @@ def _attempt_key(ctx: Ctx, tool: str, args: dict) -> str:
     (a taken slot, an FSM error) may be sent again with the same Idempotency-Key once the cause is
     gone, so each new attempt gets its own key."""
     base = _key(ctx, tool, args)
+    retry = f"{base}:retry"
+    # substr, not LIKE: an Idempotency-Key may contain _ or %.
     tried = ctx.conn.execute(
-        "SELECT COUNT(*) FROM bookings WHERE fsm_key = ? OR fsm_key LIKE ?",
-        (base, f"{base}:retry%"),
+        "SELECT COUNT(*) FROM bookings WHERE fsm_key = ? OR substr(fsm_key, 1, ?) = ?",
+        (base, len(retry), retry),
     ).fetchone()[0]
     return f"{base}:retry{tried}" if tried else base
 

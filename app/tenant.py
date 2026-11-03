@@ -64,7 +64,7 @@ class Tenant:
         ]
         self.phone_keys = {phone_key(n) for n in agent["phone_numbers"]}
         self.safety: dict = agent["safety"]
-        self.commercial_phrases: list[str] = agent["commercial_phrases"]
+        self.commercial: dict = agent["commercial"]
         self.priority: dict = agent["priority"]
         self.lines: dict = agent["lines"]
         self.callbacks: dict = agent["callbacks"]

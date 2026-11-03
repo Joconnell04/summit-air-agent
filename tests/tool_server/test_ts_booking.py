@@ -4,7 +4,22 @@ caller ID shorthand, reschedule and cancel ownership (spec S-05, S-13, S-15, S-2
 import sqlite3
 from concurrent.futures import ThreadPoolExecutor
 
-from toolkit import DETAILS, UNKNOWN, book, count, first_open, in_area_address, ready_to_book
+import pytest
+import yaml
+from toolkit import (
+    DETAILS,
+    TENANT_DIR,
+    UNKNOWN,
+    book,
+    count,
+    first_open,
+    in_area_address,
+    ready_to_book,
+)
+
+from app.lifecycle import sounds_commercial
+
+AGENT = yaml.safe_load((TENANT_DIR / "agent.yaml").read_text())
 
 FULL_DAY = {"date": "2026-11-04", "window": "morning"}  # nearly-full day: no normal slots
 ONE_LEFT = {"date": "2026-11-05", "window": "afternoon"}  # exactly one normal slot open
@@ -368,3 +383,33 @@ def test_a_limit_flags_a_person_once_however_often_it_is_hit(agent):
     for _ in range(3):
         assert book(agent, call, ONE_LEFT)["refused"] == "limit"
     assert count(agent, "SELECT COUNT(*) FROM flags WHERE kind = 'limit'") == 1
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "I manage a restaurant and our heat is out",
+        "I run a restaurant and the heat is out",
+        "We own the building on Flatbush, three units",
+        "It's for my bakery on Church Ave",
+        "I'm the property manager for a few buildings",
+        "The rooftop unit over our kitchen died",
+    ],
+)
+def test_business_callers_are_recognized_from_their_words(line):
+    assert sounds_commercial(line, AGENT["commercial"]), line
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "My business partner is home with the kids",
+        "I own a two-family house and my tenants have no heat",
+        "We live in a co-op and our building's super is away",
+        "My kid's school called, I'm home now",
+        "I work from my home office and it's freezing",
+        "My company is sending me on a trip so mornings are bad",
+    ],
+)
+def test_home_callers_are_not_marked_commercial(line):
+    assert not sounds_commercial(line, AGENT["commercial"]), line

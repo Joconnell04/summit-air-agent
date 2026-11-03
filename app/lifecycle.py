@@ -1,6 +1,7 @@
 """The calls the voice layer makes around a conversation: start, every turn, end."""
 
 import json
+import re
 import sqlite3
 from datetime import datetime, timedelta
 
@@ -11,6 +12,25 @@ from .fsm import FsmAdapter, FsmRejected, FsmUnavailable
 from .schemas import EndIn, StartIn, TurnIn
 from .tenant import Tenant
 from .text import has_phrase, phone_key, words
+
+RUN_WORDS = r"(?:i|we) (?:run|manage|own|operate|work at)"
+
+
+def sounds_commercial(text: str, cfg: dict) -> bool:
+    """Does the caller describe a business? Best effort by design: the agent and the FSM account
+    type catch the rest, and a false positive costs a booking, so the tenant's lists stay narrow."""
+    text_words = words(text)
+    for phrase in cfg["not"]:
+        text_words = text_words.replace(words(phrase), " ")
+    if any(has_phrase(text_words, p) for p in cfg["phrases"]):
+        return True
+    owned = "|".join(map(re.escape, cfg["owned"]))
+    run = "|".join(map(re.escape, cfg["run"]))
+    return bool(
+        re.search(rf" (?:my|our) (?:{owned}) ", text_words)
+        or re.search(rf" {RUN_WORDS} (?:a|an|the) (?:\w+ )?(?:{run}) ", text_words)
+    )
+
 
 DO_NOT_CALL_PHRASES = (
     "dont call me",
@@ -188,7 +208,7 @@ def turn(
                 records.mark_do_not_call(conn, call, now)
                 hints.append("do_not_call")
             # A caller who describes a business can't book, whatever the agent does next (S-05).
-            if any(has_phrase(text_words, p) for p in tenant.commercial_phrases):
+            if sounds_commercial(args.text, tenant.commercial):
                 changes["commercial"] = 1
                 hints.append("commercial")
         elif call["safety_state"] == "signal" and safety.agent_said_lines(

@@ -96,26 +96,18 @@ safety:
     thing is to go now. We'll follow up once you're safe.
   flag_reason: "{label} reported on the call"
 
-# A caller line with one of these marks the call commercial: it can't book (spec S-05, journey 8).
-# Only phrases that can't describe a home: a landlord of a two-family house or a co-op unit owner is
-# residential, so "my tenants" and "our building" are left to the agent and the FSM account type.
-commercial_phrases:
-  - my restaurant
-  - our restaurant
-  - my business
-  - our business
-  - my store
-  - our store
-  - my company
-  - our company
-  - property manager
-  - property management
-  - our school
-  - my school
-  - our office building
-  - commercial property
-  - rooftop unit
-  - our warehouse
+# A caller line that describes a business marks the call commercial: it can't book (spec S-05,
+# journey 8). Three ways to match: "my restaurant" or "our bakery" (my or our right before a
+# business), "I run a restaurant" or "we manage the building" (a running word, then a, an or the and
+# at most one more word, then a business), and fixed phrases. A landlord of a two-family house or a
+# co-op unit owner is residential, so "my tenants" and "our building" are left to the agent and the
+# FSM account type. Exclusions are removed before matching, so "my business partner" stays a home.
+commercial:
+  owned: [restaurant, bakery, deli, cafe, bar, store, shop, salon, gym, clinic, daycare, warehouse, business]
+  run: [restaurant, bakery, deli, cafe, bar, store, shop, salon, gym, clinic, daycare, warehouse,
+        business, company, school, church, hotel, office, building, property, properties]
+  phrases: [property manager, property management, office building, commercial property, rooftop unit]
+  not: [business partner, business trip, business card, home office, my own business hours]
 
 # Rules can only raise priority (spec S-21). Each fires on words the caller said on this call, or on
 # facts the agent passed. ASSUMED: no heat or no cooling alone is High; the rules make it Urgent.
