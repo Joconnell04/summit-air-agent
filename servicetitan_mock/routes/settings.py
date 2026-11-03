@@ -175,7 +175,8 @@ def _call_parts(conn: sqlite3.Connection, cfg: TenantConfig, r: sqlite3.Row) -> 
 
 def shape_call(conn: sqlite3.Connection, cfg: TenantConfig, r: sqlite3.Row) -> dict:
     """The v3 call: a bundle (job link, business unit) around the lead call, which holds the call
-    itself. Duration is a time span, the reason an object, and an outbound call has no callType."""
+    itself, its sid and its tags. Duration is a time span, the reason an object, and an outbound
+    call has no callType."""
     parts = _call_parts(conn, cfg, r)
     return {
         "id": r["id"],
@@ -199,24 +200,18 @@ def shape_call(conn: sqlite3.Connection, cfg: TenantConfig, r: sqlite3.Row) -> d
             "createdBy": None,
             "customer": parts["customer"],
             "campaign": parts["campaign"],
+            "modifiedOn": r["modified_on"] or r["received_on"],
+            "agent": None,
+            "sid": r["sid"],
+            "tags": parts["tags"],
         },
-        "modifiedOn": r["modified_on"] or r["received_on"],
-        "agent": None,
-        "sid": r["sid"],
-        "tags": parts["tags"],
     }
 
 
 def shape_call_detail(conn: sqlite3.Connection, cfg: TenantConfig, r: sqlite3.Row) -> dict:
     """The v2 single-call shape: the lead call's fields at the top level."""
-    bundle = shape_call(conn, cfg, r)
-    return {
-        **{k: v for k, v in bundle["leadCall"].items() if k not in ("createdOn", "active")},
-        "modifiedOn": bundle["modifiedOn"],
-        "agent": None,
-        "sid": r["sid"],
-        "tags": bundle["tags"],
-    }
+    lead_call = shape_call(conn, cfg, r)["leadCall"]
+    return {k: v for k, v in lead_call.items() if k not in ("createdOn", "active")}
 
 
 @telecom_v3_router.get("/calls")

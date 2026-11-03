@@ -299,7 +299,12 @@ def create_app(
             if call is None:
                 raise Refused("unknown_call", "")
             tenant = services.tenants.by_slug[call["tenant"]]
-            return lifecycle.end(conn, tenant, call, body, services.clock())
+            ended = lifecycle.end(conn, tenant, call, body, services.clock())
+            # A callback the system placed is judged when its call ends (app/outbound.py).
+            outbound.settle_answered(
+                conn, tenant, services.fsm[tenant.slug], services.clock(), call_id
+            )
+            return ended
 
         result = run(services, request, "calls.end", call_id, body.model_dump(), fn)
         services.release(call_id)

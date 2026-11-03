@@ -225,6 +225,7 @@ def test_the_adapter_exposes_no_delete_bulk_or_free_query_call():
         "calls_from",
         "calls_to",
         "find_call",
+        "find_outbound_call",
         "tag_call",
         "record_outbound_call",
         "contacts",

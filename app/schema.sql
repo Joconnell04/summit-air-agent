@@ -255,3 +255,10 @@ CREATE TABLE IF NOT EXISTS call_outcomes (
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL
 );
+
+-- When the call log was last read for a callback, so a backlog of unreachable callbacks cannot keep
+-- the newer ones from being checked (jobs.confirm_callbacks takes the least recently checked).
+CREATE TABLE IF NOT EXISTS callback_checks (
+    callback_id INTEGER PRIMARY KEY REFERENCES callbacks (id) ON DELETE CASCADE,
+    checked_at TEXT NOT NULL
+);

@@ -727,7 +727,7 @@ def build() -> dict:
                         module="telecom",
                         version="v3",
                         query={"tag": "Callback resolved"},
-                        check="pm.test('the tagged call is listed', () => pm.expect(pm.response.json().data.map(c => c.sid)).to.include('newman-call-' + pm.collectionVariables.get('run_id')));",
+                        check="pm.test('the tagged call is listed', () => pm.expect(pm.response.json().data.map(c => c.leadCall.sid)).to.include('newman-call-' + pm.collectionVariables.get('run_id')));",
                     ),
                     item(
                         "Logs for a call id",

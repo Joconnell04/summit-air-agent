@@ -135,14 +135,8 @@ def test_a_changed_persona_updates_the_example_in_place(client, make_run):
 
 def test_experiment_is_a_project_on_the_dataset_with_run_metadata(client, make_run):
     run = make_run(
-        ["a"],
-        stack="retell",
-        profile="quality",
-        suite="smoke",
-        run_id="r9",
-        hash="h1",
-        prompt_hash="p1",
-        model="claude-sonnet-5-5",
+        ["a"], stack="retell", profile="quality", suite="smoke", run_id="r9", hash="h1",
+        prompt_hash="p1", model="claude-sonnet-5-5",
     )
     name = ls.sync(run, client)
     assert name == "r9"
@@ -214,9 +208,7 @@ def test_an_error_run_has_no_check_scores(make_run):
 
 
 def test_a_check_name_that_starts_like_another_is_not_mistaken_for_it(make_run):
-    result = with_checks(
-        make_run, "fail", ["safety_lines_said: nope"], ("safety_lines", "safety_lines_said")
-    )
+    result = with_checks(make_run, "fail", ["safety_lines_said: nope"], ("safety_lines", "safety_lines_said"))
     feedback = ls.feedback_for(result)
     assert (feedback["check:safety_lines"], feedback["check:safety_lines_said"]) == (1, 0)
 
@@ -278,14 +270,8 @@ def test_scenario_runs_are_tagged_for_filtering_and_errors_are_marked(client, ma
     run.scenarios[1].outcome, run.scenarios[1].error = "error", "harness: boom"
     ls.sync(run, client)
     ok, bad = client.created_runs
-    assert {
-        "stack:livekit",
-        "suite:smoke",
-        "outcome:pass",
-        "flow:booking",
-        "difficulty:rigorous",
-        "trait:stutter",
-    } <= set(ok["tags"])
+    assert {"stack:livekit", "suite:smoke", "outcome:pass", "flow:booking", "difficulty:rigorous",
+            "trait:stutter"} <= set(ok["tags"])
     assert "outcome:error" in bad["tags"]
     assert ok["error"] is None and bad["error"] == "harness: boom"
 
@@ -466,7 +452,8 @@ def test_each_sample_is_its_own_run_and_the_first_keeps_its_old_id(make_run):
     first = run.scenarios[0]
     second = first.model_copy(update={"sample": 2})
     assert ls.run_id_for(run, first) != ls.run_id_for(run, second)
-    expected = uuid5(ls.NAMESPACE, f"run/{ls.experiment_name(run)}/{first.scenario_id}")
+    expected = uuid5(ls.NAMESPACE,
+                          f"run/{ls.experiment_name(run)}/{first.scenario_id}")
     assert ls.run_id_for(run, first) == expected
 
 

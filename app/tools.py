@@ -261,6 +261,13 @@ def _slot_bounds(ctx: Ctx, slot: Slot, level: str) -> tuple[datetime, datetime]:
     return ctx.tenant.window_bounds(slot.date, window)
 
 
+def _window_over(ctx: Ctx, window_id: str, start: datetime, end: datetime) -> bool:
+    """Has the window started (or, for the night window, ended)? Offered a moment ago, it may have
+    gone by since."""
+    window = ctx.tenant.window(window_id)
+    return end <= ctx.now if window.after_hours else start < ctx.now
+
+
 # ---- tools ---------------------------------------------------------------------------------
 
 
@@ -485,6 +492,13 @@ def book_appointment(ctx: Ctx, args: BookIn) -> Result:
         ctx, args.job_type, f"{details['issue']}\n{details['who_home']}", details["inside_temp_f"]
     )
     window_start, window_end = _slot_bounds(ctx, args.slot, decided.level)
+    if _window_over(ctx, args.slot.window, window_start, window_end):
+        ctx.cache.invalidate()
+        raise Refused(
+            "slot_taken",
+            ctx.tenant.line("slot_taken"),
+            alternatives=_alternatives(ctx, job_type, decided.level),
+        )
     scoped = records.scoped_customers(ctx.conn, ctx.call["id"])
     if not scoped and not details["name"]:
         raise Refused(

@@ -105,6 +105,7 @@ def customer_bundle(
         call_line(c)
         for c in fsm_calls(fsm, customer_id, [p["value"] for p in phones])[:RECENT_CALLS]
     ]
+    locations = fsm.locations(customer_id)
     keys = [phone_key(p["value"]) for p in phones]
     if keys:
         # Calls this agent handled are in our own records, not the FSM's call log.
@@ -143,7 +144,7 @@ def customer_bundle(
                 "zip": loc["address"]["zip"],
                 "in_service_area": loc["address"]["zip"] in tenant.service_area,
             }
-            for loc in fsm.locations(customer_id)
+            for loc in locations
         ],
         "membership": membership_summary(tenant, fsm.memberships(customer_id)),
         "open_jobs": open_jobs(fsm, tenant, customer_id),
@@ -163,7 +164,7 @@ def customer_bundle(
                 "brand": e["manufacturer"],
                 "install_year": int(e["installedOn"][:4]) if e.get("installedOn") else None,
             }
-            for e in fsm.equipment(customer_id)
+            for e in fsm.equipment(customer_id, [loc["id"] for loc in locations])
         ],
     }
 

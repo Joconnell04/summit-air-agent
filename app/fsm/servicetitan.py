@@ -11,13 +11,16 @@ below is the mock's stand-in for it).
 import hashlib
 import threading
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import httpx
 
+from ..db import parse_iso
 from .base import FsmRejected, FsmUnavailable, fsm_timings
 
 PAGE_SIZE = 200
+MAX_PAGES = 10
+CALL_MATCH_WINDOW = timedelta(minutes=10)
 
 
 def _utc(moment: datetime) -> str:
@@ -133,10 +136,22 @@ class ServiceTitanAdapter:
         return response.json() if response.content else {}
 
     def _list(self, module: str, path: str, op: str, version: str = "v2", **params) -> list[dict]:
+        """Every page of a list, up to MAX_PAGES of them."""
         params = {k: v for k, v in params.items() if v is not None}
-        return self._call(
-            "GET", module, path, op, params={**params, "pageSize": PAGE_SIZE}, version=version
-        )["data"]
+        found: list[dict] = []
+        for page in range(1, MAX_PAGES + 1):
+            body = self._call(
+                "GET",
+                module,
+                path,
+                op,
+                params={**params, "pageSize": PAGE_SIZE, "page": page},
+                version=version,
+            )
+            found += body["data"]
+            if not body.get("hasMore"):
+                break
+        return found
 
     # ---- reads ------------------------------------------------------------------------------
 
@@ -200,12 +215,33 @@ class ServiceTitanAdapter:
         found = self._list("telecom", "calls", "find_call", version="v3", sid=sid)
         return found[0] if found else None
 
+    def find_outbound_call(self, sid: str, phone: str, started: datetime) -> dict | None:
+        """The call ServiceTitan logged for a call we placed. By its sid when ServiceTitan holds the
+        id our telephony gave it (ASSUMED to match); otherwise the outbound call to that number
+        logged closest to the time it started, within CALL_MATCH_WINDOW."""
+        found = self.find_call(sid)
+        if found is not None:
+            return found
+        near = [
+            c
+            for c in self.calls_to(phone, started - CALL_MATCH_WINDOW)
+            if abs(parse_iso(c["leadCall"]["receivedOn"]) - started) <= CALL_MATCH_WINDOW
+        ]
+        return min(
+            near, key=lambda c: abs(parse_iso(c["leadCall"]["receivedOn"]) - started), default=None
+        )
+
     def notes(self, customer_id: int) -> list[dict]:
         return self._list("crm", f"customers/{customer_id}/notes", "notes")
 
-    def equipment(self, customer_id: int) -> list[dict]:
-        """Installed equipment at the customer's locations (the list filters on locations)."""
-        ids = [loc["id"] for loc in self.locations(customer_id)]
+    def equipment(self, customer_id: int, location_ids: list[int] | None = None) -> list[dict]:
+        """Installed equipment at the customer's locations (the list filters on locations). Pass the
+        location ids when the caller has them already."""
+        ids = (
+            location_ids
+            if location_ids is not None
+            else [loc["id"] for loc in self.locations(customer_id)]
+        )
         if not ids:
             return []
         return self._list(
@@ -396,4 +432,31 @@ class ServiceTitanAdapter:
             "reason": {"name": reason["name"], "lead": reason["lead"]},
             "tag": tag,
         }
+        matched = detail.get("customer")
+        if matched:
+            # ServiceTitan's PUT asks for the customer and a location with their addresses and
+            # contacts. Without a customer matched to the call there is nothing to send.
+            customer = self.customer(matched["id"])
+            locations = self.locations(matched["id"])
+            body["customer"] = {
+                "id": customer["id"],
+                "name": customer["name"],
+                "address": customer["address"],
+                "contacts": [
+                    {
+                        "id": c["id"],
+                        "type": c["type"],
+                        "value": c["value"],
+                        "memo": c.get("memo") or "",
+                    }
+                    for c in self.contacts(matched["id"])
+                ],
+            }
+            if locations:
+                body["location"] = {
+                    "id": locations[0]["id"],
+                    "name": locations[0]["name"],
+                    "address": locations[0]["address"],
+                    "contacts": [],
+                }
         return self._call("PUT", "telecom", f"calls/{call_id}", "tag_call", json=body)

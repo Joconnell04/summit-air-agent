@@ -2,8 +2,10 @@
 tool server (docs/explorations/006-servicetitan-field-names.md)."""
 
 import sqlite3
-from datetime import date
+from concurrent.futures import ThreadPoolExecutor
+from datetime import date, timedelta
 
+import httpx
 import pytest
 from toolkit import (
     TENANT_DIR,
@@ -18,6 +20,7 @@ from toolkit import (
 from app import capacity, jobs
 from app.db import iso
 from app.fsm import FsmRejected
+from app.fsm.servicetitan import ServiceTitanAdapter
 from app.tenant import Tenant
 
 TENANT = Tenant.load(TENANT_DIR)
@@ -126,12 +129,15 @@ def test_pick_technician_reads_the_exact_window_and_applies_the_rules(agent):
     start, end = TENANT.window_bounds(TUESDAY, TENANT.window("morning"))
     three = [(1, FREE, True), (2, FREE, True), (3, FREE, True)]
     frames = [frame(TUESDAY, "morning", three), frame(TUESDAY, "afternoon", [(9, FREE, True)])]
-    assert capacity.pick_technician(TENANT, frames, start, end, "Normal") == 1
-    assert capacity.pick_technician(TENANT, frames, start, end, "Urgent") == 1
+    assert capacity.pick_technician(TENANT, frames, start, end, "Normal") == 1, (
+        "the others are held"
+    )
+    picked = {capacity.pick_technician(TENANT, frames, start, end, "Urgent") for _ in range(60)}
+    assert picked == {1, 2, 3}, "an urgent job may take any, and the pick is spread over them"
     assert capacity.pick_technician(TENANT, frames[1:], start, end, "Urgent") is None
     taken = [frame(TUESDAY, "morning", [(1, BUSY, True), (2, FREE, True), (3, FREE, True)])]
     assert capacity.pick_technician(TENANT, taken, start, end, "Normal") is None
-    assert capacity.pick_technician(TENANT, taken, start, end, "Urgent") == 2
+    assert capacity.pick_technician(TENANT, taken, start, end, "Urgent") in (2, 3)
 
 
 # ---- the adapter ------------------------------------------------------------------------------
@@ -346,3 +352,69 @@ def test_an_agent_job_note_is_kept_on_the_job_and_has_no_id(agent):
     noted = agent.tool("add_note", call, text="Gate code 4417.", attach_to="job")
     assert noted["data"]["stored_in"] == "job"
     assert count(agent, "SELECT fsm_note_id FROM notes WHERE attach_to = 'job'") is None
+
+
+# ---- bookings at the same moment, windows that have gone, long lists ---------------------------
+
+
+def test_callers_booking_one_window_together_all_get_it_while_technicians_are_free(
+    agent, monkeypatch
+):
+    """Everyone reaches for the first technician, so they collide, and each one who loses looks
+    again and takes the next. Only a window with no one left is a taken slot."""
+    monkeypatch.setattr(capacity.random, "choice", lambda technicians: technicians[0])
+    adapter = agent.app.state.services.fsm["summit-air"]
+    window = TENANT.window("afternoon")
+    slot = None
+    for offset in range(3, 12):
+        day = date(2026, 11, 2) + timedelta(days=offset)
+        start, end = TENANT.window_bounds(day, window)
+        frames = adapter.capacity(start, end, 11, 203)
+        if (
+            frames
+            and len(capacity.usable_technicians(TENANT, frames[0], day, window, "Normal")) >= 4
+        ):
+            slot = {"date": day.isoformat(), "window": window.id}
+            break
+    assert slot, "the seeded world has a quiet window"
+    calls = [ready_to_book(agent, f"(212) 555-09{10 + i}", in_area_address(i)) for i in range(3)]
+    with ThreadPoolExecutor(3) as pool:
+        results = list(pool.map(lambda c: book(agent, c, slot), calls))
+    assert [r["ok"] for r in results] == [True, True, True], results
+
+
+def test_a_window_that_has_started_is_offered_back_as_a_taken_slot_with_other_times(agent):
+    call = ready_to_book(agent)
+    started = book(agent, call, {"date": "2026-11-02", "window": "morning"})  # it is 9 a.m.
+    assert started["refused"] == "slot_taken"
+    assert started["data"]["alternatives"], "other windows come back"
+    assert count(agent, "SELECT COUNT(*) FROM flags WHERE kind = 'booking_failed'") == 0
+    assert count(agent, "SELECT COUNT(*) FROM callbacks") == 0, "nobody is promised a callback"
+    assert book(agent, call, first_open(agent, call))["ok"], "and the call can still book"
+
+
+def test_a_list_is_read_page_by_page_until_it_runs_out():
+    seen = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/connect/token":
+            return httpx.Response(200, json={"access_token": "t", "expires_in": 900})
+        page = int(request.url.params["page"])
+        seen.append((page, request.url.params["pageSize"]))
+        return httpx.Response(
+            200,
+            json={
+                "data": [{"id": page * 10 + n, "jobStatus": "Scheduled"} for n in range(2)],
+                "hasMore": page < 3,
+            },
+        )
+
+    adapter = ServiceTitanAdapter(
+        httpx.Client(transport=httpx.MockTransport(handler), base_url="http://st"),
+        1000,
+        "id",
+        "secret",
+        "key",
+    )
+    assert [job["id"] for job in adapter.jobs(5)] == [10, 11, 20, 21, 30, 31]
+    assert seen == [(1, "200"), (2, "200"), (3, "200")]

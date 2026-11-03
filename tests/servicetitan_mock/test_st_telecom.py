@@ -36,10 +36,9 @@ def test_a_v3_call_is_a_bundle_around_a_nested_lead_call(small):
     api, ids = small
     call = log_call(api, customerId=ids["home"][0], reason="No heat", callType="Booked")
     lead_call = call["leadCall"]
-    assert set(call) == {
-        "id", "jobNumber", "projectId", "businessUnit", "type", "leadCall", "modifiedOn", "agent", "sid", "tags",
-    }  # fmt: skip
-    assert call["sid"] == "sid-1"
+    assert set(call) == {"id", "jobNumber", "projectId", "businessUnit", "type", "leadCall"}
+    assert {"sid", "tags", "agent", "modifiedOn"} <= set(call["leadCall"]), "inside leadCall"
+    assert lead_call["sid"] == "sid-1"
     assert {"receivedOn", "duration", "from", "to", "direction", "callType", "reason"} <= set(
         lead_call
     )
@@ -83,25 +82,29 @@ def test_the_feed_filters_by_who_called_who_was_called_sid_tag_and_time(small):
         tags=["No contact"],
         receivedOn="2026-11-01T10:00:00Z",
     )
-    assert [c["sid"] for c in feed(api, callerPhoneNumber="7185550111")["data"]] == ["a"]
-    assert [c["sid"] for c in feed(api, phoneNumberCalled="(718) 555-0122")["data"]] == ["b", "c"]
-    assert [c["sid"] for c in feed(api, sid="b")["data"]] == ["b"]
-    assert [c["sid"] for c in feed(api, tag="Callback resolved")["data"]] == ["b"]
+    assert [c["leadCall"]["sid"] for c in feed(api, callerPhoneNumber="7185550111")["data"]] == [
+        "a"
+    ]
+    assert [
+        c["leadCall"]["sid"] for c in feed(api, phoneNumberCalled="(718) 555-0122")["data"]
+    ] == ["b", "c"]
+    assert [c["leadCall"]["sid"] for c in feed(api, sid="b")["data"]] == ["b"]
+    assert [c["leadCall"]["sid"] for c in feed(api, tag="Callback resolved")["data"]] == ["b"]
     assert feed(api, tag="No such tag")["data"] == []
     since = feed(api, createdOnOrAfter="2026-11-02T00:00:00Z")
-    assert [c["sid"] for c in since["data"]] == ["b", "a"], "newest first"
+    assert [c["leadCall"]["sid"] for c in since["data"]] == ["b", "a"], "newest first"
     recent = feed(api, phoneNumberCalled="7185550122", createdOnOrAfter="2026-11-02T00:00:00Z")
-    assert [c["sid"] for c in recent["data"]] == ["b"]
+    assert [c["leadCall"]["sid"] for c in recent["data"]] == ["b"]
     assert feed(api, minDuration=100)["data"] == []
     everything = feed(api)
     assert everything["totalCount"] == 3 and everything["hasMore"] is False
-    assert [c["sid"] for c in everything["data"]] == ["b", "a", "c"]
+    assert [c["leadCall"]["sid"] for c in everything["data"]] == ["b", "a", "c"]
 
 
 def test_a_tag_is_the_tag_type_name_and_shows_with_its_id(small):
     api, _ = small
     call = log_call(api, tags=["Callback resolved"])
-    assert call["tags"] == [{"id": 801, "typeName": "Callback resolved"}]
+    assert call["leadCall"]["tags"] == [{"id": 801, "typeName": "Callback resolved"}]
     assert [t["name"] for t in api.get("/settings/tag-types").json()["data"]] == [
         "Callback resolved",
         "Callback open",

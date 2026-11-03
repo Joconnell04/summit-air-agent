@@ -77,6 +77,9 @@ class Tenant:
         self.retention: dict = agent["retention"]
         self.after_hours_cutoffs: dict = agent["after_hours"]
         self.fsm: dict = agent["fsm"]
+        missing = {"resolved", "open", "no_contact"} - set(self.fsm.get("callback_tags", {}))
+        if missing:
+            raise ValueError(f"agent.yaml fsm.callback_tags needs {sorted(missing)}")
         self.mock_auth: dict = company.get("auth", {})
         # Technicians held back from normal jobs, per day and window (config.yaml urgent_hold).
         self.urgent_hold: dict = company.get(

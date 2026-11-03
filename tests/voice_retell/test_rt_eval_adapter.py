@@ -40,12 +40,8 @@ def test_end_ends_the_chat():
 
 def test_hear_joins_agent_lines_and_marks_tool_turns():
     messages = [
-        {
-            "role": "tool_call_invocation",
-            "tool_call_id": "t1",
-            "name": "find_slots",
-            "arguments": "{}",
-        },
+        {"role": "tool_call_invocation", "tool_call_id": "t1", "name": "find_slots",
+         "arguments": "{}"},
         {"role": "tool_call_result", "tool_call_id": "t1", "content": "{}", "successful": True},
         {"role": "agent", "content": "I have Tuesday morning."},
     ]
@@ -64,24 +60,15 @@ def test_an_end_call_that_hangs_up_ends_the_turn():
     result = json.dumps({"ok": True, "data": {"hang_up": True}})
     messages = [
         {"role": "agent", "content": "Bye."},
-        {
-            "role": "tool_call_invocation",
-            "tool_call_id": "t2",
-            "name": "end_call",
-            "arguments": "{}",
-        },
+        {"role": "tool_call_invocation", "tool_call_id": "t2", "name": "end_call", "arguments": "{}"},
         {"role": "tool_call_result", "tool_call_id": "t2", "content": result, "successful": True},
     ]
     turn = agent(lambda r: httpx.Response(201, json={"messages": messages})).hear("bye")
     assert turn.ended
 
 
-ENV = {
-    "RETELL_API_KEY": "k",
-    "RETELL_CHAT_AGENT_ID": "a",
-    "RETELL_EVAL_TOOL_SERVER": "https://eval.example",
-    "RETELL_EVAL_DEBUG_TOKEN": "tok",
-}
+ENV = {"RETELL_API_KEY": "k", "RETELL_CHAT_AGENT_ID": "a",
+       "RETELL_EVAL_TOOL_SERVER": "https://eval.example", "RETELL_EVAL_DEBUG_TOKEN": "tok"}
 
 
 def reset_client(seen, status=200):
@@ -154,22 +141,16 @@ def test_the_record_is_read_once_the_webhook_has_ended_the_call():
     def handler(request):
         return httpx.Response(200, json={"call": {"ended_at": next(states)}})
 
-    server = ToolServer(
-        httpx.Client(base_url="https://eval.example", transport=httpx.MockTransport(handler)), "tok"
-    )
+    server = ToolServer(httpx.Client(base_url="https://eval.example",
+                                     transport=httpx.MockTransport(handler)), "tok")
     assert server.final_trace("eval-x", wait_s=5, every_s=0)["call"]["ended_at"]
 
 
 def test_a_call_that_never_ends_is_returned_after_the_wait():
     from evals.world import ToolServer
 
-    server = ToolServer(
-        httpx.Client(
-            base_url="https://eval.example",
-            transport=httpx.MockTransport(
-                lambda r: httpx.Response(200, json={"call": {"ended_at": None}})
-            ),
-        ),
-        "tok",
-    )
+    server = ToolServer(httpx.Client(
+        base_url="https://eval.example",
+        transport=httpx.MockTransport(lambda r: httpx.Response(200, json={"call": {"ended_at": None}})),
+    ), "tok")
     assert server.final_trace("eval-x", wait_s=0, every_s=0)["call"]["ended_at"] is None

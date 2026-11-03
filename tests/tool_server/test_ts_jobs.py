@@ -170,6 +170,7 @@ def test_a_requested_callback_waits_for_its_time_then_is_dialed_once(agent, cloc
     agent.turn(placed, "Hi, thanks for calling back.")
     agent.confirm_read_back(placed, in_area_address())
     agent.tool("end_call", placed, reason="resolved")
+    agent.end(placed)
     finished = done(agent, claimed["outbound_id"], answered=True)["data"]
     assert (finished["result"], finished["outcome"]) == ("answered", "resolved")
     # Answering is not enough: the callback is done once the call log shows it resolved

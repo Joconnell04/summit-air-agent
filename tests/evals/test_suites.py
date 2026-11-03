@@ -5,18 +5,10 @@ from evals.suites import SuiteError, load_suites, matches, parse_tags, select
 
 
 def sc(id, flow, difficulty, tags=()):
-    return Scenario.model_validate(
-        {
-            "id": id,
-            "flow": flow,
-            "difficulty": difficulty,
-            "journeys": ["J1"],
-            "tags": list(tags),
-            "persona": "p",
-            "opening": "o",
-            "must": [{"booking": "none"}],
-        }
-    )
+    return Scenario.model_validate({
+        "id": id, "flow": flow, "difficulty": difficulty, "journeys": ["J1"], "tags": list(tags),
+        "persona": "p", "opening": "o", "must": [{"booking": "none"}],
+    })
 
 
 POOL = [
