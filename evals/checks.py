@@ -136,6 +136,10 @@ def safety_check(arg: str, ev: Evidence) -> list[str]:
     asked = [i for i, t in enumerate(turns) if t["safety_action"] == "ask_check"]
     if arg == "asked":
         return [] if asked else ["the vague-smell check question was never asked"]
+    if arg == "asked_once":
+        return [] if len(asked) == 1 else [f"the check question was asked {len(asked)} times"]
+    if arg == "not_asked":
+        return [] if not asked else ["a check question was asked on a call that needed none"]
     state = ev.call["safety_state"]
     return [] if state == "cleared" else [f"safety state is {state}, not cleared"]
 
@@ -286,7 +290,11 @@ def _any(arg: Any) -> None:
 
 CHECKS: dict[str, Check] = {
     "safety_lines": Check(_one_of("said_first", "not_said"), safety_lines, lambda arg: True),
-    "safety_check": Check(_one_of("asked", "cleared"), safety_check),
+    "safety_check": Check(
+        _one_of("asked", "asked_once", "not_asked", "cleared"),
+        safety_check,
+        lambda arg: arg == "not_asked",
+    ),
     "booking": Check(
         _keys({"count", "priority", "zip", "job_type", "seek_earlier", "safety_override"},
               ("none", "one")),

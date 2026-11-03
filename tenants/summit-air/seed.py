@@ -508,7 +508,9 @@ class World:
             NO_HEAT,
             self.work_day,
             "afternoon",
-            "Dispatched",
+            # Booked this morning for the afternoon, so no technician is on the way yet: the
+            # caller can still move or cancel it by phone.
+            "Scheduled",
             "Urgent",
             summary="No heat since last night. Radiators cold, thermostat reads 58.",
             created=wk.local_dt(cfg, self.start, "08:15"),

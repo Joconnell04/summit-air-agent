@@ -225,7 +225,7 @@ def test_a_repeat_caller_has_several_recent_calls_and_an_open_job(world):
     ]
     assert [j["id"] for j in open_jobs] == [maria["jobId"]]
     appointment = api.get("/jpm/appointments", jobId=maria["jobId"]).json()["data"][0]
-    assert appointment["status"] == "Dispatched"
+    assert appointment["status"] == "Scheduled"
 
 
 def test_a_job_done_last_week_shows_as_completed_with_history(world):
