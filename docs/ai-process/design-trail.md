@@ -39,3 +39,4 @@ How the design was reached, in order, so a reader can follow each choice back to
 | Retell baseline built | Same tools, prompts and traces on the 678 number; a real call booked and a gas call held the safety gate; speed-extras question open in #32 | pull requests 33 and 35, brief 05 |
 | Callback done read from ServiceTitan | Only an outbound call logged as resolved marks a callback done; missed calls, voicemail or the wrong person leave it open | DECISIONS.md 010, #26 |
 | Eval floor waits for the real prompts | Set from the first standard-suite run on the real prompts, rounded down to the nearest 5%, ratchet up only | DECISIONS.md 011, #27 |
+| Owner view stories | Rebuilt for a non-technical owner: ten stories on three pages (Today, Call, Results), technical detail behind a toggle | DECISIONS.md 012, #40 |

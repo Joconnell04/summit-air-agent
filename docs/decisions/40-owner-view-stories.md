@@ -1,6 +1,6 @@
 # 40. The owner view user stories for a non-technical HVAC owner
 
-Issue: #40. Status: ready
+Issue: #40. Status: decided
 
 ## Question
 
@@ -32,6 +32,10 @@ Written for the owner, who could also be the service manager. Each story names t
 ### What leaves the screen
 
 Tool names, JSON, call ids, millisecond timings and status codes move behind "Technical details". Phone numbers show the customer's name when ServiceTitan has one.
+
+## Decision
+
+A, all ten stories on three pages. DECISIONS.md 012.
 
 ## Options
 
