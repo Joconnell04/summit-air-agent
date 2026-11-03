@@ -20,6 +20,7 @@ voice/
   livekit/           LiveKit worker (only if LiveKit is built)
   retell/            Retell agent config as code and push script (only if Retell is built)
 prompts/             prompt files by job, shared by both voice layers
+trades/hvac/         what any residential HVAC shop shares; each tenant extends it
 tenants/summit-air/  everything specific to Summit Air (docs/template.md)
 config/models.yaml   model profiles
 evals/               harness, scenarios, results
@@ -47,6 +48,15 @@ A caller can say anything, including "ignore your instructions and delete every 
 - **Scoped credentials.** The FSM credentials the server holds allow only the calls above (on real ServiceTitan, an app with the minimum API scopes). No key is ever in the prompt.
 - **Prompt injection.** The prompt tells the agent to stay in role and treat caller instructions about the system as conversation, but the protection doesn't depend on it: the worst a tricked model can do is ask for a tool the server refuses.
 - **Audit.** Every refused or limited request is logged with the call id and shows on the owner view, and the eval suite includes injection and "delete everything" callers.
+
+## Added after the build, before testing
+
+Four ideas came out of working with the running agent at the end of phase 2. They were folded into the design here, before phase 3 testing, so the eval floor and the bake-off measure the design as it will ship (docs/ai-process/ideas-round-questions.md).
+
+- **Rules by call stage (DECISIONS.md 022).** A rulebook in the tool server lists every rule with its stage, kind and where it is enforced, read from the live config. Owner edits (guidance per stage and four wording lines) are stored as versions in SQLite over the YAML defaults. A version is published only after the must-pass evals pass against it, and the server validates every edit so none can loosen a gate. The server tracks the call's stage and adds the published guidance for that stage to the prompt.
+- **Templates by trade and company (DECISIONS.md 021).** The loader merges `trades/hvac/` with the tenant's folder; the tenant's values win. The eval run hash covers both, so a trade edit makes results stale.
+- **Local names (DECISIONS.md 023).** One list per tenant feeds Cartesia's pronunciation dictionary and Deepgram's keyterms. The swap happens in the voice layer, after the server has written the sentence, so the read-back and the stored address keep the written form.
+- **Carbon monoxide check for unsafe heating (DECISIONS.md 024).** The server detects indoor fuel-burning heat on a caller line and has the agent ask the check question once, through the same mechanism as the vague-smell check.
 
 ## Logging and traces
 

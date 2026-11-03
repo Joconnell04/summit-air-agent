@@ -207,7 +207,7 @@ Sources:
 
 ok some notes and feedback:
 
-* use same number from bobert, retire bobert stuff. we already paid for that phone number so should be an option. but don't reuse the SMS number used for the epic consulting receipt agent as that's solely for epic stuff. so if you need a new twilio # and can't buy it on your own, let me know and ill do it.
+* use same number from bobert, retire bobert stuff. we already paid for that phone number so should be an option. but don't reuse the SMS number used for [another project] as that's solely for [that project]. so if you need a new twilio # and can't buy it on your own, let me know and ill do it.
 * let's properly document speed to speed model not being faster too and let that be a defense for our design decision when relevant.
 * yeah i agree, let's build our own eval harness.
 * i agree we don't need the $50 thing but let's document that we already have an always-on Vultr server - and provide specs and defensability/rationale around how we know it won't fail/how we know its compute and hardware specs are sufficient
@@ -500,7 +500,7 @@ see screenshot for config details and lmk if you need me to change anything or a
 
 **Claude:**
 
-Your Vultr account has $35.59 in credit, and the only server on it is labelled "epic-pipeline". Creating a dedicated SSH key and the New Jersey server now.
+Your Vultr account has $35.59 in credit, and the only server on it is labelled for another project. Creating a dedicated SSH key and the New Jersey server now.
 
 **Claude:**
 
