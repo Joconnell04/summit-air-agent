@@ -433,7 +433,10 @@ def rule_history(app, clock: Clock, day: date) -> None:
             run = results.load(ROOT / "evals" / "results" / name)
             rerun = results.load(ROOT / "evals" / "results" / rerun_name) if rerun_name else None
             clock.now = datetime.combine(day, at, NEW_YORK)
-            _draft, errors = rules.save_draft(conn, tenant, run.overlay, "Owner", note, clock())
+            # Replays drafts a real gate run already tested, so no model reads them again here.
+            _draft, errors = rules.save_draft(
+                conn, tenant, run.overlay, "Owner", note, clock(), lambda tenant, items: {}
+            )
             assert not errors, errors
             clock.now += timedelta(minutes=2)
             checking = rules.request_publish(conn, tenant.slug, "Owner", clock())

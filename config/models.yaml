@@ -81,6 +81,15 @@ offline:
     thinking: true
     price: {input: 4.00, output: 20.00}
 
+# The owner view's check on a saved draft (app/guidance_check.py). The owner is waiting on the
+# save, so a small fast model with thinking off, answering in JSON.
+owner_edits:
+  guidance_check:
+    provider: anthropic
+    model: claude-haiku-5-5
+    thinking: false
+    price: {input: 0.10, output: 0.50}
+
 # After the call ends: the technician's job summary.
 post_call:
   summary:
