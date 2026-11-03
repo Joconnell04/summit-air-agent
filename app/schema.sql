@@ -232,3 +232,11 @@ CREATE TABLE IF NOT EXISTS alerts (
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL
 );
+
+-- The latest outside temperature per tenant, for priority (app/weather.py).
+CREATE TABLE IF NOT EXISTS weather (
+    tenant TEXT PRIMARY KEY,
+    fetched_at TEXT NOT NULL,
+    now_f REAL,
+    low_f REAL
+);

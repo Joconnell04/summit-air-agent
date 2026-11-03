@@ -27,6 +27,9 @@ class Settings:
         default_factory=lambda: float(os.environ.get("JOBS_INTERVAL_SECONDS", "60"))
     )
     slot_cache_seconds: float = 60.0
+    # Read the outside temperature from the National Weather Service (app/weather.py). Off in
+    # tests and development so nothing calls out; on for the deployed server.
+    weather: bool = field(default_factory=lambda: os.environ.get("WEATHER", "") == "1")
     # The owner view refuses every request when this is empty.
     owner_token: str = field(default_factory=lambda: os.environ.get("OWNER_TOKEN", ""))
     # Where the owner view is served, for links in alert emails. Empty leaves the links out.

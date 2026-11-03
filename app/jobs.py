@@ -8,7 +8,7 @@ import smtplib
 import sqlite3
 from datetime import datetime, timedelta
 
-from . import booking, outbound, records
+from . import booking, outbound, records, weather
 from .db import iso, parse_iso, tx
 from .fsm import FsmAdapter, FsmRejected, FsmUnavailable, SlotCache
 from .mail import Mailer
@@ -342,6 +342,11 @@ def run_once(services) -> dict:
             report[tenant.slug] = {
                 "queue": retry_queue(conn, tenant, fsm, cache, now),
                 "cache_refreshed": cache.refresh(),
+                "weather": (
+                    weather.refresh(conn, tenant, services.weather[tenant.slug], now)
+                    if services.weather.get(tenant.slug)
+                    else "off"
+                ),
                 "earlier_slots_offered": offer_earlier_slots(conn, tenant, fsm, cache, now),
                 "callbacks": schedule_callbacks(conn, tenant, now),
                 "kept": check_kept(conn, tenant, fsm, now),

@@ -66,6 +66,8 @@ class Tenant:
         self.safety: dict = agent["safety"]
         self.commercial: dict = agent["commercial"]
         self.priority: dict = agent["priority"]
+        # Where to read the outside temperature (app/weather.py). None leaves it unknown.
+        self.weather: dict | None = agent.get("weather")
         self.lines: dict = agent["lines"]
         self.callbacks: dict = agent["callbacks"]
         self.on_call_alerts: dict = agent["on_call_alerts"]

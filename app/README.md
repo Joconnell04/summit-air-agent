@@ -85,6 +85,8 @@ Nothing about Summit Air is in `app/`; a test checks for the company name, its Z
 
 ## Known limits
 
+- The outside temperature is one point, NYC's Central Park station and its forecast grid, which can differ from Staten Island or Nassau by a few degrees; the 55 F and 80 F brackets absorb that (exploration 007). It is read only on a server with `WEATHER=1`, hourly at most, and is unknown (so priority fails safe to High) after three hours without a good read.
+
 - One server process: a per-call lock serializes a call's requests so a retried booking can't race its first attempt. A second process would need that claim in the database.
 - The JSON log file is never rotated or purged here; retention covers the database. Production log rotation belongs to the deploy.
 - FSM credentials from the environment apply to every tenant; a second real tenant needs per-tenant secrets.
