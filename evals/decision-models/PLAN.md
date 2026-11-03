@@ -2,7 +2,7 @@
 
 Principle: start from a bottleneck. A side model is added only where evals or live calls show a slow gate or a judgment the main model gets wrong, and only if this bake-off shows it fixes that. Each dedicated model is used the way its vendor intends (its own question format and output types).
 
-Status: design only. Nothing built or run; no paid calls. Feeds C-35 and part 3 of `docs/decisions/05-pipeline-and-models.md`.
+Status: the quick run is built and has run for `vulnerable_person` only (`make eval-decisions`, `run.py`, lines in `lines/`; readout `evals/rounds/side-model-01.md`). The full run, the other three questions, a second labeller and the main-model arm are not built. Feeds C-35 and part 3 of `docs/decisions/05-pipeline-and-models.md`.
 
 **Bottom line.** One labelled set (480 lines, four questions), five systems behind one function, scored side by side. A side model is adopted for a question only if it clears that question's bar and beats the launch setup (fixed phrase list plus the main model) on the costlier error, with no delay a caller would notice. Plain Haiku wins ties. "Nothing beats launch" is a valid result.
 

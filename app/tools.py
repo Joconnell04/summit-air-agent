@@ -144,6 +144,7 @@ def _priority(ctx: Ctx, job_type: str, extra_text: str, inside_temp_f: float | N
         outside.now_f,
         outside.coldest_f,
         heating_indoors=safety.heating_signal(caller_text, ctx.tenant.safety),
+        caller_text=caller_text,
     )
     return facts, prio.decide(facts, ctx.tenant.priority, ctx.side_model)
 

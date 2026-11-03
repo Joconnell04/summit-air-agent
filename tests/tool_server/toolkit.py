@@ -133,7 +133,7 @@ def count(agent: Agent, sql: str, *params) -> int:
         conn.close()
 
 
-def make_server(tmp_path, clock, mock_app, **settings):
+def make_server(tmp_path, clock, mock_app, side_model=None, **settings):
     """The tool server on a scratch database, talking to the in-process mock."""
     config = Settings(
         db_path=tmp_path / "tool.db",
@@ -143,4 +143,4 @@ def make_server(tmp_path, clock, mock_app, **settings):
         **settings,
     )
     fsm = TestClient(mock_app, raise_server_exceptions=False)
-    return create_app(config, clock=clock, fsm_clients={"summit-air": fsm})
+    return create_app(config, clock=clock, fsm_clients={"summit-air": fsm}, side_model=side_model)
