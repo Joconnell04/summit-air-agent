@@ -1,6 +1,6 @@
 # 45. Which owner view design directions to develop further
 
-Issue: #45. Status: ready
+Issue: #45. Status: decided
 
 ## Question
 
@@ -44,3 +44,7 @@ Develop 1 and 3. Dispatch desk is what Paul, playing a ServiceTitan owner, will 
 - Brand values and ServiceTitan conventions: docs/explorations/008-revin-brand-and-servicetitan-ui.md.
 - Data on every page is the seeded demo day from the current owner view (Mon Nov 2, 23 calls, 9 jobs). The agent's lines on the call pages are sample copy, not a real transcript.
 - The canvas is private until shared from its Share menu.
+
+## Decision
+
+Jackson chose direction 5 mixed with direction 1, and asked for two versions of that mix. Recorded in DECISIONS.md 013.
