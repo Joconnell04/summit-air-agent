@@ -9,7 +9,7 @@ import smtplib
 import sqlite3
 from datetime import datetime, timedelta
 
-from . import booking, outbound, records, weather
+from . import booking, outbound, records, reports, search, weather
 from .db import iso, parse_iso, tx
 from .fsm import FsmAdapter, FsmRejected, FsmUnavailable, SlotCache
 from .mail import Mailer
@@ -411,8 +411,8 @@ def purge(conn: sqlite3.Connection, tenant: Tenant, now: datetime, environment: 
 
 
 def _guarded(job, *args):
-    """Run a job that reads ServiceTitan's call log. A reply it does not understand is reported
-    and logged, and does not stop the jobs after it (the overdue and alert jobs matter more)."""
+    """Run a job whose failure must not stop the jobs after it (the overdue and alert jobs matter
+    more): ServiceTitan's call log replies it does not understand, or the search index."""
     try:
         return job(*args)
     except Exception as exc:
@@ -444,6 +444,8 @@ def run_once(services) -> dict:
                 "alerts": alert_on_call(
                     conn, tenant, services.mailer, now, services.settings.owner_view_url
                 ),
+                "reports": reports.file_held(conn, tenant, services.report_poster, now),
+                "search_indexed": _guarded(search.refresh, conn, tenant),
                 "purged": purge(conn, tenant, now, services.settings.environment),
             }
         report["overdue_callbacks"] = []

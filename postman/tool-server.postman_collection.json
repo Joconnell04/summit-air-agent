@@ -1721,7 +1721,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('opens the page', () => pm.response.to.have.status(200));",
-                  "pm.test('shows the bookings', () => pm.expect(pm.response.text()).to.include('Bookings'));"
+                  "pm.test('shows the day board', () => pm.expect(pm.response.text()).to.include('Day board'));"
                 ]
               }
             }
@@ -1733,14 +1733,34 @@
           }
         },
         {
-          "name": "A call's timeline",
+          "name": "The day's calls",
           "event": [
             {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('opens the timeline', () => pm.response.to.have.status(200));",
+                  "pm.test('opens the list', () => pm.response.to.have.status(200));",
+                  "pm.test('is HTML', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('text/html'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/owner/calls"
+          }
+        },
+        {
+          "name": "A call's page",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('opens the call', () => pm.response.to.have.status(200));",
                   "pm.test('is HTML', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('text/html'));"
                 ]
               }
@@ -1750,6 +1770,156 @@
             "method": "GET",
             "header": [],
             "url": "{{base_url}}/owner/calls/{{call_id}}"
+          }
+        },
+        {
+          "name": "A call's full log as JSON",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('downloads the log', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/owner/calls/{{call_id}}/log"
+          }
+        },
+        {
+          "name": "Search calls, jobs, flags and words said",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('opens the matches', () => pm.response.to.have.status(200));",
+                  "pm.test('is HTML', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('text/html'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/owner/search?q=Union"
+          }
+        },
+        {
+          "name": "Search suggestions as JSON",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('suggests matches', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/owner/search/suggest?q=Union"
+          }
+        },
+        {
+          "name": "Results for a custom range",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('opens results', () => pm.response.to.have.status(200));",
+                  "pm.test('is HTML', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('text/html'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/owner/results?start=2026-10-27&day=2026-11-02"
+          }
+        },
+        {
+          "name": "Tell Revin something was wrong on a call",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('stores it and goes back to the call', () => pm.expect(pm.response.code).to.be.oneOf([200, 303]));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{base_url}}/owner/calls/{{call_id}}/report",
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "text",
+                  "value": "It should have asked who is at home."
+                },
+                {
+                  "key": "turn",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Results for seven days",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('opens results', () => pm.response.to.have.status(200));",
+                  "pm.test('is HTML', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('text/html'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/owner/results?days=7"
+          }
+        },
+        {
+          "name": "The design system specimen",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('opens the specimen', () => pm.response.to.have.status(200));",
+                  "pm.test('is HTML', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('text/html'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/owner/design"
           }
         }
       ]

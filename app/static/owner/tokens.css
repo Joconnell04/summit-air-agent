@@ -1,0 +1,118 @@
+/* Owner view design tokens. Every color, size and timing the components use comes from here.
+   What each token is for: docs/design-system.md. Live specimen: /owner/design. */
+
+@font-face {
+  font-family: "Public Sans";
+  src: url("fonts/PublicSans-latin.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  /* Surfaces, back to front. The page is Revin's Offwhite; panels sit on it in white. */
+  --page: #F7F6F5;
+  --surface: #FFFFFF;
+  --sunken: #FAFAF9;
+  --hover: #F5F4F2;
+  --selected: #FFF6F2;
+
+  /* Lines. Hairlines separate; they never decorate. */
+  --line: #E6E4E1;
+  --line-soft: #EFEEEB;
+  --line-strong: #D3D1CD;
+
+  /* Ink, strongest to weakest. Body copy is --ink; --faint is for times and captions only. */
+  --ink: #1A1919;
+  --ink-2: #3B3A38;
+  --muted: #5E5C59;
+  --faint: #706D68;
+  --disabled: #B5B2AD;
+
+  /* Revin. Ember is the brand: the logo, the active tab, the one primary action, and "now". */
+  --ember: #FA3500;
+  --ember-ink: #BA2500;
+  /* Ember darkened just enough for white button text to pass 4.5:1; the brand value is 3.8:1. */
+  --ember-action: #DE2F00;
+  --ember-wash: #FFF3EE;
+  --ember-line: #FFC6B3;
+
+  /* Status, from ServiceTitan's Anvil palette, so a dispatcher reads them without a key.
+     -ink is text on -wash; the plain value is for dots, rings and bars. */
+  --urgent: #D62100;
+  --urgent-ink: #A11A00;
+  --urgent-wash: #FDECEA;
+  --urgent-line: #F3B3A8;
+  --high: #E5A800;
+  --high-ink: #6B4E00;
+  --high-wash: #FFF4CC;
+  --high-line: #EBCF6A;
+  --done: #077E50;
+  --done-ink: #055C3B;
+  --done-wash: #E6F4EE;
+  --done-line: #A6D6C0;
+  --info: #0265DC;
+  --info-ink: #0B4A9E;
+  --info-wash: #E3EEFD;
+  --info-line: #A8C7F1;
+  --neutral: #A3A09B;
+  --neutral-ink: #4A4845;
+  --neutral-wash: #F1EFEC;
+
+  /* Type. One family; weight and size carry hierarchy, never color alone. */
+  --font: "Public Sans", "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --text-xs: 12px;
+  --text-sm: 13px;
+  --text-md: 14px;
+  --text-lg: 16px;
+  --text-xl: 20px;
+  --text-2xl: 26px;
+  --text-3xl: 32px;
+  --leading-tight: 1.25;
+  --leading: 1.5;
+  --regular: 400;
+  --medium: 500;
+  --semibold: 600;
+  --bold: 700;
+  --tracking-tight: -0.015em;
+
+  /* Space, on a 4px grid. */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 20px;
+  --s-6: 24px;
+  --s-8: 32px;
+  --s-10: 40px;
+  --s-12: 48px;
+
+  /* Shape. Tags are the smallest radius, panels the largest. */
+  --r-sm: 4px;
+  --r-md: 6px;
+  --r-lg: 8px;
+  --r-full: 999px;
+
+  /* Sizes. Every control in a row shares --control-h; tags inside tables use --tag-h. */
+  --control-h: 32px;
+  --tag-h: 22px;
+  --row-h: 44px;
+  --header-h: 56px;
+  --page-w: 1280px;
+  --gutter: 24px;
+
+  /* Depth. Panels are flat; only things that float over the page get a shadow. */
+  --shadow-1: 0 1px 2px rgba(26, 25, 25, 0.05);
+  --shadow-pop: 0 1px 2px rgba(26, 25, 25, 0.06), 0 8px 24px rgba(26, 25, 25, 0.12);
+  --focus: 0 0 0 3px rgba(2, 101, 220, 0.3);
+
+  /* Motion. Short, and only for state changes the eye should follow. */
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+  --fast: 120ms;
+  --base: 200ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --fast: 0ms; --base: 0ms; }
+}

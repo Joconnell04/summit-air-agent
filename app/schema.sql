@@ -233,6 +233,22 @@ CREATE TABLE IF NOT EXISTS alerts (
     updated_at TEXT NOT NULL
 );
 
+-- What the owner told Revin was wrong on a call (story O-8), the one thing the owner view writes.
+-- Filed as a GitHub issue when REPORTS_GITHUB_TOKEN and REPORTS_GITHUB_REPO are set; held
+-- otherwise, the way alert email is held without a mail server.
+CREATE TABLE IF NOT EXISTS owner_reports (
+    id INTEGER PRIMARY KEY,
+    call_id TEXT NOT NULL REFERENCES calls (id) ON DELETE CASCADE,
+    turn_seq INTEGER,
+    text TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'held' CHECK (status IN ('held', 'filed', 'failed')),
+    issue_number INTEGER,
+    attempts INTEGER NOT NULL DEFAULT 0,
+    error TEXT,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS ix_owner_reports_call ON owner_reports (call_id);
 -- The latest outside temperature per tenant, for priority (app/weather.py).
 CREATE TABLE IF NOT EXISTS weather (
     tenant TEXT PRIMARY KEY,
@@ -261,4 +277,30 @@ CREATE TABLE IF NOT EXISTS call_outcomes (
 CREATE TABLE IF NOT EXISTS callback_checks (
     callback_id INTEGER PRIMARY KEY REFERENCES callbacks (id) ON DELETE CASCADE,
     checked_at TEXT NOT NULL
+);
+
+-- The owner view's search index (app/search.py): one row per thing a person might look for on a
+-- call (the call, its job, its flags, its leads and callbacks, each line said); extra holds words
+-- that should match but are not shown, such as a phone number's bare digits. search_indexed holds
+-- a fingerprint of each call when it was indexed, so only calls that changed are indexed again.
+CREATE VIRTUAL TABLE IF NOT EXISTS search_docs USING fts5(
+    tenant UNINDEXED,
+    call_id UNINDEXED,
+    kind UNINDEXED,
+    anchor UNINDEXED,
+    at UNINDEXED,
+    label UNINDEXED,
+    title,
+    body,
+    extra,
+    tokenize = 'unicode61 remove_diacritics 2',
+    prefix = '2 3'
+);
+CREATE INDEX IF NOT EXISTS ix_flags_call ON flags (call_id);
+CREATE INDEX IF NOT EXISTS ix_leads_call ON leads (call_id);
+CREATE INDEX IF NOT EXISTS ix_callbacks_call ON callbacks (call_id);
+CREATE TABLE IF NOT EXISTS search_indexed (
+    call_id TEXT PRIMARY KEY,
+    tenant TEXT NOT NULL,
+    signature TEXT NOT NULL
 );

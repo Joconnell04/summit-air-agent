@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+{% from "_ui.html" import priority, priority_text, window_text, figure, empty, note_icon, count, go, info with context %}
+{% block title %}Design system{% endblock %}
+{% block body %}
+{% set colors = [
+  ("Surfaces", [("--page", "Page"), ("--surface", "Panel"), ("--sunken", "Sunken"), ("--hover", "Row hover"), ("--selected", "Selected")]),
+  ("Lines and ink", [("--line", "Line"), ("--line-strong", "Control line"), ("--ink", "Ink"), ("--ink-2", "Ink 2"), ("--muted", "Muted"), ("--faint", "Faint")]),
+  ("Revin", [("--ember", "Ember"), ("--ember-action", "Ember action"), ("--ember-ink", "Ember ink"), ("--ember-wash", "Ember wash"), ("--ember-line", "Ember line")]),
+  ("Status, from ServiceTitan", [("--urgent", "Urgent"), ("--urgent-wash", "Urgent wash"), ("--high", "High"), ("--high-wash", "High wash"), ("--done", "Done"), ("--done-wash", "Done wash"), ("--info", "Scheduled"), ("--info-wash", "Scheduled wash"), ("--neutral", "Neutral"), ("--neutral-wash", "Neutral wash")]),
+] %}
+<main class="page">
+  <div class="page-head">
+    <div class="lead">
+      <div class="crumbs">Design system</div>
+      <h1 class="page-title">Owner view design system</h1>
+      <p class="summary">Every token and component the owner view is built from, drawn with the same CSS the pages load. Rules and reasons: docs/design-system.md.</p>
+    </div>
+  </div>
+
+  <section class="panel">
+    <div class="panel-head"><h2>Color</h2><span class="sub">tokens.css</span></div>
+    <div class="panel-body stack" style="gap: var(--s-5);">
+      {% for group, items in colors %}
+      <div>
+        <div class="muted" style="font-size: var(--text-sm); font-weight: var(--semibold); margin-bottom: var(--s-2);">{{ group }}</div>
+        <div class="spec-grid">
+          {% for token, name in items %}
+          <div class="swatch-card"><div class="chip" style="background: var({{ token }}); border-bottom: 1px solid var(--line-soft);"></div><div class="meta"><b>{{ name }}</b><br><code>{{ token }}</code></div></div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <div class="split wide-side">
+    <section class="panel">
+      <div class="panel-head"><h2>Type</h2><span class="sub">Public Sans, one family</span></div>
+      <div class="panel-body spec-type">
+        <code>--text-3xl 32</code><span style="font-size: var(--text-3xl); font-weight: var(--semibold); letter-spacing: var(--tracking-tight); font-variant-numeric: tabular-nums;">21</span>
+        <code>--text-2xl 26</code><span style="font-size: var(--text-2xl); font-weight: var(--semibold); letter-spacing: var(--tracking-tight);">Tuesday, Nov 3</span>
+        <code>--text-xl 20</code><span style="font-size: var(--text-xl); font-weight: var(--semibold);">Owner view</span>
+        <code>--text-lg 16</code><span style="font-size: var(--text-lg);">Values in the Results ledger</span>
+        <code>--text-md 14</code><span>Body copy and table rows. Safety lines given first.</span>
+        <code>--text-sm 13</code><span style="font-size: var(--text-sm);">Controls, captions, notes in a call</span>
+        <code>--text-xs 12</code><span style="font-size: var(--text-xs); color: var(--muted);">Tags, table headings, hour labels</span>
+        <code>.num</code><span class="num">4:30 PM  11:15 AM  (718) 555-0156  1,104</span>
+      </div>
+    </section>
+    <section class="panel">
+      <div class="panel-head"><h2>Space, shape, size</h2></div>
+      <div class="panel-body stack" style="gap: var(--s-3);">
+        <div class="spec-row">{% for n, px in [(1, 4), (2, 8), (3, 12), (4, 16), (5, 20), (6, 24), (8, 32)] %}<span style="display: inline-flex; flex-direction: column; align-items: center; gap: 4px;"><span style="width: {{ px }}px; height: {{ px }}px; background: var(--info-line); border-radius: 2px;"></span><code>s-{{ n }}</code></span>{% endfor %}</div>
+        <div class="spec-row"><span class="tag">r-sm 4</span><span class="btn">r-md 6</span><span class="panel" style="padding: var(--s-2) var(--s-3); font-size: var(--text-sm);">r-lg 8</span></div>
+        <div class="spec-row muted" style="font-size: var(--text-sm);"><span>Controls 32 px</span><span>Tags 22 px</span><span>Rows 44 px</span><span>Header 56 px</span></div>
+      </div>
+    </section>
+  </div>
+
+  <section class="panel">
+    <div class="panel-head"><h2>Controls</h2><span class="sub">one height in a row</span></div>
+    <div class="panel-body stack" style="gap: var(--s-4);">
+      <div class="spec-row"><button class="btn primary" type="button">Send to Revin</button><button class="btn" type="button">Back to today</button><button class="btn quiet" type="button">This was wrong</button><button class="btn icon" type="button" aria-label="Next"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></button><span class="btn" aria-disabled="true">Later</span></div>
+      <div class="filters">
+        <button type="button" class="toggle" aria-pressed="true" style="--sw: var(--urgent)"><span class="swatch"></span>Needs a person {{ count(5) }}</button>
+        <button type="button" class="toggle" aria-pressed="false" style="--sw: var(--info)"><span class="swatch"></span>Jobs booked {{ count(9) }}</button>
+        <span class="rule"></span>
+        <div class="seg" role="group"><button type="button" aria-pressed="true">7 AM to 9 PM</button><button type="button" aria-pressed="false">Whole day</button></div>
+        <select class="select"><option>All call types</option></select>
+      </div>
+      <div class="spec-row">
+        <form class="search" role="search" onsubmit="return false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><label class="sr-only" for="spec-q">Search calls</label><input id="spec-q" type="search" placeholder="Search name, phone, address, job"></form>
+        <details class="more"><summary><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>Show 4 resolved</summary></details>
+        <span class="tray-tabs" style="border: 0; padding: 0;"><button type="button" role="tab" aria-selected="true">Callbacks{{ count(6, true) }}</button><button type="button" role="tab" aria-selected="false">Leads{{ count(3) }}</button></span>
+        <span>No heat<span class="tip-i" data-tip="Longer detail waits in a tooltip, so the row stays one line." aria-label="Why: longer detail waits in a tooltip">{{ info() }}</span></span>
+      </div>
+    </div>
+  </section>
+
+  <div class="split wide-side">
+    <section class="panel">
+      <div class="panel-head"><h2>Tags</h2><span class="sub">the word names the state; color backs it up</span></div>
+      <div class="panel-body stack" style="gap: var(--s-3);">
+        <div class="tags">{{ priority("Urgent") }}{{ priority("High") }}{{ priority("Normal") }}</div>
+        <div class="tags"><span class="tag done">Done</span><span class="tag done">Booked</span><span class="tag urgent">Late</span><span class="tag high">Needs a person</span></div>
+        <div class="tags"><span class="tag outline">Moved earlier</span><span class="tag outline">Safety override</span><span class="tag outline">Held here</span><span class="tag outline">Placed by us</span></div>
+        <div class="tags">{{ count(4) }}{{ count(2, true) }}<span class="sub faint" style="font-size: var(--text-sm);">counts sit apart from their labels</span></div>
+      </div>
+    </section>
+    <section class="panel">
+      <div class="panel-head"><h2>Status line</h2></div>
+      <div class="panel-body stack" style="gap: var(--s-3);">
+        <span class="status ok"><span class="dot"></span>Answering calls<span class="faint">, last one 5:15 PM</span></span>
+        <span class="status down"><span class="dot"></span>Not answering since 4:12 PM</span>
+        <span class="status"><span class="dot"></span>Last call 5:15 PM</span>
+      </div>
+    </section>
+  </div>
+
+  <section class="panel">
+    <div class="panel-head"><h2>Figures</h2><span class="sub">numbers on a ruled line, never cards</span></div>
+    <div class="panel-body">
+      <div class="figures">{{ figure("Need a person", 4, "calls, 5 items open, 2 urgent", "#", true, true) }}{{ figure("Calls answered", 21, "5 after hours") }}{{ figure("Jobs booked", 10, "89% booking rate: 8 of 9 who wanted a visit") }}{{ figure("Callbacks done", "4 of 6", "2 late", none, false, true) }}{{ figure("Booked and kept", "93%", "jobs not cancelled, last 30 days") }}</div>
+    </div>
+  </section>
+
+  <section class="panel board">
+    <div class="panel-head"><h2>Board marks</h2><span class="sub">a flag, a dot, a window, now</span></div>
+    <div class="board-grid" style="min-width: 0;">
+      <div class="board-row">
+        <div class="head"><span class="name"><span class="swatch" style="--sw: var(--urgent)"></span>Needs a person</span><span class="sub">labelled</span></div>
+        <div class="track" style="min-height: 52px;">
+          <div class="mark urgent" style="left: 4%"><a href="#"><span class="dot"></span>Gas smell</a></div>
+          <div class="mark high" style="left: 24%"><a href="#"><span class="dot"></span>Late callback</a></div>
+          <div class="mark normal" style="left: 46%"><a href="#"><span class="dot"></span>Billing question</a></div>
+          <div class="mark urgent handled" style="left: 70%"><a href="#"><span class="dot"></span>Resolved</a></div>
+          <span class="now" style="left: 92%"></span>
+        </div>
+      </div>
+      <div class="board-row">
+        <div class="head"><span class="name"><span class="swatch" style="--sw: var(--info)"></span>Dots</span><span class="sub">jobs, other calls</span></div>
+        <div class="track" style="min-height: 44px;">
+          {% for x in [6, 12, 30, 41] %}<div class="mark booked" style="left: {{ x }}%"><a class="dot-only" href="#"><span class="dot"></span></a></div>{% endfor %}
+          {% for x in [54, 63, 77] %}<div class="mark other" style="left: {{ x }}%"><a class="dot-only" href="#"><span class="dot"></span></a></div>{% endfor %}
+        </div>
+      </div>
+      <div class="board-row">
+        <div class="head"><span class="name">Windows</span><span class="sub">past, coming, empty</span></div>
+        <div class="track" style="min-height: 60px;">
+          <div class="window past" style="left: 0; width: 30%;"><span class="w-name">8 to 12</span><span class="w-jobs">1 job, <b>1 urgent</b></span></div>
+          <div class="window" style="left: calc(30% + 4px); width: calc(36% - 4px);"><span class="w-name">4 to 8</span><span class="w-jobs">3 jobs</span></div>
+          <div class="window empty" style="left: calc(66% + 4px); width: calc(34% - 4px);"><span class="w-name">After hours</span><span class="w-jobs">None</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="split wide-side">
+    <section class="panel">
+      <div class="panel-head"><h2>Table</h2></div>
+      <table class="table">
+        <thead><tr><th>Time</th><th>Priority</th><th>What</th><th><span class="sr-only">Open</span></th></tr></thead>
+        <tbody>
+          <tr class="urgent-open" data-href="#"><td class="time">4:30 PM</td><td class="fit">{{ priority("Urgent") }}</td><td><div class="what"><a href="#">CO alarm</a></div><div class="why small">An open urgent row is washed red.</div></td><td class="go">{{ go() }}</td></tr>
+          <tr data-href="#"><td class="time">5:18 PM</td><td class="fit">{{ priority("High") }}</td><td><div class="what"><a href="#">Late callback</a></div><div class="why small">The whole row opens the call; the chevron says so.</div></td><td class="go">{{ go() }}</td></tr>
+          <tr class="closed" data-href="#"><td class="time">7:42 AM</td><td class="fit">{{ priority_text("Normal") }}</td><td><div class="what"><a href="#">Resolved</a></div><div class="why small">Resolved rows go faint. Normal priority is plain text.</div></td><td class="go">{{ go() }}</td></tr>
+        </tbody>
+      </table>
+    </section>
+    <section class="panel">
+      <div class="panel-head"><h2>Key-value list</h2></div>
+      <div class="panel-body"><dl class="kv"><dt>Job type</dt><dd>Safety check</dd><dt>Arrival window</dt><dd>{{ window_text({"day": "today", "label": "after hours"}) }}</dd><dt>Priority</dt><dd>{{ priority("Urgent") }}</dd></dl></div>
+    </section>
+  </div>
+
+  <div class="split wide-side">
+    <section class="panel conv-panel tech">
+      <div class="panel-head"><h2>Conversation</h2><span class="sub">turns down the rail, what the agent did branching off it; technical details on</span><div class="end"><button type="button" class="toggle" aria-pressed="true">Technical details</button></div></div>
+      <ol class="conv">
+        <li class="turn caller"><span class="at">0:06</span><span class="rail" aria-hidden="true"></span><span class="speaker">Caller</span><span class="text">The carbon monoxide alarm went off earlier.</span></li>
+        <li class="step warn"><span class="at"></span><span class="rail" aria-hidden="true"></span><div class="note">{{ note_icon("warn") }}<span class="say">Heard a carbon monoxide alarm. Booking is locked until the safety lines are said.</span></div></li>
+        <li class="turn agent"><span class="at">0:15</span><span class="rail" aria-hidden="true"></span><span class="speaker">Agent</span><span class="text">Please get everyone out of the house now.</span></li>
+        <li class="step ok"><span class="at"></span><span class="rail" aria-hidden="true"></span><div class="note">{{ note_icon("ok") }}<span class="say">Looked for openings: Safety check.</span><span class="tool tech-only">find_slots</span></div><div class="tech-block tech-only">find_slots ok  8 ms
+{"job_type": "safety_check"}</div></li>
+        <li class="step hold"><span class="at"></span><span class="rail" aria-hidden="true"></span><div class="note">{{ note_icon("hold") }}<span class="say">Held the booking until the address and phone were read back.</span></div></li>
+      </ol>
+    </section>
+    <div class="stack">
+      <form class="report" onsubmit="return false">
+        <div class="report-head"><h2>Something wrong on this call?</h2><span class="hint">Goes to Revin with the call.</span></div>
+        <div class="report-fields" style="grid-template-columns: minmax(0, 1fr) auto;"><label class="sr-only" for="spec-report">What should have happened</label><textarea id="spec-report" rows="1" placeholder="What should have happened?"></textarea><button class="btn primary" type="button">Send to Revin</button></div>
+      </form>
+      <section class="panel compact"><div class="panel-head"><h2>Compact panel</h2></div><div class="panel-body"><p>A few lines in a side panel: no ruled head.</p></div></section>
+      <section class="panel">{{ empty("Nothing needs a person right now.") }}</section>
+    </div>
+  </div>
+</main>
+{% endblock %}

@@ -1,75 +1,143 @@
 {% extends "base.html" %}
-{% set call = trace.call %}
-{% block title %}{{ tenant }} · call {{ call.id }}{% endblock %}
-{% block head %}
-<style>
-main { max-width: 980px; }
-.meta { display: flex; gap: 6px; flex-wrap: wrap; padding: 10px 14px; }
-.who { color: var(--muted); width: 64px; }
-.event td { vertical-align: top; padding-top: 8px; padding-bottom: 8px; height: auto; }
-.event.agent .text { color: var(--muted); }
-.tool { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: var(--small); }
-.args { color: var(--faint); font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: var(--small); word-break: break-word; margin-top: 3px; }
-</style>
-{% endblock %}
+{% from "_ui.html" import priority, window_text, note_icon, empty, q with context %}
+{% set p = page %}
+{% set title = p.name or (p.address.street if p.address else none) or call.caller_id %}
+{% block title %}{{ tenant }}: {{ title }}, {{ clock(p.started) }}{% endblock %}
 {% block body %}
-<header class="bar">
-  <a class="btn" href="/owner?day={{ day }}">Back</a>
-  <span class="name">Call {{ call.id }}</span>
-  <span class="muted num">{{ call.caller_id }}</span>
-  <span class="spacer"></span>
-  <span class="faint num">{{ clock(call.started_at) }}{% if call.ended_at %} to {{ clock(call.ended_at) }}{% endif %}</span>
-</header>
-<main>
-  <section class="panel">
-    <div class="meta">
-      <span class="chip">{{ call.direction | capitalize }}</span>
-      <span class="chip">{{ (call.outcome or "in progress") | replace("_", " ") | capitalize }}</span>
-      {% if call.after_hours %}<span class="chip">After hours</span>{% endif %}
-      {% if call.safety_state not in ("none", "cleared") %}<span class="chip urgent">Safety: {{ call.safety_kind or "check" }}</span>{% endif %}
-      {% if call.commercial %}<span class="chip">Commercial</span>{% endif %}
-      {% if call.linked_call_id %}<a class="chip accent" href="/owner/calls/{{ call.linked_call_id }}">Linked call</a>{% endif %}
+<main class="page">
+  <div class="call-head">
+    <div class="lead" style="display: flex; flex-direction: column; gap: var(--s-2); min-width: 0;">
+      <div class="crumbs">
+        <a href="/owner{{ q(slug, p.day) }}">{{ p.day.strftime("%a %b %-d") }}</a><span>/</span>
+        <a href="/owner/calls{{ q(slug, p.day) }}">Calls</a><span>/</span><span class="num">{{ clock(p.started) }}</span>
+      </div>
+      <div class="who">
+        <h1 class="page-title">{{ title }}</h1>
+        {# One tag: where the call stands now. Everything else is a plain fact on the line below. #}
+        {% if p.open_flags %}<span class="tag {{ 'urgent' if p.booking and p.booking.priority == 'Urgent' or p.safety_label else 'high' }}">Needs a person</span>
+        {% elif p.booking %}<span class="tag done">Booked</span>
+        {% elif call.direction == "outbound" %}<span class="tag outline">Placed by us</span>{% endif %}
+      </div>
+      <div class="facts">
+        <span class="num">{{ clock(p.started) }}{% if p.seconds is not none %}, {{ p.seconds // 60 }} min {{ p.seconds % 60 }} s{% endif %}</span>
+        <span class="num">{{ call.caller_id }}</span>
+        {% if p.safety_label %}<span class="alarm">{{ note_icon("warn") }}Safety call: {{ p.safety_label | lower }}</span>{% else %}<span>{{ p.type_label }}</span>{% endif %}
+        {% if p.booking and p.booking.fsm_job_id %}<span class="num">Job {{ p.booking.fsm_job_id }}</span>{% endif %}
+        {% if call.direction == "outbound" and (p.open_flags or p.booking) %}<span>Placed by us</span>{% endif %}
+        <span>Call {{ p.position }} of {{ p.of }} that day</span>
+      </div>
     </div>
-  </section>
+    <nav class="step-nav" aria-label="Other calls that day">
+      {% if p.previous %}<a class="btn" href="/owner/calls/{{ p.previous.id }}" title="{{ p.previous.type_label }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>Earlier <span class="t">{{ clock(p.previous.at) }}</span></a>{% else %}<span class="btn" aria-disabled="true">Earlier</span>{% endif %}
+      {% if p.next %}<a class="btn" href="/owner/calls/{{ p.next.id }}" title="{{ p.next.type_label }}">Later <span class="t">{{ clock(p.next.at) }}</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg></a>{% else %}<span class="btn" aria-disabled="true">Later</span>{% endif %}
+    </nav>
+  </div>
 
-  {% if trace.flags %}
-  <section class="panel">
-    <h2>Flags</h2>
-    <table><tbody>
-    {% for f in trace.flags %}
-      <tr><td class="tight num muted">{{ clock(f.created_at) }}</td><td class="tight">{{ f.kind | replace("_", " ") | capitalize }}</td><td class="wrap">{{ f.reason }}</td><td class="tight right"><span class="chip{% if f.priority == 'Urgent' %} urgent{% elif f.priority == 'High' %} high{% endif %}">{{ f.priority }}</span></td></tr>
-    {% endfor %}
-    </tbody></table>
-  </section>
-  {% endif %}
+  <div class="split wide-side">
+    <div class="stack">
+      <section class="panel conv-panel" data-conv>
+        <div class="panel-head">
+          <h2>Conversation</h2>
+          <div class="end">
+            <a class="btn quiet tech-only" href="/owner/calls/{{ call.id }}/log" download><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>Download log</a>
+            <button type="button" class="toggle" aria-pressed="false" data-tech title="Show what the agent sent and got back at each step">Technical details</button>
+          </div>
+        </div>
+        {% if thread %}
+        <ol class="conv">
+          {% for item in thread %}
+            {% if item.kind == "turn" %}
+            <li class="turn {{ item.speaker }}" id="turn-{{ item.seq }}">
+              <span class="at">{{ item.at }}</span>
+              <span class="rail" aria-hidden="true"></span>
+              <span class="speaker">{{ "Agent" if item.speaker == "agent" else "Caller" }}</span>
+              <span class="text">{{ item.text }}{% if item.speaker == "agent" %} <button type="button" class="btn quiet report-line" data-report-turn="{{ item.seq }}" title="Tell Revin this line was wrong">This was wrong</button>{% endif %}</span>
+            </li>
+            {% else %}
+            <li class="step {{ item.tone }}">
+              <span class="at"></span>
+              <span class="rail" aria-hidden="true"></span>
+              <div class="note">{{ note_icon(item.tone) }}<span class="say">{{ item.text }}</span>{% if item.tech %}<span class="tool tech-only">{{ item.tech.tool }}</span>{% endif %}</div>
+              {% if item.tech %}
+              <div class="tech-block tech-only">{{ item.tech.tool }} {% if item.tech.ok %}ok{% else %}refused {{ item.tech.refused }}{% endif %}{% if item.tech.gate %} gate={{ item.tech.gate }}{% endif %}  {{ item.tech.ms | round | int }} ms
+{{ item.tech.args | tojson }}{% if item.tech.say %}
+say: {{ item.tech.say }}{% endif %}{% if item.tech.error %}
+error: {{ item.tech.error }}{% endif %}</div>
+              {% endif %}
+            </li>
+            {% endif %}
+          {% endfor %}
+        </ol>
+        {% else %}{{ empty("Nothing was said on this call.") }}{% endif %}
+        <div class="panel-foot">The recording isn't kept; this is the transcript the agent heard and said.</div>
+      </section>
 
-  <section class="panel">
-    <h2>Timeline <span class="count">{{ trace.events | length }}</span></h2>
-    <table><tbody>
-    {% for e in trace.events %}
-      {% if e.type == "turn" %}
-      <tr class="event {{ e.speaker }}">
-        <td class="tight num faint">{{ clock(e.at) }}</td>
-        <td class="tight who">{{ e.speaker | capitalize }}</td>
-        <td class="wrap text">{{ e.text }}{% if e.safety_action %} <span class="chip urgent">Safety {{ e.safety_action | replace("_", " ") }}</span>{% endif %}</td>
-      </tr>
-      {% else %}
-      <tr class="event">
-        <td class="tight num faint">{{ clock(e.at) }}</td>
-        <td class="tight who">Tool</td>
-        <td class="wrap">
-          <span class="tool">{{ e.tool }}</span>
-          {% if e.ok %}<span class="chip good">ok</span>{% else %}<span class="chip high">{{ e.refused }}</span>{% endif %}
-          {% if e.gate %}<span class="chip accent">{{ e.gate }}</span>{% endif %}
-          <span class="faint num">{{ e.ms | round | int }} ms</span>
-          <div class="args">{{ e.args | tojson }}</div>
-          {% if e.say %}<div class="muted">{{ e.say }}</div>{% endif %}
-          {% if e.error %}<div class="args">{{ e.error }}</div>{% endif %}
-        </td>
-      </tr>
+      <form class="report" id="report" method="post" action="/owner/calls/{{ call.id }}/report">
+        <div class="report-head"><h2>Something wrong on this call?</h2><span class="hint">Goes to Revin with the call, and becomes a test.</span></div>
+        {% if sent %}<p class="muted" role="status">Sent. Revin will fix it and add this call to the tests.</p>{% endif %}
+        <div class="report-fields">
+          <label class="sr-only" for="report-turn">Which line</label>
+          <select id="report-turn" name="turn" class="select">
+            <option value="">The whole call</option>
+            {% for item in thread if item.kind == "turn" %}<option value="{{ item.seq }}">{{ item.at }} {{ "Agent" if item.speaker == "agent" else "Caller" }}: {{ item.text | truncate(48) }}</option>{% endfor %}
+          </select>
+          <label class="sr-only" for="report-text">What should have happened</label>
+          <textarea id="report-text" name="text" rows="1" maxlength="{{ max_chars }}" placeholder="What should have happened?" required></textarea>
+          <button class="btn primary" type="submit">Send to Revin</button>
+        </div>
+        {% if reports %}
+        <ul class="list sent" aria-label="Sent about this call">
+          {% for r in reports | reverse %}
+          <li>
+            <span class="what" style="font-weight: var(--medium);">{{ r.text }}</span>
+            <span class="meta">{{ clock(r.at) }}{% if r.turn_seq %}, about line {{ r.turn_seq }}{% endif %}</span>
+            <span class="end">{% if r.status == "filed" %}<span class="tag done">With Revin, #{{ r.issue_number }}</span>{% elif r.status == "failed" %}<span class="tag high">Retrying</span>{% else %}<span class="tag outline" title="No GitHub token on this server, so the report is kept here">Held here</span>{% endif %}</span>
+          </li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+      </form>
+    </div>
+
+    <aside class="stack">
+      <section class="panel compact">
+        <div class="panel-head"><h2>What happened</h2></div>
+        <div class="panel-body"><p>{{ p.summary }}</p></div>
+      </section>
+
+      {% if p.booking %}
+      <section class="panel compact">
+        <div class="panel-head">
+          <h2>Job booked</h2>
+          <span class="end source"><img src="/owner/static/servicetitan-logo.svg" alt="ServiceTitan" width="93" height="16">{% if p.booking.fsm_job_id %}Job {{ p.booking.fsm_job_id }}{% else %}not sent yet{% endif %}</span>
+        </div>
+        <div class="panel-body">
+          <dl class="kv">
+            <dt>Job type</dt><dd>{{ p.job_type }}</dd>
+            <dt>Arrival window</dt><dd>{{ window_text(p.job) }}</dd>
+            <dt>Priority</dt><dd>{{ priority(p.booking.priority) }}</dd>
+            {% if p.booking.priority_reasons %}<dt>Why</dt><dd>{{ p.booking.priority_reasons[:1] | upper }}{{ p.booking.priority_reasons[1:] }}</dd>{% endif %}
+            <dt>Status</dt><dd>{% if p.booking.status == "booked" %}Scheduled{% elif p.booking.status == "queued" %}Waiting on ServiceTitan{% else %}{{ p.booking.status | capitalize }}{% endif %}{% if p.booking.safety_override %}, safety override logged{% endif %}</dd>
+          </dl>
+        </div>
+      </section>
       {% endif %}
-    {% endfor %}
-    </tbody></table>
-  </section>
+
+      {% if p.name or p.address %}
+      <section class="panel compact">
+        <div class="panel-head"><h2>Customer</h2></div>
+        <div class="panel-body">
+          <dl class="kv">
+            {% if p.name %}<dt>Name</dt><dd>{{ p.name }}</dd>{% endif %}
+            <dt>Phone</dt><dd class="num">{{ call.caller_id }}</dd>
+            {% if p.address %}<dt>Service location</dt><dd>{{ p.address.street }}{% if p.address.unit %} {{ p.address.unit }}{% endif %}, {{ p.address.city }} {{ p.address.zip }}</dd>{% endif %}
+            {% if p.details.approver %}<dt>Approves work</dt><dd>{{ p.details.approver }}</dd>{% endif %}
+            {% if p.details.system_type %}<dt>System</dt><dd>{{ p.details.system_type[:1] | upper }}{{ p.details.system_type[1:] }}</dd>{% endif %}
+          </dl>
+        </div>
+      </section>
+      {% endif %}
+    </aside>
+  </div>
 </main>
 {% endblock %}

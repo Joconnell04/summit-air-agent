@@ -20,14 +20,14 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from . import db, jobs, lifecycle, logs, outbound, owner_view, records, trace, weather
+from . import db, jobs, lifecycle, logs, outbound, owner_view, records, reports, trace, weather
 from .envelope import Refused, Result
 from .fsm import FsmUnavailable, SlotCache, make_adapter
 from .fsm.base import fsm_timings
 from .mail import Mailer
 from .priority import SideModel
 from .schemas import EndIn, HeartbeatIn, OutboundClaimIn, OutboundDoneIn, StartIn, TurnIn
-from .settings import Settings
+from .settings import WORKER_STALE_SECONDS, Settings
 from .tenant import Tenants
 from .tools import TOOLS, Ctx
 
@@ -37,7 +37,6 @@ log = logging.getLogger("app")
 SAY_RETRY = "Sorry, give me just a moment."
 SAY_FSM_DOWN = "I can't pull that up right now."
 SAY_BAD_INPUT = "Let me check that again."
-WORKER_STALE_SECONDS = 120
 
 
 class Services:
@@ -52,6 +51,14 @@ class Services:
         weather_clients: dict[str, httpx.Client] | None = None,
     ):
         self.settings = settings
+        if clock is None and settings.fixed_now:
+            # Only for development: a frozen clock would stop bookings, jobs and purges moving.
+            if settings.environment != "development":
+                raise ValueError("FIXED_NOW is for development only; unset it")
+            fixed = datetime.fromisoformat(settings.fixed_now)
+            if fixed.tzinfo is None:
+                raise ValueError("FIXED_NOW needs a UTC offset, such as 2026-11-03T17:20:00-05:00")
+            clock = lambda: fixed
         self.clock = clock or (lambda: datetime.now(UTC))
         db.init(settings.db_path)
         self.tenants = Tenants.load(settings.tenants_dir, settings.default_tenant)
@@ -59,6 +66,7 @@ class Services:
         self.fsm = {t.slug: make_adapter(t, settings, clients.get(t.slug)) for t in self.tenants}
         self.caches = {t.slug: SlotCache(settings.slot_cache_seconds) for t in self.tenants}
         self.side_model = side_model
+        self.report_poster = reports.github_poster(settings)
         self.weather = weather_clients or (
             {t.slug: weather.client(t.weather) for t in self.tenants} if settings.weather else {}
         )

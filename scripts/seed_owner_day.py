@@ -62,11 +62,14 @@ class Voice:
         return call_id
 
     def caller(self, call_id: str, text: str) -> dict:
+        # A few seconds a turn, so the call page reads as a conversation in time.
+        self.clock.now += timedelta(seconds=6)
         return self.client.post(
             f"/calls/{call_id}/turn", json={"speaker": "caller", "text": text}
         ).json()
 
     def agent(self, call_id: str, text: str) -> None:
+        self.clock.now += timedelta(seconds=9)
         self.client.post(f"/calls/{call_id}/turn", json={"speaker": "agent", "text": text})
 
     def tool(self, name: str, call_id: str, **args) -> dict:
@@ -439,6 +442,9 @@ def main() -> None:
     voice = Voice(app, clock, mock_client)
     earlier_week(voice, clock, day)
     today(voice, clock, day, gas, co)
+    # make owner-demo serves the page as if it were this moment, so "now" sits on the board.
+    evening = datetime.combine(day, time(17, 20), NEW_YORK)
+    (folder / "now").write_text(evening.isoformat())
     print(f"seeded {day} into {folder}")
 
 

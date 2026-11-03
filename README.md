@@ -2,7 +2,7 @@
 
 An AI phone agent that answers inbound calls for Summit Air, a 40-tech residential HVAC company in NYC. It works out what's wrong, checks whether the caller is residential and a member, collects what a technician needs, flags urgent calls, and books the visit or sets next steps.
 
-Status: build phase. The mock ServiceTitan and the tool server are built; the voice layers, evals and owner view follow.
+Status: build phase. The mock ServiceTitan, the tool server, both voice layers, the eval suite and the owner view are built; the owner view's design system is docs/design-system.md.
 
 ## Run
 

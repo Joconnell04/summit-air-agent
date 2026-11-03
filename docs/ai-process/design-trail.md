@@ -49,3 +49,8 @@ How the design was reached, in order, so a reader can follow each choice back to
 | Owner view redesign started | Jackson is redesigning it in a separate session: the first version was cluttered, generic and read like a debugging log, with the wrong level of detail for an owner | app/README.md |
 | Mock matched to ServiceTitan's real API; callbacks done by call tags | Field names, statuses, capacity, telecom calls and errors follow ServiceTitan's published specs; a callback is done only when a call back is tagged resolved; company rules moved out of the mock | pull request 46, DECISIONS.md 010, exploration 006 |
 | Callback opening asks for the caller by name | A yes to the name confirms the person, so a handled system callback can count as resolved; the plain line stays when no single name is on file | DECISIONS.md 013, #49 |
+| Owner view stories | Rebuilt for a non-technical owner: ten stories on three pages (Today, Call, Results), technical detail behind a toggle | DECISIONS.md 014, #40 |
+| Owner view design direction | Day timeline mixed with the dispatch desk tables; two versions drawn to choose between | DECISIONS.md 015, #45 |
+| Owner view: dispatch board | Version A chosen; decluttered board, no metric cards, filters, Public Sans, a full design system | DECISIONS.md 016, #53 |
+| Owner view markup round | Notes on the built pages: figures for the sentence, row links, one tag per call, the call as a graph, per-step details and a log, header search | DECISIONS.md 017, #53 |
+| Owner view second markup round | Indexed search with suggestions, technical details as a switch, chart-first Results with a custom range, resizable Jobs columns | DECISIONS.md 018, #53 |

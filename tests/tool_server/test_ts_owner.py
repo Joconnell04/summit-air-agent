@@ -131,7 +131,7 @@ def test_bookings_show_window_priority_reasons_and_the_earlier_slot_search(agent
     assert urgent["priority"] == "Urgent"
     assert "an older person or a baby at home" in urgent["reasons"]
     assert "below 55 F inside" in urgent["reasons"]
-    assert urgent["window"] == {"day": "tomorrow", "label": "8 to 12"}
+    assert urgent["window"]["day"] == "tomorrow" and urgent["window"]["label"] == "8 to 12"
     assert urgent["seek_earlier"] is True and urgent["offer"] is None
     assert urgent["address"] == "101 Union St" and urgent["zip"] == "11231"
     assert routine["priority"] == "Normal" and routine["seek_earlier"] is False
@@ -353,16 +353,17 @@ def test_the_page_renders_a_seeded_day(agent, clock):
     out_of_area(agent, 3, "10001")
     agent.client.get(f"/owner?token={TOKEN}")
     html = agent.client.get("/owner").text
+    for text in ("Day board", "Needs attention", "Jobs booked", "booking rate", "Callbacks"):
+        assert text in html, text
+    assert f'href="/owner/calls/{booked}"' in html
+    results = agent.client.get("/owner/results").text
     for text in (
-        "Bookings",
-        "Booking rate",
-        "Callbacks",
-        "Out of area",
+        "Booking rate by call type",
+        "Outside the service area",
         "10001",
         "Court St Offices",
     ):
-        assert text in html, text
-    assert f'href="/owner/calls/{booked}"' in html
+        assert text in results, text
     assert '<meta http-equiv="refresh"' in html, "today refreshes itself"
     assert '<meta http-equiv="refresh"' not in agent.client.get("/owner?day=2026-11-01").text
 
@@ -404,7 +405,8 @@ def test_an_after_hours_window_reads_as_after_hours(agent, clock):
     agent.turn(call, "We're outside. Please just book a check.")
     tonight = {"date": "2026-11-02", "window": "after_hours"}
     assert book(agent, call, tonight, job_type="safety_check")["ok"]
-    assert page(agent)["bookings"][0]["window"] == {"day": "today", "label": "after hours"}
+    window = page(agent)["bookings"][0]["window"]
+    assert (window["day"], window["label"], window["id"]) == ("today", "after hours", "after_hours")
 
 
 def test_a_call_the_system_placed_is_typed_by_what_it_was_for(agent, clock):

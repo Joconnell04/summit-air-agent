@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% from "_ui.html" import day_nav, empty, q, count, call_row with context %}
+{% block title %}{{ tenant }}: calls, {{ day.strftime("%b %-d") }}{% endblock %}
+{% block body %}
+{% set needing = calls | selectattr("open_flags") | list %}
+{% set booked = calls | selectattr("booked") | list %}
+{% set away = turned_away %}
+<main class="page">
+  <div class="page-head">
+    <div class="lead">
+      <div class="crumbs"><a href="/owner{{ q(slug, day if not is_today else none) }}">{% if is_today %}Today{% else %}{{ day.strftime("%A") }}{% endif %}</a><span>/</span><span>Calls</span></div>
+      <div style="display: flex; align-items: center; gap: var(--s-4); flex-wrap: wrap;">
+        <h1 class="page-title">Calls, {{ day.strftime("%A %b %-d") }}</h1>
+        {{ day_nav("/owner/calls", slug, day, is_today) }}
+      </div>
+    </div>
+  </div>
+
+  <section class="panel" data-call-list>
+    <div class="panel-head">
+      <div class="seg" role="group" aria-label="Show">
+        <button type="button" aria-pressed="true" data-show="all">All {{ count(calls | length) }}</button>
+        <button type="button" aria-pressed="false" data-show="needs">Needs a person {{ count(needing | length) }}</button>
+        <button type="button" aria-pressed="false" data-show="booked">Booked {{ count(booked | length) }}</button>
+        <button type="button" aria-pressed="false" data-show="away">Turned away {{ count(away | length) }}</button>
+        <button type="button" aria-pressed="false" data-show="placed">Placed by us {{ count(calls | selectattr("direction", "equalto", "outbound") | list | length) }}</button>
+      </div>
+    </div>
+    {% if calls %}
+    <div class="table-wrap">
+    <table class="table">
+      <thead><tr><th>Started</th><th>Caller</th><th>About</th><th>What happened</th><th class="right">Length</th><th></th><th><span class="sr-only">Open</span></th></tr></thead>
+      <tbody>
+      {% for c in calls %}{{ call_row(c) }}{% endfor %}
+      </tbody>
+    </table>
+    </div>
+    <div data-none hidden>{{ empty("No calls like that today.") }}</div>
+    {% else %}{{ empty("No calls on this day.") }}{% endif %}
+  </section>
+</main>
+{% endblock %}
