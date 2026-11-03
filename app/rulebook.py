@@ -145,7 +145,7 @@ PROMPT_STAGES = {
     "End": "closing",
 }
 # agent.yaml sections that hold no rule an owner would read: numbers, connections, plumbing.
-NOT_SHOWN = {"phone_numbers", "fsm", "weather", "owner_rules"}
+NOT_SHOWN = {"extends", "phone_numbers", "fsm", "weather", "owner_rules"}
 NOT_SHOWN_PROMPTS = {"tool-use.md"}
 
 

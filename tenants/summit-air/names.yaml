@@ -1,0 +1,131 @@
+# Local names the voice says the way New Yorkers do, and the ears listen for
+# (docs/explorations/011-local-pronunciation.md). Only names with a pronunciation source are listed;
+# add one when a real call finds a miss. voice/names.py reads this file for every voice stack.
+#
+# Each name has:
+#   written   how it is written; Deepgram is told to listen for this spelling (a keyterm)
+#   match     the text the voice replaces with `ipa`. Case-sensitive on sonic-3: a lowercase key also
+#             catches a capital first letter ("dekalb" catches "Dekalb", not "DeKalb"), so a mixed-case
+#             spelling needs its own key. The server's stored text never changes; only the voice
+#             hears the replacement.
+#   ipa       Cartesia's IPA form, one sound per bar, from its 41-symbol Sonic 3 English set
+#   says      the same in plain respelling, for people
+#   heard_as  other readings callers use; the keyterm makes the ears write `written` for any of them
+#   in_area   inside Summit Air's ZIPs (config.yaml), by neighborhood; ASSUMED match
+#   sources   where the pronunciation comes from (links in exploration 011, section 6)
+
+# Set by `uv run --env-file .env python -m voice.names push`: the Cartesia dictionary built from
+# this list. Re-run it after editing the list.
+cartesia_dictionary_id: pdict_Rb3j4p2Wafrdx2emgKq8oM
+
+names:
+  - written: Houston Street
+    match: [Houston Street, Houston St]
+    ipa: <<ˈ|h|aʊ|s|t|ə|n>> <<ˈ|s|t|ɹ|i|t>>
+    says: HOW-stun Street
+    in_area: false
+    sources: [WNYC, Thrillist, Wikipedia]
+    # The key is the street, never "Houston" alone, so a caller from Houston, Texas is left alone.
+
+  - written: Kosciuszko Street
+    match: [kosciuszko]
+    ipa: <<ˌ|k|ɑ|s|i|ˈ|ɑ|s|k|oʊ>>
+    says: koss-ee-OSS-koh
+    heard_as: [kuh-SHOOS-koh, kah-skee-OOS-koh]
+    in_area: true
+    sources: [Brownstoner 2015 ("most common"), Thrillist 2014, WNYC, Wikipedia]
+
+  - written: DeKalb Avenue
+    match: [dekalb, DeKalb]
+    ipa: <<d|i|ˈ|k|æ|l|b>>
+    says: dee-KALB
+    heard_as: [DEE-kalb]
+    in_area: true
+    sources: [Wikipedia, Thrillist, Brownstoner]
+
+  - written: Schermerhorn Street
+    match: [schermerhorn]
+    ipa: <<ˈ|s|k|ɝ|m|ɝ|ˌ|h|ɔ|ɹ|n>>
+    says: SKER-mer-horn
+    heard_as: [SKIM-er-horn]
+    in_area: true
+    sources: [WNYC, Thrillist, Brownstoner]
+
+  - written: Gowanus
+    match: [gowanus]
+    ipa: <<ɡ|ə|ˈ|w|ɑ|n|ə|s>>
+    says: guh-WAH-nus
+    in_area: true
+    sources: [WNYC, Wikipedia]
+
+  - written: Cortelyou Road
+    match: [cortelyou]
+    ipa: <<k|ɔ|ɹ|ˈ|t|ɛ|l|j|u>>
+    says: cor-TEL-you
+    in_area: true
+    sources: [Forgotten NY, Thrillist]
+
+  - written: Van Wyck Expressway
+    match: [Van Wyck]
+    ipa: <<ˌ|v|æ|n>> <<ˈ|w|ɪ|k>>
+    says: van WICK
+    heard_as: [van WYKE]
+    in_area: true
+    sources: [WNYC, Thrillist, Wikipedia]
+
+  - written: Wyckoff Avenue
+    match: [wyckoff]
+    ipa: <<ˈ|w|aɪ|k|ɔ|f>>
+    says: WHY-kawf
+    in_area: true
+    sources: [Thrillist]
+
+  - written: Nostrand Avenue
+    match: [nostrand]
+    ipa: <<ˈ|n|oʊ|s|t|ɹ|æ|n|d>>
+    says: NO-strand
+    in_area: true
+    sources: [Thrillist]
+
+  - written: New Utrecht Avenue
+    match: [New Utrecht]
+    ipa: <<ˈ|n|u>> <<ˈ|j|u|t|ɹ|ɛ|k>>
+    says: new YOO-trek
+    in_area: true
+    sources: [Brownstoner, Thrillist]
+
+  - written: Conselyea Street
+    match: [conselyea]
+    ipa: <<k|ɑ|n|ˈ|s|ɛ|l|j|ə>>
+    says: con-SEHL-yuh
+    in_area: true
+    sources: [Thrillist, Brownstoner]
+
+  - written: Joralemon Street
+    match: [joralemon]
+    ipa: <<dʒ|ə|ˈ|ɹ|æ|l|ə|m|ə|n>>
+    says: juh-RAL-uh-mun
+    in_area: true
+    sources: [WNYC, Thrillist, Brownstoner]
+
+  - written: Boerum Hill
+    match: [boerum]
+    ipa: <<ˈ|b|ɔ|ɹ|ə|m>>
+    says: BORE-um
+    in_area: true
+    sources: [WNYC]
+
+  - written: Todt Hill
+    match: [todt]
+    ipa: <<ˈ|t|oʊ|t>>
+    says: TOHT
+    heard_as: [TOAD]
+    in_area: true
+    sources: [Wikipedia, WNYC, Secret NYC 2025]
+
+  - written: Arrochar
+    match: [arrochar]
+    ipa: <<ə|ˈ|ɹ|oʊ|ʃ|ɝ>>
+    says: uh-ROH-sher
+    in_area: false
+    sources: [Wikipedia (one source; locals unchecked)]

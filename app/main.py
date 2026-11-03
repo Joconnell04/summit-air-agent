@@ -73,7 +73,7 @@ class Services:
             clock = lambda: fixed
         self.clock = clock or (lambda: datetime.now(UTC))
         db.init(settings.db_path)
-        self.tenants = Tenants.load(settings.tenants_dir, settings.default_tenant)
+        self.tenants = Tenants.load(settings.tenants_dir, settings.default_tenant, settings.trades_dir)
         clients = fsm_clients or {}
         self.fsm = {t.slug: make_adapter(t, settings, clients.get(t.slug)) for t in self.tenants}
         self.caches = {t.slug: SlotCache(settings.slot_cache_seconds) for t in self.tenants}

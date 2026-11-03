@@ -1,0 +1,520 @@
+after_hours:
+  at_risk_rules:
+  - vulnerable_person
+  - medical_equipment
+  cooling_job_types:
+  - no_cooling
+  cooling_morning_below_f: 80
+  cooling_tonight_above_f: 85
+  heating_job_types:
+  - no_heat
+  morning_above_f: 55
+  on_call_confirms_within_minutes: 20
+  tonight_below_f: 50
+callbacks:
+  dropped_safety_minutes: 10
+  fsm_down_minutes: 60
+  max_attempts: 1
+  outbound_hours:
+  - 08:00
+  - '21:00'
+  owner_after_hours: on_call
+  owner_in_hours: office
+commercial:
+  not:
+  - business partner
+  - business trip
+  - business card
+  - home office
+  - my own business hours
+  owned:
+  - restaurant
+  - bakery
+  - deli
+  - cafe
+  - bar
+  - store
+  - shop
+  - salon
+  - gym
+  - clinic
+  - daycare
+  - warehouse
+  - business
+  phrases:
+  - property manager
+  - property management
+  - office building
+  - commercial property
+  - rooftop unit
+  - it's a business
+  - it is a business
+  - it's commercial
+  - not a home
+  - not my home
+  - three units
+  - four units
+  - five units
+  - six units
+  - 3 units
+  - 4 units
+  - three family
+  - four family
+  - 3 family
+  - 4 family
+  - three apartments
+  - four apartments
+  - apartment building
+  run:
+  - restaurant
+  - bakery
+  - deli
+  - cafe
+  - bar
+  - store
+  - shop
+  - salon
+  - gym
+  - clinic
+  - daycare
+  - warehouse
+  - business
+  - company
+  - school
+  - church
+  - hotel
+  - office
+  - building
+  - property
+  - properties
+fsm:
+  adapter: servicetitan
+  agent_user_id: 9001
+  base_url: http://127.0.0.1:8101
+  booking_provider_id: 501
+  callback_tags:
+    no_contact: No contact
+    open: Callback open
+    resolved: Callback resolved
+  campaign_id: 301
+  cancel_reason_id: 401
+  lead_call_reason_ids:
+    commercial: 704
+    install: 702
+    membership: 705
+  log_calls_via_debug: true
+lines:
+  anything_else_first: Is there anything else I can help with?
+  callback_after: after {time}
+  callback_before: before {time}
+  callback_between: between {start} and {end}
+  callback_by: by {time}
+  callback_opening: Hi, this is Summit Air calling back for {first_name}. Is that you?
+  callback_opening_unknown: Hi, this is Summit Air calling you back, like we said we would.
+  callback_outside_hours: Our team makes calls between {opens} and {closes}. What time in there works?
+  commercial: Thanks for thinking of us. Unfortunately Summit Air only works on homes, so we're not the
+    right fit for this one.
+  do_not_call: Understood, we won't call you.
+  do_not_call_with_callback: Understood, we won't call you. That means the callback is off, so give us
+    a call any time you need us.
+  earlier_slot_offer: Hi, this is Summit Air calling about your appointment. We've had an opening {day}
+    at {window}, would you like it?
+  flag_stored: I've let our team know, and someone will call you {when}.
+  flag_stored_no_callback: I've let our team know.
+  flag_stored_urgent: I've marked this as urgent and let our on-call team know, so someone's keeping an
+    eye on it. Someone will call you {when}.
+  fsm_unavailable: I can't book that right now, but I've written it all down and someone will call you
+    by {time} to confirm.
+  fsm_unavailable_no_callback: I can't get to that right now, but I've written it all down for the team.
+  lead_stored: Someone from our team will call you {when} to tell you more.
+  limit: I've already got that taken care of on this call, so let me have someone from the team follow
+    up.
+  out_of_area: I'm sorry, that's outside the area we cover, so we're not able to send someone. A local
+    heating company should be able to help.
+  read_back: 'Let me read that back: your home at {address}, and the best number is {phone}. Is that right?'
+  repeated_drops: Looks like we keep getting cut off, the signal might be spotty. Want me to have someone
+    call you back in a few minutes instead?
+  slot_taken: That window just filled up.
+  urgent_priority: I've marked this as one of our most urgent calls, so you get our soonest opening.
+on_call_alerts:
+  email: on-call@summit-air.example
+  max_age_minutes: 120
+  priorities:
+  - Urgent
+  skip_kinds:
+  - seek_earlier
+owner_rules:
+  locked_topics:
+  - gas
+  - carbon monoxide
+  - monoxide
+  - smoke
+  - fumes
+  - co alarm
+  - co detector
+  - sulfur
+  - rotten egg
+phone_numbers:
+- (646) 624-0418
+- (678) 336-6730
+priority:
+  base:
+    estimate: Normal
+    no_cooling: High
+    no_heat: High
+    safety_check: High
+    tune_up: Normal
+  brackets:
+    no_cooling:
+    - id: hot_inside
+      inside_above_f: 85
+      level: Urgent
+      reason: above 85 F inside
+    - id: warm_inside
+      inside_at_least_f: 79
+      level: High
+      reason: 79 F or more inside
+    - id: hot_outside
+      if_unknown: match
+      level: High
+      outside_now_at_least_f: 80
+      reason: 80 F or more outside
+    - id: mild
+      level: Normal
+      reason: cool inside and a mild day
+    no_heat:
+    - id: cold_inside
+      inside_below_f: 55
+      level: Urgent
+      reason: below 55 F inside
+    - id: cool_inside
+      inside_below_f: 65
+      level: High
+      reason: below 65 F inside
+    - id: cold_outside
+      if_unknown: match
+      level: High
+      outside_coldest_below_f: 55
+      reason: cold outside or tonight
+      so the house keeps cooling: null
+    - id: mild
+      level: Normal
+      reason: warm inside and a mild day
+  combine:
+    groups: 2
+    raise_to: Urgent
+    reason: two risk factors at home together
+  rules:
+  - age_at_least: 60
+    id: vulnerable_person
+    job_types:
+    - no_heat
+    - no_cooling
+    phrases:
+    - elderly
+    - senior
+    - seniors
+    - grandmother
+    - grandfather
+    - grandma
+    - grandpa
+    - baby
+    - infant
+    - newborn
+    - months old
+    - weeks old
+    raise_to: Urgent
+    raise_to_when_mild: High
+    reason: an older person or a baby at home
+  - id: medical_equipment
+    job_types:
+    - no_heat
+    - no_cooling
+    phrases:
+    - oxygen
+    - concentrator
+    - cpap
+    - bipap
+    - dialysis
+    - nebulizer
+    - ventilator
+    - hospital bed
+    - medical equipment
+    raise_to: Urgent
+    raise_to_when_mild: High
+    reason: medical equipment at home
+  - id: bedbound
+    job_types:
+    - no_heat
+    - no_cooling
+    phrases:
+    - bedridden
+    - bedbound
+    - bed bound
+    - cant get up
+    - cant walk
+    - hospice
+    - home health aide
+    raise_to: Urgent
+    raise_to_when_mild: High
+    reason: someone at home who can't get up
+  - id: symptoms_now
+    job_types:
+    - no_heat
+    - no_cooling
+    phrases:
+    - shivering
+    - cant stop shaking
+    - dizzy
+    - short of breath
+    - feels faint
+    - feeling faint
+    - heat exhaustion
+    raise_to: Urgent
+    raise_to_when_mild: High
+    reason: someone feeling unwell from the temperature now
+  - id: improvised_heating
+    job_types:
+    - no_heat
+    phrases:
+    - using the oven
+    - oven on
+    - oven open
+    - stove on
+    - kerosene heater
+    - generator inside
+    - grill inside
+    raise_to: Urgent
+    reason: heating with an oven, stove, generator or grill indoors
+  - group: true
+    id: young_child
+    job_types:
+    - no_heat
+    - no_cooling
+    phrases:
+    - toddler
+    - little kids
+    - little ones
+    - preschooler
+    - small children
+    - young kids
+    raise_to: High
+    reason: young children at home
+  - group: true
+    id: parent_no_age
+    job_types:
+    - no_heat
+    - no_cooling
+    phrases:
+    - my mom
+    - my dad
+    - my mother
+    - my father
+    - my parents
+    raise_to: High
+    reason: a parent at home, age not given
+  - group: true
+    id: limited_mobility
+    job_types:
+    - no_heat
+    - no_cooling
+    phrases:
+    - wheelchair
+    - walker
+    - disabled
+    - disability
+    - paralyzed
+    - special needs
+    - cant get around
+    raise_to: High
+    reason: someone with limited mobility or a disability
+  - group: true
+    id: lives_alone
+    job_types:
+    - no_heat
+    - no_cooling
+    phrases:
+    - lives alone
+    - live alone
+    - by herself
+    - by himself
+    - by myself
+    - no one else
+    raise_to: High
+    reason: someone at home alone
+  - group: true
+    id: chronic_illness
+    job_types:
+    - no_heat
+    - no_cooling
+    phrases:
+    - heart condition
+    - heart problems
+    - copd
+    - asthma
+    - lung disease
+    - emphysema
+    - diabetic
+    - diabetes
+    - kidney disease
+    - medical condition
+    raise_to: High
+    reason: a chronic illness at home
+  - group: true
+    id: cognitive
+    job_types:
+    - no_heat
+    - no_cooling
+    phrases:
+    - dementia
+    - alzheimers
+    - memory problems
+    - gets confused
+    raise_to: High
+    reason: someone with dementia or memory problems
+  - group: true
+    id: pregnancy
+    job_types:
+    - no_heat
+    - no_cooling
+    phrases:
+    - pregnant
+    - expecting a baby
+    - third trimester
+    raise_to: High
+    reason: someone pregnant at home
+  - group: true
+    id: recovering
+    job_types:
+    - no_heat
+    - no_cooling
+    phrases:
+    - just had surgery
+    - recovering from surgery
+    - post op
+    - chemo
+    - chemotherapy
+    - transplant
+    - immunocompromised
+    - weak immune system
+    raise_to: High
+    reason: someone recovering or with a weak immune system
+  - id: pipes_or_only_heat
+    job_types:
+    - no_heat
+    phrases:
+    - pipes froze
+    - frozen pipes
+    - pipes are freezing
+    - no other heat
+    - only heat
+    - only source of heat
+    raise_to: High
+    reason: pipes at risk or no other heat
+  - id: safety_signal
+    raise_to: Urgent
+    reason: gas or carbon monoxide reported on the call
+    safety_signal: true
+  side_model: null
+repeat_callers:
+  drops_before_callback_offer: 2
+  link_within_minutes: 10
+retention:
+  call_record_days: 365
+  transcript_days: 30
+safety:
+  denials:
+  - not gas
+  - no gas
+  - isnt gas
+  - definitely not
+  - not a gas
+  - no smell of gas
+  flag_reason: '{label} reported on the call'
+  kinds:
+    co:
+      clear:
+      - carbon monoxide
+      - monoxide
+      - co alarm
+      - co detector
+      label: carbon monoxide
+      lines: If a window is right there, open it. Then get everyone out of the house now and call 911
+        once you're outside.
+      variants:
+      - Please get outside and call 911 from there.
+      - The safest thing is to get everyone outside now and call 911.
+    gas:
+      clear:
+      - smell gas
+      - smelling gas
+      - smells like gas
+      - smell like gas
+      - a bit like gas
+      - kind of like gas
+      - kinda like gas
+      - sort of like gas
+      - little like gas
+      - smelled gas
+      - gas smell
+      - smell of gas
+      - gas leak
+      - leaking gas
+      - gas is leaking
+      - hissing gas
+      - hiss of gas
+      label: gas smell
+      lines: Please get everyone out of the house now. Don't flip any switches or use the stove, and call
+        911 or the gas company once you're outside.
+      variants:
+      - Please get outside and call 911 from there.
+      - The safest thing is to head outside now and call 911 or the gas company.
+  sign_off: Please hang up now, get everyone outside, and call 911 from there. We'll follow up once you're
+    safe.
+  signed_off: true
+  vague:
+    co:
+      phrases:
+      - dizzy
+      - light headed
+      - lightheaded
+      - headaches
+      - nauseous
+      - alarm is beeping
+      - alarm keeps beeping
+      question: Just to be safe, is a carbon monoxide alarm going off, or is anyone feeling sick or dizzy?
+    gas:
+      phrases:
+      - smells off
+      - smell something off
+      - weird smell
+      - strange smell
+      - funny smell
+      - rotten egg
+      - rotten eggs
+      - like eggs
+      - sulfur
+      question: Just to be safe, are you smelling gas in the house right now?
+voice:
+  clips:
+    at_capacity: Thanks for calling Summit Air. If you smell gas, hang up and call 911 from outside. All
+      our lines are busy right now. Please leave your name, number and what's going on after the tone,
+      and we'll call you back.
+    bridge_check: Let me check.
+    bridge_look: Okay, checking now.
+    bridge_sec: One sec.
+  fallback: Thanks for calling Summit Air. If you smell gas, hang up and call 911 from outside. We can't
+    take your call right now. Please leave your name, number and what's going on after the tone, and we'll
+    call you back.
+  goodbye: Thanks for calling Summit Air. Stay warm out there.
+  greeting_known: Hi, this is Summit Air. Is this {first_name}?
+  greeting_unknown: Thanks for calling Summit Air, this is the virtual assistant. How can I help?
+  outbound_voicemail: Hi, this is Summit Air calling about your appointment. Please give us a call back
+    at {phone}.
+  server_down: Sorry, our system is having trouble right now. Please call us back in a few minutes, and
+    if you smell gas, hang up and call 911 from outside.
+  voicemail_callback_minutes: 60
+weather:
+  gridpoint: OKX/33,42
+  station: KNYC
+  user_agent: summit-air-agent (github.com/Joconnell04/summit-air-agent)

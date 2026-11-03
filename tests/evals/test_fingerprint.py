@@ -1,5 +1,6 @@
 import shutil
 
+from app.tenant import TRADES_DIR
 from evals.fingerprint import run_hash
 from evals.stacks import TENANTS_DIR
 
@@ -23,6 +24,15 @@ def test_audio_clips_do_not_change_the_hash(tmp_path):
     before = run_hash([], "fast", tenants_dir=tenants)
     (tenants / "summit-air" / "clips" / "new.wav").write_bytes(b"RIFF")
     assert run_hash([], "fast", tenants_dir=tenants) == before
+
+
+def test_a_trade_edit_makes_the_run_stale(tmp_path):
+    trades = tmp_path / "trades"
+    shutil.copytree(TRADES_DIR, trades)
+    before = run_hash([], "fast", trades_dir=trades)
+    agent = trades / "hvac" / "agent.yaml"
+    agent.write_text(agent.read_text().replace("- sulfur", "- sulphur"))
+    assert run_hash([], "fast", trades_dir=trades) != before
 
 
 def test_an_owner_draft_is_part_of_a_gate_runs_hash(tmp_path):

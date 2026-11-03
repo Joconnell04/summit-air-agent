@@ -92,7 +92,7 @@ The owner view is three pages for the owner and dispatcher: Today (`/owner`, the
 
 ## Template and tenant
 
-Nothing about Summit Air is in `app/`; a test checks for the company name, its ZIPs, numbers, job types and rule ids. A tenant folder holds `config.yaml` (shared with the mock: hours, area, job types, plans, refused customer types), `agent.yaml` (dialed numbers, FSM ids, safety lines and phrases, priority rules, after-hours cutoffs, callback owners and timings, repeat-caller window, retention, every line the server returns as `say`) and `knowledge/*.md`, which `/calls/start` returns for the prompts. The only text in `app/` the agent may say is a handful of neutral fallbacks ("Sorry, give me just a moment.").
+Nothing about Summit Air is in `app/`; a test checks for the company name, its ZIPs, numbers, job types and rule ids. A tenant folder holds `config.yaml` (shared with the mock: hours, area, job types, plans, refused customer types), `agent.yaml` (dialed numbers, FSM ids, safety lines, temperature brackets, after-hours cutoffs, callback owners and timings, repeat-caller window, retention, every line the server returns as `say`) and `knowledge/*.md`, which `/calls/start` returns for the prompts. `agent.yaml` starts with `extends: hvac`, so it is laid over `trades/hvac/agent.yaml`, which holds what every HVAC company shares: the safety signal phrases and the priority rules (`app/tenant.py`, `merge`; docs/template.md). `python -m app.tenant tenants/<slug>` prints the merged result. The only text in `app/` the agent may say is a handful of neutral fallbacks ("Sorry, give me just a moment.").
 
 ## Owner view: redesign in progress
 

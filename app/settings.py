@@ -14,6 +14,8 @@ class Settings:
     tenants_dir: Path = field(
         default_factory=lambda: Path(os.environ.get("TENANTS_DIR", "tenants"))
     )
+    # What a tenant's agent.yaml `extends` names (app/tenant.py).
+    trades_dir: Path = field(default_factory=lambda: Path(os.environ.get("TRADES_DIR", "trades")))
     # Used when the dialed number matches no tenant. Empty is fine when there is only one tenant.
     default_tenant: str = field(default_factory=lambda: os.environ.get("DEFAULT_TENANT", ""))
     # Debug endpoints refuse every request when this is empty.
@@ -73,6 +75,7 @@ class Settings:
     def __post_init__(self):
         self.db_path = Path(self.db_path)
         self.tenants_dir = Path(self.tenants_dir)
+        self.trades_dir = Path(self.trades_dir)
         if self.log_path is None:
             self.log_path = self.db_path.with_suffix(".log")
         self.log_path = Path(self.log_path)
