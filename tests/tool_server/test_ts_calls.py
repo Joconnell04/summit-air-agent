@@ -196,6 +196,8 @@ def test_an_outbound_call_starts_only_for_a_callback_the_server_allows(agent, cl
     started = _outbound_start(agent, callback_id)
     assert started["ok"] is True
     assert started["data"]["callback"]["reason"] == "Call back about the quote"
+    # The voice layer dials the number the server holds, not one it was handed.
+    assert started["data"]["callback"]["phone"] == UNKNOWN
     # The attempt is counted before the worker dials: a second call for it is refused, while a
     # retried start for the same call is not a second attempt.
     assert count(agent, "SELECT attempts FROM callbacks") == 1

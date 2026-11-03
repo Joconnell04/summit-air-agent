@@ -39,7 +39,7 @@ How long a caller waits for the agent to start answering, split by stage, so eve
 
 ## First real call (MEASURED)
 
-One call on 2026-11-03 (call `call-_+16466240418_mKdAaWweCvS2`): a simulated caller (`make test-call`) dialed (646) 624-0418 over the phone network, so both directions were real phone audio; profile `fast` (Haiku 5.5). Stage timings from the call trace (`make trace`), 11 agent turns. One call is a smoke test, not a median for S-36.
+One call on 2026-11-02 New York time (call `call-_+16466240418_mKdAaWweCvS2`): a simulated caller (`make test-call`) dialed (646) 624-0418 over the phone network, so both directions were real phone audio; profile `fast` (Haiku 5.5). Stage timings from the call trace (`make trace`), 11 agent turns. One call is a smoke test, not a median for S-36.
 
 | Stage | Measured |
 |---|---|

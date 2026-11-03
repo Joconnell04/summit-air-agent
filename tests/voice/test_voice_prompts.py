@@ -24,7 +24,8 @@ def test_no_company_fact_is_written_into_the_prompt_files():
         if path.name == "README.md":
             continue
         assert "Summit" not in path.read_text(), path.name
-        assert not re.search(r"\(\d{3}\) \d{3}-\d{4}", path.read_text()), path.name
+        assert not re.search(r"\d{3}\W{1,3}\d{3}\W{1,3}\d{4}", path.read_text()), path.name
+        assert not re.search(r"\b\d{5}\b", path.read_text()), path.name  # a ZIP
 
 
 def test_every_server_tool_has_a_description_and_its_arguments():

@@ -153,7 +153,11 @@ def start(
         "knowledge": tenant.knowledge,
     }
     if callback:
-        data["callback"] = {"id": callback["id"], "reason": callback["reason"]}
+        data["callback"] = {
+            "id": callback["id"],
+            "phone": callback["phone"],
+            "reason": callback["reason"],
+        }
     say = tenant.line("repeated_drops") if offer_callback else ""
     if call["safety_state"] == "signal":
         lines = safety.lines_for(tenant.safety, call["safety_kind"])

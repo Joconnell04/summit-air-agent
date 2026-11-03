@@ -3,14 +3,16 @@ text, never generated (spec S-17)."""
 
 import asyncio
 
+import httpx
 import pytest
 import yaml
-from livekit.agents import StopResponse
+from livekit.agents import Agent, StopResponse
 from livekit.agents.llm import ChatMessage
 
 from tests.tool_server.toolkit import TENANT_DIR
 from voice.livekit.bridge import Bridge
-from voice.livekit.call import Call
+from voice.livekit.call import Call, SummitAgent
+from voice.livekit.server import ToolServer
 from voice.livekit.settings import load_voice
 from voice.livekit.tools import ToolLog
 from voice.livekit.worker import greeting, leave_voicemail
@@ -166,3 +168,47 @@ def test_a_voicemail_at_capacity_flags_a_person_to_call_back(agent, connect):
     reason = conn.execute("SELECT reason FROM flags WHERE call_id = 'call-1'").fetchone()[0]
     conn.close()
     assert reason.startswith("Voicemail while every line was busy: Hi it's Dana")
+
+
+def test_a_server_that_stops_answering_mid_call_ends_the_call_with_the_safety_line():
+    def down(request):
+        raise httpx.ConnectError("refused")
+
+    server = ToolServer("http://tool-server", "call-1", transport=httpx.MockTransport(down))
+    call = Call(server, Bridge([], play=None, silent=lambda: True), ToolLog(), ENDPOINTING)
+    call.session = Session()
+    ended = []
+    call.server_down = lambda: ended.append(True)
+    with pytest.raises(StopResponse):
+        asyncio.run(call.caller_line(caller("I smell gas")))
+    assert ended == [True]
+
+
+def test_the_reply_audio_waits_for_a_bridge_clip_to_finish(monkeypatch):
+    events = []
+
+    async def clip(_path):
+        events.append("clip starts")
+        await asyncio.sleep(0.1)
+        events.append("clip ends")
+
+    async def fake_tts(_agent, _text, _settings):
+        for n in range(2):
+            yield f"frame {n}"
+
+    monkeypatch.setattr(Agent.default, "tts_node", fake_tts)
+
+    async def run():
+        bridge = Bridge(["a"], clip, lambda: True, after_s=0.01)
+        call = Call(None, bridge, ToolLog(), ENDPOINTING)
+        agent = SummitAgent(call, "", [])
+
+        async def slow_tool():
+            await asyncio.sleep(0.03)
+
+        await bridge.run(slow_tool())
+        async for frame in agent.tts_node(None, None):
+            events.append(frame)
+
+    asyncio.run(run())
+    assert events == ["clip starts", "clip ends", "frame 0", "frame 1"]

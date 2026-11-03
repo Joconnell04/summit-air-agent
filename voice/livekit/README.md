@@ -17,12 +17,12 @@ The phone line is wired by `scripts/phone/setup.py` and the server is deployed w
 
 1. The LiveKit dispatch rule puts each caller in their own room (`call-...`) and dispatches this worker (`AGENT_NAME`, default `summit-air`). The room name is the call id everywhere, including `make trace CALL=<room>`.
 2. **Capacity cap.** `MAX_CALLS` (default 3, the Cartesia Pro stream limit, docs/scaling.md) is shared by every call process through `capacity.Lines`. Past the cap the caller hears the pre-recorded busy message (safety line first) and leaves a voicemail, which is transcribed and flagged for a callback (spec S-47). No voice stream is used.
-3. **Lookup before hello.** `POST /calls/start` with the caller ID and the dialed number. Its result becomes the call context in the model's instructions (`prompts/assemble.py`). If the server is unreachable, the caller hears the tenant's `server_down` line and the call ends.
+3. **Lookup before hello.** `POST /calls/start` with the caller ID and the dialed number. Its result becomes the call context in the model's instructions (`prompts/assemble.py`). If the server is unreachable, at the start or on any later caller line, the caller hears the tenant's `server_down` line (which carries the 911 line) and the call ends, since without the server there is no safety check.
 4. **Greeting** from the tenant's `voice` lines: by first name when exactly one residential customer matched, otherwise the general greeting. A dropped safety call whose lines weren't said starts with those lines instead.
 5. **Every caller line** is posted to `/calls/{id}/turn` before the model answers. If the result carries a safety action, the worker speaks its text word for word with interruptions off and the model doesn't answer that turn. Hints (commercial, do-not-call) are added to the caller's line as `[server]` notes for the model.
 6. **Every agent line** is posted too, with its stage timings, so the server can mark the safety lines said and the trace shows where the time went.
 7. **Tools** are the server's model tools, built from `prompts/tools.yaml` and the server's request models. Each posts to `/tools/<name>`; writes carry an `Idempotency-Key` from call, tool and arguments.
-8. **Ending.** `end_call` asks the server. The worker hangs up only when the result says `hang_up: true`, after the agent's last words have played (or after the tenant's goodbye line if the model said nothing). There is no built-in end-call tool and no live transfer in V1 (DECISIONS.md 008); a caller who wants a person gets `flag_person`.
+8. **Ending.** `end_call` asks the server. Any safety text in a tool result (the lines, the check question, the safety sign-off) is spoken by the worker word for word, not handed to the model. The worker hangs up only when the result says `hang_up: true`, after the agent's last words have played (or after the tenant's goodbye line if the model said nothing). There is no built-in end-call tool and no live transfer in V1 (DECISIONS.md 008); a caller who wants a person gets `flag_person`.
 9. `POST /calls/{id}/end` runs when the room closes.
 
 ## Turn-taking
@@ -77,4 +77,6 @@ Plus the provider keys: `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET`, 
 ## Not done here
 
 - The outside monitor needs a Healthchecks.io check created and its ping URL set as `HEALTHCHECK_URL` on the server.
+- Outbound calls: the server gate is tested, but the dial, answering-machine and voicemail branches of `place_outbound` have no test with a fake LiveKit API and have not run end to end; nothing schedules a callback dispatch yet (brief 06).
 - OpenAI and Gemini profiles are wired but untested on a live call; Gemini's thinking setting is left at the plugin default.
+- The bridge clip waits 0.4 s after its last frame (`CLIP_TAIL_S`, the audio buffer LiveKit keeps) before the reply's audio may start; measure it once a tool is slow enough to trigger a clip.

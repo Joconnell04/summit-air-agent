@@ -25,8 +25,8 @@ caller: short, plain sentences, one at a time, and only answer what you're asked
 
 - Your gas furnace is due for its yearly tune-up. It works fine; nothing is wrong. You've had it
   about eight years. You haven't tried anything.
-- You own the house: 142 Union Street, Brooklyn, New York 11231. You're the only one home and you
-  approve the work. No pets, no gate code.
+- You own the house: {address}. You're the only one home and you approve the work. No pets, no gate
+  code.
 - For a contact number, say "the number I'm calling from".
 - When they read back your address and number, say yes if it's right.
 - Take the first day and arrival window they offer.
@@ -35,8 +35,14 @@ caller: short, plain sentences, one at a time, and only answer what you're asked
 
 
 class Caller(Agent):
-    def __init__(self):
-        super().__init__(instructions=PERSONA)
+    def __init__(self, address: str):
+        super().__init__(instructions=PERSONA.format(address=address))
+
+
+def address_in_area(tenant: str) -> str:
+    """A made-up street in the first ZIP of the tenant's service area."""
+    zones = yaml.safe_load((ROOT / "tenants" / tenant / "config.yaml").read_text())["zones"]
+    return f"142 Main Street, {zones[0]['zips'][0]}"
 
 
 def caller_llm():
@@ -46,7 +52,7 @@ def caller_llm():
     return anthropic.LLM(model=profile["model"])
 
 
-async def main(to: str, minutes: float) -> None:
+async def main(to: str, minutes: float, tenant: str) -> None:
     from livekit.plugins import cartesia, deepgram, silero
 
     voice = load_voice()
@@ -68,7 +74,7 @@ async def main(to: str, minutes: float) -> None:
             vad=silero.VAD.load(),
             turn_handling={"turn_detection": "vad"},
         )
-        await session.start(room=room, agent=Caller())
+        await session.start(room=room, agent=Caller(address_in_area(tenant)))
 
         @session.on("conversation_item_added")
         def show(ev) -> None:
@@ -104,5 +110,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--to", default=os.environ.get("TWILIO_PHONE_NUMBER", ""))
     parser.add_argument("--minutes", type=float, default=4)
+    parser.add_argument("--tenant", default=os.environ.get("DEFAULT_TENANT", "summit-air"))
     args = parser.parse_args()
-    asyncio.run(main(args.to, args.minutes))
+    asyncio.run(main(args.to, args.minutes, args.tenant))

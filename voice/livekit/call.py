@@ -11,7 +11,7 @@ from livekit.agents import Agent, ModelSettings, StopResponse
 from livekit.agents.llm import ChatContext, ChatMessage
 
 from .bridge import Bridge
-from .server import ToolServer
+from .server import UNREACHABLE, ToolServer
 from .tools import ToolLog
 from .turns import agent_timings, asked_for_digits, caller_timings, server_notes
 
@@ -32,6 +32,9 @@ class Call:
         self.session = None
         self.caller_stopped_at: float | None = None
         self.hang_up_task: asyncio.Task | None = None
+        # Set by the worker: says the tenant's server-down line (which carries the 911 line) and
+        # ends the call. Without the server there is no safety check, so the call can't go on.
+        self.server_down = None
         self._last_post: asyncio.Task | None = None
 
     def post(self, speaker: str, text: str, timings: dict[str, float]) -> asyncio.Task:
@@ -55,6 +58,9 @@ class Call:
         self.bridge.caller_turn()
         self.caller_stopped_at = message.metrics.get("stopped_speaking_at")
         result = await self.post("caller", text, caller_timings(message.metrics))
+        if result["refused"] == UNREACHABLE:
+            self.server_down()
+            raise StopResponse()
         data = result.get("data") or {}
         notes = server_notes(data.get("hints", []))
         if notes:

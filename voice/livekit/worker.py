@@ -138,6 +138,11 @@ async def entrypoint(ctx: JobContext) -> None:
     voice = load_voice()
     lines = Lines(settings.lines_dir, settings.max_calls)
     if not lines.take(call_id):
+        if meta.get("callback_id"):
+            # Every line is busy: don't dial out. The callback stays pending for its job to retry.
+            await tools_server.aclose()
+            ctx.shutdown("at capacity")
+            return
         await take_voicemail(ctx, tools_server, voice)
         return
 
@@ -189,19 +194,37 @@ async def entrypoint(ctx: JobContext) -> None:
 
     ctx.add_shutdown_callback(close)
 
-    def hang_up(context: RunContext) -> None:
+    def speak(text: str):
+        return session.say(text, allow_interruptions=False)
+
+    def hang_up(context: RunContext, last_line) -> None:
+        """After this turn's speech: the worker's own last line if it said one, else the tenant's
+        goodbye when the model said nothing, then the line drops."""
+
         async def run() -> None:
             await context.speech_handle.wait_for_playout()
             spoke = any(
                 isinstance(item, ChatMessage) and item.role == "assistant" and item.text_content
                 for item in context.speech_handle.chat_items
             )
-            if not spoke:
-                await session.say(spoken["goodbye"], allow_interruptions=False).wait_for_playout()
+            if last_line is not None:
+                await last_line.wait_for_playout()
+            elif not spoke:
+                await speak(spoken["goodbye"]).wait_for_playout()
             ended["reason"] = "agent_end"
             await ctx.delete_room()
 
         call.hang_up_task = asyncio.create_task(run())
+
+    def server_down() -> None:
+        async def run() -> None:
+            await speak(spoken["server_down"]).wait_for_playout()
+            ended["reason"] = "error"
+            await ctx.delete_room()
+
+        call.hang_up_task = asyncio.create_task(run())
+
+    call.server_down = server_down
 
     # The session closes when the caller hangs up; end the job then, so the call is closed on the
     # server at once rather than when LiveKit empties the room.
@@ -216,11 +239,13 @@ async def entrypoint(ctx: JobContext) -> None:
     agent = SummitAgent(
         call,
         assemble.instructions(data),
-        build_tools(specs, tools_server, bridge, tool_log, hang_up),
+        build_tools(specs, tools_server, bridge, tool_log, hang_up, speak),
     )
 
     if meta.get("callback_id"):
-        await place_outbound(ctx, session, agent, player, meta, spoken)
+        # The callback's stored reason is a note for staff; the scheduler passes the spoken one.
+        about = meta.get("reason") or "your recent call"
+        await place_outbound(ctx, session, agent, player, data["callback"]["phone"], about, spoken)
         return
 
     await session.start(room=ctx.room, agent=agent)
@@ -234,9 +259,9 @@ async def entrypoint(ctx: JobContext) -> None:
         session.say(start["say"])
 
 
-async def place_outbound(ctx, session, agent, player, meta: dict, spoken: dict) -> None:
+async def place_outbound(ctx, session, agent, player, phone: str, about: str, spoken: dict) -> None:
     """Journey 12. The server has already allowed this callback and counted the attempt; one dial,
-    and a voicemail at most."""
+    to the number the server holds for it, and a voicemail at most."""
     if not settings.outbound_trunk_id:
         log.warning("outbound call skipped: LIVEKIT_OUTBOUND_TRUNK_ID is not set")
         ctx.shutdown("no outbound trunk")
@@ -248,7 +273,7 @@ async def place_outbound(ctx, session, agent, player, meta: dict, spoken: dict) 
                 api.CreateSIPParticipantRequest(
                     room_name=ctx.room.name,
                     sip_trunk_id=settings.outbound_trunk_id,
-                    sip_call_to=meta["phone"],
+                    sip_call_to=phone,
                     participant_identity="callee",
                     wait_until_answered=True,
                 )
@@ -267,7 +292,7 @@ async def place_outbound(ctx, session, agent, player, meta: dict, spoken: dict) 
     if result.category != AMDCategory.HUMAN:
         await ctx.delete_room()
         return
-    session.say(spoken["outbound_greeting"].format(reason=meta.get("reason", "your appointment")))
+    session.say(spoken["outbound_greeting"].format(reason=about))
 
 
 class VoicemailAgent(Agent):
