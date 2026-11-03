@@ -6,7 +6,7 @@ import sqlite3
 from datetime import datetime, timedelta
 
 from . import lookup, records, rules, safety
-from .db import iso, tx
+from .db import iso, parse_iso, tx
 from .envelope import Result, ok
 from .fsm import FsmAdapter, FsmRejected, FsmUnavailable
 from .schemas import EndIn, StartIn, TurnIn
@@ -47,8 +47,74 @@ DO_NOT_CALL_PHRASES = (
 )
 
 
+# How a caller gives a name on a call ("this is Tomasz", "my name is Ana"). Only a capitalized word
+# counts, as speech-to-text writes names, so "this is about my heat" names nobody.
+NAME_SAID = re.compile(r"\b(?:[Mm]y name is|[Tt]his is|[Ii]t's|[Ii]t is)\s+([A-Z][a-z]+)")
+NOT_NAMES = {"Summit", "Okay", "Just", "Still", "Really", "So", "About", "For", "The", "My", "Me"}
+# The last turns of a linked call the agent sees, so it doesn't ask again for what was said.
+RESUME_TURNS = 12
+
+
+def _name_said(lines: list[str]) -> str | None:
+    for line in lines:
+        for match in NAME_SAID.finditer(line):
+            if match[1] not in NOT_NAMES:
+                return match[1]
+    return None
+
+
+def _linked(
+    conn: sqlite3.Connection, tenant: Tenant, caller_key: str, call_id: str, now: datetime
+) -> tuple[sqlite3.Row | None, list[sqlite3.Row]]:
+    """The call this one picks up from, and the calls within the drop window. A call from the same
+    number a few minutes after any call is linked; a call later the same day is linked only to one
+    that dropped, so a caller who finished a call this morning starts fresh this afternoon (eval
+    round 2, seed 6). Same number and same local day are the gate; a call before midnight never
+    links to one after it unless it falls inside the drop window."""
+    if not caller_key:
+        return None, []
+    day_start = datetime.combine(tenant.local(now).date(), datetime.min.time(), tenant.tz)
+    window_start = now - timedelta(minutes=tenant.repeat["link_within_minutes"])
+    calls = [
+        c
+        for c in records.recent_calls(
+            conn, tenant.slug, caller_key, now, min(day_start, window_start)
+        )
+        if c["id"] != call_id
+    ]
+    recent = [c for c in calls if parse_iso(c["started_at"]) >= window_start]
+    same_day_drop = next(
+        (
+            c
+            for c in calls
+            if parse_iso(c["started_at"]) >= day_start and records.dropped(c)
+        ),
+        None,
+    )
+    return (recent[0] if recent else same_day_drop), recent
+
+
 def _resume(conn: sqlite3.Connection, previous: sqlite3.Row) -> dict:
-    """Where the last call stopped, so the agent can pick up without redoing anything."""
+    """Where the last call stopped, so the agent can pick up without redoing anything, and the name
+    the caller gave on it, so the agent can check it is the same person first."""
+    turns = conn.execute(
+        "SELECT speaker, text FROM turns WHERE call_id = ? ORDER BY seq DESC LIMIT ?",
+        (previous["id"], RESUME_TURNS),
+    ).fetchall()[::-1]
+    named = conn.execute(
+        "SELECT request_json FROM bookings WHERE call_id = ? AND kind = 'book' ORDER BY id DESC",
+        (previous["id"],),
+    ).fetchone()
+    caller_lines = [
+        t["text"]
+        for t in conn.execute(
+            "SELECT text FROM turns WHERE call_id = ? AND speaker = 'caller' ORDER BY seq",
+            (previous["id"],),
+        )
+    ]
+    name = (json.loads(named["request_json"])["details"].get("name") if named else None) or (
+        _name_said(caller_lines)
+    )
     last = {
         speaker: conn.execute(
             "SELECT text FROM turns WHERE call_id = ? AND speaker = ? ORDER BY seq DESC LIMIT 1",
@@ -69,6 +135,9 @@ def _resume(conn: sqlite3.Connection, previous: sqlite3.Row) -> dict:
         "last_agent_line": last["agent"]["text"] if last["agent"] else None,
         "booking": dict(booked) if booked else None,
         "safety_state": previous["safety_state"],
+        "started_at": previous["started_at"],
+        "caller_name": name.split()[0] if name else None,
+        "turns": [{"speaker": t["speaker"], "text": t["text"]} for t in turns],
     }
 
 
@@ -79,18 +148,7 @@ def start(
     carried from a dropped safety call. Calling it twice for one call id is harmless."""
     caller_key = phone_key(args.caller_id)
     known = caller_key if len(caller_key) == 10 else ""
-    recent = (
-        [
-            c
-            for c in records.recent_calls(
-                conn, tenant.slug, known, now, tenant.repeat["link_within_minutes"]
-            )
-            if c["id"] != args.call_id
-        ]
-        if known
-        else []
-    )
-    previous = recent[0] if recent else None
+    previous, recent = _linked(conn, tenant, known, args.call_id, now)
     with tx(conn):
         conn.execute(
             """INSERT OR IGNORE INTO calls (id, tenant, caller_id, caller_key, dialed_number,

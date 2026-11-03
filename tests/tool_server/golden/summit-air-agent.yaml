@@ -104,7 +104,11 @@ fsm:
     membership: 705
   log_calls_via_debug: true
 lines:
+  account_choice: Should that address go on its own account, with you as a contact, or under your account?
+  account_name: Whose name should the account for that address be under?
   anything_else_first: Is there anything else I can help with?
+  arrival_no_fit: Our arrival windows are {windows}, and the technician can come any time in the window,
+    so I can't promise an exact time.
   callback_after: after {time}
   callback_before: before {time}
   callback_between: between {start} and {end}
@@ -562,6 +566,10 @@ voice:
     call you back.
   goodbye: Thanks for calling Summit Air. Stay warm out there.
   greeting_known: Hi, this is Summit Air. Is this {first_name}?
+  greeting_linked: Hi, this is Summit Air's virtual assistant again. I think we got cut off earlier. Is
+    this {first_name}?
+  greeting_linked_unknown: Hi, this is Summit Air's virtual assistant again. I think we got cut off earlier.
+    Who am I speaking with?
   greeting_unknown: Thanks for calling Summit Air, this is the virtual assistant. How can I help?
   outbound_voicemail: Hi, this is Summit Air calling about your appointment. Please give us a call back
     at {phone}.

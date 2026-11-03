@@ -271,3 +271,46 @@ def test_retell_runs_go_one_scenario_at_a_time(capsys):
     assert workers_for("retell", 4) == 1
     assert "one scenario at a time" in capsys.readouterr().out
     assert workers_for("livekit", 4) == 4
+
+
+def test_an_earlier_dropped_call_is_on_the_record_and_the_greeting_resumes_it(seed_dir, tmp_path):
+    """Eval round 2, seed 6: the scenario starts two minutes after a call from the same number
+    dropped, so the server links it and the greeting asks for the caller by name."""
+    s = scenario(
+        caller_id="(347) 555-0166",
+        earlier_call={
+            "minutes_ago": 2,
+            "turns": [
+                {"agent": GREETING},
+                {"caller": "Hi, this is Tomasz Nowak. The heat's out."},
+                {"agent": "Oh no. What's the address?"},
+                {"caller": "145 Java Street, 11222."},
+            ],
+        },
+    )
+    result, agent, *_ = run(seed_dir, tmp_path, s, [say("Okay.")], [say("[END]")])
+    assert result.transcript[0].text.endswith("Is this Tomasz?")
+    assert "145 Java Street, 11222." in agent.calls[0]["system"]
+
+
+def test_the_scheduling_system_down_fails_bookings_but_not_lookups(seed_dir, tmp_path):
+    s = scenario(fsm_down="booking", must=[{"tool_ok": "find_slots"}])
+    replies = [use("find_slots", job_type="tune_up"), say("I've got openings.")]
+    result, *_ = run(seed_dir, tmp_path, s, replies, [say("[END]")])
+    assert result.outcome == "pass", result.check_failures
+
+
+def test_fsm_down_answers_503_only_for_what_it_fails():
+    from evals.world import FsmDown
+
+    class Client:
+        def request(self, method, url, **kw):
+            return "passed"
+
+    booking = FsmDown(Client(), "booking")
+    assert booking.request("POST", "/jpm/v2/tenant/1/jobs").status_code == 503
+    assert booking.request("POST", "/crm/v2/tenant/1/customers").status_code == 503
+    assert booking.request("GET", "/crm/v2/tenant/1/customers") == "passed"
+    assert booking.request("POST", "/dispatch/v2/tenant/1/capacity") == "passed"
+    assert booking.request("POST", "/connect/token") == "passed"
+    assert FsmDown(Client(), "all").request("GET", "/crm/v2/tenant/1/customers").status_code == 503

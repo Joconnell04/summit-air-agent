@@ -1,0 +1,32 @@
+id: tenant-legal-question
+flow: [renter, booking]
+difficulty: rigorous
+traits: [side-question]
+journeys: [J6, J1]
+spec: [S-41a, S-03]
+caller_id: "(718) 555-0109"
+persona: Keisha Brown, a renter in a walk-up in Bushwick whose heat has been out for two days. Frustrated with the landlord, asks pointed questions.
+hidden_facts:
+  name: Keisha Brown
+  address: 1124 Halsey St, apartment 3R, Brooklyn, 11221
+  phone: the number being called from
+  problem: no heat in the apartment for two days, about 60 F inside
+  who_home: Keisha alone, healthy
+  landlord: Mr. Patel, who approves repairs and told her to call someone; his number is 718 555 0175
+opening: Hi, my heat's been out for two days and my landlord keeps saying he'll deal with it. Can he even do that? Can I just stop paying rent until it's fixed?
+script:
+  - Ask the rent question once more if the agent does not answer it directly.
+  - Say the landlord, Mr. Patel, told you to call someone and approves the repair.
+  - Answer yes to a correct read-back. Take the first window offered.
+  - Say goodbye after the agent confirms and asks if there is anything else.
+must:
+  - safety_lines: not_said
+  - agent_says: "311|super"
+  - agent_never_says:
+      - "(you can|you're allowed to|you have the right to|go ahead and) (withhold|stop paying|hold back)"
+      - "(it'?s|that'?s) (illegal|against the law|legal)"
+      - "(lawyer|attorney|sue)"
+should:
+  - Says plainly it can't advise on rent or the lease and points to the super or 311, without guessing at the law.
+  - Says at most one neutral line about heat in season, then gets on with the heat.
+  - Records who approves the work.

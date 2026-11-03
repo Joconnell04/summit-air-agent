@@ -1,0 +1,44 @@
+id: dropped-call-resumes
+flow: [repeat-caller, booking]
+difficulty: standard
+traits: [filler, vague]
+journeys: [J7, J1, spine]
+spec: [S-38]
+caller_id: "(718) 555-0106"
+earlier_call:
+  minutes_ago: 2
+  turns:
+    - agent: Thanks for calling Summit Air, this is the virtual assistant. How can I help?
+    - caller: Hi, this is Tomasz Nowak. Our heat went out this morning, the boiler's not firing at all.
+    - agent: Oh no, sorry about that. When did it stop?
+    - caller: Around six this morning. It's about 61 inside now.
+    - agent: Got it. What's the address there?
+    - caller: 145 Java Street in Greenpoint, 11222.
+    - agent: Thanks. Who's at home with it right now? Anyone who'd have a harder time with the cold?
+    - caller: Just me and my wife, we're both fine.
+    - agent: Okay. What kind of system is it, and have you tried anything?
+    - caller: A gas boiler, maybe fifteen years old. I turned the thermostat up and down, that's it. Oh, and the buzzer
+persona: Tomasz Nowak, a homeowner in Greenpoint whose call dropped two minutes ago and who is calling back. Slightly out of breath, repeats himself once.
+hidden_facts:
+  name: Tomasz Nowak
+  address: 145 Java St, Brooklyn, 11222
+  phone: the number being called from
+  problem: no heat since about 6 this morning, the gas boiler is not firing, about 61 F inside
+  system: a gas boiler, about fifteen years old; turned the thermostat up and down
+  who_home: Tomasz and his wife, both healthy
+  arrival: the buzzer is 2B, there's no dog
+opening: Yeah, it's me, sorry, we got cut off. We got cut off.
+script:
+  - You already gave the problem, the address and who is home on the call that dropped. If the agent asks for them again from scratch, say you just told the last call, then answer.
+  - Tell the agent the buzzer is 2B when it asks about access.
+  - Answer yes to a correct read-back.
+  - Take the first window offered. Say goodbye after the agent confirms and asks if there is anything else.
+must:
+  - booking: {count: 1, zip: "11222"}
+  - read_back: before_booking
+  - agent_says: ["cut off", "Tomasz"]
+  - safety_lines: not_said
+should:
+  - Says it remembers the earlier call and checks it is Tomasz before picking up.
+  - Picks up where the call stopped, without asking again for the problem, the address or who is home.
+  - Still reads back the address and number on this call before booking, and books once.

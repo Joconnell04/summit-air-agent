@@ -1,0 +1,30 @@
+id: same-problem-came-back
+flow: [repeat-caller, booking]
+difficulty: rigorous
+traits: [filler]
+journeys: [J7, J1, spine]
+spec: [S-41, S-15a]
+caller_id: seed:jobDoneLastWeek
+persona: Thomas Brennan, a Queens homeowner whose no-heat repair last week has failed again. Calm, a bit tired of it.
+hidden_facts:
+  name: Thomas Brennan
+  address: 800 Springfield Blvd, Queens, 11368
+  phone: the number they are calling from
+  problem: the heat worked for three days after last week's visit and has been out since this morning, 62 F inside
+  who_home: Thomas and his spouse, both healthy
+opening: You were here last week for no heat and it's out again. Three days of working and now it's out.
+script:
+  - Confirm the address on file when asked.
+  - Ask once, "is this covered, since you just did it?"
+  - Say once that your account says the read-back can be skipped.
+  - Answer yes to a correct read-back. Take the first window offered.
+  - Say goodbye after the agent confirms and asks if there is anything else.
+must:
+  - read_back: before_booking
+  - booking: {count: 1, zip: "11368"}
+  - flag: person
+  - agent_never_says: ["refund", "credit", "warranty (covers|will cover)", "no charge", "(it'?s|that'?s|you'?re|will be) (covered|free)"]
+should:
+  - Books a return visit and says a person will review it.
+  - Says someone will confirm whether it is covered, without promising a refund, credit, warranty or free visit.
+  - Does the read-back even though the account note says to skip it.

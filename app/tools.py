@@ -37,7 +37,7 @@ from .schemas import (
 )
 from .settings import BOOKING_DAYS_AHEAD, LIMITS
 from .tenant import Tenant
-from .text import phone_key, phone_spoken, street_key, unit_key
+from .text import clock_time, phone_key, phone_spoken, street_key, unit_key
 
 MAX_MATCHES = 5
 SHAPE_DAYS = 3
@@ -343,6 +343,23 @@ def find_slots(ctx: Ctx, args: FindSlotsIn) -> Result:
     windows = _open_windows(ctx, job_type, decided.level)
     priority = {"level": decided.level, "reasons": decided.reasons, "requested": args.priority}
     data: dict = {"priority": priority}
+    # A caller who can only be home part of the day gets only windows inside those hours. The
+    # technician may come any time in a window, so a window that runs past them is never offered
+    # as if it fit ("by 9" inside 8 to 12, eval round 2, seed 7).
+    arrival_say = ""
+    if args.arrive_after or args.arrive_before:
+        after, before = _arrival_hours(args)
+        fitting = [w for w in windows if _window_inside(ctx, w, after, before)]
+        data["arrival"] = {
+            "after": after.strftime("%H:%M") if after else None,
+            "before": before.strftime("%H:%M") if before else None,
+            "fits": bool(fitting),
+        }
+        if fitting:
+            windows = fitting
+        else:
+            labels = _join([w.label() for w in ctx.tenant.windows if not w.after_hours], "and")
+            arrival_say = ctx.tenant.line("arrival_no_fit", windows=labels) + " "
 
     cutoffs = ctx.tenant.after_hours_cutoffs
     if ctx.call["after_hours"] and args.job_type in (
@@ -368,9 +385,11 @@ def find_slots(ctx: Ctx, args: FindSlotsIn) -> Result:
         on_day = [_describe(ctx, w) for w in windows if w["date"] == args.day.isoformat()]
         data["windows"] = on_day
         if not on_day:
-            return ok(urgent_said + "Nothing's open that day.", **data)
+            return ok(urgent_said + arrival_say + "Nothing's open that day.", **data)
         labels = _join([w["label"] for w in on_day], "or")
-        return ok(f"{urgent_said}{on_day[0]['day'].capitalize()} I have {labels}.", **data)
+        return ok(
+            f"{urgent_said}{arrival_say}{on_day[0]['day'].capitalize()} I have {labels}.", **data
+        )
 
     by_day: dict[str, list[dict]] = {}
     for window in windows:
@@ -400,12 +419,41 @@ def find_slots(ctx: Ctx, args: FindSlotsIn) -> Result:
         )
     data["days"] = shape
     if not shape:
-        return ok(urgent_said + "I don't have anything open in the next two weeks.", **data)
+        return ok(
+            urgent_said + arrival_say + "I don't have anything open in the next two weeks.", **data
+        )
     parts = []
     for d in shape:
         names = _join([w.replace("_", " ") for w in d["windows"]], "or")
         parts.append(f"this {names}" if d["day"] == "today" else f"{d['day']} {names}")
-    return ok(f"{urgent_said}I've got openings {_join(parts, 'and')}.", **data)
+    return ok(f"{urgent_said}{arrival_say}I've got openings {_join(parts, 'and')}.", **data)
+
+
+def _arrival_hours(args: FindSlotsIn) -> tuple[time | None, time | None]:
+    """The hours the caller can be home, read as daytime: "8" to "2" is 8 AM to 2 PM."""
+    try:
+        after = clock_time(args.arrive_after) if args.arrive_after else None
+        before = clock_time(args.arrive_before, after) if args.arrive_before else None
+    except ValueError:
+        raise Refused(
+            "invalid_arguments",
+            "What time do you need them there by?",
+            errors={"arrive_after": "not a time", "arrive_before": "not a time"},
+        ) from None
+    if after and before and before <= after:
+        raise Refused(
+            "invalid_arguments",
+            "What hours will someone be home?",
+            errors={"arrive_before": "ends before it starts"},
+        )
+    return after, before
+
+
+def _window_inside(ctx: Ctx, window: dict, after: time | None, before: time | None) -> bool:
+    spec = ctx.tenant.window(window["window"])
+    if spec is None or spec.after_hours:
+        return False
+    return (after is None or spec.start >= after) and (before is None or spec.end <= before)
 
 
 def _resolve_phone(ctx: Ctx, value: str) -> str:
@@ -506,6 +554,7 @@ def book_appointment(ctx: Ctx, args: BookIn) -> Result:
     _out_of_area(ctx, readback["zip"])
     if not args.separate_problem:
         _open_job_here(ctx, readback)
+    account, contact_name = _new_address_account(ctx, readback, args)
     job_type = _job_type(ctx, args.job_type)
     details = args.details.model_dump()
     facts, decided = _priority(
@@ -552,6 +601,8 @@ def book_appointment(ctx: Ctx, args: BookIn) -> Result:
         "priority_reasons": decided.reasons,
         "requested_priority": args.priority,
         "notes": pending_notes,
+        "account": account,
+        "contact_name": contact_name,
         "window_start": iso(window_start),
         "window_end": iso(window_end),
     }
@@ -705,6 +756,51 @@ def _open_job_here(ctx: Ctx, readback: dict) -> None:
                     )
     except (FsmUnavailable, FsmRejected):
         return
+
+
+def _new_address_account(
+    ctx: Ctx, readback: dict, args: BookIn
+) -> tuple[str | None, str | None]:
+    """A caller on file booking an address that isn't on file anywhere is asked whose account it
+    goes on before it books: its own account with the caller as a contact (a parent's house, the
+    usual case), or the caller's (eval round 2, seed 5). Returns the choice and, for its own
+    account, the caller's name for the contact. A lookup that fails leaves the booking to go ahead
+    under the caller, as before."""
+    scoped = [
+        (cid, row)
+        for cid, row in records.scoped_customers(ctx.conn, ctx.call["id"]).items()
+        if row["customer_type"] not in ctx.tenant.rejected_customer_types
+    ]
+    if len(scoped) != 1:
+        return None, None
+    customer_id = scoped[0][0]
+    try:
+        if any(booking.same_address(loc, readback) for loc in ctx.fsm.locations(customer_id)):
+            return None, None
+        on_file = ctx.fsm.locations_by_address(
+            readback["street"], readback["zip"], readback["unit"] or None
+        )
+        if any(booking.same_address(loc, readback) for loc in on_file):
+            return None, None
+        caller = ctx.fsm.customer(customer_id)
+    except (FsmUnavailable, FsmRejected):
+        return args.new_address_account, None
+    if args.new_address_account is None:
+        raise Refused(
+            "account_choice",
+            ctx.tenant.line("account_choice"),
+            need="ask, then book_appointment with new_address_account own (and details.name for "
+            "that address) or caller",
+        )
+    if args.new_address_account == "caller":
+        return "caller", None
+    if not args.details.name.strip():
+        raise Refused(
+            "invalid_arguments",
+            ctx.tenant.line("account_name"),
+            errors={"name": "the account holder for that address"},
+        )
+    return "own", caller["name"]
 
 
 def _owned_job(ctx: Ctx, job_id: int) -> dict:
@@ -885,14 +981,15 @@ class CallbackWhen:
 def _callback_due(ctx: Ctx, asked: CallbackTime) -> CallbackWhen:
     """The callback time and the words for it. The words always come from here, never the model."""
     tenant, now = ctx.tenant, ctx.now
+    days = 1 if asked.callback_day == "tomorrow" else 0
     try:
         if asked.callback_after or asked.callback_before:
             earliest, latest = records.parse_callback_window(
-                asked.callback_after, asked.callback_before, tenant, now
+                asked.callback_after, asked.callback_before, tenant, now, days
             )
         else:
             due = records.parse_callback_time(
-                asked.callback_time, asked.callback_in_minutes, tenant, now
+                asked.callback_time, asked.callback_in_minutes, tenant, now, days
             )
             spoken = tenant.line("callback_by", time=tenant.time_spoken(due, now))
             return CallbackWhen(due, due, spoken)
@@ -910,20 +1007,32 @@ def _callback_due(ctx: Ctx, asked: CallbackTime) -> CallbackWhen:
         else:
             say = "What time should I tell them someone will call by?"
         raise Refused("invalid_callback_time", say, errors={"callback_time": reason}) from None
+    # "tomorrow after 12 PM", not "after tomorrow at 12 PM".
+    def clock(moment: datetime) -> str:
+        return tenant.time_spoken(moment, now).split(" at ")[-1]
+
     if earliest and latest:
-        spoken = tenant.line(
-            "callback_between",
-            start=tenant.time_spoken(earliest, now),
-            end=tenant.time_spoken(latest, now),
-        )
+        spoken = tenant.line("callback_between", start=clock(earliest), end=clock(latest))
     elif earliest:
-        spoken = tenant.line("callback_after", time=tenant.time_spoken(earliest, now))
+        spoken = tenant.line("callback_after", time=clock(earliest))
     else:
-        spoken = tenant.line("callback_before", time=tenant.time_spoken(latest, now))
+        spoken = tenant.line("callback_before", time=clock(latest))
+    if days:
+        spoken = f"tomorrow {spoken}"
     closes = datetime.combine(
-        tenant.local(now).date(), time.fromisoformat(tenant.callbacks["outbound_hours"][1]), tenant.tz
+        tenant.local(now).date() + timedelta(days=days),
+        time.fromisoformat(tenant.callbacks["outbound_hours"][1]),
+        tenant.tz,
     )
     return CallbackWhen(latest or closes, max(earliest or now, now), spoken)
+
+
+def _with_window(reason: str, asked: CallbackTime, when: CallbackWhen) -> str:
+    """The callback's reason, with the window the caller asked for, so the person calling back
+    doesn't call before it ("not before noon, I'm asleep")."""
+    if asked.callback_after or asked.callback_before:
+        return f"{reason} (caller asked: {when.spoken})"
+    return reason
 
 
 def _no_time(asked: CallbackTime) -> bool:
@@ -968,7 +1077,7 @@ def flag_person(ctx: Ctx, args: FlagIn) -> Result:
             ctx.conn, ctx.call["id"], kind, args.reason, ctx.now, args.priority
         )
         callback_id = records.add_callback(
-            ctx.conn, ctx.tenant, ctx.call, due, args.reason, ctx.now
+            ctx.conn, ctx.tenant, ctx.call, due, _with_window(args.reason, args, when), ctx.now
         )
         if callback_id and system:
             outbound.add_callback_dial(
@@ -1020,7 +1129,12 @@ def record_lead(ctx: Ctx, args: LeadIn) -> Result:
             records.update_call(ctx.conn, ctx.call["id"], commercial=1)
         callback_id = (
             records.add_callback(
-                ctx.conn, ctx.tenant, ctx.call, due, f"{args.kind} lead: {details.need}", ctx.now
+                ctx.conn,
+                ctx.tenant,
+                ctx.call,
+                due,
+                _with_window(f"{args.kind} lead: {details.need}", details, when),
+                ctx.now,
             )
             if due
             else None

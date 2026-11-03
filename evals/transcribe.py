@@ -38,6 +38,14 @@ def spell_digits(text: str) -> str:
     return NUMBER.sub(spell, text)
 
 
+def mishear(text: str, swaps: dict[str, str]) -> str:
+    """The words a scenario says speech-to-text gets wrong ("Houston" written "Hughes Tin"), as
+    whole words, any case. Letters spelled one by one are separate words, so they come through."""
+    for word, heard in swaps.items():
+        text = re.sub(rf"\b{re.escape(word)}\b", heard, text, flags=re.IGNORECASE)
+    return text
+
+
 def roughen(text: str, level: str, rng: random.Random) -> str:
     if level == "none":
         return text

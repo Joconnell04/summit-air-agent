@@ -294,14 +294,18 @@ class ServiceTitanAdapter:
             "country": self.country,
         }
 
-    def create_customer(self, key: str, name: str, address: dict, phone: str) -> dict:
+    def create_customer(
+        self, key: str, name: str, address: dict, phone: str, contact_name: str | None = None
+    ) -> dict:
+        """contact_name is the person the phone belongs to when it isn't the account holder (a
+        caller booking a parent's house): ServiceTitan keeps who a number reaches in its memo."""
         place = self._address(address)
         body = {
             "name": name,
             "type": "Residential",
             "address": place,
             "locations": [{"name": place["street"], "address": place}],
-            "contacts": [{"type": "MobilePhone", "value": phone, "memo": name}],
+            "contacts": [{"type": "MobilePhone", "value": phone, "memo": contact_name or name}],
         }
         return self._call("POST", "crm", "customers", "create_customer", json=body)
 
