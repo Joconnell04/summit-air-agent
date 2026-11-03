@@ -20,7 +20,7 @@ Lane sessions are linked from the coordinating session; each has its own worktre
 
 1. Eval co-authoring round 3 of 3, `evals/rounds/03-judge-labels.md` (ready): mark 10 transcripts pass or fail with a line why.
 2. The 10 live calls in `evals/live-calls.md` to (646) 624-0418 (#9), after the round 2 changes and the endpointing change are deployed.
-3. Done: Jackson said yes to a Supabase storage bucket for recordings. Setup: a private bucket in his Supabase project plus an S3 access key from Storage settings (the key is created in the dashboard; put the five `RECORDING_S3_*` values in the server `.env` only). Keep the call database on SQLite for now (see the chat note on the database setup); revisit Postgres only if calls outgrow one server.
+3. Recordings storage: Supabase project `summit-air` (ref `zrcfodooibsxvnuxeylp`, org LeaperDev, us-east-1, free plan) has a private `recordings` bucket. Missing: an S3 access key. The Supabase access token in the Keychain (`supabase-access-token`) can read projects but is refused for secrets and project creation, so create the key in the dashboard (Project Settings, Storage, S3 access keys), then put the five `RECORDING_S3_*` values in the server `.env` only (endpoint `https://zrcfodooibsxvnuxeylp.storage.supabase.co/storage/v1/s3`, region `us-east-1`, bucket `recordings`). Call data stays in SQLite on the server.
 
 ## After everything merges
 
