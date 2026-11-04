@@ -390,6 +390,13 @@ def build() -> dict:
             call="known_call_id",
         ),
         tool(
+            "record_move",
+            "A move nobody said they made",
+            {},
+            refused("move_not_said"),
+            call="known_call_id",
+        ),
+        tool(
             "flag_person",
             "Flag a person with a callback time",
             {
@@ -523,6 +530,14 @@ def build() -> dict:
             "Report an outbound call that was never claimed",
             "POST",
             "outbound/{{outbound_id}}/done",
+            body={"answered": False},
+            check=refused("invalid_state"),
+            pre="pm.collectionVariables.set('outbound_id', '999999');",
+        ),
+        item(
+            "Report a heads-up call that was never claimed",
+            "POST",
+            "outbound/heads-up/{{outbound_id}}/done",
             body={"answered": False},
             check=refused("invalid_state"),
             pre="pm.collectionVariables.set('outbound_id', '999999');",

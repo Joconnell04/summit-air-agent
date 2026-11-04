@@ -145,9 +145,11 @@ def test_the_call_note_never_calls_an_ended_visit_upcoming(agent, clock, scenari
 
 
 def test_find_customer_marks_an_ended_window_too(agent, clock, scenarios):
+    """The caller's own number, so the window isn't withheld (issue #128)."""
     clock.advance(hours=AFTER)
-    call = agent.start(UNKNOWN)["data"]["call_id"]
-    found = agent.tool("find_customer", call, phone=scenarios["repeatCallerOpenJob"]["phone"])
+    phone = scenarios["repeatCallerOpenJob"]["phone"]
+    call = agent.start(phone)["data"]["call_id"]
+    found = agent.tool("find_customer", call, phone=phone)
     assert found["data"]["matches"][0]["open_jobs"][0]["window"]["passed"] is True
 
 

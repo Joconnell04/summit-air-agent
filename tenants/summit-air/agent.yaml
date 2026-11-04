@@ -430,6 +430,50 @@ lines:
   visit_passed: >-
     I see a visit there that was due {day} between {between}, and it's still open on our end. Did
     the technician make it out?
+  # A number that matched more than one account, when the address doesn't say which (issue #128).
+  account_which: I see more than one account on this number. Whose name should the visit go under?
+  # The read-back when the number reaches someone else ("call my daughter at ..."). {who} is how
+  # the caller named them.
+  read_back_for: I have your home at {address}, and the number to reach {who} is {phone}, is that right?
+  # Before a change from a number that isn't on the account (issue #128). {thing} is "visit" or
+  # "account". The caller says the details; the agent never reads them out.
+  identity_check: >-
+    Of course. And just to confirm you're the person for the {thing}, could you tell me your name
+    and the address?
+  identity_check_name_only: >-
+    Of course. And just to confirm you're the person for the {thing}, what name is it under?
+  identity_check_address_only: >-
+    Of course. And just to confirm you're the person for the {thing}, could you tell me the address?
+  identity_check_address: Thanks. And what's the address?
+  identity_check_name: Thanks. And what's the name on the {thing}?
+  identity_check_again: >-
+    Sorry, I didn't catch that. Could you tell me your name and the address for the {thing}?
+  identity_mismatch: >-
+    I'm sorry, I'm not able to make that change from this number. I can have someone from our
+    office call the number we have on file for it. Would that help?
+  flag_stored_on_file: I've let our team know, and someone will call the number we have on file {when}.
+  # A caller who moved (tools.record_move). {street} is the new street and unit.
+  move_which: Which address did you move from?
+  move_done: Thanks for letting us know. I've updated your address to {street}.
+  move_visit_moved: Your upcoming visit is now set for the new address, same day and time.
+  move_visit_moved_when: Your visit {when} is now set for the new address, same time.
+  move_out_of_area: >-
+    Thanks for letting us know. I'm sorry, the new address is outside the area we cover, so we
+    won't be able to come out there, and I've made a note on your account.
+  move_visit_cancelled: >-
+    I've also cancelled the visit you had at the old address, so nobody heads there.
+  move_visit_person: >-
+    A technician is already on the way to the old address, so someone from our office will call
+    you to sort that out.
+  # The heads-up call to the number on file after a change from another number (app/heads_up.py),
+  # said once, also as the voicemail. {change} is what happened; {phone} is our number, read out.
+  heads_up: >-
+    This is Summit Air. {change} by a caller from another number. If that wasn't you, please call
+    us back at {phone}.
+  moved_from_address: Our records show you've moved from that address. Where should the technician go?
+  location_superseded: >-
+    That visit is still set for your old address, so let me have someone from our office sort it
+    out with you.
   # Added to the booking sentence for a return visit soon after a job at the same address.
   return_visit_review: >-
     Since we were just out there, a manager will look over this visit, including whether it's

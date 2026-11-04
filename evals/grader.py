@@ -34,8 +34,8 @@ class Grade:
 
 # Tools whose sentence tells the caller what was set up: a visit, a change, a callback, a lead.
 SETS_UP = (
-    "book_appointment", "reschedule_appointment", "cancel_appointment", "flag_person",
-    "record_lead", "mark_do_not_call",
+    "book_appointment", "reschedule_appointment", "cancel_appointment", "record_move",
+    "flag_person", "record_lead", "mark_do_not_call",
 )
 
 

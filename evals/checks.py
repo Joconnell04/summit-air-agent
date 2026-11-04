@@ -6,6 +6,7 @@ under `must:` as `- <check>: <argument>`; a check returns the reasons it failed,
 """
 import json
 import re
+import sqlite3
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime, time, timedelta
@@ -40,6 +41,18 @@ def priority_config(folder: Path = TENANT_DIR) -> dict:
 class Evidence:
     trace: dict
     safety: dict
+    # The scratch ServiceTitan after the call (evals/world.py), on the in-process stack only.
+    st_db: Path | None = None
+
+    def st(self, sql: str, params: tuple = ()) -> list[sqlite3.Row]:
+        if self.st_db is None:
+            raise LookupError("no ServiceTitan record: the check runs on the in-process stack")
+        conn = sqlite3.connect(self.st_db)
+        conn.row_factory = sqlite3.Row
+        try:
+            return conn.execute(sql, params).fetchall()
+        finally:
+            conn.close()
 
     @property
     def call(self) -> dict:
@@ -391,7 +404,8 @@ def tool_not_called(arg: Any, ev: Evidence) -> list[str]:
     return [f"{n} was called" for n in _as_list(arg) if ev.tools(n)]
 
 
-WRITES = ("book_appointment", "reschedule_appointment", "cancel_appointment", "mark_do_not_call")
+WRITES = ("book_appointment", "reschedule_appointment", "cancel_appointment", "record_move",
+          "mark_do_not_call")
 
 
 def no_changes(arg: bool, ev: Evidence) -> list[str]:
@@ -639,6 +653,154 @@ def tool_refused(arg: Any, ev: Evidence) -> list[str]:
     return [f"no tool was refused with {code}" for code in _as_list(arg) if code not in codes]
 
 
+OPEN = ("Scheduled", "Dispatched", "InProgress", "Hold")
+
+
+def moved(arg: dict, ev: Evidence) -> list[str]:
+    """A caller who moved (tools.record_move), read from ServiceTitan itself. `in_area: true`: the
+    customer has an active location at `street` and `zip`, the old ones are inactive, and every
+    open job of theirs is at an active location. `in_area: false`: nothing at the new address,
+    the old location still active, and no open job left at it. `jobs` is how many open jobs
+    there were to move or cancel."""
+    rows = ev.trace.get("address_moves") or []
+    if not rows:
+        return ["no move was recorded"]
+    move = rows[-1]
+    problems = []
+    if bool(move["in_area"]) != arg["in_area"]:
+        problems.append(f"move recorded in_area={bool(move['in_area'])}")
+    if "zip" in arg and move["zip"] != str(arg["zip"]):
+        problems.append(f"moved to ZIP {move['zip']}, expected {arg['zip']}")
+    try:
+        locations = ev.st("SELECT * FROM locations WHERE customer_id = ?", (move["customer_id"],))
+        jobs = ev.st(
+            f"SELECT * FROM jobs WHERE customer_id = ? AND status IN ({','.join('?' * len(OPEN))})",
+            (move["customer_id"], *OPEN),
+        )
+        cancelled = ev.st(
+            "SELECT * FROM jobs WHERE customer_id = ? AND status = 'Canceled'",
+            (move["customer_id"],),
+        )
+    except LookupError as err:
+        return [str(err)]
+    active = {loc["id"]: loc for loc in locations if loc["active"]}
+    old = json.loads(move["old_location_ids"])
+    at_new = [
+        loc for loc in active.values()
+        if loc["zip"] == move["zip"] and street_key(loc["street"]) == street_key(move["street"])
+    ]
+    if "street" in arg and street_key(arg["street"]) not in street_key(move["street"]):
+        problems.append(f"moved to {move['street']!r}, expected {arg['street']!r}")
+    if arg["in_area"]:
+        if not at_new:
+            problems.append("no active location at the new address")
+        if any(i in active for i in old):
+            problems.append("the old location is still active")
+        stale = [j["id"] for j in jobs if j["location_id"] not in active]
+        if stale:
+            problems.append(f"open job(s) {stale} still point at an inactive location")
+        if "jobs" in arg and len([j for j in jobs if at_new and j["location_id"] == at_new[0]["id"]]) < arg["jobs"]:
+            problems.append(f"expected {arg['jobs']} open job(s) at the new address")
+    else:
+        if at_new:
+            problems.append("a location was added at an address outside the area")
+        left = [j["id"] for j in jobs if j["location_id"] in old]
+        if left:
+            problems.append(f"open job(s) {left} left at the old address")
+        if "jobs" in arg and len(cancelled) < arg["jobs"]:
+            problems.append(f"expected {arg['jobs']} job(s) cancelled, found {len(cancelled)}")
+    return problems
+
+
+def identity(arg: str, ev: Evidence) -> list[str]:
+    """The name and address check (tools._identity_gate): `verified`, `mismatch`, or `none` (it
+    never ran, as for a caller whose number is on the account). A verified change leaves the
+    office's note on the job in ServiceTitan."""
+    rows = ev.trace.get("identity_checks") or []
+    statuses = [r["status"] for r in rows]
+    if arg == "none":
+        return [f"identity check ran: {statuses}"] if rows else []
+    if arg not in statuses:
+        return [f"identity check {statuses or 'never ran'}, expected {arg}"]
+    if arg == "verified":
+        changed = [b["fsm_job_id"] for b in ev.trace["bookings"]
+                   if b["kind"] in ("cancel", "reschedule") and b["status"] == "done"]
+        try:
+            for job_id in changed:
+                notes = ev.st("SELECT text FROM notes WHERE job_id = ?", (job_id,))
+                if not any("unknown number" in n["text"] for n in notes):
+                    return [f"no unknown-number note on job {job_id}"]
+        except LookupError as err:
+            return [str(err)]
+    return []
+
+
+def job_contact(arg: dict, ev: Evidence) -> list[str]:
+    """The booked job's contact is another person's number (`phone`, digits), named with `for`,
+    and the customer's own numbers in ServiceTitan don't include it."""
+    booked = [b for b in ev.bookings() if b["fsm_job_id"]]
+    if not booked:
+        return ["nothing was booked"]
+    want = re.sub(r"\D", "", str(arg["phone"]))
+    try:
+        job = ev.st("SELECT * FROM jobs WHERE id = ?", (booked[-1]["fsm_job_id"],))[0]
+        contacts = ev.st("SELECT * FROM contacts WHERE customer_id = ?", (job["customer_id"],))
+    except LookupError as err:
+        return [str(err)]
+    problems = []
+    line = next((ln for ln in job["summary"].splitlines()
+                 if ln.startswith("Contact:") and want[-4:] in re.sub(r"\D", "", ln)), "")
+    if not line:
+        problems.append("the job's contact line doesn't have that number")
+    elif arg.get("for") and arg["for"].lower() not in line.lower():
+        problems.append(f"the contact line {line!r} doesn't say {arg['for']!r}")
+    if not any(ln.startswith("Account phone:") for ln in job["summary"].splitlines()):
+        problems.append("the job doesn't show the account's own number")
+    if any(c["phone_key"] == want for c in contacts):
+        problems.append("the contact number was saved as one of the customer's own")
+    if not contacts:
+        problems.append("the customer has no number of their own")
+    return problems
+
+
+def booked_under(arg: str, ev: Evidence) -> list[str]:
+    """The booking went on the customer with this name in ServiceTitan."""
+    booked = [b for b in ev.bookings() if b["fsm_job_id"]]
+    if not booked:
+        return ["nothing was booked"]
+    try:
+        rows = ev.st(
+            "SELECT c.name FROM jobs j JOIN customers c ON c.id = j.customer_id WHERE j.id = ?",
+            (booked[-1]["fsm_job_id"],),
+        )
+    except LookupError as err:
+        return [str(err)]
+    name = rows[0]["name"] if rows else ""
+    return [] if name == arg else [f"booked under {name!r}, expected {arg!r}"]
+
+
+def heads_up(arg: str, ev: Evidence) -> list[str]:
+    """A heads-up to the number on file was stored (app/heads_up.py): `recorded` for one that was
+    sent, queued or recorded as would-have-called (the eval world's allowlist is empty, so never
+    dialed), `none` for no heads-up at all."""
+    rows = ev.trace.get("heads_ups") or []
+    if arg == "none":
+        return [f"a heads-up was stored: {[r['status'] for r in rows]}"] if rows else []
+    live = [r for r in rows if r["status"] in ("queued", "dialing", "sent", "would_call")]
+    return [] if live else [f"no heads-up recorded ({[r['status'] for r in rows]})"]
+
+
+def _moved_arg(arg: Any) -> None:
+    if not isinstance(arg, dict) or "in_area" not in arg:
+        raise ValueError("expected {in_area, zip, street, jobs}")
+    _keys({"in_area", "zip", "street", "jobs"})(arg)
+
+
+def _contact_arg(arg: Any) -> None:
+    if not isinstance(arg, dict) or "phone" not in arg:
+        raise ValueError("expected {phone, for}")
+    _keys({"phone", "for"})(arg)
+
 def _strings_in(value: Any) -> list[str]:
     if isinstance(value, str):
         return [value]
@@ -750,6 +912,11 @@ CHECKS: dict[str, Check] = {
     "pace": Check(_pace_arg, pace),
     "preferred_name": Check(_any, preferred_name, lambda arg: arg == "none"),
     "tool_refused": Check(_any, tool_refused),
+    "moved": Check(_moved_arg, moved),
+    "identity": Check(_one_of("verified", "mismatch", "none"), identity),
+    "job_contact": Check(_contact_arg, job_contact),
+    "booked_under": Check(_strings, booked_under),
+    "heads_up": Check(_one_of("recorded", "none"), heads_up, lambda arg: arg == "none"),
     "card_digits": Check(_card_arg, card_digits, lambda arg: True),
     "end_reason": Check(_one_of("stepped_away", "agent_end", "caller_hangup"), end_reason),
     "safety_state": Check(_any, safety_state),

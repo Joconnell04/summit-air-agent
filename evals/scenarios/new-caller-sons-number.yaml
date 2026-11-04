@@ -1,0 +1,27 @@
+id: new-caller-sons-number
+flow: [booking]
+difficulty: easy
+journeys: [J1, spine]
+spec: [S-13]
+tags: [standard, caller-changes]
+caller_id: "(929) 555-0123"
+persona: Rita Moss, a first-time caller whose heat stopped this morning. She'll be out, so her son Leo will be at the house and should be called. Calm and clear.
+hidden_facts:
+  name: Rita Moss
+  address: 112 Union Street, Brooklyn, 11231
+  phone: your own is the one you're calling from; for this visit, call your son Leo at 917 555 0123
+  problem: no heat since this morning, the radiators are cold; about 64 F inside
+  system: gas boiler, about 15 years old
+  who_home: Leo, your adult son, will be home and can approve the work
+opening: Hi, my heat went out this morning. My son Leo will be there, so please call him for this visit.
+script:
+  - Give the address with the ZIP when asked.
+  - Give Leo's number, 917 555 0123, when asked for the best number, and say it's your son Leo's.
+  - Answer yes to a correct read-back.
+  - Take the first window offered. Say goodbye once the agent confirms.
+must:
+  - booking: {count: 1, job_type: no_heat, zip: "11231"}
+  - read_back: before_booking
+  - job_contact: {phone: "9175550123", for: "Leo"}
+should:
+  - Reads back Leo's number as the number to reach Leo.

@@ -70,6 +70,8 @@ class Harness:
                       weather=scenario.weather)
         if scenario.earlier_call:
             world.earlier_call(f"{call_id}-earlier", caller_id, scenario.earlier_call)
+        # So the checks can read what ServiceTitan holds after the call (evals/checks.py).
+        world.server.st_db = world.st_db
         agent = InProcessAgent(world.server, self.models.agent, call_id, caller_id, world.clock,
                                handoff=scenario.transfer or "sent")
         return agent, world.server
@@ -170,7 +172,7 @@ def score(scenario, sample, call_id, server, transcript, timings, usage, error, 
                 ToolCall(name=e["tool"], arguments=e["args"])
                 for e in trace["events"] if e["type"] == "tool" and e["tool"] in TOOLS
             ]
-            evidence = Evidence(trace, safety)
+            evidence = Evidence(trace, safety, getattr(server, "st_db", None))
             done = set_up(trace, safety)
             if not error.startswith("harness"):
                 failures = run_checks(scenario.must, evidence)

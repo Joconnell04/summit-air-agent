@@ -6,12 +6,17 @@ stale hash (prompts, those scenarios or the model profiles changed since the run
 than `min_eval_scenarios`, a must-pass case the run's suite selects that is missing, errored or
 failed, or a pass rate under `min_eval_pass_rate`.
 
+A stale hash on its own is a warning, not a failure: every change to prompts or scenarios makes the
+reference stale until the next paid run, and one run per batch of merges sets the new reference
+(DECISIONS.md 086). `--strict` fails on it too, for a release gate (`make release-check`).
+
 Run with --update to raise the test baseline after adding tests, and with
 --adopt evals/results/<run>.json to make a paid run the eval reference.
 """
 
 import json
 import math
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -64,8 +69,8 @@ def must_pass_gaps(run, scenarios=None) -> list[str]:
     return problems
 
 
-def check_eval(baseline: dict, root: Path = ROOT, current_hash=None, scenarios=None
-               ) -> tuple[bool, str]:
+def check_eval(baseline: dict, root: Path = ROOT, current_hash=None, scenarios=None,
+               allow_stale: bool = False) -> tuple[bool, str]:
     from evals.results import ResultsError, load
 
     reference = baseline.get("eval_results")
@@ -86,20 +91,25 @@ def check_eval(baseline: dict, root: Path = ROOT, current_hash=None, scenarios=N
         fresh = current_hash(run)
     except (OSError, KeyError) as err:
         fresh = f"unreadable ({err})"
-    if fresh != run.hash:
-        problems.append(
-            f"{reference} is stale: its prompts, scenarios or profile changed; rerun the suite"
-        )
+    stale = f"{reference} is stale: its prompts, scenarios or profile changed; rerun the suite"
+    if fresh != run.hash and not allow_stale:
+        problems.append(stale)
     floor = baseline.get("min_eval_scenarios") or 0
     if len(run.scenarios) < floor:
         problems.append(f"{len(run.scenarios)} scenarios, fewer than the floor of {floor}")
-    problems += must_pass_gaps(run, scenarios)
+    gaps = must_pass_gaps(run, scenarios)
+    if fresh != run.hash and allow_stale:
+        # A must-pass scenario added since the reference run can't be in it; the next run covers it.
+        gaps = [g for g in gaps if not g.startswith("must-pass case missing:")]
+    problems += gaps
     rate, min_rate = run.pass_rate(), baseline.get("min_eval_pass_rate")
     if min_rate is not None and (rate is None or rate < min_rate):
         shown = "none" if rate is None else f"{rate:.0%}"
         problems.append(f"pass rate {shown} is under the floor of {min_rate:.0%}")
     if problems:
         return False, "eval floor: " + "; ".join(problems)
+    if fresh != run.hash:
+        return True, f"eval floor: warning: {stale}"
     return True, f"eval floor: {reference} ({len(run.scenarios)} scenarios, hash current)"
 
 
@@ -151,8 +161,10 @@ def main() -> int:
         return 0
     ok, msg = check(count, baseline)
     print(("ok: " if ok else "ratchet: ") + msg)
-    eval_ok, eval_msg = check_eval(baseline)
+    eval_ok, eval_msg = check_eval(baseline, allow_stale="--strict" not in sys.argv)
     print(("ok: " if eval_ok else "ratchet: ") + eval_msg)
+    if eval_ok and "warning:" in eval_msg and os.environ.get("GITHUB_ACTIONS"):
+        print(f"::warning title=Eval reference stale::{eval_msg}")
     return 0 if ok and eval_ok else 1
 
 

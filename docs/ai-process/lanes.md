@@ -8,12 +8,16 @@ issue backfilled (the issue body says so).
 
 | Issue | Lane | Pull requests | Decisions |
 |---|---|---|---|
-| | none | | |
+| [#129](https://github.com/Joconnell04/summit-air-agent/issues/129) | Booking flow: corrections after read-back, expired windows, two jobs, services we don't do, a requested technician | none yet |  |
+| [#133](https://github.com/Joconnell04/summit-air-agent/issues/133) | Retell Conversation Flow version of the agent, on the same evals | none yet |  |
 
 ## Done, newest first
 
 | Issue | Lane | Pull requests | Decisions |
 |---|---|---|---|
+| [#130](https://github.com/Joconnell04/summit-air-agent/issues/130) | Call handling: card numbers, dead air, electrical and water hazards | see issue |  |
+| [#128](https://github.com/Joconnell04/summit-air-agent/issues/128) | Caller changes: moved address, identity check, another contact number, two accounts | see issue |  |
+| [#127](https://github.com/Joconnell04/summit-air-agent/issues/127) | Booking gaps: correction after read-back, expired windows, two accounts, business phrasings | see issue |  |
 | [#124](https://github.com/Joconnell04/summit-air-agent/issues/124) | Priority rises only on the caller's own words; arguing for a higher priority | see issue |  |
 | [#122](https://github.com/Joconnell04/summit-air-agent/issues/122) | Ears test: Cartesia Ink-2 against Deepgram Nova-3 | see issue |  |
 | [#120](https://github.com/Joconnell04/summit-air-agent/issues/120) | Address lookup, preferred names, five easy scenarios | see issue |  |

@@ -32,7 +32,16 @@ def job_summary(request: dict) -> str:
         f"Issue: {details['issue']}",
         f"Since: {details['since']}",
         f"Address: {place}, {address['zip']}",
-        f"Contact: {phone_display(request['phone'])}",
+    ]
+    # A number for someone else ("call my daughter at ..."): the job's contact, with the account's
+    # own number beside it, so the technician knows whom each one reaches (issue #128).
+    if request.get("contact_for"):
+        lines.append(f"Contact: {request['contact_for']}, {phone_display(request['phone'])}")
+        if request.get("account_phone"):
+            lines.append(f"Account phone: {phone_display(request['account_phone'])}")
+    else:
+        lines.append(f"Contact: {phone_display(request['phone'])}")
+    lines += [
         f"System: {details.get('system_type') or 'not known'}",
         f"Tried: {details['tried']}",
         f"Home: {details['who_home']}",
@@ -53,6 +62,26 @@ def job_summary(request: dict) -> str:
     return "\n".join(lines)
 
 
+def check_live(fsm: FsmAdapter, location_id: int) -> None:
+    """A job goes to a location only while it is active. One the customer moved out of is
+    inactive (tools.record_move), so nothing is booked or moved to the old address."""
+    if not fsm.location(location_id).get("active", True):
+        raise FsmRejected(409, "location_superseded", f"Location {location_id} is inactive.")
+
+
+def _superseded(fsm: FsmAdapter, request: dict) -> None:
+    """The address is one a customer matched on the call moved out of. A booking queued before
+    the move, or a model that books the old address, stops here instead of making a new location
+    there."""
+    address = request["address"]
+    for customer_id in request["scoped_customer_ids"]:
+        for location in fsm.locations(customer_id, include_inactive=True):
+            if not location.get("active", True) and same_address(location, address):
+                raise FsmRejected(
+                    409, "location_superseded", f"Location {location['id']} is inactive."
+                )
+
+
 def _customer_and_location(fsm: FsmAdapter, tenant: Tenant, request: dict, key: str):
     """The customer and location to book: an address already on file for a customer matched on the
     call, then the same address anywhere in the FSM, then a new location or a new customer."""
@@ -61,6 +90,7 @@ def _customer_and_location(fsm: FsmAdapter, tenant: Tenant, request: dict, key: 
         for location in fsm.locations(customer_id):
             if same_address(location, address):
                 return fsm.customer(customer_id), location["id"]
+    _superseded(fsm, request)
     on_file = [
         loc
         for loc in fsm.locations_by_address(address["street"], address["zip"], address.get("unit"))
@@ -75,13 +105,17 @@ def _customer_and_location(fsm: FsmAdapter, tenant: Tenant, request: dict, key: 
         customer = fsm.customer(request["scoped_customer_ids"][0])
         location = fsm.create_location(f"{key}:location", customer["id"], fsm_address)
         return customer, location["id"]
-    created = fsm.create_customer(
-        f"{key}:customer",
-        request["details"]["name"],
-        fsm_address,
-        request["phone"],
-        request.get("contact_name"),
-    )
+    # When the visit's number reaches someone else, a new customer's own number is the one they
+    # called from, and the other number stays the job's contact. With no caller ID it is the only
+    # number there is, kept with whom it reaches.
+    phone, memo = request["phone"], request.get("contact_name")
+    if request.get("contact_for"):
+        if request.get("account_phone"):
+            phone = request["account_phone"]
+        else:
+            memo = memo or request["contact_for"]
+    created = fsm.create_customer(f"{key}:customer", request["details"]["name"], fsm_address,
+                                  phone, memo)
     return created, created["locations"][0]["id"]
 
 

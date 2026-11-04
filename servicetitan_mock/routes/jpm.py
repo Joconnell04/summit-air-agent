@@ -49,6 +49,14 @@ class CancelIn(BaseModel):
     memo: str
 
 
+class JobUpdate(BaseModel):
+    """A partial update, as ServiceTitan's PATCH jobs/{id} takes. The mock applies only these two;
+    the real endpoint takes more fields."""
+
+    locationId: int | None = None
+    summary: str | None = None
+
+
 class JobNoteIn(BaseModel):
     text: str = Field(min_length=1, max_length=2000)
     pinToTop: bool | None = None
@@ -540,6 +548,60 @@ def cancel_job(
         )
         _history(c, job_id, now, "JobCanceled", body.memo or "Job cancelled.")
         return 200, {}
+
+    return write(
+        conn,
+        run,
+        idem_key=idempotency_key,
+        route=_route(request),
+        body={"job": job_id, **body.model_dump()},
+    )
+
+
+@router.patch("/jobs/{job_id}")
+def update_job(
+    job_id: int,
+    body: JobUpdate,
+    request: Request,
+    conn: sqlite3.Connection = Depends(get_conn),
+    now: datetime = Depends(get_now),
+    idempotency_key: str | None = Header(None),
+):
+    """Change a job's location or summary. The new location must be an active one of the job's
+    customer, and a closed job can't change."""
+
+    def run(c: sqlite3.Connection):
+        job = _one(c, "jobs", job_id, "Job")
+        if job["status"] in ("Completed", "Canceled"):
+            raise ApiError(409, "invalid_state", f"A {job['status']} job cannot be changed.")
+        stamp = iso(now)
+        if body.locationId is not None and body.locationId != job["location_id"]:
+            location = c.execute(
+                "SELECT * FROM locations WHERE id = ? AND customer_id = ?",
+                (body.locationId, job["customer_id"]),
+            ).fetchone()
+            if not location or not location["active"]:
+                raise ApiError(
+                    422,
+                    "unknown_reference",
+                    f"Location {body.locationId} is not an active location of customer "
+                    f"{job['customer_id']}.",
+                    {"locationId": "unknown or inactive"},
+                )
+            c.execute(
+                "UPDATE jobs SET location_id = ?, modified_on = ? WHERE id = ?",
+                (body.locationId, stamp, job_id),
+            )
+            _history(
+                c, job_id, now, "LocationChanged",
+                f"Location changed from {job['location_id']} to {body.locationId}.",
+            )
+        if body.summary is not None:
+            c.execute(
+                "UPDATE jobs SET summary = ?, modified_on = ? WHERE id = ?",
+                (body.summary, stamp, job_id),
+            )
+        return 200, shape_job(c, _one(c, "jobs", job_id, "Job"))
 
     return write(
         conn,
