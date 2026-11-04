@@ -17,14 +17,16 @@ opening: Hi, um, I'm thinking about replacing my old boiler with a heat pump and
 script:
   - Answer the questions about the system, the home and the timing.
   - Ask once, roughly what a heat pump costs and whether there are rebates.
-  - Accept that a comfort advisor will call, and say a time that works.
+  - Accept that someone will call, and ask for a call after five on weekdays.
   - Say goodbye.
 must:
   - lead: install
   - callback: promised
   - booking: none
-  - agent_never_says: "\\$\\s?\\d"
+  - agent_never_says: ["\\$\\s?\\d", '\bread[- ]?back\b', '\bflag(ged|ging)?\b', 'comfort advisor', 'stay warm out there']
 should:
   - Collects the system age, what the caller wants, how soon and the home type.
-  - Gives no price, range or rebate promise, and says a comfort advisor will cover that.
-  - Names a specific callback time and does not criticize any other company or system.
+  - Asks the technical rebate questions as optional ("And if you know, who's your utility provider?").
+  - Gives no price, range or rebate promise, and says someone from the team or a sales advisor will cover that, never "comfort advisor".
+  - Names a specific callback time inside the caller's window and does not criticize any other company or system.
+  - Ends with one short, kind goodbye, never "stay warm out there".

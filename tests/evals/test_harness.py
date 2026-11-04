@@ -159,7 +159,7 @@ def test_safety_lines_come_from_the_server_not_the_model(seed_dir, tmp_path):
 
 
 def test_a_tool_call_reaches_the_server_and_is_recorded(seed_dir, tmp_path):
-    s = scenario(must=[{"tool_ok": "check_service_area"}])
+    s = scenario(must=[{"tool_ok": "check_service_area"}], opening="Hi, my heat is out in 11231.")
     replies = [use("check_service_area", "Let me check.", zip="11231"),
                say("Good news, we cover your area.")]
     result, *_ = run(seed_dir, tmp_path, s, replies, [say("[END]")])
@@ -171,7 +171,8 @@ def test_a_tool_call_reaches_the_server_and_is_recorded(seed_dir, tmp_path):
 
 
 def test_an_out_of_area_refusal_is_recorded_by_zip(seed_dir, tmp_path):
-    s = scenario(must=[{"out_of_area": "11501"}, {"booking": "none"}])
+    s = scenario(must=[{"out_of_area": "11501"}, {"booking": "none"}],
+                 opening="Hi, my heat is out, I'm in 11501.")
     replies = [use("check_service_area", zip="11501"), say("Sorry, that's outside our area.")]
     result, agent, *_ = run(seed_dir, tmp_path, s, replies, [say("[END]")])
     assert result.outcome == "pass", result.check_failures
@@ -324,3 +325,38 @@ def test_fsm_down_answers_503_only_for_what_it_fails():
     assert booking.request("POST", "/dispatch/v2/tenant/1/capacity") == "passed"
     assert booking.request("POST", "/connect/token") == "passed"
     assert FsmDown(Client(), "all").request("GET", "/crm/v2/tenant/1/customers").status_code == 503
+
+
+DEMAND = "Put me through to a manager right now, this is ridiculous."
+
+
+def handoff_scenario(**overrides) -> Scenario:
+    data = {"opening": DEMAND, "must": [{"handoff": {"role": "office", "status": "handed_off"}}]}
+    return scenario(**{**data, **overrides})
+
+
+def test_a_demand_is_handed_off_by_code_and_the_call_ends_as_a_transfer(seed_dir, tmp_path):
+    """The agent model is never asked: the server decides on the caller's turn and the in-process
+    agent says the line and reports the transfer, as the worker does."""
+    result, agent, _, _ = run(seed_dir, tmp_path, handoff_scenario(transfer="sent"), [], [])
+    assert result.outcome == "pass", result.check_failures
+    assert result.transcript[-1].text == "Transferring you to a person now."
+    assert agent.calls == []
+
+
+def test_a_transfer_that_fails_brings_the_agent_back_with_the_callback_line(seed_dir, tmp_path):
+    s = handoff_scenario(transfer="fails", must=[{"handoff": {"status": "failed"}},
+                                                 {"callback": "promised"}])
+    result, *_ = run(seed_dir, tmp_path, s, [say("Is there anything else?")], [say("[END]")])
+    assert result.outcome == "pass", result.check_failures
+    assert result.transcript[2].text == (
+        "Transferring you to a person now. I couldn't reach anyone just now, so I've let the team "
+        "know and someone will call you by 9:30 AM."
+    )
+
+
+def test_without_transfer_set_the_shells_numbers_are_never_read(seed_dir, tmp_path, monkeypatch):
+    monkeypatch.setenv("TRANSFER_OFFICE_NUMBER", "+12125550100")
+    s = handoff_scenario(must=[{"handoff": {"status": "not_dialed"}}])
+    result, *_ = run(seed_dir, tmp_path, s, [say("Is there anything else?")], [say("[END]")])
+    assert result.outcome == "pass", result.check_failures

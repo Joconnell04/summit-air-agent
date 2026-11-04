@@ -12,6 +12,8 @@ from collections.abc import Callable
 
 from livekit.agents import RunContext, function_tool
 
+from prompts.assemble import SpokenReply, spoken_by_server
+
 from .bridge import Bridge
 from .server import ToolServer
 from .transfer import Transfer
@@ -40,9 +42,11 @@ def make_tool(
     server: ToolServer,
     bridge: Bridge,
     log: ToolLog,
-    hang_up: Callable[[RunContext, object], None],
+    hang_up: Callable[..., None],
     speak: Callable[[str], object],
     transfer: Transfer | None = None,
+    say_parts: Callable[[list[dict]], object] | None = None,
+    reply: SpokenReply | None = None,
 ):
     schema = {k: spec[k] for k in ("name", "description", "parameters")}
 
@@ -53,16 +57,25 @@ def make_tool(
         result = await bridge.run(server.tool(spec["name"], dict(raw_arguments), spec["write"]))
         log.ms += (time.perf_counter() - started) * 1000
         log.bridge = log.bridge or len(bridge.played) > before
+        if reply is not None:
+            reply.tool_done(spec["name"], result)
         ending = spec["name"] == "end_call" and result["ok"]
         spoken = None
-        if result["say"] and (result["refused"] == "gate_safety" or ending):
-            # Safety text (the lines, the check question, the safety sign-off) is spoken by the
-            # worker word for word, never by the model. end_call only carries a sentence on a
-            # safety call.
-            spoken = speak(result["say"])
+        parts = result["data"].get("parts") if result["ok"] else None
+        line = spoken_by_server(spec["name"], result)
+        if parts and say_parts is not None:
+            # A read-back the caller asked to hear slower: the server's sentence in parts, the
+            # address at its own speed (app/pace.py), spoken word for word.
+            spoken = say_parts(parts)
+        elif line:
+            # Safety text (the lines, the check question, the safety sign-off), the read-back
+            # sentence and a booking's confirmation are spoken by the worker word for word, never
+            # by the model. end_call only carries a sentence on a safety call.
+            spoken = speak(line)
         if ending and result["data"].get("hang_up"):
             # The server agreed: hang up once this turn's speech, and any line above, has played.
-            hang_up(context, spoken)
+            # After the safety sign-off the call has had its goodbye, so the worker adds none.
+            hang_up(context, spoken, quiet=bool(result["data"].get("signed_off")))
         # After a person flag the server may put the caller through now, and the worker speaks
         # for the agent from there.
         put_through = spec["name"] == "flag_person" and result["ok"] and transfer is not None
@@ -81,11 +94,17 @@ def build_tools(
     server: ToolServer,
     bridge: Bridge,
     log: ToolLog,
-    hang_up: Callable[[RunContext, object], None],
+    hang_up: Callable[..., None],
     speak: Callable[[str], object],
     transfer: Transfer | None = None,
+    say_parts: Callable[[list[dict]], object] | None = None,
+    reply: SpokenReply | None = None,
 ) -> list:
     """One tool per spec. `hang_up` runs only when the server's end_call result says to; `speak`
     says a line word for word with interruptions off and returns its speech handle; `transfer`,
-    when set, is asked after every person flag."""
-    return [make_tool(spec, server, bridge, log, hang_up, speak, transfer) for spec in specs]
+    when set, is asked after every person flag; `say_parts` speaks a sentence the server split by
+    speed; `reply` hears each result, so the agent knows when to hold the model's text."""
+    return [
+        make_tool(spec, server, bridge, log, hang_up, speak, transfer, say_parts, reply)
+        for spec in specs
+    ]

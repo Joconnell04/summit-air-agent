@@ -266,9 +266,161 @@ def test_the_reply_audio_waits_for_a_bridge_clip_to_finish(monkeypatch):
         async def slow_tool():
             await asyncio.sleep(0.03)
 
+        async def reply():
+            yield "Okay, I found it."
+
         await bridge.run(slow_tool())
-        async for frame in agent.tts_node(None, None):
+        async for frame in agent.tts_node(reply(), None):
             events.append(frame)
 
     asyncio.run(run())
     assert events == ["clip starts", "clip ends", "frame 0", "frame 1"]
+
+
+def test_the_worker_stops_the_recording_when_the_caller_objects(agent, connect):
+    """Two-party consent on: the server reads the objection and the worker stops the recorder."""
+    from app import owner_settings
+
+    conn = agent.db()
+    try:
+        tenant = agent.app.state.services.tenants.default
+        owner_settings.change(conn, tenant, {"two_party_consent": True}, "Pat", agent.clock())
+    finally:
+        conn.close()
+    agent.start(call_id="call-1")
+    call = make_call(connect)
+    stopped = []
+
+    async def stop() -> None:
+        stopped.append(True)
+
+    call.stop_recording = stop
+
+    async def run(text: str) -> None:
+        await call.caller_line(caller(text))
+        await asyncio.sleep(0)
+
+    asyncio.run(run("Please don't record this. The AC is out."))
+    assert stopped == [True]
+    assert call.session.said == [("Okay, I've turned the recording off.", True)]
+    asyncio.run(run("The AC is still out."))
+    assert stopped == [True], "once"
+    assert len(call.session.said) == 1
+# Eval round 3: the caller hears the server's read-back sentence alone, never a lead-in.
+
+
+def _stream(*parts):
+    """A model reply as the LLM node streams it: text, then any tool calls."""
+    from livekit.agents import llm
+
+    async def fake_llm(_agent, _ctx, _tools, _settings):
+        for part in parts:
+            if isinstance(part, str):
+                yield llm.ChatChunk(id="c", delta=llm.ChoiceDelta(content=part))
+            else:
+                name, args = part
+                call = llm.FunctionToolCall(name=name, arguments=json.dumps(args), call_id="t1")
+                yield llm.ChatChunk(id="c", delta=llm.ChoiceDelta(tool_calls=[call]))
+
+    return fake_llm
+
+
+def _heard(monkeypatch, reply_setup, *parts) -> tuple[str, list[str]]:
+    from livekit.agents import llm
+
+    monkeypatch.setattr(Agent.default, "llm_node", _stream(*parts))
+    call = Call(None, None, ToolLog(), ENDPOINTING)
+    reply_setup(call.reply)
+    agent = SummitAgent(call, "", [])
+
+    async def run():
+        text, tools = [], []
+        async for chunk in agent.llm_node(None, [], None):
+            if isinstance(chunk, str):
+                text.append(chunk)
+            elif isinstance(chunk, llm.ChatChunk) and chunk.delta:
+                text.append(chunk.delta.content or "")
+                tools += [t.name for t in chunk.delta.tool_calls]
+        return "".join(text), tools
+
+    text, tools = asyncio.run(run())
+    return text.strip(), tools
+
+
+def _at_booking(reply):
+    reply.tool_done("check_service_area", {"ok": True})
+
+
+def test_a_reply_that_calls_read_back_drops_the_text_before_it(monkeypatch):
+    text, tools = _heard(
+        monkeypatch, _at_booking, "Got it. ", "Let me read that back.", ("read_back", {"phone": "x"})
+    )
+    assert text == ""
+    assert tools == ["read_back"]
+
+
+def test_a_reply_that_calls_another_tool_keeps_its_text(monkeypatch):
+    text, tools = _heard(
+        monkeypatch, _at_booking, "Let me see. ", ("find_slots", {"job_type": "no_heat"})
+    )
+    assert text == "Let me see."
+    assert tools == ["find_slots"]
+
+
+def test_confirming_the_read_back_keeps_the_text(monkeypatch):
+    text, _ = _heard(
+        monkeypatch, _at_booking, "Great.", ("read_back", {"phone": "x", "confirmed": True})
+    )
+    assert text == "Great."
+
+
+def test_before_an_address_is_checked_text_streams_untouched(monkeypatch):
+    text, _ = _heard(monkeypatch, lambda reply: None, "Sure. ", ("read_back", {"phone": "x"}))
+    assert text == "Sure."
+
+
+def test_on_a_safety_call_a_goodbye_before_the_sign_off_is_dropped(monkeypatch):
+    def safety_call(reply):
+        reply.heard({"action": "speak_lines"})
+
+    text, _ = _heard(monkeypatch, safety_call, "Take care. ", ("end_call", {"reason": "x"}))
+    assert text == ""
+    text, _ = _heard(monkeypatch, safety_call, "Okay.")
+    assert text == "Okay."
+
+
+
+def _gave_address(reply):
+    reply.heard(None, "it's three two two one avenue n brooklyn one one two three four")
+    reply.heard(None, "six three one five five five oh one three three")
+
+
+def test_a_read_back_announcement_is_dropped_from_any_reply(monkeypatch):
+    """Eval round 3 run 20261104-024140, two-family-owner-residential: "I'll read back the
+    details" in a reply that called find_slots."""
+    text, _ = _heard(
+        monkeypatch,
+        lambda reply: None,
+        "Thursday afternoon it is. I'll read back the details in a moment. ",
+        "Which window works?",
+        ("find_slots", {"job_type": "tune_up"}),
+    )
+    assert text == "Thursday afternoon it is. Which window works?"
+
+
+def test_a_restated_zip_or_number_is_dropped_and_the_rest_kept(monkeypatch):
+    text, _ = _heard(
+        monkeypatch,
+        _gave_address,
+        "Got it, 3221 Avenue N, Brooklyn, 11234. ",
+        "And the number is 631-555-0133. ",
+        "Is the furnace working right now?",
+    )
+    assert text == "Is the furnace working right now?"
+
+
+def test_a_reply_with_nothing_left_is_silent(monkeypatch):
+    text, _ = _heard(
+        monkeypatch, _gave_address, "Let me read that back. ", "Your ZIP is 11234."
+    )
+    assert text == ""

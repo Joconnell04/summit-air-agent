@@ -73,6 +73,14 @@ def add_scope(
     )
 
 
+def last_caller_line(conn: sqlite3.Connection, call_id: str) -> str:
+    row = conn.execute(
+        "SELECT text FROM turns WHERE call_id = ? AND speaker = 'caller' ORDER BY seq DESC LIMIT 1",
+        (call_id,),
+    ).fetchone()
+    return row["text"] if row else ""
+
+
 def caller_turn_after(conn: sqlite3.Connection, call_id: str, seq: int) -> bool:
     return bool(
         conn.execute(

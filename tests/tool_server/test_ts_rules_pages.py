@@ -6,30 +6,26 @@ from html.parser import HTMLParser
 import pytest
 import yaml
 from test_ts_rules import PATH, PETS, TENANT, publish
-from toolkit import PASSES, ROOT, Agent, make_server
+from toolkit import PASSES, ROOT, Agent, make_server, sign_in
 
-from app import owner_view, plain, rulebook, rules
+from app import bench_rules, plain, rulebook, rules
 
-READ = "owner-token"
-EDIT = "edit-code"
 CSS = (ROOT / "app" / "static" / "owner" / "components.css").read_text()
 
 
 @pytest.fixture
 def agent(tmp_path, clock, mock):
-    app = make_server(tmp_path, clock, mock[0], owner_token=READ, rules_editors=f"Dana={EDIT}")
-    return Agent(app, clock)
+    return Agent(make_server(tmp_path, clock, mock[0]), clock)
 
 
 def reader(agent: Agent) -> Agent:
-    agent.client.get(f"/owner?token={READ}")
-    return agent
+    """Signed in as staff, who can read every page."""
+    return sign_in(agent, "staff", "sam")
 
 
 def editor(agent: Agent) -> Agent:
-    response = agent.client.post("/owner/rules/login", data={"token": EDIT}, follow_redirects=False)
-    assert response.status_code == 303
-    return agent
+    """Signed in as an admin named Dana, who can edit and publish."""
+    return sign_in(agent, "admin", "dana")
 
 
 class Tags(HTMLParser):
@@ -105,7 +101,7 @@ def test_a_config_change_shows_up_by_itself():
 def test_the_prompt_files_are_read_not_copied():
     rows = [r for r in rulebook.rulebook(TENANT) if r.kind == "guidance"]
     titles = {r.title: r.stage for r in rows}
-    assert titles["Read-back before booking"] == "booking"
+    assert titles["Confirm the address and number before booking"] == "booking"
     assert titles["Listen first"] == "opening"
     assert all("{company}" not in r.title + r.detail for r in rows)
 
@@ -119,7 +115,7 @@ def test_live_edits_show_as_the_owners_own_rows():
     assert goodbye.detail == "Thanks for calling. Take care."
 
 
-# ---- The Rules page (read token) ----------------------------------------------------------------
+# ---- The Rules page (any signed-in user) ----------------------------------------------------------------
 
 
 def test_the_rules_page_lists_every_stage_with_locked_and_editable_rules(agent):
@@ -169,26 +165,29 @@ def test_a_version_that_passed_on_a_rerun_says_so(agent):
     assert "Failed, then passed on a rerun: landlord in disguise." in page
 
 
-# ---- The editor (edit login) --------------------------------------------------------------------
+# ---- The editor (admins) --------------------------------------------------------------------
 
 
-def test_the_owner_token_alone_cannot_open_the_editor(agent):
-    page = reader(agent).client.get("/owner/rules/edit")
-    assert page.status_code == 401 and "Edit code" in page.text
+def test_staff_cannot_open_the_editor(agent):
+    page = reader(agent).client.get("/bench/rules")
+    assert page.status_code == 403 and "Admins only" in page.text
 
 
-def test_a_wrong_edit_code_is_refused(agent):
-    page = agent.client.post("/owner/rules/login", data={"token": READ})
-    assert page.status_code == 401 and "didn't work" in page.text
+def test_the_editor_needs_a_sign_in(agent):
+    page = agent.client.get("/bench/rules")
+    assert page.status_code == 401 and 'name="password"' in page.text
 
 
-def test_no_edit_code_set_refuses_every_edit(tmp_path, clock, mock):
-    bare = Agent(make_server(tmp_path, clock, mock[0], owner_token=READ), clock)
-    assert bare.client.post("/owner/rules/login", data={"token": ""}).status_code == 401
+def test_the_editor_is_on_the_bench_and_the_owner_view_only_links_to_it(agent):
+    assert 'href="/bench/rules"' not in reader(agent).client.get("/owner/rules").text
+    page = editor(agent).client.get("/owner/rules").text
+    assert 'href="/bench/rules"' in page and "Edit on the bench" in page
+    for path in ("/owner/rules/edit", "/owner/rules/draft", "/owner/rules/discard"):
+        assert agent.client.get(path).status_code == 404, path
 
 
 def test_the_editor_has_fields_only_for_the_editable_lines(agent):
-    page = editor(agent).client.get("/owner/rules/edit")
+    page = editor(agent).client.get("/bench/rules")
     assert page.status_code == 200
     names = {i.get("name") for i in parse(page.text).inputs}
     lines = {n.removeprefix("line.") for n in names if n and n.startswith("line.")}
@@ -198,9 +197,9 @@ def test_the_editor_has_fields_only_for_the_editable_lines(agent):
     assert stages == set(rules.GUIDANCE_STAGES)
 
 
-def test_saving_a_draft_needs_the_edit_login(agent):
-    response = reader(agent).client.post("/owner/rules/draft", data={"guide.booking.0": PETS})
-    assert response.status_code == 401
+def test_staff_cannot_save_a_draft(agent):
+    response = reader(agent).client.post("/bench/rules/draft", data={"guide.booking.0": PETS})
+    assert response.status_code == 403
     conn = agent.db()
     try:
         assert conn.execute("SELECT COUNT(*) FROM rule_versions").fetchone()[0] == 0
@@ -219,7 +218,7 @@ WHY_GAS = "A gas smell always gets the safety lines, so the agent can't play it 
 ])
 def test_a_forbidden_edit_sent_by_hand_is_refused_on_the_server(agent, field, value, why):
     agent.app.state.services.guidance_check.refuse[GAS] = WHY_GAS
-    response = editor(agent).client.post("/owner/rules/draft", data={field: value, "note": "x"})
+    response = editor(agent).client.post("/bench/rules/draft", data={field: value, "note": "x"})
     assert response.status_code == 422 and why in response.text
     conn = agent.db()
     try:
@@ -230,7 +229,7 @@ def test_a_forbidden_edit_sent_by_hand_is_refused_on_the_server(agent, field, va
 
 def test_the_editor_says_when_the_check_could_not_run(agent):
     agent.app.state.services.guidance_check.down = True
-    response = editor(agent).client.post("/owner/rules/draft", data={"guide.booking.0": PETS})
+    response = editor(agent).client.post("/bench/rules/draft", data={"guide.booking.0": PETS})
     assert response.status_code == 422 and "Couldn&#39;t check this right now" in response.text
     conn = agent.db()
     try:
@@ -241,15 +240,15 @@ def test_the_editor_says_when_the_check_could_not_run(agent):
 
 def test_publish_sends_the_draft_to_the_gate_and_starts_it(agent, monkeypatch):
     started = []
-    monkeypatch.setattr(owner_view.subprocess, "Popen", lambda args, **kw: started.append(args))
+    monkeypatch.setattr(bench_rules.subprocess, "Popen", lambda args, **kw: started.append(args))
     agent.app.state.services.settings.rules_gate = True
     response = editor(agent).client.post(
-        "/owner/rules/draft", data={"guide.booking.0": PETS, "note": "Pets", "publish": "1"},
+        "/bench/rules/draft", data={"guide.booking.0": PETS, "note": "Pets", "publish": "1"},
         follow_redirects=False,
     )
     assert response.status_code == 303
     assert started and started[0][1:3] == ["-m", "evals.gate"]
-    page = agent.client.get("/owner/rules/edit").text
+    page = agent.client.get("/bench/rules").text
     assert "Checking" in page and 'http-equiv="refresh"' in page
     conn = agent.db()
     try:
@@ -261,9 +260,148 @@ def test_publish_sends_the_draft_to_the_gate_and_starts_it(agent, monkeypatch):
 
 def test_publish_without_the_gate_setting_waits_for_a_check(agent, monkeypatch):
     started = []
-    monkeypatch.setattr(owner_view.subprocess, "Popen", lambda args, **kw: started.append(args))
-    editor(agent).client.post("/owner/rules/draft", data={"guide.booking.0": PETS, "publish": "1"})
+    monkeypatch.setattr(bench_rules.subprocess, "Popen", lambda args, **kw: started.append(args))
+    editor(agent).client.post("/bench/rules/draft", data={"guide.booking.0": PETS, "publish": "1"})
     assert started == []
+
+
+def test_override_publishes_at_once_and_records_who_skipped_the_check_and_why(agent, monkeypatch):
+    started = []
+    monkeypatch.setattr(bench_rules.subprocess, "Popen", lambda args, **kw: started.append(args))
+    agent.app.state.services.settings.rules_gate = True
+    response = editor(agent).client.post(
+        "/bench/rules/draft",
+        data={"guide.booking.0": PETS, "note": "Pets", "override": "1", "reason": "Owner asked, call today"},
+        follow_redirects=False,
+    )
+    assert response.status_code == 303
+    assert started == [], "no gate runs on an override"
+    conn = agent.db()
+    try:
+        live = rules.live(conn, TENANT.slug)
+        assert live["content"]["guidance"] == {"booking": [PETS]}
+        assert live["gate"] == {"passed": False, "overridden": True, "by": "Dana",
+                                "at": live["published_at"], "reason": "Owner asked, call today"}
+        logged = conn.execute(
+            "SELECT args_json, gate FROM tool_calls WHERE tool = 'rules.override'").fetchall()
+    finally:
+        conn.close()
+    assert len(logged) == 1 and logged[0]["gate"] == "override"
+    assert '"reason": "Owner asked, call today"' in logged[0]["args_json"]
+    for path in ("/bench/rules", "/owner/rules"):
+        page = agent.client.get(path).text
+        assert "Check skipped" in page, path
+        assert "by Dana: Owner asked, call today" in page, path
+
+
+def test_override_needs_a_reason_and_saves_the_draft_without_publishing(agent):
+    response = editor(agent).client.post(
+        "/bench/rules/draft", data={"guide.booking.0": PETS, "override": "1", "reason": "  "})
+    assert response.status_code == 422 and "Say why the check is being skipped." in response.text
+    conn = agent.db()
+    try:
+        assert rules.live(conn, TENANT.slug) is None
+        assert rules.open_draft(conn, TENANT.slug)["status"] == "draft"
+    finally:
+        conn.close()
+
+
+def test_override_still_runs_the_guidance_check(agent):
+    agent.app.state.services.guidance_check.down = True
+    response = editor(agent).client.post(
+        "/bench/rules/draft", data={"guide.booking.0": PETS, "override": "1", "reason": "Quick fix"})
+    assert response.status_code == 422
+    conn = agent.db()
+    try:
+        assert rules.live(conn, TENANT.slug) is None
+    finally:
+        conn.close()
+
+
+def live_number(agent) -> int | None:
+    conn = agent.db()
+    try:
+        found = rules.live(conn, TENANT.slug)
+        return found["number"] if found else None
+    finally:
+        conn.close()
+
+
+def test_override_is_refused_while_a_check_runs(agent):
+    editor(agent).client.post("/bench/rules/draft", data={"guide.booking.0": PETS, "publish": "1"})
+    response = agent.client.post(
+        "/bench/rules/draft", data={"guide.booking.0": PETS, "override": "1", "reason": "Quick fix"})
+    assert response.status_code == 422
+    assert "A check is running on the last draft" in response.text
+    assert live_number(agent) is None
+
+
+@pytest.mark.parametrize("field, value, why", [
+    ("line.read_back", "Let me read that back: {address}, {phone}. Right?", "read-back is locked"),
+    ("set.priority", "lower", "Priority is locked"),
+])
+def test_override_cannot_carry_a_locked_rule(agent, field, value, why):
+    response = editor(agent).client.post(
+        "/bench/rules/draft",
+        data={"guide.booking.0": PETS, field: value, "override": "1", "reason": "Quick fix"},
+    )
+    assert response.status_code == 422 and why in response.text
+    assert live_number(agent) is None
+
+
+def test_override_of_a_draft_that_matches_live_is_refused(agent):
+    publish(agent, {"guidance": {"booking": [PETS]}})
+    response = editor(agent).client.post(
+        "/bench/rules/draft", data={"guide.booking.0": PETS, "override": "1", "reason": "Again"})
+    assert response.status_code == 422 and "the same as what&#39;s live" in response.text
+    assert live_number(agent) == 1
+
+
+def test_an_override_that_cannot_be_logged_publishes_nothing(agent, monkeypatch):
+    def broken(*args, **kwargs):
+        raise OSError("disk full")
+
+    monkeypatch.setattr(bench_rules.logs, "write", broken)
+    response = editor(agent).client.post(
+        "/bench/rules/draft", data={"guide.booking.0": PETS, "override": "1", "reason": "Quick fix"})
+    assert response.status_code == 503 and "nothing was published" in response.text
+    assert live_number(agent) is None
+    conn = agent.db()
+    try:
+        assert rules.open_draft(conn, TENANT.slug)["status"] == "draft"
+    finally:
+        conn.close()
+
+
+def test_staff_cannot_override(agent):
+    response = reader(agent).client.post(
+        "/bench/rules/draft", data={"guide.booking.0": PETS, "override": "1", "reason": "x"})
+    assert response.status_code == 403
+
+
+def test_a_rollback_to_an_overridden_version_keeps_its_record(agent):
+    editor(agent).client.post(
+        "/bench/rules/draft", data={"guide.booking.0": PETS, "override": "1", "reason": "Quick fix"})
+    agent.clock.advance(minutes=5)
+    publish(agent, {"guidance": {"closing": [PATH]}})
+    agent.client.post("/bench/rules/rollback", data={"number": "1"})
+    conn = agent.db()
+    try:
+        live = rules.live(conn, TENANT.slug)
+        assert live["rollback_of"] == 1 and live["gate"]["overridden"] is True
+    finally:
+        conn.close()
+    row = next(r for r in agent.client.get("/bench/rules").text.split("<tr>")
+               if f'<span class="what">{live["number"]}</span>' in r)
+    assert "Rolled back" in row and "Check skipped" in row
+
+
+def test_enter_in_a_field_saves_the_draft_and_never_discards(agent):
+    editor(agent).client.post("/bench/rules/draft", data={"guide.booking.0": PETS})
+    page = agent.client.get("/bench/rules").text
+    head = page[page.index('<div class="actions">'):page.index("</div>", page.index('<div class="pop-body">'))]
+    first = head.index('<button class="btn" type="submit">Save draft</button>')
+    assert first < head.index(">Discard</button>") and first < head.index(">Publish now</button>")
 
 
 def test_rollback_from_the_editor(agent):
@@ -271,7 +409,7 @@ def test_rollback_from_the_editor(agent):
     agent.clock.advance(minutes=5)
     publish(agent, {"guidance": {"closing": [PATH]}})
     agent.clock.advance(minutes=5)
-    response = editor(agent).client.post("/owner/rules/rollback", data={"number": "1"},
+    response = editor(agent).client.post("/bench/rules/rollback", data={"number": "1"},
                                          follow_redirects=False)
     assert response.status_code == 303
     conn = agent.db()
@@ -280,19 +418,19 @@ def test_rollback_from_the_editor(agent):
         assert live["number"] == 3 and live["content"]["guidance"] == {"booking": [PETS]}
     finally:
         conn.close()
-    page = agent.client.get("/owner/rules/edit").text
+    page = agent.client.get("/bench/rules").text
     assert "Rolled back" in page and page.count(">Roll back</button>") == 3
 
 
 @pytest.mark.parametrize("path, form", [
-    ("/owner/rules/discard", {}),
-    ("/owner/rules/rollback", {"number": "0"}),
-    ("/owner/rules/cancel", {}),
+    ("/bench/rules/discard", {}),
+    ("/bench/rules/rollback", {"number": "0"}),
+    ("/bench/rules/cancel", {}),
 ])
-def test_every_edit_action_needs_the_edit_login(agent, path, form):
+def test_staff_cannot_take_any_edit_action(agent, path, form):
     publish(agent, {"guidance": {"booking": [PETS]}})
     response = reader(agent).client.post(path, data=form)
-    assert response.status_code == 401 and "Edit code" in response.text
+    assert response.status_code == 403 and "Admins only" in response.text
     conn = agent.db()
     try:
         assert rules.live(conn, TENANT.slug)["number"] == 1
@@ -301,10 +439,10 @@ def test_every_edit_action_needs_the_edit_login(agent, path, form):
 
 
 def test_stop_check_returns_the_draft(agent):
-    editor(agent).client.post("/owner/rules/draft", data={"guide.booking.0": PETS, "publish": "1"})
-    page = agent.client.get("/owner/rules/edit").text
+    editor(agent).client.post("/bench/rules/draft", data={"guide.booking.0": PETS, "publish": "1"})
+    page = agent.client.get("/bench/rules").text
     assert ">Stop check</button>" in page
-    agent.client.post("/owner/rules/cancel")
+    agent.client.post("/bench/rules/cancel")
     conn = agent.db()
     try:
         assert rules.open_draft(conn, TENANT.slug)["status"] == "draft"
@@ -313,8 +451,8 @@ def test_stop_check_returns_the_draft(agent):
 
 
 def test_discard_drops_the_draft(agent):
-    editor(agent).client.post("/owner/rules/draft", data={"guide.booking.0": PETS})
-    agent.client.post("/owner/rules/discard")
+    editor(agent).client.post("/bench/rules/draft", data={"guide.booking.0": PETS})
+    agent.client.post("/bench/rules/discard")
     conn = agent.db()
     try:
         assert rules.open_draft(conn, TENANT.slug) is None
@@ -325,7 +463,7 @@ def test_discard_drops_the_draft(agent):
 # ---- Design system ------------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize("path", ["/owner/rules", "/owner/rules/edit"])
+@pytest.mark.parametrize("path", ["/owner/rules", "/bench/rules"])
 def test_the_rules_pages_use_only_design_system_classes(agent, path):
     publish(agent, {"guidance": {"booking": [PETS]}})
     page = editor(reader(agent)).client.get(path).text
@@ -334,7 +472,7 @@ def test_the_rules_pages_use_only_design_system_classes(agent, path):
     assert not undefined, sorted(undefined)
 
 
-@pytest.mark.parametrize("name", ["rules.html", "rules_edit.html", "login.html"])
+@pytest.mark.parametrize("name", ["rules.html", "bench_rules.html", "login.html"])
 def test_the_rules_templates_set_no_style_of_their_own(name):
     text = (ROOT / "app" / "templates" / name).read_text()
     assert "style=" not in text and "<style" not in text

@@ -5,7 +5,7 @@ import re
 import sqlite3
 from datetime import datetime, timedelta
 
-from . import lookup, recordings, records, rules, safety
+from . import lookup, owner_settings, pace, recordings, records, rules, safety, transfer
 from .db import iso, parse_iso, tx
 from .envelope import Result, ok
 from .fsm import FsmAdapter, FsmRejected, FsmUnavailable
@@ -19,11 +19,51 @@ RUN_WORDS = r"(?:i|we) (?:run|manage|operate|work at)"
 OWN_WORDS = r"(?:i|we) own"
 
 
+# Words that end a street or place name. A commercial word right before one is part of a name:
+# "540 Church Ave", "Hotel Street" (spec S-05, PR #88).
+STREET_SUFFIXES = {
+    "ave", "avenue", "st", "street", "rd", "road", "pl", "place", "blvd", "boulevard", "pkwy",
+    "parkway", "ln", "lane", "ct", "court", "dr", "drive", "ter", "terrace",
+}
+# "Plaza" is a business ("it's in a plaza") unless it ends a name ("Grand Army Plaza").
+PLAZA_GENERIC = {"a", "an", "the", "this", "that", "our", "my", "strip", "shopping", "small"}
+NUMBER_WORDS = {"oh", "zero", "one", "two", "three", "four", "five", "six", "seven", "eight",
+                "nine", "ten", "eleven", "twelve", "twenty", "thirty", "forty", "fifty", "sixty",
+                "seventy", "eighty", "ninety", "hundred"}
+
+
+def without_place_names(text: str, business_words: set[str]) -> str:
+    """The line, as words, with those that are part of a street or place name blanked out, so an
+    address is never read as a business: the word before a street word ("Church Ave"), a business
+    word right after a house number ("540 Church"), and "plaza" when it ends a name ("Grand Army
+    Plaza"). Each sentence or comma-separated part is read on its own, so "I run a clinic. Dr.
+    Patel does billing" and "my restaurant, St Marks" keep their business word."""
+    parts = [_place_names(words(part), business_words) for part in re.split(r"[.,;:!?]", text)]
+    return " " + " ".join(p for p in parts if p) + " "
+
+
+def _place_names(text_words: str, business_words: set[str]) -> str:
+    tokens = text_words.split()
+    kept = list(tokens)
+    for i, token in enumerate(tokens):
+        before = tokens[i - 1] if i else None
+        if token in STREET_SUFFIXES and before is not None:
+            kept[i - 1] = "_"
+        if token in business_words and before is not None and (
+            before.isdigit() or before in NUMBER_WORDS
+        ):
+            kept[i] = "_"
+        if token == "plaza" and before is not None and before not in PLAZA_GENERIC:
+            kept[i] = "_"
+    return " ".join(kept)
+
+
 def sounds_commercial(text: str, cfg: dict) -> bool:
     """Does the caller describe a business, with commercial equipment? Homes, apartments, co-ops and
     whole apartment buildings are residential. Best effort by design: the agent and the FSM account
     type catch the rest, and a false positive costs a booking, so the tenant's lists stay narrow."""
-    text_words = words(text)
+    single = {w for w in cfg["phrases"] + cfg["owned"] + cfg["run"] if " " not in w.strip()}
+    text_words = without_place_names(text, single)
     for phrase in cfg["not"]:
         text_words = text_words.replace(words(phrase), " ")
     if any(has_phrase(text_words, p) for p in cfg["phrases"]):
@@ -201,6 +241,17 @@ def start(
             ),
         )
         call = records.get_call(conn, args.call_id)
+        # The owner's settings, read once and kept for the whole call (app/owner_settings.py).
+        values = owner_settings.pin(conn, tenant, args.call_id)
+        pace.start(
+            conn,
+            tenant.pace,
+            tenant.slug,
+            args.call_id,
+            known,
+            previous["id"] if previous else None,
+            now,
+        )
         # A safety call that dropped carries on where it was: if the lines weren't said, they come
         # first on this call too.
         if (
@@ -233,6 +284,13 @@ def start(
             fsm_ok = False
     _record_known_out_of_area(conn, args.call_id, customers, now)
 
+    # With two-party consent on, the caller hears that the call may be recorded before anything
+    # is kept. A call that opens with the safety lines has no greeting to carry the notice, so it
+    # isn't recorded at all.
+    consent = values["two_party_consent"]
+    record_this = recordings.wanted(tenant, values, record) and not (
+        consent and call["safety_state"] == "signal"
+    )
     drops = sum(1 for c in recent if records.dropped(c))
     offer_callback = drops >= tenant.repeat["drops_before_callback_offer"]
     data = {
@@ -251,11 +309,13 @@ def start(
         "knowledge": tenant.knowledge,
         # The owner's live edits, pinned to this call (app/rules.py).
         "house_rules": rules.start_call(conn, tenant, args.call_id, now),
+        # The speed the worker speaks at from the greeting on (app/pace.py).
+        "pace": pace.current(conn, args.call_id),
         "recording": (
-            {"object_key": recordings.object_key(tenant, args.call_id)}
-            if recordings.wanted(tenant, record)
-            else None
+            {"object_key": recordings.object_key(tenant, args.call_id)} if record_this else None
         ),
+        # Said by the voice layer just before the greeting (or a placed call's opening line).
+        "recording_notice": recordings.notice(tenant) if consent else None,
     }
     say = tenant.line("repeated_drops") if offer_callback else ""
     if call["safety_state"] == "signal":
@@ -292,6 +352,7 @@ def turn(
     action = safety.SafetyAction("none", call["safety_kind"])
     changes: dict = {"turn_seq": seq}
     hints = []
+    stop_recording = False
     with tx(conn):
         if args.speaker == "caller":
             heating = cfg.get("heating_check")
@@ -342,14 +403,14 @@ def turn(
                 changes.update(safety_state="checking", safety_kind=action.kind)
             elif action.action == "cleared":
                 changes.update(safety_state="cleared")
-                records.add_flag(
-                    conn,
-                    call["id"],
-                    "safety_check_cleared",
-                    "Caller said no to the safety check",
-                    now,
-                    "Low",
+                reason = (
+                    "Caller said there was no smell or alarm after the safety lines"
+                    if call["safety_state"] == "lines_said"
+                    else "Caller said no to the safety check"
                 )
+                records.add_flag(conn, call["id"], "safety_check_cleared", reason, now, "Low")
+            # The caller asking for a pace, "sorry, what?" twice, or an older caller (app/pace.py).
+            hints += pace.caller_line(conn, tenant.pace, call, args.text, seq, now)
             text_words = words(args.text)
             # Marked at once on the caller's words (spec S-49); the agent still says the line.
             if len(call["caller_key"]) == 10 and any(
@@ -357,6 +418,12 @@ def turn(
             ):
                 records.mark_do_not_call(conn, call, now)
                 hints.append("do_not_call")
+            # A caller who says not to record isn't recorded, whatever the consent setting: the
+            # voice layer is told to stop and to say so, and the jobs loop deletes the file
+            # instead of keeping it.
+            if recordings.objected(args.text) and not recordings.declined(conn, call["id"]):
+                recordings.decline(conn, call["id"], seq, now)
+                stop_recording = True
             # A caller who describes a business can't book, whatever the agent does next (S-05).
             if sounds_commercial(args.text, tenant.commercial):
                 changes["commercial"] = 1
@@ -395,14 +462,93 @@ def turn(
     if action.action in ("speak_lines", "speak_variant", "ask_check"):
         hints.append("journey:safety")
     if action.action == "cleared":
-        hints.append("safety_check_cleared")
+        stood_down = call["safety_state"] == "lines_said"
+        hints.append("safety_stood_down" if stood_down else "safety_check_cleared")
     # After the lines, every caller line carries a reminder that the safety call doesn't book.
     if args.speaker == "caller" and action.action == "none" and call["safety_state"] == "lines_said":
         hints.append("safety_call")
     payload = None
     if action.action != "none":
         payload = {"action": action.action, "kind": action.kind, "text": action.text}
-    return ok(action.text, seq=seq, safety=payload, hints=hints)
+    known = already_known(conn, call["id"]) if args.speaker == "caller" else {}
+    return ok(
+        action.text,
+        seq=seq,
+        safety=payload,
+        hints=hints,
+        known=known,
+        pace=pace.current(conn, call["id"]),
+        recording=(
+            {"action": "stop", "text": recordings.stopped_line(tenant)} if stop_recording else None
+        ),
+    )
+
+
+# What the agent's tool calls have already recorded, by field. Read from the tool log, so it costs
+# no model request (eval round 4: the agent asked again for what the caller had told it).
+KNOWN_FROM_DETAILS = {
+    "name": "name",
+    "who_home": "who's home",
+    "approver": "who approves",
+    "system_type": "system",
+    "arrival_notes": "access",
+}
+KNOWN_MAX = 40  # characters a value is cut to, so the note stays a few dozen tokens
+# From the caller's own lines (eval round 4, spell-street-letter-by-letter: the agent asked a
+# caller who had said "my home" whether she rents, and for a name she had given).
+KNOWN_NAME = re.compile(r"\b(?:my name is|my names|name is|the names|this is)\s+([a-z]+(?: [a-z]+)?)")
+RENTS = ("i rent", "im renting", "we rent", "were renting", "im a tenant", "my landlord", "our landlord")
+OWNS = ("i own", "we own", "my home", "my house", "our house", "our home", "its my place",
+        "its our place", "im the owner", "homeowner")
+NOT_A_NAME = {"summit", "the", "a", "my", "it", "about", "regarding", "calling"}
+
+
+def already_known(conn: sqlite3.Connection, call_id: str) -> dict[str, str]:
+    """Facts this call's tool calls carried: the ZIP checked, the address and phone read back
+    (marked confirmed once the caller said yes) and the intake a booking attempt sent, so the
+    agent doesn't ask again. Empty until a tool has recorded something."""
+    known: dict[str, str] = {}
+    rows = conn.execute(
+        "SELECT tool, args_json FROM tool_calls WHERE call_id = ? ORDER BY id", (call_id,)
+    ).fetchall()
+    for row in rows:
+        args = json.loads(row["args_json"] or "{}")
+        if row["tool"] == "check_service_area" and args.get("zip"):
+            known["ZIP"] = args["zip"]
+        if row["tool"] == "find_slots":
+            facts = args.get("facts") or {}
+            if facts.get("who_home"):
+                known["who's home"] = facts["who_home"]
+        if row["tool"] in ("book_appointment", "reschedule_appointment"):
+            for field, label in KNOWN_FROM_DETAILS.items():
+                value = (args.get("details") or {}).get(field)
+                if value:
+                    known[label] = value
+    lines = [
+        words(r["text"]).strip()
+        for r in conn.execute(
+            "SELECT text FROM turns WHERE call_id = ? AND speaker = 'caller' ORDER BY seq",
+            (call_id,),
+        )
+    ]
+    for line in lines:
+        said = KNOWN_NAME.search(line)
+        if said and said.group(1).split()[0] not in NOT_A_NAME:
+            known.setdefault("name", said.group(1).title())
+        padded = f" {line} "
+        if any(f" {p} " in padded for p in RENTS):
+            known["rents or owns"] = "rents"
+        elif any(f" {p} " in padded for p in OWNS):
+            known.setdefault("rents or owns", "owns")
+    readback = conn.execute(
+        "SELECT readback_json, readback_confirmed_at FROM calls WHERE id = ?", (call_id,)
+    ).fetchone()
+    if readback and readback["readback_json"]:
+        asked = json.loads(readback["readback_json"])
+        mark = " (confirmed)" if readback["readback_confirmed_at"] else ""
+        known["address"] = f"{asked['street']}, {asked['zip']}{mark}"
+        known["phone"] = f"ending {asked['phone'][-4:]}{mark}"
+    return {k: v if len(v) <= KNOWN_MAX else v[: KNOWN_MAX - 3] + "..." for k, v in known.items()}
 
 
 def end(
@@ -441,6 +587,7 @@ def end(
                 now,
                 "Urgent",
             )
+        transfer.close_open_handoff(conn, call["id"], args.reason, now)
         outcome = _outcome(conn, call)
         records.update_call(
             conn,

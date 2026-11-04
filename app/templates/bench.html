@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% from "_ui.html" import bench_tabs, go, empty with context %}
+{% block title %}Bench: calls{% endblock %}
+{% block tabs %}{{ bench_tabs(tab) }}{% endblock %}
+{% block body %}
+<main class="page">
+  <div class="page-head">
+    <div class="lead">
+      <div class="crumbs">Debug bench</div>
+      <h1 class="page-title">Calls</h1>
+    </div>
+    <form class="actions" method="get" action="/bench" role="search">
+      <label class="sr-only" for="bench-q">Call id or phone</label>
+      <input class="field" id="bench-q" type="search" name="q" value="{{ bench_query }}" placeholder="Call id or phone digits" autocomplete="off">
+      <button class="btn" type="submit">Find</button>
+      {% if bench_query %}<a class="btn quiet" href="/bench">Clear</a>{% endif %}
+    </form>
+  </div>
+
+  {% if live %}
+  <section class="panel">
+    <div class="panel-head"><h2>In progress</h2>{{ "" }}<span class="count alarm">{{ live | length }}</span><span class="sub">Open one to watch its steps as they happen.</span></div>
+    <ul class="list">
+      {% for c in live %}
+      <li data-href="/bench/calls/{{ c.key }}"><span class="what"><a href="/bench/calls/{{ c.key }}">{{ mask(c.id) }}</a></span><span class="meta num">{{ c.local.strftime("%-I:%M %p") }}, {{ mask(c.caller_id) }}, {{ c.turns }} lines</span><span class="end"><span class="tag ember">Live</span><span class="go">{{ go() }}</span></span></li>
+      {% endfor %}
+    </ul>
+  </section>
+  {% endif %}
+
+  <section class="panel">
+    <div class="panel-head">
+      <h2>{% if bench_query %}Matches{% else %}Recent calls{% endif %}</h2><span class="count">{{ calls | length }}</span>
+      <span class="sub">{% if bench_query %}by call id, or phone digits when the search has four or more{% else %}newest first, the last {{ calls | length }}{% endif %}</span>
+    </div>
+    {% if calls %}
+    <div class="table-wrap">
+      <table class="table">
+        <thead><tr><th>Started</th><th>Call</th><th>Caller</th><th>Outcome</th><th class="right">Lines</th><th class="right">Tools</th><th class="right">Refused</th><th class="right">Reply p50</th><th></th><th></th></tr></thead>
+        <tbody>
+          {% for c in calls %}
+          <tr data-href="/bench/calls/{{ c.key }}">
+            <td class="time">{{ c.local.strftime("%b %-d, %-I:%M %p") }}</td>
+            <td><span class="what"><a href="/bench/calls/{{ c.key }}"><code>{{ mask(c.id) }}</code></a></span></td>
+            <td class="fit num muted">{{ mask(c.caller_id) }}</td>
+            <td class="fit">{{ (c.outcome or "open") | replace("_", " ") }}</td>
+            <td class="fit right num">{{ c.turns }}</td>
+            <td class="fit right num">{{ c.tools }}</td>
+            <td class="fit right num">{% if c.refused %}<span class="count alarm">{{ c.refused }}</span>{% else %}<span class="faint">0</span>{% endif %}</td>
+            <td class="fit right num">{% if c.reply_p50 is none %}<span class="faint">missing</span>{% else %}{{ "{:,.0f}".format(c.reply_p50) }} ms{% endif %}</td>
+            <td class="fit right"><span class="tags">{% if c.live %}<span class="tag ember">Live</span>{% endif %}{% if c.safety_kind %}<span class="tag urgent">Safety</span>{% endif %}</span></td>
+            <td class="go">{{ go() }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}{{ empty("No call matches " ~ bench_query ~ "." if bench_query else "No calls on record.") }}{% endif %}
+  </section>
+</main>
+{% endblock %}

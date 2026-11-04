@@ -10,6 +10,10 @@ How the agent is tested before anyone calls it. Decision and reasoning: DECISION
 4. When the call ends, code checks read the tool-call log and the saved records. They decide pass or fail. A run where the simulated caller loops or never finishes, or the harness breaks, is marked `error`, not `fail` (decision 06), and is left out of pass rates. The exception: if the call already broke a rule that forbids something (a booking before the read-back, a price said, a booking on a commercial call), it is a fail however the call ended.
 5. An LLM grader (profile `offline.grader`) scores how the call felt. It can fail a run the code passed, never rescue one the code failed. A grader outage never hides a failed check: that run stays a fail, ungraded. Besides the transcript it gets what the server set up on the call, read from the call record (flags, bookings with their job number, the sentences the booking, flag and lead tools returned, and the signed-off safety lines and sign-off), so a callback time a tool gave isn't mistaken for one the agent made up.
 
+## How far the grader is trusted
+
+Eval round 3 (`evals/rounds/03-judge-labels.md`) had Jackson label ten graded calls with the grader's verdict hidden. On the five he gave an explicit pass or fail, the grader agreed on 3 of 5 (MEASURED, that file's agreement table). Reading his other five notes as pass or fail (INFERRED), agreement is 7 of 10. Both are short of the bar in exploration 008 ("advisory if it disagrees on more than 2 of 20"), so the grader is not trusted to fail a run on its own. The publish gate already keeps its fails as notes (DECISIONS.md 031). In `make eval` a grader fail still marks the run failed, as decision 06 set; read a grader-only fail as a transcript to look at, not a regression, until a second labelling round (DECISIONS.md 035, "would change if") shows better agreement. The two misses ran both ways: it failed a call he passed (no personal details given out) and passed one he failed (a repeated read-back, internal wording, a weak goodbye), and it scored several passes 2 or 3 of 5, so it noticed problems and let them through. Its checklist (`prompts/evals/grader.md`) now carries his standards from that round, read as a fail when one recurs on a call.
+
 ## Scenario file
 
 One YAML file per scenario in `evals/scenarios/`. The fields, the seeded callers and every check are listed in `evals/scenarios/README.md`; a test loads every file, so an unknown check fails `make check`.
@@ -77,7 +81,9 @@ Each run writes `evals/results/<run>.json` (schema and validation in `evals/resu
 
 ## The eval gate for owner edits
 
-A draft an owner publishes from the Rules page (app/rules.py) goes live only through `evals/gate.py`: every must-pass scenario, once, on our stack, with the draft served as the live version in each scratch world, so calls take the same path as on the phone. A scenario that fails a code check or ends with no verdict is run once more on the same draft, and a second miss blocks it; both runs are saved (`<run>-gate.json` and `<run>-gate-rerun.json`) and the version keeps which passed on the rerun, how many were rerun and what that cost. The grader's notes are kept but do not block, since the must-pass lines are code checks and an owner may change manner on purpose. The run is saved as `evals/results/<run>-gate.json` with the draft in `overlay`, which is part of its hash. `make rules-gate` runs it on every draft waiting; the server starts it itself when `RULES_GATE=1`. Cost: $0.38 to $0.39 for the 18 must-pass scenarios on `fast` (MEASURED, runs `20261103-193944-livekit-fast-gate` and `20261103-200110-livekit-fast-gate`). Those two runs, from before the rerun, failed five different must-pass scenarios between them, none in both, and the first run's two failures passed on the defaults (`20261103-195832-livekit-fast-custom`); the rerun is there so a one-off miss doesn't block an edit that didn't cause it. A rerun adds about $0.02 a scenario (MEASURED, the same runs). After the must-pass fixes in `evals/rounds/reliability-01.md`, the second run's edit passed 18 of 18 with no rerun (`20261103-225314-livekit-fast-gate`, $0.38 MEASURED).
+A rules draft published from the debug bench's editor (`/bench/rules`, app/bench_rules.py and app/rules.py) goes live through `evals/gate.py` unless an admin overrides it: every must-pass scenario, once, on our stack, with the draft served as the live version in each scratch world, so calls take the same path as on the phone. A scenario that fails a code check or ends with no verdict is run once more on the same draft, and a second miss blocks it; both runs are saved (`<run>-gate.json` and `<run>-gate-rerun.json`) and the version keeps which passed on the rerun, how many were rerun and what that cost. The grader's notes are kept but do not block, since the must-pass lines are code checks and an owner may change manner on purpose. The run is saved as `evals/results/<run>-gate.json` with the draft in `overlay`, which is part of its hash. `make rules-gate` runs it on every draft waiting; the server starts it itself when `RULES_GATE=1`. Cost: $0.38 to $0.39 for the 18 must-pass scenarios on `fast` (MEASURED, runs `20261103-193944-livekit-fast-gate` and `20261103-200110-livekit-fast-gate`). Those two runs, from before the rerun, failed five different must-pass scenarios between them, none in both, and the first run's two failures passed on the defaults (`20261103-195832-livekit-fast-custom`); the rerun is there so a one-off miss doesn't block an edit that didn't cause it. A rerun adds about $0.02 a scenario (MEASURED, the same runs). After the must-pass fixes in `evals/rounds/reliability-01.md`, the second run's edit passed 18 of 18 with no rerun (`20261103-225314-livekit-fast-gate`, $0.38 MEASURED).
+
+The override (DECISIONS.md 055) publishes a draft at once, without this gate, once the admin gives a reason. The guidance check still runs when the draft is saved. The version keeps who skipped the gate, when and why, shows **Check skipped** in the version history, and the server log gets a `rules.override` line. The two-call pair evals (`make eval-pairs`) are not part of the gate.
 
 ## Running it
 
@@ -89,6 +95,25 @@ A draft an owner publishes from the Rules page (app/rules.py) goes live only thr
 - **Simulated caller and grader prompts** live in `prompts/evals/`.
 - **Cost.** Every scenario records the agent, caller and grader tokens at the prices in `config/models.yaml`; the report prints the total.
 - **Live audio pass.** The ten scripted phone calls for noise, interruptions and real reply delay are in `evals/live-calls.md`.
+
+## Two calls at once
+
+During a cold snap or a heat wave several callers can want the same opening at the same moment. A pair runs two simulated calls at the same time against one world: one mock ServiceTitan and one tool server, so they compete for the same technicians. Pair files are in `evals/scenarios/pairs/` (format in that folder's README); the code is `evals/pairs.py`.
+
+```
+make eval-pairs                                   # both pairs once, on our stack
+make eval-pairs PAIRS=two-callers-last-slot SAMPLES=3
+```
+
+- **The world.** Before the calls, the pair's `fill` days are booked up in the mock directly, leaving each window's urgent hold free and, in the `keep_open` windows, that many more technicians who can do the job. So a caller below Urgent sees exactly those windows open on those days, and the next opening after them is whatever the seed has.
+- **The race.** Each call's first booking after a confirmed read-back waits until the other call reaches its own, then both go to the tool server at once and on to the mock, which decides who gets each technician (DECISIONS.md 003: one write at a time, then the one-job-per-technician-window rule). A call that ends without booking lets the other go on alone; `booked_together` then fails, since nothing raced.
+- **Checks.** Each call is scored on its own (`must`, the grader on `should`), as `<pair id>-a` and `<pair id>-b`. The `together` checks then read both call records and the mock itself, and a failure there fails both calls: `one_job_per_technician_window` (no technician has two live jobs in one window anywhere in the mock), `window_jobs` (how many of the two calls' jobs are in a window, each with its own technician), `booked_together` and `taken_refusals` (how many calls were told the window was taken). The run prints, per pair, whether the calls met at the booking and how many times the mock answered 409 `slot_taken`, which is how often both reached for the same technician.
+- **Limits.** Our stack only: Retell's eval instance resets its one mock before each call. Pairs are not in the suites or the owner-edit gate, since they need two calls at once.
+
+| Pair | World | Passes when |
+|---|---|---|
+| `two-callers-last-slot` | Monday and Tuesday full but for one technician on Monday afternoon | Exactly one of the two jobs is in that window, the other caller is told plainly it just went and books the next opening, and neither is told they're booked before they are |
+| `two-callers-same-tech` | The same, with two technicians on Monday afternoon; both callers in one ZIP | Both get the window, each with a different technician, and neither hears it was taken |
 
 ## Audio rig (bake-off 6)
 
@@ -118,6 +143,16 @@ make rig-report RUNS="evals/results/<a>.json evals/results/<b>.json"
 | `gemini_live` | `gemini-live` | A scratch world, in process | Gemini's Live WebSocket; function calls forwarded to the tool server |
 
 **Results.** The same results file as the text harness, with `transport: audio`, and per turn `caller_speech_ms`, `agent_speech_ms` and, where the voice program logs one, `platform_reply_ms` (our worker's own measure of the same gap) and `model_first_token_ms`, plus `platform_stages` (every stage timing the voice program logged for the caller's line and the reply, such as LiveKit's `end_of_turn_ms`) and `over_caller_ms` (how long before the caller finished the agent made a sound, when it did: on a stack that never backchannels, a cut-off). Agent lines in the transcript are what the caller heard, with the platform's own text in `said`. Each scenario has `silent_turns` and `cost_parts` (caller voice, agent ears, platform, brain model, caller model, grader). `make rig-report` prints the bake-off table, the safety calls one by one (the server's check, the platform's text against the signed-off lines, and what the caller heard against them) and the decision 026 verdict. A stack is chosen only from runs that scored six safety calls and three runs of every must-pass scenario in a named suite, so a run stopped by `MAX_COST` can only tie.
+
+**Listening to calls.** Every rig call is also saved as one stereo file, caller on the left and agent on the right, at the rig's own rate with no phone-line filter, with each clip placed on the clock the rig times the call with, so the pause before each reply in the file is that turn's `reply_delay_ms`. Beside it is the transcript with each line's time. A run's calls form a batch in `data/sim/<time>-<stack>/` (gitignored), coded S1, S2 and so on in the order they ran; the codes never change once written. Files are FLAC when the `flac` command is installed (lossless, about a seventh the size of WAV: 2.1 MB for a 2.5-minute call, MEASURED on the first batch), WAV otherwise. Each file is also copied to `sim/<batch>/` in the private recordings bucket (DECISIONS.md 052); the bucket's keys are read from the server's `.env` over ssh at run time and kept in memory, never written to a file. `--no-record` and `--no-store` turn these off.
+
+```
+make sim CALLS="co-alarm-clear complaint-flag"   # these scenarios once each, on our stack, in order
+make sim TAGS=flow:safety MAX_COST=2             # every scenario with the tags; stops at $2
+make listen                                      # http://127.0.0.1:8130, the newest batch
+```
+
+`make sim` runs each scenario once, one call at a time, and writes its results file into the batch folder rather than `evals/results`, so a listening batch never changes the committed results or LangSmith. The page shows each call's code, scenario, a player and the numbered, timed transcript; clicking a line plays from it and space pauses, so feedback can name "S3, line 7" or "S3 at 0:42". It leaves the grader's verdict off, as the eval rounds do.
 
 **Needs.** `DEEPGRAM_API_KEY` and `ANTHROPIC_API_KEY` for every run; `LIVEKIT_URL`, `LIVEKIT_API_KEY` and `LIVEKIT_API_SECRET` for ours; the Retell eval variables above for Retell; `ELEVENLABS_API_KEY` and an installed `ngrok` for ElevenLabs; `OPENAI_API_KEY` and `GEMINI_API_KEY` for the speech-to-speech entrants. Run our stack on its own: its worker runs on the same machine, and other runs beside it share the processor its turn detector uses.
 

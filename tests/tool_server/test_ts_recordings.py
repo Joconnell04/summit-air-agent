@@ -6,8 +6,7 @@ from pathlib import Path
 
 import pytest
 from botocore.exceptions import ClientError
-from test_ts_owner import TOKEN
-from toolkit import UNKNOWN, Agent, count, make_server
+from toolkit import UNKNOWN, Agent, count, make_server, sign_in
 
 from app import jobs, recordings
 from app.settings import Settings
@@ -31,10 +30,13 @@ class FakeBucket:
     def delete(self, key: str) -> None:
         self.objects.pop(key, None)
 
+    def discard(self, key: str) -> bool:
+        return self.objects.pop(key, None) is not None
+
 
 def server(tmp_path, clock, mock, **settings) -> tuple[Agent, FakeBucket]:
     app = make_server(
-        tmp_path, clock, mock[0], owner_token=TOKEN, recording_bucket="calls", **settings
+        tmp_path, clock, mock[0], recording_bucket="calls", **settings
     )
     bucket = FakeBucket()
     app.state.services.bucket = bucket
@@ -101,13 +103,13 @@ def test_only_the_file_name_the_server_gave_is_accepted(recorded):
 def test_a_finished_recording_is_copied_here_and_removed_from_the_bucket(recorded):
     agent, bucket = recorded
     call = a_recorded_call(agent, bucket)
-    assert collect(agent) == {"stored": 1, "missing": 0}
+    assert collect(agent) == {"stored": 1, "missing": 0, "declined": 0}
     path = agent.app.state.services.settings.recordings_dir / f"summit-air/{call}.mp4"
     assert path.read_bytes() == AUDIO
     assert bucket.objects == {}
     assert count(agent, "SELECT COUNT(*) FROM recordings WHERE status = 'stored'") == 1
     # Collected once.
-    assert collect(agent) == {"stored": 0, "missing": 0}
+    assert collect(agent) == {"stored": 0, "missing": 0, "declined": 0}
 
 
 def test_a_call_still_going_is_left_in_the_bucket(recorded):
@@ -115,7 +117,7 @@ def test_a_call_still_going_is_left_in_the_bucket(recorded):
     call = agent.start(UNKNOWN)["data"]["call_id"]
     record(agent, call)
     bucket.objects[f"summit-air/{call}.mp4"] = AUDIO
-    assert collect(agent) == {"stored": 0, "missing": 0}
+    assert collect(agent) == {"stored": 0, "missing": 0, "declined": 0}
     assert bucket.objects
 
 
@@ -124,23 +126,23 @@ def test_a_recording_that_never_arrives_is_marked_missing(recorded, clock):
     call = agent.start(UNKNOWN)["data"]["call_id"]
     record(agent, call)
     agent.end(call)
-    assert collect(agent) == {"stored": 0, "missing": 0}
+    assert collect(agent) == {"stored": 0, "missing": 0, "declined": 0}
     clock.advance(hours=3)
-    assert collect(agent) == {"stored": 0, "missing": 1}
+    assert collect(agent) == {"stored": 0, "missing": 1, "declined": 0}
 
 
 def test_the_jobs_loop_collects_recordings(recorded):
     agent, bucket = recorded
     a_recorded_call(agent, bucket)
     report = jobs.run_once(agent.app.state.services)
-    assert report["summit-air"]["recordings"] == {"stored": 1, "missing": 0}
+    assert report["summit-air"]["recordings"] == {"stored": 1, "missing": 0, "declined": 0}
 
 
 def test_the_call_page_plays_the_recording(recorded):
     agent, bucket = recorded
     call = a_recorded_call(agent, bucket)
     collect(agent)
-    agent.client.get(f"/owner?token={TOKEN}")
+    sign_in(agent)
     page = agent.client.get(f"/owner/calls/{call}").text
     assert f'src="/owner/calls/{call}/recording"' in page
     assert "data-player" in page
@@ -155,7 +157,7 @@ def test_a_call_with_no_recording_says_so_and_has_no_player(recorded):
     agent, _ = recorded
     call = agent.start(UNKNOWN)["data"]["call_id"]
     agent.end(call)
-    agent.client.get(f"/owner?token={TOKEN}")
+    sign_in(agent)
     page = agent.client.get(f"/owner/calls/{call}").text
     assert "data-player" not in page
     assert "No recording of this call." in page
@@ -183,7 +185,7 @@ def test_a_recording_is_deleted_with_the_transcript(tmp_path, clock, mock):
     assert report["summit-air"]["purged"]["recordings"] == 1
     assert not path.exists()
     assert count(agent, "SELECT COUNT(*) FROM recordings WHERE status = 'deleted'") == 1
-    agent.client.get(f"/owner?token={TOKEN}")
+    sign_in(agent)
     assert agent.client.get(f"/owner/calls/{call}/recording").status_code == 404
 
 
@@ -227,6 +229,15 @@ def test_the_bucket_copies_through_a_partial_file_and_deletes(tmp_path):
     assert s3.objects == {}
 
 
+def test_the_bucket_discards_an_objected_file_without_copying_it(tmp_path):
+    s3 = FakeS3({"summit-air/a.mp4": AUDIO})
+    bucket = recordings.Bucket(Settings(db_path=tmp_path / "t.db", recording_bucket="calls"), s3)
+    assert not bucket.discard("summit-air/b.mp4"), "not there yet"
+    assert bucket.discard("summit-air/a.mp4")
+    assert s3.objects == {}
+    assert not any(tmp_path.rglob("*.mp4"))
+
+
 def test_a_bucket_that_refuses_is_logged_not_taken_for_not_there_yet(tmp_path, caplog):
     class Refusing(FakeS3):
         def head_object(self, Bucket, Key):
@@ -259,7 +270,7 @@ def test_a_call_id_that_climbs_out_of_the_folder_is_never_written(recorded, tmp_
     conn.execute("UPDATE calls SET ended_at = '2026-11-02T14:05:00Z' WHERE id = ?", (call,))
     conn.close()
     bucket.objects[key] = AUDIO
-    assert collect(agent) == {"stored": 0, "missing": 1}
+    assert collect(agent) == {"stored": 0, "missing": 1, "declined": 0}
     folder = agent.app.state.services.settings.recordings_dir
     assert not (folder / key).resolve().exists()
     assert bucket.objects == {key: AUDIO}
@@ -274,7 +285,7 @@ def test_a_stored_path_outside_the_folder_is_never_served(recorded, tmp_path):
     conn = agent.db()
     conn.execute("UPDATE recordings SET path = ? WHERE call_id = ?", (str(elsewhere), call))
     conn.close()
-    agent.client.get(f"/owner?token={TOKEN}")
+    sign_in(agent)
     assert agent.client.get(f"/owner/calls/{call}/recording").status_code == 404
 
 

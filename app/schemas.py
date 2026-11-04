@@ -74,6 +74,12 @@ class TransferDoneIn(Body):
     outcome: Literal["connected", "no_answer", "not_accepted", "failed"]
 
 
+class HandoffDoneIn(Body):
+    """What happened to a cold handoff's SIP transfer (app/transfer.py finish_handoff)."""
+
+    outcome: Literal["handed_off", "failed"]
+
+
 class RecordingIn(Body):
     """The voice layer started recording this call into the bucket under `object_key`."""
 

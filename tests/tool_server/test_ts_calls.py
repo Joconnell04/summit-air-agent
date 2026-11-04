@@ -191,14 +191,17 @@ def test_a_flag_returns_its_sentence_only_once_stored_and_names_a_time(agent):
         priority="Urgent",
         callback_in_minutes=20,
     )
-    assert urgent["say"].startswith("I've marked this as urgent and let our on-call team know")
-    assert "9:20 AM" in urgent["say"]
+    # Eval round 3: "top priority", and no on-call team in office hours.
+    assert urgent["say"] == (
+        "I've let our team know this call is top priority, and someone will call you by 9:20 AM."
+    )
 
 
 @pytest.mark.parametrize(
     "window,spoken",
     [
-        ({"callback_after": "5 PM"}, "someone will call you after 5 PM."),
+        # Eval round 3: "after 5" is promised as a time inside it.
+        ({"callback_after": "5 PM"}, "someone will call you around 5:30 PM."),
         ({"callback_before": "3 PM"}, "someone will call you before 3 PM."),
         (
             {"callback_after": "1 PM", "callback_before": "3:30 PM"},
@@ -215,13 +218,13 @@ def test_a_window_the_caller_asked_for_is_said_by_the_server_as_asked(agent, win
     assert flagged["data"]["callback_spoken"] == spoken.removeprefix("someone will call you ")[:-1]
 
 
-def test_an_after_window_is_due_at_the_end_of_callback_hours_and_dialed_from_its_start(agent):
+def test_an_after_window_is_due_at_the_time_promised_and_dialed_from_its_start(agent):
     call = agent.start(UNKNOWN)["data"]["call_id"]
     flagged = agent.tool(
         "flag_person", call, reason="Call me back", callback_after="5 PM", system_calls_back=True
     )
     assert flagged["ok"], flagged
-    assert flagged["data"]["callback_at"].startswith("2026-11-03T02:00")  # 9 PM New York
+    assert flagged["data"]["callback_at"].startswith("2026-11-02T22:30")  # 5:30 PM New York
     conn = agent.db()
     try:
         dial = conn.execute("SELECT due_at FROM outbound").fetchone()["due_at"]
@@ -238,7 +241,8 @@ def test_an_after_window_is_due_at_the_end_of_callback_hours_and_dialed_from_its
         ({"callback_after": "1", "callback_before": "3"}, "between 1 PM and 3 PM", "20:00"),
         ({"callback_after": "6", "callback_before": "9"}, "between 6 PM and 9 PM", "02:00"),
         ({"callback_before": "4"}, "before 4 PM", "21:00"),
-        ({"callback_after": "noon"}, "after 12 PM", "02:00"),
+        # Eval round 3: "after" is promised as a time inside it.
+        ({"callback_after": "noon"}, "around 12:30 PM", "17:30"),
     ],
 )
 def test_a_bare_hour_in_a_callback_window_reads_as_daytime(agent, window, spoken, due):
@@ -260,14 +264,16 @@ def test_a_callback_tomorrow_not_before_noon_is_due_tomorrow_and_keeps_the_windo
     }
     lead = agent.tool("record_lead", call, kind="membership", details=details)
     assert lead["ok"], lead
-    assert lead["say"] == "Someone from our team will call you tomorrow after 12 PM to tell you more."
+    assert lead["say"] == (
+        "Someone from our team will call you tomorrow around 12:30 PM to tell you more."
+    )
     conn = agent.db()
     try:
         row = conn.execute("SELECT due_at, reason FROM callbacks").fetchone()
     finally:
         conn.close()
-    assert row["due_at"].startswith("2026-11-04T02:00")  # 9 PM New York, tomorrow
-    assert "caller asked: tomorrow after 12 PM" in row["reason"]
+    assert row["due_at"].startswith("2026-11-03T17:30")  # 12:30 PM New York, tomorrow
+    assert "caller asked: tomorrow around 12:30 PM" in row["reason"]
 
 
 @pytest.mark.parametrize(
@@ -309,7 +315,14 @@ def test_a_lead_says_the_window_the_caller_asked_for(agent):
     call = agent.start(UNKNOWN)["data"]["call_id"]
     details = {"contact_name": "Ana Ruiz", "need": "Wants to join the plan", "callback_after": "4 PM"}
     lead = agent.tool("record_lead", call, kind="membership", details=details)
-    assert lead["say"] == "Someone from our team will call you after 4 PM to tell you more."
+    assert lead["say"] == "Someone from our team will call you around 4:30 PM to tell you more."
+
+
+def test_an_after_window_near_closing_is_promised_no_later_than_closing(agent):
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    flagged = agent.tool("flag_person", call, reason="Call me back", callback_after="8:45 PM")
+    assert flagged["ok"], flagged
+    assert flagged["data"]["callback_spoken"] == "around 9 PM"
 
 
 @pytest.mark.parametrize("bad", [None, "shortly", "soon", "8:00 AM", "25:00"])
@@ -579,3 +592,53 @@ def test_the_retry_job_leaves_a_booking_that_is_still_being_sent_alone(agent, cl
         == "sending"
     )
     conn.close()
+
+
+def test_after_a_goodbye_a_flag_with_no_time_is_stored_and_nothing_is_asked(agent):
+    """Eval round 4, co-op-owner-mentions-board: asking for a callback time reopened a call the
+    caller had ended three times."""
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "any time this afternoon is fine thank you goodbye")
+    flagged = agent.tool("flag_person", call, reason="Confirm who can approve")
+    assert flagged["ok"], flagged
+    assert flagged["say"] == ""
+    assert flagged["data"]["callback_spoken"] == "as soon as they can"
+    assert "End the call" in flagged["data"]["note"]
+    assert count(agent, "SELECT COUNT(*) FROM callbacks WHERE status = 'pending'") == 1
+
+
+def test_without_a_goodbye_a_flag_with_no_time_still_asks_for_one(agent):
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "Can someone call me about the bill?")
+    assert agent.tool("flag_person", call, reason="Bill")["refused"] == "invalid_callback_time"
+
+
+def test_each_caller_turn_says_what_the_call_already_knows(agent):
+    """Eval round 4: re-asking what was answered. The note comes from the tool log."""
+    from prompts.assemble import server_notes
+
+    call = ready_to_book(agent)
+    agent.tool("check_service_area", call, zip="11231")
+    agent.tool("find_slots", call, job_type="no_heat", facts={"who_home": "me and my wife"})
+    turn = agent.turn(call, "Okay, what's next?")
+    known = turn["data"]["known"]
+    assert known["ZIP"] == "11231"
+    assert known["who's home"] == "me and my wife"
+    assert known["address"] == "101 Union St, 11231 (confirmed)"
+    assert known["phone"] == "ending 0999 (confirmed)"
+    note = server_notes([], known)[-1]
+    assert note.startswith("[server] Already known, don't ask again: ZIP 11231;")
+    assert len(note.split()) < 40
+
+
+def test_the_known_list_takes_the_name_and_own_or_rent_from_the_callers_lines(agent):
+    """Eval round 4 run 20261104-040959, spell-street-letter-by-letter."""
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "Hi, the heat's out in my home.")
+    turn = agent.turn(call, "Oh and my name's Ruth Adeyemi if you need it.")
+    assert turn["data"]["known"]["name"] == "Ruth Adeyemi"
+    assert turn["data"]["known"]["rents or owns"] == "owns"
+    renter = agent.start("(212) 555-0902")["data"]["call_id"]
+    assert agent.turn(renter, "I rent the place, my landlord is Dennis.")["data"]["known"] == {
+        "rents or owns": "rents"
+    }

@@ -1,0 +1,31 @@
+id: older-caller-gets-slower-pace
+flow: [priority, booking]
+difficulty: standard
+traits: [filler]
+journeys: [J2, J1]
+spec: [S-21, S-35]
+tags: [pace]
+caller_id: "(929) 555-0105"
+persona: Walter Brandt, 78, a retired bus driver in Bay Ridge calling about his heat. Friendly and unhurried; gives his age plainly when it comes up and never asks the agent to slow down.
+hidden_facts:
+  name: Walter Brandt
+  address: 7302 Ridge Blvd, Brooklyn, 11209
+  phone: the number being called from
+  problem: the boiler stopped this morning, 61 F inside
+  home: lives with his wife, who is 75
+opening: Hi, I'm 78, and uh, my boiler quit on me this morning and the apartment's getting chilly.
+script:
+  - Whenever you give the address, include the ZIP.
+  - When asked who is at home, say your wife is home with you.
+  - Never ask the agent to slow down or speed up, and never say "what?"
+  - Take the first window the agent offers, then say goodbye once asked if there is anything else.
+must:
+  # The server hears his own age and slows the voice for the rest of the call. It isn't kept for
+  # his next call: only a pace he asked for is remembered.
+  - pace: {held: 0.85, source: older_adult, remembered: none}
+  - booking: {count: 1, job_type: no_heat, zip: "11209"}
+  - read_back: before_booking
+  - safety_lines: not_said
+should:
+  - Keeps sentences short and plain once he gives his age, without remarking on it.
+  - Does not repeat his age back to him.

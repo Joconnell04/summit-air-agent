@@ -22,7 +22,7 @@
         <a href="/owner/rules?show={{ key }}{% if slug %}&tenant={{ slug }}{% endif %}"{% if show == key %} aria-current="true"{% endif %}>{{ name }} {{ count(counts[key]) }}</a>
         {% endfor %}
       </div>
-      <a class="btn primary" href="/owner/rules/edit{{ q(slug) }}">Edit rules</a>
+      {% if is_admin %}<a class="btn" href="/bench/rules{{ q(slug) }}">Edit on the bench</a>{% endif %}
     </div>
   </div>
 

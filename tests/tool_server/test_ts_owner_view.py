@@ -5,7 +5,7 @@ from datetime import date, timedelta
 
 import httpx
 import pytest
-from test_ts_owner import TOKEN, booked_tune_up, caller, commercial, out_of_area, page
+from test_ts_owner import booked_tune_up, caller, commercial, out_of_area, page
 from test_ts_safety import GAS_LINES
 from toolkit import (
     ROOT,
@@ -16,6 +16,7 @@ from toolkit import (
     in_area_address,
     make_server,
     ready_to_book,
+    sign_in,
 )
 
 from app import jobs, owner, plain, reports, search, trace
@@ -25,11 +26,11 @@ TODAY = date(2026, 11, 2)
 
 @pytest.fixture
 def agent(tmp_path, clock, mock):
-    return Agent(make_server(tmp_path, clock, mock[0], owner_token=TOKEN), clock)
+    return Agent(make_server(tmp_path, clock, mock[0]), clock)
 
 
 def signed_in(agent: Agent) -> Agent:
-    agent.client.get(f"/owner?token={TOKEN}")
+    sign_in(agent)
     return agent
 
 
@@ -685,7 +686,7 @@ def test_a_callback_done_after_it_went_late_is_not_on_time(agent, clock):
 
 def test_results_leave_out_a_zip_when_the_call_back_on_the_thread_booked(agent, clock):
     first = agent.start(caller(1))["data"]["call_id"]
-    agent.turn(first, "Do you go out to Hoboken? That's my mom's place.")
+    agent.turn(first, "Do you go out to Hoboken, 07030? That's my mom's place.")
     agent.tool("check_service_area", first, zip="07030")
     agent.end(first, "dropped")
     clock.advance(minutes=1)

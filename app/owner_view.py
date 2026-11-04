@@ -1,19 +1,16 @@
 """The owner view: three read-only pages for the owner and dispatcher (Today, Calls, Results), each
-call's page, the one write (a report to Revin, story O-8), the Rules page and its editor, and the
-design system's live specimen. The numbers come from app/owner.py, the plain notes from
-app/plain.py, the rulebook from app/rulebook.py and owner edits from app/rules.py; this module
-handles the login tokens and renders HTML. Design: docs/design-system.md.
+call's page, the report to Revin (story O-8), the read-only Rules page (the editor is on the debug
+bench, app/bench_rules.py), the Settings page with its users, and the design system's live specimen. The numbers come from app/owner.py, the plain
+notes from app/plain.py, the rulebook from app/rulebook.py, owner edits from app/rules.py, settings
+from app/owner_settings.py and accounts from app/accounts.py; this module checks who is signed in
+and renders HTML. Design: docs/design-system.md.
 
-The read token is OWNER_TOKEN. Opening /owner?token=... once sets a cookie and drops the token from
-the address bar; without either, the page shows a one-field form. An empty OWNER_TOKEN refuses all.
-Editing rules takes a separate code per person (RULES_EDITORS); the owner token stays read-only,
-and an edit code also opens the read-only pages.
+Every page needs a signed-in user. Staff can open every page and send a report; changing a setting
+or a user needs an admin, and each of those routes checks the role here, on the server, whatever
+the page showed.
 """
 
-import hmac
 import json
-import subprocess
-import sys
 from datetime import date, timedelta
 from pathlib import Path
 
@@ -28,105 +25,102 @@ from fastapi.responses import (
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from . import owner, plain, recordings, reports, rulebook, rules, search, trace
+from . import (
+    accounts,
+    owner,
+    owner_settings,
+    plain,
+    recordings,
+    reports,
+    rulebook,
+    rules,
+    search,
+    trace,
+)
 from .db import parse_iso
 from .settings import REPORT_MAX_CHARS, WORKER_STALE_SECONDS
 
-COOKIE = "owner_token"
-EDIT_COOKIE = "owner_edit"
+COOKIE = "owner_session"
+# The cookies of the shared read token and the rules edit code, from before accounts. Cleared at
+# sign-in; nothing reads them.
+OLD_COOKIES = ("owner_token", "owner_edit")
 RULE_FILTERS = ("all", "editable", "locked")
-# Logins last as long as browsers allow (Chrome caps a cookie at 400 days); the demo shouldn't log anyone out.
-COOKIE_DAYS = 400
 SEARCH_MAX_CHARS = 80
 HERE = Path(__file__).parent
 templates = Jinja2Templates(directory=HERE / "templates")
 
 
-def _valid(request: Request, given: str | None) -> bool:
-    token = request.app.state.services.settings.owner_token
-    return bool(token and given and hmac.compare_digest(given.encode(), token.encode()))
+def _user(request: Request):
+    """The signed-in user, read once per request."""
+    if not hasattr(request.state, "user"):
+        services = request.app.state.services
+        conn = services.connect()
+        try:
+            request.state.user = accounts.session_user(
+                conn, request.cookies.get(COOKIE), services.clock()
+            )
+        finally:
+            conn.close()
+    return request.state.user
 
 
-def _editor(request: Request) -> str | None:
-    """The name behind the edit code in the cookie, or None. Compared against every code so the
-    time taken says nothing about which one matched."""
-    given = request.cookies.get(EDIT_COOKIE) or ""
-    found = None
-    for code, name in request.app.state.services.settings.editors().items():
-        if given and hmac.compare_digest(given.encode(), code.encode()):
-            found = name
-    return found
+def _signed_in(request: Request) -> bool:
+    return _user(request) is not None
 
 
-def _remember(request: Request, response: Response, token: str, cookie: str = COOKIE) -> Response:
-    # Secure when served over HTTPS, so the cookie never travels in clear text there.
-    response.set_cookie(
-        cookie,
-        token,
-        httponly=True,
-        samesite="strict",
-        secure=request.url.scheme == "https",
-        max_age=COOKIE_DAYS * 86400,
-    )
-    return response
+def _is_admin(request: Request) -> bool:
+    user = _user(request)
+    return user is not None and user["role"] == "admin"
 
 
 def _render(request: Request, name: str, context: dict, status: int = 200) -> Response:
     return templates.TemplateResponse(request, name, context, status_code=status)
 
 
-def _signed_in(request: Request) -> bool:
-    return _valid(request, request.cookies.get(COOKIE)) or _editor(request) is not None
+def _next_path(value: str) -> str:
+    """Where to go after signing in: a path on the owner view or the bench, never another site."""
+    if value.startswith(("/owner", "/bench")) and not value.startswith("//") and "\\" not in value:
+        return value
+    return "/owner"
 
 
-def _login(request: Request) -> Response:
-    return _render(request, "login.html", {"failed": False}, 401)
-
-
-def _edit_login(request: Request, failed: bool = False) -> Response:
-    context = {
-        "failed": failed,
-        "title": "Edit rules",
-        "label": "Edit code",
-        "action": "/owner/rules/login",
-    }
+def _login(request: Request, failed: bool = False, username: str = "") -> Response:
+    # An old link may still carry the shared token from before accounts; it opens nothing and is
+    # dropped, so it doesn't follow the user around.
+    rest = request.url.remove_query_params("token")
+    here = rest.path + (f"?{rest.query}" if rest.query else "")
+    nxt = here if request.method == "GET" and request.url.path != "/owner/login" else "/owner"
+    context = {"failed": failed, "next": nxt, "username": username}
     return _render(request, "login.html", context, 401)
 
 
-def _start_gate(services) -> None:
-    """Run the eval gate in its own process, so a publish answers at once and the check takes as
-    long as it takes. Its output goes beside the server's log."""
-    if not services.settings.rules_gate:
-        return
-    log = open(services.settings.log_path.with_suffix(".gate.log"), "a")  # noqa: SIM115
-    subprocess.Popen(
-        [sys.executable, "-m", "evals.gate", "--db", str(services.settings.db_path)],
-        stdout=log,
-        stderr=subprocess.STDOUT,
-        start_new_session=True,
-    )
-    log.close()
+def _denied(request: Request) -> Response:
+    """A signed-in staff user asked for something only an admin can do."""
+    services = request.app.state.services
+    conn = services.connect()
+    try:
+        context = _common(request, services.tenants.default, "", "", conn)
+    finally:
+        conn.close()
+    return _render(request, "denied.html", context, 403)
 
 
-def _edit_form(form) -> tuple[dict, str]:
-    """A draft's content and note from the edit form: line.<key> and guide.<stage>.<n> fields.
-    Any field name is read, so a locked key sent by hand reaches validation and is refused there."""
-    content: dict = {"lines": {}, "guidance": {}}
-    for name, value in form.multi_items():
-        kind, _, rest = name.partition(".")
-        if kind == "line" and rest:
-            content["lines"][rest] = value
-        elif kind == "guide" and rest:
-            stage = rest.split(".")[0]
-            content["guidance"].setdefault(stage, []).append(value)
-        elif kind == "set" and rest:
-            # A raw setting, such as set.priority: there is no field for one, so it is refused.
-            content[rest] = value
-    return content, str(form.get("note", ""))
+def _need_admin(request: Request) -> Response | None:
+    """None when an admin is signed in; otherwise the response to send instead."""
+    if not _signed_in(request):
+        return _login(request)
+    if not _is_admin(request):
+        return _denied(request)
+    return None
 
 
 def _tenant_q(slug: str) -> str:
     return f"?tenant={slug}" if slug else ""
+
+
+def _amp(slug: str) -> str:
+    """What joins one more query field onto _tenant_q."""
+    return "&" if slug else "?"
 
 
 def _common(request: Request, tenant, slug: str, tab: str, conn) -> dict:
@@ -146,6 +140,8 @@ def _common(request: Request, tenant, slug: str, tab: str, conn) -> dict:
             f"{(m // 60) % 12 or 12}:{m % 60:02d} {'AM' if m % 1440 < 720 else 'PM'}"
         ),
         "timedelta": timedelta,
+        "user": _user(request),
+        "is_admin": _is_admin(request),
     }
 
 
@@ -162,17 +158,7 @@ def add_routes(app: FastAPI) -> None:
         return given or tenant.local(app.state.services.clock()).date()
 
     @app.get("/owner", response_class=HTMLResponse)
-    def owner_today(
-        request: Request, token: str | None = None, day: date | None = None, tenant: str = ""
-    ):
-        if token is not None:
-            if not _valid(request, token):
-                return _render(request, "login.html", {"failed": True}, 401)
-            # Keep the token out of the address bar and the browser history. A relative URL, so
-            # it stays on https behind a TLS proxy.
-            rest = request.url.remove_query_params("token")
-            target = rest.path + (f"?{rest.query}" if rest.query else "")
-            return _remember(request, RedirectResponse(target, 303), token)
+    def owner_today(request: Request, day: date | None = None, tenant: str = ""):
         if not _signed_in(request):
             return _login(request)
         found = tenant_for(request, tenant)
@@ -189,10 +175,48 @@ def add_routes(app: FastAPI) -> None:
         return _render(request, "today.html", context)
 
     @app.post("/owner/login")
-    def owner_login(request: Request, token: str = Form("")):
-        if not _valid(request, token):
-            return _render(request, "login.html", {"failed": True}, 401)
-        return _remember(request, RedirectResponse("/owner", 303), token)
+    def owner_login(
+        request: Request, username: str = Form(""), password: str = Form(""), next: str = Form("")
+    ):
+        services = request.app.state.services
+        conn = services.connect()
+        try:
+            user = accounts.authenticate(conn, username, password)
+            if user is None:
+                return _render(
+                    request,
+                    "login.html",
+                    {"failed": True, "next": _next_path(next), "username": username[:40]},
+                    401,
+                )
+            token = accounts.start_session(conn, user["id"], services.clock())
+        finally:
+            conn.close()
+        # A relative URL, so it stays on https behind a TLS proxy.
+        response = RedirectResponse(_next_path(next), 303)
+        # Secure when served over HTTPS, so the cookie never travels in clear text there.
+        response.set_cookie(
+            COOKIE,
+            token,
+            httponly=True,
+            samesite="strict",
+            secure=request.url.scheme == "https",
+            max_age=accounts.SESSION_DAYS * 86400,
+        )
+        for old in OLD_COOKIES:
+            response.delete_cookie(old)
+        return response
+
+    @app.post("/owner/logout")
+    def owner_logout(request: Request):
+        conn = request.app.state.services.connect()
+        try:
+            accounts.end_session(conn, request.cookies.get(COOKIE))
+        finally:
+            conn.close()
+        response = RedirectResponse("/owner", 303)
+        response.delete_cookie(COOKIE)
+        return response
 
     @app.get("/owner/calls", response_class=HTMLResponse)
     def owner_calls(request: Request, day: date | None = None, tenant: str = ""):
@@ -381,7 +405,6 @@ def add_routes(app: FastAPI) -> None:
             "live": found,
             "versions": rules.history(conn, tenant.slug),
             "local": lambda value: tenant.local(parse_iso(value)),
-            "editor": _editor(request),
         }
 
     @app.get("/owner/rules", response_class=HTMLResponse)
@@ -414,151 +437,159 @@ def add_routes(app: FastAPI) -> None:
             conn.close()
         return _render(request, "rules.html", context)
 
-    def edit_page(request: Request, found, slug: str, conn, content=None, note: str = "",
-                  errors=None, status: int = 200) -> Response:
-        rules.expire_checks(conn, found.slug, request.app.state.services.clock())
-        context = rules_context(request, found, slug, conn)
-        draft = rules.open_draft(conn, found.slug)
-        newest = context["versions"][0] if context["versions"] else None
-        blocked = newest if newest and newest["status"] == "blocked" else None
-        if content is None:
-            base = draft or blocked or context["live"]
-            content = base["content"] if base else {}
-            note = base["note"] if (draft or blocked) else ""
-        lines = content.get("lines") or {}
-        guidance = content.get("guidance") or {}
-        errors = errors or {}
-        # Errors with no field on the page, such as a locked rule sent by hand, show at the top.
-        fields = {f"lines.{k}" for k in rules.EDITABLE_LINES}
-        general = [
-            message for key, message in errors.items()
-            if key not in fields
-            and not any(key.startswith(f"guidance.{s}") for s in rules.GUIDANCE_STAGES)
+    def settings_page(request: Request, found, slug: str, conn, errors=None, added=None,
+                      remove: int | None = None, saved: str = "", status: int = 200) -> Response:
+        values = owner_settings.current(conn, found)
+        local = lambda value: found.local(parse_iso(value))
+        users = accounts.live_users(conn)
+        names = {s.key: s.label for s in owner_settings.SETTINGS}
+        changes = [
+            {
+                "at": row["created_at"],
+                "by": row["author"],
+                "what": f"{names.get(row['key'], row['key'])} {'on' if row['value'] else 'off'}",
+            }
+            for row in owner_settings.history(conn, found)
         ]
-        context |= {
-            "draft": draft,
-            "blocked": blocked,
-            "note": note,
-            "errors": errors,
-            "general": general,
-            "lines": [
-                (key, label, stage, lines.get(key) or rules.default_line(found, key),
-                 rules.default_line(found, key))
-                for key, (_where, stage, label) in rules.EDITABLE_LINES.items()
-            ],
-            "guidance": [
-                (stage, rules.STAGES[stage],
-                 (list(guidance.get(stage) or []) + [""] * rules.GUIDANCE_PER_STAGE)[
-                     : rules.GUIDANCE_PER_STAGE])
-                for stage in rules.GUIDANCE_STAGES
-            ],
-            "max_line": rules.LINE_MAX_CHARS,
-            "max_guide": rules.GUIDANCE_MAX_CHARS,
+        verbs = {
+            "added": lambda c: f"Added {c['user_name']} as {c['detail']}",
+            "removed": lambda c: f"Removed {c['user_name']}",
+            "role": lambda c: f"Made {c['user_name']} {c['detail']}",
+            "password": lambda c: f"New password for {c['user_name']}",
         }
-        return _render(request, "rules_edit.html", context, status)
+        changes += [
+            {"at": c["at"], "by": c["by_name"], "what": verbs[c["action"]](c)}
+            for c in accounts.changes(conn)
+        ]
+        changes.sort(key=lambda c: c["at"], reverse=True)
+        context = {
+            **_common(request, found, slug, "settings", conn),
+            "settings": [(s, values[s.key]) for s in owner_settings.shown(found)],
+            "users": users,
+            "admins": sum(u["role"] == "admin" for u in users),
+            "roles": accounts.ROLE_LABELS,
+            "changes": changes[:50],
+            "local": local,
+            "errors": errors or {},
+            "added": added or {},
+            "remove": remove,
+            "saved": saved,
+            "min_password": accounts.PASSWORD_MIN_CHARS,
+        }
+        return _render(request, "settings.html", context, status)
 
-    @app.get("/owner/rules/edit", response_class=HTMLResponse)
-    def owner_rules_edit(request: Request, tenant: str = ""):
-        if _editor(request) is None:
-            return _edit_login(request)
+    @app.get("/owner/settings", response_class=HTMLResponse)
+    def owner_settings_view(request: Request, tenant: str = "", remove: int | None = None,
+                            saved: str = ""):
+        """The company's settings and its users. Staff see them; only an admin changes them."""
+        if not _signed_in(request):
+            return _login(request)
         found = tenant_for(request, tenant)
         if found is None:
             return HTMLResponse("No such company.", 404)
         conn = request.app.state.services.connect()
         try:
-            return edit_page(request, found, tenant, conn)
+            return settings_page(request, found, tenant, conn,
+                                 remove=remove if _is_admin(request) else None,
+                                 saved=saved if saved in ("settings", "users") else "")
         finally:
             conn.close()
 
-    @app.post("/owner/rules/login")
-    def owner_rules_login(request: Request, token: str = Form("")):
-        editors = request.app.state.services.settings.editors()
-        if not any(token and hmac.compare_digest(token.encode(), c.encode()) for c in editors):
-            return _edit_login(request, failed=True)
-        return _remember(request, RedirectResponse("/owner/rules/edit", 303), token, EDIT_COOKIE)
-
-    @app.post("/owner/rules/draft")
-    async def owner_rules_draft(request: Request, tenant: str = ""):
-        """Save the draft, and with publish=1 send it to the eval gate. Validation is here, on the
-        server, whatever the page sent."""
-        author = _editor(request)
-        if author is None:
-            return _edit_login(request)
+    @app.post("/owner/settings")
+    async def owner_settings_save(request: Request, tenant: str = ""):
+        refused = _need_admin(request)
+        if refused:
+            return refused
         found = tenant_for(request, tenant)
         if found is None:
             return HTMLResponse("No such company.", 404)
-        services = request.app.state.services
         form = await request.form()
-        content, note = _edit_form(form)
+        wanted = {
+            name.removeprefix("s."): value == "1"
+            for name, value in form.multi_items()
+            if name.startswith("s.")
+        }
+        services = request.app.state.services
         conn = services.connect()
         try:
-            _saved, errors = rules.save_draft(
-                conn, found, content, author, note, services.clock(), services.guidance_check
-            )
-            if errors:
-                return edit_page(request, found, tenant, conn, content, note, errors, 422)
-            if form.get("publish"):
-                try:
-                    rules.request_publish(conn, found.slug, author, services.clock())
-                except rules.RulesError as err:
-                    return edit_page(request, found, tenant, conn, content, note,
-                                     {"content": str(err)}, 422)
-                _start_gate(services)
+            owner_settings.change(conn, found, wanted, _user(request)["name"], services.clock())
+        except owner_settings.SettingsError as err:
+            return settings_page(request, found, tenant, conn, {"settings": str(err)}, status=422)
         finally:
             conn.close()
-        return RedirectResponse(f"/owner/rules/edit{_tenant_q(tenant)}", 303)
+        return RedirectResponse(f"/owner/settings{_tenant_q(tenant)}{_amp(tenant)}saved=settings",
+                                303)
 
-    @app.post("/owner/rules/discard")
-    def owner_rules_discard(request: Request, tenant: str = ""):
-        if _editor(request) is None:
-            return _edit_login(request)
+    @app.post("/owner/users")
+    def owner_users_add(
+        request: Request,
+        tenant: str = "",
+        username: str = Form(""),
+        name: str = Form(""),
+        role: str = Form("staff"),
+        password: str = Form(""),
+    ):
+        refused = _need_admin(request)
+        if refused:
+            return refused
         found = tenant_for(request, tenant)
         if found is None:
             return HTMLResponse("No such company.", 404)
         services = request.app.state.services
         conn = services.connect()
         try:
-            rules.discard_draft(conn, found.slug, services.clock())
+            accounts.add(conn, username, name, role, password, _user(request)["name"],
+                         services.clock())
+        except accounts.AccountError as err:
+            kept = {"username": username[:40], "name": name[:accounts.NAME_MAX_CHARS], "role": role}
+            return settings_page(request, found, tenant, conn, err.errors, kept, status=422)
         finally:
             conn.close()
-        return RedirectResponse(f"/owner/rules/edit{_tenant_q(tenant)}", 303)
+        return RedirectResponse(
+            f"/owner/settings{_tenant_q(tenant)}{_amp(tenant)}saved=users#users", 303
+        )
 
-    @app.post("/owner/rules/cancel")
-    def owner_rules_cancel(request: Request, tenant: str = ""):
-        """Stop waiting for a check and get the draft back; a late result is refused."""
-        if _editor(request) is None:
-            return _edit_login(request)
+    @app.post("/owner/users/{user_id}/role")
+    def owner_users_role(request: Request, user_id: int, tenant: str = "", role: str = Form("")):
+        refused = _need_admin(request)
+        if refused:
+            return refused
         found = tenant_for(request, tenant)
         if found is None:
             return HTMLResponse("No such company.", 404)
         services = request.app.state.services
         conn = services.connect()
         try:
-            rules.cancel_check(conn, found.slug, services.clock())
-        except rules.RulesError as err:
-            return edit_page(request, found, tenant, conn, errors={"content": str(err)}, status=422)
+            accounts.set_role(conn, user_id, role, _user(request)["name"], services.clock())
+        except accounts.AccountError as err:
+            return settings_page(request, found, tenant, conn, err.errors, status=422)
         finally:
             conn.close()
-        return RedirectResponse(f"/owner/rules/edit{_tenant_q(tenant)}", 303)
+        return RedirectResponse(
+            f"/owner/settings{_tenant_q(tenant)}{_amp(tenant)}saved=users#users", 303
+        )
 
-    @app.post("/owner/rules/rollback")
-    def owner_rules_rollback(request: Request, number: int = Form(...), tenant: str = ""):
-        """Make an earlier live version live again, as a new version (nothing is deleted)."""
-        author = _editor(request)
-        if author is None:
-            return _edit_login(request)
+    @app.post("/owner/users/{user_id}/remove")
+    def owner_users_remove(request: Request, user_id: int, tenant: str = ""):
+        """The second step of Remove; the first only shows Confirm on the row, with no dialog."""
+        refused = _need_admin(request)
+        if refused:
+            return refused
         found = tenant_for(request, tenant)
         if found is None:
             return HTMLResponse("No such company.", 404)
         services = request.app.state.services
+        me = _user(request)
         conn = services.connect()
         try:
-            rules.rollback(conn, found.slug, number, author, services.clock())
-        except rules.RulesError as err:
-            return edit_page(request, found, tenant, conn, errors={"content": str(err)}, status=422)
+            accounts.remove(conn, user_id, me["id"], me["name"], services.clock())
+        except accounts.AccountError as err:
+            return settings_page(request, found, tenant, conn, err.errors, status=422)
         finally:
             conn.close()
-        return RedirectResponse(f"/owner/rules/edit{_tenant_q(tenant)}", 303)
+        return RedirectResponse(
+            f"/owner/settings{_tenant_q(tenant)}{_amp(tenant)}saved=users#users", 303
+        )
 
     @app.get("/owner/design", response_class=HTMLResponse)
     def owner_design(request: Request):

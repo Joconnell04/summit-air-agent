@@ -8,11 +8,13 @@ call's own state, and ownership is checked against the customers matched on this
 
 import hashlib
 import json
+import os
 import sqlite3
-from dataclasses import dataclass
+from collections.abc import Mapping
+from dataclasses import dataclass, field
 from datetime import datetime, time, timedelta
 
-from . import booking, lookup, outbound, records, safety, transfer, weather
+from . import booking, lookup, outbound, pace, records, safety, transfer, weather
 from . import capacity as capacity_rules
 from . import priority as prio
 from .db import iso, parse_iso, tx
@@ -38,7 +40,18 @@ from .schemas import (
 )
 from .settings import BOOKING_DAYS_AHEAD, LIMITS
 from .tenant import Tenant
-from .text import clock_time, has_phrase, phone_key, phone_spoken, street_key, unit_key, words
+from .text import (
+    clock_time,
+    digit_runs,
+    digits_spoken,
+    has_phrase,
+    phone_key,
+    phone_said,
+    says_goodbye,
+    street_key,
+    unit_key,
+    words,
+)
 
 MAX_MATCHES = 5
 SHAPE_DAYS = 3
@@ -54,6 +67,9 @@ class Ctx:
     now: datetime
     side_model: prio.SideModel | None = None
     idempotency_key: str | None = None
+    # Where the transfer numbers are read from (app/transfer.py): the server's environment, or a
+    # scratch mapping in evals so a run never reads a real number.
+    numbers: Mapping[str, str] = field(default_factory=lambda: os.environ)
 
     def reload(self) -> None:
         self.call = records.get_call(self.conn, self.call["id"])
@@ -106,6 +122,36 @@ def _record_out_of_area(ctx: Ctx, zip_code: str) -> None:
             "INSERT OR IGNORE INTO out_of_area (call_id, zip, at) VALUES (?, ?, ?)",
             (ctx.call["id"], zip_code, iso(ctx.now)),
         )
+
+
+def _zip_known(ctx: Ctx, zip_code: str) -> None:
+    """A ZIP the server acts on came from the caller or their record, never from the model: it was
+    said in a caller line on this call or one linked to it ("one one two two six" counts), or it is
+    on a location of a customer matched on this call. Otherwise the agent asks for it, so a guessed
+    ZIP can't turn a caller away as out of area or put a booking at the wrong place."""
+    ids = records.thread(ctx.conn, ctx.call["id"])
+    lines = ctx.conn.execute(
+        f"SELECT text FROM turns WHERE speaker = 'caller' "
+        f"AND call_id IN ({','.join('?' * len(ids))})",
+        ids,
+    )
+    # The whole run, or ZIP plus four: "718 112 2600" is a phone number, not 11226.
+    said = {run for line in lines for run in digit_runs(line["text"])}
+    if zip_code in said or any(len(run) == 9 and run.startswith(zip_code) for run in said):
+        return
+    for customer_id in records.scoped_customers(ctx.conn, ctx.call["id"]):
+        try:
+            on_file = ctx.fsm.locations(customer_id)
+        except (FsmUnavailable, FsmRejected):
+            continue
+        if any(loc["address"]["zip"] == zip_code for loc in on_file):
+            return
+    raise Refused(
+        "zip_not_heard",
+        "What's the ZIP code there?",
+        need="ask the caller for the ZIP; use only one they say",
+        zip=zip_code,
+    )
 
 
 def _out_of_area(ctx: Ctx, zip_code: str) -> None:
@@ -268,11 +314,15 @@ def _describe(ctx: Ctx, window: dict) -> dict:
         if local.date() == today + timedelta(days=1)
         else local.strftime("%A")
     )
+    # The confirmation names the day and the date ("today, Monday, November 2"), so a caller can
+    # catch a wrong day (eval round 3).
+    dated = f"{local.strftime('%A')}, {local.strftime('%B')} {local.day}"
     return {
         "date": window["date"],
         "window": window["window"],
         "weekday": local.strftime("%A"),
         "day": day_word,
+        "day_and_date": dated if day_word == local.strftime("%A") else f"{day_word}, {dated}",
         "label": spec.label() if spec else window["window"],
         "after_hours": window["after_hours"],
     }
@@ -371,6 +421,7 @@ def get_customer_history(ctx: Ctx, args: HistoryIn) -> Result:
 
 
 def check_service_area(ctx: Ctx, args: ServiceAreaIn) -> Result:
+    _zip_known(ctx, args.zip)
     _out_of_area(ctx, args.zip)
     zone = ctx.tenant.service_area[args.zip]
     return ok(zip=args.zip, in_area=True, area=zone["name"])
@@ -533,19 +584,28 @@ def read_back(ctx: Ctx, args: ReadBackIn) -> Result:
     asked. With confirmed, accepts only if that same sentence was returned on this call and a caller
     line followed it (spec S-26)."""
     phone = _resolve_phone(ctx, args.phone)
+    _zip_known(ctx, args.address.zip)
     address = args.address.model_dump()
     place = address["street"] + (f", unit {address['unit']}" if address["unit"] else "")
     city = f", {address['city']}" if address["city"] else ""
     # The sentence names the address as a home, so every booking has the caller confirm it's
     # residential (assignment; spec S-07). A caller who corrects it is caught by the turn check.
-    sentence = ctx.tenant.line(
-        "read_back",
-        address=f"{place}{city}, {address['zip']}",
-        phone=phone_spoken(phone),
-    )
+    # The ZIP and the number are written out digit by digit, as the caller should hear them.
+    spoken_address = f"{place}{city}, {digits_spoken(address['zip'])}"
+    sentence = ctx.tenant.line("read_back", address=spoken_address, phone=phone_said(phone))
     asked = records.readback(ctx.call)
     current = {**address, "phone": phone, "sentence": sentence}
     same = asked is not None and _readback_key(asked) == _readback_key(current)
+    # Details the caller already confirmed are never read back again on the call (eval rounds 3
+    # and 4). Only a change to them reads a new sentence.
+    if same and ctx.call["readback_confirmed_at"] and not args.confirmed:
+        raise Refused(
+            "read_back_confirmed",
+            "",
+            note="The caller already confirmed this address and number. Don't read them again.",
+            address=address,
+            phone=phone,
+        )
     if (
         args.confirmed
         and same
@@ -554,6 +614,7 @@ def read_back(ctx: Ctx, args: ReadBackIn) -> Result:
         with tx(ctx.conn):
             records.update_call(ctx.conn, ctx.call["id"], readback_confirmed_at=iso(ctx.now))
         return ok(confirmed=True, address=address, phone=phone)
+    parts = None
     if not (args.confirmed and same):
         with tx(ctx.conn):
             records.update_call(
@@ -563,6 +624,9 @@ def read_back(ctx: Ctx, args: ReadBackIn) -> Result:
                 readback_asked_seq=ctx.call["turn_seq"],
                 readback_confirmed_at=None,
             )
+            if not args.confirmed:
+                # The caller asked for the address slower: the worker speaks these parts as given.
+                parts = pace.read_back_parts(ctx.conn, ctx.call["id"], sentence, spoken_address)
     if args.confirmed:
         raise Refused(
             "gate_read_back",
@@ -570,6 +634,8 @@ def read_back(ctx: Ctx, args: ReadBackIn) -> Result:
             need="read the sentence to the caller and let them answer first",
             sentence=sentence,
         )
+    if parts:
+        return ok(sentence, confirmed=False, sentence=sentence, parts=parts)
     return ok(sentence, confirmed=False, sentence=sentence)
 
 
@@ -742,7 +808,7 @@ def book_appointment(ctx: Ctx, args: BookIn) -> Result:
         },
     )
     say = (
-        f"You're all set for {when['day']}, with the technician arriving between "
+        f"You're all set for {when['day_and_date']}, with the technician arriving between "
         f"{when['label'].replace(' to ', ' and ')}."
     )
     # A visit booked on a safety call goes ahead only once the problem is shut off (eval round 2).
@@ -769,6 +835,11 @@ def book_appointment(ctx: Ctx, args: BookIn) -> Result:
             say += " " + ctx.tenant.line(line, when=spoken)
     if returning:
         say += " " + ctx.tenant.line("return_visit_review")
+    if seek_earlier:
+        say += " " + ctx.tenant.line("seek_earlier_note")
+    # The voice layer speaks this as the whole confirmation, with no model step after it, so it
+    # ends by asking "Anything else?" itself (spec S-30; eval round 4, the booking turn's delay).
+    say += " " + ctx.tenant.line("after_confirmation")
     result = ok(
         say,
         booking_id=sent["job_id"],
@@ -1096,7 +1167,8 @@ def reschedule_appointment(ctx: Ctx, args: RescheduleIn) -> Result:
     )
     between = when["label"].replace(" to ", " and ")
     return ok(
-        f"Done, I've moved it to {when['day']} between {between}.",
+        f"Done, I've moved it to {when['day_and_date']}, between {between}. "
+        + ctx.tenant.line("after_confirmation"),
         booking_id=job["id"],
         window=when,
     )
@@ -1130,8 +1202,15 @@ def cancel_appointment(ctx: Ctx, args: CancelIn) -> Result:
         )
     job_type = ctx.tenant.job_types.get(ctx.tenant.job_type_codes.get(job["jobTypeId"], ""))
     alternatives = _alternatives(ctx, job_type, job["priority"]) if job_type else []
+    say = "That visit is cancelled."
+    if alternatives:
+        # Spoken by the voice layer as it is, so the offer of other times is part of it.
+        times = _join([f"{a['day']} {a['label']}" for a in alternatives], "or")
+        say += f" If you'd like another time, I have {times}."
+    else:
+        say += " " + ctx.tenant.line("after_confirmation")
     return ok(
-        "That visit is cancelled.",
+        say,
         booking_id=job["id"],
         reason=args.reason,
         alternatives=alternatives,
@@ -1178,19 +1257,25 @@ def _callback_due(ctx: Ctx, asked: CallbackTime) -> CallbackWhen:
     def clock(moment: datetime) -> str:
         return tenant.time_spoken(moment, now).split(" at ")[-1]
 
-    if earliest and latest:
-        spoken = tenant.line("callback_between", start=clock(earliest), end=clock(latest))
-    elif earliest:
-        spoken = tenant.line("callback_after", time=clock(earliest))
-    else:
-        spoken = tenant.line("callback_before", time=clock(latest))
-    if days:
-        spoken = f"tomorrow {spoken}"
     day = tenant.local(now).date() + timedelta(days=days)
     opens, closes = (
         datetime.combine(day, time.fromisoformat(t), tenant.tz)
         for t in tenant.callbacks["outbound_hours"]
     )
+    target = None
+    if earliest and latest:
+        spoken = tenant.line("callback_between", start=clock(earliest), end=clock(latest))
+    elif earliest:
+        # "After 5" is promised as a time inside it ("around 5:30"), so the caller knows when to
+        # expect the call and the office knows when it is late (eval round 3).
+        target = min(earliest + timedelta(minutes=tenant.callbacks["after_lead_minutes"]), closes)
+        spoken = tenant.line("callback_after", time=clock(target))
+    else:
+        spoken = tenant.line("callback_before", time=clock(latest))
+    if days:
+        spoken = f"tomorrow {spoken}"
+    if target:
+        return CallbackWhen(target, max(earliest, now), spoken)
     # "Tomorrow, before 3" is never dialed today: a window with no start begins when calling hours
     # open on the day asked for (PR #75 review).
     return CallbackWhen(latest or closes, max(earliest or opens, now), spoken)
@@ -1213,8 +1298,21 @@ def _no_time(asked: CallbackTime) -> bool:
     )
 
 
+def _caller_left(ctx: Ctx) -> bool:
+    """The caller's last line was a goodbye: they aren't asked for anything more (eval round 4,
+    co-op-owner-mentions-board, where asking for a callback time reopened a finished call)."""
+    return says_goodbye(records.last_caller_line(ctx.conn, ctx.call["id"]))
+
+
+def _soon_after_goodbye(ctx: Ctx, asked: CallbackTime) -> CallbackTime:
+    """A callback with no time, after the caller said goodbye: due within the tenant's default."""
+    minutes = ctx.tenant.callbacks["after_goodbye_minutes"]
+    return asked.model_copy(update={"callback_in_minutes": minutes})
+
+
 def flag_person(ctx: Ctx, args: FlagIn) -> Result:
     """The sentence comes back only after the flag and the callback are stored (spec S-23)."""
+    left = _no_time(args) and _caller_left(ctx)
     if _no_time(args):
         # A safety call already has a person flagged who follows up once the caller is safe, so
         # the caller is never asked for a callback time while they leave the house (journey 3).
@@ -1226,12 +1324,14 @@ def flag_person(ctx: Ctx, args: FlagIn) -> Result:
             return ok(ctx.tenant.line("flag_stored_no_callback"), flag_id=flag_id, callback_id=None)
         # After hours the on-call technician calls an urgent caller back within a set time
         # (journey 11), so no time needs to be asked for.
-        if ctx.call["after_hours"] and args.priority == "Urgent":
+        if left:
+            args = _soon_after_goodbye(ctx, args)
+        elif ctx.call["after_hours"] and args.priority == "Urgent":
             minutes = ctx.tenant.after_hours_cutoffs["on_call_confirms_within_minutes"]
             args = args.model_copy(update={"callback_in_minutes": minutes})
         # A caller who asked for a person in office hours is about to be put through, so they
         # aren't asked for a time first; this callback is the one kept if nobody answers.
-        elif transfer.role_for(ctx.conn, ctx.tenant, ctx.call, False) == "office":
+        elif transfer.role_for(ctx.conn, ctx.tenant, ctx.call, False, ctx.numbers) == "office":
             minutes = ctx.tenant.transfer["fallback_callback_minutes"]
             args = args.model_copy(update={"callback_in_minutes": minutes})
     when = _callback_due(ctx, args)
@@ -1258,8 +1358,20 @@ def flag_person(ctx: Ctx, args: FlagIn) -> Result:
                 ctx.conn, ctx.tenant, ctx.call, callback_id, when.dial_at, ctx.now
             )
     spoken = when.spoken
+    if left:
+        # Stored, and nothing more is said: the caller has gone.
+        return ok(
+            "",
+            flag_id=flag_id,
+            callback_id=callback_id,
+            callback_at=iso(due),
+            callback_spoken=ctx.tenant.line("callback_asap"),
+            note="The caller said goodbye. End the call now; ask nothing more.",
+        )
     if callback_id is None:
         say = ctx.tenant.line("flag_stored_no_callback")
+    elif args.priority == "Urgent" and ctx.call["after_hours"]:
+        say = ctx.tenant.line("flag_stored_on_call", when=spoken)
     elif args.priority == "Urgent":
         say = ctx.tenant.line("flag_stored_urgent", when=spoken)
     else:
@@ -1269,11 +1381,65 @@ def flag_person(ctx: Ctx, args: FlagIn) -> Result:
     )
 
 
+def demand_handoff(ctx: Ctx, text: str) -> Result | None:
+    """A caller who demands a person on this line is sent to one now (app/transfer.py decides who,
+    from their words). Not a tool: the turn endpoint asks after the safety check, so the model
+    can't start it and can't hold it up. The flag and callback are stored before anything is
+    dialed. `say` is the handoff line when there is a number to send the call to, and otherwise
+    the stored callback line; `handoff.fallback` is the callback line either way."""
+    ctx.reload()
+    role = transfer.handoff_role(ctx.conn, ctx.tenant, ctx.call, text)
+    if role is None:
+        return None
+    on_safety = bool(ctx.call["safety_signal_at"]) and ctx.call["safety_state"] != "cleared"
+    reason = "Caller demanded a person" + (" after the safety lines" if on_safety else "")
+    when = None
+    # A safety call is never given a callback time while the caller leaves the house: the safety
+    # flag already has a person following up (journey 3), as in flag_person.
+    if not on_safety:
+        cutoffs = ctx.tenant.after_hours_cutoffs
+        minutes = (
+            cutoffs["on_call_confirms_within_minutes"]
+            if role == "on_call"
+            else ctx.tenant.transfer["fallback_callback_minutes"]
+        )
+        when = _callback_due(ctx, CallbackTime(callback_in_minutes=minutes))
+    with tx(ctx.conn):
+        flag_id = records.add_flag(
+            ctx.conn, ctx.call["id"], "person", reason, ctx.now, "Urgent" if on_safety else "High"
+        )
+        callback_id = (
+            records.add_callback(ctx.conn, ctx.tenant, ctx.call, when.due, reason, ctx.now)
+            if when
+            else None
+        )
+        plan = transfer.start_handoff(
+            ctx.conn, ctx.tenant, ctx.call, role, flag_id, callback_id, ctx.now, ctx.numbers
+        )
+    fallback = (
+        ctx.tenant.line("flag_stored", when=when.spoken)
+        if callback_id
+        else ctx.tenant.line("flag_stored_no_callback")
+    )
+    say = ctx.tenant.line("handoff_now") if plan else fallback
+    return ok(
+        say,
+        handoff={
+            "flag_id": flag_id,
+            "callback_id": callback_id,
+            "transfer": plan,
+            "fallback": fallback,
+        },
+    )
+
+
 def record_lead(ctx: Ctx, args: LeadIn) -> Result:
     """One write, no extra lookups (spec S-08). A commercial lead marks the call, so it can never
     become a booking."""
     details = args.details
     due = when = None
+    if args.kind != "commercial" and _no_time(details) and _caller_left(ctx):
+        details = _soon_after_goodbye(ctx, details)
     if args.kind != "commercial":
         when = _callback_due(ctx, details)
         due = when.due
@@ -1432,9 +1598,11 @@ def end_call(ctx: Ctx, args: EndCallIn) -> Result:
             with tx(ctx.conn):
                 records.update_call(ctx.conn, ctx.call["id"], end_requested=1)
         sign_off = " ".join(safety["sign_off"].split())
-        # A caller saying goodbye after the sign-off doesn't hear it a second time.
-        if hang_up and records.agent_said(ctx.conn, ctx.call["id"], sign_off):
-            return ok("", hang_up=True)
+        # One ending: the sign-off is said once a call, whether the caller is leaving or keeps
+        # talking (eval round 3).
+        if records.agent_said(ctx.conn, ctx.call["id"], sign_off):
+            # signed_off tells the voice layer the goodbye has been said, so it adds none.
+            return ok("", hang_up=hang_up, signed_off=True)
         return ok(sign_off, hang_up=hang_up)
     last = ctx.conn.execute(
         "SELECT turn_seq FROM bookings WHERE call_id = ? AND kind = 'book' AND status IN ('sending', 'booked', 'queued') "

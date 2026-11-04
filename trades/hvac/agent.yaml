@@ -6,6 +6,12 @@
 # off its own script (docs/decisions/24-safety-lines-signoff.md). Numbers sourced to one city, such
 # as temperature cutoffs and the age a person counts as older, stay with the tenant too.
 
+# The trade's equipment, as callers name it. Swearing next to one of these ("the damn furnace") is
+# about a broken system, not anger at the call, so it doesn't turn a request for a person into a
+# demand (app/transfer.py).
+equipment_words: [furnace, furnaces, boiler, boilers, heat, heater, heating, ac, air, radiator,
+  radiators, thermostat, pipe, pipes, vent, vents, filter, fan, compressor]
+
 # Safety signals. The server matches these on every caller line; the tenant's lines say what to do.
 safety:
   kinds:

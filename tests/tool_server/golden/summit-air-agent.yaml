@@ -46,6 +46,8 @@ approval:
   - not sure if i can approve
   - not sure i can approve
 callbacks:
+  after_goodbye_minutes: 60
+  after_lead_minutes: 30
   dropped_safety_minutes: 10
   fsm_down_minutes: 60
   max_attempts: 1
@@ -125,6 +127,26 @@ commercial:
   - church
   - hotel
   - office
+equipment_words:
+- furnace
+- furnaces
+- boiler
+- boilers
+- heat
+- heater
+- heating
+- ac
+- air
+- radiator
+- radiators
+- thermostat
+- pipe
+- pipes
+- vent
+- vents
+- filter
+- fan
+- compressor
 fsm:
   adapter: servicetitan
   agent_user_id: 9001
@@ -144,6 +166,7 @@ fsm:
 lines:
   account_choice: Should that address go on its own account, with you as a contact, or under your account?
   account_name: Whose name should the account for that address be under?
+  after_confirmation: Anything else?
   anything_else_first: Is there anything else I can help with?
   approval_callback: Before the technician heads out, someone from our team will call you {when} to confirm
     who can approve the work.
@@ -151,7 +174,8 @@ lines:
     and the technician won't start until that's settled.
   arrival_no_fit: Our arrival windows are {windows}, and the technician can come any time in the window,
     so I can't promise an exact time.
-  callback_after: after {time}
+  callback_after: around {time}
+  callback_asap: as soon as they can
   callback_before: before {time}
   callback_between: between {start} and {end}
   callback_by: by {time}
@@ -167,8 +191,9 @@ lines:
     at {window}, would you like it?
   flag_stored: I've let our team know, and someone will call you {when}.
   flag_stored_no_callback: I've let our team know.
-  flag_stored_urgent: I've marked this as urgent and let our on-call team know, so someone's keeping an
-    eye on it. Someone will call you {when}.
+  flag_stored_on_call: I've let our on-call team know this call is top priority, and someone will call
+    you {when}.
+  flag_stored_urgent: I've let our team know this call is top priority, and someone will call you {when}.
   fsm_unavailable: I can't book that right now, but I've written it all down and someone will call you
     by {time} to confirm.
   fsm_unavailable_no_callback: I can't get to that right now, but I've written it all down for the team.
@@ -177,18 +202,20 @@ lines:
     up.
   out_of_area: I'm sorry, that's outside the area we cover, so we're not able to send someone. A local
     heating company should be able to help.
-  read_back: 'Let me read that back: your home at {address}, and the best number is {phone}. Is that right?'
+  read_back: I have your home at {address}, and the best number is {phone}, is that right?
   repeated_drops: Looks like we keep getting cut off, the signal might be spotty. Want me to have someone
     call you back in a few minutes instead?
   return_visit_review: Since we were just out there, a manager will look over this visit, including whether
     it's covered, before the technician arrives.
+  seek_earlier_note: I've also asked our team to look for an earlier opening.
   slot_taken: That window just filled up.
   transfer_handoff: I'm connecting you with someone from our team now.
   transfer_no_answer: I couldn't reach anyone just now, so I've let the team know and someone will call
     you {when}.
   transfer_prompt: Summit Air has a caller for the {role}. Press 1 to take the call.
   transfer_summary: '{priority}Caller at {phone}: {reason}. Putting you through now.'
-  urgent_priority: I've marked this as one of our most urgent calls, so you get our soonest opening.
+  handoff_now: Transferring you to a person now.
+  urgent_priority: I've marked this call top priority, so you get our soonest opening.
 on_call_alerts:
   email: on-call@summit-air.example
   max_age_minutes: 120
@@ -199,6 +226,233 @@ on_call_alerts:
 owner_rules:
   disclosure:
   - virtual assistant
+pace:
+  address_phrases:
+  - the address slower
+  - the address slowly
+  - the address more slowly
+  - the address again slower
+  - the address again slowly
+  - address back slower
+  - address back slowly
+  - slower on the address
+  - slowly on the address
+  faster_imperative: speed up
+  faster_lines:
+  - faster
+  - a little faster
+  - a bit faster
+  - little faster
+  - bit faster
+  - quicker
+  - speed it up
+  - go faster
+  - pick up the pace
+  faster_phrases:
+  - talk faster
+  - speak faster
+  - talk a little faster
+  - talk a bit faster
+  - speak a little faster
+  - speak a bit faster
+  - talk quicker
+  - speak quicker
+  - talking too slow
+  - talking so slow
+  - talking too slowly
+  - speaking too slow
+  - speaking so slow
+  - you talk too slow
+  - you speak too slow
+  - need you to speed up
+  - want you to speed up
+  fastest: 1.3
+  imperative_after:
+  - please
+  - a
+  - for
+  - there
+  - ok
+  - okay
+  - sorry
+  - im
+  - i
+  - youre
+  - so
+  - thanks
+  - thank
+  - now
+  imperative_before:
+  - you
+  - can
+  - please
+  - whoa
+  - hey
+  - ok
+  - okay
+  - just
+  - sorry
+  - wait
+  - um
+  - uh
+  - so
+  - oh
+  - now
+  job_words:
+  - send
+  - someone
+  - somebody
+  - technician
+  - tech
+  - guy
+  - crew
+  - install
+  - installation
+  - repair
+  - appointment
+  - visit
+  - come
+  - coming
+  - get here
+  - schedule
+  - service
+  - fix
+  - job
+  - process
+  - furnace
+  - boiler
+  - heater
+  - heat
+  - ac
+  - fan
+  - blower
+  - motor
+  - unit
+  - system
+  - drain
+  - thermostat
+  - pump
+  - radiator
+  - water
+  line_fillers:
+  - um
+  - uh
+  - oh
+  - ok
+  - okay
+  - sorry
+  - please
+  - so
+  - just
+  - hey
+  - can
+  - could
+  - would
+  - you
+  - maybe
+  normal: 1.0
+  normal_phrases:
+  - normal speed
+  - regular speed
+  - normal pace
+  - regular pace
+  - usual speed
+  - usual pace
+  older_adult_age: 65
+  older_adult_phrases:
+  - im elderly
+  - i am elderly
+  - im a senior
+  - i am a senior
+  - im a senior citizen
+  - im an old man
+  - im an old woman
+  - im an old lady
+  - im getting old
+  - im not young anymore
+  older_adult_speed: 0.85
+  repeat_lines:
+  - what
+  - huh
+  - sorry
+  - pardon
+  - sorry what
+  - what sorry
+  - excuse me
+  - what was that
+  - come again
+  - say again
+  repeat_phrases:
+  - sorry what
+  - what did you say
+  - say that again
+  - can you repeat that
+  - could you repeat that
+  - repeat that please
+  - i didnt catch that
+  - didnt catch that
+  - i didnt hear that
+  - didnt hear you
+  - i cant hear you
+  - pardon me
+  - come again
+  repeat_words:
+  - repeat
+  - again
+  - say that
+  - say it
+  - read that
+  - read it
+  repeats_before_slower: 2
+  slow_words:
+  - slower
+  - slowly
+  slower_imperative: slow down
+  slower_lines:
+  - slower
+  - a little slower
+  - a bit slower
+  - little slower
+  - bit slower
+  - more slowly
+  - slowly
+  - slow it down
+  - slower this time
+  slower_phrases:
+  - speak slower
+  - talk slower
+  - speak more slowly
+  - talk more slowly
+  - speak slowly
+  - talk slowly
+  - say it slower
+  - say that slower
+  - say it slowly
+  - say that slowly
+  - say that again slower
+  - say that again slowly
+  - say it again slower
+  - say it again slowly
+  - repeat that slower
+  - repeat that slowly
+  - youre talking too fast
+  - youre talking so fast
+  - youre talking fast
+  - you talk too fast
+  - you talk so fast
+  - youre speaking too fast
+  - you speak too fast
+  - talking too fast
+  - talking so fast
+  - speaking too fast
+  - speaking so fast
+  - youre going too fast
+  - youre too fast
+  - dont talk so fast
+  - need you to slow down
+  - want you to slow down
+  slowest: 0.7
+  step: 0.15
 phone_numbers:
 - (646) 624-0418
 - (678) 336-6730
@@ -570,6 +824,7 @@ safety:
       variants:
       - Please get outside and call 911 from there.
       - The safest thing is to head outside now and call 911 or the gas company.
+  repeat_limit: 1
   sign_off: For your safety, I'd recommend hanging up now, getting outside, and calling 911 from there.
     We'll follow up once you're safe.
   signed_off: true
@@ -644,7 +899,7 @@ voice:
   fallback: Thanks for calling Summit Air. If you smell gas, hang up and call 911 from outside. We can't
     take your call right now. Please leave your name, number and what's going on after the tone, and we'll
     call you back.
-  goodbye: Thanks for calling Summit Air. Stay warm out there.
+  goodbye: Thanks for calling Summit Air. Have a great rest of your day.
   greeting_known: Hi, this is Summit Air. Is this {first_name}?
   greeting_linked: Hi, this is Summit Air's virtual assistant again. I think we got cut off earlier. Is
     this {first_name}?
@@ -653,6 +908,8 @@ voice:
   greeting_unknown: Thanks for calling Summit Air, this is the virtual assistant. How can I help?
   outbound_voicemail: Hi, this is Summit Air calling about your appointment. Please give us a call back
     at {phone}.
+  recording_notice: This call may be recorded.
+  recording_stopped: Okay, I've turned the recording off.
   server_down: Sorry, our system is having trouble right now. Please call us back in a few minutes, and
     if you smell gas, hang up and call 911 from outside.
   voicemail_callback_minutes: 60

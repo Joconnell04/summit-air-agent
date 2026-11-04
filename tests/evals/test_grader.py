@@ -53,7 +53,8 @@ def test_the_grader_is_told_what_the_server_set_up():
                 tool("book_appointment", "Before I book it, let me read back.", ok=False)],
     ), SAFETY)
     assert found == ["A person was flagged (person).",
-                     "flag_person returned: Someone will call you by 9:15 AM."]
+                     "flag_person returned: Someone will call you by 9:15 AM.",
+                     "The system did not mark this call Urgent."]
     model = ScriptedModel([grade_reply()])
     grade(model, TURNS, [], found)
     assert "flag_person returned: Someone will call you by 9:15 AM." in model.calls[0]["system"]
@@ -61,19 +62,43 @@ def test_the_grader_is_told_what_the_server_set_up():
 
 def test_a_booking_shows_its_job_number_so_reading_it_out_is_not_invented():
     found = set_up(trace(bookings=[
-        {"kind": "book", "status": "booked", "fsm_job_id": 625, "window_start": "2026-11-03T13:00:00Z"},
+        {"kind": "book", "status": "booked", "fsm_job_id": 625, "window_start": "2026-11-03T13:00:00Z",
+         "priority": "High"},
         {"kind": "book", "status": "failed", "fsm_job_id": None, "window_start": "x"},
+        {"kind": "book", "status": "queued", "fsm_job_id": None, "window_start": "y"},
     ]), SAFETY)
-    assert found == ["A visit was booked (job 625, starting 2026-11-03T13:00:00Z)."]
+    assert found == [
+        "A visit was booked (job 625, starting 2026-11-03T13:00:00Z, priority High).",
+        "A visit was queued to retry, not yet booked; the caller gets a callback to confirm.",
+        "The system did not mark this call Urgent.",
+    ]
 
 
 def test_a_safety_call_shows_the_grader_the_signed_off_wording():
     found = set_up(trace(signal="2026-11-02T14:00:00Z", state="lines_said"), SAFETY)
     assert "Safety sign-off (fixed wording): We'll follow up once you're safe." in found
-    assert set_up(trace(signal="2026-11-02T14:00:00Z", state="cleared"), SAFETY) == []
+    assert set_up(trace(signal="2026-11-02T14:00:00Z", state="cleared"), SAFETY) == [
+        "The system did not mark this call Urgent."
+    ]
 
 
 def test_with_nothing_set_up_the_grader_is_told_so():
     model = ScriptedModel([grade_reply()])
     grade(model, TURNS, [])
     assert "- Nothing." in model.calls[0]["system"]
+
+
+def test_the_grader_is_told_when_the_system_marked_the_call_urgent():
+    """Eval round 4, oven-heat-co-check: the server's own top-priority line was judged wrong."""
+    line = "I've marked this call top priority, so you get our soonest opening. Today I have 12 to 4."
+    found = set_up(trace(events=[tool("find_slots", line)]), SAFETY)
+    assert "The system marked this call Urgent and said so (top priority)." in found
+
+
+def test_the_grader_sees_the_company_knowledge_and_the_approved_wordings():
+    """Eval round 4: a policy from the knowledge folder and Jackson's own wording were marked down."""
+    model = ScriptedModel([grade_reply()])
+    grade(model, TURNS, [], [])
+    system = model.calls[0]["system"]
+    assert "No price is quoted on the phone" in system
+    assert "I'll ask the technician to give you a call before they arrive" in system

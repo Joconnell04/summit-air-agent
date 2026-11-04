@@ -165,8 +165,10 @@ async def entrypoint(ctx: JobContext) -> None:
 
     if outbound:
         start = await tools_server.start(outbound["phone"], outbound["dialed_from"], "outbound")
+        caller_identity = "callee"
     else:
         caller = await ctx.wait_for_participant(kind=SIP)
+        caller_identity = caller.identity
         start = await tools_server.start(
             caller.attributes.get("sip.phoneNumber", ""),
             caller.attributes.get("sip.trunkPhoneNumber", ""),
@@ -198,6 +200,8 @@ async def entrypoint(ctx: JobContext) -> None:
     llm_log = LlmLog()
     call = Call(tools_server, bridge, tool_log, voice["endpointing"], llm_log)
     call.session = session
+    # The pace the server chose for this caller (app/pace.py), from the greeting on.
+    call.apply_pace(data)
     ended = {"reason": "caller_hangup"}
     egress = {"id": None}
 
@@ -213,9 +217,10 @@ async def entrypoint(ctx: JobContext) -> None:
     def speak(text: str):
         return session.say(text, allow_interruptions=False)
 
-    def hang_up(context: RunContext, last_line) -> None:
+    def hang_up(context: RunContext, last_line, quiet: bool = False) -> None:
         """After this turn's speech: the worker's own last line if it said one, else the tenant's
-        goodbye when the model said nothing, then the line drops."""
+        goodbye when the model said nothing (never after the safety sign-off, which is the goodbye),
+        then the line drops."""
 
         async def run() -> None:
             await context.speech_handle.wait_for_playout()
@@ -225,7 +230,7 @@ async def entrypoint(ctx: JobContext) -> None:
             )
             if last_line is not None:
                 await last_line.wait_for_playout()
-            elif not spoke:
+            elif not spoke and not quiet:
                 await speak(spoken["goodbye"]).wait_for_playout()
             ended["reason"] = "agent_end"
             await ctx.delete_room()
@@ -271,7 +276,10 @@ async def entrypoint(ctx: JobContext) -> None:
         speak,
         hold,
         hand_over,
+        caller=caller_identity,
+        ending=lambda reason: ended.update(reason=reason),
     )
+    call.handoff = transfer.handoff
 
     # The session closes when the caller hangs up; end the job then, so the call is closed on the
     # server at once rather than when LiveKit empties the room.
@@ -290,16 +298,35 @@ async def entrypoint(ctx: JobContext) -> None:
     agent = SummitAgent(
         call,
         assemble.instructions(data),
-        build_tools(specs, tools_server, bridge, tool_log, hang_up, speak, transfer),
+        build_tools(
+            specs, tools_server, bridge, tool_log, hang_up, speak, transfer, call.say_parts,
+            call.reply,
+        ),
     )
 
     async def record() -> None:
+        if egress.get("declined"):
+            return
         egress["id"] = await recording.start(
             ctx.api, tools_server, call_id, data.get("recording"), settings
         )
+        # The caller objected while the recorder was starting.
+        if egress.get("declined"):
+            await stop_recording()
+
+    async def stop_recording() -> None:
+        """The caller asked not to be recorded (two-party consent). The server deletes the file
+        whatever happens here; stopping now keeps the rest of the call out of it."""
+        egress["declined"] = True
+        await recording.stop(ctx.api, egress["id"])
+        egress["id"] = None
+
+    call.stop_recording = stop_recording
 
     if outbound:
-        await place_outbound(ctx, session, agent, player, outbound, spoken, tools_server, record)
+        await place_outbound(
+            ctx, session, agent, player, outbound, spoken, tools_server, record, data
+        )
         return
 
     await session.start(room=ctx.room, agent=agent)
@@ -310,13 +337,19 @@ async def entrypoint(ctx: JobContext) -> None:
     if (data.get("safety") or {}).get("text"):
         session.say(data["safety"]["text"], allow_interruptions=False)
         return
-    session.say(assemble.greeting(data, spoken))
+    session.say(opening(data, assemble.greeting(data, spoken)))
     if start["say"]:
         session.say(start["say"])
 
 
+def opening(data: dict, line: str) -> str:
+    """The first line, after the recording notice when the server sends one (two-party consent,
+    app/owner_settings.py)."""
+    return " ".join(part for part in (data.get("recording_notice"), line) if part)
+
+
 async def place_outbound(
-    ctx, session, agent, player, claim: dict, spoken: dict, tools_server: ToolServer, record
+    ctx, session, agent, player, claim: dict, spoken: dict, tools_server: ToolServer, record, data
 ) -> None:
     """Journey 12. The server chose this call and checked its rules when it was claimed; one dial,
     a voicemail at most, and the result goes back to the server."""
@@ -355,7 +388,7 @@ async def place_outbound(
     await tools_server.outbound_done(claim["outbound_id"], True, False)
     # Recorded only once a person answered; a voicemail we leave isn't kept.
     asyncio.create_task(record())
-    session.say(claim["opening_line"])
+    session.say(opening(data, claim["opening_line"]))
 
 
 class VoicemailAgent(Agent):

@@ -96,7 +96,7 @@ const run = Date.now();
 pm.collectionVariables.set('call_id', 'pm-' + run);
 pm.collectionVariables.set('safety_call_id', 'pm-safety-' + run);
 pm.collectionVariables.set('known_call_id', 'pm-known-' + run);
-// No transfer has this id, so reporting on it is refused.
+// No transfer or handoff has this id, so reporting on it is refused.
 pm.collectionVariables.set('unknown_transfer_id', '0');
 pm.collectionVariables.set('caller', '(212) 555-' + String(1000 + run % 9000).slice(-4));
 """
@@ -299,6 +299,13 @@ def build() -> dict:
             "POST",
             "calls/{{safety_call_id}}/transfer/{{unknown_transfer_id}}/done",
             body={"outcome": "no_answer"},
+            check=refused("invalid_state"),
+        ),
+        item(
+            "A handoff that was never started can't be reported",
+            "POST",
+            "calls/{{safety_call_id}}/handoff/{{unknown_transfer_id}}/done",
+            body={"outcome": "handed_off"},
             check=refused("invalid_state"),
         ),
         item(
@@ -515,25 +522,27 @@ def build() -> dict:
             pre="pm.collectionVariables.set('outbound_id', '999999');",
         ),
         item(
-            "Owner view without a token",
+            "Owner view without signing in",
             "GET",
             "owner",
             envelope=False,
-            check="pm.test('shows the token form', () => pm.response.to.have.status(401));\n"
+            check="pm.test('shows the sign-in form', () => pm.response.to.have.status(401));\n"
             + html,
         ),
         item(
-            "Owner view login with a wrong token",
+            "Owner view sign-in with a wrong password",
             "POST",
             "owner/login",
             envelope=False,
+            form={"username": "{{owner_username}}", "password": "not-the-password"},
             check="pm.test('is refused', () => pm.response.to.have.status(401));",
         ),
         item(
-            "Owner view with the token",
-            "GET",
-            "owner?token={{owner_token}}",
+            "Sign in to the owner view as the admin",
+            "POST",
+            "owner/login",
             envelope=False,
+            form={"username": "{{owner_username}}", "password": "{{owner_password}}"},
             check="pm.test('opens the page', () => pm.response.to.have.status(200));\n"
             + "pm.test('shows the day board', () => pm.expect(pm.response.text()).to.include('Day board'));",
         ),
@@ -616,51 +625,187 @@ def build() -> dict:
             check="pm.test('opens the rules', () => pm.response.to.have.status(200));\n" + html,
         ),
         item(
-            "The rules editor asks for an edit code",
+            "The rules editor opens for an admin",
             "GET",
-            "owner/rules/edit",
+            "bench/rules",
             envelope=False,
-            check="pm.test('the owner token is read-only', () => pm.response.to.have.status(401));",
+            check="pm.test('opens the editor', () => pm.response.to.have.status(200));\n" + html,
         ),
         item(
-            "A wrong edit code is refused",
-            "POST",
-            "owner/rules/login",
+            "The settings and users",
+            "GET",
+            "owner/settings",
             envelope=False,
-            form={"token": "not-an-edit-code"},
-            check="pm.test('refused', () => pm.response.to.have.status(401));",
+            check="pm.test('opens the settings', () => pm.response.to.have.status(200));\n" + html,
         ),
         item(
-            "Saving a rules draft needs the edit login",
+            "An admin saves the settings",
             "POST",
-            "owner/rules/draft",
+            "owner/settings",
+            envelope=False,
+            form={"s.two_party_consent": "0", "s.call_recordings": "1"},
+            check="pm.test('saved', () => pm.response.to.have.status(200));\n"
+            + "pm.test('back on the settings', () => pm.expect(pm.response.text()).to.include('Saved'));",
+        ),
+        item(
+            "An admin adds a staff user",
+            "POST",
+            "owner/users",
+            envelope=False,
+            form={"username": "temp", "name": "Temp", "role": "staff", "password": "temp-password-1"},
+            check="pm.test('added', () => pm.response.to.have.status(200));\n"
+            + "pm.test('listed', () => pm.expect(pm.response.text()).to.include('Temp'));",
+        ),
+        item(
+            "An admin changes a user's role",
+            "POST",
+            "owner/users/{{temp_user_id}}/role",
+            envelope=False,
+            form={"role": "admin"},
+            pre="pm.collectionVariables.set('temp_user_id', '3');",
+            check="pm.test('changed', () => pm.response.to.have.status(200));",
+        ),
+        item(
+            "An admin removes a user",
+            "POST",
+            "owner/users/{{temp_user_id}}/remove",
+            envelope=False,
+            form={},
+            check="pm.test('removed', () => pm.response.to.have.status(200));\n"
+            + "pm.test('gone from the list', () => pm.expect(pm.response.text()).to.not.include('>Temp<'));",
+        ),
+        item(
+            "Sign out",
+            "POST",
+            "owner/logout",
+            envelope=False,
+            form={},
+            check="pm.test('back to the sign-in form', () => pm.response.to.have.status(401));",
+        ),
+        item(
+            "Sign in as staff",
+            "POST",
+            "owner/login",
+            envelope=False,
+            form={"username": "{{staff_username}}", "password": "{{staff_password}}"},
+            check="pm.test('opens the page', () => pm.response.to.have.status(200));",
+        ),
+        item(
+            "Staff can read the settings",
+            "GET",
+            "owner/settings",
+            envelope=False,
+            check="pm.test('opens the settings', () => pm.response.to.have.status(200));\n"
+            + "pm.test('without a Save button', () => pm.expect(pm.response.text()).to.not.include('>Save</button>'));",
+        ),
+        item(
+            "Staff can't change a setting",
+            "POST",
+            "owner/settings",
+            envelope=False,
+            form={"s.two_party_consent": "1"},
+            check="pm.test('refused', () => pm.response.to.have.status(403));",
+        ),
+        item(
+            "Staff can't add a user",
+            "POST",
+            "owner/users",
+            envelope=False,
+            form={"username": "eve", "name": "Eve", "role": "admin", "password": "long-enough-1"},
+            check="pm.test('refused', () => pm.response.to.have.status(403));",
+        ),
+        item(
+            "Staff can't open the rules editor",
+            "GET",
+            "bench/rules",
+            envelope=False,
+            check="pm.test('refused', () => pm.response.to.have.status(403));",
+        ),
+        item(
+            "Staff can't save a rules draft",
+            "POST",
+            "bench/rules/draft",
             envelope=False,
             form={"guide.booking.0": "Ask about pets."},
-            check="pm.test('refused', () => pm.response.to.have.status(401));",
+            check="pm.test('refused', () => pm.response.to.have.status(403));",
         ),
         item(
-            "Discarding a rules draft needs the edit login",
+            "Staff can't discard a rules draft",
             "POST",
-            "owner/rules/discard",
+            "bench/rules/discard",
             envelope=False,
             form={},
-            check="pm.test('refused', () => pm.response.to.have.status(401));",
+            check="pm.test('refused', () => pm.response.to.have.status(403));",
         ),
         item(
-            "Stopping a rules check needs the edit login",
+            "Staff can't stop a rules check",
             "POST",
-            "owner/rules/cancel",
+            "bench/rules/cancel",
             envelope=False,
             form={},
-            check="pm.test('refused', () => pm.response.to.have.status(401));",
+            check="pm.test('refused', () => pm.response.to.have.status(403));",
         ),
         item(
-            "Rolling back the rules needs the edit login",
+            "Staff can't roll back the rules",
             "POST",
-            "owner/rules/rollback",
+            "bench/rules/rollback",
             envelope=False,
             form={"number": "0"},
-            check="pm.test('refused', () => pm.response.to.have.status(401));",
+            check="pm.test('refused', () => pm.response.to.have.status(403));",
+        ),
+    ]
+    # The owner view folder ends signed in as staff, who can't open the bench; then the admin can.
+    staff_refused = "pm.test('admins only', () => pm.response.to.have.status(403));"
+    opens = "pm.test('opens', () => pm.response.to.have.status(200));\n" + html
+    eval_run = "pm.collectionVariables.set('eval_run', '20261104-013438-livekit-fast-standard');"
+    bench = [
+        *[
+            item(name, "GET", path, envelope=False, check=staff_refused, pre=pre or "")
+            for name, path, pre in (
+                ("Staff can't open the bench", "bench?q=0418", None),
+                ("Staff can't open a call's node graph", "bench/calls/{{call_id}}", None),
+                ("Staff can't fetch the graph alone", "bench/calls/{{call_id}}/graph", None),
+                ("Staff can't open the live stream", "bench/calls/{{call_id}}/stream", None),
+                ("Staff can't draft a scenario from a call", "bench/calls/{{call_id}}/scenario.yaml",
+                 None),
+                ("Staff can't open the bench's settings", "bench/settings", None),
+                ("Staff can't open an eval run", "bench/evals/{{eval_run}}", eval_run),
+                ("Staff can't open an eval scenario", "bench/evals/{{eval_run}}/{{eval_key}}",
+                 eval_run + "\npm.collectionVariables.set('eval_key', 'elderly-no-heat');"),
+                ("Staff can't open an eval round", "bench/rounds/{{eval_round}}",
+                 "pm.collectionVariables.set('eval_round', 'model-matrix-01');"),
+            )
+        ],
+        item(
+            "Sign in to the bench as the admin",
+            "POST",
+            "owner/login",
+            envelope=False,
+            form={"username": "{{owner_username}}", "password": "{{owner_password}}",
+                  "next": "/bench"},
+            check="pm.test('opens the bench', () => pm.response.to.have.status(200));",
+        ),
+        item("The bench's calls", "GET", "bench", envelope=False, check=opens),
+        item("A call's node graph", "GET", "bench/calls/{{call_id}}/graph", envelope=False,
+             check=opens),
+        item("The bench's settings", "GET", "bench/settings", envelope=False, check=opens),
+        item("The eval runs", "GET", "bench/evals", envelope=False, check=opens),
+        item(
+            "An override needs a reason",
+            "POST",
+            "bench/rules/draft",
+            envelope=False,
+            form={"guide.booking.0": "Ask about pets.", "override": "1", "reason": ""},
+            check="pm.test('refused, nothing published', () => pm.response.to.have.status(422));\n"
+            + "pm.test('says why', () => pm.expect(pm.response.text()).to.include('Say why the check is being skipped.'));",
+        ),
+        item(
+            "Discard the draft that override left",
+            "POST",
+            "bench/rules/discard",
+            envelope=False,
+            form={},
+            check="pm.test('back to the editor', () => pm.response.to.have.status(200));",
         ),
     ]
     scenarios = booking_flow[0]
@@ -679,6 +824,7 @@ def build() -> dict:
             folder("4 Known caller", known_flow),
             folder("5 Triage", triage),
             folder("6 Outbound and owner view", outbound_and_owner),
+            folder("7 Debug bench", bench),
         ],
     }
 
@@ -688,7 +834,10 @@ def environment() -> dict:
         "base_url": "http://127.0.0.1:8100",
         "st_url": "http://127.0.0.1:8101",
         "debug_token": "dev-debug-token",
-        "owner_token": "dev-owner-token",
+        "owner_username": "owner",
+        "owner_password": "dev-owner-password",
+        "staff_username": "staff",
+        "staff_password": "dev-staff-password",
     }
     return {
         "name": "Tool server (local)",

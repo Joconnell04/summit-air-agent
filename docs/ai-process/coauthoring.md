@@ -235,6 +235,29 @@ Status: open
 Feedback (verbatim): the same notes as spec r8 above ("commercial is referring to like an office building or something. In multi-tenant apartment building is technically residential").
 Changed:
 - Section 9, commercial caller: a restaurant, a store, an office; a super or building manager of an apartment building is no longer in this group. "Our building" and "our tenants" alone point to an apartment building. The agent says Summit Air works on homes and apartments, not businesses, and explains when a caller is unsure.
+
+## spec r9 (amendment after lock: eval round 3, wording and safety tone)
+Numbered after the two r8 rounds in PRs #74 and #75.
+Feedback (verbatim, Jackson's notes on the ten graded calls in evals/rounds/03-judge-labels.md, the parts this round acts on):
+> 3. good but express urgency....so like "Agent: I'm sorry about the bill and the mud in your hallway. I'll flag this for a person to call you back. What time works best for a call back today?" becomes "Agent: I'm sorry about the bill and the mud in your hallway. I'll flag this for a person to call you back as soon as they can. What time works best for a call back today?" also if possible, try to add some specificity to "Agent: I can't change the bill or take anything off on this call. I'll get that callback set for after 5 p.m. I've let our team know, and someone will call you after 5 PM. Anything else?" so it would be more like "Agent: I can't change the bill or take anything off on this call. I'll get that callback set for after 5 p.m. I've let our team know, and someone will call you around 5:30pm. Anything else?" and "stay warm at there" is a terrible ending, change it to be generic and kind
+
+> for situation 4: use better pacing and be less demaning. i.e. "Agent: Good, get outside and stay there. Stay on the line if you need to, and call 911 from outside if you haven't already." becomes "Agent: Okay, that's good, now I recommend getting outside and staying there until emergency services can confirm it's not a dangerous situation. Please call 911 from outside if you haven't already." and don't offer to stay on the line because what would the ai agent be able to do? nothing and make the ending thing "Agent: Okay. Please stay outside and call 911. Goodbye. For your safety, I'd recommend hanging up now, getting outside, and calling 911 from there. We'll follow up once you're safe." better and less repetitive. so fail but partial.
+
+> for situation 5: [...] for "Agent: You're all set for today, with the technician arriving between 12 and 4. They'll call or knock since the buzzer's broken. Anything else?", make sure the agent restates the day/date with the time
+
+> for situation 6: fail in a few ways. [...] "Agent: Please get everyone out of the house now. Don't flip any switches or use the stove, and call 911 or the gas company once you're outside." shouldn't be said because the caller didn't say gas was going off, they were just saying they're worried about it theoretically. so make it less senstiive. this is a complete over sensitivty and thus a failure. and even when the caller clarifies they didn't smell gas, the agent continues to fail and over emphasize safety concerns. also im confused why [...] the agent says it can't schedule a callback....why not?
+
+> and in situation 8, the safety is appreciated but is overdone. the caller should always be in control. if they say it smells like gas but it's fine, elevate your concern but then if they reject your advice, just let it be and maybe offer one more time. but don't keep demanding to get everyone outside. [...] and "Agent: Stay safe, Gil. Thanks for calling Summit Air. Stay warm out there. Please hang up now, get everyone outside, and call 911 from there. We'll follow up once you're safe." is terrible. so i'd say failure in. many ways on this one
+
+> in situation 9, [...] "I've marked this as one of our most urgent calls" should be "I've marked this call top priority"...
+Changed:
+- S-17: the shorter safety line is said once per call (`safety.repeat_limit`), then the caller stays in control. The signed-off wording is unchanged.
+- S-19: the sign-off is the call's one goodbye, said once.
+- S-20: a worry with nothing described gets the check question at most, never the lines; a caller who says after the lines that there was never a smell stands the call down.
+- S-21a: the urgent line is now "I've marked this call top priority".
+- S-30: the confirmation names the date as well as the day.
+- S-32: "after 5" is promised as "around 5:30", worked out by the server; a callback can be set on a safety call when the caller asks.
+Commit: 83e06e1
 Status: open
 
 ## call-journeys r6 (amendment after lock: eval round 2, second half)
@@ -268,4 +291,22 @@ Changed:
 - S-38: same number and same day are the gate, the greeting checks the name, never two bookings across the calls.
 - S-41a (new): no legal advice, and another company's quote is never judged.
 Commit: a8108c7 (saved as a WIP commit when the app quit; this round's text is in it)
+Status: open
+
+## call-journeys r7 (amendment after lock: cold handoff after the live calls)
+Feedback (verbatim, Jackson):
+> Let's just make sure that there's proper handoff, essentially like a cold handoff. Like if they like are angry and demand a person, just say transfer your person now and immediately transfer them, if that's possible. Like, yeah. Properly implement that.
+Changed:
+- Traits: "Wants a person" is split. Asked once and calmly, it stays a flag and the warm transfer in office hours. Demanded (insistently, again, or angrily), the agent says only "Transferring you to a person now." and the call goes straight to the office, or the on-call technician after hours, with no summary; the server decides from the caller's words. A passing mention or "are you a real person?" isn't a request. The stale "no live transfer in V1" is gone.
+- Traits: "Upset or rude" points at the demand line.
+- Journey 3, after step 6: a demand is put through only after the safety lines, to on-call after hours. This is a change to decision 051's "never on a safety call", proposed in the PR, because the lines have already told the caller to get outside.
+- Journey 13 step 3: a complaint caller who demands a manager is put through at once.
+Commit: ff34e7f (amended to add this line)
+Status: open
+
+## spec r10 (amendment after lock: cold handoff after the live calls)
+Feedback (verbatim): the same note as call-journeys r7 above.
+Changed:
+- S-38a (new): the cold handoff, who it goes to, when it doesn't happen (a mention, a commercial call, before the safety lines), once per call, and the stored callback line when nothing goes through.
+Commit: ff34e7f (amended to add this line)
 Status: open

@@ -7,6 +7,7 @@ the voice layer never hears an error page. Every request is logged (app/logs.py)
 import hashlib
 import json
 import logging
+import os
 import threading
 import time
 import uuid
@@ -21,6 +22,9 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from . import (
+    accounts,
+    bench,
+    bench_rules,
     db,
     jobs,
     lifecycle,
@@ -46,6 +50,7 @@ from .mail import Mailer
 from .priority import SideModel
 from .schemas import (
     EndIn,
+    HandoffDoneIn,
     HeartbeatIn,
     OutboundClaimIn,
     OutboundDoneIn,
@@ -57,7 +62,7 @@ from .schemas import (
 )
 from .settings import WORKER_STALE_SECONDS, Settings
 from .tenant import Tenants
-from .tools import TOOLS, Ctx, needs_on_call_tonight
+from .tools import TOOLS, Ctx, demand_handoff, needs_on_call_tonight
 
 log = logging.getLogger("app")
 
@@ -106,6 +111,17 @@ class Services:
         )
         self.mailer = Mailer(settings)
         self.bucket = recordings.bucket(settings)
+        conn = self.connect()
+        try:
+            accounts.seed_admin(
+                conn,
+                settings.owner_admin_username,
+                settings.owner_admin_name,
+                settings.owner_admin_password,
+                self.clock(),
+            )
+        finally:
+            conn.close()
         self._locks: dict[str, threading.Lock] = {}
         self._locks_guard = threading.Lock()
 
@@ -215,6 +231,9 @@ def _ctx(services: Services, conn, call_id: str, key: str | None) -> Ctx:
     if call["ended_at"]:
         raise Refused("call_ended", "")
     tenant = rules.tenant_for_call(conn, services.tenants.by_slug[call["tenant"]], call_id)
+    numbers = services.settings.transfer_numbers
+    if numbers is None:
+        numbers = os.environ
     return Ctx(
         conn,
         call,
@@ -224,6 +243,7 @@ def _ctx(services: Services, conn, call_id: str, key: str | None) -> Ctx:
         services.clock(),
         services.side_model,
         key,
+        numbers,
     )
 
 
@@ -342,6 +362,13 @@ def create_app(
         def fn(conn, key):
             ctx = _ctx(services, conn, call_id, key)
             result = lifecycle.turn(conn, ctx.tenant, ctx.call, body, ctx.now)
+            # A caller who demands a person is sent to one now, but never on a turn that brought
+            # the safety lines or the check question: those are said first.
+            if body.speaker == "caller" and not result.data.get("safety"):
+                handed = demand_handoff(ctx, body.text)
+                if handed is not None:
+                    result.say = handed.say
+                    result.data["handoff"] = handed.data["handoff"]
             # Ask the side model now, so its answer is back before find_slots or book needs it.
             slot = ctx.tenant.priority.get("side_model")
             if body.speaker == "caller" and services.side_model and slot:
@@ -362,6 +389,7 @@ def create_app(
                 body.callback_id,
                 ctx.now,
                 needs_on_call_tonight(ctx),
+                ctx.numbers,
             )
 
         return run(services, request, "calls.transfer", call_id, body.model_dump(), fn)
@@ -373,6 +401,16 @@ def create_app(
             return transfer.finish(conn, ctx.tenant, ctx.call, transfer_id, body.outcome, ctx.now)
 
         return run(services, request, "calls.transfer_done", call_id, body.model_dump(), fn)
+
+    @app.post("/calls/{call_id}/handoff/{handoff_id}/done")
+    def call_handoff_done(request: Request, call_id: str, handoff_id: int, body: HandoffDoneIn):
+        def fn(conn, key):
+            ctx = _ctx(services, conn, call_id, key)
+            return transfer.finish_handoff(
+                conn, ctx.tenant, ctx.call, handoff_id, body.outcome, ctx.now
+            )
+
+        return run(services, request, "calls.handoff_done", call_id, body.model_dump(), fn)
 
     @app.post("/calls/{call_id}/recording")
     def call_recording(request: Request, call_id: str, body: RecordingIn):
@@ -479,6 +517,8 @@ def create_app(
         return {"ok": True, "say": "", "data": found, "refused": None}
 
     owner_view.add_routes(app)
+    bench.add_routes(app)
+    bench_rules.add_routes(app)
 
     # ---- tools the model can call ------------------------------------------------------------
 

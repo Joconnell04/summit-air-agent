@@ -365,6 +365,42 @@ def request_publish(conn: sqlite3.Connection, slug: str, author: str, now: datet
     return get(conn, draft["id"])
 
 
+OVERRIDE_MAX_CHARS = 200
+
+
+def publish_now(
+    conn: sqlite3.Connection, slug: str, author: str, reason: str, now: datetime, record=None
+) -> dict:
+    """Publish the draft at once, without the eval gate (DECISIONS.md 055). The guidance check
+    already ran when the draft was saved. The version records that the check was skipped, by
+    whom, when and why, so the history shows it plainly; a reason is required. `record(conn,
+    version)` runs inside the same transaction, so if writing the log fails nothing is
+    published."""
+    reason = " ".join(reason.split())[:OVERRIDE_MAX_CHARS]
+    if not reason:
+        raise RulesError("Say why the check is being skipped.")
+    with tx(conn):
+        draft = open_draft(conn, slug)
+        if draft and draft["status"] == "checking":
+            raise RulesError("A check is running on this draft. Stop it first.")
+        if not draft:
+            raise RulesError("There is no draft to publish.")
+        current = live(conn, slug)
+        if content_hash(draft["content"]) == content_hash(current["content"] if current else {}):
+            raise RulesError("The draft is the same as what's live.")
+        override = {"passed": False, "overridden": True, "by": author, "at": iso(now),
+                    "reason": reason}
+        conn.execute(
+            "UPDATE rule_versions SET status = 'published', published_by = ?, base_live = ?, "
+            "gate_json = ?, gate_at = ?, published_at = ?, updated_at = ? WHERE id = ?",
+            (author, current["number"] if current else 0, json.dumps(override, sort_keys=True),
+             iso(now), iso(now), iso(now), draft["id"]),
+        )
+        if record is not None:
+            record(conn, get(conn, draft["id"]))
+    return get(conn, draft["id"])
+
+
 def gate_passed(result: dict, expected: int) -> bool:
     """The gate's own reading of a run: every one of the `expected` must-pass scenarios ran, and the
     result lists its failures and errors, and both are empty. A partial or malformed result, or a
@@ -447,7 +483,8 @@ def discard_draft(conn: sqlite3.Connection, slug: str, now: datetime) -> None:
 
 def rollback(conn: sqlite3.Connection, slug: str, number: int, author: str, now: datetime) -> dict:
     """Make an earlier version live again, as a new version that copies it. Number 0 is the
-    shipped defaults. Only a version that went live before can come back, so it passed the gate."""
+    shipped defaults. Only a version that went live before can come back: it passed the gate, or
+    was published without it, and the copy keeps that record."""
     with tx(conn):
         if number == 0:
             content, gate = {}, {"passed": True, "defaults": True}

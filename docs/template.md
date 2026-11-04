@@ -37,7 +37,7 @@ What a tenant can and can't change. The server refuses to load a tenant that bre
 - Can't: drop a trade phrase or rule; lower a trade rule's level or a job type's base level; change any other value the trade set on a rule (turning off `group` or `safety_signal`, say); add `safety.denials`, since a denial turns the answer to a safety check into a no (Summit Air has no denials of its own, so all of them are the trade's); replace a trade list or mapping with another shape; mix entries with and without an `id` in a rules list. Loosening any of these is a change to the trade, reviewed like any rule change.
 - Must: give every safety kind its `lines` and `variants`, every vague kind its check `question`, and the `sign_off` and `flag_reason` lines. The trade lists the signals but none of the words, so these are checked when the tenant loads.
 
-`trades/hvac/agent.yaml` holds the safety signal phrases (gas and carbon monoxide, the vague smells and symptoms that get a check question, the denials), the priority rules for who is at risk with each job type's default level, and which job types and rules the after-hours rules apply to.
+`trades/hvac/agent.yaml` holds the safety signal phrases (gas and carbon monoxide, the vague smells and symptoms that get a check question, the denials), the priority rules for who is at risk with each job type's default level, and which job types and rules the after-hours rules apply to, and `equipment_words`, the trade's equipment as callers name it, so swearing at a broken system isn't read as anger at the call when deciding a cold handoff (app/transfer.py).
 
 The move was kept narrow. These stay with the tenant even though another HVAC company might share them:
 

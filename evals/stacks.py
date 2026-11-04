@@ -43,6 +43,8 @@ class AgentTurn:
     timing: TurnTiming
     usage: Usage = field(default_factory=Usage)
     ended: bool = False
+    # Why the call ended when `ended`: the agent hung up, or a cold handoff sent the caller on.
+    end_reason: str = "agent_end"
 
 
 def load_adapter(stack: str):
@@ -144,16 +146,20 @@ def greeting(start_data: dict) -> str | None:
     return assemble.greeting(start_data, voice)
 
 
-def server_notes(hints: list[str]) -> list[str]:
+def server_notes(hints: list[str], known: dict | None = None) -> list[str]:
     assemble = _assemble()
     if assemble is not None and hasattr(assemble, "server_notes"):
-        return assemble.server_notes(hints)
+        return assemble.server_notes(hints, known)
     return [f"(Server note: {HINT_NOTES[h]})" for h in hints if h in HINT_NOTES]
 
 
 def spoken_by_code(name: str, envelope: dict) -> str | None:
     """Tool results the worker speaks word for word with no model step: a refusal by the safety
-    gate, and the safety sign-off an end_call returns."""
+    gate, the read-back sentence, and the safety sign-off an end_call returns. The worker's own
+    rule (prompts/assemble.py) when it is in the tree."""
+    assemble = _assemble()
+    if assemble is not None and hasattr(assemble, "spoken_by_server"):
+        return assemble.spoken_by_server(name, envelope)
     say = envelope.get("say") or ""
     if envelope.get("refused") == "gate_safety" and say:
         return say
@@ -162,10 +168,20 @@ def spoken_by_code(name: str, envelope: dict) -> str | None:
     return None
 
 
+def read_back_parts(name: str, envelope: dict) -> list[dict] | None:
+    """A read-back the caller asked to hear slower: the worker speaks the server's sentence in these
+    parts, each at its own speed (app/pace.py), with no model step."""
+    if name == "read_back" and envelope.get("ok"):
+        return (envelope.get("data") or {}).get("parts")
+    return None
+
+
 class InProcessAgent:
     def __init__(self, server: ToolServer, model: Model, call_id: str, caller_id: str,
-                 clock=None):
+                 clock=None, handoff: str = "sent"):
         self.server = server
+        # What the simulated phone company does with a cold handoff's SIP transfer.
+        self.handoff = handoff
         self.model = model
         self.call_id = call_id
         self.caller_id = caller_id
@@ -173,9 +189,28 @@ class InProcessAgent:
         self.messages: list[dict] = []
         self.system = ""
         self.tools: list[dict] = []
+        # What of each model reply the caller hears, by the worker's own rule, so the transcript
+        # and the checks see what a caller would (prompts/assemble.py SpokenReply).
+        assemble = _assemble()
+        self.reply = assemble.SpokenReply() if hasattr(assemble, "SpokenReply") else None
+        # The speaking rate the server set (app/pace.py); every agent line is posted with the
+        # speed it would be spoken at, as the worker does.
+        self.speed: float | None = None
+
+    def _pace(self, data: dict) -> None:
+        pace = (data or {}).get("pace")
+        if pace and pace.get("speed"):
+            self.speed = float(pace["speed"])
+
+    def _post_agent(self, text: str, timings: dict, speed: float | None = None) -> None:
+        speed = self.speed if speed is None else speed
+        if speed is not None:
+            timings = {**timings, "speed": speed}
+        self.server.turn(self.call_id, "agent", text, timings)
 
     def start(self) -> AgentTurn:
         started = self.server.start(self.call_id, self.caller_id)
+        self._pace(started["data"])
         now = self.clock() if self.clock else None
         self.system = system_prompt(started["data"], now=now)
         slug = started["data"]["tenant"]["slug"]
@@ -194,23 +229,47 @@ class InProcessAgent:
     def hear(self, caller_text: str) -> AgentTurn:
         t0 = time.perf_counter()
         result = self.server.turn(self.call_id, "caller", caller_text)
+        self._pace(result["data"])
         safety = result["data"].get("safety") or {}
+        if self.reply is not None:
+            self.reply.heard(safety, caller_text)
         if safety.get("action") in SPOKEN_FROM_CODE and result["say"]:
             self.messages.append({"role": "user", "content": caller_text})
             return self._speak_from_code(result["say"], t0)
-        notes = server_notes(result["data"].get("hints", []))
+        handoff = result["data"].get("handoff")
+        if handoff and result["say"]:
+            self.messages.append({"role": "user", "content": caller_text})
+            return self._hand_off(result["say"], handoff, t0)
+        notes = server_notes(result["data"].get("hints", []), result["data"].get("known"))
         return self._think("\n".join([caller_text, *notes]), t0)
+
+    def _hand_off(self, line: str, handoff: dict, t0: float) -> AgentTurn:
+        """What the worker does with a caller the server handed off (voice/livekit/transfer.py):
+        say the server's line, then report the transfer as the scenario's phone company would.
+        Sent ends the call; failed says the stored callback line and the call carries on."""
+        turn = self._speak_from_code(line, t0)
+        plan = handoff.get("transfer")
+        if not plan:
+            return turn
+        done = self.server.handoff_done(self.call_id, plan["id"],
+                                        "handed_off" if self.handoff == "sent" else "failed")
+        if self.handoff == "sent":
+            turn.ended, turn.end_reason = True, "transfer"
+            return turn
+        back = self._speak_from_code(done["say"] or handoff["fallback"], time.perf_counter())
+        return AgentTurn(f"{turn.text} {back.text}", turn.timing)
 
     def _speak_from_code(self, text: str, t0: float) -> AgentTurn:
         self.messages.append({"role": "assistant", "content": text})
         delay = (time.perf_counter() - t0) * 1000
-        self.server.turn(self.call_id, "agent", text, {"spoken_from_code_ms": delay})
+        self._post_agent(text, {"spoken_from_code_ms": delay})
         return AgentTurn(text, TurnTiming(kind="plain", reply_delay_ms=delay,
                                           model_first_token_ms=0))
 
     def _think(self, content: str, t0: float) -> AgentTurn:
         self.messages.append({"role": "user", "content": content})
         spoken, usage, ended = [], Usage(), False
+        parts: list[dict] = []
         first_word = None
         hops: list[float] = []
         tool_ms = 0.0
@@ -219,9 +278,18 @@ class InProcessAgent:
             reply = self.model.complete(self.system, self.messages, self.tools, max_tokens=1024)
             usage.add(reply.usage)
             hops.append(reply.first_token_ms)
-            self.messages.append({"role": "assistant", "content": reply.content})
-            if reply.text:
-                spoken.append(reply.text)
+            said, content = reply.text, reply.content
+            if self.reply is not None and said:
+                calls = [(u["name"], u["input"]) for u in reply.tool_uses]
+                said = self.reply.text(said, calls)
+                # The model's own history keeps what the worker would have spoken, as LiveKit's
+                # chat context does.
+                content = [b for b in content if b.get("type") != "text"]
+                if said:
+                    content.insert(0, {"type": "text", "text": said})
+            self.messages.append({"role": "assistant", "content": content})
+            if said:
+                spoken.append(said)
                 if first_word is None:
                     first_word = hop_start + reply.first_token_ms / 1000
             if not reply.tool_uses:
@@ -231,9 +299,15 @@ class InProcessAgent:
                 called = time.perf_counter()
                 envelope = self._call_tool(use["name"], use["input"])
                 tool_ms += (time.perf_counter() - called) * 1000
+                if self.reply is not None:
+                    self.reply.tool_done(use["name"], envelope)
                 if use["name"] == "end_call" and envelope.get("ok"):
                     ended = bool((envelope.get("data") or {}).get("hang_up"))
-                from_code = from_code or spoken_by_code(use["name"], envelope)
+                # A read-back split by speed is spoken in its parts, never also whole.
+                split = read_back_parts(use["name"], envelope) or []
+                parts = parts or split
+                if not split:
+                    from_code = from_code or spoken_by_code(use["name"], envelope)
                 results.append(
                     {"type": "tool_result", "tool_use_id": use["id"],
                      "content": json.dumps(envelope)}
@@ -244,9 +318,15 @@ class InProcessAgent:
                 spoken.append(from_code)
                 first_word = first_word or time.perf_counter()
                 break
+            if parts:
+                sentence = " ".join(p["text"] for p in parts)
+                self.messages.append({"role": "assistant", "content": sentence})
+                first_word = first_word or time.perf_counter()
+                break
             if ended:
                 break
-        text = " ".join(spoken)
+        said = " ".join(spoken)
+        text = " ".join([said, *(p["text"] for p in parts)]).strip()
         delay = ((first_word or time.perf_counter()) - t0) * 1000
         timing = TurnTiming(
             kind="lookup" if len(hops) > 1 else "plain",
@@ -255,9 +335,12 @@ class InProcessAgent:
             tool_ms=tool_ms,
             second_hop_ms=hops[1] if len(hops) > 1 else None,
         )
-        if text:
-            stages = {"model_first_token_ms": hops[0], "tool_ms": tool_ms, "reply_ms": delay}
-            self.server.turn(self.call_id, "agent", text, stages)
+        stages = {"model_first_token_ms": hops[0], "tool_ms": tool_ms, "reply_ms": delay}
+        if said:
+            self._post_agent(said, stages)
+        # Each part is its own line, as the worker speaks them.
+        for n, part in enumerate(parts):
+            self._post_agent(part["text"], {} if said or n else stages, float(part["speed"]))
         return AgentTurn(text, timing, usage, ended)
 
     def _call_tool(self, name: str, args: dict) -> dict:

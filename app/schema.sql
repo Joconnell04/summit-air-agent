@@ -380,6 +380,22 @@ CREATE TABLE IF NOT EXISTS transfers (
     finished_at TEXT
 );
 
+-- Cold handoffs to a person (app/transfer.py): a caller who demands a person is sent straight to the
+-- role's number by a SIP transfer, with no summary and no key press. A call has at most one
+-- transfer of either kind. handed_off means the call went to the number, not that a person
+-- answered, so the flag and callback stay open; not_dialed is a demand heard with no number set.
+CREATE TABLE IF NOT EXISTS handoffs (
+    id INTEGER PRIMARY KEY,
+    call_id TEXT NOT NULL UNIQUE REFERENCES calls (id) ON DELETE CASCADE,
+    flag_id INTEGER NOT NULL REFERENCES flags (id) ON DELETE CASCADE,
+    callback_id INTEGER REFERENCES callbacks (id) ON DELETE SET NULL,
+    role TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'dialing'
+        CHECK (status IN ('dialing', 'handed_off', 'failed', 'not_dialed')),
+    started_at TEXT NOT NULL,
+    finished_at TEXT
+);
+
 -- Call audio (story O-6). The voice layer records the call to a bucket; the jobs loop copies the
 -- file to the server's data folder and removes it from the bucket. Deleted with the transcript.
 CREATE TABLE IF NOT EXISTS recordings (
@@ -392,4 +408,104 @@ CREATE TABLE IF NOT EXISTS recordings (
     bytes INTEGER,
     started_at TEXT NOT NULL,
     updated_at TEXT NOT NULL
+);
+
+-- Owner view accounts (app/accounts.py). A removed user keeps its row, so the name on a rule
+-- version or a settings change still reads; only one live user can hold a username.
+CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY,
+    username TEXT NOT NULL,
+    name TEXT NOT NULL,
+    role TEXT NOT NULL CHECK (role IN ('admin', 'staff')),
+    password_hash TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    removed_at TEXT
+);
+CREATE UNIQUE INDEX IF NOT EXISTS ux_users_live ON users (username) WHERE removed_at IS NULL;
+
+-- A signed-in browser. The cookie holds a random token; only its SHA-256 is kept here, so a copy
+-- of the database can't be used to sign in.
+CREATE TABLE IF NOT EXISTS sessions (
+    token_hash TEXT PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    created_at TEXT NOT NULL,
+    expires_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS ix_sessions_user ON sessions (user_id);
+
+-- Who added, removed or changed the role of a user, and when.
+CREATE TABLE IF NOT EXISTS user_changes (
+    id INTEGER PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users (id),
+    action TEXT NOT NULL CHECK (action IN ('added', 'removed', 'role', 'password')),
+    detail TEXT NOT NULL DEFAULT '',
+    by_name TEXT NOT NULL,
+    at TEXT NOT NULL
+);
+
+-- Owner settings (app/owner_settings.py), one row per change, never edited or deleted: the
+-- current value of a setting is its newest row, or the default when it has none.
+CREATE TABLE IF NOT EXISTS setting_changes (
+    id INTEGER PRIMARY KEY,
+    tenant TEXT NOT NULL,
+    key TEXT NOT NULL,
+    value INTEGER NOT NULL CHECK (value IN (0, 1)),
+    author TEXT NOT NULL,
+    created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS ix_setting_changes ON setting_changes (tenant, key, id);
+
+-- The settings a call started under, so a change mid-call never flips it halfway and every
+-- later step (recording, transfer, summary, alert) reads the same values.
+CREATE TABLE IF NOT EXISTS call_settings (
+    call_id TEXT PRIMARY KEY REFERENCES calls (id) ON DELETE CASCADE,
+    settings_json TEXT NOT NULL
+);
+
+-- A caller who said not to be recorded. The jobs loop deletes the file from the bucket instead of
+-- keeping it, whatever the voice layer did.
+CREATE TABLE IF NOT EXISTS recording_declines (
+    call_id TEXT PRIMARY KEY REFERENCES calls (id) ON DELETE CASCADE,
+    seq INTEGER NOT NULL,
+    at TEXT NOT NULL
+);
+
+-- Speaking rate (app/pace.py, DECISIONS.md 053). The server decides the pace from the caller's
+-- lines and the worker applies it. One row per call: the speed in effect and what set it (default,
+-- record, linked, request, repeats, older_adult). `requested` is 1 once the caller asked for a pace,
+-- so their age no longer changes it; `address_speed` is a slower pace asked for the address alone,
+-- used by the next read-back and then cleared; `repeats` counts "sorry, what?" since the last step.
+CREATE TABLE IF NOT EXISTS call_pace (
+    call_id TEXT PRIMARY KEY REFERENCES calls (id) ON DELETE CASCADE,
+    speed REAL NOT NULL,
+    source TEXT NOT NULL,
+    requested INTEGER NOT NULL DEFAULT 0,
+    older_adult INTEGER NOT NULL DEFAULT 0,
+    address_speed REAL,
+    repeats INTEGER NOT NULL DEFAULT 0
+);
+
+-- Every change of pace on a call, after the turn numbered `seq` (0 for the pace a call starts at).
+-- `scope` is call (the rest of the call) or address (the next read-back's address only).
+CREATE TABLE IF NOT EXISTS pace_changes (
+    id INTEGER PRIMARY KEY,
+    call_id TEXT NOT NULL REFERENCES calls (id) ON DELETE CASCADE,
+    seq INTEGER NOT NULL,
+    speed REAL NOT NULL,
+    scope TEXT NOT NULL CHECK (scope IN ('call', 'address')),
+    source TEXT NOT NULL,
+    at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS ix_pace_changes_call ON pace_changes (call_id, seq);
+
+-- The pace a caller asked for, kept for their number so their next call starts at it. Asking for
+-- the normal pace removes it.
+CREATE TABLE IF NOT EXISTS caller_pace (
+    tenant TEXT NOT NULL,
+    phone_key TEXT NOT NULL,
+    speed REAL NOT NULL,
+    call_id TEXT,
+    set_at TEXT NOT NULL,
+    PRIMARY KEY (tenant, phone_key)
 );

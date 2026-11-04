@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% from "_ui.html" import bench_tabs, pct, figure, outcome, go, empty with context %}
+{% block title %}Bench: {{ run.run_id }}{% endblock %}
+{% block tabs %}{{ bench_tabs(tab) }}{% endblock %}
+{% block body %}
+<main class="page">
+  <div class="page-head">
+    <div class="lead">
+      <div class="crumbs"><a href="/bench/evals">Evals</a><span>/</span><span>{{ run.suite }}</span></div>
+      <h1 class="page-title">{{ run.run_id }}</h1>
+    </div>
+    {% if langsmith %}<a class="btn" href="{{ langsmith }}" rel="noopener" target="_blank" title="The experiment is named {{ run.run_id }}">LangSmith</a>{% endif %}
+  </div>
+  <div class="figures">
+    {{ figure("Pass rate", pct(s.rate), s.passed ~ " of " ~ s.judged ~ " judged", alarm=(floor and s.rate is not none and s.rate < floor)) }}
+    {{ figure("Must-pass failures", s.must_pass, "any one fails the run", alarm=s.must_pass > 0) }}
+    {{ figure("No verdict", s.errors, "left out of the rate") }}
+    {{ figure("Reply delay", ("{:,.0f}".format(s.delay) ~ " ms") if s.delay is not none else "-", "median of the scenario medians") }}
+    {{ figure("Cost", "$%.2f" | format(s.cost), run.stack ~ ", " ~ run.profile ~ (", " ~ run.model if run.model else "")) }}
+  </div>
+
+  <section class="panel">
+    <div class="panel-head"><h2>Failures</h2><span class="count{% if failures %} alarm{% endif %}">{{ failures | length }}</span><span class="sub">code checks first, then the grader's notes</span></div>
+    {% if failures %}
+    <ul class="list">
+      {% for f in failures %}
+      <li data-href="/bench/evals/{{ run.run_id }}/{{ f.key }}">
+        <span class="what"><a href="/bench/evals/{{ run.run_id }}/{{ f.key }}">{{ f.key }}</a>{% if f.must_pass_failures %} <span class="tag urgent">Must-pass</span>{% endif %}</span>
+        <span class="meta">{% for c in f.code_failures %}<code>{{ mask(c) }}</code>{% if not loop.last %}<br>{% endif %}{% endfor %}{% if f.error %}<code>{{ mask(f.error) }}</code>{% endif %}{% if f.grader_notes %}{% if f.code_failures or f.error %}<br>{% endif %}Grader{% if f.grader_score %} {{ f.grader_score }} of 5{% endif %}: {{ mask(f.grader_notes) | truncate(320) }}{% endif %}</span>
+        <span class="end">{{ outcome(f.outcome) }}<span class="go">{{ go() }}</span></span>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}{{ empty("Every scenario passed.") }}{% endif %}
+  </section>
+
+  <section class="panel">
+    <div class="panel-head"><h2>Scenarios</h2><span class="count">{{ run.scenarios | length }}</span><span class="sub">prompt hash <code>{{ run.prompt_hash or "-" }}</code>, run hash <code>{{ run.hash[:16] }}</code></span></div>
+    <div class="table-wrap">
+      <table class="table">
+        <thead><tr><th>Scenario</th><th>Flow</th><th>Difficulty</th><th>Outcome</th><th class="right">Grade</th><th class="right">Reply p50</th><th class="right">p90</th><th class="right">Cost</th><th></th></tr></thead>
+        <tbody>
+          {% for r in run.scenarios %}
+          <tr data-href="/bench/evals/{{ run.run_id }}/{{ r.key }}">
+            <td><span class="what"><a href="/bench/evals/{{ run.run_id }}/{{ r.key }}">{{ r.key }}</a></span></td>
+            <td class="fit muted">{{ r.flow | join(", ") }}</td>
+            <td class="fit muted">{{ r.difficulty }}</td>
+            <td class="fit">{{ outcome(r.outcome) }}</td>
+            <td class="fit right num">{{ r.grader_score if r.grader_score is not none else "-" }}</td>
+            <td class="fit right num">{{ "{:,.0f}".format(r.reply_delay_p50_ms) }} ms</td>
+            <td class="fit right num muted">{{ "{:,.0f}".format(r.reply_delay_p90_ms) }} ms</td>
+            <td class="fit right num muted">${{ "%.3f" | format(r.cost_usd) }}</td>
+            <td class="go">{{ go() }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</main>
+{% endblock %}

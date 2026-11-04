@@ -89,3 +89,13 @@ How the design was reached, in order, so a reader can follow each choice back to
 | Times and return visits | A bare hour is daytime; a same-problem job within 30 days is flagged | DECISIONS.md 050, #75 |
 | Warm transfer | Server-decided, a key press joins the person, a stored callback if nobody answers; the demo rings Jackson's phone | DECISIONS.md 051, #69 |
 | Call recordings | Bucket to server copy, 30 days, played on the call page | DECISIONS.md 052, #69 |
+| Speaking rate per call | Server-set, 0.85 for callers 65 or older or on request, remembered for the caller | DECISIONS.md 053 |
+| Owner accounts and settings | Admin and staff roles; a settings panel with a two-party consent switch | DECISIONS.md 054 |
+| Rule edits on the bench | Edits move to the debug bench; the gate reruns by default, an override is logged | DECISIONS.md 055, #86 |
+| Side model check | Kept on: no false alarms in 46 calls, one real fix; the phrase rules' "nobody's" bug fixed | DECISIONS.md 056 |
+| Booking under load | Two simulated calls race for one slot; one wins, the other hears it plainly | DECISIONS.md 057, #86 |
+| ZIP from the caller | The server only acts on a ZIP the caller said or one on record; street names aren't businesses | DECISIONS.md 058, #88 |
+| Debug bench | Calls as a node graph with prompts and rule decisions, settings, evals, live view; admin only, redacted | DECISIONS.md 059, #89 |
+| Server-spoken lines and a speech filter | Read-back and confirmations spoken from the server; the filter drops repeats, tool talk and unprompted advice | DECISIONS.md 060, #82 |
+| Cold handoff | A caller who demands a person is transferred at once, after the safety lines on a gas call | DECISIONS.md 061, #90 |
+| Listening to simulated calls | Stereo files with real pauses, `make sim` and `make listen` with S1, S2 codes | DECISIONS.md 062, #95 |

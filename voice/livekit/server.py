@@ -79,6 +79,10 @@ class ToolServer:
         body = {"outcome": outcome}
         return await self._post(f"/calls/{self.call_id}/transfer/{transfer_id}/done", body)
 
+    async def handoff_done(self, handoff_id: int, outcome: str) -> dict:
+        body = {"outcome": outcome}
+        return await self._post(f"/calls/{self.call_id}/handoff/{handoff_id}/done", body)
+
     async def recording(self, egress_id: str, object_key: str) -> dict:
         body = {"egress_id": egress_id, "object_key": object_key}
         return await self._post(f"/calls/{self.call_id}/recording", body)

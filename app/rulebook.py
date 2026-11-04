@@ -76,7 +76,11 @@ GATES = (
      ("gate_safety",), ("S-18",)),
     ("booking", "Holds any booking until the address and phone are read back and confirmed",
      ("gate_read_back", "invalid_phone"), ("S-26",)),
+    ("booking", "Reads the address and phone back once; confirmed details aren't read again",
+     ("read_back_confirmed",), ("S-26",)),
     ("booking", "Won't book outside the service area", ("out_of_area",), ("S-28",)),
+    ("booking", "Checks the area and books only on a ZIP the caller said or one on their record",
+     ("zip_not_heard",), ()),
     ("booking", "Won't book a commercial customer", ("customer_type",), ("S-05",)),
     ("booking", "When who can approve isn't settled, a booking gets a call before dispatch", (),
      ("S-07a",)),
@@ -106,6 +110,8 @@ NOT_RULES = {"invalid_arguments", "unknown_call", "call_ended"}
 LINE_STAGES = {
     "greeting_known": ("opening", "Greeting, known caller"),
     "greeting_unknown": ("opening", "Greeting"),
+    "recording_notice": ("opening", "Recording notice, two-party consent"),
+    "recording_stopped": ("whole_call", "Recording stopped, two-party consent"),
     "callback_opening": ("opening", "Callback opening"),
     "callback_opening_unknown": ("opening", "Callback, no name"),
     "earlier_slot_offer": ("opening", "Earlier opening offer"),
@@ -119,6 +125,7 @@ LINE_STAGES = {
     "flag_stored_urgent": ("whole_call", "Team will call, urgent"),
     "flag_stored_no_callback": ("whole_call", "Team told"),
     "transfer_handoff": ("whole_call", "Putting you through"),
+    "handoff_now": ("whole_call", "Sent straight to a person"),
     "transfer_no_answer": ("whole_call", "Nobody picked up"),
     "transfer_prompt": ("whole_call", "To the person answering"),
     "transfer_summary": ("whole_call", "Summary once they take it"),
@@ -155,7 +162,7 @@ PROMPT_STAGES = {
     "The caller has already heard the greeting": "opening",
     "Listen first": "opening",
     "Contact number": "booking",
-    "Read-back before booking": "booking",
+    "Confirm the address and number before booking": "booking",
     "Offer times like a person": "booking",
     "Book, then confirm out loud": "booking",
     "End": "closing",
@@ -264,6 +271,15 @@ def _settings(tenant: Tenant) -> list[Rule]:
              f"person; after {tenant.repeat['drops_before_callback_offer']} dropped calls the "
              "agent offers a callback", why=why),
     ]
+    if tenant.pace:
+        p = tenant.pace
+        found.append(Rule(
+            "setting.pace", "whole_call", "setting", "Speaking pace",
+            f"Slower ({p['older_adult_speed']} of normal) for a caller who says they're elderly "
+            f"or {p['older_adult_age']} or over; a step slower or faster when the caller asks, "
+            f"kept for their next call; a step slower after \"sorry, what?\" "
+            f"{p['repeats_before_slower']} times; just the address slower when that's all they "
+            "ask", why=why))
     labels = {code: j["name"] for code, j in tenant.job_types.items()}
     for job, brackets in tenant.priority["brackets"].items():
         for b in brackets:
@@ -356,7 +372,7 @@ def _settings(tenant: Tenant) -> list[Rule]:
 # The agent.yaml sections each part above reads, for the completeness test.
 SHOWN = {
     "safety", "commercial", "approval", "priority", "after_hours", "callbacks", "on_call_alerts",
-    "repeat_callers", "retention", "lines", "voice", "transfer",
+    "repeat_callers", "retention", "lines", "voice", "transfer", "pace",
 }
 
 

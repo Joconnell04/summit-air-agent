@@ -1,0 +1,54 @@
+# Two neighbors in one ZIP book the same window at the same moment while two technicians are free
+# in it. Both get it, each with a technician of their own. Format: evals/scenarios/pairs/README.md.
+id: two-callers-same-tech
+flow: [booking]
+difficulty: standard
+journeys: [J1, spine]
+spec: [S-27]
+world:
+  job_type: no_heat
+  fill: ["2026-11-02", "2026-11-03"]
+  keep_open:
+    - {date: "2026-11-02", window: afternoon, technicians: 2}
+callers:
+  - caller_id: "(332) 555-0163"
+    persona: Priya Shah, a homeowner in Kensington, Brooklyn, calling during a cold snap. Calm and clear, wants the earliest visit.
+    hidden_facts:
+      name: Priya Shah
+      address: 220 Beverley Rd, Brooklyn, 11218
+      phone: the number they are calling from
+      problem: no heat since last night, 63 F inside
+      system: gas boiler, about twelve years old
+      tried: checked the thermostat and the breaker
+      home: Priya and her brother, both healthy adults, home all day
+      approver: Priya
+    opening: Hi, we've had no heat since last night and it's cold in here.
+  - caller_id: "(332) 555-0164"
+    persona: Daniel Okafor, a homeowner a few blocks away in the same ZIP, calling at the same time. Direct and a bit impatient, wants someone today.
+    hidden_facts:
+      name: Daniel Okafor
+      address: 515 E 5th St, Brooklyn, 11218
+      phone: the number they are calling from
+      problem: the radiators went cold this morning, 63 F inside
+      system: gas boiler, about twenty years old
+      tried: bled one radiator
+      home: Daniel and his roommate, both healthy adults, home all day
+      approver: Daniel
+    opening: Yeah hi, my radiators went cold this morning, I need someone out today.
+script:
+  - Answer each question once, in a full sentence.
+  - You want the earliest visit there is. Take the first window the agent offers, today if there is one.
+  - If the agent says that window just went, take the next opening it offers.
+  - Say goodbye once the agent asks if there is anything else.
+must:
+  - booking: {count: 1, job_type: no_heat, priority: High, zip: "11218"}
+  - read_back: before_booking
+  - said_booked: only_after_booking
+  - safety_lines: not_said
+together:
+  - booked_together: true
+  - one_job_per_technician_window: true
+  - window_jobs: {date: "2026-11-02", window: afternoon, count: 2}
+  - taken_refusals: 0
+should:
+  - Each caller is booked into the window they asked for with no mention of the other call.

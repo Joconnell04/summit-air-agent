@@ -79,6 +79,10 @@ safety:
   booking_note: >-
     The technician can only work on it once the gas company or 911 has shut it off and said it's
     safe, so please stay outside until then.
+  # How many shorter lines a caller hears after the full lines when they raise it again. The caller
+  # stays in control: the concern is said once, offered once more, then the agent helps (eval round
+  # 3, Jackson: "if they reject your advice, just let it be and maybe offer one more time").
+  repeat_limit: 1
 
 # A caller line that describes a business marks the call commercial: it can't book (spec S-05,
 # journey 8). Commercial means commercial-grade equipment: offices, stores, restaurants and the like.
@@ -181,6 +185,10 @@ callbacks:
   max_attempts: 1
   # A dropped safety call gets a callback this soon.
   dropped_safety_minutes: 10
+  # A callback asked for "after 5" is promised for this long after the start ("around 5:30"). ASSUMED.
+  after_lead_minutes: 30
+  # A callback stored with no time because the caller had already said goodbye. ASSUMED.
+  after_goodbye_minutes: 60
   # When the FSM is down or refuses a booking, someone calls back within this.
   fsm_down_minutes: 60
 
@@ -201,6 +209,72 @@ repeat_callers:
   # 7 step 3). ASSUMED: a month, the usual window a callback on recent work is checked in.
   return_visit_days: 30
 
+# Speaking rate (app/pace.py, DECISIONS.md 053). The server moves the pace from the caller's lines and
+# the voice worker applies it to that call only. Steps are the same size each way, so a caller can
+# ask to speed up as easily as to slow down. Cartesia sonic-3 takes 0.6 to 2.0 (SOURCE: the LiveKit
+# Cartesia plugin's docs for `speed`); the step and bounds are ASSUMED until a listen. 0.85 for an
+# older adult is Jackson's number (053), and 65 is his line for pace (priority's is 60, 019).
+pace:
+  normal: 1.0
+  step: 0.15
+  slowest: 0.7
+  fastest: 1.3
+  older_adult_age: 65
+  older_adult_speed: 0.85
+  # "Sorry, what?" this many times since the pace last moved is one step slower.
+  repeats_before_slower: 2
+  # A request counts only when it is about how the agent speaks: a phrase with a speech word, "slow
+  # down" or "speed up" said to the agent with no object, or a whole line that is only a request.
+  # Never on a line with a job word ("send someone faster", "speed up the install"), and never
+  # negated ("you don't need to speak slower"). "The fan is slower" or "it heats too slow" never match.
+  slower_phrases: [speak slower, talk slower, speak more slowly, talk more slowly, speak slowly,
+                   talk slowly, say it slower, say that slower, say it slowly, say that slowly,
+                   say that again slower, say that again slowly, say it again slower,
+                   say it again slowly, repeat that slower, repeat that slowly, youre talking too fast,
+                   youre talking so fast, youre talking fast, you talk too fast, you talk so fast,
+                   youre speaking too fast, you speak too fast, talking too fast, talking so fast,
+                   speaking too fast, speaking so fast, youre going too fast, youre too fast,
+                   dont talk so fast, need you to slow down, want you to slow down]
+  faster_phrases: [talk faster, speak faster, talk a little faster, talk a bit faster,
+                   speak a little faster, speak a bit faster, talk quicker, speak quicker,
+                   talking too slow, talking so slow, talking too slowly, speaking too slow,
+                   speaking so slow, you talk too slow, you speak too slow, need you to speed up,
+                   want you to speed up]
+  normal_phrases: [normal speed, regular speed, normal pace, regular pace, usual speed, usual pace]
+  # "Slow down" and "speed up" on their own count only when said to the agent: after one of the
+  # `before` words or at the start of the line, and followed by nothing or one of the `after` words.
+  slower_imperative: slow down
+  faster_imperative: speed up
+  imperative_before: [you, can, please, whoa, hey, ok, okay, just, sorry, wait, um, uh, so, oh,
+                      now]
+  imperative_after: [please, a, for, there, ok, okay, sorry, im, i, youre, so, thanks, thank, now]
+  # A whole line that is only a request, once these filler words are dropped.
+  line_fillers: [um, uh, oh, ok, okay, sorry, please, so, just, hey, can, could, would, you, maybe]
+  slower_lines: [slower, a little slower, a bit slower, little slower, bit slower, more slowly,
+                 slowly, slow it down, slower this time]
+  faster_lines: [faster, a little faster, a bit faster, little faster, bit faster, quicker,
+                 speed it up, go faster, pick up the pace]
+  job_words: [send, someone, somebody, technician, tech, guy, crew, install, installation, repair,
+              appointment, visit, come, coming, get here, schedule, service, fix, job, process,
+              furnace, boiler, heater, heat, ac, fan, blower, motor, unit, system, drain,
+              thermostat, pump, radiator, water]
+  # The address alone: one of these phrases, or right after the read-back a slow word with a repeat
+  # word ("can you say that again slower?"). "My heat is slow, I live on Main Street" is neither.
+  address_phrases: [the address slower, the address slowly, the address more slowly,
+                    the address again slower, the address again slowly, address back slower,
+                    address back slowly, slower on the address, slowly on the address]
+  slow_words: [slower, slowly]
+  repeat_words: [repeat, again, say that, say it, read that, read it]
+  # "Sorry, what?": a whole line that is only one of these, or a line with one of the phrases.
+  repeat_lines: [what, huh, sorry, pardon, sorry what, what sorry, excuse me, what was that,
+                 come again, say again]
+  repeat_phrases: [sorry what, what did you say, say that again, can you repeat that,
+                   could you repeat that, repeat that please, i didnt catch that, didnt catch that,
+                   i didnt hear that, didnt hear you, i cant hear you, pardon me, come again]
+  # The caller about themselves; "my elderly mother" is about someone else.
+  older_adult_phrases: [im elderly, i am elderly, im a senior, i am a senior, im a senior citizen,
+                        im an old man, im an old woman, im an old lady, im getting old, im not young anymore]
+
 retention:
   transcript_days: 30
   call_record_days: 365
@@ -210,8 +284,11 @@ retention:
 
 # Warm transfer to a person (C-11). The server decides: a caller who asks for a person during
 # office hours goes to the office, and an urgent call after hours goes to the on-call technician.
-# Never on a gas or carbon monoxide call. Each role names the server environment variable that
-# holds its number, so no number is in the repo; an unset number keeps the flag and callback.
+# Never on a gas or carbon monoxide call. A caller who demands a person (insistently, again, or
+# angrily) is sent straight through instead, with no summary: the office in hours, the on-call
+# technician after hours, and on a safety call only once the fixed lines have been said
+# (app/transfer.py). Each role names the server environment variable that holds its number, so no
+# number is in the repo; an unset number keeps the flag and callback.
 transfer:
   targets:
     office: TRANSFER_OFFICE_NUMBER
@@ -231,9 +308,10 @@ lines:
   fsm_unavailable_no_callback: I can't get to that right now, but I've written it all down for the team.
   # {when} is how the callback time is said, from the callback_ lines below.
   flag_stored: I've let our team know, and someone will call you {when}.
-  flag_stored_urgent: >-
-    I've marked this as urgent and let our on-call team know, so someone's keeping an eye on it.
-    Someone will call you {when}.
+  flag_stored_urgent: I've let our team know this call is top priority, and someone will call you {when}.
+  # The same after hours, when the on-call technician has the urgent calls (journey 11).
+  flag_stored_on_call: >-
+    I've let our on-call team know this call is top priority, and someone will call you {when}.
   flag_stored_no_callback: I've let our team know.
   # Warm transfer. The handoff is said to the caller; the summary only to the person answering.
   transfer_handoff: I'm connecting you with someone from our team now.
@@ -241,17 +319,22 @@ lines:
   # The first line names no caller, in case a voicemail greeting answered.
   transfer_prompt: Summit Air has a caller for the {role}. Press 1 to take the call.
   transfer_summary: "{priority}Caller at {phone}: {reason}. Putting you through now."
+  # Cold handoff, said to a caller who demanded a person, just before the call is sent through.
+  handoff_now: Transferring you to a person now.
   lead_stored: Someone from our team will call you {when} to tell you more.
-  # The callback time as said: a time we named, or the window the caller asked for.
+  # The callback time as said: a time we named, or the window the caller asked for. A caller who
+  # says "after 5" hears a time inside that window, so they know when to expect it (eval round 3):
+  # callbacks.after_lead_minutes past the start.
   callback_by: by {time}
-  callback_after: after {time}
+  callback_after: around {time}
   callback_before: before {time}
   callback_between: between {start} and {end}
+  callback_asap: as soon as they can
   callback_outside_hours: Our team makes calls between {opens} and {closes}. What time in there works?
   # {address} is street, unit, city and ZIP; {phone} is read in groups. Naming it a home is how
   # every booking confirms the caller is residential.
-  read_back: >-
-    Let me read that back: your home at {address}, and the best number is {phone}. Is that right?
+  # One sentence with no lead-in, said once (eval round 3).
+  read_back: I have your home at {address}, and the best number is {phone}, is that right?
   commercial: >-
     Thanks for thinking of us. Unfortunately Summit Air works on homes and apartments, not
     businesses, so we're not the right fit for this one.
@@ -288,8 +371,12 @@ lines:
     Our arrival windows are {windows}, and the technician can come any time in the window, so I
     can't promise an exact time.
   # Said once when the server marks a call Urgent (spec S-21a). Below Urgent, no priority is named.
-  urgent_priority: I've marked this as one of our most urgent calls, so you get our soonest opening.
+  urgent_priority: I've marked this call top priority, so you get our soonest opening.
   anything_else_first: Is there anything else I can help with?
+  # Ends a booking, reschedule or cancel sentence, which the voice layer speaks with no model step.
+  after_confirmation: Anything else?
+  # Added to an urgent booking with no window today; the server has flagged a person to move it up.
+  seek_earlier_note: I've also asked our team to look for an earlier opening.
   # The first line of a call the system places (journey 12). {day} is "today", "tomorrow" or a
   # weekday; {window} is spoken, such as "2 to 4".
   earlier_slot_offer: >-
@@ -305,6 +392,11 @@ lines:
 voice:
   greeting_known: Hi, this is Summit Air. Is this {first_name}?
   greeting_unknown: Thanks for calling Summit Air, this is the virtual assistant. How can I help?
+  # Two-party consent (the owner's Settings page, app/owner_settings.py): said just before the
+  # greeting, and by the worker when a caller objects and the recording stops. Off by default:
+  # New York needs only one party's consent to record.
+  recording_notice: This call may be recorded.
+  recording_stopped: Okay, I've turned the recording off.
   # A caller whose earlier call today dropped (repeat_callers): the agent remembers it and checks it
   # is the same person before picking up where it stopped.
   greeting_linked: >-
@@ -313,8 +405,9 @@ voice:
   greeting_linked_unknown: >-
     Hi, this is Summit Air's virtual assistant again. I think we got cut off earlier. Who am I
     speaking with?
-  # Said when the model ends the call without a goodbye of its own (knowledge/sign-off.md).
-  goodbye: Thanks for calling Summit Air. Stay warm out there.
+  # Said when the model ends the call without a goodbye of its own (knowledge/sign-off.md). Generic
+  # and kind, the same on any day (eval round 3).
+  goodbye: Thanks for calling Summit Air. Have a great rest of your day.
   # Said by the worker when the tool server can't be reached, then the call ends.
   server_down: >-
     Sorry, our system is having trouble right now. Please call us back in a few minutes, and if you

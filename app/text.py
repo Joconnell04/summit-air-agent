@@ -32,6 +32,32 @@ def phone_spoken(value: str) -> str:
     return f"{key[:3]}, {key[3:6]}, {key[6:]}" if len(key) == 10 else value
 
 
+GOODBYES = ("bye", "goodbye", "good bye", "talk to you later", "have a good one", "have a good day")
+
+
+def says_goodbye(text: str) -> bool:
+    text_words = words(text)
+    return any(has_phrase(text_words, g) for g in GOODBYES)
+
+
+DIGIT_NAMES = ("zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine")
+
+
+def digits_spoken(digits: str) -> str:
+    """Digits as words, one by one, so the voice says "one one two three one" rather than
+    "eleven thousand..." (a live call read a number back as "six hundred and forty six")."""
+    return " ".join(DIGIT_NAMES[int(d)] for d in digits if d.isdigit())
+
+
+def phone_said(value: str) -> str:
+    """A number read back digit by digit in groups: "seven one eight, five five five, zero one
+    four two"."""
+    key = phone_key(value)
+    if len(key) != 10:
+        return value
+    return ", ".join(digits_spoken(part) for part in (key[:3], key[3:6], key[6:]))
+
+
 def phone_display(value: str) -> str:
     key = phone_key(value)
     return f"({key[:3]}) {key[3:6]}-{key[6:]}" if len(key) == 10 else value
@@ -140,3 +166,39 @@ STREET_TYPES = {
     word for pair in STREET_WORDS.items() for word in pair
     if pair[0] not in ("north", "south", "east", "west")
 }
+
+
+DIGIT_WORDS = {
+    "oh": "0", "o": "0", "zero": "0", "one": "1", "two": "2", "three": "3", "four": "4",
+    "five": "5", "six": "6", "seven": "7", "eight": "8", "nine": "9",
+}
+
+
+def digit_runs(text: str) -> list[str]:
+    """The runs of digits a line says, however speech-to-text wrote them: "11226", "11 226", "one
+    one two two six" and "one one two double six" are each one run, "11226". Punctuation ends a
+    run, so "11226, 718 555 0142" is two."""
+    runs = []
+    for part in re.split(r"[.,;:!?]", text or ""):
+        runs += _digit_runs(part)
+    return runs
+
+
+def _digit_runs(text: str) -> list[str]:
+    runs, current, double = [], "", False
+    for token in words(text).split():
+        if token == "double":
+            double = True
+            continue
+        digits = token if token.isdigit() else DIGIT_WORDS.get(token)
+        if digits is None:
+            if current:
+                runs.append(current)
+            current, double = "", False
+            continue
+        current += digits * 2 if double and len(digits) == 1 else digits
+        double = False
+    if current:
+        runs.append(current)
+    return runs
+

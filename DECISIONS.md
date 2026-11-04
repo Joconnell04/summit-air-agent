@@ -12,6 +12,39 @@ Discussion: docs/ai-process/transcripts/... or docs/explorations/...
 Issue: #N
 -->
 
+## 056. The side model stays on after a with-and-without check
+
+Decided: the side model (decision 037) stays on for live calls. Its first eval check with it on found no false alarms, so no narrower trigger is added.
+Why: 26 priority and no-heat scenarios, twice with and twice without (MEASURED, evals/rounds/side-model-02.md, $2.50): it said yes on 11 of 46 calls, all with a person at risk, and no on 35, none at risk (a true false-alarm rate of 8.2% or lower at 95% confidence). It fixed `stroke-in-passing-no-heat` (High without, Urgent with) and every answer was back before the gate read it. A yes doesn't trigger the on-call alert or the after-hours booking hold. The Urgent calls with nobody at risk came from the phrase rules reading "nobody's elderly" as a yes, fixed alongside.
+Considered: requiring a phrase match too (would switch it off for the calls it exists for); cold days only (a mild-day yes only reaches High anyway).
+Would change if: third-party hard negatives ("my neighbor is 90") or the mild-day branch, neither tested yet, show false alarms.
+Discussion: evals/rounds/side-model-02.md
+
+## 055. Rule edits move to the debug bench, with an override
+
+Decided: owner rule edits move off the owner view and onto the debug bench. Publishing an edit reruns the must-pass eval gate by default; an override publishes it at once and logs it as an overridden instant change. Two-call booking evals run only on our stack for now.
+Why: Jackson's direction, given in the booking-concurrency session (PR #86). Rule edits are an engineer-facing tool more than an owner one, and an override keeps a quick fix possible while the log shows it skipped the gate.
+Considered: keeping edits on the owner view behind the edit login (DECISIONS.md 022).
+Built in PR #93: the editor is at `/bench/rules`; an override needs a reason, still runs the AI guidance check and every structural check, and shows "Check skipped" in both histories with who, when and why.
+Would change if: owners ask to edit wording themselves again.
+Discussion: PR #86, PR #93
+
+## 054. Owner accounts with two roles, and a settings panel with a consent switch
+
+Decided: the owner view gets named accounts with two roles. Admins change settings and publish rules; staff view everything and change nothing. A settings panel, changed by admins only and kept with an audit trail, holds a two-party consent switch: on, every greeting adds a short recording notice; off (the default), no notice, since Summit Air is in New York, a one-party consent state. Other owner settings (call recordings, warm transfer, technician summaries, after-hours alerts) can be switched there; none can loosen a gate.
+Why: Jackson's direction; a real shop has more than one person in the office, and recording-consent rules differ by state when callers or the company move beyond New York.
+Considered: the shared read token and a separate edit code (no way to tell who changed what).
+Would change if: Summit Air needs finer roles (a dispatcher who can edit rules but not settings).
+Discussion: Jackson's notes on the phase 3 brief
+
+## 053. The server sets the speaking rate per call, and remembers it
+
+Decided: the agent speaks more slowly (0.85 of normal) when a caller says they're elderly or gives an age of 65 or more, and changes pace when a caller asks to slow down or speed up, or says "sorry, what?" twice. The change is decided by the tool server from the caller's lines and applied by the worker for that call only. A requested pace holds for the rest of the call, carries to a linked call the same day, and is remembered on the caller's record for their next call. A request to slow down just for the address applies only to the read-back sentence, then the pace returns. Faster and slower are treated alike; nothing assumes callers only want slower.
+Why: Jackson's direction; older callers and anyone hearing an address or number benefit, and pace is manner, so a server trigger is enough and keeps it testable. The 65 line for pace is Jackson's own; priority's older-adult line stays at 60 (decision 019).
+Considered: a model tool alone (harder to test); a fixed slower voice for everyone (slows every call).
+Would change if: live calls show the slower pace sounds unnatural, or callers ask for it often enough to make it the default.
+Discussion: docs/tuning.md
+
 ## 052. Call recordings go through a bucket to the server and are kept 30 days
 
 Decided: the LiveKit worker records each call's audio (audio only, through LiveKit egress) into a private Supabase storage bucket; the jobs loop copies each finished file to the server's data folder and deletes it from the bucket, and the copy is deleted with the transcript after 30 days (S-45). The call page plays it with the design-system Player. Recording stops when the agent leaves, so a conversation after a warm transfer isn't recorded.

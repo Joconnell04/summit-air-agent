@@ -211,7 +211,7 @@ def test_find_slots_reads_the_stored_outside_temperature(agent, clock):
 
 
 def test_an_urgent_caller_hears_it_once_and_a_routine_caller_never_does(agent):
-    line = "one of our most urgent calls"
+    line = "marked this call top priority"
     call = agent.start(UNKNOWN)["data"]["call_id"]
     agent.turn(call, "No heat, and my 84-year-old mother lives with me.")
     first = agent.tool("find_slots", call, job_type="no_heat")
@@ -238,10 +238,13 @@ def test_older_adult_starts_at_60_in_line_with_nyc_health(text, urgent):
         "We don't have a baby.",
         "There's no one elderly here, nobody on oxygen.",
         "two healthy adults no babies no older people nothing like medical equipment",
+        "we're both healthy nobody's elderly or sick or anything",
     ],
 )
 def test_a_person_said_not_to_be_there_raises_nothing(text):
-    """Eval round 2, seed 9: "nobody on any medical equipment" made a mild call urgent."""
+    """Eval round 2, seed 9: "nobody on any medical equipment" made a mild call urgent. The pair
+    eval two-callers-last-slot: "nobody's elderly" did too, and took a technician held for urgent
+    jobs."""
     result = decide("no_heat", text, 58)
     assert [r for r in result.rules if not r.startswith("bracket:")] == []
 
@@ -259,3 +262,8 @@ def test_a_person_said_not_to_be_there_raises_nothing(text):
 def test_a_negation_elsewhere_in_the_line_never_drops_a_raise(text):
     """A missed raise is worse than an extra one, so the look back stops at a new thought."""
     assert [r for r in decide("no_heat", text, 58).rules if not r.startswith("bracket:")]
+
+
+@pytest.mark.parametrize("text", ["nobody's elderly here", "nobody's a baby, just me and my wife", "no one's elderly"])
+def test_nobodys_negates_a_risk_word(text):
+    assert decide("no_heat", text, 66).level != "Urgent"

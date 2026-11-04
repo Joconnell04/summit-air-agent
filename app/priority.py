@@ -79,8 +79,9 @@ def _ages(text: str) -> list[int]:
 # babies or older people", "nobody on any medical equipment" (eval round 2, seed 9). The look back is
 # short and stops at a word that starts a new thought, so "no heat and grandma is here" still
 # raises: a missed raise is worse than an extra one, and rules can only raise.
-NEGATIONS = {"no", "not", "nobody", "nothing", "none", "without", "never", "neither", "nor", "dont", "doesnt",
-             "isnt", "arent", "havent", "hasnt"}
+# "nobodys" and "nothings" are "nobody's" and "nothing's" once the apostrophe is dropped.
+NEGATIONS = {"no", "not", "nobody", "nobodys", "noone", "nothing", "nothings", "none", "without", "never",
+             "neither", "nor", "dont", "doesnt", "isnt", "arent", "havent", "hasnt", "aint"}
 CLAUSE_BREAKS = {"and", "but", "so", "because", "though", "although", "except", "plus", "also",
                  "just", "only", "well"}
 NEGATION_REACH = 4

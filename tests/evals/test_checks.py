@@ -174,6 +174,16 @@ def test_agent_says_and_never_says_are_case_insensitive_regexes():
     assert failures("agent_never_says", ["refund"], t) == []
 
 
+def test_agent_says_at_most_counts_agent_lines():
+    t = trace([("agent", "I'd recommend getting outside.", None), ("caller", "No.", None),
+               ("agent", "I'd still recommend going outside.", None)])
+    assert failures("agent_says_at_most", {"recommend": 2}, t) == []
+    assert failures("agent_says_at_most", {"recommend": 1}, t) == [
+        "the agent said /recommend/ in 2 lines, at most 1 allowed"
+    ]
+    assert CHECKS["agent_says_at_most"].prohibits({"recommend": 1})
+
+
 def test_prohibitions_only_skips_checks_that_need_the_call_to_finish():
     must = [{"booking": "one"}, {"booking": "none"}, {"lead": "commercial"}]
     t = trace(bookings=[booked(), booked()])
@@ -196,7 +206,9 @@ def test_run_checks_prefixes_each_failure_with_its_check():
 @pytest.mark.parametrize(
     "check, arg",
     [("safety_lines", "maybe"), ("booking", {"colour": "red"}), ("out_of_area", "Queens"),
-     ("agent_says", "("), ("tool_ok", 3), ("no_changes", False)],
+     ("agent_says", "("), ("tool_ok", 3), ("no_changes", False),
+     ("agent_says_at_most", {"outside": "two"}), ("agent_says_at_most", {"(": 1}),
+     ("agent_says_at_most", "outside")],
 )
 def test_bad_arguments_are_rejected(check, arg):
     with pytest.raises(ValueError):
@@ -237,3 +249,70 @@ def test_callback_checks_the_day_and_the_earliest_time():
     assert failures("callback", want, trace(started_at=started)) == ["no callback was promised"]
     with pytest.raises(ValueError):
         CHECKS["callback"].validate({"tomorrow": True})
+
+
+def test_an_approval_check_flag_can_be_required():
+    """Eval round 3: a renter with an unknown approver books with an approval call, flagged as
+    approval_check rather than person (renter-landlord-unknown)."""
+    t = trace()
+    t["flags"] = [{"kind": "approval_check"}]
+    assert failures("flag", "approval_check", t) == []
+    assert failures("flag", "approval_check", trace()) != []
+
+
+def test_the_booking_confirmation_needs_a_short_line_before_it():
+    said = trace([("agent", "Perfect, booking that now. You're all set for today. Anything else?", None)])
+    assert failures("booking_lead_in", True, said) == []
+    bare = trace([("agent", "You're all set for today. Anything else?", None)])
+    assert failures("booking_lead_in", True, bare) == [
+        "the booking confirmation came with no line before it"
+    ]
+TAKEN = {"type": "tool", "tool": "book_appointment", "args": {}, "ok": False,
+         "refused": "slot_taken"}
+
+
+def test_said_booked_only_counts_once_a_booking_went_through():
+    early = trace(events=[turn("agent", "Great, you're all set for this afternoon."), TAKEN])
+    assert failures("said_booked", "only_after_booking", early)[0].startswith(
+        "told the caller they were booked before any booking"
+    )
+    after = trace(events=[TAKEN, tool("book_appointment"), turn("agent", "You're booked.")])
+    assert failures("said_booked", "only_after_booking", after) == []
+    plain = trace(events=[turn("agent", "Let me book that for you.")])
+    assert failures("said_booked", "only_after_booking", plain) == []
+    # A claim spoken in the same reply as a booking is recorded after that booking's result.
+    bundled = trace(events=[TAKEN, turn("agent", "You're all set. Sorry, that window just went.")])
+    assert failures("said_booked", "only_after_booking", bundled)
+
+
+def test_a_taken_window_is_said_plainly_with_another_time():
+    told = trace(events=[TAKEN, turn("agent", "That window just filled up. I have Thursday 12 to 4.")])
+    assert failures("slot_taken", "told_plainly", told) == []
+    vague = trace(events=[TAKEN, turn("agent", "Hmm, let me try something else.")])
+    assert failures("slot_taken", "told_plainly", vague) == [
+        "did not say the window just went: 'Hmm, let me try something else.'",
+        "did not offer another time: 'Hmm, let me try something else.'",
+    ]
+    only_the_lost_one = trace(events=[TAKEN, turn("agent", "Monday afternoon just filled up.")])
+    assert failures("slot_taken", "told_plainly", only_the_lost_one) == [
+        "did not offer another time: 'Monday afternoon just filled up.'"
+    ]
+    hung_up = trace(events=[TAKEN])
+    assert failures("slot_taken", "told_plainly", hung_up) == [
+        "the call ended before the agent said the window was taken"
+    ]
+    assert failures("slot_taken", "told_plainly", trace()) == [], "no taken window, nothing to say"
+
+
+def test_handoff_reads_the_cold_handoff_record():
+    sent = {**trace(), "handoffs": [{"role": "office", "status": "handed_off"}]}
+    assert failures("handoff", {"role": "office", "status": "handed_off"}, sent) == []
+    assert failures("handoff", {"role": "on_call"}, sent) == [
+        "handoff role office, expected on_call"
+    ]
+    assert failures("handoff", "none", sent) == ["1 handoff(s), expected none"]
+    # A trace from before handoffs existed has none.
+    assert failures("handoff", "none", trace()) == []
+    assert failures("handoff", {"status": "handed_off"}, trace()) == ["no handoff was decided"]
+    with pytest.raises(ValueError):
+        CHECKS["handoff"].validate({"role": "manager"})

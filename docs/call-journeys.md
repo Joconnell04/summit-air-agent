@@ -62,6 +62,7 @@ How to ask: call-takers in this trade routinely screen for people at risk (older
    - After the lines, the agent recommends staying outside and calling 911 or the gas company, then offers once to book a technician visit for after the gas or the problem has been shut off. The caller doesn't have to insist. The server allows a booking only after the lines were said and the flag raised, adds its own line that the problem must be shut off first, and logs it on the owner view (decided in eval round 2).
 5. The agent doesn't hang up on them. It signs off with a polite recommendation, not a demand: "For your safety, I'd recommend hanging up now, getting outside, and calling 911 from there. We'll follow up once you're safe." ("Getting outside", not "everyone", because by then the caller may have said they're alone.) It doesn't offer to stay on the line, because the gas utility says not to use a phone inside (decision 009) If the caller keeps talking, it repeats the instruction once, briefly. The end-call tool refuses until the lines were said and the flag raised; the call ends when the caller hangs up or says goodbye.
 6. If the call drops before the lines finish: a person is flagged to call back.
+   - A caller who demands a person is put through only after the lines have been said, to the on-call technician after hours; a demand on the same line as the smell gets the lines first. The lines have already told them to get outside, so a person on the phone doesn't keep them in the house any longer than the agent would (decided after the live calls).
 7. False alarm: if the caller says clearly that they don't smell gas and nothing is going off, the call returns to the journey it came from and the owner view shows "safety check cleared" for review.
 8. Follow-up: once the caller is safe, a person (or journey 12) calls back, treated as top priority, and books a visit if the caller didn't book one on the call.
 9. A spam or wrong-number label can never apply to a call with a safety signal.
@@ -160,7 +161,7 @@ Who places them (decided in round 3): the earlier-slot offer and the requested c
 
 1. The caller is unhappy with finished work, a price, or wants a warranty or credit exception.
 2. The agent listens, doesn't argue or promise anything, and says what happens next: "I'm sorry that happened. I'll get this to a manager now, and they'll call you by" a named time.
-3. Flags a person with a short summary (who, which job, what they want), so the caller doesn't have to repeat it (C-46; Revin blog: https://revin.ai/blog/hvac-ai-call-transfer-to-human).
+3. Flags a person with a short summary (who, which job, what they want), so the caller doesn't have to repeat it (C-46; Revin blog: https://revin.ai/blog/hvac-ai-call-transfer-to-human). A caller who demands a manager or a person is put through at once instead (traits, below); Revin's post sends complaints and "get me a person" to staff (vendor practice, docs/explorations/005-revin-blog.md).
 4. Owner view: complaint, flagged, callback time.
 
 ## 14. Wants to become a member
@@ -176,8 +177,9 @@ If a lookup or booking fails (the FSM is down, a timeout), the agent says so hon
 
 ## Traits on any call
 
-- Upset or rude: calm, no arguing, offer a person.
+- Upset or rude: calm, no arguing, offer a person. One who demands a person is put through at once (below).
 - Hard of hearing or slow to answer: slower pace, shorter questions, more read-backs, longer wait before a check-in.
 - Two people on the line or someone relaying: confirm who is approving and who will be home.
 - "Am I talking to a robot?": "Yes, I'm an AI assistant for Summit Air." Never denied.
-- Wants a person: during hours, take details and flag a person for a callback (no live transfer in V1); after hours, as journey 11.
+- Wants a person, asked once and calmly: take the details and flag a person. In office hours the server puts them through to the office, who hear a short summary first; after hours, as journey 11.
+- Demands a person (says it insistently, asks again, or asks while angry): the agent says only "Transferring you to a person now." and the call goes straight to the office, or to the on-call technician after hours, with no summary and no questions first. The server decides this from the caller's words, not the model. A passing mention ("last time I talked to someone it took a week") or "are you a real person?" isn't a request. The flag and a callback time are stored before the transfer, so if nobody can be reached or no number is set, the caller hears that callback time instead (decided after the live calls).

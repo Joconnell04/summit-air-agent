@@ -59,8 +59,10 @@ class HeardTurn:
 
 
 class Listener:
-    def __init__(self, vad: Vad, clock=time.perf_counter, rate: int = 16000):
+    def __init__(self, vad: Vad, clock=time.perf_counter, rate: int = 16000, recorder=None):
         self.vad = vad
+        # A CallRecorder (evals/audio_rig/recording.py) that keeps the agent's audio as it plays.
+        self.recorder = recorder
         self.clock = clock
         self.rate = rate
         self.playout = Playout(rate)
@@ -79,7 +81,9 @@ class Listener:
         if rate != self.rate:
             pcm = resample(pcm, rate, self.rate)
         now = self.clock()
-        self.playout.add(pcm, now, live)
+        start = self.playout.add(pcm, now, live)
+        if self.recorder is not None:
+            self.recorder.agent(pcm, self.rate, start)
         self._last_audio = now
         self._done = False
 
