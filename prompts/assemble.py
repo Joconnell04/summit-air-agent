@@ -257,6 +257,13 @@ def server_notes(hints: list[str], known: dict[str, str] | None = None) -> list[
     stage hint ("stage_booking") is followed by the owner's notes for it ("guidance:<text>"), and
     the two become one note."""
     notes = [f"[server] {SERVER_NOTES[h]}" for h in hints if h in SERVER_NOTES]
+    # Two units named in one line (DECISIONS.md 079).
+    for units in (h.removeprefix("units:") for h in hints if h.startswith("units:")):
+        notes.append(
+            f"[server] The caller named more than one unit ({units.replace(',', ', ')}). Each "
+            "unit is its own job: read back and book one unit at a time, with that unit alone in "
+            "the read-back, then the next. Never book one visit to cover several units."
+        )
     # Work the company doesn't do (DECISIONS.md 078): the server's own sentence, said once.
     for line in (h.removeprefix("not_offered:") for h in hints if h.startswith("not_offered:")):
         notes.append(

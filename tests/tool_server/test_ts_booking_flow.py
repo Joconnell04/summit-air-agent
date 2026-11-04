@@ -466,3 +466,27 @@ def test_a_yes_naming_both_units_is_no_change_to_the_one_read_back():
     second = {**READ_BACK, "unit": "5C"}
     assert readback.change("Yes, 2A and 5C, that's right.", second) is None
     assert readback.change("Yes, 2A.", second) == "unit"
+
+
+def test_two_units_named_together_get_a_note_and_the_first_booking_moves_on_to_the_second(agent):
+    first = {**in_area_address(), "unit": "2A"}
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    hints = agent.turn(call, "I'm the super, no heat in 2A and 5C.")["data"]["hints"]
+    assert "units:2A,5C" in hints
+    assert "Each unit is its own job" in " ".join(server_notes(hints))
+    agent.confirm_read_back(call, first)
+    booked = book(agent, call, first_open(agent, call, "no_heat"), job_type="no_heat")
+    assert booked["say"].endswith("Now let's set up apartment 5C.")
+    second = {**first, "unit": "5C"}
+    agent.turn(call, "Okay, 5C now.")
+    asked = agent.tool("read_back", call, address=second, phone="caller_id")
+    agent.say(call, asked["say"])
+    agent.turn(call, "Yes.")
+    assert agent.tool("read_back", call, address=second, phone="caller_id", confirmed=True)["ok"]
+    done = book(agent, call, first_open(agent, call, "no_heat"), job_type="no_heat")
+    assert done["say"].endswith("Anything else?")
+
+
+def test_one_unit_booking_still_ends_with_anything_else(agent):
+    call = ready_to_book(agent)
+    assert book(agent, call, first_open(agent, call))["say"].endswith("Anything else?")

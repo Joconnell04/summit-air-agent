@@ -163,6 +163,7 @@ LINE_STAGES = {
     "out_of_area": ("booking", "Outside the area"),
     "not_offered": ("whole_call", "Work we don't do"),
     "visit_passed": ("booking", "Visit window passed"),
+    "next_unit": ("booking", "Next unit"),
     "slot_taken": ("booking", "Window just filled"),
     "urgent_priority": ("booking", "Marked urgent"),
     "fsm_unavailable": ("booking", "Can't book now"),

@@ -22,6 +22,7 @@ from .db import iso, parse_iso, tx
 from .envelope import Result, ok
 from .fsm import FsmAdapter, FsmRejected, FsmUnavailable
 from .readback import change as readback_change
+from .readback import units_said
 from .schemas import EndIn, StartIn, TurnIn
 from .tenant import Tenant
 from .text import digit_runs, has_phrase, phone_key, words
@@ -497,6 +498,10 @@ def turn(
             if confirmed and readback_change(args.text, confirmed):
                 changes["readback_confirmed_at"] = None
                 hints.append("readback_changed")
+            # Two units in one line ("2A and 5C") are two jobs, each read back and booked (079).
+            units = units_said(args.text)
+            if len(units) > 1:
+                hints.append("units:" + ",".join(u.upper() for u in units))
             # Work the company doesn't do ("and my sink leaks"): the agent says the tenant's line
             # once, and the office gets a lead (DECISIONS.md 078). Anything else on the call goes on.
             # Not on a safety call (the lines come first) or a commercial one (already declined).

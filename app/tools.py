@@ -23,6 +23,7 @@ from .envelope import Refused, Result, ok
 from .fsm import FsmAdapter, FsmRejected, FsmUnavailable, SlotCache
 from .lifecycle import approval_unclear
 from .readback import change as readback_change
+from .readback import units_said
 from .schemas import (
     BookIn,
     CallbackTime,
@@ -1330,7 +1331,13 @@ def book_appointment(ctx: Ctx, args: BookIn) -> Result:
         say += " " + ctx.tenant.line("seek_earlier_note")
     # The voice layer speaks this as the whole confirmation, with no model step after it, so it
     # ends by asking "Anything else?" itself (spec S-30; eval round 4, the booking turn's delay).
-    say += " " + ctx.tenant.line("after_confirmation")
+    # A unit the caller named that has no booking yet comes next instead, so the second job isn't
+    # lost to a goodbye (DECISIONS.md 079; eval run 20261104-201025, super-two-units).
+    next_unit = _unit_not_booked(ctx)
+    if next_unit:
+        say += " " + ctx.tenant.line("next_unit", unit=next_unit)
+    else:
+        say += " " + ctx.tenant.line("after_confirmation")
     result = ok(
         say,
         booking_id=sent["job_id"],
@@ -1380,6 +1387,29 @@ def _second_job(ctx: Ctx, existing: list[sqlite3.Row], readback: dict, args: Boo
             "separate_problem true only if the caller asked for a second, different job; to change "
             "the first, use reschedule_appointment",
         )
+
+
+def _unit_not_booked(ctx: Ctx) -> str | None:
+    """A unit the caller named in a line that named two or more, with no booking on this call,
+    once at least one booking was made there."""
+    booked = {
+        unit_key(json.loads(r["request_json"])["address"]["unit"] or "")
+        for r in ctx.conn.execute(
+            "SELECT request_json FROM bookings WHERE call_id = ? AND kind = 'book' "
+            "AND status IN ('booked', 'queued')",
+            (ctx.call["id"],),
+        )
+    }
+    for row in ctx.conn.execute(
+        "SELECT text FROM turns WHERE call_id = ? AND speaker = 'caller' ORDER BY seq",
+        (ctx.call["id"],),
+    ):
+        named = units_said(row["text"])
+        if len(named) > 1 and booked & set(named):
+            left = [u for u in named if u not in booked]
+            if left:
+                return left[0].upper()
+    return None
 
 
 def _on_call_first(ctx: Ctx, facts: prio.Facts, decided: prio.Priority) -> None:

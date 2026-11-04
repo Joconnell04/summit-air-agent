@@ -61,6 +61,11 @@ def change(text: str, readback: dict) -> str | None:
     return None
 
 
+def units_said(text: str) -> list[str]:
+    """The units a line names, as unit keys, in order and without repeats: "2A and 5C"."""
+    return list(dict.fromkeys(_units_said(words(text).split())))
+
+
 def _units_said(tokens: list[str]) -> list[str]:
     found = []
     for i, token in enumerate(tokens):
