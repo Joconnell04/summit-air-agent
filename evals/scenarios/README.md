@@ -72,6 +72,6 @@ Each `must` item is `- <check>: <argument>`. They read the tool server's record 
 | `agent_says` | a regex or list | the agent said each one at some point (case ignored) |
 | `agent_never_says` | a regex or list | the agent never said any of them |
 | `said_booked` | `only_after_booking` | the agent never told the caller they were booked before a booking went through on the call |
-| `slot_taken` | `told_plainly` | a booking that came back `slot_taken` was followed by an agent line saying the window just went and naming another time; passes when no booking came back taken |
+| `slot_taken` | `told_plainly` | a booking that came back `slot_taken` was followed by an agent line saying the window just went and, after that, naming another time; passes when no booking came back taken |
 
 Job types: `no_heat`, `no_cooling`, `tune_up`, `safety_check`, `estimate`. Priorities: Low, Normal, High, Urgent.

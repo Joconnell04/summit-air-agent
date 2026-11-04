@@ -252,6 +252,9 @@ def test_said_booked_only_counts_once_a_booking_went_through():
     assert failures("said_booked", "only_after_booking", after) == []
     plain = trace(events=[turn("agent", "Let me book that for you.")])
     assert failures("said_booked", "only_after_booking", plain) == []
+    # A claim spoken in the same reply as a booking is recorded after that booking's result.
+    bundled = trace(events=[TAKEN, turn("agent", "You're all set. Sorry, that window just went.")])
+    assert failures("said_booked", "only_after_booking", bundled)
 
 
 def test_a_taken_window_is_said_plainly_with_another_time():
@@ -261,6 +264,10 @@ def test_a_taken_window_is_said_plainly_with_another_time():
     assert failures("slot_taken", "told_plainly", vague) == [
         "did not say the window just went: 'Hmm, let me try something else.'",
         "did not offer another time: 'Hmm, let me try something else.'",
+    ]
+    only_the_lost_one = trace(events=[TAKEN, turn("agent", "Monday afternoon just filled up.")])
+    assert failures("slot_taken", "told_plainly", only_the_lost_one) == [
+        "did not offer another time: 'Monday afternoon just filled up.'"
     ]
     hung_up = trace(events=[TAKEN])
     assert failures("slot_taken", "told_plainly", hung_up) == [

@@ -338,7 +338,10 @@ NAMES_A_TIME = (
 
 
 def said_booked(arg: str, ev: Evidence) -> list[str]:
-    """The agent says the caller is booked only once a booking went through on this call."""
+    """The agent says the caller is booked only once a booking went through on this call. The record
+    keeps one agent line per turn, after that turn's tools, so a claim spoken in the same reply as
+    a booking that failed comes after the failure here and is caught; one bundled with a booking
+    that succeeded turned out true."""
     for e in ev.trace["events"]:
         if e["type"] == "tool" and e["tool"] == "book_appointment" and e["ok"]:
             return []
@@ -351,7 +354,8 @@ def said_booked(arg: str, ev: Evidence) -> list[str]:
 
 def slot_taken(arg: str, ev: Evidence) -> list[str]:
     """A booking that came back slot_taken is said plainly: the agent's next line says the window
-    went and names another time. Passes on a call where no booking came back taken."""
+    went and, after saying so, names another time ("Monday afternoon just filled up" names only
+    the time that went). Passes on a call where no booking came back taken."""
     events = ev.trace["events"]
     for i, e in enumerate(events):
         if not (e["type"] == "tool" and e["tool"] == "book_appointment"
@@ -364,9 +368,11 @@ def slot_taken(arg: str, ev: Evidence) -> list[str]:
         if reply is None:
             return ["the call ended before the agent said the window was taken"]
         problems = []
-        if not re.search(SAYS_GONE, reply, re.IGNORECASE):
+        gone = re.search(SAYS_GONE, reply, re.IGNORECASE)
+        if not gone:
             problems.append(f"did not say the window just went: {reply[:80]!r}")
-        if not re.search(NAMES_A_TIME, reply, re.IGNORECASE):
+        offered = reply[gone.end():] if gone else reply
+        if not re.search(NAMES_A_TIME, offered, re.IGNORECASE):
             problems.append(f"did not offer another time: {reply[:80]!r}")
         return problems
     return []
