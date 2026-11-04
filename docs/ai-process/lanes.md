@@ -8,12 +8,13 @@ issue backfilled (the issue body says so).
 
 | Issue | Lane | Pull requests | Decisions |
 |---|---|---|---|
-| [#124](https://github.com/Joconnell04/summit-air-agent/issues/124) | Priority rises only on the caller's own words; arguing for a higher priority | none yet |  |
+| | none | | |
 
 ## Done, newest first
 
 | Issue | Lane | Pull requests | Decisions |
 |---|---|---|---|
+| [#124](https://github.com/Joconnell04/summit-air-agent/issues/124) | Priority rises only on the caller's own words; arguing for a higher priority | see issue |  |
 | [#122](https://github.com/Joconnell04/summit-air-agent/issues/122) | Ears test: Cartesia Ink-2 against Deepgram Nova-3 | see issue |  |
 | [#120](https://github.com/Joconnell04/summit-air-agent/issues/120) | Address lookup, preferred names, five easy scenarios | see issue |  |
 | [#119](https://github.com/Joconnell04/summit-air-agent/issues/119) | Owner view and bench at the public URL | [#100](https://github.com/Joconnell04/summit-air-agent/pull/100) |  |
