@@ -118,7 +118,17 @@ NOT_STREET = {
     "also", "but", "so", "right", "correct", "window", "slot", "noon", "midnight", "visit",
     "appointment", "between", "healthy", "below", "above", "plus", "something", "ish", "max",
     "tops", "maybe", "total", "us", "them", "grown", "young", "little", "small", "big",
-    "different", "separate", "other", "new", "older", "elderly", "seniors", "old", "ago", "one", "ones", "car", "cars",
+    "different", "separate", "other", "new", "older", "elderly", "seniors", "book", "can", "confirm",
+    "i", "we", "you", "he", "she", "they", "my", "your", "if", "when", "just", "old", "ago", "one", "ones", "car", "cars",
+}
+
+
+# Words right before a number that make it a time or a date, not a house number.
+TIME_LEADS = {
+    "to", "at", "from", "between", "by", "around", "after", "before", "until", "till", "til", "and",
+    "or", "about", "january", "february", "march", "april", "may", "june", "july", "august",
+    "september", "october", "november", "december", "monday", "tuesday", "wednesday", "thursday",
+    "friday", "saturday", "sunday", "the",
 }
 
 
@@ -135,8 +145,12 @@ def _houses_said(text: str, street: str = "") -> list[str]:
             continue
         nxt = tokens[i + 1] if i + 1 < len(tokens) else ""
         after = tokens[i + 2] if i + 2 < len(tokens) else ""
+        prev = tokens[i - 1] if i else ""
+        suffix = nxt in SUFFIXES or after in SUFFIXES
         named = nxt.isalpha() and len(nxt) > 1 and nxt not in NOT_STREET and nxt not in UNIT_WORDS
-        if named and (len(token) > 1 or nxt in names or nxt in SUFFIXES or after in SUFFIXES):
+        # A time or a date is not an address: "8 to 12 book it", "November 5", "at 4 works".
+        timed = prev in TIME_LEADS or prev.isdigit()
+        if named and (suffix or (not timed and (len(token) > 1 or nxt in names))):
             found.append(token)
             continue
         if nxt.isdigit() and _ordinal(text, nxt):  # "188-10 64th Avenue"

@@ -635,3 +635,17 @@ def test_a_caller_who_asks_not_to_send_someone_gets_that_note(agent):
     notes = [r[0] for r in _rows(agent, "SELECT text FROM notes WHERE attach_to = 'job'")]
     assert notes == ["Caller asked not to send Mike. Dispatcher to decide."]
     assert asks.technician_asked("I don't want Mike again.") is None
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "Yeah that's right, Thursday November 5, 8 to 12, book it.",
+        "Yes that's all correct, Thursday morning 8 to 12, can you just confirm it so I can go.",
+        "Yes, Thursday November 5, 8 to 12, at 71 20 Austin Street, and that number is right.",
+    ],
+)
+def test_a_time_said_with_the_yes_is_not_a_house_number(line):
+    """Eval run 20261104-210139, gas-downplayed-wants-booking: "8 to 12 book it" refused every yes."""
+    austin = {**READ_BACK, "street": "71-20 Austin Street", "zip": "11375"}
+    assert readback.change(line, austin) is None
