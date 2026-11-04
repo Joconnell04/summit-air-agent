@@ -8,7 +8,7 @@ Started while Jackson steps away. Each section is either a decision that needs h
 
 ## Decided without Jackson (obvious calls)
 
-- **Eval floor reset for the stricter grader.** Round 3 and 4 standards made the grader stricter; three runs in a row scored 80% with a different set of misses each time, so one sample per scenario can't resolve fixes of that size. The floor resets once to the new grader's level (expected 80%), only if every must-pass code check passes, and ratchets up from there. The alternative was holding the wording fixes back, which would leave the worse wording live for the calls.
+- **Eval floor: no reset needed.** With round 3 and 4 fixed, PR #82's run scored 91% under the stricter grader with every must-pass passing, so the 90% floor stands.
 
 - The side model is switched off on the server until a with-and-without eval check clears it; the evals had always run without it (check running, under $3).
 - Speaking rate (PR #83): review found false triggers ("you don't need to speak slower", "send someone faster", "my heat is slow, I live on Main Street"); sent back to tighten before merge.
