@@ -97,3 +97,4 @@ How the design was reached, in order, so a reader can follow each choice back to
 | ZIP from the caller | The server only acts on a ZIP the caller said or one on record; street names aren't businesses | DECISIONS.md 058, #88 |
 | Debug bench | Calls as a node graph with prompts and rule decisions, settings, evals, live view; admin only, redacted | DECISIONS.md 059, #89 |
 | Server-spoken lines and a speech filter | Read-back and confirmations spoken from the server; the filter drops repeats, tool talk and unprompted advice | DECISIONS.md 060, #82 |
+| Cold handoff | A caller who demands a person is transferred at once, after the safety lines on a gas call | DECISIONS.md 061, #90 |
