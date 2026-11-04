@@ -3,7 +3,9 @@ call as a node graph with the prompts and decisions at every step (app/nodes.py)
 progress as it happens, the rule proof, a call turned into a draft eval scenario, the live
 settings with their documented measurements, and the eval runs (app/bench_data.py). Read-only.
 
-Admin only (an admin account, app/accounts.py), through require_admin. Every value shown passes through app/redact.py.
+Admin only (an admin account, app/accounts.py), through require_admin. Admins see everything a call
+recorded, phone numbers and addresses included (DECISIONS.md 064); only a replay draft, which is
+meant to be committed to the suite, is redacted (app/redact.py).
 """
 
 import json
@@ -40,13 +42,18 @@ def require_admin(request: Request) -> Response | None:
     return _need_admin(request)
 
 
+def _shown(value):
+    """Bench pages show values as recorded; admins see everything (DECISIONS.md 064)."""
+    return "" if value is None else value
+
+
 def _context(request: Request, conn, tab: str) -> dict:
     services = request.app.state.services
     tenant = services.tenants.default
     return {
         **_common(request, tenant, "", tab, conn),
         "bench": True,
-        "mask": redact.text,
+        "mask": _shown,
     }
 
 
@@ -133,13 +140,13 @@ def add_routes(app: FastAPI) -> None:
                 "SELECT stage, version_id, at FROM call_stages WHERE call_id = ? ORDER BY at", (call_id,))]
             return {
                 **_context(request, conn, "bench"),
-                "call": redact.value(found["call"]),
+                "call": found["call"],
                 "call_id": call_id,
                 "key": key,
                 "local": tenant.local(parse_iso(found["call"]["started_at"])),
                 "graph": graph,
-                "bookings": redact.value(found["bookings"]),
-                "flags": redact.value(found["flags"]),
+                "bookings": found["bookings"],
+                "flags": found["flags"],
                 "stages": stages,
                 "live_rules": rules.live(conn, tenant.slug),
                 "draft": bench_data.scenario_draft(found, redact, key),
@@ -329,8 +336,8 @@ def add_routes(app: FastAPI) -> None:
                 "run": run,
                 "r": result,
                 "checks": bench_data.check_rows(result),
-                "transcript": [{"role": t.role, "text": redact.text(t.text)} for t in result.transcript],
-                "tools": [{"name": t.name, "args": json.dumps(redact.value(t.arguments), ensure_ascii=False)}
+                "transcript": [{"role": t.role, "text": t.text} for t in result.transcript],
+                "tools": [{"name": t.name, "args": json.dumps(t.arguments, ensure_ascii=False)}
                           for t in result.tool_calls],
                 "langsmith": request.app.state.services.settings.langsmith_url,
             }
@@ -351,7 +358,7 @@ def add_routes(app: FastAPI) -> None:
         try:
             context = {
                 **_context(request, conn, "bench-evals"),
-                "doc": bench_data.markdown(redact.text(body)),
+                "doc": bench_data.markdown(body),
                 "title": title.lstrip("# ").strip(),
                 "source": str(path.relative_to(bench_data.ROOT)),
             }

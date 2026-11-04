@@ -12,6 +12,13 @@ Discussion: docs/ai-process/transcripts/... or docs/explorations/...
 Issue: #N
 -->
 
+## 067. Every lane has a GitHub issue, and the lanes page is generated
+
+Decided: each build lane gets an issue labeled `agent` before it starts, including lanes asked for in chat; its pull requests close it. `make lanes` writes docs/ai-process/lanes.md from those issues after each merge, and the brief links to it instead of keeping its own table. New ideas go in docs/later.md; docs/considerations.md stays as the closed design record, since its C-NN numbers are cited across the docs.
+Why: lanes started from chat had no issue, so the board and the brief's table drifted from what was actually built. Lanes before this rule had issues backfilled (#103 to #119).
+Would change if: the board itself is shown to reviewers, in which case the page is a view of it.
+Discussion: PR #121
+
 ## 066. The eval reference is measured at two samples per scenario
 
 Decided: the standard-suite run that sets the eval floor runs every scenario twice (`SAMPLES=2`), and the floor is that run's pass rate rounded down to 5% under decision 011. The first such reference is `20261104-154616-livekit-fast-standard`, 93% over 104 calls, floor 90%.
