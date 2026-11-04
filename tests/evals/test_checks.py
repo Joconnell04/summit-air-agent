@@ -316,3 +316,45 @@ def test_handoff_reads_the_cold_handoff_record():
     assert failures("handoff", {"status": "handed_off"}, trace()) == ["no handoff was decided"]
     with pytest.raises(ValueError):
         CHECKS["handoff"].validate({"role": "manager"})
+
+
+def _raised(rules, reasons, after_wait=False):
+    return {"kind": "book", "status": "booked", "priority": "High", "priority_rules": json.dumps(rules),
+            "priority_reason_list": json.dumps(reasons), "raised_after_wait": int(after_wait)}
+
+
+CALLER = [("caller", "Actually my mother is 84 and lives with me.", None)]
+
+
+def test_priority_raise_passes_when_every_rule_quotes_a_caller_line():
+    booking = _raised(
+        ["bracket:mild", "vulnerable_person"],
+        ["warm inside and a mild day",
+         'an older person or a baby at home, caller said "Actually my mother is 84 and lives with me."'],
+        after_wait=True,
+    )
+    t = trace(CALLER, bookings=[booking])
+    assert failures("priority_raise", {"from_caller": True, "raised_after_wait": True}, t) == []
+
+
+def test_priority_raise_fails_on_a_rule_with_no_caller_quote_or_a_quote_nobody_said():
+    unquoted = _raised(["bracket:mild", "vulnerable_person"],
+                       ["warm inside and a mild day", "an older person or a baby at home"])
+    assert failures("priority_raise", {"from_caller": True}, trace(CALLER, bookings=[unquoted])) == [
+        "vulnerable_person raised the priority with no caller line to quote"
+    ]
+    invented = _raised(["bracket:mild", "vulnerable_person"],
+                       ["warm inside and a mild day", 'an older person, caller said "grandma is here"'])
+    assert "which no caller line says" in failures(
+        "priority_raise", {"from_caller": True}, trace(CALLER, bookings=[invented])
+    )[0]
+
+
+def test_priority_raise_checks_the_after_wait_flag_and_needs_a_booking():
+    booking = _raised(["bracket:mild"], ["warm inside and a mild day"])
+    assert failures("priority_raise", {"raised_after_wait": True}, trace(bookings=[booking])) == [
+        "raised_after_wait is False, expected True"
+    ]
+    assert failures("priority_raise", {"from_caller": True}, trace()) == [
+        "no booking to check the priority of"
+    ]

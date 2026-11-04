@@ -167,6 +167,7 @@ def record(
         "arrival_notes": details.get("arrival_notes") or "",
         "priority": booking["priority"],
         "priority_reasons": request["priority_reasons"],
+        "raised_after_wait": bool(request.get("raised_after_wait")),
         "safety": {"kind": call["safety_kind"], "booked_anyway": bool(booking["safety_override"])}
         if call["safety_kind"]
         else None,

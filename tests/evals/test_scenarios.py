@@ -95,6 +95,21 @@ def test_two_people_mind_change_asks_for_windows_the_seed_has_open(tmp_path):
     assert "afternoon" in windows("2026-11-05")
 
 
+def test_a_scenarios_weather_is_the_reading_the_server_uses(tmp_path):
+    # On a mild day with nothing said, a no-heat call starts at Normal; with no reading it starts
+    # as if it were cold out (the cold_outside bracket matches an unknown temperature).
+    scenario = next(s for s in SCENARIOS if s.id == "pushes-for-priority-no-facts")
+    start = datetime(2026, 11, 2, 9, 0, tzinfo=ZoneInfo("America/New_York"))
+    levels = []
+    for name, weather in (("mild", scenario.weather), ("none", None)):
+        world = World(tmp_path / name, seeded_db(tmp_path / f"seed-{name}"), start, weather=weather)
+        world.server.start("c1", scenario.caller_id)
+        world.server.turn("c1", "caller", "My heat's out.")
+        found = world.server.tool("find_slots", "c1", {"job_type": "no_heat"})
+        levels.append(found["data"]["priority"]["level"])
+    assert levels == ["Normal", "High"]
+
+
 def test_no_em_dashes_in_scenarios():
     for path in (ROOT / "evals" / "scenarios").glob("*.yaml"):
         assert "\u2014" not in path.read_text(), path.name
@@ -139,3 +154,17 @@ def test_tags_include_flow_difficulty_trait_journey_spec_and_must_pass():
     assert s.all_tags() >= {"flow:safety", "difficulty:rigorous", "trait:stutter", "journey:J3",
                             "spec:S-17", "smoke", "must-pass", "id:x"}
     assert s.start_time.isoformat() == "2026-11-02T09:00:00-05:00"
+
+
+def test_a_scenario_that_must_book_gives_an_address_in_the_service_area():
+    # Run 20261104-171428 lost three calls to made-up addresses outside the area.
+    from app.tenant import Tenant
+
+    area = Tenant.load(TENANT_DIR).service_area
+    for s in SCENARIOS:
+        booking = next((m["booking"] for m in s.must if "booking" in m), None)
+        address = str(s.hidden_facts.get("address", ""))
+        zips = re.findall(r"\b\d{5}\b", address)
+        if booking in (None, "none") or s.caller_id.startswith("seed:") or not zips:
+            continue
+        assert zips[-1] in area, f"{s.id}: {zips[-1]} is outside the service area"

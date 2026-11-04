@@ -192,6 +192,45 @@ def booking(arg: Any, ev: Evidence) -> list[str]:
     return problems
 
 
+# Rules that raise without a caller line to quote: the server's own readings and the side model.
+UNQUOTED_RULES = ("safety_signal", "side_model", "combined")
+QUOTE = re.compile(r'caller said "(.*?)"$')
+
+
+def priority_raise(arg: dict, ev: Evidence) -> list[str]:
+    """Where each booking's priority came from (DECISIONS.md 070). `from_caller`: every rule that
+    raised it quotes a caller line, and each quote is in a caller turn on the record, so nothing
+    the model wrote raised it. `raised_after_wait`: the booking's flag for a raise on a fact first
+    given after the caller heard the wait."""
+    booked = ev.bookings()
+    if not booked:
+        return ["no booking to check the priority of"]
+    said = [" ".join(t["text"].split()) for t in ev.turns() if t["speaker"] == "caller"]
+    problems = []
+    for b in booked:
+        if "raised_after_wait" in arg and bool(b.get("raised_after_wait")) != arg["raised_after_wait"]:
+            problems.append(
+                f"raised_after_wait is {bool(b.get('raised_after_wait'))}, "
+                f"expected {arg['raised_after_wait']}"
+            )
+        if not arg.get("from_caller"):
+            continue
+        rules = json.loads(b.get("priority_rules") or "[]")
+        reasons = json.loads(b.get("priority_reason_list") or "[]")
+        quoted_before = False
+        for rule, reason in zip(rules, reasons, strict=False):
+            quote = QUOTE.search(reason)
+            if quote:
+                quoted_before = True
+                text = quote[1].removesuffix("...")
+                if not any(text in line for line in said):
+                    problems.append(f"{rule} quotes {text!r}, which no caller line says")
+            # A line two rules fire on is quoted only with the first (app/priority.py).
+            elif not (rule.startswith("bracket:") or rule in UNQUOTED_RULES or quoted_before):
+                problems.append(f"{rule} raised the priority with no caller line to quote")
+    return problems
+
+
 def read_back(arg: str, ev: Evidence) -> list[str]:
     """No booking before a confirmed read-back, and the read-back sentence was said out loud before
     the confirmation (the server gate checks the sentence was returned, not that it was spoken)."""
@@ -531,6 +570,7 @@ CHECKS: dict[str, Check] = {
         lambda arg: arg == "none",
     ),
     "read_back": Check(_one_of("before_booking"), read_back, lambda arg: True),
+    "priority_raise": Check(_keys({"from_caller", "raised_after_wait"}), priority_raise),
     "flag": Check(
         _one_of("none", "person", "safety", "safety_check_cleared", "approval_check"),
         flag,

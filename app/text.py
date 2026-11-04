@@ -202,3 +202,43 @@ def _digit_runs(text: str) -> list[str]:
         runs.append(current)
     return runs
 
+
+
+TENS = {"twenty": 20, "thirty": 30, "forty": 40, "fifty": 50, "sixty": 60, "seventy": 70,
+        "eighty": 80, "ninety": 90}
+ONES = {"one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7, "eight": 8,
+        "nine": 9}
+SPOKEN_NUMBER = re.compile(
+    rf"\b(?:((?:a|one)[\s-]+hundred)(?:[\s-]+and)?[\s-]+)?({'|'.join(TENS)})"
+    rf"(?:[\s-]+({'|'.join(ONES)}))?\b"
+)
+SPOKEN_HUNDRED = re.compile(rf"\b(?:a|one)[\s-]+hundred(?:[\s-]+and)?[\s-]+({'|'.join(ONES)})\b")
+DECADE_WORDS = {"twenties": 20, "thirties": 30, "forties": 40, "fifties": 50, "sixties": 60,
+                "seventies": 70, "eighties": 80, "nineties": 90}
+
+
+def spoken_numbers(value: str) -> str:
+    """Lowercased text with spoken tens written as digits: "eighty-four" is "84" and "fifty two
+    degrees" is "52 degrees". Only twenty to ninety-nine (and "a hundred and five") change, the
+    range of ages and temperatures, so "no one" and "one or two" keep their words."""
+
+    def digits(m: re.Match) -> str:
+        return str((100 if m[1] else 0) + TENS[m[2]] + (ONES[m[3]] if m[3] else 0))
+
+    value = SPOKEN_NUMBER.sub(digits, (value or "").lower())
+    return SPOKEN_HUNDRED.sub(lambda m: str(100 + ONES[m[1]]), value)
+
+
+def numbers_said(value: str) -> list[tuple[int, float, float]]:
+    """The numbers in a line of speech, each as (word position, lowest, highest) in words(): "52"
+    and "fifty two" are (n, 52, 52); "the fifties" and "50s" are (n, 50, 59)."""
+    found = []
+    for i, token in enumerate(words(spoken_numbers(value)).split()):
+        decade = re.fullmatch(r"(\d)0s", token)
+        if decade:
+            found.append((i, int(decade[1]) * 10, int(decade[1]) * 10 + 9))
+        elif token in DECADE_WORDS:
+            found.append((i, DECADE_WORDS[token], DECADE_WORDS[token] + 9))
+        elif token.isdigit():
+            found.append((i, int(token), int(token)))
+    return found

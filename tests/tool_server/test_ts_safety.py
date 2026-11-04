@@ -498,6 +498,16 @@ def test_the_confirm_question_is_asked_once_per_call():
         ("no nothing like that it was just dusty, it didn't smell like eggs or gas or anything", "cleared"),
         ("no nothing like that it was just dusty, like burning dust, no gas smell no alarm", "cleared"),
         ("no nothing like that, like when you first fire up a heater after the summer", "cleared"),
+        # Eval run 20261104-173249: "nothing like eggs" fired the lines. A no, or at worst unclear.
+        ("no, nothing like eggs, just dusty", "cleared"),
+        (
+            (
+                "no nothing like that it was just dusty like burning dust you know the way a "
+                "heater smells the first time it runs nothing like eggs it's gone now"
+            ),
+            "ask_check",
+        ),
+        ("it smells like eggs", "speak_lines"),
         ("Actually it does, a bit like eggs", "speak_lines"),
         ("No, it smells like rotten eggs", "speak_lines"),
         ("Yeah, kind of", "speak_lines"),

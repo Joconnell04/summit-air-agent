@@ -104,3 +104,5 @@ How the design was reached, in order, so a reader can follow each choice back to
 | Cartesia hosted agents | Left out: our server couldn't force safety lines or own hang-ups; Cartesia stays the voice only | DECISIONS.md 065 |
 | Lane tracking | Every lane has an issue; the lanes page is generated from GitHub | DECISIONS.md 067, #121 |
 | Speech-to-text vendor | Nova-3 kept; Ink-2 measured 0.6 s slower a turn and worse on street names, and stays out of the bake-off | DECISIONS.md 068, #123 |
+| Priority from the caller | Rules fire on the caller's words only; the model's notes raise nothing; a raise after the wait is flagged for the dispatcher | DECISIONS.md 070, #124 |
+| A caller who pushes | A calm line and the soonest window or a person; pushing and claims raise nothing | DECISIONS.md 071, #124 |

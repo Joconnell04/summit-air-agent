@@ -6,6 +6,7 @@ import sqlite3
 from datetime import datetime, timedelta
 
 from . import lookup, owner_settings, pace, recordings, records, rules, safety, transfer
+from . import priority as prio
 from .db import iso, parse_iso, tx
 from .envelope import Result, ok
 from .fsm import FsmAdapter, FsmRejected, FsmUnavailable
@@ -347,6 +348,15 @@ def _record_known_out_of_area(
             )
 
 
+def _at_risk_asked(conn: sqlite3.Connection, call_id: str, phrases: list[str]) -> bool:
+    """Whether an agent line on the thread already asked who is home and whether anyone is at
+    risk."""
+    return any(
+        t["speaker"] == "agent" and any(has_phrase(words(t["text"]), p) for p in phrases)
+        for t in records.thread_turns(conn, call_id)
+    )
+
+
 def turn(
     conn: sqlite3.Connection, tenant: Tenant, call: sqlite3.Row, args: TurnIn, now: datetime
 ) -> Result:
@@ -441,6 +451,11 @@ def turn(
             # call; a stage reached during one gets its note once the safety state clears.
             rules.advance_stage(conn, call, now)
             on_safety = call["safety_state"] not in ("none", "cleared") or action.action != "none"
+            # A caller who asks for a higher priority with no new fact gets a calm answer from a
+            # note; nothing is raised, since only facts raise priority (DECISIONS.md 071).
+            if not on_safety and prio.raising_push(args.text, tenant.priority):
+                asked = _at_risk_asked(conn, call["id"], tenant.priority.get("at_risk_asked", []))
+                hints.append("priority_pushed_asked" if asked else "priority_pushed")
             if not on_safety:
                 stage, items = rules.note_due(conn, tenant, call)
                 if stage:

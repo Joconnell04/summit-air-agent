@@ -850,7 +850,23 @@ def call_page(conn: sqlite3.Connection, tenant: Tenant, trace: dict, now: dateti
         "booking": booked[-1] if booked else None,
         "tech_summary": summary.for_call(conn, call) if booked else None,
         "open_flags": [f for f in trace["flags"] if f["status"] == "open"],
+        "raised_after_wait": bool(request.get("raised_after_wait")),
+        "number_raised_after_wait": raised_after_wait(conn, call["tenant"], call["caller_key"]),
     }
+
+
+def raised_after_wait(conn: sqlite3.Connection, tenant: str, caller_key: str) -> int:
+    """How many calls from this number booked a job whose priority was raised by a fact the caller
+    first gave after hearing the wait (DECISIONS.md 070), for the dispatcher to weigh."""
+    if not caller_key:
+        return 0
+    return conn.execute(
+        "SELECT COUNT(DISTINCT b.call_id) FROM bookings b JOIN calls c ON c.id = b.call_id "
+        "WHERE c.tenant = ? AND c.caller_key = ? AND b.kind = 'book' "
+        "AND b.status IN ('booked', 'queued', 'done') "
+        "AND json_extract(b.request_json, '$.raised_after_wait')",
+        (tenant, caller_key),
+    ).fetchone()[0]
 
 
 def ledger(now: dict, before: dict) -> list[dict]:

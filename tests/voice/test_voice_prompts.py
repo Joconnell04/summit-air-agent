@@ -213,6 +213,19 @@ def test_top_priority_is_said_only_on_a_call_the_server_marked_urgent():
     assert reply.text(said, []) == said
 
 
+def test_the_model_saying_it_raised_the_call_is_dropped_but_saying_it_cant_is_kept():
+    """Eval run 20261104-173249, adds-fact-after-wait."""
+    reply = assemble.SpokenReply()
+    claims = "I've marked it as a priority because of your mother. Let me check times."
+    assert reply.text(claims, []) == "Let me check times."
+    assert reply.text("I'll put you first on the list. Today works.", []) == "Today works."
+    assert reply.text("We've moved you up. Today works.", []) == "Today works."
+    honest = "I can't mark it urgent based on something that isn't true."
+    assert reply.text(honest, []) == honest
+    plain = "I'll put you down for the morning, and someone will follow up."
+    assert reply.text(plain, []) == plain
+
+
 def test_gas_advice_is_dropped_on_a_call_with_no_safety_signal():
     """Eval round 4, gas-worry-no-smell."""
     reply = assemble.SpokenReply()

@@ -213,10 +213,15 @@ def today(voice: Voice, clock: Clock, day: date, gas_lines: str, co_lines: str) 
     )
     voice.end(c)
 
+    # 9:03: the caller mentions a parent only after hearing the first opening. The raise stands and
+    # the call page flags it for the dispatcher (DECISIONS.md 070).
     at(9, 3)
     c = voice.start("c05", "(718) 555-0109")
     voice.caller(c, "The radiators upstairs are barely warm.")
     voice.read_back(c, "61 Wilson Ave", "11237")
+    voice.first_slot(c, "no_heat")
+    voice.agent(c, "The first opening I have is tomorrow morning, between 8 and 12.")
+    voice.caller(c, "Oh, I should say my dad lives with us, he's 79. Is there anything sooner?")
     voice.book(c, "no_heat", voice.first_slot(c, "no_heat"), "Upstairs radiators barely warm")
     voice.end(c)
 

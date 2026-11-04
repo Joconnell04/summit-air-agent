@@ -34,6 +34,17 @@ def must_pass_spec_ids(spec_text: str | None = None) -> set[str]:
     return set(re.findall(r"^\| (S-\d+[a-z]?) \*\*M\*\*", text, flags=re.MULTILINE))
 
 
+class Weather(BaseModel):
+    """The outside temperature the server reads on the call, stored as a fresh reading at the
+    scenario's start (app/weather.py). Unset, the server has none, as when the weather service is
+    down, and a no-heat call starts as if it were cold out."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    now_f: float
+    low_f: float
+
+
 class EarlierCall(BaseModel):
     """A call from the same number that dropped `minutes_ago` before the scenario starts, already on
     the record (journey 7, a dropped call that resumes). Each turn is `{caller: ...}` or
@@ -84,6 +95,7 @@ class Scenario(BaseModel):
     # call as handed off, "fails" brings the agent back. Unset, no number is set, as on a tenant
     # with none.
     transfer: Literal["sent", "fails"] | None = None
+    weather: Weather | None = None
     must: list[dict[str, Any]] = Field(min_length=1)
     should: list[str] = Field(default_factory=list)
 

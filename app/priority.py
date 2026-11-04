@@ -3,16 +3,17 @@ rules from tenant config (docs/explorations/007-priority-brackets.md).
 
 The brackets set where a no-heat or no-cooling call starts, from the inside temperature the caller
 gives and the outside temperature now and tonight. Rules and the side model then can only raise
-it (spec S-21). The agent passes facts (the inside
-temperature, who is home) and the server also reads every caller line on the call, so a priority
-the agent asks for is logged but never used on its own: the model asks, the server decides.
+it (spec S-21). Rules fire only on the caller's own lines and the server's readings (the weather,
+the safety state), never on words the model wrote: an inside temperature counts only when a caller
+line carries it (`heard_inside_temp`), and the model's notes on who is home go to the job, not here
+(DECISIONS.md 070). A priority the agent asks for is logged but never used.
 """
 
 import re
 from dataclasses import dataclass, field
 from typing import Protocol
 
-from .text import words
+from .text import has_phrase, numbers_said, spoken_numbers, words
 
 LEVELS = ["Low", "Normal", "High", "Urgent"]
 # How callers say someone's age: "84-year-old", "84 years old", "I'm 84", "she's 90", "my dad is
@@ -38,13 +39,14 @@ class SideModel(Protocol):
 @dataclass
 class Facts:
     job_type: str
-    text: str = ""  # every caller line on the call, plus what the agent passed
-    inside_temp_f: float | None = None
+    text: str = ""  # the caller's lines on this call and any linked to it, one per line
+    inside_temp_f: float | None = None  # only a temperature the caller said (heard_inside_temp)
     safety_signal: bool = False
     outside_now_f: float | None = None
     outside_coldest_f: float | None = None  # the lower of now and the next 12 hours
     heating_indoors: bool = False  # the safety check heard fuel-burning heat indoors
-    caller_text: str = ""  # the caller's lines alone, what the side model reads
+    caller_text: str = ""  # what the side model reads; the same lines as `text`
+    inside_temp_line: str = ""  # the caller's line the inside temperature came from
 
 
 @dataclass
@@ -61,7 +63,8 @@ class Priority:
 
 
 def _ages(text: str) -> list[int]:
-    text = text.lower()
+    # "eighty-four" is 84: a line roughened by speech-to-text, or a caller who spells it out.
+    text = spoken_numbers(text)
     ages = []
     for m in AGE.finditer(text):
         if m[4]:
@@ -82,7 +85,9 @@ def _ages(text: str) -> list[int]:
 # raises: a missed raise is worse than an extra one, and rules can only raise.
 # "nobodys" and "nothings" are "nobody's" and "nothing's" once the apostrophe is dropped.
 NEGATIONS = {"no", "not", "nobody", "nobodys", "noone", "nothing", "nothings", "none", "without", "never",
-             "neither", "nor", "dont", "doesnt", "isnt", "arent", "havent", "hasnt", "aint"}
+             "neither", "nor", "dont", "doesnt", "isnt", "arent", "havent", "hasnt", "aint",
+             # "I didn't mention a baby" (eval run 20261104-171428, asks-agent-to-say-baby).
+             "didnt", "wasnt", "werent", "hadnt"}
 CLAUSE_BREAKS = {"and", "but", "so", "because", "though", "although", "except", "plus", "also",
                  "just", "only", "well"}
 NEGATION_REACH = 4
@@ -149,6 +154,51 @@ def _parts(text: str) -> list[str]:
     return carried
 
 
+# A caller telling the agent what to claim ("just say there's a baby here", "tell them there's a baby
+# here, there isn't", "pretend she's 85") is asking for a raise, not giving a fact (C-58). The words
+# after one, up to the end of that part of the sentence, raise nothing. A real fact after "and" still
+# does: "just say it's urgent and my mom is 85".
+CLAIMS = re.compile(
+    r"\b(?:just say|(?:say|tell (?:them|him|her|the \w+)) (?:that )?there(?:['’]?s| is| are)"
+    r"|say (?:that )?(?:she|he)(?:['’]?s| is)|put (?:it |this |me )?down (?:that|as)|pretend"
+    r"|make (?:it|something) up|lie and say)\b"
+    r"[^.,;:!?\n]*?(?=\b(?:and|but|so|because|also|plus)\b|[.,;:!?\n]|$)",
+    re.IGNORECASE,
+)
+
+
+def _unclaimed(text: str) -> str:
+    return CLAIMS.sub(" ", text)
+
+
+def _always_followed(text: str, phrase: str, followers: list[str] | None) -> bool:
+    """Every mention of the phrase runs straight on into one of these words, across a comma too:
+    "it's just me and my partner" names someone else, so it isn't "just me" (a rule's
+    `unless_followed_by`)."""
+    if not followers:
+        return False
+    tokens, target = words(text).split(), words(phrase).split()
+    found = [
+        i for i in range(len(tokens) - len(target) + 1) if tokens[i : i + len(target)] == target
+    ]
+    after = [tokens[i + len(target)] if i + len(target) < len(tokens) else "" for i in found]
+    return bool(found) and all(a in followers for a in after)
+
+
+def _said(rule: dict, text: str) -> bool:
+    """The rule's phrases or ages turn up in these lines, not negated and not a claim the caller
+    asked the agent to make."""
+    text = _unclaimed(text)
+    phrases = [
+        p for p in rule.get("phrases", []) if not _always_followed(text, p, rule.get("unless_followed_by"))
+    ]
+    # Split at punctuation first, so "No, my mother lives with us" keeps its raise.
+    parts = _parts(text)
+    if any(_said_not_negated(part, p) for part in parts for p in phrases):
+        return True
+    return "age_at_least" in rule and any(a >= rule["age_at_least"] for a in _ages(text))
+
+
 def _rule_fires(rule: dict, facts: Facts) -> bool:
     if "job_types" in rule and facts.job_type not in rule["job_types"]:
         return False
@@ -156,11 +206,7 @@ def _rule_fires(rule: dict, facts: Facts) -> bool:
         return facts.safety_signal
     if rule.get("heating_indoors") and facts.heating_indoors:
         return True
-    # Split at punctuation first, so "No, my mother lives with us" keeps its raise.
-    parts = _parts(facts.text)
-    if any(_said_not_negated(part, p) for part in parts for p in rule.get("phrases", [])):
-        return True
-    if "age_at_least" in rule and any(a >= rule["age_at_least"] for a in _ages(facts.text)):
+    if _said(rule, facts.text):
         return True
     temp = facts.inside_temp_f
     if temp is not None:
@@ -169,6 +215,38 @@ def _rule_fires(rule: dict, facts: Facts) -> bool:
         if "inside_temp_above_f" in rule and temp > rule["inside_temp_above_f"]:
             return True
     return False
+
+
+SENTENCE_END = re.compile(r"(?<=[.!?])\s+")
+QUOTE_CHARS = 80
+
+
+def quoted(line: str) -> str:
+    """A caller's line as the priority reason quotes it, cut at a word near QUOTE_CHARS."""
+    # Without its closing punctuation, so the reason reads as one sentence wherever it's shown.
+    line = " ".join(line.split()).strip().rstrip(" .!?,;")
+    if len(line) > QUOTE_CHARS:
+        line = line[: QUOTE_CHARS - 3].rsplit(" ", 1)[0].rstrip(" ,;.") + "..."
+    return f'caller said "{line}"'
+
+
+def _caller_line(rule: dict, facts: Facts) -> str:
+    """The first of the caller's sentences that fires the rule on its own, so the reason shows the
+    dispatcher what the caller said rather than only the rule's name."""
+    if rule.get("safety_signal"):
+        return ""
+    by_temp = "inside_temp_below_f" in rule or "inside_temp_above_f" in rule
+    if by_temp and facts.inside_temp_line and not _said(rule, facts.text):
+        return facts.inside_temp_line
+    for line in facts.text.splitlines():
+        for sentence in SENTENCE_END.split(line):
+            if sentence.strip() and _said(rule, sentence):
+                return sentence
+    return ""
+
+
+def _reason(reason: str, line: str) -> str:
+    return f"{reason}, {quoted(line)}" if line else reason
 
 
 def _bracket(facts: Facts, brackets: list[dict]) -> dict:
@@ -202,7 +280,10 @@ def decide(facts: Facts, cfg: dict, side_model: SideModel | None = None) -> Prio
     brackets = cfg.get("brackets", {}).get(facts.job_type)
     if brackets:
         bracket = _bracket(facts, brackets)
-        result = Priority(bracket["level"], [bracket["reason"]], [f"bracket:{bracket['id']}"])
+        line = facts.inside_temp_line if any(k.startswith("inside_") for k in bracket) else ""
+        result = Priority(
+            bracket["level"], [_reason(bracket["reason"], line)], [f"bracket:{bracket['id']}"]
+        )
     else:
         result = Priority(cfg["base"].get(facts.job_type, "Normal"))
     mild = result.level == "Normal"
@@ -212,7 +293,10 @@ def decide(facts: Facts, cfg: dict, side_model: SideModel | None = None) -> Prio
             # On a mild day a household at risk is High, not Urgent: the house isn't getting
             # dangerous, but they still go ahead of routine work.
             level = rule.get("raise_to_when_mild", rule["raise_to"]) if mild else rule["raise_to"]
-            result.raise_to(level, rule["id"], rule["reason"])
+            line = _caller_line(rule, facts)
+            # A line two rules fire on is quoted once, with the first.
+            quote = line if line and not any(quoted(line) in r for r in result.reasons) else ""
+            result.raise_to(level, rule["id"], _reason(rule["reason"], quote))
             groups += rule.get("group", False)
     combine = cfg.get("combine")
     if combine and not mild and groups >= combine["groups"]:
@@ -225,6 +309,55 @@ def decide(facts: Facts, cfg: dict, side_model: SideModel | None = None) -> Prio
             level = slot.get("raise_to_when_mild", slot["raise_to"]) if mild else slot["raise_to"]
             result.raise_to(level, "side_model", slot["reason"])
     return result
+
+
+def heard_inside_temp(
+    turns: list[tuple[str, str]], value: float | None, cfg: dict
+) -> str | None:
+    """The caller's line that gives this inside temperature, or None, on the pattern of the ZIP
+    rule (DECISIONS.md 058): the model's number counts only if the caller said it. `turns` are
+    (speaker, text) in order. The number has to sit within a few words of a temperature word in the
+    same sentence ("it's 52 in here", "fifty two degrees", "the thermostat says 58"), or be the
+    caller's answer right after the agent asked about the temperature ("about 58"). A number the
+    line gives as someone's age never counts ("my mother is 84"). "The fifties" counts for any
+    value from 50 to 59. `cfg` is the trade's priority.inside_temp block."""
+    low_f, high_f = cfg.get("plausible_f", [30, 110])
+    if value is None or not low_f <= value <= high_f:
+        return None
+    reach = cfg.get("reach_words", 4)
+    asked = False
+    for speaker, text in turns:
+        if speaker == "agent":
+            asked = any(has_phrase(words(text), a) for a in cfg.get("asked", []))
+            continue
+        ages = set(_ages(text))
+        for sentence in SENTENCE_END.split(text):
+            tokens = words(spoken_numbers(sentence)).split()
+            cues = [
+                i
+                for cue in cfg.get("cues", [])
+                for target in [words(cue).split()]
+                for i in range(len(tokens) - len(target) + 1)
+                if tokens[i : i + len(target)] == target
+            ]
+            for at, low, high in numbers_said(sentence):
+                if not low <= value <= high or (low == high and low in ages):
+                    continue
+                if asked or any(abs(at - i) <= reach for i in cues):
+                    return text
+    return None
+
+
+def raising_push(text: str, cfg: dict) -> bool:
+    """The caller asks for a higher priority with no new fact in the line: "it's an emergency",
+    "put me first", "I'll pay extra". A line that also gives a fact a rule raises on ("it's an
+    emergency, my mother is 84") is left to the rules. A negated ask ("it's not an emergency") and
+    talk about the equipment ("the furnace is urgent business") don't match. The phrases are the
+    trade's priority.pushes."""
+    parts = [words(part) for part in re.split(r"[.,;:!?\n]", text)]
+    if not any(_said_not_negated(part, p) for part in parts for p in cfg.get("pushes", [])):
+        return False
+    return not any(_said(rule, text) for rule in cfg["rules"])
 
 
 def after_hours_outcome(facts: Facts, priority: Priority, cfg: dict, falling_fast: bool) -> str:

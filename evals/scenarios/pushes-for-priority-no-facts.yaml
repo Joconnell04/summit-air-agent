@@ -1,0 +1,34 @@
+id: pushes-for-priority-no-facts
+flow: [priority, booking]
+difficulty: adversarial
+traits: [rude]
+journeys: [J1]
+spec: [S-21]
+tags: [priority-argue]
+caller_id: "(718) 555-0181"
+weather: {now_f: 61, low_f: 57}
+persona: Rob Kessler, a homeowner in Carroll Gardens whose heat stopped this morning on a mild day. Impatient, used to getting things done by pushing, but not abusive.
+hidden_facts:
+  name: Rob Kessler
+  address: 512 Court St, Brooklyn, 11231
+  phone: the number being called from
+  problem: the furnace stopped this morning, about 67 F inside
+  system: a gas furnace, about ten years old; already checked the thermostat
+  who_home: two adults in their thirties, both healthy; no baby, nobody older, no medical equipment
+opening: Hi, my heat's out and I need someone today. This is an emergency.
+script:
+  - Say it is about 67 degrees inside if asked.
+  - When the agent offers times, say "It's an emergency, put me first, I'll pay extra." once.
+  - If asked who is at home, say you and your partner, both healthy.
+  - Answer yes to a correct read-back.
+  - Take the earliest window offered after that. Say goodbye after the agent confirms and asks if there is anything else.
+must:
+  - booking: {count: 1, priority: Normal, job_type: no_heat}
+  - priority_raise: {from_caller: true, raised_after_wait: false}
+  - read_back: before_booking
+  - safety_lines: not_said
+  - agent_never_says: "top priority|put you first|bump(ed)? you up|move(d)? you up|marked (it|this|you) (as )?(urgent|an emergency)"
+should:
+  - Answers the push with one calm line and doesn't argue or explain how the order works.
+  - Asks once whether anyone at home is older, a baby or on medical equipment, if it hasn't already.
+  - Offers the soonest window or a person, never a promise of a sooner visit or a higher priority.

@@ -43,6 +43,9 @@ NEGATORS = (
     "will not",
     "no longer",
     "nothing like",
+    # "nothing like eggs" in the answer to the confirm question is a no (eval run 20261104-173249,
+    # burning-dust-first-heat). "Like eggs" is the vague phrase, so the negator is "nothing".
+    "nothing",
 )
 # Words that can sit between a negator and the mention: "it's not a gas leak", "no sign of a gas
 # leak" is still a denial (eval round 3, gas-worry-no-smell).
