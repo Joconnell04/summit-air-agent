@@ -325,3 +325,38 @@ def test_fsm_down_answers_503_only_for_what_it_fails():
     assert booking.request("POST", "/dispatch/v2/tenant/1/capacity") == "passed"
     assert booking.request("POST", "/connect/token") == "passed"
     assert FsmDown(Client(), "all").request("GET", "/crm/v2/tenant/1/customers").status_code == 503
+
+
+DEMAND = "Put me through to a manager right now, this is ridiculous."
+
+
+def handoff_scenario(**overrides) -> Scenario:
+    data = {"opening": DEMAND, "must": [{"handoff": {"role": "office", "status": "handed_off"}}]}
+    return scenario(**{**data, **overrides})
+
+
+def test_a_demand_is_handed_off_by_code_and_the_call_ends_as_a_transfer(seed_dir, tmp_path):
+    """The agent model is never asked: the server decides on the caller's turn and the in-process
+    agent says the line and reports the transfer, as the worker does."""
+    result, agent, _, _ = run(seed_dir, tmp_path, handoff_scenario(transfer="sent"), [], [])
+    assert result.outcome == "pass", result.check_failures
+    assert result.transcript[-1].text == "Transferring you to a person now."
+    assert agent.calls == []
+
+
+def test_a_transfer_that_fails_brings_the_agent_back_with_the_callback_line(seed_dir, tmp_path):
+    s = handoff_scenario(transfer="fails", must=[{"handoff": {"status": "failed"}},
+                                                 {"callback": "promised"}])
+    result, *_ = run(seed_dir, tmp_path, s, [say("Is there anything else?")], [say("[END]")])
+    assert result.outcome == "pass", result.check_failures
+    assert result.transcript[2].text == (
+        "Transferring you to a person now. I couldn't reach anyone just now, so I've let the team "
+        "know and someone will call you by 9:30 AM."
+    )
+
+
+def test_without_transfer_set_the_shells_numbers_are_never_read(seed_dir, tmp_path, monkeypatch):
+    monkeypatch.setenv("TRANSFER_OFFICE_NUMBER", "+12125550100")
+    s = handoff_scenario(must=[{"handoff": {"status": "not_dialed"}}])
+    result, *_ = run(seed_dir, tmp_path, s, [say("Is there anything else?")], [say("[END]")])
+    assert result.outcome == "pass", result.check_failures

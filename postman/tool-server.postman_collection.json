@@ -85,7 +85,7 @@
                   "pm.collectionVariables.set('call_id', 'pm-' + run);",
                   "pm.collectionVariables.set('safety_call_id', 'pm-safety-' + run);",
                   "pm.collectionVariables.set('known_call_id', 'pm-known-' + run);",
-                  "// No transfer has this id, so reporting on it is refused.",
+                  "// No transfer or handoff has this id, so reporting on it is refused.",
                   "pm.collectionVariables.set('unknown_transfer_id', '0');",
                   "pm.collectionVariables.set('caller', '(212) 555-' + String(1000 + run % 9000).slice(-4));",
                   ""
@@ -1096,6 +1096,40 @@
             "body": {
               "mode": "raw",
               "raw": "{\n  \"outcome\": \"no_answer\"\n}"
+            }
+          }
+        },
+        {
+          "name": "A handoff that was never started can't be reported",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('refused: invalid_state', () => pm.expect(pm.response.json().refused).to.eql('invalid_state'));",
+                  "",
+                  "pm.test('HTTP 200 with the envelope', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  const b = pm.response.json();",
+                  "  ['ok', 'say', 'data', 'refused'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/calls/{{safety_call_id}}/handoff/{{unknown_transfer_id}}/done",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"outcome\": \"handed_off\"\n}"
             }
           }
         },

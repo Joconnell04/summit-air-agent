@@ -5,7 +5,7 @@ import re
 import sqlite3
 from datetime import datetime, timedelta
 
-from . import lookup, owner_settings, pace, recordings, records, rules, safety
+from . import lookup, owner_settings, pace, recordings, records, rules, safety, transfer
 from .db import iso, parse_iso, tx
 from .envelope import Result, ok
 from .fsm import FsmAdapter, FsmRejected, FsmUnavailable
@@ -587,6 +587,7 @@ def end(
                 now,
                 "Urgent",
             )
+        transfer.close_open_handoff(conn, call["id"], args.reason, now)
         outcome = _outcome(conn, call)
         records.update_call(
             conn,

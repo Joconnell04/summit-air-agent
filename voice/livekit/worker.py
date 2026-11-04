@@ -160,8 +160,10 @@ async def entrypoint(ctx: JobContext) -> None:
 
     if outbound:
         start = await tools_server.start(outbound["phone"], outbound["dialed_from"], "outbound")
+        caller_identity = "callee"
     else:
         caller = await ctx.wait_for_participant(kind=SIP)
+        caller_identity = caller.identity
         start = await tools_server.start(
             caller.attributes.get("sip.phoneNumber", ""),
             caller.attributes.get("sip.trunkPhoneNumber", ""),
@@ -269,7 +271,10 @@ async def entrypoint(ctx: JobContext) -> None:
         speak,
         hold,
         hand_over,
+        caller=caller_identity,
+        ending=lambda reason: ended.update(reason=reason),
     )
+    call.handoff = transfer.handoff
 
     # The session closes when the caller hangs up; end the job then, so the call is closed on the
     # server at once rather than when LiveKit empties the room.

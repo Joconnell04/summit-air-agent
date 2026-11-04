@@ -284,8 +284,11 @@ retention:
 
 # Warm transfer to a person (C-11). The server decides: a caller who asks for a person during
 # office hours goes to the office, and an urgent call after hours goes to the on-call technician.
-# Never on a gas or carbon monoxide call. Each role names the server environment variable that
-# holds its number, so no number is in the repo; an unset number keeps the flag and callback.
+# Never on a gas or carbon monoxide call. A caller who demands a person (insistently, again, or
+# angrily) is sent straight through instead, with no summary: the office in hours, the on-call
+# technician after hours, and on a safety call only once the fixed lines have been said
+# (app/transfer.py). Each role names the server environment variable that holds its number, so no
+# number is in the repo; an unset number keeps the flag and callback.
 transfer:
   targets:
     office: TRANSFER_OFFICE_NUMBER
@@ -316,6 +319,8 @@ lines:
   # The first line names no caller, in case a voicemail greeting answered.
   transfer_prompt: Summit Air has a caller for the {role}. Press 1 to take the call.
   transfer_summary: "{priority}Caller at {phone}: {reason}. Putting you through now."
+  # Cold handoff, said to a caller who demanded a person, just before the call is sent through.
+  handoff_now: Transferring you to a person now.
   lead_stored: Someone from our team will call you {when} to tell you more.
   # The callback time as said: a time we named, or the window the caller asked for. A caller who
   # says "after 5" hears a time inside that window, so they know when to expect it (eval round 3):

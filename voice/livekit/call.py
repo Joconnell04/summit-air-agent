@@ -49,6 +49,8 @@ class Call:
         # Set by the worker: says the tenant's server-down line (which carries the 911 line) and
         # ends the call. Without the server there is no safety check, so the call can't go on.
         self.server_down = None
+        # Set by the worker: sends a caller the server handed off to a person (transfer.py).
+        self.handoff = None
         # Set by the worker: stops the call's recording when the server says the caller objected.
         self.stop_recording = None
         self._last_post: asyncio.Task | None = None
@@ -135,6 +137,21 @@ class Call:
         notes = server_notes(data.get("hints", []), data.get("known"))
         if notes:
             message.content.append("\n" + "\n".join(notes))
+        handoff = data.get("handoff")
+        if handoff and result["say"]:
+            # The caller demanded a person: the server's line, then the transfer, or the stored
+            # callback line when there is no number to send them to. The model doesn't answer.
+            plan = handoff.get("transfer")
+            if plan and self.handoff is None:
+                # Nothing here can send the call, so the caller gets the stored callback line,
+                # never a handoff line with no transfer after it.
+                await self.server.handoff_done(plan["id"], "failed")
+                self.session.say(handoff["fallback"], allow_interruptions=False)
+                raise StopResponse()
+            line = self.session.say(result["say"], allow_interruptions=False)
+            if plan:
+                self.handoff(line, plan, handoff["fallback"])
+            raise StopResponse()
         safety = data.get("safety")
         self.reply.heard(safety, text)
         if safety and safety["action"] in SPOKEN_ACTIONS and safety.get("text"):

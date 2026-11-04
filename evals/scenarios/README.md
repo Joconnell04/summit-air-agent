@@ -23,6 +23,7 @@ One YAML file per simulated call, named `<id>.yaml`. `evals/scenario.py` validat
 | `earlier_call` | A call from the same number that dropped `minutes_ago` before this one, with its `turns` (`- caller: ...` / `- agent: ...`), already on the record so the server links it (journey 7) |
 | `fsm_down` | The scheduling system failing: `booking` fails the writes that book (jobs, customers, locations, leads) while lookups and availability work; `all` fails everything (spec S-48) |
 | `misheard` | Words the simulated speech-to-text writes wrong, such as `{Houston: Hughes ton}`, applied before the line is roughened; spelled letters come through |
+| `transfer` | The office and on-call transfer numbers set in the scratch world (made up; nothing is dialed), and what happens to a cold handoff's SIP transfer: `sent` ends the call as handed off, `fails` brings the agent back with the callback line. Unset, no number is set |
 | `must` | Code checks; every one has to pass |
 | `should` | What the grader looks for in how the call felt |
 
@@ -45,7 +46,7 @@ One YAML file per simulated call, named `<id>.yaml`. `evals/scenario.py` validat
 | `residentialBuildingAccounts.N` | 0 Linden Property Management, 1 a co-op board; Residential accounts | |
 | `replacementLead` | Naomi Feld, asking about a replacement | |
 
-The Retell stack ignores `earlier_call`, `fsm_down` and `misheard`, and sets no speaking rate (the `pace` check); those scenarios run on the in-process stack.
+The Retell stack ignores `earlier_call`, `fsm_down`, `misheard` and `transfer`, and sets no speaking rate (the `pace` check); those scenarios run on the in-process stack.
 
 Service-area ZIPs are in `tenants/summit-air/config.yaml` (Brooklyn, Queens, Staten Island). Use made-up 555-01xx numbers for unknown callers.
 
@@ -66,6 +67,7 @@ Each `must` item is `- <check>: <argument>`. They read the tool server's record 
 | `tool_ok` | a tool name or list | each tool was called and succeeded |
 | `tool_not_called` | a tool name or list | none of them was called |
 | `no_changes` | `true` | no booking, reschedule, cancel or do-not-call change |
+| `handoff` | `none`, or `{role, status}` | the cold handoff record: none was decided, or its role (`office`, `on_call`) and status (`dialing`, `handed_off`, `failed`, `not_dialed`) are these |
 | `outcome` | a call outcome or list | the call's outcome (`booked`, `safety`, `declined_commercial`, `declined_out_of_area`, `changed_booking`, `callback`, `flagged`, `no_booking`) |
 | `ended_by` | `caller` or `agent` | who ended the call |
 | `callback` | `promised`, `none`, or `{day, not_before}` | a timed callback was stored, or none; with a mapping, every callback is due `day` days after the call, no earlier than `not_before` (local, "12:00") |

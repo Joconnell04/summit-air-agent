@@ -79,6 +79,11 @@ class Scenario(BaseModel):
     # Words the simulated speech-to-text writes wrong, applied to the caller's line before it is
     # roughened: {"Houston": "Hughes Tin"}. Spelled letters are left alone.
     misheard: dict[str, str] = Field(default_factory=dict)
+    # The office and on-call transfer numbers set in the scratch world (made-up numbers; nothing is
+    # dialed), and what the phone company does with a cold handoff's SIP transfer: "sent" ends the
+    # call as handed off, "fails" brings the agent back. Unset, no number is set, as on a tenant
+    # with none.
+    transfer: Literal["sent", "fails"] | None = None
     must: list[dict[str, Any]] = Field(min_length=1)
     should: list[str] = Field(default_factory=list)
 

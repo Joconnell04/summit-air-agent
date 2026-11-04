@@ -127,6 +127,26 @@ commercial:
   - church
   - hotel
   - office
+equipment_words:
+- furnace
+- furnaces
+- boiler
+- boilers
+- heat
+- heater
+- heating
+- ac
+- air
+- radiator
+- radiators
+- thermostat
+- pipe
+- pipes
+- vent
+- vents
+- filter
+- fan
+- compressor
 fsm:
   adapter: servicetitan
   agent_user_id: 9001
@@ -194,6 +214,7 @@ lines:
     you {when}.
   transfer_prompt: Summit Air has a caller for the {role}. Press 1 to take the call.
   transfer_summary: '{priority}Caller at {phone}: {reason}. Putting you through now.'
+  handoff_now: Transferring you to a person now.
   urgent_priority: I've marked this call top priority, so you get our soonest opening.
 on_call_alerts:
   email: on-call@summit-air.example

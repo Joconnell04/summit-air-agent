@@ -125,6 +125,7 @@ LINE_STAGES = {
     "flag_stored_urgent": ("whole_call", "Team will call, urgent"),
     "flag_stored_no_callback": ("whole_call", "Team told"),
     "transfer_handoff": ("whole_call", "Putting you through"),
+    "handoff_now": ("whole_call", "Sent straight to a person"),
     "transfer_no_answer": ("whole_call", "Nobody picked up"),
     "transfer_prompt": ("whole_call", "To the person answering"),
     "transfer_summary": ("whole_call", "Summary once they take it"),

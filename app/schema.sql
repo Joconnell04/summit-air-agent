@@ -380,6 +380,22 @@ CREATE TABLE IF NOT EXISTS transfers (
     finished_at TEXT
 );
 
+-- Cold handoffs to a person (app/transfer.py): a caller who demands a person is sent straight to the
+-- role's number by a SIP transfer, with no summary and no key press. A call has at most one
+-- transfer of either kind. handed_off means the call went to the number, not that a person
+-- answered, so the flag and callback stay open; not_dialed is a demand heard with no number set.
+CREATE TABLE IF NOT EXISTS handoffs (
+    id INTEGER PRIMARY KEY,
+    call_id TEXT NOT NULL UNIQUE REFERENCES calls (id) ON DELETE CASCADE,
+    flag_id INTEGER NOT NULL REFERENCES flags (id) ON DELETE CASCADE,
+    callback_id INTEGER REFERENCES callbacks (id) ON DELETE SET NULL,
+    role TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'dialing'
+        CHECK (status IN ('dialing', 'handed_off', 'failed', 'not_dialed')),
+    started_at TEXT NOT NULL,
+    finished_at TEXT
+);
+
 -- Call audio (story O-6). The voice layer records the call to a bucket; the jobs loop copies the
 -- file to the server's data folder and removes it from the bucket. Deleted with the transcript.
 CREATE TABLE IF NOT EXISTS recordings (

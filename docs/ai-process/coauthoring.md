@@ -292,3 +292,21 @@ Changed:
 - S-41a (new): no legal advice, and another company's quote is never judged.
 Commit: a8108c7 (saved as a WIP commit when the app quit; this round's text is in it)
 Status: open
+
+## call-journeys r7 (amendment after lock: cold handoff after the live calls)
+Feedback (verbatim, Jackson):
+> Let's just make sure that there's proper handoff, essentially like a cold handoff. Like if they like are angry and demand a person, just say transfer your person now and immediately transfer them, if that's possible. Like, yeah. Properly implement that.
+Changed:
+- Traits: "Wants a person" is split. Asked once and calmly, it stays a flag and the warm transfer in office hours. Demanded (insistently, again, or angrily), the agent says only "Transferring you to a person now." and the call goes straight to the office, or the on-call technician after hours, with no summary; the server decides from the caller's words. A passing mention or "are you a real person?" isn't a request. The stale "no live transfer in V1" is gone.
+- Traits: "Upset or rude" points at the demand line.
+- Journey 3, after step 6: a demand is put through only after the safety lines, to on-call after hours. This is a change to decision 051's "never on a safety call", proposed in the PR, because the lines have already told the caller to get outside.
+- Journey 13 step 3: a complaint caller who demands a manager is put through at once.
+Commit: ff34e7f (amended to add this line)
+Status: open
+
+## spec r10 (amendment after lock: cold handoff after the live calls)
+Feedback (verbatim): the same note as call-journeys r7 above.
+Changed:
+- S-38a (new): the cold handoff, who it goes to, when it doesn't happen (a mention, a commercial call, before the safety lines), once per call, and the stored callback line when nothing goes through.
+Commit: ff34e7f (amended to add this line)
+Status: open

@@ -219,6 +219,11 @@ class Tenant:
         self.pace: dict | None = clamped_config(agent.get("pace"))
         self.retention: dict = agent["retention"]
         self.after_hours_cutoffs: dict = agent["after_hours"]
+        # Words for the trade's equipment, so swearing at a broken system isn't read as anger at the
+        # call (app/transfer.py).
+        self.equipment_words: frozenset[str] = frozenset(
+            w.lower() for w in agent.get("equipment_words", [])
+        )
         # Warm transfer to a person (app/transfer.py). None turns it off.
         self.transfer: dict | None = agent.get("transfer")
         self.fsm: dict = agent["fsm"]

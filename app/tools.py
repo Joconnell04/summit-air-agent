@@ -8,8 +8,10 @@ call's own state, and ownership is checked against the customers matched on this
 
 import hashlib
 import json
+import os
 import sqlite3
-from dataclasses import dataclass
+from collections.abc import Mapping
+from dataclasses import dataclass, field
 from datetime import datetime, time, timedelta
 
 from . import booking, lookup, outbound, pace, records, safety, transfer, weather
@@ -65,6 +67,9 @@ class Ctx:
     now: datetime
     side_model: prio.SideModel | None = None
     idempotency_key: str | None = None
+    # Where the transfer numbers are read from (app/transfer.py): the server's environment, or a
+    # scratch mapping in evals so a run never reads a real number.
+    numbers: Mapping[str, str] = field(default_factory=lambda: os.environ)
 
     def reload(self) -> None:
         self.call = records.get_call(self.conn, self.call["id"])
@@ -1326,7 +1331,7 @@ def flag_person(ctx: Ctx, args: FlagIn) -> Result:
             args = args.model_copy(update={"callback_in_minutes": minutes})
         # A caller who asked for a person in office hours is about to be put through, so they
         # aren't asked for a time first; this callback is the one kept if nobody answers.
-        elif transfer.role_for(ctx.conn, ctx.tenant, ctx.call, False) == "office":
+        elif transfer.role_for(ctx.conn, ctx.tenant, ctx.call, False, ctx.numbers) == "office":
             minutes = ctx.tenant.transfer["fallback_callback_minutes"]
             args = args.model_copy(update={"callback_in_minutes": minutes})
     when = _callback_due(ctx, args)
@@ -1373,6 +1378,58 @@ def flag_person(ctx: Ctx, args: FlagIn) -> Result:
         say = ctx.tenant.line("flag_stored", when=spoken)
     return ok(
         say, flag_id=flag_id, callback_id=callback_id, callback_at=iso(due), callback_spoken=spoken
+    )
+
+
+def demand_handoff(ctx: Ctx, text: str) -> Result | None:
+    """A caller who demands a person on this line is sent to one now (app/transfer.py decides who,
+    from their words). Not a tool: the turn endpoint asks after the safety check, so the model
+    can't start it and can't hold it up. The flag and callback are stored before anything is
+    dialed. `say` is the handoff line when there is a number to send the call to, and otherwise
+    the stored callback line; `handoff.fallback` is the callback line either way."""
+    ctx.reload()
+    role = transfer.handoff_role(ctx.conn, ctx.tenant, ctx.call, text)
+    if role is None:
+        return None
+    on_safety = bool(ctx.call["safety_signal_at"]) and ctx.call["safety_state"] != "cleared"
+    reason = "Caller demanded a person" + (" after the safety lines" if on_safety else "")
+    when = None
+    # A safety call is never given a callback time while the caller leaves the house: the safety
+    # flag already has a person following up (journey 3), as in flag_person.
+    if not on_safety:
+        cutoffs = ctx.tenant.after_hours_cutoffs
+        minutes = (
+            cutoffs["on_call_confirms_within_minutes"]
+            if role == "on_call"
+            else ctx.tenant.transfer["fallback_callback_minutes"]
+        )
+        when = _callback_due(ctx, CallbackTime(callback_in_minutes=minutes))
+    with tx(ctx.conn):
+        flag_id = records.add_flag(
+            ctx.conn, ctx.call["id"], "person", reason, ctx.now, "Urgent" if on_safety else "High"
+        )
+        callback_id = (
+            records.add_callback(ctx.conn, ctx.tenant, ctx.call, when.due, reason, ctx.now)
+            if when
+            else None
+        )
+        plan = transfer.start_handoff(
+            ctx.conn, ctx.tenant, ctx.call, role, flag_id, callback_id, ctx.now, ctx.numbers
+        )
+    fallback = (
+        ctx.tenant.line("flag_stored", when=when.spoken)
+        if callback_id
+        else ctx.tenant.line("flag_stored_no_callback")
+    )
+    say = ctx.tenant.line("handoff_now") if plan else fallback
+    return ok(
+        say,
+        handoff={
+            "flag_id": flag_id,
+            "callback_id": callback_id,
+            "transfer": plan,
+            "fallback": fallback,
+        },
     )
 
 

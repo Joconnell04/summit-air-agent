@@ -229,6 +229,32 @@ def flag(arg: str, ev: Evidence) -> list[str]:
     return [] if arg in kinds else [f"no {arg} flag, flags were {sorted(kinds)}"]
 
 
+def handoff(arg: Any, ev: Evidence) -> list[str]:
+    """The cold handoff record: `none`, or the role and status it must have."""
+    rows = ev.trace.get("handoffs", [])
+    if arg == "none":
+        return [f"{len(rows)} handoff(s), expected none"] if rows else []
+    if not rows:
+        return ["no handoff was decided"]
+    row = rows[0]
+    return [
+        f"handoff {key} {row[key]}, expected {want}"
+        for key, want in arg.items()
+        if row[key] != want
+    ]
+
+
+def _handoff_arg(arg: Any) -> None:
+    if arg == "none":
+        return
+    if not isinstance(arg, dict) or not set(arg) <= {"role", "status"}:
+        raise ValueError("expected none, or a mapping with role and status")
+    if arg.get("role", "office") not in ("office", "on_call"):
+        raise ValueError("role is office or on_call")
+    if arg.get("status", "handed_off") not in ("dialing", "handed_off", "failed", "not_dialed"):
+        raise ValueError("status is dialing, handed_off, failed or not_dialed")
+
+
 def lead(arg: str, ev: Evidence) -> list[str]:
     kinds = {e["args"].get("kind") for e in ev.tools("record_lead", ok=True)}
     return [] if arg in kinds else [f"no {arg} lead recorded"]
@@ -511,6 +537,7 @@ CHECKS: dict[str, Check] = {
         lambda arg: arg == "none",
     ),
     "lead": Check(_one_of(*LEAD_KINDS), lead),
+    "handoff": Check(_handoff_arg, handoff, lambda arg: arg == "none"),
     "out_of_area": Check(_recorded_or_zip, out_of_area),
     "tool_ok": Check(_any, tool_ok),
     "tool_not_called": Check(_any, tool_not_called, lambda arg: True),

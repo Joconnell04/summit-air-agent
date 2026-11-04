@@ -68,6 +68,13 @@ def set_up(trace: dict, safety: dict) -> list[str]:
     for e in trace["events"]:
         if e["type"] == "tool" and e["tool"] in SETS_UP and e["ok"] and e["say"]:
             found.append(f"{e['tool']} returned: {e['say']}")
+    for h in trace.get("handoffs", []):
+        # The handoff line and any callback line after it were said by the server's code.
+        sent = {"handed_off": "was sent through to", "failed": "could not be sent through to",
+                "not_dialed": "had no number set for", "dialing": "was being sent to"}
+        role = "the office" if h["role"] == "office" else "the on-call technician"
+        found.append(f"The caller demanded a person, so the server's code said the handoff line "
+                     f"and the call {sent[h['status']]} {role}.")
     # Whether "top priority" belonged on the call (eval round 4, oven-heat-co-check): the system's
     # own find_slots line says it only when it marked the call Urgent.
     urgent = any(

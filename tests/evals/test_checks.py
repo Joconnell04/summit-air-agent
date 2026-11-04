@@ -302,3 +302,17 @@ def test_a_taken_window_is_said_plainly_with_another_time():
         "the call ended before the agent said the window was taken"
     ]
     assert failures("slot_taken", "told_plainly", trace()) == [], "no taken window, nothing to say"
+
+
+def test_handoff_reads_the_cold_handoff_record():
+    sent = {**trace(), "handoffs": [{"role": "office", "status": "handed_off"}]}
+    assert failures("handoff", {"role": "office", "status": "handed_off"}, sent) == []
+    assert failures("handoff", {"role": "on_call"}, sent) == [
+        "handoff role office, expected on_call"
+    ]
+    assert failures("handoff", "none", sent) == ["1 handoff(s), expected none"]
+    # A trace from before handoffs existed has none.
+    assert failures("handoff", "none", trace()) == []
+    assert failures("handoff", {"status": "handed_off"}, trace()) == ["no handoff was decided"]
+    with pytest.raises(ValueError):
+        CHECKS["handoff"].validate({"role": "manager"})

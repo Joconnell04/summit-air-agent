@@ -89,6 +89,9 @@ class Settings:
             Path(os.environ["RECORDINGS_DIR"]) if os.environ.get("RECORDINGS_DIR") else None
         )
     )
+    # Transfer numbers by environment variable name, used instead of the environment when set. Evals
+    # set it so a run never reads a real number from the shell (app/transfer.py).
+    transfer_numbers: dict[str, str] | None = None
     # Development only: serve every request as if it were this moment (ISO, with offset). The
     # owner demo sets it to the evening of the seeded day so "now" sits on the board.
     fixed_now: str = field(default_factory=lambda: os.environ.get("FIXED_NOW", ""))
