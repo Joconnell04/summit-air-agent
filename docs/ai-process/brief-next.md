@@ -11,7 +11,15 @@ Written at the end of the check-ins while Jackson was away (about 23:00 to 01:10
    If a caller asks for a person, the transfer rings your cell.
 2. **After the calls, one feedback pass.** Say what felt off; I'll map each complaint to a setting in `docs/tuning.md` (end-of-turn wait, interruption sensitivity, reply length cap, sampling temperature, speaking rate) and try the obvious fix first. One is already queued: a lower turn-detector maximum (now 1.5 s), since on about one turn in seven the detector waited the full 1.5 s on a finished line (MEASURED, PR #98).
 
-Nothing else needs a decision. No balance needs a top-up: no run failed for credit tonight. Tonight's paid runs come to about $27 (from the lanes' reports: round 3 and 4 about $16.60, the side-model check $2.50, end-of-turn runs $2.07, the listener batch $1.60, speaking rate and ZIP $1.25, the rest under $1 each), with up to $8 more for the last fix pass.
+Nothing else needs a decision. No balance needs a top-up: no run failed for credit. Cartesia overages are on at $65 per 1M credits; added Cartesia spend stays under $20. Tonight's paid runs come to about $27 (from the lanes' reports: round 3 and 4 about $16.60, the side-model check $2.50, end-of-turn runs $2.07, the listener batch $1.60, speaking rate and ZIP $1.25, the rest under $1 each), with up to $8 more for the last fix pass.
+
+## Your questions (answered)
+
+**Cartesia's managed voice agents.** Looked at in exploration 013 and left out. They'd host the whole call on Cartesia, with their own model list and a model-driven end-call tool, so our server couldn't force the exact safety lines or decide hang-ups and transfers, the rule everything here rests on. Templating would be weaker too: per-agent prompts and settings, nothing like our trade layer that each company folder builds on. Cartesia is also ending hosting for its code-first Line agents on 2026-12-01 (SOURCE: Cartesia's migration page via exploration 013).
+
+**Cartesia for speech-to-text.** Possible: Cartesia's Ink-2 is a streaming speech-to-text model with built-in turn detection and up to 100 keyterms (SOURCE: [Cartesia keyterms docs](https://docs.cartesia.ai/use-the-api/stt/keyterms.md)). We use Deepgram Nova-3 because it was chosen on phone audio first, has keyterms we already tuned for local street names, and its endpointing is what our end-of-turn timing is measured against. We found no phone-audio (8 kHz) guidance for Ink-2. Worth one audio-rig comparison after the live calls (about $2); not before, since it changes the ears under every safety and read-back rule.
+
+**Why Cartesia for speaking but not hearing.** Each was picked as the best at its own job: Cartesia sonic-3 for natural, fast speech with per-call speed and a pronunciation dictionary; Deepgram for accurate hearing of phone audio with keyterms. One vendor for both would save a contract, not latency.
 
 ## Live on the server (deployed 01:05, health checks pass)
 
@@ -29,9 +37,12 @@ Nothing else needs a decision. No balance needs a top-up: no run failed for cred
 | Simulated calls saved as audio; `make sim`, `make listen` | [#95](https://github.com/Joconnell04/summit-air-agent/pull/95) | 062 |
 | End-of-turn wait measured and kept at 0.35 s; the longer digits wait no longer sticks for the rest of the call (about 0.55 s back on each later turn) | [#98](https://github.com/Joconnell04/summit-air-agent/pull/98) | |
 
-Signing in: owner view and bench as `jackson`; the password is in the macOS Keychain (`security find-generic-password -a summit-air -s owner-admin-password -w`). The side model is on. Warm transfer and recordings are on.
+Signing in: https://45-77-105-247.sslip.io/owner (owner view) and https://45-77-105-247.sslip.io/bench (debug bench), both as `jackson`; the password is in the macOS Keychain (`security find-generic-password -a summit-air -s owner-admin-password -w`). The side model is on. Warm transfer and recordings are on.
 
 ## Still open
+
+- **Address lookup, preferred names, five easy scenarios** (new lane): a server address lookup finds the ZIP from "248 Duffield St" (one match fills it and the read-back confirms; several ask which borough; none asks to repeat or spell; a caller's ZIP that disagrees with the lookup gets read back and settled before booking). Callers who ask to be called "Dr. Patel" are, for the call and next time. Five plain scenarios join the standard suite. Ends with a two-sample eval run.
+- **Bench shows everything** ([#101](https://github.com/Joconnell04/summit-air-agent/pull/101), decision 064): admins see phone numbers, addresses and tool arguments as recorded; only replay drafts meant for the repo stay redacted. Merges and deploys once CI clears.
 
 - **Last fix pass (round 3 lane):** the agent slips still seen in eval runs (re-asking given details, an apartment building declined, an invented fee line, a repeated 911 line, flagging instead of booking after hours, warming advice for a baby), the after-midnight "tomorrow" bug, and two at-risk phrasings ("just me at home", "a cane"). Then one eval run with two samples per scenario becomes the reference. Main's eval check is red only on that stale reference until then. Deploys when it lands.
 
