@@ -1,4 +1,4 @@
-.PHONY: setup test lint check ratchet ratchet-update eval eval-pairs eval-decisions replay langsmith eval-upload seed-st mock-st postman-st server postman trace \
+.PHONY: setup test lint check release-check ratchet ratchet-update eval eval-pairs eval-decisions replay langsmith eval-upload seed-st mock-st postman-st server postman trace \
 	owner-demo owner-user design-export rules-gate summary-check voice-livekit phone-setup deploy test-call measure-delay \
 	retell-push retell-bridge retell-deploy retell-report rig rig-report sim listen lanes stt-bench
 
@@ -16,6 +16,10 @@ check: lint test ratchet
 
 ratchet:
 	uv run python scripts/ratchet.py
+
+# The release gate: the same checks, and the eval reference must be current, not stale.
+release-check: lint test
+	uv run python scripts/ratchet.py --strict
 
 ratchet-update:
 	uv run python scripts/ratchet.py --update

@@ -12,6 +12,14 @@ Discussion: docs/ai-process/transcripts/... or docs/explorations/...
 Issue: #N
 -->
 
+## 086. A stale eval reference warns; it doesn't fail the build
+
+Decided: the eval floor check reports a stale reference as a warning in `make check`, the pre-commit hook and CI, and still fails on what matters: a failed or missing must-pass case, fewer scenarios than the floor, or a pass rate under it. `make release-check` (the ratchet with `--strict`) fails on a stale reference too, for a release gate.
+Why: 41 of the last 42 failed CI runs were this one check (MEASURED, `gh run list`, the failing test in each log). Every pull request that touched prompts or scenarios went red until a paid two-sample run, by design (one reference per batch, 066), so the failures carried no news, flooded Jackson's inbox with GitHub emails, and trained lanes to commit with `--no-verify`, which skips the real tests too.
+Considered: a separate non-required CI job (the same emails on main); dropping the check from CI (loses the must-pass and floor checks on the committed reference).
+Would change if: a stale reference sits through more than one batch of merges, in which case the coordinator's batch step runs `make release-check`.
+Discussion: Jackson's note about CI failure emails
+
 ## 074. The design system is saved to the Claude account, built from the repository
 
 Decided: keep the design system's source in this repository (`tokens.css`, `components.css`, `/owner/design`, docs/design-system.md) and save a copy to the Claude account as a design system, "Revin owner view", rebuilt from the code by `scripts/export_design_system.py`. Its brand book is docs/design-system-rules.md, the short form of the design system page written as rules for an agent.

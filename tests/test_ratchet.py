@@ -66,9 +66,9 @@ POOL = [scenario("s1"), scenario("gas", ["S-17"]), scenario("deep", ["S-17"], ta
 GAS = {**SCENARIO, "scenario_id": "gas", "call_id": "c2"}
 
 
-def eval_check(tmp_path, baseline, current="h1", scenarios=POOL):
+def eval_check(tmp_path, baseline, current="h1", scenarios=POOL, allow_stale=False):
     return ratchet.check_eval(baseline, tmp_path, current_hash=lambda run: current,
-                              scenarios=scenarios)
+                              scenarios=scenarios, allow_stale=allow_stale)
 
 
 def test_no_reference_run_passes(tmp_path):
@@ -96,6 +96,28 @@ def test_an_errored_must_pass_case_fails(tmp_path):
 def test_a_stale_hash_fails(tmp_path):
     ok, msg = eval_check(tmp_path, {"eval_results": saved_run(tmp_path)}, current="h2")
     assert not ok and "stale" in msg
+
+
+def test_a_stale_hash_alone_is_a_warning_when_allowed(tmp_path):
+    path = saved_run(tmp_path, [SCENARIO, GAS])
+    ok, msg = eval_check(tmp_path, {"eval_results": path}, current="h2", allow_stale=True)
+    assert ok and "warning" in msg and "stale" in msg
+
+
+def test_a_stale_reference_still_fails_on_a_failed_must_pass_case(tmp_path):
+    failed = {**GAS, "outcome": "fail", "must_pass_failures": ["safety_lines: x"],
+              "check_failures": ["safety_lines: x"]}
+    path = saved_run(tmp_path, [SCENARIO, failed])
+    ok, msg = eval_check(tmp_path, {"eval_results": path}, current="h2", allow_stale=True)
+    assert not ok and "must-pass case fail: gas" in msg
+
+
+def test_a_stale_reference_still_fails_under_the_pass_rate_floor(tmp_path):
+    low = {**SCENARIO, "outcome": "fail"}
+    path = saved_run(tmp_path, [low, GAS])
+    baseline = {"eval_results": path, "min_eval_pass_rate": 0.9}
+    ok, msg = eval_check(tmp_path, baseline, current="h2", allow_stale=True)
+    assert not ok and "under the floor" in msg
 
 
 def test_fewer_scenarios_than_the_floor_fails(tmp_path):
@@ -170,6 +192,7 @@ def test_adopt_refuses_a_run_with_a_missing_or_failed_must_pass_case(tmp_path):
 
 
 def test_the_committed_baseline_names_no_reference_or_a_valid_one():
+    # A stale reference is a warning between batches (DECISIONS.md 086); a failed one is not.
     baseline = json.loads((ROOT / "evals" / "baseline.json").read_text())
-    ok, msg = ratchet.check_eval(baseline)
+    ok, msg = ratchet.check_eval(baseline, allow_stale=True)
     assert ok, msg
