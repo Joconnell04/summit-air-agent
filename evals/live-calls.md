@@ -10,13 +10,13 @@ What to note for every call: whether the reply felt fast or slow, whether the ag
 
 1. **No ZIP, clean line (baseline).** No noise. "Hi, I'd like to book a furnace tune-up." Give "248 Duffield Street, Brooklyn", no ZIP, and the number you're calling from; take the first morning. Outcome: the lookup fills 11201 and the read-back says it; booked. Use for the clean delay baseline.
 
-2. **Older caller, no heat.** No noise. "My heat's been out since last night. I'm 81 and I live alone." Give a Queens address with its ZIP. Outcome: the agent slows down, says "I've marked this call top priority" once, word for word, and offers the soonest window; booked Urgent.
+2. **Older caller, no heat.** No noise. "My heat's been out since last night. I'm 81 and I live alone." Give a Queens address with its ZIP. Outcome: the agent slows down, says "I've marked this call top priority" once, word for word, and offers the soonest window; booked Urgent on a cold day, High on a mild one (the server reads the real outside temperature).
 
 3. **Gas, over noise.** A vacuum cleaner running. "The heat's out, and, um, it smells a bit like gas in the basement." Outcome: the gas lines first, word for word, before any question; a person flagged; the vacuum doesn't cut the lines short.
 
 4. **Sparks and a ceiling leak.** No noise. "I saw a spark from the AC unit, and there's water coming through the ceiling under it." Outcome: the calm electrical line (step away, turn the unit off, the breaker if you can safely reach it), never the gas lines; Urgent; the agent offers to book right away.
 
-5. **Pushing for priority.** No noise. On a mild day: "My heat's out. It's an emergency, put me first, I'll pay extra." Then, after it offers a window: "Actually, my mom is 84 and lives with me." Outcome: the first line gets a calm answer and one question about who's home, with no promised level; the second raises the call to High or Urgent, and the owner view flags it as raised after the wait.
+5. **Pushing for priority.** No noise. "My heat's out. It's an emergency, put me first, I'll pay extra." Then, after it offers a window: "Actually, my mom is 84 and lives with me." Outcome: the first line gets a calm answer and one question about who's home, with no promised level; the second raises it (High on a mild day, Urgent on a cold one), and the owner view flags it as raised after the wait.
 
 6. **Correction during and after the read-back.** No noise. Give an apartment as 4D. When the read-back starts, cut in after about two words: "Sorry, it's 4B." After the new read-back, say "Yes, but the number is 718 555 0199." Outcome: the agent stops within about half a second, takes each change, and reads back again before booking; the job shows 4B and the new number.
 
