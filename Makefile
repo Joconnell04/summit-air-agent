@@ -1,5 +1,5 @@
 .PHONY: setup test lint check ratchet ratchet-update eval eval-pairs eval-decisions replay langsmith eval-upload seed-st mock-st postman-st server postman trace \
-	owner-demo owner-user rules-gate summary-check voice-livekit phone-setup deploy test-call measure-delay \
+	owner-demo owner-user design-export rules-gate summary-check voice-livekit phone-setup deploy test-call measure-delay \
 	retell-push retell-bridge retell-deploy retell-report rig rig-report sim listen lanes stt-bench
 
 setup:
@@ -122,6 +122,12 @@ owner-demo:
 	uv run python -m scripts.seed_owner_day --dir data/owner-demo
 	TOOL_DB=data/owner-demo/tool.db JOBS_INTERVAL_SECONDS=0 FIXED_NOW=$$(cat data/owner-demo/now) \
 	  uv run uvicorn app.main:create_app --factory --port $(PORT)
+
+# Export the design system as the files of its saved copy in Claude (docs/design-system.md),
+# with make owner-demo running: make design-export OUT=/tmp/revin-design-system
+design-export:
+	@test -n "$(OUT)" || { echo 'usage: make design-export OUT=<folder>'; exit 2; }
+	uv run --with playwright python scripts/export_design_system.py --out $(OUT) --ref "main@$$(git rev-parse --short HEAD)"
 
 # Add a user to the owner view; the password is asked for in the terminal.
 # make owner-user ACCOUNT=dana NAME="Dana Ruiz" [ROLE=staff|admin] [DB=data/tool_server.db]
