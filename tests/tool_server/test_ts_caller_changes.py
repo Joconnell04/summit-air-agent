@@ -182,7 +182,7 @@ def test_an_unknown_number_cancels_after_saying_the_name_and_address(agent, mock
     asked = agent.tool("cancel_appointment", call, booking_id=maria["jobId"], reason="fixed")
     assert asked["refused"] == "identity_check"
     # The caller opened with the address, so only the name is asked for.
-    assert asked["say"].endswith("could you tell me your name?")
+    assert asked["say"].endswith("what name is it under?")
     assert "confirm you're the person for the visit" in asked["say"]
     assert "Delgado" not in asked["say"] and "Bedford" not in asked["say"]
     agent.say(call, asked["say"])
@@ -607,7 +607,7 @@ def test_a_surname_that_is_the_street_name_is_not_a_name(agent, mock, scenarios)
         agent, scenarios, "Cancel the visit at 620 Bedford Avenue, 11235."
     )
     assert refused["refused"] == "identity_check"
-    assert refused["say"].endswith("could you tell me your name?")
+    assert refused["say"].endswith("what name is it under?")
 
 
 def test_a_surname_said_in_passing_is_not_a_name(agent, mock, scenarios):
