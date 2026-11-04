@@ -12,7 +12,7 @@ from collections.abc import Callable
 
 from livekit.agents import RunContext, function_tool
 
-from prompts.assemble import SpokenReply, spoken_by_server
+from prompts.assemble import SpokenReply, spoken_by_server, spoken_first
 
 from .bridge import Bridge
 from .server import ToolServer
@@ -78,6 +78,9 @@ def make_tool(
             # sentence and a booking's confirmation are spoken by the worker word for word, never
             # by the model. end_call only carries a sentence on a safety call.
             spoken = speak(line)
+        elif spoken_first(result):
+            # The top-priority line, word for word; the model's reply (the times) follows it.
+            speak(spoken_first(result))
         if ending and result["data"].get("hang_up"):
             # The server agreed: hang up once this turn's speech, and any line above, has played.
             # After the safety sign-off the call has had its goodbye, so the worker adds none.

@@ -357,6 +357,12 @@ class InProcessAgent:
                 parts = parts or split
                 if not split:
                     from_code = from_code or spoken_by_code(use["name"], envelope)
+                # Said by the worker before the model's reply, which still follows (the
+                # top-priority line from find_slots).
+                first = (envelope.get("data") or {}).get("spoken_first")
+                if first and not from_code:
+                    spoken.append(first)
+                    first_word = first_word or time.perf_counter()
                 results.append(
                     {"type": "tool_result", "tool_use_id": use["id"],
                      "content": json.dumps(envelope)}

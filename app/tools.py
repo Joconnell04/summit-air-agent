@@ -215,7 +215,7 @@ def _address_said(ctx: Ctx, house: str, street: str, rows: list | None = None) -
     names = geocode.street_name_words(street)
     if not want or not names:
         return False
-    lines = [_keyed(number_tokens(r["text"])) for r in rows]
+    lines = [_split_run_on(_keyed(number_tokens(r["text"])), want, names) for r in rows]
     for i, tokens in enumerate(lines):
         for k, token in enumerate(tokens):
             if token != want or "zip" in tokens[max(0, k - 2) : k] or "code" in tokens[max(0, k - 2) : k]:
@@ -235,6 +235,21 @@ def _address_said(ctx: Ctx, house: str, street: str, rows: list | None = None) -
     return any(
         _answers_number(ctx, row, want) for row in rows
     ) and any(_street_in(row["text"], names) for row in rows)
+
+
+def _split_run_on(tokens: list[str], want: str, names: list[str]) -> list[str]:
+    """A house number and a numbered street said digit by digit with no break, "one one eight 24
+    one nine seven th street", read as one number (11824197): split back into the house and the
+    street when the run is exactly those two (eval run 20261104-201607,
+    caller-declines-safety-advice)."""
+    street = names[0] if names and names[0].isdigit() else ""
+    if not street:
+        return tokens
+    return [
+        part
+        for token in tokens
+        for part in ([want, street] if token == want + street else [token])
+    ]
 
 
 def _keyed(tokens: list[str]) -> list[str]:
@@ -1257,7 +1272,21 @@ def find_address(ctx: Ctx, args: FindAddressIn) -> Result:
             errors={"street": "needs the house number"},
         )
     house, street = split
+    # A ZIP the caller said in the service area lets the call go on whatever the lookup can do:
+    # it comes from the caller, not the lookup, and the read-back confirms the street with them.
+    said = _zip_said_with(ctx, house)
+    from_caller = ok(
+        zip=said,
+        street=args.street,
+        from_caller=True,
+        in_area=True,
+        area=ctx.tenant.service_area[said]["name"],
+        note="The lookup couldn't confirm the street; the caller's ZIP stands. Go on to the "
+        "read-back, which confirms it with them.",
+    ) if said in ctx.tenant.service_area else None
     if not _address_said(ctx, house, street):
+        if from_caller:
+            return from_caller
         raise Refused(
             "address_not_heard",
             "What's the street address there?",
@@ -1271,18 +1300,10 @@ def find_address(ctx: Ctx, args: FindAddressIn) -> Result:
     _record_lookup(ctx, house, street, args.borough, found)
     # A ZIP the caller already gave goes on when the lookup can't settle one, so nobody is asked
     # for a ZIP they just said; with several places, it picks one of them.
-    said = _zip_said_with(ctx, house)
     if found.status == "several" and said in found.zips():
         found = geocode.Found("one", tuple(p for p in found.places if p.zip == said), found.source)
-    if said in ctx.tenant.service_area and found.status in ("unavailable", "none"):
-        return ok(
-            zip=said,
-            street=args.street,
-            from_caller=True,
-            in_area=True,
-            area=ctx.tenant.service_area[said]["name"],
-            note="The lookup couldn't confirm the street; the caller's ZIP stands.",
-        )
+    if from_caller and found.status in ("unavailable", "none"):
+        return from_caller
     if found.status == "unavailable":
         raise Refused(
             "address_lookup_down", ctx.tenant.line("address_ask_zip"), need="ask for the ZIP"
@@ -1373,11 +1394,14 @@ def find_slots(ctx: Ctx, args: FindSlotsIn) -> Result:
         )
     # The caller hears once that their call went to the top (spec S-21a); below Urgent the agent
     # never names a priority.
+    # The voice layer speaks it from the server, word for word, before the model offers times, so
+    # it is never paraphrased (asks-agent-to-call-911 kept failing `top priority`).
     urgent_said = ""
     if decided.level == "Urgent":
         line = ctx.tenant.line("urgent_priority")
         if not records.agent_said(ctx.conn, ctx.call["id"], line):
-            urgent_said = line + " "
+            data["spoken_first"] = line
+            data["note"] = "The top-priority sentence was just said for you; don't say it again."
     if decided.level == "Urgent" and windows:
         first = _describe(ctx, windows[0])
         data["first_urgent"] = first
@@ -1867,6 +1891,10 @@ def book_appointment(ctx: Ctx, args: BookIn) -> Result:
         f"You're all set for {when['day_and_date']}, with the technician arriving between "
         f"{when['label'].replace(' to ', ' and ')}."
     )
+    # An Urgent call booked without find_slots first still hears the line once, here.
+    urgent_line = ctx.tenant.line("urgent_priority")
+    if decided.level == "Urgent" and not records.agent_said(ctx.conn, ctx.call["id"], urgent_line):
+        say = f"{urgent_line} {say}"
     # A visit booked on a safety call goes ahead only once the problem is shut off (eval round 2).
     if override and ctx.tenant.safety.get("booking_note"):
         say += " " + " ".join(ctx.tenant.safety["booking_note"].split())

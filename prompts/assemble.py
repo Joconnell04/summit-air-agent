@@ -469,6 +469,7 @@ class SpokenReply:
         self.phones: set[str] = set()
         self.streets: set[tuple[str, str]] = set()
         self.urgent = False
+        self.urgent_spoken = False
         self.advised = False
         self._dropped_restatement = False
         self._asked = False
@@ -500,6 +501,9 @@ class SpokenReply:
             self.address_checked = True
         if name == "find_slots" and (data.get("priority") or {}).get("level") == "Urgent":
             self.urgent = True
+        if data.get("spoken_first"):
+            # The server's own line was spoken; the model's version of it is never said too.
+            self.urgent_spoken = True
         if name == "read_back" and data.get("confirmed"):
             self.read_back_confirmed = True
             # Confirmed details are said once, in the server's sentence: never again by the model.
@@ -542,7 +546,7 @@ class SpokenReply:
             self.advised = True
         if not self.safety_call and CARBON_MONOXIDE.search(sentence):
             return ""
-        if not self.urgent and CLAIMS_PRIORITY.search(sentence):
+        if (not self.urgent or self.urgent_spoken) and CLAIMS_PRIORITY.search(sentence):
             return ""
         if not self.safety_call and HAZARD.search(sentence) and EVACUATE.search(sentence):
             return ""
@@ -589,6 +593,12 @@ class SpokenReply:
             return ""
         self.start_reply()
         return " ".join(kept for s in sentences(text) if (kept := self.sentence(s)))
+
+
+def spoken_first(envelope: dict) -> str | None:
+    """A sentence the voice layer speaks from a tool result word for word before the model's
+    reply, which still follows: the top-priority line from find_slots (spec S-21a)."""
+    return (envelope.get("data") or {}).get("spoken_first") or None
 
 
 def spoken_by_server(name: str, envelope: dict) -> str | None:
