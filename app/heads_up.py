@@ -13,7 +13,9 @@ and never dialed. The allowlist is checked when the heads-up is stored and again
 claimed, so a number taken off the list is never dialed.
 """
 
+import logging
 import os
+import re
 import sqlite3
 from datetime import datetime
 
@@ -23,12 +25,27 @@ from .fsm import FsmAdapter, FsmRejected, FsmUnavailable
 from .tenant import Tenant
 from .text import phone_display, phone_key, phone_said
 
+log = logging.getLogger(__name__)
+
 
 def allowlist(environ=os.environ) -> frozenset[str]:
-    """The numbers a heads-up may dial, as ten-digit keys. Anything that isn't ten digits is
-    ignored, so a typo can't widen the list."""
-    keys = {phone_key(n) for n in (environ.get("HEADSUP_ALLOWLIST") or "").split(",")}
-    return frozenset(k for k in keys if len(k) == 10)
+    """The numbers a heads-up may dial, as ten-digit keys. An entry counts only when it is exactly
+    ten digits, or eleven starting with 1, once spaces and punctuation are dropped; anything else
+    ("718-555-0142 ext 5", "+44 20 7946 0958", a typo) is left out and logged, so a malformed
+    entry can never widen the list to a different number (PR #134 review)."""
+    keys = set()
+    for entry in (environ.get("HEADSUP_ALLOWLIST") or "").split(","):
+        entry = entry.strip()
+        if not entry:
+            continue
+        digits = re.sub(r"[\s().+-]", "", entry)
+        if digits.isdigit() and len(digits) == 11 and digits.startswith("1"):
+            digits = digits[1:]
+        if digits.isdigit() and len(digits) == 10:
+            keys.add(digits)
+        else:
+            log.warning("HEADSUP_ALLOWLIST entry ignored, not a ten-digit number: %r", entry)
+    return frozenset(keys)
 
 
 def may_dial(phone: str, allowed: frozenset[str]) -> bool:
@@ -64,7 +81,8 @@ def queue(
     """Store the heads-up for after the call. `change` is what happened, as the sentence says it
     ("Your visit on Thursday between 8 and 12 was cancelled"). Returns its id, or None with no
     number on file."""
-    if len(phone_key(phone)) != 10:
+    # Never the number the change came from: the heads-up is for the account's own number.
+    if len(phone_key(phone)) != 10 or phone_key(phone) == call["caller_key"]:
         return None
     line = tenant.line(
         "heads_up", change=change, phone=phone_said(tenant.agent["phone_numbers"][0])

@@ -767,13 +767,69 @@ def _said_before_agent(turns: list, said_by_agent) -> list:
     return rows
 
 
+# Words right before a surname that make it a name the caller is giving: "this is", "my name
+# is", "I'm", "it's", "under". The customer's first name before it counts too ("Maria Delgado").
+NAME_LEADS = (("this", "is"), ("name", "is"), ("im",), ("i", "am"), ("its",), ("under",))
+# What a line that is only the name may also hold: "Um, Delgado." or "Sure, Maria Delgado."
+NAME_LINE_FILLER = {"um", "uh", "its", "sure", "yes", "yeah", "ok", "okay", "thats", "the",
+                    "name", "is", "mr", "mrs", "ms", "miss", "dr"}
+NAME_LINE_MAX_WORDS = 5
+STREET_AFTER = geocode.STREET_TYPE_WORDS | {
+    "street", "avenue", "road", "place", "boulevard", "drive", "lane", "court", "terrace",
+    "parkway", "broadway",
+}
+NUMBER_WORDS = {"oh", "zero", "one", "two", "three", "four", "five", "six", "seven", "eight",
+                "nine", "ten", "hundred"}
+
+
+def _name_given(text: str, name: str) -> bool:
+    """The caller gave this customer's surname as a name in this line: after a name lead or the
+    customer's first name, or as a line that is just the name. A surname inside the address ("620
+    Bedford Avenue") or in passing ("what's the price") is no name (PR #134 review)."""
+    surname = _surname(name)
+    first = _name_words(name)[0] if len(_name_words(name)) > 1 else ""
+    tokens = _name_words(text)
+    joined = [(i, t) for i, t in enumerate(tokens)]
+    # A surname split in two by speech to text ("Del Gado") is read as one word.
+    joined += [(i + 1, a + b) for i, (a, b) in enumerate(pairwise(tokens)) if a + b == surname]
+    hits = [i for i, t in joined if t == surname]
+    for i in hits:
+        start = i - (1 if tokens[i] != surname else 0)
+        after = tokens[i + 1] if i + 1 < len(tokens) else ""
+        before = tokens[max(0, start - 2):start]
+        if after in STREET_AFTER or (before and (before[-1].isdigit() or before[-1] in NUMBER_WORDS)):
+            continue
+        if (first and before and before[-1] == first) or any(
+            tuple(before[-len(lead):]) == lead for lead in NAME_LEADS if len(before) >= len(lead)
+        ):
+            return True
+    rest = "".join(t for t in tokens if t not in NAME_LINE_FILLER)
+    return bool(hits) and len(tokens) <= NAME_LINE_MAX_WORDS and rest in (
+        surname, "".join(_name_words(name))
+    )
+
+
+def _unit_said(rows: list, unit: str) -> bool:
+    """The location's unit, as the caller said it: "3B", "apartment three B". A unit only the
+    model gave is not enough, the same as a ZIP (DECISIONS.md 058)."""
+    want = unit_key(unit)
+    if not want:
+        return True
+    for row in rows:
+        tokens = [t for t in number_tokens(row["text"]) if t.isalnum()]
+        for size in (1, 2, 3):
+            if any("".join(tokens[i:i + size]) == want for i in range(len(tokens) - size + 1)):
+                return True
+    return False
+
+
 def _identity_said(ctx: Ctx, name: str, addresses: list[dict]) -> tuple[bool, bool]:
-    """Whether the caller said the customer's surname and one of these addresses (house number and
-    street), each before the agent said it."""
+    """Whether the caller gave the customer's surname as a name (_name_given) and said one of
+    these addresses (house number, street and any unit), each before the agent said it."""
     turns = records.thread_turns(ctx.conn, ctx.call["id"])
     surname = _surname(name)
     name_ok = bool(surname) and any(
-        _has_word(r["text"], surname)
+        _name_given(r["text"], name)
         for r in _said_before_agent(turns, lambda t: _has_word(t, surname))
     )
     address_ok = False
@@ -783,10 +839,17 @@ def _identity_said(ctx: Ctx, name: str, addresses: list[dict]) -> tuple[bool, bo
             continue
         house, names = geocode.house_key(split[0]), geocode.street_name_words(split[1])
         rows = _said_before_agent(turns, lambda t, h=house, n=names: _address_tokens_in(t, h, n))
-        if rows and _address_said(ctx, split[0], split[1], rows):
+        if rows and _address_said(ctx, split[0], split[1], rows) and _unit_said(
+            rows, address.get("unit") or ""
+        ):
             address_ok = True
             break
     return name_ok, address_ok
+
+
+def _identity_row_status(ctx: Ctx, customer_id: int) -> str | None:
+    row = _identity_row(ctx, customer_id)
+    return row["status"] if row else None
 
 
 def _identity_row(ctx: Ctx, customer_id: int) -> sqlite3.Row | None:
@@ -1095,17 +1158,19 @@ def _unsaid_withheld(ctx: Ctx, bundle: dict) -> dict:
     scoped = records.scoped_customers(ctx.conn, ctx.call["id"]).get(bundle["customer_id"])
     if scoped is not None and scoped["matched_by"] == "caller_id":
         return bundle
-    surname = _surname(bundle["name"])
-    if surname and _has_word(records.caller_text(ctx.conn, ctx.call["id"]), surname):
+    if _identity_row_status(ctx, bundle["customer_id"]) == "verified":
         return bundle
+    # The name, once the caller has given it as a name; the rest only after the full check.
+    named = _name_given(records.caller_text(ctx.conn, ctx.call["id"]), bundle["name"])
     return {
         **bundle,
-        "name": "",
+        "name": bundle["name"] if named else "",
         "phones": [],
         # What the visit is about stays out too; the job id and window are enough to change it.
         "open_jobs": [{**j, "summary": ""} for j in bundle["open_jobs"]],
         "notes": [],
-        "withheld": "the name and numbers on file are not shown until the caller says them; "
+        "withheld": "the numbers, notes and what the visit is about are not shown, and the "
+        "name only once the caller gives it, until the server's name and address check passes; "
         "a change asks for them first",
     }
 

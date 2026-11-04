@@ -577,3 +577,124 @@ def test_a_number_that_matches_nobody_falls_back_to_the_address(agent, scenarios
     assert [m["customer_id"] for m in found["data"]["matches"]] == [
         scenarios["repeatCallerOpenJob"]["customerId"]
     ]
+
+
+# ---- the name and address check, on half the information (PR #134 review) ----------------------
+
+
+def rename_maria(mock, scenarios, name: str, unit: str = "") -> None:
+    maria = scenarios["repeatCallerOpenJob"]
+    conn = sqlite3.connect(mock[0].state.db_path)
+    with conn:
+        conn.execute("UPDATE customers SET name = ? WHERE id = ?", (name, maria["customerId"]))
+        conn.execute("UPDATE locations SET unit = ?, unit_key = ? WHERE id = ?",
+                     (unit, unit.lower(), maria["locationId"]))
+    conn.close()
+
+
+def unknown_caller_cancels(agent, scenarios, line: str, unit: str = "") -> dict:
+    maria = scenarios["repeatCallerOpenJob"]
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, line)
+    agent.tool("find_customer", call,
+               address={"street": "620 Bedford Ave", "unit": unit, "zip": "11235"})
+    return agent.tool("cancel_appointment", call, booking_id=maria["jobId"], reason="not needed")
+
+
+def test_a_surname_that_is_the_street_name_is_not_a_name(agent, mock, scenarios):
+    rename_maria(mock, scenarios, "Maria Bedford")
+    refused = unknown_caller_cancels(
+        agent, scenarios, "Cancel the visit at 620 Bedford Avenue, 11235."
+    )
+    assert refused["refused"] == "identity_check"
+    assert refused["say"].endswith("could you tell me your name?")
+
+
+def test_a_surname_said_in_passing_is_not_a_name(agent, mock, scenarios):
+    rename_maria(mock, scenarios, "Maria Price")
+    refused = unknown_caller_cancels(
+        agent, scenarios, "What's the price to cancel the visit at 620 Bedford Avenue, 11235?"
+    )
+    assert refused["refused"] == "identity_check"
+
+
+def test_a_street_name_surname_counts_when_given_as_a_name(agent, mock, scenarios):
+    rename_maria(mock, scenarios, "Maria Washington")
+    assert unknown_caller_cancels(
+        agent, scenarios,
+        "This is Maria Washington, cancel the visit at 620 Bedford Avenue, 11235.",
+    )["ok"]
+
+
+def test_a_hudson_living_on_hudson_counts_only_by_name(agent, mock, scenarios):
+    from app.tools import _name_given
+
+    assert not _name_given("I live at 71 Hudson Street", "Ana Hudson")
+    assert not _name_given("it's on Hudson Avenue", "Ana Hudson")
+    assert _name_given("my name is Hudson", "Ana Hudson")
+    assert _name_given("Ana Hudson.", "Ana Hudson")
+    assert _name_given("um, it's under Hudson", "Ana Hudson")
+    assert _name_given("Del Gado", "Maria Delgado")
+
+
+def test_the_unit_on_file_must_be_the_one_the_caller_said(agent, mock, scenarios):
+    rename_maria(mock, scenarios, "Maria Delgado", unit="3B")
+    wrong = unknown_caller_cancels(
+        agent, scenarios, "Maria Delgado, 620 Bedford apartment 9Z, 11235, cancel my visit.",
+        unit="3B",
+    )
+    assert wrong["refused"] == "identity_check"
+    assert wrong["say"].endswith("could you tell me the address?")
+
+
+def test_the_unit_said_in_words_counts(agent, mock, scenarios):
+    rename_maria(mock, scenarios, "Maria Delgado", unit="3B")
+    assert unknown_caller_cancels(
+        agent, scenarios,
+        "Maria Delgado, 620 Bedford Avenue apartment three B, 11235, cancel my visit.", unit="3B",
+    )["ok"]
+
+
+def test_a_malformed_allowlist_entry_never_becomes_another_number():
+    from app.heads_up import allowlist
+
+    allowed = allowlist({"HEADSUP_ALLOWLIST": "718-555-0142 ext 5, +44 20 7946 0958, "
+                                              "1 (646) 555-0199, 646555019"})
+    assert allowed == frozenset({"6465550199"})
+
+
+def test_the_heads_up_never_dials_the_number_the_change_came_from(agent, mock, scenarios):
+    maria = scenarios["repeatCallerOpenJob"]
+    conn = sqlite3.connect(mock[0].state.db_path)
+    with conn:
+        conn.execute("UPDATE contacts SET value = ?, phone_key = ? WHERE customer_id = ?",
+                     ("(212) 555-0999", "2125550999", maria["customerId"]))
+    conn.close()
+    # The caller's number is now the one on file, but the call matched by address: no heads-up.
+    from app import heads_up
+
+    services = agent.app.state.services
+    call = agent.start("(212) 555-0999")["data"]["call_id"]
+    db = agent.db()
+    row = db.execute("SELECT * FROM calls WHERE id = ?", (call,)).fetchone()
+    tenant = services.tenants.by_slug["summit-air"]
+    assert heads_up.queue(db, tenant, services.fsm["summit-air"], row, maria["customerId"], None,
+                          "(212) 555-0999", "x", frozenset({"2125550999"}), services.clock()) is None
+    db.close()
+
+
+def test_notes_and_job_details_wait_for_the_full_check(agent, scenarios):
+    maria = scenarios["repeatCallerOpenJob"]
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "This is Maria Delgado, I need to cancel a visit.")
+    found = agent.tool("find_customer", call,
+                       address={"street": "620 Bedford Ave", "unit": "", "zip": "11235"})
+    match = found["data"]["matches"][0]
+    # The name she gave shows; the gate code note and the visit's summary don't, yet.
+    assert match["name"] == "Maria Delgado"
+    assert match["notes"] == [] and match["open_jobs"][0]["summary"] == ""
+    agent.turn(call, "It's 620 Bedford Avenue, 11235.")
+    assert agent.tool("cancel_appointment", call, booking_id=maria["jobId"], reason="not needed")["ok"]
+    again = agent.tool("find_customer", call,
+                       address={"street": "620 Bedford Ave", "unit": "", "zip": "11235"})
+    assert again["data"]["matches"][0]["notes"]

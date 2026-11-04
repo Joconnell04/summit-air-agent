@@ -42,7 +42,6 @@ def job_summary(request: dict) -> str:
     else:
         lines.append(f"Contact: {phone_display(request['phone'])}")
     lines += [
-
         f"System: {details.get('system_type') or 'not known'}",
         f"Tried: {details['tried']}",
         f"Home: {details['who_home']}",
