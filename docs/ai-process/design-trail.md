@@ -109,3 +109,4 @@ How the design was reached, in order, so a reader can follow each choice back to
 | Lookups in evals | Recorded GeoSearch answers; unknown addresses act as an outage | DECISIONS.md 071, #125 |
 | Priority from the caller | Rules fire on the caller's words only; the model's notes raise nothing; a raise after the wait is flagged for the dispatcher | DECISIONS.md 072, #124 |
 | A caller who pushes | A calm line and the soonest window or a person; pushing and claims raise nothing | DECISIONS.md 073, #124 |
+| Eval reference after C-58 and #125 | Two-sample standard run adopted at 92%; floor stays 90% | DECISIONS.md 011, #126 |
