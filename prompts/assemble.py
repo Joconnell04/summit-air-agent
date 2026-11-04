@@ -195,6 +195,16 @@ DESCRIBES_TOOLS = re.compile(
     r"(?:says?|said|shows?|showed|marked|returned|gave|is giving|tells? me|flagged|came back)\b",
     re.IGNORECASE,
 )
+# A word from inside the company ("I'll flag this for our team"). The server's own sentences say
+# "I've let our team know" (eval run 20261104-053435, complaint-flag).
+INTERNAL_WORD = re.compile(r"\bflag(?:s|ged|ging)?\b", re.IGNORECASE)
+# A fee or price the server didn't give ("There's no charge for the visit itself"): the company
+# knowledge says the technician goes over costs (eval run 20261104-052332, co-op-board-asks-to-book).
+CLAIMS_FEE = re.compile(
+    r"\bno (?:charge|fee|cost)\b|\bfree of charge\b|\bfree (?:visit|service call|estimate|diagnostic)"
+    r"|\bwon'?t be charged\b|\bdoesn'?t cost\b|\$\s?\d|\b\d+ dollars\b",
+    re.IGNORECASE,
+)
 # Carbon monoxide talk. Only the server's check question and safety lines raise it; on a call with
 # no safety signal the model's own is dropped (eval round 4, no-heat-gas-stove).
 CARBON_MONOXIDE = re.compile(r"\bcarbon monoxide\b|\bco (?:alarm|detector)\b", re.IGNORECASE)
@@ -307,6 +317,7 @@ class SpokenReply:
         self.phones: set[str] = set()
         self.streets: set[tuple[str, str]] = set()
         self.urgent = False
+        self.advised = False
         self._dropped_restatement = False
         self._asked = False
 
@@ -359,6 +370,15 @@ class SpokenReply:
         after_restatement, self._dropped_restatement = self._dropped_restatement, False
         if ANNOUNCES_READ_BACK.search(sentence) or DESCRIBES_TOOLS.search(sentence):
             return ""
+        if INTERNAL_WORD.search(sentence) or CLAIMS_FEE.search(sentence):
+            return ""
+        if self.safety_call and EVACUATE.search(sentence):
+            # The caller stays in control: the agent's own recommendation to stay out or call 911
+            # is said once on the call, after the server's lines (eval run 20261104-052332,
+            # co-alarm-clear).
+            if self.advised:
+                return ""
+            self.advised = True
         if not self.safety_call and CARBON_MONOXIDE.search(sentence):
             return ""
         if not self.urgent and CLAIMS_PRIORITY.search(sentence):

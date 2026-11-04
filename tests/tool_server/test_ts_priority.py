@@ -1,7 +1,7 @@
 """The priority engine and the after-hours outcome (spec S-04, S-21, S-33; DECISIONS.md 006)."""
 
 import pytest
-from toolkit import TENANT_DIR, UNKNOWN
+from toolkit import TENANT_DIR, UNKNOWN, book, ready_to_book
 
 from app import priority as prio
 from app.tenant import load_agent
@@ -267,3 +267,79 @@ def test_a_negation_elsewhere_in_the_line_never_drops_a_raise(text):
 @pytest.mark.parametrize("text", ["nobody's elderly here", "nobody's a baby, just me and my wife", "no one's elderly"])
 def test_nobodys_negates_a_risk_word(text):
     assert decide("no_heat", text, 66).level != "Urgent"
+
+
+def test_nobody_whos_a_baby_or_elderly_raises_nothing_but_a_real_mention_still_does():
+    """Eval run 20261104-052332, mild-after-hours-no-heat: "elderly" sat five words after
+    "nobody" and sent a mild night to the on-call technician."""
+    from app.priority import _said_not_negated
+    from app.text import words
+
+    said = "just two adults both healthy nobody whos a baby or elderly nobody on any medical equipment"
+    assert not _said_not_negated(words(said), "elderly")
+    assert _said_not_negated(words("no heat since this morning grandma is here"), "grandma")
+
+
+@pytest.mark.parametrize(
+    "who_home",
+    [
+        "It's just me at home. I'm 84, and I use a cane to get around.",
+        "its just me at home im 84 and i use a cane",
+        "just me at home, I use a cane",
+    ],
+)
+def test_an_older_caller_alone_with_a_cane_is_urgent(agent, who_home):
+    """A rig call (#98): an 84-year-old alone with a cane was booked High while told it was
+    urgent."""
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "My heat isn't working, it's about 55 in here.")
+    agent.turn(call, who_home)
+    found = agent.tool("find_slots", call, job_type="no_heat", facts={"inside_temp_f": 56})
+    assert found["data"]["priority"]["level"] == "Urgent"
+
+
+def test_the_booking_keeps_the_priority_find_slots_already_gave(agent):
+    """The rig call's find_slots facts said "elderly"; the booking's details didn't, and it was
+    booked one level lower than the caller was told."""
+    call = ready_to_book(agent)
+    found = agent.tool("find_slots", call, job_type="no_heat",
+                       facts={"who_home": "elderly woman, cold but managing", "inside_temp_f": 60})
+    assert found["data"]["priority"]["level"] == "Urgent"
+    day = found["data"]["days"][0]
+    booked = book(agent, call, {"date": day["date"], "window": day["windows"][0]},
+                  job_type="no_heat", who_home="Caller, cold but managing")
+    assert booked["ok"], booked
+    assert booked["data"]["priority"]["level"] == "Urgent"
+
+
+def test_a_negated_list_goes_on_past_a_comma_but_a_bare_no_does_not():
+    """Eval run 20261104-154616, mild-after-hours-no-heat: "no babies, older people or medical
+    equipment" raised medical_equipment and sent a mild night to the on-call path."""
+    from app import priority as prio
+
+    listed = prio.Facts("no_heat", "Two healthy adults, no babies, older people or medical equipment")
+    assert not prio._rule_fires({"phrases": ["medical equipment"]}, listed)
+    answer = prio.Facts("no_heat", "No, my mother lives with us and she's on oxygen")
+    assert prio._rule_fires({"phrases": ["oxygen"]}, answer)
+    later = prio.Facts("no_heat", "No babies here, but grandma is visiting, she's elderly")
+    assert prio._rule_fires({"phrases": ["elderly"]}, later)
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "No heat, baby in the house",
+        "No heat, newborn at home",
+        "No heat at all, infant in the house",
+        "No heat since last night, elderly mother lives with me",
+        "No heat, oxygen concentrator running",
+        "no kids, no pets, elderly mother lives here",
+        "no heat, no hot water, elderly man upstairs",
+    ],
+)
+def test_a_no_before_a_comma_never_hides_someone_at_risk(agent, line):
+    """PR #102 review: the comma carry dropped each of these from Urgent to High at 66 F."""
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, line)
+    found = agent.tool("find_slots", call, job_type="no_heat", facts={"inside_temp_f": 66})
+    assert found["data"]["priority"]["level"] == "Urgent", line

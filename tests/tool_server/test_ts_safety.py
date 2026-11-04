@@ -771,3 +771,65 @@ def test_i_dont_feel_sick_or_dizzy_is_a_no_and_i_wont_use_the_oven_asks_nothing(
     assert safety.check_caller_turn(answer, "checking", "co", 0, CFG).action == "cleared"
     promise = "okay i won't use the stove or oven for heat and the generator's staying off"
     assert safety.check_caller_turn(promise, "none", None, 0, CFG).action == "none"
+
+
+def test_the_carbon_monoxide_alarms_quiet_is_a_no_to_the_gas_check():
+    """Eval run 20261104-060544, vague-smell-cleared: "the carbon monoxide alarm's quiet too"."""
+    answer = "no um definitely not gas the carbon monoxide alarm's quiet too i think it's the trash"
+    assert safety.check_caller_turn(answer, "checking", "gas", 0, CFG).action == "cleared"
+
+
+def test_asking_whether_they_smell_gas_is_a_worry_not_a_report():
+    """Eval run 20261104-154616, gas-worry-no-smell: the caller echoed the question and the gas
+    lines fired."""
+    line = "oh um no we're still inside do you smell gas do i smell gas i don't think i do"
+    assert safety.check_caller_turn(line, "none", None, 0, CFG).action != "speak_lines"
+    assert safety.check_caller_turn("I do smell gas, yes", "none", None, 0, CFG).action == "speak_lines"
+
+
+@pytest.mark.parametrize("line", ["Do you smell gas? I do.", "do i smell gas yeah i think so"])
+def test_an_echoed_question_answered_yes_is_a_report(line):
+    """PR #102 review: "Do you smell gas? I do" must bring the lines at once."""
+    assert safety.check_caller_turn(line, "none", None, 0, CFG).action == "speak_lines"
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "What do I do? I smell gas",
+        "what should I do, I smell gas in the kitchen",
+        "do I smell gas? yes, strongly",
+    ],
+)
+def test_a_real_gas_report_after_a_question_word_brings_the_lines(line):
+    """PR #102 review: the bare "do i", "should i" and "would i" worries held these back."""
+    assert safety.check_caller_turn(line, "none", None, 0, CFG).action == "speak_lines", line
+
+
+def test_if_we_do_smell_gas_what_should_we_do_is_a_worry():
+    """Eval run 20261104-163112, gas-worry-no-smell: "we do" in the question read as an answer."""
+    line = "yes that's right but if we do smell gas what should we do"
+    assert safety.check_caller_turn(line, "none", None, 0, CFG).action != "speak_lines"
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "The c o alarm is going off",
+        "my c.o. detector keeps beeping",
+        "the see oh alarm went off",
+        "the CO2 detector is going off and I feel dizzy",
+    ],
+)
+def test_carbon_monoxide_spelled_by_speech_to_text_brings_the_lines(line):
+    """The Ink-2 lane: Deepgram Nova-3 wrote "The c o alarm is going off" for the same clip twice."""
+    action = safety.check_caller_turn(line, "none", None, 0, CFG)
+    assert action.action == "speak_lines" and action.kind == "co", line
+
+
+@pytest.mark.parametrize(
+    "line",
+    ["I paid c o d for the last part", "the company co sent a bill, my heat is out"],
+)
+def test_c_o_without_an_alarm_or_symptom_is_not_carbon_monoxide(line):
+    assert safety.check_caller_turn(line, "none", None, 0, CFG).action == "none"

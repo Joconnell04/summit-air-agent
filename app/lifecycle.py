@@ -11,7 +11,7 @@ from .envelope import Result, ok
 from .fsm import FsmAdapter, FsmRejected, FsmUnavailable
 from .schemas import EndIn, StartIn, TurnIn
 from .tenant import Tenant
-from .text import has_phrase, phone_key, words
+from .text import digit_runs, has_phrase, phone_key, words
 
 RUN_WORDS = r"(?:i|we) (?:run|manage|operate|work at)"
 # Owning is matched only against businesses: "I own the building" or "I manage the building" is a
@@ -68,10 +68,14 @@ def sounds_commercial(text: str, cfg: dict) -> bool:
         text_words = text_words.replace(words(phrase), " ")
     if any(has_phrase(text_words, p) for p in cfg["phrases"]):
         return True
-    if any(has_phrase(text_words, p) for p in cfg.get("not_home", [])) and not any(
-        has_phrase(text_words, p) for p in cfg.get("apartment_signs", [])
-    ):
-        return True
+    # "Not a home" is a business unless the line says it's an apartment building, and a business
+    # word in the same line wins: "it's not a home, it's the shop building" (PR #102 review).
+    if any(has_phrase(text_words, p) for p in cfg.get("not_home", [])):
+        names_business = any(has_phrase(text_words, p) for p in cfg["owned"] + cfg["run"])
+        if names_business or not any(
+            has_phrase(text_words, p) for p in cfg.get("apartment_signs", [])
+        ):
+            return True
     owned = "|".join(map(re.escape, cfg["owned"]))
     run = "|".join(map(re.escape, cfg["run"]))
     return bool(
@@ -470,7 +474,11 @@ def turn(
     payload = None
     if action.action != "none":
         payload = {"action": action.action, "kind": action.kind, "text": action.text}
-    known = already_known(conn, call["id"]) if args.speaker == "caller" else {}
+    known = (
+        already_known(conn, call["id"], tenant.system_words, frozenset(tenant.service_area))
+        if args.speaker == "caller"
+        else {}
+    )
     return ok(
         action.text,
         seq=seq,
@@ -501,9 +509,15 @@ RENTS = ("i rent", "im renting", "we rent", "were renting", "im a tenant", "my l
 OWNS = ("i own", "we own", "my home", "my house", "our house", "our home", "its my place",
         "its our place", "im the owner", "homeowner")
 NOT_A_NAME = {"summit", "the", "a", "my", "it", "about", "regarding", "calling"}
+SYSTEM_HEDGES = ("dont know", "not sure", "no idea", "maybe", "or a", "or the", "either")
 
 
-def already_known(conn: sqlite3.Connection, call_id: str) -> dict[str, str]:
+def already_known(
+    conn: sqlite3.Connection,
+    call_id: str,
+    systems: tuple[str, ...] = (),
+    area_zips: frozenset[str] = frozenset(),
+) -> dict[str, str]:
     """Facts this call's tool calls carried: the ZIP checked, the address and phone read back
     (marked confirmed once the caller said yes) and the intake a booking attempt sent, so the
     agent doesn't ask again. Empty until a tool has recorded something."""
@@ -524,14 +538,32 @@ def already_known(conn: sqlite3.Connection, call_id: str) -> dict[str, str]:
                 value = (args.get("details") or {}).get(field)
                 if value:
                     known[label] = value
-    lines = [
-        words(r["text"]).strip()
+    said_lines = [
+        r["text"]
         for r in conn.execute(
             "SELECT text FROM turns WHERE call_id = ? AND speaker = 'caller' ORDER BY seq",
             (call_id,),
         )
     ]
+    for raw in said_lines:
+        # A ZIP the caller said is known before any tool checks it (eval run 20261104-053435,
+        # gas-worry-no-smell: asked for the ZIP twice after the caller gave it).
+        # Only a ZIP the company serves, so a five-digit house number ("21230 41st Avenue") is never
+        # taken for one (PR #102 review); any other ZIP is asked for and checked as usual.
+        zips = [run for run in digit_runs(raw) if len(run) == 5 and run in area_zips]
+        if zips and "ZIP" not in known:
+            known["ZIP said"] = zips[-1]
+    lines = [words(raw).strip() for raw in said_lines]
     for line in lines:
+        padded_system = f" {line} "
+        # The trade's system words (eval run 20261104-053435, heat-pump-defrost), only when the
+        # caller names one without hedging: "a heat pump or a boiler, I don't know" is still a
+        # question for the agent (PR #102 review).
+        named = {s for s in systems if f" {s} " in padded_system}
+        named -= {s for s in named for other in named if s != other and s in other}
+        hedged = any(f" {h} " in padded_system for h in SYSTEM_HEDGES)
+        if len(named) == 1 and not hedged:
+            known.setdefault("system", named.pop())
         said = KNOWN_NAME.search(line)
         if said and said.group(1).split()[0] not in NOT_A_NAME:
             known.setdefault("name", said.group(1).title())

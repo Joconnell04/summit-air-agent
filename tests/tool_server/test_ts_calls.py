@@ -642,3 +642,22 @@ def test_the_known_list_takes_the_name_and_own_or_rent_from_the_callers_lines(ag
     assert agent.turn(renter, "I rent the place, my landlord is Dennis.")["data"]["known"] == {
         "rents or owns": "rents"
     }
+
+
+def test_a_zip_and_system_the_caller_said_are_known_on_the_next_turn(agent):
+    """Eval run 20261104-053435: the agent asked again for the ZIP and the system type."""
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "My heat pump stopped. It's 8415 Ridge Blvd, Brooklyn, one one two oh nine.")
+    known = agent.turn(call, "Okay.")["data"]["known"]
+    assert known["ZIP said"] == "11209"
+    assert known["system"] == "heat pump"
+
+
+def test_a_hedged_system_and_a_house_number_are_not_taken_as_known(agent):
+    """PR #102 review: "a heat pump or a boiler, I don't know" isn't a known system, and a
+    five-digit house number isn't the ZIP."""
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "I don't know if it's a heat pump or a boiler.")
+    known = agent.turn(call, "The house is two one two three zero 41st Avenue.")["data"]["known"]
+    assert "system" not in known
+    assert "ZIP said" not in known

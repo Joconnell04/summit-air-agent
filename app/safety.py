@@ -171,6 +171,10 @@ ECHO_NEGATORS = (
 QUIET_AFTER = (
     "is quiet",
     "is silent",
+    # "the carbon monoxide alarm's quiet" once the apostrophe is dropped (eval run
+    # 20261104-060544, vague-smell-cleared).
+    "alarms quiet",
+    "detectors quiet",
     "its quiet",
     "its silent",
     "been quiet",
@@ -205,6 +209,12 @@ HYPOTHETICAL = (
     "worried about",
     "afraid of",
 )
+# The agent's own question echoed back ("do you smell gas, do I smell gas? I don't think I do",
+# eval run 20261104-154616, gas-worry-no-smell): a worry only when the line echoes "do you smell"
+# and the mention comes right after "do I" or "do you", with nothing between. "What do I do? I
+# smell gas" and "do I smell gas? yes, strongly" stay reports (PR #102 review).
+ECHO_OF_QUESTION = "do you smell"
+ECHOES = ("do i", "do you")
 HYPOTHETICAL_FILLER = {
     "i", "we", "you", "they", "ever", "there", "theres", "is", "was", "a", "an", "any", "some",
     "like", "start", "started", "to", "get", "it", "its", "were", "maybe", "even", "do", "did",
@@ -318,8 +328,13 @@ def _hypothetical(text_words: str, phrase: str) -> bool:
     start = text_words.find(target)
     if start < 0:
         return False
+    echoing = has_phrase(text_words, ECHO_OF_QUESTION)
     while start >= 0:
         kept = text_words[: start + 1].split()
+        straight_before = " " + " ".join(kept[-2:]) + " "
+        if echoing and any(straight_before == f" {e} " for e in ECHOES):
+            start = text_words.find(target, start + 1)
+            continue
         for _ in range(HYPOTHETICAL_GAP + 1):
             trimmed = " " + " ".join(kept) + " "
             if any(trimmed.endswith(words(h)) for h in HYPOTHETICAL):
@@ -342,8 +357,30 @@ def _mentions(text: str, cfg: dict, answering_check: bool) -> list[tuple[str, bo
             if has_phrase(text_words, phrase) and not _negated(
                 text_words, phrase, answering_check
             ):
-                found.append((kind, _hypothetical(text_words, phrase)))
+                worry = _hypothetical(text_words, phrase) and not _answers_yes_after(
+                    text_words, phrase
+                )
+                found.append((kind, worry))
     return found
+
+
+# A caller who echoes the question and then answers it yes ("Do you smell gas? I do") is reporting
+# it, so the lines aren't held back for a check question (PR #102 review).
+ANSWERED_YES = ("i do", "we do", "yes", "yeah", "yep", "it does", "definitely", "i can")
+ANSWER_DENIES = ("dont", "do not", "not", "no", "nothing", "never", "cant")
+
+
+def _answers_yes_after(text_words: str, phrase: str) -> bool:
+    """The caller echoed the question and the words straight after the last mention answer it yes,
+    with nothing that takes it back. Only for the echo: in "if we do smell gas, what should we do"
+    the "we do" is part of a question, not an answer."""
+    if not has_phrase(text_words, ECHO_OF_QUESTION):
+        return False
+    rest = " " + text_words[text_words.rfind(words(phrase)) + len(words(phrase)) :]
+    opening = " " + " ".join(rest.split()[:3]) + " "
+    return any(has_phrase(opening, w) for w in ANSWERED_YES) and not any(
+        has_phrase(rest, w) for w in ANSWER_DENIES
+    )
 
 
 def clear_signal(text: str, cfg: dict, answering_check: bool = False) -> str | None:
@@ -521,6 +558,26 @@ def lines_for(cfg: dict, kind: str) -> str:
     return " ".join(cfg["kinds"][kind]["lines"].split())
 
 
+# Carbon monoxide as speech-to-text spells it: Deepgram Nova-3 wrote "The c o alarm is going off"
+# (the Ink-2 lane, two runs of the same clip). Read as carbon monoxide only beside a word that
+# makes it one, within a few words either side, so "c o d" and "company co" stay as they are.
+SPELLED_CO = re.compile(r" (?:c o|see oh|co2|co 2) ")
+CO_CONTEXT = {"alarm", "alarms", "detector", "detectors", "poisoning", "monitor", "sensor",
+              "dizzy", "headache", "headaches", "nauseous", "sick"}
+CO_CONTEXT_WINDOW = 3
+
+
+def _spelled_co(text: str) -> str:
+    """The line with a spelled-out carbon monoxide said as the words the phrase lists know."""
+    text_words = words(text)
+    for match in reversed(list(SPELLED_CO.finditer(text_words))):
+        before = text_words[: match.start()].split()[-CO_CONTEXT_WINDOW:]
+        after = text_words[match.end() :].split()[:CO_CONTEXT_WINDOW]
+        if CO_CONTEXT & set(before + after):
+            text_words = text_words[: match.start()] + " carbon monoxide " + text_words[match.end() :]
+    return text_words
+
+
 def check_caller_turn(
     text: str,
     state: str,
@@ -534,6 +591,7 @@ def check_caller_turn(
     """What the agent must do after this caller line, given the call's safety state. heating_asked
     and confirm_asked are True once that question has been asked on this call; answering_confirm
     when the question being answered is the confirm question."""
+    text = _spelled_co(text)
     if state == "lines_said" and stands_down(text, kind, cfg):
         return SafetyAction("cleared", kind)
     signal = clear_signal(text, cfg, answering_check=state == "checking")

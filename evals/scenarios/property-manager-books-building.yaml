@@ -18,7 +18,8 @@ opening: Hi, I manage a six-unit building in Crown Heights and the boiler's out,
 script:
   - Answer quickly and to the point. If asked whether this is a home or a business, say it's an apartment building, people live there.
   - If the agent declines or says it only works on homes, ask once whether it really can't help an apartment building.
-  - Confirm the read-back, take the earliest window offered, then say goodbye.
+  - When the agent reads back "your home at ...", say yes, and add "it's a building, not a home, so make sure they note that". This is the line that made the agent decline before.
+  - Take the earliest window offered, then say goodbye.
 must:
   - booking: {count: 1, zip: "11216"}
   - read_back: before_booking

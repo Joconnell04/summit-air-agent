@@ -20,7 +20,8 @@ LEVELS = ["Low", "Normal", "High", "Urgent"]
 # "it's 2 years old" (usually the system) never fires.
 AGE = re.compile(
     r"\b(\d{2,3})(?:-|\s)(?:year|yr)s?(?:-|\s)old\b"
-    r"|\b(?:i|she|he|they|who|mom|dad|mother|father|grandma|grandpa)(?:['’]s|['’]m| is| am| are|['’]re)\s+(\d{2,3})\b"
+    # The apostrophe is optional: speech-to-text writes "im 84" as often as "I'm 84".
+    r"|\b(?:i|she|he|they|who|mom|dad|mother|father|grandma|grandpa)(?:['’]?s|['’]?m| is| am| are|['’]?re)\s+(\d{2,3})\b"
     r"|\bage[d]?\s+(\d{2,3})\b"
     r"|\bin (?:his|her|their|my|our) (\d)0s\b"
 )
@@ -86,6 +87,17 @@ CLAUSE_BREAKS = {"and", "but", "so", "because", "though", "although", "except", 
                  "just", "only", "well"}
 NEGATION_REACH = 4
 POSSESSIVES = {"my", "our", "his", "her", "their"}
+PEOPLE_STARTS = {"she", "shes", "he", "hes", "they", "theyre", "theres", "there", "i", "im", "we"}
+# The people and things a priority rule looks for, as a caller lists them after "no".
+RISK_NOUNS = {"baby", "babies", "infant", "infants", "newborn", "newborns", "kids", "children",
+              "toddler", "toddlers", "elderly", "seniors", "older", "people", "medical",
+              "equipment", "oxygen", "one", "anyone", "nobody"}
+# Words that say something about a person rather than list one: "elderly mother lives with me".
+SAYS_SOMETHING = {"lives", "live", "living", "is", "are", "has", "have", "stays", "staying",
+                  "here", "home", "house", "upstairs", "downstairs", "with", "running", "on"}
+# Small words that don't use up the reach: "nobody who's a baby or elderly" negates "elderly"
+# (eval run 20261104-052332, mild-after-hours-no-heat: it sent a mild night to the on-call path).
+REACH_FILLER = {"a", "an", "or", "who", "whos", "is", "any", "on"}
 
 
 def _said_not_negated(text_words: str, phrase: str) -> bool:
@@ -94,8 +106,8 @@ def _said_not_negated(text_words: str, phrase: str) -> bool:
     for i in range(len(tokens) - len(target) + 1):
         if tokens[i : i + len(target)] != target:
             continue
-        negated = False
-        for j in range(i - 1, max(-1, i - 1 - NEGATION_REACH), -1):
+        negated, reached = False, 0
+        for j in range(i - 1, -1, -1):
             if tokens[j] in CLAUSE_BREAKS:
                 break
             # "no my grandmother lives with us" is an answer, then a person: speech-to-text drops
@@ -103,9 +115,38 @@ def _said_not_negated(text_words: str, phrase: str) -> bool:
             if tokens[j] in NEGATIONS and tokens[j + 1] not in POSSESSIVES:
                 negated = True
                 break
+            if tokens[j] not in REACH_FILLER:
+                reached += 1
+                if reached >= NEGATION_REACH:
+                    break
         if not negated:
             return True
     return False
+
+
+def _parts(text: str) -> list[str]:
+    """The text split at punctuation. A negated list of the people or things a rule looks for goes
+    on past a comma: in "no babies, older people or medical equipment" the "no" covers the whole
+    list (eval run 20261104-154616, mild-after-hours-no-heat). It carries only from a part that
+    negates a risk noun ("no babies"), into a part that is still a list ("... or ...") with nothing
+    said about someone, so "No heat, baby in the house" and "no kids, no pets, elderly mother lives
+    here" still raise. A missed raise is worse than an extra one (PR #102 review)."""
+    parts = [words(part) for part in re.split(r"[.,;:!?\n]", text)]
+    carried = []
+    for i, part in enumerate(parts):
+        before = parts[i - 1].split() if i else []
+        tokens = part.split()
+        listed = (
+            len(before) >= 2
+            and before[0] in NEGATIONS
+            and any(t in RISK_NOUNS for t in before[1:])
+            and tokens
+            and tokens[0] not in POSSESSIVES | CLAUSE_BREAKS | PEOPLE_STARTS
+            and ("or" in tokens or "nor" in tokens)
+            and not any(t in SAYS_SOMETHING for t in tokens)
+        )
+        carried.append(f" no {part.strip()} " if listed else part)
+    return carried
 
 
 def _rule_fires(rule: dict, facts: Facts) -> bool:
@@ -116,7 +157,7 @@ def _rule_fires(rule: dict, facts: Facts) -> bool:
     if rule.get("heating_indoors") and facts.heating_indoors:
         return True
     # Split at punctuation first, so "No, my mother lives with us" keeps its raise.
-    parts = [words(part) for part in re.split(r"[.,;:!?\n]", facts.text)]
+    parts = _parts(facts.text)
     if any(_said_not_negated(part, p) for part in parts for p in rule.get("phrases", [])):
         return True
     if "age_at_least" in rule and any(a >= rule["age_at_least"] for a in _ages(facts.text)):
