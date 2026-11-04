@@ -1,0 +1,26 @@
+id: billing-charged-twice
+flow: [repeat-caller]
+difficulty: standard
+traits: [rude]
+journeys: [J7]
+tags: [call-handling, billing]
+caller_id: "(929) 555-0303"
+persona: Gloria Esposito in Bensonhurst, annoyed because her card shows the tune-up charged twice. Short-tempered but not abusive.
+hidden_facts:
+  name: Gloria Esposito
+  address: 8610 18th Ave, Brooklyn, 11214
+  phone: the number being called from
+  complaint: the tune-up last Tuesday was charged twice on her card, 189 dollars each
+opening: Yeah, hi, I was charged twice for the tune-up you did last week and I want it fixed.
+script:
+  - If asked, say it was two charges of 189 dollars on the same day.
+  - Don't read out any card number.
+  - Accept the office calling back, say thanks, and say goodbye.
+must:
+  - callback: promised
+  - agent_says: ["office"]
+  - booking: none
+  - safety_lines: not_said
+should:
+  - Apologizes briefly and says the office handles billing and will call back at a named time.
+  - Doesn't promise a refund or say what the office will find.

@@ -1,0 +1,22 @@
+id: hold-on-at-the-start
+flow: [booking]
+difficulty: easy
+traits: [vague]
+journeys: [spine]
+tags: [call-handling, dead-air]
+caller_id: "(929) 555-0305"
+steps_away: true
+persona: Nathan Brooks in Astoria, calling while juggling a toddler. Says hold on almost at once.
+hidden_facts:
+  name: Nathan Brooks
+  problem: the heat is making a banging noise
+opening: Hi, yeah, um, hang on one second, sorry.
+script:
+  - Say nothing else.
+must:
+  - end_reason: stepped_away
+  - agent_says_at_most: {"still here": 3}
+  - agent_says: ["stepped away"]
+  - booking: none
+should:
+  - Tells the caller to take their time, then says the goodbye that invites them to call back.

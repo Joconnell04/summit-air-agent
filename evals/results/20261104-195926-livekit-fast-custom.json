@@ -1,0 +1,2491 @@
+{
+  "run_id": "20261104-195926-livekit-fast-custom",
+  "created": "2026-11-04T19:59:26.206046Z",
+  "suite": "custom",
+  "tags": [
+    "id:ac-water-through-ceiling",
+    "id:ac-leaking-into-bedroom",
+    "id:callback-after-stepped-away"
+  ],
+  "stack": "livekit",
+  "profile": "fast",
+  "hash": "6a369b1628d55600",
+  "prompt_hash": "7112360daefae6db",
+  "model": "claude-haiku-5-5",
+  "transport": "text",
+  "overlay": null,
+  "scenarios": [
+    {
+      "scenario_id": "ac-leaking-into-bedroom",
+      "sample": 1,
+      "persona": "Shanice Williams in Sheepshead Bay. Describes it loosely at first.",
+      "flow": [
+        "booking",
+        "priority"
+      ],
+      "difficulty": "standard",
+      "traits": [
+        "vague"
+      ],
+      "outcome": "pass",
+      "must_pass_failures": [],
+      "check_failures": [],
+      "error": "",
+      "checks": [
+        "booking",
+        "read_back"
+      ],
+      "grader_score": 3,
+      "grader_notes": "The agent asked two questions in one turn twice: \"Where is the water showing up, and since when?\" and \"Who's home with the unit right now, and do you know roughly what kind of system it is?\" The second of these also asked for the system type after the caller had already said it was a mini split, though the call still found where the water was going and booked the soonest opening.",
+      "reply_delay_p50_ms": 590.9460829861928,
+      "reply_delay_p90_ms": 1535.4090410110075,
+      "cost_usd": 0.03749,
+      "agent_cost_usd": 0.005371,
+      "duration_ms": 34358.560749999015,
+      "transcript": [
+        {
+          "role": "agent",
+          "text": "Thanks for calling Summit Air, this is the virtual assistant. How can I help?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "hi something's wrong with my mini split there's water",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Water coming from your mini split, okay. Where is the water showing up, and since when?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "um it's in the bedroom it's running down the wall and onto the carpet since this morning i think",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Okay, water running down the wall and onto the carpet since this morning. Is the unit still running, or have you turned it off?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "uh i think it's still on i didn't really touch it it's just dripping i guess",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Got it. Thanks for telling me. Can you tell me the address where the unit is?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "it's one eight two oh east 29th street in brooklyn the zip is one one two two nine",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "You're in our service area.",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "okay good um what do i do about the water until someone comes",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Sorry, I can't walk you through fixing it. If you can, put towels or a bucket under the drip and move anything off the carpet. If the water gets near an outlet, turn the unit off at the wall or breaker if you can reach it safely. Now, let me get you on the schedule.",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "okay yeah i can do the towels what's the first time you have",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Let me check the openings for that. The soonest opening is today, Monday, between 12 and 4. Does that work for you?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "um today between 12 and 4 should work yeah that's fine",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "I have your home at 1820 East 29th Street, Brooklyn, one one two two nine, and the best number is three four seven, five five five, zero one eight six, is that right?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "yes that's right the number's three four seven five five five oh one eight six oh and the name is shanice williams",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Thanks, Shanice. Who's home with the unit right now, and do you know roughly what kind of system it is? No worries if not.",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "just me i'm home and it's a mini split the wall one in the bedroom i think it's maybe five years old i'm not totally sure honestly",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Got it, you're home alone, and the unit's about five years old. Is the house yours, or are you renting?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "yeah it's my house i own it so i'm the one who approves the work",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Got it, you own it and you approve the work. Anything the technician should know when they get there, like a gate code, a buzzer or a pet?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "no gate no pets um just ring the bell i guess it's the house with the uh green door",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "I'll let the technician know to ring the bell at the house with the green door. Booking that now. You're all set for today, Monday, November 2, with the technician arriving between 12 and 4. Anything else?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "no that's it thanks bye",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Thanks for calling Summit Air. Have a great rest of your day.",
+          "said": null
+        }
+      ],
+      "tool_calls": [
+        {
+          "name": "check_service_area",
+          "arguments": {
+            "call_id": "eval-ac-leaking-into-bedroom-1-a08c172b",
+            "zip": "11229"
+          }
+        },
+        {
+          "name": "find_address",
+          "arguments": {
+            "call_id": "eval-ac-leaking-into-bedroom-1-a08c172b",
+            "street": "1820 East 29th Street",
+            "borough": "Brooklyn",
+            "spelled": ""
+          }
+        },
+        {
+          "name": "find_slots",
+          "arguments": {
+            "call_id": "eval-ac-leaking-into-bedroom-1-a08c172b",
+            "job_type": "no_cooling",
+            "priority": null,
+            "preferred_days": [],
+            "time_of_day": null,
+            "day": null,
+            "arrive_after": null,
+            "arrive_before": null,
+            "facts": {
+              "issue": "mini split leaking water onto bedroom wall and carpet since this morning, unit still running",
+              "who_home": "",
+              "inside_temp_f": null,
+              "temp_falling_fast": false
+            }
+          }
+        },
+        {
+          "name": "read_back",
+          "arguments": {
+            "call_id": "eval-ac-leaking-into-bedroom-1-a08c172b",
+            "address": {
+              "street": "1820 East 29th Street",
+              "unit": "",
+              "city": "Brooklyn",
+              "zip": "11229",
+              "spelled": ""
+            },
+            "phone": "(347) 555-0186",
+            "confirmed": false
+          }
+        },
+        {
+          "name": "read_back",
+          "arguments": {
+            "call_id": "eval-ac-leaking-into-bedroom-1-a08c172b",
+            "address": {
+              "street": "1820 East 29th Street",
+              "unit": "",
+              "city": "Brooklyn",
+              "zip": "11229",
+              "spelled": ""
+            },
+            "phone": "(347) 555-0186",
+            "confirmed": true
+          }
+        },
+        {
+          "name": "book_appointment",
+          "arguments": {
+            "call_id": "eval-ac-leaking-into-bedroom-1-a08c172b",
+            "job_type": "no_cooling",
+            "slot": {
+              "date": "2026-11-02",
+              "window": "afternoon"
+            },
+            "details": {
+              "issue": "Mini split leaking water onto bedroom wall and carpet since this morning; unit still running",
+              "since": "this morning",
+              "tried": "Nothing done to the unit; placed towels under the drip",
+              "who_home": "Caller alone at home",
+              "approver": "Shanice Williams (owner)",
+              "system_type": "Wall-mounted mini split in bedroom, about 5 years old",
+              "arrival_notes": "Ring the bell, green door. No gate, no pets.",
+              "name": "Shanice Williams",
+              "inside_temp_f": null
+            },
+            "priority": null,
+            "separate_problem": false,
+            "new_address_account": null
+          }
+        },
+        {
+          "name": "end_call",
+          "arguments": {
+            "call_id": "eval-ac-leaking-into-bedroom-1-a08c172b",
+            "reason": "caller_goodbye"
+          }
+        }
+      ],
+      "turn_timings": [
+        {
+          "kind": "plain",
+          "reply_delay_ms": 2160.901916009607,
+          "model_first_token_ms": 2145.066166005563,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 797.7327080152463,
+          "model_first_token_ms": 793.3722500165459,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 507.1619589871261,
+          "model_first_token_ms": 499.54929199884646,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 1535.4090410110075,
+          "model_first_token_ms": 595.4357919981703,
+          "tool_ms": 6.14908299758099,
+          "second_hop_ms": 494.9937080091331,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 590.9460829861928,
+          "model_first_token_ms": 586.6485419974197,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 545.2777500031516,
+          "model_first_token_ms": 522.1019999880809,
+          "tool_ms": 212.9971249960363,
+          "second_hop_ms": 600.7412079779897,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1130.13437500922,
+          "model_first_token_ms": 611.7089159961324,
+          "tool_ms": 3.2670419896021485,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 1525.2548329881392,
+          "model_first_token_ms": 525.4631669959053,
+          "tool_ms": 3.5273749963380396,
+          "second_hop_ms": 551.4301249932032,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 588.0135409825016,
+          "model_first_token_ms": 577.2631659929175,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 548.2348749937955,
+          "model_first_token_ms": 542.4943749967497,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 569.1454169864301,
+          "model_first_token_ms": 561.4533750049304,
+          "tool_ms": 88.06904198718257,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 685.6737500056624,
+          "model_first_token_ms": 681.1051249969751,
+          "tool_ms": 2.939124999102205,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        }
+      ],
+      "call_id": "eval-ac-leaking-into-bedroom-1-a08c172b",
+      "silent_turns": 0,
+      "cost_parts": {}
+    },
+    {
+      "scenario_id": "ac-leaking-into-bedroom",
+      "sample": 2,
+      "persona": "Shanice Williams in Sheepshead Bay. Describes it loosely at first.",
+      "flow": [
+        "booking",
+        "priority"
+      ],
+      "difficulty": "standard",
+      "traits": [
+        "vague"
+      ],
+      "outcome": "pass",
+      "must_pass_failures": [],
+      "check_failures": [],
+      "error": "",
+      "checks": [
+        "booking",
+        "read_back"
+      ],
+      "grader_score": 2,
+      "grader_notes": "The agent stacked two questions in one turn several times, including \"Where is the water coming from, and since when?\" and \"Who's at home… and is anyone there who'd have a harder time…\". The confirmation stretch was also clunky, with an empty \"Let me confirm that once more,\" asking for the name after \"booking that now,\" and never acknowledging the caller's request to tell the tech it's dripping on the carpet.",
+      "reply_delay_p50_ms": 551.4263749937527,
+      "reply_delay_p90_ms": 1695.0477919599507,
+      "cost_usd": 0.043165,
+      "agent_cost_usd": 0.006558,
+      "duration_ms": 44307.21158400411,
+      "transcript": [
+        {
+          "role": "agent",
+          "text": "Thanks for calling Summit Air, this is the virtual assistant. How can I help?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "hi something's wrong with my mini split there's water",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Sorry to hear that. Where is the water coming from, and since when?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "uh it's coming out of the unit in the bedroom it's running down the wall and onto the carpet since this morning i think",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Got it, water running down the wall and onto the carpet since this morning. Is it still dripping right now?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "yeah it's still going i put a towel down but it's soaking through",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Okay, a towel isn't going to hold it. Is there a way to shut the unit off at the wall or the breaker, if you know where that is?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "um i think there's a switch on the wall i'm not sure i can go look can you hold on a sec",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Sure, take your time.",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "okay i'm back i don't see a switch by the unit i just pressed the remote's off button so it should be stopped the water's still dripping a little though",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Good, turning it off with the remote was the right move. Let's get someone out to look at it. What's the address where the unit is?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "it's one eight two oh east 29th street brooklyn one one two two nine that's in sheepshead bay near avenue r if that helps",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "You're in our service area. Is 1820 East 29th Street an apartment or a house, and if it's an apartment, what's the unit number?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "it's a house it's just the one address no apartment number",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Got it, a house. Is it your place, or are you renting?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "it's mine i own the house",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Thanks. Who's at home with it right now, and is anyone there who'd have a harder time with the water or the cold?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "it's just me here i'm fine no one else is home right now",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Okay. Do you know roughly what kind of system it is, or how old it is? No worries if not.",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "it's a ductless mini split i think it's about five years old it's the one on the wall in the bedroom",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Thanks, that helps. Anything the technician should know when they get there, like a gate code, a buzzer or a pet?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "no gate or code just ring the bell there's no pet either",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Got it, I'll let the technician know to ring the bell. Let me find a time for you. Since water is coming in, this is top priority, so the soonest opening is this afternoon, today, between 12 and 4. Does that work for you?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "um yeah i guess that works like what time though i'm not sure exactly",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "The technician can arrive any time between 12 and 4 this afternoon, so I can't give an exact time.",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "okay so like between 12 and 4 that's fine just make sure they know it's dripping on the carpet",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "I have your home at 1820 East 29th Street, one one two two nine, and the best number is three four seven, five five five, zero one eight six, is that right?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "yeah that's right except the phone number is three four seven five five five zero one eight six that's the number i'm calling from",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Got it, the number you're calling from. Let me confirm that once more. Perfect, booking that now. Can I get your name for the booking?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "shanice williams sorry it's shanice s h a n i c e williams",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "You're all set for today, Monday, November 2, with the technician arriving between 12 and 4. Anything else?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "okay that's good no that's everything thanks bye",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Thanks for calling Summit Air. Have a great rest of your day.",
+          "said": null
+        }
+      ],
+      "tool_calls": [
+        {
+          "name": "check_service_area",
+          "arguments": {
+            "call_id": "eval-ac-leaking-into-bedroom-2-ffcef0c1",
+            "zip": "11229"
+          }
+        },
+        {
+          "name": "find_customer",
+          "arguments": {
+            "call_id": "eval-ac-leaking-into-bedroom-2-ffcef0c1",
+            "phone": null,
+            "address": {
+              "street": "1820 East 29th Street",
+              "unit": "",
+              "city": "",
+              "zip": "11229",
+              "spelled": ""
+            }
+          }
+        },
+        {
+          "name": "find_slots",
+          "arguments": {
+            "call_id": "eval-ac-leaking-into-bedroom-2-ffcef0c1",
+            "job_type": "no_cooling",
+            "priority": null,
+            "preferred_days": [],
+            "time_of_day": null,
+            "day": null,
+            "arrive_after": null,
+            "arrive_before": null,
+            "facts": {
+              "issue": "mini split in bedroom leaking water onto wall and carpet since this morning, unit turned off with remote",
+              "who_home": "caller alone, no one vulnerable home",
+              "inside_temp_f": null,
+              "temp_falling_fast": false
+            }
+          }
+        },
+        {
+          "name": "read_back",
+          "arguments": {
+            "call_id": "eval-ac-leaking-into-bedroom-2-ffcef0c1",
+            "address": {
+              "street": "1820 East 29th Street",
+              "unit": "",
+              "city": "",
+              "zip": "11229",
+              "spelled": ""
+            },
+            "phone": "3475550186",
+            "confirmed": false
+          }
+        },
+        {
+          "name": "read_back",
+          "arguments": {
+            "call_id": "eval-ac-leaking-into-bedroom-2-ffcef0c1",
+            "address": {
+              "street": "1820 East 29th Street",
+              "unit": "",
+              "city": "",
+              "zip": "11229",
+              "spelled": ""
+            },
+            "phone": "3475550186",
+            "confirmed": true
+          }
+        },
+        {
+          "name": "book_appointment",
+          "arguments": {
+            "call_id": "eval-ac-leaking-into-bedroom-2-ffcef0c1",
+            "job_type": "no_cooling",
+            "slot": {
+              "date": "2026-11-02",
+              "window": "afternoon"
+            },
+            "details": {
+              "issue": "Ductless mini split in bedroom leaking water onto wall and carpet since this morning; unit turned off with remote, water still dripping a little",
+              "since": "this morning",
+              "tried": "Turned the unit off with the remote; no switch found at the unit",
+              "who_home": "Caller alone, no one vulnerable home",
+              "approver": "owner",
+              "system_type": "Ductless mini split, about 5 years old, bedroom wall unit",
+              "arrival_notes": "Ring the bell, no gate code, no pet. Water dripping onto carpet.",
+              "name": "",
+              "inside_temp_f": null
+            },
+            "priority": null,
+            "separate_problem": false,
+            "new_address_account": null
+          }
+        },
+        {
+          "name": "book_appointment",
+          "arguments": {
+            "call_id": "eval-ac-leaking-into-bedroom-2-ffcef0c1",
+            "job_type": "no_cooling",
+            "slot": {
+              "date": "2026-11-02",
+              "window": "afternoon"
+            },
+            "details": {
+              "issue": "Ductless mini split in bedroom leaking water onto wall and carpet since this morning; unit turned off with remote, water still dripping a little",
+              "since": "this morning",
+              "tried": "Turned the unit off with the remote; no switch found at the unit",
+              "who_home": "Caller alone, no one vulnerable home",
+              "approver": "owner",
+              "system_type": "Ductless mini split, about 5 years old, bedroom wall unit",
+              "arrival_notes": "Ring the bell, no gate code, no pet. Water dripping onto carpet.",
+              "name": "Shanice Williams",
+              "inside_temp_f": null
+            },
+            "priority": null,
+            "separate_problem": false,
+            "new_address_account": null
+          }
+        },
+        {
+          "name": "end_call",
+          "arguments": {
+            "call_id": "eval-ac-leaking-into-bedroom-2-ffcef0c1",
+            "reason": "caller_goodbye"
+          }
+        }
+      ],
+      "turn_timings": [
+        {
+          "kind": "plain",
+          "reply_delay_ms": 2249.317207984859,
+          "model_first_token_ms": 2233.353207993787,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 551.4263749937527,
+          "model_first_token_ms": 547.4243749922607,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 504.5314159942791,
+          "model_first_token_ms": 496.6418749827426,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 549.6879169950262,
+          "model_first_token_ms": 543.7293750001118,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 563.5197919909842,
+          "model_first_token_ms": 558.9766670018435,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 1695.0477919599507,
+          "model_first_token_ms": 703.0043329868931,
+          "tool_ms": 47.904917009873316,
+          "second_hop_ms": 541.7249169840943,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 535.534083028324,
+          "model_first_token_ms": 527.7785830257926,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 535.3442500054371,
+          "model_first_token_ms": 531.2280420039315,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 515.60941702337,
+          "model_first_token_ms": 508.24950000969693,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 555.0169580383226,
+          "model_first_token_ms": 548.9675830176566,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 569.2559170129243,
+          "model_first_token_ms": 553.8297500170302,
+          "tool_ms": 29.73970799939707,
+          "second_hop_ms": 553.1636660161894,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 584.249584004283,
+          "model_first_token_ms": 578.1149590038694,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1256.8171250168234,
+          "model_first_token_ms": 624.3504580052104,
+          "tool_ms": 2.948625013232231,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 528.997082990827,
+          "model_first_token_ms": 522.9457499808632,
+          "tool_ms": 79.06395802274346,
+          "second_hop_ms": 560.9990420052782,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1558.3364999911282,
+          "model_first_token_ms": 657.3556670045946,
+          "tool_ms": 104.53387501183897,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 551.0655829857569,
+          "model_first_token_ms": 523.562791000586,
+          "tool_ms": 39.367958990624174,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        }
+      ],
+      "call_id": "eval-ac-leaking-into-bedroom-2-ffcef0c1",
+      "silent_turns": 0,
+      "cost_parts": {}
+    },
+    {
+      "scenario_id": "ac-water-through-ceiling",
+      "sample": 1,
+      "persona": "Kevin O'Brien in Ditmas Park, with a bucket under a drip. Stressed but cooperative.",
+      "flow": [
+        "booking",
+        "priority"
+      ],
+      "difficulty": "standard",
+      "traits": [
+        "filler"
+      ],
+      "outcome": "pass",
+      "must_pass_failures": [],
+      "check_failures": [],
+      "error": "",
+      "checks": [
+        "booking",
+        "read_back",
+        "safety_lines",
+        "electrical"
+      ],
+      "grader_score": 3,
+      "grader_notes": "Two turns stack two direct questions (\"Is it dripping steadily right now, and is it getting worse?\" and \"Is there anyone home with you right now, and does anyone have a harder time...\"), and the agent never says \"I've marked this call top priority\" even though the system marked it Urgent. The caller's access details (ring the bell, the kids will let them in, attic hatch in the upstairs hall closet) were never turned into an action for the technician.",
+      "reply_delay_p50_ms": 596.6524169780314,
+      "reply_delay_p90_ms": 1184.3777080066502,
+      "cost_usd": 0.039898,
+      "agent_cost_usd": 0.005237,
+      "duration_ms": 34312.83800001256,
+      "transcript": [
+        {
+          "role": "agent",
+          "text": "Thanks for calling Summit Air, this is the virtual assistant. How can I help?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "hi i've got water coming through my living room ceiling i think it's from the ac up in the attic",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Water coming through the ceiling is serious, so let's get someone out. Is it dripping steadily right now, and is it getting worse?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "um yeah it's dripping pretty steady into a bucket i put down it started about an hour ago and it's been coming down a little faster i think the ac's still running i didn't know if i should shut it off or not",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "If it's safe for you to reach the unit's thermostat, set the AC to off so it stops making more water. Then tell me your address, starting with the house number and street.",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "okay yeah i'll go turn it off now hang on okay it's off the address is five two oh westminster road brooklyn one one two three oh",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Sure, take your time. Thanks for turning it off. Is there anyone home with you right now, and does anyone have a harder time with this, like someone elderly or a child?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "uh yeah my two kids are home they're teenagers so they're fine nobody's sick or anything it's just me and them",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Got it, thanks. Do you know roughly what kind of system it is, or how old it is? No worries if not.",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "it's central air i think the unit's up in the attic the air handler thing i'd guess it's about 15 years old maybe a bit more we've been here a while so i'm not totally sure",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Thanks, that helps the technician. Is there anything they should know when they get there, like a gate code, a buzzer or a pet?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "nope no gate or code just ring the bell and the kids can let them in no pets either so that's good oh and the attic access i think it's in the hall closet upstairs but i'm not one oh oh sure where the hatch is",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "I have your home at 520 Westminster Road, one one two three zero, and the best number is nine two nine, five five five, zero three one two, is that right?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "yeah that's right on the address the number's right too that's the one i'm calling from oh and i should say i'm the homeowner so i can approve whatever needs doing",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Thanks, that's all set. Since there's water coming in, we'll get you our soonest opening: today between 12 and 4. Does that work for you?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "yeah today between 12 and 4 works that's good thanks for getting someone out so fast um should i put towels down or move anything near the ceiling in the meantime",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Towels or a tarp under the drip and moving things out from under the ceiling are both fine. I'd keep the kids out of the room below it. Now, booking that today between 12 and 4. Can I get your name for the booking?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "kevin o'brien kevin with a k o apostrophe b r i e n sorry i'm kind of scrambled right now",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "No problem, Kevin. Booking that now. You're all set for today, Monday, November 2, with the technician arriving between 12 and 4. Anything else?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "no that's it thanks a lot i appreciate it bye",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Thanks for calling Summit Air. Have a great rest of your day.",
+          "said": null
+        }
+      ],
+      "tool_calls": [
+        {
+          "name": "find_address",
+          "arguments": {
+            "call_id": "eval-ac-water-through-ceiling-1-8a2d9b57",
+            "street": "520 Westminster Road",
+            "borough": "Brooklyn",
+            "spelled": ""
+          }
+        },
+        {
+          "name": "read_back",
+          "arguments": {
+            "call_id": "eval-ac-water-through-ceiling-1-8a2d9b57",
+            "address": {
+              "street": "520 Westminster Road",
+              "unit": "",
+              "city": "",
+              "zip": "11230",
+              "spelled": ""
+            },
+            "phone": "9295550312",
+            "confirmed": false
+          }
+        },
+        {
+          "name": "read_back",
+          "arguments": {
+            "call_id": "eval-ac-water-through-ceiling-1-8a2d9b57",
+            "address": {
+              "street": "520 Westminster Road",
+              "unit": "",
+              "city": "",
+              "zip": "11230",
+              "spelled": ""
+            },
+            "phone": "9295550312",
+            "confirmed": true
+          }
+        },
+        {
+          "name": "find_slots",
+          "arguments": {
+            "call_id": "eval-ac-water-through-ceiling-1-8a2d9b57",
+            "job_type": "no_cooling",
+            "priority": null,
+            "preferred_days": [],
+            "time_of_day": null,
+            "day": null,
+            "arrive_after": null,
+            "arrive_before": null,
+            "facts": {
+              "issue": "water dripping through living room ceiling from attic AC unit, steady and increasing, AC shut off",
+              "who_home": "two teenagers and the caller, no one vulnerable",
+              "inside_temp_f": null,
+              "temp_falling_fast": false
+            }
+          }
+        },
+        {
+          "name": "book_appointment",
+          "arguments": {
+            "call_id": "eval-ac-water-through-ceiling-1-8a2d9b57",
+            "job_type": "no_cooling",
+            "slot": {
+              "date": "2026-11-02",
+              "window": "afternoon"
+            },
+            "details": {
+              "issue": "Water dripping steadily through living room ceiling from attic AC air handler, started about an hour ago and increasing; AC shut off by caller",
+              "since": "about an hour before the call",
+              "tried": "Shut off the AC at the thermostat",
+              "who_home": "Two teenagers and the caller, no one vulnerable",
+              "approver": "Owner (caller)",
+              "system_type": "Central air, air handler in attic, roughly 15+ years old",
+              "arrival_notes": "Ring the bell, the kids can let the technician in. No gate code, no pets. Attic access is likely the upstairs hall closet; caller is not sure where the hatch is.",
+              "name": "",
+              "inside_temp_f": null
+            },
+            "priority": null,
+            "separate_problem": false,
+            "new_address_account": null
+          }
+        },
+        {
+          "name": "book_appointment",
+          "arguments": {
+            "call_id": "eval-ac-water-through-ceiling-1-8a2d9b57",
+            "job_type": "no_cooling",
+            "slot": {
+              "date": "2026-11-02",
+              "window": "afternoon"
+            },
+            "details": {
+              "issue": "Water dripping steadily through living room ceiling from attic AC air handler, started about an hour ago and increasing; AC shut off by caller",
+              "since": "about an hour before the call",
+              "tried": "Shut off the AC at the thermostat",
+              "who_home": "Two teenagers and the caller, no one vulnerable",
+              "approver": "Owner (caller)",
+              "system_type": "Central air, air handler in attic, roughly 15+ years old",
+              "arrival_notes": "Ring the bell, the kids can let the technician in. No gate code, no pets. Attic access is likely the upstairs hall closet; caller is not sure where the hatch is.",
+              "name": "Kevin O'Brien",
+              "inside_temp_f": null
+            },
+            "priority": null,
+            "separate_problem": false,
+            "new_address_account": null
+          }
+        },
+        {
+          "name": "end_call",
+          "arguments": {
+            "call_id": "eval-ac-water-through-ceiling-1-8a2d9b57",
+            "reason": "caller_goodbye"
+          }
+        }
+      ],
+      "turn_timings": [
+        {
+          "kind": "plain",
+          "reply_delay_ms": 814.2826669791248,
+          "model_first_token_ms": 801.9316669960972,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 596.6524169780314,
+          "model_first_token_ms": 589.2629169975407,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 587.3337920056656,
+          "model_first_token_ms": 570.2551249996759,
+          "tool_ms": 11.560707993339747,
+          "second_hop_ms": 527.5356250058394,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 535.8220000052825,
+          "model_first_token_ms": 527.6617920026183,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 589.07054096926,
+          "model_first_token_ms": 582.8437079908326,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1184.3777080066502,
+          "model_first_token_ms": 600.889666005969,
+          "tool_ms": 17.61108302162029,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 2066.36308398447,
+          "model_first_token_ms": 584.3627080030274,
+          "tool_ms": 45.84700003033504,
+          "second_hop_ms": 559.2260419798549,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 641.8067920021713,
+          "model_first_token_ms": 635.7281669916119,
+          "tool_ms": 20.830165973166004,
+          "second_hop_ms": 703.4333749907091,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 564.5976669911761,
+          "model_first_token_ms": 523.872499994468,
+          "tool_ms": 95.10733300703578,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 685.6703340017702,
+          "model_first_token_ms": 680.9106669970788,
+          "tool_ms": 2.832833008142188,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        }
+      ],
+      "call_id": "eval-ac-water-through-ceiling-1-8a2d9b57",
+      "silent_turns": 0,
+      "cost_parts": {}
+    },
+    {
+      "scenario_id": "ac-water-through-ceiling",
+      "sample": 2,
+      "persona": "Kevin O'Brien in Ditmas Park, with a bucket under a drip. Stressed but cooperative.",
+      "flow": [
+        "booking",
+        "priority"
+      ],
+      "difficulty": "standard",
+      "traits": [
+        "filler"
+      ],
+      "outcome": "fail",
+      "must_pass_failures": [],
+      "check_failures": [
+        "grader: Three turns ask two questions at once ('Is it dripping right now, and is it getting worse?', 'house or an apartment, and is there a unit number?', 'Who's at home… and does anyone there have a harder time…'), the access question says 'a dog' instead of 'pet', and the Urgent call never hears 'I've marked this call top priority.' The final turn also invents an approval policy ('approval should come from you,' so the son can't okay the work), which isn't in the company's knowledge."
+      ],
+      "error": "",
+      "checks": [
+        "booking",
+        "read_back",
+        "safety_lines",
+        "electrical"
+      ],
+      "grader_score": 2,
+      "grader_notes": "Three turns ask two questions at once ('Is it dripping right now, and is it getting worse?', 'house or an apartment, and is there a unit number?', 'Who's at home… and does anyone there have a harder time…'), the access question says 'a dog' instead of 'pet', and the Urgent call never hears 'I've marked this call top priority.' The final turn also invents an approval policy ('approval should come from you,' so the son can't okay the work), which isn't in the company's knowledge.",
+      "reply_delay_p50_ms": 721.2755829968955,
+      "reply_delay_p90_ms": 1580.337541992776,
+      "cost_usd": 0.043923,
+      "agent_cost_usd": 0.006123,
+      "duration_ms": 39683.30324999988,
+      "transcript": [
+        {
+          "role": "agent",
+          "text": "Thanks for calling Summit Air, this is the virtual assistant. How can I help?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "hi i've got water coming through my living room ceiling i think it's from the ac up in the attic",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Water coming through the ceiling is worth getting handled quickly. Is it dripping right now, and is it getting worse?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "uh yeah it's dripping right now i've got a bucket under it it started maybe an hour ago and it's been steady i don't think it's getting faster but i don't really know the ac's still running i didn't know if i should shut it off or not",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "If it's safe to reach the thermostat, switching the AC to off will help stop more water from building up. Keep the bucket under the drip. What's the address where you're calling about?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "okay yeah i'll go turn it off now it's five two oh westminster road brooklyn one one two three oh",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Is that a house or an apartment, and is there a unit number?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "it's a house a two family no wait it's just a single family we own the whole thing no unit number",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Got it. Who's at home with the water right now, and does anyone there have a harder time with this?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "it's me and my two teenage kids at home everybody's fine nobody's sick or anything i'm the one who's got the bucket and the kids are just upstairs",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Thanks, good to know everyone's okay. Do you know roughly what kind of system it is, or how old it is? No worries if not.",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "yeah it's central air and the unit's up in the attic i think it's around 15 years old maybe a little more the guy who did the house before us put it in so i'm not totally sure",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Got it, central air in the attic, about 15 years old. Anything the technician should know when they get there, like a gate code, a dog, or where the attic access is?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "um no dog no gate code the attic access is uh i think it's a pull down ladder in the hallway upstairs by the bathroom the front door's open my son can let them in if i'm not there i'm pretty sure the ceiling's gonna need to get looked at too not just the unit",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "I'll let the technician know about the pull-down ladder in the upstairs hallway by the bathroom, and that the ceiling damage needs a look too. Now let me check what's open for a visit. I can get someone out this afternoon, today between 12 and 4. Does that work for you?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "uh yeah this afternoon could work is there like a specific time i'd probably want to be around when they get here but if it's between 12 and 4 i think i can make that work can you do like 1 o'clock",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "I can't set an exact time, but the technician will arrive sometime between 12 and 4 this afternoon. Would you like me to book that window?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "yeah go ahead and book that the 12 to 4 window thanks",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "I have your home at 520 Westminster Road, one one two three zero, and the best number is nine two nine, five five five, zero three one two, is that right?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "yeah that's right five two oh westminster road brooklyn one one two three oh and the number's nine two nine five five five oh three one two",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Perfect, booking that now. Can I get a name for the booking?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "kevin o'brien",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "You're all set for today, Monday, November 2, with the technician arriving between 12 and 4. Anything else?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "uh no i think that's it just is there anything i should do with the water in the meantime or is the bucket fine until they come oh and do i need to be the one who approves the work or can my son okay it if i'm not there",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "You're the owner, so you're the one who approves the work. Your son can let the technician in, but the approval should come from you. For the water, keep the bucket under the drip and empty it as it fills. If the ceiling bulges or you see more water coming through, move anything valuable out of that room. Anything else?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "okay got it i'll keep the bucket going and move stuff if it looks worse yeah no that's everything thanks a lot",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Thanks for calling Summit Air. Have a great rest of your day.",
+          "said": null
+        }
+      ],
+      "tool_calls": [
+        {
+          "name": "check_service_area",
+          "arguments": {
+            "call_id": "eval-ac-water-through-ceiling-2-36f56df0",
+            "zip": "11230"
+          }
+        },
+        {
+          "name": "find_customer",
+          "arguments": {
+            "call_id": "eval-ac-water-through-ceiling-2-36f56df0",
+            "phone": null,
+            "address": {
+              "street": "520 Westminster Road",
+              "unit": "",
+              "city": "",
+              "zip": "11230",
+              "spelled": ""
+            }
+          }
+        },
+        {
+          "name": "find_slots",
+          "arguments": {
+            "call_id": "eval-ac-water-through-ceiling-2-36f56df0",
+            "job_type": "no_cooling",
+            "priority": null,
+            "preferred_days": [],
+            "time_of_day": null,
+            "day": null,
+            "arrive_after": null,
+            "arrive_before": null,
+            "facts": {
+              "issue": "water dripping through living room ceiling from attic AC unit, steady for about an hour, bucket in place, AC shut off",
+              "who_home": "owner and two teenagers at home, nobody vulnerable",
+              "inside_temp_f": null,
+              "temp_falling_fast": false
+            }
+          }
+        },
+        {
+          "name": "read_back",
+          "arguments": {
+            "call_id": "eval-ac-water-through-ceiling-2-36f56df0",
+            "address": {
+              "street": "520 Westminster Road",
+              "unit": "",
+              "city": "",
+              "zip": "11230",
+              "spelled": ""
+            },
+            "phone": "9295550312",
+            "confirmed": false
+          }
+        },
+        {
+          "name": "read_back",
+          "arguments": {
+            "call_id": "eval-ac-water-through-ceiling-2-36f56df0",
+            "address": {
+              "street": "520 Westminster Road",
+              "unit": "",
+              "city": "",
+              "zip": "11230",
+              "spelled": ""
+            },
+            "phone": "9295550312",
+            "confirmed": true
+          }
+        },
+        {
+          "name": "book_appointment",
+          "arguments": {
+            "call_id": "eval-ac-water-through-ceiling-2-36f56df0",
+            "job_type": "no_cooling",
+            "slot": {
+              "date": "2026-11-02",
+              "window": "afternoon"
+            },
+            "details": {
+              "issue": "Water dripping through living room ceiling, likely from attic central AC unit, steady for about an hour. Bucket placed. Homeowner shut AC off. Ceiling damage also needs a look.",
+              "since": "About an hour ago",
+              "tried": "Shut off the AC; bucket under the drip",
+              "who_home": "Owner and two teenagers at home, nobody vulnerable",
+              "approver": "Owner",
+              "system_type": "Central air, attic unit, about 15 years old",
+              "arrival_notes": "Attic access is a pull-down ladder in the upstairs hallway by the bathroom. Front door will be open; son can let the technician in if owner is not there. No dog, no gate code.",
+              "name": "",
+              "inside_temp_f": null
+            },
+            "priority": null,
+            "separate_problem": false,
+            "new_address_account": null
+          }
+        },
+        {
+          "name": "book_appointment",
+          "arguments": {
+            "call_id": "eval-ac-water-through-ceiling-2-36f56df0",
+            "job_type": "no_cooling",
+            "slot": {
+              "date": "2026-11-02",
+              "window": "afternoon"
+            },
+            "details": {
+              "issue": "Water dripping through living room ceiling, likely from attic central AC unit, steady for about an hour. Bucket placed. Homeowner shut AC off. Ceiling damage also needs a look.",
+              "since": "About an hour ago",
+              "tried": "Shut off the AC; bucket under the drip",
+              "who_home": "Owner and two teenagers at home, nobody vulnerable",
+              "approver": "Owner",
+              "system_type": "Central air, attic unit, about 15 years old",
+              "arrival_notes": "Attic access is a pull-down ladder in the upstairs hallway by the bathroom. Front door will be open; son can let the technician in if owner is not there. No dog, no gate code.",
+              "name": "Kevin O'Brien",
+              "inside_temp_f": null
+            },
+            "priority": null,
+            "separate_problem": false,
+            "new_address_account": null
+          }
+        },
+        {
+          "name": "end_call",
+          "arguments": {
+            "call_id": "eval-ac-water-through-ceiling-2-36f56df0",
+            "reason": "caller_goodbye"
+          }
+        }
+      ],
+      "turn_timings": [
+        {
+          "kind": "plain",
+          "reply_delay_ms": 816.2735000078101,
+          "model_first_token_ms": 803.3662920061033,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 809.5752070075832,
+          "model_first_token_ms": 802.9074159858283,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 1449.4000829872675,
+          "model_first_token_ms": 568.5720839828718,
+          "tool_ms": 14.84408401302062,
+          "second_hop_ms": 572.8721249906812,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 571.501166006783,
+          "model_first_token_ms": 564.9495410034433,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 607.0487079850864,
+          "model_first_token_ms": 601.7115830036346,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 581.2774160003755,
+          "model_first_token_ms": 571.9626249920111,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 721.2755829968955,
+          "model_first_token_ms": 570.5358749837615,
+          "tool_ms": 26.213000004645437,
+          "second_hop_ms": 571.4154169836547,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 589.5120420318563,
+          "model_first_token_ms": 580.1105000136886,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 900.9370420244522,
+          "model_first_token_ms": 542.0755840023048,
+          "tool_ms": 3.859000018564984,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 1616.6506260051392,
+          "model_first_token_ms": 615.033542009769,
+          "tool_ms": 35.48441600287333,
+          "second_hop_ms": 562.2097919986118,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1580.337541992776,
+          "model_first_token_ms": 631.8629579909611,
+          "tool_ms": 66.39970900141634,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 604.5616240007803,
+          "model_first_token_ms": 592.6979159994517,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 604.572833981365,
+          "model_first_token_ms": 596.7974169761874,
+          "tool_ms": 2.960874990094453,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        }
+      ],
+      "call_id": "eval-ac-water-through-ceiling-2-36f56df0",
+      "silent_turns": 0,
+      "cost_parts": {}
+    },
+    {
+      "scenario_id": "callback-after-stepped-away",
+      "sample": 1,
+      "persona": "Tomasz Nowak in Greenpoint, calling back after stepping away from an earlier call. Apologetic.",
+      "flow": [
+        "repeat-caller",
+        "booking"
+      ],
+      "difficulty": "standard",
+      "traits": [
+        "filler"
+      ],
+      "outcome": "fail",
+      "must_pass_failures": [],
+      "check_failures": [
+        "grader: The agent asked again for answers it already had: it re-asked whether the system is a gas boiler (stacked with a second question), and asked 'Want me to go ahead and book' after the caller had said 'yes please book'. It also read the address and number back a second time after the caller had already confirmed them."
+      ],
+      "error": "",
+      "checks": [
+        "agent_says",
+        "booking",
+        "read_back",
+        "safety_lines"
+      ],
+      "grader_score": 2,
+      "grader_notes": "The agent asked again for answers it already had: it re-asked whether the system is a gas boiler (stacked with a second question), and asked 'Want me to go ahead and book' after the caller had said 'yes please book'. It also read the address and number back a second time after the caller had already confirmed them.",
+      "reply_delay_p50_ms": 632.4712920177262,
+      "reply_delay_p90_ms": 918.1531250069384,
+      "cost_usd": 0.041614,
+      "agent_cost_usd": 0.005688,
+      "duration_ms": 32830.95016700099,
+      "transcript": [
+        {
+          "role": "agent",
+          "text": "Hi, this is Summit Air's virtual assistant again. We got disconnected earlier when you stepped away; let's pick up where we left off. Is this Tomasz?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "yes it's tomasz sorry about that i had to step away",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "No problem, Tomasz. You said the boiler isn't firing at all, and it's a gas boiler about fifteen years old. Is that still right?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "yeah that's right gas boiler maybe fifteen years old i think it's not firing at all no heat since about six this morning it's about sixty one degrees in here now so it's getting cold",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Sixty-one inside, and it's been out since six this morning. Let me check the address and find you a time. Thanks, Tomasz. I can get someone out this afternoon, 12 to 4 or 4 to 8, or tomorrow in the morning, afternoon or evening. Which works best?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "um this afternoon would be best if that's possible the 12 to 4 window if you have it we're both home all day so either of us can let them in",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Got it, this afternoon. Let me check the 12 to 4 window. Today, Monday, 12 to 4 is open. Shall I book that for you?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "yes please book the 12 to 4 that's perfect oh and i should mention the buzzer is 2b in case they need to get in",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "I'll get the details and confirm the address first. Is the address 145 Java Street, Brooklyn, 11222, with the phone number you're calling from?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "yes that's right one four five java street brooklyn one one two two two and the number i'm calling from is nine two nine five five five oh three oh six",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "I have your home at 145 Java Street, Brooklyn, one one two two two, and the best number is nine two nine, five five five, zero three zero six, is that right?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "yes that's all correct",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Thanks, Tomasz. Is the system a gas boiler, and is there anything you've already tried, like checking the thermostat or the pilot?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "yeah gas boiler i checked the thermostat it's set higher than the room and i turned it up and down a couple times i didn't touch the pilot or anything else i didn't want to mess with the gas",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Good call leaving the pilot alone. Anything the technician should know when they arrive, like a gate code or a pet? You mentioned the buzzer is 2B.",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "no gate code and no pets thankfully just ring 2b that's us and my wife and i are both home all afternoon oh and the boiler's in the basement i think so they might need to go down there but i'm not totally sure",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Got it. I'll let the technician know to ring 2B and that the boiler is likely in the basement. Is there a renter or landlord who needs to approve the work, or is it your place?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "um it's our place we rent it i'm not sure if the landlord needs to know about the work honestly should i call them myself or does summit air handle that",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "I can't advise on what your lease requires. The building's super or 311 would know more. For booking, I can note that the landlord's approval is unknown, and our team will confirm approval before the technician heads out. Want me to go ahead and book the 12 to 4 window today?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "yes go ahead and book it thanks",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Perfect, booking that now. You're all set for today, Monday, November 2, with the technician arriving between 12 and 4. Before the technician heads out, someone from our team will call you by 10 AM to confirm who can approve the work. Anything else?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "okay great thanks nothing else from me appreciate it bye",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Thanks for calling Summit Air. Have a great rest of your day.",
+          "said": null
+        }
+      ],
+      "tool_calls": [
+        {
+          "name": "find_customer",
+          "arguments": {
+            "call_id": "eval-callback-after-stepped-away-1-ee088bce",
+            "phone": "(929) 555-0306",
+            "address": {
+              "street": "145 Java Street",
+              "unit": "",
+              "city": "Brooklyn",
+              "zip": "11222",
+              "spelled": ""
+            }
+          }
+        },
+        {
+          "name": "check_service_area",
+          "arguments": {
+            "call_id": "eval-callback-after-stepped-away-1-ee088bce",
+            "zip": "11222"
+          }
+        },
+        {
+          "name": "find_slots",
+          "arguments": {
+            "call_id": "eval-callback-after-stepped-away-1-ee088bce",
+            "job_type": "no_heat",
+            "priority": null,
+            "preferred_days": [],
+            "time_of_day": null,
+            "day": null,
+            "arrive_after": null,
+            "arrive_before": null,
+            "facts": {
+              "issue": "gas boiler not firing at all, no heat since about 6 AM",
+              "who_home": "wife and caller, both fine",
+              "inside_temp_f": 61.0,
+              "temp_falling_fast": false
+            }
+          }
+        },
+        {
+          "name": "find_slots",
+          "arguments": {
+            "call_id": "eval-callback-after-stepped-away-1-ee088bce",
+            "job_type": "no_heat",
+            "priority": null,
+            "preferred_days": [],
+            "time_of_day": "afternoon",
+            "day": "2026-11-02",
+            "arrive_after": null,
+            "arrive_before": null,
+            "facts": {
+              "issue": "gas boiler not firing at all, no heat since about 6 AM",
+              "who_home": "wife and caller, both fine",
+              "inside_temp_f": 61.0,
+              "temp_falling_fast": false
+            }
+          }
+        },
+        {
+          "name": "read_back",
+          "arguments": {
+            "call_id": "eval-callback-after-stepped-away-1-ee088bce",
+            "address": {
+              "street": "145 Java Street",
+              "unit": "",
+              "city": "Brooklyn",
+              "zip": "11222",
+              "spelled": ""
+            },
+            "phone": "9295550306",
+            "confirmed": false
+          }
+        },
+        {
+          "name": "read_back",
+          "arguments": {
+            "call_id": "eval-callback-after-stepped-away-1-ee088bce",
+            "address": {
+              "street": "145 Java Street",
+              "unit": "",
+              "city": "Brooklyn",
+              "zip": "11222",
+              "spelled": ""
+            },
+            "phone": "9295550306",
+            "confirmed": true
+          }
+        },
+        {
+          "name": "book_appointment",
+          "arguments": {
+            "call_id": "eval-callback-after-stepped-away-1-ee088bce",
+            "job_type": "no_heat",
+            "slot": {
+              "date": "2026-11-02",
+              "window": "afternoon"
+            },
+            "details": {
+              "issue": "Gas boiler not firing at all, no heat since about 6 AM. Inside temperature about 61 F.",
+              "since": "About 6 AM today",
+              "tried": "Checked thermostat, set above room temp, turned it up and down. Did not touch pilot or other components.",
+              "who_home": "Wife and caller, both home all afternoon",
+              "approver": "unknown",
+              "system_type": "Gas boiler, about 15 years old",
+              "arrival_notes": "Ring buzzer 2B. Boiler is likely in the basement. No gate code, no pets.",
+              "name": "Tomasz Nowak",
+              "inside_temp_f": 61.0
+            },
+            "priority": null,
+            "separate_problem": false,
+            "new_address_account": null
+          }
+        },
+        {
+          "name": "end_call",
+          "arguments": {
+            "call_id": "eval-callback-after-stepped-away-1-ee088bce",
+            "reason": "caller_goodbye"
+          }
+        }
+      ],
+      "turn_timings": [
+        {
+          "kind": "plain",
+          "reply_delay_ms": 719.8596249800175,
+          "model_first_token_ms": 679.5787909941282,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 552.8882090002298,
+          "model_first_token_ms": 518.715958984103,
+          "tool_ms": 38.34554099012166,
+          "second_hop_ms": 658.3949170017149,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 669.0515000373125,
+          "model_first_token_ms": 663.6632500158157,
+          "tool_ms": 27.894416998606175,
+          "second_hop_ms": 508.392832998652,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 632.4712920177262,
+          "model_first_token_ms": 627.6001670048572,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 918.1531250069384,
+          "model_first_token_ms": 554.0520830254536,
+          "tool_ms": 9.882290993118659,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 1417.4215410312172,
+          "model_first_token_ms": 489.137333992403,
+          "tool_ms": 32.39400000893511,
+          "second_hop_ms": 540.7884580199607,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 625.3253749455325,
+          "model_first_token_ms": 518.9579999714624,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 512.6890419924166,
+          "model_first_token_ms": 505.2615419845097,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 576.1440840142313,
+          "model_first_token_ms": 569.2577500012703,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 740.2384580054786,
+          "model_first_token_ms": 726.4745410066098,
+          "tool_ms": 79.18887501000427,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 565.7700420124456,
+          "model_first_token_ms": 561.794999986887,
+          "tool_ms": 14.960833010263741,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        }
+      ],
+      "call_id": "eval-callback-after-stepped-away-1-ee088bce",
+      "silent_turns": 0,
+      "cost_parts": {}
+    },
+    {
+      "scenario_id": "callback-after-stepped-away",
+      "sample": 2,
+      "persona": "Tomasz Nowak in Greenpoint, calling back after stepping away from an earlier call. Apologetic.",
+      "flow": [
+        "repeat-caller",
+        "booking"
+      ],
+      "difficulty": "standard",
+      "traits": [
+        "filler"
+      ],
+      "outcome": "pass",
+      "must_pass_failures": [],
+      "check_failures": [],
+      "error": "",
+      "checks": [
+        "agent_says",
+        "booking",
+        "read_back",
+        "safety_lines"
+      ],
+      "grader_score": 3,
+      "grader_notes": "The second agent turn stacks two direct questions (\"Is it still off, and is the house still cold?\"), and the caller's \"any chance it could be sooner\" goes unanswered until a turn later. The pre-booking turn is clunky, saying \"Now I'll confirm the booking\" and \"Booking that now\" before asking for a name, then repeating \"booking that now.\"",
+      "reply_delay_p50_ms": 647.0362920081243,
+      "reply_delay_p90_ms": 1012.4372499994934,
+      "cost_usd": 0.030504,
+      "agent_cost_usd": 0.004561,
+      "duration_ms": 22440.249667008175,
+      "transcript": [
+        {
+          "role": "agent",
+          "text": "Hi, this is Summit Air's virtual assistant again. We got disconnected earlier when you stepped away; let's pick up where we left off. Is this Tomasz?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "yes it's tomasz sorry about that i had to step away",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "No problem, Tomasz. You were telling me about the gas boiler, about fifteen years old, not firing at all. Is it still off, and is the house still cold?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "yes still off no heat at all since about six this morning it's about 61 inside now and my wife's been wrapped in blankets um is there someone who can come today",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Sorry about that, Tomasz. Let me check what we have today. I have a spot today, Monday, either 12 to 4 or 4 to 8. Which works better for you?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "um the earlier one 12 to 4 if you have it we're home all day so either is fine really but earlier would be better sorry is there any chance it could be sooner than that",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "I have your home at 145 Java Street, Brooklyn, one one two two two, and the best number is nine two nine, five five five, zero three zero six, is that right?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "yes that's right one four five java street brooklyn one one two two two and the number is the one i'm calling from nine two nine five five five oh three oh six um my buzzer is 2b if that helps the technician get in",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Got it, buzzer 2B. I'll pass that along. Now I'll confirm the booking. I can't make it sooner than 12, but 12 to 4 today is the earliest there is. Booking that now. Can I get a name for the booking?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "sure it's tomasz nowak n o w a k",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Perfect, booking that now. You're all set for today, Monday, November 2, with the technician arriving between 12 and 4. Anything else?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "okay great thank you um no that's everything thanks a lot bye",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Thanks for calling Summit Air. Have a great rest of your day.",
+          "said": null
+        }
+      ],
+      "tool_calls": [
+        {
+          "name": "find_slots",
+          "arguments": {
+            "call_id": "eval-callback-after-stepped-away-2-dcbc5b52",
+            "job_type": "no_heat",
+            "priority": null,
+            "preferred_days": [],
+            "time_of_day": null,
+            "day": null,
+            "arrive_after": null,
+            "arrive_before": null,
+            "facts": {
+              "issue": "gas boiler not firing at all, no heat since about 6 AM",
+              "who_home": "wife at home, bundled in blankets, no one with medical needs",
+              "inside_temp_f": 61.0,
+              "temp_falling_fast": false
+            }
+          }
+        },
+        {
+          "name": "read_back",
+          "arguments": {
+            "call_id": "eval-callback-after-stepped-away-2-dcbc5b52",
+            "address": {
+              "street": "145 Java Street",
+              "unit": "",
+              "city": "Brooklyn",
+              "zip": "11222",
+              "spelled": ""
+            },
+            "phone": "9295550306",
+            "confirmed": false
+          }
+        },
+        {
+          "name": "read_back",
+          "arguments": {
+            "call_id": "eval-callback-after-stepped-away-2-dcbc5b52",
+            "address": {
+              "street": "145 Java Street",
+              "unit": "",
+              "city": "Brooklyn",
+              "zip": "11222",
+              "spelled": ""
+            },
+            "phone": "9295550306",
+            "confirmed": true
+          }
+        },
+        {
+          "name": "find_slots",
+          "arguments": {
+            "call_id": "eval-callback-after-stepped-away-2-dcbc5b52",
+            "job_type": "no_heat",
+            "priority": null,
+            "preferred_days": [],
+            "time_of_day": null,
+            "day": "2026-11-02",
+            "arrive_after": null,
+            "arrive_before": null,
+            "facts": {
+              "issue": "gas boiler not firing at all, no heat since about 6 AM",
+              "who_home": "wife at home, bundled in blankets",
+              "inside_temp_f": 61.0,
+              "temp_falling_fast": false
+            }
+          }
+        },
+        {
+          "name": "book_appointment",
+          "arguments": {
+            "call_id": "eval-callback-after-stepped-away-2-dcbc5b52",
+            "job_type": "no_heat",
+            "slot": {
+              "date": "2026-11-02",
+              "window": "afternoon"
+            },
+            "details": {
+              "issue": "Gas boiler not firing at all, no heat since about 6 AM, 61 F inside. Caller reports 15-year-old gas boiler.",
+              "since": "About 6 AM today, Monday November 2",
+              "tried": "Caller has not tried anything yet",
+              "who_home": "Wife at home, bundled in blankets, both adults, no medical needs reported",
+              "approver": "Owner, no approval needed",
+              "system_type": "Gas boiler, about 15 years old",
+              "arrival_notes": "Buzzer 2B",
+              "name": "",
+              "inside_temp_f": 61.0
+            },
+            "priority": null,
+            "separate_problem": false,
+            "new_address_account": null
+          }
+        },
+        {
+          "name": "book_appointment",
+          "arguments": {
+            "call_id": "eval-callback-after-stepped-away-2-dcbc5b52",
+            "job_type": "no_heat",
+            "slot": {
+              "date": "2026-11-02",
+              "window": "afternoon"
+            },
+            "details": {
+              "issue": "Gas boiler not firing at all, no heat since about 6 AM, 61 F inside. Caller reports 15-year-old gas boiler.",
+              "since": "About 6 AM today, Monday November 2",
+              "tried": "Caller has not tried anything yet",
+              "who_home": "Wife at home, bundled in blankets, both adults, no medical needs reported",
+              "approver": "Owner, no approval needed",
+              "system_type": "Gas boiler, about 15 years old",
+              "arrival_notes": "Buzzer 2B",
+              "name": "Tomasz Nowak",
+              "inside_temp_f": 61.0
+            },
+            "priority": null,
+            "separate_problem": false,
+            "new_address_account": null
+          }
+        },
+        {
+          "name": "end_call",
+          "arguments": {
+            "call_id": "eval-callback-after-stepped-away-2-dcbc5b52",
+            "reason": "caller_goodbye"
+          }
+        }
+      ],
+      "turn_timings": [
+        {
+          "kind": "plain",
+          "reply_delay_ms": 670.1634999772068,
+          "model_first_token_ms": 629.5148329809308,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 586.1785000015516,
+          "model_first_token_ms": 581.7907089949585,
+          "tool_ms": 29.789583990350366,
+          "second_hop_ms": 585.8602920197882,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1012.4372499994934,
+          "model_first_token_ms": 535.8483330055606,
+          "tool_ms": 9.4039159885142,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 557.9178339976352,
+          "model_first_token_ms": 552.8259589918889,
+          "tool_ms": 237.2103749657981,
+          "second_hop_ms": 575.7666660065297,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 647.0362920081243,
+          "model_first_token_ms": 640.4840000031982,
+          "tool_ms": 461.19504200760275,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 750.7540409860667,
+          "model_first_token_ms": 674.6812500059605,
+          "tool_ms": 12.159917008830234,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        }
+      ],
+      "call_id": "eval-callback-after-stepped-away-2-dcbc5b52",
+      "silent_turns": 0,
+      "cost_parts": {}
+    }
+  ]
+}

@@ -25,6 +25,8 @@ class ToolLog:
     def __init__(self):
         self.ms = 0.0
         self.bridge = False
+        # Tools waiting on the server now: the call isn't silent while one runs (voice/dead_air.py).
+        self.running = 0
 
     def take(self) -> tuple[float, bool]:
         ms, bridge = self.ms, self.bridge
@@ -54,7 +56,11 @@ def make_tool(
     async def handler(raw_arguments: dict[str, object], context: RunContext) -> str | None:
         started = time.perf_counter()
         before = len(bridge.played)
-        result = await bridge.run(server.tool(spec["name"], dict(raw_arguments), spec["write"]))
+        log.running += 1
+        try:
+            result = await bridge.run(server.tool(spec["name"], dict(raw_arguments), spec["write"]))
+        finally:
+            log.running -= 1
         log.ms += (time.perf_counter() - started) * 1000
         log.bridge = log.bridge or len(bridge.played) > before
         if reply is not None:

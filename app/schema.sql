@@ -562,3 +562,23 @@ CREATE TABLE IF NOT EXISTS call_names (
     at TEXT NOT NULL,
     saved_at TEXT
 );
+
+-- A caller who asked the agent to wait (app/dead_air.py, DECISIONS.md 081): the turn they asked on,
+-- and the turn they came back on (NULL while the hold lasts).
+CREATE TABLE IF NOT EXISTS holds (
+    call_id TEXT NOT NULL REFERENCES calls (id) ON DELETE CASCADE,
+    seq INTEGER NOT NULL,
+    at TEXT NOT NULL,
+    back_seq INTEGER,
+    PRIMARY KEY (call_id, seq)
+);
+
+-- The electrical route (app/safety.py electrical_line, DECISIONS.md 082): the caller's line that
+-- reported sparks or an electrical smell, and when the tenant's electrical lines were said. Kept
+-- apart from the calls table's safety columns, which this route never sets.
+CREATE TABLE IF NOT EXISTS electrical (
+    call_id TEXT PRIMARY KEY REFERENCES calls (id) ON DELETE CASCADE,
+    heard_seq INTEGER NOT NULL,
+    heard_line TEXT NOT NULL,
+    said_at TEXT
+);

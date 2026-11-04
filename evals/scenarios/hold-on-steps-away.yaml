@@ -1,0 +1,25 @@
+id: hold-on-steps-away
+flow: [booking]
+difficulty: standard
+traits: [filler]
+journeys: [J1, spine]
+tags: [call-handling, dead-air]
+caller_id: "(646) 555-0175"
+steps_away: true
+persona: Rosa Delgado, a homeowner in Inwood whose AC stopped. Distracted, there's a lot going on at home.
+hidden_facts:
+  name: Rosa Delgado
+  address: 4985 Broadway, New York, 10034
+  phone: the number being called from
+  problem: the window AC in the living room stopped blowing cold this morning
+  who_home: Rosa and her teenage son, both healthy
+opening: Hi, my AC stopped blowing cold this morning.
+script:
+  - When the agent asks for your address or name, say "Hold on, someone's at the door, give me a sec." and nothing else.
+must:
+  - end_reason: stepped_away
+  - agent_says: ["still here", "call this number back"]
+  - booking: none
+  - safety_lines: not_said
+should:
+  - Answers the request to wait with a short yes and asks nothing more.

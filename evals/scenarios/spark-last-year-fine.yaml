@@ -1,0 +1,27 @@
+id: spark-last-year-fine
+flow: [booking, priority]
+difficulty: rigorous
+traits: [side-question]
+journeys: [J1]
+tags: [call-handling, electrical]
+caller_id: "(929) 555-0314"
+weather: {now_f: 66, low_f: 55}
+persona: Robert Feld in Forest Hills. Chatty, mentions the unit's history.
+hidden_facts:
+  name: Robert Feld
+  address: 72-10 Austin St, Forest Hills, 11375
+  phone: the number being called from
+  problem: wants the boiler tuned up before winter, it runs fine
+  history: the boiler's igniter sparked once last year and the last technician fixed it, it's been fine since
+  system: gas boiler, about 13 years old
+  who_home: Robert and his wife, both healthy
+  owns: Robert owns the house and approves the work
+opening: Hi, I'd like a tune-up on my boiler before winter. It sparked once last year and it's been fine since your guy fixed it.
+script:
+  - Answer the booking questions, confirm the read-back, take the first window, then say goodbye.
+must:
+  - electrical: not_said
+  - safety_lines: not_said
+  - booking: {count: 1, priority: Normal, zip: "11375"}
+should:
+  - Treats the old spark as history and books a routine tune-up.

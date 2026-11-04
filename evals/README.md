@@ -40,6 +40,8 @@ should:
   - One question at a time, no repeated questions.
 ```
 
+Call handling (DECISIONS.md 080 to 082, tag `call-handling`): `steps_away: true` makes the caller go quiet once the server puts the call on hold, and the worker's silence timer (voice/dead_air.py) runs on a short clock; `earlier_call.end_reason: stepped_away` puts a call that ended that way on the record. Their checks: `card_digits: {absent: <card>}` (no stored turn holds card digits and the card shows up nowhere in the record), `end_reason`, `safety_state` (the gas and carbon monoxide state) and `electrical: said | not_said` (the electrical lines, once, word for word).
+
 A scenario whose `spec` includes a must-pass line (marked **M** in docs/spec.md) is a must-pass case: any failed code check there is a must-pass failure. A grader fail on one counts against the pass rate like any other fail, but is not a must-pass failure, since the must-pass lines are code checks (the publish gate counts them the same way).
 
 ## Labels

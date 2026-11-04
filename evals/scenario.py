@@ -54,6 +54,9 @@ class EarlierCall(BaseModel):
 
     minutes_ago: int = Field(ge=1, le=600)
     turns: list[dict[Literal["caller", "agent"], str]] = Field(min_length=1)
+    # How it ended: the line dropped, or the agent hung up after the caller stepped away and never
+    # came back (DECISIONS.md 081).
+    end_reason: Literal["dropped", "stepped_away"] = "dropped"
 
     @field_validator("turns")
     @classmethod
@@ -96,6 +99,9 @@ class Scenario(BaseModel):
     # with none.
     transfer: Literal["sent", "fails"] | None = None
     weather: Weather | None = None
+    # The caller asks the agent to wait and never comes back: once a caller line puts the call on
+    # hold, the worker's silence timer runs on a short clock (DECISIONS.md 081).
+    steps_away: bool = False
     must: list[dict[str, Any]] = Field(min_length=1)
     should: list[str] = Field(default_factory=list)
 

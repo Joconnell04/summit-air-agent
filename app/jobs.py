@@ -212,6 +212,7 @@ CALLBACK_LOOKBACK_DAYS = 14
 # The flags a callback leaves on its call, closed together with it.
 CALLBACK_FLAG_KINDS = (
     "callback_requested",
+    "billing",
     "person",
     "overdue_callback",
     "callback_needs_person",
