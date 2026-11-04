@@ -248,7 +248,12 @@ def run(
     ).fetchall()
     budget = SUMMARIES_PER_RUN
     started = timer()
-    for call in rows:
+    for index, call in enumerate(rows):
+        if budget == 0 or timer() - started >= RUN_SECONDS:
+            # Out of time or count: the rest wait for the next run unread, so a backlog can't keep
+            # the jobs thread busy past the budget.
+            counts["waiting"] += len(rows) - index
+            break
         booking = conn.execute(
             "SELECT * FROM bookings WHERE call_id = ? AND kind = 'book' ORDER BY id DESC LIMIT 1",
             (call["id"],),
@@ -261,13 +266,7 @@ def run(
             continue
         # A summary already written only needs sending, which needs no model.
         needs_model = call["summary_status"] == "pending"
-        out_of_time = timer() - started >= RUN_SECONDS
-        if (
-            booking["status"] != "booked"
-            or budget == 0
-            or out_of_time
-            or (needs_model and model is None)
-        ):
+        if booking["status"] != "booked" or (needs_model and model is None):
             counts["waiting"] += 1
             continue
         budget -= 1
