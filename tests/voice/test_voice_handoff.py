@@ -190,6 +190,20 @@ def test_an_error_mid_handoff_takes_the_caller_off_hold_with_the_callback_line(
     assert worker.ended["reason"] == "caller_hangup"
 
 
+def test_with_nothing_to_send_the_call_the_caller_hears_the_callback_line(
+    agent, connect, numbers
+):
+    agent.start(UNKNOWN, call_id="call-1")
+    worker = Worker(connect("call-1"))
+    worker.call.handoff = None
+    assert worker.hear(DEMAND) is None
+    assert worker.session.said == [
+        ("I've let our team know, and someone will call you by 9:30 AM.", False)
+    ]
+    assert not worker.lk.sip.transfers
+    assert status(agent) == "failed"
+
+
 def test_a_calm_ask_goes_to_the_model(agent, connect, numbers):
     agent.start(UNKNOWN, call_id="call-1")
     worker = Worker(connect("call-1"))

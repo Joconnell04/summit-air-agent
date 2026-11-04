@@ -132,9 +132,16 @@ class Call:
         if handoff and result["say"]:
             # The caller demanded a person: the server's line, then the transfer, or the stored
             # callback line when there is no number to send them to. The model doesn't answer.
+            plan = handoff.get("transfer")
+            if plan and self.handoff is None:
+                # Nothing here can send the call, so the caller gets the stored callback line,
+                # never a handoff line with no transfer after it.
+                await self.server.handoff_done(plan["id"], "failed")
+                self.session.say(handoff["fallback"], allow_interruptions=False)
+                raise StopResponse()
             line = self.session.say(result["say"], allow_interruptions=False)
-            if handoff.get("transfer") and self.handoff:
-                self.handoff(line, handoff["transfer"], handoff["fallback"])
+            if plan:
+                self.handoff(line, plan, handoff["fallback"])
             raise StopResponse()
         safety = data.get("safety")
         if safety and safety["action"] in SPOKEN_ACTIONS and safety.get("text"):

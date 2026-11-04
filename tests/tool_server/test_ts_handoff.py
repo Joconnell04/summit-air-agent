@@ -68,13 +68,14 @@ def test_an_angry_demand_in_office_hours_goes_straight_to_the_office(agent, numb
 @pytest.mark.parametrize(
     "lines",
     [
-        # Anger earlier on the call, then a plain ask.
+        # Anger in the line just before a plain ask, or in the same line.
         ("This is ridiculous, the furnace died again.", "Can I talk to someone?"),
+        ("Damn it, can I talk to someone?",),
         # Asked twice.
         ("Can I speak to a person?", "I'd like to book a visit.", "Can I talk to someone, please?"),
         # Insistent words in the same line.
         ("I said I want a real person, not a robot.",),
-        ("Transfer me now.",),
+        ("Transfer me right away.",),
         # Speech-to-text with the full stops dropped: the instruction is still a request (eval
         # angry-caller-demands-person, first run).
         (UNPUNCTUATED,),
@@ -90,6 +91,13 @@ def test_what_counts_as_a_demand(agent, numbers, lines):
     [
         # A calm, single ask stays with the warm transfer, through flag_person.
         ("Can I just talk to a real person, please?",),
+        # "Now" said calmly is a request, not a demand.
+        ("Can I talk to someone now?",),
+        ("Transfer me now, please.",),
+        # Swearing about the equipment isn't anger at the call.
+        ("The damn furnace is dead again. Can I talk to someone?",),
+        # Anger two lines back, before an address, doesn't carry to a plain ask.
+        ("This is ridiculous.", "It's 12 Court Street.", "Can I talk to someone?"),
         # A passing mention is not a request.
         ("Last time I tried to talk to someone it took a week, so I'm calling early.",),
         ("My landlord said to talk to someone about the heat, it's ridiculous.",),
@@ -221,6 +229,33 @@ def test_on_a_gas_call_before_the_lines_are_said_nobody_is_dialed(agent, numbers
     agent.turn(call, "I smell gas in the kitchen.")
     # The lines haven't been said yet (the agent's line hasn't come back), so it waits.
     result = agent.turn(call, "Put me through to a person right now.")
+    assert "handoff" not in result["data"]
+    assert handoff(agent, call) is None
+
+
+def test_a_turn_that_brings_safety_text_is_never_handed_off(agent, numbers):
+    """The turn endpoint's guard alone: after the lines the call may be handed off, but a line that
+    raises the gas again gets the shorter variant first, and the next demand is handed off."""
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "I smell gas in the kitchen.")
+    agent.say(call, GAS_LINES)
+    again = agent.turn(call, "It still smells like gas, put me through to a person right now.")
+    assert again["data"]["safety"]["action"] == "speak_variant"
+    assert "handoff" not in again["data"]
+    assert handoff(agent, call) is None
+    after = agent.turn(call, "I said put me through to a person right now.")
+    assert after["say"] == HANDOFF_LINE
+
+
+def test_while_the_safety_check_question_is_open_nobody_is_dialed(agent, numbers):
+    """The safety-state guard alone: the turn brings no safety text, but the check question hasn't
+    been answered, so whether the caller should be outside isn't known yet."""
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    assert agent.turn(call, "There's a weird smell near the furnace.")["data"]["safety"][
+        "action"
+    ] == "ask_check"
+    result = agent.turn(call, "Put me through to a person right now.")
+    assert result["data"].get("safety") is None
     assert "handoff" not in result["data"]
     assert handoff(agent, call) is None
 

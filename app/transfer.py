@@ -123,20 +123,13 @@ INSISTENT = (
     "not a machine",
     "not a computer",
 )
-# Anger anywhere on the call turns a request into a demand.
+# Anger at the call, in the request's own line or the one just before it, turns a request into a
+# demand. These are about the call or the company whatever follows them.
 ANGRY = (
     "the hell",
-    "damn",
-    "dammit",
     "bullshit",
-    "shit",
-    "fuck",
-    "fucking",
-    "crap",
     "ridiculous",
     "unacceptable",
-    "garbage",
-    "useless",
     "sick of",
     "fed up",
     "pissed",
@@ -145,6 +138,15 @@ ANGRY = (
     "screw this",
     "this is a joke",
 )
+# Swearing counts too, but not when it is about the equipment: "the damn furnace is dead again" is
+# a broken furnace, not anger at the call.
+SWEARING = ("damn", "dammit", "shit", "fuck", "fucking", "freaking", "crap", "crappy", "garbage",
+            "useless", "stupid")
+EQUIPMENT = {
+    "furnace", "boiler", "heat", "heater", "heating", "ac", "air", "unit", "system", "thing",
+    "radiator", "radiators", "thermostat", "pipe", "pipes", "vent", "vents", "filter", "fan",
+    "compressor", "boilers", "furnaces",
+}
 ROLE_NAMES = {"office": "office", "on_call": "on-call technician"}
 OUTCOMES = ("connected", "no_answer", "not_accepted", "failed")
 HANDOFF_OUTCOMES = ("handed_off", "failed")
@@ -193,19 +195,27 @@ def asks_for_person(text: str) -> bool:
     return bool(_asking_sentences(text))
 
 
-def demands_person(text: str, earlier: list[str]) -> bool:
-    """This caller line asks for a person and means it: insistently ("right now", "I said"), angrily
-    (anywhere on the call), or again after asking on an earlier line of this call."""
-    asking = _asking_sentences(text)
-    if not asking:
-        return False
-    if any(" now " in sentence for sentence in asking):
+def _angry(line: str) -> bool:
+    said = words(line)
+    if any(has_phrase(said, phrase) for phrase in ANGRY):
         return True
+    heard = said.split()
+    for i, word in enumerate(heard):
+        if word in SWEARING and not EQUIPMENT & set(heard[i + 1 : i + 3]):
+            return True
+    return False
+
+
+def demands_person(text: str, earlier: list[str]) -> bool:
+    """This caller line asks for a person and means it: insistently ("right now", "I said"),
+    angrily (in this line or the one just before it), or again after asking on an earlier line of
+    this call. A calm "can I talk to someone now?" is a request, not a demand."""
+    if not _asking_sentences(text):
+        return False
     said = words(text)
     if any(has_phrase(said, phrase) for phrase in INSISTENT):
         return True
-    heard = words(" ".join([*earlier, text]))
-    if any(has_phrase(heard, phrase) for phrase in ANGRY):
+    if any(_angry(line) for line in [*earlier[-1:], text]):
         return True
     return any(asks_for_person(line) for line in earlier)
 
