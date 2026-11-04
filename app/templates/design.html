@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_ui.html" import priority, priority_text, window_text, figure, empty, note_icon, count, go, info, player, on_off with context %}
+{% from "_ui.html" import priority, priority_text, window_text, figure, empty, note_icon, count, go, info, player, on_off, node_graph, node_detail, basis, outcome with context %}
 {% block title %}Design system{% endblock %}
 {% block body %}
 {% set colors = [
@@ -197,6 +197,39 @@
       <section class="panel compact"><div class="panel-head"><h2>Compact panel</h2></div><div class="panel-body"><p>A few lines in a side panel: no ruled head.</p></div></section>
       <section class="panel">{{ empty("Nothing needs a person right now.") }}</section>
     </div>
+  </div>
+  {# The debug bench's pieces, with made-up steps. #}
+  {% set n = {"facts": [], "blocks": [], "messages": none, "refs": [], "ms_label": "", "tone": ""} %}
+  {% set sample = {"lanes": [("caller", "Caller"), ("voice", "Voice worker"), ("model", "Model"), ("server", "Server")], "nodes": [
+    dict(n, id="s1", lane="caller", col=0, from_col=0, kind="caller_line", title="Caller", summary="I smell gas in the basement.", at="0:06", ms=212.0, ms_label="final transcript", blocks=[{"title": "Said", "text": "I smell gas in the basement.", "open": true}]),
+    dict(n, id="s2", lane="voice", col=1, from_col=0, kind="end_of_turn", title="End of turn", summary="Decided the caller had finished", at="0:06", ms=354.0, ms_label="end of turn"),
+    dict(n, id="s3", lane="server", col=3, from_col=1, kind="turn_check", title="Turn check", summary="Safety signal: the fixed lines are spoken next (gas)", at="0:06", ms=1.2, ms_label="server", tone="warn", facts=[("Safety action", "speak_lines")]),
+    dict(n, id="s4", lane="voice", col=1, from_col=3, kind="spoken", title="Spoken", summary="Please leave the house now and call 911 from outside.", at="0:07", ms=none, ms_label="first audio", tone="warn", facts=[("Source", "fixed text from the server, no model")]),
+    dict(n, id="s5", lane="model", col=2, from_col=1, kind="model_request", title="Model request", summary="Request 1 of the turn, 6 messages", at="0:15", ms=565.0, ms_label="first token", messages=[{"role": "user", "text": "We're outside now."}, {"role": "assistant", "text": "Good. I'll flag this for a person."}]),
+    dict(n, id="s6", lane="server", col=3, from_col=2, kind="tool", title="book_appointment", summary="refused gate_safety", at="0:16", ms=8.0, ms_label="server", tone="hold", blocks=[{"title": "Arguments", "text": "{\"job_type\": \"safety_check\"}", "open": true}]),
+  ]} %}
+  <div class="split wide-side" data-graph>
+    <section class="panel">
+      <div class="panel-head"><h2>Node graph</h2><span class="sub">a call's steps in the lane of whoever took them; pick one for its detail; a missing timing says so</span></div>
+      {{ node_graph(sample, "Specimen steps") }}
+    </section>
+    {{ node_detail(sample) }}
+  </div>
+
+  <div class="split wide-side">
+    <section class="panel">
+      <div class="panel-head"><h2>Rate chart</h2><span class="sub">pass rate per eval run, the floor as a dashed line</span></div>
+      <div class="panel-body">
+        <div class="rate-chart" style="--cols: 12">
+          {% for rate in [0.81, 0.88, 0.91, 0.94, 0.84, 0.97, 0.91, none, 1.0, 0.94] %}<a href="#" class="{% if rate is none %}error{% elif rate < 0.9 %}under{% endif %}" style="--h: {{ ((rate or 0) * 100) | round(1) }}%" aria-label="Specimen run"><i></i></a>{% endfor %}
+          <div class="floor" style="--h: 90%"><span>Floor 90%</span></div>
+        </div>
+      </div>
+    </section>
+    <section class="panel">
+      <div class="panel-head"><h2>Basis and outcome tags</h2><span class="sub">number basis; rule and run outcomes</span></div>
+      <div class="panel-body spec-row">{{ basis("MEASURED") }}{{ basis("SOURCE") }}{{ basis("ASSUMED") }}{{ outcome("pass") }}{{ outcome("fail") }}{{ outcome("fired") }}{{ outcome("error") }}{{ outcome("not reached") }}</div>
+    </section>
   </div>
 </main>
 {% endblock %}

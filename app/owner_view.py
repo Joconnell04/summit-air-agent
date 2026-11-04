@@ -80,8 +80,8 @@ def _render(request: Request, name: str, context: dict, status: int = 200) -> Re
 
 
 def _next_path(value: str) -> str:
-    """Where to go after signing in: a path on the owner view only, never another site."""
-    if value.startswith("/owner") and not value.startswith("//") and "\\" not in value:
+    """Where to go after signing in: a path on the owner view or the bench, never another site."""
+    if value.startswith(("/owner", "/bench")) and not value.startswith("//") and "\\" not in value:
         return value
     return "/owner"
 

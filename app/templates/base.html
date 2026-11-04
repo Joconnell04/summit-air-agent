@@ -16,13 +16,16 @@
 <header class="app-header">
   <div class="inner">
     <a class="brand" href="/owner{{ q(slug) }}"><img src="/owner/static/revin-logo.svg" alt="Revin" width="88" height="15"><span class="rule"></span><span class="company">{{ tenant }}</span></a>
+    {% block tabs %}{% from "_ui.html" import q with context %}
     <nav class="tabs" aria-label="Pages">
       <a href="/owner{{ q(slug, day if day is defined and not is_today else none) }}"{% if tab == "today" %} aria-current="page"{% endif %}>Today</a>
       <a href="/owner/calls{{ q(slug, day if day is defined and not is_today else none) }}"{% if tab == "calls" %} aria-current="page"{% endif %}>Calls</a>
       <a href="/owner/results{{ q(slug, day if day is defined and not is_today else none) }}"{% if tab == "results" %} aria-current="page"{% endif %}>Results</a>
       <a href="/owner/rules{{ q(slug) }}"{% if tab == "rules" %} aria-current="page"{% endif %}>Rules</a>
       <a href="/owner/settings{{ q(slug) }}"{% if tab == "settings" %} aria-current="page"{% endif %}>Settings</a>
+      {% if is_admin %}<a href="/bench">Bench</a>{% endif %}
     </nav>
+    {% endblock %}
     <div class="end">
       <form class="search" role="search" method="get" action="/owner/search" data-suggest="/owner/search/suggest{{ q(slug) }}">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>

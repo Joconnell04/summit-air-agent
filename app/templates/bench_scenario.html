@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% from "_ui.html" import bench_tabs, outcome, empty with context %}
+{% block title %}Bench: {{ r.key }}{% endblock %}
+{% block tabs %}{{ bench_tabs(tab) }}{% endblock %}
+{% block body %}
+<main class="page">
+  <div class="call-head">
+    <div class="lead">
+      <div class="crumbs"><a href="/bench/evals">Evals</a><span>/</span><a href="/bench/evals/{{ run.run_id }}">{{ run.run_id }}</a></div>
+      <div class="who"><h1 class="page-title">{{ r.key }}</h1>{{ outcome(r.outcome) }}{% if r.must_pass_failures %}<span class="tag urgent">Must-pass</span>{% endif %}</div>
+      <div class="facts"><span>{{ r.flow | join(", ") }}</span><span>{{ r.difficulty }}</span>{% if r.traits %}<span>{{ r.traits | join(", ") }}</span>{% endif %}<span class="num">call {{ mask(r.call_id) }}</span></div>
+    </div>
+    {% if langsmith %}<a class="btn" href="{{ langsmith }}" rel="noopener" target="_blank" title="Experiment {{ run.run_id }}, run {{ r.key }}">LangSmith</a>{% endif %}
+  </div>
+
+  <div class="split wide-side">
+    <section class="panel conv-panel">
+      <div class="panel-head"><h2>Transcript</h2><span class="count">{{ transcript | length }}</span><span class="sub">{{ mask(r.persona) | truncate(120) }}</span></div>
+      {% if transcript %}
+      <ol class="conv">
+        {% for t in transcript %}
+        <li class="turn {{ 'agent' if t.role == 'agent' else 'caller' }}"><span class="at">{{ loop.index }}</span><span class="rail" aria-hidden="true"></span><span class="speaker">{{ "Agent" if t.role == "agent" else "Caller" }}</span><span class="text">{{ t.text }}</span></li>
+        {% endfor %}
+      </ol>
+      {% else %}{{ empty("No transcript in this result.") }}{% endif %}
+    </section>
+    <aside class="stack">
+      <section class="panel compact">
+        <div class="panel-head"><h2>Code checks</h2></div>
+        <div class="panel-body">
+          {% if checks %}<dl class="kv">{% for name, ok, why in checks %}<dt><code>{{ name }}</code></dt><dd>{% if ok %}<span class="tag done">Pass</span>{% else %}<span class="tag urgent">Fail</span> {{ mask(why) }}{% endif %}</dd>{% endfor %}</dl>
+          {% elif r.error %}<p class="muted">No verdict: {{ mask(r.error) }}</p>{% else %}<p class="muted">No checks recorded on this result.</p>{% endif %}
+        </div>
+      </section>
+      <section class="panel compact">
+        <div class="panel-head"><h2>Grader</h2><span class="end source">{% if r.grader_score is not none %}{{ r.grader_score }} of 5{% endif %}</span></div>
+        <div class="panel-body"><p>{{ mask(r.grader_notes) or "No notes." }}</p></div>
+      </section>
+      <section class="panel compact">
+        <div class="panel-head"><h2>Tool calls</h2><span class="end source">{{ tools | length }}</span></div>
+        <div class="panel-body">{% for t in tools %}<div class="tech-block">{{ t.name }} {{ t.args }}</div>{% else %}<p class="muted">None.</p>{% endfor %}</div>
+      </section>
+      <section class="panel compact">
+        <div class="panel-head"><h2>Timings</h2></div>
+        <div class="panel-body">
+          <dl class="kv">
+            <dt>Reply p50 / p90</dt><dd class="num">{{ "{:,.0f}".format(r.reply_delay_p50_ms) }} / {{ "{:,.0f}".format(r.reply_delay_p90_ms) }} ms</dd>
+            {% for t in r.turn_timings %}<dt>Turn {{ loop.index }}, {{ t.kind }}</dt><dd class="num">{{ "{:,.0f}".format(t.reply_delay_ms) }} ms reply, {{ "{:,.0f}".format(t.model_first_token_ms) }} ms first token{% if t.tool_ms %}, {{ "{:,.0f}".format(t.tool_ms) }} ms tool{% endif %}</dd>{% endfor %}
+            <dt>Cost</dt><dd class="num">${{ "%.4f" | format(r.cost_usd) }}{% if r.agent_cost_usd is not none %}, agent ${{ "%.4f" | format(r.agent_cost_usd) }}{% endif %}</dd>
+          </dl>
+        </div>
+      </section>
+    </aside>
+  </div>
+</main>
+{% endblock %}
