@@ -12,7 +12,17 @@ import time
 from datetime import datetime, timedelta
 from pathlib import Path
 
-from . import booking, outbound, recordings, records, reports, search, summary, weather
+from . import (
+    booking,
+    outbound,
+    owner_settings,
+    recordings,
+    records,
+    reports,
+    search,
+    summary,
+    weather,
+)
 from .db import iso, parse_iso, tx
 from .fsm import FsmAdapter, FsmRejected, FsmUnavailable, SlotCache
 from .mail import Mailer
@@ -27,6 +37,8 @@ STUCK_SENDING_MINUTES = 5
 UNCLAIMED_MINUTES = 15
 # FSM reads per run for the booked-and-kept check, so a backlog can't hold up the other jobs.
 KEPT_CHECKS_PER_RUN = 50
+# The safety call's flags: emailed after hours whatever the owner's on-call alerts setting says.
+SAFETY_FLAG_KINDS = ("safety", "safety_dropped")
 
 
 def retry_queue(
@@ -312,7 +324,8 @@ def alert_on_call(
     owner_view_url: str = "",
 ) -> dict:
     """Email the on-call person about each urgent flag raised while the company is closed: what,
-    where, who and why (journey 11). A send that fails is tried again on the next runs."""
+    where, who and why (journey 11). A send that fails is tried again on the next runs. With the
+    owner's on-call alerts setting off for the call, only safety flags are sent."""
     cfg = tenant.on_call_alerts
     since = iso(now - timedelta(minutes=cfg["max_age_minutes"]))
     marks = ",".join("?" * len(cfg["priorities"]))
@@ -331,6 +344,11 @@ def alert_on_call(
     counts = {"sent": 0, "held": 0, "failed": 0}
     for flag in flags:
         if flag["kind"] in cfg["skip_kinds"] or tenant.is_open(parse_iso(flag["created_at"])):
+            continue
+        if (
+            flag["kind"] not in SAFETY_FLAG_KINDS
+            and not owner_settings.for_call(conn, tenant, flag["call_id"])["on_call_alerts"]
+        ):
             continue
         subject, body = _alert_text(conn, tenant, flag, owner_view_url)
         status, error = _send(mailer, cfg["email"], subject, body)

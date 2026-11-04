@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% from "_ui.html" import empty with context %}
+{% block title %}{{ tenant }}: admins only{% endblock %}
+{% block body %}
+<main class="page">
+  <div class="page-head">
+    <div class="lead">
+      <div class="crumbs">{{ user.name }}<span>/</span><span>Staff</span></div>
+      <h1 class="page-title">Admins only</h1>
+    </div>
+  </div>
+  <section class="panel">{{ empty("Only an admin can change this. Ask one to make the change.") }}</section>
+</main>
+{% endblock %}

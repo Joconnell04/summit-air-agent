@@ -440,7 +440,7 @@ def test_a_line_tampered_into_the_table_still_cannot_change_a_locked_line(agent)
     finally:
         conn.close()
     call = agent.start()["data"]["call_id"]
-    agent.turn(call, "My heat is out.")
+    agent.turn(call, "My heat is out at 101 Union St, 11231.")
     said = agent.tool("read_back", call, address={"street": "101 Union St", "unit": "",
                                                     "city": "Brooklyn", "zip": "11231"},
                       phone="caller_id")

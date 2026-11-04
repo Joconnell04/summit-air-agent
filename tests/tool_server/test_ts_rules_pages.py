@@ -6,30 +6,26 @@ from html.parser import HTMLParser
 import pytest
 import yaml
 from test_ts_rules import PATH, PETS, TENANT, publish
-from toolkit import PASSES, ROOT, Agent, make_server
+from toolkit import PASSES, ROOT, Agent, make_server, sign_in
 
 from app import owner_view, plain, rulebook, rules
 
-READ = "owner-token"
-EDIT = "edit-code"
 CSS = (ROOT / "app" / "static" / "owner" / "components.css").read_text()
 
 
 @pytest.fixture
 def agent(tmp_path, clock, mock):
-    app = make_server(tmp_path, clock, mock[0], owner_token=READ, rules_editors=f"Dana={EDIT}")
-    return Agent(app, clock)
+    return Agent(make_server(tmp_path, clock, mock[0]), clock)
 
 
 def reader(agent: Agent) -> Agent:
-    agent.client.get(f"/owner?token={READ}")
-    return agent
+    """Signed in as staff, who can read every page."""
+    return sign_in(agent, "staff", "sam")
 
 
 def editor(agent: Agent) -> Agent:
-    response = agent.client.post("/owner/rules/login", data={"token": EDIT}, follow_redirects=False)
-    assert response.status_code == 303
-    return agent
+    """Signed in as an admin named Dana, who can edit and publish."""
+    return sign_in(agent, "admin", "dana")
 
 
 class Tags(HTMLParser):
@@ -119,7 +115,7 @@ def test_live_edits_show_as_the_owners_own_rows():
     assert goodbye.detail == "Thanks for calling. Take care."
 
 
-# ---- The Rules page (read token) ----------------------------------------------------------------
+# ---- The Rules page (any signed-in user) ----------------------------------------------------------------
 
 
 def test_the_rules_page_lists_every_stage_with_locked_and_editable_rules(agent):
@@ -169,22 +165,22 @@ def test_a_version_that_passed_on_a_rerun_says_so(agent):
     assert "Failed, then passed on a rerun: landlord in disguise." in page
 
 
-# ---- The editor (edit login) --------------------------------------------------------------------
+# ---- The editor (admins) --------------------------------------------------------------------
 
 
-def test_the_owner_token_alone_cannot_open_the_editor(agent):
+def test_staff_cannot_open_the_editor(agent):
     page = reader(agent).client.get("/owner/rules/edit")
-    assert page.status_code == 401 and "Edit code" in page.text
+    assert page.status_code == 403 and "Admins only" in page.text
 
 
-def test_a_wrong_edit_code_is_refused(agent):
-    page = agent.client.post("/owner/rules/login", data={"token": READ})
-    assert page.status_code == 401 and "didn't work" in page.text
+def test_the_editor_needs_a_sign_in(agent):
+    page = agent.client.get("/owner/rules/edit")
+    assert page.status_code == 401 and 'name="password"' in page.text
 
 
-def test_no_edit_code_set_refuses_every_edit(tmp_path, clock, mock):
-    bare = Agent(make_server(tmp_path, clock, mock[0], owner_token=READ), clock)
-    assert bare.client.post("/owner/rules/login", data={"token": ""}).status_code == 401
+def test_staff_see_no_edit_button_and_admins_do(agent):
+    assert "Edit rules" not in reader(agent).client.get("/owner/rules").text
+    assert "Edit rules" in editor(agent).client.get("/owner/rules").text
 
 
 def test_the_editor_has_fields_only_for_the_editable_lines(agent):
@@ -198,9 +194,9 @@ def test_the_editor_has_fields_only_for_the_editable_lines(agent):
     assert stages == set(rules.GUIDANCE_STAGES)
 
 
-def test_saving_a_draft_needs_the_edit_login(agent):
+def test_staff_cannot_save_a_draft(agent):
     response = reader(agent).client.post("/owner/rules/draft", data={"guide.booking.0": PETS})
-    assert response.status_code == 401
+    assert response.status_code == 403
     conn = agent.db()
     try:
         assert conn.execute("SELECT COUNT(*) FROM rule_versions").fetchone()[0] == 0
@@ -289,10 +285,10 @@ def test_rollback_from_the_editor(agent):
     ("/owner/rules/rollback", {"number": "0"}),
     ("/owner/rules/cancel", {}),
 ])
-def test_every_edit_action_needs_the_edit_login(agent, path, form):
+def test_staff_cannot_take_any_edit_action(agent, path, form):
     publish(agent, {"guidance": {"booking": [PETS]}})
     response = reader(agent).client.post(path, data=form)
-    assert response.status_code == 401 and "Edit code" in response.text
+    assert response.status_code == 403 and "Admins only" in response.text
     conn = agent.db()
     try:
         assert rules.live(conn, TENANT.slug)["number"] == 1

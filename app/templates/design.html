@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_ui.html" import priority, priority_text, window_text, figure, empty, note_icon, count, go, info, player with context %}
+{% from "_ui.html" import priority, priority_text, window_text, figure, empty, note_icon, count, go, info, player, on_off with context %}
 {% block title %}Design system{% endblock %}
 {% block body %}
 {% set colors = [
@@ -87,6 +87,15 @@
           <tr><td class="fit"><label class="what" for="spec-bad">Greeting, known caller</label></td><td><input class="field" id="spec-bad" value="Hi, is this you?" aria-invalid="true" aria-describedby="spec-bad-why"><span class="error field-error" id="spec-bad-why">Keep {first_name} in the line, and no other braces.</span></td></tr>
         </tbody>
       </table>
+      <form class="table-wrap" onsubmit="return false">
+      <table class="table form">
+        <tbody>
+          <tr><td><span class="what" id="spec-setting">Two-party consent</span><div class="why small">An on/off setting: the segmented control as a radio pair.</div></td><td class="fit right">{{ on_off("spec.consent", false, "spec-setting") }}</td></tr>
+          <tr><td><span class="what">Call recordings</span><div class="why small">The same setting as staff see it.</div></td><td class="fit right"><span class="tag done">On</span></td></tr>
+        </tbody>
+      </table>
+      </form>
+      <div class="spec-row"><form class="account" onsubmit="return false"><button class="btn quiet" type="button" data-tip="Signed in as Dana Ruiz, staff">Sign out</button></form></div>
       <div class="tags"><span class="tag info">Editable</span><span class="tag outline">Locked</span><span class="tag high">Checking</span><span class="tag done">Passed 18 of 18</span><span class="tag urgent">Blocked, 2 of 18 failed</span><span class="tag outline">Rolled back</span></div>
     </div>
   </section>

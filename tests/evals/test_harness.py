@@ -159,7 +159,7 @@ def test_safety_lines_come_from_the_server_not_the_model(seed_dir, tmp_path):
 
 
 def test_a_tool_call_reaches_the_server_and_is_recorded(seed_dir, tmp_path):
-    s = scenario(must=[{"tool_ok": "check_service_area"}])
+    s = scenario(must=[{"tool_ok": "check_service_area"}], opening="Hi, my heat is out in 11231.")
     replies = [use("check_service_area", "Let me check.", zip="11231"),
                say("Good news, we cover your area.")]
     result, *_ = run(seed_dir, tmp_path, s, replies, [say("[END]")])
@@ -171,7 +171,8 @@ def test_a_tool_call_reaches_the_server_and_is_recorded(seed_dir, tmp_path):
 
 
 def test_an_out_of_area_refusal_is_recorded_by_zip(seed_dir, tmp_path):
-    s = scenario(must=[{"out_of_area": "11501"}, {"booking": "none"}])
+    s = scenario(must=[{"out_of_area": "11501"}, {"booking": "none"}],
+                 opening="Hi, my heat is out, I'm in 11501.")
     replies = [use("check_service_area", zip="11501"), say("Sorry, that's outside our area.")]
     result, agent, *_ = run(seed_dir, tmp_path, s, replies, [say("[END]")])
     assert result.outcome == "pass", result.check_failures

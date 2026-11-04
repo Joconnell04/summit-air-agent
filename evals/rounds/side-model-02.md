@@ -7,7 +7,7 @@ The check Jackson asked for before `SIDE_MODEL=openai-decisions` goes back on in
 ## Method
 
 - **Code.** `origin/main` at `bc8b8a6`, in a scratch worktree (removed afterwards), with the main checkout's `.venv` and `.env`. `SIDE_MODEL` is not set in `.env`, so the "without" arm unset it explicitly and the "with" arm set `SIDE_MODEL=openai-decisions` in the environment. The side-model settings are the shipped ones: question `vulnerable_person`, threshold 0.5, Urgent (High on a mild day), 0.4 s wait (`tenants/summit-air/agent.yaml`, `app/side_model.py`).
-- **Scenarios.** 26, chosen by id. All 13 tagged `flow:priority` or `flow:after-hours` (including `mild-after-hours-no-heat`, `elderly-no-heat`, `baby-no-heat-standard`, `stroke-in-passing-no-heat`, `grandchild-for-elderly-grandparent`, `asks-agent-to-call-911`, `no-cooling-standard`, `oven-heat-co-check`) plus `after-hours-tune-up`, and 12 plain no-heat or no-cooling calls where nobody is at risk (`no-heat-gas-stove`, `booking-system-down`, `arrival-before-ten`, `tenant-landlord-approves`, `tenant-legal-question`, `out-of-area-known-caller`, `same-problem-came-back`, `note-asks-to-skip-readback`, `dropped-call-resumes`, `injection-skip-readback`, `landlord-in-disguise`, `co-op-owner-mentions-board`).
+- **Scenarios.** 26, chosen by id. All 14 tagged `flow:priority` or `flow:after-hours` (including `mild-after-hours-no-heat`, `elderly-no-heat`, `baby-no-heat-standard`, `stroke-in-passing-no-heat`, `grandchild-for-elderly-grandparent`, `asks-agent-to-call-911`, `no-cooling-standard`, `oven-heat-co-check`, `after-hours-tune-up`), and 12 plain no-heat or no-cooling calls where nobody is at risk (`no-heat-gas-stove`, `booking-system-down`, `arrival-before-ten`, `tenant-landlord-approves`, `tenant-legal-question`, `out-of-area-known-caller`, `same-problem-came-back`, `note-asks-to-skip-readback`, `dropped-call-resumes`, `injection-skip-readback`, `landlord-in-disguise`, `co-op-owner-mentions-board`).
 - **Runs.** Profile `fast` (claude-haiku-5-5), the harness's own simulated caller and grader, 4 workers, 1 sample per scenario, `--no-upload`. Two runs per arm: with 1 and without 1 started together, then with 2 and without 2, so both arms ran in the same minutes. Run ids and command: `side-model-02-data/arm.sh.txt`.
 - **What was read.** A 40-line scratch wrapper around `evals.run.main` (`side-model-02-data/sidecheck_run.py.txt`, not part of the repo) dumped, for every scenario, the server's call record (`/debug/calls/<id>`) and every side-model answer the priority gate read. The priority the server set is the highest of the booking priority and any flag priority on that record. "Side model on record" means the booking's `priority_reasons` holds "someone at home at risk from the heat or cold", which only the side-model slot writes. Everything per call is in `side-model-02-data/calls.json`; the four results files are in `evals/results/`.
 - **Spend.** The harness reports $0.638, $0.597, $0.640 and $0.626 for the four runs, $2.50 in all (agent, simulated caller, grader). The OpenAI calls are not in that figure; at about $0.0004 per phone call (`side-model-01.md`, not re-measured here) the 52 calls add about $0.02 (ASSUMED). Within the $3 approved. The first run was checked 45 seconds in: the side model was answering.
@@ -70,12 +70,12 @@ The check Jackson asked for before `SIDE_MODEL=openai-decisions` goes back on in
 
 | Measure | Value |
 |---|---|
-| Calls where the gate read a side-model answer | 46 (the other 6 had no no-heat or no-cooling lookup: two tune-ups, two out-of-area, and two flag-only calls) |
+| Calls where the gate read a side-model answer | 46 (the other 6 never reached a priority decision for a no-heat or no-cooling job: two tune-ups, two out-of-area, and two flag-only calls) |
 | Answers read by the gate | 131, none late and none failed |
 | Longest wait at the gate | 2 ms (the answer was back before the agent asked) |
 | Calls with a yes (probability 0.5 or more) | 11 of 46 |
 | Yes calls with a person at risk in what the caller said | 11 of 11 (10 as scripted, 1 where the simulated caller added a husband with a heart condition) |
-| No calls | 35 of 46; none had a person at risk in what the caller said |
+| No calls | 35 of 46; none had a person at risk in what the caller said (MEASURED by scanning every caller line for risk words and reading each hit: all were negations such as "no babies", "nobody elderly", or healthy adults) |
 | Yes calls where the rules had already raised to Urgent | 9 (the side model changed nothing) |
 | Yes calls where the side model alone moved High to Urgent | 2, both `stroke-in-passing-no-heat` |
 | Answer values seen | 0.0, 0.01 and 1.0 only |
@@ -95,7 +95,7 @@ Six calls in 76 (38 per arm), all from the phrase rules. The side model answered
 | Without 1 | no-heat-gas-stove | "my dad helped me with the down payment", "I live alone" | a parent at home, age not given; someone at home alone; two risk factors together |
 | Without 2 | wrong-zip-corrected-at-once | "nobody's elderly" | an older person or a baby at home |
 
-Cause, checked by calling the shipped rule on the caller's words: `words()` in `app/text.py` drops the apostrophe, so "nobody's" becomes "nobodys", which is not in `NEGATIONS` in `app/priority.py`, and "elderly" or "baby" after it counts as said. "nobody is elderly" and "no babies" are read correctly. The seventh Urgent in the table above (With 1, `wrong-zip-corrected-at-once`) is the legitimate one.
+Cause, checked by calling the shipped rule on the caller's words: `words()` in `app/text.py` drops the apostrophe, so "nobody's" becomes "nobodys", which is not in `NEGATIONS` in `app/priority.py`, and "elderly" or "baby" after it counts as said. "nobody is elderly" and "no babies" are read correctly. The one other Urgent counted in the per-run table (With 1, `wrong-zip-corrected-at-once`) is correct for what the caller said, so it is not in this list.
 
 ### Why each run failed, and whether the side model is the cause
 
@@ -116,7 +116,7 @@ Of the 12 fails in the without arm, 2 are the stroke scenario; the other 10 have
 
 | Behavior | With (2 runs) | Without (2 runs) |
 |---|---|---|
-| "I've marked this call top priority" line played | 17 calls | 14 calls |
+| "most urgent calls" line played (the top-priority line) | 17 calls | 14 calls |
 | Urgent on the 12 calls that should be Urgent (the six scenarios above, twice) | 12 of 12 | 10 of 12 (stroke missed twice) |
 | On-call-first gate fired (`after-hours-no-heat-cold`) | 2 of 2 | 1 of 2 (the other run took the gas safety path) |
 | On-call alert or on-call-first gate on `mild-after-hours-no-heat` | 0 of 2, booked the morning | 0 of 2, booked the morning |

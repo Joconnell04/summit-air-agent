@@ -79,6 +79,8 @@ GATES = (
     ("booking", "Reads the address and phone back once; confirmed details aren't read again",
      ("read_back_confirmed",), ("S-26",)),
     ("booking", "Won't book outside the service area", ("out_of_area",), ("S-28",)),
+    ("booking", "Checks the area and books only on a ZIP the caller said or one on their record",
+     ("zip_not_heard",), ()),
     ("booking", "Won't book a commercial customer", ("customer_type",), ("S-05",)),
     ("booking", "When who can approve isn't settled, a booking gets a call before dispatch", (),
      ("S-07a",)),
@@ -108,6 +110,8 @@ NOT_RULES = {"invalid_arguments", "unknown_call", "call_ended"}
 LINE_STAGES = {
     "greeting_known": ("opening", "Greeting, known caller"),
     "greeting_unknown": ("opening", "Greeting"),
+    "recording_notice": ("opening", "Recording notice, two-party consent"),
+    "recording_stopped": ("whole_call", "Recording stopped, two-party consent"),
     "callback_opening": ("opening", "Callback opening"),
     "callback_opening_unknown": ("opening", "Callback, no name"),
     "earlier_slot_offer": ("opening", "Earlier opening offer"),

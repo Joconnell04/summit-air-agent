@@ -60,6 +60,7 @@ def test_the_model_gets_exactly_the_servers_tools_and_no_built_in_end_call(conne
 
 def test_a_tool_call_posts_to_the_server_with_the_call_id(agent, connect):
     agent.start(call_id="call-1")
+    agent.turn("call-1", "I'm in 11231.")
     tools = tools_for(connect("call-1"))
     result = json.loads(asyncio.run(tools["check_service_area"]({"zip": "11231"}, None)))
     assert result["ok"] is True
@@ -216,6 +217,7 @@ def test_a_slow_tool_is_timed_for_the_turn_log(agent, connect):
 def test_the_read_back_sentence_is_spoken_by_the_worker_and_the_model_says_nothing(agent, connect):
     """Eval round 3: the caller hears the server's read-back sentence word for word, once."""
     agent.start(call_id="call-1")
+    agent.turn("call-1", "It's 101 Union Street, Brooklyn, one one two three one.")
     hangups, voice = Hangups(), Voice()
     tools = tools_for(connect("call-1"), hangups, voice)
     address = {"street": "101 Union St", "unit": "", "city": "Brooklyn", "zip": "11231"}

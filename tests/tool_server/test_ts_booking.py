@@ -67,6 +67,7 @@ def test_a_happy_booking_creates_one_job_with_the_intake_fields(agent, mock):
 def test_booking_is_refused_until_the_read_back_was_returned_and_answered(agent, mock):
     before = fsm_jobs(mock)
     call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "It's 101 Union St, 11231.")
     slot = first_open(agent, call)
     refused = book(agent, call, slot)
     assert refused["refused"] == "gate_read_back"
@@ -103,6 +104,7 @@ def test_a_correction_after_the_read_back_needs_a_new_read_back(agent):
 def test_the_read_back_is_one_sentence_with_the_number_in_groups(agent):
     """Eval round 3: one sentence, no "let me read that back" lead-in, no internal words."""
     call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "It's 101 Union St, 11231.")
     asked = agent.tool("read_back", call, address=in_area_address(), phone="caller_id")
     assert asked["say"] == (
         "I have your home at 101 Union St, Brooklyn, one one two three one, and the best number is "
@@ -113,8 +115,8 @@ def test_the_read_back_is_one_sentence_with_the_number_in_groups(agent):
 
 def test_a_caller_who_answers_the_read_back_with_a_business_cannot_book(agent):
     call = agent.start(UNKNOWN)["data"]["call_id"]
-    agent.turn(call, "The heat's out.")
-    agent.tool("read_back", call, address=in_area_address(), phone="caller_id")
+    agent.turn(call, "The heat's out at 101 Union St, 11231.")
+    assert agent.tool("read_back", call, address=in_area_address(), phone="caller_id")["ok"]
     agent.turn(call, "Well, it's a business, it's our office upstairs.")
     agent.tool("read_back", call, address=in_area_address(), phone="caller_id", confirmed=True)
     assert book(agent, call, first_open(agent, call))["refused"] == "customer_type"
@@ -122,6 +124,7 @@ def test_a_caller_who_answers_the_read_back_with_a_business_cannot_book(agent):
 
 def test_the_number_im_calling_from_is_the_real_caller_id(agent):
     call = agent.start("+1 (347) 555-0101")["data"]["call_id"]
+    agent.turn(call, "It's 101 Union St, 11231.")
     asked = agent.tool("read_back", call, address=in_area_address(), phone="caller_id")
     assert "three four seven, five five five, zero one zero one" in asked["say"]
 
@@ -129,6 +132,7 @@ def test_the_number_im_calling_from_is_the_real_caller_id(agent):
 def test_the_one_ending_in_picks_the_matching_number_on_file(agent, scenarios):
     park = scenarios["activeMemberWithAdultChild"]  # two numbers on file
     call = agent.start(park["phone"])["data"]["call_id"]
+    agent.turn(call, "It's for 101 Union St, 11231.")
     ending = park["adultChildPhone"][-4:]
     asked = agent.tool("read_back", call, address=in_area_address(), phone=ending)
     digits = "".join(c for c in park["adultChildPhone"] if c.isdigit())
@@ -258,6 +262,7 @@ def test_out_of_area_is_refused_and_recorded_with_its_zip(agent, mock, scenarios
 
 def test_an_in_area_zip_passes(agent):
     call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "I'm in 11201.")
     checked = agent.tool("check_service_area", call, zip="11201")
     assert checked["ok"] and checked["data"]["in_area"]
 
@@ -620,7 +625,7 @@ def test_an_arrival_time_no_window_fits_is_said_plainly_without_a_promise(agent)
 )
 def test_a_spelled_street_is_joined_into_the_name_for_the_read_back(agent, address, street):
     call = agent.start(UNKNOWN)["data"]["call_id"]
-    agent.turn(call, "It's on Houston, let me spell it.")
+    agent.turn(call, "It's on Houston, 10302, let me spell it.")
     asked = agent.tool(
         "read_back", call, address={"zip": "10302", **address}, phone="caller_id"
     )
@@ -956,6 +961,57 @@ def test_an_unrelated_booking_after_a_recent_visit_is_not_a_return_visit(agent, 
     assert "manager" not in booked["say"]
 
 
+@pytest.mark.parametrize(
+    "line",
+    [
+        "It's 540 Church Ave.",
+        "I live on Church Avenue in Flatbush.",
+        "five forty church avenue",
+        "It's 540 Church, Brooklyn.",
+        "I'm right by Grand Army Plaza.",
+        "It's on Hotel Street.",
+        "We're on Office Road, the house at the end.",
+    ],
+)
+def test_a_business_word_in_a_street_or_place_name_is_not_a_business(line):
+    assert not sounds_commercial(line, AGENT["commercial"]), line
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "It's a church.",
+        "I run a hotel.",
+        "It's in a plaza on Atlantic.",
+        "We run a restaurant on Church Ave.",
+    ],
+)
+def test_a_business_said_as_one_still_reads_commercial_beside_a_street_name(line):
+    assert sounds_commercial(line, AGENT["commercial"]), line
+
+
+def test_a_caller_on_church_avenue_can_book(agent):
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "My heat's out at 540 Church Ave, 11218.")
+    address = {"street": "540 Church Ave", "unit": "", "city": "Brooklyn", "zip": "11218"}
+    agent.confirm_read_back(call, address)
+    assert book(agent, call, first_open(agent, call))["ok"]
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "I run a clinic. Dr. Patel handles the billing.",
+        "It's my store. Street parking only.",
+        "It's for my restaurant, St Marks and Third.",
+    ],
+)
+def test_a_street_word_after_a_break_does_not_hide_the_business_before_it(line):
+    assert sounds_commercial(line, AGENT["commercial"]), line
+
+
+def test_a_street_name_still_hides_its_business_word_inside_one_sentence():
+    assert not sounds_commercial("It's 540 Church St. in Brooklyn.", AGENT["commercial"])
 def test_the_read_back_says_the_zip_and_number_digit_by_digit():
     """A live test call read 646 624 0418 back as "six hundred and forty six"."""
     assert phone_said("(646) 624-0418") == "six four six, six two four, zero four one eight"

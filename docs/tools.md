@@ -10,7 +10,7 @@ Every endpoint returns HTTP 200 with:
 {"ok": true, "say": "One sentence the agent can say", "data": {}, "refused": null}
 ```
 
-- `ok: false` with `refused` set (`gate_read_back`, `gate_safety`, `out_of_area`, `customer_type`, `limit`, `not_owner`, `fsm_unavailable`, ...) when the server says no. `say` then tells the agent what to say instead. A non-2xx would make voice platforms retry and leave dead air.
+- `ok: false` with `refused` set (`gate_read_back`, `gate_safety`, `out_of_area`, `zip_not_heard` (the ZIP given to `check_service_area` or `read_back` was neither said by the caller on this call or a linked one, digits or words, nor on a matched customer's record), `customer_type`, `limit`, `not_owner`, `fsm_unavailable`, ...) when the server says no. `say` then tells the agent what to say instead. A non-2xx would make voice platforms retry and leave dead air.
 - Every request carries `call_id`. Writes also carry an `Idempotency-Key` (the voice layer derives it from call id, tool and arguments), so a retried call returns the first result.
 - Every request and result is logged with call id, request id, tool, arguments, result, the gate that fired, and timings (docs/architecture.md, logging).
 

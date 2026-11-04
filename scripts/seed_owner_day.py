@@ -3,7 +3,7 @@ on a clock moved call by call. The calls are scripted, not a model: each one mak
 voice layer would. A week of earlier bookings is seeded first so booked-and-kept has something to
 read.
 
-Run: make owner-demo   (seeds data/owner-demo/ and serves it on :8100 with token dev-owner-token)
+Run: make owner-demo   (seeds data/owner-demo/ and serves it on :8100; sign in as owner or staff)
 Or:  uv run python -m scripts.seed_owner_day [--dir data/owner-demo] [--day YYYY-MM-DD]
 """
 
@@ -15,7 +15,7 @@ from zoneinfo import ZoneInfo
 
 from fastapi.testclient import TestClient
 
-from app import jobs, rules
+from app import accounts, jobs, rules
 from app.main import create_app
 from app.settings import Settings
 from evals import gate, results
@@ -94,6 +94,8 @@ class Voice:
 
     def read_back(self, call_id: str, street: str, zip_code: str) -> None:
         address = {"street": street, "unit": "", "city": "Brooklyn", "zip": zip_code}
+        # The server acts only on a ZIP the caller said (app/tools.py _zip_known).
+        self.caller(call_id, f"It's {street}, {zip_code}.")
         asked = self.tool("read_back", call_id, address=address, phone="caller_id")
         self.agent(call_id, asked["say"])
         self.caller(call_id, "Yes, that's right.")
@@ -220,7 +222,7 @@ def today(voice: Voice, clock: Clock, day: date, gas_lines: str, co_lines: str) 
 
     at(9, 30)
     c = voice.start("c06", "(646) 555-0150")
-    voice.caller(c, "Hi, my boiler stopped. I'm on West 23rd Street in Manhattan.")
+    voice.caller(c, "Hi, my boiler stopped. I'm on West 23rd Street in Manhattan, 10011.")
     voice.tool("check_service_area", c, zip="10011")
     voice.end(c)
 
@@ -286,7 +288,7 @@ def today(voice: Voice, clock: Clock, day: date, gas_lines: str, co_lines: str) 
 
     at(12, 10)
     c = voice.start("c12", "(201) 555-0110")
-    voice.caller(c, "Do you come out to Hoboken?")
+    voice.caller(c, "Do you come out to Hoboken, 07030?")
     voice.tool("check_service_area", c, zip="07030")
     voice.end(c)
 
@@ -340,7 +342,7 @@ def today(voice: Voice, clock: Clock, day: date, gas_lines: str, co_lines: str) 
 
     at(15, 30)
     c = voice.start("c17", "(646) 555-0166")
-    voice.caller(c, "My AC unit is leaking, I'm in Chelsea.")
+    voice.caller(c, "My AC unit is leaking, I'm in Chelsea, 10011.")
     voice.tool("check_service_area", c, zip="10011")
     voice.end(c)
 
@@ -462,6 +464,23 @@ def rule_history(app, clock: Clock, day: date) -> None:
         conn.close()
 
 
+# Development only: the demo database is thrown away on every seed and never deployed.
+DEMO_USERS = (
+    ("owner", "Pat Moreno", "admin", "dev-owner-password"),
+    ("staff", "Sam Ortiz", "staff", "dev-staff-password"),
+)
+
+
+def demo_users(app, clock) -> None:
+    """An admin and a staff user to sign in as (make owner-demo)."""
+    conn = app.state.services.connect()
+    try:
+        for username, name, role, password in DEMO_USERS:
+            accounts.add(conn, username, name, role, password, "Revin", clock())
+    finally:
+        conn.close()
+
+
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description="Seed a day of calls for the owner view.")
     parser.add_argument("--dir", default="data/owner-demo")
@@ -492,6 +511,7 @@ def main(argv: list[str] | None = None) -> None:
     earlier_week(voice, clock, day)
     today(voice, clock, day, gas, co)
     rule_history(app, clock, day)
+    demo_users(app, clock)
     # make owner-demo serves the page as if it were this moment, so "now" sits on the board.
     evening = datetime.combine(day, time(17, 20), NEW_YORK)
     (folder / "now").write_text(evening.isoformat())

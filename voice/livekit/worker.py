@@ -295,12 +295,28 @@ async def entrypoint(ctx: JobContext) -> None:
     )
 
     async def record() -> None:
+        if egress.get("declined"):
+            return
         egress["id"] = await recording.start(
             ctx.api, tools_server, call_id, data.get("recording"), settings
         )
+        # The caller objected while the recorder was starting.
+        if egress.get("declined"):
+            await stop_recording()
+
+    async def stop_recording() -> None:
+        """The caller asked not to be recorded (two-party consent). The server deletes the file
+        whatever happens here; stopping now keeps the rest of the call out of it."""
+        egress["declined"] = True
+        await recording.stop(ctx.api, egress["id"])
+        egress["id"] = None
+
+    call.stop_recording = stop_recording
 
     if outbound:
-        await place_outbound(ctx, session, agent, player, outbound, spoken, tools_server, record)
+        await place_outbound(
+            ctx, session, agent, player, outbound, spoken, tools_server, record, data
+        )
         return
 
     await session.start(room=ctx.room, agent=agent)
@@ -311,13 +327,19 @@ async def entrypoint(ctx: JobContext) -> None:
     if (data.get("safety") or {}).get("text"):
         session.say(data["safety"]["text"], allow_interruptions=False)
         return
-    session.say(assemble.greeting(data, spoken))
+    session.say(opening(data, assemble.greeting(data, spoken)))
     if start["say"]:
         session.say(start["say"])
 
 
+def opening(data: dict, line: str) -> str:
+    """The first line, after the recording notice when the server sends one (two-party consent,
+    app/owner_settings.py)."""
+    return " ".join(part for part in (data.get("recording_notice"), line) if part)
+
+
 async def place_outbound(
-    ctx, session, agent, player, claim: dict, spoken: dict, tools_server: ToolServer, record
+    ctx, session, agent, player, claim: dict, spoken: dict, tools_server: ToolServer, record, data
 ) -> None:
     """Journey 12. The server chose this call and checked its rules when it was claimed; one dial,
     a voicemail at most, and the result goes back to the server."""
@@ -356,7 +378,7 @@ async def place_outbound(
     await tools_server.outbound_done(claim["outbound_id"], True, False)
     # Recorded only once a person answered; a voicemail we leave isn't kept.
     asyncio.create_task(record())
-    session.say(claim["opening_line"])
+    session.say(opening(data, claim["opening_line"]))
 
 
 class VoicemailAgent(Agent):
