@@ -11,6 +11,7 @@ from test_ts_safety import GAS_LINES
 from toolkit import (
     UNKNOWN,
     Agent,
+    Clock,
     book,
     first_open,
     in_area_address,
@@ -20,6 +21,8 @@ from toolkit import (
 
 from app import jobs, records, summary
 from app.db import tx
+from app.fsm import FsmRejected, FsmUnavailable
+from app.settings import QUEUE_MAX_ATTEMPTS
 
 TOKEN = "owner-token"
 DRAFT = {
@@ -61,11 +64,11 @@ def adapter(agent: Agent):
     return services(agent).fsm["summit-air"]
 
 
-def run(agent: Agent, model) -> dict:
+def run(agent: Agent, model, **kwargs) -> dict:
     conn = agent.db()
     try:
         return summary.run(
-            conn, services(agent).tenants.default, adapter(agent), model, agent.clock()
+            conn, services(agent).tenants.default, adapter(agent), model, agent.clock(), **kwargs
         )
     finally:
         conn.close()
@@ -194,13 +197,24 @@ def test_a_number_from_the_record_stays(agent, scenarios):
     )
 
 
+def test_a_line_with_a_phone_number_is_dropped(agent):
+    """The number is in the record (the caller said it), so only the phone check stops it."""
+    call = ready_to_book(agent)
+    agent.turn(call, "If nobody answers the door, call 212 555 0999.")
+    booked = book(agent, call, first_open(agent, call))
+    agent.end(call)
+    run(agent, FakeModel({**DRAFT, "access": "No answer at the door: call 212 555 0999"}))
+    assert "0999" not in pinned(agent, booked["data"]["booking_id"])[0]["text"]
+    [dropped] = json.loads(stored(agent, call)["dropped_json"])
+    assert dropped["field"] == "access" and dropped["reason"] == "a phone number"
+
+
 def test_problem_and_told_come_from_the_record_when_the_model_leaves_them_out(agent):
     call, _ = booked_call(agent)
     run(agent, FakeModel({k: "" for k in summary.FIELDS}))
     lines = dict(json.loads(stored(agent, call)["lines_json"]))
     assert lines["Problem"] == "No heat since last night, radiators are cold, since last night"
     assert lines["Told"].startswith("Arrival window Monday 2026-11-02")
-
 
 
 def test_the_told_fallback_keeps_a_promised_callback(agent):
@@ -225,6 +239,7 @@ def test_the_told_fallback_keeps_a_promised_callback(agent):
     told = dict(json.loads(stored(agent, call)["lines_json"]))["Told"]
     assert told.startswith("Arrival window Monday 2026-11-02")
     assert "call back by 11:00 AM (Office to confirm the part)" in told
+
 
 # ---- the write to ServiceTitan ------------------------------------------------------------------
 
@@ -259,6 +274,68 @@ def test_a_note_whose_answer_was_lost_is_not_added_twice(agent, fsm):
     assert run(agent, model)["done"] == 1
     assert len(pinned(agent, job_id)) == 1
     assert len(model.records) == 1, "a written summary is sent again without asking the model"
+
+
+def test_a_rejected_history_read_gives_up_without_asking_the_model(agent, monkeypatch):
+    call, job_id = booked_call(agent)
+
+    def notes(customer_id):
+        raise FsmRejected(403, "unauthorized", "no access to notes")
+
+    monkeypatch.setattr(adapter(agent), "notes", notes)
+    model = FakeModel()
+    assert run(agent, model)["failed"] == 1
+    assert model.records == [] and status(agent, call) == "failed"
+    assert "unauthorized" in stored(agent, call)["last_error"]
+    assert pinned(agent, job_id) == []
+
+
+def test_a_history_read_that_fails_uses_no_model_attempt(agent, monkeypatch):
+    call, job_id = booked_call(agent)
+
+    def notes(customer_id):
+        raise FsmUnavailable("notes: ConnectError")
+
+    monkeypatch.setattr(adapter(agent), "notes", notes)
+    model = FakeModel()
+    for _ in range(summary.MODEL_ATTEMPTS + 1):
+        assert run(agent, model)["retry"] == 1
+    assert model.records == [] and status(agent, call) == "pending"
+    assert stored(agent, call)["model_attempts"] == 0
+    monkeypatch.undo()
+    assert run(agent, model)["done"] == 1
+    assert len(pinned(agent, job_id)) == 1
+
+
+def test_a_rejected_write_gives_up_and_keeps_the_written_lines(agent, monkeypatch):
+    call, job_id = booked_call(agent)
+
+    def add_note(*args, **kwargs):
+        raise FsmRejected(404, "not_found", "Job not found")
+
+    monkeypatch.setattr(adapter(agent), "add_note", add_note)
+    assert run(agent, FakeModel())["failed"] == 1
+    assert status(agent, call) == "failed"
+    assert json.loads(stored(agent, call)["lines_json"]), "the lines stay for the call page"
+    assert pinned(agent, job_id) == []
+
+
+def test_servicetitan_down_is_retried_then_given_up_without_asking_the_model_again(
+    agent, monkeypatch
+):
+    call, job_id = booked_call(agent)
+
+    def add_note(*args, **kwargs):
+        raise FsmUnavailable("add_note: ConnectError")
+
+    monkeypatch.setattr(adapter(agent), "add_note", add_note)
+    model = FakeModel()
+    results = [run(agent, model) for _ in range(QUEUE_MAX_ATTEMPTS)]
+    assert all(r["retry"] == 1 for r in results[:-1]) and results[-1]["failed"] == 1
+    assert len(model.records) == 1
+    row = stored(agent, call)
+    assert row["post_attempts"] == QUEUE_MAX_ATTEMPTS and status(agent, call) == "failed"
+    assert pinned(agent, job_id) == []
 
 
 # ---- failure, retry and the calls that get none ---------------------------------------------------
@@ -314,6 +391,40 @@ def test_a_queued_booking_waits_for_the_fsm_before_its_summary(agent, fsm):
     model = FakeModel()
     assert run(agent, model)["waiting"] == 1 and model.records == []
     assert status(agent, call) == "pending"
+
+
+def test_a_call_older_than_a_day_is_skipped(agent, clock: Clock):
+    call, job_id = booked_call(agent)
+    clock.advance(hours=25)
+    model = FakeModel()
+    assert run(agent, model)["skipped"] == 1
+    assert status(agent, call) == "skipped" and model.records == []
+    assert pinned(agent, job_id) == []
+
+
+def test_a_run_writes_at_most_its_cap_and_leaves_the_rest_for_the_next(agent):
+    calls = [
+        booked_call(agent, f"(212) 555-07{n:02d}") for n in range(summary.SUMMARIES_PER_RUN + 1)
+    ]
+    model = FakeModel()
+    first = run(agent, model)
+    assert first["done"] == summary.SUMMARIES_PER_RUN and first["waiting"] == 1
+    assert status(agent, calls[-1][0]) == "pending", "the newest call waits"
+    assert run(agent, model)["done"] == 1
+
+
+def test_a_run_starts_no_new_summary_once_its_time_is_used_up(agent):
+    calls = [booked_call(agent, f"(212) 555-07{n:02d}") for n in range(3)]
+    elapsed = [0.0]
+
+    class SlowModel(FakeModel):
+        def write(self, system, record):
+            elapsed[0] += summary.RUN_SECONDS * 0.6
+            return super().write(system, record)
+
+    counts = run(agent, SlowModel(), timer=lambda: elapsed[0])
+    assert counts["done"] == 2 and counts["waiting"] == 1
+    assert status(agent, calls[2][0]) == "pending"
 
 
 def test_the_jobs_loop_writes_the_summary_last(agent):
@@ -384,7 +495,9 @@ def test_the_client_uses_the_post_call_profile_with_thinking_and_the_schema(monk
     assert client.sent["model"] == cfg["model"]
     assert client.sent["thinking"] == {"type": "adaptive"}
     assert client.sent["output_config"]["format"]["schema"] == summary.SCHEMA
-    assert cost == pytest.approx((2000 * cfg["price"]["input"] + 500 * cfg["price"]["output"]) / 1e6)
+    assert cost == pytest.approx(
+        (2000 * cfg["price"]["input"] + 500 * cfg["price"]["output"]) / 1e6
+    )
 
 
 def test_a_reply_cut_short_is_a_failure_not_a_summary():

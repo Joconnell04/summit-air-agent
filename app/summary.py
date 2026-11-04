@@ -18,6 +18,8 @@ import logging
 import os
 import re
 import sqlite3
+import time
+from collections.abc import Callable
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Protocol
@@ -37,8 +39,12 @@ PROFILE = "post_call.summary"
 PROMPT = ROOT / "prompts" / "post-call-summary.md"
 # The first try and one retry, on the next run of the jobs.
 MODEL_ATTEMPTS = 2
-TIMEOUT_SECONDS = 90
-# Model calls per run, so a backlog can't hold up the next run's alerts and callbacks.
+# One model call, and the time after which a run starts no new summary. The jobs run on one
+# thread, so together they bound how long a run can hold the next run's alerts and callbacks: at
+# most RUN_SECONDS plus one TIMEOUT_SECONDS (ASSUMED values; a summary call is usually seconds).
+TIMEOUT_SECONDS = 30
+RUN_SECONDS = 20
+# Summaries per run, whatever the time.
 SUMMARIES_PER_RUN = 5
 # A call older than this is not summarized: the visit may be over, and a backlog after an outage
 # (or after summaries are turned on) should not write notes onto old jobs.
@@ -229,10 +235,11 @@ def run(
     fsm: FsmAdapter,
     model: SummaryModel | None,
     now: datetime,
+    timer: Callable[[], float] = time.monotonic,
 ) -> dict:
     """Summarize each ended call with a booked job, oldest first. A call whose booking is still
     queued waits for it; a call with no booking (a safety call, a callback, a turned-away caller)
-    gets no summary."""
+    gets no summary. Calls left when the run's time or count is used up wait for the next run."""
     counts = {"done": 0, "skipped": 0, "waiting": 0, "retry": 0, "failed": 0}
     rows = conn.execute(
         "SELECT * FROM calls WHERE tenant = ? AND summary_status IN ('pending', 'written') "
@@ -240,6 +247,7 @@ def run(
         (tenant.slug,),
     ).fetchall()
     budget = SUMMARIES_PER_RUN
+    started = timer()
     for call in rows:
         booking = conn.execute(
             "SELECT * FROM bookings WHERE call_id = ? AND kind = 'book' ORDER BY id DESC LIMIT 1",
@@ -253,7 +261,13 @@ def run(
             continue
         # A summary already written only needs sending, which needs no model.
         needs_model = call["summary_status"] == "pending"
-        if booking["status"] != "booked" or budget == 0 or (needs_model and model is None):
+        out_of_time = timer() - started >= RUN_SECONDS
+        if (
+            booking["status"] != "booked"
+            or budget == 0
+            or out_of_time
+            or (needs_model and model is None)
+        ):
             counts["waiting"] += 1
             continue
         budget -= 1
