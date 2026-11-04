@@ -18,6 +18,10 @@ Started while Jackson steps away. Each section is either a decision that needs h
 - **Side model stays on** (decision 056) after a with-and-without check found no false alarms; it goes live again at the next deploy.
 - **Merged while you were away:** #83 speaking rate, #85 accounts and settings, #86 booking under load, #87 the "nobody's" fix, #88 ZIP from the caller and street names.
 
+- **Cold handoff (PR #90):** "Can I talk to someone now?" was triggering an immediate transfer; it now needs "right now", "right away" or a repeated request. Swearing about the equipment ("the damn furnace") doesn't count as anger at the call. A gas or CO caller who demands a person after the safety lines is handed off (decision 059 when it merges).
+- **Debug bench (PR #89):** phone numbers on the bench keep their last four digits; the full number is never in a URL or a replay file.
+- **Main went briefly red** when the ZIP rule (#88) met tests whose scripted callers never say a ZIP; the test callers now say it (branch `fix/pair-callers-say-zip`).
+
 ## In progress
 
 | Lane | PR | State |
