@@ -20,7 +20,6 @@ from prompts import assemble
         ("Just call me Bea, everyone does.", "Bea"),
         ("I'd prefer to be called Mr. McKenzie.", "Mr. McKenzie"),
         ("Call me Jo Ann, please.", "Jo Ann"),
-        ("just call me bea everyone does", "Bea"),
         # As phone speech-to-text writes it: no punctuation, no capitals, the name after an intro.
         ("hi this is anjali patel please call me dr patel id like to book my boiler tune up",
          "Dr. Patel"),
@@ -40,6 +39,21 @@ def test_a_form_of_address_is_read_from_the_callers_words(line, name):
         "It's about my furnace.",
         "Call me crazy, but it smells like dust.",
         "I'm calling about the heat.",
+        # Review of #125: days, times and figures of speech are not names.
+        "call me Tuesday",
+        "Call me Monday.",
+        "call me right back",
+        "call me noon",
+        "call me up",
+        "call me sometime",
+        "call me whatever",
+        "I go by bus",
+        "Call me Tuesday afternoon, please.",
+        # A given name needs a capital, as speech-to-text writes names; lowercase is ambiguous.
+        "just call me bea everyone does",
+        # A possessive is someone else's name.
+        "I'm Dr. Patel's wife.",
+        "it's dr patels wife calling",
     ],
 )
 def test_lines_that_ask_for_no_name_are_ignored(line):
@@ -47,10 +61,36 @@ def test_lines_that_ask_for_no_name_are_ignored(line):
 
 
 @pytest.mark.parametrize(
-    "line", ["Call me Your Majesty.", "Call me master.", "You can call me Lord Vader.", "call me daddy"]
+    "line",
+    [
+        "Call me Your Majesty.",
+        "Call me master.",
+        "You can call me Lord Vader.",
+        "call me daddy",
+        # Review of #125: abuse inside a word.
+        "Call me Mr. Fuckface.",
+        "Call me Shithead.",
+        "Just call me Asshat.",
+        "Call me Dumbass.",
+        "Call me Retard.",
+        "Call me Jackass.",
+        "Call me Dr. Bitchface.",
+    ],
 )
 def test_a_mocking_form_of_address_is_refused(line):
     assert address_as.read(line)[0] == "refused"
+
+
+def test_every_listed_slur_is_refused_inside_a_name():
+    for stem in address_as.REFUSED_STEMS:
+        assert address_as.read(f"Call me Mr. {stem.capitalize()}face.")[0] == "refused", stem
+    for word in address_as.REFUSED:
+        assert address_as.read(f"Call me {word.capitalize()}.")[0] == "refused", word
+
+
+@pytest.mark.parametrize("line, name", [("Call me Ms. Glass.", "Ms. Glass"), ("I go by Cass.", "Cass")])
+def test_real_names_that_contain_a_refused_stem_are_kept(line, name):
+    assert address_as.read(line) == ("ok", name)
 
 
 def test_the_name_is_kept_for_the_call_and_told_to_the_agent(agent):

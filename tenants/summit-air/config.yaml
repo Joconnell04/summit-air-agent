@@ -41,8 +41,6 @@ auth:
   app_key: ak1.summit-air-mock
   user_id: 9001
 
-# ASSUMED county list (Brooklyn, Queens, Staten Island). The ZIPs are real ZIP codes in those
-# counties; zone names are ours.
 # The address lookup (app/geocode.py, on when GEOCODER=geosearch): NYC Planning's GeoSearch, built
 # on the city's Property Address Directory, with the Census geocoder behind it. `boroughs` maps
 # what a caller says to the directory's borough; `zip_boroughs` reads a Census answer's borough
@@ -63,6 +61,8 @@ address_lookup:
                  "104": Bronx, "112": Brooklyn, "110": Queens, "111": Queens, "113": Queens,
                  "114": Queens, "116": Queens}
 
+# ASSUMED county list (Brooklyn, Queens, Staten Island). The ZIPs are real ZIP codes in those
+# counties; zone names are ours.
 zones:
   - id: 1
     name: Brooklyn North

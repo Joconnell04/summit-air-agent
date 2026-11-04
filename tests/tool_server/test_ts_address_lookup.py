@@ -468,3 +468,68 @@ def test_a_zip_out_of_the_area_said_with_the_street_is_left_to_the_area_check(tm
     found = agent.tool("find_address", call, street="47 Willis Ave")
     assert found["refused"] == "address_lookup_down"
     assert agent.tool("check_service_area", call, zip="11501")["refused"] == "out_of_area"
+
+
+# ---- review of #125 -------------------------------------------------------------------------
+
+
+AVENUE_U = Place("5", "AVENUE U", "11223", "Brooklyn", "Gravesend")
+
+
+def test_a_number_said_about_something_else_is_not_a_house_number(located, answers):
+    answers.book[("5", "ave u")] = [AVENUE_U]
+    call = located.start(UNKNOWN)["data"]["call_id"]
+    located.turn(call, "My furnace has been out for 5 days and I have two kids at home")
+    result = located.tool("find_address", call, street="5 Avenue U")
+    assert result["refused"] == "address_not_heard"
+    assert located.tool("check_service_area", call, zip="11223")["refused"] == "zip_not_heard"
+
+
+def test_a_street_word_inside_another_word_is_not_the_street(located, answers):
+    answers.book[("455", "ct st")] = [Place("455", "COURT STREET", "11231", "Brooklyn", "")]
+    call = located.start(UNKNOWN)["data"]["call_id"]
+    located.turn(call, "Unit 455, the electrician was here yesterday.")
+    assert located.tool("find_address", call, street="455 Court St")["refused"] == (
+        "address_not_heard"
+    )
+
+
+def test_the_number_and_street_must_come_together(located):
+    call = located.start(UNKNOWN)["data"]["call_id"]
+    located.turn(call, "It's been 248 minutes on hold, I swear.")
+    located.turn(call, "Anyway, we're near Duffield Street somewhere.")
+    located.turn(call, "Not sure of the number.")
+    assert located.tool("find_address", call, street="248 Duffield St")["refused"] == (
+        "address_not_heard"
+    )
+
+
+def test_the_real_address_passes_however_it_was_said(located):
+    for line in ("248 duffield st", "two four eight duffield street", "It's 248 Duffield St."):
+        call = located.start(UNKNOWN)["data"]["call_id"]
+        located.turn(call, line)
+        assert located.tool("find_address", call, street="248 Duffield St")["ok"], line
+
+
+def test_a_number_said_digit_by_digit_may_have_its_street_in_the_next_line(located):
+    call = located.start(UNKNOWN)["data"]["call_id"]
+    located.turn(call, "it's two four eight")
+    located.turn(call, "duffield street")
+    assert located.tool("find_address", call, street="248 Duffield St")["ok"]
+
+
+def test_a_floor_after_the_street_still_gets_the_mismatch_question(located):
+    assert geocode.split_address("248 Duffield Street 3rd Floor") == ("248", "Duffield Street")
+    call = located.start(UNKNOWN)["data"]["call_id"]
+    located.turn(call, "248 Duffield Street, 3rd floor, 11205.")
+    address = _address("248 Duffield Street 3rd Floor", "11205")
+    assert located.tool("read_back", call, address=address, phone="caller_id")["refused"] == (
+        "zip_mismatch"
+    )
+
+
+def test_a_zip_said_before_the_street_is_asked_about_not_replaced(located):
+    call = located.start(UNKNOWN)["data"]["call_id"]
+    located.turn(call, "I'm in 11205.")
+    located.turn(call, "The address is 248 Duffield Street.")
+    assert located.tool("find_address", call, street="248 Duffield St")["refused"] == "zip_mismatch"

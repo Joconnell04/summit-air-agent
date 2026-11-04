@@ -138,8 +138,13 @@ def split_address(street: str) -> tuple[str, str] | None:
     if not match:
         return None
     # The street ends where the unit or the borough starts: "Main Street, Apt 5F", "Main St #5F".
-    street = re.split(r",|#|\s(?:apt|apartment|unit|suite|ste|floor|fl)\b", match.group(2),
-                      maxsplit=1, flags=re.IGNORECASE)[0]
+    # "Duffield Street 3rd Floor" ends before "3rd".
+    street = re.split(
+        r",|#|\s(?:\d+(?:st|nd|rd|th)?\s+(?:floor|fl)|apt|apartment|unit|suite|ste|floor|fl)\b",
+        match.group(2),
+        maxsplit=1,
+        flags=re.IGNORECASE,
+    )[0]
     return re.sub(r"\s+", "", match.group(1)), street.strip()
 
 

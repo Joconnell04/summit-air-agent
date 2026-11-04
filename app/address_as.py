@@ -40,7 +40,8 @@ TITLES = {
     "officer": "Officer",
     "coach": "Coach",
 }
-# "Call me <word>" where the word is not a name: when, how, or a figure of speech.
+# Words that follow "call me" or "I go by" and aren't names: when, how, or a figure of speech.
+# A given name must also be written with a capital, as speech-to-text writes names.
 NOT_NAMES = {
     "back", "later", "tomorrow", "today", "tonight", "again", "anytime", "whenever", "asap",
     "soon", "now", "at", "on", "in", "when", "after", "before", "around", "about", "if", "the",
@@ -49,19 +50,38 @@ NOT_NAMES = {
     "so", "and", "but", "or", "with", "from", "to", "for", "by", "yes", "no", "okay", "ok",
     "calling", "speaking", "though", "thanks", "thank", "is", "im", "its", "i", "id", "ill",
     "ive", "want", "need", "like", "have", "got", "just", "thats", "dont", "can", "will", "would",
+    # Days and times: "call me Tuesday", "call me noon".
+    "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday", "weekday",
+    "weekend", "noon", "midnight", "morning", "afternoon", "evening", "night", "sometime",
+    "sometimes", "right", "up", "down", "over", "real", "quick",
+    # Fillers and common words: "call me whatever", "I go by bus".
+    "whatever", "anything", "something", "nothing", "everyone", "anyone", "someone", "nobody",
+    "bus", "train", "car", "cab", "subway", "foot", "phone", "text", "email", "cell", "landline",
+    "home", "work", "office", "name", "names", "number", "same", "different", "either", "any",
+    "um", "uh", "well", "actually", "also", "too", "then", "once", "twice", "sure", "fine",
 }
-# Never used as a form of address: mocking honorifics, pet names and abuse. A name with any of
-# these is refused whole.
+# Never used as a form of address: mocking honorifics, pet names and abuse, as whole words. A
+# name with any of them is refused whole.
 REFUSED = {
     "master", "mistress", "majesty", "highness", "lord", "lady", "king", "queen", "prince",
     "princess", "god", "goddess", "emperor", "empress", "overlord", "sir", "madam", "boss",
     "daddy", "mommy", "mama", "papa", "baby", "babe", "honey", "sweetheart", "darling", "sexy",
-    "hot", "stud", "idiot", "stupid", "dummy", "loser", "moron", "ass", "asshole", "bitch",
-    "bastard", "dick", "shit", "fuck", "fucker", "cunt", "whore", "slut", "satan", "hitler",
-    "robot", "batman", "superman", "voldemort",
+    "hot", "stud", "idiot", "stupid", "dummy", "loser", "moron", "satan", "hitler",
+    "robot", "batman", "superman", "voldemort", "dick", "prick", "cock", "twat", "tit",
+    "fag", "spic", "chink", "gook", "kike", "wop", "dyke",
 }
-# The words that ask for a form of address. "It's" and "this is" count only with a title, since
-# "this is Maria" is an introduction, which the agent already uses.
+# Abuse found anywhere inside a word: "Fuckface", "Shithead", "Mr. Bitchface".
+REFUSED_STEMS = (
+    "fuck", "shit", "cunt", "bitch", "whore", "slut", "bastard", "retard", "nigg", "fagg",
+    "dickhead", "dickface", "cocksuck", "douche", "wank", "tranny", "skank",
+)
+# Abuse at the start or end of a word, where the stem alone is also part of real names ("Cass",
+# "Glass", "Bassett"): "Asshat", "Dumbass", "Jackass".
+REFUSED_AFFIXES = ("ass",)
+AFFIX_NAMES = {"cass", "glass", "bass", "brass", "grass", "class", "douglass", "nass", "hass",
+               "assad", "assaf", "assefa", "assante", "asselin", "assis"}
+# The words that ask for a form of address. An introduction ("it's", "this is", "my name is")
+# counts only with a title, since "this is Maria" is a name the agent already uses.
 ASKS = (
     ("any", re.compile(r" call me ")),
     ("any", re.compile(r" i go by ")),
@@ -73,9 +93,20 @@ ASKS = (
 # Ann"). A clause ends the name, so "call me Bea, everyone does" is Bea.
 MAX_NAMES = 2
 MAX_NAMES_TITLED = 1
+RELATIONS = {"wife", "husband", "son", "daughter", "kid", "kids", "mother", "father", "mom", "dad",
+             "office", "assistant", "house", "place", "home", "patient", "tenant", "nurse",
+             "partner", "brother", "sister", "friend", "nanny", "neighbor"}
 CLAUSE = re.compile(r"[,.;:!?]+")
 NOTE = "Prefers to be called {name}."
 NOTE_READ = re.compile(r"^Prefers to be called (.+)\.$")
+
+
+def abusive(token: str) -> bool:
+    if token in REFUSED or any(stem in token for stem in REFUSED_STEMS):
+        return True
+    return token not in AFFIX_NAMES and any(
+        token.startswith(a) or token.endswith(a) for a in REFUSED_AFFIXES
+    )
 
 
 def read(text: str) -> tuple[str, str] | None:
@@ -104,25 +135,38 @@ def _read_clause(clause: str, text: str) -> tuple[str, str] | None:
         title = TITLES.get(tokens[0]) if tokens else None
         if kind == "titled" and not title:
             continue
-        # "Call me Your Majesty": a refused word among the first few is refused, whatever else.
+        # "Call me Your Majesty", "Mr. Fuckface": abuse among the first few words is refused.
         head = tokens[:3]
-        if any(t in REFUSED for t in head):
+        if any(abusive(t) for t in head):
             return "refused", " ".join(head)
         names = []
-        most = MAX_NAMES_TITLED if title else MAX_NAMES
         for token in tokens[1 if title else 0:]:
-            if token in NOT_NAMES or token.isdigit() or len(names) == most:
+            if len(names) == (MAX_NAMES_TITLED if title else MAX_NAMES):
                 break
-            # A second name only when the transcript wrote it as one ("Jo Ann"), so "call me
-            # bea everyone does" is Bea.
-            if names and not _as_written(text, token, keep_case=True)[:1].isupper():
+            if token in NOT_NAMES or not token.isalpha() or _possessive(text, token):
+                break
+            # A given name is written with a capital; after a title the surname may not be,
+            # since the title already says a name follows.
+            if (names or not title) and not _as_written(text, token, keep_case=True)[:1].isupper():
                 break
             names.append(token)
         if not names:
             continue
+        # "dr patels wife": speech-to-text drops the apostrophe, so a name ending in s before a
+        # word for a relation or a place is a possessive too.
+        after = tokens[(1 if title else 0) + len(names):][:1]
+        if names[-1].endswith("s") and after and after[0] in RELATIONS:
+            continue
         written = [_as_written(text, n) for n in names]
         return "ok", " ".join(([title] if title else []) + written)
     return None
+
+
+def _possessive(text: str, token: str) -> bool:
+    """ "I'm Dr. Patel's wife": a possessive is somebody else's name, not one to be called."""
+    return bool(re.search(rf"\b{re.escape(token)}['’]s\b", text, re.IGNORECASE)) or (
+        token.endswith("s") and bool(re.search(rf"\b{re.escape(token[:-1])}['’]s\b", text, re.IGNORECASE))
+    )
 
 
 def _as_written(text: str, token: str, keep_case: bool = False) -> str:

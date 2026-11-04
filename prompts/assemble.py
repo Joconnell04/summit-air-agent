@@ -54,11 +54,41 @@ def instructions(start: dict, now: datetime | None = None) -> str:
     context = {
         k: v for k, v in start.items() if k not in ("knowledge", "tenant", "call_id", "house_rules")
     }
+    notes = call_notes(start)
+    noted = "".join(f"- {n}\n" for n in notes)
     return (
         f"{text}\n\n# Company knowledge\n\n{knowledge}\n\n# This call\n\n"
         f"Now: {local:%A %-d %B %Y, %-I:%M %p} ({tenant['timezone']}).\n\n"
-        f"What the server found before hello:\n{json.dumps(context, default=str)}\n"
+        + (f"For this caller:\n{noted}\n" if notes else "")
+        + f"What the server found before hello:\n{json.dumps(context, default=str)}\n"
     )
+
+
+def call_notes(start: dict) -> list[str]:
+    """Plain lines for what the call context means for this caller, so the agent acts on it
+    rather than finding it in the JSON (eval run 20261104-174038: a member was never thanked, and
+    a caller moving a visit was booked a second one first)."""
+    customers = [c for c in start.get("customers", []) if c.get("residential")]
+    notes = []
+    if len(customers) == 1:
+        membership = customers[0].get("membership") or {}
+        if membership.get("status") == "Active":
+            plan = membership.get("plan") or "maintenance"
+            notes.append(
+                f"They're on an active {plan} plan. Thank them for being a member once, early in "
+                "the call, and mention the plan's benefit that applies."
+            )
+    visits = [
+        job for c in customers for job in c.get("open_jobs") or [] if job.get("window")
+    ]
+    if visits:
+        when = ", ".join(f"{v['window']['weekday']} {v['window']['label']}" for v in visits)
+        notes.append(
+            f"They already have a visit booked ({when}). To move it, call reschedule_appointment "
+            "for that visit, never book_appointment; book a new visit only for a different problem "
+            "the caller confirms."
+        )
+    return notes
 
 
 def house_guidance(guidance: dict[str, list[str]]) -> str:

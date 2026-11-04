@@ -9,6 +9,7 @@ call's own state, and ownership is checked against the customers matched on this
 import hashlib
 import json
 import os
+import re
 import sqlite3
 from collections.abc import Mapping
 from dataclasses import dataclass, field
@@ -42,10 +43,12 @@ from .schemas import (
 from .settings import BOOKING_DAYS_AHEAD, LIMITS
 from .tenant import Tenant
 from .text import (
+    SPELLED_RUN,
     clock_time,
     digit_runs,
     digits_spoken,
     has_phrase,
+    join_spelled,
     phone_key,
     phone_said,
     says_goodbye,
@@ -180,21 +183,42 @@ def _caller_lines(ctx: Ctx) -> list[sqlite3.Row]:
 
 
 def _address_said(ctx: Ctx, house: str, street: str) -> bool:
-    """The house number and the street's name came from the caller's lines, digits or words, so
-    a lookup can't turn a street the model made up into a ZIP. The name is matched loosely, with
-    spaces dropped, so a street spelled letter by letter counts."""
+    """The house number and the street came from one caller line, so a lookup can't turn a
+    street the model made up, or a number said about something else ("out for 5 days"), into a
+    ZIP. The number is a whole run of digits, and every word naming the street is a whole word
+    there ("Court" matches "Court Street", not "electrician"). The street may be in the line
+    before or after instead when the number was said digit by digit or the street was spelled
+    letter by letter, as those come in pieces."""
     lines = [r["text"] for r in _caller_lines(ctx)]
     want = geocode.house_key(house)
-    runs = {run for line in lines for run in digit_runs(line)}
-    # The whole run, or the house number run into a ZIP or phone said straight after it.
-    if not any(
-        run == want or (run.startswith(want) and len(run) - len(want) in (5, 10)) for run in runs
-    ):
+    names = geocode.street_name_words(street)
+    if not want or not names:
         return False
-    text = " ".join(lines)
-    # Compared both as said and as the street key writes it ("court" is "ct" there).
-    said = words(text).replace(" ", "") + " " + street_key(text).replace(" ", "")
-    return any(w in said for w in geocode.street_name_words(street))
+    for i, line in enumerate(lines):
+        if not _house_in(line, want):
+            continue
+        if _street_in(line, names):
+            return True
+        by_digit = not re.search(rf"(?<![0-9]){re.escape(house)}(?![0-9])", line)
+        for j in (i - 1, i + 1):
+            nearby = 0 <= j < len(lines) and (by_digit or SPELLED_RUN.search(lines[j]))
+            if nearby and _street_in(lines[j], names):
+                return True
+    return False
+
+
+def _house_in(line: str, want: str) -> bool:
+    """The house number is a whole run of digits in the line, or runs straight into a ZIP."""
+    return any(
+        run == want or (run.startswith(want) and len(run) - len(want) in (5, 9))
+        for run in digit_runs(line)
+    )
+
+
+def _street_in(line: str, names: list[str]) -> bool:
+    joined = join_spelled(line)
+    tokens = set(words(joined).split()) | set(geocode.street_match_key(joined).split())
+    return all(name in tokens for name in names)
 
 
 def _record_lookup(ctx: Ctx, house: str, street: str, hint: str, found: geocode.Found) -> None:
@@ -321,17 +345,12 @@ def _ask_mismatch(ctx: Ctx, house: str, street: str, place: geocode.Place, said_
 
 
 def _zip_said_with(ctx: Ctx, house: str) -> str | None:
-    """The last ZIP the caller said, from the line that gave this house number on: a ZIP said
-    with the address, or a correction after it."""
+    """The last ZIP the caller said on the call: with the address, before it ("I'm in 11205, at
+    248 Duffield") or as a correction after it."""
     want = geocode.house_key(house)
-    said, started = None, False
+    said = None
     for row in _caller_lines(ctx):
-        runs = digit_runs(row["text"])
-        if any(r == want or r.startswith(want) for r in runs):
-            started = True
-        if not started:
-            continue
-        for run in runs:
+        for run in digit_runs(row["text"]):
             if run.startswith(want) and len(run) - len(want) in (5, 9):
                 run = run[len(want):]  # the house number and ZIP said as one run
             if len(run) in (5, 9) and run != want and _plausible_zip(ctx, run[:5]):
