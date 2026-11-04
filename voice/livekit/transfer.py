@@ -9,6 +9,11 @@ why, and are moved into the caller's room (LiveKit's MoveParticipant), and the a
 voicemail box never presses 1, so it is never put through and never hears the caller's details. LiveKit's own WarmTransferTask joins the calls the same way, but there a model talking
 to the person decides when to connect; here the key press does, and the server decides who is
 called.
+
+A caller who demands a person gets a cold handoff instead, decided by the server on the caller's
+own turn: the worker says the server's one line and sends the caller's own call leg to the number
+with a SIP transfer (a REFER through the inbound trunk), so there is no consult room, summary or
+key press. If the transfer fails, the agent comes back with the callback time the server stored.
 """
 
 import asyncio
@@ -16,6 +21,7 @@ import contextlib
 import logging
 from collections.abc import Awaitable, Callable
 
+import aiohttp
 from livekit import api, rtc
 
 from .server import ToolServer
@@ -26,6 +32,9 @@ PERSON = "person"
 ACCEPT_DIGIT = "1"
 # LiveKit gives up ringing at ring_seconds; this is only a backstop on the request itself.
 DIAL_GRACE_S = 5.0
+# A transfer still ringing when LiveKit answers has been accepted by the phone company, and the
+# caller is on their way; only a failed one brings the agent back.
+SENT = (api.SIPTransferStatus.STS_TRANSFER_SUCCESSFUL, api.SIPTransferStatus.STS_TRANSFER_ONGOING)
 
 
 class ConsultRoom:
@@ -120,10 +129,34 @@ async def dial_and_join(
             await lk.room.delete_room(api.DeleteRoomRequest(room=consult.name))
 
 
+async def send_through(lk: api.LiveKitAPI, caller_room: str, caller: str, plan: dict) -> str:
+    """Send the caller's call to the person's number. Returns handed_off or failed."""
+    request = api.TransferSIPParticipantRequest(
+        room_name=caller_room,
+        participant_identity=caller,
+        transfer_to=f"tel:{plan['phone']}",
+        play_dialtone=False,
+    )
+    request.ringing_timeout.FromSeconds(int(plan["ring_seconds"]))
+    try:
+        sent = await asyncio.wait_for(
+            lk.sip.transfer_sip_participant(request), plan["ring_seconds"] + DIAL_GRACE_S
+        )
+    except (api.TwirpError, TimeoutError, aiohttp.ClientError) as exc:
+        log.info("handoff %s not sent: %s", plan["id"], type(exc).__name__)
+        return "failed"
+    if sent.status not in SENT:
+        log.info("handoff %s refused: %s", plan["id"], sent.reason)
+        return "failed"
+    return "handed_off"
+
+
 class Transfer:
     """Asks the server after each person flag, and runs the transfer once the agent's turn has
     played. `hold(True)` mutes the conversation and plays hold music; `hand_over` ends the agent's
-    part of the call without hanging up the caller."""
+    part of the call without hanging up the caller. `caller` is the caller's participant identity,
+    for a cold handoff; `ending` records why the call is ending, set before a SIP transfer because
+    the caller leaves the room as it goes through."""
 
     def __init__(
         self,
@@ -135,6 +168,8 @@ class Transfer:
         speak: Callable[[str], object],
         hold: Callable[[bool], None],
         hand_over: Callable[[], Awaitable[None]],
+        caller: str = "",
+        ending: Callable[[str], None] = lambda reason: None,
     ):
         self.server = server
         self.lk = lk
@@ -144,6 +179,8 @@ class Transfer:
         self.speak = speak
         self.hold = hold
         self.hand_over = hand_over
+        self.caller = caller
+        self.ending = ending
         self.task: asyncio.Task | None = None
 
     async def offer(self, turn, flagged: dict) -> bool:
@@ -158,6 +195,49 @@ class Transfer:
             return False
         self.task = asyncio.create_task(self.run(turn, asked["say"], plan, flagged["say"]))
         return True
+
+    def handoff(self, line, plan: dict, fallback: str) -> None:
+        """The server sent a caller who demanded a person straight through; `line` is the handoff
+        line's speech handle, already playing."""
+        self.task = asyncio.create_task(self.run_handoff(line, plan, fallback))
+
+    async def run_handoff(self, line, plan: dict, fallback: str) -> str:
+        """Like `run`, never leaves the caller in silence: a failed transfer, or any error, takes
+        them off hold with the callback sentence the server stored before anything was sent."""
+        reported = False
+        try:
+            await line.wait_for_playout()
+            self.hold(True)
+            self.ending("transfer")
+            outcome = (
+                await send_through(self.lk, self.caller_room, self.caller, plan)
+                if self.caller
+                else "failed"
+            )
+            if outcome == "handed_off":
+                # The caller has gone; the server is told and the agent leaves.
+                await self.server.handoff_done(plan["id"], outcome)
+                await self.hand_over()
+                return outcome
+            self.ending("caller_hangup")
+            done = await self.server.handoff_done(plan["id"], outcome)
+            reported = True
+            self.hold(False)
+            await self.speak(done["say"] or fallback).wait_for_playout()
+            return outcome
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            log.exception("handoff %s broke off; back to the caller", plan["id"])
+            self.ending("caller_hangup")
+            if not reported:
+                await self.server.handoff_done(plan["id"], "failed")
+            try:
+                self.hold(False)
+                await self.speak(fallback).wait_for_playout()
+            except Exception:
+                log.exception("handoff %s: could not take the caller off hold", plan["id"])
+            return "failed"
 
     def cancel(self) -> None:
         """The caller hung up: stop dialing. The person's room is deleted on the way out."""

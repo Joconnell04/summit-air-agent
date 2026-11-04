@@ -188,6 +188,7 @@ lines:
     you {when}.
   transfer_prompt: Summit Air has a caller for the {role}. Press 1 to take the call.
   transfer_summary: '{priority}Caller at {phone}: {reason}. Putting you through now.'
+  handoff_now: Transferring you to a person now.
   urgent_priority: I've marked this as one of our most urgent calls, so you get our soonest opening.
 on_call_alerts:
   email: on-call@summit-air.example

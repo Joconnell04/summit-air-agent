@@ -74,6 +74,12 @@ def timeline(conn: sqlite3.Connection, call_id: str) -> dict | None:
         "leads": rows("SELECT id, kind, summary, status FROM leads WHERE call_id = ? ORDER BY id"),
         "out_of_area": rows("SELECT zip, at FROM out_of_area WHERE call_id = ?"),
         "summary": rows("SELECT * FROM summaries WHERE call_id = ?"),
+        "transfers": rows(
+            "SELECT id, flag_id, callback_id, role, status FROM transfers WHERE call_id = ?"
+        ),
+        "handoffs": rows(
+            "SELECT id, flag_id, callback_id, role, status FROM handoffs WHERE call_id = ?"
+        ),
     }
 
 
@@ -101,7 +107,8 @@ def as_text(trace: dict) -> str:
                 lines.append(f"              say  {e['say']}")
             if e["error"]:
                 lines.append(f"              error {e['error']}")
-    for title in ("flags", "callbacks", "bookings", "leads", "out_of_area", "summary"):
+    for title in ("flags", "callbacks", "bookings", "leads", "out_of_area", "summary", "transfers",
+                  "handoffs"):
         if trace[title]:
             lines += ["", f"{title}:"] + [f"  {json.dumps(r)}" for r in trace[title]]
     return "\n".join(lines)

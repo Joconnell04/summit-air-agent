@@ -96,7 +96,7 @@ const run = Date.now();
 pm.collectionVariables.set('call_id', 'pm-' + run);
 pm.collectionVariables.set('safety_call_id', 'pm-safety-' + run);
 pm.collectionVariables.set('known_call_id', 'pm-known-' + run);
-// No transfer has this id, so reporting on it is refused.
+// No transfer or handoff has this id, so reporting on it is refused.
 pm.collectionVariables.set('unknown_transfer_id', '0');
 pm.collectionVariables.set('caller', '(212) 555-' + String(1000 + run % 9000).slice(-4));
 """
@@ -299,6 +299,13 @@ def build() -> dict:
             "POST",
             "calls/{{safety_call_id}}/transfer/{{unknown_transfer_id}}/done",
             body={"outcome": "no_answer"},
+            check=refused("invalid_state"),
+        ),
+        item(
+            "A handoff that was never started can't be reported",
+            "POST",
+            "calls/{{safety_call_id}}/handoff/{{unknown_transfer_id}}/done",
+            body={"outcome": "handed_off"},
             check=refused("invalid_state"),
         ),
         item(

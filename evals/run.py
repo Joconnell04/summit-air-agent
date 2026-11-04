@@ -65,10 +65,11 @@ class Harness:
         if self.stack != "livekit":
             return load_adapter(self.stack).open_agent(call_id, caller_id)
         world = World(self.workdir / call_id, self.seed, scenario.start_time, self.overlay,
-                      scenario.fsm_down)
+                      scenario.fsm_down, transfer=scenario.transfer is not None)
         if scenario.earlier_call:
             world.earlier_call(f"{call_id}-earlier", caller_id, scenario.earlier_call)
-        agent = InProcessAgent(world.server, self.models.agent, call_id, caller_id, world.clock)
+        agent = InProcessAgent(world.server, self.models.agent, call_id, caller_id, world.clock,
+                               handoff=scenario.transfer or "sent")
         return agent, world.server
 
     def run(self, scenario: Scenario, sample: int = 1, caller_turns: list[str] | None = None
@@ -113,7 +114,7 @@ class Harness:
                 if turn.text:
                     transcript.append(Turn(role="agent", text=turn.text))
                 if turn.ended:
-                    reason = "agent_end"
+                    reason = turn.end_reason
                     break
                 if replay is not None:
                     said = replay.pop(0) if replay else None

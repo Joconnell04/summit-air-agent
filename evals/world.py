@@ -25,6 +25,12 @@ TENANT_DIR = ROOT / "tenants" / "summit-air"
 SEED_START = date(2026, 11, 2)
 DIALED = "(646) 624-0418"
 DEBUG_TOKEN = "eval-debug-token"
+# Made-up numbers, on no seeded customer, for a scenario that sets `transfer`. Nothing is dialed in
+# an eval: the in-process agent reports the transfer's outcome itself.
+TRANSFER_NUMBERS = {
+    "TRANSFER_OFFICE_NUMBER": "+12125550198",
+    "TRANSFER_ON_CALL_NUMBER": "+12125550190",
+}
 _seed_lock = threading.Lock()
 
 
@@ -79,6 +85,9 @@ class ToolServer:
     def end(self, call_id: str, reason: str) -> dict:
         return self._post(f"/calls/{call_id}/end", {"reason": reason})
 
+    def handoff_done(self, call_id: str, handoff_id: int, outcome: str) -> dict:
+        return self._post(f"/calls/{call_id}/handoff/{handoff_id}/done", {"outcome": outcome})
+
     def trace(self, call_id: str) -> dict:
         response = self.client.get(
             f"/debug/calls/{call_id}", headers={"X-Debug-Token": self.debug_token}
@@ -122,7 +131,8 @@ class FsmDown:
 
 class World:
     def __init__(self, workdir: Path, seed: tuple[Path, dict], start: datetime,
-                 overlay: dict | None = None, fsm_down: str | None = None):
+                 overlay: dict | None = None, fsm_down: str | None = None,
+                 transfer: bool = False):
         workdir.mkdir(parents=True, exist_ok=True)
         st_db = workdir / "servicetitan.db"
         shutil.copy(seed[0], st_db)
@@ -135,6 +145,8 @@ class World:
             debug_token=DEBUG_TOKEN,
             jobs_interval_seconds=0,
             environment="development",
+            # Never the shell's own numbers, so a run can't plan a transfer to a real phone.
+            transfer_numbers=dict(TRANSFER_NUMBERS) if transfer else {},
         )
         fsm = TestClient(mock, raise_server_exceptions=False)
         if fsm_down:

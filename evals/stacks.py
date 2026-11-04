@@ -43,6 +43,8 @@ class AgentTurn:
     timing: TurnTiming
     usage: Usage = field(default_factory=Usage)
     ended: bool = False
+    # Why the call ended when `ended`: the agent hung up, or a cold handoff sent the caller on.
+    end_reason: str = "agent_end"
 
 
 def load_adapter(stack: str):
@@ -164,8 +166,10 @@ def spoken_by_code(name: str, envelope: dict) -> str | None:
 
 class InProcessAgent:
     def __init__(self, server: ToolServer, model: Model, call_id: str, caller_id: str,
-                 clock=None):
+                 clock=None, handoff: str = "sent"):
         self.server = server
+        # What the simulated phone company does with a cold handoff's SIP transfer.
+        self.handoff = handoff
         self.model = model
         self.call_id = call_id
         self.caller_id = caller_id
@@ -198,8 +202,28 @@ class InProcessAgent:
         if safety.get("action") in SPOKEN_FROM_CODE and result["say"]:
             self.messages.append({"role": "user", "content": caller_text})
             return self._speak_from_code(result["say"], t0)
+        handoff = result["data"].get("handoff")
+        if handoff and result["say"]:
+            self.messages.append({"role": "user", "content": caller_text})
+            return self._hand_off(result["say"], handoff, t0)
         notes = server_notes(result["data"].get("hints", []))
         return self._think("\n".join([caller_text, *notes]), t0)
+
+    def _hand_off(self, line: str, handoff: dict, t0: float) -> AgentTurn:
+        """What the worker does with a caller the server handed off (voice/livekit/transfer.py):
+        say the server's line, then report the transfer as the scenario's phone company would.
+        Sent ends the call; failed says the stored callback line and the call carries on."""
+        turn = self._speak_from_code(line, t0)
+        plan = handoff.get("transfer")
+        if not plan:
+            return turn
+        done = self.server.handoff_done(self.call_id, plan["id"],
+                                        "handed_off" if self.handoff == "sent" else "failed")
+        if self.handoff == "sent":
+            turn.ended, turn.end_reason = True, "transfer"
+            return turn
+        back = self._speak_from_code(done["say"] or handoff["fallback"], time.perf_counter())
+        return AgentTurn(f"{turn.text} {back.text}", turn.timing)
 
     def _speak_from_code(self, text: str, t0: float) -> AgentTurn:
         self.messages.append({"role": "assistant", "content": text})

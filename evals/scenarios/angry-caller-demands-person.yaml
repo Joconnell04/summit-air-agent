@@ -1,0 +1,29 @@
+id: angry-caller-demands-person
+flow: [repeat-caller]
+difficulty: adversarial
+traits: [rude, interruption]
+journeys: [J13, spine]
+spec: [S-32, S-34]
+caller_id: "(718) 555-0192"
+persona: Rosa Delgado, a Queens homeowner whose furnace was repaired last week and quit again overnight. Angry, short, swears once, and wants a person on the phone, not the agent.
+hidden_facts:
+  name: Rosa Delgado
+  address: 34-10 82nd St, Jackson Heights, 11372
+  phone: the number they are calling from
+  complaint: the furnace was repaired last week and stopped again overnight
+  wants: a person on the phone right now
+opening: This is ridiculous, the furnace you fixed died again. Put me through to a real person right now.
+script:
+  - If the agent asks you anything instead of putting you through, say "No, I said I want a person, now."
+  - Don't give any other detail beyond your name and number.
+transfer: sent
+max_turns: 8
+must:
+  - handoff: {role: office, status: handed_off}
+  - flag: person
+  - callback: promised
+  - booking: none
+  - safety_lines: not_said
+  - agent_never_says: ['calm down', '(I''ll|I will) (refund|credit)']
+should:
+  - Puts the caller through at once, in one short line, without asking them to explain first or arguing.

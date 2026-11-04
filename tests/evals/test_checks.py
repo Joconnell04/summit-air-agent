@@ -237,3 +237,17 @@ def test_callback_checks_the_day_and_the_earliest_time():
     assert failures("callback", want, trace(started_at=started)) == ["no callback was promised"]
     with pytest.raises(ValueError):
         CHECKS["callback"].validate({"tomorrow": True})
+
+
+def test_handoff_reads_the_cold_handoff_record():
+    sent = {**trace(), "handoffs": [{"role": "office", "status": "handed_off"}]}
+    assert failures("handoff", {"role": "office", "status": "handed_off"}, sent) == []
+    assert failures("handoff", {"role": "on_call"}, sent) == [
+        "handoff role office, expected on_call"
+    ]
+    assert failures("handoff", "none", sent) == ["1 handoff(s), expected none"]
+    # A trace from before handoffs existed has none.
+    assert failures("handoff", "none", trace()) == []
+    assert failures("handoff", {"status": "handed_off"}, trace()) == ["no handoff was decided"]
+    with pytest.raises(ValueError):
+        CHECKS["handoff"].validate({"role": "manager"})
