@@ -420,3 +420,22 @@ def test_a_stroke_of_luck_is_not_an_illness(text):
     result = decide("no_heat", text, 61)
     assert "a chronic illness at home" not in result.reasons
     assert result.level == "High"
+
+
+
+def test_two_find_slots_in_one_turn_hand_out_the_line_once(agent):
+    """PR #139 review: "once" was read from the transcript, written only after the turn."""
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "No heat, and my 84-year-old mother lives with me.")
+    first = agent.tool("find_slots", call, job_type="no_heat")
+    second = agent.tool("find_slots", call, job_type="no_heat", time_of_day="morning")
+    assert "spoken_first" in first["data"]
+    assert "spoken_first" not in second["data"] and "top priority" not in second["say"]
+
+
+def test_the_line_waits_for_the_safety_lines(agent):
+    """PR #139 review: it could play before the safety lines."""
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "I smell gas, and the heat is out.")
+    held = agent.tool("find_slots", call, job_type="no_heat")
+    assert "spoken_first" not in held["data"]

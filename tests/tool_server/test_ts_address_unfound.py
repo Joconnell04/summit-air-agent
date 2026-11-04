@@ -38,7 +38,7 @@ def test_with_no_zip_said_the_agent_asks_once_then_goes_on(unfound):
     assert again["ok"] and again["data"]["zip"] == "11412", again
 
 
-def test_a_street_the_caller_never_said_is_still_refused_without_a_zip(unfound):
+def test_a_street_the_caller_never_said_is_refused_without_a_zip(unfound):
     call = unfound.start(UNKNOWN)["data"]["call_id"]
     unfound.turn(call, "My heat is out.")
     refused = unfound.tool("find_address", call, street="118-24 197th Street")
@@ -62,5 +62,37 @@ def test_the_callers_zip_then_reads_back_and_confirms(unfound):
 def test_a_house_and_numbered_street_said_as_one_run_is_split():
     from app.tools import _split_run_on
 
-    assert _split_run_on(["11824197", "th", "st"], "11824", ["197"]) == ["11824", "197", "th", "st"]
-    assert _split_run_on(["248", "duffield"], "248", ["duffield"]) == ["248", "duffield"]
+    said = "one one eight 24 one nine seven th street"
+    assert _split_run_on(["11824197", "th", "st"], "11824", ["197"], said) == [
+        "11824", "197", "th", "st"
+    ]
+    assert _split_run_on(["248", "duffield"], "248", ["duffield"], "248 Duffield") == [
+        "248", "duffield"
+    ]
+
+
+def test_a_run_written_as_digits_is_not_split():
+    """PR #139 review: "112 2nd Avenue" is house 112, never house 11 on 2nd Avenue."""
+    from app.tools import _split_run_on
+
+    assert _split_run_on(["112", "ave"], "11", ["2"], "112 2nd Avenue") == ["112", "ave"]
+
+
+def test_the_zip_is_asked_once_and_the_lookup_isnt_tried_again(unfound):
+    """PR #139 review: with no ZIP said, find_address asked for it up to four times."""
+    call = unfound.start(UNKNOWN)["data"]["call_id"]
+    unfound.turn(call, "It's 118-24 197th Street in St. Albans.")
+    asked = []
+    for _ in range(4):
+        result = unfound.tool("find_address", call, street="118-24 197th Street")
+        asked.append(result["say"] == "What's the ZIP code there?")
+    assert asked.count(True) == 1
+    assert result["refused"] == "zip_asked" and result["say"] == ""
+
+
+def test_a_made_up_street_is_refused_even_with_a_zip_said(unfound):
+    """PR #139 review: "99 Fake Street" was accepted once any ZIP was said."""
+    call = unfound.start(UNKNOWN)["data"]["call_id"]
+    unfound.turn(call, "I'm at 118-24 197th Street, 11412.")
+    refused = unfound.tool("find_address", call, street="99 Fake Street")
+    assert refused["refused"] == "address_not_heard"

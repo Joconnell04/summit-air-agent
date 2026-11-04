@@ -245,3 +245,16 @@ def test_a_move_is_spoken_once_by_the_worker_and_the_model_is_not_asked_to_reply
     assert len(voice.said) == 1 and voice.said[0].startswith("Done, I've moved it to")
     # The model still gets the result to read.
     assert json.loads(result.output)["ok"] is True
+
+
+def test_the_worker_speaks_the_top_priority_line_first_and_the_model_still_replies(agent, connect):
+    """PR #139: the line is spoken word for word, then the model offers the times."""
+    agent.start(call_id="call-1")
+    agent.turn("call-1", "No heat, and my 84-year-old mother lives with me.")
+    voice = Voice()
+    tools = tools_for(connect("call-1"), voice=voice)
+    result = asyncio.run(tools["find_slots"]({"job_type": "no_heat"}, None))
+    assert voice.said == ["I've marked this call top priority, so you get our soonest opening."]
+    # A string result asks the session for the model's reply; its say no longer carries the line.
+    assert isinstance(result, str)
+    assert "top priority" not in json.loads(result).get("say", "")

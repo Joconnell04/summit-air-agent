@@ -215,7 +215,9 @@ def _address_said(ctx: Ctx, house: str, street: str, rows: list | None = None) -
     names = geocode.street_name_words(street)
     if not want or not names:
         return False
-    lines = [_split_run_on(_keyed(number_tokens(r["text"])), want, names) for r in rows]
+    lines = [
+        _split_run_on(_keyed(number_tokens(r["text"])), want, names, r["text"]) for r in rows
+    ]
     for i, tokens in enumerate(lines):
         for k, token in enumerate(tokens):
             if token != want or "zip" in tokens[max(0, k - 2) : k] or "code" in tokens[max(0, k - 2) : k]:
@@ -237,19 +239,17 @@ def _address_said(ctx: Ctx, house: str, street: str, rows: list | None = None) -
     ) and any(_street_in(row["text"], names) for row in rows)
 
 
-def _split_run_on(tokens: list[str], want: str, names: list[str]) -> list[str]:
+def _split_run_on(tokens: list[str], want: str, names: list[str], text: str) -> list[str]:
     """A house number and a numbered street said digit by digit with no break, "one one eight 24
     one nine seven th street", read as one number (11824197): split back into the house and the
     street when the run is exactly those two (eval run 20261104-201607,
     caller-declines-safety-advice)."""
     street = names[0] if names and names[0].isdigit() else ""
-    if not street:
+    run = want + street
+    # Only a run that was said digit by digit: "112 2nd Avenue" written as digits is house 112.
+    if not street or re.search(rf"\b{run}\b", text):
         return tokens
-    return [
-        part
-        for token in tokens
-        for part in ([want, street] if token == want + street else [token])
-    ]
+    return [part for token in tokens for part in ([want, street] if token == run else [token])]
 
 
 def _keyed(tokens: list[str]) -> list[str]:
@@ -1272,6 +1272,12 @@ def find_address(ctx: Ctx, args: FindAddressIn) -> Result:
             errors={"street": "needs the house number"},
         )
     house, street = split
+    if not _address_said(ctx, house, street):
+        raise Refused(
+            "address_not_heard",
+            "What's the street address there?",
+            need="look up only a house number and street the caller said",
+        )
     # A ZIP the caller said in the service area lets the call go on whatever the lookup can do:
     # it comes from the caller, not the lookup, and the read-back confirms the street with them.
     said = _zip_said_with(ctx, house)
@@ -1284,13 +1290,14 @@ def find_address(ctx: Ctx, args: FindAddressIn) -> Result:
         note="The lookup couldn't confirm the street; the caller's ZIP stands. Go on to the "
         "read-back, which confirms it with them.",
     ) if said in ctx.tenant.service_area else None
-    if not _address_said(ctx, house, street):
-        if from_caller:
-            return from_caller
+    # The ZIP was already asked for and the caller hasn't said one: the lookup isn't tried again,
+    # so the caller is asked once (PR #139 review).
+    if not said and _zip_asked(ctx):
         raise Refused(
-            "address_not_heard",
-            "What's the street address there?",
-            need="look up only a house number and street the caller said",
+            "zip_asked",
+            "",
+            need="the ZIP was asked for already; wait for the caller's answer, then call "
+            "check_service_area with the ZIP they say, and don't call find_address again",
         )
     found = (
         ctx.geocoder.find(house, street, args.borough)
@@ -1305,9 +1312,7 @@ def find_address(ctx: Ctx, args: FindAddressIn) -> Result:
     if from_caller and found.status in ("unavailable", "none"):
         return from_caller
     if found.status == "unavailable":
-        raise Refused(
-            "address_lookup_down", ctx.tenant.line("address_ask_zip"), need="ask for the ZIP"
-        )
+        _ask_zip(ctx, "address_lookup_down")
     if found.status == "none":
         thread = records.thread(ctx.conn, ctx.call["id"])
         misses = ctx.conn.execute(
@@ -1316,9 +1321,7 @@ def find_address(ctx: Ctx, args: FindAddressIn) -> Result:
             thread,
         ).fetchone()[0]
         if misses >= 2:
-            raise Refused(
-                "address_not_found", ctx.tenant.line("address_ask_zip"), need="ask for the ZIP"
-            )
+            _ask_zip(ctx, "address_not_found")
         raise Refused(
             "address_not_found",
             ctx.tenant.line("address_not_found"),
@@ -1399,7 +1402,7 @@ def find_slots(ctx: Ctx, args: FindSlotsIn) -> Result:
     urgent_said = ""
     if decided.level == "Urgent":
         line = ctx.tenant.line("urgent_priority")
-        if not records.agent_said(ctx.conn, ctx.call["id"], line):
+        if _hand_out_once(ctx, line):
             # Kept in `say` too, so the call's record shows the system said it; the voice layer
             # strips it from what the model sees (prompts/assemble.py for_model).
             urgent_said = line + " "
@@ -1459,6 +1462,45 @@ def find_slots(ctx: Ctx, args: FindSlotsIn) -> Result:
         names = _join([w.replace("_", " ") for w in d["windows"]], "or")
         parts.append(f"this {names}" if d["day"] == "today" else f"{d['day']} {names}")
     return ok(f"{urgent_said}{arrival_say}I've got openings {_join(parts, 'and')}.", **data)
+
+
+ZIP_ASKED = "address_ask_zip"
+
+
+def _zip_asked(ctx: Ctx) -> bool:
+    return bool(
+        ctx.conn.execute(
+            "SELECT 1 FROM lines_handed WHERE call_id = ? AND line = ?",
+            (ctx.call["id"], ZIP_ASKED),
+        ).fetchone()
+    )
+
+
+def _ask_zip(ctx: Ctx, code: str) -> None:
+    """Ask the caller for the ZIP, once a call; recorded when asked (PR #139 review)."""
+    with tx(ctx.conn):
+        ctx.conn.execute(
+            "INSERT OR IGNORE INTO lines_handed (call_id, line, at) VALUES (?, ?, ?)",
+            (ctx.call["id"], ZIP_ASKED, iso(ctx.now)),
+        )
+    raise Refused(code, ctx.tenant.line("address_ask_zip"), need="ask for the ZIP")
+
+
+def _hand_out_once(ctx: Ctx, line: str) -> bool:
+    """Whether to hand out a line said once a call: not while the safety lines or the check
+    question are still due (they come first), and not when it was already handed out or said.
+    Recorded when it is handed out, so two calls in one caller turn can't both carry it (the
+    transcript is only written after the turn)."""
+    if ctx.call["safety_state"] in ("signal", "checking"):
+        return False
+    if records.agent_said(ctx.conn, ctx.call["id"], line):
+        return False
+    with tx(ctx.conn):
+        inserted = ctx.conn.execute(
+            "INSERT OR IGNORE INTO lines_handed (call_id, line, at) VALUES (?, ?, ?)",
+            (ctx.call["id"], line, iso(ctx.now)),
+        ).rowcount
+    return inserted == 1
 
 
 def _keep_second_job(ctx: Ctx, data: dict) -> None:
@@ -1896,7 +1938,7 @@ def book_appointment(ctx: Ctx, args: BookIn) -> Result:
     )
     # An Urgent call booked without find_slots first still hears the line once, here.
     urgent_line = ctx.tenant.line("urgent_priority")
-    if decided.level == "Urgent" and not records.agent_said(ctx.conn, ctx.call["id"], urgent_line):
+    if decided.level == "Urgent" and _hand_out_once(ctx, urgent_line):
         say = f"{urgent_line} {say}"
     # A visit booked on a safety call goes ahead only once the problem is shut off (eval round 2).
     if override and ctx.tenant.safety.get("booking_note"):
