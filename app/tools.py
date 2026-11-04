@@ -12,12 +12,12 @@ import os
 import sqlite3
 from collections.abc import Mapping
 from dataclasses import dataclass, field
-from datetime import datetime, time, timedelta
+from datetime import date, datetime, time, timedelta
 
 from . import booking, lookup, outbound, pace, records, safety, transfer, weather
 from . import capacity as capacity_rules
 from . import priority as prio
-from .db import iso, parse_iso, tx
+from .db import iso, tx
 from .envelope import Refused, Result, ok
 from .fsm import FsmAdapter, FsmRejected, FsmUnavailable, SlotCache
 from .lifecycle import approval_unclear
@@ -304,25 +304,22 @@ def _open_windows(ctx: Ctx, job_type: dict, level: str) -> list[dict]:
 
 
 def _describe(ctx: Ctx, window: dict) -> dict:
-    local = ctx.tenant.local(parse_iso(window["start"]))
     spec = ctx.tenant.window(window["window"])
-    today = ctx.tenant.local(ctx.now).date()
-    day_word = (
-        "today"
-        if local.date() == today
-        else "tomorrow"
-        if local.date() == today + timedelta(days=1)
-        else local.strftime("%A")
-    )
+    # "Today" or "tomorrow" comes from the visit's own date against the local date now, never from
+    # a start time that may sit on another day (a live call just after midnight heard "tomorrow"
+    # for that day's visit).
+    visit = date.fromisoformat(window["date"])
+    day_word = ctx.tenant.day_spoken(visit, ctx.now)
+    weekday = visit.strftime("%A")
     # The confirmation names the day and the date ("today, Monday, November 2"), so a caller can
     # catch a wrong day (eval round 3).
-    dated = f"{local.strftime('%A')}, {local.strftime('%B')} {local.day}"
+    dated = f"{weekday}, {visit.strftime('%B')} {visit.day}"
     return {
         "date": window["date"],
         "window": window["window"],
-        "weekday": local.strftime("%A"),
+        "weekday": weekday,
         "day": day_word,
-        "day_and_date": dated if day_word == local.strftime("%A") else f"{day_word}, {dated}",
+        "day_and_date": dated if day_word == weekday else f"{day_word}, {dated}",
         "label": spec.label() if spec else window["window"],
         "after_hours": window["after_hours"],
     }

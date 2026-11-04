@@ -101,9 +101,12 @@ commercial:
             strip mall, plaza, hotel, church, dental practice, rooftop unit, "it's a business",
             it is a business, "it's commercial"]
   # "Not my home" is a business, unless the same line says it's an apartment building: "it's not
-  # my home, it's twelve units" is a super or manager, which is residential.
+  # my home, it's twelve units" is a super or manager, which is residential. "It's a building, not a
+  # home", said to the read-back's "your home", is a building manager too (eval runs 20261104-040959
+  # and 052332); an office building is caught by the phrases above first.
   not_home: [not a home, not my home]
-  apartment_signs: [units, apartments, apartment building, unit building, family house, walk up]
+  apartment_signs: [units, apartments, apartment building, unit building, family house, walk up,
+                    building, tenants]
   not: [business partner, business trip, business card, home office, my own business hours]
 
 # Who can approve the work (eval round 2, co-op-owner-mentions-board). A caller who says a board or

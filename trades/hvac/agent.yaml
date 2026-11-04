@@ -9,6 +9,9 @@
 # The trade's equipment, as callers name it. Swearing next to one of these ("the damn furnace") is
 # about a broken system, not anger at the call, so it doesn't turn a request for a person into a
 # demand (app/transfer.py).
+# The heating and cooling systems a caller names, longest first, so the call's "already known" note
+# lists the one they said and the agent doesn't ask again (eval round 4).
+system_words: [heat pump, mini split, central air, boiler, furnace, radiators, radiator]
 equipment_words: [furnace, furnaces, boiler, boilers, heat, heater, heating, ac, air, radiator,
   radiators, thermostat, pipe, pipes, vent, vents, filter, fan, compressor]
 

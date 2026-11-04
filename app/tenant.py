@@ -224,6 +224,8 @@ class Tenant:
         self.equipment_words: frozenset[str] = frozenset(
             w.lower() for w in agent.get("equipment_words", [])
         )
+        # The systems a caller names, so the agent doesn't ask for one already given (app/lifecycle.py).
+        self.system_words: tuple[str, ...] = tuple(agent.get("system_words", []))
         # Warm transfer to a person (app/transfer.py). None turns it off.
         self.transfer: dict | None = agent.get("transfer")
         self.fsm: dict = agent["fsm"]

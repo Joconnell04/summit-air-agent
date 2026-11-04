@@ -64,6 +64,8 @@ commercial:
   - unit building
   - family house
   - walk up
+  - building
+  - tenants
   not:
   - business partner
   - business trip
@@ -197,6 +199,7 @@ lines:
   fsm_unavailable: I can't book that right now, but I've written it all down and someone will call you
     by {time} to confirm.
   fsm_unavailable_no_callback: I can't get to that right now, but I've written it all down for the team.
+  handoff_now: Transferring you to a person now.
   lead_stored: Someone from our team will call you {when} to tell you more.
   limit: I've already got that taken care of on this call, so let me have someone from the team follow
     up.
@@ -214,7 +217,6 @@ lines:
     you {when}.
   transfer_prompt: Summit Air has a caller for the {role}. Press 1 to take the call.
   transfer_summary: '{priority}Caller at {phone}: {reason}. Putting you through now.'
-  handoff_now: Transferring you to a person now.
   urgent_priority: I've marked this call top priority, so you get our soonest opening.
 on_call_alerts:
   email: on-call@summit-air.example
@@ -881,6 +883,14 @@ safety:
       - like eggs
       - sulfur
       question: Just to be safe, are you smelling gas in the house right now?
+system_words:
+- heat pump
+- mini split
+- central air
+- boiler
+- furnace
+- radiators
+- radiator
 transfer:
   accept_seconds: 10
   fallback_callback_minutes: 30

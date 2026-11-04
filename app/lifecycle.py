@@ -11,7 +11,7 @@ from .envelope import Result, ok
 from .fsm import FsmAdapter, FsmRejected, FsmUnavailable
 from .schemas import EndIn, StartIn, TurnIn
 from .tenant import Tenant
-from .text import has_phrase, phone_key, words
+from .text import digit_runs, has_phrase, phone_key, words
 
 RUN_WORDS = r"(?:i|we) (?:run|manage|operate|work at)"
 # Owning is matched only against businesses: "I own the building" or "I manage the building" is a
@@ -470,7 +470,7 @@ def turn(
     payload = None
     if action.action != "none":
         payload = {"action": action.action, "kind": action.kind, "text": action.text}
-    known = already_known(conn, call["id"]) if args.speaker == "caller" else {}
+    known = already_known(conn, call["id"], tenant.system_words) if args.speaker == "caller" else {}
     return ok(
         action.text,
         seq=seq,
@@ -503,7 +503,9 @@ OWNS = ("i own", "we own", "my home", "my house", "our house", "our home", "its 
 NOT_A_NAME = {"summit", "the", "a", "my", "it", "about", "regarding", "calling"}
 
 
-def already_known(conn: sqlite3.Connection, call_id: str) -> dict[str, str]:
+def already_known(
+    conn: sqlite3.Connection, call_id: str, systems: tuple[str, ...] = ()
+) -> dict[str, str]:
     """Facts this call's tool calls carried: the ZIP checked, the address and phone read back
     (marked confirmed once the caller said yes) and the intake a booking attempt sent, so the
     agent doesn't ask again. Empty until a tool has recorded something."""
@@ -524,14 +526,26 @@ def already_known(conn: sqlite3.Connection, call_id: str) -> dict[str, str]:
                 value = (args.get("details") or {}).get(field)
                 if value:
                     known[label] = value
-    lines = [
-        words(r["text"]).strip()
+    said_lines = [
+        r["text"]
         for r in conn.execute(
             "SELECT text FROM turns WHERE call_id = ? AND speaker = 'caller' ORDER BY seq",
             (call_id,),
         )
     ]
+    for raw in said_lines:
+        # A ZIP the caller said is known before any tool checks it (eval run 20261104-053435,
+        # gas-worry-no-smell: asked for the ZIP twice after the caller gave it).
+        zips = [run for run in digit_runs(raw) if len(run) == 5]
+        if zips and "ZIP" not in known:
+            known["ZIP said"] = zips[-1]
+    lines = [words(raw).strip() for raw in said_lines]
     for line in lines:
+        padded_system = f" {line} "
+        # The trade's system words (eval run 20261104-053435, heat-pump-defrost).
+        system = next((s for s in systems if f" {s} " in padded_system), None)
+        if system:
+            known.setdefault("system", system)
         said = KNOWN_NAME.search(line)
         if said and said.group(1).split()[0] not in NOT_A_NAME:
             known.setdefault("name", said.group(1).title())

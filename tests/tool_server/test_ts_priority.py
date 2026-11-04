@@ -267,3 +267,14 @@ def test_a_negation_elsewhere_in_the_line_never_drops_a_raise(text):
 @pytest.mark.parametrize("text", ["nobody's elderly here", "nobody's a baby, just me and my wife", "no one's elderly"])
 def test_nobodys_negates_a_risk_word(text):
     assert decide("no_heat", text, 66).level != "Urgent"
+
+
+def test_nobody_whos_a_baby_or_elderly_raises_nothing_but_a_real_mention_still_does():
+    """Eval run 20261104-052332, mild-after-hours-no-heat: "elderly" sat five words after
+    "nobody" and sent a mild night to the on-call technician."""
+    from app.priority import _said_not_negated
+    from app.text import words
+
+    said = "just two adults both healthy nobody whos a baby or elderly nobody on any medical equipment"
+    assert not _said_not_negated(words(said), "elderly")
+    assert _said_not_negated(words("no heat since this morning grandma is here"), "grandma")

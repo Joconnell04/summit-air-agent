@@ -1048,3 +1048,24 @@ def test_the_booking_confirmation_is_the_whole_turn_and_asks_anything_else(agent
     assert booked["ok"], booked
     assert booked["say"].startswith("You're all set for ")
     assert booked["say"].endswith(" Anything else?")
+
+
+@pytest.mark.parametrize(
+    "advance,day",
+    [
+        # 11:50 PM Monday: Tuesday's visit is tomorrow.
+        ({"hours": 14, "minutes": 50}, "tomorrow, Tuesday, November 3"),
+        # 12:20 AM Tuesday: the same visit is today (a live call heard "tomorrow").
+        ({"hours": 15, "minutes": 20}, "today, Tuesday, November 3"),
+    ],
+)
+def test_today_and_tomorrow_come_from_the_visit_date_against_the_local_date(
+    agent, clock, advance, day
+):
+    clock.advance(**advance)
+    call = ready_to_book(agent)
+    found = agent.tool("find_slots", call, job_type="tune_up", day="2026-11-03")
+    window = found["data"]["windows"][0]["window"]
+    booked = book(agent, call, {"date": "2026-11-03", "window": window})
+    assert booked["ok"], booked
+    assert booked["say"].startswith(f"You're all set for {day}, with the")

@@ -108,11 +108,13 @@ def test_a_looping_caller_is_an_error_not_a_fail(seed_dir, tmp_path):
 
 
 def test_a_rule_broken_before_the_caller_looped_is_still_a_fail(seed_dir, tmp_path):
-    s = scenario(max_turns=8, spec=["S-41"], must=[{"agent_never_says": r"\$\s?\d"},
+    # A price is now dropped before it's spoken (prompts/assemble.py), so the broken rule here is
+    # claiming to be a person.
+    s = scenario(max_turns=8, spec=["S-41"], must=[{"agent_never_says": r"\bhuman\b"},
                                                   {"flag": "person"}])
-    result, *_ = run(seed_dir, tmp_path, s, [say("That will be $89.")], [say("Hello?")] * 5)
+    result, *_ = run(seed_dir, tmp_path, s, [say("Yes, I'm a human.")], [say("Hello?")] * 5)
     assert result.outcome == "fail"
-    assert result.check_failures == ["agent_never_says: the agent said /\\$\\s?\\d/: 'That will be $89.'"]
+    assert result.check_failures == ["agent_never_says: the agent said /\\bhuman\\b/: \"Yes, I'm a human.\""]
     assert "repeated the same line" in result.error
 
 

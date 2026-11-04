@@ -86,6 +86,9 @@ CLAUSE_BREAKS = {"and", "but", "so", "because", "though", "although", "except", 
                  "just", "only", "well"}
 NEGATION_REACH = 4
 POSSESSIVES = {"my", "our", "his", "her", "their"}
+# Small words that don't use up the reach: "nobody who's a baby or elderly" negates "elderly"
+# (eval run 20261104-052332, mild-after-hours-no-heat: it sent a mild night to the on-call path).
+REACH_FILLER = {"a", "an", "or", "who", "whos", "is", "any", "on"}
 
 
 def _said_not_negated(text_words: str, phrase: str) -> bool:
@@ -94,8 +97,8 @@ def _said_not_negated(text_words: str, phrase: str) -> bool:
     for i in range(len(tokens) - len(target) + 1):
         if tokens[i : i + len(target)] != target:
             continue
-        negated = False
-        for j in range(i - 1, max(-1, i - 1 - NEGATION_REACH), -1):
+        negated, reached = False, 0
+        for j in range(i - 1, -1, -1):
             if tokens[j] in CLAUSE_BREAKS:
                 break
             # "no my grandmother lives with us" is an answer, then a person: speech-to-text drops
@@ -103,6 +106,10 @@ def _said_not_negated(text_words: str, phrase: str) -> bool:
             if tokens[j] in NEGATIONS and tokens[j + 1] not in POSSESSIVES:
                 negated = True
                 break
+            if tokens[j] not in REACH_FILLER:
+                reached += 1
+                if reached >= NEGATION_REACH:
+                    break
         if not negated:
             return True
     return False

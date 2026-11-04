@@ -266,3 +266,27 @@ def test_a_hyphenated_top_priority_claim_is_dropped_too():
     reply = assemble.SpokenReply()
     said = "Since it's below 65 inside, this is a top-priority visit. Today I have 12 to 4."
     assert reply.text(said, []) == "Today I have 12 to 4."
+
+
+def test_flag_a_fee_claim_and_a_second_recommendation_are_dropped():
+    reply = assemble.SpokenReply()
+    said = "I'll flag this for our team. There's no charge for the visit itself. Anything else?"
+    assert reply.text(said, []) == "Anything else?"
+    assert reply.text("The technician will go over any costs first.", []) != ""
+    reply.heard({"action": "speak_lines"})
+    first = "I'd recommend staying outside and calling 911 now."
+    assert reply.text(first, []) == first
+    assert reply.text("Please stay outside and call 911 or the gas company.", []) == ""
+
+
+def test_a_building_not_a_home_answer_stays_residential(agent):
+    """Eval runs 20261104-040959 and 052332, property-manager-books-building: "it's a building,
+    not a home" after the read-back made the agent decline an apartment building."""
+    from app.lifecycle import sounds_commercial
+    from app.tenant import load_agent
+    from tests.tool_server.toolkit import TENANT_DIR
+
+    cfg = load_agent(TENANT_DIR)[0]["commercial"]
+    assert not sounds_commercial("yes that's right, it's a building not a home so note that", cfg)
+    text = assemble.instructions(agent.start()["data"], datetime(2026, 11, 2, 14, 0, tzinfo=UTC))
+    assert '"it\'s a building, not a home"' in text and "is still residential" in text

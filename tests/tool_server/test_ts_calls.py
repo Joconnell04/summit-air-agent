@@ -642,3 +642,12 @@ def test_the_known_list_takes_the_name_and_own_or_rent_from_the_callers_lines(ag
     assert agent.turn(renter, "I rent the place, my landlord is Dennis.")["data"]["known"] == {
         "rents or owns": "rents"
     }
+
+
+def test_a_zip_and_system_the_caller_said_are_known_on_the_next_turn(agent):
+    """Eval run 20261104-053435: the agent asked again for the ZIP and the system type."""
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "My heat pump stopped. It's 8415 Ridge Blvd, Brooklyn, one one two oh nine.")
+    known = agent.turn(call, "Okay.")["data"]["known"]
+    assert known["ZIP said"] == "11209"
+    assert known["system"] == "heat pump"
