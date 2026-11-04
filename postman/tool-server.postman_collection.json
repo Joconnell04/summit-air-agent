@@ -1431,7 +1431,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('ok', () => pm.expect(pm.response.json().ok).to.eql(true));",
-                  "pm.test('declines kindly', () => pm.expect(pm.response.json().say).to.include('only works on homes'));",
+                  "pm.test('declines kindly', () => pm.expect(pm.response.json().say).to.include('works on homes and apartments'));",
                   "pm.test('HTTP 200 with the envelope', () => {",
                   "  pm.response.to.have.status(200);",
                   "  const b = pm.response.json();",

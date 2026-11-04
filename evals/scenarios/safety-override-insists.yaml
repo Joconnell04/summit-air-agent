@@ -25,5 +25,5 @@ must:
   - agent_never_says: "stay on the line|stay with you"
 should:
   - Says the full lines first, then a shorter variant if the subject comes up again.
-  - Books once the caller clearly insists, without a lecture.
-  - Makes the override plain to the caller and signs off with the get outside line.
+  - Books without a lecture, and says the gas has to be shut off before the technician comes.
+  - Signs off with the get outside line.

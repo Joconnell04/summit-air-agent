@@ -421,7 +421,7 @@ def test_a_safety_call_flags_a_person_without_asking_for_a_callback_time(agent):
     assert count(agent, "SELECT COUNT(*) FROM callbacks WHERE call_id = ?", call) == 0
 
 
-def test_after_the_lines_each_caller_line_reminds_the_agent_not_to_book(agent):
+def test_after_the_lines_each_caller_line_reminds_the_agent_how_to_carry_on(agent):
     call = agent.start(UNKNOWN)["data"]["call_id"]
     before = agent.turn(call, "Hi, my carbon monoxide alarm is going off.")
     assert "safety_call" not in before["data"]["hints"]
@@ -431,9 +431,9 @@ def test_after_the_lines_each_caller_line_reminds_the_agent_not_to_book(agent):
     from prompts.assemble import server_notes
 
     note = server_notes(after["data"]["hints"])[0]
-    assert "Don't offer a visit" in note
-    # A caller who asks for a visit anyway gets one (spec S-18); the note must not read as a no.
-    assert "if the caller asks for one anyway, book it" in note
+    assert "offer once to book" in note
+    # A caller who wants a visit gets one (spec S-18); the note must not read as a no.
+    assert "book only if the caller wants it" in note
 
 
 def test_the_sign_off_suits_a_caller_who_is_alone_and_recommends_rather_than_orders():
@@ -454,3 +454,155 @@ def test_a_caller_saying_goodbye_after_the_sign_off_does_not_hear_it_again(agent
     assert bye["say"] == ""
     assert bye["data"]["hang_up"] is True
 
+
+
+# ---- eval round 2: a lighter confirm question, and a visit booked on a safety call --------------
+
+CONFIRM = CFG["vague"]["gas"]["confirm_question"]
+BOOKING_NOTE = " ".join(CFG["booking_note"].split())
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "It smelled like burning dust for a few minutes, it's gone now",
+        "there was a burning smell when the heat came on",
+    ],
+)
+def test_a_burning_dust_smell_gets_the_confirm_question(line):
+    action = safety.check_caller_turn(line, "none", None, 0, CFG)
+    assert action.action == "ask_check"
+    assert action.kind == "gas"
+    assert action.text == CONFIRM
+
+
+def test_the_confirm_question_is_asked_once_per_call():
+    line = "it smelled like burning dust again this morning"
+    assert safety.check_caller_turn(line, "none", None, 0, CFG, confirm_asked=True).action == "none"
+    assert safety.check_caller_turn("no burning smell at all", "none", None, 0, CFG).action == "none"
+
+
+@pytest.mark.parametrize(
+    "answer,result",
+    [
+        ("Yeah", "cleared"),
+        ("Yeah, it doesn't smell like eggs, just dusty", "cleared"),
+        ("Right, nothing like that", "cleared"),
+        ("Nope, just dusty, you know", "cleared"),
+        ("No rotten eggs or sulfur, just dust", "cleared"),
+        ("It doesn't smell like sulfur or rotten eggs", "cleared"),
+        ("Correct", "cleared"),
+        # The standard run after the merge of #72: "didn't smell like eggs" fired the lines.
+        ("no nothing like that it was just dusty, it didn't smell like eggs or gas or anything", "cleared"),
+        ("no nothing like that it was just dusty, like burning dust, no gas smell no alarm", "cleared"),
+        ("no nothing like that, like when you first fire up a heater after the summer", "cleared"),
+        ("Actually it does, a bit like eggs", "speak_lines"),
+        ("No, it smells like rotten eggs", "speak_lines"),
+        ("Yeah, kind of", "speak_lines"),
+        ("I'm not sure", "speak_lines"),
+        # PR #74 review: agreement plus anything that isn't filler is not a clear.
+        ("Right, and my head hurts", "speak_lines"),
+        ("Right, we feel sick", "speak_lines"),
+        ("Yeah I smell something strong", "speak_lines"),
+        ("Yeah, but the kids were coughing", "ask_check"),
+    ],
+)
+def test_the_confirm_question_is_asked_the_negative_way_so_yeah_clears_it(answer, result):
+    """Eval round 2: "it doesn't smell like sulfur or rotten eggs, right?" is answered "yeah"
+    when it doesn't. The smell named again, "it does", symptoms or an unsure answer bring the lines;
+    an answer with more than agreement in it is unclear, so the plain gas question is asked."""
+    action = safety.check_caller_turn(answer, "checking", "gas", 0, CFG, answering_confirm=True)
+    assert action.action == result
+
+
+def test_symptoms_in_the_confirm_answer_bring_the_carbon_monoxide_lines():
+    action = safety.check_caller_turn(
+        "Right, and my head hurts", "checking", "gas", 0, CFG, answering_confirm=True
+    )
+    assert action.kind == "co" and action.text == CO_LINES
+
+
+def test_the_gas_check_question_still_reads_yeah_as_a_smell():
+    action = safety.check_caller_turn("Yeah", "checking", "gas", 0, CFG)
+    assert action.action == "speak_lines"
+
+
+def test_a_cleared_burning_dust_check_books_without_the_lines(agent):
+    """Eval round 2, burning-dust-first-heat."""
+    call = ready_to_book(agent)
+    asked = agent.turn(call, "It smelled like burning dust for a few minutes, it's gone now.")
+    assert asked["data"]["safety"]["text"] == CONFIRM
+    agent.say(call, CONFIRM)
+    assert agent.turn(call, "Yeah, just dusty.")["data"]["safety"]["action"] == "cleared"
+    again = agent.turn(call, "Yeah the burning dust smell only lasted a minute.")
+    assert again["data"]["safety"] is None
+    booked = book(agent, call, first_open(agent, call))
+    assert booked["ok"], booked
+    assert BOOKING_NOTE not in booked["say"]
+
+
+def test_after_the_lines_a_visit_can_be_booked_without_insisting(agent):
+    """Eval round 2, already-outside-asks-for-visit: the lines and the flag come first, then the
+    agent may offer a visit for after the problem is shut off, and the server says so."""
+    call = ready_to_book(agent)
+    agent.turn(call, "My carbon monoxide alarm went off.")
+    agent.say(call, CO_LINES)
+    turn = agent.turn(call, "Okay, I'm outside now.")
+    assert "safety_call" in turn["data"]["hints"]
+    booked = book(agent, call, first_open(agent, call, "safety_check"), job_type="safety_check")
+    assert booked["ok"], booked
+    assert booked["say"].endswith(BOOKING_NOTE)
+    assert booked["data"]["safety_override"] is True
+    assert count(agent, "SELECT COUNT(*) FROM flags WHERE kind = 'safety'") == 1
+
+
+def test_the_safety_call_note_offers_a_visit_and_never_a_callback_time():
+    from prompts.assemble import SERVER_NOTES
+
+    note = SERVER_NOTES["safety_call"]
+    assert "offer once to book" in note and "Never ask for a callback time" in note
+    assert "insist" not in note
+
+
+def test_a_safety_caller_who_leaves_after_the_read_back_gets_a_person_to_book(agent):
+    """PR #74 review: no time was picked, so nothing is booked; a person calls back to book."""
+    call = ready_to_book(agent)
+    agent.turn(call, "My carbon monoxide alarm went off.")
+    agent.say(call, CO_LINES)
+    agent.turn(call, "I'm outside, I have to go call 911 now, bye.")
+    agent.end(call, "caller_hangup")
+    reasons = [
+        r[0]
+        for r in agent.db().execute("SELECT reason FROM flags WHERE kind = 'person'").fetchall()
+    ]
+    assert any("left before a time was set" in r for r in reasons)
+    assert count(agent, "SELECT COUNT(*) FROM bookings") == 0
+
+
+def test_a_plain_call_that_ends_after_the_read_back_gets_no_safety_flag(agent):
+    call = ready_to_book(agent)
+    agent.end(call, "caller_hangup")
+    assert count(agent, "SELECT COUNT(*) FROM flags WHERE kind = 'person'") == 0
+
+
+def test_an_unclear_confirm_answer_gets_the_plain_question_and_its_answer_is_read_plainly(agent):
+    """PR #74 eval run: after an unclear answer, a later "yeah" was read against the negative
+    question and fired the lines on a burning-dust call."""
+    call = ready_to_book(agent)
+    agent.turn(call, "It smelled like burning dust for a minute when the heat came on.")
+    agent.say(call, CONFIRM)
+    unclear = agent.turn(call, "Right, but the dog has been acting strange")
+    plain = CFG["vague"]["gas"]["question"]
+    assert unclear["data"]["safety"]["action"] == "ask_check"
+    assert unclear["data"]["safety"]["text"] == plain
+    agent.say(call, plain)
+    assert agent.turn(call, "No, no gas at all.")["data"]["safety"]["action"] == "cleared"
+    later = agent.turn(call, "Yeah, it's a house, the one bedroom upstairs is cold.")
+    assert later["data"]["safety"] is None
+
+
+def test_the_confirm_answer_is_read_the_negative_way_after_the_agent_moves_on(agent):
+    call = ready_to_book(agent)
+    agent.turn(call, "There was a burning smell when the heat came on.")
+    agent.say(call, f"Got it. {CONFIRM}")
+    assert agent.turn(call, "Yeah, just dusty.")["data"]["safety"]["action"] == "cleared"
