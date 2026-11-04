@@ -9,6 +9,7 @@ from pathlib import Path
 
 from app.tenant import TRADES_DIR
 from evals.models import load_config, profile
+from evals.pairs import pair_file
 from evals.scenario import SCENARIOS_DIR, scenario_path
 from evals.stacks import PROMPTS_DIR, TENANTS_DIR, prompt_files
 
@@ -48,7 +49,11 @@ def run_hash(
     config = config or load_config()
     digest = hashlib.sha256()
     files = prompt_files(prompts_dir) + sorted((prompts_dir / "evals").glob("*.md"))
-    files += [scenario_path(i, scenarios_dir) for i in sorted(set(scenario_ids))]
+    for i in sorted(set(scenario_ids)):
+        # The two callers of a pair (evals/pairs.py) come from one pair file, hashed once.
+        path = pair_file(i, scenarios_dir / "pairs") or scenario_path(i, scenarios_dir)
+        if path not in files:
+            files.append(path)
     for path in files:
         digest.update(path.name.encode() + b"\0" + path.read_bytes() + b"\0")
     for folder, prefix in ((tenants_dir, ""), (trades_dir, "trades/")):

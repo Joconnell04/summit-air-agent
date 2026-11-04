@@ -1,4 +1,4 @@
-.PHONY: setup test lint check ratchet ratchet-update eval eval-decisions replay langsmith eval-upload seed-st mock-st postman-st server postman trace \
+.PHONY: setup test lint check ratchet ratchet-update eval eval-pairs eval-decisions replay langsmith eval-upload seed-st mock-st postman-st server postman trace \
 	owner-demo owner-user rules-gate summary-check voice-livekit phone-setup deploy test-call measure-delay \
 	retell-push retell-bridge retell-deploy retell-report rig rig-report
 
@@ -29,6 +29,11 @@ eval:
 	uv run $(EVAL_ENV) python -m evals.run $(if $(SUITE),--suite $(SUITE)) $(if $(TAGS),--tags $(TAGS)) \
 	  $(if $(STACKS),--stacks $(STACKS)) $(if $(PROFILES),--profiles $(PROFILES)) \
 	  $(if $(SAMPLES),--samples $(SAMPLES))
+
+# Paid: two calls at once against one world, racing for the same opening (evals/README.md, "Two
+# calls at once"). make eval-pairs [PAIRS=all|two-callers-last-slot,...] [SAMPLES=3]
+eval-pairs:
+	uv run $(EVAL_ENV) python -m evals.run --pairs $(or $(PAIRS),all) $(if $(SAMPLES),--samples $(SAMPLES))
 
 # Paid: the simulated audio bake-off, one stack per run (evals/README.md, "Audio rig").
 # make rig STACK=elevenlabs [SUITE=smoke] [MAX_COST=5]   stacks: livekit, retell, elevenlabs,

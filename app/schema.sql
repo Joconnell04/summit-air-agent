@@ -454,3 +454,42 @@ CREATE TABLE IF NOT EXISTS recording_declines (
     seq INTEGER NOT NULL,
     at TEXT NOT NULL
 );
+
+-- Speaking rate (app/pace.py, DECISIONS.md 053). The server decides the pace from the caller's
+-- lines and the worker applies it. One row per call: the speed in effect and what set it (default,
+-- record, linked, request, repeats, older_adult). `requested` is 1 once the caller asked for a pace,
+-- so their age no longer changes it; `address_speed` is a slower pace asked for the address alone,
+-- used by the next read-back and then cleared; `repeats` counts "sorry, what?" since the last step.
+CREATE TABLE IF NOT EXISTS call_pace (
+    call_id TEXT PRIMARY KEY REFERENCES calls (id) ON DELETE CASCADE,
+    speed REAL NOT NULL,
+    source TEXT NOT NULL,
+    requested INTEGER NOT NULL DEFAULT 0,
+    older_adult INTEGER NOT NULL DEFAULT 0,
+    address_speed REAL,
+    repeats INTEGER NOT NULL DEFAULT 0
+);
+
+-- Every change of pace on a call, after the turn numbered `seq` (0 for the pace a call starts at).
+-- `scope` is call (the rest of the call) or address (the next read-back's address only).
+CREATE TABLE IF NOT EXISTS pace_changes (
+    id INTEGER PRIMARY KEY,
+    call_id TEXT NOT NULL REFERENCES calls (id) ON DELETE CASCADE,
+    seq INTEGER NOT NULL,
+    speed REAL NOT NULL,
+    scope TEXT NOT NULL CHECK (scope IN ('call', 'address')),
+    source TEXT NOT NULL,
+    at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS ix_pace_changes_call ON pace_changes (call_id, seq);
+
+-- The pace a caller asked for, kept for their number so their next call starts at it. Asking for
+-- the normal pace removes it.
+CREATE TABLE IF NOT EXISTS caller_pace (
+    tenant TEXT NOT NULL,
+    phone_key TEXT NOT NULL,
+    speed REAL NOT NULL,
+    call_id TEXT,
+    set_at TEXT NOT NULL,
+    PRIMARY KEY (tenant, phone_key)
+);

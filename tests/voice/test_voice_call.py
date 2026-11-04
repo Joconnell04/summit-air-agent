@@ -241,8 +241,11 @@ def test_the_reply_audio_waits_for_a_bridge_clip_to_finish(monkeypatch):
         async def slow_tool():
             await asyncio.sleep(0.03)
 
+        async def reply():
+            yield "Okay, I found it."
+
         await bridge.run(slow_tool())
-        async for frame in agent.tts_node(None, None):
+        async for frame in agent.tts_node(reply(), None):
             events.append(frame)
 
     asyncio.run(run())
