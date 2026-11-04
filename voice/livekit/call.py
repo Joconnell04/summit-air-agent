@@ -3,14 +3,15 @@ safety lines the server returns, and keeps the turn-taking settings in step with
 just asked."""
 
 import asyncio
+import json
 import logging
 from collections.abc import AsyncIterable
 
 from livekit import rtc
-from livekit.agents import Agent, ModelSettings, StopResponse
+from livekit.agents import Agent, ModelSettings, StopResponse, llm
 from livekit.agents.llm import ChatContext, ChatMessage
 
-from prompts.assemble import server_notes
+from prompts.assemble import SpokenReply, server_notes
 
 from .bridge import Bridge
 from .server import UNREACHABLE, ToolServer
@@ -46,6 +47,8 @@ class Call:
         # ends the call. Without the server there is no safety check, so the call can't go on.
         self.server_down = None
         self._last_post: asyncio.Task | None = None
+        # What of the model's replies the caller hears (prompts/assemble.py SpokenReply).
+        self.reply = SpokenReply()
 
     def post(self, speaker: str, text: str, timings: dict[str, float]) -> asyncio.Task:
         """Queue a line for the server. Lines go one at a time, in the order they happened,
@@ -76,6 +79,7 @@ class Call:
         if notes:
             message.content.append("\n" + "\n".join(notes))
         safety = data.get("safety")
+        self.reply.heard(safety)
         if safety and safety["action"] in SPOKEN_ACTIONS and safety.get("text"):
             # Spoken from the server's text, never generated, and the caller can't cut it short.
             self.session.say(safety["text"], allow_interruptions=False)
@@ -108,6 +112,36 @@ class SummitAgent(Agent):
     async def on_user_turn_completed(self, turn_ctx: ChatContext, new_message: ChatMessage):
         await self.call.caller_line(new_message)
 
+    async def llm_node(
+        self, chat_ctx: ChatContext, tools: list[llm.Tool], model_settings: ModelSettings
+    ) -> AsyncIterable[llm.ChatChunk | str]:
+        """The model's reply, streamed as usual, except while the reply rule is holding: then its
+        text waits for the end of the reply, and is dropped if the reply calls a tool whose result
+        the worker speaks itself (a read-back lead-in, a goodbye before the safety sign-off)."""
+        stream = Agent.default.llm_node(self, chat_ctx, tools, model_settings)
+        if not self.call.reply.holding():
+            async for chunk in stream:
+                yield chunk
+            return
+        held: list[str] = []
+        calls: list[tuple[str, dict]] = []
+        async for chunk in stream:
+            if isinstance(chunk, str):
+                held.append(chunk)
+                continue
+            if isinstance(chunk, llm.ChatChunk) and chunk.delta and chunk.delta.content:
+                held.append(chunk.delta.content)
+                chunk = chunk.model_copy(
+                    update={"delta": chunk.delta.model_copy(update={"content": None})}
+                )
+            if isinstance(chunk, llm.ChatChunk) and chunk.delta:
+                for tool in chunk.delta.tool_calls:
+                    calls.append((tool.name, _arguments(tool.arguments)))
+            yield chunk
+        text = self.call.reply.text("".join(held), calls)
+        if text:
+            yield text
+
     async def tts_node(
         self, text: AsyncIterable[str], model_settings: ModelSettings
     ) -> AsyncIterable[rtc.AudioFrame]:
@@ -116,3 +150,11 @@ class SummitAgent(Agent):
         async for frame in Agent.default.tts_node(self, text, model_settings):
             await self.call.bridge.wait_clear()
             yield frame
+
+
+def _arguments(raw: str) -> dict:
+    try:
+        parsed = json.loads(raw or "{}")
+    except json.JSONDecodeError:
+        return {}
+    return parsed if isinstance(parsed, dict) else {}

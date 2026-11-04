@@ -11,6 +11,8 @@ from collections.abc import Callable
 
 from livekit.agents import RunContext, function_tool
 
+from prompts.assemble import SpokenReply, spoken_by_server
+
 from .bridge import Bridge
 from .server import ToolServer
 
@@ -40,6 +42,7 @@ def make_tool(
     log: ToolLog,
     hang_up: Callable[..., None],
     speak: Callable[[str], object],
+    reply: SpokenReply | None = None,
 ):
     schema = {k: spec[k] for k in ("name", "description", "parameters")}
 
@@ -50,13 +53,16 @@ def make_tool(
         result = await bridge.run(server.tool(spec["name"], dict(raw_arguments), spec["write"]))
         log.ms += (time.perf_counter() - started) * 1000
         log.bridge = log.bridge or len(bridge.played) > before
+        if reply is not None:
+            reply.tool_done(spec["name"], result)
         ending = spec["name"] == "end_call" and result["ok"]
         spoken = None
-        if result["say"] and (result["refused"] == "gate_safety" or ending):
-            # Safety text (the lines, the check question, the safety sign-off) is spoken by the
-            # worker word for word, never by the model. end_call only carries a sentence on a
-            # safety call.
-            spoken = speak(result["say"])
+        line = spoken_by_server(spec["name"], result)
+        if line:
+            # Safety text (the lines, the check question, the safety sign-off) and the read-back
+            # sentence are spoken by the worker word for word, never by the model. end_call only
+            # carries a sentence on a safety call.
+            spoken = speak(line)
         if ending and result["data"].get("hang_up"):
             # The server agreed: hang up once this turn's speech, and any line above, has played.
             # After the safety sign-off the call has had its goodbye, so the worker adds none.
@@ -76,7 +82,9 @@ def build_tools(
     log: ToolLog,
     hang_up: Callable[..., None],
     speak: Callable[[str], object],
+    reply: SpokenReply | None = None,
 ) -> list:
     """One tool per spec. `hang_up` runs only when the server's end_call result says to; `speak`
-    says a line word for word with interruptions off and returns its speech handle."""
-    return [make_tool(spec, server, bridge, log, hang_up, speak) for spec in specs]
+    says a line word for word with interruptions off and returns its speech handle; `reply` hears
+    each result, so the agent knows when to hold the model's text."""
+    return [make_tool(spec, server, bridge, log, hang_up, speak, reply) for spec in specs]

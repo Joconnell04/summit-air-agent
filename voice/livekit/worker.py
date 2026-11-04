@@ -248,7 +248,7 @@ async def entrypoint(ctx: JobContext) -> None:
     agent = SummitAgent(
         call,
         assemble.instructions(data),
-        build_tools(specs, tools_server, bridge, tool_log, hang_up, speak),
+        build_tools(specs, tools_server, bridge, tool_log, hang_up, speak, call.reply),
     )
 
     if outbound:

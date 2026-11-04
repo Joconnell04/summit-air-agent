@@ -86,3 +86,25 @@ def test_instructions_keep_the_fixes_from_the_must_pass_reliability_round(agent)
     assert "No follow-up, referral or advice." in text
     assert "An out-of-area caller gets no lead." in text
     assert "don't bring up gas safety yourself" in text
+
+
+def test_the_voice_layer_speaks_the_read_back_the_safety_refusal_and_the_sign_off():
+    spoken = assemble.spoken_by_server
+    assert spoken("read_back", {"ok": True, "say": "I have your home at 1 Main St."})
+    assert spoken("read_back", {"ok": False, "refused": "gate_read_back", "say": "I have..."})
+    assert spoken("read_back", {"ok": False, "refused": "invalid_phone", "say": "Again?"}) is None
+    assert spoken("read_back", {"ok": True, "say": "", "data": {"confirmed": True}}) is None
+    assert spoken("find_slots", {"ok": True, "say": "Tuesday works."}) is None
+
+
+def test_the_reply_rule_holds_text_only_while_a_read_back_can_come_or_on_a_safety_call():
+    reply = assemble.SpokenReply()
+    assert not reply.holding()
+    reply.tool_done("check_service_area", {"ok": True})
+    assert reply.holding()
+    reply.tool_done("read_back", {"ok": True, "data": {"confirmed": True}})
+    assert not reply.holding()
+    reply.heard({"action": "speak_lines"})
+    assert reply.holding() and reply.server_speaks("end_call", {})
+    reply.heard({"action": "cleared"})
+    assert not reply.holding() and not reply.server_speaks("end_call", {})

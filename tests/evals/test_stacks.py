@@ -159,3 +159,35 @@ def test_the_retell_adapter_is_loaded_by_name():
     from evals.stacks import load_adapter
 
     assert load_adapter("retell").__name__ == "voice.retell.eval_adapter"
+
+
+class ReadBackServer(StubServer):
+    """Checks the ZIP, then returns the read-back sentence."""
+
+    def tool(self, name, call_id, args, key=None):
+        if name == "check_service_area":
+            return {"ok": True, "say": "", "data": {"in_area": True}, "refused": None}
+        return {"ok": True, "say": "I have your home at 1 Main St, is that right?",
+                "data": {"confirmed": False}, "refused": None}
+
+
+def test_the_read_back_is_heard_alone_with_the_lead_in_dropped():
+    """Eval round 3: the harness records what a caller of the worker would hear."""
+    model = ScriptedModel([
+        use("check_service_area", "", zip="11231"),
+        say("You're in our area."),
+        use("read_back", "Let me read that back.", phone="caller_id"),
+        say("never said"),
+    ])
+    server = ReadBackServer()
+    agent = InProcessAgent(server, model, "c1", "(212) 555-0999")
+    agent.start()
+    agent.hear("It's 1 Main St, 11231.")
+    turn = agent.hear("Okay.")
+    assert turn.text == "I have your home at 1 Main St, is that right?"
+    assert server.lines[-1] == "I have your home at 1 Main St, is that right?"
+    # The dropped lead-in is gone from the model's own history too.
+    assert not any(
+        b.get("text") == "Let me read that back."
+        for m in agent.messages if isinstance(m["content"], list) for b in m["content"]
+    )

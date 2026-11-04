@@ -153,7 +153,11 @@ def server_notes(hints: list[str]) -> list[str]:
 
 def spoken_by_code(name: str, envelope: dict) -> str | None:
     """Tool results the worker speaks word for word with no model step: a refusal by the safety
-    gate, and the safety sign-off an end_call returns."""
+    gate, the read-back sentence, and the safety sign-off an end_call returns. The worker's own
+    rule (prompts/assemble.py) when it is in the tree."""
+    assemble = _assemble()
+    if assemble is not None and hasattr(assemble, "spoken_by_server"):
+        return assemble.spoken_by_server(name, envelope)
     say = envelope.get("say") or ""
     if envelope.get("refused") == "gate_safety" and say:
         return say
@@ -173,6 +177,10 @@ class InProcessAgent:
         self.messages: list[dict] = []
         self.system = ""
         self.tools: list[dict] = []
+        # What of each model reply the caller hears, by the worker's own rule, so the transcript
+        # and the checks see what a caller would (prompts/assemble.py SpokenReply).
+        assemble = _assemble()
+        self.reply = assemble.SpokenReply() if hasattr(assemble, "SpokenReply") else None
 
     def start(self) -> AgentTurn:
         started = self.server.start(self.call_id, self.caller_id)
@@ -195,6 +203,8 @@ class InProcessAgent:
         t0 = time.perf_counter()
         result = self.server.turn(self.call_id, "caller", caller_text)
         safety = result["data"].get("safety") or {}
+        if self.reply is not None:
+            self.reply.heard(safety)
         if safety.get("action") in SPOKEN_FROM_CODE and result["say"]:
             self.messages.append({"role": "user", "content": caller_text})
             return self._speak_from_code(result["say"], t0)
@@ -219,9 +229,16 @@ class InProcessAgent:
             reply = self.model.complete(self.system, self.messages, self.tools, max_tokens=1024)
             usage.add(reply.usage)
             hops.append(reply.first_token_ms)
-            self.messages.append({"role": "assistant", "content": reply.content})
-            if reply.text:
-                spoken.append(reply.text)
+            said, content = reply.text, reply.content
+            if self.reply is not None and said:
+                calls = [(u["name"], u["input"]) for u in reply.tool_uses]
+                said = self.reply.text(said, calls)
+                if not said:
+                    # The worker never speaks it, so the model's own history doesn't keep it.
+                    content = [b for b in content if b.get("type") != "text"]
+            self.messages.append({"role": "assistant", "content": content})
+            if said:
+                spoken.append(said)
                 if first_word is None:
                     first_word = hop_start + reply.first_token_ms / 1000
             if not reply.tool_uses:
@@ -231,6 +248,8 @@ class InProcessAgent:
                 called = time.perf_counter()
                 envelope = self._call_tool(use["name"], use["input"])
                 tool_ms += (time.perf_counter() - called) * 1000
+                if self.reply is not None:
+                    self.reply.tool_done(use["name"], envelope)
                 if use["name"] == "end_call" and envelope.get("ok"):
                     ended = bool((envelope.get("data") or {}).get("hang_up"))
                 from_code = from_code or spoken_by_code(use["name"], envelope)

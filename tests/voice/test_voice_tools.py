@@ -211,3 +211,14 @@ def test_a_slow_tool_is_timed_for_the_turn_log(agent, connect):
     ms, played = log.take()
     assert ms > 0 and played is False
     assert log.take() == (0.0, False)
+
+
+def test_the_read_back_sentence_is_spoken_by_the_worker_and_the_model_says_nothing(agent, connect):
+    """Eval round 3: the caller hears the server's read-back sentence word for word, once."""
+    agent.start(call_id="call-1")
+    hangups, voice = Hangups(), Voice()
+    tools = tools_for(connect("call-1"), hangups, voice)
+    address = {"street": "101 Union St", "unit": "", "city": "Brooklyn", "zip": "11231"}
+    result = asyncio.run(tools["read_back"]({"address": address, "phone": "caller_id"}, "ctx"))
+    assert result is None
+    assert len(voice.said) == 1 and voice.said[0].startswith("I have your home at 101 Union St")

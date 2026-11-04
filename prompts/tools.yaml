@@ -13,9 +13,9 @@ find_slots: >-
   days; with `day` it returns that day's exact arrival windows. Pass what you've heard that bears on
   priority in `facts`.
 read_back: >-
-  Confirms the address and number before booking. First call returns the exact sentence to say:
-  call it without announcing it, and say that sentence as your whole turn. After the caller clearly
-  says yes, call again with the same address and phone and `confirmed: true`.
+  Confirms the address and number before booking. The first call's sentence is spoken to the caller
+  for you, word for word, so call it without announcing it and say nothing yourself. After the
+  caller clearly says yes, call again with the same address and phone and `confirmed: true`.
 book_appointment: >-
   Book the window the caller chose, with the intake details. Only after the read-back was confirmed
   and after find_slots with `day` returned that day's windows. `slot.date` and `slot.window` are the

@@ -154,6 +154,65 @@ def server_notes(hints: list[str]) -> list[str]:
     return notes
 
 
+class SpokenReply:
+    """What of the model's reply the caller hears, kept the same in every voice layer and the eval
+    harness. Some tool results are spoken by the voice layer itself, word for word: the read-back
+    sentence, and on a safety call the sign-off end_call returns. In a reply that calls one of
+    those, the text the model wrote first is dropped, so the caller hears the server's sentence
+    alone, never a lead-in ("let me read that back") or a second goodbye (eval round 3).
+
+    A streaming voice layer can only drop text it hasn't spoken yet, so while `holding` it keeps
+    each reply's text until the reply ends. That is from the first in-area ZIP check, when a
+    read-back can come, until the read-back is confirmed, and for the whole of a safety call."""
+
+    def __init__(self) -> None:
+        self.address_checked = False
+        self.read_back_confirmed = False
+        self.safety_call = False
+
+    def holding(self) -> bool:
+        return self.safety_call or (self.address_checked and not self.read_back_confirmed)
+
+    def heard(self, safety: dict | None) -> None:
+        """A caller turn's result: the safety action the server returned, if any."""
+        action = (safety or {}).get("action")
+        if action in ("speak_lines", "speak_variant"):
+            self.safety_call = True
+        elif action == "cleared":
+            self.safety_call = False
+
+    def tool_done(self, name: str, envelope: dict) -> None:
+        if name == "check_service_area" and envelope.get("ok"):
+            self.address_checked = True
+        if name == "read_back" and (envelope.get("data") or {}).get("confirmed"):
+            self.read_back_confirmed = True
+
+    def server_speaks(self, name: str, args: dict) -> bool:
+        """Decided from the call alone, before its result: a streaming layer must choose then."""
+        if name == "read_back":
+            return not args.get("confirmed")
+        return name == "end_call" and self.safety_call
+
+    def text(self, text: str, calls: list[tuple[str, dict]]) -> str:
+        """The model's text for one reply, given the (name, arguments) of the tools it called."""
+        return "" if any(self.server_speaks(n, a) for n, a in calls) else text
+
+
+def spoken_by_server(name: str, envelope: dict) -> str | None:
+    """The sentence a voice layer speaks itself from a tool result, word for word, with no model
+    step after it: a safety refusal, the read-back sentence, and the sign-off end_call returns."""
+    say = envelope.get("say") or ""
+    if not say:
+        return None
+    if envelope.get("refused") == "gate_safety":
+        return say
+    if name == "read_back" and (envelope.get("ok") or envelope.get("refused") == "gate_read_back"):
+        return say
+    if name == "end_call" and envelope.get("ok"):
+        return say
+    return None
+
+
 def job_types(tenant_dir: Path) -> list[str]:
     """Active job type codes from the tenant's config.yaml."""
     config = yaml.safe_load((tenant_dir / "config.yaml").read_text())
