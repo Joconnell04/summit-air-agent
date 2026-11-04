@@ -804,3 +804,9 @@ def test_an_echoed_question_answered_yes_is_a_report(line):
 def test_a_real_gas_report_after_a_question_word_brings_the_lines(line):
     """PR #102 review: the bare "do i", "should i" and "would i" worries held these back."""
     assert safety.check_caller_turn(line, "none", None, 0, CFG).action == "speak_lines", line
+
+
+def test_if_we_do_smell_gas_what_should_we_do_is_a_worry():
+    """Eval run 20261104-163112, gas-worry-no-smell: "we do" in the question read as an answer."""
+    line = "yes that's right but if we do smell gas what should we do"
+    assert safety.check_caller_turn(line, "none", None, 0, CFG).action != "speak_lines"

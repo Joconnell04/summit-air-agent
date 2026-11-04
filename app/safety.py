@@ -371,9 +371,14 @@ ANSWER_DENIES = ("dont", "do not", "not", "no", "nothing", "never", "cant")
 
 
 def _answers_yes_after(text_words: str, phrase: str) -> bool:
-    """After the last mention, the caller says yes and nothing that takes it back."""
+    """The caller echoed the question and the words straight after the last mention answer it yes,
+    with nothing that takes it back. Only for the echo: in "if we do smell gas, what should we do"
+    the "we do" is part of a question, not an answer."""
+    if not has_phrase(text_words, ECHO_OF_QUESTION):
+        return False
     rest = " " + text_words[text_words.rfind(words(phrase)) + len(words(phrase)) :]
-    return any(has_phrase(rest, w) for w in ANSWERED_YES) and not any(
+    opening = " " + " ".join(rest.split()[:3]) + " "
+    return any(has_phrase(opening, w) for w in ANSWERED_YES) and not any(
         has_phrase(rest, w) for w in ANSWER_DENIES
     )
 
