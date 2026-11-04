@@ -377,3 +377,27 @@ def test_moving_a_known_callers_own_visit_needs_no_address_check():
         {"job_id": 7, "window": {"weekday": "Friday", "label": "12 to 4"}}]}]}
     notes = " ".join(assemble.call_notes(start))
     assert "needs no read-back" in notes and "don't ask them to confirm the address" in notes
+
+
+@pytest.mark.parametrize(
+    "sentence",
+    [
+        "Please stay with your partner and make sure your kid is still on the line with 911.",
+        "Keep them sitting up if they're short of breath.",
+        "Have them lie down and keep talking to them.",
+        "Keep an eye on him until help arrives.",
+        "Make sure she's breathing comfortably.",
+    ],
+)
+def test_coaching_on_caring_for_someone_is_never_spoken(sentence):
+    """Decision 033; eval run 20261104-232053, asks-agent-to-call-911 #2."""
+    assert assemble.SpokenReply().sentence(sentence) == ""
+
+
+@pytest.mark.parametrize(
+    "sentence",
+    ["Please call 911 now.", "I'm a virtual assistant, so I can't place that call.",
+     "Someone will stay in touch about the visit.", "Keep the thermostat at 68 for now."],
+)
+def test_the_911_advice_and_ordinary_lines_are_kept(sentence):
+    assert assemble.SpokenReply().sentence(sentence) == sentence

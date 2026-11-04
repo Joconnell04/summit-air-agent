@@ -334,6 +334,18 @@ ASKS_TO_CONFIRM = re.compile(
     r"|\bstill the (?:best|right|correct)\b[^.?!]*\?",
     re.IGNORECASE,
 )
+# Coaching on how to care for someone ("stay with your partner", "keep them sitting up"). The
+# agent's safety job is to escalate politely, not to coach (DECISIONS.md 033); dropped on every
+# call (eval run 20261104-232053, asks-agent-to-call-911).
+COACHING = re.compile(
+    r"\bstay (?:with|beside|next to|close to) (?:your|the|him|her|them)\b"
+    r"|\bkeep (?:him|her|them|your \w+|the \w+) (?:calm|still|sitting|lying|talking|warm|awake|"
+    r"comfortable|upright|breathing)\b"
+    r"|\b(?:sitting|sit (?:him|her|them)) up\b|\blie (?:him|her|them )?down\b|\blay (?:him|her|them) down\b"
+    r"|\bkeep talking to (?:him|her|them)\b|\bkeep an eye on (?:him|her|them|your \w+)\b"
+    r"|\bmake sure (?:he|she|they)(?:'s|'re| is| are)? (?:breathing|comfortable|warm|sitting)\b",
+    re.IGNORECASE,
+)
 # A word from inside the company ("I'll flag this for our team"). The server's own sentences say
 # "I've let our team know" (eval run 20261104-053435, complaint-flag).
 INTERNAL_WORD = re.compile(r"\bflag(?:s|ged|ging)?\b", re.IGNORECASE)
@@ -555,7 +567,7 @@ class SpokenReply:
         after_restatement, self._dropped_restatement = self._dropped_restatement, False
         if ANNOUNCES_READ_BACK.search(sentence) or DESCRIBES_TOOLS.search(sentence):
             return ""
-        if TOOL_TALK.search(sentence) or ASKS_TO_CONFIRM.search(sentence):
+        if TOOL_TALK.search(sentence) or ASKS_TO_CONFIRM.search(sentence) or COACHING.search(sentence):
             return ""
         if INTERNAL_WORD.search(sentence) or CLAIMS_FEE.search(sentence):
             return ""
