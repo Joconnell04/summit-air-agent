@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any
 from zoneinfo import ZoneInfo
 
+from app import priority as prio
 from app.tenant import load_agent
 from app.text import street_key, words
 
@@ -27,6 +28,11 @@ DIGIT_WORDS = ["oh", "one", "two", "three", "four", "five", "six", "seven", "eig
 def safety_config(folder: Path = TENANT_DIR) -> dict:
     """The tenant's safety config with its trade's phrases, as the server reads it."""
     return load_agent(folder)[0]["safety"]
+
+
+def priority_config(folder: Path = TENANT_DIR) -> dict:
+    """The tenant's priority config with its trade's rules, as the server reads it."""
+    return load_agent(folder)[0]["priority"]
 
 
 @dataclass
@@ -197,11 +203,23 @@ UNQUOTED_RULES = ("safety_signal", "side_model", "combined")
 QUOTE = re.compile(r'caller said "(.*?)"$')
 
 
+def _invented_at_home(who_home: str, caller: str) -> list[str]:
+    rules = priority_config()["rules"]
+    return [
+        f"who_home {who_home!r} says {rule['reason']!r}, which the caller never said"
+        for rule in rules
+        if rule.get("phrases") or "age_at_least" in rule
+        if prio.said(rule, who_home) and not prio.said(rule, caller)
+    ]
+
+
 def priority_raise(arg: dict, ev: Evidence) -> list[str]:
     """Where each booking's priority came from (DECISIONS.md 072). `from_caller`: every rule that
     raised it quotes a caller line, and each quote is in a caller turn on the record, so nothing
-    the model wrote raised it. `raised_after_wait`: the booking's flag for a raise on a fact first
-    given after the caller heard the wait."""
+    the model wrote raised it. `who_home_from_caller`: no priority rule fires on the booking's
+    `who_home` that doesn't also fire on the caller's lines, so the model invented no one at home.
+    `raised_after_wait`: the booking's flag for a raise on a fact first given after the caller
+    heard the wait."""
     booked = ev.bookings()
     if not booked:
         return ["no booking to check the priority of"]
@@ -213,6 +231,8 @@ def priority_raise(arg: dict, ev: Evidence) -> list[str]:
                 f"raised_after_wait is {bool(b.get('raised_after_wait'))}, "
                 f"expected {arg['raised_after_wait']}"
             )
+        if arg.get("who_home_from_caller"):
+            problems += _invented_at_home(b.get("who_home") or "", "\n".join(said))
         if not arg.get("from_caller"):
             continue
         rules = json.loads(b.get("priority_rules") or "[]")
@@ -570,7 +590,9 @@ CHECKS: dict[str, Check] = {
         lambda arg: arg == "none",
     ),
     "read_back": Check(_one_of("before_booking"), read_back, lambda arg: True),
-    "priority_raise": Check(_keys({"from_caller", "raised_after_wait"}), priority_raise),
+    "priority_raise": Check(
+        _keys({"from_caller", "raised_after_wait", "who_home_from_caller"}), priority_raise
+    ),
     "flag": Check(
         _one_of("none", "person", "safety", "safety_check_cleared", "approval_check"),
         flag,

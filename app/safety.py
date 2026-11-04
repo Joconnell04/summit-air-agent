@@ -305,7 +305,8 @@ def _nothing_like(bare: str, target: str) -> bool:
 def _sentences(text: str) -> list[str]:
     """The text split at sentence ends. A negation never reaches across one: in "I reset the
     breaker and got nothing. Gas smell in the basement." the gas smell is a report."""
-    return [s for s in re.split(r"(?<=[.!?])\s+|\n", text) if s.strip()]
+    # Only after a word of two or more letters, so "my c.o. detector" stays one sentence.
+    return [s for s in re.split(r"(?<=[A-Za-z0-9]{2}[.!?])\s+|\n", text) if s.strip()]
 
 
 def _negated(text_words: str, phrase: str, answering: bool = False) -> bool:
@@ -363,9 +364,10 @@ def _hypothetical(text_words: str, phrase: str) -> bool:
 
 
 def _mentions(text: str, cfg: dict, answering_check: bool) -> list[tuple[str, bool]]:
-    """Every clear phrase in the text that isn't negated, as (kind, only a worry), sentence by
-    sentence."""
-    found = []
+    """Every clear phrase in the text that isn't negated, as (kind, only a worry). Negation is read
+    sentence by sentence; whether it's a worry is read on the whole line, so "Do you smell gas? I
+    do." is a report."""
+    found, whole = [], words(text)
     for sentence in _sentences(text):
         text_words = words(sentence)
         for kind, spec in cfg["kinds"].items():
@@ -373,9 +375,7 @@ def _mentions(text: str, cfg: dict, answering_check: bool) -> list[tuple[str, bo
                 if has_phrase(text_words, phrase) and not _negated(
                     text_words, phrase, answering_check
                 ):
-                    worry = _hypothetical(text_words, phrase) and not _answers_yes_after(
-                        text_words, phrase
-                    )
+                    worry = _hypothetical(whole, phrase) and not _answers_yes_after(whole, phrase)
                     found.append((kind, worry))
     return found
 
@@ -584,7 +584,13 @@ CO_CONTEXT_WINDOW = 3
 
 
 def _spelled_co(text: str) -> str:
-    """The line with a spelled-out carbon monoxide said as the words the phrase lists know."""
+    """The line with a spelled-out carbon monoxide said as the words the phrase lists know, one
+    sentence to a line, so the checks after it still stop a negation at a sentence end ("No. Gas
+    smell in the basement.", PR #126 review)."""
+    return "\n".join(_spelled_co_sentence(sentence) for sentence in _sentences(text))
+
+
+def _spelled_co_sentence(text: str) -> str:
     text_words = words(text)
     for match in reversed(list(SPELLED_CO.finditer(text_words))):
         before = text_words[: match.start()].split()[-CO_CONTEXT_WINDOW:]

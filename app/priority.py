@@ -21,12 +21,18 @@ LEVELS = ["Low", "Normal", "High", "Urgent"]
 # "it's 2 years old" (usually the system) never fires.
 AGE = re.compile(
     r"\b(\d{2,3})(?:-|\s)(?:year|yr)s?(?:-|\s)old\b"
-    # The apostrophe is optional: speech-to-text writes "im 84" as often as "I'm 84".
-    r"|\b(?:i|she|he|they|who|mom|dad|mother|father|grandma|grandpa)(?:['’]?s|['’]?m| is| am| are|['’]?re)\s+(\d{2,3})\b"
+    # Each pronoun with its own verb, so "it is 48" or "the house is 48" is never an age (PR #126
+    # re-check). The apostrophe is optional: speech-to-text writes "im 84" as often as "I'm 84".
+    r"|\b(?:i['’]?m|i am|they['’]?re|they are"
+    r"|(?:she|he|who|mom|dad|mother|father|grandma|grandpa)(?:['’]?s| is))\s+(\d{2,3})\b"
     r"|\bage[d]?\s+(\d{2,3})\b"
     r"|\bin (?:his|her|their|my|our) (\d)0s\b"
 )
 DECADES = {"seventies": 70, "eighties": 80, "nineties": 90}
+AMOUNT = re.compile(
+    r"\b\d+\s*(?:%|percent\b|per cent\b|minutes?\b|mins?\b|hours?\b|hrs?\b|blocks?\b"
+    r"|dollars?\b|bucks\b|miles?\b|seconds?\b|degrees?\b)"
+)
 
 
 class SideModel(Protocol):
@@ -63,9 +69,10 @@ class Priority:
 
 
 def _ages(text: str) -> list[int]:
-    # "eighty-four" is 84: a line roughened by speech-to-text, or a caller who spells it out. "I'm
-    # ninety percent sure" gives no age (PR #126 review).
-    text = re.sub(r"\b\d+\s*(?:percent|per cent|%)", " ", spoken_numbers(text))
+    # "eighty-four" is 84: a line roughened by speech-to-text, or a caller who spells it out. A
+    # number with a unit is never an age: "I'm ninety percent sure", "I'm sixty five minutes away"
+    # (PR #126 review).
+    text = AMOUNT.sub(" ", spoken_numbers(text))
     ages = []
     for m in AGE.finditer(text):
         if m[4]:
@@ -155,23 +162,6 @@ def _parts(text: str) -> list[str]:
     return carried
 
 
-# A caller telling the agent what to claim ("just say there's a baby here", "tell them there's a baby
-# here, there isn't", "pretend she's 85") is asking for a raise, not giving a fact (C-58). The words
-# after one, up to the end of that part of the sentence, raise nothing. A real fact after "and" still
-# does: "just say it's urgent and my mom is 85".
-CLAIMS = re.compile(
-    r"\b(?:just say|(?:say|tell (?:them|him|her|the \w+)) (?:that )?there(?:['’]?s| is| are)"
-    r"|say (?:that )?(?:she|he)(?:['’]?s| is)|put (?:it |this |me )?down (?:that|as)|pretend"
-    r"|make (?:it|something) up|lie and say)\b"
-    r"[^.,;:!?\n]*?(?=\b(?:and|but|so|because|also|plus)\b|[.,;:!?\n]|$)",
-    re.IGNORECASE,
-)
-
-
-def _unclaimed(text: str) -> str:
-    return CLAIMS.sub(" ", text)
-
-
 def _always_followed(text: str, phrase: str, followers: list[str]) -> bool:
     """Every mention of the phrase runs straight on into one of these words, across a comma too:
     "it's just me and my partner" names someone else, so it isn't "just me" (a rule's
@@ -185,9 +175,9 @@ def _always_followed(text: str, phrase: str, followers: list[str]) -> bool:
 
 
 def _said(rule: dict, text: str) -> bool:
-    """The rule's phrases or ages turn up in these lines, not negated and not a claim the caller
-    asked the agent to make."""
-    text = _unclaimed(text)
+    """The rule's phrases or ages turn up in these lines, not negated. A fact the caller states
+    always counts, even one they ask the agent to pass on ("tell them there's a baby in the house"):
+    a false raise is the safe direction, and raised_after_wait tells the dispatcher when it came."""
     unless = rule.get("unless_followed_by") or {}
     phrases = [
         p
@@ -199,6 +189,12 @@ def _said(rule: dict, text: str) -> bool:
     if any(_said_not_negated(part, p) for part in parts for p in phrases):
         return True
     return "age_at_least" in rule and any(a >= rule["age_at_least"] for a in _ages(text))
+
+
+def said(rule: dict, text: str) -> bool:
+    """Whether a rule's phrases or ages turn up in this text, as the server reads a caller's lines;
+    the eval checks use it to test the model's notes against what the caller said."""
+    return _said(rule, text)
 
 
 def _rule_fires(rule: dict, facts: Facts) -> bool:

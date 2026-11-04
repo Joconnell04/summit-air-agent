@@ -143,8 +143,9 @@ priority:
   rules:
     - id: vulnerable_person
       job_types: [no_heat, no_cooling]
-      phrases: [elderly, senior, seniors, grandmother, grandfather, grandma, grandpa, baby, infant,
-                newborn, months old, weeks old]
+      # "Babys" is "the baby's room" once the apostrophe is dropped.
+      phrases: [elderly, senior, seniors, grandmother, grandfather, grandma, grandpa, baby, babys,
+                babies, infant, newborn, months old, weeks old]
       raise_to: Urgent
       raise_to_when_mild: High
       reason: an older person or a baby at home
@@ -199,7 +200,8 @@ priority:
       # "Just me at home" and the like (a rig call: an 84-year-old alone with a cane booked High).
       phrases: [lives alone, live alone, by herself, by himself, by myself, no one else,
                 just me at home, just me here, its just me, im alone, i am alone, home alone,
-                alone at home, on my own, only one here, only one home, caller alone]
+                alone at home, on my own, only one here, only one home, caller alone, all alone,
+                all by myself]
       # "Just me and my partner" names someone else at home. Only the "just me" phrases: "I live
       # alone and my heat is out" still raises.
       unless_followed_by:

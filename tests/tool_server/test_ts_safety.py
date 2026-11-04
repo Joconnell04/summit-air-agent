@@ -868,3 +868,9 @@ def test_a_negation_never_reaches_across_a_sentence_end(line):
 )
 def test_nothing_negates_only_a_like_phrase_in_a_check_answer(answer, result):
     assert safety.answer_to_check(answer, CFG) == result
+
+
+@pytest.mark.parametrize("line", ["No. Gas smell in the basement.", "Never. Gas smell in the garage."])
+def test_a_one_word_no_before_a_gas_report_still_brings_the_lines(line):
+    # PR #126 re-check: the live turn check joined the sentences and "no" negated the smell.
+    assert safety.check_caller_turn(line, "none", None, 0, CFG).action == "speak_lines"
