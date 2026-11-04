@@ -22,7 +22,8 @@
       <a href="/owner/calls{{ q(slug, day if day is defined and not is_today else none) }}"{% if tab == "calls" %} aria-current="page"{% endif %}>Calls</a>
       <a href="/owner/results{{ q(slug, day if day is defined and not is_today else none) }}"{% if tab == "results" %} aria-current="page"{% endif %}>Results</a>
       <a href="/owner/rules{{ q(slug) }}"{% if tab == "rules" %} aria-current="page"{% endif %}>Rules</a>
-      {% if admin %}<a href="/bench">Bench</a>{% endif %}
+      <a href="/owner/settings{{ q(slug) }}"{% if tab == "settings" %} aria-current="page"{% endif %}>Settings</a>
+      {% if is_admin %}<a href="/bench">Bench</a>{% endif %}
     </nav>
     {% endblock %}
     <div class="end">
@@ -34,6 +35,7 @@
         {% if slug %}<input type="hidden" name="tenant" value="{{ slug }}">{% endif %}
       </form>
       {{ status_line(status) }}
+      {% if user %}<form class="account" method="post" action="/owner/logout"><button class="btn quiet" type="submit" data-tip="Signed in as {{ user.name }}, {{ 'admin' if user.role == 'admin' else 'staff' }}" aria-label="Sign out {{ user.name }}">Sign out</button></form>{% endif %}
     </div>
   </div>
 </header>

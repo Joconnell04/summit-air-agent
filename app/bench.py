@@ -3,16 +3,15 @@ call as a node graph with the prompts and decisions at every step (app/nodes.py)
 progress as it happens, the rule proof, a call turned into a draft eval scenario, the live
 settings with their documented measurements, and the eval runs (app/bench_data.py). Read-only.
 
-Admin only, through require_admin. Every value shown passes through app/redact.py.
+Admin only (an admin account, app/accounts.py), through require_admin. Every value shown passes through app/redact.py.
 """
 
-import hmac
 import json
 import os
 import re
 import time
 
-from fastapi import FastAPI, Form, Request
+from fastapi import FastAPI, Request
 from fastapi.responses import (
     HTMLResponse,
     PlainTextResponse,
@@ -23,7 +22,7 @@ from fastapi.responses import (
 
 from . import bench_data, nodes, redact, rules, trace
 from .db import parse_iso
-from .owner_view import EDIT_COOKIE, _common, _remember, _render, is_admin
+from .owner_view import _common, _need_admin, _render
 
 RECENT = 60
 SEARCH_MAX_CHARS = 80
@@ -34,13 +33,9 @@ KEEPALIVE_SECONDS = 15
 
 
 def require_admin(request: Request) -> Response | None:
-    """None for an admin, otherwise the page to sign in. Until named accounts land this is the
-    rules editor's edit code (app/owner_view.py); it is the one place to switch to the admin role."""
-    if is_admin(request):
-        return None
-    context = {"failed": False, "title": "Debug bench", "label": "Edit code",
-               "action": "/bench/login"}
-    return _render(request, "login.html", context, 401)
+    """None when an admin is signed in (app/accounts.py); otherwise the sign-in form, or the
+    "admins only" page for a staff user. Every bench route starts here."""
+    return _need_admin(request)
 
 
 def _context(request: Request, conn, tab: str) -> dict:
@@ -92,15 +87,6 @@ def _calls(conn, q: str, tenants) -> list[dict]:
 
 
 def add_routes(app: FastAPI) -> None:
-    @app.post("/bench/login")
-    def bench_login(request: Request, token: str = Form("")):
-        editors = request.app.state.services.settings.editors()
-        if not any(token and hmac.compare_digest(token.encode(), c.encode()) for c in editors):
-            context = {"failed": True, "title": "Debug bench", "label": "Edit code",
-                       "action": "/bench/login"}
-            return _render(request, "login.html", context, 401)
-        return _remember(request, RedirectResponse("/bench", 303), token, EDIT_COOKIE)
-
     @app.get("/bench", response_class=HTMLResponse)
     def bench_index(request: Request, q: str = ""):
         denied = require_admin(request)

@@ -7,7 +7,7 @@ find_customer: >-
 get_customer_history: >-
   Older history for a customer already matched on this call: past jobs, past calls or equipment.
   Use it for questions like "when were you last out here?" that the call context doesn't answer.
-check_service_area: Check a five-digit ZIP against the service area. Call it as soon as you have the ZIP.
+check_service_area: Check a five-digit ZIP against the service area. Call it as soon as the caller gives the ZIP; never guess one from the street.
 find_slots: >-
   Availability for a job type. Without `day` it returns the shape of availability over the coming
   days; with `day` it returns that day's exact arrival windows. Pass what you've heard that bears on

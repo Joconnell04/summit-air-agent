@@ -94,3 +94,4 @@ How the design was reached, in order, so a reader can follow each choice back to
 | Rule edits on the bench | Edits move to the debug bench; the gate reruns by default, an override is logged | DECISIONS.md 055, #86 |
 | Side model check | Kept on: no false alarms in 46 calls, one real fix; the phrase rules' "nobody's" bug fixed | DECISIONS.md 056 |
 | Booking under load | Two simulated calls race for one slot; one wins, the other hears it plainly | DECISIONS.md 057, #86 |
+| ZIP from the caller | The server only acts on a ZIP the caller said or one on record; street names aren't businesses | DECISIONS.md 058, #88 |

@@ -100,6 +100,8 @@ def test_a_gas_smell_asks_for_the_signed_off_lines_exactly_with_no_tools(app):
 
 def test_function_calls_go_to_the_tool_server_and_the_reply_continues(app):
     line, sock, listener = greeted(app)
+    # The server checks only a ZIP the caller said (app/tools.py _zip_known).
+    world_for(app).server.turn("rt-1", "caller", "I'm in 11231.")
     sock.sent.clear()
     done = {"type": "response.done", "response": {"output": [
         {"type": "function_call", "name": "check_service_area", "call_id": "fc_1",

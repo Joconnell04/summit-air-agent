@@ -5,27 +5,31 @@ documented measurements, and the eval runs."""
 import pytest
 import yaml
 from test_ts_safety import GAS_LINES
-from toolkit import UNKNOWN, Agent, book, first_open, in_area_address, make_server, ready_to_book
+from toolkit import (
+    UNKNOWN,
+    Agent,
+    book,
+    first_open,
+    in_area_address,
+    make_server,
+    ready_to_book,
+    sign_in,
+)
 
 from app import bench, bench_data, nodes, redact, trace
 from evals.scenario import Scenario
 
-READ = "read-token"
-EDIT = "edit-code"
 # A number the mock has no customer for, so a booking needs no account choice.
 CALLER = UNKNOWN
 
 
 @pytest.fixture
 def agent(tmp_path, clock, mock):
-    app = make_server(tmp_path, clock, mock[0], owner_token=READ, rules_editors=f"Dana={EDIT}")
-    return Agent(app, clock)
+    return Agent(make_server(tmp_path, clock, mock[0]), clock)
 
 
 def admin(agent: Agent) -> Agent:
-    response = agent.client.post("/bench/login", data={"token": EDIT}, follow_redirects=False)
-    assert response.status_code == 303
-    return agent
+    return sign_in(agent, "admin", "dana")
 
 
 def timed_call(agent: Agent) -> str:
@@ -60,11 +64,11 @@ PAGES = [
 
 @pytest.mark.parametrize("path", PAGES)
 def test_the_bench_needs_an_admin(agent, path):
-    assert agent.client.get(path).status_code == 401, "nobody signed in"
-    agent.client.get(f"/owner?token={READ}")
     response = agent.client.get(path)
-    assert response.status_code == 401, "the owner's read token is not enough"
-    assert 'action="/bench/login"' in response.text
+    assert response.status_code == 401, "nobody signed in"
+    assert 'action="/owner/login"' in response.text
+    sign_in(agent, "staff", "sam")
+    assert agent.client.get(path).status_code == 403, "staff can't open the bench"
     admin(agent)
     assert agent.client.get(path).status_code == 200
 
@@ -73,16 +77,22 @@ def test_every_route_on_a_call_needs_an_admin(agent):
     call = timed_call(agent)
     for path in ("", "/graph", "/stream", "/scenario.yaml"):
         assert agent.client.get(f"/bench/calls/{call}{path}").status_code == 401, path
+    sign_in(agent, "staff", "sam")
+    for path in ("", "/graph", "/stream", "/scenario.yaml"):
+        assert agent.client.get(f"/bench/calls/{call}{path}").status_code == 403, path
 
 
-def test_a_wrong_code_does_not_sign_in(agent):
-    response = agent.client.post("/bench/login", data={"token": "guess"}, follow_redirects=False)
-    assert response.status_code == 401
-    assert agent.client.get("/bench").status_code == 401
+def test_signing_in_from_the_bench_comes_back_to_it(agent):
+    page = agent.client.get("/bench/settings").text
+    assert 'value="/bench/settings"' in page
+    sign_in(agent, "admin", "dana")
+    response = agent.client.post("/owner/login", data={"username": "dana", "password": "test-password-1",
+                                                       "next": "/bench/settings"}, follow_redirects=False)
+    assert response.headers["location"] == "/bench/settings"
 
 
 def test_only_an_admin_sees_the_bench_tab_on_the_owner_view(agent):
-    agent.client.get(f"/owner?token={READ}")
+    sign_in(agent, "staff", "sam")
     assert 'href="/bench"' not in agent.client.get("/owner").text
     admin(agent)
     assert 'href="/bench"' in agent.client.get("/owner").text
@@ -308,7 +318,6 @@ def test_the_settings_page_shows_live_values_and_never_a_secret(agent):
     assert "voice.endpointing.digits.max_delay" in page
     assert "claude-haiku-5-5" in page and "Measured" in page and "Assumed" in page
     assert "test-token" not in page, "the debug token shows only as set"
-    assert EDIT not in page
 
 
 def test_the_evals_page_shows_each_run_against_the_floor(agent):

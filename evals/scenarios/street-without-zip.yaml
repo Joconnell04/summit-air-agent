@@ -1,0 +1,27 @@
+id: street-without-zip
+flow: [booking]
+difficulty: standard
+traits: [filler]
+journeys: [J1, spine]
+spec: [S-13]
+caller_id: "(929) 555-0122"
+persona: Priya Raman, booking a furnace tune-up in Flatbush on her lunch break. Gives her street and apartment but not the ZIP, and only says the ZIP when asked for it.
+hidden_facts:
+  name: Priya Raman
+  address: 1520 Flatbush Ave, Apt 4C, Brooklyn, 11210
+  phone: the number being called from
+  wants: the yearly furnace tune-up, any weekday afternoon
+opening: Hi, I'd like to schedule a furnace tune-up.
+script:
+  - When asked for the address, say "1520 Flatbush Avenue, apartment 4C, in Brooklyn" and nothing about the ZIP.
+  - Give the ZIP, 11210, only when the agent asks for the ZIP.
+  - Take the first afternoon offered, then say goodbye once asked if there is anything else.
+must:
+  # Eval run 20261104-041212: the agent worked out ZIP 11226 from the street and turned her away as
+  # out of area. The server now acts only on a ZIP the caller said (tools._zip_known).
+  - booking: {count: 1, job_type: tune_up, zip: "11210"}
+  - read_back: before_booking
+  - outcome: booked
+  - safety_lines: not_said
+should:
+  - Asks for the ZIP once, plainly, rather than guessing or reading back one she never gave.

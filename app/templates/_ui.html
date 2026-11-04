@@ -120,6 +120,15 @@
 </div>
 {%- endmacro %}
 
+{# An on/off choice in a form: the segmented control as a radio pair, so the server reads a plain
+   field ("1" or "0") and the page works without the script. #}
+{% macro on_off(name, value, labelledby) -%}
+<div class="seg" role="radiogroup" aria-labelledby="{{ labelledby }}">
+  <input type="radio" id="{{ name }}-on" name="{{ name }}" value="1"{% if value %} checked{% endif %}><label for="{{ name }}-on">On</label>
+  <input type="radio" id="{{ name }}-off" name="{{ name }}" value="0"{% if not value %} checked{% endif %}><label for="{{ name }}-off">Off</label>
+</div>
+{%- endmacro %}
+
 {# A step's timing on the node graph: milliseconds, or "missing" when the record has none. #}
 {% macro ms(value, slow=1500) -%}
 {%- if value is none %}<span class="ms missing">missing</span>{% elif value < 1 %}<span class="ms">&lt;1 ms</span>{% else %}<span class="ms{% if value >= slow %} slow{% endif %}">{{ "{:,.0f}".format(value) }} ms</span>{% endif -%}
