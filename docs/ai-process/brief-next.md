@@ -43,7 +43,12 @@ Signing in: https://45-77-105-247.sslip.io/owner (owner view) and https://45-77-
 
 ## Still open
 
-- **Priority from the caller's own words** (new lane, issue #124, docs/later.md C-58): insisting alone never raised priority, but the model's own notes on who's home and the inside temperature fed the same phrase rules, so pressure or a model slip could raise it. Now only the caller's words raise it, the reason quotes the caller's line, a raise that came after the caller heard the wait is flagged for the dispatcher, and the agent handles a caller who argues calmly. Five new evals, then two-sample runs.
+- **Three lanes for the call paths you approved** (issues #128, #129, #130; decisions 074 to 082 reserved):
+  - Caller changes: a caller who moved, a name-and-address check before changes from an unknown number, another callback number, two accounts.
+  - Booking flow: a correction after the read-back, expired windows, commercial phrasings, work Summit Air doesn't do, two jobs in one call, a requested technician.
+  - Call handling: card numbers stopped and never stored, dead air (check in every 2 minutes, hang up at 8 with a call-back invite, resume on the next call), a calm electrical safety route, AC water through the ceiling Urgent, a tripping breaker High.
+  Each lane runs its own scenarios and must-pass at two samples; one standard run after all three merge sets the reference. Spanish (idea 10) stays in later.md as C-16.
+- **Done, [#126]:** priority from the caller's own words (issue #124, docs/later.md C-58): insisting alone never raised priority, but the model's own notes on who's home and the inside temperature fed the same phrase rules, so pressure or a model slip could raise it. Now only the caller's words raise it, the reason quotes the caller's line, a raise that came after the caller heard the wait is flagged for the dispatcher, and the agent handles a caller who argues calmly. Five new evals, then two-sample runs.
 - **Address lookup, preferred names, five easy scenarios** (new lane): a server address lookup finds the ZIP from "248 Duffield St" (one match fills it and the read-back confirms; several ask which borough; none asks to repeat or spell; a caller's ZIP that disagrees with the lookup gets read back and settled before booking). Callers who ask to be called "Dr. Patel" are, for the call and next time. Five plain scenarios join the standard suite. Ends with a two-sample eval run.
 
 - **Decisions 057 to 064 were missing from DECISIONS.md** (the design trail had them; the entries never landed). Restored from the session log, word for word.
