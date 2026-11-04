@@ -17,6 +17,7 @@ from toolkit import (
     in_area_address,
     make_server,
     ready_to_book,
+    sign_in,
 )
 
 from app import jobs, records, summary
@@ -24,7 +25,6 @@ from app.db import tx
 from app.fsm import FsmRejected, FsmUnavailable
 from app.settings import QUEUE_MAX_ATTEMPTS
 
-TOKEN = "owner-token"
 DRAFT = {
     "problem": "No heat since last night, radiators are cold",
     "watch_for": "",
@@ -53,7 +53,7 @@ class FakeModel:
 
 @pytest.fixture
 def agent(tmp_path, clock, mock):
-    return Agent(make_server(tmp_path, clock, mock[0], owner_token=TOKEN), clock)
+    return Agent(make_server(tmp_path, clock, mock[0]), clock)
 
 
 def services(agent: Agent):
@@ -455,7 +455,7 @@ def test_summaries_are_off_without_the_switch():
 
 def test_the_call_page_shows_the_summary_beside_the_job(agent):
     call, _ = booked_call(agent, arrival_notes="Buzzer 3B")
-    agent.client.get(f"/owner?token={TOKEN}")
+    sign_in(agent)
     html = agent.client.get(f"/owner/calls/{call}").text
     assert "For the technician" in html and "Written shortly after the call." in html
     run(agent, FakeModel({**DRAFT, "access": "Buzzer 3B"}))
@@ -468,7 +468,7 @@ def test_the_call_page_shows_nothing_for_a_call_with_no_booking(agent):
     call = ready_to_book(agent, address=in_area_address(2))
     agent.end(call)
     run(agent, FakeModel())
-    agent.client.get(f"/owner?token={TOKEN}")
+    sign_in(agent)
     assert "For the technician" not in agent.client.get(f"/owner/calls/{call}").text
 
 

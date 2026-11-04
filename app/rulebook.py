@@ -108,6 +108,8 @@ NOT_RULES = {"invalid_arguments", "unknown_call", "call_ended"}
 LINE_STAGES = {
     "greeting_known": ("opening", "Greeting, known caller"),
     "greeting_unknown": ("opening", "Greeting"),
+    "recording_notice": ("opening", "Recording notice, two-party consent"),
+    "recording_stopped": ("whole_call", "Recording stopped, two-party consent"),
     "callback_opening": ("opening", "Callback opening"),
     "callback_opening_unknown": ("opening", "Callback, no name"),
     "earlier_slot_offer": ("opening", "Earlier opening offer"),

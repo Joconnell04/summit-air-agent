@@ -5,7 +5,7 @@ from datetime import date, timedelta
 
 import httpx
 import pytest
-from test_ts_owner import TOKEN, booked_tune_up, caller, commercial, out_of_area, page
+from test_ts_owner import booked_tune_up, caller, commercial, out_of_area, page
 from test_ts_safety import GAS_LINES
 from toolkit import (
     ROOT,
@@ -16,6 +16,7 @@ from toolkit import (
     in_area_address,
     make_server,
     ready_to_book,
+    sign_in,
 )
 
 from app import jobs, owner, plain, reports, search, trace
@@ -25,11 +26,11 @@ TODAY = date(2026, 11, 2)
 
 @pytest.fixture
 def agent(tmp_path, clock, mock):
-    return Agent(make_server(tmp_path, clock, mock[0], owner_token=TOKEN), clock)
+    return Agent(make_server(tmp_path, clock, mock[0]), clock)
 
 
 def signed_in(agent: Agent) -> Agent:
-    agent.client.get(f"/owner?token={TOKEN}")
+    sign_in(agent)
     return agent
 
 

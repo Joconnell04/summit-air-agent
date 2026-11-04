@@ -5,7 +5,7 @@ import re
 import sqlite3
 from datetime import datetime, timedelta
 
-from . import lookup, pace, recordings, records, rules, safety
+from . import lookup, owner_settings, pace, recordings, records, rules, safety
 from .db import iso, parse_iso, tx
 from .envelope import Result, ok
 from .fsm import FsmAdapter, FsmRejected, FsmUnavailable
@@ -234,6 +234,8 @@ def start(
             ),
         )
         call = records.get_call(conn, args.call_id)
+        # The owner's settings, read once and kept for the whole call (app/owner_settings.py).
+        values = owner_settings.pin(conn, tenant, args.call_id)
         pace.start(
             conn,
             tenant.pace,
@@ -275,6 +277,13 @@ def start(
             fsm_ok = False
     _record_known_out_of_area(conn, args.call_id, customers, now)
 
+    # With two-party consent on, the caller hears that the call may be recorded before anything
+    # is kept. A call that opens with the safety lines has no greeting to carry the notice, so it
+    # isn't recorded at all.
+    consent = values["two_party_consent"]
+    record_this = recordings.wanted(tenant, values, record) and not (
+        consent and call["safety_state"] == "signal"
+    )
     drops = sum(1 for c in recent if records.dropped(c))
     offer_callback = drops >= tenant.repeat["drops_before_callback_offer"]
     data = {
@@ -296,10 +305,10 @@ def start(
         # The speed the worker speaks at from the greeting on (app/pace.py).
         "pace": pace.current(conn, args.call_id),
         "recording": (
-            {"object_key": recordings.object_key(tenant, args.call_id)}
-            if recordings.wanted(tenant, record)
-            else None
+            {"object_key": recordings.object_key(tenant, args.call_id)} if record_this else None
         ),
+        # Said by the voice layer just before the greeting (or a placed call's opening line).
+        "recording_notice": recordings.notice(tenant) if consent else None,
     }
     say = tenant.line("repeated_drops") if offer_callback else ""
     if call["safety_state"] == "signal":
@@ -336,6 +345,7 @@ def turn(
     action = safety.SafetyAction("none", call["safety_kind"])
     changes: dict = {"turn_seq": seq}
     hints = []
+    stop_recording = False
     with tx(conn):
         if args.speaker == "caller":
             heating = cfg.get("heating_check")
@@ -403,6 +413,12 @@ def turn(
             ):
                 records.mark_do_not_call(conn, call, now)
                 hints.append("do_not_call")
+            # A caller who says not to record isn't recorded, whatever the consent setting: the
+            # voice layer is told to stop and to say so, and the jobs loop deletes the file
+            # instead of keeping it.
+            if recordings.objected(args.text) and not recordings.declined(conn, call["id"]):
+                recordings.decline(conn, call["id"], seq, now)
+                stop_recording = True
             # A caller who describes a business can't book, whatever the agent does next (S-05).
             if sounds_commercial(args.text, tenant.commercial):
                 changes["commercial"] = 1
@@ -449,7 +465,14 @@ def turn(
     if action.action != "none":
         payload = {"action": action.action, "kind": action.kind, "text": action.text}
     return ok(
-        action.text, seq=seq, safety=payload, hints=hints, pace=pace.current(conn, call["id"])
+        action.text,
+        seq=seq,
+        safety=payload,
+        hints=hints,
+        pace=pace.current(conn, call["id"]),
+        recording=(
+            {"action": "stop", "text": recordings.stopped_line(tenant)} if stop_recording else None
+        ),
     )
 
 

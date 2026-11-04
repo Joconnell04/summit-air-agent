@@ -3,13 +3,16 @@
 {% block header %}{% endblock %}
 {% block body %}
 <main class="login">
-  <form class="panel" method="post" action="{{ action | default('/owner/login') }}">
+  <form class="panel" method="post" action="/owner/login">
     <img src="/owner/static/revin-logo.svg" alt="Revin" width="88" height="15">
-    <h1 class="page-title">{{ title | default("Owner view") }}</h1>
-    <label for="token">{{ label | default("Access code") }}</label>
-    <input id="token" name="token" type="password" autocomplete="current-password" autofocus required>
-    {% if failed %}<p class="error" role="alert">That code didn't work.</p>{% endif %}
-    <button class="btn primary" type="submit">Open</button>
+    <h1 class="page-title">Owner view</h1>
+    <input type="hidden" name="next" value="{{ next | default('/owner') }}">
+    <label for="username">Username</label>
+    <input id="username" name="username" value="{{ username | default('') }}" autocomplete="username" autocapitalize="none" spellcheck="false" autofocus required>
+    <label for="password">Password</label>
+    <input id="password" name="password" type="password" autocomplete="current-password" required>
+    {% if failed %}<p class="error" role="alert">That username and password don't match.</p>{% endif %}
+    <button class="btn primary" type="submit">Sign in</button>
   </form>
 </main>
 {% endblock %}
