@@ -76,7 +76,8 @@ def run(agent: Agent, model, **kwargs) -> dict:
 
 def booked_call(agent: Agent, caller: str = UNKNOWN, **details) -> tuple[str, int]:
     call = ready_to_book(agent, caller)
-    booked = book(agent, call, first_open(agent, call), **details)
+    account = None if caller == UNKNOWN else "caller"
+    booked = book(agent, call, first_open(agent, call), account=account, **details)
     assert booked["ok"], booked
     agent.end(call)
     return call, booked["data"]["booking_id"]
@@ -187,7 +188,9 @@ def test_a_number_from_the_record_stays(agent, scenarios):
     known = scenarios["repeatCallerOpenJob"]
     draft = {**DRAFT, "access": "Side gate code 4417, friendly dog"}
     call = ready_to_book(agent, known["phone"])
-    booked = book(agent, call, first_open(agent, call, "no_heat"), job_type="no_heat")
+    booked = book(
+        agent, call, first_open(agent, call, "no_heat"), job_type="no_heat", account="caller"
+    )
     assert booked["ok"], booked
     agent.end(call)
     run(agent, FakeModel(draft))

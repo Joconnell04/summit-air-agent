@@ -1,0 +1,29 @@
+id: houston-street-misheard
+flow: [booking]
+difficulty: rigorous
+traits: [transcription-errors]
+journeys: [J1, spine]
+spec: [S-15b, S-52]
+caller_id: "(718) 555-0178"
+misheard: {Houston: Hughes ton}
+persona: Paolo Russo, a homeowner in Port Richmond, Staten Island, whose heat pump is making a grinding noise. Easygoing, talks fast.
+hidden_facts:
+  name: Paolo Russo
+  address: 81 Houston St, Staten Island, 10302
+  phone: the number being called from
+  problem: the heat pump outside started grinding yesterday, still heats, 68 F inside
+  system: a ductless heat pump, about six years old; turned it off and on once
+  who_home: Paolo and his partner, both healthy
+opening: Hi, my heat pump started making a grinding noise yesterday and I want someone to look at it.
+script:
+  - Give the address as 81 Houston Street, Staten Island, 10302.
+  - If the agent asks you to spell the street, spell it letter by letter, "H, O, U, S, T, O, N".
+  - If the read-back has the street wrong, correct it once and spell it.
+  - Answer yes to a correct read-back. Take the first window offered.
+  - Say goodbye after the agent confirms and asks if there is anything else.
+must:
+  - read_back: before_booking
+  - booking: {count: 1, zip: "10302", street: "Houston St"}
+should:
+  - Notices the street name came through garbled and asks the caller to spell it instead of guessing.
+  - Reads back Houston Street correctly before booking.

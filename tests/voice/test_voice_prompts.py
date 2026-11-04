@@ -86,3 +86,35 @@ def test_instructions_keep_the_fixes_from_the_must_pass_reliability_round(agent)
     assert "No follow-up, referral or advice." in text
     assert "An out-of-area caller gets no lead." in text
     assert "don't bring up gas safety yourself" in text
+
+
+VOICE = {
+    "greeting_known": "Hi, this is Summit Air. Is this {first_name}?",
+    "greeting_unknown": "Thanks for calling Summit Air, this is the virtual assistant.",
+    "greeting_linked": "Hi again. I think we got cut off earlier. Is this {first_name}?",
+    "greeting_linked_unknown": "Hi again. I think we got cut off earlier. Who am I speaking with?",
+}
+
+
+def test_a_caller_whose_call_dropped_today_is_greeted_by_the_name_they_gave():
+    """Eval round 2, seed 6: the agent mentions the earlier call and checks it is the same person."""
+    linked = {"dropped": True, "caller_name": "Tomasz"}
+    assert assemble.greeting({"linked_call": linked}, VOICE).endswith("Is this Tomasz?")
+    matched = {"linked_call": linked, "customers": [{"name": "Maria Delgado", "residential": True}]}
+    assert assemble.greeting(matched, VOICE).endswith("Is this Maria?")
+    nameless = {"linked_call": {"dropped": True, "caller_name": None}}
+    assert assemble.greeting(nameless, VOICE).endswith("Who am I speaking with?")
+    # A linked call that didn't drop, or a tenant without the line, gets the usual greeting.
+    finished = {"linked_call": {"dropped": False, "caller_name": "Tomasz"}}
+    assert assemble.greeting(finished, VOICE) == VOICE["greeting_unknown"]
+    plain = {k: v for k, v in VOICE.items() if not k.startswith("greeting_linked")}
+    assert assemble.greeting({"linked_call": linked}, plain) == VOICE["greeting_unknown"]
+
+
+def test_the_prompt_says_how_times_spelling_and_other_addresses_work():
+    """Eval round 2: "8 to 2" is daytime, a street the agent can't confirm is spelled, and a second
+    address asks whose account it goes on. The server enforces each; the prompt makes it smooth."""
+    text = "\n".join((assemble.PROMPTS / p).read_text() for p in assemble.PARTS)
+    assert '"8 to 2" is 8 AM to 2 PM' in text
+    assert "spell it" in text and "`spelled`" in text
+    assert "new_address_account" in text

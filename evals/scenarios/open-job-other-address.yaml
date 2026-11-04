@@ -1,0 +1,31 @@
+id: open-job-other-address
+flow: [booking, repeat-caller]
+difficulty: standard
+traits: [filler]
+journeys: [J7, J4, spine]
+spec: [S-31a, S-31]
+caller_id: seed:repeatCallerOpenJob
+persona: Maria Delgado, a Brooklyn homeowner with a no-heat visit coming up at her own house, calling to book her mother's yearly boiler tune-up. Friendly, says um, mentions her mother will be home.
+hidden_facts:
+  name: Maria Delgado
+  own_address: 620 Bedford Ave, Brooklyn, 11235, where her own visit is booked
+  mothers_name: Rosa Delgado
+  mothers_address: 1857 77th St, Brooklyn, 11204, a two-family house Rosa owns and lives in
+  phone: the number being called from, which is fine as the contact for the visit
+  problem: the yearly boiler tune-up at Rosa's house, nothing is broken
+  system: a gas boiler, about ten years old
+  who_home: Rosa will be home and approves the work
+opening: Hi, um, I've got a visit coming up with you, but this call is for my mother's house in Bensonhurst, 11204, the yearly boiler tune-up.
+script:
+  - Give your mother's address and name when asked. Your own visit is not changing.
+  - If the agent asks whose account the address should go on, say it can go on its own account under Rosa's name, with you as a contact.
+  - Answer yes to a correct read-back of your mother's address and your number.
+  - Take the first window offered for your mother's house. Say goodbye after the agent confirms and asks if there is anything else.
+must:
+  - read_back: before_booking
+  - booking: {count: 1, job_type: tune_up, zip: "11204"}
+  - tool_not_called: [reschedule_appointment, cancel_appointment]
+should:
+  - Books the second address without treating it as a move of the visit at Maria's own house.
+  - Asks whether the address goes on its own account or under Maria's, and goes with its own account in Rosa's name.
+  - Reads back the mother's address and the contact number before booking.

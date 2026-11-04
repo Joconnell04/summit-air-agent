@@ -4,9 +4,9 @@ S-23, S-32, S-38, S-42, S-48, S-49)."""
 import sqlite3
 
 import pytest
-from toolkit import UNKNOWN, book, count, first_open, ready_to_book
+from toolkit import DETAILS, UNKNOWN, book, count, first_open, ready_to_book
 
-from app import jobs, records
+from app import jobs, lifecycle, records
 from app.settings import QUEUE_MAX_ATTEMPTS
 
 
@@ -61,11 +61,115 @@ def test_repeated_drops_get_a_callback_offer(agent, clock):
     assert "keep getting cut off" in third["say"]
 
 
-def test_a_call_from_the_same_number_long_after_is_not_linked(agent, clock):
+def test_a_dropped_call_earlier_the_same_day_is_linked_with_the_name_given(agent, clock):
+    """Eval round 2, seed 6: same number and same day are the gate, and the greeting asks by name."""
+    first = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(first, "Hi, this is Tomasz Nowak. Our heat went out this morning.")
+    agent.say(first, "Oh no. What's the address there?")
+    agent.turn(first, "145 Java Street, 11222.")
+    agent.end(first, "dropped")
+    clock.advance(hours=3)
+    linked = agent.start(UNKNOWN)["data"]["linked_call"]
+    assert linked["call_id"] == first
+    assert linked["caller_name"] == "Tomasz"
+    assert [t["speaker"] for t in linked["turns"]] == ["caller", "agent", "caller"]
+    assert linked["turns"][-1]["text"] == "145 Java Street, 11222."
+
+
+def test_a_call_from_the_same_number_the_next_day_is_not_linked(agent, clock):
     call = agent.start(UNKNOWN)["data"]["call_id"]
     agent.end(call, "dropped")
+    clock.advance(hours=16)  # 1 a.m. the next day in New York
+    assert agent.start(UNKNOWN)["data"]["linked_call"] is None
+
+
+def test_a_call_that_finished_earlier_today_is_not_linked_later(agent, clock):
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "Thanks, that's all.")
+    agent.tool("end_call", call, reason="caller_goodbye")
+    agent.end(call, "agent_end")
     clock.advance(minutes=45)
     assert agent.start(UNKNOWN)["data"]["linked_call"] is None
+
+
+def test_a_drop_followed_by_a_finished_call_is_not_resumed_later(agent, clock):
+    """PR #75 review: only the latest call today, and only if it dropped."""
+    dropped = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(dropped, "Hi, this is Tomasz, the heat is out.")
+    agent.end(dropped, "dropped")
+    clock.advance(hours=1)
+    finished = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(finished, "Thanks, that's all.")
+    agent.tool("end_call", finished, reason="caller_goodbye")
+    agent.end(finished, "agent_end")
+    clock.advance(hours=2)
+    assert agent.start(UNKNOWN)["data"]["linked_call"] is None
+
+
+def test_the_resume_name_is_the_callers_not_the_account_holders(agent, clock, scenarios):
+    """PR #75 review: Maria booked her mother's house on its own account under Rosa; the call back
+    asks for Maria."""
+    maria = scenarios["repeatCallerOpenJob"]
+    first = agent.start(maria["phone"])["data"]["call_id"]
+    agent.turn(first, "This call is for my mother's house, the yearly tune-up.")
+    agent.confirm_read_back(first, {"street": "1857 77th St", "zip": "11204"})
+    booked = agent.tool(
+        "book_appointment",
+        first,
+        job_type="tune_up",
+        slot=first_open(agent, first),
+        details={**DETAILS, "name": "Rosa Delgado"},
+        new_address_account="own",
+    )
+    assert booked["ok"], booked
+    agent.end(first, "dropped")
+    clock.advance(hours=2)
+    assert agent.start(maria["phone"])["data"]["linked_call"]["caller_name"] == "Maria"
+
+
+def test_a_before_only_window_tomorrow_is_dialed_tomorrow(agent):
+    """PR #75 review: "call me tomorrow before 3" is never dialed today."""
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    flagged = agent.tool(
+        "flag_person",
+        call,
+        reason="Call me back",
+        callback_before="3 PM",
+        callback_day="tomorrow",
+        system_calls_back=True,
+    )
+    assert flagged["ok"], flagged
+    assert flagged["say"].endswith("tomorrow before 3 PM.")
+    conn = agent.db()
+    try:
+        dial = conn.execute("SELECT due_at FROM outbound").fetchone()["due_at"]
+    finally:
+        conn.close()
+    assert dial.startswith("2026-11-03T13:00")  # 8 AM New York tomorrow, when calling hours open
+
+
+def test_a_dropped_call_and_its_call_back_later_today_book_once(agent, clock):
+    first = ready_to_book(agent)
+    assert book(agent, first, first_open(agent, first))["ok"]
+    agent.end(first, "dropped")
+    clock.advance(hours=2)
+    second = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(second, "Hi, we got cut off earlier.")
+    agent.confirm_read_back(second, {"street": "101 Union St", "zip": "11231"})
+    assert book(agent, second, first_open(agent, second))["refused"] == "limit"
+
+
+@pytest.mark.parametrize(
+    "line,name",
+    [
+        ("My name is Ana Ruiz and the heat is out.", "Ana"),
+        ("It's Tomasz, we got cut off.", "Tomasz"),
+        ("this is about my heat", None),
+        ("This is Summit Air? Hi.", None),
+    ],
+)
+def test_the_name_a_caller_gave_is_read_only_from_how_names_are_said(line, name):
+    assert lifecycle._name_said([line]) == name
 
 
 # ---- flags and callbacks -----------------------------------------------------------------------
@@ -124,6 +228,46 @@ def test_an_after_window_is_due_at_the_end_of_callback_hours_and_dialed_from_its
     finally:
         conn.close()
     assert dial.startswith("2026-11-02T22:00")  # 5 PM New York
+
+
+@pytest.mark.parametrize(
+    "window,spoken,due",
+    [
+        # Eval round 2, seed 7: "8 to 2" is 8 AM to 2 PM, never 2 in the morning.
+        ({"callback_after": "10", "callback_before": "2"}, "between 10 AM and 2 PM", "19:00"),
+        ({"callback_after": "1", "callback_before": "3"}, "between 1 PM and 3 PM", "20:00"),
+        ({"callback_after": "6", "callback_before": "9"}, "between 6 PM and 9 PM", "02:00"),
+        ({"callback_before": "4"}, "before 4 PM", "21:00"),
+        ({"callback_after": "noon"}, "after 12 PM", "02:00"),
+    ],
+)
+def test_a_bare_hour_in_a_callback_window_reads_as_daytime(agent, window, spoken, due):
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    flagged = agent.tool("flag_person", call, reason="Call me back", **window)
+    assert flagged["ok"], flagged
+    assert flagged["data"]["callback_spoken"] == spoken
+    assert flagged["data"]["callback_at"][11:16] == due  # UTC
+
+
+def test_a_callback_tomorrow_not_before_noon_is_due_tomorrow_and_keeps_the_window(agent):
+    """Eval round 2, seed 8: "call me tomorrow, but not before noon, I'm asleep"."""
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    details = {
+        "contact_name": "Beatriz Lima",
+        "need": "Wants to hear about the plan",
+        "callback_after": "12 PM",
+        "callback_day": "tomorrow",
+    }
+    lead = agent.tool("record_lead", call, kind="membership", details=details)
+    assert lead["ok"], lead
+    assert lead["say"] == "Someone from our team will call you tomorrow after 12 PM to tell you more."
+    conn = agent.db()
+    try:
+        row = conn.execute("SELECT due_at, reason FROM callbacks").fetchone()
+    finally:
+        conn.close()
+    assert row["due_at"].startswith("2026-11-04T02:00")  # 9 PM New York, tomorrow
+    assert "caller asked: tomorrow after 12 PM" in row["reason"]
 
 
 @pytest.mark.parametrize(
