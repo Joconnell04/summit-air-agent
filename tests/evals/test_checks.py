@@ -422,3 +422,10 @@ def test_a_lead_the_server_kept_counts_for_the_lead_check():
     t = {**trace(), "leads": [{"kind": "not_offered", "summary": "", "status": "queued"}]}
     assert failures("lead", "not_offered", t) == []
     assert failures("lead", "commercial", t) == ["no commercial lead recorded"]
+
+
+
+def test_jobs_reads_a_queens_house_number_with_or_without_its_hyphen():
+    t = trace(bookings=[_job(street="19611 Hillside Avenue")])
+    assert failures("jobs", [{"street": "196-11 Hillside"}], t) == []
+    assert failures("jobs", [{"street": "196-12 Hillside"}], t) != []
