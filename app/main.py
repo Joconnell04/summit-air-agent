@@ -22,6 +22,8 @@ from pydantic import BaseModel
 
 from . import (
     accounts,
+    bench,
+    bench_rules,
     db,
     jobs,
     lifecycle,
@@ -491,6 +493,8 @@ def create_app(
         return {"ok": True, "say": "", "data": found, "refused": None}
 
     owner_view.add_routes(app)
+    bench.add_routes(app)
+    bench_rules.add_routes(app)
 
     # ---- tools the model can call ------------------------------------------------------------
 

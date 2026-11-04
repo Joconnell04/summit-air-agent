@@ -1,23 +1,35 @@
 {% extends "base.html" %}
-{% from "_ui.html" import q, count, empty, gate_result with context %}
+{% from "_ui.html" import q, count, empty, gate_result, bench_tabs with context %}
 {% set checking = draft and draft.status == "checking" %}
 {% block head %}{% if checking %}<meta http-equiv="refresh" content="30">{% endif %}{% endblock %}
-{% block title %}{{ tenant }}: edit rules{% endblock %}
+{% block title %}Bench: edit rules{% endblock %}
+{% block tabs %}{{ bench_tabs(tab) }}{% endblock %}
 {% block body %}
 <main class="page">
-  <form class="stack" method="post" action="/owner/rules/draft{{ q(slug) }}">
+  <form class="stack" method="post" action="/bench/rules/draft{{ q(slug) }}">
   <div class="page-head">
     <div class="lead">
-      <div class="crumbs"><a href="/owner/rules{{ q(slug) }}">Rules</a><span>/</span><span>Edit</span></div>
+      <div class="crumbs">Debug bench<span>/</span><a href="/owner/rules{{ q(slug) }}">The owner's Rules page</a></div>
       <h1 class="page-title">Edit rules</h1>
     </div>
     <div class="actions">
       {% if checking %}<span class="tag high">Checking</span>{% elif draft %}<span class="tag outline">Draft saved</span>{% elif blocked %}{{ gate_result(blocked) }}{% endif %}
       <label class="sr-only" for="note">What changed</label>
       <input class="field" id="note" name="note" value="{{ note }}" maxlength="200" placeholder="What changed"{% if checking %} disabled{% endif %}>
-      {% if checking %}<button class="btn quiet" type="submit" formaction="/owner/rules/cancel{{ q(slug) }}" formnovalidate>Stop check</button>{% endif %}
-      {% if draft and not checking %}<button class="btn quiet" type="submit" formaction="/owner/rules/discard{{ q(slug) }}" formnovalidate>Discard</button>{% endif %}
+      {% if checking %}<button class="btn quiet" type="submit" formaction="/bench/rules/cancel{{ q(slug) }}" formnovalidate>Stop check</button>{% endif %}
+      {% if draft and not checking %}<button class="btn quiet" type="submit" formaction="/bench/rules/discard{{ q(slug) }}" formnovalidate>Discard</button>{% endif %}
       <button class="btn" type="submit"{% if checking %} disabled{% endif %}>Save draft</button>
+      {% if not checking %}
+      <details class="more pop">
+        <summary><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>Override</summary>
+        <div class="pop-body">
+          <label for="reason">Why skip the check</label>
+          <input class="field" id="reason" name="reason" maxlength="{{ max_reason }}" placeholder="Fixing a typo in the goodbye">
+          <span class="hint">Publishes at once, without the test calls. The history shows it was overridden, by whom and why.</span>
+          <button class="btn" type="submit" name="override" value="1">Publish now</button>
+        </div>
+      </details>
+      {% endif %}
       <button class="btn primary" type="submit" name="publish" value="1"{% if checking %} disabled{% endif %}>Publish</button>
     </div>
   </div>
@@ -62,7 +74,7 @@
       </tbody>
     </table>
     </div>
-    <div class="panel-foot">Publishing runs the must-pass test calls on the draft. It goes live only if every one passes.</div>
+    <div class="panel-foot">Publish runs the must-pass test calls on the draft, and it goes live only if every one passes. Override publishes at once and is logged as such.</div>
   </section>
   </form>
 
@@ -79,7 +91,7 @@
           <td class="fit">{{ v.author }}</td>
           <td>{{ v.note or "No note" }}</td>
           <td class="fit right">{{ gate_result(v) }}</td>
-          <td class="fit right">{% if v.status == "published" and not v.live %}<form method="post" action="/owner/rules/rollback{{ q(slug) }}"><input type="hidden" name="number" value="{{ v.number }}"><button class="btn" type="submit">Roll back</button></form>{% endif %}</td>
+          <td class="fit right">{% if v.status == "published" and not v.live %}<form method="post" action="/bench/rules/rollback{{ q(slug) }}"><input type="hidden" name="number" value="{{ v.number }}"><button class="btn" type="submit">Roll back</button></form>{% endif %}</td>
         </tr>
       {% endfor %}
         <tr>
@@ -88,7 +100,7 @@
           <td class="fit">Revin</td>
           <td>As set up</td>
           <td class="fit right"></td>
-          <td class="fit right">{% if live %}<form method="post" action="/owner/rules/rollback{{ q(slug) }}"><input type="hidden" name="number" value="0"><button class="btn" type="submit">Roll back</button></form>{% endif %}</td>
+          <td class="fit right">{% if live %}<form method="post" action="/bench/rules/rollback{{ q(slug) }}"><input type="hidden" name="number" value="0"><button class="btn" type="submit">Roll back</button></form>{% endif %}</td>
         </tr>
       </tbody>
     </table>

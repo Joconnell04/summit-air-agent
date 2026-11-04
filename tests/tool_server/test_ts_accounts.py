@@ -153,7 +153,7 @@ OWNER_PAGES = [
     "/owner/calls",
     "/owner/results",
     "/owner/rules",
-    "/owner/rules/edit",
+    "/bench/rules",
     "/owner/settings",
     "/owner/search?q=union",
     "/owner/design",
@@ -265,7 +265,7 @@ def test_old_cookies_open_nothing_and_signing_in_clears_them(agent):
     agent.client.cookies.set("owner_token", "old-token")
     agent.client.cookies.set("owner_edit", "old-code")
     assert agent.client.get("/owner").status_code == 401
-    assert agent.client.post("/owner/rules/discard").status_code == 401
+    assert agent.client.post("/bench/rules/discard").status_code == 401
     add_user(agent, "pat", "admin")
     done = agent.client.post(
         "/owner/login", data={"username": "pat", "password": PASSWORD}, follow_redirects=False
@@ -399,11 +399,11 @@ def _ids(agent: Agent) -> dict[str, int]:
 
 
 WRITES = [
-    ("get", "/owner/rules/edit", {}),
-    ("post", "/owner/rules/draft", {"guide.booking.0": PETS}),
-    ("post", "/owner/rules/discard", {}),
-    ("post", "/owner/rules/cancel", {}),
-    ("post", "/owner/rules/rollback", {"number": "0"}),
+    ("get", "/bench/rules", {}),
+    ("post", "/bench/rules/draft", {"guide.booking.0": PETS}),
+    ("post", "/bench/rules/discard", {}),
+    ("post", "/bench/rules/cancel", {}),
+    ("post", "/bench/rules/rollback", {"number": "0"}),
     ("post", "/owner/settings", {"s.two_party_consent": "1"}),
     ("post", "/owner/users", {"username": "eve", "name": "Eve", "role": "admin",
                               "password": PASSWORD}),
@@ -477,7 +477,7 @@ def test_staff_can_send_a_report_to_revin(agent):
 
 def test_an_admin_publishes_under_their_own_name(agent):
     sign_in(agent, "admin", "pat")
-    agent.client.post("/owner/rules/draft", data={"guide.booking.0": PETS, "publish": "1"})
+    agent.client.post("/bench/rules/draft", data={"guide.booking.0": PETS, "publish": "1"})
     conn = conn_of(agent)
     try:
         row = rules.open_draft(conn, "summit-air")

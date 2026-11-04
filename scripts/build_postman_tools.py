@@ -620,7 +620,7 @@ def build() -> dict:
         item(
             "The rules editor opens for an admin",
             "GET",
-            "owner/rules/edit",
+            "bench/rules",
             envelope=False,
             check="pm.test('opens the editor', () => pm.response.to.have.status(200));\n" + html,
         ),
@@ -710,14 +710,14 @@ def build() -> dict:
         item(
             "Staff can't open the rules editor",
             "GET",
-            "owner/rules/edit",
+            "bench/rules",
             envelope=False,
             check="pm.test('refused', () => pm.response.to.have.status(403));",
         ),
         item(
             "Staff can't save a rules draft",
             "POST",
-            "owner/rules/draft",
+            "bench/rules/draft",
             envelope=False,
             form={"guide.booking.0": "Ask about pets."},
             check="pm.test('refused', () => pm.response.to.have.status(403));",
@@ -725,7 +725,7 @@ def build() -> dict:
         item(
             "Staff can't discard a rules draft",
             "POST",
-            "owner/rules/discard",
+            "bench/rules/discard",
             envelope=False,
             form={},
             check="pm.test('refused', () => pm.response.to.have.status(403));",
@@ -733,7 +733,7 @@ def build() -> dict:
         item(
             "Staff can't stop a rules check",
             "POST",
-            "owner/rules/cancel",
+            "bench/rules/cancel",
             envelope=False,
             form={},
             check="pm.test('refused', () => pm.response.to.have.status(403));",
@@ -741,10 +741,64 @@ def build() -> dict:
         item(
             "Staff can't roll back the rules",
             "POST",
-            "owner/rules/rollback",
+            "bench/rules/rollback",
             envelope=False,
             form={"number": "0"},
             check="pm.test('refused', () => pm.response.to.have.status(403));",
+        ),
+    ]
+    # The owner view folder ends signed in as staff, who can't open the bench; then the admin can.
+    staff_refused = "pm.test('admins only', () => pm.response.to.have.status(403));"
+    opens = "pm.test('opens', () => pm.response.to.have.status(200));\n" + html
+    eval_run = "pm.collectionVariables.set('eval_run', '20261104-013438-livekit-fast-standard');"
+    bench = [
+        *[
+            item(name, "GET", path, envelope=False, check=staff_refused, pre=pre or "")
+            for name, path, pre in (
+                ("Staff can't open the bench", "bench?q=0418", None),
+                ("Staff can't open a call's node graph", "bench/calls/{{call_id}}", None),
+                ("Staff can't fetch the graph alone", "bench/calls/{{call_id}}/graph", None),
+                ("Staff can't open the live stream", "bench/calls/{{call_id}}/stream", None),
+                ("Staff can't draft a scenario from a call", "bench/calls/{{call_id}}/scenario.yaml",
+                 None),
+                ("Staff can't open the bench's settings", "bench/settings", None),
+                ("Staff can't open an eval run", "bench/evals/{{eval_run}}", eval_run),
+                ("Staff can't open an eval scenario", "bench/evals/{{eval_run}}/{{eval_key}}",
+                 eval_run + "\npm.collectionVariables.set('eval_key', 'elderly-no-heat');"),
+                ("Staff can't open an eval round", "bench/rounds/{{eval_round}}",
+                 "pm.collectionVariables.set('eval_round', 'model-matrix-01');"),
+            )
+        ],
+        item(
+            "Sign in to the bench as the admin",
+            "POST",
+            "owner/login",
+            envelope=False,
+            form={"username": "{{owner_username}}", "password": "{{owner_password}}",
+                  "next": "/bench"},
+            check="pm.test('opens the bench', () => pm.response.to.have.status(200));",
+        ),
+        item("The bench's calls", "GET", "bench", envelope=False, check=opens),
+        item("A call's node graph", "GET", "bench/calls/{{call_id}}/graph", envelope=False,
+             check=opens),
+        item("The bench's settings", "GET", "bench/settings", envelope=False, check=opens),
+        item("The eval runs", "GET", "bench/evals", envelope=False, check=opens),
+        item(
+            "An override needs a reason",
+            "POST",
+            "bench/rules/draft",
+            envelope=False,
+            form={"guide.booking.0": "Ask about pets.", "override": "1", "reason": ""},
+            check="pm.test('refused, nothing published', () => pm.response.to.have.status(422));\n"
+            + "pm.test('says why', () => pm.expect(pm.response.text()).to.include('Say why the check is being skipped.'));",
+        ),
+        item(
+            "Discard the draft that override left",
+            "POST",
+            "bench/rules/discard",
+            envelope=False,
+            form={},
+            check="pm.test('back to the editor', () => pm.response.to.have.status(200));",
         ),
     ]
     scenarios = booking_flow[0]
@@ -763,6 +817,7 @@ def build() -> dict:
             folder("4 Known caller", known_flow),
             folder("5 Triage", triage),
             folder("6 Outbound and owner view", outbound_and_owner),
+            folder("7 Debug bench", bench),
         ],
     }
 

@@ -1,0 +1,11 @@
+{% from "_ui.html" import node_graph, node_detail with context %}
+<div class="split wide-side" data-graph>
+  <section class="panel">
+    <div class="panel-head">
+      <h2>Steps</h2><span class="count">{{ graph.nodes | length }}</span>
+      <span class="sub">{% if not graph.logged %}The JSON log has nothing for this call, so tool results and prompts are missing.{% else %}Pick a step to see what went in and what came out.{% endif %}</span>
+    </div>
+    {% if graph.nodes %}{{ node_graph(graph) }}{% else %}<div class="empty">Nothing recorded on this call yet.</div>{% endif %}
+  </section>
+  {{ node_detail(graph) }}
+</div>
