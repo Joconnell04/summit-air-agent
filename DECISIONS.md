@@ -12,6 +12,20 @@ Discussion: docs/ai-process/transcripts/... or docs/explorations/...
 Issue: #N
 -->
 
+## 068. Deepgram Nova-3 stays as the ears; Cartesia Ink-2 stays out of the bake-off
+
+Decided: the live stack keeps Deepgram Nova-3 for speech-to-text. Cartesia's Ink-2 doesn't replace it and doesn't join the bake-off. Ink-2 stays in `config/models.yaml` as a measured candidate (`voice.stt_candidates`), with the STT bench to rerun it (`make stt-bench`).
+Why: on the same caller audio at phone quality, Ink-2 was slower on every turn and worse on local names (MEASURED, evals/rounds/stt-ink2-01.md, results file evals/rounds/stt-ink2-01-data/20261104-110914-ink-2.json):
+- Final transcript a median 1.08 s after the caller's last word, against 0.44 s for Nova-3 (slowest 10%: 1.66 s against 0.50 s; 60 runs per arm). LiveKit can't use Ink-2 without waiting for its own turn end, so this is about 0.6 s more on every turn.
+- Street names and addresses: 28 of 32 against 32 of 32.
+- ZIPs and phone numbers: tied, 16 of 16 each. Spelled names: tied, 3 of 4 each. Safety phrases: 8 of 8 for Nova-3, 7 of 8 for Ink-2.
+- Ink-2 ended the turn mid-number on all 4 runs of a phone number said with 1.5 s pauses.
+- Cost: $0.0117 a minute for Ink-2 at our current overage against $0.0090 for Nova-3 with keyterms (SOURCE: Cartesia and Deepgram pricing pages, read 2026-11-04).
+The test cost about $0.28, of which $0.13 was Cartesia.
+Considered: Ink-2 with our own turn detector in place of Cartesia's (the installed plugin sends a final transcript only when Ink-2 ends the turn, so the wait stays); one vendor for voice and ears (saves a contract, not latency).
+Would change if: Cartesia sends final transcripts on request, or a rerun of the bench shows Ink-2 within 0.1 s of Nova-3 with no loss on street names, digits or safety phrases.
+Discussion: evals/rounds/stt-ink2-01.md, PR #123, issue #122
+
 ## 067. Every lane has a GitHub issue, and the lanes page is generated
 
 Decided: each build lane gets an issue labeled `agent` before it starts, including lanes asked for in chat; its pull requests close it. `make lanes` writes docs/ai-process/lanes.md from those issues after each merge, and the brief links to it instead of keeping its own table. New ideas go in docs/later.md; docs/considerations.md stays as the closed design record, since its C-NN numbers are cited across the docs.
