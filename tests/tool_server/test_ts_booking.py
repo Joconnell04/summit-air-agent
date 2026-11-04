@@ -3,7 +3,7 @@ caller ID shorthand, reschedule and cancel ownership (spec S-05, S-13, S-15, S-2
 
 import sqlite3
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime, time, timedelta
+from datetime import UTC, datetime, time, timedelta
 from zoneinfo import ZoneInfo
 
 import pytest
@@ -605,6 +605,17 @@ def test_a_limit_flags_a_person_once_however_often_it_is_hit(agent):
         "It's an office building on Court Street",
         "The rooftop unit over our kitchen died",
         "It's a storefront, the heat in the shop is out",
+        # PR #74 review: callers who say it's a business, not a home, stay commercial.
+        "It's not a home, it's a deli",
+        "It's an office, not my home",
+        "It's not my home, it's a church",
+        "I'm a property manager at a shopping center",
+        "We manage the property, it's retail",
+        "I run the property it is a hotel",
+        "I manage a building of commercial tenants",
+        "The units in our strip mall are out",
+        "It's the plaza on Atlantic Avenue",
+        "It's for my dental practice upstairs",
     ],
 )
 def test_business_callers_are_recognized_from_their_words(line):
@@ -696,3 +707,76 @@ def test_a_property_manager_account_typed_residential_can_book(agent, scenarios)
     call = ready_to_book(agent, linden["phone"])
     assert agent.tool("find_slots", call, job_type="tune_up")["ok"]
     assert book(agent, call, first_open(agent, call))["ok"]
+
+
+NY = ZoneInfo("America/New_York")
+
+
+@pytest.mark.parametrize(
+    "now,window,expected,late",
+    [
+        # An afternoon booking for tomorrow at 8: the evening before, inside calling hours.
+        ((2026, 11, 2, 14, 0), (2026, 11, 3, 8, 0), (2026, 11, 2, 20, 30), False),
+        # A midday window: two hours before it.
+        ((2026, 11, 2, 9, 0), (2026, 11, 3, 12, 0), (2026, 11, 3, 10, 0), False),
+        # PR #74 review: booked at 10:30 PM for tomorrow at 8. The evening has passed, so the next
+        # opening of calling hours, which is when the window opens: the job is held.
+        ((2026, 11, 2, 22, 30), (2026, 11, 3, 8, 0), (2026, 11, 3, 8, 0), True),
+        # Booked at 6:30 AM for a noon window: calling hours open at 8, still before the window.
+        ((2026, 11, 3, 6, 30), (2026, 11, 3, 12, 0), (2026, 11, 3, 10, 0), False),
+        # Booked at 6:30 AM for an 8 AM window: no calling time before it.
+        ((2026, 11, 3, 6, 30), (2026, 11, 3, 8, 0), (2026, 11, 3, 8, 0), True),
+    ],
+)
+def test_the_approval_call_is_always_inside_calling_hours(now, window, expected, late):
+    from app import records, tools
+    from app.tenant import Tenant
+
+    tenant = Tenant.load(TENANT_DIR)
+    now, window = datetime(*now, tzinfo=NY), datetime(*window, tzinfo=NY)
+    due = tools.approval_call_time(tenant, window, now)
+    assert due == datetime(*expected, tzinfo=NY)
+    assert records.in_outbound_hours(tenant, due)
+    assert due >= now
+    assert (due >= window) is late
+
+
+def test_a_late_night_booking_with_approval_unclear_holds_the_job_and_says_so(agent, clock):
+    clock.now = datetime(2026, 11, 3, 3, 30, tzinfo=UTC)  # 10:30 PM in New York
+    call = ready_to_book(agent)
+    agent.turn(call, "The co-op board has to approve any work, but please book it anyway.")
+    booked = book(agent, call, first_open(agent, call))
+    assert booked["ok"], booked
+    due = datetime.fromisoformat(booked["data"]["approval_callback_at"])
+    assert time(8) <= due.astimezone(NY).time() < time(21)
+    conn = agent.db()
+    try:
+        start = conn.execute("SELECT window_start FROM bookings WHERE call_id = ?", (call,))
+        window_start = datetime.fromisoformat(start.fetchone()["window_start"])
+        reason = conn.execute(
+            "SELECT reason FROM flags WHERE kind = 'approval_check'"
+        ).fetchone()["reason"]
+    finally:
+        conn.close()
+    if due >= window_start:
+        assert "hold the technician" in reason
+        assert "won't start until that's settled" in booked["say"]
+    else:
+        assert "Before the technician heads out" in booked["say"]
+
+
+@pytest.mark.parametrize(
+    "line,unclear",
+    [
+        ("The co-op board has to approve any work", True),
+        ("I'll have to ask my landlord first", True),
+        ("I'm not sure who approves work in the building", True),
+        # PR #74 review: negated or settled lines say approval is clear.
+        ("I don't need permission, it's my unit", False),
+        ("no I dont need to ask my landlord", False),
+        ("My landlord already approved it", False),
+        ("We don't have to check with the board, it's my place", False),
+    ],
+)
+def test_approval_is_unclear_only_when_the_caller_says_someone_else_must_approve(line, unclear):
+    assert lifecycle.approval_unclear(line, AGENT["approval"]) is unclear

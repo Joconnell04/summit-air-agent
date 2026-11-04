@@ -489,17 +489,32 @@ def test_the_confirm_question_is_asked_once_per_call():
         ("No rotten eggs or sulfur, just dust", "cleared"),
         ("It doesn't smell like sulfur or rotten eggs", "cleared"),
         ("Correct", "cleared"),
+        ("no nothing like that it was just dusty, like burning dust, no gas smell no alarm", "cleared"),
+        ("no nothing like that, like when you first fire up a heater after the summer", "cleared"),
         ("Actually it does, a bit like eggs", "speak_lines"),
         ("No, it smells like rotten eggs", "speak_lines"),
         ("Yeah, kind of", "speak_lines"),
         ("I'm not sure", "speak_lines"),
+        # PR #74 review: agreement plus anything that isn't filler is not a clear.
+        ("Right, and my head hurts", "speak_lines"),
+        ("Right, we feel sick", "speak_lines"),
+        ("Yeah I smell something strong", "speak_lines"),
+        ("Yeah, but the kids were coughing", "ask_check"),
     ],
 )
 def test_the_confirm_question_is_asked_the_negative_way_so_yeah_clears_it(answer, result):
     """Eval round 2: "it doesn't smell like sulfur or rotten eggs, right?" is answered "yeah"
-    when it doesn't. The smell named again, "it does" or an unsure answer still bring the lines."""
+    when it doesn't. The smell named again, "it does", symptoms or an unsure answer bring the lines;
+    an answer with more than agreement in it is unclear, so the plain gas question is asked."""
     action = safety.check_caller_turn(answer, "checking", "gas", 0, CFG, answering_confirm=True)
     assert action.action == result
+
+
+def test_symptoms_in_the_confirm_answer_bring_the_carbon_monoxide_lines():
+    action = safety.check_caller_turn(
+        "Right, and my head hurts", "checking", "gas", 0, CFG, answering_confirm=True
+    )
+    assert action.kind == "co" and action.text == CO_LINES
 
 
 def test_the_gas_check_question_still_reads_yeah_as_a_smell():
@@ -542,3 +557,47 @@ def test_the_safety_call_note_offers_a_visit_and_never_a_callback_time():
     note = SERVER_NOTES["safety_call"]
     assert "offer once to book" in note and "Never ask for a callback time" in note
     assert "insist" not in note
+
+
+def test_a_safety_caller_who_leaves_after_the_read_back_gets_a_person_to_book(agent):
+    """PR #74 review: no time was picked, so nothing is booked; a person calls back to book."""
+    call = ready_to_book(agent)
+    agent.turn(call, "My carbon monoxide alarm went off.")
+    agent.say(call, CO_LINES)
+    agent.turn(call, "I'm outside, I have to go call 911 now, bye.")
+    agent.end(call, "caller_hangup")
+    reasons = [
+        r[0]
+        for r in agent.db().execute("SELECT reason FROM flags WHERE kind = 'person'").fetchall()
+    ]
+    assert any("left before a time was set" in r for r in reasons)
+    assert count(agent, "SELECT COUNT(*) FROM bookings") == 0
+
+
+def test_a_plain_call_that_ends_after_the_read_back_gets_no_safety_flag(agent):
+    call = ready_to_book(agent)
+    agent.end(call, "caller_hangup")
+    assert count(agent, "SELECT COUNT(*) FROM flags WHERE kind = 'person'") == 0
+
+
+def test_an_unclear_confirm_answer_gets_the_plain_question_and_its_answer_is_read_plainly(agent):
+    """PR #74 eval run: after an unclear answer, a later "yeah" was read against the negative
+    question and fired the lines on a burning-dust call."""
+    call = ready_to_book(agent)
+    agent.turn(call, "It smelled like burning dust for a minute when the heat came on.")
+    agent.say(call, CONFIRM)
+    unclear = agent.turn(call, "Right, but the dog has been acting strange")
+    plain = CFG["vague"]["gas"]["question"]
+    assert unclear["data"]["safety"]["action"] == "ask_check"
+    assert unclear["data"]["safety"]["text"] == plain
+    agent.say(call, plain)
+    assert agent.turn(call, "No, no gas at all.")["data"]["safety"]["action"] == "cleared"
+    later = agent.turn(call, "Yeah, it's a house, the one bedroom upstairs is cold.")
+    assert later["data"]["safety"] is None
+
+
+def test_the_confirm_answer_is_read_the_negative_way_after_the_agent_moves_on(agent):
+    call = ready_to_book(agent)
+    agent.turn(call, "There was a burning smell when the heat came on.")
+    agent.say(call, f"Got it. {CONFIRM}")
+    assert agent.turn(call, "Yeah, just dusty.")["data"]["safety"]["action"] == "cleared"

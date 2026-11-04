@@ -42,8 +42,6 @@ approval:
   - check with my landlord
   - check with the landlord
   - management has to approve
-  - need permission
-  - needs permission
   - not sure who approves
   - not sure if i can approve
   - not sure i can approve
@@ -57,12 +55,22 @@ callbacks:
   owner_after_hours: on_call
   owner_in_hours: office
 commercial:
+  apartment_signs:
+  - units
+  - apartments
+  - apartment building
+  - unit building
+  - family house
+  - walk up
   not:
   - business partner
   - business trip
   - business card
   - home office
   - my own business hours
+  not_home:
+  - not a home
+  - not my home
   owned:
   - restaurant
   - bakery
@@ -84,8 +92,16 @@ commercial:
   - commercial space
   - commercial unit
   - commercial building
+  - commercial tenants
   - retail space
+  - retail
   - storefront
+  - shopping center
+  - strip mall
+  - plaza
+  - hotel
+  - church
+  - dental practice
   - rooftop unit
   - it's a business
   - it is a business
@@ -129,6 +145,8 @@ lines:
   anything_else_first: Is there anything else I can help with?
   approval_callback: Before the technician heads out, someone from our team will call you {when} to confirm
     who can approve the work.
+  approval_callback_late: Someone from our team will call you {when} to confirm who can approve the work,
+    and the technician won't start until that's settled.
   callback_after: after {time}
   callback_before: before {time}
   callback_between: between {start} and {end}
@@ -549,11 +567,30 @@ safety:
       - light headed
       - lightheaded
       - headaches
+      - head hurts
+      - feel sick
       - nauseous
       - alarm is beeping
       - alarm keeps beeping
       question: Just to be safe, is a carbon monoxide alarm going off, or is anyone feeling sick or dizzy?
     gas:
+      confirm_filler:
+      - dust
+      - dusty
+      - burnt
+      - heat
+      - heater
+      - furnace
+      - boiler
+      - fire
+      - fires
+      - fired
+      - egg
+      - sulphur
+      - alarm
+      - vents
+      - radiator
+      - radiators
       confirm_phrases:
       - burning dust
       - burnt dust

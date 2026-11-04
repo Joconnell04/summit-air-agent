@@ -140,19 +140,27 @@ def _approval_unclear(ctx: Ctx, approver: str) -> bool:
     return any(approval_unclear(r["text"], cfg) for r in rows)
 
 
-def _before_dispatch(ctx: Ctx, window_start: datetime) -> datetime:
+def approval_call_time(tenant: Tenant, window_start: datetime, now: datetime) -> datetime:
     """When to call about approval: a set time before the window opens, moved back into calling
-    hours (the evening before, for an early window), and never in the past."""
-    tenant = ctx.tenant
+    hours (the evening before, for an early window). If that time has passed, the next time inside
+    calling hours, which can be after the window opens; the caller of this checks for that."""
+    opens, closes = (time.fromisoformat(t) for t in tenant.callbacks["outbound_hours"])
+    # Calling hours end before `closes` (records.in_outbound_hours), so aim half an hour inside.
+    last = (datetime.combine(datetime.min, closes) - timedelta(minutes=30)).time()
     due = tenant.local(
         window_start - timedelta(hours=tenant.approval["callback_hours_before_window"])
     )
-    opens, closes = (time.fromisoformat(t) for t in tenant.callbacks["outbound_hours"])
-    if due.time() > closes:
-        due = datetime.combine(due.date(), closes, tenant.tz)
+    if due.time() > last:
+        due = datetime.combine(due.date(), last, tenant.tz)
     elif due.time() < opens:
-        due = datetime.combine(due.date() - timedelta(days=1), closes, tenant.tz)
-    return max(due, ctx.now)
+        due = datetime.combine(due.date() - timedelta(days=1), last, tenant.tz)
+    if due >= now:
+        return due
+    if records.in_outbound_hours(tenant, now):
+        return now
+    local = tenant.local(now)
+    day = local.date() if local.time() < opens else local.date() + timedelta(days=1)
+    return datetime.combine(day, opens, tenant.tz)
 
 
 def _job_type(ctx: Ctx, code: str) -> dict:
@@ -679,8 +687,12 @@ def book_appointment(ctx: Ctx, args: BookIn) -> Result:
     # Approval unclear: a person calls before dispatch to confirm who can approve (eval round 2).
     approval_callback_at = None
     if check_approval:
-        due = _before_dispatch(ctx, window_start)
+        due = approval_call_time(ctx.tenant, window_start, ctx.now)
+        # No calling time left before the window: a person holds the job until approval is settled.
+        late = due >= window_start
         reason = f"Confirm who can approve job {sent['job_id']} before dispatch"
+        if late:
+            reason += "; the call can't happen before the window opens, so hold the technician"
         with tx(ctx.conn):
             records.add_flag(ctx.conn, ctx.call["id"], "approval_check", reason, ctx.now, "High")
             callback_id = records.add_callback(
@@ -689,7 +701,8 @@ def book_appointment(ctx: Ctx, args: BookIn) -> Result:
         if callback_id:
             approval_callback_at = iso(due)
             spoken = ctx.tenant.line("callback_by", time=ctx.tenant.time_spoken(due, ctx.now))
-            say += " " + ctx.tenant.line("approval_callback", when=spoken)
+            line = "approval_callback_late" if late else "approval_callback"
+            say += " " + ctx.tenant.line(line, when=spoken)
     result = ok(
         say,
         booking_id=sent["job_id"],

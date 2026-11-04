@@ -63,12 +63,18 @@ safety:
         - smelled like burning
         - smell of burning
         - smells burnt
+      # Words a caller uses around a plain "no" to that question that add nothing to it ("no, just
+      # dusty, like when the heater first fires up").
+      confirm_filler: [dust, dusty, burnt, heat, heater, furnace, boiler, fire, fires, fired, egg,
+                       sulphur, alarm, vents, radiator, radiators]
     co:
       phrases:
         - dizzy
         - light headed
         - lightheaded
         - headaches
+        - head hurts
+        - feel sick
         - nauseous
         - alarm is beeping
         - alarm keeps beeping

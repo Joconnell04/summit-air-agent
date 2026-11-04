@@ -12,6 +12,7 @@ hidden_facts:
   phone: the number being called from
   smell: it smelled like burning dust for a few minutes when the heat first came on, it is gone now, no gas, nothing like eggs, no alarm
   problem: one upstairs bedroom stays cold while the rest of the house heats, since the heat came on two days ago, about 63 F in that room, two healthy adults at home
+  owns: Omar owns the house, lives there, and approves the work himself
 opening: Hey, so I turned the heat on for the first time this year, and, you know, it smelled like burning dust for a few minutes, it's gone now. But one room upstairs just stays cold.
 script:
   - If asked whether it smells like sulfur or rotten eggs, say no, nothing like that, it was just dusty.

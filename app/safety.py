@@ -80,6 +80,9 @@ UNSURE = ("dont know", "not sure", "no idea", "cant tell")
 CONFIRM_YES = (
     "it does",
     "does smell",
+    "smell something",
+    "something strong",
+    "strong smell",
     "actually",
     "kind of",
     "sort of",
@@ -89,6 +92,18 @@ CONFIRM_YES = (
     "i think so",
     "now that you mention it",
 )
+# Words that can sit around the agreement without adding anything: "yeah, it was just like that
+# for a minute". The trade's own signal words and its `confirm_filler` are added at run time, so a
+# negated "no gas smell" is filler too. Anything else in the answer ("right, but the dog is acting
+# strange") makes it unclear, so the plain check question is asked.
+CONFIRM_FILLER = {
+    "a", "after", "all", "and", "any", "anymore", "anything", "at", "away", "came", "dont", "else",
+    "few", "fine", "first", "for", "going", "gone", "good", "i", "im", "it", "its", "just", "kicked",
+    "know", "like", "minute", "minutes", "normal", "not", "now", "of", "off", "oh", "ok", "okay",
+    "on", "only", "or", "really", "season", "seconds", "so", "summer", "sure", "that", "thats",
+    "thanks", "the", "there", "think", "this", "time", "totally", "uh", "um", "up", "was", "went",
+    "when", "while", "year", "you",
+}
 # And these agree that it doesn't.
 CONFIRM_NO = (
     "yes",
@@ -335,7 +350,15 @@ def answer_to_confirm(text: str, cfg: dict) -> str:
         return "yes"
     if any(has_phrase(text_words, w) for w in UNSURE):
         return "yes"
-    if any(has_phrase(text_words, w) for w in CONFIRM_NO):
+    allowed = {w for phrase in CONFIRM_NO for w in words(phrase).split()} | CONFIRM_FILLER
+    for spec in cfg["kinds"].values():
+        allowed |= {w for p in spec["clear"] for w in words(p).split()}
+    for spec in cfg["vague"].values():
+        phrases = spec["phrases"] + spec.get("confirm_phrases", []) + spec.get("confirm_filler", [])
+        allowed |= {w for p in phrases for w in words(p).split()}
+    if any(has_phrase(text_words, w) for w in CONFIRM_NO) and all(
+        w in allowed for w in text_words.split()
+    ):
         return "no"
     return "unclear"
 
@@ -381,11 +404,18 @@ def check_caller_turn(
         # The lines haven't been said yet, so they still come before anything else.
         return SafetyAction("speak_lines", kind, lines_for(cfg, kind))
     if state == "checking":
+        # Symptoms in the answer to the gas question are a carbon monoxide signal.
+        other = vague_signal(text, cfg, answering_check=True)
+        if other and other != kind:
+            return SafetyAction("speak_lines", other, lines_for(cfg, other))
         answer = answer_to_confirm(text, cfg) if answering_confirm else answer_to_check(text, cfg)
         if answer == "yes":
             return SafetyAction("speak_lines", kind, lines_for(cfg, kind))
         if answer == "no":
             return SafetyAction("cleared", kind)
+        # An unclear answer to the lighter question gets the plain check question, once.
+        if answering_confirm:
+            return SafetyAction("ask_check", kind, cfg["vague"][kind]["question"])
         return SafetyAction("none", kind)
     vague = vague_signal(text, cfg)
     if vague and state in ("none", "cleared"):

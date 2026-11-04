@@ -83,13 +83,16 @@ def caller_turn_after(conn: sqlite3.Connection, call_id: str, seq: int) -> bool:
     )
 
 
-def last_agent_line(conn: sqlite3.Connection, call_id: str) -> str | None:
-    """The agent's most recent line on this call."""
-    row = conn.execute(
-        "SELECT text FROM turns WHERE call_id = ? AND speaker = 'agent' ORDER BY seq DESC LIMIT 1",
+def last_said(conn: sqlite3.Connection, call_id: str, lines: list[str]) -> str | None:
+    """Which of these lines the agent said most recently on this call, or None."""
+    for row in conn.execute(
+        "SELECT text FROM turns WHERE call_id = ? AND speaker = 'agent' ORDER BY seq DESC",
         (call_id,),
-    ).fetchone()
-    return row["text"] if row else None
+    ):
+        for line in lines:
+            if line in row["text"]:
+                return line
+    return None
 
 
 def agent_said(conn: sqlite3.Connection, call_id: str, line: str) -> bool:

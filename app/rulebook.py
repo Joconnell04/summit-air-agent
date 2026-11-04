@@ -107,6 +107,7 @@ LINE_STAGES = {
     "repeated_drops": ("opening", "After dropped calls"),
     "commercial": ("whole_call", "Commercial decline"),
     "approval_callback": ("booking", "Approval call before dispatch"),
+    "approval_callback_late": ("booking", "Approval call, job held"),
     "do_not_call": ("whole_call", "Do not call"),
     "do_not_call_with_callback": ("whole_call", "Do not call, callback off"),
     "flag_stored": ("whole_call", "Team will call"),
