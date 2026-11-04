@@ -113,7 +113,7 @@ Jackson is redesigning the owner view in a separate session. The first version, 
 
 | Setting | Default | Read in |
 |---|---|---|
-| Two-party consent | off (New York is a one-party state) | `lifecycle.start` sends `recording_notice` (the tenant's `voice.recording_notice`, or `recordings.NOTICE`), said before the greeting by both voice stacks; `lifecycle.turn` reads an objection (`recordings.objected`), records it in `recording_declines` and returns `recording: {action: stop, text}`, and the LiveKit worker stops the recorder and says the line before the agent answers; `recordings.collect` deletes that call's file from the bucket instead of keeping it. A call that opens with the safety lines isn't recorded |
+| Two-party consent | off (New York is a one-party state) | `lifecycle.start` sends `recording_notice` (the tenant's `voice.recording_notice`), said before the greeting by both voice stacks; `lifecycle.turn` reads an objection (`recordings.objected`), records it in `recording_declines` and returns `recording: {action: stop, text}` with the tenant's `voice.recording_stopped`, and the LiveKit worker stops the recorder and says the line before the agent answers; `recordings.collect` deletes that call's file from the bucket instead of keeping it. A call that opens with the safety lines isn't recorded |
 | Call recordings | the tenant's `retention.record_calls` | `recordings.wanted` |
 | Warm transfer | on where the tenant has a `transfer` section | `transfer.role_for` |
 | Technician summaries | on | `summary.run` marks the call skipped |

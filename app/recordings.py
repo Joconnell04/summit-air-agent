@@ -102,21 +102,14 @@ def wanted(values: dict[str, bool], configured: bool) -> bool:
     return configured and bool(values.get("call_recordings"))
 
 
-# What is said under two-party consent, unless the tenant's `voice:` lines set their own
-# (recording_notice, recording_stopped). Plain defaults here, so turning the setting on needs no
-# tenant file change; a tenant file change moves the eval fingerprint (evals/fingerprint.py).
-NOTICE = "This call may be recorded."
-STOPPED = "Okay, I've turned the recording off."
-
-
 def notice(tenant: Tenant) -> str:
-    """Said just before the greeting."""
-    return tenant.agent["voice"].get("recording_notice") or NOTICE
+    """Said just before the greeting under two-party consent: the tenant's `voice:` line."""
+    return tenant.agent["voice"]["recording_notice"]
 
 
 def stopped_line(tenant: Tenant) -> str:
     """Said by the voice layer when it stops the recording, before the agent answers."""
-    return tenant.agent["voice"].get("recording_stopped") or STOPPED
+    return tenant.agent["voice"]["recording_stopped"]
 
 
 # A caller saying they don't want the call recorded. Matched on whole words, so "record" in "my

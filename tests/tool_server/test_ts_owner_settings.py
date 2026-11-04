@@ -15,6 +15,7 @@ from toolkit import ROOT, UNKNOWN, Agent, count, make_server, sign_in
 from app import owner_settings, recordings
 
 NOTICE = "This call may be recorded."
+STOPPED = "Okay, I've turned the recording off."
 
 
 @pytest.fixture
@@ -123,12 +124,13 @@ def test_with_consent_off_there_is_no_notice(agent):
     assert agent.start(UNKNOWN)["data"]["recording_notice"] is None
 
 
-def test_with_consent_on_the_start_carries_the_notice(agent):
+def test_with_consent_on_the_start_carries_the_tenants_notice(agent):
     set_to(agent, two_party_consent=True)
+    assert tenant(agent).agent["voice"]["recording_notice"] == NOTICE
     assert agent.start(UNKNOWN)["data"]["recording_notice"] == NOTICE
 
 
-def test_a_tenant_can_word_the_notice_and_the_stopped_line_itself(agent, monkeypatch):
+def test_the_notice_and_the_stopped_line_are_the_tenants_own_words(agent, monkeypatch):
     voice = tenant(agent).agent["voice"]
     monkeypatch.setitem(voice, "recording_notice", "Calls are recorded for quality.")
     monkeypatch.setitem(voice, "recording_stopped", "Sure, recording's off.")
@@ -175,7 +177,7 @@ def test_with_consent_on_an_objection_stops_the_recording_once(recorded):
     call = agent.start(UNKNOWN)["data"]["call_id"]
     record(agent, call)
     first = agent.turn(call, "Please don't record this call. My AC is out.")["data"]
-    assert first["recording"] == {"action": "stop", "text": recordings.STOPPED}
+    assert first["recording"] == {"action": "stop", "text": STOPPED}
     again = agent.turn(call, "And don't record me, okay?")["data"]
     assert again["recording"] is None
     assert count(agent, "SELECT seq FROM recording_declines") == 1

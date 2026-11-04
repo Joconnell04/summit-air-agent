@@ -305,6 +305,11 @@ lines:
 voice:
   greeting_known: Hi, this is Summit Air. Is this {first_name}?
   greeting_unknown: Thanks for calling Summit Air, this is the virtual assistant. How can I help?
+  # Two-party consent (the owner's Settings page, app/owner_settings.py): said just before the
+  # greeting, and by the worker when a caller objects and the recording stops. Off by default:
+  # New York needs only one party's consent to record.
+  recording_notice: This call may be recorded.
+  recording_stopped: Okay, I've turned the recording off.
   # A caller whose earlier call today dropped (repeat_callers): the agent remembers it and checks it
   # is the same person before picking up where it stopped.
   greeting_linked: >-
