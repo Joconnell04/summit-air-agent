@@ -1,6 +1,6 @@
 .PHONY: setup test lint check ratchet ratchet-update eval eval-decisions replay langsmith eval-upload seed-st mock-st postman-st server postman trace \
 	owner-demo rules-gate summary-check voice-livekit phone-setup deploy test-call measure-delay \
-	retell-push retell-bridge retell-deploy retell-report rig rig-report
+	retell-push retell-bridge retell-deploy retell-report rig rig-report sim listen
 
 setup:
 	uv sync
@@ -40,6 +40,18 @@ rig:
 
 rig-report:
 	uv run python -m evals.audio_rig.report $(RUNS)
+
+# Paid, about $0.05 a call all-in (MEASURED, evals/rounds/bakeoff-audio-01.md): simulated calls on
+# our stack, recorded in stereo for listening (evals/audio_rig/sim.py). Prints the page link.
+# make sim CALLS="co-alarm-clear complaint-flag" | TAGS=flow:safety [MAX_COST=2]
+sim:
+	@test -n "$(CALLS)$(TAGS)" || { echo 'usage: make sim CALLS="id id" or TAGS=tag,tag'; exit 2; }
+	uv run $(EVAL_ENV) python -m evals.audio_rig.sim $(if $(CALLS),--calls "$(CALLS)") \
+	  $(if $(TAGS),--tags $(TAGS)) $(if $(MAX_COST),--max-cost $(MAX_COST))
+
+# The local listening page for the newest batch in data/sim: http://127.0.0.1:8130
+listen:
+	uv run python -m evals.audio_rig.listen
 
 # Paid, cents: the side-model quick run on one question (evals/decision-models/PLAN.md section 6).
 # make eval-decisions [SYSTEMS=rules,haiku,openai-decisions,jev]

@@ -119,6 +119,16 @@ make rig-report RUNS="evals/results/<a>.json evals/results/<b>.json"
 
 **Results.** The same results file as the text harness, with `transport: audio`, and per turn `caller_speech_ms`, `agent_speech_ms` and, where the voice program logs one, `platform_reply_ms` (our worker's own measure of the same gap) and `model_first_token_ms`. Agent lines in the transcript are what the caller heard, with the platform's own text in `said`. Each scenario has `silent_turns` and `cost_parts` (caller voice, agent ears, platform, brain model, caller model, grader). `make rig-report` prints the bake-off table, the safety calls one by one (the server's check, the platform's text against the signed-off lines, and what the caller heard against them) and the decision 026 verdict.
 
+**Listening to calls.** Every rig call is also saved as one stereo file, caller on the left and agent on the right, at the rig's own rate with no phone-line filter, with each clip placed on the clock the rig times the call with, so the pause before each reply in the file is that turn's `reply_delay_ms`. Beside it is the transcript with each line's time. A run's calls form a batch in `data/sim/<time>-<stack>/` (gitignored), coded S1, S2 and so on in the order they ran; the codes never change once written. Files are FLAC when the `flac` command is installed (lossless, about a third the size of WAV), WAV otherwise. Each file is also copied to `sim/<batch>/` in the private recordings bucket (DECISIONS.md 052); the bucket's keys are read from the server's `.env` over ssh at run time and kept in memory, never written to a file. `--no-record` and `--no-store` turn these off.
+
+```
+make sim CALLS="co-alarm-clear complaint-flag"   # these scenarios once each, on our stack, in order
+make sim TAGS=flow:safety MAX_COST=2             # every scenario with the tags; stops at $2
+make listen                                      # http://127.0.0.1:8130, the newest batch
+```
+
+`make sim` runs each scenario once, one call at a time, and writes its results file into the batch folder rather than `evals/results`, so a listening batch never changes the committed results or LangSmith. The page shows each call's code, scenario, a player and the numbered, timed transcript; clicking a line plays from it and space pauses, so feedback can name "S3, line 7" or "S3 at 0:42". It leaves the grader's verdict off, as the eval rounds do.
+
 **Needs.** `DEEPGRAM_API_KEY` and `ANTHROPIC_API_KEY` for every run; `LIVEKIT_URL`, `LIVEKIT_API_KEY` and `LIVEKIT_API_SECRET` for ours; the Retell eval variables above for Retell; `ELEVENLABS_API_KEY` and an installed `ngrok` for ElevenLabs; `OPENAI_API_KEY` and `GEMINI_API_KEY` for the speech-to-speech entrants. Run our stack on its own: its worker runs on the same machine, and other runs beside it share the processor its turn detector uses.
 
 **Limits.** No phone network or codec on most paths, so a phone call adds its own delay on top (bake-off 6 sends the final two to real calls for that). The caller answers adaptively, so each entrant hears different turns; the checks still read the same record.
