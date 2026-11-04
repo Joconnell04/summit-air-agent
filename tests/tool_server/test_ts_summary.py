@@ -409,11 +409,16 @@ def test_a_run_writes_at_most_its_cap_and_leaves_the_rest_for_the_next(agent):
     calls = [
         booked_call(agent, f"(212) 555-07{n:02d}") for n in range(summary.SUMMARIES_PER_RUN + 1)
     ]
+    nothing_booked = ready_to_book(agent, address=in_area_address(9))
+    agent.end(nothing_booked)
     model = FakeModel()
     first = run(agent, model)
-    assert first["done"] == summary.SUMMARIES_PER_RUN and first["waiting"] == 1
-    assert status(agent, calls[-1][0]) == "pending", "the newest call waits"
-    assert run(agent, model)["done"] == 1
+    assert first["done"] == summary.SUMMARIES_PER_RUN and first["waiting"] == 2
+    assert status(agent, calls[-1][0]) == "pending", "the newest booked call waits"
+    # Past the cap the rest aren't read at all, so even a call with no booking isn't skipped yet.
+    assert status(agent, nothing_booked) == "pending"
+    second = run(agent, model)
+    assert second["done"] == 1 and second["skipped"] == 1
 
 
 def test_a_run_starts_no_new_summary_once_its_time_is_used_up(agent):
@@ -516,3 +521,9 @@ def test_a_reply_cut_short_is_a_failure_not_a_summary():
 def test_without_a_key_summaries_stay_off(monkeypatch):
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
     assert summary.model_from_config() is None
+
+
+def test_a_shared_deadline_already_past_starts_no_summary(agent):
+    booked_call(agent)
+    counts = run(agent, FakeModel(), timer=lambda: 100.0, deadline=50.0)
+    assert counts["done"] == 0 and counts["waiting"] == 1

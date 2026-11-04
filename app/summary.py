@@ -46,6 +46,8 @@ TIMEOUT_SECONDS = 30
 RUN_SECONDS = 20
 # Summaries per run, whatever the time.
 SUMMARIES_PER_RUN = 5
+# How many waiting calls one run reads; most wait on a queued booking and cost nothing.
+ROWS_PER_RUN = 200
 # A call older than this is not summarized: the visit may be over, and a backlog after an outage
 # (or after summaries are turned on) should not write notes onto old jobs.
 MAX_AGE = timedelta(hours=24)
@@ -236,19 +238,30 @@ def run(
     model: SummaryModel | None,
     now: datetime,
     timer: Callable[[], float] = time.monotonic,
+    deadline: float | None = None,
 ) -> dict:
     """Summarize each ended call with a booked job, oldest first. A call whose booking is still
     queued waits for it; a call with no booking (a safety call, a callback, a turned-away caller)
-    gets no summary. Calls left when the run's time or count is used up wait for the next run."""
+    gets no summary. Calls left when the run's time or count is used up wait for the next run.
+    `deadline` is a `timer()` value shared across tenants, so one jobs run spends at most
+    RUN_SECONDS on summaries in all; without it the run gets RUN_SECONDS from now."""
     counts = {"done": 0, "skipped": 0, "waiting": 0, "retry": 0, "failed": 0}
+    if deadline is None:
+        deadline = timer() + RUN_SECONDS
+    # Read a bounded slice, inside the budget, so a large backlog can't stall the jobs thread
+    # before the first check. The rest are reached on later runs.
     rows = conn.execute(
         "SELECT * FROM calls WHERE tenant = ? AND summary_status IN ('pending', 'written') "
-        "ORDER BY ended_at, id",
-        (tenant.slug,),
+        "ORDER BY ended_at, id LIMIT ?",
+        (tenant.slug, ROWS_PER_RUN),
     ).fetchall()
     budget = SUMMARIES_PER_RUN
-    started = timer()
-    for call in rows:
+    for index, call in enumerate(rows):
+        if budget == 0 or timer() >= deadline:
+            # Out of time or count: the rest wait for the next run unread, so a backlog can't keep
+            # the jobs thread busy past the budget.
+            counts["waiting"] += len(rows) - index
+            break
         booking = conn.execute(
             "SELECT * FROM bookings WHERE call_id = ? AND kind = 'book' ORDER BY id DESC LIMIT 1",
             (call["id"],),
@@ -261,13 +274,7 @@ def run(
             continue
         # A summary already written only needs sending, which needs no model.
         needs_model = call["summary_status"] == "pending"
-        out_of_time = timer() - started >= RUN_SECONDS
-        if (
-            booking["status"] != "booked"
-            or budget == 0
-            or out_of_time
-            or (needs_model and model is None)
-        ):
+        if booking["status"] != "booked" or (needs_model and model is None):
             counts["waiting"] += 1
             continue
         budget -= 1
