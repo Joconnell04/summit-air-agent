@@ -6,7 +6,8 @@ Written at the end of the check-ins while Jackson was away (about 23:00 to 01:10
 
 1. **The 10 live calls: the number is ready now.** (646) 624-0418, script in `evals/live-calls.md`. Everything below is deployed and a scripted test call passed at 01:10. Recommend calling now rather than waiting for the last fix pass (below): real-call evidence is the biggest gap, and the remaining fixes are small. Three things to listen for, seen on the test call:
    - The relative day is wrong just after midnight: a November 4 visit was called "tomorrow" at 1 AM. Fixed in the open pass; daytime calls aren't affected.
-   - The first words of the goodbye may be clipped when the call ends ("...for calling Summit Air").
+   - The first words of a line may be clipped: the goodbye at 01:10 ("...for calling Summit Air"), and "Good to hear from you" heard as "To hear from you" on the 17:00 UTC test call. The goodbye also still splits around the hang-up.
+   - Two questions in one turn slipped through once ("Is that the one you want to keep? Do you want a different day?").
    - "Sure, Pat" ran together; listen for whether names after "Sure" sound natural.
    If a caller asks for a person, the transfer rings your cell.
 2. **After the calls, one feedback pass.** Say what felt off; I'll map each complaint to a setting in `docs/tuning.md` (end-of-turn wait, interruption sensitivity, reply length cap, sampling temperature, speaking rate) and try the obvious fix first. One is already queued: a lower turn-detector maximum (now 1.5 s), since on about one turn in seven the detector waited the full 1.5 s on a finished line (MEASURED, PR #98).
