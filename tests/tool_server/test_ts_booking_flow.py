@@ -446,6 +446,13 @@ def test_a_name_written_in_lower_case_still_counts(line, asked):
     assert asks.technician_asked(line) == asked
 
 
+def test_the_trades_equipment_words_are_never_a_technician():
+    equipment = frozenset(load_agent(TENANT_DIR)[0]["equipment_words"])
+    assert asks.technician_asked("can you get the heat back", equipment) is None
+    assert asks.technician_asked("can i get heat again", equipment) is None
+    assert asks.technician_asked("can i get heat again") == "Heat"
+
+
 def test_two_units_in_one_read_back_are_refused(agent):
     call = agent.start(UNKNOWN)["data"]["call_id"]
     agent.turn(call, "It's 101 Union St, 11231, units 2A and 5C.")

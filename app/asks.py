@@ -90,20 +90,21 @@ SAME_TECH = ("same technician", "same tech", "same guy", "same person", "same ma
              "same lady", "whoever came last time", "the one who came last time")
 NOT_NAMES = {
     "summit", "someone", "somebody", "anyone", "anybody", "everyone", "it", "you", "me", "them",
-    "him", "her", "us", "that", "this", "one", "the", "a", "an", "heat", "heating", "ac", "air",
-    "power", "help", "things", "everything", "there", "here", "now", "today", "tomorrow",
+    "him", "her", "us", "that", "this", "one", "the", "a", "an", "power", "help", "things", "everything", "there", "here", "now", "today", "tomorrow",
     "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday", "back", "out",
-    "they", "he", "she", "we", "i", "my", "your", "a tech", "tech", "technician", "guy",
-    "furnace", "boiler", "unit", "system", "thermostat", "service", "anything", "something",
+    "they", "he", "she", "we", "i", "my", "your", "tech", "technician", "guy", "unit", "system",
+    "service", "anything", "something",
 }
 
 
-def technician_asked(text: str) -> str | None:
+def technician_asked(text: str, equipment: frozenset[str] = frozenset()) -> str | None:
     """The technician the caller asks for, by name, or "the same technician as last time"; None
-    when the line asks for nobody."""
+    when the line asks for nobody. `equipment` is the trade's words for its systems, so "get the
+    heat back" names nobody."""
     for pattern in NAMED:
         for match in pattern.finditer(text or ""):
-            if match.group(1).lower() not in NOT_NAMES:
+            word = match.group(1).lower()
+            if word not in NOT_NAMES and word not in equipment:
                 return match.group(1).capitalize()
     line = words(text)
     if any(has_phrase(line, p) for p in SAME_TECH):
@@ -112,11 +113,11 @@ def technician_asked(text: str) -> str | None:
 
 
 def note_technician(
-    conn: sqlite3.Connection, call: sqlite3.Row, text: str, now: datetime
+    conn: sqlite3.Connection, tenant: Tenant, call: sqlite3.Row, text: str, now: datetime
 ) -> str | None:
     """A request for a technician becomes a note for the dispatcher on the job, once per name per
     call. The server never assigns by name; the note says so. Returns the name noted, or None."""
-    asked = technician_asked(text)
+    asked = technician_asked(text, tenant.equipment_words)
     if not asked:
         return None
     note = f"Caller asked for {asked}. Not promised; dispatcher to decide."

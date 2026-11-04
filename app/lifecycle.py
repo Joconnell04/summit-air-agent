@@ -510,7 +510,7 @@ def turn(
                 hints += [f"not_offered:{line}" for line in
                           asks.decline_not_offered(conn, tenant, call, args.text, now)]
             # A technician asked for by name is a note for the dispatcher, never a promise (079).
-            if asks.note_technician(conn, call, args.text, now):
+            if asks.note_technician(conn, tenant, call, args.text, now):
                 hints.append("technician_requested")
             # Who can approve isn't settled: the agent offers a callback, and a booking the caller
             # asks for gets a call before dispatch (tools.book_appointment reads the same lines).
