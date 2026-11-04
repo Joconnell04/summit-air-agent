@@ -32,10 +32,17 @@ NUMBER_WORDS = {"oh", "zero", "one", "two", "three", "four", "five", "six", "sev
                 "seventy", "eighty", "ninety", "hundred"}
 
 
-def without_place_names(text_words: str, business_words: set[str]) -> str:
-    """The line with words that are part of a street or place name blanked out, so an address is
-    never read as a business: the word before a street word ("Church Ave"), a business word right
-    after a house number ("540 Church"), and "plaza" when it ends a name ("Grand Army Plaza")."""
+def without_place_names(text: str, business_words: set[str]) -> str:
+    """The line, as words, with those that are part of a street or place name blanked out, so an
+    address is never read as a business: the word before a street word ("Church Ave"), a business
+    word right after a house number ("540 Church"), and "plaza" when it ends a name ("Grand Army
+    Plaza"). Each sentence or comma-separated part is read on its own, so "I run a clinic. Dr.
+    Patel does billing" and "my restaurant, St Marks" keep their business word."""
+    parts = [_place_names(words(part), business_words) for part in re.split(r"[.,;:!?]", text)]
+    return " " + " ".join(p for p in parts if p) + " "
+
+
+def _place_names(text_words: str, business_words: set[str]) -> str:
     tokens = text_words.split()
     kept = list(tokens)
     for i, token in enumerate(tokens):
@@ -48,7 +55,7 @@ def without_place_names(text_words: str, business_words: set[str]) -> str:
             kept[i] = "_"
         if token == "plaza" and before is not None and before not in PLAZA_GENERIC:
             kept[i] = "_"
-    return " " + " ".join(kept) + " "
+    return " ".join(kept)
 
 
 def sounds_commercial(text: str, cfg: dict) -> bool:
@@ -56,7 +63,7 @@ def sounds_commercial(text: str, cfg: dict) -> bool:
     whole apartment buildings are residential. Best effort by design: the agent and the FSM account
     type catch the rest, and a false positive costs a booking, so the tenant's lists stay narrow."""
     single = {w for w in cfg["phrases"] + cfg["owned"] + cfg["run"] if " " not in w.strip()}
-    text_words = without_place_names(words(text), single)
+    text_words = without_place_names(text, single)
     for phrase in cfg["not"]:
         text_words = text_words.replace(words(phrase), " ")
     if any(has_phrase(text_words, p) for p in cfg["phrases"]):
