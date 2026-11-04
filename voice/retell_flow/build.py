@@ -207,6 +207,8 @@ def flow_tools(specs: list[dict], base_url: str) -> list[dict]:
                 "Tells the server a transfer wasn't answered. Called by the flow, not the model.",
                 f"{base_url}/retell/flow/{route}-failed",
                 {"type": "object", "properties": {key: {"type": "string", "const": "{{" + key + "}}"}}},
+                # The fallback the plan came with stays as it was, whatever this answer holds.
+                variables=tuple(k for k in ROUTING if k != "fallback"),
                 status="failed_status",
             )
         )
@@ -298,6 +300,8 @@ def nodes(model_tool_ids: list[str], tenant: Tenant, chat: bool) -> list[dict]:
             "notice_line",
             "Notice, then the model answers",
             "{{line}}",
+            # Its only way out is the skip-response edge, so the caller can't talk it off the floor.
+            interruption_sensitivity=0,
             skip_response_edge=_special("notice_skip", "Skip response", "stage"),
         )
     )

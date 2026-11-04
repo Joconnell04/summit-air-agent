@@ -119,8 +119,9 @@ class FlowBridge(Bridge):
             # Retell records until the call ends, but with storage at basic attributes it keeps no
             # recording or transcript once the webhooks have gone out. The line is said, then the
             # model answers the rest of what the caller said, as on our worker.
-            if kind == "call":
-                self.keep_no_recording(rid)
+            if kind == "call" and not self.keep_no_recording(rid):
+                # Retell would keep the recording, so the line would be untrue; the model answers.
+                return routed(stage=stage, notes=notes)
             return routed("notice", recording["text"], stage=stage, notes=notes)
         return routed(stage=stage, notes=notes)
 
@@ -130,9 +131,9 @@ class FlowBridge(Bridge):
         plan = handoff.get("transfer")
         fallback = handoff.get("fallback") or say
         if not plan or not plan.get("phone"):
-            # No number to send the call to: `say` is already the stored callback line, said with
-            # interruptions off as our worker says it.
-            return routed("firm", fallback)
+            # No number to send the call to: the server's `say` is then the stored callback line,
+            # said with interruptions off as our worker says it.
+            return routed("firm", say if not plan else fallback)
         if kind == "chat":
             # A chat can't transfer. The eval harness reports the transfer as sent, as its phone
             # company does for our stack (evals/stacks.py), and the chat ends on the line.
@@ -170,6 +171,9 @@ class FlowBridge(Bridge):
         """After a person flag, the server says whether the call goes to a person now (app/transfer.py
         plan); nothing is dialed unless it sends a plan."""
         data = flagged["data"]
+        if not flagged.get("say"):
+            # No callback line to fall back on if nobody answers: leave the flag to the model.
+            return None
         asked = self.tools.transfer(call_id, data["flag_id"], data.get("callback_id"))
         plan = ((asked or {}).get("data") or {}).get("transfer") if asked and asked["ok"] else None
         if not plan or not plan.get("phone"):
@@ -182,17 +186,19 @@ class FlowBridge(Bridge):
             transfer_number=plan["phone"],
             transfer_id=plan["id"],
             transfer_summary=plan.get("summary") or "",
-            fallback=flagged.get("say") or "",
+            fallback=flagged["say"],
         )
 
     def server_down_line(self) -> str:
         return " ".join(self.spoken(self.default_tenant)["server_down"].split())
 
-    def keep_no_recording(self, rid: str) -> None:
+    def keep_no_recording(self, rid: str) -> bool:
         try:
             self.retell.keep_no_recording(rid)
+            return True
         except (RetellError, httpx.HTTPError) as exc:
             log.warning("update-live-call %s failed: %s", rid, exc)
+            return False
 
     # ---- transfers -------------------------------------------------------------------------
 
@@ -205,22 +211,29 @@ class FlowBridge(Bridge):
         our_id = (body.get("args") or {}).get(key) or ""
         with self.lock:
             self.dialing.pop(rid, None)
-        if not our_id.isdigit():
-            return routed()
-        if kind == "handoff":
-            done = self.tools.handoff_done(call_id, int(our_id), "failed")
-        else:
-            done = self.tools.transfer_done(call_id, int(our_id), "no_answer")
+        done = None
+        if our_id.isdigit():
+            if kind == "handoff":
+                done = self.tools.handoff_done(call_id, int(our_id), "failed")
+            else:
+                done = self.tools.transfer_done(call_id, int(our_id), "no_answer")
         say = (done or {}).get("say") or ""
-        return routed("line" if say else "model", say)
+        # With no line from the server, the flow says the fallback the plan came with.
+        out = routed("line" if say else "fallback", say)
+        del out["fallback"]
+        return out
 
     def webhook(self, event: dict) -> bool:
         """The single-prompt bridge's events, plus the outcome of a transfer that went through."""
+        if event.get("event") == "chat_ended":
+            with self.lock:
+                self.stages.pop(retell_id(event.get("chat") or {}), None)
         call = event.get("call") or {}
         rid = retell_id(call)
         if event.get("event") == "call_ended" and rid:
             with self.lock:
                 dialing = self.dialing.pop(rid, None)
+                self.stages.pop(rid, None)
             if dialing and call.get("disconnection_reason") == "call_transfer":
                 call_id = self.ensure_started(call, "call")
                 kind, our_id = dialing

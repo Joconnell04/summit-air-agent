@@ -36,10 +36,19 @@ def ensure_flow(retell: Retell, flow_id: str | None, desired: dict, log: list[st
         return flow["conversation_flow_id"]
     current = retell.request("GET", f"/get-conversation-flow/{flow_id}")
     diff = single.changes(current, desired)
+    if "tools" not in diff and _variables_differ(current.get("tools") or [], desired["tools"]):
+        diff["tools"] = desired["tools"]
     if diff:
         retell.request("PATCH", f"/update-conversation-flow/{flow_id}", json=diff)
         log.append(f"updated flow {flow_id}: {', '.join(sorted(diff))}")
     return flow_id
+
+
+def _variables_differ(current: list[dict], desired: list[dict]) -> bool:
+    """A response variable dropped from a tool stays on Retell under the shared comparison, which
+    checks only the keys we send; the edges depend on exactly these mappings."""
+    held = {t.get("tool_id"): t.get("response_variables") or {} for t in current}
+    return any(held.get(t["tool_id"]) != t["response_variables"] for t in desired)
 
 
 def ensure_agent(retell: Retell, kind: str, name: str, body_for, flow: dict, log: list[str]) -> str:

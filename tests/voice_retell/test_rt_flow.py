@@ -11,7 +11,7 @@ from test_rt_push import BASE, VOICE, account, specs
 from toolkit import TENANT_DIR, in_area_address
 
 from app.tools import TOOLS
-from voice.retell.api import allowed
+from voice.retell.api import RetellError, allowed
 from voice.retell.ledger import Ledger
 from voice.retell.push import PHONE_NUMBER
 from voice.retell_flow import build
@@ -333,6 +333,25 @@ def test_a_demand_for_a_person_is_handed_off_through_the_transfer_node(
     assert status == [{"status": "failed"}]
 
 
+def test_a_failed_transfer_report_with_no_line_falls_back_without_wiping_the_fallback(flow_bridge):
+    flow_bridge.tools.handoff_done = lambda *args: None
+    answer = flow_bridge.transfer_failed("handoff", {"call": call_obj("x"), "args": {"handoff_id": "7"}})
+    assert answer["route"] == "fallback"
+    assert "fallback" not in answer
+    failed_tool = next(t for t in flow()["tools"] if t["name"] == "handoff_failed")
+    assert "fallback" not in failed_tool["response_variables"]
+
+
+def test_if_retell_would_keep_the_recording_the_line_isnt_said(flow_client, retell):
+    def refuse(call_id):
+        raise RetellError("refused")
+
+    retell.keep_no_recording = refuse
+    inbound(flow_client, "abc")
+    objection = utterance("user", "Please don't record this call. My heat is out.")
+    assert turn(flow_client, call_obj("abc", GREETING, objection))["route"] == "model"
+
+
 def test_a_transfer_that_goes_through_is_reported_when_the_call_ends(flow_client, tool_app, monkeypatch):
     monkeypatch.setenv("TRANSFER_OFFICE_NUMBER", "+12125550100")
     inbound(flow_client, "mad")
@@ -392,6 +411,18 @@ def test_a_second_push_sends_no_writes_and_only_allowed_endpoints():
     assert log == [] and len(fake.writes()) == before
     for method, path, _ in fake.requests:
         assert allowed(method, path), (method, path)
+
+
+def test_a_response_variable_dropped_from_a_tool_is_dropped_on_retell():
+    fake = account()
+    _, ids = run_push(fake)
+    flow_id = fake.agents[ids["agent"]]["response_engine"]["conversation_flow_id"]
+    stale = next(t for t in fake.flows[flow_id]["tools"] if t["name"] == "handoff_failed")
+    stale["response_variables"]["fallback"] = "fallback"
+    log, _ = run_push(fake)
+    assert log == [f"updated flow {flow_id}: tools"]
+    fresh = next(t for t in fake.flows[flow_id]["tools"] if t["name"] == "handoff_failed")
+    assert "fallback" not in fresh["response_variables"]
 
 
 def test_bind_number_puts_the_flow_agent_on_678():
