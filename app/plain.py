@@ -16,6 +16,7 @@ REFUSED = {
     "gate_safety": ("Held the booking until the safety lines were said.", "hold"),
     "gate_read_back": ("Held the booking until the address and phone were read back.", "hold"),
     "out_of_area": ("Outside the service area, so it can't be booked.", "warn"),
+    "zip_not_heard": ("The caller hadn't said that ZIP; asked for it.", "hold"),
     "customer_type": ("A commercial caller, which this company doesn't book.", "warn"),
     "slot_taken": ("That opening had just been taken; offered another.", "hold"),
     "invalid_slot": ("That time isn't open; offered another.", "hold"),

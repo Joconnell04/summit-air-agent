@@ -22,6 +22,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from . import (
+    accounts,
     db,
     jobs,
     lifecycle,
@@ -108,6 +109,17 @@ class Services:
         )
         self.mailer = Mailer(settings)
         self.bucket = recordings.bucket(settings)
+        conn = self.connect()
+        try:
+            accounts.seed_admin(
+                conn,
+                settings.owner_admin_username,
+                settings.owner_admin_name,
+                settings.owner_admin_password,
+                self.clock(),
+            )
+        finally:
+            conn.close()
         self._locks: dict[str, threading.Lock] = {}
         self._locks_guard = threading.Lock()
 

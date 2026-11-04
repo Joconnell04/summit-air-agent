@@ -40,7 +40,16 @@ from .schemas import (
 )
 from .settings import BOOKING_DAYS_AHEAD, LIMITS
 from .tenant import Tenant
-from .text import clock_time, has_phrase, phone_key, phone_spoken, street_key, unit_key, words
+from .text import (
+    clock_time,
+    digit_runs,
+    has_phrase,
+    phone_key,
+    phone_spoken,
+    street_key,
+    unit_key,
+    words,
+)
 
 MAX_MATCHES = 5
 SHAPE_DAYS = 3
@@ -111,6 +120,36 @@ def _record_out_of_area(ctx: Ctx, zip_code: str) -> None:
             "INSERT OR IGNORE INTO out_of_area (call_id, zip, at) VALUES (?, ?, ?)",
             (ctx.call["id"], zip_code, iso(ctx.now)),
         )
+
+
+def _zip_known(ctx: Ctx, zip_code: str) -> None:
+    """A ZIP the server acts on came from the caller or their record, never from the model: it was
+    said in a caller line on this call or one linked to it ("one one two two six" counts), or it is
+    on a location of a customer matched on this call. Otherwise the agent asks for it, so a guessed
+    ZIP can't turn a caller away as out of area or put a booking at the wrong place."""
+    ids = records.thread(ctx.conn, ctx.call["id"])
+    lines = ctx.conn.execute(
+        f"SELECT text FROM turns WHERE speaker = 'caller' "
+        f"AND call_id IN ({','.join('?' * len(ids))})",
+        ids,
+    )
+    # The whole run, or ZIP plus four: "718 112 2600" is a phone number, not 11226.
+    said = {run for line in lines for run in digit_runs(line["text"])}
+    if zip_code in said or any(len(run) == 9 and run.startswith(zip_code) for run in said):
+        return
+    for customer_id in records.scoped_customers(ctx.conn, ctx.call["id"]):
+        try:
+            on_file = ctx.fsm.locations(customer_id)
+        except (FsmUnavailable, FsmRejected):
+            continue
+        if any(loc["address"]["zip"] == zip_code for loc in on_file):
+            return
+    raise Refused(
+        "zip_not_heard",
+        "What's the ZIP code there?",
+        need="ask the caller for the ZIP; use only one they say",
+        zip=zip_code,
+    )
 
 
 def _out_of_area(ctx: Ctx, zip_code: str) -> None:
@@ -376,6 +415,7 @@ def get_customer_history(ctx: Ctx, args: HistoryIn) -> Result:
 
 
 def check_service_area(ctx: Ctx, args: ServiceAreaIn) -> Result:
+    _zip_known(ctx, args.zip)
     _out_of_area(ctx, args.zip)
     zone = ctx.tenant.service_area[args.zip]
     return ok(zip=args.zip, in_area=True, area=zone["name"])
@@ -538,6 +578,7 @@ def read_back(ctx: Ctx, args: ReadBackIn) -> Result:
     asked. With confirmed, accepts only if that same sentence was returned on this call and a caller
     line followed it (spec S-26)."""
     phone = _resolve_phone(ctx, args.phone)
+    _zip_known(ctx, args.address.zip)
     address = args.address.model_dump()
     place = address["street"] + (f", unit {address['unit']}" if address["unit"] else "")
     city = f", {address['city']}" if address["city"] else ""

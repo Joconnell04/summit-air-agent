@@ -84,6 +84,7 @@ def test_the_read_back_tool_hands_the_parts_to_the_worker_and_the_model_says_not
     agent, connect
 ):
     agent.start(call_id="call-1")
+    agent.turn("call-1", "It's 101 Union St, 11231.")
     server = connect("call-1")
     address = in_area_address()
     asked = agent.tool("read_back", "call-1", address=address, phone="caller_id")

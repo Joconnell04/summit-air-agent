@@ -85,6 +85,7 @@ def test_the_check_fails_when_an_older_callers_pace_is_wrongly_remembered(agent)
 def address_call(agent, slow_part: bool, back_to_pace: bool = True) -> str:
     call = agent.start()["data"]["call_id"]
     voice = Voice(agent, call)
+    voice.caller("It's 101 Union St, 11231.")
     address = in_area_address()
     asked = agent.tool("read_back", call, address=address, phone="caller_id")
     voice.says(asked["say"])
@@ -113,7 +114,7 @@ def test_the_check_fails_when_the_address_was_not_spoken_slower(agent):
 def test_the_check_fails_when_the_pace_stays_slow_after_the_address(agent):
     call = address_call(agent, slow_part=True, back_to_pace=False)
     assert pace({"held": 1.0, "address": 0.85}, evidence(agent, call)) == [
-        "agent line 7 was spoken at 0.85; the server's pace was 1.0"
+        "agent line 8 was spoken at 0.85; the server's pace was 1.0"
     ]
 
 

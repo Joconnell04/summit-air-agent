@@ -2,7 +2,8 @@
 and to whom; the voice layer only dials, says the server's words, and reports what happened.
 
 A call goes to a person only when all of these hold:
-- the tenant has a transfer section and a number set for the role, in the server's environment;
+- the tenant has a transfer section and a number set for the role, in the server's environment,
+  and the owner's warm transfer setting was on when the call started (app/owner_settings.py);
 - it isn't a safety call (the lines tell the caller to leave and call 911) or a commercial one;
 - during office hours, the caller asked for a person on this call (their own words, matched here,
   not a flag the model sets); after hours, the server's own priority and after-hours cutoffs say
@@ -29,7 +30,7 @@ import sqlite3
 from collections.abc import Mapping
 from datetime import datetime
 
-from . import records
+from . import owner_settings, records
 from .db import iso, parse_iso, tx
 from .envelope import Refused, Result, ok
 from .tenant import Tenant
@@ -241,6 +242,8 @@ def role_for(
     `needs_on_call` is the server's own after-hours judgement, never the flag's priority."""
     if not tenant.transfer:
         return None
+    if not switched_on(conn, tenant, call):
+        return None
     if call["safety_signal_at"] and call["safety_state"] != "cleared":
         return None
     if call["commercial"]:
@@ -266,11 +269,10 @@ def tried(conn: sqlite3.Connection, call_id: str) -> bool:
 
 
 def switched_on(conn: sqlite3.Connection, tenant: Tenant, call: sqlite3.Row) -> bool:
-    """Whether the owner lets calls be put through to a person. The accounts lane (PR #85) adds
-    this switch as the warm transfer setting in app/owner_settings.py, pinned when the call starts;
-    once it merges, this returns that setting, so turning it off stops the cold handoff too (the
-    flag and callback are still stored). Until then every call has it on."""
-    return True
+    """Whether the owner lets calls be put through to a person: the warm transfer setting, pinned
+    when the call started (app/owner_settings.py). Off stops the cold handoff too; the flag and
+    callback are still stored and the caller hears the callback line."""
+    return owner_settings.for_call(conn, tenant, call["id"])["warm_transfer"]
 
 
 def handoff_role(

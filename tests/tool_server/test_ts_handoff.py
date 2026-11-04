@@ -9,6 +9,8 @@ import pytest
 from test_ts_safety import GAS_LINES
 from toolkit import UNKNOWN, Agent, count
 
+from app import owner_settings
+
 OFFICE = "+12125550100"
 ON_CALL = "+12125550111"
 # 10 p.m. Monday in New York: the office is closed (config.yaml hours).
@@ -134,6 +136,22 @@ def test_with_no_number_set_the_caller_hears_the_callback_line(agent):
     assert result["data"]["handoff"]["transfer"] is None
     assert handoff(agent, call)["status"] == "not_dialed"
     assert count(agent, "SELECT COUNT(*) FROM callbacks WHERE status = 'pending'") == 1
+
+
+def test_with_the_owners_transfer_switch_off_nothing_is_dialed(agent, numbers):
+    """The settings page's warm transfer switch covers the cold handoff as well."""
+    conn = agent.db()
+    try:
+        owner_settings.change(
+            conn, agent.app.state.services.tenants.default, {"warm_transfer": False}, "Pat",
+            agent.clock(),
+        )
+    finally:
+        conn.close()
+    call, result = call_with(agent, "Put me through to a manager right now.")
+    assert result["say"] == "I've let our team know, and someone will call you by 9:30 AM."
+    assert result["data"]["handoff"]["transfer"] is None
+    assert handoff(agent, call)["status"] == "not_dialed"
 
 
 def test_with_no_on_call_number_after_hours_nothing_is_dialed(agent, clock, monkeypatch):

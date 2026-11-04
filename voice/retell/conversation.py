@@ -18,11 +18,13 @@ def spoken_lines(tenants_dir: Path, slug: str) -> dict:
 
 def opening(start: dict, say: str, lines: dict) -> str:
     """The first line. A call that carries on a dropped safety call opens with the safety lines;
-    anything else the server wants said (repeated drops) follows the greeting."""
+    otherwise the recording notice when the server sends one (two-party consent), the greeting,
+    and anything else the server wants said (repeated drops)."""
     safety = start.get("safety") or {}
     if safety.get("text"):
         return safety["text"]
-    return f"{greeting(start, lines)} {say}".strip()
+    parts = (start.get("recording_notice"), greeting(start, lines), say)
+    return " ".join(part for part in parts if part)
 
 
 def variables(call_id: str, instructions: str, first_line: str) -> dict[str, str]:
