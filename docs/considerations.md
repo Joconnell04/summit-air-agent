@@ -1,6 +1,6 @@
 # Considerations
 
-A running list of things the build should think about. Anyone (Jackson by voice, or an agent) adds to it with `/consider`. Nothing here is a commitment until it is triaged.
+The triage record from design: every item here was marked in, later, out or decided (#10, DECISIONS.md 008), and the C-NN numbers are cited across the docs, so the file stays as it is. It takes no new items. New ideas go in docs/later.md under "Ideas to look into" with the next free C-NN number (`/consider`), and the three `later` items below are tracked there.
 
 Status: `open` (not triaged), `in` (in scope, linked to the spec or an issue), `later` (after go-live, goes in the rollout plan), `out` (won't do, with the reason), `decided` (see DECISIONS.md).
 
