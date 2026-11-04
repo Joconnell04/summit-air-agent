@@ -663,6 +663,40 @@ def build() -> dict:
             check="pm.test('refused', () => pm.response.to.have.status(401));",
         ),
     ]
+    admin_only = "pm.test('admin only', () => pm.response.to.have.status(401));"
+    eval_run = "pm.collectionVariables.set('eval_run', '20261104-013438-livekit-fast-standard');"
+    bench = [
+        item(
+            "A wrong code doesn't open the bench",
+            "POST",
+            "bench/login",
+            envelope=False,
+            form={"token": "not-an-edit-code"},
+            check="pm.test('refused', () => pm.response.to.have.status(401));",
+        ),
+        *[
+            item(name, "GET", path, envelope=False, check=admin_only)
+            for name, path in (
+                ("The bench's calls need an admin", "bench?q=0418"),
+                ("A call's node graph needs an admin", "bench/calls/{{call_id}}"),
+                ("The graph alone needs an admin", "bench/calls/{{call_id}}/graph"),
+                ("The live stream needs an admin", "bench/calls/{{call_id}}/stream"),
+                ("A call as a scenario needs an admin", "bench/calls/{{call_id}}/scenario.yaml"),
+                ("The bench's settings need an admin", "bench/settings"),
+                ("The eval runs need an admin", "bench/evals"),
+            )
+        ],
+        *[
+            item(name, "GET", path, envelope=False, check=admin_only, pre=pre)
+            for name, path, pre in (
+                ("An eval run needs an admin", "bench/evals/{{eval_run}}", eval_run),
+                ("An eval scenario needs an admin", "bench/evals/{{eval_run}}/{{eval_key}}",
+                 eval_run + "\npm.collectionVariables.set('eval_key', 'elderly-no-heat');"),
+                ("An eval round needs an admin", "bench/rounds/{{eval_round}}",
+                 "pm.collectionVariables.set('eval_round', 'model-matrix-01');"),
+            )
+        ],
+    ]
     scenarios = booking_flow[0]
     scenarios["request"]["url"] = "{{st_url}}/debug/scenarios"
     return {
@@ -679,6 +713,7 @@ def build() -> dict:
             folder("4 Known caller", known_flow),
             folder("5 Triage", triage),
             folder("6 Outbound and owner view", outbound_and_owner),
+            folder("7 Debug bench", bench),
         ],
     }
 

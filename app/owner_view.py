@@ -58,6 +58,11 @@ def _editor(request: Request) -> str | None:
     return found
 
 
+def is_admin(request: Request) -> bool:
+    """Who may open the debug bench (app/bench.py). Until named accounts land, a rules editor."""
+    return _editor(request) is not None
+
+
 def _remember(request: Request, response: Response, token: str, cookie: str = COOKIE) -> Response:
     # Secure when served over HTTPS, so the cookie never travels in clear text there.
     response.set_cookie(
@@ -146,6 +151,7 @@ def _common(request: Request, tenant, slug: str, tab: str, conn) -> dict:
             f"{(m // 60) % 12 or 12}:{m % 60:02d} {'AM' if m % 1440 < 720 else 'PM'}"
         ),
         "timedelta": timedelta,
+        "admin": is_admin(request),
     }
 
 

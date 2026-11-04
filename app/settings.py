@@ -52,6 +52,9 @@ class Settings:
     rules_gate: bool = field(default_factory=lambda: os.environ.get("RULES_GATE", "") == "1")
     # Where the owner view is served, for links in alert emails. Empty leaves the links out.
     owner_view_url: str = field(default_factory=lambda: os.environ.get("OWNER_VIEW_URL", ""))
+    # The LangSmith page that holds the eval experiments (evals/README.md), linked from the debug
+    # bench's eval pages. Empty leaves the links out.
+    langsmith_url: str = field(default_factory=lambda: os.environ.get("LANGSMITH_URL", ""))
     # Alert email. With no SMTP_HOST, alerts are held, not sent (app/mail.py).
     smtp_host: str = field(default_factory=lambda: os.environ.get("SMTP_HOST", ""))
     smtp_port: int = field(default_factory=lambda: int(os.environ.get("SMTP_PORT", "587")))

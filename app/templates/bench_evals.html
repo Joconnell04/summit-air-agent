@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% from "_ui.html" import bench_tabs, pct, go, empty with context %}
+{% block title %}Bench: evals{% endblock %}
+{% block tabs %}{{ bench_tabs(tab) }}{% endblock %}
+{% block body %}
+{% set oldest_first = runs | reverse | list %}
+<main class="page">
+  <div class="page-head">
+    <div class="lead">
+      <div class="crumbs">Debug bench<span>/</span><span>evals/results, read only</span></div>
+      <h1 class="page-title">Evals</h1>
+    </div>
+    <div class="filters">
+      <div class="seg" role="group" aria-label="Suite">
+        <a href="/bench/evals"{% if suite == "all" %} aria-current="true"{% endif %}>All</a>
+        {% for s in suites %}<a href="/bench/evals?suite={{ s }}"{% if suite == s %} aria-current="true"{% endif %}>{{ s | capitalize }}</a>{% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <section class="panel">
+    <div class="panel-head">
+      <h2>Pass rate by run</h2><span class="count">{{ runs | length }}</span>
+      <span class="sub">oldest on the left; the dashed line is the floor the ratchet holds, {{ pct(floor) }}</span>
+      <span class="legend end"><span><i style="--sw: var(--info)"></i>At or over the floor</span><span><i style="--sw: var(--urgent)"></i>Under it</span><span><i style="--sw: var(--neutral)"></i>No verdict</span></span>
+    </div>
+    {% if runs %}
+    <div class="panel-body">
+      <div class="rate-chart" style="--cols: {{ [oldest_first | length, 12] | max }}" role="list" aria-label="Runs, oldest first">
+        {% for r in oldest_first %}
+        <a role="listitem" class="{% if r.rate is none %}error{% elif floor and r.rate < floor %}under{% endif %}" href="/bench/evals/{{ r.id }}" style="--h: {{ ((r.rate or 0) * 100) | round(1) }}%" data-tip="{{ r.id }}: {% if r.rate is none %}no verdict{% else %}{{ r.passed }} of {{ r.judged }} passed{% endif %}" aria-label="{{ r.id }}, {{ pct(r.rate) }}"><i></i></a>
+        {% endfor %}
+        {% if floor %}<div class="floor" style="--h: {{ (floor * 100) | round(1) }}%"><span>Floor {{ pct(floor) }}</span></div>{% endif %}
+      </div>
+    </div>
+    {% endif %}
+  </section>
+
+  <div class="split wide-side">
+    <section class="panel">
+      <div class="panel-head"><h2>Runs</h2><span class="sub">newest first</span></div>
+      {% if runs %}
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th>Run</th><th>Suite</th><th>Stack and profile</th><th class="right">Passed</th><th class="right">Rate</th><th class="right">Must-pass</th><th class="right">Cost</th><th></th></tr></thead>
+          <tbody>
+            {% for r in runs %}
+            <tr data-href="/bench/evals/{{ r.id }}">
+              <td class="time">{{ r.created.strftime("%b %-d, %H:%M") }}</td>
+              <td class="fit">{{ r.suite }}{% if r.id == reference %} <span class="tag ember">Reference</span>{% endif %}{% if r.overlay %} <span class="tag outline">Owner draft</span>{% endif %}</td>
+              <td><span class="what"><a href="/bench/evals/{{ r.id }}">{{ r.stack }}, {{ r.profile }}</a></span>{% if r.transport == "audio" %} <span class="tag info">Audio</span>{% endif %}</td>
+              <td class="fit right num">{{ r.passed }} of {{ r.judged }}{% if r.errors %} <span class="faint">+{{ r.errors }}</span>{% endif %}</td>
+              <td class="fit right num"><span class="what">{{ pct(r.rate) }}</span></td>
+              <td class="fit right num">{% if r.must_pass %}<span class="count alarm">{{ r.must_pass }}</span>{% else %}<span class="faint">0</span>{% endif %}</td>
+              <td class="fit right num muted">${{ "%.2f" | format(r.cost) }}</td>
+              <td class="go">{{ go() }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}{{ empty("No results files.") }}{% endif %}
+    </section>
+    <section class="panel">
+      <div class="panel-head"><h2>Rounds</h2><span class="count">{{ rounds | length }}</span><span class="sub">evals/rounds and the co-authoring log</span></div>
+      <ul class="list">
+        {% for d in rounds %}
+        <li data-href="/bench/rounds/{{ d.slug }}"><span class="what"><a href="/bench/rounds/{{ d.slug }}">{{ d.title }}</a></span><span class="meta"><code>{{ d.path }}</code></span><span class="end go">{{ go() }}</span></li>
+        {% endfor %}
+      </ul>
+    </section>
+  </div>
+</main>
+{% endblock %}

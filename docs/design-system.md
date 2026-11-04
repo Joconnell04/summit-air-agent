@@ -7,7 +7,7 @@ The owner view is built for the person who runs Summit Air: someone who knows HV
 | `app/static/owner/tokens.css` | Every color, size, space, radius, shadow and timing, as CSS custom properties |
 | `app/static/owner/components.css` | Every component, built only from tokens |
 | `app/templates/_ui.html` | Jinja macros for the components that repeat (tags, counts, figures, a call row, the status line, day navigation, note icons) |
-| `app/static/owner/owner.js` | The few interactions: board filters and layout, tabs, whole-row links, tooltips, search as you type, resizable columns, the technical details switch, the Results filter. Each page works without it, apart from search as you type and the technical details |
+| `app/static/owner/owner.js` | The few interactions: board filters and layout, tabs, whole-row links, tooltips, search as you type, resizable columns, the technical details switch, the Results filter, and on the debug bench picking a step on the node graph and the live view. Each page works without it, apart from search as you type, the technical details and the live view |
 | `app/static/owner/fonts/` | Public Sans, served from the app, with its license |
 
 ## Principles
@@ -74,7 +74,7 @@ Times, phone numbers and counts use `.num` (tabular figures) so columns line up.
 Each component lists its parts, its states and when to use it. All of them are on `/owner/design`.
 
 ### App header
-Revin logo, a rule, the company name, the four tabs (Today, Calls, Results, Rules) with Ember under the current one, then search and the status line on the right. Sticky. The first three tabs carry the day being looked at, so moving between pages stays on the same day; Rules has no day.
+Revin logo, a rule, the company name, the four tabs (Today, Calls, Results, Rules) with Ember under the current one, then search and the status line on the right. Sticky. The first three tabs carry the day being looked at, so moving between pages stays on the same day; Rules has no day. An admin also sees a fifth tab, Bench, for the debug bench; on the bench the tabs are Calls, Settings, Evals and a link back to the owner view.
 
 ### Search
 One field in the header on every page, backed by a full-text index of every call on record (`app/search.py`, SQLite FTS5): the call (caller name and number, what it was about, how it ended), its job (service location, ZIP, job number, priority and why, arrival window), the flags it raised, its leads and callbacks, and every line said on it. Every word typed has to match, each as the start of a word; a phone number matches however it is written; a lone one- or two-digit number is ignored because it would match nearly everything; punctuation never reaches the index's own query syntax. The index is kept current by the jobs loop and again before each search, and only calls that changed since they were indexed are redone, so a refresh with nothing new is three reads (MEASURED: `test_a_refresh_with_nothing_new_is_three_reads` counts the statements). Calls are indexed a hundred to a transaction, so a first build never holds the write lock for long. A transcript removed by retention leaves the index on the next refresh. Each kind of result is its own query, so many matches of one kind never crowd out another, and the counts are the true totals. At about 5,800 calls (the demo day copied 130 times), a refresh with nothing new takes 19 ms, a search 36 ms and a suggestion 19 ms (MEASURED on a laptop with a scratch timing script).
@@ -171,8 +171,24 @@ A page's controls on one row at one height (`.actions`): a status tag, a field a
 ### Rules page
 `/owner/rules` lists every rule by call stage (Before hello, Opening, Whole call, Booking, Closing, After the call), one panel each, built from the tenant files and prompts (`app/rulebook.py`). Each row is the rule, how it is kept (Server check, Exact wording, Company setting, Agent guidance, Your guidance) and a tag: **Editable** (info) or **Locked** (outline), whose tooltip says why. A segmented control shows All, Editable or Locked. Versions sit under the stages with their check: **Passed 18 of 18** (done), **Blocked, 2 of 18 failed** (urgent, the failed calls in the tooltip), **Checking** (high), **Rolled back**, **Draft**, **Not published, live changed** (a rollback landed while it was checked) and **1 on a rerun** (outline). While a check runs, the editor offers **Stop check**, which returns the draft; a check that never reports back returns it after an hour. The editor (`/owner/rules/edit`) needs an edit code; the Rules page opens with the read token.
 
+### Node graph (debug bench)
+A call as the steps it took, one 32 px row each, read top down: the time from the start of the call, the step in the lane of whoever took it (Caller, Voice worker, Model, Server), and its timing on the right. Each lane has a hairline rail and each step a 12 px node on its rail: hollow for the caller, Ember for the model, grey for the voice worker, ink for the server; a step that held something back is yellow, a safety step red, a rule that let a request through green. A short edge joins a step to the lane of the step before it, so a turn reads as a path across the lanes, the way a sequence diagram does. The row shows the step's name in bold and a one-line summary that ends in an ellipsis; a timing the record doesn't hold reads "missing" in faint italic, never a made-up number, and one over 1.5 s is red. Picking a step (a click, or the arrow keys) shows its **detail** in a sticky panel beside the graph: a key-value list of facts, the messages a model request was given under their roles, and code blocks for arguments, results and prompts, each in a disclosure. Without the script each step links to its detail by its anchor. Macros `node_graph(graph)` and `node_detail(graph)` in `_ui.html`; the graph comes from `app/nodes.py`.
+
+### Rate chart (debug bench)
+Eval runs as thin bars, oldest on the left, each as high as its pass rate, with the ratchet's floor as a dashed line across and its value at the right end. A bar under the floor is red, a run with no verdict grey. Each bar links to its run and carries the run and the count in its tooltip.
+
+### Basis and outcome tags (debug bench)
+Where a documented number comes from, as a tag: **Measured** (done), **Source** (info), **Assumed** (outline), following the labels every doc uses. How a rule or an eval came out: **Pass** and **Passed** (done), **Fail** (urgent), **Held** (high, a rule refused a request), **No verdict** and **Not reached** (outline). Macros `basis(label)` and `outcome(value)`.
+
+### Prose
+A document in a panel (an eval round on the bench): headings at body size in semibold, lists, ruled tables in a light frame, at most 860 px wide.
+
 ### Empty state
 One centred line in faint ink that says what isn't there ("Nothing needs a person right now."). Never an illustration.
+
+## Debug bench
+
+`/bench`, for engineers and admins only (`require_admin` in `app/bench.py`), on the same server and design system as the owner view, denser. Calls (search by call id or phone digits, calls in progress first), a call's node graph with the rule proof and a draft eval scenario made from it, Settings (the tuning knobs and model profiles with the measurement each has in the docs) and Evals (the rate chart, each run's failures with their code checks and grader notes, a scenario's transcript, the rounds). A call in progress updates as it goes, from server-sent events. Every value is redacted before it is drawn (`app/redact.py`): phone numbers keep their last four digits, a service location keeps its street name, and anything key-like is replaced. The owner pages don't change, apart from the admin's Bench tab.
 
 ## Words
 
