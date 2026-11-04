@@ -493,23 +493,23 @@ def turn(
                 hints.append("commercial")
             # A detail the caller already confirmed, changed afterwards ("yes, but it's 4B", or a
             # second unit for another job): the confirmation is cleared, so nothing books there
-            # until the new details are read back and confirmed (DECISIONS.md 077).
+            # until the new details are read back and confirmed (DECISIONS.md 083).
             confirmed = records.readback(call) if call["readback_confirmed_at"] else None
             if confirmed and readback_change(args.text, confirmed):
                 changes["readback_confirmed_at"] = None
                 hints.append("readback_changed")
-            # Two units in one line ("2A and 5C") are two jobs, each read back and booked (079).
+            # Two units in one line ("2A and 5C") are two jobs, each read back and booked (085).
             units = units_said(args.text)
             if len(units) > 1:
                 hints.append("units:" + ",".join(u.upper() for u in units))
             # Work the company doesn't do ("and my sink leaks"): the agent says the tenant's line
-            # once, and the office gets a lead (DECISIONS.md 078). Anything else on the call goes on.
+            # once, and the office gets a lead (DECISIONS.md 084). Anything else on the call goes on.
             # Not on a safety call (the lines come first) or a commercial one (already declined).
             quiet = call["safety_state"] in ("none", "cleared") and action.action == "none"
             if quiet and not commercial_line and not call["commercial"]:
                 hints += [f"not_offered:{line}" for line in
                           asks.decline_not_offered(conn, tenant, call, args.text, now)]
-            # A technician asked for by name is a note for the dispatcher, never a promise (079).
+            # A technician asked for by name is a note for the dispatcher, never a promise (085).
             if asks.note_technician(conn, tenant, call, args.text, now):
                 hints.append("technician_requested")
             # Who can approve isn't settled: the agent offers a callback, and a booking the caller

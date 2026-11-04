@@ -238,7 +238,7 @@ def lines(fields: dict, rec: dict) -> tuple[list[list[str]], list[dict]]:
     kept.setdefault("told", clip("; ".join(told)))
     found = [[FIELDS[f], kept[f]] for f in FIELDS if f in kept]
     # A technician the caller asked for, from the server's own note, never the model's words
-    # (DECISIONS.md 079).
+    # (DECISIONS.md 085).
     asked = rec.get("technician_asked") or []
     if asked:
         found.append([ASKED_FOR, clip("; ".join(asked))])

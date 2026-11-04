@@ -111,6 +111,6 @@ How the design was reached, in order, so a reader can follow each choice back to
 | A caller who pushes | A calm line and the soonest window or a person; pushing and claims raise nothing | DECISIONS.md 073, #124 |
 | Eval reference after C-58 and #125 | Two-sample standard run adopted at 92%; floor stays 90% | DECISIONS.md 011, #126 |
 | Design system saved to Claude | The repository stays the source; a copy in the Claude account is rebuilt from the code, with a drift test | DECISIONS.md 074 |
-| Read-back corrections and ended windows | A detail changed after the read-back resets it; a visit whose window ended is asked about, never confirmed | DECISIONS.md 077, #129 |
-| Work we don't do | Declined once by the server from the service list in config, kept as a lead; commercial "office" and ownership phrasings added | DECISIONS.md 078, #129 |
-| Two jobs and named technicians | Two different jobs per call, each with its own read-back where the unit differs; a technician request is a dispatcher note, never a promise | DECISIONS.md 079, #129 |
+| Read-back corrections and ended windows | A detail changed after the read-back resets it; a visit whose window ended is asked about, never confirmed | DECISIONS.md 083, #129 |
+| Work we don't do | Declined once by the server from the service list in config, kept as a lead; commercial "office" and ownership phrasings added | DECISIONS.md 084, #129 |
+| Two jobs and named technicians | Two different jobs per call, each with its own read-back where the unit differs; a technician request is a dispatcher note, never a promise | DECISIONS.md 085, #129 |

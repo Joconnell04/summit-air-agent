@@ -232,13 +232,13 @@ SERVER_NOTES = {
         "The caller asked to be called something the company doesn't use. Don't use it; carry on "
         "with their name, or no name, without comment."
     ),
-    # A caller line that changed a detail after the read-back was confirmed (DECISIONS.md 077).
+    # A caller line that changed a detail after the read-back was confirmed (DECISIONS.md 083).
     "readback_changed": (
         "The caller gave a different address detail or number after confirming the read-back. "
         "Call read_back with the details they just gave, so the new sentence is read for you; "
         "nothing books until they confirm it. Don't ask them to repeat what they already said."
     ),
-    # A technician asked for by name (DECISIONS.md 079); the server noted it for the dispatcher.
+    # A technician asked for by name (DECISIONS.md 085); the server noted it for the dispatcher.
     "technician_requested": (
         "The caller asked for a particular technician. Say you'll pass that along to the team, and "
         "never promise who will come or that it will be that person. It's already noted for the "
@@ -257,14 +257,14 @@ def server_notes(hints: list[str], known: dict[str, str] | None = None) -> list[
     stage hint ("stage_booking") is followed by the owner's notes for it ("guidance:<text>"), and
     the two become one note."""
     notes = [f"[server] {SERVER_NOTES[h]}" for h in hints if h in SERVER_NOTES]
-    # Two units named in one line (DECISIONS.md 079).
+    # Two units named in one line (DECISIONS.md 085).
     for units in (h.removeprefix("units:") for h in hints if h.startswith("units:")):
         notes.append(
             f"[server] The caller named more than one unit ({units.replace(',', ', ')}). Each "
             "unit is its own job: read back and book one unit at a time, with that unit alone in "
             "the read-back, then the next. Never book one visit to cover several units."
         )
-    # Work the company doesn't do (DECISIONS.md 078): the server's own sentence, said once.
+    # Work the company doesn't do (DECISIONS.md 084): the server's own sentence, said once.
     for line in (h.removeprefix("not_offered:") for h in hints if h.startswith("not_offered:")):
         notes.append(
             "[server] The caller asked for work the company doesn't do. Say this once, as written: "
@@ -322,7 +322,7 @@ CLAIMS_PRIORITY = re.compile(
     re.IGNORECASE,
 )
 # A promise of who the technician will be ("Mike will be the one coming out", "I'll make sure it's
-# Mike"). The dispatcher decides; the agent only passes the request on (DECISIONS.md 079). "I'll pass
+# Mike"). The dispatcher decides; the agent only passes the request on (DECISIONS.md 085). "I'll pass
 # that along" and "I can't promise who comes" are kept.
 NAME = r"(?!(?:Someone|Somebody|They|He|She|It|We|You|That|This|There|Our|The|A|Anyone)\b)[A-Z][a-z]+"
 PROMISES_TECHNICIAN = re.compile(

@@ -547,7 +547,7 @@ def test_the_summary_read_uses_the_index_in_order_without_a_sort(agent):
 
 
 def test_a_technician_the_caller_asked_for_is_a_line_from_the_servers_note(agent):
-    """DECISIONS.md 079: the request reaches the technician summary from the server's note, marked
+    """DECISIONS.md 085: the request reaches the technician summary from the server's note, marked
     as not promised, whatever the model writes."""
     call = ready_to_book(agent)
     agent.turn(call, "Can I get Mike again? He was great.")

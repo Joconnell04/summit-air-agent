@@ -417,7 +417,7 @@ lines:
   urgent_priority: I've marked this call top priority, so you get our soonest opening.
   anything_else_first: Is there anything else I can help with?
   # Ends a booking sentence instead of after_confirmation when the caller named another unit that
-  # has no booking yet (DECISIONS.md 079). {unit} is "5C".
+  # has no booking yet (DECISIONS.md 085). {unit} is "5C".
   next_unit: Now let's set up apartment {unit}.
   # Ends a booking, reschedule or cancel sentence, which the voice layer speaks with no model step.
   after_confirmation: Anything else?

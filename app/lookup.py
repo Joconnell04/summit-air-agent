@@ -33,7 +33,7 @@ def membership_summary(tenant: Tenant, memberships: list[dict]) -> dict | None:
 
 def window_text(tenant: Tenant, start: str, end: str, now: datetime | None = None) -> dict:
     """An arrival window as said. Given `now`, `passed` says the window ended before it, so a visit
-    still open after its window is never told to the caller as coming up (DECISIONS.md 077 note)."""
+    still open after its window is never told to the caller as coming up (DECISIONS.md 083 note)."""
     local_start, local_end = tenant.local(parse_iso(start)), tenant.local(parse_iso(end))
 
     def hour(moment: datetime) -> str:

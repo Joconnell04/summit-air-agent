@@ -943,7 +943,7 @@ def find_slots(ctx: Ctx, args: FindSlotsIn) -> Result:
 
 def _keep_second_job(ctx: Ctx, data: dict) -> None:
     """No opening for a second job on a call that already booked one: it is never dropped, a
-    person calls back to book it (DECISIONS.md 079)."""
+    person calls back to book it (DECISIONS.md 085)."""
     booked = ctx.conn.execute(
         "SELECT 1 FROM bookings WHERE call_id = ? AND kind = 'book' "
         "AND status IN ('sending', 'booked', 'queued')",
@@ -1030,7 +1030,7 @@ def read_back(ctx: Ctx, args: ReadBackIn) -> Result:
     line followed it (spec S-26)."""
     phone = _resolve_phone(ctx, args.phone)
     # One unit a read-back: two units are two jobs, each read back and booked on its own
-    # (DECISIONS.md 079; eval run 20261104-200546 read back "unit 2A and 5C" as one).
+    # (DECISIONS.md 085; eval run 20261104-200546 read back "unit 2A and 5C" as one).
     if re.search(r"\band\b|[,&+/]", args.address.unit or ""):
         raise Refused(
             "invalid_arguments",
@@ -1065,7 +1065,7 @@ def read_back(ctx: Ctx, args: ReadBackIn) -> Result:
         ctx.conn, ctx.call["id"], ctx.call["readback_asked_seq"]
     )
     # "Yes, but it's 4B" in the same breath as the yes: the caller changed a detail, so this
-    # sentence can't be confirmed (DECISIONS.md 077).
+    # sentence can't be confirmed (DECISIONS.md 083).
     corrected = _readback_corrected(ctx, asked) if answered else None
     if corrected:
         raise Refused(
@@ -1332,7 +1332,7 @@ def book_appointment(ctx: Ctx, args: BookIn) -> Result:
     # The voice layer speaks this as the whole confirmation, with no model step after it, so it
     # ends by asking "Anything else?" itself (spec S-30; eval round 4, the booking turn's delay).
     # A unit the caller named that has no booking yet comes next instead, so the second job isn't
-    # lost to a goodbye (DECISIONS.md 079; eval run 20261104-201025, super-two-units).
+    # lost to a goodbye (DECISIONS.md 085; eval run 20261104-201025, super-two-units).
     next_unit = _unit_not_booked(ctx)
     if next_unit:
         say += " " + ctx.tenant.line("next_unit", unit=next_unit)
@@ -1359,7 +1359,7 @@ def book_appointment(ctx: Ctx, args: BookIn) -> Result:
 
 
 def _second_job(ctx: Ctx, existing: list[sqlite3.Row], readback: dict, args: BookIn) -> None:
-    """A call may book two jobs (DECISIONS.md 079): "my heat's out, and can you tune up the AC?",
+    """A call may book two jobs (DECISIONS.md 085): "my heat's out, and can you tune up the AC?",
     or a super with units 2A and 5C. Each has its own read-back where the address or unit differs
     (a new unit clears the confirmed read-back, app/readback.py). At the same address the second
     has to be a different kind of visit the caller asked for, so a retry or a slip never books the

@@ -1,6 +1,6 @@
 """Does a caller line change a detail the read-back named? Used after the caller confirmed it, so
 "yes, but it's 4B" or "yes, it's 144" resets the confirmation and the booking waits for a new
-read-back (DECISIONS.md 077). A plain yes, or the same value said again, changes nothing.
+read-back (DECISIONS.md 083). A plain yes, or the same value said again, changes nothing.
 
 Best effort by design, with the error on the safe side: a line read as a change costs one more
 read-back, a change missed can book the wrong door. Only shapes that name an address detail count:

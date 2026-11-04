@@ -182,7 +182,7 @@ def test_the_same_visit_twice_on_one_call_is_refused(agent):
 
 
 def test_a_third_booking_on_one_call_is_refused_and_flags_a_person(agent):
-    """Two jobs per call at most (DECISIONS.md 079), then a person takes over."""
+    """Two jobs per call at most (DECISIONS.md 085), then a person takes over."""
     call = ready_to_book(agent)
     assert book(agent, call, first_open(agent, call))["ok"]
     second = book(agent, call, first_open(agent, call, "no_heat"), job_type="no_heat",
