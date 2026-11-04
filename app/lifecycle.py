@@ -5,7 +5,7 @@ import re
 import sqlite3
 from datetime import datetime, timedelta
 
-from . import lookup, recordings, records, rules, safety
+from . import lookup, pace, recordings, records, rules, safety
 from .db import iso, parse_iso, tx
 from .envelope import Result, ok
 from .fsm import FsmAdapter, FsmRejected, FsmUnavailable
@@ -201,6 +201,15 @@ def start(
             ),
         )
         call = records.get_call(conn, args.call_id)
+        pace.start(
+            conn,
+            tenant.pace,
+            tenant.slug,
+            args.call_id,
+            known,
+            previous["id"] if previous else None,
+            now,
+        )
         # A safety call that dropped carries on where it was: if the lines weren't said, they come
         # first on this call too.
         if (
@@ -251,6 +260,8 @@ def start(
         "knowledge": tenant.knowledge,
         # The owner's live edits, pinned to this call (app/rules.py).
         "house_rules": rules.start_call(conn, tenant, args.call_id, now),
+        # The speed the worker speaks at from the greeting on (app/pace.py).
+        "pace": pace.current(conn, args.call_id),
         "recording": (
             {"object_key": recordings.object_key(tenant, args.call_id)}
             if recordings.wanted(tenant, record)
@@ -348,6 +359,8 @@ def turn(
                     else "Caller said no to the safety check"
                 )
                 records.add_flag(conn, call["id"], "safety_check_cleared", reason, now, "Low")
+            # The caller asking for a pace, "sorry, what?" twice, or an older caller (app/pace.py).
+            hints += pace.caller_line(conn, tenant.pace, call, args.text, seq, now)
             text_words = words(args.text)
             # Marked at once on the caller's words (spec S-49); the agent still says the line.
             if len(call["caller_key"]) == 10 and any(
@@ -402,7 +415,14 @@ def turn(
     if action.action != "none":
         payload = {"action": action.action, "kind": action.kind, "text": action.text}
     known = already_known(conn, call["id"]) if args.speaker == "caller" else {}
-    return ok(action.text, seq=seq, safety=payload, hints=hints, known=known)
+    return ok(
+        action.text,
+        seq=seq,
+        safety=payload,
+        hints=hints,
+        known=known,
+        pace=pace.current(conn, call["id"]),
+    )
 
 
 # What the agent's tool calls have already recorded, by field. Read from the tool log, so it costs

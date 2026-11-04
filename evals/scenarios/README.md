@@ -45,7 +45,7 @@ One YAML file per simulated call, named `<id>.yaml`. `evals/scenario.py` validat
 | `residentialBuildingAccounts.N` | 0 Linden Property Management, 1 a co-op board; Residential accounts | |
 | `replacementLead` | Naomi Feld, asking about a replacement | |
 
-The Retell stack ignores `earlier_call`, `fsm_down` and `misheard`; those scenarios run on the in-process stack.
+The Retell stack ignores `earlier_call`, `fsm_down` and `misheard`, and sets no speaking rate (the `pace` check); those scenarios run on the in-process stack.
 
 Service-area ZIPs are in `tenants/summit-air/config.yaml` (Brooklyn, Queens, Staten Island). Use made-up 555-01xx numbers for unknown callers.
 
@@ -73,5 +73,8 @@ Each `must` item is `- <check>: <argument>`. They read the tool server's record 
 | `agent_never_says` | a regex or list | the agent never said any of them |
 | `agent_says_at_most` | `{regex: n}` | each regex turns up in at most n agent lines |
 | `booking_lead_in` | `true` | the agent line with the booking confirmation opens with a short line from the same reply |
+| `said_booked` | `only_after_booking` | the agent never told the caller they were booked before a booking went through on the call |
+| `slot_taken` | `told_plainly` | a booking that came back `slot_taken` was followed by an agent line saying the window just went and, after that, naming another time; passes when no booking came back taken |
+| `pace` | a mapping: `held`, `source`, `remembered`, `address` | the speaking rate the server recorded (app/pace.py): the call ended at the `held` speed, set by `source` (default, record, linked, request, repeats, older_adult); the caller's number keeps `remembered` (a speed or `none`); a request to hear the address at the `address` speed was recorded and the address was spoken at it. Always: every agent line carries the speed it was spoken at, and it is the server's pace at that point |
 
 Job types: `no_heat`, `no_cooling`, `tune_up`, `safety_check`, `estimate`. Priorities: Low, Normal, High, Urgent.

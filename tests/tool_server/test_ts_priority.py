@@ -238,10 +238,13 @@ def test_older_adult_starts_at_60_in_line_with_nyc_health(text, urgent):
         "We don't have a baby.",
         "There's no one elderly here, nobody on oxygen.",
         "two healthy adults no babies no older people nothing like medical equipment",
+        "we're both healthy nobody's elderly or sick or anything",
     ],
 )
 def test_a_person_said_not_to_be_there_raises_nothing(text):
-    """Eval round 2, seed 9: "nobody on any medical equipment" made a mild call urgent."""
+    """Eval round 2, seed 9: "nobody on any medical equipment" made a mild call urgent. The pair
+    eval two-callers-last-slot: "nobody's elderly" did too, and took a technician held for urgent
+    jobs."""
     result = decide("no_heat", text, 58)
     assert [r for r in result.rules if not r.startswith("bracket:")] == []
 

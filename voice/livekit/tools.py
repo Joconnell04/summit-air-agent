@@ -45,6 +45,7 @@ def make_tool(
     hang_up: Callable[..., None],
     speak: Callable[[str], object],
     transfer: Transfer | None = None,
+    say_parts: Callable[[list[dict]], object] | None = None,
     reply: SpokenReply | None = None,
 ):
     schema = {k: spec[k] for k in ("name", "description", "parameters")}
@@ -60,11 +61,16 @@ def make_tool(
             reply.tool_done(spec["name"], result)
         ending = spec["name"] == "end_call" and result["ok"]
         spoken = None
+        parts = result["data"].get("parts") if result["ok"] else None
         line = spoken_by_server(spec["name"], result)
-        if line:
-            # Safety text (the lines, the check question, the safety sign-off) and the read-back
-            # sentence are spoken by the worker word for word, never by the model. end_call only
-            # carries a sentence on a safety call.
+        if parts and say_parts is not None:
+            # A read-back the caller asked to hear slower: the server's sentence in parts, the
+            # address at its own speed (app/pace.py), spoken word for word.
+            spoken = say_parts(parts)
+        elif line:
+            # Safety text (the lines, the check question, the safety sign-off), the read-back
+            # sentence and a booking's confirmation are spoken by the worker word for word, never
+            # by the model. end_call only carries a sentence on a safety call.
             spoken = speak(line)
         if ending and result["data"].get("hang_up"):
             # The server agreed: hang up once this turn's speech, and any line above, has played.
@@ -91,12 +97,14 @@ def build_tools(
     hang_up: Callable[..., None],
     speak: Callable[[str], object],
     transfer: Transfer | None = None,
+    say_parts: Callable[[list[dict]], object] | None = None,
     reply: SpokenReply | None = None,
 ) -> list:
     """One tool per spec. `hang_up` runs only when the server's end_call result says to; `speak`
     says a line word for word with interruptions off and returns its speech handle; `transfer`,
-    when set, is asked after every person flag; `reply` hears each result, so the agent knows when
-    to hold the model's text."""
+    when set, is asked after every person flag; `say_parts` speaks a sentence the server split by
+    speed; `reply` hears each result, so the agent knows when to hold the model's text."""
     return [
-        make_tool(spec, server, bridge, log, hang_up, speak, transfer, reply) for spec in specs
+        make_tool(spec, server, bridge, log, hang_up, speak, transfer, say_parts, reply)
+        for spec in specs
     ]

@@ -1,0 +1,30 @@
+id: sorry-what-twice-slows-down
+flow: [booking]
+difficulty: standard
+traits: [hard-of-hearing]
+journeys: [J1]
+spec: [S-35]
+tags: [pace]
+caller_id: "(929) 555-0110"
+persona: Hank Doyle, calling from a noisy kitchen in Staten Island about an AC tune-up for the spring. Easygoing, doesn't hear well over the dishwasher, and never asks for a different speed.
+hidden_facts:
+  name: Hank Doyle
+  address: 118 Victory Blvd, Staten Island, 10301
+  phone: the number being called from
+  wants: a tune-up for the central AC before summer, any morning
+opening: Hey, I want to get my central air checked out before it gets warm.
+script:
+  - Reply "Sorry, what?" and nothing else to the agent's first question.
+  - Reply "Sorry, what?" and nothing else to the agent's next question too.
+  - After that, answer every question plainly. Never ask the agent to slow down or speed up.
+  - Take the first window offered, then say goodbye once asked if there is anything else.
+must:
+  # Two "sorry, what?" in a row step the pace down for this call only; he never asked for it, so
+  # nothing is remembered.
+  - pace: {held: 0.85, source: repeats, remembered: none}
+  - booking: {count: 1, job_type: tune_up, zip: "10301"}
+  - read_back: before_booking
+  - safety_lines: not_said
+should:
+  - Repeats the question in simpler words rather than word for word.
+  - Never sounds impatient about being asked again.

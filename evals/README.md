@@ -94,6 +94,25 @@ A draft an owner publishes from the Rules page (app/rules.py) goes live only thr
 - **Cost.** Every scenario records the agent, caller and grader tokens at the prices in `config/models.yaml`; the report prints the total.
 - **Live audio pass.** The ten scripted phone calls for noise, interruptions and real reply delay are in `evals/live-calls.md`.
 
+## Two calls at once
+
+During a cold snap or a heat wave several callers can want the same opening at the same moment. A pair runs two simulated calls at the same time against one world: one mock ServiceTitan and one tool server, so they compete for the same technicians. Pair files are in `evals/scenarios/pairs/` (format in that folder's README); the code is `evals/pairs.py`.
+
+```
+make eval-pairs                                   # both pairs once, on our stack
+make eval-pairs PAIRS=two-callers-last-slot SAMPLES=3
+```
+
+- **The world.** Before the calls, the pair's `fill` days are booked up in the mock directly, leaving each window's urgent hold free and, in the `keep_open` windows, that many more technicians who can do the job. So a caller below Urgent sees exactly those windows open on those days, and the next opening after them is whatever the seed has.
+- **The race.** Each call's first booking after a confirmed read-back waits until the other call reaches its own, then both go to the tool server at once and on to the mock, which decides who gets each technician (DECISIONS.md 003: one write at a time, then the one-job-per-technician-window rule). A call that ends without booking lets the other go on alone; `booked_together` then fails, since nothing raced.
+- **Checks.** Each call is scored on its own (`must`, the grader on `should`), as `<pair id>-a` and `<pair id>-b`. The `together` checks then read both call records and the mock itself, and a failure there fails both calls: `one_job_per_technician_window` (no technician has two live jobs in one window anywhere in the mock), `window_jobs` (how many of the two calls' jobs are in a window, each with its own technician), `booked_together` and `taken_refusals` (how many calls were told the window was taken). The run prints, per pair, whether the calls met at the booking and how many times the mock answered 409 `slot_taken`, which is how often both reached for the same technician.
+- **Limits.** Our stack only: Retell's eval instance resets its one mock before each call. Pairs are not in the suites or the owner-edit gate, since they need two calls at once.
+
+| Pair | World | Passes when |
+|---|---|---|
+| `two-callers-last-slot` | Monday and Tuesday full but for one technician on Monday afternoon | Exactly one of the two jobs is in that window, the other caller is told plainly it just went and books the next opening, and neither is told they're booked before they are |
+| `two-callers-same-tech` | The same, with two technicians on Monday afternoon; both callers in one ZIP | Both get the window, each with a different technician, and neither hears it was taken |
+
 ## Audio rig (bake-off 6)
 
 The text harness can't compare reply delay across platforms, because each one reports it differently (the Retell row above times a whole chat reply). The audio rig in `evals/audio_rig/` measures every entrant the same way, on the audio itself, for the bake-off in DECISIONS.md 026 (docs/bakeoffs.md, bake-off 6).

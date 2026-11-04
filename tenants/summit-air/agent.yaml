@@ -209,6 +209,72 @@ repeat_callers:
   # 7 step 3). ASSUMED: a month, the usual window a callback on recent work is checked in.
   return_visit_days: 30
 
+# Speaking rate (app/pace.py, DECISIONS.md 053). The server moves the pace from the caller's lines and
+# the voice worker applies it to that call only. Steps are the same size each way, so a caller can
+# ask to speed up as easily as to slow down. Cartesia sonic-3 takes 0.6 to 2.0 (SOURCE: the LiveKit
+# Cartesia plugin's docs for `speed`); the step and bounds are ASSUMED until a listen. 0.85 for an
+# older adult is Jackson's number (053), and 65 is his line for pace (priority's is 60, 019).
+pace:
+  normal: 1.0
+  step: 0.15
+  slowest: 0.7
+  fastest: 1.3
+  older_adult_age: 65
+  older_adult_speed: 0.85
+  # "Sorry, what?" this many times since the pace last moved is one step slower.
+  repeats_before_slower: 2
+  # A request counts only when it is about how the agent speaks: a phrase with a speech word, "slow
+  # down" or "speed up" said to the agent with no object, or a whole line that is only a request.
+  # Never on a line with a job word ("send someone faster", "speed up the install"), and never
+  # negated ("you don't need to speak slower"). "The fan is slower" or "it heats too slow" never match.
+  slower_phrases: [speak slower, talk slower, speak more slowly, talk more slowly, speak slowly,
+                   talk slowly, say it slower, say that slower, say it slowly, say that slowly,
+                   say that again slower, say that again slowly, say it again slower,
+                   say it again slowly, repeat that slower, repeat that slowly, youre talking too fast,
+                   youre talking so fast, youre talking fast, you talk too fast, you talk so fast,
+                   youre speaking too fast, you speak too fast, talking too fast, talking so fast,
+                   speaking too fast, speaking so fast, youre going too fast, youre too fast,
+                   dont talk so fast, need you to slow down, want you to slow down]
+  faster_phrases: [talk faster, speak faster, talk a little faster, talk a bit faster,
+                   speak a little faster, speak a bit faster, talk quicker, speak quicker,
+                   talking too slow, talking so slow, talking too slowly, speaking too slow,
+                   speaking so slow, you talk too slow, you speak too slow, need you to speed up,
+                   want you to speed up]
+  normal_phrases: [normal speed, regular speed, normal pace, regular pace, usual speed, usual pace]
+  # "Slow down" and "speed up" on their own count only when said to the agent: after one of the
+  # `before` words or at the start of the line, and followed by nothing or one of the `after` words.
+  slower_imperative: slow down
+  faster_imperative: speed up
+  imperative_before: [you, can, please, whoa, hey, ok, okay, just, sorry, wait, um, uh, so, oh,
+                      now]
+  imperative_after: [please, a, for, there, ok, okay, sorry, im, i, youre, so, thanks, thank, now]
+  # A whole line that is only a request, once these filler words are dropped.
+  line_fillers: [um, uh, oh, ok, okay, sorry, please, so, just, hey, can, could, would, you, maybe]
+  slower_lines: [slower, a little slower, a bit slower, little slower, bit slower, more slowly,
+                 slowly, slow it down, slower this time]
+  faster_lines: [faster, a little faster, a bit faster, little faster, bit faster, quicker,
+                 speed it up, go faster, pick up the pace]
+  job_words: [send, someone, somebody, technician, tech, guy, crew, install, installation, repair,
+              appointment, visit, come, coming, get here, schedule, service, fix, job, process,
+              furnace, boiler, heater, heat, ac, fan, blower, motor, unit, system, drain,
+              thermostat, pump, radiator, water]
+  # The address alone: one of these phrases, or right after the read-back a slow word with a repeat
+  # word ("can you say that again slower?"). "My heat is slow, I live on Main Street" is neither.
+  address_phrases: [the address slower, the address slowly, the address more slowly,
+                    the address again slower, the address again slowly, address back slower,
+                    address back slowly, slower on the address, slowly on the address]
+  slow_words: [slower, slowly]
+  repeat_words: [repeat, again, say that, say it, read that, read it]
+  # "Sorry, what?": a whole line that is only one of these, or a line with one of the phrases.
+  repeat_lines: [what, huh, sorry, pardon, sorry what, what sorry, excuse me, what was that,
+                 come again, say again]
+  repeat_phrases: [sorry what, what did you say, say that again, can you repeat that,
+                   could you repeat that, repeat that please, i didnt catch that, didnt catch that,
+                   i didnt hear that, didnt hear you, i cant hear you, pardon me, come again]
+  # The caller about themselves; "my elderly mother" is about someone else.
+  older_adult_phrases: [im elderly, i am elderly, im a senior, i am a senior, im a senior citizen,
+                        im an old man, im an old woman, im an old lady, im getting old, im not young anymore]
+
 retention:
   transcript_days: 30
   call_record_days: 365

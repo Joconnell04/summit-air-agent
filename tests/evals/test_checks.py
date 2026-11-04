@@ -267,3 +267,38 @@ def test_the_booking_confirmation_needs_a_short_line_before_it():
     assert failures("booking_lead_in", True, bare) == [
         "the booking confirmation came with no line before it"
     ]
+TAKEN = {"type": "tool", "tool": "book_appointment", "args": {}, "ok": False,
+         "refused": "slot_taken"}
+
+
+def test_said_booked_only_counts_once_a_booking_went_through():
+    early = trace(events=[turn("agent", "Great, you're all set for this afternoon."), TAKEN])
+    assert failures("said_booked", "only_after_booking", early)[0].startswith(
+        "told the caller they were booked before any booking"
+    )
+    after = trace(events=[TAKEN, tool("book_appointment"), turn("agent", "You're booked.")])
+    assert failures("said_booked", "only_after_booking", after) == []
+    plain = trace(events=[turn("agent", "Let me book that for you.")])
+    assert failures("said_booked", "only_after_booking", plain) == []
+    # A claim spoken in the same reply as a booking is recorded after that booking's result.
+    bundled = trace(events=[TAKEN, turn("agent", "You're all set. Sorry, that window just went.")])
+    assert failures("said_booked", "only_after_booking", bundled)
+
+
+def test_a_taken_window_is_said_plainly_with_another_time():
+    told = trace(events=[TAKEN, turn("agent", "That window just filled up. I have Thursday 12 to 4.")])
+    assert failures("slot_taken", "told_plainly", told) == []
+    vague = trace(events=[TAKEN, turn("agent", "Hmm, let me try something else.")])
+    assert failures("slot_taken", "told_plainly", vague) == [
+        "did not say the window just went: 'Hmm, let me try something else.'",
+        "did not offer another time: 'Hmm, let me try something else.'",
+    ]
+    only_the_lost_one = trace(events=[TAKEN, turn("agent", "Monday afternoon just filled up.")])
+    assert failures("slot_taken", "told_plainly", only_the_lost_one) == [
+        "did not offer another time: 'Monday afternoon just filled up.'"
+    ]
+    hung_up = trace(events=[TAKEN])
+    assert failures("slot_taken", "told_plainly", hung_up) == [
+        "the call ended before the agent said the window was taken"
+    ]
+    assert failures("slot_taken", "told_plainly", trace()) == [], "no taken window, nothing to say"

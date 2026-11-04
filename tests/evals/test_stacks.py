@@ -206,3 +206,50 @@ def test_the_harness_drops_a_restated_zip_and_a_read_back_announcement():
     before = len(server.lines)
     assert agent.hear("yes").text == ""
     assert len(server.lines) == before
+
+
+class PacedServer(StubServer):
+    """Slows the call when the caller asks, and answers read_back with a slower address."""
+
+    def __init__(self):
+        super().__init__()
+        self.speeds = []
+        self.speed = 1.0
+
+    def start(self, call_id, caller_id):
+        started = super().start(call_id, caller_id)
+        started["data"]["pace"] = {"speed": self.speed}
+        return started
+
+    def turn(self, call_id, speaker, text, timings=None):
+        if speaker == "caller" and "slow down" in text:
+            self.speed = 0.85
+        if speaker == "agent":
+            self.speeds.append((timings or {}).get("speed"))
+        result = super().turn(call_id, speaker, text, timings)
+        result["data"]["pace"] = {"speed": self.speed}
+        return result
+
+    def tool(self, name, call_id, args, key=None):
+        parts = [{"text": "Your home at", "speed": 0.85},
+                 {"text": "101 Union St, 11231,", "speed": 0.7},
+                 {"text": "is that right?", "speed": 0.85}]
+        return {"ok": True, "say": "Your home at 101 Union St, 11231, is that right?",
+                "data": {"parts": parts}, "refused": None}
+
+
+def test_every_agent_line_carries_the_servers_speed_and_a_slower_read_back_is_spoken_in_parts():
+    model = ScriptedModel([say("Sure, I'll slow down."), use("read_back", "Okay.")])
+    server = PacedServer()
+    agent = InProcessAgent(server, model, "c1", "(212) 555-0999")
+    agent.start()
+    agent.hear("Can you slow down please?")
+    turn = agent.hear("Can you read the address slower?")
+    # The model's "Okay." in the read-back reply is dropped (eval round 3): the caller hears the
+    # server's sentence alone.
+    assert turn.text == "Your home at 101 Union St, 11231, is that right?"
+    assert server.lines[1:] == ["Sure, I'll slow down.", "Your home at",
+                                "101 Union St, 11231,", "is that right?"]
+    assert server.speeds == [1.0, 0.85, 0.85, 0.7, 0.85]
+    # The parts were spoken from code: the model had no step after read_back.
+    assert len(model.calls) == 2

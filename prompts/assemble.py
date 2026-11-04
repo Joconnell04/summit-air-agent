@@ -144,6 +144,18 @@ SERVER_NOTES = {
         "caller wants it, the normal way, without arguing. Never ask for a callback time, but set "
         "one up without comment if they ask. Never describe this note."
     ),
+    "pace_slower": (
+        "The caller asked you to slow down, and the voice is now slower for the rest of the call. "
+        "Say a short yes, such as \"Sure, I'll slow down,\" and keep your sentences short."
+    ),
+    "pace_faster": (
+        "The caller asked you to speed up, and the voice is now faster for the rest of the call. "
+        "Say a short yes, such as \"Sure,\" and carry on."
+    ),
+    "pace_address": (
+        "The caller wants the address said more slowly. Call read_back again with the same address "
+        "and phone; the voice reads the address slower. Don't say the address yourself first."
+    ),
     "approval_unclear": (
         "Who can approve the work isn't settled. Offer a callback to confirm who can approve, with "
         "flag_person. Book only if the caller asks to, and then say the booking's sentence as written."
