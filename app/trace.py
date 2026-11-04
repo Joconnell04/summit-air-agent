@@ -74,6 +74,17 @@ def timeline(conn: sqlite3.Connection, call_id: str) -> dict | None:
         "leads": rows("SELECT id, kind, summary, status FROM leads WHERE call_id = ? ORDER BY id"),
         "out_of_area": rows("SELECT zip, at FROM out_of_area WHERE call_id = ?"),
         "summary": rows("SELECT * FROM summaries WHERE call_id = ?"),
+        # Speaking rate (app/pace.py): the pace in effect, each change, and what is remembered for
+        # the caller's number.
+        "pace": rows("SELECT * FROM call_pace WHERE call_id = ?"),
+        "pace_changes": rows("SELECT * FROM pace_changes WHERE call_id = ? ORDER BY id"),
+        "caller_pace": [
+            dict(r)
+            for r in conn.execute(
+                "SELECT speed, call_id, set_at FROM caller_pace WHERE tenant = ? AND phone_key = ?",
+                (call["tenant"], call["caller_key"]),
+            )
+        ],
     }
 
 
@@ -101,7 +112,7 @@ def as_text(trace: dict) -> str:
                 lines.append(f"              say  {e['say']}")
             if e["error"]:
                 lines.append(f"              error {e['error']}")
-    for title in ("flags", "callbacks", "bookings", "leads", "out_of_area", "summary"):
+    for title in ("flags", "callbacks", "bookings", "leads", "out_of_area", "summary", "pace_changes"):
         if trace[title]:
             lines += ["", f"{title}:"] + [f"  {json.dumps(r)}" for r in trace[title]]
     return "\n".join(lines)
