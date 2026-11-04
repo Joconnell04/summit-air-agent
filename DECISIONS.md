@@ -12,7 +12,7 @@ Discussion: docs/ai-process/transcripts/... or docs/explorations/...
 Issue: #N
 -->
 
-## 076. Another number for the visit is the job's contact, and a number on two accounts books under the name said
+## 077. Another number for the visit is the job's contact, and a number on two accounts books under the name said
 
 Decided: when the caller wants a different number used ("call my daughter at this number instead"), the read-back takes `phone_for`, whom the number reaches in the caller's words (each word must be in a caller line), and reads "the number to reach my daughter Ana is ...". The booking keeps that number as the job's contact: the job summary says "Contact: my daughter Ana, (646) 555-0142" with "Account phone: ..." beside it, the technician's summary note gets the same line from the server (the model never sees a number), and the owner view's call page shows both. The customer's own numbers in ServiceTitan are never changed; a new customer gets the number they called from as their own. When the call's number matches more than one residential account and the address doesn't settle which (it's on file for both, or neither), the confirmed read-back's sentence is the server's question, "I see more than one account on this number. Whose name should the visit go under?", and the booking goes on the account whose first name the caller says (a name word only that account has). A name said earlier ("this is Hector") settles it without asking; two asks with no one name book the first account. An address on file for only one of them books there, as before.
 Why: a job contact and the account's phone are different things in ServiceTitan (contacts belong to customers and locations, jobs have none), so writing the daughter's number as the customer's phone would send every later call and reminder to her. On a shared number the old code booked under whichever account came first, or under a new customer for a new address (#127 item 3).
@@ -21,7 +21,7 @@ Would change if: technicians in practice want the visit contact as a ServiceTita
 Discussion: docs/ai-process/coauthoring.md spec r12
 Issue: #128
 
-## 075. A change from a number not on the account needs the caller to say the name and address
+## 076. A change from a number not on the account needs the caller to say the name and address
 
 Decided: `cancel_appointment`, `reschedule_appointment` and `record_move` for a customer the call's number isn't on (found by an address or a number the caller gave) are refused with `identity_check` until the caller has said that customer's surname and the visit's (or account's) house number and street. The question is the server's own polite sentence: "Of course. And just to confirm you're the person for the visit, could you tell me your name and the address?" Only the caller's lines count, and only what they said before any agent line held the same detail, so the agent reading "Maria Delgado?" out for a yes never passes. With one part right the server asks for the other; after two answers that don't match it refuses the change for the rest of the call (`identity_mismatch`), flags it for the office, and offers a call to the number on file; the callback the caller accepts goes to the account's own number, not theirs. A known number skips all of it. A change made after the check leaves a note on the job (or the account for a move): "Changed from an unknown number after a name and address check." This replaces the old rule that a confirmed read-back of the visit's address was enough.
 Why: anyone who knows an address could cancel a stranger's visit. Name and address is a low bar (everyone in the household knows both), which is why the office gets the note; the realistic misuse is a neighbor or an ex, and the note plus the callback to the number on file catches that.
@@ -30,7 +30,7 @@ Would change if: live calls show real customers failing the check often (a mishe
 Discussion: docs/ai-process/coauthoring.md spec r12
 Issue: #128
 
-## 074. A caller who moved: a new location, the old one inactive, and nothing dispatched there
+## 075. A caller who moved: a new location, the old one inactive, and nothing dispatched there
 
 Decided: a caller on file who says they moved (first-person phrases: "we just moved", "I have a new address", "I don't live there anymore") gets the new address found with `find_address` (or the ZIP checked with `check_service_area`) and confirmed in the read-back, then `record_move`. In the area it adds a ServiceTitan location for the new address (or makes active again an inactive one there), makes the old location inactive, moves every open job at the old address to the new location with a pinned note for the technician, and leaves a customer note. ServiceTitan keeps a location per address with its own history and equipment, and lists only active ones by default, so the old one is retired, not overwritten. Out of the area nothing changes on the account but a note, and every open job at the old address is cancelled, with the caller told plainly in the server's sentence; until then an out-of-area answer for a mover says nothing, so the decline and the cancellation come together. A job already dispatched is flagged for a person instead. The server refuses anything left pointing at the old address: a booking there (`location_superseded`, also for a booking queued before the move and sent later), a reschedule of a job still at an inactive location, and, while the caller said they moved and no move is recorded, any booking (`move_first`). A caller booking an address already on file ("we just moved in two years ago") is no move. The mock gained `PATCH locations/{id}` (active) and `PATCH jobs/{id}` (locationId), and its location list now hides inactive ones unless `active=Any`, as ServiceTitan's does.
 Why: a mover's open visit would otherwise go to an empty house, and the old account choice ("under your account") added the new address while leaving the old one live for every later booking and reminder.
@@ -38,6 +38,14 @@ Considered: editing the old location's address in place (moves the old house's e
 Would change if: a real ServiceTitan tenant refuses PATCH jobs/{id} with a new location (ASSUMED to be allowed, as the mock README notes), in which case the open job is cancelled and rebooked in the same window.
 Discussion: docs/ai-process/coauthoring.md spec r12
 Issue: #128
+## 074. The design system is saved to the Claude account, built from the repository
+
+Decided: keep the design system's source in this repository (`tokens.css`, `components.css`, `/owner/design`, docs/design-system.md) and save a copy to the Claude account as a design system, "Revin owner view", rebuilt from the code by `scripts/export_design_system.py`. Its brand book is docs/design-system-rules.md, the short form of the design system page written as rules for an agent.
+Why: later sessions, and other surfaces such as decks or a new page, read a saved design system directly instead of rereading the CSS and the long doc. Building the copy from the code, with a test that fails on drift, keeps one source.
+Considered: the repository alone (every session rereads 700 lines of CSS); the saved copy alone (the app's CSS would drift from it); a live bundle of the page script (the previews would run code the app's tests don't cover).
+Would change if: the owner view moves to a component library with its own build, in which case the copy is built from that library.
+Discussion: Jackson in chat: "make sure you like properly save and add the design system for Revan to my Claude account, so like it will be easier to reference in future sessions."
+Issue: none; follows #53
 
 ## 073. A caller who pushes for a higher priority gets a calm answer, not a raise
 
@@ -358,7 +366,7 @@ Decided: in V1, built in phase 3: the technician summary (S-16), the model matri
 Why: the assignment is a voice agent, not a front-end platform, so phase 3 time goes to what callers and technicians notice. Texting waits on carrier registration (decision 007), and the owner view stays as built.
 Considered: keeping the earlier later-list as it was; building the extra owner-view editing now.
 Would change if: the interview asks for one of the deferred items, or phase 3 runs out of time before the in-V1 items land.
-Discussion: Jackson's notes on docs/ai-process/brief-phase-3-onward.md
+Discussion: Jackson's notes on docs/ai-process/past-briefs/brief-phase-3-onward.md
 
 ## 033. The agent's safety job is to escalate politely, not to coach
 
@@ -383,7 +391,7 @@ Decided: a draft is published only if every must-pass scenario passes its code c
 Why: at one sample per scenario the must-pass set is noisy: three gate runs failed five different must-pass scenarios, none twice (MEASURED, PR #65). A rerun of only the misses costs about $0.02 a scenario, and a failure that repeats still blocks, so a known failure can't ride along. A gate relative to the live version was ruled out: it doubles the cost of a publish and lets an existing failure go live again. The must-pass lines are code checks; the grader is the noisiest signal and an owner edit may change manner on purpose.
 Considered: blocking on a single miss (blocked every edit tried); comparing against the live version; blocking on grader fails too.
 Would change if: a scenario keeps passing only on its rerun across publishes (flakiness to fix in the scenario), or a grader-only fail turns out to be a real regression the code checks missed.
-Discussion: PR #65; the flakiness is a phase 3 finding in docs/ai-process/brief-phase-3-onward.md
+Discussion: PR #65; the flakiness is a phase 3 finding in docs/ai-process/past-briefs/brief-phase-3-onward.md
 Issue: #56
 
 ## 030. "Never suggest unsafe heat" is a prompt rule, checked by evals
@@ -460,7 +468,7 @@ Decided: the owner view shows every rule the agent follows, grouped by call stag
 Why: owners of HVAC shops tune their call scripts, and ServiceTitan's own voice agent lets them edit opening and closing messages and follow-up questions (exploration 009). Of the 28 rules, 13 include a server gate and only 4 rest on the prompt alone, so the editable part is the manner of the call, not its rules. Two edits that look harmless would break a gate without touching code: rewording the read-back, which doubles as the home-or-business check, and lowering a priority bracket, so both are locked.
 Considered: a read-only rulebook only (cheaper, but the owner can't make the agent theirs); condition and action rules from a fixed menu (powerful, but an owner could build a rule that undoes a gate); edits written straight to YAML (no audit trail, and the server would commit to git).
 Would change if: owners ask to change numbers such as callback windows, in which case tighten-only numbers are added behind the same gate.
-Discussion: docs/explorations/009-rules-by-call-stage.md, docs/ai-process/ideas-round-questions.md
+Discussion: docs/explorations/009-rules-by-call-stage.md, docs/ai-process/past-briefs/ideas-round-questions.md
 Issue: #56
 
 ## 021. Templates layered by trade, then by company, in the repo

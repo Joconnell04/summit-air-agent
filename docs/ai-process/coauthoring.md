@@ -331,9 +331,9 @@ Feedback (verbatim, Jackson, relayed by the coordinating session):
 > Call my daughter at this number instead
 
 Changed:
-- S-31b (new): a caller who moved; new location, old one inactive, open visits moved, or cancelled out of the area; nothing sent to the old address (DECISIONS.md 074).
-- S-31c (new): the name and address check before a change from a number not on the account, in the server's polite words; a mismatch changes nothing and offers a call to the number on file (DECISIONS.md 075).
-- S-13b (new): another person's number is the visit's contact, never the customer's own (DECISIONS.md 076).
-- S-31d (new): a number on more than one account asks whose name the visit goes under (#127 item 3, DECISIONS.md 076).
+- S-31b (new): a caller who moved; new location, old one inactive, open visits moved, or cancelled out of the area; nothing sent to the old address (DECISIONS.md 075).
+- S-31c (new): the name and address check before a change from a number not on the account, in the server's polite words; a mismatch changes nothing and offers a call to the number on file (DECISIONS.md 076).
+- S-13b (new): another person's number is the visit's contact, never the customer's own (DECISIONS.md 077).
+- S-31d (new): a number on more than one account asks whose name the visit goes under (#127 item 3, DECISIONS.md 077).
 Commit: (this PR)
 Status: open

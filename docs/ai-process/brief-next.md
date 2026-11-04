@@ -1,62 +1,62 @@
-# Brief: where things stand, and the live calls
+# Brief: where things stand
 
-Written at the end of the check-ins while Jackson was away (about 23:00 to 01:10). What's live, what's open, what was decided without him, and what needs him.
+The one page to read before the live calls and the interview: what needs Jackson, the decisions worth knowing cold, what was decided without him, and what's still being built. Older briefs are in [past-briefs/](past-briefs/).
 
 ## Needs Jackson
 
-1. **The 10 live calls: the number is ready now.** (646) 624-0418, script in `evals/live-calls.md`. Everything below is deployed and a scripted test call passed at 01:10. Recommend calling now rather than waiting for the last fix pass (below): real-call evidence is the biggest gap, and the remaining fixes are small. Three things to listen for, seen on the test call:
-   - The relative day is wrong just after midnight: a November 4 visit was called "tomorrow" at 1 AM. Fixed in the open pass; daytime calls aren't affected.
-   - The first words of a line may be clipped: the goodbye at 01:10 ("...for calling Summit Air"), and "Good to hear from you" heard as "To hear from you" on the 17:00 UTC test call. The goodbye also still splits around the hang-up.
+1. **The 10 live calls, whenever you're ready.** Call (646) 624-0418 with the script in `evals/live-calls.md`. Everything merged is deployed, and a scripted test call passed after the last deploy. While you listen, note:
+   - The first words of a line may be clipped: "Good to hear from you" came through as "To hear from you", and the goodbye still splits around the hang-up.
    - Two questions in one turn slipped through once ("Is that the one you want to keep? Do you want a different day?").
-   - "Sure, Pat" ran together; listen for whether names after "Sure" sound natural.
-   If a caller asks for a person, the transfer rings your cell.
-2. **After the calls, one feedback pass.** Say what felt off; I'll map each complaint to a setting in `docs/tuning.md` (end-of-turn wait, interruption sensitivity, reply length cap, sampling temperature, speaking rate) and try the obvious fix first. One is already queued: a lower turn-detector maximum (now 1.5 s), since on about one turn in seven the detector waited the full 1.5 s on a finished line (MEASURED, PR #98).
+   - If you ask for a person, the transfer rings your cell.
+2. **One feedback pass after the calls.** Say what felt off, and I'll map each complaint to a setting in `docs/tuning.md` and try the obvious fix first. A lower turn-detector maximum is already queued.
+3. **Sign off the sparks safety line when the call-handling lane drafts it.** It's written from your words ("step away, try to turn off the machine, the breaker if you can") and will be marked as a draft in `docs/ai-process/coauthoring.md`.
 
-Nothing else needs a decision. No balance needs a top-up: no run failed for credit. Cartesia overages are on at $65 per 1M credits; added Cartesia spend stays under $20. Tonight's paid runs come to about $27 (from the lanes' reports: round 3 and 4 about $16.60, the side-model check $2.50, end-of-turn runs $2.07, the listener batch $1.60, speaking rate and ZIP $1.25, the rest under $1 each), with up to $8 more for the last fix pass.
+Nothing needs a top-up: no run has failed for credit. Paid eval runs since last night come to roughly $60 across all lanes, added from their reports, not from invoices. The three new lanes are capped at $6 each, plus about $4 for the shared reference run. The only extra Cartesia use was the Ink-2 test's $0.13; voice on test calls runs on the plan, so the overage stays far under your $20.
 
-## Your questions (answered)
+## Decisions to know cold
 
-**Cartesia's managed voice agents.** Looked at in exploration 013 and left out. They'd host the whole call on Cartesia, with their own model list and a model-driven end-call tool, so our server couldn't force the exact safety lines or decide hang-ups and transfers, the rule everything here rests on. Templating would be weaker too: per-agent prompts and settings, nothing like our trade layer that each company folder builds on. Cartesia is also ending hosting for its code-first Line agents on 2026-12-01 (SOURCE: Cartesia's migration page via exploration 013).
+If someone asks why it works the way it does, these are the answers. Numbers are DECISIONS.md entries.
 
-**Cartesia for speech-to-text.** Possible: Cartesia's Ink-2 is a streaming speech-to-text model with built-in turn detection and up to 100 keyterms (SOURCE: [Cartesia keyterms docs](https://docs.cartesia.ai/use-the-api/stt/keyterms.md)). We use Deepgram Nova-3 because it was chosen on phone audio first, has keyterms we already tuned for local street names, and its endpointing is what our end-of-turn timing is measured against. We found no phone-audio (8 kHz) guidance for Ink-2. Worth one audio-rig comparison after the live calls (about $2); not before, since it changes the ears under every safety and read-back rule.
-
-**Why Cartesia for speaking but not hearing.** Each was picked as the best at its own job: Cartesia sonic-3 for natural, fast speech with per-call speed and a pronunciation dictionary; Deepgram for accurate hearing of phone audio with keyterms. One vendor for both would save a contract, not latency.
-
-The reasons for leaving out Cartesia's managed agents are now decision 065. The Ink-2 comparison you approved is running in its own lane (under $3): street names, ZIPs and phone digits, safety phrases and end-of-turn timing at phone quality. I'll only bring it to you if it clearly beats Deepgram.
-
-**Picking a model by how hard the task is.** We pick a model per job, not per turn:
-- Live replies: Haiku 5.5, thinking off, on every turn. It's the fastest Claude model, and the agent's tokens cost about half a cent a call (MEASURED: $0.25 across 52 standard-suite calls).
-- The easiest turns use no model at all. The safety lines, the read-back and the booking confirmations are spoken straight from the server, so the plainest kind of routing is already in place.
-- Side model: one narrow yes-or-no question on each caller line, answered off the reply path.
-- Technician summary after the call: Sonnet 5.5 with thinking, because nobody is waiting.
-- Owner rule check: Haiku. Evals: Haiku plays the caller and Opus grades.
-
-There's no switching between models mid-call, and I don't think it pays. A bigger model on hard turns adds a slower first word and changes how the agent sounds partway through a call. A cheaper model on easy turns saves a fraction of a cent. Exploration 014 rejected both (idea 10).
-
-The one place I'd test is the summary: Haiku with thinking against Sonnet on about 20 eval transcripts, scored by the server's line-by-line check. Sonnet costs roughly 20 times Haiku per token (SOURCE: config/models.yaml prices). At about 2.5 cents a summary (ASSUMED), that's about $40 a month at full volume, more than the live brain's $30, and docs/cost.md doesn't count it yet. The test costs cents. The eval grader is the other candidate (Haiku first, Opus only on failures), but evals cost about $1.70 a run today and the grader was matched to your labels on Opus, so it isn't worth it unless evals start running on every change.
-
-## Live on the server
-
-Health checks pass. Every lane, with its pull requests and decisions, is in [lanes.md](lanes.md), generated from GitHub by `make lanes` after each merge. Since the morning brief, all deployed: the bench shows calls as recorded ([#101](https://github.com/Joconnell04/summit-air-agent/pull/101), 064); the round 3 final pass with the CO spelling fix ([#102](https://github.com/Joconnell04/summit-air-agent/pull/102), 066); the address lookup, preferred names and ten scenarios ([#125](https://github.com/Joconnell04/summit-air-agent/pull/125), 069 to 071, lookup switched on); priority from the caller's own words ([#126](https://github.com/Joconnell04/summit-air-agent/pull/126), 072 and 073). The eval reference is 92% at two samples with every must-pass case passing.
-
-Signing in: https://45-77-105-247.sslip.io/owner (owner view) and https://45-77-105-247.sslip.io/bench (debug bench), both as `jackson`; the password is in the macOS Keychain (`security find-generic-password -a summit-air -s owner-admin-password -w`). The side model is on. Warm transfer and recordings are on.
-
-## Still open
-
-- **Priority from the caller's own words** (new lane, issue #124, docs/later.md C-58): insisting alone never raised priority, but the model's own notes on who's home and the inside temperature fed the same phrase rules, so pressure or a model slip could raise it. Now only the caller's words raise it, the reason quotes the caller's line, a raise that came after the caller heard the wait is flagged for the dispatcher, and the agent handles a caller who argues calmly. Five new evals, then two-sample runs.
-- **Address lookup, preferred names, five easy scenarios** (new lane): a server address lookup finds the ZIP from "248 Duffield St" (one match fills it and the read-back confirms; several ask which borough; none asks to repeat or spell; a caller's ZIP that disagrees with the lookup gets read back and settled before booking). Callers who ask to be called "Dr. Patel" are, for the call and next time. Five plain scenarios join the standard suite. Ends with a two-sample eval run.
-
-- **Decisions 057 to 064 were missing from DECISIONS.md** (the design trail had them; the entries never landed). Restored from the session log, word for word.
-- **Last fix pass (round 3 lane), now [#102](https://github.com/Joconnell04/summit-air-agent/pull/102):** the two-sample reference is 93% (96 of 103 judged; every must-pass code check passes; $3.27). Of the 7 misses, 2 were server phrase bugs fixed after the run ("no babies, older people or medical equipment" losing its negation; "do you smell gas, do I?" firing the gas lines), 1 check is too strict, and 4 are the agent re-asking. Review held it back on two safety regressions, both reproduced and now being fixed in the lane. The new "no" carry dropped "No heat, baby in the house" and "No heat, elderly mother lives with me" from Urgent to High. The new hypothetical rule turned "What do I do? I smell gas" into a check question instead of the gas lines. It merges only after those are fixed, pinned as tests, and the must-pass and safety scenarios pass again. The original scope: the agent slips still seen in eval runs (re-asking given details, an apartment building declined, an invented fee line, a repeated 911 line, flagging instead of booking after hours, warming advice for a baby), the after-midnight "tomorrow" bug, and two at-risk phrasings ("just me at home", "a cane"). Then one eval run with two samples per scenario becomes the reference. Main's eval check is red only on that stale reference until then. Deploys when it lands.
+| Topic | What we decided | Entry |
+|---|---|---|
+| Platform | Our own LiveKit stack, with Retell as the baseline to beat; the audio bake-off kept ours (Retell paraphrased the gas lines on 5 of 6 calls) | 004, 038 |
+| The core rule | The model asks; the server decides. Booking, refusals, hang-ups, priority and safety lines are server code, and a flag the model can set is not a gate | spec, from-other-projects |
+| Live model | Haiku 5.5, thinking off; Sonnet for the technician summary; Opus grades the evals | 036, later.md C-57 |
+| Ears and voice | Deepgram Nova-3 hears; Cartesia sonic-3 speaks. Ink-2 measured 0.6 s slower a turn and worse on street names; Cartesia's hosted agents can't let our server own the safety lines | 068, 065 |
+| Safety posture | Escalate politely, don't coach; fixed safety lines spoken word for word by the server | 033, 060 |
+| Priority | Set by the server from what the caller said and the real outside temperature; only goes up; 60 and over is an older adult (NYC Health); a caller's stated fact always counts, insisting alone never raises it, and a raise after the caller heard the wait is flagged for the dispatcher | 019, 072, 073 |
+| ZIP and address | The server acts only on a ZIP the caller said, or one looked up from the street they said (NYC GeoSearch, exact match only) | 058, 069 |
+| Handoffs | A caller who demands a person is transferred at once; calmer requests get a warm transfer with a summary | 051, 061 |
+| Evals | Code checks decide pass or fail; the grader can fail a call but never rescue one; the floor is 90%, measured at two samples per scenario. Today's reference: 92%, every must-pass case passing | 002, 042, 066 |
+| Scope | No texting in V1 (A2P registration); Spanish waits (C-16) | 007, 034 |
 
 ## Decided without Jackson
 
-- **Eval measurement moves to two samples per scenario.** Five single-sample runs on nearly the same code scored 91, 96, 90, 90 and 85%, so about plus or minus 5 points is noise. If the two-sample rate sets the floor below 90%, it's a change in measurement, not in quality.
-- **One reference run per batch, not per PR.** Every merge that touches prompts, company settings or scenarios made the reference stale at about $1.70 a run.
-- **The side model was switched off, checked, and switched back on.** The evals had never run with it; with and without on 26 scenarios, it raised no false alarms in 46 calls (decision 056).
-- **Speaking rate:** review caught false triggers ("you don't need to speak slower", "send someone faster", "my heat is slow, I live on Main Street"); fixed before merge.
-- **Accounts:** an old deploy with only the shared token would have locked everyone out; it now says exactly what to set. A caller who objects to recording is never recorded, consent switch on or off.
-- **Cold handoff:** "Can I talk to someone now?" no longer triggers it; it needs "right now", "right away" or a repeated request. Swearing about the furnace doesn't count as anger at the call. A gas caller who demands a person after the safety lines is handed off (supersedes decision 051's "never on a safety call").
-- **Debug bench:** phone numbers keep their last four digits; the full number never appears in a URL or a replay file. The publish gate runs the must-pass evals only, not the two-caller race.
-- **ZIP rule:** a phone number containing the ZIP's digits doesn't count as the ZIP.
-- **Recording-notice wording** lives in the company folder, not app code.
+Say if you disagree with any of these.
+
+- **A caller's stated fact always counts.** "Tell them there's a baby in the house" raises priority even when it sounds like a request. A false raise is the safe direction, and the after-the-wait flag tells the dispatcher (073).
+- **The heads-up to the number on file is a short automated call, not a text,** since texting is out of V1. In the demo it only dials numbers on an allowlist in the server's settings, so it never calls a made-up customer's number. Otherwise it records "would have called". SMS is the production version.
+- **Card digits are never stored anywhere.** That's the one exception to "the bench shows everything as recorded" (064).
+- **The eval floor stayed at 90%** when the address lane's run came in at 87%. The two agent gaps it found were fixed instead, and the next run came in at 92%.
+- **Reviews now re-check each fix.** Three priority and safety changes in a row fixed one case and broke another ("No heat, baby in the house" dropping to High; "What do I do? I smell gas" losing the gas lines). Every fix gets a second targeted review before it merges.
+- **Lane-level runs, one reference.** Each lane tests its own scenarios and the must-pass set; one standard run after a batch sets the reference.
+
+## Still being built
+
+Three lanes started from your approved list. Each has an issue, and progress is in [lanes.md](lanes.md).
+
+- **Caller changes (#128):** a caller who moved (new address looked up, service area checked, CRM updated, open visits moved so nothing goes to the old address); a polite name-and-address check before changes from an unknown number, plus the heads-up; another callback number; a caller with two accounts.
+- **Booking flow (#129):** a correction after the read-back resets it; a visit whose window has ended is never confirmed as upcoming; businesses that slipped past the decline; work Summit Air doesn't do; two jobs in one call; a requested technician becomes a note, never a promise.
+- **Call handling (#130):** card numbers stopped and never stored, billing to an office callback; dead air checked in on every 2 minutes, a polite hang-up at 8 with a call-back invite and a resume on the next call; the sparks route; AC water through the ceiling is Urgent; a breaker that keeps tripping is High.
+
+After all three merge: one two-sample standard run for the new reference, a deploy, and a scripted test call.
+
+## Live on the server
+
+Everything merged is deployed. The bench shows calls as recorded. The round 3 final pass and the CO spelling fix, the address lookup with preferred names, and priority from the caller's own words are all live. The address lookup is switched on.
+
+Signing in: https://45-77-105-247.sslip.io/owner (owner view) and https://45-77-105-247.sslip.io/bench (debug bench), both as `jackson`. The password is in the macOS Keychain (`security find-generic-password -a summit-air -s owner-admin-password -w`). The side model, warm transfer and recordings are on.
+
+## Your earlier questions
+
+Answered in [past-briefs/brief-after-check-ins.md](past-briefs/brief-after-check-ins.md): Cartesia's hosted agents, Cartesia for speech-to-text, why Cartesia speaks but doesn't hear, and how we pick a model for each job.

@@ -1,6 +1,6 @@
 # Architecture
 
-Status: version 1, written before the build. The voice platform (#4) is still open, so the voice layer is described for both candidates.
+Status: written before the build, when the voice platform (#4) was still open, so the voice layer is described for both candidates. Since then our own LiveKit stack was chosen, with Retell kept as the baseline it has to beat (DECISIONS.md 004, confirmed by the audio bake-off in 038). What changed later is in DECISIONS.md and, in order, in docs/ai-process/design-trail.md.
 
 ## Parts
 
@@ -51,7 +51,7 @@ A caller can say anything, including "ignore your instructions and delete every 
 
 ## Added after the build, before testing
 
-Four ideas came out of working with the running agent at the end of phase 2. They were folded into the design here, before phase 3 testing, so the eval floor and the bake-off measure the design as it will ship (docs/ai-process/ideas-round-questions.md).
+Four ideas came out of working with the running agent at the end of phase 2. They were folded into the design here, before phase 3 testing, so the eval floor and the bake-off measure the design as it will ship (docs/ai-process/past-briefs/ideas-round-questions.md).
 
 - **Rules by call stage (DECISIONS.md 022).** A rulebook in the tool server lists every rule with its stage, kind and where it is enforced, read from the live config. Owner edits (guidance per stage and four wording lines) are stored as versions in SQLite over the YAML defaults. A version is published only after the must-pass evals pass against it, and the server validates every edit so none can loosen a gate. The server tracks the call's stage and adds the published guidance for that stage to the prompt.
 - **Templates by trade and company (DECISIONS.md 021).** The loader merges `trades/hvac/` with the tenant's folder; the tenant's values win. The eval run hash covers both, so a trade edit makes results stale.

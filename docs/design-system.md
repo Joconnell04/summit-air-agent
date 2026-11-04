@@ -9,6 +9,13 @@ The owner view is built for the person who runs Summit Air: someone who knows HV
 | `app/templates/_ui.html` | Jinja macros for the components that repeat (tags, counts, figures, a call row, the status line, day navigation, note icons) |
 | `app/static/owner/owner.js` | The few interactions: board filters and layout, tabs, whole-row links, tooltips, search as you type, resizable columns, the technical details switch, the Results filter, and on the debug bench picking a step on the node graph and the live view. Each page works without it, apart from search as you type, the technical details and the live view |
 | `app/static/owner/fonts/` | Public Sans, served from the app, with its license |
+| `docs/design-system-rules.md` | The short form of this page, as rules for an agent building a page |
+
+## The saved copy in Claude
+
+The system is also saved to the Claude account as a design system, "Revin owner view" (https://claude.ai/artifact/X2FNGFF8L3z7pBonm6tCmR, private to the account), so a later session, a new page or a deck starts from the same tokens and rules instead of rereading the CSS. It holds the tokens (every color, size, space, radius and shadow from `tokens.css`, each with what it is for), Public Sans, the Revin and ServiceTitan logos, `components.css` unchanged, the rules from `docs/design-system-rules.md` as its brand book, and 27 components, each with its section of this page and a preview captured from the running app.
+
+This repository is the source. After a change to the tokens, the components or this page, rebuild the copy with `make owner-demo` running and `make design-export OUT=<folder>`, then publish the folder's `project/` files to the saved copy (a Claude session with the artifact tools does this). `tests/test_design_export.py` fails when a token is added to `tokens.css` without a usage note in the export, or a component's section here is renamed. The previews are static: the page script is not carried over.
 
 ## Principles
 
