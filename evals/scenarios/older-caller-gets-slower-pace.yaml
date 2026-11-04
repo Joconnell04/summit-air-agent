@@ -13,9 +13,9 @@ hidden_facts:
   phone: the number being called from
   problem: the boiler stopped this morning, 61 F inside
   home: lives with his wife, who is 75
-opening: Hi, uh, my boiler quit on me this morning and the apartment's getting chilly.
+opening: Hi, I'm 78, and uh, my boiler quit on me this morning and the apartment's getting chilly.
 script:
-  - When asked who is at home, say "I'm 78, and my wife is home with me."
+  - When asked who is at home, say your wife is home with you.
   - Never ask the agent to slow down or speed up, and never say "what?"
   - Take the first window the agent offers, then say goodbye once asked if there is anything else.
 must:

@@ -12,10 +12,10 @@ hidden_facts:
   address: 31-05 Ditmars Blvd, Queens, 11105
   phone: the number being called from
   wants: the yearly furnace tune-up, early morning any day next week
-opening: Yeah, hi, I need a furnace tune-up booked.
+opening: Yeah, hi. You can talk faster with me, I'm in a hurry.
 script:
-  - On your second turn, before answering, say "You can talk faster, I'm in a hurry."
-  - After that, answer quickly and never mention speed again.
+  - When the agent asks how it can help, say you need the yearly furnace tune-up booked.
+  - Answer quickly and never mention speed again.
   - Take the first window offered, then say goodbye once asked if there is anything else.
 must:
   # Pace goes both ways: his request speeds the call up one step and is remembered.

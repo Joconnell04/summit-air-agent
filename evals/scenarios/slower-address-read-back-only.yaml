@@ -14,6 +14,7 @@ hidden_facts:
   wants: the yearly furnace tune-up, Thursday afternoon if possible
 opening: Hi, I'd like to schedule a furnace tune-up.
 script:
+  - Whenever you give the address, include the ZIP, 11210.
   - When the agent reads back the address and number the first time, say "Sorry, can you say that again slower? I want to check the apartment number."
   - When it reads it back again, say yes, that's right.
   - Never ask to slow down at any other point, and never say "what?"
