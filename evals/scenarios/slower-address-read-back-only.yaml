@@ -1,0 +1,31 @@
+id: slower-address-read-back-only
+flow: [booking]
+difficulty: standard
+traits: [late-correction]
+journeys: [J1]
+spec: [S-35]
+tags: [pace]
+caller_id: "(929) 555-0112"
+persona: Priya Raman, booking a tune-up in Flatbush on her lunch break. Quick and clear on everything except the read-back, which she wants to hear slower to check the unit number.
+hidden_facts:
+  name: Priya Raman
+  address: 1520 Flatbush Ave, Apt 4C, Brooklyn, 11210
+  phone: the number being called from
+  wants: the yearly furnace tune-up, Thursday afternoon if possible
+opening: Hi, I'd like to schedule a furnace tune-up.
+script:
+  - When the agent reads back the address and number the first time, say "Sorry, can you say that again slower? I want to check the apartment number."
+  - When it reads it back again, say yes, that's right.
+  - Never ask to slow down at any other point, and never say "what?"
+  - Take the first window offered, then say goodbye once asked if there is anything else.
+must:
+  # Only the address in the second read-back is slower; the call stays at the normal pace and
+  # nothing is remembered.
+  - pace: {held: 1.0, address: 0.85, remembered: none}
+  - tool_ok: read_back
+  - booking: {count: 1, job_type: tune_up, zip: "11210"}
+  - read_back: before_booking
+  - safety_lines: not_said
+should:
+  - Reads the address back again when asked, without commentary about speed.
+  - Goes back to its normal pace after the read-back.

@@ -199,6 +199,140 @@ on_call_alerts:
 owner_rules:
   disclosure:
   - virtual assistant
+pace:
+  address_words:
+  - address
+  - street
+  - house number
+  faster_phrases:
+  - speed up please
+  - please speed up
+  - can you speed up
+  - could you speed up
+  - you can speed up
+  - speed it up
+  - talk faster
+  - speak faster
+  - talk a little faster
+  - talk a bit faster
+  - speak a little faster
+  - speak a bit faster
+  - talk quicker
+  - speak quicker
+  - you can go faster
+  - you can talk faster
+  - faster please
+  - a little faster please
+  - a bit faster please
+  - youre talking too slow
+  - youre talking so slow
+  - youre talking too slowly
+  - you talk too slow
+  - youre speaking too slow
+  - you speak too slow
+  - youre going too slow
+  - pick up the pace
+  fastest: 1.3
+  normal: 1.0
+  normal_phrases:
+  - normal speed
+  - regular speed
+  - normal pace
+  - regular pace
+  - usual speed
+  - usual pace
+  older_adult_age: 65
+  older_adult_phrases:
+  - im elderly
+  - i am elderly
+  - im a senior
+  - i am a senior
+  - im a senior citizen
+  - im an old man
+  - im an old woman
+  - im an old lady
+  - im getting old
+  - im not young anymore
+  older_adult_speed: 0.85
+  repeat_lines:
+  - what
+  - huh
+  - sorry
+  - pardon
+  - sorry what
+  - what sorry
+  - excuse me
+  - what was that
+  - come again
+  - say again
+  repeat_phrases:
+  - sorry what
+  - what did you say
+  - say that again
+  - can you repeat that
+  - could you repeat that
+  - repeat that please
+  - i didnt catch that
+  - didnt catch that
+  - i didnt hear that
+  - didnt hear you
+  - i cant hear you
+  - pardon me
+  - come again
+  repeat_words:
+  - repeat
+  - again
+  - say that
+  - say it
+  - read that
+  - read it
+  repeats_before_slower: 2
+  slow_words:
+  - slow
+  - slower
+  - slowly
+  slower_phrases:
+  - slow down please
+  - please slow down
+  - can you slow down
+  - could you slow down
+  - would you slow down
+  - will you slow down
+  - slow down a little
+  - slow down a bit
+  - slow down for me
+  - slow it down
+  - whoa slow down
+  - a little slower please
+  - a bit slower please
+  - slower please
+  - speak slower
+  - talk slower
+  - speak more slowly
+  - talk more slowly
+  - speak slowly
+  - talk slowly
+  - say it slower
+  - say that slower
+  - say it slowly
+  - say that slowly
+  - youre talking too fast
+  - youre talking fast
+  - you talk too fast
+  - you talk so fast
+  - youre speaking too fast
+  - you speak too fast
+  - youre going too fast
+  - youre too fast
+  - talking so fast
+  - too fast for me
+  - dont talk so fast
+  - not so fast please
+  - again slower
+  - again slowly
+  - slower this time
+  slowest: 0.7
+  step: 0.15
 phone_numbers:
 - (646) 624-0418
 - (678) 336-6730

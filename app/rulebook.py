@@ -264,6 +264,15 @@ def _settings(tenant: Tenant) -> list[Rule]:
              f"person; after {tenant.repeat['drops_before_callback_offer']} dropped calls the "
              "agent offers a callback", why=why),
     ]
+    if tenant.pace:
+        p = tenant.pace
+        found.append(Rule(
+            "setting.pace", "whole_call", "setting", "Speaking pace",
+            f"Slower ({p['older_adult_speed']} of normal) for a caller who says they're elderly "
+            f"or {p['older_adult_age']} or over; a step slower or faster when the caller asks, "
+            f"kept for their next call; a step slower after \"sorry, what?\" "
+            f"{p['repeats_before_slower']} times; just the address slower when that's all they "
+            "ask", why=why))
     labels = {code: j["name"] for code, j in tenant.job_types.items()}
     for job, brackets in tenant.priority["brackets"].items():
         for b in brackets:
@@ -356,7 +365,7 @@ def _settings(tenant: Tenant) -> list[Rule]:
 # The agent.yaml sections each part above reads, for the completeness test.
 SHOWN = {
     "safety", "commercial", "approval", "priority", "after_hours", "callbacks", "on_call_alerts",
-    "repeat_callers", "retention", "lines", "voice", "transfer",
+    "repeat_callers", "retention", "lines", "voice", "transfer", "pace",
 }
 
 

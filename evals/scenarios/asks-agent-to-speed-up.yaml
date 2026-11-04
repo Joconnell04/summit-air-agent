@@ -1,0 +1,28 @@
+id: asks-agent-to-speed-up
+flow: [booking]
+difficulty: standard
+traits: [filler]
+journeys: [J1]
+spec: [S-35]
+tags: [pace]
+caller_id: "(929) 555-0115"
+persona: Marcus Hale, a contractor in Astoria calling from a job site. Brisk and impatient but not rude; wants the booking done quickly.
+hidden_facts:
+  name: Marcus Hale
+  address: 31-05 Ditmars Blvd, Queens, 11105
+  phone: the number being called from
+  wants: the yearly furnace tune-up, early morning any day next week
+opening: Yeah, hi, I need a furnace tune-up booked.
+script:
+  - On your second turn, before answering, say "You can talk faster, I'm in a hurry."
+  - After that, answer quickly and never mention speed again.
+  - Take the first window offered, then say goodbye once asked if there is anything else.
+must:
+  # Pace goes both ways: his request speeds the call up one step and is remembered.
+  - pace: {held: 1.15, source: request, remembered: 1.15}
+  - booking: {count: 1, job_type: tune_up, zip: "11105"}
+  - read_back: before_booking
+  - safety_lines: not_said
+should:
+  - Acknowledges in a word or two and gets on with it.
+  - Keeps every turn brief.

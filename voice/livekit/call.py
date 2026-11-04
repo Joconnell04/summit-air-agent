@@ -1,6 +1,6 @@
 """One live conversation: posts every caller and agent line to the tool server in order, speaks the
-safety lines the server returns, and keeps the turn-taking settings in step with what the agent
-just asked."""
+safety lines the server returns, keeps the turn-taking settings in step with what the agent just
+asked, and speaks at the pace the server sets (app/pace.py)."""
 
 import asyncio
 import logging
@@ -46,6 +46,43 @@ class Call:
         # ends the call. Without the server there is no safety check, so the call can't go on.
         self.server_down = None
         self._last_post: asyncio.Task | None = None
+        # The speaking rate the server set for this call; None leaves the voice at its default.
+        self.speed: float | None = None
+        # Text the worker speaks at its own speed (the parts of a slower read-back), by its text.
+        self.planned: dict[str, float] = {}
+        # What each speech was synthesized at, by its first words, so its line reports the speed.
+        self._spoken: list[tuple[str, float]] = []
+
+    def apply_pace(self, data: dict) -> None:
+        """Takes the speed from a server result. The worker never decides a pace itself."""
+        pace = data.get("pace")
+        if pace and pace.get("speed"):
+            self.speed = float(pace["speed"])
+
+    def speed_for(self, first_text: str) -> float | None:
+        """The speed for a speech that starts with this text: a planned part's own speed, else the
+        call's. Recorded so the agent line can say what it was spoken at."""
+        speed = self.planned.pop(first_text.strip(), self.speed)
+        if speed is not None:
+            self._spoken.append((first_text.strip(), speed))
+        return speed
+
+    def spoken_speed(self, text: str) -> float | None:
+        """The speed a finished agent line was synthesized at."""
+        for i, (start, speed) in enumerate(self._spoken):
+            if text.strip().startswith(start):
+                del self._spoken[i]
+                return speed
+        return self.speed
+
+    def say_parts(self, parts: list[dict]) -> object:
+        """Says the server's sentence in its parts, each at the speed the server gave it (the
+        address alone slower), and returns the last part's speech handle."""
+        handle = None
+        for part in parts:
+            self.planned[part["text"].strip()] = float(part["speed"])
+            handle = self.session.say(part["text"])
+        return handle
 
     def post(self, speaker: str, text: str, timings: dict[str, float]) -> asyncio.Task:
         """Queue a line for the server. Lines go one at a time, in the order they happened,
@@ -72,6 +109,7 @@ class Call:
             self.server_down()
             raise StopResponse()
         data = result.get("data") or {}
+        self.apply_pace(data)
         notes = server_notes(data.get("hints", []))
         if notes:
             message.content.append("\n" + "\n".join(notes))
@@ -90,6 +128,9 @@ class Call:
         timings = agent_timings(
             message.metrics, self.caller_stopped_at, tool_ms, bridge, self.llm_log.take()
         )
+        speed = self.spoken_speed(text)
+        if speed is not None:
+            timings["speed"] = speed
         self.post("agent", text, timings)
         mode = "digits" if asked_for_digits(text) else "normal"
         self.session.update_options(endpointing_opts=self.endpointing[mode])
@@ -111,8 +152,25 @@ class SummitAgent(Agent):
     async def tts_node(
         self, text: AsyncIterable[str], model_settings: ModelSettings
     ) -> AsyncIterable[rtc.AudioFrame]:
+        # The speed is set before the voice stream opens, because Cartesia's stream copies its
+        # options when it starts: each speech is spoken at one speed.
+        chunks = aiter(text)
+        first = ""
+        async for chunk in chunks:
+            first += chunk
+            if first.strip():
+                break
+        speed = self.call.speed_for(first)
+        if speed is not None:
+            self.session.tts.update_options(speed=speed)
+
+        async def whole() -> AsyncIterable[str]:
+            yield first
+            async for chunk in chunks:
+                yield chunk
+
         # The reply is synthesized while a bridge clip plays, but its first sound waits for the
         # clip to end, so the two never overlap.
-        async for frame in Agent.default.tts_node(self, text, model_settings):
+        async for frame in Agent.default.tts_node(self, whole(), model_settings):
             await self.call.bridge.wait_clear()
             yield frame
