@@ -50,7 +50,13 @@ profiles:
 voice:
   stt: {provider: deepgram, model: nova-3, endpointing_ms: 100}
   # Katie, the Cartesia plugin default. The pre-recorded clips (voice/livekit/clips.py) use the same voice.
-  tts: {provider: cartesia, model: sonic-3, voice_id: f786b574-daa5-4673-aa0c-cbe3e8534c02}
+  # min_sentence_chars: a sentence shorter than this waits to be sent to the voice with the next
+  # one (LiveKit's default, 20).
+  tts: {provider: cartesia, model: sonic-3, voice_id: f786b574-daa5-4673-aa0c-cbe3e8534c02,
+        min_sentence_chars: 20}
+  # Start the voice on the early reply LiveKit drafts from the final transcript, before the turn
+  # is confirmed over; thrown away if the caller keeps talking.
+  preemptive_tts: false
   # The silence that ends the caller's speech. LiveKit's turn detector refuses less than 0.25 s;
   # 0.25 s measured no faster than 0.35 s on the audio rig (evals/rounds/bakeoff-audio-02.md).
   vad: {min_silence_s: 0.35, activation: 0.5}

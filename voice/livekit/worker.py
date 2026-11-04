@@ -68,7 +68,15 @@ def stt_options(voice: dict, names: local_names.Names) -> dict:
 def tts_options(voice: dict, names: local_names.Names) -> dict:
     """Cartesia's settings: the tenant's pronunciation dictionary, when it has one. Cartesia swaps
     the names inside its own service, so the text the server wrote is never changed."""
-    options = {"model": voice["tts"]["model"], "voice": voice["tts"]["voice_id"]}
+    from livekit.agents.tokenize import blingfire
+
+    options = {
+        "model": voice["tts"]["model"],
+        "voice": voice["tts"]["voice_id"],
+        "tokenizer": blingfire.SentenceTokenizer(
+            min_sentence_len=voice["tts"]["min_sentence_chars"]
+        ),
+    }
     if names.cartesia_dictionary_id:
         options["pronunciation_dict_id"] = names.cartesia_dictionary_id
     return options
@@ -92,7 +100,7 @@ def turn_handling(voice: dict) -> dict:
         # A copy: LiveKit keeps this dict and writes later option changes into it.
         "endpointing": dict(voice["endpointing"]["normal"]),
         "interruption": voice["interruption"],
-        "preemptive_generation": {"enabled": True, "preemptive_tts": False},
+        "preemptive_generation": {"enabled": True, "preemptive_tts": voice["preemptive_tts"]},
     }
 
 
