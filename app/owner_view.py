@@ -18,11 +18,17 @@ from datetime import date, timedelta
 from pathlib import Path
 
 from fastapi import FastAPI, Form, Request
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
+from fastapi.responses import (
+    FileResponse,
+    HTMLResponse,
+    JSONResponse,
+    RedirectResponse,
+    Response,
+)
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from . import owner, plain, reports, rulebook, rules, search, trace
+from . import owner, plain, recordings, reports, rulebook, rules, search, trace
 from .db import parse_iso
 from .settings import REPORT_MAX_CHARS, WORKER_STALE_SECONDS
 
@@ -223,6 +229,7 @@ def add_routes(app: FastAPI) -> None:
                 "call": found["call"],
                 "page": owner.call_page(conn, tenant, found, services.clock()),
                 "thread": plain.conversation(found, tenant),
+                "recorded": recordings.stored_path(conn, call_id, request.app.state.services.settings.recordings_dir) is not None,
                 "reports": reports.for_call(conn, call_id),
                 "sent": bool(sent),
                 "max_chars": REPORT_MAX_CHARS,
@@ -248,6 +255,20 @@ def add_routes(app: FastAPI) -> None:
             media_type="application/json",
             headers={"Content-Disposition": f'attachment; filename="call-{call_id}.json"'},
         )
+
+    @app.get("/owner/calls/{call_id}/recording")
+    def owner_call_recording(request: Request, call_id: str):
+        """The call's audio, for the player on the call page (story O-6)."""
+        if not _signed_in(request):
+            return _login(request)
+        conn = request.app.state.services.connect()
+        try:
+            path = recordings.stored_path(conn, call_id, request.app.state.services.settings.recordings_dir)
+        finally:
+            conn.close()
+        if path is None:
+            return HTMLResponse("No recording for this call.", 404)
+        return FileResponse(path, media_type=recordings.MEDIA_TYPE)
 
     @app.get("/owner/search", response_class=HTMLResponse)
     def owner_search(request: Request, q: str = "", tenant: str = ""):

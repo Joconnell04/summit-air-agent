@@ -362,3 +362,34 @@ CREATE TABLE IF NOT EXISTS call_stages (
     noted INTEGER NOT NULL DEFAULT 0,
     PRIMARY KEY (call_id, stage)
 );
+
+-- Warm transfers to a person (C-11), at most one per call. The flag and callback the transfer
+-- stands in for are stored before anyone is dialed, so a transfer nobody answers still ends in a
+-- named callback; a connected one marks them done.
+CREATE TABLE IF NOT EXISTS transfers (
+    id INTEGER PRIMARY KEY,
+    call_id TEXT NOT NULL UNIQUE REFERENCES calls (id) ON DELETE CASCADE,
+    flag_id INTEGER NOT NULL REFERENCES flags (id) ON DELETE CASCADE,
+    callback_id INTEGER REFERENCES callbacks (id) ON DELETE SET NULL,
+    role TEXT NOT NULL,
+    -- What the person answering hears before they take the call, kept for the record.
+    summary TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'dialing'
+        CHECK (status IN ('dialing', 'connected', 'no_answer', 'not_accepted', 'failed')),
+    started_at TEXT NOT NULL,
+    finished_at TEXT
+);
+
+-- Call audio (story O-6). The voice layer records the call to a bucket; the jobs loop copies the
+-- file to the server's data folder and removes it from the bucket. Deleted with the transcript.
+CREATE TABLE IF NOT EXISTS recordings (
+    call_id TEXT PRIMARY KEY REFERENCES calls (id) ON DELETE CASCADE,
+    object_key TEXT NOT NULL,
+    egress_id TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'recording'
+        CHECK (status IN ('recording', 'stored', 'missing', 'deleted')),
+    path TEXT,
+    bytes INTEGER,
+    started_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);

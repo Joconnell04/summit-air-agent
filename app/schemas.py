@@ -63,6 +63,24 @@ class EndIn(Body):
     reason: Literal["caller_hangup", "agent_end", "dropped", "transfer", "error"] = "caller_hangup"
 
 
+class TransferIn(Body):
+    """The voice layer asks, right after a person flag, whether the call goes to a person now."""
+
+    flag_id: int
+    callback_id: int | None = None
+
+
+class TransferDoneIn(Body):
+    outcome: Literal["connected", "no_answer", "not_accepted", "failed"]
+
+
+class RecordingIn(Body):
+    """The voice layer started recording this call into the bucket under `object_key`."""
+
+    egress_id: str = Field(min_length=1, max_length=80)
+    object_key: str = Field(min_length=1, max_length=200)
+
+
 class HeartbeatIn(Body):
     worker: str = Field(min_length=1, max_length=60)
 

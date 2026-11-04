@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_ui.html" import priority, priority_text, window_text, figure, empty, note_icon, count, go, info with context %}
+{% from "_ui.html" import priority, priority_text, window_text, figure, empty, note_icon, count, go, info, player with context %}
 {% block title %}Design system{% endblock %}
 {% block body %}
 {% set colors = [
@@ -169,7 +169,8 @@
 
   <div class="split wide-side">
     <section class="panel conv-panel tech">
-      <div class="panel-head"><h2>Conversation</h2><span class="sub">turns down the rail, what the agent did branching off it; technical details on</span><div class="end"><button type="button" class="toggle" aria-pressed="true">Technical details</button></div></div>
+      <div class="panel-head"><h2>Conversation</h2><span class="sub">the recording, then turns down the rail and what the agent did branching off it; technical details on</span><div class="end"><button type="button" class="toggle" aria-pressed="true">Technical details</button></div></div>
+      {{ player("/owner/static/specimen-recording.wav", "Specimen recording") }}
       <ol class="conv">
         <li class="turn caller"><span class="at">0:06</span><span class="rail" aria-hidden="true"></span><span class="speaker">Caller</span><span class="text">The carbon monoxide alarm went off earlier.</span></li>
         <li class="step warn"><span class="at"></span><span class="rail" aria-hidden="true"></span><div class="note">{{ note_icon("warn") }}<span class="say">Heard a carbon monoxide alarm. Booking is locked until the safety lines are said.</span></div></li>

@@ -5,7 +5,7 @@ import re
 import sqlite3
 from datetime import datetime, timedelta
 
-from . import lookup, records, rules, safety
+from . import lookup, recordings, records, rules, safety
 from .db import iso, parse_iso, tx
 from .envelope import Result, ok
 from .fsm import FsmAdapter, FsmRejected, FsmUnavailable
@@ -170,10 +170,16 @@ def _resume(conn: sqlite3.Connection, previous: sqlite3.Row) -> dict:
 
 
 def start(
-    conn: sqlite3.Connection, tenant: Tenant, fsm: FsmAdapter, args: StartIn, now: datetime
+    conn: sqlite3.Connection,
+    tenant: Tenant,
+    fsm: FsmAdapter,
+    args: StartIn,
+    now: datetime,
+    record: bool = False,
 ) -> Result:
     """Lookup before hello: the caller's records, a recent call to resume, and the safety state
-    carried from a dropped safety call. Calling it twice for one call id is harmless."""
+    carried from a dropped safety call. Calling it twice for one call id is harmless. `record` says
+    the server has somewhere to keep recordings; the call carries the file name to record under."""
     caller_key = phone_key(args.caller_id)
     known = caller_key if len(caller_key) == 10 else ""
     previous, recent = _linked(conn, tenant, known, args.call_id, now)
@@ -245,6 +251,11 @@ def start(
         "knowledge": tenant.knowledge,
         # The owner's live edits, pinned to this call (app/rules.py).
         "house_rules": rules.start_call(conn, tenant, args.call_id, now),
+        "recording": (
+            {"object_key": recordings.object_key(tenant, args.call_id)}
+            if recordings.wanted(tenant, record)
+            else None
+        ),
     }
     say = tenant.line("repeated_drops") if offer_callback else ""
     if call["safety_state"] == "signal":

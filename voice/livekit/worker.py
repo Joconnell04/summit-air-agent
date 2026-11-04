@@ -16,7 +16,9 @@ from livekit.agents import (
     Agent,
     AgentServer,
     AgentSession,
+    AudioConfig,
     BackgroundAudioPlayer,
+    BuiltinAudioClip,
     ConversationItemAddedEvent,
     JobContext,
     JobProcess,
@@ -33,7 +35,7 @@ from livekit.agents.voice.amd import AMD, AMDCategory
 from prompts import assemble
 from voice import names as local_names
 
-from . import clips
+from . import clips, recording
 from .brain import build_llm
 from .bridge import Bridge
 from .call import Call, SummitAgent
@@ -41,6 +43,7 @@ from .capacity import Lines
 from .server import ToolServer
 from .settings import Settings, fallback_tenant, load_voice
 from .tools import ToolLog, build_tools
+from .transfer import ConsultRoom, Transfer
 from .turns import LlmLog
 
 log = logging.getLogger("voice.worker")
@@ -48,6 +51,7 @@ log = logging.getLogger("voice.worker")
 # Rust buffers this much audio after a clip's last frame is handed over (BackgroundAudioPlayer).
 CLIP_TAIL_S = 0.4
 VOICEMAIL_SECONDS = 60
+HOLD_VOLUME = 0.6
 SIP = rtc.ParticipantKind.PARTICIPANT_KIND_SIP
 
 settings = Settings()
@@ -190,8 +194,11 @@ async def entrypoint(ctx: JobContext) -> None:
     call = Call(tools_server, bridge, tool_log, voice["endpointing"], llm_log)
     call.session = session
     ended = {"reason": "caller_hangup"}
+    egress = {"id": None}
 
     async def close() -> None:
+        transfer.cancel()
+        await recording.stop(ctx.api, egress["id"])
         await call.flush()
         await tools_server.end(ended["reason"])
         await tools_server.aclose()
@@ -231,6 +238,37 @@ async def entrypoint(ctx: JobContext) -> None:
 
     call.server_down = server_down
 
+    held = {"music": None}
+
+    def hold(on: bool) -> None:
+        """While a person is dialed: the caller hears hold music and nothing they say reaches the
+        model; off, the conversation picks up again."""
+        session.input.set_audio_enabled(not on)
+        session.output.set_audio_enabled(not on)
+        if on:
+            music = AudioConfig(BuiltinAudioClip.HOLD_MUSIC, volume=HOLD_VOLUME)
+            held["music"] = player.play(music, loop=True)
+        elif held["music"] is not None:
+            held["music"].stop()
+            held["music"] = None
+
+    async def hand_over() -> None:
+        """The person is in the caller's room: the agent leaves without hanging up."""
+        hold(False)
+        ended["reason"] = "transfer"
+        ctx.shutdown("transferred")
+
+    transfer = Transfer(
+        tools_server,
+        ctx.api,
+        call_id,
+        settings.outbound_trunk_id,
+        lambda name: ConsultRoom(name, settings.livekit_url, session.tts),
+        speak,
+        hold,
+        hand_over,
+    )
+
     # The session closes when the caller hangs up; end the job then, so the call is closed on the
     # server at once rather than when LiveKit empties the room.
     session.on("close", lambda _ev: ctx.shutdown("session closed"))
@@ -248,15 +286,22 @@ async def entrypoint(ctx: JobContext) -> None:
     agent = SummitAgent(
         call,
         assemble.instructions(data),
-        build_tools(specs, tools_server, bridge, tool_log, hang_up, speak, call.reply),
+        build_tools(specs, tools_server, bridge, tool_log, hang_up, speak, transfer, call.reply),
     )
 
+    async def record() -> None:
+        egress["id"] = await recording.start(
+            ctx.api, tools_server, call_id, data.get("recording"), settings
+        )
+
     if outbound:
-        await place_outbound(ctx, session, agent, player, outbound, spoken, tools_server)
+        await place_outbound(ctx, session, agent, player, outbound, spoken, tools_server, record)
         return
 
     await session.start(room=ctx.room, agent=agent)
     await player.start(room=ctx.room, agent_session=session)
+    # In the background, so the greeting doesn't wait on the recorder.
+    asyncio.create_task(record())
     # A dropped safety call whose lines weren't said: they come first on this call too.
     if (data.get("safety") or {}).get("text"):
         session.say(data["safety"]["text"], allow_interruptions=False)
@@ -267,7 +312,7 @@ async def entrypoint(ctx: JobContext) -> None:
 
 
 async def place_outbound(
-    ctx, session, agent, player, claim: dict, spoken: dict, tools_server: ToolServer
+    ctx, session, agent, player, claim: dict, spoken: dict, tools_server: ToolServer, record
 ) -> None:
     """Journey 12. The server chose this call and checked its rules when it was claimed; one dial,
     a voicemail at most, and the result goes back to the server."""
@@ -304,6 +349,8 @@ async def place_outbound(
         await ctx.delete_room()
         return
     await tools_server.outbound_done(claim["outbound_id"], True, False)
+    # Recorded only once a person answered; a voicemail we leave isn't kept.
+    asyncio.create_task(record())
     session.say(claim["opening_line"])
 
 

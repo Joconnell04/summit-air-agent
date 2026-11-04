@@ -108,3 +108,14 @@
 {% macro rule_status(r) -%}
 {%- if r.editable %}<span class="tag info">Editable</span>{% else %}<span class="tag outline" tabindex="0" data-tip="{{ r.why }}" aria-label="Locked: {{ r.why }}">Locked</span>{% endif -%}
 {%- endmacro %}
+
+{# A call's recording on one row (story O-6). The script swaps the browser's controls for the
+   play button, scrub bar and time; without it the browser's own controls show. #}
+{% macro player(src, label="Call recording") -%}
+<div class="player" data-player>
+  <audio src="{{ src }}" preload="metadata" controls aria-label="{{ label }}"></audio>
+  <button type="button" class="btn icon" data-play aria-label="Play" hidden><svg class="play" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg><svg class="pause" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z"/></svg></button>
+  <input type="range" class="scrub" min="0" max="0" step="0.1" value="0" aria-label="Position in the recording" data-scrub hidden>
+  <span class="time num" data-time hidden>0:00 / 0:00</span>
+</div>
+{%- endmacro %}

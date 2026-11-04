@@ -185,6 +185,11 @@ lines:
   return_visit_review: Since we were just out there, a manager will look over this visit, including whether
     it's covered, before the technician arrives.
   slot_taken: That window just filled up.
+  transfer_handoff: I'm connecting you with someone from our team now.
+  transfer_no_answer: I couldn't reach anyone just now, so I've let the team know and someone will call
+    you {when}.
+  transfer_prompt: Summit Air has a caller for the {role}. Press 1 to take the call.
+  transfer_summary: '{priority}Caller at {phone}: {reason}. Putting you through now.'
   urgent_priority: I've marked this call top priority, so you get our soonest opening.
 on_call_alerts:
   email: on-call@summit-air.example
@@ -473,6 +478,7 @@ repeat_callers:
   return_visit_days: 30
 retention:
   call_record_days: 365
+  record_calls: true
   transcript_days: 30
 safety:
   booking_note: The technician can only work on it once the gas company or 911 has shut it off and said
@@ -623,6 +629,13 @@ safety:
       - like eggs
       - sulfur
       question: Just to be safe, are you smelling gas in the house right now?
+transfer:
+  accept_seconds: 10
+  fallback_callback_minutes: 30
+  ring_seconds: 20
+  targets:
+    office: TRANSFER_OFFICE_NUMBER
+    on_call: TRANSFER_ON_CALL_NUMBER
 voice:
   clips:
     at_capacity: Thanks for calling Summit Air. If you smell gas, hang up and call 911 from outside. All

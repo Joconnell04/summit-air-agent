@@ -176,6 +176,43 @@
     });
   }
 
+  // Player: the play button, scrub bar and time in place of the browser's audio controls.
+
+  function clockTime(seconds) {
+    if (!isFinite(seconds)) return "0:00";
+    var s = Math.floor(seconds);
+    return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
+  }
+
+  function setupPlayer(box) {
+    var audio = box.querySelector("audio");
+    var play = box.querySelector("[data-play]");
+    var scrub = box.querySelector("[data-scrub]");
+    var time = box.querySelector("[data-time]");
+    audio.controls = false;
+    box.setAttribute("data-ready", "");
+    [play, scrub, time].forEach(function (el) { el.hidden = false; });
+    function show() {
+      var length = isFinite(audio.duration) ? audio.duration : 0;
+      scrub.max = length;
+      scrub.value = audio.currentTime;
+      scrub.style.setProperty("--played", (length ? (audio.currentTime / length) * 100 : 0) + "%");
+      time.textContent = clockTime(audio.currentTime) + " / " + clockTime(length);
+    }
+    function playing(on) {
+      box.classList.toggle("playing", on);
+      play.setAttribute("aria-label", on ? "Pause" : "Play");
+    }
+    play.addEventListener("click", function () { if (audio.paused) audio.play(); else audio.pause(); });
+    scrub.addEventListener("input", function () { audio.currentTime = Number(scrub.value); show(); });
+    audio.addEventListener("loadedmetadata", show);
+    audio.addEventListener("timeupdate", show);
+    audio.addEventListener("play", function () { playing(true); });
+    audio.addEventListener("pause", function () { playing(false); });
+    audio.addEventListener("ended", function () { playing(false); });
+    show();
+  }
+
   // Calls list filter
 
   function setupCallList(table) {
@@ -394,6 +431,7 @@
     each(document, "#board", setupBoard);
     each(document, "[data-tray]", setupTray);
     each(document, ".conv", setupCall);
+    each(document, "[data-player]", setupPlayer);
     each(document, "[data-call-list]", setupCallList);
     each(document, "[data-hours-chart]", setupHours);
   });
