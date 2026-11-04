@@ -20,6 +20,7 @@ script:
   - Pick the first weekday morning the agent offers.
   - Say goodbye once the agent confirms and asks if there is anything else.
 must:
+  - booking_lead_in: true
   - booking: {count: 1, job_type: tune_up, zip: "11206"}
   - read_back: before_booking
   - safety_lines: not_said

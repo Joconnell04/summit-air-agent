@@ -176,13 +176,6 @@ ANNOUNCES_READ_BACK = re.compile(
     r"(?:details|address|number)",
     re.IGNORECASE,
 )
-# A sentence that only announces a booking the tools are about to make ("Booking today's afternoon
-# window now."). The tool's own sentence says what happened, and an announcement can contradict it
-# when the booking is queued (eval round 3, booking-system-down).
-ANNOUNCES_BOOKING = re.compile(
-    r"^\s*(?:booking\b|let me (?:book|lock|get (?:that|it|you) booked)|i'?ll (?:book|lock) (?:that|it)\b)",
-    re.IGNORECASE,
-)
 # A priority claim. Only the server's own Urgent line may say it (eval round 4).
 CLAIMS_PRIORITY = re.compile(r"\btop priority\b|\bmost urgent\b|\bhighest priority\b", re.IGNORECASE)
 # Gas or carbon monoxide advice to leave or call 911. Only the server's safety lines say it; on
@@ -338,7 +331,7 @@ class SpokenReply:
         """One sentence of the model's text, in order within a reply, or "" when the caller
         shouldn't hear it."""
         after_restatement, self._dropped_restatement = self._dropped_restatement, False
-        if ANNOUNCES_READ_BACK.search(sentence) or ANNOUNCES_BOOKING.search(sentence):
+        if ANNOUNCES_READ_BACK.search(sentence):
             return ""
         if not self.urgent and CLAIMS_PRIORITY.search(sentence):
             return ""
@@ -387,6 +380,12 @@ def spoken_by_server(name: str, envelope: dict) -> str | None:
         return say
     # A booking the field service system couldn't take: one honest line, as written (spec S-48).
     if name == "book_appointment" and envelope.get("refused") == "fsm_unavailable":
+        return say
+    # A booking, move or cancel that went through: its confirmation is the whole turn, so no
+    # second model request runs after the slowest tool on the call (eval round 4).
+    if name in ("book_appointment", "reschedule_appointment", "cancel_appointment") and (
+        envelope.get("ok")
+    ):
         return say
     return None
 

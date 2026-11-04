@@ -794,6 +794,11 @@ def book_appointment(ctx: Ctx, args: BookIn) -> Result:
             say += " " + ctx.tenant.line(line, when=spoken)
     if returning:
         say += " " + ctx.tenant.line("return_visit_review")
+    if seek_earlier:
+        say += " " + ctx.tenant.line("seek_earlier_note")
+    # The voice layer speaks this as the whole confirmation, with no model step after it, so it
+    # ends by asking "Anything else?" itself (spec S-30; eval round 4, the booking turn's delay).
+    say += " " + ctx.tenant.line("after_confirmation")
     result = ok(
         say,
         booking_id=sent["job_id"],
@@ -1121,7 +1126,8 @@ def reschedule_appointment(ctx: Ctx, args: RescheduleIn) -> Result:
     )
     between = when["label"].replace(" to ", " and ")
     return ok(
-        f"Done, I've moved it to {when['day_and_date']}, between {between}.",
+        f"Done, I've moved it to {when['day_and_date']}, between {between}. "
+        + ctx.tenant.line("after_confirmation"),
         booking_id=job["id"],
         window=when,
     )
@@ -1155,8 +1161,15 @@ def cancel_appointment(ctx: Ctx, args: CancelIn) -> Result:
         )
     job_type = ctx.tenant.job_types.get(ctx.tenant.job_type_codes.get(job["jobTypeId"], ""))
     alternatives = _alternatives(ctx, job_type, job["priority"]) if job_type else []
+    say = "That visit is cancelled."
+    if alternatives:
+        # Spoken by the voice layer as it is, so the offer of other times is part of it.
+        times = _join([f"{a['day']} {a['label']}" for a in alternatives], "or")
+        say += f" If you'd like another time, I have {times}."
+    else:
+        say += " " + ctx.tenant.line("after_confirmation")
     return ok(
-        "That visit is cancelled.",
+        say,
         booking_id=job["id"],
         reason=args.reason,
         alternatives=alternatives,

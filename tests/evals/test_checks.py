@@ -258,3 +258,12 @@ def test_an_approval_check_flag_can_be_required():
     t["flags"] = [{"kind": "approval_check"}]
     assert failures("flag", "approval_check", t) == []
     assert failures("flag", "approval_check", trace()) != []
+
+
+def test_the_booking_confirmation_needs_a_short_line_before_it():
+    said = trace([("agent", "Perfect, booking that now. You're all set for today. Anything else?", None)])
+    assert failures("booking_lead_in", True, said) == []
+    bare = trace([("agent", "You're all set for today. Anything else?", None)])
+    assert failures("booking_lead_in", True, bare) == [
+        "the booking confirmation came with no line before it"
+    ]

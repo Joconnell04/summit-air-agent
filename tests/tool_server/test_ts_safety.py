@@ -553,7 +553,7 @@ def test_after_the_lines_a_visit_can_be_booked_without_insisting(agent):
     assert "safety_call" in turn["data"]["hints"]
     booked = book(agent, call, first_open(agent, call, "safety_check"), job_type="safety_check")
     assert booked["ok"], booked
-    assert booked["say"].endswith(BOOKING_NOTE)
+    assert booked["say"].endswith(f"{BOOKING_NOTE} Anything else?")
     assert booked["data"]["safety_override"] is True
     assert count(agent, "SELECT COUNT(*) FROM flags WHERE kind = 'safety'") == 1
 

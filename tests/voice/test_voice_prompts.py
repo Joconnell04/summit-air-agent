@@ -179,13 +179,20 @@ def test_a_restated_street_address_is_dropped_but_a_temperature_is_not():
     assert reply.text(said, []) == "Got it, 64 degrees. Who's home?"
 
 
-def test_a_booking_announcement_is_dropped_and_a_queued_booking_is_spoken_once():
-    """Eval round 3 run 20261104-031113, booking-system-down."""
+def test_the_booking_reply_keeps_its_short_line_and_the_confirmation_is_spoken_by_the_server():
+    """Eval round 4: one model request on the booking turn. The model says a short line in the
+    reply that books, and the voice layer speaks the server's confirmation as it is."""
     reply = assemble.SpokenReply()
-    assert reply.text("Thanks, Ruth. Booking today's afternoon window now.", []) == "Thanks, Ruth."
+    line = "Perfect, booking that now."
+    assert reply.text(line, [("book_appointment", {"slot": {}})]) == line
+    booked = {"ok": True, "say": "You're all set for today. Anything else?"}
+    assert assemble.spoken_by_server("book_appointment", booked) == booked["say"]
+    assert assemble.spoken_by_server("reschedule_appointment", {"ok": True, "say": "Done."})
+    assert assemble.spoken_by_server("cancel_appointment", {"ok": True, "say": "Cancelled."})
     queued = {"ok": False, "refused": "fsm_unavailable", "say": "I can't book that right now."}
     assert assemble.spoken_by_server("book_appointment", queued) == "I can't book that right now."
-    assert assemble.spoken_by_server("book_appointment", {"ok": True, "say": "You're all set."}) is None
+    refused = {"ok": False, "refused": "slot_taken", "say": "That window just filled up."}
+    assert assemble.spoken_by_server("book_appointment", refused) is None
 
 
 def test_a_confirmed_address_and_number_are_never_restated_by_the_model():

@@ -22,7 +22,8 @@ book_appointment: >-
   Book the window the caller chose, with the intake details. Only after the read-back was confirmed
   and after find_slots with `day` returned that day's windows. `slot.date` and `slot.window` are the
   `date` and `window` code from that result (such as "morning"), never the spoken label ("8 to 12").
-  Confirm out loud only after it returns ok. To move a visit the caller already has, use
+  Its confirmation is spoken for you when it returns ok; say a short line first in the same reply
+  ("Perfect, booking that now.") and nothing after. To move a visit the caller already has, use
   reschedule_appointment instead. If it refuses with account_choice, ask the caller its question
   and book again with new_address_account.
 reschedule_appointment: >-

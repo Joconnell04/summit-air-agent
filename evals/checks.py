@@ -339,6 +339,17 @@ def _counts(arg: Any) -> None:
             raise ValueError(f"expected a whole number for {pattern!r}, got {most!r}")
 
 
+def booking_lead_in(arg: bool, ev: Evidence) -> list[str]:
+    """The agent's line with the booking confirmation opens with a short line of the model's own,
+    from the same reply that booked, rather than a separate filler reply or silence (eval round
+    4: the caller hears something at once on the slowest turn)."""
+    lines = [line for line in ev.agent_lines() if "You're all set for" in line]
+    if not lines:
+        return ["no booking confirmation was said"]
+    lead = lines[0].split("You're all set for")[0].strip()
+    return [] if lead else ["the booking confirmation came with no line before it"]
+
+
 def _recorded_or_zip(arg: Any) -> None:
     if arg != "recorded" and not re.fullmatch(r"\d{5}", str(arg)):
         raise ValueError(f"expected recorded or a five-digit ZIP, got {arg!r}")
@@ -380,6 +391,7 @@ CHECKS: dict[str, Check] = {
     "agent_says": Check(_strings, agent_says),
     "agent_never_says": Check(_strings, agent_never_says, lambda arg: True),
     "agent_says_at_most": Check(_counts, agent_says_at_most, lambda arg: True),
+    "booking_lead_in": Check(_one_of(True), booking_lead_in),
 }
 
 

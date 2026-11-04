@@ -72,5 +72,6 @@ Each `must` item is `- <check>: <argument>`. They read the tool server's record 
 | `agent_says` | a regex or list | the agent said each one at some point (case ignored) |
 | `agent_never_says` | a regex or list | the agent never said any of them |
 | `agent_says_at_most` | `{regex: n}` | each regex turns up in at most n agent lines |
+| `booking_lead_in` | `true` | the agent line with the booking confirmation opens with a short line from the same reply |
 
 Job types: `no_heat`, `no_cooling`, `tune_up`, `safety_check`, `estimate`. Priorities: Low, Normal, High, Urgent.

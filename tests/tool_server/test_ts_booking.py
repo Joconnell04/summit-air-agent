@@ -365,6 +365,8 @@ def test_a_cancel_needs_a_reason_and_offers_two_windows(agent, scenarios):
     cancelled = agent.tool("cancel_appointment", other, booking_id=job_id, reason="fixed itself")
     assert cancelled["ok"], cancelled
     assert len(cancelled["data"]["alternatives"]) == 2
+    # Eval round 4: the voice layer speaks this as it is, so the offer is in the sentence.
+    assert cancelled["say"].startswith("That visit is cancelled. If you'd like another time, I have ")
     second = agent.tool("cancel_appointment", other, booking_id=job_id, reason="again please")
     assert second["refused"] == "limit"
 
@@ -981,3 +983,12 @@ def test_a_renter_with_an_unknown_approver_books_with_a_call_before_dispatch(age
     assert booked["ok"], booked
     assert booked["data"]["approval_callback_at"]
     assert "to confirm who can approve the work" in booked["say"]
+
+
+def test_the_booking_confirmation_is_the_whole_turn_and_asks_anything_else(agent):
+    """Eval round 4: the voice layer speaks it with no model step after, so it asks itself."""
+    call = ready_to_book(agent)
+    booked = book(agent, call, first_open(agent, call))
+    assert booked["ok"], booked
+    assert booked["say"].startswith("You're all set for ")
+    assert booked["say"].endswith(" Anything else?")
