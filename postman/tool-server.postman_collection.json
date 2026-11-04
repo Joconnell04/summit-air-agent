@@ -1918,6 +1918,49 @@
           }
         },
         {
+          "name": "Report a heads-up call that was never claimed",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('outbound_id', '999999');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('refused: invalid_state', () => pm.expect(pm.response.json().refused).to.eql('invalid_state'));",
+                  "",
+                  "pm.test('HTTP 200 with the envelope', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  const b = pm.response.json();",
+                  "  ['ok', 'say', 'data', 'refused'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/outbound/heads-up/{{outbound_id}}/done",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"answered\": false\n}"
+            }
+          }
+        },
+        {
           "name": "Owner view without signing in",
           "event": [
             {

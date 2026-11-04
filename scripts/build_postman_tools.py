@@ -535,6 +535,14 @@ def build() -> dict:
             pre="pm.collectionVariables.set('outbound_id', '999999');",
         ),
         item(
+            "Report a heads-up call that was never claimed",
+            "POST",
+            "outbound/heads-up/{{outbound_id}}/done",
+            body={"answered": False},
+            check=refused("invalid_state"),
+            pre="pm.collectionVariables.set('outbound_id', '999999');",
+        ),
+        item(
             "Owner view without signing in",
             "GET",
             "owner",

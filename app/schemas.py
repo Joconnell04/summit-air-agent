@@ -193,7 +193,8 @@ class ReadBackIn(CallRef):
         "",
         max_length=60,
         description='Who the number reaches when it isn\'t the caller, as the caller said it, such as '
-        '"my daughter Ana". Empty for the caller\'s own number.',
+        '"my daughter Ana". Always set when the caller says the number is someone else\'s; empty '
+        "for the caller's own number.",
     )
     confirmed: bool = False
 

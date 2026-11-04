@@ -891,8 +891,35 @@ def _identity_gate(ctx: Ctx, customer_id: int, addresses: list[dict], thing: str
     )
 
 
+def _settle_unanswered_check(ctx: Ctx) -> None:
+    """A check whose question the caller answered without a match, when the agent moves on to a
+    callback instead of trying the change again, is a mismatch: nothing was changed, and the
+    callback goes to the number on file (eval run 20261104-200759, unknown-number-wrong-name)."""
+    rows = ctx.conn.execute(
+        "SELECT * FROM identity_checks WHERE call_id = ? AND status = 'asked'", (ctx.call["id"],)
+    ).fetchall()
+    for check in rows:
+        if not records.caller_turn_after(ctx.conn, ctx.call["id"], check["asked_seq"]):
+            continue
+        phone = _on_file_phone(ctx, check["customer_id"])
+        with tx(ctx.conn):
+            ctx.conn.execute(
+                "UPDATE identity_checks SET status = 'mismatch', on_file_phone = ? "
+                "WHERE call_id = ? AND customer_id = ?",
+                (phone, check["call_id"], check["customer_id"]),
+            )
+            records.add_flag(
+                ctx.conn, ctx.call["id"], "identity_mismatch",
+                f"A caller from {ctx.call['caller_id']} asked to change something for customer "
+                f"{check['customer_id']} and didn't give the name and address on file. Nothing "
+                "was changed.",
+                ctx.now, "High",
+            )
+
+
 def _mismatch_callback(ctx: Ctx) -> sqlite3.Row | None:
     """An identity check this call failed whose callback to the number on file isn't set yet."""
+    _settle_unanswered_check(ctx)
     thread = records.thread(ctx.conn, ctx.call["id"])
     return ctx.conn.execute(
         f"SELECT * FROM identity_checks WHERE status = 'mismatch' AND callback_id IS NULL "
@@ -942,24 +969,29 @@ def _distinct_names(names: dict[int, str]) -> dict[int, set[str]]:
     }
 
 
-# Words before a name that make it someone else's: "my wife, Marisol" names the other account.
-RELATION_WORDS = {
-    "wife", "husband", "partner", "son", "daughter", "mother", "mom", "father", "dad", "sister",
-    "brother", "spouse",
-}
+# Words right before a name that make it the one the visit goes under: "this is Hector", "I'm
+# Marisol", "put it under Marisol", "for Hector". Any other mention ("my husband Hector handles
+# that", "Hector might have changed the thermostat") says nothing about whose visit it is.
+SELF_BEFORE = (
+    ("this", "is"), ("i", "am"), ("name", "is"), ("im",), ("its",), ("under",), ("for",),
+    ("name",),
+)
+NAME_ALONE_MAX_WORDS = 3
 
 
 def _account_said(ctx: Ctx, distinct: dict[int, set[str]]) -> int | None:
-    """The account whose own name word the caller used for themselves or for the visit: in the
-    latest caller line that names one, the first such name not right after a relation word. None
-    when no line names one."""
+    """The account whose own name word the caller gave as theirs or as the visit's, in the
+    latest caller line that does ("I'm Marisol", "under Hector", or the name said alone as an
+    answer). None when no line does, and the server asks."""
     for row in reversed(_caller_lines(ctx)):
         tokens = _name_words(row["text"])
         for i, token in enumerate(tokens):
-            if any(t in RELATION_WORDS for t in tokens[max(0, i - 2):i]):
-                continue
             found = [cid for cid, own in distinct.items() if token in own]
-            if len(found) == 1:
+            if len(found) != 1:
+                continue
+            before = tuple(tokens[max(0, i - 2):i])
+            alone = len(tokens) <= NAME_ALONE_MAX_WORDS
+            if alone or any(before[-len(p):] == p for p in SELF_BEFORE if len(before) >= len(p)):
                 return found[0]
     return None
 
@@ -1016,12 +1048,15 @@ def _account_named(ctx: Ctx, readback: dict) -> int | None:
 def find_customer(ctx: Ctx, args: FindCustomerIn) -> Result:
     _limit(ctx, "find_customer", records.count_tool(ctx.conn, ctx.call["id"], "find_customer"))
     needs_unit = False
+    customers = []
     if args.phone:
         if len(phone_key(args.phone)) != 10:
             raise Refused("invalid_arguments", "Could I get that number again, all ten digits?")
         customers = ctx.fsm.customers_by_phone(args.phone)
         matched_by = "phone"
-    else:
+    # A number that matches nobody, with an address too: the address is looked up (eval run
+    # 20261104-200759, a caller on a work phone whose visit was under her cell).
+    if not customers and args.address:
         address = args.address
         locations = ctx.fsm.locations_by_address(address.street, address.zip, address.unit or None)
         # Only exact matches: without a unit, a building's other units are other people's records.
@@ -1916,6 +1951,25 @@ def _new_address_account(
     return "own", caller["name"]
 
 
+def _move_first(ctx: Ctx) -> None:
+    """A caller who said they moved has their old visit moved or cancelled by record_move, which
+    also notes the move and checks the new address (eval run 20261104-200759: a mover's visit was
+    cancelled with no note and no decline). Asked once; a caller who won't give the new address
+    can still cancel."""
+    if not _mover_pending(ctx):
+        return
+    asked = ctx.conn.execute(
+        "SELECT 1 FROM tool_calls WHERE call_id = ? AND refused = 'move_first'", (ctx.call["id"],)
+    ).fetchone()
+    if not asked:
+        raise Refused(
+            "move_first",
+            "",
+            need="the caller moved: ask for the new address, read it back, then call record_move; "
+            "it moves this visit there or, outside the area, cancels it",
+        )
+
+
 def _owned_job(ctx: Ctx, job_id: int) -> tuple[dict, bool]:
     """The job, if it was booked on this thread or belongs to a customer matched on this call. A
     customer the call's number isn't on must first pass the identity check (_identity_gate).
@@ -1977,6 +2031,7 @@ def _action_failed(ctx: Ctx, row_id: int, exc: Exception, what: str) -> None:
 def reschedule_appointment(ctx: Ctx, args: RescheduleIn) -> Result:
     _safety_gate(ctx)
     _limit(ctx, "reschedule", records.count_actions(ctx.conn, ctx.call["id"], "reschedule"))
+    _move_first(ctx)
     job, checked = _owned_job(ctx, args.booking_id)
     appointments = [a for a in ctx.fsm.appointments(job["id"]) if a["status"] == "Scheduled"]
     if job["jobStatus"] != "Scheduled" or not appointments:
@@ -2064,6 +2119,7 @@ def cancel_appointment(ctx: Ctx, args: CancelIn) -> Result:
     (journey 7)."""
     _safety_gate(ctx)
     _limit(ctx, "cancel", records.count_actions(ctx.conn, ctx.call["id"], "cancel"))
+    _move_first(ctx)
     job, checked = _owned_job(ctx, args.booking_id)
     # A dispatched technician is already on the way; a person handles that.
     if job["jobStatus"] != "Scheduled":

@@ -458,9 +458,10 @@ def test_a_known_number_gets_no_heads_up(agent, scenarios):
 def test_a_failed_check_gets_no_heads_up(agent, scenarios):
     call, maria = unknown_caller_finds_maria(agent, scenarios)
     for _ in range(3):
-        refused = agent.tool("cancel_appointment", call, booking_id=maria["jobId"], reason="x")
+        refused = agent.tool("cancel_appointment", call, booking_id=maria["jobId"], reason="fixed")
         agent.say(call, refused["say"])
         agent.turn(call, "Joanne Price.")
+    assert refused["refused"] == "identity_mismatch"
     assert heads_ups(agent) == []
 
 
@@ -529,3 +530,47 @@ def test_a_spouse_named_later_does_not_reopen_which_account(agent, mock, scenari
     owner = st(mock, "SELECT c.name FROM jobs j JOIN customers c ON c.id = j.customer_id "
                      "WHERE j.id = ?", booked["data"]["booking_id"])[0]
     assert owner["name"] == "Hector Ruiz"
+
+
+def test_a_name_mentioned_in_passing_does_not_pick_the_account(agent, mock, scenarios):
+    """Eval run 20261104-200759, shared-phone-asks-which: "I'm Marisol", then "Hector might have
+    messed with the thermostat", booked under Hector."""
+    call, address = shared_call(agent, scenarios, "Could we put it under my name though, I'm Marisol.")
+    agent.confirm_read_back(call, address)
+    agent.turn(call, "My husband Hector handles that. Hector might have messed with the thermostat.")
+    booked = book(agent, call, first_open(agent, call))
+    owner = st(mock, "SELECT c.name FROM jobs j JOIN customers c ON c.id = j.customer_id "
+                     "WHERE j.id = ?", booked["data"]["booking_id"])[0]
+    assert owner["name"] == "Marisol Ruiz"
+
+
+def test_a_movers_cancel_goes_through_record_move_first(agent, scenarios):
+    maria = scenarios["repeatCallerOpenJob"]
+    call = agent.start(maria["phone"])["data"]["call_id"]
+    agent.turn(call, "We moved to Hoboken last week, please cancel the visit.")
+    first = agent.tool("cancel_appointment", call, booking_id=maria["jobId"], reason="moved")
+    assert first["refused"] == "move_first"
+    # Asked once: a caller who won't give the new address can still cancel.
+    assert agent.tool("cancel_appointment", call, booking_id=maria["jobId"], reason="moved")["ok"]
+
+
+def test_a_callback_after_an_unmatched_answer_goes_to_the_number_on_file(agent, scenarios):
+    call, maria = unknown_caller_finds_maria(agent, scenarios)
+    asked = agent.tool("cancel_appointment", call, booking_id=maria["jobId"], reason="fixed")
+    assert asked["refused"] == "identity_check"
+    agent.say(call, asked["say"])
+    agent.turn(call, "I'm Joanne Price, I don't know whose name it's under.")
+    flagged = agent.tool("flag_person", call, key="f1", reason="Wants the visit cancelled",
+                         priority="Normal", callback_in_minutes=30)
+    assert "number we have on file" in flagged["say"]
+    assert count(agent, "SELECT COUNT(*) FROM identity_checks WHERE status = 'mismatch'") == 1
+
+
+def test_a_number_that_matches_nobody_falls_back_to_the_address(agent, scenarios):
+    call = agent.start("(212) 555-0151")["data"]["call_id"]
+    agent.turn(call, "It's 620 Bedford Avenue, 11235.")
+    found = agent.tool("find_customer", call, phone="(212) 555-0151",
+                       address={"street": "620 Bedford Ave", "unit": "", "zip": "11235"})
+    assert [m["customer_id"] for m in found["data"]["matches"]] == [
+        scenarios["repeatCallerOpenJob"]["customerId"]
+    ]
