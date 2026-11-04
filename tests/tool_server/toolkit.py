@@ -5,7 +5,7 @@ from pathlib import Path
 
 from fastapi.testclient import TestClient
 
-from app import guidance_check
+from app import accounts, guidance_check
 from app.main import create_app
 from app.settings import Settings
 
@@ -178,3 +178,38 @@ def make_server(tmp_path, clock, mock_app, side_model=None, guidance=None, **set
     fsm = TestClient(mock_app, raise_server_exceptions=False)
     return create_app(config, clock=clock, fsm_clients={"summit-air": fsm}, side_model=side_model,
                       guidance_check=guidance or FakeCheck())
+
+
+# One password for every test account; long enough for the account rules.
+PASSWORD = "test-password-1"
+
+
+def add_user(agent: "Agent", username: str = "owner", role: str = "admin", name: str = "") -> int:
+    """A user straight in the database, as make owner-user would add one."""
+    services = agent.app.state.services
+    conn = services.connect()
+    try:
+        return accounts.add(
+            conn, username, name or username.capitalize(), role, PASSWORD, "Test", services.clock()
+        )
+    finally:
+        conn.close()
+
+
+def sign_in(agent: "Agent", role: str = "admin", username: str | None = None) -> "Agent":
+    """Add a user with this role (unless one of that name exists) and sign the client in."""
+    username = username or role
+    conn = agent.app.state.services.connect()
+    try:
+        exists = accounts.by_username(conn, username) is not None
+    finally:
+        conn.close()
+    if not exists:
+        add_user(agent, username, role)
+    response = agent.client.post(
+        "/owner/login",
+        data={"username": username, "password": PASSWORD},
+        follow_redirects=False,
+    )
+    assert response.status_code == 303, response.text
+    return agent

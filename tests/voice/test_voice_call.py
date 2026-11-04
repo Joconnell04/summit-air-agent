@@ -247,3 +247,34 @@ def test_the_reply_audio_waits_for_a_bridge_clip_to_finish(monkeypatch):
 
     asyncio.run(run())
     assert events == ["clip starts", "clip ends", "frame 0", "frame 1"]
+
+
+def test_the_worker_stops_the_recording_when_the_caller_objects(agent, connect):
+    """Two-party consent on: the server reads the objection and the worker stops the recorder."""
+    from app import owner_settings
+
+    conn = agent.db()
+    try:
+        tenant = agent.app.state.services.tenants.default
+        owner_settings.change(conn, tenant, {"two_party_consent": True}, "Pat", agent.clock())
+    finally:
+        conn.close()
+    agent.start(call_id="call-1")
+    call = make_call(connect)
+    stopped = []
+
+    async def stop() -> None:
+        stopped.append(True)
+
+    call.stop_recording = stop
+
+    async def run(text: str) -> None:
+        await call.caller_line(caller(text))
+        await asyncio.sleep(0)
+
+    asyncio.run(run("Please don't record this. The AC is out."))
+    assert stopped == [True]
+    assert call.session.said == [("Okay, I've turned the recording off.", True)]
+    asyncio.run(run("The AC is still out."))
+    assert stopped == [True], "once"
+    assert len(call.session.said) == 1

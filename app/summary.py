@@ -28,7 +28,7 @@ from typing import Protocol
 
 import yaml
 
-from . import lookup, records
+from . import lookup, owner_settings, records
 from .db import iso, parse_iso, tx
 from .fsm import FsmAdapter, FsmRejected, FsmUnavailable
 from .settings import QUEUE_MAX_ATTEMPTS
@@ -278,7 +278,9 @@ def run(
             (call["id"],),
         ).fetchone()
         old = call["ended_at"] and parse_iso(call["ended_at"]) < now - MAX_AGE
-        if booking is None or booking["status"] == "failed" or old:
+        # The owner's technician summaries setting, as it was when the call started.
+        off = not owner_settings.for_call(conn, tenant, call["id"])["technician_summaries"]
+        if booking is None or booking["status"] == "failed" or old or off:
             with tx(conn):
                 records.update_call(conn, call["id"], summary_status="skipped")
             counts["skipped"] += 1

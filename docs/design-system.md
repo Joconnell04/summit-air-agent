@@ -19,7 +19,7 @@ The owner view is built for the person who runs Summit Air: someone who knows HV
 5. **Plain words on the surface; detail one click away.** Tool names, arguments and refusal codes stay on the call page behind the "Technical details" switch, which also offers the whole record as a log. The owner reads "Held the booking until the safety lines were said", and Revin's engineer turns the switch on to read `book_appointment refused gate_safety` in the same place.
 6. **A row is the link.** A row that opens a call opens it anywhere on the row, and a chevron at its end says so. The row's name is the real link, for keyboards and for pages without the script.
 7. **One line per row.** Longer detail, such as why a job is urgent, waits in a tooltip so rows stay the same height and a column reads straight down.
-8. **Read-only except two things.** The report to Revin (story O-8), and the rules editor behind its own edit login (exploration 009), which changes only wording and guidance and goes live only after the eval gate. Nothing on the page changes a call, a job or a flag.
+8. **Read-only except for admins, and the report.** Anyone signed in can send a report to Revin (story O-8). Only an admin edits rules (exploration 009, which changes only wording and guidance and goes live only after the eval gate), changes settings or manages users, and the server checks the role on every one of those routes. Nothing on the page changes a call, a job or a flag.
 
 ## Tokens
 
@@ -74,7 +74,10 @@ Times, phone numbers and counts use `.num` (tabular figures) so columns line up.
 Each component lists its parts, its states and when to use it. All of them are on `/owner/design`.
 
 ### App header
-Revin logo, a rule, the company name, the four tabs (Today, Calls, Results, Rules) with Ember under the current one, then search and the status line on the right. Sticky. The first three tabs carry the day being looked at, so moving between pages stays on the same day; Rules has no day.
+Revin logo, a rule, the company name, the five tabs (Today, Calls, Results, Rules, Settings) with Ember under the current one, then search (300 px), the status line and the account on the right. Sticky. The first three tabs carry the day being looked at, so moving between pages stays on the same day; Rules and Settings have no day.
+
+### Account
+**Sign out**, a quiet button after the status line, set off by a hairline. Its tooltip says who is signed in and their role; the header has no room for a name beside five tabs, search and the status line at 1280 px. Signing in is the one-panel form at `/owner/login` (username, password, Sign in), which returns to the page that asked.
 
 ### Search
 One field in the header on every page, backed by a full-text index of every call on record (`app/search.py`, SQLite FTS5): the call (caller name and number, what it was about, how it ended), its job (service location, ZIP, job number, priority and why, arrival window), the flags it raised, its leads and callbacks, and every line said on it. Every word typed has to match, each as the start of a word; a phone number matches however it is written; a lone one- or two-digit number is ignored because it would match nearly everything; punctuation never reaches the index's own query syntax. The index is kept current by the jobs loop and again before each search, and only calls that changed since they were indexed are redone, so a refresh with nothing new is three reads (MEASURED: `test_a_refresh_with_nothing_new_is_three_reads` counts the statements). Calls are indexed a hundred to a transaction, so a first build never holds the write lock for long. A transcript removed by retention leaves the index on the next refresh. Each kind of result is its own query, so many matches of one kind never crowd out another, and the counts are the true totals. At about 5,800 calls (the demo day copied 130 times), a refresh with nothing new takes 19 ms, a search 36 ms and a suggestion 19 ms (MEASURED on a laptop with a scratch timing script).
@@ -105,7 +108,7 @@ Default (outlined), **primary** (Ember, one per page at most), **quiet** (no bor
 ### Filters
 Two controls, the same height as every other control in the row:
 - **Toggle**: an on/off button with a color swatch and a count ("Needs a person 5"). Off shows a hollow swatch on a sunken background. Used for the board's lanes and "Show resolved".
-- **Segmented control**: one choice of a few ("7 AM to 9 PM" or "Whole day"; "Day", "7 days", "30 days"; the call list's All, Needs a person, Booked, Turned away, Placed by us).
+- **Segmented control**: one choice of a few ("7 AM to 9 PM" or "Whole day"; "Day", "7 days", "30 days"; the call list's All, Needs a person, Booked, Turned away, Placed by us). In a form it is a radio group (macro `on_off` in `_ui.html`): each choice a label after a hidden radio, so the page works without the script and the server reads a plain field. The Settings page uses it for On and Off.
 - **Select**: for a choice of many (call type on Results).
 
 Filters are remembered per browser in `localStorage` (a convenience only; the page works and reads correctly without it).
@@ -163,13 +166,16 @@ The Results period: Day, 7 days or 30 days, and "Custom", a disclosure whose pop
 One line of text an owner types: 32 px high, the same edge and radius as a select, a blue focus ring. An invalid field gets a red edge (`aria-invalid`) and the reason under it in red (`.error.field-error`), written by the server, never a browser alert. Used on the rules editor.
 
 ### Form table
-A table (`.table.form`) whose rows are a label and its field, centred on the field's line so a label reads level with its box. The rules editor's Wording and Guidance panels.
+A table (`.table.form`) whose rows are a label and its field, centred on the field's line so a label reads level with its box, every row at least one control high so rows without a control line up with those that have one. The rules editor's Wording and Guidance panels, and the Settings page's Calls and Users panels. Controls at a row's end stay on one line.
 
 ### Actions
 A page's controls on one row at one height (`.actions`): a status tag, a field at a fixed 280 px, then the buttons, the primary last. The rules editor's head: "What changed", Discard, Save draft, Publish.
 
 ### Rules page
-`/owner/rules` lists every rule by call stage (Before hello, Opening, Whole call, Booking, Closing, After the call), one panel each, built from the tenant files and prompts (`app/rulebook.py`). Each row is the rule, how it is kept (Server check, Exact wording, Company setting, Agent guidance, Your guidance) and a tag: **Editable** (info) or **Locked** (outline), whose tooltip says why. A segmented control shows All, Editable or Locked. Versions sit under the stages with their check: **Passed 18 of 18** (done), **Blocked, 2 of 18 failed** (urgent, the failed calls in the tooltip), **Checking** (high), **Rolled back**, **Draft**, **Not published, live changed** (a rollback landed while it was checked) and **1 on a rerun** (outline). While a check runs, the editor offers **Stop check**, which returns the draft; a check that never reports back returns it after an hour. The editor (`/owner/rules/edit`) needs an edit code; the Rules page opens with the read token.
+`/owner/rules` lists every rule by call stage (Before hello, Opening, Whole call, Booking, Closing, After the call), one panel each, built from the tenant files and prompts (`app/rulebook.py`). Each row is the rule, how it is kept (Server check, Exact wording, Company setting, Agent guidance, Your guidance) and a tag: **Editable** (info) or **Locked** (outline), whose tooltip says why. A segmented control shows All, Editable or Locked. Versions sit under the stages with their check: **Passed 18 of 18** (done), **Blocked, 2 of 18 failed** (urgent, the failed calls in the tooltip), **Checking** (high), **Rolled back**, **Draft**, **Not published, live changed** (a rollback landed while it was checked) and **1 on a rerun** (outline). While a check runs, the editor offers **Stop check**, which returns the draft; a check that never reports back returns it after an hour. The editor (`/owner/rules/edit`) and its Edit rules button are for admins; staff read the Rules page and get **Admins only** if they open the editor.
+
+### Settings page
+`/owner/settings`, three panels. **Calls**: one row per setting, its name in bold and one line under it, and On/Off on the right (the segmented control as a radio pair) with **Save** in the panel head, the page's one primary action; staff see an **On** (done) or **Off** (outline) tag instead. **Users**: name, username, role, and for an admin **Make admin** or **Make staff** and **Remove**. Remove asks again on the row (**Confirm**, **Keep**), never in a browser dialog, and the last admin has neither control. The last row adds a user: name, username, role and password fields on one line, then **Add user**; a refused field shows its reason under it. **Changes**: every settings and user change, newest first, with who made it. A 403 for staff on an admin route is the **Admins only** page: the page head and one empty-state line.
 
 ### Empty state
 One centred line in faint ink that says what isn't there ("Nothing needs a person right now."). Never an illustration.

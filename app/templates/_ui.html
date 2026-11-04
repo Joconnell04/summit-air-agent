@@ -119,3 +119,12 @@
   <span class="time num" data-time hidden>0:00 / 0:00</span>
 </div>
 {%- endmacro %}
+
+{# An on/off choice in a form: the segmented control as a radio pair, so the server reads a plain
+   field ("1" or "0") and the page works without the script. #}
+{% macro on_off(name, value, labelledby) -%}
+<div class="seg" role="radiogroup" aria-labelledby="{{ labelledby }}">
+  <input type="radio" id="{{ name }}-on" name="{{ name }}" value="1"{% if value %} checked{% endif %}><label for="{{ name }}-on">On</label>
+  <input type="radio" id="{{ name }}-off" name="{{ name }}" value="0"{% if not value %} checked{% endif %}><label for="{{ name }}-off">Off</label>
+</div>
+{%- endmacro %}

@@ -5,6 +5,7 @@ import pytest
 from fastapi.testclient import TestClient
 from toolkit import START, TENANT_DIR, Agent, Clock, make_server
 
+from app import accounts
 from app.fsm import FsmUnavailable
 from servicetitan_mock.app import create_app as create_mock
 from servicetitan_mock.seed import build_world
@@ -15,6 +16,13 @@ def seeded_world(tmp_path_factory):
     path = tmp_path_factory.mktemp("st") / "world.db"
     scenarios = build_world(path, TENANT_DIR, START)
     return path, scenarios
+
+
+@pytest.fixture(autouse=True)
+def cheap_password_hashing(monkeypatch):
+    """scrypt at its real cost takes tens of milliseconds a hash; tests sign in hundreds of times.
+    The cost travels in each stored hash, so checking still runs the same code."""
+    monkeypatch.setattr(accounts, "SCRYPT_N", 2**4)
 
 
 @pytest.fixture

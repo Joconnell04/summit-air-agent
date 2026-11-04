@@ -45,6 +45,8 @@ class Call:
         # Set by the worker: says the tenant's server-down line (which carries the 911 line) and
         # ends the call. Without the server there is no safety check, so the call can't go on.
         self.server_down = None
+        # Set by the worker: stops the call's recording when the server says the caller objected.
+        self.stop_recording = None
         self._last_post: asyncio.Task | None = None
 
     def post(self, speaker: str, text: str, timings: dict[str, float]) -> asyncio.Task:
@@ -72,6 +74,10 @@ class Call:
             self.server_down()
             raise StopResponse()
         data = result.get("data") or {}
+        # The caller objected to being recorded (two-party consent): stop at once.
+        stop = (data.get("recording") or {}).get("action") == "stop"
+        if stop and self.stop_recording:
+            asyncio.create_task(self.stop_recording())
         notes = server_notes(data.get("hints", []))
         if notes:
             message.content.append("\n" + "\n".join(notes))
@@ -80,6 +86,9 @@ class Call:
             # Spoken from the server's text, never generated, and the caller can't cut it short.
             self.session.say(safety["text"], allow_interruptions=False)
             raise StopResponse()
+        if stop and data["recording"].get("text"):
+            # The server's line, said before the model answers the rest of what the caller said.
+            self.session.say(data["recording"]["text"])
 
     def agent_line(self, message: ChatMessage) -> None:
         """Called when an agent line has been spoken (or cut off)."""
