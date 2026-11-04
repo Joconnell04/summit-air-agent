@@ -43,6 +43,7 @@ def make_tool(
     hang_up: Callable[[RunContext, object], None],
     speak: Callable[[str], object],
     transfer: Transfer | None = None,
+    say_parts: Callable[[list[dict]], object] | None = None,
 ):
     schema = {k: spec[k] for k in ("name", "description", "parameters")}
 
@@ -60,6 +61,11 @@ def make_tool(
             # worker word for word, never by the model. end_call only carries a sentence on a
             # safety call.
             spoken = speak(result["say"])
+        parts = result["data"].get("parts") if result["ok"] else None
+        if parts and say_parts is not None:
+            # A read-back the caller asked to hear slower: the server's sentence in parts, the
+            # address at its own speed (app/pace.py), spoken word for word.
+            spoken = say_parts(parts)
         if ending and result["data"].get("hang_up"):
             # The server agreed: hang up once this turn's speech, and any line above, has played.
             hang_up(context, spoken)
@@ -84,8 +90,12 @@ def build_tools(
     hang_up: Callable[[RunContext, object], None],
     speak: Callable[[str], object],
     transfer: Transfer | None = None,
+    say_parts: Callable[[list[dict]], object] | None = None,
 ) -> list:
     """One tool per spec. `hang_up` runs only when the server's end_call result says to; `speak`
     says a line word for word with interruptions off and returns its speech handle; `transfer`,
-    when set, is asked after every person flag."""
-    return [make_tool(spec, server, bridge, log, hang_up, speak, transfer) for spec in specs]
+    when set, is asked after every person flag; `say_parts` speaks a sentence the server split by
+    speed."""
+    return [
+        make_tool(spec, server, bridge, log, hang_up, speak, transfer, say_parts) for spec in specs
+    ]

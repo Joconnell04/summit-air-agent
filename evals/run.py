@@ -2,6 +2,7 @@
 
 Usage: python -m evals.run [--suite smoke] [--tags flow:safety,...] [--stacks livekit,retell]
                            [--profiles fast,quality] [--samples N] [--workers 4] [--no-upload]
+       python -m evals.run --pairs all|<id>,... [--samples N]   two calls at once (evals/pairs.py)
 
 Code checks decide pass or fail; the grader can then fail a pass, never rescue a fail. A run where
 the simulated caller loops, never finishes or the harness breaks is marked error and has no
@@ -20,7 +21,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from app.tools import TOOLS
-from evals import compare, langsmith_sync, results, suites
+from evals import compare, langsmith_sync, pairs, results, suites
 from evals.caller import SimulatedCaller
 from evals.checks import Evidence, check_names, run_checks, safety_config
 from evals.compare import percentile
@@ -29,7 +30,7 @@ from evals.grader import grade, set_up
 from evals.models import Model, Usage, for_profile, load_config
 from evals.models import profile as models_profile
 from evals.results import RESULTS_DIR, Run, ScenarioResult, ToolCall, Turn
-from evals.scenario import Scenario, load_all
+from evals.scenario import Scenario, ScenarioError, load_all
 from evals.stacks import InProcessAgent, load_adapter
 from evals.transcribe import level_for, mishear, roughen, seeded
 from evals.world import World, resolve_caller, seeded_db
@@ -71,9 +72,10 @@ class Harness:
         agent = InProcessAgent(world.server, self.models.agent, call_id, caller_id, world.clock)
         return agent, world.server
 
-    def run(self, scenario: Scenario, sample: int = 1, caller_turns: list[str] | None = None
-            ) -> ScenarioResult:
-        """One simulated call. With caller_turns, those lines are replayed instead of a caller."""
+    def run(self, scenario: Scenario, sample: int = 1, caller_turns: list[str] | None = None,
+            open_agent: Callable | None = None) -> ScenarioResult:
+        """One simulated call. With caller_turns, those lines are replayed instead of a caller.
+        open_agent replaces the harness's own, as when two calls share one world (evals/pairs.py)."""
         call_id = f"eval-{scenario.id}-{sample}-{uuid.uuid4().hex[:8]}"
         began = time.perf_counter()
         transcript: list[Turn] = []
@@ -83,7 +85,7 @@ class Harness:
         error = ""
         server = None
         try:
-            agent, server = self.open_agent(scenario, call_id)
+            agent, server = (open_agent or self.open_agent)(scenario, call_id)
             call_id = getattr(agent, "call_id", call_id)
             # The caller knows the digits of the phone they're on, so a read-back of the caller ID
             # can be confirmed or corrected instead of guessed at.
@@ -232,6 +234,15 @@ def run_suite(harness: Harness, chosen: list[Scenario], samples: int, workers: i
         return list(pool.map(lambda job: harness.run(*job), jobs))
 
 
+def run_pair_suite(harness: Harness, chosen: list[pairs.Pair], samples: int, workers: int
+                   ) -> list[ScenarioResult]:
+    """Each pair's two calls run together; separate pairs and samples run side by side."""
+    jobs = [(p, n) for p in chosen for n in range(1, samples + 1)]
+    with ThreadPoolExecutor(max_workers=max(1, workers)) as pool:
+        found = pool.map(lambda job: pairs.run_pair(harness, *job), jobs)
+        return [r for pair_results in found for r in pair_results]
+
+
 def workers_for(stack: str, asked: int) -> int:
     """Retell scenarios share one mock that is reset before each, so they go one at a time."""
     if stack != "livekit" and asked > 1:
@@ -287,16 +298,29 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--workers", type=int, default=4)
     parser.add_argument("--no-upload", action="store_true")
     parser.add_argument("--results-dir", default=str(RESULTS_DIR))
+    parser.add_argument("--pairs", default="",
+                        help="all, or pair ids: two calls at once on one world (evals/pairs.py)")
     args = parser.parse_args(argv)
 
     tags = suites.parse_tags(args.tags)
-    named = args.suite or (None if tags else "smoke")
-    suite = named or "custom"
-    try:
-        chosen, samples = suites.select(load_all(), named, tags)
-    except suites.SuiteError as err:
-        print(err, file=sys.stderr)
-        return 2
+    if args.pairs:
+        if suites.parse_tags(args.stacks) != ["livekit"]:
+            print("pairs run on the livekit stack only: Retell's eval mock is reset before each "
+                  "call, so two calls cannot share it", file=sys.stderr)
+            return 2
+        try:
+            chosen, samples, suite = pairs.select(pairs.load_all(), args.pairs), 1, "pairs"
+        except ScenarioError as err:
+            print(err, file=sys.stderr)
+            return 2
+    else:
+        named = args.suite or (None if tags else "smoke")
+        suite = named or "custom"
+        try:
+            chosen, samples = suites.select(load_all(), named, tags)
+        except suites.SuiteError as err:
+            print(err, file=sys.stderr)
+            return 2
     samples = args.samples or samples
     profiles = suites.parse_tags(args.profiles) or [load_config()["default"]]
     results_dir = Path(args.results_dir)
@@ -307,7 +331,8 @@ def main(argv: list[str] | None = None) -> int:
             with tempfile.TemporaryDirectory(prefix="summit-eval-") as tmp:
                 harness = Harness(default_models(profile), stack, Path(tmp))
                 workers = workers_for(stack, args.workers)
-                scenario_results = run_suite(harness, chosen, samples, workers)
+                run_all = run_pair_suite if args.pairs else run_suite
+                scenario_results = run_all(harness, chosen, samples, workers)
             run = build_run(suite, tags, stack, profile, scenario_results)
             path = results.save(run, results_dir)
             print("\n".join(compare.report(run, compare.previous(run, results_dir))))
