@@ -199,7 +199,9 @@ DESCRIBES_TOOLS = re.compile(
 # no safety signal the model's own is dropped (eval round 4, no-heat-gas-stove).
 CARBON_MONOXIDE = re.compile(r"\bcarbon monoxide\b|\bco (?:alarm|detector)\b", re.IGNORECASE)
 # A priority claim. Only the server's own Urgent line may say it (eval round 4).
-CLAIMS_PRIORITY = re.compile(r"\btop priority\b|\bmost urgent\b|\bhighest priority\b", re.IGNORECASE)
+CLAIMS_PRIORITY = re.compile(
+    r"\btop[- ]priority\b|\bmost urgent\b|\bhighest[- ]priority\b", re.IGNORECASE
+)
 # Gas or carbon monoxide advice to leave or call 911. Only the server's safety lines say it; on
 # a call with no safety signal the model's own is dropped (eval round 4, gas-worry-no-smell).
 HAZARD = re.compile(r"\bgas\b|\bsmell|\bcarbon monoxide\b|\bfumes\b|\bco alarm\b", re.IGNORECASE)

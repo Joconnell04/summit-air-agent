@@ -259,3 +259,10 @@ def test_a_second_separate_question_in_one_reply_waits():
     assert reply.text(said, []) == "Do you know what kind of system it is? No worries if not."
     one = "Is it your place, or are you renting?"
     assert reply.text(one, []) == one
+
+
+def test_a_hyphenated_top_priority_claim_is_dropped_too():
+    """Eval run 20261104-052332, no-heat-unknown-caller."""
+    reply = assemble.SpokenReply()
+    said = "Since it's below 65 inside, this is a top-priority visit. Today I have 12 to 4."
+    assert reply.text(said, []) == "Today I have 12 to 4."
