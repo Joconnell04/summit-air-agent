@@ -176,6 +176,16 @@ ANNOUNCES_READ_BACK = re.compile(
     r"(?:details|address|number)",
     re.IGNORECASE,
 )
+# The model describing its own tools ("The tool says it's marked top priority"). Never said to a
+# caller (eval round 4, burning-dust-first-heat).
+DESCRIBES_TOOLS = re.compile(
+    r"\b(?:the|my|our) (?:tool|tools|system|server|records?)(?:'s)?\s+"
+    r"(?:says?|said|shows?|showed|marked|returned|gave|is giving|tells? me|flagged|came back)\b",
+    re.IGNORECASE,
+)
+# Carbon monoxide talk. Only the server's check question and safety lines raise it; on a call with
+# no safety signal the model's own is dropped (eval round 4, no-heat-gas-stove).
+CARBON_MONOXIDE = re.compile(r"\bcarbon monoxide\b|\bco (?:alarm|detector)\b", re.IGNORECASE)
 # A priority claim. Only the server's own Urgent line may say it (eval round 4).
 CLAIMS_PRIORITY = re.compile(r"\btop priority\b|\bmost urgent\b|\bhighest priority\b", re.IGNORECASE)
 # Gas or carbon monoxide advice to leave or call 911. Only the server's safety lines say it; on
@@ -284,6 +294,7 @@ class SpokenReply:
         self.streets: set[tuple[str, str]] = set()
         self.urgent = False
         self._dropped_restatement = False
+        self._asked = False
 
     def holding(self) -> bool:
         return self.safety_call or (self.address_checked and not self.read_back_confirmed)
@@ -326,12 +337,15 @@ class SpokenReply:
 
     def start_reply(self) -> None:
         self._dropped_restatement = False
+        self._asked = False
 
     def sentence(self, sentence: str) -> str:
         """One sentence of the model's text, in order within a reply, or "" when the caller
         shouldn't hear it."""
         after_restatement, self._dropped_restatement = self._dropped_restatement, False
-        if ANNOUNCES_READ_BACK.search(sentence):
+        if ANNOUNCES_READ_BACK.search(sentence) or DESCRIBES_TOOLS.search(sentence):
+            return ""
+        if not self.safety_call and CARBON_MONOXIDE.search(sentence):
             return ""
         if not self.urgent and CLAIMS_PRIORITY.search(sentence):
             return ""
@@ -342,6 +356,12 @@ class SpokenReply:
         if self._restates(sentence):
             self._dropped_restatement = True
             return ""
+        # One question a reply: a second separate question waits for the caller's answer to the
+        # first (eval round 4). A statement after it, such as "No worries if not.", stays.
+        if sentence.rstrip().endswith("?"):
+            if self._asked:
+                return ""
+            self._asked = True
         return sentence
 
     def _restates(self, sentence: str) -> bool:

@@ -82,9 +82,20 @@ def set_up(trace: dict, safety: dict) -> list[str]:
     return found
 
 
+KNOWLEDGE = Path(__file__).resolve().parent.parent / "tenants" / "summit-air" / "knowledge"
+
+
+def company_knowledge(folder: Path = KNOWLEDGE) -> str:
+    """The tenant's knowledge files, as the agent gets them, so the grader doesn't call a real
+    policy invented (eval round 4, wants-membership: "no price on the phone" is in the folder)."""
+    parts = [p.read_text().strip() for p in sorted(folder.glob("*.md")) if p.name != "README.md"]
+    return "\n\n".join(parts) or "Nothing."
+
+
 def grade(model: Model, turns: list[Turn], should: list[str], done: list[str] | None = None
           ) -> Grade:
     system = PROMPT.read_text().format(
+        knowledge=company_knowledge(),
         should="\n".join(f"- {s}" for s in should) or "- Nothing beyond the house rules.",
         set_up="\n".join(f"- {d}" for d in done or []) or "- Nothing.",
     )

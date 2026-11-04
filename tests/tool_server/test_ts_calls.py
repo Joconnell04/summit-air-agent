@@ -629,3 +629,16 @@ def test_each_caller_turn_says_what_the_call_already_knows(agent):
     note = server_notes([], known)[-1]
     assert note.startswith("[server] Already known, don't ask again: ZIP 11231;")
     assert len(note.split()) < 40
+
+
+def test_the_known_list_takes_the_name_and_own_or_rent_from_the_callers_lines(agent):
+    """Eval round 4 run 20261104-040959, spell-street-letter-by-letter."""
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "Hi, the heat's out in my home.")
+    turn = agent.turn(call, "Oh and my name's Ruth Adeyemi if you need it.")
+    assert turn["data"]["known"]["name"] == "Ruth Adeyemi"
+    assert turn["data"]["known"]["rents or owns"] == "owns"
+    renter = agent.start("(212) 555-0902")["data"]["call_id"]
+    assert agent.turn(renter, "I rent the place, my landlord is Dennis.")["data"]["known"] == {
+        "rents or owns": "rents"
+    }

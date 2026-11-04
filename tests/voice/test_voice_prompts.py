@@ -223,3 +223,39 @@ def test_gas_advice_is_dropped_on_a_call_with_no_safety_signal():
     reply.heard({"action": "speak_lines"})
     kept = "I'd recommend staying outside and calling 911 or the gas company now."
     assert reply.text(kept, []) == kept
+
+
+def test_the_knowledge_says_apartment_buildings_are_homes(agent):
+    """Eval round 4 run 20261104-040959, property-manager-books-building: the knowledge folder
+    still said "not whole buildings", against eval round 2's residential rule."""
+    text = assemble.instructions(agent.start()["data"], datetime(2026, 11, 2, 14, 0, tzinfo=UTC))
+    assert "whole buildings" not in text
+    assert "whole apartment buildings, including a building's shared boiler" in text
+
+
+def test_the_model_describing_its_tools_is_never_heard():
+    """Eval round 4 run 20261104-040959, burning-dust-first-heat."""
+    reply = assemble.SpokenReply()
+    said = "The tool says it's marked top priority. Today I have 12 to 4."
+    assert reply.text(said, []) == "Today I have 12 to 4."
+    assert reply.text("The system shows an opening today.", []) == ""
+    # The caller's own heating system is not a tool.
+    assert reply.text("Is the system a boiler?", []) == "Is the system a boiler?"
+
+
+def test_carbon_monoxide_talk_is_dropped_on_a_call_with_no_safety_signal():
+    """Eval round 4 run 20261104-040959, no-heat-gas-stove."""
+    reply = assemble.SpokenReply()
+    said = "Got it. Please don't use the stove for heat, it gives off carbon monoxide."
+    assert reply.text(said, []) == "Got it."
+    reply.heard({"action": "speak_lines"})
+    assert reply.text(said, []) == said
+
+
+def test_a_second_separate_question_in_one_reply_waits():
+    """Eval round 4: one question at a time; an "or" question is one question."""
+    reply = assemble.SpokenReply()
+    said = "Do you know what kind of system it is? No worries if not. How old is it, roughly?"
+    assert reply.text(said, []) == "Do you know what kind of system it is? No worries if not."
+    one = "Is it your place, or are you renting?"
+    assert reply.text(one, []) == one

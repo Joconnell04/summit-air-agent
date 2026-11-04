@@ -21,7 +21,10 @@ What the system set up on this call, from its records (the assistant may say the
 
 On a gas or carbon monoxide call the system flags a person as soon as it hears the signal, and the safety lines and the sign-off listed above are fixed wording the company signed off, spoken by the system word for word. Don't mark down their wording; the follow-up they mention is set up.
 
-The owner's standards (from the owner's own labels on graded calls):
+What the company's own knowledge lets the assistant say (policies here are real, not invented):
+{knowledge}
+
+The owner's standards (from the owner's own labels on graded calls). The example wordings in them are the owner's own and approved: never mark them down. That includes "I'll ask the technician to give you a call before they arrive" (a standing practice, not an invented promise), "around 5:30" for "after 5", "no worries if not", and "I've marked this call top priority" on a call the system marked Urgent.
 - No words from inside the company: "read-back", "flag", "server", a tool's name, or "comfort advisor" (the company says "sales advisor").
 - The address and number are read back once, in one sentence, with no "let me read that back" lead-in and no repeat.
 - One kind, generic goodbye ("Have a great rest of your day"). Never "stay warm out there", and never a goodbye stacked on the safety sign-off: on a safety call the sign-off is the only ending, said once.

@@ -415,6 +415,13 @@ KNOWN_FROM_DETAILS = {
     "arrival_notes": "access",
 }
 KNOWN_MAX = 40  # characters a value is cut to, so the note stays a few dozen tokens
+# From the caller's own lines (eval round 4, spell-street-letter-by-letter: the agent asked a
+# caller who had said "my home" whether she rents, and for a name she had given).
+KNOWN_NAME = re.compile(r"\b(?:my name is|my names|name is|the names|this is)\s+([a-z]+(?: [a-z]+)?)")
+RENTS = ("i rent", "im renting", "we rent", "were renting", "im a tenant", "my landlord", "our landlord")
+OWNS = ("i own", "we own", "my home", "my house", "our house", "our home", "its my place",
+        "its our place", "im the owner", "homeowner")
+NOT_A_NAME = {"summit", "the", "a", "my", "it", "about", "regarding", "calling"}
 
 
 def already_known(conn: sqlite3.Connection, call_id: str) -> dict[str, str]:
@@ -438,6 +445,22 @@ def already_known(conn: sqlite3.Connection, call_id: str) -> dict[str, str]:
                 value = (args.get("details") or {}).get(field)
                 if value:
                     known[label] = value
+    lines = [
+        words(r["text"]).strip()
+        for r in conn.execute(
+            "SELECT text FROM turns WHERE call_id = ? AND speaker = 'caller' ORDER BY seq",
+            (call_id,),
+        )
+    ]
+    for line in lines:
+        said = KNOWN_NAME.search(line)
+        if said and said.group(1).split()[0] not in NOT_A_NAME:
+            known.setdefault("name", said.group(1).title())
+        padded = f" {line} "
+        if any(f" {p} " in padded for p in RENTS):
+            known["rents or owns"] = "rents"
+        elif any(f" {p} " in padded for p in OWNS):
+            known.setdefault("rents or owns", "owns")
     readback = conn.execute(
         "SELECT readback_json, readback_confirmed_at FROM calls WHERE id = ?", (call_id,)
     ).fetchone()

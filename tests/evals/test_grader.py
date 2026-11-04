@@ -93,3 +93,12 @@ def test_the_grader_is_told_when_the_system_marked_the_call_urgent():
     line = "I've marked this call top priority, so you get our soonest opening. Today I have 12 to 4."
     found = set_up(trace(events=[tool("find_slots", line)]), SAFETY)
     assert "The system marked this call Urgent and said so (top priority)." in found
+
+
+def test_the_grader_sees_the_company_knowledge_and_the_approved_wordings():
+    """Eval round 4: a policy from the knowledge folder and Jackson's own wording were marked down."""
+    model = ScriptedModel([grade_reply()])
+    grade(model, TURNS, [], [])
+    system = model.calls[0]["system"]
+    assert "No price is quoted on the phone" in system
+    assert "I'll ask the technician to give you a call before they arrive" in system
