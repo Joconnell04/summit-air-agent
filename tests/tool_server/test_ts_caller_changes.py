@@ -404,3 +404,128 @@ def test_a_question_from_a_dropped_call_is_asked_again(agent, scenarios):
     agent.say(again, refused["say"])
     agent.turn(again, "Maria Delgado.")
     assert agent.tool("cancel_appointment", again, booking_id=maria["jobId"], reason="fixed")["ok"]
+
+
+# ---- the heads-up to the number on file ---------------------------------------------------------
+
+
+def cancel_from_unknown_number(agent, scenarios) -> tuple[str, dict]:
+    call, maria = unknown_caller_finds_maria(agent, scenarios)
+    agent.turn(call, "It's Maria Delgado.")
+    assert agent.tool("cancel_appointment", call, booking_id=maria["jobId"], reason="fixed")["ok"]
+    return call, maria
+
+
+def heads_ups(agent) -> list:
+    conn = agent.db()
+    try:
+        return [dict(r) for r in conn.execute("SELECT * FROM heads_ups ORDER BY id")]
+    finally:
+        conn.close()
+
+
+def test_the_allowlist_parses_ten_digit_numbers_only():
+    from app.heads_up import allowlist, may_dial
+
+    allowed = allowlist({"HEADSUP_ALLOWLIST": "(212) 555-0100, 555-0101,,not a number"})
+    assert allowed == frozenset({"2125550100"})
+    assert may_dial("212.555.0100", allowed) and not may_dial("2125550199", allowed)
+    assert allowlist({}) == frozenset()
+
+
+def test_a_change_from_an_unknown_number_off_the_allowlist_is_never_dialed(agent, mock, scenarios):
+    call, maria = cancel_from_unknown_number(agent, scenarios)
+    [row] = heads_ups(agent)
+    assert (row["status"], row["result"]) == ("would_call", "not on the allowlist")
+    assert row["phone"] == "".join(c for c in maria["phone"] if c.isdigit())
+    assert "was cancelled by a caller from another number" in row["line"]
+    agent.end(call)
+    assert agent.client.post("/outbound/claim", json={"worker": "w"}).json()["data"]["outbound"] is None
+    notes = [r["text"] for r in st(mock, "SELECT text FROM notes WHERE job_id = ?", maria["jobId"])]
+    assert any(n.startswith("Heads-up would have been sent to the number on file") for n in notes)
+    html = signed_in(agent).client.get(f"/owner/calls/{call}").text
+    assert "Heads-up would have been sent to the number on file at" in html
+
+
+def test_a_known_number_gets_no_heads_up(agent, scenarios):
+    maria = scenarios["repeatCallerOpenJob"]
+    call = agent.start(maria["phone"])["data"]["call_id"]
+    agent.turn(call, "Cancel my visit please.")
+    assert agent.tool("cancel_appointment", call, booking_id=maria["jobId"], reason="fixed")["ok"]
+    assert heads_ups(agent) == []
+
+
+def test_a_failed_check_gets_no_heads_up(agent, scenarios):
+    call, maria = unknown_caller_finds_maria(agent, scenarios)
+    for _ in range(3):
+        refused = agent.tool("cancel_appointment", call, booking_id=maria["jobId"], reason="x")
+        agent.say(call, refused["say"])
+        agent.turn(call, "Joanne Price.")
+    assert heads_ups(agent) == []
+
+
+def test_an_allowed_heads_up_is_dialed_after_the_call_once_and_noted(tmp_path, clock, mock,
+                                                                    scenarios):
+    from toolkit import Agent, make_server
+
+    maria = scenarios["repeatCallerOpenJob"]
+    allowed = frozenset({"".join(c for c in maria["phone"] if c.isdigit())})
+    agent = Agent(make_server(tmp_path, clock, mock[0], headsup_allowlist=allowed), clock)
+    call, _ = cancel_from_unknown_number(agent, scenarios)
+    assert heads_ups(agent)[0]["status"] == "queued"
+    # Not during the call.
+    assert agent.client.post("/outbound/claim", json={"worker": "w"}).json()["data"]["outbound"] is None
+    agent.end(call)
+    claim = agent.client.post("/outbound/claim", json={"worker": "w"}).json()["data"]["outbound"]
+    assert claim["kind"] == "heads_up" and claim["opening_line"].startswith("This is Summit Air.")
+    assert agent.client.post("/outbound/claim", json={"worker": "w"}).json()["data"]["outbound"] is None
+    done = agent.client.post(f"/outbound/heads-up/{claim['outbound_id']}/done",
+                             json={"answered": False, "voicemail": True}).json()
+    assert done["ok"] and done["data"]["result"] == "voicemail"
+    again = agent.client.post(f"/outbound/heads-up/{claim['outbound_id']}/done",
+                              json={"answered": True}).json()
+    assert again["refused"] == "invalid_state", "one attempt"
+    notes = [r["text"] for r in st(mock, "SELECT text FROM notes WHERE job_id = ?", maria["jobId"])]
+    assert any(n.startswith("Heads-up sent to the number on file") and "voicemail" in n
+               for n in notes)
+
+
+def test_a_number_taken_off_the_allowlist_before_the_claim_is_not_dialed(tmp_path, clock, mock,
+                                                                        scenarios):
+    from toolkit import Agent, make_server
+
+    maria = scenarios["repeatCallerOpenJob"]
+    allowed = frozenset({"".join(c for c in maria["phone"] if c.isdigit())})
+    app = make_server(tmp_path, clock, mock[0], headsup_allowlist=allowed)
+    agent = Agent(app, clock)
+    call, _ = cancel_from_unknown_number(agent, scenarios)
+    agent.end(call)
+    app.state.services.settings.headsup_allowlist = frozenset()
+    assert agent.client.post("/outbound/claim", json={"worker": "w"}).json()["data"]["outbound"] is None
+    assert heads_ups(agent)[0]["status"] == "would_call"
+
+
+def test_a_customer_found_by_address_comes_back_without_name_or_numbers(agent, scenarios):
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "I need to cancel the visit at 620 Bedford Avenue, 11235.")
+    found = agent.tool("find_customer", call,
+                       address={"street": "620 Bedford Ave", "unit": "", "zip": "11235"})
+    match = found["data"]["matches"][0]
+    assert match["name"] == "" and match["phones"] == [] and match["withheld"]
+    agent.turn(call, "It's Maria Delgado.")
+    again = agent.tool("find_customer", call,
+                       address={"street": "620 Bedford Ave", "unit": "", "zip": "11235"})
+    assert again["data"]["matches"][0]["name"] == "Maria Delgado"
+
+
+def test_a_spouse_named_later_does_not_reopen_which_account(agent, mock, scenarios):
+    """Eval run 20261104-200156, shared-phone-names-self: "my wife, Marisol" after "this is
+    Hector" asked whose name the visit goes under."""
+    call, address = shared_call(agent, scenarios, "Hi, this is Hector Ruiz, a tune-up please.")
+    agent.confirm_read_back(call, address)
+    agent.turn(call, "It's just me and my wife, Marisol, at home.")
+    booked = book(agent, call, first_open(agent, call))
+    assert booked["ok"], booked
+    owner = st(mock, "SELECT c.name FROM jobs j JOIN customers c ON c.id = j.customer_id "
+                     "WHERE j.id = ?", booked["data"]["booking_id"])[0]
+    assert owner["name"] == "Hector Ruiz"

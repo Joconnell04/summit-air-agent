@@ -173,7 +173,9 @@ async def entrypoint(ctx: JobContext) -> None:
     if not lines.take(call_id):
         if outbound:
             # The poller only claims below the cap, so this is a race: report it as not placed.
-            await tools_server.outbound_done(outbound["outbound_id"], False, False)
+            await tools_server.outbound_done(
+                outbound["outbound_id"], False, False, outbound.get("kind", "")
+            )
             await tools_server.aclose()
             ctx.shutdown("at capacity")
             return
@@ -374,10 +376,12 @@ async def place_outbound(
     ctx, session, agent, player, claim: dict, spoken: dict, tools_server: ToolServer, record, data
 ) -> None:
     """Journey 12. The server chose this call and checked its rules when it was claimed; one dial,
-    a voicemail at most, and the result goes back to the server."""
+    a voicemail at most, and the result goes back to the server. A heads-up (app/heads_up.py) says
+    its one sentence to a person or a voicemail alike, then hangs up."""
+    kind = claim.get("kind", "")
     if not settings.outbound_trunk_id:
         log.warning("outbound call skipped: LIVEKIT_OUTBOUND_TRUNK_ID is not set")
-        await tools_server.outbound_done(claim["outbound_id"], False, False)
+        await tools_server.outbound_done(claim["outbound_id"], False, False, kind)
         ctx.shutdown("no outbound trunk")
         return
     await session.start(room=ctx.room, agent=agent)
@@ -394,11 +398,19 @@ async def place_outbound(
             )
         except api.TwirpError as exc:
             log.warning("outbound call not answered: %s", exc.message)
-            await tools_server.outbound_done(claim["outbound_id"], False, False)
+            await tools_server.outbound_done(claim["outbound_id"], False, False, kind)
             ctx.shutdown("not answered")
             return
         result = await detector.execute()
     await player.start(room=ctx.room, agent_session=session)
+    if kind == "heads_up":
+        human = result.category == AMDCategory.HUMAN
+        voicemail = result.category == AMDCategory.MACHINE_VM
+        if human or voicemail:
+            await session.say(claim["opening_line"], allow_interruptions=False).wait_for_playout()
+        await tools_server.outbound_done(claim["outbound_id"], human, voicemail, kind)
+        await ctx.delete_room()
+        return
     if result.category != AMDCategory.HUMAN:
         voicemail = result.category == AMDCategory.MACHINE_VM
         if voicemail:

@@ -108,6 +108,9 @@ def timeline(conn: sqlite3.Connection, call_id: str) -> dict | None:
         "identity_checks": rows(
             "SELECT customer_id, status, asks, callback_id FROM identity_checks WHERE call_id = ?"
         ),
+        "heads_ups": rows(
+            "SELECT id, customer_id, job_id, status, result, line FROM heads_ups WHERE call_id = ?"
+        ),
     }
 
 

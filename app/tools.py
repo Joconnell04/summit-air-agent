@@ -15,7 +15,7 @@ from dataclasses import dataclass, field
 from datetime import date, datetime, time, timedelta
 from itertools import pairwise
 
-from . import booking, geocode, lookup, outbound, pace, records, safety, transfer, weather
+from . import booking, geocode, heads_up, lookup, outbound, pace, records, safety, transfer, weather
 from . import capacity as capacity_rules
 from . import priority as prio
 from .db import iso, tx
@@ -81,6 +81,8 @@ class Ctx:
     numbers: Mapping[str, str] = field(default_factory=lambda: os.environ)
     # The address lookup (app/geocode.py); None when GEOCODER is off, and the agent asks for ZIPs.
     geocoder: geocode.Geocoder | None = None
+    # The numbers a heads-up call may dial (app/heads_up.py); empty dials none.
+    heads_up_allowlist: frozenset[str] = frozenset()
 
     def reload(self) -> None:
         self.call = records.get_call(self.conn, self.call["id"])
@@ -837,7 +839,11 @@ def _identity_gate(ctx: Ctx, customer_id: int, addresses: list[dict], thing: str
                  check["asks"] if check else 0, iso(ctx.now)),
             )
         return True
-    note = "ask it as written; never say the name or address on file for the caller to confirm"
+    note = (
+        "this question was said for you. When the caller answers, call this tool again: the "
+        "server checks the answer. Never say whether it matches, and never say the name or "
+        "address on file"
+    )
     if check is None:
         with tx(ctx.conn):
             ctx.conn.execute(
@@ -896,9 +902,12 @@ def _mismatch_callback(ctx: Ctx) -> sqlite3.Row | None:
     ).fetchone()
 
 
-def _note_unknown_number(ctx: Ctx, customer_id: int, job_id: int | None, what: str) -> None:
-    """The office's note on a change made from a number not on the account. A note that fails
-    leaves the change standing; the identity check's row records it either way."""
+def _note_unknown_number(
+    ctx: Ctx, customer_id: int, job_id: int | None, what: str, change: str
+) -> None:
+    """After a change made from a number not on the account: the office's note, and a heads-up
+    call to the number on file once this call ends (app/heads_up.py). `change` is what the
+    heads-up says happened. A note that fails leaves the change standing."""
     try:
         ctx.fsm.add_note(
             _key(ctx, f"identity_note:{what}", {"customer": customer_id, "job": job_id}),
@@ -907,7 +916,17 @@ def _note_unknown_number(ctx: Ctx, customer_id: int, job_id: int | None, what: s
             job_id,
         )
     except (FsmUnavailable, FsmRejected):
-        return
+        pass
+    heads_up.queue(
+        ctx.conn, ctx.tenant, ctx.fsm, ctx.call, customer_id, job_id,
+        _on_file_phone(ctx, customer_id), change, ctx.heads_up_allowlist, ctx.now,
+    )
+
+
+def _visit_spoken(ctx: Ctx, start: str, end: str) -> str:
+    """ "Thursday between 8 and 12", for the heads-up sentence."""
+    window = lookup.window_text(ctx.tenant, start, end)
+    return f"{window['weekday']} between {window['label'].replace(' to ', ' and ')}"
 
 
 # ---- two accounts on one number ---------------------------------------------------------------
@@ -921,6 +940,28 @@ def _distinct_names(names: dict[int, str]) -> dict[int, set[str]]:
         cid: own - set().union(*(o for other, o in sets.items() if other != cid))
         for cid, own in sets.items()
     }
+
+
+# Words before a name that make it someone else's: "my wife, Marisol" names the other account.
+RELATION_WORDS = {
+    "wife", "husband", "partner", "son", "daughter", "mother", "mom", "father", "dad", "sister",
+    "brother", "spouse",
+}
+
+
+def _account_said(ctx: Ctx, distinct: dict[int, set[str]]) -> int | None:
+    """The account whose own name word the caller used for themselves or for the visit: in the
+    latest caller line that names one, the first such name not right after a relation word. None
+    when no line names one."""
+    for row in reversed(_caller_lines(ctx)):
+        tokens = _name_words(row["text"])
+        for i, token in enumerate(tokens):
+            if any(t in RELATION_WORDS for t in tokens[max(0, i - 2):i]):
+                continue
+            found = [cid for cid, own in distinct.items() if token in own]
+            if len(found) == 1:
+                return found[0]
+    return None
 
 
 def _number_accounts(ctx: Ctx) -> list[int]:
@@ -952,13 +993,9 @@ def _account_named(ctx: Ctx, readback: dict) -> int | None:
         names = {cid: ctx.fsm.customer(cid)["name"] for cid in accounts}
     except (FsmUnavailable, FsmRejected):
         return None
-    caller = words(records.caller_text(ctx.conn, ctx.call["id"]))
-    said = [
-        cid for cid, own in _distinct_names(names).items()
-        if own and any(f" {w} " in caller for w in own)
-    ]
-    if len(said) == 1:
-        return said[0]
+    said = _account_said(ctx, _distinct_names(names))
+    if said is not None:
+        return said
     # Asked twice with no one name in the answers: the first account, for a person to check.
     asked = ctx.conn.execute(
         "SELECT COUNT(*) FROM tool_calls WHERE call_id = ? AND refused = 'account_which'",
@@ -1006,7 +1043,26 @@ def find_customer(ctx: Ctx, args: FindCustomerIn) -> Result:
                 ctx.conn, ctx.call["id"], customer["id"], matched_by, customer["type"]
             )
     bundles = [lookup.customer_bundle(ctx.fsm, ctx.tenant, ctx.conn, c, ctx.now) for c in customers]
-    return ok(matches=bundles, needs_unit=needs_unit)
+    return ok(matches=[_unsaid_withheld(ctx, b) for b in bundles], needs_unit=needs_unit)
+
+
+def _unsaid_withheld(ctx: Ctx, bundle: dict) -> dict:
+    """A customer found from what a caller said, not from the number they called from: the name
+    and numbers on file are left out until the caller has said the surname, so the agent can't
+    read them out for a yes or tell a stranger whose account it is (issue #128)."""
+    scoped = records.scoped_customers(ctx.conn, ctx.call["id"]).get(bundle["customer_id"])
+    if scoped is not None and scoped["matched_by"] == "caller_id":
+        return bundle
+    surname = _surname(bundle["name"])
+    if surname and _has_word(records.caller_text(ctx.conn, ctx.call["id"]), surname):
+        return bundle
+    return {
+        **bundle,
+        "name": "",
+        "phones": [],
+        "withheld": "the name and numbers on file are not shown until the caller says them; "
+        "a change asks for them first",
+    }
 
 
 def get_customer_history(ctx: Ctx, args: HistoryIn) -> Result:
@@ -1980,7 +2036,11 @@ def reschedule_appointment(ctx: Ctx, args: RescheduleIn) -> Result:
             (iso(window_start), iso(window_end), iso(ctx.now), row_id),
         )
     if checked:
-        _note_unknown_number(ctx, job["customerId"], job["id"], "Visit moved by phone.")
+        _note_unknown_number(
+            ctx, job["customerId"], job["id"], "Visit moved by phone.",
+            "Your visit was moved to "
+            + _visit_spoken(ctx, iso(window_start), iso(window_end)),
+        )
     when = _describe(
         ctx,
         {
@@ -2026,7 +2086,14 @@ def cancel_appointment(ctx: Ctx, args: CancelIn) -> Result:
             (iso(ctx.now), row_id),
         )
     if checked:
-        _note_unknown_number(ctx, job["customerId"], job["id"], "Visit cancelled by phone.")
+        try:
+            was = ctx.fsm.appointments(job["id"])[-1]
+            change = "Your visit on " + _visit_spoken(
+                ctx, was["arrivalWindowStart"], was["arrivalWindowEnd"]
+            ) + " was cancelled"
+        except (FsmUnavailable, FsmRejected, IndexError):
+            change = "Your upcoming visit was cancelled"
+        _note_unknown_number(ctx, job["customerId"], job["id"], "Visit cancelled by phone.", change)
     job_type = ctx.tenant.job_types.get(ctx.tenant.job_type_codes.get(job["jobTypeId"], ""))
     alternatives = _alternatives(ctx, job_type, job["priority"]) if job_type else []
     say = "That visit is cancelled."
@@ -2238,11 +2305,24 @@ def record_move(ctx: Ctx, args: MoveIn) -> Result:
                 ctx.now, "High",
             )
     if checked:
-        _note_unknown_number(ctx, customer_id, None, "Address change by phone.")
+        _note_unknown_number(ctx, customer_id, None, "Address change by phone.",
+                             "The address on your account was changed")
     if in_area:
         say = ctx.tenant.line("move_done", street=_place(new))
         if moved:
-            say += " " + ctx.tenant.line("move_visit_moved")
+            visit = next(j for j in jobs if j["id"] == moved[0])
+            try:
+                appointment = [a for a in ctx.fsm.appointments(visit["id"])
+                               if a["status"] != "Canceled"][-1]
+                when = _visit_spoken(
+                    ctx, appointment["arrivalWindowStart"], appointment["arrivalWindowEnd"]
+                )
+            except (FsmUnavailable, FsmRejected, IndexError):
+                when = ""
+            say += " " + (
+                ctx.tenant.line("move_visit_moved_when", when=when) if when
+                else ctx.tenant.line("move_visit_moved")
+            )
     else:
         say = ctx.tenant.line("move_out_of_area")
         if cancelled:

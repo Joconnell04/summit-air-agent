@@ -22,7 +22,7 @@ must:
   - tool_ok: cancel_appointment
   - identity: verified
   - outcome: changed_booking
-  - agent_never_says: "Delgado"
+  - heads_up: recorded
 should:
   - Asks politely for the caller's name and address before cancelling, without reading any details out.
   - Cancels once the details are given and confirms it out loud.

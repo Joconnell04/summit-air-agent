@@ -104,7 +104,7 @@ error: {{ item.tech.error }}{% endif %}</div>
     <aside class="stack">
       <section class="panel compact">
         <div class="panel-head"><h2>What happened</h2></div>
-        <div class="panel-body"><p>{{ p.summary }}</p>{% for line in p.moves %}<p>{{ line }}</p>{% endfor %}</div>
+        <div class="panel-body"><p>{{ p.summary }}</p>{% for line in p.moves %}<p>{{ line }}</p>{% endfor %}{% for line in p.heads_ups %}<p>{{ line }}</p>{% endfor %}</div>
       </section>
 
       {% if p.booking %}

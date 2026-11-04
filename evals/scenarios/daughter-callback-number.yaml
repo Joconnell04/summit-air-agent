@@ -21,7 +21,7 @@ script:
 must:
   - booking: {count: 1, job_type: tune_up}
   - read_back: before_booking
-  - job_contact: {phone: "6465550142", for: "Ana"}
+  - job_contact: {phone: "6465550142", for: "daughter"}
 should:
   - Reads back Ana's number as the number for the visit, saying it reaches Ana.
   - Doesn't change the caller's own number on the account.

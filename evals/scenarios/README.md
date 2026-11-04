@@ -89,5 +89,6 @@ Each `must` item is `- <check>: <argument>`. They read the tool server's record 
 | `identity` | `verified`, `mismatch` or `none` | the name and address check for a change from a number not on the account; `verified` also needs the office's note on each job changed |
 | `job_contact` | `{phone, for}` | the booked job's contact line in ServiceTitan has that number and names `for`, the job shows the account's own number, and the customer's numbers don't include it |
 | `booked_under` | a customer name | the booked job is on that customer in ServiceTitan |
+| `heads_up` | `recorded` or `none` | a heads-up call to the number on file was stored (sent, queued, or recorded as would-have-called, since the eval world's allowlist is empty), or none was |
 
 Job types: `no_heat`, `no_cooling`, `tune_up`, `safety_check`, `estimate`. Priorities: Low, Normal, High, Urgent.

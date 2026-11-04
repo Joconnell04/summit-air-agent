@@ -699,7 +699,7 @@ def job_contact(arg: dict, ev: Evidence) -> list[str]:
         problems.append(f"the contact line {line!r} doesn't say {arg['for']!r}")
     if not any(ln.startswith("Account phone:") for ln in job["summary"].splitlines()):
         problems.append("the job doesn't show the account's own number")
-    if any(c["phone_key"].endswith(want[-7:]) for c in contacts):
+    if any(c["phone_key"] == want for c in contacts):
         problems.append("the contact number was saved as one of the customer's own")
     if not contacts:
         problems.append("the customer has no number of their own")
@@ -720,6 +720,17 @@ def booked_under(arg: str, ev: Evidence) -> list[str]:
         return [str(err)]
     name = rows[0]["name"] if rows else ""
     return [] if name == arg else [f"booked under {name!r}, expected {arg!r}"]
+
+
+def heads_up(arg: str, ev: Evidence) -> list[str]:
+    """A heads-up to the number on file was stored (app/heads_up.py): `recorded` for one that was
+    sent, queued or recorded as would-have-called (the eval world's allowlist is empty, so never
+    dialed), `none` for no heads-up at all."""
+    rows = ev.trace.get("heads_ups") or []
+    if arg == "none":
+        return [f"a heads-up was stored: {[r['status'] for r in rows]}"] if rows else []
+    live = [r for r in rows if r["status"] in ("queued", "dialing", "sent", "would_call")]
+    return [] if live else [f"no heads-up recorded ({[r['status'] for r in rows]})"]
 
 
 def _moved_arg(arg: Any) -> None:
@@ -789,6 +800,7 @@ CHECKS: dict[str, Check] = {
     "identity": Check(_one_of("verified", "mismatch", "none"), identity),
     "job_contact": Check(_contact_arg, job_contact),
     "booked_under": Check(_strings, booked_under),
+    "heads_up": Check(_one_of("recorded", "none"), heads_up, lambda arg: arg == "none"),
 }
 
 

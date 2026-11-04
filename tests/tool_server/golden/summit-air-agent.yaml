@@ -205,6 +205,8 @@ lines:
     by {time} to confirm.
   fsm_unavailable_no_callback: I can't get to that right now, but I've written it all down for the team.
   handoff_now: Transferring you to a person now.
+  heads_up: This is Summit Air. {change} by a caller from another number. If that wasn't you, please call
+    us back at {phone}.
   identity_check: Of course. And just to confirm you're the person for the {thing}, could you tell me
     your name and the address?
   identity_check_address: Thanks. And what's the address?
@@ -223,6 +225,7 @@ lines:
     so we won't be able to come out there, and I've made a note on your account.
   move_visit_cancelled: I've also cancelled the visit you had at the old address, so nobody heads there.
   move_visit_moved: Your upcoming visit is now set for the new address, same day and time.
+  move_visit_moved_when: Your visit {when} is now set for the new address, same time.
   move_visit_person: A technician is already on the way to the old address, so someone from our office
     will call you to sort that out.
   move_which: Which address did you move from?

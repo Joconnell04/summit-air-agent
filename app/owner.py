@@ -11,7 +11,7 @@ import sqlite3
 from collections import Counter
 from datetime import date, datetime, time, timedelta
 
-from . import records, summary
+from . import heads_up, records, summary
 from .db import iso, parse_iso
 from .tenant import Tenant
 from .text import phone_display
@@ -860,6 +860,7 @@ def call_page(conn: sqlite3.Connection, tenant: Tenant, trace: dict, now: dateti
             "account_phone": phone_display(request.get("account_phone") or ""),
         } if request.get("contact_for") else None,
         "moves": [_move_line(m) for m in trace.get("address_moves") or []],
+        "heads_ups": heads_up.for_call(conn, tenant, call["id"]),
     }
 
 

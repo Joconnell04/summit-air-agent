@@ -599,3 +599,23 @@ CREATE TABLE IF NOT EXISTS address_moves (
     at TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS ix_address_moves_call ON address_moves (call_id);
+
+-- A heads-up call to the customer's number on file after a change made from another number
+-- (app/heads_up.py). queued waits for the call to end; dialing, then sent with `result` answered,
+-- voicemail or no_answer; would_call when the number isn't on HEADSUP_ALLOWLIST (never dialed);
+-- skipped for a do-not-call number. `line` is the sentence said once.
+CREATE TABLE IF NOT EXISTS heads_ups (
+    id INTEGER PRIMARY KEY,
+    tenant TEXT NOT NULL,
+    call_id TEXT NOT NULL REFERENCES calls (id) ON DELETE CASCADE,
+    customer_id INTEGER NOT NULL,
+    job_id INTEGER,
+    phone TEXT NOT NULL,
+    line TEXT NOT NULL,
+    status TEXT NOT NULL CHECK (status IN ('queued', 'dialing', 'sent', 'would_call', 'skipped')),
+    result TEXT,
+    placed_call_id TEXT,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS ix_heads_ups_status ON heads_ups (status);

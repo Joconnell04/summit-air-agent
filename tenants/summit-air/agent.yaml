@@ -394,6 +394,7 @@ lines:
   move_which: Which address did you move from?
   move_done: Thanks for letting us know. I've updated your address to {street}.
   move_visit_moved: Your upcoming visit is now set for the new address, same day and time.
+  move_visit_moved_when: Your visit {when} is now set for the new address, same time.
   move_out_of_area: >-
     Thanks for letting us know. I'm sorry, the new address is outside the area we cover, so we
     won't be able to come out there, and I've made a note on your account.
@@ -402,6 +403,11 @@ lines:
   move_visit_person: >-
     A technician is already on the way to the old address, so someone from our office will call
     you to sort that out.
+  # The heads-up call to the number on file after a change from another number (app/heads_up.py),
+  # said once, also as the voicemail. {change} is what happened; {phone} is our number, read out.
+  heads_up: >-
+    This is Summit Air. {change} by a caller from another number. If that wasn't you, please call
+    us back at {phone}.
   moved_from_address: Our records show you've moved from that address. Where should the technician go?
   location_superseded: >-
     That visit is still set for your old address, so let me have someone from our office sort it
