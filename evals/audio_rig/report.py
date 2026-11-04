@@ -93,6 +93,12 @@ class Stack:
         return sum(1 for s in self.scenarios if s.outcome != "error"
                    for t in s.turn_timings if t.reply_delay_ms == 0)
 
+    def cut_ins(self) -> int:
+        """Turns where the agent made a sound before the caller had finished their line. On our
+        stack, which never backchannels, each is the agent starting a reply in a pause mid-line."""
+        return sum(1 for s in self.scenarios if s.outcome != "error"
+                   for t in s.turn_timings if t.over_caller_ms is not None)
+
     def silent(self) -> int:
         return sum(s.silent_turns for s in self.scenarios)
 
@@ -138,7 +144,7 @@ def ms(values: list[float], share: float) -> str:
 def table(stacks: list[Stack]) -> list[str]:
     signed_off = lines_by_kind()
     header = ("| Stack | Calls | Plain median | Plain slowest 10% | Lookup median "
-              "| Lookup slowest 10% | Talked over / silent | Must-pass checks held | Grader passed "
+              "| Lookup slowest 10% | Talked over / sound over caller / silent | Must-pass checks held | Grader passed "
               "| Safety lines word for word | Stack cost per call | All-in per call |")
     rows = [header, "|---|---|---|---|---|---|---|---|---|---|---|---|"]
     for st in stacks:
@@ -153,7 +159,7 @@ def table(stacks: list[Stack]) -> list[str]:
         rows.append(
             f"| {st.name} | {len(st.scenarios)} | {ms(plain, .5)} ({len(plain)}) | {ms(plain, .9)} "
             f"| {ms(lookup, .5)} ({len(lookup)}) | {ms(lookup, .9)} "
-            f"| {st.talk_overs()} / {st.silent()} | {held} of {len(must)} | {liked} of {len(graded)} | {exact} of {len(safety)} "
+            f"| {st.talk_overs()} / {st.cut_ins()} / {st.silent()} | {held} of {len(must)} | {liked} of {len(graded)} | {exact} of {len(safety)} "
             f"| ${stack_cost:.3f} | ${all_in:.3f} |"
         )
     return rows

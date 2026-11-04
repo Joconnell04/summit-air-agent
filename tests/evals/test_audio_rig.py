@@ -21,6 +21,7 @@ from evals.audio_rig.rig import (
     load_entrant,
     must_repeat,
     newest_agent_timings,
+    newest_caller_timings,
     plan,
     tool_count,
 )
@@ -152,6 +153,40 @@ def test_a_backchannel_while_the_caller_talks_is_not_the_reply(monkeypatch):
 
     heard = asyncio.run(go())
     assert heard.first_sound == pytest.approx(51.5)
+
+
+def test_a_reply_started_in_a_pause_mid_line_is_sound_over_the_caller(monkeypatch):
+    monkeypatch.setattr(line_mod, "QUIET_S", 0.0)
+    clock = Clock(50.0)
+    lst = listener(clock)
+    lst.new_turn()
+    clock.t = 50.4
+    lst.audio(tone(300), RATE)  # the agent starts at 50.4, in a pause before the caller goes on
+    clock.t = 51.5
+    lst.audio(tone(400), RATE)  # and answers again after the caller finished at 51.2
+
+    async def go():
+        clock.t = 53.0
+        return await lst.turn(signals_done=False, since=51.2)
+
+    heard = asyncio.run(go())
+    assert heard.over_caller == pytest.approx(50.4)
+    assert heard.first_sound == pytest.approx(51.5)
+
+
+def test_a_quiet_line_while_the_caller_talks_is_no_sound_over_the_caller():
+    clock = Clock(50.0)
+    lst = listener(clock)
+    lst.new_turn()
+    lst.audio(silence(800), RATE, live=True)
+    clock.t = 51.0
+    lst.audio(tone(400), RATE, live=True)
+
+    async def go():
+        clock.t = 51.4 + line_mod.QUIET_S + 0.1
+        return await lst.turn(signals_done=False, since=50.9)
+
+    assert asyncio.run(go()).over_caller is None
 
 
 def test_sample_at_finds_the_sample_playing_at_a_time():
@@ -339,6 +374,16 @@ def test_the_voice_programs_own_timing_is_read_from_its_newest_line():
     assert newest_agent_timings(trace, 2) == ({}, 2)
 
 
+def test_the_caller_lines_stage_timings_come_from_the_newest_caller_line():
+    trace = {"events": [
+        {"type": "turn", "speaker": "caller", "timings": {"end_of_turn_ms": 400.0}},
+        {"type": "turn", "speaker": "agent", "timings": {}},
+        {"type": "turn", "speaker": "caller", "timings": {"end_of_turn_ms": 310.0}},
+    ]}
+    assert newest_caller_timings(trace) == {"end_of_turn_ms": 310.0}
+    assert newest_caller_timings({"events": []}) == {}
+
+
 def test_unknown_entrants_are_refused():
     with pytest.raises(ValueError):
         load_entrant("vapi")
@@ -406,7 +451,7 @@ class FakeLine:
         await asyncio.sleep(0.4)
         self.listener.audio(tone(500), RATE)
         self.listener.said(text)
-        self.server.turn(self.call_id, "agent", text)
+        self.server.turn(self.call_id, "agent", text, {"tts_first_byte_ms": 150.0})
         self.listener.done()
 
     async def send(self, pcm: bytes) -> None:
@@ -417,7 +462,8 @@ class FakeLine:
             self.quiet_frames += 1
             if self.quiet_frames == 1:
                 self.speaking = False
-                self.server.turn(self.call_id, "caller", "my heat is out")
+                self.server.turn(self.call_id, "caller", "my heat is out",
+                                 {"end_of_turn_ms": 350.0})
                 text = self.replies.pop(0) if self.replies else "Okay."
                 asyncio.get_running_loop().create_task(self.agent(text))
 
@@ -460,6 +506,8 @@ def test_a_whole_call_is_timed_on_the_audio_and_scored_on_the_record(tmp_path, m
     # measured from the last frame, not from the start of the call.
     assert 380 <= timing.reply_delay_ms <= 1500
     assert timing.kind == "plain" and timing.caller_speech_ms == pytest.approx(300, abs=25)
+    assert timing.platform_stages == {"end_of_turn_ms": 350.0, "tts_first_byte_ms": 150.0}
+    assert timing.over_caller_ms is None
     assert [t.role for t in result.transcript] == ["agent", "caller", "agent"]
     assert result.transcript[-1].said == "Sorry to hear that. Goodbye."
     assert result.cost_parts["platform"] == 0.01

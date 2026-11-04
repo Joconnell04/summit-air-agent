@@ -136,6 +136,12 @@ def newest_agent_timings(trace: dict, seen: int) -> tuple[dict, int]:
     return lines[-1].get("timings") or {}, len(lines)
 
 
+def newest_caller_timings(trace: dict) -> dict:
+    """Stage timings the voice program logged with the newest caller line, if any."""
+    lines = [e for e in trace["events"] if e["type"] == "turn" and e["speaker"] == "caller"]
+    return (lines[-1].get("timings") or {}) if lines else {}
+
+
 def must_repeat(scenario: Scenario) -> bool:
     """The decision rule's three repeats cover every must-pass scenario."""
     return scenario.must_pass
@@ -213,6 +219,8 @@ class Rig:
                 lookup = tool_count(trace) > tools_so_far
                 tools_so_far = tool_count(trace)
                 stages, agent_lines = newest_agent_timings(trace, agent_lines)
+                logged = {k: float(v) for k, v in {**newest_caller_timings(trace), **stages}.items()
+                          if isinstance(v, (int, float))}
                 if heard_turn.first_sound is None:
                     silent += 1
                 else:
@@ -225,6 +233,9 @@ class Rig:
                         platform_reply_ms=stages.get("reply_ms"),
                         caller_speech_ms=(end - start) * 1000,
                         agent_speech_ms=len(heard_turn.pcm) / 2 / heard_turn.rate * 1000,
+                        over_caller_ms=(None if heard_turn.over_caller is None
+                                        else max(0.0, (end - heard_turn.over_caller) * 1000)),
+                        platform_stages=logged,
                     ))
                 delay = (f"{reply_delay_ms(end, heard_turn.first_sound):.0f} ms"
                          if heard_turn.first_sound is not None else "silent")
