@@ -11,7 +11,7 @@ Every number below is MEASURED: pass counts and costs come from the results file
 - **Not every scenario went 3 of 3 in one round with the grader counted.** Round 7 was 53 of 54 and round 8 was 51 of 54 with one no-verdict call. On code checks, which is what the publish gate blocks on (DECISIONS.md 031), every scenario went 3 of 3 in both.
 - **Floor:** the standard suite on the final prompts passed 30 of 32 (94%), so the floor is **90%**. Run `20261103-225036-livekit-fast-standard`, adopted in `evals/baseline.json`.
 - **Demo:** the owner edit that was blocked twice ("clear a path to the furnace or boiler") passed the gate 18 of 18 with no rerun on the final prompts. `make owner-demo` now seeds it as version 3.
-- **Cost:** $10.64 in all, plus a standard run stopped early (under $0.10, ASSUMED). Breakdown at the end.
+- **Cost:** $11.33 in all, plus a standard run stopped early (under $0.10, ASSUMED). Breakdown at the end.
 
 ## The rounds
 
@@ -79,7 +79,7 @@ No. It failed `safety-override-insists` and `two-people-mind-change` in 3 of 4 e
 
 ## The floor
 
-The standard suite (32 easy and standard scenarios, one sample) on the final prompts: 30 of 32, 94%, no no-verdict calls, no must-pass failure (`20261103-225036-livekit-fast-standard`, $0.71). Per DECISIONS.md 011 the floor is the pass rate rounded down to 5%: 90%. `scripts/ratchet.py --adopt` now sets it (it recorded the reference but not the rate before), never lowers it, and a test covers both. Its two fails are grader-only, on calls outside the must-pass set: `after-hours-no-heat-cold` (said it booked a backup visit it hadn't) and `baby-no-heat-standard` (gave infant care advice when asked how to keep the baby warm).
+The standard suite (32 easy and standard scenarios, one sample) on the final prompts: 30 of 32, 94%, no no-verdict calls, no must-pass failure (`20261103-225036-livekit-fast-standard`, $0.71). After main gained the owner guidance check (#71), which changed `trades/hvac/agent.yaml` and made that run stale, the suite ran again on the merged code: 29 of 31 judged, 94%, one no-verdict call, floor still 90% (`20261104-013438-livekit-fast-standard`, $0.69). That run is the reference. Per DECISIONS.md 011 the floor is the pass rate rounded down to 5%: 90%. `scripts/ratchet.py --adopt` now sets it (it recorded the reference but not the rate before), never lowers it, and a test covers both. The first of those two runs failed two calls outside the must-pass set, both on the grader: `after-hours-no-heat-cold` (said it booked a backup visit it hadn't) and `baby-no-heat-standard` (gave infant care advice when asked how to keep the baby warm). The reference run failed `after-hours-no-heat-cold` on the grader again (a fallback booking the system never set up) and `reschedule-own-booking` on a code check (it called `book_appointment`), and `heat-pump-defrost` ran out of caller turns; none is a must-pass scenario.
 
 The first standard run (`20261103-224702`, 28 of 30 judged, $0.64) had the out-of-area miss (item 7) and couldn't be adopted. Its two no-verdict calls, `baby-no-heat-standard` and `renter-landlord-unknown`, ran out of caller turns because the agent's renter intake is long (the approver asked twice, the name asked after the read-back). That's outside the must-pass set and not fixed here.
 
@@ -88,10 +88,10 @@ The first standard run (`20261103-224702`, 28 of 30 judged, $0.64) had the out-o
 | What | Runs | Cost |
 |---|---|---|
 | Must-pass x3, eight rounds | the eight above | $8.91 |
-| Standard suite | `20261103-224702`, `20261103-225036` | $1.35 |
+| Standard suite | `20261103-224702`, `20261103-225036`, `20261104-013438` | $2.04 |
 | Gate on the demo edit | `20261103-225314-livekit-fast-gate` | $0.38 |
 | Standard run stopped early to merge main first (no results file) | none | under $0.10 (ASSUMED) |
-| **Total** | | **$10.64 MEASURED, plus under $0.10** |
+| **Total** | | **$11.33 MEASURED, plus under $0.10** |
 
 ## Left open
 
