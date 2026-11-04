@@ -6,8 +6,9 @@ answers into the dynamic variables the flow's edges read (voice/retell_flow/buil
   each lead to one node; `model` leaves the call with the model.
 - `line`: the server's sentence for a static-sentence node, word for word.
 - `stage`, `notes`: the server's call stage and this turn's [server] notes (turn check only).
-- `transfer_number`, `transfer_id`, `handoff_id`, `transfer_summary`: what a transfer node dials and
-  what the bridge reports back when nobody answers.
+- `transfer_number`, `transfer_id`, `handoff_id`, `transfer_summary`, `fallback`: what a transfer
+  node dials, what the bridge reports back when nobody answers, and the callback line said if even
+  that report fails.
 
 Every answer carries every routing field, so a value left from an earlier answer never fires an
 edge. Which sentences the server speaks itself is `prompts/assemble.spoken_by_server`, the same
@@ -30,7 +31,7 @@ from starlette.concurrency import run_in_threadpool
 from app.tools import TOOLS
 from prompts.assemble import instructions, server_notes, spoken_by_server
 from voice.retell import conversation
-from voice.retell.api import Retell
+from voice.retell.api import Retell, RetellError
 from voice.retell.bridge import Bridge, ToolServer, build_app, compact
 from voice.retell.ledger import Ledger
 from voice.retell.transcript import lines, retell_id
@@ -45,6 +46,7 @@ ROUTING = (
     "transfer_id",
     "transfer_summary",
     "handoff_id",
+    "fallback",
 )
 
 
@@ -62,6 +64,8 @@ class FlowBridge(Bridge):
         # Retell call id -> ("handoff" or "transfer", our id), for the transfer being dialed. Only
         # the outcome report needs it; a restart mid-transfer leaves it to the server's own timeout.
         self.dialing: dict[str, tuple[str, str]] = {}
+        # Retell call id -> the last stage the server gave, for a turn check with no new caller line.
+        self.stages: dict[str, str] = {}
         self.lock = threading.Lock()
 
     # ---- the turn check --------------------------------------------------------------------
@@ -74,12 +78,22 @@ class FlowBridge(Bridge):
         obj = body.get(kind) or {}
         rid = retell_id(obj)
         call_id = self.ensure_started(obj, kind)
-        posted = self.ledger.sync(call_id, lines(obj), self.tools.turn, True)
+        said = lines(obj)
+        posted = self.ledger.sync(call_id, said, self.tools.turn, True)
         caller = [answer for speaker, answer in posted if speaker == "caller"]
+        with self.lock:
+            stage = self.stages.get(rid, "opening")
         if not caller:
-            return routed(stage="opening", notes="")
-        hints, known, stage = [], {}, "opening"
+            if said and said[-1].speaker == "caller" and not self.ledger.posted_all(call_id, said):
+                # The server didn't take the caller's line: say so and end, as our worker does
+                # (voice/livekit/call.py), rather than answer with no safety check.
+                return routed("end_line", self.server_down_line()) | {"stage": stage, "notes": ""}
+            return routed() | {"stage": stage, "notes": ""}
+        hints, known = [], {}
         safety_text = ""
+        # A batch holds more than one caller line only when the caller spoke twice before a reply.
+        # Safety from any of them counts, so the lines are never lost; the server itself refuses a
+        # hand-off on a safety call until the lines were said, so the two can't conflict.
         for answer in caller:
             data = answer.get("data") or {}
             hints += data.get("hints") or []
@@ -88,6 +102,8 @@ class FlowBridge(Bridge):
             safety = data.get("safety") or {}
             if safety.get("action") in SAFETY_ACTIONS and safety.get("text"):
                 safety_text = safety["text"]
+        with self.lock:
+            self.stages[rid] = stage
         last = caller[-1]
         data = last.get("data") or {}
         notes = "\n".join(server_notes(hints, known))
@@ -100,16 +116,23 @@ class FlowBridge(Bridge):
             return routed("safety", safety_text, stage=stage, notes=notes)
         recording = data.get("recording") or {}
         if recording.get("action") == "stop" and recording.get("text"):
-            # Retell's own recording can't be stopped from here (exploration 017); the line is said.
-            return routed("line", recording["text"], stage=stage, notes=notes)
+            # Retell records until the call ends, but with storage at basic attributes it keeps no
+            # recording or transcript once the webhooks have gone out. The line is said, then the
+            # model answers the rest of what the caller said, as on our worker.
+            if kind == "call":
+                self.keep_no_recording(rid)
+            return routed("notice", recording["text"], stage=stage, notes=notes)
         return routed(stage=stage, notes=notes)
 
     def _handoff(self, kind: str, rid: str, call_id: str, say: str, handoff: dict) -> dict:
         """A caller who demanded a person (app/tools.demand_handoff). `say` is the hand-off line when
         the server has a number to send the call to, otherwise the stored callback line."""
         plan = handoff.get("transfer")
-        if not plan:
-            return routed("line", say)
+        fallback = handoff.get("fallback") or say
+        if not plan or not plan.get("phone"):
+            # No number to send the call to: `say` is already the stored callback line, said with
+            # interruptions off as our worker says it.
+            return routed("firm", fallback)
         if kind == "chat":
             # A chat can't transfer. The eval harness reports the transfer as sent, as its phone
             # company does for our stack (evals/stacks.py), and the chat ends on the line.
@@ -118,7 +141,7 @@ class FlowBridge(Bridge):
         with self.lock:
             self.dialing[rid] = ("handoff", str(plan["id"]))
         return routed(
-            "handoff", say, transfer_number=plan["phone"], handoff_id=plan["id"]
+            "handoff", say, transfer_number=plan["phone"], handoff_id=plan["id"], fallback=fallback
         )
 
     # ---- model tools -----------------------------------------------------------------------
@@ -159,7 +182,17 @@ class FlowBridge(Bridge):
             transfer_number=plan["phone"],
             transfer_id=plan["id"],
             transfer_summary=plan.get("summary") or "",
+            fallback=flagged.get("say") or "",
         )
+
+    def server_down_line(self) -> str:
+        return " ".join(self.spoken(self.default_tenant)["server_down"].split())
+
+    def keep_no_recording(self, rid: str) -> None:
+        try:
+            self.retell.keep_no_recording(rid)
+        except (RetellError, httpx.HTTPError) as exc:
+            log.warning("update-live-call %s failed: %s", rid, exc)
 
     # ---- transfers -------------------------------------------------------------------------
 

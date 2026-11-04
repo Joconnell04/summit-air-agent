@@ -99,6 +99,15 @@ class Retell:
             json={"call_control": {"additional_context": context}},
         )
 
+    def keep_no_recording(self, call_id: str) -> None:
+        """Retell keeps no recording or transcript of this call once its webhooks have gone out
+        (Update Live Call, data_storage_setting; it can only be made stricter)."""
+        self.request(
+            "PATCH",
+            f"/v2/update-live-call/{call_id}",
+            json={"fields_to_override": {"data_storage_setting": "basic_attributes_only"}},
+        )
+
     def stop_call(self, call_id: str) -> None:
         self.request("POST", f"/v2/stop-call/{call_id}")
 

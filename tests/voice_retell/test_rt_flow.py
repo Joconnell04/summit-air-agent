@@ -20,13 +20,13 @@ from voice.retell_flow.eval_adapter import FlowChatAgent
 from voice.retell_flow.push import push
 
 MODEL = "claude-haiku-5-5"
-RING_MS = 20000
+TENANT = build.Tenant(server_down=SPOKEN["server_down"], ring_ms=20000, detect_ms=10000)
 SAFETY = yaml.safe_load((TENANT_DIR / "agent.yaml").read_text())["safety"]
 GAS_LINES = " ".join(SAFETY["kinds"]["gas"]["lines"].split())
 
 
 def flow(chat: bool = False) -> dict:
-    return build.flow_body(specs(), BASE, MODEL, RING_MS, chat)
+    return build.flow_body(specs(), BASE, MODEL, TENANT, chat)
 
 
 def by_id(body: dict) -> dict[str, dict]:
@@ -53,6 +53,8 @@ def test_end_and_transfer_nodes_are_reached_only_by_a_route_the_server_set(chat)
     guarded = {
         i for i, n in nodes.items() if n["type"] in ("end", "transfer_call") or i.endswith("_line")
     }
+    # Retell's own record that a function call failed; set by Retell, not by the model.
+    status = {"{{turn_status}}", "{{failed_status}}"}
     for node in body["nodes"]:
         assert "global_node_setting" not in node, node["id"]
         for edge in build.outgoing(node):
@@ -60,19 +62,26 @@ def test_end_and_transfer_nodes_are_reached_only_by_a_route_the_server_set(chat)
             if target not in guarded:
                 continue
             condition = edge["transition_condition"]
-            # The one exception: a hand-off line leads to its own transfer when it has been said.
+            # A hand-off line leads to its own transfer once said; a failed report falls back to the
+            # server's callback line.
             if condition == {"type": "prompt", "prompt": "Skip response"}:
                 assert node["id"].endswith("_line") and nodes[target]["type"] == "transfer_call"
                 continue
+            if condition == {"type": "prompt", "prompt": "Else"}:
+                assert node["type"] == "function" and target == "fallback_line", node["id"]
+                continue
             assert condition["type"] == "equation", (node["id"], target)
-            assert condition["equations"][0]["left"] == "{{route}}"
+            assert condition["equations"][0]["left"] in {"{{route}}"} | status
 
 
 def test_every_route_has_an_edge_from_the_turn_check_and_from_every_stage():
     nodes = by_id(flow())
+    first, *routes = nodes["turn_check"]["edges"]
+    # A failed turn check is matched before any route an earlier turn left behind.
+    assert first["transition_condition"]["equations"][0]["left"] == "{{turn_status}}"
+    assert first["destination_node_id"] == "server_down"
     from_turn = {
-        e["transition_condition"]["equations"][0]["right"]: e["destination_node_id"]
-        for e in nodes["turn_check"]["edges"]
+        e["transition_condition"]["equations"][0]["right"]: e["destination_node_id"] for e in routes
     }
     assert from_turn == build.ROUTES_FROM_TURN
     for stage in build.STAGES:
@@ -87,9 +96,13 @@ def test_every_route_has_an_edge_from_the_turn_check_and_from_every_stage():
 
 def test_the_server_lines_are_static_sentences_and_the_safety_lines_cant_be_interrupted():
     nodes = by_id(flow())
-    for node_id in ("safety_line", "server_line", "handoff_line", "transfer_line"):
+    for node_id in ("safety_line", "server_line", "firm_line", "notice_line", "handoff_line"):
         assert nodes[node_id]["instruction"] == {"type": "static_text", "text": "{{line}}"}
-    assert nodes["safety_line"]["interruption_sensitivity"] == 0
+    for node_id in ("safety_line", "firm_line", "handoff_line", "transfer_line", "fallback_line"):
+        assert nodes[node_id]["interruption_sensitivity"] == 0
+    # After the recording line the model answers the rest of what the caller said.
+    assert nodes["notice_line"]["skip_response_edge"]["destination_node_id"] == "stage"
+    assert nodes["server_down"]["instruction"]["text"] == SPOKEN["server_down"]
     assert nodes["end_with_line"]["instruction"]["text"] == "{{line}}"
     assert nodes["end_quiet"]["speak_during_execution"] is False
 
@@ -111,6 +124,23 @@ def test_the_prompt_and_model_are_the_ones_our_worker_uses():
     assert body["model_config"]["temperature"] == 0.3
     for stage in build.STAGES:
         assert "{{notes}}" in by_id(body)[stage]["instruction"]["text"]
+
+
+def test_the_warm_transfer_connects_only_a_person_and_whispers_the_servers_summary():
+    option = by_id(flow())["transfer_call"]["transfer_option"]
+    assert option["type"] == "warm_transfer"
+    assert option["opt_out_human_detection"] is False
+    assert option["private_handoff_option"]["message"] == "{{transfer_summary}}"
+    assert by_id(flow())["handoff_call"]["transfer_option"]["type"] == "cold_transfer"
+
+
+def test_a_failed_transfer_report_still_says_the_callback_line():
+    nodes = by_id(flow())
+    for node_id in ("handoff_failed", "transfer_failed"):
+        down = nodes[node_id]["edges"][0]
+        assert down["transition_condition"]["equations"][0]["left"] == "{{failed_status}}"
+        assert down["destination_node_id"] == "fallback_line"
+    assert nodes["fallback_line"]["instruction"]["text"] == "{{fallback}}"
 
 
 def test_a_chat_starts_at_the_turn_check_and_has_no_transfer():
@@ -195,6 +225,48 @@ def test_a_plain_line_stays_with_the_model_with_the_servers_stage_and_notes(flow
     assert answer["notes"].startswith("[server] This call can't book.")
 
 
+def test_a_caller_line_the_server_cant_take_ends_the_call_on_the_server_down_line(
+    tool_app, tmp_path, retell, later
+):
+    class Down(FlowToolServer):
+        def turn(self, *args):
+            return None
+
+    down = FlowBridge(
+        KEY, Down(TestClient(tool_app)), Ledger(tmp_path / "down.db"), retell,
+        instructions=lambda start: "", spoken=lambda slug: SPOKEN, notes=lambda h, k=None: [],
+        default_tenant="summit-air", tool_names=set(TOOLS), now_ms=lambda: NOW_MS, later=later,
+    )
+    answer = down.turn_check({"call": call_obj("abc", GREETING, HEAT_OUT)})
+    assert (answer["route"], answer["line"]) == ("end_line", SPOKEN["server_down"])
+
+
+def test_a_turn_check_with_no_new_caller_line_keeps_the_stage(flow_client):
+    said = booked_call(flow_client)
+    now = call_obj("abc", *said, utterance("user", "Great, what times?"))
+    assert turn(flow_client, now)["stage"] == "booking"
+    again = turn(flow_client, now)
+    assert (again["route"], again["stage"]) == ("model", "booking")
+
+
+def test_a_caller_who_objects_to_recording_hears_the_line_and_retell_keeps_nothing(
+    flow_client, retell
+):
+    inbound(flow_client, "abc")
+    objection = utterance("user", "Please don't record this call. My heat is out.")
+    answer = turn(flow_client, call_obj("abc", GREETING, objection))
+    assert (answer["route"], answer["line"]) == ("notice", "Okay, I've turned the recording off.")
+    assert retell.unrecorded == ["abc"]
+
+
+def test_a_demand_with_no_number_set_gets_the_callback_line_uninterrupted(flow_client, monkeypatch):
+    monkeypatch.delenv("TRANSFER_OFFICE_NUMBER", raising=False)
+    inbound(flow_client, "mad")
+    demand = utterance("user", "Put me through to a manager right now, this is ridiculous.")
+    answer = turn(flow_client, call_obj("mad", GREETING, demand))
+    assert answer["route"] == "firm" and "call you" in answer["line"]
+
+
 def test_the_read_back_is_the_servers_sentence_said_from_a_static_node(flow_client):
     inbound(flow_client, "abc")
     answer = flow_tool(
@@ -252,6 +324,7 @@ def test_a_demand_for_a_person_is_handed_off_through_the_transfer_node(
     assert answer["route"] == "handoff"
     assert answer["transfer_number"] == "+12125550100"
     assert answer["handoff_id"].isdigit()
+    assert "call you" in answer["fallback"]
     # Nobody picks up: the server's callback line is said next.
     body = {"name": "handoff_failed", "call": call_obj("mad"), "args": {"handoff_id": answer["handoff_id"]}}
     failed = signed(flow_client, "/retell/flow/handoff-failed", body).json()
@@ -294,7 +367,8 @@ def test_in_a_chat_a_hand_off_ends_the_chat_on_the_line_as_the_harness_reports_i
 
 
 def run_push(fake: FakeRetell, **kwargs):
-    return push(fake.client(), specs(), BASE, MODEL, VOICE, RING_MS, **kwargs)
+    return push(fake.client(), specs(), BASE, MODEL, VOICE, TENANT, analysis_model="gpt-5.4-nano",
+                **kwargs)
 
 
 def test_a_first_push_creates_the_flows_and_agents_and_leaves_the_number_alone():

@@ -66,8 +66,9 @@ def push(
     base_url: str,
     model_id: str,
     voice: dict,
-    ring_ms: int,
+    tenant: build.Tenant,
     eval_url: str | None = None,
+    analysis_model: str = "",
     names: local_names.Names | None = None,
     bind_number: bool = False,
 ) -> tuple[list[str], dict[str, str]]:
@@ -80,7 +81,7 @@ def push(
         "agent",
         build.AGENT_NAME,
         lambda flow_id: build.agent_body(flow_id, base_url, voice_id, voice["model"], names),
-        build.flow_body(specs, base_url, model_id, ring_ms, chat=False),
+        build.flow_body(specs, base_url, model_id, tenant, chat=False),
         log,
     )
     if bind_number:
@@ -90,17 +91,23 @@ def push(
             retell,
             "chat-agent",
             build.CHAT_AGENT_NAME,
-            lambda flow_id: build.chat_agent_body(flow_id, eval_url),
-            build.flow_body(specs, eval_url, model_id, ring_ms, chat=True),
+            lambda flow_id: build.chat_agent_body(flow_id, eval_url, analysis_model),
+            build.flow_body(specs, eval_url, model_id, tenant, chat=True),
             log,
         )
     return log, ids
 
 
-def ring_ms(tenant: Path) -> int:
-    """How long a transfer rings before the call comes back, from the tenant's agent.yaml."""
+def tenant_settings(tenant: Path) -> build.Tenant:
+    """From the tenant's agent.yaml: the server-down line, how long a transfer rings, and how long
+    the person has to answer (Retell's human detection can't wait less than 10 s)."""
     config = yaml.safe_load((tenant / "agent.yaml").read_text())
-    return int(config["transfer"]["ring_seconds"]) * 1000
+    transfer = config["transfer"]
+    return build.Tenant(
+        server_down=" ".join(config["voice"]["server_down"].split()),
+        ring_ms=int(transfer["ring_seconds"]) * 1000,
+        detect_ms=max(10000, int(transfer["accept_seconds"]) * 1000),
+    )
 
 
 def main() -> int:
@@ -124,8 +131,9 @@ def main() -> int:
         base_url,
         model_id,
         voice,
-        ring_ms(tenant),
+        tenant_settings(tenant),
         eval_url,
+        config["retell"]["post_chat_analysis"]["model"],
         local_names.load(tenant),
         args.bind_number,
     )

@@ -53,7 +53,7 @@ The voice, ears, turn-taking and timeouts are the baseline's (`voice/retell/buil
 | Safety lines node | Static sentence, interruption sensitivity 0 | Our worker plays the safety lines with interruptions off; Retell staff tie lost static lines to a caller still talking (exploration 017) |
 | `speak_after_execution` | On for every tool | The edge on `route` beats the model's follow-up when the server sent a line (MEASURED in the prototype); otherwise the model speaks about the result |
 | Webhook events | No `transcript_updated` | Every caller line reaches the server through `turn_check`, in order, before the reply, so the webhook would only post lines twice |
-| Post-chat analysis model | `gpt-5.4-nano` (chat agent) | Nothing reads it, and the default model costs 2.08 cents a chat (MEASURED) |
+| Post-chat analysis model | `retell.post_chat_analysis` in config/models.yaml (chat agent) | Nothing reads it, and the default model costs 2.08 cents a chat (MEASURED) |
 | Transfer ring | 20 s | The tenant's `transfer.ring_seconds` |
 
 ## Differences from our stack
@@ -63,7 +63,9 @@ Everything the baseline lists in `voice/retell/README.md` ("Every difference") s
 - **The safety lines, read-back, confirmations and sign-off are said from the server's text** in static-sentence nodes, not by the model.
 - **The safety check and the `[server]` notes come before the reply**, through `turn_check`, not by Update Live Call after the reply has started.
 - **Hang-up is Retell's end node**, reached on the server's answer, so no timer estimates the goodbye.
-- **Warm transfer is built**: the server decides, Retell dials. The person hears the server's summary as Retell's private whisper, not a press-1 prompt, so a voicemail can pick up where our worker's would not.
+- **Warm transfer is built**: the server decides, Retell dials. Retell connects the caller only once its human detection hears a person, and whispers the server's summary to that person. There is no press-1 step as on our worker.
+- **A caller who objects to recording** hears the server's line from a static node and the model then answers the rest; Retell keeps recording until the call ends but stores nothing once its webhooks have gone out (data storage set to basic attributes through Update Live Call).
+- **Server down mid-call** ends the call on the tenant's server-down line, from a failed turn check or a caller line the server didn't take, as our worker does.
 
 What a flow can't do is in exploration 017, "Can't be done in a flow": the speech filter on model text, per-question voice settings, the slower read-back in parts, server-owned timeouts, stopping Retell's recording, a chat that opens with the greeting, and outbound callbacks.
 
