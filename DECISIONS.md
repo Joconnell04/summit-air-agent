@@ -12,6 +12,14 @@ Discussion: docs/ai-process/transcripts/... or docs/explorations/...
 Issue: #N
 -->
 
+## 055. Rule edits move to the debug bench, with an override
+
+Decided: owner rule edits move off the owner view and onto the debug bench. Publishing an edit reruns the must-pass eval gate by default; an override publishes it at once and logs it as an overridden instant change. Two-call booking evals run only on our stack for now.
+Why: Jackson's direction, given in the booking-concurrency session (PR #86). Rule edits are an engineer-facing tool more than an owner one, and an override keeps a quick fix possible while the log shows it skipped the gate.
+Considered: keeping edits on the owner view behind the edit login (DECISIONS.md 022).
+Would change if: owners ask to edit wording themselves again.
+Discussion: PR #86, the debug bench PR
+
 ## 054. Owner accounts with two roles, and a settings panel with a consent switch
 
 Decided: the owner view gets named accounts with two roles. Admins change settings and publish rules; staff view everything and change nothing. A settings panel, changed by admins only and kept with an audit trail, holds a two-party consent switch: on, every greeting adds a short recording notice; off (the default), no notice, since Summit Air is in New York, a one-party consent state. Other owner settings (call recordings, warm transfer, technician summaries, after-hours alerts) can be switched there; none can loosen a gate.

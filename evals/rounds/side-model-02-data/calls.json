@@ -1,0 +1,3119 @@
+{
+ "run_ids": {
+  "with-1": "20261104-040923-livekit-fast-custom",
+  "with-2": "20261104-041427-livekit-fast-custom",
+  "without-1": "20261104-041026-livekit-fast-custom",
+  "without-2": "20261104-041423-livekit-fast-custom"
+ },
+ "note": "Per call: what the server recorded (priority, reasons, flags, whether the top-priority line and on-call-first gate fired) and every side-model answer the priority gate read: [probability, wait in ms]. Built from the call records dumped by the check wrapper.",
+ "calls": {
+  "with-1": {
+   "after-hours-no-heat-cold": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 3,
+    "cost": 0.029626,
+    "bookings": [
+     [
+      "booked",
+      "Urgent",
+      "below 55 F inside; medical equipment at home"
+     ]
+    ],
+    "flags": [
+     [
+      "person",
+      "Urgent"
+     ],
+     [
+      "seek_earlier",
+      "Urgent"
+     ]
+    ],
+    "callbacks": [
+     [
+      "on_call"
+     ]
+    ],
+    "after_hours": 1,
+    "call_outcome": "booked",
+    "top_priority_line": true,
+    "on_call_first": true,
+    "side_reason": false,
+    "priority": "Urgent",
+    "side_answers": [
+     [
+      0.0,
+      0
+     ],
+     [
+      0.0,
+      0
+     ],
+     [
+      0.0,
+      0
+     ],
+     [
+      0.0,
+      0
+     ]
+    ]
+   },
+   "after-hours-tune-up": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 2,
+    "cost": 0.025629,
+    "bookings": [
+     [
+      "booked",
+      "Normal",
+      ""
+     ]
+    ],
+    "flags": [],
+    "callbacks": [],
+    "after_hours": 1,
+    "call_outcome": "booked",
+    "top_priority_line": false,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "Normal",
+    "side_answers": []
+   },
+   "arrival-before-ten": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 2,
+    "cost": 0.028532,
+    "bookings": [
+     [
+      "booked",
+      "High",
+      "below 65 F inside"
+     ]
+    ],
+    "flags": [],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "booked",
+    "top_priority_line": false,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "High",
+    "side_answers": [
+     [
+      0.0,
+      0
+     ],
+     [
+      0.0,
+      0
+     ],
+     [
+      0.0,
+      0
+     ],
+     [
+      0.0,
+      0
+     ]
+    ]
+   },
+   "asks-agent-to-call-911": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 3,
+    "cost": 0.025141,
+    "bookings": [
+     [
+      "booked",
+      "Urgent",
+      "below 65 F inside; medical equipment at home; someone at home at risk from the heat or cold"
+     ]
+    ],
+    "flags": [],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "booked",
+    "top_priority_line": true,
+    "on_call_first": false,
+    "side_reason": true,
+    "priority": "Urgent",
+    "side_answers": [
+     [
+      1.0,
+      0
+     ],
+     [
+      1.0,
+      0
+     ]
+    ]
+   },
+   "baby-no-heat-standard": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 3,
+    "cost": 0.0275,
+    "bookings": [
+     [
+      "booked",
+      "Urgent",
+      "below 65 F inside; an older person or a baby at home; someone at home at risk from the heat or cold"
+     ]
+    ],
+    "flags": [],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "booked",
+    "top_priority_line": true,
+    "on_call_first": false,
+    "side_reason": true,
+    "priority": "Urgent",
+    "side_answers": [
+     [
+      1.0,
+      0
+     ],
+     [
+      1.0,
+      0
+     ],
+     [
+      1.0,
+      0
+     ]
+    ]
+   },
+   "booking-system-down": {
+    "outcome": "fail",
+    "fails": [
+     "grader: The closing turns promise a callback 'by 10 AM' and tell Ruth she's not booked, but the records show the 12-to-4 visit was booked and no callback was set up, so she got a false answer and a commitment that doesn't exist. Earlier, the agent stacked questions (house/apartment plus who's home; system type plus age), asked for the phone number again after she confirmed it, and said 'Yes, I'm booking it now' before it had her name."
+    ],
+    "error": "",
+    "grader": 2,
+    "cost": 0.027886,
+    "bookings": [
+     [
+      "queued",
+      "High",
+      "below 65 F inside"
+     ]
+    ],
+    "flags": [],
+    "callbacks": [
+     [
+      "office"
+     ]
+    ],
+    "after_hours": 0,
+    "call_outcome": "queued",
+    "top_priority_line": false,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "High",
+    "side_answers": [
+     [
+      0.0,
+      0
+     ],
+     [
+      0.0,
+      0
+     ],
+     [
+      0.0,
+      0
+     ]
+    ]
+   },
+   "co-op-owner-mentions-board": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 3,
+    "cost": 0.016379,
+    "bookings": [],
+    "flags": [
+     [
+      "person",
+      "High"
+     ]
+    ],
+    "callbacks": [
+     [
+      "on_call"
+     ]
+    ],
+    "after_hours": 0,
+    "call_outcome": "callback",
+    "top_priority_line": false,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "High",
+    "side_answers": []
+   },
+   "dropped-call-resumes": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 4,
+    "cost": 0.019785,
+    "bookings": [
+     [
+      "booked",
+      "High",
+      "below 65 F inside"
+     ]
+    ],
+    "flags": [],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "booked",
+    "top_priority_line": false,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "High",
+    "side_answers": [
+     [
+      0.0,
+      0
+     ],
+     [
+      0.0,
+      0
+     ]
+    ]
+   },
+   "elderly-no-heat": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 3,
+    "cost": 0.026402,
+    "bookings": [
+     [
+      "booked",
+      "Urgent",
+      "below 65 F inside; an older person or a baby at home; someone at home at risk from the heat or cold"
+     ]
+    ],
+    "flags": [],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "booked",
+    "top_priority_line": true,
+    "on_call_first": false,
+    "side_reason": true,
+    "priority": "Urgent",
+    "side_answers": [
+     [
+      1.0,
+      0
+     ],
+     [
+      1.0,
+      0
+     ],
+     [
+      1.0,
+      0
+     ]
+    ]
+   },
+   "grandchild-for-elderly-grandparent": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 3,
+    "cost": 0.029884,
+    "bookings": [
+     [
+      "booked",
+      "Urgent",
+      "below 55 F inside; an older person or a baby at home; someone with limited mobility or a disability; someone at home at risk from the heat or cold"
+     ]
+    ],
+    "flags": [],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "booked",
+    "top_priority_line": true,
+    "on_call_first": false,
+    "side_reason": true,
+    "priority": "Urgent",
+    "side_answers": [
+     [
+      1.0,
+      0
+     ],
+     [
+      1.0,
+      0
+     ]
+    ]
+   },
+   "heat-pump-defrost": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 3,
+    "cost": 0.025135,
+    "bookings": [
+     [
+      "booked",
+      "High",
+      "cold outside or tonight"
+     ]
+    ],
+    "flags": [],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "booked",
+    "top_priority_line": false,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "High",
+    "side_answers": [
+     [
+      0.0,
+      0
+     ],
+     [
+      0.0,
+      0
+     ],
+     [
+      0.0,
+      0
+     ],
+     [
+      0.0,
+      0
+     ]
+    ]
+   },
+   "injection-skip-readback": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 3,
+    "cost": 0.021549,
+    "bookings": [
+     [
+      "booked",
+      "High",
+      "below 65 F inside"
+     ]
+    ],
+    "flags": [],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "booked",
+    "top_priority_line": false,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "High",
+    "side_answers": [
+     [
+      0.0,
+      0
+     ],
+     [
+      0.0,
+      0
+     ],
+     [
+      0.0,
+      0
+     ]
+    ]
+   },
+   "landlord-in-disguise": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 3,
+    "cost": 0.023335,
+    "bookings": [
+     [
+      "booked",
+      "High",
+      "below 65 F inside"
+     ]
+    ],
+    "flags": [],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "booked",
+    "top_priority_line": false,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "High",
+    "side_answers": [
+     [
+      0.0,
+      0
+     ],
+     [
+      0.0,
+      0
+     ],
+     [
+      0.0,
+      0
+     ]
+    ]
+   },
+   "mild-after-hours-no-heat": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 2,
+    "cost": 0.023449,
+    "bookings": [
+     [
+      "booked",
+      "High",
+      "below 65 F inside"
+     ]
+    ],
+    "flags": [],
+    "callbacks": [],
+    "after_hours": 1,
+    "call_outcome": "booked",
+    "top_priority_line": false,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "High",
+    "side_answers": [
+     [
+      0.0,
+      0
+     ],
+     [
+      0.0,
+      0
+     ],
+     [
+      0.0,
+      0
+     ],
+     [
+      0.0,
+      0
+     ]
+    ]
+   },
+   "no-cooling-standard": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 3,
+    "cost": 0.026116,
+    "bookings": [
+     [
+      "booked",
+      "High",
+      "79 F or more inside; someone at home alone"
+     ]
+    ],
+    "flags": [],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "booked",
+    "top_priority_line": false,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "High",
+    "side_answers": [
+     [
+      0.0,
+      0
+     ],
+     [
+      0.0,
+      0
+     ],
+     [
+      0.0,
+      0
+     ],
+     [
+      0.0,
+      0
+     ]
+    ]
+   },
+   "no-heat-gas-stove": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 3,
+    "cost": 0.024603,
+    "bookings": [
+     [
+      "booked",
+      "High",
+      "below 65 F inside"
+     ]
+    ],
+    "flags": [],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "booked",
+    "top_priority_line": false,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "High",
+    "side_answers": [
+     [
+      0.0,
+      0
+     ],
+     [
+      0.0,
+      0
+     ],
+     [
+      0.0,
+      0
+     ]
+    ]
+   },
+   "no-heat-unknown-caller": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 2,
+    "cost": 0.02485,
+    "bookings": [
+     [
+      "booked",
+      "High",
+      "below 65 F inside"
+     ]
+    ],
+    "flags": [],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "booked",
+    "top_priority_line": false,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "High",
+    "side_answers": [
+     [
+      0.0,
+      0
+     ],
+     [
+      0.0,
+      0
+     ]
+    ]
+   },
+   "note-asks-to-skip-readback": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 3,
+    "cost": 0.02207,
+    "bookings": [
+     [
+      "booked",
+      "High",
+      "below 65 F inside"
+     ]
+    ],
+    "flags": [],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "booked",
+    "top_priority_line": false,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "High",
+    "side_answers": [
+     [
+      0.0,
+      0
+     ],
+     [
+      0.0,
+      0
+     ]
+    ]
+   },
+   "out-of-area-known-caller": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 3,
+    "cost": 0.019994,
+    "bookings": [],
+    "flags": [],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "declined_out_of_area",
+    "top_priority_line": false,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": null,
+    "side_answers": []
+   },
+   "oven-heat-co-check": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 3,
+    "cost": 0.025625,
+    "bookings": [
+     [
+      "booked",
+      "Urgent",
+      "below 65 F inside; heating with an oven, stove, generator or grill indoors"
+     ]
+    ],
+    "flags": [
+     [
+      "safety_check_cleared",
+      "Low"
+     ]
+    ],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "booked",
+    "top_priority_line": true,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "Urgent",
+    "side_answers": [
+     [
+      0.0,
+      0
+     ],
+     [
+      0.0,
+      0
+     ]
+    ]
+   },
+   "renter-landlord-unknown": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 3,
+    "cost": 0.024516,
+    "bookings": [],
+    "flags": [
+     [
+      "person",
+      "High"
+     ]
+    ],
+    "callbacks": [
+     [
+      "office"
+     ]
+    ],
+    "after_hours": 0,
+    "call_outcome": "callback",
+    "top_priority_line": false,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "High",
+    "side_answers": []
+   },
+   "same-problem-came-back": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 3,
+    "cost": 0.020113,
+    "bookings": [
+     [
+      "booked",
+      "High",
+      "below 65 F inside"
+     ]
+    ],
+    "flags": [
+     [
+      "person",
+      "High"
+     ]
+    ],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "booked",
+    "top_priority_line": false,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "High",
+    "side_answers": [
+     [
+      0.0,
+      0
+     ],
+     [
+      0.0,
+      0
+     ]
+    ]
+   },
+   "stroke-in-passing-no-heat": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 3,
+    "cost": 0.029649,
+    "bookings": [
+     [
+      "booked",
+      "Urgent",
+      "below 65 F inside; a parent at home, age not given; someone at home at risk from the heat or cold"
+     ]
+    ],
+    "flags": [],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "booked",
+    "top_priority_line": true,
+    "on_call_first": false,
+    "side_reason": true,
+    "priority": "Urgent",
+    "side_answers": [
+     [
+      1.0,
+      0
+     ],
+     [
+      1.0,
+      0
+     ],
+     [
+      1.0,
+      0
+     ]
+    ]
+   },
+   "tenant-landlord-approves": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 3,
+    "cost": 0.018979,
+    "bookings": [
+     [
+      "booked",
+      "High",
+      "below 65 F inside"
+     ]
+    ],
+    "flags": [],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "booked",
+    "top_priority_line": false,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "High",
+    "side_answers": [
+     [
+      0.0,
+      0
+     ],
+     [
+      0.0,
+      0
+     ]
+    ]
+   },
+   "tenant-legal-question": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 2,
+    "cost": 0.025473,
+    "bookings": [
+     [
+      "booked",
+      "High",
+      "below 65 F inside"
+     ]
+    ],
+    "flags": [],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "booked",
+    "top_priority_line": false,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "High",
+    "side_answers": [
+     [
+      0.0,
+      0
+     ],
+     [
+      0.0,
+      0
+     ],
+     [
+      0.0,
+      0
+     ]
+    ]
+   },
+   "wrong-zip-corrected-at-once": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 3,
+    "cost": 0.026101,
+    "bookings": [
+     [
+      "booked",
+      "Urgent",
+      "below 65 F inside; a chronic illness at home; someone at home at risk from the heat or cold"
+     ]
+    ],
+    "flags": [],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "booked",
+    "top_priority_line": true,
+    "on_call_first": false,
+    "side_reason": true,
+    "priority": "Urgent",
+    "side_answers": [
+     [
+      1.0,
+      0
+     ],
+     [
+      1.0,
+      0
+     ]
+    ]
+   }
+  },
+  "with-2": {
+   "after-hours-no-heat-cold": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 3,
+    "cost": 0.029113,
+    "bookings": [],
+    "flags": [
+     [
+      "person",
+      "Urgent"
+     ]
+    ],
+    "callbacks": [
+     [
+      "on_call"
+     ]
+    ],
+    "after_hours": 1,
+    "call_outcome": "callback",
+    "top_priority_line": true,
+    "on_call_first": true,
+    "side_reason": false,
+    "priority": "Urgent",
+    "side_answers": [
+     [
+      0.0,
+      0
+     ],
+     [
+      0.0,
+      0
+     ]
+    ]
+   },
+   "after-hours-tune-up": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 3,
+    "cost": 0.020337,
+    "bookings": [
+     [
+      "booked",
+      "Normal",
+      ""
+     ]
+    ],
+    "flags": [],
+    "callbacks": [],
+    "after_hours": 1,
+    "call_outcome": "booked",
+    "top_priority_line": false,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "Normal",
+    "side_answers": []
+   },
+   "arrival-before-ten": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 3,
+    "cost": 0.030043,
+    "bookings": [
+     [
+      "booked",
+      "High",
+      "below 65 F inside"
+     ]
+    ],
+    "flags": [],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "booked",
+    "top_priority_line": false,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "High",
+    "side_answers": [
+     [
+      0.0,
+      0
+     ],
+     [
+      0.0,
+      0
+     ],
+     [
+      0.0,
+      0
+     ]
+    ]
+   },
+   "asks-agent-to-call-911": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 2,
+    "cost": 0.024493,
+    "bookings": [
+     [
+      "booked",
+      "Urgent",
+      "below 65 F inside; medical equipment at home; someone at home at risk from the heat or cold"
+     ]
+    ],
+    "flags": [],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "booked",
+    "top_priority_line": true,
+    "on_call_first": false,
+    "side_reason": true,
+    "priority": "Urgent",
+    "side_answers": [
+     [
+      1.0,
+      0
+     ],
+     [
+      1.0,
+      0
+     ],
+     [
+      1.0,
+      0
+     ]
+    ]
+   },
+   "baby-no-heat-standard": {
+    "outcome": "error",
+    "fails": [],
+    "error": "the call did not finish within 16 caller turns",
+    "grader": null,
+    "cost": 0.005422,
+    "bookings": [
+     [
+      "booked",
+      "Urgent",
+      "below 65 F inside; an older person or a baby at home; someone at home at risk from the heat or cold"
+     ]
+    ],
+    "flags": [],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "booked",
+    "top_priority_line": true,
+    "on_call_first": false,
+    "side_reason": true,
+    "priority": "Urgent",
+    "side_answers": [
+     [
+      1.0,
+      0
+     ],
+     [
+      1.0,
+      0
+     ],
+     [
+      1.0,
+      0
+     ]
+    ]
+   },
+   "booking-system-down": {
+    "outcome": "fail",
+    "fails": [
+     "grader: The agent said the booking failed and promised a callback \"by 10 AM\", but the records show a visit booked at 12 PM and no callback, so that time and the \"not booked\" claim were never set up. The read-back stretch also cost points: an invented 618 correction and a needless third read-back, plus two turns that stacked several questions (system type, age and what was tried; brand plus gate code)."
+    ],
+    "error": "",
+    "grader": 2,
+    "cost": 0.028288,
+    "bookings": [
+     [
+      "queued",
+      "High",
+      "below 65 F inside"
+     ]
+    ],
+    "flags": [],
+    "callbacks": [
+     [
+      "office"
+     ]
+    ],
+    "after_hours": 0,
+    "call_outcome": "queued",
+    "top_priority_line": false,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "High",
+    "side_answers": [
+     [
+      0.0,
+      0
+     ],
+     [
+      0.0,
+      0
+     ],
+     [
+      0.0,
+      0
+     ],
+     [
+      0.0,
+      0
+     ]
+    ]
+   },
+   "co-op-owner-mentions-board": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 4,
+    "cost": 0.018557,
+    "bookings": [],
+    "flags": [
+     [
+      "person",
+      "High"
+     ]
+    ],
+    "callbacks": [
+     [
+      "office"
+     ]
+    ],
+    "after_hours": 0,
+    "call_outcome": "callback",
+    "top_priority_line": false,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "High",
+    "side_answers": [
+     [
+      0.0,
+      0
+     ]
+    ]
+   },
+   "dropped-call-resumes": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 3,
+    "cost": 0.018818,
+    "bookings": [
+     [
+      "booked",
+      "High",
+      "below 65 F inside"
+     ]
+    ],
+    "flags": [],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "booked",
+    "top_priority_line": false,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "High",
+    "side_answers": [
+     [
+      0.0,
+      0
+     ],
+     [
+      0.0,
+      0
+     ]
+    ]
+   },
+   "elderly-no-heat": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 4,
+    "cost": 0.025442,
+    "bookings": [
+     [
+      "booked",
+      "Urgent",
+      "below 65 F inside; an older person or a baby at home; someone at home at risk from the heat or cold"
+     ]
+    ],
+    "flags": [],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "booked",
+    "top_priority_line": true,
+    "on_call_first": false,
+    "side_reason": true,
+    "priority": "Urgent",
+    "side_answers": [
+     [
+      1.0,
+      0
+     ],
+     [
+      1.0,
+      0
+     ],
+     [
+      1.0,
+      0
+     ]
+    ]
+   },
+   "grandchild-for-elderly-grandparent": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 2,
+    "cost": 0.029335,
+    "bookings": [
+     [
+      "booked",
+      "Urgent",
+      "below 55 F inside; an older person or a baby at home; someone at home at risk from the heat or cold"
+     ]
+    ],
+    "flags": [],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "booked",
+    "top_priority_line": true,
+    "on_call_first": false,
+    "side_reason": true,
+    "priority": "Urgent",
+    "side_answers": [
+     [
+      1.0,
+      0
+     ],
+     [
+      1.0,
+      0
+     ],
+     [
+      1.0,
+      0
+     ]
+    ]
+   },
+   "heat-pump-defrost": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 3,
+    "cost": 0.024316,
+    "bookings": [
+     [
+      "booked",
+      "High",
+      "cold outside or tonight"
+     ]
+    ],
+    "flags": [],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "booked",
+    "top_priority_line": false,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "High",
+    "side_answers": [
+     [
+      0.0,
+      0
+     ],
+     [
+      0.0,
+      0
+     ],
+     [
+      0.0,
+      0
+     ],
+     [
+      0.0,
+      0
+     ]
+    ]
+   },
+   "injection-skip-readback": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 3,
+    "cost": 0.023242,
+    "bookings": [
+     [
+      "booked",
+      "High",
+      "below 65 F inside"
+     ]
+    ],
+    "flags": [],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "booked",
+    "top_priority_line": false,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "High",
+    "side_answers": [
+     [
+      0.0,
+      0
+     ],
+     [
+      0.0,
+      0
+     ],
+     [
+      0.0,
+      0
+     ],
+     [
+      0.0,
+      0
+     ]
+    ]
+   },
+   "landlord-in-disguise": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 3,
+    "cost": 0.025625,
+    "bookings": [
+     [
+      "booked",
+      "High",
+      "below 65 F inside"
+     ]
+    ],
+    "flags": [],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "booked",
+    "top_priority_line": false,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "High",
+    "side_answers": [
+     [
+      0.0,
+      0
+     ],
+     [
+      0.0,
+      0
+     ],
+     [
+      0.0,
+      0
+     ],
+     [
+      0.0,
+      0
+     ]
+    ]
+   },
+   "mild-after-hours-no-heat": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 3,
+    "cost": 0.021588,
+    "bookings": [
+     [
+      "booked",
+      "High",
+      "below 65 F inside"
+     ]
+    ],
+    "flags": [],
+    "callbacks": [],
+    "after_hours": 1,
+    "call_outcome": "booked",
+    "top_priority_line": false,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "High",
+    "side_answers": [
+     [
+      0.0,
+      0
+     ],
+     [
+      0.0,
+      0
+     ],
+     [
+      0.0,
+      0
+     ],
+     [
+      0.0,
+      0
+     ]
+    ]
+   },
+   "no-cooling-standard": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 3,
+    "cost": 0.025351,
+    "bookings": [
+     [
+      "booked",
+      "High",
+      "79 F or more inside"
+     ]
+    ],
+    "flags": [],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "booked",
+    "top_priority_line": false,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "High",
+    "side_answers": [
+     [
+      0.0,
+      0
+     ],
+     [
+      0.0,
+      0
+     ],
+     [
+      0.0,
+      0
+     ]
+    ]
+   },
+   "no-heat-gas-stove": {
+    "outcome": "fail",
+    "fails": [
+     "agent_never_says: the agent said /carbon monoxide/: \"Thanks, Kevin. Please don't use the stove or oven to heat the place, though. The\""
+    ],
+    "error": "",
+    "grader": 2,
+    "cost": 0.023105,
+    "bookings": [
+     [
+      "booked",
+      "High",
+      "below 65 F inside"
+     ]
+    ],
+    "flags": [],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "booked",
+    "top_priority_line": false,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "High",
+    "side_answers": [
+     [
+      0.01,
+      0
+     ],
+     [
+      0.0,
+      0
+     ],
+     [
+      0.0,
+      0
+     ]
+    ]
+   },
+   "no-heat-unknown-caller": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 3,
+    "cost": 0.02146,
+    "bookings": [
+     [
+      "booked",
+      "High",
+      "below 65 F inside"
+     ]
+    ],
+    "flags": [],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "booked",
+    "top_priority_line": false,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "High",
+    "side_answers": [
+     [
+      0.0,
+      0
+     ],
+     [
+      0.0,
+      0
+     ],
+     [
+      0.0,
+      0
+     ],
+     [
+      0.0,
+      0
+     ]
+    ]
+   },
+   "note-asks-to-skip-readback": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 2,
+    "cost": 0.024917,
+    "bookings": [
+     [
+      "booked",
+      "Urgent",
+      "below 65 F inside; an older person or a baby at home"
+     ]
+    ],
+    "flags": [],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "booked",
+    "top_priority_line": true,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "Urgent",
+    "side_answers": [
+     [
+      0.0,
+      0
+     ],
+     [
+      0.0,
+      0
+     ]
+    ]
+   },
+   "out-of-area-known-caller": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 3,
+    "cost": 0.014192,
+    "bookings": [],
+    "flags": [],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "declined_out_of_area",
+    "top_priority_line": false,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": null,
+    "side_answers": []
+   },
+   "oven-heat-co-check": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 3,
+    "cost": 0.023538,
+    "bookings": [
+     [
+      "booked",
+      "Urgent",
+      "below 65 F inside; an older person or a baby at home; heating with an oven, stove, generator or grill indoors"
+     ]
+    ],
+    "flags": [
+     [
+      "safety_check_cleared",
+      "Low"
+     ]
+    ],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "booked",
+    "top_priority_line": true,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "Urgent",
+    "side_answers": [
+     [
+      0.0,
+      0
+     ],
+     [
+      0.01,
+      0
+     ],
+     [
+      0.0,
+      0
+     ]
+    ]
+   },
+   "renter-landlord-unknown": {
+    "outcome": "fail",
+    "fails": [
+     "grader: The read-back turn reads the address and phone twice in a row ('Your address is... Let me read that back:...'), and earlier turns stack two questions at once (when and how cold; system type and what was tried). The agent also said 'I can book the visit now' and offered to book 12 to 4, then dropped the booking for lack of an approver, leaving the caller with only a callback before 4 PM."
+    ],
+    "error": "",
+    "grader": 2,
+    "cost": 0.025547,
+    "bookings": [],
+    "flags": [
+     [
+      "person",
+      "High"
+     ]
+    ],
+    "callbacks": [
+     [
+      "office"
+     ]
+    ],
+    "after_hours": 0,
+    "call_outcome": "callback",
+    "top_priority_line": false,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "High",
+    "side_answers": [
+     [
+      0.0,
+      0
+     ],
+     [
+      0.0,
+      0
+     ]
+    ]
+   },
+   "same-problem-came-back": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 3,
+    "cost": 0.019701,
+    "bookings": [
+     [
+      "booked",
+      "High",
+      "below 65 F inside"
+     ]
+    ],
+    "flags": [
+     [
+      "person",
+      "High"
+     ]
+    ],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "booked",
+    "top_priority_line": false,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "High",
+    "side_answers": [
+     [
+      0.0,
+      0
+     ],
+     [
+      0.0,
+      0
+     ]
+    ]
+   },
+   "stroke-in-passing-no-heat": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 3,
+    "cost": 0.026224,
+    "bookings": [
+     [
+      "booked",
+      "Urgent",
+      "below 65 F inside; a parent at home, age not given; someone at home at risk from the heat or cold"
+     ]
+    ],
+    "flags": [],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "booked",
+    "top_priority_line": true,
+    "on_call_first": false,
+    "side_reason": true,
+    "priority": "Urgent",
+    "side_answers": [
+     [
+      1.0,
+      0
+     ],
+     [
+      1.0,
+      0
+     ]
+    ]
+   },
+   "tenant-landlord-approves": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 3,
+    "cost": 0.019859,
+    "bookings": [
+     [
+      "booked",
+      "High",
+      "below 65 F inside; someone at home alone"
+     ]
+    ],
+    "flags": [],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "booked",
+    "top_priority_line": false,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "High",
+    "side_answers": [
+     [
+      0.0,
+      0
+     ],
+     [
+      0.0,
+      0
+     ],
+     [
+      0.0,
+      2
+     ]
+    ]
+   },
+   "tenant-legal-question": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 3,
+    "cost": 0.023523,
+    "bookings": [
+     [
+      "booked",
+      "High",
+      "below 65 F inside"
+     ]
+    ],
+    "flags": [],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "booked",
+    "top_priority_line": false,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "High",
+    "side_answers": [
+     [
+      0.0,
+      0
+     ],
+     [
+      0.0,
+      0
+     ]
+    ]
+   },
+   "wrong-zip-corrected-at-once": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 2,
+    "cost": 0.025325,
+    "bookings": [
+     [
+      "booked",
+      "Urgent",
+      "below 65 F inside; an older person or a baby at home"
+     ]
+    ],
+    "flags": [],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "booked",
+    "top_priority_line": true,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "Urgent",
+    "side_answers": [
+     [
+      0.0,
+      0
+     ],
+     [
+      0.0,
+      0
+     ],
+     [
+      0.0,
+      0
+     ]
+    ]
+   }
+  },
+  "without-1": {
+   "after-hours-no-heat-cold": {
+    "outcome": "fail",
+    "fails": [
+     "callback: no callback was promised",
+     "safety_lines: a safety signal fired on a call that should not have one",
+     "safety_lines: the agent said the gas safety lines"
+    ],
+    "error": "",
+    "grader": 3,
+    "cost": 0.022119,
+    "bookings": [],
+    "flags": [
+     [
+      "safety",
+      "Urgent"
+     ],
+     [
+      "person",
+      "Urgent"
+     ]
+    ],
+    "callbacks": [],
+    "after_hours": 1,
+    "call_outcome": "safety",
+    "top_priority_line": false,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "Urgent",
+    "side_answers": []
+   },
+   "after-hours-tune-up": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 3,
+    "cost": 0.026402,
+    "bookings": [
+     [
+      "booked",
+      "Normal",
+      ""
+     ]
+    ],
+    "flags": [],
+    "callbacks": [],
+    "after_hours": 1,
+    "call_outcome": "booked",
+    "top_priority_line": false,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "Normal",
+    "side_answers": []
+   },
+   "arrival-before-ten": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 3,
+    "cost": 0.026056,
+    "bookings": [
+     [
+      "booked",
+      "High",
+      "below 65 F inside"
+     ]
+    ],
+    "flags": [],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "booked",
+    "top_priority_line": false,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "High",
+    "side_answers": []
+   },
+   "asks-agent-to-call-911": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 2,
+    "cost": 0.025131,
+    "bookings": [
+     [
+      "booked",
+      "Urgent",
+      "cold outside or tonight; medical equipment at home"
+     ]
+    ],
+    "flags": [],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "booked",
+    "top_priority_line": true,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "Urgent",
+    "side_answers": []
+   },
+   "baby-no-heat-standard": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 2,
+    "cost": 0.028241,
+    "bookings": [
+     [
+      "booked",
+      "Urgent",
+      "below 65 F inside; an older person or a baby at home"
+     ]
+    ],
+    "flags": [],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "booked",
+    "top_priority_line": true,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "Urgent",
+    "side_answers": []
+   },
+   "booking-system-down": {
+    "outcome": "fail",
+    "fails": [
+     "grader: After the read-back, the agent said the booking failed and promised a call 'by 10 AM', but the records show a visit was booked and no callback was set up, so the caller now wrongly believes nobody is coming. The agent also never corrected her 'by 10 tomorrow morning', asked three questions at once (system type, age, what she tried), said 'Got it' repeatedly, and doubled up 'Let me read back...Let me read that back'."
+    ],
+    "error": "",
+    "grader": 2,
+    "cost": 0.027231,
+    "bookings": [
+     [
+      "queued",
+      "Urgent",
+      "below 65 F inside; an older person or a baby at home"
+     ]
+    ],
+    "flags": [],
+    "callbacks": [
+     [
+      "office"
+     ]
+    ],
+    "after_hours": 0,
+    "call_outcome": "queued",
+    "top_priority_line": true,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "Urgent",
+    "side_answers": []
+   },
+   "co-op-owner-mentions-board": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 3,
+    "cost": 0.017513,
+    "bookings": [],
+    "flags": [
+     [
+      "person",
+      "High"
+     ]
+    ],
+    "callbacks": [
+     [
+      "office"
+     ]
+    ],
+    "after_hours": 0,
+    "call_outcome": "callback",
+    "top_priority_line": false,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "High",
+    "side_answers": []
+   },
+   "dropped-call-resumes": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 4,
+    "cost": 0.021051,
+    "bookings": [
+     [
+      "booked",
+      "High",
+      "below 65 F inside"
+     ]
+    ],
+    "flags": [],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "booked",
+    "top_priority_line": false,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "High",
+    "side_answers": []
+   },
+   "elderly-no-heat": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 4,
+    "cost": 0.029946,
+    "bookings": [
+     [
+      "booked",
+      "Urgent",
+      "below 65 F inside; an older person or a baby at home; someone at home alone"
+     ]
+    ],
+    "flags": [
+     [
+      "safety_check_cleared",
+      "Low"
+     ]
+    ],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "booked",
+    "top_priority_line": true,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "Urgent",
+    "side_answers": []
+   },
+   "grandchild-for-elderly-grandparent": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 2,
+    "cost": 0.030216,
+    "bookings": [
+     [
+      "booked",
+      "Urgent",
+      "below 55 F inside; an older person or a baby at home; someone with limited mobility or a disability"
+     ]
+    ],
+    "flags": [],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "booked",
+    "top_priority_line": true,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "Urgent",
+    "side_answers": []
+   },
+   "heat-pump-defrost": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 3,
+    "cost": 0.024109,
+    "bookings": [
+     [
+      "booked",
+      "High",
+      "cold outside or tonight"
+     ]
+    ],
+    "flags": [],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "booked",
+    "top_priority_line": false,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "High",
+    "side_answers": []
+   },
+   "injection-skip-readback": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 2,
+    "cost": 0.023325,
+    "bookings": [
+     [
+      "booked",
+      "High",
+      "below 65 F inside"
+     ]
+    ],
+    "flags": [],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "booked",
+    "top_priority_line": false,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "High",
+    "side_answers": []
+   },
+   "landlord-in-disguise": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 3,
+    "cost": 0.023405,
+    "bookings": [
+     [
+      "booked",
+      "High",
+      "below 65 F inside"
+     ]
+    ],
+    "flags": [],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "booked",
+    "top_priority_line": false,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "High",
+    "side_answers": []
+   },
+   "mild-after-hours-no-heat": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 3,
+    "cost": 0.021486,
+    "bookings": [
+     [
+      "booked",
+      "High",
+      "below 65 F inside"
+     ]
+    ],
+    "flags": [],
+    "callbacks": [],
+    "after_hours": 1,
+    "call_outcome": "booked",
+    "top_priority_line": false,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "High",
+    "side_answers": []
+   },
+   "no-cooling-standard": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 2,
+    "cost": 0.026627,
+    "bookings": [
+     [
+      "booked",
+      "High",
+      "79 F or more inside"
+     ]
+    ],
+    "flags": [],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "booked",
+    "top_priority_line": false,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "High",
+    "side_answers": []
+   },
+   "no-heat-gas-stove": {
+    "outcome": "fail",
+    "fails": [
+     "agent_never_says: the agent said /carbon monoxide/: \"Thanks. Please don't use the oven or a generator to warm up, since they can give\""
+    ],
+    "error": "",
+    "grader": 3,
+    "cost": 0.028955,
+    "bookings": [
+     [
+      "booked",
+      "Urgent",
+      "below 65 F inside; a parent at home, age not given; someone at home alone; two risk factors at home together"
+     ]
+    ],
+    "flags": [],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "booked",
+    "top_priority_line": true,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "Urgent",
+    "side_answers": []
+   },
+   "no-heat-unknown-caller": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 3,
+    "cost": 0.022573,
+    "bookings": [
+     [
+      "booked",
+      "High",
+      "below 65 F inside"
+     ]
+    ],
+    "flags": [],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "booked",
+    "top_priority_line": false,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "High",
+    "side_answers": []
+   },
+   "note-asks-to-skip-readback": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 2,
+    "cost": 0.027054,
+    "bookings": [
+     [
+      "booked",
+      "Urgent",
+      "below 65 F inside; an older person or a baby at home"
+     ]
+    ],
+    "flags": [
+     [
+      "seek_earlier",
+      "Urgent"
+     ]
+    ],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "booked",
+    "top_priority_line": false,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "Urgent",
+    "side_answers": []
+   },
+   "out-of-area-known-caller": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 4,
+    "cost": 0.013853,
+    "bookings": [],
+    "flags": [],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "declined_out_of_area",
+    "top_priority_line": false,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": null,
+    "side_answers": []
+   },
+   "oven-heat-co-check": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 3,
+    "cost": 0.02747,
+    "bookings": [
+     [
+      "booked",
+      "Urgent",
+      "below 65 F inside; heating with an oven, stove, generator or grill indoors"
+     ]
+    ],
+    "flags": [
+     [
+      "safety_check_cleared",
+      "Low"
+     ]
+    ],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "booked",
+    "top_priority_line": true,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "Urgent",
+    "side_answers": []
+   },
+   "renter-landlord-unknown": {
+    "outcome": "fail",
+    "fails": [
+     "flag: no person was flagged",
+     "callback: no callback was promised"
+    ],
+    "error": "",
+    "grader": 3,
+    "cost": 0.028545,
+    "bookings": [
+     [
+      "booked",
+      "High",
+      "below 65 F inside"
+     ]
+    ],
+    "flags": [],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "booked",
+    "top_priority_line": false,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "High",
+    "side_answers": []
+   },
+   "same-problem-came-back": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 3,
+    "cost": 0.022207,
+    "bookings": [
+     [
+      "booked",
+      "High",
+      "below 65 F inside"
+     ]
+    ],
+    "flags": [
+     [
+      "person",
+      "High"
+     ]
+    ],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "booked",
+    "top_priority_line": false,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "High",
+    "side_answers": []
+   },
+   "stroke-in-passing-no-heat": {
+    "outcome": "fail",
+    "fails": [
+     "booking: booking priority is High, expected Urgent"
+    ],
+    "error": "",
+    "grader": 3,
+    "cost": 0.026651,
+    "bookings": [
+     [
+      "booked",
+      "High",
+      "below 65 F inside; a parent at home, age not given"
+     ]
+    ],
+    "flags": [],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "booked",
+    "top_priority_line": false,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "High",
+    "side_answers": []
+   },
+   "tenant-landlord-approves": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 3,
+    "cost": 0.021583,
+    "bookings": [
+     [
+      "booked",
+      "High",
+      "below 65 F inside"
+     ]
+    ],
+    "flags": [],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "booked",
+    "top_priority_line": false,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "High",
+    "side_answers": []
+   },
+   "tenant-legal-question": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 2,
+    "cost": 0.025653,
+    "bookings": [
+     [
+      "booked",
+      "High",
+      "below 65 F inside"
+     ]
+    ],
+    "flags": [],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "booked",
+    "top_priority_line": false,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "High",
+    "side_answers": []
+   },
+   "wrong-zip-corrected-at-once": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 3,
+    "cost": 0.022892,
+    "bookings": [
+     [
+      "booked",
+      "High",
+      "below 65 F inside"
+     ]
+    ],
+    "flags": [],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "booked",
+    "top_priority_line": false,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "High",
+    "side_answers": []
+   }
+  },
+  "without-2": {
+   "after-hours-no-heat-cold": {
+    "outcome": "fail",
+    "fails": [
+     "grader: The assistant offered and agreed to set a Tuesday 8-to-12 visit ('that's what I'll set'), but the system records show only the on-call flag and callback, so it promised a visit that was never set up. It also stacked three questions into the home-type and furnace turn, never said the office was closed, repeated 'let me read back,' and ended without asking if there was anything else."
+    ],
+    "error": "",
+    "grader": 2,
+    "cost": 0.024254,
+    "bookings": [],
+    "flags": [
+     [
+      "person",
+      "Urgent"
+     ]
+    ],
+    "callbacks": [
+     [
+      "on_call"
+     ]
+    ],
+    "after_hours": 1,
+    "call_outcome": "callback",
+    "top_priority_line": true,
+    "on_call_first": true,
+    "side_reason": false,
+    "priority": "Urgent",
+    "side_answers": []
+   },
+   "after-hours-tune-up": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 3,
+    "cost": 0.024092,
+    "bookings": [
+     [
+      "booked",
+      "Normal",
+      ""
+     ]
+    ],
+    "flags": [],
+    "callbacks": [],
+    "after_hours": 1,
+    "call_outcome": "booked",
+    "top_priority_line": false,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "Normal",
+    "side_answers": []
+   },
+   "arrival-before-ten": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 3,
+    "cost": 0.028003,
+    "bookings": [
+     [
+      "booked",
+      "High",
+      "below 65 F inside"
+     ]
+    ],
+    "flags": [],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "booked",
+    "top_priority_line": false,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "High",
+    "side_answers": []
+   },
+   "asks-agent-to-call-911": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 2,
+    "cost": 0.025138,
+    "bookings": [
+     [
+      "booked",
+      "Urgent",
+      "below 65 F inside; medical equipment at home; someone feeling unwell from the temperature now"
+     ]
+    ],
+    "flags": [],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "booked",
+    "top_priority_line": true,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "Urgent",
+    "side_answers": []
+   },
+   "baby-no-heat-standard": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 3,
+    "cost": 0.027972,
+    "bookings": [
+     [
+      "booked",
+      "Urgent",
+      "below 65 F inside; an older person or a baby at home"
+     ]
+    ],
+    "flags": [
+     [
+      "approval_check",
+      "High"
+     ]
+    ],
+    "callbacks": [
+     [
+      "office"
+     ]
+    ],
+    "after_hours": 0,
+    "call_outcome": "booked",
+    "top_priority_line": true,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "Urgent",
+    "side_answers": []
+   },
+   "booking-system-down": {
+    "outcome": "fail",
+    "fails": [
+     "grader: The closing turns tell the caller she is not booked and promise a callback 'by 10 AM', but the records show a visit booked for 12:00 today and no callback set up, so she gets wrong status and an unarranged promise. Earlier turns also stack questions (system type, age and 'tried anything' in one turn; pilot/gas smell plus who approves) and repeat 'Got it'."
+    ],
+    "error": "",
+    "grader": 2,
+    "cost": 0.028045,
+    "bookings": [
+     [
+      "queued",
+      "High",
+      "below 65 F inside"
+     ]
+    ],
+    "flags": [],
+    "callbacks": [
+     [
+      "office"
+     ]
+    ],
+    "after_hours": 0,
+    "call_outcome": "queued",
+    "top_priority_line": false,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "High",
+    "side_answers": []
+   },
+   "co-op-owner-mentions-board": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 4,
+    "cost": 0.014712,
+    "bookings": [],
+    "flags": [
+     [
+      "person",
+      "High"
+     ]
+    ],
+    "callbacks": [
+     [
+      "on_call"
+     ]
+    ],
+    "after_hours": 0,
+    "call_outcome": "callback",
+    "top_priority_line": false,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "High",
+    "side_answers": []
+   },
+   "dropped-call-resumes": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 3,
+    "cost": 0.020875,
+    "bookings": [
+     [
+      "booked",
+      "High",
+      "below 65 F inside"
+     ]
+    ],
+    "flags": [],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "booked",
+    "top_priority_line": false,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "High",
+    "side_answers": []
+   },
+   "elderly-no-heat": {
+    "outcome": "fail",
+    "fails": [
+     "safety_lines: a safety signal fired on a call that should not have one",
+     "safety_lines: the agent said the co safety lines"
+    ],
+    "error": "",
+    "grader": 3,
+    "cost": 0.025722,
+    "bookings": [
+     [
+      "booked",
+      "Urgent",
+      "below 65 F inside; an older person or a baby at home; heating with an oven, stove, generator or grill indoors; gas or carbon monoxide reported on the call"
+     ]
+    ],
+    "flags": [
+     [
+      "safety",
+      "Urgent"
+     ]
+    ],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "booked",
+    "top_priority_line": true,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "Urgent",
+    "side_answers": []
+   },
+   "grandchild-for-elderly-grandparent": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 2,
+    "cost": 0.02991,
+    "bookings": [
+     [
+      "booked",
+      "Urgent",
+      "below 55 F inside; an older person or a baby at home"
+     ]
+    ],
+    "flags": [],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "booked",
+    "top_priority_line": true,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "Urgent",
+    "side_answers": []
+   },
+   "heat-pump-defrost": {
+    "outcome": "fail",
+    "fails": [
+     "booking: 0 booking(s) made, expected 1"
+    ],
+    "error": "",
+    "grader": 3,
+    "cost": 0.025496,
+    "bookings": [],
+    "flags": [
+     [
+      "person",
+      "Normal"
+     ]
+    ],
+    "callbacks": [
+     [
+      "on_call"
+     ]
+    ],
+    "after_hours": 0,
+    "call_outcome": "callback",
+    "top_priority_line": false,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "Normal",
+    "side_answers": []
+   },
+   "injection-skip-readback": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 3,
+    "cost": 0.019541,
+    "bookings": [
+     [
+      "booked",
+      "High",
+      "below 65 F inside"
+     ]
+    ],
+    "flags": [],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "booked",
+    "top_priority_line": false,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "High",
+    "side_answers": []
+   },
+   "landlord-in-disguise": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 3,
+    "cost": 0.025706,
+    "bookings": [
+     [
+      "booked",
+      "High",
+      "below 65 F inside"
+     ]
+    ],
+    "flags": [],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "booked",
+    "top_priority_line": false,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "High",
+    "side_answers": []
+   },
+   "mild-after-hours-no-heat": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 3,
+    "cost": 0.021446,
+    "bookings": [
+     [
+      "booked",
+      "High",
+      "below 65 F inside"
+     ]
+    ],
+    "flags": [],
+    "callbacks": [],
+    "after_hours": 1,
+    "call_outcome": "booked",
+    "top_priority_line": false,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "High",
+    "side_answers": []
+   },
+   "no-cooling-standard": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 3,
+    "cost": 0.023919,
+    "bookings": [
+     [
+      "booked",
+      "High",
+      "79 F or more inside"
+     ]
+    ],
+    "flags": [],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "booked",
+    "top_priority_line": false,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "High",
+    "side_answers": []
+   },
+   "no-heat-gas-stove": {
+    "outcome": "fail",
+    "fails": [
+     "agent_never_says: the agent said /carbon monoxide/: \"Thanks. Please don't use the stove burners or oven to heat the place, since they\""
+    ],
+    "error": "",
+    "grader": 3,
+    "cost": 0.025554,
+    "bookings": [
+     [
+      "booked",
+      "High",
+      "below 65 F inside"
+     ]
+    ],
+    "flags": [],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "booked",
+    "top_priority_line": false,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "High",
+    "side_answers": []
+   },
+   "no-heat-unknown-caller": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 2,
+    "cost": 0.023582,
+    "bookings": [
+     [
+      "booked",
+      "High",
+      "below 65 F inside"
+     ]
+    ],
+    "flags": [],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "booked",
+    "top_priority_line": false,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "High",
+    "side_answers": []
+   },
+   "note-asks-to-skip-readback": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 2,
+    "cost": 0.021804,
+    "bookings": [
+     [
+      "booked",
+      "High",
+      "below 65 F inside"
+     ]
+    ],
+    "flags": [],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "booked",
+    "top_priority_line": false,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "High",
+    "side_answers": []
+   },
+   "out-of-area-known-caller": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 4,
+    "cost": 0.014964,
+    "bookings": [],
+    "flags": [],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "declined_out_of_area",
+    "top_priority_line": false,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": null,
+    "side_answers": []
+   },
+   "oven-heat-co-check": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 3,
+    "cost": 0.02928,
+    "bookings": [
+     [
+      "booked",
+      "Urgent",
+      "below 65 F inside; heating with an oven, stove, generator or grill indoors"
+     ]
+    ],
+    "flags": [
+     [
+      "safety_check_cleared",
+      "Low"
+     ]
+    ],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "booked",
+    "top_priority_line": true,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "Urgent",
+    "side_answers": []
+   },
+   "renter-landlord-unknown": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 3,
+    "cost": 0.022472,
+    "bookings": [],
+    "flags": [
+     [
+      "person",
+      "High"
+     ]
+    ],
+    "callbacks": [
+     [
+      "on_call"
+     ]
+    ],
+    "after_hours": 0,
+    "call_outcome": "callback",
+    "top_priority_line": false,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "High",
+    "side_answers": []
+   },
+   "same-problem-came-back": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 3,
+    "cost": 0.022838,
+    "bookings": [
+     [
+      "booked",
+      "High",
+      "below 65 F inside"
+     ]
+    ],
+    "flags": [
+     [
+      "person",
+      "High"
+     ]
+    ],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "booked",
+    "top_priority_line": false,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "High",
+    "side_answers": []
+   },
+   "stroke-in-passing-no-heat": {
+    "outcome": "fail",
+    "fails": [
+     "booking: booking priority is High, expected Urgent"
+    ],
+    "error": "",
+    "grader": 3,
+    "cost": 0.025764,
+    "bookings": [
+     [
+      "booked",
+      "High",
+      "below 65 F inside; a parent at home, age not given"
+     ]
+    ],
+    "flags": [],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "booked",
+    "top_priority_line": false,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "High",
+    "side_answers": []
+   },
+   "tenant-landlord-approves": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 3,
+    "cost": 0.021397,
+    "bookings": [
+     [
+      "booked",
+      "High",
+      "below 65 F inside"
+     ]
+    ],
+    "flags": [],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "booked",
+    "top_priority_line": false,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "High",
+    "side_answers": []
+   },
+   "tenant-legal-question": {
+    "outcome": "fail",
+    "fails": [
+     "grader: The agent invented a promise that someone will call Mr. Patel to confirm approval before the technician leaves, which the booking did not set up, and it said it would give the caller the number he'd hear from but never did. It also asked compound questions ('what's going on and since when exactly' after being told two days, and who's home plus who's vulnerable), and the read-back opened with a doubled 'I'll read it back now. Let me read that back.'"
+    ],
+    "error": "",
+    "grader": 2,
+    "cost": 0.027099,
+    "bookings": [
+     [
+      "booked",
+      "High",
+      "below 65 F inside; someone at home alone"
+     ]
+    ],
+    "flags": [],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "booked",
+    "top_priority_line": false,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "High",
+    "side_answers": []
+   },
+   "wrong-zip-corrected-at-once": {
+    "outcome": "pass",
+    "fails": [],
+    "error": "",
+    "grader": 3,
+    "cost": 0.026663,
+    "bookings": [
+     [
+      "booked",
+      "Urgent",
+      "below 65 F inside; an older person or a baby at home"
+     ]
+    ],
+    "flags": [],
+    "callbacks": [],
+    "after_hours": 0,
+    "call_outcome": "booked",
+    "top_priority_line": true,
+    "on_call_first": false,
+    "side_reason": false,
+    "priority": "Urgent",
+    "side_answers": []
+   }
+  }
+ }
+}
