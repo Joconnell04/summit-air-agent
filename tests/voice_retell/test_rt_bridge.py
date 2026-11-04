@@ -22,6 +22,8 @@ def rows(tool_app, sql, *params):
 
 GREETING = utterance("agent", SPOKEN["greeting_unknown"], start=0.5)
 HEAT_OUT = utterance("user", "Hi, my heat's out and it's freezing in here.", start=5.0)
+# The server acts only on a ZIP the caller said (app/tools.py _zip_known).
+WHERE = utterance("user", "It's 101 Union St, 11231.", start=9.0)
 
 
 def booked_call(client, rid="abc"):
@@ -30,12 +32,12 @@ def booked_call(client, rid="abc"):
     asked = tool(
         client,
         "read_back",
-        call_obj(rid, GREETING, HEAT_OUT),
+        call_obj(rid, GREETING, HEAT_OUT, WHERE),
         address=in_area_address(),
         phone="caller_id",
     )
     assert asked["ok"], asked
-    said = [GREETING, HEAT_OUT, utterance("agent", asked["say"]), utterance("user", "Yes.")]
+    said = [GREETING, HEAT_OUT, WHERE, utterance("agent", asked["say"]), utterance("user", "Yes.")]
     confirmed = tool(
         client,
         "read_back",
@@ -60,12 +62,13 @@ def test_the_inbound_webhook_starts_the_call_and_fills_the_prompt_and_greeting(c
 
 def test_tool_calls_reach_the_server_under_our_call_id_with_the_lines_said_so_far(client, tool_app):
     inbound(client, "abc")
-    answer = tool(client, "check_service_area", call_obj("abc", GREETING, HEAT_OUT), zip="11231")
+    lines = call_obj("abc", GREETING, HEAT_OUT, WHERE)
+    answer = tool(client, "check_service_area", lines, zip="11231")
     assert answer["ok"], answer
     logged = rows(tool_app, "SELECT call_id FROM tool_calls WHERE tool = 'check_service_area'")
     assert logged == [{"call_id": "retell_abc"}]
     turns = rows(tool_app, "SELECT speaker, text FROM turns WHERE call_id = 'retell_abc'")
-    assert [t["speaker"] for t in turns] == ["agent", "caller"]
+    assert [t["speaker"] for t in turns] == ["agent", "caller", "caller"]
 
 
 def test_the_read_back_gate_passes_because_the_callers_yes_is_posted_first(client, tool_app):
@@ -86,12 +89,12 @@ def test_booking_without_the_callers_yes_is_refused(client):
     inbound(client, "abc")
     address = in_area_address()
     tool(
-        client, "read_back", call_obj("abc", GREETING, HEAT_OUT), address=address, phone="caller_id"
+        client, "read_back", call_obj("abc", GREETING, HEAT_OUT, WHERE), address=address, phone="caller_id"
     )
     early = tool(
         client,
         "read_back",
-        call_obj("abc", GREETING, HEAT_OUT),
+        call_obj("abc", GREETING, HEAT_OUT, WHERE),
         address=address,
         phone="caller_id",
         confirmed=True,
@@ -240,7 +243,7 @@ def build_app_down():
 
 
 def test_a_web_call_with_no_inbound_webhook_is_started_on_first_contact(client, tool_app):
-    web = call_obj("web1", GREETING, HEAT_OUT, call_type="web_call")
+    web = call_obj("web1", GREETING, HEAT_OUT, WHERE, call_type="web_call")
     web.pop("retell_llm_dynamic_variables")
     web.pop("from_number")
     answer = tool(client, "check_service_area", web, zip="11231")
@@ -283,7 +286,7 @@ def test_a_chat_maps_to_the_eval_call_id_and_its_end_closes_the_call(client, too
         "retell_llm_dynamic_variables": {"summit_call_id": "eval-42"},
         "message_with_tool_calls": [
             {"role": "agent", "content": SPOKEN["greeting_unknown"]},
-            {"role": "user", "content": "My AC is making a grinding noise."},
+            {"role": "user", "content": "My AC is making a grinding noise. I'm in 11231."},
         ],
     }
     chat_event(client, "transcript_updated", chat)

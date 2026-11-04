@@ -77,6 +77,8 @@ GATES = (
     ("booking", "Holds any booking until the address and phone are read back and confirmed",
      ("gate_read_back", "invalid_phone"), ("S-26",)),
     ("booking", "Won't book outside the service area", ("out_of_area",), ("S-28",)),
+    ("booking", "Checks the area and books only on a ZIP the caller said or one on their record",
+     ("zip_not_heard",), ()),
     ("booking", "Won't book a commercial customer", ("customer_type",), ("S-05",)),
     ("booking", "When who can approve isn't settled, a booking gets a call before dispatch", (),
      ("S-07a",)),

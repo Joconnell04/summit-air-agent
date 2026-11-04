@@ -95,7 +95,9 @@ class Agent:
         return self.app.state.services.connect()
 
     def confirm_read_back(self, call_id: str, address: dict, phone: str = "caller_id") -> dict:
-        """The two-step read-back with a caller yes in between."""
+        """The two-step read-back with a caller yes in between. The caller gives the address first,
+        since the server acts only on a ZIP the caller said (tools._zip_known)."""
+        self.turn(call_id, f"It's {address['street']}, {address['zip']}.")
         asked = self.tool("read_back", call_id, address=address, phone=phone)
         assert asked["ok"], asked
         self.say(call_id, asked["say"])

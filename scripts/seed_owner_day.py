@@ -94,6 +94,8 @@ class Voice:
 
     def read_back(self, call_id: str, street: str, zip_code: str) -> None:
         address = {"street": street, "unit": "", "city": "Brooklyn", "zip": zip_code}
+        # The server acts only on a ZIP the caller said (app/tools.py _zip_known).
+        self.caller(call_id, f"The ZIP is {zip_code}.")
         asked = self.tool("read_back", call_id, address=address, phone="caller_id")
         self.agent(call_id, asked["say"])
         self.caller(call_id, "Yes, that's right.")
@@ -220,7 +222,7 @@ def today(voice: Voice, clock: Clock, day: date, gas_lines: str, co_lines: str) 
 
     at(9, 30)
     c = voice.start("c06", "(646) 555-0150")
-    voice.caller(c, "Hi, my boiler stopped. I'm on West 23rd Street in Manhattan.")
+    voice.caller(c, "Hi, my boiler stopped. I'm on West 23rd Street in Manhattan, 10011.")
     voice.tool("check_service_area", c, zip="10011")
     voice.end(c)
 
@@ -286,7 +288,7 @@ def today(voice: Voice, clock: Clock, day: date, gas_lines: str, co_lines: str) 
 
     at(12, 10)
     c = voice.start("c12", "(201) 555-0110")
-    voice.caller(c, "Do you come out to Hoboken?")
+    voice.caller(c, "Do you come out to Hoboken, 07030?")
     voice.tool("check_service_area", c, zip="07030")
     voice.end(c)
 
@@ -340,7 +342,7 @@ def today(voice: Voice, clock: Clock, day: date, gas_lines: str, co_lines: str) 
 
     at(15, 30)
     c = voice.start("c17", "(646) 555-0166")
-    voice.caller(c, "My AC unit is leaking, I'm in Chelsea.")
+    voice.caller(c, "My AC unit is leaking, I'm in Chelsea, 10011.")
     voice.tool("check_service_area", c, zip="10011")
     voice.end(c)
 
