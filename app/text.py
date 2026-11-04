@@ -32,6 +32,24 @@ def phone_spoken(value: str) -> str:
     return f"{key[:3]}, {key[3:6]}, {key[6:]}" if len(key) == 10 else value
 
 
+DIGIT_NAMES = ("zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine")
+
+
+def digits_spoken(digits: str) -> str:
+    """Digits as words, one by one, so the voice says "one one two three one" rather than
+    "eleven thousand..." (a live call read a number back as "six hundred and forty six")."""
+    return " ".join(DIGIT_NAMES[int(d)] for d in digits if d.isdigit())
+
+
+def phone_said(value: str) -> str:
+    """A number read back digit by digit in groups: "seven one eight, five five five, zero one
+    four two"."""
+    key = phone_key(value)
+    if len(key) != 10:
+        return value
+    return ", ".join(digits_spoken(part) for part in (key[:3], key[3:6], key[6:]))
+
+
 def phone_display(value: str) -> str:
     key = phone_key(value)
     return f"({key[:3]}) {key[3:6]}-{key[6:]}" if len(key) == 10 else value

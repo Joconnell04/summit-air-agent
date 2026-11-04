@@ -38,7 +38,16 @@ from .schemas import (
 )
 from .settings import BOOKING_DAYS_AHEAD, LIMITS
 from .tenant import Tenant
-from .text import clock_time, has_phrase, phone_key, phone_spoken, street_key, unit_key, words
+from .text import (
+    clock_time,
+    digits_spoken,
+    has_phrase,
+    phone_key,
+    phone_said,
+    street_key,
+    unit_key,
+    words,
+)
 
 MAX_MATCHES = 5
 SHAPE_DAYS = 3
@@ -542,10 +551,11 @@ def read_back(ctx: Ctx, args: ReadBackIn) -> Result:
     city = f", {address['city']}" if address["city"] else ""
     # The sentence names the address as a home, so every booking has the caller confirm it's
     # residential (assignment; spec S-07). A caller who corrects it is caught by the turn check.
+    # The ZIP and the number are written out digit by digit, as the caller should hear them.
     sentence = ctx.tenant.line(
         "read_back",
-        address=f"{place}{city}, {address['zip']}",
-        phone=phone_spoken(phone),
+        address=f"{place}{city}, {digits_spoken(address['zip'])}",
+        phone=phone_said(phone),
     )
     asked = records.readback(ctx.call)
     current = {**address, "phone": phone, "sentence": sentence}

@@ -22,6 +22,7 @@ from app import lifecycle
 from app.db import iso
 from app.lifecycle import sounds_commercial
 from app.tenant import load_agent
+from app.text import phone_said
 
 AGENT = load_agent(TENANT_DIR)[0]
 
@@ -104,8 +105,8 @@ def test_the_read_back_is_one_sentence_with_the_number_in_groups(agent):
     call = agent.start(UNKNOWN)["data"]["call_id"]
     asked = agent.tool("read_back", call, address=in_area_address(), phone="caller_id")
     assert asked["say"] == (
-        "I have your home at 101 Union St, Brooklyn, 11231, and the best number is 212, 555, "
-        "0999, is that right?"
+        "I have your home at 101 Union St, Brooklyn, one one two three one, and the best number is "
+        "two one two, five five five, zero nine nine nine, is that right?"
     )
     assert "read" not in asked["say"].lower()
 
@@ -122,7 +123,7 @@ def test_a_caller_who_answers_the_read_back_with_a_business_cannot_book(agent):
 def test_the_number_im_calling_from_is_the_real_caller_id(agent):
     call = agent.start("+1 (347) 555-0101")["data"]["call_id"]
     asked = agent.tool("read_back", call, address=in_area_address(), phone="caller_id")
-    assert "347, 555, 0101" in asked["say"]
+    assert "three four seven, five five five, zero one zero one" in asked["say"]
 
 
 def test_the_one_ending_in_picks_the_matching_number_on_file(agent, scenarios):
@@ -131,7 +132,7 @@ def test_the_one_ending_in_picks_the_matching_number_on_file(agent, scenarios):
     ending = park["adultChildPhone"][-4:]
     asked = agent.tool("read_back", call, address=in_area_address(), phone=ending)
     digits = "".join(c for c in park["adultChildPhone"] if c.isdigit())
-    assert f"{digits[:3]}, {digits[3:6]}, {digits[6:]}" in asked["say"]
+    assert phone_said(digits) in asked["say"]
     unknown = agent.tool("read_back", call, address=in_area_address(), phone="9999")
     assert unknown["refused"] == "invalid_phone"
 
@@ -622,7 +623,7 @@ def test_a_spelled_street_is_joined_into_the_name_for_the_read_back(agent, addre
         "read_back", call, address={"zip": "10302", **address}, phone="caller_id"
     )
     assert asked["ok"], asked
-    assert f"your home at {street}, 10302" in asked["say"]
+    assert f"your home at {street}, one zero three zero two" in asked["say"]
 
 
 def test_an_owner_who_lives_downstairs_with_a_tenant_upstairs_can_book(agent):
@@ -951,3 +952,8 @@ def test_an_unrelated_booking_after_a_recent_visit_is_not_a_return_visit(agent, 
     assert booked["ok"], booked
     assert booked["data"]["return_visit_review"] is False
     assert "manager" not in booked["say"]
+
+
+def test_the_read_back_says_the_zip_and_number_digit_by_digit():
+    """A live test call read 646 624 0418 back as "six hundred and forty six"."""
+    assert phone_said("(646) 624-0418") == "six four six, six two four, zero four one eight"
