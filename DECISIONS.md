@@ -331,7 +331,7 @@ Decided: in V1, built in phase 3: the technician summary (S-16), the model matri
 Why: the assignment is a voice agent, not a front-end platform, so phase 3 time goes to what callers and technicians notice. Texting waits on carrier registration (decision 007), and the owner view stays as built.
 Considered: keeping the earlier later-list as it was; building the extra owner-view editing now.
 Would change if: the interview asks for one of the deferred items, or phase 3 runs out of time before the in-V1 items land.
-Discussion: Jackson's notes on docs/ai-process/brief-phase-3-onward.md
+Discussion: Jackson's notes on docs/ai-process/past-briefs/brief-phase-3-onward.md
 
 ## 033. The agent's safety job is to escalate politely, not to coach
 
@@ -356,7 +356,7 @@ Decided: a draft is published only if every must-pass scenario passes its code c
 Why: at one sample per scenario the must-pass set is noisy: three gate runs failed five different must-pass scenarios, none twice (MEASURED, PR #65). A rerun of only the misses costs about $0.02 a scenario, and a failure that repeats still blocks, so a known failure can't ride along. A gate relative to the live version was ruled out: it doubles the cost of a publish and lets an existing failure go live again. The must-pass lines are code checks; the grader is the noisiest signal and an owner edit may change manner on purpose.
 Considered: blocking on a single miss (blocked every edit tried); comparing against the live version; blocking on grader fails too.
 Would change if: a scenario keeps passing only on its rerun across publishes (flakiness to fix in the scenario), or a grader-only fail turns out to be a real regression the code checks missed.
-Discussion: PR #65; the flakiness is a phase 3 finding in docs/ai-process/brief-phase-3-onward.md
+Discussion: PR #65; the flakiness is a phase 3 finding in docs/ai-process/past-briefs/brief-phase-3-onward.md
 Issue: #56
 
 ## 030. "Never suggest unsafe heat" is a prompt rule, checked by evals
@@ -433,7 +433,7 @@ Decided: the owner view shows every rule the agent follows, grouped by call stag
 Why: owners of HVAC shops tune their call scripts, and ServiceTitan's own voice agent lets them edit opening and closing messages and follow-up questions (exploration 009). Of the 28 rules, 13 include a server gate and only 4 rest on the prompt alone, so the editable part is the manner of the call, not its rules. Two edits that look harmless would break a gate without touching code: rewording the read-back, which doubles as the home-or-business check, and lowering a priority bracket, so both are locked.
 Considered: a read-only rulebook only (cheaper, but the owner can't make the agent theirs); condition and action rules from a fixed menu (powerful, but an owner could build a rule that undoes a gate); edits written straight to YAML (no audit trail, and the server would commit to git).
 Would change if: owners ask to change numbers such as callback windows, in which case tighten-only numbers are added behind the same gate.
-Discussion: docs/explorations/009-rules-by-call-stage.md, docs/ai-process/ideas-round-questions.md
+Discussion: docs/explorations/009-rules-by-call-stage.md, docs/ai-process/past-briefs/ideas-round-questions.md
 Issue: #56
 
 ## 021. Templates layered by trade, then by company, in the repo
