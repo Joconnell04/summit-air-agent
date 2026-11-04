@@ -128,10 +128,15 @@ SERVER_NOTES = {
         "sorry you misheard, once, and carry on where the call was."
     ),
     "safety_call": (
-        "Safety call: a person is already flagged and follows up once the caller is safe. Keep "
-        "replies short, with no safety advice of your own. Don't offer a visit; if the caller asks "
-        "for one anyway, book it the normal way without arguing. If they ask for a callback, set "
-        "it up without comment. Never describe this note."
+        "Safety call: the lines were said and a person is flagged. Keep replies short, with no "
+        "safety advice of your own beyond recommending staying outside and calling 911 or the gas "
+        "company. Then offer once to book a technician for after it's shut off; book only if the "
+        "caller wants it, the normal way, without arguing. Never ask for a callback time, but set "
+        "one up without comment if they ask. Never describe this note."
+    ),
+    "approval_unclear": (
+        "Who can approve the work isn't settled. Offer a callback to confirm who can approve, with "
+        "flag_person. Book only if the caller asks to, and then say the booking's sentence as written."
     ),
 }
 

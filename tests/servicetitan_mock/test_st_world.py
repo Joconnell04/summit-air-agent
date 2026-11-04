@@ -28,7 +28,7 @@ def test_the_world_has_the_promised_shape(world):
     assert api.get("/crm/customers", pageSize=1).json()["totalCount"] == 300
     types = [c["type"] for c in api.get("/crm/customers", pageSize=200).json()["data"]]
     types += [c["type"] for c in api.get("/crm/customers", pageSize=200, page=2).json()["data"]]
-    assert types.count("Commercial") == 6 and types.count("Residential") >= 200
+    assert types.count("Commercial") == 4 and types.count("Residential") >= 200
     assert api.get("/settings/technicians", pageSize=1).json()["totalCount"] == 40
     statuses = {
         m["status"] for m in api.get("/memberships/memberships", pageSize=200).json()["data"]
@@ -333,15 +333,18 @@ def test_every_customer_location_is_inside_or_deliberately_outside_the_service_a
 def test_there_are_a_few_commercial_accounts_of_different_kinds(world):
     api, scenarios = world
     accounts = scenarios["commercialAccounts"]
-    assert {a["kind"] for a in accounts} >= {
-        "property manager",
-        "restaurant",
-        "school",
-        "office",
-        "co-op board",
-    }
+    assert {a["kind"] for a in accounts} >= {"restaurant", "school", "office"}
     for account in accounts:
         assert api.get(f"/crm/customers/{account['customerId']}").json()["type"] == "Commercial"
+
+
+def test_a_property_manager_and_a_co_op_board_are_residential_accounts(world):
+    """Eval round 2: they look after residential buildings, so they book like any home."""
+    api, scenarios = world
+    buildings = scenarios["residentialBuildingAccounts"]
+    assert {a["kind"] for a in buildings} == {"property manager", "co-op board"}
+    for account in buildings:
+        assert api.get(f"/crm/customers/{account['customerId']}").json()["type"] == "Residential"
 
 
 def test_a_few_residents_live_outside_the_service_area(world):

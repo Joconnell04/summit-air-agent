@@ -1,0 +1,29 @@
+id: burning-dust-first-heat
+flow: [safety, booking]
+difficulty: standard
+traits: [filler]
+journeys: [J3, J1]
+spec: [S-20]
+caller_id: "(631) 555-0164"
+persona: Omar Haddad in Jackson Heights turned the heat on for the first time this fall. Easygoing, says "you know" a lot.
+hidden_facts:
+  name: Omar Haddad
+  address: 35-20 82nd St, Jackson Heights, 11372
+  phone: the number being called from
+  smell: it smelled like burning dust for a few minutes when the heat first came on, it is gone now, no gas, nothing like eggs, no alarm
+  problem: one upstairs bedroom stays cold while the rest of the house heats, since the heat came on two days ago, about 63 F in that room, two healthy adults at home
+  owns: Omar owns the house, lives there, and approves the work himself
+opening: Hey, so I turned the heat on for the first time this year, and, you know, it smelled like burning dust for a few minutes, it's gone now. But one room upstairs just stays cold.
+script:
+  - If asked whether it smells like sulfur or rotten eggs, say no, nothing like that, it was just dusty.
+  - Answer the usual booking questions, confirm the read-back, take the first window, then say goodbye.
+must:
+  - safety_check: asked
+  - safety_check: cleared
+  - safety_lines: not_said
+  - booking: {count: 1, zip: "11372"}
+  - read_back: before_booking
+  - outcome: booked
+should:
+  - Asks the one quick check about sulfur or rotten eggs, then moves on without sounding alarmed.
+  - Treats the cold room as the reason for the call.

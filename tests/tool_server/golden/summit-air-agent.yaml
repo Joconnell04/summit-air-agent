@@ -11,6 +11,40 @@ after_hours:
   morning_above_f: 55
   on_call_confirms_within_minutes: 20
   tonight_below_f: 50
+approval:
+  callback_hours_before_window: 2
+  unclear_approver:
+  - board
+  - not sure
+  - unclear
+  - unknown
+  - to confirm
+  - to be confirmed
+  - tbd
+  - needs approval
+  unclear_phrases:
+  - co-op board
+  - coop board
+  - condo board
+  - building board
+  - board approval
+  - board has to approve
+  - board needs to approve
+  - board to approve
+  - board has to be told
+  - board has to know
+  - tell the board
+  - ask the board
+  - check with the board
+  - landlord has to approve
+  - landlord needs to approve
+  - ask my landlord
+  - check with my landlord
+  - check with the landlord
+  - management has to approve
+  - not sure who approves
+  - not sure if i can approve
+  - not sure i can approve
 callbacks:
   after_lead_minutes: 30
   dropped_safety_minutes: 10
@@ -22,12 +56,22 @@ callbacks:
   owner_after_hours: on_call
   owner_in_hours: office
 commercial:
+  apartment_signs:
+  - units
+  - apartments
+  - apartment building
+  - unit building
+  - family house
+  - walk up
   not:
   - business partner
   - business trip
   - business card
   - home office
   - my own business hours
+  not_home:
+  - not a home
+  - not my home
   owned:
   - restaurant
   - bakery
@@ -43,29 +87,26 @@ commercial:
   - warehouse
   - business
   phrases:
-  - property manager
-  - property management
   - office building
+  - office space
   - commercial property
+  - commercial space
+  - commercial unit
+  - commercial building
+  - commercial tenants
+  - retail space
+  - retail
+  - storefront
+  - shopping center
+  - strip mall
+  - plaza
+  - hotel
+  - church
+  - dental practice
   - rooftop unit
   - it's a business
   - it is a business
   - it's commercial
-  - not a home
-  - not my home
-  - three units
-  - four units
-  - five units
-  - six units
-  - 3 units
-  - 4 units
-  - three family
-  - four family
-  - 3 family
-  - 4 family
-  - three apartments
-  - four apartments
-  - apartment building
   run:
   - restaurant
   - bakery
@@ -85,9 +126,6 @@ commercial:
   - church
   - hotel
   - office
-  - building
-  - property
-  - properties
 fsm:
   adapter: servicetitan
   agent_user_id: 9001
@@ -106,6 +144,10 @@ fsm:
   log_calls_via_debug: true
 lines:
   anything_else_first: Is there anything else I can help with?
+  approval_callback: Before the technician heads out, someone from our team will call you {when} to confirm
+    who can approve the work.
+  approval_callback_late: Someone from our team will call you {when} to confirm who can approve the work,
+    and the technician won't start until that's settled.
   callback_after: around {time}
   callback_before: before {time}
   callback_between: between {start} and {end}
@@ -113,8 +155,8 @@ lines:
   callback_opening: Hi, this is Summit Air calling back for {first_name}. Is that you?
   callback_opening_unknown: Hi, this is Summit Air calling you back, like we said we would.
   callback_outside_hours: Our team makes calls between {opens} and {closes}. What time in there works?
-  commercial: Thanks for thinking of us. Unfortunately Summit Air only works on homes, so we're not the
-    right fit for this one.
+  commercial: Thanks for thinking of us. Unfortunately Summit Air works on homes and apartments, not businesses,
+    so we're not the right fit for this one.
   do_not_call: Understood, we won't call you.
   do_not_call_with_callback: Understood, we won't call you. That means the callback is off, so give us
     a call any time you need us.
@@ -426,6 +468,8 @@ retention:
   call_record_days: 365
   transcript_days: 30
 safety:
+  booking_note: The technician can only work on it once the gas company or 911 has shut it off and said
+    it's safe, so please stay outside until then.
   denials:
   - not gas
   - no gas
@@ -526,11 +570,41 @@ safety:
       - light headed
       - lightheaded
       - headaches
+      - head hurts
+      - feel sick
       - nauseous
       - alarm is beeping
       - alarm keeps beeping
       question: Just to be safe, is a carbon monoxide alarm going off, or is anyone feeling sick or dizzy?
     gas:
+      confirm_filler:
+      - dust
+      - dusty
+      - burnt
+      - heat
+      - heater
+      - furnace
+      - boiler
+      - fire
+      - fires
+      - fired
+      - egg
+      - sulphur
+      - alarm
+      - vents
+      - radiator
+      - radiators
+      confirm_phrases:
+      - burning dust
+      - burnt dust
+      - dusty smell
+      - burning smell
+      - burnt smell
+      - smells like burning
+      - smelled like burning
+      - smell of burning
+      - smells burnt
+      confirm_question: Just to confirm, it doesn't smell like sulfur or rotten eggs, right?
       phrases:
       - smells off
       - smell something off

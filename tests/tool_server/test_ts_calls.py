@@ -284,7 +284,7 @@ def test_a_commercial_call_saves_one_line_with_no_extra_lookups(agent, mock):
         },
     )
     assert lead["ok"]
-    assert "only works on homes" in lead["say"]
+    assert "works on homes and apartments" in lead["say"]
     log = agent.client.get(
         "/debug/logs",
         params={"call_id": call, "tool": "record_lead"},

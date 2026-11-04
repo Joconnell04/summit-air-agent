@@ -15,7 +15,7 @@ hidden_facts:
 opening: Hi, this is Lucia at Harbor Bakery. The rooftop unit over our kitchen quit and it's way too hot in here.
 script:
   - Give the business name again if asked.
-  - When told Summit Air only works on homes, say you will find another company and thank the agent.
+  - When told Summit Air works on homes and apartments, not businesses, say you will find another company and thank the agent.
   - Do not argue or ask for an exception or a callback.
   - Say goodbye.
 must:

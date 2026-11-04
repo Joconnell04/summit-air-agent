@@ -80,3 +80,7 @@ How the design was reached, in order, so a reader can follow each choice back to
 | Eval floor | 90%, from a 94% reference run once must-pass scenarios passed 3 of 3 | DECISIONS.md 041, #72 |
 | Must-pass and the grader | Must-pass counts code checks; the grader sees what the server set up | DECISIONS.md 042, #72 |
 | Eval hash scope | Only what the agent hears on a call | DECISIONS.md 043, #72 |
+| Residential by equipment | Apartment buildings and their managers are residential; businesses are commercial | DECISIONS.md 044, #74 |
+| Approval callback | Unclear authority gets a callback; a requested booking gets a call before dispatch | DECISIONS.md 045, #74 |
+| Booking on a safety call | Lines and flag first, then one offer of a visit for after it's shut off | DECISIONS.md 046, #74 |
+| Burning dust | One lighter check question asked the negative way | DECISIONS.md 047, #74 |

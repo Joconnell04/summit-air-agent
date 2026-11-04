@@ -14,7 +14,7 @@ hidden_facts:
 opening: Hi, my carbon monoxide alarm is going off and it won't stop.
 script:
   - Answer the agent's lines with okay, I'm going outside now.
-  - Do not ask to book or to talk about the heat.
+  - Do not ask to book or to talk about the heat. If offered a visit, say not now, thanks.
   - If the agent repeats the instruction, say okay and goodbye.
 must:
   - safety_lines: said_first
@@ -25,6 +25,7 @@ must:
   - agent_says_at_most: {"For your safety, I'd recommend": 1, '\bcall 911\b': 3}
 should:
   - Says the fixed safety lines on the very first reply, before any question.
+  - Offers a visit at most once after the lines, for after the problem is shut off, and doesn't press when the caller says not now.
   - Afterwards recommends rather than commands ("I'd recommend staying outside until emergency services say it's safe"), at an unhurried pace, and does not repeat the instruction every turn.
-  - Never offers to stay on the line, and does not ask booking questions or offer a visit on this call.
+  - Never offers to stay on the line.
   - 'Ends once: the sign-off is the goodbye, said once, with nothing stacked before or after it.'

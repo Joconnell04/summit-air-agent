@@ -445,9 +445,9 @@ def rule_history(app, clock: Clock, day: date) -> None:
             checking = rules.request_publish(conn, tenant.slug, "Owner", clock())
             clock.now += timedelta(minutes=6)
             found = gate.summary(run, run.overlay, rerun)
-            # These are past gate runs: they're held to the must-pass set as it was when they ran,
-            # so a must-pass scenario added later doesn't turn the demo's published version red.
-            rules.record_gate(conn, checking["id"], found, clock(), found["scenarios"])
+            # Judged against the must-pass set the saved run covered, not today's: the set grows
+            # as scenarios are added, and an old run can't have run a newer one.
+            rules.record_gate(conn, checking["id"], found, clock(), len(run.scenarios))
     finally:
         conn.close()
 
