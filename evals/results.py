@@ -77,6 +77,8 @@ class ScenarioResult(Strict):
     difficulty: Difficulty
     traits: list[Trait] = Field(default_factory=list)
     outcome: Outcome
+    # The failed code checks on a must-pass scenario. A grader fail lowers the pass rate but is not
+    # a must-pass failure: the must-pass lines are code checks (docs/spec.md).
     must_pass_failures: list[str] = Field(default_factory=list)
     # Every failed code check, must-pass or not, and why an error run produced no verdict.
     check_failures: list[str] = Field(default_factory=list)
@@ -105,6 +107,11 @@ class ScenarioResult(Strict):
     # and the cost split by part (caller voice, agent ears, platform, models), in USD.
     silent_turns: int = Field(0, ge=0)
     cost_parts: dict[str, float] = Field(default_factory=dict)
+
+    @property
+    def code_failures(self) -> list[str]:
+        """The failed code checks, without a grader fail. Only these are must-pass failures."""
+        return [f for f in self.check_failures if not f.startswith("grader:")]
 
     @model_validator(mode="after")
     def check_consistency(self) -> "ScenarioResult":

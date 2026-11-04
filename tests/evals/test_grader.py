@@ -1,7 +1,7 @@
 import pytest
 from fakes import ScriptedModel, grade_reply, say
 
-from evals.grader import grade
+from evals.grader import grade, set_up
 from evals.models import ModelError
 from evals.results import Turn
 
@@ -31,3 +31,49 @@ def test_the_grader_sees_the_transcript_and_what_to_look_for():
     call = model.calls[0]
     assert "Offers the shape of availability first." in call["system"]
     assert call["messages"][0]["content"] == "AGENT: Hi.\nCALLER: Hello."
+
+
+SAFETY = {"kinds": {"gas": {"lines": "Please get everyone out."}}, "sign_off": "We'll follow up once\n you're safe."}
+
+
+def trace(flags=(), events=(), signal=None, state="none", bookings=()):
+    call = {"safety_signal_at": signal, "safety_state": state, "safety_kind": "gas" if signal else None}
+    return {"call": call, "flags": list(flags), "events": list(events), "bookings": list(bookings)}
+
+
+def tool(name, say, ok=True):
+    return {"type": "tool", "tool": name, "ok": ok, "say": say}
+
+
+def test_the_grader_is_told_what_the_server_set_up():
+    found = set_up(trace(
+        flags=[{"kind": "person"}],
+        events=[tool("flag_person", "Someone will call you by 9:15 AM."),
+                tool("find_slots", "I've got openings today."),
+                tool("book_appointment", "Before I book it, let me read back.", ok=False)],
+    ), SAFETY)
+    assert found == ["A person was flagged (person).",
+                     "flag_person returned: Someone will call you by 9:15 AM."]
+    model = ScriptedModel([grade_reply()])
+    grade(model, TURNS, [], found)
+    assert "flag_person returned: Someone will call you by 9:15 AM." in model.calls[0]["system"]
+
+
+def test_a_booking_shows_its_job_number_so_reading_it_out_is_not_invented():
+    found = set_up(trace(bookings=[
+        {"kind": "book", "status": "booked", "fsm_job_id": 625, "window_start": "2026-11-03T13:00:00Z"},
+        {"kind": "book", "status": "failed", "fsm_job_id": None, "window_start": "x"},
+    ]), SAFETY)
+    assert found == ["A visit was booked (job 625, starting 2026-11-03T13:00:00Z)."]
+
+
+def test_a_safety_call_shows_the_grader_the_signed_off_wording():
+    found = set_up(trace(signal="2026-11-02T14:00:00Z", state="lines_said"), SAFETY)
+    assert "Safety sign-off (fixed wording): We'll follow up once you're safe." in found
+    assert set_up(trace(signal="2026-11-02T14:00:00Z", state="cleared"), SAFETY) == []
+
+
+def test_with_nothing_set_up_the_grader_is_told_so():
+    model = ScriptedModel([grade_reply()])
+    grade(model, TURNS, [])
+    assert "- Nothing." in model.calls[0]["system"]

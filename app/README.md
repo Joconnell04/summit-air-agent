@@ -28,6 +28,7 @@ The owner view is three pages for the owner and dispatcher: Today (`/owner`, the
 | `DEBUG_TOKEN` | empty, which refuses every debug request | Token for `/debug/*` |
 | `APP_ENV` | `development` | Anything else turns on the retention policy |
 | `JOBS_INTERVAL_SECONDS` | `60` | Background jobs (`app/jobs.py`); `0` turns them off |
+| `SUMMARIES` | empty | `1` writes the technician's summary after each booked call (`app/summary.py`); it needs `ANTHROPIC_API_KEY` too |
 | `OWNER_TOKEN` | empty, which refuses every owner view request | Token for `/owner` |
 | `OWNER_VIEW_URL` | empty | Where the owner view is served, for the call link in alert emails |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `MAIL_FROM` | empty, `587` | The mail server for on-call alerts. With no host, alerts are held and shown on the owner view, not sent |
@@ -49,7 +50,8 @@ The owner view is three pages for the owner and dispatcher: Today (`/owner`, the
 | `lookup.py` | The richer lookup (membership, open jobs, last service, recent calls, notes, equipment) and history |
 | `booking.py` | Sending a booking to the FSM, shared by the live path and the retry queue |
 | `records.py` | The server's own tables: calls, scope, flags, callbacks (named time, owner, outbound rules, overdue), do-not-call |
-| `jobs.py` | Retry of queued bookings and leads, earlier openings for flagged urgent bookings, queuing the callbacks the system places, booked-and-kept, on-call email after hours, cache refresh, the search index, collecting call recordings, overdue callbacks, retention |
+| `jobs.py` | Retry of queued bookings and leads, earlier openings for flagged urgent bookings, queuing the callbacks the system places, booked-and-kept, on-call email after hours, cache refresh, the search index, collecting call recordings, overdue callbacks, retention, and the technician summary last |
+| `summary.py` | The technician's summary after a booked call (spec S-16): the call record the model reads, the checks on its lines, and the pinned job note |
 | `transfer.py` | Warm transfer (C-11): whether a person flag goes to a person now and to whom, the summary they hear, and what happens when nobody takes it |
 | `recordings.py` | Call audio (story O-6): the file name a call records under, copying finished files from the bucket, deletion with the transcript |
 | `outbound.py` | Calls the system places (journey 12): what the voice layer claims, and settling each one from what happened on it |
@@ -124,5 +126,5 @@ Jackson is redesigning the owner view in a separate session. The first version, 
 - The booked-and-kept check reads at most 50 bookings per run, oldest window first; bookings the FSM keeps refusing to read, or moved later, are read again each run and could crowd out newer ones in a large backlog.
 - One `OWNER_TOKEN` opens every tenant's owner view (`?tenant=<slug>`); a second real tenant needs its own token.
 - Flags with no call (a lead the FSM refused) belong to no tenant and don't show on the owner view.
-- `/calls/end` marks the technician summary as pending (spec S-16); the summary job itself is not built yet.
+- The technician summary's checks drop a line with nothing in the record behind it and a line with a number the record doesn't hold. A wrong statement made from real facts would pass them, which is why the full intake stays in the job summary underneath the pinned note.
 - Against real ServiceTitan the adapter still needs the changes listed in `servicetitan_mock/README.md` (our own idempotency keys, a capacity recheck before creating a job).
