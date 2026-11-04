@@ -10,6 +10,7 @@ Rules, all enforced here:
 """
 
 import asyncio
+import time
 from collections.abc import Awaitable, Callable
 
 # Longest a bridge clip may be. Longer clips are refused at load (voice/livekit/clips.py).
@@ -34,9 +35,12 @@ class Bridge:
         self._last_turn: int | None = None
         self._playing: asyncio.Task | None = None
         self.played: list[str] = []
+        # When this turn's clip started (wall clock, as LiveKit stamps its lines), if one did.
+        self.clip_started_at: float | None = None
 
     def caller_turn(self) -> None:
         self._turn += 1
+        self.clip_started_at = None
 
     def _pick(self) -> str | None:
         if not self._unused or not self._silent():
@@ -57,6 +61,7 @@ class Bridge:
         if not done:
             clip = self._pick()
             if clip:
+                self.clip_started_at = time.time()
                 self._playing = asyncio.create_task(self._play(clip))
         return await task
 

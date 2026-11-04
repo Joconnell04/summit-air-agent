@@ -142,13 +142,22 @@ def tool_count(trace: dict) -> int:
     return sum(1 for e in trace["events"] if e["type"] == "tool" and e["tool"] in TOOLS)
 
 
-def newest_agent_timings(trace: dict, seen: int) -> tuple[dict, int]:
-    """Stage timings the voice program logged with its newest agent line, if it logged a new
-    one since `seen` lines, and the number of agent lines now on the record."""
+def turn_agent_timings(trace: dict, seen: int) -> tuple[dict, int]:
+    """Stage timings the voice program logged with the agent lines of this turn (those after the
+    first `seen`), and the number of agent lines now on the record. The first line's timings are
+    the reply the caller waited for; a line after a tool call in the same turn only adds its tool
+    time."""
     lines = [e for e in trace["events"] if e["type"] == "turn" and e["speaker"] == "agent"]
-    if len(lines) <= seen:
+    new = [e.get("timings") or {} for e in lines[seen:]]
+    if not new:
         return {}, len(lines)
-    return lines[-1].get("timings") or {}, len(lines)
+    stages = dict(new[0])
+    tool_ms = sum(float(t.get("tool_ms") or 0) for t in new)
+    if tool_ms:
+        stages["tool_ms"] = tool_ms
+    if len(new) > 1:
+        stages["agent_lines"] = float(len(new))
+    return stages, len(lines)
 
 
 def newest_caller_timings(trace: dict) -> dict:
@@ -216,7 +225,7 @@ class Rig:
                                    said=" ".join(heard_turn.said) or None))
             trace = await asyncio.to_thread(server.trace, call_id)
             tools_so_far = tool_count(trace)
-            _, agent_lines = newest_agent_timings(trace, 0)
+            _, agent_lines = turn_agent_timings(trace, 0)
             said = caller.first_line(greeting)
             recent: list[str] = []
             reason = None
@@ -242,7 +251,7 @@ class Rig:
                 trace = await asyncio.to_thread(server.trace, call_id)
                 lookup = tool_count(trace) > tools_so_far
                 tools_so_far = tool_count(trace)
-                stages, agent_lines = newest_agent_timings(trace, agent_lines)
+                stages, agent_lines = turn_agent_timings(trace, agent_lines)
                 logged = {k: float(v) for k, v in {**newest_caller_timings(trace), **stages}.items()
                           if isinstance(v, (int, float))}
                 if heard_turn.first_sound is None:

@@ -20,10 +20,10 @@ from evals.audio_rig.rig import (
     Sender,
     load_entrant,
     must_repeat,
-    newest_agent_timings,
     newest_caller_timings,
     plan,
     tool_count,
+    turn_agent_timings,
 )
 from evals.audio_rig.router import Worlds, build_app, call_id_of
 from evals.audio_rig.speech import Deepgram
@@ -364,14 +364,25 @@ def test_only_model_tools_count_toward_a_lookup_turn():
     assert tool_count(trace) == 1
 
 
-def test_the_voice_programs_own_timing_is_read_from_its_newest_line():
+def test_the_voice_programs_own_timing_is_read_from_the_turns_lines():
     trace = {"events": [
         {"type": "turn", "speaker": "agent", "timings": {}},
         {"type": "turn", "speaker": "caller", "timings": {}},
         {"type": "turn", "speaker": "agent", "timings": {"reply_ms": 950.0}},
     ]}
-    assert newest_agent_timings(trace, 1) == ({"reply_ms": 950.0}, 2)
-    assert newest_agent_timings(trace, 2) == ({}, 2)
+    assert turn_agent_timings(trace, 1) == ({"reply_ms": 950.0}, 2)
+    assert turn_agent_timings(trace, 2) == ({}, 2)
+
+
+def test_a_turn_with_two_agent_lines_is_timed_by_the_first():
+    trace = {"events": [
+        {"type": "turn", "speaker": "caller", "timings": {}},
+        {"type": "turn", "speaker": "agent", "timings": {"reply_ms": 1200.0, "tool_ms": 0.0}},
+        {"type": "turn", "speaker": "agent", "timings": {"tool_ms": 40.0}},
+    ]}
+    stages, seen = turn_agent_timings(trace, 0)
+    assert seen == 2
+    assert stages == {"reply_ms": 1200.0, "tool_ms": 40.0, "agent_lines": 2.0}
 
 
 def test_the_caller_lines_stage_timings_come_from_the_newest_caller_line():

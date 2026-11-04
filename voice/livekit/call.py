@@ -5,6 +5,7 @@ asked, and speaks at the pace the server sets (app/pace.py)."""
 import asyncio
 import json
 import logging
+import time
 from collections.abc import AsyncIterable
 
 from livekit import rtc
@@ -44,7 +45,10 @@ class Call:
         self.llm_log = llm_log or LlmLog()
         self.endpointing = endpointing
         self.session = None
+        # The end of the caller's last line, until the first agent line after it is timed.
         self.caller_stopped_at: float | None = None
+        # How long that line's trip to the tool server took, before the model could answer.
+        self.server_ms: float | None = None
         self.hang_up_task: asyncio.Task | None = None
         # Set by the worker: says the tenant's server-down line (which carries the 911 line) and
         # ends the call. Without the server there is no safety check, so the call can't go on.
@@ -124,7 +128,9 @@ class Call:
         self.drop_unspoken()
         self.bridge.caller_turn()
         self.caller_stopped_at = message.metrics.get("stopped_speaking_at")
+        began = time.perf_counter()
         result = await self.post("caller", text, caller_timings(message.metrics))
+        self.server_ms = round((time.perf_counter() - began) * 1000, 1)
         if result["refused"] == UNREACHABLE:
             self.server_down()
             raise StopResponse()
@@ -169,8 +175,15 @@ class Call:
             return
         tool_ms, bridge = self.tool_log.take()
         timings = agent_timings(
-            message.metrics, self.caller_stopped_at, tool_ms, bridge, self.llm_log.take()
+            message.metrics, self.caller_stopped_at, tool_ms, bridge, self.llm_log.take(),
+            clip_started_at=self.bridge.clip_started_at,
         )
+        if self.caller_stopped_at is not None and self.server_ms is not None:
+            timings["server_ms"] = self.server_ms
+        # Only the first line after the caller's is the reply the caller waited for; a line after
+        # a tool call in the same turn is timed from it no longer.
+        self.caller_stopped_at = None
+        self.server_ms = None
         speed = self.spoken_speed(text)
         if speed is not None:
             timings["speed"] = speed

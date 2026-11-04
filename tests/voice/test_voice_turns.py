@@ -51,6 +51,14 @@ def test_reply_delay_runs_from_the_caller_going_quiet_to_the_first_audio():
     assert agent_timings({}, None, 5.0, True) == {"tool_ms": 5.0, "bridge": 1.0}
 
 
+def test_a_bridge_clip_that_plays_first_is_the_first_audio():
+    timings = agent_timings({"started_speaking_at": 14.0}, 10.8, 900.0, True, clip_started_at=11.6)
+    assert timings["reply_ms"] == 800.0
+    # A clip stamped after the line started (it can't play over the agent) doesn't count.
+    late = agent_timings({"started_speaking_at": 12.0}, 10.8, 0.0, False, clip_started_at=12.5)
+    assert late["reply_ms"] == 1200.0
+
+
 def test_the_profile_is_switched_by_one_setting(monkeypatch):
     assert load_profile().provider == "anthropic"
     monkeypatch.setenv("MODEL_PROFILE", "openai-fast")

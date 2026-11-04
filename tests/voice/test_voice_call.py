@@ -180,6 +180,57 @@ def test_every_agent_line_carries_its_stage_timings(agent, connect):
     assert '"reply_ms": 1100.0' in timings and '"tool_ms": 42.0' in timings
 
 
+def agent_timings_rows(agent) -> list[dict]:
+    conn = agent.db()
+    rows = conn.execute(
+        "SELECT timings_json FROM turns WHERE call_id = 'call-1' AND speaker = 'agent' ORDER BY id"
+    ).fetchall()
+    conn.close()
+    return [json.loads(r[0]) for r in rows]
+
+
+def test_only_the_first_line_after_the_caller_carries_the_reply_delay(agent, connect):
+    """On a tool turn the agent can speak twice ("Let me check", then the answer). The caller
+    waited for the first; the second line timed from the caller's end read up to 11 s too high
+    (exploration 014)."""
+    agent.start(call_id="call-1")
+    call = make_call(connect)
+    call.caller_stopped_at = 100.0
+    first = agent_says("Let me check what we have.")
+    first.metrics = {"started_speaking_at": 101.2}
+    second = agent_says("I've got Tuesday morning open.")
+    second.metrics = {"started_speaking_at": 104.9}
+
+    async def run():
+        call.agent_line(first)
+        call.agent_line(second)
+        await call.flush()
+
+    asyncio.run(run())
+    rows = agent_timings_rows(agent)
+    assert rows[0]["reply_ms"] == 1200.0
+    assert "reply_ms" not in rows[1]
+
+
+def test_the_caller_lines_trip_to_the_server_is_timed_on_the_reply(agent, connect):
+    agent.start(call_id="call-1")
+    call = make_call(connect)
+    heard = caller("my heat is out")
+    heard.metrics = {"stopped_speaking_at": 100.0}
+    reply = agent_says("Sorry to hear that. When did it stop?")
+    reply.metrics = {"started_speaking_at": 101.3}
+
+    async def run():
+        await call.caller_line(heard)
+        call.agent_line(reply)
+        await call.flush()
+
+    asyncio.run(run())
+    (row,) = agent_timings_rows(agent)
+    assert row["reply_ms"] == 1300.0
+    assert 0 < row["server_ms"] < 5000
+
+
 def test_the_trace_shows_whether_the_prompt_cache_was_hit(agent, connect):
     agent.start(call_id="call-1")
     call = make_call(connect)
