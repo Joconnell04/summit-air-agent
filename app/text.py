@@ -150,7 +150,15 @@ DIGIT_WORDS = {
 
 def digit_runs(text: str) -> list[str]:
     """The runs of digits a line says, however speech-to-text wrote them: "11226", "11 226", "one
-    one two two six" and "one one two double six" are each one run, "11226"."""
+    one two two six" and "one one two double six" are each one run, "11226". Punctuation ends a
+    run, so "11226, 718 555 0142" is two."""
+    runs = []
+    for part in re.split(r"[.,;:!?]", text or ""):
+        runs += _digit_runs(part)
+    return runs
+
+
+def _digit_runs(text: str) -> list[str]:
     runs, current, double = [], "", False
     for token in words(text).split():
         if token == "double":
