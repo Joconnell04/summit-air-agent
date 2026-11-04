@@ -47,6 +47,7 @@ from .schemas import (
 from .settings import BOOKING_DAYS_AHEAD, LIMITS
 from .tenant import Tenant
 from .text import (
+    DIGIT_WORDS,
     SPELLED_RUN,
     clock_time,
     digit_runs,
@@ -246,10 +247,36 @@ def _split_run_on(tokens: list[str], want: str, names: list[str], text: str) -> 
     caller-declines-safety-advice)."""
     street = names[0] if names and names[0].isdigit() else ""
     run = want + street
-    # Only a run that was said digit by digit: "112 2nd Avenue" written as digits is house 112.
-    if not street or re.search(rf"\b{run}\b", text):
+    # Only a run said digit by digit: "112 2nd Avenue" and "one twelve 2nd avenue" are house 112.
+    if not street or not _digit_by_digit(text, run):
         return tokens
     return [part for token in tokens for part in ([want, street] if token == run else [token])]
+
+
+SINGLE_DIGITS = {"zero", "oh", "o", "one", "two", "three", "four", "five", "six", "seven", "eight",
+                 "nine"}
+
+
+def _digit_by_digit(text: str, run: str) -> bool:
+    """The run was said mostly one digit at a time: a stretch of digit words and short numbers
+    whose digits are the run, at least half of them single digits ("one one eight 24 one nine
+    seven" is 11824197)."""
+    tokens = words(text).split()
+    for start in range(len(tokens)):
+        digits, singles = "", 0
+        for count, token in enumerate(tokens[start:], start=1):
+            if token in SINGLE_DIGITS:
+                digits += DIGIT_WORDS[token]
+                singles += 1
+            elif token.isdigit() and len(token) <= 2:
+                digits += token
+            else:
+                break
+            if digits == run:
+                return singles * 2 >= count >= 4
+            if not run.startswith(digits):
+                break
+    return False
 
 
 def _keyed(tokens: list[str]) -> list[str]:
@@ -1292,7 +1319,7 @@ def find_address(ctx: Ctx, args: FindAddressIn) -> Result:
     ) if said in ctx.tenant.service_area else None
     # The ZIP was already asked for and the caller hasn't said one: the lookup isn't tried again,
     # so the caller is asked once (PR #139 review).
-    if not said and _zip_asked(ctx):
+    if not said and _zip_asked(ctx, house, street):
         raise Refused(
             "zip_asked",
             "",
@@ -1312,7 +1339,7 @@ def find_address(ctx: Ctx, args: FindAddressIn) -> Result:
     if from_caller and found.status in ("unavailable", "none"):
         return from_caller
     if found.status == "unavailable":
-        _ask_zip(ctx, "address_lookup_down")
+        _ask_zip(ctx, "address_lookup_down", house, street)
     if found.status == "none":
         thread = records.thread(ctx.conn, ctx.call["id"])
         misses = ctx.conn.execute(
@@ -1321,7 +1348,7 @@ def find_address(ctx: Ctx, args: FindAddressIn) -> Result:
             thread,
         ).fetchone()[0]
         if misses >= 2:
-            _ask_zip(ctx, "address_not_found")
+            _ask_zip(ctx, "address_not_found", house, street)
         raise Refused(
             "address_not_found",
             ctx.tenant.line("address_not_found"),
@@ -1464,24 +1491,27 @@ def find_slots(ctx: Ctx, args: FindSlotsIn) -> Result:
     return ok(f"{urgent_said}{arrival_say}I've got openings {_join(parts, 'and')}.", **data)
 
 
-ZIP_ASKED = "address_ask_zip"
+def _zip_asked_key(house: str, street: str) -> str:
+    """Per house and street, so an address the caller corrects gets its own lookup (PR #139
+    re-check: "Sorry, I'm actually at 248 Duffield Street" was stuck on the first one's ask)."""
+    return f"address_ask_zip:{geocode.house_key(house)} {' '.join(geocode.street_name_words(street))}"
 
 
-def _zip_asked(ctx: Ctx) -> bool:
+def _zip_asked(ctx: Ctx, house: str, street: str) -> bool:
     return bool(
         ctx.conn.execute(
             "SELECT 1 FROM lines_handed WHERE call_id = ? AND line = ?",
-            (ctx.call["id"], ZIP_ASKED),
+            (ctx.call["id"], _zip_asked_key(house, street)),
         ).fetchone()
     )
 
 
-def _ask_zip(ctx: Ctx, code: str) -> None:
-    """Ask the caller for the ZIP, once a call; recorded when asked (PR #139 review)."""
+def _ask_zip(ctx: Ctx, code: str, house: str, street: str) -> None:
+    """Ask the caller for the ZIP, once for each address; recorded when asked (PR #139 review)."""
     with tx(ctx.conn):
         ctx.conn.execute(
             "INSERT OR IGNORE INTO lines_handed (call_id, line, at) VALUES (?, ?, ?)",
-            (ctx.call["id"], ZIP_ASKED, iso(ctx.now)),
+            (ctx.call["id"], _zip_asked_key(house, street), iso(ctx.now)),
         )
     raise Refused(code, ctx.tenant.line("address_ask_zip"), need="ask for the ZIP")
 

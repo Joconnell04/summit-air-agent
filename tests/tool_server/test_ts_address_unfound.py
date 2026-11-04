@@ -96,3 +96,40 @@ def test_a_made_up_street_is_refused_even_with_a_zip_said(unfound):
     unfound.turn(call, "I'm at 118-24 197th Street, 11412.")
     refused = unfound.tool("find_address", call, street="99 Fake Street")
     assert refused["refused"] == "address_not_heard"
+
+
+def test_a_corrected_address_gets_its_own_lookup_after_the_zip_was_asked(tmp_path, clock, mock):
+    """PR #139 re-check: after the ZIP was asked for one street, a corrected street was stuck on
+    zip_asked for the rest of the call, with the lookup up or down."""
+    from test_ts_address_lookup import DUFFIELD
+
+    book = Book({("248", "duffield st"): [DUFFIELD]})
+    agent = Agent(make_server(tmp_path, clock, mock[0], geocoder=lookup([("book", book)])), clock)
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "It's 118-24 197th Street in St. Albans.")
+    first = agent.tool("find_address", call, street="118-24 197th Street")
+    if first["refused"] == "address_not_found":
+        agent.turn(call, "One nine seven, 197th Street.")
+        first = agent.tool("find_address", call, street="118-24 197th Street")
+    assert first["say"] == "What's the ZIP code there?"
+    agent.turn(call, "Sorry, I'm actually at 248 Duffield Street, Brooklyn.")
+    corrected = agent.tool("find_address", call, street="248 Duffield Street")
+    assert corrected["ok"] and corrected["data"]["zip"] == "11201", corrected
+
+
+def test_a_corrected_address_with_the_lookup_down_is_asked_its_own_zip(tmp_path, clock, mock):
+    agent = Agent(make_server(tmp_path, clock, mock[0], geocoder=lookup([("down", down)])), clock)
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "It's 118-24 197th Street in St. Albans.")
+    assert agent.tool("find_address", call, street="118-24 197th Street")["refused"] == "address_lookup_down"
+    agent.turn(call, "Sorry, I'm actually at 248 Duffield Street, Brooklyn.")
+    corrected = agent.tool("find_address", call, street="248 Duffield Street")
+    assert corrected["refused"] == "address_lookup_down"
+    assert corrected["say"] == "What's the ZIP code there?"
+
+
+def test_a_run_said_as_number_words_is_not_split():
+    """PR #139 re-check: "one twelve 2nd avenue" is house 112, not house 11 on 2nd Avenue."""
+    from app.tools import _split_run_on
+
+    assert _split_run_on(["112", "ave"], "11", ["2"], "one twelve 2nd avenue") == ["112", "ave"]

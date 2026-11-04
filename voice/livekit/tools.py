@@ -99,10 +99,10 @@ def make_tool(
 
 
 def _no_reply(result: dict) -> ToolResult:
-    """The worker spoke for the agent, so the session must not generate another reply. In
-    livekit-agents 1.8 a tool that returns None still asks for one, with an empty output, and the
-    model then talks about the missing message ("the reschedule ran without a confirmation
-    message", a scripted test call after #135). The model still gets the result to read."""
+    """The worker spoke for the agent, so the session generates no reply now, and the model's
+    context keeps the result. A tool returning None also asks for no reply, but leaves an empty
+    output in the context; on the next turn the model read that as a missing result and said so
+    ("the reschedule ran without a confirmation message", a scripted test call after #135)."""
     return ToolResult(compact(for_model(result)), reply_required=False)
 
 
