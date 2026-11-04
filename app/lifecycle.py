@@ -111,14 +111,10 @@ def _linked(
         if c["id"] != call_id
     ]
     recent = [c for c in calls if parse_iso(c["started_at"]) >= window_start]
-    same_day_drop = next(
-        (
-            c
-            for c in calls
-            if parse_iso(c["started_at"]) >= day_start and records.dropped(c)
-        ),
-        None,
-    )
+    # Only the latest call today, and only if it dropped: a caller who finished a call after the
+    # drop (a callback, say) starts fresh (PR #75 review).
+    today = [c for c in calls if parse_iso(c["started_at"]) >= day_start]
+    same_day_drop = today[0] if today and records.dropped(today[0]) else None
     return (recent[0] if recent else same_day_drop), recent
 
 
@@ -140,9 +136,13 @@ def _resume(conn: sqlite3.Connection, previous: sqlite3.Row) -> dict:
             (previous["id"],),
         )
     ]
-    name = (json.loads(named["request_json"])["details"].get("name") if named else None) or (
-        _name_said(caller_lines)
+    # The caller's own name: what they said on the call, else the booking's contact. A booking put
+    # on its own account names the person who lives there, not the caller (PR #75 review).
+    request = json.loads(named["request_json"]) if named else {}
+    booked_name = request.get("contact_name") or (
+        request.get("details", {}).get("name") if request.get("account") != "own" else None
     )
+    name = _name_said(caller_lines) or booked_name
     last = {
         speaker: conn.execute(
             "SELECT text FROM turns WHERE call_id = ? AND speaker = ? ORDER BY seq DESC LIMIT 1",

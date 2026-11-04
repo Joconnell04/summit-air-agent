@@ -707,7 +707,7 @@ def book_appointment(ctx: Ctx, args: BookIn) -> Result:
         raise Refused("fsm_rejected", _fsm_down_say(ctx, callback_id, due)) from None
 
     ctx.cache.invalidate()
-    returning = _recent_job_here(ctx, readback)
+    returning = _recent_job_here(ctx, readback, job_type)
     with tx(ctx.conn):
         booking.mark_booked(ctx.conn, booking_id, sent, ctx.now)
         # The same problem back soon after a visit: a person reviews the priority and whether it's
@@ -810,12 +810,32 @@ def _on_call_first(ctx: Ctx, facts: prio.Facts, decided: prio.Priority) -> None:
         )
 
 
-def _recent_job_here(ctx: Ctx, readback: dict) -> dict | None:
+# How a caller says the problem is back, so a booking of another job type still counts as a return
+# visit ("you fixed the AC last week and now nothing works again").
+SAME_PROBLEM_PHRASES = (
+    "again",
+    "came back",
+    "same problem",
+    "same issue",
+    "still not working",
+    "still broken",
+    "you were here",
+    "you were just here",
+    "you just fixed",
+    "since you fixed",
+)
+
+
+def _recent_job_here(ctx: Ctx, readback: dict, job_type: dict) -> dict | None:
     """A job finished at this address within the tenant's return-visit window, for a customer
-    matched on this call. A lookup that fails finds none; the booking stands either way."""
+    matched on this call, when the new booking is the same problem: the same job type, or the
+    caller says it's back ("it's out again"). A tune-up last week and an unrelated breakdown now is
+    not a return visit (PR #75 review). A lookup that fails finds none; the booking stands."""
     days = ctx.tenant.repeat.get("return_visit_days")
     if not days:
         return None
+    caller = words(records.caller_text(ctx.conn, ctx.call["id"]))
+    said_same = any(has_phrase(caller, p) for p in SAME_PROBLEM_PHRASES)
     since = (ctx.now - timedelta(days=days)).isoformat()
     try:
         for customer_id in records.scoped_customers(ctx.conn, ctx.call["id"]):
@@ -827,7 +847,9 @@ def _recent_job_here(ctx: Ctx, readback: dict) -> dict | None:
             done = [
                 j
                 for j in ctx.fsm.jobs(customer_id, ["Completed"])
-                if j["locationId"] in here and (j.get("completedOn") or "") >= since[:19]
+                if j["locationId"] in here
+                and (j.get("completedOn") or "") >= since[:19]
+                and (said_same or j["jobTypeId"] == job_type["id"])
             ]
             if done:
                 last = max(done, key=lambda j: j["completedOn"])
@@ -1132,12 +1154,14 @@ def _callback_due(ctx: Ctx, asked: CallbackTime) -> CallbackWhen:
         spoken = tenant.line("callback_before", time=clock(latest))
     if days:
         spoken = f"tomorrow {spoken}"
-    closes = datetime.combine(
-        tenant.local(now).date() + timedelta(days=days),
-        time.fromisoformat(tenant.callbacks["outbound_hours"][1]),
-        tenant.tz,
+    day = tenant.local(now).date() + timedelta(days=days)
+    opens, closes = (
+        datetime.combine(day, time.fromisoformat(t), tenant.tz)
+        for t in tenant.callbacks["outbound_hours"]
     )
-    return CallbackWhen(latest or closes, max(earliest or now, now), spoken)
+    # "Tomorrow, before 3" is never dialed today: a window with no start begins when calling hours
+    # open on the day asked for (PR #75 review).
+    return CallbackWhen(latest or closes, max(earliest or opens, now), spoken)
 
 
 def _with_window(reason: str, asked: CallbackTime, when: CallbackWhen) -> str:

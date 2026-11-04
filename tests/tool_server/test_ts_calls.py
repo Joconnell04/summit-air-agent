@@ -4,7 +4,7 @@ S-23, S-32, S-38, S-42, S-48, S-49)."""
 import sqlite3
 
 import pytest
-from toolkit import UNKNOWN, book, count, first_open, ready_to_book
+from toolkit import DETAILS, UNKNOWN, book, count, first_open, ready_to_book
 
 from app import jobs, lifecycle, records
 from app.settings import QUEUE_MAX_ATTEMPTS
@@ -90,6 +90,62 @@ def test_a_call_that_finished_earlier_today_is_not_linked_later(agent, clock):
     agent.end(call, "agent_end")
     clock.advance(minutes=45)
     assert agent.start(UNKNOWN)["data"]["linked_call"] is None
+
+
+def test_a_drop_followed_by_a_finished_call_is_not_resumed_later(agent, clock):
+    """PR #75 review: only the latest call today, and only if it dropped."""
+    dropped = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(dropped, "Hi, this is Tomasz, the heat is out.")
+    agent.end(dropped, "dropped")
+    clock.advance(hours=1)
+    finished = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(finished, "Thanks, that's all.")
+    agent.tool("end_call", finished, reason="caller_goodbye")
+    agent.end(finished, "agent_end")
+    clock.advance(hours=2)
+    assert agent.start(UNKNOWN)["data"]["linked_call"] is None
+
+
+def test_the_resume_name_is_the_callers_not_the_account_holders(agent, clock, scenarios):
+    """PR #75 review: Maria booked her mother's house on its own account under Rosa; the call back
+    asks for Maria."""
+    maria = scenarios["repeatCallerOpenJob"]
+    first = agent.start(maria["phone"])["data"]["call_id"]
+    agent.turn(first, "This call is for my mother's house, the yearly tune-up.")
+    agent.confirm_read_back(first, {"street": "1857 77th St", "zip": "11204"})
+    booked = agent.tool(
+        "book_appointment",
+        first,
+        job_type="tune_up",
+        slot=first_open(agent, first),
+        details={**DETAILS, "name": "Rosa Delgado"},
+        new_address_account="own",
+    )
+    assert booked["ok"], booked
+    agent.end(first, "dropped")
+    clock.advance(hours=2)
+    assert agent.start(maria["phone"])["data"]["linked_call"]["caller_name"] == "Maria"
+
+
+def test_a_before_only_window_tomorrow_is_dialed_tomorrow(agent):
+    """PR #75 review: "call me tomorrow before 3" is never dialed today."""
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    flagged = agent.tool(
+        "flag_person",
+        call,
+        reason="Call me back",
+        callback_before="3 PM",
+        callback_day="tomorrow",
+        system_calls_back=True,
+    )
+    assert flagged["ok"], flagged
+    assert flagged["say"].endswith("tomorrow before 3 PM.")
+    conn = agent.db()
+    try:
+        dial = conn.execute("SELECT due_at FROM outbound").fetchone()["due_at"]
+    finally:
+        conn.close()
+    assert dial.startswith("2026-11-03T13:00")  # 8 AM New York tomorrow, when calling hours open
 
 
 def test_a_dropped_call_and_its_call_back_later_today_book_once(agent, clock):

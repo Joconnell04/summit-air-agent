@@ -920,3 +920,17 @@ def test_a_first_visit_flags_no_one(agent):
     booked = book(agent, call, first_open(agent, call))
     assert booked["data"]["return_visit_review"] is False
     assert count(agent, "SELECT COUNT(*) FROM flags WHERE call_id = ?", call) == 0
+
+
+def test_an_unrelated_booking_after_a_recent_visit_is_not_a_return_visit(agent, scenarios):
+    """PR #75 review: a recent job of another type, and no word that it's the same problem."""
+    thomas = scenarios["jobDoneLastWeek"]  # an AC repair finished last week
+    call = agent.start(thomas["phone"])["data"]["call_id"]
+    agent.turn(call, "Hi, I'd like to book my yearly heating tune-up.")
+    agent.confirm_read_back(
+        call, {"street": "800 Springfield Blvd", "unit": "", "city": "Queens", "zip": "11368"}
+    )
+    booked = book(agent, call, first_open(agent, call))
+    assert booked["ok"], booked
+    assert booked["data"]["return_visit_review"] is False
+    assert "manager" not in booked["say"]
