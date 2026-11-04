@@ -1,0 +1,29 @@
+id: asks-agent-to-slow-down
+flow: [booking]
+difficulty: standard
+traits: [filler]
+journeys: [J1]
+spec: [S-35]
+tags: [pace]
+caller_id: "(929) 555-0106"
+persona: Rosa Iglesias, a home health aide in Jackson Heights booking her furnace tune-up between shifts. Polite, a little tired, writing details down on paper as the agent talks.
+hidden_facts:
+  name: Rosa Iglesias
+  address: 35-20 82nd St, Queens, 11372
+  phone: the number being called from
+  wants: the yearly furnace tune-up, any weekday
+  system: gas furnace, about ten years old
+opening: Hi, I'd like to book the yearly tune-up for my furnace.
+script:
+  - Your very next line after the opening is exactly "Sorry, can you slow down a little? I'm writing this down." Answer the agent's question on the line after that.
+  - After that, answer each question plainly and never ask about speed again.
+  - Take the first window offered, then say goodbye once asked if there is anything else.
+must:
+  # Her request slows the rest of the call one step, and is remembered for her next call.
+  - pace: {held: 0.85, source: request, remembered: 0.85}
+  - booking: {count: 1, job_type: tune_up, zip: "11372"}
+  - read_back: before_booking
+  - safety_lines: not_said
+should:
+  - Says a short yes to slowing down, without explaining how, and carries on.
+  - Keeps each question short after she asks.
