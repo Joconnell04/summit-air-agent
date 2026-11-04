@@ -818,7 +818,8 @@ def test_a_property_manager_account_typed_residential_can_book(agent, scenarios)
     )
     call = ready_to_book(agent, linden["phone"])
     assert agent.tool("find_slots", call, job_type="tune_up")["ok"]
-    assert book(agent, call, first_open(agent, call))["ok"]
+    # A manager booking a building they look after keeps it on their own account (seed 5).
+    assert book(agent, call, first_open(agent, call), account="caller")["ok"]
 
 
 NY = ZoneInfo("America/New_York")
