@@ -34,6 +34,8 @@ CREATE TABLE IF NOT EXISTS calls (
     readback_confirmed_at TEXT
 );
 CREATE INDEX IF NOT EXISTS ix_calls_caller ON calls (caller_key, started_at);
+-- The summary job reads waiting calls oldest first; this keeps that read to the waiting rows.
+CREATE INDEX IF NOT EXISTS ix_calls_summary ON calls (tenant, summary_status, ended_at, id);
 
 -- Customers matched on a call. Reads and writes are scoped to these.
 CREATE TABLE IF NOT EXISTS call_customers (

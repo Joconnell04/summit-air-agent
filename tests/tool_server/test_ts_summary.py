@@ -524,3 +524,19 @@ def test_a_shared_deadline_already_past_starts_no_summary(agent):
     booked_call(agent)
     counts = run(agent, FakeModel(), timer=lambda: 100.0, deadline=50.0)
     assert counts["done"] == 0 and counts["waiting"] == 1
+
+
+def test_the_summary_read_uses_an_index_not_a_table_scan(agent):
+    conn = agent.db()
+    try:
+        plan = " ".join(
+            row[-1]
+            for row in conn.execute(
+                "EXPLAIN QUERY PLAN SELECT * FROM calls WHERE tenant = ? AND summary_status IN "
+                "('pending', 'written') ORDER BY ended_at, id LIMIT 200",
+                ("summit-air",),
+            )
+        )
+    finally:
+        conn.close()
+    assert "ix_calls_summary" in plan and "SCAN calls" not in plan, plan
