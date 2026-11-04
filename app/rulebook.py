@@ -83,6 +83,8 @@ GATES = (
     ("booking", "Books only openings ServiceTitan offered, and never the same one twice",
      ("invalid_slot", "slot_taken"), ("S-27",)),
     ("booking", "Changes only the caller's own visits", ("invalid_state", "open_job"), ()),
+    ("booking", "Asks whose account a new address goes on before booking it",
+     ("account_choice",), ("S-31a",)),
     ("booking", "After hours, books a tonight visit only once the on-call technician is alerted",
      ("on_call_first",), ()),
     ("booking", "When ServiceTitan is down, keeps the booking and sets a callback",
@@ -257,9 +259,10 @@ def _settings(tenant: Tenant) -> list[Rule]:
     found = [
         Rule("setting.hours", "before_hello", "setting", "Office hours", _hours(tenant), why=why),
         Rule("setting.repeat_callers", "before_hello", "setting", "Repeat callers",
-             f"A call back within {tenant.repeat['link_within_minutes']} minutes picks up the last "
-             f"one; after {tenant.repeat['drops_before_callback_offer']} dropped calls the agent "
-             "offers a callback", why=why),
+             f"A call back within {tenant.repeat['link_within_minutes']} minutes, or later the "
+             "same day after a dropped call, picks up the last one and checks it's the same "
+             f"person; after {tenant.repeat['drops_before_callback_offer']} dropped calls the "
+             "agent offers a callback", why=why),
     ]
     labels = {code: j["name"] for code, j in tenant.job_types.items()}
     for job, brackets in tenant.priority["brackets"].items():

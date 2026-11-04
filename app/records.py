@@ -1,14 +1,13 @@
 """Reads and writes on the tool server's own tables: calls, turns, flags, callbacks, do-not-call."""
 
 import json
-import re
 import sqlite3
 from datetime import datetime, time, timedelta
 
 from .db import iso, parse_iso
 from .settings import TAG_RETRY_MINUTES
 from .tenant import Tenant
-from .text import phone_key
+from .text import clock_time, phone_key
 
 CALLBACK_MAX_DAYS = 7
 
@@ -151,30 +150,28 @@ def add_flag(
     return cur.lastrowid
 
 
-def _clock_today(value: str, tenant: Tenant, now: datetime) -> datetime:
-    """A local clock time today: "16:30", "4:30 PM", "4 pm"."""
-    match = re.fullmatch(r"(\d{1,2})(?::(\d{2}))?\s*([ap]\.?m\.?)?", value.strip().lower())
-    if not match:
-        raise ValueError("not a time")
-    hour, minute = int(match[1]), int(match[2] or 0)
-    if match[3]:
-        if not 1 <= hour <= 12:
-            raise ValueError("not a time")
-        hour = hour % 12 + (12 if match[3].startswith("p") else 0)
-    if hour > 23 or minute > 59:
-        raise ValueError("not a time")
-    return datetime.combine(tenant.local(now).date(), time(hour, minute), tenant.tz)
+def _clock_on(value: str, tenant: Tenant, now: datetime, days: int = 0,
+              after: time | None = None) -> datetime:
+    """A local clock time today, or `days` later: "16:30", "4:30 PM", "4 pm", or a bare hour read
+    as daytime (text.clock_time)."""
+    day = tenant.local(now).date() + timedelta(days=days)
+    return datetime.combine(day, clock_time(value, after), tenant.tz)
 
 
 def parse_callback_window(
-    after: str | None, before: str | None, tenant: Tenant, now: datetime
+    after: str | None, before: str | None, tenant: Tenant, now: datetime, days: int = 0
 ) -> tuple[datetime | None, datetime | None]:
-    """The window a caller asked for ("after 5", "before 3", "between 1 and 3"), today, as
-    (earliest, latest). Raises ValueError when it has passed, is backwards, or falls outside the
-    hours the company calls back in (callbacks.outbound_hours)."""
-    earliest = _clock_today(after, tenant, now) if after else None
-    latest = _clock_today(before, tenant, now) if before else None
-    day = tenant.local(now).date()
+    """The window a caller asked for ("after 5", "before 3", "between 8 and 2"), today or `days`
+    later, as (earliest, latest). A bare hour is daytime, and the end of a range comes after its
+    start, so "8 and 2" is 8 AM to 2 PM. Raises ValueError when it has passed, is backwards, or
+    falls outside the hours the company calls back in (callbacks.outbound_hours)."""
+    earliest = _clock_on(after, tenant, now, days) if after else None
+    latest = (
+        _clock_on(before, tenant, now, days, earliest.time() if earliest else None)
+        if before
+        else None
+    )
+    day = tenant.local(now).date() + timedelta(days=days)
     opens, closes = (
         datetime.combine(day, time.fromisoformat(t), tenant.tz)
         for t in tenant.callbacks["outbound_hours"]
@@ -189,11 +186,11 @@ def parse_callback_window(
 
 
 def parse_callback_time(
-    value: str | None, minutes: int | None, tenant: Tenant, now: datetime
+    value: str | None, minutes: int | None, tenant: Tenant, now: datetime, days: int = 0
 ) -> datetime:
-    """A named time: minutes from now, an ISO time with an offset, or a local clock time today
-    ("16:30", "4:30 PM", "4 pm"). Raises ValueError for anything vague or in the past, because
-    "shortly" is never a callback time (C-45)."""
+    """A named time: minutes from now, an ISO time with an offset, or a local clock time today or
+    `days` later ("16:30", "4:30 PM", "4 pm", a bare "2" read as 2 PM). Raises ValueError for
+    anything vague or in the past, because "shortly" is never a callback time (C-45)."""
     if minutes is not None:
         due = now + timedelta(minutes=minutes)
     elif value:
@@ -205,7 +202,7 @@ def parse_callback_time(
         if due is not None and due.tzinfo is None:
             raise ValueError("an ISO time needs a UTC offset")
         if due is None:
-            due = _clock_today(value, tenant, now)
+            due = _clock_on(value, tenant, now, days)
     else:
         raise ValueError("no callback time given")
     if due <= now:
@@ -346,15 +343,14 @@ def mark_overdue(conn: sqlite3.Connection, tenant: Tenant, now: datetime) -> lis
 
 
 def recent_calls(
-    conn: sqlite3.Connection, tenant: str, caller_key: str, before: datetime, minutes: int
+    conn: sqlite3.Connection, tenant: str, caller_key: str, before: datetime, since: datetime
 ) -> list[sqlite3.Row]:
-    """Calls from this number to this tenant shortly before, so a call to another company on the
-    same server is never linked or resumed."""
-    since = iso(before - timedelta(minutes=minutes))
+    """Calls from this number to this tenant since a moment, newest first. Only this tenant's, so a
+    call to another company on the same server is never linked or resumed."""
     return conn.execute(
         "SELECT * FROM calls WHERE tenant = ? AND caller_key = ? AND started_at >= ? "
         "AND started_at < ? ORDER BY started_at DESC",
-        (tenant, caller_key, since, iso(before)),
+        (tenant, caller_key, iso(since), iso(before)),
     ).fetchall()
 
 

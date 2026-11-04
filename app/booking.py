@@ -44,6 +44,8 @@ def job_summary(request: dict) -> str:
     priority = request["priority"]
     reasons = f" ({'; '.join(request['priority_reasons'])})" if request["priority_reasons"] else ""
     lines.append(f"Priority: {priority}{reasons}")
+    if request.get("contact_name"):
+        lines.append(f"Contact: booked by {request['contact_name']}, who stays a contact")
     lines += [f"Note: {note}" for note in request.get("notes", [])]
     lines.append(f"Booked by the phone agent, call {request['call_id']}.")
     return "\n".join(lines)
@@ -65,12 +67,18 @@ def _customer_and_location(fsm: FsmAdapter, tenant: Tenant, request: dict, key: 
     if len({loc["customerId"] for loc in on_file}) == 1:
         return fsm.customer(on_file[0]["customerId"]), on_file[0]["id"]
     fsm_address = {k: address.get(k, "") for k in ("street", "unit", "city", "zip")}
-    if len(request["scoped_customer_ids"]) == 1:
+    # A caller on file booking somewhere new: the address goes on its own account with the caller
+    # as its contact when they chose that (a parent's house), otherwise under the caller's account.
+    if len(request["scoped_customer_ids"]) == 1 and request.get("account") != "own":
         customer = fsm.customer(request["scoped_customer_ids"][0])
         location = fsm.create_location(f"{key}:location", customer["id"], fsm_address)
         return customer, location["id"]
     created = fsm.create_customer(
-        f"{key}:customer", request["details"]["name"], fsm_address, request["phone"]
+        f"{key}:customer",
+        request["details"]["name"],
+        fsm_address,
+        request["phone"],
+        request.get("contact_name"),
     )
     return created, created["locations"][0]["id"]
 

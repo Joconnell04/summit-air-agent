@@ -1,0 +1,31 @@
+id: mild-after-hours-no-heat
+flow: [after-hours, priority]
+difficulty: standard
+traits: [filler]
+journeys: [J11, J1]
+spec: [S-33, S-21a]
+time: "2026-11-02T21:30"
+caller_id: "(718) 555-0173"
+persona: Nadia Haddad, a homeowner in Bay Ridge calling at night about the heat. Matter-of-fact, says "okay, sure".
+hidden_facts:
+  name: Nadia Haddad
+  address: 8410 4th Ave, Brooklyn, 11209
+  phone: the number being called from
+  problem: the heat has been out since dinner, 58 F inside and holding
+  system: a gas furnace, about twelve years old; checked the thermostat batteries
+  who_home: two healthy adults, no baby, no older person, no medical equipment
+  wants: a visit in the morning
+opening: Hi, the heat's been out since dinner, okay, I just want someone to come in the morning.
+script:
+  - Say it is 58 degrees inside and holding steady.
+  - When asked who is at home, say two healthy adults.
+  - Answer yes to a correct read-back.
+  - Take the first morning window offered. Say goodbye after the agent confirms and asks if there is anything else.
+must:
+  - booking: {count: 1, window: morning}
+  - flag: none
+  - safety_lines: not_said
+  - agent_never_says: "(will|'ll|going to|can) (be there|come out|come over|arrive|show up|send someone) tonight"
+should:
+  - Says the office is closed and books the first morning window.
+  - Does not alert anyone on call and never offers or promises a visit tonight.

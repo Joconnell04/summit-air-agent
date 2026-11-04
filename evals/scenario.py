@@ -7,7 +7,7 @@ filter on.
 import re
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 from zoneinfo import ZoneInfo
 
 import yaml
@@ -34,6 +34,24 @@ def must_pass_spec_ids(spec_text: str | None = None) -> set[str]:
     return set(re.findall(r"^\| (S-\d+[a-z]?) \*\*M\*\*", text, flags=re.MULTILINE))
 
 
+class EarlierCall(BaseModel):
+    """A call from the same number that dropped `minutes_ago` before the scenario starts, already on
+    the record (journey 7, a dropped call that resumes). Each turn is `{caller: ...}` or
+    `{agent: ...}`, in order."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    minutes_ago: int = Field(ge=1, le=600)
+    turns: list[dict[Literal["caller", "agent"], str]] = Field(min_length=1)
+
+    @field_validator("turns")
+    @classmethod
+    def one_speaker(cls, value: list[dict]) -> list[dict]:
+        if any(len(t) != 1 for t in value):
+            raise ValueError("each turn is one {caller: ...} or {agent: ...}")
+        return value
+
+
 class Scenario(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -53,6 +71,14 @@ class Scenario(BaseModel):
     opening: str = Field(min_length=1)
     script: list[str] = Field(default_factory=list)
     max_turns: int = Field(16, ge=2, le=40)
+    earlier_call: EarlierCall | None = None
+    # The scheduling system failing: "booking" fails the writes that book (new jobs, customers,
+    # locations, leads) while lookups and availability still work, as when it goes down mid-booking
+    # (spec S-48); "all" fails every request.
+    fsm_down: Literal["booking", "all"] | None = None
+    # Words the simulated speech-to-text writes wrong, applied to the caller's line before it is
+    # roughened: {"Houston": "Hughes Tin"}. Spelled letters are left alone.
+    misheard: dict[str, str] = Field(default_factory=dict)
     must: list[dict[str, Any]] = Field(min_length=1)
     should: list[str] = Field(default_factory=list)
 

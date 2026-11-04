@@ -1,4 +1,4 @@
-from evals.transcribe import level_for, roughen, seeded, spell_digits
+from evals.transcribe import level_for, mishear, roughen, seeded, spell_digits
 
 
 def test_easy_callers_pass_through_clean():
@@ -33,3 +33,11 @@ def test_level_follows_difficulty_and_the_transcription_trait():
 def test_spell_digits():
     assert spell_digits("718").split() == ["seven", "one", "eight"]
     assert spell_digits("an 84-year-old") == "an 84-year-old"
+
+
+def test_misheard_words_are_swapped_as_whole_words_and_spelled_letters_survive():
+    swaps = {"Houston": "Hughes ton"}
+    assert mishear("81 Houston Street", swaps) == "81 Hughes ton Street"
+    assert mishear("houston street", swaps) == "Hughes ton street"
+    assert mishear("H, O, U, S, T, O, N", swaps) == "H, O, U, S, T, O, N"
+    assert mishear("Houstonia Ave", swaps) == "Houstonia Ave"

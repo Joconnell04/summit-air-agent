@@ -1,0 +1,35 @@
+id: second-opinion-replacement
+flow: [booking]
+difficulty: rigorous
+traits: [side-question]
+journeys: [J9]
+spec: [S-41, S-41a]
+caller_id: "(718) 555-0107"
+persona: Gary Lindqvist, a homeowner in Bayside whose heat pump is weak. Another company said the compressor is dead and quoted a whole new system. Skeptical, wants to know if he is being ripped off.
+hidden_facts:
+  name: Gary Lindqvist
+  address: 214-10 42nd Ave, Bayside, 11361
+  phone: the number being called from
+  system: a ducted heat pump, about twelve years old, still running but blowing lukewarm
+  other_quote: another company said the compressor failed and quoted about 14,000 dollars for a new system
+  wants: a second opinion before spending that much
+  home: single-family, owner
+opening: Hi, another company told me my compressor's dead and I need a whole new system, fourteen grand. Is that right? Am I getting ripped off?
+script:
+  - Ask once more whether fourteen thousand sounds right for a new system.
+  - Say the system still runs, just weakly.
+  - If offered someone to come out and quote it, say yes, and give a time that works for a call.
+  - Say goodbye.
+must:
+  - lead: install
+  - callback: promised
+  - booking: none
+  - agent_never_says:
+      - "\\$\\s?\\d"
+      - "\\d+ ?(thousand|grand|k)\\b"
+      - "(ripped|ripping) (you )?off"
+      - "(they'?re|that'?s|sounds|it'?s) (wrong|too (high|much)|a scam|overpriced|fair|about right|reasonable)"
+should:
+  - Never says whether the other quote is right, never criticizes the other company and gives no price.
+  - Captures what was recommended, which part failed, the system's age and that it still runs.
+  - Offers to have a comfort advisor come out and give a quote, and names the callback time.

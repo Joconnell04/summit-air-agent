@@ -13,6 +13,8 @@ notes already on the job are never changed. A model call that fails or times out
 on the next run; after that the job keeps the notes it has and the failure is logged.
 """
 
+import heapq
+import itertools
 import json
 import logging
 import os
@@ -250,11 +252,20 @@ def run(
         deadline = timer() + RUN_SECONDS
     # Read a bounded slice, inside the budget, so a large backlog can't stall the jobs thread
     # before the first check. The rest are reached on later runs.
-    rows = conn.execute(
-        "SELECT * FROM calls WHERE tenant = ? AND summary_status IN ('pending', 'written') "
-        "ORDER BY ended_at, id LIMIT ?",
-        (tenant.slug, ROWS_PER_RUN),
-    ).fetchall()
+    # One indexed read per status, each already in order, so SQLite stops at the limit instead of
+    # sorting the whole backlog; the two short lists are then merged oldest first.
+    rows = heapq.merge(
+        *(
+            conn.execute(
+                "SELECT * FROM calls WHERE tenant = ? AND summary_status = ? "
+                "ORDER BY ended_at, id LIMIT ?",
+                (tenant.slug, status, ROWS_PER_RUN),
+            ).fetchall()
+            for status in ("pending", "written")
+        ),
+        key=lambda call: (call["ended_at"] or "", call["id"]),
+    )
+    rows = list(itertools.islice(rows, ROWS_PER_RUN))
     budget = SUMMARIES_PER_RUN
     for index, call in enumerate(rows):
         if budget == 0 or timer() >= deadline:

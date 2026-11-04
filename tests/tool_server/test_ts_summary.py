@@ -76,7 +76,8 @@ def run(agent: Agent, model, **kwargs) -> dict:
 
 def booked_call(agent: Agent, caller: str = UNKNOWN, **details) -> tuple[str, int]:
     call = ready_to_book(agent, caller)
-    booked = book(agent, call, first_open(agent, call), **details)
+    account = None if caller == UNKNOWN else "caller"
+    booked = book(agent, call, first_open(agent, call), account=account, **details)
     assert booked["ok"], booked
     agent.end(call)
     return call, booked["data"]["booking_id"]
@@ -187,7 +188,9 @@ def test_a_number_from_the_record_stays(agent, scenarios):
     known = scenarios["repeatCallerOpenJob"]
     draft = {**DRAFT, "access": "Side gate code 4417, friendly dog"}
     call = ready_to_book(agent, known["phone"])
-    booked = book(agent, call, first_open(agent, call, "no_heat"), job_type="no_heat")
+    booked = book(
+        agent, call, first_open(agent, call, "no_heat"), job_type="no_heat", account="caller"
+    )
     assert booked["ok"], booked
     agent.end(call)
     run(agent, FakeModel(draft))
@@ -526,17 +529,18 @@ def test_a_shared_deadline_already_past_starts_no_summary(agent):
     assert counts["done"] == 0 and counts["waiting"] == 1
 
 
-def test_the_summary_read_uses_an_index_not_a_table_scan(agent):
+def test_the_summary_read_uses_the_index_in_order_without_a_sort(agent):
     conn = agent.db()
     try:
         plan = " ".join(
             row[-1]
             for row in conn.execute(
-                "EXPLAIN QUERY PLAN SELECT * FROM calls WHERE tenant = ? AND summary_status IN "
-                "('pending', 'written') ORDER BY ended_at, id LIMIT 200",
-                ("summit-air",),
+                "EXPLAIN QUERY PLAN SELECT * FROM calls WHERE tenant = ? AND summary_status = ? "
+                "ORDER BY ended_at, id LIMIT 200",
+                ("summit-air", "pending"),
             )
         )
     finally:
         conn.close()
-    assert "ix_calls_summary" in plan and "SCAN calls" not in plan, plan
+    assert "ix_calls_summary" in plan, plan
+    assert "SCAN calls" not in plan and "TEMP B-TREE" not in plan, plan

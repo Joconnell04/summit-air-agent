@@ -7,6 +7,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from .settings import NOTE_MAX_CHARS
+from .text import join_spelled, with_spelled_name
 
 Priority = Literal["Low", "Normal", "High", "Urgent"]
 Zip = Field(pattern=r"^\d{5}$")
@@ -25,6 +26,20 @@ class Address(Body):
     unit: str = Field("", max_length=20)
     city: str = Field("", max_length=60)
     zip: str = Zip
+    spelled: str = Field(
+        "",
+        max_length=120,
+        description='The street name as the caller spelled it, letter by letter, such as "H, O, U, '
+        'S, T, O, N". The server joins the letters into the street name.',
+    )
+
+    @model_validator(mode="after")
+    def join_letters(self):
+        # Letters said one by one become the name, so the read-back says the word, not the letters.
+        street = with_spelled_name(self.street, self.spelled) if self.spelled else self.street
+        self.street = join_spelled(street)
+        self.spelled = ""
+        return self
 
 
 # ---- lifecycle ---------------------------------------------------------------------------------
@@ -118,6 +133,18 @@ class FindSlotsIn(CallRef):
     preferred_days: list[str] = Field(default_factory=list, max_length=7)
     time_of_day: Literal["morning", "afternoon", "evening"] | None = None
     day: dt.date | None = Field(None, description="Ask for one day's exact windows")
+    arrive_after: str | None = Field(
+        None,
+        max_length=20,
+        description='The caller can only have the technician arrive after this local time, such '
+        'as "8" or "1 PM". Only what the caller said; a bare hour such as "2" means 2 PM.',
+    )
+    arrive_before: str | None = Field(
+        None,
+        max_length=20,
+        description='The caller needs the technician to arrive before this local time, such as '
+        '"10" or "2". Only what the caller said; "8 to 2" is arrive_after "8" and arrive_before "2".',
+    )
     facts: Facts = Field(default_factory=Facts)
 
 
@@ -149,7 +176,12 @@ class JobDetails(Body):
     approver: str = Field(min_length=1, max_length=120)
     system_type: str = Field("", max_length=120)
     arrival_notes: str = Field("", max_length=300)
-    name: str = Field("", max_length=80, description="Needed only for a caller not on file")
+    name: str = Field(
+        "",
+        max_length=80,
+        description="Needed for a caller not on file, and for the account holder at a new "
+        "address booked with new_address_account own",
+    )
     inside_temp_f: float | None = Field(None, ge=0, le=130)
 
 
@@ -163,6 +195,13 @@ class BookIn(CallRef):
         description="True only when the caller has an open visit at this address and confirmed "
         "this is a different problem that needs its own visit. To move a visit, use "
         "reschedule_appointment.",
+    )
+    new_address_account: Literal["own", "caller"] | None = Field(
+        None,
+        description="Only when a caller on file books an address that isn't theirs on file: own "
+        "puts the address on its own account, in details.name, with the caller as a contact (the "
+        "usual choice, such as a parent's house); caller adds it to the caller's own account (they "
+        "moved, or it's theirs). Ask the caller which.",
     )
 
 
@@ -193,6 +232,11 @@ class CallbackTime(Body):
         max_length=40,
         description='The caller asked to be called before this local time today, such as "3 PM". '
         "Only what the caller said; use it instead of callback_time.",
+    )
+    callback_day: Literal["today", "tomorrow"] = Field(
+        "today",
+        description="The day the caller asked for. The times above are on that day; a bare hour "
+        'such as "2" means 2 PM.',
     )
 
     @model_validator(mode="after")
