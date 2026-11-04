@@ -310,3 +310,14 @@ Changed:
 - S-38a (new): the cold handoff, who it goes to, when it doesn't happen (a mention, a commercial call, before the safety lines), once per call, and the stored callback line when nothing goes through.
 Commit: ff34e7f (amended to add this line)
 Status: open
+
+## spec r11 (amendment after lock: address lookup and preferred names)
+Feedback (verbatim, Jackson, relayed by the coordinating session):
+> ensure no ZIP guessing....but maybe give the system an address lookup tool or at least a ZIP finder tool...of course confirmation is great but if it could just determine the address from a short hand like '248 duffield st'....there's only one of those so you could find the zip from that. also how are we handling the rare error of someone telling us their address but not remembering their zip code....that feature would help with this. also what if the address and zip don't match up....think through that.
+
+> if someone asks to be called by a certain name - as long as it's appropriate - do it....like 'Dr.'
+Changed:
+- S-13a (new): the ZIP comes from the caller, their record or a lookup of the street they said; one match fills it for the read-back, several ask which, none asks to spell, an outage asks for the ZIP, and a ZIP that disagrees with the lookup is asked about and never booked until the caller settles it.
+- S-53 (new): a form of address the caller asks for is used for the call, a linked call and later calls, and a mocking or abusive one is never used or kept.
+Commit: 0df6132 (amended to add this line)
+Status: open
