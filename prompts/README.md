@@ -13,6 +13,7 @@ What the model is told on a call, split by job so each part can be changed and t
 | `guidance-check.md` | Not part of a call: the instructions for the check on an owner's saved draft (app/guidance_check.py), which refuses only a note or line that contradicts a locked rule |
 | `tools.yaml` | One description per tool; the arguments come from the tool server's request models |
 | `side/questions.yaml` | The one question a side model answers beside the call (app/side_model.py); not part of the agent's prompt or its hash |
+| `post-call-summary.md` | Not part of the call: the system prompt for the technician's summary written after a booked call (app/summary.py) |
 
 `assemble.instructions(start)` joins the files in that order (with the owner's guidance after the journeys when `/calls/start` returned any), puts in the company name, and adds the call context: the tenant's knowledge folder, the local time, and what `/calls/start` found before hello. `assemble.tool_specs(job_types)` gives one entry per server tool with its JSON-schema arguments (references inlined, `call_id` left out, job types limited to the tenant's own).
 

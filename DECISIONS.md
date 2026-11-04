@@ -12,6 +12,38 @@ Discussion: docs/ai-process/transcripts/... or docs/explorations/...
 Issue: #N
 -->
 
+## 043. The eval hash covers only what the agent hears on a call
+
+Decided: the run hash's prompt files are the parts `prompts/assemble.py` joins, plus `tools.yaml` and the assembler. A prompt that is never part of a call, such as the technician summary's, is left out, so editing it doesn't make the voice agent's results stale.
+Why: staleness should track what changes calls.
+Would change if: a post-call prompt starts feeding back into a call.
+Discussion: PR #72
+
+## 042. Must-pass failures count code checks only, and the grader sees what the server set up
+
+Decided: a grader fail on a must-pass scenario lowers the pass rate but is not a must-pass failure, in the harness, the ratchet and the publish gate alike; a must-pass scenario with no verdict still blocks. The grader is given what the server set up on the call (flags, bookings, the tools' sentences and the signed-off safety wording), so it can tell a real callback from an invented one. This supersedes the last sentence of 031.
+Why: the must-pass lines are code checks; at one sample the grader failed one or two must-pass calls a round on manner, a different one each time, and failed calls for saying the signed-off sign-off. Round 3 also showed the grader agrees with Jackson on 3 of 5 explicit verdicts, so it shouldn't decide must-pass alone.
+Considered: counting the grader too; loosening its "promise not set up" rule (would let real invented promises through).
+Would change if: the grader catches real must-pass problems the code checks miss.
+Discussion: PR #72, evals/rounds/03-judge-labels.md
+
+## 041. The eval floor is 90%
+
+Decided: reference run `20261104-013438-livekit-fast-standard`, 29 of 31 judged (94%), sets the floor at 90% under decision 011; `ratchet.py --adopt` sets the floor this way from now on and never lowers it. Every must-pass scenario passed 3 of 3 on the defaults before the reference was taken.
+Why: three standard runs on nearly the same prompts gave 93%, 94% and 94% (MEASURED, evals/rounds/reliability-01.md), steady enough to set the floor.
+Considered: waiting for three samples per scenario.
+Would change if: a later reference run is higher, which raises it.
+Discussion: PR #72, evals/rounds/reliability-01.md
+
+## 040. The technician summary is a pinned job note the server checks
+
+Decided: after a booked call, a model (profile `post_call.summary`) drafts a short summary (the problem, anything risky, access, recent work, what the customer was told) and the server writes it as a new pinned job note through the FSM adapter, leaving the intake and every other note as they are. The server drops any line with nothing in the record behind it, with a number the record doesn't hold, or with a phone number. A failed summary is tried once more, then left out and logged; nobody is flagged, since the job already carries the full intake. On the server with `SUMMARIES=1`.
+Why: spec S-16; a technician reads a few lines in the truck, not a transcript. ServiceTitan's job notes are append-only and can be pinned, so the summary sits on top without editing anything. The model writes the sentences; the server decides which reach the job, which catches invented work or codes, though not a wrong statement built from real facts, so the intake stays underneath.
+Considered: editing the job summary field (overwrites the intake); a template with no model (stiff, and loses the caller's own words).
+Would change if: technicians find a summary line wrong, in which case the summary moves behind the owner's review.
+Discussion: PR #73
+Issue: none (spec S-16)
+
 ## 039. Owner guidance is refused only when a model finds it contradicts a locked rule
 
 Decided: the keyword filter on owner guidance is gone; no single word refuses a note. When a draft is saved, one call to a small fast model (profile `owner_edits.guidance_check`, thinking off, JSON) reads the new or changed notes and lines against the locked rules built from the rulebook, and refuses only one that contradicts a locked rule, tells the agent to skip or override one, or has it tell callers something a locked rule makes untrue, with a one-sentence reason on the editor. A note that only mentions a subject passes. If the check can't run or answers out of shape, the save is refused, never let through. Structural checks stay in code: plain ASCII after NFKC, no markup characters, length and per-stage limits, exact `{first_name}`, the AI disclosure in the greeting. This supersedes the keyword part of decision 032.

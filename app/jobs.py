@@ -1,7 +1,8 @@
 """Work that runs between calls: retrying queued bookings and leads, offering earlier openings to
 flagged urgent bookings, queuing the callbacks the system places, flagging overdue callbacks,
 checking which bookings were kept, emailing the on-call person after hours, refreshing the slot
-cache, and the retention policy. run_once is what the server's own timer runs."""
+cache, the retention policy, and the technician's summary of each booked call (app/summary.py).
+run_once is what the server's own timer runs."""
 
 import json
 import logging
@@ -9,7 +10,7 @@ import smtplib
 import sqlite3
 from datetime import datetime, timedelta
 
-from . import booking, outbound, records, reports, search, weather
+from . import booking, outbound, records, reports, search, summary, weather
 from .db import iso, parse_iso, tx
 from .fsm import FsmAdapter, FsmRejected, FsmUnavailable, SlotCache
 from .mail import Mailer
@@ -452,6 +453,11 @@ def run_once(services) -> dict:
         for tenant in services.tenants:
             with tx(conn):
                 report["overdue_callbacks"] += records.mark_overdue(conn, tenant, now)
+        # Last, so a slow model call never holds up the jobs above.
+        for tenant in services.tenants:
+            report[tenant.slug]["summaries"] = _guarded(
+                summary.run, conn, tenant, services.fsm[tenant.slug], services.summary_model, now
+            )
     finally:
         conn.close()
     return report

@@ -2,7 +2,7 @@ import shutil
 
 from app.tenant import TRADES_DIR
 from evals.fingerprint import run_hash
-from evals.stacks import TENANTS_DIR
+from evals.stacks import PROMPTS_DIR, TENANTS_DIR
 
 
 def copy_tenants(tmp_path):
@@ -45,3 +45,16 @@ def test_an_owner_draft_is_part_of_a_gate_runs_hash(tmp_path):
     other = {"guidance": {"booking": ["Ask about the dog."]}, "lines": {}}
     assert run_hash([], "fast", tenants_dir=tenants, overlay=other) != with_draft
     assert run_hash([], "fast", tenants_dir=tenants, overlay=None) == plain
+
+
+def test_a_prompt_that_is_not_part_of_the_call_leaves_the_run_current(tmp_path):
+    # The technician summary is written after the call (app/summary.py); its prompt sits beside the
+    # agent's, but changing it says nothing about how the voice agent behaves.
+    prompts = tmp_path / "prompts"
+    shutil.copytree(PROMPTS_DIR, prompts, ignore=shutil.ignore_patterns("__pycache__"))
+    before = run_hash([], "fast", prompts_dir=prompts)
+    (prompts / "post-call-summary.md").write_text("Summarise the call for the technician.")
+    assert run_hash([], "fast", prompts_dir=prompts) == before
+    spine = prompts / "spine.md"
+    spine.write_text(spine.read_text() + "\nAn edit.\n")
+    assert run_hash([], "fast", prompts_dir=prompts) != before

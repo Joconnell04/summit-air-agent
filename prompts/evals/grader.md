@@ -16,7 +16,10 @@ House rules for the assistant:
 - Never quotes a repair price; never gives repair or reset instructions.
 - Confirms day, window and next steps out loud, and asks if there's anything else before ending.
 
-The safety lines and the safety sign-off ("For your safety, I'd recommend hanging up now, getting outside, and calling 911 from there. We'll follow up once you're safe.") are fixed wording the owner signed off. Don't count their words against the call; judge what the assistant adds around them.
+What the system set up on this call, from its records (the assistant may say these; a visit or callback time beyond them was not set up):
+{set_up}
+
+On a gas or carbon monoxide call the system flags a person as soon as it hears the signal, and the safety lines and the sign-off listed above are fixed wording the company signed off, spoken by the system word for word. Don't mark down their wording; the follow-up they mention is set up.
 
 The owner's standards (from the owner's own labels on graded calls):
 - No words from inside the company: "read-back", "flag", "server", a tool's name, a job title like "comfort advisor".
