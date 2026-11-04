@@ -12,6 +12,121 @@ Discussion: docs/ai-process/transcripts/... or docs/explorations/...
 Issue: #N
 -->
 
+## 052. Call recordings go through a bucket to the server and are kept 30 days
+
+Decided: the LiveKit worker records each call's audio (audio only, through LiveKit egress) into a private Supabase storage bucket; the jobs loop copies each finished file to the server's data folder and deletes it from the bucket, and the copy is deleted with the transcript after 30 days (S-45). The call page plays it with the design-system Player. Recording stops when the agent leaves, so a conversation after a warm transfer isn't recorded.
+Why: story O-6 on the owner view; LiveKit Cloud can only write to cloud storage, and keeping the copy on the server keeps call data in one place (SQLite and the data folder). The free LiveKit plan allows 60 recorded minutes a month (SOURCE: livekit.com/pricing, PR #69), enough for the demo.
+Considered: keeping files in the bucket (call data in two places); recording after a transfer (the person's side of the call wasn't agreed to by the agent's greeting).
+Would change if: Summit Air moves past the demo, in which case recorded minutes need the paid LiveKit plan and the greeting needs a recording notice where state law asks for one.
+Discussion: PR #69
+
+## 051. Warm transfer is decided by the server, and the demo rings Jackson's phone
+
+Decided: the server, not the model, decides a warm transfer: in office hours only on the caller's own words, after hours only when the server's own priority and cutoffs say the on-call technician is needed, never on a safety or commercial call, and only when the role's number is set. The person hears a short neutral opener and a summary, and presses 1 to be joined, so a voicemail box is never put through. The flag and a named callback are stored before anyone is dialed, so a missed or failed transfer leaves the caller with that callback, never silence. For the demo, both roles ring Jackson's personal phone; the number is set only in the server's `.env`.
+Why: C-11 moved into V1 (DECISIONS.md 034); a flag the model can set is not a gate.
+Considered: the model deciding when to transfer (the reviewer found it could ring the on-call phone by marking a call urgent); bridging on answer (a voicemail would be bridged).
+Would change if: Summit Air has a real office line and on-call rotation, which replace the demo number.
+Discussion: PR #69
+
+## 050. Round 2 part B: times, return visits and new scenarios
+
+Decided: a bare hour means daytime (1 to 7 is afternoon, and a range ends after it starts, so "8 to 2" is 8 AM to 2 PM). A completed job for the same problem at the address within 30 days (ASSUMED) is flagged to a person as a possible return visit. Priority phrases respect a plain negation, with a short look-back that errs toward raising. Second opinions on a replacement go to a sales advisor who comes out to quote, through the install lead, never a price on the phone. The new round 2 scenarios aren't must-pass until they have a few clean runs.
+Why: Jackson's round 2 notes; the knowledge folder says replacements are quoted in person.
+Would change if: callers mean evening hours often enough to need a question, or the 30-day window doesn't match Summit Air's warranty.
+Discussion: evals/rounds/02-seeds-and-holdout.md, PR #75
+
+## 049. Same number, same day links only a dropped call
+
+Decided: a call from the same number links to an earlier call that day only when the most recent earlier call dropped; the agent confirms the caller by their own name before resuming, and the two calls can't book twice. A finished call in the morning doesn't link an afternoon call.
+Why: Jackson's round 2 note asked for resuming within the day; linking finished calls would block a legitimate second booking.
+Would change if: callers often call back after a finished call to change what they booked.
+Discussion: PR #75
+
+## 048. A second address goes on its own account by default
+
+Decided: a caller with a job at their own home can book a visit at another address in the service area. The server asks first whether it goes on its own account (the usual answer, with the caller as a contact) or the caller's own.
+Why: Jackson's round 2 note; a separate account keeps each home's history with that home.
+Would change if: the office prefers one account per caller.
+Discussion: PR #75
+
+## 047. Burning dust gets one lighter check question
+
+Decided: a burning or dusty smell (common on the first cold night) gets one check question asked the negative way: "Just to confirm, it doesn't smell like sulfur or rotten eggs, right?" Agreement words alone ("yeah", "right", "no") clear it; the smell named again, a symptom or an unsure answer bring the lines.
+Why: Jackson's round 2 note; a burning-dust smell is usually harmless, and asking the gas question the usual way read "yeah" as a smell.
+Would change if: real calls show a gas smell described as burning dust and cleared by a "yeah".
+Discussion: evals/rounds/02-seeds-and-holdout.md, PR #74
+
+## 046. A safety call can book a visit for after the problem is shut off
+
+Decided: on a gas or carbon monoxide call the fixed lines and the person flag come first; the agent then recommends staying outside and calling 911 or the gas company and offers once to book a technician for after it's shut off, with the signed-off line "The technician can only work on it once the gas company or 911 has shut it off and said it's safe, so please stay outside until then." The caller doesn't have to insist. This updates decisions 009 and 033.
+Why: Jackson's round 2 note: the agent should still help the caller get a technician once it's safe.
+Would change if: callers take the booking as a reason to stay inside.
+Discussion: evals/rounds/02-seeds-and-holdout.md, PR #74
+
+## 045. Unclear approval gets a callback, and a requested booking a call before dispatch
+
+Decided: when it's unclear whether a co-op or apartment caller can approve the work, the agent offers a callback to confirm who can; if the caller asks to book, it books and the server schedules a call 2 hours before the window (ASSUMED) inside calling hours. If that call can't happen before the window, the booking is flagged to hold the technician and the caller is told the technician won't start until it's settled.
+Why: Jackson's round 2 note; approval is a question of authority, not of residential or commercial.
+Would change if: the office finds the pre-dispatch call adds work without catching problems.
+Discussion: PR #74
+
+## 044. Residential is about equipment, not unit count
+
+Decided: residential means residential-grade equipment: homes, apartments, co-op and condo units and whole apartment buildings, including a super or building manager calling about the building. Commercial means a business with commercial-grade equipment (offices, stores, restaurants, hotels, churches, shopping centers). Property managers and co-op boards are residential accounts in ServiceTitan. The agent can explain the difference briefly when a caller is unsure. This replaces the three-unit line from call-journeys round 2.
+Why: Jackson's round 2 note: a NYC residential HVAC company works on residential-grade units, and multi-tenant buildings have them.
+Would change if: Summit Air starts taking commercial-grade work.
+Discussion: evals/rounds/02-seeds-and-holdout.md, PR #74, docs/brief.md
+
+## 043. The eval hash covers only what the agent hears on a call
+
+Decided: the run hash's prompt files are the parts `prompts/assemble.py` joins, plus `tools.yaml` and the assembler. A prompt that is never part of a call, such as the technician summary's, is left out, so editing it doesn't make the voice agent's results stale.
+Why: staleness should track what changes calls.
+Would change if: a post-call prompt starts feeding back into a call.
+Discussion: PR #72
+
+## 042. Must-pass failures count code checks only, and the grader sees what the server set up
+
+Decided: a grader fail on a must-pass scenario lowers the pass rate but is not a must-pass failure, in the harness, the ratchet and the publish gate alike; a must-pass scenario with no verdict still blocks. The grader is given what the server set up on the call (flags, bookings, the tools' sentences and the signed-off safety wording), so it can tell a real callback from an invented one. This supersedes the last sentence of 031.
+Why: the must-pass lines are code checks; at one sample the grader failed one or two must-pass calls a round on manner, a different one each time, and failed calls for saying the signed-off sign-off. Round 3 also showed the grader agrees with Jackson on 3 of 5 explicit verdicts, so it shouldn't decide must-pass alone.
+Considered: counting the grader too; loosening its "promise not set up" rule (would let real invented promises through).
+Would change if: the grader catches real must-pass problems the code checks miss.
+Discussion: PR #72, evals/rounds/03-judge-labels.md
+
+## 041. The eval floor is 90%
+
+Decided: reference run `20261104-013438-livekit-fast-standard`, 29 of 31 judged (94%), sets the floor at 90% under decision 011; `ratchet.py --adopt` sets the floor this way from now on and never lowers it. Every must-pass scenario passed 3 of 3 on the defaults before the reference was taken.
+Why: three standard runs on nearly the same prompts gave 93%, 94% and 94% (MEASURED, evals/rounds/reliability-01.md), steady enough to set the floor.
+Considered: waiting for three samples per scenario.
+Would change if: a later reference run is higher, which raises it.
+Discussion: PR #72, evals/rounds/reliability-01.md
+
+## 040. The technician summary is a pinned job note the server checks
+
+Decided: after a booked call, a model (profile `post_call.summary`) drafts a short summary (the problem, anything risky, access, recent work, what the customer was told) and the server writes it as a new pinned job note through the FSM adapter, leaving the intake and every other note as they are. The server drops any line with nothing in the record behind it, with a number the record doesn't hold, or with a phone number. A failed summary is tried once more, then left out and logged; nobody is flagged, since the job already carries the full intake. On the server with `SUMMARIES=1`.
+Why: spec S-16; a technician reads a few lines in the truck, not a transcript. ServiceTitan's job notes are append-only and can be pinned, so the summary sits on top without editing anything. The model writes the sentences; the server decides which reach the job, which catches invented work or codes, though not a wrong statement built from real facts, so the intake stays underneath.
+Considered: editing the job summary field (overwrites the intake); a template with no model (stiff, and loses the caller's own words).
+Would change if: technicians find a summary line wrong, in which case the summary moves behind the owner's review.
+Discussion: PR #73
+Issue: none (spec S-16)
+
+## 039. Owner guidance is refused only when a model finds it contradicts a locked rule
+
+Decided: the keyword filter on owner guidance is gone; no single word refuses a note. When a draft is saved, one call to a small fast model (profile `owner_edits.guidance_check`, thinking off, JSON) reads the new or changed notes and lines against the locked rules built from the rulebook, and refuses only one that contradicts a locked rule, tells the agent to skip or override one, or has it tell callers something a locked rule makes untrue, with a one-sentence reason on the editor. A note that only mentions a subject passes. If the check can't run or answers out of shape, the save is refused, never let through. Structural checks stay in code: plain ASCII after NFKC, no markup characters, length and per-stage limits, exact `{first_name}`, the AI disclosure in the greeting. This supersedes the keyword part of decision 032.
+Why: the word list refused reasonable notes ("if someone mentions 911, stay calm") and a reviewer found phrasings that passed it, so it was wrong both ways. Containment never rested on it: the server gates hold whatever the prompt says, and the eval gate runs the must-pass calls on every draft (031). In a live check the model got 33 of 33 right at about $0.002 and 1.4 s a save (MEASURED, PR #71).
+Considered: a shorter word list (still refuses mentions, still misses rewordings); no check, leaving it to the eval gate (the owner waits minutes for a blocked publish with no reason).
+Would change if: owners hit refusals they think are wrong, or a contradiction passes the check and only the eval gate catches it.
+Discussion: PR #71, docs/template.md ("Owner edits")
+Issue: #56
+
+## 038. Audio bake-off round 1: our stack stays
+
+Decided: under the rule in decision 026, no newcomer is chosen. Gemini Live, OpenAI Realtime and Retell are out of the real-call round: Gemini Live never said the safety lines first (0 of 6), OpenAI Realtime was slowest (2.47 s plain median) and missed the lines twice, and Retell said them word for word on 1 of 6 (a safety failure rules a candidate out, docs/bakeoffs.md). ElevenLabs on our brain was 0.44 s faster with the lines exact on 6 of 6 but misread addresses and numbers on read-back ("St" as "Saint", digits run together) and booked 2 of 4 tune-ups; it gets a fix and a rerun before it can be a finalist. Our stack's plain median was 1.89 s on the rig (MEASURED, evals/rounds/bakeoff-audio-01.md), above the 1.2 s bar; the same Claude model answered in about the same time in both stacks, so the gap is our end-of-turn wait, which is tuned next.
+Why: the rule was set before the run, and the results were read against it. The rig reads about 0.4 s above the worker's own `reply_ms`, since the worker starts timing after its silence wait, so real-call traces need that added.
+Considered: promoting ElevenLabs on speed alone (it would read wrong addresses back to callers).
+Would change if: ElevenLabs reads back cleanly after its fix and stays ahead after our endpointing is tuned, in which case the two get the real calls.
+Discussion: PR #70, evals/rounds/bakeoff-audio-01.md
+Issue: #62
+
 ## 037. A side model reads whether someone at risk is home
 
 Decided: a side model (OpenAI Decisions) answers one question on each caller line of a no-heat or no-cooling call: is someone at risk at home? The priority gate reads whatever answer is back within 0.4 s. A yes raises priority the way the vulnerable-person rule does (Urgent, or High on a mild day); a late, failed or missing answer leaves today's rules to decide, and it can never lower priority. On on the server with `SIDE_MODEL=openai-decisions`.

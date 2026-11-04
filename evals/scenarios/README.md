@@ -20,6 +20,9 @@ One YAML file per simulated call, named `<id>.yaml`. `evals/scenario.py` validat
 | `opening` | The caller's first line, word for word |
 | `script` | How the caller behaves, as short instructions to the simulated caller |
 | `max_turns` | Caller turns before the run is marked `error` (default 16) |
+| `earlier_call` | A call from the same number that dropped `minutes_ago` before this one, with its `turns` (`- caller: ...` / `- agent: ...`), already on the record so the server links it (journey 7) |
+| `fsm_down` | The scheduling system failing: `booking` fails the writes that book (jobs, customers, locations, leads) while lookups and availability work; `all` fails everything (spec S-48) |
+| `misheard` | Words the simulated speech-to-text writes wrong, such as `{Houston: Hughes ton}`, applied before the line is roughened; spelled letters come through |
 | `must` | Code checks; every one has to pass |
 | `should` | What the grader looks for in how the call felt |
 
@@ -38,8 +41,11 @@ One YAML file per simulated call, named `<id>.yaml`. `evals/scenario.py` validat
 | `ownerAndTenant` | `ownerPhone` Dennis Ocasio, `tenantPhone` Priya Nair (unit 2, landlord approves) | 801 Fenimore St, Brooklyn 11206 |
 | `outOfArea` | Gerald Whitman | 47 Willis Ave, Mineola 11501 |
 | `commercial` | Harbor Bakery Group | 232 Lexington Ave, Brooklyn 11221 |
-| `commercialAccounts.N` | 0 bakery, 1 property manager, 2 restaurant, 3 school, 4 dental office, 5 co-op board | |
+| `commercialAccounts.N` | 0 bakery, 1 restaurant, 2 school, 3 dental office | |
+| `residentialBuildingAccounts.N` | 0 Linden Property Management, 1 a co-op board; Residential accounts | |
 | `replacementLead` | Naomi Feld, asking about a replacement | |
+
+The Retell stack ignores `earlier_call`, `fsm_down` and `misheard`; those scenarios run on the in-process stack.
 
 Service-area ZIPs are in `tenants/summit-air/config.yaml` (Brooklyn, Queens, Staten Island). Use made-up 555-01xx numbers for unknown callers.
 
@@ -52,7 +58,7 @@ Each `must` item is `- <check>: <argument>`. They read the tool server's record 
 | `safety_lines` | `said_first` | a safety signal fired, the agent's next line was the fixed lines word for word, and a person was flagged |
 | | `not_said` | no signal fired and the agent never said any safety lines |
 | `safety_check` | `asked` / `cleared` | the vague-smell question was asked / the caller's clear no cleared the call |
-| `booking` | `none`, `one`, or `{count, priority, zip, job_type, seek_earlier, safety_override}` | the bookings made match |
+| `booking` | `none`, `one`, or `{count, priority, zip, job_type, seek_earlier, safety_override, window, street, new_address_account}` | the bookings made match; `street` is compared with the read-back's street, `window` with the booked window code |
 | `read_back` | `before_booking` | no booking came before a confirmed read-back |
 | `flag` | `person`, `none`, `safety`, `safety_check_cleared` | a person flag was raised / none was / a flag of that kind exists |
 | `lead` | `commercial`, `membership`, `install` | a lead of that kind was recorded |
@@ -62,7 +68,7 @@ Each `must` item is `- <check>: <argument>`. They read the tool server's record 
 | `no_changes` | `true` | no booking, reschedule, cancel or do-not-call change |
 | `outcome` | a call outcome or list | the call's outcome (`booked`, `safety`, `declined_commercial`, `declined_out_of_area`, `changed_booking`, `callback`, `flagged`, `no_booking`) |
 | `ended_by` | `caller` or `agent` | who ended the call |
-| `callback` | `promised` or `none` | a timed callback was stored, or none |
+| `callback` | `promised`, `none`, or `{day, not_before}` | a timed callback was stored, or none; with a mapping, every callback is due `day` days after the call, no earlier than `not_before` (local, "12:00") |
 | `agent_says` | a regex or list | the agent said each one at some point (case ignored) |
 | `agent_never_says` | a regex or list | the agent never said any of them |
 

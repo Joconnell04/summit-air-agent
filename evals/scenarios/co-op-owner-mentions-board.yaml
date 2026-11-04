@@ -1,0 +1,30 @@
+id: co-op-owner-mentions-board
+flow: [renter, booking]
+difficulty: standard
+traits: [side-question]
+journeys: [J6, J8]
+spec: [S-07, S-07a]
+caller_id: "(631) 555-0162"
+persona: Beverly Okafor owns and lives in her unit in a Forest Hills co-op. Polite and a little formal. Not sure whether she can approve work herself or whether the co-op board has to.
+hidden_facts:
+  name: Beverly Okafor
+  address: 110-20 71st Rd, Apt 4C, Forest Hills, 11375
+  phone: the number being called from
+  problem: the ductless unit in the living room stopped heating last night, about 64 F inside, she is alone and well
+  approval: she believes the co-op board has to approve any work in the building, and the super has to be told; she does not know if she can sign off herself
+opening: Good morning. The ductless unit in my co-op apartment stopped heating, and I should say the co-op board has to approve any work in the building.
+script:
+  - Do not ask to book a visit. If the agent offers to have someone call to sort out who can approve, say yes, that would be helpful.
+  - If asked for a callback time, say any time this afternoon.
+  - Then say thank you and goodbye.
+must:
+  - booking: none
+  - callback: promised
+  - flag: person
+  - tool_not_called: record_lead
+  - safety_lines: not_said
+  - outcome: [callback, flagged]
+should:
+  - Treats a co-op apartment as residential and never declines it.
+  - Offers a callback to confirm who can approve rather than pushing a booking.
+  - Names when someone will call, from the server's sentence.

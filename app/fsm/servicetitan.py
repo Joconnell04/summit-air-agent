@@ -188,6 +188,9 @@ class ServiceTitanAdapter:
     def appointments(self, job_id: int) -> list[dict]:
         return self._list("jpm", "appointments", "appointments", jobId=job_id)
 
+    def job_notes(self, job_id: int) -> list[dict]:
+        return self._list("jpm", f"jobs/{job_id}/notes", "job_notes")
+
     def calls_from(self, phone: str, since: datetime | None = None) -> list[dict]:
         """Calls from this number, newest first, as the v3 call feed lists them."""
         return self._list(
@@ -294,14 +297,18 @@ class ServiceTitanAdapter:
             "country": self.country,
         }
 
-    def create_customer(self, key: str, name: str, address: dict, phone: str) -> dict:
+    def create_customer(
+        self, key: str, name: str, address: dict, phone: str, contact_name: str | None = None
+    ) -> dict:
+        """contact_name is the person the phone belongs to when it isn't the account holder (a
+        caller booking a parent's house): ServiceTitan keeps who a number reaches in its memo."""
         place = self._address(address)
         body = {
             "name": name,
             "type": "Residential",
             "address": place,
             "locations": [{"name": place["street"], "address": place}],
-            "contacts": [{"type": "MobilePhone", "value": phone, "memo": name}],
+            "contacts": [{"type": "MobilePhone", "value": phone, "memo": contact_name or name}],
         }
         return self._call("POST", "crm", "customers", "create_customer", json=body)
 
@@ -384,9 +391,12 @@ class ServiceTitanAdapter:
     def create_lead(self, key: str, lead: dict) -> dict:
         return self._call("POST", "crm", "leads", "create_lead", json=lead)
 
-    def add_note(self, key: str, customer_id: int, text: str, job_id: int | None = None) -> dict:
-        """A job note comes back without an id, as ServiceTitan's does."""
-        body = {"text": text}
+    def add_note(
+        self, key: str, customer_id: int, text: str, job_id: int | None = None, pin: bool = False
+    ) -> dict:
+        """A job note comes back without an id, as ServiceTitan's does. A pinned note shows above
+        the others in ServiceTitan; nothing can edit or remove it afterwards."""
+        body = {"text": text, "pinToTop": pin}
         if job_id is not None:
             return self._call("POST", "jpm", f"jobs/{job_id}/notes", "add_note", json=body)
         return self._call("POST", "crm", f"customers/{customer_id}/notes", "add_note", json=body)

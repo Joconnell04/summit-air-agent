@@ -222,6 +222,7 @@ def test_the_adapter_exposes_no_delete_bulk_or_free_query_call():
         "jobs",
         "job",
         "appointments",
+        "job_notes",
         "calls_from",
         "calls_to",
         "find_call",

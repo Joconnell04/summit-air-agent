@@ -85,6 +85,8 @@
                   "pm.collectionVariables.set('call_id', 'pm-' + run);",
                   "pm.collectionVariables.set('safety_call_id', 'pm-safety-' + run);",
                   "pm.collectionVariables.set('known_call_id', 'pm-known-' + run);",
+                  "// No transfer has this id, so reporting on it is refused.",
+                  "pm.collectionVariables.set('unknown_transfer_id', '0');",
                   "pm.collectionVariables.set('caller', '(212) 555-' + String(1000 + run % 9000).slice(-4));",
                   ""
                 ]
@@ -992,6 +994,146 @@
           }
         },
         {
+          "name": "Flag a person on the safety call",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('ok', () => pm.expect(pm.response.json().ok).to.eql(true));",
+                  "pm.collectionVariables.set('safety_flag_id', pm.response.json().data.flag_id);",
+                  "pm.test('HTTP 200 with the envelope', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  const b = pm.response.json();",
+                  "  ['ok', 'say', 'data', 'refused'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{safety_call_id}}-flag"
+              }
+            ],
+            "url": "{{base_url}}/tools/flag_person",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"call_id\": \"{{safety_call_id}}\",\n  \"reason\": \"Caller wants to talk to a person about the gas smell\",\n  \"priority\": \"Urgent\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Never transferred on a safety call",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('ok', () => pm.expect(pm.response.json().ok).to.eql(true));",
+                  "pm.test('stays with the agent', () => pm.expect(pm.response.json().data.transfer).to.eql(null));",
+                  "pm.test('HTTP 200 with the envelope', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  const b = pm.response.json();",
+                  "  ['ok', 'say', 'data', 'refused'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/calls/{{safety_call_id}}/transfer",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"flag_id\": \"{{safety_flag_id}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "A transfer that was never started can't be reported",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('refused: invalid_state', () => pm.expect(pm.response.json().refused).to.eql('invalid_state'));",
+                  "",
+                  "pm.test('HTTP 200 with the envelope', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  const b = pm.response.json();",
+                  "  ['ok', 'say', 'data', 'refused'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/calls/{{safety_call_id}}/transfer/{{unknown_transfer_id}}/done",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"outcome\": \"no_answer\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Recording only under the key the server gave",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('refused: invalid_arguments', () => pm.expect(pm.response.json().refused).to.eql('invalid_arguments'));",
+                  "",
+                  "pm.test('HTTP 200 with the envelope', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  const b = pm.response.json();",
+                  "  ['ok', 'say', 'data', 'refused'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/calls/{{safety_call_id}}/recording",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"egress_id\": \"EG_test\",\n  \"object_key\": \"summit-air/another-call.mp4\"\n}"
+            }
+          }
+        },
+        {
           "name": "End call signs off",
           "event": [
             {
@@ -1431,7 +1573,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('ok', () => pm.expect(pm.response.json().ok).to.eql(true));",
-                  "pm.test('declines kindly', () => pm.expect(pm.response.json().say).to.include('only works on homes'));",
+                  "pm.test('declines kindly', () => pm.expect(pm.response.json().say).to.include('works on homes and apartments'));",
                   "pm.test('HTTP 200 with the envelope', () => {",
                   "  pm.response.to.have.status(200);",
                   "  const b = pm.response.json();",
@@ -1789,6 +1931,25 @@
             "method": "GET",
             "header": [],
             "url": "{{base_url}}/owner/calls/{{call_id}}/log"
+          }
+        },
+        {
+          "name": "A call's recording, none kept here",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('no recording without a bucket', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/owner/calls/{{call_id}}/recording"
           }
         },
         {

@@ -96,6 +96,8 @@ const run = Date.now();
 pm.collectionVariables.set('call_id', 'pm-' + run);
 pm.collectionVariables.set('safety_call_id', 'pm-safety-' + run);
 pm.collectionVariables.set('known_call_id', 'pm-known-' + run);
+// No transfer has this id, so reporting on it is refused.
+pm.collectionVariables.set('unknown_transfer_id', '0');
 pm.collectionVariables.set('caller', '(212) 555-' + String(1000 + run % 9000).slice(-4));
 """
 SCENARIOS = """
@@ -276,6 +278,37 @@ def build() -> dict:
             call="safety_call_id",
         ),
         tool(
+            "flag_person",
+            "Flag a person on the safety call",
+            {"reason": "Caller wants to talk to a person about the gas smell", "priority": "Urgent"},
+            ok("pm.collectionVariables.set('safety_flag_id', pm.response.json().data.flag_id);"),
+            call="safety_call_id",
+            key="{{safety_call_id}}-flag",
+        ),
+        item(
+            "Never transferred on a safety call",
+            "POST",
+            "calls/{{safety_call_id}}/transfer",
+            body={"flag_id": "{{safety_flag_id}}"},
+            check=ok(
+                "pm.test('stays with the agent', () => pm.expect(pm.response.json().data.transfer).to.eql(null));"
+            ),
+        ),
+        item(
+            "A transfer that was never started can't be reported",
+            "POST",
+            "calls/{{safety_call_id}}/transfer/{{unknown_transfer_id}}/done",
+            body={"outcome": "no_answer"},
+            check=refused("invalid_state"),
+        ),
+        item(
+            "Recording only under the key the server gave",
+            "POST",
+            "calls/{{safety_call_id}}/recording",
+            body={"egress_id": "EG_test", "object_key": "summit-air/another-call.mp4"},
+            check=refused("invalid_arguments"),
+        ),
+        tool(
             "end_call",
             "End call signs off",
             {"reason": "resolved"},
@@ -402,7 +435,7 @@ def build() -> dict:
                 },
             },
             ok(
-                "pm.test('declines kindly', () => pm.expect(pm.response.json().say).to.include('only works on homes'));"
+                "pm.test('declines kindly', () => pm.expect(pm.response.json().say).to.include('works on homes and apartments'));"
             ),
             call="known_call_id",
             key="{{known_call_id}}-commercial",
@@ -524,6 +557,13 @@ def build() -> dict:
             "owner/calls/{{call_id}}/log",
             envelope=False,
             check="pm.test('downloads the log', () => pm.response.to.have.status(200));",
+        ),
+        item(
+            "A call's recording, none kept here",
+            "GET",
+            "owner/calls/{{call_id}}/recording",
+            envelope=False,
+            check="pm.test('no recording without a bucket', () => pm.response.to.have.status(404));",
         ),
         item(
             "Search calls, jobs, flags and words said",

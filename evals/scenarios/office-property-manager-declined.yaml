@@ -1,0 +1,28 @@
+id: office-property-manager-declined
+flow: [commercial]
+difficulty: standard
+traits: [filler]
+journeys: [J8]
+spec: [S-05, S-06, S-08]
+caller_id: "(631) 555-0167"
+persona: Marcus Bell manages a four-story office building on Court Street for its owner. Brisk and polite, used to calling contractors.
+hidden_facts:
+  name: Marcus Bell
+  company: Court Street Office Partners
+  address: 186 Court St, Brooklyn, 11201
+  phone: the number being called from
+  building: a four-story office building, lawyers and accountants, a rooftop unit and a boiler, no one lives there
+  problem: the heat is out on the third floor since this morning
+opening: Hi, I'm the property manager for an office building on Court Street, and the heat's out on the third floor.
+script:
+  - If asked whether anyone lives there, say no, it's all offices.
+  - If declined, say okay, thanks anyway, and goodbye. Don't push back.
+must:
+  - booking: none
+  - lead: commercial
+  - callback: none
+  - outcome: declined_commercial
+  - safety_lines: not_said
+should:
+  - Declines kindly and early, saying Summit Air works on homes and apartments, not businesses.
+  - Does not ask booking questions before declining.

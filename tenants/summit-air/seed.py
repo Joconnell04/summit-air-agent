@@ -186,13 +186,15 @@ WHITMAN_PHONE = "(917) 555-0150"
 BAKERY_PHONE = "(718) 555-0188"
 FELD_PHONE = "(929) 555-0105"
 
-# More edge cases, a few of each, so the agent sees what a real company's records hold.
-COMMERCIAL_ACCOUNTS = [
-    ("Linden Property Management", "property manager", "(212) 555-0181", 1),
-    ("Rosa's Trattoria", "restaurant", "(718) 555-0157", 2),
-    ("Bay Ridge Montessori School", "school", "(718) 555-0193", 2),
-    ("Astoria Dental Group", "office", "(347) 555-0108", 3),
-    ("1400 Ocean Parkway Owners Corp", "co-op board", "(929) 555-0136", 2),
+# More edge cases, a few of each, so the agent sees what a real company's records hold. A property
+# manager and a co-op board look like businesses but look after residential buildings, so they are
+# Residential accounts (eval round 2): residential means residential-grade equipment.
+BUSINESS_ACCOUNTS = [
+    ("Linden Property Management", "property manager", "(212) 555-0181", 1, "Residential"),
+    ("Rosa's Trattoria", "restaurant", "(718) 555-0157", 2, "Commercial"),
+    ("Bay Ridge Montessori School", "school", "(718) 555-0193", 2, "Commercial"),
+    ("Astoria Dental Group", "office", "(347) 555-0108", 3, "Commercial"),
+    ("1400 Ocean Parkway Owners Corp", "co-op board", "(929) 555-0136", 2, "Residential"),
 ]
 OUT_OF_AREA = [
     ("Carol Weiss", "Nassau", "(516) 555-0144", "88 Fulton Ave", "Hempstead", "NY", "11550"),
@@ -229,7 +231,7 @@ RESERVED = {
     WHITMAN_PHONE,
     BAKERY_PHONE,
     FELD_PHONE,
-    *(phone for _, _, phone, _ in COMMERCIAL_ACCOUNTS),
+    *(phone for _, _, phone, _, _ in BUSINESS_ACCOUNTS),
 }
 
 
@@ -706,14 +708,15 @@ class World:
         }
 
         accounts = [{"name": "Harbor Bakery Group", "kind": "restaurant", **s["commercial"]}]
-        for name, kind, phone, zone_id in COMMERCIAL_ACCOUNTS:
+        buildings = []
+        for name, kind, phone, zone_id, customer_type in BUSINESS_ACCOUNTS:
             cid, lid = self.add_person(
-                name, self.address(zone[zone_id]), "owner", [phone], kind="Commercial"
+                name, self.address(zone[zone_id]), "owner", [phone], kind=customer_type
             )
-            accounts.append(
-                {"name": name, "kind": kind, "phone": phone, "customerId": cid, "locationId": lid}
-            )
+            account = {"name": name, "kind": kind, "phone": phone, "customerId": cid, "locationId": lid}
+            (accounts if customer_type == "Commercial" else buildings).append(account)
         s["commercialAccounts"] = accounts
+        s["residentialBuildingAccounts"] = buildings
 
         residents = [{"region": "Nassau", **s["outOfArea"]}]
         for name, region, phone, street, city, state, zip_code in OUT_OF_AREA:

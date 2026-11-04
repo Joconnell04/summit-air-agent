@@ -137,6 +137,8 @@ def missing_safety_wording(safety: dict) -> list[str]:
             missing.append(f"kinds.{kind} (vague.{kind} has no kind)")
         if not cfg.get("question"):
             missing.append(f"vague.{kind}.question")
+        if cfg.get("confirm_phrases") and not cfg.get("confirm_question"):
+            missing.append(f"vague.{kind}.confirm_question")
     missing += [key for key in ("sign_off", "flag_reason") if not safety.get(key)]
     return missing
 
@@ -201,6 +203,10 @@ class Tenant:
         if missing:
             raise ValueError(f"{folder}/agent.yaml safety needs {missing}")
         self.commercial: dict = agent["commercial"]
+        self.approval: dict = agent.get(
+            "approval",
+            {"unclear_phrases": [], "unclear_approver": [], "callback_hours_before_window": 2},
+        )
         self.priority: dict = agent["priority"]
         # Where to read the outside temperature (app/weather.py). None leaves it unknown.
         self.weather: dict | None = agent.get("weather")
@@ -210,6 +216,8 @@ class Tenant:
         self.repeat: dict = agent["repeat_callers"]
         self.retention: dict = agent["retention"]
         self.after_hours_cutoffs: dict = agent["after_hours"]
+        # Warm transfer to a person (app/transfer.py). None turns it off.
+        self.transfer: dict | None = agent.get("transfer")
         self.fsm: dict = agent["fsm"]
         missing = {"resolved", "open", "no_contact"} - set(self.fsm.get("callback_tags", {}))
         if missing:

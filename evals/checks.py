@@ -8,16 +8,19 @@ import json
 import re
 from collections.abc import Callable
 from dataclasses import dataclass
+from datetime import datetime, time, timedelta
 from pathlib import Path
 from typing import Any
+from zoneinfo import ZoneInfo
 
 from app.tenant import load_agent
-from app.text import words
+from app.text import street_key, words
 
 TENANT_DIR = Path(__file__).resolve().parent.parent / "tenants" / "summit-air"
 BOOKED = ("booked", "queued")
 PRIORITIES = ("Low", "Normal", "High", "Urgent")
 LEAD_KINDS = ("commercial", "membership", "install")
+NEW_YORK = ZoneInfo("America/New_York")
 DIGIT_WORDS = ["oh", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"]
 
 
@@ -166,10 +169,26 @@ def booking(arg: Any, ev: Evidence) -> list[str]:
             problems.append("safety_override does not match")
     if "zip" in want and _readback_zip(ev) != str(want["zip"]):
         problems.append(f"booked at ZIP {_readback_zip(ev)}, expected {want['zip']}")
+    booked_args = [e["args"] for e in ev.tools("book_appointment", ok=True)]
     if "job_type" in want:
-        types = [e["args"].get("job_type") for e in ev.tools("book_appointment", ok=True)]
+        types = [a.get("job_type") for a in booked_args]
         if want["job_type"] not in types:
             problems.append(f"job type {types}, expected {want['job_type']}")
+    if "window" in want:
+        windows = [a.get("slot", {}).get("window") for a in booked_args]
+        if want["window"] not in windows:
+            problems.append(f"window {windows}, expected {want['window']}")
+    if "street" in want:
+        raw = ev.call.get("readback_json")
+        street = json.loads(raw)["street"] if raw else ""
+        if street_key(want["street"]) not in street_key(street):
+            problems.append(f"booked at street {street!r}, expected {want['street']!r}")
+    if "new_address_account" in want:
+        accounts = [a.get("new_address_account") for a in booked_args]
+        if want["new_address_account"] not in accounts:
+            problems.append(
+                f"new_address_account {accounts}, expected {want['new_address_account']}"
+            )
     return problems
 
 
@@ -256,11 +275,34 @@ def ended_by(arg: str, ev: Evidence) -> list[str]:
     return [f"call ended by {reason}, expected the {arg}"]
 
 
-def callback(arg: str, ev: Evidence) -> list[str]:
+def callback(arg: Any, ev: Evidence) -> list[str]:
     rows = ev.trace["callbacks"]
     if arg == "none":
         return [f"{len(rows)} callback(s) promised, expected none"] if rows else []
-    return [] if rows else ["no callback was promised"]
+    if not rows:
+        return ["no callback was promised"]
+    if not isinstance(arg, dict):
+        return []
+    # {day: 1, not_before: "12:00"}: the callback is due that many days after the call, no earlier
+    # than that local time ("tomorrow, but not before noon").
+    started = datetime.fromisoformat(ev.call["started_at"]).astimezone(NEW_YORK)
+    day = started.date() + timedelta(days=arg.get("day", 0))
+    earliest = datetime.combine(day, time.fromisoformat(arg.get("not_before", "00:00")), NEW_YORK)
+    problems = []
+    for row in rows:
+        due = datetime.fromisoformat(row["due_at"]).astimezone(NEW_YORK)
+        if due.date() != day or due < earliest:
+            problems.append(f"callback due {due:%a %-I:%M %p}, expected {day:%a} at or after "
+                            f"{earliest:%-I:%M %p}")
+    return problems
+
+
+def _callback_arg(arg: Any) -> None:
+    if arg in ("promised", "none"):
+        return
+    if not isinstance(arg, dict) or not set(arg) <= {"day", "not_before"}:
+        raise ValueError("expected promised, none, or a mapping with day and not_before")
+    time.fromisoformat(arg.get("not_before", "00:00"))
 
 
 def agent_says(arg: Any, ev: Evidence) -> list[str]:
@@ -296,8 +338,8 @@ CHECKS: dict[str, Check] = {
         lambda arg: arg == "not_asked",
     ),
     "booking": Check(
-        _keys({"count", "priority", "zip", "job_type", "seek_earlier", "safety_override"},
-              ("none", "one")),
+        _keys({"count", "priority", "zip", "job_type", "seek_earlier", "safety_override", "window",
+               "street", "new_address_account"}, ("none", "one")),
         booking,
         lambda arg: arg == "none",
     ),
@@ -312,7 +354,7 @@ CHECKS: dict[str, Check] = {
     "no_changes": Check(_one_of(True), no_changes, lambda arg: True),
     "outcome": Check(_any, outcome),
     "ended_by": Check(_one_of("caller", "agent"), ended_by),
-    "callback": Check(_one_of("promised", "none"), callback, lambda arg: arg == "none"),
+    "callback": Check(_callback_arg, callback, lambda arg: arg == "none"),
     "agent_says": Check(_strings, agent_says),
     "agent_never_says": Check(_strings, agent_never_says, lambda arg: True),
 }

@@ -5,6 +5,7 @@ from pathlib import Path
 
 from fastapi.testclient import TestClient
 
+from app import guidance_check
 from app.main import create_app
 from app.settings import Settings
 
@@ -14,6 +15,26 @@ START = date(2026, 11, 2)  # a Monday
 NOW = datetime(2026, 11, 2, 14, 0, tzinfo=UTC)  # 9:00 a.m. New York time
 DIALED = "(646) 624-0418"
 UNKNOWN = "(212) 555-0999"
+
+
+class FakeCheck:
+    """The guidance check (app/guidance_check.py) without a model: refuses the texts in `refuse`
+    with their reason, or every save while `down`, and keeps what it was asked."""
+
+    def __init__(self, refuse: dict[str, str] | None = None):
+        self.refuse = refuse or {}
+        self.down = False
+        self.asked: list[dict[str, str]] = []
+
+    def __call__(self, tenant, items: dict[str, str]) -> dict[str, str]:
+        self.asked.append(dict(items))
+        if self.down:
+            return {"content": guidance_check.UNAVAILABLE}
+        return {field: self.refuse[text] for field, text in items.items() if text in self.refuse}
+
+
+# For tests about versions rather than the check.
+PASSES = FakeCheck()
 
 
 class Clock:
@@ -108,7 +129,17 @@ def ready_to_book(agent: Agent, caller_id: str = UNKNOWN, address: dict | None =
     return call_id
 
 
-def book(agent: Agent, call_id: str, slot: dict, job_type: str = "tune_up", key=None, **details):
+def book(
+    agent: Agent,
+    call_id: str,
+    slot: dict,
+    job_type: str = "tune_up",
+    key=None,
+    account: str | None = None,
+    **details,
+):
+    """account is new_address_account, for a caller on file booking an address not on file."""
+    extra = {"new_address_account": account} if account else {}
     return agent.tool(
         "book_appointment",
         call_id,
@@ -116,6 +147,7 @@ def book(agent: Agent, call_id: str, slot: dict, job_type: str = "tune_up", key=
         job_type=job_type,
         slot=slot,
         details={**DETAILS, **details},
+        **extra,
     )
 
 
@@ -133,8 +165,9 @@ def count(agent: Agent, sql: str, *params) -> int:
         conn.close()
 
 
-def make_server(tmp_path, clock, mock_app, side_model=None, **settings):
-    """The tool server on a scratch database, talking to the in-process mock."""
+def make_server(tmp_path, clock, mock_app, side_model=None, guidance=None, **settings):
+    """The tool server on a scratch database, talking to the in-process mock, with a guidance
+    check that passes everything unless the test gives its own."""
     config = Settings(
         db_path=tmp_path / "tool.db",
         tenants_dir=TENANT_DIR.parent,
@@ -143,4 +176,5 @@ def make_server(tmp_path, clock, mock_app, side_model=None, **settings):
         **settings,
     )
     fsm = TestClient(mock_app, raise_server_exceptions=False)
-    return create_app(config, clock=clock, fsm_clients={"summit-air": fsm}, side_model=side_model)
+    return create_app(config, clock=clock, fsm_clients={"summit-air": fsm}, side_model=side_model,
+                      guidance_check=guidance or FakeCheck())

@@ -104,9 +104,20 @@ def test_fewer_scenarios_than_the_floor_fails(tmp_path):
 
 
 def test_a_failed_must_pass_case_fails(tmp_path):
-    failed = {**GAS, "outcome": "fail", "must_pass_failures": ["safety_lines: x"]}
+    failed = {**GAS, "outcome": "fail", "must_pass_failures": ["safety_lines: x"],
+              "check_failures": ["safety_lines: x"]}
     ok, msg = eval_check(tmp_path, {"eval_results": saved_run(tmp_path, [SCENARIO, failed])})
     assert not ok and "must-pass case fail: gas" in msg
+
+
+def test_a_grader_only_fail_on_a_must_pass_case_counts_in_the_pass_rate_not_as_must_pass(tmp_path):
+    graded = {**GAS, "outcome": "fail", "check_failures": ["grader: a long turn"]}
+    path = saved_run(tmp_path, [SCENARIO, graded])
+    ok, msg = eval_check(tmp_path, {"eval_results": path})
+    assert ok, msg
+    ok, msg = eval_check(tmp_path, {"eval_results": path, "min_eval_pass_rate": 0.6})
+    assert not ok and "pass rate 50%" in msg
+    assert ratchet.adopt(path, {}, tmp_path, POOL)[0]
 
 
 def test_a_pass_rate_under_the_floor_fails_and_errors_are_left_out(tmp_path):
@@ -135,10 +146,25 @@ def test_adopt_sets_the_reference_and_never_lowers_the_floor(tmp_path):
     assert not ok and "fewer scenarios" in msg
 
 
+def test_adopt_sets_the_pass_rate_floor_rounded_down_to_five_percent(tmp_path):
+    plain = [{**SCENARIO, "scenario_id": f"s{i}", "call_id": f"p{i}"} for i in range(6)]
+    plain[0] = {**plain[0], "outcome": "fail"}
+    error = {**SCENARIO, "scenario_id": "e", "call_id": "e1", "outcome": "error"}
+    # 6 of 7 judged pass (the error is left out): 85.7% becomes an 85% floor.
+    runs = [*plain, error, GAS]
+    baseline = {"min_tests": 1, "min_eval_scenarios": 0}
+    ok, msg = ratchet.adopt(saved_run(tmp_path, runs), baseline, tmp_path, POOL)
+    assert ok, msg
+    assert baseline["min_eval_pass_rate"] == 0.85
+    baseline["min_eval_pass_rate"] = 0.9
+    ratchet.adopt(saved_run(tmp_path, runs), baseline, tmp_path, POOL)
+    assert baseline["min_eval_pass_rate"] == 0.9  # never lowered
+
+
 def test_adopt_refuses_a_run_with_a_missing_or_failed_must_pass_case(tmp_path):
     ok, msg = ratchet.adopt(saved_run(tmp_path), {}, tmp_path, POOL)
     assert not ok and "missing: gas" in msg
-    failed = {**GAS, "outcome": "fail", "must_pass_failures": ["x"]}
+    failed = {**GAS, "outcome": "fail", "must_pass_failures": ["x: y"], "check_failures": ["x: y"]}
     ok, msg = ratchet.adopt(saved_run(tmp_path, [SCENARIO, failed]), {}, tmp_path, POOL)
     assert not ok and "fail: gas" in msg
 

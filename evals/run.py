@@ -25,13 +25,13 @@ from evals.caller import SimulatedCaller
 from evals.checks import Evidence, check_names, run_checks, safety_config
 from evals.compare import percentile
 from evals.fingerprint import prompt_hash, run_hash
-from evals.grader import grade
+from evals.grader import grade, set_up
 from evals.models import Model, Usage, for_profile, load_config
 from evals.models import profile as models_profile
 from evals.results import RESULTS_DIR, Run, ScenarioResult, ToolCall, Turn
 from evals.scenario import Scenario, load_all
 from evals.stacks import InProcessAgent, load_adapter
-from evals.transcribe import level_for, roughen, seeded
+from evals.transcribe import level_for, mishear, roughen, seeded
 from evals.world import World, resolve_caller, seeded_db
 
 STACKS = ("livekit", "retell")
@@ -64,7 +64,10 @@ class Harness:
         caller_id = resolve_caller(scenario.caller_id, self.seed[1])
         if self.stack != "livekit":
             return load_adapter(self.stack).open_agent(call_id, caller_id)
-        world = World(self.workdir / call_id, self.seed, scenario.start_time, self.overlay)
+        world = World(self.workdir / call_id, self.seed, scenario.start_time, self.overlay,
+                      scenario.fsm_down)
+        if scenario.earlier_call:
+            world.earlier_call(f"{call_id}-earlier", caller_id, scenario.earlier_call)
         agent = InProcessAgent(world.server, self.models.agent, call_id, caller_id, world.clock)
         return agent, world.server
 
@@ -99,7 +102,10 @@ class Harness:
             recent: list[str] = []
             reason = None
             for _ in range(scenario.max_turns):
-                heard = said if replay is not None else roughen(said, level, rng)
+                heard = (
+                    said if replay is not None
+                    else roughen(mishear(said, scenario.misheard), level, rng)
+                )
                 transcript.append(Turn(role="caller", text=heard))
                 turn = agent.hear(heard)
                 agent_usage.add(turn.usage)
@@ -145,6 +151,7 @@ def score(scenario, sample, call_id, server, transcript, timings, usage, error, 
     as the audio rig's."""
     failures, violations, tool_calls, grade_score, notes = [], [], [], None, ""
     ran: list[str] = []
+    done: list[str] = []
     if server is not None:
         try:
             trace = server.final_trace(call_id) if final else server.trace(call_id)
@@ -153,6 +160,7 @@ def score(scenario, sample, call_id, server, transcript, timings, usage, error, 
                 for e in trace["events"] if e["type"] == "tool" and e["tool"] in TOOLS
             ]
             evidence = Evidence(trace, safety)
+            done = set_up(trace, safety)
             if not error.startswith("harness"):
                 failures = run_checks(scenario.must, evidence)
                 violations = run_checks(scenario.must, evidence, prohibitions_only=True)
@@ -174,7 +182,7 @@ def score(scenario, sample, call_id, server, transcript, timings, usage, error, 
         outcome = "fail" if failures else "pass"
     if not error:
         try:
-            g = grade(grader, transcript, scenario.should)
+            g = grade(grader, transcript, scenario.should, done)
             usage.add(g.usage)
             grade_score, notes = g.score, g.notes
             if g.failed and outcome == "pass":
@@ -195,7 +203,10 @@ def score(scenario, sample, call_id, server, transcript, timings, usage, error, 
         difficulty=scenario.difficulty,
         traits=scenario.traits,
         outcome=outcome,
-        must_pass_failures=failures if scenario.must_pass and outcome == "fail" else [],
+        must_pass_failures=(
+            [f for f in failures if not f.startswith("grader:")]
+            if scenario.must_pass and outcome == "fail" else []
+        ),
         check_failures=failures,
         checks=ran,
         error=error,

@@ -50,12 +50,31 @@ safety:
         - rotten eggs
         - like eggs
         - sulfur
+      # Usually harmless, but worth one lighter question: the tenant's `confirm_question`, asked
+      # once per call. The first heating of the season smells of burning dust (eval round 2,
+      # burning-dust-first-heat).
+      confirm_phrases:
+        - burning dust
+        - burnt dust
+        - dusty smell
+        - burning smell
+        - burnt smell
+        - smells like burning
+        - smelled like burning
+        - smell of burning
+        - smells burnt
+      # Words a caller uses around a plain "no" to that question that add nothing to it ("no, just
+      # dusty, like when the heater first fires up").
+      confirm_filler: [dust, dusty, burnt, heat, heater, furnace, boiler, fire, fires, fired, egg,
+                       sulphur, alarm, vents, radiator, radiators]
     co:
       phrases:
         - dizzy
         - light headed
         - lightheaded
         - headaches
+        - head hurts
+        - feel sick
         - nauseous
         - alarm is beeping
         - alarm keeps beeping
@@ -186,10 +205,3 @@ after_hours:
   heating_job_types: [no_heat]
   cooling_job_types: [no_cooling]
   at_risk_rules: [vulnerable_person, medical_equipment]
-
-# Owner edits from the owner view (app/rules.py). Guidance an owner writes may not mention these,
-# because the safety script covers them; the template adds its own list (prices, priority, the
-# read-back and so on).
-owner_rules:
-  locked_topics: [gas, carbon monoxide, monoxide, smoke, fumes, co alarm, co detector, sulfur,
-                  rotten egg]

@@ -12,12 +12,13 @@ import sqlite3
 from dataclasses import dataclass
 from datetime import datetime, time, timedelta
 
-from . import booking, lookup, outbound, records, safety, weather
+from . import booking, lookup, outbound, records, safety, transfer, weather
 from . import capacity as capacity_rules
 from . import priority as prio
 from .db import iso, parse_iso, tx
 from .envelope import Refused, Result, ok
 from .fsm import FsmAdapter, FsmRejected, FsmUnavailable, SlotCache
+from .lifecycle import approval_unclear
 from .schemas import (
     BookIn,
     CallbackTime,
@@ -37,7 +38,7 @@ from .schemas import (
 )
 from .settings import BOOKING_DAYS_AHEAD, LIMITS
 from .tenant import Tenant
-from .text import phone_key, phone_spoken, street_key, unit_key
+from .text import clock_time, has_phrase, phone_key, phone_spoken, street_key, unit_key, words
 
 MAX_MATCHES = 5
 SHAPE_DAYS = 3
@@ -82,8 +83,10 @@ def _limit(ctx: Ctx, kind: str, count: int) -> None:
 
 
 def _safety_gate(ctx: Ctx) -> bool:
-    """Booking tools wait until the safety lines were said and a person flagged (spec S-18).
-    Returns True when this is a safety call past that point, so the action is an override."""
+    """Booking tools wait until the safety lines were said and a person flagged (spec S-18). After
+    that the agent may offer a visit for once the problem is shut off, without the caller having to
+    insist (eval round 2). Returns True when this is a safety call past that point, so the booking
+    is logged as made on a safety call."""
     state, safety = ctx.call["safety_state"], ctx.tenant.safety
     if state == "signal":
         lines = " ".join(safety["kinds"][ctx.call["safety_kind"]]["lines"].split())
@@ -120,6 +123,44 @@ def _commercial(ctx: Ctx) -> None:
     only_commercial = by_caller_id and all(r["customer_type"] in rejected for r in by_caller_id)
     if ctx.call["commercial"] or only_commercial:
         raise Refused("customer_type", ctx.tenant.line("commercial"))
+
+
+def _approval_unclear(ctx: Ctx, approver: str) -> bool:
+    """Who can approve the work isn't settled: the caller said a co-op board or a landlord has to
+    approve, on this call or one linked to it, or the approver the agent recorded says so."""
+    cfg = ctx.tenant.approval
+    if any(has_phrase(words(approver), p) for p in cfg["unclear_approver"]):
+        return True
+    thread = records.thread(ctx.conn, ctx.call["id"])
+    rows = ctx.conn.execute(
+        f"SELECT text FROM turns WHERE speaker = 'caller' "
+        f"AND call_id IN ({','.join('?' * len(thread))})",
+        thread,
+    )
+    return any(approval_unclear(r["text"], cfg) for r in rows)
+
+
+def approval_call_time(tenant: Tenant, window_start: datetime, now: datetime) -> datetime:
+    """When to call about approval: a set time before the window opens, moved back into calling
+    hours (the evening before, for an early window). If that time has passed, the next time inside
+    calling hours, which can be after the window opens; the caller of this checks for that."""
+    opens, closes = (time.fromisoformat(t) for t in tenant.callbacks["outbound_hours"])
+    # Calling hours end before `closes` (records.in_outbound_hours), so aim half an hour inside.
+    last = (datetime.combine(datetime.min, closes) - timedelta(minutes=30)).time()
+    due = tenant.local(
+        window_start - timedelta(hours=tenant.approval["callback_hours_before_window"])
+    )
+    if due.time() > last:
+        due = datetime.combine(due.date(), last, tenant.tz)
+    elif due.time() < opens:
+        due = datetime.combine(due.date() - timedelta(days=1), last, tenant.tz)
+    if due >= now:
+        return due
+    if records.in_outbound_hours(tenant, now):
+        return now
+    local = tenant.local(now)
+    day = local.date() if local.time() < opens else local.date() + timedelta(days=1)
+    return datetime.combine(day, opens, tenant.tz)
 
 
 def _job_type(ctx: Ctx, code: str) -> dict:
@@ -343,6 +384,23 @@ def find_slots(ctx: Ctx, args: FindSlotsIn) -> Result:
     windows = _open_windows(ctx, job_type, decided.level)
     priority = {"level": decided.level, "reasons": decided.reasons, "requested": args.priority}
     data: dict = {"priority": priority}
+    # A caller who can only be home part of the day gets only windows inside those hours. The
+    # technician may come any time in a window, so a window that runs past them is never offered
+    # as if it fit ("by 9" inside 8 to 12, eval round 2, seed 7).
+    arrival_say = ""
+    if args.arrive_after or args.arrive_before:
+        after, before = _arrival_hours(args)
+        fitting = [w for w in windows if _window_inside(ctx, w, after, before)]
+        data["arrival"] = {
+            "after": after.strftime("%H:%M") if after else None,
+            "before": before.strftime("%H:%M") if before else None,
+            "fits": bool(fitting),
+        }
+        if fitting:
+            windows = fitting
+        else:
+            labels = _join([w.label() for w in ctx.tenant.windows if not w.after_hours], "and")
+            arrival_say = ctx.tenant.line("arrival_no_fit", windows=labels) + " "
 
     cutoffs = ctx.tenant.after_hours_cutoffs
     if ctx.call["after_hours"] and args.job_type in (
@@ -368,9 +426,11 @@ def find_slots(ctx: Ctx, args: FindSlotsIn) -> Result:
         on_day = [_describe(ctx, w) for w in windows if w["date"] == args.day.isoformat()]
         data["windows"] = on_day
         if not on_day:
-            return ok(urgent_said + "Nothing's open that day.", **data)
+            return ok(urgent_said + arrival_say + "Nothing's open that day.", **data)
         labels = _join([w["label"] for w in on_day], "or")
-        return ok(f"{urgent_said}{on_day[0]['day'].capitalize()} I have {labels}.", **data)
+        return ok(
+            f"{urgent_said}{arrival_say}{on_day[0]['day'].capitalize()} I have {labels}.", **data
+        )
 
     by_day: dict[str, list[dict]] = {}
     for window in windows:
@@ -400,12 +460,41 @@ def find_slots(ctx: Ctx, args: FindSlotsIn) -> Result:
         )
     data["days"] = shape
     if not shape:
-        return ok(urgent_said + "I don't have anything open in the next two weeks.", **data)
+        return ok(
+            urgent_said + arrival_say + "I don't have anything open in the next two weeks.", **data
+        )
     parts = []
     for d in shape:
         names = _join([w.replace("_", " ") for w in d["windows"]], "or")
         parts.append(f"this {names}" if d["day"] == "today" else f"{d['day']} {names}")
-    return ok(f"{urgent_said}I've got openings {_join(parts, 'and')}.", **data)
+    return ok(f"{urgent_said}{arrival_say}I've got openings {_join(parts, 'and')}.", **data)
+
+
+def _arrival_hours(args: FindSlotsIn) -> tuple[time | None, time | None]:
+    """The hours the caller can be home, read as daytime: "8" to "2" is 8 AM to 2 PM."""
+    try:
+        after = clock_time(args.arrive_after) if args.arrive_after else None
+        before = clock_time(args.arrive_before, after) if args.arrive_before else None
+    except ValueError:
+        raise Refused(
+            "invalid_arguments",
+            "What time do you need them there by?",
+            errors={"arrive_after": "not a time", "arrive_before": "not a time"},
+        ) from None
+    if after and before and before <= after:
+        raise Refused(
+            "invalid_arguments",
+            "What hours will someone be home?",
+            errors={"arrive_before": "ends before it starts"},
+        )
+    return after, before
+
+
+def _window_inside(ctx: Ctx, window: dict, after: time | None, before: time | None) -> bool:
+    spec = ctx.tenant.window(window["window"])
+    if spec is None or spec.after_hours:
+        return False
+    return (after is None or spec.start >= after) and (before is None or spec.end <= before)
 
 
 def _resolve_phone(ctx: Ctx, value: str) -> str:
@@ -506,6 +595,7 @@ def book_appointment(ctx: Ctx, args: BookIn) -> Result:
     _out_of_area(ctx, readback["zip"])
     if not args.separate_problem:
         _open_job_here(ctx, readback)
+    account, contact_name = _new_address_account(ctx, readback, args)
     job_type = _job_type(ctx, args.job_type)
     details = args.details.model_dump()
     facts, decided = _priority(
@@ -536,6 +626,9 @@ def book_appointment(ctx: Ctx, args: BookIn) -> Result:
             thread,
         )
     ]
+    check_approval = _approval_unclear(ctx, details["approver"])
+    if check_approval:
+        pending_notes.append("Confirm who can approve the work before dispatch.")
     request = {
         "call_id": ctx.call["id"],
         "job_type": args.job_type,
@@ -552,6 +645,8 @@ def book_appointment(ctx: Ctx, args: BookIn) -> Result:
         "priority_reasons": decided.reasons,
         "requested_priority": args.priority,
         "notes": pending_notes,
+        "account": account,
+        "contact_name": contact_name,
         "window_start": iso(window_start),
         "window_end": iso(window_end),
     }
@@ -612,8 +707,21 @@ def book_appointment(ctx: Ctx, args: BookIn) -> Result:
         raise Refused("fsm_rejected", _fsm_down_say(ctx, callback_id, due)) from None
 
     ctx.cache.invalidate()
+    returning = _recent_job_here(ctx, readback, job_type)
     with tx(ctx.conn):
         booking.mark_booked(ctx.conn, booking_id, sent, ctx.now)
+        # The same problem back soon after a visit: a person reviews the priority and whether it's
+        # covered, so the agent never has to answer that (journey 7 step 3, eval round 2, seed 10).
+        if returning:
+            records.add_flag(
+                ctx.conn,
+                ctx.call["id"],
+                "person",
+                f"Return visit: job {sent['job_id']} is at the address of job {returning['id']}, "
+                f"finished {returning['completed']}. Review the priority and whether it's covered.",
+                ctx.now,
+                "High",
+            )
         if seek_earlier:
             records.add_flag(
                 ctx.conn,
@@ -633,15 +741,44 @@ def book_appointment(ctx: Ctx, args: BookIn) -> Result:
             "start": request["window_start"],
         },
     )
-    result = ok(
+    say = (
         f"You're all set for {when['day']}, with the technician arriving between "
-        f"{when['label'].replace(' to ', ' and ')}.",
+        f"{when['label'].replace(' to ', ' and ')}."
+    )
+    # A visit booked on a safety call goes ahead only once the problem is shut off (eval round 2).
+    if override and ctx.tenant.safety.get("booking_note"):
+        say += " " + " ".join(ctx.tenant.safety["booking_note"].split())
+    # Approval unclear: a person calls before dispatch to confirm who can approve (eval round 2).
+    approval_callback_at = None
+    if check_approval:
+        due = approval_call_time(ctx.tenant, window_start, ctx.now)
+        # No calling time left before the window: a person holds the job until approval is settled.
+        late = due >= window_start
+        reason = f"Confirm who can approve job {sent['job_id']} before dispatch"
+        if late:
+            reason += "; the call can't happen before the window opens, so hold the technician"
+        with tx(ctx.conn):
+            records.add_flag(ctx.conn, ctx.call["id"], "approval_check", reason, ctx.now, "High")
+            callback_id = records.add_callback(
+                ctx.conn, ctx.tenant, ctx.call, due, reason, ctx.now
+            )
+        if callback_id:
+            approval_callback_at = iso(due)
+            spoken = ctx.tenant.line("callback_by", time=ctx.tenant.time_spoken(due, ctx.now))
+            line = "approval_callback_late" if late else "approval_callback"
+            say += " " + ctx.tenant.line(line, when=spoken)
+    if returning:
+        say += " " + ctx.tenant.line("return_visit_review")
+    result = ok(
+        say,
         booking_id=sent["job_id"],
         appointment_id=sent["appointment_id"],
         window=when,
         priority={"level": decided.level, "reasons": decided.reasons},
         seek_earlier=seek_earlier,
         safety_override=override,
+        approval_callback_at=approval_callback_at,
+        return_visit_review=bool(returning),
     )
     if override:
         result.gate = "safety_override"
@@ -671,6 +808,87 @@ def _on_call_first(ctx: Ctx, facts: prio.Facts, decided: prio.Priority) -> None:
             "Let me get this to our on-call technician first.",
             need="flag_person with priority Urgent",
         )
+
+
+def needs_on_call_tonight(ctx: Ctx) -> bool:
+    """After hours, whether the server's own priority sends this call to the on-call technician
+    tonight (journey 11), as `_on_call_first` decides for a booking: the last heating or cooling job
+    the agent looked up or booked, scored again from every caller line. The priority the model
+    puts on a flag is never read."""
+    cutoffs = ctx.tenant.after_hours_cutoffs
+    if not ctx.call["after_hours"]:
+        return False
+    job_types = cutoffs["heating_job_types"] + cutoffs["cooling_job_types"]
+    rows = ctx.conn.execute(
+        "SELECT tool, args_json FROM tool_calls WHERE call_id = ? "
+        "AND tool IN ('find_slots', 'book_appointment') ORDER BY id DESC",
+        (ctx.call["id"],),
+    )
+    for row in rows:
+        args = json.loads(row["args_json"])
+        if args.get("job_type") not in job_types:
+            continue
+        heard = args.get("facts") or args.get("details") or {}
+        facts, decided = _priority(
+            ctx,
+            args["job_type"],
+            f"{heard.get('issue', '')}\n{heard.get('who_home', '')}",
+            heard.get("inside_temp_f"),
+        )
+        falling = bool(heard.get("temp_falling_fast"))
+        return prio.after_hours_outcome(facts, decided, cutoffs, falling) == (
+            "tonight_if_on_call_agrees"
+        )
+    return False
+
+
+# How a caller says the problem is back, so a booking of another job type still counts as a return
+# visit ("you fixed the AC last week and now nothing works again").
+SAME_PROBLEM_PHRASES = (
+    "again",
+    "came back",
+    "same problem",
+    "same issue",
+    "still not working",
+    "still broken",
+    "you were here",
+    "you were just here",
+    "you just fixed",
+    "since you fixed",
+)
+
+
+def _recent_job_here(ctx: Ctx, readback: dict, job_type: dict) -> dict | None:
+    """A job finished at this address within the tenant's return-visit window, for a customer
+    matched on this call, when the new booking is the same problem: the same job type, or the
+    caller says it's back ("it's out again"). A tune-up last week and an unrelated breakdown now is
+    not a return visit (PR #75 review). A lookup that fails finds none; the booking stands."""
+    days = ctx.tenant.repeat.get("return_visit_days")
+    if not days:
+        return None
+    caller = words(records.caller_text(ctx.conn, ctx.call["id"]))
+    said_same = any(has_phrase(caller, p) for p in SAME_PROBLEM_PHRASES)
+    since = (ctx.now - timedelta(days=days)).isoformat()
+    try:
+        for customer_id in records.scoped_customers(ctx.conn, ctx.call["id"]):
+            here = {
+                loc["id"]
+                for loc in ctx.fsm.locations(customer_id)
+                if booking.same_address(loc, readback)
+            }
+            done = [
+                j
+                for j in ctx.fsm.jobs(customer_id, ["Completed"])
+                if j["locationId"] in here
+                and (j.get("completedOn") or "") >= since[:19]
+                and (said_same or j["jobTypeId"] == job_type["id"])
+            ]
+            if done:
+                last = max(done, key=lambda j: j["completedOn"])
+                return {"id": last["id"], "completed": last["completedOn"][:10]}
+    except (FsmUnavailable, FsmRejected):
+        return None
+    return None
 
 
 def _open_job_here(ctx: Ctx, readback: dict) -> None:
@@ -705,6 +923,51 @@ def _open_job_here(ctx: Ctx, readback: dict) -> None:
                     )
     except (FsmUnavailable, FsmRejected):
         return
+
+
+def _new_address_account(
+    ctx: Ctx, readback: dict, args: BookIn
+) -> tuple[str | None, str | None]:
+    """A caller on file booking an address that isn't on file anywhere is asked whose account it
+    goes on before it books: its own account with the caller as a contact (a parent's house, the
+    usual case), or the caller's (eval round 2, seed 5). Returns the choice and, for its own
+    account, the caller's name for the contact. A lookup that fails leaves the booking to go ahead
+    under the caller, as before."""
+    scoped = [
+        (cid, row)
+        for cid, row in records.scoped_customers(ctx.conn, ctx.call["id"]).items()
+        if row["customer_type"] not in ctx.tenant.rejected_customer_types
+    ]
+    if len(scoped) != 1:
+        return None, None
+    customer_id = scoped[0][0]
+    try:
+        if any(booking.same_address(loc, readback) for loc in ctx.fsm.locations(customer_id)):
+            return None, None
+        on_file = ctx.fsm.locations_by_address(
+            readback["street"], readback["zip"], readback["unit"] or None
+        )
+        if any(booking.same_address(loc, readback) for loc in on_file):
+            return None, None
+        caller = ctx.fsm.customer(customer_id)
+    except (FsmUnavailable, FsmRejected):
+        return args.new_address_account, None
+    if args.new_address_account is None:
+        raise Refused(
+            "account_choice",
+            ctx.tenant.line("account_choice"),
+            need="ask, then book_appointment with new_address_account own (and details.name for "
+            "that address) or caller",
+        )
+    if args.new_address_account == "caller":
+        return "caller", None
+    if not args.details.name.strip():
+        raise Refused(
+            "invalid_arguments",
+            ctx.tenant.line("account_name"),
+            errors={"name": "the account holder for that address"},
+        )
+    return "own", caller["name"]
 
 
 def _owned_job(ctx: Ctx, job_id: int) -> dict:
@@ -885,14 +1148,15 @@ class CallbackWhen:
 def _callback_due(ctx: Ctx, asked: CallbackTime) -> CallbackWhen:
     """The callback time and the words for it. The words always come from here, never the model."""
     tenant, now = ctx.tenant, ctx.now
+    days = 1 if asked.callback_day == "tomorrow" else 0
     try:
         if asked.callback_after or asked.callback_before:
             earliest, latest = records.parse_callback_window(
-                asked.callback_after, asked.callback_before, tenant, now
+                asked.callback_after, asked.callback_before, tenant, now, days
             )
         else:
             due = records.parse_callback_time(
-                asked.callback_time, asked.callback_in_minutes, tenant, now
+                asked.callback_time, asked.callback_in_minutes, tenant, now, days
             )
             spoken = tenant.line("callback_by", time=tenant.time_spoken(due, now))
             return CallbackWhen(due, due, spoken)
@@ -910,20 +1174,34 @@ def _callback_due(ctx: Ctx, asked: CallbackTime) -> CallbackWhen:
         else:
             say = "What time should I tell them someone will call by?"
         raise Refused("invalid_callback_time", say, errors={"callback_time": reason}) from None
+    # "tomorrow after 12 PM", not "after tomorrow at 12 PM".
+    def clock(moment: datetime) -> str:
+        return tenant.time_spoken(moment, now).split(" at ")[-1]
+
     if earliest and latest:
-        spoken = tenant.line(
-            "callback_between",
-            start=tenant.time_spoken(earliest, now),
-            end=tenant.time_spoken(latest, now),
-        )
+        spoken = tenant.line("callback_between", start=clock(earliest), end=clock(latest))
     elif earliest:
-        spoken = tenant.line("callback_after", time=tenant.time_spoken(earliest, now))
+        spoken = tenant.line("callback_after", time=clock(earliest))
     else:
-        spoken = tenant.line("callback_before", time=tenant.time_spoken(latest, now))
-    closes = datetime.combine(
-        tenant.local(now).date(), time.fromisoformat(tenant.callbacks["outbound_hours"][1]), tenant.tz
+        spoken = tenant.line("callback_before", time=clock(latest))
+    if days:
+        spoken = f"tomorrow {spoken}"
+    day = tenant.local(now).date() + timedelta(days=days)
+    opens, closes = (
+        datetime.combine(day, time.fromisoformat(t), tenant.tz)
+        for t in tenant.callbacks["outbound_hours"]
     )
-    return CallbackWhen(latest or closes, max(earliest or now, now), spoken)
+    # "Tomorrow, before 3" is never dialed today: a window with no start begins when calling hours
+    # open on the day asked for (PR #75 review).
+    return CallbackWhen(latest or closes, max(earliest or opens, now), spoken)
+
+
+def _with_window(reason: str, asked: CallbackTime, when: CallbackWhen) -> str:
+    """The callback's reason, with the window the caller asked for, so the person calling back
+    doesn't call before it ("not before noon, I'm asleep")."""
+    if asked.callback_after or asked.callback_before:
+        return f"{reason} (caller asked: {when.spoken})"
+    return reason
 
 
 def _no_time(asked: CallbackTime) -> bool:
@@ -951,6 +1229,11 @@ def flag_person(ctx: Ctx, args: FlagIn) -> Result:
         if ctx.call["after_hours"] and args.priority == "Urgent":
             minutes = ctx.tenant.after_hours_cutoffs["on_call_confirms_within_minutes"]
             args = args.model_copy(update={"callback_in_minutes": minutes})
+        # A caller who asked for a person in office hours is about to be put through, so they
+        # aren't asked for a time first; this callback is the one kept if nobody answers.
+        elif transfer.role_for(ctx.conn, ctx.tenant, ctx.call, False) == "office":
+            minutes = ctx.tenant.transfer["fallback_callback_minutes"]
+            args = args.model_copy(update={"callback_in_minutes": minutes})
     when = _callback_due(ctx, args)
     due = when.due
     # A callback the system places needs no person unless the dial fails (app/outbound.py). The
@@ -968,7 +1251,7 @@ def flag_person(ctx: Ctx, args: FlagIn) -> Result:
             ctx.conn, ctx.call["id"], kind, args.reason, ctx.now, args.priority
         )
         callback_id = records.add_callback(
-            ctx.conn, ctx.tenant, ctx.call, due, args.reason, ctx.now
+            ctx.conn, ctx.tenant, ctx.call, due, _with_window(args.reason, args, when), ctx.now
         )
         if callback_id and system:
             outbound.add_callback_dial(
@@ -1020,7 +1303,12 @@ def record_lead(ctx: Ctx, args: LeadIn) -> Result:
             records.update_call(ctx.conn, ctx.call["id"], commercial=1)
         callback_id = (
             records.add_callback(
-                ctx.conn, ctx.tenant, ctx.call, due, f"{args.kind} lead: {details.need}", ctx.now
+                ctx.conn,
+                ctx.tenant,
+                ctx.call,
+                due,
+                _with_window(f"{args.kind} lead: {details.need}", details, when),
+                ctx.now,
             )
             if due
             else None

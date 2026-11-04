@@ -39,6 +39,9 @@ class Settings:
     # A side model for the vulnerable-person read (app/side_model.py): a profile name under `side`
     # in config/models.yaml. Empty is off, and the phrase rules decide alone.
     side_model: str = field(default_factory=lambda: os.environ.get("SIDE_MODEL", ""))
+    # Write the technician's summary after each booked call (app/summary.py). Off in tests and
+    # development so nothing calls out; it needs ANTHROPIC_API_KEY as well.
+    summaries: bool = field(default_factory=lambda: os.environ.get("SUMMARIES", "") == "1")
     # The owner view refuses every request when this is empty.
     owner_token: str = field(default_factory=lambda: os.environ.get("OWNER_TOKEN", ""))
     # Who may edit the agent's rules on the owner view, as name=code pairs separated by commas
@@ -62,6 +65,23 @@ class Settings:
     reports_github_repo: str = field(
         default_factory=lambda: os.environ.get("REPORTS_GITHUB_REPO", "")
     )
+    # Call recordings (story O-6). LiveKit uploads each call's audio to this S3-compatible bucket
+    # (it can't write to our disk); the jobs loop copies it to recordings_dir and deletes it from the
+    # bucket. No bucket turns recording off. The voice worker reads the same variables.
+    recording_bucket: str = field(default_factory=lambda: os.environ.get("RECORDING_S3_BUCKET", ""))
+    recording_endpoint: str = field(
+        default_factory=lambda: os.environ.get("RECORDING_S3_ENDPOINT", "")
+    )
+    recording_region: str = field(default_factory=lambda: os.environ.get("RECORDING_S3_REGION", ""))
+    recording_access_key: str = field(
+        default_factory=lambda: os.environ.get("RECORDING_S3_ACCESS_KEY", "")
+    )
+    recording_secret: str = field(default_factory=lambda: os.environ.get("RECORDING_S3_SECRET", ""))
+    recordings_dir: Path | None = field(
+        default_factory=lambda: (
+            Path(os.environ["RECORDINGS_DIR"]) if os.environ.get("RECORDINGS_DIR") else None
+        )
+    )
     # Development only: serve every request as if it were this moment (ISO, with offset). The
     # owner demo sets it to the evening of the seeded day so "now" sits on the board.
     fixed_now: str = field(default_factory=lambda: os.environ.get("FIXED_NOW", ""))
@@ -82,6 +102,10 @@ class Settings:
         if self.log_path is None:
             self.log_path = self.db_path.with_suffix(".log")
         self.log_path = Path(self.log_path)
+        # Beside the database by default: data/recordings on the server.
+        if self.recordings_dir is None:
+            self.recordings_dir = self.db_path.parent / "recordings"
+        self.recordings_dir = Path(self.recordings_dir)
 
 
 # Per-call limits. Hitting one flags a person instead of continuing (docs/architecture.md).

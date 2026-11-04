@@ -27,22 +27,37 @@ from . import (
     logs,
     outbound,
     owner_view,
+    recordings,
     records,
     reports,
     rules,
+    summary,
     trace,
+    transfer,
     weather,
 )
 from . import side_model as side_models
 from .envelope import Refused, Result
 from .fsm import FsmUnavailable, SlotCache, make_adapter
 from .fsm.base import fsm_timings
+from .guidance_check import Check
+from .guidance_check import check as check_guidance
 from .mail import Mailer
 from .priority import SideModel
-from .schemas import EndIn, HeartbeatIn, OutboundClaimIn, OutboundDoneIn, StartIn, TurnIn
+from .schemas import (
+    EndIn,
+    HeartbeatIn,
+    OutboundClaimIn,
+    OutboundDoneIn,
+    RecordingIn,
+    StartIn,
+    TransferDoneIn,
+    TransferIn,
+    TurnIn,
+)
 from .settings import WORKER_STALE_SECONDS, Settings
 from .tenant import Tenants
-from .tools import TOOLS, Ctx
+from .tools import TOOLS, Ctx, needs_on_call_tonight
 
 log = logging.getLogger("app")
 
@@ -62,6 +77,8 @@ class Services:
         fsm_clients: dict[str, httpx.Client] | None = None,
         side_model: SideModel | None = None,
         weather_clients: dict[str, httpx.Client] | None = None,
+        summary_model: summary.SummaryModel | None = None,
+        guidance_check: Check | None = None,
     ):
         self.settings = settings
         if clock is None and settings.fixed_now:
@@ -79,11 +96,16 @@ class Services:
         self.fsm = {t.slug: make_adapter(t, settings, clients.get(t.slug)) for t in self.tenants}
         self.caches = {t.slug: SlotCache(settings.slot_cache_seconds) for t in self.tenants}
         self.side_model = side_model or side_models.from_settings(settings.side_model)
+        self.summary_model = summary_model or (
+            summary.model_from_config() if settings.summaries else None
+        )
+        self.guidance_check = guidance_check or check_guidance
         self.report_poster = reports.github_poster(settings)
         self.weather = weather_clients or (
             {t.slug: weather.client(t.weather) for t in self.tenants} if settings.weather else {}
         )
         self.mailer = Mailer(settings)
+        self.bucket = recordings.bucket(settings)
         self._locks: dict[str, threading.Lock] = {}
         self._locks_guard = threading.Lock()
 
@@ -235,8 +257,11 @@ def create_app(
     clock: Callable[[], datetime] | None = None,
     fsm_clients: dict[str, httpx.Client] | None = None,
     side_model: SideModel | None = None,
+    guidance_check: Check | None = None,
 ) -> FastAPI:
-    services = Services(settings or Settings(), clock, fsm_clients, side_model)
+    services = Services(
+        settings or Settings(), clock, fsm_clients, side_model, guidance_check=guidance_check
+    )
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
@@ -301,7 +326,14 @@ def create_app(
     def call_start(request: Request, body: StartIn):
         def fn(conn, key):
             tenant = services.tenants.for_number(body.dialed_number)
-            return lifecycle.start(conn, tenant, services.fsm[tenant.slug], body, services.clock())
+            return lifecycle.start(
+                conn,
+                tenant,
+                services.fsm[tenant.slug],
+                body,
+                services.clock(),
+                record=services.bucket is not None,
+            )
 
         return run(services, request, "calls.start", body.call_id, body.model_dump(), fn)
 
@@ -317,6 +349,38 @@ def create_app(
             return result
 
         return run(services, request, "turn", call_id, body.model_dump(), fn)
+
+    @app.post("/calls/{call_id}/transfer")
+    def call_transfer(request: Request, call_id: str, body: TransferIn):
+        def fn(conn, key):
+            ctx = _ctx(services, conn, call_id, key)
+            return transfer.plan(
+                conn,
+                ctx.tenant,
+                ctx.call,
+                body.flag_id,
+                body.callback_id,
+                ctx.now,
+                needs_on_call_tonight(ctx),
+            )
+
+        return run(services, request, "calls.transfer", call_id, body.model_dump(), fn)
+
+    @app.post("/calls/{call_id}/transfer/{transfer_id}/done")
+    def call_transfer_done(request: Request, call_id: str, transfer_id: int, body: TransferDoneIn):
+        def fn(conn, key):
+            ctx = _ctx(services, conn, call_id, key)
+            return transfer.finish(conn, ctx.tenant, ctx.call, transfer_id, body.outcome, ctx.now)
+
+        return run(services, request, "calls.transfer_done", call_id, body.model_dump(), fn)
+
+    @app.post("/calls/{call_id}/recording")
+    def call_recording(request: Request, call_id: str, body: RecordingIn):
+        def fn(conn, key):
+            ctx = _ctx(services, conn, call_id, key)
+            return recordings.started(conn, ctx.call, body.egress_id, body.object_key, ctx.now)
+
+        return run(services, request, "calls.recording", call_id, body.model_dump(), fn)
 
     @app.post("/calls/{call_id}/end")
     def call_end(request: Request, call_id: str, body: EndIn):

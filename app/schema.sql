@@ -16,6 +16,8 @@ CREATE TABLE IF NOT EXISTS calls (
     linked_call_id TEXT,
     outcome TEXT,
     commercial INTEGER NOT NULL DEFAULT 0,
+    -- The technician's summary (app/summary.py): none, pending (the call ended), written (not in
+    -- the FSM yet), done, failed, or skipped (nothing was booked).
     summary_status TEXT NOT NULL DEFAULT 'none',
     turn_seq INTEGER NOT NULL DEFAULT 0,
     -- Safety: none, checking (the check question was asked), signal (lines not said yet),
@@ -32,6 +34,8 @@ CREATE TABLE IF NOT EXISTS calls (
     readback_confirmed_at TEXT
 );
 CREATE INDEX IF NOT EXISTS ix_calls_caller ON calls (caller_key, started_at);
+-- The summary job reads waiting calls oldest first; this keeps that read to the waiting rows.
+CREATE INDEX IF NOT EXISTS ix_calls_summary ON calls (tenant, summary_status, ended_at, id);
 
 -- Customers matched on a call. Reads and writes are scoped to these.
 CREATE TABLE IF NOT EXISTS call_customers (
@@ -152,6 +156,21 @@ CREATE TABLE IF NOT EXISTS notes (
     fsm_note_id INTEGER,
     text TEXT NOT NULL,
     created_at TEXT NOT NULL
+);
+
+-- The technician's summary for a booked call, written after the call (spec S-16). lines_json holds
+-- [label, text] pairs as pinned to the job; dropped_json the lines the server refused, and why.
+CREATE TABLE IF NOT EXISTS summaries (
+    call_id TEXT PRIMARY KEY REFERENCES calls (id) ON DELETE CASCADE,
+    booking_id INTEGER REFERENCES bookings (id) ON DELETE CASCADE,
+    lines_json TEXT,
+    dropped_json TEXT NOT NULL DEFAULT '[]',
+    model_attempts INTEGER NOT NULL DEFAULT 0,
+    post_attempts INTEGER NOT NULL DEFAULT 0,
+    last_error TEXT,
+    cost_usd REAL,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
 );
 
 -- One row per request, beside the JSON log line, so the owner view and traces can query them.
@@ -342,4 +361,35 @@ CREATE TABLE IF NOT EXISTS call_stages (
     -- 1 once the owner's guidance for this stage went to the model as a [server] note.
     noted INTEGER NOT NULL DEFAULT 0,
     PRIMARY KEY (call_id, stage)
+);
+
+-- Warm transfers to a person (C-11), at most one per call. The flag and callback the transfer
+-- stands in for are stored before anyone is dialed, so a transfer nobody answers still ends in a
+-- named callback; a connected one marks them done.
+CREATE TABLE IF NOT EXISTS transfers (
+    id INTEGER PRIMARY KEY,
+    call_id TEXT NOT NULL UNIQUE REFERENCES calls (id) ON DELETE CASCADE,
+    flag_id INTEGER NOT NULL REFERENCES flags (id) ON DELETE CASCADE,
+    callback_id INTEGER REFERENCES callbacks (id) ON DELETE SET NULL,
+    role TEXT NOT NULL,
+    -- What the person answering hears before they take the call, kept for the record.
+    summary TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'dialing'
+        CHECK (status IN ('dialing', 'connected', 'no_answer', 'not_accepted', 'failed')),
+    started_at TEXT NOT NULL,
+    finished_at TEXT
+);
+
+-- Call audio (story O-6). The voice layer records the call to a bucket; the jobs loop copies the
+-- file to the server's data folder and removes it from the bucket. Deleted with the transcript.
+CREATE TABLE IF NOT EXISTS recordings (
+    call_id TEXT PRIMARY KEY REFERENCES calls (id) ON DELETE CASCADE,
+    object_key TEXT NOT NULL,
+    egress_id TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'recording'
+        CHECK (status IN ('recording', 'stored', 'missing', 'deleted')),
+    path TEXT,
+    bytes INTEGER,
+    started_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
 );

@@ -57,7 +57,8 @@ GATES = (
     ("whole_call", "Listens for a safety emergency on every caller line", (), ("S-17",)),
     ("whole_call", "Speaks the signed-off safety lines itself, never the agent's own", (),
      ("S-17",)),
-    ("whole_call", "Marks a caller who describes a business as commercial", (), ("S-05",)),
+    ("whole_call", "Marks a caller who describes a business, such as a store, as commercial", (),
+     ("S-05",)),
     ("whole_call", "Stops calling anyone who asks not to be called", (), ()),
     ("whole_call", "Sets priority from what the caller says, and only ever raises it", (), ()),
     ("whole_call", "One booking, one change and one cancel per call, then a person takes over",
@@ -66,6 +67,9 @@ GATES = (
      ("S-39",)),
     ("whole_call", "Can't place a call to 911 or anyone outside the company's callbacks", (),
      ("S-24",)),
+    ("whole_call", "Puts a caller through to a person only when the server says so",
+     (), ()),
+    ("whole_call", "Never puts a safety call through to a person", (), ()),
     ("whole_call", "Every callback has a named time inside calling hours",
      ("invalid_callback_time",), ()),
     ("booking", "Holds any booking until the safety lines are said and a person is flagged",
@@ -74,9 +78,13 @@ GATES = (
      ("gate_read_back", "invalid_phone"), ("S-26",)),
     ("booking", "Won't book outside the service area", ("out_of_area",), ("S-28",)),
     ("booking", "Won't book a commercial customer", ("customer_type",), ("S-05",)),
+    ("booking", "When who can approve isn't settled, a booking gets a call before dispatch", (),
+     ("S-07a",)),
     ("booking", "Books only openings ServiceTitan offered, and never the same one twice",
      ("invalid_slot", "slot_taken"), ("S-27",)),
     ("booking", "Changes only the caller's own visits", ("invalid_state", "open_job"), ()),
+    ("booking", "Asks whose account a new address goes on before booking it",
+     ("account_choice",), ("S-31a",)),
     ("booking", "After hours, books a tonight visit only once the on-call technician is alerted",
      ("on_call_first",), ()),
     ("booking", "When ServiceTitan is down, keeps the booking and sets a callback",
@@ -103,11 +111,17 @@ LINE_STAGES = {
     "earlier_slot_offer": ("opening", "Earlier opening offer"),
     "repeated_drops": ("opening", "After dropped calls"),
     "commercial": ("whole_call", "Commercial decline"),
+    "approval_callback": ("booking", "Approval call before dispatch"),
+    "approval_callback_late": ("booking", "Approval call, job held"),
     "do_not_call": ("whole_call", "Do not call"),
     "do_not_call_with_callback": ("whole_call", "Do not call, callback off"),
     "flag_stored": ("whole_call", "Team will call"),
     "flag_stored_urgent": ("whole_call", "Team will call, urgent"),
     "flag_stored_no_callback": ("whole_call", "Team told"),
+    "transfer_handoff": ("whole_call", "Putting you through"),
+    "transfer_no_answer": ("whole_call", "Nobody picked up"),
+    "transfer_prompt": ("whole_call", "To the person answering"),
+    "transfer_summary": ("whole_call", "Summary once they take it"),
     "lead_stored": ("whole_call", "Lead saved"),
     "callback_by": ("whole_call", "Callback by a time"),
     "callback_after": ("whole_call", "Callback after a time"),
@@ -205,6 +219,12 @@ def _wording(tenant: Tenant, edits: dict[str, str]) -> list[Rule]:
         label = safety["kinds"][kind]["label"].capitalize()
         found.append(Rule(f"safety.{kind}.question", "whole_call", "wording",
                           f"{label}: check question", cfg["question"], why=why))
+        if cfg.get("confirm_question"):
+            found.append(Rule(f"safety.{kind}.confirm_question", "whole_call", "wording",
+                              f"{label}: confirm question", cfg["confirm_question"], why=why))
+    if safety.get("booking_note"):
+        found.append(Rule("safety.booking_note", "booking", "wording", "Visit on a safety call",
+                          _plain(safety["booking_note"], tenant), why=why, spec=("S-18",)))
     found.append(Rule("safety.sign_off", "closing", "wording", "Safety sign-off",
                       _plain(safety["sign_off"], tenant), why=why, spec=("S-19",)))
     return found
@@ -239,9 +259,10 @@ def _settings(tenant: Tenant) -> list[Rule]:
     found = [
         Rule("setting.hours", "before_hello", "setting", "Office hours", _hours(tenant), why=why),
         Rule("setting.repeat_callers", "before_hello", "setting", "Repeat callers",
-             f"A call back within {tenant.repeat['link_within_minutes']} minutes picks up the last "
-             f"one; after {tenant.repeat['drops_before_callback_offer']} dropped calls the agent "
-             "offers a callback", why=why),
+             f"A call back within {tenant.repeat['link_within_minutes']} minutes, or later the "
+             "same day after a dropped call, picks up the last one and checks it's the same "
+             f"person; after {tenant.repeat['drops_before_callback_offer']} dropped calls the "
+             "agent offers a callback", why=why),
     ]
     labels = {code: j["name"] for code, j in tenant.job_types.items()}
     for job, brackets in tenant.priority["brackets"].items():
@@ -271,8 +292,18 @@ def _settings(tenant: Tenant) -> list[Rule]:
         found.append(Rule(f"setting.safety.{kind}.vague", "whole_call", "setting",
                           f"Words that ask about {label}", _few(cfg["phrases"]),
                           why=rules.LOCKED["safety"]))
+        if cfg.get("confirm_phrases"):
+            found.append(Rule(f"setting.safety.{kind}.confirm", "whole_call", "setting",
+                              f"Words that ask the lighter {label} question",
+                              _few(cfg["confirm_phrases"]), why=rules.LOCKED["safety"]))
     found.append(Rule("setting.commercial", "whole_call", "setting", "Business words",
                       _few(tenant.commercial["owned"] + tenant.commercial["phrases"]), why=why))
+    approval = tenant.approval
+    if approval["unclear_phrases"]:
+        found.append(Rule("setting.approval", "booking", "setting", "Approval not settled",
+                          f"When the caller says {_few(approval['unclear_phrases'])}, a booking "
+                          f"gets a call {approval['callback_hours_before_window']} hours before the "
+                          "window", why=why))
     fees = [k.replace("_", " ") for k, v in tenant.fees.items() if v is not None]
     found.append(Rule("setting.fees", "whole_call", "setting", "Fees the agent may say",
                       _few(fees) if fees else "None, so the agent never quotes a fee", why=why))
@@ -308,16 +339,24 @@ def _settings(tenant: Tenant) -> list[Rule]:
              f"{_few(agent['on_call_alerts']['priorities'])} flags after hours are emailed",
              why=why),
         Rule("setting.retention", "after_call", "setting", "Records kept",
-             f"Transcripts {tenant.retention['transcript_days']} days, calls "
+             f"Transcripts{' and recordings' if tenant.retention.get('record_calls') else ''} "
+             f"{tenant.retention['transcript_days']} days, calls "
              f"{tenant.retention['call_record_days']} days", why=why),
     ]
+    if tenant.transfer:
+        cfg = tenant.transfer
+        found.append(Rule("setting.transfer", "whole_call", "setting", "Putting a caller through",
+                          "The office in hours when the caller asks for a person; the on-call "
+                          "technician after hours on an urgent call. Rings "
+                          f"{cfg['ring_seconds']} s, then someone calls back within "
+                          f"{cfg['fallback_callback_minutes']} minutes", why=why))
     return found
 
 
 # The agent.yaml sections each part above reads, for the completeness test.
 SHOWN = {
-    "safety", "commercial", "priority", "after_hours", "callbacks", "on_call_alerts",
-    "repeat_callers", "retention", "lines", "voice",
+    "safety", "commercial", "approval", "priority", "after_hours", "callbacks", "on_call_alerts",
+    "repeat_callers", "retention", "lines", "voice", "transfer",
 }
 
 

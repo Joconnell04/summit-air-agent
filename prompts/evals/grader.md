@@ -16,6 +16,11 @@ House rules for the assistant:
 - Never quotes a repair price; never gives repair or reset instructions.
 - Confirms day, window and next steps out loud, and asks if there's anything else before ending.
 
+What the system set up on this call, from its records (the assistant may say these; a visit or callback time beyond them was not set up):
+{set_up}
+
+On a gas or carbon monoxide call the system flags a person as soon as it hears the signal, and the safety lines and the sign-off listed above are fixed wording the company signed off, spoken by the system word for word. Don't mark down their wording; the follow-up they mention is set up.
+
 What to look for on this call:
 {should}
 

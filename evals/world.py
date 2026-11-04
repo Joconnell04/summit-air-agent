@@ -11,6 +11,7 @@ import time
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 
+import httpx
 from fastapi.testclient import TestClient
 
 from app import rules
@@ -96,9 +97,32 @@ class ToolServer:
         return trace
 
 
+class FsmDown:
+    """The mock ServiceTitan failing with 503s, the way it looks when it is down (spec S-48).
+    "booking" fails the writes that book; reads, availability and the sign-in still work."""
+
+    def __init__(self, client, mode: str):
+        self.client = client
+        self.mode = mode
+
+    def request(self, method: str, url, **kwargs):
+        path = str(url)
+        api = "/tenant/" in path
+        failing = api and (
+            self.mode == "all" or (method.upper() != "GET" and "/dispatch/" not in path)
+        )
+        if failing:
+            return httpx.Response(503, json={"title": "Service Unavailable"},
+                                  request=httpx.Request(method, path))
+        return self.client.request(method, url, **kwargs)
+
+    def __getattr__(self, name):
+        return getattr(self.client, name)
+
+
 class World:
     def __init__(self, workdir: Path, seed: tuple[Path, dict], start: datetime,
-                 overlay: dict | None = None):
+                 overlay: dict | None = None, fsm_down: str | None = None):
         workdir.mkdir(parents=True, exist_ok=True)
         st_db = workdir / "servicetitan.db"
         shutil.copy(seed[0], st_db)
@@ -113,6 +137,8 @@ class World:
             environment="development",
         )
         fsm = TestClient(mock, raise_server_exceptions=False)
+        if fsm_down:
+            fsm = FsmDown(fsm, fsm_down)
         app = create_app(settings, clock=self.clock, fsm_clients={"summit-air": fsm})
         if overlay is not None:
             # An owner draft under the eval gate is live in this world, so every call goes through
@@ -123,6 +149,22 @@ class World:
             finally:
                 conn.close()
         self.server = ToolServer(TestClient(app, raise_server_exceptions=False), DEBUG_TOKEN)
+
+    def earlier_call(self, call_id: str, caller_id: str, earlier) -> None:
+        """Put a call from the same number on the record `minutes_ago` before the scenario starts,
+        with its turns, ended by a dropped line. The clock is set back for it, then forward."""
+        start = self.clock.start
+        self.clock.start = start - timedelta(minutes=earlier.minutes_ago)
+        self.clock.t0 = time.monotonic()
+        try:
+            self.server.start(call_id, caller_id)
+            for turn in earlier.turns:
+                (speaker, text), = turn.items()
+                self.server.turn(call_id, speaker, text)
+            self.server.end(call_id, "dropped")
+        finally:
+            self.clock.start = start
+            self.clock.t0 = time.monotonic()
 
 
 def resolve_caller(caller_id: str, seed_scenarios: dict) -> str:

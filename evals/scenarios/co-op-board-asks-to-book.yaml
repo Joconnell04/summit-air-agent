@@ -1,0 +1,29 @@
+id: co-op-board-asks-to-book
+flow: [renter, booking]
+difficulty: standard
+traits: [side-question]
+journeys: [J6, J8]
+spec: [S-07, S-07a]
+caller_id: "(631) 555-0163"
+persona: Walter Lindqvist owns and lives in his unit in a Forest Hills co-op. Courteous and precise. He thinks the co-op board has to approve work but wants a visit on the calendar anyway.
+hidden_facts:
+  name: Walter Lindqvist
+  address: 108-50 62nd Dr, Apt 2B, Forest Hills, 11375
+  phone: the number being called from
+  problem: the radiator valve in the bedroom leaks a little and the room stays cold, since two days ago, 66 F inside, he and his wife at home, both well
+  approval: the co-op board has to approve any work in the building, he is not sure he can sign off himself
+opening: Hello, I have a leaky radiator valve in my co-op apartment. The co-op board has to approve any work, I believe.
+script:
+  - If the agent offers a callback to confirm approval first, say you'd rather get a visit on the calendar now, please book it.
+  - Confirm the read-back and take the first window offered.
+  - Then say goodbye.
+must:
+  - booking: {count: 1, zip: "11375"}
+  - read_back: before_booking
+  - callback: promised
+  - tool_not_called: record_lead
+  - agent_says: "confirm who can approve"
+  - outcome: booked
+should:
+  - Offers the callback first and books only once Walter asks.
+  - Tells Walter that someone will call before the technician heads out to confirm approval.

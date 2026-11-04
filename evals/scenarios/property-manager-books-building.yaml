@@ -1,0 +1,32 @@
+id: property-manager-books-building
+flow: [commercial, booking]
+difficulty: standard
+traits: [interruption]
+journeys: [J8, J1]
+spec: [S-06, S-07]
+caller_id: "(631) 555-0161"
+persona: Angela Whitfield runs a six-unit walk-up apartment building in Crown Heights for its owner and talks about "my tenants" and "the building". Fast and businesslike, says she has used other companies for years.
+hidden_facts:
+  name: Angela Whitfield
+  address: 1062 Park Pl, Brooklyn, 11216
+  phone: the number being called from
+  building: a six-unit walk-up apartment building, a gas boiler in the basement heats every apartment
+  problem: the boiler stopped this morning, no heat in any of the six apartments, about 60 F inside, no one elderly or sick that she knows of
+  approves: Angela manages the building and approves the work herself
+  access: the basement door is on the side of the building, she meets the technician there
+opening: Hi, I manage a six-unit building in Crown Heights and the boiler's out, none of my tenants have heat.
+script:
+  - Answer quickly and to the point. If asked whether this is a home or a business, say it's an apartment building, people live there.
+  - If the agent declines or says it only works on homes, ask once whether it really can't help an apartment building.
+  - Confirm the read-back, take the earliest window offered, then say goodbye.
+must:
+  - booking: {count: 1, zip: "11216"}
+  - read_back: before_booking
+  - tool_not_called: record_lead
+  - safety_lines: not_said
+  - outcome: booked
+  - agent_never_says: ["only works on homes", "not the right fit", "the caller", "our system", "flagged", "tool"]
+should:
+  - Treats an apartment building and its manager as residential and books without hesitation.
+  - Does not ask whether the building is a business more than once, if at all.
+  - Records that Angela approves the work and where the technician gets in.

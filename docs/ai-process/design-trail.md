@@ -74,3 +74,18 @@ How the design was reached, in order, so a reader can follow each choice back to
 | Co-authoring rounds | Three rounds: failures, then seeds with a hold-out, then judge labels with the floor | DECISIONS.md 035 |
 | Model matrix | Haiku stays live: higher pass rate, a third of Sonnet's delay, a fraction of the cost | DECISIONS.md 036, #68 |
 | Side model | OpenAI Decisions reads "someone at risk at home" on each line; it can only raise priority | DECISIONS.md 037, #68 |
+| Audio bake-off round 1 | Our stack stays; Retell, Gemini Live and OpenAI Realtime out on the safety lines or speed; ElevenLabs needs a read-back fix; our end-of-turn wait gets tuned | DECISIONS.md 038, #70 |
+| AI check for owner guidance | A model refuses a note only when it contradicts a locked rule, with the reason; no word list | DECISIONS.md 039, #71 |
+| Technician summary | A pinned job note drafted by a model and checked line by line by the server | DECISIONS.md 040, #73 |
+| Eval floor | 90%, from a 94% reference run once must-pass scenarios passed 3 of 3 | DECISIONS.md 041, #72 |
+| Must-pass and the grader | Must-pass counts code checks; the grader sees what the server set up | DECISIONS.md 042, #72 |
+| Eval hash scope | Only what the agent hears on a call | DECISIONS.md 043, #72 |
+| Residential by equipment | Apartment buildings and their managers are residential; businesses are commercial | DECISIONS.md 044, #74 |
+| Approval callback | Unclear authority gets a callback; a requested booking gets a call before dispatch | DECISIONS.md 045, #74 |
+| Booking on a safety call | Lines and flag first, then one offer of a visit for after it's shut off | DECISIONS.md 046, #74 |
+| Burning dust | One lighter check question asked the negative way | DECISIONS.md 047, #74 |
+| Second address | Its own account by default, the caller as contact | DECISIONS.md 048, #75 |
+| Same-day calls | Linked only when the last call dropped; the caller confirmed by name | DECISIONS.md 049, #75 |
+| Times and return visits | A bare hour is daytime; a same-problem job within 30 days is flagged | DECISIONS.md 050, #75 |
+| Warm transfer | Server-decided, a key press joins the person, a stored callback if nobody answers; the demo rings Jackson's phone | DECISIONS.md 051, #69 |
+| Call recordings | Bucket to server copy, 30 days, played on the call page | DECISIONS.md 052, #69 |

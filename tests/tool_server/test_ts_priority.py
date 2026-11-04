@@ -229,3 +229,33 @@ def test_an_urgent_caller_hears_it_once_and_a_routine_caller_never_does(agent):
 def test_older_adult_starts_at_60_in_line_with_nyc_health(text, urgent):
     result = decide("no_heat", text, None)
     assert (result.level == "Urgent") is urgent
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "we're both healthy no babies or older people here and nobody on any medical equipment",
+        "We don't have a baby.",
+        "There's no one elderly here, nobody on oxygen.",
+        "two healthy adults no babies no older people nothing like medical equipment",
+    ],
+)
+def test_a_person_said_not_to_be_there_raises_nothing(text):
+    """Eval round 2, seed 9: "nobody on any medical equipment" made a mild call urgent."""
+    result = decide("no_heat", text, 58)
+    assert [r for r in result.rules if not r.startswith("bracket:")] == []
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "no heat and grandma is staying with us",
+        "No, my grandmother lives with us.",
+        "no my grandmother lives with us",
+        "my dad's oxygen machine is not working",
+        "not sure, but there's a baby here",
+    ],
+)
+def test_a_negation_elsewhere_in_the_line_never_drops_a_raise(text):
+    """A missed raise is worse than an extra one, so the look back stops at a new thought."""
+    assert [r for r in decide("no_heat", text, 58).rules if not r.startswith("bracket:")]

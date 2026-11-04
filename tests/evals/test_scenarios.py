@@ -1,12 +1,14 @@
 import re
 import sqlite3
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 import pytest
 
 from app.text import phone_key
 from evals.scenario import ROOT, Scenario, ScenarioError, load, load_all, must_pass_spec_ids
 from evals.suites import select
-from evals.world import SEED_START, TENANT_DIR, resolve_caller, seeded_db
+from evals.world import SEED_START, TENANT_DIR, World, resolve_caller, seeded_db
 from servicetitan_mock.seed import build_world
 
 SCENARIOS = load_all()
@@ -69,6 +71,28 @@ def test_seed_references_resolve(tmp_path):
     _, scenarios = seeded_db(tmp_path)
     for s in SCENARIOS:
         assert len(phone_key(resolve_caller(s.caller_id, scenarios))) == 10, s.id
+
+
+def test_two_people_mind_change_asks_for_windows_the_seed_has_open(tmp_path):
+    # The couple's call is High priority (62 F inside). Wednesday has no non-urgent window in the
+    # seed, and a caller who insists on a closed day can only end in a flag, never the booking the
+    # scenario checks for.
+    scenario = next(s for s in SCENARIOS if s.id == "two-people-mind-change")
+    world = World(tmp_path / "w", seeded_db(tmp_path / "seed"),
+                  datetime(2026, 11, 2, 9, 0, tzinfo=ZoneInfo("America/New_York")))
+    world.server.start("c1", scenario.caller_id)
+    facts = {"issue": "furnace runs, house won't warm", "who_home": "Carla, healthy",
+             "inside_temp_f": 62.0, "temp_falling_fast": False}
+
+    def windows(day: str) -> list[str]:
+        found = world.server.tool("find_slots", "c1", {"job_type": "no_heat", "day": day,
+                                                       "facts": facts})
+        assert found["data"]["priority"]["level"] == "High"
+        return [w["window"] for w in found["data"]["windows"]]
+
+    assert "Tuesday morning" in scenario.hidden_facts["final_choice"]
+    assert "morning" in windows("2026-11-03")
+    assert "afternoon" in windows("2026-11-05")
 
 
 def test_no_em_dashes_in_scenarios():
