@@ -123,6 +123,24 @@ error: {{ item.tech.error }}{% endif %}</div>
       </section>
       {% endif %}
 
+      {% if p.tech_summary %}
+      {% set s = p.tech_summary %}
+      <section class="panel compact">
+        <div class="panel-head">
+          <h2>For the technician</h2>
+          <span class="end source">{% if s.status == "done" %}Pinned to the job notes{% elif s.status == "written" %}Sending to ServiceTitan{% elif s.status == "failed" and s.lines %}Not sent{% endif %}</span>
+        </div>
+        <div class="panel-body">
+          {% if s.lines %}
+          <dl class="kv">
+            {% for label, text in s.lines %}<dt>{{ label }}</dt><dd>{{ text }}</dd>{% endfor %}
+          </dl>
+          {% elif s.status == "failed" %}<p class="muted">Not written. The job keeps the notes from the call.</p>
+          {% else %}<p class="muted">Written shortly after the call.</p>{% endif %}
+        </div>
+      </section>
+      {% endif %}
+
       {% if p.name or p.address %}
       <section class="panel compact">
         <div class="panel-head"><h2>Customer</h2></div>
