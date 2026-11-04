@@ -139,15 +139,12 @@ ANGRY = (
     "screw this",
     "this is a joke",
 )
-# Swearing counts too, but not when it is about the equipment: "the damn furnace is dead again" is
-# a broken furnace, not anger at the call.
+# Swearing counts too, but not when it is about the equipment ("the damn thing is dead again"):
+# swearing at a broken system isn't anger at the call. The trade names its own equipment words
+# (trades/<trade>/agent.yaml `equipment_words`).
 SWEARING = ("damn", "dammit", "shit", "fuck", "fucking", "freaking", "crap", "crappy", "garbage",
             "useless", "stupid")
-EQUIPMENT = {
-    "furnace", "boiler", "heat", "heater", "heating", "ac", "air", "unit", "system", "thing",
-    "radiator", "radiators", "thermostat", "pipe", "pipes", "vent", "vents", "filter", "fan",
-    "compressor", "boilers", "furnaces",
-}
+EQUIPMENT = {"thing", "system", "unit"}
 ROLE_NAMES = {"office": "office", "on_call": "on-call technician"}
 OUTCOMES = ("connected", "no_answer", "not_accepted", "failed")
 HANDOFF_OUTCOMES = ("handed_off", "failed")
@@ -196,18 +193,18 @@ def asks_for_person(text: str) -> bool:
     return bool(_asking_sentences(text))
 
 
-def _angry(line: str) -> bool:
+def _angry(line: str, equipment: set[str]) -> bool:
     said = words(line)
     if any(has_phrase(said, phrase) for phrase in ANGRY):
         return True
     heard = said.split()
     for i, word in enumerate(heard):
-        if word in SWEARING and not EQUIPMENT & set(heard[i + 1 : i + 3]):
+        if word in SWEARING and not equipment & set(heard[i + 1 : i + 3]):
             return True
     return False
 
 
-def demands_person(text: str, earlier: list[str]) -> bool:
+def demands_person(text: str, earlier: list[str], equipment: frozenset[str] = frozenset()) -> bool:
     """This caller line asks for a person and means it: insistently ("right now", "I said"),
     angrily (in this line or the one just before it), or again after asking on an earlier line of
     this call. A calm "can I talk to someone now?" is a request, not a demand."""
@@ -216,7 +213,8 @@ def demands_person(text: str, earlier: list[str]) -> bool:
     said = words(text)
     if any(has_phrase(said, phrase) for phrase in INSISTENT):
         return True
-    if any(_angry(line) for line in [*earlier[-1:], text]):
+    equipment = EQUIPMENT | set(equipment)
+    if any(_angry(line, equipment) for line in [*earlier[-1:], text]):
         return True
     return any(asks_for_person(line) for line in earlier)
 
@@ -295,7 +293,7 @@ def handoff_role(
             (call["id"], call["turn_seq"]),
         )
     ]
-    if not demands_person(text, earlier):
+    if not demands_person(text, earlier, tenant.equipment_words):
         return None
     return "on_call" if call["after_hours"] else "office"
 
