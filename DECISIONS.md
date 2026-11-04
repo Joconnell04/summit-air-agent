@@ -12,6 +12,73 @@ Discussion: docs/ai-process/transcripts/... or docs/explorations/...
 Issue: #N
 -->
 
+## 065. Cartesia's managed voice agents stay out
+
+Decided: we don't build on Cartesia's hosted agents, and they don't join the bake-off. Cartesia stays as the voice only.
+Why: the hosted agent runs the whole call on Cartesia, so our server couldn't force the signed-off safety lines word for word or decide hang-ups and transfers; its end-call tool is model-driven, and a flag the model can set is not a gate. It offers Cartesia's own model list rather than our brain and tool server, and its per-agent prompt and settings are no substitute for the trade layer each company folder builds on. Cartesia is also ending hosting for its code-first Line agents on 2026-12-01 (SOURCE: Cartesia's Line migration page, via docs/explorations/013-more-bakeoff-entrants.md).
+Considered: Cartesia Line agents in code (being retired); Ink-2 speech-to-text inside our own stack, which is a separate question tested on the audio rig.
+Would change if: Cartesia lets a hosted agent call our server before every reply and hang-up and speak our text verbatim.
+Discussion: docs/explorations/013-more-bakeoff-entrants.md
+
+## 064. Admins see everything on the debug bench
+
+Decided: the bench shows calls as recorded, phone numbers, addresses, codes and tool arguments included. Only the replay draft, which is meant to be committed to the eval suite, stays redacted. Environment secrets still show only as set or not set. This replaces the redaction in decision 059.
+Why: Jackson's direction: "the debug bench should be fully privileged to view everything". It's admin only, and debugging a wrong ZIP or a misheard number needs the real value.
+Would change if: the bench is ever shared on screen with real customer calls, in which case a "presenting" mode masks again.
+Discussion: Jackson's notes after the check-ins
+
+## 063. The end-of-turn wait stays at 0.35 s; the digits wait no longer sticks
+
+Decided: the silence wait before the agent replies stays at 0.35 s. A bug is fixed where the longer wait used after asking for a ZIP or phone number stayed on for the rest of the call.
+Why: on the audio rig, 0.25 s (the lowest the turn detector accepts) cut the wait by 39 ms and the caller-heard median didn't move beyond noise, because the turn can't end before Deepgram's final transcript about 0.3 s after speech. The sticky digits wait cost about 0.55 s on every later turn of a booking call (MEASURED, evals/rounds/bakeoff-audio-02.md, $2.07).
+Would change if: real calls show the 1.5 s turn-detector maximum cutting in often, which is the next setting to try after the live calls.
+Discussion: PR #98
+
+## 062. Simulated calls are saved as audio for listening
+
+Decided: every audio-rig call is saved as one full-quality stereo file (caller left, agent right, with each reply's real pause kept) plus a timestamped transcript, in a gitignored local folder and in the private recordings bucket under `sim/`. `make sim` runs a batch on our stack and `make listen` opens a local page with stable short codes (S1, S2, ...), a player and numbered lines that seek the player, so Jackson can pause and dictate "S3, line 7" feedback. A simulated call costs about $0.15 (MEASURED, 11-call batch).
+Why: Jackson can judge how the agent sounds without phoning it each time; the files keep simulated calls for later comparison.
+Would change if: the debug bench hosts the listener, which it is set up to do.
+Discussion: PR #95
+
+## 061. A caller who demands a person is handed off at once
+
+Decided: when a caller insists on a person (an explicit repeated or "right now" request, or anger in the same line as the request; swearing about the equipment doesn't count), the server decides a cold handoff: the agent says "Transferring you to a person now." and the worker transfers the call straight to the office in hours or on-call after hours, with no summary or key press. The flag and a callback are stored first, so a failed or unset transfer gives the caller the stored callback line, never silence. On a gas or carbon monoxide call the fixed safety lines come first; a caller who then demands a person is handed off. This supersedes decision 051's "never on a safety call". Calmer requests keep the warm transfer, and the owner's warm-transfer switch applies to both. The model can't trigger a transfer.
+Why: Jackson asked for it after reading that Revin hands complaints, safety issues and anyone who asks for a person straight to a person; an angry caller held by an AI makes things worse.
+Considered: warm transfer only (adds a delay an angry caller won't wait for); transferring on any mention of a person (fires on "last time I talked to someone").
+Would change if: the office can't answer fast enough, in which case cold handoffs go to the callback queue.
+Discussion: PR #90
+
+## 060. The server speaks fixed lines itself, and a speech filter guards what the model adds
+
+Decided: from eval rounds 3 and 4. The voice layer speaks the read-back, booking, move and cancel confirmations and a queued booking's line straight from the server, word for word, with a short model line before a booking ("Perfect, booking that now"). A speech filter drops what the model adds that the server didn't raise: read-back lead-ins, restatements of a confirmed address, ZIP or phone, tool talk, priority claims on calls the server didn't mark Urgent, unprompted hazard advice, and a second question in one turn. Each turn's server note lists what's already known so nothing is asked twice. After the safety lines a caller hears one shorter repeat at most, then the agent helps; a worry with nothing described gets the check question at most. "After 5" is promised as about 5:30 (ASSUMED). The grader keeps Jackson's wording standards as fail rules (repeated acknowledgments no longer count) but still can't fail a must-pass call alone (042).
+Why: Jackson failed repeated read-backs, re-asking, stacked questions and overdone safety advice in rounds 3 and 4. The model kept doing them despite prompt rules, so the fixes moved into code; speaking server text directly also removes a model request on the slowest turn. The standard suite went from 53% to between 85% and 96% across five single-sample runs on nearly the same code (MEASURED, PR #82).
+Considered: softening the grader instead (the failures were real); prompt-only fixes (tried first; the model kept slipping).
+Would change if: the filter drops something a caller needed to hear, which the debug bench shows per turn.
+Discussion: evals/rounds/03-judge-labels.md, evals/rounds/04-wording-standards.md, PR #82
+
+## 059. A debug bench for engineers on the owner view's server
+
+Decided: `/bench`, on the same server and URL as the owner view and for admins only, shows each call as a node graph (the caller's words, the exact prompt and messages the model got, tool calls and results, the server rules that fired, what the speech filter dropped, what was spoken, with timings and missing ones shown as missing), the live tuning settings with their measurements and sources, eval runs against the floor with their failures, a live view of a call in progress, a rule check per call, search, and replay of a call as a draft eval scenario. Phone numbers keep their last four digits; addresses, codes and anything key-like are hidden, and no full number appears in a URL or a replay file.
+Why: the interview ends with debugging live; a page that shows why the agent did something beats reading `make trace` in a terminal, and it doubles as proof of the server rules.
+Considered: extending the owner view's technical switch (mixes owner and engineer views); a separate service (another moving part).
+Would change if: the bench shows real customer data beyond the demo, in which case redaction is reviewed again.
+Discussion: PR #89
+
+## 058. The server acts only on a ZIP the caller said, and street names aren't businesses
+
+Decided: a ZIP used for the service-area check, the read-back or a booking must have been said by the caller on this call or a linked one, or be on a matched customer's location; otherwise the tool refuses and the agent asks. A business word that's part of a street or place name ("540 Church Ave", "Grand Army Plaza") doesn't make a caller commercial; "it's a church" or "we run a restaurant on Church Ave" still does.
+Why: a test run caught the model inventing ZIP 11226 for "1520 Flatbush Ave" and the server ending the call as out of area; in later runs it guessed again 2 times in 3, and the gate refused each time and the call booked (MEASURED, PR #88). Brooklyn has a Church Avenue, which the round 2 commercial phrases had made a business.
+Would change if: callers often give no ZIP, in which case the server looks it up from the street and house number.
+Discussion: PR #88
+
+## 057. Two calls booking the same slot are tested end to end
+
+Decided: availability comes from the mock ServiceTitan's real capacity (technicians on shift with the right skills, minus booked, minus held for urgent), and a booking writes a job there. A harness mode runs two simulated calls at once against one world, with two evals: two callers for the only open window (exactly one gets it; the other is told plainly it just went and offered another time, never told they're booked) and two callers in one window with two technicians on (both book, on different technicians). The checks read the mock directly: one job per technician-window across the whole mock. For now the pairs run only on our stack.
+Why: Jackson's round 4 ask; in a cold snap callers race for the same opening, and the unit race test didn't show what the caller hears.
+Would change if: a real ServiceTitan sandbox counts capacity differently, in which case the adapter and the checks follow it.
+Discussion: PR #86, evals/rounds/04-wording-standards.md
+
 ## 056. The side model stays on after a with-and-without check
 
 Decided: the side model (decision 037) stays on for live calls. Its first eval check with it on found no false alarms, so no narrower trigger is added.
