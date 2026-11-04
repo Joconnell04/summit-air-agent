@@ -22,21 +22,40 @@ import sqlite3
 from dataclasses import dataclass
 from datetime import datetime
 
-from . import records
 from .db import iso
+from .safety import NEGATORS
 from .text import has_phrase, words
 
 SLOWER, FASTER, NORMAL = -1, 1, 0
+# What Cartesia sonic-3 accepts for `speed` (SOURCE: the LiveKit Cartesia plugin's docs). Every
+# pace the server stores or returns is kept inside it, whatever a tenant or a stored row says.
+SPEED_MIN, SPEED_MAX = 0.6, 2.0
+SPEED_KEYS = ("normal", "slowest", "fastest", "older_adult_speed")
 
-# A caller's own age: "I'm 84", "I am 70 years old", "I'm in my seventies". "I'm 100 percent sure"
-# and "I'm 70 minutes away" are not ages.
+# A caller's own age: "I'm 84", "I am 70 years old", "I'm in my seventies". "I'm 100 percent sure",
+# "I'm 70 yards away" and "I'm 60 to 70 percent sure" are not ages.
 OWN_AGE = re.compile(
     r"\bi(?:['’]?m| am)\s+(\d{2,3})\b"
-    r"(?!\s*(?:percent|%|minutes?|mins?|hours?|feet|ft|degrees?|dollars?|bucks|miles?|blocks?|"
-    r"floors?|stories|pounds?|lbs?))"
+    r"(?!\s*(?:percent|%|minutes?|mins?|hours?|feet|ft|yards?|yds?|degrees?|dollars?|bucks|miles?|"
+    r"blocks?|floors?|stories|pounds?|lbs?|to\s+\d|or\s+\d|-\s*\d))"
 )
 OWN_DECADE = re.compile(r"\bi(?:['’]?m| am) in my (?:(\d)0s|(seventies|eighties|nineties))\b")
 DECADES = {"seventies": 70, "eighties": 80, "nineties": 90}
+# How far back a negator still applies to a request ("you don't really need to speak slower"); a
+# word that starts a new thought ends the look back.
+NEGATION_REACH = 4
+CLAUSE_BREAKS = {"and", "but", "so", "because", "though", "also", "just", "well", "okay", "ok"}
+
+
+def clamp(speed: float) -> float:
+    return round(min(SPEED_MAX, max(SPEED_MIN, float(speed))), 2)
+
+
+def clamped_config(cfg: dict | None) -> dict | None:
+    """The tenant's pace block with every speed inside what the voice accepts (read at load)."""
+    if cfg is None:
+        return None
+    return {**cfg, **{k: clamp(cfg[k]) for k in SPEED_KEYS if k in cfg}}
 
 
 @dataclass
@@ -58,8 +77,83 @@ def own_age(text: str) -> int | None:
     return max(ages) if ages else None
 
 
-def _any(text_words: str, phrases: list[str]) -> bool:
-    return any(has_phrase(text_words, p) for p in phrases)
+def _matches(text_words: str, phrase: str) -> list[int]:
+    """Token positions where the phrase starts."""
+    tokens, target = text_words.split(), words(phrase).split()
+    return [
+        i for i in range(len(tokens) - len(target) + 1) if tokens[i : i + len(target)] == target
+    ]
+
+
+def _negated(tokens: list[str], at: int) -> bool:
+    before = []
+    for token in reversed(tokens[max(0, at - NEGATION_REACH) : at]):
+        if token in CLAUSE_BREAKS:
+            break
+        before.insert(0, token)
+    return any(has_phrase(" " + " ".join(before) + " ", n) for n in NEGATORS)
+
+
+def _said(text_words: str, phrases: list[str]) -> bool:
+    """One of the phrases occurs at least once without a negator just before it."""
+    tokens = text_words.split()
+    return any(not _negated(tokens, i) for p in phrases for i in _matches(text_words, p))
+
+
+def _imperative(text_words: str, phrase: str, cfg: dict) -> bool:
+    """"Slow down" or "speed up" said to the agent, with no object after it: "can you slow down a
+    little" counts, "the motor will slow down" and "speed up the install" don't."""
+    tokens = text_words.split()
+    size = len(phrase.split())
+    for i in _matches(text_words, phrase):
+        before = tokens[i - 1] if i else None
+        after = tokens[i + size] if i + size < len(tokens) else None
+        if (before is None or before in cfg["imperative_before"]) and (
+            after is None or after in cfg["imperative_after"]
+        ) and not _negated(tokens, i):
+            return True
+    return False
+
+
+def _whole_line(text_words: str, lines: list[str], cfg: dict) -> bool:
+    kept = [t for t in text_words.split() if t not in cfg["line_fillers"]]
+    return " ".join(kept) in lines
+
+
+def _request(text_words: str, cfg: dict) -> int | None:
+    """A request about how the agent speaks, or None. A line that names the job ("send someone
+    faster", "speed up the install") is about the work, not the voice."""
+    if _said(text_words, cfg["job_words"]):
+        return None
+    if (
+        _said(text_words, cfg["slower_phrases"])
+        or _imperative(text_words, cfg["slower_imperative"], cfg)
+        or _whole_line(text_words, cfg["slower_lines"], cfg)
+    ):
+        return SLOWER
+    if (
+        _said(text_words, cfg["faster_phrases"])
+        or _imperative(text_words, cfg["faster_imperative"], cfg)
+        or _whole_line(text_words, cfg["faster_lines"], cfg)
+    ):
+        return FASTER
+    if _said(text_words, cfg["normal_phrases"]):
+        return NORMAL
+    return None
+
+
+def _address_request(text_words: str, cfg: dict, after_read_back: bool) -> bool:
+    """A request to hear the address slower: "say the address slower", or right after the
+    read-back, a slow word with a repeat word ("can you say that again slower?")."""
+    if _said(text_words, cfg["job_words"]):
+        return False
+    if _said(text_words, cfg["address_phrases"]):
+        return True
+    return (
+        after_read_back
+        and _said(text_words, cfg["slow_words"])
+        and any(has_phrase(text_words, w) for w in cfg["repeat_words"])
+    )
 
 
 def hear(text: str, cfg: dict, after_read_back: bool) -> Heard:
@@ -67,22 +161,16 @@ def hear(text: str, cfg: dict, after_read_back: bool) -> Heard:
     last thing asked, so "can you say that again slower?" is about the address."""
     text_words = words(text)
     heard = Heard()
-    slow_word = _any(text_words, cfg["slow_words"])
-    about_address = _any(text_words, cfg["address_words"]) or (
-        after_read_back and _any(text_words, cfg["repeat_words"])
-    )
-    if slow_word and about_address:
+    if _address_request(text_words, cfg, after_read_back):
         heard.request, heard.address_only = SLOWER, True
-    elif _any(text_words, cfg["slower_phrases"]):
-        heard.request = SLOWER
-    elif _any(text_words, cfg["faster_phrases"]):
-        heard.request = FASTER
-    elif _any(text_words, cfg["normal_phrases"]):
-        heard.request = NORMAL
-    elif text_words.strip() in cfg["repeat_lines"] or _any(text_words, cfg["repeat_phrases"]):
-        heard.repeat_ask = True
+    else:
+        heard.request = _request(text_words, cfg)
+        if heard.request is None:
+            heard.repeat_ask = text_words.strip() in cfg["repeat_lines"] or any(
+                has_phrase(text_words, p) for p in cfg["repeat_phrases"]
+            )
     age = own_age(text)
-    heard.older_adult = (age is not None and age >= cfg["older_adult_age"]) or _any(
+    heard.older_adult = (age is not None and age >= cfg["older_adult_age"]) or _said(
         text_words, cfg["older_adult_phrases"]
     )
     return heard
@@ -91,9 +179,9 @@ def hear(text: str, cfg: dict, after_read_back: bool) -> Heard:
 def stepped(speed: float, direction: int, cfg: dict) -> float:
     """One step slower or faster, kept inside the tenant's bounds; NORMAL goes back to normal."""
     if direction == NORMAL:
-        return cfg["normal"]
+        return clamp(cfg["normal"])
     moved = speed + direction * cfg["step"]
-    return round(min(cfg["fastest"], max(cfg["slowest"], moved)), 2)
+    return clamp(min(cfg["fastest"], max(cfg["slowest"], moved)))
 
 
 # ---- the record ----------------------------------------------------------------------------
@@ -152,10 +240,11 @@ def start(
         previous = _state(conn, previous_id) if previous_id else None
         kept = remembered(conn, tenant_slug, caller_key) if caller_key else None
         if previous is not None and previous["speed"] != cfg["normal"]:
-            speed, source = previous["speed"], "linked"
+            speed, source = clamp(previous["speed"]), "linked"
             requested, older = previous["requested"], previous["older_adult"]
         elif kept is not None:
-            speed, source, requested = kept, "record", 1
+            # A stored row is kept inside what the voice accepts, whatever wrote it.
+            speed, source, requested = clamp(kept), "record", 1
         conn.execute(
             "INSERT INTO call_pace (call_id, speed, source, requested, older_adult) "
             "VALUES (?, ?, ?, ?, ?)",
@@ -188,11 +277,24 @@ def caller_line(
     if state is None:
         return []
     asked_seq = call["readback_asked_seq"]
-    after_read_back = asked_seq is not None and not records.caller_turn_after(
-        conn, call["id"], asked_seq
-    )
+    # The read-back is the last thing asked: no caller line since it was returned. (Read here, not
+    # through app.records, because the tenant module loads this one.)
+    after_read_back = asked_seq is not None and not conn.execute(
+        "SELECT 1 FROM turns WHERE call_id = ? AND speaker = 'caller' AND seq > ?",
+        (call["id"], asked_seq),
+    ).fetchone()
     heard = hear(text, cfg, after_read_back)
     speed, changes, hints = state["speed"], {}, []
+    # An older caller is spoken to more slowly unless they asked for a pace for the whole call; an
+    # address request on the same line ("I'm 80, say the address slower") still slows the call.
+    if heard.older_adult and not state["older_adult"]:
+        changes["older_adult"] = 1
+        whole_call_request = heard.request is not None and not heard.address_only
+        older_speed = clamp(cfg["older_adult_speed"])
+        if not state["requested"] and not whole_call_request and speed > older_speed:
+            speed = older_speed
+            changes.update(speed=speed, source="older_adult")
+            _log(conn, call["id"], seq, speed, "call", "older_adult", now)
     if heard.address_only:
         address_speed = stepped(speed, SLOWER, cfg)
         changes["address_speed"] = address_speed
@@ -215,12 +317,6 @@ def caller_line(
             if new != speed:
                 changes.update(speed=new, source="repeats")
                 _log(conn, call["id"], seq, new, "call", "repeats", now)
-    if heard.older_adult and not state["older_adult"]:
-        changes["older_adult"] = 1
-        speed_now = changes.get("speed", speed)
-        if not state["requested"] and heard.request is None and speed_now > cfg["older_adult_speed"]:
-            changes.update(speed=cfg["older_adult_speed"], source="older_adult")
-            _log(conn, call["id"], seq, cfg["older_adult_speed"], "call", "older_adult", now)
     if changes:
         sets = ", ".join(f"{k} = ?" for k in changes)
         conn.execute(

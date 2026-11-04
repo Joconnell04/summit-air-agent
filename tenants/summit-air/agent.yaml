@@ -215,31 +215,47 @@ pace:
   older_adult_speed: 0.85
   # "Sorry, what?" this many times since the pace last moved is one step slower.
   repeats_before_slower: 2
-  # Each phrase speaks to the agent's pace; "the fan is slower" or "it heats too slow" must not
-  # match, so bare "slower" and "too slow" are left out.
-  slower_phrases: [slow down please, please slow down, can you slow down, could you slow down,
-                   would you slow down, will you slow down, slow down a little, slow down a bit,
-                   slow down for me, slow it down, whoa slow down, a little slower please,
-                   a bit slower please, slower please, speak slower, talk slower, speak more slowly,
-                   talk more slowly, speak slowly, talk slowly, say it slower, say that slower,
-                   say it slowly, say that slowly, youre talking too fast, youre talking fast,
-                   you talk too fast, you talk so fast, youre speaking too fast, you speak too fast,
-                   youre going too fast, youre too fast, talking so fast, too fast for me,
-                   dont talk so fast, not so fast please, again slower, again slowly,
-                   slower this time]
-  faster_phrases: [speed up please, please speed up, can you speed up, could you speed up,
-                   you can speed up, speed it up, talk faster, speak faster, talk a little faster,
-                   talk a bit faster, speak a little faster, speak a bit faster, talk quicker,
-                   speak quicker, you can go faster, you can talk faster, faster please,
-                   a little faster please, a bit faster please, youre talking too slow,
-                   youre talking so slow, youre talking too slowly, you talk too slow,
-                   youre speaking too slow, you speak too slow, youre going too slow,
-                   pick up the pace]
+  # A request counts only when it is about how the agent speaks: a phrase with a speech word, "slow
+  # down" or "speed up" said to the agent with no object, or a whole line that is only a request.
+  # Never on a line with a job word ("send someone faster", "speed up the install"), and never
+  # negated ("you don't need to speak slower"). "The fan is slower" or "it heats too slow" never match.
+  slower_phrases: [speak slower, talk slower, speak more slowly, talk more slowly, speak slowly,
+                   talk slowly, say it slower, say that slower, say it slowly, say that slowly,
+                   say that again slower, say that again slowly, say it again slower,
+                   say it again slowly, repeat that slower, repeat that slowly, youre talking too fast,
+                   youre talking so fast, youre talking fast, you talk too fast, you talk so fast,
+                   youre speaking too fast, you speak too fast, talking too fast, talking so fast,
+                   speaking too fast, speaking so fast, youre going too fast, youre too fast,
+                   dont talk so fast, need you to slow down, want you to slow down]
+  faster_phrases: [talk faster, speak faster, talk a little faster, talk a bit faster,
+                   speak a little faster, speak a bit faster, talk quicker, speak quicker,
+                   talking too slow, talking so slow, talking too slowly, speaking too slow,
+                   speaking so slow, you talk too slow, you speak too slow, need you to speed up,
+                   want you to speed up]
   normal_phrases: [normal speed, regular speed, normal pace, regular pace, usual speed, usual pace]
-  # Asking for the address alone: one of these words with a slow word, or a repeat word right after
-  # the read-back ("can you say that again slower?").
-  slow_words: [slow, slower, slowly]
-  address_words: [address, street, house number]
+  # "Slow down" and "speed up" on their own count only when said to the agent: after one of the
+  # `before` words or at the start of the line, and followed by nothing or one of the `after` words.
+  slower_imperative: slow down
+  faster_imperative: speed up
+  imperative_before: [you, can, please, whoa, hey, ok, okay, just, sorry, wait, um, uh, so, oh,
+                      now]
+  imperative_after: [please, a, for, there, ok, okay, sorry, im, i, youre, so, thanks, thank, now]
+  # A whole line that is only a request, once these filler words are dropped.
+  line_fillers: [um, uh, oh, ok, okay, sorry, please, so, just, hey, can, could, would, you, maybe]
+  slower_lines: [slower, a little slower, a bit slower, little slower, bit slower, more slowly,
+                 slowly, slow it down, slower this time]
+  faster_lines: [faster, a little faster, a bit faster, little faster, bit faster, quicker,
+                 speed it up, go faster, pick up the pace]
+  job_words: [send, someone, somebody, technician, tech, guy, crew, install, installation, repair,
+              appointment, visit, come, coming, get here, schedule, service, fix, job, process,
+              furnace, boiler, heater, heat, ac, fan, blower, motor, unit, system, drain,
+              thermostat, pump, radiator, water]
+  # The address alone: one of these phrases, or right after the read-back a slow word with a repeat
+  # word ("can you say that again slower?"). "My heat is slow, I live on Main Street" is neither.
+  address_phrases: [the address slower, the address slowly, the address more slowly,
+                    the address again slower, the address again slowly, address back slower,
+                    address back slowly, slower on the address, slowly on the address]
+  slow_words: [slower, slowly]
   repeat_words: [repeat, again, say that, say it, read that, read it]
   # "Sorry, what?": a whole line that is only one of these, or a line with one of the phrases.
   repeat_lines: [what, huh, sorry, pardon, sorry what, what sorry, excuse me, what was that,

@@ -21,6 +21,9 @@ log = logging.getLogger("voice.call")
 
 # Turn results whose text the worker speaks itself, word for word, before the model answers.
 SPOKEN_ACTIONS = ("speak_lines", "speak_variant", "ask_check")
+# What Cartesia sonic-3 accepts for `speed` (SOURCE: the LiveKit Cartesia plugin's docs). The server
+# keeps its paces inside it too; this guards the voice against a bad value either way.
+SPEED_MIN, SPEED_MAX = 0.6, 2.0
 
 
 class Call:
@@ -57,7 +60,7 @@ class Call:
         """Takes the speed from a server result. The worker never decides a pace itself."""
         pace = data.get("pace")
         if pace and pace.get("speed"):
-            self.speed = float(pace["speed"])
+            self.speed = min(SPEED_MAX, max(SPEED_MIN, float(pace["speed"])))
 
     def speed_for(self, first_text: str) -> float | None:
         """The speed for a speech that starts with this text: a planned part's own speed, else the
@@ -66,6 +69,13 @@ class Call:
         if speed is not None:
             self._spoken.append((first_text.strip(), speed))
         return speed
+
+    def drop_unspoken(self) -> None:
+        """Parts of a slower read-back that were never synthesized (the caller cut in first) are
+        logged and forgotten, so a later line with the same words isn't spoken at their speed."""
+        if self.planned:
+            log.warning("read-back parts never spoken: %s", list(self.planned))
+            self.planned.clear()
 
     def spoken_speed(self, text: str) -> float | None:
         """The speed a finished agent line was synthesized at."""
@@ -78,9 +88,11 @@ class Call:
     def say_parts(self, parts: list[dict]) -> object:
         """Says the server's sentence in its parts, each at the speed the server gave it (the
         address alone slower), and returns the last part's speech handle."""
+        self.drop_unspoken()
         handle = None
         for part in parts:
-            self.planned[part["text"].strip()] = float(part["speed"])
+            speed = min(SPEED_MAX, max(SPEED_MIN, float(part["speed"])))
+            self.planned[part["text"].strip()] = speed
             handle = self.session.say(part["text"])
         return handle
 
@@ -102,6 +114,7 @@ class Call:
         text = message.text_content or ""
         if not text.strip():
             return
+        self.drop_unspoken()
         self.bridge.caller_turn()
         self.caller_stopped_at = message.metrics.get("stopped_speaking_at")
         result = await self.post("caller", text, caller_timings(message.metrics))
@@ -137,6 +150,7 @@ class Call:
 
     async def flush(self) -> None:
         """Wait for agent lines still being posted, before the call is closed."""
+        self.drop_unspoken()
         if self._last_post:
             await asyncio.gather(self._last_post, return_exceptions=True)
 

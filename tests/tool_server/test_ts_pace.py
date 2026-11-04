@@ -276,3 +276,157 @@ def test_the_trace_shows_the_pace_and_its_changes(agent):
     assert trace["pace"][0]["speed"] == 0.85
     assert trace["pace_changes"][0]["source"] == "request"
     assert trace["caller_pace"][0]["speed"] == 0.85
+
+
+# ---- false triggers (PR #83 review) ----------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "You don't need to speak slower, you're fine.",
+        "No need to talk slowly, I can hear you.",
+        "You don't have to slow down for me.",
+        "I don't need you to slow down.",
+        "You're not talking too fast.",
+    ],
+)
+def test_a_negated_request_changes_nothing(line):
+    assert pace.hear(line, CFG, after_read_back=False).request is None
+
+
+def test_a_negated_request_is_not_remembered(agent):
+    call = agent.start()["data"]["call_id"]
+    assert speed(agent.turn(call, "You don't need to speak slower, I'm following.")) == 1.0
+    assert remembered(agent) is None
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "Can you send someone faster please?",
+        "Can you speed up the install?",
+        "Can you speed up the repair?",
+        "Could the technician come a bit faster please?",
+        "Can you schedule it slower please, like next week?",
+        "The motor will slow down and stop.",
+        "Things speed up when the heat kicks on.",
+    ],
+)
+def test_talk_about_the_job_is_not_a_pace_request(line):
+    heard = pace.hear(line, CFG, after_read_back=False)
+    assert heard.request is None and not heard.address_only
+
+
+def test_a_job_speed_request_is_not_remembered(agent):
+    call = agent.start()["data"]["call_id"]
+    assert speed(agent.turn(call, "Can you send someone faster please?")) == 1.0
+    assert remembered(agent) is None
+
+
+@pytest.mark.parametrize(
+    "line, asked",
+    [
+        ("Slower please.", pace.SLOWER),
+        ("Um, a little slower.", pace.SLOWER),
+        ("Can you speed up?", pace.FASTER),
+        ("Faster please.", pace.FASTER),
+        ("I need you to slow down.", pace.SLOWER),
+        ("Could you please slow down there?", pace.SLOWER),
+    ],
+)
+def test_short_requests_and_slow_down_said_to_the_agent_still_count(line, asked):
+    assert pace.hear(line, CFG, after_read_back=False).request == asked
+
+
+@pytest.mark.parametrize("after_read_back", [False, True])
+@pytest.mark.parametrize(
+    "line",
+    [
+        "My heat is slow, I live on Main Street.",
+        "The slow drain is at 12 Oak Street.",
+        "The fan runs slower at 45 Elm Street, can you repeat the visit time?",
+        "It's slowly getting colder at my address.",
+    ],
+)
+def test_equipment_talk_with_an_address_is_not_an_address_request(line, after_read_back):
+    heard = pace.hear(line, CFG, after_read_back)
+    assert not heard.address_only and heard.request is None
+
+
+@pytest.mark.parametrize(
+    "line",
+    ["Can you say the address slower?", "Slower on the address, please.",
+     "Repeat the address slowly for me."],
+)
+def test_asking_to_hear_the_address_slower_counts_anywhere_in_the_call(line):
+    heard = pace.hear(line, CFG, after_read_back=False)
+    assert heard.address_only and heard.request == pace.SLOWER
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "I'm 70 yards from the house.",
+        "I'm 60 to 70 percent sure it's the boiler.",
+        "I'm 80-90 percent sure.",
+        "I'm 75 or 80 feet up the driveway.",
+    ],
+)
+def test_numbers_that_are_not_ages_are_not_read_as_ages(line):
+    assert pace.own_age(line) is None
+
+
+def test_an_older_caller_asking_for_the_address_slower_gets_both(agent):
+    call = agent.start()["data"]["call_id"]
+    result = agent.turn(call, "I'm 80, so say the address slower when you read it.")
+    assert speed(result) == 0.85
+    assert changes(agent, call) == [(1, 0.85, "call", "older_adult"), (1, 0.7, "address", "request")]
+    asked = agent.tool("read_back", call, address=in_area_address(), phone="caller_id")
+    assert [p["speed"] for p in asked["data"]["parts"]] == [0.85, 0.7, 0.85]
+
+
+# ---- bounds and scope ------------------------------------------------------------------------
+
+
+def test_every_pace_is_kept_inside_what_the_voice_accepts():
+    assert pace.clamp(0.3) == pace.SPEED_MIN == 0.6
+    assert pace.clamp(5) == pace.SPEED_MAX == 2.0
+    loose = {**CFG, "slowest": 0.2, "fastest": 3.0, "normal": 1.0, "older_adult_speed": 0.1}
+    tight = pace.clamped_config(loose)
+    assert (tight["slowest"], tight["fastest"], tight["older_adult_speed"]) == (0.6, 2.0, 0.6)
+    assert pace.stepped(0.6, pace.SLOWER, tight) == 0.6
+
+
+def test_the_tenant_is_loaded_with_clamped_speeds():
+    from app.tenant import Tenant
+
+    tenant = Tenant.load(TENANT_DIR)
+    assert all(0.6 <= tenant.pace[k] <= 2.0 for k in pace.SPEED_KEYS)
+
+
+def test_a_stored_pace_outside_the_voices_range_starts_the_call_clamped(agent):
+    conn = agent.db()
+    conn.execute(
+        "INSERT INTO caller_pace (tenant, phone_key, speed, call_id, set_at) "
+        "VALUES ('summit-air', '2125550999', 4.5, NULL, '2026-11-01T00:00:00Z')"
+    )
+    conn.close()
+    assert agent.start()["data"]["pace"] == {"speed": 2.0}
+
+
+def test_a_remembered_pace_belongs_to_one_number_and_one_tenant(agent, clock):
+    first = agent.start()["data"]["call_id"]
+    agent.turn(first, "Could you talk slower?")
+    agent.end(first)
+    clock.advance(days=1)
+    assert agent.start("(718) 555-0199")["data"]["pace"] == {"speed": 1.0}
+    conn = agent.db()
+    conn.execute(
+        "INSERT INTO calls (id, tenant, caller_id, caller_key, dialed_number, direction, started_at)"
+        " VALUES ('other-1', 'other-co', '(212) 555-0999', '2125550999', '', 'inbound', "
+        "'2026-11-03T00:00:00Z')"
+    )
+    started = pace.start(conn, CFG, "other-co", "other-1", "2125550999", None, clock())
+    conn.close()
+    assert started == {"speed": 1.0}

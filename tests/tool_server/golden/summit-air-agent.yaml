@@ -200,17 +200,28 @@ owner_rules:
   disclosure:
   - virtual assistant
 pace:
-  address_words:
-  - address
-  - street
-  - house number
-  faster_phrases:
-  - speed up please
-  - please speed up
-  - can you speed up
-  - could you speed up
-  - you can speed up
+  address_phrases:
+  - the address slower
+  - the address slowly
+  - the address more slowly
+  - the address again slower
+  - the address again slowly
+  - address back slower
+  - address back slowly
+  - slower on the address
+  - slowly on the address
+  faster_imperative: speed up
+  faster_lines:
+  - faster
+  - a little faster
+  - a bit faster
+  - little faster
+  - bit faster
+  - quicker
   - speed it up
+  - go faster
+  - pick up the pace
+  faster_phrases:
   - talk faster
   - speak faster
   - talk a little faster
@@ -219,20 +230,99 @@ pace:
   - speak a bit faster
   - talk quicker
   - speak quicker
-  - you can go faster
-  - you can talk faster
-  - faster please
-  - a little faster please
-  - a bit faster please
-  - youre talking too slow
-  - youre talking so slow
-  - youre talking too slowly
+  - talking too slow
+  - talking so slow
+  - talking too slowly
+  - speaking too slow
+  - speaking so slow
   - you talk too slow
-  - youre speaking too slow
   - you speak too slow
-  - youre going too slow
-  - pick up the pace
+  - need you to speed up
+  - want you to speed up
   fastest: 1.3
+  imperative_after:
+  - please
+  - a
+  - for
+  - there
+  - ok
+  - okay
+  - sorry
+  - im
+  - i
+  - youre
+  - so
+  - thanks
+  - thank
+  - now
+  imperative_before:
+  - you
+  - can
+  - please
+  - whoa
+  - hey
+  - ok
+  - okay
+  - just
+  - sorry
+  - wait
+  - um
+  - uh
+  - so
+  - oh
+  - now
+  job_words:
+  - send
+  - someone
+  - somebody
+  - technician
+  - tech
+  - guy
+  - crew
+  - install
+  - installation
+  - repair
+  - appointment
+  - visit
+  - come
+  - coming
+  - get here
+  - schedule
+  - service
+  - fix
+  - job
+  - process
+  - furnace
+  - boiler
+  - heater
+  - heat
+  - ac
+  - fan
+  - blower
+  - motor
+  - unit
+  - system
+  - drain
+  - thermostat
+  - pump
+  - radiator
+  - water
+  line_fillers:
+  - um
+  - uh
+  - oh
+  - ok
+  - okay
+  - sorry
+  - please
+  - so
+  - just
+  - hey
+  - can
+  - could
+  - would
+  - you
+  - maybe
   normal: 1.0
   normal_phrases:
   - normal speed
@@ -288,24 +378,20 @@ pace:
   - read it
   repeats_before_slower: 2
   slow_words:
-  - slow
   - slower
   - slowly
-  slower_phrases:
-  - slow down please
-  - please slow down
-  - can you slow down
-  - could you slow down
-  - would you slow down
-  - will you slow down
-  - slow down a little
-  - slow down a bit
-  - slow down for me
+  slower_imperative: slow down
+  slower_lines:
+  - slower
+  - a little slower
+  - a bit slower
+  - little slower
+  - bit slower
+  - more slowly
+  - slowly
   - slow it down
-  - whoa slow down
-  - a little slower please
-  - a bit slower please
-  - slower please
+  - slower this time
+  slower_phrases:
   - speak slower
   - talk slower
   - speak more slowly
@@ -316,21 +402,28 @@ pace:
   - say that slower
   - say it slowly
   - say that slowly
+  - say that again slower
+  - say that again slowly
+  - say it again slower
+  - say it again slowly
+  - repeat that slower
+  - repeat that slowly
   - youre talking too fast
+  - youre talking so fast
   - youre talking fast
   - you talk too fast
   - you talk so fast
   - youre speaking too fast
   - you speak too fast
+  - talking too fast
+  - talking so fast
+  - speaking too fast
+  - speaking so fast
   - youre going too fast
   - youre too fast
-  - talking so fast
-  - too fast for me
   - dont talk so fast
-  - not so fast please
-  - again slower
-  - again slowly
-  - slower this time
+  - need you to slow down
+  - want you to slow down
   slowest: 0.7
   step: 0.15
 phone_numbers:

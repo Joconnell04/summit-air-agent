@@ -17,6 +17,7 @@ from zoneinfo import ZoneInfo
 
 import yaml
 
+from .pace import clamped_config
 from .priority import LEVELS
 from .text import phone_key
 
@@ -215,7 +216,7 @@ class Tenant:
         self.on_call_alerts: dict = agent["on_call_alerts"]
         self.repeat: dict = agent["repeat_callers"]
         # Speaking rate (app/pace.py). None leaves the voice at its default speed.
-        self.pace: dict | None = agent.get("pace")
+        self.pace: dict | None = clamped_config(agent.get("pace"))
         self.retention: dict = agent["retention"]
         self.after_hours_cutoffs: dict = agent["after_hours"]
         # Warm transfer to a person (app/transfer.py). None turns it off.

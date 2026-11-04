@@ -150,3 +150,27 @@ def test_the_speed_is_set_on_the_voice_before_each_speech_is_synthesized(monkeyp
     assert Session.tts.speeds == [1.0, 0.85]
     # The speed was set before the first words reached the voice, and no words were lost.
     assert seen == [("Sure", [1.0]), (", I'll slow down.", [1.0]), ("101 Union St,", [1.0, 0.85])]
+
+
+def test_the_worker_keeps_any_speed_inside_what_the_voice_accepts(agent, connect):
+    agent.start(call_id="call-1")
+    call = make_call(connect)
+    call.apply_pace({"pace": {"speed": 3.0}})
+    assert call.speed == 2.0
+    call.apply_pace({"pace": {"speed": 0.2}})
+    assert call.speed == 0.6
+    call.say_parts([{"text": "101 Union St,", "speed": 0.1}])
+    assert call.speed_for("101 Union St,") == 0.6
+
+
+def test_read_back_parts_never_spoken_are_logged_and_forgotten(agent, connect, caplog):
+    agent.start(call_id="call-1")
+    call = make_call(connect)
+    call.speed = 1.0
+    call.say_parts([{"text": "Your home at", "speed": 1.0}, {"text": "101 Union St,", "speed": 0.85}])
+    assert call.speed_for("Your home at") == 1.0
+    # The caller cut in before the address was synthesized.
+    asyncio.run(call.caller_line(caller("Wait, it's 103.")))
+    assert "read-back parts never spoken" in caplog.text
+    assert call.planned == {}
+    assert call.speed_for("101 Union St,") == 1.0
