@@ -216,6 +216,10 @@ Changed:
 - S-20: the confirm question is Jackson's own negative wording, "Just to confirm, it doesn't smell like sulfur or rotten eggs, right?", and the server reads "yeah", "right" or "no" to it as all clear (app/safety.py `answer_to_confirm`); the smell named again, "it does" or an unsure answer still bring the lines.
 - The mock's property manager and co-op board accounts are typed Residential.
 - The read-back keeps "your home". docs/brief.md gains "How residential or commercial is read", with the equipment reasoning.
+Sign-off feedback (verbatim, Jackson on the safety booking line):
+> regarding your question for PR #74, i sign it off, that makes sense.
+Changed:
+- `safety.booking_note` in tenants/summit-air/agent.yaml is signed off: "The technician can only work on it once the gas company or 911 has shut it off and said it's safe, so please stay outside until then."
 Status: open
 
 ## call-journeys r5 (amendment after lock: eval round 2)

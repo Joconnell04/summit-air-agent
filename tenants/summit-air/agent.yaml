@@ -75,7 +75,7 @@ safety:
   flag_reason: "{label} reported on the call"
   # Added to the booking sentence when a visit is booked on a safety call (eval round 2, Jackson: "we'll
   # book a technician for you, but first it's important that whatever the problem is shut off").
-  # Proposed, not yet signed off.
+  # Signed off by Jackson (spec r8 in docs/ai-process/coauthoring.md).
   booking_note: >-
     The technician can only work on it once the gas company or 911 has shut it off and said it's
     safe, so please stay outside until then.
