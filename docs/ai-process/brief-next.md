@@ -34,28 +34,15 @@ There's no switching between models mid-call, and I don't think it pays. A bigge
 
 The one place I'd test is the summary: Haiku with thinking against Sonnet on about 20 eval transcripts, scored by the server's line-by-line check. Sonnet costs roughly 20 times Haiku per token (SOURCE: config/models.yaml prices). At about 2.5 cents a summary (ASSUMED), that's about $40 a month at full volume, more than the live brain's $30, and docs/cost.md doesn't count it yet. The test costs cents. The eval grader is the other candidate (Haiku first, Opus only on failures), but evals cost about $1.70 a run today and the grader was matched to your labels on Opus, so it isn't worth it unless evals start running on every change.
 
-## Live on the server (deployed 01:05, health checks pass)
+## Live on the server
 
-| What | PR | Decision |
-|---|---|---|
-| Round 3 and 4 wording: read-back and booking confirmations spoken by the server, a speech filter for repeats, tool talk and unprompted advice, the known-details list | [#82](https://github.com/Joconnell04/summit-air-agent/pull/82) | 060 |
-| Speaking rate per call, set by the server and remembered | [#83](https://github.com/Joconnell04/summit-air-agent/pull/83) | 053 |
-| Admin and staff accounts and a settings panel with the recording-notice switch | [#85](https://github.com/Joconnell04/summit-air-agent/pull/85) | 054 |
-| Two calls racing for one slot, tested end to end | [#86](https://github.com/Joconnell04/summit-air-agent/pull/86), [#94](https://github.com/Joconnell04/summit-air-agent/pull/94) | 057 |
-| "Nobody's elderly" no longer reads as someone at risk; the side model stays on | [#87](https://github.com/Joconnell04/summit-air-agent/pull/87) | 056 |
-| The server acts only on a ZIP the caller said; street names like Church Ave aren't businesses | [#88](https://github.com/Joconnell04/summit-air-agent/pull/88), [#91](https://github.com/Joconnell04/summit-air-agent/pull/91), [#92](https://github.com/Joconnell04/summit-air-agent/pull/92) | 058 |
-| Debug bench at `/bench`: calls as a node graph with prompts and rule decisions, settings, evals, live view | [#89](https://github.com/Joconnell04/summit-air-agent/pull/89) | 059 |
-| Cold handoff when a caller demands a person | [#90](https://github.com/Joconnell04/summit-air-agent/pull/90) | 061 |
-| Rule editing moved to `/bench/rules`, with a logged override | [#93](https://github.com/Joconnell04/summit-air-agent/pull/93), [#96](https://github.com/Joconnell04/summit-air-agent/pull/96) | 055 |
-| Simulated calls saved as audio; `make sim`, `make listen` | [#95](https://github.com/Joconnell04/summit-air-agent/pull/95) | 062 |
-| End-of-turn wait measured and kept at 0.35 s; the longer digits wait no longer sticks for the rest of the call (about 0.55 s back on each later turn) | [#98](https://github.com/Joconnell04/summit-air-agent/pull/98) | |
+Health checks pass. Every lane, with its pull requests and decisions, is in [lanes.md](lanes.md), generated from GitHub by `make lanes` after each merge. Since the morning brief: the bench shows calls as recorded ([#101](https://github.com/Joconnell04/summit-air-agent/pull/101), decision 064), deployed at 16:24 UTC.
 
 Signing in: https://45-77-105-247.sslip.io/owner (owner view) and https://45-77-105-247.sslip.io/bench (debug bench), both as `jackson`; the password is in the macOS Keychain (`security find-generic-password -a summit-air -s owner-admin-password -w`). The side model is on. Warm transfer and recordings are on.
 
 ## Still open
 
 - **Address lookup, preferred names, five easy scenarios** (new lane): a server address lookup finds the ZIP from "248 Duffield St" (one match fills it and the read-back confirms; several ask which borough; none asks to repeat or spell; a caller's ZIP that disagrees with the lookup gets read back and settled before booking). Callers who ask to be called "Dr. Patel" are, for the call and next time. Five plain scenarios join the standard suite. Ends with a two-sample eval run.
-- **Bench shows everything** ([#101](https://github.com/Joconnell04/summit-air-agent/pull/101), decision 064): admins see phone numbers, addresses and tool arguments as recorded; only replay drafts meant for the repo stay redacted. Merges and deploys once CI clears.
 
 - **Decisions 057 to 064 were missing from DECISIONS.md** (the design trail had them; the entries never landed). Restored from the session log, word for word.
 - **Last fix pass (round 3 lane), now [#102](https://github.com/Joconnell04/summit-air-agent/pull/102):** the two-sample reference is 93% (96 of 103 judged; every must-pass code check passes; $3.27). Of the 7 misses, 2 were server phrase bugs fixed after the run ("no babies, older people or medical equipment" losing its negation; "do you smell gas, do I?" firing the gas lines), 1 check is too strict, and 4 are the agent re-asking. Review held it back on two safety regressions, both reproduced and now being fixed in the lane. The new "no" carry dropped "No heat, baby in the house" and "No heat, elderly mother lives with me" from Urgent to High. The new hypothetical rule turned "What do I do? I smell gas" into a check question instead of the gas lines. It merges only after those are fixed, pinned as tests, and the must-pass and safety scenarios pass again. The original scope: the agent slips still seen in eval runs (re-asking given details, an apartment building declined, an invented fee line, a repeated 911 line, flagging instead of booking after hours, warming advice for a baby), the after-midnight "tomorrow" bug, and two at-risk phrasings ("just me at home", "a cane"). Then one eval run with two samples per scenario becomes the reference. Main's eval check is red only on that stale reference until then. Deploys when it lands.

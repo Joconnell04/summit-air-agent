@@ -1,6 +1,6 @@
 .PHONY: setup test lint check ratchet ratchet-update eval eval-pairs eval-decisions replay langsmith eval-upload seed-st mock-st postman-st server postman trace \
 	owner-demo owner-user rules-gate summary-check voice-livekit phone-setup deploy test-call measure-delay \
-	retell-push retell-bridge retell-deploy retell-report rig rig-report sim listen stt-bench
+	retell-push retell-bridge retell-deploy retell-report rig rig-report sim listen lanes stt-bench
 
 setup:
 	uv sync
@@ -19,6 +19,10 @@ ratchet:
 
 ratchet-update:
 	uv run python scripts/ratchet.py --update
+
+# Rewrites docs/ai-process/lanes.md from GitHub issues labeled agent (needs gh).
+lanes:
+	uv run python scripts/lanes.py
 
 # Paid: runs scenarios against a stack (evals/README.md). The smoke suite is about $0.15 (MEASURED).
 # make eval SUITE=smoke | TAGS=flow:safety,difficulty:rigorous | STACKS=livekit,retell | PROFILES=fast

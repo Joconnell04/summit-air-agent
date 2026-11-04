@@ -1,6 +1,6 @@
 # Come back to later
 
-Things Jackson set aside on purpose. Nothing here is dropped; each item gets walked before V1 is called done (phases.md, phase 3). Add an item whenever Jackson says "later", "come back to that" or "not now", with where it came from.
+Things Jackson set aside on purpose, and ideas not yet looked into. Nothing here is dropped; each item gets walked before V1 is called done (phases.md, phase 3). Add an item whenever Jackson says "later", "come back to that" or "not now", with where it came from. This file replaced docs/considerations.md for new items; that file is now the design-time triage record.
 
 | Item | Why it waits | Where it came from | Status |
 |---|---|---|---|
@@ -19,3 +19,11 @@ Things Jackson set aside on purpose. Nothing here is dropped; each item gets wal
 | "If the caller says X then Y" rules from a fixed menu (exploration 009 option D) | A rule engine is 8 to 12 days (ASSUMED) and waits for three real asks | Exploration 009; #56 | after V1 (DECISIONS.md 034) |
 | Owner guidance for after the call | The technician summary is built (app/summary.py) but does not read owner guidance yet (spec S-43) | #56 build | after V1 (DECISIONS.md 034) |
 | Two-call race evals on the Retell stack | Retell's eval mock is reset before each call, so two calls can't share it; our stack runs them | PR #86 (concurrent booking) | fine for now (Jackson) |
+
+## Ideas to look into
+
+Added with `/consider`. Numbered C-NN after the last number in docs/considerations.md (C-56). An idea here is a prompt to investigate, never a decision; when it's looked at, it moves to the table above, to an exploration, or out with a reason.
+
+| Idea | Raised | Status |
+|---|---|---|
+| **C-57 Size each model to its job.** V1 keeps Haiku 5.5 live, Sonnet 5.5 for the technician summary and Opus 5.5 grading evals. With more time, measure the real Haiku-to-Sonnet gap on a task before paying for the bigger model. First, the summary: Haiku with thinking against Sonnet on about 20 eval transcripts, scored by the server's line-by-line check; Sonnet is roughly 20 times Haiku per token (SOURCE: config/models.yaml prices), so at about 2.5 cents a summary (ASSUMED) it's about $40 a month at full volume, which docs/cost.md doesn't count yet. Second, the grader: Haiku or Sonnet first, Opus only on failures and borderline calls; worth it only once evals run on every change, and only after rechecking agreement with Jackson's round 3 labels. Out of scope: switching models mid-call on the live path, rejected in exploration 014 (idea 10) for the slower first word and the change in how the agent sounds. | Jackson, after the model-routing answer in docs/ai-process/brief-next.md | open |

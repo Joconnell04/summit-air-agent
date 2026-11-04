@@ -4,7 +4,7 @@ How the design was reached, in order, so a reader can follow each choice back to
 
 ## How a choice gets made
 
-1. An idea or concern goes into `docs/considerations.md` (by voice, with `/consider`).
+1. An idea or concern goes into `docs/considerations.md` (by voice, with `/consider`; after design, into `docs/later.md`).
 2. If it needs evidence, a background research agent writes `docs/explorations/NNN-*.md`.
 3. If it's Jackson's call, a short readout in `docs/decisions/NN-*.md` lays out the options, trade-offs and a recommendation. Jackson reads it beside the chat and answers.
 4. The answer becomes one entry in `DECISIONS.md` (what, why, what else was considered, what would change it), the issue is closed, and the docs it touches are updated.
@@ -102,3 +102,4 @@ How the design was reached, in order, so a reader can follow each choice back to
 | End-of-turn wait | Kept at 0.35 s; the digits wait no longer sticks for the rest of a call | DECISIONS.md 063, #98 |
 | Bench shows everything | Admins see calls as recorded; only replay drafts stay redacted | DECISIONS.md 064, #101 |
 | Cartesia hosted agents | Left out: our server couldn't force safety lines or own hang-ups; Cartesia stays the voice only | DECISIONS.md 065 |
+| Lane tracking | Every lane has an issue; the lanes page is generated from GitHub | DECISIONS.md 067, #121 |
