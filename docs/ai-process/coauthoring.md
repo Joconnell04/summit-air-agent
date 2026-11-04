@@ -209,7 +209,13 @@ Changed:
 - S-07a (new): a caller who says a board, landlord or management has to approve is offered a callback to confirm who can approve; a booking they ask for gets a server-scheduled call before the arrival window to confirm approval before dispatch.
 - S-18: after the lines and the flag, the agent recommends staying outside and calling 911 or the gas company, and may offer a visit for once the problem is shut off without the caller having to insist; the booking carries the server's shut-off line.
 - S-20: burning dust and similar smells get a lighter confirm question once per call ("Just to confirm, does it smell at all like sulfur or rotten eggs?"). Asked as a yes or no question rather than Jackson's "it doesn't..., right?", because a "yeah" to a negative question can mean either, and the server reads a yeah as a smell.
-Not changed: the read-back still says "your home at"; for a building manager it reads oddly but it is locked wording (DECISIONS.md 022), left as an open question.
+Not changed: the read-back still says "your home at" (DECISIONS.md 022).
+Follow-up feedback (verbatim, Jackson on the PR's three questions):
+> yeah means it's not a safety issue in that instance for your first question. for your second question, yes change those two to be residential. for question 3, no keep that wording as most people calling aren't building managers. but include in the docuemntation somewhere that we are interpreting commercial as truly commercial and residential as either an individual tenant, unit, or even a full residential building because we expect an HVAC company in NYC to operate on individual/residential-grade units and just not commercial-grade units, and individual/resitdential-grade units are present in multi-tenant buildings
+Changed:
+- S-20: the confirm question is Jackson's own negative wording, "Just to confirm, it doesn't smell like sulfur or rotten eggs, right?", and the server reads "yeah", "right" or "no" to it as all clear (app/safety.py `answer_to_confirm`); the smell named again, "it does" or an unsure answer still bring the lines.
+- The mock's property manager and co-op board accounts are typed Residential.
+- The read-back keeps "your home". docs/brief.md gains "How residential or commercial is read", with the equipment reasoning.
 Status: open
 
 ## call-journeys r5 (amendment after lock: eval round 2)

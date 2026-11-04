@@ -482,18 +482,29 @@ def test_the_confirm_question_is_asked_once_per_call():
 @pytest.mark.parametrize(
     "answer,result",
     [
+        ("Yeah", "cleared"),
+        ("Yeah, it doesn't smell like eggs, just dusty", "cleared"),
+        ("Right, nothing like that", "cleared"),
         ("Nope, just dusty, you know", "cleared"),
-        ("No, nothing like that", "cleared"),
         ("No rotten eggs or sulfur, just dust", "cleared"),
         ("It doesn't smell like sulfur or rotten eggs", "cleared"),
-        ("not like rotten eggs, no", "cleared"),
-        ("Yeah, a bit like eggs", "speak_lines"),
+        ("Correct", "cleared"),
+        ("Actually it does, a bit like eggs", "speak_lines"),
         ("No, it smells like rotten eggs", "speak_lines"),
+        ("Yeah, kind of", "speak_lines"),
         ("I'm not sure", "speak_lines"),
     ],
 )
-def test_answers_that_echo_the_question_are_read_right(answer, result):
-    assert safety.check_caller_turn(answer, "checking", "gas", 0, CFG).action == result
+def test_the_confirm_question_is_asked_the_negative_way_so_yeah_clears_it(answer, result):
+    """Eval round 2: "it doesn't smell like sulfur or rotten eggs, right?" is answered "yeah"
+    when it doesn't. The smell named again, "it does" or an unsure answer still bring the lines."""
+    action = safety.check_caller_turn(answer, "checking", "gas", 0, CFG, answering_confirm=True)
+    assert action.action == result
+
+
+def test_the_gas_check_question_still_reads_yeah_as_a_smell():
+    action = safety.check_caller_turn("Yeah", "checking", "gas", 0, CFG)
+    assert action.action == "speak_lines"
 
 
 def test_a_cleared_burning_dust_check_books_without_the_lines(agent):
@@ -502,7 +513,7 @@ def test_a_cleared_burning_dust_check_books_without_the_lines(agent):
     asked = agent.turn(call, "It smelled like burning dust for a few minutes, it's gone now.")
     assert asked["data"]["safety"]["text"] == CONFIRM
     agent.say(call, CONFIRM)
-    assert agent.turn(call, "No, nothing like that.")["data"]["safety"]["action"] == "cleared"
+    assert agent.turn(call, "Yeah, just dusty.")["data"]["safety"]["action"] == "cleared"
     again = agent.turn(call, "Yeah the burning dust smell only lasted a minute.")
     assert again["data"]["safety"] is None
     booked = book(agent, call, first_open(agent, call))

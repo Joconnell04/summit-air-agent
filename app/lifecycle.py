@@ -214,6 +214,15 @@ def turn(
                 for spec in cfg["vague"].values()
                 if spec.get("confirm_question")
             )
+            # The confirm question asks the negative way, so its answer is read the other way
+            # round. It is the one being answered when the call is checking that kind and the
+            # agent's last line asked it.
+            answering_confirm = (
+                call["safety_state"] == "checking"
+                and bool(cfg["vague"][call["safety_kind"]].get("confirm_question"))
+                and cfg["vague"][call["safety_kind"]]["confirm_question"]
+                in (records.last_agent_line(conn, call["id"]) or "")
+            )
             action = safety.check_caller_turn(
                 args.text,
                 call["safety_state"],
@@ -222,6 +231,7 @@ def turn(
                 cfg,
                 heating_asked,
                 confirm_asked,
+                answering_confirm,
             )
             if action.action == "speak_lines":
                 changes.update(safety_state="signal", safety_kind=action.kind)

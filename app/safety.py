@@ -6,7 +6,9 @@ nothing, because only phrases describing a smell, leak, alarm or symptom are lis
 description gets one check question; a yes is a clear signal and a clear no clears the call.
 
 A smell that is usually harmless but sometimes hides gas (burning dust the first time the heat runs)
-gets a lighter confirm question once per call, with the same yes and no rules.
+gets a lighter confirm question once per call. It is asked the negative way ("it doesn't smell like
+sulfur or rotten eggs, right?"), so "yeah", "right" or "no" clear it, and the smell named again,
+"it does" or an unsure answer bring the lines.
 
 Heating the home with an oven, stove, generator or grill indoors gets the carbon monoxide check
 question once per call. Only wording that says it is used for heat counts ("the oven on to keep
@@ -74,6 +76,36 @@ YES = (
 # that says how the caller feels about the cold: "I just feel a little chilled".
 NOT_A_SIGN = {"chilled", "chilly", "cold", "cool", "annoyed", "frustrated", "worried", "nervous"}
 UNSURE = ("dont know", "not sure", "no idea", "cant tell")
+# The answer to the confirm question, which asks the negative way: these say it does smell.
+CONFIRM_YES = (
+    "it does",
+    "does smell",
+    "actually",
+    "kind of",
+    "sort of",
+    "a little",
+    "a bit",
+    "maybe",
+    "i think so",
+    "now that you mention it",
+)
+# And these agree that it doesn't.
+CONFIRM_NO = (
+    "yes",
+    "yeah",
+    "yep",
+    "yup",
+    "right",
+    "correct",
+    "exactly",
+    "no",
+    "nope",
+    "nah",
+    "not really",
+    "nothing",
+    "doesnt",
+    "does not",
+)
 NO = (
     "no",
     "nope",
@@ -91,6 +123,9 @@ NO = (
 # and the mention, and these endings negate what follows them.
 ECHO_WORDS = {"or", "and", "any", "rotten", "egg", "eggs", "sulfur", "sulphur"}
 ECHO_NEGATORS = (
+    "doesnt smell",
+    "does not smell",
+    "dont smell",
     "not like",
     "nothing like",
     "doesnt smell like",
@@ -288,6 +323,23 @@ def answer_to_check(text: str, cfg: dict) -> str:
     return "unclear"
 
 
+def answer_to_confirm(text: str, cfg: dict) -> str:
+    """yes, no or unclear, for the confirm question asked the negative way. A yes still wins on any
+    doubt: the smell named again, "it does", or an unsure answer."""
+    text_words = words(text)
+    if clear_signal(text, cfg, answering_check=True) or vague_signal(
+        text, cfg, answering_check=True
+    ):
+        return "yes"
+    if any(_says_yes(text_words, w) for w in CONFIRM_YES):
+        return "yes"
+    if any(has_phrase(text_words, w) for w in UNSURE):
+        return "yes"
+    if any(has_phrase(text_words, w) for w in CONFIRM_NO):
+        return "no"
+    return "unclear"
+
+
 def _says_yes(text_words: str, word: str) -> bool:
     """The yes word is there, and isn't "a little" describing the cold ("a little chilled")."""
     target = words(word)
@@ -312,9 +364,11 @@ def check_caller_turn(
     cfg: dict,
     heating_asked: bool = False,
     confirm_asked: bool = False,
+    answering_confirm: bool = False,
 ) -> SafetyAction:
     """What the agent must do after this caller line, given the call's safety state. heating_asked
-    and confirm_asked are True once that question has been asked on this call."""
+    and confirm_asked are True once that question has been asked on this call; answering_confirm
+    when the question being answered is the confirm question."""
     signal = clear_signal(text, cfg, answering_check=state == "checking")
     if signal:
         if state == "lines_said" and signal == kind:
@@ -327,7 +381,7 @@ def check_caller_turn(
         # The lines haven't been said yet, so they still come before anything else.
         return SafetyAction("speak_lines", kind, lines_for(cfg, kind))
     if state == "checking":
-        answer = answer_to_check(text, cfg)
+        answer = answer_to_confirm(text, cfg) if answering_confirm else answer_to_check(text, cfg)
         if answer == "yes":
             return SafetyAction("speak_lines", kind, lines_for(cfg, kind))
         if answer == "no":

@@ -60,10 +60,10 @@ safety:
   vague:
     gas:
       question: Just to be safe, are you smelling gas in the house right now?
-      # Proposed in eval round 2 (Jackson: "just to confirm, it doesn't smell like sulfur or egg or
-      # anything, right?"), asked as a yes or no question so a "yeah" can't mean both. Not yet
-      # signed off.
-      confirm_question: Just to confirm, does it smell at all like sulfur or rotten eggs?
+      # Asked once when the trade's confirm phrases come up ("burning dust"). Asked the negative way,
+      # so a "yeah" or "right" clears it (app/safety.py answer_to_confirm). Signed off by Jackson in
+      # eval round 2.
+      confirm_question: Just to confirm, it doesn't smell like sulfur or rotten eggs, right?
     co:
       question: Just to be safe, is a carbon monoxide alarm going off, or is anyone feeling sick or dizzy?
   # Said when the agent wants to end a safety call: it signs off rather than hangs up. A polite

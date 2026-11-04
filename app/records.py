@@ -83,6 +83,15 @@ def caller_turn_after(conn: sqlite3.Connection, call_id: str, seq: int) -> bool:
     )
 
 
+def last_agent_line(conn: sqlite3.Connection, call_id: str) -> str | None:
+    """The agent's most recent line on this call."""
+    row = conn.execute(
+        "SELECT text FROM turns WHERE call_id = ? AND speaker = 'agent' ORDER BY seq DESC LIMIT 1",
+        (call_id,),
+    ).fetchone()
+    return row["text"] if row else None
+
+
 def agent_said(conn: sqlite3.Connection, call_id: str, line: str) -> bool:
     """Whether an agent turn on this call's thread already contained the line."""
     ids = thread(conn, call_id)

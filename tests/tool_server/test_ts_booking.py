@@ -685,3 +685,14 @@ def test_a_caller_who_approves_gets_no_approval_call(agent):
     assert booked["data"]["approval_callback_at"] is None
     assert "approve" not in booked["say"]
     assert _approval_callbacks(agent, call) == []
+
+
+def test_a_property_manager_account_typed_residential_can_book(agent, scenarios):
+    """Eval round 2: the mock's property manager and co-op board look after apartment buildings,
+    so they are Residential accounts and book like any home."""
+    linden = next(
+        a for a in scenarios["residentialBuildingAccounts"] if a["kind"] == "property manager"
+    )
+    call = ready_to_book(agent, linden["phone"])
+    assert agent.tool("find_slots", call, job_type="tune_up")["ok"]
+    assert book(agent, call, first_open(agent, call))["ok"]
