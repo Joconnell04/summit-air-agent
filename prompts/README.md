@@ -1,6 +1,6 @@
 # Prompts
 
-What the model is told on a call, split by job so each part can be changed and tested on its own. Both voice layers load these files through `assemble.py`, so the LiveKit worker and the Retell baseline run the same conversation. Every change runs the eval suite before merge.
+The system prompt is these files assembled, not one file. What the model is told on a call, split by job so each part can be changed and tested on its own. Both voice layers load these files through `assemble.py`, so the LiveKit worker and the Retell baseline run the same conversation. Every change runs the eval suite before merge.
 
 | File | Job |
 |---|---|
