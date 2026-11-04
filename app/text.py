@@ -140,3 +140,39 @@ STREET_TYPES = {
     word for pair in STREET_WORDS.items() for word in pair
     if pair[0] not in ("north", "south", "east", "west")
 }
+
+
+DIGIT_WORDS = {
+    "oh": "0", "o": "0", "zero": "0", "one": "1", "two": "2", "three": "3", "four": "4",
+    "five": "5", "six": "6", "seven": "7", "eight": "8", "nine": "9",
+}
+
+
+def digit_runs(text: str) -> list[str]:
+    """The runs of digits a line says, however speech-to-text wrote them: "11226", "11 226", "one
+    one two two six" and "one one two double six" are each one run, "11226". Punctuation ends a
+    run, so "11226, 718 555 0142" is two."""
+    runs = []
+    for part in re.split(r"[.,;:!?]", text or ""):
+        runs += _digit_runs(part)
+    return runs
+
+
+def _digit_runs(text: str) -> list[str]:
+    runs, current, double = [], "", False
+    for token in words(text).split():
+        if token == "double":
+            double = True
+            continue
+        digits = token if token.isdigit() else DIGIT_WORDS.get(token)
+        if digits is None:
+            if current:
+                runs.append(current)
+            current, double = "", False
+            continue
+        current += digits * 2 if double and len(digits) == 1 else digits
+        double = False
+    if current:
+        runs.append(current)
+    return runs
+

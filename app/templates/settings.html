@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% from "_ui.html" import q, count, empty, on_off with context %}
+{% block title %}{{ tenant }}: settings{% endblock %}
+{% block body %}
+{% set amp = "&" if slug else "?" %}
+<main class="page">
+  <div class="page-head">
+    <div class="lead">
+      <div class="crumbs">Settings<span>/</span><span>{% if is_admin %}Admin{% else %}View only{% endif %}</span></div>
+      <h1 class="page-title">Settings</h1>
+    </div>
+  </div>
+
+  <form class="panel" id="calls" method="post" action="/owner/settings{{ q(slug) }}">
+    <div class="panel-head">
+      <h2>Calls</h2>{{ count(settings | length) }}<span class="sub">read by the server, never by the agent</span>
+      {% if is_admin %}<div class="end">{% if saved == "settings" %}<span class="tag done">Saved</span>{% endif %}<button class="btn primary" type="submit">Save</button></div>{% endif %}
+    </div>
+    {% if errors.settings %}<div class="panel-body"><p class="error" role="alert">{{ errors.settings }}</p></div>{% endif %}
+    <div class="table-wrap">
+    <table class="table form">
+      <thead><tr><th>Setting</th><th class="right">State</th></tr></thead>
+      <tbody>
+      {% for s, value in settings %}
+        <tr>
+          <td><span class="what" id="label-{{ s.key }}">{{ s.label }}</span><div class="why small">{{ s.detail }}</div></td>
+          <td class="fit right">{% if is_admin %}{{ on_off("s." ~ s.key, value, "label-" ~ s.key) }}{% elif value %}<span class="tag done">On</span>{% else %}<span class="tag outline">Off</span>{% endif %}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    </div>
+  </form>
+
+  <section class="panel" id="users">
+    <div class="panel-head">
+      <h2>Users</h2>{{ count(users | length) }}<span class="sub">admins change settings, rules and users</span>
+      {% if saved == "users" %}<div class="end"><span class="tag done">Saved</span></div>{% endif %}
+    </div>
+    {% for key in ("user", "role") %}{% if errors[key] %}<div class="panel-body"><p class="error" role="alert">{{ errors[key] }}</p></div>{% endif %}{% endfor %}
+    <div class="table-wrap">
+    <table class="table form">
+      <thead><tr><th>Name</th><th>Username</th><th>Role</th><th class="right"><span class="sr-only">Change</span></th></tr></thead>
+      <tbody>
+      {% for u in users %}
+        {% set last_admin = u.role == "admin" and admins == 1 %}
+        <tr>
+          <td><span class="what">{{ u.name }}</span>{% if u.id == user.id %} <span class="faint">(you)</span>{% endif %}</td>
+          <td class="fit muted">{{ u.username }}</td>
+          <td class="fit">{{ roles[u.role] }}</td>
+          <td class="fit right">{% if is_admin %}<div class="actions">
+            {% if remove == u.id and u.id != user.id and not last_admin %}
+              <form method="post" action="/owner/users/{{ u.id }}/remove{{ q(slug) }}"><button class="btn" type="submit">Confirm</button></form>
+              <a class="btn quiet" href="/owner/settings{{ q(slug) }}#users">Keep</a>
+            {% else %}
+              {% if not last_admin %}<form method="post" action="/owner/users/{{ u.id }}/role{{ q(slug) }}"><input type="hidden" name="role" value="{{ 'staff' if u.role == 'admin' else 'admin' }}"><button class="btn" type="submit">{{ "Make staff" if u.role == "admin" else "Make admin" }}</button></form>{% endif %}
+              {% if u.id != user.id and not last_admin %}<a class="btn quiet" href="/owner/settings{{ q(slug) }}{{ amp }}remove={{ u.id }}#users">Remove</a>{% endif %}
+            {% endif %}
+          </div>{% endif %}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    </div>
+    {% if is_admin %}
+    <form class="panel-foot actions" method="post" action="/owner/users{{ q(slug) }}">
+      <label class="sr-only" for="new-name">Name</label><input class="field" id="new-name" name="name" value="{{ added.name }}" maxlength="60" placeholder="Name" required{% if errors.name %} aria-invalid="true" aria-describedby="err-name"{% endif %}>
+      <label class="sr-only" for="new-username">Username</label><input class="field" id="new-username" name="username" value="{{ added.username }}" maxlength="40" placeholder="Username" autocapitalize="none" spellcheck="false" autocomplete="off" required{% if errors.username %} aria-invalid="true" aria-describedby="err-username"{% endif %}>
+      <label class="sr-only" for="new-password">Password</label><input class="field" id="new-password" name="password" type="password" minlength="{{ min_password }}" placeholder="Password, {{ min_password }} or more characters" autocomplete="new-password" required{% if errors.password %} aria-invalid="true" aria-describedby="err-password"{% endif %}>
+      <label class="sr-only" for="new-role">Role</label><select class="select" id="new-role" name="role">{% for key, label in roles.items() %}<option value="{{ key }}"{% if (added.role or "staff") == key %} selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+      <button class="btn" type="submit">Add user</button>
+    </form>
+    {% for key in ("name", "username", "password") %}{% if errors[key] %}<p class="error field-error panel-foot" id="err-{{ key }}" role="alert">{{ key | capitalize }}: {{ errors[key] }}</p>{% endif %}{% endfor %}
+    {% endif %}
+  </section>
+
+  <section class="panel" id="changes">
+    <div class="panel-head"><h2>Changes</h2>{{ count(changes | length) }}<span class="sub">every change, kept</span></div>
+    {% if changes %}
+    <div class="table-wrap">
+    <table class="table">
+      <thead><tr><th>Changed</th><th>By</th><th>What changed</th></tr></thead>
+      <tbody>
+      {% for c in changes %}
+        <tr>
+          <td class="time">{{ local(c.at).strftime("%b %-d, %-I:%M %p") }}</td>
+          <td class="fit">{{ c.by }}</td>
+          <td>{{ c.what }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    </div>
+    {% else %}{{ empty("No changes yet. Calls use the settings as set up.") }}{% endif %}
+  </section>
+</main>
+{% endblock %}

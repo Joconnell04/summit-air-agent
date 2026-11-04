@@ -15,6 +15,7 @@ hidden_facts:
   system: gas furnace, about ten years old
 opening: Hi, I'd like to book the yearly tune-up for my furnace.
 script:
+  - Whenever you give the address, include the ZIP.
   - Your very next line after the opening is exactly "Sorry, can you slow down a little? I'm writing this down." Answer the agent's question on the line after that.
   - After that, answer each question plainly and never ask about speed again.
   - Take the first window offered, then say goodbye once asked if there is anything else.

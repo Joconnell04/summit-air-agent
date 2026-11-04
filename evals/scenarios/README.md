@@ -71,6 +71,8 @@ Each `must` item is `- <check>: <argument>`. They read the tool server's record 
 | `callback` | `promised`, `none`, or `{day, not_before}` | a timed callback was stored, or none; with a mapping, every callback is due `day` days after the call, no earlier than `not_before` (local, "12:00") |
 | `agent_says` | a regex or list | the agent said each one at some point (case ignored) |
 | `agent_never_says` | a regex or list | the agent never said any of them |
+| `said_booked` | `only_after_booking` | the agent never told the caller they were booked before a booking went through on the call |
+| `slot_taken` | `told_plainly` | a booking that came back `slot_taken` was followed by an agent line saying the window just went and, after that, naming another time; passes when no booking came back taken |
 | `pace` | a mapping: `held`, `source`, `remembered`, `address` | the speaking rate the server recorded (app/pace.py): the call ended at the `held` speed, set by `source` (default, record, linked, request, repeats, older_adult); the caller's number keeps `remembered` (a speed or `none`); a request to hear the address at the `address` speed was recorded and the address was spoken at it. Always: every agent line carries the speed it was spoken at, and it is the server's pace at that point |
 
 Job types: `no_heat`, `no_cooling`, `tune_up`, `safety_check`, `estimate`. Priorities: Low, Normal, High, Urgent.

@@ -119,6 +119,7 @@ Plus the provider keys: `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET`, 
 
 - `deploy.sh` copies the checkout and `.env` to the server, installs, restarts, and installs the crontab.
 - `run.sh` starts the mock, the tool server, the worker and the outbound poller if they aren't running; cron runs it at boot.
+- The owner view signs people in with accounts (app/accounts.py). Before the first deploy of accounts, set `OWNER_ADMIN_USERNAME`, `OWNER_ADMIN_NAME` and `OWNER_ADMIN_PASSWORD` in the server's `.env`: the tool server creates that admin at startup. `OWNER_TOKEN` and `RULES_EDITORS` are no longer read and can be removed. A server started with no user logs an error saying so, and `make owner-user ACCOUNT=<name> NAME="<name>" ROLE=admin DB=<the server's TOOL_DB>` adds one from a shell on the server.
 - `watchdog.sh` runs every minute: restarts anything stopped, checks the worker's own health page (`:8081/`, 200 only once registered with LiveKit) and the tool server's `/healthz`, posts the worker heartbeat, pings `HEALTHCHECK_URL` when set, and after two failed checks in a row moves the number to the recorded fallback (`scripts/phone/fallback.py`: Twilio plays the tenant's fallback line and records a voicemail), and back when the worker passes again. Fallback voicemails stay in Twilio's call log; they don't reach the owner view.
 
 ## Not done here

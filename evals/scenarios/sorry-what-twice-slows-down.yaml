@@ -14,6 +14,7 @@ hidden_facts:
   wants: a tune-up for the central AC before summer, any morning
 opening: Hey, I want to get my central air checked out before it gets warm.
 script:
+  - Whenever you give the address, include the ZIP.
   - Reply "Sorry, what?" and nothing else to the agent's first question.
   - Reply "Sorry, what?" and nothing else to the agent's next question too.
   - After that, answer every question plainly. Never ask the agent to slow down or speed up.

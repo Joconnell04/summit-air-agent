@@ -1,5 +1,5 @@
-.PHONY: setup test lint check ratchet ratchet-update eval eval-decisions replay langsmith eval-upload seed-st mock-st postman-st server postman trace \
-	owner-demo rules-gate summary-check voice-livekit phone-setup deploy test-call measure-delay \
+.PHONY: setup test lint check ratchet ratchet-update eval eval-pairs eval-decisions replay langsmith eval-upload seed-st mock-st postman-st server postman trace \
+	owner-demo owner-user rules-gate summary-check voice-livekit phone-setup deploy test-call measure-delay \
 	retell-push retell-bridge retell-deploy retell-report rig rig-report sim listen
 
 setup:
@@ -29,6 +29,11 @@ eval:
 	uv run $(EVAL_ENV) python -m evals.run $(if $(SUITE),--suite $(SUITE)) $(if $(TAGS),--tags $(TAGS)) \
 	  $(if $(STACKS),--stacks $(STACKS)) $(if $(PROFILES),--profiles $(PROFILES)) \
 	  $(if $(SAMPLES),--samples $(SAMPLES))
+
+# Paid: two calls at once against one world, racing for the same opening (evals/README.md, "Two
+# calls at once"). make eval-pairs [PAIRS=all|two-callers-last-slot,...] [SAMPLES=3]
+eval-pairs:
+	uv run $(EVAL_ENV) python -m evals.run --pairs $(or $(PAIRS),all) $(if $(SAMPLES),--samples $(SAMPLES))
 
 # Paid: the simulated audio bake-off, one stack per run (evals/README.md, "Audio rig").
 # make rig STACK=elevenlabs [SUITE=smoke] [MAX_COST=5]   stacks: livekit, retell, elevenlabs,
@@ -99,14 +104,19 @@ trace:
 	@test -n "$(CALL)" || { echo "usage: make trace CALL=<call id>"; exit 2; }
 	uv run python -m app.trace $(CALL) $(if $(DB),--db $(DB))
 
-# A seeded day of calls on the owner view, served as if it were 5:20 PM that day:
-# http://127.0.0.1:$(PORT)/owner?token=dev-owner-token
+# A seeded day of calls on the owner view, served as if it were 5:20 PM that day. Sign in at
+# http://127.0.0.1:$(PORT)/owner as owner (admin) or staff, password dev-owner-password or
+# dev-staff-password (development only; scripts/seed_owner_day.py adds both).
 owner-demo:
 	uv run python -m scripts.seed_owner_day --dir data/owner-demo
-	TOOL_DB=data/owner-demo/tool.db OWNER_TOKEN=$${OWNER_TOKEN:-dev-owner-token} JOBS_INTERVAL_SECONDS=0 \
-	  RULES_EDITORS=$${RULES_EDITORS:-Owner=dev-edit-code} \
-	  FIXED_NOW=$$(cat data/owner-demo/now) \
+	TOOL_DB=data/owner-demo/tool.db JOBS_INTERVAL_SECONDS=0 FIXED_NOW=$$(cat data/owner-demo/now) \
 	  uv run uvicorn app.main:create_app --factory --port $(PORT)
+
+# Add a user to the owner view; the password is asked for in the terminal.
+# make owner-user ACCOUNT=dana NAME="Dana Ruiz" [ROLE=staff|admin] [DB=data/tool_server.db]
+owner-user:
+	@test -n "$(ACCOUNT)" -a -n "$(NAME)" || { echo 'usage: make owner-user ACCOUNT=<username> NAME="<name>"'; exit 2; }
+	uv run python -m app.accounts $(if $(DB),--db $(DB)) add $(ACCOUNT) --name "$(NAME)" --role $(or $(ROLE),staff)
 
 # Paid: the eval gate on every owner draft waiting for a check (evals/gate.py), about $0.39 for the
 # 18 must-pass scenarios (MEASURED). make rules-gate [DB=data/tool_server.db]

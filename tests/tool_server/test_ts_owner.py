@@ -14,17 +14,17 @@ from toolkit import (
     in_area_address,
     make_server,
     ready_to_book,
+    sign_in,
 )
 
 from app import jobs, owner
 
 TODAY = date(2026, 11, 2)
-TOKEN = "owner-token"
 
 
 @pytest.fixture
 def agent(tmp_path, clock, mock):
-    return Agent(make_server(tmp_path, clock, mock[0], owner_token=TOKEN), clock)
+    return Agent(make_server(tmp_path, clock, mock[0]), clock)
 
 
 def page(agent: Agent, day: date = TODAY) -> dict:
@@ -69,7 +69,7 @@ def commercial(agent: Agent, n: int) -> str:
 
 def out_of_area(agent: Agent, n: int, zip_code: str) -> str:
     call = agent.start(caller(n))["data"]["call_id"]
-    agent.turn(call, "My AC is out.")
+    agent.turn(call, f"My AC is out. I'm in {zip_code}.")
     agent.tool("check_service_area", call, zip=zip_code)
     agent.end(call)
     return call
@@ -262,7 +262,7 @@ def test_out_of_area_calls_by_zip_most_first_over_thirty_days(agent, clock):
 
 def test_a_zip_asked_about_on_a_call_that_booked_is_not_out_of_area_demand(agent):
     call = agent.start(caller(1))["data"]["call_id"]
-    agent.turn(call, "Do you cover Hoboken? My mom lives there. Mine's the tune-up though.")
+    agent.turn(call, "Do you cover Hoboken, 07030? My mom lives there. Mine's the tune-up though.")
     agent.tool("check_service_area", call, zip="07030")
     agent.confirm_read_back(call, in_area_address())
     assert book(agent, call, first_open(agent, call))["ok"]
@@ -273,7 +273,7 @@ def test_a_zip_asked_about_on_a_call_that_booked_is_not_out_of_area_demand(agent
 
 def test_a_zip_asked_about_before_a_drop_is_not_demand_when_the_call_back_booked(agent, clock):
     first = agent.start(caller(1))["data"]["call_id"]
-    agent.turn(first, "Do you go out to Hoboken? That's my mom's place.")
+    agent.turn(first, "Do you go out to Hoboken, 07030? That's my mom's place.")
     agent.tool("check_service_area", first, zip="07030")
     agent.end(first, "dropped")
     clock.advance(minutes=1)
@@ -320,38 +320,20 @@ def test_another_days_page_reads_only_that_day(agent, clock):
     assert [c["type"] for c in page(agent, date(2026, 11, 3))["calls"]] == ["no_heat"]
 
 
-# ---- the page and its token --------------------------------------------------------------------
+# ---- the page --------------------------------------------------------------------
 
 
-def test_the_page_needs_the_token_and_keeps_it_out_of_the_address_bar(agent):
-    client = agent.client
-    first = client.get("/owner", follow_redirects=False)
-    assert first.status_code == 401 and 'name="token"' in first.text
-    assert client.get("/owner?token=wrong", follow_redirects=False).status_code == 401
-    opened = client.get(f"/owner?token={TOKEN}", follow_redirects=False)
-    assert opened.status_code == 303 and "token" not in opened.headers["location"]
-    assert "httponly" in opened.headers["set-cookie"].lower()
-    assert client.get("/owner").status_code == 200, "the cookie carries the token after that"
 
 
-def test_the_login_form_sets_the_cookie(agent):
-    assert agent.client.post("/owner/login", data={"token": "nope"}).status_code == 401
-    done = agent.client.post("/owner/login", data={"token": TOKEN}, follow_redirects=False)
-    assert done.status_code == 303
-    assert agent.client.get("/owner").status_code == 200
 
 
-def test_an_empty_owner_token_refuses_everyone(tmp_path, clock, mock):
-    agent = Agent(make_server(tmp_path, clock, mock[0]), clock)
-    assert agent.client.get("/owner?token=", follow_redirects=False).status_code == 401
-    assert agent.client.post("/owner/login", data={"token": ""}).status_code == 401
 
 
 def test_the_page_renders_a_seeded_day(agent, clock):
     booked = booked_tune_up(agent, 1)
     commercial(agent, 2)
     out_of_area(agent, 3, "10001")
-    agent.client.get(f"/owner?token={TOKEN}")
+    sign_in(agent)
     html = agent.client.get("/owner").text
     for text in ("Day board", "Needs attention", "Jobs booked", "booking rate", "Callbacks"):
         assert text in html, text
@@ -373,7 +355,7 @@ def test_a_calls_timeline_shows_turns_tools_and_refusals(agent):
     agent.turn(call, "Wait, I smell gas.")
     book(agent, call, first_open(agent, call))
     assert agent.client.get(f"/owner/calls/{call}").status_code == 401
-    agent.client.get(f"/owner?token={TOKEN}")
+    sign_in(agent)
     html = agent.client.get(f"/owner/calls/{call}").text
     assert "Wait, I smell gas." in html
     assert "book_appointment" in html and "gate_safety" in html
@@ -383,7 +365,7 @@ def test_a_calls_timeline_shows_turns_tools_and_refusals(agent):
 def test_caller_text_is_escaped(agent):
     call = agent.start(UNKNOWN)["data"]["call_id"]
     agent.turn(call, "<script>alert(1)</script>")
-    agent.client.get(f"/owner?token={TOKEN}")
+    sign_in(agent)
     html = agent.client.get(f"/owner/calls/{call}").text
     assert "<script>alert(1)</script>" not in html
     assert count(agent, "SELECT COUNT(*) FROM turns") == 1
@@ -436,7 +418,7 @@ def test_a_call_the_system_placed_is_typed_by_what_it_was_for(agent, clock):
 def test_the_timeline_links_back_to_the_local_day(agent, clock):
     clock.advance(hours=11)  # 8 p.m. New York, already the next day in UTC
     call = agent.start(caller(1))["data"]["call_id"]
-    agent.client.get(f"/owner?token={TOKEN}")
+    sign_in(agent)
     html = agent.client.get(f"/owner/calls/{call}").text
     assert 'href="/owner?day=2026-11-02"' in html
 
@@ -449,17 +431,6 @@ def test_a_callback_the_system_is_placing_doesnt_count_as_needing_a_person(agent
     assert page(agent)["needs_person"] == 0
 
 
-def test_an_odd_token_is_refused_not_an_error(agent):
-    assert agent.client.get("/owner?token=é", follow_redirects=False).status_code == 401
-    assert agent.client.post("/owner/login", data={"token": "é"}).status_code == 401
 
 
-def test_the_login_redirect_is_relative_and_keeps_the_day(agent):
-    opened = agent.client.get(f"/owner?token={TOKEN}&day=2026-11-01", follow_redirects=False)
-    assert opened.headers["location"] == "/owner?day=2026-11-01"
-    assert "max-age" in opened.headers["set-cookie"].lower()
 
-
-def test_a_login_lasts_as_long_as_a_browser_allows(agent):
-    opened = agent.client.get(f"/owner?token={TOKEN}", follow_redirects=False)
-    assert f"max-age={400 * 86400}" in opened.headers["set-cookie"].lower()
