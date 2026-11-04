@@ -141,6 +141,25 @@ def test_debug_endpoints_need_the_token(agent):
     assert agent.client.get("/debug/calls/nope", headers=DEBUG).status_code == 404
 
 
+def test_forgetting_calls_is_refused_unless_the_server_allows_it(agent):
+    assert agent.client.post("/debug/forget-calls").status_code == 401
+    assert agent.client.post("/debug/forget-calls", headers=DEBUG).status_code == 403
+
+
+def test_forgotten_calls_no_longer_link_a_caller_calling_again(tmp_path, clock, mock):
+    agent = Agent(make_server(tmp_path, clock, mock[0], allow_forget_calls=True), clock)
+    first = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(first, "I smell gas in the kitchen.")
+    agent.client.post(f"/calls/{first}/end", json={"reason": "agent_end"})
+    clock.advance(minutes=1)
+    # A minute later the same number is taken for the caller calling back.
+    assert agent.start(UNKNOWN)["data"]["linked_call"] is not None
+    assert agent.client.post("/debug/forget-calls", headers=DEBUG).json() == {"ok": True, "aged": 2}
+    clock.advance(minutes=1)
+    again = agent.start(UNKNOWN)["data"]
+    assert again["linked_call"] is None and "safety" not in again
+
+
 def test_the_call_timeline_shows_turns_tools_gates_refusals_and_outcome(agent):
     call = ready_to_book(agent)
     agent.turn(call, "Oh, and it smells like gas a little.")

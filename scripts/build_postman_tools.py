@@ -494,6 +494,14 @@ def build() -> dict:
             envelope=False,
             check="pm.test('is refused', () => pm.response.to.have.status(401));",
         ),
+        item(
+            "Forget calls, eval instance only",
+            "POST",
+            "debug/forget-calls",
+            headers=DEBUG,
+            envelope=False,
+            check="pm.test('refused off the Retell eval instance', () => pm.response.to.have.status(403));",
+        ),
     ]
     setup = [
         item(

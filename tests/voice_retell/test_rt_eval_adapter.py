@@ -3,7 +3,13 @@ import json
 import httpx
 import pytest
 
-from voice.retell.eval_adapter import RetellChatAgent, RetellNotReady, open_agent, reset_world
+from voice.retell.eval_adapter import (
+    RetellChatAgent,
+    RetellNotReady,
+    forget_calls,
+    open_agent,
+    reset_world,
+)
 
 
 def agent(handler, opened=None):
@@ -88,12 +94,14 @@ def test_a_run_opens_its_chats_through_the_retell_lanes_open_chat(monkeypatch):
     from voice.retell.chat import open_chat
 
     monkeypatch.setattr("voice.retell.eval_adapter.reset_world", lambda env: None)
+    monkeypatch.setattr("voice.retell.eval_adapter.forget_calls", lambda env: None)
     retell_agent, _server = open_agent("eval-x", "(212) 555-0999", env=ENV)
     assert retell_agent.open_chat is open_chat
 
 
 def test_the_eval_servers_token_goes_on_every_request_and_to_open_chat(monkeypatch):
     monkeypatch.setattr("voice.retell.eval_adapter.reset_world", lambda env: None)
+    monkeypatch.setattr("voice.retell.eval_adapter.forget_calls", lambda env: None)
     agent, server = open_agent("eval-x", "(212) 555-0999", env=ENV)
     assert server.client.headers["X-Debug-Token"] == "tok"
     assert server.debug_token == "tok"
@@ -103,6 +111,7 @@ def test_the_eval_servers_token_goes_on_every_request_and_to_open_chat(monkeypat
 def test_the_mock_is_reset_before_the_chat_opens(monkeypatch):
     order = []
     monkeypatch.setattr("voice.retell.eval_adapter.reset_world", lambda env: order.append("reset"))
+    monkeypatch.setattr("voice.retell.eval_adapter.forget_calls", lambda env: None)
     open_agent("eval-x", "(212) 555-0999", env=ENV)
     assert order == ["reset"]
 
@@ -118,6 +127,14 @@ def test_the_reset_address_can_be_overridden_for_a_tunnel():
     env = {**ENV, "RETELL_EVAL_MOCK_RESET_URL": "http://127.0.0.1:8111/debug/reset"}
     reset_world(env, reset_client(seen))
     assert seen[0][1] == "http://127.0.0.1:8111/debug/reset"
+
+
+def test_the_eval_tool_server_forgets_earlier_calls_before_each_scenario():
+    seen = []
+    forget_calls(ENV, reset_client(seen))
+    assert seen == [("POST", "https://eval.example/debug/forget-calls", "tok")]
+    with pytest.raises(RetellNotReady, match="TOOL_ALLOW_FORGET_CALLS"):
+        forget_calls(ENV, reset_client([], status=403))
 
 
 def test_a_refused_reset_stops_the_scenario_instead_of_scoring_a_dirty_world():

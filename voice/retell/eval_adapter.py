@@ -117,6 +117,23 @@ def reset_world(env: dict, client: httpx.Client | None = None) -> None:
         )
 
 
+def forget_calls(env: dict, client: httpx.Client | None = None) -> None:
+    """Ask the eval tool server to age every call it has recorded, so this scenario's caller isn't
+    taken for one calling back a few minutes after the last scenario with the same caller ID
+    (lifecycle._linked). Our own stack gets a fresh tool server per scenario; this one is shared."""
+    url = env["RETELL_EVAL_TOOL_SERVER"].rstrip("/") + "/debug/forget-calls"
+    client = client or httpx.Client(timeout=60)
+    try:
+        response = client.post(url, headers={"X-Debug-Token": env["RETELL_EVAL_DEBUG_TOKEN"]})
+    except httpx.HTTPError as err:
+        raise RetellNotReady(f"could not reach the eval tool server at {url}: {err}") from err
+    if response.status_code != 200:
+        raise RetellNotReady(
+            f"the eval tool server refused to forget its calls ({response.status_code} at {url}); "
+            "it needs TOOL_ALLOW_FORGET_CALLS=1 (deploy/retell/run.sh)"
+        )
+
+
 def open_agent(call_id: str, caller_id: str, env: dict | None = None):
     """The agent under test and the tool server whose record the checks read, on a clean mock."""
     env = env if env is not None else os.environ
@@ -126,6 +143,7 @@ def open_agent(call_id: str, caller_id: str, env: dict | None = None):
             f"Retell runs need {', '.join(missing)}; the Retell lane (brief 05) sets them up"
         )
     reset_world(env)
+    forget_calls(env)
     http = httpx.Client(
         base_url=BASE_URL, headers={"Authorization": f"Bearer {env['RETELL_API_KEY']}"},
         timeout=30,

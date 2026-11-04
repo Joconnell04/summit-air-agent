@@ -20,8 +20,9 @@ case "$1" in
     ST_MOCK_DB="$DATA/eval_mock.db" ST_MOCK_ALLOW_RESET=1 ST_MOCK_RESET_TOKEN="$SUMMIT_EVAL_TOKEN" \
       exec uv run uvicorn --factory --host 127.0.0.1 --port 8111 servicetitan_mock.app:create_app ;;
   eval-tools)
+    # TOOL_ALLOW_FORGET_CALLS: the harness ages earlier scenarios' calls so none links as a repeat.
     FSM_BASE_URL=http://127.0.0.1:8111 TOOL_DB="$DATA/eval_tools.db" DEBUG_TOKEN="$SUMMIT_EVAL_TOKEN" \
-      SLOT_CACHE_SECONDS=0 \
+      SLOT_CACHE_SECONDS=0 TOOL_ALLOW_FORGET_CALLS=1 \
       exec uv run uvicorn --factory --host 127.0.0.1 --port 8110 app.main:create_app ;;
   eval-bridge)
     TOOL_SERVER_URL=http://127.0.0.1:8110 RETELL_BRIDGE_DB="$DATA/eval_bridge.db" \
