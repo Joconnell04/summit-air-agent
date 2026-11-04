@@ -37,6 +37,7 @@ from evals.audio_rig.audio import FRAME_MS, Vad, frames, reply_delay_ms
 from evals.audio_rig.line import Listener
 from evals.audio_rig.recording import (
     LISTEN_URL,
+    MANIFEST,
     RECORD_RATE,
     SIM_DIR,
     Batch,
@@ -371,6 +372,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--no-store", action="store_true",
                         help="keep recordings local, without the copy in the bucket")
     parser.add_argument("--record-dir", default=str(SIM_DIR))
+    parser.add_argument("--batch", default="",
+                        help="add the calls to this existing batch, numbering on from its last")
     parser.add_argument("--results-in-batch", action="store_true",
                         help="write the results file into the batch folder, not evals/results")
     args = parser.parse_args(argv)
@@ -387,9 +390,12 @@ def main(argv: list[str] | None = None) -> int:
         chosen = [by_id[i] for i in dict.fromkeys(suites.parse_tags(args.only))]
     batch = None
     if not args.no_record:
-        env = dict(os.environ)
-        store = None if args.no_store else open_store(env)
-        batch = Batch(Path(args.record_dir) / batch_id(args.stack), args.stack, store)
+        name = args.batch or batch_id(args.stack)
+        if args.batch and not (Path(args.record_dir) / name / MANIFEST).is_file():
+            print(f"no batch {name} in {args.record_dir}", file=sys.stderr)
+            return 2
+        store = None if args.no_store else open_store(dict(os.environ))
+        batch = Batch(Path(args.record_dir) / name, args.stack, store)
         print(f"recording into {batch.folder}", flush=True)
     results_dir = batch.folder if (batch and args.results_in_batch) else Path(args.results_dir)
     with tempfile.TemporaryDirectory(prefix="summit-rig-") as tmp:

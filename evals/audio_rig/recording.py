@@ -147,9 +147,13 @@ class Batch:
         self.folder = folder
         self.store = store
         self.flac = flac
-        self.manifest = {"batch": folder.name, "stack": stack,
-                         "created": datetime.now(UTC).isoformat(timespec="seconds"),
-                         "results": None, "calls": []}
+        if (folder / MANIFEST).is_file():
+            # Adding to a batch: its calls keep their codes and new ones follow on.
+            self.manifest = json.loads((folder / MANIFEST).read_text())
+        else:
+            self.manifest = {"batch": folder.name, "stack": stack,
+                             "created": datetime.now(UTC).isoformat(timespec="seconds"),
+                             "results": None, "calls": []}
         folder.mkdir(parents=True, exist_ok=True)
         self._save()
 
@@ -184,8 +188,11 @@ class Batch:
     def finish(self, results_path: Path | None) -> None:
         if results_path is not None:
             path = results_path.resolve()
-            self.manifest["results"] = str(path.relative_to(ROOT) if path.is_relative_to(ROOT)
-                                           else path)
+            name = str(path.relative_to(ROOT) if path.is_relative_to(ROOT) else path)
+            # A batch added to more than once has a results file per run.
+            earlier = self.manifest.get("results") or []
+            earlier = [earlier] if isinstance(earlier, str) else earlier
+            self.manifest["results"] = [*earlier, name]
         self._save()
         if self.store is not None:
             self.store.put(self.folder / MANIFEST, f"{self.folder.name}/{MANIFEST}")

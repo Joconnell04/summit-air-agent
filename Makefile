@@ -48,11 +48,11 @@ rig-report:
 
 # Paid, about $0.14 a call all-in (MEASURED: eight round 3 calls, $1.10): simulated calls on
 # our stack, recorded in stereo for listening (evals/audio_rig/sim.py). Prints the page link.
-# make sim CALLS="co-alarm-clear complaint-flag" | TAGS=flow:safety [MAX_COST=2]
+# make sim CALLS="co-alarm-clear complaint-flag" | TAGS=flow:safety [MAX_COST=2] [BATCH=<to add to>]
 sim:
 	@test -n "$(CALLS)$(TAGS)" || { echo 'usage: make sim CALLS="id id" or TAGS=tag,tag'; exit 2; }
 	uv run $(EVAL_ENV) python -m evals.audio_rig.sim $(if $(CALLS),--calls "$(CALLS)") \
-	  $(if $(TAGS),--tags $(TAGS)) $(if $(MAX_COST),--max-cost $(MAX_COST))
+	  $(if $(TAGS),--tags $(TAGS)) $(if $(MAX_COST),--max-cost $(MAX_COST)) $(if $(BATCH),--batch $(BATCH))
 
 # The local listening page for the newest batch in data/sim: http://127.0.0.1:8130
 listen:

@@ -159,7 +159,7 @@ def test_calls_get_short_codes_in_the_order_they_ran(tmp_path):
     manifest = json.loads((batch.folder / "manifest.json").read_text())
     assert [c["code"] for c in manifest["calls"]] == ["S1", "S2"]
     assert [c["scenario_id"] for c in manifest["calls"]] == ["co-alarm-clear", "complaint-flag"]
-    assert manifest["results"] == "data/sim/x/run.json"
+    assert manifest["results"] == ["data/sim/x/run.json"]
     transcript = json.loads((batch.folder / "S1.json").read_text())
     assert transcript["persona"] == "Tomas, a renter"
     assert transcript["lines"][0]["text"] == "hello"
@@ -305,3 +305,26 @@ def test_a_scenario_id_that_does_not_exist_stops_the_rig_before_any_call(capsys)
 
     assert rig.main(["--stack", "livekit", "--suite", "full", "--only", "no-such-call"]) == 2
     assert "no-such-call" in capsys.readouterr().err
+
+
+def test_adding_to_a_batch_numbers_on_and_keeps_every_results_file(tmp_path):
+    folder = tmp_path / "20261104-010203-livekit"
+    first = Batch(folder, "livekit", flac=False)
+    first.add(recorded_call(), result_for("co-alarm-clear"))
+    first.finish(tmp_path / "a.json")
+    again = Batch(folder, "livekit", flac=False)
+    entry = again.add(recorded_call(), result_for("complaint-flag"))
+    again.finish(tmp_path / "b.json")
+    manifest = json.loads((folder / "manifest.json").read_text())
+    assert entry["code"] == "S2"
+    assert [c["code"] for c in manifest["calls"]] == ["S1", "S2"]
+    assert len(manifest["results"]) == 2
+
+
+def test_adding_to_a_batch_that_does_not_exist_stops_before_any_call(tmp_path, capsys):
+    from evals.audio_rig import rig
+
+    code = rig.main(["--stack", "livekit", "--suite", "full", "--only", "co-alarm-clear",
+                     "--record-dir", str(tmp_path), "--batch", "20261104-000000-livekit"])
+    assert code == 2 and "no batch" in capsys.readouterr().err
+    assert sim.rig_args("a", "", 1.0, batch="x")[-2:] == ["--batch", "x"]
