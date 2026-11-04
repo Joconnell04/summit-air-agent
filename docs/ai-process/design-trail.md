@@ -89,3 +89,5 @@ How the design was reached, in order, so a reader can follow each choice back to
 | Times and return visits | A bare hour is daytime; a same-problem job within 30 days is flagged | DECISIONS.md 050, #75 |
 | Warm transfer | Server-decided, a key press joins the person, a stored callback if nobody answers; the demo rings Jackson's phone | DECISIONS.md 051, #69 |
 | Call recordings | Bucket to server copy, 30 days, played on the call page | DECISIONS.md 052, #69 |
+| Speaking rate per call | Server-set, 0.85 for callers 65 or older or on request, remembered for the caller | DECISIONS.md 053 |
+| Owner accounts and settings | Admin and staff roles; a settings panel with a two-party consent switch | DECISIONS.md 054 |
