@@ -10,8 +10,9 @@ import smtplib
 import sqlite3
 import time
 from datetime import datetime, timedelta
+from pathlib import Path
 
-from . import booking, outbound, records, reports, search, summary, weather
+from . import booking, outbound, recordings, records, reports, search, summary, weather
 from .db import iso, parse_iso, tx
 from .fsm import FsmAdapter, FsmRejected, FsmUnavailable, SlotCache
 from .mail import Mailer
@@ -386,11 +387,16 @@ def _alert_text(
     return subject, "\n".join(lines)
 
 
-def purge(conn: sqlite3.Connection, tenant: Tenant, now: datetime, environment: str) -> dict:
-    """Transcripts go after transcript_days and call records after call_record_days (spec S-45).
-    Development keeps everything, because QA and debugging read full logs."""
+def purge(
+    conn: sqlite3.Connection, tenant: Tenant, now: datetime, environment: str, folder: Path
+) -> dict:
+    """Transcripts and recordings go after transcript_days, call records after call_record_days
+    (spec S-45). Development keeps everything, because QA and debugging read full logs."""
     if environment == "development":
-        return {"turns": 0, "calls": 0}
+        return {"turns": 0, "recordings": 0, "calls": 0}
+    audio = recordings.purge(
+        conn, tenant, folder, now - timedelta(days=tenant.retention["transcript_days"]), now
+    )
     transcripts = iso(now - timedelta(days=tenant.retention["transcript_days"]))
     records_before = iso(now - timedelta(days=tenant.retention["call_record_days"]))
     with tx(conn):
@@ -409,7 +415,7 @@ def purge(conn: sqlite3.Connection, tenant: Tenant, now: datetime, environment: 
             conn.execute("DELETE FROM tool_calls WHERE call_id = ?", (call_id,))
             conn.execute("DELETE FROM idempotency WHERE call_id = ?", (call_id,))
             conn.execute("DELETE FROM calls WHERE id = ?", (call_id,))
-    return {"turns": turns, "calls": len(old)}
+    return {"turns": turns, "recordings": audio, "calls": len(old)}
 
 
 def _guarded(job, *args, **kwargs):
@@ -448,7 +454,21 @@ def run_once(services) -> dict:
                 ),
                 "reports": reports.file_held(conn, tenant, services.report_poster, now),
                 "search_indexed": _guarded(search.refresh, conn, tenant),
-                "purged": purge(conn, tenant, now, services.settings.environment),
+                "recordings": _guarded(
+                    recordings.collect,
+                    conn,
+                    tenant,
+                    services.bucket,
+                    services.settings.recordings_dir,
+                    now,
+                ),
+                "purged": purge(
+                    conn,
+                    tenant,
+                    now,
+                    services.settings.environment,
+                    services.settings.recordings_dir,
+                ),
             }
         report["overdue_callbacks"] = []
         for tenant in services.tenants:

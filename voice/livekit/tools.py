@@ -1,8 +1,9 @@
 """The model's tools. Each one posts to the tool server and hands the envelope back to the model;
 none decides anything here. Safety text in a result is spoken by the worker, not handed to the
 model to say. There is no built-in end-call or transfer tool: `end_call` asks the
-server first and hangs up only when the server says so (DECISIONS.md 004), and V1 has no live
-transfer, so the model asks for a person with `flag_person` (docs/call-journeys.md, traits).
+server first and hangs up only when the server says so (DECISIONS.md 004), and the model asks for a
+person with `flag_person`; after each one the worker asks the server whether the call goes to a
+person now (transfer.py).
 """
 
 import json
@@ -13,6 +14,7 @@ from livekit.agents import RunContext, function_tool
 
 from .bridge import Bridge
 from .server import ToolServer
+from .transfer import Transfer
 
 
 class ToolLog:
@@ -40,6 +42,7 @@ def make_tool(
     log: ToolLog,
     hang_up: Callable[[RunContext, object], None],
     speak: Callable[[str], object],
+    transfer: Transfer | None = None,
 ):
     schema = {k: spec[k] for k in ("name", "description", "parameters")}
 
@@ -60,6 +63,11 @@ def make_tool(
         if ending and result["data"].get("hang_up"):
             # The server agreed: hang up once this turn's speech, and any line above, has played.
             hang_up(context, spoken)
+        # After a person flag the server may put the caller through now, and the worker speaks
+        # for the agent from there.
+        put_through = spec["name"] == "flag_person" and result["ok"] and transfer is not None
+        if put_through and await transfer.offer(context.speech_handle, result):
+            return None
         if spoken is not None or ending:
             # None tells the session not to generate another reply.
             return None
@@ -75,7 +83,9 @@ def build_tools(
     log: ToolLog,
     hang_up: Callable[[RunContext, object], None],
     speak: Callable[[str], object],
+    transfer: Transfer | None = None,
 ) -> list:
     """One tool per spec. `hang_up` runs only when the server's end_call result says to; `speak`
-    says a line word for word with interruptions off and returns its speech handle."""
-    return [make_tool(spec, server, bridge, log, hang_up, speak) for spec in specs]
+    says a line word for word with interruptions off and returns its speech handle; `transfer`,
+    when set, is asked after every person flag."""
+    return [make_tool(spec, server, bridge, log, hang_up, speak, transfer) for spec in specs]

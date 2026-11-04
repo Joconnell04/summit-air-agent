@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_ui.html" import priority, window_text, note_icon, empty, q with context %}
+{% from "_ui.html" import priority, window_text, note_icon, empty, player, q with context %}
 {% set p = page %}
 {% set title = p.name or (p.address.street if p.address else none) or call.caller_id %}
 {% block title %}{{ tenant }}: {{ title }}, {{ clock(p.started) }}{% endblock %}
@@ -43,6 +43,7 @@
             <button type="button" class="toggle" aria-pressed="false" data-tech title="Show what the agent sent and got back at each step">Technical details</button>
           </div>
         </div>
+        {% if recorded %}{{ player("/owner/calls/" ~ call.id ~ "/recording") }}{% endif %}
         {% if thread %}
         <ol class="conv">
           {% for item in thread %}
@@ -69,7 +70,7 @@ error: {{ item.tech.error }}{% endif %}</div>
           {% endfor %}
         </ol>
         {% else %}{{ empty("Nothing was said on this call.") }}{% endif %}
-        <div class="panel-foot">The recording isn't kept; this is the transcript the agent heard and said.</div>
+        {% if not recorded %}<div class="panel-foot">No recording of this call.</div>{% endif %}
       </section>
 
       <form class="report" id="report" method="post" action="/owner/calls/{{ call.id }}/report">

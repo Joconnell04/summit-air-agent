@@ -67,6 +67,9 @@ GATES = (
      ("S-39",)),
     ("whole_call", "Can't place a call to 911 or anyone outside the company's callbacks", (),
      ("S-24",)),
+    ("whole_call", "Puts a caller through to a person only when the server says so",
+     (), ()),
+    ("whole_call", "Never puts a safety call through to a person", (), ()),
     ("whole_call", "Every callback has a named time inside calling hours",
      ("invalid_callback_time",), ()),
     ("booking", "Holds any booking until the safety lines are said and a person is flagged",
@@ -115,6 +118,10 @@ LINE_STAGES = {
     "flag_stored": ("whole_call", "Team will call"),
     "flag_stored_urgent": ("whole_call", "Team will call, urgent"),
     "flag_stored_no_callback": ("whole_call", "Team told"),
+    "transfer_handoff": ("whole_call", "Putting you through"),
+    "transfer_no_answer": ("whole_call", "Nobody picked up"),
+    "transfer_prompt": ("whole_call", "To the person answering"),
+    "transfer_summary": ("whole_call", "Summary once they take it"),
     "lead_stored": ("whole_call", "Lead saved"),
     "callback_by": ("whole_call", "Callback by a time"),
     "callback_after": ("whole_call", "Callback after a time"),
@@ -332,16 +339,24 @@ def _settings(tenant: Tenant) -> list[Rule]:
              f"{_few(agent['on_call_alerts']['priorities'])} flags after hours are emailed",
              why=why),
         Rule("setting.retention", "after_call", "setting", "Records kept",
-             f"Transcripts {tenant.retention['transcript_days']} days, calls "
+             f"Transcripts{' and recordings' if tenant.retention.get('record_calls') else ''} "
+             f"{tenant.retention['transcript_days']} days, calls "
              f"{tenant.retention['call_record_days']} days", why=why),
     ]
+    if tenant.transfer:
+        cfg = tenant.transfer
+        found.append(Rule("setting.transfer", "whole_call", "setting", "Putting a caller through",
+                          "The office in hours when the caller asks for a person; the on-call "
+                          "technician after hours on an urgent call. Rings "
+                          f"{cfg['ring_seconds']} s, then someone calls back within "
+                          f"{cfg['fallback_callback_minutes']} minutes", why=why))
     return found
 
 
 # The agent.yaml sections each part above reads, for the completeness test.
 SHOWN = {
     "safety", "commercial", "approval", "priority", "after_hours", "callbacks", "on_call_alerts",
-    "repeat_callers", "retention", "lines", "voice",
+    "repeat_callers", "retention", "lines", "voice", "transfer",
 }
 
 

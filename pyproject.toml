@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "Inbound phone agent for Summit Air, a residential HVAC company in NYC"
 requires-python = ">=3.12"
 dependencies = [
+    "boto3>=1.43.123",
     # The tool server's technician summary (app/summary.py) and the eval harness.
     "anthropic>=2.4.0",
     "fastapi>=0.162.0",

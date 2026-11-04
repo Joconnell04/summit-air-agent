@@ -476,8 +476,34 @@ div.note {
   font-family: var(--mono); font-size: 12px; color: var(--muted); white-space: pre-wrap; word-break: break-word;
 }
 
-.recording { display: flex; align-items: center; gap: var(--s-3); padding: var(--s-3) var(--s-4); border-bottom: 1px solid var(--line-soft); color: var(--muted); font-size: var(--text-sm); }
-.recording .play { width: 32px; height: 32px; border-radius: var(--r-full); background: var(--neutral-wash); display: flex; align-items: center; justify-content: center; color: var(--disabled); flex: none; }
+/* Player: a call's recording on one row, one control high: play, a scrub bar, the time (story
+   O-6). The played part and the playhead are Ember, as "now" is on the board. Without the script
+   the browser's own controls show instead. */
+.player { display: flex; align-items: center; gap: var(--s-3); padding: var(--s-2) var(--s-4); border-bottom: 1px solid var(--line-soft); background: var(--sunken); }
+.player audio { flex: 1; min-width: 0; height: var(--control-h); }
+.player[data-ready] audio { display: none; }
+.player .btn.icon { flex: none; }
+.player .btn .pause, .player.playing .btn .play { display: none; }
+.player.playing .btn .pause { display: block; }
+.player .scrub {
+  flex: 1; min-width: 0; height: var(--control-h); margin: 0; background: transparent; cursor: pointer;
+  -webkit-appearance: none; appearance: none; --played: 0%;
+}
+.player .scrub::-webkit-slider-runnable-track {
+  height: 4px; border-radius: var(--r-full);
+  background: linear-gradient(to right, var(--ember) var(--played), var(--line-strong) var(--played));
+}
+.player .scrub::-moz-range-track { height: 4px; border-radius: var(--r-full); background: var(--line-strong); }
+.player .scrub::-moz-range-progress { height: 4px; border-radius: var(--r-full); background: var(--ember); }
+.player .scrub::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 12px; height: 12px; margin-top: -4px; border: 0; border-radius: var(--r-full);
+  background: var(--ember); box-shadow: 0 0 0 3px var(--sunken);
+}
+.player .scrub::-moz-range-thumb { width: 12px; height: 12px; border: 0; border-radius: var(--r-full); background: var(--ember); box-shadow: 0 0 0 3px var(--sunken); }
+.player .scrub:focus-visible { outline: none; }
+.player .scrub:focus-visible::-webkit-slider-thumb { box-shadow: var(--focus); }
+.player .scrub:focus-visible::-moz-range-thumb { box-shadow: var(--focus); }
+.player .time { flex: none; color: var(--muted); font-size: var(--text-sm); white-space: nowrap; }
 
 /* Tell Revin (story O-8): the one write on the owner view. */
 .report { border: 1px solid var(--ember-line); background: var(--ember-wash); border-radius: var(--r-lg); padding: var(--s-4); display: flex; flex-direction: column; gap: var(--s-3); }

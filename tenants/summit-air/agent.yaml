@@ -204,6 +204,24 @@ repeat_callers:
 retention:
   transcript_days: 30
   call_record_days: 365
+  # Each call's audio, kept on the server and deleted with its transcript. Recording also needs a
+  # bucket for LiveKit to upload to (RECORDING_S3_* in the server's .env); without one, none is made.
+  record_calls: true
+
+# Warm transfer to a person (C-11). The server decides: a caller who asks for a person during
+# office hours goes to the office, and an urgent call after hours goes to the on-call technician.
+# Never on a gas or carbon monoxide call. Each role names the server environment variable that
+# holds its number, so no number is in the repo; an unset number keeps the flag and callback.
+transfer:
+  targets:
+    office: TRANSFER_OFFICE_NUMBER
+    on_call: TRANSFER_ON_CALL_NUMBER
+  # How long the person's phone rings before the agent comes back (ASSUMED).
+  ring_seconds: 20
+  # After the first line, how long the person has to press 1 (ASSUMED). A voicemail never does.
+  accept_seconds: 10
+  # The callback promised when no time was asked for and nobody answers (ASSUMED).
+  fallback_callback_minutes: 30
 
 # Lines the server returns as `say`. {time} is a named callback time, such as "4:30 PM".
 lines:
@@ -217,6 +235,12 @@ lines:
     I've marked this as urgent and let our on-call team know, so someone's keeping an eye on it.
     Someone will call you {when}.
   flag_stored_no_callback: I've let our team know.
+  # Warm transfer. The handoff is said to the caller; the summary only to the person answering.
+  transfer_handoff: I'm connecting you with someone from our team now.
+  transfer_no_answer: I couldn't reach anyone just now, so I've let the team know and someone will call you {when}.
+  # The first line names no caller, in case a voicemail greeting answered.
+  transfer_prompt: Summit Air has a caller for the {role}. Press 1 to take the call.
+  transfer_summary: "{priority}Caller at {phone}: {reason}. Putting you through now."
   lead_stored: Someone from our team will call you {when} to tell you more.
   # The callback time as said: a time we named, or the window the caller asked for.
   callback_by: by {time}

@@ -67,6 +67,15 @@ class Settings:
     tool_timeout_s: float = 4.0
     # The LiveKit outbound trunk for journey 12 calls; empty turns outbound calls off.
     outbound_trunk_id: str = field(default_factory=lambda: _env("LIVEKIT_OUTBOUND_TRUNK_ID", ""))
+    # The LiveKit project, for joining the room a transfer's person is dialed into.
+    livekit_url: str = field(default_factory=lambda: _env("LIVEKIT_URL", ""))
+    # The bucket LiveKit uploads each call's recording to (app/recordings.py reads the same
+    # variables to collect it). No bucket, no recording.
+    recording_bucket: str = field(default_factory=lambda: _env("RECORDING_S3_BUCKET", ""))
+    recording_endpoint: str = field(default_factory=lambda: _env("RECORDING_S3_ENDPOINT", ""))
+    recording_region: str = field(default_factory=lambda: _env("RECORDING_S3_REGION", ""))
+    recording_access_key: str = field(default_factory=lambda: _env("RECORDING_S3_ACCESS_KEY", ""))
+    recording_secret: str = field(default_factory=lambda: _env("RECORDING_S3_SECRET", ""))
     # How often the outbound poller asks the server for a call to place.
     claim_every_s: float = field(default_factory=lambda: float(_env("CLAIM_EVERY_S", "15")))
 
