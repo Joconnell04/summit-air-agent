@@ -100,3 +100,5 @@ How the design was reached, in order, so a reader can follow each choice back to
 | Cold handoff | A caller who demands a person is transferred at once, after the safety lines on a gas call | DECISIONS.md 061, #90 |
 | Listening to simulated calls | Stereo files with real pauses, `make sim` and `make listen` with S1, S2 codes | DECISIONS.md 062, #95 |
 | End-of-turn wait | Kept at 0.35 s; the digits wait no longer sticks for the rest of a call | DECISIONS.md 063, #98 |
+| Bench shows everything | Admins see calls as recorded; only replay drafts stay redacted | DECISIONS.md 064, #101 |
+| Cartesia hosted agents | Left out: our server couldn't force safety lines or own hang-ups; Cartesia stays the voice only | DECISIONS.md 065 |
