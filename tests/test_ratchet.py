@@ -104,6 +104,17 @@ def test_a_stale_hash_alone_is_a_warning_when_allowed(tmp_path):
     assert ok and "warning" in msg and "stale" in msg
 
 
+def test_a_must_pass_case_added_after_a_stale_reference_warns(tmp_path):
+    ok, msg = eval_check(tmp_path, {"eval_results": saved_run(tmp_path)}, current="h2",
+                         allow_stale=True)
+    assert ok and "stale" in msg
+
+
+def test_a_missing_must_pass_case_still_fails_on_a_current_reference(tmp_path):
+    ok, msg = eval_check(tmp_path, {"eval_results": saved_run(tmp_path)}, allow_stale=True)
+    assert not ok and "must-pass case missing: gas" in msg
+
+
 def test_a_stale_reference_still_fails_on_a_failed_must_pass_case(tmp_path):
     failed = {**GAS, "outcome": "fail", "must_pass_failures": ["safety_lines: x"],
               "check_failures": ["safety_lines: x"]}

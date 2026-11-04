@@ -97,7 +97,11 @@ def check_eval(baseline: dict, root: Path = ROOT, current_hash=None, scenarios=N
     floor = baseline.get("min_eval_scenarios") or 0
     if len(run.scenarios) < floor:
         problems.append(f"{len(run.scenarios)} scenarios, fewer than the floor of {floor}")
-    problems += must_pass_gaps(run, scenarios)
+    gaps = must_pass_gaps(run, scenarios)
+    if fresh != run.hash and allow_stale:
+        # A must-pass scenario added since the reference run can't be in it; the next run covers it.
+        gaps = [g for g in gaps if not g.startswith("must-pass case missing:")]
+    problems += gaps
     rate, min_rate = run.pass_rate(), baseline.get("min_eval_pass_rate")
     if min_rate is not None and (rate is None or rate < min_rate):
         shown = "none" if rate is None else f"{rate:.0%}"
