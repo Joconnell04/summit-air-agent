@@ -8,6 +8,7 @@ import json
 import logging
 import smtplib
 import sqlite3
+import time
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -417,11 +418,11 @@ def purge(
     return {"turns": turns, "recordings": audio, "calls": len(old)}
 
 
-def _guarded(job, *args):
+def _guarded(job, *args, **kwargs):
     """Run a job whose failure must not stop the jobs after it (the overdue and alert jobs matter
     more): ServiceTitan's call log replies it does not understand, or the search index."""
     try:
-        return job(*args)
+        return job(*args, **kwargs)
     except Exception as exc:
         log.exception("job failed")
         return {"error": f"{type(exc).__name__}: {exc}"}
@@ -473,10 +474,13 @@ def run_once(services) -> dict:
         for tenant in services.tenants:
             with tx(conn):
                 report["overdue_callbacks"] += records.mark_overdue(conn, tenant, now)
-        # Last, so a slow model call never holds up the jobs above.
+        # Last, so a slow model call never holds up the jobs above. One deadline for every
+        # tenant, so the run's summary time doesn't grow with the number of tenants.
+        deadline = time.monotonic() + summary.RUN_SECONDS
         for tenant in services.tenants:
             report[tenant.slug]["summaries"] = _guarded(
-                summary.run, conn, tenant, services.fsm[tenant.slug], services.summary_model, now
+                summary.run, conn, tenant, services.fsm[tenant.slug], services.summary_model, now,
+                deadline=deadline,
             )
     finally:
         conn.close()
