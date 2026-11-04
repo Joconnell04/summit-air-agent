@@ -22,6 +22,9 @@ Started while Jackson steps away. Each section is either a decision that needs h
 - **Debug bench (PR #89):** phone numbers on the bench keep their last four digits; the full number is never in a URL or a replay file.
 - **Main went briefly red** when the ZIP rule (#88) met tests whose scripted callers never say a ZIP; the test callers now say it (branch `fix/pair-callers-say-zip`).
 
+- **Eval measurement moves to two samples per scenario.** Five single-sample runs on nearly the same code scored 91, 96, 90, 90 and 85%, so about plus or minus 5 points is noise. The final reference run uses two samples per scenario, after one more round of agent fixes (an apartment building declined again, re-asking, an invented fee line, a repeated 911 line, flagging instead of booking after hours). If the two-sample rate sets the floor below 90%, that's a measurement change, not a quality drop.
+- **Merged:** #82 (round 3 and 4: server-spoken read-back and confirmations, the speech filter, decision 060), #89 and #93 (debug bench and the rule editor on it), #92, #94, #96.
+
 ## In progress
 
 | Lane | PR | State |
