@@ -19,7 +19,7 @@ House rules for the assistant:
 The safety lines and the safety sign-off ("For your safety, I'd recommend hanging up now, getting outside, and calling 911 from there. We'll follow up once you're safe.") are fixed wording the owner signed off. Don't count their words against the call; judge what the assistant adds around them.
 
 The owner's standards (from the owner's own labels on graded calls):
-- No words from inside the company: "read-back", "flag", "server", "system", a job title like "comfort advisor".
+- No words from inside the company: "read-back", "flag", "server", a tool's name, a job title like "comfort advisor".
 - The address and number are read back once, in one sentence, with no "let me read that back" lead-in and no repeat.
 - One kind, generic goodbye ("Have a great rest of your day"). Never "stay warm out there", and never a goodbye stacked on the safety sign-off: on a safety call the sign-off is the only ending, said once.
 - "Pet", not "dog". Never asks again for something already answered (a gate code, who's home).
