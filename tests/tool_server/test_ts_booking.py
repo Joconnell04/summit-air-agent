@@ -939,3 +939,40 @@ def test_an_unrelated_booking_after_a_recent_visit_is_not_a_return_visit(agent, 
     assert booked["ok"], booked
     assert booked["data"]["return_visit_review"] is False
     assert "manager" not in booked["say"]
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "It's 540 Church Ave.",
+        "I live on Church Avenue in Flatbush.",
+        "five forty church avenue",
+        "It's 540 Church, Brooklyn.",
+        "I'm right by Grand Army Plaza.",
+        "It's on Hotel Street.",
+        "We're on Office Road, the house at the end.",
+    ],
+)
+def test_a_business_word_in_a_street_or_place_name_is_not_a_business(line):
+    assert not sounds_commercial(line, AGENT["commercial"]), line
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "It's a church.",
+        "I run a hotel.",
+        "It's in a plaza on Atlantic.",
+        "We run a restaurant on Church Ave.",
+    ],
+)
+def test_a_business_said_as_one_still_reads_commercial_beside_a_street_name(line):
+    assert sounds_commercial(line, AGENT["commercial"]), line
+
+
+def test_a_caller_on_church_avenue_can_book(agent):
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "My heat's out at 540 Church Ave, 11218.")
+    address = {"street": "540 Church Ave", "unit": "", "city": "Brooklyn", "zip": "11218"}
+    agent.confirm_read_back(call, address)
+    assert book(agent, call, first_open(agent, call))["ok"]

@@ -95,7 +95,7 @@ class Voice:
     def read_back(self, call_id: str, street: str, zip_code: str) -> None:
         address = {"street": street, "unit": "", "city": "Brooklyn", "zip": zip_code}
         # The server acts only on a ZIP the caller said (app/tools.py _zip_known).
-        self.caller(call_id, f"The ZIP is {zip_code}.")
+        self.caller(call_id, f"It's {street}, {zip_code}.")
         asked = self.tool("read_back", call_id, address=address, phone="caller_id")
         self.agent(call_id, asked["say"])
         self.caller(call_id, "Yes, that's right.")
