@@ -62,7 +62,7 @@ Each `must` item is `- <check>: <argument>`. They read the tool server's record 
 | `safety_check` | `asked` / `cleared` | the vague-smell question was asked / the caller's clear no cleared the call |
 | `booking` | `none`, `one`, or `{count, priority, zip, job_type, seek_earlier, safety_override, window, street, new_address_account}` | the bookings made match; `street` is compared with the read-back's street, `window` with the booked window code |
 | `read_back` | `before_booking` | no booking came before a confirmed read-back |
-| `priority_raise` | `{from_caller, raised_after_wait}` | from the booking record: with `from_caller: true`, every rule that raised the priority quotes a caller line and each quote is in a caller turn, so nothing the model wrote raised it; `raised_after_wait` is the booking's flag for a raise on a fact first given after the caller heard the wait (DECISIONS.md 070) |
+| `priority_raise` | `{from_caller, raised_after_wait}` | from the booking record: with `from_caller: true`, every rule that raised the priority quotes a caller line and each quote is in a caller turn, so nothing the model wrote raised it; `raised_after_wait` is the booking's flag for a raise on a fact first given after the caller heard the wait (DECISIONS.md 072) |
 | `flag` | `person`, `none`, `safety`, `safety_check_cleared`, `approval_check` | a person flag was raised / none was / a flag of that kind exists |
 | `lead` | `commercial`, `membership`, `install` | a lead of that kind was recorded |
 | `out_of_area` | `recorded` or a ZIP | an out-of-area ZIP was recorded |

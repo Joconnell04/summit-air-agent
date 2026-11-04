@@ -1,4 +1,4 @@
-"""Priority from the caller's words only (docs/later.md C-58, DECISIONS.md 070 and 071): the model's
+"""Priority from the caller's words only (docs/later.md C-58, DECISIONS.md 072 and 073): the model's
 notes raise nothing, an inside temperature counts only when the caller said it, the reason quotes
 the caller, a raise after the caller heard the wait is flagged, and a caller who pushes with no new
 fact gets a note rather than a raise."""

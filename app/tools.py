@@ -274,7 +274,7 @@ def _facts(ctx: Ctx, job_type: str, turns: list, temps: list[float], outside) ->
 
 def _priority(ctx: Ctx, job_type: str, inside_temp_f: float | None) -> Decided:
     """The server's priority from the caller's own lines on the thread and its readings (spec
-    S-21, DECISIONS.md 070). What the model wrote in `issue` and `who_home` goes to the job notes
+    S-21, DECISIONS.md 072). What the model wrote in `issue` and `who_home` goes to the job notes
     and raises nothing; its inside temperature counts only when the caller said that number."""
     outside = weather.current(ctx.conn, ctx.tenant, ctx.now)
     turns = records.thread_turns(ctx.conn, ctx.call["id"])

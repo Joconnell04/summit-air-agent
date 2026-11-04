@@ -452,7 +452,7 @@ def turn(
             rules.advance_stage(conn, call, now)
             on_safety = call["safety_state"] not in ("none", "cleared") or action.action != "none"
             # A caller who asks for a higher priority with no new fact gets a calm answer from a
-            # note; nothing is raised, since only facts raise priority (DECISIONS.md 071).
+            # note; nothing is raised, since only facts raise priority (DECISIONS.md 073).
             if not on_safety and prio.raising_push(args.text, tenant.priority):
                 asked = _at_risk_asked(conn, call["id"], tenant.priority.get("at_risk_asked", []))
                 hints.append("priority_pushed_asked" if asked else "priority_pushed")

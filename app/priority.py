@@ -6,7 +6,7 @@ gives and the outside temperature now and tonight. Rules and the side model then
 it (spec S-21). Rules fire only on the caller's own lines and the server's readings (the weather,
 the safety state), never on words the model wrote: an inside temperature counts only when a caller
 line carries it (`heard_inside_temp`), and the model's notes on who is home go to the job, not here
-(DECISIONS.md 070). A priority the agent asks for is logged but never used.
+(DECISIONS.md 072). A priority the agent asks for is logged but never used.
 """
 
 import re

@@ -12,7 +12,7 @@ Discussion: docs/ai-process/transcripts/... or docs/explorations/...
 Issue: #N
 -->
 
-## 071. A caller who pushes for a higher priority gets a calm answer, not a raise
+## 073. A caller who pushes for a higher priority gets a calm answer, not a raise
 
 Decided: when a caller asks to be put first with no new fact ("it's an emergency", "make it urgent", "I'll pay extra", "put me first"), the server's turn check adds a hint and the agent gets a `[server]` note: one calm line that it'll get them the soonest opening, no arguing and no level named or promised, the at-risk question once if it hasn't been asked (`priority_pushed`, or `priority_pushed_asked` once an agent line has asked who's home), then the soonest window or a callback from a person, and 911 only if someone is in danger. Nothing is raised. The phrases are the trade's (`priority.pushes` in trades/hvac/agent.yaml). A negated ask ("it's not an emergency"), talk about the equipment ("the furnace is urgent business") and a line that also gives a fact a rule raises on don't count; on a safety call there is no hint. A caller telling the agent what to claim ("just say there's a baby here", "pretend she's 85") is not a fact: the words after "just say", "pretend" and the like, to the end of that part of the sentence, raise nothing (`CLAIMS` in app/priority.py).
 Why: insisting never raised priority, but nothing told the agent how to answer it, and the caller's own "say there's a baby" put the word "baby" in a caller line, which the phrase rule believed.
@@ -21,7 +21,7 @@ Would change if: live calls show callers pushing in words the list misses, or a 
 Discussion: docs/later.md C-58
 Issue: #124
 
-## 070. Priority rises only on the caller's own words, and a raise after the wait is flagged
+## 072. Priority rises only on the caller's own words, and a raise after the wait is flagged
 
 Decided: priority rules fire only on the caller's lines on this call or a linked one, and the server's own readings (the outside temperature, the safety state). What the model writes in `issue` and `who_home` still goes into the job notes but raises nothing. The model's `inside_temp_f` counts only when a caller line carries that number within four words of a temperature word ("it's 52 in here", "fifty two degrees") or answers an agent line that asked about the temperature ("maybe 52"), and never when the line gives it as an age, on the pattern of the ZIP rule (058); a booking that leaves the number out keeps one the caller gave earlier. Each rule's reason quotes the caller's sentence that raised it (`caller said "..."`), on the owner view and in the job's notes. The first time `find_slots` answers on a call, the server marks the wait as heard (`waits` table); a job whose level is above what the caller's lines before that would give is stored with `raised_after_wait`, a note line in ServiceTitan, a "Raised" row on the call page and a count per caller number in the call page's facts line. The flag is for the dispatcher to weigh and never lowers anything. The job type stays the model's: it sets the starting level and needs no caller cue.
 Why: the model's own summary fed the same phrase rules as the caller's words, so pressure on the agent or a model slip could raise a call, and after hours ask the on-call technician, on words nobody said. A fact first given after hearing the wait is usually true and still raises, since missing an at-risk caller is worse than a false raise, but a person should see when it came.

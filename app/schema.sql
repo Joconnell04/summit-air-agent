@@ -90,7 +90,7 @@ CREATE INDEX IF NOT EXISTS ix_bookings_status ON bookings (status);
 
 -- The turn when the agent first offered a window or named the wait on a call (find_slots answered).
 -- A priority raised by a fact the caller first gave after it is flagged for the dispatcher
--- (raised_after_wait in the booking's request, DECISIONS.md 070); nothing is lowered.
+-- (raised_after_wait in the booking's request, DECISIONS.md 072); nothing is lowered.
 CREATE TABLE IF NOT EXISTS waits (
     call_id TEXT PRIMARY KEY REFERENCES calls (id) ON DELETE CASCADE,
     turn_seq INTEGER NOT NULL,

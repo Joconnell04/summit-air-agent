@@ -109,7 +109,7 @@ safety:
 
 # Priority (spec S-21). `base` is the level for a job type the tenant gives no temperature brackets.
 # Each rule fires only on words the caller said on this call or a linked one, never on what the agent
-# wrote (DECISIONS.md 070), and can only raise priority. On a mild day (the call starts at Normal) an
+# wrote (DECISIONS.md 072), and can only raise priority. On a mild day (the call starts at Normal) an
 # Urgent rule raises to High instead. A "group" rule counts toward the tenant's `combine` rule, if it
 # has one.
 priority:

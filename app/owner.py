@@ -857,7 +857,7 @@ def call_page(conn: sqlite3.Connection, tenant: Tenant, trace: dict, now: dateti
 
 def raised_after_wait(conn: sqlite3.Connection, tenant: str, caller_key: str) -> int:
     """How many calls from this number booked a job whose priority was raised by a fact the caller
-    first gave after hearing the wait (DECISIONS.md 070), for the dispatcher to weigh."""
+    first gave after hearing the wait (DECISIONS.md 072), for the dispatcher to weigh."""
     if not caller_key:
         return 0
     return conn.execute(

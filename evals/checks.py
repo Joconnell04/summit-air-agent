@@ -198,7 +198,7 @@ QUOTE = re.compile(r'caller said "(.*?)"$')
 
 
 def priority_raise(arg: dict, ev: Evidence) -> list[str]:
-    """Where each booking's priority came from (DECISIONS.md 070). `from_caller`: every rule that
+    """Where each booking's priority came from (DECISIONS.md 072). `from_caller`: every rule that
     raised it quotes a caller line, and each quote is in a caller turn on the record, so nothing
     the model wrote raised it. `raised_after_wait`: the booking's flag for a raise on a fact first
     given after the caller heard the wait."""

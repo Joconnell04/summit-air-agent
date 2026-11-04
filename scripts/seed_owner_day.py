@@ -214,7 +214,7 @@ def today(voice: Voice, clock: Clock, day: date, gas_lines: str, co_lines: str) 
     voice.end(c)
 
     # 9:03: the caller mentions a parent only after hearing the first opening. The raise stands and
-    # the call page flags it for the dispatcher (DECISIONS.md 070).
+    # the call page flags it for the dispatcher (DECISIONS.md 072).
     at(9, 3)
     c = voice.start("c05", "(718) 555-0109")
     voice.caller(c, "The radiators upstairs are barely warm.")

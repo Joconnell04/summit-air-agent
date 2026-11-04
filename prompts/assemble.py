@@ -156,7 +156,7 @@ SERVER_NOTES = {
         "The caller wants the address said more slowly. Call read_back again with the same address "
         "and phone; the voice reads the address slower. Don't say the address yourself first."
     ),
-    # A caller pushing for a higher priority with no new fact (DECISIONS.md 071). Only facts raise
+    # A caller pushing for a higher priority with no new fact (DECISIONS.md 073). Only facts raise
     # it, on the server; the agent neither argues nor promises.
     "priority_pushed": (
         "The caller is pressing to be seen first but gave no new fact. Say one calm line that you'll "
