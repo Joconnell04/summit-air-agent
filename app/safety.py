@@ -43,9 +43,6 @@ NEGATORS = (
     "will not",
     "no longer",
     "nothing like",
-    # "nothing like eggs" in the answer to the confirm question is a no (eval run 20261104-173249,
-    # burning-dust-first-heat). "Like eggs" is the vague phrase, so the negator is "nothing".
-    "nothing",
 )
 # Words that can sit between a negator and the mention: "it's not a gas leak", "no sign of a gas
 # leak" is still a denial (eval round 3, gas-worry-no-smell).
@@ -298,6 +295,19 @@ def _echo_negated(before: str) -> bool:
     return any(trimmed.endswith(words(n)) for n in NEGATORS + ECHO_NEGATORS)
 
 
+def _nothing_like(bare: str, target: str) -> bool:
+    """Check answers only: "nothing like eggs" is a no to "like eggs" (eval run 20261104-173249,
+    burning-dust-first-heat). "Nothing" negates only a phrase that starts with "like", so "nothing,
+    the gas smell is strong" and "nothing but rotten eggs" still say yes."""
+    return target.startswith(" like ") and bare.endswith(" nothing ")
+
+
+def _sentences(text: str) -> list[str]:
+    """The text split at sentence ends. A negation never reaches across one: in "I reset the
+    breaker and got nothing. Gas smell in the basement." the gas smell is a report."""
+    return [s for s in re.split(r"(?<=[.!?])\s+|\n", text) if s.strip()]
+
+
 def _negated(text_words: str, phrase: str, answering: bool = False) -> bool:
     """True only when every mention of the phrase comes straight after a negating word, as in
     "I don't smell gas" or "no gas smell". "I don't know, I smell gas" is not negated. In the answer
@@ -315,7 +325,8 @@ def _negated(text_words: str, phrase: str, answering: bool = False) -> bool:
             kept.pop()
         bare = " " + " ".join(kept) + " "
         negated = any(bare.endswith(words(n)) for n in NEGATORS) or (
-            answering and (_person_negated(before) or _echo_negated(before))
+            answering
+            and (_person_negated(before) or _echo_negated(before) or _nothing_like(bare, target))
         )
         if not negated and not (answering and _quiet_after(after)):
             return False
@@ -352,18 +363,20 @@ def _hypothetical(text_words: str, phrase: str) -> bool:
 
 
 def _mentions(text: str, cfg: dict, answering_check: bool) -> list[tuple[str, bool]]:
-    """Every clear phrase in the text that isn't negated, as (kind, only a worry)."""
-    text_words = words(text)
+    """Every clear phrase in the text that isn't negated, as (kind, only a worry), sentence by
+    sentence."""
     found = []
-    for kind, spec in cfg["kinds"].items():
-        for phrase in spec["clear"]:
-            if has_phrase(text_words, phrase) and not _negated(
-                text_words, phrase, answering_check
-            ):
-                worry = _hypothetical(text_words, phrase) and not _answers_yes_after(
-                    text_words, phrase
-                )
-                found.append((kind, worry))
+    for sentence in _sentences(text):
+        text_words = words(sentence)
+        for kind, spec in cfg["kinds"].items():
+            for phrase in spec["clear"]:
+                if has_phrase(text_words, phrase) and not _negated(
+                    text_words, phrase, answering_check
+                ):
+                    worry = _hypothetical(text_words, phrase) and not _answers_yes_after(
+                        text_words, phrase
+                    )
+                    found.append((kind, worry))
     return found
 
 
@@ -427,25 +440,25 @@ def stands_down(text: str, kind: str | None, cfg: dict) -> bool:
 
 
 def vague_signal(text: str, cfg: dict, answering_check: bool = False) -> str | None:
-    text_words = words(text)
-    for kind, spec in cfg["vague"].items():
-        if any(
-            has_phrase(text_words, p) and not _negated(text_words, p, answering_check)
-            for p in spec["phrases"]
-        ):
-            return kind
+    for text_words in (words(sentence) for sentence in _sentences(text)):
+        for kind, spec in cfg["vague"].items():
+            if any(
+                has_phrase(text_words, p) and not _negated(text_words, p, answering_check)
+                for p in spec["phrases"]
+            ):
+                return kind
     return None
 
 
 def confirm_signal(text: str, cfg: dict) -> str | None:
     """The kind whose confirm phrases ("burning dust") the caller used, not negated, or None."""
-    text_words = words(text)
-    for kind, spec in cfg["vague"].items():
-        if any(
-            has_phrase(text_words, p) and not _negated(text_words, p)
-            for p in spec.get("confirm_phrases", [])
-        ):
-            return kind
+    for text_words in (words(sentence) for sentence in _sentences(text)):
+        for kind, spec in cfg["vague"].items():
+            if any(
+                has_phrase(text_words, p) and not _negated(text_words, p)
+                for p in spec.get("confirm_phrases", [])
+            ):
+                return kind
     return None
 
 

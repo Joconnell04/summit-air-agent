@@ -118,10 +118,14 @@ priority:
   # within `reach_words` of one of the `cues`, or answers an agent line with one of the `asked` words.
   inside_temp:
     cues: [degrees, degree, in here, inside, indoors, in the house, in the apartment, thermostat,
-           temperature, temp, cold, freezing, hot, warm, boiling]
+           temperature, temp, cold, freezing, hot, warm, boiling, house, home, down to, dropped,
+           falling, says, reads]
     asked: [temperature, thermostat, degrees, how cold, how warm, how hot, cold, chilly, warm, hot]
     reach_words: 4
-    plausible_f: [30, 110]  # a number outside these isn't an inside temperature
+    # An agent's temperature question stays open for this many caller lines, or until one gives a
+    # number ("let me check", "Sure", "it says 48").
+    asked_lines: 3
+    plausible_f: [20, 110]  # a number outside these isn't an inside temperature
   # A caller asking for a higher priority with no new fact. The server's turn check gives the agent
   # a note on how to answer (prompts/assemble.py, priority_pushed); nothing here raises anything.
   pushes: [its an emergency, its an emergency call, this is an emergency, its urgent, this is urgent,
@@ -196,8 +200,11 @@ priority:
       phrases: [lives alone, live alone, by herself, by himself, by myself, no one else,
                 just me at home, just me here, its just me, im alone, i am alone, home alone,
                 alone at home, on my own, only one here, only one home, caller alone]
-      # "Just me and my partner" names someone else at home.
-      unless_followed_by: [and, with, plus]
+      # "Just me and my partner" names someone else at home. Only the "just me" phrases: "I live
+      # alone and my heat is out" still raises.
+      unless_followed_by:
+        phrases: [its just me, just me at home, just me here]
+        words: [and, with, plus]
       raise_to: High
       group: true
       reason: someone at home alone

@@ -843,3 +843,28 @@ def test_carbon_monoxide_spelled_by_speech_to_text_brings_the_lines(line):
 )
 def test_c_o_without_an_alarm_or_symptom_is_not_carbon_monoxide(line):
     assert safety.check_caller_turn(line, "none", None, 0, CFG).action == "none"
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "I reset the breaker and got nothing. Gas smell in the basement.",
+        "Heat's out, thermostat shows nothing. Smells like gas down there.",
+    ],
+)
+def test_a_negation_never_reaches_across_a_sentence_end(line):
+    # PR #126 review: "nothing" as a general negator hid these gas reports.
+    assert safety.clear_signal(line, CFG) == "gas"
+
+
+@pytest.mark.parametrize(
+    "answer,result",
+    [
+        ("Nothing, the gas smell is strong", "yes"),
+        ("nothing but rotten eggs", "yes"),
+        ("no, it does smell like eggs", "yes"),
+        ("no, nothing like eggs, just dusty", "no"),
+    ],
+)
+def test_nothing_negates_only_a_like_phrase_in_a_check_answer(answer, result):
+    assert safety.answer_to_check(answer, CFG) == result

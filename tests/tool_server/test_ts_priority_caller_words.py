@@ -49,6 +49,12 @@ def test_numbers_said_reads_digits_words_and_decades():
     ]
 
 
+def test_a_percentage_is_not_an_age():
+    facts = prio.Facts("no_heat", "I'm ninety percent sure it's the igniter")
+    assert "vulnerable_person" not in prio.decide(facts, CFG).rules
+    assert "vulnerable_person" in prio.decide(prio.Facts("no_heat", "I'm ninety"), CFG).rules
+
+
 def test_an_age_said_in_words_raises_like_one_in_digits():
     facts = prio.Facts("no_heat", "my mother is eighty four and lives with me")
     assert "vulnerable_person" in prio.decide(facts, CFG).rules
@@ -83,6 +89,11 @@ def test_a_past_tense_negation_raises_nothing():
         ("it's just me here", True),
         ("It's just me. My son visits on Sundays.", True),
         ("I live alone", True),
+        # PR #126 review: the exclusion covers the "just me" phrases only.
+        ("I live alone and my heat is out", True),
+        ("I'm alone and it's freezing", True),
+        ("by myself and cold", True),
+        ("she lives alone and she is cold", True),
     ],
 )
 def test_just_me_counts_only_when_no_one_else_is_named_after_it(text, alone):
@@ -110,6 +121,52 @@ def test_a_real_fact_after_a_claim_still_raises():
 )
 def test_a_temperature_the_caller_said_with_a_temperature_word_counts(line, value):
     assert prio.heard_inside_temp([("caller", line)], value, TEMP) == line
+
+
+@pytest.mark.parametrize(
+    "line,value",
+    [
+        ("it's 48 and falling", 48),
+        ("it dropped to 48", 48),
+        ("the house is at 48", 48),
+        ("the thermostat reads like fiftyish", 50),
+        ("thermostat says five oh", 50),
+        ("it's four five in here", 45),
+        ("the house is down to 28", 28),
+    ],
+)
+def test_more_ways_of_giving_the_temperature_count(line, value):
+    # PR #126 review: each of these lost a real cold-house reading.
+    assert prio.heard_inside_temp([("caller", line)], value, TEMP) == line
+
+
+@pytest.mark.parametrize("answer,value", [("fiftyish", 50), ("five oh", 50), ("four five", 45)])
+def test_spoken_forms_count_as_the_answer_to_a_temperature_question(answer, value):
+    turns = [("agent", "How cold is it inside right now?"), ("caller", answer)]
+    assert prio.heard_inside_temp(turns, value, TEMP) == answer
+
+
+def test_the_question_stays_open_while_the_caller_goes_to_look():
+    turns = [
+        ("agent", "Do you know roughly what the temperature is inside?"),
+        ("caller", "let me check"),
+        ("agent", "Sure."),
+        ("caller", "it says 48"),
+    ]
+    assert prio.heard_inside_temp(turns, 48, TEMP) == "it says 48"
+
+
+def test_the_question_closes_once_a_number_is_given_or_the_talk_moves_on():
+    answered = [
+        ("agent", "How cold is it inside?"), ("caller", "about 60"),
+        ("agent", "And how many people are home?"), ("caller", "2"),
+    ]
+    assert prio.heard_inside_temp(answered, 2, {**TEMP, "plausible_f": [0, 110]}) is None
+    moved_on = [
+        ("agent", "How cold is it inside?"), ("caller", "hang on"), ("caller", "okay"),
+        ("caller", "what was the question"), ("agent", "Sure."), ("caller", "about 58"),
+    ]
+    assert prio.heard_inside_temp(moved_on, 58, TEMP) is None
 
 
 def test_a_bare_number_counts_when_it_answers_a_temperature_question():

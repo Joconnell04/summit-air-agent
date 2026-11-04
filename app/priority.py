@@ -63,8 +63,9 @@ class Priority:
 
 
 def _ages(text: str) -> list[int]:
-    # "eighty-four" is 84: a line roughened by speech-to-text, or a caller who spells it out.
-    text = spoken_numbers(text)
+    # "eighty-four" is 84: a line roughened by speech-to-text, or a caller who spells it out. "I'm
+    # ninety percent sure" gives no age (PR #126 review).
+    text = re.sub(r"\b\d+\s*(?:percent|per cent|%)", " ", spoken_numbers(text))
     ages = []
     for m in AGE.finditer(text):
         if m[4]:
@@ -171,12 +172,10 @@ def _unclaimed(text: str) -> str:
     return CLAIMS.sub(" ", text)
 
 
-def _always_followed(text: str, phrase: str, followers: list[str] | None) -> bool:
+def _always_followed(text: str, phrase: str, followers: list[str]) -> bool:
     """Every mention of the phrase runs straight on into one of these words, across a comma too:
     "it's just me and my partner" names someone else, so it isn't "just me" (a rule's
-    `unless_followed_by`)."""
-    if not followers:
-        return False
+    `unless_followed_by`, which names the phrases it covers)."""
     tokens, target = words(text).split(), words(phrase).split()
     found = [
         i for i in range(len(tokens) - len(target) + 1) if tokens[i : i + len(target)] == target
@@ -189,8 +188,11 @@ def _said(rule: dict, text: str) -> bool:
     """The rule's phrases or ages turn up in these lines, not negated and not a claim the caller
     asked the agent to make."""
     text = _unclaimed(text)
+    unless = rule.get("unless_followed_by") or {}
     phrases = [
-        p for p in rule.get("phrases", []) if not _always_followed(text, p, rule.get("unless_followed_by"))
+        p
+        for p in rule.get("phrases", [])
+        if p not in unless.get("phrases", []) or not _always_followed(text, p, unless["words"])
     ]
     # Split at punctuation first, so "No, my mother lives with us" keeps its raise.
     parts = _parts(text)
@@ -307,7 +309,8 @@ def decide(facts: Facts, cfg: dict, side_model: SideModel | None = None) -> Prio
         score = side_model.score(slot["question"], facts.caller_text or facts.text)
         if score is not None and score >= slot["threshold"]:
             level = slot.get("raise_to_when_mild", slot["raise_to"]) if mild else slot["raise_to"]
-            result.raise_to(level, "side_model", slot["reason"])
+            # The side model reads every caller line, so there is no one line to quote.
+            result.raise_to(level, "side_model", f"{slot['reason']}, from the side model")
     return result
 
 
@@ -318,18 +321,23 @@ def heard_inside_temp(
     rule (DECISIONS.md 058): the model's number counts only if the caller said it. `turns` are
     (speaker, text) in order. The number has to sit within a few words of a temperature word in the
     same sentence ("it's 52 in here", "fifty two degrees", "the thermostat says 58"), or be the
-    caller's answer right after the agent asked about the temperature ("about 58"). A number the
-    line gives as someone's age never counts ("my mother is 84"). "The fifties" counts for any
-    value from 50 to 59. `cfg` is the trade's priority.inside_temp block."""
-    low_f, high_f = cfg.get("plausible_f", [30, 110])
+    caller's answer after the agent asked about the temperature ("about 58"). The question stays
+    open across an agent's "Sure" while the caller goes to look, until a caller line gives a number
+    or `asked_lines` caller lines go by. A number the line gives as someone's age never counts ("my
+    mother is 84"). "The fifties" counts for any value from 50 to 59. `cfg` is the trade's
+    priority.inside_temp block."""
+    low_f, high_f = cfg.get("plausible_f", [20, 110])
     if value is None or not low_f <= value <= high_f:
         return None
     reach = cfg.get("reach_words", 4)
-    asked = False
+    open_for = 0
     for speaker, text in turns:
         if speaker == "agent":
-            asked = any(has_phrase(words(text), a) for a in cfg.get("asked", []))
+            if any(has_phrase(words(text), a) for a in cfg.get("asked", [])):
+                open_for = cfg.get("asked_lines", 3)
             continue
+        asked = open_for > 0
+        open_for = 0 if numbers_said(text) else max(0, open_for - 1)
         ages = set(_ages(text))
         for sentence in SENTENCE_END.split(text):
             tokens = words(spoken_numbers(sentence)).split()

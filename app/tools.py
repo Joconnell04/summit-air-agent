@@ -294,12 +294,11 @@ def _priority(ctx: Ctx, job_type: str, inside_temp_f: float | None) -> Decided:
     )
     if not any(t["speaker"] == "caller" for t in turns[cut:]):
         return Decided(facts, decided)
-    before = prio.decide(
-        _facts(ctx, job_type, turns[:cut], temps, outside),
-        ctx.tenant.priority,
-        ctx.side_model if "side_model" in decided.rules else None,
-    )
-    raised = prio.LEVELS.index(decided.level) > prio.LEVELS.index(before.level)
+    # Rules alone on both sides: a second side model call on the shorter text would have nothing
+    # prefetched and could stall the tool (PR #126 review).
+    before = prio.decide(_facts(ctx, job_type, turns[:cut], temps, outside), ctx.tenant.priority)
+    now = prio.decide(facts, ctx.tenant.priority)
+    raised = prio.LEVELS.index(now.level) > prio.LEVELS.index(before.level)
     return Decided(facts, decided, raised)
 
 

@@ -530,6 +530,7 @@ priority:
     - chilly
     - warm
     - hot
+    asked_lines: 3
     cues:
     - degrees
     - degree
@@ -546,8 +547,15 @@ priority:
     - hot
     - warm
     - boiling
+    - house
+    - home
+    - down to
+    - dropped
+    - falling
+    - says
+    - reads
     plausible_f:
-    - 30
+    - 20
     - 110
     reach_words: 4
   pushes:
@@ -742,9 +750,14 @@ priority:
     raise_to: High
     reason: someone at home alone
     unless_followed_by:
-    - and
-    - with
-    - plus
+      phrases:
+      - its just me
+      - just me at home
+      - just me here
+      words:
+      - and
+      - with
+      - plus
   - group: true
     id: chronic_illness
     job_types:
