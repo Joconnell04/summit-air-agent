@@ -75,7 +75,14 @@ def agents():
             booking_agent("Omar Haddad", "412 Avenue C", "11218")]
 
 
-CALLERS = [["Hi, my heat is out.", "Yes, that's right.", "Okay, that works."]] * 2
+# Each caller says their own address and ZIP: the server acts only on a ZIP the caller said
+# (DECISIONS.md 058).
+CALLERS = [["Hi, my heat is out at 8410 Ridge Blvd, 11209.", "Yes, that's right.", "Okay, that works."],
+           ["Hi, my heat is out at 412 Avenue C, 11218.", "Yes, that's right.", "Okay, that works."]]
+SAME_ZIP_CALLERS = [["Hi, my heat is out at 220 Beverley Rd, 11218.", "Yes, that's right.",
+                     "Okay, that works."],
+                    ["Hi, my heat is out at 515 E 5th St, 11218.", "Yes, that's right.",
+                     "Okay, that works."]]
 
 
 def test_every_pair_file_loads_and_leaves_only_its_open_windows(seed_dir, tmp_path):
@@ -170,7 +177,7 @@ def test_two_callers_with_two_technicians_free_both_get_the_window(
 ):
     # Both reach for the same technician, so the loser has to look again and take the other one.
     monkeypatch.setattr(app_capacity.random, "choice", lambda technicians: technicians[0])
-    results = pairs.run_pair(harness(seed_dir, tmp_path), SAME_TECH, caller_turns=CALLERS,
+    results = pairs.run_pair(harness(seed_dir, tmp_path), SAME_TECH, caller_turns=SAME_ZIP_CALLERS,
                              agent_models=agents_same_zip())
     assert [r.outcome for r in results] == ["pass", "pass"], [r.check_failures for r in results]
     assert "mock answered slot_taken 1 time(s)" in capsys.readouterr().out
