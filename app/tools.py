@@ -14,7 +14,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass, field
 from datetime import datetime, time, timedelta
 
-from . import booking, lookup, outbound, records, safety, transfer, weather
+from . import booking, lookup, outbound, pace, records, safety, transfer, weather
 from . import capacity as capacity_rules
 from . import priority as prio
 from .db import iso, parse_iso, tx
@@ -543,11 +543,8 @@ def read_back(ctx: Ctx, args: ReadBackIn) -> Result:
     city = f", {address['city']}" if address["city"] else ""
     # The sentence names the address as a home, so every booking has the caller confirm it's
     # residential (assignment; spec S-07). A caller who corrects it is caught by the turn check.
-    sentence = ctx.tenant.line(
-        "read_back",
-        address=f"{place}{city}, {address['zip']}",
-        phone=phone_spoken(phone),
-    )
+    spoken_address = f"{place}{city}, {address['zip']}"
+    sentence = ctx.tenant.line("read_back", address=spoken_address, phone=phone_spoken(phone))
     asked = records.readback(ctx.call)
     current = {**address, "phone": phone, "sentence": sentence}
     same = asked is not None and _readback_key(asked) == _readback_key(current)
@@ -559,6 +556,7 @@ def read_back(ctx: Ctx, args: ReadBackIn) -> Result:
         with tx(ctx.conn):
             records.update_call(ctx.conn, ctx.call["id"], readback_confirmed_at=iso(ctx.now))
         return ok(confirmed=True, address=address, phone=phone)
+    parts = None
     if not (args.confirmed and same):
         with tx(ctx.conn):
             records.update_call(
@@ -568,6 +566,9 @@ def read_back(ctx: Ctx, args: ReadBackIn) -> Result:
                 readback_asked_seq=ctx.call["turn_seq"],
                 readback_confirmed_at=None,
             )
+            if not args.confirmed:
+                # The caller asked for the address slower: the worker speaks these parts as given.
+                parts = pace.read_back_parts(ctx.conn, ctx.call["id"], sentence, spoken_address)
     if args.confirmed:
         raise Refused(
             "gate_read_back",
@@ -575,6 +576,8 @@ def read_back(ctx: Ctx, args: ReadBackIn) -> Result:
             need="read the sentence to the caller and let them answer first",
             sentence=sentence,
         )
+    if parts:
+        return ok(sentence, confirmed=False, sentence=sentence, parts=parts)
     return ok(sentence, confirmed=False, sentence=sentence)
 
 

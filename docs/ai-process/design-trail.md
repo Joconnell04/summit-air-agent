@@ -91,3 +91,6 @@ How the design was reached, in order, so a reader can follow each choice back to
 | Call recordings | Bucket to server copy, 30 days, played on the call page | DECISIONS.md 052, #69 |
 | Speaking rate per call | Server-set, 0.85 for callers 65 or older or on request, remembered for the caller | DECISIONS.md 053 |
 | Owner accounts and settings | Admin and staff roles; a settings panel with a two-party consent switch | DECISIONS.md 054 |
+| Rule edits on the bench | Edits move to the debug bench; the gate reruns by default, an override is logged | DECISIONS.md 055, #86 |
+| Side model check | Kept on: no false alarms in 46 calls, one real fix; the phrase rules' "nobody's" bug fixed | DECISIONS.md 056 |
+| Booking under load | Two simulated calls race for one slot; one wins, the other hears it plainly | DECISIONS.md 057, #86 |
