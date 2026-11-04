@@ -318,12 +318,57 @@ def test_override_still_runs_the_guidance_check(agent):
         conn.close()
 
 
-def test_override_is_refused_while_a_check_runs(agent):
-    editor(agent).client.post("/bench/rules/draft", data={"guide.booking.0": PETS, "publish": "1"})
+def live_number(agent) -> int | None:
     conn = agent.db()
     try:
-        with pytest.raises(rules.RulesError, match="Stop it first"):
-            rules.publish_now(conn, TENANT.slug, "Dana", "Quick fix", agent.clock())
+        found = rules.live(conn, TENANT.slug)
+        return found["number"] if found else None
+    finally:
+        conn.close()
+
+
+def test_override_is_refused_while_a_check_runs(agent):
+    editor(agent).client.post("/bench/rules/draft", data={"guide.booking.0": PETS, "publish": "1"})
+    response = agent.client.post(
+        "/bench/rules/draft", data={"guide.booking.0": PETS, "override": "1", "reason": "Quick fix"})
+    assert response.status_code == 422
+    assert "A check is running on the last draft" in response.text
+    assert live_number(agent) is None
+
+
+@pytest.mark.parametrize("field, value, why", [
+    ("line.read_back", "Let me read that back: {address}, {phone}. Right?", "read-back is locked"),
+    ("set.priority", "lower", "Priority is locked"),
+])
+def test_override_cannot_carry_a_locked_rule(agent, field, value, why):
+    response = editor(agent).client.post(
+        "/bench/rules/draft",
+        data={"guide.booking.0": PETS, field: value, "override": "1", "reason": "Quick fix"},
+    )
+    assert response.status_code == 422 and why in response.text
+    assert live_number(agent) is None
+
+
+def test_override_of_a_draft_that_matches_live_is_refused(agent):
+    publish(agent, {"guidance": {"booking": [PETS]}})
+    response = editor(agent).client.post(
+        "/bench/rules/draft", data={"guide.booking.0": PETS, "override": "1", "reason": "Again"})
+    assert response.status_code == 422 and "the same as what&#39;s live" in response.text
+    assert live_number(agent) == 1
+
+
+def test_an_override_that_cannot_be_logged_publishes_nothing(agent, monkeypatch):
+    def broken(*args, **kwargs):
+        raise OSError("disk full")
+
+    monkeypatch.setattr(bench_rules.logs, "write", broken)
+    response = editor(agent).client.post(
+        "/bench/rules/draft", data={"guide.booking.0": PETS, "override": "1", "reason": "Quick fix"})
+    assert response.status_code == 503 and "nothing was published" in response.text
+    assert live_number(agent) is None
+    conn = agent.db()
+    try:
+        assert rules.open_draft(conn, TENANT.slug)["status"] == "draft"
     finally:
         conn.close()
 
@@ -346,6 +391,17 @@ def test_a_rollback_to_an_overridden_version_keeps_its_record(agent):
         assert live["rollback_of"] == 1 and live["gate"]["overridden"] is True
     finally:
         conn.close()
+    row = next(r for r in agent.client.get("/bench/rules").text.split("<tr>")
+               if f'<span class="what">{live["number"]}</span>' in r)
+    assert "Rolled back" in row and "Check skipped" in row
+
+
+def test_enter_in_a_field_saves_the_draft_and_never_discards(agent):
+    editor(agent).client.post("/bench/rules/draft", data={"guide.booking.0": PETS})
+    page = agent.client.get("/bench/rules").text
+    head = page[page.index('<div class="actions">'):page.index("</div>", page.index('<div class="pop-body">'))]
+    first = head.index('<button class="btn" type="submit">Save draft</button>')
+    assert first < head.index(">Discard</button>") and first < head.index(">Publish now</button>")
 
 
 def test_rollback_from_the_editor(agent):
