@@ -84,3 +84,6 @@ How the design was reached, in order, so a reader can follow each choice back to
 | Approval callback | Unclear authority gets a callback; a requested booking gets a call before dispatch | DECISIONS.md 045, #74 |
 | Booking on a safety call | Lines and flag first, then one offer of a visit for after it's shut off | DECISIONS.md 046, #74 |
 | Burning dust | One lighter check question asked the negative way | DECISIONS.md 047, #74 |
+| Second address | Its own account by default, the caller as contact | DECISIONS.md 048, #75 |
+| Same-day calls | Linked only when the last call dropped; the caller confirmed by name | DECISIONS.md 049, #75 |
+| Times and return visits | A bare hour is daytime; a same-problem job within 30 days is flagged | DECISIONS.md 050, #75 |
