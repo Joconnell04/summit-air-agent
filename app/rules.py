@@ -369,11 +369,13 @@ OVERRIDE_MAX_CHARS = 200
 
 
 def publish_now(
-    conn: sqlite3.Connection, slug: str, author: str, reason: str, now: datetime
+    conn: sqlite3.Connection, slug: str, author: str, reason: str, now: datetime, record=None
 ) -> dict:
     """Publish the draft at once, without the eval gate (DECISIONS.md 055). The guidance check
     already ran when the draft was saved. The version records that the check was skipped, by
-    whom, when and why, so the history shows it plainly; a reason is required."""
+    whom, when and why, so the history shows it plainly; a reason is required. `record(conn,
+    version)` runs inside the same transaction, so if writing the log fails nothing is
+    published."""
     reason = " ".join(reason.split())[:OVERRIDE_MAX_CHARS]
     if not reason:
         raise RulesError("Say why the check is being skipped.")
@@ -394,6 +396,8 @@ def publish_now(
             (author, current["number"] if current else 0, json.dumps(override, sort_keys=True),
              iso(now), iso(now), iso(now), draft["id"]),
         )
+        if record is not None:
+            record(conn, get(conn, draft["id"]))
     return get(conn, draft["id"])
 
 

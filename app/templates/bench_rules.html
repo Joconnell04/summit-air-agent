@@ -16,9 +16,11 @@
       {% if checking %}<span class="tag high">Checking</span>{% elif draft %}<span class="tag outline">Draft saved</span>{% elif blocked %}{{ gate_result(blocked) }}{% endif %}
       <label class="sr-only" for="note">What changed</label>
       <input class="field" id="note" name="note" value="{{ note }}" maxlength="200" placeholder="What changed"{% if checking %} disabled{% endif %}>
+      {# Save draft comes first: pressing Enter in a field submits with the first button, and that
+         must never discard or stop a check. #}
+      <button class="btn" type="submit"{% if checking %} disabled{% endif %}>Save draft</button>
       {% if checking %}<button class="btn quiet" type="submit" formaction="/bench/rules/cancel{{ q(slug) }}" formnovalidate>Stop check</button>{% endif %}
       {% if draft and not checking %}<button class="btn quiet" type="submit" formaction="/bench/rules/discard{{ q(slug) }}" formnovalidate>Discard</button>{% endif %}
-      <button class="btn" type="submit"{% if checking %} disabled{% endif %}>Save draft</button>
       {% if not checking %}
       <details class="more pop">
         <summary><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>Override</summary>

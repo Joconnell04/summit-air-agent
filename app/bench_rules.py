@@ -13,7 +13,7 @@ import uuid
 from fastapi import FastAPI, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
 
-from . import db, logs, rules
+from . import logs, rules
 from .bench import require_admin
 from .db import parse_iso
 from .owner_view import _common, _render, _tenant_q, _user
@@ -53,8 +53,17 @@ def edit_form(form) -> tuple[dict, str]:
     return content, str(form.get("note", ""))
 
 
-def log_override(services, conn, version: dict, now) -> None:
-    """A line in the server's log (and /debug/logs) for a version published without the check."""
+def log_override(services, now):
+    """What writes the server's log line (and its /debug/logs row) for a version published
+    without the check. rules.publish_now calls it inside its transaction."""
+
+    def record(conn, version: dict) -> None:
+        write_override_line(services, conn, version, now)
+
+    return record
+
+
+def write_override_line(services, conn, version: dict, now) -> None:
     gate = version["gate"] or {}
     line = logs.record(
         now=now,
@@ -70,8 +79,7 @@ def log_override(services, conn, version: dict, now) -> None:
         error=None,
         replayed=False,
     )
-    with db.tx(conn):
-        logs.write(services.settings.log_path, conn, line)
+    logs.write(services.settings.log_path, conn, line)
 
 
 def add_routes(app: FastAPI) -> None:
@@ -169,15 +177,19 @@ def add_routes(app: FastAPI) -> None:
                 return edit_page(request, found, tenant, conn, content, note, errors, 422)
             try:
                 if form.get("override"):
-                    version = rules.publish_now(conn, found.slug, author,
-                                                str(form.get("reason", "")), services.clock())
-                    log_override(services, conn, version, services.clock())
+                    now = services.clock()
+                    rules.publish_now(conn, found.slug, author, str(form.get("reason", "")), now,
+                                      record=log_override(services, now))
                 elif form.get("publish"):
                     rules.request_publish(conn, found.slug, author, services.clock())
                     start_gate(services)
             except rules.RulesError as err:
                 return edit_page(request, found, tenant, conn, content, note,
                                  {"content": str(err)}, 422)
+            except OSError:
+                return edit_page(request, found, tenant, conn, content, note,
+                                 {"content": "The override couldn't be logged, so nothing was "
+                                             "published. The draft is saved."}, 503)
         finally:
             conn.close()
         return back(tenant)
