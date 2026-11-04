@@ -451,3 +451,16 @@ class Http:
 def test_ending_a_chat_the_end_node_already_closed_is_not_an_error():
     agent = FlowChatAgent(Http(), None, "+12125550999", "eval-x", {})
     agent.end("agent_end")
+
+
+def test_a_caller_hanging_up_is_recorded_as_the_callers_end_before_the_chat_closes():
+    ended = []
+
+    class Server:
+        def end(self, call_id, reason):
+            ended.append((call_id, reason))
+
+    agent = FlowChatAgent(Http(), None, "+12125550999", "eval-x", {})
+    agent.server = Server()
+    agent.end("caller_hangup")
+    assert ended == [("eval-x", "caller_hangup")]

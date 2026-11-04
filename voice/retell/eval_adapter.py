@@ -52,6 +52,8 @@ class RetellChatAgent:
         self.call_id = call_id
         self.chat_id = ""
         self.env = env
+        # The eval tool server, set by open_agent.
+        self.server = None
 
     def start(self) -> AgentTurn:
         t0 = time.perf_counter()
@@ -82,7 +84,12 @@ class RetellChatAgent:
         return AgentTurn(" ".join(said), timing, ended=ended)
 
     def end(self, reason: str) -> None:
-        """Ending the chat fires Retell's webhook, which closes the call on the tool server."""
+        """Close the call on the tool server with the harness's reason first, as our own stack's
+        agent does (evals/stacks.py): the bridge closes every chat as the agent's end, so a caller
+        hanging up would otherwise look like the agent hanging up. Then end the chat; its webhook
+        finds the call already closed."""
+        if self.server is not None:
+            self.server.end(self.call_id, reason)
         self.http.patch(f"/end-chat/{self.chat_id}").raise_for_status()
 
 
@@ -156,4 +163,6 @@ def open_agent(call_id: str, caller_id: str, env: dict | None = None):
         token,
     )
     chat_env = {**env, "DEBUG_TOKEN": token}
-    return RetellChatAgent(http, open_chat, caller_id, call_id, chat_env), server
+    agent = RetellChatAgent(http, open_chat, caller_id, call_id, chat_env)
+    agent.server = server
+    return agent, server
