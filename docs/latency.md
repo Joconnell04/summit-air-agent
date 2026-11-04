@@ -7,7 +7,7 @@ How long a caller waits for the agent to start answering, split by stage, so eve
 | Stage | Budget | Basis |
 |---|---|---|
 | Phone network in and out (Twilio, SIP trunk to LiveKit) | 150 ms | ASSUMED; measured on the first real calls |
-| Deciding the caller has finished (turn detection) | 400 ms | MEASURED 0.35 to 0.6 s on the earlier practice agent (from-other-projects/bobert/latency-notes.md) |
+| Deciding the caller has finished (turn detection) | 400 ms | MEASURED 0.35 to 0.6 s on the earlier practice agent (from-other-projects/bobert/latency-notes.md); MEASURED a median of 355 ms on our stack on the audio rig, with the turn detector's 1.5 s maximum on about one turn in seven (evals/rounds/bakeoff-audio-02.md) |
 | Final transcript (Deepgram) | runs alongside turn detection | MEASURED 0.2 to 0.4 s after speech ends, same source |
 | Model's first words (Claude Haiku, thinking off) | 500 ms | ASSUMED for Haiku 5.5; Haiku 4.5 measured about 1.0 s to first audio end to end, same source |
 | First audio from the voice (Cartesia) | 150 ms | ASSUMED; measured on the first real calls |
@@ -28,7 +28,8 @@ How long a caller waits for the agent to start answering, split by stage, so eve
 
 - **Lookup before hello** and **cached slots** remove most FSM round trips from the conversation (docs/decisions/05-pipeline-and-models.md, the harness).
 - **Short tool results** with a ready-to-say sentence keep the second model hop short.
-- **Digits:** when the agent has just asked for a phone number or ZIP, it waits a little longer before deciding the caller has finished, because people pause between groups of digits; the earlier practice agent lowered the cap to 1.5 s with 0.35 s of silence (MEASURED).
+- **Digits:** when the agent has just asked for a phone number or ZIP, it waits a little longer before deciding the caller has finished, because people pause between groups of digits; the earlier practice agent lowered the cap to 1.5 s with 0.35 s of silence (MEASURED). Ours waits at least 0.9 s (`voice.endpointing.digits`), counted from the end of speech. Until the fix in evals/rounds/bakeoff-audio-02.md, section 3, that longer wait stayed on for the rest of the call once the agent first asked for digits.
+- **The silence wait is the normal wait.** LiveKit counts `min_delay` from the end of speech, so the normal 0.3 s runs inside the 0.35 s silence wait (`voice.vad.min_silence_s`) and adds nothing. The turn detector refuses a silence wait under 0.25 s, and the turn can't end before Deepgram's final transcript (median about 0.3 s after speech, MEASURED on the rig), so shortening the silence wait saves under 0.1 s; at 0.25 s it saved 39 ms (MEASURED, same file).
 - **A short bridge line, only for slow tools.** If a tool hasn't answered within about 0.7 s, the agent says one short line ("Okay, let me check that now", "One sec, pulling up the schedule") while it waits, so the caller hears something instead of silence. Rules:
   - Fast tools never trigger it, so most turns go straight to the answer.
   - At most once every few turns, and never the same line twice in a call.
@@ -39,7 +40,9 @@ How long a caller waits for the agent to start answering, split by stage, so eve
 
 ## What `reply_ms` leaves out (MEASURED)
 
-The `reply_ms` the worker logs with each agent line (`make trace`, voice/livekit/turns.py) runs from LiveKit's `stopped_speaking_at` to the agent starting to speak. LiveKit sets `stopped_speaking_at` only once its voice-activity detector has heard `voice.vad.min_silence_s` of silence (0.35 s, config/models.yaml), so that wait, and the audio's trip to the worker, are not in it. On the simulated audio rig, which times the gap on the audio a caller would hear, our stack read a median of 0.39 s above its own `reply_ms` (60 turns: rig 1.90 s, worker 1.47 s; evals/rounds/bakeoff-audio-01.md, section 5). Read every `reply_ms` below, and in `make trace`, as about 0.4 s short of what the caller waits; the S-36 targets are measured against what the caller hears.
+The `reply_ms` the worker logs with each agent line (`make trace`, voice/livekit/turns.py) runs from LiveKit's `stopped_speaking_at` to the agent starting to speak. LiveKit sets `stopped_speaking_at` only once its voice-activity detector has heard `voice.vad.min_silence_s` of silence (0.35 s, config/models.yaml), so that wait, and the audio's trip to the worker, are not in it. On the simulated audio rig, which times the gap on the audio a caller would hear, our stack read a median of 0.39 s above its own `reply_ms` in round 1 (60 turns: rig 1.90 s, worker 1.47 s; evals/rounds/bakeoff-audio-01.md, section 5) and 0.64 s above it on plain turns in round 2 (25 turns: rig 1.97 s, worker 1.34 s; evals/rounds/bakeoff-audio-02.md). Read every `reply_ms` below, and in `make trace`, as about 0.4 to 0.6 s short of what the caller waits; the S-36 targets are measured against what the caller hears.
+
+Inside `reply_ms`, on round 2's plain turns: the model's first token took a median of 0.52 s and the voice's first byte 0.18 s, which leaves about 0.64 s that no stage timing covers yet. It includes the caller's line going to the tool server and back before the model is asked (voice/livekit/call.py `caller_line`), which is the next thing to time.
 
 ## First real call (MEASURED)
 

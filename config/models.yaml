@@ -51,9 +51,12 @@ voice:
   stt: {provider: deepgram, model: nova-3, endpointing_ms: 100}
   # Katie, the Cartesia plugin default. The pre-recorded clips (voice/livekit/clips.py) use the same voice.
   tts: {provider: cartesia, model: sonic-3, voice_id: f786b574-daa5-4673-aa0c-cbe3e8534c02}
+  # The silence that ends the caller's speech. LiveKit's turn detector refuses less than 0.25 s;
+  # 0.25 s measured no faster than 0.35 s on the audio rig (evals/rounds/bakeoff-audio-02.md).
   vad: {min_silence_s: 0.35, activation: 0.5}
-  # How long to wait after the caller stops before answering. "digits" applies right after the agent
-  # asks for a phone number or ZIP, because people pause between groups of digits (C-48).
+  # How long to wait after the caller stops before answering, counted by LiveKit from the end of
+  # speech, so a min_delay under the silence wait above has no effect. "digits" applies right after
+  # the agent asks for a phone number or ZIP, because people pause between groups of digits (C-48).
   endpointing:
     normal: {min_delay: 0.3, max_delay: 1.5}
     digits: {min_delay: 0.9, max_delay: 3.0}
