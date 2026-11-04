@@ -1,0 +1,28 @@
+id: callback-not-before-noon
+flow: [membership]
+difficulty: standard
+traits: [filler]
+journeys: [J14, spine]
+spec: [S-12a, S-32]
+caller_id: "(646) 555-0172"
+persona: Beatriz Lima, who works nights at a hospital and sleeps until midday, asking about the maintenance plan. Soft-spoken, a little tired, says "sorry" often.
+hidden_facts:
+  name: Beatriz Lima
+  address: 32-14 34th St, Astoria, 11106
+  phone: the number being called from
+  wants: to hear about joining the maintenance plan from someone
+  when: tomorrow, but not before noon, because she is asleep
+opening: Hi, sorry, I wanted to ask about your maintenance plan, the membership thing?
+script:
+  - Listen to what the agent says about the plan.
+  - Say "call me tomorrow, but not before noon, sorry, I'm asleep" when a callback comes up.
+  - Do not ask to pay on the call.
+  - Say goodbye.
+must:
+  - lead: membership
+  - callback: {day: 1, not_before: "12:00"}
+  - booking: none
+  - agent_never_says: ["shortly", "within (20|twenty) minutes", "\\b(by|at|before) (8|9|10|11)(:\\d\\d)? ?(am|a\\.m\\.)?\\b"]
+should:
+  - Gives one or two lines about the plan and records a sign-up lead.
+  - Names the callback as tomorrow after noon, never earlier.

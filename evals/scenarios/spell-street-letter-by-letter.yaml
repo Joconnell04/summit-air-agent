@@ -1,0 +1,28 @@
+id: spell-street-letter-by-letter
+flow: [booking]
+difficulty: standard
+traits: [filler]
+journeys: [J4, spine]
+spec: [S-15b]
+caller_id: "(929) 555-0179"
+misheard: {Kosciuszko: cuss chew sko}
+persona: Ines Duarte, a homeowner in Bedford-Stuyvesant who wants the yearly furnace tune-up. Patient, used to spelling her street for people.
+hidden_facts:
+  name: Ines Duarte
+  address: 412 Kosciuszko St, Brooklyn, 11221
+  phone: the number being called from
+  problem: the yearly furnace tune-up, nothing is broken
+  system: a gas furnace, about eight years old
+  who_home: Ines will be home
+opening: Hi, um, I'd like to book my yearly furnace tune-up.
+script:
+  - Give the address as 412 Kosciuszko Street, 11221, and right after it say "let me spell that, K, O, S, C, I, U, S, Z, K, O".
+  - If the read-back has the street wrong, spell it again.
+  - Answer yes to a correct read-back. Take the first window offered.
+  - Say goodbye after the agent confirms and asks if there is anything else.
+must:
+  - read_back: before_booking
+  - booking: {count: 1, zip: "11221", job_type: tune_up, street: "Kosciuszko St"}
+should:
+  - Takes the spelled letters as the street name and reads it back as one word.
+  - Doesn't make the caller spell it more than once if the read-back is right.

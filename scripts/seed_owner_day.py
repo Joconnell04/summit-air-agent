@@ -102,6 +102,16 @@ class Voice:
     def book(self, call_id: str, job_type: str, slot: dict, issue: str, **details) -> dict:
         body = {**DETAILS, "issue": issue, "name": details.pop("name", "Pat Rivera"), **details}
         booked = self.tool("book_appointment", call_id, job_type=job_type, slot=slot, details=body)
+        if booked["refused"] == "account_choice":
+            # A demo caller on file booking a new address keeps it on their own account.
+            booked = self.tool(
+                "book_appointment",
+                call_id,
+                job_type=job_type,
+                slot=slot,
+                details=body,
+                new_address_account="caller",
+            )
         if not booked["ok"]:
             raise SystemExit(f"booking failed on {call_id}: {booked}")
         return booked

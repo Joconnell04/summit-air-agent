@@ -213,3 +213,39 @@ def test_run_checks_prefixes_each_failure_with_its_check():
 def test_bad_arguments_are_rejected(check, arg):
     with pytest.raises(ValueError):
         CHECKS[check].validate(arg)
+
+
+BOOKED_ROW = {"kind": "book", "status": "booked", "priority": "Normal", "seek_earlier": 0,
+              "safety_override": 0}
+
+
+def test_booking_checks_the_window_the_street_and_whose_account():
+    """Eval round 2: seeds 5 and 7, and the spelled-street scenarios."""
+    args = {"job_type": "tune_up", "slot": {"date": "2026-11-03", "window": "morning"},
+            "new_address_account": "own"}
+    readback = json.dumps({"street": "81 Houston St", "unit": "", "zip": "10302"})
+    t = trace(tools=[("book_appointment", args)], bookings=[BOOKED_ROW], readback_json=readback)
+    want = {"window": "morning", "street": "Houston Street", "new_address_account": "own"}
+    assert failures("booking", want, t) == []
+    assert failures("booking", {"window": "afternoon"}, t) == [
+        "window ['morning'], expected afternoon"
+    ]
+    assert "expected 'Huston St'" in failures("booking", {"street": "Huston St"}, t)[0]
+    assert failures("booking", {"new_address_account": "caller"}, t) == [
+        "new_address_account ['own'], expected caller"
+    ]
+
+
+def test_callback_checks_the_day_and_the_earliest_time():
+    """Eval round 2, seed 8: "call me tomorrow, but not before noon"."""
+    started = "2026-11-02T14:00:00Z"  # 9 AM New York, Monday
+    want = {"day": 1, "not_before": "12:00"}
+    tomorrow_evening = trace(callbacks=[{"due_at": "2026-11-04T02:00:00Z"}], started_at=started)
+    assert failures("callback", want, tomorrow_evening) == []
+    today = trace(callbacks=[{"due_at": "2026-11-03T02:00:00Z"}], started_at=started)
+    assert "expected Tue at or after 12:00 PM" in failures("callback", want, today)[0]
+    morning = trace(callbacks=[{"due_at": "2026-11-03T15:00:00Z"}], started_at=started)
+    assert failures("callback", want, morning)
+    assert failures("callback", want, trace(started_at=started)) == ["no callback was promised"]
+    with pytest.raises(ValueError):
+        CHECKS["callback"].validate({"tomorrow": True})

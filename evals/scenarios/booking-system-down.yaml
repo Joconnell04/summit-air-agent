@@ -1,0 +1,29 @@
+id: booking-system-down
+flow: [booking]
+difficulty: standard
+traits: [filler]
+journeys: [tool-failure, J1, spine]
+spec: [S-48, S-32]
+caller_id: "(718) 555-0105"
+fsm_down: booking
+persona: Ruth Adeyemi, a homeowner in Flatbush whose heat is out. Practical, says "okay" a lot, would rather hear the truth than wait.
+hidden_facts:
+  name: Ruth Adeyemi
+  address: 1520 Ocean Ave, Brooklyn, 11230
+  phone: the number being called from
+  problem: no heat since last night, 62 F inside
+  system: a gas boiler, about fifteen years old; checked the thermostat
+  who_home: Ruth and her husband, both healthy
+opening: Hi, okay, our heat went out last night and I'd like to get someone out.
+script:
+  - Answer the questions, then yes to a correct read-back, and take the first window offered.
+  - If the agent says it can't book right now, ask once, "so am I booked or not?"
+  - Accept a callback and say goodbye.
+must:
+  - callback: promised
+  - outcome: queued
+  - agent_says: "(can'?t|cannot|couldn'?t|not able to|unable to) .{0,30}(book|schedul|confirm)"
+  - agent_never_says: ["you'?re all set", "(you'?re|you are) booked", "shortly"]
+should:
+  - Says honestly that it can't book right now and that the details are kept.
+  - Names the time someone will call back, and doesn't pretend the visit is booked.

@@ -31,7 +31,7 @@ from evals.models import profile as models_profile
 from evals.results import RESULTS_DIR, Run, ScenarioResult, ToolCall, Turn
 from evals.scenario import Scenario, load_all
 from evals.stacks import InProcessAgent, load_adapter
-from evals.transcribe import level_for, roughen, seeded
+from evals.transcribe import level_for, mishear, roughen, seeded
 from evals.world import World, resolve_caller, seeded_db
 
 STACKS = ("livekit", "retell")
@@ -64,7 +64,10 @@ class Harness:
         caller_id = resolve_caller(scenario.caller_id, self.seed[1])
         if self.stack != "livekit":
             return load_adapter(self.stack).open_agent(call_id, caller_id)
-        world = World(self.workdir / call_id, self.seed, scenario.start_time, self.overlay)
+        world = World(self.workdir / call_id, self.seed, scenario.start_time, self.overlay,
+                      scenario.fsm_down)
+        if scenario.earlier_call:
+            world.earlier_call(f"{call_id}-earlier", caller_id, scenario.earlier_call)
         agent = InProcessAgent(world.server, self.models.agent, call_id, caller_id, world.clock)
         return agent, world.server
 
@@ -99,7 +102,10 @@ class Harness:
             recent: list[str] = []
             reason = None
             for _ in range(scenario.max_turns):
-                heard = said if replay is not None else roughen(said, level, rng)
+                heard = (
+                    said if replay is not None
+                    else roughen(mishear(said, scenario.misheard), level, rng)
+                )
                 transcript.append(Turn(role="caller", text=heard))
                 turn = agent.hear(heard)
                 agent_usage.add(turn.usage)

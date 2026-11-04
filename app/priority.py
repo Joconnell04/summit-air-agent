@@ -12,7 +12,7 @@ import re
 from dataclasses import dataclass, field
 from typing import Protocol
 
-from .text import has_phrase, words
+from .text import words
 
 LEVELS = ["Low", "Normal", "High", "Urgent"]
 # How callers say someone's age: "84-year-old", "84 years old", "I'm 84", "she's 90", "my dad is
@@ -75,6 +75,38 @@ def _ages(text: str) -> list[int]:
     return ages
 
 
+# A phrase right after one of these, in the same part of the sentence, was said not to apply: "no
+# babies or older people", "nobody on any medical equipment" (eval round 2, seed 9). The look back is
+# short and stops at a word that starts a new thought, so "no heat and grandma is here" still
+# raises: a missed raise is worse than an extra one, and rules can only raise.
+NEGATIONS = {"no", "not", "nobody", "nothing", "none", "without", "never", "neither", "nor", "dont", "doesnt",
+             "isnt", "arent", "havent", "hasnt"}
+CLAUSE_BREAKS = {"and", "but", "so", "because", "though", "although", "except", "plus", "also",
+                 "just", "only", "well"}
+NEGATION_REACH = 4
+POSSESSIVES = {"my", "our", "his", "her", "their"}
+
+
+def _said_not_negated(text_words: str, phrase: str) -> bool:
+    """The phrase occurs at least once without a negation just before it."""
+    tokens, target = text_words.split(), words(phrase).split()
+    for i in range(len(tokens) - len(target) + 1):
+        if tokens[i : i + len(target)] != target:
+            continue
+        negated = False
+        for j in range(i - 1, max(-1, i - 1 - NEGATION_REACH), -1):
+            if tokens[j] in CLAUSE_BREAKS:
+                break
+            # "no my grandmother lives with us" is an answer, then a person: speech-to-text drops
+            # the comma, and nobody says "no my" to mean there is none.
+            if tokens[j] in NEGATIONS and tokens[j + 1] not in POSSESSIVES:
+                negated = True
+                break
+        if not negated:
+            return True
+    return False
+
+
 def _rule_fires(rule: dict, facts: Facts) -> bool:
     if "job_types" in rule and facts.job_type not in rule["job_types"]:
         return False
@@ -82,8 +114,9 @@ def _rule_fires(rule: dict, facts: Facts) -> bool:
         return facts.safety_signal
     if rule.get("heating_indoors") and facts.heating_indoors:
         return True
-    text_words = words(facts.text)
-    if any(has_phrase(text_words, p) for p in rule.get("phrases", [])):
+    # Split at punctuation first, so "No, my mother lives with us" keeps its raise.
+    parts = [words(part) for part in re.split(r"[.,;:!?\n]", facts.text)]
+    if any(_said_not_negated(part, p) for part in parts for p in rule.get("phrases", [])):
         return True
     if "age_at_least" in rule and any(a >= rule["age_at_least"] for a in _ages(facts.text)):
         return True

@@ -107,11 +107,20 @@ def spoken(start: dict, voice: dict) -> dict:
 
 def greeting(start: dict, voice: dict) -> str:
     """The opening line from the tenant's `voice` lines: by first name when exactly one residential
-    customer matched the calling number, otherwise the general greeting."""
+    customer matched the calling number, otherwise the general greeting. A caller whose earlier
+    call today dropped hears that the agent remembers it, and is asked by name whether it is the
+    same person (eval round 2, seed 6)."""
     voice = spoken(start, voice)
     customers = [c for c in start.get("customers", []) if c.get("residential")]
-    if len(customers) == 1 and first_name(customers[0]["name"]):
-        return voice["greeting_known"].format(first_name=first_name(customers[0]["name"]))
+    name = first_name(customers[0]["name"]) if len(customers) == 1 else ""
+    linked = start.get("linked_call") or {}
+    if linked.get("dropped") and "greeting_linked" in voice:
+        name = name or linked.get("caller_name") or ""
+        if name:
+            return voice["greeting_linked"].format(first_name=name)
+        return voice["greeting_linked_unknown"]
+    if name:
+        return voice["greeting_known"].format(first_name=name)
     return voice["greeting_unknown"]
 
 

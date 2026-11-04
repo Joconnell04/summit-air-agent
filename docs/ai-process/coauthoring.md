@@ -259,3 +259,36 @@ Changed:
 - S-32: "after 5" is promised as "around 5:30", worked out by the server; a callback can be set on a safety call when the caller asks.
 Commit: 83e06e1
 Status: open
+
+## call-journeys r6 (amendment after lock: eval round 2, second half)
+Feedback (verbatim, the parts this round acts on, from evals/rounds/02-seeds-and-holdout.md):
+> For situation five, yeah, somebody should be able to have an open job on their house and then call on behalf of somebody else at a different address. And as long as that address is within the service zone, the agent should be able to book them on that. But should also somehow ask if they're, like, the person calling will be the point of contact going forward, or if they want that other, like, house or unit to be assigned to a different account, which is what should happen ideally. But think through that.
+
+> Yeah, for situation six, the agent reminding the caller that they remember the earlier call. That works. Just make sure that's stage gated by the number being the same and the time in between calls being within that same day. Then also make sure the agent just confirms that it's still speaking to the same person. Be like, this is Jackson, correct? Or something like that. But yeah, very important to not book twice across the two calls.
+
+> For example number 7, make sure there's proper understanding built into the model that if somebody says 8 to 2, they're referring to 8 a.m. to 2 p.m. and not 8 a.m. or 8 p.m. to 2 a.m. You get what I'm saying?
+
+> Throw in the legal question 1 too. That's a good one to have. Just make sure that the agent doesn't give unsolicited advice or untrue material, and just always tries to defer to asking the super or somebody with more knowledge on that. And then for the second opinion replacement quote, yeah, add that one in too. It shouldn't state a price or criticize them, and it should offer to have somebody come out to quote them if that's something we're doing. If that's not something we're doing, then figure it out or something.
+
+> Then also add in an eval set for a street name that speech to text mangles, but make it for Houston Street. That's the only one. And then ensure if the agent cannot confirm how to spell or like understand the street, that it can listen to the user read out the letters. That should be a capability.
+Changed:
+- Spine 5.2: a street the agent can't confirm is spelled by the caller, and the server joins the letters into the name for the read-back.
+- Spine 8: times mean what the caller means ("8 to 2" is 8 a.m. to 2 p.m.) for arrival hours and callback windows; an exact arrival inside a window is never promised.
+- Journey 6 step 6 (new): a legal question gets "I can't advise on that" and a pointer to the super or 311, no unasked advice.
+- Journey 7 step 5: linked by same number, within a few minutes or later the same day after a drop; the greeting confirms the person by name; never two bookings across the calls.
+- Journey 7 step 6 (new): another address can be booked; the agent asks whose account it goes on, its own account with the caller as contact being the usual choice. Steps after it renumbered.
+- Journey 9 step 3: a second opinion never judges the other quote and offers a comfort advisor to come out and quote, since the knowledge folder says replacements are quoted by a comfort advisor and never on the phone.
+Commit: a8108c7 (saved as a WIP commit when the app quit; this round's text is in it)
+Status: open
+
+## spec r9 (amendment after lock: eval round 2, second half)
+Feedback (verbatim): the same notes as call-journeys r6 above.
+Changed:
+- S-15b (new): spelled street names, joined by the server.
+- S-29: hours the caller is home read as daytime; no exact arrival promised inside a window.
+- S-31a (new): booking another address, with the account question asked by the server.
+- S-32: callback windows can be tomorrow, bare hours are daytime, the window is kept for the person calling.
+- S-38: same number and same day are the gate, the greeting checks the name, never two bookings across the calls.
+- S-41a (new): no legal advice, and another company's quote is never judged.
+Commit: a8108c7 (saved as a WIP commit when the app quit; this round's text is in it)
+Status: open

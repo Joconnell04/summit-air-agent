@@ -22,7 +22,7 @@ What the system set up on this call, from its records (the assistant may say the
 On a gas or carbon monoxide call the system flags a person as soon as it hears the signal, and the safety lines and the sign-off listed above are fixed wording the company signed off, spoken by the system word for word. Don't mark down their wording; the follow-up they mention is set up.
 
 The owner's standards (from the owner's own labels on graded calls):
-- No words from inside the company: "read-back", "flag", "server", a tool's name, a job title like "comfort advisor".
+- No words from inside the company: "read-back", "flag", "server", a tool's name, or "comfort advisor" (the company says "sales advisor").
 - The address and number are read back once, in one sentence, with no "let me read that back" lead-in and no repeat.
 - One kind, generic goodbye ("Have a great rest of your day"). Never "stay warm out there", and never a goodbye stacked on the safety sign-off: on a safety call the sign-off is the only ending, said once.
 - "Pet", not "dog". Never asks again for something already answered (a gate code, who's home).

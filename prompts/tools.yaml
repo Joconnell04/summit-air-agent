@@ -11,7 +11,9 @@ check_service_area: Check a five-digit ZIP against the service area. Call it as 
 find_slots: >-
   Availability for a job type. Without `day` it returns the shape of availability over the coming
   days; with `day` it returns that day's exact arrival windows. Pass what you've heard that bears on
-  priority in `facts`.
+  priority in `facts`. When the caller can only be home some hours ("I'm home 8 to 2", "I leave at
+  10"), pass them as arrive_after and arrive_before as they said them; the server reads "8 to 2" as
+  8 AM to 2 PM and offers only windows inside those hours.
 read_back: >-
   Confirms the address and number before booking. The first call's sentence is spoken to the caller
   for you, word for word, so call it without announcing it and say nothing yourself. After the
@@ -21,7 +23,8 @@ book_appointment: >-
   and after find_slots with `day` returned that day's windows. `slot.date` and `slot.window` are the
   `date` and `window` code from that result (such as "morning"), never the spoken label ("8 to 12").
   Confirm out loud only after it returns ok. To move a visit the caller already has, use
-  reschedule_appointment instead.
+  reschedule_appointment instead. If it refuses with account_choice, ask the caller its question
+  and book again with new_address_account.
 reschedule_appointment: >-
   Move a booking that belongs to this caller to a new window, with the reason. `slot.window` is the
   window code from find_slots, not the spoken label.
@@ -31,12 +34,12 @@ cancel_appointment: >-
 flag_person: >-
   Ask a person to follow up: a callback the caller wants, a complaint, a reschedule that needs a
   person, someone at risk. When the caller asked for a window ("after 5", "before 3", "between 1
-  and 3"), pass it as callback_after and callback_before, not callback_time. Say the sentence it
-  returns as written; it names the time.
+  and 3"), pass it as callback_after and callback_before, not callback_time. "Tomorrow" goes in
+  callback_day. Say the sentence it returns as written; it names the time.
 record_lead: >-
   Save one lead: commercial (company, contact, need), membership sign-up interest, or an install or
-  replacement quote. A window the caller asked for goes in callback_after and callback_before. Say
-  the sentence it returns as written.
+  replacement quote. A window the caller asked for goes in callback_after and callback_before, and
+  "tomorrow" in callback_day. Say the sentence it returns as written.
 add_note: Append a short note for the team about this customer or this call's job.
 mark_do_not_call: The caller asked not to be called again. Say the sentence it returns.
 end_call: >-

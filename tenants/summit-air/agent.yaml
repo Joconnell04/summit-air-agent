@@ -203,6 +203,9 @@ on_call_alerts:
 repeat_callers:
   link_within_minutes: 10
   drops_before_callback_offer: 2
+  # A booking at an address with a job finished this recently flags a person to review it (journey
+  # 7 step 3). ASSUMED: a month, the usual window a callback on recent work is checked in.
+  return_visit_days: 30
 
 retention:
   transcript_days: 30
@@ -257,6 +260,18 @@ lines:
     back in a few minutes instead?
   limit: I've already got that taken care of on this call, so let me have someone from the team follow up.
   slot_taken: That window just filled up.
+  # A caller on file booking an address that isn't theirs on file (eval round 2, seed 5).
+  account_choice: >-
+    Should that address go on its own account, with you as a contact, or under your account?
+  account_name: Whose name should the account for that address be under?
+  # Added to the booking sentence for a return visit soon after a job at the same address.
+  return_visit_review: >-
+    Since we were just out there, a manager will look over this visit, including whether it's
+    covered, before the technician arrives.
+  # {windows} is the arrival windows, such as "8 to 12, 12 to 4 and 4 to 8".
+  arrival_no_fit: >-
+    Our arrival windows are {windows}, and the technician can come any time in the window, so I
+    can't promise an exact time.
   # Said once when the server marks a call Urgent (spec S-21a). Below Urgent, no priority is named.
   urgent_priority: I've marked this call top priority, so you get our soonest opening.
   anything_else_first: Is there anything else I can help with?
@@ -275,6 +290,14 @@ lines:
 voice:
   greeting_known: Hi, this is Summit Air. Is this {first_name}?
   greeting_unknown: Thanks for calling Summit Air, this is the virtual assistant. How can I help?
+  # A caller whose earlier call today dropped (repeat_callers): the agent remembers it and checks it
+  # is the same person before picking up where it stopped.
+  greeting_linked: >-
+    Hi, this is Summit Air's virtual assistant again. I think we got cut off earlier. Is this
+    {first_name}?
+  greeting_linked_unknown: >-
+    Hi, this is Summit Air's virtual assistant again. I think we got cut off earlier. Who am I
+    speaking with?
   # Said when the model ends the call without a goodbye of its own (knowledge/sign-off.md). Generic
   # and kind, the same on any day (eval round 3).
   goodbye: Thanks for calling Summit Air. Have a great rest of your day.

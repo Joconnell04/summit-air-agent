@@ -12,6 +12,27 @@ Discussion: docs/ai-process/transcripts/... or docs/explorations/...
 Issue: #N
 -->
 
+## 050. Round 2 part B: times, return visits and new scenarios
+
+Decided: a bare hour means daytime (1 to 7 is afternoon, and a range ends after it starts, so "8 to 2" is 8 AM to 2 PM). A completed job for the same problem at the address within 30 days (ASSUMED) is flagged to a person as a possible return visit. Priority phrases respect a plain negation, with a short look-back that errs toward raising. Second opinions on a replacement go to a sales advisor who comes out to quote, through the install lead, never a price on the phone. The new round 2 scenarios aren't must-pass until they have a few clean runs.
+Why: Jackson's round 2 notes; the knowledge folder says replacements are quoted in person.
+Would change if: callers mean evening hours often enough to need a question, or the 30-day window doesn't match Summit Air's warranty.
+Discussion: evals/rounds/02-seeds-and-holdout.md, PR #75
+
+## 049. Same number, same day links only a dropped call
+
+Decided: a call from the same number links to an earlier call that day only when the most recent earlier call dropped; the agent confirms the caller by their own name before resuming, and the two calls can't book twice. A finished call in the morning doesn't link an afternoon call.
+Why: Jackson's round 2 note asked for resuming within the day; linking finished calls would block a legitimate second booking.
+Would change if: callers often call back after a finished call to change what they booked.
+Discussion: PR #75
+
+## 048. A second address goes on its own account by default
+
+Decided: a caller with a job at their own home can book a visit at another address in the service area. The server asks first whether it goes on its own account (the usual answer, with the caller as a contact) or the caller's own.
+Why: Jackson's round 2 note; a separate account keeps each home's history with that home.
+Would change if: the office prefers one account per caller.
+Discussion: PR #75
+
 ## 047. Burning dust gets one lighter check question
 
 Decided: a burning or dusty smell (common on the first cold night) gets one check question asked the negative way: "Just to confirm, it doesn't smell like sulfur or rotten eggs, right?" Agreement words alone ("yeah", "right", "no") clear it; the smell named again, a symptom or an unsure answer bring the lines.

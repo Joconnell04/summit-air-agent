@@ -72,7 +72,9 @@ class FsmAdapter(Protocol):
 
     # Writes. The key identifies the attempt on our side: ServiceTitan has no idempotency, so a
     # retry with the same key finds what the first attempt made (find_job) instead of making it again.
-    def create_customer(self, key: str, name: str, address: dict, phone: str) -> dict: ...
+    def create_customer(
+        self, key: str, name: str, address: dict, phone: str, contact_name: str | None = None
+    ) -> dict: ...
     def create_location(self, key: str, customer_id: int, address: dict) -> dict: ...
     def create_job(
         self,
