@@ -48,7 +48,16 @@ profiles:
 # points from the earlier practice agent (from-other-projects/bobert/latency-notes.md) until
 # measured on real phone audio (docs/latency.md).
 voice:
-  stt: {provider: deepgram, model: nova-3, endpointing_ms: 100}
+  # price_per_minute is streaming plus Deepgram's keyterm add-on, $0.0077 + $0.0013 (SOURCE:
+  # https://deepgram.com/pricing, read 2026-11-04).
+  stt: {provider: deepgram, model: nova-3, endpointing_ms: 100, price_per_minute: 0.0090}
+  # Other ears, measured against Nova-3 by the STT bench (voice/livekit/stt_bench.py, make
+  # stt-bench). RIG_VOICE='{"stt": <one of these>}' puts one on the rig's worker; a Cartesia entry
+  # also hands the end of turn to the STT's own turn detection, as LiveKit exposes it.
+  # Ink-2: 3 credits per second of audio (SOURCE: https://cartesia.ai/pricing, read 2026-11-04) at
+  # the Pro overage of $65 per 1M credits we pay now, so $0.0117 a minute.
+  stt_candidates:
+    ink-2: {provider: cartesia, model: ink-2, price_per_minute: 0.0117}
   # Katie, the Cartesia plugin default. The pre-recorded clips (voice/livekit/clips.py) use the same voice.
   # min_sentence_chars: a sentence shorter than this waits to be sent to the voice with the next
   # one (LiveKit's default, 20).
@@ -139,10 +148,15 @@ audio_rig:
   agent_ears: {provider: deepgram, model: nova-3, price_per_minute: 0.0077}
   # ASSUMED: speech sits well above -40 dBFS and codec noise well below it; 40 ms of it is a word.
   vad: {threshold_dbfs: -40, min_voiced_ms: 40}
-  # Our LiveKit stack's speech parts, to cost a rig call: Deepgram streaming (SOURCE as above) and
-  # Cartesia Sonic (ASSUMED from the Startup plan, docs/cost.md). Its Claude tokens are counted
+  # Our LiveKit stack's speech parts, to cost a rig call: Deepgram streaming with the keyterm
+  # add-on (SOURCE: voice.stt above) and Cartesia Sonic (ASSUMED from the Startup plan, docs/cost.md). Its Claude tokens are counted
   # from the call record.
-  livekit: {stt_per_minute: 0.0077, tts_per_1k_chars: 0.031}
+  livekit: {stt_per_minute: 0.0090, tts_per_1k_chars: 0.031}
+  # The STT bench (voice/livekit/stt_bench.py): two caller voices so a result is not one
+  # speaker's, and the line noise under the silences, ASSUMED at about -60 dBFS.
+  stt_bench:
+    voices: [aura-2-thalia-en, aura-2-orion-en]
+    noise_dbfs: -60
 
 # Speech-to-speech and managed-voice entrants on the rig. Profile names are dotted
 # ("realtime.openai") so a results file names them like any other profile.

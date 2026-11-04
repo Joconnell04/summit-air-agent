@@ -58,11 +58,22 @@ settings = Settings()
 
 
 def stt_options(voice: dict, names: local_names.Names) -> dict:
-    """Deepgram's settings: the tenant's local names as keyterms, so they are written as spelled."""
-    options = {"model": voice["stt"]["model"], "endpointing_ms": voice["stt"]["endpointing_ms"]}
+    """The ears' settings: the tenant's local names as keyterms, so they are written as spelled.
+    Deepgram also takes its endpointing; Cartesia's Ink-2 decides the end of turn itself."""
+    stt = voice["stt"]
+    options = {"model": stt["model"]}
+    if stt["provider"] == "deepgram":
+        options["endpointing_ms"] = stt["endpointing_ms"]
     if names.keyterms():
         options["keyterm"] = names.keyterms()
     return options
+
+
+def build_stt(voice: dict, names: local_names.Names, **extra):
+    from livekit.plugins import cartesia, deepgram
+
+    plugin = {"deepgram": deepgram.STT, "cartesia": cartesia.STT}[voice["stt"]["provider"]]
+    return plugin(**stt_options(voice, names), **extra)
 
 
 def tts_options(voice: dict, names: local_names.Names) -> dict:
@@ -83,10 +94,10 @@ def tts_options(voice: dict, names: local_names.Names) -> dict:
 
 
 def build_session(vad, voice: dict, names: local_names.Names) -> AgentSession:
-    from livekit.plugins import cartesia, deepgram
+    from livekit.plugins import cartesia
 
     return AgentSession(
-        stt=deepgram.STT(**stt_options(voice, names)),
+        stt=build_stt(voice, names),
         llm=build_llm(),
         tts=cartesia.TTS(**tts_options(voice, names)),
         vad=vad,
@@ -95,8 +106,11 @@ def build_session(vad, voice: dict, names: local_names.Names) -> AgentSession:
 
 
 def turn_handling(voice: dict) -> dict:
+    # Ink-2 ends the turn from the words and the silence together, and sends its final transcript
+    # only then, so a second detector on top would only wait for it.
+    detector = "stt" if voice["stt"]["provider"] == "cartesia" else inference.TurnDetector()
     return {
-        "turn_detection": inference.TurnDetector(),
+        "turn_detection": detector,
         # A copy: LiveKit keeps this dict and writes later option changes into it.
         "endpointing": dict(voice["endpointing"]["normal"]),
         "interruption": voice["interruption"],

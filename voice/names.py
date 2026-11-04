@@ -24,6 +24,8 @@ CARTESIA_DICT_VERSION = "2026-08-14"
 # Deepgram keyterm limits for Nova-3 (SOURCE: developers.deepgram.com/docs/keyterm).
 MAX_KEYTERMS = 100
 MAX_KEYTERM_TOKENS = 500
+# Cartesia Ink-2 takes the same 100 terms and 1,200 characters (SOURCE:
+# https://docs.cartesia.ai/use-the-api/stt/keyterms.md), so a list inside Deepgram's limits fits it.
 # Cartesia's Sonic 3 English sounds and its two stress marks (SOURCE: Cartesia IPA phonemes guide).
 SOUNDS = {
     "p", "b", "t", "d", "k", "ɡ", "tʃ", "dʒ", "f", "v", "θ", "ð", "s", "z", "ʃ", "ʒ", "h", "m",

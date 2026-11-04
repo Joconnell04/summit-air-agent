@@ -1,6 +1,6 @@
 .PHONY: setup test lint check ratchet ratchet-update eval eval-pairs eval-decisions replay langsmith eval-upload seed-st mock-st postman-st server postman trace \
 	owner-demo owner-user rules-gate summary-check voice-livekit phone-setup deploy test-call measure-delay \
-	retell-push retell-bridge retell-deploy retell-report rig rig-report sim listen
+	retell-push retell-bridge retell-deploy retell-report rig rig-report sim listen stt-bench
 
 setup:
 	uv sync
@@ -53,6 +53,13 @@ sim:
 	@test -n "$(CALLS)$(TAGS)" || { echo 'usage: make sim CALLS="id id" or TAGS=tag,tag'; exit 2; }
 	uv run $(EVAL_ENV) python -m evals.audio_rig.sim $(if $(CALLS),--calls "$(CALLS)") \
 	  $(if $(TAGS),--tags $(TAGS)) $(if $(MAX_COST),--max-cost $(MAX_COST)) $(if $(BATCH),--batch $(BATCH))
+
+# Paid, about $0.28 (MEASURED, evals/rounds/stt-ink2-01.md): our ears against a candidate from
+# config/models.yaml voice.stt_candidates on the same scripted 8 kHz caller turns.
+# make stt-bench [STT=ink-2] [REPS=2] [ONLY=digits-phone,safety-co]
+stt-bench:
+	uv run $(EVAL_ENV) python -m voice.livekit.stt_bench $(if $(STT),--stt $(STT)) \
+	  $(if $(REPS),--reps $(REPS)) $(if $(ONLY),--only $(ONLY))
 
 # The local listening page for the newest batch in data/sim: http://127.0.0.1:8130
 listen:
