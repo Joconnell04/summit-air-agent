@@ -9,12 +9,12 @@ issue backfilled (the issue body says so).
 | Issue | Lane | Pull requests | Decisions |
 |---|---|---|---|
 | [#120](https://github.com/Joconnell04/summit-air-agent/issues/120) | Address lookup, preferred names, five easy scenarios | none yet |  |
-| [#122](https://github.com/Joconnell04/summit-air-agent/issues/122) | Ears test: Cartesia Ink-2 against Deepgram Nova-3 | none yet |  |
 
 ## Done, newest first
 
 | Issue | Lane | Pull requests | Decisions |
 |---|---|---|---|
+| [#122](https://github.com/Joconnell04/summit-air-agent/issues/122) | Ears test: Cartesia Ink-2 against Deepgram Nova-3 | see issue |  |
 | [#119](https://github.com/Joconnell04/summit-air-agent/issues/119) | Owner view and bench at the public URL | [#100](https://github.com/Joconnell04/summit-air-agent/pull/100) |  |
 | [#118](https://github.com/Joconnell04/summit-air-agent/issues/118) | Listen to simulated calls | [#95](https://github.com/Joconnell04/summit-air-agent/pull/95) | 062 |
 | [#117](https://github.com/Joconnell04/summit-air-agent/issues/117) | Cold handoff | [#90](https://github.com/Joconnell04/summit-air-agent/pull/90) | 061 |
