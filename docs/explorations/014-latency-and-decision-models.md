@@ -105,3 +105,18 @@ Repo (MEASURED unless noted): docs/latency.md, docs/tuning.md, evals/rounds/bake
 Web, read 2026-11-03: [LiveKit turn tuning](https://docs.livekit.io/agents/logic/turns/tuning) (preemptive generation, delays, dynamic endpointing); [LiveKit turns](https://docs.livekit.io/agents/build/turns/); [LiveKit Deepgram STT](https://docs.livekit.io/agents/models/stt/deepgram/) (Flux options); [Deepgram eager end-of-turn](https://developers.deepgram.com/docs/flux/voice-agent-eager-eot); [Deepgram Flux quickstart](https://developers.deepgram.com/docs/flux/quickstart); [Deepgram keyterms](https://developers.deepgram.com/docs/keyterm) (search snippet only); [Telnyx on eager end-of-turn](https://telnyx.com/release-notes/automatic-eager-end-of-turn-deepgram-flux) (snippet, vendor figure); [Smart Turn v3, Daily](https://www.daily.co/blog/announcing-smart-turn-v3-with-cpu-inference-in-just-12ms/); [Cartesia latest models](https://docs.cartesia.ai/build-with-cartesia/tts-models/latest) and [older models](https://docs.cartesia.ai/build-with-cartesia/tts-models/older-models.md); Sonic 3.6 latency claims from search snippets only (the [Marktechpost article](https://www.marktechpost.com/2026/08/18/cartesia-ships-sonic-3-6-a-streaming-tts-model-that-now-leads-both-artificial-analysis-speech-arenas/) returned 403); [Anthropic fast mode](https://platform.claude.com/docs/en/build-with-claude/fast-mode); [Anthropic models overview](https://platform.claude.com/docs/en/models/overview); [Anthropic reducing latency](https://platform.claude.com/docs/en/test-and-evaluate/strengthen-guardrails/reduce-latency); [OpenAI Decisions guide](https://developers.openai.com/api/docs/guides/decisions); [TypeSafe docs](https://docs.typesafe.ai) (intro page only: no latency or retention figures); [SPORK, speculative tool calls](https://arxiv.org/pdf/2607.03333) (snippet).
 
 Gaps. Jev's retention policy, Sonic 3.6's measured latency, ModernBERT CPU latency, and a controlled TTFT benchmark for small models on fast hosts were not found; no Exa or Firecrawl calls were made (built-in search was enough). Whether LiveKit starts its early reply on Flux's eager event is not documented in what I read. No GitHub issue exists for this exploration, so none was commented on.
+
+## Decided (Jackson approved the recommendations)
+
+| Idea | Decision | Where |
+|---|---|---|
+| 1. Retune the end-of-turn wait | Do now | End-of-turn lane, with the worker's tool-turn timer fix and per-turn stage times in rig results |
+| 2. Server speaks the read-back and booking text | Do now | PR #82 (read-back, booking, reschedule and cancel confirmations) |
+| 3. Extend the side model | Do two questions: "asked for a person" (warm transfer) and "can't keep up" (speaking rate); not "commercial" | A lane after PR #83 merges |
+| 4. Hand the model lookup results | Do after the live calls | A second latency lane |
+| 5. Bare-yes fast path | Shadow mode only: log what it would do, never act | The second latency lane |
+| 6. A short line before a silent tool call | Do, from the same model response | PR #82 for the booking turn; the second latency lane for the rest |
+| 7. Deepgram Flux | Not before the demo | |
+| 8. Voice-side tweaks | Test preemptive speech and a smaller first sentence on the rig; keep what helps | End-of-turn lane |
+| 9. Our own classifier | No | |
+| 10. A faster model for some turns | No: Haiku is already the fastest Claude model, the model is 0.8 s of a 1.94 s turn, and switching mid-call changes voice and judgment | |
