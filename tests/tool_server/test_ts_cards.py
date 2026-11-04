@@ -325,3 +325,25 @@ def test_a_phone_split_across_turns_is_stored_as_said(agent):
 )
 def test_a_card_word_leaves_house_numbers_zips_dates_times_and_amounts(line):
     assert cards.redact(line) == line
+
+
+def test_a_spoken_zip_and_phone_stay_and_the_spoken_card_expiry_and_code_go():
+    # From eval run 20261104-204957 (card-read-after-booking#2).
+    line = (
+        "yes that's right seven one two oh ridge blvd brooklyn one one two oh nine and nine two "
+        "nine five five five oh three oh one thanks okay let me grab my card it's four one one one "
+        "one one one one one one one one one one one one expires oh eight twenty eight the "
+        "security code is one two three"
+    )
+    cleaned = cards.redact(line)
+    assert "one one two oh nine and nine two nine five five five oh three oh one" in cleaned
+    assert cleaned.endswith(
+        f"my card it's {cards.MARKER} expires {cards.MARKER} the security code is {cards.MARKER}"
+    )
+    assert cards.redact(cleaned) == cleaned
+
+
+def test_a_phone_after_a_card_on_the_same_line_stays():
+    assert cards.redact("4111 1111 1111 1111 and then 718 555 0101") == (
+        f"{cards.MARKER} and then 718 555 0101"
+    )

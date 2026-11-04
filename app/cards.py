@@ -34,8 +34,17 @@ TAIL_DIGITS = 4
 DIGIT_WORDS = {
     "zero": "0", "oh": "0", "one": "1", "two": "2", "three": "3", "four": "4",
     "five": "5", "six": "6", "seven": "7", "eight": "8", "nine": "9",
+    # An expiry said as "oh eight twenty eight": tens and teens are spoken digits too.
+    "ten": "10", "eleven": "11", "twelve": "12", "thirteen": "13", "fourteen": "14",
+    "fifteen": "15", "sixteen": "16", "seventeen": "17", "eighteen": "18", "nineteen": "19",
+    "twenty": "20", "thirty": "30", "forty": "40", "fifty": "50", "sixty": "60", "seventy": "70",
+    "eighty": "80", "ninety": "90",
 }
-_DIGIT_WORD = r"(?:zero|oh|one|two|three|four|five|six|seven|eight|nine)"
+_DIGIT_WORD = (
+    r"(?:zero|oh|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|"
+    r"fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|"
+    r"seventy|eighty|ninety)"
+)
 # A run of digits: groups joined by a space, comma, dash or dot ("4111 1111"), a date ("08/28"),
 # or digits said as words ("four one one one"); or a marker left by an earlier redaction.
 RUN = re.compile(
@@ -69,6 +78,9 @@ class Run:
     known: bool = False  # a marker: a card already taken out
     kept: bool = False  # the last four after "ending in"
     card: bool = False
+    spoken: bool = False  # said as words: one group per word
+    cued: bool = False  # a card word comes before it in the window
+    after_and: bool = False  # "and" comes between it and the run before, on the same line
 
     @property
     def digits(self) -> str:
@@ -76,8 +88,13 @@ class Run:
 
     @property
     def tail_shaped(self) -> bool:
-        """An expiry date or a security code: a date, or four digits or fewer."""
-        return "/" in "".join(self.groups) or len(self.digits) <= TAIL_DIGITS
+        """An expiry date or a security code: a date, four digits or fewer, or four spoken numbers
+        or fewer ("oh eight twenty eight")."""
+        return (
+            "/" in "".join(self.groups)
+            or len(self.digits) <= TAIL_DIGITS
+            or (self.spoken and len(self.groups) <= TAIL_DIGITS)
+        )
 
 
 def luhn(digits: str) -> bool:
@@ -110,6 +127,7 @@ def _runs(line: str, index: int) -> list[tuple[Run, str]]:
         before = line[at : match.start()]
         known = match.group(0) == MARKER
         run = Run(index, match.start(), match.end(), [] if known else _groups(match.group(0)), known)
+        run.spoken = bool(re.search(r"[a-z]", match.group(0), re.IGNORECASE)) and not known
         run.kept = bool(ENDING.search(line[: match.start()]))
         out.append((run, before))
         at = match.end()
@@ -131,11 +149,12 @@ def _card_grouping(sizes: list[int]) -> bool:
     return all(size == 4 for size in sizes[:-1]) and 1 <= sizes[-1] <= 4
 
 
-def _is_card(runs: list[Run], cued: bool) -> bool:
+def _is_card(runs: list[Run]) -> bool:
     groups = [g for run in runs for g in run.groups]
     digits = "".join(groups)
     if any("/" in g for g in groups) or not _card_grouping([len(g) for g in groups]):
         return False
+    cued = runs[0].cued
     return (len(digits) in WHOLE_CARD and luhn(digits)) or (cued and len(digits) in CUED_CARD)
 
 
@@ -143,17 +162,24 @@ def _chains(lines: list[str]) -> list[list[Run]]:
     """The window's runs in order, split where words other than filler come between two of them
     or before kept last four digits. Lines of the window run on into each other."""
     chains: list[list[Run]] = [[]]
+    cued = False
     for index, line in enumerate(lines):
+        cues = [m.start() for m in CARD_WORDS.finditer(line)]
+        first = True
         for run, before in _runs(line, index):
+            run.cued = cued or any(at < run.start for at in cues)
+            run.after_and = not first and has_phrase(words(before), "and")
+            first = False
             if run.kept or (chains[-1] and not _filler(before)):
                 chains.append([])
             chains[-1].append(run)
             if run.kept:
                 chains.append([])
+        cued = cued or bool(cues)
     return [c for c in chains if c]
 
 
-def _mark(chain: list[Run], cued: bool) -> None:
+def _mark(chain: list[Run]) -> None:
     """Marks the card in the chain, and the expiry or code right after it."""
     i = 0
     while i < len(chain):
@@ -161,9 +187,13 @@ def _mark(chain: list[Run], cued: bool) -> None:
         for j in range(i, len(chain)):
             if any(r.known or r.kept for r in chain[i : j + 1]):
                 break
+            # A card read out isn't joined by "and" on one line: "11209 and 929 555 0301" is a
+            # ZIP and a phone. The expiry and code after a card can be.
+            if j > i and chain[j].after_and:
+                break
             if len("".join(r.digits for r in chain[i : j + 1])) > max(WHOLE_CARD):
                 break
-            if _is_card(chain[i : j + 1], cued):
+            if _is_card(chain[i : j + 1]):
                 found = j
         if found is None and not chain[i].known:
             i += 1
@@ -188,10 +218,9 @@ def redact_window(lines: list[str]) -> list[str]:
         while start > 0 and mostly_digits(lines[start - 1]):
             start -= 1
     window = lines[start:]
-    cued = bool(CARD_WORDS.search(" ".join(window)))
     chains = _chains(window)
     for chain in chains:
-        _mark(chain, cued)
+        _mark(chain)
     out = list(window)
     for run in sorted((r for c in chains for r in c if r.card), key=lambda r: -r.start):
         line = out[run.line]
