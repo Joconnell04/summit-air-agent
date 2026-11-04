@@ -490,3 +490,25 @@ def test_two_units_named_together_get_a_note_and_the_first_booking_moves_on_to_t
 def test_one_unit_booking_still_ends_with_anything_else(agent):
     call = ready_to_book(agent)
     assert book(agent, call, first_open(agent, call))["say"].endswith("Anything else?")
+
+
+OCEAN_LINE = ("Almost, the address is one one two oh Ocean Ave, not one one two three zero Ocean "
+              "Ave, Brooklyn one one two three oh.")
+
+
+@pytest.mark.parametrize(
+    "line, field",
+    [
+        (OCEAN_LINE, None),
+        ("Yes, it's 4B, not 4C.", "unit"),
+        ("It's 144, not 142.", "house number"),
+        ("Not 11232, it's 11231.", None),
+        ("Not sure, maybe apartment 3.", "unit"),
+    ],
+)
+def test_a_value_the_caller_rejects_is_not_a_change(line, field):
+    """Eval run 20261104-201607, heat-and-sink-leak: "not 11230 Ocean Ave" reset a right read-back."""
+    ocean = {**READ_BACK, "street": "1120 Ocean Ave", "zip": "11230"}
+    main = {**READ_BACK, "zip": "11231"}
+    target = ocean if "Ocean" in line else main
+    assert readback.change(line, target) == field

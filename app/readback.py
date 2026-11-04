@@ -38,9 +38,19 @@ def _house(street: str) -> str:
     return re.sub(r"\D", "", first[0]) if first and re.search(r"\d", first[0]) else ""
 
 
+# A value right after "not" is the one the caller rejects: "1120 Ocean Ave, not 11230 Ocean Ave",
+# "it's 144, not 142" (eval run 20261104-201607, heat-and-sink-leak). The words up to the next
+# break, "and", "but" or "it's", at most eight, are left out.
+REJECTED = re.compile(
+    r"\b(?:not|isn'?t|instead of)\b(?:\s+(?!(?:and|but|it'?s|its)\b)[^\s,.;!?]+){1,8}",
+    re.IGNORECASE,
+)
+
+
 def change(text: str, readback: dict) -> str | None:
     """The read-back field this caller line gives a different value for (unit, house number,
-    street, ZIP or phone), or None."""
+    street, ZIP or phone), or None. A value the caller rejects ("not 142") doesn't count."""
+    text = REJECTED.sub(" ", text or "")
     tokens = words(text).split()
     # "Yes, 2A and 5C" to a read-back of 5C names the unit read back: no change.
     units = _units_said(tokens)
@@ -48,7 +58,8 @@ def change(text: str, readback: dict) -> str | None:
         return "unit"
     house = _house(readback.get("street", ""))
     for said in _houses_said(text):
-        if said != house:
+        # "It's 11231" is the ZIP said again, not a house number.
+        if said not in (house, readback.get("zip")):
             return "house number"
     street = _street_said(text)
     if street and street not in street_key(readback.get("street", "")):
