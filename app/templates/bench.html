@@ -22,7 +22,7 @@
     <div class="panel-head"><h2>In progress</h2>{{ "" }}<span class="count alarm">{{ live | length }}</span><span class="sub">Open one to watch its steps as they happen.</span></div>
     <ul class="list">
       {% for c in live %}
-      <li data-href="/bench/calls/{{ c.id }}"><span class="what" style="font-weight: var(--semibold);"><a href="/bench/calls/{{ c.id }}">{{ mask(c.id) }}</a></span><span class="meta num">{{ c.local.strftime("%-I:%M %p") }}, {{ mask(c.caller_id) }}, {{ c.turns }} lines</span><span class="end"><span class="tag ember">Live</span><span class="go">{{ go() }}</span></span></li>
+      <li data-href="/bench/calls/{{ c.key }}"><span class="what"><a href="/bench/calls/{{ c.key }}">{{ mask(c.id) }}</a></span><span class="meta num">{{ c.local.strftime("%-I:%M %p") }}, {{ mask(c.caller_id) }}, {{ c.turns }} lines</span><span class="end"><span class="tag ember">Live</span><span class="go">{{ go() }}</span></span></li>
       {% endfor %}
     </ul>
   </section>
@@ -39,9 +39,9 @@
         <thead><tr><th>Started</th><th>Call</th><th>Caller</th><th>Outcome</th><th class="right">Lines</th><th class="right">Tools</th><th class="right">Refused</th><th class="right">Reply p50</th><th></th><th></th></tr></thead>
         <tbody>
           {% for c in calls %}
-          <tr data-href="/bench/calls/{{ c.id }}">
+          <tr data-href="/bench/calls/{{ c.key }}">
             <td class="time">{{ c.local.strftime("%b %-d, %-I:%M %p") }}</td>
-            <td><span class="what"><a href="/bench/calls/{{ c.id }}"><code>{{ mask(c.id) }}</code></a></span></td>
+            <td><span class="what"><a href="/bench/calls/{{ c.key }}"><code>{{ mask(c.id) }}</code></a></span></td>
             <td class="fit num muted">{{ mask(c.caller_id) }}</td>
             <td class="fit">{{ (c.outcome or "open") | replace("_", " ") }}</td>
             <td class="fit right num">{{ c.turns }}</td>

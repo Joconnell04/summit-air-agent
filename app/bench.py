@@ -26,8 +26,10 @@ from .owner_view import _common, _need_admin, _render
 
 RECENT = 60
 SEARCH_MAX_CHARS = 80
-# A live view keeps its stream open this long, then the page offers to reconnect.
-STREAM_SECONDS = 30 * 60
+# A live view's stream closes after this long; the browser opens it again by itself (the
+# EventSource retry), so a forgotten tab never holds a server thread for the length of a call.
+STREAM_SECONDS = 5 * 60
+RETRY_MS = 1000
 STREAM_POLL_SECONDS = 1.0
 KEEPALIVE_SECONDS = 15
 
@@ -81,9 +83,21 @@ def _calls(conn, q: str, tenants) -> list[dict]:
     for r in rows:
         tenant = tenants.by_slug.get(r["tenant"]) or tenants.default
         d = sorted(delays[r["id"]])
-        out.append({**dict(r), "local": tenant.local(parse_iso(r["started_at"])),
+        out.append({**dict(r), "key": redact.call_key(r["id"]),
+                    "local": tenant.local(parse_iso(r["started_at"])),
                     "reply_p50": d[len(d) // 2] if d else None, "live": r["ended_at"] is None})
     return out
+
+
+def call_for(conn, key: str) -> str | None:
+    """The call id behind a bench key (redact.call_key). Read by scanning ids, which at thousands
+    of calls is a few milliseconds and keeps the key out of the schema."""
+    if not re.fullmatch(r"[0-9a-f]{12}", key):
+        return None
+    for (call_id,) in conn.execute("SELECT id FROM calls"):
+        if redact.call_key(call_id) == key:
+            return call_id
+    return None
 
 
 def add_routes(app: FastAPI) -> None:
@@ -98,18 +112,19 @@ def add_routes(app: FastAPI) -> None:
         try:
             found = _calls(conn, q, services.tenants)
             if q and len(found) == 1:
-                return RedirectResponse(f"/bench/calls/{found[0]['id']}", 303)
+                return RedirectResponse(f"/bench/calls/{found[0]['key']}", 303)
             context = {**_context(request, conn, "bench"), "bench_query": q, "calls": found,
                        "live": [c for c in found if c["live"]]}
         finally:
             conn.close()
         return _render(request, "bench.html", context)
 
-    def call_context(request: Request, call_id: str) -> dict | None:
+    def call_context(request: Request, key: str) -> dict | None:
         services = request.app.state.services
         conn = services.connect()
         try:
-            found = trace.timeline(conn, call_id)
+            call_id = call_for(conn, key)
+            found = trace.timeline(conn, call_id) if call_id else None
             if found is None:
                 return None
             graph = nodes.build(conn, found, services.settings.log_path)
@@ -120,46 +135,55 @@ def add_routes(app: FastAPI) -> None:
                 **_context(request, conn, "bench"),
                 "call": redact.value(found["call"]),
                 "call_id": call_id,
+                "key": key,
                 "local": tenant.local(parse_iso(found["call"]["started_at"])),
                 "graph": graph,
                 "bookings": redact.value(found["bookings"]),
                 "flags": redact.value(found["flags"]),
                 "stages": stages,
                 "live_rules": rules.live(conn, tenant.slug),
-                "draft": bench_data.scenario_draft(found, redact),
+                "draft": bench_data.scenario_draft(found, redact, key),
             }
         finally:
             conn.close()
 
-    @app.get("/bench/calls/{call_id}", response_class=HTMLResponse)
-    def bench_call(request: Request, call_id: str):
+    @app.get("/bench/calls/{key}", response_class=HTMLResponse)
+    def bench_call(request: Request, key: str):
         denied = require_admin(request)
         if denied:
             return denied
-        context = call_context(request, call_id)
+        context = call_context(request, key)
         if context is None:
             return HTMLResponse("No such call.", 404)
         return _render(request, "bench_call.html", context)
 
-    @app.get("/bench/calls/{call_id}/graph", response_class=HTMLResponse)
-    def bench_call_graph(request: Request, call_id: str):
+    @app.get("/bench/calls/{key}/graph", response_class=HTMLResponse)
+    def bench_call_graph(request: Request, key: str):
         """The graph and its detail alone, for the live view to swap in as the call goes on."""
         denied = require_admin(request)
         if denied:
             return denied
-        context = call_context(request, call_id)
+        context = call_context(request, key)
         if context is None:
             return HTMLResponse("No such call.", 404)
         return _render(request, "_bench_graph.html", context)
 
-    @app.get("/bench/calls/{call_id}/stream")
-    def bench_call_stream(request: Request, call_id: str):
+    @app.get("/bench/calls/{key}/stream")
+    def bench_call_stream(request: Request, key: str):
         """Server-sent events while a call is in progress: `changed` when a turn or a tool call is
-        recorded, `ended` when the call ends or the stream has been open STREAM_SECONDS."""
+        recorded, `ended` when the call ends. After STREAM_SECONDS the stream closes without
+        `ended` and the browser reconnects."""
         denied = require_admin(request)
         if denied:
             return denied
         services = request.app.state.services
+        conn = services.connect()
+        try:
+            call_id = call_for(conn, key)
+        finally:
+            conn.close()
+        if call_id is None:
+            return HTMLResponse("No such call.", 404)
 
         def state():
             conn = services.connect()
@@ -174,20 +198,20 @@ def add_routes(app: FastAPI) -> None:
             finally:
                 conn.close()
 
-        if state() is None:
-            return HTMLResponse("No such call.", 404)
-
         def events():
             last = None
             opened = quiet = time.monotonic()
+            yield f"retry: {RETRY_MS}\n\n"
             while True:
                 row = state()
                 if row is not None and tuple(row) != last:
                     last, quiet = tuple(row), time.monotonic()
                     yield f"event: changed\ndata: {json.dumps({'turns': row[1], 'requests': row[2]})}\n\n"
-                if row is None or row[0] or time.monotonic() - opened >= STREAM_SECONDS:
+                if row is None or row[0]:
                     yield "event: ended\ndata: {}\n\n"
                     return
+                if time.monotonic() - opened >= STREAM_SECONDS:
+                    return  # the browser reconnects; the call is still going
                 if time.monotonic() - quiet > KEEPALIVE_SECONDS:
                     quiet = time.monotonic()
                     yield ": still open\n\n"
@@ -196,23 +220,23 @@ def add_routes(app: FastAPI) -> None:
         return StreamingResponse(events(), media_type="text/event-stream",
                                  headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
 
-    @app.get("/bench/calls/{call_id}/scenario.yaml")
-    def bench_call_scenario(request: Request, call_id: str):
+    @app.get("/bench/calls/{key}/scenario.yaml")
+    def bench_call_scenario(request: Request, key: str):
         denied = require_admin(request)
         if denied:
             return denied
         conn = request.app.state.services.connect()
         try:
-            found = trace.timeline(conn, call_id)
+            call_id = call_for(conn, key)
+            found = trace.timeline(conn, call_id) if call_id else None
         finally:
             conn.close()
         if found is None:
             return HTMLResponse("No such call.", 404)
-        name = re.sub(r"[^A-Za-z0-9_-]+", "-", call_id)[:60]
         return PlainTextResponse(
-            bench_data.scenario_draft(found, redact),
+            bench_data.scenario_draft(found, redact, key),
             media_type="application/yaml",
-            headers={"Content-Disposition": f'attachment; filename="replay-{name}.yaml"'},
+            headers={"Content-Disposition": f'attachment; filename="replay-{key}.yaml"'},
         )
 
     @app.get("/bench/settings", response_class=HTMLResponse)
@@ -289,13 +313,13 @@ def add_routes(app: FastAPI) -> None:
             conn.close()
         return _render(request, "bench_run.html", context)
 
-    @app.get("/bench/evals/{run_id}/{key}", response_class=HTMLResponse)
-    def bench_scenario(request: Request, run_id: str, key: str):
+    @app.get("/bench/evals/{run_id}/{scenario}", response_class=HTMLResponse)
+    def bench_scenario(request: Request, run_id: str, scenario: str):
         denied = require_admin(request)
         if denied:
             return denied
         run = find_run(run_id)
-        result = next((s for s in run.scenarios if s.key == key), None) if run else None
+        result = next((s for s in run.scenarios if s.key == scenario), None) if run else None
         if result is None:
             return HTMLResponse("No such scenario in that run.", 404)
         conn = request.app.state.services.connect()

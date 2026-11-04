@@ -976,3 +976,19 @@ def test_a_caller_on_church_avenue_can_book(agent):
     address = {"street": "540 Church Ave", "unit": "", "city": "Brooklyn", "zip": "11218"}
     agent.confirm_read_back(call, address)
     assert book(agent, call, first_open(agent, call))["ok"]
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "I run a clinic. Dr. Patel handles the billing.",
+        "It's my store. Street parking only.",
+        "It's for my restaurant, St Marks and Third.",
+    ],
+)
+def test_a_street_word_after_a_break_does_not_hide_the_business_before_it(line):
+    assert sounds_commercial(line, AGENT["commercial"]), line
+
+
+def test_a_street_name_still_hides_its_business_word_inside_one_sentence():
+    assert not sounds_commercial("It's 540 Church St. in Brooklyn.", AGENT["commercial"])

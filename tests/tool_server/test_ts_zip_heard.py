@@ -79,3 +79,22 @@ def test_the_agents_own_line_with_a_zip_does_not_count(agent):
     agent.turn(call, "1520 Flatbush Avenue.")
     agent.say(call, "That's 11226, right?")
     assert agent.tool("check_service_area", call, zip="11226")["refused"] == "zip_not_heard"
+
+
+def test_punctuation_ends_a_run_of_digits():
+    assert digit_runs("11226, and my cell is 718 555 0142.") == ["11226", "7185550142"]
+
+
+@pytest.mark.parametrize(
+    "line", ["My number is 718 112 2600.", "Call me at 9 1 1 2 2 6 4 4 0 1.", "Unit 112260."]
+)
+def test_a_zip_inside_a_longer_number_does_not_count(agent, line):
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, line)
+    assert agent.tool("check_service_area", call, zip="11226")["refused"] == "zip_not_heard"
+
+
+def test_zip_plus_four_counts(agent):
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "It's 11231-4402.")
+    assert agent.tool("check_service_area", call, zip="11231")["ok"]
