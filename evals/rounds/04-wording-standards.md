@@ -26,3 +26,24 @@ Round 3's standards made the grader stricter, and the standard suite settled at 
 ## Your turn
 
 For each of the 15, keep, loosen or change. Then: which, if any, should only lower the score rather than fail a call when broken twice?
+
+## Jackson's notes (verbatim, transcribed)
+
+> Okay, so for round four. Investigate a better way we could handle the reading back thing, given that it's causing so many issues, and that's such an obvious mistake. Same thing for never re-asking what's answered, because that's fundamentally the same behavior of redundancy. Yeah, do one question at a time. Question, wait, answer, accept. Like, only when it's two separate questions. And you can ask an or question in one sentence, just not like two individual direct questions, like how long has it been and how cold is it? Repeated acknowledgement is not inherently bad. So maybe we need to change the greater on that part. Obviously some variability is nice, but sometimes it's good to use the same acknowledgement. It makes it very clear. Also, figure out a fix to the pet and dog thing. I'm very confused at how that is causing so many problems. Investigate whether it's the grader's fault or the voice agent's fault for point number six on the goodbye thing. Yeah, and figure out the same stuff for top priority, only on urgent calls. It shouldn't be saying that and not doing it. These should be easy things to implement. Also, surface to me how you're going to go about implementing them without hurting latency too bad. Same thing with the gas worry. And the re-asking, although don't worry too much about that one. Unless it caused an issue. And saying around 5:30, if the caller said after 5, that's good, that's after 5. Also, make sure there is an actual system that's operating to properly check availability and book appointments and stuff. And test concurrency too, for like two calls at once trying to book the same appointment, and if one is handled versus not. Make like one or two evals for that.
+
+## What the notes mean
+
+| # | Standard | Verdict | Change |
+|---|---|---|---|
+| 1 | Read back once | Keep, fix the system | The server speaks the read-back itself and owns when it's said; a model restatement of a confirmed address is dropped. |
+| 2 | Never re-ask | Keep, fix the system | The server tells the model each turn what's already known, so nothing answered is asked again. |
+| 3 | One question at a time | Keep, clarified | Two separate direct questions in one turn break it; one "or" question doesn't. |
+| 4 | Repeated acknowledgment | Drop as a fail | Repeating "Got it" is fine and can be clearer; some variety is nice but isn't graded. |
+| 5 | "Pet", not "dog" | Keep, find the cause | Investigate whether the agent or the grader is at fault. |
+| 6 | One goodbye | Keep, find the cause | Investigate whether the agent or the grader is at fault. |
+| 7 | "Top priority" only on Urgent | Keep, fix the system | Only the server says it, and only when it marked the call Urgent. |
+| 8 | Gas worry, no smell | Keep, fix the system | No evacuation advice unless the server heard a safety signal. |
+| 9 | Spell only when unclear | Keep | Fix only if it keeps causing failures. |
+| 10 | "Around 5:30" for "after 5" | Keep | Already right. |
+| 11 to 15 | | Keep | |
+| New | Booking under load | Add | Confirm availability and booking run on the real system, and add one or two evals with two calls booking the same slot at once. |
