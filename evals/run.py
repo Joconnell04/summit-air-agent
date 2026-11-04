@@ -35,7 +35,7 @@ from evals.stacks import InProcessAgent, load_adapter
 from evals.transcribe import level_for, mishear, roughen, seeded
 from evals.world import World, resolve_caller, seeded_db
 
-STACKS = ("livekit", "retell")
+STACKS = ("livekit", "retell", "retell_flow")
 LOOP_REPEATS = 3
 
 
@@ -144,7 +144,7 @@ class Harness:
                agent_cost=0.0):
         return score(scenario, sample, call_id, server, transcript, timings, usage, error, began,
                      safety=self.safety, grader=self.models.grader,
-                     final=self.stack == "retell", agent_cost=agent_cost)
+                     final=self.stack.startswith("retell"), agent_cost=agent_cost)
 
 
 def score(scenario, sample, call_id, server, transcript, timings, usage, error, began, *,

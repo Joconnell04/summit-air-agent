@@ -1,6 +1,6 @@
 .PHONY: setup test lint check ratchet ratchet-update eval eval-pairs eval-decisions replay langsmith eval-upload seed-st mock-st postman-st server postman trace \
 	owner-demo owner-user design-export rules-gate summary-check voice-livekit phone-setup deploy test-call measure-delay \
-	retell-push retell-bridge retell-deploy retell-report rig rig-report sim listen lanes stt-bench
+	retell-push retell-flow-push retell-bridge retell-deploy retell-report rig rig-report sim listen lanes stt-bench
 
 setup:
 	uv sync
@@ -174,8 +174,15 @@ retell-push:
 	RETELL_BRIDGE_URL=$(RETELL_BRIDGE_URL) uv run $(if $(wildcard .env),--env-file .env) \
 	  python -m voice.retell.push $(if $(EVAL_URL),--eval-url $(EVAL_URL))
 
+# The Conversation Flow agent (voice/retell_flow/README.md). BIND=1 puts it on the 678 number;
+# `make retell-push` puts the single-prompt agent back.
+retell-flow-push:
+	RETELL_BRIDGE_URL=$(RETELL_BRIDGE_URL) uv run $(if $(wildcard .env),--env-file .env) \
+	  python -m voice.retell_flow.push $(if $(EVAL_URL),--eval-url $(EVAL_URL)) $(if $(BIND),--bind-number)
+
+# One bridge serves both Retell agents: the flow's routes are added to the single-prompt bridge's.
 retell-bridge:
-	uv run $(if $(wildcard .env),--env-file .env) uvicorn voice.retell.bridge:create_app --factory --port 8102
+	uv run $(if $(wildcard .env),--env-file .env) uvicorn voice.retell_flow.bridge:create_app --factory --port 8102
 
 retell-deploy:
 	sh deploy/retell/deploy.sh

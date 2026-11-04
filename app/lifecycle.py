@@ -387,6 +387,7 @@ def turn(
     cfg = tenant.safety
     seq = call["turn_seq"] + 1
     action = safety.SafetyAction("none", call["safety_kind"])
+    call_stage = None
     changes: dict = {"turn_seq": seq}
     hints = []
     stop_recording = False
@@ -479,6 +480,7 @@ def turn(
             # then sends the owner's guidance for that stage, as a [server] note. Never on a safety
             # call; a stage reached during one gets its note once the safety state clears.
             rules.advance_stage(conn, call, now)
+            call_stage = rules.stage_now(conn, call)
             on_safety = call["safety_state"] not in ("none", "cleared") or action.action != "none"
             # A caller who asks for a higher priority with no new fact gets a calm answer from a
             # note; nothing is raised, since only facts raise priority (DECISIONS.md 073).
@@ -530,6 +532,9 @@ def turn(
         hints=hints,
         known=known,
         pace=pace.current(conn, call["id"]),
+        # The stage the server's records put the call in, after a caller line (rules.stage_now).
+        # The Retell flow routes on it; the model is never asked.
+        stage=call_stage,
         recording=(
             {"action": "stop", "text": recordings.stopped_line(tenant)} if stop_recording else None
         ),
