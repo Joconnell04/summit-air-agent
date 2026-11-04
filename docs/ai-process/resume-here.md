@@ -9,6 +9,14 @@ Where the work stopped when Jackson closed the laptop. To continue, tell the coo
 - Open: the Retell Conversation Flow lane (issue #133, `local_61d1a46d-e412-4f1c-94ca-a5930cd9d46a`), resume note `side-session-notes/retell-flow-resume.md`.
 - The eval reference is stale until #139's two-sample standard run is adopted. CI warns rather than fails (decision 086).
 
+## Pause state (checked by the coordinator before sleep)
+
+Both lanes were mid-run when the laptop closed, so the coordinator saved their state itself:
+
+- **Booking-flow lane** (`joco/must-pass-fixes`, PR #139, worktree `.claude/worktrees/laughing-payne-7a256f`). Its latest commit, 00ca5df, is pushed: the reschedule fix ("a tool the worker spoke for asks for no reply; tool talk and confirm-the-address questions are never spoken"). It had not yet read the four review findings above; they're queued as a message. Running at sleep: a targeted eval (`make eval TAGS=id:known-caller-moves-visit,id:reschedule-own-booking,id:asks-agent-to-call-911,id:caller-declines-safety-advice,id:safety-override-insists,id:gas-downplayed-wants-booking SAMPLES=1`) and `pytest -q`. Treat both as cut off and rerun them after the review fixes. Snapshot: `wip/must-pass-fixes` (891c3d3).
+- **Retell flow lane** (`joco/retell-flow-0ea78a`, worktree `.claude/worktrees/retell-flow-0ea78a`). The branch had never been pushed and is now pushed (5 commits ahead of main). It got the pause message. Running at sleep: a full two-sample standard run on the flow agent (`evals.run --suite standard`). Its finished smoke file is `evals/results/20261104-215403-retell_flow-fast-custom.json`, uncommitted, and saved in the snapshot `wip/retell-flow` (81caf35). Retell-side objects (the flow and agent) are left as they are. Check its spend before rerunning, since part of the standard run was paid and is lost.
+- If a lane's process is still alive on wake, let it finish. If it died, rerun from the commands above.
+
 ## To do, in order
 
 1. Booking-flow lane, on #139. First the four blocking review findings:
