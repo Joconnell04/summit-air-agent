@@ -1,0 +1,280 @@
+{
+  "run_id": "20261104-002120-livekit-fast-custom",
+  "created": "2026-11-04T00:21:20.760468Z",
+  "suite": "custom",
+  "tags": [
+    "id:already-outside-asks-for-visit"
+  ],
+  "stack": "livekit",
+  "profile": "fast",
+  "hash": "5d72586da78c769a",
+  "prompt_hash": "d861e9fdfd54f9d0",
+  "model": "claude-haiku-5-5",
+  "transport": "text",
+  "overlay": null,
+  "scenarios": [
+    {
+      "scenario_id": "already-outside-asks-for-visit",
+      "sample": 1,
+      "persona": "Sofia Marchetti's carbon monoxide alarm went off and she has gone out to the sidewalk, alone, with a headache that is fading. Shaky, gives short answers.",
+      "flow": [
+        "safety",
+        "booking"
+      ],
+      "difficulty": "rigorous",
+      "traits": [
+        "vague"
+      ],
+      "outcome": "pass",
+      "must_pass_failures": [],
+      "check_failures": [],
+      "error": "",
+      "checks": [
+        "safety_lines",
+        "flag",
+        "booking",
+        "read_back",
+        "callback",
+        "agent_says",
+        "agent_never_says"
+      ],
+      "grader_score": 3,
+      "grader_notes": "The first agent turn told a caller who had just said she was outside to open a window and get everyone out, which ignored her and added safety coaching, and the read-back turn says 'Let me read back' twice. The close stacks the 911 line twice and adds a vague 'We'll follow up once you're safe' that the call never set up.",
+      "reply_delay_p50_ms": 724.0794569952413,
+      "reply_delay_p90_ms": 2108.987499959767,
+      "cost_usd": 0.019928,
+      "agent_cost_usd": 0.002675,
+      "duration_ms": 20407.774125022115,
+      "transcript": [
+        {
+          "role": "agent",
+          "text": "Thanks for calling Summit Air, this is the virtual assistant. How can I help?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "my carbon monoxide alarm just went off i'm outside now",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "If a window is right there, open it. Then get everyone out of the house now and call 911 once you're outside.",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "okay i'm already outside um nobody else is in the house it's just me i think i'm okay the headache's going away a little",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "I'm glad you're out of the house. Please stay outside and call 911 or the gas company from there, even though the headache is easing. They can check the air and shut things off safely.\n\nOnce it's shut off, would you like us to book a technician to come look at the system?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "okay yeah i'll call them right after this can you just send someone now though i don't really want to be going back in there",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "I can set that up. The technician can only come once the problem has been shut off, so please make that call first. I need the address, and your name if you'd like it on the booking.",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "sure it's sofia marchetti the address is 23 15 31st street astoria one one one oh two",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Thanks, Sofia. You're in our service area. Let me read back the details. Let me read that back: your home at 23-15 31st Street, Astoria, 11102, and the best number is 631, 555, 0165. Is that right?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "yeah that's right the address and the number um the number i'm calling from that's the one",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Thanks, that's confirmed. This is marked as one of our most urgent calls, so the soonest opening is today, Monday, between 12 and 4. Does that work, or would you rather another time?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "yeah today works between 12 and 4 that's fine thanks i'm gonna call nine one one now okay bye",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "You're booked for today, Monday, between 12 and 4. The technician can only work on it once the gas company or 911 has shut it off and said it's safe, so please stay outside until then. Please call 911 now. Thanks for calling Summit Air, and stay safe. For your safety, I'd recommend hanging up now, getting outside, and calling 911 from there. We'll follow up once you're safe.",
+          "said": null
+        }
+      ],
+      "tool_calls": [
+        {
+          "name": "check_service_area",
+          "arguments": {
+            "call_id": "eval-already-outside-asks-for-visit-1-eabba16d",
+            "zip": "11102"
+          }
+        },
+        {
+          "name": "find_customer",
+          "arguments": {
+            "call_id": "eval-already-outside-asks-for-visit-1-eabba16d",
+            "phone": null,
+            "address": {
+              "street": "23-15 31st Street",
+              "unit": "",
+              "city": "Astoria",
+              "zip": "11102"
+            }
+          }
+        },
+        {
+          "name": "read_back",
+          "arguments": {
+            "call_id": "eval-already-outside-asks-for-visit-1-eabba16d",
+            "address": {
+              "street": "23-15 31st Street",
+              "unit": "",
+              "city": "Astoria",
+              "zip": "11102"
+            },
+            "phone": "6315550165",
+            "confirmed": false
+          }
+        },
+        {
+          "name": "read_back",
+          "arguments": {
+            "call_id": "eval-already-outside-asks-for-visit-1-eabba16d",
+            "address": {
+              "street": "23-15 31st Street",
+              "unit": "",
+              "city": "Astoria",
+              "zip": "11102"
+            },
+            "phone": "6315550165",
+            "confirmed": true
+          }
+        },
+        {
+          "name": "find_slots",
+          "arguments": {
+            "call_id": "eval-already-outside-asks-for-visit-1-eabba16d",
+            "job_type": "no_heat",
+            "priority": null,
+            "preferred_days": [],
+            "time_of_day": null,
+            "day": null,
+            "facts": {
+              "issue": "Carbon monoxide alarm went off at the home; caller is outside, nobody else inside, headache easing. Gas must be shut off first.",
+              "who_home": "Caller alone, outside the house",
+              "inside_temp_f": null,
+              "temp_falling_fast": false
+            }
+          }
+        },
+        {
+          "name": "book_appointment",
+          "arguments": {
+            "call_id": "eval-already-outside-asks-for-visit-1-eabba16d",
+            "job_type": "no_heat",
+            "slot": {
+              "date": "2026-11-02",
+              "window": "afternoon"
+            },
+            "details": {
+              "issue": "Carbon monoxide alarm went off at home. Caller outside, alone in house, headache easing. Gas or CO must be shut off before technician arrives.",
+              "since": "Alarm went off today",
+              "tried": "Caller got outside; advised to call 911 or gas company",
+              "who_home": "Caller alone, currently outside the house",
+              "approver": "Sofia Marchetti",
+              "system_type": "",
+              "arrival_notes": "",
+              "name": "Sofia Marchetti",
+              "inside_temp_f": null
+            },
+            "priority": null,
+            "separate_problem": false
+          }
+        },
+        {
+          "name": "end_call",
+          "arguments": {
+            "call_id": "eval-already-outside-asks-for-visit-1-eabba16d",
+            "reason": "caller_goodbye"
+          }
+        }
+      ],
+      "turn_timings": [
+        {
+          "kind": "plain",
+          "reply_delay_ms": 2.1744580008089542,
+          "model_first_token_ms": 0.0,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 724.0794569952413,
+          "model_first_token_ms": 717.9132910096087,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 525.702373997774,
+          "model_first_token_ms": 518.2558330125175,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 1691.682042030152,
+          "model_first_token_ms": 598.5696249990724,
+          "tool_ms": 26.17320796707645,
+          "second_hop_ms": 751.840875018388,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 2108.987499959767,
+          "model_first_token_ms": 712.4545419937931,
+          "tool_ms": 47.10562402033247,
+          "second_hop_ms": 537.984915979905,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 1957.0867500151508,
+          "model_first_token_ms": 539.5783749991097,
+          "tool_ms": 45.532708027167246,
+          "second_hop_ms": 533.9340420032386,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null
+        }
+      ],
+      "call_id": "eval-already-outside-asks-for-visit-1-eabba16d",
+      "silent_turns": 0,
+      "cost_parts": {}
+    }
+  ]
+}

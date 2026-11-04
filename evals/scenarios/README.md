@@ -38,7 +38,8 @@ One YAML file per simulated call, named `<id>.yaml`. `evals/scenario.py` validat
 | `ownerAndTenant` | `ownerPhone` Dennis Ocasio, `tenantPhone` Priya Nair (unit 2, landlord approves) | 801 Fenimore St, Brooklyn 11206 |
 | `outOfArea` | Gerald Whitman | 47 Willis Ave, Mineola 11501 |
 | `commercial` | Harbor Bakery Group | 232 Lexington Ave, Brooklyn 11221 |
-| `commercialAccounts.N` | 0 bakery, 1 property manager, 2 restaurant, 3 school, 4 dental office, 5 co-op board | |
+| `commercialAccounts.N` | 0 bakery, 1 restaurant, 2 school, 3 dental office | |
+| `residentialBuildingAccounts.N` | 0 Linden Property Management, 1 a co-op board; Residential accounts | |
 | `replacementLead` | Naomi Feld, asking about a replacement | |
 
 Service-area ZIPs are in `tenants/summit-air/config.yaml` (Brooklyn, Queens, Staten Island). Use made-up 555-01xx numbers for unknown callers.

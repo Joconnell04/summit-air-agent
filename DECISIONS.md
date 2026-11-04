@@ -12,6 +12,34 @@ Discussion: docs/ai-process/transcripts/... or docs/explorations/...
 Issue: #N
 -->
 
+## 047. Burning dust gets one lighter check question
+
+Decided: a burning or dusty smell (common on the first cold night) gets one check question asked the negative way: "Just to confirm, it doesn't smell like sulfur or rotten eggs, right?" Agreement words alone ("yeah", "right", "no") clear it; the smell named again, a symptom or an unsure answer bring the lines.
+Why: Jackson's round 2 note; a burning-dust smell is usually harmless, and asking the gas question the usual way read "yeah" as a smell.
+Would change if: real calls show a gas smell described as burning dust and cleared by a "yeah".
+Discussion: evals/rounds/02-seeds-and-holdout.md, PR #74
+
+## 046. A safety call can book a visit for after the problem is shut off
+
+Decided: on a gas or carbon monoxide call the fixed lines and the person flag come first; the agent then recommends staying outside and calling 911 or the gas company and offers once to book a technician for after it's shut off, with the signed-off line "The technician can only work on it once the gas company or 911 has shut it off and said it's safe, so please stay outside until then." The caller doesn't have to insist. This updates decisions 009 and 033.
+Why: Jackson's round 2 note: the agent should still help the caller get a technician once it's safe.
+Would change if: callers take the booking as a reason to stay inside.
+Discussion: evals/rounds/02-seeds-and-holdout.md, PR #74
+
+## 045. Unclear approval gets a callback, and a requested booking a call before dispatch
+
+Decided: when it's unclear whether a co-op or apartment caller can approve the work, the agent offers a callback to confirm who can; if the caller asks to book, it books and the server schedules a call 2 hours before the window (ASSUMED) inside calling hours. If that call can't happen before the window, the booking is flagged to hold the technician and the caller is told the technician won't start until it's settled.
+Why: Jackson's round 2 note; approval is a question of authority, not of residential or commercial.
+Would change if: the office finds the pre-dispatch call adds work without catching problems.
+Discussion: PR #74
+
+## 044. Residential is about equipment, not unit count
+
+Decided: residential means residential-grade equipment: homes, apartments, co-op and condo units and whole apartment buildings, including a super or building manager calling about the building. Commercial means a business with commercial-grade equipment (offices, stores, restaurants, hotels, churches, shopping centers). Property managers and co-op boards are residential accounts in ServiceTitan. The agent can explain the difference briefly when a caller is unsure. This replaces the three-unit line from call-journeys round 2.
+Why: Jackson's round 2 note: a NYC residential HVAC company works on residential-grade units, and multi-tenant buildings have them.
+Would change if: Summit Air starts taking commercial-grade work.
+Discussion: evals/rounds/02-seeds-and-holdout.md, PR #74, docs/brief.md
+
 ## 043. The eval hash covers only what the agent hears on a call
 
 Decided: the run hash's prompt files are the parts `prompts/assemble.py` joins, plus `tools.yaml` and the assembler. A prompt that is never part of a call, such as the technician summary's, is left out, so editing it doesn't make the voice agent's results stale.
