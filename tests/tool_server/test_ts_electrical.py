@@ -177,3 +177,31 @@ def test_a_booking_after_sparks_is_high_and_the_call_stays_off_the_safety_path(a
     finally:
         conn.close()
     assert row["priority"] == "High"
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "hi i've got water coming through my living room ceiling i think it's from the ac",
+        "it's leaking, water's running down the wall and onto the carpet",
+        "the carpet's getting soaked under the unit",
+    ],
+)
+def test_water_in_the_callers_own_words_is_urgent(text):
+    result = decide("no_cooling", text, outside_now_f=70)
+    assert result.level == "Urgent"
+    assert any("caller said" in r for r in result.reasons)
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "there's no water on the floor, it just won't cool",
+        "no leaks on the floor or anything",
+        "my water heater is on the basement floor",
+        "the ac on the second floor is not cooling",
+        "there's water. The unit in the bedroom won't turn on.",
+    ],
+)
+def test_water_far_from_the_home_or_negated_raises_nothing(text):
+    assert decide("no_cooling", text, outside_now_f=70).level == "Normal"

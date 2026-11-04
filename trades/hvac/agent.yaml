@@ -274,6 +274,15 @@ priority:
                 ceilings dripping, leaking into the house, leaking into the apartment, leaking into the home,
                 leaking into the bedroom, leaking into the living room, water all over the floor,
                 flooding the floor, water is pouring, pouring water]
+      # Or callers' own words: a water word within a few words of a part of the home ("water
+      # coming through my living room ceiling", "leaking, running down the wall onto the carpet").
+      together:
+        first: [water, leak, leaking, leaks, leaked, dripping, drips, pouring, flooding, flooded,
+                soaked, soaking, puddle, puddles, wet, running down, dripping down, water stain]
+        second: [ceiling, ceilings, wall, walls, floor, floors, carpet, carpets, rug, rugs, hardwood,
+                 bedroom, living room, kitchen, hallway, closet, downstairs, apartment below]
+        within: 8
+      not_phrases: [water heater, hot water, water bill, water pressure]
       raise_to: Urgent
       reason: water coming into the home
     # A breaker that trips again and again isn't an emergency, but it goes ahead of routine work.

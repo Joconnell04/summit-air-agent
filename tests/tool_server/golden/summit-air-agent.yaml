@@ -921,6 +921,11 @@ priority:
     raise_to: High
     reason: pipes at risk or no other heat
   - id: water_in_home
+    not_phrases:
+    - water heater
+    - hot water
+    - water bill
+    - water pressure
     phrases:
     - water through the ceiling
     - water coming through the ceiling
@@ -947,6 +952,46 @@ priority:
     - pouring water
     raise_to: Urgent
     reason: water coming into the home
+    together:
+      first:
+      - water
+      - leak
+      - leaking
+      - leaks
+      - leaked
+      - dripping
+      - drips
+      - pouring
+      - flooding
+      - flooded
+      - soaked
+      - soaking
+      - puddle
+      - puddles
+      - wet
+      - running down
+      - dripping down
+      - water stain
+      second:
+      - ceiling
+      - ceilings
+      - wall
+      - walls
+      - floor
+      - floors
+      - carpet
+      - carpets
+      - rug
+      - rugs
+      - hardwood
+      - bedroom
+      - living room
+      - kitchen
+      - hallway
+      - closet
+      - downstairs
+      - apartment below
+      within: 8
   - id: breaker_trips
     phrases:
     - breaker keeps tripping
