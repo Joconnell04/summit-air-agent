@@ -196,6 +196,8 @@ class InProcessAgent:
         # The speaking rate the server set (app/pace.py); every agent line is posted with the
         # speed it would be spoken at, as the worker does.
         self.speed: float | None = None
+        # The caller asked the agent to wait on their last line (app/dead_air.py).
+        self.holding = False
 
     def _pace(self, data: dict) -> None:
         pace = (data or {}).get("pace")
@@ -214,6 +216,7 @@ class InProcessAgent:
         now = self.clock() if self.clock else None
         self.system = system_prompt(started["data"], now=now)
         slug = started["data"]["tenant"]["slug"]
+        self.slug = slug
         self.tools = assembled_tool_specs(slug) if _assemble() else tool_specs()
         safety = started["data"].get("safety")
         if safety and started["say"]:
@@ -240,8 +243,52 @@ class InProcessAgent:
         if handoff and result["say"]:
             self.messages.append({"role": "user", "content": caller_text})
             return self._hand_off(result["say"], handoff, t0)
+        # The card stop, the billing callback or the electrical lines, said as written.
+        spoken = result["data"].get("spoken") or {}
+        if spoken.get("text"):
+            self.messages.append({"role": "user", "content": caller_text})
+            return self._speak_from_code(spoken["text"], t0)
+        hold = (result["data"].get("hold") or {}).get("state")
+        self.holding = hold == "holding"
+        if hold == "aside":
+            # Said on hold to someone else: the worker lets the model say nothing.
+            self.messages.append({"role": "user", "content": caller_text})
+            return AgentTurn("", TurnTiming(kind="plain", reply_delay_ms=0, model_first_token_ms=0))
         notes = server_notes(result["data"].get("hints", []), result["data"].get("known"))
         return self._think("\n".join([caller_text, *notes]), t0)
+
+    def step_away(self) -> AgentTurn:
+        """go_quiet with the live timings (config/models.yaml voice.dead_air) and the tenant's
+        lines."""
+        timings = yaml.safe_load((ROOT / "config" / "models.yaml").read_text())["voice"]["dead_air"]
+        lines = yaml.safe_load((TENANTS_DIR / self.slug / "agent.yaml").read_text())["voice"]
+        return self.go_quiet(timings["check_in_s"], timings["hang_up_s"], lines)
+
+    def go_quiet(self, check_in_s: float, hang_up_s: float, lines: dict) -> AgentTurn:
+        """The caller asked the agent to wait and never came back. The worker's own timer
+        (voice/dead_air.py) runs on a clock that jumps ahead instead of waiting minutes, so each
+        check-in and the goodbye are posted as the worker would say them, and the call ends as
+        `stepped_away`."""
+        from voice.dead_air import CHECK_IN, GOODBYE, DeadAir
+
+        now = [0.0]
+        timer = DeadAir(check_in_s, hang_up_s, clock=lambda: now[0])
+        said = []
+        while True:
+            now[0] += 1.0
+            action = timer.due()
+            if action is None:
+                continue
+            timer.said(action)
+            line = " ".join(lines["still_here" if action == CHECK_IN else "stepped_away"].split())
+            self._speak_from_code(line, time.perf_counter())
+            said.append(line)
+            if action == GOODBYE:
+                break
+        turn = AgentTurn(" ".join(said), TurnTiming(kind="plain", reply_delay_ms=0,
+                                                    model_first_token_ms=0))
+        turn.ended, turn.end_reason = True, "stepped_away"
+        return turn
 
     def _hand_off(self, line: str, handoff: dict, t0: float) -> AgentTurn:
         """What the worker does with a caller the server handed off (voice/livekit/transfer.py):

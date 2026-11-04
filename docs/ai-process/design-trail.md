@@ -110,3 +110,6 @@ How the design was reached, in order, so a reader can follow each choice back to
 | Priority from the caller | Rules fire on the caller's words only; the model's notes raise nothing; a raise after the wait is flagged for the dispatcher | DECISIONS.md 072, #124 |
 | A caller who pushes | A calm line and the soonest window or a person; pushing and claims raise nothing | DECISIONS.md 073, #124 |
 | Eval reference after C-58 and #125 | Two-sample standard run adopted at 92%; floor stays 90% | DECISIONS.md 011, #126 |
+| Card numbers and billing | Card digits are taken out before anything stores them; offering a card gets the server's line; a billing dispute gets an office callback | DECISIONS.md 080, #130 |
+| Dead air | A check-in every 2 minutes, a goodbye at 8 that invites a call back, and a call back that picks up where it stopped | DECISIONS.md 081, #130 |
+| Electrical and water | Sparks get their own calm route apart from gas and carbon monoxide; water into the home is Urgent; a tripping breaker is High | DECISIONS.md 082, #130 |

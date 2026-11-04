@@ -149,9 +149,12 @@ def greeting(start: dict, voice: dict) -> str:
     linked = start.get("linked_call") or {}
     if linked.get("dropped") and "greeting_linked" in voice:
         name = name or linked.get("preferred_name") or linked.get("caller_name") or ""
+        # The caller stepped away and the agent hung up after the wait (DECISIONS.md 081).
+        key = "greeting_linked_stepped_away" if linked.get("stepped_away") else "greeting_linked"
+        key = key if key in voice else "greeting_linked"
         if name:
-            return voice["greeting_linked"].format(first_name=name)
-        return voice["greeting_linked_unknown"]
+            return voice[key].format(first_name=name)
+        return voice[f"{key}_unknown"]
     if name:
         return voice["greeting_known"].format(first_name=name)
     return voice["greeting_unknown"]
@@ -165,6 +168,11 @@ SERVER_NOTES = {
     ),
     "do_not_call": "The caller asked not to be called. Call mark_do_not_call and say its sentence.",
     "safety_check_cleared": "The caller said no to the safety check. Carry on where the call was.",
+    # A caller who asked the agent to wait (app/dead_air.py, DECISIONS.md 081).
+    "caller_holding": (
+        "The caller asked you to wait. Say only a short yes, such as \"Sure, take your time.\" Ask "
+        "nothing and add nothing else; the voice layer checks in if they're gone a while."
+    ),
     "safety_stood_down": (
         "The caller says there was never a smell or alarm, so this is no longer a safety call. Say "
         "sorry you misheard, once, and carry on where the call was."

@@ -1,0 +1,27 @@
+id: no-sparks-just-hums
+flow: [booking, priority]
+difficulty: standard
+traits: [filler]
+journeys: [J1]
+tags: [call-handling, electrical]
+caller_id: "(929) 555-0313"
+weather: {now_f: 70, low_f: 62}
+persona: Grace Liu in Bath Beach. Precise, rules things out before she's asked.
+hidden_facts:
+  name: Grace Liu
+  address: 2075 Bath Ave, Brooklyn, 11214
+  phone: the number being called from
+  problem: the outdoor AC unit hums but the fan won't spin, since yesterday; no sparks, no smoke, no smell
+  system: central air, about 9 years old
+  who_home: Grace, healthy
+  owns: Grace owns the house and approves the work
+opening: Hi, my outdoor AC unit hums but the fan won't spin. No sparks or smoke or anything, it just hums.
+script:
+  - Answer the booking questions, confirm the read-back, take the first window, then say goodbye.
+must:
+  - electrical: not_said
+  - safety_state: none
+  - safety_lines: not_said
+  - booking: {count: 1, priority: Normal, zip: "11214"}
+should:
+  - Books a normal repair visit without any safety advice.

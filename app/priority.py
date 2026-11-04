@@ -53,6 +53,7 @@ class Facts:
     heating_indoors: bool = False  # the safety check heard fuel-burning heat indoors
     caller_text: str = ""  # what the side model reads; the same lines as `text`
     inside_temp_line: str = ""  # the caller's line the inside temperature came from
+    electrical_line: str = ""  # the caller's line the electrical route heard (app/safety.py)
 
 
 @dataclass
@@ -205,6 +206,8 @@ def _rule_fires(rule: dict, facts: Facts) -> bool:
         return False
     if rule.get("safety_signal"):
         return facts.safety_signal
+    if rule.get("electrical_signal"):
+        return bool(facts.electrical_line)
     if rule.get("heating_indoors") and facts.heating_indoors:
         return True
     if _said(rule, facts.text):
@@ -236,6 +239,8 @@ def _caller_line(rule: dict, facts: Facts) -> str:
     dispatcher what the caller said rather than only the rule's name."""
     if rule.get("safety_signal"):
         return ""
+    if rule.get("electrical_signal"):
+        return facts.electrical_line
     by_temp = "inside_temp_below_f" in rule or "inside_temp_above_f" in rule
     if by_temp and facts.inside_temp_line and not _said(rule, facts.text):
         return facts.inside_temp_line

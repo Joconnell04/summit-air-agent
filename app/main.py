@@ -26,6 +26,7 @@ from . import (
     address_as,
     bench,
     bench_rules,
+    cards,
     db,
     geocode,
     jobs,
@@ -259,6 +260,9 @@ def _ctx(services: Services, conn, call_id: str, key: str | None) -> Ctx:
 def _tool_route(app: FastAPI, name: str, handler: Callable, model: type[BaseModel], write: bool):
     def endpoint(request: Request, body: model):  # type: ignore[valid-type]
         services: Services = request.app.state.services
+        # Card digits the model copied into an argument are taken out before the tool, the tool
+        # log or anything downstream sees them (app/cards.py).
+        body = model.model_validate(cards.scrub(body.model_dump(mode="json")))
         return run(
             services,
             request,
@@ -332,6 +336,7 @@ def create_app(
             raw = json.loads(await request.body() or b"{}")
         except ValueError:
             raw = {}
+        raw = cards.scrub(raw)
         call_id = raw.get("call_id") if isinstance(raw, dict) else None
         call_id = call_id or request.path_params.get("call_id")
         conn = services.connect()
@@ -374,12 +379,17 @@ def create_app(
 
     @app.post("/calls/{call_id}/turn")
     def call_turn(request: Request, call_id: str, body: TurnIn):
+        # Card digits never reach the turns table, the log or the checks (app/cards.py); the
+        # turn check sees the marker in their place.
+        body = body.model_copy(update={"text": cards.redact(body.text)})
+
         def fn(conn, key):
             ctx = _ctx(services, conn, call_id, key)
             result = lifecycle.turn(conn, ctx.tenant, ctx.call, body, ctx.now)
             # A caller who demands a person is sent to one now, but never on a turn that brought
             # the safety lines or the check question: those are said first.
-            if body.speaker == "caller" and not result.data.get("safety"):
+            spoken = result.data.get("safety") or result.data.get("spoken")
+            if body.speaker == "caller" and not spoken:
                 handed = demand_handoff(ctx, body.text)
                 if handed is not None:
                     result.say = handed.say

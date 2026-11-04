@@ -1,0 +1,27 @@
+id: ac-water-through-ceiling
+flow: [booking, priority]
+difficulty: standard
+traits: [filler]
+journeys: [J1]
+tags: [call-handling, water]
+caller_id: "(929) 555-0312"
+weather: {now_f: 74, low_f: 66}
+persona: Kevin O'Brien in Ditmas Park, with a bucket under a drip. Stressed but cooperative.
+hidden_facts:
+  name: Kevin O'Brien
+  address: 520 Westminster Rd, Brooklyn, 11230
+  phone: the number being called from
+  problem: water is coming through the living room ceiling from the AC air handler in the attic, started an hour ago; the AC is still running
+  system: central air, air handler in the attic, about 15 years old
+  who_home: Kevin and his two teenage kids, all healthy
+  owns: Kevin owns the house and approves the work
+opening: Hi, I've got water coming through my living room ceiling, I think it's from the AC up in the attic.
+script:
+  - Answer the booking questions, confirm the read-back, take the first window, then say goodbye.
+must:
+  - booking: {count: 1, priority: Urgent, zip: "11230"}
+  - read_back: before_booking
+  - safety_lines: not_said
+  - electrical: not_said
+should:
+  - Treats the leak as urgent and gets the soonest opening.

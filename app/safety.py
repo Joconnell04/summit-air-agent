@@ -665,3 +665,60 @@ def check_caller_turn(
 def agent_said_lines(text: str, kind: str | None, cfg: dict) -> bool:
     """The agent line contains the full safety lines for the call's kind, word for word."""
     return bool(kind) and words(lines_for(cfg, kind)) in words(text)
+
+
+# Electrical trouble (DECISIONS.md 082): its own route, apart from gas and carbon monoxide. It never
+# changes the call's safety state; the server says the tenant's electrical lines once and the agent
+# helps book. A negator up to this many words before a mention says it isn't happening ("there
+# aren't any sparks"), unless a word that starts a new thought comes between.
+ELECTRICAL_NEGATORS = {"no", "not", "never", "dont", "doesnt", "didnt", "isnt", "arent", "wasnt",
+                       "werent", "hasnt", "havent", "hadnt", "without", "nothing", "none", "cant"}
+ELECTRICAL_REACH = 3
+ELECTRICAL_BREAKS = {"but", "and", "so", "now", "then", "though", "because", "except"}
+
+
+def _electrical_negated(tokens: list[str], at: int) -> bool:
+    for j in range(at - 1, max(-1, at - 1 - ELECTRICAL_REACH), -1):
+        if tokens[j] in ELECTRICAL_BREAKS:
+            return False
+        if tokens[j] in ELECTRICAL_NEGATORS:
+            return True
+    return False
+
+
+def _electrical_mentions(sentence: str, phrases: list[str]) -> list[int]:
+    tokens = words(sentence).split()
+    found = []
+    for phrase in phrases:
+        target = words(phrase).split()
+        for i in range(len(tokens) - len(target) + 1):
+            if tokens[i : i + len(target)] == target and not _electrical_negated(tokens, i):
+                found.append(i)
+    return found
+
+
+def electrical_line(text: str, cfg: dict) -> str | None:
+    """The caller's sentence that reports sparks, arcing, an electrical smell or smoke from the unit
+    or panel now, or None. "No sparks" and "it sparked once last year and it's been fine" are not
+    reports; "it sparked when I turned it on" is. `cfg` is the tenant's safety block, which carries
+    the trade's `electrical` phrases."""
+    spec = cfg.get("electrical")
+    if not spec:
+        return None
+    history = [words(h) for h in spec.get("history", [])]
+    for sentence in _sentences(text):
+        if _electrical_mentions(sentence, spec.get("now", [])):
+            return sentence.strip()
+        sentence_words = words(sentence)
+        past = _electrical_mentions(sentence, spec.get("past", []))
+        if past and not any(h in sentence_words for h in history):
+            return sentence.strip()
+    return None
+
+
+def electrical_signal(text: str, cfg: dict) -> bool:
+    return electrical_line(text, cfg) is not None
+
+
+def electrical_lines(cfg: dict) -> str:
+    return " ".join(cfg["electrical"]["lines"].split())

@@ -1,0 +1,28 @@
+id: breaker-keeps-tripping-ac
+flow: [booking, priority]
+difficulty: standard
+traits: [filler]
+journeys: [J1]
+tags: [call-handling, breaker]
+caller_id: "(929) 555-0310"
+weather: {now_f: 72, low_f: 64}
+persona: Luis Ramirez in Jackson Heights. Matter-of-fact, has reset the breaker three times today.
+hidden_facts:
+  name: Luis Ramirez
+  address: 35-20 82nd St, Jackson Heights, 11372
+  phone: the number being called from
+  problem: the central air keeps tripping the breaker a few minutes after it starts, reset it three times today; no sparks, no burning smell
+  system: central air, about 10 years old
+  who_home: Luis and his wife, both healthy
+  owns: Luis owns the house and approves the work
+opening: Hi, my central air keeps tripping the breaker a few minutes after it starts.
+script:
+  - If asked, say there are no sparks and no burning smell.
+  - Answer the booking questions, confirm the read-back, take the first window, then say goodbye.
+must:
+  - booking: {count: 1, priority: High, zip: "11372"}
+  - read_back: before_booking
+  - electrical: not_said
+  - safety_lines: not_said
+should:
+  - Treats it as a repair worth going ahead of routine work, without alarm.

@@ -1,0 +1,43 @@
+id: callback-after-stepped-away
+flow: [repeat-caller, booking]
+difficulty: standard
+traits: [filler]
+journeys: [J7, J1, spine]
+caller_id: "(929) 555-0306"
+tags: [call-handling, dead-air]
+earlier_call:
+  minutes_ago: 40
+  end_reason: stepped_away
+  turns:
+    - agent: Thanks for calling Summit Air, this is the virtual assistant. How can I help?
+    - caller: Hi, this is Tomasz Nowak. Our heat went out this morning, the boiler's not firing at all.
+    - agent: Oh no, sorry about that. What's the address there?
+    - caller: 145 Java Street in Greenpoint, 11222.
+    - agent: Thanks. Who's at home with it right now? Anyone who'd have a harder time with the cold?
+    - caller: Just me and my wife, we're both fine. Hold on, someone's at the door, give me a sec.
+    - agent: Sure, take your time.
+    - agent: Take your time, I'm still here.
+    - agent: Take your time, I'm still here.
+    - agent: Take your time, I'm still here.
+    - agent: It sounds like you've stepped away, so I'm going to hang up for now. Once you're ready, feel free to call this number back, and we can pick up where we left off.
+persona: Tomasz Nowak in Greenpoint, calling back after stepping away from an earlier call. Apologetic.
+hidden_facts:
+  name: Tomasz Nowak
+  address: 145 Java St, Brooklyn, 11222
+  phone: the number being called from
+  problem: no heat since about 6 this morning, the gas boiler is not firing, about 61 F inside
+  system: a gas boiler, about fifteen years old
+  who_home: Tomasz and his wife, both healthy
+  arrival: the buzzer is 2B
+opening: Yes, it's Tomasz, sorry about that, I had to step away.
+script:
+  - You already gave the problem, the address and who is home. If asked again from scratch, say you told the last call, then answer.
+  - Answer yes to a correct read-back, take the first window, say goodbye after the agent asks if there is anything else.
+must:
+  - agent_says: ["stepped away", "pick up where we left off"]
+  - booking: {count: 1, zip: "11222"}
+  - read_back: before_booking
+  - safety_lines: not_said
+should:
+  - Opens by saying the earlier call ended when they stepped away and picks up where it stopped.
+  - Doesn't ask again for the problem, the address or who is home.
