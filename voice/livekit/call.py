@@ -92,7 +92,9 @@ class Call:
         )
         self.post("agent", text, timings)
         mode = "digits" if asked_for_digits(text) else "normal"
-        self.session.update_options(endpointing_opts=self.endpointing[mode])
+        # A copy: LiveKit writes into the dict it is given, which would overwrite the normal wait
+        # with the digits wait for the rest of the call.
+        self.session.update_options(endpointing_opts=dict(self.endpointing[mode]))
 
     async def flush(self) -> None:
         """Wait for agent lines still being posted, before the call is closed."""

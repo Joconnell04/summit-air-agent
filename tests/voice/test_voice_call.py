@@ -20,7 +20,7 @@ from voice.livekit.call import Call, SummitAgent
 from voice.livekit.server import ToolServer
 from voice.livekit.settings import load_voice
 from voice.livekit.tools import ToolLog
-from voice.livekit.worker import leave_voicemail
+from voice.livekit.worker import leave_voicemail, turn_handling
 
 SAFETY = load_agent(TENANT_DIR)[0]["safety"]
 GAS_LINES = " ".join(SAFETY["kinds"]["gas"]["lines"].split())
@@ -132,6 +132,31 @@ def test_the_wait_is_longer_right_after_asking_for_a_number(agent, connect):
     asyncio.run(run())
     assert call.session.endpointing == [ENDPOINTING["digits"], ENDPOINTING["normal"]]
     assert ENDPOINTING["digits"]["min_delay"] > ENDPOINTING["normal"]["min_delay"]
+
+
+def test_the_normal_wait_comes_back_after_the_digits_on_a_real_livekit_session(connect):
+    """LiveKit's update_options writes into the options dict it is given. If the worker passes
+    its own settings, the first digits question overwrites the normal wait and every caller turn
+    after it waits the long digits wait for the rest of the call (MEASURED on the audio rig,
+    evals/rounds/bakeoff-audio-02.md)."""
+    from livekit.agents import AgentSession
+
+    voice = load_voice()
+    endpointing = voice["endpointing"]
+    normal = dict(endpointing["normal"])
+    call = Call(connect("call-1"), Bridge([], play=None, silent=lambda: True), ToolLog(),
+                endpointing)
+
+    async def run():
+        call.session = AgentSession(turn_handling=turn_handling(voice))
+        call.agent_line(agent_says("What's the ZIP code there?"))
+        call.agent_line(agent_says("Got it. And how cold is it inside?"))
+        await call.flush()
+
+    asyncio.run(run())
+    assert endpointing["normal"] == normal
+    live = call.session._opts.endpointing
+    assert (live["min_delay"], live["max_delay"]) == (normal["min_delay"], normal["max_delay"])
 
 
 def test_every_agent_line_carries_its_stage_timings(agent, connect):

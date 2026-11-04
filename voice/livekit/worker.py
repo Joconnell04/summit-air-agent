@@ -82,13 +82,18 @@ def build_session(vad, voice: dict, names: local_names.Names) -> AgentSession:
         llm=build_llm(),
         tts=cartesia.TTS(**tts_options(voice, names)),
         vad=vad,
-        turn_handling={
-            "turn_detection": inference.TurnDetector(),
-            "endpointing": voice["endpointing"]["normal"],
-            "interruption": voice["interruption"],
-            "preemptive_generation": {"enabled": True, "preemptive_tts": False},
-        },
+        turn_handling=turn_handling(voice),
     )
+
+
+def turn_handling(voice: dict) -> dict:
+    return {
+        "turn_detection": inference.TurnDetector(),
+        # A copy: LiveKit keeps this dict and writes later option changes into it.
+        "endpointing": dict(voice["endpointing"]["normal"]),
+        "interruption": voice["interruption"],
+        "preemptive_generation": {"enabled": True, "preemptive_tts": False},
+    }
 
 
 def load_vad(voice: dict):

@@ -4,7 +4,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from voice.livekit.settings import load_profile
+from voice.livekit.settings import load_profile, load_voice
 from voice.livekit.turns import (
     LlmLog,
     agent_timings,
@@ -105,3 +105,20 @@ def test_only_model_metrics_are_recorded():
 def test_a_profile_reads_how_to_turn_its_thinking_off():
     assert load_profile("quality").thinking_off == "between_tools"
     assert load_profile("fast").thinking_off == "disabled"
+
+
+def test_the_silence_wait_is_one_the_turn_detector_accepts():
+    """LiveKit's turn detector refuses a voice-activity silence under its floor, and only when the
+    session starts, which would be on a live call rather than when the worker starts."""
+    from livekit.agents.inference.eot.base import MIN_SILENCE_DURATION_MS
+
+    voice = load_voice()
+    assert voice["vad"]["min_silence_s"] >= (MIN_SILENCE_DURATION_MS + 50) / 1000
+
+
+def test_the_digits_wait_outlasts_the_silence_wait():
+    """LiveKit counts `min_delay` from the end of speech, so it overlaps the silence wait; the
+    longer wait after asking for digits (C-48) only takes effect if it is the longer of the two."""
+    voice = load_voice()
+    assert voice["endpointing"]["digits"]["min_delay"] >= 0.9
+    assert voice["endpointing"]["digits"]["min_delay"] > voice["vad"]["min_silence_s"]
