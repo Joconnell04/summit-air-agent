@@ -39,6 +39,9 @@ class Settings:
     # A side model for the vulnerable-person read (app/side_model.py): a profile name under `side`
     # in config/models.yaml. Empty is off, and the phrase rules decide alone.
     side_model: str = field(default_factory=lambda: os.environ.get("SIDE_MODEL", ""))
+    # Write the technician's summary after each booked call (app/summary.py). Off in tests and
+    # development so nothing calls out; it needs ANTHROPIC_API_KEY as well.
+    summaries: bool = field(default_factory=lambda: os.environ.get("SUMMARIES", "") == "1")
     # The owner view refuses every request when this is empty.
     owner_token: str = field(default_factory=lambda: os.environ.get("OWNER_TOKEN", ""))
     # Who may edit the agent's rules on the owner view, as name=code pairs separated by commas

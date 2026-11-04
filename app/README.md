@@ -28,6 +28,7 @@ The owner view is three pages for the owner and dispatcher: Today (`/owner`, the
 | `DEBUG_TOKEN` | empty, which refuses every debug request | Token for `/debug/*` |
 | `APP_ENV` | `development` | Anything else turns on the retention policy |
 | `JOBS_INTERVAL_SECONDS` | `60` | Background jobs (`app/jobs.py`); `0` turns them off |
+| `SUMMARIES` | empty | `1` writes the technician's summary after each booked call (`app/summary.py`); it needs `ANTHROPIC_API_KEY` too |
 | `OWNER_TOKEN` | empty, which refuses every owner view request | Token for `/owner` |
 | `OWNER_VIEW_URL` | empty | Where the owner view is served, for the call link in alert emails |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `MAIL_FROM` | empty, `587` | The mail server for on-call alerts. With no host, alerts are held and shown on the owner view, not sent |
@@ -46,7 +47,8 @@ The owner view is three pages for the owner and dispatcher: Today (`/owner`, the
 | `lookup.py` | The richer lookup (membership, open jobs, last service, recent calls, notes, equipment) and history |
 | `booking.py` | Sending a booking to the FSM, shared by the live path and the retry queue |
 | `records.py` | The server's own tables: calls, scope, flags, callbacks (named time, owner, outbound rules, overdue), do-not-call |
-| `jobs.py` | Retry of queued bookings and leads, earlier openings for flagged urgent bookings, queuing the callbacks the system places, booked-and-kept, on-call email after hours, cache refresh, the search index, overdue callbacks, retention |
+| `jobs.py` | Retry of queued bookings and leads, earlier openings for flagged urgent bookings, queuing the callbacks the system places, booked-and-kept, on-call email after hours, cache refresh, the search index, overdue callbacks, retention, and the technician summary last |
+| `summary.py` | The technician's summary after a booked call (spec S-16): the call record the model reads, the checks on its lines, and the pinned job note |
 | `outbound.py` | Calls the system places (journey 12): what the voice layer claims, and settling each one from what happened on it |
 | `owner.py` | Every number and list on the owner view, each defined in its docstring: the board, the status line, Results |
 | `plain.py` | Each tool call on a call page said in plain words (story O-7) |
@@ -86,7 +88,7 @@ The owner view is three pages for the owner and dispatcher: Today (`/owner`, the
 | Urgent holds and the urgent-only night window are the company's rules, applied to what ServiceTitan's capacity returns, again right before a job is created or moved | S-25, decision 003 | `capacity.usable_technicians`, `capacity.pick_technician`, `booking.send` |
 | A booking counts as kept if its job was still on the schedule when its current window came | C-42 | `jobs.check_kept` |
 | An urgent flag raised while the company is closed is emailed to the on-call person, once, with what, where, who and why | Journey 11 | `jobs.alert_on_call` |
-| An owner edit changes only the six editable lines and guidance for four stages; anything else in a draft (the read-back, priority, the safety script, any other line) is refused, a stored version is validated again before a call uses it, and a draft goes live only when the eval gate passes on it | S-51 | `rules.validate`, `rules.applied`, `rules.record_gate` |
+| An owner edit changes only the six editable lines and guidance for four stages; anything else in a draft (the read-back, priority, the safety script, any other line) is refused, a stored version is validated again before a call uses it, a new or changed note or line that contradicts a locked rule is refused with the reason (and a save the check can't run on is refused), and a draft goes live only when the eval gate passes on it | S-51 | `rules.validate`, `guidance_check.check`, `rules.applied`, `rules.record_gate` |
 | The call stage comes from the server's records, and booking and closing guidance is sent as a `[server]` note when the stage starts, never on a safety call | S-51 | `rules.stage_now`, `rules.advance_stage`, `lifecycle.turn` |
 | Do-not-call marked on the caller's words, cancelling pending callbacks; the tool returns the line to say | S-49 | `lifecycle.turn`, `records.mark_do_not_call` |
 
@@ -117,5 +119,5 @@ Jackson is redesigning the owner view in a separate session. The first version, 
 - The booked-and-kept check reads at most 50 bookings per run, oldest window first; bookings the FSM keeps refusing to read, or moved later, are read again each run and could crowd out newer ones in a large backlog.
 - One `OWNER_TOKEN` opens every tenant's owner view (`?tenant=<slug>`); a second real tenant needs its own token.
 - Flags with no call (a lead the FSM refused) belong to no tenant and don't show on the owner view.
-- `/calls/end` marks the technician summary as pending (spec S-16); the summary job itself is not built yet.
+- The technician summary's checks drop a line with nothing in the record behind it and a line with a number the record doesn't hold. A wrong statement made from real facts would pass them, which is why the full intake stays in the job summary underneath the pinned note.
 - Against real ServiceTitan the adapter still needs the changes listed in `servicetitan_mock/README.md` (our own idempotency keys, a capacity recheck before creating a job).

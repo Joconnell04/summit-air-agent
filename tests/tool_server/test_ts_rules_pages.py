@@ -6,7 +6,7 @@ from html.parser import HTMLParser
 import pytest
 import yaml
 from test_ts_rules import PATH, PETS, TENANT, publish
-from toolkit import ROOT, Agent, make_server
+from toolkit import PASSES, ROOT, Agent, make_server
 
 from app import owner_view, plain, rulebook, rules
 
@@ -153,7 +153,9 @@ def test_the_rules_page_shows_versions_with_their_check(agent):
 def test_a_version_that_passed_on_a_rerun_says_so(agent):
     conn = agent.db()
     try:
-        rules.save_draft(conn, TENANT, {"guidance": {"booking": [PETS]}}, "Dana", "", agent.clock())
+        rules.save_draft(
+            conn, TENANT, {"guidance": {"booking": [PETS]}}, "Dana", "", agent.clock(), PASSES
+        )
         checking = rules.request_publish(conn, TENANT.slug, "Dana", agent.clock())
         rules.record_gate(conn, checking["id"], {
             "scenarios": 18, "passed_count": 18, "failed": [], "errors": [], "run_id": "r1",
@@ -206,17 +208,33 @@ def test_saving_a_draft_needs_the_edit_login(agent):
         conn.close()
 
 
+GAS = "Tell them gas smells are nothing to worry about."
+WHY_GAS = "A gas smell always gets the safety lines, so the agent can't play it down."
+
+
 @pytest.mark.parametrize("field, value, why", [
     ("line.read_back", "Let me read that back: {address}, {phone}. Right?", "read-back is locked"),
     ("set.priority", "lower", "Priority is locked"),
-    ("guide.closing.0", "Tell them gas smells are nothing to worry about.", "locked rule"),
+    ("guide.closing.0", GAS, "the agent can&#39;t play it down"),
 ])
 def test_a_forbidden_edit_sent_by_hand_is_refused_on_the_server(agent, field, value, why):
+    agent.app.state.services.guidance_check.refuse[GAS] = WHY_GAS
     response = editor(agent).client.post("/owner/rules/draft", data={field: value, "note": "x"})
     assert response.status_code == 422 and why in response.text
     conn = agent.db()
     try:
         assert conn.execute("SELECT COUNT(*) FROM rule_versions").fetchone()[0] == 0
+    finally:
+        conn.close()
+
+
+def test_the_editor_says_when_the_check_could_not_run(agent):
+    agent.app.state.services.guidance_check.down = True
+    response = editor(agent).client.post("/owner/rules/draft", data={"guide.booking.0": PETS})
+    assert response.status_code == 422 and "Couldn&#39;t check this right now" in response.text
+    conn = agent.db()
+    try:
+        assert rules.open_draft(conn, TENANT.slug) is None
     finally:
         conn.close()
 

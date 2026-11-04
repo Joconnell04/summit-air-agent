@@ -430,7 +430,10 @@ def test_after_the_lines_each_caller_line_reminds_the_agent_not_to_book(agent):
     assert "safety_call" in after["data"]["hints"]
     from prompts.assemble import server_notes
 
-    assert "Don't offer a visit" in server_notes(after["data"]["hints"])[0]
+    note = server_notes(after["data"]["hints"])[0]
+    assert "Don't offer a visit" in note
+    # A caller who asks for a visit anyway gets one (spec S-18); the note must not read as a no.
+    assert "if the caller asks for one anyway, book it" in note
 
 
 def test_the_sign_off_suits_a_caller_who_is_alone_and_recommends_rather_than_orders():

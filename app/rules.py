@@ -3,8 +3,9 @@ call stage, stored as versions over the tenant's YAML defaults.
 
 What an owner can change is a fixed list here, and every draft is checked against it in this
 module, so no screen can reach a gate. The read-back, the safety script, priority, the service
-area and every other rule stay in tenant files and server code, changed only by engineers. A draft
-goes live only when the must-pass evals pass against it (evals/gate.py), and a rollback is a new
+area and every other rule stay in tenant files and server code, changed only by engineers. New or
+changed text is read by the guidance check when a draft is saved (app/guidance_check.py), which
+refuses only what contradicts a locked rule or tells the agent to skip one. A draft goes live only when the must-pass evals pass against it (evals/gate.py), and a rollback is a new
 version that copies an older one, so nothing is ever deleted.
 
 The server decides which stage a call is in, from its own records, never from the model.
@@ -31,8 +32,8 @@ STAGES = {
     "closing": "Closing",
     "after_call": "After the call",
 }
-# Stages the owner can add guidance to. Before hello has no model, and after the call there is no
-# model step yet that would read it (the technician summary is not built).
+# Stages the owner can add guidance to. Before hello has no model, and the technician summary after
+# the call does not read owner guidance yet (docs/later.md).
 GUIDANCE_STAGES = ("opening", "whole_call", "booking", "closing")
 GUIDANCE_PER_STAGE = 5
 GUIDANCE_MAX_CHARS = 300
@@ -62,41 +63,9 @@ LOCKED = {
 }
 LOCKED_DEFAULT = "This is locked. Only engineers change it."
 
-# Guidance is soft, so it may not touch a subject a locked rule covers, and it may not try to talk
-# the model out of its instructions. Matched as whole words, after the text is folded to plain
-# ASCII. The trade's own safety words (a gas smell, say) come from its agent.yaml
-# (owner_rules.locked_topics). This list is a filter for honest mistakes and the obvious attempt,
-# not the containment: the server gates hold whatever the prompt says, and the eval gate runs the
-# must-pass calls on every draft (docs/template.md, "Owner edits").
-LOCKED_TOPICS = (
-    # Safety
-    "911", "safety", "evacuate", "alarm", "detector", "emergency", "urgent", "priority",
-    # The read-back and booking checks
-    "read back", "readback", "address", "verify",
-    "verified", "skip", "never ask", "without", "cancel", "delete",
-    # Talking the model past a step in other words
-    "confirm", "confirms", "confirmed", "confirming", "confirmation", "bypass", "omit", "dont ask",
-    "do not ask", "no need", "no longer", "already", "act as", "assume", "from now on", "accept all",
-    "every job", "all jobs", "check", "checks",
-    # Residential only
-    "commercial", "business", "residential", "rental", "rentals", "renter", "renting", "landlord",
-    "tenant", "tenants", "office", "offices", "store", "shop", "restaurant", "building",
-    "apartment", "apartments", "units", "company", "service area", "zip", "out of area",
-    # Prices and promises
-    "price", "prices", "pricing", "fee", "fees", "cost", "costs", "charge", "discount", "free",
-    "coupon", "refund", "promise", "guarantee", "complimentary", "on the house", "half off", "waive",
-    "no charge",
-    # Talking the model out of its instructions
-    "ignore", "disregard", "forget", "instruction", "instructions", "rule", "rules", "override",
-    "system", "server", "pretend",
-)
-# Wording lines are said as written, so they may not quote a price either.
-LINE_TOPICS = (
-    "price", "prices", "fee", "fees", "cost", "costs", "charge", "discount", "free", "coupon",
-)
-# Characters that could pass for prompt structure, a template field, a role label or an amount.
-NOT_PLAIN = re.compile(r"[{}\[\]#`<>\\|*_:$]")
-DIGIT = re.compile(r"\d")
+# Characters that could pass for prompt structure, a template field or a role label. Whether a
+# note contradicts a locked rule is for the guidance check (app/guidance_check.py), not a word list.
+NOT_PLAIN = re.compile(r"[{}\[\]#`<>\\|*_]")
 # What a line's fields are filled with when it is checked, so a line that can't be said is caught
 # here and not at hello or on a callback.
 SAMPLE = {"first_name": "Maria"}
@@ -152,11 +121,6 @@ def _renders(text: str) -> bool:
     return len(said) <= LINE_MAX_CHARS + 50
 
 
-def _topic(text: str, topics) -> str | None:
-    text_words = words(text)
-    return next((t for t in topics if has_phrase(text_words, t)), None)
-
-
 def _disclosure(tenant: Tenant) -> tuple[str, ...]:
     return tuple(tenant.agent.get("owner_rules", {}).get("disclosure", ()))
 
@@ -190,7 +154,6 @@ def validate(tenant: Tenant, content: dict) -> tuple[dict, dict[str, str]]:
             continue
         wanted = _fields(default)
         keep = ", ".join("{" + f + "}" for f in sorted(wanted))
-        topic = _topic(text, LINE_TOPICS)
         dropped = next(
             (p for p in _disclosure(tenant)
              if has_phrase(words(default), p) and not has_phrase(words(text), p)),
@@ -202,16 +165,11 @@ def validate(tenant: Tenant, content: dict) -> tuple[dict, dict[str, str]]:
             errors[field] = f"Keep {keep} in the line, and no other braces." if wanted else (
                 "No braces in this line."
             )
-        elif "$" in text or DIGIT.search(text):
-            errors[field] = "No numbers or amounts in a line."
-        elif topic:
-            errors[field] = f"No prices or fees in a line (found \"{topic}\")."
         elif dropped:
             errors[field] = f"Keep \"{dropped}\" in the line, so callers know it's an AI."
         else:
             clean["lines"][key] = text
 
-    topics = LOCKED_TOPICS + tuple(tenant.agent.get("owner_rules", {}).get("locked_topics", ()))
     guidance = content.get("guidance") or {}
     if not isinstance(guidance, dict):
         guidance, errors["guidance"] = {}, "Not a list of guidance."
@@ -226,15 +184,12 @@ def validate(tenant: Tenant, content: dict) -> tuple[dict, dict[str, str]]:
         for n, given in enumerate(i for i in items if str(i or "").strip()):
             field = f"guidance.{stage}.{n}"
             text = _ascii(given)
-            topic = _topic(text, topics) if text else None
             if text is None:
                 errors[field] = "Plain letters only. Retype it without special characters."
             elif len(text) > GUIDANCE_MAX_CHARS:
                 errors[field] = f"Keep it under {GUIDANCE_MAX_CHARS} characters."
-            elif NOT_PLAIN.search(text) or DIGIT.search(text):
-                errors[field] = "Plain words only, no numbers or symbols like $, : or #."
-            elif topic:
-                errors[field] = f"That touches a locked rule (\"{topic}\"). Ask Revin to change it."
+            elif NOT_PLAIN.search(text):
+                errors[field] = "Plain words only, no symbols like braces, brackets or #."
             kept.append(text or "")
         if len(kept) > GUIDANCE_PER_STAGE:
             errors[f"guidance.{stage}"] = f"At most {GUIDANCE_PER_STAGE} per stage."
@@ -333,13 +288,35 @@ def _insert(conn, slug: str, content: dict, status: str, author: str, note: str,
     return cursor.lastrowid
 
 
+def changed(tenant: Tenant, clean: dict, base: dict | None) -> dict[str, str]:
+    """The lines and notes in a clean draft that the live version doesn't have, by field: what the
+    guidance check reads. A note already live was checked when it was saved."""
+    before = applied(tenant, base)
+    found = {f"lines.{k}": v for k, v in clean["lines"].items() if before["lines"].get(k) != v}
+    for stage, items in clean["guidance"].items():
+        found.update({
+            f"guidance.{stage}.{n}": text for n, text in enumerate(items)
+            if text not in before["guidance"].get(stage, [])
+        })
+    return found
+
+
 def save_draft(
-    conn: sqlite3.Connection, tenant: Tenant, content: dict, author: str, note: str, now: datetime
+    conn: sqlite3.Connection, tenant: Tenant, content: dict, author: str, note: str, now: datetime,
+    check,
 ) -> tuple[dict | None, dict[str, str]]:
-    """Save the owner's draft. Nothing goes live here. With errors, nothing is saved."""
+    """Save the owner's draft. Nothing goes live here. With errors, nothing is saved. `check` is
+    the guidance check (app/guidance_check.py), given the new and changed lines and notes; it
+    returns what's wrong by field, and an empty answer is the only way past it."""
     clean, errors = validate(tenant, content)
     if errors:
         return None, errors
+    current = live(conn, tenant.slug)
+    new = changed(tenant, clean, current["content"] if current else None)
+    if new:
+        errors = check(tenant, new)
+        if errors:
+            return None, errors
     note = " ".join(note.split())[:200]
     expire_checks(conn, tenant.slug, now)
     with tx(conn):

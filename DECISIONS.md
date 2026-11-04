@@ -12,6 +12,56 @@ Discussion: docs/ai-process/transcripts/... or docs/explorations/...
 Issue: #N
 -->
 
+## 043. The eval hash covers only what the agent hears on a call
+
+Decided: the run hash's prompt files are the parts `prompts/assemble.py` joins, plus `tools.yaml` and the assembler. A prompt that is never part of a call, such as the technician summary's, is left out, so editing it doesn't make the voice agent's results stale.
+Why: staleness should track what changes calls.
+Would change if: a post-call prompt starts feeding back into a call.
+Discussion: PR #72
+
+## 042. Must-pass failures count code checks only, and the grader sees what the server set up
+
+Decided: a grader fail on a must-pass scenario lowers the pass rate but is not a must-pass failure, in the harness, the ratchet and the publish gate alike; a must-pass scenario with no verdict still blocks. The grader is given what the server set up on the call (flags, bookings, the tools' sentences and the signed-off safety wording), so it can tell a real callback from an invented one. This supersedes the last sentence of 031.
+Why: the must-pass lines are code checks; at one sample the grader failed one or two must-pass calls a round on manner, a different one each time, and failed calls for saying the signed-off sign-off. Round 3 also showed the grader agrees with Jackson on 3 of 5 explicit verdicts, so it shouldn't decide must-pass alone.
+Considered: counting the grader too; loosening its "promise not set up" rule (would let real invented promises through).
+Would change if: the grader catches real must-pass problems the code checks miss.
+Discussion: PR #72, evals/rounds/03-judge-labels.md
+
+## 041. The eval floor is 90%
+
+Decided: reference run `20261104-013438-livekit-fast-standard`, 29 of 31 judged (94%), sets the floor at 90% under decision 011; `ratchet.py --adopt` sets the floor this way from now on and never lowers it. Every must-pass scenario passed 3 of 3 on the defaults before the reference was taken.
+Why: three standard runs on nearly the same prompts gave 93%, 94% and 94% (MEASURED, evals/rounds/reliability-01.md), steady enough to set the floor.
+Considered: waiting for three samples per scenario.
+Would change if: a later reference run is higher, which raises it.
+Discussion: PR #72, evals/rounds/reliability-01.md
+
+## 040. The technician summary is a pinned job note the server checks
+
+Decided: after a booked call, a model (profile `post_call.summary`) drafts a short summary (the problem, anything risky, access, recent work, what the customer was told) and the server writes it as a new pinned job note through the FSM adapter, leaving the intake and every other note as they are. The server drops any line with nothing in the record behind it, with a number the record doesn't hold, or with a phone number. A failed summary is tried once more, then left out and logged; nobody is flagged, since the job already carries the full intake. On the server with `SUMMARIES=1`.
+Why: spec S-16; a technician reads a few lines in the truck, not a transcript. ServiceTitan's job notes are append-only and can be pinned, so the summary sits on top without editing anything. The model writes the sentences; the server decides which reach the job, which catches invented work or codes, though not a wrong statement built from real facts, so the intake stays underneath.
+Considered: editing the job summary field (overwrites the intake); a template with no model (stiff, and loses the caller's own words).
+Would change if: technicians find a summary line wrong, in which case the summary moves behind the owner's review.
+Discussion: PR #73
+Issue: none (spec S-16)
+
+## 039. Owner guidance is refused only when a model finds it contradicts a locked rule
+
+Decided: the keyword filter on owner guidance is gone; no single word refuses a note. When a draft is saved, one call to a small fast model (profile `owner_edits.guidance_check`, thinking off, JSON) reads the new or changed notes and lines against the locked rules built from the rulebook, and refuses only one that contradicts a locked rule, tells the agent to skip or override one, or has it tell callers something a locked rule makes untrue, with a one-sentence reason on the editor. A note that only mentions a subject passes. If the check can't run or answers out of shape, the save is refused, never let through. Structural checks stay in code: plain ASCII after NFKC, no markup characters, length and per-stage limits, exact `{first_name}`, the AI disclosure in the greeting. This supersedes the keyword part of decision 032.
+Why: the word list refused reasonable notes ("if someone mentions 911, stay calm") and a reviewer found phrasings that passed it, so it was wrong both ways. Containment never rested on it: the server gates hold whatever the prompt says, and the eval gate runs the must-pass calls on every draft (031). In a live check the model got 33 of 33 right at about $0.002 and 1.4 s a save (MEASURED, PR #71).
+Considered: a shorter word list (still refuses mentions, still misses rewordings); no check, leaving it to the eval gate (the owner waits minutes for a blocked publish with no reason).
+Would change if: owners hit refusals they think are wrong, or a contradiction passes the check and only the eval gate catches it.
+Discussion: PR #71, docs/template.md ("Owner edits")
+Issue: #56
+
+## 038. Audio bake-off round 1: our stack stays
+
+Decided: under the rule in decision 026, no newcomer is chosen. Gemini Live, OpenAI Realtime and Retell are out of the real-call round: Gemini Live never said the safety lines first (0 of 6), OpenAI Realtime was slowest (2.47 s plain median) and missed the lines twice, and Retell said them word for word on 1 of 6 (a safety failure rules a candidate out, docs/bakeoffs.md). ElevenLabs on our brain was 0.44 s faster with the lines exact on 6 of 6 but misread addresses and numbers on read-back ("St" as "Saint", digits run together) and booked 2 of 4 tune-ups; it gets a fix and a rerun before it can be a finalist. Our stack's plain median was 1.89 s on the rig (MEASURED, evals/rounds/bakeoff-audio-01.md), above the 1.2 s bar; the same Claude model answered in about the same time in both stacks, so the gap is our end-of-turn wait, which is tuned next.
+Why: the rule was set before the run, and the results were read against it. The rig reads about 0.4 s above the worker's own `reply_ms`, since the worker starts timing after its silence wait, so real-call traces need that added.
+Considered: promoting ElevenLabs on speed alone (it would read wrong addresses back to callers).
+Would change if: ElevenLabs reads back cleanly after its fix and stays ahead after our endpointing is tuned, in which case the two get the real calls.
+Discussion: PR #70, evals/rounds/bakeoff-audio-01.md
+Issue: #62
+
 ## 037. A side model reads whether someone at risk is home
 
 Decided: a side model (OpenAI Decisions) answers one question on each caller line of a no-heat or no-cooling call: is someone at risk at home? The priority gate reads whatever answer is back within 0.4 s. A yes raises priority the way the vulnerable-person rule does (Urgent, or High on a mild day); a late, failed or missing answer leaves today's rules to decide, and it can never lower priority. On on the server with `SIDE_MODEL=openai-decisions`.

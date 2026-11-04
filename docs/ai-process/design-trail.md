@@ -74,3 +74,9 @@ How the design was reached, in order, so a reader can follow each choice back to
 | Co-authoring rounds | Three rounds: failures, then seeds with a hold-out, then judge labels with the floor | DECISIONS.md 035 |
 | Model matrix | Haiku stays live: higher pass rate, a third of Sonnet's delay, a fraction of the cost | DECISIONS.md 036, #68 |
 | Side model | OpenAI Decisions reads "someone at risk at home" on each line; it can only raise priority | DECISIONS.md 037, #68 |
+| Audio bake-off round 1 | Our stack stays; Retell, Gemini Live and OpenAI Realtime out on the safety lines or speed; ElevenLabs needs a read-back fix; our end-of-turn wait gets tuned | DECISIONS.md 038, #70 |
+| AI check for owner guidance | A model refuses a note only when it contradicts a locked rule, with the reason; no word list | DECISIONS.md 039, #71 |
+| Technician summary | A pinned job note drafted by a model and checked line by line by the server | DECISIONS.md 040, #73 |
+| Eval floor | 90%, from a 94% reference run once must-pass scenarios passed 3 of 3 | DECISIONS.md 041, #72 |
+| Must-pass and the grader | Must-pass counts code checks; the grader sees what the server set up | DECISIONS.md 042, #72 |
+| Eval hash scope | Only what the agent hears on a call | DECISIONS.md 043, #72 |

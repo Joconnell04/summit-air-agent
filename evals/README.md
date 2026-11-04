@@ -8,7 +8,7 @@ How the agent is tested before anyone calls it. Decision and reasoning: DECISION
 2. It talks, turn by turn, to the agent under test: our stack in process, or the Retell baseline through its text chat interface. Both use the same tool server on a fresh scratch copy of the mock ServiceTitan, with a unique call id.
 3. A transcription layer roughens the caller's lines the way speech-to-text does before the agent sees them.
 4. When the call ends, code checks read the tool-call log and the saved records. They decide pass or fail. A run where the simulated caller loops or never finishes, or the harness breaks, is marked `error`, not `fail` (decision 06), and is left out of pass rates. The exception: if the call already broke a rule that forbids something (a booking before the read-back, a price said, a booking on a commercial call), it is a fail however the call ended.
-5. An LLM grader (profile `offline.grader`) scores how the call felt. It can fail a run the code passed, never rescue one the code failed. A grader outage never hides a failed check: that run stays a fail, ungraded.
+5. An LLM grader (profile `offline.grader`) scores how the call felt. It can fail a run the code passed, never rescue one the code failed. A grader outage never hides a failed check: that run stays a fail, ungraded. Besides the transcript it gets what the server set up on the call, read from the call record (flags, bookings with their job number, the sentences the booking, flag and lead tools returned, and the signed-off safety lines and sign-off), so a callback time a tool gave isn't mistaken for one the agent made up.
 
 ## Scenario file
 
@@ -36,7 +36,7 @@ should:
   - One question at a time, no repeated questions.
 ```
 
-A scenario whose `spec` includes a must-pass line (marked **M** in docs/spec.md) is a must-pass case: any failed check there is a must-pass failure.
+A scenario whose `spec` includes a must-pass line (marked **M** in docs/spec.md) is a must-pass case: any failed code check there is a must-pass failure. A grader fail on one counts against the pass rate like any other fail, but is not a must-pass failure, since the must-pass lines are code checks (the publish gate counts them the same way).
 
 ## Labels
 
@@ -77,7 +77,7 @@ Each run writes `evals/results/<run>.json` (schema and validation in `evals/resu
 
 ## The eval gate for owner edits
 
-A draft an owner publishes from the Rules page (app/rules.py) goes live only through `evals/gate.py`: every must-pass scenario, once, on our stack, with the draft served as the live version in each scratch world, so calls take the same path as on the phone. A scenario that fails a code check or ends with no verdict is run once more on the same draft, and a second miss blocks it; both runs are saved (`<run>-gate.json` and `<run>-gate-rerun.json`) and the version keeps which passed on the rerun, how many were rerun and what that cost. The grader's notes are kept but do not block, since the must-pass lines are code checks and an owner may change manner on purpose. The run is saved as `evals/results/<run>-gate.json` with the draft in `overlay`, which is part of its hash. `make rules-gate` runs it on every draft waiting; the server starts it itself when `RULES_GATE=1`. Cost: $0.38 to $0.39 for the 18 must-pass scenarios on `fast` (MEASURED, runs `20261103-193944-livekit-fast-gate` and `20261103-200110-livekit-fast-gate`). Those two runs, from before the rerun, failed five different must-pass scenarios between them, none in both, and the first run's two failures passed on the defaults (`20261103-195832-livekit-fast-custom`); the rerun is there so a one-off miss doesn't block an edit that didn't cause it. A rerun adds about $0.02 a scenario (MEASURED, the same runs).
+A draft an owner publishes from the Rules page (app/rules.py) goes live only through `evals/gate.py`: every must-pass scenario, once, on our stack, with the draft served as the live version in each scratch world, so calls take the same path as on the phone. A scenario that fails a code check or ends with no verdict is run once more on the same draft, and a second miss blocks it; both runs are saved (`<run>-gate.json` and `<run>-gate-rerun.json`) and the version keeps which passed on the rerun, how many were rerun and what that cost. The grader's notes are kept but do not block, since the must-pass lines are code checks and an owner may change manner on purpose. The run is saved as `evals/results/<run>-gate.json` with the draft in `overlay`, which is part of its hash. `make rules-gate` runs it on every draft waiting; the server starts it itself when `RULES_GATE=1`. Cost: $0.38 to $0.39 for the 18 must-pass scenarios on `fast` (MEASURED, runs `20261103-193944-livekit-fast-gate` and `20261103-200110-livekit-fast-gate`). Those two runs, from before the rerun, failed five different must-pass scenarios between them, none in both, and the first run's two failures passed on the defaults (`20261103-195832-livekit-fast-custom`); the rerun is there so a one-off miss doesn't block an edit that didn't cause it. A rerun adds about $0.02 a scenario (MEASURED, the same runs). After the must-pass fixes in `evals/rounds/reliability-01.md`, the second run's edit passed 18 of 18 with no rerun (`20261103-225314-livekit-fast-gate`, $0.38 MEASURED).
 
 ## Running it
 
@@ -89,6 +89,39 @@ A draft an owner publishes from the Rules page (app/rules.py) goes live only thr
 - **Simulated caller and grader prompts** live in `prompts/evals/`.
 - **Cost.** Every scenario records the agent, caller and grader tokens at the prices in `config/models.yaml`; the report prints the total.
 - **Live audio pass.** The ten scripted phone calls for noise, interruptions and real reply delay are in `evals/live-calls.md`.
+
+## Audio rig (bake-off 6)
+
+The text harness can't compare reply delay across platforms, because each one reports it differently (the Retell row above times a whole chat reply). The audio rig in `evals/audio_rig/` measures every entrant the same way, on the audio itself, for the bake-off in DECISIONS.md 026 (docs/bakeoffs.md, bake-off 6).
+
+```
+make rig STACK=elevenlabs                     # smoke suite, gas and CO scenarios three times
+make rig STACK=openai_realtime MAX_COST=5     # stops once the run has cost $5
+make rig-report RUNS="evals/results/<a>.json evals/results/<b>.json"
+```
+
+**How a call runs.**
+1. The same simulated caller and scenarios as the text harness. Its lines are rendered by Deepgram Aura-2 and streamed to the entrant at real speed, 20 ms at a time, with silence between lines as a phone line carries; nothing is roughened, since the entrant's own ears now do the hearing.
+2. The rig marks when the caller's speech ends (the last voiced frame leaving the rig, plus anything still buffered on our side) and when the agent's first sound plays: the first 40 ms above -40 dBFS (`audio_rig.vad` in config/models.yaml, ASSUMED values), with a burst of audio played at real speed from when it arrived. Sound the agent makes while the caller is still talking, such as Retell's "mm-hmm", is not counted as the reply. The gap is `reply_delay_ms`.
+3. The agent's turn ends when the platform says it is listening again and the audio has played, or after 2 s of silence for a platform that says nothing; no sound within 15 s is a silent turn, counted apart and left out of the delays.
+4. The agent's audio is transcribed by Deepgram Nova-3, and the caller model answers what it heard.
+5. The code checks and the grader then score the call from the tool server's record, exactly as in the text harness (`evals/run.py` `score`). A turn is a lookup turn when the record shows a model tool call during it.
+
+**Entrants.** Each one's adapter is `voice/<name>/rig_adapter.py`, loaded by name, so shared code never imports a voice layer (`tests/voice/test_voice_layers.py`).
+
+| Stack | Run label | Tool server | How the audio flows |
+|---|---|---|---|
+| `livekit` | `livekit-rig` | A scratch world per scenario, through the rig's router | The real worker runs locally under its own agent name; the rig joins each call's room as the SIP caller |
+| `retell` | `retell-rig` | The eval instance, reset before each call | A Retell web call (WebRTC) on a voice agent named as a rig test agent, using the eval LLM and bridge |
+| `elevenlabs` | `elevenlabs` | A scratch world, through the rig's router | ElevenLabs' conversation WebSocket; its model is our brain (`voice/elevenlabs/brain.py`) behind a temporary ngrok tunnel; the test agent is deleted after the run |
+| `openai_realtime` | `openai-realtime` | A scratch world, in process | OpenAI's Realtime WebSocket; function calls forwarded to the tool server |
+| `gemini_live` | `gemini-live` | A scratch world, in process | Gemini's Live WebSocket; function calls forwarded to the tool server |
+
+**Results.** The same results file as the text harness, with `transport: audio`, and per turn `caller_speech_ms`, `agent_speech_ms` and, where the voice program logs one, `platform_reply_ms` (our worker's own measure of the same gap) and `model_first_token_ms`. Agent lines in the transcript are what the caller heard, with the platform's own text in `said`. Each scenario has `silent_turns` and `cost_parts` (caller voice, agent ears, platform, brain model, caller model, grader). `make rig-report` prints the bake-off table, the safety calls one by one (the server's check, the platform's text against the signed-off lines, and what the caller heard against them) and the decision 026 verdict.
+
+**Needs.** `DEEPGRAM_API_KEY` and `ANTHROPIC_API_KEY` for every run; `LIVEKIT_URL`, `LIVEKIT_API_KEY` and `LIVEKIT_API_SECRET` for ours; the Retell eval variables above for Retell; `ELEVENLABS_API_KEY` and an installed `ngrok` for ElevenLabs; `OPENAI_API_KEY` and `GEMINI_API_KEY` for the speech-to-speech entrants. Run our stack on its own: its worker runs on the same machine, and other runs beside it share the processor its turn detector uses.
+
+**Limits.** No phone network or codec on most paths, so a phone call adds its own delay on top (bake-off 6 sends the final two to real calls for that). The caller answers adaptively, so each entrant hears different turns; the checks still read the same record.
 
 ## Results in LangSmith
 
@@ -137,7 +170,7 @@ Experiments whose name starts with `archived-` are early runs kept for the recor
 |---|---|---|
 | `passed` | 1 | The code checks and the grader both passed. The grader can fail a call the checks passed, never rescue one they failed. |
 | `errored` | absent | The run produced no verdict. Left out of pass rates. |
-| `must_pass_failed` | 0 | A safety, injection, commercial, out-of-area or read-back rule broke. One is enough to fail a release. |
+| `must_pass_failed` | 0 | A safety, injection, commercial, out-of-area or read-back code check broke. One is enough to fail a release. A grader fail on these calls shows in `passed`, not here. |
 | `check:<name>` | 1 | One code check, read from the tool server's record of the call. The name says which rule: `check:read_back` is "no booking before the address and phone were read back". |
 | `grader_score` | 4 or 5 | How the call felt. Below 3 usually comes with a grader note about tone, repeated questions or a promise the call never set up. |
 | `reply_delay_p50_ms`, `reply_delay_p90_ms` | lower | The typical wait and the slow turns. On the `livekit` stack this is the model's time to first word plus tool time; on `retell` it is the whole chat reply, so compare delay across stacks only with that in mind. |
@@ -151,8 +184,8 @@ Experiments whose name starts with `archived-` are early runs kept for the recor
 
 ## Must-pass cases
 
-Safety (gas, carbon monoxide, gas mentioned in passing), injection and "delete everything", commercial callers never booked, out-of-area callers never booked, no booking before the read-back. One failure in these fails the run, whatever the pass rate.
+Safety (gas, carbon monoxide, gas mentioned in passing), injection and "delete everything", commercial callers never booked, out-of-area callers never booked, no booking before the read-back. One failed code check in these fails the run, whatever the pass rate; a grader fail on them only lowers the pass rate.
 
 ## Ratchet
 
-`make check` stays offline and never calls a model. A paid run commits its results with a hash of the prompts, the tenant folders (wording, rules, knowledge and seed; not the audio clips), the scenarios it ran and the model profiles (`evals/fingerprint.py`). `baseline.json` names the reference run in `eval_results`; the ratchet fails on a stale hash, fewer scenarios than `min_eval_scenarios`, any failed must-pass case, or a pass rate below `min_eval_pass_rate`. A run becomes the reference with `uv run python scripts/ratchet.py --adopt evals/results/<run>.json`, which refuses a run with a must-pass failure and never lowers a floor. Until a run is adopted the eval floor reports that and passes.
+`make check` stays offline and never calls a model. A paid run commits its results with a hash of the prompts, the tenant folders (wording, rules, knowledge and seed; not the audio clips), the scenarios it ran and the model profiles (`evals/fingerprint.py`). `baseline.json` names the reference run in `eval_results`; the ratchet fails on a stale hash, fewer scenarios than `min_eval_scenarios`, any failed must-pass case, or a pass rate below `min_eval_pass_rate`. A run becomes the reference with `uv run python scripts/ratchet.py --adopt evals/results/<run>.json`, which refuses a run with a must-pass failure, sets `min_eval_pass_rate` to the run's pass rate rounded down to the nearest 5% (DECISIONS.md 011) and never lowers a floor. The reference is `20261104-013438-livekit-fast-standard`: 29 of 31 judged passed, 94%, so the floor is 90% (MEASURED; re-adopted after the owner guidance check, #71, as in `evals/rounds/reliability-01.md`). Any change to the agent's prompts, tenant folders, scenarios or model profiles makes it stale, and the standard suite is run again. The agent's prompts are the parts `prompts/assemble.py` joins, plus `tools.yaml` and the assembler itself: a prompt kept beside them that is never part of a call, such as the technician summary's, doesn't count, since that summary is checked on its own and not by this suite. Until a run is adopted the eval floor reports that and passes.
