@@ -103,6 +103,29 @@ safety:
               generator in the basement, generator in the garage, generator in the apartment,
               grill inside, grill in the house, grill in the apartment, using a kerosene heater,
               running a kerosene heater, using a propane heater, running a propane heater]
+  # Electrical trouble at the unit or the panel (DECISIONS.md 082). Its own calm route, separate
+  # from gas and carbon monoxide: it never sets their safety state or says their lines, and the
+  # agent helps book after it. The tenant's `electrical.lines` say what to do. `now` phrases count
+  # unless negated ("no sparks"); `past` forms count unless the same sentence puts them in the past
+  # ("it sparked once last year and it's been fine"). Burning dust on the first heat stays with
+  # the gas confirm question above.
+  electrical:
+    now: [sparks, sparking, arcing, arcs, burning plastic, melting plastic, electrical smell,
+          burning wire, burnt wire, burning wires, burnt wires, burnt smell from the ac,
+          burnt smell from the unit, burning smell from the ac, burning smell from the unit,
+          smoke from the furnace, smoke from the ac, smoke coming from the furnace,
+          smoke coming out of the furnace, smoke from the outdoor unit,
+          electrical burning smell, smells electrical, smell electrical, smells like an electrical fire,
+          smoke coming out of the unit, smoke coming from the unit, unit is smoking, furnace is smoking,
+          its smoking, smoke from the unit, smoke from the panel,
+          smoke from the breaker, panel is smoking, breaker box is smoking]
+    # And a single spark ("I saw a spark", "there was a spark from the outdoor unit"), which is
+    # usually told as something that happened.
+    past: [sparked, arced, smoked, spark]
+    # Words in the sentence that put a past mention in the past.
+    history: [last year, last month, last week, last winter, last summer, years ago, months ago,
+              a while ago, a while back, long time ago, used to, back then, been fine, been ok,
+              been okay, since then, got fixed, was fixed, fixed it]
   # A plain denial in the answer to a check question is a no, even with a yes word in it
   # ("definitely not gas"). An unsure word in the same answer still counts as a yes.
   denials: [not gas, no gas, isnt gas, definitely not, not a gas, no smell of gas]
@@ -248,6 +271,54 @@ priority:
       phrases: [pipes froze, frozen pipes, pipes are freezing, no other heat, only heat, only source of heat]
       raise_to: High
       reason: pipes at risk or no other heat
+    # Water from the system coming into the home is Urgent on any day (DECISIONS.md 082).
+    - id: water_in_home
+      phrases: [water through the ceiling, water coming through the ceiling, water coming from the ceiling,
+                water from the ceiling, water dripping from the ceiling, dripping from the ceiling,
+                dripping through the ceiling, leaking through the ceiling, leaking from the ceiling,
+                coming through the ceiling, ceiling is leaking, ceilings leaking, ceiling is dripping,
+                ceilings dripping, leaking into the house, leaking into the apartment, leaking into the home,
+                leaking into the bedroom, leaking into the living room, water all over the floor,
+                flooding the floor, water is pouring, pouring water]
+      # Or callers' own words: a water word within a few words of the cooling equipment or of the
+      # ceiling or a wall ("water coming through my living room ceiling", "the AC is dripping
+      # water", "running down the wall"). A faucet, sink, toilet or water heater near the water word
+      # means it's plumbing, not the system ("the kitchen faucet is dripping and the AC is broken").
+      together:
+        first: [water, leak, leaking, leaks, leaked, dripping, drips, pouring, flooding, flooded,
+                soaked, soaking, puddle, puddles, running down, dripping down, water stain, wet,
+                overflowed, overflowing, overflows]
+        second: [ceiling, ceilings, wall, walls, ac, a c, air conditioner, air conditioning,
+                 air handler, mini split, ductless, the unit, unit, indoor unit, attic unit,
+                 condensate, drain pan, vent, vents, register, registers]
+        within: 8
+        unless_near: [faucet, sink, toilet, tub, shower, dishwasher, washing machine, water heater,
+                      hot water heater, pipe, pipes, radiator, boiler]
+      not_phrases: [water heater, hot water, water bill, water pressure]
+      raise_to: Urgent
+      reason: water coming into the home
+    # A breaker that trips again and again isn't an emergency, but it goes ahead of routine work.
+    - id: breaker_trips
+      # Present tense says it happens again and again: "my breaker trips when the AC kicks on".
+      # "It tripped once in the storm" doesn't count.
+      phrases: [breaker trips, breakers trip, breaker is tripping, breakers are tripping,
+                breaker tripping, trips the breaker, tripping the breaker, trips my breaker,
+                tripping my breaker, trips the circuit, breaker keeps tripping, breakers keep tripping,
+                tripped when the, tripped every time, trips when the, trips whenever,
+                keep resetting the breaker, keep resetting it, keeps resetting the breaker,
+                resetting the breaker, reset the breaker again, reset the breaker twice,
+                keeps tripping the breaker,
+                keeps tripping breakers, keeps tripping my breaker, keeps flipping the breaker,
+                breaker keeps flipping, breaker trips every time, trips the breaker every time,
+                tripped the breaker again, breaker tripped again, keeps blowing the breaker,
+                keeps blowing a fuse, keeps blowing fuses, keeps tripping the circuit]
+      raise_to: High
+      reason: a breaker that keeps tripping
+    # Sparks, arcing or an electrical smell, as the electrical route heard it (safety.electrical).
+    - id: electrical_fault
+      electrical_signal: true
+      raise_to: High
+      reason: sparks or an electrical smell at the unit
     - id: safety_signal
       safety_signal: true
       raise_to: Urgent
@@ -278,3 +349,20 @@ services:
     water_heater: [water heater, hot water heater, hot water tank]
     duct_cleaning: [duct cleaning, clean my ducts, clean the ducts, clean our ducts, ducts cleaned,
                     clean out the ducts, dryer vent cleaning]
+
+# Paying and billing on the phone (DECISIONS.md 080). A caller who offers a card hears the tenant's
+# `card_stop` line, said by the voice layer word for word; card digits are never stored
+# (app/cards.py). A caller who disputes a charge gets a callback from the office.
+payments:
+  card_phrases: [pay by card, pay with a card, pay with my card, pay with card, pay by credit card,
+                 pay with a credit card, pay with my credit card, pay by debit card, pay with my debit card,
+                 pay with a debit card, give you my card, give you my credit card, give you the card,
+                 read you my card, read you the card, take my card, take a card, take a credit card,
+                 put it on my card, put it on a card, charge my card, charge it to my card,
+                 my card number, the card number, credit card number, card over the phone,
+                 pay over the phone, pay for it now, pay now over the phone]
+  billing_phrases: [charged twice, double charged, charged me twice, overcharged, over charged,
+                    charged too much, wrong charge, charge is wrong, bill is wrong, billed twice,
+                    billed me twice, billing mistake, billing error, dispute a charge, dispute the charge,
+                    dispute the bill, didnt authorize, did not authorize, never authorized,
+                    want a refund, need a refund, get a refund, refund my]

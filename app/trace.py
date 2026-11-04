@@ -82,6 +82,9 @@ def timeline(conn: sqlite3.Connection, call_id: str) -> dict | None:
         "leads": rows("SELECT id, kind, summary, status FROM leads WHERE call_id = ? ORDER BY id"),
         "out_of_area": rows("SELECT zip, at FROM out_of_area WHERE call_id = ?"),
         "summary": rows("SELECT * FROM summaries WHERE call_id = ?"),
+        # The electrical route and holds (DECISIONS.md 081, 082).
+        "electrical": rows("SELECT * FROM electrical WHERE call_id = ?"),
+        "holds": rows("SELECT * FROM holds WHERE call_id = ? ORDER BY seq"),
         # Speaking rate (app/pace.py): the pace in effect, each change, and what is remembered for
         # the caller's number.
         "pace": rows("SELECT * FROM call_pace WHERE call_id = ?"),

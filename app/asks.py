@@ -96,6 +96,14 @@ NAMED = (
         r"(?:\s+(?i:again|back|to come|out|please|if|for|instead|this time|next time)\b|\s*(?:[?.!,]|$))"
     ),
     re.compile(rf"\b(?i:send|get)\s+{NAME}\s*(?:[?.!,]|$)"),
+    # "I'd love Mike back", "ask Mike to come".
+    re.compile(rf"\b(?i:i'?d love|i would love|we'?d love|bring)\s+{NAME}\s+(?i:back|again|out|to come)\b"),
+    re.compile(rf"\b(?i:ask|have)\s+{NAME}\s+(?i:to come|to do it|to come back|to come out)\b"),
+    # "Mike was great last time, can he come again?": praise for a name, then a request in the line.
+    re.compile(
+        rf"\b{NAME}\s+(?i:was|did)\b[^.?!]*?\b(?i:can|could|would)\s+(?i:he|she|they)\s+"
+        r"(?i:come|do|be)\b"
+    ),
 )
 # Words before the request that turn it around: "I don't want Mike again", "anyone but Mike".
 DECLINES = re.compile(

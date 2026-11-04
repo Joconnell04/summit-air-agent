@@ -1,0 +1,29 @@
+id: billing-refund-then-books
+flow: [booking]
+difficulty: standard
+traits: [side-question]
+journeys: [J1, J7]
+tags: [call-handling, billing]
+caller_id: "(929) 555-0304"
+persona: Hiro Tanaka, a homeowner in Forest Hills. Calm, has two things to sort out.
+hidden_facts:
+  name: Hiro Tanaka
+  address: 72-10 Austin St, Forest Hills, 11375
+  phone: the number being called from
+  complaint: was overcharged on the last invoice, billed for a part that wasn't installed
+  problem: wants a fall tune-up for the boiler, it works fine
+  system: gas boiler, about 10 years old
+  who_home: Hiro and his wife, both healthy
+  owns: Hiro owns the house and approves the work
+opening: Hi, two things. First, I think I was overcharged on my last bill, you billed me for a part that never went in.
+script:
+  - Accept the office calling back about the bill.
+  - Then ask to book a fall tune-up for the boiler. Confirm the read-back and take the first window.
+  - Say goodbye after the agent asks if there is anything else.
+must:
+  - callback: promised
+  - booking: {count: 1, zip: "11375"}
+  - read_back: before_booking
+  - agent_says: ["office"]
+should:
+  - Hands the billing question to the office with a named callback time, then books the tune-up.

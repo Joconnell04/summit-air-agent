@@ -8,6 +8,8 @@ from datetime import datetime, timedelta
 from . import (
     address_as,
     asks,
+    cards,
+    dead_air,
     lookup,
     owner_settings,
     pace,
@@ -116,7 +118,11 @@ def sounds_commercial(text: str, cfg: dict) -> bool:
     owned = "|".join(map(re.escape, cfg["owned"]))
     run = "|".join(map(re.escape, cfg["run"]))
     return bool(
-        re.search(rf" (?:my|our) (?:{owned}) ", text_words)
+        # "My store", and "our shop's furnace" ("shops" once the apostrophe is dropped).
+        re.search(rf" (?:my|our) (?:{owned})s? ", text_words)
+        # "The restaurant I run has no heat": the business, then the caller running or owning it.
+        or re.search(rf" (?:the|a|this|that) (?:{run}) (?:i|we) (?:run|own|manage|operate) ",
+                     text_words)
         or re.search(rf" {RUN_WORDS} (?:a|an|the) (?:\w+ )?(?:{run}) ", text_words)
         or re.search(rf" {OWN_WORDS} (?:a|an|the) (?:\w+ )?(?:{owned}) ", text_words)
         # "We're a restaurant": the caller says what they are ("we're" is "were" once the
@@ -150,6 +156,10 @@ def _owns_business(text: str, text_words: str, cfg: dict) -> bool:
     return owns and bool(re.search(rf" (?:its|it is) (?:a|an) (?:\w+ )?(?:{business}) ", text_words))
 
 
+# Words that place an office: "my office is by the church", "our office is on Court Street".
+OFFICE_PLACED = "by|on|at|near|next to|in|across from|around|off|over|above|located|right"
+
+
 def _office_system(text_words: str, cfg: dict) -> bool:
     """An office with its heating or cooling: "the heat in my office", "our office AC". A bare "my
     office" is about the caller's work, not the place needing service."""
@@ -160,6 +170,9 @@ def _office_system(text_words: str, cfg: dict) -> bool:
         return False
     return bool(
         re.search(rf" (?:my|our|the) (?:{places})s? (?:\w+ )?(?:{systems}) ", text_words)
+        # "My office is by the church": where the office is, so the office is the place to serve
+        # (PR #135 re-check). "My office called me" says nothing about where it is.
+        or re.search(rf" (?:my|our) (?:{places})s? (?:is|its) (?:{OFFICE_PLACED}) ", text_words)
         or re.search(rf" (?:{systems}) (?:\w+ ){{0,3}}(?:in|at|for) (?:my|our|the) (?:{places}) ",
                      text_words)
     )
@@ -283,6 +296,9 @@ def _resume(conn: sqlite3.Connection, previous: sqlite3.Row) -> dict:
         "call_id": previous["id"],
         "ended_at": previous["ended_at"],
         "dropped": records.dropped(previous),
+        # The caller asked the agent to wait and never came back, so the worker hung up after
+        # saying they could call back (DECISIONS.md 081). The greeting says so.
+        "stepped_away": previous["end_reason"] == "stepped_away",
         "last_caller_line": last["caller"]["text"] if last["caller"] else None,
         "last_agent_line": last["agent"]["text"] if last["agent"] else None,
         "booking": dict(booked) if booked else None,
@@ -439,6 +455,103 @@ def _at_risk_asked(conn: sqlite3.Connection, call_id: str, phrases: list[str]) -
     )
 
 
+PAYMENT_REASON = "Caller wants to pay by card: send a payment link or call to take the payment"
+BILLING_REASON = "Billing: the caller disputes a charge; the office calls back"
+# How far ahead the office's opening is looked for, in quarter hours (a long weekend fits).
+OPEN_SEARCH_STEPS = 7 * 24 * 4
+
+
+def _has_flag(conn: sqlite3.Connection, call_id: str, kind: str) -> bool:
+    return conn.execute(
+        "SELECT 1 FROM flags WHERE call_id = ? AND kind = ?", (call_id, kind)
+    ).fetchone() is not None
+
+
+def _first_open(tenant: Tenant, moment: datetime) -> datetime:
+    """The first quarter hour from this moment that is inside the company's hours."""
+    for _ in range(OPEN_SEARCH_STEPS):
+        if tenant.is_open(moment):
+            return moment
+        moment = moment.replace(minute=moment.minute - moment.minute % 15, second=0, microsecond=0)
+        moment += timedelta(minutes=15)
+    raise ValueError("the company is never open")
+
+
+def office_callback_due(tenant: Tenant, now: datetime) -> datetime:
+    """When the office calls back about a bill: `billing_minutes` after it is next open, inside its
+    hours, so the call is the office's and never the on-call technician's (DECISIONS.md 080)."""
+    minutes = timedelta(minutes=tenant.callbacks["billing_minutes"])
+    due = _first_open(tenant, now) + minutes
+    while not tenant.is_open(due):
+        due = _first_open(tenant, due) + minutes
+    return due
+
+
+def _billing_line(
+    conn: sqlite3.Connection, tenant: Tenant, call: sqlite3.Row, now: datetime
+) -> str:
+    """A caller disputing a charge: a flag and a callback from the office, stored before the line
+    that promises it is said."""
+    due = office_callback_due(tenant, now)
+    records.add_flag(conn, call["id"], "billing", BILLING_REASON, now, "Normal")
+    callback_id = records.add_callback(conn, tenant, call, due, BILLING_REASON, now)
+    if callback_id is None:
+        return tenant.line("flag_stored_no_callback")
+    return tenant.line(
+        "billing_callback", when=tenant.line("callback_by", time=tenant.time_spoken(due, now))
+    )
+
+
+def _electrical(
+    conn: sqlite3.Connection, tenant: Tenant, call_id: str, text: str, seq: int, now: datetime
+) -> bool:
+    """Records an electrical report on this line, and says whether the electrical lines are still
+    owed on this call (heard, and not said yet)."""
+    row = conn.execute("SELECT * FROM electrical WHERE call_id = ?", (call_id,)).fetchone()
+    line = safety.electrical_line(text, tenant.safety)
+    if line and row is None:
+        conn.execute(
+            "INSERT INTO electrical (call_id, heard_seq, heard_line) VALUES (?, ?, ?)",
+            (call_id, seq, line),
+        )
+        return True
+    return row is not None and row["said_at"] is None
+
+
+def _spoken_line(
+    conn: sqlite3.Connection,
+    tenant: Tenant,
+    call: sqlite3.Row,
+    text: str,
+    seq: int,
+    now: datetime,
+    on_safety: bool,
+    speaking_safety: bool,
+) -> dict | None:
+    """A line the voice layer says word for word for this caller line, if any: the card stop, the
+    billing callback or the electrical lines, in that order. A gas or carbon monoxide line or
+    question said on this turn comes first, so none is returned then, but the payment and billing
+    flags and the billing callback are still stored; a card offered after the lines still hears the
+    card stop. The electrical lines wait for the gas or carbon monoxide call to clear, since those
+    lines already cover leaving."""
+    owed = _electrical(conn, tenant, call["id"], text, seq, now)
+    spoken = None
+    if cards.offers_card(text, tenant.payments):
+        if not _has_flag(conn, call["id"], "payment"):
+            records.add_flag(conn, call["id"], "payment", PAYMENT_REASON, now, "Normal")
+        spoken = {"kind": "card", "text": tenant.line("card_stop")}
+    elif cards.billing_dispute(text, tenant.payments) and not _has_flag(conn, call["id"], "billing"):
+        spoken = {"kind": "billing", "text": _billing_line(conn, tenant, call, now)}
+    if speaking_safety:
+        return None
+    if spoken:
+        return spoken
+    if owed and not on_safety:
+        conn.execute("UPDATE electrical SET said_at = ? WHERE call_id = ?", (iso(now), call["id"]))
+        return {"kind": "electrical", "text": safety.electrical_lines(tenant.safety)}
+    return None
+
+
 def turn(
     conn: sqlite3.Connection, tenant: Tenant, call: sqlite3.Row, args: TurnIn, now: datetime
 ) -> Result:
@@ -448,7 +561,8 @@ def turn(
     action = safety.SafetyAction("none", call["safety_kind"])
     changes: dict = {"turn_seq": seq}
     hints = []
-    stop_recording = False
+    stop_recording = card_stop = False
+    spoken, hold = None, None
     with tx(conn):
         if args.speaker == "caller":
             heating = cfg.get("heating_check")
@@ -505,6 +619,31 @@ def turn(
                     else "Caller said no to the safety check"
                 )
                 records.add_flag(conn, call["id"], "safety_check_cleared", reason, now, "Low")
+            # Gas or carbon monoxide on this call after this line: their lines and questions come
+            # before anything else. A check the caller just cleared isn't.
+            gas_or_co = action.action in ("speak_lines", "speak_variant", "ask_check") or (
+                action.action == "none" and call["safety_state"] not in ("none", "cleared")
+            )
+            # The card stop, the billing callback or the electrical lines (DECISIONS.md 080, 082).
+            speaking_safety = action.action in ("speak_lines", "speak_variant", "ask_check")
+            spoken = _spoken_line(
+                conn, tenant, call, args.text, seq, now, gas_or_co, speaking_safety
+            )
+            # A caller who asks the agent to wait, or comes back (DECISIONS.md 081).
+            hold = dead_air.caller_line(
+                conn, call["id"], args.text, seq, now, gas_or_co or spoken is not None
+            )
+            if hold == "holding" and spoken is None:
+                hints.append("caller_holding")
+            # The electrical lines were said: the visit doesn't wait on the unit or the breaker
+            # (DECISIONS.md 082, Jackson's sign-off).
+            if spoken and spoken["kind"] == "electrical":
+                hints.append("electrical_said")
+            # Card digits were read out: the recording stops and is deleted, as for a caller who
+            # objects, so the digits aren't kept in the audio either (DECISIONS.md 080).
+            if cards.removed(args.text) and not recordings.declined(conn, call["id"]):
+                recordings.decline(conn, call["id"], seq, now)
+                stop_recording, card_stop = True, True
             # The caller asking for a pace, "sorry, what?" twice, or an older caller (app/pace.py).
             hints += pace.caller_line(conn, tenant.pace, call, args.text, seq, now)
             text_words = words(args.text)
@@ -604,21 +743,27 @@ def turn(
     payload = None
     if action.action != "none":
         payload = {"action": action.action, "kind": action.kind, "text": action.text}
+    say = action.text or (spoken["text"] if spoken else "")
+    if stop_recording:
+        # Stopped for card digits, the recording's own line isn't said: the card line is.
+        recording = {"action": "stop", "text": "" if card_stop else recordings.stopped_line(tenant)}
+    else:
+        recording = None
     known = (
         already_known(conn, call["id"], tenant.system_words, frozenset(tenant.service_area))
         if args.speaker == "caller"
         else {}
     )
     return ok(
-        action.text,
+        say,
         seq=seq,
         safety=payload,
+        spoken=spoken,
+        hold={"state": hold} if hold else None,
         hints=hints,
         known=known,
         pace=pace.current(conn, call["id"]),
-        recording=(
-            {"action": "stop", "text": recordings.stopped_line(tenant)} if stop_recording else None
-        ),
+        recording=recording,
     )
 
 

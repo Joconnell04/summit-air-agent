@@ -1,0 +1,26 @@
+id: ac-leaking-into-bedroom
+flow: [booking, priority]
+difficulty: standard
+traits: [vague]
+journeys: [J1]
+tags: [call-handling, water]
+caller_id: "(347) 555-0186"
+weather: {now_f: 71, low_f: 63}
+persona: Shanice Williams in Bayside. Describes it loosely at first.
+hidden_facts:
+  name: Shanice Williams
+  address: 4517 Bell Blvd, Bayside, 11361
+  phone: the number being called from
+  problem: the mini split in the bedroom is leaking into the bedroom, water running down the wall onto the carpet since this morning
+  system: ductless mini split, about 5 years old
+  who_home: Shanice, healthy
+  owns: Shanice owns the house and approves the work
+opening: Hi, something's wrong with my mini split, there's water.
+script:
+  - When asked what's going on, say it's leaking into the bedroom, running down the wall onto the carpet.
+  - Answer the booking questions, confirm the read-back, take the first window, then say goodbye.
+must:
+  - booking: {count: 1, priority: Urgent, zip: "11361"}
+  - read_back: before_booking
+should:
+  - Finds out where the water is going before booking, and books the soonest opening.

@@ -649,3 +649,54 @@ def test_a_time_said_with_the_yes_is_not_a_house_number(line):
     """Eval run 20261104-210139, gas-downplayed-wants-booking: "8 to 12 book it" refused every yes."""
     austin = {**READ_BACK, "street": "71-20 Austin Street", "zip": "11375"}
     assert readback.change(line, austin) is None
+
+
+# ---- PR #135 re-check ----------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "line",
+    ["My office is by the church.", "The restaurant I run has no heat.", "Our shop's furnace quit."],
+)
+def test_an_office_placed_or_a_business_the_caller_runs_is_commercial(line):
+    assert sounds_commercial(line, COMMERCIAL), line
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "My office called me, my furnace is out.",
+        "I'm at my office right now.",
+        "The shops on my block are closed.",
+    ],
+)
+def test_an_office_or_shops_mentioned_in_passing_stay_residential(line):
+    assert not sounds_commercial(line, COMMERCIAL), line
+
+
+@pytest.mark.parametrize(
+    "line",
+    ["Mike was great last time, can he come again?", "I'd love Mike back.", "Ask Mike to come."],
+)
+def test_praise_and_asks_for_a_technician_make_the_note(line):
+    assert asks.technician_asked(line) == "Mike"
+
+
+@pytest.mark.parametrize("sentence", ["I'll send Mike.", "Mike's on his way.", "You'll get Mike.",
+                                      "It'll be Mike.", "I've put Mike on your job."])
+def test_a_dispatch_word_with_a_name_is_dropped_with_no_hint(sentence):
+    assert SpokenReply().sentence(sentence) == ""
+
+
+@pytest.mark.parametrize(
+    "sentence",
+    [
+        "I can't promise it'll be Mike, but I'll pass that along.",
+        "I'll send a technician between 8 and 12.",
+        "You're all set for Tuesday, Linda.",
+        "Someone's on the way.",
+        "I'll get you set up, Linda.",
+    ],
+)
+def test_a_dispatch_word_without_a_technician_name_is_kept(sentence):
+    assert SpokenReply().sentence(sentence) == sentence

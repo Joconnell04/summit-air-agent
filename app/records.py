@@ -393,3 +393,31 @@ def dropped(call: sqlite3.Row) -> bool:
 
 def readback(call: sqlite3.Row) -> dict | None:
     return json.loads(call["readback_json"]) if call["readback_json"] else None
+
+
+def recent_caller_lines(conn: sqlite3.Connection, call_id: str, limit: int) -> list[tuple[int, str]]:
+    """The caller's last few lines, oldest first, as (seq, text)."""
+    rows = conn.execute(
+        "SELECT seq, text FROM turns WHERE call_id = ? AND speaker = 'caller' "
+        "ORDER BY seq DESC LIMIT ?",
+        (call_id, limit),
+    ).fetchall()
+    return [(r["seq"], r["text"]) for r in reversed(rows)]
+
+
+def rewrite_caller_lines(
+    conn: sqlite3.Connection, call_id: str, changes: dict[int, str], olds: dict[str, str]
+) -> None:
+    """Earlier caller lines found to hold part of a card (app/cards.py): the turn and the tool
+    log's record of the request that posted it get the redacted text."""
+    for seq, text in changes.items():
+        conn.execute(
+            "UPDATE turns SET text = ? WHERE call_id = ? AND seq = ? AND speaker = 'caller'",
+            (text, call_id, seq),
+        )
+    for old, new in olds.items():
+        conn.execute(
+            "UPDATE tool_calls SET args_json = json_set(args_json, '$.text', ?) "
+            "WHERE call_id = ? AND tool = 'turn' AND json_extract(args_json, '$.text') = ?",
+            (new, call_id, old),
+        )

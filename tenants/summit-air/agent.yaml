@@ -83,6 +83,15 @@ safety:
   # stays in control: the concern is said once, offered once more, then the agent helps (eval round
   # 3, Jackson: "if they reject your advice, just let it be and maybe offer one more time").
   repeat_limit: 1
+  # Sparks, arcing or an electrical smell (app/safety.py electrical_signal, DECISIONS.md 082): said
+  # once per call, word for word, then the agent helps book. Never the gas or carbon monoxide
+  # lines. Booking never waits on the unit or the breaker being off. Signed off by Jackson
+  # (coauthoring safety r1).
+  electrical:
+    signed_off: true
+    lines: >-
+      Please step away from the unit and turn it off, and if you can safely reach the breaker,
+      switch that off too. I can get a technician out to look at it.
 
 # A caller line that describes a business marks the call commercial: it can't book (spec S-05,
 # journey 8). Commercial means commercial-grade equipment: offices, stores, restaurants and the like.
@@ -217,6 +226,9 @@ callbacks:
   dropped_safety_minutes: 10
   # A callback asked for "after 5" is promised for this long after the start ("around 5:30"). ASSUMED.
   after_lead_minutes: 30
+  # A billing dispute: the office calls back within this, inside office hours (DECISIONS.md 080).
+  # ASSUMED.
+  billing_minutes: 120
   # A callback stored with no time because the caller had already said goodbye. ASSUMED.
   after_goodbye_minutes: 60
   # When the FSM is down or refuses a booking, someone calls back within this.
@@ -368,6 +380,16 @@ lines:
   commercial: >-
     Thanks for thinking of us. Unfortunately Summit Air works on homes and apartments, not
     businesses, so we're not the right fit for this one.
+  # A caller who offers a card (DECISIONS.md 080): said word for word by the voice layer. The
+  # office follows up from the flag the server stores. Signed off by Jackson (coauthoring safety r1).
+  card_stop: >-
+    For your security, please don't read a card number over the phone. Our office will send you a
+    secure payment link, or call you to take the payment.
+  # A caller who disputes a charge. {when} is the office callback time, such as "by 10:30 AM".
+  # Signed off by Jackson (coauthoring safety r1).
+  billing_callback: >-
+    I'm sorry about that. Billing goes through our office, so I've asked them to look into the
+    charge, and someone from the office will call you {when}.
   # Added to a booking's sentence when who can approve isn't settled. {when} is "by 9 PM".
   approval_callback: >-
     Before the technician heads out, someone from our team will call you {when} to confirm who can
@@ -454,6 +476,21 @@ voice:
   greeting_linked_unknown: >-
     Hi, this is Summit Air's virtual assistant again. I think we got cut off earlier. Who am I
     speaking with?
+  # A caller whose earlier call ended because they stepped away (DECISIONS.md 081). Signed off by
+  # Jackson (coauthoring safety r1), as are still_here and stepped_away below.
+  greeting_linked_stepped_away: >-
+    Hi, this is Summit Air's virtual assistant again. We got disconnected earlier when you stepped
+    away; let's pick up where we left off. Is this {first_name}?
+  greeting_linked_stepped_away_unknown: >-
+    Hi, this is Summit Air's virtual assistant again. We got disconnected earlier when you stepped
+    away; let's pick up where we left off. Who am I speaking with?
+  # Dead air (DECISIONS.md 081, voice.dead_air in config/models.yaml for the timings): the check-in
+  # said every couple of minutes of silence, and the goodbye before the agent hangs up, in Jackson's
+  # words.
+  still_here: Take your time, I'm still here.
+  stepped_away: >-
+    It sounds like you've stepped away, so I'm going to hang up for now. Once you're ready, feel free
+    to call this number back, and we can pick up where we left off.
   # Said when the model ends the call without a goodbye of its own (knowledge/sign-off.md). Generic
   # and kind, the same on any day (eval round 3).
   goodbye: Thanks for calling Summit Air. Have a great rest of your day.

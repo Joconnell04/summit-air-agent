@@ -221,6 +221,8 @@ class Tenant:
         self.repeat: dict = agent["repeat_callers"]
         # Speaking rate (app/pace.py). None leaves the voice at its default speed.
         self.pace: dict | None = clamped_config(agent.get("pace"))
+        # Card and billing phrases (app/cards.py).
+        self.payments: dict = agent.get("payments", {})
         self.retention: dict = agent["retention"]
         self.after_hours_cutoffs: dict = agent["after_hours"]
         # Words for the trade's equipment, so swearing at a broken system isn't read as anger at the

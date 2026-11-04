@@ -164,9 +164,12 @@ def greeting(start: dict, voice: dict) -> str:
     linked = start.get("linked_call") or {}
     if linked.get("dropped") and "greeting_linked" in voice:
         name = name or linked.get("preferred_name") or linked.get("caller_name") or ""
+        # The caller stepped away and the agent hung up after the wait (DECISIONS.md 081).
+        key = "greeting_linked_stepped_away" if linked.get("stepped_away") else "greeting_linked"
+        key = key if key in voice else "greeting_linked"
         if name:
-            return voice["greeting_linked"].format(first_name=name)
-        return voice["greeting_linked_unknown"]
+            return voice[key].format(first_name=name)
+        return voice[f"{key}_unknown"]
     if name:
         return voice["greeting_known"].format(first_name=name)
     return voice["greeting_unknown"]
@@ -180,6 +183,17 @@ SERVER_NOTES = {
     ),
     "do_not_call": "The caller asked not to be called. Call mark_do_not_call and say its sentence.",
     "safety_check_cleared": "The caller said no to the safety check. Carry on where the call was.",
+    # Sparks or an electrical smell (app/safety.py, DECISIONS.md 082).
+    "electrical_said": (
+        "The electrical advice has just been said for you. This isn't a gas or carbon monoxide "
+        "call: offer to book a visit now, without waiting for the unit or the breaker to be off, "
+        "and don't repeat the advice."
+    ),
+    # A caller who asked the agent to wait (app/dead_air.py, DECISIONS.md 081).
+    "caller_holding": (
+        "The caller asked you to wait. Say only a short yes, such as \"Sure, take your time.\" Ask "
+        "nothing and add nothing else; the voice layer checks in if they're gone a while."
+    ),
     "safety_stood_down": (
         "The caller says there was never a smell or alarm, so this is no longer a safety call. Say "
         "sorry you misheard, once, and carry on where the call was."
@@ -324,12 +338,22 @@ CLAIMS_PRIORITY = re.compile(
 # A promise of who the technician will be ("Mike will be the one coming out", "I'll make sure it's
 # Mike"). The dispatcher decides; the agent only passes the request on (DECISIONS.md 085). "I'll pass
 # that along" and "I can't promise who comes" are kept.
-NAME = r"(?!(?:Someone|Somebody|They|He|She|It|We|You|That|This|There|Our|The|A|Anyone)\b)[A-Z][a-z]+"
+NAME = (
+    r"(?!(?:Someone|Somebody|They|He|She|It|We|You|That|This|There|Our|Your|The|A|An|Anyone|"
+    r"Summit|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday|Today|Tomorrow|Everyone|"
+    r"One|Nobody|Whoever)\b)[A-Z][a-z]+"
+)
+# A dispatch word paired with a person's name ("I'll send Mike", "Mike's on his way", "You'll get
+# Mike", "It'll be Mike", "I've put Mike on your job"), whatever the caller asked for: the
+# dispatcher decides, so the agent never says who is coming (PR #135 re-check).
 PROMISES_TECHNICIAN = re.compile(
     rf"\b{NAME} (?:will|'ll) be (?:the one|your technician|the technician|coming|there|out)\b"
+    rf"|\b{NAME}(?:'s| is) (?:on (?:his|her|their|the) way|coming|heading|the one)\b"
+    rf"|\b{NAME} (?:will|'ll|can|is going to) (?:take care of|come|head|stop by|be by)\b"
+    rf"|\b(?i:send|sending|you'll get|you will get|it'll be|it will be|i'll have|we'll have)\s+{NAME}\b"
     r"|\b(?i:i|we)(?:'ll| will)\s+(?:make sure|ensure|guarantee|see to it)\s+(?:that\s+)?"
     rf"(?:it'?s {NAME}|it is {NAME}|you get {NAME}|{NAME} (?:comes|is the one))\b"
-    rf"|\b(?i:i|we)(?:'ve| have)\s+(?:assigned|booked|scheduled)\s+{NAME}\b",
+    rf"|\b(?i:i|we)(?:'ve| have)\s+(?:assigned|booked|scheduled|put|got)\s+{NAME}\b",
 )
 # A sentence that passes a technician request on, or says it can't be promised: the one way the
 # agent may name the technician the caller asked for.
@@ -506,7 +530,8 @@ class SpokenReply:
             return ""
         if INTERNAL_WORD.search(sentence) or CLAIMS_FEE.search(sentence):
             return ""
-        if PROMISES_TECHNICIAN.search(sentence) or self._names_technician(sentence):
+        promised = PROMISES_TECHNICIAN.search(sentence) and not PASSES_ON.search(sentence)
+        if promised or self._names_technician(sentence):
             return ""
         if self.safety_call and EVACUATE.search(sentence):
             # The caller stays in control: the agent's own recommendation to stay out or call 911

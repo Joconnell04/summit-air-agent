@@ -28,7 +28,7 @@ from typing import Protocol
 
 import yaml
 
-from . import lookup, owner_settings, records
+from . import cards, lookup, owner_settings, records
 from .db import iso, parse_iso, tx
 from .fsm import FsmAdapter, FsmRejected, FsmUnavailable
 from .settings import QUEUE_MAX_ATTEMPTS
@@ -339,6 +339,9 @@ def _summarize(conn, tenant, fsm, model, call, booking, now) -> str:
             # keeps its notes and the model is asked once more on the next run.
             return _model_failed(conn, call["id"], row["model_attempts"] + 1, exc, now)
         kept, dropped = lines(fields, rec)
+        # The record it was written from has no card digits; a slip by the model still never
+        # reaches the technician's note (DECISIONS.md 080).
+        kept = cards.scrub(kept)
         for d in dropped:
             log.warning("summary for call %s: dropped %s, %s", call["id"], d["field"], d["reason"])
         with tx(conn):

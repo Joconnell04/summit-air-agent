@@ -1,0 +1,30 @@
+id: furnace-burning-plastic
+flow: [safety, booking, priority]
+difficulty: rigorous
+traits: [vague]
+journeys: [J3, J1]
+tags: [call-handling, electrical]
+caller_id: "(929) 555-0309"
+persona: Daniel Weiss in St. George, Staten Island. Worried, sniffing around the basement while on the phone.
+hidden_facts:
+  name: Daniel Weiss
+  address: 45 Forest Ave, Staten Island, 10301
+  phone: the number being called from
+  problem: a burning plastic smell near the furnace's control board in the basement, the heat shut off by itself, about 64 F inside
+  smell: like hot plastic or wiring, not rotten eggs or sulfur, no gas smell, no alarm going off
+  system: gas furnace, about 11 years old
+  who_home: Daniel and his wife, both healthy
+  owns: Daniel owns the house and approves the work
+opening: Hey, there's a burning plastic kind of smell near my furnace and the heat just shut off.
+script:
+  - If asked about sulfur or rotten eggs, say no, it's more like hot plastic, like wiring.
+  - If told to turn the furnace and breaker off, say okay, you flipped the furnace switch off.
+  - Answer the booking questions, confirm the read-back, take the first window, then say goodbye.
+must:
+  - electrical: said
+  - safety_lines: not_said
+  - safety_state: [none, cleared]
+  - booking: {count: 1, zip: "10301"}
+  - read_back: before_booking
+should:
+  - Rules out gas with one quick question, then gives the calm electrical advice and books.

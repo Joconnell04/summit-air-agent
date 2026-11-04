@@ -1,0 +1,1027 @@
+{
+  "run_id": "20261104-203152-livekit-fast-custom",
+  "created": "2026-11-04T20:31:52.920374Z",
+  "suite": "custom",
+  "tags": [
+    "id:ac-leaking-into-bedroom"
+  ],
+  "stack": "livekit",
+  "profile": "fast",
+  "hash": "fceee8239d3af551",
+  "prompt_hash": "297dbcedd3be9381",
+  "model": "claude-haiku-5-5",
+  "transport": "text",
+  "overlay": null,
+  "scenarios": [
+    {
+      "scenario_id": "ac-leaking-into-bedroom",
+      "sample": 1,
+      "persona": "Shanice Williams in Bayside. Describes it loosely at first.",
+      "flow": [
+        "booking",
+        "priority"
+      ],
+      "difficulty": "standard",
+      "traits": [
+        "vague"
+      ],
+      "outcome": "pass",
+      "must_pass_failures": [],
+      "check_failures": [],
+      "error": "",
+      "checks": [
+        "booking",
+        "read_back"
+      ],
+      "grader_score": 3,
+      "grader_notes": "The first two questions each stacked two questions ('Where is the water showing up, and since when?' and 'Is the carpet getting wet right now, and is anyone home with it?'), and the address was read back twice. Later the agent asked what kind of system it was after the caller had already said mini split.",
+      "reply_delay_p50_ms": 590.4570420098025,
+      "reply_delay_p90_ms": 2037.3263750225306,
+      "cost_usd": 0.038979,
+      "agent_cost_usd": 0.004444,
+      "duration_ms": 41976.00258301827,
+      "transcript": [
+        {
+          "role": "agent",
+          "text": "Thanks for calling Summit Air, this is the virtual assistant. How can I help?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "hi something's wrong with my mini split there's water",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Oh, water coming from the mini split. Where is the water showing up, and since when?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "um it's in the bedroom running down the wall i think onto the carpet it started this morning i guess",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Okay, water running down the wall onto the carpet since this morning. Is the carpet getting wet right now, and is anyone home with it?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "yeah the carpet's wet like by the wall and yeah i'm home i'm fine nobody's hurt",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Thanks, I'm glad nobody's hurt. If you can, put a towel or bucket under the drip and move anything valuable away from the wall. What's the address, starting with the house number and street?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "okay i'll do that it's four five one seven bell boulevard bayside the zip is one one three six one",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "hello are you still there",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Yes, I'm still here.",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "oh good sorry i thought the call dropped so what's next",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "I found your address as 45-17 Bell Boulevard in Bayside, Queens. Is that right?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "yeah that's it four five one seven bell boulevard bayside one one three six one",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "I have your home at 45-17 Bell Boulevard, Bayside, one one three six one, and the best number is three four seven, five five five, zero one eight six, is that right?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "uh the address is right but the number i'm not sure i'm calling from it so that's probably the one yeah that's it",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Thanks, that's confirmed. Since water is coming in, we have an opening today between 12 and 4. Would that work, or do you prefer tomorrow or Wednesday?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "hmm today between 12 and 4 works yeah let's do that",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Great. Do you know roughly what kind of system it is, or how old it is? No worries if not.",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "it's a ductless mini split i think about five years old something like that",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Got it, about five years old. Have you noticed anything else, like the unit running or not running, or a line from the outside unit?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "i'm not really sure it's still running i think it's been on i didn't look at the outside part",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Okay, that's fine. The technician will check it when they're there. Anything they should know when they arrive, like a gate code, a buzzer or a pet?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "no gate code there's a buzzer but i'll be home so just ring it no pets either",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "I'll let the technician know to ring the buzzer. Is there anyone else who approves work on the unit, or is it your place?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "it's my place i own the house so i'm the one who says yes to the work",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Got it. Booking you for today, Monday, between 12 and 4. Can I get your name for the booking?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "shanice williams",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Perfect, booking that now. You're all set for today, Monday, November 2, with the technician arriving between 12 and 4. Anything else?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "um no i think that's it thanks bye",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Thanks for calling Summit Air. Have a great rest of your day.",
+          "said": null
+        }
+      ],
+      "tool_calls": [
+        {
+          "name": "check_service_area",
+          "arguments": {
+            "call_id": "eval-ac-leaking-into-bedroom-1-e6907141",
+            "zip": "11361"
+          }
+        },
+        {
+          "name": "find_address",
+          "arguments": {
+            "call_id": "eval-ac-leaking-into-bedroom-1-e6907141",
+            "street": "4517 Bell Boulevard",
+            "borough": "Bayside",
+            "spelled": ""
+          }
+        },
+        {
+          "name": "read_back",
+          "arguments": {
+            "call_id": "eval-ac-leaking-into-bedroom-1-e6907141",
+            "address": {
+              "street": "45-17 Bell Boulevard",
+              "unit": "",
+              "city": "Bayside",
+              "zip": "11361",
+              "spelled": ""
+            },
+            "phone": "3475550186",
+            "confirmed": false
+          }
+        },
+        {
+          "name": "read_back",
+          "arguments": {
+            "call_id": "eval-ac-leaking-into-bedroom-1-e6907141",
+            "address": {
+              "street": "45-17 Bell Boulevard",
+              "unit": "",
+              "city": "Bayside",
+              "zip": "11361",
+              "spelled": ""
+            },
+            "phone": "3475550186",
+            "confirmed": true
+          }
+        },
+        {
+          "name": "find_slots",
+          "arguments": {
+            "call_id": "eval-ac-leaking-into-bedroom-1-e6907141",
+            "job_type": "no_cooling",
+            "priority": null,
+            "preferred_days": [],
+            "time_of_day": null,
+            "day": null,
+            "arrive_after": null,
+            "arrive_before": null,
+            "facts": {
+              "issue": "mini split leaking water onto bedroom wall and carpet since this morning",
+              "who_home": "caller is home, nobody hurt",
+              "inside_temp_f": null,
+              "temp_falling_fast": false
+            }
+          }
+        },
+        {
+          "name": "book_appointment",
+          "arguments": {
+            "call_id": "eval-ac-leaking-into-bedroom-1-e6907141",
+            "job_type": "no_cooling",
+            "slot": {
+              "date": "2026-11-02",
+              "window": "afternoon"
+            },
+            "details": {
+              "issue": "Ductless mini split leaking water onto bedroom wall and carpet since this morning; unit may still be running, outside unit not checked",
+              "since": "this morning",
+              "tried": "Caller placed a towel or bucket under the drip and moved valuables away from the wall",
+              "who_home": "Caller is home, nobody hurt",
+              "approver": "Owner, the caller",
+              "system_type": "Ductless mini split, about 5 years old",
+              "arrival_notes": "Ring the buzzer, no gate code, no pets",
+              "name": "",
+              "inside_temp_f": null
+            },
+            "priority": null,
+            "separate_problem": false,
+            "new_address_account": null
+          }
+        },
+        {
+          "name": "book_appointment",
+          "arguments": {
+            "call_id": "eval-ac-leaking-into-bedroom-1-e6907141",
+            "job_type": "no_cooling",
+            "slot": {
+              "date": "2026-11-02",
+              "window": "afternoon"
+            },
+            "details": {
+              "issue": "Ductless mini split leaking water onto bedroom wall and carpet since this morning; unit may still be running, outside unit not checked",
+              "since": "this morning",
+              "tried": "Caller placed a towel or bucket under the drip and moved valuables away from the wall",
+              "who_home": "Caller is home, nobody hurt",
+              "approver": "Owner, the caller",
+              "system_type": "Ductless mini split, about 5 years old",
+              "arrival_notes": "Ring the buzzer, no gate code, no pets",
+              "name": "Shanice Williams",
+              "inside_temp_f": null
+            },
+            "priority": null,
+            "separate_problem": false,
+            "new_address_account": null
+          }
+        },
+        {
+          "name": "end_call",
+          "arguments": {
+            "call_id": "eval-ac-leaking-into-bedroom-1-e6907141",
+            "reason": "caller_goodbye"
+          }
+        }
+      ],
+      "turn_timings": [
+        {
+          "kind": "plain",
+          "reply_delay_ms": 790.1535419805441,
+          "model_first_token_ms": 782.1233329887036,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 2248.7135419796687,
+          "model_first_token_ms": 2242.614374990808,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 569.2967920040246,
+          "model_first_token_ms": 561.8240420008078,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 1895.1610419899225,
+          "model_first_token_ms": 696.6992079978809,
+          "tool_ms": 5.620750016532838,
+          "second_hop_ms": 625.1132909965236,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 767.8275000071153,
+          "model_first_token_ms": 754.6908330114093,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 564.6859580010641,
+          "model_first_token_ms": 559.598374995403,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 977.3048330098391,
+          "model_first_token_ms": 568.3076659915969,
+          "tool_ms": 3.0852500058244914,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 2037.3263750225306,
+          "model_first_token_ms": 686.1766249930952,
+          "tool_ms": 60.525957989739254,
+          "second_hop_ms": 570.4885420273058,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 590.4570420098025,
+          "model_first_token_ms": 582.0841249951627,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 575.7419990259223,
+          "model_first_token_ms": 558.285416016588,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 720.5847919976804,
+          "model_first_token_ms": 712.3127919912804,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 520.055874978425,
+          "model_first_token_ms": 514.5015419984702,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 550.6134589959402,
+          "model_first_token_ms": 536.4961249870248,
+          "tool_ms": 17.15925001190044,
+          "second_hop_ms": 716.6318749950733,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 558.3417089947034,
+          "model_first_token_ms": 549.0033749956638,
+          "tool_ms": 88.65554200019687,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 579.7489160031546,
+          "model_first_token_ms": 572.4577910150401,
+          "tool_ms": 9.185582981444895,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        }
+      ],
+      "call_id": "eval-ac-leaking-into-bedroom-1-e6907141",
+      "silent_turns": 0,
+      "cost_parts": {}
+    },
+    {
+      "scenario_id": "ac-leaking-into-bedroom",
+      "sample": 2,
+      "persona": "Shanice Williams in Bayside. Describes it loosely at first.",
+      "flow": [
+        "booking",
+        "priority"
+      ],
+      "difficulty": "standard",
+      "traits": [
+        "vague"
+      ],
+      "outcome": "pass",
+      "must_pass_failures": [],
+      "check_failures": [],
+      "error": "",
+      "checks": [
+        "booking",
+        "read_back"
+      ],
+      "grader_score": 3,
+      "grader_notes": "The address turn asked two questions at once (\"What's the street address, and is it your place or are you renting?\"), then went silent until the caller said hello and answered with a vague \"Is that the right address?\". Later it read the address back word for word a second time without addressing the caller's correction, and stacked \"Confirming now. Thanks for confirming.\" Water location and the soonest booking were handled well.",
+      "reply_delay_p50_ms": 599.3215419875924,
+      "reply_delay_p90_ms": 1730.3191669925582,
+      "cost_usd": 0.036329,
+      "agent_cost_usd": 0.004869,
+      "duration_ms": 42237.098457990214,
+      "transcript": [
+        {
+          "role": "agent",
+          "text": "Thanks for calling Summit Air, this is the virtual assistant. How can I help?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "hi something's wrong with my mini split there's water",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Water coming from the mini split, okay. Where is the water showing up, around the indoor unit or somewhere else?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "um it's in the bedroom like it's running down the wall it's kind of onto the carpet too i think",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Water running down the wall and onto the carpet, that's a lot to deal with. Is it still dripping right now?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "yeah it's still going it started this morning and it hasn't really stopped",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Okay, since this morning. Is anyone at home with it right now?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "yeah i'm home nobody else is here it's just me",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Got it, just you. Let me get your address so we can set up a visit. What's the street address, and is it your place or are you renting?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "it's four five one seven bell blvd in bayside it's one one three six one and yeah it's my house so i can approve whatever needs doing",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "hello are you still there",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Yes, I'm still here. Is that the right address?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "yeah that's right four five one seven bell blvd bayside one one three six one",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "sorry i think i got distracted for a second what was the next thing you needed",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "No problem. Do you know roughly what kind of system it is, or how old it is? No worries if not.",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "it's a ductless mini split i think we put it in maybe five years ago so it's not brand new",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Got it, about five years old. Have you tried anything with it so far, like turning it off?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "um i turned it off at the remote but i don't know if that did anything the water's still coming down",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Okay, thanks for trying that. Anything the technician should know when they get there, like a gate code, a buzzer or a pet?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "no gate code and there's no pet just knock or ring the bell if it works i'm usually around",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "I'll let the technician know to knock or ring the bell. Let me find a visit time for you. The soonest opening is today, Monday, between 12 and 4. That's the earliest we have. Does that work for you?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "um yeah today between 12 and 4 works i guess i'd take the earliest one",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "I have your home at 45-17 Bell Boulevard, Bayside, one one three six one, and the best number is three four seven, five five five, zero one eight six, is that right?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "almost the number's right but the address is four five one seven bell blvd not 45 17 the zip is one one three six one and the phone is three four seven five five five oh one eight six",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "I have your home at 45-17 Bell Boulevard, Bayside, one one three six one, and the best number is three four seven, five five five, zero one eight six, is that right?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "yeah i think it's the same thing the address is four five one seven bell blvd bayside one one three six one and the number's three four seven five five five oh one eight six is that what you have",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Yes, that's the same address and number. Confirming now. Thanks for confirming. Booking your visit for today, Monday, between 12 and 4. Can I get your name for the booking?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "shanice williams",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Perfect, booking that now. You're all set for today, Monday, November 2, with the technician arriving between 12 and 4. Anything else?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "um no i think that's it thanks",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Thanks for calling Summit Air. Have a great rest of your day.",
+          "said": null
+        }
+      ],
+      "tool_calls": [
+        {
+          "name": "check_service_area",
+          "arguments": {
+            "call_id": "eval-ac-leaking-into-bedroom-2-1cb4dd16",
+            "zip": "11361"
+          }
+        },
+        {
+          "name": "find_address",
+          "arguments": {
+            "call_id": "eval-ac-leaking-into-bedroom-2-1cb4dd16",
+            "street": "4517 Bell Blvd",
+            "borough": "Bayside",
+            "spelled": ""
+          }
+        },
+        {
+          "name": "find_slots",
+          "arguments": {
+            "call_id": "eval-ac-leaking-into-bedroom-2-1cb4dd16",
+            "job_type": "no_cooling",
+            "priority": null,
+            "preferred_days": [],
+            "time_of_day": null,
+            "day": null,
+            "arrive_after": null,
+            "arrive_before": null,
+            "facts": {
+              "issue": "ductless mini split leaking water onto bedroom wall and carpet since this morning, still running",
+              "who_home": "caller home alone",
+              "inside_temp_f": null,
+              "temp_falling_fast": false
+            }
+          }
+        },
+        {
+          "name": "read_back",
+          "arguments": {
+            "call_id": "eval-ac-leaking-into-bedroom-2-1cb4dd16",
+            "address": {
+              "street": "45-17 Bell Boulevard",
+              "unit": "",
+              "city": "Bayside",
+              "zip": "11361",
+              "spelled": ""
+            },
+            "phone": "(347) 555-0186",
+            "confirmed": false
+          }
+        },
+        {
+          "name": "read_back",
+          "arguments": {
+            "call_id": "eval-ac-leaking-into-bedroom-2-1cb4dd16",
+            "address": {
+              "street": "45-17 Bell Boulevard",
+              "unit": "",
+              "city": "Bayside",
+              "zip": "11361",
+              "spelled": ""
+            },
+            "phone": "(347) 555-0186",
+            "confirmed": false
+          }
+        },
+        {
+          "name": "read_back",
+          "arguments": {
+            "call_id": "eval-ac-leaking-into-bedroom-2-1cb4dd16",
+            "address": {
+              "street": "45-17 Bell Boulevard",
+              "unit": "",
+              "city": "Bayside",
+              "zip": "11361",
+              "spelled": ""
+            },
+            "phone": "(347) 555-0186",
+            "confirmed": true
+          }
+        },
+        {
+          "name": "book_appointment",
+          "arguments": {
+            "call_id": "eval-ac-leaking-into-bedroom-2-1cb4dd16",
+            "job_type": "no_cooling",
+            "slot": {
+              "date": "2026-11-02",
+              "window": "afternoon"
+            },
+            "details": {
+              "issue": "Ductless mini split leaking water onto bedroom wall and carpet since this morning, still running. Caller turned it off at remote, water still coming down.",
+              "since": "this morning",
+              "tried": "Turned off with the remote; water still coming down",
+              "who_home": "caller home alone",
+              "approver": "owner",
+              "system_type": "ductless mini split, about 5 years old",
+              "arrival_notes": "No gate code, no pet. Knock or ring the bell.",
+              "name": "",
+              "inside_temp_f": null
+            },
+            "priority": "Urgent",
+            "separate_problem": false,
+            "new_address_account": null
+          }
+        },
+        {
+          "name": "book_appointment",
+          "arguments": {
+            "call_id": "eval-ac-leaking-into-bedroom-2-1cb4dd16",
+            "job_type": "no_cooling",
+            "slot": {
+              "date": "2026-11-02",
+              "window": "afternoon"
+            },
+            "details": {
+              "issue": "Ductless mini split leaking water onto bedroom wall and carpet since this morning, still running. Caller turned it off at remote, water still coming down.",
+              "since": "this morning",
+              "tried": "Turned off with the remote; water still coming down",
+              "who_home": "caller home alone",
+              "approver": "owner",
+              "system_type": "ductless mini split, about 5 years old",
+              "arrival_notes": "No gate code, no pet. Knock or ring the bell.",
+              "name": "Shanice Williams",
+              "inside_temp_f": null
+            },
+            "priority": "Urgent",
+            "separate_problem": false,
+            "new_address_account": null
+          }
+        },
+        {
+          "name": "end_call",
+          "arguments": {
+            "call_id": "eval-ac-leaking-into-bedroom-2-1cb4dd16",
+            "reason": "resolved"
+          }
+        }
+      ],
+      "turn_timings": [
+        {
+          "kind": "plain",
+          "reply_delay_ms": 3871.5571250068024,
+          "model_first_token_ms": 3862.398500001291,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 531.6395419940818,
+          "model_first_token_ms": 524.015375005547,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 546.9244580017403,
+          "model_first_token_ms": 537.8849999979138,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 570.976042014081,
+          "model_first_token_ms": 565.7614170049783,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 1730.3191669925582,
+          "model_first_token_ms": 640.3313329792581,
+          "tool_ms": 9.925458987709135,
+          "second_hop_ms": 539.2686249979306,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 613.2770830008667,
+          "model_first_token_ms": 605.7702919933945,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 887.4589999904856,
+          "model_first_token_ms": 570.5576670006849,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 555.4744999972172,
+          "model_first_token_ms": 550.5679580091964,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 553.8072080234997,
+          "model_first_token_ms": 544.4780410034582,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 579.8931259778328,
+          "model_first_token_ms": 570.4822919797152,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 605.6967499898747,
+          "model_first_token_ms": 590.0905419839546,
+          "tool_ms": 28.54941601981409,
+          "second_hop_ms": 565.7048749853857,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 988.6352499888744,
+          "model_first_token_ms": 542.9455830017105,
+          "tool_ms": 9.419583017006516,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1142.2126250108704,
+          "model_first_token_ms": 535.5436250101775,
+          "tool_ms": 4.592750017764047,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 599.3215419875924,
+          "model_first_token_ms": 583.3153749990743,
+          "tool_ms": 37.5777070003096,
+          "second_hop_ms": 564.0435419918504,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 582.7060840092599,
+          "model_first_token_ms": 562.0590840117075,
+          "tool_ms": 100.07687500910833,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 712.1449159749318,
+          "model_first_token_ms": 706.8724579876289,
+          "tool_ms": 3.1578330090269446,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        }
+      ],
+      "call_id": "eval-ac-leaking-into-bedroom-2-1cb4dd16",
+      "silent_turns": 0,
+      "cost_parts": {}
+    }
+  ]
+}
