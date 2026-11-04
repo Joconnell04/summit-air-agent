@@ -61,10 +61,15 @@ def test_the_grader_is_told_what_the_server_set_up():
 
 def test_a_booking_shows_its_job_number_so_reading_it_out_is_not_invented():
     found = set_up(trace(bookings=[
-        {"kind": "book", "status": "booked", "fsm_job_id": 625, "window_start": "2026-11-03T13:00:00Z"},
+        {"kind": "book", "status": "booked", "fsm_job_id": 625, "window_start": "2026-11-03T13:00:00Z",
+         "priority": "High"},
         {"kind": "book", "status": "failed", "fsm_job_id": None, "window_start": "x"},
+        {"kind": "book", "status": "queued", "fsm_job_id": None, "window_start": "y"},
     ]), SAFETY)
-    assert found == ["A visit was booked (job 625, starting 2026-11-03T13:00:00Z)."]
+    assert found == [
+        "A visit was booked (job 625, starting 2026-11-03T13:00:00Z, priority High).",
+        "A visit was queued to retry, not yet booked; the caller gets a callback to confirm.",
+    ]
 
 
 def test_a_safety_call_shows_the_grader_the_signed_off_wording():

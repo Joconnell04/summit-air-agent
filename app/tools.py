@@ -560,6 +560,10 @@ def read_back(ctx: Ctx, args: ReadBackIn) -> Result:
     asked = records.readback(ctx.call)
     current = {**address, "phone": phone, "sentence": sentence}
     same = asked is not None and _readback_key(asked) == _readback_key(current)
+    # Details the caller already confirmed are never read back again on the call (eval round 3,
+    # reschedule-own-booking).
+    if same and ctx.call["readback_confirmed_at"]:
+        return ok(confirmed=True, address=address, phone=phone)
     if (
         args.confirmed
         and same

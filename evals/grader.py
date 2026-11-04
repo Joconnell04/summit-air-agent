@@ -54,8 +54,17 @@ def set_up(trace: dict, safety: dict) -> list[str]:
         found.append(f"Safety lines (fixed wording): {' '.join(kind['lines'].split())}")
         found.append(f"Safety sign-off (fixed wording): {' '.join(safety['sign_off'].split())}")
     for b in trace["bookings"]:
-        if b["kind"] == "book" and b["status"] in BOOKED:
-            found.append(f"A visit was booked (job {b['fsm_job_id']}, starting {b['window_start']}).")
+        if b["kind"] == "book" and b["status"] == "queued":
+            # Not in the field service system yet: the caller hears it couldn't be booked.
+            found.append(
+                "A visit was queued to retry, not yet booked; the caller gets a callback to confirm."
+            )
+        elif b["kind"] == "book" and b["status"] in BOOKED:
+            # The priority says whether "I've marked this call top priority" belonged on the call.
+            found.append(
+                f"A visit was booked (job {b['fsm_job_id']}, starting {b['window_start']}, "
+                f"priority {b.get('priority') or 'not set'})."
+            )
     for e in trace["events"]:
         if e["type"] == "tool" and e["tool"] in SETS_UP and e["ok"] and e["say"]:
             found.append(f"{e['tool']} returned: {e['say']}")

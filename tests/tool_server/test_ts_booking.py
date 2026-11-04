@@ -957,3 +957,24 @@ def test_an_unrelated_booking_after_a_recent_visit_is_not_a_return_visit(agent, 
 def test_the_read_back_says_the_zip_and_number_digit_by_digit():
     """A live test call read 646 624 0418 back as "six hundred and forty six"."""
     assert phone_said("(646) 624-0418") == "six four six, six two four, zero four one eight"
+
+
+def test_confirmed_details_are_not_read_back_again(agent):
+    """Eval round 3 run 20261104-031113, reschedule-own-booking."""
+    call = ready_to_book(agent)
+    again = agent.tool("read_back", call, address=in_area_address(), phone="caller_id")
+    assert again["ok"] and again["say"] == ""
+    assert again["data"]["confirmed"] is True
+    changed = agent.tool("read_back", call, address=in_area_address(3), phone="caller_id")
+    assert changed["say"].startswith("I have your home at 103 Union St")
+
+
+def test_a_renter_with_an_unknown_approver_books_with_a_call_before_dispatch(agent):
+    """Eval round 3 run 20261104-031113, baby-no-heat-standard: the landlord's name is never
+    needed to book (DECISIONS.md 045, eval round 1 verdict on renter-landlord-unknown)."""
+    call = ready_to_book(agent)
+    agent.turn(call, "I rent, I don't know the landlord's name, the management company handles it.")
+    booked = book(agent, call, first_open(agent, call), approver="unknown")
+    assert booked["ok"], booked
+    assert booked["data"]["approval_callback_at"]
+    assert "to confirm who can approve the work" in booked["say"]

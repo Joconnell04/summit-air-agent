@@ -34,8 +34,9 @@ cancel_appointment: >-
 flag_person: >-
   Ask a person to follow up: a callback the caller wants, a complaint, a reschedule that needs a
   person, someone at risk. When the caller asked for a window ("after 5", "before 3", "between 1
-  and 3"), pass it as callback_after and callback_before, not callback_time. "Tomorrow" goes in
-  callback_day. Say the sentence it returns as written; it names the time.
+  and 3"), pass it as callback_after and callback_before, not callback_time. "This afternoon" is
+  after 12 PM and before 5 PM, "this morning" before 12 PM, "this evening" after 5 PM. "Tomorrow"
+  goes in callback_day. Say the sentence it returns as written; it names the time.
 record_lead: >-
   Save one lead: commercial (company, contact, need), membership sign-up interest, or an install or
   replacement quote. A window the caller asked for goes in callback_after and callback_before, and

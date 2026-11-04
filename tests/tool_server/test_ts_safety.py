@@ -750,3 +750,15 @@ def test_a_cleared_check_is_not_asked_again_for_the_same_kind():
     assert again.action == "none"
     other = safety.check_caller_turn("there's a weird smell in the basement", "cleared", "co", 0, CFG)
     assert other.action == "ask_check" and other.kind == "gas"
+
+
+def test_a_denial_that_ends_with_or_anything_like_eggs_clears_the_confirm_question(agent):
+    """Eval round 3 run 20261104-031113, burning-dust-first-heat."""
+    call = ready_to_book(agent)
+    agent.turn(call, "It smelled like burning dust for a few minutes when the heat came on.")
+    agent.say(call, CONFIRM)
+    answer = agent.turn(
+        call,
+        "no nothing like that it was just dusty, it's gone now, no gas smell or anything like eggs",
+    )
+    assert answer["data"]["safety"]["action"] == "cleared"

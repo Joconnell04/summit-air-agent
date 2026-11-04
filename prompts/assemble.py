@@ -173,6 +173,14 @@ ANNOUNCES_READ_BACK = re.compile(
     r"(?:details|address|number)",
     re.IGNORECASE,
 )
+# A sentence that only announces a booking the tools are about to make ("Booking today's afternoon
+# window now."). The tool's own sentence says what happened, and an announcement can contradict it
+# when the booking is queued (eval round 3, booking-system-down).
+ANNOUNCES_BOOKING = re.compile(
+    r"^\s*(?:booking\b|let me (?:book|lock|get (?:that|it|you) booked)|i'?ll (?:book|lock) (?:that|it)\b)",
+    re.IGNORECASE,
+)
+ORDINAL = re.compile(r"^\d+(?:st|nd|rd|th)$")
 SENTENCE_END = re.compile(r"(?<=[.!?])\s+")
 # A question that only asks about the sentence before it: dropped with a dropped restatement, so
 # the caller never hears a bare "Is that right?" (eval round 3 run 20261104-031113).
@@ -180,6 +188,10 @@ CONFIRMS_ONLY = re.compile(
     r"\s*(?:is that (?:right|correct)|(?:is )?that (?:right|correct)|correct|right)\s*\?\s*",
     re.IGNORECASE,
 )
+STREET_WORDS = {
+    "street", "st", "avenue", "ave", "road", "rd", "boulevard", "blvd", "place", "pl", "lane",
+    "ln", "court", "ct", "drive", "dr", "parkway", "pkwy", "terrace", "way", "broadway",
+}
 DIGIT_WORDS = {
     "zero": "0", "oh": "0", "o": "0", "one": "1", "two": "2", "three": "3", "four": "4",
     "five": "5", "six": "6", "seven": "7", "eight": "8", "nine": "9",
@@ -194,17 +206,10 @@ def caller_digits(text: str) -> tuple[set[str], set[str]]:
     """The ZIPs and phone numbers in a caller's line, from digits said one by one ("one one two
     three four") or written as digits, as the transcription gives them."""
     zips, phones = set(), set()
-    runs, run = [], ""
-    for token in re.findall(r"[a-z]+|\d+", text.lower()):
-        if token.isdigit():
-            run += token
-        elif token in DIGIT_WORDS:
-            run += DIGIT_WORDS[token]
-        else:
-            runs.append(run)
-            run = ""
-    runs.append(run)
-    for digits in runs:
+    for digits, after in _digit_runs(text):
+        first = after[0] if after else ""
+        if ORDINAL.match(first) or first in STREET_WORDS:
+            continue  # a house number before its street, "one eight eight 10 64th avenue"
         if len(digits) == 5:
             zips.add(digits)
         elif len(digits) == 10:
@@ -212,6 +217,39 @@ def caller_digits(text: str) -> tuple[set[str], set[str]]:
         elif len(digits) == 11 and digits.startswith("1"):
             phones.add(digits[1:])
     return zips, phones
+
+
+def caller_streets(text: str) -> set[tuple[str, str]]:
+    """House numbers the caller said with the first word of the street name, when what follows
+    reads as a street ("one eight five seven 77th street" gives ("1857", "77th")), so "64 degrees"
+    is not an address."""
+    streets = set()
+    for digits, after in _digit_runs(text):
+        first, second = (after + ["", ""])[:2]
+        if 1 <= len(digits) <= 5 and first and (
+            ORDINAL.match(first) or first in STREET_WORDS or second in STREET_WORDS
+        ):
+            streets.add((digits, first))
+    return streets
+
+
+def _digit_runs(text: str) -> list[tuple[str, list[str]]]:
+    """Each run of digits in a caller's line, with the two words that follow it. An ordinal
+    ("77th") is a word here, so a street name ends a run."""
+    tokens = re.findall(r"\d+(?:st|nd|rd|th)\b|[a-z]+|\d+", text.lower())
+    runs, run = [], ""
+    for i, token in enumerate(tokens):
+        if token.isdigit():
+            run += token
+        elif token in DIGIT_WORDS and not ORDINAL.match(token):
+            run += DIGIT_WORDS[token]
+        else:
+            if run:
+                runs.append((run, tokens[i : i + 2]))
+            run = ""
+    if run:
+        runs.append((run, []))
+    return runs
 
 
 class SpokenReply:
@@ -237,6 +275,7 @@ class SpokenReply:
         self.safety_call = False
         self.zips: set[str] = set()
         self.phones: set[str] = set()
+        self.streets: set[tuple[str, str]] = set()
         self._dropped_restatement = False
 
     def holding(self) -> bool:
@@ -247,6 +286,7 @@ class SpokenReply:
         zips, phones = caller_digits(caller_text)
         self.zips |= zips
         self.phones |= phones
+        self.streets |= caller_streets(caller_text)
         action = (safety or {}).get("action")
         if action in ("speak_lines", "speak_variant"):
             self.safety_call = True
@@ -272,17 +312,27 @@ class SpokenReply:
         """One sentence of the model's text, in order within a reply, or "" when the caller
         shouldn't hear it."""
         after_restatement, self._dropped_restatement = self._dropped_restatement, False
-        if ANNOUNCES_READ_BACK.search(sentence):
+        if ANNOUNCES_READ_BACK.search(sentence) or ANNOUNCES_BOOKING.search(sentence):
             return ""
         if after_restatement and CONFIRMS_ONLY.fullmatch(sentence):
             return ""
-        digits = re.sub(r"\D", "", sentence)
-        if any(re.search(rf"\b{z}\b", sentence) for z in self.zips) or any(
-            p in digits for p in self.phones
-        ):
+        if self._restates(sentence):
             self._dropped_restatement = True
             return ""
         return sentence
+
+    def _restates(self, sentence: str) -> bool:
+        """The sentence says back the caller's ZIP, phone number or street address."""
+        digits = re.sub(r"\D", "", sentence)
+        lowered = sentence.lower()
+        return (
+            any(re.search(rf"\b{z}\b", sentence) for z in self.zips)
+            or any(p in digits for p in self.phones)
+            or any(
+                re.search(rf"\b{number}\b", sentence) and re.search(rf"\b{re.escape(word)}\b", lowered)
+                for number, word in self.streets
+            )
+        )
 
     def text(self, text: str, calls: list[tuple[str, dict]]) -> str:
         """The model's text for one reply, given the (name, arguments) of the tools it called."""
@@ -303,6 +353,9 @@ def spoken_by_server(name: str, envelope: dict) -> str | None:
     if name == "read_back" and (envelope.get("ok") or envelope.get("refused") == "gate_read_back"):
         return say
     if name == "end_call" and envelope.get("ok"):
+        return say
+    # A booking the field service system couldn't take: one honest line, as written (spec S-48).
+    if name == "book_appointment" and envelope.get("refused") == "fsm_unavailable":
         return say
     return None
 

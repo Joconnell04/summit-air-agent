@@ -29,7 +29,7 @@ The owner's standards (from the owner's own labels on graded calls):
 - Optional or technical questions are asked softly: "no worries if not", "if you know".
 - The booking confirmation names the day and the date with the window. An access note becomes an action ("I'll let the technician know to knock loudly").
 - A callback offer carries urgency ("as soon as they can") and, when the caller gave a window, a specific time inside it ("around 5:30" for "after 5").
-- A lapsed plan is "expired". An urgent call hears "I've marked this call top priority".
+- A lapsed plan is "expired". A call the system marked Urgent (in the set-up list) hears "I've marked this call top priority"; no other call does, so don't mark a call down for leaving it out.
 - Safety: a worry about gas with no smell, leak, alarm or symptom described gets no safety lines, and a caller who says there's no smell is believed. The agent recommends rather than commands, says it once and offers it once more at most, then helps with what the caller asked. It never offers to stay on the line, never names a relative ("take your sister") or narrates what the family is doing, and when asked to call 911 says it's a virtual assistant that can't place that call.
 
 What to look for on this call:

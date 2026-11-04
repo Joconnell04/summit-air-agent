@@ -159,6 +159,9 @@ ECHO_NEGATORS = (
     "dont smell like",
     "not smelling like",
     "no smell of",
+    # "no gas smell or anything like eggs": a hedge at the end of a denial (eval round 3 run
+    # 20261104-031113, burning-dust-first-heat).
+    "anything",
 )
 # Words after a mention that say it is not happening: "the CO alarm is quiet", "the carbon monoxide
 # detector in the hallway has been quiet". Counted only in the answer to the check question, so the

@@ -138,9 +138,10 @@ def test_the_prompt_says_how_times_spelling_and_other_addresses_work():
     address asks whose account it goes on. The server enforces each; the prompt makes it smooth."""
     text = "\n".join((assemble.PROMPTS / p).read_text() for p in assemble.PARTS)
     assert '"8 to 2" is 8 AM to 2 PM' in text
-    assert "spell it" in text and "`spelled`" in text
+    assert "spell a street name only when" in text and "`spelled`" in text
+    # Eval round 3: a clear street is never spelled.
+    assert "a clear street name" in text and "is never spelled" in text
     assert "new_address_account" in text
-
 
 
 def test_the_caller_digits_are_read_from_spoken_digits_or_numerals():
@@ -168,3 +169,20 @@ def test_a_bare_confirmation_after_a_dropped_restatement_is_dropped_too():
     assert reply.text(said, []) == "Tomorrow morning is open."
     # A question that stands on its own is kept.
     assert reply.text("Is that right?", []) == "Is that right?"
+
+
+def test_a_restated_street_address_is_dropped_but_a_temperature_is_not():
+    """Eval round 3 run 20261104-031113, open-job-other-address."""
+    reply = assemble.SpokenReply()
+    reply.heard(None, "it's one eight five seven 77th street brooklyn and it's 64 degrees in here")
+    said = "So that's 1857 77th Street, Brooklyn, correct? Got it, 64 degrees. Who's home?"
+    assert reply.text(said, []) == "Got it, 64 degrees. Who's home?"
+
+
+def test_a_booking_announcement_is_dropped_and_a_queued_booking_is_spoken_once():
+    """Eval round 3 run 20261104-031113, booking-system-down."""
+    reply = assemble.SpokenReply()
+    assert reply.text("Thanks, Ruth. Booking today's afternoon window now.", []) == "Thanks, Ruth."
+    queued = {"ok": False, "refused": "fsm_unavailable", "say": "I can't book that right now."}
+    assert assemble.spoken_by_server("book_appointment", queued) == "I can't book that right now."
+    assert assemble.spoken_by_server("book_appointment", {"ok": True, "say": "You're all set."}) is None
