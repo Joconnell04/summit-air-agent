@@ -352,8 +352,25 @@ def _mentions(text: str, cfg: dict, answering_check: bool) -> list[tuple[str, bo
             if has_phrase(text_words, phrase) and not _negated(
                 text_words, phrase, answering_check
             ):
-                found.append((kind, _hypothetical(text_words, phrase)))
+                worry = _hypothetical(text_words, phrase) and not _answers_yes_after(
+                    text_words, phrase
+                )
+                found.append((kind, worry))
     return found
+
+
+# A caller who echoes the question and then answers it yes ("Do you smell gas? I do") is reporting
+# it, so the lines aren't held back for a check question (PR #102 review).
+ANSWERED_YES = ("i do", "we do", "yes", "yeah", "yep", "it does", "definitely", "i can")
+ANSWER_DENIES = ("dont", "do not", "not", "no", "nothing", "never", "cant")
+
+
+def _answers_yes_after(text_words: str, phrase: str) -> bool:
+    """After the last mention, the caller says yes and nothing that takes it back."""
+    rest = " " + text_words[text_words.rfind(words(phrase)) + len(words(phrase)) :]
+    return any(has_phrase(rest, w) for w in ANSWERED_YES) and not any(
+        has_phrase(rest, w) for w in ANSWER_DENIES
+    )
 
 
 def clear_signal(text: str, cfg: dict, answering_check: bool = False) -> str | None:

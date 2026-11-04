@@ -470,7 +470,11 @@ def turn(
     payload = None
     if action.action != "none":
         payload = {"action": action.action, "kind": action.kind, "text": action.text}
-    known = already_known(conn, call["id"], tenant.system_words) if args.speaker == "caller" else {}
+    known = (
+        already_known(conn, call["id"], tenant.system_words, frozenset(tenant.service_area))
+        if args.speaker == "caller"
+        else {}
+    )
     return ok(
         action.text,
         seq=seq,
@@ -501,10 +505,14 @@ RENTS = ("i rent", "im renting", "we rent", "were renting", "im a tenant", "my l
 OWNS = ("i own", "we own", "my home", "my house", "our house", "our home", "its my place",
         "its our place", "im the owner", "homeowner")
 NOT_A_NAME = {"summit", "the", "a", "my", "it", "about", "regarding", "calling"}
+SYSTEM_HEDGES = ("dont know", "not sure", "no idea", "maybe", "or a", "or the", "either")
 
 
 def already_known(
-    conn: sqlite3.Connection, call_id: str, systems: tuple[str, ...] = ()
+    conn: sqlite3.Connection,
+    call_id: str,
+    systems: tuple[str, ...] = (),
+    area_zips: frozenset[str] = frozenset(),
 ) -> dict[str, str]:
     """Facts this call's tool calls carried: the ZIP checked, the address and phone read back
     (marked confirmed once the caller said yes) and the intake a booking attempt sent, so the
@@ -536,16 +544,22 @@ def already_known(
     for raw in said_lines:
         # A ZIP the caller said is known before any tool checks it (eval run 20261104-053435,
         # gas-worry-no-smell: asked for the ZIP twice after the caller gave it).
-        zips = [run for run in digit_runs(raw) if len(run) == 5]
+        # Only a ZIP the company serves, so a five-digit house number ("21230 41st Avenue") is never
+        # taken for one (PR #102 review); any other ZIP is asked for and checked as usual.
+        zips = [run for run in digit_runs(raw) if len(run) == 5 and run in area_zips]
         if zips and "ZIP" not in known:
             known["ZIP said"] = zips[-1]
     lines = [words(raw).strip() for raw in said_lines]
     for line in lines:
         padded_system = f" {line} "
-        # The trade's system words (eval run 20261104-053435, heat-pump-defrost).
-        system = next((s for s in systems if f" {s} " in padded_system), None)
-        if system:
-            known.setdefault("system", system)
+        # The trade's system words (eval run 20261104-053435, heat-pump-defrost), only when the
+        # caller names one without hedging: "a heat pump or a boiler, I don't know" is still a
+        # question for the agent (PR #102 review).
+        named = {s for s in systems if f" {s} " in padded_system}
+        named -= {s for s in named for other in named if s != other and s in other}
+        hedged = any(f" {h} " in padded_system for h in SYSTEM_HEDGES)
+        if len(named) == 1 and not hedged:
+            known.setdefault("system", named.pop())
         said = KNOWN_NAME.search(line)
         if said and said.group(1).split()[0] not in NOT_A_NAME:
             known.setdefault("name", said.group(1).title())

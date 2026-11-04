@@ -651,3 +651,13 @@ def test_a_zip_and_system_the_caller_said_are_known_on_the_next_turn(agent):
     known = agent.turn(call, "Okay.")["data"]["known"]
     assert known["ZIP said"] == "11209"
     assert known["system"] == "heat pump"
+
+
+def test_a_hedged_system_and_a_house_number_are_not_taken_as_known(agent):
+    """PR #102 review: "a heat pump or a boiler, I don't know" isn't a known system, and a
+    five-digit house number isn't the ZIP."""
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "I don't know if it's a heat pump or a boiler.")
+    known = agent.turn(call, "The house is two one two three zero 41st Avenue.")["data"]["known"]
+    assert "system" not in known
+    assert "ZIP said" not in known

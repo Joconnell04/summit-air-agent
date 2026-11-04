@@ -785,3 +785,9 @@ def test_asking_whether_they_smell_gas_is_a_worry_not_a_report():
     line = "oh um no we're still inside do you smell gas do i smell gas i don't think i do"
     assert safety.check_caller_turn(line, "none", None, 0, CFG).action != "speak_lines"
     assert safety.check_caller_turn("I do smell gas, yes", "none", None, 0, CFG).action == "speak_lines"
+
+
+@pytest.mark.parametrize("line", ["Do you smell gas? I do.", "do i smell gas yeah i think so"])
+def test_an_echoed_question_answered_yes_is_a_report(line):
+    """PR #102 review: "Do you smell gas? I do" must bring the lines at once."""
+    assert safety.check_caller_turn(line, "none", None, 0, CFG).action == "speak_lines"
