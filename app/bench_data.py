@@ -214,8 +214,8 @@ def check_rows(result) -> list[tuple[str, bool, str]]:
 
 
 def _round_files() -> list[Path]:
-    """The round write-ups, not the folder's README index."""
-    return sorted(p for p in ROUNDS.glob("*.md") if p.stem != "README")
+    """The rounds' write-ups; the folder's README is its index, not a round."""
+    return [p for p in sorted(ROUNDS.glob("*.md")) if p.name != "README.md"]
 
 
 def rounds() -> list[dict]:

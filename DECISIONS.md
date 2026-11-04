@@ -12,6 +12,7 @@ Discussion: docs/ai-process/transcripts/... or docs/explorations/...
 Issue: #N
 -->
 
+<<<<<<< HEAD
 ## 079. Two jobs on one call, and a technician asked for by name is a note
 
 Decided: a call can book two jobs (`LIMITS["book"]` is 2). At the same address the second has to be a different job type the caller asked for, booked with `separate_problem`; the same visit twice is refused as `already_booked`, a third booking hits the limit and a person takes over. A second unit or address goes through its own read-back: a caller line naming a different unit after the read-back clears the confirmation (077), so the second job can't land on the first unit. Priority is decided per job from its own job type. When the second job has no opening, `find_slots` tells the agent to offer a named callback with `flag_person`, so it isn't dropped. A request for a technician ("can I get Mike again", "the same guy as last time") is read by the server from the caller's words and kept as a job note, "Caller asked for Mike. Not promised; dispatcher to decide." It goes into the job's notes (or onto the booked job, if asked after booking) and onto the technician summary as a fixed "Asked for" line. The agent says it will pass it on; a sentence promising a named technician is dropped before it is spoken. The server never assigns by name.
@@ -38,6 +39,16 @@ Considered: trusting the model to re-read after a correction (the bug); clearing
 Would change if: live calls show resets on lines that weren't corrections, or corrections in shapes the check misses (a unit said as "the fourth floor, back").
 Discussion: issue #127 items 1 and 2, issue #129
 Issue: #129
+=======
+## 074. The design system is saved to the Claude account, built from the repository
+
+Decided: keep the design system's source in this repository (`tokens.css`, `components.css`, `/owner/design`, docs/design-system.md) and save a copy to the Claude account as a design system, "Revin owner view", rebuilt from the code by `scripts/export_design_system.py`. Its brand book is docs/design-system-rules.md, the short form of the design system page written as rules for an agent.
+Why: later sessions, and other surfaces such as decks or a new page, read a saved design system directly instead of rereading the CSS and the long doc. Building the copy from the code, with a test that fails on drift, keeps one source.
+Considered: the repository alone (every session rereads 700 lines of CSS); the saved copy alone (the app's CSS would drift from it); a live bundle of the page script (the previews would run code the app's tests don't cover).
+Would change if: the owner view moves to a component library with its own build, in which case the copy is built from that library.
+Discussion: Jackson in chat: "make sure you like properly save and add the design system for Revan to my Claude account, so like it will be easier to reference in future sessions."
+Issue: none; follows #53
+>>>>>>> origin/main
 
 ## 073. A caller who pushes for a higher priority gets a calm answer, not a raise
 

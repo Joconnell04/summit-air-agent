@@ -28,7 +28,7 @@ Call it at (646) 624-0418. The owner view is at https://45-77-105-247.sslip.io/o
 **System**
 - [docs/architecture.md](docs/architecture.md): the parts and how a call moves through them
 - [docs/tools.md](docs/tools.md): the contract between the voice layer and the tool server
-- [docs/design-system.md](docs/design-system.md): the owner view and bench's tokens, components and rules
+- [docs/design-system.md](docs/design-system.md): the owner view and bench's tokens, components and rules, also saved as a Claude design system that later sessions build from ([docs/design-system-rules.md](docs/design-system-rules.md) is its short form)
 
 **Performance and cost**
 - [docs/latency.md](docs/latency.md): where the reply delay goes, stage by stage, and how each stage is measured
