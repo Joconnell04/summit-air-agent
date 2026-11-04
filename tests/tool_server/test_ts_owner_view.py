@@ -685,7 +685,7 @@ def test_a_callback_done_after_it_went_late_is_not_on_time(agent, clock):
 
 def test_results_leave_out_a_zip_when_the_call_back_on_the_thread_booked(agent, clock):
     first = agent.start(caller(1))["data"]["call_id"]
-    agent.turn(first, "Do you go out to Hoboken? That's my mom's place.")
+    agent.turn(first, "Do you go out to Hoboken, 07030? That's my mom's place.")
     agent.tool("check_service_area", first, zip="07030")
     agent.end(first, "dropped")
     clock.advance(minutes=1)

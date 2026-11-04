@@ -85,6 +85,8 @@ def test_a_gas_smell_interrupts_with_the_signed_off_lines(app):
 
 def test_function_calls_go_to_the_tool_server_and_back(app):
     line, sock, _ = opened_line(app)
+    # The server checks only a ZIP the caller said (app/tools.py _zip_known).
+    world_for(app).server.turn("gl-1", "caller", "I'm in 11231.")
     call = {"toolCall": {"functionCalls": [
         {"id": "f1", "name": "check_service_area", "args": {"zip": "11231"}}]}}
     asyncio.run(line.handle(call))

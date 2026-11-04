@@ -69,7 +69,7 @@ def commercial(agent: Agent, n: int) -> str:
 
 def out_of_area(agent: Agent, n: int, zip_code: str) -> str:
     call = agent.start(caller(n))["data"]["call_id"]
-    agent.turn(call, "My AC is out.")
+    agent.turn(call, f"My AC is out. I'm in {zip_code}.")
     agent.tool("check_service_area", call, zip=zip_code)
     agent.end(call)
     return call
@@ -262,7 +262,7 @@ def test_out_of_area_calls_by_zip_most_first_over_thirty_days(agent, clock):
 
 def test_a_zip_asked_about_on_a_call_that_booked_is_not_out_of_area_demand(agent):
     call = agent.start(caller(1))["data"]["call_id"]
-    agent.turn(call, "Do you cover Hoboken? My mom lives there. Mine's the tune-up though.")
+    agent.turn(call, "Do you cover Hoboken, 07030? My mom lives there. Mine's the tune-up though.")
     agent.tool("check_service_area", call, zip="07030")
     agent.confirm_read_back(call, in_area_address())
     assert book(agent, call, first_open(agent, call))["ok"]
@@ -273,7 +273,7 @@ def test_a_zip_asked_about_on_a_call_that_booked_is_not_out_of_area_demand(agent
 
 def test_a_zip_asked_about_before_a_drop_is_not_demand_when_the_call_back_booked(agent, clock):
     first = agent.start(caller(1))["data"]["call_id"]
-    agent.turn(first, "Do you go out to Hoboken? That's my mom's place.")
+    agent.turn(first, "Do you go out to Hoboken, 07030? That's my mom's place.")
     agent.tool("check_service_area", first, zip="07030")
     agent.end(first, "dropped")
     clock.advance(minutes=1)

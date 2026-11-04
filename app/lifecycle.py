@@ -19,11 +19,44 @@ RUN_WORDS = r"(?:i|we) (?:run|manage|operate|work at)"
 OWN_WORDS = r"(?:i|we) own"
 
 
+# Words that end a street or place name. A commercial word right before one is part of a name:
+# "540 Church Ave", "Hotel Street" (spec S-05, PR #88).
+STREET_SUFFIXES = {
+    "ave", "avenue", "st", "street", "rd", "road", "pl", "place", "blvd", "boulevard", "pkwy",
+    "parkway", "ln", "lane", "ct", "court", "dr", "drive", "ter", "terrace",
+}
+# "Plaza" is a business ("it's in a plaza") unless it ends a name ("Grand Army Plaza").
+PLAZA_GENERIC = {"a", "an", "the", "this", "that", "our", "my", "strip", "shopping", "small"}
+NUMBER_WORDS = {"oh", "zero", "one", "two", "three", "four", "five", "six", "seven", "eight",
+                "nine", "ten", "eleven", "twelve", "twenty", "thirty", "forty", "fifty", "sixty",
+                "seventy", "eighty", "ninety", "hundred"}
+
+
+def without_place_names(text_words: str, business_words: set[str]) -> str:
+    """The line with words that are part of a street or place name blanked out, so an address is
+    never read as a business: the word before a street word ("Church Ave"), a business word right
+    after a house number ("540 Church"), and "plaza" when it ends a name ("Grand Army Plaza")."""
+    tokens = text_words.split()
+    kept = list(tokens)
+    for i, token in enumerate(tokens):
+        before = tokens[i - 1] if i else None
+        if token in STREET_SUFFIXES and before is not None:
+            kept[i - 1] = "_"
+        if token in business_words and before is not None and (
+            before.isdigit() or before in NUMBER_WORDS
+        ):
+            kept[i] = "_"
+        if token == "plaza" and before is not None and before not in PLAZA_GENERIC:
+            kept[i] = "_"
+    return " " + " ".join(kept) + " "
+
+
 def sounds_commercial(text: str, cfg: dict) -> bool:
     """Does the caller describe a business, with commercial equipment? Homes, apartments, co-ops and
     whole apartment buildings are residential. Best effort by design: the agent and the FSM account
     type catch the rest, and a false positive costs a booking, so the tenant's lists stay narrow."""
-    text_words = words(text)
+    single = {w for w in cfg["phrases"] + cfg["owned"] + cfg["run"] if " " not in w.strip()}
+    text_words = without_place_names(words(text), single)
     for phrase in cfg["not"]:
         text_words = text_words.replace(words(phrase), " ")
     if any(has_phrase(text_words, p) for p in cfg["phrases"]):

@@ -59,6 +59,7 @@ def test_the_model_gets_exactly_the_servers_tools_and_no_built_in_end_call(conne
 
 def test_a_tool_call_posts_to_the_server_with_the_call_id(agent, connect):
     agent.start(call_id="call-1")
+    agent.turn("call-1", "I'm in 11231.")
     tools = tools_for(connect("call-1"))
     result = json.loads(asyncio.run(tools["check_service_area"]({"zip": "11231"}, None)))
     assert result["ok"] is True
