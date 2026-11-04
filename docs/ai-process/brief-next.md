@@ -9,7 +9,7 @@ The one page to read before the live calls and the interview: what needs Jackson
    - Two questions in one turn slipped through once ("Is that the one you want to keep? Do you want a different day?").
    - If you ask for a person, the transfer rings your cell.
 2. **One feedback pass after the calls.** Say what felt off, and I'll map each complaint to a setting in `docs/tuning.md` and try the obvious fix first. A lower turn-detector maximum is already queued.
-3. **Sign off the sparks safety line when the call-handling lane drafts it.** It's written from your words ("step away, try to turn off the machine, the breaker if you can") and will be marked as a draft in `docs/ai-process/coauthoring.md`.
+3. **Call the Retell Conversation Flow version when it's ready.** If it passes every must-pass check and comes within 5 points of our stack, it goes on (678) 336-6730 for you to call and compare.
 
 Nothing needs a top-up: no run has failed for credit. Paid eval runs since last night come to roughly $60 across all lanes, added from their reports, not from invoices. The three new lanes are capped at $6 each, plus about $4 for the shared reference run. The only extra Cartesia use was the Ink-2 test's $0.13; voice on test calls runs on the plan, so the overage stays far under your $20.
 
@@ -30,6 +30,10 @@ If someone asks why it works the way it does, these are the answers. Numbers are
 | Evals | Code checks decide pass or fail; the grader can fail a call but never rescue one; the floor is 90%, measured at two samples per scenario. Today's reference: 92%, every must-pass case passing | 002, 042, 066 |
 | Scope | No texting in V1 (A2P registration); Spanish waits (C-16) | 007, 034 |
 
+## Signed off
+
+The six new lines from the call-handling lane: the sparks line (edited to end "I can get a technician out to look at it," since the breaker isn't a condition for booking), the dead-air check-in and goodbye, the call-back greeting, the card-number line and the billing line (call-handling lane, #132).
+
 ## Decided without Jackson
 
 Say if you disagree with any of these.
@@ -49,7 +53,9 @@ Three lanes started from your approved list. Each has an issue, and progress is 
 - **Booking flow (#129):** a correction after the read-back resets it; a visit whose window has ended is never confirmed as upcoming; businesses that slipped past the decline; work Summit Air doesn't do; two jobs in one call; a requested technician becomes a note, never a promise.
 - **Call handling (#130):** card numbers stopped and never stored, billing to an office callback; dead air checked in on every 2 minutes, a polite hang-up at 8 with a call-back invite and a resume on the next call; the sparks route; AC water through the ceiling is Urgent; a breaker that keeps tripping is High.
 
-After all three merge: one two-sample standard run for the new reference, a deploy, and a scripted test call.
+- **Retell Conversation Flow (#133):** our design mapped onto Retell's stage graph, with the safety lines as static sentences and our tool server still deciding every gate. Checked against the spec, then run on the must-pass set and the standard suite at two samples. A fair second test of whether a managed platform does this better.
+
+After the first three merge: one two-sample standard run for the new reference, a deploy, and a scripted test call. The next prompt idea, giving the model only the current stage's instructions, is in [exploration 016](../explorations/016-stage-scoped-prompts.md).
 
 ## Live on the server
 
