@@ -511,11 +511,61 @@ def test_the_real_address_passes_however_it_was_said(located):
         assert located.tool("find_address", call, street="248 Duffield St")["ok"], line
 
 
-def test_a_number_said_digit_by_digit_may_have_its_street_in_the_next_line(located):
+def test_a_house_number_given_as_the_answer_to_the_agents_question_counts(located):
     call = located.start(UNKNOWN)["data"]["call_id"]
-    located.turn(call, "it's two four eight")
-    located.turn(call, "duffield street")
+    located.turn(call, "I'm on Duffield Street in Brooklyn.")
+    located.say(call, "What's the house number?")
+    located.turn(call, "it's two forty eight")
     assert located.tool("find_address", call, street="248 Duffield St")["ok"]
+
+
+def test_a_bare_number_not_asked_for_does_not_count(located):
+    call = located.start(UNKNOWN)["data"]["call_id"]
+    located.turn(call, "I'm on Duffield Street in Brooklyn.")
+    located.say(call, "How long has it been out?")
+    located.turn(call, "248")
+    assert located.tool("find_address", call, street="248 Duffield St")["refused"] == (
+        "address_not_heard"
+    )
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "two forty eight duffield street",
+        "two hundred forty eight duffield street",
+        "two forty eight D U F F I E L D",
+        "248 on Duffield, by the park",
+    ],
+)
+def test_spoken_house_numbers_pass(located, line):
+    """Re-check of #125: "forty" was dropped, so "two forty eight" read as 2, 8."""
+    call = located.start(UNKNOWN)["data"]["call_id"]
+    located.turn(call, line)
+    assert located.tool("find_address", call, street="248 Duffield St")["ok"], line
+
+
+def test_a_queens_pair_said_as_words_passes(located, answers):
+    answers.book[("4241", "bell blvd")] = [Place("42-41", "BELL BOULEVARD", "11361", "Queens", "Bayside")]
+    call = located.start(UNKNOWN)["data"]["call_id"]
+    located.turn(call, "forty two forty one bell boulevard")
+    assert located.tool("find_address", call, street="42-41 Bell Blvd")["ok"]
+
+
+@pytest.mark.parametrize(
+    "line, street",
+    [
+        ("I live on Ocean Avenue, furnace out for 12 days", "12 Ocean Ave"),
+        ("I called 2 times about Union Street", "2 Union St"),
+        ("it's been out since 9 and I'm on Union", "9 Union St"),
+        ("my zip is 11201 and I live on Union", "11201 Union St"),
+        ("zip code 11201 Union Street", "11201 Union St"),
+    ],
+)
+def test_a_number_not_right_before_the_street_is_not_its_house_number(located, line, street):
+    call = located.start(UNKNOWN)["data"]["call_id"]
+    located.turn(call, line)
+    assert located.tool("find_address", call, street=street)["refused"] == "address_not_heard"
 
 
 def test_a_floor_after_the_street_still_gets_the_mismatch_question(located):

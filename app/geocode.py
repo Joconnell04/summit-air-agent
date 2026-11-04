@@ -31,7 +31,7 @@ from dataclasses import asdict, dataclass
 
 import httpx
 
-from .text import DIGIT_WORDS, street_key
+from .text import DIGIT_WORDS, number_tokens, street_key
 
 log = logging.getLogger("summit.geocode")
 
@@ -152,7 +152,7 @@ def addresses_in(text: str) -> list[tuple[str, str]]:
     """House numbers and streets in a caller's line, written as digits or said one by one ("two
     four eight Duffield Street"), to start their lookups early."""
     found = []
-    for line in (text or "", _with_digits(text or "")):
+    for line in (text or "", _with_digits(text or ""), " ".join(number_tokens(text or ""))):
         for m in ADDRESS_IN_LINE.finditer(line):
             if (m.group(1), m.group(2).lower()) not in [(h, s.lower()) for h, s in found]:
                 found.append((m.group(1), m.group(2)))

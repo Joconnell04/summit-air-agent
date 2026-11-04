@@ -9,7 +9,6 @@ call's own state, and ownership is checked against the customers matched on this
 import hashlib
 import json
 import os
-import re
 import sqlite3
 from collections.abc import Mapping
 from dataclasses import dataclass, field
@@ -48,13 +47,16 @@ from .text import (
     digit_runs,
     digits_spoken,
     has_phrase,
-    join_spelled,
+    number_tokens,
     phone_key,
     phone_said,
     says_goodbye,
     street_key,
     unit_key,
     words,
+)
+from .text import (
+    STREET_WORDS as STREET_KEY_WORDS,
 )
 
 MAX_MATCHES = 5
@@ -182,42 +184,70 @@ def _caller_lines(ctx: Ctx) -> list[sqlite3.Row]:
     ).fetchall()
 
 
+# How many words may sit between a house number and its street ("248 on Duffield").
+STREET_GAP = 2
+STREET_GAP_WORDS = {"on", "at", "the", "off", "um", "uh", "is", "its", "spelled"}
+# Words around a bare house number given as an answer: "it's 248", "um, two forty eight".
+ANSWER_FILLER = {"its", "it", "is", "um", "uh", "the", "number", "house", "okay", "ok", "yeah",
+                 "yes", "so", "oh", "thats", "building", "were", "at", "im"}
+
+
 def _address_said(ctx: Ctx, house: str, street: str) -> bool:
-    """The house number and the street came from one caller line, so a lookup can't turn a
-    street the model made up, or a number said about something else ("out for 5 days"), into a
-    ZIP. The number is a whole run of digits, and every word naming the street is a whole word
-    there ("Court" matches "Court Street", not "electrician"). The street may be in the line
-    before or after instead when the number was said digit by digit or the street was spelled
-    letter by letter, as those come in pieces."""
-    lines = [r["text"] for r in _caller_lines(ctx)]
+    """The caller said this house number right before this street, so a lookup can't turn a
+    street the model made up, or a number said about something else ("out for 12 days", "I
+    called 2 times about Union Street", "my zip is 11201 and I live on Union"), into a ZIP.
+
+    Numbers count however they were said ("two forty eight", "two hundred forty eight", digits
+    one by one), and the street's words are whole words ("Court", not "electrician"). The
+    number may also be the caller's whole answer to the agent asking for it, with the street
+    said in another line, or come before a street the caller then spelled letter by letter."""
+    rows = _caller_lines(ctx)
     want = geocode.house_key(house)
     names = geocode.street_name_words(street)
     if not want or not names:
         return False
-    for i, line in enumerate(lines):
-        if not _house_in(line, want):
-            continue
-        if _street_in(line, names):
-            return True
-        by_digit = not re.search(rf"(?<![0-9]){re.escape(house)}(?![0-9])", line)
-        for j in (i - 1, i + 1):
-            nearby = 0 <= j < len(lines) and (by_digit or SPELLED_RUN.search(lines[j]))
-            if nearby and _street_in(lines[j], names):
+    lines = [_keyed(number_tokens(r["text"])) for r in rows]
+    for i, tokens in enumerate(lines):
+        for k, token in enumerate(tokens):
+            if token != want or "zip" in tokens[max(0, k - 2) : k] or "code" in tokens[max(0, k - 2) : k]:
+                continue
+            after = [t for t in tokens[k + 1 :] if t.isalnum()]
+            # Only small words may sit between them: "248 on Duffield", not "2 times about Union".
+            skip = 0
+            while skip < min(STREET_GAP, len(after)) and after[skip] in STREET_GAP_WORDS:
+                skip += 1
+            if after[skip : skip + len(names)] == names:
                 return True
-    return False
-
-
-def _house_in(line: str, want: str) -> bool:
-    """The house number is a whole run of digits in the line, or runs straight into a ZIP."""
+            # "52 Dufield Street", then the street spelled in one of the next lines.
+            if any(t in geocode.STREET_TYPE_WORDS for t in after):
+                for later in rows[i + 1 : i + 3]:
+                    if SPELLED_RUN.search(later["text"]) and _street_in(later["text"], names):
+                        return True
     return any(
-        run == want or (run.startswith(want) and len(run) - len(want) in (5, 9))
-        for run in digit_runs(line)
-    )
+        _answers_number(ctx, row, want) for row in rows
+    ) and any(_street_in(row["text"], names) for row in rows)
+
+
+def _keyed(tokens: list[str]) -> list[str]:
+    """Tokens as the street key writes them: "court" is "ct", "avenue" is "ave"."""
+    return [STREET_KEY_WORDS.get(t, t) for t in tokens]
+
+
+def _answers_number(ctx: Ctx, row: sqlite3.Row, want: str) -> bool:
+    """The line is the house number alone, said right after the agent asked for a number."""
+    said = [t for t in number_tokens(row["text"]) if t.isalnum() and t not in ANSWER_FILLER]
+    if said != [want]:
+        return False
+    asked = ctx.conn.execute(
+        "SELECT text FROM turns WHERE call_id = ? AND speaker = 'agent' AND seq < ? "
+        "ORDER BY seq DESC LIMIT 1",
+        (row["call_id"], row["seq"]),
+    ).fetchone()
+    return bool(asked) and "number" in words(asked["text"])
 
 
 def _street_in(line: str, names: list[str]) -> bool:
-    joined = join_spelled(line)
-    tokens = set(words(joined).split()) | set(geocode.street_match_key(joined).split())
+    tokens = set(_keyed(number_tokens(line)))
     return all(name in tokens for name in names)
 
 

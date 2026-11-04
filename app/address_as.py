@@ -59,6 +59,10 @@ NOT_NAMES = {
     "bus", "train", "car", "cab", "subway", "foot", "phone", "text", "email", "cell", "landline",
     "home", "work", "office", "name", "names", "number", "same", "different", "either", "any",
     "um", "uh", "well", "actually", "also", "too", "then", "once", "twice", "sure", "fine",
+    # Rides, places and urgency: "call me an Uber", "call me outside", "call me immediately".
+    "uber", "lyft", "taxi", "amtrak", "greyhound", "metro", "metrocard", "outside", "inside",
+    "downstairs", "upstairs", "immediately", "urgent", "urgently", "hello", "hi", "hey", "him",
+    "her", "them", "us", "me", "street", "avenue", "boulevard", "road", "place", "island",
 }
 # Never used as a form of address: mocking honorifics, pet names and abuse, as whole words. A
 # name with any of them is refused whole.
@@ -73,13 +77,18 @@ REFUSED = {
 # Abuse found anywhere inside a word: "Fuckface", "Shithead", "Mr. Bitchface".
 REFUSED_STEMS = (
     "fuck", "shit", "cunt", "bitch", "whore", "slut", "bastard", "retard", "nigg", "fagg",
-    "dickhead", "dickface", "cocksuck", "douche", "wank", "tranny", "skank",
+    "dickhead", "dickface", "cocksuck", "douche", "wank", "tranny", "skank", "poop", "butt",
+    "scum", "piss", "jerk", "numbnut", "dingleberr", "boob",
 )
+# Real surnames that hold a stem above: never refused for it.
+STEM_NAMES = {"scunthorpe", "shittu", "wankel", "butts", "buttons", "button", "butters",
+              "jerkins", "scummings"}
 # Abuse at the start or end of a word, where the stem alone is also part of real names ("Cass",
 # "Glass", "Bassett"): "Asshat", "Dumbass", "Jackass".
 REFUSED_AFFIXES = ("ass",)
 AFFIX_NAMES = {"cass", "glass", "bass", "brass", "grass", "class", "douglass", "nass", "hass",
-               "assad", "assaf", "assefa", "assante", "asselin", "assis"}
+               "mass", "pass", "tass", "lass", "strauss", "assad", "assaf", "assefa", "assante",
+               "asselin", "assis", "assange"}
 # The words that ask for a form of address. An introduction ("it's", "this is", "my name is")
 # counts only with a title, since "this is Maria" is a name the agent already uses.
 ASKS = (
@@ -102,26 +111,29 @@ NOTE_READ = re.compile(r"^Prefers to be called (.+)\.$")
 
 
 def abusive(token: str) -> bool:
-    if token in REFUSED or any(stem in token for stem in REFUSED_STEMS):
+    if token in REFUSED:
+        return True
+    if token not in STEM_NAMES and any(stem in token for stem in REFUSED_STEMS):
         return True
     return token not in AFFIX_NAMES and any(
         token.startswith(a) or token.endswith(a) for a in REFUSED_AFFIXES
     )
 
 
-def read(text: str) -> tuple[str, str] | None:
+def read(text: str, places: frozenset[str] = frozenset()) -> tuple[str, str] | None:
     """("ok", "Dr. Patel") for a form of address the caller asked for, ("refused", words) for one
-    that is never used, or None when the line asks for none."""
+    that is never used, or None when the line asks for none. `places` are the tenant's place
+    names ("call me Brooklyn" is not a name), from its address_lookup config."""
     # "Dr." is a title, not the end of a clause.
     text = re.sub(r"\b(dr|mr|mrs|ms|mx|prof|rev)\.", r"\1", text or "", flags=re.IGNORECASE)
     for clause in CLAUSE.split(text):
-        found = _read_clause(clause, text)
+        found = _read_clause(clause, text, places)
         if found:
             return found
     return None
 
 
-def _read_clause(clause: str, text: str) -> tuple[str, str] | None:
+def _read_clause(clause: str, text: str, places: frozenset[str]) -> tuple[str, str] | None:
     said = words(clause)
     # Every place a trigger starts, in order: "this is Anjali Patel, please call me Dr. Patel"
     # passes the introduction (no title) and takes what follows "call me".
@@ -143,7 +155,7 @@ def _read_clause(clause: str, text: str) -> tuple[str, str] | None:
         for token in tokens[1 if title else 0:]:
             if len(names) == (MAX_NAMES_TITLED if title else MAX_NAMES):
                 break
-            if token in NOT_NAMES or not token.isalpha() or _possessive(text, token):
+            if token in NOT_NAMES or token in places or not token.isalpha() or _possessive(text, token):
                 break
             # A given name is written with a capital; after a title the surname may not be,
             # since the title already says a name follows.
@@ -176,12 +188,18 @@ def _as_written(text: str, token: str, keep_case: bool = False) -> str:
     return name if keep_case or name[:1].isupper() else name.capitalize()
 
 
+def place_words(address_lookup: dict | None) -> frozenset[str]:
+    """The words of the tenant's place names, which are never names to be called."""
+    boroughs = (address_lookup or {}).get("boroughs") or {}
+    return frozenset(w for name in [*boroughs, *boroughs.values()] for w in words(name).split())
+
+
 def record(conn: sqlite3.Connection, call_id: str, text: str, seq: int,
-           now: datetime) -> str | None:
+           now: datetime, places: frozenset[str] = frozenset()) -> str | None:
     """Store what the caller asked to be called on this line, inside the turn's transaction.
     Returns the hint for the agent: `preferred_name` when a new name was kept,
     `preferred_name_refused` when one was refused, or None."""
-    read_back = read(text)
+    read_back = read(text, places)
     if read_back is None:
         return None
     verdict, name = read_back

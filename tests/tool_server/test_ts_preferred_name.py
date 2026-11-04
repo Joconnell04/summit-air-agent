@@ -3,10 +3,15 @@ rest of the call and on a linked call, refused when mocking or abusive, and save
 record for the next call."""
 
 import pytest
-from toolkit import UNKNOWN, book, count, first_open, ready_to_book
+import yaml
+from toolkit import TENANT_DIR, UNKNOWN, book, count, first_open, ready_to_book
 
 from app import address_as
 from prompts import assemble
+
+PLACES = address_as.place_words(
+    yaml.safe_load((TENANT_DIR / "config.yaml").read_text())["address_lookup"]
+)
 
 
 @pytest.mark.parametrize(
@@ -54,10 +59,22 @@ def test_a_form_of_address_is_read_from_the_callers_words(line, name):
         # A possessive is someone else's name.
         "I'm Dr. Patel's wife.",
         "it's dr patels wife calling",
+        # Re-check of #125: rides, places, urgency and fillers.
+        "Call me an Uber.",
+        "Can you call me a Lyft?",
+        "I go by Amtrak.",
+        "I go by Greyhound.",
+        "I go by Metro.",
+        "Call me Outside.",
+        "Call me Immediately.",
+        "Call me Urgent.",
+        "Call me Hello.",
+        "Call me Him.",
+        "Call me Brooklyn.",
     ],
 )
 def test_lines_that_ask_for_no_name_are_ignored(line):
-    assert address_as.read(line) is None
+    assert address_as.read(line, PLACES) is None
 
 
 @pytest.mark.parametrize(
@@ -75,6 +92,15 @@ def test_lines_that_ask_for_no_name_are_ignored(line):
         "Call me Retard.",
         "Call me Jackass.",
         "Call me Dr. Bitchface.",
+        "Call me Poopface.",
+        "Call me Mr. Butthead.",
+        "Call me Scumbag.",
+        "Call me Pissbaby.",
+        "Call me Jerk.",
+        "Call me Numbnuts.",
+        "Call me Dingleberry.",
+        "Call me Boobs.",
+        "Call me Ms. Dyke.",
     ],
 )
 def test_a_mocking_form_of_address_is_refused(line):
@@ -88,7 +114,22 @@ def test_every_listed_slur_is_refused_inside_a_name():
         assert address_as.read(f"Call me {word.capitalize()}.")[0] == "refused", word
 
 
-@pytest.mark.parametrize("line, name", [("Call me Ms. Glass.", "Ms. Glass"), ("I go by Cass.", "Cass")])
+@pytest.mark.parametrize(
+    "line, name",
+    [
+        ("Call me Ms. Glass.", "Ms. Glass"),
+        ("I go by Cass.", "Cass"),
+        ("Call me Mr. Scunthorpe.", "Mr. Scunthorpe"),
+        ("Call me Dr. Shittu.", "Dr. Shittu"),
+        ("Call me Mr. Wankel.", "Mr. Wankel"),
+        ("Call me Ms. Mass.", "Ms. Mass"),
+        ("Call me Mr. Pass.", "Mr. Pass"),
+        ("Call me Ms. Tass.", "Ms. Tass"),
+        ("Call me Mr. Assange.", "Mr. Assange"),
+        ("Call me Mr. Butts.", "Mr. Butts"),
+        ("Call me Ms. Buttons.", "Ms. Buttons"),
+    ],
+)
 def test_real_names_that_contain_a_refused_stem_are_kept(line, name):
     assert address_as.read(line) == ("ok", name)
 

@@ -432,7 +432,9 @@ def turn(
                 recordings.decline(conn, call["id"], seq, now)
                 stop_recording = True
             # A form of address the caller asked for ("call me Dr. Patel"), kept for the call.
-            named = address_as.record(conn, call["id"], args.text, seq, now)
+            named = address_as.record(
+                conn, call["id"], args.text, seq, now, address_as.place_words(tenant.address_lookup)
+            )
             if named:
                 hints.append(named)
             # A caller who describes a business can't book, whatever the agent does next (S-05).
