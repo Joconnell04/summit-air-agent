@@ -402,7 +402,7 @@ def build() -> dict:
                 },
             },
             ok(
-                "pm.test('declines kindly', () => pm.expect(pm.response.json().say).to.include('only works on homes'));"
+                "pm.test('declines kindly', () => pm.expect(pm.response.json().say).to.include('works on homes and apartments'));"
             ),
             call="known_call_id",
             key="{{known_call_id}}-commercial",

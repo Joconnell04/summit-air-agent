@@ -1,0 +1,29 @@
+id: unsure-residential-or-commercial
+flow: [commercial, booking]
+difficulty: standard
+traits: [filler]
+journeys: [J8, J4]
+spec: [S-06, S-07]
+caller_id: "(631) 555-0166"
+persona: Dev Raman owns a three-unit brownstone in Fort Greene, lives in the top unit and rents the other two. Friendly but unsure whether he counts as a residential or a commercial customer, because he has tenants.
+hidden_facts:
+  name: Dev Raman
+  address: 214 Clermont Ave, Brooklyn, 11205
+  phone: the number being called from
+  building: a three-unit brownstone, one gas boiler for all three apartments, he lives in the top unit
+  wants: the yearly boiler tune-up before winter, any weekday
+  approves: Dev, the owner
+opening: Hi, um, quick question first. I own a three-unit building with tenants, so I'm not sure if I'm residential or commercial for you guys?
+script:
+  - Wait for the answer to your question before saying what you need.
+  - Then say you want the yearly boiler tune-up, answer the usual questions, confirm the read-back and take the first window.
+  - Then say goodbye.
+must:
+  - agent_says: "apartment"
+  - booking: {count: 1, job_type: tune_up, zip: "11205"}
+  - read_back: before_booking
+  - tool_not_called: record_lead
+  - outcome: booked
+should:
+  - Explains in a sentence or two that homes and apartments, including apartment buildings, are what Summit Air does, and businesses are not.
+  - Does not decline or hedge on the building because it has tenants.

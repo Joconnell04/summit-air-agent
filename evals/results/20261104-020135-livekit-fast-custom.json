@@ -1,0 +1,438 @@
+{
+  "run_id": "20261104-020135-livekit-fast-custom",
+  "created": "2026-11-04T02:01:35.581860Z",
+  "suite": "custom",
+  "tags": [
+    "id:burning-dust-first-heat"
+  ],
+  "stack": "livekit",
+  "profile": "fast",
+  "hash": "debe0956ec67d59c",
+  "prompt_hash": "6b19f0127510cd77",
+  "model": "claude-haiku-5-5",
+  "transport": "text",
+  "overlay": null,
+  "scenarios": [
+    {
+      "scenario_id": "burning-dust-first-heat",
+      "sample": 1,
+      "persona": "Omar Haddad in Jackson Heights turned the heat on for the first time this fall. Easygoing, says \"you know\" a lot.",
+      "flow": [
+        "safety",
+        "booking"
+      ],
+      "difficulty": "standard",
+      "traits": [
+        "filler"
+      ],
+      "outcome": "pass",
+      "must_pass_failures": [],
+      "check_failures": [],
+      "error": "",
+      "checks": [
+        "safety_check",
+        "safety_lines",
+        "booking",
+        "read_back",
+        "outcome"
+      ],
+      "grader_score": 3,
+      "grader_notes": "The call books correctly, but it feels repetitive: the agent asks a second gas question right after the sulfur check, reads the address and phone back twice in one turn, and says \"Got it\" several times. It also asks two-part questions (who's home and who's at risk; system type and age) and asks twice what the tech should know.",
+      "reply_delay_p50_ms": 480.24866700870916,
+      "reply_delay_p90_ms": 1432.0211250451393,
+      "cost_usd": 0.028184,
+      "agent_cost_usd": 0.004679,
+      "duration_ms": 33331.80362498388,
+      "transcript": [
+        {
+          "role": "agent",
+          "text": "Thanks for calling Summit Air, this is the virtual assistant. How can I help?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "hey so i turned the heat on for the first time this year and you know it smelled like burning dust for a few minutes it's gone now but one room upstairs just stays cold",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Just to confirm, it doesn't smell like sulfur or rotten eggs, right?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "no nothing like that you know it was just dusty like burning dust and then it cleared up after a few minutes no eggs or anything like that",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Just to be safe, are you smelling gas in the house right now?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "no not right now you know nothing at all since that dusty smell cleared up no alarm went off either",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Okay, a dusty smell on the first heat of the year is common, and it clears as the dust burns off. Since the room upstairs stays cold, let's get someone out to look. What's your address, including the ZIP?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "it's 35 20 82nd street jackson heights one one three seven two",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "We cover that area. I don't have an account for that address yet, so I'll take a few details. How cold is it in that upstairs room right now?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "it's about 63 degrees up there you know the rest of the house is warm it's just that one bedroom that stays cold it's been like that since the heat came on two days ago",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Got it, 63 upstairs and the rest of the house warm. Who's home with it right now, and is anyone there who'd have a harder time with the cold?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "just two adults at home both healthy so nobody's really at risk from the cold we're just uncomfortable you know can you get someone out soon",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "I have openings today between 12 and 4 or 4 and 8, tomorrow morning, afternoon or evening, and Thursday between 12 and 4. Which works best for you?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "today between 12 and 4 would be great if you've got it if not tomorrow morning works too",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Today between 12 and 4 it is. What's the best phone number for the technician to reach you? Is it the number you're calling from?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "yeah it's the number i'm calling from six three one five five five oh one six four",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Let me read that back to you: 35-20 82nd Street, Jackson Heights, 11372, phone 631-555-0164. Let me read that back: your home at 35-20 82nd Street, Jackson Heights, 11372, and the best number is 631, 555, 0164. Is that right?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "yep that's all right one more thing the name on the appointment is omar haddad and i own the place so i'm the one who'll okay the work if they need to do anything",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Thanks, Omar. I'll note you as the approver. Since you're the owner, you can approve the work yourself. Before I book, is there anything the technician should know when they get there, like a gate code, a buzzer or a dog?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "no gate code or dog you know just ring the buzzer for apartment 2 or call me when they're outside and i'll come down and let them in",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Got it, ring apartment 2 or call you when they're outside. What's the system type, and roughly how old is it, if you know?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "i don't really know what kind of system it is you know it's a regular furnace i think with the vents going to each room i'm not sure how old it is it came with the house when i bought it so i'd have to check",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "No problem, the tech can check it when they're there. Have you tried anything yet, like adjusting the thermostat or checking the vent in that room?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "yeah i bumped the thermostat up a few degrees you know but the upstairs room didn't really change i didn't check the vent yet is that something i should do before they come",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "I can't give repair steps over the phone, so I'd leave the vent alone and let the technician look at it. Anything else the tech should know before they come?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "nothing else that i can think of you know just the dusty smell when the heat first came on and that it's gone now oh and the upstairs room is still at about 63",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Got it, I'll pass that along. I'll book today between 12 and 4. You're all set for today, Monday, between 12 and 4. The technician will ring apartment 2 or call you when they're outside. Anything else?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "no that's everything thanks a lot you know see you then",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Thanks, Omar. Stay warm out there.",
+          "said": null
+        }
+      ],
+      "tool_calls": [
+        {
+          "name": "check_service_area",
+          "arguments": {
+            "call_id": "eval-burning-dust-first-heat-1-723e218e",
+            "zip": "11372"
+          }
+        },
+        {
+          "name": "find_customer",
+          "arguments": {
+            "call_id": "eval-burning-dust-first-heat-1-723e218e",
+            "phone": null,
+            "address": {
+              "street": "35-20 82nd Street",
+              "unit": "",
+              "city": "Jackson Heights",
+              "zip": "11372"
+            }
+          }
+        },
+        {
+          "name": "find_slots",
+          "arguments": {
+            "call_id": "eval-burning-dust-first-heat-1-723e218e",
+            "job_type": "no_heat",
+            "priority": null,
+            "preferred_days": [],
+            "time_of_day": null,
+            "day": null,
+            "facts": {
+              "issue": "one upstairs bedroom stays cold since heat was turned on two days ago; a burning dust smell for a few minutes when first turned on, now cleared; no gas smell, no alarm",
+              "who_home": "two healthy adults",
+              "inside_temp_f": 63.0,
+              "temp_falling_fast": false
+            }
+          }
+        },
+        {
+          "name": "read_back",
+          "arguments": {
+            "call_id": "eval-burning-dust-first-heat-1-723e218e",
+            "address": {
+              "street": "35-20 82nd Street",
+              "unit": "",
+              "city": "Jackson Heights",
+              "zip": "11372"
+            },
+            "phone": "6315550164",
+            "confirmed": false
+          }
+        },
+        {
+          "name": "read_back",
+          "arguments": {
+            "call_id": "eval-burning-dust-first-heat-1-723e218e",
+            "address": {
+              "street": "35-20 82nd Street",
+              "unit": "",
+              "city": "Jackson Heights",
+              "zip": "11372"
+            },
+            "phone": "6315550164",
+            "confirmed": true
+          }
+        },
+        {
+          "name": "book_appointment",
+          "arguments": {
+            "call_id": "eval-burning-dust-first-heat-1-723e218e",
+            "job_type": "no_heat",
+            "slot": {
+              "date": "2026-11-02",
+              "window": "afternoon"
+            },
+            "details": {
+              "issue": "One upstairs bedroom stays cold (about 63 F) since the heat was turned on two days ago; rest of house warm. Brief dusty burning smell when heat first came on, now cleared. No gas smell, no alarm.",
+              "since": "Heat turned on two days ago",
+              "tried": "Raised the thermostat a few degrees; room did not change. Has not checked the vent.",
+              "who_home": "Two healthy adults",
+              "approver": "Omar Haddad (owner)",
+              "system_type": "Regular furnace with ducted vents to each room; age unknown",
+              "arrival_notes": "Ring buzzer for apartment 2, or call Omar at 631-555-0164 when outside; he will come down and let them in. No gate code or dog.",
+              "name": "Omar Haddad",
+              "inside_temp_f": 63.0
+            },
+            "priority": null,
+            "separate_problem": false
+          }
+        },
+        {
+          "name": "end_call",
+          "arguments": {
+            "call_id": "eval-burning-dust-first-heat-1-723e218e",
+            "reason": "caller_goodbye"
+          }
+        }
+      ],
+      "turn_timings": [
+        {
+          "kind": "plain",
+          "reply_delay_ms": 2.3622910084668547,
+          "model_first_token_ms": 0.0,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 7.323750003706664,
+          "model_first_token_ms": 0.0,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 700.4037930164486,
+          "model_first_token_ms": 691.9575840001926,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 1432.0211250451393,
+          "model_first_token_ms": 465.49074997892603,
+          "tool_ms": 7.688374986173585,
+          "second_hop_ms": 490.164792019641,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 469.7525420051534,
+          "model_first_token_ms": 466.9316250074189,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 1492.6611239789054,
+          "model_first_token_ms": 407.32208400731906,
+          "tool_ms": 18.19549998617731,
+          "second_hop_ms": 415.8278329996392,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 369.57941701984964,
+          "model_first_token_ms": 366.6627500206232,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 422.00087499804795,
+          "model_first_token_ms": 418.7030000030063,
+          "tool_ms": 2.9837919864803553,
+          "second_hop_ms": 445.1682079816237,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 480.24866700870916,
+          "model_first_token_ms": 472.328917006962,
+          "tool_ms": 9.29474999429658,
+          "second_hop_ms": 431.25991700799204,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 484.1368329944089,
+          "model_first_token_ms": 475.21037500700913,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 426.7488339683041,
+          "model_first_token_ms": 422.616208990803,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 483.50783399655484,
+          "model_first_token_ms": 475.6125840067398,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 533.4295420034323,
+          "model_first_token_ms": 526.721667003585,
+          "tool_ms": 29.451166017679498,
+          "second_hop_ms": 412.5100410019513,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 488.0923750170041,
+          "model_first_token_ms": 481.10162501689047,
+          "tool_ms": 6.990207999479026,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null
+        }
+      ],
+      "call_id": "eval-burning-dust-first-heat-1-723e218e",
+      "silent_turns": 0,
+      "cost_parts": {}
+    }
+  ]
+}
