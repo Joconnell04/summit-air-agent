@@ -1400,6 +1400,9 @@ def find_slots(ctx: Ctx, args: FindSlotsIn) -> Result:
     if decided.level == "Urgent":
         line = ctx.tenant.line("urgent_priority")
         if not records.agent_said(ctx.conn, ctx.call["id"], line):
+            # Kept in `say` too, so the call's record shows the system said it; the voice layer
+            # strips it from what the model sees (prompts/assemble.py for_model).
+            urgent_said = line + " "
             data["spoken_first"] = line
             data["note"] = "The top-priority sentence was just said for you; don't say it again."
     if decided.level == "Urgent" and windows:

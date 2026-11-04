@@ -12,7 +12,7 @@ from collections.abc import Callable
 
 from livekit.agents import RunContext, function_tool
 
-from prompts.assemble import SpokenReply, spoken_by_server, spoken_first
+from prompts.assemble import SpokenReply, for_model, spoken_by_server, spoken_first
 
 from .bridge import Bridge
 from .server import ToolServer
@@ -93,7 +93,7 @@ def make_tool(
         if spoken is not None or ending:
             # None tells the session not to generate another reply.
             return None
-        return compact(result)
+        return compact(for_model(result))
 
     return handler
 

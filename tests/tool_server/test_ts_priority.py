@@ -5,7 +5,7 @@ from toolkit import START, TENANT_DIR, UNKNOWN, book, in_area_address, ready_to_
 
 from app import priority as prio
 from app.tenant import load_agent
-from prompts.assemble import SpokenReply, spoken_by_server, spoken_first
+from prompts.assemble import SpokenReply, for_model, spoken_by_server, spoken_first
 
 AGENT = load_agent(TENANT_DIR)[0]
 CFG = AGENT["priority"]
@@ -223,9 +223,13 @@ def test_an_urgent_caller_hears_it_once_and_a_routine_caller_never_does(agent):
     call = agent.start(UNKNOWN)["data"]["call_id"]
     agent.turn(call, "No heat, and my 84-year-old mother lives with me.")
     first = agent.tool("find_slots", call, job_type="no_heat")
-    # Spoken by the voice layer word for word before the times, never left for the model to say.
-    assert line in first["data"]["spoken_first"] and line not in first["say"]
-    agent.say(call, first["data"]["spoken_first"] + " " + first["say"])
+    # Spoken by the voice layer word for word before the times, never left for the model to say;
+    # the record's `say` keeps it, and the model is shown the rest.
+    assert line in first["data"]["spoken_first"] and first["say"].startswith(
+        first["data"]["spoken_first"]
+    )
+    assert line not in for_model(first)["say"] and for_model(first)["say"]
+    agent.say(call, first["say"])
     again = agent.tool("find_slots", call, job_type="no_heat")
     assert "spoken_first" not in again["data"]
 

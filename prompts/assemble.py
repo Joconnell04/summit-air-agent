@@ -601,6 +601,16 @@ def spoken_first(envelope: dict) -> str | None:
     return (envelope.get("data") or {}).get("spoken_first") or None
 
 
+def for_model(envelope: dict) -> dict:
+    """The tool result as the model sees it: a sentence the voice layer already spoke first is
+    taken out of `say`, so the model doesn't say it again (the top-priority line)."""
+    first = spoken_first(envelope)
+    say = envelope.get("say") or ""
+    if not first or not say.startswith(first):
+        return envelope
+    return {**envelope, "say": say[len(first):].strip()}
+
+
 def spoken_by_server(name: str, envelope: dict) -> str | None:
     """The sentence a voice layer speaks itself from a tool result, word for word, with no model
     step after it: a safety refusal, the read-back sentence, and the sign-off end_call returns."""
