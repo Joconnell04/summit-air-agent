@@ -37,7 +37,7 @@ The one place I'd test is the summary: Haiku with thinking against Sonnet on abo
 
 ## Live on the server
 
-Health checks pass. Every lane, with its pull requests and decisions, is in [lanes.md](lanes.md), generated from GitHub by `make lanes` after each merge. Since the morning brief: the bench shows calls as recorded ([#101](https://github.com/Joconnell04/summit-air-agent/pull/101), decision 064), deployed at 16:24 UTC.
+Health checks pass. Every lane, with its pull requests and decisions, is in [lanes.md](lanes.md), generated from GitHub by `make lanes` after each merge. Since the morning brief, all deployed: the bench shows calls as recorded ([#101](https://github.com/Joconnell04/summit-air-agent/pull/101), 064); the round 3 final pass with the CO spelling fix ([#102](https://github.com/Joconnell04/summit-air-agent/pull/102), 066); the address lookup, preferred names and ten scenarios ([#125](https://github.com/Joconnell04/summit-air-agent/pull/125), 069 to 071, lookup switched on); priority from the caller's own words ([#126](https://github.com/Joconnell04/summit-air-agent/pull/126), 072 and 073). The eval reference is 92% at two samples with every must-pass case passing.
 
 Signing in: https://45-77-105-247.sslip.io/owner (owner view) and https://45-77-105-247.sslip.io/bench (debug bench), both as `jackson`; the password is in the macOS Keychain (`security find-generic-password -a summit-air -s owner-admin-password -w`). The side model is on. Warm transfer and recordings are on.
 
