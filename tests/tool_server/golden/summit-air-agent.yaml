@@ -1138,7 +1138,7 @@ priority:
     raise_to: Urgent
     raise_to_when_mild: High
     reason: someone at home at risk from the heat or cold
-    threshold: 0.5
+    threshold: 0.65
 repeat_callers:
   drops_before_callback_offer: 2
   link_within_minutes: 10

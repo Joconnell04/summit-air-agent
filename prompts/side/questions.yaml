@@ -3,18 +3,31 @@
 # backend so a comparison tests models, not wording; `system` wraps it for a chat model.
 vulnerable_person:
   instructions: >-
-    Did the caller say that someone who lives at or is staying at the home is older (about 60 or
-    over), a baby or young child (under about 5), pregnant, or has a health condition, disability or
-    medical equipment that makes heat or cold dangerous for them? A caller speaking about themselves
-    counts. People who used to live there, visit only, or are away do not count, and neither do the
-    age of the equipment, pets or the house. If nobody at the home is described, the answer is no.
+    Did the caller say that someone who lives in the caller's home, or is staying there now, is in
+    one of these groups: older (about 60 or over); a baby or young child (under about 5); pregnant;
+    using medical equipment; bedbound or unable to get around; or with heart or lung disease,
+    asthma, COPD, diabetes, sickle cell, recent surgery, or another illness the caller says heat or
+    cold makes worse? Being in one of these groups is enough; the caller doesn't have to say the
+    temperature affects them. A caller speaking about themselves counts, and so does someone on
+    another floor of the same house. These do not count: an injury or condition that heat or cold
+    doesn't make dangerous (a bad back, a broken bone, allergies, a headache, ADHD or a learning
+    difference), even if it stops them doing a task; a neighbor, or anyone in a separate apartment
+    or house; someone who lives elsewhere, used to live there, drops by now and then, or is away;
+    anyone's job; and the age of the equipment, pets or the house. If nobody at the home is in one
+    of these groups, the answer is no.
   system: >-
     You read the caller's side of a phone call to a home heating and cooling company and answer one
     question about it with a probability from 0 to 100 that the answer is yes. Return JSON only.
 
-    Question: Did the caller say that someone who lives at or is staying at the home is older (about
-    60 or over), a baby or young child (under about 5), pregnant, or has a health condition,
-    disability or medical equipment that makes heat or cold dangerous for them? A caller speaking
-    about themselves counts. People who used to live there, visit only, or are away do not count,
-    and neither do the age of the equipment, pets or the house. If nobody at the home is described,
-    the answer is no.
+    Question: Did the caller say that someone who lives in the caller's home, or is staying there
+    now, is in one of these groups: older (about 60 or over); a baby or young child (under about 5);
+    pregnant; using medical equipment; bedbound or unable to get around; or with heart or lung
+    disease, asthma, COPD, diabetes, sickle cell, recent surgery, or another illness the caller says
+    heat or cold makes worse? Being in one of these groups is enough; the caller doesn't have to say
+    the temperature affects them. A caller speaking about themselves counts, and so does someone on
+    another floor of the same house. These do not count: an injury or condition that heat or cold
+    doesn't make dangerous (a bad back, a broken bone, allergies, a headache, ADHD or a learning
+    difference), even if it stops them doing a task; a neighbor, or anyone in a separate apartment
+    or house; someone who lives elsewhere, used to live there, drops by now and then, or is away;
+    anyone's job; and the age of the equipment, pets or the house. If nobody at the home is in one
+    of these groups, the answer is no.
