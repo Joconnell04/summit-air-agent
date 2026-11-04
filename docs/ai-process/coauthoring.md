@@ -335,5 +335,12 @@ Changed (all new lines in tenants/summit-air/agent.yaml, DRAFTED for Jackson's s
 - `lines.card_stop`: "For your security, please don't read a card number over the phone. Our office will send you a secure payment link, or call you to take the payment."
 - `lines.billing_callback`: "I'm sorry about that. Billing goes through our office, so I've asked them to look into the charge, and someone from the office will call you {when}."
 Decisions: DECISIONS.md 080 to 082.
-Commit: the issue #130 pull request
-Status: open, waiting for Jackson's sign-off on the drafted lines
+
+Sign-off (verbatim, Jackson, relayed by the coordinating session):
+> for the Spark safety line, that's good, but don't say once it's off, I can get a technician out to look at it. Just say, I can get a technician out to look at it. Then turning off the breaker isn't a requirement to dispatch a technician. But the other stuff looks good. That all makes sense. So I approve of those 6 lines. Just make sure to implement my feedback on the Spark safety line.
+Changed at sign-off:
+- `safety.electrical.lines` now ends "I can get a technician out to look at it." instead of "Once it's off, I can get a technician out to look at it.", and `signed_off` is true.
+- The other five lines are signed off as drafted.
+- The server adds an `electrical_said` note after the line so the agent offers to book at once; a test pins that a sparks caller books with nothing said about the unit or the breaker being off.
+Commit: PR #132
+Status: closed

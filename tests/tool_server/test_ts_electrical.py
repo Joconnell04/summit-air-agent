@@ -4,7 +4,7 @@ breaker that keeps tripping is High. Gas, carbon monoxide and at-risk callers ra
 as before."""
 
 import pytest
-from toolkit import TENANT_DIR, book, first_open, ready_to_book
+from toolkit import TENANT_DIR, book, first_open, in_area_address, ready_to_book
 
 from app import priority as prio
 from app import safety
@@ -205,3 +205,22 @@ def test_water_in_the_callers_own_words_is_urgent(text):
 )
 def test_water_far_from_the_home_or_negated_raises_nothing(text):
     assert decide("no_cooling", text, outside_now_f=70).level == "Normal"
+
+
+def test_the_signed_off_line_makes_the_visit_wait_on_nothing():
+    assert SAFETY["electrical"]["signed_off"] is True
+    assert ELECTRICAL.endswith("I can get a technician out to look at it.")
+    assert "once" not in ELECTRICAL.lower()
+
+
+def test_a_sparks_caller_can_book_right_after_the_line(agent):
+    call_id = agent.start(call_id="call-1")["data"]["call_id"]
+    said = agent.turn(call_id, "My AC is sparking, can you send someone?")
+    assert said["say"] == ELECTRICAL
+    assert "electrical_said" in said["data"]["hints"]
+    agent.say(call_id, said["say"])
+    # Nothing about the unit or the breaker being off: the booking goes through anyway.
+    agent.confirm_read_back(call_id, in_area_address())
+    booked = book(agent, call_id, first_open(agent, call_id), job_type="tune_up")
+    assert booked["ok"], booked
+    assert "shut it off" not in booked["say"]

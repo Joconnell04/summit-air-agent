@@ -246,7 +246,9 @@ class InProcessAgent:
         # The card stop, the billing callback or the electrical lines, said as written.
         spoken = result["data"].get("spoken") or {}
         if spoken.get("text"):
-            self.messages.append({"role": "user", "content": caller_text})
+            # The worker adds the server's notes to the caller's line before it speaks the line.
+            notes = server_notes(result["data"].get("hints", []), result["data"].get("known"))
+            self.messages.append({"role": "user", "content": "\n".join([caller_text, *notes])})
             return self._speak_from_code(spoken["text"], t0)
         hold = (result["data"].get("hold") or {}).get("state")
         self.holding = hold == "holding"

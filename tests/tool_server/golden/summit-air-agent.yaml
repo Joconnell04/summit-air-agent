@@ -1068,7 +1068,7 @@ safety:
     - was fixed
     - fixed it
     lines: Please step away from the unit and turn it off, and if you can safely reach the breaker, switch
-      that off too. Once it's off, I can get a technician out to look at it.
+      that off too. I can get a technician out to look at it.
     now:
     - sparks
     - sparking
@@ -1095,7 +1095,7 @@ safety:
     - sparked
     - arced
     - smoked
-    signed_off: false
+    signed_off: true
   flag_reason: '{label} reported on the call'
   heating_check:
     kind: co

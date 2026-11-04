@@ -565,6 +565,10 @@ def turn(
             )
             if hold == "holding" and spoken is None:
                 hints.append("caller_holding")
+            # The electrical lines were said: the visit doesn't wait on the unit or the breaker
+            # (DECISIONS.md 082, Jackson's sign-off).
+            if spoken and spoken["kind"] == "electrical":
+                hints.append("electrical_said")
             # Card digits were read out: the recording stops and is deleted, as for a caller who
             # objects, so the digits aren't kept in the audio either (DECISIONS.md 080).
             if cards.removed(args.text) and not recordings.declined(conn, call["id"]):

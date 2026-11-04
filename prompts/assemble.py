@@ -168,6 +168,12 @@ SERVER_NOTES = {
     ),
     "do_not_call": "The caller asked not to be called. Call mark_do_not_call and say its sentence.",
     "safety_check_cleared": "The caller said no to the safety check. Carry on where the call was.",
+    # Sparks or an electrical smell (app/safety.py, DECISIONS.md 082).
+    "electrical_said": (
+        "The electrical advice has just been said for you. This isn't a gas or carbon monoxide "
+        "call: offer to book a visit now, without waiting for the unit or the breaker to be off, "
+        "and don't repeat the advice."
+    ),
     # A caller who asked the agent to wait (app/dead_air.py, DECISIONS.md 081).
     "caller_holding": (
         "The caller asked you to wait. Say only a short yes, such as \"Sure, take your time.\" Ask "
