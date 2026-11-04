@@ -126,9 +126,12 @@ class World:
         workdir.mkdir(parents=True, exist_ok=True)
         st_db = workdir / "servicetitan.db"
         shutil.copy(seed[0], st_db)
+        # Kept so a check can read what ServiceTitan holds after the call (evals/pairs.py).
+        self.st_db = st_db
+        self.st_log = workdir / "servicetitan.log"
         self.scenarios = seed[1]
         self.clock = Clock(start)
-        mock = create_mock(st_db, TENANT_DIR, workdir / "servicetitan.log", clock=self.clock)
+        mock = create_mock(st_db, TENANT_DIR, self.st_log, clock=self.clock)
         settings = Settings(
             db_path=workdir / "tool_server.db",
             tenants_dir=TENANT_DIR.parent,
