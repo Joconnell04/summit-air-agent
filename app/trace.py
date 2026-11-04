@@ -95,6 +95,13 @@ def timeline(conn: sqlite3.Connection, call_id: str) -> dict | None:
         "handoffs": rows(
             "SELECT id, flag_id, callback_id, role, status FROM handoffs WHERE call_id = ?"
         ),
+        # The address lookup (app/geocode.py) and what the caller asked to be called.
+        "address_lookups": rows(
+            "SELECT house, street, hint, status, zips_json, source FROM address_lookups "
+            "WHERE call_id = ? ORDER BY id"
+        ),
+        "address_checks": rows("SELECT * FROM address_checks WHERE call_id = ?"),
+        "names": rows("SELECT name, seq, saved_at FROM call_names WHERE call_id = ?"),
     }
 
 

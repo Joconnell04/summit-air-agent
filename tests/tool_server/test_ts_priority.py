@@ -353,3 +353,41 @@ def test_a_no_before_a_comma_never_hides_someone_at_risk(agent, line):
     agent.turn(call, line)
     found = agent.tool("find_slots", call, job_type="no_heat", facts={"inside_temp_f": 66})
     assert found["data"]["priority"]["level"] == "Urgent", line
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "my husband had a stroke last year",
+        "she's recovering from a stroke",
+        "my mother-in-law moved in after her stroke",
+        "my husband and my mother in law who moved in after her stroke",
+    ],
+)
+def test_a_stroke_counts_as_a_chronic_illness(text):
+    """stroke-in-passing-no-heat came out High twice: a stroke read as no risk at all."""
+    # The reason may go on to quote the caller (DECISIONS.md 072).
+    reasons = decide("no_heat", text, 61).reasons
+    assert any(r.startswith("a chronic illness at home") for r in reasons)
+
+
+def test_a_spouses_parent_after_a_stroke_is_urgent():
+    """The caller said "his mother's here too, she moved in after her stroke" and it booked High
+    (eval run 20261104-172529, stroke-in-passing-no-heat#3)."""
+    text = "its me and my husband and his mothers here too she moved in with us after her stroke"
+    assert decide("no_heat", text, 61).level == "Urgent"
+
+
+def test_the_stroke_in_passing_call_is_urgent_like_other_at_risk_callers():
+    stroke = decide("no_heat", "my husband and my mother-in-law, who moved in after her stroke", 61)
+    heart = decide("no_heat", "my husband and my mother-in-law, she has a heart condition", 61)
+    assert stroke.level == heart.level == "Urgent"
+
+
+@pytest.mark.parametrize(
+    "text", ["it was a stroke of luck we caught it early", "a real stroke of genius, that thermostat"]
+)
+def test_a_stroke_of_luck_is_not_an_illness(text):
+    result = decide("no_heat", text, 61)
+    assert "a chronic illness at home" not in result.reasons
+    assert result.level == "High"

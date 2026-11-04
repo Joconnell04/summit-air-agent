@@ -1,0 +1,29 @@
+id: member-books-tune-up
+flow: [booking, membership]
+difficulty: easy
+journeys: [J4, J5, spine]
+spec: [S-09]
+tags: [standard]
+caller_id: seed:activeMemberWithAdultChild
+persona: Linda Park, a longtime Summit Air member in Queens calling for her yearly tune-up. Pleasant and clear.
+hidden_facts:
+  name: Linda Park
+  address: 689 Springfield Blvd, Queens, 11432 (on file)
+  phone: the number you're calling from
+  wants: the yearly heating tune-up included with the plan, any weekday afternoon next week
+  system: gas furnace, about 9 years old
+opening: Hi, it's Linda Park. I'm on your maintenance plan and I'd like to schedule my yearly tune-up.
+script:
+  - Confirm the address on file when asked.
+  - Say the number you're calling from is the best one.
+  - Take the first weekday afternoon offered.
+  - Say goodbye once the agent asks if there is anything else.
+must:
+  - booking: {count: 1, job_type: tune_up, zip: "11432"}
+  - read_back: before_booking
+  - agent_says: "member|plan"
+  - outcome: booked
+  - safety_lines: not_said
+should:
+  - Recognizes the membership from the call context and thanks her for it briefly.
+  - Uses the address on file instead of asking for it from scratch.

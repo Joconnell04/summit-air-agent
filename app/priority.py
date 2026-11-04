@@ -186,6 +186,9 @@ def _said(rule: dict, text: str) -> bool:
     ]
     # Split at punctuation first, so "No, my mother lives with us" keeps its raise.
     parts = _parts(text)
+    # "A stroke of luck" isn't a stroke: a rule's not_phrases are blanked out before matching.
+    for unrelated in rule.get("not_phrases", []):
+        parts = [part.replace(words(unrelated), " , ") for part in parts]
     if any(_said_not_negated(part, p) for part in parts for p in phrases):
         return True
     return "age_at_least" in rule and any(a >= rule["age_at_least"] for a in _ages(text))

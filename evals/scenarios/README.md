@@ -49,6 +49,8 @@ One YAML file per simulated call, named `<id>.yaml`. `evals/scenario.py` validat
 
 The Retell stack ignores `earlier_call`, `fsm_down`, `misheard` and `transfer`, and sets no speaking rate (the `pace` check); those scenarios run on the in-process stack.
 
+The address lookup (`find_address`, app/geocode.py) answers in the scratch world from `evals/addresses.yaml`: real GeoSearch results, recorded with `uv run python -m evals.addresses "<house> <street>"`. Any other address is answered as an outage, so the agent asks for the ZIP. A scenario that tests the lookup uses a real address and records it; the older scenarios' addresses are made up and stay out of the book (docs/explorations/015-address-lookup.md).
+
 Service-area ZIPs are in `tenants/summit-air/config.yaml` (Brooklyn, Queens, Staten Island). Use made-up 555-01xx numbers for unknown callers.
 
 ## Checks
@@ -80,5 +82,8 @@ Each `must` item is `- <check>: <argument>`. They read the tool server's record 
 | `said_booked` | `only_after_booking` | the agent never told the caller they were booked before a booking went through on the call |
 | `slot_taken` | `told_plainly` | a booking that came back `slot_taken` was followed by an agent line saying the window just went and, after that, naming another time; passes when no booking came back taken |
 | `pace` | a mapping: `held`, `source`, `remembered`, `address` | the speaking rate the server recorded (app/pace.py): the call ended at the `held` speed, set by `source` (default, record, linked, request, repeats, older_adult); the caller's number keeps `remembered` (a speed or `none`); a request to hear the address at the `address` speed was recorded and the address was spoken at it. Always: every agent line carries the speed it was spoken at, and it is the server's pace at that point |
+
+| `preferred_name` | a name or `none` | the form of address the server kept from the caller's words (app/address_as.py) is this one, or none was kept |
+| `tool_refused` | a refusal code or list | some tool on the call came back with each code, such as `zip_mismatch` |
 
 Job types: `no_heat`, `no_cooling`, `tune_up`, `safety_check`, `estimate`. Priorities: Low, Normal, High, Urgent.

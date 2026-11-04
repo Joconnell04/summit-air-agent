@@ -28,6 +28,7 @@ The owner view is three pages for the owner and dispatcher: Today (`/owner`, the
 | `DEBUG_TOKEN` | empty, which refuses every debug request | Token for `/debug/*` |
 | `APP_ENV` | `development` | Anything else turns on the retention policy |
 | `JOBS_INTERVAL_SECONDS` | `60` | Background jobs (`app/jobs.py`); `0` turns them off |
+| `GEOCODER` | empty | `geosearch` turns on the address lookup (`geocode.py`): NYC Planning's GeoSearch, then the Census geocoder, set per tenant in `config.yaml` `address_lookup`. Empty, the agent asks for every ZIP |
 | `SUMMARIES` | empty | `1` writes the technician's summary after each booked call (`app/summary.py`); it needs `ANTHROPIC_API_KEY` too |
 | `OWNER_ADMIN_USERNAME`, `OWNER_ADMIN_NAME`, `OWNER_ADMIN_PASSWORD` | empty, which creates no one | The owner view's first admin, created at startup if no user has that username; a password changed since is never reset. `OWNER_TOKEN` and `RULES_EDITORS`, from before accounts, are no longer read and are logged as such |
 | `OWNER_VIEW_URL` | empty | Where the owner view is served, for the call link in alert emails |
@@ -53,6 +54,8 @@ The owner view is three pages for the owner and dispatcher: Today (`/owner`, the
 | `lifecycle.py` | `/calls/start` (lookup before hello, repeat-caller linking, a dropped safety call carried over), `/calls/{id}/turn` (the safety check on every caller line), `/calls/{id}/end` (outcome, a dropped safety call flagged) |
 | `safety.py` | The phrase check: clear signals, the vague-smell check question, negation, variants on a repeat |
 | `priority.py` | Base priority by job type, rules that only raise it, the off-by-default side-model slot, the after-hours outcome |
+| `geocode.py` | The address lookup behind `find_address`: GeoSearch and the Census geocoder, the exact house-and-street rule, started from the caller's line and cached |
+| `address_as.py` | What the caller asked to be called, read from their words, refused when mocking or abusive, kept for the call and linked calls, and saved on the customer record as a note |
 | `lookup.py` | The richer lookup (membership, open jobs, last service, recent calls, notes, equipment) and history |
 | `booking.py` | Sending a booking to the FSM, shared by the live path and the retry queue |
 | `records.py` | The server's own tables: calls, scope, flags, callbacks (named time, owner, outbound rules, overdue), do-not-call |

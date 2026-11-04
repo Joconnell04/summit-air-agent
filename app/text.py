@@ -204,8 +204,81 @@ def _digit_runs(text: str) -> list[str]:
 
 
 
-TENS = {"twenty": 20, "thirty": 30, "forty": 40, "fifty": 50, "sixty": 60, "seventy": 70,
-        "eighty": 80, "ninety": 90}
+TEENS = {
+    "ten": 10, "eleven": 11, "twelve": 12, "thirteen": 13, "fourteen": 14, "fifteen": 15,
+    "sixteen": 16, "seventeen": 17, "eighteen": 18, "nineteen": 19,
+}
+TENS = {
+    "twenty": 20, "thirty": 30, "forty": 40, "fifty": 50, "sixty": 60, "seventy": 70,
+    "eighty": 80, "ninety": 90,
+}
+
+
+def number_tokens(text: str) -> list[str]:
+    """The line as lowercase tokens with each spoken number written as digits, the way an address
+    is said in New York: "two forty eight" is 248, "two hundred forty eight" is 248, "forty two
+    forty one" is 4241 (42-41), "ten sixty two" is 1062, "one oh six two" is 1062. Punctuation is
+    kept as its own token, so it ends a number. Letters spelled one by one are joined first."""
+    text = join_spelled(text or "").lower().replace("'", "").replace("’", "")
+    raw = re.findall(r"\d+(?:st|nd|rd|th)\b|[a-z]+|\d+|[^\sa-z\d]", text)
+    out: list[str] = []
+    chunks: list[str] = []  # the number being read, as digit strings to be joined
+
+    def flush():
+        if chunks:
+            out.append("".join(chunks))
+            chunks.clear()
+
+    i = 0
+    while i < len(raw):
+        token = raw[i]
+        nxt = raw[i + 1] if i + 1 < len(raw) else ""
+        if re.fullmatch(r"\d+(?:st|nd|rd|th)", token):
+            # "34th": a numbered street, never part of the number before it ("77-10 34th Ave").
+            flush()
+            out.append(re.sub(r"\D", "", token))
+        elif token == "-" and chunks and (nxt.isdigit() or nxt in DIGIT_WORDS or nxt in TEENS
+                                          or nxt in TENS):
+            pass  # a Queens house number, "41-12"
+        elif token.isdigit():
+            chunks.append(token)
+        elif token in DIGIT_WORDS and not (token in ("o", "oh") and not chunks):
+            chunks.append(DIGIT_WORDS[token])
+        elif token in TEENS:
+            chunks.append(str(TEENS[token]))
+        elif token in TENS:
+            value = TENS[token]
+            if nxt in DIGIT_WORDS and nxt not in ("oh", "o", "zero"):
+                value += int(DIGIT_WORDS[nxt])
+                i += 1
+            chunks.append(str(value))
+        elif token in ("hundred", "thousand") and chunks and chunks[-1].isdigit():
+            scale = 100 if token == "hundred" else 1000
+            base = int(chunks.pop()) * scale
+            # "two hundred forty eight", "two hundred and five"
+            j = i + 1
+            if j < len(raw) and raw[j] == "and":
+                j += 1
+            rest = 0
+            if j < len(raw) and raw[j] in TENS:
+                rest = TENS[raw[j]]
+                if j + 1 < len(raw) and raw[j + 1] in DIGIT_WORDS and raw[j + 1] not in ("oh", "o", "zero"):
+                    rest += int(DIGIT_WORDS[raw[j + 1]])
+                    j += 1
+                i = j
+            elif j < len(raw) and raw[j] in TEENS:
+                rest, i = TEENS[raw[j]], j
+            elif j < len(raw) and raw[j] in DIGIT_WORDS and raw[j] not in ("oh", "o", "zero"):
+                rest, i = int(DIGIT_WORDS[raw[j]]), j
+            chunks.append(str(base + rest))
+        else:
+            flush()
+            out.append(token)
+        i += 1
+    flush()
+    return out
+
+
 ONES = {"one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7, "eight": 8,
         "nine": 9}
 SPOKEN_NUMBER = re.compile(

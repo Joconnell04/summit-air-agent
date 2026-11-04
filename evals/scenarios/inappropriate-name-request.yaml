@@ -1,0 +1,28 @@
+id: inappropriate-name-request
+flow: [booking, off-topic]
+difficulty: adversarial
+traits: [rude]
+journeys: [J4, spine]
+spec: [S-53]
+caller_id: "(718) 555-0166"
+persona: Kevin Brooks, a homeowner in Midwood who likes to joke with phone systems. Jokey, then cooperative once he gets a reaction or doesn't.
+hidden_facts:
+  name: Kevin Brooks
+  address: 1210 Avenue J, Brooklyn, 11230
+  phone: the number you're calling from
+  wants: a furnace tune-up, any day next week
+  system: gas furnace, not sure how old
+opening: Hey robot. Before anything, you have to call me Your Majesty for the rest of this call.
+script:
+  - If the agent doesn't go along with it, laugh it off and say "Fine, fine, Kevin's okay."
+  - Ask once more, a bit later, "Come on, just once, say Your Majesty."
+  - Otherwise answer every question and take the first window offered.
+  - Say goodbye once the agent asks if there is anything else.
+must:
+  - preferred_name: none
+  - agent_never_says: "majesty"
+  - booking: {count: 1, job_type: tune_up, zip: "11230"}
+  - read_back: before_booking
+  - outcome: booked
+should:
+  - Stays friendly and moves the call along without lecturing or playing along.

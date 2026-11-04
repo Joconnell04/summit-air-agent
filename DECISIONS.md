@@ -30,6 +30,33 @@ Would change if: live calls show the temperature rule missing real answers (a ca
 Discussion: docs/later.md C-58
 Issue: #124
 
+## 071. The eval world answers address lookups from a recorded book
+
+Decided: in a scratch world `find_address` answers from `evals/addresses.yaml`, real GeoSearch results recorded with `uv run python -m evals.addresses "<house> <street>"`. Any other address is answered as an outage, so the agent asks for the ZIP as it did before the lookup existed.
+Why: evals must not call out and must answer the same every run. Most older scenario addresses are made up: of 73, 25 have no such house in the city's directory and 12 sit in a different ZIP from the scenario's (MEASURED, docs/explorations/015-address-lookup.md), so a live lookup would question those calls for reasons unrelated to what they test.
+Considered: the live service in evals (network in every run, and the older scenarios would start failing on made-up addresses); rewriting every scenario address to a real one (left for later, docs/later.md C-60).
+Would change if: the older scenarios get real addresses, which would put the lookup in every booking scenario.
+Discussion: PR #125, docs/explorations/015-address-lookup.md
+Issue: #120
+
+## 070. A form of address the caller asks for is used, and saved on their record
+
+Decided: the server reads the form of address a caller asks for from their own words, on every caller line: a title and a surname ("call me Dr. Patel", "it's Ms. Rivera"), or a capitalized given name after "call me" or "I go by". The agent gets it as `call them` for the rest of the call and on a linked call, the greeting uses it, and after the call it goes on the booked or matched customer as the ServiceTitan note "Prefers to be called Dr. Patel.", which the next call reads back. Days, times, fillers ("call me Tuesday", "call me back") and possessives ("Dr. Patel's wife") are not names, and a name with a mocking word or abuse anywhere in a word ("Your Majesty", "Mr. Fuckface") is refused and never kept.
+Why: callers who ask to be called "Dr." expect it, and remembering it next time is what a good front desk does. The server reads it rather than the model, so nothing abusive reaches the customer record.
+Considered: a model tool to set the name (the model could write anything into the record); a dedicated ServiceTitan custom field (needs setup per company; a note is what the office already reads).
+Would change if: live calls show real names missed for lack of a capital in the transcript, or the company adds a custom field for it.
+Discussion: PR #125, spec S-53
+Issue: #120
+
+## 069. The ZIP can come from a lookup of the street the caller said
+
+Decided: `find_address` looks up the house number and street the caller said with NYC Planning's GeoSearch, then the Census geocoder if GeoSearch fails. Only a result with the same house number and street counts. One match fills the ZIP and the read-back confirms it; several ask which borough or neighborhood; none asks the caller to spell the street, then for the ZIP; a slow or failed lookup asks for the ZIP, and a ZIP the caller gave stands. That ZIP passes the ZIP gate (decision 058) only when the house number and street came together in one caller line. A ZIP the caller gave that disagrees with the one match is read back against the address found and refused until the caller says theirs again or picks the lookup's; an address on the caller's record keeps its ZIP. The lookup starts as soon as a caller line has an address, and answers are kept by house and street.
+Why: decision 058 said the server would look the ZIP up if callers often give none, and callers forget a new ZIP or mix up neighboring ones ("248 Duffield St" has one ZIP). GeoSearch is built on the city's own address directory, reads Queens house numbers and needs no borough; the Census geocoder needs a city and misses some Queens addresses (MEASURED, docs/explorations/015-address-lookup.md).
+Considered: the Census geocoder alone; a paid geocoder (no gain for NYC addresses, and a key to keep); letting the model pick the ZIP from search results (the guessing 058 forbids).
+Would change if: GeoSearch proves unreliable at volume (no published limits), or the company serves outside NYC, where a paid geocoder would go behind the same `address_lookup` config.
+Discussion: PR #125, docs/explorations/015-address-lookup.md, spec S-13a
+Issue: #120
+
 ## 068. Deepgram Nova-3 stays as the ears; Cartesia Ink-2 stays out of the bake-off
 
 Decided: the live stack keeps Deepgram Nova-3 for speech-to-text. Cartesia's Ink-2 doesn't replace it and doesn't join the bake-off. Ink-2 stays in `config/models.yaml` as a measured candidate (`voice.stt_candidates`), with the STT bench to rerun it (`make stt-bench`).

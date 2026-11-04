@@ -1,0 +1,1771 @@
+{
+  "run_id": "20261104-175014-livekit-fast-custom",
+  "created": "2026-11-04T17:50:14.348869Z",
+  "suite": "custom",
+  "tags": [
+    "id:member-books-tune-up",
+    "id:known-caller-moves-visit",
+    "id:reschedule-own-booking"
+  ],
+  "stack": "livekit",
+  "profile": "fast",
+  "hash": "7c6c31788435c6d6",
+  "prompt_hash": "57403e123c5b417d",
+  "model": "claude-haiku-5-5",
+  "transport": "text",
+  "overlay": null,
+  "scenarios": [
+    {
+      "scenario_id": "known-caller-moves-visit",
+      "sample": 1,
+      "persona": "Maria Delgado, a homeowner in Brooklyn who has a visit coming and can't be home for it. Clear about what she wants.",
+      "flow": [
+        "repeat-caller"
+      ],
+      "difficulty": "easy",
+      "traits": [],
+      "outcome": "pass",
+      "must_pass_failures": [],
+      "check_failures": [],
+      "error": "",
+      "checks": [
+        "tool_ok",
+        "tool_not_called",
+        "outcome"
+      ],
+      "grader_score": 3,
+      "grader_notes": "The agent found the existing visit and moved it correctly, with day, date and window confirmed, but it ignored the caller's direct question about whether this was the same visit and went straight to reading back the address and number. When the caller asked again, the reply \"Done, I've moved it\" only implied an answer instead of plainly saying yes, it's the same visit, just moved.",
+      "reply_delay_p50_ms": 767.6209170022048,
+      "reply_delay_p90_ms": 1302.336666994961,
+      "cost_usd": 0.026753,
+      "agent_cost_usd": 0.003242,
+      "duration_ms": 13183.439917018404,
+      "transcript": [
+        {
+          "role": "agent",
+          "text": "Hi, this is Summit Air. Is this Maria?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "Hi, I have a technician coming and I need to move it to tomorrow morning if you have anything.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Sure, I can help with that. I see your visit today between 12 and 4. Let me check tomorrow morning. Tomorrow, Tuesday, has a morning window from 8 to 12. Would that work for you?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "Yes, eight to twelve tomorrow works for me. Can you confirm it's the same visit, just moved?",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "I have your home at 620 Bedford Ave, Brooklyn, one one two three five, and the best number is seven one eight, five five five, zero one four two, is that right?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "Yes, that's right. Can you confirm the address is 620 Bedford Avenue? And is the visit still the same, just moved to tomorrow?",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Done, I've moved it to tomorrow, Tuesday, November 3, between 8 and 12. Anything else?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "Thanks, that's all I needed. Have a good day.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Thanks for calling Summit Air. Have a great rest of your day.",
+          "said": null
+        }
+      ],
+      "tool_calls": [
+        {
+          "name": "find_slots",
+          "arguments": {
+            "call_id": "eval-known-caller-moves-visit-1-2a939e78",
+            "job_type": "no_heat",
+            "priority": null,
+            "preferred_days": [
+              "tomorrow"
+            ],
+            "time_of_day": "morning",
+            "day": null,
+            "arrive_after": null,
+            "arrive_before": null,
+            "facts": {
+              "issue": "No heat since last night, radiators cold",
+              "who_home": "",
+              "inside_temp_f": null,
+              "temp_falling_fast": false
+            }
+          }
+        },
+        {
+          "name": "read_back",
+          "arguments": {
+            "call_id": "eval-known-caller-moves-visit-1-2a939e78",
+            "address": {
+              "street": "620 Bedford Ave",
+              "unit": "",
+              "city": "Brooklyn",
+              "zip": "11235",
+              "spelled": ""
+            },
+            "phone": "0142",
+            "confirmed": false
+          }
+        },
+        {
+          "name": "read_back",
+          "arguments": {
+            "call_id": "eval-known-caller-moves-visit-1-2a939e78",
+            "address": {
+              "street": "620 Bedford Ave",
+              "unit": "",
+              "city": "Brooklyn",
+              "zip": "11235",
+              "spelled": ""
+            },
+            "phone": "0142",
+            "confirmed": true
+          }
+        },
+        {
+          "name": "reschedule_appointment",
+          "arguments": {
+            "call_id": "eval-known-caller-moves-visit-1-2a939e78",
+            "booking_id": 1,
+            "slot": {
+              "date": "2026-11-03",
+              "window": "morning"
+            },
+            "reason": "Caller asked to move today's no-heat visit to tomorrow morning"
+          }
+        },
+        {
+          "name": "end_call",
+          "arguments": {
+            "call_id": "eval-known-caller-moves-visit-1-2a939e78",
+            "reason": "caller_goodbye"
+          }
+        }
+      ],
+      "turn_timings": [
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 767.6209170022048,
+          "model_first_token_ms": 753.7106669915374,
+          "tool_ms": 14.896791020873934,
+          "second_hop_ms": 550.3876250004396,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 875.6448329950217,
+          "model_first_token_ms": 469.62991601321846,
+          "tool_ms": 18.35629201377742,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1302.336666994961,
+          "model_first_token_ms": 564.9862500140443,
+          "tool_ms": 51.513458020053804,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 528.5646249831188,
+          "model_first_token_ms": 522.9608750087209,
+          "tool_ms": 3.154665988404304,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        }
+      ],
+      "call_id": "eval-known-caller-moves-visit-1-2a939e78",
+      "silent_turns": 0,
+      "cost_parts": {}
+    },
+    {
+      "scenario_id": "known-caller-moves-visit",
+      "sample": 2,
+      "persona": "Maria Delgado, a homeowner in Brooklyn who has a visit coming and can't be home for it. Clear about what she wants.",
+      "flow": [
+        "repeat-caller"
+      ],
+      "difficulty": "easy",
+      "traits": [],
+      "outcome": "pass",
+      "must_pass_failures": [],
+      "check_failures": [],
+      "error": "",
+      "checks": [
+        "tool_ok",
+        "tool_not_called",
+        "outcome"
+      ],
+      "grader_score": 4,
+      "grader_notes": "The agent found and moved the existing visit cleanly and confirmed the day, date and window, but the confirmation turn added unprompted space-heater safety advice. That same turn only acknowledged Lena's access note (\"Lena will be there\") instead of turning it into an action for the technician.",
+      "reply_delay_p50_ms": 562.9038339830004,
+      "reply_delay_p90_ms": 1483.3761249901727,
+      "cost_usd": 0.030002,
+      "agent_cost_usd": 0.003874,
+      "duration_ms": 18204.76379201864,
+      "transcript": [
+        {
+          "role": "agent",
+          "text": "Hi, this is Summit Air. Is this Maria?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "Hi, I have a technician coming and I need to move it to tomorrow morning if you have anything.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Sure, I can help with that. Let me check tomorrow morning for you. Tomorrow, Tuesday, I have 8 to 12 in the morning. Does that work for you?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "Yes, 8 to 12 works. Can you confirm it's for my address? It's 620 Bedford Avenue.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "I have your home at 620 Bedford Avenue, Brooklyn, one one two three five, and the best number is seven one eight, five five five, zero one four two, is that right?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "Yes, that's right. Thanks. Is that all I need to do?",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Almost. Your visit is moving from today's 12 to 4 window. Is there anything the tech should know when they get there, like a gate code or a pet?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "No gate code, and no pets. My friend is staying with me, and she has a space heater on, so the house is fine for now. Just make sure someone can get in tomorrow morning, since I might not be home.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Let me get the visit moved. Who can let the tech in tomorrow?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "My friend Lena will be at the house tomorrow morning, so she can let the tech in. I don't have her number handy, but she'll be there, so that should work.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Got it, Lena will be there. A space heater is a warmth source I'd want you to be careful with, so please keep it at least three feet from anything that can burn. Booking the move now. Done, I've moved it to tomorrow, Tuesday, November 3, between 8 and 12. Anything else?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "Thanks, that's all I needed. I'll make sure Lena keeps the heater away from anything that can burn. Have a good day.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Thanks for calling Summit Air. Have a great rest of your day.",
+          "said": null
+        }
+      ],
+      "tool_calls": [
+        {
+          "name": "find_slots",
+          "arguments": {
+            "call_id": "eval-known-caller-moves-visit-2-3345c88a",
+            "job_type": "no_heat",
+            "priority": null,
+            "preferred_days": [],
+            "time_of_day": "morning",
+            "day": "2026-11-03",
+            "arrive_after": null,
+            "arrive_before": null,
+            "facts": {
+              "issue": "No heat since last night, radiators cold, thermostat reads 58",
+              "who_home": "",
+              "inside_temp_f": null,
+              "temp_falling_fast": false
+            }
+          }
+        },
+        {
+          "name": "read_back",
+          "arguments": {
+            "call_id": "eval-known-caller-moves-visit-2-3345c88a",
+            "address": {
+              "street": "620 Bedford Avenue",
+              "unit": "",
+              "city": "Brooklyn",
+              "zip": "11235",
+              "spelled": ""
+            },
+            "phone": "0142",
+            "confirmed": false
+          }
+        },
+        {
+          "name": "read_back",
+          "arguments": {
+            "call_id": "eval-known-caller-moves-visit-2-3345c88a",
+            "address": {
+              "street": "620 Bedford Avenue",
+              "unit": "",
+              "city": "Brooklyn",
+              "zip": "11235",
+              "spelled": ""
+            },
+            "phone": "0142",
+            "confirmed": true
+          }
+        },
+        {
+          "name": "reschedule_appointment",
+          "arguments": {
+            "call_id": "eval-known-caller-moves-visit-2-3345c88a",
+            "booking_id": 1,
+            "slot": {
+              "date": "2026-11-03",
+              "window": "morning"
+            },
+            "reason": "Caller asked to move no-heat visit to tomorrow morning; friend Lena will be at the house to let tech in"
+          }
+        },
+        {
+          "name": "end_call",
+          "arguments": {
+            "call_id": "eval-known-caller-moves-visit-2-3345c88a",
+            "reason": "caller_goodbye"
+          }
+        }
+      ],
+      "turn_timings": [
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 767.4883750150912,
+          "model_first_token_ms": 754.6841250150464,
+          "tool_ms": 16.764749976573512,
+          "second_hop_ms": 570.9912909951527,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 834.6396250126418,
+          "model_first_token_ms": 567.3958329716697,
+          "tool_ms": 18.24129102169536,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 1483.3761249901727,
+          "model_first_token_ms": 565.6764169980306,
+          "tool_ms": 12.074666999978945,
+          "second_hop_ms": 599.8519159911666,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 542.1976250072476,
+          "model_first_token_ms": 536.7060000135098,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 478.4426250262186,
+          "model_first_token_ms": 473.5387500259094,
+          "tool_ms": 42.227291996823624,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 562.9038339830004,
+          "model_first_token_ms": 557.7443339861929,
+          "tool_ms": 2.7855419903062284,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        }
+      ],
+      "call_id": "eval-known-caller-moves-visit-2-3345c88a",
+      "silent_turns": 0,
+      "cost_parts": {}
+    },
+    {
+      "scenario_id": "member-books-tune-up",
+      "sample": 1,
+      "persona": "Linda Park, a longtime Summit Air member in Queens calling for her yearly tune-up. Pleasant and clear.",
+      "flow": [
+        "booking",
+        "membership"
+      ],
+      "difficulty": "easy",
+      "traits": [],
+      "outcome": "pass",
+      "must_pass_failures": [],
+      "check_failures": [],
+      "error": "",
+      "checks": [
+        "booking",
+        "read_back",
+        "agent_says",
+        "outcome",
+        "safety_lines"
+      ],
+      "grader_score": 2,
+      "grader_notes": "The agent invented a 'Lennox furnace' the caller never mentioned, gave a confusing, contradictory turn about next week's afternoons, and asked two questions at once ('who's home... and is anyone there who'd have a harder time with the cold?'). It also re-asked the furnace's age after she had already said nine years and re-read the address she had confirmed at the start.",
+      "reply_delay_p50_ms": 659.8428749712184,
+      "reply_delay_p90_ms": 920.1319999992847,
+      "cost_usd": 0.038947,
+      "agent_cost_usd": 0.005707,
+      "duration_ms": 30141.93795801839,
+      "transcript": [
+        {
+          "role": "agent",
+          "text": "Hi, this is Summit Air. Is this Linda?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "Hi, it's Linda Park. I'm on your maintenance plan and I'd like to schedule my yearly tune-up.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Thanks for being a Summit Standard Member, Linda. Our plan covers two tune-ups a year, so let's get one set up. I have you at 689 Springfield Boulevard in Queens. Is that still right?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "Yes, that's still right. 689 Springfield Boulevard, Queens, 11432.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Got it. Is it a heating tune-up or a cooling tune-up you want, or both?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "Heating, please. I have a gas furnace, and it's about nine years old.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Got it, a heating tune-up for your Lennox furnace. Let me check what's open. I have openings today afternoon or evening, tomorrow morning, afternoon or evening, and Thursday afternoon. Do any of those work for you?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "I'm not sure the Lennox part is right, I don't actually know the brand of my furnace. As for the times, I'd like something next week, so none of those today or tomorrow will work. Do you have anything on a weekday afternoon next week?",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Sure, no problem about the brand. Let me check next week's afternoons. Those are the same days as before, and the only afternoon openings are today, tomorrow, and this Thursday. Let me check whether there's anything later next week. Next week I have afternoons open Monday, Tuesday, and Wednesday, from 12 to 4. Which day works best for you?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "Monday afternoon works. Whatever time you have open first is fine with me.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Monday afternoon it is. Let me get the exact window for you. Monday, November 9 is open 12 to 4. Is the number you're calling from the best one to reach you?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "Yes, the number I'm calling from is the best one, (718) 555-0123.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "I have your home at 689 Springfield Blvd, Queens, one one four three two, and the best number is seven one eight, five five five, zero one two three, is that right?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "That's right, thank you.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Before I book, who's home at the house on Monday, and is anyone there who'd have a harder time with the cold?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "I'll be home myself, I live alone. Nobody there has any trouble with the cold.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Thanks. Do you know roughly how old the furnace is, or anything else the technician should know when they get there, like a gate code or a pet?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "The furnace is about nine years old. There's no gate code, and I don't have any pets. The front door will be unlocked for the technician, so they can just come in.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Got it, I'll let the technician know the front door will be unlocked. Since you're the homeowner, I'll note you as the approver. Booking that now. You're all set for Monday, November 9, with the technician arriving between 12 and 4. Anything else?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "That's perfect, thank you. I'm all set. Have a good day.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Thanks for calling Summit Air. Have a great rest of your day.",
+          "said": null
+        }
+      ],
+      "tool_calls": [
+        {
+          "name": "find_slots",
+          "arguments": {
+            "call_id": "eval-member-books-tune-up-1-964d852a",
+            "job_type": "tune_up",
+            "priority": null,
+            "preferred_days": [],
+            "time_of_day": null,
+            "day": null,
+            "arrive_after": null,
+            "arrive_before": null,
+            "facts": {
+              "issue": "",
+              "who_home": "",
+              "inside_temp_f": null,
+              "temp_falling_fast": false
+            }
+          }
+        },
+        {
+          "name": "find_slots",
+          "arguments": {
+            "call_id": "eval-member-books-tune-up-1-964d852a",
+            "job_type": "tune_up",
+            "priority": null,
+            "preferred_days": [
+              "Monday",
+              "Tuesday",
+              "Wednesday",
+              "Thursday",
+              "Friday"
+            ],
+            "time_of_day": "afternoon",
+            "day": null,
+            "arrive_after": null,
+            "arrive_before": null,
+            "facts": {
+              "issue": "",
+              "who_home": "",
+              "inside_temp_f": null,
+              "temp_falling_fast": false
+            }
+          }
+        },
+        {
+          "name": "find_slots",
+          "arguments": {
+            "call_id": "eval-member-books-tune-up-1-964d852a",
+            "job_type": "tune_up",
+            "priority": null,
+            "preferred_days": [
+              "2026-11-09",
+              "2026-11-10",
+              "2026-11-11",
+              "2026-11-12"
+            ],
+            "time_of_day": "afternoon",
+            "day": null,
+            "arrive_after": null,
+            "arrive_before": null,
+            "facts": {
+              "issue": "",
+              "who_home": "",
+              "inside_temp_f": null,
+              "temp_falling_fast": false
+            }
+          }
+        },
+        {
+          "name": "find_slots",
+          "arguments": {
+            "call_id": "eval-member-books-tune-up-1-964d852a",
+            "job_type": "tune_up",
+            "priority": null,
+            "preferred_days": [],
+            "time_of_day": "afternoon",
+            "day": "2026-11-09",
+            "arrive_after": null,
+            "arrive_before": null,
+            "facts": {
+              "issue": "",
+              "who_home": "",
+              "inside_temp_f": null,
+              "temp_falling_fast": false
+            }
+          }
+        },
+        {
+          "name": "read_back",
+          "arguments": {
+            "call_id": "eval-member-books-tune-up-1-964d852a",
+            "address": {
+              "street": "689 Springfield Blvd",
+              "unit": "",
+              "city": "Queens",
+              "zip": "11432",
+              "spelled": ""
+            },
+            "phone": "7185550123",
+            "confirmed": false
+          }
+        },
+        {
+          "name": "read_back",
+          "arguments": {
+            "call_id": "eval-member-books-tune-up-1-964d852a",
+            "address": {
+              "street": "689 Springfield Blvd",
+              "unit": "",
+              "city": "Queens",
+              "zip": "11432",
+              "spelled": ""
+            },
+            "phone": "7185550123",
+            "confirmed": true
+          }
+        },
+        {
+          "name": "book_appointment",
+          "arguments": {
+            "call_id": "eval-member-books-tune-up-1-964d852a",
+            "job_type": "tune_up",
+            "slot": {
+              "date": "2026-11-09",
+              "window": "afternoon"
+            },
+            "details": {
+              "issue": "Yearly heating tune-up under Summit Standard Membership",
+              "since": "Scheduled yearly maintenance",
+              "tried": "No issues reported",
+              "who_home": "Caller lives alone and will be home",
+              "approver": "Linda Park",
+              "system_type": "Gas furnace, about 9 years old",
+              "arrival_notes": "Front door will be unlocked for the technician. No gate code, no pets.",
+              "name": "Linda Park",
+              "inside_temp_f": null
+            },
+            "priority": null,
+            "separate_problem": false,
+            "new_address_account": null
+          }
+        },
+        {
+          "name": "end_call",
+          "arguments": {
+            "call_id": "eval-member-books-tune-up-1-964d852a",
+            "reason": "caller_goodbye"
+          }
+        }
+      ],
+      "turn_timings": [
+        {
+          "kind": "plain",
+          "reply_delay_ms": 819.1623750317376,
+          "model_first_token_ms": 806.6918330150656,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 565.0612090248615,
+          "model_first_token_ms": 560.3914170060307,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 640.7665429869667,
+          "model_first_token_ms": 629.7812089906074,
+          "tool_ms": 29.93374998914078,
+          "second_hop_ms": 553.8837909989525,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 659.8428749712184,
+          "model_first_token_ms": 652.1249579964206,
+          "tool_ms": 7.305332983378321,
+          "second_hop_ms": 585.502500005532,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 662.088541983394,
+          "model_first_token_ms": 657.435708999401,
+          "tool_ms": 4.117375006899238,
+          "second_hop_ms": 601.3048750173766,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 920.1319999992847,
+          "model_first_token_ms": 624.4361250137445,
+          "tool_ms": 3.291250002803281,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 1539.0339170116931,
+          "model_first_token_ms": 634.8482079920359,
+          "tool_ms": 3.108958015218377,
+          "second_hop_ms": 606.4677500107791,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 562.8274159680586,
+          "model_first_token_ms": 558.7100409902632,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 608.0142919672653,
+          "model_first_token_ms": 600.460124987876,
+          "tool_ms": 40.01024999888614,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 847.6245000201743,
+          "model_first_token_ms": 842.4250000098255,
+          "tool_ms": 3.4696669899858534,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        }
+      ],
+      "call_id": "eval-member-books-tune-up-1-964d852a",
+      "silent_turns": 0,
+      "cost_parts": {}
+    },
+    {
+      "scenario_id": "member-books-tune-up",
+      "sample": 2,
+      "persona": "Linda Park, a longtime Summit Air member in Queens calling for her yearly tune-up. Pleasant and clear.",
+      "flow": [
+        "booking",
+        "membership"
+      ],
+      "difficulty": "easy",
+      "traits": [],
+      "outcome": "pass",
+      "must_pass_failures": [],
+      "check_failures": [],
+      "error": "",
+      "checks": [
+        "booking",
+        "read_back",
+        "agent_says",
+        "outcome",
+        "safety_lines"
+      ],
+      "grader_score": 4,
+      "grader_notes": "After already offering the heating tune-up, the agent asked \"heating or cooling?\", which was an unneeded question. Its reply \"so does tomorrow, Tuesday\" also muddled the caller's request for next Tuesday; otherwise it recognized the membership, used the address on file and confirmed the booking well.",
+      "reply_delay_p50_ms": 655.4486250097398,
+      "reply_delay_p90_ms": 1604.6264580218121,
+      "cost_usd": 0.031484,
+      "agent_cost_usd": 0.004627,
+      "duration_ms": 22638.696458976483,
+      "transcript": [
+        {
+          "role": "agent",
+          "text": "Hi, this is Summit Air. Is this Linda?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "Hi, it's Linda Park. I'm on your maintenance plan and I'd like to schedule my yearly tune-up.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Thanks for being a member, Linda. Our Summit Standard Membership covers two tune-ups a year, and I can get your heating tune-up booked now. Is it still 689 Springfield Boulevard in Queens that we're visiting?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "Yes, that's still the right address, 689 Springfield Boulevard in Queens, 11432.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Great. Which system should we look at, the heating or the cooling tune-up?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "The heating tune-up, please. We have a gas furnace, about nine years old.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Got it, the furnace tune-up. Let me find the openings. I have openings this afternoon or evening, tomorrow morning, afternoon or evening, and Thursday afternoon. Do any of those work for you?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "I was hoping for a weekday afternoon next week. Do you have anything on Monday or Tuesday afternoon?",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Let me check next week. Monday next week, the 9th, has afternoon openings, and so does tomorrow, Tuesday. Which would you prefer?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "I'll take the first one, Monday afternoon the 9th, please.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Let me get that day's exact times. On Monday, November 9th, I have 12 to 4 in the afternoon. Shall I book that window?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "Yes, please book that 12 to 4 window on Monday. And the best number to reach me at is the one I'm calling from.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "I have your home at 689 Springfield Blvd, Queens, one one four three two, and the best number is seven one eight, five five five, zero one two three, is that right?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "Yes, that's correct. Thank you.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "You're all set for Monday, November 9, with the technician arriving between 12 and 4. Anything else?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "No, that's everything. Thank you so much, goodbye.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Thanks for calling Summit Air. Have a great rest of your day.",
+          "said": null
+        }
+      ],
+      "tool_calls": [
+        {
+          "name": "find_slots",
+          "arguments": {
+            "call_id": "eval-member-books-tune-up-2-b7416755",
+            "job_type": "tune_up",
+            "priority": null,
+            "preferred_days": [],
+            "time_of_day": null,
+            "day": null,
+            "arrive_after": null,
+            "arrive_before": null,
+            "facts": {
+              "issue": "",
+              "who_home": "",
+              "inside_temp_f": null,
+              "temp_falling_fast": false
+            }
+          }
+        },
+        {
+          "name": "find_slots",
+          "arguments": {
+            "call_id": "eval-member-books-tune-up-2-b7416755",
+            "job_type": "tune_up",
+            "priority": null,
+            "preferred_days": [
+              "Monday",
+              "Tuesday"
+            ],
+            "time_of_day": "afternoon",
+            "day": null,
+            "arrive_after": null,
+            "arrive_before": null,
+            "facts": {
+              "issue": "",
+              "who_home": "",
+              "inside_temp_f": null,
+              "temp_falling_fast": false
+            }
+          }
+        },
+        {
+          "name": "find_slots",
+          "arguments": {
+            "call_id": "eval-member-books-tune-up-2-b7416755",
+            "job_type": "tune_up",
+            "priority": null,
+            "preferred_days": [
+              "Monday"
+            ],
+            "time_of_day": "afternoon",
+            "day": "2026-11-09",
+            "arrive_after": null,
+            "arrive_before": null,
+            "facts": {
+              "issue": "",
+              "who_home": "",
+              "inside_temp_f": null,
+              "temp_falling_fast": false
+            }
+          }
+        },
+        {
+          "name": "read_back",
+          "arguments": {
+            "call_id": "eval-member-books-tune-up-2-b7416755",
+            "address": {
+              "street": "689 Springfield Blvd",
+              "unit": "",
+              "city": "Queens",
+              "zip": "11432",
+              "spelled": ""
+            },
+            "phone": "7185550123",
+            "confirmed": false
+          }
+        },
+        {
+          "name": "read_back",
+          "arguments": {
+            "call_id": "eval-member-books-tune-up-2-b7416755",
+            "address": {
+              "street": "689 Springfield Blvd",
+              "unit": "",
+              "city": "Queens",
+              "zip": "11432",
+              "spelled": ""
+            },
+            "phone": "7185550123",
+            "confirmed": true
+          }
+        },
+        {
+          "name": "book_appointment",
+          "arguments": {
+            "call_id": "eval-member-books-tune-up-2-b7416755",
+            "job_type": "tune_up",
+            "slot": {
+              "date": "2026-11-09",
+              "window": "afternoon"
+            },
+            "details": {
+              "issue": "Yearly heating tune-up on gas furnace, member visit",
+              "since": "Scheduled maintenance",
+              "tried": "Nothing, routine maintenance",
+              "who_home": "Linda Park",
+              "approver": "Linda Park",
+              "system_type": "Gas furnace, Lennox, about 9 years old",
+              "arrival_notes": "",
+              "name": "",
+              "inside_temp_f": null
+            },
+            "priority": null,
+            "separate_problem": false,
+            "new_address_account": null
+          }
+        },
+        {
+          "name": "end_call",
+          "arguments": {
+            "call_id": "eval-member-books-tune-up-2-b7416755",
+            "reason": "caller_goodbye"
+          }
+        }
+      ],
+      "turn_timings": [
+        {
+          "kind": "plain",
+          "reply_delay_ms": 807.1147489827126,
+          "model_first_token_ms": 793.8458329881541,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 666.2102919945028,
+          "model_first_token_ms": 660.8099169970956,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 586.5265429893043,
+          "model_first_token_ms": 575.5848340049852,
+          "tool_ms": 26.279124984284863,
+          "second_hop_ms": 596.4814589824528,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 655.4486250097398,
+          "model_first_token_ms": 651.3389589963481,
+          "tool_ms": 4.220333998091519,
+          "second_hop_ms": 894.4879999908153,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 627.3852919985075,
+          "model_first_token_ms": 623.1799999950454,
+          "tool_ms": 3.847875021165237,
+          "second_hop_ms": 611.2883329915348,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 998.8614169997163,
+          "model_first_token_ms": 594.5990829786751,
+          "tool_ms": 34.16604202357121,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1604.6264580218121,
+          "model_first_token_ms": 556.3472499779891,
+          "tool_ms": 71.63387499167584,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 602.8567499888595,
+          "model_first_token_ms": 598.8000829820521,
+          "tool_ms": 4.176165995886549,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        }
+      ],
+      "call_id": "eval-member-books-tune-up-2-b7416755",
+      "silent_turns": 0,
+      "cost_parts": {}
+    },
+    {
+      "scenario_id": "reschedule-own-booking",
+      "sample": 1,
+      "persona": "Maria Delgado, a homeowner in Brooklyn who has to move an appointment because of work. Friendly, says um, changes the day once.",
+      "flow": [
+        "repeat-caller"
+      ],
+      "difficulty": "standard",
+      "traits": [
+        "filler",
+        "self-correction"
+      ],
+      "outcome": "pass",
+      "must_pass_failures": [],
+      "check_failures": [],
+      "error": "",
+      "checks": [
+        "tool_ok",
+        "tool_not_called",
+        "outcome"
+      ],
+      "grader_score": 4,
+      "grader_notes": "The agent never named or confirmed which existing appointment it was moving before offering new times (second turn: \"Sure, I can move that\"). Otherwise the call was smooth: availability was offered sensibly, the address and number were read back once, and the confirmation named Friday, November 6, 8 to 12, followed by \"Anything else?\" and a clean sign-off.",
+      "reply_delay_p50_ms": 1501.9677079981193,
+      "reply_delay_p90_ms": 1911.360500002047,
+      "cost_usd": 0.027814,
+      "agent_cost_usd": 0.004576,
+      "duration_ms": 19561.851999984356,
+      "transcript": [
+        {
+          "role": "agent",
+          "text": "Hi, this is Summit Air. Is this Maria?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "hi um i have an appointment with you and i need to move it something came up at work",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Sure, I can move that. What day and time would work better for you?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "um do you have anything thursday afternoon like after two if that's possible",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Thursday has an evening window, 4 to 8. Would that work for you?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "hmm i was hoping for the afternoon not evening actually wait let me check my calendar um what about friday morning instead anything open then",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Friday has morning, afternoon and evening openings. Which Friday works best, the 6th or the 13th?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "um the 6th if that one has a morning slot is there anything before noon",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Friday the 6th has 8 to 12 open. Should I move your visit to that?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "yes that works please go ahead and book the 8 to 12 window on friday the 6th",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "I have your home at 620 Bedford Ave, Brooklyn, one one two three five, and the best number is seven one eight, five five five, zero one four two, is that right?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "yes that's right six two oh bedford ave one one two three five and you can reach me at that number seven one eight five five five oh one four two",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Perfect, booking that now. Done, I've moved it to Friday, November 6, between 8 and 12. Anything else?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "no that's all thank you so much have a good day",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Thanks for calling Summit Air. Have a great rest of your day.",
+          "said": null
+        }
+      ],
+      "tool_calls": [
+        {
+          "name": "find_slots",
+          "arguments": {
+            "call_id": "eval-reschedule-own-booking-1-f92ba759",
+            "job_type": "no_heat",
+            "priority": null,
+            "preferred_days": [
+              "Thursday"
+            ],
+            "time_of_day": "afternoon",
+            "day": null,
+            "arrive_after": "2 PM",
+            "arrive_before": null,
+            "facts": {
+              "issue": "",
+              "who_home": "",
+              "inside_temp_f": null,
+              "temp_falling_fast": false
+            }
+          }
+        },
+        {
+          "name": "find_slots",
+          "arguments": {
+            "call_id": "eval-reschedule-own-booking-1-f92ba759",
+            "job_type": "no_heat",
+            "priority": null,
+            "preferred_days": [
+              "Friday"
+            ],
+            "time_of_day": "morning",
+            "day": null,
+            "arrive_after": null,
+            "arrive_before": null,
+            "facts": {
+              "issue": "No heat since last night, radiators cold, thermostat reads 58",
+              "who_home": "",
+              "inside_temp_f": 58.0,
+              "temp_falling_fast": false
+            }
+          }
+        },
+        {
+          "name": "find_slots",
+          "arguments": {
+            "call_id": "eval-reschedule-own-booking-1-f92ba759",
+            "job_type": "no_heat",
+            "priority": null,
+            "preferred_days": [],
+            "time_of_day": null,
+            "day": "2026-11-06",
+            "arrive_after": null,
+            "arrive_before": "12",
+            "facts": {
+              "issue": "No heat since last night, radiators cold, thermostat reads 58",
+              "who_home": "",
+              "inside_temp_f": 58.0,
+              "temp_falling_fast": false
+            }
+          }
+        },
+        {
+          "name": "read_back",
+          "arguments": {
+            "call_id": "eval-reschedule-own-booking-1-f92ba759",
+            "address": {
+              "street": "620 Bedford Ave",
+              "unit": "",
+              "city": "Brooklyn",
+              "zip": "11235",
+              "spelled": ""
+            },
+            "phone": "0142",
+            "confirmed": false
+          }
+        },
+        {
+          "name": "read_back",
+          "arguments": {
+            "call_id": "eval-reschedule-own-booking-1-f92ba759",
+            "address": {
+              "street": "620 Bedford Ave",
+              "unit": "",
+              "city": "Brooklyn",
+              "zip": "11235",
+              "spelled": ""
+            },
+            "phone": "0142",
+            "confirmed": true
+          }
+        },
+        {
+          "name": "reschedule_appointment",
+          "arguments": {
+            "call_id": "eval-reschedule-own-booking-1-f92ba759",
+            "booking_id": 1,
+            "slot": {
+              "date": "2026-11-06",
+              "window": "morning"
+            },
+            "reason": "Caller has a work conflict and asked to move to Friday morning"
+          }
+        },
+        {
+          "name": "end_call",
+          "arguments": {
+            "call_id": "eval-reschedule-own-booking-1-f92ba759",
+            "reason": "caller_goodbye"
+          }
+        }
+      ],
+      "turn_timings": [
+        {
+          "kind": "plain",
+          "reply_delay_ms": 563.4161659982055,
+          "model_first_token_ms": 560.1900829933584,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 1641.9568739947863,
+          "model_first_token_ms": 551.1629170214292,
+          "tool_ms": 22.94550000806339,
+          "second_hop_ms": 703.0750830017496,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 1587.322625971865,
+          "model_first_token_ms": 592.3144170083106,
+          "tool_ms": 5.799375008791685,
+          "second_hop_ms": 526.6404169960879,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 1501.9677079981193,
+          "model_first_token_ms": 529.0776249894407,
+          "tool_ms": 6.1879999993834645,
+          "second_hop_ms": 544.9286669900175,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 932.1572920016479,
+          "model_first_token_ms": 520.68208399578,
+          "tool_ms": 12.138541991589591,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 1911.360500002047,
+          "model_first_token_ms": 1041.3484580058139,
+          "tool_ms": 34.91370799019933,
+          "second_hop_ms": 567.039957997622,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 656.6880830214359,
+          "model_first_token_ms": 650.6327500101179,
+          "tool_ms": 4.840915993554518,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        }
+      ],
+      "call_id": "eval-reschedule-own-booking-1-f92ba759",
+      "silent_turns": 0,
+      "cost_parts": {}
+    },
+    {
+      "scenario_id": "reschedule-own-booking",
+      "sample": 2,
+      "persona": "Maria Delgado, a homeowner in Brooklyn who has to move an appointment because of work. Friendly, says um, changes the day once.",
+      "flow": [
+        "repeat-caller"
+      ],
+      "difficulty": "standard",
+      "traits": [
+        "filler",
+        "self-correction"
+      ],
+      "outcome": "pass",
+      "must_pass_failures": [],
+      "check_failures": [],
+      "error": "",
+      "checks": [
+        "tool_ok",
+        "tool_not_called",
+        "outcome"
+      ],
+      "grader_score": 4,
+      "grader_notes": "The agent never named or confirmed which existing appointment was being moved, jumping straight to 'What day and time would work better for you?' without checking the lookup with Maria. Otherwise the call was smooth: one clean address and number read-back, a clear Friday, November 6, 8-to-12 confirmation, an 'Anything else?', and the standard goodbye.",
+      "reply_delay_p50_ms": 568.472417013254,
+      "reply_delay_p90_ms": 1022.8602919960395,
+      "cost_usd": 0.025458,
+      "agent_cost_usd": 0.00188,
+      "duration_ms": 15553.483415977098,
+      "transcript": [
+        {
+          "role": "agent",
+          "text": "Hi, this is Summit Air. Is this Maria?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "hi um i have an appointment with you and i need to move it something came up at work",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Sure, I can help move that. What day and time would work better for you?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "um i was hoping for thursday afternoon if you have anything actually wait would friday morning be possible instead sorry my schedule's kind of all over the place this week",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "No problem. Let me check what's open. Good news, Friday morning is open, and Thursday afternoon is too. Friday the 6th, between 8 and 12 works. Would that suit you?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "friday morning works yeah um is eight o'clock the earliest or can i do like nine i think nine is better for me",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "The windows are 8 to 12, so the technician can arrive any time in that span. I can't set a 9 o'clock start. Does Friday morning between 8 and 12 work for you?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "oh okay that's fine then yeah friday morning between 8 and 12 works um can you just confirm the address for me is it still six two oh bedford ave",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "I have your home at 620 Bedford Ave, Brooklyn, one one two three five, and the best number is seven one eight, five five five, zero one four two, is that right?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "yes that's right both of those um and so the new appointment is friday the 6th morning sometime between 8 and 12",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Done, I've moved it to Friday, November 6, between 8 and 12. Anything else?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "no that's everything thanks so much for your help have a good day",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Thanks for calling Summit Air. Have a great rest of your day.",
+          "said": null
+        }
+      ],
+      "tool_calls": [
+        {
+          "name": "find_slots",
+          "arguments": {
+            "call_id": "eval-reschedule-own-booking-2-8f2ca864",
+            "job_type": "no_heat",
+            "priority": null,
+            "preferred_days": [
+              "Thursday",
+              "Friday"
+            ],
+            "time_of_day": "afternoon",
+            "day": null,
+            "arrive_after": null,
+            "arrive_before": null,
+            "facts": {
+              "issue": "No heat since last night, radiators cold, thermostat reads 58. Caller wants to move existing visit.",
+              "who_home": "",
+              "inside_temp_f": null,
+              "temp_falling_fast": false
+            }
+          }
+        },
+        {
+          "name": "find_slots",
+          "arguments": {
+            "call_id": "eval-reschedule-own-booking-2-8f2ca864",
+            "job_type": "no_heat",
+            "priority": null,
+            "preferred_days": [
+              "Friday"
+            ],
+            "time_of_day": "morning",
+            "day": null,
+            "arrive_after": null,
+            "arrive_before": null,
+            "facts": {
+              "issue": "No heat since last night, radiators cold, thermostat reads 58. Caller wants to move existing visit.",
+              "who_home": "",
+              "inside_temp_f": null,
+              "temp_falling_fast": false
+            }
+          }
+        },
+        {
+          "name": "read_back",
+          "arguments": {
+            "call_id": "eval-reschedule-own-booking-2-8f2ca864",
+            "address": {
+              "street": "620 Bedford Ave",
+              "unit": "",
+              "city": "Brooklyn",
+              "zip": "11235",
+              "spelled": ""
+            },
+            "phone": "0142",
+            "confirmed": false
+          }
+        },
+        {
+          "name": "reschedule_appointment",
+          "arguments": {
+            "call_id": "eval-reschedule-own-booking-2-8f2ca864",
+            "booking_id": 1,
+            "slot": {
+              "date": "2026-11-06",
+              "window": "morning"
+            },
+            "reason": "Caller has a work conflict and asked to move the visit to Friday morning."
+          }
+        },
+        {
+          "name": "end_call",
+          "arguments": {
+            "call_id": "eval-reschedule-own-booking-2-8f2ca864",
+            "reason": "caller_goodbye"
+          }
+        }
+      ],
+      "turn_timings": [
+        {
+          "kind": "plain",
+          "reply_delay_ms": 479.22795798513107,
+          "model_first_token_ms": 476.1714159976691,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 572.8956659731921,
+          "model_first_token_ms": 567.6137909758836,
+          "tool_ms": 22.056124958908185,
+          "second_hop_ms": 472.73887498886324,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 513.6894170136657,
+          "model_first_token_ms": 510.10841701645404,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 798.2471249997616,
+          "model_first_token_ms": 515.1166249997914,
+          "tool_ms": 12.42566600558348,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1022.8602919960395,
+          "model_first_token_ms": 635.6064590218011,
+          "tool_ms": 22.412249993067235,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 568.472417013254,
+          "model_first_token_ms": 562.7854590129573,
+          "tool_ms": 3.4202919923700392,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        }
+      ],
+      "call_id": "eval-reschedule-own-booking-2-8f2ca864",
+      "silent_turns": 0,
+      "cost_parts": {}
+    }
+  ]
+}

@@ -124,6 +124,32 @@ class ServiceAreaIn(CallRef):
     zip: str = Zip
 
 
+class FindAddressIn(CallRef):
+    street: str = Field(
+        min_length=1,
+        max_length=120,
+        description='The house number and street as the caller said them, such as "248 Duffield '
+        'St" or "41-12 Bell Blvd"',
+    )
+    borough: str = Field(
+        "",
+        max_length=60,
+        description="The borough or neighborhood, only if the caller said one",
+    )
+    spelled: str = Field(
+        "",
+        max_length=120,
+        description="The street name as the caller spelled it, letter by letter",
+    )
+
+    @model_validator(mode="after")
+    def join_letters(self):
+        street = with_spelled_name(self.street, self.spelled) if self.spelled else self.street
+        self.street = join_spelled(street)
+        self.spelled = ""
+        return self
+
+
 class Facts(Body):
     """What the agent has heard that bears on priority. The server sets priority from the caller's
     own lines; `who_home` and `issue` raise nothing, and `inside_temp_f` counts only when a caller

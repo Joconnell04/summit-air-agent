@@ -17,6 +17,11 @@ REFUSED = {
     "gate_read_back": ("Held the booking until the address and phone were read back.", "hold"),
     "out_of_area": ("Outside the service area, so it can't be booked.", "warn"),
     "zip_not_heard": ("The caller hadn't said that ZIP; asked for it.", "hold"),
+    "zip_mismatch": ("The caller's ZIP didn't match their street; asked which is right.", "hold"),
+    "address_several": ("That street is in more than one place; asked which.", "hold"),
+    "address_not_found": ("The street wasn't found; asked the caller to spell it.", "hold"),
+    "address_lookup_down": ("The address lookup didn't answer; asked for the ZIP.", "hold"),
+    "address_not_heard": ("The caller hadn't said that street; asked for the address.", "hold"),
     "customer_type": ("A commercial caller, which this company doesn't book.", "warn"),
     "slot_taken": ("That opening had just been taken; offered another.", "hold"),
     "invalid_slot": ("That time isn't open; offered another.", "hold"),
@@ -59,6 +64,8 @@ def tool_note(event: dict, tenant: Tenant) -> dict | None:
         return {"text": "Looked the caller up in ServiceTitan.", "tone": "ok"}
     if tool == "get_customer_history":
         return {"text": "Checked this customer's past visits.", "tone": "ok"}
+    if tool == "find_address":
+        return {"text": f"Found the ZIP for {args.get('street', 'the street')}.", "tone": "ok"}
     if tool == "check_service_area":
         return {"text": f"ZIP {args.get('zip', '')} is in the service area.", "tone": "ok"}
     if tool == "find_slots":

@@ -252,6 +252,40 @@
           }
         },
         {
+          "name": "Find address: a street the caller never said",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('refused: address_not_heard', () => pm.expect(pm.response.json().refused).to.eql('address_not_heard'));",
+                  "",
+                  "pm.test('HTTP 200 with the envelope', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  const b = pm.response.json();",
+                  "  ['ok', 'say', 'data', 'refused'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/tools/find_address",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"call_id\": \"{{call_id}}\",\n  \"street\": \"248 Duffield St\"\n}"
+            }
+          }
+        },
+        {
           "name": "Find slots: shape",
           "event": [
             {

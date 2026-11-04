@@ -104,5 +104,8 @@ How the design was reached, in order, so a reader can follow each choice back to
 | Cartesia hosted agents | Left out: our server couldn't force safety lines or own hang-ups; Cartesia stays the voice only | DECISIONS.md 065 |
 | Lane tracking | Every lane has an issue; the lanes page is generated from GitHub | DECISIONS.md 067, #121 |
 | Speech-to-text vendor | Nova-3 kept; Ink-2 measured 0.6 s slower a turn and worse on street names, and stays out of the bake-off | DECISIONS.md 068, #123 |
+| ZIP from the street | A lookup of the caller's own street fills the ZIP; a disagreeing ZIP is asked about before any booking | DECISIONS.md 069, #125 |
+| Preferred names | "Call me Dr. Patel" is used for the call and saved on the customer record; abusive forms are refused | DECISIONS.md 070, #125 |
+| Lookups in evals | Recorded GeoSearch answers; unknown addresses act as an outage | DECISIONS.md 071, #125 |
 | Priority from the caller | Rules fire on the caller's words only; the model's notes raise nothing; a raise after the wait is flagged for the dispatcher | DECISIONS.md 072, #124 |
 | A caller who pushes | A calm line and the soonest window or a person; pushing and claims raise nothing | DECISIONS.md 073, #124 |

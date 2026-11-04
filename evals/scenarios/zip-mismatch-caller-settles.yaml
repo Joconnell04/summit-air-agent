@@ -1,0 +1,28 @@
+id: zip-mismatch-caller-settles
+flow: [booking]
+difficulty: rigorous
+traits: [self-correction]
+journeys: [J1, spine]
+spec: [S-13a]
+caller_id: "(718) 555-0163"
+persona: Grace Liu, a homeowner in Clinton Hill who mixes up her ZIP with the neighborhood next door. Polite and quick, a little embarrassed when corrected.
+hidden_facts:
+  name: Grace Liu
+  address: 116 Greene Ave, Brooklyn. You believe the ZIP is 11205, but it is really 11238.
+  phone: the number you're calling from
+  wants: the yearly furnace tune-up, any weekday morning
+  system: gas furnace, about 10 years old, working fine
+opening: Hi, I'd like to book a tune-up for my furnace.
+script:
+  - When asked for the address, say "116 Greene Avenue, Brooklyn, 11205."
+  - If the agent says the street is in a different ZIP, say "Oh, you're right, it's 11238. I always mix those up."
+  - Take the first morning offered.
+  - Say goodbye once the agent asks if there is anything else.
+must:
+  - tool_refused: zip_mismatch
+  - booking: {count: 1, job_type: tune_up, zip: "11238"}
+  - read_back: before_booking
+  - outcome: booked
+should:
+  - Asks which ZIP is right plainly, once, without making the caller feel wrong.
+  - Takes the corrected ZIP and moves on without asking again.

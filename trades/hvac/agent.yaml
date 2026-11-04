@@ -184,7 +184,11 @@ priority:
       reason: young children at home
     - id: parent_no_age
       job_types: [no_heat, no_cooling]
-      phrases: [my mom, my dad, my mother, my father, my parents]
+      # A spouse's parent counts too ("his mother's here too" reads "his mothers here", eval run
+      # 20261104-172529).
+      phrases: [my mom, my dad, my mother, my father, my parents, mother in law, father in law,
+                his mother, her mother, his father, her father, his mom, her mom, his dad, her dad,
+                his parents, her parents, his mothers, her mothers, his fathers, her fathers]
       raise_to: High
       group: true
       reason: a parent at home, age not given
@@ -213,7 +217,10 @@ priority:
     - id: chronic_illness
       job_types: [no_heat, no_cooling]
       phrases: [heart condition, heart problems, copd, asthma, lung disease, emphysema, diabetic,
-                diabetes, kidney disease, medical condition]
+                diabetes, kidney disease, medical condition, stroke, had a stroke,
+                recovering from a stroke]
+      # Said in a way that isn't an illness: these are taken out before the phrases are matched.
+      not_phrases: [stroke of luck, stroke of genius, brush stroke, swim stroke, at the stroke of]
       raise_to: High
       group: true
       reason: a chronic illness at home

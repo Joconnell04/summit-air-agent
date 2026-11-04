@@ -54,11 +54,41 @@ def instructions(start: dict, now: datetime | None = None) -> str:
     context = {
         k: v for k, v in start.items() if k not in ("knowledge", "tenant", "call_id", "house_rules")
     }
+    notes = call_notes(start)
+    noted = "".join(f"- {n}\n" for n in notes)
     return (
         f"{text}\n\n# Company knowledge\n\n{knowledge}\n\n# This call\n\n"
         f"Now: {local:%A %-d %B %Y, %-I:%M %p} ({tenant['timezone']}).\n\n"
-        f"What the server found before hello:\n{json.dumps(context, default=str)}\n"
+        + (f"For this caller:\n{noted}\n" if notes else "")
+        + f"What the server found before hello:\n{json.dumps(context, default=str)}\n"
     )
+
+
+def call_notes(start: dict) -> list[str]:
+    """Plain lines for what the call context means for this caller, so the agent acts on it
+    rather than finding it in the JSON (eval run 20261104-174038: a member was never thanked, and
+    a caller moving a visit was booked a second one first)."""
+    customers = [c for c in start.get("customers", []) if c.get("residential")]
+    notes = []
+    if len(customers) == 1:
+        membership = customers[0].get("membership") or {}
+        if membership.get("status") == "Active":
+            plan = membership.get("plan") or "maintenance"
+            notes.append(
+                f"They're on an active {plan} plan. Thank them for being a member once, early in "
+                "the call, and mention the plan's benefit that applies."
+            )
+    visits = [
+        job for c in customers for job in c.get("open_jobs") or [] if job.get("window")
+    ]
+    if visits:
+        when = ", ".join(f"{v['window']['weekday']} {v['window']['label']}" for v in visits)
+        notes.append(
+            f"They already have a visit booked ({when}). To move it, call reschedule_appointment "
+            "for that visit, never book_appointment; book a new visit only for a different problem "
+            "the caller confirms."
+        )
+    return notes
 
 
 def house_guidance(guidance: dict[str, list[str]]) -> str:
@@ -114,9 +144,11 @@ def greeting(start: dict, voice: dict) -> str:
     voice = spoken(start, voice)
     customers = [c for c in start.get("customers", []) if c.get("residential")]
     name = first_name(customers[0]["name"]) if len(customers) == 1 else ""
+    # What the caller asked to be called on a linked call or their record ("Dr. Patel") wins.
+    name = start.get("preferred_name") or name
     linked = start.get("linked_call") or {}
     if linked.get("dropped") and "greeting_linked" in voice:
-        name = name or linked.get("caller_name") or ""
+        name = name or linked.get("preferred_name") or linked.get("caller_name") or ""
         if name:
             return voice["greeting_linked"].format(first_name=name)
         return voice["greeting_linked_unknown"]
@@ -162,19 +194,28 @@ SERVER_NOTES = {
         "The caller is pressing to be seen first but gave no new fact. Say one calm line that you'll "
         "get them the soonest opening there is, such as \"I understand, and I'll get you the soonest "
         "opening we have.\" Don't argue, explain how the order works, talk about payment, or name or "
-        "promise a level. Then carry on where the call was. Before you offer times, ask once, as its own question, "
-        "whether anyone at home is older, a baby, or on medical equipment. When you have times, "
-        "offer the soonest window find_slots gives, or to have someone from the team call them "
-        "back. Mention 911 only if they describe someone in danger right now. Never describe this "
-        "note."
+        "promise a level. Then carry on where the call was. Before you offer times, ask once, as its "
+        "own question, whether anyone at home is older, a baby, or on medical equipment. When you "
+        "have times, offer the soonest window find_slots gives, or to have someone from the team "
+        "call them back. Mention 911 only if they describe someone in danger right now. Never "
+        "describe this note."
     ),
     "priority_pushed_asked": (
         "The caller is pressing to be seen first but gave no new fact. Say one calm line that you'll "
         "get them the soonest opening there is, such as \"I understand, and I'll get you the soonest "
         "opening we have.\" Don't argue, explain how the order works, talk about payment, or name or "
-        "promise a level, and don't ask again who's at home. Carry on where the call was; when you have times, offer "
-        "the soonest window find_slots gives, or to have someone from the team call them back. Mention 911 only if they describe someone in danger "
-        "right now. Never describe this note."
+        "promise a level, and don't ask again who's at home. Carry on where the call was; when you "
+        "have times, offer the soonest window find_slots gives, or to have someone from the team "
+        "call them back. Mention 911 only if they describe someone in danger right now. Never "
+        "describe this note."
+    ),
+    "preferred_name": (
+        "The caller asked to be called by the name under \"call them\". Use it from now on, "
+        "without remarking on it beyond a short \"Sure\" if they asked you directly."
+    ),
+    "preferred_name_refused": (
+        "The caller asked to be called something the company doesn't use. Don't use it; carry on "
+        "with their name, or no name, without comment."
     ),
     "approval_unclear": (
         "Who can approve the work isn't settled. Offer a callback to confirm who can approve, with "
@@ -365,7 +406,7 @@ class SpokenReply:
 
     def tool_done(self, name: str, envelope: dict) -> None:
         data = envelope.get("data") or {}
-        if name == "check_service_area" and envelope.get("ok"):
+        if name in ("check_service_area", "find_address") and envelope.get("ok"):
             self.address_checked = True
         if name == "find_slots" and (data.get("priority") or {}).get("level") == "Urgent":
             self.urgent = True
@@ -454,6 +495,16 @@ def spoken_by_server(name: str, envelope: dict) -> str | None:
     if not say:
         return None
     if envelope.get("refused") == "gate_safety":
+        return say
+    # The caller's ZIP against the address the lookup found: the server's own question, said as
+    # written, since it names both ZIPs, which a restatement check would otherwise drop.
+    if envelope.get("refused") == "zip_mismatch":
+        return say
+    # The address lookup's questions (which one, spell it, the ZIP), as written, so the caller
+    # hears one plain question rather than the model's account of the lookup.
+    if name == "find_address" and envelope.get("refused") in (
+        "address_several", "address_not_found", "address_lookup_down"
+    ):
         return say
     if name == "read_back" and (envelope.get("ok") or envelope.get("refused") == "gate_read_back"):
         return say

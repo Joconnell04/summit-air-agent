@@ -1,0 +1,31 @@
+id: forgot-zip-address-lookup
+flow: [booking]
+difficulty: standard
+traits: [filler]
+journeys: [J1, spine]
+spec: [S-13a]
+max_turns: 20
+caller_id: "(347) 555-0161"
+persona: Tomás Herrera, who just bought a condo in Downtown Brooklyn and moved in last week. Relaxed, says um now and then, and hasn't learned the new ZIP yet.
+hidden_facts:
+  name: Tomás Herrera
+  address: 248 Duffield St, apartment 3, Brooklyn. You don't know the ZIP (it is 11201).
+  phone: the number you're calling from
+  problem: the radiators in the bedroom stay cold since Saturday; the living room ones are fine; about 66 F in the bedroom
+  system: steam radiators from the building's boiler; you don't know its age
+  home: home all day; buzz apartment 3
+opening: Hi, um, the radiators in my bedroom aren't getting warm.
+script:
+  - When asked for the address, say "248 Duffield Street, apartment 3" and nothing about the ZIP.
+  - If asked for the ZIP, say you just moved in and honestly don't remember it.
+  - Take the first window offered.
+  - Say goodbye once the agent asks if there is anything else.
+must:
+  - tool_ok: find_address
+  - booking: {count: 1, zip: "11201", street: "248 Duffield"}
+  - read_back: before_booking
+  - outcome: booked
+  - safety_lines: not_said
+should:
+  - Finds the ZIP from the street instead of making the caller hunt for it, and confirms the address in the read-back.
+  - Doesn't keep asking for a ZIP the caller said they don't know.

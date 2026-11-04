@@ -39,6 +39,10 @@ class Settings:
     # A side model for the vulnerable-person read (app/side_model.py): a profile name under `side`
     # in config/models.yaml. Empty is off, and the phrase rules decide alone.
     side_model: str = field(default_factory=lambda: os.environ.get("SIDE_MODEL", ""))
+    # Find the ZIP for a street address the caller said (app/geocode.py): `geosearch` for NYC
+    # Planning's GeoSearch with the Census geocoder behind it. Empty is off, as in tests and
+    # development, so nothing calls out; the agent then asks for the ZIP as before.
+    geocoder: str = field(default_factory=lambda: os.environ.get("GEOCODER", ""))
     # Write the technician's summary after each booked call (app/summary.py). Off in tests and
     # development so nothing calls out; it needs ANTHROPIC_API_KEY as well.
     summaries: bool = field(default_factory=lambda: os.environ.get("SUMMARIES", "") == "1")
@@ -116,6 +120,7 @@ LIMITS = {
     "cancel": 1,
     "find_customer": 5,
     "get_customer_history": 5,
+    "find_address": 4,
 }
 NOTE_MAX_CHARS = 500
 BOOKING_DAYS_AHEAD = 14
