@@ -168,6 +168,9 @@ fsm:
 lines:
   account_choice: Should that address go on its own account, with you as a contact, or under your account?
   account_name: Whose name should the account for that address be under?
+  address_ask_zip: What's the ZIP code there?
+  address_not_found: I'm not finding that street. Could you spell the street name for me?
+  address_which: Is that the one in {places}?
   after_confirmation: Anything else?
   anything_else_first: Is there anything else I can help with?
   approval_callback: Before the technician heads out, someone from our team will call you {when} to confirm
@@ -218,6 +221,7 @@ lines:
   transfer_prompt: Summit Air has a caller for the {role}. Press 1 to take the call.
   transfer_summary: '{priority}Caller at {phone}: {reason}. Putting you through now.'
   urgent_priority: I've marked this call top priority, so you get our soonest opening.
+  zip_mismatch: I have {street} in {where} as {found}, not {said}. Which one is right?
 on_call_alerts:
   email: on-call@summit-air.example
   max_age_minutes: 120

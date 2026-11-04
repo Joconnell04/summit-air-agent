@@ -506,6 +506,23 @@ def pace(arg: dict, ev: Evidence) -> list[str]:
     return problems
 
 
+def preferred_name(arg: str, ev: Evidence) -> list[str]:
+    """The form of address the server kept from the caller's words (app/address_as.py): this
+    name, or `none` when nothing was kept."""
+    kept = [r["name"] for r in ev.trace.get("names", [])]
+    if arg == "none":
+        return [f"kept {kept[0]!r}, expected none"] if kept else []
+    if kept != [arg]:
+        return [f"kept {kept[0] if kept else 'nothing'}, expected {arg!r}"]
+    return []
+
+
+def tool_refused(arg: Any, ev: Evidence) -> list[str]:
+    """Each refusal code came back from some tool on the call, such as `zip_mismatch`."""
+    codes = {e["refused"] for e in ev.tools() if e["refused"]}
+    return [f"no tool was refused with {code}" for code in _as_list(arg) if code not in codes]
+
+
 def _recorded_or_zip(arg: Any) -> None:
     if arg != "recorded" and not re.fullmatch(r"\d{5}", str(arg)):
         raise ValueError(f"expected recorded or a five-digit ZIP, got {arg!r}")
@@ -552,6 +569,8 @@ CHECKS: dict[str, Check] = {
     "said_booked": Check(_one_of("only_after_booking"), said_booked, lambda arg: True),
     "slot_taken": Check(_one_of("told_plainly"), slot_taken),
     "pace": Check(_pace_arg, pace),
+    "preferred_name": Check(_any, preferred_name, lambda arg: arg == "none"),
+    "tool_refused": Check(_any, tool_refused),
 }
 
 

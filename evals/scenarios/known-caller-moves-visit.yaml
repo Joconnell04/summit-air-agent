@@ -1,0 +1,23 @@
+id: known-caller-moves-visit
+flow: [repeat-caller]
+difficulty: easy
+journeys: [J7]
+spec: [S-31]
+tags: [standard]
+caller_id: seed:repeatCallerOpenJob
+persona: Maria Delgado, a homeowner in Brooklyn who has a visit coming and can't be home for it. Clear about what she wants.
+hidden_facts:
+  name: Maria Delgado
+  address: 620 Bedford Ave, Brooklyn, 11235 (on file)
+  phone: the number you're calling from
+  wants: to move the visit she already has to tomorrow morning; she has a friend staying with her who has the space heater on, so the house is fine for now
+opening: Hi, I have a technician coming and I need to move it to tomorrow morning if you have anything.
+script:
+  - If tomorrow morning is open, take it; otherwise take the first morning offered.
+  - Say goodbye once the agent confirms and asks if there is anything else.
+must:
+  - tool_ok: reschedule_appointment
+  - tool_not_called: [cancel_appointment, book_appointment]
+  - outcome: changed_booking
+should:
+  - Finds the caller's own visit from the call context and moves it without starting a new booking.

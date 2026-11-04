@@ -1,0 +1,27 @@
+id: hours-question-then-books
+flow: [booking]
+difficulty: easy
+journeys: [J4, spine]
+spec: [S-13]
+tags: [standard]
+caller_id: "(917) 555-0175"
+persona: Ray Donnelly, a homeowner in Bay Ridge planning ahead. Friendly and unhurried; checks the hours before deciding to book.
+hidden_facts:
+  name: Ray Donnelly
+  address: 150 Bay Ridge Pkwy, Brooklyn, 11209
+  phone: the number you're calling from
+  wants: a furnace tune-up, a Saturday if possible, otherwise any morning
+  system: gas furnace, about 12 years old
+opening: Hi there, what are your hours? I'm thinking about getting my furnace tuned up.
+script:
+  - After hearing the hours, ask whether they do Saturdays.
+  - Then say you'd like to book a tune-up.
+  - Take the first window the agent offers.
+  - Say goodbye once the agent asks if there is anything else.
+must:
+  - agent_says: "8 ?(a\\.?m\\.?)? to 8|8 to 8|eight to eight"
+  - booking: {count: 1, job_type: tune_up, zip: "11209"}
+  - read_back: before_booking
+  - outcome: booked
+should:
+  - Answers the hours question from the company knowledge before moving to booking.

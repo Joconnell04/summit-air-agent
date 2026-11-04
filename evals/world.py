@@ -12,11 +12,14 @@ from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 
 import httpx
+import yaml
 from fastapi.testclient import TestClient
 
 from app import rules
+from app.geocode import Area
 from app.main import create_app
 from app.settings import Settings
+from evals import addresses
 from servicetitan_mock.app import create_app as create_mock
 from servicetitan_mock.seed import build_world
 
@@ -32,6 +35,10 @@ TRANSFER_NUMBERS = {
     "TRANSFER_ON_CALL_NUMBER": "+12125550190",
 }
 _seed_lock = threading.Lock()
+# What callers say for each borough, as the server reads it (config.yaml address_lookup).
+TENANT_BOROUGHS = Area.from_config(
+    yaml.safe_load((TENANT_DIR / "config.yaml").read_text())["address_lookup"]
+).boroughs
 
 
 class Clock:
@@ -154,7 +161,13 @@ class World:
         fsm = TestClient(mock, raise_server_exceptions=False)
         if fsm_down:
             fsm = FsmDown(fsm, fsm_down)
-        app = create_app(settings, clock=self.clock, fsm_clients={"summit-air": fsm})
+        # The address lookup answers from recorded GeoSearch results (evals/addresses.py).
+        app = create_app(
+            settings,
+            clock=self.clock,
+            fsm_clients={"summit-air": fsm},
+            geocoder=addresses.geocoder(TENANT_BOROUGHS),
+        )
         if overlay is not None:
             # An owner draft under the eval gate is live in this world, so every call goes through
             # the same path a real call takes (app/rules.py).

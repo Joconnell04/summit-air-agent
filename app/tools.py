@@ -14,7 +14,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass, field
 from datetime import date, datetime, time, timedelta
 
-from . import booking, lookup, outbound, pace, records, safety, transfer, weather
+from . import booking, geocode, lookup, outbound, pace, records, safety, transfer, weather
 from . import capacity as capacity_rules
 from . import priority as prio
 from .db import iso, tx
@@ -27,6 +27,7 @@ from .schemas import (
     CancelIn,
     DoNotCallIn,
     EndCallIn,
+    FindAddressIn,
     FindCustomerIn,
     FindSlotsIn,
     FlagIn,
@@ -70,6 +71,8 @@ class Ctx:
     # Where the transfer numbers are read from (app/transfer.py): the server's environment, or a
     # scratch mapping in evals so a run never reads a real number.
     numbers: Mapping[str, str] = field(default_factory=lambda: os.environ)
+    # The address lookup (app/geocode.py); None when GEOCODER is off, and the agent asks for ZIPs.
+    geocoder: geocode.Geocoder | None = None
 
     def reload(self) -> None:
         self.call = records.get_call(self.conn, self.call["id"])
@@ -128,7 +131,8 @@ def _zip_known(ctx: Ctx, zip_code: str) -> None:
     """A ZIP the server acts on came from the caller or their record, never from the model: it was
     said in a caller line on this call or one linked to it ("one one two two six" counts), or it is
     on a location of a customer matched on this call. Otherwise the agent asks for it, so a guessed
-    ZIP can't turn a caller away as out of area or put a booking at the wrong place."""
+    ZIP can't turn a caller away as out of area or put a booking at the wrong place. A ZIP the
+    address lookup found for a house and street the caller said counts too (find_address)."""
     ids = records.thread(ctx.conn, ctx.call["id"])
     lines = ctx.conn.execute(
         f"SELECT text FROM turns WHERE speaker = 'caller' "
@@ -146,11 +150,204 @@ def _zip_known(ctx: Ctx, zip_code: str) -> None:
             continue
         if any(loc["address"]["zip"] == zip_code for loc in on_file):
             return
+    # A ZIP the lookup found for a house and street the caller said (find_address).
+    found = ctx.conn.execute(
+        f"SELECT zips_json FROM address_lookups WHERE status = 'one' "
+        f"AND call_id IN ({','.join('?' * len(ids))})",
+        ids,
+    )
+    if any(zip_code in json.loads(row["zips_json"]) for row in found):
+        return
     raise Refused(
         "zip_not_heard",
         "What's the ZIP code there?",
         need="ask the caller for the ZIP; use only one they say",
         zip=zip_code,
+    )
+
+
+# ---- the address lookup --------------------------------------------------------------------
+
+
+def _caller_lines(ctx: Ctx) -> list[sqlite3.Row]:
+    """Caller lines on this call and the calls linked to it, oldest first."""
+    ids = records.thread(ctx.conn, ctx.call["id"])
+    return ctx.conn.execute(
+        f"SELECT call_id, seq, text FROM turns WHERE speaker = 'caller' "
+        f"AND call_id IN ({','.join('?' * len(ids))}) ORDER BY at, seq",
+        ids,
+    ).fetchall()
+
+
+def _address_said(ctx: Ctx, house: str, street: str) -> bool:
+    """The house number and the street's name came from the caller's lines, digits or words, so
+    a lookup can't turn a street the model made up into a ZIP. The name is matched loosely, with
+    spaces dropped, so a street spelled letter by letter counts."""
+    lines = [r["text"] for r in _caller_lines(ctx)]
+    want = geocode.house_key(house)
+    runs = {run for line in lines for run in digit_runs(line)}
+    # The whole run, or the house number run into a ZIP or phone said straight after it.
+    if not any(
+        run == want or (run.startswith(want) and len(run) - len(want) in (5, 10)) for run in runs
+    ):
+        return False
+    text = " ".join(lines)
+    # Compared both as said and as the street key writes it ("court" is "ct" there).
+    said = words(text).replace(" ", "") + " " + street_key(text).replace(" ", "")
+    return any(w in said for w in geocode.street_name_words(street))
+
+
+def _record_lookup(ctx: Ctx, house: str, street: str, hint: str, found: geocode.Found) -> None:
+    with tx(ctx.conn):
+        ctx.conn.execute(
+            "INSERT INTO address_lookups (call_id, house, street, hint, status, zips_json, "
+            "source, at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            (
+                ctx.call["id"],
+                geocode.house_key(house),
+                geocode.street_match_key(street),
+                hint,
+                found.status,
+                json.dumps(found.zips()),
+                found.source,
+                iso(ctx.now),
+            ),
+        )
+
+
+def _places_spoken(places: tuple[geocode.Place, ...]) -> str:
+    """ "Brooklyn or Manhattan", or the neighborhoods when the boroughs are the same."""
+    boroughs = [p.borough for p in places]
+    if all(boroughs) and len(set(boroughs)) == len(boroughs):
+        return _join(boroughs, "or")
+    areas = [p.area for p in places]
+    if all(areas) and len(set(areas)) == len(areas):
+        return _join(areas, "or")
+    return "ZIP code " + _join([digits_spoken(p.zip) for p in places], "or")
+
+
+def _on_file_here(ctx: Ctx, house: str, street: str, zip_code: str) -> bool:
+    """This address is on a matched customer's record with this ZIP: the company has been there,
+    so the record wins over the lookup."""
+    want = (geocode.house_key(house), geocode.street_match_key(street))
+    for customer_id in records.scoped_customers(ctx.conn, ctx.call["id"]):
+        try:
+            on_file = ctx.fsm.locations(customer_id)
+        except (FsmUnavailable, FsmRejected):
+            continue
+        for loc in on_file:
+            split = geocode.split_address(loc["address"]["street"])
+            if split and loc["address"]["zip"] == zip_code and (
+                geocode.house_key(split[0]),
+                geocode.street_match_key(split[1]),
+            ) == want:
+                return True
+    return False
+
+
+def _zip_mismatch(ctx: Ctx, zip_code: str, street: str | None = None, hint: str = "") -> None:
+    """A ZIP the caller gave that the lookup of their street disagrees with is refused until the
+    caller settles it: the agent reads back the address the lookup found and asks which ZIP is
+    right. Their own ZIP counts again once they say it after that question; the lookup's ZIP
+    counts once they pick it in the read-back. `street` is the address being read back; without
+    it, the addresses in the caller's own lines are checked. A lookup that is slow, down, finds
+    nothing or finds several places leaves the caller's ZIP as it is."""
+    if ctx.geocoder is None:
+        return
+    if street:
+        split = geocode.split_address(street)
+        addresses = [split] if split else []
+    else:
+        addresses = []
+        for row in reversed(_caller_lines(ctx)):
+            for found_address in geocode.addresses_in(row["text"]):
+                if found_address not in addresses:
+                    addresses.append(found_address)
+    for house, name in addresses[:2]:
+        found = ctx.geocoder.find(house, name, hint, wait_s=geocode.CHECK_WAIT_S)
+        if found.status != "one" or found.places[0].zip == zip_code:
+            continue
+        if _on_file_here(ctx, house, name, zip_code):
+            continue
+        _ask_mismatch(ctx, house, name, found.places[0], zip_code, hint)
+
+
+def _ask_mismatch(ctx: Ctx, house: str, street: str, place: geocode.Place, said_zip: str,
+                  hint: str = "") -> None:
+    """Refuse the caller's ZIP for this street until they settle it, unless they already have:
+    said it again after the question. Their own ZIP then stands."""
+    key = (ctx.call["id"], geocode.house_key(house), geocode.street_match_key(street), said_zip)
+    row = ctx.conn.execute(
+        "SELECT * FROM address_checks WHERE call_id = ? AND house = ? AND street = ? "
+        "AND said_zip = ?",
+        key,
+    ).fetchone()
+    if row and row["settled_at"]:
+        return
+    if row and _said_since(ctx, said_zip, row["asked_seq"]):
+        with tx(ctx.conn):
+            ctx.conn.execute(
+                "UPDATE address_checks SET settled_at = ? WHERE call_id = ? AND house = ? "
+                "AND street = ? AND said_zip = ?",
+                (iso(ctx.now), *key),
+            )
+        return
+    # The lookup's ZIP counts as known from here, as a find_address answer would, when the street
+    # came from the caller: the read-back that follows is where they pick it.
+    if _address_said(ctx, house, street):
+        _record_lookup(ctx, house, street, hint, geocode.Found("one", (place,), "check"))
+    with tx(ctx.conn):
+        ctx.conn.execute(
+            "INSERT INTO address_checks (call_id, house, street, said_zip, found_zip, "
+            "asked_seq, at) VALUES (?, ?, ?, ?, ?, ?, ?) "
+            "ON CONFLICT (call_id, house, street, said_zip) DO UPDATE SET "
+            "asked_seq = excluded.asked_seq, asks = asks + 1",
+            (*key, place.zip, ctx.call["turn_seq"], iso(ctx.now)),
+        )
+    raise Refused(
+        "zip_mismatch",
+        ctx.tenant.line(
+            "zip_mismatch",
+            street=place.spoken_street(),
+            where=place.area or place.borough,
+            found=digits_spoken(place.zip),
+            said=digits_spoken(said_zip),
+        ),
+        need="the ZIP the caller gave doesn't match the street; use the ZIP they pick",
+        found_zip=place.zip,
+        said_zip=said_zip,
+        street=place.spoken_street(),
+    )
+
+
+def _zip_said_with(ctx: Ctx, house: str) -> str | None:
+    """The last ZIP the caller said, from the line that gave this house number on: a ZIP said
+    with the address, or a correction after it."""
+    want = geocode.house_key(house)
+    said, started = None, False
+    for row in _caller_lines(ctx):
+        runs = digit_runs(row["text"])
+        if any(r == want or r.startswith(want) for r in runs):
+            started = True
+        if not started:
+            continue
+        for run in runs:
+            if run.startswith(want) and len(run) - len(want) in (5, 9):
+                run = run[len(want):]  # the house number and ZIP said as one run
+            if len(run) in (5, 9) and run != want:
+                said = run[:5]
+    return said
+
+
+def _said_since(ctx: Ctx, zip_code: str, seq: int) -> bool:
+    rows = ctx.conn.execute(
+        "SELECT text FROM turns WHERE call_id = ? AND speaker = 'caller' AND seq > ?",
+        (ctx.call["id"], seq),
+    )
+    return any(
+        run == zip_code or (len(run) == 9 and run.startswith(zip_code))
+        for row in rows
+        for run in digit_runs(row["text"])
     )
 
 
@@ -430,9 +627,96 @@ def get_customer_history(ctx: Ctx, args: HistoryIn) -> Result:
 
 def check_service_area(ctx: Ctx, args: ServiceAreaIn) -> Result:
     _zip_known(ctx, args.zip)
+    _zip_mismatch(ctx, args.zip)
     _out_of_area(ctx, args.zip)
     zone = ctx.tenant.service_area[args.zip]
     return ok(zip=args.zip, in_area=True, area=zone["name"])
+
+
+def find_address(ctx: Ctx, args: FindAddressIn) -> Result:
+    """The ZIP for a house and street the caller said. One place: its ZIP, checked against the
+    service area, for the read-back to confirm. Several (the same street in two boroughs): which
+    one. None: the caller repeats or spells the street, then a second miss asks for the ZIP. A
+    lookup that is down or slow asks for the ZIP."""
+    _limit(ctx, "find_address", records.count_tool(ctx.conn, ctx.call["id"], "find_address"))
+    split = geocode.split_address(args.street)
+    if not split:
+        raise Refused(
+            "invalid_arguments",
+            "What's the house number there?",
+            errors={"street": "needs the house number"},
+        )
+    house, street = split
+    if not _address_said(ctx, house, street):
+        raise Refused(
+            "address_not_heard",
+            "What's the street address there?",
+            need="look up only a house number and street the caller said",
+        )
+    found = (
+        ctx.geocoder.find(house, street, args.borough)
+        if ctx.geocoder
+        else geocode.Found("unavailable")
+    )
+    _record_lookup(ctx, house, street, args.borough, found)
+    # A ZIP the caller already gave goes on when the lookup can't settle one, so nobody is asked
+    # for a ZIP they just said; with several places, it picks one of them.
+    said = _zip_said_with(ctx, house)
+    if found.status == "several" and said in found.zips():
+        found = geocode.Found("one", tuple(p for p in found.places if p.zip == said), found.source)
+    if said and found.status in ("unavailable", "none"):
+        _out_of_area(ctx, said)
+        return ok(
+            zip=said,
+            street=args.street,
+            from_caller=True,
+            in_area=True,
+            area=ctx.tenant.service_area[said]["name"],
+            note="The lookup couldn't confirm the street; the caller's ZIP stands.",
+        )
+    if found.status == "unavailable":
+        raise Refused(
+            "address_lookup_down", ctx.tenant.line("address_ask_zip"), need="ask for the ZIP"
+        )
+    if found.status == "none":
+        thread = records.thread(ctx.conn, ctx.call["id"])
+        misses = ctx.conn.execute(
+            f"SELECT COUNT(*) FROM address_lookups WHERE status = 'none' "
+            f"AND call_id IN ({','.join('?' * len(thread))})",
+            thread,
+        ).fetchone()[0]
+        if misses >= 2:
+            raise Refused(
+                "address_not_found", ctx.tenant.line("address_ask_zip"), need="ask for the ZIP"
+            )
+        raise Refused(
+            "address_not_found",
+            ctx.tenant.line("address_not_found"),
+            need="ask the caller to spell the street, then look it up again with spelled",
+        )
+    if found.status == "several":
+        raise Refused(
+            "address_several",
+            ctx.tenant.line("address_which", places=_places_spoken(found.places)),
+            need="ask which one, then look it up again with borough",
+            places=[
+                {"borough": p.borough, "neighborhood": p.area, "zip": p.zip} for p in found.places
+            ],
+        )
+    place = found.places[0]
+    # A ZIP the caller gave with this address that the lookup disagrees with is asked about.
+    if said and said != place.zip and not _on_file_here(ctx, house, street, said):
+        _ask_mismatch(ctx, house, street, place, said)
+    _out_of_area(ctx, place.zip)
+    zone = ctx.tenant.service_area[place.zip]
+    return ok(
+        street=place.spoken_street(),
+        zip=place.zip,
+        borough=place.borough,
+        neighborhood=place.area,
+        in_area=True,
+        area=zone["name"],
+    )
 
 
 def find_slots(ctx: Ctx, args: FindSlotsIn) -> Result:
@@ -593,6 +877,7 @@ def read_back(ctx: Ctx, args: ReadBackIn) -> Result:
     line followed it (spec S-26)."""
     phone = _resolve_phone(ctx, args.phone)
     _zip_known(ctx, args.address.zip)
+    _zip_mismatch(ctx, args.address.zip, args.address.street, args.address.city)
     address = args.address.model_dump()
     place = address["street"] + (f", unit {address['unit']}" if address["unit"] else "")
     city = f", {address['city']}" if address["city"] else ""
@@ -666,6 +951,14 @@ def book_appointment(ctx: Ctx, args: BookIn) -> Result:
             need="read_back",
         )
     readback = records.readback(ctx.call)
+    try:
+        # A lookup that came back after the read-back can still stop a booking at a ZIP the
+        # caller hasn't settled; the address is then read back again.
+        _zip_mismatch(ctx, readback["zip"], readback["street"], readback["city"])
+    except Refused:
+        with tx(ctx.conn):
+            records.update_call(ctx.conn, ctx.call["id"], readback_confirmed_at=None)
+        raise
     _out_of_area(ctx, readback["zip"])
     if not args.separate_problem:
         _open_job_here(ctx, readback)
@@ -1634,6 +1927,7 @@ TOOLS = {
     "find_customer": (find_customer, FindCustomerIn, False),
     "get_customer_history": (get_customer_history, HistoryIn, False),
     "check_service_area": (check_service_area, ServiceAreaIn, False),
+    "find_address": (find_address, FindAddressIn, False),
     "find_slots": (find_slots, FindSlotsIn, False),
     "read_back": (read_back, ReadBackIn, False),
     "book_appointment": (book_appointment, BookIn, True),

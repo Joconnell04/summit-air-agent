@@ -167,7 +167,8 @@ def count(agent: Agent, sql: str, *params) -> int:
         conn.close()
 
 
-def make_server(tmp_path, clock, mock_app, side_model=None, guidance=None, **settings):
+def make_server(tmp_path, clock, mock_app, side_model=None, guidance=None, geocoder=None,
+                **settings):
     """The tool server on a scratch database, talking to the in-process mock, with a guidance
     check that passes everything unless the test gives its own."""
     config = Settings(
@@ -179,7 +180,7 @@ def make_server(tmp_path, clock, mock_app, side_model=None, guidance=None, **set
     )
     fsm = TestClient(mock_app, raise_server_exceptions=False)
     return create_app(config, clock=clock, fsm_clients={"summit-air": fsm}, side_model=side_model,
-                      guidance_check=guidance or FakeCheck())
+                      guidance_check=guidance or FakeCheck(), geocoder=geocoder)
 
 
 # One password for every test account; long enough for the account rules.

@@ -509,3 +509,47 @@ CREATE TABLE IF NOT EXISTS caller_pace (
     set_at TEXT NOT NULL,
     PRIMARY KEY (tenant, phone_key)
 );
+
+-- Addresses looked up with find_address (app/geocode.py). `status` is one, several, none or
+-- unavailable; `zips_json` the ZIPs found. A ZIP from a `one` lookup counts as known for the ZIP
+-- gate (tools._zip_known), since the house and street came from the caller's own lines.
+CREATE TABLE IF NOT EXISTS address_lookups (
+    id INTEGER PRIMARY KEY,
+    call_id TEXT NOT NULL REFERENCES calls (id) ON DELETE CASCADE,
+    house TEXT NOT NULL,
+    street TEXT NOT NULL,
+    hint TEXT NOT NULL DEFAULT '',
+    status TEXT NOT NULL,
+    zips_json TEXT NOT NULL,
+    source TEXT NOT NULL DEFAULT '',
+    at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS ix_address_lookups_call ON address_lookups (call_id);
+
+-- A ZIP the caller gave that the lookup of their street disagrees with. The agent asked which is
+-- right after the turn numbered `asked_seq`; the caller's ZIP counts again only once they say it
+-- after that question (tools._zip_mismatch).
+CREATE TABLE IF NOT EXISTS address_checks (
+    call_id TEXT NOT NULL REFERENCES calls (id) ON DELETE CASCADE,
+    house TEXT NOT NULL,
+    street TEXT NOT NULL,
+    said_zip TEXT NOT NULL,
+    found_zip TEXT NOT NULL,
+    asked_seq INTEGER NOT NULL,
+    asks INTEGER NOT NULL DEFAULT 1,
+    settled_at TEXT,
+    at TEXT NOT NULL,
+    PRIMARY KEY (call_id, house, street, said_zip)
+);
+
+-- What the caller asked to be called ("call me Dr. Patel"), from their own words
+-- (app/address_as.py). The latest line wins. `saved_at` is when it went onto the customer record
+-- as a note, after the call.
+CREATE TABLE IF NOT EXISTS call_names (
+    call_id TEXT PRIMARY KEY REFERENCES calls (id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    seq INTEGER NOT NULL,
+    source TEXT NOT NULL,
+    at TEXT NOT NULL,
+    saved_at TEXT
+);

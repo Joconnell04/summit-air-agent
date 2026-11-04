@@ -1,0 +1,29 @@
+id: renter-landlord-approves-books
+flow: [booking, renter]
+difficulty: easy
+journeys: [J1, J6, spine]
+spec: [S-13]
+tags: [standard]
+caller_id: "(646) 555-0167"
+persona: Sofia Marino, who rents a floor-through apartment in Carroll Gardens. Clear and organized; her landlord already told her to go ahead and book.
+hidden_facts:
+  name: Sofia Marino
+  address: 455 Court St, apartment 2R, Brooklyn, 11231
+  phone: the number you're calling from
+  problem: the heat comes on but the apartment only gets to about 67 F; since Sunday
+  system: gas furnace in the basement, age unknown
+  approver: the landlord, Sal Russo, who already said to book it
+  home: home after 12 on weekdays
+opening: Hi, I rent an apartment and the heat isn't keeping up. My landlord said to call you and book someone.
+script:
+  - If asked who approves the work, say "My landlord, Sal Russo, he already said to go ahead."
+  - Take the first afternoon offered.
+  - Say goodbye once the agent asks if there is anything else.
+must:
+  - booking: {count: 1, job_type: no_heat, zip: "11231"}
+  - read_back: before_booking
+  - tool_not_called: flag_person
+  - outcome: booked
+  - safety_lines: not_said
+should:
+  - Records the landlord as the approver without asking for anything more about approval.

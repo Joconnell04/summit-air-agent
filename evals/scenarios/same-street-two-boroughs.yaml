@@ -1,0 +1,29 @@
+id: same-street-two-boroughs
+flow: [booking]
+difficulty: standard
+traits: [vague]
+journeys: [J1, spine]
+spec: [S-13a]
+max_turns: 20
+caller_id: "(917) 555-0162"
+persona: Marcus Bell, who lives in an apartment in DUMBO. Short answers, assumes everyone knows where Main Street is, doesn't know the ZIP offhand.
+hidden_facts:
+  name: Marcus Bell
+  address: 1 Main St, apartment 5F, in DUMBO, Brooklyn. You don't know the ZIP (it is 11201).
+  phone: the number you're calling from
+  wants: a heating tune-up before winter, any afternoon
+  system: a heat pump, about 4 years old
+opening: Hey, I want to get my heat looked at before it gets cold. Just a tune-up.
+script:
+  - When asked for the address, say only "1 Main Street, 5F."
+  - Say "Brooklyn, in DUMBO" only when the agent asks which one, which borough or where that is.
+  - If asked for the ZIP, say you don't know it offhand.
+  - Take the first afternoon offered.
+  - Say goodbye once the agent asks if there is anything else.
+must:
+  - tool_ok: find_address
+  - booking: {count: 1, job_type: tune_up, zip: "11201"}
+  - read_back: before_booking
+  - outcome: booked
+should:
+  - Asks which borough or neighborhood once, plainly, rather than guessing.

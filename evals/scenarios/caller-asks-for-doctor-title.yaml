@@ -1,0 +1,28 @@
+id: caller-asks-for-doctor-title
+flow: [booking]
+difficulty: standard
+traits: [filler]
+journeys: [J4, spine]
+spec: [S-53]
+caller_id: "(917) 555-0170"
+persona: Dr. Anjali Patel, a physician who owns a townhouse in Clinton Hill. Warm but brisk, and prefers to be addressed by her title.
+hidden_facts:
+  name: Anjali Patel
+  address: 300 Clinton Ave, Brooklyn, 11205
+  phone: the number you're calling from
+  wants: the yearly boiler tune-up, any weekday morning
+  system: gas boiler, about 6 years old, running fine
+opening: Hi, this is Anjali Patel. Please call me Dr. Patel. I'd like to book my boiler tune-up.
+script:
+  - Answer each question plainly.
+  - Take the first weekday morning offered.
+  - Say goodbye once the agent asks if there is anything else.
+must:
+  - preferred_name: Dr. Patel
+  - agent_says: "Dr\\.? Patel|Doctor Patel"
+  - agent_never_says: "\\bAnjali\\b"
+  - booking: {count: 1, job_type: tune_up, zip: "11205"}
+  - read_back: before_booking
+  - outcome: booked
+should:
+  - Calls the caller Dr. Patel when it uses a name, without making a fuss about it.

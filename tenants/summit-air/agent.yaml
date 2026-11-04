@@ -352,6 +352,13 @@ lines:
   out_of_area: >-
     I'm sorry, that's outside the area we cover, so we're not able to send someone. A local heating
     company should be able to help.
+  # The address lookup (tools.find_address and the ZIP check). {street} is "248 Duffield Street",
+  # {where} the neighborhood or borough, {found} and {said} ZIPs written out digit by digit.
+  zip_mismatch: >-
+    I have {street} in {where} as {found}, not {said}. Which one is right?
+  address_which: Is that the one in {places}?
+  address_not_found: I'm not finding that street. Could you spell the street name for me?
+  address_ask_zip: What's the ZIP code there?
   do_not_call: Understood, we won't call you.
   do_not_call_with_callback: >-
     Understood, we won't call you. That means the callback is off, so give us a call any time you

@@ -189,6 +189,8 @@ class Tenant:
         self.membership_types = {m["id"]: m for m in company["membership_types"]}
         self.equipment_labels: dict = company.get("equipment_labels", {})
         self.service_area = {z: zone for zone in company["zones"] for z in zone["zips"]}
+        # Where the address lookup asks and the place names callers use (app/geocode.py).
+        self.address_lookup: dict | None = company.get("address_lookup")
         self.windows = [
             Window(
                 w["id"],

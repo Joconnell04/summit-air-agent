@@ -114,9 +114,11 @@ def greeting(start: dict, voice: dict) -> str:
     voice = spoken(start, voice)
     customers = [c for c in start.get("customers", []) if c.get("residential")]
     name = first_name(customers[0]["name"]) if len(customers) == 1 else ""
+    # What the caller asked to be called on a linked call or their record ("Dr. Patel") wins.
+    name = start.get("preferred_name") or name
     linked = start.get("linked_call") or {}
     if linked.get("dropped") and "greeting_linked" in voice:
-        name = name or linked.get("caller_name") or ""
+        name = name or linked.get("preferred_name") or linked.get("caller_name") or ""
         if name:
             return voice["greeting_linked"].format(first_name=name)
         return voice["greeting_linked_unknown"]
@@ -155,6 +157,14 @@ SERVER_NOTES = {
     "pace_address": (
         "The caller wants the address said more slowly. Call read_back again with the same address "
         "and phone; the voice reads the address slower. Don't say the address yourself first."
+    ),
+    "preferred_name": (
+        "The caller asked to be called by the name under \"call them\". Use it from now on, "
+        "without remarking on it beyond a short \"Sure\" if they asked you directly."
+    ),
+    "preferred_name_refused": (
+        "The caller asked to be called something the company doesn't use. Don't use it; carry on "
+        "with their name, or no name, without comment."
     ),
     "approval_unclear": (
         "Who can approve the work isn't settled. Offer a callback to confirm who can approve, with "
@@ -338,7 +348,7 @@ class SpokenReply:
 
     def tool_done(self, name: str, envelope: dict) -> None:
         data = envelope.get("data") or {}
-        if name == "check_service_area" and envelope.get("ok"):
+        if name in ("check_service_area", "find_address") and envelope.get("ok"):
             self.address_checked = True
         if name == "find_slots" and (data.get("priority") or {}).get("level") == "Urgent":
             self.urgent = True
@@ -427,6 +437,16 @@ def spoken_by_server(name: str, envelope: dict) -> str | None:
     if not say:
         return None
     if envelope.get("refused") == "gate_safety":
+        return say
+    # The caller's ZIP against the address the lookup found: the server's own question, said as
+    # written, since it names both ZIPs, which a restatement check would otherwise drop.
+    if envelope.get("refused") == "zip_mismatch":
+        return say
+    # The address lookup's questions (which one, spell it, the ZIP), as written, so the caller
+    # hears one plain question rather than the model's account of the lookup.
+    if name == "find_address" and envelope.get("refused") in (
+        "address_several", "address_not_found", "address_lookup_down"
+    ):
         return say
     if name == "read_back" and (envelope.get("ok") or envelope.get("refused") == "gate_read_back"):
         return say
