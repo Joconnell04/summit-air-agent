@@ -227,7 +227,18 @@
       </div>
     </section>
     <section class="panel">
-      <div class="panel-head"><h2>Basis and outcome tags</h2><span class="sub">number basis; rule and run outcomes</span></div>
+      <div class="panel-head"><h2>Popover form, basis and outcome tags</h2><span class="sub">the override; number basis; outcomes</span></div>
+      <div class="panel-body spec-row">
+        <details class="more pop" open>
+          <summary><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>Override</summary>
+          <div class="pop-body">
+            <label for="spec-reason">Why skip the check</label>
+            <input class="field" id="spec-reason" placeholder="Fixing a typo in the goodbye">
+            <span class="hint">Publishes at once, without the test calls.</span>
+            <button class="btn" type="button">Publish now</button>
+          </div>
+        </details>
+      </div>
       <div class="panel-body spec-row">{{ basis("MEASURED") }}{{ basis("SOURCE") }}{{ basis("ASSUMED") }}{{ outcome("pass") }}{{ outcome("fail") }}{{ outcome("fired") }}{{ outcome("error") }}{{ outcome("not reached") }}</div>
     </section>
   </div>
