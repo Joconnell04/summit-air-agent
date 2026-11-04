@@ -663,8 +663,21 @@ def book_appointment(ctx: Ctx, args: BookIn) -> Result:
         raise Refused("fsm_rejected", _fsm_down_say(ctx, callback_id, due)) from None
 
     ctx.cache.invalidate()
+    returning = _recent_job_here(ctx, readback)
     with tx(ctx.conn):
         booking.mark_booked(ctx.conn, booking_id, sent, ctx.now)
+        # The same problem back soon after a visit: a person reviews the priority and whether it's
+        # covered, so the agent never has to answer that (journey 7 step 3, eval round 2, seed 10).
+        if returning:
+            records.add_flag(
+                ctx.conn,
+                ctx.call["id"],
+                "person",
+                f"Return visit: job {sent['job_id']} is at the address of job {returning['id']}, "
+                f"finished {returning['completed']}. Review the priority and whether it's covered.",
+                ctx.now,
+                "High",
+            )
         if seek_earlier:
             records.add_flag(
                 ctx.conn,
@@ -684,15 +697,17 @@ def book_appointment(ctx: Ctx, args: BookIn) -> Result:
             "start": request["window_start"],
         },
     )
+    review = f" {ctx.tenant.line('return_visit_review')}" if returning else ""
     result = ok(
         f"You're all set for {when['day']}, with the technician arriving between "
-        f"{when['label'].replace(' to ', ' and ')}.",
+        f"{when['label'].replace(' to ', ' and ')}.{review}",
         booking_id=sent["job_id"],
         appointment_id=sent["appointment_id"],
         window=when,
         priority={"level": decided.level, "reasons": decided.reasons},
         seek_earlier=seek_earlier,
         safety_override=override,
+        return_visit_review=bool(returning),
     )
     if override:
         result.gate = "safety_override"
@@ -722,6 +737,33 @@ def _on_call_first(ctx: Ctx, facts: prio.Facts, decided: prio.Priority) -> None:
             "Let me get this to our on-call technician first.",
             need="flag_person with priority Urgent",
         )
+
+
+def _recent_job_here(ctx: Ctx, readback: dict) -> dict | None:
+    """A job finished at this address within the tenant's return-visit window, for a customer
+    matched on this call. A lookup that fails finds none; the booking stands either way."""
+    days = ctx.tenant.repeat.get("return_visit_days")
+    if not days:
+        return None
+    since = (ctx.now - timedelta(days=days)).isoformat()
+    try:
+        for customer_id in records.scoped_customers(ctx.conn, ctx.call["id"]):
+            here = {
+                loc["id"]
+                for loc in ctx.fsm.locations(customer_id)
+                if booking.same_address(loc, readback)
+            }
+            done = [
+                j
+                for j in ctx.fsm.jobs(customer_id, ["Completed"])
+                if j["locationId"] in here and (j.get("completedOn") or "") >= since[:19]
+            ]
+            if done:
+                last = max(done, key=lambda j: j["completedOn"])
+                return {"id": last["id"], "completed": last["completedOn"][:10]}
+    except (FsmUnavailable, FsmRejected):
+        return None
+    return None
 
 
 def _open_job_here(ctx: Ctx, readback: dict) -> None:

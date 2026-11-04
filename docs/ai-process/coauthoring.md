@@ -218,7 +218,7 @@ Changed:
 - Journey 7 step 5: linked by same number, within a few minutes or later the same day after a drop; the greeting confirms the person by name; never two bookings across the calls.
 - Journey 7 step 6 (new): another address can be booked; the agent asks whose account it goes on, its own account with the caller as contact being the usual choice. Steps after it renumbered.
 - Journey 9 step 3: a second opinion never judges the other quote and offers a comfort advisor to come out and quote, since the knowledge folder says replacements are quoted by a comfort advisor and never on the phone.
-Commit: (pending)
+Commit: a8108c7 (saved as a WIP commit when the app quit; this round's text is in it)
 Status: open
 
 ## spec r8 (amendment after lock: eval round 2, second half)
@@ -230,5 +230,5 @@ Changed:
 - S-32: callback windows can be tomorrow, bare hours are daytime, the window is kept for the person calling.
 - S-38: same number and same day are the gate, the greeting checks the name, never two bookings across the calls.
 - S-41a (new): no legal advice, and another company's quote is never judged.
-Commit: (pending)
+Commit: a8108c7 (saved as a WIP commit when the app quit; this round's text is in it)
 Status: open

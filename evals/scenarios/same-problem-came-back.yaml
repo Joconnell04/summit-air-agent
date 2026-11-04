@@ -23,7 +23,7 @@ must:
   - read_back: before_booking
   - booking: {count: 1, zip: "11368"}
   - flag: person
-  - agent_never_says: ["refund", "credit", "warranty (covers|will cover)", "no charge", "(it'?s|that'?s|you'?re|will be) (covered|free)"]
+  - agent_never_says: ["refund", "credit", "warranty (covers|will cover)", "no charge", "(?<!whether )(?<!if )(it'?s|that'?s|you'?re|will be) (covered|free)"]
 should:
   - Books a return visit and says a person will review it.
   - Says someone will confirm whether it is covered, without promising a refund, credit, warranty or free visit.

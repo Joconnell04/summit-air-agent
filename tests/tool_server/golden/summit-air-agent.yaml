@@ -138,6 +138,8 @@ lines:
   read_back: 'Let me read that back: your home at {address}, and the best number is {phone}. Is that right?'
   repeated_drops: Looks like we keep getting cut off, the signal might be spotty. Want me to have someone
     call you back in a few minutes instead?
+  return_visit_review: Since we were just out there, a manager will look over this visit, including whether
+    it's covered, before the technician arrives.
   slot_taken: That window just filled up.
   urgent_priority: I've marked this as one of our most urgent calls, so you get our soonest opening.
 on_call_alerts:
@@ -424,6 +426,7 @@ priority:
 repeat_callers:
   drops_before_callback_offer: 2
   link_within_minutes: 10
+  return_visit_days: 30
 retention:
   call_record_days: 365
   transcript_days: 30

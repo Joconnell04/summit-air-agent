@@ -716,3 +716,30 @@ def test_business_callers_are_recognized_from_their_words(line):
 )
 def test_home_callers_are_not_marked_commercial(line):
     assert not sounds_commercial(line, AGENT["commercial"]), line
+
+
+def test_the_same_problem_back_after_a_recent_visit_flags_a_person_to_review_it(agent, scenarios):
+    """Eval round 2, seed 10: a return visit is booked and a person reviews priority and cost."""
+    thomas = scenarios["jobDoneLastWeek"]
+    call = agent.start(thomas["phone"])["data"]["call_id"]
+    agent.turn(call, "You were here last week for no heat and it's out again.")
+    agent.confirm_read_back(
+        call, {"street": "800 Springfield Blvd", "unit": "", "city": "Queens", "zip": "11368"}
+    )
+    booked = book(agent, call, first_open(agent, call, "no_heat"), job_type="no_heat")
+    assert booked["ok"], booked
+    assert booked["data"]["return_visit_review"] is True
+    assert "a manager will look over this visit" in booked["say"]
+    assert count(
+        agent,
+        "SELECT COUNT(*) FROM flags WHERE call_id = ? AND kind = 'person' AND reason LIKE ?",
+        call,
+        "Return visit:%",
+    ) == 1
+
+
+def test_a_first_visit_flags_no_one(agent):
+    call = ready_to_book(agent)
+    booked = book(agent, call, first_open(agent, call))
+    assert booked["data"]["return_visit_review"] is False
+    assert count(agent, "SELECT COUNT(*) FROM flags WHERE call_id = ?", call) == 0

@@ -129,7 +129,17 @@ def ready_to_book(agent: Agent, caller_id: str = UNKNOWN, address: dict | None =
     return call_id
 
 
-def book(agent: Agent, call_id: str, slot: dict, job_type: str = "tune_up", key=None, **details):
+def book(
+    agent: Agent,
+    call_id: str,
+    slot: dict,
+    job_type: str = "tune_up",
+    key=None,
+    account: str | None = None,
+    **details,
+):
+    """account is new_address_account, for a caller on file booking an address not on file."""
+    extra = {"new_address_account": account} if account else {}
     return agent.tool(
         "book_appointment",
         call_id,
@@ -137,6 +147,7 @@ def book(agent: Agent, call_id: str, slot: dict, job_type: str = "tune_up", key=
         job_type=job_type,
         slot=slot,
         details={**DETAILS, **details},
+        **extra,
     )
 
 
