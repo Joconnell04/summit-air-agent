@@ -327,6 +327,27 @@ def test_the_seed_admin_is_made_once_from_the_environment(tmp_path, clock, mock)
         conn.close()
 
 
+def test_a_server_started_with_no_user_says_how_to_add_one(tmp_path, clock, mock, caplog,
+                                                           monkeypatch):
+    """A deploy upgraded with only OWNER_TOKEN set would otherwise leave nobody able to sign in."""
+    monkeypatch.setenv("OWNER_TOKEN", "old-token")
+    with caplog.at_level(logging.ERROR, logger="app.accounts"):
+        agent = Agent(make_server(tmp_path, clock, mock[0]), clock)
+    errors = [r.getMessage() for r in caplog.records if r.levelno == logging.ERROR]
+    assert len(errors) == 1
+    for needed in ("OWNER_ADMIN_USERNAME", "OWNER_ADMIN_NAME", "OWNER_ADMIN_PASSWORD",
+                   "make owner-user"):
+        assert needed in errors[0], needed
+    assert agent.client.get("/owner").status_code == 401
+
+
+def test_a_server_with_a_user_logs_no_error(tmp_path, clock, mock, caplog):
+    with caplog.at_level(logging.ERROR, logger="app.accounts"):
+        make_server(tmp_path, clock, mock[0], owner_admin_username="pat",
+                    owner_admin_password=PASSWORD)
+    assert not [r for r in caplog.records if r.levelno == logging.ERROR]
+
+
 def test_no_seed_admin_without_a_password(agent):
     conn = conn_of(agent)
     try:

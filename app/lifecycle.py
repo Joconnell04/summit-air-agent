@@ -239,7 +239,7 @@ def start(
     # is kept. A call that opens with the safety lines has no greeting to carry the notice, so it
     # isn't recorded at all.
     consent = values["two_party_consent"]
-    record_this = recordings.wanted(values, record) and not (
+    record_this = recordings.wanted(tenant, values, record) and not (
         consent and call["safety_state"] == "signal"
     )
     drops = sum(1 for c in recent if records.dropped(c))
@@ -367,14 +367,10 @@ def turn(
             ):
                 records.mark_do_not_call(conn, call, now)
                 hints.append("do_not_call")
-            # Under two-party consent, a caller who says not to record isn't recorded: the voice
-            # layer is told to stop and to say so, and the jobs loop deletes the file instead of
-            # keeping it.
-            if (
-                recordings.objected(args.text)
-                and owner_settings.for_call(conn, tenant, call["id"])["two_party_consent"]
-                and not recordings.declined(conn, call["id"])
-            ):
+            # A caller who says not to record isn't recorded, whatever the consent setting: the
+            # voice layer is told to stop and to say so, and the jobs loop deletes the file
+            # instead of keeping it.
+            if recordings.objected(args.text) and not recordings.declined(conn, call["id"]):
                 recordings.decline(conn, call["id"], seq, now)
                 stop_recording = True
             # A caller who describes a business can't book, whatever the agent does next (S-05).

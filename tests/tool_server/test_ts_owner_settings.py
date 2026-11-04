@@ -183,12 +183,20 @@ def test_with_consent_on_an_objection_stops_the_recording_once(recorded):
     assert count(agent, "SELECT seq FROM recording_declines") == 1
 
 
-def test_with_consent_off_an_objection_changes_nothing(recorded):
-    agent, _ = recorded
-    call = agent.start(UNKNOWN)["data"]["call_id"]
-    data = agent.turn(call, "Please don't record this call.")["data"]
-    assert data["recording"] is None
-    assert count(agent, "SELECT COUNT(*) FROM recording_declines") == 0
+def test_with_consent_off_an_objection_still_drops_the_recording(recorded):
+    agent, bucket = recorded
+    assert current(agent)["two_party_consent"] is False
+    call = agent.start(UNKNOWN)["data"]
+    assert call["recording_notice"] is None, "no notice with the setting off"
+    record(agent, call["call_id"])
+    data = agent.turn(call["call_id"], "Please don't record this call.")["data"]
+    assert data["recording"] == {"action": "stop", "text": STOPPED}
+    agent.end(call["call_id"])
+    key = f"summit-air/{call['call_id']}.mp4"
+    bucket.objects[key] = AUDIO
+    assert collect(agent) == {"stored": 0, "missing": 0, "declined": 1}
+    assert key not in bucket.objects
+    assert count(agent, "SELECT status FROM recordings") == "deleted"
 
 
 def test_an_objected_recording_is_deleted_from_the_bucket_and_never_kept(recorded):
@@ -235,6 +243,17 @@ def test_with_consent_on_a_call_that_opens_with_the_safety_lines_isnt_recorded(r
 
 
 # ---- call recordings ---------------------------------------------------------------------------
+
+
+def test_the_switch_cannot_turn_recording_on_for_a_tenant_that_says_no(recorded, monkeypatch):
+    agent, _ = recorded
+    monkeypatch.setitem(tenant(agent).retention, "record_calls", False)
+    assert current(agent)["call_recordings"] is False
+    assert set_to(agent, call_recordings=True) == ["call_recordings"]
+    assert current(agent)["call_recordings"] is True
+    assert agent.start(UNKNOWN)["data"]["recording"] is None
+    keys = [s.key for s in owner_settings.shown(tenant(agent))]
+    assert "call_recordings" not in keys, "no switch shown where it can't do anything"
 
 
 def test_with_call_recordings_off_no_call_is_recorded(recorded):

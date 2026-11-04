@@ -5,9 +5,9 @@ in progress, and the owner view plays the copy here. A recording is deleted with
 transcript (spec S-45).
 
 With the owner's two-party consent setting on (app/owner_settings.py), every greeting says the call
-may be recorded, and a caller who objects isn't: the server reads their words, tells the voice layer
-to stop, and deletes the file from the bucket instead of keeping it, so the audio is gone even if
-the voice layer never stopped.
+may be recorded. A caller who objects isn't recorded, with the setting on or off: the server reads
+their words, tells the voice layer to stop, and deletes the file from the bucket instead of keeping
+it, so the audio is gone even if the voice layer never stopped.
 """
 
 import logging
@@ -96,10 +96,15 @@ def inside(folder: Path, path: Path) -> Path | None:
     return resolved if resolved.is_relative_to(folder.resolve()) else None
 
 
-def wanted(values: dict[str, bool], configured: bool) -> bool:
-    """Whether a call is recorded: the owner's setting the call started under (its default is the
-    tenant's record_calls), and a bucket to put it in."""
-    return configured and bool(values.get("call_recordings"))
+def wanted(tenant: Tenant, values: dict[str, bool], configured: bool) -> bool:
+    """Whether a call is recorded: the tenant's config allows it, the owner's switch the call
+    started under is on, and there is a bucket to put it in. The switch can only turn recording
+    off, never on for a tenant whose config says no."""
+    return (
+        configured
+        and bool(tenant.retention.get("record_calls"))
+        and bool(values.get("call_recordings"))
+    )
 
 
 def notice(tenant: Tenant) -> str:

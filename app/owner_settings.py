@@ -33,7 +33,7 @@ SETTINGS = (
     Setting(
         "two_party_consent",
         "Two-party consent",
-        "Each greeting says the call may be recorded; a caller who objects isn't.",
+        "Each greeting says the call may be recorded.",
         "app/lifecycle.py start and turn, app/recordings.py collect",
     ),
     Setting(
@@ -82,8 +82,14 @@ def defaults(tenant: Tenant) -> dict[str, bool]:
 
 
 def shown(tenant: Tenant) -> tuple[Setting, ...]:
-    """The settings that mean something for this company: warm transfer only where it is set up."""
-    return tuple(s for s in SETTINGS if s.key != "warm_transfer" or tenant.transfer)
+    """The settings that mean something for this company: warm transfer only where it is set up,
+    and call recordings only where the tenant's config allows recording at all."""
+    hidden = set()
+    if not tenant.transfer:
+        hidden.add("warm_transfer")
+    if not tenant.retention.get("record_calls"):
+        hidden.add("call_recordings")
+    return tuple(s for s in SETTINGS if s.key not in hidden)
 
 
 def current(conn: sqlite3.Connection, tenant: Tenant) -> dict[str, bool]:

@@ -262,19 +262,28 @@ def seed_admin(conn: sqlite3.Connection, username: str, name: str, password: str
                now: datetime, environ=os.environ) -> int | None:
     """Create the first admin from the server's environment, once. An existing user of that name
     is left alone, so a password changed since isn't reset by a restart. Variables from before
-    accounts are reported, since they no longer open anything."""
+    accounts are reported, since they no longer open anything, and a server left with no user at
+    all says how to make one, since nobody could sign in."""
     for variable in LEGACY_VARIABLES:
         if environ.get(variable):
             log.warning("%s is no longer read; sign in with an account (app/accounts.py)", variable)
-    if not (username and password):
-        return None
-    if by_username(conn, username) is not None:
-        return None
-    try:
-        return add(conn, username, name or "Owner", "admin", password, "Server setup", now)
-    except AccountError as err:
-        log.error("seed admin not created: %s", err)
-        return None
+    made = None
+    if username and password and by_username(conn, username) is None:
+        try:
+            made = add(conn, username, name or "Owner", "admin", password, "Server setup", now)
+        except AccountError as err:
+            log.error("seed admin not created: %s", err)
+    if not live_users(conn):
+        log.error(NOBODY)
+    return made
+
+
+# Logged at startup when the owner view has no user, as on a server upgraded from the shared token.
+NOBODY = (
+    "The owner view has no users, so nobody can sign in. Set OWNER_ADMIN_USERNAME, "
+    "OWNER_ADMIN_NAME and OWNER_ADMIN_PASSWORD in the server's .env and restart, or run "
+    'make owner-user ACCOUNT=<username> NAME="<name>" ROLE=admin DB=<the server\'s TOOL_DB>.'
+)
 
 
 def _password(prompt: str = "Password: ") -> str:
