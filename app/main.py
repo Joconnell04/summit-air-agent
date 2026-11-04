@@ -38,6 +38,8 @@ from . import side_model as side_models
 from .envelope import Refused, Result
 from .fsm import FsmUnavailable, SlotCache, make_adapter
 from .fsm.base import fsm_timings
+from .guidance_check import Check
+from .guidance_check import check as check_guidance
 from .mail import Mailer
 from .priority import SideModel
 from .schemas import EndIn, HeartbeatIn, OutboundClaimIn, OutboundDoneIn, StartIn, TurnIn
@@ -64,6 +66,7 @@ class Services:
         side_model: SideModel | None = None,
         weather_clients: dict[str, httpx.Client] | None = None,
         summary_model: summary.SummaryModel | None = None,
+        guidance_check: Check | None = None,
     ):
         self.settings = settings
         if clock is None and settings.fixed_now:
@@ -84,6 +87,7 @@ class Services:
         self.summary_model = summary_model or (
             summary.model_from_config() if settings.summaries else None
         )
+        self.guidance_check = guidance_check or check_guidance
         self.report_poster = reports.github_poster(settings)
         self.weather = weather_clients or (
             {t.slug: weather.client(t.weather) for t in self.tenants} if settings.weather else {}
@@ -240,8 +244,11 @@ def create_app(
     clock: Callable[[], datetime] | None = None,
     fsm_clients: dict[str, httpx.Client] | None = None,
     side_model: SideModel | None = None,
+    guidance_check: Check | None = None,
 ) -> FastAPI:
-    services = Services(settings or Settings(), clock, fsm_clients, side_model)
+    services = Services(
+        settings or Settings(), clock, fsm_clients, side_model, guidance_check=guidance_check
+    )
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
