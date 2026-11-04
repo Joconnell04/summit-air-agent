@@ -18,6 +18,11 @@ DRAFT = {"guidance": {"whole_call": ["Ask about pets."]}, "lines": {}}
 NOW = datetime(2026, 11, 3, 15, 0, tzinfo=UTC)
 
 
+
+def passes(tenant, items):
+    """The guidance check, passing: these tests are about the gate."""
+    return {}
+
 def result(sid, outcome, failures=(), error=""):
     return ScenarioResult(
         scenario_id=sid, persona="A caller.", flow=["booking"], difficulty="easy", outcome=outcome,
@@ -56,7 +61,7 @@ def test_check_waiting_records_the_result_on_the_version_it_tested(tmp_path):
     path = tmp_path / "tool.db"
     db.init(path)
     conn = db.connect(path)
-    rules.save_draft(conn, TENANT, DRAFT, "Dana", "pets", NOW)
+    rules.save_draft(conn, TENANT, DRAFT, "Dana", "pets", NOW, passes)
     rules.request_publish(conn, TENANT.slug, "Dana", NOW)
     conn.close()
     tested = []
@@ -146,7 +151,7 @@ def test_a_late_result_for_a_cancelled_check_is_not_recorded(tmp_path):
     path = tmp_path / "tool.db"
     db.init(path)
     conn = db.connect(path)
-    rules.save_draft(conn, TENANT, DRAFT, "Dana", "pets", NOW)
+    rules.save_draft(conn, TENANT, DRAFT, "Dana", "pets", NOW, passes)
     rules.request_publish(conn, TENANT.slug, "Dana", NOW)
 
     def cancelled_meanwhile(content, profile, results_dir):
