@@ -249,3 +249,12 @@ def test_callback_checks_the_day_and_the_earliest_time():
     assert failures("callback", want, trace(started_at=started)) == ["no callback was promised"]
     with pytest.raises(ValueError):
         CHECKS["callback"].validate({"tomorrow": True})
+
+
+def test_an_approval_check_flag_can_be_required():
+    """Eval round 3: a renter with an unknown approver books with an approval call, flagged as
+    approval_check rather than person (renter-landlord-unknown)."""
+    t = trace()
+    t["flags"] = [{"kind": "approval_check"}]
+    assert failures("flag", "approval_check", t) == []
+    assert failures("flag", "approval_check", trace()) != []

@@ -365,7 +365,9 @@ CHECKS: dict[str, Check] = {
     ),
     "read_back": Check(_one_of("before_booking"), read_back, lambda arg: True),
     "flag": Check(
-        _one_of("none", "person", "safety", "safety_check_cleared"), flag, lambda arg: arg == "none"
+        _one_of("none", "person", "safety", "safety_check_cleared", "approval_check"),
+        flag,
+        lambda arg: arg == "none",
     ),
     "lead": Check(_one_of(*LEAD_KINDS), lead),
     "out_of_area": Check(_recorded_or_zip, out_of_area),
