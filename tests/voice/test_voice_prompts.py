@@ -66,7 +66,9 @@ def test_instructions_keep_the_fixes_from_the_must_pass_reliability_round(agent)
     # Each line here fixed a must-pass miss in evals/rounds/reliability-01.md; losing one brings
     # the miss back.
     text = assemble.instructions(agent.start()["data"], datetime(2026, 11, 2, 14, 0, tzinfo=UTC))
-    assert "If the caller asks for a visit anyway, book it the normal way" in text
+    # Eval round 2 (PR #74) replaced "if the caller asks for a visit anyway" with an offer; the fix
+    # it carried, booking the normal way without arguing, is kept.
+    assert "book it the normal way" in text and "without arguing" in text
     assert "offer to stay on the line" in text
     assert "call `end_call` without saying anything first" in text
     assert "the technician prices the work in person" in text

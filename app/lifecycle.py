@@ -14,18 +14,23 @@ from .tenant import Tenant
 from .text import has_phrase, phone_key, words
 
 RUN_WORDS = r"(?:i|we) (?:run|manage|operate|work at)"
-# Owning is matched only against businesses: "I own the building" is a landlord of a one or
-# two-family house as often as not, which is a home (spec S-05, journey 8).
+# Owning is matched only against businesses: "I own the building" or "I manage the building" is a
+# landlord or a super, and an apartment building is residential (spec S-05, journey 8).
 OWN_WORDS = r"(?:i|we) own"
 
 
 def sounds_commercial(text: str, cfg: dict) -> bool:
-    """Does the caller describe a business? Best effort by design: the agent and the FSM account
+    """Does the caller describe a business, with commercial equipment? Homes, apartments, co-ops and
+    whole apartment buildings are residential. Best effort by design: the agent and the FSM account
     type catch the rest, and a false positive costs a booking, so the tenant's lists stay narrow."""
     text_words = words(text)
     for phrase in cfg["not"]:
         text_words = text_words.replace(words(phrase), " ")
     if any(has_phrase(text_words, p) for p in cfg["phrases"]):
+        return True
+    if any(has_phrase(text_words, p) for p in cfg.get("not_home", [])) and not any(
+        has_phrase(text_words, p) for p in cfg.get("apartment_signs", [])
+    ):
         return True
     owned = "|".join(map(re.escape, cfg["owned"]))
     run = "|".join(map(re.escape, cfg["run"]))
@@ -34,6 +39,29 @@ def sounds_commercial(text: str, cfg: dict) -> bool:
         or re.search(rf" {RUN_WORDS} (?:a|an|the) (?:\w+ )?(?:{run}) ", text_words)
         or re.search(rf" {OWN_WORDS} (?:a|an|the) (?:\w+ )?(?:{owned}) ", text_words)
     )
+
+
+# Words that can sit between a negator and an approval phrase: "I don't need to ask my landlord".
+APPROVAL_FILLER = {"need", "needs", "to", "have", "has", "got", "gotta", "even", "really"}
+
+
+def approval_unclear(text: str, cfg: dict) -> bool:
+    """The caller says someone else, such as a co-op board or a landlord, has to approve the work
+    (eval round 2, co-op-owner-mentions-board). A negated mention ("no, I don't need to ask my
+    landlord") says the opposite, so it doesn't count."""
+    text_words = words(text)
+    for phrase in cfg["unclear_phrases"]:
+        target = words(phrase)
+        start = text_words.find(target)
+        while start >= 0:
+            kept = text_words[: start + 1].split()
+            while kept and kept[-1] in APPROVAL_FILLER:
+                kept.pop()
+            before = " " + " ".join(kept) + " "
+            if not any(before.endswith(words(n)) for n in safety.NEGATORS):
+                return True
+            start = text_words.find(target, start + 1)
+    return False
 
 
 DO_NOT_CALL_PHRASES = (
@@ -259,6 +287,21 @@ def turn(
             heating_asked = bool(heating) and records.agent_said(
                 conn, call["id"], cfg["vague"][heating["kind"]]["question"]
             )
+            confirm_asked = any(
+                records.agent_said(conn, call["id"], spec["confirm_question"])
+                for spec in cfg["vague"].values()
+                if spec.get("confirm_question")
+            )
+            # The confirm question asks the negative way, so its answer is read the other way
+            # round. It is the one being answered while the call is checking and it is the check
+            # question the agent asked last.
+            answering_confirm = False
+            if call["safety_state"] == "checking":
+                spec = cfg["vague"][call["safety_kind"]]
+                confirm = spec.get("confirm_question")
+                answering_confirm = bool(confirm) and confirm == records.last_said(
+                    conn, call["id"], [confirm, spec["question"]]
+                )
             action = safety.check_caller_turn(
                 args.text,
                 call["safety_state"],
@@ -266,6 +309,8 @@ def turn(
                 call["safety_variant"],
                 cfg,
                 heating_asked,
+                confirm_asked,
+                answering_confirm,
             )
             if action.action == "speak_lines":
                 changes.update(safety_state="signal", safety_kind=action.kind)
@@ -305,6 +350,10 @@ def turn(
             if sounds_commercial(args.text, tenant.commercial):
                 changes["commercial"] = 1
                 hints.append("commercial")
+            # Who can approve isn't settled: the agent offers a callback, and a booking the caller
+            # asks for gets a call before dispatch (tools.book_appointment reads the same lines).
+            if approval_unclear(args.text, tenant.approval):
+                hints.append("approval_unclear")
             # The server, not the model, says when the call reaches booking or closing, and only
             # then sends the owner's guidance for that stage, as a [server] note. Never on a safety
             # call; a stage reached during one gets its note once the safety state clears.
@@ -363,6 +412,24 @@ def end(
             )
             due = now + timedelta(minutes=tenant.callbacks["dropped_safety_minutes"])
             records.add_callback(conn, tenant, call, due, "Safety call dropped; call back", now)
+        # A safety caller who confirmed the address for a visit but left before a time was set
+        # gets a person to call back and book it once they're safe (PR #74 review).
+        on_safety = call["safety_signal_at"] and call["safety_state"] != "cleared"
+        booked = conn.execute(
+            "SELECT 1 FROM bookings WHERE call_id = ? AND kind = 'book' "
+            "AND status IN ('sending', 'booked', 'queued')",
+            (call["id"],),
+        ).fetchone()
+        if on_safety and call["readback_confirmed_at"] and not booked:
+            records.add_flag(
+                conn,
+                call["id"],
+                "person",
+                "Safety call: the caller confirmed the address for a visit but left before a "
+                "time was set; call back to book it once they're safe",
+                now,
+                "Urgent",
+            )
         outcome = _outcome(conn, call)
         records.update_call(
             conn,

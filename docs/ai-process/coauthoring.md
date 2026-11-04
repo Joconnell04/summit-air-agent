@@ -200,7 +200,44 @@ Changed:
 Commit: c019538
 Status: open
 
-## call-journeys r5 (amendment after lock: eval round 2, second half)
+
+## spec r8 (amendment after lock: eval round 2, residential, approval and safety calls)
+Feedback (verbatim, Jackson's eval round 2 notes, the parts this round acts on are on seeds 1 to 4):
+> Okay, so now I'm reading round two of the evals. Remind yourself that in this instance, commercial is referring to like an office building or something. In multi-tenant apartment building is technically residential, so keep that in mind, update prompts accordingly. So for situation number one, that should stay residential. Because, yeah, she might have residential systems, and that's just a super or a building manager that is relying on Sonnet to handle their residential stuff. So harden your and refine your definition of what commercial is in this instance. And if somebody asks about, oh, I'm not sure if I'm residential or commercial, make sure the agent is capable of providing them a brief explanation. And note that Sonnet Air does not only work on homes, they work on residential units, which are homes, apartments, etc., just not commercial stuff. And for situation number two, a co-op is still a residential unit because, as I explained, residential just means that they have residential grade appliances, not commercial grade appliances. So for situation number two, that's just a question of who has the authority to approve it. So offer a callback. But don't book a visit in that situation unless they explicitly ask. But then even then, say we're still going to call back before the person's dispatched to ensure that they have the proper approval and authority to be working on that unit. for situation 3, no safety trigger should be triggered, that is fine because they acknowledged it's gone now. For situation four, that's definitely a safety situation. So yeah, you know, be like, I'll get a technician out to you, but also be like, you know, be very cautious. I recommend calling 911 or something like that. Yeah, so with that, I don't agree that outcome safety means that the agent is not capable of booking a technician or something. The technician should be booked, but the priority is be like, you know, I recommend staying outside, calling emergency services, and we'll book a technician for you, but first it's important that whatever the problem is shut off. For situation five, yeah, somebody should be able to have an open job on their house and then call on behalf of somebody else at a different address. And as long as that address is within the service zone, the agent should be able to book them on that. But should also somehow ask if they're, like, the person calling will be the point of contact going forward, or if they want that other, like, house or unit to be assigned to a different account, which is what should happen ideally. But think through that. Yeah, for situation six, the agent reminding the caller that they remember the earlier call. That works. Just make sure that's stage gated by the number being the same and the time in between calls being within that same day. Then also make sure the agent just confirms that it's still speaking to the same person. Be like, this is Jackson, correct? Or something like that. But yeah, very important to not book twice across the two calls. For example number 7, make sure there's proper understanding built into the model that if somebody says 8 to 2, they're referring to 8 a.m. to 2 p.m. and not 8 a.m. or 8 p.m. to 2 a.m. You get what I'm saying? But yeah, that's a good eval to have. Eval 8 looks good too. Yeah, eval 9 looks good too. Eval 10 looks good as well. Throw in the legal question 1 too. That's a good one to have. Just make sure that the agent doesn't give unsolicited advice or untrue material, and just always tries to defer to asking the super or somebody with more knowledge on that. And then for the second opinion replacement quote, yeah, add that one in too. It shouldn't state a price or criticize them, and it should offer to have somebody come out to quote them if that's something we're doing. If that's not something we're doing, then figure it out or something. I don't know. Yeah, add the scheduling system is down mid-booking well as well. Then also add in an eval set for a street name that speech to text mangles, but make it for Houston Street. That's the only one. And then ensure if the agent cannot confirm how to spell or like understand the street, that it can listen to the user read out the letters. That should be a capability. So make another eval for that situation. Also, I'm confused on what the purpose is for the holdout. Can you explain that super briefly? And also, just going back to the burning dust smell, that should get a question. The agent should just quickly be like, just to confirm, it doesn't smell like sulfur or egg or anything, right? Because that will check the box there. Also, you no longer need to give me the explanation on the holdout thing. I understand that now. For now, let's just go forward, and I won't be adding to the holdout until later when I have more time to test it.
+Changed:
+- S-06 and S-07: residential means residential-grade equipment (houses, apartments, co-op and condo units, whole apartment buildings, including a super or building manager calling for the building); commercial means a business with commercial-grade equipment (offices, stores, restaurants). The "three or more units" and "property manager" lines are gone. A caller unsure which they are gets a one or two sentence explanation, and the decline says Summit Air works on homes and apartments, not businesses.
+- S-07a (new): a caller who says a board, landlord or management has to approve is offered a callback to confirm who can approve; a booking they ask for gets a server-scheduled call before the arrival window to confirm approval before dispatch.
+- S-18: after the lines and the flag, the agent recommends staying outside and calling 911 or the gas company, and may offer a visit for once the problem is shut off without the caller having to insist; the booking carries the server's shut-off line.
+- S-20: burning dust and similar smells get a lighter confirm question once per call ("Just to confirm, does it smell at all like sulfur or rotten eggs?"). Asked as a yes or no question rather than Jackson's "it doesn't..., right?", because a "yeah" to a negative question can mean either, and the server reads a yeah as a smell.
+Not changed: the read-back still says "your home at" (DECISIONS.md 022).
+Follow-up feedback (verbatim, Jackson on the PR's three questions):
+> yeah means it's not a safety issue in that instance for your first question. for your second question, yes change those two to be residential. for question 3, no keep that wording as most people calling aren't building managers. but include in the docuemntation somewhere that we are interpreting commercial as truly commercial and residential as either an individual tenant, unit, or even a full residential building because we expect an HVAC company in NYC to operate on individual/residential-grade units and just not commercial-grade units, and individual/resitdential-grade units are present in multi-tenant buildings
+Changed:
+- S-20: the confirm question is Jackson's own negative wording, "Just to confirm, it doesn't smell like sulfur or rotten eggs, right?", and the server reads "yeah", "right" or "no" to it as all clear (app/safety.py `answer_to_confirm`); the smell named again, "it does" or an unsure answer still bring the lines.
+- The mock's property manager and co-op board accounts are typed Residential.
+- The read-back keeps "your home". docs/brief.md gains "How residential or commercial is read", with the equipment reasoning.
+Sign-off feedback (verbatim, Jackson on the safety booking line):
+> regarding your question for PR #74, i sign it off, that makes sense.
+Changed:
+- `safety.booking_note` in tenants/summit-air/agent.yaml is signed off: "The technician can only work on it once the gas company or 911 has shut it off and said it's safe, so please stay outside until then."
+Status: open
+
+## call-journeys r5 (amendment after lock: eval round 2)
+Feedback (verbatim): the same notes as spec r8 above.
+Changed:
+- Spine step 4: the lighter confirm question for burning dust and similar smells, once per call; a clear no carries on with no safety lines.
+- Journey 3 step 4 and step 8: after the lines the agent recommends staying outside and calling 911 or the gas company, then offers once to book a visit for after the gas or problem is shut off; the caller doesn't have to insist. The follow-up call books a visit only if none was booked on the call. This reverses the round 2 line "the agent doesn't offer one on the safety call".
+- Journey 6: a board, landlord or management that has to approve gets a callback offer instead of a booking; a booking the caller asks for gets a call before dispatch.
+- Journey 8: where the line falls is now residential-grade or commercial-grade equipment, with an explanation for a caller who isn't sure, and the new decline wording.
+Status: open
+
+## users r4 (amendment after lock: eval round 2)
+Feedback (verbatim): the same notes as spec r8 above ("commercial is referring to like an office building or something. In multi-tenant apartment building is technically residential").
+Changed:
+- Section 9, commercial caller: a restaurant, a store, an office; a super or building manager of an apartment building is no longer in this group. "Our building" and "our tenants" alone point to an apartment building. The agent says Summit Air works on homes and apartments, not businesses, and explains when a caller is unsure.
+Status: open
+
+## call-journeys r6 (amendment after lock: eval round 2, second half)
 Feedback (verbatim, the parts this round acts on, from evals/rounds/02-seeds-and-holdout.md):
 > For situation five, yeah, somebody should be able to have an open job on their house and then call on behalf of somebody else at a different address. And as long as that address is within the service zone, the agent should be able to book them on that. But should also somehow ask if they're, like, the person calling will be the point of contact going forward, or if they want that other, like, house or unit to be assigned to a different account, which is what should happen ideally. But think through that.
 
@@ -221,8 +258,8 @@ Changed:
 Commit: a8108c7 (saved as a WIP commit when the app quit; this round's text is in it)
 Status: open
 
-## spec r8 (amendment after lock: eval round 2, second half)
-Feedback (verbatim): the same notes as call-journeys r5 above.
+## spec r9 (amendment after lock: eval round 2, second half)
+Feedback (verbatim): the same notes as call-journeys r6 above.
 Changed:
 - S-15b (new): spelled street names, joined by the server.
 - S-29: hours the caller is home read as daytime; no exact arrival promised inside a window.
