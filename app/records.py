@@ -256,10 +256,13 @@ def add_callback(
     due: datetime,
     reason: str,
     now: datetime,
+    phone: str | None = None,
 ) -> int | None:
-    """Promise a callback to the caller's number. None when the number is on the do-not-call list,
+    """Promise a callback to the caller's number, or to `phone` (the number on a customer's
+    account, after a failed identity check). None when the number is on the do-not-call list,
     since nobody may call it."""
-    if is_do_not_call(conn, call["caller_id"]):
+    number = phone or call["caller_id"]
+    if is_do_not_call(conn, number):
         return None
     owner = tenant.callbacks["owner_in_hours" if tenant.is_open(due) else "owner_after_hours"]
     cur = conn.execute(
@@ -268,8 +271,8 @@ def add_callback(
            VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
         (
             call["id"],
-            call["caller_id"],
-            call["caller_key"],
+            number,
+            phone_key(number),
             iso(due),
             owner,
             reason,

@@ -1,0 +1,26 @@
+id: moved-in-area-gives-zip
+flow: [repeat-caller]
+difficulty: easy
+journeys: [J7]
+spec: [S-31]
+tags: [caller-changes]
+caller_id: seed:storedActiveButLapsed
+persona: Gloria Santos, a longtime customer who moved to a new house in Greenpoint and wants the company's records updated. Clear and organized.
+hidden_facts:
+  name: Gloria Santos
+  new_address: 41 Kent Street, Brooklyn, 11222
+  phone: the number you're calling from
+  wants: only to update the address on file; nothing is broken and there is no visit to book
+opening: Hi, I moved last month and I'd like you to update my address on file.
+script:
+  - Give the new address with the ZIP when asked.
+  - Answer yes to a correct read-back.
+  - Don't book anything; if offered a visit or a plan, say no thanks.
+  - Say goodbye once the agent confirms the change.
+must:
+  - tool_ok: record_move
+  - moved: {in_area: true, zip: "11222", street: "41 Kent"}
+  - tool_not_called: [book_appointment]
+  - outcome: changed_booking
+should:
+  - Updates the address after reading it back, without pushing a booking.

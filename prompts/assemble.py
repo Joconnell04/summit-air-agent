@@ -522,6 +522,14 @@ def spoken_by_server(name: str, envelope: dict) -> str | None:
         return say
     if name == "read_back" and (envelope.get("ok") or envelope.get("refused") == "gate_read_back"):
         return say
+    # The name and address check, which account on a shared number, and the moved-out address:
+    # the server's own questions, as written, so the agent never reads a customer's details out
+    # for a yes (issue #128).
+    if envelope.get("refused") in (
+        "identity_check", "identity_mismatch", "account_which", "which_old_address",
+        "location_superseded",
+    ):
+        return say
     if name == "end_call" and envelope.get("ok"):
         return say
     # A booking the field service system couldn't take: one honest line, as written (spec S-48).
@@ -529,9 +537,9 @@ def spoken_by_server(name: str, envelope: dict) -> str | None:
         return say
     # A booking, move or cancel that went through: its confirmation is the whole turn, so no
     # second model request runs after the slowest tool on the call (eval round 4).
-    if name in ("book_appointment", "reschedule_appointment", "cancel_appointment") and (
-        envelope.get("ok")
-    ):
+    if name in (
+        "book_appointment", "reschedule_appointment", "cancel_appointment", "record_move"
+    ) and envelope.get("ok"):
         return say
     return None
 

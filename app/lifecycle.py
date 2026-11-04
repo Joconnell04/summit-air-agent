@@ -845,7 +845,7 @@ def _outcome(conn: sqlite3.Connection, call: sqlite3.Row) -> str:
         return "declined_out_of_area"
     if has(
         "SELECT 1 FROM bookings WHERE call_id = ? AND kind IN ('reschedule', 'cancel') AND status = 'done'"
-    ):
+    ) or has("SELECT 1 FROM address_moves WHERE call_id = ?"):
         return "changed_booking"
     if has("SELECT 1 FROM callbacks WHERE call_id = ?"):
         return "callback"

@@ -67,6 +67,14 @@ class LocationCreate(LocationIn):
     customerId: int
 
 
+class LocationUpdate(BaseModel):
+    """A partial update, as ServiceTitan's PATCH locations/{id} takes: a location that is no
+    longer the customer's is made inactive, which keeps its history and equipment."""
+
+    name: str | None = None
+    active: bool | None = None
+
+
 class BookingIn(BaseModel):
     source: str
     name: str = Field(min_length=1)
@@ -243,18 +251,19 @@ def list_locations(
     street: str | None = None,
     unit: str | None = None,
     zip: str | None = None,
-    active: bool | None = None,
+    active: Literal["True", "Any", "False"] = "True",
 ):
     """Address lookup: street is compared after normalizing (St and Street match). Leave unit out
-    to get every unit in the building. There is no phone filter on locations."""
+    to get every unit in the building. There is no phone filter on locations. Only active
+    locations unless active is Any or False, as in ServiceTitan."""
     sub, params = _location_filter(street, unit, zip)
     where = [sub]
     if customerId is not None:
         where.append("l.customer_id = ?")
         params.append(customerId)
-    if active is not None:
+    if active != "Any":
         where.append("l.active = ?")
-        params.append(int(active))
+        params.append(int(active == "True"))
     sql = f"SELECT l.* FROM locations l WHERE {' AND '.join(where)} ORDER BY l.id"
     return page_of(conn, sql, params, repo.shape_location, *pg)
 
@@ -284,6 +293,39 @@ def create_location(
         idem_key=idempotency_key,
         route=_route(request),
         body=body.model_dump(),
+    )
+
+
+@router.patch("/locations/{location_id}")
+def update_location(
+    location_id: int,
+    body: LocationUpdate,
+    request: Request,
+    conn: sqlite3.Connection = Depends(get_conn),
+    now=Depends(get_now),
+    idempotency_key: str | None = Header(None),
+):
+    def run(c):
+        _one(c, "locations", location_id, "Location")
+        stamp = iso(now)
+        if body.name is not None:
+            c.execute(
+                "UPDATE locations SET name = ?, modified_on = ? WHERE id = ?",
+                (body.name, stamp, location_id),
+            )
+        if body.active is not None:
+            c.execute(
+                "UPDATE locations SET active = ?, modified_on = ? WHERE id = ?",
+                (int(body.active), stamp, location_id),
+            )
+        return 200, repo.shape_location(_one(c, "locations", location_id, "Location"))
+
+    return write(
+        conn,
+        run,
+        idem_key=idempotency_key,
+        route=_route(request),
+        body={"location": location_id, **body.model_dump()},
     )
 
 

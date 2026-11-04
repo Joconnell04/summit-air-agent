@@ -169,6 +169,7 @@ fsm:
 lines:
   account_choice: Should that address go on its own account, with you as a contact, or under your account?
   account_name: Whose name should the account for that address be under?
+  account_which: I see more than one account on this number. Whose name should the visit go under?
   address_ask_zip: What's the ZIP code there?
   address_not_found: I'm not finding that street. Could you spell the street name for me?
   address_which: Is that the one in {places}?
@@ -203,17 +204,45 @@ lines:
   flag_stored_no_callback: I've let our team know.
   flag_stored_on_call: I've let our on-call team know this call is top priority, and someone will call
     you {when}.
+  flag_stored_on_file: I've let our team know, and someone will call the number we have on file {when}.
   flag_stored_urgent: I've let our team know this call is top priority, and someone will call you {when}.
   fsm_unavailable: I can't book that right now, but I've written it all down and someone will call you
     by {time} to confirm.
   fsm_unavailable_no_callback: I can't get to that right now, but I've written it all down for the team.
   handoff_now: Transferring you to a person now.
+  heads_up: This is Summit Air. {change} by a caller from another number. If that wasn't you, please call
+    us back at {phone}.
+  identity_check: Of course. And just to confirm you're the person for the {thing}, could you tell me
+    your name and the address?
+  identity_check_address: Thanks. And what's the address?
+  identity_check_address_only: Of course. And just to confirm you're the person for the {thing}, could
+    you tell me the address?
+  identity_check_again: Sorry, I didn't catch that. Could you tell me your name and the address for the
+    {thing}?
+  identity_check_name: Thanks. And what's the name on the {thing}?
+  identity_check_name_only: Of course. And just to confirm you're the person for the {thing}, what name
+    is it under?
+  identity_mismatch: I'm sorry, I'm not able to make that change from this number. I can have someone
+    from our office call the number we have on file for it. Would that help?
   lead_stored: Someone from our team will call you {when} to tell you more.
   limit: I've already got that taken care of on this call, so let me have someone from the team follow
     up.
+  location_superseded: That visit is still set for your old address, so let me have someone from our office
+    sort it out with you.
+  move_done: Thanks for letting us know. I've updated your address to {street}.
+  move_out_of_area: Thanks for letting us know. I'm sorry, the new address is outside the area we cover,
+    so we won't be able to come out there, and I've made a note on your account.
+  move_visit_cancelled: I've also cancelled the visit you had at the old address, so nobody heads there.
+  move_visit_moved: Your upcoming visit is now set for the new address, same day and time.
+  move_visit_moved_when: Your visit {when} is now set for the new address, same time.
+  move_visit_person: A technician is already on the way to the old address, so someone from our office
+    will call you to sort that out.
+  move_which: Which address did you move from?
+  moved_from_address: Our records show you've moved from that address. Where should the technician go?
   out_of_area: I'm sorry, that's outside the area we cover, so we're not able to send someone. A local
     heating company should be able to help.
   read_back: I have your home at {address}, and the best number is {phone}, is that right?
+  read_back_for: I have your home at {address}, and the number to reach {who} is {phone}, is that right?
   repeated_drops: Looks like we keep getting cut off, the signal might be spotty. Want me to have someone
     call you back in a few minutes instead?
   return_visit_review: Since we were just out there, a manager will look over this visit, including whether

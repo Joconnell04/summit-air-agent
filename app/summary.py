@@ -33,6 +33,7 @@ from .db import iso, parse_iso, tx
 from .fsm import FsmAdapter, FsmRejected, FsmUnavailable
 from .settings import QUEUE_MAX_ATTEMPTS
 from .tenant import Tenant
+from .text import phone_display
 
 log = logging.getLogger(__name__)
 
@@ -230,6 +231,18 @@ def lines(fields: dict, rec: dict) -> tuple[list[list[str]], list[dict]]:
     return [[FIELDS[f], kept[f]] for f in FIELDS if f in kept], dropped
 
 
+def contact_lines(request: dict) -> list[list[str]]:
+    """The visit's number when it reaches someone else, and the account's own beside it, written
+    by the server from the booking rather than by the model, which never sees a phone number
+    (issue #128)."""
+    if not request.get("contact_for"):
+        return []
+    text = f"{request['contact_for']}, {phone_display(request['phone'])}"
+    if request.get("account_phone"):
+        text += f"; account phone {phone_display(request['account_phone'])}"
+    return [["Contact", text]]
+
+
 def note_text(summary_lines: list[list[str]]) -> str:
     return "\n".join([HEADER] + [f"{label}: {text}" for label, text in summary_lines])
 
@@ -325,6 +338,7 @@ def _summarize(conn, tenant, fsm, model, call, booking, now) -> str:
         # The record it was written from has no card digits; a slip by the model still never
         # reaches the technician's note (DECISIONS.md 080).
         kept = cards.scrub(kept)
+        kept += contact_lines(json.loads(booking["request_json"]))
         for d in dropped:
             log.warning("summary for call %s: dropped %s, %s", call["id"], d["field"], d["reason"])
         with tx(conn):

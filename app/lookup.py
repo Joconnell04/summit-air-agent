@@ -70,7 +70,12 @@ def call_line(call: dict) -> dict:
     }
 
 
-def open_jobs(fsm: FsmAdapter, tenant: Tenant, customer_id: int) -> list[dict]:
+def open_jobs(
+    fsm: FsmAdapter, tenant: Tenant, customer_id: int, locations: list[dict] | None = None
+) -> list[dict]:
+    """Each open job with its next appointment and, from the customer's locations when they are
+    given, the street it is at, so the agent can tell which visit is at which address."""
+    streets = {loc["id"]: loc["address"]["street"] for loc in locations or []}
     jobs = []
     for job in fsm.jobs(customer_id, OPEN_JOB_STATUSES):
         appointments = [a for a in fsm.appointments(job["id"]) if a["status"] != "Canceled"]
@@ -82,6 +87,8 @@ def open_jobs(fsm: FsmAdapter, tenant: Tenant, customer_id: int) -> list[dict]:
                 "status": job["jobStatus"],
                 "priority": job["priority"],
                 "summary": job["summary"],
+                "location_id": job["locationId"],
+                "street": streets.get(job["locationId"], ""),
                 "appointment_id": next_appt["id"] if next_appt else None,
                 "appointment_status": next_appt["status"] if next_appt else None,
                 "window": window_text(
@@ -147,7 +154,7 @@ def customer_bundle(
             for loc in locations
         ],
         "membership": membership_summary(tenant, fsm.memberships(customer_id)),
-        "open_jobs": open_jobs(fsm, tenant, customer_id),
+        "open_jobs": open_jobs(fsm, tenant, customer_id, locations),
         "last_service_date": last_service[:10] if last_service else None,
         "recent_calls": calls,
         "notes": [

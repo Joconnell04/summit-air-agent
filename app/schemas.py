@@ -191,6 +191,13 @@ class ReadBackIn(CallRef):
         description="Ten digits, caller_id for the number calling, or the last four digits of a "
         "number on file",
     )
+    phone_for: str = Field(
+        "",
+        max_length=60,
+        description='Who the number reaches when it isn\'t the caller, as the caller said it, such as '
+        '"my daughter Ana". Always set when the caller says the number is someone else\'s; empty '
+        "for the caller's own number.",
+    )
     confirmed: bool = False
 
 
@@ -250,6 +257,17 @@ class RescheduleIn(CallRef):
 class CancelIn(CallRef):
     booking_id: int
     reason: str = Field(min_length=3, max_length=200)
+
+
+class MoveIn(CallRef):
+    customer_id: int | None = Field(
+        None, description="The account that moved; leave it out when one customer is matched"
+    )
+    from_location_id: int | None = Field(
+        None,
+        description="The location they moved out of, only when the account has more than one "
+        "and the caller said which",
+    )
 
 
 class CallbackTime(Body):

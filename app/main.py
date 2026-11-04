@@ -30,6 +30,7 @@ from . import (
     cards,
     db,
     geocode,
+    heads_up,
     jobs,
     lifecycle,
     logs,
@@ -255,6 +256,7 @@ def _ctx(services: Services, conn, call_id: str, key: str | None) -> Ctx:
         key,
         numbers,
         services.geocoders.get(tenant.slug),
+        services.settings.headsup_allowlist,
     )
 
 
@@ -550,10 +552,40 @@ def create_app(
         try:
             found = outbound.claim(
                 conn, services.tenants.by_slug, services.fsm, services.clock()
+            ) or heads_up.claim(
+                conn, services.tenants.by_slug, services.settings.headsup_allowlist,
+                services.clock(),
             )
         finally:
             conn.close()
         return {"ok": True, "say": "", "data": {"outbound": found}, "refused": None}
+
+    @app.post("/outbound/heads-up/{heads_up_id}/done")
+    def heads_up_done(heads_up_id: int, body: OutboundDoneIn):
+        """How a heads-up call went (app/heads_up.py): one attempt, the sentence said once."""
+        conn = services.connect()
+        try:
+            row = conn.execute(
+                "SELECT tenant FROM heads_ups WHERE id = ?", (heads_up_id,)
+            ).fetchone()
+            found = (
+                heads_up.finish(
+                    conn,
+                    services.tenants.by_slug[row["tenant"]],
+                    services.fsm[row["tenant"]],
+                    heads_up_id,
+                    body.answered,
+                    body.voicemail,
+                    services.clock(),
+                )
+                if row
+                else None
+            )
+        finally:
+            conn.close()
+        if found is None:
+            return {"ok": False, "say": "", "data": {}, "refused": "invalid_state"}
+        return {"ok": True, "say": "", "data": found, "refused": None}
 
     @app.post("/outbound/{outbound_id}/done")
     def outbound_done(outbound_id: int, body: OutboundDoneIn):

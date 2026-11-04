@@ -151,8 +151,10 @@ def shape_contact(r: sqlite3.Row) -> dict:
 
 def shape_customer(conn: sqlite3.Connection, r: sqlite3.Row) -> dict:
     """The customer record. Contacts are not inline: they come from customers/{id}/contacts."""
+    # The address is the first active location's, so a customer who moved shows the new one.
     first = conn.execute(
-        "SELECT * FROM locations WHERE customer_id = ? ORDER BY id LIMIT 1", (r["id"],)
+        "SELECT * FROM locations WHERE customer_id = ? ORDER BY active DESC, id LIMIT 1",
+        (r["id"],),
     ).fetchone()
     return {
         "id": r["id"],

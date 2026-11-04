@@ -170,8 +170,19 @@ class ServiceTitanAdapter:
         """A customer's phone numbers and emails. The customer record does not hold them."""
         return self._list("crm", f"customers/{customer_id}/contacts", "contacts")
 
-    def locations(self, customer_id: int) -> list[dict]:
-        return self._list("crm", "locations", "locations", customerId=customer_id)
+    def locations(self, customer_id: int, include_inactive: bool = False) -> list[dict]:
+        """The customer's active locations, as ServiceTitan lists them by default. A location the
+        customer moved out of is inactive (tools.record_move); include_inactive lists those too."""
+        return self._list(
+            "crm",
+            "locations",
+            "locations",
+            customerId=customer_id,
+            active="Any" if include_inactive else None,
+        )
+
+    def location(self, location_id: int) -> dict:
+        return self._call("GET", "crm", f"locations/{location_id}", "location")
 
     def memberships(self, customer_id: int) -> list[dict]:
         return self._list("memberships", "memberships", "memberships", customerIds=customer_id)
@@ -316,6 +327,18 @@ class ServiceTitanAdapter:
         place = self._address(address)
         body = {"customerId": customer_id, "name": place["street"], "address": place}
         return self._call("POST", "crm", "locations", "create_location", json=body)
+
+    def set_location_active(self, key: str, location_id: int, active: bool) -> dict:
+        return self._call(
+            "PATCH", "crm", f"locations/{location_id}", "set_location_active",
+            json={"active": active},
+        )
+
+    def move_job(self, key: str, job_id: int, location_id: int) -> dict:
+        """Point an open job at another of its customer's locations (PATCH jobs/{id})."""
+        return self._call(
+            "PATCH", "jpm", f"jobs/{job_id}", "move_job", json={"locationId": location_id}
+        )
 
     def create_job(
         self,

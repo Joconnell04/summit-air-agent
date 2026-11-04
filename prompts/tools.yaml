@@ -24,7 +24,9 @@ find_slots: >-
 read_back: >-
   Confirms the address and number before booking. The first call's sentence is spoken to the caller
   for you, word for word, so call it without announcing it and say nothing yourself. After the
-  caller clearly says yes, call again with the same address and phone and `confirmed: true`.
+  caller clearly says yes, call again with the same address and phone and `confirmed: true`. When
+  the caller gives a number that reaches someone else ("call my daughter at ..."), pass whom it
+  reaches in `phone_for`, in their words.
 book_appointment: >-
   Book the window the caller chose, with the intake details. Only after the read-back was confirmed
   and after find_slots with `day` returned that day's windows. `slot.date` and `slot.window` are the
@@ -39,6 +41,11 @@ reschedule_appointment: >-
 cancel_appointment: >-
   Cancel a booking that belongs to this caller, after a clear yes and the reason. Returns two windows
   to offer instead.
+record_move: >-
+  For a caller on file who says they moved house. First find the new address (find_address, or
+  check_service_area with their ZIP), then read it back with read_back, then call this. It saves the
+  new address and moves their open visits there, or, outside the area, cancels the visits at the old
+  address. Its sentence is spoken for you.
 flag_person: >-
   Ask a person to follow up: a callback the caller wants, a complaint, a reschedule that needs a
   person, someone at risk. When the caller asked for a window ("after 5", "before 3", "between 1

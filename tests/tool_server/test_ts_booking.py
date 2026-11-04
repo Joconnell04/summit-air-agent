@@ -703,10 +703,10 @@ def test_a_number_the_caller_only_states_is_not_enough_to_change_a_visit(agent):
     found = agent.tool("find_customer", other, phone="(212) 555-0930")
     assert found["data"]["matches"]
     refused = agent.tool("cancel_appointment", other, booking_id=job_id, reason="not needed")
-    assert refused["refused"] == "not_owner"
-    # Confirming the visit's address in the read-back is what a call-taker would ask for.
-    agent.turn(other, "It's for my mother's place.")
-    agent.confirm_read_back(other, in_area_address(30))
+    # From a number not on the account, the caller says the name and address first (issue #128).
+    assert refused["refused"] == "identity_check"
+    agent.say(other, refused["say"])
+    agent.turn(other, "It's Pat Caller, 130 Union Street.")
     assert agent.tool("cancel_appointment", other, booking_id=job_id, reason="not needed")["ok"]
 
 
