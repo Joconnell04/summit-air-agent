@@ -25,8 +25,9 @@ Discussion: evals/rounds/side-model-02.md
 Decided: owner rule edits move off the owner view and onto the debug bench. Publishing an edit reruns the must-pass eval gate by default; an override publishes it at once and logs it as an overridden instant change. Two-call booking evals run only on our stack for now.
 Why: Jackson's direction, given in the booking-concurrency session (PR #86). Rule edits are an engineer-facing tool more than an owner one, and an override keeps a quick fix possible while the log shows it skipped the gate.
 Considered: keeping edits on the owner view behind the edit login (DECISIONS.md 022).
+Built in PR #93: the editor is at `/bench/rules`; an override needs a reason, still runs the AI guidance check and every structural check, and shows "Check skipped" in both histories with who, when and why.
 Would change if: owners ask to edit wording themselves again.
-Discussion: PR #86, the debug bench PR
+Discussion: PR #86, PR #93
 
 ## 054. Owner accounts with two roles, and a settings panel with a consent switch
 
