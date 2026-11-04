@@ -762,3 +762,12 @@ def test_a_denial_that_ends_with_or_anything_like_eggs_clears_the_confirm_questi
         "no nothing like that it was just dusty, it's gone now, no gas smell or anything like eggs",
     )
     assert answer["data"]["safety"]["action"] == "cleared"
+
+
+def test_i_dont_feel_sick_or_dizzy_is_a_no_and_i_wont_use_the_oven_asks_nothing():
+    """Eval round 4 run 20261104-042822, no-heat-gas-stove: both brought the carbon monoxide
+    question or lines on a call with no hazard."""
+    answer = "no nothing like that no alarm going off and i don't feel sick or dizzy just cold"
+    assert safety.check_caller_turn(answer, "checking", "co", 0, CFG).action == "cleared"
+    promise = "okay i won't use the stove or oven for heat and the generator's staying off"
+    assert safety.check_caller_turn(promise, "none", None, 0, CFG).action == "none"

@@ -39,6 +39,8 @@ NEGATORS = (
     "cant",
     "cannot",
     "isnt",
+    "wont",
+    "will not",
     "no longer",
     "nothing like",
 )
@@ -266,7 +268,11 @@ def _person_negated(before: str) -> bool:
     while kept and kept[-1] in LIST_WORDS:
         kept.pop()
     trimmed = " " + " ".join(kept) + " "
-    return any(trimmed.endswith(words(n)) for n in PERSON_NEGATORS)
+    # "I don't feel sick or dizzy" denies both, as "nobody's sick or dizzy" does (eval round 4
+    # run 20261104-042822, no-heat-gas-stove).
+    # A plain "no" still negates nothing here ("no, sick and dizzy").
+    verbs = tuple(n for n in NEGATORS if n != "no")
+    return any(trimmed.endswith(words(n)) for n in PERSON_NEGATORS + verbs)
 
 
 def _echo_negated(before: str) -> bool:
