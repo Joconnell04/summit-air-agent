@@ -6,14 +6,10 @@ Where the build stopped when Jackson closed the laptop. Every working lane was t
 
 | PR | What | State | Next step |
 |---|---|---|---|
-| #69 | Warm transfer and call recordings | Review fixes pushed; conflicts with main | Resolve, re-review, merge, deploy. Server `.env` already has `TRANSFER_OFFICE_NUMBER` and `TRANSFER_ON_CALL_NUMBER` (Jackson's cell, for the demo; never in the repo) and the five `RECORDING_S3_*` values (Supabase project `summit-air`, bucket `recordings`, upload tested). Document that the demo transfer rings Jackson's personal phone; `/round` spec and call-journeys for transfer and recordings |
-| #72 | Must-pass reliability, eval floor 90%, passing demo version | Approved; conflicts with main | Resolve, re-adopt a standard run (about $0.70, #71 is merged), merge, record the floor decision |
-| #73 | Technician summary (S-16) | Mergeable; lane was fixing a failing hook test | Check make check, review, merge, record decisions |
-| #74 | Round 2 part A (draft) | Code and unit tests done; paid evals not run | Run its scenarios and the must-pass set (under $3), review, merge |
-| #75 | Round 2 part B (draft, saved by the coordinator before a pause) | Code done; paid evals and final make check not run | Same as #74 |
-| none | Bake-off follow-up (verdict guard, shorter endpointing, ElevenLabs read-back fix) | Lane was running a capped rig run when the app was force-quit; worktree `jolly-tharp-99a196` has no remote branch yet | Ask the lane to push and open its PR |
+| #82 | Eval round 3: wording, safety tone, grader standards, speech filter for read-back lead-ins | Lane merging main and running the standard suite (about $1.10) | Merge if it clears the 90% floor, deploy; if not, decide on the misses listed in the PR |
+| none | Bake-off follow-up (verdict guard, shorter endpointing, ElevenLabs read-back fix) | Saved in worktree `jolly-tharp-99a196`, not pushed; its session is gone | Push it as a draft PR and finish it, or close it out |
 
-Merged and cleaned up: #70, #71 and the earlier fix branches; their six worktrees were removed.
+Merged since the last note: #69 (warm transfer and recordings), #72 (eval floor 90%), #73, #76, #77, #79, #80, #81 (technician summary), #74 and #75 (eval round 2), #78. Deployed to the server after #69; a scripted test call booked a tune-up end to end. Known on that call and fixed in #82, not yet live: "Before I book, I need to read back the details", "Let me read that back", "Stay warm out there". Also noticed: the phone number is read as "six hundred and forty six ..." instead of digit by digit.
 
 ## Waiting on Jackson
 
