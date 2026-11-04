@@ -119,6 +119,13 @@ class Harness:
                 if turn.ended:
                     reason = turn.end_reason
                     break
+                # The caller asked the agent to wait and walks away: the worker's timer runs on a
+                # short clock (voice/dead_air.py), and the call ends as stepped_away.
+                if scenario.steps_away and getattr(agent, "holding", False):
+                    turn = agent.step_away()
+                    transcript.append(Turn(role="agent", text=turn.text))
+                    reason = turn.end_reason
+                    break
                 if replay is not None:
                     said = replay.pop(0) if replay else None
                 else:

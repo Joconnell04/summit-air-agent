@@ -48,6 +48,7 @@ approval:
 callbacks:
   after_goodbye_minutes: 60
   after_lead_minutes: 30
+  billing_minutes: 120
   dropped_safety_minutes: 10
   fsm_down_minutes: 60
   max_attempts: 1
@@ -179,6 +180,8 @@ lines:
     and the technician won't start until that's settled.
   arrival_no_fit: Our arrival windows are {windows}, and the technician can come any time in the window,
     so I can't promise an exact time.
+  billing_callback: I'm sorry about that. Billing goes through our office, so I've asked them to look
+    into the charge, and someone from the office will call you {when}.
   callback_after: around {time}
   callback_asap: as soon as they can
   callback_before: before {time}
@@ -187,6 +190,8 @@ lines:
   callback_opening: Hi, this is Summit Air calling back for {first_name}. Is that you?
   callback_opening_unknown: Hi, this is Summit Air calling you back, like we said we would.
   callback_outside_hours: Our team makes calls between {opens} and {closes}. What time in there works?
+  card_stop: For your security, please don't read a card number over the phone. Our office will send you
+    a secure payment link, or call you to take the payment.
   commercial: Thanks for thinking of us. Unfortunately Summit Air works on homes and apartments, not businesses,
     so we're not the right fit for this one.
   do_not_call: Understood, we won't call you.
@@ -459,6 +464,61 @@ pace:
   - want you to slow down
   slowest: 0.7
   step: 0.15
+payments:
+  billing_phrases:
+  - charged twice
+  - double charged
+  - charged me twice
+  - overcharged
+  - over charged
+  - charged too much
+  - wrong charge
+  - charge is wrong
+  - bill is wrong
+  - billed twice
+  - billed me twice
+  - billing mistake
+  - billing error
+  - dispute a charge
+  - dispute the charge
+  - dispute the bill
+  - didnt authorize
+  - did not authorize
+  - never authorized
+  - want a refund
+  - need a refund
+  - get a refund
+  - refund my
+  card_phrases:
+  - pay by card
+  - pay with a card
+  - pay with my card
+  - pay with card
+  - pay by credit card
+  - pay with a credit card
+  - pay with my credit card
+  - pay by debit card
+  - pay with my debit card
+  - pay with a debit card
+  - give you my card
+  - give you my credit card
+  - give you the card
+  - read you my card
+  - read you the card
+  - take my card
+  - take a card
+  - take a credit card
+  - put it on my card
+  - put it on a card
+  - charge my card
+  - charge it to my card
+  - my card number
+  - the card number
+  - credit card number
+  - card over the phone
+  - pay over the phone
+  - pay for it now
+  - pay now over the phone
 phone_numbers:
 - (646) 624-0418
 - (678) 336-6730
@@ -860,6 +920,141 @@ priority:
     - only source of heat
     raise_to: High
     reason: pipes at risk or no other heat
+  - id: water_in_home
+    not_phrases:
+    - water heater
+    - hot water
+    - water bill
+    - water pressure
+    phrases:
+    - water through the ceiling
+    - water coming through the ceiling
+    - water coming from the ceiling
+    - water from the ceiling
+    - water dripping from the ceiling
+    - dripping from the ceiling
+    - dripping through the ceiling
+    - leaking through the ceiling
+    - leaking from the ceiling
+    - coming through the ceiling
+    - ceiling is leaking
+    - ceilings leaking
+    - ceiling is dripping
+    - ceilings dripping
+    - leaking into the house
+    - leaking into the apartment
+    - leaking into the home
+    - leaking into the bedroom
+    - leaking into the living room
+    - water all over the floor
+    - flooding the floor
+    - water is pouring
+    - pouring water
+    raise_to: Urgent
+    reason: water coming into the home
+    together:
+      first:
+      - water
+      - leak
+      - leaking
+      - leaks
+      - leaked
+      - dripping
+      - drips
+      - pouring
+      - flooding
+      - flooded
+      - soaked
+      - soaking
+      - puddle
+      - puddles
+      - running down
+      - dripping down
+      - water stain
+      - wet
+      - overflowed
+      - overflowing
+      - overflows
+      second:
+      - ceiling
+      - ceilings
+      - wall
+      - walls
+      - ac
+      - a c
+      - air conditioner
+      - air conditioning
+      - air handler
+      - mini split
+      - ductless
+      - the unit
+      - unit
+      - indoor unit
+      - attic unit
+      - condensate
+      - drain pan
+      - vent
+      - vents
+      - register
+      - registers
+      unless_near:
+      - faucet
+      - sink
+      - toilet
+      - tub
+      - shower
+      - dishwasher
+      - washing machine
+      - water heater
+      - hot water heater
+      - pipe
+      - pipes
+      - radiator
+      - boiler
+      within: 8
+  - id: breaker_trips
+    phrases:
+    - breaker trips
+    - breakers trip
+    - breaker is tripping
+    - breakers are tripping
+    - breaker tripping
+    - trips the breaker
+    - tripping the breaker
+    - trips my breaker
+    - tripping my breaker
+    - trips the circuit
+    - breaker keeps tripping
+    - breakers keep tripping
+    - tripped when the
+    - tripped every time
+    - trips when the
+    - trips whenever
+    - keep resetting the breaker
+    - keep resetting it
+    - keeps resetting the breaker
+    - resetting the breaker
+    - reset the breaker again
+    - reset the breaker twice
+    - keeps tripping the breaker
+    - keeps tripping breakers
+    - keeps tripping my breaker
+    - keeps flipping the breaker
+    - breaker keeps flipping
+    - breaker trips every time
+    - trips the breaker every time
+    - tripped the breaker again
+    - breaker tripped again
+    - keeps blowing the breaker
+    - keeps blowing a fuse
+    - keeps blowing fuses
+    - keeps tripping the circuit
+    raise_to: High
+    reason: a breaker that keeps tripping
+  - electrical_signal: true
+    id: electrical_fault
+    raise_to: High
+    reason: sparks or an electrical smell at the unit
   - id: safety_signal
     raise_to: Urgent
     reason: gas or carbon monoxide reported on the call
@@ -891,6 +1086,70 @@ safety:
   - definitely not
   - not a gas
   - no smell of gas
+  electrical:
+    history:
+    - last year
+    - last month
+    - last week
+    - last winter
+    - last summer
+    - years ago
+    - months ago
+    - a while ago
+    - a while back
+    - long time ago
+    - used to
+    - back then
+    - been fine
+    - been ok
+    - been okay
+    - since then
+    - got fixed
+    - was fixed
+    - fixed it
+    lines: Please step away from the unit and turn it off, and if you can safely reach the breaker, switch
+      that off too. I can get a technician out to look at it.
+    now:
+    - sparks
+    - sparking
+    - arcing
+    - arcs
+    - burning plastic
+    - melting plastic
+    - electrical smell
+    - burning wire
+    - burnt wire
+    - burning wires
+    - burnt wires
+    - burnt smell from the ac
+    - burnt smell from the unit
+    - burning smell from the ac
+    - burning smell from the unit
+    - smoke from the furnace
+    - smoke from the ac
+    - smoke coming from the furnace
+    - smoke coming out of the furnace
+    - smoke from the outdoor unit
+    - electrical burning smell
+    - smells electrical
+    - smell electrical
+    - smells like an electrical fire
+    - smoke coming out of the unit
+    - smoke coming from the unit
+    - unit is smoking
+    - furnace is smoking
+    - its smoking
+    - smoke from the unit
+    - smoke from the panel
+    - smoke from the breaker
+    - panel is smoking
+    - breaker box is smoking
+    past:
+    - sparked
+    - arced
+    - smoked
+    - spark
+    signed_off: true
   flag_reason: '{label} reported on the call'
   heating_check:
     kind: co
@@ -1060,6 +1319,10 @@ voice:
   greeting_known: Hi, this is Summit Air. Is this {first_name}?
   greeting_linked: Hi, this is Summit Air's virtual assistant again. I think we got cut off earlier. Is
     this {first_name}?
+  greeting_linked_stepped_away: Hi, this is Summit Air's virtual assistant again. We got disconnected
+    earlier when you stepped away; let's pick up where we left off. Is this {first_name}?
+  greeting_linked_stepped_away_unknown: Hi, this is Summit Air's virtual assistant again. We got disconnected
+    earlier when you stepped away; let's pick up where we left off. Who am I speaking with?
   greeting_linked_unknown: Hi, this is Summit Air's virtual assistant again. I think we got cut off earlier.
     Who am I speaking with?
   greeting_unknown: Thanks for calling Summit Air, this is the virtual assistant. How can I help?
@@ -1069,6 +1332,9 @@ voice:
   recording_stopped: Okay, I've turned the recording off.
   server_down: Sorry, our system is having trouble right now. Please call us back in a few minutes, and
     if you smell gas, hang up and call 911 from outside.
+  stepped_away: It sounds like you've stepped away, so I'm going to hang up for now. Once you're ready,
+    feel free to call this number back, and we can pick up where we left off.
+  still_here: Take your time, I'm still here.
   voicemail_callback_minutes: 60
 weather:
   gridpoint: OKX/33,42

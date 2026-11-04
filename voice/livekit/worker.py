@@ -33,6 +33,7 @@ from livekit.agents.llm import ChatMessage
 from livekit.agents.voice.amd import AMD, AMDCategory
 
 from prompts import assemble
+from voice import dead_air as silence
 from voice import names as local_names
 
 from . import clips, recording
@@ -229,12 +230,15 @@ async def entrypoint(ctx: JobContext) -> None:
 
     async def close() -> None:
         transfer.cancel()
+        if timer["task"]:
+            timer["task"].cancel()
         await recording.stop(ctx.api, egress["id"])
         await call.flush()
         await tools_server.end(ended["reason"])
         await tools_server.aclose()
 
     ctx.add_shutdown_callback(close)
+    timer = {"task": None}
 
     def speak(text: str):
         return session.say(text, allow_interruptions=False)
@@ -355,6 +359,7 @@ async def entrypoint(ctx: JobContext) -> None:
     await player.start(room=ctx.room, agent_session=session)
     # In the background, so the greeting doesn't wait on the recorder.
     asyncio.create_task(record())
+    timer["task"] = asyncio.create_task(watch_silence(ctx, session, call, spoken, voice, held, ended))
     # A dropped safety call whose lines weren't said: they come first on this call too.
     if (data.get("safety") or {}).get("text"):
         session.say(data["safety"]["text"], allow_interruptions=False)
@@ -362,6 +367,39 @@ async def entrypoint(ctx: JobContext) -> None:
     session.say(opening(data, assemble.greeting(data, spoken)))
     if start["say"]:
         session.say(start["say"])
+
+
+async def watch_silence(ctx, session, call, spoken: dict, voice: dict, held: dict, ended: dict) -> None:
+    """Dead air (DECISIONS.md 081): the tenant's check-in line every `check_in_s` of silence, and at
+    `hang_up_s` its goodbye, then the call ends as `stepped_away`."""
+    timings = voice["dead_air"]
+    call.dead_air = silence.DeadAir(timings["check_in_s"], timings["hang_up_s"])
+    call.timer_lines = {" ".join(spoken[k].split()) for k in ("still_here", "stepped_away")}
+
+    def busy() -> bool:
+        return (
+            session.agent_state in ("speaking", "thinking")
+            or call.tool_log.running > 0
+            or held["music"] is not None
+            or call.hang_up_task is not None
+        )
+
+    async def check_in() -> None:
+        session.say(spoken["still_here"])
+
+    async def goodbye() -> None:
+        await session.say(spoken["stepped_away"], allow_interruptions=False).wait_for_playout()
+        ended["reason"] = "stepped_away"
+        await ctx.delete_room()
+
+    await silence.watch(
+        call.dead_air,
+        busy,
+        lambda: session.user_state == "speaking",
+        check_in,
+        goodbye,
+        poll_s=timings["poll_s"],
+    )
 
 
 def opening(data: dict, line: str) -> str:

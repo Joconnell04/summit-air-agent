@@ -1,0 +1,27 @@
+id: breaker-trips-heat-pump
+flow: [booking, priority]
+difficulty: standard
+traits: [self-correction]
+journeys: [J1]
+tags: [call-handling, breaker]
+caller_id: "(929) 555-0311"
+weather: {now_f: 68, low_f: 58}
+persona: Ana Costa on Staten Island. Organized, corrects one detail.
+hidden_facts:
+  name: Ana Costa
+  address: 2290 Hylan Blvd, Staten Island, 10306
+  phone: the number being called from
+  problem: the heat pump wants a tune-up, and lately the breaker keeps tripping when it switches to heat; no sparks, no smell
+  system: heat pump, about 7 years old
+  who_home: Ana, healthy
+  owns: Ana owns the house and approves the work
+opening: Hi, I'd like a tune-up on my heat pump, and also the breaker keeps tripping when it switches over to heat.
+script:
+  - Say the heat pump is 5 years old, then correct it to 7.
+  - Answer the booking questions, confirm the read-back, take the first window, then say goodbye.
+must:
+  - booking: {count: 1, priority: High, zip: "10306"}
+  - read_back: before_booking
+  - electrical: not_said
+should:
+  - Books the visit and notes the tripping breaker.

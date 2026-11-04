@@ -190,7 +190,7 @@ class World:
 
     def earlier_call(self, call_id: str, caller_id: str, earlier) -> None:
         """Put a call from the same number on the record `minutes_ago` before the scenario starts,
-        with its turns, ended by a dropped line. The clock is set back for it, then forward."""
+        with its turns, ended by a dropped line (or the caller stepping away, as its end_reason says). The clock is set back for it, then forward."""
         start = self.clock.start
         self.clock.start = start - timedelta(minutes=earlier.minutes_ago)
         self.clock.t0 = time.monotonic()
@@ -199,7 +199,7 @@ class World:
             for turn in earlier.turns:
                 (speaker, text), = turn.items()
                 self.server.turn(call_id, speaker, text)
-            self.server.end(call_id, "dropped")
+            self.server.end(call_id, getattr(earlier, "end_reason", "dropped"))
         finally:
             self.clock.start = start
             self.clock.t0 = time.monotonic()
