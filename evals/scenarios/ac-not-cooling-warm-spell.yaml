@@ -1,0 +1,28 @@
+id: ac-not-cooling-warm-spell
+flow: [booking]
+difficulty: easy
+journeys: [J1, spine]
+spec: [S-01, S-02]
+tags: [standard]
+caller_id: "(917) 555-0176"
+persona: Nadia Haddad, a homeowner in Bayside whose central air quit during an unseasonable warm spell. Calm; it's uncomfortable but nobody at home is at risk.
+hidden_facts:
+  name: Nadia Haddad
+  address: 45-17 Bell Blvd, Queens, 11361
+  phone: the number you're calling from
+  problem: the central AC runs but blows warm air since this morning; 80 F inside
+  system: central air, about 7 years old
+  who_home: just you and your husband, both healthy
+  tried: checked the thermostat and changed the filter
+opening: Hi, my central air is running but it's just blowing warm air.
+script:
+  - Answer each question plainly.
+  - Take the first window offered.
+  - Say goodbye once the agent asks if there is anything else.
+must:
+  - booking: {count: 1, job_type: no_cooling, zip: "11361"}
+  - read_back: before_booking
+  - safety_lines: not_said
+  - outcome: booked
+should:
+  - Asks how warm it is inside and who's at home, then books without treating it as an emergency.

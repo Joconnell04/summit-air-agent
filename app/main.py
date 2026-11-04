@@ -23,9 +23,11 @@ from pydantic import BaseModel
 
 from . import (
     accounts,
+    address_as,
     bench,
     bench_rules,
     db,
+    geocode,
     jobs,
     lifecycle,
     logs,
@@ -84,6 +86,7 @@ class Services:
         weather_clients: dict[str, httpx.Client] | None = None,
         summary_model: summary.SummaryModel | None = None,
         guidance_check: Check | None = None,
+        geocoder: geocode.Geocoder | None = None,
     ):
         self.settings = settings
         if clock is None and settings.fixed_now:
@@ -101,6 +104,11 @@ class Services:
         self.fsm = {t.slug: make_adapter(t, settings, clients.get(t.slug)) for t in self.tenants}
         self.caches = {t.slug: SlotCache(settings.slot_cache_seconds) for t in self.tenants}
         self.side_model = side_model or side_models.from_settings(settings.side_model)
+        # One address lookup per tenant, or the one given (tests and the eval world).
+        self.geocoders = {
+            t.slug: geocoder or geocode.from_settings(settings.geocoder, t.address_lookup)
+            for t in self.tenants
+        }
         self.summary_model = summary_model or (
             summary.model_from_config() if settings.summaries else None
         )
@@ -244,6 +252,7 @@ def _ctx(services: Services, conn, call_id: str, key: str | None) -> Ctx:
         services.side_model,
         key,
         numbers,
+        services.geocoders.get(tenant.slug),
     )
 
 
@@ -278,9 +287,15 @@ def create_app(
     fsm_clients: dict[str, httpx.Client] | None = None,
     side_model: SideModel | None = None,
     guidance_check: Check | None = None,
+    geocoder: geocode.Geocoder | None = None,
 ) -> FastAPI:
     services = Services(
-        settings or Settings(), clock, fsm_clients, side_model, guidance_check=guidance_check
+        settings or Settings(),
+        clock,
+        fsm_clients,
+        side_model,
+        guidance_check=guidance_check,
+        geocoder=geocoder,
     )
 
     @asynccontextmanager
@@ -369,6 +384,10 @@ def create_app(
                 if handed is not None:
                     result.say = handed.say
                     result.data["handoff"] = handed.data["handoff"]
+            # Look up a street the caller just said, so the answer is back before the agent asks.
+            geocoder = services.geocoders.get(ctx.tenant.slug)
+            if body.speaker == "caller" and geocoder:
+                geocoder.prefetch_line(body.text)
             # Ask the side model now, so its answer is back before find_slots or book needs it.
             slot = ctx.tenant.priority.get("side_model")
             if body.speaker == "caller" and services.side_model and slot:
@@ -428,6 +447,11 @@ def create_app(
                 raise Refused("unknown_call", "")
             tenant = services.tenants.by_slug[call["tenant"]]
             ended = lifecycle.end(conn, tenant, call, body, services.clock())
+            # What the caller asked to be called goes onto their record for the next call.
+            try:
+                address_as.save(conn, services.fsm[tenant.slug], call, services.clock())
+            except Exception:
+                log.exception("saving the preferred name on call %s failed", call_id)
             # A callback the system placed is judged when its call ends (app/outbound.py).
             try:
                 outbound.settle_answered(

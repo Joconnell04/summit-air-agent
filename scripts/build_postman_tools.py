@@ -153,6 +153,12 @@ def build() -> dict:
             ),
         ),
         tool(
+            "find_address",
+            "Find address: a street the caller never said",
+            {"street": "248 Duffield St"},
+            refused("address_not_heard"),
+        ),
+        tool(
             "find_slots",
             "Find slots: shape",
             {"job_type": "tune_up", "time_of_day": "morning"},

@@ -301,3 +301,32 @@ def test_a_shop_building_that_is_not_a_home_stays_commercial():
     cfg = load_agent(TENANT_DIR)[0]["commercial"]
     assert sounds_commercial("it's not a home, it's the shop building", cfg)
     assert not sounds_commercial("it's a building not a home, six apartments", cfg)
+
+
+def test_an_active_member_is_told_to_be_thanked(agent, scenarios):
+    """member-books-tune-up: the agent never thanked a member (eval run 20261104-174038)."""
+    linda = scenarios["activeMemberWithAdultChild"]
+    start = agent.start(linda["phone"])["data"]
+    text = assemble.instructions(start, datetime(2026, 11, 2, 14, 0, tzinfo=UTC))
+    assert "Thank them for being a member once" in text
+    assert "For this caller:" in text
+
+
+def test_a_caller_with_a_visit_booked_is_moved_not_booked_again(agent, scenarios):
+    """known-caller-moves-visit: the agent called book_appointment before rescheduling (eval run
+    20261104-174038)."""
+    maria = scenarios["repeatCallerOpenJob"]
+    notes = assemble.call_notes(agent.start(maria["phone"])["data"])
+    assert any("call reschedule_appointment" in n and "never book_appointment" in n for n in notes)
+
+
+def test_an_unknown_caller_gets_no_caller_notes(agent):
+    start = agent.start()["data"]
+    assert assemble.call_notes(start) == []
+    assert "For this caller:" not in assemble.instructions(start)
+
+
+def test_an_expired_member_is_not_thanked_as_a_member(agent, scenarios):
+    frank = scenarios["expiredMember"]
+    notes = assemble.call_notes(agent.start(frank["phone"])["data"])
+    assert not any("active" in n for n in notes)

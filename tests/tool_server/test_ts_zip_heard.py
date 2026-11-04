@@ -98,3 +98,22 @@ def test_zip_plus_four_counts(agent):
     call = agent.start(UNKNOWN)["data"]["call_id"]
     agent.turn(call, "It's 11231-4402.")
     assert agent.tool("check_service_area", call, zip="11231")["ok"]
+
+
+@pytest.mark.parametrize(
+    "line, tokens",
+    [
+        ("two forty eight duffield", ["248", "duffield"]),
+        ("two hundred forty eight", ["248"]),
+        ("two hundred and five main", ["205", "main"]),
+        ("forty two forty one bell", ["4241", "bell"]),
+        ("ten sixty two park place", ["1062", "park", "place"]),
+        ("one oh six two", ["1062"]),
+        ("77-10 34th Ave", ["7710", "34", "ave"]),
+        ("out for 12 days", ["out", "for", "12", "days"]),
+    ],
+)
+def test_spoken_numbers_are_read_as_new_yorkers_say_addresses(line, tokens):
+    from app.text import number_tokens
+
+    assert number_tokens(line) == tokens

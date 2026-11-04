@@ -8,6 +8,13 @@ get_customer_history: >-
   Older history for a customer already matched on this call: past jobs, past calls or equipment.
   Use it for questions like "when were you last out here?" that the call context doesn't answer.
 check_service_area: Check a five-digit ZIP against the service area. Call it as soon as the caller gives the ZIP; never guess one from the street.
+find_address: >-
+  Find the ZIP for a street address when the caller gave the house number and street but no ZIP,
+  or doesn't know it. Pass the house number and street as they said them, and the borough or
+  neighborhood only if they said one. When it returns the address, its ZIP is already checked
+  against the service area: use that ZIP and street in the read-back, which confirms it, and don't
+  ask for the ZIP. If it asks which one or asks to spell the street, ask the caller its sentence
+  and call it again with `borough` or `spelled`.
 find_slots: >-
   Availability for a job type. Without `day` it returns the shape of availability over the coming
   days; with `day` it returns that day's exact arrival windows. Pass what you've heard that bears on

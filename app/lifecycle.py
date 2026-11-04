@@ -5,7 +5,7 @@ import re
 import sqlite3
 from datetime import datetime, timedelta
 
-from . import lookup, owner_settings, pace, recordings, records, rules, safety, transfer
+from . import address_as, lookup, owner_settings, pace, recordings, records, rules, safety, transfer
 from .db import iso, parse_iso, tx
 from .envelope import Result, ok
 from .fsm import FsmAdapter, FsmRejected, FsmUnavailable
@@ -209,6 +209,7 @@ def _resume(conn: sqlite3.Connection, previous: sqlite3.Row) -> dict:
         "safety_state": previous["safety_state"],
         "started_at": previous["started_at"],
         "caller_name": name.split()[0] if name else None,
+        "preferred_name": address_as.current(conn, previous["id"]),
         "turns": [{"speaker": t["speaker"], "text": t["text"]} for t in turns],
     }
 
@@ -309,6 +310,8 @@ def start(
         "customers": customers,
         "fsm_available": fsm_ok,
         "linked_call": _resume(conn, previous) if previous else None,
+        # What the caller asked to be called: on a linked call, else on their record.
+        "preferred_name": address_as.current(conn, args.call_id) or address_as.from_notes(customers),
         "offer_callback": offer_callback,
         "knowledge": tenant.knowledge,
         # The owner's live edits, pinned to this call (app/rules.py).
@@ -428,6 +431,12 @@ def turn(
             if recordings.objected(args.text) and not recordings.declined(conn, call["id"]):
                 recordings.decline(conn, call["id"], seq, now)
                 stop_recording = True
+            # A form of address the caller asked for ("call me Dr. Patel"), kept for the call.
+            named = address_as.record(
+                conn, call["id"], args.text, seq, now, address_as.place_words(tenant.address_lookup)
+            )
+            if named:
+                hints.append(named)
             # A caller who describes a business can't book, whatever the agent does next (S-05).
             if sounds_commercial(args.text, tenant.commercial):
                 changes["commercial"] = 1
@@ -572,6 +581,15 @@ def already_known(
             known["rents or owns"] = "rents"
         elif any(f" {p} " in padded for p in OWNS):
             known.setdefault("rents or owns", "owns")
+    # A ZIP the address lookup found for the caller's street (tools.find_address).
+    for row in conn.execute(
+        "SELECT zips_json FROM address_lookups WHERE call_id = ? AND status = 'one' ORDER BY id",
+        (call_id,),
+    ):
+        known["ZIP"] = json.loads(row["zips_json"])[0]
+    preferred = address_as.current(conn, call_id)
+    if preferred:
+        known["call them"] = preferred
     readback = conn.execute(
         "SELECT readback_json, readback_confirmed_at FROM calls WHERE id = ?", (call_id,)
     ).fetchone()

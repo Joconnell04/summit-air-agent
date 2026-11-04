@@ -41,6 +41,26 @@ auth:
   app_key: ak1.summit-air-mock
   user_id: 9001
 
+# The address lookup (app/geocode.py, on when GEOCODER=geosearch): NYC Planning's GeoSearch, built
+# on the city's Property Address Directory, with the Census geocoder behind it. `boroughs` maps
+# what a caller says to the directory's borough; `zip_boroughs` reads a Census answer's borough
+# from its ZIP. Research: docs/explorations/015-address-lookup.md.
+address_lookup:
+  geosearch_url: https://geosearch.planninglabs.nyc/v2/search
+  census_suffix: ", NY"
+  boroughs:
+    brooklyn: Brooklyn
+    kings: Brooklyn
+    queens: Queens
+    staten island: Staten Island
+    richmond: Staten Island
+    manhattan: Manhattan
+    bronx: Bronx
+    the bronx: Bronx
+  zip_boroughs: {"100": Manhattan, "101": Manhattan, "102": Manhattan, "103": Staten Island,
+                 "104": Bronx, "112": Brooklyn, "110": Queens, "111": Queens, "113": Queens,
+                 "114": Queens, "116": Queens}
+
 # ASSUMED county list (Brooklyn, Queens, Staten Island). The ZIPs are real ZIP codes in those
 # counties; zone names are ours.
 zones:
