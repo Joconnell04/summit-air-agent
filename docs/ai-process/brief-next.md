@@ -26,11 +26,9 @@ Started while Jackson steps away. Each section is either a decision that needs h
 
 | Lane | PR | State |
 |---|---|---|
-| Round 3 and 4 wording, read-back and booking spoken by the server | #82 | implementing round 4, then one eval run |
+| Round 3 and 4 wording, server-spoken read-back and booking | #82 | 91% with every must-pass passing; merging main and re-running once to become the deploy reference |
+| Debug bench, then the rule editor moved onto it | #89 | review fixes (phone number in replay ids, redaction gaps) |
+| Cold handoff | #90 | review fixes ("now" alone no longer triggers it) |
 | End-of-turn wait, timer fix, stage times, voice tweaks | none yet | rig runs |
-| Speaking rate per call | #83 | fixing review findings |
-| Accounts, roles, settings panel | #85 | done; merges in the batch with one eval re-adopt |
-| Simulated-call recordings and listener | none yet | building |
-| Two calls, one slot | none yet | building |
-| Debug bench | none yet | building |
-| Cold handoff when a caller demands a person | none yet | building |
+| Simulated-call recordings and listener | none yet | recording the 15-call batch |
+| Merged | #83, #85, #86, #87, #88, #91 | speaking rate, accounts and settings, booking under load, "nobody's", ZIP from the caller, test fixes |
