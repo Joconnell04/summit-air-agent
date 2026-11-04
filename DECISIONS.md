@@ -12,6 +12,15 @@ Discussion: docs/ai-process/transcripts/... or docs/explorations/...
 Issue: #N
 -->
 
+## 074. The design system is saved to the Claude account, built from the repository
+
+Decided: keep the design system's source in this repository (`tokens.css`, `components.css`, `/owner/design`, docs/design-system.md) and save a copy to the Claude account as a design system, "Revin owner view", rebuilt from the code by `scripts/export_design_system.py`. Its brand book is docs/design-system-rules.md, the short form of the design system page written as rules for an agent.
+Why: later sessions, and other surfaces such as decks or a new page, read a saved design system directly instead of rereading the CSS and the long doc. Building the copy from the code, with a test that fails on drift, keeps one source.
+Considered: the repository alone (every session rereads 700 lines of CSS); the saved copy alone (the app's CSS would drift from it); a live bundle of the page script (the previews would run code the app's tests don't cover).
+Would change if: the owner view moves to a component library with its own build, in which case the copy is built from that library.
+Discussion: Jackson in chat: "make sure you like properly save and add the design system for Revan to my Claude account, so like it will be easier to reference in future sessions."
+Issue: none; follows #53
+
 ## 073. A caller who pushes for a higher priority gets a calm answer, not a raise
 
 Decided: when a caller asks to be put first with no new fact ("it's an emergency", "make it urgent", "I'll pay extra", "put me first"), the server's turn check adds a hint and the agent gets a `[server]` note: one calm line that it'll get them the soonest opening, no arguing and no level named or promised, the at-risk question once if it hasn't been asked (`priority_pushed`, or `priority_pushed_asked` once an agent line has asked who's home), then the soonest window or a callback from a person, and 911 only if someone is in danger. Nothing is raised. The phrases are the trade's (`priority.pushes` in trades/hvac/agent.yaml). A negated ask ("it's not an emergency"), talk about the equipment ("the furnace is urgent business") and a line that also gives a fact a rule raises on don't count; on a safety call there is no hint. A fact the caller states always counts, even one they ask the agent to pass on ("tell them there's a baby in the house"); the model's own sentence saying it raised the call ("I've marked it as a priority") is dropped before it's spoken.
