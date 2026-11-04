@@ -1029,6 +1029,23 @@ def read_back(ctx: Ctx, args: ReadBackIn) -> Result:
     ):
         with tx(ctx.conn):
             records.update_call(ctx.conn, ctx.call["id"], readback_confirmed_at=iso(ctx.now))
+        # Whose account a new address goes on is asked here, as the confirmation's own sentence,
+        # not by a refused booking: the reply that books then carries its short line and the
+        # confirmation together (eval run 20261104-183233, tune-up-known-caller).
+        try:
+            choose = _new_address_customer(ctx, address) is not None
+        except (FsmUnavailable, FsmRejected):
+            choose = False
+        if choose:
+            return ok(
+                ctx.tenant.line("account_choice"),
+                confirmed=True,
+                address=address,
+                phone=phone,
+                account_choice=True,
+                need="this question was said for you; when the caller answers, book_appointment "
+                "with new_address_account own (and details.name for that address) or caller",
+            )
         return ok(confirmed=True, address=address, phone=phone)
     parts = None
     if not (args.confirmed and same):
@@ -1421,6 +1438,27 @@ def _open_job_here(ctx: Ctx, readback: dict) -> None:
         return
 
 
+def _new_address_customer(ctx: Ctx, readback: dict) -> int | None:
+    """The one customer matched on this call when the address is on file nowhere, so whose account
+    it goes on has to be asked; None otherwise. FSM errors are raised for the caller to handle."""
+    scoped = [
+        (cid, row)
+        for cid, row in records.scoped_customers(ctx.conn, ctx.call["id"]).items()
+        if row["customer_type"] not in ctx.tenant.rejected_customer_types
+    ]
+    if len(scoped) != 1:
+        return None
+    customer_id = scoped[0][0]
+    if any(booking.same_address(loc, readback) for loc in ctx.fsm.locations(customer_id)):
+        return None
+    on_file = ctx.fsm.locations_by_address(
+        readback["street"], readback["zip"], readback["unit"] or None
+    )
+    if any(booking.same_address(loc, readback) for loc in on_file):
+        return None
+    return customer_id
+
+
 def _new_address_account(
     ctx: Ctx, readback: dict, args: BookIn
 ) -> tuple[str | None, str | None]:
@@ -1429,21 +1467,9 @@ def _new_address_account(
     usual case), or the caller's (eval round 2, seed 5). Returns the choice and, for its own
     account, the caller's name for the contact. A lookup that fails leaves the booking to go ahead
     under the caller, as before."""
-    scoped = [
-        (cid, row)
-        for cid, row in records.scoped_customers(ctx.conn, ctx.call["id"]).items()
-        if row["customer_type"] not in ctx.tenant.rejected_customer_types
-    ]
-    if len(scoped) != 1:
-        return None, None
-    customer_id = scoped[0][0]
     try:
-        if any(booking.same_address(loc, readback) for loc in ctx.fsm.locations(customer_id)):
-            return None, None
-        on_file = ctx.fsm.locations_by_address(
-            readback["street"], readback["zip"], readback["unit"] or None
-        )
-        if any(booking.same_address(loc, readback) for loc in on_file):
+        customer_id = _new_address_customer(ctx, readback)
+        if customer_id is None:
             return None, None
         caller = ctx.fsm.customer(customer_id)
     except (FsmUnavailable, FsmRejected):
