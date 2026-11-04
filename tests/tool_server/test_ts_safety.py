@@ -741,3 +741,12 @@ def test_a_denial_with_an_article_or_nothing_like_triggers_nothing(line):
     """Eval round 3 run 20261104-014518, gas-worry-no-smell: "it's not a gas leak" brought the
     gas lines."""
     assert safety.check_caller_turn(line, "none", None, 0, CFG).action == "none"
+
+
+def test_a_cleared_check_is_not_asked_again_for_the_same_kind():
+    """Eval round 3 run 20261104-024140, oven-heat-co-check: "nobody's dizzy" after the cleared
+    carbon monoxide question asked it a second time."""
+    again = safety.check_caller_turn("we're fine, nobody's dizzy or sick", "cleared", "co", 0, CFG)
+    assert again.action == "none"
+    other = safety.check_caller_turn("there's a weird smell in the basement", "cleared", "co", 0, CFG)
+    assert other.action == "ask_check" and other.kind == "gas"

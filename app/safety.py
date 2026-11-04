@@ -558,7 +558,9 @@ def check_caller_turn(
             return SafetyAction("ask_check", kind, cfg["vague"][kind]["question"])
         return SafetyAction("none", kind)
     vague = vague_signal(text, cfg) or worry_signal(text, cfg)
-    if vague and state in ("none", "cleared"):
+    # A check the caller already answered no to isn't asked again for the same kind: "nobody's
+    # dizzy" later on is the same answer (eval round 3, oven-heat-co-check).
+    if vague and (state == "none" or (state == "cleared" and vague != kind)):
         return SafetyAction("ask_check", vague, cfg["vague"][vague]["question"])
     confirm = confirm_signal(text, cfg)
     if confirm and not confirm_asked and state in ("none", "cleared"):
