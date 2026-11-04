@@ -22,7 +22,7 @@ fsm:
   # The ServiceTitan user the integration acts as: notes it adds carry this createdById.
   agent_user_id: 9001
   # The call reason a lead carries for each of record_lead's kinds (config.yaml call_reasons).
-  lead_call_reason_ids: {commercial: 704, install: 702, membership: 705}
+  lead_call_reason_ids: {commercial: 704, install: 702, membership: 705, not_offered: 706}
   # Tag types (config.yaml tag_types) that say how a callback call went. A person at the office
   # puts one on the call in ServiceTitan; the server puts one on the callbacks it places itself.
   # Only "resolved" marks a callback done (docs/decisions/26-callback-done.md).
@@ -100,6 +100,13 @@ safety:
 # tenants", "our building", "the building I manage" and a count of units mark nothing. Three ways to
 # match: "my restaurant" or "our bakery" (my or our right before a business), "I run a restaurant"
 # (a running word, then a, an or the and at most one more word, then a business), and fixed phrases.
+# Ownership counts only when it attaches to the business: "the bakery across from me is mine"
+# (mine, right after the business and at most four words), or "I own the place, it's a deli" (an
+# own_place phrase with "it's a" and the business). "I own the place, the bar next door is loud"
+# names a neighbor, so it marks nothing (PR #135 review). An office counts only with its heating or
+# cooling ("the heat in my office", "our office AC"), since "my office called me" is about work.
+# A line that names the caller's home as the place ("at home", "my house") is residential, whatever
+# job words come before it ("I'm a church deacon calling about my house").
 # Exclusions are removed before matching, so "my business partner" stays a home.
 commercial:
   owned: [restaurant, bakery, deli, cafe, bar, store, shop, salon, gym, clinic, daycare, warehouse, business]
@@ -116,7 +123,27 @@ commercial:
   not_home: [not a home, not my home]
   apartment_signs: [units, apartments, apartment building, unit building, family house, walk up,
                     building, tenants]
+  mine: [is mine, is ours, belongs to me, belongs to us]
+  own_place: [i own the place, we own the place, i own this place, we own this place, i own it,
+              we own it, im the owner, were the owners]
+  office: {words: [office], systems: [heat, heating, ac, air conditioning, air conditioner, cooling,
+                                      furnace, boiler, thermostat, radiators, hvac]}
+  home_signs: [at home, my house, my home, my apartment, our house, our home, our apartment]
   not: [business partner, business trip, business card, home office, my own business hours]
+
+# What Summit Air does and doesn't (issue #129). Bookable work is the job types in config.yaml;
+# offered says it in words for the owner view and the docs. A request for work in not_offered (the
+# trade's services.kinds say how callers put it) gets the not_offered line, said once per kind, and
+# is kept as a lead so the office sees the demand. suggest is a general kind of business, never a
+# brand. Duct cleaning isn't a job type here, so it is declined like the others (ASSUMED).
+services:
+  offered: [heating repair, cooling repair, maintenance tune-ups, gas and carbon monoxide safety
+            checks, replacement estimates]
+  not_offered:
+    plumbing: {what: plumbing, suggest: a plumber}
+    appliances: {what: appliance repair, suggest: an appliance repair shop}
+    water_heater: {what: water heaters, suggest: a plumber}
+    duct_cleaning: {what: duct cleaning, suggest: a duct cleaning company}
 
 # Who can approve the work (eval round 2, co-op-owner-mentions-board). A caller who says a board or
 # a landlord has to approve is offered a callback to settle it; if they ask to book anyway, the
@@ -371,6 +398,10 @@ lines:
   approval_callback_late: >-
     Someone from our team will call you {when} to confirm who can approve the work, and the
     technician won't start until that's settled.
+  # Work the company doesn't do (services.not_offered). {what} is "plumbing"; {suggest} is "a
+  # plumber".
+  not_offered: >-
+    I'm sorry, we don't do {what}, so {suggest} would be the right call for that.
   out_of_area: >-
     I'm sorry, that's outside the area we cover, so we're not able to send someone. A local heating
     company should be able to help.
@@ -394,6 +425,11 @@ lines:
   account_choice: >-
     Should that address go on its own account, with you as a contact, or under your account?
   account_name: Whose name should the account for that address be under?
+  # An open visit at the address whose arrival window has ended (tools._passed_visit). {day} is
+  # "today", "yesterday" or a weekday; {between} is "8 and 12".
+  visit_passed: >-
+    I see a visit there that was due {day} between {between}, and it's still open on our end. Did
+    the technician make it out?
   # A number that matched more than one account, when the address doesn't say which (issue #128).
   account_which: I see more than one account on this number. Whose name should the visit go under?
   # The read-back when the number reaches someone else ("call my daughter at ..."). {who} is how
@@ -449,6 +485,9 @@ lines:
   # Said once when the server marks a call Urgent (spec S-21a). Below Urgent, no priority is named.
   urgent_priority: I've marked this call top priority, so you get our soonest opening.
   anything_else_first: Is there anything else I can help with?
+  # Ends a booking sentence instead of after_confirmation when the caller named another unit that
+  # has no booking yet (DECISIONS.md 085). {unit} is "5C".
+  next_unit: Now let's set up apartment {unit}.
   # Ends a booking, reschedule or cancel sentence, which the voice layer speaks with no model step.
   after_confirmation: Anything else?
   # Added to an urgent booking with no window today; the server has flagged a person to move it up.

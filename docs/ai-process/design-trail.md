@@ -118,3 +118,6 @@ How the design was reached, in order, so a reader can follow each choice back to
 | Card numbers and billing | Card digits are taken out before anything stores them; offering a card gets the server's line; a billing dispute gets an office callback | DECISIONS.md 080, #130 |
 | Dead air | A check-in every 2 minutes, a goodbye at 8 that invites a call back, and a call back that picks up where it stopped | DECISIONS.md 081, #130 |
 | Electrical and water | Sparks get their own calm route apart from gas and carbon monoxide; water into the home is Urgent; a tripping breaker is High | DECISIONS.md 082, #130 |
+| Read-back corrections and ended windows | A detail changed after the read-back resets it; a visit whose window ended is asked about, never confirmed | DECISIONS.md 083, #129 |
+| Work we don't do | Declined once by the server from the service list in config, kept as a lead; commercial "office" and ownership phrasings added | DECISIONS.md 084, #129 |
+| Two jobs and named technicians | Two different jobs per call, each with its own read-back where the unit differs; a technician request is a dispatcher note, never a promise | DECISIONS.md 085, #129 |

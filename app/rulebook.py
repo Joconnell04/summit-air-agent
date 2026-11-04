@@ -60,9 +60,15 @@ GATES = (
     ("whole_call", "Marks a caller who describes a business, such as a store, as commercial", (),
      ("S-05",)),
     ("whole_call", "Stops calling anyone who asks not to be called", (), ()),
+    ("whole_call", "Says once that the company doesn't do work it doesn't, and keeps it as a lead",
+     (), ()),
+    ("whole_call", "Passes on a request for a technician by name, and never promises one", (),
+     ()),
     ("whole_call", "Sets priority from what the caller says, and only ever raises it", (), ()),
-    ("whole_call", "One booking, one change and one cancel per call, then a person takes over",
+    ("whole_call", "Two bookings for different jobs, one change, one cancel, then a person",
      ("limit",), ()),
+    ("booking", "Never books one visit twice; a second at one address is a different job",
+     ("already_booked", "second_job"), ()),
     ("whole_call", "Can't delete records or look at another customer's", ("not_owner",),
      ("S-39",)),
     ("whole_call", "Can't place a call to 911 or anyone outside the company's callbacks", (),
@@ -78,6 +84,10 @@ GATES = (
      ("gate_read_back", "invalid_phone"), ("S-26",)),
     ("booking", "Reads the address and phone back once; confirmed details aren't read again",
      ("read_back_confirmed",), ("S-26",)),
+    ("booking", "A detail the caller changes after confirming is read back again before booking",
+     (), ("S-26",)),
+    ("booking", "Asks about an open visit whose window has passed, never calls it upcoming",
+     ("open_job_passed",), ()),
     ("booking", "Won't book outside the service area", ("out_of_area",), ("S-28",)),
     ("booking", "Checks the area and books only on a ZIP the caller said or one on their record",
      ("zip_not_heard",), ()),
@@ -178,6 +188,9 @@ LINE_STAGES = {
     "moved_from_address": ("booking", "Booking at the old address"),
     "heads_up": ("after_call", "Heads-up to the number on file"),
     "out_of_area": ("booking", "Outside the area"),
+    "not_offered": ("whole_call", "Work we don't do"),
+    "visit_passed": ("booking", "Visit window passed"),
+    "next_unit": ("booking", "Next unit"),
     "slot_taken": ("booking", "Window just filled"),
     "urgent_priority": ("booking", "Marked urgent"),
     "fsm_unavailable": ("booking", "Can't book now"),
@@ -316,6 +329,12 @@ def _settings(tenant: Tenant) -> list[Rule]:
             f"kept for their next call; a step slower after \"sorry, what?\" "
             f"{p['repeats_before_slower']} times; just the address slower when that's all they "
             "ask", why=why))
+    declined = tenant.services.get("not_offered", {})
+    if declined:
+        found.append(Rule(
+            "setting.services", "whole_call", "setting", "Work we don't do",
+            "; ".join(f"{v['what']} (suggests {v['suggest']})" for v in declined.values()),
+            why=why))
     labels = {code: j["name"] for code, j in tenant.job_types.items()}
     for job, brackets in tenant.priority["brackets"].items():
         for b in brackets:
@@ -408,7 +427,7 @@ def _settings(tenant: Tenant) -> list[Rule]:
 # The agent.yaml sections each part above reads, for the completeness test.
 SHOWN = {
     "safety", "commercial", "approval", "priority", "after_hours", "callbacks", "on_call_alerts",
-    "repeat_callers", "retention", "lines", "voice", "transfer", "pace",
+    "repeat_callers", "retention", "lines", "voice", "transfer", "pace", "services",
 }
 
 

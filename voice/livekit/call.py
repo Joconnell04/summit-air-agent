@@ -168,7 +168,7 @@ class Call:
                 self.handoff(line, plan, handoff["fallback"])
             raise StopResponse()
         safety = data.get("safety")
-        self.reply.heard(safety, text)
+        self.reply.heard(safety, text, data.get("hints"))
         if safety and safety["action"] in SPOKEN_ACTIONS and safety.get("text"):
             # Spoken from the server's text, never generated, and the caller can't cut it short.
             self.session.say(safety["text"], allow_interruptions=False)

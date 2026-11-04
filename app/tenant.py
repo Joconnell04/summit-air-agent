@@ -206,6 +206,8 @@ class Tenant:
         if missing:
             raise ValueError(f"{folder}/agent.yaml safety needs {missing}")
         self.commercial: dict = agent["commercial"]
+        # What the company does and doesn't do, and how callers ask for work it doesn't (app/asks.py).
+        self.services: dict = agent.get("services", {})
         self.approval: dict = agent.get(
             "approval",
             {"unclear_phrases": [], "unclear_approver": [], "callback_hours_before_window": 2},

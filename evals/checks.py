@@ -17,12 +17,12 @@ from zoneinfo import ZoneInfo
 from app import cards
 from app import priority as prio
 from app.tenant import load_agent
-from app.text import street_key, words
+from app.text import street_key, unit_key, words
 
 TENANT_DIR = Path(__file__).resolve().parent.parent / "tenants" / "summit-air"
 BOOKED = ("booked", "queued")
 PRIORITIES = ("Low", "Normal", "High", "Urgent")
-LEAD_KINDS = ("commercial", "membership", "install")
+LEAD_KINDS = ("commercial", "membership", "install", "not_offered")
 NEW_YORK = ZoneInfo("America/New_York")
 DIGIT_WORDS = ["oh", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"]
 
@@ -330,7 +330,63 @@ def _handoff_arg(arg: Any) -> None:
 
 def lead(arg: str, ev: Evidence) -> list[str]:
     kinds = {e["args"].get("kind") for e in ev.tools("record_lead", ok=True)}
+    # Leads the server keeps itself, such as work the company doesn't do (app/asks.py).
+    kinds |= {r["kind"] for r in ev.trace.get("leads", [])}
     return [] if arg in kinds else [f"no {arg} lead recorded"]
+
+
+JOB_KEYS = {"job_type", "unit", "street", "note"}
+
+
+def _job_matches(want: dict, job: dict) -> bool:
+    if "job_type" in want and job.get("job_type") != want["job_type"]:
+        return False
+    if "unit" in want and unit_key(job.get("unit") or "") != unit_key(str(want["unit"])):
+        return False
+    if "street" in want and street_key(want["street"]) not in street_key(job.get("street") or ""):
+        return False
+    if "note" in want:
+        notes = json.loads(job.get("job_notes") or "[]")
+        if not any(re.search(want["note"], n, re.IGNORECASE) for n in notes):
+            return False
+    return True
+
+
+def jobs(arg: list[dict], ev: Evidence) -> list[str]:
+    """Each wanted job is a different booked job on the call, read from the booking record: its job
+    type, the unit and street it was booked at, a note it carries. No other job was booked."""
+    booked = ev.bookings()
+    if len(booked) != len(arg):
+        return [f"{len(booked)} job(s) booked, expected {len(arg)}"]
+    left = list(booked)
+    problems = []
+    for want in arg:
+        found = next((j for j in left if _job_matches(want, j)), None)
+        if found is None:
+            seen = [{k: j.get(k) for k in ("job_type", "street", "unit")} for j in left]
+            problems.append(f"no booked job matches {want}; left: {seen}")
+        else:
+            left.remove(found)
+    return problems
+
+
+def _jobs_arg(arg: Any) -> None:
+    if not isinstance(arg, list) or not arg:
+        raise ValueError("expected a list of jobs")
+    for item in arg:
+        if not isinstance(item, dict) or not set(item) <= JOB_KEYS or not item:
+            raise ValueError(f"each job is a mapping with keys from {sorted(JOB_KEYS)}")
+
+
+def job_note(arg: str, ev: Evidence) -> list[str]:
+    """A note for the job on this call matches: one the server or agent kept for the job, or one
+    the booking carried."""
+    notes = [n["text"] for n in ev.trace.get("notes", []) if n["attach_to"] == "job"]
+    for b in ev.bookings():
+        notes += json.loads(b.get("job_notes") or "[]")
+    if any(re.search(arg, n, re.IGNORECASE) for n in notes):
+        return []
+    return [f"no job note matches {arg!r}"]
 
 
 def out_of_area(arg: Any, ev: Evidence) -> list[str]:
@@ -837,6 +893,8 @@ CHECKS: dict[str, Check] = {
         lambda arg: arg == "none",
     ),
     "lead": Check(_one_of(*LEAD_KINDS), lead),
+    "jobs": Check(_jobs_arg, jobs),
+    "job_note": Check(_strings, job_note),
     "handoff": Check(_handoff_arg, handoff, lambda arg: arg == "none"),
     "out_of_area": Check(_recorded_or_zip, out_of_area),
     "tool_ok": Check(_any, tool_ok),

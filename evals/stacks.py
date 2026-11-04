@@ -235,7 +235,7 @@ class InProcessAgent:
         self._pace(result["data"])
         safety = result["data"].get("safety") or {}
         if self.reply is not None:
-            self.reply.heard(safety, caller_text)
+            self.reply.heard(safety, caller_text, result["data"].get("hints"))
         if safety.get("action") in SPOKEN_FROM_CODE and result["say"]:
             self.messages.append({"role": "user", "content": caller_text})
             return self._speak_from_code(result["say"], t0)

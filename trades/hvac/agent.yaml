@@ -331,6 +331,25 @@ after_hours:
   cooling_job_types: [no_cooling]
   at_risk_rules: [vulnerable_person, medical_equipment]
 
+# Work callers ask an HVAC company for that another trade usually does, in the words callers use
+# (issue #129). Each tenant says which of these it doesn't do and who to suggest instead
+# (services.not_offered); a kind it leaves out is never declined. Words that also name heating or
+# cooling ("pipes", "oven", "water") are left out, so a no-heat call is never turned away. A phrase
+# with one of near_equipment within near_words words of it is the trade's own work: "my AC drain is
+# clogged" is a condensate drain, not plumbing (PR #135 review).
+services:
+  near_words: 3
+  near_equipment: [ac, air conditioner, air conditioning, condensate, mini split, heat pump, furnace,
+                   boiler, hvac, central air]
+  kinds:
+    plumbing: [sink, sinks, toilet, faucet, clogged drain, drain is clogged, drains are clogged,
+               garbage disposal, burst pipe, pipe burst, plumbing, plumber]
+    appliances: [fridge, refrigerator, freezer, dishwasher, washing machine, my washer,
+                 my dryer, the dryer, clothes dryer, microwave]
+    water_heater: [water heater, hot water heater, hot water tank]
+    duct_cleaning: [duct cleaning, clean my ducts, clean the ducts, clean our ducts, ducts cleaned,
+                    clean out the ducts, dryer vent cleaning]
+
 # Paying and billing on the phone (DECISIONS.md 080). A caller who offers a card hears the tenant's
 # `card_stop` line, said by the voice layer word for word; card digits are never stored
 # (app/cards.py). A caller who disputes a charge gets a callback from the office.

@@ -1,0 +1,27 @@
+id: super-two-units
+flow: [booking]
+difficulty: rigorous
+journeys: [J1, spine]
+spec: [S-13, S-26]
+tags: ["issue:129"]
+caller_id: "(917) 555-0117"
+persona: Luis Ortega, the live-in super of a six-unit walk-up in Bushwick, Brooklyn. Practical, calling about two apartments with no heat, each with its own radiator problem.
+hidden_facts:
+  name: Luis Ortega
+  building: 278 Menahan St, Brooklyn, 11237, a six-unit apartment building
+  phone: the number you're calling from
+  problem: apartment 2A has no heat since last night (about 63 inside); apartment 5C's radiator is also cold, same since last night
+  home: Luis has keys and will let the technician in to both
+  approver: Luis, for the owner
+opening: Hi, I'm the super at a building in Bushwick. I've got two apartments with no heat, 2A and 5C.
+script:
+  - Give the building address when asked.
+  - Say each unit is its own radiator problem and you want each one looked at.
+  - Confirm each read-back that has the right unit.
+  - Take the first time offered for each, then say goodbye.
+must:
+  - jobs: [{unit: 2A}, {unit: 5C}]
+  - read_back: before_booking
+  - outcome: booked
+should:
+  - Books one visit per apartment, reading back each unit before its booking.

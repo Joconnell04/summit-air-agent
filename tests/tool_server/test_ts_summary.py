@@ -544,3 +544,31 @@ def test_the_summary_read_uses_the_index_in_order_without_a_sort(agent):
         conn.close()
     assert "ix_calls_summary" in plan, plan
     assert "SCAN calls" not in plan and "TEMP B-TREE" not in plan, plan
+
+
+def test_a_technician_the_caller_asked_for_is_a_line_from_the_servers_note(agent):
+    """DECISIONS.md 085: the request reaches the technician summary from the server's note, marked
+    as not promised, whatever the model writes."""
+    call = ready_to_book(agent)
+    agent.turn(call, "Can I get Mike again? He was great.")
+    booked = book(agent, call, first_open(agent, call))
+    agent.end(call)
+    run(agent, FakeModel())
+    text = pinned(agent, booked["data"]["booking_id"])[0]["text"].splitlines()
+    assert text[-1] == "Asked for: Mike, not promised"
+
+
+def test_a_summary_with_no_technician_request_has_no_asked_for_line(agent):
+    _, job_id = booked_call(agent)
+    run(agent, FakeModel())
+    assert not any(line.startswith("Asked for") for line in pinned(agent, job_id)[0]["text"].splitlines())
+
+
+def test_a_technician_the_caller_asked_not_to_send_is_on_the_summary(agent):
+    call = ready_to_book(agent)
+    agent.turn(call, "I don't want Mike again.")
+    booked = book(agent, call, first_open(agent, call))
+    agent.end(call)
+    run(agent, FakeModel())
+    text = pinned(agent, booked["data"]["booking_id"])[0]["text"].splitlines()
+    assert text[-1] == "Asked for: not Mike"

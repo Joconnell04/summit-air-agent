@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 
 from . import (
     address_as,
+    asks,
     cards,
     dead_air,
     lookup,
@@ -22,6 +23,8 @@ from . import priority as prio
 from .db import iso, parse_iso, tx
 from .envelope import Result, ok
 from .fsm import FsmAdapter, FsmRejected, FsmUnavailable
+from .readback import change as readback_change
+from .readback import units_said
 from .schemas import EndIn, StartIn, TurnIn
 from .tenant import Tenant
 from .text import digit_runs, has_phrase, phone_key, words
@@ -92,6 +95,10 @@ def sounds_commercial(text: str, cfg: dict) -> bool:
     """Does the caller describe a business, with commercial equipment? Homes, apartments, co-ops and
     whole apartment buildings are residential. Best effort by design: the agent and the FSM account
     type catch the rest, and a false positive costs a booking, so the tenant's lists stay narrow."""
+    # The caller's own home as the place with the problem ("my heat at home is out", "calling
+    # about my house") is residential, whatever job words come first (PR #135 review).
+    if _names_home(text, cfg):
+        return False
     single = {w for w in cfg["phrases"] + cfg["owned"] + cfg["run"] if " " not in w.strip()}
     text_words = without_place_names(text, single)
     for phrase in cfg["not"]:
@@ -106,15 +113,68 @@ def sounds_commercial(text: str, cfg: dict) -> bool:
             has_phrase(text_words, p) for p in cfg.get("apartment_signs", [])
         ):
             return True
+    if _owns_business(text, text_words, cfg) or _office_system(text_words, cfg):
+        return True
     owned = "|".join(map(re.escape, cfg["owned"]))
     run = "|".join(map(re.escape, cfg["run"]))
     return bool(
-        re.search(rf" (?:my|our) (?:{owned}) ", text_words)
+        # "My store", and "our shop's furnace" ("shops" once the apostrophe is dropped).
+        re.search(rf" (?:my|our) (?:{owned})s? ", text_words)
+        # "The restaurant I run has no heat": the business, then the caller running or owning it.
+        or re.search(rf" (?:the|a|this|that) (?:{run}) (?:i|we) (?:run|own|manage|operate) ",
+                     text_words)
         or re.search(rf" {RUN_WORDS} (?:a|an|the) (?:\w+ )?(?:{run}) ", text_words)
         or re.search(rf" {OWN_WORDS} (?:a|an|the) (?:\w+ )?(?:{owned}) ", text_words)
         # "We're a restaurant": the caller says what they are ("we're" is "were" once the
         # apostrophe is dropped).
         or re.search(rf" (?:were|we are) (?:a|an) (?:\w+ )?(?:{run}) ", text_words)
+    )
+
+
+def _names_home(text: str, cfg: dict) -> bool:
+    """The line names the caller's home ("at home", "my house"), and not as what it isn't ("not my
+    home")."""
+    line = words(text)
+    if any(has_phrase(line, p) for p in cfg.get("not_home", [])):
+        return False
+    return any(
+        has_phrase(line, p) and not has_phrase(line, "not " + p) for p in cfg.get("home_signs", [])
+    )
+
+
+def _owns_business(text: str, text_words: str, cfg: dict) -> bool:
+    """Ownership attached to a business: "the bakery across from me is mine" (the business, at most
+    four words, then "is mine"), or "I own the place, it's a deli" (an own-the-place phrase and the
+    place said to be a business). The business word is read from the blanked line, so one placed
+    as a landmark never counts; the own-the-place phrase from the line as said ("place" is a
+    street word, which blanking would hide)."""
+    business = "|".join(map(re.escape, cfg["owned"] + cfg["run"]))
+    mine = "|".join(re.escape(words(m).strip()) for m in cfg.get("mine", []))
+    if mine and re.search(rf" (?:{business}) (?:\w+ ){{0,4}}(?:{mine}) ", text_words):
+        return True
+    owns = any(has_phrase(words(text), c) for c in cfg.get("own_place", []))
+    return owns and bool(re.search(rf" (?:its|it is) (?:a|an) (?:\w+ )?(?:{business}) ", text_words))
+
+
+# Words that place an office: "my office is by the church", "our office is on Court Street".
+OFFICE_PLACED = "by|on|at|near|next to|in|across from|around|off|over|above|located|right"
+
+
+def _office_system(text_words: str, cfg: dict) -> bool:
+    """An office with its heating or cooling: "the heat in my office", "our office AC". A bare "my
+    office" is about the caller's work, not the place needing service."""
+    office = cfg.get("office") or {}
+    places = "|".join(map(re.escape, office.get("words", [])))
+    systems = "|".join(re.escape(words(w).strip()) for w in office.get("systems", []))
+    if not places or not systems:
+        return False
+    return bool(
+        re.search(rf" (?:my|our|the) (?:{places})s? (?:\w+ )?(?:{systems}) ", text_words)
+        # "My office is by the church": where the office is, so the office is the place to serve
+        # (PR #135 re-check). "My office called me" says nothing about where it is.
+        or re.search(rf" (?:my|our) (?:{places})s? (?:is|its) (?:{OFFICE_PLACED}) ", text_words)
+        or re.search(rf" (?:{systems}) (?:\w+ ){{0,3}}(?:in|at|for) (?:my|our|the) (?:{places}) ",
+                     text_words)
     )
 
 
@@ -606,9 +666,36 @@ def turn(
             if named:
                 hints.append(named)
             # A caller who describes a business can't book, whatever the agent does next (S-05).
-            if sounds_commercial(args.text, tenant.commercial):
+            commercial_line = sounds_commercial(args.text, tenant.commercial)
+            if commercial_line:
                 changes["commercial"] = 1
                 hints.append("commercial")
+            # A detail the caller already confirmed, changed afterwards ("yes, but it's 4B", or a
+            # second unit for another job): the confirmation is cleared, so nothing books there
+            # until the new details are read back and confirmed (DECISIONS.md 083).
+            confirmed = records.readback(call) if call["readback_confirmed_at"] else None
+            if confirmed and readback_change(args.text, confirmed):
+                changes["readback_confirmed_at"] = None
+                hints.append("readback_changed")
+            # Two units in one line ("2A and 5C") are two jobs, each read back and booked (085).
+            units = units_said(args.text)
+            if len(units) > 1:
+                hints.append("units:" + ",".join(u.upper() for u in units))
+            # Work the company doesn't do ("and my sink leaks"): the agent says the tenant's line
+            # once, and the office gets a lead (DECISIONS.md 084). Anything else on the call goes on.
+            # Not on a safety call (the lines come first) or a commercial one (already declined).
+            quiet = call["safety_state"] in ("none", "cleared") and action.action == "none"
+            if quiet and not commercial_line and not call["commercial"]:
+                hints += [f"not_offered:{line}" for line in
+                          asks.decline_not_offered(conn, tenant, call, args.text, now)]
+            # A technician asked for by name is a note for the dispatcher, never a promise (085).
+            asked = asks.note_technician(conn, tenant, call, args.text, now)
+            if asked:
+                hints.append("technician_requested")
+            # The name, every time it's said, so the voice layer can drop a promise of it.
+            named = asks.technician_request(args.text, tenant.equipment_words)
+            if named and not named[0].startswith("the same"):
+                hints.append(f"technician:{named[0]}")
             # Who can approve isn't settled: the agent offers a callback, and a booking the caller
             # asks for gets a call before dispatch (tools.book_appointment reads the same lines).
             if approval_unclear(args.text, tenant.approval):

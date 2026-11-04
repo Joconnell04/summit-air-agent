@@ -67,6 +67,19 @@ commercial:
   - walk up
   - building
   - tenants
+  home_signs:
+  - at home
+  - my house
+  - my home
+  - my apartment
+  - our house
+  - our home
+  - our apartment
+  mine:
+  - is mine
+  - is ours
+  - belongs to me
+  - belongs to us
   not:
   - business partner
   - business trip
@@ -76,6 +89,30 @@ commercial:
   not_home:
   - not a home
   - not my home
+  office:
+    systems:
+    - heat
+    - heating
+    - ac
+    - air conditioning
+    - air conditioner
+    - cooling
+    - furnace
+    - boiler
+    - thermostat
+    - radiators
+    - hvac
+    words:
+    - office
+  own_place:
+  - i own the place
+  - we own the place
+  - i own this place
+  - we own this place
+  - i own it
+  - we own it
+  - im the owner
+  - were the owners
   owned:
   - restaurant
   - bakery
@@ -165,6 +202,7 @@ fsm:
     commercial: 704
     install: 702
     membership: 705
+    not_offered: 706
   log_calls_via_debug: true
 lines:
   account_choice: Should that address go on its own account, with you as a contact, or under your account?
@@ -239,6 +277,8 @@ lines:
     will call you to sort that out.
   move_which: Which address did you move from?
   moved_from_address: Our records show you've moved from that address. Where should the technician go?
+  next_unit: Now let's set up apartment {unit}.
+  not_offered: I'm sorry, we don't do {what}, so {suggest} would be the right call for that.
   out_of_area: I'm sorry, that's outside the area we cover, so we're not able to send someone. A local
     heating company should be able to help.
   read_back: I have your home at {address}, and the best number is {phone}, is that right?
@@ -255,6 +295,8 @@ lines:
   transfer_prompt: Summit Air has a caller for the {role}. Press 1 to take the call.
   transfer_summary: '{priority}Caller at {phone}: {reason}. Putting you through now.'
   urgent_priority: I've marked this call top priority, so you get our soonest opening.
+  visit_passed: I see a visit there that was due {day} between {between}, and it's still open on our end.
+    Did the technician make it out?
   zip_mismatch: I have {street} in {where} as {found}, not {said}. Which one is right?
 on_call_alerts:
   email: on-call@summit-air.example
@@ -1318,6 +1360,75 @@ safety:
       - like eggs
       - sulfur
       question: Just to be safe, are you smelling gas in the house right now?
+services:
+  kinds:
+    appliances:
+    - fridge
+    - refrigerator
+    - freezer
+    - dishwasher
+    - washing machine
+    - my washer
+    - my dryer
+    - the dryer
+    - clothes dryer
+    - microwave
+    duct_cleaning:
+    - duct cleaning
+    - clean my ducts
+    - clean the ducts
+    - clean our ducts
+    - ducts cleaned
+    - clean out the ducts
+    - dryer vent cleaning
+    plumbing:
+    - sink
+    - sinks
+    - toilet
+    - faucet
+    - clogged drain
+    - drain is clogged
+    - drains are clogged
+    - garbage disposal
+    - burst pipe
+    - pipe burst
+    - plumbing
+    - plumber
+    water_heater:
+    - water heater
+    - hot water heater
+    - hot water tank
+  near_equipment:
+  - ac
+  - air conditioner
+  - air conditioning
+  - condensate
+  - mini split
+  - heat pump
+  - furnace
+  - boiler
+  - hvac
+  - central air
+  near_words: 3
+  not_offered:
+    appliances:
+      suggest: an appliance repair shop
+      what: appliance repair
+    duct_cleaning:
+      suggest: a duct cleaning company
+      what: duct cleaning
+    plumbing:
+      suggest: a plumber
+      what: plumbing
+    water_heater:
+      suggest: a plumber
+      what: water heaters
+  offered:
+  - heating repair
+  - cooling repair
+  - maintenance tune-ups
+  - gas and carbon monoxide safety checks
+  - replacement estimates
 system_words:
 - heat pump
 - mini split

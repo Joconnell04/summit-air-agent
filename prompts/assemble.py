@@ -81,12 +81,27 @@ def call_notes(start: dict) -> list[str]:
     visits = [
         job for c in customers for job in c.get("open_jobs") or [] if job.get("window")
     ]
-    if visits:
-        when = ", ".join(f"{v['window']['weekday']} {v['window']['label']}" for v in visits)
+    upcoming = [v for v in visits if not v["window"].get("passed")]
+    # A visit still open after its window ended is not coming up (a test call at 2 PM heard
+    # "you're all set for today between eight and twelve").
+    passed = [v for v in visits if v["window"].get("passed")]
+    if upcoming:
+        when = ", ".join(f"{v['window']['weekday']} {v['window']['label']}" for v in upcoming)
         notes.append(
             f"They already have a visit booked ({when}). To move it, call reschedule_appointment "
             "for that visit, never book_appointment; book a new visit only for a different problem "
             "the caller confirms."
+        )
+    if passed:
+        when = ", ".join(
+            f"{v['window']['weekday']} {v['window']['label']}, job {v['job_id']}" for v in passed
+        )
+        notes.append(
+            f"The arrival window of their open visit ({when}) has already ended, and the visit is "
+            "still open. Never call it upcoming or say they're all set for it. Ask whether the "
+            "technician came, then offer a new time by moving that visit with "
+            "reschedule_appointment (its job as booking_id), never book_appointment, or to have "
+            "the team check what happened with flag_person."
         )
     return notes
 
@@ -231,6 +246,18 @@ SERVER_NOTES = {
         "The caller asked to be called something the company doesn't use. Don't use it; carry on "
         "with their name, or no name, without comment."
     ),
+    # A caller line that changed a detail after the read-back was confirmed (DECISIONS.md 083).
+    "readback_changed": (
+        "The caller gave a different address detail or number after confirming the read-back. "
+        "Call read_back with the details they just gave, so the new sentence is read for you; "
+        "nothing books until they confirm it. Don't ask them to repeat what they already said."
+    ),
+    # A technician asked for by name (DECISIONS.md 085); the server noted it for the dispatcher.
+    "technician_requested": (
+        "The caller asked for a particular technician. Say you'll pass that along to the team, and "
+        "never promise who will come or that it will be that person. It's already noted for the "
+        "dispatcher, so don't add a note for it."
+    ),
     "approval_unclear": (
         "Who can approve the work isn't settled. Offer a callback to confirm who can approve, with "
         "flag_person. Book only if the caller asks to, and then say the booking's sentence as written."
@@ -244,6 +271,20 @@ def server_notes(hints: list[str], known: dict[str, str] | None = None) -> list[
     stage hint ("stage_booking") is followed by the owner's notes for it ("guidance:<text>"), and
     the two become one note."""
     notes = [f"[server] {SERVER_NOTES[h]}" for h in hints if h in SERVER_NOTES]
+    # Two units named in one line (DECISIONS.md 085).
+    for units in (h.removeprefix("units:") for h in hints if h.startswith("units:")):
+        notes.append(
+            f"[server] The caller named more than one unit ({units.replace(',', ', ')}). Each "
+            "unit is its own job: read back and book one unit at a time, with that unit alone in "
+            "the read-back, then the next. Never book one visit to cover several units."
+        )
+    # Work the company doesn't do (DECISIONS.md 084): the server's own sentence, said once.
+    for line in (h.removeprefix("not_offered:") for h in hints if h.startswith("not_offered:")):
+        notes.append(
+            "[server] The caller asked for work the company doesn't do. Say this once, as written: "
+            f"\"{line}\" Book nothing for that work and add no other referral. If they also have "
+            "a heating or cooling problem, carry on with that as usual."
+        )
     stage = next((h for h in hints if h in STAGE_NOTES), None)
     items = [h.removeprefix("guidance:") for h in hints if h.startswith("guidance:")]
     if stage and items:
@@ -292,6 +333,35 @@ CLAIMS_PRIORITY = re.compile(
     r"(?:mark(?:ed|ing)?|put(?:ting)?|flag(?:ged|ging)?|list(?:ed|ing)?)\s+"
     r"(?:it|this|you|the call|your call|the job)\b[^.?!]*?\b(?:priority|urgent|an emergency|first)\b"
     r"|\b(?:i|we)(?:'ve| have|'ll| will|'m| am)\s+(?:mov(?:ed|ing)|bump(?:ed|ing)?)\s+(?:you|it|this) up\b",
+    re.IGNORECASE,
+)
+# A promise of who the technician will be ("Mike will be the one coming out", "I'll make sure it's
+# Mike"). The dispatcher decides; the agent only passes the request on (DECISIONS.md 085). "I'll pass
+# that along" and "I can't promise who comes" are kept.
+NAME = (
+    r"(?!(?:Someone|Somebody|They|He|She|It|We|You|That|This|There|Our|Your|The|A|An|Anyone|"
+    r"Summit|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday|Today|Tomorrow|Everyone|"
+    r"One|Nobody|Whoever)\b)[A-Z][a-z]+"
+)
+# A dispatch word paired with a person's name ("I'll send Mike", "Mike's on his way", "You'll get
+# Mike", "It'll be Mike", "I've put Mike on your job"), whatever the caller asked for: the
+# dispatcher decides, so the agent never says who is coming (PR #135 re-check).
+PROMISES_TECHNICIAN = re.compile(
+    rf"\b{NAME} (?:will|'ll) be (?:the one|your technician|the technician|coming|there|out)\b"
+    rf"|\b{NAME}(?:'s| is) (?:on (?:his|her|their|the) way|coming|heading|the one)\b"
+    rf"|\b{NAME} (?:will|'ll|can|is going to) (?:take care of|come|head|stop by|be by)\b"
+    rf"|\b(?i:send|sending|you'll get|you will get|it'll be|it will be|i'll have|we'll have)\s+{NAME}\b"
+    r"|\b(?i:i|we)(?:'ll| will)\s+(?:make sure|ensure|guarantee|see to it)\s+(?:that\s+)?"
+    rf"(?:it'?s {NAME}|it is {NAME}|you get {NAME}|{NAME} (?:comes|is the one))\b"
+    rf"|\b(?i:i|we)(?:'ve| have)\s+(?:assigned|booked|scheduled|put|got)\s+{NAME}\b",
+)
+# A sentence that passes a technician request on, or says it can't be promised: the one way the
+# agent may name the technician the caller asked for.
+PASSES_ON = re.compile(
+    r"\bpass(?:ing)? (?:that|it|this|the request)? ?(?:along|on)\b"
+    r"|\blet (?:the|our) team know\b"
+    r"|\b(?:can'?t|cannot|can not|won'?t be able to|not able to|unable to|no way to) "
+    r"(?:promise|guarantee)\b|\bno (?:promise|guarantee)s?\b",
     re.IGNORECASE,
 )
 # Gas or carbon monoxide advice to leave or call 911. Only the server's safety lines say it; on
@@ -402,12 +472,18 @@ class SpokenReply:
         self.advised = False
         self._dropped_restatement = False
         self._asked = False
+        # Technicians the caller asked for by name (DECISIONS.md 085).
+        self.technicians: set[str] = set()
 
     def holding(self) -> bool:
         return self.safety_call or (self.address_checked and not self.read_back_confirmed)
 
-    def heard(self, safety: dict | None, caller_text: str = "") -> None:
-        """A caller line and its turn result: the safety action the server returned, if any."""
+    def heard(self, safety: dict | None, caller_text: str = "", hints: list[str] | None = None) -> None:
+        """A caller line and its turn result: the safety action the server returned, if any, and
+        its hints (a technician the caller asked for by name)."""
+        for hint in hints or []:
+            if hint.startswith("technician:"):
+                self.technicians.add(hint.removeprefix("technician:"))
         zips, phones = caller_digits(caller_text)
         self.zips |= zips
         self.phones |= phones
@@ -454,6 +530,9 @@ class SpokenReply:
             return ""
         if INTERNAL_WORD.search(sentence) or CLAIMS_FEE.search(sentence):
             return ""
+        promised = PROMISES_TECHNICIAN.search(sentence) and not PASSES_ON.search(sentence)
+        if promised or self._names_technician(sentence):
+            return ""
         if self.safety_call and EVACUATE.search(sentence):
             # The caller stays in control: the agent's own recommendation to stay out or call 911
             # is said once on the call, after the server's lines (eval run 20261104-052332,
@@ -479,6 +558,16 @@ class SpokenReply:
                 return ""
             self._asked = True
         return sentence
+
+    def _names_technician(self, sentence: str) -> bool:
+        """A sentence naming a technician the caller asked for is a promise, whatever its words
+        ("I'll send Mike", "It'll be Mike"), unless it passes the request on or says it can't be
+        promised (PR #135 review)."""
+        named = any(
+            re.search(rf"\b{re.escape(name)}\b", sentence, re.IGNORECASE)
+            for name in self.technicians
+        )
+        return named and not PASSES_ON.search(sentence)
 
     def _restates(self, sentence: str) -> bool:
         """The sentence says back the caller's ZIP, phone number or street address."""
