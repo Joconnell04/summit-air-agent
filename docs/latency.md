@@ -64,8 +64,8 @@ One call on 2026-11-02 New York time (call `call-_+16466240418_mKdAaWweCvS2`): a
 | Turn end decided (normal wait) | about 354 ms |
 | Model's first token | median 1.5 s (0.55 to 2.1 s) |
 | Voice first byte (Cartesia) | median 216 ms |
-| Reply delay, plain turns (worker's `reply_ms`, see above) | median 2.7 s (2.1 to 2.8 s, 4 turns) |
-| Reply delay, turns with a tool (same) | 1.4 to 3.4 s (6 turns) |
+| Reply delay, plain turns | median 2.7 s (2.1 to 2.8 s, 4 turns) |
+| Reply delay, turns with a tool | 1.4 to 3.4 s (6 turns) |
 
 The model's first token is the gap: about 1.5 s against the 500 ms budgeted, so plain turns run about twice the 1.2 s target. Turns whose first step follows a tool result in the same turn answer in about 0.55 s, which points at the first model request of each turn (prompt caching or preemptive generation restarting) rather than the model itself; that is the next thing to measure. The bridge line never fired: no tool took longer than 0.7 s (the slowest was 68 ms).
 

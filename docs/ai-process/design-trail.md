@@ -99,3 +99,4 @@ How the design was reached, in order, so a reader can follow each choice back to
 | Server-spoken lines and a speech filter | Read-back and confirmations spoken from the server; the filter drops repeats, tool talk and unprompted advice | DECISIONS.md 060, #82 |
 | Cold handoff | A caller who demands a person is transferred at once, after the safety lines on a gas call | DECISIONS.md 061, #90 |
 | Listening to simulated calls | Stereo files with real pauses, `make sim` and `make listen` with S1, S2 codes | DECISIONS.md 062, #95 |
+| End-of-turn wait | Kept at 0.35 s; the digits wait no longer sticks for the rest of a call | DECISIONS.md 063, #98 |
