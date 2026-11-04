@@ -466,20 +466,27 @@ def _spoken_line(
     seq: int,
     now: datetime,
     on_safety: bool,
+    speaking_safety: bool,
 ) -> dict | None:
     """A line the voice layer says word for word for this caller line, if any: the card stop, the
-    billing callback or the electrical lines, in that order. Never on a gas or carbon monoxide
-    call, whose lines come first; an electrical report heard then is said once the call clears."""
+    billing callback or the electrical lines, in that order. A gas or carbon monoxide line or
+    question said on this turn comes first, so none is returned then, but the payment and billing
+    flags and the billing callback are still stored; a card offered after the lines still hears the
+    card stop. The electrical lines wait for the gas or carbon monoxide call to clear, since those
+    lines already cover leaving."""
     owed = _electrical(conn, tenant, call["id"], text, seq, now)
-    if on_safety:
-        return None
+    spoken = None
     if cards.offers_card(text, tenant.payments):
         if not _has_flag(conn, call["id"], "payment"):
             records.add_flag(conn, call["id"], "payment", PAYMENT_REASON, now, "Normal")
-        return {"kind": "card", "text": tenant.line("card_stop")}
-    if cards.billing_dispute(text, tenant.payments) and not _has_flag(conn, call["id"], "billing"):
-        return {"kind": "billing", "text": _billing_line(conn, tenant, call, now)}
-    if owed:
+        spoken = {"kind": "card", "text": tenant.line("card_stop")}
+    elif cards.billing_dispute(text, tenant.payments) and not _has_flag(conn, call["id"], "billing"):
+        spoken = {"kind": "billing", "text": _billing_line(conn, tenant, call, now)}
+    if speaking_safety:
+        return None
+    if spoken:
+        return spoken
+    if owed and not on_safety:
         conn.execute("UPDATE electrical SET said_at = ? WHERE call_id = ?", (iso(now), call["id"]))
         return {"kind": "electrical", "text": safety.electrical_lines(tenant.safety)}
     return None
@@ -558,7 +565,10 @@ def turn(
                 action.action == "none" and call["safety_state"] not in ("none", "cleared")
             )
             # The card stop, the billing callback or the electrical lines (DECISIONS.md 080, 082).
-            spoken = _spoken_line(conn, tenant, call, args.text, seq, now, gas_or_co)
+            speaking_safety = action.action in ("speak_lines", "speak_variant", "ask_check")
+            spoken = _spoken_line(
+                conn, tenant, call, args.text, seq, now, gas_or_co, speaking_safety
+            )
             # A caller who asks the agent to wait, or comes back (DECISIONS.md 081).
             hold = dead_air.caller_line(
                 conn, call["id"], args.text, seq, now, gas_or_co or spoken is not None

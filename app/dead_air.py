@@ -29,7 +29,9 @@ HOLDS = (
 )
 # Words that say the caller is talking to the agent again.
 RETURNS = (
-    "okay", "ok", "alright", "all right", "im back", "i am back", "back now", "sorry", "hello",
+    "okay", "ok", "alright", "all right", "im back", "i am back", "back now", "im here",
+    "i am here", "still here", "right here", "one more sec", "one more second", "one more minute",
+    "looking", "still looking", "i cant find it", "cant find it", "almost done", "sorry", "hello",
     "hi", "hey", "you there", "still there", "are you there", "thanks", "thank you", "found it",
     "got it", "here it is", "i have it", "yes", "yeah", "yep", "nope",
 )

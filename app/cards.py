@@ -5,11 +5,15 @@ turns table, the tool log and its JSON lines, job notes, flags and the technicia
 the marker instead. It is the one exception to decision 064 (the bench shows everything as
 recorded): card digits are never recorded in the first place.
 
-A run of digits counts as a card when it is 13 to 19 digits, passes the Luhn check, and is grouped
-the way a card is read (one block, fours, Amex's 4-6-5, or one digit at a time). A phone number with
-a ZIP after it (3-3-4-5) is grouped like neither, so it stays. After a card word ("my card number
-is", "the code on the back"), the digits that follow in the line are taken out whatever they are,
-up to a word that starts something else ("phone", "zip", "address").
+A run of digits is taken out when it is grouped the way a card is read (fours, Amex's 4-6-5, or one
+digit at a time) and is either a whole card (13 to 19 digits that pass the Luhn check, or 15 or 16
+that don't, a likely speech-to-text slip) or the start of one (8 digits or more; one digit at a
+time, a run the length of a phone number stays). A phone number, a phone with a ZIP after it
+(3-3-4-5), a house number, a date or an amount is grouped like none of these, so it stays. Right
+after a card word ("my card number is", "the code on the back"), the digits that follow are taken
+out whatever their length; further along the line only a card-like run is. On the caller's line
+after one that had digits taken out, a line that is little more than digits loses them too, so a
+card split at a turn boundary is never stored.
 
 What the agent says when a caller offers a card, and the billing callback, are the server's lines
 (app/lifecycle.py).
@@ -21,32 +25,34 @@ from typing import Any
 from .text import has_phrase, words
 
 MARKER = "[card number removed]"
-CARD_DIGITS = range(13, 20)
+WHOLE_CARD = range(13, 20)
+SLIP_LENGTHS = {15, 16}
+START_DIGITS = 8
+PHONE_LENGTHS = {10, 11}
+KEEP_LENGTHS = {5, 10, 11}
+CONTINUATION_WORDS = 3
 DIGIT_WORDS = {
     "zero": "0", "oh": "0", "one": "1", "two": "2", "three": "3", "four": "4",
     "five": "5", "six": "6", "seven": "7", "eight": "8", "nine": "9",
 }
 _DIGIT_WORD = r"(?:zero|oh|one|two|three|four|five|six|seven|eight|nine)"
-# Groups of digits joined by a single space, dash, dot or comma: "4111 1111 1111 1111".
-DIGIT_RUN = re.compile(r"(?<![\w/])\d+(?:[ \t.,-]\d+)*(?![\w/])")
-# Digits said as words, one at a time: "four one one one ...".
-WORD_RUN = re.compile(rf"\b{_DIGIT_WORD}(?:[\s,-]+{_DIGIT_WORD})+\b", re.IGNORECASE)
-# Words that say card digits follow. Matched on the line as written, case-insensitively.
-CARD_CUES = re.compile(
-    r"\b(?:(?:credit|debit)\s+card(?:\s+number)?|card\s+(?:number|no\.?|#)|card\s+is|"
-    r"number\s+on\s+the\s+card|visa|mastercard|master\s+card|amex|american\s+express|discover\s+card|"
-    r"expiration\s+date|cvv|cvc|security\s+code|code\s+on\s+the\s+back)\b",
+# Digits in groups joined by a single space, dash, dot or comma ("4111 1111 1111 1111"), or digits
+# said as words ("four one one one").
+RUN = re.compile(
+    rf"(?<![\w/])\d+(?:[ \t.,-]\d+)*(?![\w/])|\b{_DIGIT_WORD}(?:[\s,-]+{_DIGIT_WORD})*\b",
     re.IGNORECASE,
 )
-# Words that end what a card cue covers: the caller has moved on to something else.
-CUE_STOPS = re.compile(
-    r"\b(?:phone|cell|call\s+me|zip|zip\s+code|address|street|avenue|apartment|apt|unit|"
-    r"buzzer|gate)\b",
-    re.IGNORECASE,
+# A card word, the few words that can sit between it and the digits, and the digits right after:
+# a group, a date like 08/28, or digit words.
+_CUE = (
+    r"\b(?:(?:credit|debit)\s+card(?:\s+number)?|card\s+(?:number|no\.?|\#)|card\s+is|"
+    r"number\s+on\s+the\s+card|visa|mastercard|master\s+card|amex|american\s+express|"
+    r"discover\s+card|expiration\s+date|cvv|cvc|security\s+code|code\s+on\s+the\s+back)\b"
 )
-# Digits after a cue, in any form: a group, a date like 08/28, or digit words.
-CUED_DIGITS = re.compile(
-    rf"\d[\d /.,-]*\d|\d|\b{_DIGIT_WORD}(?:[\s,-]+{_DIGIT_WORD})*\b", re.IGNORECASE
+_GAP = r"(?:[\s,:#]+(?:is|was|its|it's|number|no|ending\s+in)?)*[\s,:#]*"
+CUED = re.compile(
+    rf"({_CUE}{_GAP})(\d[\d /.-]*\d|\d|{_DIGIT_WORD}(?:[\s,-]+{_DIGIT_WORD})*\b)",
+    re.IGNORECASE,
 )
 
 
@@ -60,58 +66,66 @@ def luhn(digits: str) -> bool:
     return total % 10 == 0
 
 
-def _card_grouping(groups: list[str]) -> bool:
-    """One block, fours with a shorter last group, Amex's 4-6-5 (or 4-6-4), or one digit at a time."""
-    sizes = [len(g) for g in groups]
-    if len(sizes) == 1 or all(s == 1 for s in sizes):
-        return True
-    if sizes in ([4, 6, 5], [4, 6, 4]):
-        return True
-    return all(s == 4 for s in sizes[:-1]) and 1 <= sizes[-1] <= 4
+def _groups(run: str) -> list[str]:
+    """The digit groups of a run: separated digits, or one group per spoken digit."""
+    spoken = re.findall(r"[a-z]+", run, re.IGNORECASE)
+    if spoken:
+        return [DIGIT_WORDS[w.lower()] for w in spoken]
+    return [g for g in re.split(r"[ \t.,-]", run) if g]
 
 
-def _is_card(groups: list[str]) -> bool:
+def _card_like(groups: list[str]) -> bool:
+    """A whole card, or the start of one, by how the digits are grouped (see the module note)."""
     digits = "".join(groups)
-    return len(digits) in CARD_DIGITS and _card_grouping(groups) and luhn(digits)
+    sizes = [len(g) for g in groups]
+    singles = len(sizes) > 1 and all(size == 1 for size in sizes)
+    fours = len(sizes) > 1 and all(size == 4 for size in sizes[:-1]) and 1 <= sizes[-1] <= 4
+    amex = sizes in ([4, 6, 5], [4, 6, 4])
+    whole = len(digits) in WHOLE_CARD and (fours or singles or amex or len(sizes) == 1)
+    if whole and (luhn(digits) or len(digits) in SLIP_LENGTHS):
+        return True
+    if singles:
+        return len(digits) >= START_DIGITS and len(digits) not in PHONE_LENGTHS
+    return fours and len(digits) >= START_DIGITS
 
 
-def _digit_runs(text: str) -> str:
+def _runs(text: str) -> str:
     def replace(match: re.Match) -> str:
-        groups = re.split(r"[ \t.,-]", match.group(0))
-        return MARKER if _is_card(groups) else match.group(0)
+        return MARKER if _card_like(_groups(match.group(0))) else match.group(0)
 
-    return DIGIT_RUN.sub(replace, text)
-
-
-def _word_runs(text: str) -> str:
-    def replace(match: re.Match) -> str:
-        found = re.findall(r"[a-z]+", match.group(0), re.IGNORECASE)
-        groups = [DIGIT_WORDS[w.lower()] for w in found]
-        return MARKER if _is_card(groups) else match.group(0)
-
-    return WORD_RUN.sub(replace, text)
+    return RUN.sub(replace, text)
 
 
 def _after_cues(text: str) -> str:
-    """Every digit after a card cue in the line, up to a word that starts something else."""
-    out, at = [], 0
-    for cue in CARD_CUES.finditer(text):
-        if cue.start() < at:
-            continue
-        stop = CUE_STOPS.search(text, cue.end())
-        end = stop.start() if stop else len(text)
-        span = CUED_DIGITS.sub(MARKER, text[cue.end() : end])
-        out.append(text[at : cue.end()] + span)
-        at = end
-    out.append(text[at:])
-    return "".join(out)
+    """The digits right after a card word, whatever their length: "card number is 4111", "the
+    code on the back is 123", "expiration date 08/28"."""
+    return CUED.sub(lambda m: m.group(1) + MARKER, text)
 
 
-def redact(text: str) -> str:
-    """The text with card digits replaced by the marker. Repeated markers are joined into one."""
+def _continuation(text: str) -> str:
+    """The rest of a card the caller kept reading on the next line, if the line is mostly digits.
+    A run the length of a phone number or a ZIP stays."""
+    other = re.findall(r"[a-z']+", RUN.sub(" ", text), re.IGNORECASE)
+    if len(other) > CONTINUATION_WORDS:
+        return text
+
+    def replace(match: re.Match) -> str:
+        run = match.group(0)
+        digits = "".join(_groups(run))
+        # A lone "one" ("one more sec") is a word, not part of a card.
+        return run if len(digits) < 2 or len(digits) in KEEP_LENGTHS else MARKER
+
+    return RUN.sub(replace, text)
+
+
+def redact(text: str, continuing: bool = False) -> str:
+    """The text with card digits replaced by the marker. Repeated markers are joined into one.
+    `continuing`: the caller's previous line had card digits taken out."""
     if not text:
         return text
-    cleaned = _after_cues(_word_runs(_digit_runs(text)))
+    cleaned = _after_cues(_runs(text))
+    if continuing:
+        cleaned = _continuation(cleaned)
     return re.sub(rf"{re.escape(MARKER)}(?:[\s,/-]*{re.escape(MARKER)})+", MARKER, cleaned)
 
 

@@ -31,6 +31,11 @@ CO_LINES = " ".join(SAFETY["kinds"]["co"]["lines"].split())
         "No. It sparked again this morning.",
         "it sparked once last year and now it's sparking again",
         "it's arcing at the disconnect",
+        "I saw a spark",
+        "there was a spark from the outdoor unit",
+        "there's smoke from the furnace",
+        "there's a burning wire smell",
+        "a burnt smell from the AC",
     ],
 )
 def test_sparks_arcing_and_electrical_smells_fire(line):
@@ -45,6 +50,7 @@ def test_sparks_arcing_and_electrical_smells_fire(line):
         "it's not sparking, it just won't turn on",
         "it sparked once last year and it's been fine",
         "it sparked a while ago but they fixed it",
+        "there was a spark last year but it's been fine",
         "my breaker keeps tripping",
         "the furnace smells like burning dust the first time it runs",
         "I smell gas",
@@ -201,6 +207,7 @@ def test_water_in_the_callers_own_words_is_urgent(text):
         "my water heater is on the basement floor",
         "the ac on the second floor is not cooling",
         "there's water. The unit in the bedroom won't turn on.",
+        "there's a puddle on the kitchen floor from the sink",
     ],
 )
 def test_water_far_from_the_home_or_negated_raises_nothing(text):
@@ -224,3 +231,18 @@ def test_a_sparks_caller_can_book_right_after_the_line(agent):
     booked = book(agent, call_id, first_open(agent, call_id), job_type="tune_up")
     assert booked["ok"], booked
     assert "shut it off" not in booked["say"]
+
+
+@pytest.mark.parametrize(
+    "text,level",
+    [
+        ("the kitchen faucet is dripping and the AC is broken", "Normal"),
+        ("the water heater is leaking onto the floor", "Normal"),
+        ("the AC is dripping water", "Urgent"),
+        ("water leaking from the air handler", "Urgent"),
+        ("the circuit breaker is tripping whenever the furnace starts", "High"),
+        ("my breaker trips when the AC kicks on", "High"),
+    ],
+)
+def test_the_review_cases_for_water_and_breakers(text, level):
+    assert decide("no_cooling", text, outside_now_f=70).level == level

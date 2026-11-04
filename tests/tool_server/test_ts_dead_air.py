@@ -98,3 +98,12 @@ def test_a_plain_dropped_call_keeps_the_cut_off_greeting(agent, clock):
     started = agent.start(caller_id=CALLER, call_id="call-2")["data"]
     assert started["linked_call"]["stepped_away"] is False
     assert "cut off" in greeting(started, VOICE)
+
+
+@pytest.mark.parametrize(
+    "line",
+    ["I'm still here", "I'm here", "yeah, still here", "right here", "I'm back",
+     "one more sec", "still looking", "I can't find it", "almost done"],
+)
+def test_answering_the_check_in_is_a_reply(line):
+    assert dead_air.is_reply(line)

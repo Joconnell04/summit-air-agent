@@ -378,7 +378,8 @@ async def watch_silence(ctx, session, call, spoken: dict, voice: dict, held: dic
 
     def busy() -> bool:
         return (
-            session.agent_state == "speaking"
+            session.agent_state in ("speaking", "thinking")
+            or call.tool_log.running > 0
             or held["music"] is not None
             or call.hang_up_task is not None
         )

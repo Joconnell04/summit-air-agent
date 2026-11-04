@@ -968,7 +968,6 @@ priority:
       - soaking
       - puddle
       - puddles
-      - wet
       - running down
       - dripping down
       - water stain
@@ -977,23 +976,43 @@ priority:
       - ceilings
       - wall
       - walls
-      - floor
-      - floors
-      - carpet
-      - carpets
-      - rug
-      - rugs
-      - hardwood
-      - bedroom
-      - living room
-      - kitchen
-      - hallway
-      - closet
-      - downstairs
-      - apartment below
+      - ac
+      - a c
+      - air conditioner
+      - air conditioning
+      - air handler
+      - mini split
+      - ductless
+      - the unit
+      - condensate
+      - drain pan
+      unless_near:
+      - faucet
+      - sink
+      - toilet
+      - tub
+      - shower
+      - dishwasher
+      - washing machine
+      - water heater
+      - hot water heater
+      - pipe
+      - pipes
+      - radiator
+      - boiler
       within: 8
   - id: breaker_trips
     phrases:
+    - breaker trips
+    - breakers trip
+    - breaker is tripping
+    - breakers are tripping
+    - breaker tripping
+    - trips the breaker
+    - tripping the breaker
+    - trips my breaker
+    - tripping my breaker
+    - trips the circuit
     - breaker keeps tripping
     - breakers keep tripping
     - keeps tripping the breaker
@@ -1077,6 +1096,19 @@ safety:
     - burning plastic
     - melting plastic
     - electrical smell
+    - burning wire
+    - burnt wire
+    - burning wires
+    - burnt wires
+    - burnt smell from the ac
+    - burnt smell from the unit
+    - burning smell from the ac
+    - burning smell from the unit
+    - smoke from the furnace
+    - smoke from the ac
+    - smoke coming from the furnace
+    - smoke coming out of the furnace
+    - smoke from the outdoor unit
     - electrical burning smell
     - smells electrical
     - smell electrical
@@ -1095,6 +1127,7 @@ safety:
     - sparked
     - arced
     - smoked
+    - spark
     signed_off: true
   flag_reason: '{label} reported on the call'
   heating_check:

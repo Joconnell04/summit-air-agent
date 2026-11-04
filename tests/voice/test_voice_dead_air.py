@@ -131,3 +131,28 @@ def test_the_worker_says_the_card_and_electrical_lines_word_for_word(agent, conn
     (card, card_cut), (sparks, sparks_cut) = call.session.said
     assert "card number" in card and "breaker" in sparks
     assert card_cut is sparks_cut is False
+
+
+def test_a_running_tool_is_counted_so_the_call_isnt_silent(agent, connect):
+    from prompts import assemble
+    from tests.tool_server.toolkit import in_area_address
+    from tests.voice.test_voice_tools import JOB_TYPES, Hangups, Voice
+    from voice.livekit.bridge import Bridge
+    from voice.livekit.tools import ToolLog, build_tools
+
+    agent.start(call_id="call-1")
+    log = ToolLog()
+    server = connect("call-1")
+    seen = []
+    real = server.tool
+
+    async def tool(*args, **kwargs):
+        seen.append(log.running)
+        return await real(*args, **kwargs)
+
+    server.tool = tool
+    built = build_tools(assemble.tool_specs(JOB_TYPES), server,
+                        Bridge([], play=None, silent=lambda: True), log, Hangups(), Voice())
+    tools = {t.info.name: t for t in built}
+    asyncio.run(tools["read_back"]({"address": in_area_address(), "phone": "caller_id"}, None))
+    assert seen == [1] and log.running == 0

@@ -71,8 +71,8 @@ async def watch(
     poll_s: float = 1.0,
     sleep: Callable[[float], Awaitable[None]] = asyncio.sleep,
 ) -> None:
-    """Runs for the whole call. Nothing is said while `busy` (the agent is speaking, or the caller
-    is on hold music for a transfer). While `sound` (voice activity on the caller's side) a check-in
+    """Runs for the whole call. Nothing is said while `busy` (the agent is speaking or thinking, a
+    tool is running, or the caller is on hold music for a transfer). While `sound` (voice activity on the caller's side) a check-in
     waits, but the goodbye doesn't: a TV left on would otherwise keep the line open for good.
     Returns after the goodbye."""
     while True:

@@ -380,8 +380,16 @@ def create_app(
     @app.post("/calls/{call_id}/turn")
     def call_turn(request: Request, call_id: str, body: TurnIn):
         # Card digits never reach the turns table, the log or the checks (app/cards.py); the
-        # turn check sees the marker in their place.
-        body = body.model_copy(update={"text": cards.redact(body.text)})
+        # turn check sees the marker in their place. A card split across two caller lines is
+        # caught on the second by the marker on the first.
+        continuing = False
+        if body.speaker == "caller":
+            conn = services.connect()
+            try:
+                continuing = cards.removed(records.last_caller_line(conn, call_id))
+            finally:
+                conn.close()
+        body = body.model_copy(update={"text": cards.redact(body.text, continuing)})
 
         def fn(conn, key):
             ctx = _ctx(services, conn, call_id, key)

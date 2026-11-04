@@ -152,12 +152,17 @@ def _positions(tokens: list[str], phrases: list[str]) -> list[int]:
 
 def _together(text_words: str, spec: dict) -> bool:
     """A word from each list within `within` words of each other, the first of the two not
-    negated: "water coming through my living room ceiling", "leaking, running down the wall onto
-    the carpet" (a rule's `together`, DECISIONS.md 082)."""
+    negated, and no `unless_near` word close to the first: "water coming through my living room
+    ceiling", "the AC is dripping water" (a rule's `together`, DECISIONS.md 082)."""
     tokens = text_words.split()
     firsts, seconds = _positions(tokens, spec["first"]), _positions(tokens, spec["second"])
+    # A word in `unless_near` close to the first word says it is something else ("the kitchen
+    # faucet is dripping").
+    others = _positions(tokens, spec.get("unless_near", []))
     return any(
-        abs(a - b) <= spec["within"] and not _negated_at(tokens, min(a, b))
+        abs(a - b) <= spec["within"]
+        and not _negated_at(tokens, min(a, b))
+        and not any(abs(a - o) <= spec["within"] for o in others)
         for a in firsts
         for b in seconds
     )

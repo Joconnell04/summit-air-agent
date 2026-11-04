@@ -62,7 +62,7 @@ def test_card_digits_are_taken_out(line):
         "apartment 4B, the gate code is 4411",
         "it's 52 degrees in here",
         "the window is 8 to 12 on 11/02",
-        "the model number is 1234567890123456",
+        "the serial number is 123456789012",
         "my account number is 100234",
         "I paid with my visa last time",
         "I was charged twice on November 2nd, about 340 dollars",
@@ -203,8 +203,98 @@ def test_the_office_callback_falls_inside_office_hours():
     assert due > late
 
 
-def test_billing_words_on_a_gas_call_wait_for_the_lines(agent):
+def test_billing_words_on_a_gas_line_get_the_gas_lines_but_the_callback_is_still_stored(agent):
     call_id = agent.start(caller_id=UNKNOWN, call_id="call-1")["data"]["call_id"]
     result = agent.turn(call_id, "I smell gas and also I was overcharged")
-    assert result["say"] == GAS_LINES
-    assert count(agent, "SELECT COUNT(*) FROM callbacks WHERE call_id = ?", call_id) == 0
+    assert result["say"] == GAS_LINES and result["data"]["spoken"] is None
+    assert count(
+        agent, "SELECT COUNT(*) FROM flags WHERE call_id = ? AND kind = 'billing'", call_id
+    ) == 1
+    assert count(agent, "SELECT COUNT(*) FROM callbacks WHERE call_id = ?", call_id) == 1
+
+
+def test_after_the_gas_lines_a_card_offer_still_hears_the_card_stop(agent):
+    call_id = agent.start(call_id="call-1")["data"]["call_id"]
+    lines = agent.turn(call_id, "I smell gas")
+    agent.say(call_id, lines["say"])
+    result = agent.turn(call_id, "Okay. Can I pay by card for the visit?")
+    assert result["say"] == CARD_STOP
+    assert result["data"]["spoken"]["kind"] == "card"
+
+
+@pytest.mark.parametrize(
+    "line",
+    ["1111 1111", "uh 1111, 1111", "one one one one, one one one one", "oh eight twenty eight",
+     "0828 and 123"],
+)
+def test_the_rest_of_a_card_on_the_next_line_is_taken_out(line):
+    assert cards.MARKER in cards.redact(line, continuing=True)
+    assert not re.search(r"\d", cards.redact(line, continuing=True))
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "my number is 718 555 0101",
+        "7185550101",
+        "seven one eight five five five oh one oh one",
+        "the zip is 11222",
+        "it's 4410 8th Ave in Brooklyn, near the park, by the school",
+        "okay one more sec",
+    ],
+)
+def test_after_a_card_a_phone_zip_or_address_line_stays(line):
+    assert cards.redact(line, continuing=True) == line
+
+
+def test_a_card_split_across_two_turns_is_never_stored(agent):
+    call_id = agent.start(call_id="call-1")["data"]["call_id"]
+    agent.turn(call_id, "Can I pay now? My card number is 4111 1111")
+    agent.turn(call_id, "1111 1111")
+    after = agent.turn(call_id, "my number is 718 555 0101")
+    stored = stored_text(agent, call_id)
+    assert "1111" not in stored
+    assert "718 555 0101" in stored
+    assert after["data"]["spoken"] is None
+
+
+@pytest.mark.parametrize(
+    "first,second",
+    [
+        ("4111 1111 1111", "1111"),
+        ("four one one one, one one one one, one one one one", "one one one one"),
+        ("my card number is 4111 1111", "1111 1111"),
+    ],
+)
+def test_a_card_split_across_caller_lines_is_never_stored(agent, first, second):
+    call_id = agent.start(call_id="call-1")["data"]["call_id"]
+    agent.turn(call_id, first)
+    agent.turn(call_id, second)
+    conn = agent.db()
+    try:
+        texts = [r["text"] for r in conn.execute(
+            "SELECT text FROM turns WHERE call_id = ? AND speaker = 'caller'", (call_id,)
+        )]
+    finally:
+        conn.close()
+    assert all(cards.MARKER in t for t in texts)
+    assert not any(ch.isdigit() for t in texts for ch in t)
+    assert "one one" not in " ".join(texts)
+
+
+def test_a_luhn_invalid_card_length_run_is_taken_out_as_a_likely_slip():
+    assert cards.redact("4111 1111 1111 1112") == cards.MARKER
+    assert cards.redact("4111111111111112") == cards.MARKER
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "I pay by Visa, I'm at 145 Union Street",
+        "my credit card was charged twice on 11/02",
+        "it's on my Visa, the zip is 11222",
+        "my credit card company called at 3:30 about 189 dollars",
+    ],
+)
+def test_a_card_word_leaves_house_numbers_zips_dates_times_and_amounts(line):
+    assert cards.redact(line) == line
