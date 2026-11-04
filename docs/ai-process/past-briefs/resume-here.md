@@ -1,6 +1,6 @@
 # Resume here
 
-Where the build stopped when Jackson closed the laptop. Every working lane was told to push its work-in-progress and stop (phase 3, after eval round 2). To continue, tell the coordinating session "resume from docs/ai-process/resume-here.md".
+Where the build stopped when Jackson closed the laptop. Every working lane was told to push its work-in-progress and stop (phase 3, after eval round 2). To continue, tell the coordinating session "resume from docs/ai-process/past-briefs/resume-here.md".
 
 ## Open PRs and what each needs
 
@@ -29,4 +29,4 @@ Merged since the last note: #69 (warm transfer and recordings), #72 (eval floor 
 - Deploy (check no call is live first), with `SIDE_MODEL=openai-decisions` already set in the server `.env`.
 - Load the rules page demo history on the server (`make owner-demo` equivalent for the server database).
 - Reply-delay targets: add about 0.4 s to `make trace` numbers (the worker times from after its silence wait, DECISIONS.md 038).
-- Phases 4 and 5 stay paused until Jackson picks them up (docs/ai-process/brief-phase-3-onward.md lists the open items).
+- Phases 4 and 5 stay paused until Jackson picks them up (docs/ai-process/past-briefs/brief-phase-3-onward.md lists the open items).

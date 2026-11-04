@@ -6,7 +6,7 @@ Branch: `joco/rules-by-stage-7503c4`. Depends on brief 07 (the owner view redesi
 
 The owner sees every rule the agent follows, sorted by where in the call it applies, each marked locked or editable, and can change a small, safe set of them: four wording lines and short guidance per stage. No screen can reach a gate.
 
-Read first: CLAUDE.md, docs/assignment.md, docs/explorations/009-rules-by-call-stage.md (the design and the 28-rule inventory), docs/ai-process/ideas-round-questions.md questions 4 to 9, docs/design-system.md.
+Read first: CLAUDE.md, docs/assignment.md, docs/explorations/009-rules-by-call-stage.md (the design and the 28-rule inventory), docs/ai-process/past-briefs/ideas-round-questions.md questions 4 to 9, docs/design-system.md.
 
 ## What was decided (questions 4 to 9, all recommendations taken)
 
