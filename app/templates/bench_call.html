@@ -4,7 +4,7 @@
 {% block tabs %}{{ bench_tabs(tab) }}{% endblock %}
 {% block body %}
 {% set live = call.ended_at is none %}
-<main class="page"{% if live %} data-live="/bench/calls/{{ call_id }}/stream" data-live-graph="/bench/calls/{{ call_id }}/graph"{% endif %}>
+<main class="page"{% if live %} data-live="/bench/calls/{{ key }}/stream" data-live-graph="/bench/calls/{{ key }}/graph"{% endif %}>
   <div class="call-head">
     <div class="lead">
       <div class="crumbs"><a href="/bench">Bench</a><span>/</span><a href="/bench">Calls</a><span>/</span><span class="num">{{ local.strftime("%b %-d, %-I:%M %p") }}</span></div>
@@ -20,8 +20,7 @@
       </div>
     </div>
     <nav class="step-nav" aria-label="Call actions">
-      <a class="btn" href="/owner/calls/{{ call_id }}">Owner page</a>
-      <a class="btn" href="/bench/calls/{{ call_id }}/scenario.yaml" download>Scenario draft</a>
+      <a class="btn" href="/bench/calls/{{ key }}/scenario.yaml" download>Scenario draft</a>
     </nav>
   </div>
 
@@ -61,7 +60,7 @@
         </div>
       </section>
       <section class="panel compact">
-        <div class="panel-head"><h2>Replay as a scenario</h2><div class="end"><a class="btn quiet" href="/bench/calls/{{ call_id }}/scenario.yaml" download>Download</a></div></div>
+        <div class="panel-head"><h2>Replay as a scenario</h2><div class="end"><a class="btn quiet" href="/bench/calls/{{ key }}/scenario.yaml" download>Download</a></div></div>
         <div class="panel-body"><pre class="tech-block scroll">{{ draft }}</pre></div>
       </section>
     </aside>

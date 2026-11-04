@@ -306,11 +306,12 @@ FLOW_FROM = (
 )
 
 
-def scenario_draft(trace: dict, redact) -> str:
+def scenario_draft(trace: dict, redact, key: str) -> str:
     """A draft scenario file (evals/scenarios/README.md) from a real call: the caller's first line
     as the opening, the rest as the script, and code checks for what the call did. Personal details
     are redacted and the caller is a made-up number, so the draft needs a person's pass before it
-    goes in the suite."""
+    goes in the suite. `key` is the call's bench key (redact.call_key): the id and the file name
+    are built from it, never from the call id, which can carry the caller's number."""
     call = trace["call"]
     said = [e for e in trace["events"] if e["type"] == "turn" and e["speaker"] == "caller"]
     flows = [name for name, test in FLOW_FROM if test(trace)] or ["booking"]
@@ -331,7 +332,7 @@ def scenario_draft(trace: dict, redact) -> str:
         must.append({"outcome": call["outcome"]})
     if not must:
         must.append({"outcome": "no_booking"})
-    slug = re.sub(r"[^a-z0-9]+", "-", f"replay-{call['id']}".lower()).strip("-")[:60]
+    slug = f"replay-{key}"
     draft = {
         "id": slug,
         "flow": flows,
