@@ -71,5 +71,7 @@ Each `must` item is `- <check>: <argument>`. They read the tool server's record 
 | `callback` | `promised`, `none`, or `{day, not_before}` | a timed callback was stored, or none; with a mapping, every callback is due `day` days after the call, no earlier than `not_before` (local, "12:00") |
 | `agent_says` | a regex or list | the agent said each one at some point (case ignored) |
 | `agent_never_says` | a regex or list | the agent never said any of them |
+| `said_booked` | `only_after_booking` | the agent never told the caller they were booked before a booking went through on the call |
+| `slot_taken` | `told_plainly` | a booking that came back `slot_taken` was followed by an agent line saying the window just went and naming another time; passes when no booking came back taken |
 
 Job types: `no_heat`, `no_cooling`, `tune_up`, `safety_check`, `estimate`. Priorities: Low, Normal, High, Urgent.

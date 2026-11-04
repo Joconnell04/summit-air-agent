@@ -237,3 +237,33 @@ def test_callback_checks_the_day_and_the_earliest_time():
     assert failures("callback", want, trace(started_at=started)) == ["no callback was promised"]
     with pytest.raises(ValueError):
         CHECKS["callback"].validate({"tomorrow": True})
+
+
+TAKEN = {"type": "tool", "tool": "book_appointment", "args": {}, "ok": False,
+         "refused": "slot_taken"}
+
+
+def test_said_booked_only_counts_once_a_booking_went_through():
+    early = trace(events=[turn("agent", "Great, you're all set for this afternoon."), TAKEN])
+    assert failures("said_booked", "only_after_booking", early)[0].startswith(
+        "told the caller they were booked before any booking"
+    )
+    after = trace(events=[TAKEN, tool("book_appointment"), turn("agent", "You're booked.")])
+    assert failures("said_booked", "only_after_booking", after) == []
+    plain = trace(events=[turn("agent", "Let me book that for you.")])
+    assert failures("said_booked", "only_after_booking", plain) == []
+
+
+def test_a_taken_window_is_said_plainly_with_another_time():
+    told = trace(events=[TAKEN, turn("agent", "That window just filled up. I have Thursday 12 to 4.")])
+    assert failures("slot_taken", "told_plainly", told) == []
+    vague = trace(events=[TAKEN, turn("agent", "Hmm, let me try something else.")])
+    assert failures("slot_taken", "told_plainly", vague) == [
+        "did not say the window just went: 'Hmm, let me try something else.'",
+        "did not offer another time: 'Hmm, let me try something else.'",
+    ]
+    hung_up = trace(events=[TAKEN])
+    assert failures("slot_taken", "told_plainly", hung_up) == [
+        "the call ended before the agent said the window was taken"
+    ]
+    assert failures("slot_taken", "told_plainly", trace()) == [], "no taken window, nothing to say"

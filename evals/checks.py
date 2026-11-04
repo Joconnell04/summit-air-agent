@@ -319,6 +319,59 @@ def agent_never_says(arg: Any, ev: Evidence) -> list[str]:
     return problems
 
 
+# The agent telling a caller they're booked. Said before any booking went through, it is untrue.
+CLAIMS_BOOKED = (
+    r"(you'?re|you are) (all set|booked|scheduled|on the schedule)|i'?ve (got you|booked)"
+    r"|(booked|got) you (in|down|for)|(that'?s|it'?s|visit is) (booked|confirmed|scheduled)"
+)
+# The agent saying a window someone else just took is gone.
+SAYS_GONE = (
+    r"\b(just|already) (went|gone|filled|been (taken|booked)|got (taken|booked))|filled up"
+    r"|no longer (open|available)|(isn'?t|is not|not) (open|available) any ?more"
+    r"|someone (else )?(just )?(took|booked|grabbed)|\b(was|been|got) taken\b"
+)
+# A time the agent offers instead: a day or a window.
+NAMES_A_TIME = (
+    r"\b(today|tonight|tomorrow|monday|tuesday|wednesday|thursday|friday|saturday|sunday"
+    r"|morning|afternoon|evening|\d{1,2} to \d{1,2}|noon)\b"
+)
+
+
+def said_booked(arg: str, ev: Evidence) -> list[str]:
+    """The agent says the caller is booked only once a booking went through on this call."""
+    for e in ev.trace["events"]:
+        if e["type"] == "tool" and e["tool"] == "book_appointment" and e["ok"]:
+            return []
+        if e["type"] == "turn" and e["speaker"] == "agent" and re.search(
+            CLAIMS_BOOKED, e["text"], re.IGNORECASE
+        ):
+            return [f"told the caller they were booked before any booking: {e['text'][:80]!r}"]
+    return []
+
+
+def slot_taken(arg: str, ev: Evidence) -> list[str]:
+    """A booking that came back slot_taken is said plainly: the agent's next line says the window
+    went and names another time. Passes on a call where no booking came back taken."""
+    events = ev.trace["events"]
+    for i, e in enumerate(events):
+        if not (e["type"] == "tool" and e["tool"] == "book_appointment"
+                and e.get("refused") == "slot_taken"):
+            continue
+        reply = next(
+            (t["text"] for t in events[i + 1:] if t["type"] == "turn" and t["speaker"] == "agent"),
+            None,
+        )
+        if reply is None:
+            return ["the call ended before the agent said the window was taken"]
+        problems = []
+        if not re.search(SAYS_GONE, reply, re.IGNORECASE):
+            problems.append(f"did not say the window just went: {reply[:80]!r}")
+        if not re.search(NAMES_A_TIME, reply, re.IGNORECASE):
+            problems.append(f"did not offer another time: {reply[:80]!r}")
+        return problems
+    return []
+
+
 def _recorded_or_zip(arg: Any) -> None:
     if arg != "recorded" and not re.fullmatch(r"\d{5}", str(arg)):
         raise ValueError(f"expected recorded or a five-digit ZIP, got {arg!r}")
@@ -357,6 +410,8 @@ CHECKS: dict[str, Check] = {
     "callback": Check(_callback_arg, callback, lambda arg: arg == "none"),
     "agent_says": Check(_strings, agent_says),
     "agent_never_says": Check(_strings, agent_never_says, lambda arg: True),
+    "said_booked": Check(_one_of("only_after_booking"), said_booked, lambda arg: True),
+    "slot_taken": Check(_one_of("told_plainly"), slot_taken),
 }
 
 
