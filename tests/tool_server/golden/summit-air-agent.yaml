@@ -46,6 +46,8 @@ approval:
   - not sure if i can approve
   - not sure i can approve
 callbacks:
+  after_goodbye_minutes: 60
+  after_lead_minutes: 30
   dropped_safety_minutes: 10
   fsm_down_minutes: 60
   max_attempts: 1
@@ -144,6 +146,7 @@ fsm:
 lines:
   account_choice: Should that address go on its own account, with you as a contact, or under your account?
   account_name: Whose name should the account for that address be under?
+  after_confirmation: Anything else?
   anything_else_first: Is there anything else I can help with?
   approval_callback: Before the technician heads out, someone from our team will call you {when} to confirm
     who can approve the work.
@@ -151,7 +154,8 @@ lines:
     and the technician won't start until that's settled.
   arrival_no_fit: Our arrival windows are {windows}, and the technician can come any time in the window,
     so I can't promise an exact time.
-  callback_after: after {time}
+  callback_after: around {time}
+  callback_asap: as soon as they can
   callback_before: before {time}
   callback_between: between {start} and {end}
   callback_by: by {time}
@@ -167,8 +171,9 @@ lines:
     at {window}, would you like it?
   flag_stored: I've let our team know, and someone will call you {when}.
   flag_stored_no_callback: I've let our team know.
-  flag_stored_urgent: I've marked this as urgent and let our on-call team know, so someone's keeping an
-    eye on it. Someone will call you {when}.
+  flag_stored_on_call: I've let our on-call team know this call is top priority, and someone will call
+    you {when}.
+  flag_stored_urgent: I've let our team know this call is top priority, and someone will call you {when}.
   fsm_unavailable: I can't book that right now, but I've written it all down and someone will call you
     by {time} to confirm.
   fsm_unavailable_no_callback: I can't get to that right now, but I've written it all down for the team.
@@ -177,18 +182,19 @@ lines:
     up.
   out_of_area: I'm sorry, that's outside the area we cover, so we're not able to send someone. A local
     heating company should be able to help.
-  read_back: 'Let me read that back: your home at {address}, and the best number is {phone}. Is that right?'
+  read_back: I have your home at {address}, and the best number is {phone}, is that right?
   repeated_drops: Looks like we keep getting cut off, the signal might be spotty. Want me to have someone
     call you back in a few minutes instead?
   return_visit_review: Since we were just out there, a manager will look over this visit, including whether
     it's covered, before the technician arrives.
+  seek_earlier_note: I've also asked our team to look for an earlier opening.
   slot_taken: That window just filled up.
   transfer_handoff: I'm connecting you with someone from our team now.
   transfer_no_answer: I couldn't reach anyone just now, so I've let the team know and someone will call
     you {when}.
   transfer_prompt: Summit Air has a caller for the {role}. Press 1 to take the call.
   transfer_summary: '{priority}Caller at {phone}: {reason}. Putting you through now.'
-  urgent_priority: I've marked this as one of our most urgent calls, so you get our soonest opening.
+  urgent_priority: I've marked this call top priority, so you get our soonest opening.
 on_call_alerts:
   email: on-call@summit-air.example
   max_age_minutes: 120
@@ -797,6 +803,7 @@ safety:
       variants:
       - Please get outside and call 911 from there.
       - The safest thing is to head outside now and call 911 or the gas company.
+  repeat_limit: 1
   sign_off: For your safety, I'd recommend hanging up now, getting outside, and calling 911 from there.
     We'll follow up once you're safe.
   signed_off: true
@@ -871,7 +878,7 @@ voice:
   fallback: Thanks for calling Summit Air. If you smell gas, hang up and call 911 from outside. We can't
     take your call right now. Please leave your name, number and what's going on after the tone, and we'll
     call you back.
-  goodbye: Thanks for calling Summit Air. Stay warm out there.
+  goodbye: Thanks for calling Summit Air. Have a great rest of your day.
   greeting_known: Hi, this is Summit Air. Is this {first_name}?
   greeting_linked: Hi, this is Summit Air's virtual assistant again. I think we got cut off earlier. Is
     this {first_name}?

@@ -15,13 +15,15 @@ find_slots: >-
   10"), pass them as arrive_after and arrive_before as they said them; the server reads "8 to 2" as
   8 AM to 2 PM and offers only windows inside those hours.
 read_back: >-
-  The read-back before booking. First call returns the exact sentence to say. After the caller
-  clearly says yes, call again with the same address and phone and `confirmed: true`.
+  Confirms the address and number before booking. The first call's sentence is spoken to the caller
+  for you, word for word, so call it without announcing it and say nothing yourself. After the
+  caller clearly says yes, call again with the same address and phone and `confirmed: true`.
 book_appointment: >-
   Book the window the caller chose, with the intake details. Only after the read-back was confirmed
   and after find_slots with `day` returned that day's windows. `slot.date` and `slot.window` are the
   `date` and `window` code from that result (such as "morning"), never the spoken label ("8 to 12").
-  Confirm out loud only after it returns ok. To move a visit the caller already has, use
+  Its confirmation is spoken for you when it returns ok; say a short line first in the same reply
+  ("Perfect, booking that now.") and nothing after. To move a visit the caller already has, use
   reschedule_appointment instead. If it refuses with account_choice, ask the caller its question
   and book again with new_address_account.
 reschedule_appointment: >-
@@ -33,8 +35,9 @@ cancel_appointment: >-
 flag_person: >-
   Ask a person to follow up: a callback the caller wants, a complaint, a reschedule that needs a
   person, someone at risk. When the caller asked for a window ("after 5", "before 3", "between 1
-  and 3"), pass it as callback_after and callback_before, not callback_time. "Tomorrow" goes in
-  callback_day. Say the sentence it returns as written; it names the time.
+  and 3"), pass it as callback_after and callback_before, not callback_time. "This afternoon" is
+  after 12 PM and before 5 PM, "this morning" before 12 PM, "this evening" after 5 PM. "Tomorrow"
+  goes in callback_day. Say the sentence it returns as written; it names the time.
 record_lead: >-
   Save one lead: commercial (company, contact, need), membership sign-up interest, or an install or
   replacement quote. A window the caller asked for goes in callback_after and callback_before, and
@@ -43,4 +46,5 @@ add_note: Append a short note for the team about this customer or this call's jo
 mark_do_not_call: The caller asked not to be called again. Say the sentence it returns.
 end_call: >-
   Ask to end the call, with the reason. Call it after your goodbye. If it says not to hang up yet,
-  say its sentence and keep listening.
+  say its sentence and keep listening. On a safety call it returns the sign-off, which is the
+  goodbye: say nothing of your own in that turn.

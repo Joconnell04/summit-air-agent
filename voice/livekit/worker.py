@@ -210,9 +210,10 @@ async def entrypoint(ctx: JobContext) -> None:
     def speak(text: str):
         return session.say(text, allow_interruptions=False)
 
-    def hang_up(context: RunContext, last_line) -> None:
+    def hang_up(context: RunContext, last_line, quiet: bool = False) -> None:
         """After this turn's speech: the worker's own last line if it said one, else the tenant's
-        goodbye when the model said nothing, then the line drops."""
+        goodbye when the model said nothing (never after the safety sign-off, which is the goodbye),
+        then the line drops."""
 
         async def run() -> None:
             await context.speech_handle.wait_for_playout()
@@ -222,7 +223,7 @@ async def entrypoint(ctx: JobContext) -> None:
             )
             if last_line is not None:
                 await last_line.wait_for_playout()
-            elif not spoke:
+            elif not spoke and not quiet:
                 await speak(spoken["goodbye"]).wait_for_playout()
             ended["reason"] = "agent_end"
             await ctx.delete_room()
@@ -288,7 +289,8 @@ async def entrypoint(ctx: JobContext) -> None:
         call,
         assemble.instructions(data),
         build_tools(
-            specs, tools_server, bridge, tool_log, hang_up, speak, transfer, call.say_parts
+            specs, tools_server, bridge, tool_log, hang_up, speak, transfer, call.say_parts,
+            call.reply,
         ),
     )
 

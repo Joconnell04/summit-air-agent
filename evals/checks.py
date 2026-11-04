@@ -319,6 +319,37 @@ def agent_never_says(arg: Any, ev: Evidence) -> list[str]:
     return problems
 
 
+def agent_says_at_most(arg: dict, ev: Evidence) -> list[str]:
+    """Each pattern turns up in at most that many agent lines: a recommendation said once and
+    offered once more, not pressed on every turn (eval round 3)."""
+    problems = []
+    for pattern, most in arg.items():
+        hits = [line for line in ev.agent_lines() if re.search(pattern, line, re.IGNORECASE)]
+        if len(hits) > most:
+            problems.append(f"the agent said /{pattern}/ in {len(hits)} lines, at most {most} allowed")
+    return problems
+
+
+def _counts(arg: Any) -> None:
+    if not isinstance(arg, dict) or not arg:
+        raise ValueError("expected a mapping of regex to the most lines allowed")
+    for pattern, most in arg.items():
+        _strings(pattern)
+        if not isinstance(most, int) or isinstance(most, bool) or most < 0:
+            raise ValueError(f"expected a whole number for {pattern!r}, got {most!r}")
+
+
+def booking_lead_in(arg: bool, ev: Evidence) -> list[str]:
+    """The agent's line with the booking confirmation opens with a short line of the model's own,
+    from the same reply that booked, rather than a separate filler reply or silence (eval round
+    4: the caller hears something at once on the slowest turn)."""
+    lines = [line for line in ev.agent_lines() if "You're all set for" in line]
+    if not lines:
+        return ["no booking confirmation was said"]
+    lead = lines[0].split("You're all set for")[0].strip()
+    return [] if lead else ["the booking confirmation came with no line before it"]
+
+
 # The agent telling a caller they're booked. Said before any booking went through, it is untrue.
 CLAIMS_BOOKED = (
     r"(you'?re|you are) (all set|booked|scheduled|on the schedule)|i'?ve (got you|booked)"
@@ -475,7 +506,9 @@ CHECKS: dict[str, Check] = {
     ),
     "read_back": Check(_one_of("before_booking"), read_back, lambda arg: True),
     "flag": Check(
-        _one_of("none", "person", "safety", "safety_check_cleared"), flag, lambda arg: arg == "none"
+        _one_of("none", "person", "safety", "safety_check_cleared", "approval_check"),
+        flag,
+        lambda arg: arg == "none",
     ),
     "lead": Check(_one_of(*LEAD_KINDS), lead),
     "out_of_area": Check(_recorded_or_zip, out_of_area),
@@ -487,6 +520,8 @@ CHECKS: dict[str, Check] = {
     "callback": Check(_callback_arg, callback, lambda arg: arg == "none"),
     "agent_says": Check(_strings, agent_says),
     "agent_never_says": Check(_strings, agent_never_says, lambda arg: True),
+    "agent_says_at_most": Check(_counts, agent_says_at_most, lambda arg: True),
+    "booking_lead_in": Check(_one_of(True), booking_lead_in),
     "said_booked": Check(_one_of("only_after_booking"), said_booked, lambda arg: True),
     "slot_taken": Check(_one_of("told_plainly"), slot_taken),
     "pace": Check(_pace_arg, pace),

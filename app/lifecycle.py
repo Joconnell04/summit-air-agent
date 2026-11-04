@@ -403,14 +403,12 @@ def turn(
                 changes.update(safety_state="checking", safety_kind=action.kind)
             elif action.action == "cleared":
                 changes.update(safety_state="cleared")
-                records.add_flag(
-                    conn,
-                    call["id"],
-                    "safety_check_cleared",
-                    "Caller said no to the safety check",
-                    now,
-                    "Low",
+                reason = (
+                    "Caller said there was no smell or alarm after the safety lines"
+                    if call["safety_state"] == "lines_said"
+                    else "Caller said no to the safety check"
                 )
+                records.add_flag(conn, call["id"], "safety_check_cleared", reason, now, "Low")
             # The caller asking for a pace, "sorry, what?" twice, or an older caller (app/pace.py).
             hints += pace.caller_line(conn, tenant.pace, call, args.text, seq, now)
             text_words = words(args.text)
@@ -464,23 +462,93 @@ def turn(
     if action.action in ("speak_lines", "speak_variant", "ask_check"):
         hints.append("journey:safety")
     if action.action == "cleared":
-        hints.append("safety_check_cleared")
+        stood_down = call["safety_state"] == "lines_said"
+        hints.append("safety_stood_down" if stood_down else "safety_check_cleared")
     # After the lines, every caller line carries a reminder that the safety call doesn't book.
     if args.speaker == "caller" and action.action == "none" and call["safety_state"] == "lines_said":
         hints.append("safety_call")
     payload = None
     if action.action != "none":
         payload = {"action": action.action, "kind": action.kind, "text": action.text}
+    known = already_known(conn, call["id"]) if args.speaker == "caller" else {}
     return ok(
         action.text,
         seq=seq,
         safety=payload,
         hints=hints,
+        known=known,
         pace=pace.current(conn, call["id"]),
         recording=(
             {"action": "stop", "text": recordings.stopped_line(tenant)} if stop_recording else None
         ),
     )
+
+
+# What the agent's tool calls have already recorded, by field. Read from the tool log, so it costs
+# no model request (eval round 4: the agent asked again for what the caller had told it).
+KNOWN_FROM_DETAILS = {
+    "name": "name",
+    "who_home": "who's home",
+    "approver": "who approves",
+    "system_type": "system",
+    "arrival_notes": "access",
+}
+KNOWN_MAX = 40  # characters a value is cut to, so the note stays a few dozen tokens
+# From the caller's own lines (eval round 4, spell-street-letter-by-letter: the agent asked a
+# caller who had said "my home" whether she rents, and for a name she had given).
+KNOWN_NAME = re.compile(r"\b(?:my name is|my names|name is|the names|this is)\s+([a-z]+(?: [a-z]+)?)")
+RENTS = ("i rent", "im renting", "we rent", "were renting", "im a tenant", "my landlord", "our landlord")
+OWNS = ("i own", "we own", "my home", "my house", "our house", "our home", "its my place",
+        "its our place", "im the owner", "homeowner")
+NOT_A_NAME = {"summit", "the", "a", "my", "it", "about", "regarding", "calling"}
+
+
+def already_known(conn: sqlite3.Connection, call_id: str) -> dict[str, str]:
+    """Facts this call's tool calls carried: the ZIP checked, the address and phone read back
+    (marked confirmed once the caller said yes) and the intake a booking attempt sent, so the
+    agent doesn't ask again. Empty until a tool has recorded something."""
+    known: dict[str, str] = {}
+    rows = conn.execute(
+        "SELECT tool, args_json FROM tool_calls WHERE call_id = ? ORDER BY id", (call_id,)
+    ).fetchall()
+    for row in rows:
+        args = json.loads(row["args_json"] or "{}")
+        if row["tool"] == "check_service_area" and args.get("zip"):
+            known["ZIP"] = args["zip"]
+        if row["tool"] == "find_slots":
+            facts = args.get("facts") or {}
+            if facts.get("who_home"):
+                known["who's home"] = facts["who_home"]
+        if row["tool"] in ("book_appointment", "reschedule_appointment"):
+            for field, label in KNOWN_FROM_DETAILS.items():
+                value = (args.get("details") or {}).get(field)
+                if value:
+                    known[label] = value
+    lines = [
+        words(r["text"]).strip()
+        for r in conn.execute(
+            "SELECT text FROM turns WHERE call_id = ? AND speaker = 'caller' ORDER BY seq",
+            (call_id,),
+        )
+    ]
+    for line in lines:
+        said = KNOWN_NAME.search(line)
+        if said and said.group(1).split()[0] not in NOT_A_NAME:
+            known.setdefault("name", said.group(1).title())
+        padded = f" {line} "
+        if any(f" {p} " in padded for p in RENTS):
+            known["rents or owns"] = "rents"
+        elif any(f" {p} " in padded for p in OWNS):
+            known.setdefault("rents or owns", "owns")
+    readback = conn.execute(
+        "SELECT readback_json, readback_confirmed_at FROM calls WHERE id = ?", (call_id,)
+    ).fetchone()
+    if readback and readback["readback_json"]:
+        asked = json.loads(readback["readback_json"])
+        mark = " (confirmed)" if readback["readback_confirmed_at"] else ""
+        known["address"] = f"{asked['street']}, {asked['zip']}{mark}"
+        known["phone"] = f"ending {asked['phone'][-4:]}{mark}"
+    return {k: v if len(v) <= KNOWN_MAX else v[: KNOWN_MAX - 3] + "..." for k, v in known.items()}
 
 
 def end(

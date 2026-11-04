@@ -79,6 +79,10 @@ safety:
   booking_note: >-
     The technician can only work on it once the gas company or 911 has shut it off and said it's
     safe, so please stay outside until then.
+  # How many shorter lines a caller hears after the full lines when they raise it again. The caller
+  # stays in control: the concern is said once, offered once more, then the agent helps (eval round
+  # 3, Jackson: "if they reject your advice, just let it be and maybe offer one more time").
+  repeat_limit: 1
 
 # A caller line that describes a business marks the call commercial: it can't book (spec S-05,
 # journey 8). Commercial means commercial-grade equipment: offices, stores, restaurants and the like.
@@ -181,6 +185,10 @@ callbacks:
   max_attempts: 1
   # A dropped safety call gets a callback this soon.
   dropped_safety_minutes: 10
+  # A callback asked for "after 5" is promised for this long after the start ("around 5:30"). ASSUMED.
+  after_lead_minutes: 30
+  # A callback stored with no time because the caller had already said goodbye. ASSUMED.
+  after_goodbye_minutes: 60
   # When the FSM is down or refuses a booking, someone calls back within this.
   fsm_down_minutes: 60
 
@@ -297,9 +305,10 @@ lines:
   fsm_unavailable_no_callback: I can't get to that right now, but I've written it all down for the team.
   # {when} is how the callback time is said, from the callback_ lines below.
   flag_stored: I've let our team know, and someone will call you {when}.
-  flag_stored_urgent: >-
-    I've marked this as urgent and let our on-call team know, so someone's keeping an eye on it.
-    Someone will call you {when}.
+  flag_stored_urgent: I've let our team know this call is top priority, and someone will call you {when}.
+  # The same after hours, when the on-call technician has the urgent calls (journey 11).
+  flag_stored_on_call: >-
+    I've let our on-call team know this call is top priority, and someone will call you {when}.
   flag_stored_no_callback: I've let our team know.
   # Warm transfer. The handoff is said to the caller; the summary only to the person answering.
   transfer_handoff: I'm connecting you with someone from our team now.
@@ -308,16 +317,19 @@ lines:
   transfer_prompt: Summit Air has a caller for the {role}. Press 1 to take the call.
   transfer_summary: "{priority}Caller at {phone}: {reason}. Putting you through now."
   lead_stored: Someone from our team will call you {when} to tell you more.
-  # The callback time as said: a time we named, or the window the caller asked for.
+  # The callback time as said: a time we named, or the window the caller asked for. A caller who
+  # says "after 5" hears a time inside that window, so they know when to expect it (eval round 3):
+  # callbacks.after_lead_minutes past the start.
   callback_by: by {time}
-  callback_after: after {time}
+  callback_after: around {time}
   callback_before: before {time}
   callback_between: between {start} and {end}
+  callback_asap: as soon as they can
   callback_outside_hours: Our team makes calls between {opens} and {closes}. What time in there works?
   # {address} is street, unit, city and ZIP; {phone} is read in groups. Naming it a home is how
   # every booking confirms the caller is residential.
-  read_back: >-
-    Let me read that back: your home at {address}, and the best number is {phone}. Is that right?
+  # One sentence with no lead-in, said once (eval round 3).
+  read_back: I have your home at {address}, and the best number is {phone}, is that right?
   commercial: >-
     Thanks for thinking of us. Unfortunately Summit Air works on homes and apartments, not
     businesses, so we're not the right fit for this one.
@@ -354,8 +366,12 @@ lines:
     Our arrival windows are {windows}, and the technician can come any time in the window, so I
     can't promise an exact time.
   # Said once when the server marks a call Urgent (spec S-21a). Below Urgent, no priority is named.
-  urgent_priority: I've marked this as one of our most urgent calls, so you get our soonest opening.
+  urgent_priority: I've marked this call top priority, so you get our soonest opening.
   anything_else_first: Is there anything else I can help with?
+  # Ends a booking, reschedule or cancel sentence, which the voice layer speaks with no model step.
+  after_confirmation: Anything else?
+  # Added to an urgent booking with no window today; the server has flagged a person to move it up.
+  seek_earlier_note: I've also asked our team to look for an earlier opening.
   # The first line of a call the system places (journey 12). {day} is "today", "tomorrow" or a
   # weekday; {window} is spoken, such as "2 to 4".
   earlier_slot_offer: >-
@@ -384,8 +400,9 @@ voice:
   greeting_linked_unknown: >-
     Hi, this is Summit Air's virtual assistant again. I think we got cut off earlier. Who am I
     speaking with?
-  # Said when the model ends the call without a goodbye of its own (knowledge/sign-off.md).
-  goodbye: Thanks for calling Summit Air. Stay warm out there.
+  # Said when the model ends the call without a goodbye of its own (knowledge/sign-off.md). Generic
+  # and kind, the same on any day (eval round 3).
+  goodbye: Thanks for calling Summit Air. Have a great rest of your day.
   # Said by the worker when the tool server can't be reached, then the call ends.
   server_down: >-
     Sorry, our system is having trouble right now. Please call us back in a few minutes, and if you

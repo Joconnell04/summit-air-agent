@@ -54,17 +54,48 @@ def set_up(trace: dict, safety: dict) -> list[str]:
         found.append(f"Safety lines (fixed wording): {' '.join(kind['lines'].split())}")
         found.append(f"Safety sign-off (fixed wording): {' '.join(safety['sign_off'].split())}")
     for b in trace["bookings"]:
-        if b["kind"] == "book" and b["status"] in BOOKED:
-            found.append(f"A visit was booked (job {b['fsm_job_id']}, starting {b['window_start']}).")
+        if b["kind"] == "book" and b["status"] == "queued":
+            # Not in the field service system yet: the caller hears it couldn't be booked.
+            found.append(
+                "A visit was queued to retry, not yet booked; the caller gets a callback to confirm."
+            )
+        elif b["kind"] == "book" and b["status"] in BOOKED:
+            # The priority says whether "I've marked this call top priority" belonged on the call.
+            found.append(
+                f"A visit was booked (job {b['fsm_job_id']}, starting {b['window_start']}, "
+                f"priority {b.get('priority') or 'not set'})."
+            )
     for e in trace["events"]:
         if e["type"] == "tool" and e["tool"] in SETS_UP and e["ok"] and e["say"]:
             found.append(f"{e['tool']} returned: {e['say']}")
+    # Whether "top priority" belonged on the call (eval round 4, oven-heat-co-check): the system's
+    # own find_slots line says it only when it marked the call Urgent.
+    urgent = any(
+        e["type"] == "tool" and e["tool"] == "find_slots" and "top priority" in (e.get("say") or "")
+        for e in trace["events"]
+    )
+    found.append(
+        "The system marked this call Urgent and said so (top priority)."
+        if urgent
+        else "The system did not mark this call Urgent."
+    )
     return found
+
+
+KNOWLEDGE = Path(__file__).resolve().parent.parent / "tenants" / "summit-air" / "knowledge"
+
+
+def company_knowledge(folder: Path = KNOWLEDGE) -> str:
+    """The tenant's knowledge files, as the agent gets them, so the grader doesn't call a real
+    policy invented (eval round 4, wants-membership: "no price on the phone" is in the folder)."""
+    parts = [p.read_text().strip() for p in sorted(folder.glob("*.md")) if p.name != "README.md"]
+    return "\n\n".join(parts) or "Nothing."
 
 
 def grade(model: Model, turns: list[Turn], should: list[str], done: list[str] | None = None
           ) -> Grade:
     system = PROMPT.read_text().format(
+        knowledge=company_knowledge(),
         should="\n".join(f"- {s}" for s in should) or "- Nothing beyond the house rules.",
         set_up="\n".join(f"- {d}" for d in done or []) or "- Nothing.",
     )

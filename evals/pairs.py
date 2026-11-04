@@ -195,8 +195,11 @@ class Meeting:
             pass
 
     def leave(self) -> None:
-        """A call ended. Anyone still waiting goes on alone (after a meeting this changes nothing)."""
-        self.barrier.abort()
+        """A call ended without meeting the other: whoever is still waiting goes on alone. After a
+        meeting it does nothing, so a call that finishes fast can't break the barrier under one
+        that was released but hasn't woken yet."""
+        if not self.met:
+            self.barrier.abort()
 
 
 class HeldServer:

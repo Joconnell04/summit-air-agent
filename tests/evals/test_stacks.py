@@ -69,7 +69,7 @@ def test_the_worker_greeting_and_server_notes_come_from_assemble(monkeypatch):
 
     fake = types.ModuleType("prompts.assemble")
     fake.greeting = lambda start, voice: f"Hi, this is {start['tenant']['name']}."
-    fake.server_notes = lambda hints: [f"[server] {h}" for h in hints]
+    fake.server_notes = lambda hints, known=None: [f"[server] {h}" for h in hints]
     monkeypatch.setitem(sys.modules, "prompts.assemble", fake)
     monkeypatch.setattr(stacks.yaml, "safe_load", lambda text: {"voice": {"greeting_unknown": "x"}})
     assert stacks.greeting({"tenant": {"slug": "summit-air", "name": "Summit Air"}}) == (
@@ -161,6 +161,53 @@ def test_the_retell_adapter_is_loaded_by_name():
     assert load_adapter("retell").__name__ == "voice.retell.eval_adapter"
 
 
+class ReadBackServer(StubServer):
+    """Checks the ZIP, then returns the read-back sentence."""
+
+    def tool(self, name, call_id, args, key=None):
+        if name == "check_service_area":
+            return {"ok": True, "say": "", "data": {"in_area": True}, "refused": None}
+        return {"ok": True, "say": "I have your home at 1 Main St, is that right?",
+                "data": {"confirmed": False}, "refused": None}
+
+
+def test_the_read_back_is_heard_alone_with_the_lead_in_dropped():
+    """Eval round 3: the harness records what a caller of the worker would hear."""
+    model = ScriptedModel([
+        use("check_service_area", "", zip="11231"),
+        say("You're in our area."),
+        use("read_back", "Let me read that back.", phone="caller_id"),
+        say("never said"),
+    ])
+    server = ReadBackServer()
+    agent = InProcessAgent(server, model, "c1", "(212) 555-0999")
+    agent.start()
+    agent.hear("It's 1 Main St, 11231.")
+    turn = agent.hear("Okay.")
+    assert turn.text == "I have your home at 1 Main St, is that right?"
+    assert server.lines[-1] == "I have your home at 1 Main St, is that right?"
+    # The dropped lead-in is gone from the model's own history too.
+    assert not any(
+        b.get("text") == "Let me read that back."
+        for m in agent.messages if isinstance(m["content"], list) for b in m["content"]
+    )
+
+
+def test_the_harness_drops_a_restated_zip_and_a_read_back_announcement():
+    model = ScriptedModel([
+        say("Got it, 1 Main St, Brooklyn, 11231. I'll read back the details soon. Is it a house?"),
+        say("Let me read that back."),
+    ])
+    server = StubServer()
+    agent = InProcessAgent(server, model, "c1", "(212) 555-0999")
+    agent.start()
+    assert agent.hear("one main street brooklyn one one two three one").text == "Is it a house?"
+    # Nothing left: the caller hears silence, and no empty agent line is posted.
+    before = len(server.lines)
+    assert agent.hear("yes").text == ""
+    assert len(server.lines) == before
+
+
 class PacedServer(StubServer):
     """Slows the call when the caller asks, and answers read_back with a slower address."""
 
@@ -198,9 +245,11 @@ def test_every_agent_line_carries_the_servers_speed_and_a_slower_read_back_is_sp
     agent.start()
     agent.hear("Can you slow down please?")
     turn = agent.hear("Can you read the address slower?")
-    assert turn.text == "Okay. Your home at 101 Union St, 11231, is that right?"
-    assert server.lines[1:] == ["Sure, I'll slow down.", "Okay.", "Your home at",
+    # The model's "Okay." in the read-back reply is dropped (eval round 3): the caller hears the
+    # server's sentence alone.
+    assert turn.text == "Your home at 101 Union St, 11231, is that right?"
+    assert server.lines[1:] == ["Sure, I'll slow down.", "Your home at",
                                 "101 Union St, 11231,", "is that right?"]
-    assert server.speeds == [1.0, 0.85, 0.85, 0.85, 0.7, 0.85]
+    assert server.speeds == [1.0, 0.85, 0.85, 0.7, 0.85]
     # The parts were spoken from code: the model had no step after read_back.
     assert len(model.calls) == 2
