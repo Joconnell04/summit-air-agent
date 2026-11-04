@@ -810,3 +810,26 @@ def test_if_we_do_smell_gas_what_should_we_do_is_a_worry():
     """Eval run 20261104-163112, gas-worry-no-smell: "we do" in the question read as an answer."""
     line = "yes that's right but if we do smell gas what should we do"
     assert safety.check_caller_turn(line, "none", None, 0, CFG).action != "speak_lines"
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "The c o alarm is going off",
+        "my c.o. detector keeps beeping",
+        "the see oh alarm went off",
+        "the CO2 detector is going off and I feel dizzy",
+    ],
+)
+def test_carbon_monoxide_spelled_by_speech_to_text_brings_the_lines(line):
+    """The Ink-2 lane: Deepgram Nova-3 wrote "The c o alarm is going off" for the same clip twice."""
+    action = safety.check_caller_turn(line, "none", None, 0, CFG)
+    assert action.action == "speak_lines" and action.kind == "co", line
+
+
+@pytest.mark.parametrize(
+    "line",
+    ["I paid c o d for the last part", "the company co sent a bill, my heat is out"],
+)
+def test_c_o_without_an_alarm_or_symptom_is_not_carbon_monoxide(line):
+    assert safety.check_caller_turn(line, "none", None, 0, CFG).action == "none"

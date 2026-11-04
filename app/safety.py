@@ -558,6 +558,26 @@ def lines_for(cfg: dict, kind: str) -> str:
     return " ".join(cfg["kinds"][kind]["lines"].split())
 
 
+# Carbon monoxide as speech-to-text spells it: Deepgram Nova-3 wrote "The c o alarm is going off"
+# (the Ink-2 lane, two runs of the same clip). Read as carbon monoxide only beside a word that
+# makes it one, within a few words either side, so "c o d" and "company co" stay as they are.
+SPELLED_CO = re.compile(r" (?:c o|see oh|co2|co 2) ")
+CO_CONTEXT = {"alarm", "alarms", "detector", "detectors", "poisoning", "monitor", "sensor",
+              "dizzy", "headache", "headaches", "nauseous", "sick"}
+CO_CONTEXT_WINDOW = 3
+
+
+def _spelled_co(text: str) -> str:
+    """The line with a spelled-out carbon monoxide said as the words the phrase lists know."""
+    text_words = words(text)
+    for match in reversed(list(SPELLED_CO.finditer(text_words))):
+        before = text_words[: match.start()].split()[-CO_CONTEXT_WINDOW:]
+        after = text_words[match.end() :].split()[:CO_CONTEXT_WINDOW]
+        if CO_CONTEXT & set(before + after):
+            text_words = text_words[: match.start()] + " carbon monoxide " + text_words[match.end() :]
+    return text_words
+
+
 def check_caller_turn(
     text: str,
     state: str,
@@ -571,6 +591,7 @@ def check_caller_turn(
     """What the agent must do after this caller line, given the call's safety state. heating_asked
     and confirm_asked are True once that question has been asked on this call; answering_confirm
     when the question being answered is the confirm question."""
+    text = _spelled_co(text)
     if state == "lines_said" and stands_down(text, kind, cfg):
         return SafetyAction("cleared", kind)
     signal = clear_signal(text, cfg, answering_check=state == "checking")
