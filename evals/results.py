@@ -66,6 +66,13 @@ class TurnTiming(Strict):
     # The voice program's own measure of the same gap, when it logs one with its line (our
     # worker's `reply_ms`, voice/livekit/turns.py), to calibrate the rig against it.
     platform_reply_ms: float | None = Field(None, ge=0)
+    # Audio rig only: how long before the caller finished the agent started making sound, when it
+    # did. On a stack that never backchannels, that is the agent cutting the caller off mid-line.
+    over_caller_ms: float | None = Field(None, ge=0)
+    # Audio rig only: every stage timing the voice program logged with the caller's line and its
+    # reply (voice/livekit/turns.py: end_of_turn_ms, transcript_ms, tts_first_byte_ms and the
+    # like), so a run shows where the reply delay went.
+    platform_stages: dict[str, float] = Field(default_factory=dict)
 
 
 class ScenarioResult(Strict):

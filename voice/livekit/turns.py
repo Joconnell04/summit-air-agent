@@ -69,10 +69,15 @@ def agent_timings(
     tool_ms: float,
     bridge: bool,
     llm: dict[str, float] | None = None,
+    clip_started_at: float | None = None,
 ) -> dict[str, float]:
-    """Stage timings for an agent line. `reply_ms` runs from the caller going quiet to the agent's
-    first audio, the number spec S-36 sets targets for. `llm` is `LlmLog.take()`: the first model
-    request's prompt cache numbers, so `make trace` shows whether the cache was hit."""
+    """Stage timings for an agent line. `reply_ms` runs from the end of the caller's speech to the
+    agent's first audio, the number spec S-36 sets targets for. LiveKit's `stopped_speaking_at` is
+    the end of speech itself, so the silence wait is inside it (its own `end_of_turn_delay` is
+    timed from the same moment). `caller_stopped_at` is None on every line after the first of a
+    turn, which gets no `reply_ms`. A bridge clip that started first is the first audio. `llm` is
+    `LlmLog.take()`: the first model request's prompt cache numbers, so `make trace` shows whether
+    the cache was hit."""
     timings = {
         "llm_first_token_ms": _ms(metrics.get("llm_node_ttft")),
         "tts_first_byte_ms": _ms(metrics.get("tts_node_ttfb")),
@@ -81,6 +86,8 @@ def agent_timings(
     }
     timings.update(llm or {})
     started = metrics.get("started_speaking_at")
+    if clip_started_at and (not started or clip_started_at < started):
+        started = clip_started_at
     if started and caller_stopped_at:
         timings["reply_ms"] = _ms(started - caller_stopped_at)
     return {k: v for k, v in timings.items() if v is not None}

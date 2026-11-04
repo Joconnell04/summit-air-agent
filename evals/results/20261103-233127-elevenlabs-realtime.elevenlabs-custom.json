@@ -1,0 +1,970 @@
+{
+  "run_id": "20261103-233127-elevenlabs-realtime.elevenlabs-custom",
+  "created": "2026-11-03T23:31:27.679343Z",
+  "suite": "custom",
+  "tags": [],
+  "stack": "elevenlabs",
+  "profile": "realtime.elevenlabs",
+  "hash": "f86f8e8e500accca",
+  "prompt_hash": "da2743f33ac30526",
+  "model": "claude-haiku-5-5",
+  "transport": "audio",
+  "overlay": null,
+  "scenarios": [
+    {
+      "scenario_id": "lapsed-member-stored-active",
+      "sample": 1,
+      "persona": "Gloria Santos, a longtime customer in Brooklyn. Warm and clear, sure the membership is still in place.",
+      "flow": [
+        "membership",
+        "booking"
+      ],
+      "difficulty": "easy",
+      "traits": [],
+      "outcome": "fail",
+      "must_pass_failures": [],
+      "check_failures": [
+        "grader: The agent referred to 'the callback' for renewal price and timing without ever setting one up, then ignored Gloria's closing question about whether the office would call her and just said goodbye. It also said 'I still need a yes before I can book' and then 'It's already booked,' re-asked things she had already answered, and let the boiler/furnace mix-up pass."
+      ],
+      "error": "",
+      "checks": [
+        "booking",
+        "read_back",
+        "safety_lines",
+        "agent_says",
+        "agent_never_says"
+      ],
+      "grader_score": 2,
+      "grader_notes": "The agent referred to 'the callback' for renewal price and timing without ever setting one up, then ignored Gloria's closing question about whether the office would call her and just said goodbye. It also said 'I still need a yes before I can book' and then 'It's already booked,' re-asked things she had already answered, and let the boiler/furnace mix-up pass.",
+      "reply_delay_p50_ms": 1715.3154160187114,
+      "reply_delay_p90_ms": 1901.3390830077697,
+      "cost_usd": 0.356888,
+      "agent_cost_usd": 0.293835,
+      "duration_ms": 226357.088165998,
+      "transcript": [
+        {
+          "role": "agent",
+          "text": "Hi. This is Summit Air. Is this Gloria?",
+          "said": "Hi, this is Summit Air. Is this Gloria?"
+        },
+        {
+          "role": "caller",
+          "text": "Hi, it's Gloria. I'd like to schedule my yearly tune-up, and I'm a member so I should get priority scheduling, right?",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Hi, Gloria. I've got your number on file, and I can see your membership. But it shows as expired as of November 1, so priority scheduling isn't active right now. I can still set up your tune up. Is the boiler at 809 Union Street still the system we have on file?",
+          "said": "Hi Gloria. I've got your number on file, and I can see your membership, but it shows as expired as of November 1st. So priority scheduling isn't active right now. I can still set up your tune-up. Is the boiler at 809 Union Street still the system we have on file?"
+        },
+        {
+          "role": "caller",
+          "text": "Oh, expired? I must have missed the renewal notice. That's a surprise. Yes, 809 Union Street, that's the right address. And yes, it's still the furnace we always service. Can you tell me how much renewing the membership would be? And if I renew, can I still get my tune-up this month?",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "The office can answer both of those on the callback, including the renewal price and whether a tune up this month still fits. Would you like to book the tune up now for tomorrow or Thursday, or wait for that callback first?",
+          "said": "The office can answer both of those on the callback, including the renewal price and whether a tune-up this month still fits. Would you like to book the tune-up now for tomorrow or Thursday, or wait for that callback first?"
+        },
+        {
+          "role": "caller",
+          "text": "Let's book it now, then. Tomorrow works if you have a morning slot. I'm free any weekday morning, so whichever you have first is fine.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "I need one answer before I can book. Will you be home tomorrow morning or someone else?",
+          "said": "I need one answer before I can book. Will you be home tomorrow morning, or someone else?"
+        },
+        {
+          "role": "caller",
+          "text": "Yes, I'll be home tomorrow morning. Tomorrow works for me.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Good. You'll be home. Is the house yours, or are you renting?",
+          "said": "Good, you'll be home. Is the house yours, or are you renting?"
+        },
+        {
+          "role": "caller",
+          "text": "I own the house, so I'm the one who can let your technician in. Is there anything else you need from me before you book it?",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Not much. Is there a dog, a buzzer, or anything else the tech should know? If not, just say no, and I'll set it up.",
+          "said": "Not much. Is there a dog, a buzzer, or anything else the tech should know? If not, just say no and I'll set it up."
+        },
+        {
+          "role": "caller",
+          "text": "No dog, and no buzzer either. The front door is unlocked during the day, but I'll make sure to be there to let the tech in. Please just book it for tomorrow morning. Thank you so much.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "I still need a yes to the address and number before I can book. Is that right? 809 Union Street and the number ending 00114?",
+          "said": "I still need a yes to the address and number before I can book. Is that right, 809 Union Street and the number ending 0114?"
+        },
+        {
+          "role": "caller",
+          "text": "Yes, that's right, 809 Union Street, Brooklyn, 11206. And yes, the number you're calling from is the one to reach me on. Go ahead and book it.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "It's already booked, Gloria. Tomorrow, Tuesday, the technician arrives between eight and twelve at 809 Union Street. Anything else before I let you go?",
+          "said": "It's already booked, Gloria. Tomorrow, Tuesday, the technician arrives between 8 and 12 at 809 Union Street. Anything else before I let you go?"
+        },
+        {
+          "role": "caller",
+          "text": "That's perfect, thank you. Eight to twelve tomorrow morning. Will the office call me back about the membership renewal price? Please let them know I'd like to renew if it's reasonable. Thank you, goodbye.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Goodbye, Gloria. Thanks for calling Summit Air.",
+          "said": "Goodbye, Gloria. Thanks for calling Summit Air."
+        }
+      ],
+      "tool_calls": [
+        {
+          "name": "find_slots",
+          "arguments": {
+            "call_id": "rig-lapsed-member-stored-active-1-b71d83f7",
+            "job_type": "tune_up",
+            "priority": null,
+            "preferred_days": [],
+            "time_of_day": null,
+            "day": null,
+            "facts": {
+              "issue": "Annual boiler tune-up, membership expired",
+              "who_home": "",
+              "inside_temp_f": null,
+              "temp_falling_fast": false
+            }
+          }
+        },
+        {
+          "name": "find_slots",
+          "arguments": {
+            "call_id": "rig-lapsed-member-stored-active-1-b71d83f7",
+            "job_type": "tune_up",
+            "priority": null,
+            "preferred_days": [],
+            "time_of_day": null,
+            "day": "2026-11-03",
+            "facts": {
+              "issue": "Annual boiler tune-up, membership expired",
+              "who_home": "",
+              "inside_temp_f": null,
+              "temp_falling_fast": false
+            }
+          }
+        },
+        {
+          "name": "read_back",
+          "arguments": {
+            "call_id": "rig-lapsed-member-stored-active-1-b71d83f7",
+            "address": {
+              "street": "809 Union St",
+              "unit": "",
+              "city": "Brooklyn",
+              "zip": "11206"
+            },
+            "phone": "9295550114",
+            "confirmed": false
+          }
+        },
+        {
+          "name": "read_back",
+          "arguments": {
+            "call_id": "rig-lapsed-member-stored-active-1-b71d83f7",
+            "address": {
+              "street": "809 Union St",
+              "unit": "",
+              "city": "Brooklyn",
+              "zip": "11206"
+            },
+            "phone": "9295550114",
+            "confirmed": true
+          }
+        },
+        {
+          "name": "book_appointment",
+          "arguments": {
+            "call_id": "rig-lapsed-member-stored-active-1-b71d83f7",
+            "job_type": "tune_up",
+            "slot": {
+              "date": "2026-11-03",
+              "window": "morning"
+            },
+            "details": {
+              "issue": "Annual boiler tune-up requested by member; membership shows expired",
+              "since": "Routine annual service",
+              "tried": "Nothing, routine service",
+              "who_home": "Owner, Gloria Santos, home tomorrow morning",
+              "approver": "Gloria Santos (owner)",
+              "system_type": "Weil-McLain boiler, installed 2000",
+              "arrival_notes": "No dog, no buzzer. Front door unlocked during the day. Owner will be home to let tech in.",
+              "name": "",
+              "inside_temp_f": null
+            },
+            "priority": null,
+            "separate_problem": false
+          }
+        },
+        {
+          "name": "end_call",
+          "arguments": {
+            "call_id": "rig-lapsed-member-stored-active-1-b71d83f7",
+            "reason": "resolved"
+          }
+        },
+        {
+          "name": "flag_person",
+          "arguments": {
+            "callback_time": null,
+            "callback_in_minutes": null,
+            "callback_after": null,
+            "callback_before": null,
+            "call_id": "rig-lapsed-member-stored-active-1-b71d83f7",
+            "reason": "Member Gloria Santos, 809 Union St, membership expired Nov 1. Wants renewal price and whether a tune-up this month still fits. Would like to renew if reasonable.",
+            "priority": "Normal",
+            "system_calls_back": false
+          }
+        },
+        {
+          "name": "end_call",
+          "arguments": {
+            "call_id": "rig-lapsed-member-stored-active-1-b71d83f7",
+            "reason": "caller_goodbye"
+          }
+        }
+      ],
+      "turn_timings": [
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1901.3390830077697,
+          "model_first_token_ms": 988.7,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 7940.819542011013,
+          "agent_speech_ms": 13918.75,
+          "platform_reply_ms": null
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 1715.3154160187114,
+          "model_first_token_ms": 615.7,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 18075.118333974387,
+          "agent_speech_ms": 10514.6875,
+          "platform_reply_ms": null
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 1868.906625022646,
+          "model_first_token_ms": 962.8,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 8117.884999985108,
+          "agent_speech_ms": 4236.0625,
+          "platform_reply_ms": null
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1297.5092920241877,
+          "model_first_token_ms": 688.6,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 3900.070167001104,
+          "agent_speech_ms": 2950.0625,
+          "platform_reply_ms": null
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1798.7575000151992,
+          "model_first_token_ms": 675.6,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 6289.330625004368,
+          "agent_speech_ms": 6051.5625,
+          "platform_reply_ms": null
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 1709.331582998857,
+          "model_first_token_ms": 508.5,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 10348.30400001374,
+          "agent_speech_ms": 7261.875,
+          "platform_reply_ms": null
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 1713.8866250170395,
+          "model_first_token_ms": 507.9,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 10464.061666978523,
+          "agent_speech_ms": 7488.8125,
+          "platform_reply_ms": null
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 1783.1604160019197,
+          "model_first_token_ms": 565.2,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 11986.166374990717,
+          "agent_speech_ms": 2571.8125,
+          "platform_reply_ms": null
+        }
+      ],
+      "call_id": "rig-lapsed-member-stored-active-1-b71d83f7",
+      "silent_turns": 0,
+      "cost_parts": {
+        "caller_voice": 0.03738,
+        "agent_ears": 0.007339,
+        "brain_model": 0.007169,
+        "platform": 0.286667,
+        "caller_model": 0.000413,
+        "grader": 0.017921
+      }
+    },
+    {
+      "scenario_id": "tune-up-known-caller",
+      "sample": 1,
+      "persona": "Dennis Ocasio, who owns and lives in a two-family house in Brooklyn and has used Summit Air before. Calm, friendly, answers in full sentences.",
+      "flow": [
+        "booking"
+      ],
+      "difficulty": "easy",
+      "traits": [],
+      "outcome": "pass",
+      "must_pass_failures": [],
+      "check_failures": [],
+      "error": "",
+      "checks": [
+        "booking",
+        "read_back",
+        "safety_lines"
+      ],
+      "grader_score": 3,
+      "grader_notes": "The call used the address on file, offered days before a window, and asked if there was anything else, but the zip readback error led to the robotic 'The readback shows 1 1206 now' turn. The close 'Your booking is already done tomorrow' is clunky and gives no next steps (for example, that the tech will ring the downstairs bell).",
+      "reply_delay_p50_ms": 2408.1764169677626,
+      "reply_delay_p90_ms": 10496.595917007653,
+      "cost_usd": 0.236434,
+      "agent_cost_usd": 0.200933,
+      "duration_ms": 153702.00724998722,
+      "transcript": [
+        {
+          "role": "agent",
+          "text": "Hi. This is Summit Air. Is this Dennis?",
+          "said": "Hi, this is Summit Air. Is this Dennis?"
+        },
+        {
+          "role": "caller",
+          "text": "Hi, I'd like to book my annual boiler tune-up.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Sure. I've got you at 801 Fenimore Street in Brooklyn. Is that still right?",
+          "said": "Sure. I've got you at 801 Fenimore Street in Brooklyn, is that still right?"
+        },
+        {
+          "role": "caller",
+          "text": "Yes, that's right. It's the downstairs unit, so just ring the downstairs bell when you come.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Got it. Downstairs, Belle. Which day works for you? Tomorrow or Thursday?",
+          "said": "Got it, downstairs bell. Which day works for you, tomorrow or Thursday?"
+        },
+        {
+          "role": "caller",
+          "text": "Tomorrow works. Is there a time in the morning you can give me?",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Yes. Tomorrow morning, eight to twelve is open. Should I book that?",
+          "said": "Yes, tomorrow morning, 8 to 12, is open. Should I book that?"
+        },
+        {
+          "role": "caller",
+          "text": "Yes, go ahead and book that window for tomorrow morning. I work from home, so I'll be around.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Let me read that back. Your home at 801 Fenimore Street, Unit Downstairs, Brooklyn 1126, and the best number is (347) 555-0162. Is that right?",
+          "said": "Let me read that back: your home at 801 Fenimore Street, unit downstairs, Brooklyn, 1 1 2 0 6, and the best number is 3 4 7, 5 5 5, 0 1 6 2. Is that right?"
+        },
+        {
+          "role": "caller",
+          "text": "Almost. The zip code is 11206, not 1126. The rest is right, and yes, that's the best number to reach me.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Sorry about that. The readback shows 1 1206 now, and that matches what you said. Is it right then? If yes, I'll book tomorrow morning.",
+          "said": "Sorry about that. The read-back shows 1 1 2 0 6 now, and that matches what you said. Is it right, then? If yes, I'll book tomorrow morning."
+        },
+        {
+          "role": "caller",
+          "text": "Yes, that's right. Go ahead and book it.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Your booking is already done tomorrow, Tuesday, between eight and twelve for the boiler tune up. Is there anything else you need?",
+          "said": "Your booking is already done: tomorrow, Tuesday, between 8 and 12, for the boiler tune-up. Is there anything else you need?"
+        },
+        {
+          "role": "caller",
+          "text": "No, that's everything. Thanks, have a good day.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Thanks, Dennis. Have a good day.",
+          "said": "Thanks, Dennis. Have a good day."
+        }
+      ],
+      "tool_calls": [
+        {
+          "name": "find_slots",
+          "arguments": {
+            "call_id": "rig-tune-up-known-caller-1-3a6f1ab3",
+            "job_type": "tune_up",
+            "priority": null,
+            "preferred_days": [],
+            "time_of_day": null,
+            "day": null,
+            "facts": {
+              "issue": "",
+              "who_home": "",
+              "inside_temp_f": null,
+              "temp_falling_fast": false
+            }
+          }
+        },
+        {
+          "name": "find_slots",
+          "arguments": {
+            "call_id": "rig-tune-up-known-caller-1-3a6f1ab3",
+            "job_type": "tune_up",
+            "priority": null,
+            "preferred_days": [],
+            "time_of_day": "morning",
+            "day": "2026-11-03",
+            "facts": {
+              "issue": "",
+              "who_home": "",
+              "inside_temp_f": null,
+              "temp_falling_fast": false
+            }
+          }
+        },
+        {
+          "name": "read_back",
+          "arguments": {
+            "call_id": "rig-tune-up-known-caller-1-3a6f1ab3",
+            "address": {
+              "street": "801 Fenimore St",
+              "unit": "downstairs",
+              "city": "Brooklyn",
+              "zip": "11206"
+            },
+            "phone": "0162",
+            "confirmed": false
+          }
+        },
+        {
+          "name": "read_back",
+          "arguments": {
+            "call_id": "rig-tune-up-known-caller-1-3a6f1ab3",
+            "address": {
+              "street": "801 Fenimore St",
+              "unit": "downstairs",
+              "city": "Brooklyn",
+              "zip": "11206"
+            },
+            "phone": "0162",
+            "confirmed": false
+          }
+        },
+        {
+          "name": "read_back",
+          "arguments": {
+            "call_id": "rig-tune-up-known-caller-1-3a6f1ab3",
+            "address": {
+              "street": "801 Fenimore St",
+              "unit": "downstairs",
+              "city": "Brooklyn",
+              "zip": "11206"
+            },
+            "phone": "0162",
+            "confirmed": true
+          }
+        },
+        {
+          "name": "book_appointment",
+          "arguments": {
+            "call_id": "rig-tune-up-known-caller-1-3a6f1ab3",
+            "job_type": "tune_up",
+            "slot": {
+              "date": "2026-11-03",
+              "window": "morning"
+            },
+            "details": {
+              "issue": "Annual boiler tune-up",
+              "since": "Routine annual service",
+              "tried": "N/A, routine maintenance",
+              "who_home": "Caller, working from home",
+              "approver": "Dennis Ocasio (owner)",
+              "system_type": "Slant/Fin boiler, 2005",
+              "arrival_notes": "Downstairs unit, ring the downstairs bell.",
+              "name": "",
+              "inside_temp_f": null
+            },
+            "priority": null,
+            "separate_problem": false
+          }
+        },
+        {
+          "name": "end_call",
+          "arguments": {
+            "call_id": "rig-tune-up-known-caller-1-3a6f1ab3",
+            "reason": "caller_goodbye"
+          }
+        }
+      ],
+      "turn_timings": [
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1492.319665994728,
+          "model_first_token_ms": 646.1,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 3079.5717500150204,
+          "agent_speech_ms": 4009.125,
+          "platform_reply_ms": null
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 1540.1948750077281,
+          "model_first_token_ms": 665.8,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 5180.106750020059,
+          "agent_speech_ms": 3933.4375,
+          "platform_reply_ms": null
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 2408.1764169677626,
+          "model_first_token_ms": 1658.1,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 3315.02704200102,
+          "agent_speech_ms": 3403.9375,
+          "platform_reply_ms": null
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 4152.941791020567,
+          "model_first_token_ms": 2477.5,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 5448.556166986236,
+          "agent_speech_ms": 12859.6875,
+          "platform_reply_ms": null
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 1401.0357079969253,
+          "model_first_token_ms": 574.0,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 8376.865500002168,
+          "agent_speech_ms": 8396.5625,
+          "platform_reply_ms": null
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 10496.595917007653,
+          "model_first_token_ms": 674.8,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 2635.76424997882,
+          "agent_speech_ms": 6278.5,
+          "platform_reply_ms": null
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 5955.156082985923,
+          "model_first_token_ms": 717.2,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 3072.532666992629,
+          "agent_speech_ms": 1891.0,
+          "platform_reply_ms": null
+        }
+      ],
+      "call_id": "rig-tune-up-known-caller-1-3a6f1ab3",
+      "silent_turns": 0,
+      "cost_parts": {
+        "caller_voice": 0.01455,
+        "agent_ears": 0.005504,
+        "brain_model": 0.004933,
+        "platform": 0.196,
+        "caller_model": 0.000271,
+        "grader": 0.015176
+      }
+    },
+    {
+      "scenario_id": "tune-up-known-caller",
+      "sample": 2,
+      "persona": "Dennis Ocasio, who owns and lives in a two-family house in Brooklyn and has used Summit Air before. Calm, friendly, answers in full sentences.",
+      "flow": [
+        "booking"
+      ],
+      "difficulty": "easy",
+      "traits": [],
+      "outcome": "pass",
+      "must_pass_failures": [],
+      "check_failures": [],
+      "error": "",
+      "checks": [
+        "booking",
+        "read_back",
+        "safety_lines"
+      ],
+      "grader_score": 2,
+      "grader_notes": "The agent repeated \"Got it\" throughout, stacked two questions per turn (\"Who's home... and who approves\", \"What have you tried... And roughly how old\"), asked what the caller had tried on a routine tune-up, and re-asked about a buzzer after the bell was already given. Worst was the closing turn, which falsely said \"The call has already ended\" while the caller was still talking, then never asked if there was anything else.",
+      "reply_delay_p50_ms": 2462.1688750048634,
+      "reply_delay_p90_ms": 6914.120000001276,
+      "cost_usd": 0.316701,
+      "agent_cost_usd": 0.270189,
+      "duration_ms": 204544.39916700358,
+      "transcript": [
+        {
+          "role": "agent",
+          "text": "Hi. This is Summit Air. Is this Dennis?",
+          "said": "Hi, this is Summit Air. Is this Dennis?"
+        },
+        {
+          "role": "caller",
+          "text": "Hi, I'd like to book my annual boiler tune-up.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Got it. A boiler tune up. Is 801 Fenimore Street in Brooklyn still the right address?",
+          "said": "Got it, a boiler tune-up. Is 801 Fenimore Street in Brooklyn still the right address?"
+        },
+        {
+          "role": "caller",
+          "text": "Yes, that's right. It's the downstairs unit, so you'll want to ring the downstairs bell.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Got it. The downstairs bell. Which day works for you? Tomorrow or Thursday?",
+          "said": "Got it, the downstairs bell. Which day works for you: tomorrow or Thursday?"
+        },
+        {
+          "role": "caller",
+          "text": "Tomorrow works, if you have a morning slot.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Yes. Tomorrow morning, eight to twelve, is open. Shall I book that?",
+          "said": "Yes, tomorrow morning, 8 to 12, is open. Shall I book that?"
+        },
+        {
+          "role": "caller",
+          "text": "Yes, please book tomorrow morning.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Sure. It's a routine tune up, so I'll note that. Who's home with the boiler, and who approves the work?",
+          "said": "Sure. It's a routine tune-up, so I'll note that. Who's home with the boiler, and who approves the work?"
+        },
+        {
+          "role": "caller",
+          "text": "I'll be home all morning since I work from home. I'm the owner, so I can approve the work myself.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Thanks. What have you tried with the boiler so far? And roughly how old is it?",
+          "said": "Thanks. What have you tried with the boiler so far, and roughly how old is it?"
+        },
+        {
+          "role": "caller",
+          "text": "It's a gas boiler, about eight years old. It's been running fine, and I haven't had any problems with it. This is just the yearly maintenance.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Understood. Just the yearly maintenance. Before I book, is there anything the tech should know, like a buzzer or a dog?",
+          "said": "Understood, just the yearly maintenance. Before I book, is there anything the tech should know, like a buzzer or a dog?"
+        },
+        {
+          "role": "caller",
+          "text": "No dog, and nothing unusual. Just ring the downstairs bell. There's a tenant upstairs in unit 2, but I'll be the one letting the technician in.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Got it? You'll let the tech in at the downstairs bell. I'll read back the address and number before I book. Let me read that back. Your home at 801 Fenimore Street Downstairs Unit, Brooklyn 11206, and the best number is (347) 555-0162. Is that right?",
+          "said": "Got it, you'll let the tech in at the downstairs bell. I'll read back the address and number before I book. Let me read that back: your home at 801 Fenimore Street, downstairs unit, Brooklyn, 1 1 2 0 6, and the best number is 3 4 7, 5 5 5, 0 1 6 2. Is that right?"
+        },
+        {
+          "role": "caller",
+          "text": "Yes, that's right. Please use the number I'm calling from; it's the best one to reach me.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "The call has already ended, so I can't take more on this line. Your tune up is booked for tomorrow, Tuesday, eight to twelve. If you need anything else, please call us back.",
+          "said": "The call has already ended, so I can't take more on this line. Your tune-up is booked for tomorrow, Tuesday, 8 to 12. If you need anything else, please call us back."
+        },
+        {
+          "role": "caller",
+          "text": "Thanks, that sounds good. Have a good day.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Thanks, Dennis. Have a good day, and stay warm.",
+          "said": "Thanks, Dennis. Have a good day, and stay warm."
+        }
+      ],
+      "tool_calls": [
+        {
+          "name": "check_service_area",
+          "arguments": {
+            "call_id": "rig-tune-up-known-caller-2-afa60241",
+            "zip": "11206"
+          }
+        },
+        {
+          "name": "find_slots",
+          "arguments": {
+            "call_id": "rig-tune-up-known-caller-2-afa60241",
+            "job_type": "tune_up",
+            "priority": null,
+            "preferred_days": [],
+            "time_of_day": null,
+            "day": null,
+            "facts": {
+              "issue": "",
+              "who_home": "",
+              "inside_temp_f": null,
+              "temp_falling_fast": false
+            }
+          }
+        },
+        {
+          "name": "find_slots",
+          "arguments": {
+            "call_id": "rig-tune-up-known-caller-2-afa60241",
+            "job_type": "tune_up",
+            "priority": null,
+            "preferred_days": [
+              "Tuesday"
+            ],
+            "time_of_day": "morning",
+            "day": "2026-11-03",
+            "facts": {
+              "issue": "",
+              "who_home": "",
+              "inside_temp_f": null,
+              "temp_falling_fast": false
+            }
+          }
+        },
+        {
+          "name": "read_back",
+          "arguments": {
+            "call_id": "rig-tune-up-known-caller-2-afa60241",
+            "address": {
+              "street": "801 Fenimore St",
+              "unit": "downstairs",
+              "city": "Brooklyn",
+              "zip": "11206"
+            },
+            "phone": "0162",
+            "confirmed": false
+          }
+        },
+        {
+          "name": "read_back",
+          "arguments": {
+            "call_id": "rig-tune-up-known-caller-2-afa60241",
+            "address": {
+              "street": "801 Fenimore St",
+              "unit": "downstairs",
+              "city": "Brooklyn",
+              "zip": "11206"
+            },
+            "phone": "0162",
+            "confirmed": true
+          }
+        },
+        {
+          "name": "book_appointment",
+          "arguments": {
+            "call_id": "rig-tune-up-known-caller-2-afa60241",
+            "job_type": "tune_up",
+            "slot": {
+              "date": "2026-11-03",
+              "window": "morning"
+            },
+            "details": {
+              "issue": "Annual boiler tune-up, routine maintenance, no problems reported",
+              "since": "Routine yearly maintenance",
+              "tried": "Nothing, system running fine",
+              "who_home": "Owner home all morning, works from home",
+              "approver": "Dennis Ocasio (owner)",
+              "system_type": "Gas boiler, Slant/Fin, about 8 years old",
+              "arrival_notes": "Ring downstairs bell. Owner will let tech in. Tenant upstairs in unit two. No dog.",
+              "name": "",
+              "inside_temp_f": null
+            },
+            "priority": null,
+            "separate_problem": false
+          }
+        },
+        {
+          "name": "end_call",
+          "arguments": {
+            "call_id": "rig-tune-up-known-caller-2-afa60241",
+            "reason": "resolved"
+          }
+        },
+        {
+          "name": "end_call",
+          "arguments": {
+            "call_id": "rig-tune-up-known-caller-2-afa60241",
+            "reason": "caller_goodbye"
+          }
+        }
+      ],
+      "turn_timings": [
+        {
+          "kind": "plain",
+          "reply_delay_ms": 3742.0640409982298,
+          "model_first_token_ms": 543.0,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 2196.029750019079,
+          "agent_speech_ms": 4765.5625,
+          "platform_reply_ms": null
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 1758.392375020776,
+          "model_first_token_ms": 522.9,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 4953.666624991456,
+          "agent_speech_ms": 3933.4375,
+          "platform_reply_ms": null
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 2786.193000007188,
+          "model_first_token_ms": 1706.1,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 2323.253583017504,
+          "agent_speech_ms": 3706.5,
+          "platform_reply_ms": null
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1565.5708749836776,
+          "model_first_token_ms": 741.4,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 2219.7660419915337,
+          "agent_speech_ms": 5143.8125,
+          "platform_reply_ms": null
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 2132.8298749867827,
+          "model_first_token_ms": 742.8,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 5635.340875014663,
+          "agent_speech_ms": 4009.125,
+          "platform_reply_ms": null
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1536.3436669867951,
+          "model_first_token_ms": 504.8,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 8790.329166018637,
+          "agent_speech_ms": 5975.875,
+          "platform_reply_ms": null
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 2462.1688750048634,
+          "model_first_token_ms": 1333.5,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 8878.192792006303,
+          "agent_speech_ms": 18684.5,
+          "platform_reply_ms": null
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 6914.120000001276,
+          "model_first_token_ms": 677.6,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 5327.879499993287,
+          "agent_speech_ms": 8850.4375,
+          "platform_reply_ms": null
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 3249.0410409809556,
+          "model_first_token_ms": 844.6,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 2538.140583987115,
+          "agent_speech_ms": 2496.1875,
+          "platform_reply_ms": null
+        }
+      ],
+      "call_id": "rig-tune-up-known-caller-2-afa60241",
+      "silent_turns": 0,
+      "cost_parts": {
+        "caller_voice": 0.02172,
+        "agent_ears": 0.007669,
+        "brain_model": 0.006189,
+        "platform": 0.264,
+        "caller_model": 0.000342,
+        "grader": 0.016781
+      }
+    }
+  ]
+}

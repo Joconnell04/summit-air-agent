@@ -12,8 +12,9 @@ transcribes the agent's audio so the caller model can answer what it heard. Code
 grader score the call from the tool server's record, exactly as in the text harness
 (evals/run.py `score`), and the results file has the same format, marked `transport: audio`.
 
-Must-pass gas and carbon monoxide scenarios run `--repeats` times (three by default), because the
-decision rule asks for the safety lines word for word on three repeats. `--max-cost` stops the
+Must-pass scenarios run `--repeats` times (three by default), because the decision rule asks for
+every must-pass scenario to pass, with the safety lines word for word, on three repeats; the
+report won't pick a winner from fewer. `--max-cost` stops the
 run when its cost passes that many dollars, and the partial run is still written.
 
 Every call is also recorded in stereo with a timed transcript, into a batch folder under data/sim
@@ -141,18 +142,33 @@ def tool_count(trace: dict) -> int:
     return sum(1 for e in trace["events"] if e["type"] == "tool" and e["tool"] in TOOLS)
 
 
-def newest_agent_timings(trace: dict, seen: int) -> tuple[dict, int]:
-    """Stage timings the voice program logged with its newest agent line, if it logged a new
-    one since `seen` lines, and the number of agent lines now on the record."""
+def turn_agent_timings(trace: dict, seen: int) -> tuple[dict, int]:
+    """Stage timings the voice program logged with the agent lines of this turn (those after the
+    first `seen`), and the number of agent lines now on the record. The first line's timings are
+    the reply the caller waited for; a line after a tool call in the same turn only adds its tool
+    time."""
     lines = [e for e in trace["events"] if e["type"] == "turn" and e["speaker"] == "agent"]
-    if len(lines) <= seen:
+    new = [e.get("timings") or {} for e in lines[seen:]]
+    if not new:
         return {}, len(lines)
-    return lines[-1].get("timings") or {}, len(lines)
+    stages = dict(new[0])
+    tool_ms = sum(float(t.get("tool_ms") or 0) for t in new)
+    if tool_ms:
+        stages["tool_ms"] = tool_ms
+    if len(new) > 1:
+        stages["agent_lines"] = float(len(new))
+    return stages, len(lines)
+
+
+def newest_caller_timings(trace: dict) -> dict:
+    """Stage timings the voice program logged with the newest caller line, if any."""
+    lines = [e for e in trace["events"] if e["type"] == "turn" and e["speaker"] == "caller"]
+    return (lines[-1].get("timings") or {}) if lines else {}
 
 
 def must_repeat(scenario: Scenario) -> bool:
-    """The decision rule's three repeats: must-pass gas and carbon monoxide scenarios."""
-    return scenario.must_pass and "safety" in scenario.flow
+    """The decision rule's three repeats cover every must-pass scenario."""
+    return scenario.must_pass
 
 
 class Rig:
@@ -209,7 +225,7 @@ class Rig:
                                    said=" ".join(heard_turn.said) or None))
             trace = await asyncio.to_thread(server.trace, call_id)
             tools_so_far = tool_count(trace)
-            _, agent_lines = newest_agent_timings(trace, 0)
+            _, agent_lines = turn_agent_timings(trace, 0)
             said = caller.first_line(greeting)
             recent: list[str] = []
             reason = None
@@ -235,7 +251,9 @@ class Rig:
                 trace = await asyncio.to_thread(server.trace, call_id)
                 lookup = tool_count(trace) > tools_so_far
                 tools_so_far = tool_count(trace)
-                stages, agent_lines = newest_agent_timings(trace, agent_lines)
+                stages, agent_lines = turn_agent_timings(trace, agent_lines)
+                logged = {k: float(v) for k, v in {**newest_caller_timings(trace), **stages}.items()
+                          if isinstance(v, (int, float))}
                 if heard_turn.first_sound is None:
                     silent += 1
                 else:
@@ -248,6 +266,9 @@ class Rig:
                         platform_reply_ms=stages.get("reply_ms"),
                         caller_speech_ms=(end - start) * 1000,
                         agent_speech_ms=len(heard_turn.pcm) / 2 / heard_turn.rate * 1000,
+                        over_caller_ms=(None if heard_turn.over_caller is None
+                                        else max(0.0, (end - heard_turn.over_caller) * 1000)),
+                        platform_stages=logged,
                     ))
                 delay = (f"{reply_delay_ms(end, heard_turn.first_sound):.0f} ms"
                          if heard_turn.first_sound is not None else "silent")
@@ -304,7 +325,7 @@ class Rig:
 
 
 def plan(chosen: list[Scenario], repeats: int, samples: int = 1) -> list[tuple[Scenario, int]]:
-    """`repeats` runs of each must-pass gas or CO scenario, `samples` of every other one."""
+    """`repeats` runs of each must-pass scenario, `samples` of every other one."""
     return [(s, n) for s in chosen
             for n in range(1, (repeats if must_repeat(s) else samples) + 1)]
 

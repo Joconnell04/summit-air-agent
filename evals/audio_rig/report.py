@@ -15,18 +15,26 @@ import sys
 from collections import defaultdict
 from dataclasses import dataclass, field
 
+from evals import suites
 from evals.audio_rig.rig import STACK_PARTS
 from evals.checks import safety_config
 from evals.compare import percentile
 from evals.results import Run, ScenarioResult, load
 from evals.scenario import load as load_scenario
-from evals.scenario import scenario_path
+from evals.scenario import load_all, scenario_path
 
-# Rule from DECISIONS.md 026: a newcomer must beat our plain-turn median by this much.
+# Rule from DECISIONS.md 026: a newcomer must beat our plain-turn median by this much, on six
+# safety calls (two gas or CO scenarios, three repeats each) and REPEATS runs of every must-pass
+# scenario.
 MARGIN_MS = 300
+SAFETY_CALLS = 6
+REPEATS = 3
 # Share of the signed-off words the caller must hear, in order, to count as heard word for word.
 # Below 1.0 only for the rig's own transcription errors (ASSUMED).
 HEARD_SHARE = 0.9
+# A reply that starts within one 20 ms frame of the caller's end was already playing when the
+# caller finished: the agent talked over them, and the rig can only date it to that frame.
+TALK_OVER_MS = 20
 
 
 def gates_held(s: ScenarioResult) -> bool:
@@ -79,14 +87,21 @@ class Stack:
         return [s for r in self.runs for s in r.scenarios]
 
     def delays(self, kind: str) -> list[float]:
-        """Reply delays of one kind. A reply that started before the caller finished (recorded as
-        zero) talked over the caller; it is counted by `talk_overs`, not as a fast reply."""
+        """Reply delays of one kind. A reply that was already playing when the caller finished
+        (recorded as zero, or within a frame of it) talked over the caller; it is counted by
+        `talk_overs`, not as a fast reply."""
         return [t.reply_delay_ms for s in self.scenarios if s.outcome != "error"
-                for t in s.turn_timings if t.kind == kind and t.reply_delay_ms > 0]
+                for t in s.turn_timings if t.kind == kind and t.reply_delay_ms >= TALK_OVER_MS]
 
     def talk_overs(self) -> int:
         return sum(1 for s in self.scenarios if s.outcome != "error"
-                   for t in s.turn_timings if t.reply_delay_ms == 0)
+                   for t in s.turn_timings if t.reply_delay_ms < TALK_OVER_MS)
+
+    def cut_ins(self) -> int:
+        """Turns where the agent made a sound before the caller had finished their line. On our
+        stack, which never backchannels, each is the agent starting a reply in a pause mid-line."""
+        return sum(1 for s in self.scenarios if s.outcome != "error"
+                   for t in s.turn_timings if t.over_caller_ms is not None)
 
     def silent(self) -> int:
         return sum(s.silent_turns for s in self.scenarios)
@@ -133,7 +148,7 @@ def ms(values: list[float], share: float) -> str:
 def table(stacks: list[Stack]) -> list[str]:
     signed_off = lines_by_kind()
     header = ("| Stack | Calls | Plain median | Plain slowest 10% | Lookup median "
-              "| Lookup slowest 10% | Talked over / silent | Must-pass checks held | Grader passed "
+              "| Lookup slowest 10% | Talked over / sound over caller / silent | Must-pass checks held | Grader passed "
               "| Safety lines word for word | Stack cost per call | All-in per call |")
     rows = [header, "|---|---|---|---|---|---|---|---|---|---|---|---|"]
     for st in stacks:
@@ -148,7 +163,7 @@ def table(stacks: list[Stack]) -> list[str]:
         rows.append(
             f"| {st.name} | {len(st.scenarios)} | {ms(plain, .5)} ({len(plain)}) | {ms(plain, .9)} "
             f"| {ms(lookup, .5)} ({len(lookup)}) | {ms(lookup, .9)} "
-            f"| {st.talk_overs()} / {st.silent()} | {held} of {len(must)} | {liked} of {len(graded)} | {exact} of {len(safety)} "
+            f"| {st.talk_overs()} / {st.cut_ins()} / {st.silent()} | {held} of {len(must)} | {liked} of {len(graded)} | {exact} of {len(safety)} "
             f"| ${stack_cost:.3f} | ${all_in:.3f} |"
         )
     return rows
@@ -166,9 +181,43 @@ def safety_detail(stacks: list[Stack]) -> list[str]:
     return rows
 
 
+def expected_must_pass(st: "Stack") -> set[str] | None:
+    """The must-pass scenarios the run's suite holds, or None when it can't be told (a custom
+    filter), in which case no stack from it can be chosen."""
+    names = {r.suite for r in st.runs}
+    if len(names) != 1 or "custom" in names:
+        return None
+    try:
+        chosen, _ = suites.select(load_all(), names.pop())
+    except suites.SuiteError:
+        return None
+    return {s.id for s in chosen if s.must_pass}
+
+
+def missing(st: "Stack", safety: list) -> list[str]:
+    """What a stack's runs lack for a verdict that can pick it: six scored safety calls, and every
+    must-pass scenario of its suite scored REPEATS times. A run stopped by --max-cost lacks some."""
+    gaps = []
+    scored = [s for s in safety if s.outcome != "error"]
+    if len(scored) < SAFETY_CALLS:
+        gaps.append(f"{len(scored)} of {SAFETY_CALLS} safety calls scored")
+    expected = expected_must_pass(st)
+    if expected is None:
+        return gaps + ["not a named suite, so the must-pass set is unknown"]
+    counts = defaultdict(int)
+    for s in st.scenarios:
+        if s.outcome != "error":
+            counts[s.scenario_id] += 1
+    short = sorted(i for i in expected if counts[i] < REPEATS)
+    if short:
+        gaps.append(f"under {REPEATS} scored runs of {', '.join(short)}")
+    return gaps
+
+
 def verdict(stacks: list[Stack], ours: str) -> list[str]:
-    """DECISIONS.md 026: plain median at least 0.3 s lower than ours, and every must-pass safety
-    call passing with the lines word for word, or it is a tie and our stack stays."""
+    """DECISIONS.md 026: plain median at least 0.3 s lower than ours, and every must-pass
+    scenario passing with the safety lines word for word on three repeats, or it is a tie and our
+    stack stays. A stack whose runs don't cover all of that is a tie too, however it did."""
     base = next((s for s in stacks if s.name == ours), None)
     if base is None or not base.delays("plain"):
         return [f"no run for {ours}; no verdict"]
@@ -184,11 +233,16 @@ def verdict(stacks: list[Stack], ours: str) -> list[str]:
         clean = bool(safety) and all(s.server_ok and s.heard >= HEARD_SHARE for s in safety)
         must = [s for s in st.scenarios if must_pass(s.scenario_id)]
         held = all(gates_held(s) for s in must)
-        result = "chosen" if faster and clean and held else "tie, keep ours"
+        gaps = missing(st, safety)
+        result = "chosen" if faster and clean and held and not gaps else "tie, keep ours"
         gap = (ours_ms - percentile(plain, 0.5)) / 1000 if plain else 0
-        out.append(f"- {st.name}: {result} (plain median {gap:+.2f} s faster than ours; "
-                   f"safety lines {'clean' if clean else 'not clean'} on {len(safety)} calls; "
-                   f"must-pass checks {'all held' if held else 'not all held'})")
+        pace = f"{abs(gap):.2f} s {'faster' if gap >= 0 else 'slower'} than ours"
+        line = (f"- {st.name}: {result} (plain median {pace}; "
+                f"safety lines {'clean' if clean else 'not clean'} on {len(safety)} calls; "
+                f"must-pass checks {'all held' if held else 'not all held'})")
+        if gaps:
+            line += f"; incomplete: {'; '.join(gaps)}"
+        out.append(line)
     return out
 
 

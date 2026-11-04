@@ -11,7 +11,7 @@ from livekit.plugins import cartesia, deepgram
 from tests.tool_server.toolkit import TENANT_DIR
 from voice import names as local_names
 from voice.livekit.settings import load_voice
-from voice.livekit.worker import check_names, stt_options, tts_options
+from voice.livekit.worker import check_names, stt_options, tts_options, turn_handling
 
 NAMES = local_names.load(TENANT_DIR)
 RAW = yaml.safe_load((TENANT_DIR / "names.yaml").read_text())
@@ -112,6 +112,14 @@ def test_the_worker_gives_deepgram_the_keyterms_and_cartesia_the_dictionary():
     # The plugins accept them as built (no network until speech starts).
     deepgram.STT(**stt, api_key="test")
     cartesia.TTS(**tts, api_key="test")
+
+
+def test_the_voice_settings_reach_the_session():
+    voice = load_voice()
+    tokenizer = tts_options(voice, NAMES)["tokenizer"]
+    assert tokenizer._config.min_sentence_len == voice["tts"]["min_sentence_chars"]
+    trial = {**voice, "preemptive_tts": True}
+    assert turn_handling(trial)["preemptive_generation"] == {"enabled": True, "preemptive_tts": True}
 
 
 def test_push_creates_the_dictionary_then_updates_it_in_place(tmp_path):
