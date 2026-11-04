@@ -20,7 +20,8 @@ LEVELS = ["Low", "Normal", "High", "Urgent"]
 # "it's 2 years old" (usually the system) never fires.
 AGE = re.compile(
     r"\b(\d{2,3})(?:-|\s)(?:year|yr)s?(?:-|\s)old\b"
-    r"|\b(?:i|she|he|they|who|mom|dad|mother|father|grandma|grandpa)(?:['’]s|['’]m| is| am| are|['’]re)\s+(\d{2,3})\b"
+    # The apostrophe is optional: speech-to-text writes "im 84" as often as "I'm 84".
+    r"|\b(?:i|she|he|they|who|mom|dad|mother|father|grandma|grandpa)(?:['’]?s|['’]?m| is| am| are|['’]?re)\s+(\d{2,3})\b"
     r"|\bage[d]?\s+(\d{2,3})\b"
     r"|\bin (?:his|her|their|my|our) (\d)0s\b"
 )

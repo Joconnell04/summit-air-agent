@@ -53,11 +53,16 @@ class HeardTurn:
     first_sound: float | None
     said: list[str] = field(default_factory=list)
     hung_up: bool = False
+    # When the agent made a sound while the caller was still speaking: a reply started in a pause
+    # mid-line, or a backchannel on a platform that makes them. None if it stayed quiet.
+    over_caller: float | None = None
 
 
 class Listener:
-    def __init__(self, vad: Vad, clock=time.perf_counter, rate: int = 16000):
+    def __init__(self, vad: Vad, clock=time.perf_counter, rate: int = 16000, recorder=None):
         self.vad = vad
+        # A CallRecorder (evals/audio_rig/recording.py) that keeps the agent's audio as it plays.
+        self.recorder = recorder
         self.clock = clock
         self.rate = rate
         self.playout = Playout(rate)
@@ -76,7 +81,9 @@ class Listener:
         if rate != self.rate:
             pcm = resample(pcm, rate, self.rate)
         now = self.clock()
-        self.playout.add(pcm, now, live)
+        start = self.playout.add(pcm, now, live)
+        if self.recorder is not None:
+            self.recorder.agent(pcm, self.rate, start)
         self._last_audio = now
         self._done = False
 
@@ -116,6 +123,15 @@ class Listener:
                 self._onset = self.playout.heard_at(skip + onset)
         return self._onset
 
+    def over_caller(self) -> float | None:
+        """When the agent's first sound played while the caller was still speaking (between the
+        start of the caller's line and `since`), if it made one."""
+        if self._after is None or not self.playout.pcm:
+            return None
+        end = self.playout.sample_at(self._after)
+        onset = self.vad.onset(bytes(self.playout.pcm[: end * 2]), self.playout.rate)
+        return None if onset is None else self.playout.heard_at(onset)
+
     def finished(self, now: float, signals_done: bool) -> bool:
         """Has the agent finished the turn it started? It has to have made a sound first."""
         if self._hung_up:
@@ -142,4 +158,4 @@ class Listener:
                 break
             await asyncio.sleep(POLL_S)
         return HeardTurn(bytes(self.playout.pcm), self.playout.rate, self.first_sound(),
-                         list(self._said), self._hung_up)
+                         list(self._said), self._hung_up, self.over_caller())

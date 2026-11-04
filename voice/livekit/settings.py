@@ -26,9 +26,15 @@ class Profile:
     thinking_off: str = "disabled"
 
 
-def load_profile(name: str = "", path: Path = ROOT / "config/models.yaml") -> Profile:
+def config_path() -> Path:
+    """config/models.yaml, or the copy MODELS_CONFIG names (the audio rig uses one to try other
+    turn-taking values without touching the file)."""
+    return Path(os.environ.get("MODELS_CONFIG") or ROOT / "config/models.yaml")
+
+
+def load_profile(name: str = "", path: Path | None = None) -> Profile:
     """The named profile, MODEL_PROFILE, or the file's default, in that order."""
-    config = yaml.safe_load(path.read_text())
+    config = yaml.safe_load((path or config_path()).read_text())
     chosen = name or os.environ.get("MODEL_PROFILE") or config["default"]
     entry = config["profiles"][chosen]
     return Profile(
@@ -40,9 +46,9 @@ def load_profile(name: str = "", path: Path = ROOT / "config/models.yaml") -> Pr
     )
 
 
-def load_voice(path: Path = ROOT / "config/models.yaml") -> dict:
+def load_voice(path: Path | None = None) -> dict:
     """The speech-to-text and voice settings from config/models.yaml."""
-    return yaml.safe_load(path.read_text())["voice"]
+    return yaml.safe_load((path or config_path()).read_text())["voice"]
 
 
 @dataclass(frozen=True)

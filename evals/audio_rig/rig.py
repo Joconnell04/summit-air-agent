@@ -1,7 +1,8 @@
 """The simulated audio bake-off (DECISIONS.md 026, docs/bakeoffs.md bake-off 6).
 
     uv run --env-file .env python -m evals.audio_rig --stack elevenlabs [--suite smoke]
-        [--repeats 3] [--samples 1] [--max-cost 3.0] [--only id,id] [--no-upload]
+        [--repeats 3] [--samples 1] [--max-cost 3.0] [--only id,id] [--tags t,t] [--no-upload]
+        [--no-record] [--no-store]
 
 The harness's simulated caller writes each line; Deepgram renders it to audio, which streams to
 the entrant at real speed, 20 ms at a time, with silence between lines as a phone line has. The
@@ -11,9 +12,14 @@ transcribes the agent's audio so the caller model can answer what it heard. Code
 grader score the call from the tool server's record, exactly as in the text harness
 (evals/run.py `score`), and the results file has the same format, marked `transport: audio`.
 
-Must-pass gas and carbon monoxide scenarios run `--repeats` times (three by default), because the
-decision rule asks for the safety lines word for word on three repeats. `--max-cost` stops the
+Must-pass scenarios run `--repeats` times (three by default), because the decision rule asks for
+every must-pass scenario to pass, with the safety lines word for word, on three repeats; the
+report won't pick a winner from fewer. `--max-cost` stops the
 run when its cost passes that many dollars, and the partial run is still written.
+
+Every call is also recorded in stereo with a timed transcript, into a batch folder under data/sim
+with a copy in the recordings bucket (evals/audio_rig/recording.py and store.py), for listening
+on `make listen`.
 """
 import argparse
 import asyncio
@@ -30,8 +36,18 @@ from app.tools import TOOLS
 from evals import compare, results, suites
 from evals.audio_rig.audio import FRAME_MS, Vad, frames, reply_delay_ms
 from evals.audio_rig.line import Listener
+from evals.audio_rig.recording import (
+    LISTEN_URL,
+    MANIFEST,
+    RECORD_RATE,
+    SIM_DIR,
+    Batch,
+    CallRecorder,
+    batch_id,
+)
 from evals.audio_rig.router import Serving, Worlds, build_app
 from evals.audio_rig.speech import Deepgram
+from evals.audio_rig.store import open_store
 from evals.caller import SimulatedCaller
 from evals.checks import safety_config
 from evals.models import Model, Usage, for_profile, load_config
@@ -126,18 +142,33 @@ def tool_count(trace: dict) -> int:
     return sum(1 for e in trace["events"] if e["type"] == "tool" and e["tool"] in TOOLS)
 
 
-def newest_agent_timings(trace: dict, seen: int) -> tuple[dict, int]:
-    """Stage timings the voice program logged with its newest agent line, if it logged a new
-    one since `seen` lines, and the number of agent lines now on the record."""
+def turn_agent_timings(trace: dict, seen: int) -> tuple[dict, int]:
+    """Stage timings the voice program logged with the agent lines of this turn (those after the
+    first `seen`), and the number of agent lines now on the record. The first line's timings are
+    the reply the caller waited for; a line after a tool call in the same turn only adds its tool
+    time."""
     lines = [e for e in trace["events"] if e["type"] == "turn" and e["speaker"] == "agent"]
-    if len(lines) <= seen:
+    new = [e.get("timings") or {} for e in lines[seen:]]
+    if not new:
         return {}, len(lines)
-    return lines[-1].get("timings") or {}, len(lines)
+    stages = dict(new[0])
+    tool_ms = sum(float(t.get("tool_ms") or 0) for t in new)
+    if tool_ms:
+        stages["tool_ms"] = tool_ms
+    if len(new) > 1:
+        stages["agent_lines"] = float(len(new))
+    return stages, len(lines)
+
+
+def newest_caller_timings(trace: dict) -> dict:
+    """Stage timings the voice program logged with the newest caller line, if any."""
+    lines = [e for e in trace["events"] if e["type"] == "turn" and e["speaker"] == "caller"]
+    return (lines[-1].get("timings") or {}) if lines else {}
 
 
 def must_repeat(scenario: Scenario) -> bool:
-    """The decision rule's three repeats: must-pass gas and carbon monoxide scenarios."""
-    return scenario.must_pass and "safety" in scenario.flow
+    """The decision rule's three repeats cover every must-pass scenario."""
+    return scenario.must_pass
 
 
 class Rig:
@@ -159,7 +190,8 @@ class Rig:
         if self.verbose:
             print(f"  {call_id[-8:]} {text}", flush=True)
 
-    async def call(self, scenario: Scenario, sample: int = 1) -> ScenarioResult:
+    async def call(self, scenario: Scenario, sample: int = 1,
+                   recorder: CallRecorder | None = None) -> ScenarioResult:
         call_id = f"rig-{scenario.id}-{sample}-{uuid.uuid4().hex[:8]}"
         began = time.perf_counter()
         transcript: list[Turn] = []
@@ -168,7 +200,7 @@ class Rig:
         error, server, silent = "", None, 0
         speech = Deepgram(self.rig_config, self.ctx.env.get("DEEPGRAM_API_KEY"))
         line = self.entrant.line()
-        listener = Listener(self.vad, rate=self.entrant.in_rate)
+        listener = Listener(self.vad, rate=self.entrant.in_rate, recorder=recorder)
         sender = Sender(line.send, self.entrant.in_rate, queued=getattr(line, "queued_s", None))
         sending = None
         caller = SimulatedCaller(scenario, self.caller_model)
@@ -186,11 +218,14 @@ class Rig:
             heard_turn = await listener.turn(self.entrant.signals_done, since)
             greeting = await speech.hear(heard_turn.pcm, heard_turn.rate)
             self.log(call_id, f"agent: {greeting}")
+            if recorder:
+                recorder.line("agent", greeting or " ".join(heard_turn.said),
+                              heard_turn.first_sound)
             transcript.append(Turn(role="agent", text=greeting,
                                    said=" ".join(heard_turn.said) or None))
             trace = await asyncio.to_thread(server.trace, call_id)
             tools_so_far = tool_count(trace)
-            _, agent_lines = newest_agent_timings(trace, 0)
+            _, agent_lines = turn_agent_timings(trace, 0)
             said = caller.first_line(greeting)
             recent: list[str] = []
             reason = None
@@ -202,7 +237,12 @@ class Rig:
                                     self.entrant.in_rate)
                 transcript.append(Turn(role="caller", text=said))
                 self.log(call_id, f"caller: {said}")
+                spoken = not sender.stopped
                 start, end = await sender.speak(pcm, on_start=listener.new_turn)
+                if recorder and spoken:
+                    padded = b"".join(frames(pcm, self.entrant.in_rate))
+                    began_at = recorder.caller(padded, self.entrant.in_rate, end)
+                    recorder.line("caller", said, began_at)
                 if sender.stopped and listener.is_hung_up:
                     reason = "agent_end"
                     break
@@ -211,7 +251,9 @@ class Rig:
                 trace = await asyncio.to_thread(server.trace, call_id)
                 lookup = tool_count(trace) > tools_so_far
                 tools_so_far = tool_count(trace)
-                stages, agent_lines = newest_agent_timings(trace, agent_lines)
+                stages, agent_lines = turn_agent_timings(trace, agent_lines)
+                logged = {k: float(v) for k, v in {**newest_caller_timings(trace), **stages}.items()
+                          if isinstance(v, (int, float))}
                 if heard_turn.first_sound is None:
                     silent += 1
                 else:
@@ -224,10 +266,17 @@ class Rig:
                         platform_reply_ms=stages.get("reply_ms"),
                         caller_speech_ms=(end - start) * 1000,
                         agent_speech_ms=len(heard_turn.pcm) / 2 / heard_turn.rate * 1000,
+                        over_caller_ms=(None if heard_turn.over_caller is None
+                                        else max(0.0, (end - heard_turn.over_caller) * 1000)),
+                        platform_stages=logged,
                     ))
                 delay = (f"{reply_delay_ms(end, heard_turn.first_sound):.0f} ms"
                          if heard_turn.first_sound is not None else "silent")
                 self.log(call_id, f"agent ({delay}{', lookup' if lookup else ''}): {heard}")
+                if recorder and heard_turn.first_sound is not None:
+                    recorder.line("agent", heard or " ".join(heard_turn.said),
+                                  heard_turn.first_sound,
+                                  reply_delay_ms(end, heard_turn.first_sound))
                 if heard or heard_turn.said:
                     transcript.append(Turn(role="agent", text=heard,
                                            said=" ".join(heard_turn.said) or None))
@@ -276,13 +325,14 @@ class Rig:
 
 
 def plan(chosen: list[Scenario], repeats: int, samples: int = 1) -> list[tuple[Scenario, int]]:
-    """`repeats` runs of each must-pass gas or CO scenario, `samples` of every other one."""
+    """`repeats` runs of each must-pass scenario, `samples` of every other one."""
     return [(s, n) for s in chosen
             for n in range(1, (repeats if must_repeat(s) else samples) + 1)]
 
 
 async def run_entrant(name: str, chosen: list[Scenario], repeats: int, max_cost: float | None,
-                      env: dict, workdir: Path, samples: int = 1) -> tuple[list[ScenarioResult], object]:
+                      env: dict, workdir: Path, samples: int = 1,
+                      batch: Batch | None = None) -> tuple[list[ScenarioResult], object]:
     config = load_config()
     worlds = Worlds()
     with Serving(build_app(worlds)) as router:
@@ -294,12 +344,16 @@ async def run_entrant(name: str, chosen: list[Scenario], repeats: int, max_cost:
         await entrant.start()
         try:
             for scenario, sample in plan(chosen, repeats, samples):
+                recorder = CallRecorder(max(entrant.in_rate, RECORD_RATE)) if batch else None
                 try:
-                    result = await rig.call(scenario, sample)
+                    result = await rig.call(scenario, sample, recorder)
                 except (KeyboardInterrupt, asyncio.CancelledError):
                     print("stopped: the finished calls are still written", flush=True)
                     break
                 done.append(result)
+                if batch is not None:
+                    entry = await asyncio.to_thread(batch.add, recorder, result, scenario.persona)
+                    print(f"recorded {entry['code']}: {entry['audio']}", flush=True)
                 spent = sum(r.cost_usd for r in done)
                 delays = ", ".join(f"{t.reply_delay_ms:.0f}" for t in result.turn_timings)
                 why = result.error or "; ".join(result.check_failures)
@@ -333,27 +387,57 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--max-cost", type=float, default=None)
     parser.add_argument("--no-upload", action="store_true")
     parser.add_argument("--results-dir", default=str(RESULTS_DIR))
+    parser.add_argument("--tags", default="", help="scenario tags, comma separated")
+    parser.add_argument("--no-record", action="store_true",
+                        help="skip the stereo recordings (evals/audio_rig/recording.py)")
+    parser.add_argument("--no-store", action="store_true",
+                        help="keep recordings local, without the copy in the bucket")
+    parser.add_argument("--record-dir", default=str(SIM_DIR))
+    parser.add_argument("--batch", default="",
+                        help="add the calls to this existing batch, numbering on from its last")
+    parser.add_argument("--results-in-batch", action="store_true",
+                        help="write the results file into the batch folder, not evals/results")
     args = parser.parse_args(argv)
 
-    chosen, _ = suites.select(load_all(), args.suite)
+    chosen, _ = suites.select(load_all(), args.suite, suites.parse_tags(args.tags))
     if args.only:
         wanted = set(suites.parse_tags(args.only))
-        chosen = [s for s in chosen if s.id in wanted]
+        missing = wanted - {s.id for s in chosen}
+        if missing:
+            print(f"not in suite {args.suite}: {', '.join(sorted(missing))}", file=sys.stderr)
+            return 2
+        # The order asked for is the order the calls run and are numbered in.
+        by_id = {s.id: s for s in chosen}
+        chosen = [by_id[i] for i in dict.fromkeys(suites.parse_tags(args.only))]
+    batch = None
+    if not args.no_record:
+        name = args.batch or batch_id(args.stack)
+        if args.batch and not (Path(args.record_dir) / name / MANIFEST).is_file():
+            print(f"no batch {name} in {args.record_dir}", file=sys.stderr)
+            return 2
+        store = None if args.no_store else open_store(dict(os.environ))
+        batch = Batch(Path(args.record_dir) / name, args.stack, store)
+        print(f"recording into {batch.folder}", flush=True)
+    results_dir = batch.folder if (batch and args.results_in_batch) else Path(args.results_dir)
     with tempfile.TemporaryDirectory(prefix="summit-rig-") as tmp:
         done, entrant = asyncio.run(
             run_entrant(args.stack, chosen, args.repeats, args.max_cost, dict(os.environ),
-                        Path(tmp), args.samples)
+                        Path(tmp), args.samples, batch)
         )
     if not done:
         print("no scenario finished", file=sys.stderr)
         return 1
-    suite = args.suite if not args.only else "custom"
-    run = build_run(suite, [], entrant.name, entrant.profile, done, transport="audio")
+    suite = args.suite if not (args.only or args.tags) else "custom"
+    run = build_run(suite, suites.parse_tags(args.tags), entrant.name, entrant.profile, done,
+                    transport="audio")
     if getattr(entrant, "model", None):
         run.model = entrant.model
-    path = results.save(run, Path(args.results_dir))
-    print("\n".join(compare.report(run, compare.previous(run, Path(args.results_dir)))))
+    path = results.save(run, results_dir)
+    print("\n".join(compare.report(run, compare.previous(run, results_dir))))
     print(f"results: {path}")
+    if batch is not None:
+        batch.finish(path)
+        print(f"listen: make listen, then {LISTEN_URL}/?batch={batch.folder.name}")
     if not args.no_upload:
         upload(run, path)
     return 1 if any(s.must_pass_failures for s in run.scenarios) else 0

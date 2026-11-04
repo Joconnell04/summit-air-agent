@@ -171,6 +171,10 @@ ECHO_NEGATORS = (
 QUIET_AFTER = (
     "is quiet",
     "is silent",
+    # "the carbon monoxide alarm's quiet" once the apostrophe is dropped (eval run
+    # 20261104-060544, vague-smell-cleared).
+    "alarms quiet",
+    "detectors quiet",
     "its quiet",
     "its silent",
     "been quiet",

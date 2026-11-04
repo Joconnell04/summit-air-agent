@@ -162,13 +162,17 @@ priority:
       reason: a parent at home, age not given
     - id: limited_mobility
       job_types: [no_heat, no_cooling]
-      phrases: [wheelchair, walker, disabled, disability, paralyzed, special needs, cant get around]
+      phrases: [wheelchair, walker, cane, crutches, mobility scooter, disabled, disability, paralyzed,
+                special needs, cant get around]
       raise_to: High
       group: true
       reason: someone with limited mobility or a disability
     - id: lives_alone
       job_types: [no_heat, no_cooling]
-      phrases: [lives alone, live alone, by herself, by himself, by myself, no one else]
+      # "Just me at home" and the like (a rig call: an 84-year-old alone with a cane booked High).
+      phrases: [lives alone, live alone, by herself, by himself, by myself, no one else,
+                just me at home, just me here, its just me, im alone, i am alone, home alone,
+                alone at home, on my own, only one here, only one home, caller alone]
       raise_to: High
       group: true
       reason: someone at home alone

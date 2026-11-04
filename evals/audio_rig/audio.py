@@ -96,13 +96,15 @@ class Playout:
     chunks: list[tuple[int, float]] = field(default_factory=list)
     pcm: bytearray = field(default_factory=bytearray)
 
-    def add(self, pcm: bytes, arrived: float, live: bool = False) -> None:
+    def add(self, pcm: bytes, arrived: float, live: bool = False) -> float:
         """`live` audio comes from a stream that already plays at real speed (a LiveKit track),
-        so it plays when it arrives; such a stream can also carry two tracks at once."""
+        so it plays when it arrives; such a stream can also carry two tracks at once. Returns
+        when the chunk starts playing."""
         start = arrived if live else max(arrived, self.end)
         self.chunks.append((len(self.pcm) // SAMPLE_BYTES, start))
         self.pcm.extend(pcm)
         self.end = max(self.end, start + len(pcm) / SAMPLE_BYTES / self.rate)
+        return start
 
     def heard_at(self, sample: int) -> float:
         offset, start = self.chunks[0]

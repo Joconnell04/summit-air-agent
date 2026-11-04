@@ -223,9 +223,20 @@ def _job_type(ctx: Ctx, code: str) -> dict:
 def _priority(ctx: Ctx, job_type: str, extra_text: str, inside_temp_f: float | None):
     outside = weather.current(ctx.conn, ctx.tenant, ctx.now)
     caller_text = records.caller_text(ctx.conn, ctx.call["id"])
+    # What the agent passed to earlier find_slots calls counts too, so the booking can't come out
+    # lower than the priority the caller was already told (a rig call heard "most urgent" from
+    # find_slots, then booked High).
+    earlier = "\n".join(
+        f"{f.get('issue', '')}\n{f.get('who_home', '')}"
+        for row in ctx.conn.execute(
+            "SELECT args_json FROM tool_calls WHERE call_id = ? AND tool = 'find_slots'",
+            (ctx.call["id"],),
+        )
+        for f in [json.loads(row["args_json"] or "{}").get("facts") or {}]
+    )
     facts = prio.Facts(
         job_type,
-        caller_text + "\n" + extra_text,
+        caller_text + "\n" + earlier + "\n" + extra_text,
         inside_temp_f,
         ctx.call["safety_state"] in ("signal", "lines_said"),
         outside.now_f,

@@ -623,6 +623,9 @@ priority:
     phrases:
     - wheelchair
     - walker
+    - cane
+    - crutches
+    - mobility scooter
     - disabled
     - disability
     - paralyzed
@@ -642,6 +645,17 @@ priority:
     - by himself
     - by myself
     - no one else
+    - just me at home
+    - just me here
+    - its just me
+    - im alone
+    - i am alone
+    - home alone
+    - alone at home
+    - on my own
+    - only one here
+    - only one home
+    - caller alone
     raise_to: High
     reason: someone at home alone
   - group: true

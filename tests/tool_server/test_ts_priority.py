@@ -1,7 +1,7 @@
 """The priority engine and the after-hours outcome (spec S-04, S-21, S-33; DECISIONS.md 006)."""
 
 import pytest
-from toolkit import TENANT_DIR, UNKNOWN
+from toolkit import TENANT_DIR, UNKNOWN, book, ready_to_book
 
 from app import priority as prio
 from app.tenant import load_agent
@@ -278,3 +278,35 @@ def test_nobody_whos_a_baby_or_elderly_raises_nothing_but_a_real_mention_still_d
     said = "just two adults both healthy nobody whos a baby or elderly nobody on any medical equipment"
     assert not _said_not_negated(words(said), "elderly")
     assert _said_not_negated(words("no heat since this morning grandma is here"), "grandma")
+
+
+@pytest.mark.parametrize(
+    "who_home",
+    [
+        "It's just me at home. I'm 84, and I use a cane to get around.",
+        "its just me at home im 84 and i use a cane",
+        "just me at home, I use a cane",
+    ],
+)
+def test_an_older_caller_alone_with_a_cane_is_urgent(agent, who_home):
+    """A rig call (#98): an 84-year-old alone with a cane was booked High while told it was
+    urgent."""
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "My heat isn't working, it's about 55 in here.")
+    agent.turn(call, who_home)
+    found = agent.tool("find_slots", call, job_type="no_heat", facts={"inside_temp_f": 56})
+    assert found["data"]["priority"]["level"] == "Urgent"
+
+
+def test_the_booking_keeps_the_priority_find_slots_already_gave(agent):
+    """The rig call's find_slots facts said "elderly"; the booking's details didn't, and it was
+    booked one level lower than the caller was told."""
+    call = ready_to_book(agent)
+    found = agent.tool("find_slots", call, job_type="no_heat",
+                       facts={"who_home": "elderly woman, cold but managing", "inside_temp_f": 60})
+    assert found["data"]["priority"]["level"] == "Urgent"
+    day = found["data"]["days"][0]
+    booked = book(agent, call, {"date": day["date"], "window": day["windows"][0]},
+                  job_type="no_heat", who_home="Caller, cold but managing")
+    assert booked["ok"], booked
+    assert booked["data"]["priority"]["level"] == "Urgent"

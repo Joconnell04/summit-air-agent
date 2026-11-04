@@ -771,3 +771,9 @@ def test_i_dont_feel_sick_or_dizzy_is_a_no_and_i_wont_use_the_oven_asks_nothing(
     assert safety.check_caller_turn(answer, "checking", "co", 0, CFG).action == "cleared"
     promise = "okay i won't use the stove or oven for heat and the generator's staying off"
     assert safety.check_caller_turn(promise, "none", None, 0, CFG).action == "none"
+
+
+def test_the_carbon_monoxide_alarms_quiet_is_a_no_to_the_gas_check():
+    """Eval run 20261104-060544, vague-smell-cleared: "the carbon monoxide alarm's quiet too"."""
+    answer = "no um definitely not gas the carbon monoxide alarm's quiet too i think it's the trash"
+    assert safety.check_caller_turn(answer, "checking", "gas", 0, CFG).action == "cleared"

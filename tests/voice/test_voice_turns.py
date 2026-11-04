@@ -4,7 +4,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from voice.livekit.settings import load_profile
+from voice.livekit.settings import load_profile, load_voice
 from voice.livekit.turns import (
     LlmLog,
     agent_timings,
@@ -49,6 +49,14 @@ def test_reply_delay_runs_from_the_caller_going_quiet_to_the_first_audio():
     timings = agent_timings({"started_speaking_at": 12.0}, 10.8, tool_ms=0.0, bridge=False)
     assert timings["reply_ms"] == 1200.0
     assert agent_timings({}, None, 5.0, True) == {"tool_ms": 5.0, "bridge": 1.0}
+
+
+def test_a_bridge_clip_that_plays_first_is_the_first_audio():
+    timings = agent_timings({"started_speaking_at": 14.0}, 10.8, 900.0, True, clip_started_at=11.6)
+    assert timings["reply_ms"] == 800.0
+    # A clip stamped after the line started (it can't play over the agent) doesn't count.
+    late = agent_timings({"started_speaking_at": 12.0}, 10.8, 0.0, False, clip_started_at=12.5)
+    assert late["reply_ms"] == 1200.0
 
 
 def test_the_profile_is_switched_by_one_setting(monkeypatch):
@@ -105,3 +113,20 @@ def test_only_model_metrics_are_recorded():
 def test_a_profile_reads_how_to_turn_its_thinking_off():
     assert load_profile("quality").thinking_off == "between_tools"
     assert load_profile("fast").thinking_off == "disabled"
+
+
+def test_the_silence_wait_is_one_the_turn_detector_accepts():
+    """LiveKit's turn detector refuses a voice-activity silence under its floor, and only when the
+    session starts, which would be on a live call rather than when the worker starts."""
+    from livekit.agents.inference.eot.base import MIN_SILENCE_DURATION_MS
+
+    voice = load_voice()
+    assert voice["vad"]["min_silence_s"] >= (MIN_SILENCE_DURATION_MS + 50) / 1000
+
+
+def test_the_digits_wait_outlasts_the_silence_wait():
+    """LiveKit counts `min_delay` from the end of speech, so it overlaps the silence wait; the
+    longer wait after asking for digits (C-48) only takes effect if it is the longer of the two."""
+    voice = load_voice()
+    assert voice["endpointing"]["digits"]["min_delay"] >= 0.9
+    assert voice["endpointing"]["digits"]["min_delay"] > voice["vad"]["min_silence_s"]
