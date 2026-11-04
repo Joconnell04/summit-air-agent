@@ -198,6 +198,7 @@ def test_an_older_caller_who_asks_to_slow_down_further_gets_another_step(agent):
 
 def test_slowing_down_for_the_address_applies_to_the_address_alone(agent):
     call = agent.start()["data"]["call_id"]
+    agent.turn(call, "It's 101 Union St, 11231.")
     address = in_area_address()
     asked = agent.tool("read_back", call, address=address, phone="caller_id")
     assert "parts" not in asked["data"]
@@ -211,7 +212,7 @@ def test_slowing_down_for_the_address_applies_to_the_address_alone(agent):
     assert parts[1] == {"text": "101 Union St, Brooklyn, 11231,", "speed": 0.85}
     assert parts[0]["speed"] == parts[2]["speed"] == 1.0
     # Used once: the call's pace is unchanged and the next read-back is whole.
-    assert changes(agent, call) == [(2, 0.85, "address", "request")]
+    assert changes(agent, call) == [(3, 0.85, "address", "request")]
     agent.say(call, again["say"])
     assert speed(agent.turn(call, "Yes, that's right.")) == 1.0
     third = agent.tool("read_back", call, address=address, phone="caller_id")
@@ -223,6 +224,7 @@ def test_the_address_slows_one_step_below_the_calls_own_pace(agent):
     call = agent.start()["data"]["call_id"]
     agent.turn(call, "I'm 77.")
     agent.turn(call, "Please say the address slower when you read it.")
+    agent.turn(call, "It's 101 Union St, 11231.")
     asked = agent.tool("read_back", call, address=in_area_address(), phone="caller_id")
     assert [p["speed"] for p in asked["data"]["parts"]] == [0.85, 0.7, 0.85]
 
@@ -382,6 +384,7 @@ def test_an_older_caller_asking_for_the_address_slower_gets_both(agent):
     result = agent.turn(call, "I'm 80, so say the address slower when you read it.")
     assert speed(result) == 0.85
     assert changes(agent, call) == [(1, 0.85, "call", "older_adult"), (1, 0.7, "address", "request")]
+    agent.turn(call, "It's 101 Union St, 11231.")
     asked = agent.tool("read_back", call, address=in_area_address(), phone="caller_id")
     assert [p["speed"] for p in asked["data"]["parts"]] == [0.85, 0.7, 0.85]
 

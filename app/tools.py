@@ -128,7 +128,9 @@ def _zip_known(ctx: Ctx, zip_code: str) -> None:
         f"AND call_id IN ({','.join('?' * len(ids))})",
         ids,
     )
-    if any(zip_code in run for line in lines for run in digit_runs(line["text"])):
+    # The whole run, or ZIP plus four: "718 112 2600" is a phone number, not 11226.
+    said = {run for line in lines for run in digit_runs(line["text"])}
+    if zip_code in said or any(len(run) == 9 and run.startswith(zip_code) for run in said):
         return
     for customer_id in records.scoped_customers(ctx.conn, ctx.call["id"]):
         try:
