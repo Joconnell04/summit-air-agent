@@ -2146,7 +2146,7 @@
           "request": {
             "method": "GET",
             "header": [],
-            "url": "{{base_url}}/owner/rules/edit"
+            "url": "{{base_url}}/bench/rules"
           }
         },
         {
@@ -2463,7 +2463,7 @@
           "request": {
             "method": "GET",
             "header": [],
-            "url": "{{base_url}}/owner/rules/edit"
+            "url": "{{base_url}}/bench/rules"
           }
         },
         {
@@ -2482,7 +2482,7 @@
           "request": {
             "method": "POST",
             "header": [],
-            "url": "{{base_url}}/owner/rules/draft",
+            "url": "{{base_url}}/bench/rules/draft",
             "body": {
               "mode": "urlencoded",
               "urlencoded": [
@@ -2510,7 +2510,7 @@
           "request": {
             "method": "POST",
             "header": [],
-            "url": "{{base_url}}/owner/rules/discard",
+            "url": "{{base_url}}/bench/rules/discard",
             "body": {
               "mode": "urlencoded",
               "urlencoded": []
@@ -2533,7 +2533,7 @@
           "request": {
             "method": "POST",
             "header": [],
-            "url": "{{base_url}}/owner/rules/cancel",
+            "url": "{{base_url}}/bench/rules/cancel",
             "body": {
               "mode": "urlencoded",
               "urlencoded": []
@@ -2556,7 +2556,7 @@
           "request": {
             "method": "POST",
             "header": [],
-            "url": "{{base_url}}/owner/rules/rollback",
+            "url": "{{base_url}}/bench/rules/rollback",
             "body": {
               "mode": "urlencoded",
               "urlencoded": [
@@ -2886,6 +2886,66 @@
             "method": "GET",
             "header": [],
             "url": "{{base_url}}/bench/evals"
+          }
+        },
+        {
+          "name": "An override needs a reason",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('refused, nothing published', () => pm.response.to.have.status(422));",
+                  "pm.test('says why', () => pm.expect(pm.response.text()).to.include('Say why the check is being skipped.'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{base_url}}/bench/rules/draft",
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "guide.booking.0",
+                  "value": "Ask about pets."
+                },
+                {
+                  "key": "override",
+                  "value": "1"
+                },
+                {
+                  "key": "reason",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Discard the draft that override left",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('back to the editor', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{base_url}}/bench/rules/discard",
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": []
+            }
           }
         }
       ]

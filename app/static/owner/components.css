@@ -315,6 +315,17 @@ a.figure:hover .label { color: var(--ink); }
 .more summary:hover { background: var(--hover); border-color: var(--line-strong); }
 .more[open] summary svg { transform: rotate(90deg); }
 
+/* Popover form: a disclosure whose popover holds one field, a hint and one action, for a step
+   that needs a reason before it runs (the bench's override). */
+.pop { position: relative; }
+.pop-body {
+  position: absolute; right: 0; top: calc(100% + 6px); z-index: 30; width: 320px; display: flex; flex-direction: column; gap: var(--s-2);
+  padding: var(--s-3); background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); box-shadow: var(--shadow-pop);
+}
+.pop-body label { font-size: var(--text-sm); color: var(--muted); }
+.pop-body .hint { font-size: var(--text-xs); color: var(--faint); }
+.actions .pop-body .field { width: 100%; }
+
 /* Range picker: a disclosure whose popover holds two dates and Apply. */
 .range { position: relative; }
 .range[data-on] summary { border-color: var(--ink-2); color: var(--ink); font-weight: var(--semibold); }

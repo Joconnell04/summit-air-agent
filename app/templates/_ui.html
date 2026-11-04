@@ -99,6 +99,7 @@
 {%- elif v.status == "blocked" -%}<span class="tag urgent" tabindex="0" data-tip="{% if g.reruns %}Failed twice{% else %}Failed{% endif %}: {{ (g.failed + g.errors) | join(', ') | replace('-', ' ') }}. {{ rerun_note }}">Blocked, {{ (g.failed | length) + (g.errors | length) }} of {{ g.scenarios }} failed</span>
 {%- elif v.status == "draft" -%}<span class="tag outline">Draft</span>
 {%- elif v.rollback_of is not none -%}<span class="tag outline">Rolled back</span>
+{%- elif g.overridden -%}<span class="tag high" tabindex="0" data-tip="Published at once without the test calls, by {{ g.by }}: {{ g.reason }}">Check skipped</span>
 {%- elif g.scenarios -%}<span class="tags"><span class="tag done"{% if g.grader_flags %} tabindex="0" data-tip="The grader also noted: {{ g.grader_flags | join(', ') | replace('-', ' ') }}"{% endif %}>Passed {{ g.passed_count }} of {{ g.scenarios }}</span>{% if again %}<span class="tag outline" tabindex="0" data-tip="{{ rerun_note }}">{{ again | length }} on a rerun</span>{% endif %}</span>
 {%- else -%}<span class="tag outline">Published</span>
 {%- endif -%}
@@ -184,6 +185,7 @@
   <a href="/bench"{% if tab == "bench" %} aria-current="page"{% endif %}>Calls</a>
   <a href="/bench/settings"{% if tab == "bench-settings" %} aria-current="page"{% endif %}>Settings</a>
   <a href="/bench/evals"{% if tab == "bench-evals" %} aria-current="page"{% endif %}>Evals</a>
+  <a href="/bench/rules"{% if tab == "bench-rules" %} aria-current="page"{% endif %}>Rules</a>
   <a href="/owner">Owner view</a>
 </nav>
 {%- endmacro %}
