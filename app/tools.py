@@ -334,9 +334,19 @@ def _zip_said_with(ctx: Ctx, house: str) -> str | None:
         for run in runs:
             if run.startswith(want) and len(run) - len(want) in (5, 9):
                 run = run[len(want):]  # the house number and ZIP said as one run
-            if len(run) in (5, 9) and run != want:
+            if len(run) in (5, 9) and run != want and _plausible_zip(ctx, run[:5]):
                 said = run[:5]
     return said
+
+
+def _plausible_zip(ctx: Ctx, zip_code: str) -> bool:
+    """A five-digit run that can be a ZIP here: one the company serves, or one in the lookup's
+    area. Numbers said one by one run together ("ten sixty two one oh six two" holds 21062), and
+    a run like that must never decline a caller as out of area (eval run 20261104-174038)."""
+    if zip_code in ctx.tenant.service_area:
+        return True
+    prefixes = (ctx.tenant.address_lookup or {}).get("zip_boroughs") or {}
+    return zip_code[:3] in {str(p) for p in prefixes}
 
 
 def _said_since(ctx: Ctx, zip_code: str, seq: int) -> bool:
@@ -664,8 +674,7 @@ def find_address(ctx: Ctx, args: FindAddressIn) -> Result:
     said = _zip_said_with(ctx, house)
     if found.status == "several" and said in found.zips():
         found = geocode.Found("one", tuple(p for p in found.places if p.zip == said), found.source)
-    if said and found.status in ("unavailable", "none"):
-        _out_of_area(ctx, said)
+    if said in ctx.tenant.service_area and found.status in ("unavailable", "none"):
         return ok(
             zip=said,
             street=args.street,

@@ -617,6 +617,22 @@ priority:
     - my mother
     - my father
     - my parents
+    - mother in law
+    - father in law
+    - his mother
+    - her mother
+    - his father
+    - her father
+    - his mom
+    - her mom
+    - his dad
+    - her dad
+    - his parents
+    - her parents
+    - his mothers
+    - her mothers
+    - his fathers
+    - her fathers
     raise_to: High
     reason: a parent at home, age not given
   - group: true
@@ -667,6 +683,12 @@ priority:
     job_types:
     - no_heat
     - no_cooling
+    not_phrases:
+    - stroke of luck
+    - stroke of genius
+    - brush stroke
+    - swim stroke
+    - at the stroke of
     phrases:
     - heart condition
     - heart problems
@@ -678,6 +700,9 @@ priority:
     - diabetes
     - kidney disease
     - medical condition
+    - stroke
+    - had a stroke
+    - recovering from a stroke
     raise_to: High
     reason: a chronic illness at home
   - group: true

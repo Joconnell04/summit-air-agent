@@ -446,3 +446,25 @@ def test_the_callers_zip_picks_one_of_several(located):
     located.turn(call, "1 Main Street, 11201.")
     found = located.tool("find_address", call, street="1 Main St")
     assert found["ok"] and found["data"]["zip"] == "11201"
+
+
+def test_numbers_run_together_are_not_a_zip_that_declines(tmp_path, clock, mock):
+    """ "ten sixty two one oh six two park place" holds the run 21062, which declined a building
+    in the area as out of area (eval run 20261104-174038, property-manager-books-building)."""
+    agent = Agent(make_server(tmp_path, clock, mock[0], geocoder=lookup([("down", down)])), clock)
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "it's one oh six two park place brooklyn one one two one six")
+    agent.turn(call, "not one oh six it's ten sixty two one oh six two park place p a r k place")
+    found = agent.tool("find_address", call, street="1062 Park Place", borough="Brooklyn")
+    assert found["ok"] and found["data"]["zip"] == "11216", found
+    assert count(agent, "SELECT COUNT(*) FROM out_of_area") == 0
+
+
+def test_a_zip_out_of_the_area_said_with_the_street_is_left_to_the_area_check(tmp_path, clock,
+                                                                               mock):
+    agent = Agent(make_server(tmp_path, clock, mock[0], geocoder=lookup([("down", down)])), clock)
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "It's 47 Willis Ave, Mineola, 11501.")
+    found = agent.tool("find_address", call, street="47 Willis Ave")
+    assert found["refused"] == "address_lookup_down"
+    assert agent.tool("check_service_area", call, zip="11501")["refused"] == "out_of_area"

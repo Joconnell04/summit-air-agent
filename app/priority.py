@@ -158,6 +158,9 @@ def _rule_fires(rule: dict, facts: Facts) -> bool:
         return True
     # Split at punctuation first, so "No, my mother lives with us" keeps its raise.
     parts = _parts(facts.text)
+    # "A stroke of luck" isn't a stroke: a rule's not_phrases are blanked out before matching.
+    for unrelated in rule.get("not_phrases", []):
+        parts = [part.replace(words(unrelated), " , ") for part in parts]
     if any(_said_not_negated(part, p) for part in parts for p in rule.get("phrases", [])):
         return True
     if "age_at_least" in rule and any(a >= rule["age_at_least"] for a in _ages(facts.text)):
