@@ -32,6 +32,9 @@ REPEATS = 3
 # Share of the signed-off words the caller must hear, in order, to count as heard word for word.
 # Below 1.0 only for the rig's own transcription errors (ASSUMED).
 HEARD_SHARE = 0.9
+# A reply that starts within one 20 ms frame of the caller's end was already playing when the
+# caller finished: the agent talked over them, and the rig can only date it to that frame.
+TALK_OVER_MS = 20
 
 
 def gates_held(s: ScenarioResult) -> bool:
@@ -84,14 +87,15 @@ class Stack:
         return [s for r in self.runs for s in r.scenarios]
 
     def delays(self, kind: str) -> list[float]:
-        """Reply delays of one kind. A reply that started before the caller finished (recorded as
-        zero) talked over the caller; it is counted by `talk_overs`, not as a fast reply."""
+        """Reply delays of one kind. A reply that was already playing when the caller finished
+        (recorded as zero, or within a frame of it) talked over the caller; it is counted by
+        `talk_overs`, not as a fast reply."""
         return [t.reply_delay_ms for s in self.scenarios if s.outcome != "error"
-                for t in s.turn_timings if t.kind == kind and t.reply_delay_ms > 0]
+                for t in s.turn_timings if t.kind == kind and t.reply_delay_ms >= TALK_OVER_MS]
 
     def talk_overs(self) -> int:
         return sum(1 for s in self.scenarios if s.outcome != "error"
-                   for t in s.turn_timings if t.reply_delay_ms == 0)
+                   for t in s.turn_timings if t.reply_delay_ms < TALK_OVER_MS)
 
     def cut_ins(self) -> int:
         """Turns where the agent made a sound before the caller had finished their line. On our

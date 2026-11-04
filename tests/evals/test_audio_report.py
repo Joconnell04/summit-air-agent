@@ -125,6 +125,14 @@ def test_a_reply_over_the_caller_is_a_talk_over_not_a_fast_reply():
     assert st.talk_overs() == 4
 
 
+def test_a_reply_already_playing_when_the_caller_stops_is_a_talk_over():
+    # The rig dates a reply that was playing at the caller's end to that frame, a fraction of a
+    # millisecond after it.
+    st = stack("x", [0.3, 1200])
+    assert st.delays("plain") == [1200] * 4
+    assert st.talk_overs() == 4
+
+
 def test_sound_over_the_caller_is_counted_whatever_the_reply_delay():
     st = stack("x", [1200, 1400])
     st.runs[0].scenarios[0].turn_timings[0].over_caller_ms = 600
