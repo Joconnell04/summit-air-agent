@@ -10,6 +10,22 @@ Status: written before the build, when the voice platform (#4) was still open, s
 4. **FSM adapter.** The only code that talks to the company's field service system. Today it points at the mock ServiceTitan; later at the real one (C-03).
 5. **Mock ServiceTitan.** The customer's system, emulated: CRM, memberships, equipment, jobs, dispatch, call log (brief: docs/ai-process/briefs/01-mock-servicetitan.md).
 
+## How rules are layered
+
+From "must happen" down to "should sound like this". Anything that must happen sits in the first three layers, where the model can't change it; the rest makes the agent do those things smoothly so callers rarely meet a refusal.
+
+1. **Server gates** (`app/`): booking needs a confirmed read-back, the ZIP comes from the caller, commercial callers are declined, priority only rises and only on the caller's own words, hang-ups and transfers are the server's. A refused tool call returns the reason and a line to say.
+2. **Server-spoken lines**: the gas and carbon monoxide lines, the electrical line, the read-back, booking confirmations and the account question are spoken word for word from the server's text, with no model in between.
+3. **Speech filter**: drops what the model adds that the server didn't raise (repeats, tool talk, unprompted advice, a second question, a priority claim) before it's spoken (DECISIONS.md 060).
+4. **Per-turn `[server]` notes**: what's already known, a pace change, a caller who pushes for priority.
+5. **Side model**: one narrow question on each caller line, answered beside the call; its answer can only raise priority (DECISIONS.md 037, 056).
+6. **Owner guidance by stage**: the owner's notes and reworded lines, checked against the locked rules and the must-pass evals before they go live (DECISIONS.md 055).
+7. **The system prompt**: an assembly of six files in `prompts/`, joined by `prompts/assemble.py` in this order: `identity.md` (who it is and how it sounds), `spine.md` (the steps every call shares), `journeys.md` (the 14 kinds of caller), the owner's guidance under `house-guidance.md`, `tool-use.md`, and `safety.md`, then the call context. It is split by job so each change is small and reviewable; it is one prompt to the model. Scoping it by call stage is the next step considered (docs/explorations/016-stage-scoped-prompts.md).
+
+## Why this design, for the shop
+
+For a shop like Summit Air, the mistakes that cost money or hurt someone are a gas call booked for Thursday, two families sent the same technician, a callback promised and never made, or a technician sent to the old address. Each of those is decided by server code the model can't talk its way around, and each has a test that runs before any change ships. That makes the agent predictable for the owner: a rule on the Rules page is a rule, not a request the model may follow. The model is kept to what it does well, a natural conversation, so the owner can reword greetings and add guidance without being able to break a gate. And because the parts are separate (ears, brain, voice, rules and the ServiceTitan adapter), each can be swapped on measurement, a faster voice, a cheaper model, the real ServiceTitan account, without rebuilding the agent. The cost is that we own more code than a managed platform does; the bake-offs are how we check that the trade keeps paying, and a Retell Conversation Flow version is being built to test it again on the same evals (docs/bakeoffs.md).
+
 ## Repo layout
 
 ```
