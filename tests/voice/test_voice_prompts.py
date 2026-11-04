@@ -140,3 +140,21 @@ def test_the_prompt_says_how_times_spelling_and_other_addresses_work():
     assert '"8 to 2" is 8 AM to 2 PM' in text
     assert "spell it" in text and "`spelled`" in text
     assert "new_address_account" in text
+
+
+
+def test_the_caller_digits_are_read_from_spoken_digits_or_numerals():
+    zips, phones = assemble.caller_digits(
+        "it's one eight eight 10 64th avenue fresh meadows one one three six six and my cell is "
+        "six three one five five five oh one four seven"
+    )
+    assert zips == {"11366"}
+    assert phones == {"6315550147"}
+
+
+def test_a_sentence_on_file_is_kept_when_the_caller_never_said_its_zip():
+    reply = assemble.SpokenReply()
+    on_file = "The address I have is 290 Bedford Avenue, Brooklyn, 11218. Is that still right?"
+    assert reply.text(on_file, []) == on_file
+    reply.heard(None, "yes it's one one two one eight")
+    assert reply.text(on_file, []) == "Is that still right?"

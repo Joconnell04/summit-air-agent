@@ -5,6 +5,7 @@ own request models), the greeting, and the `[server]` notes added to caller line
 
 import copy
 import json
+import re
 from datetime import datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -163,27 +164,82 @@ def server_notes(hints: list[str]) -> list[str]:
     return notes
 
 
+# A sentence that announces the read-back ("let me read that back", "I'll read back the details",
+# "let me confirm your address and number"). The server's own sentence says it; the caller hears
+# it once (eval round 3).
+ANNOUNCES_READ_BACK = re.compile(
+    r"\bread(?:\s+\w+){0,3}\s+back\b|\bread-back\b"
+    r"|\b(?:let me|i'?ll|i will|i need to|i have to|i'?m going to)\s+confirm\s+(?:\w+\s+){0,2}"
+    r"(?:details|address|number)",
+    re.IGNORECASE,
+)
+SENTENCE_END = re.compile(r"(?<=[.!?])\s+")
+DIGIT_WORDS = {
+    "zero": "0", "oh": "0", "o": "0", "one": "1", "two": "2", "three": "3", "four": "4",
+    "five": "5", "six": "6", "seven": "7", "eight": "8", "nine": "9",
+}
+
+
+def sentences(text: str) -> list[str]:
+    return [s for s in SENTENCE_END.split(text) if s.strip()]
+
+
+def caller_digits(text: str) -> tuple[set[str], set[str]]:
+    """The ZIPs and phone numbers in a caller's line, from digits said one by one ("one one two
+    three four") or written as digits, as the transcription gives them."""
+    zips, phones = set(), set()
+    runs, run = [], ""
+    for token in re.findall(r"[a-z]+|\d+", text.lower()):
+        if token.isdigit():
+            run += token
+        elif token in DIGIT_WORDS:
+            run += DIGIT_WORDS[token]
+        else:
+            runs.append(run)
+            run = ""
+    runs.append(run)
+    for digits in runs:
+        if len(digits) == 5:
+            zips.add(digits)
+        elif len(digits) == 10:
+            phones.add(digits)
+        elif len(digits) == 11 and digits.startswith("1"):
+            phones.add(digits[1:])
+    return zips, phones
+
+
 class SpokenReply:
     """What of the model's reply the caller hears, kept the same in every voice layer and the eval
-    harness. Some tool results are spoken by the voice layer itself, word for word: the read-back
-    sentence, and on a safety call the sign-off end_call returns. In a reply that calls one of
-    those, the text the model wrote first is dropped, so the caller hears the server's sentence
-    alone, never a lead-in ("let me read that back") or a second goodbye (eval round 3).
+    harness. The caller hears the address and number read back once, in the server's sentence
+    (eval round 3):
 
-    A streaming voice layer can only drop text it hasn't spoken yet, so while `holding` it keeps
-    each reply's text until the reply ends. That is from the first in-area ZIP check, when a
-    read-back can come, until the read-back is confirmed, and for the whole of a safety call."""
+    - Some tool results are spoken by the voice layer itself, word for word: the read-back
+      sentence, and on a safety call the sign-off end_call returns. In a reply that calls one of
+      those, the text the model wrote first is dropped: no lead-in, no second goodbye.
+    - In any reply, a sentence announcing the read-back is dropped, and so is a sentence that
+      restates the ZIP or phone number the caller gave. The rest of the reply is kept; a reply
+      with nothing left is silent.
+
+    A streaming voice layer can only drop text it hasn't spoken yet. It passes each sentence
+    through `sentence` as it completes, and while `holding` it keeps the whole reply until it
+    ends. That is from the first in-area ZIP check, when a read-back can come, until the
+    read-back is confirmed, and for the whole of a safety call."""
 
     def __init__(self) -> None:
         self.address_checked = False
         self.read_back_confirmed = False
         self.safety_call = False
+        self.zips: set[str] = set()
+        self.phones: set[str] = set()
 
     def holding(self) -> bool:
         return self.safety_call or (self.address_checked and not self.read_back_confirmed)
 
-    def heard(self, safety: dict | None) -> None:
-        """A caller turn's result: the safety action the server returned, if any."""
+    def heard(self, safety: dict | None, caller_text: str = "") -> None:
+        """A caller line and its turn result: the safety action the server returned, if any."""
+        zips, phones = caller_digits(caller_text)
+        self.zips |= zips
+        self.phones |= phones
         action = (safety or {}).get("action")
         if action in ("speak_lines", "speak_variant"):
             self.safety_call = True
@@ -202,9 +258,22 @@ class SpokenReply:
             return not args.get("confirmed")
         return name == "end_call" and self.safety_call
 
+    def sentence(self, sentence: str) -> str:
+        """One sentence of the model's text, or "" when the caller shouldn't hear it."""
+        if ANNOUNCES_READ_BACK.search(sentence):
+            return ""
+        if any(re.search(rf"\b{z}\b", sentence) for z in self.zips):
+            return ""
+        digits = re.sub(r"\D", "", sentence)
+        if any(p in digits for p in self.phones):
+            return ""
+        return sentence
+
     def text(self, text: str, calls: list[tuple[str, dict]]) -> str:
         """The model's text for one reply, given the (name, arguments) of the tools it called."""
-        return "" if any(self.server_speaks(n, a) for n, a in calls) else text
+        if any(self.server_speaks(n, a) for n, a in calls):
+            return ""
+        return " ".join(kept for s in sentences(text) if (kept := self.sentence(s)))
 
 
 def spoken_by_server(name: str, envelope: dict) -> str | None:

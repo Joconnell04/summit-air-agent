@@ -11,7 +11,7 @@ from livekit import rtc
 from livekit.agents import Agent, ModelSettings, StopResponse, llm
 from livekit.agents.llm import ChatContext, ChatMessage
 
-from prompts.assemble import SpokenReply, server_notes
+from prompts.assemble import SENTENCE_END, SpokenReply, server_notes
 
 from .bridge import Bridge
 from .server import UNREACHABLE, ToolServer
@@ -79,7 +79,7 @@ class Call:
         if notes:
             message.content.append("\n" + "\n".join(notes))
         safety = data.get("safety")
-        self.reply.heard(safety)
+        self.reply.heard(safety, text)
         if safety and safety["action"] in SPOKEN_ACTIONS and safety.get("text"):
             # Spoken from the server's text, never generated, and the caller can't cut it short.
             self.session.say(safety["text"], allow_interruptions=False)
@@ -115,32 +115,40 @@ class SummitAgent(Agent):
     async def llm_node(
         self, chat_ctx: ChatContext, tools: list[llm.Tool], model_settings: ModelSettings
     ) -> AsyncIterable[llm.ChatChunk | str]:
-        """The model's reply, streamed as usual, except while the reply rule is holding: then its
-        text waits for the end of the reply, and is dropped if the reply calls a tool whose result
-        the worker speaks itself (a read-back lead-in, a goodbye before the safety sign-off)."""
-        stream = Agent.default.llm_node(self, chat_ctx, tools, model_settings)
-        if not self.call.reply.holding():
-            async for chunk in stream:
-                yield chunk
-            return
-        held: list[str] = []
+        """The model's reply, a sentence at a time through the reply rule (prompts/assemble.py
+        SpokenReply), so a read-back announcement or a restated ZIP or number is never spoken.
+        While the rule is holding, the text waits for the end of the reply and is dropped if the
+        reply calls a tool whose result the worker speaks itself."""
+        reply = self.call.reply
+        holding = reply.holding()
+        pending, held = "", []
         calls: list[tuple[str, dict]] = []
-        async for chunk in stream:
-            if isinstance(chunk, str):
-                held.append(chunk)
-                continue
-            if isinstance(chunk, llm.ChatChunk) and chunk.delta and chunk.delta.content:
-                held.append(chunk.delta.content)
-                chunk = chunk.model_copy(
-                    update={"delta": chunk.delta.model_copy(update={"content": None})}
-                )
+        async for chunk in Agent.default.llm_node(self, chat_ctx, tools, model_settings):
+            text = chunk if isinstance(chunk, str) else None
             if isinstance(chunk, llm.ChatChunk) and chunk.delta:
-                for tool in chunk.delta.tool_calls:
-                    calls.append((tool.name, _arguments(tool.arguments)))
-            yield chunk
-        text = self.call.reply.text("".join(held), calls)
-        if text:
-            yield text
+                text = chunk.delta.content
+                calls += [(c.name, _arguments(c.arguments)) for c in chunk.delta.tool_calls]
+                if text or chunk.delta.tool_calls:
+                    chunk = chunk.model_copy(
+                        update={"delta": chunk.delta.model_copy(update={"content": None})}
+                    )
+            if text:
+                pending += text
+                *done, pending = split_sentences(pending)
+                if holding:
+                    held += done
+                else:
+                    for sentence in done:
+                        if kept := reply.sentence(sentence):
+                            yield kept + " "
+            if not isinstance(chunk, str):
+                yield chunk
+        if holding:
+            kept = reply.text(" ".join([*held, pending]), calls)
+        else:
+            kept = reply.sentence(pending) if pending.strip() else ""
+        if kept:
+            yield kept
 
     async def tts_node(
         self, text: AsyncIterable[str], model_settings: ModelSettings
@@ -150,6 +158,11 @@ class SummitAgent(Agent):
         async for frame in Agent.default.tts_node(self, text, model_settings):
             await self.call.bridge.wait_clear()
             yield frame
+
+
+def split_sentences(text: str) -> list[str]:
+    """Complete sentences, then what is left after the last one (possibly "")."""
+    return SENTENCE_END.split(text)
 
 
 def _arguments(raw: str) -> dict:

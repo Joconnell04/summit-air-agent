@@ -191,3 +191,18 @@ def test_the_read_back_is_heard_alone_with_the_lead_in_dropped():
         b.get("text") == "Let me read that back."
         for m in agent.messages if isinstance(m["content"], list) for b in m["content"]
     )
+
+
+def test_the_harness_drops_a_restated_zip_and_a_read_back_announcement():
+    model = ScriptedModel([
+        say("Got it, 1 Main St, Brooklyn, 11231. I'll read back the details soon. Is it a house?"),
+        say("Let me read that back."),
+    ])
+    server = StubServer()
+    agent = InProcessAgent(server, model, "c1", "(212) 555-0999")
+    agent.start()
+    assert agent.hear("one main street brooklyn one one two three one").text == "Is it a house?"
+    # Nothing left: the caller hears silence, and no empty agent line is posted.
+    before = len(server.lines)
+    assert agent.hear("yes").text == ""
+    assert len(server.lines) == before

@@ -286,7 +286,8 @@ def _heard(monkeypatch, reply_setup, *parts) -> tuple[str, list[str]]:
                 tools += [t.name for t in chunk.delta.tool_calls]
         return "".join(text), tools
 
-    return asyncio.run(run())
+    text, tools = asyncio.run(run())
+    return text.strip(), tools
 
 
 def _at_booking(reply):
@@ -305,7 +306,7 @@ def test_a_reply_that_calls_another_tool_keeps_its_text(monkeypatch):
     text, tools = _heard(
         monkeypatch, _at_booking, "Let me see. ", ("find_slots", {"job_type": "no_heat"})
     )
-    assert text == "Let me see. "
+    assert text == "Let me see."
     assert tools == ["find_slots"]
 
 
@@ -318,7 +319,7 @@ def test_confirming_the_read_back_keeps_the_text(monkeypatch):
 
 def test_before_an_address_is_checked_text_streams_untouched(monkeypatch):
     text, _ = _heard(monkeypatch, lambda reply: None, "Sure. ", ("read_back", {"phone": "x"}))
-    assert text == "Sure. "
+    assert text == "Sure."
 
 
 def test_on_a_safety_call_a_goodbye_before_the_sign_off_is_dropped(monkeypatch):
@@ -329,3 +330,40 @@ def test_on_a_safety_call_a_goodbye_before_the_sign_off_is_dropped(monkeypatch):
     assert text == ""
     text, _ = _heard(monkeypatch, safety_call, "Okay.")
     assert text == "Okay."
+
+
+
+def _gave_address(reply):
+    reply.heard(None, "it's three two two one avenue n brooklyn one one two three four")
+    reply.heard(None, "six three one five five five oh one three three")
+
+
+def test_a_read_back_announcement_is_dropped_from_any_reply(monkeypatch):
+    """Eval round 3 run 20261104-024140, two-family-owner-residential: "I'll read back the
+    details" in a reply that called find_slots."""
+    text, _ = _heard(
+        monkeypatch,
+        lambda reply: None,
+        "Thursday afternoon it is. I'll read back the details in a moment. ",
+        "Which window works?",
+        ("find_slots", {"job_type": "tune_up"}),
+    )
+    assert text == "Thursday afternoon it is. Which window works?"
+
+
+def test_a_restated_zip_or_number_is_dropped_and_the_rest_kept(monkeypatch):
+    text, _ = _heard(
+        monkeypatch,
+        _gave_address,
+        "Got it, 3221 Avenue N, Brooklyn, 11234. ",
+        "And the number is 631-555-0133. ",
+        "Is the furnace working right now?",
+    )
+    assert text == "Is the furnace working right now?"
+
+
+def test_a_reply_with_nothing_left_is_silent(monkeypatch):
+    text, _ = _heard(
+        monkeypatch, _gave_address, "Let me read that back. ", "Your ZIP is 11234."
+    )
+    assert text == ""

@@ -204,7 +204,7 @@ class InProcessAgent:
         result = self.server.turn(self.call_id, "caller", caller_text)
         safety = result["data"].get("safety") or {}
         if self.reply is not None:
-            self.reply.heard(safety)
+            self.reply.heard(safety, caller_text)
         if safety.get("action") in SPOKEN_FROM_CODE and result["say"]:
             self.messages.append({"role": "user", "content": caller_text})
             return self._speak_from_code(result["say"], t0)
@@ -233,9 +233,11 @@ class InProcessAgent:
             if self.reply is not None and said:
                 calls = [(u["name"], u["input"]) for u in reply.tool_uses]
                 said = self.reply.text(said, calls)
-                if not said:
-                    # The worker never speaks it, so the model's own history doesn't keep it.
-                    content = [b for b in content if b.get("type") != "text"]
+                # The model's own history keeps what the worker would have spoken, as LiveKit's
+                # chat context does.
+                content = [b for b in content if b.get("type") != "text"]
+                if said:
+                    content.insert(0, {"type": "text", "text": said})
             self.messages.append({"role": "assistant", "content": content})
             if said:
                 spoken.append(said)
