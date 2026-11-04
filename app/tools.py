@@ -1167,7 +1167,7 @@ def _unsaid_withheld(ctx: Ctx, bundle: dict) -> dict:
         "name": bundle["name"] if named else "",
         "phones": [],
         # What the visit is about stays out too; the job id and window are enough to change it.
-        "open_jobs": [{**j, "summary": ""} for j in bundle["open_jobs"]],
+        "open_jobs": [{**j, "summary": "", "window": None} for j in bundle["open_jobs"]],
         "notes": [],
         "withheld": "the numbers, notes and what the visit is about are not shown, and the "
         "name only once the caller gives it, until the server's name and address check passes; "

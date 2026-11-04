@@ -693,6 +693,7 @@ def test_notes_and_job_details_wait_for_the_full_check(agent, scenarios):
     # The name she gave shows; the gate code note and the visit's summary don't, yet.
     assert match["name"] == "Maria Delgado"
     assert match["notes"] == [] and match["open_jobs"][0]["summary"] == ""
+    assert match["open_jobs"][0]["window"] is None, "the visit's day and time wait too"
     agent.turn(call, "It's 620 Bedford Avenue, 11235.")
     assert agent.tool("cancel_appointment", call, booking_id=maria["jobId"], reason="not needed")["ok"]
     again = agent.tool("find_customer", call,
