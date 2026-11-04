@@ -259,3 +259,8 @@ def test_a_person_said_not_to_be_there_raises_nothing(text):
 def test_a_negation_elsewhere_in_the_line_never_drops_a_raise(text):
     """A missed raise is worse than an extra one, so the look back stops at a new thought."""
     assert [r for r in decide("no_heat", text, 58).rules if not r.startswith("bracket:")]
+
+
+@pytest.mark.parametrize("text", ["nobody's elderly here", "nobody's a baby, just me and my wife", "no one's elderly"])
+def test_nobodys_negates_a_risk_word(text):
+    assert decide("no_heat", text, 66).level != "Urgent"
