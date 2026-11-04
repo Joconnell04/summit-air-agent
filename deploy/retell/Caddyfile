@@ -29,6 +29,14 @@
 		uri strip_prefix /eval
 		reverse_proxy 127.0.0.1:8110
 	}
+	# The owner view and the debug bench, behind their own sign-in (named accounts, admin for the
+	# bench). Only these paths reach the tool server; its call and tool endpoints stay private.
+	handle /owner* {
+		reverse_proxy 127.0.0.1:8100
+	}
+	handle /bench* {
+		reverse_proxy 127.0.0.1:8100
+	}
 	handle {
 		respond 404
 	}
