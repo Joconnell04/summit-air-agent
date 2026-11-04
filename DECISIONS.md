@@ -12,6 +12,15 @@ Discussion: docs/ai-process/transcripts/... or docs/explorations/...
 Issue: #N
 -->
 
+## 040. The technician summary is a pinned job note the server checks
+
+Decided: after a booked call, a model (profile `post_call.summary`) drafts a short summary (the problem, anything risky, access, recent work, what the customer was told) and the server writes it as a new pinned job note through the FSM adapter, leaving the intake and every other note as they are. The server drops any line with nothing in the record behind it, with a number the record doesn't hold, or with a phone number. A failed summary is tried once more, then left out and logged; nobody is flagged, since the job already carries the full intake. On the server with `SUMMARIES=1`.
+Why: spec S-16; a technician reads a few lines in the truck, not a transcript. ServiceTitan's job notes are append-only and can be pinned, so the summary sits on top without editing anything. The model writes the sentences; the server decides which reach the job, which catches invented work or codes, though not a wrong statement built from real facts, so the intake stays underneath.
+Considered: editing the job summary field (overwrites the intake); a template with no model (stiff, and loses the caller's own words).
+Would change if: technicians find a summary line wrong, in which case the summary moves behind the owner's review.
+Discussion: PR #73
+Issue: none (spec S-16)
+
 ## 039. Owner guidance is refused only when a model finds it contradicts a locked rule
 
 Decided: the keyword filter on owner guidance is gone; no single word refuses a note. When a draft is saved, one call to a small fast model (profile `owner_edits.guidance_check`, thinking off, JSON) reads the new or changed notes and lines against the locked rules built from the rulebook, and refuses only one that contradicts a locked rule, tells the agent to skip or override one, or has it tell callers something a locked rule makes untrue, with a one-sentence reason on the editor. A note that only mentions a subject passes. If the check can't run or answers out of shape, the save is refused, never let through. Structural checks stay in code: plain ASCII after NFKC, no markup characters, length and per-stage limits, exact `{first_name}`, the AI disclosure in the greeting. This supersedes the keyword part of decision 032.

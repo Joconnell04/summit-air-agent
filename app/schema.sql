@@ -16,6 +16,8 @@ CREATE TABLE IF NOT EXISTS calls (
     linked_call_id TEXT,
     outcome TEXT,
     commercial INTEGER NOT NULL DEFAULT 0,
+    -- The technician's summary (app/summary.py): none, pending (the call ended), written (not in
+    -- the FSM yet), done, failed, or skipped (nothing was booked).
     summary_status TEXT NOT NULL DEFAULT 'none',
     turn_seq INTEGER NOT NULL DEFAULT 0,
     -- Safety: none, checking (the check question was asked), signal (lines not said yet),
@@ -152,6 +154,21 @@ CREATE TABLE IF NOT EXISTS notes (
     fsm_note_id INTEGER,
     text TEXT NOT NULL,
     created_at TEXT NOT NULL
+);
+
+-- The technician's summary for a booked call, written after the call (spec S-16). lines_json holds
+-- [label, text] pairs as pinned to the job; dropped_json the lines the server refused, and why.
+CREATE TABLE IF NOT EXISTS summaries (
+    call_id TEXT PRIMARY KEY REFERENCES calls (id) ON DELETE CASCADE,
+    booking_id INTEGER REFERENCES bookings (id) ON DELETE CASCADE,
+    lines_json TEXT,
+    dropped_json TEXT NOT NULL DEFAULT '[]',
+    model_attempts INTEGER NOT NULL DEFAULT 0,
+    post_attempts INTEGER NOT NULL DEFAULT 0,
+    last_error TEXT,
+    cost_usd REAL,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
 );
 
 -- One row per request, beside the JSON log line, so the owner view and traces can query them.
