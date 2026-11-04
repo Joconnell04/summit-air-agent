@@ -620,7 +620,7 @@ def build() -> dict:
         item(
             "The rules editor opens for an admin",
             "GET",
-            "owner/rules/edit",
+            "bench/rules",
             envelope=False,
             check="pm.test('opens the editor', () => pm.response.to.have.status(200));\n" + html,
         ),
@@ -710,14 +710,14 @@ def build() -> dict:
         item(
             "Staff can't open the rules editor",
             "GET",
-            "owner/rules/edit",
+            "bench/rules",
             envelope=False,
             check="pm.test('refused', () => pm.response.to.have.status(403));",
         ),
         item(
             "Staff can't save a rules draft",
             "POST",
-            "owner/rules/draft",
+            "bench/rules/draft",
             envelope=False,
             form={"guide.booking.0": "Ask about pets."},
             check="pm.test('refused', () => pm.response.to.have.status(403));",
@@ -725,7 +725,7 @@ def build() -> dict:
         item(
             "Staff can't discard a rules draft",
             "POST",
-            "owner/rules/discard",
+            "bench/rules/discard",
             envelope=False,
             form={},
             check="pm.test('refused', () => pm.response.to.have.status(403));",
@@ -733,7 +733,7 @@ def build() -> dict:
         item(
             "Staff can't stop a rules check",
             "POST",
-            "owner/rules/cancel",
+            "bench/rules/cancel",
             envelope=False,
             form={},
             check="pm.test('refused', () => pm.response.to.have.status(403));",
@@ -741,7 +741,7 @@ def build() -> dict:
         item(
             "Staff can't roll back the rules",
             "POST",
-            "owner/rules/rollback",
+            "bench/rules/rollback",
             envelope=False,
             form={"number": "0"},
             check="pm.test('refused', () => pm.response.to.have.status(403));",
@@ -783,6 +783,23 @@ def build() -> dict:
              check=opens),
         item("The bench's settings", "GET", "bench/settings", envelope=False, check=opens),
         item("The eval runs", "GET", "bench/evals", envelope=False, check=opens),
+        item(
+            "An override needs a reason",
+            "POST",
+            "bench/rules/draft",
+            envelope=False,
+            form={"guide.booking.0": "Ask about pets.", "override": "1", "reason": ""},
+            check="pm.test('refused, nothing published', () => pm.response.to.have.status(422));\n"
+            + "pm.test('says why', () => pm.expect(pm.response.text()).to.include('Say why the check is being skipped.'));",
+        ),
+        item(
+            "Discard the draft that override left",
+            "POST",
+            "bench/rules/discard",
+            envelope=False,
+            form={},
+            check="pm.test('back to the editor', () => pm.response.to.have.status(200));",
+        ),
     ]
     scenarios = booking_flow[0]
     scenarios["request"]["url"] = "{{st_url}}/debug/scenarios"

@@ -1,18 +1,16 @@
 """The owner view: three read-only pages for the owner and dispatcher (Today, Calls, Results), each
-call's page, the report to Revin (story O-8), the Rules page and its editor, the Settings page with
-its users, and the design system's live specimen. The numbers come from app/owner.py, the plain
+call's page, the report to Revin (story O-8), the read-only Rules page (the editor is on the debug
+bench, app/bench_rules.py), the Settings page with its users, and the design system's live specimen. The numbers come from app/owner.py, the plain
 notes from app/plain.py, the rulebook from app/rulebook.py, owner edits from app/rules.py, settings
 from app/owner_settings.py and accounts from app/accounts.py; this module checks who is signed in
 and renders HTML. Design: docs/design-system.md.
 
-Every page needs a signed-in user. Staff can open every page and send a report; changing a setting,
-a rule or a user needs an admin, and each of those routes checks the role here, on the server,
-whatever the page showed.
+Every page needs a signed-in user. Staff can open every page and send a report; changing a setting
+or a user needs an admin, and each of those routes checks the role here, on the server, whatever
+the page showed.
 """
 
 import json
-import subprocess
-import sys
 from datetime import date, timedelta
 from pathlib import Path
 
@@ -114,38 +112,6 @@ def _need_admin(request: Request) -> Response | None:
     if not _is_admin(request):
         return _denied(request)
     return None
-
-
-def _start_gate(services) -> None:
-    """Run the eval gate in its own process, so a publish answers at once and the check takes as
-    long as it takes. Its output goes beside the server's log."""
-    if not services.settings.rules_gate:
-        return
-    log = open(services.settings.log_path.with_suffix(".gate.log"), "a")  # noqa: SIM115
-    subprocess.Popen(
-        [sys.executable, "-m", "evals.gate", "--db", str(services.settings.db_path)],
-        stdout=log,
-        stderr=subprocess.STDOUT,
-        start_new_session=True,
-    )
-    log.close()
-
-
-def _edit_form(form) -> tuple[dict, str]:
-    """A draft's content and note from the edit form: line.<key> and guide.<stage>.<n> fields.
-    Any field name is read, so a locked key sent by hand reaches validation and is refused there."""
-    content: dict = {"lines": {}, "guidance": {}}
-    for name, value in form.multi_items():
-        kind, _, rest = name.partition(".")
-        if kind == "line" and rest:
-            content["lines"][rest] = value
-        elif kind == "guide" and rest:
-            stage = rest.split(".")[0]
-            content["guidance"].setdefault(stage, []).append(value)
-        elif kind == "set" and rest:
-            # A raw setting, such as set.priority: there is no field for one, so it is refused.
-            content[rest] = value
-    return content, str(form.get("note", ""))
 
 
 def _tenant_q(slug: str) -> str:
@@ -470,150 +436,6 @@ def add_routes(app: FastAPI) -> None:
         finally:
             conn.close()
         return _render(request, "rules.html", context)
-
-    def edit_page(request: Request, found, slug: str, conn, content=None, note: str = "",
-                  errors=None, status: int = 200) -> Response:
-        rules.expire_checks(conn, found.slug, request.app.state.services.clock())
-        context = rules_context(request, found, slug, conn)
-        draft = rules.open_draft(conn, found.slug)
-        newest = context["versions"][0] if context["versions"] else None
-        blocked = newest if newest and newest["status"] == "blocked" else None
-        if content is None:
-            base = draft or blocked or context["live"]
-            content = base["content"] if base else {}
-            note = base["note"] if (draft or blocked) else ""
-        lines = content.get("lines") or {}
-        guidance = content.get("guidance") or {}
-        errors = errors or {}
-        # Errors with no field on the page, such as a locked rule sent by hand, show at the top.
-        fields = {f"lines.{k}" for k in rules.EDITABLE_LINES}
-        general = [
-            message for key, message in errors.items()
-            if key not in fields
-            and not any(key.startswith(f"guidance.{s}") for s in rules.GUIDANCE_STAGES)
-        ]
-        context |= {
-            "draft": draft,
-            "blocked": blocked,
-            "note": note,
-            "errors": errors,
-            "general": general,
-            "lines": [
-                (key, label, stage, lines.get(key) or rules.default_line(found, key),
-                 rules.default_line(found, key))
-                for key, (_where, stage, label) in rules.EDITABLE_LINES.items()
-            ],
-            "guidance": [
-                (stage, rules.STAGES[stage],
-                 (list(guidance.get(stage) or []) + [""] * rules.GUIDANCE_PER_STAGE)[
-                     : rules.GUIDANCE_PER_STAGE])
-                for stage in rules.GUIDANCE_STAGES
-            ],
-            "max_line": rules.LINE_MAX_CHARS,
-            "max_guide": rules.GUIDANCE_MAX_CHARS,
-        }
-        return _render(request, "rules_edit.html", context, status)
-
-    @app.get("/owner/rules/edit", response_class=HTMLResponse)
-    def owner_rules_edit(request: Request, tenant: str = ""):
-        refused = _need_admin(request)
-        if refused:
-            return refused
-        found = tenant_for(request, tenant)
-        if found is None:
-            return HTMLResponse("No such company.", 404)
-        conn = request.app.state.services.connect()
-        try:
-            return edit_page(request, found, tenant, conn)
-        finally:
-            conn.close()
-
-    @app.post("/owner/rules/draft")
-    async def owner_rules_draft(request: Request, tenant: str = ""):
-        """Save the draft, and with publish=1 send it to the eval gate. Validation is here, on the
-        server, whatever the page sent."""
-        refused = _need_admin(request)
-        if refused:
-            return refused
-        author = _user(request)["name"]
-        found = tenant_for(request, tenant)
-        if found is None:
-            return HTMLResponse("No such company.", 404)
-        services = request.app.state.services
-        form = await request.form()
-        content, note = _edit_form(form)
-        conn = services.connect()
-        try:
-            _saved, errors = rules.save_draft(
-                conn, found, content, author, note, services.clock(), services.guidance_check
-            )
-            if errors:
-                return edit_page(request, found, tenant, conn, content, note, errors, 422)
-            if form.get("publish"):
-                try:
-                    rules.request_publish(conn, found.slug, author, services.clock())
-                except rules.RulesError as err:
-                    return edit_page(request, found, tenant, conn, content, note,
-                                     {"content": str(err)}, 422)
-                _start_gate(services)
-        finally:
-            conn.close()
-        return RedirectResponse(f"/owner/rules/edit{_tenant_q(tenant)}", 303)
-
-    @app.post("/owner/rules/discard")
-    def owner_rules_discard(request: Request, tenant: str = ""):
-        refused = _need_admin(request)
-        if refused:
-            return refused
-        found = tenant_for(request, tenant)
-        if found is None:
-            return HTMLResponse("No such company.", 404)
-        services = request.app.state.services
-        conn = services.connect()
-        try:
-            rules.discard_draft(conn, found.slug, services.clock())
-        finally:
-            conn.close()
-        return RedirectResponse(f"/owner/rules/edit{_tenant_q(tenant)}", 303)
-
-    @app.post("/owner/rules/cancel")
-    def owner_rules_cancel(request: Request, tenant: str = ""):
-        """Stop waiting for a check and get the draft back; a late result is refused."""
-        refused = _need_admin(request)
-        if refused:
-            return refused
-        found = tenant_for(request, tenant)
-        if found is None:
-            return HTMLResponse("No such company.", 404)
-        services = request.app.state.services
-        conn = services.connect()
-        try:
-            rules.cancel_check(conn, found.slug, services.clock())
-        except rules.RulesError as err:
-            return edit_page(request, found, tenant, conn, errors={"content": str(err)}, status=422)
-        finally:
-            conn.close()
-        return RedirectResponse(f"/owner/rules/edit{_tenant_q(tenant)}", 303)
-
-    @app.post("/owner/rules/rollback")
-    def owner_rules_rollback(request: Request, number: int = Form(...), tenant: str = ""):
-        """Make an earlier live version live again, as a new version (nothing is deleted)."""
-        refused = _need_admin(request)
-        if refused:
-            return refused
-        author = _user(request)["name"]
-        found = tenant_for(request, tenant)
-        if found is None:
-            return HTMLResponse("No such company.", 404)
-        services = request.app.state.services
-        conn = services.connect()
-        try:
-            rules.rollback(conn, found.slug, number, author, services.clock())
-        except rules.RulesError as err:
-            return edit_page(request, found, tenant, conn, errors={"content": str(err)}, status=422)
-        finally:
-            conn.close()
-        return RedirectResponse(f"/owner/rules/edit{_tenant_q(tenant)}", 303)
 
     def settings_page(request: Request, found, slug: str, conn, errors=None, added=None,
                       remove: int | None = None, saved: str = "", status: int = 200) -> Response:
