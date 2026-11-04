@@ -120,3 +120,5 @@ Gaps. Jev's retention policy, Sonic 3.6's measured latency, ModernBERT CPU laten
 | 8. Voice-side tweaks | Test preemptive speech and a smaller first sentence on the rig; keep what helps | End-of-turn lane |
 | 9. Our own classifier | No | |
 | 10. A faster model for some turns | No: Haiku is already the fastest Claude model, the model is 0.8 s of a 1.94 s turn, and switching mid-call changes voice and judgment | |
+
+Ears, tested after the decision (idea 7's neighbour): Cartesia Ink-2 against Nova-3 on the same scripted 8 kHz caller turns, same keyterms (evals/rounds/stt-ink2-01.md). Kept Deepgram: Ink-2's final transcript came a median 1.08 s after the caller's last word against 0.44 s (MEASURED, 60 runs each), and LiveKit waits for that final, so every turn would be about 0.6 s slower; it also missed 4 of 32 street spans to Nova-3's 0, and tied on digits and spelled names.

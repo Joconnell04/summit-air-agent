@@ -11,7 +11,13 @@ from livekit.plugins import cartesia, deepgram
 from tests.tool_server.toolkit import TENANT_DIR
 from voice import names as local_names
 from voice.livekit.settings import load_voice
-from voice.livekit.worker import check_names, stt_options, tts_options, turn_handling
+from voice.livekit.worker import (
+    build_stt,
+    check_names,
+    stt_options,
+    tts_options,
+    turn_handling,
+)
 
 NAMES = local_names.load(TENANT_DIR)
 RAW = yaml.safe_load((TENANT_DIR / "names.yaml").read_text())
@@ -112,6 +118,18 @@ def test_the_worker_gives_deepgram_the_keyterms_and_cartesia_the_dictionary():
     # The plugins accept them as built (no network until speech starts).
     deepgram.STT(**stt, api_key="test")
     cartesia.TTS(**tts, api_key="test")
+
+
+def test_ink2_gets_the_same_keyterms_and_ends_the_turn_itself():
+    voice = load_voice()
+    trial = {**voice, "stt": voice["stt_candidates"]["ink-2"]}
+    options = stt_options(trial, NAMES)
+    assert options == {"model": "ink-2", "keyterm": NAMES.keyterms()}
+    assert isinstance(build_stt(trial, NAMES, api_key="test"), cartesia.STT)
+    assert turn_handling(trial)["turn_detection"] == "stt"
+    # Nova-3 keeps LiveKit's turn detector.
+    assert turn_handling(voice)["turn_detection"] != "stt"
+    assert isinstance(build_stt(voice, NAMES, api_key="test"), deepgram.STT)
 
 
 def test_the_voice_settings_reach_the_session():
