@@ -4,6 +4,8 @@ import json
 import re
 from datetime import UTC, datetime
 
+import pytest
+
 from app.tools import TOOLS
 from prompts import assemble
 from tests.tool_server.toolkit import TENANT_DIR
@@ -343,3 +345,35 @@ def test_an_expired_member_is_not_thanked_as_a_member(agent, scenarios):
     frank = scenarios["expiredMember"]
     notes = assemble.call_notes(agent.start(frank["phone"])["data"])
     assert not any("active" in n for n in notes)
+
+
+@pytest.mark.parametrize(
+    "sentence",
+    [
+        "The reschedule ran without a confirmation message.",
+        "I can't confirm the new time yet.",
+        "Let me check the appointment again.",
+        "The booking didn't return anything.",
+        "Is 142 Main Street still the right address?",
+        "And the number ending in 0418 the best to reach you?",
+    ],
+)
+def test_tool_talk_and_confirm_questions_are_never_spoken(sentence):
+    """The same test call: tool talk aloud, and a stacked address-and-number check before a move."""
+    assert assemble.SpokenReply().sentence(sentence) == ""
+
+
+@pytest.mark.parametrize(
+    "sentence",
+    ["What's the best number to reach you?", "What's the address there?",
+     "Your tune-up is set for Friday between 12 and 4."],
+)
+def test_ordinary_questions_and_confirmations_are_kept(sentence):
+    assert assemble.SpokenReply().sentence(sentence) == sentence
+
+
+def test_moving_a_known_callers_own_visit_needs_no_address_check():
+    start = {"customers": [{"residential": True, "open_jobs": [
+        {"job_id": 7, "window": {"weekday": "Friday", "label": "12 to 4"}}]}]}
+    notes = " ".join(assemble.call_notes(start))
+    assert "needs no read-back" in notes and "don't ask them to confirm the address" in notes

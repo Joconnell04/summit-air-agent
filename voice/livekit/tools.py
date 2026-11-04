@@ -11,6 +11,7 @@ import time
 from collections.abc import Callable
 
 from livekit.agents import RunContext, function_tool
+from livekit.agents.llm import ToolResult
 
 from prompts.assemble import SpokenReply, for_model, spoken_by_server, spoken_first
 
@@ -89,13 +90,20 @@ def make_tool(
         # for the agent from there.
         put_through = spec["name"] == "flag_person" and result["ok"] and transfer is not None
         if put_through and await transfer.offer(context.speech_handle, result):
-            return None
+            return _no_reply(result)
         if spoken is not None or ending:
-            # None tells the session not to generate another reply.
-            return None
+            return _no_reply(result)
         return compact(for_model(result))
 
     return handler
+
+
+def _no_reply(result: dict) -> ToolResult:
+    """The worker spoke for the agent, so the session must not generate another reply. In
+    livekit-agents 1.8 a tool that returns None still asks for one, with an empty output, and the
+    model then talks about the missing message ("the reschedule ran without a confirmation
+    message", a scripted test call after #135). The model still gets the result to read."""
+    return ToolResult(compact(for_model(result)), reply_required=False)
 
 
 def build_tools(

@@ -90,7 +90,8 @@ def call_notes(start: dict) -> list[str]:
         notes.append(
             f"They already have a visit booked ({when}). To move it, call reschedule_appointment "
             "for that visit, never book_appointment; book a new visit only for a different problem "
-            "the caller confirms."
+            "the caller confirms. Moving their own visit needs no read-back: don't ask them to "
+            "confirm the address or number, just offer times and move it."
         )
     if passed:
         when = ", ".join(
@@ -309,6 +310,28 @@ ANNOUNCES_READ_BACK = re.compile(
 DESCRIBES_TOOLS = re.compile(
     r"\b(?:the|my|our) (?:tool|tools|system|server|records?)(?:'s)?\s+"
     r"(?:says?|said|shows?|showed|marked|returned|gave|is giving|tells? me|flagged|came back)\b",
+    re.IGNORECASE,
+)
+# Talk about a tool's run or its result ("The reschedule ran without a confirmation message", "Let
+# me check the appointment again"), from a scripted test call after #135. The caller only ever
+# hears what the call means for them.
+TOOL_TALK = re.compile(
+    r"\bran without\b|\bconfirmation message\b|\bwithout a confirmation\b"
+    r"|\b(?:let me|i'?ll|i need to) (?:check|look at|pull up|verify) (?:the|your) "
+    r"(?:appointment|booking|visit|reschedule|request) again\b"
+    r"|\b(?:the|my|that) (?:reschedule|rescheduling|booking|move|cancel(?:lation)?|request|update|"
+    r"change|lookup|call) (?:ran|didn'?t (?:return|come back|confirm)|returned|came back|went "
+    r"through without|failed to (?:return|confirm))\b"
+    r"|\bi can'?t confirm the new time yet\b",
+    re.IGNORECASE,
+)
+# A question confirming the address or the number ("Is 142 Main Street still the right address?",
+# "And the number ending in 0418, the best to reach you?"). The server's read-back confirms them,
+# and a caller's own visit is moved with no read-back at all (the same test call).
+ASKS_TO_CONFIRM = re.compile(
+    r"\bis\b[^.?!]{0,50}\b(?:still )?(?:the )?(?:right|correct) (?:address|number|place)\b[^.?!]*\?"
+    r"|\bnumber ending in\b[^.?!]*\?"
+    r"|\bstill the (?:best|right|correct)\b[^.?!]*\?",
     re.IGNORECASE,
 )
 # A word from inside the company ("I'll flag this for our team"). The server's own sentences say
@@ -531,6 +554,8 @@ class SpokenReply:
         shouldn't hear it."""
         after_restatement, self._dropped_restatement = self._dropped_restatement, False
         if ANNOUNCES_READ_BACK.search(sentence) or DESCRIBES_TOOLS.search(sentence):
+            return ""
+        if TOOL_TALK.search(sentence) or ASKS_TO_CONFIRM.search(sentence):
             return ""
         if INTERNAL_WORD.search(sentence) or CLAIMS_FEE.search(sentence):
             return ""

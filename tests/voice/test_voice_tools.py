@@ -10,6 +10,7 @@ from app.tenant import load_agent
 from app.tools import TOOLS
 from prompts import assemble
 from tests.tool_server.toolkit import DIALED, TENANT_DIR, in_area_address
+from tests.voice.replies import no_reply
 from voice.livekit.bridge import Bridge
 from voice.livekit.server import UNREACHABLE, ToolServer, idempotency_key
 from voice.livekit.tools import ToolLog, build_tools
@@ -92,7 +93,7 @@ def test_end_call_before_the_safety_lines_speaks_the_lines_and_does_not_hang_up(
     lines = agent.turn(call_id, "I smell gas in the kitchen")["say"]
     hangups, voice = Hangups(), Voice()
     tools = tools_for(connect(call_id), hangups, voice)
-    assert asyncio.run(tools["end_call"]({"reason": "resolved"}, "ctx")) is None
+    assert no_reply(asyncio.run(tools["end_call"]({"reason": "resolved"}, "ctx")))
     assert voice.said == [lines]
     assert hangups.calls == []
 
@@ -103,7 +104,7 @@ def test_the_safety_sign_off_is_spoken_by_the_worker_and_the_line_stays_open(age
     agent.say(call_id, agent.turn(call_id, "I smell gas")["say"])
     hangups, voice = Hangups(), Voice()
     tools = tools_for(connect(call_id), hangups, voice)
-    assert asyncio.run(tools["end_call"]({"reason": "resolved"}, "ctx")) is None
+    assert no_reply(asyncio.run(tools["end_call"]({"reason": "resolved"}, "ctx")))
     sign_off = " ".join(SAFETY["sign_off"].split())
     assert voice.said == [sign_off]
     assert hangups.calls == []
@@ -115,7 +116,7 @@ def test_a_safety_caller_saying_goodbye_hears_the_sign_off_then_the_line_drops(a
     agent.say(call_id, agent.turn(call_id, "I smell gas")["say"])
     hangups, voice = Hangups(), Voice()
     tools = tools_for(connect(call_id), hangups, voice)
-    assert asyncio.run(tools["end_call"]({"reason": "caller_goodbye"}, "ctx")) is None
+    assert no_reply(asyncio.run(tools["end_call"]({"reason": "caller_goodbye"}, "ctx")))
     assert voice.said == [" ".join(SAFETY["sign_off"].split())]
     # The hang-up waits for the sign-off's own playout.
     assert hangups.calls == [("ctx", "handle:1")]
@@ -130,7 +131,7 @@ def test_a_goodbye_after_the_sign_off_adds_no_second_goodbye(agent, connect):
     agent.turn(call_id, "Okay, bye.")
     hangups, voice = Hangups(), Voice()
     tools = tools_for(connect(call_id), hangups, voice)
-    assert asyncio.run(tools["end_call"]({"reason": "caller_goodbye"}, "ctx")) is None
+    assert no_reply(asyncio.run(tools["end_call"]({"reason": "caller_goodbye"}, "ctx")))
     assert voice.said == []
     assert hangups.calls == [("ctx", None)] and hangups.quiet is True
 
@@ -139,7 +140,7 @@ def test_end_call_that_the_server_allows_hangs_up_and_ends_the_turn(agent, conne
     agent.start(call_id="call-1")
     hangups, voice = Hangups(), Voice()
     tools = tools_for(connect("call-1"), hangups, voice)
-    assert asyncio.run(tools["end_call"]({"reason": "wrong_number"}, "ctx")) is None
+    assert no_reply(asyncio.run(tools["end_call"]({"reason": "wrong_number"}, "ctx")))
     assert hangups.calls == [("ctx", None)]
     assert voice.said == []
 
@@ -160,7 +161,7 @@ def test_a_booking_refused_for_safety_has_the_worker_say_the_lines(agent, connec
             "approver": "me",
         },
     }
-    assert asyncio.run(tools["book_appointment"](args, None)) is None
+    assert no_reply(asyncio.run(tools["book_appointment"](args, None)))
     assert voice.said == [lines]
 
 
@@ -222,5 +223,25 @@ def test_the_read_back_sentence_is_spoken_by_the_worker_and_the_model_says_nothi
     tools = tools_for(connect("call-1"), hangups, voice)
     address = {"street": "101 Union St", "unit": "", "city": "Brooklyn", "zip": "11231"}
     result = asyncio.run(tools["read_back"]({"address": address, "phone": "caller_id"}, "ctx"))
-    assert result is None
+    assert no_reply(result)
     assert len(voice.said) == 1 and voice.said[0].startswith("I have your home at 101 Union St")
+
+
+def test_a_move_is_spoken_once_by_the_worker_and_the_model_is_not_asked_to_reply(agent, connect,
+                                                                                  scenarios):
+    """A scripted test call after #135: the confirmation was spoken, then the model said "the
+    reschedule ran without a confirmation message", because a tool returning None still asked
+    livekit-agents for a reply."""
+    maria = scenarios["repeatCallerOpenJob"]
+    agent.start(caller_id=maria["phone"], call_id="call-1")
+    agent.turn("call-1", "I need to move my visit to tomorrow.")
+    day = agent.tool("find_slots", "call-1", job_type="no_heat")["data"]["days"][1]
+    voice = Voice()
+    tools = tools_for(connect("call-1"), voice=voice)
+    args = {"booking_id": maria["jobId"], "slot": {"date": day["date"], "window": day["windows"][0]},
+            "reason": "Can't be home today"}
+    result = asyncio.run(tools["reschedule_appointment"](args, None))
+    assert no_reply(result)
+    assert len(voice.said) == 1 and voice.said[0].startswith("Done, I've moved it to")
+    # The model still gets the result to read.
+    assert json.loads(result.output)["ok"] is True
