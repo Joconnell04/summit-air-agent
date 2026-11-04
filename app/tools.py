@@ -851,7 +851,14 @@ def _identity_gate(ctx: Ctx, customer_id: int, addresses: list[dict], thing: str
                 "VALUES (?, ?, 'asked', ?, ?)",
                 (ctx.call["id"], customer_id, ctx.call["turn_seq"], iso(ctx.now)),
             )
-        raise Refused("identity_check", ctx.tenant.line("identity_check", thing=thing), need=note)
+        # Only what the caller hasn't said yet is asked for (eval run 20261104-201343: asking
+        # again for an address the caller opened with read as a repeat).
+        line = (
+            "identity_check_name_only" if address_ok
+            else "identity_check_address_only" if name_ok
+            else "identity_check"
+        )
+        raise Refused("identity_check", ctx.tenant.line(line, thing=thing), need=note)
     if not records.caller_turn_after(ctx.conn, check["call_id"], check["asked_seq"]):
         raise Refused("identity_check", ctx.tenant.line("identity_check", thing=thing), need=note)
     if check["asks"] < IDENTITY_ASKS:
@@ -1095,6 +1102,9 @@ def _unsaid_withheld(ctx: Ctx, bundle: dict) -> dict:
         **bundle,
         "name": "",
         "phones": [],
+        # What the visit is about stays out too; the job id and window are enough to change it.
+        "open_jobs": [{**j, "summary": ""} for j in bundle["open_jobs"]],
+        "notes": [],
         "withheld": "the name and numbers on file are not shown until the caller says them; "
         "a change asks for them first",
     }

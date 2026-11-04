@@ -160,6 +160,8 @@ LINE_STAGES = {
     "read_back_for": ("booking", "Read-back, someone else's number"),
     "account_which": ("booking", "Which account on the number"),
     "identity_check": ("whole_call", "Name and address check"),
+    "identity_check_name_only": ("whole_call", "Name and address check, name only"),
+    "identity_check_address_only": ("whole_call", "Name and address check, address only"),
     "identity_check_address": ("whole_call", "Name and address check, address"),
     "identity_check_name": ("whole_call", "Name and address check, name"),
     "identity_check_again": ("whole_call", "Name and address check, again"),

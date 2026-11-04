@@ -181,6 +181,8 @@ def test_an_unknown_number_cancels_after_saying_the_name_and_address(agent, mock
     call, maria = unknown_caller_finds_maria(agent, scenarios)
     asked = agent.tool("cancel_appointment", call, booking_id=maria["jobId"], reason="fixed")
     assert asked["refused"] == "identity_check"
+    # The caller opened with the address, so only the name is asked for.
+    assert asked["say"].endswith("could you tell me your name?")
     assert "confirm you're the person for the visit" in asked["say"]
     assert "Delgado" not in asked["say"] and "Bedford" not in asked["say"]
     agent.say(call, asked["say"])
@@ -513,6 +515,7 @@ def test_a_customer_found_by_address_comes_back_without_name_or_numbers(agent, s
                        address={"street": "620 Bedford Ave", "unit": "", "zip": "11235"})
     match = found["data"]["matches"][0]
     assert match["name"] == "" and match["phones"] == [] and match["withheld"]
+    assert match["open_jobs"] and match["open_jobs"][0]["summary"] == ""
     agent.turn(call, "It's Maria Delgado.")
     again = agent.tool("find_customer", call,
                        address={"street": "620 Bedford Ave", "unit": "", "zip": "11235"})
