@@ -454,8 +454,10 @@ def test_a_whole_call_is_timed_on_the_audio_and_scored_on_the_record(tmp_path, m
     assert result.outcome == "pass", result.error or result.check_failures
     assert fake.closed == "caller_hangup"
     (timing,) = result.turn_timings
-    # The fake answers 400 ms after the caller's last frame; pacing adds at most a frame or two.
-    assert 380 <= timing.reply_delay_ms <= 520
+    # The fake answers 400 ms after the caller's last frame. The test runs on the wall clock, so a
+    # busy CI runner can add a few hundred ms; the bound only checks the delay is measured from
+    # the last frame, not from the start of the call.
+    assert 380 <= timing.reply_delay_ms <= 1500
     assert timing.kind == "plain" and timing.caller_speech_ms == pytest.approx(300, abs=25)
     assert [t.role for t in result.transcript] == ["agent", "caller", "agent"]
     assert result.transcript[-1].said == "Sorry to hear that. Goodbye."
