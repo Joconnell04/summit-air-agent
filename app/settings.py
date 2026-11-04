@@ -118,6 +118,7 @@ LIMITS = {
     "book": 1,
     "reschedule": 1,
     "cancel": 1,
+    "move": 1,
     "find_customer": 5,
     "get_customer_history": 5,
     "find_address": 4,

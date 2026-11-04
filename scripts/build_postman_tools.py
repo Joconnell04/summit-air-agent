@@ -390,6 +390,13 @@ def build() -> dict:
             call="known_call_id",
         ),
         tool(
+            "record_move",
+            "A move nobody said they made",
+            {},
+            refused("move_not_said"),
+            call="known_call_id",
+        ),
+        tool(
             "flag_person",
             "Flag a person with a callback time",
             {

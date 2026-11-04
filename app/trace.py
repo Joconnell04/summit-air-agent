@@ -102,6 +102,12 @@ def timeline(conn: sqlite3.Connection, call_id: str) -> dict | None:
         ),
         "address_checks": rows("SELECT * FROM address_checks WHERE call_id = ?"),
         "names": rows("SELECT name, seq, saved_at FROM call_names WHERE call_id = ?"),
+        # A caller who moved, and the name and address check for a change from a number that
+        # isn't on the account (issue #128).
+        "address_moves": rows("SELECT * FROM address_moves WHERE call_id = ? ORDER BY id"),
+        "identity_checks": rows(
+            "SELECT customer_id, status, asks, callback_id FROM identity_checks WHERE call_id = ?"
+        ),
     }
 
 

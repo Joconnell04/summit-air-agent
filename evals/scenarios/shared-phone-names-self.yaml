@@ -1,0 +1,23 @@
+id: shared-phone-names-self
+flow: [booking, repeat-caller]
+difficulty: easy
+journeys: [J4]
+spec: [S-31a]
+tags: [standard, caller-changes]
+caller_id: seed:sharedPhone
+persona: Hector Ruiz, who shares a home phone with his wife Marisol and introduces himself up front. Brief and direct.
+hidden_facts:
+  name: Hector Ruiz
+  address: the house on file, 507 Coney Island Ave, Brooklyn, 11210
+  phone: the number you're calling from
+  wants: the yearly heating tune-up, any morning this week
+opening: Hi, this is Hector Ruiz, I'd like to book the yearly heating tune-up.
+script:
+  - Answer yes to a correct read-back.
+  - Take the first morning window offered. Say goodbye once the agent confirms.
+must:
+  - booking: {count: 1, job_type: tune_up}
+  - booked_under: Hector Ruiz
+  - agent_never_says: "more than one account"
+should:
+  - Books under the caller's own name without asking whose account it is.

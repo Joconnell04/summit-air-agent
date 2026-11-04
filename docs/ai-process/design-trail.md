@@ -110,3 +110,6 @@ How the design was reached, in order, so a reader can follow each choice back to
 | Priority from the caller | Rules fire on the caller's words only; the model's notes raise nothing; a raise after the wait is flagged for the dispatcher | DECISIONS.md 072, #124 |
 | A caller who pushes | A calm line and the soonest window or a person; pushing and claims raise nothing | DECISIONS.md 073, #124 |
 | Eval reference after C-58 and #125 | Two-sample standard run adopted at 92%; floor stays 90% | DECISIONS.md 011, #126 |
+| A caller who moved | New location, old one inactive, open visits moved or (out of area) cancelled; nothing goes to the old address | DECISIONS.md 074, #128 |
+| Changes from an unknown number | The caller says the name and address first; a mismatch changes nothing and offers a call to the number on file | DECISIONS.md 075, #128 |
+| Another number, two accounts | Another person's number is the visit's contact; a shared number books under the name the caller says | DECISIONS.md 076, #128 |

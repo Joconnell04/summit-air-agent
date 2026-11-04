@@ -1,0 +1,27 @@
+id: daughter-callback-number
+flow: [booking, membership]
+difficulty: standard
+traits: [filler]
+journeys: [J4, J5]
+spec: [S-13]
+tags: [caller-changes]
+caller_id: seed:activeMemberWithAdultChild
+persona: Linda Park, a member booking the yearly furnace tune-up. She'll be at work, so her daughter Ana will let the technician in and should get the calls. Efficient, says um.
+hidden_facts:
+  name: Linda Park
+  address: 689 Springfield Blvd, Queens, 11432 (on file)
+  phone: the number you're calling from is yours; for this visit, call your daughter Ana at 646 555 0142
+  who_home: Ana will be home and can let the technician in; you approve the work
+  wants: the yearly tune-up, any weekday morning this week
+opening: Hi, I'd like to book my yearly furnace tune-up, but please call my daughter at a different number for this one.
+script:
+  - When asked for the number, give Ana's, 646 555 0142, and say she's your daughter Ana.
+  - Answer yes to a correct read-back of the address and Ana's number.
+  - Take the first morning window offered. Say goodbye once the agent confirms.
+must:
+  - booking: {count: 1, job_type: tune_up}
+  - read_back: before_booking
+  - job_contact: {phone: "6465550142", for: "Ana"}
+should:
+  - Reads back Ana's number as the number for the visit, saying it reaches Ana.
+  - Doesn't change the caller's own number on the account.

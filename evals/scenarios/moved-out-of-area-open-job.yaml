@@ -1,0 +1,31 @@
+id: moved-out-of-area-open-job
+flow: [repeat-caller]
+difficulty: standard
+traits: [filler]
+journeys: [J7]
+spec: [S-28, S-31]
+tags: [caller-changes]
+max_turns: 18
+caller_id: seed:repeatCallerOpenJob
+persona: Maria Delgado, who has a no-heat visit booked for today at her old Brooklyn house but moved to Hoboken, New Jersey last week. Friendly, says um.
+hidden_facts:
+  name: Maria Delgado
+  old_address: 620 Bedford Ave, Brooklyn, 11235, where the visit is booked; nobody lives there now
+  new_address: 71 Hudson Street, Hoboken, New Jersey, 07030
+  phone: the number you're calling from
+  wants: to know whether the company can come to the new place; if not, nobody should go to the old house
+opening: Hi, um, I've got a technician coming today, but we moved to Hoboken last week. Can you still come out?
+script:
+  - Give the new address with the ZIP when asked.
+  - Answer yes to a correct read-back of the new address and your number.
+  - If the agent says it can't come to Hoboken, accept it politely.
+  - Say goodbye once the agent says what happened to the visit.
+must:
+  - tool_ok: record_move
+  - moved: {in_area: false, zip: "07030", jobs: 1}
+  - out_of_area: "07030"
+  - tool_not_called: [book_appointment]
+  - agent_says: "outside the area"
+should:
+  - Tells the caller plainly that Hoboken is outside the area and that the visit at the old house is cancelled, so nobody goes there.
+  - Doesn't promise a visit or suggest a booking at the new address.

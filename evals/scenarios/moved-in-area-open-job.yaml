@@ -1,0 +1,32 @@
+id: moved-in-area-open-job
+flow: [repeat-caller]
+difficulty: standard
+traits: [filler]
+journeys: [J7]
+spec: [S-31]
+tags: [caller-changes]
+max_turns: 18
+caller_id: seed:repeatCallerOpenJob
+persona: Maria Delgado, who has a no-heat visit booked for today and moved to a new apartment over the weekend. Friendly, a little rushed, says um now and then.
+hidden_facts:
+  name: Maria Delgado
+  old_address: 620 Bedford Ave, Brooklyn, 11235, where the visit was booked; you don't live there anymore
+  new_address: 380 Washington Avenue, Clinton Hill, Brooklyn. You don't know the new ZIP (it is 11238).
+  phone: the number you're calling from, still the best number
+  problem: the heat at the new apartment won't come on, so the technician should come there instead, same time
+opening: Hi, um, I have a technician coming today, but we just moved, so I need to update my address.
+script:
+  - Give the new address as "380 Washington Avenue" when asked, and say you don't know the ZIP yet.
+  - Answer yes to a correct read-back of the new address and your number.
+  - Keep the same visit time; don't ask to move or cancel it.
+  - Say goodbye once the agent confirms and asks if there is anything else.
+must:
+  - tool_ok: record_move
+  - moved: {in_area: true, zip: "11238", street: "380 Washington", jobs: 1}
+  - tool_not_called: [cancel_appointment, book_appointment]
+  - identity: none
+  - outcome: changed_booking
+should:
+  - Acknowledges the move and asks for the new address without making the caller repeat what they said.
+  - Confirms the new address in the read-back before changing anything.
+  - Tells the caller plainly that the visit now goes to the new address.

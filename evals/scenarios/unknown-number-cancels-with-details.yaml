@@ -1,0 +1,28 @@
+id: unknown-number-cancels-with-details
+flow: [repeat-caller]
+difficulty: standard
+traits: [filler]
+journeys: [J7]
+spec: [S-31, S-39]
+tags: [caller-changes]
+caller_id: "(212) 555-0151"
+persona: Maria Delgado, calling from her work phone, which isn't on her account, to cancel today's no-heat visit because the heat came back on. Polite, says um.
+hidden_facts:
+  name: Maria Delgado
+  address: 620 Bedford Ave, Brooklyn, 11235
+  phone: this is your work phone; your cell is the one on the account
+  reason: the boiler started working again on its own this morning
+opening: Hi, um, I need to cancel the heating visit we have booked for today.
+script:
+  - When asked for the address, give it with the ZIP.
+  - When asked for your name, say Maria Delgado.
+  - Give the reason when asked, confirm the cancel, and decline any other window offered.
+  - Say goodbye after the agent confirms the cancellation.
+must:
+  - tool_ok: cancel_appointment
+  - identity: verified
+  - outcome: changed_booking
+  - agent_never_says: "Delgado"
+should:
+  - Asks politely for the caller's name and address before cancelling, without reading any details out.
+  - Cancels once the details are given and confirms it out loud.

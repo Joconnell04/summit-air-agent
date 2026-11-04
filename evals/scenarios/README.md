@@ -85,5 +85,9 @@ Each `must` item is `- <check>: <argument>`. They read the tool server's record 
 
 | `preferred_name` | a name or `none` | the form of address the server kept from the caller's words (app/address_as.py) is this one, or none was kept |
 | `tool_refused` | a refusal code or list | some tool on the call came back with each code, such as `zip_mismatch` |
+| `moved` | `{in_area, zip, street, jobs}` | read from ServiceTitan after the call (in-process stack only): in the area, an active location at the new address, the old one inactive and no open job at an inactive location; out of the area, no location added and no open job left at the old one. `jobs` is how many open jobs were moved or cancelled |
+| `identity` | `verified`, `mismatch` or `none` | the name and address check for a change from a number not on the account; `verified` also needs the office's note on each job changed |
+| `job_contact` | `{phone, for}` | the booked job's contact line in ServiceTitan has that number and names `for`, the job shows the account's own number, and the customer's numbers don't include it |
+| `booked_under` | a customer name | the booked job is on that customer in ServiceTitan |
 
 Job types: `no_heat`, `no_cooling`, `tune_up`, `safety_check`, `estimate`. Priorities: Low, Normal, High, Urgent.

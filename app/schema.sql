@@ -562,3 +562,40 @@ CREATE TABLE IF NOT EXISTS call_names (
     at TEXT NOT NULL,
     saved_at TEXT
 );
+
+-- The name and address check before a change for a caller whose number isn't on the customer's
+-- account (tools._identity_gate). `status` is asked, verified or mismatch; `asked_seq` the turn the
+-- question was last asked on. After a mismatch the callback the caller accepts goes to
+-- `on_file_phone`, the account's own number, and `callback_id` is that callback.
+CREATE TABLE IF NOT EXISTS identity_checks (
+    call_id TEXT NOT NULL REFERENCES calls (id) ON DELETE CASCADE,
+    customer_id INTEGER NOT NULL,
+    status TEXT NOT NULL CHECK (status IN ('asked', 'verified', 'mismatch')),
+    asked_seq INTEGER NOT NULL,
+    asks INTEGER NOT NULL DEFAULT 1,
+    on_file_phone TEXT NOT NULL DEFAULT '',
+    callback_id INTEGER,
+    at TEXT NOT NULL,
+    PRIMARY KEY (call_id, customer_id)
+);
+
+-- A customer who moved (tools.record_move). In the area: the new location, the old ones made
+-- inactive and the open jobs moved to the new one. Out of the area: nothing changes but a note,
+-- and the open jobs at the old address are cancelled. Job ids are JSON lists.
+CREATE TABLE IF NOT EXISTS address_moves (
+    id INTEGER PRIMARY KEY,
+    call_id TEXT NOT NULL REFERENCES calls (id) ON DELETE CASCADE,
+    customer_id INTEGER NOT NULL,
+    old_location_ids TEXT NOT NULL,
+    new_location_id INTEGER,
+    new_location_made TEXT NOT NULL DEFAULT '',
+    street TEXT NOT NULL,
+    unit TEXT NOT NULL DEFAULT '',
+    zip TEXT NOT NULL,
+    in_area INTEGER NOT NULL,
+    jobs_moved TEXT NOT NULL DEFAULT '[]',
+    jobs_cancelled TEXT NOT NULL DEFAULT '[]',
+    jobs_for_person TEXT NOT NULL DEFAULT '[]',
+    at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS ix_address_moves_call ON address_moves (call_id);

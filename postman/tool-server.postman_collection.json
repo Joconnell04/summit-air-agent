@@ -1481,6 +1481,40 @@
           }
         },
         {
+          "name": "A move nobody said they made",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('refused: move_not_said', () => pm.expect(pm.response.json().refused).to.eql('move_not_said'));",
+                  "",
+                  "pm.test('HTTP 200 with the envelope', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  const b = pm.response.json();",
+                  "  ['ok', 'say', 'data', 'refused'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/tools/record_move",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"call_id\": \"{{known_call_id}}\"\n}"
+            }
+          }
+        },
+        {
           "name": "Flag a person with a callback time",
           "event": [
             {

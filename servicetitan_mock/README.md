@@ -68,10 +68,10 @@ All tenant routes live under `/{module}/v2/tenant/{tenantId}/` (the call feed is
 
 | Module | Endpoints |
 |---|---|
-| `crm` | `GET/POST customers`, `GET customers/{id}`, `GET/POST customers/{id}/contacts`, `GET/POST customers/{id}/notes`, `GET/POST locations`, `GET locations/{id}`, `GET locations/{id}/contacts`, `GET bookings`, `GET bookings/{id}`, `POST booking-provider/{id}/bookings`, `GET/POST leads`, `GET leads/{id}` |
+| `crm` | `GET/POST customers`, `GET customers/{id}`, `GET/POST customers/{id}/contacts`, `GET/POST customers/{id}/notes`, `GET/POST locations`, `GET/PATCH locations/{id}`, `GET locations/{id}/contacts`, `GET bookings`, `GET bookings/{id}`, `POST booking-provider/{id}/bookings`, `GET/POST leads`, `GET leads/{id}` |
 | `memberships` | `GET membership-types`, `GET membership-types/{id}`, `GET memberships`, `GET memberships/{id}`, `GET recurring-service-events` |
 | `equipmentsystems` | `GET installed-equipment` |
-| `jpm` | `GET job-types`, `GET job-types/{id}`, `GET job-cancel-reasons`, `GET/POST jobs`, `GET jobs/{id}`, `GET jobs/{id}/history`, `GET/POST jobs/{id}/notes`, `PUT jobs/{id}/cancel`, `GET appointments`, `GET appointments/{id}`, `PATCH appointments/{id}/reschedule` |
+| `jpm` | `GET job-types`, `GET job-types/{id}`, `GET job-cancel-reasons`, `GET/POST jobs`, `GET/PATCH jobs/{id}`, `GET jobs/{id}/history`, `GET/POST jobs/{id}/notes`, `PUT jobs/{id}/cancel`, `GET appointments`, `GET appointments/{id}`, `PATCH appointments/{id}/reschedule` |
 | `dispatch` | `POST capacity`, `GET appointment-assignments`, `POST appointment-assignments/assign-technicians`, `GET arrival-windows`, `GET zones`, `GET technician-shifts` |
 | `settings` | `GET business-units`, `GET technicians`, `GET technicians/{id}`, `GET tag-types` |
 | `jbce` | `GET call-reasons` |
@@ -79,7 +79,7 @@ All tenant routes live under `/{module}/v2/tenant/{tenantId}/` (the call feed is
 | `telecom` | v3: `GET calls`; v2: `GET calls/{id}`, `PUT calls/{id}` |
 | root (not ServiceTitan) | `POST /connect/token` (ServiceTitan's is on `auth.servicetitan.io`), `GET /health`, `GET /debug/logs`, `GET /debug/scenarios`, `POST /debug/calls`, `POST /debug/reset` (eval instance only; not in the Postman collection because it wipes the world) |
 
-Query filters that matter to the agent: `customers?phone=`, `customers?street=&unit=&zip=`, `locations?street=&unit=&zip=`, `memberships?customerIds=&status=`, `jobs?customerId=&jobStatus=Scheduled`, `installed-equipment?locationIds=`, and on the call feed `callerPhoneNumber=`, `phoneNumberCalled=`, `createdOnOrAfter=`, `sid=`, `tag=`.
+Query filters that matter to the agent: `customers?phone=`, `customers?street=&unit=&zip=`, `locations?street=&unit=&zip=` (active locations only unless `active=Any` or `False`, as in ServiceTitan), `memberships?customerIds=&status=`, `jobs?customerId=&jobStatus=Scheduled`, `installed-equipment?locationIds=`, and on the call feed `callerPhoneNumber=`, `phoneNumberCalled=`, `createdOnOrAfter=`, `sid=`, `tag=`.
 
 ## Not in the real API
 
@@ -119,6 +119,7 @@ Source for every SOURCE line: ServiceTitan's own OpenAPI documents, downloaded a
 - Membership `status` words beyond Active, Expired and Canceled, and the shape of a membership type's discount.
 - Arrival windows (8 to 12, 12 to 4, 4 to 8, plus an after-hours window), hours, the 36/4 split of service technicians and comfort advisors, urgent holds of two per window, the three counties, perk values, and every fee. Fees are null on purpose: Summit Air's real fees are unknown, and the agent never states a fee that is not configured.
 - Time zone and the weekly on-call rotation.
+- That `PATCH jobs/{id}` accepts a new `locationId` for an open job (the mock applies only `locationId` and `summary`, and only to an active location of the job's customer), and that `PATCH locations/{id}` with `active: false` retires a location the customer moved out of. Both are in the published spec; neither has been called on a tenant. If a tenant refuses the job move, the tool server cancels and rebooks instead (DECISIONS.md 074).
 
 **Where the mock is stricter than the real thing.** Real ServiceTitan capacity is advisory: two callers can both see the last slot and the second job still saves (practice agent notes). The mock refuses the second booking. The adapter looks at capacity again right before it creates a job, and a real tenant still needs a dispatcher process for overbooking.
 
