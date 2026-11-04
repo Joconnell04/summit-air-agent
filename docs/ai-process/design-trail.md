@@ -87,3 +87,5 @@ How the design was reached, in order, so a reader can follow each choice back to
 | Second address | Its own account by default, the caller as contact | DECISIONS.md 048, #75 |
 | Same-day calls | Linked only when the last call dropped; the caller confirmed by name | DECISIONS.md 049, #75 |
 | Times and return visits | A bare hour is daytime; a same-problem job within 30 days is flagged | DECISIONS.md 050, #75 |
+| Warm transfer | Server-decided, a key press joins the person, a stored callback if nobody answers; the demo rings Jackson's phone | DECISIONS.md 051, #69 |
+| Call recordings | Bucket to server copy, 30 days, played on the call page | DECISIONS.md 052, #69 |
