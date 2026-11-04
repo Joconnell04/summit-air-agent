@@ -46,7 +46,7 @@ rig:
 rig-report:
 	uv run python -m evals.audio_rig.report $(RUNS)
 
-# Paid, about $0.14 a call all-in (MEASURED: eight round 3 calls, $1.10): simulated calls on
+# Paid, about $0.15 a call all-in (MEASURED: eleven calls, $1.60): simulated calls on
 # our stack, recorded in stereo for listening (evals/audio_rig/sim.py). Prints the page link.
 # make sim CALLS="co-alarm-clear complaint-flag" | TAGS=flow:safety [MAX_COST=2] [BATCH=<to add to>]
 sim:
