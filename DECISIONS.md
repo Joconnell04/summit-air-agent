@@ -14,7 +14,7 @@ Issue: #N
 
 ## 086. A stale eval reference warns; it doesn't fail the build
 
-Decided: the eval floor check reports a stale reference as a warning in `make check`, the pre-commit hook and CI, and still fails on what matters: a failed or missing must-pass case, fewer scenarios than the floor, or a pass rate under it. `make release-check` (the ratchet with `--strict`) fails on a stale reference too, for a release gate.
+Decided: the eval floor check reports a stale reference as a warning in `make check`, the pre-commit hook and CI, and still fails on what matters: a must-pass case that failed or errored in the reference run, fewer scenarios than the floor, or a pass rate under it. A must-pass scenario added after a stale reference can't be in that run, so its absence is part of the warning; on a current reference a missing must-pass case still fails. `make release-check` (the ratchet with `--strict`) fails on a stale reference too, for a release gate.
 Why: 41 of the last 42 failed CI runs were this one check (MEASURED, `gh run list`, the failing test in each log). Every pull request that touched prompts or scenarios went red until a paid two-sample run, by design (one reference per batch, 066), so the failures carried no news, flooded Jackson's inbox with GitHub emails, and trained lanes to commit with `--no-verify`, which skips the real tests too.
 Considered: a separate non-required CI job (the same emails on main); dropping the check from CI (loses the must-pass and floor checks on the committed reference).
 Would change if: a stale reference sits through more than one batch of merges, in which case the coordinator's batch step runs `make release-check`.
