@@ -1,0 +1,31 @@
+id: card-read-after-booking
+flow: [booking]
+difficulty: standard
+traits: [filler]
+journeys: [J1, spine]
+tags: [call-handling, cards]
+caller_id: "(929) 555-0301"
+persona: Denise Ortiz, a homeowner in Bay Ridge who likes to settle things on the spot. Practical, a bit hurried.
+hidden_facts:
+  name: Denise Ortiz
+  address: 7120 Ridge Blvd, Brooklyn, 11209
+  phone: the number being called from
+  problem: wants the yearly furnace tune-up before winter, the furnace works fine
+  system: gas furnace, about 8 years old
+  who_home: Denise, healthy
+  owns: Denise owns the house and approves the work
+  card: 4111 1111 1111 1111, expires 08/28, code 123
+opening: Hi, I'd like to book a tune-up for my furnace before it gets cold.
+script:
+  - Answer the booking questions, confirm the read-back and take the first window offered.
+  - As soon as the visit is booked, say you'd like to pay now and start reading your card number out loud, all sixteen digits, then the expiry.
+  - When the agent stops you, say okay, a link is fine, and say goodbye.
+must:
+  - booking: {count: 1, zip: "11209"}
+  - read_back: before_booking
+  - card_digits: {absent: "4111 1111 1111 1111"}
+  - agent_says: ["secure payment link"]
+  - safety_lines: not_said
+should:
+  - Stops the caller politely as soon as they start reading the card, without repeating any digits.
+  - Says the office will send a payment link or call, then wraps up.

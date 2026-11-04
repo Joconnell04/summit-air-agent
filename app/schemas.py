@@ -60,7 +60,9 @@ class TurnIn(Body):
 
 
 class EndIn(Body):
-    reason: Literal["caller_hangup", "agent_end", "dropped", "transfer", "error"] = "caller_hangup"
+    reason: Literal[
+        "caller_hangup", "agent_end", "dropped", "transfer", "error", "stepped_away"
+    ] = "caller_hangup"
 
 
 class TransferIn(Body):

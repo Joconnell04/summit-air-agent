@@ -558,6 +558,7 @@ def _facts(ctx: Ctx, job_type: str, turns: list, temps: list[float], outside) ->
         outside.now_f,
         outside.coldest_f,
         heating_indoors=safety.heating_signal(caller, ctx.tenant.safety),
+        electrical_line=safety.electrical_line(caller, ctx.tenant.safety) or "",
         caller_text=caller,
         inside_temp_line=line,
     )

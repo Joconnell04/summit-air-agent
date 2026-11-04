@@ -114,3 +114,6 @@ How the design was reached, in order, so a reader can follow each choice back to
 | A caller who moved | New location, old one inactive, open visits moved or (out of area) cancelled; nothing goes to the old address | DECISIONS.md 075, #128 |
 | Changes from an unknown number | The caller says the name and address first; a mismatch changes nothing and offers a call to the number on file | DECISIONS.md 076, #128 |
 | Another number, two accounts | Another person's number is the visit's contact; a shared number books under the name the caller says | DECISIONS.md 077, #128 |
+| Card numbers and billing | Card digits are taken out before anything stores them; offering a card gets the server's line; a billing dispute gets an office callback | DECISIONS.md 080, #130 |
+| Dead air | A check-in every 2 minutes, a goodbye at 8 that invites a call back, and a call back that picks up where it stopped | DECISIONS.md 081, #130 |
+| Electrical and water | Sparks get their own calm route apart from gas and carbon monoxide; water into the home is Urgent; a tripping breaker is High | DECISIONS.md 082, #130 |

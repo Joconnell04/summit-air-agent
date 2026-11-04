@@ -14,6 +14,7 @@ import uuid
 from collections.abc import Callable
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime, timedelta
+from pathlib import Path
 
 import httpx
 from fastapi import FastAPI, Request
@@ -26,6 +27,7 @@ from . import (
     address_as,
     bench,
     bench_rules,
+    cards,
     db,
     geocode,
     heads_up,
@@ -258,9 +260,33 @@ def _ctx(services: Services, conn, call_id: str, key: str | None) -> Ctx:
     )
 
 
+# How many earlier caller lines a card read aloud can span: one digit a line, with a few "um"s.
+CARD_WINDOW_LINES = 24
+
+
+def redact_caller_line(conn, log_path: Path, call_id: str, text: str) -> str:
+    """This caller line with card digits taken out, read together with the caller's lines just
+    before it (app/cards.py). Earlier lines that turn out to hold part of the card are rewritten
+    in the turns table, the tool log and the JSON log before this line is stored."""
+    earlier = records.recent_caller_lines(conn, call_id, CARD_WINDOW_LINES)
+    redacted = cards.redact_window([t for _, t in earlier] + [text])
+    changes = {
+        seq: new for (seq, old), new in zip(earlier, redacted[:-1], strict=True) if new != old
+    }
+    if changes:
+        olds = {old: changes[seq] for seq, old in earlier if seq in changes}
+        with db.tx(conn):
+            records.rewrite_caller_lines(conn, call_id, changes, olds)
+        logs.rewrite_turn_texts(log_path, call_id, olds)
+    return redacted[-1]
+
+
 def _tool_route(app: FastAPI, name: str, handler: Callable, model: type[BaseModel], write: bool):
     def endpoint(request: Request, body: model):  # type: ignore[valid-type]
         services: Services = request.app.state.services
+        # Card digits the model copied into an argument are taken out before the tool, the tool
+        # log or anything downstream sees them (app/cards.py).
+        body = model.model_validate(cards.scrub(body.model_dump(mode="json")))
         return run(
             services,
             request,
@@ -334,6 +360,7 @@ def create_app(
             raw = json.loads(await request.body() or b"{}")
         except ValueError:
             raw = {}
+        raw = cards.scrub(raw)
         call_id = raw.get("call_id") if isinstance(raw, dict) else None
         call_id = call_id or request.path_params.get("call_id")
         conn = services.connect()
@@ -376,12 +403,26 @@ def create_app(
 
     @app.post("/calls/{call_id}/turn")
     def call_turn(request: Request, call_id: str, body: TurnIn):
+        # Card digits never reach the turns table, the log or the checks (app/cards.py); the
+        # turn check sees the marker in their place. A card read across several caller lines is
+        # found on the line that completes it, and the earlier lines are rewritten then.
+        if body.speaker == "caller":
+            conn = services.connect()
+            try:
+                text = redact_caller_line(conn, services.settings.log_path, call_id, body.text)
+            finally:
+                conn.close()
+        else:
+            text = cards.redact(body.text)
+        body = body.model_copy(update={"text": text})
+
         def fn(conn, key):
             ctx = _ctx(services, conn, call_id, key)
             result = lifecycle.turn(conn, ctx.tenant, ctx.call, body, ctx.now)
             # A caller who demands a person is sent to one now, but never on a turn that brought
             # the safety lines or the check question: those are said first.
-            if body.speaker == "caller" and not result.data.get("safety"):
+            spoken = result.data.get("safety") or result.data.get("spoken")
+            if body.speaker == "caller" and not spoken:
                 handed = demand_handoff(ctx, body.text)
                 if handed is not None:
                     result.say = handed.say

@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Any
 from zoneinfo import ZoneInfo
 
+from app import cards
 from app import priority as prio
 from app.tenant import load_agent
 from app.text import street_key, words
@@ -744,6 +745,63 @@ def _contact_arg(arg: Any) -> None:
         raise ValueError("expected {phone, for}")
     _keys({"phone", "for"})(arg)
 
+def _strings_in(value: Any) -> list[str]:
+    if isinstance(value, str):
+        return [value]
+    if isinstance(value, dict):
+        return [s for v in value.values() for s in _strings_in(v)]
+    if isinstance(value, list):
+        return [s for v in value for s in _strings_in(v)]
+    return []
+
+
+def card_digits(arg: dict, ev: Evidence) -> list[str]:
+    """No card digits anywhere the server stored (DECISIONS.md 080): no turn holds a number the
+    redaction would still take out, and the card the caller read (`absent`, digits only) shows up
+    nowhere in the record, not even its first eight digits run together."""
+    problems = [
+        f"turn {t.get('seq')} still holds card digits: {t['text']!r}"
+        for t in ev.turns()
+        if cards.redact(t["text"]) != t["text"]
+    ]
+    start = re.sub(r"\D", "", arg["absent"])[:8]
+    for text in _strings_in(ev.trace):
+        if start in re.sub(r"\D", "", text):
+            problems.append(f"the card's digits are on the record: {text[:80]!r}")
+            break
+    return problems
+
+
+def _card_arg(arg: Any) -> None:
+    if not isinstance(arg, dict) or set(arg) != {"absent"}:
+        raise ValueError("expected {absent: <the card number the caller reads>}")
+    if len(re.sub(r"\D", "", str(arg["absent"]))) < 13:
+        raise ValueError("absent must be a whole card number")
+
+
+def end_reason(arg: str, ev: Evidence) -> list[str]:
+    got = ev.call["end_reason"]
+    return [] if got == arg else [f"call ended as {got}, expected {arg}"]
+
+
+def safety_state(arg: Any, ev: Evidence) -> list[str]:
+    """The gas and carbon monoxide state on the call record: the electrical route never sets it."""
+    got = ev.call["safety_state"]
+    return [] if got in _as_list(arg) else [f"safety state {got}, expected {arg}"]
+
+
+def electrical(arg: str, ev: Evidence) -> list[str]:
+    """The electrical lines (app/safety.py): `said` once, word for word, or `not_said`."""
+    rows = ev.trace.get("electrical", [])
+    said = bool(rows) and rows[0]["said_at"] is not None
+    if arg == "not_said":
+        return ["the electrical lines were said"] if said else []
+    if not said:
+        return ["the electrical lines were never said"]
+    lines = " ".join(ev.safety["electrical"]["lines"].split())
+    spoken = [t for t in ev.agent_lines() if lines in " ".join(t.split())]
+    return [] if len(spoken) == 1 else [f"the electrical lines were spoken {len(spoken)} times"]
+
 
 def _recorded_or_zip(arg: Any) -> None:
     if arg != "recorded" and not re.fullmatch(r"\d{5}", str(arg)):
@@ -801,6 +859,10 @@ CHECKS: dict[str, Check] = {
     "job_contact": Check(_contact_arg, job_contact),
     "booked_under": Check(_strings, booked_under),
     "heads_up": Check(_one_of("recorded", "none"), heads_up, lambda arg: arg == "none"),
+    "card_digits": Check(_card_arg, card_digits, lambda arg: True),
+    "end_reason": Check(_one_of("stepped_away", "agent_end", "caller_hangup"), end_reason),
+    "safety_state": Check(_any, safety_state),
+    "electrical": Check(_one_of("said", "not_said"), electrical, lambda arg: arg == "not_said"),
 }
 
 

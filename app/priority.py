@@ -53,6 +53,7 @@ class Facts:
     heating_indoors: bool = False  # the safety check heard fuel-burning heat indoors
     caller_text: str = ""  # what the side model reads; the same lines as `text`
     inside_temp_line: str = ""  # the caller's line the inside temperature came from
+    electrical_line: str = ""  # the caller's line the electrical route heard (app/safety.py)
 
 
 @dataclass
@@ -113,28 +114,58 @@ SAYS_SOMETHING = {"lives", "live", "living", "is", "are", "has", "have", "stays"
 REACH_FILLER = {"a", "an", "or", "who", "whos", "is", "any", "on"}
 
 
+def _negated_at(tokens: list[str], i: int) -> bool:
+    """A negation just before the word at i, in the same part of the sentence."""
+    reached = 0
+    for j in range(i - 1, -1, -1):
+        if tokens[j] in CLAUSE_BREAKS:
+            return False
+        # "no my grandmother lives with us" is an answer, then a person: speech-to-text drops
+        # the comma, and nobody says "no my" to mean there is none.
+        if tokens[j] in NEGATIONS and tokens[j + 1] not in POSSESSIVES:
+            return True
+        if tokens[j] not in REACH_FILLER:
+            reached += 1
+            if reached >= NEGATION_REACH:
+                return False
+    return False
+
+
 def _said_not_negated(text_words: str, phrase: str) -> bool:
     """The phrase occurs at least once without a negation just before it."""
     tokens, target = text_words.split(), words(phrase).split()
-    for i in range(len(tokens) - len(target) + 1):
-        if tokens[i : i + len(target)] != target:
-            continue
-        negated, reached = False, 0
-        for j in range(i - 1, -1, -1):
-            if tokens[j] in CLAUSE_BREAKS:
-                break
-            # "no my grandmother lives with us" is an answer, then a person: speech-to-text drops
-            # the comma, and nobody says "no my" to mean there is none.
-            if tokens[j] in NEGATIONS and tokens[j + 1] not in POSSESSIVES:
-                negated = True
-                break
-            if tokens[j] not in REACH_FILLER:
-                reached += 1
-                if reached >= NEGATION_REACH:
-                    break
-        if not negated:
-            return True
-    return False
+    return any(
+        tokens[i : i + len(target)] == target and not _negated_at(tokens, i)
+        for i in range(len(tokens) - len(target) + 1)
+    )
+
+
+def _positions(tokens: list[str], phrases: list[str]) -> list[int]:
+    found = []
+    for phrase in phrases:
+        target = words(phrase).split()
+        found += [
+            i for i in range(len(tokens) - len(target) + 1) if tokens[i : i + len(target)] == target
+        ]
+    return found
+
+
+def _together(text_words: str, spec: dict) -> bool:
+    """A word from each list within `within` words of each other, the first of the two not
+    negated, and no `unless_near` word close to the first: "water coming through my living room
+    ceiling", "the AC is dripping water" (a rule's `together`, DECISIONS.md 082)."""
+    tokens = text_words.split()
+    firsts, seconds = _positions(tokens, spec["first"]), _positions(tokens, spec["second"])
+    # A word in `unless_near` close to the first word says it is something else ("the kitchen
+    # faucet is dripping").
+    others = _positions(tokens, spec.get("unless_near", []))
+    return any(
+        abs(a - b) <= spec["within"]
+        and not _negated_at(tokens, min(a, b))
+        and not any(abs(a - o) <= spec["within"] for o in others)
+        for a in firsts
+        for b in seconds
+    )
 
 
 def _parts(text: str) -> list[str]:
@@ -191,6 +222,14 @@ def _said(rule: dict, text: str) -> bool:
         parts = [part.replace(words(unrelated), " , ") for part in parts]
     if any(_said_not_negated(part, p) for part in parts for p in phrases):
         return True
+    # Two words near each other, read across each sentence: callers put commas between them.
+    if "together" in rule:
+        for sentence in re.split(r"(?<=[.!?])\s+|\n", text):
+            said_words = words(sentence)
+            for unrelated in rule.get("not_phrases", []):
+                said_words = said_words.replace(words(unrelated), " , ")
+            if _together(said_words, rule["together"]):
+                return True
     return "age_at_least" in rule and any(a >= rule["age_at_least"] for a in _ages(text))
 
 
@@ -205,6 +244,8 @@ def _rule_fires(rule: dict, facts: Facts) -> bool:
         return False
     if rule.get("safety_signal"):
         return facts.safety_signal
+    if rule.get("electrical_signal"):
+        return bool(facts.electrical_line)
     if rule.get("heating_indoors") and facts.heating_indoors:
         return True
     if _said(rule, facts.text):
@@ -236,6 +277,8 @@ def _caller_line(rule: dict, facts: Facts) -> str:
     dispatcher what the caller said rather than only the rule's name."""
     if rule.get("safety_signal"):
         return ""
+    if rule.get("electrical_signal"):
+        return facts.electrical_line
     by_temp = "inside_temp_below_f" in rule or "inside_temp_above_f" in rule
     if by_temp and facts.inside_temp_line and not _said(rule, facts.text):
         return facts.inside_temp_line
