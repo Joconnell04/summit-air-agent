@@ -38,6 +38,14 @@ Considered: masking the digits only on the bench (they would still be stored); k
 Would change if: Summit Air adds a payment system the agent can hand off to, or live calls show phone numbers or account numbers taken out by mistake.
 Discussion: docs/ai-process/coauthoring.md (issue #130)
 Issue: #130
+## 074. The design system is saved to the Claude account, built from the repository
+
+Decided: keep the design system's source in this repository (`tokens.css`, `components.css`, `/owner/design`, docs/design-system.md) and save a copy to the Claude account as a design system, "Revin owner view", rebuilt from the code by `scripts/export_design_system.py`. Its brand book is docs/design-system-rules.md, the short form of the design system page written as rules for an agent.
+Why: later sessions, and other surfaces such as decks or a new page, read a saved design system directly instead of rereading the CSS and the long doc. Building the copy from the code, with a test that fails on drift, keeps one source.
+Considered: the repository alone (every session rereads 700 lines of CSS); the saved copy alone (the app's CSS would drift from it); a live bundle of the page script (the previews would run code the app's tests don't cover).
+Would change if: the owner view moves to a component library with its own build, in which case the copy is built from that library.
+Discussion: Jackson in chat: "make sure you like properly save and add the design system for Revan to my Claude account, so like it will be easier to reference in future sessions."
+Issue: none; follows #53
 
 ## 073. A caller who pushes for a higher priority gets a calm answer, not a raise
 

@@ -214,7 +214,7 @@ def check_rows(result) -> list[tuple[str, bool, str]]:
 
 
 def _round_files() -> list[Path]:
-    """The eval round write-ups, without the folder's index (evals/rounds/README.md)."""
+    """The rounds' write-ups; the folder's README is its index, not a round."""
     return [p for p in sorted(ROUNDS.glob("*.md")) if p.name != "README.md"]
 
 
