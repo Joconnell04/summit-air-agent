@@ -518,3 +518,9 @@ def test_a_reply_cut_short_is_a_failure_not_a_summary():
 def test_without_a_key_summaries_stay_off(monkeypatch):
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
     assert summary.model_from_config() is None
+
+
+def test_a_shared_deadline_already_past_starts_no_summary(agent):
+    booked_call(agent)
+    counts = run(agent, FakeModel(), timer=lambda: 100.0, deadline=50.0)
+    assert counts["done"] == 0 and counts["waiting"] == 1
