@@ -87,6 +87,7 @@ CLAUSE_BREAKS = {"and", "but", "so", "because", "though", "although", "except", 
                  "just", "only", "well"}
 NEGATION_REACH = 4
 POSSESSIVES = {"my", "our", "his", "her", "their"}
+PEOPLE_STARTS = {"she", "shes", "he", "hes", "they", "theyre", "theres", "there", "i", "im", "we"}
 # Small words that don't use up the reach: "nobody who's a baby or elderly" negates "elderly"
 # (eval run 20261104-052332, mild-after-hours-no-heat: it sent a mild night to the on-call path).
 REACH_FILLER = {"a", "an", "or", "who", "whos", "is", "any", "on"}
@@ -116,6 +117,28 @@ def _said_not_negated(text_words: str, phrase: str) -> bool:
     return False
 
 
+def _parts(text: str) -> list[str]:
+    """The text split at punctuation. A negated list goes on past a comma: in "no babies, older
+    people or medical equipment" the "no" covers the whole list (eval run 20261104-154616,
+    mild-after-hours-no-heat, where it sent a mild night to the on-call path). A bare "No," is an
+    answer, so it doesn't carry: "No, my mother lives with us" still raises."""
+    parts = [words(part) for part in re.split(r"[.,;:!?\n]", text)]
+    carried = []
+    for i, part in enumerate(parts):
+        before = parts[i - 1].split() if i else []
+        tokens = part.split()
+        # Only straight on from the negated part, and never into a new thought ("but grandma is
+        # visiting") or a part about a person ("my mother", "she's elderly").
+        listed = (
+            len(before) >= 2
+            and before[0] in NEGATIONS
+            and tokens
+            and tokens[0] not in POSSESSIVES | CLAUSE_BREAKS | PEOPLE_STARTS
+        )
+        carried.append(f" no {part.strip()} " if listed else part)
+    return carried
+
+
 def _rule_fires(rule: dict, facts: Facts) -> bool:
     if "job_types" in rule and facts.job_type not in rule["job_types"]:
         return False
@@ -124,7 +147,7 @@ def _rule_fires(rule: dict, facts: Facts) -> bool:
     if rule.get("heating_indoors") and facts.heating_indoors:
         return True
     # Split at punctuation first, so "No, my mother lives with us" keeps its raise.
-    parts = [words(part) for part in re.split(r"[.,;:!?\n]", facts.text)]
+    parts = _parts(facts.text)
     if any(_said_not_negated(part, p) for part in parts for p in rule.get("phrases", [])):
         return True
     if "age_at_least" in rule and any(a >= rule["age_at_least"] for a in _ages(facts.text)):

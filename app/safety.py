@@ -208,6 +208,12 @@ HYPOTHETICAL = (
     "might it be",
     "worried about",
     "afraid of",
+    # A question back, not a report: "do you smell gas, do I smell gas? I don't think I do"
+    # (eval run 20261104-154616, gas-worry-no-smell).
+    "do i",
+    "do you",
+    "should i",
+    "would i",
 )
 HYPOTHETICAL_FILLER = {
     "i", "we", "you", "they", "ever", "there", "theres", "is", "was", "a", "an", "any", "some",

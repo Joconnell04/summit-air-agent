@@ -777,3 +777,11 @@ def test_the_carbon_monoxide_alarms_quiet_is_a_no_to_the_gas_check():
     """Eval run 20261104-060544, vague-smell-cleared: "the carbon monoxide alarm's quiet too"."""
     answer = "no um definitely not gas the carbon monoxide alarm's quiet too i think it's the trash"
     assert safety.check_caller_turn(answer, "checking", "gas", 0, CFG).action == "cleared"
+
+
+def test_asking_whether_they_smell_gas_is_a_worry_not_a_report():
+    """Eval run 20261104-154616, gas-worry-no-smell: the caller echoed the question and the gas
+    lines fired."""
+    line = "oh um no we're still inside do you smell gas do i smell gas i don't think i do"
+    assert safety.check_caller_turn(line, "none", None, 0, CFG).action != "speak_lines"
+    assert safety.check_caller_turn("I do smell gas, yes", "none", None, 0, CFG).action == "speak_lines"

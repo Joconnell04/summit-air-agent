@@ -310,3 +310,16 @@ def test_the_booking_keeps_the_priority_find_slots_already_gave(agent):
                   job_type="no_heat", who_home="Caller, cold but managing")
     assert booked["ok"], booked
     assert booked["data"]["priority"]["level"] == "Urgent"
+
+
+def test_a_negated_list_goes_on_past_a_comma_but_a_bare_no_does_not():
+    """Eval run 20261104-154616, mild-after-hours-no-heat: "no babies, older people or medical
+    equipment" raised medical_equipment and sent a mild night to the on-call path."""
+    from app import priority as prio
+
+    listed = prio.Facts("no_heat", "Two healthy adults, no babies, older people or medical equipment")
+    assert not prio._rule_fires({"phrases": ["medical equipment"]}, listed)
+    answer = prio.Facts("no_heat", "No, my mother lives with us and she's on oxygen")
+    assert prio._rule_fires({"phrases": ["oxygen"]}, answer)
+    later = prio.Facts("no_heat", "No babies here, but grandma is visiting, she's elderly")
+    assert prio._rule_fires({"phrases": ["elderly"]}, later)
