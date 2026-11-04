@@ -174,6 +174,16 @@ def test_agent_says_and_never_says_are_case_insensitive_regexes():
     assert failures("agent_never_says", ["refund"], t) == []
 
 
+def test_agent_says_at_most_counts_agent_lines():
+    t = trace([("agent", "I'd recommend getting outside.", None), ("caller", "No.", None),
+               ("agent", "I'd still recommend going outside.", None)])
+    assert failures("agent_says_at_most", {"recommend": 2}, t) == []
+    assert failures("agent_says_at_most", {"recommend": 1}, t) == [
+        "the agent said /recommend/ in 2 lines, at most 1 allowed"
+    ]
+    assert CHECKS["agent_says_at_most"].prohibits({"recommend": 1})
+
+
 def test_prohibitions_only_skips_checks_that_need_the_call_to_finish():
     must = [{"booking": "one"}, {"booking": "none"}, {"lead": "commercial"}]
     t = trace(bookings=[booked(), booked()])
@@ -196,7 +206,9 @@ def test_run_checks_prefixes_each_failure_with_its_check():
 @pytest.mark.parametrize(
     "check, arg",
     [("safety_lines", "maybe"), ("booking", {"colour": "red"}), ("out_of_area", "Queens"),
-     ("agent_says", "("), ("tool_ok", 3), ("no_changes", False)],
+     ("agent_says", "("), ("tool_ok", 3), ("no_changes", False),
+     ("agent_says_at_most", {"outside": "two"}), ("agent_says_at_most", {"(": 1}),
+     ("agent_says_at_most", "outside")],
 )
 def test_bad_arguments_are_rejected(check, arg):
     with pytest.raises(ValueError):
@@ -239,6 +251,22 @@ def test_callback_checks_the_day_and_the_earliest_time():
         CHECKS["callback"].validate({"tomorrow": True})
 
 
+def test_an_approval_check_flag_can_be_required():
+    """Eval round 3: a renter with an unknown approver books with an approval call, flagged as
+    approval_check rather than person (renter-landlord-unknown)."""
+    t = trace()
+    t["flags"] = [{"kind": "approval_check"}]
+    assert failures("flag", "approval_check", t) == []
+    assert failures("flag", "approval_check", trace()) != []
+
+
+def test_the_booking_confirmation_needs_a_short_line_before_it():
+    said = trace([("agent", "Perfect, booking that now. You're all set for today. Anything else?", None)])
+    assert failures("booking_lead_in", True, said) == []
+    bare = trace([("agent", "You're all set for today. Anything else?", None)])
+    assert failures("booking_lead_in", True, bare) == [
+        "the booking confirmation came with no line before it"
+    ]
 TAKEN = {"type": "tool", "tool": "book_appointment", "args": {}, "ok": False,
          "refused": "slot_taken"}
 

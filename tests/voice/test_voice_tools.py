@@ -22,8 +22,9 @@ class Hangups:
     def __init__(self):
         self.calls = []
 
-    def __call__(self, context, last_line):
+    def __call__(self, context, last_line, quiet=False):
         self.calls.append((context, last_line))
+        self.quiet = quiet
 
 
 class Voice:
@@ -120,6 +121,20 @@ def test_a_safety_caller_saying_goodbye_hears_the_sign_off_then_the_line_drops(a
     assert hangups.calls == [("ctx", "handle:1")]
 
 
+def test_a_goodbye_after_the_sign_off_adds_no_second_goodbye(agent, connect):
+    """Eval round 3: one ending on a safety call."""
+    call_id = "call-1"
+    agent.start(call_id=call_id)
+    agent.say(call_id, agent.turn(call_id, "I smell gas")["say"])
+    agent.say(call_id, " ".join(SAFETY["sign_off"].split()))
+    agent.turn(call_id, "Okay, bye.")
+    hangups, voice = Hangups(), Voice()
+    tools = tools_for(connect(call_id), hangups, voice)
+    assert asyncio.run(tools["end_call"]({"reason": "caller_goodbye"}, "ctx")) is None
+    assert voice.said == []
+    assert hangups.calls == [("ctx", None)] and hangups.quiet is True
+
+
 def test_end_call_that_the_server_allows_hangs_up_and_ends_the_turn(agent, connect):
     agent.start(call_id="call-1")
     hangups, voice = Hangups(), Voice()
@@ -197,3 +212,15 @@ def test_a_slow_tool_is_timed_for_the_turn_log(agent, connect):
     ms, played = log.take()
     assert ms > 0 and played is False
     assert log.take() == (0.0, False)
+
+
+def test_the_read_back_sentence_is_spoken_by_the_worker_and_the_model_says_nothing(agent, connect):
+    """Eval round 3: the caller hears the server's read-back sentence word for word, once."""
+    agent.start(call_id="call-1")
+    agent.turn("call-1", "It's 101 Union Street, Brooklyn, one one two three one.")
+    hangups, voice = Hangups(), Voice()
+    tools = tools_for(connect("call-1"), hangups, voice)
+    address = {"street": "101 Union St", "unit": "", "city": "Brooklyn", "zip": "11231"}
+    result = asyncio.run(tools["read_back"]({"address": address, "phone": "caller_id"}, "ctx"))
+    assert result is None
+    assert len(voice.said) == 1 and voice.said[0].startswith("I have your home at 101 Union St")

@@ -20,7 +20,7 @@ script:
 # Booking without a known approver passes as long as a person is flagged to find the approver and a
 # callback is promised (eval round 1 review, evals/rounds/01-real-failures.md item 5).
 must:
-  - flag: person
+  - flag: approval_check
   - callback: promised
   - outcome: [booked, flagged, callback]
 should:

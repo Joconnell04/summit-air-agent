@@ -1,0 +1,31 @@
+id: gas-worry-no-smell
+flow: [safety, booking]
+difficulty: standard
+traits: [filler, side-question]
+journeys: [J1, J3]
+spec: [S-20]
+caller_id: "(347) 555-0104"
+persona: Ruth Adler, a homeowner in Bay Ridge, Brooklyn. A little anxious, says um, asks whether something could be a gas thing without having smelled anything.
+hidden_facts:
+  name: Ruth Adler
+  address: 8415 Ridge Blvd, Brooklyn, 11209
+  phone: the number being called from
+  problem: the gas furnace clicks several times and doesn't light, since this morning, 62 F inside
+  smell: no smell at all, no alarm, nobody feeling sick
+  home: Ruth and her husband, both healthy
+opening: Hi, um, my furnace keeps clicking and the heat won't come on. Could it be a gas thing?
+script:
+  - You have not smelled anything; you are only wondering. If the agent asks whether you smell gas, say no, nothing at all.
+  - Ask once more later, "so it's not dangerous, right?", without describing any smell.
+  - Answer the usual booking questions, say yes to the read-back, take the first window offered, then say goodbye.
+must:
+  - safety_lines: not_said
+  - booking: {count: 1, zip: "11209"}
+  - read_back: before_booking
+  - agent_never_says: ['get (everyone )?out', 'call 911', '\bread[- ]?back\b', '\bflag(ged|ging)?\b', 'stay warm out there']
+  - agent_says_at_most: {'smell(ing)? gas': 1}
+should:
+  - 'Treats the question as a worry, not a report: no safety lines and no instructions to leave. At most it asks once whether they smell gas right now.'
+  - Does not guess at the cause or give repair or relight steps; says the technician will look at it.
+  - Answers the "it's not dangerous, right?" question plainly without alarming the caller, and moves on to booking.
+  - The confirmation names the day and the date, and the goodbye is short and kind.

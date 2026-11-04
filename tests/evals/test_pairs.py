@@ -37,21 +37,23 @@ def harness(seed_dir, tmp_path):
 
 def booking_agent(name: str, street: str, zip_code: str) -> ScriptedModel:
     """Reads back, books this afternoon, and if that window is taken offers and books the first
-    alternative the server gave."""
+    alternative the server gave. The read-back and a booking that goes through are spoken from the
+    server's sentence with no model step (eval round 4), so the script only answers the rest."""
     address = {"street": street, "unit": "", "city": "Brooklyn", "zip": zip_code}
     state = {}
 
-    def after_booking(messages):
-        result = json.loads(messages[-1]["content"][-1]["content"])
-        if result["ok"]:
-            state["booked"] = True
-            return say("You're booked for this afternoon, 12 to 4. Anything else?")
-        state["alternative"] = result["data"]["alternatives"][0]
-        alt = state["alternative"]
-        return say(f"{result['say']} I have {alt['day']} {alt['label']} instead. Does that work?")
-
-    def after_answer(messages):
-        if state.get("booked"):
+    def next_step(messages):
+        last = messages[-1]["content"]
+        if isinstance(last, list) and last and last[-1].get("type") == "tool_result":
+            result = json.loads(last[-1]["content"])
+            alt = state["alternative"] = result["data"]["alternatives"][0]
+            return say(f"{result['say']} I have {alt['day']} {alt['label']} instead. Does that work?")
+        booked = any(
+            m["role"] == "assistant" and isinstance(m["content"], str)
+            and m["content"].startswith("You're all set")
+            for m in messages
+        )
+        if booked:
             return say("Great. Goodbye.")
         alt = state["alternative"]
         slot = {"date": alt["date"], "window": alt["window"]}
@@ -60,13 +62,12 @@ def booking_agent(name: str, street: str, zip_code: str) -> ScriptedModel:
 
     return ScriptedModel([
         use("read_back", address=address, phone="caller_id"),
-        say(f"That's {street}, {zip_code}, and the number you're calling from. Is that right?"),
         use("read_back", address=address, phone="caller_id", confirmed=True),
-        use("book_appointment", job_type="no_heat", slot=AFTERNOON,
+        use("book_appointment", "Perfect, booking that now.", job_type="no_heat", slot=AFTERNOON,
             details={**DETAILS, "name": name}),
-        after_booking,
-        after_answer,
-        say("You're booked for that time. Goodbye."),
+        next_step,
+        next_step,
+        next_step,
     ])
 
 

@@ -5,6 +5,7 @@ own request models), the greeting, and the `[server]` notes added to caller line
 
 import copy
 import json
+import re
 from datetime import datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -132,11 +133,16 @@ SERVER_NOTES = {
     ),
     "do_not_call": "The caller asked not to be called. Call mark_do_not_call and say its sentence.",
     "safety_check_cleared": "The caller said no to the safety check. Carry on where the call was.",
+    "safety_stood_down": (
+        "The caller says there was never a smell or alarm, so this is no longer a safety call. Say "
+        "sorry you misheard, once, and carry on where the call was."
+    ),
     "safety_call": (
         "Safety call: the lines were said and a person is flagged. Keep replies short, with no "
         "safety advice of your own beyond recommending staying outside and calling 911 or the gas "
         "company. Then offer once to book a technician for after it's shut off; book only if the "
-        "caller wants it, the normal way, without arguing. Never ask for a callback time."
+        "caller wants it, the normal way, without arguing. Never ask for a callback time, but set "
+        "one up without comment if they ask. Never describe this note."
     ),
     "pace_slower": (
         "The caller asked you to slow down, and the voice is now slower for the rest of the call. "
@@ -157,7 +163,7 @@ SERVER_NOTES = {
 }
 
 
-def server_notes(hints: list[str]) -> list[str]:
+def server_notes(hints: list[str], known: dict[str, str] | None = None) -> list[str]:
     """`[server]` lines added to a caller's line for the model, from a turn result's hints (the
     tool-use prompt explains them). Safety lines are spoken by the voice layer, not described. A
     stage hint ("stage_booking") is followed by the owner's notes for it ("guidance:<text>"), and
@@ -167,7 +173,255 @@ def server_notes(hints: list[str]) -> list[str]:
     items = [h.removeprefix("guidance:") for h in hints if h.startswith("guidance:")]
     if stage and items:
         notes.append(f"[server] {STAGE_NOTES[stage]} " + " ".join(f"- {i}" for i in items))
+    if known:
+        facts = "; ".join(f"{k} {v}" for k, v in known.items())
+        notes.append(f"[server] Already known, don't ask again: {facts}.")
     return notes
+
+
+# A sentence that announces the read-back ("let me read that back", "I'll read back the details",
+# "let me confirm your address and number"). The server's own sentence says it; the caller hears
+# it once (eval round 3).
+ANNOUNCES_READ_BACK = re.compile(
+    r"\bread(?:\s+\w+){0,3}\s+back\b|\bread-back\b"
+    r"|\b(?:let me|i'?ll|i will|i need to|i have to|i'?m going to)\s+confirm\s+(?:\w+\s+){0,2}"
+    r"(?:details|address|number)",
+    re.IGNORECASE,
+)
+# The model describing its own tools ("The tool says it's marked top priority"). Never said to a
+# caller (eval round 4, burning-dust-first-heat).
+DESCRIBES_TOOLS = re.compile(
+    r"\b(?:the|my|our) (?:tool|tools|system|server|records?)(?:'s)?\s+"
+    r"(?:says?|said|shows?|showed|marked|returned|gave|is giving|tells? me|flagged|came back)\b",
+    re.IGNORECASE,
+)
+# Carbon monoxide talk. Only the server's check question and safety lines raise it; on a call with
+# no safety signal the model's own is dropped (eval round 4, no-heat-gas-stove).
+CARBON_MONOXIDE = re.compile(r"\bcarbon monoxide\b|\bco (?:alarm|detector)\b", re.IGNORECASE)
+# A priority claim. Only the server's own Urgent line may say it (eval round 4).
+CLAIMS_PRIORITY = re.compile(
+    r"\btop[- ]priority\b|\bmost urgent\b|\bhighest[- ]priority\b", re.IGNORECASE
+)
+# Gas or carbon monoxide advice to leave or call 911. Only the server's safety lines say it; on
+# a call with no safety signal the model's own is dropped (eval round 4, gas-worry-no-smell).
+HAZARD = re.compile(r"\bgas\b|\bsmell|\bcarbon monoxide\b|\bfumes\b|\bco alarm\b", re.IGNORECASE)
+EVACUATE = re.compile(
+    r"\b(?:get|step|head|go)\s+(?:everyone\s+)?out(?:side)?\b|\bleave the (?:house|home|apartment)\b"
+    r"|\b911\b|\bgas company\b|\bevacuat",
+    re.IGNORECASE,
+)
+ORDINAL = re.compile(r"^\d+(?:st|nd|rd|th)$")
+SENTENCE_END = re.compile(r"(?<=[.!?])\s+")
+# A question that only asks about the sentence before it: dropped with a dropped restatement, so
+# the caller never hears a bare "Is that right?" (eval round 3 run 20261104-031113).
+CONFIRMS_ONLY = re.compile(
+    r"\s*(?:is that (?:right|correct)|(?:is )?that (?:right|correct)|correct|right)\s*\?\s*",
+    re.IGNORECASE,
+)
+STREET_WORDS = {
+    "street", "st", "avenue", "ave", "road", "rd", "boulevard", "blvd", "place", "pl", "lane",
+    "ln", "court", "ct", "drive", "dr", "parkway", "pkwy", "terrace", "way", "broadway",
+}
+DIGIT_WORDS = {
+    "zero": "0", "oh": "0", "o": "0", "one": "1", "two": "2", "three": "3", "four": "4",
+    "five": "5", "six": "6", "seven": "7", "eight": "8", "nine": "9",
+}
+
+
+def sentences(text: str) -> list[str]:
+    return [s for s in SENTENCE_END.split(text) if s.strip()]
+
+
+def caller_digits(text: str) -> tuple[set[str], set[str]]:
+    """The ZIPs and phone numbers in a caller's line, from digits said one by one ("one one two
+    three four") or written as digits, as the transcription gives them."""
+    zips, phones = set(), set()
+    for digits, after in _digit_runs(text):
+        first = after[0] if after else ""
+        if ORDINAL.match(first) or first in STREET_WORDS:
+            continue  # a house number before its street, "one eight eight 10 64th avenue"
+        if len(digits) == 5:
+            zips.add(digits)
+        elif len(digits) == 10:
+            phones.add(digits)
+        elif len(digits) == 11 and digits.startswith("1"):
+            phones.add(digits[1:])
+    return zips, phones
+
+
+def caller_streets(text: str) -> set[tuple[str, str]]:
+    """House numbers the caller said with the first word of the street name, when what follows
+    reads as a street ("one eight five seven 77th street" gives ("1857", "77th")), so "64 degrees"
+    is not an address."""
+    streets = set()
+    for digits, after in _digit_runs(text):
+        first, second = (after + ["", ""])[:2]
+        if 1 <= len(digits) <= 5 and first and (
+            ORDINAL.match(first) or first in STREET_WORDS or second in STREET_WORDS
+        ):
+            streets.add((digits, first))
+    return streets
+
+
+def _digit_runs(text: str) -> list[tuple[str, list[str]]]:
+    """Each run of digits in a caller's line, with the two words that follow it. An ordinal
+    ("77th") is a word here, so a street name ends a run."""
+    tokens = re.findall(r"\d+(?:st|nd|rd|th)\b|[a-z]+|\d+", text.lower())
+    runs, run = [], ""
+    for i, token in enumerate(tokens):
+        if token.isdigit():
+            run += token
+        elif token in DIGIT_WORDS and not ORDINAL.match(token):
+            run += DIGIT_WORDS[token]
+        else:
+            if run:
+                runs.append((run, tokens[i : i + 2]))
+            run = ""
+    if run:
+        runs.append((run, []))
+    return runs
+
+
+class SpokenReply:
+    """What of the model's reply the caller hears, kept the same in every voice layer and the eval
+    harness. The caller hears the address and number read back once, in the server's sentence
+    (eval round 3):
+
+    - Some tool results are spoken by the voice layer itself, word for word: the read-back
+      sentence, and on a safety call the sign-off end_call returns. In a reply that calls one of
+      those, the text the model wrote first is dropped: no lead-in, no second goodbye.
+    - In any reply, a sentence announcing the read-back is dropped, and so is a sentence that
+      restates the ZIP or phone number the caller gave. The rest of the reply is kept; a reply
+      with nothing left is silent.
+
+    A streaming voice layer can only drop text it hasn't spoken yet. It passes each sentence
+    through `sentence` as it completes, and while `holding` it keeps the whole reply until it
+    ends. That is from the first in-area ZIP check, when a read-back can come, until the
+    read-back is confirmed, and for the whole of a safety call."""
+
+    def __init__(self) -> None:
+        self.address_checked = False
+        self.read_back_confirmed = False
+        self.safety_call = False
+        self.zips: set[str] = set()
+        self.phones: set[str] = set()
+        self.streets: set[tuple[str, str]] = set()
+        self.urgent = False
+        self._dropped_restatement = False
+        self._asked = False
+
+    def holding(self) -> bool:
+        return self.safety_call or (self.address_checked and not self.read_back_confirmed)
+
+    def heard(self, safety: dict | None, caller_text: str = "") -> None:
+        """A caller line and its turn result: the safety action the server returned, if any."""
+        zips, phones = caller_digits(caller_text)
+        self.zips |= zips
+        self.phones |= phones
+        self.streets |= caller_streets(caller_text)
+        action = (safety or {}).get("action")
+        if action in ("speak_lines", "speak_variant"):
+            self.safety_call = True
+        elif action == "cleared":
+            self.safety_call = False
+
+    def tool_done(self, name: str, envelope: dict) -> None:
+        data = envelope.get("data") or {}
+        if name == "check_service_area" and envelope.get("ok"):
+            self.address_checked = True
+        if name == "find_slots" and (data.get("priority") or {}).get("level") == "Urgent":
+            self.urgent = True
+        if name == "read_back" and data.get("confirmed"):
+            self.read_back_confirmed = True
+            # Confirmed details are said once, in the server's sentence: never again by the model.
+            address = data.get("address") or {}
+            if address.get("zip"):
+                self.zips.add(address["zip"])
+            if data.get("phone"):
+                self.phones.add(re.sub(r"\D", "", data["phone"]))
+            street = re.match(r"(\d[\d-]*)\s+(\S+)", address.get("street") or "")
+            if street:
+                self.streets.add((street.group(1), street.group(2).lower()))
+
+    def server_speaks(self, name: str, args: dict) -> bool:
+        """Decided from the call alone, before its result: a streaming layer must choose then."""
+        if name == "read_back":
+            return not args.get("confirmed")
+        return name == "end_call" and self.safety_call
+
+    def start_reply(self) -> None:
+        self._dropped_restatement = False
+        self._asked = False
+
+    def sentence(self, sentence: str) -> str:
+        """One sentence of the model's text, in order within a reply, or "" when the caller
+        shouldn't hear it."""
+        after_restatement, self._dropped_restatement = self._dropped_restatement, False
+        if ANNOUNCES_READ_BACK.search(sentence) or DESCRIBES_TOOLS.search(sentence):
+            return ""
+        if not self.safety_call and CARBON_MONOXIDE.search(sentence):
+            return ""
+        if not self.urgent and CLAIMS_PRIORITY.search(sentence):
+            return ""
+        if not self.safety_call and HAZARD.search(sentence) and EVACUATE.search(sentence):
+            return ""
+        if after_restatement and CONFIRMS_ONLY.fullmatch(sentence):
+            return ""
+        if self._restates(sentence):
+            self._dropped_restatement = True
+            return ""
+        # One question a reply: a second separate question waits for the caller's answer to the
+        # first (eval round 4). A statement after it, such as "No worries if not.", stays.
+        if sentence.rstrip().endswith("?"):
+            if self._asked:
+                return ""
+            self._asked = True
+        return sentence
+
+    def _restates(self, sentence: str) -> bool:
+        """The sentence says back the caller's ZIP, phone number or street address."""
+        digits = re.sub(r"\D", "", sentence)
+        lowered = sentence.lower()
+        return (
+            any(re.search(rf"\b{z}\b", sentence) for z in self.zips)
+            or any(p in digits for p in self.phones)
+            or any(
+                re.search(rf"\b{re.escape(number)}\b", sentence)
+                and re.search(rf"\b{re.escape(word)}\b", lowered)
+                for number, word in self.streets
+            )
+        )
+
+    def text(self, text: str, calls: list[tuple[str, dict]]) -> str:
+        """The model's text for one reply, given the (name, arguments) of the tools it called."""
+        if any(self.server_speaks(n, a) for n, a in calls):
+            return ""
+        self.start_reply()
+        return " ".join(kept for s in sentences(text) if (kept := self.sentence(s)))
+
+
+def spoken_by_server(name: str, envelope: dict) -> str | None:
+    """The sentence a voice layer speaks itself from a tool result, word for word, with no model
+    step after it: a safety refusal, the read-back sentence, and the sign-off end_call returns."""
+    say = envelope.get("say") or ""
+    if not say:
+        return None
+    if envelope.get("refused") == "gate_safety":
+        return say
+    if name == "read_back" and (envelope.get("ok") or envelope.get("refused") == "gate_read_back"):
+        return say
+    if name == "end_call" and envelope.get("ok"):
+        return say
+    # A booking the field service system couldn't take: one honest line, as written (spec S-48).
+    if name == "book_appointment" and envelope.get("refused") == "fsm_unavailable":
+        return say
+    # A booking, move or cancel that went through: its confirmation is the whole turn, so no
+    # second model request runs after the slowest tool on the call (eval round 4).
+    if name in ("book_appointment", "reschedule_appointment", "cancel_appointment") and (
+        envelope.get("ok")
+    ):
+        return say
+    return None
 
 
 def job_types(tenant_dir: Path) -> list[str]:
