@@ -208,13 +208,13 @@ HYPOTHETICAL = (
     "might it be",
     "worried about",
     "afraid of",
-    # A question back, not a report: "do you smell gas, do I smell gas? I don't think I do"
-    # (eval run 20261104-154616, gas-worry-no-smell).
-    "do i",
-    "do you",
-    "should i",
-    "would i",
 )
+# The agent's own question echoed back ("do you smell gas, do I smell gas? I don't think I do",
+# eval run 20261104-154616, gas-worry-no-smell): a worry only when the line echoes "do you smell"
+# and the mention comes right after "do I" or "do you", with nothing between. "What do I do? I
+# smell gas" and "do I smell gas? yes, strongly" stay reports (PR #102 review).
+ECHO_OF_QUESTION = "do you smell"
+ECHOES = ("do i", "do you")
 HYPOTHETICAL_FILLER = {
     "i", "we", "you", "they", "ever", "there", "theres", "is", "was", "a", "an", "any", "some",
     "like", "start", "started", "to", "get", "it", "its", "were", "maybe", "even", "do", "did",
@@ -328,8 +328,13 @@ def _hypothetical(text_words: str, phrase: str) -> bool:
     start = text_words.find(target)
     if start < 0:
         return False
+    echoing = has_phrase(text_words, ECHO_OF_QUESTION)
     while start >= 0:
         kept = text_words[: start + 1].split()
+        straight_before = " " + " ".join(kept[-2:]) + " "
+        if echoing and any(straight_before == f" {e} " for e in ECHOES):
+            start = text_words.find(target, start + 1)
+            continue
         for _ in range(HYPOTHETICAL_GAP + 1):
             trimmed = " " + " ".join(kept) + " "
             if any(trimmed.endswith(words(h)) for h in HYPOTHETICAL):

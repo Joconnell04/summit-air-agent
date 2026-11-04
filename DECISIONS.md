@@ -12,6 +12,14 @@ Discussion: docs/ai-process/transcripts/... or docs/explorations/...
 Issue: #N
 -->
 
+## 066. The eval reference is measured at two samples per scenario
+
+Decided: the standard-suite run that sets the eval floor runs every scenario twice (`SAMPLES=2`), and the floor is that run's pass rate rounded down to 5% under decision 011. The first such reference is `20261104-154616-livekit-fast-standard`, 93% over 104 calls, floor 90%.
+Why: at one sample per scenario the pass rate moved about five points between runs on nearly the same code (91%, 96%, 90%, 85%, MEASURED, PR #102), which is the size of the fixes being judged, so one lucky or unlucky call could set or break the floor. Two samples halve that noise for about $3.30 a run instead of $1.70 (MEASURED).
+Considered: one sample with a rerun of misses (hides a flaky scenario); three samples (about $5 a run for a further small gain).
+Would change if: two-sample runs on unchanged code still move by more than five points, or the suite grows enough that the cost matters.
+Discussion: PR #102
+
 ## 065. Cartesia's managed voice agents stay out
 
 Decided: we don't build on Cartesia's hosted agents, and they don't join the bake-off. Cartesia stays as the voice only.

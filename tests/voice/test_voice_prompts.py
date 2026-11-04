@@ -290,3 +290,14 @@ def test_a_building_not_a_home_answer_stays_residential(agent):
     assert not sounds_commercial("yes that's right, it's a building not a home so note that", cfg)
     text = assemble.instructions(agent.start()["data"], datetime(2026, 11, 2, 14, 0, tzinfo=UTC))
     assert '"it\'s a building, not a home"' in text and "is still residential" in text
+
+
+def test_a_shop_building_that_is_not_a_home_stays_commercial():
+    """PR #102 review: "building" as an apartment sign mustn't make a business residential."""
+    from app.lifecycle import sounds_commercial
+    from app.tenant import load_agent
+    from tests.tool_server.toolkit import TENANT_DIR
+
+    cfg = load_agent(TENANT_DIR)[0]["commercial"]
+    assert sounds_commercial("it's not a home, it's the shop building", cfg)
+    assert not sounds_commercial("it's a building not a home, six apartments", cfg)

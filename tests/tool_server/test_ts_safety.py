@@ -791,3 +791,16 @@ def test_asking_whether_they_smell_gas_is_a_worry_not_a_report():
 def test_an_echoed_question_answered_yes_is_a_report(line):
     """PR #102 review: "Do you smell gas? I do" must bring the lines at once."""
     assert safety.check_caller_turn(line, "none", None, 0, CFG).action == "speak_lines"
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "What do I do? I smell gas",
+        "what should I do, I smell gas in the kitchen",
+        "do I smell gas? yes, strongly",
+    ],
+)
+def test_a_real_gas_report_after_a_question_word_brings_the_lines(line):
+    """PR #102 review: the bare "do i", "should i" and "would i" worries held these back."""
+    assert safety.check_caller_turn(line, "none", None, 0, CFG).action == "speak_lines", line

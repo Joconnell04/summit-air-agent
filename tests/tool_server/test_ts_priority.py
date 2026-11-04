@@ -323,3 +323,23 @@ def test_a_negated_list_goes_on_past_a_comma_but_a_bare_no_does_not():
     assert prio._rule_fires({"phrases": ["oxygen"]}, answer)
     later = prio.Facts("no_heat", "No babies here, but grandma is visiting, she's elderly")
     assert prio._rule_fires({"phrases": ["elderly"]}, later)
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "No heat, baby in the house",
+        "No heat, newborn at home",
+        "No heat at all, infant in the house",
+        "No heat since last night, elderly mother lives with me",
+        "No heat, oxygen concentrator running",
+        "no kids, no pets, elderly mother lives here",
+        "no heat, no hot water, elderly man upstairs",
+    ],
+)
+def test_a_no_before_a_comma_never_hides_someone_at_risk(agent, line):
+    """PR #102 review: the comma carry dropped each of these from Urgent to High at 66 F."""
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, line)
+    found = agent.tool("find_slots", call, job_type="no_heat", facts={"inside_temp_f": 66})
+    assert found["data"]["priority"]["level"] == "Urgent", line

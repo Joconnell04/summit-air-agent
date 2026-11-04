@@ -68,10 +68,14 @@ def sounds_commercial(text: str, cfg: dict) -> bool:
         text_words = text_words.replace(words(phrase), " ")
     if any(has_phrase(text_words, p) for p in cfg["phrases"]):
         return True
-    if any(has_phrase(text_words, p) for p in cfg.get("not_home", [])) and not any(
-        has_phrase(text_words, p) for p in cfg.get("apartment_signs", [])
-    ):
-        return True
+    # "Not a home" is a business unless the line says it's an apartment building, and a business
+    # word in the same line wins: "it's not a home, it's the shop building" (PR #102 review).
+    if any(has_phrase(text_words, p) for p in cfg.get("not_home", [])):
+        names_business = any(has_phrase(text_words, p) for p in cfg["owned"] + cfg["run"])
+        if names_business or not any(
+            has_phrase(text_words, p) for p in cfg.get("apartment_signs", [])
+        ):
+            return True
     owned = "|".join(map(re.escape, cfg["owned"]))
     run = "|".join(map(re.escape, cfg["run"]))
     return bool(
