@@ -8,7 +8,7 @@ system prompt and messages are rebuilt from the same pieces the worker joins: th
 result through prompts/assemble.py, then the turns, the `[server]` notes and the tool results as
 the worker hands them to the model. A timing the record doesn't hold is None, shown as missing.
 
-Everything returned is redacted (app/redact.py).
+Values are shown as recorded: the bench is admin only and admins see everything (DECISIONS.md 064).
 """
 
 import json
@@ -16,10 +16,14 @@ from datetime import datetime
 
 from prompts.assemble import instructions, server_notes
 
-from . import logs, redact
+from . import logs
 from .db import parse_iso
 from .plain import REFUSED
 from .tools import TOOLS
+
+
+def _as_recorded(value, _key: str = ""):
+    return value
 
 LANES = (
     ("caller", "Caller"),
@@ -69,7 +73,7 @@ def _clock(start: datetime, at: str) -> str:
 
 
 def _dumps(obj) -> str:
-    return json.dumps(redact.value(obj), indent=2, default=str, ensure_ascii=False)
+    return json.dumps(_as_recorded(obj), indent=2, default=str, ensure_ascii=False)
 
 
 def _tool_output(row: dict | None) -> str | None:
@@ -79,7 +83,7 @@ def _tool_output(row: dict | None) -> str | None:
         return None
     envelope = {"ok": row["ok"], "say": row["say"], "data": row.get("result"), "refused": row["refused"]}
     return json.dumps(
-        redact.value({k: v for k, v in envelope.items() if v not in (None, "", {})}),
+        _as_recorded({k: v for k, v in envelope.items() if v not in (None, "", {})}),
         default=str, ensure_ascii=False,
     )
 
@@ -106,12 +110,12 @@ class Graph:
             "from_col": LANE_INDEX[previous],
             "kind": kind,
             "title": title,
-            "summary": redact.text(summary),
+            "summary": _as_recorded(summary),
             "at": _clock(self.started, at) if at else "",
             "ms": ms,
             "ms_label": ms_label,
             "tone": tone,
-            "facts": [(k, redact.value(v, k)) for k, v in detail.pop("facts", [])],
+            "facts": [(k, _as_recorded(v, k)) for k, v in detail.pop("facts", [])],
             "blocks": detail.pop("blocks", []),
             "messages": detail.pop("messages", None),
             "refs": [],
@@ -202,7 +206,7 @@ def _start(g: Graph, event: dict, row: dict | None) -> None:
         g.system_note = "The /calls/start result is not in the log, so the prompt can't be rebuilt."
     else:
         try:
-            g.system = redact.text(instructions(redact.value(data), g.started))
+            g.system = _as_recorded(instructions(_as_recorded(data), g.started))
             g.system_note = (
                 "Rebuilt with prompts/assemble.py from this call's /calls/start result and the "
                 "prompt files as they are now; the worker doesn't log the request itself."
@@ -229,7 +233,7 @@ def _caller(g: Graph, event: dict, row: dict | None) -> tuple[bool, bool]:
     g.turn_requests = []
     g.add("caller", "caller_line", "Caller", event["text"], event["at"],
           timings.get("transcript_ms"), "final transcript",
-          facts=[("Line", event["seq"])], blocks=[{"title": "Said", "text": redact.text(event["text"]), "open": True}])
+          facts=[("Line", event["seq"])], blocks=[{"title": "Said", "text": _as_recorded(event["text"]), "open": True}])
     g.add("voice", "end_of_turn", "End of turn", "Decided the caller had finished", event["at"],
           timings.get("end_of_turn_ms"), "end of turn",
           facts=[(k, v) for k, v in sorted(timings.items())])
@@ -248,10 +252,10 @@ def _caller(g: Graph, event: dict, row: dict | None) -> tuple[bool, bool]:
     notes = server_notes(hints)
     if notes:
         g.add("server", "server_note", "Note to the model", notes[0], event["at"],
-              blocks=[{"title": "Added to the caller's line", "text": redact.text("\n".join(notes)),
+              blocks=[{"title": "Added to the caller's line", "text": _as_recorded("\n".join(notes)),
                        "open": True}])
     content = event["text"] + ("\n" + "\n".join(notes) if notes else "")
-    g.messages.append({"role": "user", "text": redact.text(content)})
+    g.messages.append({"role": "user", "text": _as_recorded(content)})
     spoken = action in SPOKEN_ACTIONS and bool(safety.get("text"))
     return spoken, not spoken
 
@@ -279,7 +283,7 @@ def _tool(g: Graph, event: dict, row: dict | None) -> None:
         g.add("server", "rule", "Rule", text, event["at"], tone=rule_tone,
               facts=[("Gate", event["gate"]), ("Outcome", "allowed" if event["ok"] else "held")])
     g.messages.append({"role": "assistant", "text": f"[tool call] {event['tool']} "
-                       + json.dumps(redact.value(event["args"]), default=str, ensure_ascii=False)})
+                       + json.dumps(_as_recorded(event["args"]), default=str, ensure_ascii=False)})
     g.messages.append({"role": "tool", "text": output or "(not in the log)"})
 
 
@@ -291,8 +295,8 @@ def _agent(g: Graph, event: dict, scripted: bool, need_request: bool) -> None:
               "first audio", tone="warn" if event["safety_action"] else "",
               facts=[("Source", "fixed text from the server or the tenant's lines, no model"),
                      ("Line", event["seq"])],
-              blocks=[{"title": "Spoken", "text": redact.text(text), "open": True}])
-        g.messages.append({"role": "assistant", "text": redact.text(text)})
+              blocks=[{"title": "Spoken", "text": _as_recorded(text), "open": True}])
+        g.messages.append({"role": "assistant", "text": _as_recorded(text)})
         return
     if need_request or not g.turn_requests:
         g.request(event["at"])
@@ -305,12 +309,12 @@ def _agent(g: Graph, event: dict, scripted: bool, need_request: bool) -> None:
     last["ms"] = timings.get("llm_first_token_ms")
     g.add("model", "model_wrote", "Model wrote", text, event["at"],
           facts=[("Line", event["seq"]), ("Characters", len(text))],
-          blocks=[{"title": "Text", "text": redact.text(text), "open": True}])
+          blocks=[{"title": "Text", "text": _as_recorded(text), "open": True}])
     filtered = speech_filter(text)
     if filtered is not None and filtered != text:
         g.add("voice", "filter", "Speech filter", f"Dropped markdown or emoji: {_dropped(text, filtered)}",
               event["at"], tone="hold",
-              blocks=[{"title": "After the filter", "text": redact.text(filtered), "open": True}],
+              blocks=[{"title": "After the filter", "text": _as_recorded(filtered), "open": True}],
               facts=[("How it's known", "LiveKit's default filter patterns, applied to the line")])
     reply = timings.get("reply_ms")
     g.add("voice", "spoken", "Spoken", text if filtered is None else filtered, event["at"],
@@ -319,7 +323,7 @@ def _agent(g: Graph, event: dict, scripted: bool, need_request: bool) -> None:
           facts=[("Reply delay", f"{reply:.0f} ms" if reply is not None else "missing"),
                  ("Tool time on the worker", timings.get("tool_ms", "missing")),
                  ("Bridge line played", bool(timings.get("bridge")))])
-    g.messages.append({"role": "assistant", "text": redact.text(text)})
+    g.messages.append({"role": "assistant", "text": _as_recorded(text)})
 
 
 def _dropped(text: str, filtered: str) -> str:
