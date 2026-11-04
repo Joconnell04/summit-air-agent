@@ -7,15 +7,17 @@ recorded): card digits are never recorded in the first place.
 
 A card is found by its digit total, not line by line, because speech-to-text splits a card read
 aloud wherever the caller pauses. The window is the caller's latest line and the lines just before
-it that are mostly digits (digits plus filler such as "and", "okay", "my card number is"). Its digit
-runs are read in order; a stretch of them that totals 13 to 19 digits and passes the Luhn check, or
-12 to 19 digits when a card word is in the window, and is grouped the way a card is read (fours,
-Amex's 4-6-5, one block, or one digit at a time) is a card. Its runs are taken out on every line of
-the window, and so are an expiry date or a code of up to four digits right after it. A line with a
-street word, "dollars" or anything else isn't mostly digits, so "145 Union Street" and "it was 249
-dollars" never join a window; a phone number split across lines is never 13 digits. Digits after
-"ending" or "ending in" are kept: the last four alone don't identify a card, and the office may
-need them to find the charge.
+it that are mostly digits (digits plus filler such as "and", "okay", "my card number is"); a line
+of filler alone ("hold on", "um okay") stays inside it without adding to it. Its digit runs are read
+in order. After a card word, a stretch of 12 to 19 digits in any grouping is a card. Otherwise the
+digits must be grouped the way a card is read (fours, Amex's 4-6-5, one block, or one digit at a
+time) and total 13 to 19 passing the Luhn check, except a full 4-4-4-4 or 4-6-5, which counts even
+when Luhn fails, since one misheard digit does that. A card's runs are taken out on every line of
+the window, and so are an expiry date or a code right after it. A stretch is never joined by "and"
+on one line, so a spoken ZIP "and" a phone stay. A line with a street word, "dollars" or anything
+else isn't mostly digits, so "145 Union Street" and "it was 249 dollars" never join a window; a
+phone number split across lines is never 13 digits. Digits after "ending" or "ending in" are kept:
+the last four alone don't identify a card, and the office may need them to find the charge.
 
 What the agent says when a caller offers a card, and the billing callback, are the server's lines
 (app/lifecycle.py).
@@ -30,6 +32,8 @@ from .text import has_phrase, words
 MARKER = "[card number removed]"
 WHOLE_CARD = range(13, 20)
 CUED_CARD = range(12, 20)
+# A whole card read in its usual groups, counted even when Luhn fails.
+FULL_GROUPINGS = ([4, 4, 4, 4], [4, 6, 5])
 TAIL_DIGITS = 4
 DIGIT_WORDS = {
     "zero": "0", "oh": "0", "one": "1", "two": "2", "three": "3", "four": "4",
@@ -64,7 +68,9 @@ FILLER = {
     "credit", "debit", "visa", "mastercard", "master", "amex", "american", "express", "discover",
     "expiration", "expiry", "exp", "expires", "date", "security", "code", "cvv", "cvc", "on",
     "back", "of", "yeah", "yes", "then", "thats", "that", "sorry", "wait", "let", "me", "see",
-    "again", "next", "rest", "ending", "in", "here", "go", "you", "are", "hold", "dash",
+    "again", "next", "rest", "ending", "in", "here", "go", "you", "are", "hold", "dash", "hang",
+    "sec", "secs", "second", "seconds", "moment", "minute", "minutes", "just", "give", "hmm",
+    "er", "mm", "one", "two",
 }
 ENDING = re.compile(r"\bending(?:\s+in)?\s*$", re.IGNORECASE)
 
@@ -116,6 +122,26 @@ def _groups(text: str) -> list[str]:
     return [g for g in re.split(r"[ \t,.-]", text) if g]
 
 
+# "One sec", "two minutes": a spoken number that is a length of time, not a digit.
+TIME_AFTER = re.compile(r"^\s+(?:sec|secs|second|seconds|moment|minute|minutes)\b", re.IGNORECASE)
+
+
+def _digit_matches(line: str) -> list[re.Match]:
+    return [
+        m
+        for m in RUN.finditer(line)
+        if not (re.fullmatch(_DIGIT_WORD, m.group(0), re.IGNORECASE) and TIME_AFTER.match(line[m.end() :]))
+    ]
+
+
+def _without_digits(line: str) -> str:
+    out, at = [], 0
+    for m in _digit_matches(line):
+        out += [line[at : m.start()], " "]
+        at = m.end()
+    return "".join(out) + line[at:]
+
+
 def _filler(text: str) -> bool:
     return all(w in FILLER for w in words(text).split())
 
@@ -123,7 +149,7 @@ def _filler(text: str) -> bool:
 def _runs(line: str, index: int) -> list[tuple[Run, str]]:
     """Each run in the line with the text just before it."""
     out, at = [], 0
-    for match in RUN.finditer(line):
+    for match in _digit_matches(line):
         before = line[at : match.start()]
         known = match.group(0) == MARKER
         run = Run(index, match.start(), match.end(), [] if known else _groups(match.group(0)), known)
@@ -134,11 +160,17 @@ def _runs(line: str, index: int) -> list[tuple[Run, str]]:
     return out
 
 
+def filler_only(line: str) -> bool:
+    """A line with no digits and nothing but filler ("hold on", "um okay", "sorry"). It stays
+    inside a window without adding to it."""
+    return not _digit_matches(line) and bool(words(line).split()) and _filler(line)
+
+
 def mostly_digits(line: str) -> bool:
     """Digits, or a marker, with nothing but filler around them."""
-    if not RUN.search(line):
+    if not _digit_matches(line):
         return False
-    return _filler(RUN.sub(" ", line))
+    return _filler(_without_digits(line))
 
 
 def _card_grouping(sizes: list[int]) -> bool:
@@ -150,12 +182,19 @@ def _card_grouping(sizes: list[int]) -> bool:
 
 
 def _is_card(runs: list[Run]) -> bool:
+    """After a card word any grouping counts ("41", "11", ... read two at a time). Without one,
+    the digits must be grouped as a card is read and pass Luhn, except a full 4-4-4-4 or Amex
+    4-6-5, which counts even when Luhn fails: one misheard digit does that."""
     groups = [g for run in runs for g in run.groups]
     digits = "".join(groups)
-    if any("/" in g for g in groups) or not _card_grouping([len(g) for g in groups]):
+    sizes = [len(g) for g in groups]
+    if any("/" in g for g in groups):
         return False
-    cued = runs[0].cued
-    return (len(digits) in WHOLE_CARD and luhn(digits)) or (cued and len(digits) in CUED_CARD)
+    if runs[0].cued and len(digits) in CUED_CARD:
+        return True
+    if not _card_grouping(sizes):
+        return False
+    return (len(digits) in WHOLE_CARD and luhn(digits)) or sizes in FULL_GROUPINGS
 
 
 def _chains(lines: list[str]) -> list[list[Run]]:
@@ -215,7 +254,7 @@ def redact_window(lines: list[str]) -> list[str]:
         return lines
     start = len(lines) - 1
     if mostly_digits(lines[-1]):
-        while start > 0 and mostly_digits(lines[start - 1]):
+        while start > 0 and (mostly_digits(lines[start - 1]) or filler_only(lines[start - 1])):
             start -= 1
     window = lines[start:]
     chains = _chains(window)

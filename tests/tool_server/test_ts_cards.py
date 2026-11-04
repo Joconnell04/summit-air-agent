@@ -61,7 +61,7 @@ def test_card_digits_are_taken_out(line):
         "it's 52 degrees in here",
         "the window is 8 to 12 on 11/02",
         "the serial number is 123456789012",
-        "the serial is 1234 5678 9012 3456",
+        "the account number is 1234567890123456",
         "the serial is 1234567890123",
         "visa, 11215 is the zip",
         "it was 249 dollars",
@@ -268,7 +268,6 @@ def test_a_card_read_across_lines_is_found_by_its_digit_total(lines):
         ["4111 1111 1111 1111", "my number is 718 555 0101"],
         ["4111 1111 1111 1111", "and the zip is 11222"],
         ["4111 1111 1111 1111", "it's 145 Union Street"],
-        ["1234 5678", "9012 3456"],
         ["okay hold on", "4111 1111"],
         ["visa", "11215 is the zip"],
     ],
@@ -347,3 +346,47 @@ def test_a_phone_after_a_card_on_the_same_line_stays():
     assert cards.redact("4111 1111 1111 1111 and then 718 555 0101") == (
         f"{cards.MARKER} and then 718 555 0101"
     )
+
+
+@pytest.mark.parametrize(
+    "lines",
+    [
+        # A filler-only line stays inside the window.
+        ["my card number is 4111 1111", "hold on", "1111 1111"],
+        ["4111 1111 1111", "um okay", "1111"],
+        ["4111 1111 1111", "hang on one sec", "1111"],
+        # After a card word, any grouping counts.
+        ["my card is 41", "11", "11", "11", "11", "11", "11", "11"],
+        ["my visa is 411", "111", "111", "111", "111", "1"],
+        # One digit a line, sixteen lines, after a card word.
+        ["my card number is", *"4111111111111111"],
+        # A full 4-4-4-4 or 4-6-5 with one digit misheard fails Luhn and still counts.
+        ["4111 1111 1111 1112"],
+        ["4111", "1111", "1111", "1112"],
+        ["3782 822463 10006"],
+        ["1234 5678", "9012 3456"],
+    ],
+)
+def test_the_re_check_leaks_are_taken_out(lines):
+    out = as_stored(lines)
+    assert not any(re.search(r"\d", line) for line in out)
+    assert any(cards.MARKER in line for line in out)
+
+
+def test_filler_only_lines_stay_as_said_inside_a_window():
+    assert as_stored(["4111 1111 1111", "um okay", "1111"])[1] == "um okay"
+
+
+def test_a_card_one_digit_a_line_is_never_stored(agent):
+    call_id = agent.start(call_id="call-1")["data"]["call_id"]
+    agent.turn(call_id, "my card number is")
+    for digit in "4111111111111111":
+        agent.turn(call_id, digit)
+    conn = agent.db()
+    try:
+        texts = [r["text"] for r in conn.execute(
+            "SELECT text FROM turns WHERE call_id = ? AND speaker = 'caller'", (call_id,)
+        )]
+    finally:
+        conn.close()
+    assert not any(re.search(r"\d", t) for t in texts)

@@ -258,8 +258,8 @@ def _ctx(services: Services, conn, call_id: str, key: str | None) -> Ctx:
     )
 
 
-# How many earlier caller lines a card read aloud can span.
-CARD_WINDOW_LINES = 8
+# How many earlier caller lines a card read aloud can span: one digit a line, with a few "um"s.
+CARD_WINDOW_LINES = 24
 
 
 def redact_caller_line(conn, log_path: Path, call_id: str, text: str) -> str:
