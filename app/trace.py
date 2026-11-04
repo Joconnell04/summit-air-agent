@@ -68,8 +68,12 @@ def timeline(conn: sqlite3.Connection, call_id: str) -> dict | None:
         "callbacks": rows("SELECT * FROM callbacks WHERE call_id = ? ORDER BY id"),
         "bookings": rows(
             "SELECT id, kind, status, fsm_job_id, window_start, priority, priority_reasons, "
-            "safety_override, seek_earlier, attempts, last_error FROM bookings WHERE call_id = ? "
-            "ORDER BY id"
+            "safety_override, seek_earlier, attempts, last_error, "
+            "json_extract(request_json, '$.raised_after_wait') AS raised_after_wait, "
+            "json_extract(request_json, '$.priority_rules') AS priority_rules, "
+            "json_extract(request_json, '$.priority_reasons') AS priority_reason_list, "
+            "json_extract(request_json, '$.details.who_home') AS who_home "
+            "FROM bookings WHERE call_id = ? ORDER BY id"
         ),
         "leads": rows("SELECT id, kind, summary, status FROM leads WHERE call_id = ? ORDER BY id"),
         "out_of_area": rows("SELECT zip, at FROM out_of_area WHERE call_id = ?"),

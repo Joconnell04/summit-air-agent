@@ -498,6 +498,16 @@ def test_the_confirm_question_is_asked_once_per_call():
         ("no nothing like that it was just dusty, it didn't smell like eggs or gas or anything", "cleared"),
         ("no nothing like that it was just dusty, like burning dust, no gas smell no alarm", "cleared"),
         ("no nothing like that, like when you first fire up a heater after the summer", "cleared"),
+        # Eval run 20261104-173249: "nothing like eggs" fired the lines. A no, or at worst unclear.
+        ("no, nothing like eggs, just dusty", "cleared"),
+        (
+            (
+                "no nothing like that it was just dusty like burning dust you know the way a "
+                "heater smells the first time it runs nothing like eggs it's gone now"
+            ),
+            "ask_check",
+        ),
+        ("it smells like eggs", "speak_lines"),
         ("Actually it does, a bit like eggs", "speak_lines"),
         ("No, it smells like rotten eggs", "speak_lines"),
         ("Yeah, kind of", "speak_lines"),
@@ -833,3 +843,34 @@ def test_carbon_monoxide_spelled_by_speech_to_text_brings_the_lines(line):
 )
 def test_c_o_without_an_alarm_or_symptom_is_not_carbon_monoxide(line):
     assert safety.check_caller_turn(line, "none", None, 0, CFG).action == "none"
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "I reset the breaker and got nothing. Gas smell in the basement.",
+        "Heat's out, thermostat shows nothing. Smells like gas down there.",
+    ],
+)
+def test_a_negation_never_reaches_across_a_sentence_end(line):
+    # PR #126 review: "nothing" as a general negator hid these gas reports.
+    assert safety.clear_signal(line, CFG) == "gas"
+
+
+@pytest.mark.parametrize(
+    "answer,result",
+    [
+        ("Nothing, the gas smell is strong", "yes"),
+        ("nothing but rotten eggs", "yes"),
+        ("no, it does smell like eggs", "yes"),
+        ("no, nothing like eggs, just dusty", "no"),
+    ],
+)
+def test_nothing_negates_only_a_like_phrase_in_a_check_answer(answer, result):
+    assert safety.answer_to_check(answer, CFG) == result
+
+
+@pytest.mark.parametrize("line", ["No. Gas smell in the basement.", "Never. Gas smell in the garage."])
+def test_a_one_word_no_before_a_gas_report_still_brings_the_lines(line):
+    # PR #126 re-check: the live turn check joined the sentences and "no" negated the smell.
+    assert safety.check_caller_turn(line, "none", None, 0, CFG).action == "speak_lines"

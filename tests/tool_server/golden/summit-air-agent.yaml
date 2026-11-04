@@ -463,6 +463,19 @@ phone_numbers:
 - (646) 624-0418
 - (678) 336-6730
 priority:
+  at_risk_asked:
+  - anyone at home
+  - anyone there
+  - anyone in the home
+  - who is home
+  - whos home
+  - who lives
+  - older
+  - elderly
+  - baby
+  - babies
+  - medical equipment
+  - oxygen
   base:
     estimate: Normal
     no_cooling: High
@@ -509,6 +522,84 @@ priority:
     groups: 2
     raise_to: Urgent
     reason: two risk factors at home together
+  inside_temp:
+    asked:
+    - temperature
+    - thermostat
+    - degrees
+    - how cold
+    - how warm
+    - how hot
+    - cold
+    - chilly
+    - warm
+    - hot
+    asked_lines: 3
+    cues:
+    - degrees
+    - degree
+    - in here
+    - inside
+    - indoors
+    - in the house
+    - in the apartment
+    - thermostat
+    - temperature
+    - temp
+    - cold
+    - freezing
+    - hot
+    - warm
+    - boiling
+    - house
+    - home
+    - down to
+    - dropped
+    - falling
+    - says
+    - reads
+    plausible_f:
+    - 20
+    - 110
+    reach_words: 4
+  pushes:
+  - its an emergency
+  - its an emergency call
+  - this is an emergency
+  - its urgent
+  - this is urgent
+  - make it urgent
+  - mark it urgent
+  - mark it as urgent
+  - put it as urgent
+  - put it down as urgent
+  - make it an emergency
+  - make it a priority
+  - make me a priority
+  - make this a priority
+  - higher priority
+  - top priority
+  - high priority
+  - put me first
+  - put us first
+  - put me at the top
+  - move me up
+  - move us up
+  - bump me up
+  - bump us up
+  - top of the list
+  - front of the line
+  - skip the line
+  - ahead of everyone
+  - ill pay extra
+  - i can pay extra
+  - i will pay extra
+  - happy to pay extra
+  - ill pay more
+  - i can pay more
+  - ill pay double
+  - ill pay whatever
+  - pay whatever it takes
   rules:
   - age_at_least: 60
     id: vulnerable_person
@@ -524,6 +615,8 @@ priority:
     - grandma
     - grandpa
     - baby
+    - babys
+    - babies
     - infant
     - newborn
     - months old
@@ -676,8 +769,19 @@ priority:
     - only one here
     - only one home
     - caller alone
+    - all alone
+    - all by myself
     raise_to: High
     reason: someone at home alone
+    unless_followed_by:
+      phrases:
+      - its just me
+      - just me at home
+      - just me here
+      words:
+      - and
+      - with
+      - plus
   - group: true
     id: chronic_illness
     job_types:

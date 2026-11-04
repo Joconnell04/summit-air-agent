@@ -99,7 +99,12 @@ def test_the_agent_asking_for_urgent_does_not_make_it_urgent(agent):
     call = agent.start(UNKNOWN)["data"]["call_id"]
     agent.turn(call, "I need my annual tune-up.")
     found = agent.tool("find_slots", call, job_type="tune_up", priority="Urgent")
-    assert found["data"]["priority"] == {"level": "Normal", "reasons": [], "requested": "Urgent"}
+    assert found["data"]["priority"] == {
+        "level": "Normal",
+        "reasons": [],
+        "requested": "Urgent",
+        "raised_after_wait": False,
+    }
 
 
 def test_caller_lines_feed_priority_even_if_the_agent_leaves_them_out(agent):
@@ -134,6 +139,8 @@ def test_find_slots_returns_the_after_hours_outcome_only_after_hours(agent, cloc
     clock.advance(hours=13)  # 10 p.m. New York
     night = agent.start("(212) 555-0902")["data"]
     assert night["after_hours"] is True
+    # The inside temperature counts only once the caller says it (DECISIONS.md 072).
+    agent.turn(night["call_id"], "The heat's out, it's about 60 in here.")
     found = agent.tool(
         "find_slots", night["call_id"], job_type="no_heat", facts={"inside_temp_f": 60}
     )
@@ -300,14 +307,17 @@ def test_an_older_caller_alone_with_a_cane_is_urgent(agent, who_home):
 
 def test_the_booking_keeps_the_priority_find_slots_already_gave(agent):
     """The rig call's find_slots facts said "elderly"; the booking's details didn't, and it was
-    booked one level lower than the caller was told."""
+    booked one level lower than the caller was told. Priority now comes from the caller's own lines
+    (DECISIONS.md 072), which the booking reads as well, and from the inside temperature the caller
+    gave."""
     call = ready_to_book(agent)
+    agent.turn(call, "It's my elderly mother's place, about 60 degrees in there.")
     found = agent.tool("find_slots", call, job_type="no_heat",
                        facts={"who_home": "elderly woman, cold but managing", "inside_temp_f": 60})
     assert found["data"]["priority"]["level"] == "Urgent"
     day = found["data"]["days"][0]
     booked = book(agent, call, {"date": day["date"], "window": day["windows"][0]},
-                  job_type="no_heat", who_home="Caller, cold but managing")
+                  job_type="no_heat", who_home="Caller, cold but managing", inside_temp_f=None)
     assert booked["ok"], booked
     assert booked["data"]["priority"]["level"] == "Urgent"
 
@@ -356,7 +366,9 @@ def test_a_no_before_a_comma_never_hides_someone_at_risk(agent, line):
 )
 def test_a_stroke_counts_as_a_chronic_illness(text):
     """stroke-in-passing-no-heat came out High twice: a stroke read as no risk at all."""
-    assert "a chronic illness at home" in decide("no_heat", text, 61).reasons
+    # The reason may go on to quote the caller (DECISIONS.md 072).
+    reasons = decide("no_heat", text, 61).reasons
+    assert any(r.startswith("a chronic illness at home") for r in reasons)
 
 
 def test_a_spouses_parent_after_a_stroke_is_urgent():

@@ -277,3 +277,59 @@ def number_tokens(text: str) -> list[str]:
         i += 1
     flush()
     return out
+
+
+ONES = {"one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7, "eight": 8,
+        "nine": 9}
+SPOKEN_NUMBER = re.compile(
+    rf"\b(?:((?:a|one)[\s-]+hundred)(?:[\s-]+and)?[\s-]+)?({'|'.join(TENS)})"
+    rf"(?:[\s-]+({'|'.join(ONES)}))?\b"
+)
+SPOKEN_HUNDRED = re.compile(rf"\b(?:a|one)[\s-]+hundred(?:[\s-]+and)?[\s-]+({'|'.join(ONES)})\b")
+DECADE_WORDS = {"twenties": 20, "thirties": 30, "forties": 40, "fifties": 50, "sixties": 60,
+                "seventies": 70, "eighties": 80, "nineties": 90}
+
+
+def spoken_numbers(value: str) -> str:
+    """Lowercased text with spoken tens written as digits: "eighty-four" is "84" and "fifty two
+    degrees" is "52 degrees". Only twenty to ninety-nine (and "a hundred and five") change, the
+    range of ages and temperatures, so "no one" and "one or two" keep their words."""
+
+    def digits(m: re.Match) -> str:
+        return str((100 if m[1] else 0) + TENS[m[2]] + (ONES[m[3]] if m[3] else 0))
+
+    value = SPOKEN_NUMBER.sub(digits, (value or "").lower())
+    return SPOKEN_HUNDRED.sub(lambda m: str(100 + ONES[m[1]]), value)
+
+
+SPOKEN_DIGITS = {"zero": 0, "oh": 0, "o": 0, **ONES}
+# "Fiftyish" and "50ish": a few degrees either way.
+ISH_REACH = 4
+
+
+def numbers_said(value: str) -> list[tuple[int, float, float]]:
+    """The numbers in a line of speech, each as (word position, lowest, highest) in words(): "52"
+    and "fifty two" are (n, 52, 52); "the fifties" and "50s" are (n, 50, 59); "fiftyish" is (n,
+    46, 54); two digits said one by one, "five oh" or "four five", are (n, 50, 50) and (n, 45, 45).
+    """
+    found = []
+    text = re.sub(
+        rf"\b({'|'.join(TENS)})ish\b", lambda m: f"{TENS[m[1]]}ish", (value or "").lower()
+    )
+    tokens = words(spoken_numbers(text)).split()
+    for i, token in enumerate(tokens):
+        decade = re.fullmatch(r"(\d)0s", token)
+        ish = re.fullmatch(r"(\d+)ish", token)
+        pair = i + 1 < len(tokens) and token in ONES and tokens[i + 1] in SPOKEN_DIGITS
+        if ish:
+            found.append((i, int(ish[1]) - ISH_REACH, int(ish[1]) + ISH_REACH))
+        elif pair:
+            number = ONES[token] * 10 + SPOKEN_DIGITS[tokens[i + 1]]
+            found.append((i, number, number))
+        elif decade:
+            found.append((i, int(decade[1]) * 10, int(decade[1]) * 10 + 9))
+        elif token in DECADE_WORDS:
+            found.append((i, DECADE_WORDS[token], DECADE_WORDS[token] + 9))
+        elif token.isdigit():
+            found.append((i, int(token), int(token)))
+    return found

@@ -6,6 +6,7 @@ import sqlite3
 from datetime import datetime, timedelta
 
 from . import address_as, lookup, owner_settings, pace, recordings, records, rules, safety, transfer
+from . import priority as prio
 from .db import iso, parse_iso, tx
 from .envelope import Result, ok
 from .fsm import FsmAdapter, FsmRejected, FsmUnavailable
@@ -27,6 +28,12 @@ STREET_SUFFIXES = {
 }
 # "Plaza" is a business ("it's in a plaza") unless it ends a name ("Grand Army Plaza").
 PLAZA_GENERIC = {"a", "an", "the", "this", "that", "our", "my", "strip", "shopping", "small"}
+# Words that place an address by a landmark: "right off the corner by the church", "across from
+# the school". The business word after one is a place, not the caller's business (eval run
+# 20261104-183233, no-heat-gas-stove).
+LANDMARK_LEADS = ("by", "near", "next to", "across from", "behind", "beside", "opposite", "past",
+                  "around the corner from", "down the street from", "up the street from")
+LANDMARK_FILLER = {"a", "an", "the", "that", "this", "big", "old", "little", "new"}
 NUMBER_WORDS = {"oh", "zero", "one", "two", "three", "four", "five", "six", "seven", "eight",
                 "nine", "ten", "eleven", "twelve", "twenty", "thirty", "forty", "fifty", "sixty",
                 "seventy", "eighty", "ninety", "hundred"}
@@ -35,8 +42,8 @@ NUMBER_WORDS = {"oh", "zero", "one", "two", "three", "four", "five", "six", "sev
 def without_place_names(text: str, business_words: set[str]) -> str:
     """The line, as words, with those that are part of a street or place name blanked out, so an
     address is never read as a business: the word before a street word ("Church Ave"), a business
-    word right after a house number ("540 Church"), and "plaza" when it ends a name ("Grand Army
-    Plaza"). Each sentence or comma-separated part is read on its own, so "I run a clinic. Dr.
+    word right after a house number ("540 Church"), "plaza" when it ends a name ("Grand Army
+    Plaza"), and a landmark the caller places the address by ("by the church"). Each sentence or comma-separated part is read on its own, so "I run a clinic. Dr.
     Patel does billing" and "my restaurant, St Marks" keep their business word."""
     parts = [_place_names(words(part), business_words) for part in re.split(r"[.,;:!?]", text)]
     return " " + " ".join(p for p in parts if p) + " "
@@ -55,7 +62,18 @@ def _place_names(text_words: str, business_words: set[str]) -> str:
             kept[i] = "_"
         if token == "plaza" and before is not None and before not in PLAZA_GENERIC:
             kept[i] = "_"
+        if token in business_words and _after_landmark_lead(tokens[:i]):
+            kept[i] = "_"
     return " ".join(kept)
+
+
+def _after_landmark_lead(before: list[str]) -> bool:
+    """The words before end with a landmark lead, past an article: "by the", "next to that"."""
+    trimmed = list(before)
+    while trimmed and trimmed[-1] in LANDMARK_FILLER:
+        trimmed.pop()
+    ending = " " + " ".join(trimmed) + " "
+    return any(ending.endswith(f" {lead} ") for lead in LANDMARK_LEADS)
 
 
 def sounds_commercial(text: str, cfg: dict) -> bool:
@@ -82,6 +100,9 @@ def sounds_commercial(text: str, cfg: dict) -> bool:
         re.search(rf" (?:my|our) (?:{owned}) ", text_words)
         or re.search(rf" {RUN_WORDS} (?:a|an|the) (?:\w+ )?(?:{run}) ", text_words)
         or re.search(rf" {OWN_WORDS} (?:a|an|the) (?:\w+ )?(?:{owned}) ", text_words)
+        # "We're a restaurant": the caller says what they are ("we're" is "were" once the
+        # apostrophe is dropped).
+        or re.search(rf" (?:were|we are) (?:a|an) (?:\w+ )?(?:{run}) ", text_words)
     )
 
 
@@ -350,6 +371,15 @@ def _record_known_out_of_area(
             )
 
 
+def _at_risk_asked(conn: sqlite3.Connection, call_id: str, phrases: list[str]) -> bool:
+    """Whether an agent line on the thread already asked who is home and whether anyone is at
+    risk."""
+    return any(
+        t["speaker"] == "agent" and any(has_phrase(words(t["text"]), p) for p in phrases)
+        for t in records.thread_turns(conn, call_id)
+    )
+
+
 def turn(
     conn: sqlite3.Connection, tenant: Tenant, call: sqlite3.Row, args: TurnIn, now: datetime
 ) -> Result:
@@ -450,6 +480,11 @@ def turn(
             # call; a stage reached during one gets its note once the safety state clears.
             rules.advance_stage(conn, call, now)
             on_safety = call["safety_state"] not in ("none", "cleared") or action.action != "none"
+            # A caller who asks for a higher priority with no new fact gets a calm answer from a
+            # note; nothing is raised, since only facts raise priority (DECISIONS.md 073).
+            if not on_safety and prio.raising_push(args.text, tenant.priority):
+                asked = _at_risk_asked(conn, call["id"], tenant.priority.get("at_risk_asked", []))
+                hints.append("priority_pushed_asked" if asked else "priority_pushed")
             if not on_safety:
                 stage, items = rules.note_due(conn, tenant, call)
                 if stage:

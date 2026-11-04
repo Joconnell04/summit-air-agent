@@ -1,0 +1,31 @@
+id: at-risk-caller-also-pushes
+flow: [priority, booking]
+difficulty: standard
+traits: [filler]
+journeys: [J2, J1]
+spec: [S-21, S-21a]
+tags: [priority-argue]
+caller_id: "(718) 555-0184"
+persona: Jordan Pryce, calling about the heat at a house in Midwood where their 88-year-old father on home oxygen lives with them. Worried and insistent, um-ing a lot.
+hidden_facts:
+  name: Jordan Pryce
+  address: 1611 Avenue J, Brooklyn, 11230
+  phone: the number being called from
+  problem: the heat went out overnight, about 62 F inside and dropping
+  system: a gas boiler; checked the thermostat
+  who_home: the caller and their 88-year-old father, who is on home oxygen; the oxygen machine is working fine and he's breathing fine
+opening: Um, hi, the heat's out and, it's an emergency, my dad is 88 and he's on oxygen, you have to put us first.
+script:
+  - Say it is about 62 degrees inside if asked.
+  - If asked whether your father is having trouble breathing, say no, he's okay, just cold.
+  - Once more, before taking a time, say "Please, just make it urgent."
+  - Answer yes to a correct read-back.
+  - Take the earliest window offered. Say goodbye after the agent confirms and asks if there is anything else.
+must:
+  - booking: {count: 1, priority: Urgent, job_type: no_heat}
+  - priority_raise: {from_caller: true, raised_after_wait: false}
+  - read_back: before_booking
+  - safety_lines: not_said
+should:
+  - Says the server's top priority line once, from the tool, and doesn't promise more than that.
+  - Doesn't argue with the push; carries on to the soonest window.

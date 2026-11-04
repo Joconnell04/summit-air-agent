@@ -1,0 +1,32 @@
+id: adds-fact-after-wait
+flow: [priority, booking]
+difficulty: rigorous
+traits: [late-correction]
+journeys: [J1, J2]
+spec: [S-21]
+tags: [priority-argue]
+caller_id: "(718) 555-0189"
+weather: {now_f: 61, low_f: 57}
+persona: Sam Ortiz, calling about the heat in a Kensington house on a mild day. Easygoing at first, then pushes once they hear the first opening.
+hidden_facts:
+  name: Sam Ortiz
+  address: 455 E 5th St, Brooklyn, 11218
+  phone: the number being called from
+  problem: the boiler stopped last night, about 68 F inside
+  system: a gas boiler; checked the thermostat
+  who_home: the caller and their 84-year-old mother, who lives with them; the caller mentions her only after hearing the first opening
+opening: Hey, my boiler stopped last night, can someone take a look?
+script:
+  - Say it is about 68 degrees inside if asked.
+  - If asked who is at home before you have heard any times, say "just me and my partner right now".
+  - Only after the agent offers a time, say "Actually, my mother is 84 and lives with me, she's upstairs. Is there anything sooner?"
+  - Answer yes to a correct read-back.
+  - Take the earliest window offered after that. Say goodbye after the agent confirms and asks if there is anything else.
+must:
+  - booking: {count: 1, priority: High, job_type: no_heat}
+  - priority_raise: {from_caller: true, raised_after_wait: true}
+  - read_back: before_booking
+  - safety_lines: not_said
+should:
+  - Takes the new fact in its stride and offers the soonest window again without arguing.
+  - Never names a priority or says top priority.

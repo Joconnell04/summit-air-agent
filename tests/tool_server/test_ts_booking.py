@@ -1069,3 +1069,60 @@ def test_today_and_tomorrow_come_from_the_visit_date_against_the_local_date(
     booked = book(agent, call, {"date": "2026-11-03", "window": window})
     assert booked["ok"], booked
     assert booked["say"].startswith(f"You're all set for {day}, with the")
+
+
+def test_whose_account_is_asked_with_the_confirmed_read_back_not_by_a_refused_booking(
+    agent, scenarios
+):
+    """Eval run 20261104-183233, tune-up-known-caller: the booking's short line was said on the
+    turn the booking was refused for the account choice, so the confirmation came alone. The
+    question now comes as the confirmed read-back's own sentence, and the next booking goes
+    through in one reply."""
+    call = agent.start(scenarios["repeatCallerOpenJob"]["phone"])["data"]["call_id"]
+    agent.turn(call, "Hi, the heat's out at my other place.")
+    confirmed = agent.confirm_read_back(call, in_area_address(41))
+    assert confirmed["data"]["account_choice"] is True
+    assert "its own account" in confirmed["say"]
+    agent.say(call, confirmed["say"])
+    agent.turn(call, "Put it under my account.")
+    booked = agent.tool(
+        "book_appointment",
+        call,
+        job_type="tune_up",
+        slot=first_open(agent, call),
+        details=DETAILS,
+        new_address_account="caller",
+    )
+    assert booked["ok"], booked
+
+
+def test_an_address_already_on_file_confirms_with_no_account_question(agent, scenarios):
+    maria = scenarios["repeatCallerOpenJob"]
+    call = agent.start(maria["phone"])["data"]["call_id"]
+    agent.turn(call, "It's about the tune-up.")
+    home = {"street": "620 Bedford Ave", "unit": "", "city": "Brooklyn", "zip": "11235"}
+    confirmed = agent.confirm_read_back(call, home)
+    assert "account_choice" not in confirmed["data"] and not confirmed["say"]
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "it's eight four one oh ridge boulevard brooklyn one one two oh nine right off the corner by the church if that helps",
+        "we're across from the school on 4th Ave",
+        "it's the house next to the restaurant",
+        "around the corner from the church",
+        "near the old hospital, the brick one",
+    ],
+)
+def test_a_landmark_the_address_is_placed_by_is_not_a_business(line):
+    # Eval run 20261104-183233, no-heat-gas-stove: "by the church" declined a home as commercial.
+    assert not sounds_commercial(line, AGENT["commercial"]), line
+
+
+@pytest.mark.parametrize(
+    "line",
+    ["It's a church", "I run the church on the corner", "we're a restaurant near the park"],
+)
+def test_a_business_said_as_the_callers_own_still_declines(line):
+    assert sounds_commercial(line, AGENT["commercial"]), line

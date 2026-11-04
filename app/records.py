@@ -125,6 +125,30 @@ def caller_text(conn: sqlite3.Connection, call_id: str) -> str:
     return "\n".join(r["text"] for r in rows)
 
 
+def thread_turns(conn: sqlite3.Connection, call_id: str) -> list[sqlite3.Row]:
+    """Every line on the call's thread, oldest call first, each call's lines in order."""
+    ids = list(reversed(thread(conn, call_id)))
+    rows = conn.execute(
+        f"SELECT call_id, seq, speaker, text FROM turns WHERE call_id IN "
+        f"({','.join('?' * len(ids))})",
+        ids,
+    ).fetchall()
+    return sorted(rows, key=lambda r: (ids.index(r["call_id"]), r["seq"]))
+
+
+def wait_named(conn: sqlite3.Connection, call_id: str) -> tuple[str, int] | None:
+    """The call and turn on the thread where the agent first offered a window or named the wait
+    (find_slots answered), oldest first. Lines after it were said after the caller heard the wait."""
+    ids = list(reversed(thread(conn, call_id)))
+    rows = conn.execute(
+        f"SELECT call_id, turn_seq FROM waits WHERE call_id IN ({','.join('?' * len(ids))})", ids
+    ).fetchall()
+    if not rows:
+        return None
+    first = min(rows, key=lambda r: (ids.index(r["call_id"]), r["turn_seq"]))
+    return first["call_id"], first["turn_seq"]
+
+
 def count_actions(conn: sqlite3.Connection, call_id: str, kind: str) -> int:
     ids = thread(conn, call_id)
     return conn.execute(

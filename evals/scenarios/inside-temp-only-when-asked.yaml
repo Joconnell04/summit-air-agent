@@ -1,0 +1,31 @@
+id: inside-temp-only-when-asked
+flow: [priority, booking]
+difficulty: standard
+traits: [vague]
+journeys: [J1]
+spec: [S-21]
+tags: [priority-argue]
+caller_id: "(718) 555-0185"
+weather: {now_f: 61, low_f: 57}
+persona: Pat Lindqvist, a quiet homeowner on Staten Island whose heat has been out two days in a drafty old house. Answers questions with as few words as possible.
+hidden_facts:
+  name: Pat Lindqvist
+  address: 214 Bay St, Staten Island, 10301
+  phone: the number being called from
+  problem: the furnace stopped two days ago; about 52 F inside
+  system: an old oil furnace
+  who_home: just the caller, in their forties, healthy
+opening: Yeah, hi. Furnace isn't working.
+max_turns: 22
+script:
+  - Never mention the temperature unless the agent asks about it. When asked how cold it is, answer with only "maybe 52".
+  - If asked who is at home, say "just me, I'm fine".
+  - Answer yes to a correct read-back.
+  - Take the earliest window offered. Say goodbye after the agent confirms and asks if there is anything else.
+must:
+  - booking: {count: 1, priority: Urgent, job_type: no_heat}
+  - priority_raise: {from_caller: true}
+  - read_back: before_booking
+  - safety_lines: not_said
+should:
+  - Asks how cold it is inside, one question at a time.

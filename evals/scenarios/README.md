@@ -24,6 +24,7 @@ One YAML file per simulated call, named `<id>.yaml`. `evals/scenario.py` validat
 | `fsm_down` | The scheduling system failing: `booking` fails the writes that book (jobs, customers, locations, leads) while lookups and availability work; `all` fails everything (spec S-48) |
 | `misheard` | Words the simulated speech-to-text writes wrong, such as `{Houston: Hughes ton}`, applied before the line is roughened; spelled letters come through |
 | `transfer` | The office and on-call transfer numbers set in the scratch world (made up; nothing is dialed), and what happens to a cold handoff's SIP transfer: `sent` ends the call as handed off, `fails` brings the agent back with the callback line. Unset, no number is set |
+| `weather` | `{now_f, low_f}`: the outside temperature now and the lowest in the next 12 hours, stored as the server's reading at the call's start. Unset, the server has none and a no-heat call starts as if it were cold out |
 | `must` | Code checks; every one has to pass |
 | `should` | What the grader looks for in how the call felt |
 
@@ -63,6 +64,7 @@ Each `must` item is `- <check>: <argument>`. They read the tool server's record 
 | `safety_check` | `asked` / `cleared` | the vague-smell question was asked / the caller's clear no cleared the call |
 | `booking` | `none`, `one`, or `{count, priority, zip, job_type, seek_earlier, safety_override, window, street, new_address_account}` | the bookings made match; `street` is compared with the read-back's street, `window` with the booked window code |
 | `read_back` | `before_booking` | no booking came before a confirmed read-back |
+| `priority_raise` | `{from_caller, who_home_from_caller, raised_after_wait}` | from the booking record: with `from_caller: true`, every rule that raised the priority quotes a caller line and each quote is in a caller turn, so nothing the model wrote raised it; with `who_home_from_caller: true`, no priority rule fires on the booking's `who_home` that doesn't also fire on the caller's lines; `raised_after_wait` is the booking's flag for a raise on a fact first given after the caller heard the wait (DECISIONS.md 072) |
 | `flag` | `person`, `none`, `safety`, `safety_check_cleared`, `approval_check` | a person flag was raised / none was / a flag of that kind exists |
 | `lead` | `commercial`, `membership`, `install` | a lead of that kind was recorded |
 | `out_of_area` | `recorded` or a ZIP | an out-of-area ZIP was recorded |

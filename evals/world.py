@@ -16,6 +16,7 @@ import yaml
 from fastapi.testclient import TestClient
 
 from app import rules
+from app.db import iso
 from app.geocode import Area
 from app.main import create_app
 from app.settings import Settings
@@ -139,7 +140,7 @@ class FsmDown:
 class World:
     def __init__(self, workdir: Path, seed: tuple[Path, dict], start: datetime,
                  overlay: dict | None = None, fsm_down: str | None = None,
-                 transfer: bool = False):
+                 transfer: bool = False, weather=None):
         workdir.mkdir(parents=True, exist_ok=True)
         st_db = workdir / "servicetitan.db"
         shutil.copy(seed[0], st_db)
@@ -174,6 +175,15 @@ class World:
             conn = app.state.services.connect()
             try:
                 rules.install_for_eval(conn, TENANT_DIR.name, overlay, self.clock())
+            finally:
+                conn.close()
+        if weather is not None:
+            conn = app.state.services.connect()
+            try:
+                conn.execute(
+                    "INSERT INTO weather (tenant, fetched_at, now_f, low_f) VALUES (?, ?, ?, ?)",
+                    (TENANT_DIR.name, iso(self.clock()), weather.now_f, weather.low_f),
+                )
             finally:
                 conn.close()
         self.server = ToolServer(TestClient(app, raise_server_exceptions=False), DEBUG_TOKEN)

@@ -107,3 +107,6 @@ How the design was reached, in order, so a reader can follow each choice back to
 | ZIP from the street | A lookup of the caller's own street fills the ZIP; a disagreeing ZIP is asked about before any booking | DECISIONS.md 069, #125 |
 | Preferred names | "Call me Dr. Patel" is used for the call and saved on the customer record; abusive forms are refused | DECISIONS.md 070, #125 |
 | Lookups in evals | Recorded GeoSearch answers; unknown addresses act as an outage | DECISIONS.md 071, #125 |
+| Priority from the caller | Rules fire on the caller's words only; the model's notes raise nothing; a raise after the wait is flagged for the dispatcher | DECISIONS.md 072, #124 |
+| A caller who pushes | A calm line and the soonest window or a person; pushing and claims raise nothing | DECISIONS.md 073, #124 |
+| Eval reference after C-58 and #125 | Two-sample standard run adopted at 92%; floor stays 90% | DECISIONS.md 011, #126 |

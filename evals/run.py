@@ -66,7 +66,8 @@ class Harness:
         if self.stack != "livekit":
             return load_adapter(self.stack).open_agent(call_id, caller_id)
         world = World(self.workdir / call_id, self.seed, scenario.start_time, self.overlay,
-                      scenario.fsm_down, transfer=scenario.transfer is not None)
+                      scenario.fsm_down, transfer=scenario.transfer is not None,
+                      weather=scenario.weather)
         if scenario.earlier_call:
             world.earlier_call(f"{call_id}-earlier", caller_id, scenario.earlier_call)
         agent = InProcessAgent(world.server, self.models.agent, call_id, caller_id, world.clock,

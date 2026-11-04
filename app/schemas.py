@@ -151,7 +151,9 @@ class FindAddressIn(CallRef):
 
 
 class Facts(Body):
-    """What the agent has heard that bears on priority. The server also reads every caller line."""
+    """What the agent has heard that bears on priority. The server sets priority from the caller's
+    own lines; `who_home` and `issue` raise nothing, and `inside_temp_f` counts only when a caller
+    line carries that number (DECISIONS.md 072)."""
 
     issue: str = Field("", max_length=300)
     who_home: str = Field("", max_length=300)

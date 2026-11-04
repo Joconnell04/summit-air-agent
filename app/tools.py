@@ -476,31 +476,86 @@ def _job_type(ctx: Ctx, code: str) -> dict:
     return job_type
 
 
-def _priority(ctx: Ctx, job_type: str, extra_text: str, inside_temp_f: float | None):
-    outside = weather.current(ctx.conn, ctx.tenant, ctx.now)
-    caller_text = records.caller_text(ctx.conn, ctx.call["id"])
-    # What the agent passed to earlier find_slots calls counts too, so the booking can't come out
-    # lower than the priority the caller was already told (a rig call heard "most urgent" from
-    # find_slots, then booked High).
-    earlier = "\n".join(
-        f"{f.get('issue', '')}\n{f.get('who_home', '')}"
-        for row in ctx.conn.execute(
-            "SELECT args_json FROM tool_calls WHERE call_id = ? AND tool = 'find_slots'",
-            (ctx.call["id"],),
-        )
-        for f in [json.loads(row["args_json"] or "{}").get("facts") or {}]
-    )
-    facts = prio.Facts(
+@dataclass
+class Decided:
+    """The server's priority for a job and the facts it came from. raised_after_wait: the level is
+    higher than the caller's lines before they heard the wait would give, so the dispatcher can
+    judge a fact first said after it. A note for a person, never a gate; nothing is lowered."""
+
+    facts: prio.Facts
+    priority: prio.Priority
+    raised_after_wait: bool = False
+
+
+def _earlier_temps(ctx: Ctx) -> list[float]:
+    """Inside temperatures the agent passed on earlier find_slots and booking calls, newest first,
+    so a booking that leaves the number out still starts from the one the caller gave."""
+    found = []
+    for row in ctx.conn.execute(
+        "SELECT args_json FROM tool_calls WHERE call_id = ? AND tool IN ('find_slots', "
+        "'book_appointment') ORDER BY id DESC",
+        (ctx.call["id"],),
+    ):
+        args = json.loads(row["args_json"] or "{}")
+        temp = (args.get("facts") or args.get("details") or {}).get("inside_temp_f")
+        if temp is not None:
+            found.append(temp)
+    return found
+
+
+def _facts(ctx: Ctx, job_type: str, turns: list, temps: list[float], outside) -> prio.Facts:
+    """Facts from these lines of the thread alone: the caller's words, the inside temperature only
+    if a caller line carries it, and the server's own readings."""
+    pairs = [(t["speaker"], t["text"]) for t in turns]
+    caller = "\n".join(text for speaker, text in pairs if speaker == "caller")
+    cfg = ctx.tenant.priority.get("inside_temp", {})
+    temp, line = None, ""
+    for value in temps:
+        heard = prio.heard_inside_temp(pairs, value, cfg)
+        if heard is not None:
+            temp, line = value, heard
+            break
+    return prio.Facts(
         job_type,
-        caller_text + "\n" + earlier + "\n" + extra_text,
-        inside_temp_f,
+        caller,
+        temp,
         ctx.call["safety_state"] in ("signal", "lines_said"),
         outside.now_f,
         outside.coldest_f,
-        heating_indoors=safety.heating_signal(caller_text, ctx.tenant.safety),
-        caller_text=caller_text,
+        heating_indoors=safety.heating_signal(caller, ctx.tenant.safety),
+        caller_text=caller,
+        inside_temp_line=line,
     )
-    return facts, prio.decide(facts, ctx.tenant.priority, ctx.side_model)
+
+
+def _priority(ctx: Ctx, job_type: str, inside_temp_f: float | None) -> Decided:
+    """The server's priority from the caller's own lines on the thread and its readings (spec
+    S-21, DECISIONS.md 072). What the model wrote in `issue` and `who_home` goes to the job notes
+    and raises nothing; its inside temperature counts only when the caller said that number."""
+    outside = weather.current(ctx.conn, ctx.tenant, ctx.now)
+    turns = records.thread_turns(ctx.conn, ctx.call["id"])
+    temps = ([inside_temp_f] if inside_temp_f is not None else []) + _earlier_temps(ctx)
+    facts = _facts(ctx, job_type, turns, temps, outside)
+    # The side model's cache is keyed on the text the turn handler prefetched with.
+    facts.caller_text = records.caller_text(ctx.conn, ctx.call["id"])
+    decided = prio.decide(facts, ctx.tenant.priority, ctx.side_model)
+    wait = records.wait_named(ctx.conn, ctx.call["id"])
+    if wait is None:
+        return Decided(facts, decided)
+    calls = list(reversed(records.thread(ctx.conn, ctx.call["id"])))
+    wait_at = (calls.index(wait[0]), wait[1])
+    cut = next(
+        (i for i, t in enumerate(turns) if (calls.index(t["call_id"]), t["seq"]) > wait_at),
+        len(turns),
+    )
+    if not any(t["speaker"] == "caller" for t in turns[cut:]):
+        return Decided(facts, decided)
+    # Rules alone on both sides: a second side model call on the shorter text would have nothing
+    # prefetched and could stall the tool (PR #126 review).
+    before = prio.decide(_facts(ctx, job_type, turns[:cut], temps, outside), ctx.tenant.priority)
+    now = prio.decide(facts, ctx.tenant.priority)
+    raised = prio.LEVELS.index(now.level) > prio.LEVELS.index(before.level)
+    return Decided(facts, decided, raised)
 
 
 def _key(ctx: Ctx, tool: str, args: dict) -> str:
@@ -779,11 +834,15 @@ def find_address(ctx: Ctx, args: FindAddressIn) -> Result:
 
 def find_slots(ctx: Ctx, args: FindSlotsIn) -> Result:
     job_type = _job_type(ctx, args.job_type)
-    facts, decided = _priority(
-        ctx, args.job_type, f"{args.facts.issue}\n{args.facts.who_home}", args.facts.inside_temp_f
-    )
+    found = _priority(ctx, args.job_type, args.facts.inside_temp_f)
+    facts, decided = found.facts, found.priority
     windows = _open_windows(ctx, job_type, decided.level)
-    priority = {"level": decided.level, "reasons": decided.reasons, "requested": args.priority}
+    priority = {
+        "level": decided.level,
+        "reasons": decided.reasons,
+        "requested": args.priority,
+        "raised_after_wait": found.raised_after_wait,
+    }
     data: dict = {"priority": priority}
     # A caller who can only be home part of the day gets only windows inside those hours. The
     # technician may come any time in a window, so a window that runs past them is never offered
@@ -802,6 +861,12 @@ def find_slots(ctx: Ctx, args: FindSlotsIn) -> Result:
         else:
             labels = _join([w.label() for w in ctx.tenant.windows if not w.after_hours], "and")
             arrival_say = ctx.tenant.line("arrival_no_fit", windows=labels) + " "
+    # From here the caller hears a window or the wait; a fact they first give after it is flagged.
+    with tx(ctx.conn):
+        ctx.conn.execute(
+            "INSERT OR IGNORE INTO waits (call_id, turn_seq, at) VALUES (?, ?, ?)",
+            (ctx.call["id"], ctx.call["turn_seq"], iso(ctx.now)),
+        )
 
     cutoffs = ctx.tenant.after_hours_cutoffs
     if ctx.call["after_hours"] and args.job_type in (
@@ -964,6 +1029,23 @@ def read_back(ctx: Ctx, args: ReadBackIn) -> Result:
     ):
         with tx(ctx.conn):
             records.update_call(ctx.conn, ctx.call["id"], readback_confirmed_at=iso(ctx.now))
+        # Whose account a new address goes on is asked here, as the confirmation's own sentence,
+        # not by a refused booking: the reply that books then carries its short line and the
+        # confirmation together (eval run 20261104-183233, tune-up-known-caller).
+        try:
+            choose = _new_address_customer(ctx, address) is not None
+        except (FsmUnavailable, FsmRejected):
+            choose = False
+        if choose:
+            return ok(
+                ctx.tenant.line("account_choice"),
+                confirmed=True,
+                address=address,
+                phone=phone,
+                account_choice=True,
+                need="this question was said for you; when the caller answers, book_appointment "
+                "with new_address_account own (and details.name for that address) or caller",
+            )
         return ok(confirmed=True, address=address, phone=phone)
     parts = None
     if not (args.confirmed and same):
@@ -1023,9 +1105,8 @@ def book_appointment(ctx: Ctx, args: BookIn) -> Result:
     account, contact_name = _new_address_account(ctx, readback, args)
     job_type = _job_type(ctx, args.job_type)
     details = args.details.model_dump()
-    facts, decided = _priority(
-        ctx, args.job_type, f"{details['issue']}\n{details['who_home']}", details["inside_temp_f"]
-    )
+    found = _priority(ctx, args.job_type, details["inside_temp_f"])
+    facts, decided = found.facts, found.priority
     if not override:
         _on_call_first(ctx, facts, decided)
     window_start, window_end = _slot_bounds(ctx, args.slot, decided.level)
@@ -1068,6 +1149,8 @@ def book_appointment(ctx: Ctx, args: BookIn) -> Result:
         or list(scoped),
         "priority": decided.level,
         "priority_reasons": decided.reasons,
+        "priority_rules": decided.rules,
+        "raised_after_wait": found.raised_after_wait,
         "requested_priority": args.priority,
         "notes": pending_notes,
         "account": account,
@@ -1204,7 +1287,11 @@ def book_appointment(ctx: Ctx, args: BookIn) -> Result:
         booking_id=sent["job_id"],
         appointment_id=sent["appointment_id"],
         window=when,
-        priority={"level": decided.level, "reasons": decided.reasons},
+        priority={
+            "level": decided.level,
+            "reasons": decided.reasons,
+            "raised_after_wait": found.raised_after_wait,
+        },
         seek_earlier=seek_earlier,
         safety_override=override,
         approval_callback_at=approval_callback_at,
@@ -1259,12 +1346,8 @@ def needs_on_call_tonight(ctx: Ctx) -> bool:
         if args.get("job_type") not in job_types:
             continue
         heard = args.get("facts") or args.get("details") or {}
-        facts, decided = _priority(
-            ctx,
-            args["job_type"],
-            f"{heard.get('issue', '')}\n{heard.get('who_home', '')}",
-            heard.get("inside_temp_f"),
-        )
+        found = _priority(ctx, args["job_type"], heard.get("inside_temp_f"))
+        facts, decided = found.facts, found.priority
         falling = bool(heard.get("temp_falling_fast"))
         return prio.after_hours_outcome(facts, decided, cutoffs, falling) == (
             "tonight_if_on_call_agrees"
@@ -1355,6 +1438,27 @@ def _open_job_here(ctx: Ctx, readback: dict) -> None:
         return
 
 
+def _new_address_customer(ctx: Ctx, readback: dict) -> int | None:
+    """The one customer matched on this call when the address is on file nowhere, so whose account
+    it goes on has to be asked; None otherwise. FSM errors are raised for the caller to handle."""
+    scoped = [
+        (cid, row)
+        for cid, row in records.scoped_customers(ctx.conn, ctx.call["id"]).items()
+        if row["customer_type"] not in ctx.tenant.rejected_customer_types
+    ]
+    if len(scoped) != 1:
+        return None
+    customer_id = scoped[0][0]
+    if any(booking.same_address(loc, readback) for loc in ctx.fsm.locations(customer_id)):
+        return None
+    on_file = ctx.fsm.locations_by_address(
+        readback["street"], readback["zip"], readback["unit"] or None
+    )
+    if any(booking.same_address(loc, readback) for loc in on_file):
+        return None
+    return customer_id
+
+
 def _new_address_account(
     ctx: Ctx, readback: dict, args: BookIn
 ) -> tuple[str | None, str | None]:
@@ -1363,21 +1467,9 @@ def _new_address_account(
     usual case), or the caller's (eval round 2, seed 5). Returns the choice and, for its own
     account, the caller's name for the contact. A lookup that fails leaves the booking to go ahead
     under the caller, as before."""
-    scoped = [
-        (cid, row)
-        for cid, row in records.scoped_customers(ctx.conn, ctx.call["id"]).items()
-        if row["customer_type"] not in ctx.tenant.rejected_customer_types
-    ]
-    if len(scoped) != 1:
-        return None, None
-    customer_id = scoped[0][0]
     try:
-        if any(booking.same_address(loc, readback) for loc in ctx.fsm.locations(customer_id)):
-            return None, None
-        on_file = ctx.fsm.locations_by_address(
-            readback["street"], readback["zip"], readback["unit"] or None
-        )
-        if any(booking.same_address(loc, readback) for loc in on_file):
+        customer_id = _new_address_customer(ctx, readback)
+        if customer_id is None:
             return None, None
         caller = ctx.fsm.customer(customer_id)
     except (FsmUnavailable, FsmRejected):

@@ -108,16 +108,44 @@ safety:
   denials: [not gas, no gas, isnt gas, definitely not, not a gas, no smell of gas]
 
 # Priority (spec S-21). `base` is the level for a job type the tenant gives no temperature brackets.
-# Each rule fires on words the caller said on this call or facts the agent passed, and can only raise
-# priority. On a mild day (the call starts at Normal) an Urgent rule raises to High instead. A "group"
-# rule counts toward the tenant's `combine` rule, if it has one.
+# Each rule fires only on words the caller said on this call or a linked one, never on what the agent
+# wrote (DECISIONS.md 072), and can only raise priority. On a mild day (the call starts at Normal) an
+# Urgent rule raises to High instead. A "group" rule counts toward the tenant's `combine` rule, if it
+# has one.
 priority:
   base: {no_heat: High, no_cooling: High, tune_up: Normal, safety_check: High, estimate: Normal}
+  # The inside temperature the agent passes counts only when a caller line carries that number
+  # within `reach_words` of one of the `cues`, or answers an agent line with one of the `asked` words.
+  inside_temp:
+    cues: [degrees, degree, in here, inside, indoors, in the house, in the apartment, thermostat,
+           temperature, temp, cold, freezing, hot, warm, boiling, house, home, down to, dropped,
+           falling, says, reads]
+    asked: [temperature, thermostat, degrees, how cold, how warm, how hot, cold, chilly, warm, hot]
+    reach_words: 4
+    # An agent's temperature question stays open for this many caller lines, or until one gives a
+    # number ("let me check", "Sure", "it says 48").
+    asked_lines: 3
+    plausible_f: [20, 110]  # a number outside these isn't an inside temperature
+  # A caller asking for a higher priority with no new fact. The server's turn check gives the agent
+  # a note on how to answer (prompts/assemble.py, priority_pushed); nothing here raises anything.
+  pushes: [its an emergency, its an emergency call, this is an emergency, its urgent, this is urgent,
+           make it urgent, mark it urgent, mark it as urgent, put it as urgent, put it down as urgent,
+           make it an emergency, make it a priority, make me a priority, make this a priority,
+           higher priority, top priority, high priority, put me first, put us first, put me at the top,
+           move me up, move us up, bump me up, bump us up, top of the list, front of the line,
+           skip the line, ahead of everyone, ill pay extra, i can pay extra, i will pay extra,
+           happy to pay extra, ill pay more, i can pay more, ill pay double, ill pay whatever,
+           pay whatever it takes]
+  # Words in an agent line that ask who is at home and whether anyone is at risk, so the note asks
+  # that question only if it hasn't been asked on the call.
+  at_risk_asked: [anyone at home, anyone there, anyone in the home, who is home, whos home,
+                  who lives, older, elderly, baby, babies, medical equipment, oxygen]
   rules:
     - id: vulnerable_person
       job_types: [no_heat, no_cooling]
-      phrases: [elderly, senior, seniors, grandmother, grandfather, grandma, grandpa, baby, infant,
-                newborn, months old, weeks old]
+      # "Babys" is "the baby's room" once the apostrophe is dropped.
+      phrases: [elderly, senior, seniors, grandmother, grandfather, grandma, grandpa, baby, babys,
+                babies, infant, newborn, months old, weeks old]
       raise_to: Urgent
       raise_to_when_mild: High
       reason: an older person or a baby at home
@@ -176,7 +204,13 @@ priority:
       # "Just me at home" and the like (a rig call: an 84-year-old alone with a cane booked High).
       phrases: [lives alone, live alone, by herself, by himself, by myself, no one else,
                 just me at home, just me here, its just me, im alone, i am alone, home alone,
-                alone at home, on my own, only one here, only one home, caller alone]
+                alone at home, on my own, only one here, only one home, caller alone, all alone,
+                all by myself]
+      # "Just me and my partner" names someone else at home. Only the "just me" phrases: "I live
+      # alone and my heat is out" still raises.
+      unless_followed_by:
+        phrases: [its just me, just me at home, just me here]
+        words: [and, with, plus]
       raise_to: High
       group: true
       reason: someone at home alone

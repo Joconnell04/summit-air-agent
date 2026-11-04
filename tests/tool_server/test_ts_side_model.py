@@ -93,11 +93,13 @@ class FakeSideModel:
     def __init__(self, value):
         self.value = value
         self.prefetched = []
+        self.scored = []
 
     def prefetch(self, question, text):
         self.prefetched.append((question, text))
 
     def score(self, question, text):
+        self.scored.append(text)
         return self.value
 
 
@@ -128,7 +130,23 @@ def test_a_yes_from_the_side_model_raises_a_no_heat_call_the_rules_left_at_high(
     agent.turn(call, "Our boiler quit, and my wife is on dialysis three days a week.")
     found = agent.tool("find_slots", call, job_type="no_heat", facts={"inside_temp_f": 61})
     assert found["data"]["priority"]["level"] == "Urgent"
-    assert "someone at home at risk from the heat or cold" in found["data"]["priority"]["reasons"]
+    assert (
+        "someone at home at risk from the heat or cold, from the side model"
+        in found["data"]["priority"]["reasons"]
+    )
+
+
+def test_the_after_wait_comparison_never_asks_the_side_model_again(server):
+    # PR #126 review: a second ask on the shorter text has nothing prefetched and could stall.
+    agent, fake = server(0.95)
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "Our boiler quit, it's 61 in here.")
+    first = agent.tool("find_slots", call, job_type="no_heat", facts={"inside_temp_f": 61})
+    agent.say(call, first["say"])
+    agent.turn(call, "Oh, and my wife is on dialysis three days a week.")
+    fake.scored.clear()
+    agent.tool("find_slots", call, job_type="no_heat", facts={"inside_temp_f": 61})
+    assert len(fake.scored) == 1
 
 
 def test_the_side_model_only_applies_to_no_heat_and_no_cooling(server):

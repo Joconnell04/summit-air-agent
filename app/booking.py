@@ -44,6 +44,8 @@ def job_summary(request: dict) -> str:
     priority = request["priority"]
     reasons = f" ({'; '.join(request['priority_reasons'])})" if request["priority_reasons"] else ""
     lines.append(f"Priority: {priority}{reasons}")
+    if request.get("raised_after_wait"):
+        lines.append("Note: priority raised by a fact the caller gave after hearing the wait")
     if request.get("contact_name"):
         lines.append(f"Contact: booked by {request['contact_name']}, who stays a contact")
     lines += [f"Note: {note}" for note in request.get("notes", [])]
