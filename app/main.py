@@ -64,7 +64,7 @@ from .schemas import (
 )
 from .settings import WORKER_STALE_SECONDS, Settings
 from .tenant import Tenants
-from .tools import TOOLS, Ctx, demand_handoff, needs_on_call_tonight
+from .tools import TOOLS, Ctx, attach_late_job_notes, demand_handoff, needs_on_call_tonight
 
 log = logging.getLogger("app")
 
@@ -377,6 +377,9 @@ def create_app(
         def fn(conn, key):
             ctx = _ctx(services, conn, call_id, key)
             result = lifecycle.turn(conn, ctx.tenant, ctx.call, body, ctx.now)
+            # A technician asked for after the visit was booked goes onto that job now.
+            if "technician_requested" in result.data.get("hints", []):
+                attach_late_job_notes(ctx)
             # A caller who demands a person is sent to one now, but never on a turn that brought
             # the safety lines or the check question: those are said first.
             if body.speaker == "caller" and not result.data.get("safety"):

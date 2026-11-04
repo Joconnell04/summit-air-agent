@@ -56,6 +56,7 @@ MAX_AGE = timedelta(hours=24)
 MAX_LINE_CHARS = 120
 HISTORY_MONTHS = 24
 HEADER = "Summary from the call:"
+ASKED_FOR = "Asked for"
 
 FIELDS = {
     "problem": "Problem",
@@ -181,6 +182,14 @@ def record(
             r["text"]
             for r in conn.execute("SELECT text FROM notes WHERE call_id = ?", (call["id"],))
         ],
+        "technician_asked": [
+            r["text"].removeprefix("Caller asked for ").split(".")[0]
+            + ", not promised"
+            for r in conn.execute(
+                "SELECT text FROM notes WHERE call_id = ? AND text LIKE 'Caller asked for %'",
+                (call["id"],),
+            )
+        ],
         "customer_notes": [n["text"] for n in fsm.notes(customer_id)],
         "completed_jobs": [
             {"completed": j["completed"], "job_type": j["job_type"], "summary": j["summary"]}
@@ -227,7 +236,13 @@ def lines(fields: dict, rec: dict) -> tuple[list[list[str]], list[dict]]:
     told = [f"Arrival window {rec['arrival_window']}"]
     told += [f"call back by {c['by']} ({c['why']})" for c in rec["callbacks_promised"]]
     kept.setdefault("told", clip("; ".join(told)))
-    return [[FIELDS[f], kept[f]] for f in FIELDS if f in kept], dropped
+    found = [[FIELDS[f], kept[f]] for f in FIELDS if f in kept]
+    # A technician the caller asked for, from the server's own note, never the model's words
+    # (DECISIONS.md 079).
+    asked = rec.get("technician_asked") or []
+    if asked:
+        found.append([ASKED_FOR, clip("; ".join(asked))])
+    return found, dropped
 
 
 def note_text(summary_lines: list[list[str]]) -> str:

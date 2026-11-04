@@ -72,6 +72,14 @@ commercial:
   - business card
   - home office
   - my own business hours
+  - from my office
+  - im at my office
+  - i am at my office
+  - im in my office
+  - back to my office
+  - my office number
+  - my office line
+  - my office phone
   not_home:
   - not a home
   - not my home
@@ -89,6 +97,22 @@ commercial:
   - daycare
   - warehouse
   - business
+  - office
+  owner_cues:
+  - i own the place
+  - we own the place
+  - i own this place
+  - we own this place
+  - i own it
+  - we own it
+  - is mine
+  - is ours
+  - its mine
+  - its ours
+  - belongs to me
+  - belongs to us
+  - im the owner
+  - were the owners
   phrases:
   - office building
   - office space
@@ -164,6 +188,7 @@ fsm:
     commercial: 704
     install: 702
     membership: 705
+    not_offered: 706
   log_calls_via_debug: true
 lines:
   account_choice: Should that address go on its own account, with you as a contact, or under your account?
@@ -206,6 +231,7 @@ lines:
   lead_stored: Someone from our team will call you {when} to tell you more.
   limit: I've already got that taken care of on this call, so let me have someone from the team follow
     up.
+  not_offered: I'm sorry, we don't do {what}, so {suggest} would be the right call for that.
   out_of_area: I'm sorry, that's outside the area we cover, so we're not able to send someone. A local
     heating company should be able to help.
   read_back: I have your home at {address}, and the best number is {phone}, is that right?
@@ -221,6 +247,8 @@ lines:
   transfer_prompt: Summit Air has a caller for the {role}. Press 1 to take the call.
   transfer_summary: '{priority}Caller at {phone}: {reason}. Putting you through now.'
   urgent_priority: I've marked this call top priority, so you get our soonest opening.
+  visit_passed: I see a visit there that was due {day} between {between}, and it's still open on our end.
+    Did the technician make it out?
   zip_mismatch: I have {street} in {where} as {found}, not {said}. Which one is right?
 on_call_alerts:
   email: on-call@summit-air.example
@@ -1030,6 +1058,62 @@ safety:
       - like eggs
       - sulfur
       question: Just to be safe, are you smelling gas in the house right now?
+services:
+  kinds:
+    appliances:
+    - fridge
+    - refrigerator
+    - freezer
+    - dishwasher
+    - washing machine
+    - my washer
+    - my dryer
+    - the dryer
+    - clothes dryer
+    - microwave
+    duct_cleaning:
+    - duct cleaning
+    - clean my ducts
+    - clean the ducts
+    - clean our ducts
+    - ducts cleaned
+    - clean out the ducts
+    - dryer vent cleaning
+    electric_water_heater:
+    - electric water heater
+    - electric hot water heater
+    plumbing:
+    - sink
+    - sinks
+    - toilet
+    - faucet
+    - clogged drain
+    - drain is clogged
+    - drains are clogged
+    - garbage disposal
+    - burst pipe
+    - pipe burst
+    - plumbing
+    - plumber
+  not_offered:
+    appliances:
+      suggest: an appliance repair shop
+      what: appliance repair
+    duct_cleaning:
+      suggest: a duct cleaning company
+      what: duct cleaning
+    electric_water_heater:
+      suggest: a plumber
+      what: electric water heaters
+    plumbing:
+      suggest: a plumber
+      what: plumbing
+  offered:
+  - heating repair
+  - cooling repair
+  - maintenance tune-ups
+  - gas and carbon monoxide safety checks
+  - replacement estimates
 system_words:
 - heat pump
 - mini split

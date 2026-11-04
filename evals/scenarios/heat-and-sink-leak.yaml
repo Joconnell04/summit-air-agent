@@ -1,0 +1,28 @@
+id: heat-and-sink-leak
+flow: [booking]
+difficulty: standard
+journeys: [J1, spine]
+spec: [S-13, S-26]
+tags: ["issue:129"]
+caller_id: "(917) 555-0111"
+persona: Grace Okafor, a homeowner in Flatbush, Brooklyn, having a bad morning. Mentions two problems in one breath and wants both sorted.
+hidden_facts:
+  name: Grace Okafor
+  address: 1120 Ocean Ave, Brooklyn, 11230
+  phone: the number you're calling from
+  problem: no heat since last night, gas boiler, about 64 inside; also the kitchen sink is leaking under the cabinet
+  home: Grace, all day
+  approver: Grace, she owns the house
+opening: My heat is out and my kitchen sink is leaking too, can you help with both?
+script:
+  - When told Summit Air doesn't do plumbing, say okay, you'll call a plumber, and carry on with the heat.
+  - Take the first time offered for the heat, then say goodbye.
+must:
+  - jobs: [{job_type: no_heat}]
+  - lead: not_offered
+  - agent_says: "plumb"
+  - read_back: before_booking
+  - outcome: booked
+should:
+  - Says once, plainly, that Summit Air doesn't do plumbing and suggests a plumber, then books the heat without fuss.
+  - Doesn't put the sink on the heating visit.

@@ -56,6 +56,8 @@ The owner view is three pages for the owner and dispatcher: Today (`/owner`, the
 | `priority.py` | Base priority by job type, rules that only raise it, the off-by-default side-model slot, the after-hours outcome |
 | `geocode.py` | The address lookup behind `find_address`: GeoSearch and the Census geocoder, the exact house-and-street rule, started from the caller's line and cached |
 | `address_as.py` | What the caller asked to be called, read from their words, refused when mocking or abusive, kept for the call and linked calls, and saved on the customer record as a note |
+| `readback.py` | Whether a caller line changes a detail the read-back named (unit, house number, street, ZIP, phone), so a correction after the yes resets it (DECISIONS.md 077) |
+| `asks.py` | Work the company doesn't do, declined once and kept as a lead, and a technician asked for by name, kept as a dispatcher note (DECISIONS.md 078, 079) |
 | `lookup.py` | The richer lookup (membership, open jobs, last service, recent calls, notes, equipment) and history |
 | `booking.py` | Sending a booking to the FSM, shared by the live path and the retry queue |
 | `records.py` | The server's own tables: calls, scope, flags, callbacks (named time, owner, outbound rules, overdue), do-not-call |

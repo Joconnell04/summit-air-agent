@@ -21,6 +21,7 @@ from .db import iso, tx
 from .envelope import Refused, Result, ok
 from .fsm import FsmAdapter, FsmRejected, FsmUnavailable, SlotCache
 from .lifecycle import approval_unclear
+from .readback import change as readback_change
 from .schemas import (
     BookIn,
     CallbackTime,
@@ -892,6 +893,7 @@ def find_slots(ctx: Ctx, args: FindSlotsIn) -> Result:
         on_day = [_describe(ctx, w) for w in windows if w["date"] == args.day.isoformat()]
         data["windows"] = on_day
         if not on_day:
+            _keep_second_job(ctx, data)
             return ok(urgent_said + arrival_say + "Nothing's open that day.", **data)
         labels = _join([w["label"] for w in on_day], "or")
         return ok(
@@ -926,6 +928,7 @@ def find_slots(ctx: Ctx, args: FindSlotsIn) -> Result:
         )
     data["days"] = shape
     if not shape:
+        _keep_second_job(ctx, data)
         return ok(
             urgent_said + arrival_say + "I don't have anything open in the next two weeks.", **data
         )
@@ -934,6 +937,22 @@ def find_slots(ctx: Ctx, args: FindSlotsIn) -> Result:
         names = _join([w.replace("_", " ") for w in d["windows"]], "or")
         parts.append(f"this {names}" if d["day"] == "today" else f"{d['day']} {names}")
     return ok(f"{urgent_said}{arrival_say}I've got openings {_join(parts, 'and')}.", **data)
+
+
+def _keep_second_job(ctx: Ctx, data: dict) -> None:
+    """No opening for a second job on a call that already booked one: it is never dropped, a
+    person calls back to book it (DECISIONS.md 079)."""
+    booked = ctx.conn.execute(
+        "SELECT 1 FROM bookings WHERE call_id = ? AND kind = 'book' "
+        "AND status IN ('sending', 'booked', 'queued')",
+        (ctx.call["id"],),
+    ).fetchone()
+    if booked:
+        data["need"] = (
+            "a visit is already booked on this call and this second job has no opening; offer a "
+            "callback to book it, and if the caller agrees, call flag_person with the job in the "
+            "reason and a callback time"
+        )
 
 
 def _arrival_hours(args: FindSlotsIn) -> tuple[time | None, time | None]:
@@ -994,6 +1013,15 @@ def _readback_key(value: dict) -> tuple:
     return (street_key(value["street"]), unit_key(value["unit"]), value["zip"], value["phone"])
 
 
+def _readback_corrected(ctx: Ctx, asked: dict) -> str | None:
+    """The read-back field a caller line since the sentence was read gives a new value for."""
+    rows = ctx.conn.execute(
+        "SELECT text FROM turns WHERE call_id = ? AND speaker = 'caller' AND seq > ? ORDER BY seq",
+        (ctx.call["id"], ctx.call["readback_asked_seq"]),
+    )
+    return next((f for r in rows if (f := readback_change(r["text"], asked))), None)
+
+
 def read_back(ctx: Ctx, args: ReadBackIn) -> Result:
     """Two steps. Without confirmed, returns the exact sentence to read and records that it was
     asked. With confirmed, accepts only if that same sentence was returned on this call and a caller
@@ -1022,11 +1050,21 @@ def read_back(ctx: Ctx, args: ReadBackIn) -> Result:
             address=address,
             phone=phone,
         )
-    if (
-        args.confirmed
-        and same
-        and records.caller_turn_after(ctx.conn, ctx.call["id"], ctx.call["readback_asked_seq"])
-    ):
+    answered = args.confirmed and same and records.caller_turn_after(
+        ctx.conn, ctx.call["id"], ctx.call["readback_asked_seq"]
+    )
+    # "Yes, but it's 4B" in the same breath as the yes: the caller changed a detail, so this
+    # sentence can't be confirmed (DECISIONS.md 077).
+    corrected = _readback_corrected(ctx, asked) if answered else None
+    if corrected:
+        raise Refused(
+            "gate_read_back",
+            "",
+            need=f"the caller changed the {corrected} in their answer; call read_back with the "
+            "corrected details and read the new sentence",
+            changed=corrected,
+        )
+    if answered:
         with tx(ctx.conn):
             records.update_call(ctx.conn, ctx.call["id"], readback_confirmed_at=iso(ctx.now))
         # Whose account a new address goes on is asked here, as the confirmation's own sentence,
@@ -1100,6 +1138,7 @@ def book_appointment(ctx: Ctx, args: BookIn) -> Result:
             records.update_call(ctx.conn, ctx.call["id"], readback_confirmed_at=None)
         raise
     _out_of_area(ctx, readback["zip"])
+    _second_job(ctx, existing, readback, args)
     if not args.separate_problem:
         _open_job_here(ctx, readback)
     account, contact_name = _new_address_account(ctx, readback, args)
@@ -1302,6 +1341,37 @@ def book_appointment(ctx: Ctx, args: BookIn) -> Result:
     return result
 
 
+def _second_job(ctx: Ctx, existing: list[sqlite3.Row], readback: dict, args: BookIn) -> None:
+    """A call may book two jobs (DECISIONS.md 079): "my heat's out, and can you tune up the AC?",
+    or a super with units 2A and 5C. Each has its own read-back where the address or unit differs
+    (a new unit clears the confirmed read-back, app/readback.py). At the same address the second
+    has to be a different kind of visit the caller asked for, so a retry or a slip never books the
+    same visit twice."""
+    here = [
+        row
+        for row in existing
+        if _readback_key({**json.loads(row["request_json"])["address"], "phone": ""})
+        == _readback_key({**readback, "phone": ""})
+    ]
+    if not here:
+        return
+    if any(row["job_type"] == args.job_type for row in here):
+        raise Refused(
+            "already_booked",
+            "",
+            note="That visit is already booked on this call; say nothing more about booking it.",
+            booking_id=here[0]["fsm_job_id"],
+        )
+    if not args.separate_problem:
+        raise Refused(
+            "second_job",
+            "",
+            need="a visit is already booked at this address on this call; book this one with "
+            "separate_problem true only if the caller asked for a second, different job; to change "
+            "the first, use reschedule_appointment",
+        )
+
+
 def _on_call_first(ctx: Ctx, facts: prio.Facts, decided: prio.Priority) -> None:
     """After hours, a no-heat or no-cooling call that needs the on-call technician tonight (journey
     11) books only once an urgent person flag has alerted them. The morning visit is then the
@@ -1426,6 +1496,7 @@ def _open_job_here(ctx: Ctx, readback: dict) -> None:
             }
             for job in ctx.fsm.jobs(customer_id, lookup.OPEN_JOB_STATUSES):
                 if job["locationId"] in here and job["id"] not in booked_here:
+                    _passed_visit(ctx, job)
                     raise Refused(
                         "open_job",
                         "You already have a visit booked there. Should I move that one instead?",
@@ -1436,6 +1507,33 @@ def _open_job_here(ctx: Ctx, readback: dict) -> None:
                     )
     except (FsmUnavailable, FsmRejected):
         return
+
+
+def _passed_visit(ctx: Ctx, job: dict) -> None:
+    """An open visit whose arrival window ended before now is not one to move or keep as booked:
+    the caller is asked whether the technician came (a test call at 2 PM heard "you're all set for
+    today between eight and twelve")."""
+    live = [a for a in ctx.fsm.appointments(job["id"]) if a["status"] != "Canceled"]
+    if not live:
+        return
+    window = lookup.window_text(
+        ctx.tenant, live[-1]["arrivalWindowStart"], live[-1]["arrivalWindowEnd"], ctx.now
+    )
+    if not window["passed"]:
+        return
+    visit = date.fromisoformat(window["date"])
+    yesterday = ctx.tenant.local(ctx.now).date() - timedelta(days=1)
+    day = "yesterday" if visit == yesterday else ctx.tenant.day_spoken(visit, ctx.now)
+    between = window["label"].replace(" to ", " and ")
+    raise Refused(
+        "open_job_passed",
+        ctx.tenant.line("visit_passed", day=day, between=between),
+        job_id=job["id"],
+        window=window,
+        use="when the caller answers, reschedule_appointment with this job_id as booking_id for a "
+        "new time, or flag_person so the team checks what happened; book_appointment with "
+        "separate_problem true only for a different problem",
+    )
 
 
 def _new_address_customer(ctx: Ctx, readback: dict) -> int | None:
@@ -2013,6 +2111,41 @@ def add_note(ctx: Ctx, args: NoteIn) -> Result:
             (ctx.call["id"], args.attach_to, customer_id, fsm_note_id, text, iso(ctx.now)),
         ).lastrowid
     return ok(note_id=note_id, stored_in=where)
+
+
+def attach_late_job_notes(ctx: Ctx) -> None:
+    """Job notes the server made after the job was booked on this call (a technician asked for by
+    name, app/asks.py) go onto that job now; notes made before it went into its summary when it
+    was booked. A failed write leaves the note for the technician summary, which reads every note
+    on the call."""
+    job = ctx.conn.execute(
+        "SELECT fsm_job_id, customer_id, request_json FROM bookings WHERE call_id = ? "
+        "AND kind = 'book' AND status = 'booked' ORDER BY id DESC LIMIT 1",
+        (ctx.call["id"],),
+    ).fetchone()
+    if not job:
+        return
+    sent = set(json.loads(job["request_json"]).get("notes", []))
+    for note in ctx.conn.execute(
+        "SELECT id, text FROM notes WHERE call_id = ? AND attach_to = 'job' AND fsm_note_id IS NULL",
+        (ctx.call["id"],),
+    ).fetchall():
+        if note["text"] in sent:
+            continue
+        try:
+            made = ctx.fsm.add_note(
+                f"{ctx.call['id']}:job-note:{note['id']}",
+                job["customer_id"],
+                note["text"],
+                job["fsm_job_id"],
+            )
+        except (FsmUnavailable, FsmRejected):
+            return
+        with tx(ctx.conn):
+            ctx.conn.execute(
+                "UPDATE notes SET fsm_note_id = ?, customer_id = ? WHERE id = ?",
+                (made.get("id"), job["customer_id"], note["id"]),
+            )
 
 
 def mark_do_not_call(ctx: Ctx, args: DoNotCallIn) -> Result:

@@ -259,3 +259,17 @@ after_hours:
   heating_job_types: [no_heat]
   cooling_job_types: [no_cooling]
   at_risk_rules: [vulnerable_person, medical_equipment]
+
+# Work callers ask an HVAC company for that another trade usually does, in the words callers use
+# (issue #129). Each tenant says which of these it doesn't do and who to suggest instead
+# (services.not_offered); a kind it leaves out is never declined. Words that also name heating or
+# cooling ("pipes", "oven", "water") are left out, so a no-heat call is never turned away.
+services:
+  kinds:
+    plumbing: [sink, sinks, toilet, faucet, clogged drain, drain is clogged, drains are clogged,
+               garbage disposal, burst pipe, pipe burst, plumbing, plumber]
+    appliances: [fridge, refrigerator, freezer, dishwasher, washing machine, my washer,
+                 my dryer, the dryer, clothes dryer, microwave]
+    electric_water_heater: [electric water heater, electric hot water heater]
+    duct_cleaning: [duct cleaning, clean my ducts, clean the ducts, clean our ducts, ducts cleaned,
+                    clean out the ducts, dryer vent cleaning]

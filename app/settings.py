@@ -115,7 +115,8 @@ class Settings:
 
 # Per-call limits. Hitting one flags a person instead of continuing (docs/architecture.md).
 LIMITS = {
-    "book": 1,
+    # Two jobs on one call, each its own visit (DECISIONS.md 079, tools._second_job).
+    "book": 2,
     "reschedule": 1,
     "cancel": 1,
     "find_customer": 5,

@@ -31,17 +31,22 @@ def membership_summary(tenant: Tenant, memberships: list[dict]) -> dict | None:
     }
 
 
-def window_text(tenant: Tenant, start: str, end: str) -> dict:
+def window_text(tenant: Tenant, start: str, end: str, now: datetime | None = None) -> dict:
+    """An arrival window as said. Given `now`, `passed` says the window ended before it, so a visit
+    still open after its window is never told to the caller as coming up (DECISIONS.md 077 note)."""
     local_start, local_end = tenant.local(parse_iso(start)), tenant.local(parse_iso(end))
 
     def hour(moment: datetime) -> str:
         return moment.strftime("%-I:%M").replace(":00", "")
 
-    return {
+    text = {
         "date": local_start.date().isoformat(),
         "weekday": local_start.strftime("%A"),
         "label": f"{hour(local_start)} to {hour(local_end)}",
     }
+    if now is not None:
+        text["passed"] = local_end <= now
+    return text
 
 
 def fsm_calls(
@@ -70,7 +75,7 @@ def call_line(call: dict) -> dict:
     }
 
 
-def open_jobs(fsm: FsmAdapter, tenant: Tenant, customer_id: int) -> list[dict]:
+def open_jobs(fsm: FsmAdapter, tenant: Tenant, customer_id: int, now: datetime) -> list[dict]:
     jobs = []
     for job in fsm.jobs(customer_id, OPEN_JOB_STATUSES):
         appointments = [a for a in fsm.appointments(job["id"]) if a["status"] != "Canceled"]
@@ -85,7 +90,7 @@ def open_jobs(fsm: FsmAdapter, tenant: Tenant, customer_id: int) -> list[dict]:
                 "appointment_id": next_appt["id"] if next_appt else None,
                 "appointment_status": next_appt["status"] if next_appt else None,
                 "window": window_text(
-                    tenant, next_appt["arrivalWindowStart"], next_appt["arrivalWindowEnd"]
+                    tenant, next_appt["arrivalWindowStart"], next_appt["arrivalWindowEnd"], now
                 )
                 if next_appt
                 else None,
@@ -147,7 +152,7 @@ def customer_bundle(
             for loc in locations
         ],
         "membership": membership_summary(tenant, fsm.memberships(customer_id)),
-        "open_jobs": open_jobs(fsm, tenant, customer_id),
+        "open_jobs": open_jobs(fsm, tenant, customer_id, now),
         "last_service_date": last_service[:10] if last_service else None,
         "recent_calls": calls,
         "notes": [

@@ -1,0 +1,25 @@
+id: asks-same-tech-after-booking
+flow: [booking]
+difficulty: standard
+journeys: [J1, spine]
+spec: [S-13, S-26]
+tags: ["issue:129"]
+caller_id: "(917) 555-0118"
+persona: Hank Morrison, a homeowner in Marine Park, Brooklyn, booking a furnace tune-up. Remembers a good technician named Rosa only at the end.
+hidden_facts:
+  name: Hank Morrison
+  address: 3320 Avenue S, Brooklyn, 11234
+  phone: the number you're calling from
+  wants: a yearly furnace tune-up, any weekday morning
+opening: Hi, I'd like to book a tune-up for my furnace.
+script:
+  - Give the details when asked and take the first weekday morning offered.
+  - After the agent confirms the booking and asks if there's anything else, say "Oh, could you send Rosa back out? She did a great job last year."
+  - If the agent says it can't promise who comes, say that's fine and goodbye.
+must:
+  - booking: {count: 1, job_type: tune_up}
+  - job_note: "asked for Rosa"
+  - agent_never_says: ["Rosa will be", "make sure (?:it'?s|you get) Rosa", "(?:assigned|booked) Rosa", "guarantee"]
+  - outcome: booked
+should:
+  - Says it will pass the request on to the team, without promising Rosa.

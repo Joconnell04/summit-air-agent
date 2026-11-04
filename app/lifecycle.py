@@ -5,11 +5,23 @@ import re
 import sqlite3
 from datetime import datetime, timedelta
 
-from . import address_as, lookup, owner_settings, pace, recordings, records, rules, safety, transfer
+from . import (
+    address_as,
+    asks,
+    lookup,
+    owner_settings,
+    pace,
+    recordings,
+    records,
+    rules,
+    safety,
+    transfer,
+)
 from . import priority as prio
 from .db import iso, parse_iso, tx
 from .envelope import Result, ok
 from .fsm import FsmAdapter, FsmRejected, FsmUnavailable
+from .readback import change as readback_change
 from .schemas import EndIn, StartIn, TurnIn
 from .tenant import Tenant
 from .text import digit_runs, has_phrase, phone_key, words
@@ -94,6 +106,12 @@ def sounds_commercial(text: str, cfg: dict) -> bool:
             has_phrase(text_words, p) for p in cfg.get("apartment_signs", [])
         ):
             return True
+    # "I own the place, it's a deli": the caller owns something, and the line names a business.
+    # The cue is read from the line as said ("place" is a street word, so blanking would hide it).
+    if any(has_phrase(words(text), c) for c in cfg.get("owner_cues", [])) and any(
+        has_phrase(text_words, b) for b in cfg["owned"] + cfg["run"]
+    ):
+        return True
     owned = "|".join(map(re.escape, cfg["owned"]))
     run = "|".join(map(re.escape, cfg["run"]))
     return bool(
@@ -468,9 +486,27 @@ def turn(
             if named:
                 hints.append(named)
             # A caller who describes a business can't book, whatever the agent does next (S-05).
-            if sounds_commercial(args.text, tenant.commercial):
+            commercial_line = sounds_commercial(args.text, tenant.commercial)
+            if commercial_line:
                 changes["commercial"] = 1
                 hints.append("commercial")
+            # A detail the caller already confirmed, changed afterwards ("yes, but it's 4B", or a
+            # second unit for another job): the confirmation is cleared, so nothing books there
+            # until the new details are read back and confirmed (DECISIONS.md 077).
+            confirmed = records.readback(call) if call["readback_confirmed_at"] else None
+            if confirmed and readback_change(args.text, confirmed):
+                changes["readback_confirmed_at"] = None
+                hints.append("readback_changed")
+            # Work the company doesn't do ("and my sink leaks"): the agent says the tenant's line
+            # once, and the office gets a lead (DECISIONS.md 078). Anything else on the call goes on.
+            # Not on a safety call (the lines come first) or a commercial one (already declined).
+            quiet = call["safety_state"] in ("none", "cleared") and action.action == "none"
+            if quiet and not commercial_line and not call["commercial"]:
+                hints += [f"not_offered:{line}" for line in
+                          asks.decline_not_offered(conn, tenant, call, args.text, now)]
+            # A technician asked for by name is a note for the dispatcher, never a promise (079).
+            if asks.note_technician(conn, call, args.text, now):
+                hints.append("technician_requested")
             # Who can approve isn't settled: the agent offers a callback, and a booking the caller
             # asks for gets a call before dispatch (tools.book_appointment reads the same lines).
             if approval_unclear(args.text, tenant.approval):

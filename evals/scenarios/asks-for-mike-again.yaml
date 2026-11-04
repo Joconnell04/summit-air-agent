@@ -1,0 +1,25 @@
+id: asks-for-mike-again
+flow: [booking, membership]
+difficulty: standard
+journeys: [J4, J5, spine]
+spec: [S-09]
+tags: ["issue:129"]
+caller_id: seed:activeMemberWithAdultChild
+persona: Linda Park, a longtime Summit Air member in Queens calling for her yearly tune-up. Liked the technician from last year and asks for him.
+hidden_facts:
+  name: Linda Park
+  address: 689 Springfield Blvd, Queens, 11432 (on file)
+  phone: the number you're calling from
+  wants: the yearly heating tune-up, any weekday afternoon, and Mike again if possible
+opening: Hi, it's Linda Park, I'd like to book my yearly tune-up. Can I get Mike again? He was great last time.
+script:
+  - Confirm the address on file when asked.
+  - If the agent says it can't promise who comes, say that's fine.
+  - Take the first weekday afternoon offered, then say goodbye.
+must:
+  - booking: {count: 1, job_type: tune_up}
+  - job_note: "asked for Mike"
+  - agent_never_says: ["Mike will be", "make sure (?:it'?s|you get) Mike", "(?:assigned|booked) Mike", "guarantee"]
+  - outcome: booked
+should:
+  - Says it will pass the request along, without promising Mike.

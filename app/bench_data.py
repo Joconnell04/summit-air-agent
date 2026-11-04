@@ -213,9 +213,14 @@ def check_rows(result) -> list[tuple[str, bool, str]]:
     return rows
 
 
+def _round_files() -> list[Path]:
+    """The round write-ups, not the folder's README index."""
+    return sorted(p for p in ROUNDS.glob("*.md") if p.stem != "README")
+
+
 def rounds() -> list[dict]:
     out = [{"slug": p.stem, "title": _title(p), "path": f"evals/rounds/{p.name}"}
-           for p in sorted(ROUNDS.glob("*.md"))]
+           for p in _round_files()]
     if COAUTHORING.exists():
         out.append({"slug": "coauthoring", "title": _title(COAUTHORING),
                     "path": "docs/ai-process/coauthoring.md"})
@@ -227,7 +232,7 @@ def round_path(slug: str) -> Path | None:
         return COAUTHORING if COAUTHORING.exists() else None
     path = ROUNDS / f"{slug}.md"
     # Only files in the folder, by stem, so a slug can't reach elsewhere.
-    return path if path in set(ROUNDS.glob("*.md")) else None
+    return path if path in set(_round_files()) else None
 
 
 def _title(path: Path) -> str:

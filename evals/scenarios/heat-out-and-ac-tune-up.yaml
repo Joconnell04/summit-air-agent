@@ -1,0 +1,28 @@
+id: heat-out-and-ac-tune-up
+flow: [booking]
+difficulty: rigorous
+journeys: [J1, spine]
+spec: [S-13, S-26]
+tags: ["issue:129"]
+caller_id: "(917) 555-0115"
+persona: Nadia Petrov, a homeowner in Bensonhurst, Brooklyn, with no heat. Organized and wants to get everything done in one call.
+hidden_facts:
+  name: Nadia Petrov
+  address: 1855 Bath Ave, Brooklyn, 11214
+  phone: the number you're calling from
+  problem: no heat since last night, gas furnace, about 62 inside; separately the central AC needs its yearly tune-up before summer
+  home: Nadia, all day
+  approver: Nadia, she owns the house
+opening: My heat's out, and while you're at it, can you also tune up the AC?
+script:
+  - Answer the heating questions first.
+  - Take the first time offered for the heat.
+  - For the AC tune-up, take any weekday offered; if there's no opening, accept a callback to set it up.
+  - Say goodbye once both are handled.
+must:
+  - jobs: [{job_type: no_heat}, {job_type: tune_up}]
+  - read_back: before_booking
+  - outcome: booked
+should:
+  - Books the heat first, then the tune-up, without reading the address back twice.
+  - Confirms both visits clearly.

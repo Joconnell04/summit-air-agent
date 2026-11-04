@@ -138,10 +138,13 @@ def book(
     job_type: str = "tune_up",
     key=None,
     account: str | None = None,
+    separate_problem: bool = False,
     **details,
 ):
     """account is new_address_account, for a caller on file booking an address not on file."""
     extra = {"new_address_account": account} if account else {}
+    if separate_problem:
+        extra["separate_problem"] = True
     return agent.tool(
         "book_appointment",
         call_id,
