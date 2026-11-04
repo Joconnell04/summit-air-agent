@@ -120,6 +120,7 @@ class SummitAgent(Agent):
         While the rule is holding, the text waits for the end of the reply and is dropped if the
         reply calls a tool whose result the worker speaks itself."""
         reply = self.call.reply
+        reply.start_reply()
         holding = reply.holding()
         pending, held = "", []
         calls: list[tuple[str, dict]] = []

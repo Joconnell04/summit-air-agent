@@ -174,6 +174,12 @@ ANNOUNCES_READ_BACK = re.compile(
     re.IGNORECASE,
 )
 SENTENCE_END = re.compile(r"(?<=[.!?])\s+")
+# A question that only asks about the sentence before it: dropped with a dropped restatement, so
+# the caller never hears a bare "Is that right?" (eval round 3 run 20261104-031113).
+CONFIRMS_ONLY = re.compile(
+    r"\s*(?:is that (?:right|correct)|(?:is )?that (?:right|correct)|correct|right)\s*\?\s*",
+    re.IGNORECASE,
+)
 DIGIT_WORDS = {
     "zero": "0", "oh": "0", "o": "0", "one": "1", "two": "2", "three": "3", "four": "4",
     "five": "5", "six": "6", "seven": "7", "eight": "8", "nine": "9",
@@ -231,6 +237,7 @@ class SpokenReply:
         self.safety_call = False
         self.zips: set[str] = set()
         self.phones: set[str] = set()
+        self._dropped_restatement = False
 
     def holding(self) -> bool:
         return self.safety_call or (self.address_checked and not self.read_back_confirmed)
@@ -258,14 +265,22 @@ class SpokenReply:
             return not args.get("confirmed")
         return name == "end_call" and self.safety_call
 
+    def start_reply(self) -> None:
+        self._dropped_restatement = False
+
     def sentence(self, sentence: str) -> str:
-        """One sentence of the model's text, or "" when the caller shouldn't hear it."""
+        """One sentence of the model's text, in order within a reply, or "" when the caller
+        shouldn't hear it."""
+        after_restatement, self._dropped_restatement = self._dropped_restatement, False
         if ANNOUNCES_READ_BACK.search(sentence):
             return ""
-        if any(re.search(rf"\b{z}\b", sentence) for z in self.zips):
+        if after_restatement and CONFIRMS_ONLY.fullmatch(sentence):
             return ""
         digits = re.sub(r"\D", "", sentence)
-        if any(p in digits for p in self.phones):
+        if any(re.search(rf"\b{z}\b", sentence) for z in self.zips) or any(
+            p in digits for p in self.phones
+        ):
+            self._dropped_restatement = True
             return ""
         return sentence
 
@@ -273,6 +288,7 @@ class SpokenReply:
         """The model's text for one reply, given the (name, arguments) of the tools it called."""
         if any(self.server_speaks(n, a) for n, a in calls):
             return ""
+        self.start_reply()
         return " ".join(kept for s in sentences(text) if (kept := self.sentence(s)))
 
 

@@ -158,3 +158,13 @@ def test_a_sentence_on_file_is_kept_when_the_caller_never_said_its_zip():
     assert reply.text(on_file, []) == on_file
     reply.heard(None, "yes it's one one two one eight")
     assert reply.text(on_file, []) == "Is that still right?"
+
+
+def test_a_bare_confirmation_after_a_dropped_restatement_is_dropped_too():
+    """Eval round 3 run 20261104-031113, heat-pump-defrost: "Is that right?" was left alone."""
+    reply = assemble.SpokenReply()
+    reply.heard(None, "two one two 30 41st ave bayside one one three six one")
+    said = "Tomorrow morning is open. So that's 21230 41st Avenue, Bayside, 11361. Is that right?"
+    assert reply.text(said, []) == "Tomorrow morning is open."
+    # A question that stands on its own is kept.
+    assert reply.text("Is that right?", []) == "Is that right?"
