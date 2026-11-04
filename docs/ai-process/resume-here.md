@@ -11,6 +11,13 @@ Where the build stopped when Jackson closed the laptop. Every working lane was t
 
 Merged since the last note: #69 (warm transfer and recordings), #72 (eval floor 90%), #73, #76, #77, #79, #80, #81 (technician summary), #74 and #75 (eval round 2), #78. Deployed to the server after #69; a scripted test call booked a tune-up end to end. Known on that call and fixed in #82, not yet live: "Before I book, I need to read back the details", "Let me read that back", "Stay warm out there". Also noticed: the phone number is read as "six hundred and forty six ..." instead of digit by digit.
 
+## Queued (start when the dependency lands)
+
+- Side model extension ("asked for a person", "can't keep up"): after PR #83 merges. Exploration 014, idea 3.
+- Second latency lane (lookup results up front, a short line before silent tool calls, bare-yes fast path in shadow mode): after PR #82 merges. Exploration 014, ideas 4 to 6.
+- Debug bench at `/bench` on the owner view's server (call timeline, rule results, eval runs, the simulated-call listener, replay a call as a scenario), admin only: after the accounts lane merges.
+- After everything merges: re-adopt one eval reference, deploy, one scripted test call, then Jackson's 10 live calls.
+
 ## Waiting on Jackson
 
 1. Eval co-authoring round 3 of 3, `evals/rounds/03-judge-labels.md` (ready): mark 10 transcripts pass or fail with a line why.
