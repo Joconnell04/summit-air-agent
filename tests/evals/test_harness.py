@@ -86,6 +86,16 @@ def test_must_pass_failures_are_listed_only_for_must_pass_scenarios(seed_dir, tm
     assert result.outcome == "fail" and result.must_pass_failures == []
 
 
+def test_a_grader_fail_on_a_must_pass_scenario_is_a_fail_but_not_a_must_pass_failure(seed_dir,
+                                                                                    tmp_path):
+    s = scenario(spec=["S-26"])
+    result, *_ = run(seed_dir, tmp_path, s, [say("Okay.")], [say("[END]")],
+                     grade=grade_reply(2, "fail", "A long turn."))
+    assert result.outcome == "fail"
+    assert result.check_failures == ["grader: A long turn."]
+    assert result.must_pass_failures == []
+
+
 def test_a_looping_caller_is_an_error_not_a_fail(seed_dir, tmp_path):
     s = scenario(max_turns=8, must=[{"flag": "person"}])
     result, _, _, grader = run(seed_dir, tmp_path, s, [], [say("Hello?")] * 5)

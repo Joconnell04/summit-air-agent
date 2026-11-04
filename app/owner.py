@@ -11,7 +11,7 @@ import sqlite3
 from collections import Counter
 from datetime import date, datetime, time, timedelta
 
-from . import records
+from . import records, summary
 from .db import iso, parse_iso
 from .tenant import Tenant
 
@@ -848,6 +848,7 @@ def call_page(conn: sqlite3.Connection, tenant: Tenant, trace: dict, now: dateti
         "details": request.get("details", {}),
         "job": _window_of(tenant, booked[-1]["window_start"], now) if booked else None,
         "booking": booked[-1] if booked else None,
+        "tech_summary": summary.for_call(conn, call) if booked else None,
         "open_flags": [f for f in trace["flags"] if f["status"] == "open"],
     }
 

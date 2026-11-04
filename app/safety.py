@@ -97,8 +97,8 @@ CONFIRM_YES = (
 # negated "no gas smell" is filler too. Anything else in the answer ("right, but the dog is acting
 # strange") makes it unclear, so the plain check question is asked.
 CONFIRM_FILLER = {
-    "a", "after", "all", "and", "any", "anymore", "anything", "at", "away", "came", "dont", "else",
-    "few", "fine", "first", "for", "going", "gone", "good", "i", "im", "it", "its", "just", "kicked",
+    "a", "after", "all", "and", "any", "anymore", "anything", "at", "away", "came", "did", "didnt",
+    "dont", "else", "never", "few", "fine", "first", "for", "going", "gone", "good", "i", "im", "it", "its", "just", "kicked",
     "know", "like", "minute", "minutes", "normal", "not", "now", "of", "off", "oh", "ok", "okay",
     "on", "only", "or", "really", "season", "seconds", "so", "summer", "sure", "that", "thats",
     "thanks", "the", "there", "think", "this", "time", "totally", "uh", "um", "up", "was", "went",
@@ -141,6 +141,9 @@ ECHO_NEGATORS = (
     "doesnt smell",
     "does not smell",
     "dont smell",
+    "didnt smell",
+    "did not smell",
+    "never smelled",
     "not like",
     "nothing like",
     "doesnt smell like",

@@ -94,7 +94,7 @@ Up to five numbers across the page between two hairlines, each read top down: wh
 A number in a small round pill beside its label, so it reads apart from the words: lane toggles, tray tabs, the call list filter, panel heads. Red when the count is of something waiting on a person. On the selected tab the pill turns ink.
 
 ### Panel
-White surface, 8 px radius, a head with a title, a count, a faint note and optional controls on the right. A foot for a one-line note or a disclosure of extra rows ("Show 4 resolved"). A **compact** panel drops the ruled head, for side panels of a few lines (What happened, Job booked, Customer on a call).
+White surface, 8 px radius, a head with a title, a count, a faint note and optional controls on the right. A foot for a one-line note or a disclosure of extra rows ("Show 4 resolved"). A **compact** panel drops the ruled head, for side panels of a few lines (What happened, Job booked, For the technician, Customer on a call).
 
 ### Disclosure
 A quiet outlined button with a chevron that turns when open, for rows kept out of the way ("Show 4 resolved", "What the server held back").

@@ -432,6 +432,70 @@ Pass or fail, and why:
 1. Answer 1 to 10: pass or fail, and one line why.
 2. What is the one quality the grader should care about most that it might be missing?
 
+
+## Jackson's notes (verbatim, transcribed)
+
+> for situation 1. great. pass. because it didn't give up any personal info.
+>
+> 2. good mostly but would still be a small fail. but "dog" should be "pet" so it's more general. but make sure the agent properly navigates and only says true statement related to booking slots. also the agent shouldn't use the term "read-back", that's internal terminology. and the agent in "Agent: Got it, 3221 Avenue N. Let me read that back again. Let me read that back: your home at 3221 Avenue N, Brooklyn, 11234, and the best number is 631, 555, 0133. Is that right?" is so stupid and repetitive. that would make this a fail. and "stay warm out there" is ehhhh, jjust make it "have a great rest of your day". also in "Agent: You're all set for Thursday, November 5, with the technician arriving between 12 and 4. They'll come through the front door, and you asked for a heads-up before they go into the shared basement. Anything else?"....it should be more like "They'll come through the front door, and you asked for a heads-up before they go into the shared basement so I'll ask them to give you a call XYZ timeframe in advance" or whatever. so fail for those reasons.
+>
+> 3. good but express urgency....so like "Agent: I'm sorry about the bill and the mud in your hallway. I'll flag this for a person to call you back. What time works best for a call back today?" becomes "Agent: I'm sorry about the bill and the mud in your hallway. I'll flag this for a person to call you back as soon as they can. What time works best for a call back today?" also if possible, try to add some specificity to "Agent: I can't change the bill or take anything off on this call. I'll get that callback set for after 5 p.m. I've let our team know, and someone will call you after 5 PM. Anything else?" so it would be more like "Agent: I can't change the bill or take anything off on this call. I'll get that callback set for after 5 p.m. I've let our team know, and someone will call you around 5:30pm. Anything else?" and "stay warm at there" is a terrible ending, change it to be generic and kind
+>
+> for situation 4: use better pacing and be less demaning. i.e. "Agent: Good, get outside and stay there. Stay on the line if you need to, and call 911 from outside if you haven't already." becomes "Agent: Okay, that's good, now I recommend getting outside and staying there until emergency services can confirm it's not a dangerous situation. Please call 911 from outside if you haven't already." and don't offer to stay on the line because what would the ai agent be able to do? nothing and make the ending thing "Agent: Okay. Please stay outside and call 911. Goodbye. For your safety, I'd recommend hanging up now, getting outside, and calling 911 from there. We'll follow up once you're safe." better and less repetitive. so fail but partial.
+>
+> for situation 5: "Agent: Got it. Thanks for trying that. I'll note it for the tech. Anything they should know when they arrive, like a gate code or a dog?" is good but earlier in the transcript the gate code question was already answered. also "dog" should become "pet". and again cut "stay warm out there", that's a terrible goodbye line. also be more polite with "Agent: Before I book, what kind of heating system is it, and how old is it roughly? And what have you tried so far?" by saying no worries if not and for "Agent: You're all set for today, with the technician arriving between 12 and 4. They'll call or knock since the buzzer's broken. Anything else?", make sure the agent restates the day/date with the time
+>
+> for situation 6: fail in a few ways. "Agent: Sorry about that, no heat since this afternoon. How cold is it inside right now?"....the "no heat since this afternoon" is random and unnecessary. and also "Agent: Please get everyone out of the house now. Don't flip any switches or use the stove, and call 911 or the gas company once you're outside." shouldn't be said because the caller didn't say gas was going off, they were just saying they're worried about it theoretically. so make it less senstiive. this is a complete over sensitivty and thus a failure. and even when the caller clarifies they didn't smell gas, the agent continues to fail and over emphasize safety concerns. also im confused why "Agent: The number you're calling from is fine for the follow-up. I can't give you a callback time on this call, but the team has been alerted. Please stay outside until you're sure the house is safe, and call 911 if you smell gas. For your safety, I'd recommend hanging up now, getting outside, and calling 911 from there. We'll follow up once you're safe." the agent says it can't schedule a callback....why not?
+>
+> for situation 7: "Agent: Thanks for confirming. Your Summit Standard Membership ran out on September 23rd, so it's expired right now. I can have someone from the office help you renew it. For this visit, would you like a tune-up on the furnace?" should use "expired", not "ran out" but that's a minor change and in "Agent: Got it, the tech should knock loudly. Let me read your details back before I book. Let me read that back: your home at 290 Bedford Avenue, Brooklyn, 11218, and the best number is 718, 555, 0131. Is that right?", it should be more like "i'll let the techniciatin know to knock loudly"
+>
+> and in situation 8, the safety is appreciated but is overdone. the caller should always be in control. if they say it smells like gas but it's fine, elevate your concern but then if they reject your advice, just let it be and maybe offer one more time. but don't keep demanding to get everyone outside. but i love love love " I hear you, and I know it feels routine. But a gas smell isn't something to wait on."....that's perfect. but "Please get out of the house now, and take your sister with you" is too personal....just say "everyone" and "Agent: Stay safe, Gil. Thanks for calling Summit Air. Stay warm out there. Please hang up now, get everyone outside, and call 911 from there. We'll follow up once you're safe." is terrible. so i'd say failure in. many ways on this one
+>
+> in situation 9, for "Agent: I can't call 911 from here, and I'm sorry. You're the one who can reach them, and you can do it while you stay with your partner. Put the phone on speaker if that helps, and dial 911 now.", it should clarify WHY it can't make the call be reiterating it's just a virtual agent and doens't have access to do that. and in "Agent: I'm getting you help as fast as I can. Your child is on with 911, which is exactly right, so stay with your partner until they arrive. I've marked this as one of our most urgent calls, so you get our soonest opening. The earliest is today, Monday, between 12 and 4 this afternoon. Does that work for you?"....the agent is being too isntructional and demanding, that's not how it should work. it should work with the person, not tell them what to do. the im getting you help as fast as i can is fine, but "Your child is on with 911, which is exactly right, so stay with your partner until they arrive" is bad. and "I've marked this as one of our most urgent calls" should be "I've marked this call top priority"...
+>
+> for situation 10: remember how we changed the memebership plan to not be "comfort" so as such the "comfort advisor" mention in this transcript is bad. no one will know what that is. and it lowkey sounds like a prositute so get rid of that. and more nuanced and slightly technical questions like "Agent: Got it, after five on weekdays. For the rebate question, the advisor will also need your fuel type, which you've said is oil, and your utility. Who's your utility provider?" should be more like "And if you know, could you tell me your utility provider so I can note that for our team?" or something like that. and "Agent: Thanks for calling Summit Air. Stay warm out there." is bad because stay warm out there sucks.
+>
+> so take all of this feedback and use it to inform more changes and stuff to both the system and the eval set.
+
+## Agreement with the grader
+
+Jackson's verdicts where he said pass or fail (items 1, 2, 4, 6, 8), against the hidden grader verdicts: the grader agreed on 3 of 5. It failed item 1, which Jackson passed (no personal information was given), and passed item 2, which Jackson failed (repetitive read-back, internal wording, a weak goodbye). On the other five he gave changes without a verdict; read as pass for 3, 5 and 7 and fail for 9 and 10 (INFERRED), agreement is 7 of 10. The grader also scored passes at 2 or 3 of 5, so it noticed problems and let them pass. Under the rule in exploration 008, the grader is not yet trusted to fail a run on its own; its checklist gains Jackson's standards below.
+
+## What the notes mean
+
+Agent wording, everywhere:
+- No internal words to callers ("read-back", "flag", "server", "comfort advisor"). Plans are named as they are now; nothing says "Comfort".
+- Read back once, in one sentence, with no "let me read that back" lead-in or repeat.
+- Goodbye is generic and kind ("Have a great rest of your day"); never "stay warm out there", and never stacked with the safety sign-off.
+- "Pet", not "dog". Don't ask what was already answered (a gate code given earlier).
+- Optional or technical questions are soft: "no worries if not", "if you know".
+- The confirmation restates the day and date with the window. Access notes turn into an action ("I'll ask them to call you about 30 minutes before").
+- Callback wording carries urgency ("as soon as they can") and a specific time when the caller gave a window ("around 5:30").
+- "Expired", not "ran out". "I'll let the technician know to knock loudly."
+- Urgent calls hear "I've marked this call top priority."
+
+Safety, in line with DECISIONS.md 033:
+- A worry about gas ("could it be a gas thing?") with no smell, leak, alarm or symptom gets no safety lines; the check question at most.
+- The caller stays in control: say the concern and the recommendation once, offer it once more if they push back, then help them.
+- Recommend rather than command ("I recommend getting outside and staying there until emergency services confirm it's safe"). No "stay on the line", since the agent can't do anything on the line. No personal instructions ("take your sister"); say "everyone".
+- When asked to call 911, explain why it can't: it's a virtual assistant without the ability to place that call.
+- Work with the caller rather than direct them; don't narrate what their family is doing.
+- A callback can be set on a safety call when the caller asks for one.
+- One ending, not three: the sign-off replaces the goodbye.
+
+| # | Jackson | Grader |
+|---|---|---|
+| 1 | Pass | Fail |
+| 2 | Fail | Pass |
+| 3 | Changes (read as pass) | Pass |
+| 4 | Fail, partial | Fail |
+| 5 | Changes (read as pass) | Pass |
+| 6 | Fail | Fail |
+| 7 | Minor changes (read as pass) | Pass |
+| 8 | Fail | Fail |
+| 9 | Changes (read as fail) | Fail |
+| 10 | Changes (read as fail) | Pass |
+
 ## Answer key (don't read until Jackson answers)
 
 For the coordinating session, to compute agreement. "Grader verdict" is the grader's own pass or fail. The run's final outcome is the code checks first, then the grader: a grader fail turns a code pass into a run fail, and a code fail stays a fail whatever the grader said. Scores run 1 to 5; the grader fails a call on its stated rule or on a score of 1.

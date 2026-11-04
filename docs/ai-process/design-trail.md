@@ -76,3 +76,4 @@ How the design was reached, in order, so a reader can follow each choice back to
 | Side model | OpenAI Decisions reads "someone at risk at home" on each line; it can only raise priority | DECISIONS.md 037, #68 |
 | Audio bake-off round 1 | Our stack stays; Retell, Gemini Live and OpenAI Realtime out on the safety lines or speed; ElevenLabs needs a read-back fix; our end-of-turn wait gets tuned | DECISIONS.md 038, #70 |
 | AI check for owner guidance | A model refuses a note only when it contradicts a locked rule, with the reason; no word list | DECISIONS.md 039, #71 |
+| Technician summary | A pinned job note drafted by a model and checked line by line by the server | DECISIONS.md 040, #73 |

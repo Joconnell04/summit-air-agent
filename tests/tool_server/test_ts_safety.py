@@ -430,7 +430,10 @@ def test_after_the_lines_each_caller_line_reminds_the_agent_how_to_carry_on(agen
     assert "safety_call" in after["data"]["hints"]
     from prompts.assemble import server_notes
 
-    assert "offer once to book" in server_notes(after["data"]["hints"])[0]
+    note = server_notes(after["data"]["hints"])[0]
+    assert "offer once to book" in note
+    # A caller who wants a visit gets one (spec S-18); the note must not read as a no.
+    assert "book only if the caller wants it" in note
 
 
 def test_the_sign_off_suits_a_caller_who_is_alone_and_recommends_rather_than_orders():
@@ -489,6 +492,8 @@ def test_the_confirm_question_is_asked_once_per_call():
         ("No rotten eggs or sulfur, just dust", "cleared"),
         ("It doesn't smell like sulfur or rotten eggs", "cleared"),
         ("Correct", "cleared"),
+        # The standard run after the merge of #72: "didn't smell like eggs" fired the lines.
+        ("no nothing like that it was just dusty, it didn't smell like eggs or gas or anything", "cleared"),
         ("no nothing like that it was just dusty, like burning dust, no gas smell no alarm", "cleared"),
         ("no nothing like that, like when you first fire up a heater after the summer", "cleared"),
         ("Actually it does, a bit like eggs", "speak_lines"),

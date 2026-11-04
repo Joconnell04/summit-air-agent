@@ -11,6 +11,7 @@ Run with --update to raise the test baseline after adding tests, and with
 """
 
 import json
+import math
 import subprocess
 import sys
 from pathlib import Path
@@ -38,8 +39,8 @@ def check(count: int, baseline: dict) -> tuple[bool, str]:
 
 
 def must_pass_gaps(run, scenarios=None) -> list[str]:
-    """Must-pass scenarios the run's suite selects today that are missing from it or didn't pass.
-    An error is not a pass: a safety case with no verdict can't stand in the reference."""
+    """Must-pass scenarios the run's suite selects today that are missing from it or failed a code
+    check. An error is not a pass: a safety case with no verdict can't stand in the reference."""
     from evals.scenario import load_all
     from evals.suites import SuiteError, select
 
@@ -52,11 +53,13 @@ def must_pass_gaps(run, scenarios=None) -> list[str]:
     needed = {s.id for s in chosen if s.must_pass}
     ran = {s.scenario_id for s in run.scenarios}
     problems = [f"must-pass case missing: {i}" for i in sorted(needed - ran)]
+    # A grader fail lowers the pass rate but is not a must-pass failure: the must-pass lines are code
+    # checks, as in the publish gate (DECISIONS.md 031).
     must_now = {s.id for s in scenarios if s.must_pass}
     for s in run.scenarios:
-        if s.scenario_id in must_now and s.outcome != "pass":
+        if s.scenario_id in must_now and (s.outcome == "error" or s.code_failures):
             problems.append(f"must-pass case {s.outcome}: {s.key}")
-        elif s.must_pass_failures:
+        elif s.must_pass_failures and s.code_failures:
             problems.append(f"must-pass case failed: {s.key}")
     return problems
 
@@ -115,7 +118,14 @@ def adopt(path: str, baseline: dict, root: Path = ROOT, scenarios=None) -> tuple
         return False, "refusing to adopt a run with fewer scenarios than the floor"
     baseline["eval_results"] = path
     baseline["min_eval_scenarios"] = len(run.scenarios)
-    return True, f"eval reference is now {path} ({len(run.scenarios)} scenarios)"
+    # The pass rate rounded down to the nearest 5% absorbs a noisy call or two (DECISIONS.md 011).
+    rate = run.pass_rate() or 0.0
+    floor = math.floor(round(rate * 100, 6) / 5) * 5 / 100
+    baseline["min_eval_pass_rate"] = max(floor, baseline.get("min_eval_pass_rate") or 0.0)
+    return True, (
+        f"eval reference is now {path} ({len(run.scenarios)} scenarios, pass rate {rate:.0%}, "
+        f"floor {baseline['min_eval_pass_rate']:.0%})"
+    )
 
 
 def main() -> int:

@@ -42,15 +42,11 @@ def scenarios():
     return chosen
 
 
-def _code_failures(s) -> list[str]:
-    return [f for f in s.check_failures if not f.startswith("grader:")]
-
-
 def _missed(run: Run | None) -> set[str]:
     """Scenarios with a failed code check or no verdict."""
     if run is None:
         return set()
-    return {s.scenario_id for s in run.scenarios if s.outcome == "error" or _code_failures(s)}
+    return {s.scenario_id for s in run.scenarios if s.outcome == "error" or s.code_failures}
 
 
 def summary(run: Run, content: dict, rerun: Run | None = None) -> dict:
@@ -60,8 +56,8 @@ def summary(run: Run, content: dict, rerun: Run | None = None) -> dict:
     if rerun is not None:
         final |= {s.scenario_id: s for s in rerun.scenarios}
     missed_first = _missed(run)
-    failed = sorted(i for i, s in final.items() if _code_failures(s))
-    errors = sorted(i for i, s in final.items() if s.outcome == "error" and not _code_failures(s))
+    failed = sorted(i for i, s in final.items() if s.code_failures)
+    errors = sorted(i for i, s in final.items() if s.outcome == "error" and not s.code_failures)
     runs = [run] + ([rerun] if rerun else [])
     return {
         "content_hash": rules.content_hash(content),
@@ -79,7 +75,7 @@ def summary(run: Run, content: dict, rerun: Run | None = None) -> dict:
         "reruns": len(rerun.scenarios) if rerun else 0,
         "rerun_cost_usd": round(sum(s.cost_usd for s in rerun.scenarios), 4) if rerun else 0.0,
         "grader_flags": sorted(
-            s.scenario_id for s in final.values() if s.outcome == "fail" and not _code_failures(s)
+            s.scenario_id for s in final.values() if s.outcome == "fail" and not s.code_failures
         ),
         "cost_usd": round(sum(s.cost_usd for r in runs for s in r.scenarios), 4),
         "finished_at": (rerun or run).created.isoformat(),
