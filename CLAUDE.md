@@ -20,9 +20,10 @@ The assignment, word for word: `docs/assignment.md`. Reread it before any design
 
 - Work is tracked in GitHub Issues on the "Summit Air" project board. Use `gh`.
 - A build session starts from a brief in `docs/ai-process/briefs/`, works on a branch, and ends with a pull request that says `Closes #N`.
+- Every lane has an issue labeled `agent` before it starts, including lanes asked for in chat; its pull requests list under it and the last one closes it. Run `make lanes` after a merge to refresh `docs/ai-process/lanes.md`, which the brief links to instead of keeping its own table.
 - If blocked on a choice that is the human's to make, open an issue with the needs-decision template, label `needs-decision`, put it in the Needs decision column, and continue with other work.
 - Every needs-decision issue gets a readout in `docs/decisions/NN-<slug>.md` (format in that folder's README), researched in the background before Jackson is asked. GitHub issues aren't visible in the Claude app, so the readout is what he reads beside the chat; he answers in chat.
-- Ideas Jackson throws out mid-step are prompts to look into, not decisions. Record them as open considerations or explorations, never write them into a doc as settled.
+- Ideas Jackson throws out mid-step are prompts to look into, not decisions. Record them as ideas in `docs/later.md` or as explorations, never write them into a doc as settled.
 - Decisions go in `DECISIONS.md` as one short entry each.
 - When a decision lands, add a row to `docs/ai-process/design-trail.md`.
 - When Jackson sets something aside ("later", "come back to that", "not now"), add it to `docs/later.md` with where it came from. The list is walked with him before V1 is called done.
@@ -48,9 +49,9 @@ Log his words verbatim in co-authoring and transcripts; apply the glossary only 
 
 ## Commands
 
-- `make setup`, `make check`, `make ratchet-update`
+- `make setup`, `make check`, `make ratchet-update`, `make lanes`
 - `/next` where we are, what needs Jackson, what's next
-- `/consider <idea>` add to docs/considerations.md and keep going
+- `/consider <idea>` add to docs/later.md and keep going
 - `/round <doc>` revise a high-touch doc from feedback and log it
 - `/explore <idea>` background research into docs/explorations
 - `/discuss <NNN>` load an exploration to talk through and decide

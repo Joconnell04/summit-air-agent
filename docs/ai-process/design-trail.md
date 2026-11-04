@@ -4,7 +4,7 @@ How the design was reached, in order, so a reader can follow each choice back to
 
 ## How a choice gets made
 
-1. An idea or concern goes into `docs/considerations.md` (by voice, with `/consider`).
+1. An idea or concern goes into `docs/considerations.md` (by voice, with `/consider`; after design, into `docs/later.md`).
 2. If it needs evidence, a background research agent writes `docs/explorations/NNN-*.md`.
 3. If it's Jackson's call, a short readout in `docs/decisions/NN-*.md` lays out the options, trade-offs and a recommendation. Jackson reads it beside the chat and answers.
 4. The answer becomes one entry in `DECISIONS.md` (what, why, what else was considered, what would change it), the issue is closed, and the docs it touches are updated.

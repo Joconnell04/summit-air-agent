@@ -9,7 +9,8 @@ Built with Claude Code, mostly by voice through transcription. The structure is 
 - **Side research.** `/explore` runs a background research agent with a fixed template; results in `/docs/explorations/`.
 - **Agent loops with verification.** Build agents work on branches from a brief. A pre-commit hook runs the fast tests, CI runs everything on each pull request, a ratchet blocks a lower test count, and a read-only reviewer agent checks the change against its brief. Two failures escalate to a needs-decision issue.
 - **Transcripts.** Exported from the design sessions into `transcripts/`.
-- **Considerations.** A running list in `/docs/considerations.md`, added to by voice with `/consider` and triaged into scope during design.
+- **Considerations.** A running list in `/docs/considerations.md`, triaged into scope during design and now closed. New ideas, and anything set aside, go in `/docs/later.md` (`/consider`).
+- **Lanes.** Every build lane has an issue labeled `agent` that its pull requests close; `make lanes` writes `docs/ai-process/lanes.md` from them.
 - **Phases.** `phases.md` is the route; Claude proposes each next step and Jackson says go.
 
 ## Finished branches
