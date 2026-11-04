@@ -93,12 +93,15 @@ def call_notes(start: dict) -> list[str]:
             "the caller confirms."
         )
     if passed:
-        when = ", ".join(f"{v['window']['weekday']} {v['window']['label']}" for v in passed)
+        when = ", ".join(
+            f"{v['window']['weekday']} {v['window']['label']}, job {v['job_id']}" for v in passed
+        )
         notes.append(
             f"The arrival window of their open visit ({when}) has already ended, and the visit is "
             "still open. Never call it upcoming or say they're all set for it. Ask whether the "
-            "technician came, then offer a new time with reschedule_appointment for that visit, or "
-            "to have the team check what happened with flag_person."
+            "technician came, then offer a new time by moving that visit with "
+            "reschedule_appointment (its job as booking_id), never book_appointment, or to have "
+            "the team check what happened with flag_person."
         )
     return notes
 

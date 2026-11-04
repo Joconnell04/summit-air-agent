@@ -42,8 +42,9 @@ def change(text: str, readback: dict) -> str | None:
     """The read-back field this caller line gives a different value for (unit, house number,
     street, ZIP or phone), or None."""
     tokens = words(text).split()
-    unit = _unit_said(tokens)
-    if unit is not None and unit != unit_key(readback.get("unit", "")):
+    # "Yes, 2A and 5C" to a read-back of 5C names the unit read back: no change.
+    units = _units_said(tokens)
+    if units and unit_key(readback.get("unit", "")) not in units:
         return "unit"
     house = _house(readback.get("street", ""))
     for said in _houses_said(text):
@@ -60,7 +61,8 @@ def change(text: str, readback: dict) -> str | None:
     return None
 
 
-def _unit_said(tokens: list[str]) -> str | None:
+def _units_said(tokens: list[str]) -> list[str]:
+    found = []
     for i, token in enumerate(tokens):
         if token in UNIT_WORDS and i + 1 < len(tokens):
             value = tokens[i + 1]
@@ -68,10 +70,10 @@ def _unit_said(tokens: list[str]) -> str | None:
             if value.isdigit() and i + 2 < len(tokens) and len(tokens[i + 2]) == 1:
                 value += tokens[i + 2]
             if value.isdigit() or UNIT_TOKEN.match(value) or len(value) == 1:
-                return unit_key(value)
-        if UNIT_TOKEN.match(token) and not ORDINAL.match(token):
-            return token
-    return None
+                found.append(unit_key(value))
+        elif UNIT_TOKEN.match(token) and not ORDINAL.match(token):
+            found.append(token)
+    return found
 
 
 def _houses_said(text: str) -> list[str]:

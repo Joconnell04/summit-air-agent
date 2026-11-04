@@ -6,17 +6,17 @@ journeys: [J1, spine]
 spec: [S-13, S-26]
 tags: ["issue:129"]
 caller_id: "(917) 555-0100"
-persona: Dana Whitfield, renting in Park Slope, Brooklyn, with no heat since this morning. Quick and friendly, answers in short bursts and leaves the apartment number out the first time.
+persona: Dana Whitfield, renting in Carroll Gardens, Brooklyn, with no heat since this morning. Quick and friendly, answers in short bursts and leaves the apartment number out the first time.
 hidden_facts:
   name: Dana Whitfield
-  address: 412 7th Ave, apartment 4B, Brooklyn, 11215
+  address: 412 Court St, apartment 4B, Brooklyn, 11231
   phone: the number you're calling from
   problem: no heat since this morning, radiators cold, about 63 degrees inside
   approver: the landlord already said to call
   home: Dana, all day
 opening: Hi, my heat's been out since this morning.
 script:
-  - When first asked for the address, give "412 7th Ave, 11215" with no apartment number.
+  - When first asked for the address, give "412 Court Street, 11231" with no apartment number.
   - When the agent reads the address back without an apartment, answer in one line, "Yes, but it's 4B."
   - Confirm once the agent reads it back with 4B.
   - Take the first time offered, then say goodbye.

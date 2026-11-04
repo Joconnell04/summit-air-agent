@@ -428,3 +428,41 @@ def _rows(agent, sql, *params):
 )
 def test_a_promise_of_a_named_technician_is_never_said(sentence, dropped):
     assert (SpokenReply().sentence(sentence) == "") is dropped
+
+
+@pytest.mark.parametrize(
+    "line, asked",
+    [
+        ("can i get mike again he was great last time", "Mike"),
+        ("oh could you send rosa back out", "Rosa"),
+        ("can you get someone out today", None),
+        ("can you get it working again", None),
+        ("is anyone available tomorrow", None),
+        ("can you send a tech out", None),
+    ],
+)
+def test_a_name_written_in_lower_case_still_counts(line, asked):
+    """Eval run 20261104-200546: the transcript came through in lower case."""
+    assert asks.technician_asked(line) == asked
+
+
+def test_two_units_in_one_read_back_are_refused(agent):
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "It's 101 Union St, 11231, units 2A and 5C.")
+    refused = agent.tool("read_back", call, address={**in_area_address(), "unit": "2A and 5C"},
+                         phone="caller_id")
+    assert refused["refused"] == "invalid_arguments"
+    assert agent.tool("read_back", call, address={**in_area_address(), "unit": "2A"},
+                      phone="caller_id")["ok"]
+
+
+def test_the_ended_visit_note_names_the_job_to_move(agent, clock, scenarios):
+    started, visit = _delgado_visit(agent, clock, scenarios, AFTER)
+    notes = " ".join(call_notes(started["data"]))
+    assert f"job {visit['job_id']}" in notes and "never book_appointment" in notes
+
+
+def test_a_yes_naming_both_units_is_no_change_to_the_one_read_back():
+    second = {**READ_BACK, "unit": "5C"}
+    assert readback.change("Yes, 2A and 5C, that's right.", second) is None
+    assert readback.change("Yes, 2A.", second) == "unit"

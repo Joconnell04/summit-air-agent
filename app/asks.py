@@ -74,22 +74,28 @@ def decline_not_offered(
     return said
 
 
-# A technician asked for by name: "can I get Mike again", "send Mike", "is Mike available". Only a
-# capitalized word counts, as speech-to-text writes names.
+# A technician asked for by name: "can I get Mike again", "send Mike back out", "is Mike
+# available". Speech-to-text may write the name in lower case, so a word in the name's place counts
+# unless it is a common word ("can you get someone out", "get it working again").
+NAME = r"([A-Za-z][a-z]+)"
 NAMED = (
     re.compile(
-        r"\b(?i:get|send|have|want|request|ask for|bring back|book)\s+([A-Z][a-z]+)\s+"
-        r"(?i:again|back|out|this time|to come|for this|if (?:he|she|they)|please)"
+        rf"\b(?i:get|send|have|want|request|ask for|bring back|book)\s+{NAME}\s+"
+        r"(?i:again|back|out|this time|to come|for this|if (?:he|she|they)|please)\b"
     ),
-    re.compile(r"\b(?i:is|was|can|could)\s+([A-Z][a-z]+)\s+(?i:available|free|working|come|do it)\b"),
-    re.compile(r"\b(?i:same|the guy|the tech|the technician) (?i:as last time, )?([A-Z][a-z]+)\b"),
+    re.compile(rf"\b(?i:is|was|can|could)\s+{NAME}\s+(?i:available|free|working|come|do it)\b"),
 )
 # The same technician as last time, with no name: still a request to pass on.
 SAME_TECH = ("same technician", "same tech", "same guy", "same person", "same man", "same woman",
              "same lady", "whoever came last time", "the one who came last time")
-NOT_NAMES = {"Summit", "Someone", "Somebody", "Anyone", "Anybody", "It", "You", "Me", "Them",
-             "Him", "Her", "That", "This", "One", "The", "Monday", "Tuesday", "Wednesday",
-             "Thursday", "Friday", "Saturday", "Sunday", "Today", "Tomorrow"}
+NOT_NAMES = {
+    "summit", "someone", "somebody", "anyone", "anybody", "everyone", "it", "you", "me", "them",
+    "him", "her", "us", "that", "this", "one", "the", "a", "an", "heat", "heating", "ac", "air",
+    "power", "help", "things", "everything", "there", "here", "now", "today", "tomorrow",
+    "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday", "back", "out",
+    "they", "he", "she", "we", "i", "my", "your", "a tech", "tech", "technician", "guy",
+    "furnace", "boiler", "unit", "system", "thermostat", "service", "anything", "something",
+}
 
 
 def technician_asked(text: str) -> str | None:
@@ -97,8 +103,8 @@ def technician_asked(text: str) -> str | None:
     when the line asks for nobody."""
     for pattern in NAMED:
         for match in pattern.finditer(text or ""):
-            if match.group(1) not in NOT_NAMES:
-                return match.group(1)
+            if match.group(1).lower() not in NOT_NAMES:
+                return match.group(1).capitalize()
     line = words(text)
     if any(has_phrase(line, p) for p in SAME_TECH):
         return "the same technician as last time"

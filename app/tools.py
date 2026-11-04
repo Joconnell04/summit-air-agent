@@ -9,6 +9,7 @@ call's own state, and ownership is checked against the customers matched on this
 import hashlib
 import json
 import os
+import re
 import sqlite3
 from collections.abc import Mapping
 from dataclasses import dataclass, field
@@ -1027,6 +1028,15 @@ def read_back(ctx: Ctx, args: ReadBackIn) -> Result:
     asked. With confirmed, accepts only if that same sentence was returned on this call and a caller
     line followed it (spec S-26)."""
     phone = _resolve_phone(ctx, args.phone)
+    # One unit a read-back: two units are two jobs, each read back and booked on its own
+    # (DECISIONS.md 079; eval run 20261104-200546 read back "unit 2A and 5C" as one).
+    if re.search(r"\band\b|[,&+/]", args.address.unit or ""):
+        raise Refused(
+            "invalid_arguments",
+            "",
+            need="one unit per read-back: read back and book the first unit, then the second",
+            errors={"unit": "one unit"},
+        )
     _zip_known(ctx, args.address.zip)
     _zip_mismatch(ctx, args.address.zip, args.address.street, args.address.city)
     address = args.address.model_dump()

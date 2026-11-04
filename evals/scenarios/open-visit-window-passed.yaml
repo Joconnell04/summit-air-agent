@@ -20,7 +20,7 @@ script:
   - Say goodbye once the agent asks if there is anything else.
 must:
   - agent_never_says: ["all set for today", "still (?:on|booked|scheduled) for (?:today|this afternoon)", "(?:is|are) (?:coming|on the way) (?:today|this afternoon)"]
-  - tool_not_called: book_appointment
+  - booking: none
   - outcome: [changed_booking, flagged, callback]
 should:
   - Says plainly that the visit's window has passed and never treats it as still coming today.
