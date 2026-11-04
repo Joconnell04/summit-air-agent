@@ -12,6 +12,22 @@ Discussion: docs/ai-process/transcripts/... or docs/explorations/...
 Issue: #N
 -->
 
+## 052. Call recordings go through a bucket to the server and are kept 30 days
+
+Decided: the LiveKit worker records each call's audio (audio only, through LiveKit egress) into a private Supabase storage bucket; the jobs loop copies each finished file to the server's data folder and deletes it from the bucket, and the copy is deleted with the transcript after 30 days (S-45). The call page plays it with the design-system Player. Recording stops when the agent leaves, so a conversation after a warm transfer isn't recorded.
+Why: story O-6 on the owner view; LiveKit Cloud can only write to cloud storage, and keeping the copy on the server keeps call data in one place (SQLite and the data folder). The free LiveKit plan allows 60 recorded minutes a month (SOURCE: livekit.com/pricing, PR #69), enough for the demo.
+Considered: keeping files in the bucket (call data in two places); recording after a transfer (the person's side of the call wasn't agreed to by the agent's greeting).
+Would change if: Summit Air moves past the demo, in which case recorded minutes need the paid LiveKit plan and the greeting needs a recording notice where state law asks for one.
+Discussion: PR #69
+
+## 051. Warm transfer is decided by the server, and the demo rings Jackson's phone
+
+Decided: the server, not the model, decides a warm transfer: in office hours only on the caller's own words, after hours only when the server's own priority and cutoffs say the on-call technician is needed, never on a safety or commercial call, and only when the role's number is set. The person hears a short neutral opener and a summary, and presses 1 to be joined, so a voicemail box is never put through. The flag and a named callback are stored before anyone is dialed, so a missed or failed transfer leaves the caller with that callback, never silence. For the demo, both roles ring Jackson's personal phone; the number is set only in the server's `.env`.
+Why: C-11 moved into V1 (DECISIONS.md 034); a flag the model can set is not a gate.
+Considered: the model deciding when to transfer (the reviewer found it could ring the on-call phone by marking a call urgent); bridging on answer (a voicemail would be bridged).
+Would change if: Summit Air has a real office line and on-call rotation, which replace the demo number.
+Discussion: PR #69
+
 ## 050. Round 2 part B: times, return visits and new scenarios
 
 Decided: a bare hour means daytime (1 to 7 is afternoon, and a range ends after it starts, so "8 to 2" is 8 AM to 2 PM). A completed job for the same problem at the address within 30 days (ASSUMED) is flagged to a person as a possible return visit. Priority phrases respect a plain negation, with a short look-back that errs toward raising. Second opinions on a replacement go to a sales advisor who comes out to quote, through the install lead, never a price on the phone. The new round 2 scenarios aren't must-pass until they have a few clean runs.
