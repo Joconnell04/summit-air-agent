@@ -562,3 +562,13 @@ def test_a_summary_with_no_technician_request_has_no_asked_for_line(agent):
     _, job_id = booked_call(agent)
     run(agent, FakeModel())
     assert not any(line.startswith("Asked for") for line in pinned(agent, job_id)[0]["text"].splitlines())
+
+
+def test_a_technician_the_caller_asked_not_to_send_is_on_the_summary(agent):
+    call = ready_to_book(agent)
+    agent.turn(call, "I don't want Mike again.")
+    booked = book(agent, call, first_open(agent, call))
+    agent.end(call)
+    run(agent, FakeModel())
+    text = pinned(agent, booked["data"]["booking_id"])[0]["text"].splitlines()
+    assert text[-1] == "Asked for: not Mike"

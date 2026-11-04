@@ -331,6 +331,15 @@ PROMISES_TECHNICIAN = re.compile(
     rf"(?:it'?s {NAME}|it is {NAME}|you get {NAME}|{NAME} (?:comes|is the one))\b"
     rf"|\b(?i:i|we)(?:'ve| have)\s+(?:assigned|booked|scheduled)\s+{NAME}\b",
 )
+# A sentence that passes a technician request on, or says it can't be promised: the one way the
+# agent may name the technician the caller asked for.
+PASSES_ON = re.compile(
+    r"\bpass(?:ing)? (?:that|it|this|the request)? ?(?:along|on)\b"
+    r"|\blet (?:the|our) team know\b"
+    r"|\b(?:can'?t|cannot|can not|won'?t be able to|not able to|unable to|no way to) "
+    r"(?:promise|guarantee)\b|\bno (?:promise|guarantee)s?\b",
+    re.IGNORECASE,
+)
 # Gas or carbon monoxide advice to leave or call 911. Only the server's safety lines say it; on
 # a call with no safety signal the model's own is dropped (eval round 4, gas-worry-no-smell).
 HAZARD = re.compile(r"\bgas\b|\bsmell|\bcarbon monoxide\b|\bfumes\b|\bco alarm\b", re.IGNORECASE)
@@ -439,12 +448,18 @@ class SpokenReply:
         self.advised = False
         self._dropped_restatement = False
         self._asked = False
+        # Technicians the caller asked for by name (DECISIONS.md 085).
+        self.technicians: set[str] = set()
 
     def holding(self) -> bool:
         return self.safety_call or (self.address_checked and not self.read_back_confirmed)
 
-    def heard(self, safety: dict | None, caller_text: str = "") -> None:
-        """A caller line and its turn result: the safety action the server returned, if any."""
+    def heard(self, safety: dict | None, caller_text: str = "", hints: list[str] | None = None) -> None:
+        """A caller line and its turn result: the safety action the server returned, if any, and
+        its hints (a technician the caller asked for by name)."""
+        for hint in hints or []:
+            if hint.startswith("technician:"):
+                self.technicians.add(hint.removeprefix("technician:"))
         zips, phones = caller_digits(caller_text)
         self.zips |= zips
         self.phones |= phones
@@ -491,7 +506,7 @@ class SpokenReply:
             return ""
         if INTERNAL_WORD.search(sentence) or CLAIMS_FEE.search(sentence):
             return ""
-        if PROMISES_TECHNICIAN.search(sentence):
+        if PROMISES_TECHNICIAN.search(sentence) or self._names_technician(sentence):
             return ""
         if self.safety_call and EVACUATE.search(sentence):
             # The caller stays in control: the agent's own recommendation to stay out or call 911
@@ -518,6 +533,16 @@ class SpokenReply:
                 return ""
             self._asked = True
         return sentence
+
+    def _names_technician(self, sentence: str) -> bool:
+        """A sentence naming a technician the caller asked for is a promise, whatever its words
+        ("I'll send Mike", "It'll be Mike"), unless it passes the request on or says it can't be
+        promised (PR #135 review)."""
+        named = any(
+            re.search(rf"\b{re.escape(name)}\b", sentence, re.IGNORECASE)
+            for name in self.technicians
+        )
+        return named and not PASSES_ON.search(sentence)
 
     def _restates(self, sentence: str) -> bool:
         """The sentence says back the caller's ZIP, phone number or street address."""

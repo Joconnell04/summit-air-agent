@@ -4,20 +4,19 @@ read-back (DECISIONS.md 083). A plain yes, or the same value said again, changes
 
 Best effort by design, with the error on the safe side: a line read as a change costs one more
 read-back, a change missed can book the wrong door. Only shapes that name an address detail count:
-a unit ("4B", "apartment 3"), a house number right after "it's" or right before a street, a street
-with its street word, a five-digit ZIP and a ten-digit phone number.
+a unit ("4B", "four B", "apartment 3"), a house number right before a street name or right after
+"it's", a street with its street word, a five-digit ZIP and a ten-digit phone number.
 """
 
 import re
 
-from .text import STREET_WORDS, digit_runs, number_tokens, phone_key, street_key, unit_key, words
+from .text import STREET_WORDS, digit_runs, number_tokens, phone_key, street_key, unit_key
 
 UNIT_WORDS = {"apartment", "apt", "unit", "suite", "ste"}
-# "4B", "12c": a unit as callers say it. Ordinals ("2nd", "64th") are streets and floors.
-UNIT_TOKEN = re.compile(r"^\d{1,4}[a-z]$")
 ORDINAL = re.compile(r"^\d+(?:st|nd|rd|th)$")
 # A bare number is a house number only right after one of these: "it's 144", "the number is 144".
-HOUSE_LEADS = ("its", "it is", "thats", "that is", "number is", "house is", "address is", "its at")
+HOUSE_LEADS = ("its", "it is", "thats", "that is", "number is", "house is", "address is", "its at",
+               "make it")
 # Words that may follow a house number to end the thought: "it's 144, sorry".
 HOUSE_TAIL = {"", ",", ".", "!", "?", ";", "not", "sorry", "actually", "instead"}
 SUFFIXES = set(STREET_WORDS) | {v for v in STREET_WORDS.values()} | {"blvd", "pkwy", "ter"}
@@ -51,13 +50,12 @@ def change(text: str, readback: dict) -> str | None:
     """The read-back field this caller line gives a different value for (unit, house number,
     street, ZIP or phone), or None. A value the caller rejects ("not 142") doesn't count."""
     text = REJECTED.sub(" ", text or "")
-    tokens = words(text).split()
     # "Yes, 2A and 5C" to a read-back of 5C names the unit read back: no change.
-    units = _units_said(tokens)
+    units = _units_said(text)
     if units and unit_key(readback.get("unit", "")) not in units:
         return "unit"
     house = _house(readback.get("street", ""))
-    for said in _houses_said(text):
+    for said in _houses_said(text, readback.get("street", "")):
         # "It's 11231" is the ZIP said again, not a house number.
         if said not in (house, readback.get("zip")):
             return "house number"
@@ -74,39 +72,74 @@ def change(text: str, readback: dict) -> str | None:
 
 def units_said(text: str) -> list[str]:
     """The units a line names, as unit keys, in order and without repeats: "2A and 5C"."""
-    return list(dict.fromkeys(_units_said(words(text).split())))
+    return list(dict.fromkeys(_units_said(text)))
 
 
-def _units_said(tokens: list[str]) -> list[str]:
-    found = []
-    for i, token in enumerate(tokens):
-        if token in UNIT_WORDS and i + 1 < len(tokens):
-            value = tokens[i + 1]
-            # "apartment 4 b": a unit said as a number and a letter.
-            if value.isdigit() and i + 2 < len(tokens) and len(tokens[i + 2]) == 1:
-                value += tokens[i + 2]
-            if value.isdigit() or UNIT_TOKEN.match(value) or len(value) == 1:
-                found.append(unit_key(value))
-        elif UNIT_TOKEN.match(token) and not ORDINAL.match(token):
-            found.append(token)
-    return found
-
-
-def _houses_said(text: str) -> list[str]:
-    """House numbers in the line: a number right before a street with its street word, or a bare
-    number right after "it's" and ending the thought."""
+def _units_said(text: str) -> list[str]:
+    """Units as callers say them: "4B", "4 B", "four B", "apartment 3", "unit C". Numbers are
+    read from words first, so "four b" is "4b"; ordinals ("2nd floor") are never units."""
     tokens = number_tokens(text)
     found = []
     for i, token in enumerate(tokens):
-        if not token.isdigit() or len(token) > 6:
-            continue
-        # A numbered street ("64th Avenue") is not a house number.
-        if re.search(rf"\b{token}(?:st|nd|rd|th)\b", text.lower()):
+        nxt = tokens[i + 1] if i + 1 < len(tokens) else ""
+        if token in UNIT_WORDS and nxt:
+            after = tokens[i + 2] if i + 2 < len(tokens) else ""
+            if nxt.isdigit() and len(nxt) <= 4:
+                found.append(unit_key(nxt + (after if _letter(after) else "")))
+            elif _letter(nxt):
+                found.append(nxt)
+        elif token.isdigit() and len(token) <= 4 and _letter(nxt) and not _ordinal(text, token):
+            if not (i and tokens[i - 1] in UNIT_WORDS):
+                found.append(token + nxt)
+    return found
+
+
+def _letter(token: str) -> bool:
+    """A unit letter: one letter, not the word "I"."""
+    return len(token) == 1 and token.isalpha() and token != "i"
+
+
+def _ordinal(text: str, number: str) -> bool:
+    return bool(re.search(rf"\b{number}(?:st|nd|rd|th)\b", text.lower()))
+
+
+# Words that follow a number that isn't a house number: "3 days", "12 to 4", "2 boilers", "4 works".
+NOT_STREET = {
+    "to", "or", "and", "of", "in", "at", "on", "for", "from", "by", "with", "the", "a", "is", "was",
+    "am", "pm", "oclock", "days", "day", "weeks", "week", "hours", "hour", "minutes", "minute",
+    "months", "month", "years", "year", "degrees", "degree", "people", "person", "kids", "children",
+    "adults", "dogs", "cats", "pets", "units", "apartments", "floors", "floor", "stories", "story",
+    "family", "bedrooms", "bedroom", "bathrooms", "rooms", "room", "radiators", "radiator",
+    "boilers", "furnaces", "zones", "systems", "thermostats", "heaters", "windows", "tenants",
+    "times", "time", "more", "percent", "dollars", "bucks", "blocks", "feet", "inches", "works",
+    "sounds", "would", "will", "should", "please", "thanks", "thank", "ok", "okay", "fine", "good",
+    "great", "perfect", "are", "it", "that", "this", "then", "now", "today", "tomorrow",
+    "morning", "afternoon", "evening", "tonight", "yes", "yeah", "no", "sorry", "actually", "too",
+    "also", "but", "so", "right", "correct", "window", "slot", "noon", "midnight", "visit",
+    "appointment", "between", "healthy", "below", "above", "plus", "something", "ish", "max",
+    "tops", "maybe", "total", "us", "them", "grown", "young", "little", "small", "big",
+    "different", "separate", "other", "new", "older", "elderly", "seniors", "old", "ago", "one", "ones", "car", "cars",
+}
+
+
+def _houses_said(text: str, street: str = "") -> list[str]:
+    """House numbers in the line: a number right before a street name, with or without its street
+    word ("148 Main", "it's 143 Main Street", "188-10 64th Avenue"), or a bare number right after
+    "it's" and ending the thought ("it's 144"). A one-digit number counts only before a street word
+    or the read-back's own street name ("5 Union"), so "two healthy adults" names no house."""
+    tokens = number_tokens(text)
+    names = set(street_key(street).split()) - SUFFIXES
+    found = []
+    for i, token in enumerate(tokens):
+        if not token.isdigit() or len(token) > 6 or _ordinal(text, token):
             continue
         nxt = tokens[i + 1] if i + 1 < len(tokens) else ""
         after = tokens[i + 2] if i + 2 < len(tokens) else ""
-        # "144 Main Street", "188-10 64th Avenue": a number before a named street.
-        if nxt and (nxt in SUFFIXES or after in SUFFIXES) and not ORDINAL.match(token):
+        named = nxt.isalpha() and len(nxt) > 1 and nxt not in NOT_STREET and nxt not in UNIT_WORDS
+        if named and (len(token) > 1 or nxt in names or nxt in SUFFIXES or after in SUFFIXES):
+            found.append(token)
+            continue
+        if nxt.isdigit() and _ordinal(text, nxt):  # "188-10 64th Avenue"
             found.append(token)
             continue
         before = " " + " ".join(tokens[max(0, i - 3) : i]) + " "

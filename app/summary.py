@@ -183,10 +183,12 @@ def record(
             for r in conn.execute("SELECT text FROM notes WHERE call_id = ?", (call["id"],))
         ],
         "technician_asked": [
-            r["text"].removeprefix("Caller asked for ").split(".")[0]
-            + ", not promised"
+            r["text"].removeprefix("Caller asked for ").split(".")[0] + ", not promised"
+            if r["text"].startswith("Caller asked for ")
+            else "not " + r["text"].removeprefix("Caller asked not to send ").split(".")[0]
             for r in conn.execute(
-                "SELECT text FROM notes WHERE call_id = ? AND text LIKE 'Caller asked for %'",
+                "SELECT text FROM notes WHERE call_id = ? AND (text LIKE 'Caller asked for %' "
+                "OR text LIKE 'Caller asked not to send %')",
                 (call["id"],),
             )
         ],

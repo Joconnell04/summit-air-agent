@@ -93,6 +93,10 @@ def sounds_commercial(text: str, cfg: dict) -> bool:
     """Does the caller describe a business, with commercial equipment? Homes, apartments, co-ops and
     whole apartment buildings are residential. Best effort by design: the agent and the FSM account
     type catch the rest, and a false positive costs a booking, so the tenant's lists stay narrow."""
+    # The caller's own home as the place with the problem ("my heat at home is out", "calling
+    # about my house") is residential, whatever job words come first (PR #135 review).
+    if _names_home(text, cfg):
+        return False
     single = {w for w in cfg["phrases"] + cfg["owned"] + cfg["run"] if " " not in w.strip()}
     text_words = without_place_names(text, single)
     for phrase in cfg["not"]:
@@ -107,11 +111,7 @@ def sounds_commercial(text: str, cfg: dict) -> bool:
             has_phrase(text_words, p) for p in cfg.get("apartment_signs", [])
         ):
             return True
-    # "I own the place, it's a deli": the caller owns something, and the line names a business.
-    # The cue is read from the line as said ("place" is a street word, so blanking would hide it).
-    if any(has_phrase(words(text), c) for c in cfg.get("owner_cues", [])) and any(
-        has_phrase(text_words, b) for b in cfg["owned"] + cfg["run"]
-    ):
+    if _owns_business(text, text_words, cfg) or _office_system(text_words, cfg):
         return True
     owned = "|".join(map(re.escape, cfg["owned"]))
     run = "|".join(map(re.escape, cfg["run"]))
@@ -122,6 +122,46 @@ def sounds_commercial(text: str, cfg: dict) -> bool:
         # "We're a restaurant": the caller says what they are ("we're" is "were" once the
         # apostrophe is dropped).
         or re.search(rf" (?:were|we are) (?:a|an) (?:\w+ )?(?:{run}) ", text_words)
+    )
+
+
+def _names_home(text: str, cfg: dict) -> bool:
+    """The line names the caller's home ("at home", "my house"), and not as what it isn't ("not my
+    home")."""
+    line = words(text)
+    if any(has_phrase(line, p) for p in cfg.get("not_home", [])):
+        return False
+    return any(
+        has_phrase(line, p) and not has_phrase(line, "not " + p) for p in cfg.get("home_signs", [])
+    )
+
+
+def _owns_business(text: str, text_words: str, cfg: dict) -> bool:
+    """Ownership attached to a business: "the bakery across from me is mine" (the business, at most
+    four words, then "is mine"), or "I own the place, it's a deli" (an own-the-place phrase and the
+    place said to be a business). The business word is read from the blanked line, so one placed
+    as a landmark never counts; the own-the-place phrase from the line as said ("place" is a
+    street word, which blanking would hide)."""
+    business = "|".join(map(re.escape, cfg["owned"] + cfg["run"]))
+    mine = "|".join(re.escape(words(m).strip()) for m in cfg.get("mine", []))
+    if mine and re.search(rf" (?:{business}) (?:\w+ ){{0,4}}(?:{mine}) ", text_words):
+        return True
+    owns = any(has_phrase(words(text), c) for c in cfg.get("own_place", []))
+    return owns and bool(re.search(rf" (?:its|it is) (?:a|an) (?:\w+ )?(?:{business}) ", text_words))
+
+
+def _office_system(text_words: str, cfg: dict) -> bool:
+    """An office with its heating or cooling: "the heat in my office", "our office AC". A bare "my
+    office" is about the caller's work, not the place needing service."""
+    office = cfg.get("office") or {}
+    places = "|".join(map(re.escape, office.get("words", [])))
+    systems = "|".join(re.escape(words(w).strip()) for w in office.get("systems", []))
+    if not places or not systems:
+        return False
+    return bool(
+        re.search(rf" (?:my|our|the) (?:{places})s? (?:\w+ )?(?:{systems}) ", text_words)
+        or re.search(rf" (?:{systems}) (?:\w+ ){{0,3}}(?:in|at|for) (?:my|our|the) (?:{places}) ",
+                     text_words)
     )
 
 
@@ -510,8 +550,13 @@ def turn(
                 hints += [f"not_offered:{line}" for line in
                           asks.decline_not_offered(conn, tenant, call, args.text, now)]
             # A technician asked for by name is a note for the dispatcher, never a promise (085).
-            if asks.note_technician(conn, tenant, call, args.text, now):
+            asked = asks.note_technician(conn, tenant, call, args.text, now)
+            if asked:
                 hints.append("technician_requested")
+            # The name, every time it's said, so the voice layer can drop a promise of it.
+            named = asks.technician_request(args.text, tenant.equipment_words)
+            if named and not named[0].startswith("the same"):
+                hints.append(f"technician:{named[0]}")
             # Who can approve isn't settled: the agent offers a callback, and a booking the caller
             # asks for gets a call before dispatch (tools.book_appointment reads the same lines).
             if approval_unclear(args.text, tenant.approval):

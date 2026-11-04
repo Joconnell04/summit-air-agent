@@ -91,14 +91,16 @@ safety:
 # tenants", "our building", "the building I manage" and a count of units mark nothing. Three ways to
 # match: "my restaurant" or "our bakery" (my or our right before a business), "I run a restaurant"
 # (a running word, then a, an or the and at most one more word, then a business), and fixed phrases.
-# A fourth: a line that says the caller owns something ("I own the place", "it's mine") and names a
-# business ("it's a deli", "the bakery across from me") (eval issue #129). A business placed as a
-# landmark ("next to the restaurant") is blanked first, so it never counts.
-# Exclusions are removed before matching, so "my business partner" stays a home and "calling from
-# my office" says where the caller is, not what needs work.
+# Ownership counts only when it attaches to the business: "the bakery across from me is mine"
+# (mine, right after the business and at most four words), or "I own the place, it's a deli" (an
+# own_place phrase with "it's a" and the business). "I own the place, the bar next door is loud"
+# names a neighbor, so it marks nothing (PR #135 review). An office counts only with its heating or
+# cooling ("the heat in my office", "our office AC"), since "my office called me" is about work.
+# A line that names the caller's home as the place ("at home", "my house") is residential, whatever
+# job words come before it ("I'm a church deacon calling about my house").
+# Exclusions are removed before matching, so "my business partner" stays a home.
 commercial:
-  owned: [restaurant, bakery, deli, cafe, bar, store, shop, salon, gym, clinic, daycare, warehouse, business,
-          office]
+  owned: [restaurant, bakery, deli, cafe, bar, store, shop, salon, gym, clinic, daycare, warehouse, business]
   run: [restaurant, bakery, deli, cafe, bar, store, shop, salon, gym, clinic, daycare, warehouse,
         business, company, school, church, hotel, office]
   phrases: [office building, office space, commercial property, commercial space, commercial unit,
@@ -112,12 +114,13 @@ commercial:
   not_home: [not a home, not my home]
   apartment_signs: [units, apartments, apartment building, unit building, family house, walk up,
                     building, tenants]
-  owner_cues: [i own the place, we own the place, i own this place, we own this place, i own it,
-               we own it, is mine, is ours, its mine, its ours, belongs to me, belongs to us,
-               im the owner, were the owners]
-  not: [business partner, business trip, business card, home office, my own business hours,
-        from my office, im at my office, i am at my office, im in my office, back to my office,
-        my office number, my office line, my office phone]
+  mine: [is mine, is ours, belongs to me, belongs to us]
+  own_place: [i own the place, we own the place, i own this place, we own this place, i own it,
+              we own it, im the owner, were the owners]
+  office: {words: [office], systems: [heat, heating, ac, air conditioning, air conditioner, cooling,
+                                      furnace, boiler, thermostat, radiators, hvac]}
+  home_signs: [at home, my house, my home, my apartment, our house, our home, our apartment]
+  not: [business partner, business trip, business card, home office, my own business hours]
 
 # What Summit Air does and doesn't (issue #129). Bookable work is the job types in config.yaml;
 # offered says it in words for the owner view and the docs. A request for work in not_offered (the
@@ -130,7 +133,7 @@ services:
   not_offered:
     plumbing: {what: plumbing, suggest: a plumber}
     appliances: {what: appliance repair, suggest: an appliance repair shop}
-    electric_water_heater: {what: electric water heaters, suggest: a plumber}
+    water_heater: {what: water heaters, suggest: a plumber}
     duct_cleaning: {what: duct cleaning, suggest: a duct cleaning company}
 
 # Who can approve the work (eval round 2, co-op-owner-mentions-board). A caller who says a board or

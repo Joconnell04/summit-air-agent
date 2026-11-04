@@ -175,10 +175,11 @@ COMMERCIAL = load_agent(TENANT_DIR)[0]["commercial"]
 @pytest.mark.parametrize(
     "line",
     [
-        "My office is by the church.",
+        "The heat stopped at my office, my office is by the church.",
         "The bakery across from me is mine.",
         "I own the place, it's a deli near the park.",
         "The AC in our office quit.",
+        "I own the deli on Fifth.",
     ],
 )
 def test_an_office_or_a_business_the_caller_owns_is_commercial(line):
@@ -196,6 +197,13 @@ def test_an_office_or_a_business_the_caller_owns_is_commercial(line):
         "I own it, it's a brownstone.",
         "My doctor's office called.",
         "I work from my home office and it's freezing.",
+        # PR #135 review: ownership attaches to the business, and a bare office is work.
+        "I own the place, my kids go to the daycare nearby.",
+        "I own the place, the bar next door is loud.",
+        "My office called me, my furnace is out.",
+        # Declined on main too: the caller's home is the place with the problem.
+        "I work at an office but my heat at home is out.",
+        "I'm a church deacon calling about my house.",
     ],
 )
 def test_a_home_placed_by_a_business_or_a_caller_at_work_stays_residential(line):
@@ -213,7 +221,8 @@ SERVICES = load_agent(TENANT_DIR)[0]["services"]
         ("My kitchen sink is leaking.", ["plumbing"]),
         ("Can you fix a fridge that stopped cooling?", ["appliances"]),
         ("Our dishwasher won't drain.", ["appliances"]),
-        ("It's an electric water heater, no hot water.", ["electric_water_heater"]),
+        ("It's an electric water heater, no hot water.", ["water_heater"]),
+        ("The gas water heater is leaking.", ["water_heater"]),
         ("Do you guys do duct cleaning?", ["duct_cleaning"]),
         ("My heat is out and my sink leaks.", ["plumbing"]),
     ],
@@ -232,6 +241,9 @@ def test_work_the_company_doesnt_do_is_recognized(line, kinds):
         "No hot water and no heat, it's a gas boiler.",
         "It's freezing in here.",
         "No, it's not the sink, it's the heat.",
+        # PR #135 review: a condensate drain is HVAC work.
+        "My AC drain is clogged.",
+        "There's a clogged drain on my AC.",
     ],
 )
 def test_heating_and_cooling_lines_are_never_declined(line):
@@ -519,3 +531,107 @@ def test_a_value_the_caller_rejects_is_not_a_change(line, field):
     main = {**READ_BACK, "zip": "11231"}
     target = ocean if "Ocean" in line else main
     assert readback.change(line, target) == field
+
+
+# ---- PR #135 review ------------------------------------------------------------------------
+
+UNION = {**READ_BACK, "street": "101 Union St"}
+
+
+@pytest.mark.parametrize(
+    "line, field",
+    [
+        ("Yes, 148 Main.", "house number"),
+        ("Yes, it's 143 Main.", "house number"),
+        ("Yes, make it 4 B.", "unit"),
+        ("Yes, four B.", "unit"),
+        ("Yes, apartment four b.", "unit"),
+        ("Yes, 5 Union.", "house number"),
+    ],
+)
+def test_a_house_before_any_street_name_and_a_spoken_unit_are_changes(line, field):
+    """The review's blocking case: these kept the confirmation and booked the old door."""
+    assert readback.change(line, UNION) == field
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "Yep, 101 Union.",
+        "Just two healthy adults at home.",
+        "It's 48 in here and dropping.",
+        "Yes, the 8 to 12 window.",
+        "We have 12 radiators.",
+        "Tuesday at 8 is good.",
+        "I'm 82 years old.",
+    ],
+)
+def test_numbers_that_name_no_house_still_keep_the_read_back(line):
+    assert readback.change(line, UNION) is None
+
+
+def test_the_same_spoken_unit_keeps_the_read_back():
+    four_b = {**UNION, "unit": "4B"}
+    for line in ("Yes, 4 B.", "Yes, four b.", "Yes, apartment 4B."):
+        assert readback.change(line, four_b) is None, line
+
+
+def test_a_house_number_said_after_the_yes_stops_the_booking(agent):
+    call = ready_to_book(agent)
+    assert "readback_changed" in agent.turn(call, "Yes, 148 Main.")["data"]["hints"]
+    assert book(agent, call, first_open(agent, call))["refused"] == "gate_read_back"
+
+
+@pytest.mark.parametrize(
+    "sentence",
+    [
+        "I'll send Mike.",
+        "I've put Mike on your job.",
+        "It'll be Mike.",
+        "You'll get Mike.",
+        "Mike will take care of you.",
+        "Mike's on his way.",
+    ],
+)
+def test_any_sentence_naming_the_requested_technician_is_dropped(sentence):
+    reply = SpokenReply()
+    reply.heard(None, "can I get Mike again", ["technician_requested", "technician:Mike"])
+    assert reply.sentence(sentence) == ""
+
+
+@pytest.mark.parametrize(
+    "sentence",
+    [
+        "I'll pass that along, that you'd like Mike.",
+        "I can't promise it'll be Mike, but I'll let the team know.",
+        "You're all set for Tuesday between 8 and 12.",
+    ],
+)
+def test_passing_the_request_on_or_saying_it_cant_be_promised_is_kept(sentence):
+    reply = SpokenReply()
+    reply.heard(None, "can I get Mike again", ["technician:Mike"])
+    assert reply.sentence(sentence) == sentence
+
+
+def test_the_turn_gives_the_voice_layer_the_requested_name(agent):
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    assert "technician:Mike" in agent.turn(call, "I'd like Mike.")["data"]["hints"]
+
+
+@pytest.mark.parametrize("line", ["I want Mike.", "Send Mike?", "I'd like Mike.", "I'd like Mike to come."])
+def test_more_ways_to_ask_for_a_technician(line):
+    assert asks.technician_asked(line) == "Mike"
+
+
+@pytest.mark.parametrize("line", ["I'd like the morning.", "I want to book a tune-up.",
+                                  "I want answers now.", "Send someone?"])
+def test_asking_for_a_time_or_a_visit_names_no_technician(line):
+    assert asks.technician_request(line) is None
+
+
+def test_a_caller_who_asks_not_to_send_someone_gets_that_note(agent):
+    call = ready_to_book(agent)
+    agent.turn(call, "I don't want Mike again.")
+    notes = [r[0] for r in _rows(agent, "SELECT text FROM notes WHERE attach_to = 'job'")]
+    assert notes == ["Caller asked not to send Mike. Dispatcher to decide."]
+    assert asks.technician_asked("I don't want Mike again.") is None
