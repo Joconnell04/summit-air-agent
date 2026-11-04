@@ -378,6 +378,77 @@ def slot_taken(arg: str, ev: Evidence) -> list[str]:
     return []
 
 
+PACE_KEYS = {"held", "source", "remembered", "address"}
+PACE_SOURCES = ("default", "record", "linked", "request", "repeats", "older_adult")
+
+
+def _pace_arg(arg: Any) -> None:
+    if not isinstance(arg, dict) or not arg or not set(arg) <= PACE_KEYS:
+        raise ValueError(f"expected a mapping with some of {sorted(PACE_KEYS)}")
+    for key in ("held", "address"):
+        if key in arg and not isinstance(arg[key], (int, float)):
+            raise ValueError(f"{key}: expected a speed such as 0.85")
+    if "remembered" in arg and arg["remembered"] != "none" and not isinstance(
+        arg["remembered"], (int, float)
+    ):
+        raise ValueError("remembered: expected a speed or none")
+    if "source" in arg and arg["source"] not in PACE_SOURCES:
+        raise ValueError(f"source: expected one of {PACE_SOURCES}")
+
+
+def _speed(value: Any) -> float | None:
+    return None if value is None else round(float(value), 2)
+
+
+def pace(arg: dict, ev: Evidence) -> list[str]:
+    """The pace the server recorded (app/pace.py), and that every agent line was spoken at it: the
+    speed in each agent line's timings is what the voice layer applied."""
+    state = (ev.trace.get("pace") or [None])[0]
+    if state is None:
+        return ["the server kept no pace for this call"]
+    problems = []
+    changes = ev.trace.get("pace_changes") or []
+    if "held" in arg and _speed(state["speed"]) != _speed(arg["held"]):
+        problems.append(f"the call ended at {state['speed']}, expected {arg['held']}")
+    if "source" in arg and state["source"] != arg["source"]:
+        problems.append(f"the pace was set by {state['source']}, expected {arg['source']}")
+    if "remembered" in arg:
+        kept = ev.trace.get("caller_pace") or []
+        got = _speed(kept[0]["speed"]) if kept else "none"
+        want = arg["remembered"] if arg["remembered"] == "none" else _speed(arg["remembered"])
+        if got != want:
+            problems.append(f"remembered for the caller: {got}, expected {want}")
+    address = {_speed(c["speed"]) for c in changes if c["scope"] == "address"}
+    if "address" in arg and _speed(arg["address"]) not in address:
+        problems.append(f"no request for the address at {arg['address']} was recorded")
+    readback = json.loads(ev.call.get("readback_json") or "{}")
+    street = (readback.get("street") or "").strip().lower()
+    normal = load_agent(TENANT_DIR)[0]["pace"]["normal"]
+    spoke_address = False
+    for turn in ev.turns():
+        if turn["speaker"] != "agent":
+            continue
+        got = _speed(turn["timings"].get("speed"))
+        if got is None:
+            problems.append(f"agent line {turn['seq']} carries no speed")
+            continue
+        # The address part of a slower read-back, spoken at its own speed.
+        if street and turn["text"].strip().lower().startswith(street) and got in address:
+            spoke_address = True
+            continue
+        expected = _speed(normal)
+        for change in changes:
+            if change["scope"] == "call" and change["seq"] < turn["seq"]:
+                expected = _speed(change["speed"])
+        if got != expected:
+            problems.append(
+                f"agent line {turn['seq']} was spoken at {got}; the server's pace was {expected}"
+            )
+    if "address" in arg and not spoke_address:
+        problems.append("the address was never spoken at its own pace")
+    return problems
+
+
 def _recorded_or_zip(arg: Any) -> None:
     if arg != "recorded" and not re.fullmatch(r"\d{5}", str(arg)):
         raise ValueError(f"expected recorded or a five-digit ZIP, got {arg!r}")
@@ -418,6 +489,7 @@ CHECKS: dict[str, Check] = {
     "agent_never_says": Check(_strings, agent_never_says, lambda arg: True),
     "said_booked": Check(_one_of("only_after_booking"), said_booked, lambda arg: True),
     "slot_taken": Check(_one_of("told_plainly"), slot_taken),
+    "pace": Check(_pace_arg, pace),
 }
 
 

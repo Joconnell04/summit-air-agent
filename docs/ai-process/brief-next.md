@@ -21,7 +21,8 @@ Started while Jackson steps away. Each section is either a decision that needs h
 | Round 3 and 4 wording, read-back and booking spoken by the server | #82 | implementing round 4, then one eval run |
 | End-of-turn wait, timer fix, stage times, voice tweaks | none yet | rig runs |
 | Speaking rate per call | #83 | fixing review findings |
-| Accounts, roles, settings panel | none yet | building |
+| Accounts, roles, settings panel | #85 | done; merges in the batch with one eval re-adopt |
 | Simulated-call recordings and listener | none yet | building |
 | Two calls, one slot | none yet | building |
 | Debug bench | none yet | building |
+| Cold handoff when a caller demands a person | none yet | building |

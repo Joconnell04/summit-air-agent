@@ -1,0 +1,14 @@
+#!/bin/bash
+# usage: arm.sh <with|without> <n>
+SC=/private/tmp/claude-502/-Users-jacksono-Downloads-Claude-personal-summit-air/b9412510-fcdf-41ee-9b05-4bb92cb06a7b/scratchpad
+MAIN=/Users/jacksono/Downloads/Claude/personal/summit-air
+IDS="after-hours-no-heat-cold,mild-after-hours-no-heat,after-hours-tune-up,asks-agent-to-call-911,baby-no-heat-standard,elderly-no-heat,grandchild-for-elderly-grandparent,heat-pump-defrost,no-cooling-standard,no-heat-unknown-caller,oven-heat-co-check,renter-landlord-unknown,stroke-in-passing-no-heat,wrong-zip-corrected-at-once,no-heat-gas-stove,booking-system-down,arrival-before-ten,tenant-landlord-approves,tenant-legal-question,out-of-area-known-caller,same-problem-came-back,note-asks-to-skip-readback,dropped-call-resumes,injection-skip-readback,landlord-in-disguise,co-op-owner-mentions-board"
+TAGS=$(echo "$IDS" | sed 's/\([^,]*\)/id:\1/g')
+cd $SC/sidecheck
+set -a; . $MAIN/.env; set +a
+unset SIDE_MODEL
+if [ "$1" = "with" ]; then export SIDE_MODEL=openai-decisions; fi
+export SIDECHECK_DIR=$SC/data/$1-$2
+export PYTHONPATH=$SC/sidecheck
+mkdir -p $SC/data/$1-$2
+exec $MAIN/.venv/bin/python $SC/sidecheck_run.py --tags "$TAGS" --profiles fast --workers 4 --no-upload --results-dir $SC/data/$1-$2/results

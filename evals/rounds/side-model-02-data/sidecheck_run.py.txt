@@ -1,0 +1,55 @@
+"""Scratch wrapper around evals.run.main for the side-model check. Not part of the repo.
+
+Dumps, for every scenario, the server's call record (so the priority the server set can be read)
+and every side-model answer the priority gate read (probability, or None when late or failed).
+Output files are named by the SIDECHECK_DIR environment variable.
+"""
+import json
+import os
+import sys
+import threading
+import time
+from pathlib import Path
+
+out = Path(os.environ["SIDECHECK_DIR"])
+out.mkdir(parents=True, exist_ok=True)
+lock = threading.Lock()
+
+import app.side_model as side_model  # noqa: E402
+import evals.run as run  # noqa: E402
+
+original_score = run.score
+
+
+def dump_score(scenario, sample, call_id, server, *args, **kwargs):
+    try:
+        trace = server.trace(call_id) if server is not None else None
+        with lock, (out / "traces.jsonl").open("a") as fh:
+            fh.write(json.dumps({"scenario": scenario.id, "sample": sample, "call_id": call_id,
+                                 "trace": trace}) + "\n")
+    except Exception as err:  # noqa: BLE001
+        with lock, (out / "traces.jsonl").open("a") as fh:
+            fh.write(json.dumps({"scenario": scenario.id, "sample": sample, "call_id": call_id,
+                                 "dump_error": repr(err)}) + "\n")
+    return original_score(scenario, sample, call_id, server, *args, **kwargs)
+
+
+run.score = dump_score
+
+original_side_score = side_model.SideModel.score
+
+
+def logged_side_score(self, question, text):
+    started = time.perf_counter()
+    value = original_side_score(self, question, text)
+    waited_ms = round((time.perf_counter() - started) * 1000)
+    with lock, (out / "side_answers.jsonl").open("a") as fh:
+        fh.write(json.dumps({"question": question, "text": text, "value": value,
+                             "waited_ms": waited_ms, "t": time.time()}) + "\n")
+    return value
+
+
+side_model.SideModel.score = logged_side_score
+
+if __name__ == "__main__":
+    sys.exit(run.main(sys.argv[1:]))

@@ -193,6 +193,8 @@ async def entrypoint(ctx: JobContext) -> None:
     llm_log = LlmLog()
     call = Call(tools_server, bridge, tool_log, voice["endpointing"], llm_log)
     call.session = session
+    # The pace the server chose for this caller (app/pace.py), from the greeting on.
+    call.apply_pace(data)
     ended = {"reason": "caller_hangup"}
     egress = {"id": None}
 
@@ -285,7 +287,9 @@ async def entrypoint(ctx: JobContext) -> None:
     agent = SummitAgent(
         call,
         assemble.instructions(data),
-        build_tools(specs, tools_server, bridge, tool_log, hang_up, speak, transfer),
+        build_tools(
+            specs, tools_server, bridge, tool_log, hang_up, speak, transfer, call.say_parts
+        ),
     )
 
     async def record() -> None:
