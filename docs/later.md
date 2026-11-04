@@ -18,3 +18,4 @@ Things Jackson set aside on purpose. Nothing here is dropped; each item gets wal
 | Editable numbers on the owner view: hours, urgent hold, outbound hours, tighten-only brackets (exploration 009 option B in full) | V1 edits wording and guidance only; numbers wait until Summit Air asks to change them | Exploration 009, questions 4 and 5; #56 | after V1 (DECISIONS.md 034) |
 | "If the caller says X then Y" rules from a fixed menu (exploration 009 option D) | A rule engine is 8 to 12 days (ASSUMED) and waits for three real asks | Exploration 009; #56 | after V1 (DECISIONS.md 034) |
 | Owner guidance for after the call | The technician summary is built (app/summary.py) but does not read owner guidance yet (spec S-43) | #56 build | after V1 (DECISIONS.md 034) |
+| Two-call race evals on the Retell stack | Retell's eval mock is reset before each call, so two calls can't share it; our stack runs them | PR #86 (concurrent booking) | fine for now (Jackson) |
