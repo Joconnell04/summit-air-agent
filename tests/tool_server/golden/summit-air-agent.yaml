@@ -971,6 +971,10 @@ priority:
       - running down
       - dripping down
       - water stain
+      - wet
+      - overflowed
+      - overflowing
+      - overflows
       second:
       - ceiling
       - ceilings
@@ -984,8 +988,15 @@ priority:
       - mini split
       - ductless
       - the unit
+      - unit
+      - indoor unit
+      - attic unit
       - condensate
       - drain pan
+      - vent
+      - vents
+      - register
+      - registers
       unless_near:
       - faucet
       - sink
@@ -1015,6 +1026,16 @@ priority:
     - trips the circuit
     - breaker keeps tripping
     - breakers keep tripping
+    - tripped when the
+    - tripped every time
+    - trips when the
+    - trips whenever
+    - keep resetting the breaker
+    - keep resetting it
+    - keeps resetting the breaker
+    - resetting the breaker
+    - reset the breaker again
+    - reset the breaker twice
     - keeps tripping the breaker
     - keeps tripping breakers
     - keeps tripping my breaker

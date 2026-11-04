@@ -286,9 +286,11 @@ priority:
       # means it's plumbing, not the system ("the kitchen faucet is dripping and the AC is broken").
       together:
         first: [water, leak, leaking, leaks, leaked, dripping, drips, pouring, flooding, flooded,
-                soaked, soaking, puddle, puddles, running down, dripping down, water stain]
+                soaked, soaking, puddle, puddles, running down, dripping down, water stain, wet,
+                overflowed, overflowing, overflows]
         second: [ceiling, ceilings, wall, walls, ac, a c, air conditioner, air conditioning,
-                 air handler, mini split, ductless, the unit, condensate, drain pan]
+                 air handler, mini split, ductless, the unit, unit, indoor unit, attic unit,
+                 condensate, drain pan, vent, vents, register, registers]
         within: 8
         unless_near: [faucet, sink, toilet, tub, shower, dishwasher, washing machine, water heater,
                       hot water heater, pipe, pipes, radiator, boiler]
@@ -302,6 +304,9 @@ priority:
       phrases: [breaker trips, breakers trip, breaker is tripping, breakers are tripping,
                 breaker tripping, trips the breaker, tripping the breaker, trips my breaker,
                 tripping my breaker, trips the circuit, breaker keeps tripping, breakers keep tripping,
+                tripped when the, tripped every time, trips when the, trips whenever,
+                keep resetting the breaker, keep resetting it, keeps resetting the breaker,
+                resetting the breaker, reset the breaker again, reset the breaker twice,
                 keeps tripping the breaker,
                 keeps tripping breakers, keeps tripping my breaker, keeps flipping the breaker,
                 breaker keeps flipping, breaker trips every time, trips the breaker every time,

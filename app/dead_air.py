@@ -5,9 +5,12 @@ nothing, and the voice worker counts the silence, saying the tenant's
 check-in line every couple of minutes (voice/dead_air.py) and, after the limit, its goodbye before hanging up with the
 end reason `stepped_away`. A call back from the same number then opens by saying so.
 
-While the call is on hold, a caller line counts as the caller coming back only when it sounds said
-to the agent: a word like "okay", "I'm back" or "hello", a yes or no, a number, or another request
-to wait. Anything else ("honey, where's the last bill?", a TV in the room) is an aside: it is kept
+Only a sentence that starts with the request counts ("hold on", "sorry, one sec"); "it runs for
+one minute then shuts off" is a symptom. While the call is on hold, a caller line counts as the
+caller coming back only when it is said to the agent: "I'm still here", "I'm back", "one more sec",
+"I can't find it", a question to the agent, an answer with a number ("it says 48"), or another
+request to wait. Anything else ("okay kids, come on", "honey, where's the last bill?", a TV in the
+room) is an aside: it is kept
 on the record and still goes through the safety check, but the agent doesn't answer it and the
 silence keeps counting. The worker only ever restarts the count on a line the server calls a reply.
 """
@@ -20,39 +23,63 @@ from .db import iso
 from .text import has_phrase, words
 
 HOLDS = (
-    "hold on", "hang on", "hold on a sec", "give me a sec", "give me a second", "give me a minute",
+    "hold on", "hang on", "give me a sec", "give me a second", "give me a minute",
     "give me a moment", "give me one sec", "give me one second", "give me two minutes",
-    "one sec", "one second", "one moment", "one minute", "just a sec", "just a second",
+    "one sec", "one second", "one moment", "one minute please", "just a sec", "just a second",
     "just a minute", "just a moment", "wait a sec", "wait a second", "wait a minute",
     "bear with me", "be right back", "let me go check", "let me go look", "let me go grab",
     "let me go get", "let me go find", "hold please", "can you hold", "can you wait",
 )
-# Words that say the caller is talking to the agent again.
+# Words a request to wait can start after: "oh, hang on", "sorry, one sec".
+LEAD_WORDS = {"oh", "um", "uh", "okay", "ok", "sorry", "yeah", "yes", "hey", "so", "actually",
+              "wait", "hi", "hello", "well", "alright", "sure", "and"}
+# Words that say the caller is talking to the agent again. A plain "okay" or "hey" isn't one:
+# "okay kids, come on" is said to someone else.
 RETURNS = (
-    "okay", "ok", "alright", "all right", "im back", "i am back", "back now", "im here",
-    "i am here", "still here", "right here", "one more sec", "one more second", "one more minute",
-    "looking", "still looking", "i cant find it", "cant find it", "almost done", "sorry", "hello",
-    "hi", "hey", "you there", "still there", "are you there", "thanks", "thank you", "found it",
-    "got it", "here it is", "i have it", "yes", "yeah", "yep", "nope",
+    "still here", "right here", "im here", "i am here", "im back", "i am back", "back now", "one more sec",
+    "one more second", "one more minute", "still looking", "im looking", "looking for it",
+    "cant find it", "i cant find", "almost done", "found it", "got it", "here it is", "i have it",
+    "sorry about that", "sorry for the wait", "thanks for waiting", "thank you for waiting",
+    "you there", "are you there", "you still there",
 )
-# The start of a line that answers what the agent asked ("it says 48", "it's a Carrier").
+# The start of a line that answers what the agent asked, with a number in it ("it says 48").
 ANSWER_STARTS = ("it says", "it is", "its", "theres", "there is", "i have", "the number", "the model")
+# A line that opens by naming someone else is said to them: "honey, where did you put it?"
+OTHERS = {"honey", "hon", "babe", "baby", "sweetie", "sweetheart", "dear", "kids", "guys", "mom",
+          "dad", "buddy", "bud"}
 NUMBER = re.compile(r"\d")
+SENTENCES = re.compile(r"(?<=[.!?])\s+|\n")
+
+
+def _starts_with_hold(sentence: str) -> bool:
+    tokens = words(sentence).split()
+    while tokens and tokens[0] in LEAD_WORDS:
+        tokens.pop(0)
+    rest = " " + " ".join(tokens) + " "
+    return any(rest.startswith(f" {h} ") for h in HOLDS)
 
 
 def asks_to_hold(text: str) -> bool:
-    said = words(text)
-    return any(has_phrase(said, h) for h in HOLDS)
+    """A request to the agent to wait: a sentence that starts with one ("hold on", "one minute
+    please", "sorry, give me a sec"). "It runs for about one minute then shuts off" is a symptom."""
+    return any(_starts_with_hold(s) for s in SENTENCES.split(text) if s.strip())
 
 
 def is_reply(text: str) -> bool:
-    """While on hold: the line sounds said to the agent, so the caller is back."""
+    """While on hold: the line is said to the agent, so the caller is back. Talk to someone else
+    in the room ("okay kids, come on", "hey, get off that") isn't."""
     said = words(text)
-    if asks_to_hold(text) or NUMBER.search(text):
+    if asks_to_hold(text) or any(has_phrase(said, r) for r in RETURNS):
         return True
-    if any(has_phrase(said, r) for r in RETURNS):
+    # A question to the agent: "Hello?", "can you still hear me?"
+    to_someone_else = said.split()[:1] and said.split()[0] in OTHERS
+    if "?" in text and not to_someone_else and (
+        has_phrase(said, "you") or said.startswith(" hello ")
+    ):
         return True
-    return any(said.startswith(f" {s} ") for s in ANSWER_STARTS)
+    if said.startswith(" it says "):
+        return True
+    return bool(NUMBER.search(text)) and any(said.startswith(f" {s} ") for s in ANSWER_STARTS)
 
 
 def holding(conn: sqlite3.Connection, call_id: str) -> bool:

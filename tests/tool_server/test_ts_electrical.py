@@ -241,6 +241,13 @@ def test_a_sparks_caller_can_book_right_after_the_line(agent):
         ("the AC is dripping water", "Urgent"),
         ("water leaking from the air handler", "Urgent"),
         ("the circuit breaker is tripping whenever the furnace starts", "High"),
+        ("the breaker tripped when the AC kicked on", "High"),
+        ("I keep resetting the breaker", "High"),
+        ("my breaker tripped once in the storm", "Normal"),
+        ("water is coming out of the vent", "Urgent"),
+        ("the ceiling under the attic unit is wet", "Urgent"),
+        ("there's a puddle under the indoor unit", "Urgent"),
+        ("the condensate pan overflowed", "Urgent"),
         ("my breaker trips when the AC kicks on", "High"),
     ],
 )
