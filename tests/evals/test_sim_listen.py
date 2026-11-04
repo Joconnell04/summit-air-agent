@@ -163,10 +163,11 @@ def test_calls_get_short_codes_in_the_order_they_ran(tmp_path):
     transcript = json.loads((batch.folder / "S1.json").read_text())
     assert transcript["persona"] == "Tomas, a renter"
     assert transcript["lines"][0]["text"] == "hello"
+    b = "20261104-010203-livekit"
     assert keep.put_keys == [
-        "20261104-010203-livekit/S1.wav", "20261104-010203-livekit/S1.json",
-        "20261104-010203-livekit/S2.wav", "20261104-010203-livekit/S2.json",
-        "20261104-010203-livekit/manifest.json",
+        f"{b}/S1.wav", f"{b}/S1.json", f"{b}/manifest.json",
+        f"{b}/S2.wav", f"{b}/S2.json", f"{b}/manifest.json",
+        f"{b}/manifest.json",
     ]
 
 

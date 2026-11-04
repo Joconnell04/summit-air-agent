@@ -122,8 +122,8 @@ class CallRecorder:
 
 
 def to_flac(wav: Path) -> Path:
-    """FLAC is lossless and about a third the size of WAV for a call that is half silence; kept as
-    WAV when the `flac` command isn't installed."""
+    """FLAC is lossless and about a seventh the size of WAV for a call, where each side is silent
+    while the other talks (MEASURED, evals/README.md); kept as WAV when `flac` isn't installed."""
     if shutil.which("flac") is None:
         return wav
     flac = wav.with_suffix(".flac")
@@ -176,7 +176,8 @@ class Batch:
         self.manifest["calls"].append(entry)
         self._save()
         if self.store is not None:
-            for path in (audio, self.folder / f"{code}.json"):
+            # The manifest goes with every call, so a run stopped partway is listed in full.
+            for path in (audio, self.folder / f"{code}.json", self.folder / MANIFEST):
                 self.store.put(path, f"{self.folder.name}/{path.name}")
         return entry
 
