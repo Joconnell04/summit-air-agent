@@ -37,7 +37,7 @@ Both safety calls in every run had the server's check pass and the signed-off li
 
 So 0.35 s to 0.25 s can save at most about 0.1 s, and saved 39 ms. Detecting a change that size in the caller-heard median would take hundreds of calls; the per-turn spread is several hundred ms, and the plain median of the same settings moved from 1.89 s in round 1 to 1.97 s here. The stage timing settles it instead.
 
-**Where the time goes instead (plain turns, baseline).** The worker's own `reply_ms`, from LiveKit deciding the caller stopped to the agent's first audio, had a median of 1.34 s. Of that, the model's first token was 0.52 s and the voice's first byte 0.18 s; the remaining 0.64 s is not covered by any stage timing yet. It includes the caller's line going to the tool server and back before the model is asked (voice/livekit/call.py `caller_line` waits for the server's answer, which carries the safety check and the priority gate), and LiveKit handing the reply to the voice. The rig read the plain-turn delay a median of 0.64 s above `reply_ms` in this session (0.55 s on round 1's file), more than the 0.39 s round 1 reported, so the stretch before `reply_ms` starts (the silence wait plus the audio's trip to the worker on LiveKit Cloud and back) is about 0.3 s more than the silence wait itself here.
+**Where the time goes instead.** See section 7: with every stage logged, a plain turn's 1.30 s inside the worker is the 0.35 s end-of-turn wait, 14 ms to the tool server, 0.71 s to the model's first sentence and 0.18 s to the voice's first byte. The model is the biggest piece; the wait is the second.
 
 **The turn detector's long wait.** On about one turn in seven (6 of 48, 7 of 44 and 7 of 42), LiveKit's turn detector judged the caller not finished and waited the 1.5 s maximum (`voice.endpointing.normal.max_delay`). The 13 in the first two runs were all complete lines, most of them ending in an address, a ZIP or "the number I'm calling from", so each cost about 1.15 s for nothing. That maximum is the turn-taking value with real time in it. It was not trialled: a shorter one is what cuts off a real caller who pauses mid-thought for a second, and the rig's caller voice never pauses like that, so the rig can't say what a lower value would cost.
 
@@ -66,15 +66,39 @@ In the 0.25 s run, `elderly-no-heat` (not must-pass) booked at High where the sc
 The default stays at 0.35 s silence and 0.3 s normal `min_delay` (config/models.yaml, comments updated to say why). The fix to the digits wait is the change. Proposals for Jackson (not decided):
 1. Keep 0.35 s: 0.25 s is the floor, saves under 0.1 s by construction, and leaves less room for a real caller's pause, which the rig can't test.
 2. Try a lower turn-detector maximum (`voice.endpointing.normal.max_delay`, 1.5 s now) on real calls, not the rig: it wasted about 1.15 s on one turn in seven here, and only real callers' pauses can show what a lower one cuts off.
-3. Time the caller line's trip to the tool server as a stage (`server_ms`) before the real calls, since the 0.64 s after the turn ends that no stage covers is now the biggest unexplained piece.
-4. Add "just me", "a cane" and similar to the priority phrase lists, through the round that owns them.
+3. Add "just me", "a cane" and similar to the priority phrase lists, through the round that owns them.
 
-## 7. Cost
+## 7. The worker's reply timer, and two voice-side trials
+
+A second batch, after main's round 3 changes were merged in (exploration 014, ideas 1 and 8): fix the worker's own reply timer on tool turns, keep its stage times in the rig results, and try two voice-side settings one at a time against a fresh baseline on the same code.
+
+**The reply timer.** The worker's `reply_ms` was stamped on every agent line, timed from the caller's end, so on a tool turn where the agent spoke twice ("Let me check", then the answer) the second line read seconds high, and the rig paired a turn with its newest line. Now only the first agent line after a caller line carries `reply_ms`, a bridge clip that played first counts as the first audio, and the rig takes a turn's stages from its first line. On tool turns, lines where `reply_ms` read more than 0.5 s above what the rig heard went from 24 of 39 (worst 8.7 s; round 1's two files) to 3 of 37 (worst 1.9 s; `livekit-rig-base2` and `livekit-rig-ptts`). The three left are sign-off turns, where the goodbye spoken from code after `end_call` is the first line the worker logs.
+
+The timer did not need the silence wait added. LiveKit's `stopped_speaking_at` is the end of the caller's speech, not the end of the silence wait: its own `end_of_turn_ms`, timed from the same moment, reads the 0.35 s wait (353 ms median). Round 1 (section 5) said the wait was left out; it wasn't. The 0.58 s the rig reads above `reply_ms` on plain turns is the audio's path to the worker on LiveKit Cloud and back, from a laptop.
+
+**Stage times in the rig results.** Each turn's `platform_stages` now holds the worker's end-of-turn wait, transcript delay, `server_ms` (the caller line's trip to the tool server before the model can answer, new), the model's first token, tool time and the voice's first byte. Plain turns in the fresh baseline, medians (15 turns): end of turn 353 ms, server 14 ms, model 706 ms, voice first byte 176 ms, `reply_ms` 1,302 ms; the parts add up to within about 50 ms. The model figure is the time to its first whole sentence, since the worker passes the reply on a sentence at a time (voice/livekit/call.py `llm_node`).
+
+**The trials.** Each is one 8-call smoke run, with the change set through `RIG_VOICE` and both new settings in config/models.yaml at today's values.
+
+| Run | Change | Plain median | Plain slowest 10% | Lookup median | Talked over / sound over caller / silent | Must-pass code checks | Read-back parts heard | Model first sentence | Voice first byte | `reply_ms`, plain | Cost |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| `livekit-rig-base2` | none (today's values) | 1.94 s (16) | 3.27 s | 2.30 s (20) | 0 / 0 / 1 | 5 of 6 | 18 of 18 | 706 ms | 176 ms | 1,302 ms | $0.61 |
+| `livekit-rig-ptts` | `preemptive_tts: true` | 2.22 s (15) | 3.62 s | 2.27 s (18) | 3 / 4 / 3 | 5 of 6 | 15 of 15 | 787 ms | 170 ms | 1,604 ms | $0.58 |
+
+"Read-back parts heard": for every `read_back` the model called, whether the ZIP, the last four of the phone number and the house number were all in what the rig heard the agent say (MEASURED, digits matched in the rig's transcription). The one must-pass miss in the baseline and the preemptive run is `tune-up-known-caller` failing round 3's new `booking_lead_in` check, at today's values in the baseline, so it is not from either change.
+
+- **Preemptive voice: not kept.** The plain median rose 0.28 s, the worker's own `reply_ms` rose 0.30 s, and it started talking over callers: 3 replies over the end of the caller's line, 4 turns with sound while the caller was still speaking, and 3 silent turns (none in the baseline). In the preemptive run's tune-up call no booking was made at all. A voice started on a draft before the turn is confirmed is the cut-off risk this file set out to avoid.
+- **A shorter first sentence (`tts.min_sentence_chars` 20 to 5): not run to a result, so not kept.** The first attempt stopped after two calls when the laptop went to sleep on battery and lost its network (no results file); the laptop kept sleeping after that, so it was not retried. The setting is in config/models.yaml at today's 20, and one command runs the same 8 calls: `RIG_VOICE='{"tts": {"min_sentence_chars": 5}}' RIG_LABEL=sent5 uv run --env-file .env python -m evals.audio_rig --stack livekit --suite smoke --repeats 1`. It can only help when a reply opens with a sentence under 20 characters ("Got it."): the voice then starts on it instead of waiting for the next sentence. The worker already hands the voice whole sentences, so it changes nothing on longer openers.
+
+## 8. Cost
 
 | Run | Cost |
 |---|---|
 | Baseline, 0.35 s, 8 calls | $0.71 |
 | 0.25 s, 8 calls | $0.73 |
 | Fixed worker, 8 calls | $0.63 |
+| Second baseline, 8 calls | $0.61 |
+| Preemptive voice, 8 calls | $0.58 |
+| Short first sentence, stopped after 2 calls when the laptop slept (no results file) | $0.09 (MEASURED from the run log) |
 
-All MEASURED as the sum of `cost_usd` in each results file, rig parts included. $2.07 in all, about the $1 to $2 approved; no run passed its $1 cap.
+All MEASURED as the sum of `cost_usd` in each results file, rig parts included. The first batch (three runs) was $2.07; the second (the timer fix and voice trials) $1.28 against about $2 approved. No run passed its $1 cap.
