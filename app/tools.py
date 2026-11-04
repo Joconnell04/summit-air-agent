@@ -44,6 +44,7 @@ from .text import (
     has_phrase,
     phone_key,
     phone_said,
+    says_goodbye,
     street_key,
     unit_key,
     words,
@@ -560,10 +561,16 @@ def read_back(ctx: Ctx, args: ReadBackIn) -> Result:
     asked = records.readback(ctx.call)
     current = {**address, "phone": phone, "sentence": sentence}
     same = asked is not None and _readback_key(asked) == _readback_key(current)
-    # Details the caller already confirmed are never read back again on the call (eval round 3,
-    # reschedule-own-booking).
-    if same and ctx.call["readback_confirmed_at"]:
-        return ok(confirmed=True, address=address, phone=phone)
+    # Details the caller already confirmed are never read back again on the call (eval rounds 3
+    # and 4). Only a change to them reads a new sentence.
+    if same and ctx.call["readback_confirmed_at"] and not args.confirmed:
+        raise Refused(
+            "read_back_confirmed",
+            "",
+            note="The caller already confirmed this address and number. Don't read them again.",
+            address=address,
+            phone=phone,
+        )
     if (
         args.confirmed
         and same
@@ -1237,8 +1244,21 @@ def _no_time(asked: CallbackTime) -> bool:
     )
 
 
+def _caller_left(ctx: Ctx) -> bool:
+    """The caller's last line was a goodbye: they aren't asked for anything more (eval round 4,
+    co-op-owner-mentions-board, where asking for a callback time reopened a finished call)."""
+    return says_goodbye(records.last_caller_line(ctx.conn, ctx.call["id"]))
+
+
+def _soon_after_goodbye(ctx: Ctx, asked: CallbackTime) -> CallbackTime:
+    """A callback with no time, after the caller said goodbye: due within the tenant's default."""
+    minutes = ctx.tenant.callbacks["after_goodbye_minutes"]
+    return asked.model_copy(update={"callback_in_minutes": minutes})
+
+
 def flag_person(ctx: Ctx, args: FlagIn) -> Result:
     """The sentence comes back only after the flag and the callback are stored (spec S-23)."""
+    left = _no_time(args) and _caller_left(ctx)
     if _no_time(args):
         # A safety call already has a person flagged who follows up once the caller is safe, so
         # the caller is never asked for a callback time while they leave the house (journey 3).
@@ -1250,7 +1270,9 @@ def flag_person(ctx: Ctx, args: FlagIn) -> Result:
             return ok(ctx.tenant.line("flag_stored_no_callback"), flag_id=flag_id, callback_id=None)
         # After hours the on-call technician calls an urgent caller back within a set time
         # (journey 11), so no time needs to be asked for.
-        if ctx.call["after_hours"] and args.priority == "Urgent":
+        if left:
+            args = _soon_after_goodbye(ctx, args)
+        elif ctx.call["after_hours"] and args.priority == "Urgent":
             minutes = ctx.tenant.after_hours_cutoffs["on_call_confirms_within_minutes"]
             args = args.model_copy(update={"callback_in_minutes": minutes})
         # A caller who asked for a person in office hours is about to be put through, so they
@@ -1282,6 +1304,16 @@ def flag_person(ctx: Ctx, args: FlagIn) -> Result:
                 ctx.conn, ctx.tenant, ctx.call, callback_id, when.dial_at, ctx.now
             )
     spoken = when.spoken
+    if left:
+        # Stored, and nothing more is said: the caller has gone.
+        return ok(
+            "",
+            flag_id=flag_id,
+            callback_id=callback_id,
+            callback_at=iso(due),
+            callback_spoken=ctx.tenant.line("callback_asap"),
+            note="The caller said goodbye. End the call now; ask nothing more.",
+        )
     if callback_id is None:
         say = ctx.tenant.line("flag_stored_no_callback")
     elif args.priority == "Urgent" and ctx.call["after_hours"]:
@@ -1300,6 +1332,8 @@ def record_lead(ctx: Ctx, args: LeadIn) -> Result:
     become a booking."""
     details = args.details
     due = when = None
+    if args.kind != "commercial" and _no_time(details) and _caller_left(ctx):
+        details = _soon_after_goodbye(ctx, details)
     if args.kind != "commercial":
         when = _callback_due(ctx, details)
         due = when.due

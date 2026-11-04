@@ -151,7 +151,7 @@ SERVER_NOTES = {
 }
 
 
-def server_notes(hints: list[str]) -> list[str]:
+def server_notes(hints: list[str], known: dict[str, str] | None = None) -> list[str]:
     """`[server]` lines added to a caller's line for the model, from a turn result's hints (the
     tool-use prompt explains them). Safety lines are spoken by the voice layer, not described. A
     stage hint ("stage_booking") is followed by the owner's notes for it ("guidance:<text>"), and
@@ -161,6 +161,9 @@ def server_notes(hints: list[str]) -> list[str]:
     items = [h.removeprefix("guidance:") for h in hints if h.startswith("guidance:")]
     if stage and items:
         notes.append(f"[server] {STAGE_NOTES[stage]} " + " ".join(f"- {i}" for i in items))
+    if known:
+        facts = "; ".join(f"{k} {v}" for k, v in known.items())
+        notes.append(f"[server] Already known, don't ask again: {facts}.")
     return notes
 
 
@@ -178,6 +181,16 @@ ANNOUNCES_READ_BACK = re.compile(
 # when the booking is queued (eval round 3, booking-system-down).
 ANNOUNCES_BOOKING = re.compile(
     r"^\s*(?:booking\b|let me (?:book|lock|get (?:that|it|you) booked)|i'?ll (?:book|lock) (?:that|it)\b)",
+    re.IGNORECASE,
+)
+# A priority claim. Only the server's own Urgent line may say it (eval round 4).
+CLAIMS_PRIORITY = re.compile(r"\btop priority\b|\bmost urgent\b|\bhighest priority\b", re.IGNORECASE)
+# Gas or carbon monoxide advice to leave or call 911. Only the server's safety lines say it; on
+# a call with no safety signal the model's own is dropped (eval round 4, gas-worry-no-smell).
+HAZARD = re.compile(r"\bgas\b|\bsmell|\bcarbon monoxide\b|\bfumes\b|\bco alarm\b", re.IGNORECASE)
+EVACUATE = re.compile(
+    r"\b(?:get|step|head|go)\s+(?:everyone\s+)?out(?:side)?\b|\bleave the (?:house|home|apartment)\b"
+    r"|\b911\b|\bgas company\b|\bevacuat",
     re.IGNORECASE,
 )
 ORDINAL = re.compile(r"^\d+(?:st|nd|rd|th)$")
@@ -276,6 +289,7 @@ class SpokenReply:
         self.zips: set[str] = set()
         self.phones: set[str] = set()
         self.streets: set[tuple[str, str]] = set()
+        self.urgent = False
         self._dropped_restatement = False
 
     def holding(self) -> bool:
@@ -294,10 +308,22 @@ class SpokenReply:
             self.safety_call = False
 
     def tool_done(self, name: str, envelope: dict) -> None:
+        data = envelope.get("data") or {}
         if name == "check_service_area" and envelope.get("ok"):
             self.address_checked = True
-        if name == "read_back" and (envelope.get("data") or {}).get("confirmed"):
+        if name == "find_slots" and (data.get("priority") or {}).get("level") == "Urgent":
+            self.urgent = True
+        if name == "read_back" and data.get("confirmed"):
             self.read_back_confirmed = True
+            # Confirmed details are said once, in the server's sentence: never again by the model.
+            address = data.get("address") or {}
+            if address.get("zip"):
+                self.zips.add(address["zip"])
+            if data.get("phone"):
+                self.phones.add(re.sub(r"\D", "", data["phone"]))
+            street = re.match(r"(\d[\d-]*)\s+(\S+)", address.get("street") or "")
+            if street:
+                self.streets.add((street.group(1), street.group(2).lower()))
 
     def server_speaks(self, name: str, args: dict) -> bool:
         """Decided from the call alone, before its result: a streaming layer must choose then."""
@@ -314,6 +340,10 @@ class SpokenReply:
         after_restatement, self._dropped_restatement = self._dropped_restatement, False
         if ANNOUNCES_READ_BACK.search(sentence) or ANNOUNCES_BOOKING.search(sentence):
             return ""
+        if not self.urgent and CLAIMS_PRIORITY.search(sentence):
+            return ""
+        if not self.safety_call and HAZARD.search(sentence) and EVACUATE.search(sentence):
+            return ""
         if after_restatement and CONFIRMS_ONLY.fullmatch(sentence):
             return ""
         if self._restates(sentence):
@@ -329,7 +359,8 @@ class SpokenReply:
             any(re.search(rf"\b{z}\b", sentence) for z in self.zips)
             or any(p in digits for p in self.phones)
             or any(
-                re.search(rf"\b{number}\b", sentence) and re.search(rf"\b{re.escape(word)}\b", lowered)
+                re.search(rf"\b{re.escape(number)}\b", sentence)
+                and re.search(rf"\b{re.escape(word)}\b", lowered)
                 for number, word in self.streets
             )
         )

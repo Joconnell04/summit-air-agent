@@ -46,6 +46,7 @@ approval:
   - not sure if i can approve
   - not sure i can approve
 callbacks:
+  after_goodbye_minutes: 60
   after_lead_minutes: 30
   dropped_safety_minutes: 10
   fsm_down_minutes: 60
@@ -153,6 +154,7 @@ lines:
   arrival_no_fit: Our arrival windows are {windows}, and the technician can come any time in the window,
     so I can't promise an exact time.
   callback_after: around {time}
+  callback_asap: as soon as they can
   callback_before: before {time}
   callback_between: between {start} and {end}
   callback_by: by {time}

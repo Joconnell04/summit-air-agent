@@ -186,3 +186,33 @@ def test_a_booking_announcement_is_dropped_and_a_queued_booking_is_spoken_once()
     queued = {"ok": False, "refused": "fsm_unavailable", "say": "I can't book that right now."}
     assert assemble.spoken_by_server("book_appointment", queued) == "I can't book that right now."
     assert assemble.spoken_by_server("book_appointment", {"ok": True, "say": "You're all set."}) is None
+
+
+def test_a_confirmed_address_and_number_are_never_restated_by_the_model():
+    reply = assemble.SpokenReply()
+    reply.tool_done("read_back", {"ok": True, "data": {
+        "confirmed": True, "phone": "2125550999",
+        "address": {"street": "290 Bedford Ave", "unit": "", "city": "Brooklyn", "zip": "11218"},
+    }})
+    said = "Booked for 290 Bedford Ave, 11218. I'll call 212-555-0999 if needed. Anything else?"
+    assert reply.text(said, []) == "Anything else?"
+
+
+def test_top_priority_is_said_only_on_a_call_the_server_marked_urgent():
+    reply = assemble.SpokenReply()
+    assert reply.text("I've marked this as top priority. Let's book.", []) == "Let's book."
+    reply.tool_done("find_slots", {"ok": True, "data": {"priority": {"level": "Urgent"}}})
+    said = "I've marked this call top priority, so you get our soonest opening."
+    assert reply.text(said, []) == said
+
+
+def test_gas_advice_is_dropped_on_a_call_with_no_safety_signal():
+    """Eval round 4, gas-worry-no-smell."""
+    reply = assemble.SpokenReply()
+    said = "The technician will check it. If you smell gas, get everyone out and call 911."
+    assert reply.text(said, []) == "The technician will check it."
+    # Medical 911 advice has no gas in it and stays.
+    assert reply.text("Please call 911 now.", []) == "Please call 911 now."
+    reply.heard({"action": "speak_lines"})
+    kept = "I'd recommend staying outside and calling 911 or the gas company now."
+    assert reply.text(kept, []) == kept

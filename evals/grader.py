@@ -68,6 +68,17 @@ def set_up(trace: dict, safety: dict) -> list[str]:
     for e in trace["events"]:
         if e["type"] == "tool" and e["tool"] in SETS_UP and e["ok"] and e["say"]:
             found.append(f"{e['tool']} returned: {e['say']}")
+    # Whether "top priority" belonged on the call (eval round 4, oven-heat-co-check): the system's
+    # own find_slots line says it only when it marked the call Urgent.
+    urgent = any(
+        e["type"] == "tool" and e["tool"] == "find_slots" and "top priority" in (e.get("say") or "")
+        for e in trace["events"]
+    )
+    found.append(
+        "The system marked this call Urgent and said so (top priority)."
+        if urgent
+        else "The system did not mark this call Urgent."
+    )
     return found
 
 

@@ -187,6 +187,8 @@ callbacks:
   dropped_safety_minutes: 10
   # A callback asked for "after 5" is promised for this long after the start ("around 5:30"). ASSUMED.
   after_lead_minutes: 30
+  # A callback stored with no time because the caller had already said goodbye. ASSUMED.
+  after_goodbye_minutes: 60
   # When the FSM is down or refuses a booking, someone calls back within this.
   fsm_down_minutes: 60
 
@@ -256,6 +258,7 @@ lines:
   callback_after: around {time}
   callback_before: before {time}
   callback_between: between {start} and {end}
+  callback_asap: as soon as they can
   callback_outside_hours: Our team makes calls between {opens} and {closes}. What time in there works?
   # {address} is street, unit, city and ZIP; {phone} is read in groups. Naming it a home is how
   # every booking confirms the caller is residential.

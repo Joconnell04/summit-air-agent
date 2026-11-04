@@ -53,7 +53,8 @@ def test_the_grader_is_told_what_the_server_set_up():
                 tool("book_appointment", "Before I book it, let me read back.", ok=False)],
     ), SAFETY)
     assert found == ["A person was flagged (person).",
-                     "flag_person returned: Someone will call you by 9:15 AM."]
+                     "flag_person returned: Someone will call you by 9:15 AM.",
+                     "The system did not mark this call Urgent."]
     model = ScriptedModel([grade_reply()])
     grade(model, TURNS, [], found)
     assert "flag_person returned: Someone will call you by 9:15 AM." in model.calls[0]["system"]
@@ -69,16 +70,26 @@ def test_a_booking_shows_its_job_number_so_reading_it_out_is_not_invented():
     assert found == [
         "A visit was booked (job 625, starting 2026-11-03T13:00:00Z, priority High).",
         "A visit was queued to retry, not yet booked; the caller gets a callback to confirm.",
+        "The system did not mark this call Urgent.",
     ]
 
 
 def test_a_safety_call_shows_the_grader_the_signed_off_wording():
     found = set_up(trace(signal="2026-11-02T14:00:00Z", state="lines_said"), SAFETY)
     assert "Safety sign-off (fixed wording): We'll follow up once you're safe." in found
-    assert set_up(trace(signal="2026-11-02T14:00:00Z", state="cleared"), SAFETY) == []
+    assert set_up(trace(signal="2026-11-02T14:00:00Z", state="cleared"), SAFETY) == [
+        "The system did not mark this call Urgent."
+    ]
 
 
 def test_with_nothing_set_up_the_grader_is_told_so():
     model = ScriptedModel([grade_reply()])
     grade(model, TURNS, [])
     assert "- Nothing." in model.calls[0]["system"]
+
+
+def test_the_grader_is_told_when_the_system_marked_the_call_urgent():
+    """Eval round 4, oven-heat-co-check: the server's own top-priority line was judged wrong."""
+    line = "I've marked this call top priority, so you get our soonest opening. Today I have 12 to 4."
+    found = set_up(trace(events=[tool("find_slots", line)]), SAFETY)
+    assert "The system marked this call Urgent and said so (top priority)." in found

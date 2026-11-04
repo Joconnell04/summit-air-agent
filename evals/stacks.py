@@ -144,10 +144,10 @@ def greeting(start_data: dict) -> str | None:
     return assemble.greeting(start_data, voice)
 
 
-def server_notes(hints: list[str]) -> list[str]:
+def server_notes(hints: list[str], known: dict | None = None) -> list[str]:
     assemble = _assemble()
     if assemble is not None and hasattr(assemble, "server_notes"):
-        return assemble.server_notes(hints)
+        return assemble.server_notes(hints, known)
     return [f"(Server note: {HINT_NOTES[h]})" for h in hints if h in HINT_NOTES]
 
 
@@ -208,7 +208,7 @@ class InProcessAgent:
         if safety.get("action") in SPOKEN_FROM_CODE and result["say"]:
             self.messages.append({"role": "user", "content": caller_text})
             return self._speak_from_code(result["say"], t0)
-        notes = server_notes(result["data"].get("hints", []))
+        notes = server_notes(result["data"].get("hints", []), result["data"].get("known"))
         return self._think("\n".join([caller_text, *notes]), t0)
 
     def _speak_from_code(self, text: str, t0: float) -> AgentTurn:

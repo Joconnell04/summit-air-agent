@@ -75,7 +75,7 @@ class Call:
             self.server_down()
             raise StopResponse()
         data = result.get("data") or {}
-        notes = server_notes(data.get("hints", []))
+        notes = server_notes(data.get("hints", []), data.get("known"))
         if notes:
             message.content.append("\n" + "\n".join(notes))
         safety = data.get("safety")

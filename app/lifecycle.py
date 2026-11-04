@@ -401,7 +401,52 @@ def turn(
     payload = None
     if action.action != "none":
         payload = {"action": action.action, "kind": action.kind, "text": action.text}
-    return ok(action.text, seq=seq, safety=payload, hints=hints)
+    known = already_known(conn, call["id"]) if args.speaker == "caller" else {}
+    return ok(action.text, seq=seq, safety=payload, hints=hints, known=known)
+
+
+# What the agent's tool calls have already recorded, by field. Read from the tool log, so it costs
+# no model request (eval round 4: the agent asked again for what the caller had told it).
+KNOWN_FROM_DETAILS = {
+    "name": "name",
+    "who_home": "who's home",
+    "approver": "who approves",
+    "system_type": "system",
+    "arrival_notes": "access",
+}
+KNOWN_MAX = 40  # characters a value is cut to, so the note stays a few dozen tokens
+
+
+def already_known(conn: sqlite3.Connection, call_id: str) -> dict[str, str]:
+    """Facts this call's tool calls carried: the ZIP checked, the address and phone read back
+    (marked confirmed once the caller said yes) and the intake a booking attempt sent, so the
+    agent doesn't ask again. Empty until a tool has recorded something."""
+    known: dict[str, str] = {}
+    rows = conn.execute(
+        "SELECT tool, args_json FROM tool_calls WHERE call_id = ? ORDER BY id", (call_id,)
+    ).fetchall()
+    for row in rows:
+        args = json.loads(row["args_json"] or "{}")
+        if row["tool"] == "check_service_area" and args.get("zip"):
+            known["ZIP"] = args["zip"]
+        if row["tool"] == "find_slots":
+            facts = args.get("facts") or {}
+            if facts.get("who_home"):
+                known["who's home"] = facts["who_home"]
+        if row["tool"] in ("book_appointment", "reschedule_appointment"):
+            for field, label in KNOWN_FROM_DETAILS.items():
+                value = (args.get("details") or {}).get(field)
+                if value:
+                    known[label] = value
+    readback = conn.execute(
+        "SELECT readback_json, readback_confirmed_at FROM calls WHERE id = ?", (call_id,)
+    ).fetchone()
+    if readback and readback["readback_json"]:
+        asked = json.loads(readback["readback_json"])
+        mark = " (confirmed)" if readback["readback_confirmed_at"] else ""
+        known["address"] = f"{asked['street']}, {asked['zip']}{mark}"
+        known["phone"] = f"ending {asked['phone'][-4:]}{mark}"
+    return {k: v if len(v) <= KNOWN_MAX else v[: KNOWN_MAX - 3] + "..." for k, v in known.items()}
 
 
 def end(

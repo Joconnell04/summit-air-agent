@@ -963,9 +963,12 @@ def test_confirmed_details_are_not_read_back_again(agent):
     """Eval round 3 run 20261104-031113, reschedule-own-booking."""
     call = ready_to_book(agent)
     again = agent.tool("read_back", call, address=in_area_address(), phone="caller_id")
-    assert again["ok"] and again["say"] == ""
-    assert again["data"]["confirmed"] is True
-    changed = agent.tool("read_back", call, address=in_area_address(3), phone="caller_id")
+    assert again["refused"] == "read_back_confirmed" and again["say"] == ""
+    assert "already confirmed" in again["data"]["note"]
+    # Still confirmed, so the booking goes ahead.
+    assert book(agent, call, first_open(agent, call))["ok"]
+    later = ready_to_book(agent)
+    changed = agent.tool("read_back", later, address=in_area_address(3), phone="caller_id")
     assert changed["say"].startswith("I have your home at 103 Union St")
 
 

@@ -592,3 +592,40 @@ def test_the_retry_job_leaves_a_booking_that_is_still_being_sent_alone(agent, cl
         == "sending"
     )
     conn.close()
+
+
+def test_after_a_goodbye_a_flag_with_no_time_is_stored_and_nothing_is_asked(agent):
+    """Eval round 4, co-op-owner-mentions-board: asking for a callback time reopened a call the
+    caller had ended three times."""
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "any time this afternoon is fine thank you goodbye")
+    flagged = agent.tool("flag_person", call, reason="Confirm who can approve")
+    assert flagged["ok"], flagged
+    assert flagged["say"] == ""
+    assert flagged["data"]["callback_spoken"] == "as soon as they can"
+    assert "End the call" in flagged["data"]["note"]
+    assert count(agent, "SELECT COUNT(*) FROM callbacks WHERE status = 'pending'") == 1
+
+
+def test_without_a_goodbye_a_flag_with_no_time_still_asks_for_one(agent):
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "Can someone call me about the bill?")
+    assert agent.tool("flag_person", call, reason="Bill")["refused"] == "invalid_callback_time"
+
+
+def test_each_caller_turn_says_what_the_call_already_knows(agent):
+    """Eval round 4: re-asking what was answered. The note comes from the tool log."""
+    from prompts.assemble import server_notes
+
+    call = ready_to_book(agent)
+    agent.tool("check_service_area", call, zip="11231")
+    agent.tool("find_slots", call, job_type="no_heat", facts={"who_home": "me and my wife"})
+    turn = agent.turn(call, "Okay, what's next?")
+    known = turn["data"]["known"]
+    assert known["ZIP"] == "11231"
+    assert known["who's home"] == "me and my wife"
+    assert known["address"] == "101 Union St, 11231 (confirmed)"
+    assert known["phone"] == "ending 0999 (confirmed)"
+    note = server_notes([], known)[-1]
+    assert note.startswith("[server] Already known, don't ask again: ZIP 11231;")
+    assert len(note.split()) < 40
