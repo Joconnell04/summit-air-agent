@@ -102,3 +102,4 @@ How the design was reached, in order, so a reader can follow each choice back to
 | End-of-turn wait | Kept at 0.35 s; the digits wait no longer sticks for the rest of a call | DECISIONS.md 063, #98 |
 | Bench shows everything | Admins see calls as recorded; only replay drafts stay redacted | DECISIONS.md 064, #101 |
 | Cartesia hosted agents | Left out: our server couldn't force safety lines or own hang-ups; Cartesia stays the voice only | DECISIONS.md 065 |
+| Lane tracking | Every lane has an issue; the lanes page is generated from GitHub | DECISIONS.md 067, #121 |

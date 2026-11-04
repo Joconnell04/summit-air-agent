@@ -8,9 +8,8 @@ issue backfilled (the issue body says so).
 
 | Issue | Lane | Pull requests | Decisions |
 |---|---|---|---|
-| [#111](https://github.com/Joconnell04/summit-air-agent/issues/111) | Eval rounds 3 and 4: wording and safety tone | [#82](https://github.com/Joconnell04/summit-air-agent/pull/82), [#97](https://github.com/Joconnell04/summit-air-agent/pull/97), [#102](https://github.com/Joconnell04/summit-air-agent/pull/102) (open) | 060 |
-| [#116](https://github.com/Joconnell04/summit-air-agent/issues/116) | Debug bench | [#89](https://github.com/Joconnell04/summit-air-agent/pull/89), [#93](https://github.com/Joconnell04/summit-air-agent/pull/93), [#96](https://github.com/Joconnell04/summit-air-agent/pull/96), [#101](https://github.com/Joconnell04/summit-air-agent/pull/101) (open) | 055, 059, 064 |
 | [#120](https://github.com/Joconnell04/summit-air-agent/issues/120) | Address lookup, preferred names, five easy scenarios | none yet |  |
+| [#122](https://github.com/Joconnell04/summit-air-agent/issues/122) | Ears test: Cartesia Ink-2 against Deepgram Nova-3 | none yet |  |
 
 ## Done, newest first
 
@@ -19,10 +18,12 @@ issue backfilled (the issue body says so).
 | [#119](https://github.com/Joconnell04/summit-air-agent/issues/119) | Owner view and bench at the public URL | [#100](https://github.com/Joconnell04/summit-air-agent/pull/100) |  |
 | [#118](https://github.com/Joconnell04/summit-air-agent/issues/118) | Listen to simulated calls | [#95](https://github.com/Joconnell04/summit-air-agent/pull/95) | 062 |
 | [#117](https://github.com/Joconnell04/summit-air-agent/issues/117) | Cold handoff | [#90](https://github.com/Joconnell04/summit-air-agent/pull/90) | 061 |
+| [#116](https://github.com/Joconnell04/summit-air-agent/issues/116) | Debug bench | [#89](https://github.com/Joconnell04/summit-air-agent/pull/89), [#93](https://github.com/Joconnell04/summit-air-agent/pull/93), [#96](https://github.com/Joconnell04/summit-air-agent/pull/96), [#101](https://github.com/Joconnell04/summit-air-agent/pull/101) | 055, 059, 064 |
 | [#115](https://github.com/Joconnell04/summit-air-agent/issues/115) | ZIP only from the caller | [#88](https://github.com/Joconnell04/summit-air-agent/pull/88), [#91](https://github.com/Joconnell04/summit-air-agent/pull/91), [#92](https://github.com/Joconnell04/summit-air-agent/pull/92) | 058 |
 | [#114](https://github.com/Joconnell04/summit-air-agent/issues/114) | Negated risk words and the side model check | [#87](https://github.com/Joconnell04/summit-air-agent/pull/87) | 056 |
 | [#113](https://github.com/Joconnell04/summit-air-agent/issues/113) | Two calls racing for one slot | [#86](https://github.com/Joconnell04/summit-air-agent/pull/86), [#94](https://github.com/Joconnell04/summit-air-agent/pull/94) | 057 |
 | [#112](https://github.com/Joconnell04/summit-air-agent/issues/112) | Speaking rate per call | [#83](https://github.com/Joconnell04/summit-air-agent/pull/83) | 053 |
+| [#111](https://github.com/Joconnell04/summit-air-agent/issues/111) | Eval rounds 3 and 4: wording and safety tone | [#82](https://github.com/Joconnell04/summit-air-agent/pull/82), [#97](https://github.com/Joconnell04/summit-air-agent/pull/97), [#102](https://github.com/Joconnell04/summit-air-agent/pull/102) (open) | 060 |
 | [#110](https://github.com/Joconnell04/summit-air-agent/issues/110) | Eval round 2: seeds and hold-out | [#74](https://github.com/Joconnell04/summit-air-agent/pull/74), [#75](https://github.com/Joconnell04/summit-air-agent/pull/75) | 044 to 050 |
 | [#109](https://github.com/Joconnell04/summit-air-agent/issues/109) | Technician summary (S-16) | [#73](https://github.com/Joconnell04/summit-air-agent/pull/73), [#76](https://github.com/Joconnell04/summit-air-agent/pull/76), [#77](https://github.com/Joconnell04/summit-air-agent/pull/77), [#79](https://github.com/Joconnell04/summit-air-agent/pull/79), [#80](https://github.com/Joconnell04/summit-air-agent/pull/80), [#81](https://github.com/Joconnell04/summit-air-agent/pull/81) | 040 |
 | [#108](https://github.com/Joconnell04/summit-air-agent/issues/108) | Must-pass reliability and the eval floor | [#72](https://github.com/Joconnell04/summit-air-agent/pull/72) | 041, 042, 043 |
