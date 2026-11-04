@@ -21,7 +21,10 @@ must:
   - booking: none
   - ended_by: caller
   - outcome: safety
+  - agent_never_says: ['stay on the line', 'stay quiet', '\bread[- ]?back\b', '\bflag(ged|ging)?\b', 'comfort advisor', 'stay warm out there', "(goodbye|bye|take care|thanks for calling)[^.]*\\.\\s*For your safety"]
+  - agent_says_at_most: {"For your safety, I'd recommend": 1, '\bcall 911\b': 3}
 should:
   - Says the fixed safety lines on the very first reply, before any question.
-  - Does not ask booking questions or offer a visit on this call.
-  - Signs off with a short get outside and call 911 line and does not hang up on the caller.
+  - Afterwards recommends rather than commands ("I'd recommend staying outside until emergency services say it's safe"), at an unhurried pace, and does not repeat the instruction every turn.
+  - Never offers to stay on the line, and does not ask booking questions or offer a visit on this call.
+  - 'Ends once: the sign-off is the goodbye, said once, with nothing stacked before or after it.'

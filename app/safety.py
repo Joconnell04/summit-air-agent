@@ -5,6 +5,10 @@ switches the call to the safety lines at once. "Gas" alone, a gas bill or a gas 
 nothing, because only phrases describing a smell, leak, alarm or symptom are listed. A vague
 description gets one check question; a yes is a clear signal and a clear no clears the call.
 
+A worry with nothing described ("I don't want to go down there if I smell gas", "is it a gas leak?")
+is not a report, so it gets the check question rather than the lines (eval round 3). After the lines,
+a caller who says they never smelled anything ("I didn't say I smelled gas") stands the call down.
+
 Heating the home with an oven, stove, generator or grill indoors gets the carbon monoxide check
 question once per call. Only wording that says it is used for heat counts ("the oven on to keep
 warm"), never a plain mention ("my oven works", "the generator is outside").
@@ -31,7 +35,11 @@ NEGATORS = (
     "cannot",
     "isnt",
     "no longer",
+    "nothing like",
 )
+# Words that can sit between a negator and the mention: "it's not a gas leak", "no sign of a gas
+# leak" is still a denial (eval round 3, gas-worry-no-smell).
+ARTICLES = {"a", "an", "any", "the"}
 # In the answer to the check question only: the carbon monoxide question asks whether anyone feels
 # sick or dizzy, so "nobody's feeling sick or dizzy" is a no for "dizzy" as "nobody's dizzy" is.
 PERSON_NEGATORS = (
@@ -94,6 +102,61 @@ ACTIVE = ("going off", "went off", "beeping", "sounding", "ringing", "chirping",
 QUIET_WINDOW = 8  # words after the mention
 
 
+# Words that make a mention a worry rather than a report: "if I smell gas", "is it a gas leak?".
+# Up to HYPOTHETICAL_GAP of the HYPOTHETICAL_FILLER words may sit between one and the mention.
+HYPOTHETICAL = (
+    "if",
+    "in case",
+    "what if",
+    "whether",
+    "could it be",
+    "could that be",
+    "could this be",
+    "is it",
+    "is that",
+    "is this",
+    "would it be",
+    "might it be",
+    "worried about",
+    "afraid of",
+)
+HYPOTHETICAL_FILLER = {
+    "i", "we", "you", "they", "ever", "there", "theres", "is", "was", "a", "an", "any", "some",
+    "like", "start", "started", "to", "get", "it", "its", "were", "maybe", "even", "do", "did",
+    "might", "may", "could", "would", "be", "possibly",
+}
+HYPOTHETICAL_GAP = 3
+# After the lines: the caller says the signal was a misunderstanding. Words saying the smell has
+# only faded ("I don't smell it anymore", "not out here") never stand a call down.
+CORRECTIONS = (
+    "didnt say",
+    "did not say",
+    "never said",
+    "i didnt mean",
+    "i meant if",
+    "i said if",
+    "didnt smell",
+    "did not smell",
+    "never smelled",
+    "theres no smell",
+    "there is no smell",
+    "no smell at all",
+)
+FADED = (
+    "anymore",
+    "any more",
+    "now",
+    "outside",
+    "out here",
+    "stopped",
+    "went away",
+    "gone",
+    "faded",
+    "not as",
+    "less",
+)
+
+
 @dataclass
 class SafetyAction:
     action: str  # none, ask_check, speak_lines, speak_variant, cleared
@@ -135,7 +198,11 @@ def _negated(text_words: str, phrase: str, answering: bool = False) -> bool:
     while start >= 0:
         before = text_words[: start + 1]
         after = text_words[start + len(target) - 1 :]
-        negated = any(before.endswith(words(n)) for n in NEGATORS) or (
+        kept = before.split()
+        while kept and kept[-1] in ARTICLES:
+            kept.pop()
+        bare = " " + " ".join(kept) + " "
+        negated = any(bare.endswith(words(n)) for n in NEGATORS) or (
             answering and _person_negated(before)
         )
         if not negated and not (answering and _quiet_after(after)):
@@ -144,17 +211,80 @@ def _negated(text_words: str, phrase: str, answering: bool = False) -> bool:
     return True
 
 
-def clear_signal(text: str, cfg: dict, answering_check: bool = False) -> str | None:
-    """The kind of the first clear, not negated signal in the text, or None. answering_check is
-    True for the caller's answer to the check question, where "the CO alarm is quiet" is a no."""
+def _hypothetical(text_words: str, phrase: str) -> bool:
+    """True only when every mention of the phrase is a worry: a word like "if" or "is it" just
+    before it, past at most a few filler words. "If it's on, I smell gas" is not, since the mention
+    comes after other words."""
+    target = words(phrase)
+    start = text_words.find(target)
+    if start < 0:
+        return False
+    while start >= 0:
+        kept = text_words[: start + 1].split()
+        for _ in range(HYPOTHETICAL_GAP + 1):
+            trimmed = " " + " ".join(kept) + " "
+            if any(trimmed.endswith(words(h)) for h in HYPOTHETICAL):
+                break
+            if not kept or kept[-1] not in HYPOTHETICAL_FILLER:
+                return False
+            kept.pop()
+        else:
+            return False
+        start = text_words.find(target, start + 1)
+    return True
+
+
+def _mentions(text: str, cfg: dict, answering_check: bool) -> list[tuple[str, bool]]:
+    """Every clear phrase in the text that isn't negated, as (kind, only a worry)."""
     text_words = words(text)
+    found = []
     for kind, spec in cfg["kinds"].items():
         for phrase in spec["clear"]:
             if has_phrase(text_words, phrase) and not _negated(
                 text_words, phrase, answering_check
             ):
-                return kind
-    return None
+                found.append((kind, _hypothetical(text_words, phrase)))
+    return found
+
+
+def clear_signal(text: str, cfg: dict, answering_check: bool = False) -> str | None:
+    """The kind of the first clear, not negated signal in the text, or None. answering_check is
+    True for the caller's answer to the check question, where "the CO alarm is quiet" is a no. A
+    mention that is only a worry ("if I smell gas") is not a signal."""
+    return next((kind for kind, worry in _mentions(text, cfg, answering_check) if not worry), None)
+
+
+def worry_signal(text: str, cfg: dict) -> str | None:
+    """The kind of a mention that is only a worry, when the text has no clear signal."""
+    mentions = _mentions(text, cfg, False)
+    if any(not worry for _, worry in mentions):
+        return None
+    return mentions[0][0] if mentions else None
+
+
+def stands_down(text: str, kind: str | None, cfg: dict) -> bool:
+    """After the lines, the caller says there was never a smell or alarm: "I didn't say I smelled
+    gas", "there's no gas smell". Never when they say it has only faded or they've gone out."""
+    if not kind:
+        return False
+    text_words = words(text)
+    if any(has_phrase(text_words, f) for f in FADED):
+        return False
+    corrected = [text_words.find(words(c)) for c in CORRECTIONS if has_phrase(text_words, c)]
+    if corrected:
+        # Every mention comes after the correction, so it is what's being taken back: "I didn't
+        # say I smelled gas". "I smell gas, I didn't say it was bad" is still a report.
+        first = min(corrected)
+        mentions = [
+            text_words.find(words(p))
+            for spec in cfg["kinds"].values()
+            for p in spec["clear"]
+            if has_phrase(text_words, p)
+        ]
+        return all(m > first for m in mentions)
+    return any(
+        has_phrase(text_words, p) and _negated(text_words, p) for p in cfg["kinds"][kind]["clear"]
+    ) and not clear_signal(text, cfg)
 
 
 def vague_signal(text: str, cfg: dict, answering_check: bool = False) -> str | None:
@@ -265,9 +395,16 @@ def check_caller_turn(
 ) -> SafetyAction:
     """What the agent must do after this caller line, given the call's safety state. heating_asked
     is True once the heating check question has been asked on this call."""
+    if state == "lines_said" and stands_down(text, kind, cfg):
+        return SafetyAction("cleared", kind)
     signal = clear_signal(text, cfg, answering_check=state == "checking")
     if signal:
         if state == "lines_said" and signal == kind:
+            # The caller stays in control: past the tenant's repeat_limit, a smell raised again
+            # gets no more lines, and the agent helps with what they asked for (eval round 3).
+            limit = cfg.get("repeat_limit")
+            if limit is not None and variant >= limit:
+                return SafetyAction("none", kind, variant=variant)
             variants = cfg["kinds"][kind]["variants"]
             return SafetyAction(
                 "speak_variant", kind, variants[variant % len(variants)], variant + 1
@@ -283,7 +420,7 @@ def check_caller_turn(
         if answer == "no":
             return SafetyAction("cleared", kind)
         return SafetyAction("none", kind)
-    vague = vague_signal(text, cfg)
+    vague = vague_signal(text, cfg) or worry_signal(text, cfg)
     if vague and state in ("none", "cleared"):
         return SafetyAction("ask_check", vague, cfg["vague"][vague]["question"])
     if not heating_asked and heating_signal(text, cfg):

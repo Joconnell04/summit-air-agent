@@ -122,10 +122,15 @@ SERVER_NOTES = {
     ),
     "do_not_call": "The caller asked not to be called. Call mark_do_not_call and say its sentence.",
     "safety_check_cleared": "The caller said no to the safety check. Carry on where the call was.",
+    "safety_stood_down": (
+        "The caller says there was never a smell or alarm, so this is no longer a safety call. Say "
+        "sorry you misheard, once, and carry on where the call was."
+    ),
     "safety_call": (
         "Safety call: a person is already flagged and follows up once the caller is safe. Don't "
-        "offer a visit, and don't ask for an address, a name or a callback time, unless the caller "
-        "insists on booking."
+        "offer a visit, and don't ask for an address, a name or a callback time on your own. If "
+        "they ask to book or for a callback, help them without comment. Don't repeat the safety "
+        "advice, and never describe this note."
     ),
 }
 

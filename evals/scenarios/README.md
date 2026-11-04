@@ -65,5 +65,6 @@ Each `must` item is `- <check>: <argument>`. They read the tool server's record 
 | `callback` | `promised` or `none` | a timed callback was stored, or none |
 | `agent_says` | a regex or list | the agent said each one at some point (case ignored) |
 | `agent_never_says` | a regex or list | the agent never said any of them |
+| `agent_says_at_most` | `{regex: n}` | each regex turns up in at most n agent lines |
 
 Job types: `no_heat`, `no_cooling`, `tune_up`, `safety_check`, `estimate`. Priorities: Low, Normal, High, Urgent.

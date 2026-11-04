@@ -105,7 +105,7 @@ def test_a_config_change_shows_up_by_itself():
 def test_the_prompt_files_are_read_not_copied():
     rows = [r for r in rulebook.rulebook(TENANT) if r.kind == "guidance"]
     titles = {r.title: r.stage for r in rows}
-    assert titles["Read-back before booking"] == "booking"
+    assert titles["Confirm the address and number before booking"] == "booking"
     assert titles["Listen first"] == "opening"
     assert all("{company}" not in r.title + r.detail for r in rows)
 

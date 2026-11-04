@@ -98,13 +98,15 @@ def test_a_correction_after_the_read_back_needs_a_new_read_back(agent):
     assert book(agent, call, first_open(agent, call))["refused"] == "gate_read_back"
 
 
-def test_the_read_back_sentence_reads_the_number_in_groups(agent):
+def test_the_read_back_is_one_sentence_with_the_number_in_groups(agent):
+    """Eval round 3: one sentence, no "let me read that back" lead-in, no internal words."""
     call = agent.start(UNKNOWN)["data"]["call_id"]
     asked = agent.tool("read_back", call, address=in_area_address(), phone="caller_id")
     assert asked["say"] == (
-        "Let me read that back: your home at 101 Union St, Brooklyn, 11231, and the best number "
-        "is 212, 555, 0999. Is that right?"
+        "I have your home at 101 Union St, Brooklyn, 11231, and the best number is 212, 555, "
+        "0999, is that right?"
     )
+    assert "read" not in asked["say"].lower()
 
 
 def test_a_caller_who_answers_the_read_back_with_a_business_cannot_book(agent):
@@ -395,7 +397,7 @@ def test_after_hours_a_cold_house_alerts_the_on_call_technician_before_booking(a
     flagged = agent.tool("flag_person", call, reason="On-call: 48 F inside", priority="Urgent")
     assert flagged["ok"], flagged
     assert flagged["data"]["callback_at"] == iso(clock() + timedelta(minutes=20))
-    assert "on-call" in flagged["say"]
+    assert "on-call team know this call is top priority" in flagged["say"]
     assert book(agent, call, TOMORROW_MORNING, job_type="no_heat", inside_temp_f=48)["ok"]
 
 
@@ -604,3 +606,19 @@ def test_business_callers_are_recognized_from_their_words(line):
 )
 def test_home_callers_are_not_marked_commercial(line):
     assert not sounds_commercial(line, AGENT["commercial"]), line
+
+
+def test_the_confirmation_names_the_day_and_the_date(agent):
+    """Eval round 3: "make sure the agent restates the day/date with the time"."""
+    call = ready_to_book(agent)
+    found = agent.tool("find_slots", call, job_type="tune_up")
+    today = next(d for d in found["data"]["days"] if d["day"] == "today")
+    booked = book(agent, call, {"date": today["date"], "window": today["windows"][0]})
+    assert booked["ok"], booked
+    assert booked["say"].startswith("You're all set for today, Monday, November 2, with the")
+    later = ready_to_book(agent, address=in_area_address(5))
+    thursday = agent.tool("find_slots", later, job_type="tune_up", day="2026-11-05")
+    window = thursday["data"]["windows"][0]["window"]
+    on_thursday = book(agent, later, {"date": "2026-11-05", "window": window})
+    assert on_thursday["ok"], on_thursday
+    assert on_thursday["say"].startswith("You're all set for Thursday, November 5, with the")

@@ -227,11 +227,15 @@ def _describe(ctx: Ctx, window: dict) -> dict:
         if local.date() == today + timedelta(days=1)
         else local.strftime("%A")
     )
+    # The confirmation names the day and the date ("today, Monday, November 2"), so a caller can
+    # catch a wrong day (eval round 3).
+    dated = f"{local.strftime('%A')}, {local.strftime('%B')} {local.day}"
     return {
         "date": window["date"],
         "window": window["window"],
         "weekday": local.strftime("%A"),
         "day": day_word,
+        "day_and_date": dated if day_word == local.strftime("%A") else f"{day_word}, {dated}",
         "label": spec.label() if spec else window["window"],
         "after_hours": window["after_hours"],
     }
@@ -634,7 +638,7 @@ def book_appointment(ctx: Ctx, args: BookIn) -> Result:
         },
     )
     result = ok(
-        f"You're all set for {when['day']}, with the technician arriving between "
+        f"You're all set for {when['day_and_date']}, with the technician arriving between "
         f"{when['label'].replace(' to ', ' and ')}.",
         booking_id=sent["job_id"],
         appointment_id=sent["appointment_id"],
@@ -833,7 +837,7 @@ def reschedule_appointment(ctx: Ctx, args: RescheduleIn) -> Result:
     )
     between = when["label"].replace(" to ", " and ")
     return ok(
-        f"Done, I've moved it to {when['day']} between {between}.",
+        f"Done, I've moved it to {when['day_and_date']}, between {between}.",
         booking_id=job["id"],
         window=when,
     )
@@ -910,19 +914,23 @@ def _callback_due(ctx: Ctx, asked: CallbackTime) -> CallbackWhen:
         else:
             say = "What time should I tell them someone will call by?"
         raise Refused("invalid_callback_time", say, errors={"callback_time": reason}) from None
-    if earliest and latest:
+    closes = datetime.combine(
+        tenant.local(now).date(), time.fromisoformat(tenant.callbacks["outbound_hours"][1]), tenant.tz
+    )
+    if earliest and not latest:
+        # "After 5" is promised as a time inside it ("around 5:30"), so the caller knows when to
+        # expect the call and the office knows when it is late (eval round 3).
+        target = min(earliest + timedelta(minutes=tenant.callbacks["after_lead_minutes"]), closes)
+        spoken = tenant.line("callback_after", time=tenant.time_spoken(target, now))
+        return CallbackWhen(target, max(earliest, now), spoken)
+    if earliest:
         spoken = tenant.line(
             "callback_between",
             start=tenant.time_spoken(earliest, now),
             end=tenant.time_spoken(latest, now),
         )
-    elif earliest:
-        spoken = tenant.line("callback_after", time=tenant.time_spoken(earliest, now))
     else:
         spoken = tenant.line("callback_before", time=tenant.time_spoken(latest, now))
-    closes = datetime.combine(
-        tenant.local(now).date(), time.fromisoformat(tenant.callbacks["outbound_hours"][1]), tenant.tz
-    )
     return CallbackWhen(latest or closes, max(earliest or now, now), spoken)
 
 
@@ -977,6 +985,8 @@ def flag_person(ctx: Ctx, args: FlagIn) -> Result:
     spoken = when.spoken
     if callback_id is None:
         say = ctx.tenant.line("flag_stored_no_callback")
+    elif args.priority == "Urgent" and ctx.call["after_hours"]:
+        say = ctx.tenant.line("flag_stored_on_call", when=spoken)
     elif args.priority == "Urgent":
         say = ctx.tenant.line("flag_stored_urgent", when=spoken)
     else:
@@ -1144,9 +1154,11 @@ def end_call(ctx: Ctx, args: EndCallIn) -> Result:
             with tx(ctx.conn):
                 records.update_call(ctx.conn, ctx.call["id"], end_requested=1)
         sign_off = " ".join(safety["sign_off"].split())
-        # A caller saying goodbye after the sign-off doesn't hear it a second time.
-        if hang_up and records.agent_said(ctx.conn, ctx.call["id"], sign_off):
-            return ok("", hang_up=True)
+        # One ending: the sign-off is said once a call, whether the caller is leaving or keeps
+        # talking (eval round 3).
+        if records.agent_said(ctx.conn, ctx.call["id"], sign_off):
+            # signed_off tells the voice layer the goodbye has been said, so it adds none.
+            return ok("", hang_up=hang_up, signed_off=True)
         return ok(sign_off, hang_up=hang_up)
     last = ctx.conn.execute(
         "SELECT turn_seq FROM bookings WHERE call_id = ? AND kind = 'book' AND status IN ('sending', 'booked', 'queued') "

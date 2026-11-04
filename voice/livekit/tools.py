@@ -38,7 +38,7 @@ def make_tool(
     server: ToolServer,
     bridge: Bridge,
     log: ToolLog,
-    hang_up: Callable[[RunContext, object], None],
+    hang_up: Callable[..., None],
     speak: Callable[[str], object],
 ):
     schema = {k: spec[k] for k in ("name", "description", "parameters")}
@@ -59,7 +59,8 @@ def make_tool(
             spoken = speak(result["say"])
         if ending and result["data"].get("hang_up"):
             # The server agreed: hang up once this turn's speech, and any line above, has played.
-            hang_up(context, spoken)
+            # After the safety sign-off the call has had its goodbye, so the worker adds none.
+            hang_up(context, spoken, quiet=bool(result["data"].get("signed_off")))
         if spoken is not None or ending:
             # None tells the session not to generate another reply.
             return None
@@ -73,7 +74,7 @@ def build_tools(
     server: ToolServer,
     bridge: Bridge,
     log: ToolLog,
-    hang_up: Callable[[RunContext, object], None],
+    hang_up: Callable[..., None],
     speak: Callable[[str], object],
 ) -> list:
     """One tool per spec. `hang_up` runs only when the server's end_call result says to; `speak`

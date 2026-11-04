@@ -228,14 +228,12 @@ def turn(
                 changes.update(safety_state="checking", safety_kind=action.kind)
             elif action.action == "cleared":
                 changes.update(safety_state="cleared")
-                records.add_flag(
-                    conn,
-                    call["id"],
-                    "safety_check_cleared",
-                    "Caller said no to the safety check",
-                    now,
-                    "Low",
+                reason = (
+                    "Caller said there was no smell or alarm after the safety lines"
+                    if call["safety_state"] == "lines_said"
+                    else "Caller said no to the safety check"
                 )
+                records.add_flag(conn, call["id"], "safety_check_cleared", reason, now, "Low")
             text_words = words(args.text)
             # Marked at once on the caller's words (spec S-49); the agent still says the line.
             if len(call["caller_key"]) == 10 and any(
@@ -277,7 +275,8 @@ def turn(
     if action.action in ("speak_lines", "speak_variant", "ask_check"):
         hints.append("journey:safety")
     if action.action == "cleared":
-        hints.append("safety_check_cleared")
+        stood_down = call["safety_state"] == "lines_said"
+        hints.append("safety_stood_down" if stood_down else "safety_check_cleared")
     # After the lines, every caller line carries a reminder that the safety call doesn't book.
     if args.speaker == "caller" and action.action == "none" and call["safety_state"] == "lines_said":
         hints.append("safety_call")

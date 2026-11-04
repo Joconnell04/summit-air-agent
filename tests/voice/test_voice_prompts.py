@@ -16,7 +16,7 @@ def test_instructions_name_the_company_from_the_call_context(agent):
     assert start["tenant"]["name"] in text
     assert "Monday 2 November 2026, 9:00 AM" in text
     # The tenant's knowledge comes in through the call context, not the prompt files.
-    assert "Stay warm out there" in text
+    assert "Have a great rest of your day" in text
 
 
 def test_no_company_fact_is_written_into_the_prompt_files():

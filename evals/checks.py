@@ -277,6 +277,26 @@ def agent_never_says(arg: Any, ev: Evidence) -> list[str]:
     return problems
 
 
+def agent_says_at_most(arg: dict, ev: Evidence) -> list[str]:
+    """Each pattern turns up in at most that many agent lines: a recommendation said once and
+    offered once more, not pressed on every turn (eval round 3)."""
+    problems = []
+    for pattern, most in arg.items():
+        hits = [line for line in ev.agent_lines() if re.search(pattern, line, re.IGNORECASE)]
+        if len(hits) > most:
+            problems.append(f"the agent said /{pattern}/ in {len(hits)} lines, at most {most} allowed")
+    return problems
+
+
+def _counts(arg: Any) -> None:
+    if not isinstance(arg, dict) or not arg:
+        raise ValueError("expected a mapping of regex to the most lines allowed")
+    for pattern, most in arg.items():
+        _strings(pattern)
+        if not isinstance(most, int) or isinstance(most, bool) or most < 0:
+            raise ValueError(f"expected a whole number for {pattern!r}, got {most!r}")
+
+
 def _recorded_or_zip(arg: Any) -> None:
     if arg != "recorded" and not re.fullmatch(r"\d{5}", str(arg)):
         raise ValueError(f"expected recorded or a five-digit ZIP, got {arg!r}")
@@ -315,6 +335,7 @@ CHECKS: dict[str, Check] = {
     "callback": Check(_one_of("promised", "none"), callback, lambda arg: arg == "none"),
     "agent_says": Check(_strings, agent_says),
     "agent_never_says": Check(_strings, agent_never_says, lambda arg: True),
+    "agent_says_at_most": Check(_counts, agent_says_at_most, lambda arg: True),
 }
 
 

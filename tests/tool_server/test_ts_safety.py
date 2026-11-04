@@ -71,12 +71,15 @@ def test_the_check_answer_decides(answer, result):
 
 
 def test_lines_said_once_then_variants_never_twice_in_a_row():
-    first = safety.check_caller_turn("I smell gas", "none", None, 0, CFG)
+    unlimited = {k: v for k, v in CFG.items() if k != "repeat_limit"}
+    first = safety.check_caller_turn("I smell gas", "none", None, 0, unlimited)
     assert first.action == "speak_lines" and first.text == GAS_LINES
     seen = []
     variant = 0
     for _ in range(4):
-        again = safety.check_caller_turn("I really do smell gas", "lines_said", "gas", variant, CFG)
+        again = safety.check_caller_turn(
+            "I really do smell gas", "lines_said", "gas", variant, unlimited
+        )
         assert again.action == "speak_variant"
         assert again.text != GAS_LINES
         seen.append(again.text)
@@ -451,3 +454,136 @@ def test_a_caller_saying_goodbye_after_the_sign_off_does_not_hear_it_again(agent
     assert bye["say"] == ""
     assert bye["data"]["hang_up"] is True
 
+
+
+# Eval round 3: safety tone (DECISIONS.md 033 and Jackson's notes in evals/rounds/03-judge-labels.md).
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "I didn't go down there, I don't want to mess with anything if I smell gas or anything",
+        "is it a gas leak?",
+        "I'm worried about a gas leak, honestly",
+        "I don't know if I smell gas",
+    ],
+)
+def test_a_worry_with_nothing_described_gets_the_check_question_not_the_lines(line):
+    action = safety.check_caller_turn(line, "none", None, 0, CFG)
+    assert action.action == "ask_check"
+    assert action.text == CFG["vague"]["gas"]["question"]
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "could it be a gas thing?",
+        "it's a gas furnace, could that be why it's loud?",
+    ],
+)
+def test_a_question_about_gas_with_no_smell_asks_nothing(line):
+    assert safety.check_caller_turn(line, "none", None, 0, CFG).action == "none"
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "what if there's a gas leak? I smell gas in the kitchen",
+        "if it's on, I smell gas",
+        "I smell gas, is it a gas leak?",
+    ],
+)
+def test_a_report_next_to_a_worry_word_still_brings_the_lines(line):
+    assert safety.check_caller_turn(line, "none", None, 0, CFG).action == "speak_lines"
+
+
+@pytest.mark.parametrize(
+    "line,stands_down",
+    [
+        ("wait, I didn't say I smelled gas, I just didn't want to go near the furnace", True),
+        ("there's no gas smell", True),
+        ("no, I never smelled gas, I meant if", True),
+        ("I don't smell it anymore", False),
+        ("I don't smell gas out here", False),
+        ("I smell gas, I didn't say it was bad", False),
+        ("I still don't smell anything", False),
+    ],
+)
+def test_after_the_lines_only_a_correction_stands_the_call_down(line, stands_down):
+    action = safety.check_caller_turn(line, "lines_said", "gas", 0, CFG)
+    assert (action.action == "cleared") is stands_down
+
+
+def test_a_stood_down_call_books_and_ends_like_any_other(agent):
+    from prompts.assemble import server_notes
+
+    call = ready_to_book(agent)
+    agent.turn(call, "Is the gas smell thing a problem? I smell gas near the stove sometimes.")
+    agent.say(call, GAS_LINES)
+    turn = agent.turn(call, "Wait, I didn't say I smelled gas. I said if.")
+    assert turn["data"]["safety"]["action"] == "cleared"
+    assert "safety_stood_down" in turn["data"]["hints"]
+    assert "no longer a safety call" in server_notes(turn["data"]["hints"])[0]
+    assert count(agent, "SELECT COUNT(*) FROM flags WHERE kind = 'safety_check_cleared'") == 1
+    booked = book(agent, call, first_open(agent, call))
+    assert booked["ok"], booked
+    assert booked["data"]["safety_override"] is False
+    agent.say(call, booked["say"])
+    agent.turn(call, "That's all, bye.")
+    bye = agent.tool("end_call", call, reason="caller_goodbye")
+    assert bye["say"] == "" and bye["data"]["hang_up"] is True
+
+
+def test_the_caller_hears_the_lines_and_one_shorter_line_then_nothing_more(agent):
+    """Eval round 3, gas-downplayed-wants-booking: the caller stays in control."""
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "There's a gas smell by the furnace but that's normal.")
+    agent.say(call, GAS_LINES)
+    again = agent.turn(call, "Come on, it's just a little gas smell, it always does that.")
+    assert again["data"]["safety"]["action"] == "speak_variant"
+    agent.say(call, again["say"])
+    third = agent.turn(call, "I told you, the gas smell is normal. Just book Thursday.")
+    assert third["data"]["safety"] is None
+    assert third["say"] == ""
+    assert "safety_call" in third["data"]["hints"]
+
+
+def test_the_sign_off_is_said_once_even_if_the_caller_keeps_talking(agent):
+    """Eval round 3, after-hours-no-heat-cold: the sign-off closed three turns in a row."""
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "My carbon monoxide alarm is going off.")
+    agent.say(call, CO_LINES)
+    first = agent.tool("end_call", call, reason="resolved")
+    assert first["say"] == " ".join(CFG["sign_off"].split())
+    agent.say(call, first["say"])
+    agent.turn(call, "Okay, but what number will you call me back on?")
+    second = agent.tool("end_call", call, reason="resolved")
+    assert second["ok"] and second["say"] == ""
+    assert second["data"]["hang_up"] is False
+
+
+def test_a_caller_on_a_safety_call_can_ask_for_a_callback_at_their_time(agent):
+    """Eval round 3: "the agent says it can't schedule a callback... why not?"."""
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "I smell gas in the basement.")
+    agent.say(call, GAS_LINES)
+    agent.turn(call, "Okay, I'm outside. Can someone call me back after 5?")
+    flagged = agent.tool(
+        "flag_person", call, reason="Gas smell; wants a callback", callback_after="5 PM"
+    )
+    assert flagged["ok"], flagged
+    assert flagged["say"] == "I've let our team know, and someone will call you around 5:30 PM."
+    assert count(agent, "SELECT COUNT(*) FROM callbacks WHERE status = 'pending'") == 1
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "nobody smelled anything, so it's not a gas leak or anything",
+        "I haven't smelled anything, nothing like rotten eggs",
+    ],
+)
+def test_a_denial_with_an_article_or_nothing_like_triggers_nothing(line):
+    """Eval round 3 run 20261104-014518, gas-worry-no-smell: "it's not a gas leak" brought the
+    gas lines."""
+    assert safety.check_caller_turn(line, "none", None, 0, CFG).action == "none"

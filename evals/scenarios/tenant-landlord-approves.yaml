@@ -22,7 +22,12 @@ must:
   - read_back: before_booking
   - safety_lines: not_said
   - outcome: booked
+  - agent_never_says: ['\bread[- ]?back\b', '\bflag(ged|ging)?\b', 'comfort advisor', 'stay warm out there', '\bdog\b', 'let me read']
+  - agent_says: '(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday), (November|December) \d'
 should:
   - Asks own or rent only after the problem is understood, and records the landlord as the one who approves.
   - May add one neutral line that landlords must provide heat in season and 311 takes complaints, and gives no legal advice.
-  - Folds the buzzer and access detail into the single closing question.
+  - Asks the optional questions about the system softly ("no worries if not"), one at a time.
+  - Does not ask about access again after the caller has explained the broken buzzer; says "pet", not "dog", if it asks at all.
+  - Turns the buzzer note into an action ("I'll let the technician know to call or knock"), and the confirmation names the day and the date with the window.
+  - Ends with one short, kind goodbye, never "stay warm out there".

@@ -22,8 +22,9 @@ class Hangups:
     def __init__(self):
         self.calls = []
 
-    def __call__(self, context, last_line):
+    def __call__(self, context, last_line, quiet=False):
         self.calls.append((context, last_line))
+        self.quiet = quiet
 
 
 class Voice:
@@ -117,6 +118,20 @@ def test_a_safety_caller_saying_goodbye_hears_the_sign_off_then_the_line_drops(a
     assert voice.said == [" ".join(SAFETY["sign_off"].split())]
     # The hang-up waits for the sign-off's own playout.
     assert hangups.calls == [("ctx", "handle:1")]
+
+
+def test_a_goodbye_after_the_sign_off_adds_no_second_goodbye(agent, connect):
+    """Eval round 3: one ending on a safety call."""
+    call_id = "call-1"
+    agent.start(call_id=call_id)
+    agent.say(call_id, agent.turn(call_id, "I smell gas")["say"])
+    agent.say(call_id, " ".join(SAFETY["sign_off"].split()))
+    agent.turn(call_id, "Okay, bye.")
+    hangups, voice = Hangups(), Voice()
+    tools = tools_for(connect(call_id), hangups, voice)
+    assert asyncio.run(tools["end_call"]({"reason": "caller_goodbye"}, "ctx")) is None
+    assert voice.said == []
+    assert hangups.calls == [("ctx", None)] and hangups.quiet is True
 
 
 def test_end_call_that_the_server_allows_hangs_up_and_ends_the_turn(agent, connect):

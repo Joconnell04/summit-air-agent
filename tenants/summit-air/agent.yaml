@@ -69,6 +69,10 @@ safety:
     For your safety, I'd recommend hanging up now, getting outside, and calling 911 from there.
     We'll follow up once you're safe.
   flag_reason: "{label} reported on the call"
+  # How many shorter lines a caller hears after the full lines when they raise it again. The caller
+  # stays in control: the concern is said once, offered once more, then the agent helps (eval round
+  # 3, Jackson: "if they reject your advice, just let it be and maybe offer one more time").
+  repeat_limit: 1
 
 # A caller line that describes a business marks the call commercial: it can't book (spec S-05,
 # journey 8). Three ways to match: "my restaurant" or "our bakery" (my or our right before a
@@ -153,6 +157,8 @@ callbacks:
   max_attempts: 1
   # A dropped safety call gets a callback this soon.
   dropped_safety_minutes: 10
+  # A callback asked for "after 5" is promised for this long after the start ("around 5:30"). ASSUMED.
+  after_lead_minutes: 30
   # When the FSM is down or refuses a booking, someone calls back within this.
   fsm_down_minutes: 60
 
@@ -182,21 +188,24 @@ lines:
   fsm_unavailable_no_callback: I can't get to that right now, but I've written it all down for the team.
   # {when} is how the callback time is said, from the callback_ lines below.
   flag_stored: I've let our team know, and someone will call you {when}.
-  flag_stored_urgent: >-
-    I've marked this as urgent and let our on-call team know, so someone's keeping an eye on it.
-    Someone will call you {when}.
+  flag_stored_urgent: I've let our team know this call is top priority, and someone will call you {when}.
+  # The same after hours, when the on-call technician has the urgent calls (journey 11).
+  flag_stored_on_call: >-
+    I've let our on-call team know this call is top priority, and someone will call you {when}.
   flag_stored_no_callback: I've let our team know.
   lead_stored: Someone from our team will call you {when} to tell you more.
-  # The callback time as said: a time we named, or the window the caller asked for.
+  # The callback time as said: a time we named, or the window the caller asked for. A caller who
+  # says "after 5" hears a time inside that window, so they know when to expect it (eval round 3):
+  # callbacks.after_lead_minutes past the start.
   callback_by: by {time}
-  callback_after: after {time}
+  callback_after: around {time}
   callback_before: before {time}
   callback_between: between {start} and {end}
   callback_outside_hours: Our team makes calls between {opens} and {closes}. What time in there works?
   # {address} is street, unit, city and ZIP; {phone} is read in groups. Naming it a home is how
   # every booking confirms the caller is residential.
-  read_back: >-
-    Let me read that back: your home at {address}, and the best number is {phone}. Is that right?
+  # One sentence with no lead-in, said once (eval round 3).
+  read_back: I have your home at {address}, and the best number is {phone}, is that right?
   commercial: >-
     Thanks for thinking of us. Unfortunately Summit Air only works on homes, so we're not the right
     fit for this one.
@@ -213,7 +222,7 @@ lines:
   limit: I've already got that taken care of on this call, so let me have someone from the team follow up.
   slot_taken: That window just filled up.
   # Said once when the server marks a call Urgent (spec S-21a). Below Urgent, no priority is named.
-  urgent_priority: I've marked this as one of our most urgent calls, so you get our soonest opening.
+  urgent_priority: I've marked this call top priority, so you get our soonest opening.
   anything_else_first: Is there anything else I can help with?
   # The first line of a call the system places (journey 12). {day} is "today", "tomorrow" or a
   # weekday; {window} is spoken, such as "2 to 4".
@@ -230,8 +239,9 @@ lines:
 voice:
   greeting_known: Hi, this is Summit Air. Is this {first_name}?
   greeting_unknown: Thanks for calling Summit Air, this is the virtual assistant. How can I help?
-  # Said when the model ends the call without a goodbye of its own (knowledge/sign-off.md).
-  goodbye: Thanks for calling Summit Air. Stay warm out there.
+  # Said when the model ends the call without a goodbye of its own (knowledge/sign-off.md). Generic
+  # and kind, the same on any day (eval round 3).
+  goodbye: Thanks for calling Summit Air. Have a great rest of your day.
   # Said by the worker when the tool server can't be reached, then the call ends.
   server_down: >-
     Sorry, our system is having trouble right now. Please call us back in a few minutes, and if you

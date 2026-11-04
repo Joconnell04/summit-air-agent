@@ -87,14 +87,17 @@ def test_a_flag_returns_its_sentence_only_once_stored_and_names_a_time(agent):
         priority="Urgent",
         callback_in_minutes=20,
     )
-    assert urgent["say"].startswith("I've marked this as urgent and let our on-call team know")
-    assert "9:20 AM" in urgent["say"]
+    # Eval round 3: "top priority", and no on-call team in office hours.
+    assert urgent["say"] == (
+        "I've let our team know this call is top priority, and someone will call you by 9:20 AM."
+    )
 
 
 @pytest.mark.parametrize(
     "window,spoken",
     [
-        ({"callback_after": "5 PM"}, "someone will call you after 5 PM."),
+        # Eval round 3: "after 5" is promised as a time inside it.
+        ({"callback_after": "5 PM"}, "someone will call you around 5:30 PM."),
         ({"callback_before": "3 PM"}, "someone will call you before 3 PM."),
         (
             {"callback_after": "1 PM", "callback_before": "3:30 PM"},
@@ -111,13 +114,13 @@ def test_a_window_the_caller_asked_for_is_said_by_the_server_as_asked(agent, win
     assert flagged["data"]["callback_spoken"] == spoken.removeprefix("someone will call you ")[:-1]
 
 
-def test_an_after_window_is_due_at_the_end_of_callback_hours_and_dialed_from_its_start(agent):
+def test_an_after_window_is_due_at_the_time_promised_and_dialed_from_its_start(agent):
     call = agent.start(UNKNOWN)["data"]["call_id"]
     flagged = agent.tool(
         "flag_person", call, reason="Call me back", callback_after="5 PM", system_calls_back=True
     )
     assert flagged["ok"], flagged
-    assert flagged["data"]["callback_at"].startswith("2026-11-03T02:00")  # 9 PM New York
+    assert flagged["data"]["callback_at"].startswith("2026-11-02T22:30")  # 5:30 PM New York
     conn = agent.db()
     try:
         dial = conn.execute("SELECT due_at FROM outbound").fetchone()["due_at"]
@@ -165,7 +168,14 @@ def test_a_lead_says_the_window_the_caller_asked_for(agent):
     call = agent.start(UNKNOWN)["data"]["call_id"]
     details = {"contact_name": "Ana Ruiz", "need": "Wants to join the plan", "callback_after": "4 PM"}
     lead = agent.tool("record_lead", call, kind="membership", details=details)
-    assert lead["say"] == "Someone from our team will call you after 4 PM to tell you more."
+    assert lead["say"] == "Someone from our team will call you around 4:30 PM to tell you more."
+
+
+def test_an_after_window_near_closing_is_promised_no_later_than_closing(agent):
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    flagged = agent.tool("flag_person", call, reason="Call me back", callback_after="8:45 PM")
+    assert flagged["ok"], flagged
+    assert flagged["data"]["callback_spoken"] == "around 9 PM"
 
 
 @pytest.mark.parametrize("bad", [None, "shortly", "soon", "8:00 AM", "25:00"])

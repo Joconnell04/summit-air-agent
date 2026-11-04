@@ -17,13 +17,20 @@ script:
   - Say you live downstairs and rent the upstairs, as soon as it matters.
   - Offer Tuesday, then correct it to Wednesday morning.
   - Take the first Wednesday window offered, then say goodbye.
+  - Mention the shared basement and ask for a heads-up before the technician comes.
 must:
   - booking: {count: 1, job_type: tune_up, zip: "11234"}
   - read_back: before_booking
   - safety_lines: not_said
   - tool_not_called: record_lead
   - outcome: booked
+  - agent_never_says: ['\bread[- ]?back\b', '\bflag(ged|ging)?\b', 'comfort advisor', 'stay warm out there', '\bdog\b', 'let me read']
+  - agent_says_at_most: {'is that right': 3}
 should:
   - Treats an owner-occupied two-family house as residential and does not decline.
   - Does not use commercial wording or ask about the tenant's account.
   - Confirms who approves the work and who will be home.
+  - Reads the address and number back once, in one sentence with no lead-in; after a correction, says the corrected sentence once.
+  - Says only what the tools returned about open times, and answers the caller's confusion about which mornings were open plainly.
+  - Turns the heads-up request into an action ("I'll ask them to give you a call about 30 minutes before they arrive").
+  - The confirmation names the day and the date; the goodbye is short and kind, never "stay warm out there".

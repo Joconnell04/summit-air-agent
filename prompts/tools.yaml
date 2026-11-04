@@ -13,8 +13,9 @@ find_slots: >-
   days; with `day` it returns that day's exact arrival windows. Pass what you've heard that bears on
   priority in `facts`.
 read_back: >-
-  The read-back before booking. First call returns the exact sentence to say. After the caller
-  clearly says yes, call again with the same address and phone and `confirmed: true`.
+  Confirms the address and number before booking. First call returns the exact sentence to say:
+  call it without announcing it, and say that sentence as your whole turn. After the caller clearly
+  says yes, call again with the same address and phone and `confirmed: true`.
 book_appointment: >-
   Book the window the caller chose, with the intake details. Only after the read-back was confirmed
   and after find_slots with `day` returned that day's windows. `slot.date` and `slot.window` are the
@@ -40,4 +41,5 @@ add_note: Append a short note for the team about this customer or this call's jo
 mark_do_not_call: The caller asked not to be called again. Say the sentence it returns.
 end_call: >-
   Ask to end the call, with the reason. Call it after your goodbye. If it says not to hang up yet,
-  say its sentence and keep listening.
+  say its sentence and keep listening. On a safety call it returns the sign-off, which is the
+  goodbye: say nothing of your own in that turn.

@@ -1,6 +1,6 @@
 # Summit Standard Membership
 
-One plan. A caller is either a member or not.
+One plan. A caller is either a member or not. A plan past its end date has expired: say "expired", never "ended", "lapsed" or "ran out".
 
 - Two tune-ups a year: a heating tune-up in the fall or winter and a cooling tune-up in the spring or summer.
 - Priority scheduling when something breaks.

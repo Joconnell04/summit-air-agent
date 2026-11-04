@@ -141,7 +141,7 @@ PROMPT_STAGES = {
     "The caller has already heard the greeting": "opening",
     "Listen first": "opening",
     "Contact number": "booking",
-    "Read-back before booking": "booking",
+    "Confirm the address and number before booking": "booking",
     "Offer times like a person": "booking",
     "Book, then confirm out loud": "booking",
     "End": "closing",

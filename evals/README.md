@@ -10,6 +10,10 @@ How the agent is tested before anyone calls it. Decision and reasoning: DECISION
 4. When the call ends, code checks read the tool-call log and the saved records. They decide pass or fail. A run where the simulated caller loops or never finishes, or the harness breaks, is marked `error`, not `fail` (decision 06), and is left out of pass rates. The exception: if the call already broke a rule that forbids something (a booking before the read-back, a price said, a booking on a commercial call), it is a fail however the call ended.
 5. An LLM grader (profile `offline.grader`) scores how the call felt. It can fail a run the code passed, never rescue one the code failed. A grader outage never hides a failed check: that run stays a fail, ungraded.
 
+## How far the grader is trusted
+
+Eval round 3 (`evals/rounds/03-judge-labels.md`) had Jackson label ten graded calls with the grader's verdict hidden. On the five he gave an explicit pass or fail, the grader agreed on 3 of 5 (MEASURED, that file's agreement table). Reading his other five notes as pass or fail (INFERRED), agreement is 7 of 10. Both are short of the bar in exploration 008 ("advisory if it disagrees on more than 2 of 20"), so the grader is not trusted to fail a run on its own. The publish gate already keeps its fails as notes (DECISIONS.md 031). In `make eval` a grader fail still marks the run failed, as decision 06 set; read a grader-only fail as a transcript to look at, not a regression, until a second labelling round (DECISIONS.md 035, "would change if") shows better agreement. The two misses ran both ways: it failed a call he passed (no personal details given out) and passed one he failed (a repeated read-back, internal wording, a weak goodbye), and it scored several passes 2 or 3 of 5, so it noticed problems and let them through. Its checklist (`prompts/evals/grader.md`) now carries his standards from that round, read as a fail when one recurs on a call.
+
 ## Scenario file
 
 One YAML file per scenario in `evals/scenarios/`. The fields, the seeded callers and every check are listed in `evals/scenarios/README.md`; a test loads every file, so an unknown check fails `make check`.
