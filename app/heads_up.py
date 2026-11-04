@@ -28,28 +28,39 @@ from .text import phone_display, phone_key, phone_said
 log = logging.getLogger(__name__)
 
 
+def us_number(value: str) -> str | None:
+    """A US number as ten digits: exactly ten, or eleven starting with 1, once spaces and
+    punctuation are dropped. Anything else (an extension, a country code other than 1, a typo) is
+    None, so it can never pass for another number (PR #134 review)."""
+    digits = re.sub(r"[\s().+-]", "", value or "")
+    if not digits.isdigit():
+        return None
+    if len(digits) == 11 and digits.startswith("1"):
+        digits = digits[1:]
+    return digits if len(digits) == 10 else None
+
+
 def allowlist(environ=os.environ) -> frozenset[str]:
-    """The numbers a heads-up may dial, as ten-digit keys. An entry counts only when it is exactly
-    ten digits, or eleven starting with 1, once spaces and punctuation are dropped; anything else
-    ("718-555-0142 ext 5", "+44 20 7946 0958", a typo) is left out and logged, so a malformed
-    entry can never widen the list to a different number (PR #134 review)."""
+    """The numbers a heads-up may dial, as ten-digit keys (us_number). A malformed entry is left
+    out and logged, so it can never widen the list to a different number."""
     keys = set()
     for entry in (environ.get("HEADSUP_ALLOWLIST") or "").split(","):
         entry = entry.strip()
         if not entry:
             continue
-        digits = re.sub(r"[\s().+-]", "", entry)
-        if digits.isdigit() and len(digits) == 11 and digits.startswith("1"):
-            digits = digits[1:]
-        if digits.isdigit() and len(digits) == 10:
-            keys.add(digits)
+        key = us_number(entry)
+        if key:
+            keys.add(key)
         else:
             log.warning("HEADSUP_ALLOWLIST entry ignored, not a ten-digit number: %r", entry)
     return frozenset(keys)
 
 
 def may_dial(phone: str, allowed: frozenset[str]) -> bool:
-    return len(phone_key(phone)) == 10 and phone_key(phone) in allowed
+    """The whole number, normalized the same way, is on the list: an international number never
+    matches a US one by its last ten digits."""
+    key = us_number(phone)
+    return key is not None and key in allowed
 
 
 def _when(tenant: Tenant, moment: datetime) -> str:

@@ -699,3 +699,63 @@ def test_notes_and_job_details_wait_for_the_full_check(agent, scenarios):
     again = agent.tool("find_customer", call,
                        address={"street": "620 Bedford Ave", "unit": "", "zip": "11235"})
     assert again["data"]["matches"][0]["notes"]
+
+
+# ---- second review (PR #134) --------------------------------------------------------------------
+
+
+def test_history_shows_nothing_until_the_check_passes(agent, scenarios):
+    call, maria = unknown_caller_finds_maria(agent, scenarios)
+    for what in ("jobs", "equipment"):
+        history = agent.tool("get_customer_history", call, customer_id=maria["customerId"],
+                             what=what)
+        assert history["ok"] and history["data"]["items"] == [] and history["data"]["withheld"]
+    agent.turn(call, "It's Maria Delgado.")
+    assert agent.tool("cancel_appointment", call, booking_id=maria["jobId"], reason="fixed")["ok"]
+    after = agent.tool("get_customer_history", call, customer_id=maria["customerId"], what="jobs")
+    assert after["data"]["items"]
+
+
+def test_a_name_at_the_start_of_the_line_counts():
+    from app.tools import _name_given
+
+    assert _name_given("Bedford, 620 Bedford Ave apartment 3B", "Maria Bedford")
+    assert _name_given("Bedford, 620 Bedford Ave", "Maria Bedford")
+    assert _name_given("Delgado 620 Bedford", "Maria Delgado")
+    assert _name_given("um, Delgado, it's 620 Bedford", "Maria Delgado")
+    # Still no name: the street alone, and a word in passing.
+    assert not _name_given("Cancel the visit at 620 Bedford Avenue", "Maria Bedford")
+    assert not _name_given("Bedford Avenue, 620", "Maria Bedford")
+    assert not _name_given("What's the price to cancel?", "Maria Price")
+
+
+def test_a_surname_that_is_an_everyday_word_needs_the_first_name():
+    from app.tools import _name_given
+
+    assert not _name_given("This is price gouging", "Maria Price")
+    assert not _name_given("It's long overdue", "Ana Long")
+    assert not _name_given("Price is too high", "Maria Price")
+    assert _name_given("This is Maria Price", "Maria Price")
+    assert _name_given("Price.", "Maria Price")
+
+
+def test_a_unit_letter_needs_a_unit_cue():
+    from app.tools import _unit_said
+
+    def rows(text):
+        return [{"call_id": "c", "seq": 1, "text": text}]
+
+    assert not _unit_said(rows("I need a visit at 620 Bedford"), "A")
+    assert _unit_said(rows("620 Bedford, apartment A"), "A")
+    assert _unit_said(rows("unit 12, 620 Bedford"), "12")
+    assert not _unit_said(rows("I've had it 12 days, 620 Bedford"), "12")
+    assert _unit_said(rows("620 Bedford 3B"), "3B")
+
+
+def test_may_dial_compares_the_whole_number():
+    from app.heads_up import may_dial
+
+    allowed = frozenset({"2079460958"})
+    assert not may_dial("+44 20 7946 0958", allowed)
+    assert may_dial("(207) 946-0958", allowed) and may_dial("1 207 946 0958", allowed)
+    assert not may_dial("207-946-0958 ext 5", allowed)

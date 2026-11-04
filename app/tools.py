@@ -783,24 +783,44 @@ NUMBER_WORDS = {"oh", "zero", "one", "two", "three", "four", "five", "six", "sev
                 "nine", "ten", "hundred"}
 
 
+# Surnames that are also everyday words: "This is price gouging", "It's long overdue". These count
+# only with the first name before them, or as a line that is just the name.
+COMMON_WORD_SURNAMES = {
+    "price", "long", "young", "king", "brown", "green", "white", "black", "gray", "grey", "rose",
+    "bell", "hall", "hill", "wood", "stone", "rice", "lane", "may", "day", "page", "love", "hope",
+    "cook", "baker", "best", "fair", "good", "small", "little", "short", "strong", "rich", "wise",
+    "sharp", "frost", "snow", "field", "ford", "park", "west", "north", "south", "east", "bush",
+    "street", "case", "cash", "hunt", "law", "fox", "wolf", "lamb", "march", "april", "june",
+    "summer", "winter", "bond", "chase", "cross", "major", "mason", "miller", "parker", "porter",
+    "power", "sweet", "true", "bright", "early", "free", "hart", "house", "moon", "shore",
+}
+
+
 def _name_given(text: str, name: str) -> bool:
-    """The caller gave this customer's surname as a name in this line: after a name lead or the
-    customer's first name, or as a line that is just the name. A surname inside the address ("620
-    Bedford Avenue") or in passing ("what's the price") is no name (PR #134 review)."""
+    """The caller gave this customer's surname as a name in this line: after the customer's first
+    name, after a name lead ("this is", "under"), at the start of the line ("Delgado, 620
+    Bedford"), or as a line that is just the name. A surname inside the address ("620 Bedford
+    Avenue") or in passing ("what's the price") is no name, and a surname that is an everyday
+    word needs the first name or a line of its own (PR #134 review)."""
     surname = _surname(name)
     first = _name_words(name)[0] if len(_name_words(name)) > 1 else ""
+    common = surname in COMMON_WORD_SURNAMES
     tokens = _name_words(text)
-    joined = [(i, t) for i, t in enumerate(tokens)]
-    # A surname split in two by speech to text ("Del Gado") is read as one word.
-    joined += [(i + 1, a + b) for i, (a, b) in enumerate(pairwise(tokens)) if a + b == surname]
-    hits = [i for i, t in joined if t == surname]
-    for i in hits:
-        start = i - (1 if tokens[i] != surname else 0)
-        after = tokens[i + 1] if i + 1 < len(tokens) else ""
-        before = tokens[max(0, start - 2):start]
+    # (where the surname starts, where it ends): a surname split in two by speech to text ("Del
+    # Gado") is read as one word.
+    hits = [(i, i) for i, t in enumerate(tokens) if t == surname]
+    hits += [(i, i + 1) for i, (a, b) in enumerate(pairwise(tokens)) if a + b == surname]
+    lead_at = next((i for i, t in enumerate(tokens) if t not in NAME_LINE_FILLER), 0)
+    for begin, end in hits:
+        after = tokens[end + 1] if end + 1 < len(tokens) else ""
+        before = tokens[max(0, begin - 2):begin]
         if after in STREET_AFTER or (before and (before[-1].isdigit() or before[-1] in NUMBER_WORDS)):
             continue
-        if (first and before and before[-1] == first) or any(
+        if first and before and before[-1] == first:
+            return True
+        if common:
+            continue
+        if begin == lead_at or any(
             tuple(before[-len(lead):]) == lead for lead in NAME_LEADS if len(before) >= len(lead)
         ):
             return True
@@ -810,17 +830,27 @@ def _name_given(text: str, name: str) -> bool:
     )
 
 
+UNIT_CUES = {"apartment", "apt", "unit", "number", "no", "#", "suite", "floor", "fl"}
+
+
 def _unit_said(rows: list, unit: str) -> bool:
     """The location's unit, as the caller said it: "3B", "apartment three B". A unit only the
-    model gave is not enough, the same as a ZIP (DECISIONS.md 058)."""
+    model gave is not enough, the same as a ZIP (DECISIONS.md 058). A unit that isn't both letters
+    and digits ("A", "12") needs a cue before it ("apartment A", "unit 12"), so the article "a"
+    is no unit (PR #134 review)."""
     want = unit_key(unit)
     if not want:
         return True
+    mixed = any(c.isdigit() for c in want) and any(c.isalpha() for c in want)
     for row in rows:
-        tokens = [t for t in number_tokens(row["text"]) if t.isalnum()]
+        raw = [t for t in number_tokens(row["text"]) if t.strip()]
         for size in (1, 2, 3):
-            if any("".join(tokens[i:i + size]) == want for i in range(len(tokens) - size + 1)):
-                return True
+            for i in range(len(raw) - size + 1):
+                window = raw[i:i + size]
+                if not all(t.isalnum() for t in window) or "".join(window) != want:
+                    continue
+                if mixed or (i > 0 and raw[i - 1] in UNIT_CUES):
+                    return True
     return False
 
 
@@ -1184,6 +1214,18 @@ def get_customer_history(ctx: Ctx, args: HistoryIn) -> Result:
         "get_customer_history",
         records.count_tool(ctx.conn, ctx.call["id"], "get_customer_history"),
     )
+    # A customer found from what a caller said shows nothing more until the name and address
+    # check passes, the same as find_customer (PR #134 review).
+    scoped = records.scoped_customers(ctx.conn, ctx.call["id"])[args.customer_id]
+    if scoped["matched_by"] != "caller_id" and _identity_row_status(
+        ctx, args.customer_id
+    ) != "verified":
+        return ok(
+            customer_id=args.customer_id,
+            what=args.what,
+            items=[],
+            withheld="not shown until the server's name and address check passes",
+        )
     items = lookup.history(
         ctx.fsm, ctx.tenant, args.customer_id, args.what, ctx.now, args.months_back
     )
