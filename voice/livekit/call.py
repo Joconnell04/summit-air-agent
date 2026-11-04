@@ -3,14 +3,15 @@ safety lines the server returns, keeps the turn-taking settings in step with wha
 asked, and speaks at the pace the server sets (app/pace.py)."""
 
 import asyncio
+import json
 import logging
 from collections.abc import AsyncIterable
 
 from livekit import rtc
-from livekit.agents import Agent, ModelSettings, StopResponse
+from livekit.agents import Agent, ModelSettings, StopResponse, llm
 from livekit.agents.llm import ChatContext, ChatMessage
 
-from prompts.assemble import server_notes
+from prompts.assemble import SENTENCE_END, SpokenReply, server_notes
 
 from .bridge import Bridge
 from .server import UNREACHABLE, ToolServer
@@ -53,6 +54,8 @@ class Call:
         # Set by the worker: stops the call's recording when the server says the caller objected.
         self.stop_recording = None
         self._last_post: asyncio.Task | None = None
+        # What of the model's replies the caller hears (prompts/assemble.py SpokenReply).
+        self.reply = SpokenReply()
         # The speaking rate the server set for this call; None leaves the voice at its default.
         self.speed: float | None = None
         # Text the worker speaks at its own speed (the parts of a slower read-back), by its text.
@@ -131,7 +134,7 @@ class Call:
         stop = (data.get("recording") or {}).get("action") == "stop"
         if stop and self.stop_recording:
             asyncio.create_task(self.stop_recording())
-        notes = server_notes(data.get("hints", []))
+        notes = server_notes(data.get("hints", []), data.get("known"))
         if notes:
             message.content.append("\n" + "\n".join(notes))
         handoff = data.get("handoff")
@@ -150,6 +153,7 @@ class Call:
                 self.handoff(line, plan, handoff["fallback"])
             raise StopResponse()
         safety = data.get("safety")
+        self.reply.heard(safety, text)
         if safety and safety["action"] in SPOKEN_ACTIONS and safety.get("text"):
             # Spoken from the server's text, never generated, and the caller can't cut it short.
             self.session.say(safety["text"], allow_interruptions=False)
@@ -189,6 +193,45 @@ class SummitAgent(Agent):
     async def on_user_turn_completed(self, turn_ctx: ChatContext, new_message: ChatMessage):
         await self.call.caller_line(new_message)
 
+    async def llm_node(
+        self, chat_ctx: ChatContext, tools: list[llm.Tool], model_settings: ModelSettings
+    ) -> AsyncIterable[llm.ChatChunk | str]:
+        """The model's reply, a sentence at a time through the reply rule (prompts/assemble.py
+        SpokenReply), so a read-back announcement or a restated ZIP or number is never spoken.
+        While the rule is holding, the text waits for the end of the reply and is dropped if the
+        reply calls a tool whose result the worker speaks itself."""
+        reply = self.call.reply
+        reply.start_reply()
+        holding = reply.holding()
+        pending, held = "", []
+        calls: list[tuple[str, dict]] = []
+        async for chunk in Agent.default.llm_node(self, chat_ctx, tools, model_settings):
+            text = chunk if isinstance(chunk, str) else None
+            if isinstance(chunk, llm.ChatChunk) and chunk.delta:
+                text = chunk.delta.content
+                calls += [(c.name, _arguments(c.arguments)) for c in chunk.delta.tool_calls]
+                if text or chunk.delta.tool_calls:
+                    chunk = chunk.model_copy(
+                        update={"delta": chunk.delta.model_copy(update={"content": None})}
+                    )
+            if text:
+                pending += text
+                *done, pending = split_sentences(pending)
+                if holding:
+                    held += done
+                else:
+                    for sentence in done:
+                        if kept := reply.sentence(sentence):
+                            yield kept + " "
+            if not isinstance(chunk, str):
+                yield chunk
+        if holding:
+            kept = reply.text(" ".join([*held, pending]), calls)
+        else:
+            kept = reply.sentence(pending) if pending.strip() else ""
+        if kept:
+            yield kept
+
     async def tts_node(
         self, text: AsyncIterable[str], model_settings: ModelSettings
     ) -> AsyncIterable[rtc.AudioFrame]:
@@ -214,3 +257,16 @@ class SummitAgent(Agent):
         async for frame in Agent.default.tts_node(self, whole(), model_settings):
             await self.call.bridge.wait_clear()
             yield frame
+
+
+def split_sentences(text: str) -> list[str]:
+    """Complete sentences, then what is left after the last one (possibly "")."""
+    return SENTENCE_END.split(text)
+
+
+def _arguments(raw: str) -> dict:
+    try:
+        parsed = json.loads(raw or "{}")
+    except json.JSONDecodeError:
+        return {}
+    return parsed if isinstance(parsed, dict) else {}

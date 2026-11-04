@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% from "_ui.html" import bench_tabs with context %}
+{% block title %}Bench: {{ title }}{% endblock %}
+{% block tabs %}{{ bench_tabs(tab) }}{% endblock %}
+{% block body %}
+<main class="page">
+  <div class="page-head">
+    <div class="lead">
+      <div class="crumbs"><a href="/bench/evals">Evals</a><span>/</span><span>Rounds</span><span>/</span><code>{{ source }}</code></div>
+      <h1 class="page-title">{{ title }}</h1>
+    </div>
+  </div>
+  <section class="panel">
+    <div class="panel-body prose">{{ doc | safe }}</div>
+  </section>
+</main>
+{% endblock %}

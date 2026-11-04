@@ -61,7 +61,7 @@ Each `must` item is `- <check>: <argument>`. They read the tool server's record 
 | `safety_check` | `asked` / `cleared` | the vague-smell question was asked / the caller's clear no cleared the call |
 | `booking` | `none`, `one`, or `{count, priority, zip, job_type, seek_earlier, safety_override, window, street, new_address_account}` | the bookings made match; `street` is compared with the read-back's street, `window` with the booked window code |
 | `read_back` | `before_booking` | no booking came before a confirmed read-back |
-| `flag` | `person`, `none`, `safety`, `safety_check_cleared` | a person flag was raised / none was / a flag of that kind exists |
+| `flag` | `person`, `none`, `safety`, `safety_check_cleared`, `approval_check` | a person flag was raised / none was / a flag of that kind exists |
 | `lead` | `commercial`, `membership`, `install` | a lead of that kind was recorded |
 | `out_of_area` | `recorded` or a ZIP | an out-of-area ZIP was recorded |
 | `tool_ok` | a tool name or list | each tool was called and succeeded |
@@ -73,6 +73,8 @@ Each `must` item is `- <check>: <argument>`. They read the tool server's record 
 | `callback` | `promised`, `none`, or `{day, not_before}` | a timed callback was stored, or none; with a mapping, every callback is due `day` days after the call, no earlier than `not_before` (local, "12:00") |
 | `agent_says` | a regex or list | the agent said each one at some point (case ignored) |
 | `agent_never_says` | a regex or list | the agent never said any of them |
+| `agent_says_at_most` | `{regex: n}` | each regex turns up in at most n agent lines |
+| `booking_lead_in` | `true` | the agent line with the booking confirmation opens with a short line from the same reply |
 | `said_booked` | `only_after_booking` | the agent never told the caller they were booked before a booking went through on the call |
 | `slot_taken` | `told_plainly` | a booking that came back `slot_taken` was followed by an agent line saying the window just went and, after that, naming another time; passes when no booking came back taken |
 | `pace` | a mapping: `held`, `source`, `remembered`, `address` | the speaking rate the server recorded (app/pace.py): the call ended at the `held` speed, set by `source` (default, record, linked, request, repeats, older_adult); the caller's number keeps `remembered` (a speed or `none`); a request to hear the address at the `address` speed was recorded and the address was spoken at it. Always: every agent line carries the speed it was spoken at, and it is the server's pace at that point |

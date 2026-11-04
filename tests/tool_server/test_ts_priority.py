@@ -211,7 +211,7 @@ def test_find_slots_reads_the_stored_outside_temperature(agent, clock):
 
 
 def test_an_urgent_caller_hears_it_once_and_a_routine_caller_never_does(agent):
-    line = "one of our most urgent calls"
+    line = "marked this call top priority"
     call = agent.start(UNKNOWN)["data"]["call_id"]
     agent.turn(call, "No heat, and my 84-year-old mother lives with me.")
     first = agent.tool("find_slots", call, job_type="no_heat")

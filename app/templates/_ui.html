@@ -88,6 +88,11 @@
 {%- endif -%}
 {%- endmacro %}
 
+{# A version published with the override: who skipped the eval gate and why, in the tooltip. #}
+{% macro skipped(g) -%}
+<span class="tag high" tabindex="0" data-tip="Published at once without the test calls, by {{ g.by }}: {{ g.reason }}">Check skipped</span>
+{%- endmacro %}
+
 {# Where an owner edit stands: its eval check, a rollback, or a draft (app/rules.py). A scenario
    that missed once is run again; the tooltip says which passed on that rerun and which failed twice. #}
 {% macro gate_result(v) -%}
@@ -98,7 +103,8 @@
 {%- elif v.status == "blocked" and g.stale -%}<span class="tag outline" tabindex="0" data-tip="Another version went live while this was checked, so it wasn't published over it. Publish it again to check it against what's live now.">Not published, live changed</span>
 {%- elif v.status == "blocked" -%}<span class="tag urgent" tabindex="0" data-tip="{% if g.reruns %}Failed twice{% else %}Failed{% endif %}: {{ (g.failed + g.errors) | join(', ') | replace('-', ' ') }}. {{ rerun_note }}">Blocked, {{ (g.failed | length) + (g.errors | length) }} of {{ g.scenarios }} failed</span>
 {%- elif v.status == "draft" -%}<span class="tag outline">Draft</span>
-{%- elif v.rollback_of is not none -%}<span class="tag outline">Rolled back</span>
+{%- elif v.rollback_of is not none -%}<span class="tags"><span class="tag outline">Rolled back</span>{% if g.overridden %}{{ skipped(g) }}{% endif %}</span>
+{%- elif g.overridden -%}{{ skipped(g) }}
 {%- elif g.scenarios -%}<span class="tags"><span class="tag done"{% if g.grader_flags %} tabindex="0" data-tip="The grader also noted: {{ g.grader_flags | join(', ') | replace('-', ' ') }}"{% endif %}>Passed {{ g.passed_count }} of {{ g.scenarios }}</span>{% if again %}<span class="tag outline" tabindex="0" data-tip="{{ rerun_note }}">{{ again | length }} on a rerun</span>{% endif %}</span>
 {%- else -%}<span class="tag outline">Published</span>
 {%- endif -%}
@@ -127,4 +133,74 @@
   <input type="radio" id="{{ name }}-on" name="{{ name }}" value="1"{% if value %} checked{% endif %}><label for="{{ name }}-on">On</label>
   <input type="radio" id="{{ name }}-off" name="{{ name }}" value="0"{% if not value %} checked{% endif %}><label for="{{ name }}-off">Off</label>
 </div>
+{%- endmacro %}
+
+{# A step's timing on the node graph: milliseconds, or "missing" when the record has none. #}
+{% macro ms(value, slow=1500) -%}
+{%- if value is none %}<span class="ms missing">missing</span>{% elif value < 1 %}<span class="ms">&lt;1 ms</span>{% else %}<span class="ms{% if value >= slow %} slow{% endif %}">{{ "{:,.0f}".format(value) }} ms</span>{% endif -%}
+{%- endmacro %}
+
+{# Node graph (docs/design-system.md): a call's steps in lanes, from app/nodes.py. Each row links
+   to its detail in node_detail; a missing timing reads "missing", never a made-up number. #}
+{% macro node_graph(graph, label="Steps of the call") -%}
+<div class="ng-head" aria-hidden="true"><span>Time</span><span class="lanes">{% for _key, name in graph.lanes %}<span>{{ name.split()[0] }}</span>{% endfor %}</span><span>Step</span><span class="ms">Timing</span></div>
+<ol class="ng" aria-label="{{ label }}" data-node-graph>
+  {% for n in graph.nodes %}
+  {% set lo = [n.col, n.from_col] | min %}
+  <li>
+    <span class="at">{{ n.at }}</span>
+    <span class="lanes" aria-hidden="true">{% if n.col != n.from_col %}<span class="edge" style="--edge: {{ lo }}; --span: {{ (n.col - n.from_col) | abs }}"></span>{% endif %}<span class="dot {{ n.lane }}{% if n.tone %} {{ n.tone }}{% endif %}" style="--col: {{ n.col }}"></span></span>
+    <a class="node {{ n.lane }}" href="#d-{{ n.id }}" data-node="{{ n.id }}"><b>{{ n.title }}</b><span class="sum">{{ n.summary }}</span></a>
+    {{ ms(n.ms) }}
+  </li>
+  {% endfor %}
+</ol>
+{%- endmacro %}
+
+{% macro node_detail(graph) -%}
+<div class="node-detail" data-node-detail>
+  {% for n in graph.nodes %}
+  <section class="panel" id="d-{{ n.id }}">
+    <div class="panel-head"><h2>{{ n.title }}</h2><span class="sub">{{ n.at }}{% for key, name in graph.lanes if key == n.lane %}, {{ name | lower }}{% endfor %}</span><div class="end">{% if n.ms is not none %}<span class="tag outline">{{ n.ms_label | capitalize }} {{ "{:,.0f}".format(n.ms) }} ms</span>{% elif n.ms_label %}<span class="tag outline">{{ n.ms_label | capitalize }} missing</span>{% endif %}</div></div>
+    <div class="panel-body">
+      <p>{{ n.summary }}</p>
+      {% if n.facts %}<dl class="kv">{% for k, v in n.facts %}<dt>{{ k }}</dt><dd class="num">{% if v is sameas true %}yes{% elif v is sameas false %}no{% elif v is none %}<span class="faint">missing</span>{% else %}{{ v }}{% endif %}</dd>{% endfor %}</dl>{% endif %}
+      {% for ref in n.refs %}<p><a href="#d-{{ ref.node }}" data-node-ref="{{ ref.node }}">{{ ref.title }}</a> <span class="faint">{{ ref.text }}</span></p>{% endfor %}
+      {% if n.messages is not none %}
+      <details open><summary>Messages given to the model ({{ n.messages | length }})</summary>
+        <p class="note-line">Rebuilt from the call record: caller lines with the server's notes, the agent's lines, tool calls and their results.</p>
+        <ol class="msgs">{% for m in n.messages %}<li class="{{ m.role }}"><span class="role">{{ m.role | capitalize }}</span><div class="tech-block">{{ m.text }}</div></li>{% endfor %}</ol>
+      </details>
+      {% endif %}
+      {% for b in n.blocks %}
+      <details{% if b.open %} open{% endif %}><summary>{{ b.title }}{% if b.text | length > 400 %} <span class="faint">({{ "{:,}".format(b.text | length) }} characters)</span>{% endif %}</summary>
+        {% if b.note %}<p class="note-line">{{ b.note }}</p>{% endif %}
+        <pre class="tech-block scroll">{{ b.text }}</pre>
+      </details>
+      {% endfor %}
+    </div>
+  </section>
+  {% endfor %}
+</div>
+{%- endmacro %}
+
+{# The debug bench's tabs, in place of the owner view's, and a way back to the owner view. #}
+{% macro bench_tabs(tab) -%}
+<nav class="tabs" aria-label="Bench pages">
+  <a href="/bench"{% if tab == "bench" %} aria-current="page"{% endif %}>Calls</a>
+  <a href="/bench/settings"{% if tab == "bench-settings" %} aria-current="page"{% endif %}>Settings</a>
+  <a href="/bench/evals"{% if tab == "bench-evals" %} aria-current="page"{% endif %}>Evals</a>
+  <a href="/bench/rules"{% if tab == "bench-rules" %} aria-current="page"{% endif %}>Rules</a>
+  <a href="/owner">Owner view</a>
+</nav>
+{%- endmacro %}
+
+{# Where a documented number comes from, as a tag: MEASURED, SOURCE or ASSUMED (CLAUDE.md). #}
+{% macro basis(label) -%}
+{%- if label == "MEASURED" %}<span class="tag done">Measured</span>{% elif label == "SOURCE" %}<span class="tag info">Source</span>{% elif label == "ASSUMED" %}<span class="tag outline">Assumed</span>{% else %}<span class="faint">-</span>{% endif -%}
+{%- endmacro %}
+
+{# A pass, fail or error from an eval run, or a rule's outcome on the bench, as a tag. #}
+{% macro outcome(value) -%}
+{%- if value in ("pass", "passed", "allowed") %}<span class="tag done">{{ value | capitalize }}</span>{% elif value in ("fail", "fired") %}<span class="tag {{ 'urgent' if value == 'fail' else 'high' }}">{{ "Fail" if value == "fail" else "Held" }}</span>{% elif value == "error" %}<span class="tag outline">No verdict</span>{% else %}<span class="tag outline">{{ value | capitalize }}</span>{% endif -%}
 {%- endmacro %}

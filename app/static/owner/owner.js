@@ -423,6 +423,81 @@
     input.addEventListener("blur", function () { setTimeout(close, 100); });
   }
 
+  // Node graph (debug bench): picking a step shows its detail beside the graph without moving
+  // the page; arrow keys move between steps. Without this, each step's link opens its detail by
+  // its anchor.
+  function setupNodeGraph(root) {
+    var graph = root.querySelector("[data-node-graph]");
+    var detail = root.querySelector("[data-node-detail]");
+    if (!graph || !detail) return;
+    var links = Array.prototype.slice.call(graph.querySelectorAll("[data-node]"));
+    function pick(link, focus, quiet) {
+      links.forEach(function (l) { l.removeAttribute("aria-current"); });
+      each(detail, "section.shown", function (s) { s.classList.remove("shown"); });
+      var section = document.getElementById("d-" + link.dataset.node);
+      if (!section) return;
+      link.setAttribute("aria-current", "true");
+      section.classList.add("shown");
+      detail.classList.add("picked");
+      detail.scrollTop = 0;
+      if (focus) link.focus();
+      if (!quiet) history.replaceState(null, "", "#d-" + link.dataset.node);
+    }
+    links.forEach(function (link, i) {
+      link.addEventListener("click", function (e) { e.preventDefault(); pick(link, false); });
+      link.addEventListener("keydown", function (e) {
+        if (e.key === "ArrowDown" && links[i + 1]) { e.preventDefault(); pick(links[i + 1], true); }
+        else if (e.key === "ArrowUp" && links[i - 1]) { e.preventDefault(); pick(links[i - 1], true); }
+      });
+    });
+    each(detail, "[data-node-ref]", function (ref) {
+      ref.addEventListener("click", function (e) {
+        var target = links.filter(function (l) { return l.dataset.node === ref.dataset.nodeRef; })[0];
+        if (target) { e.preventDefault(); pick(target, true); }
+      });
+    });
+    var wanted = location.hash.indexOf("#d-") === 0 ? location.hash.slice(3) : null;
+    // A call in progress follows its newest step; a finished one opens on its first.
+    var fallback = root.closest("[data-live]") ? links[links.length - 1] : links[0];
+    var start = links.filter(function (l) { return l.dataset.node === wanted; })[0] || fallback;
+    if (start) pick(start, false, true);
+  }
+
+  // A call in progress: the server says when a step is recorded and the graph is fetched again,
+  // keeping the step picked. The stream ends with the call.
+  function setupLive(page) {
+    if (!window.EventSource) return;
+    var slot = page.querySelector("[data-graph-slot]");
+    var source = new EventSource(page.dataset.live);
+    var first = true;
+    function refresh() {
+      var picked = slot.querySelector("[data-node][aria-current]");
+      var keep = picked ? picked.dataset.node : null;
+      var all = slot.querySelectorAll("[data-node]");
+      var atEnd = !picked || picked === all[all.length - 1];
+      fetch(page.dataset.liveGraph, { credentials: "same-origin" })
+        .then(function (r) { return r.ok ? r.text() : null; })
+        .then(function (html) {
+          if (html === null) return;
+          slot.innerHTML = html;
+          if (keep && !atEnd) history.replaceState(null, "", "#d-" + keep);
+          else history.replaceState(null, "", location.pathname);
+          setupNodeGraph(slot);
+          if (atEnd) {
+            var links = slot.querySelectorAll("[data-node]");
+            if (links.length) links[links.length - 1].click();
+          }
+        });
+    }
+    source.addEventListener("changed", function () { if (first) { first = false; return; } refresh(); });
+    source.addEventListener("ended", function () {
+      source.close();
+      var tag = page.querySelector("[data-live-tag]");
+      if (tag) { tag.textContent = "Ended"; tag.className = "tag outline"; }
+      refresh();
+    });
+  }
+
   document.addEventListener("DOMContentLoaded", function () {
     each(document, "form.search[data-suggest]", setupSuggest);
     each(document, "table[data-resize]", setupResize);
@@ -434,5 +509,7 @@
     each(document, "[data-player]", setupPlayer);
     each(document, "[data-call-list]", setupCallList);
     each(document, "[data-hours-chart]", setupHours);
+    each(document, "[data-graph]", setupNodeGraph);
+    each(document, "[data-live]", setupLive);
   });
 })();

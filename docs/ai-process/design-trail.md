@@ -95,3 +95,4 @@ How the design was reached, in order, so a reader can follow each choice back to
 | Side model check | Kept on: no false alarms in 46 calls, one real fix; the phrase rules' "nobody's" bug fixed | DECISIONS.md 056 |
 | Booking under load | Two simulated calls race for one slot; one wins, the other hears it plainly | DECISIONS.md 057, #86 |
 | ZIP from the caller | The server only acts on a ZIP the caller said or one on record; street names aren't businesses | DECISIONS.md 058, #88 |
+| Debug bench | Calls as a node graph with prompts and rule decisions, settings, evals, live view; admin only, redacted | DECISIONS.md 059, #89 |

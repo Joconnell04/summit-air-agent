@@ -106,8 +106,8 @@ def test_the_read_back_tool_hands_the_parts_to_the_worker_and_the_model_says_not
     args = {"address": address, "phone": "caller_id"}
     assert asyncio.run(tools["read_back"](args, None)) is None
     assert [p["speed"] for p in heard[0]] == [1.0, 0.85, 1.0]
-    # The next read-back is whole again, and goes to the model as usual.
-    assert json.loads(asyncio.run(tools["read_back"](args, None)))["ok"] is True
+    # The next read-back is whole again, spoken by the worker as it is (eval round 4).
+    assert asyncio.run(tools["read_back"](args, None)) is None
     assert len(heard) == 1
 
 

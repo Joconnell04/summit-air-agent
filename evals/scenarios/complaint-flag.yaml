@@ -22,8 +22,10 @@ must:
   - flag: person
   - callback: promised
   - booking: none
-  - agent_never_says: "(we|I)('ll| will) (refund|credit|waive|discount|reimburse|adjust)"
+  - agent_never_says: ["(we|I)('ll| will) (refund|credit|waive|discount|reimburse|adjust)", '\bread[- ]?back\b', '\bflag(ged|ging)?\b', 'comfort advisor', 'stay warm out there']
+  - agent_says: 'around 5:30'
 should:
   - Listens, apologizes once, and neither argues nor promises a credit.
-  - Passes a short summary to a person so the caller does not repeat it, and names a callback time.
-  - Does not offer a new visit or bring up membership.
+  - Passes a short summary to a person so the caller does not repeat it, and says someone will call back as soon as they can.
+  - Names a specific time inside the caller's window ("around 5:30" for "after 5"), said once, not repeated in the same turn.
+  - Does not offer a new visit or bring up membership, and ends with one short, kind goodbye.

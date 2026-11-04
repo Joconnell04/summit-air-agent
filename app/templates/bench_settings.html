@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% from "_ui.html" import bench_tabs, basis with context %}
+{% block title %}Bench: settings{% endblock %}
+{% block tabs %}{{ bench_tabs(tab) }}{% endblock %}
+{% macro price(p) -%}{% if p.input is defined %}${{ "%.2f" | format(p.input) }} / ${{ "%.2f" | format(p.output) }}{% else %}<span class="faint">-</span>{% endif %}{%- endmacro %}
+{% macro profile_table(rows, marks) -%}
+<div class="table-wrap">
+  <table class="table">
+    <thead><tr><th>Profile</th><th>Model</th><th>Thinking</th><th class="right">Price in / out, per M</th><th>Measured</th><th>Basis</th><th>Source</th></tr></thead>
+    <tbody>
+      {% for p in rows %}
+      <tr>
+        <td class="fit"><span class="what">{{ p.name }}</span>{% for label, name in marks if name == p.name %} <span class="tag {{ 'ember' if label == 'Live' else 'outline' }}">{{ label }}</span>{% endfor %}</td>
+        <td class="fit"><code>{{ p.provider }}/{{ p.model }}</code></td>
+        <td class="fit">{{ "on" if p.thinking else "off" }}</td>
+        <td class="fit right num">{{ price(p.price) }}</td>
+        <td>{{ p.measure }}</td>
+        <td class="fit">{{ basis(p.basis) }}</td>
+        <td class="fit muted">{{ p.source or "-" }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{%- endmacro %}
+{% block body %}
+{% set pr = profiles %}
+<main class="page">
+  <div class="page-head">
+    <div class="lead">
+      <div class="crumbs">Debug bench<span>/</span><span>config/models.yaml and the server's environment, read live</span></div>
+      <h1 class="page-title">Settings</h1>
+    </div>
+  </div>
+
+  <section class="panel">
+    <div class="panel-head"><h2>Voice and turn-taking</h2><span class="count">{{ knobs | length }}</span><span class="sub">each knob with the measurement docs/tuning.md and docs/latency.md give it</span></div>
+    <div class="table-wrap">
+      <table class="table">
+        <thead><tr><th>Setting</th><th>Where</th><th class="right">Now</th><th>Documented</th><th>Basis</th><th>Source</th></tr></thead>
+        <tbody>
+          {% for k in knobs %}
+          <tr>
+            <td><span class="what">{{ k.label }}</span></td>
+            <td class="fit"><code>{{ k.path }}</code></td>
+            <td class="fit right num"><span class="what">{{ k.value }}</span></td>
+            <td>{{ k.measure }}</td>
+            <td class="fit">{{ basis(k.basis) }}</td>
+            <td class="fit muted">{{ k.source }}</td>
+          </tr>
+          {% endfor %}
+          {% for name, where, value, source in unset %}
+          <tr>
+            <td><span class="what">{{ name }}</span></td>
+            <td class="fit"><code>{{ where }}</code></td>
+            <td class="fit right"><span class="tag outline">Not set</span></td>
+            <td>Runs at {{ value }}</td>
+            <td class="fit">{{ basis("") }}</td>
+            <td class="fit muted">{{ source }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="panel-foot">The whole stack on the audio rig: {{ stack_note[0] }} ({{ stack_note[2] }}).</div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head"><h2>Live model profiles</h2><span class="sub">the voice worker runs MODEL_PROFILE, or the default</span></div>
+    {{ profile_table(pr.live, [("Live", pr.active), ("Default", pr.default)]) }}
+  </section>
+
+  <div class="split wide-side">
+    <section class="panel">
+      <div class="panel-head"><h2>Side models</h2><span class="sub">the vulnerable-person read beside the call</span></div>
+      {{ profile_table(pr.side, []) }}
+    </section>
+    <section class="panel">
+      <div class="panel-head"><h2>Server switches</h2></div>
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th>Switch</th><th>Variable</th><th class="right">Now</th></tr></thead>
+          <tbody>
+            {% for s in switches %}
+            <tr><td><span class="what">{{ s.name }}</span></td><td class="fit"><code>{{ s.where }}</code></td><td class="fit right">{{ s.value }}</td></tr>
+            {% endfor %}
+            <tr><td><span class="what">Owner rules</span></td><td class="fit"><code>/owner/rules</code></td><td class="fit right">{% if live_rules %}version {{ live_rules.number }}, by {{ live_rules.author }}{% else %}defaults{% endif %}</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="panel-foot">Secrets show only whether they are set.</div>
+    </section>
+  </div>
+
+  <section class="panel">
+    <div class="panel-head"><h2>Off the live path</h2><span class="sub">the eval caller and grader, the technician summary, the owner edit check</span></div>
+    {{ profile_table(pr.offline, []) }}
+  </section>
+</main>
+{% endblock %}

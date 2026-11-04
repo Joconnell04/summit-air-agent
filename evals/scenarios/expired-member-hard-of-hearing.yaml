@@ -22,9 +22,10 @@ must:
   - booking: {count: 1, job_type: tune_up, zip: "11218"}
   - read_back: before_booking
   - safety_lines: not_said
-  - agent_says: "expired|ended|lapsed|run out"
-  - agent_never_says: "(active|current) member"
+  - agent_says: 'expired'
+  - agent_never_says: ['(active|current) member', 'ran out', '\bread[- ]?back\b', '\bflag(ged|ging)?\b', 'comfort advisor', 'stay warm out there']
 should:
-  - Says the plan expired, kindly, and offers someone to help renew, with no member perk promised.
-  - Slows down, uses shorter questions and repeats the read-back without being rude about it.
-  - Waits longer before checking in.
+  - Says the plan expired, in that word and kindly, and offers someone to help renew, with no member perk promised.
+  - Slows down, uses shorter questions, and repeats the address when asked without being rude about it.
+  - Turns the knock-loudly note into an action ("I'll let the technician know to knock loudly").
+  - Waits longer before checking in, and ends with one short, kind goodbye.

@@ -9,6 +9,7 @@ import pytest
 from fakes import ScriptedModel, grade_reply, say, use
 
 from app import capacity as app_capacity
+from app.fsm.servicetitan import ServiceTitanAdapter
 from evals import pairs
 from evals.fingerprint import run_hash
 from evals.run import Harness, Models, main
@@ -28,6 +29,28 @@ def seed_dir(tmp_path_factory):
     return tmp_path_factory.mktemp("pairs")
 
 
+@pytest.fixture
+def picked_together(monkeypatch):
+    """The first two jobs sent to ServiceTitan wait for each other, so both calls have read
+    capacity and picked a technician before either job is written. Without this, a busy machine
+    can let one call finish booking before the other looks, and the tool server's own check
+    catches the loser instead of the mock: still correct, but not the race these tests are about."""
+    barrier = threading.Barrier(2, timeout=60)
+    lock = threading.Lock()
+    sent = []
+    create_job = ServiceTitanAdapter.create_job
+
+    def held(self, *args, **kwargs):
+        with lock:
+            sent.append(1)
+            first_two = len(sent) <= 2
+        if first_two:
+            barrier.wait()
+        return create_job(self, *args, **kwargs)
+
+    monkeypatch.setattr(ServiceTitanAdapter, "create_job", held)
+
+
 def harness(seed_dir, tmp_path):
     grader = ScriptedModel([grade_reply(), grade_reply()])
     h = Harness(Models(ScriptedModel([]), ScriptedModel([]), grader), "livekit", seed_dir)
@@ -37,21 +60,23 @@ def harness(seed_dir, tmp_path):
 
 def booking_agent(name: str, street: str, zip_code: str) -> ScriptedModel:
     """Reads back, books this afternoon, and if that window is taken offers and books the first
-    alternative the server gave."""
+    alternative the server gave. The read-back and a booking that goes through are spoken from the
+    server's sentence with no model step (eval round 4), so the script only answers the rest."""
     address = {"street": street, "unit": "", "city": "Brooklyn", "zip": zip_code}
     state = {}
 
-    def after_booking(messages):
-        result = json.loads(messages[-1]["content"][-1]["content"])
-        if result["ok"]:
-            state["booked"] = True
-            return say("You're booked for this afternoon, 12 to 4. Anything else?")
-        state["alternative"] = result["data"]["alternatives"][0]
-        alt = state["alternative"]
-        return say(f"{result['say']} I have {alt['day']} {alt['label']} instead. Does that work?")
-
-    def after_answer(messages):
-        if state.get("booked"):
+    def next_step(messages):
+        last = messages[-1]["content"]
+        if isinstance(last, list) and last and last[-1].get("type") == "tool_result":
+            result = json.loads(last[-1]["content"])
+            alt = state["alternative"] = result["data"]["alternatives"][0]
+            return say(f"{result['say']} I have {alt['day']} {alt['label']} instead. Does that work?")
+        booked = any(
+            m["role"] == "assistant" and isinstance(m["content"], str)
+            and m["content"].startswith("You're all set")
+            for m in messages
+        )
+        if booked:
             return say("Great. Goodbye.")
         alt = state["alternative"]
         slot = {"date": alt["date"], "window": alt["window"]}
@@ -60,13 +85,12 @@ def booking_agent(name: str, street: str, zip_code: str) -> ScriptedModel:
 
     return ScriptedModel([
         use("read_back", address=address, phone="caller_id"),
-        say(f"That's {street}, {zip_code}, and the number you're calling from. Is that right?"),
         use("read_back", address=address, phone="caller_id", confirmed=True),
-        use("book_appointment", job_type="no_heat", slot=AFTERNOON,
+        use("book_appointment", "Perfect, booking that now.", job_type="no_heat", slot=AFTERNOON,
             details={**DETAILS, "name": name}),
-        after_booking,
-        after_answer,
-        say("You're booked for that time. Goodbye."),
+        next_step,
+        next_step,
+        next_step,
     ])
 
 
@@ -120,19 +144,21 @@ def test_an_unknown_pair_check_is_refused(tmp_path):
 
 
 def test_the_meeting_lets_both_go_together_and_a_call_that_leaves_frees_the_other():
-    meeting = pairs.Meeting(2, timeout_s=5)
+    meeting = pairs.Meeting(2, timeout_s=60)
     threads = [threading.Thread(target=meeting.wait) for _ in range(2)]
     for t in threads:
         t.start()
     for t in threads:
-        t.join(5)
+        t.join(60)
     assert meeting.met
+    meeting.leave()
+    assert not meeting.barrier.broken, "leaving after a meeting breaks nothing"
 
-    alone = pairs.Meeting(2, timeout_s=5)
+    alone = pairs.Meeting(2, timeout_s=60)
     waiter = threading.Thread(target=alone.wait)
     waiter.start()
     alone.leave()
-    waiter.join(5)
+    waiter.join(60)
     assert not waiter.is_alive()
     assert not alone.met
 
@@ -159,7 +185,7 @@ def test_only_the_first_booking_after_a_confirmed_read_back_is_held():
 
 
 def test_two_callers_for_the_last_slot_one_gets_it_the_other_is_told_and_books_the_next(
-    seed_dir, tmp_path, capsys
+    seed_dir, tmp_path, capsys, picked_together
 ):
     results = pairs.run_pair(harness(seed_dir, tmp_path), LAST_SLOT, caller_turns=CALLERS,
                              agent_models=agents())
@@ -171,7 +197,7 @@ def test_two_callers_for_the_last_slot_one_gets_it_the_other_is_told_and_books_t
 
 
 def test_two_callers_with_two_technicians_free_both_get_the_window(
-    seed_dir, tmp_path, monkeypatch, capsys
+    seed_dir, tmp_path, monkeypatch, capsys, picked_together
 ):
     # Both reach for the same technician, so the loser has to look again and take the other one.
     monkeypatch.setattr(app_capacity.random, "choice", lambda technicians: technicians[0])
@@ -193,7 +219,7 @@ def agents_same_zip():
 
 
 def test_with_no_lock_and_no_constraint_the_pair_checks_catch_the_double_booking(
-    seed_dir, tmp_path, monkeypatch
+    seed_dir, tmp_path, monkeypatch, picked_together
 ):
     """The self-check: ServiceTitan's capacity check sees no one booked and the one-job rule is
     gone, so both callers get the same technician, and the checks that read the mock fail."""
