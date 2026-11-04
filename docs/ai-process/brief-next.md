@@ -14,6 +14,10 @@ Started while Jackson steps away. Each section is either a decision that needs h
 - Speaking rate (PR #83): review found false triggers ("you don't need to speak slower", "send someone faster", "my heat is slow, I live on Main Street"); sent back to tighten before merge.
 - Recording-notice wording lives in the tenant folder, not app code, so one eval reference is re-adopted after the batch rather than per PR.
 
+- **Owner admin login.** Accounts (PR #85) replace the shared token. The server's settings file now has an admin user `jackson`; the password is in the macOS Keychain as `owner-admin-password` (`security find-generic-password -a summit-air -s owner-admin-password -w`). It takes effect at the next deploy.
+- **Side model stays on** (decision 056) after a with-and-without check found no false alarms; it goes live again at the next deploy.
+- **Merged while you were away:** #83 speaking rate, #85 accounts and settings, #86 booking under load, #87 the "nobody's" fix, #88 ZIP from the caller and street names.
+
 ## In progress
 
 | Lane | PR | State |
