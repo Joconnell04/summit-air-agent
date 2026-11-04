@@ -9,6 +9,7 @@ import pytest
 from fakes import ScriptedModel, grade_reply, say, use
 
 from app import capacity as app_capacity
+from app.fsm.servicetitan import ServiceTitanAdapter
 from evals import pairs
 from evals.fingerprint import run_hash
 from evals.run import Harness, Models, main
@@ -26,6 +27,28 @@ DETAILS = {"issue": "no heat", "since": "this morning", "tried": "the thermostat
 @pytest.fixture(scope="module")
 def seed_dir(tmp_path_factory):
     return tmp_path_factory.mktemp("pairs")
+
+
+@pytest.fixture
+def picked_together(monkeypatch):
+    """The first two jobs sent to ServiceTitan wait for each other, so both calls have read
+    capacity and picked a technician before either job is written. Without this, a busy machine
+    can let one call finish booking before the other looks, and the tool server's own check
+    catches the loser instead of the mock: still correct, but not the race these tests are about."""
+    barrier = threading.Barrier(2, timeout=60)
+    lock = threading.Lock()
+    sent = []
+    create_job = ServiceTitanAdapter.create_job
+
+    def held(self, *args, **kwargs):
+        with lock:
+            sent.append(1)
+            first_two = len(sent) <= 2
+        if first_two:
+            barrier.wait()
+        return create_job(self, *args, **kwargs)
+
+    monkeypatch.setattr(ServiceTitanAdapter, "create_job", held)
 
 
 def harness(seed_dir, tmp_path):
@@ -121,19 +144,21 @@ def test_an_unknown_pair_check_is_refused(tmp_path):
 
 
 def test_the_meeting_lets_both_go_together_and_a_call_that_leaves_frees_the_other():
-    meeting = pairs.Meeting(2, timeout_s=5)
+    meeting = pairs.Meeting(2, timeout_s=60)
     threads = [threading.Thread(target=meeting.wait) for _ in range(2)]
     for t in threads:
         t.start()
     for t in threads:
-        t.join(5)
+        t.join(60)
     assert meeting.met
+    meeting.leave()
+    assert not meeting.barrier.broken, "leaving after a meeting breaks nothing"
 
-    alone = pairs.Meeting(2, timeout_s=5)
+    alone = pairs.Meeting(2, timeout_s=60)
     waiter = threading.Thread(target=alone.wait)
     waiter.start()
     alone.leave()
-    waiter.join(5)
+    waiter.join(60)
     assert not waiter.is_alive()
     assert not alone.met
 
@@ -160,7 +185,7 @@ def test_only_the_first_booking_after_a_confirmed_read_back_is_held():
 
 
 def test_two_callers_for_the_last_slot_one_gets_it_the_other_is_told_and_books_the_next(
-    seed_dir, tmp_path, capsys
+    seed_dir, tmp_path, capsys, picked_together
 ):
     results = pairs.run_pair(harness(seed_dir, tmp_path), LAST_SLOT, caller_turns=CALLERS,
                              agent_models=agents())
@@ -172,7 +197,7 @@ def test_two_callers_for_the_last_slot_one_gets_it_the_other_is_told_and_books_t
 
 
 def test_two_callers_with_two_technicians_free_both_get_the_window(
-    seed_dir, tmp_path, monkeypatch, capsys
+    seed_dir, tmp_path, monkeypatch, capsys, picked_together
 ):
     # Both reach for the same technician, so the loser has to look again and take the other one.
     monkeypatch.setattr(app_capacity.random, "choice", lambda technicians: technicians[0])
@@ -194,7 +219,7 @@ def agents_same_zip():
 
 
 def test_with_no_lock_and_no_constraint_the_pair_checks_catch_the_double_booking(
-    seed_dir, tmp_path, monkeypatch
+    seed_dir, tmp_path, monkeypatch, picked_together
 ):
     """The self-check: ServiceTitan's capacity check sees no one booked and the one-job rule is
     gone, so both callers get the same technician, and the checks that read the mock fail."""
