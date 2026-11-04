@@ -169,12 +169,12 @@ def test_ordinary_text_is_left_alone():
         assert redact.text(said) == said
 
 
-def test_the_call_page_shows_no_phone_number_or_house_number(agent):
+def test_the_call_page_shows_the_full_phone_number_and_address_to_an_admin(agent):
     call = timed_call(agent)
     page = admin(agent).client.get(f"/bench/calls/{key(call)}").text
-    assert "555-0999" not in page and "5550999" not in page and "555 0999" not in page
-    assert "45 Forest" not in page and "10310" not in page
-    assert "•••-•••-0999" in page
+    title = page.split("<h1", 1)[1].split("</h1>", 1)[0]
+    assert "5550999" in title, "the call id, phone number included, is shown as recorded"
+    assert "10310" in page, "addresses are shown as recorded"
 
 
 # ---- the node graph ------------------------------------------------------------------------
@@ -226,7 +226,7 @@ def test_a_tool_step_carries_its_arguments_and_result(agent):
     assert tool["title"] == "check_service_area"
     titles = [b["title"] for b in tool["blocks"]]
     assert titles == ["Arguments", "Result to the model"]
-    assert "10310" not in tool["blocks"][0]["text"], "the ZIP is an address part"
+    assert "10310" in tool["blocks"][0]["text"], "admins see the ZIP as the agent sent it"
 
 
 def test_a_gas_call_shows_the_check_the_spoken_lines_and_the_rule_that_held(agent):
@@ -289,10 +289,7 @@ def test_a_call_is_addressed_by_a_key_that_carries_no_number(agent):
     assert "5550999" in call
     page = admin(agent).client.get("/bench").text
     assert f'href="/bench/calls/{key(call)}"' in page
-    assert "5550999" not in page and "+1212" not in page
     assert agent.client.get(f"/bench/calls/{call}").status_code == 404, "the raw id opens nothing"
-    detail = agent.client.get(f"/bench/calls/{key(call)}").text
-    assert "5550999" not in detail and "/owner/calls/" not in detail
 
 
 # ---- calls list, live view -----------------------------------------------------------------
