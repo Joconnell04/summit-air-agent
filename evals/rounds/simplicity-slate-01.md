@@ -35,6 +35,10 @@ Calling order: 1, 3b, 3c, 2, 3, 4, 5, 6, 7 (ready entries go first; Deepgram, en
 
 Not a call entry: Deepgram entity detection (docs/later.md C-71) stays a rig check if addresses fail again.
 
+## Narrowed to two (DECISIONS.md 111)
+
+After call 4 the slate was cut to one comparison: the full custom stack, called once with today's fixes, against Retell native, which Jackson has called twice. The winner gets all the work from here. Paused: Deepgram, our stack stripped, Flux, Retell native round 3. Dropped: GPT-Live-1 (107), Vapi, the old Retell single-prompt agent. Jackson's own Retell build stays on the side.
+
 ## Observations
 
 Jackson, once the live calls started (paraphrased from his chat; his own words go in the decision entry): an integrated platform like Retell may offer a lot through its integrated stack, and through its own AI assistant, which is specialized in tuning that stack from feedback. Entry 3c tests this directly: his own Retell build, tuned in the dashboard with Retell's assistant. The slate's results decide how much weight it gets; until then it's an idea (docs/later.md C-78), not a decision.
@@ -93,4 +97,25 @@ Jackson's feedback (verbatim): "* stop telling me to ask the how many e's in sev
 So I just hung up on it. I'm not sure why it was so ass at basically everything, but it's not in a place right now where it's even worth continuing to iterate on, especially since it's a speech-to-speech model, like the full duplex model. So let's just document that decision and kill that like lane or whatever it's called. Like, we don't need to test OpenAI stuff anymore. Or I mean, we don't need to test OpenAI's full duplex model anymore. It's not in a place that can do what we need it to do."
 
 What changes: GPT-Live-1 is dropped (DECISIONS.md 107) and its lane stopped. Call sheets no longer include the trivia question.
+
+### Call 4: Retell native, round 2 (entry 3b)
+
+(646) 624-0418 on agent_a8b06c59d79a6ea25dda78fc28, with the call 2 fixes (c279875): conversational personality off (it caused the pauses), polite asks, one reminder at 10 s, "Sure" to "anything else?" handled, company facts in the prompt and the knowledge base detached (it caused "reference info"). Gate: scripted call call_411b6aa0d8810886254f4d3e558 booked, e2e p50 1.72 s, no leaks or seams (MEASURED by Retell). Not yet in: the Max "happy" voice, the hang-up a second later, the name asked once. Fresh mock and open schedule just before the call. Persona Jordan Lee. Twist: pauses mid-sentence and says "what was the question?" once.
+
+Call link: Retell call_f8a3ad3177fa2c62fc9db00dcfa (agent_hangup, e2e p50 1.57 s, p90 3.55 s, MEASURED by Retell). Note: a Deepgram gate call booked into the same world between the reset and this call.
+
+Jackson's feedback (verbatim): "it asked for zip and i gave it. not bad tho. but sometimes it made weird pauses. and it asked if it was cold in the apartment but that was obvious because i said the radiator was not working...and after it said no rush, it asked me two questions at once.
+
+the 4-hour window thing is still there but i know you're fixing that.
+
+and it got slightly too repettive at the end, where it repeated 4-8pm a few times even tho it was obvious that was the time slot i decided. so maybe just loosen or change up the read_back or other procedures to ensure it doesn't overly redundnatly repeat it.
+
+also it hung up too quickly. it hung up at the right time. but it hung up like what felt like 0.1 seconds after it said "have a good evening" which felt rushed. increase that wait time slightly.
+
+also general note: sometimes the tone and change of pace/tone (i.e. what makes a question sound like a question) was wonky and felt wrong. idk if there's an easy way to fix that but if there's a dial you could change, that would be good.
+
+but overall good."
+
+What changes: native round 3 (Retell lane): the hang-up about 1 to 1.5 s after the last word, no obvious questions, one question per turn, the chosen window said once, find_address before asking for the ZIP, an intonation setting compared on recordings, the Max "happy" voice, the name asked once. Server (live-fixes): a `spelled` street the caller never spelled no longer becomes "Eastthstreet Street" in the read-back and booking. The 30-minute windows are pending deploy.
+
 

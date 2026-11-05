@@ -136,3 +136,4 @@ How the design was reached, in order, so a reader can follow each choice back to
 | A caller who says they're someone else | Not treated as the account on the number; the account question is one plain yes or no; the read-back says "ZIP code"; the Retell hang-up keeps on a "Thanks. Bye." | DECISIONS.md 106, #149 |
 | Arrival windows of 30-minute blocks | Any run of blocks, two hours by default; a named time starts the window ("7:30" gives 7:30 to 8); other lengths on request; the seeded world unchanged | DECISIONS.md 108, #149 |
 | GPT-Live-1 | One slate call: answered wrong, slow, sometimes silent, forgot the call; dropped and its lane stopped | DECISIONS.md 107, PR #163, evals/rounds/simplicity-slate-01.md |
+| One stack to push forward | The slate had grown too wide; narrowed to the full custom stack against Retell native, judged on Jackson's calls, then all work goes into the winner | DECISIONS.md 111, evals/rounds/simplicity-slate-01.md |
