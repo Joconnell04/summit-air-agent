@@ -1,6 +1,7 @@
 """The local names list (voice/names.py, tenants/summit-air/names.yaml) and how it feeds the voice
 and the ears."""
 
+import asyncio
 import json
 
 import httpx
@@ -199,5 +200,9 @@ def test_a_short_acknowledgment_at_the_start_of_a_line_is_left_to_the_adaptive_d
     handling = turn_handling(load_voice())
     assert handling["interruption"]["mode"] == "adaptive"
     assert handling["interruption"]["backchannel_boundary"] == (0.0, 1.0)
-    session = AgentSession(turn_handling=handling)
+
+    async def build():
+        return AgentSession(turn_handling=handling)
+
+    session = asyncio.run(build())
     assert session.options.interruption["backchannel_boundary"] == (0.0, 1.0)
