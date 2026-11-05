@@ -40,7 +40,7 @@
   ],
   "channel": "voice",
   "contact_memory_config": {
-    "enable_read": true,
+    "enable_read": false,
     "enable_update": false
   },
   "data_storage_setting": "everything",
@@ -183,7 +183,7 @@
     "version": 2
   },
   "responsiveness": 1,
-  "stt_mode": "fast",
+  "stt_mode": "accurate",
   "user_dtmf_options": {},
   "version": 2,
   "voice_id": "retell-Cimo",

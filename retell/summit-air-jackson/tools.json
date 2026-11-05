@@ -168,7 +168,7 @@
     },
     {
       "args_at_root": false,
-      "description": "Availability for a job type. Without `day` it returns the shape of availability over the coming days; with `day` it returns that day's exact arrival windows. Pass what you've heard that bears on priority in `facts`. When the caller can only be home some hours (\"I'm home 8 to 2\", \"I leave at 10\"), pass them as arrive_after and arrive_before as they said them; the server reads \"8 to 2\" as 8 AM to 2 PM and offers only windows inside those hours.",
+      "description": "Openings for a job type. Windows are built from half-hour blocks, two hours unless the caller asks for another length. Without `day` it returns the coming days; with `day` (today, tomorrow, a weekday or a date) that day's exact windows. When the caller names a time, pass it as `arrive_after` and the window starts then. Put what bears on priority in `facts` (issue, since when, inside temperature, who's home). Its `say` offers the soonest opening as one choice; say it as written.",
       "max_retry": 1,
       "method": "POST",
       "name": "find_slots",
@@ -200,15 +200,8 @@
             "description": "The caller needs the technician to arrive before this local time, such as \"10\" or \"2\". Only what the caller said; \"8 to 2\" is arrive_after \"8\" and arrive_before \"2\"."
           },
           "day": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Ask for one day's exact windows. Use the date from an earlier find_slots result."
+            "description": "One day's exact windows: today, tomorrow, a weekday name or a date (YYYY-MM-DD).",
+            "type": "string"
           },
           "facts": {
             "additionalProperties": false,
@@ -287,6 +280,10 @@
                 "type": "null"
               }
             ]
+          },
+          "window_minutes": {
+            "description": "Window length in minutes, in 30-minute steps, only when the caller asked for a length (\"an hour\" is 60). Two hours by default.",
+            "type": "integer"
           }
         },
         "required": [
@@ -898,7 +895,7 @@
     },
     {
       "args_at_root": false,
-      "description": "Ask to end the call, with the reason. Call it after your goodbye. If it refuses (for example, asking \"Anything else?\" first), say its `say` and keep listening. On a safety call it returns the sign-off, which is the goodbye.",
+      "description": "Ask to end the call, after your goodbye. Call it once and say nothing more: the system hangs up a moment later. If it returns a sentence instead (for example, ask whether there's anything else), say that and keep listening.",
       "max_retry": 1,
       "method": "POST",
       "name": "end_call",
@@ -928,13 +925,6 @@
       "timeout_ms": 10000,
       "type": "custom",
       "url": "https://45-77-105-247.sslip.io/retell/tools/end_call"
-    },
-    {
-      "description": "Hang up the phone after the goodbye has been said and end_call has allowed the call to end.",
-      "name": "hang_up",
-      "speak_after_execution": true,
-      "speak_during_execution": false,
-      "type": "end_call"
     }
   ]
 }

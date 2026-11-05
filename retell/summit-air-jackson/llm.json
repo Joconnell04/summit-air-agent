@@ -1,13 +1,18 @@
 {
-  "begin_message": "Thank you for calling Summit Air. How can I help you today?",
-  "default_dynamic_variables": {},
+  "begin_message": "{{greeting}}",
+  "default_dynamic_variables": {
+    "call_context": "",
+    "greeting": "Thank you for calling Summit Air. How can I help you today?"
+  },
   "is_published": false,
   "kb_config": {
-    "filter_score": 0.6,
-    "kb_instruction": "Focus retrieval on HVAC topics covered in the knowledge base, including system and component names, heating and cooling concepts, symptoms, troubleshooting, maintenance, installation basics, and safety guidance. Preserve specific equipment types, parts, error codes, measurements, and user-stated symptoms. Use the user's situation and goal to form a concise search query. Ignore greetings, small talk, and unrelated conversation; do not invent technical details.",
-    "top_k": 3
+    "filter_score": 0.8,
+    "kb_instruction": "Retrieve only when the caller asks a technical question about heating or cooling equipment, how it works, or what a symptom might mean. Do not retrieve for yes or no answers, names, addresses, phone numbers, times, greetings, or small talk.",
+    "top_k": 2
   },
-  "knowledge_base_ids": [],
+  "knowledge_base_ids": [
+    "knowledge_base_5445e21be68d38ed"
+  ],
   "llm_id": "llm_12eba5f1d4a3b067f0635097de30",
   "model": "claude-5.5-haiku",
   "model_config": {
