@@ -624,7 +624,9 @@ def pace(arg: dict, ev: Evidence) -> list[str]:
     if "address" in arg and _speed(arg["address"]) not in address:
         problems.append(f"no request for the address at {arg['address']} was recorded")
     readback = json.loads(ev.call.get("readback_json") or "{}")
+    # The address part is said in words ("one oh one Union St"); older traces said numerals.
     street = (readback.get("street") or "").strip().lower()
+    street_words = street_said(street).lower() if street else ""
     normal = load_agent(TENANT_DIR)[0]["pace"]["normal"]
     spoke_address = False
     for turn in ev.turns():
@@ -635,7 +637,8 @@ def pace(arg: dict, ev: Evidence) -> list[str]:
             problems.append(f"agent line {turn['seq']} carries no speed")
             continue
         # The address part of a slower read-back, spoken at its own speed.
-        if street and turn["text"].strip().lower().startswith(street) and got in address:
+        said = turn["text"].strip().lower()
+        if street and said.startswith((street, street_words)) and got in address:
             spoke_address = True
             continue
         expected = _speed(normal)

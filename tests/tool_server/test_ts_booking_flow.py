@@ -69,7 +69,7 @@ def test_a_unit_given_after_the_confirmation_resets_it_and_the_booking_waits(age
     # The new read-back with the unit books, and the job carries the unit.
     address = {**in_area_address(), "unit": "4B"}
     asked = agent.tool("read_back", call, address=address, phone="caller_id")
-    assert asked["ok"] and "unit 4B" in asked["say"]
+    assert asked["ok"] and "unit four B" in asked["say"]
     agent.say(call, asked["say"])
     agent.turn(call, "Yes.")
     assert agent.tool("read_back", call, address=address, phone="caller_id", confirmed=True)["ok"]
