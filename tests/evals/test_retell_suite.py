@@ -83,10 +83,11 @@ def test_copying_reads_the_live_llm_and_writes_only_the_copy():
     writes = [(m, p) for m, p, _ in api.sent if m != "GET"]
     assert writes == [("PATCH", "/update-retell-llm/llm_copy")]
     body = api.sent[-1][2]
-    assert body["general_prompt"] == "Be kind."
+    # The second difference: one line at the end of the prompt, telling it when to use that tool.
+    assert body["general_prompt"] == "Be kind.\n\n" + suite.TEST_PROMPT_LINE
     assert body["general_tools"][0]["url"] == suite.EVAL_TOOLS + "find_slots"
     assert ("GET", f"/get-retell-llm/{suite.LIVE_LLM}", None) in api.sent
-    # The one difference from the live agent: a built-in end-call tool for after end_call allows it.
+    # The first difference from the live agent: a built-in end-call tool for after end_call.
     assert [t for t in body["general_tools"] if t["type"] == "end_call"] == [suite.TEST_HANG_UP]
     assert body["knowledge_base_ids"] == []  # none on the live LLM, so none left on the copy
 

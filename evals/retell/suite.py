@@ -131,7 +131,7 @@ def eval_tools(tools: list[dict]) -> list[dict]:
     return out
 
 
-# The one way the test copy differs from the live agent. Retell grades a simulated chat only when it
+# The first of two ways the test copy differs from the live agent (README, "What a run does"). Retell grades a simulated chat only when it
 # ends; it reports Error when "the agent goes silent and stops responding to the caller"
 # (SOURCE: https://docs.retellai.com/test/llm-simulation-testing.md), which is what the agent should
 # do after end_call. On a phone call the bridge hangs up then; in a simulation nothing does, so the
@@ -144,6 +144,10 @@ TEST_HANG_UP = {
 }
 
 
+# The second difference: one line added to the end of the copy's prompt, so the agent uses that tool.
+TEST_PROMPT_LINE = "After 'Take care.' call test_hang_up."
+
+
 def copy_body(live_llm: dict) -> dict:
     body = {k: live_llm[k] for k in LLM_FIELDS if live_llm.get(k) is not None}
     # Sent even when empty: a PATCH leaves out what it isn't given, so a knowledge base taken off
@@ -151,6 +155,7 @@ def copy_body(live_llm: dict) -> dict:
     body["knowledge_base_ids"] = live_llm.get("knowledge_base_ids") or []
     tools = [t for t in eval_tools(live_llm.get("general_tools")) if t.get("type") != "end_call"]
     body["general_tools"] = [*tools, TEST_HANG_UP]
+    body["general_prompt"] = (live_llm.get("general_prompt") or "").rstrip() + "\n\n" + TEST_PROMPT_LINE
     for state in body.get("states") or []:
         state["tools"] = eval_tools(state.get("tools"))
     return body
