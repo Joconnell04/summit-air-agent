@@ -392,3 +392,19 @@ def test_the_rig_sums_model_requests_over_a_turns_lines():
     ]}
     stages, _ = turn_agent_timings(trace, 0)
     assert stages["llm_requests"] == 3.0
+
+
+def test_a_call_that_ran_out_of_turns_is_still_checked_and_a_broken_one_is_not(scenario_data):
+    from evals.audio_rig.rig import with_audio_checks
+    from evals.results import ScenarioResult
+
+    silent = call(GREETING, caller("Two four eight Duffield Street.", 4, 6), agent(6))
+    long_call = ScenarioResult.model_validate(scenario_data(
+        outcome="error", error="the call did not finish within 8 caller turns"))
+    broken = ScenarioResult.model_validate(scenario_data(
+        outcome="error", error="harness: ConnectionError: refused"))
+    checked = with_audio_checks(long_call, silent, load_config())
+    assert checked.outcome == "error"
+    assert checked.check_failures == [
+        'silence: no reply at all after the caller said "Two four eight Duffield Street."']
+    assert with_audio_checks(broken, silent, load_config()).check_failures == []

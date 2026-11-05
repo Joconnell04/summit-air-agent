@@ -664,3 +664,15 @@ def test_a_heard_turn_dates_its_samples_from_the_playout():
     heard = asyncio.run(listener.turn(False, 10.0))
     assert heard.at(0) == 10.0
     assert heard.at(RATE // 5) == 11.0
+
+
+def test_a_turn_held_open_after_the_agent_stopped_is_not_cut_into():
+    ticks = itertools.count(0)
+    def clock():  # moves on every read
+        return 12.0 + next(ticks) * 0.5
+    listener = Listener(Vad(), clock, RATE)
+    listener.playout.add(tone(200), 10.0)
+    # No "listening" signal comes, so the turn stays open for QUIET_SIGNALLED_S after the agent's
+    # last sound; the caller only cuts in while the agent is still talking.
+    heard = asyncio.run(listener.turn(True, 9.0, cut_after_s=1.0))
+    assert not heard.cut and len(heard.pcm) == len(tone(200))

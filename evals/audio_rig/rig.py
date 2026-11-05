@@ -399,13 +399,15 @@ class Rig:
 
 def with_audio_checks(result: ScenarioResult, timeline: Timeline, config: dict) -> ScenarioResult:
     """The live-like audio checks added to a scored call: each failure joins `check_failures`, and
-    a call that passed the record's checks fails on them. A run with no verdict stays one."""
-    if result.outcome == "error":
+    a call that passed the record's checks fails on them. A call that ran out of turns still had
+    its silences and repeats, so it is checked and stays an error; a broken harness run is not
+    checked."""
+    if result.error.startswith("harness"):
         return result
     failures = live_checks.run(timeline, config)
     update = {"check_failures": result.check_failures + failures,
               "checks": result.checks + list(live_checks.NAMES)}
-    if failures:
+    if failures and result.outcome == "pass":
         update["outcome"] = "fail"
     return result.model_copy(update=update)
 

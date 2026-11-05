@@ -174,7 +174,10 @@ class Listener:
             first = self.first_sound()
             if first is None and now - since > timeout_s:
                 break
-            if cut_after_s is not None and first is not None and now - first > cut_after_s:
+            # Only while the agent is still talking: a turn kept open waiting for the platform's
+            # "listening" signal after the agent stopped is not one to cut into.
+            if (cut_after_s is not None and first is not None and now < self.playout.end
+                    and now - first > cut_after_s):
                 # What the caller heard before cutting in; a platform that sends audio in bursts
                 # may have sent more that hasn't played.
                 cut, heard_to = True, self.playout.sample_at(now) * 2
