@@ -136,7 +136,7 @@ def test_the_voice_settings_reach_the_session():
     voice = load_voice()
     tokenizer = tts_options(voice, NAMES)["tokenizer"]
     assert tokenizer._config.min_sentence_len == voice["tts"]["min_sentence_chars"]
-    trial = {**voice, "preemptive_tts": True}
+    trial = {**voice, "preemptive_generation": True, "preemptive_tts": True}
     assert turn_handling(trial)["preemptive_generation"] == {"enabled": True, "preemptive_tts": True}
 
 
@@ -162,3 +162,17 @@ def test_push_creates_the_dictionary_then_updates_it_in_place(tmp_path):
     assert body["items"] == NAMES.cartesia_items() and body["name"]
     assert (method2, path2) == ("PATCH", "/pronunciation-dicts/pdict_new")
     assert "name" not in body2
+
+
+def test_preemptive_generation_is_off_because_the_server_notes_always_change_the_line():
+    """LiveKit keeps an early draft only when the caller's line is unchanged, and the worker adds
+    the server's notes to it, so a draft was never used (issue #150)."""
+    assert turn_handling(load_voice())["preemptive_generation"]["enabled"] is False
+
+
+def test_deepgram_is_asked_for_its_final_transcript_at_the_end_of_speech_when_set():
+    voice = load_voice()
+    off = {**voice, "stt": {**voice["stt"], "finalize_at_end_of_speech": False}}
+    on = {**voice, "stt": {**voice["stt"], "finalize_at_end_of_speech": True}}
+    assert build_stt(off, NAMES, api_key="test").capabilities.manual_flush is False
+    assert build_stt(on, NAMES, api_key="test").capabilities.manual_flush is True

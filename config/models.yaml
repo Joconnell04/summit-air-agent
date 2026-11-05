@@ -50,7 +50,10 @@ profiles:
 voice:
   # price_per_minute is streaming plus Deepgram's keyterm add-on, $0.0077 + $0.0013 (SOURCE:
   # https://deepgram.com/pricing, read 2026-11-04).
-  stt: {provider: deepgram, model: nova-3, endpointing_ms: 100, price_per_minute: 0.0090}
+  # finalize_at_end_of_speech: ask Deepgram for its final transcript as soon as LiveKit's own
+  # voice detection hears the caller stop, rather than waiting for Deepgram's (issue #150).
+  stt: {provider: deepgram, model: nova-3, endpointing_ms: 100, price_per_minute: 0.0090,
+        finalize_at_end_of_speech: false}
   # Other ears, measured against Nova-3 by the STT bench (voice/livekit/stt_bench.py, make
   # stt-bench). RIG_VOICE='{"stt": <one of these>}' puts one on the rig's worker; a Cartesia entry
   # also hands the end of turn to the STT's own turn detection, as LiveKit exposes it.
@@ -63,8 +66,13 @@ voice:
   # one (LiveKit's default, 20).
   tts: {provider: cartesia, model: sonic-3, voice_id: f786b574-daa5-4673-aa0c-cbe3e8534c02,
         min_sentence_chars: 20}
-  # Start the voice on the early reply LiveKit drafts from the final transcript, before the turn
-  # is confirmed over; thrown away if the caller keeps talking.
+  # LiveKit's early reply, drafted from the final transcript before the turn is confirmed over.
+  # Off: LiveKit keeps a draft only when the caller's line is unchanged, and the worker adds the
+  # server's `[server]` notes to almost every line, so every draft was thrown away (MEASURED: 0
+  # used of 67 on the live worker's log, 0 of 158 in one rig run) for one extra model request per
+  # turn (issue #150).
+  preemptive_generation: false
+  # Start the voice on that early reply too; only applies while preemptive_generation is on.
   preemptive_tts: false
   # The silence that ends the caller's speech. LiveKit's turn detector refuses less than 0.25 s;
   # 0.25 s measured no faster than 0.35 s on the audio rig (evals/rounds/bakeoff-audio-02.md).
@@ -88,6 +96,10 @@ voice:
   # `stepped_away` and hangs up. poll_s is how often the worker looks. Jackson's numbers (2 and 8
   # minutes); the text harness runs the same timer on a short clock.
   dead_air: {check_in_s: 120, hang_up_s: 480, poll_s: 1.0}
+  # How long the line stays open after the goodbye has played (live call 2: "bang, immediate hang
+  # up"). Words from the caller in that time keep the call going (voice/livekit/turns.py).
+  # Jackson asked for "like a 1 or 2 second wait"; 1.5 s is the middle (ASSUMED).
+  hang_up_grace_s: 1.5
   # Bridge line (docs/latency.md): played only when a tool hasn't answered after this long, and at
   # most once every this many caller turns.
   bridge: {after_s: 0.7, min_turns_between: 3}
