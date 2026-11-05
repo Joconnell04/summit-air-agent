@@ -106,10 +106,10 @@ def test_the_read_back_tool_hands_the_parts_to_the_worker_and_the_model_says_not
     }
     args = {"address": address, "phone": "caller_id"}
     assert no_reply(asyncio.run(tools["read_back"](args, None)))
-    assert [p["speed"] for p in heard[0]] == [1.0, 0.85, 1.0]
-    # The next read-back is whole again, spoken by the worker as it is (eval round 4).
+    assert [p["speed"] for p in heard[0]] == [1.0, 0.7, 1.0, 0.85, 1.0]
+    # The next read-back is back to the usual speeds, still spoken by the worker (eval round 4).
     assert no_reply(asyncio.run(tools["read_back"](args, None)))
-    assert len(heard) == 1
+    assert [p["speed"] for p in heard[1]] == [1.0, 0.85, 1.0, 0.85, 1.0]
 
 
 def test_the_speed_is_set_on_the_voice_before_each_speech_is_synthesized(monkeypatch):

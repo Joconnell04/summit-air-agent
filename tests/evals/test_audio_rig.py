@@ -569,3 +569,20 @@ def test_a_noise_floor_sits_at_its_level_under_silence_and_speech():
     assert dbfs(quiet) == pytest.approx(-50, abs=1.5)
     loud = tone(20)
     assert dbfs(with_noise(loud, -50, rng)) == pytest.approx(dbfs(loud), abs=0.1)
+
+
+def test_the_speech_cache_plays_the_same_audio_for_the_same_words(tmp_path, monkeypatch):
+    monkeypatch.setenv("RIG_SPEECH_CACHE", str(tmp_path))
+    asked = []
+
+    def answer(request):
+        asked.append(request)
+        return httpx.Response(200, content=tone(100))
+
+    client = httpx.AsyncClient(transport=httpx.MockTransport(answer), base_url="http://dg")
+    voice = Deepgram(load_config()["audio_rig"], client=client)
+    first = asyncio.run(voice.say("It's 101 Union Street.", RATE))
+    second = asyncio.run(voice.say("It's 101 Union Street.", RATE))
+    assert first == second and len(asked) == 1
+    asyncio.run(voice.say("Something else.", RATE))
+    assert len(asked) == 2

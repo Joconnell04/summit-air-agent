@@ -15,9 +15,10 @@ from typing import Any
 from zoneinfo import ZoneInfo
 
 from app import cards
+from app import pace as pace_rules
 from app import priority as prio
 from app.tenant import load_agent
-from app.text import street_key, unit_key, words
+from app.text import phone_said, street_key, unit_key, words
 
 TENANT_DIR = Path(__file__).resolve().parent.parent / "tenants" / "summit-air"
 BOOKED = ("booked", "queued")
@@ -616,7 +617,8 @@ def pace(arg: dict, ev: Evidence) -> list[str]:
         problems.append(f"no request for the address at {arg['address']} was recorded")
     readback = json.loads(ev.call.get("readback_json") or "{}")
     street = (readback.get("street") or "").strip().lower()
-    normal = load_agent(TENANT_DIR)[0]["pace"]["normal"]
+    number = phone_said(readback["phone"]).lower() if readback.get("phone") else ""
+    cfg = load_agent(TENANT_DIR)[0]["pace"]
     spoke_address = False
     for turn in ev.turns():
         if turn["speaker"] != "agent":
@@ -625,14 +627,19 @@ def pace(arg: dict, ev: Evidence) -> list[str]:
         if got is None:
             problems.append(f"agent line {turn['seq']} carries no speed")
             continue
-        # The address part of a slower read-back, spoken at its own speed.
-        if street and turn["text"].strip().lower().startswith(street) and got in address:
+        text = turn["text"].strip().lower()
+        # The address part of a read-back the caller asked to hear slower, at its own speed.
+        if street and text.startswith(street) and got in address:
             spoke_address = True
             continue
-        expected = _speed(normal)
+        expected = _speed(cfg["normal"])
         for change in changes:
             if change["scope"] == "call" and change["seq"] < turn["seq"]:
                 expected = _speed(change["speed"])
+        # The address and number in every read-back are a step slower than the call.
+        detail = (street and text.startswith(street)) or (number and text.startswith(number))
+        if detail and got == _speed(pace_rules.detail_speed(expected, cfg)):
+            continue
         if got != expected:
             problems.append(
                 f"agent line {turn['seq']} was spoken at {got}; the server's pace was {expected}"

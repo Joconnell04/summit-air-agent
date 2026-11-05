@@ -6,8 +6,9 @@ speed it is given. Four things change it:
 - A request to slow down or speed up, one step each way. It holds for the rest of the call, carries
   to a call linked to this one, and is remembered for the caller's number, so their next call
   starts at it.
+- Every read-back speaks the address and the number `read_back_steps` slower than the call.
 - A request to slow down for the address alone. Only the address in the next read-back sentence is
-  spoken slower; the pace then goes back to what it was.
+  spoken a step slower again; the pace then goes back to what it was.
 - "Sorry, what?" said twice: one step slower for the rest of this call.
 - A caller who says they are elderly, or gives their own age as 65 or more: the older-adult speed,
   unless they already asked for a pace. Priority's older-adult line is 60 (DECISIONS.md 019); 65
@@ -296,7 +297,7 @@ def caller_line(
             changes.update(speed=speed, source="older_adult")
             _log(conn, call["id"], seq, speed, "call", "older_adult", now)
     if heard.address_only:
-        address_speed = stepped(speed, SLOWER, cfg)
+        address_speed = stepped(detail_speed(speed, cfg), SLOWER, cfg)
         changes["address_speed"] = address_speed
         _log(conn, call["id"], seq, address_speed, "address", "request", now)
         hints.append("pace_address")
@@ -325,25 +326,43 @@ def caller_line(
     return hints
 
 
+def detail_speed(speed: float, cfg: dict) -> float:
+    """The speed of the address and number inside a read-back: `read_back_steps` slower than the
+    call's pace (live call 2: "too fast on the readback of address and phone")."""
+    for _ in range(cfg.get("read_back_steps", 0)):
+        speed = stepped(speed, SLOWER, cfg)
+    return speed
+
+
 def read_back_parts(
-    conn: sqlite3.Connection, call_id: str, sentence: str, address: str
+    conn: sqlite3.Connection, call_id: str, sentence: str, details: list[str], cfg: dict | None
 ) -> list[dict] | None:
-    """When the caller asked for the address slower, the read-back sentence in the parts the worker
-    speaks: the address at the slower speed, the words around it at the call's pace. The request is
-    used up, so the next read-back is at the call's pace again. None when nothing was asked."""
+    """The read-back sentence in the parts the worker speaks: each detail (the address, the number)
+    at the detail speed, the words around them at the call's pace. A caller who asked for the
+    address slower hears it one step below that, once; the next read-back is as usual again. None
+    when pace is off or nothing in the sentence is slower than the call."""
     state = _state(conn, call_id)
-    if state is None or state["address_speed"] is None:
+    if cfg is None or state is None:
         return None
-    at = sentence.find(address)
-    if at < 0:
+    detail = detail_speed(state["speed"], cfg)
+    slower = [detail] * len(details)
+    if state["address_speed"] is not None:
+        slower[0] = min(stepped(detail, SLOWER, cfg), state["address_speed"])
+        conn.execute("UPDATE call_pace SET address_speed = NULL WHERE call_id = ?", (call_id,))
+    parts, rest = [], sentence
+    for text, speed in zip(details, slower, strict=True):
+        at = rest.find(text)
+        if at < 0 or speed == state["speed"]:
+            continue
+        after = rest[at + len(text) :]
+        # The comma after a detail goes with it, so each part ends where a speaker would pause.
+        tail = re.match(r"^[,;:.]?", after)[0]
+        parts += [
+            {"text": rest[:at].strip(), "speed": state["speed"]},
+            {"text": text + tail, "speed": speed},
+        ]
+        rest = after[len(tail) :]
+    if not parts:
         return None
-    before, after = sentence[:at].strip(), sentence[at + len(address) :]
-    # The comma after the address goes with it, so each part ends where a speaker would pause.
-    tail = re.match(r"^[,;:.]?", after)[0]
-    parts = [
-        {"text": before, "speed": state["speed"]},
-        {"text": address + tail, "speed": state["address_speed"]},
-        {"text": after[len(tail) :].strip(), "speed": state["speed"]},
-    ]
-    conn.execute("UPDATE call_pace SET address_speed = NULL WHERE call_id = ?", (call_id,))
+    parts.append({"text": rest.strip(), "speed": state["speed"]})
     return [p for p in parts if p["text"]]

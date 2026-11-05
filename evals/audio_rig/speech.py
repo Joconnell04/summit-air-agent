@@ -6,7 +6,9 @@ Endpoints (SOURCE: https://developers.deepgram.com/reference/text-to-speech-api 
 https://developers.deepgram.com/reference/speech-to-text-api/listen): POST /v1/speak returns raw
 linear16 with `container=none`; POST /v1/listen takes raw linear16 given its rate.
 """
+import hashlib
 import os
+from pathlib import Path
 
 import httpx
 
@@ -29,14 +31,30 @@ class Deepgram:
         )
         self.chars = 0
         self.seconds = 0.0
+        # RIG_SPEECH_CACHE=<folder> keeps each caller line's audio by its text, so two runs that
+        # compare one change play the same audio wherever the caller says the same words.
+        cache = os.environ.get("RIG_SPEECH_CACHE", "")
+        self.cache = Path(cache) if cache else None
 
     async def say(self, text: str, rate: int) -> bytes:
         params = {"model": self.voice["model"], "encoding": "linear16", "sample_rate": rate,
                   "container": "none"}
+        path = None
+        if self.cache is not None:
+            key = hashlib.sha256(f"{self.voice['model']}|{rate}|{text}".encode()).hexdigest()
+            path = self.cache / f"{key}.pcm"
+            if path.is_file():
+                return path.read_bytes()
         response = await self.client.post("/v1/speak", params=params, json={"text": text})
         if response.status_code != 200:
             raise SpeechError(f"caller voice failed ({response.status_code}): {response.text[:200]}")
         self.chars += len(text)
+        if path is not None:
+            # Written whole and renamed, so a run started alongside never reads half a file.
+            path.parent.mkdir(parents=True, exist_ok=True)
+            partial = path.with_suffix(f".{os.getpid()}.part")
+            partial.write_bytes(response.content)
+            partial.replace(path)
         return response.content
 
     async def hear(self, pcm: bytes, rate: int) -> str:
