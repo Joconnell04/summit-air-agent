@@ -46,7 +46,7 @@ The owner view is three pages for the owner and dispatcher: Today (`/owner`, the
 |---|---|
 | `main.py` | Routes, the request wrapper (idempotency replay, refusals into the envelope, one log line per request), the background timer, `/healthz`, `/debug/*` |
 | `bench.py` | The debug bench at `/bench`, admin only (`require_admin`): calls, a call as a node graph with its rule proof, the live stream, a call as a draft scenario, settings, evals and rounds |
-| `bench_rules.py` | The rules editor on the bench (`/bench/rules`): save, publish through the eval gate, override with a reason, discard, stop a check, roll back |
+| `bench_rules.py` | The Rules page on the bench (`/bench/rules`): the owner's rules, the fixed responses and the system prompt by section; save, publish through the eval gate, override with a reason, discard, stop a check, roll back |
 | `nodes.py` | A call as a graph of steps in lanes, with the prompt and messages each model request was given rebuilt from the call record, and the rule proof |
 | `bench_data.py` | What the bench reads besides calls: the tuning knobs with their documented measurements, model profiles, switches, eval runs, rounds, the scenario draft |
 | `redact.py` | Redaction for everything the bench shows: phone numbers to their last four, a service location to its street name, keys and tokens replaced |
@@ -71,7 +71,8 @@ The owner view is three pages for the owner and dispatcher: Today (`/owner`, the
 | `reports.py` | Reports to Revin from the owner view, and filing them as issues (story O-8) |
 | `search.py` | The owner view's search: a SQLite full-text index of calls, jobs, flags, leads and lines said, refreshed by the jobs loop |
 | `rules.py` | Owner edits (exploration 009): the editable lines and guidance, validation that keeps every gate out of reach, versions with their eval gate result, rollback, the version a call runs under, and the call stage the server decides |
-| `rulebook.py` | Every rule the agent follows, by stage, built from the tenant files, the prompt files and the live version, for the Rules page |
+| `rulebook.py` | Every rule the agent follows, by stage, built from the tenant files, the prompt files and the live version, for the guidance check |
+| `fixed.py` | The fixed responses on the bench's Rules page: the rulebook's lines and server checks, one row per trigger, by topic |
 | `owner_view.py`, `templates/`, `static/owner/` | The owner view's tokens (read, and edit per person), routes, HTML and design system (docs/design-system.md) |
 | `mail.py` | Sending alert email over SMTP, or holding it when no server is set |
 | `tenant.py` | Loading `tenants/<company>/` and picking one by dialed number |
@@ -133,7 +134,7 @@ Jackson is redesigning the owner view in a separate session. The first version, 
 
 ## Owner edits
 
-`/calls/start` pins the live version to the call (`call_stages`) and returns it as `house_rules`: the version number, the guidance by stage and the spoken lines it overrides (greeting, goodbye). `prompts/assemble.py` adds the guidance to the prompt and lays the lines over the tenant's `voice:` lines; the server's own lines (anything else, the callback opening) come from the call's version through `rules.tenant_for_call`. Publishing marks a draft `checking`; `evals/gate.py` (`make rules-gate`, or started by the server when `RULES_GATE=1`) runs the must-pass scenarios on it and writes the result back. The editor is on the debug bench (`/bench/rules`, `app/bench_rules.py`); the owner view's Rules page is read-only. Only an admin can save, publish, override, discard, stop a check or roll back; a version carries the admin's name. An override (`rules.publish_now`) publishes the draft at once without the gate, after a reason; the version's gate record says who, when and why, and the server log gets a `rules.override` line. A result never publishes over a rollback made while it ran, a check can be stopped from the editor, and one that hasn't reported back in an hour (`rules.CHECK_TIMEOUT_MINUTES`) returns to draft. One gate process runs at a time per database (a lock file beside it). What contains an edit: docs/template.md, "Owner edits".
+`/calls/start` pins the live version to the call (`call_stages`) and returns it as `house_rules`: the version number, the guidance by stage and the spoken lines it overrides (greeting, goodbye). `prompts/assemble.py` adds the guidance to the prompt and lays the lines over the tenant's `voice:` lines; the server's own lines (anything else, the callback opening) come from the call's version through `rules.tenant_for_call`. Publishing marks a draft `checking`; `evals/gate.py` (`make rules-gate`, or started by the server when `RULES_GATE=1`) runs the must-pass scenarios on it and writes the result back. The only rules page is on the debug bench (`/bench/rules`, `app/bench_rules.py`); `/owner/rules` redirects there (DECISIONS.md 091). Only an admin can save, publish, override, discard, stop a check or roll back; a version carries the admin's name. An override (`rules.publish_now`) publishes the draft at once without the gate, after a reason; the version's gate record says who, when and why, and the server log gets a `rules.override` line. A result never publishes over a rollback made while it ran, a check can be stopped from the editor, and one that hasn't reported back in an hour (`rules.CHECK_TIMEOUT_MINUTES`) returns to draft. One gate process runs at a time per database (a lock file beside it). What contains an edit: docs/template.md, "Owner edits".
 
 ## Known limits
 

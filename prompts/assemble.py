@@ -40,13 +40,19 @@ STAGE_NOTES = {
 
 def instructions(start: dict, now: datetime | None = None) -> str:
     """The system prompt for one call. `start` is the data of the /calls/start result."""
+    return "\n\n".join(text for _name, text in sections(start, now))
+
+
+def sections(start: dict, now: datetime | None = None) -> list[tuple[str, str]]:
+    """The system prompt for one call as (name, text) parts, in the order they are joined: the
+    prompt files, the owner's guidance after the journeys when there is some, the company
+    knowledge, then this call. The bench's Rules page shows these, so it can't drift from a call."""
     tenant = start["tenant"]
-    parts = [(PROMPTS / p).read_text().strip() for p in PARTS]
+    parts = [(p, (PROMPTS / p).read_text().strip()) for p in PARTS]
     house = house_guidance((start.get("house_rules") or {}).get("guidance") or {})
     if house:
-        parts.insert(PARTS.index(HOUSE_AFTER) + 1, house)
-    text = "\n\n".join(parts)
-    text = text.replace("{company}", tenant["name"])
+        parts.insert(PARTS.index(HOUSE_AFTER) + 1, (HOUSE_GUIDANCE, house))
+    parts = [(name, text.replace("{company}", tenant["name"])) for name, text in parts]
     local = (now or datetime.now(ZoneInfo(tenant["timezone"]))).astimezone(
         ZoneInfo(tenant["timezone"])
     )
@@ -56,12 +62,16 @@ def instructions(start: dict, now: datetime | None = None) -> str:
     }
     notes = call_notes(start)
     noted = "".join(f"- {n}\n" for n in notes)
-    return (
-        f"{text}\n\n# Company knowledge\n\n{knowledge}\n\n# This call\n\n"
-        f"Now: {local:%A %-d %B %Y, %-I:%M %p} ({tenant['timezone']}).\n\n"
-        + (f"For this caller:\n{noted}\n" if notes else "")
-        + f"What the server found before hello:\n{json.dumps(context, default=str)}\n"
-    )
+    return [
+        *parts,
+        ("Company knowledge", f"# Company knowledge\n\n{knowledge}"),
+        (
+            "This call",
+            f"# This call\n\nNow: {local:%A %-d %B %Y, %-I:%M %p} ({tenant['timezone']}).\n\n"
+            + (f"For this caller:\n{noted}\n" if notes else "")
+            + f"What the server found before hello:\n{json.dumps(context, default=str)}\n",
+        ),
+    ]
 
 
 def call_notes(start: dict) -> list[str]:

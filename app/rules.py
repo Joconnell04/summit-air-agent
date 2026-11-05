@@ -292,6 +292,28 @@ def _insert(conn, slug: str, content: dict, status: str, author: str, note: str,
     return cursor.lastrowid
 
 
+def describe(tenant: Tenant, content: dict, base: dict | None) -> str:
+    """What a draft changes from the live version, in a few words, for the version's note when
+    none is given: "Added 1 rule; reworded Greeting"."""
+    after, before = applied(tenant, content), applied(tenant, base)
+    reworded = [
+        label for key, (_where, _stage, label) in EDITABLE_LINES.items()
+        if after["lines"].get(key) != before["lines"].get(key)
+    ]
+    new = {(s, t) for s, items in after["guidance"].items() for t in items}
+    old = {(s, t) for s, items in before["guidance"].items() for t in items}
+
+    def rule(n: int) -> str:
+        return f"{n} rule" + ("" if n == 1 else "s")
+
+    parts = (
+        ([f"Added {rule(len(new - old))}"] if new - old else [])
+        + ([f"Removed {rule(len(old - new))}"] if old - new else [])
+        + ([f"Reworded {', '.join(reworded)}"] if reworded else [])
+    )
+    return "; ".join(parts) or "No change"
+
+
 def changed(tenant: Tenant, clean: dict, base: dict | None) -> dict[str, str]:
     """The lines and notes in a clean draft that the live version doesn't have, by field: what the
     guidance check reads. A note already live was checked when it was saved."""

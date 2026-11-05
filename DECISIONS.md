@@ -12,6 +12,15 @@ Discussion: docs/ai-process/transcripts/... or docs/explorations/...
 Issue: #N
 -->
 
+## 091. One simple Rules page, on the debug bench only
+
+Decided: the owner view's Rules page and the bench's rule editor become one page at `/bench/rules`, in reading order: **Your rules** (a short list, each rule with its stage and where it reaches the agent, plus one row to add one), **Fixed responses** (the server's lines and hard rules, one row per trigger with the exact line, behind eight topic tabs so one topic shows at a time), **System prompt** (the sections `prompts/assemble.py` joins, in order, on a sample call, collapsed), then Versions. `/owner/rules` redirects there (308) and the owner view has no Rules tab. Every row is a trigger in plain words and the exact line; variants of one line share a row, a check that says a line shows it on its row, and each line is said on one row only, so 95 lines and 40 checks read as 83 rows. The 49 company settings and the prompt cut into 66 rows are gone from the page: settings are configuration, and the prompt is shown whole. The six lines the owner may reword are fields in place among the fixed responses. A version's note is written from the change. The page reads the prompt from `assemble.sections()`, which `instructions()` is now built from, so the two can't drift; the prompt text is unchanged byte for byte. Every server rule, the guidance check and the must-pass gate on publish (031, 055) are unchanged.
+Why: Jackson found the two pages overcomplicated, "a hodgepodge of random rules that are disparately connected", and asked for less at once, on the bench only, with the assembled prompt on the page. The owner page was 251 rows and 17,032 px tall (MEASURED, headless Chromium at 1440 px on `make owner-demo`); the new page is about 1,860 px.
+Considered: tabs for rules, fixed responses, prompt and versions (B: the least at once, but your rules never sit beside what they are checked against); fixed responses and your rules side by side (C: everything in one scroll, 6,975 px, cramped on a phone).
+Would change if: the page's main use turns out to be an engineer scanning every fixed line rather than an admin adding a rule (then C's single scroll).
+Discussion: docs/explorations/018-rules-page.md; Jackson picked A ("let's go with your recommendation of one topic at a time").
+Issue: #140
+
 ## 090. The side model stays on OpenAI Decisions, at a 0.65 threshold
 
 Decided: the side model that reads whether someone at home is at risk stays on OpenAI Decisions, not Jev, and a yes now needs a probability of 0.65 or more instead of 0.5.

@@ -101,6 +101,8 @@ SPACE_USAGE = {
     "s-10": "Rarely: large separations on the specimen page.",
     "s-12": "Page bottom padding.",
     "gutter": "The page's side padding.",
+    "field-min": "The narrowest a field in a form table gets; on a phone the table scrolls sideways.",
+    "icon-sm": "A small inline icon: a disclosure's chevron.",
 }
 RADIUS_USAGE = {
     "r-sm": "Tags and the active segmented button.",

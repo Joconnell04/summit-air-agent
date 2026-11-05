@@ -123,3 +123,4 @@ How the design was reached, in order, so a reader can follow each choice back to
 | Two jobs and named technicians | Two different jobs per call, each with its own read-back where the unit differs; a technician request is a dispatcher note, never a promise | DECISIONS.md 085, #129 |
 | Eval reference before the live calls | Two-sample standard run (186 calls) adopted at 91%; floor stays 90% | DECISIONS.md 011, #139 |
 | Side model threshold and vendor | OpenAI Decisions kept over Jev; a yes needs 0.65, not 0.5 | DECISIONS.md 090 |
+| One simple Rules page on the bench | The owner's rules, the fixed responses by topic and the system prompt by section on one bench page; the owner view's Rules page redirects there | DECISIONS.md 091, #140 |

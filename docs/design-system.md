@@ -72,7 +72,7 @@ Times, phone numbers and counts use `.num` (tabular figures) so columns line up.
 
 - Space is on a 4 px grid: `--s-1` (4) to `--s-12` (48). Panels pad 16; the page gutter is 24; panels stack 24 apart.
 - Radius: `--r-sm` 4 for tags, `--r-md` 6 for controls, `--r-lg` 8 for panels.
-- Sizes: every control in a row is `--control-h` (32 px); tags inside tables are `--tag-h` (22 px); the header is `--header-h` (56 px); the page is at most `--page-w` (1280 px).
+- Sizes: every control in a row is `--control-h` (32 px); tags inside tables are `--tag-h` (22 px); the header is `--header-h` (56 px); the page is at most `--page-w` (1280 px); a field in a form table is at least `--field-min` (220 px); a disclosure chevron is `--icon-sm` (14 px).
 - Depth: panels are flat with a 1 px line. Only the active segmented button gets `--shadow-1`. Focus is a 3 px blue ring (`--focus`).
 - Motion: `--fast` (120 ms) for hover, `--base` (200 ms) when board marks move. Both drop to zero under `prefers-reduced-motion`.
 
@@ -140,7 +140,7 @@ The day from 7 AM to 9 PM, widening to the hour for any call outside it (`owner.
 Positions are computed in Python (`owner.position`) so the board is right before any script runs, and the script only re-places marks when the range changes.
 
 ### Tray
-A panel with tabs (Callbacks, Leads, Turned away), each with its count, and a list under each. Late items are washed red and sort first. A callback says who calls back and by when ("The office calls back by 1:40 PM", "The agent called back").
+A panel with tabs (Callbacks, Leads, Turned away), each with its count, and a list under each. The tabs scroll sideways when they don't fit, as the eight topics of the bench's Rules page do on a phone. Late items are washed red and sort first. A callback says who calls back and by when ("The office calls back by 1:40 PM", "The agent called back").
 
 ### List
 Rows of a bold heading, a meta line and an end column for a tag and the chevron. The whole row opens its call. Used in the tray, the Results turned-away list and the reports.
@@ -170,19 +170,29 @@ Titled "Performance", under the chart. A table of measures down the side and per
 The Results period: Day, 7 days or 30 days, and "Custom", a disclosure whose popover takes a from and a to date and Apply. Up to 92 days; the dates can come in either order, an end after today is read as today, and a longer range shows its last 92 days and says so. The period before is the same number of days.
 
 ### Field
-One line of text an owner types: 32 px high, the same edge and radius as a select, a blue focus ring. An invalid field gets a red edge (`aria-invalid`) and the reason under it in red (`.error.field-error`), written by the server, never a browser alert. Used on the rules editor.
+One line of text an owner types: 32 px high, the same edge and radius as a select, a blue focus ring. An invalid field gets a red edge (`aria-invalid`) and the reason under it in red (`.error.field-error`), written by the server, never a browser alert. Used on the bench's Rules page. In a form table a field keeps at least `--field-min` (220 px), and the table scrolls sideways on a phone.
 
 ### Form table
-A table (`.table.form`) whose rows are a label and its field, centred on the field's line so a label reads level with its box, every row at least one control high so rows without a control line up with those that have one. The rules editor's Wording and Guidance panels, and the Settings page's Calls and Users panels. Controls at a row's end stay on one line.
+A table (`.table.form`) whose rows are a label and its field, centred on the field's line so a label reads level with its box, every row at least one control high so rows without a control line up with those that have one. The Rules page's Your rules and Fixed responses panels, and the Settings page's Calls and Users panels. Controls at a row's end stay on one line.
 
 ### Actions
-A page's controls on one row at one height (`.actions`): a status tag, a field at a fixed 280 px, then the buttons, the primary last. The rules editor's head: "What changed", Save draft, Discard, Override, Publish. Save draft comes first in the row, because Enter in a field submits with the first button and must never discard.
+A page's controls on one row at one height (`.actions`): a status tag, a field at a fixed 280 px, then the buttons, the primary last. The Rules page's head: Save draft, Discard, Override, Publish. Save draft comes first in the row, because Enter in a field submits with the first button and must never discard or remove a rule.
 
 ### Popover form
 A disclosure (the quiet outlined button with a chevron) whose popover holds one field with its label, a hint and one action, for a step that needs a reason before it runs: the bench's **Override**, whose popover asks "Why skip the check" and offers **Publish now**. 320 px wide, under the button, the same panel edge, radius and floating shadow as the range picker's popover.
 
 ### Rules page
-`/owner/rules` lists every rule by call stage (Before hello, Opening, Whole call, Booking, Closing, After the call), one panel each, built from the tenant files and prompts (`app/rulebook.py`). Each row is the rule, how it is kept (Server check, Exact wording, Company setting, Agent guidance, Your guidance) and a tag: **Editable** (info) or **Locked** (outline), whose tooltip says why. A segmented control shows All, Editable or Locked. Versions sit under the stages with their check: **Passed 18 of 18** (done), **Blocked, 2 of 18 failed** (urgent, the failed calls in the tooltip), **Checking** (high), **Rolled back**, **Check skipped** (high, published with the override; who and why in the tooltip; a rollback to such a version shows both), **Draft**, **Not published, live changed** (a rollback landed while it was checked) and **1 on a rerun** (outline). While a check runs, the editor offers **Stop check**, which returns the draft; a check that never reports back returns it after an hour. The editor is on the debug bench (`/bench/rules`, DECISIONS.md 055): the owner view keeps this read-only page, and an admin sees an **Edit on the bench** button. Publish runs the must-pass eval gate; **Override** publishes at once after a reason is given, and the version and the server log record who skipped the check, when and why. Staff get **Admins only** if they open the editor.
+`/bench/rules`, on the debug bench only (DECISIONS.md 091; `/owner/rules` redirects here and the owner view has no Rules tab). One form, three panels in reading order, then the versions (exploration 018, option A):
+
+- **Your rules**: a form table, one row per rule: **When** (a select of Opening, Whole call, Booking, Closing), the rule in a field and **Remove**; the last row adds one ("Add a rule"). A refused rule shows the guidance check's reason under its field. The foot says where rules reach the agent: opening and whole-call rules in the prompt, booking and closing rules when the call gets there.
+- **Fixed responses**: a tray of eight topics (Safety, Greeting, Drops and outages, Who's calling, Address and area, Booking, Passing to a person, Closing), one open at a time. Each row is **When** and **The agent says**: the trigger in plain words and the exact line in quotes, with its variants behind an "i" ("3 more"). A server check shows its trigger in plain words too ("A business wants a visit"), with the line it says; a line is said on one row only, so a second check on the same line (the read-back) and the checks that say nothing are listed under an **Always** group row at the end of the topic, each trigger beside what the server does. The six lines the owner may reword are fields in place.
+- **System prompt**: a section list of what `prompts/assemble.py` joins, in order, on a sample call: each part's number, name and what it is for, collapsed; the last, This call, says it is a sample caller.
+- **Versions**: each version with its check: **Passed 18 of 18** (done), **Blocked, 2 of 18 failed** (urgent, the failed calls in the tooltip), **Checking** (high), **Rolled back**, **Check skipped** (high, published with the override; who and why in the tooltip), **Draft**, **Not published, live changed** and **1 on a rerun** (outline), and **Roll back**.
+
+The head carries the actions: **Save draft** first (Enter saves), **Stop check** while a check runs, **Discard**, **Override** (a popover form asking why) and **Publish**, which runs the must-pass eval gate. A version's note is written from the change ("Added 1 rule; reworded Goodbye"). Staff get **Admins only**.
+
+### Section list
+The parts of a long text in the order they are joined, each a row that opens in place (`.sections`): a chevron, its number, its name in semibold and what it is for in muted ink (hidden on a phone); open, the text shows in a technical block. Rows are `row-h` high with `line-soft` between. The system prompt on the bench's Rules page.
 
 ### Settings page
 `/owner/settings`, three panels. **Calls**: one row per setting, its name in bold and one line under it, and On/Off on the right (the segmented control as a radio pair) with **Save** in the panel head, the page's one primary action; staff see an **On** (done) or **Off** (outline) tag instead. **Users**: name, username, role, and for an admin **Make admin** or **Make staff** and **Remove**. Remove asks again on the row (**Confirm**, **Keep**), never in a browser dialog, and the last admin has neither control. The last row adds a user: name, username, role and password fields on one line, then **Add user**; a refused field shows its reason under it. **Changes**: every settings and user change, newest first, with who made it. A 403 for staff on an admin route is the **Admins only** page: the page head and one empty-state line.
