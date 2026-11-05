@@ -32,9 +32,11 @@ from collections import deque
 from dataclasses import dataclass
 from pathlib import Path
 
+import numpy as np
+
 from app.tools import TOOLS
 from evals import compare, results, suites
-from evals.audio_rig.audio import FRAME_MS, Vad, frames, reply_delay_ms
+from evals.audio_rig.audio import FRAME_MS, Vad, frames, reply_delay_ms, with_noise
 from evals.audio_rig.line import Listener
 from evals.audio_rig.recording import (
     LISTEN_URL,
@@ -83,8 +85,12 @@ class Sender:
     """The caller's microphone: one frame every 20 ms, speech when there is some, silence
     otherwise. A frame is sent once its 20 ms have passed, as a live stream would deliver it."""
 
-    def __init__(self, send, rate: int, clock=time.perf_counter, sleep=asyncio.sleep, queued=None):
+    def __init__(self, send, rate: int, clock=time.perf_counter, sleep=asyncio.sleep, queued=None,
+                 noise_dbfs: float | None = None):
         self.send = send
+        # A noise floor under everything the caller sends, silence included (--noise-dbfs).
+        self.noise_dbfs = noise_dbfs
+        self.rng = np.random.default_rng(0)
         # Seconds of sent audio still buffered on our side before it goes out, for a line that
         # buffers (a LiveKit audio source); the caller's words reach the entrant that much later.
         self.queued = queued or (lambda: 0.0)
@@ -107,6 +113,8 @@ class Sender:
                 await self.sleep(wait)
             speech = bool(self.queue)
             frame = self.queue.popleft() if speech else self.silence
+            if self.noise_dbfs is not None:
+                frame = with_noise(frame, self.noise_dbfs, self.rng)
             try:
                 await self.send(frame)
             except Exception:  # noqa: BLE001 - the line dropped; the rig sees the hang-up
@@ -188,11 +196,13 @@ def must_repeat(scenario: Scenario) -> bool:
 
 class Rig:
     def __init__(self, entrant, ctx: RigContext, workdir: Path, caller_model: Model,
-                 grader: Model, verbose: bool = True, pause_s: float = 0.0):
+                 grader: Model, verbose: bool = True, pause_s: float = 0.0,
+                 noise_dbfs: float | None = None):
         self.entrant = entrant
         # Silence put inside each long caller line (pause_split), to see whether a shorter
         # end-of-turn wait cuts off a caller who stops mid-thought. 0 is off.
         self.pause_s = pause_s
+        self.noise_dbfs = noise_dbfs
         self.ctx = ctx
         self.workdir = workdir
         self.seed = seeded_db(workdir / "seed")
@@ -229,7 +239,8 @@ class Rig:
         speech = Deepgram(self.rig_config, self.ctx.env.get("DEEPGRAM_API_KEY"))
         line = self.entrant.line()
         listener = Listener(self.vad, rate=self.entrant.in_rate, recorder=recorder)
-        sender = Sender(line.send, self.entrant.in_rate, queued=getattr(line, "queued_s", None))
+        sender = Sender(line.send, self.entrant.in_rate, queued=getattr(line, "queued_s", None),
+                        noise_dbfs=self.noise_dbfs)
         sending = None
         caller = SimulatedCaller(scenario, self.caller_model)
         platform: dict[str, float] = {}
@@ -360,14 +371,15 @@ def plan(chosen: list[Scenario], repeats: int, samples: int = 1) -> list[tuple[S
 async def run_entrant(name: str, chosen: list[Scenario], repeats: int, max_cost: float | None,
                       env: dict, workdir: Path, samples: int = 1,
                       batch: Batch | None = None,
-                      pause_s: float = 0.0) -> tuple[list[ScenarioResult], object]:
+                      pause_s: float = 0.0,
+                      noise_dbfs: float | None = None) -> tuple[list[ScenarioResult], object]:
     config = load_config()
     worlds = Worlds()
     with Serving(build_app(worlds)) as router:
         ctx = RigContext(worlds, router.url, config, env)
         entrant = load_entrant(name).entrant(ctx)
         rig = Rig(entrant, ctx, workdir, for_profile("offline.caller"),
-                  for_profile("offline.grader"), pause_s=pause_s)
+                  for_profile("offline.grader"), pause_s=pause_s, noise_dbfs=noise_dbfs)
         done: list[ScenarioResult] = []
         await entrant.start()
         try:
@@ -427,6 +439,8 @@ def main(argv: list[str] | None = None) -> int:
                         help="write the results file into the batch folder, not evals/results")
     parser.add_argument("--pause-s", type=float, default=0.0,
                         help="silence inside each long caller line, to test for cut-offs")
+    parser.add_argument("--noise-dbfs", type=float, default=None,
+                        help="white noise under the caller's audio, as a phone line's floor")
     args = parser.parse_args(argv)
 
     chosen, _ = suites.select(load_all(), args.suite, suites.parse_tags(args.tags))
@@ -452,7 +466,7 @@ def main(argv: list[str] | None = None) -> int:
     with tempfile.TemporaryDirectory(prefix="summit-rig-") as tmp:
         done, entrant = asyncio.run(
             run_entrant(args.stack, chosen, args.repeats, args.max_cost, dict(os.environ),
-                        Path(tmp), args.samples, batch, args.pause_s)
+                        Path(tmp), args.samples, batch, args.pause_s, args.noise_dbfs)
         )
     if not done:
         print("no scenario finished", file=sys.stderr)

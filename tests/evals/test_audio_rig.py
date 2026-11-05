@@ -12,7 +12,15 @@ from fakes import ScriptedModel, grade_reply, say
 
 from evals import compare
 from evals.audio_rig import line as line_mod
-from evals.audio_rig.audio import Playout, Vad, dbfs, frames, reply_delay_ms, resample
+from evals.audio_rig.audio import (
+    Playout,
+    Vad,
+    dbfs,
+    frames,
+    reply_delay_ms,
+    resample,
+    with_noise,
+)
 from evals.audio_rig.line import Listener
 from evals.audio_rig.rig import (
     Rig,
@@ -553,3 +561,11 @@ def test_the_pause_is_silence_between_the_two_halves(tmp_path):
     assert voiced.count(False) == 25
     rig.pause_s = 0
     assert len(asyncio.run(rig.caller_audio(Voice(), line))) < len(pcm)
+
+
+def test_a_noise_floor_sits_at_its_level_under_silence_and_speech():
+    rng = np.random.default_rng(1)
+    quiet = with_noise(b"\0" * 640, -50, rng)
+    assert dbfs(quiet) == pytest.approx(-50, abs=1.5)
+    loud = tone(20)
+    assert dbfs(with_noise(loud, -50, rng)) == pytest.approx(dbfs(loud), abs=0.1)

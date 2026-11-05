@@ -30,6 +30,13 @@ def frames(pcm: bytes, rate: int, ms: int = FRAME_MS) -> list[bytes]:
     return out
 
 
+def with_noise(pcm: bytes, level_dbfs: float, rng: np.random.Generator) -> bytes:
+    """The frame with white noise at `level_dbfs` mixed in, as a phone line's floor."""
+    x = samples(pcm).astype(np.float64)
+    x += rng.normal(0.0, 32768 * 10 ** (level_dbfs / 20), len(x))
+    return np.clip(x, -32768, 32767).astype("<i2").tobytes()
+
+
 def dbfs(pcm: bytes) -> float:
     """Loudness of a frame against full scale; digital silence is -inf."""
     x = samples(pcm).astype(np.float64)
