@@ -494,3 +494,17 @@ def test_a_chat_ends_with_the_reason_in_its_metadata_after_its_last_lines(flow_c
     call = rows(tool_app, "SELECT end_reason, safety_state FROM calls WHERE id = 'eval-gas'")[0]
     # The agent's last line reached the server before the call closed, with the caller's reason.
     assert call == {"end_reason": "caller_hangup", "safety_state": "lines_said"}
+
+
+# ---- the audio rig -----------------------------------------------------------------------------
+
+
+def test_the_rig_agent_runs_the_voice_flow_on_the_eval_bridge():
+    from voice.retell_flow.rig_adapter import TEST_AGENT_NAME, rig_agent_body
+
+    voice = {"voice_id": "custom_voice_1", "voice_model": "sonic-3"}
+    body = rig_agent_body("cf_9", "https://eval.example/eval", voice)
+    assert body["agent_name"] == TEST_AGENT_NAME
+    assert body["response_engine"] == {"type": "conversation-flow", "conversation_flow_id": "cf_9"}
+    assert body["webhook_url"] == "https://eval.example/eval/retell/webhook"
+    assert body["voice_id"] == "custom_voice_1"
