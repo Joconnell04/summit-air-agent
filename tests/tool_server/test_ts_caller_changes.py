@@ -937,3 +937,31 @@ def test_things_and_places_are_not_names(line):
 
     things = Tenant.load(TENANT_DIR).not_names
     assert tools._gave_a_name(line, things) is False
+
+
+@pytest.mark.parametrize("caller", ["", UNKNOWN])
+def test_a_name_offered_unasked_gets_the_check_before_any_refusal(agent, scenarios, caller):
+    """Retell's builder agent: a reschedule from an unrecognized number went straight to
+    identity_mismatch and a callback offer because the caller had said a name. A name the caller
+    offered unasked is no answer to the check; the check is asked first, on a web call with no
+    number too."""
+    maria = scenarios["repeatCallerOpenJob"]
+    call = agent.start(caller)["data"]["call_id"]
+    agent.turn(call, "Hi, this is Jordan, I need to move the visit at 620 Bedford Avenue, 11235.")
+    agent.tool("find_customer", call, address={"street": "620 Bedford Ave", "unit": "", "zip": "11235"})
+    asked = agent.tool("reschedule_appointment", call, booking_id=maria["jobId"], slot=ONE_LEFT,
+                       reason="work")
+    assert asked["refused"] == "identity_check", asked
+
+
+def test_a_wrong_name_given_when_asked_is_still_the_one_refusal(agent, scenarios):
+    """Issue #149: a name given in answer to the agent asking isn't asked for again."""
+    maria = scenarios["repeatCallerOpenJob"]
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "I need to move the visit at 620 Bedford Avenue, 11235.")
+    agent.say(call, "Sure. Can I get your name?")
+    agent.turn(call, "It's Sam Rivera.")
+    agent.tool("find_customer", call, address={"street": "620 Bedford Ave", "unit": "", "zip": "11235"})
+    asked = agent.tool("reschedule_appointment", call, booking_id=maria["jobId"], slot=ONE_LEFT,
+                       reason="work")
+    assert asked["refused"] == "identity_mismatch", asked

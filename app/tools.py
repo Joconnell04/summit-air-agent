@@ -1315,16 +1315,30 @@ def _check_failed_on_call(ctx: Ctx) -> bool:
     )
 
 
+ASKS_FOR_NAME = re.compile(
+    r"\bname\b|\bwho am i (?:speaking|talking) (?:with|to)\b|\bwho(?:'s| is) (?:calling|this)\b",
+    re.IGNORECASE,
+)
+
+
 def _named_on_call(ctx: Ctx, name: str) -> bool:
-    """The caller said a name on this call that isn't the customer's. A line with the customer's
-    surname in it is no wrong name, even when it doesn't count because the agent said it first."""
+    """The caller answered the agent asking for a name with one that isn't the customer's. A
+    line with the customer's surname in it is no wrong name, even when it doesn't count because
+    the agent said it first. A name the caller offered unasked ("Hi, this is Jordan") is no answer:
+    the check is asked first (Retell's builder agent, a reschedule from an unknown number that
+    went straight to identity_mismatch)."""
     surname = _surname(name)
-    return any(
-        _gave_a_name(r["text"], ctx.tenant.not_names)
-        and not (surname and _has_word(r["text"], surname))
-        for r in records.thread_turns(ctx.conn, ctx.call["id"])
-        if r["call_id"] == ctx.call["id"] and r["speaker"] == "caller"
-    )
+    turns = [r for r in records.thread_turns(ctx.conn, ctx.call["id"]) if r["call_id"] == ctx.call["id"]]
+    for before, row in pairwise(turns):
+        if row["speaker"] != "caller" or before["speaker"] != "agent":
+            continue
+        if not ASKS_FOR_NAME.search(before["text"]) or "?" not in before["text"]:
+            continue
+        if _gave_a_name(row["text"], ctx.tenant.not_names) and not (
+            surname and _has_word(row["text"], surname)
+        ):
+            return True
+    return False
 
 
 def _record_mismatch(
