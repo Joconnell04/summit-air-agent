@@ -308,12 +308,15 @@ def server_notes(
 
 def lookup_note(lookup: dict) -> str:
     """A lookup the server ran for the caller's line, written as the tool call and the result it
-    returned, so the model reads it as if it had called the tool and doesn't call it again."""
+    returned, so the model reads it as if it had called the tool. Lookup round 1: "don't call it
+    again" alone froze a call whose result asked which borough, so a follow-up the result asks
+    for is allowed."""
     args = ", ".join(f"{k}={json.dumps(v)}" for k, v in lookup["args"].items() if v != "")
     result = json.dumps(lookup["result"], separators=(", ", ": "))
     return (
         f"[server] Already called for this line: {lookup['tool']}({args}) returned {result}. "
-        "Treat it as that tool's result: don't call it again for this, and answer from it now."
+        "Treat it as that tool's result and answer from it now. Don't repeat that same call; when "
+        "the result says to ask the caller something and look it up again, do that."
     )
 
 

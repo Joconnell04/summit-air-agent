@@ -63,6 +63,30 @@ def summary(rows: list[dict], kind: str) -> dict:
     }
 
 
+LOOKUPS = ("check_service_area", "find_address")
+
+
+def lookups(path: str) -> dict:
+    """Area and address lookups: run by the server, by the model, and doubles (the model calling
+    the same lookup again after the server ran it)."""
+    run = json.loads(Path(path).read_text())
+    server = model = doubles = 0
+    for s in run["scenarios"]:
+        seen = set()
+        for call in s["tool_calls"]:
+            if call["name"] not in LOOKUPS:
+                continue
+            args = call["arguments"]
+            key = (call["name"], args.get("zip") or args.get("street"))
+            if args.get("by") == "server":
+                server += 1
+                seen.add(key)
+            else:
+                model += 1
+                doubles += key in seen
+    return {"server": server, "model": model, "doubles": doubles}
+
+
 def outcomes(path: str) -> dict:
     run = json.loads(Path(path).read_text())
     return {
@@ -70,6 +94,7 @@ def outcomes(path: str) -> dict:
         "pass": sum(1 for s in run["scenarios"] if s["outcome"] == "pass"),
         "must_pass_failures": sum(len(s["must_pass_failures"]) for s in run["scenarios"]),
         "cost": round(sum(s["cost_usd"] for s in run["scenarios"]), 2),
+        "lookups": lookups(path),
     }
 
 

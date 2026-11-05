@@ -72,7 +72,18 @@ def test_a_zip_said_is_checked_and_handed_back_with_the_turn(on):
     # The model reads it as the tool's result, with the call it stands for.
     note = server_notes(data["hints"], data["known"], data["lookup"])[-1]
     assert note.startswith(f'[server] Already called for this line: check_service_area(zip="{IN_AREA}")')
-    assert "don't call it again" in note
+    assert "Don't repeat that same call" in note
+
+
+def test_the_note_lets_the_model_follow_up_when_the_result_asks_for_more(on):
+    """Lookup round 1: the same street in two boroughs came back as "ask which one, then look it up
+    again with borough", and a note that said never call again left the call stuck."""
+    lookup = {"tool": "find_address", "args": {"street": "1 Main Street"},
+              "result": {"ok": False, "refused": "address_several",
+                         "data": {"need": "ask which one, then look it up again with borough"}}}
+    note = server_notes([], None, lookup)[-1]
+    assert "look it up again, do that" in note
+    assert "don't call it again" not in note.lower()
 
 
 def test_a_zip_said_as_words_is_checked(on):
