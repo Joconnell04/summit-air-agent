@@ -15,8 +15,9 @@ trunk itself untouched, so going back is one field.
   Voice Agent bridge on the server (voice/deepgram_agent/).
 - `vapi`: no trunk; the voice URL is Vapi's Twilio inbound endpoint, once the number is imported
   into Vapi.
-- `gpt_live`: the number on its own trunk, "summit-air-openai", whose origination is OpenAI's SIP
-  endpoint for the project in OPENAI_PROJECT_ID.
+- `gpt_live`: the number on its own trunk, "summit-air-openai", with Secure Trunking on (OpenAI's
+  SIP endpoint takes TLS and SRTP only), whose origination is OpenAI's SIP endpoint for the
+  project in OPENAI_PROJECT_ID. The shared LiveKit trunk is never made secure.
 
 The watchdog (deploy/summit-air/watchdog.sh) can move the number back to the LiveKit trunk: after
 two failed LiveKit worker checks it marks the fallback, and on the next passing check it attaches
@@ -79,9 +80,10 @@ def snapshot(http, line: dict) -> dict:
     return saved
 
 
-def own_trunk(http, name: str, sip_url: str, credentials_from: str) -> dict:
+def own_trunk(http, name: str, sip_url: str, credentials_from: str, secure: bool = False) -> dict:
     """A trunk with one origination URL and the LiveKit trunk's termination credentials, made
-    only when missing."""
+    only when missing. `secure` turns on Twilio's Secure Trunking (TLS and SRTP) for this trunk
+    alone, never the shared LiveKit one."""
     trunk = next((t for t in trunks(http) if t["friendly_name"] == name), None)
     if trunk is None:
         domain = f"{name}-{twilio.account()[-6:].lower()}.pstn.twilio.com"
@@ -89,6 +91,10 @@ def own_trunk(http, name: str, sip_url: str, credentials_from: str) -> dict:
                           data={"FriendlyName": name, "DomainName": domain}).raise_for_status().json()
         print(f"created trunk {name} ({trunk['sid']})")
     sid = trunk["sid"]
+    if bool(trunk.get("secure")) != secure:
+        trunk = http.post(f"{twilio.TRUNKING}/Trunks/{sid}",
+                          data={"Secure": str(secure).lower()}).raise_for_status().json()
+        print(f"{name}: secure trunking {'on' if secure else 'off'}")
     if origination(http, sid) != [sip_url]:
         for old in http.get(f"{twilio.TRUNKING}/Trunks/{sid}/OriginationUrls").json()["origination_urls"]:
             http.delete(f"{twilio.TRUNKING}/Trunks/{sid}/OriginationUrls/{old['sid']}")
@@ -164,7 +170,8 @@ def target(http, entry: str, saved: dict, number: str) -> dict:
         if not project:
             raise SystemExit("gpt_live: set OPENAI_PROJECT_ID (OpenAI's SIP address is per project)")
         sip = f"sip:{project}@sip.api.openai.com;transport=tls"
-        trunk = own_trunk(http, f"{NAME}-openai", sip, saved["trunk"]["sid"])
+        # OpenAI's SIP endpoint takes TLS and SRTP only (the gpt-live lane, on its gate line).
+        trunk = own_trunk(http, f"{NAME}-openai", sip, saved["trunk"]["sid"], secure=True)
         return {**off_trunk, "trunk_sid": trunk["sid"], "voice_url": None}
     raise SystemExit(f"unknown entry {entry!r}; one of {', '.join(ENTRIES)}, or status")
 

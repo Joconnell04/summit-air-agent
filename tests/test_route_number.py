@@ -77,3 +77,29 @@ def test_an_entry_without_its_key_changes_nothing(twilio, monkeypatch):
     with pytest.raises(SystemExit, match="VAPI_API_KEY"):
         route_number.main("vapi")
     assert twilio.writes == []
+
+
+def test_gpt_live_turns_on_secure_trunking_on_its_own_trunk_only(twilio, monkeypatch):
+    monkeypatch.setenv("OPENAI_PROJECT_ID", "proj_1")
+    twilio.trunks.append({"sid": "TK_openai", "friendly_name": "summit-air-openai",
+                          "domain_name": "summit-air-openai-1.pstn.twilio.com", "secure": False})
+    secure_posts = []
+    handle = twilio.handle
+
+    def handle_more(request):
+        path = request.url.path
+        if path.endswith("/OriginationUrls"):
+            return httpx.Response(200, json={"origination_urls": [
+                {"sid": "OU1", "sip_url": "sip:proj_1@sip.api.openai.com;transport=tls"}]})
+        if path.endswith("/CredentialLists"):
+            return httpx.Response(200, json={"credential_lists": []})
+        if path.endswith("/Trunks/TK_openai") and request.method == "POST":
+            secure_posts.append(dict(httpx.QueryParams(request.content.decode())))
+            return httpx.Response(200, json={**twilio.trunks[1], "secure": True})
+        return handle(request)
+
+    monkeypatch.setattr(route_number.twilio, "client",
+                        lambda: httpx.Client(transport=httpx.MockTransport(handle_more)))
+    route_number.main("gpt_live")
+    assert secure_posts == [{"Secure": "true"}]
+    assert twilio.number["trunk_sid"] == "TK_openai"
