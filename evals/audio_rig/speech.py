@@ -50,8 +50,11 @@ class Deepgram:
             raise SpeechError(f"caller voice failed ({response.status_code}): {response.text[:200]}")
         self.chars += len(text)
         if path is not None:
+            # Written whole and renamed, so a run started alongside never reads half a file.
             path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_bytes(response.content)
+            partial = path.with_suffix(f".{os.getpid()}.part")
+            partial.write_bytes(response.content)
+            partial.replace(path)
         return response.content
 
     async def hear(self, pcm: bytes, rate: int) -> str:
