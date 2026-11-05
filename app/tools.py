@@ -1657,7 +1657,51 @@ def find_address(ctx: Ctx, args: FindAddressIn) -> Result:
     )
 
 
+WEEKDAYS = ("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday")
+
+
+def _day_named(ctx: Ctx, name: str) -> date | None:
+    """The date a day word means from today: "today", "tomorrow", or the next such weekday (today
+    when it is one). None for anything else."""
+    word = name.strip().lower()
+    today = ctx.tenant.local(ctx.now).date()
+    if word == "today":
+        return today
+    if word == "tomorrow":
+        return today + timedelta(days=1)
+    if word in WEEKDAYS:
+        return today + timedelta(days=(WEEKDAYS.index(word) - today.weekday()) % 7)
+    return None
+
+
+def _named_days(ctx: Ctx, args: FindSlotsIn) -> FindSlotsIn:
+    """`day` and `preferred_days` with "today", "tomorrow" and weekday names as the model passed
+    them (Retell call call_3f65a9aea68c561c5c7de616f9f: day "today" was refused as no date, and
+    preferred_days ["today"] heard "I don't have Today open")."""
+    day = args.day
+    if isinstance(day, str):
+        try:
+            day = date.fromisoformat(day.strip())
+        except ValueError:
+            day = _day_named(ctx, day)
+            if day is None:
+                raise Refused(
+                    "invalid_arguments",
+                    "Which day works for you?",
+                    errors={"day": "a date, today, tomorrow or a weekday"},
+                ) from None
+    preferred = []
+    for name in args.preferred_days:
+        word = name.strip().lower()
+        if word in ("today", "tomorrow"):
+            preferred.append(_day_named(ctx, word).isoformat())
+        else:
+            preferred.append(word)
+    return args.model_copy(update={"day": day, "preferred_days": preferred})
+
+
 def find_slots(ctx: Ctx, args: FindSlotsIn) -> Result:
+    args = _named_days(ctx, args)
     job_type = _job_type(ctx, args.job_type)
     found = _priority(ctx, args.job_type, args.facts.inside_temp_f)
     facts, decided = found.facts, found.priority
@@ -1776,6 +1820,14 @@ def find_slots(ctx: Ctx, args: FindSlotsIn) -> Result:
     return ok(f"{urgent_said}{arrival_say}{lead}", **data)
 
 
+def _day_said(ctx: Ctx, key: str) -> str:
+    """A preferred day as said: "today", "tomorrow" or "Friday", never "Today"."""
+    try:
+        return ctx.tenant.day_spoken(date.fromisoformat(key), ctx.now)
+    except ValueError:
+        return key.capitalize()
+
+
 def _one_offer(
     ctx: Ctx, by_day: dict[str, list[dict]], dates: list[str], preferred: set[str],
     time_of_day: str | None,
@@ -1796,8 +1848,11 @@ def _one_offer(
     named = offer["day_and_date"] if (visit - today).days >= 7 else offer["day"]
     lead = ""
     if preferred and not liked:
-        asked = _join(sorted(d.capitalize() for d in preferred), "or")
-        lead = f"I don't have {asked} open in the next two weeks. "
+        asked = _join(sorted(_day_said(ctx, d) for d in preferred), "or")
+        if all(d[:1].isdigit() for d in preferred):
+            lead = f"I don't have anything open {asked}. "
+        else:
+            lead = f"I don't have {asked} open in the next two weeks. "
     elif liked:
         weekday = offer["weekday"]
         first = today + timedelta(days=(visit.weekday() - today.weekday()) % 7)

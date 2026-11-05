@@ -1189,6 +1189,33 @@ def test_slots_offer_the_callers_day_first(agent):
     assert found["data"]["offer"]["weekday"] == "Friday"
 
 
+@pytest.mark.parametrize("day, date", [("today", "2026-11-02"), ("tomorrow", "2026-11-03"),
+                                       ("Friday", "2026-11-06"), ("monday", "2026-11-02")])
+def test_find_slots_takes_today_tomorrow_and_weekday_names_as_its_day(agent, day, date):
+    """Retell call call_3f65a9aea68c561c5c7de616f9f: day "today" was refused as no date."""
+    call = ready_to_book(agent)
+    found = agent.tool("find_slots", call, job_type="tune_up", day=day)
+    assert found["ok"], found
+    assert {w["date"] for w in found["data"]["windows"]} <= {date}
+
+
+def test_a_day_find_slots_cannot_read_is_asked_for(agent):
+    call = ready_to_book(agent)
+    found = agent.tool("find_slots", call, job_type="tune_up", day="someday")
+    assert found["refused"] == "invalid_arguments"
+    assert found["say"] == "Which day works for you?"
+
+
+def test_preferred_today_offers_today_and_never_says_today_as_a_name(agent):
+    """Retell call call_3f65a9aea68c561c5c7de616f9f: "I don't have Today open in the next two
+    weeks. The soonest I have is today, 4 to 8."."""
+    call = ready_to_book(agent)
+    found = agent.tool("find_slots", call, job_type="tune_up", preferred_days=["today"])
+    assert found["ok"], found
+    assert "Today" not in found["say"][1:] and "don't have" not in found["say"]
+    assert found["data"]["offer"]["date"] == "2026-11-02"
+
+
 def test_live_call_2_tomorrow_at_two_is_the_window_that_holds_two(agent):
     """Live call 2: "Tomorrow at two PM." passed as arrive 1 PM to 5 PM, which no window fits,
     and the caller heard there were no openings."""
