@@ -1,5 +1,7 @@
 # Architecture
 
+**Current shape (DECISIONS.md 112).** The live agent is a Retell agent ("Summit Air Jackson"): Retell runs the phone line, listening, turn-taking and voice, and its custom functions call our tool server through the bridge in `voice/retell/`. Everything below about the tool server, the mock ServiceTitan, the gates and the owner view still holds. The LiveKit worker described here is the earlier custom stack, kept as the reference.
+
 Status: written before the build, when the voice platform (#4) was still open, so the voice layer is described for both candidates. Since then our own LiveKit stack was chosen, with Retell kept as the baseline it has to beat (DECISIONS.md 004, confirmed by the audio bake-off in 038). What changed later is in DECISIONS.md and, in order, in docs/ai-process/design-trail.md.
 
 ## Parts

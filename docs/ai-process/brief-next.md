@@ -1,78 +1,30 @@
 # Brief: where things stand
 
-The one page to read before the live calls and the interview: what needs Jackson, the decisions worth knowing cold, what was decided without him, and what's still being built. Older briefs are in [past-briefs/](past-briefs/).
+The one page to read before the live calls and the interview. Older briefs are in [past-briefs/](past-briefs/); the last one from the custom-stack period is [brief-custom-stack-final.md](past-briefs/brief-custom-stack-final.md).
+
+## Where it is
+
+The agent runs on Retell, starting from Jackson's own agent "Summit Air Jackson" (agent_a3e38e6aa3d4e75dfac12aafc8), which (646) 624-0418 rings through our inbound webhook. Retell runs the phone line, listening, turn-taking and voice; our tool server owns every fact and rule. How we got here: DECISIONS.md 111 and 112, and the [simplicity slate](../../evals/rounds/simplicity-slate-01.md).
 
 ## Needs Jackson
 
-1. **The simplicity slate.** One live call per stack, each gated by a short rig check and a scripted call first, with Jackson's feedback logged verbatim in [evals/rounds/simplicity-slate-01.md](../../evals/rounds/simplicity-slate-01.md). The entries are our stack (improved, with Flux, and stripped), Retell (improved, native and Jackson's own build), Deepgram Voice Agent, Vapi (waiting on an account) and GPT-Live-1. Calls so far: Deepgram (to redo after fixes), Retell native (liked; voice and pacing fixes underway) and GPT-Live-1 (call 3). Our own stack hasn't passed its gate yet: the speech filter caused stalls, now fixed and being re-checked.
-2. **One feedback pass after the calls.** The end of the script maps each kind of complaint to one setting. Two fixes are already built and waiting on what you hear: the lookup fix for long silences on address turns (switched off), and the "yes, that's right" fast path for a slow booking moment (later list, C-63).
-3. **Retell prototype agents.** The Retell flow lane left its prototype agents on the Retell account. Say whether to delete them; nothing deletes without your OK.
+1. **The next call to his agent,** once the Retell lane's change sets are published and snapshotted, the server fixes are deployed, and a scripted phone call passes.
+2. **Retell prototype agents.** The flow, native and copy agents from the slate are still on the Retell account. Say whether to delete them; nothing deletes without his OK.
 
-Nothing needs a top-up: no run failed for credit. Paid eval runs since last night come to roughly $100 across all lanes (about $60 before the last batch, then $4 caller changes, $6 call handling, $18 booking flow, $13 Retell flow; the lookup lane is still running), added from their reports, not invoices; Cartesia's added spend is about $0.13.
+## Being built
+
+- **Retell lane:** snapshots of his agent into `retell/summit-air-jackson/` after every change; the greeting and call context; safety lines said once; the priority question on no-heat and no-AC calls; accurate speech-to-text; our end_call in place of the built-in hang-up; a general HVAC knowledge base with strict retrieval; eleven simulation tests; a reference of every setting in [docs/retell-knobs.md](../retell-knobs.md).
+- **Server lane:** a real live-world reset, a distinct "can't see your number" refusal, no open-visit details before the identity check, and the reschedule asking for a name and address first.
 
 ## Decisions to know cold
 
-If someone asks why it works the way it does, these are the answers. Numbers are DECISIONS.md entries.
-
 | Topic | What we decided | Entry |
 |---|---|---|
-| Platform | Our own LiveKit stack, with Retell as the baseline to beat; the audio bake-off kept ours (Retell paraphrased the gas lines on 5 of 6 calls) | 004, 038 |
-| The core rule | The model asks; the server decides. Booking, refusals, hang-ups, priority and safety lines are server code, and a flag the model can set is not a gate | spec, from-other-projects |
-| Live model | Haiku 5.5, thinking off; Sonnet for the technician summary; Opus grades the evals | 036, later.md C-57 |
-| Ears and voice | Deepgram Nova-3 hears; Cartesia sonic-3 speaks. Ink-2 measured 0.6 s slower a turn and worse on street names; Cartesia's hosted agents can't let our server own the safety lines | 068, 065 |
-| Safety posture | Escalate politely, don't coach; fixed safety lines spoken word for word by the server | 033, 060 |
-| Priority | Set by the server from what the caller said and the real outside temperature; only goes up; 60 and over is an older adult (NYC Health); a caller's stated fact always counts, insisting alone never raises it, and a raise after the caller heard the wait is flagged for the dispatcher | 019, 072, 073 |
-| ZIP and address | The server acts only on a ZIP the caller said, or one looked up from the street they said (NYC GeoSearch, exact match only) | 058, 069 |
-| Handoffs | A caller who demands a person is transferred at once; calmer requests get a warm transfer with a summary | 051, 061 |
-| Evals | Code checks decide pass or fail; the grader can fail a call but never rescue one; the floor is 90%, measured at two samples per scenario. Today's reference: 92%, every must-pass case passing | 002, 042, 066 |
-| Scope | No texting in V1 (A2P registration); Spanish waits (C-16) | 007, 034 |
-
-## Signed off
-
-The six new lines from the call-handling lane: the sparks line (edited to end "I can get a technician out to look at it," since the breaker isn't a condition for booking), the dead-air check-in and goodbye, the call-back greeting, the card-number line and the billing line (call-handling lane, #132).
-
-## Decided without Jackson
-
-Say if you disagree with any of these.
-
-- **A caller's stated fact always counts.** "Tell them there's a baby in the house" raises priority even when it sounds like a request. A false raise is the safe direction, and the after-the-wait flag tells the dispatcher (073).
-- **The heads-up to the number on file is a short automated call, not a text,** since texting is out of V1. In the demo it only dials numbers on an allowlist in the server's settings, so it never calls a made-up customer's number. Otherwise it records "would have called". SMS is the production version.
-- **Card digits are never stored anywhere.** That's the one exception to "the bench shows everything as recorded" (064).
-- **The eval floor stayed at 90%** when the address lane's run came in at 87%. The two agent gaps it found were fixed instead, and the next run came in at 92%.
-- **Reviews now re-check each fix.** Three priority and safety changes in a row fixed one case and broke another ("No heat, baby in the house" dropping to High; "What do I do? I smell gas" losing the gas lines). Every fix gets a second targeted review before it merges.
-- **Lane caps raised twice,** to $13 and $18, rather than skip the must-pass runs; 20 of the 33 must-pass cases are the rigorous and adversarial safety ones.
-- **A stale eval reference warns instead of failing CI** (086): 41 of 42 failed CI runs were that one check, so GitHub's failure emails now mean a real failure.
-- **Lane-level runs, one reference.** Each lane tests its own scenarios and the must-pass set; one standard run after a batch sets the reference.
-
-## Still being built
-
-Progress for every lane is in [lanes.md](lanes.md).
-
-- **Lookup results in the same turn (#142):** the fix for silent lookup turns, built behind a switch that's off by default and measured both ways. Ready to turn on only if your calls show lookups feel slow.
-
-## Live on the server
-
-Everything below is merged and deployed, and a scripted test call passed after the last deploy:
-- Caller changes (#134): a moved address, the name-and-address check from an unknown number with a heads-up call (allowlisted in the demo), another callback number, two accounts.
-- Booking flow (#135): corrections after the read-back reset it, ended windows never confirmed as upcoming, businesses and work Summit Air doesn't do declined, two jobs in one call, a requested technician as a note.
-- Call handling (#132): card numbers stopped and never stored, dead air (check-in at 2 minutes, goodbye at 8, resume on the call back), the sparks line, AC water through the ceiling Urgent, a tripping breaker High.
-- Must-pass fixes (#139): "top priority" spoken word for word by the server, the caller's ZIP taken when the address lookup finds nothing, no tool talk or double confirmation after a reschedule, no coaching on a 911 call, no false card prompt when a caller corrects their phone number.
-- Side model (#141): the tighter at-risk question and the 0.65 threshold.
-- Rules page (#143): one page at `/bench/rules`, one topic at a time: your rules, 83 fixed responses each with a plain trigger and its exact line, the system prompt in assembly order on a sample call, and versions. `/owner/rules` redirects there; the owner view no longer has a Rules tab.
-- Retell Conversation Flow (#146, decision 087): built and measured, not put on a number. Every gate held and the safety lines were exact, but it scored 53% against our 92%, because Retell sends the model's words straight to the voice with no place for our speech filter, and on the audio rig it was the slowest (MEASURED):
-
-  | | Plain reply | Turn with a lookup | Gas or CO lines triggered |
-  |---|---|---|---|
-  | Our stack | 1.90 s | 1.96 s | 6 of 6 |
-  | Retell, single-prompt | 1.57 s | 2.27 s | 1 of 6 |
-  | Retell, flow | 2.63 s | 3.09 s | 4 of 6 |
-
-- A safety pack (#147): 40 real-caller lines from every regression review that must always bring the lines or raise priority, run by every `make check`.
-- Phone widths (#145): the header wraps and wide parts scroll in place on every owner and bench page.
-- The eval reference: 91% at two samples (169 of 186), every must-pass case passing (run 20261104-234633). The side-model change makes it stale, which now only warns (decision 086); the next batch run re-adopts.
-
-Signing in: https://45-77-105-247.sslip.io/owner (owner view) and https://45-77-105-247.sslip.io/bench (debug bench), both as `jackson`. The password is in the macOS Keychain (`security find-generic-password -a summit-air -s owner-admin-password -w`). The side model, warm transfer and recordings are on.
-
-## Your earlier questions
-
-Answered in [past-briefs/brief-after-check-ins.md](past-briefs/brief-after-check-ins.md): Cartesia's hosted agents, Cartesia for speech-to-text, why Cartesia speaks but doesn't hear, and how we pick a model for each job.
+| Platform | Retell for the voice, our tool server for every rule; the custom stack is the reference | 111, 112 |
+| The core rule | The model asks; the server decides. Booking, refusals, hang-ups, priority and safety lines are server code | 022 |
+| Live model | Haiku 5.5 | 036 |
+| Safety | Fixed lines, said word for word on the server's instruction; the call can't end until they're said | 009, 033, 060 |
+| Priority | Set by the server from what the caller says and the outside temperature; only goes up; 60 and over is an older adult | 019, 072 |
+| Windows | Any run of 30-minute blocks, two hours unless the caller asks | 108 |
+| Service area | All five boroughs | 105 |
+| Dropped stacks | GPT-Live-1 dropped after one call; Deepgram Voice Agent paused | 107, 111 |
