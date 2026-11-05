@@ -63,3 +63,14 @@ def test_the_agent_keeps_the_tested_dials_and_adds_the_handbook():
     houston = [d for d in body["pronunciation_dictionary"] if d["word"] == "Houston Street"]
     assert houston and houston[0]["phoneme"].startswith("ˈhaʊ")
     assert {"Manhattan", "Bronx", "radiator", "boiler", "carbon monoxide"} <= set(body["boosted_keywords"])
+
+
+def test_the_letter_tools_are_only_on_the_next_copy():
+    assert not any(t["type"] == "code" for t in build.functions(specs(), BASE, "+15555550100"))
+    tools = build.functions(specs(), BASE, "+15555550100", letters=True)
+    extract, code = tools[-2], tools[-1]
+    assert extract["type"] == "extract_dynamic_variable" and code["type"] == "code"
+    assert {v["name"] for v in extract["variables"]} == {"letters_word", "letters_letter"}
+    assert "dv.letters_word" in code["code"] and "dv.letters_letter" in code["code"]
+    assert build.LETTERS_PROMPT in build.page(TENANT, letters=True)
+    assert build.LETTERS_PROMPT not in build.page(TENANT)

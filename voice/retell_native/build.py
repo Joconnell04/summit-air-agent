@@ -23,6 +23,8 @@ from voice.names import Names
 from voice.retell import build as baseline
 
 AGENT_NAME = "Summit Air (Retell native)"
+# The copy changes are tried on before they reach the agent in Jackson's slate.
+NEXT_NAME = "Summit Air (Retell native, next)"
 # What the bridge's inbound webhook fills in per call (voice/retell/conversation.py).
 CALL_CONTEXT = "{{call_context}}"
 END_CALL_LINE = "- `end_call` once the caller is done. The server decides whether the line drops."
@@ -138,7 +140,54 @@ use the sign-off above before ending. `transfer_to_office` puts the caller throu
 use it only when the caller asks for a person right now, during office hours."""
 
 
-def page(tenant_dir: Path) -> str:
+# Letter and spelling questions ("how many e's in seventeen?") go to Retell's Code tool, which takes
+# no arguments from the model, only dynamic variables; so a Retell extraction tool sets the word and
+# the letter first (SOURCE: https://docs.retellai.com/build/single-multi-prompt/code-tool.md, read
+# 2026-11-05). On live call 3 the model counted three e's in "seventeen", and the transcript wrote
+# the number as "17", so it first answered "None." for the digits.
+LETTERS_PROMPT = """## Letters and spelling
+
+For any question about the letters in a word (how many of a letter, or how a word is spelled), call
+`note_letter_question`, then `count_letters`, straight away with no text before them (the tool
+says "Let me count." for you), and answer from its result in one short sentence. A number the
+caller says, such as "17", is the word written out ("seventeen"). To spell a word aloud, put its
+letters alone inside spell tags, with no dashes or spaces, as in: It's spelled
+<spell>Kosciuszko</spell>."""
+
+COUNT_LETTERS_JS = """const word = String(dv.letters_word || "");
+const letter = String(dv.letters_letter || "").toLowerCase().replace(/[^a-z]/g, "").charAt(0);
+const letters = [...word.toLowerCase()].filter((c) => /[a-z]/.test(c));
+if (!letters.length) return { ok: false, error: "no word" };
+const result = { ok: true, word, spelled: letters.join("") };
+if (letter) {
+  result.letter = letter;
+  result.count = letters.filter((c) => c === letter).length;
+}
+return result;"""
+
+
+def letter_tools() -> list[dict]:
+    return [
+        {"type": "extract_dynamic_variable", "name": "note_letter_question",
+         "description": "Call this at once, with no words first, when the caller asks how many of "
+         "a letter are in a word or how a word is spelled. Numbers become words (17 is seventeen).",
+         "variables": [
+             {"type": "string", "name": "letters_word",
+              "description": "The word the caller asked about, written out in letters.",
+              "examples": ["seventeen", "Kosciuszko"]},
+             {"type": "string", "name": "letters_letter",
+              "description": "The single letter they asked to count, or empty when they asked how "
+              "the word is spelled.", "examples": ["e", "s"]},
+         ]},
+        {"type": "code", "name": "count_letters",
+         "description": "Count a letter in the word note_letter_question saved, and give its "
+         "spelling. Call it right after note_letter_question.",
+         "code": COUNT_LETTERS_JS, "timeout_ms": 5000, "speak_during_execution": True,
+         "execution_message_description": "Let me count.", "execution_message_type": "static_text"},
+    ]
+
+
+def page(tenant_dir: Path, letters: bool = False) -> str:
     """prompts/stripped.md with the tenant's name, safety lines and sign-off word for word, as
     prompts/assemble.py builds it, then the native additions and this call's context."""
     agent = yaml.safe_load((tenant_dir / "agent.yaml").read_text())
@@ -156,7 +205,8 @@ def page(tenant_dir: Path) -> str:
         .replace(END_CALL_LINE, "- `end_call` after your goodbye. It hangs up once you've finished "
                  "speaking.")
     )
-    return f"{text}\n\n{PROMPT_ADDITIONS}\n\n{CALL_CONTEXT}"
+    extra = f"\n\n{LETTERS_PROMPT}" if letters else ""
+    return f"{text}\n\n{PROMPT_ADDITIONS}{extra}\n\n{CALL_CONTEXT}"
 
 
 def clock(hhmm: str) -> str:
@@ -207,7 +257,7 @@ def knowledge_name(texts: list[dict]) -> str:
     return f"summit-native-{digest}"
 
 
-def functions(specs: list[dict], base_url: str, office_number: str) -> list[dict]:
+def functions(specs: list[dict], base_url: str, office_number: str, letters: bool = False) -> list[dict]:
     """The scoped custom functions to the bridge, then Retell's End Call and Call Transfer."""
     by_name = {s["name"]: s for s in specs}
     tools = []
@@ -231,25 +281,26 @@ def functions(specs: list[dict], base_url: str, office_number: str) -> list[dict
                   "speak_during_execution": True,
                   "execution_message_description": "Tell them you're putting them through now.",
                   "execution_message_type": "prompt"})
-    return tools
+    return tools + (letter_tools() if letters else [])
 
 
 def llm_body(tenant_dir: Path, specs: list[dict], base_url: str, model_id: str, office_number: str,
-             knowledge_base_id: str) -> dict:
+             knowledge_base_id: str, letters: bool = False) -> dict:
     return {
         "model": baseline.retell_model(model_id),
         "model_temperature": baseline.TEMPERATURE,
-        "general_prompt": page(tenant_dir),
-        "general_tools": functions(specs, base_url, office_number),
+        "general_prompt": page(tenant_dir, letters),
+        "general_tools": functions(specs, base_url, office_number, letters),
         "begin_message": "{{greeting}}",
         "start_speaker": "agent",
         "knowledge_base_ids": [knowledge_base_id],
     }
 
 
-def agent_body(llm_id: str, base_url: str, voice_id: str, voice_model: str, names: Names) -> dict:
+def agent_body(llm_id: str, base_url: str, voice_id: str, voice_model: str, names: Names,
+               name: str = AGENT_NAME) -> dict:
     body = baseline.agent_body(llm_id, base_url, voice_id, voice_model, names)
-    body["agent_name"] = AGENT_NAME
+    body["agent_name"] = name
     body["boosted_keywords"] = list(dict.fromkeys(body["boosted_keywords"] + EXTRA_KEYWORDS))
     body["handbook_config"] = HANDBOOK
     # Speak the greeting the moment the call connects, and start every slate call clean.

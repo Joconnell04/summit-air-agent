@@ -39,7 +39,10 @@ def ensure_knowledge(retell: Retell, texts: list[dict], log: list[str]) -> str:
     return created["knowledge_base_id"]
 
 
-def push(retell: Retell, base_url: str, office_number: str, eval_url: str | None = None) -> list[str]:
+def push(retell: Retell, base_url: str, office_number: str, eval_url: str | None = None,
+         next_copy: bool = False) -> list[str]:
+    """next_copy builds "Summit Air (Retell native, next)" with the changes not yet in the slate
+    (the letter tools), leaving the slate's agent as it is."""
     config = yaml.safe_load((ROOT / "config" / "models.yaml").read_text())
     model_id, voice = live_profile(config)
     specs = assemble.tool_specs(assemble.job_types(TENANT))
@@ -47,10 +50,11 @@ def push(retell: Retell, base_url: str, office_number: str, eval_url: str | None
     log: list[str] = []
     kb = ensure_knowledge(retell, build.knowledge(TENANT), log)
     voice_id = ensure_voice(retell, voice["voice_id"], voice["name"])
+    name = build.NEXT_NAME if next_copy else build.AGENT_NAME
     agent_id = ensure_agent(
-        retell, "agent", build.AGENT_NAME,
-        lambda llm_id: build.agent_body(llm_id, base_url, voice_id, voice["model"], names),
-        build.llm_body(TENANT, specs, base_url, model_id, office_number, kb), log,
+        retell, "agent", name,
+        lambda llm_id: build.agent_body(llm_id, base_url, voice_id, voice["model"], names, name),
+        build.llm_body(TENANT, specs, base_url, model_id, office_number, kb, next_copy), log,
     )
     log.append(f"voice agent {agent_id}")
     if eval_url:
@@ -60,7 +64,7 @@ def push(retell: Retell, base_url: str, office_number: str, eval_url: str | None
                             "response_engine": {"type": "retell-llm", "llm_id": llm_id},
                             "webhook_url": f"{eval_url}/retell/webhook",
                             "webhook_events": ["chat_started", "chat_ended", "transcript_updated"]},
-            build.llm_body(TENANT, specs, eval_url, model_id, office_number, kb), log,
+            build.llm_body(TENANT, specs, eval_url, model_id, office_number, kb, next_copy), log,
         )
         log.append(f"review chat agent {chat_id}")
     return log
@@ -69,6 +73,7 @@ def push(retell: Retell, base_url: str, office_number: str, eval_url: str | None
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--eval-url", help="public base URL of the eval bridge, for review chats")
+    parser.add_argument("--next", action="store_true", help="build the copy with the next changes")
     args = parser.parse_args()
     base_url = os.environ.get("RETELL_BRIDGE_URL", "").rstrip("/")
     if not base_url.startswith("https://"):
@@ -77,7 +82,7 @@ def main() -> int:
     if not office.startswith("+"):
         raise SystemExit("set TRANSFER_OFFICE_NUMBER (E.164) for the built-in transfer")
     retell = Retell(os.environ["RETELL_API_KEY"])
-    for line in push(retell, base_url, office, args.eval_url):
+    for line in push(retell, base_url, office, args.eval_url, args.next):
         print(line)
     return 0
 
