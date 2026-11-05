@@ -18,6 +18,8 @@ from evals.scenario import load as load_scenario
 
 CASES_DIR = Path(__file__).resolve().parent / "cases"
 SCENARIOS_DIR = Path(__file__).resolve().parent.parent / "scenarios"
+# Asked of every case: the prompt says never to use the caller's name.
+NO_NAME = "The agent never says the caller's name."
 TAGS = {"must-pass", "safety", "requirement", "live-call", "booking", "priority", "membership",
         "commercial", "service-area", "injection", "repeat-caller", "short-answers"}
 # A Retell test case name is shown in its dashboard; the prefix keeps ours apart from the ones
@@ -44,6 +46,9 @@ class Case(BaseModel):
     # Retell tool mocks (ToolMock in Retell's API). Most cases use none: every tool goes to the eval
     # tool server, so the server's gates run for real.
     tool_mocks: list[dict] = Field(default_factory=list)
+    # What this case can't test in a simulation and leaves to a phone call, such as `say_now`:
+    # the bridge making the agent say the safety lines the moment the caller says the word.
+    phone_only: list[str] = Field(default_factory=list)
 
     @field_validator("tags")
     @classmethod
@@ -248,6 +253,7 @@ def port(scenario: Scenario, caller_number: str) -> dict:
             if line not in metrics:
                 metrics.append(line)
     metrics += [as_criterion(line) for line in scenario.should]
+    metrics = [*metrics[:11], NO_NAME]
     title = re.sub(r"\s+", " ", scenario.persona.split(".")[0]).strip()[:90]
     return {
         "id": scenario.id,
@@ -256,7 +262,7 @@ def port(scenario: Scenario, caller_number: str) -> dict:
         "scenario": scenario.id,
         "caller_id": caller_number,
         "user_prompt": user_prompt(scenario, caller_number),
-        "metrics": metrics[:12],
+        "metrics": metrics,
     }
 
 

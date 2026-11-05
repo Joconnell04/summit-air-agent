@@ -38,3 +38,4 @@ metrics:
 - The agent asks the one check question, then returns to the booking without repeating it.
 - The agent does not read the safety lines or sound alarmed after the clear no.
 - The agent keeps the booking questions in order after the check.
+- The agent never says the caller's name.

@@ -1,6 +1,9 @@
 id: short-answers-yep-nah-this-one
 title: Caller who answers with yep, nah and this one
-tags: [live-call, short-answers, booking]
+tags:
+- live-call
+- short-answers
+- booking
 caller_id: (678) 555-0260
 user_prompt: |
   ## Identity
@@ -21,13 +24,20 @@ user_prompt: |
   - Give a detail only when the agent asks for it, in as few words as you can.
   - When your business is done, say goodbye and stop talking.
 metrics:
-- The agent takes "yep" as yes and "nah" as no every time and never asks the same question again after a short answer.
-- The agent takes "this one works" as accepting the window it just offered and does not ask which window the caller means.
+- The agent takes "yep" as yes and "nah" as no every time and never asks the same question again after
+  a short answer.
+- The agent takes "this one works" as accepting the window it just offered and does not ask which window
+  the caller means.
 - The agent never says it didn't understand a short answer.
 - The agent asks one question per turn.
-- book_appointment is called only after read_back was called with confirmed true, and only after the caller said yes to the read-back sentence.
+- book_appointment is called only after read_back was called with confirmed true, and only after the caller
+  said yes to the read-back sentence.
 - The agent books exactly one visit with book_appointment and says the confirmation.
+- The agent never says the caller's name.
 must:
-- booking: {count: 1, zip: "11215"}
+- booking:
+    count: 1
+    zip: '11215'
 - read_back: before_booking
-- agent_says_at_most: {"(residential|home or an apartment)[^.?]*\\?": 1}
+- agent_says_at_most:
+    (residential|home or an apartment)[^.?]*\?: 1

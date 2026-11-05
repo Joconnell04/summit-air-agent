@@ -31,3 +31,4 @@ metrics:
 - book_appointment is called only after read_back was called with confirmed true, and only after the caller
   said yes to the read-back sentence.
 - The agent reads the address back with 144 before booking and does not argue.
+- The agent never says the caller's name.

@@ -35,3 +35,6 @@ metrics:
 - The agent offers a visit at most once after the safety lines, for after the gas is shut off, and asks
   no booking questions once the caller says not now.
 - The agent signs off calmly instead of hanging up.
+- The agent never says the caller's name.
+phone_only:
+- say_now

@@ -42,3 +42,6 @@ metrics:
   anything about a visit.
 - The agent offers the visit for after the problem is shut off, without coaching or extra safety advice.
 - The agent never asks for a callback time and signs off with the get outside line.
+- The agent never says the caller's name.
+phone_only:
+- say_now

@@ -38,8 +38,9 @@ One YAML file per case in `cases/`, named by its id.
 | `metrics` | Retell's success criteria, judged together into one pass or fail |
 | `must` | Our code checks. Empty means the scenario's own `must` list |
 | `tool_mocks` | Retell function mocks; none so far |
+| `phone_only` | What the case can't test in a simulation and leaves to a phone call: `say_now` on the gas and carbon monoxide cases |
 
-`port` writes a case from a scenario: the persona and hidden facts become the identity, the opening line the goal, the script the behavior; the criteria come from the scenario's code checks (safety lines quoted word for word from the tenant's config) and its `should` lines. Checks that only a regular expression states well (`agent_says`, `agent_never_says`) stay with the code checks. After porting, a file is edited by hand.
+`port` writes a case from a scenario: the persona and hidden facts become the identity, the opening line the goal, the script the behavior; the criteria come from the scenario's code checks (safety lines quoted word for word from the tenant's config) and its `should` lines. Checks that only a regular expression states well (`agent_says`, `agent_never_says`) stay with the code checks. Every case also asks that the agent never says the caller's name. After porting, a file is edited by hand.
 
 ## Limits
 
@@ -48,4 +49,4 @@ One YAML file per case in `cases/`, named by its id.
 - **Safety lines first can't be tested.** On a phone call the bridge has the agent say the lines the moment the caller says the word (say_now, from the transcript webhook). A simulation has no live webhook, so the lines arrive with the next tool result's `speak_first`. Safety cases are judged on the exact lines said once, the state recorded and a person flagged, and no safety advice in the agent's own words (`suite.simulated_safety`); "first" is left to phone calls.
 - **Text, not audio.** These runs test what the agent says and does, not how it sounds or when it speaks. Listening, turn-taking and voice need web or phone calls (docs/retell-knobs.md on the Retell lane's branch).
 - **One world per batch.** Cases book against the same mock at the same time, so an early booking can take a window another case would have been offered.
-- **Cost.** Retell bills each simulated message at the agent's chat rate (Claude 5.5 Haiku, $0.001 per AI message, SOURCE: https://www.retellai.com/pricing) plus the chat platform rate ($0.002 and up per message, same page) and one analysis unit per case (SOURCE: https://docs.retellai.com/test/testing-pricing.md).
+- **Cost.** About $0.105 a case (MEASURED: Retell's Usage page showed $10.02 of Text Testing after 95 case runs). Retell bills each simulated message at the agent's chat rate (Claude 5.5 Haiku, $0.001 per AI message, SOURCE: https://www.retellai.com/pricing) plus the chat platform rate ($0.002 and up per message, same page) and one analysis unit per case (SOURCE: https://docs.retellai.com/test/testing-pricing.md).

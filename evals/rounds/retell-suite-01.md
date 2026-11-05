@@ -128,7 +128,7 @@ The 15 safety cases again after the built-in `hang_up` came out and the prompt b
 
 ## 6. Spend
 
-Retell doesn't report a price per test run, so spend is estimated from message counts: 2,954 simulated messages across 95 case runs and two probes (MEASURED, the summaries), at $0.003 a message and $0.01 a case for grading (ASSUMED, from $0.001 per AI message for Claude 5.5 Haiku and "$0.002+ / msg" for chat agents, SOURCE: https://www.retellai.com/pricing). About $9.80 (ASSUMED), under the $12 stop and the $15 cap. Retell's Billing, Usage page has the exact figure.
+Retell doesn't report a price per test run, so spend is estimated from message counts: 2,954 simulated messages across 95 case runs and two probes (MEASURED, the summaries), at $0.003 a message and $0.01 a case for grading (ASSUMED, from $0.001 per AI message for Claude 5.5 Haiku and "$0.002+ / msg" for chat agents, SOURCE: https://www.retellai.com/pricing). About $9.80 (ASSUMED). Retell's Billing, Usage page showed $10.02 of Text Testing for the month after these runs ($6.15 Claude 5.5 Haiku, $3.87 GPT 5.6 Terra, MEASURED), an upper bound for this suite since any other text tests on the account count there too: about $0.105 a case.
 
 ## 7. What to change first
 

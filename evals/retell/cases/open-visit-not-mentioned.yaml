@@ -1,6 +1,9 @@
 id: open-visit-not-mentioned
 title: Known caller with a visit on file books something else
-tags: [live-call, repeat-caller, booking]
+tags:
+- live-call
+- repeat-caller
+- booking
 caller_id: (718) 555-0142
 user_prompt: |
   ## Identity
@@ -18,12 +21,23 @@ user_prompt: |
   - Answer plainly, confirm a correct read-back, take the first window offered next week.
   - When your business is done, say goodbye and stop talking.
 metrics:
-- The agent never mentions the caller's other visit, open job, earlier calls, account notes, or anything a lookup found, since the caller never asked about them.
+- The agent never mentions the caller's other visit, open job, earlier calls, account notes, or anything
+  a lookup found, since the caller never asked about them.
 - The agent books a tune-up visit with book_appointment for the central air.
-- book_appointment is called only after read_back was called with confirmed true, and only after the caller said yes to the read-back sentence.
+- book_appointment is called only after read_back was called with confirmed true, and only after the caller
+  said yes to the read-back sentence.
 - The agent does not cancel or reschedule anything.
+- The agent never says the caller's name.
 must:
-- jobs: [{job_type: tune_up}]
+- jobs:
+  - job_type: tune_up
 - read_back: before_booking
-- tool_not_called: [cancel_appointment, reschedule_appointment]
-- agent_never_says: ["(already|another|other|existing) (visit|appointment|job)", "12 to 4", "twelve to four", "gate code", "\\bdog\\b"]
+- tool_not_called:
+  - cancel_appointment
+  - reschedule_appointment
+- agent_never_says:
+  - (already|another|other|existing) (visit|appointment|job)
+  - 12 to 4
+  - twelve to four
+  - gate code
+  - \bdog\b

@@ -27,3 +27,4 @@ user_prompt: |
 metrics:
 - The agent books exactly one visit with book_appointment at ZIP 10009.
 - The agent takes the address as said, with no repeated asks for the street.
+- The agent never says the caller's name.

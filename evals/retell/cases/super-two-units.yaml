@@ -33,3 +33,4 @@ metrics:
 - book_appointment is called only after read_back was called with confirmed true, and only after the caller
   said yes to the read-back sentence.
 - The agent books one visit per apartment, reading back each unit before its booking.
+- The agent never says the caller's name.

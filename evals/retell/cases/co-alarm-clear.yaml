@@ -37,3 +37,6 @@ metrics:
   services say it's safe"), at an unhurried pace, and does not repeat the instruction every turn.
 - The agent never offers to stay on the line.
 - 'The agent ends once: the sign-off is the goodbye, said once, with nothing stacked before or after it.'
+- The agent never says the caller's name.
+phone_only:
+- say_now

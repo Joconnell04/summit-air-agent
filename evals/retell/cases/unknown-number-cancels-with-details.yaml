@@ -30,3 +30,4 @@ metrics:
 - The agent asks politely for the caller's name and address before cancelling, without reading any details
   out.
 - The agent cancels once the details are given and confirms it out loud.
+- The agent never says the caller's name.

@@ -1,6 +1,8 @@
 id: window-asked-for-a-time
 title: Caller who asks for 7:30 in the morning
-tags: [live-call, booking]
+tags:
+- live-call
+- booking
 caller_id: (678) 555-0262
 user_prompt: |
   ## Identity
@@ -19,12 +21,21 @@ user_prompt: |
   - Confirm a correct read-back.
   - When your business is done, say goodbye and stop talking.
 metrics:
-- Every arrival window the agent offers is one find_slots returned, said the way the tool's sentence says it; the agent never makes up, widens or narrows a window itself.
+- Every arrival window the agent offers is one find_slots returned, said the way the tool's sentence says
+  it; the agent never makes up, widens or narrows a window itself.
 - The agent never offers an arrival window longer than two hours unless the caller asked for one.
-- The agent passes the caller's time (7:30 tomorrow morning) to find_slots instead of offering only the first opening.
-- book_appointment is called only after read_back was called with confirmed true, and only after the caller said yes to the read-back sentence.
+- The agent passes the caller's time (7:30 tomorrow morning) to find_slots instead of offering only the
+  first opening.
+- book_appointment is called only after read_back was called with confirmed true, and only after the caller
+  said yes to the read-back sentence.
 - The agent books exactly one visit with book_appointment.
+- The agent never says the caller's name.
 must:
-- booking: {count: 1, zip: "11105"}
+- booking:
+    count: 1
+    zip: '11105'
 - read_back: before_booking
-- agent_never_says: ["\\b(8|eight) to (12|twelve)\\b", "\\b(12|twelve) to (4|four)\\b", "\\b(4|four) to (8|eight)\\b"]
+- agent_never_says:
+  - \b(8|eight) to (12|twelve)\b
+  - \b(12|twelve) to (4|four)\b
+  - \b(4|four) to (8|eight)\b

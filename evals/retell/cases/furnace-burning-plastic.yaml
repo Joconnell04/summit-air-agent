@@ -39,3 +39,4 @@ metrics:
 - book_appointment is called only after read_back was called with confirmed true, and only after the caller
   said yes to the read-back sentence.
 - The agent rules out gas with one quick question, then gives the calm electrical advice and books.
+- The agent never says the caller's name.
