@@ -907,9 +907,9 @@ class SpokenReply:
     def dead_end(self, raw: str, kept: str, calls: list[tuple[str, dict]]) -> str | None:
         """A reply that would leave the caller waiting in silence, and why: it called no tool yet
         promised to do something ("promised"), the caller heard nothing of it ("silent"), or it
-        only acknowledged them ("stalled"). None when the reply calls a tool, ends on a question,
-        or says something of substance; and after one follow-up since the caller last spoke, so a
-        model that keeps failing can't loop."""
+        only acknowledged them, or the question it asked was filtered out ("stalled"). None when
+        the reply calls a tool, ends on a question, or says something of substance; and after one
+        follow-up since the caller last spoke, so a model that keeps failing can't loop."""
         if calls or self._followed_up or self._finished or self._goodbye:
             return None
         if kept.rstrip().endswith("?"):
@@ -919,6 +919,10 @@ class SpokenReply:
         elif not kept.strip():
             reason = "silent"
         elif all(ONLY_ACKNOWLEDGES.fullmatch(s.strip()) for s in sentences(kept)):
+            reason = "stalled"
+        elif any(s.rstrip().endswith("?") for s in sentences(raw)):
+            # The model asked something the caller didn't hear ("Is that the right address?"
+            # after a restatement): what was said asks nothing, and the caller waits (issue #150).
             reason = "stalled"
         else:
             return None
