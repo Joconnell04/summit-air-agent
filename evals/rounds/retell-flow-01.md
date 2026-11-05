@@ -82,4 +82,4 @@ $9.49 for the lane (MEASURED): $6.90 for the simulated caller and grader across 
 
 ## 6. Verdict
 
-The flow does not pass every must-pass code check and is 39 points below our stack on the standard suite, so it does not go on the Retell number for live calls (issue #133's bar: every must-pass code check, and within 5 points). Retell stays out of the real-call round (DECISIONS.md 038), now for a second reason recorded in DECISIONS.md 091. The phone-only behaviors in exploration 017 (a static line before a transfer, a caller talking over the safety lines, the end node cutting a goodbye) were not tested on a call.
+The flow does not pass every must-pass code check and is 39 points below our stack on the standard suite, so it does not go on the Retell number for live calls (issue #133's bar: every must-pass code check, and within 5 points). Retell stays out of the real-call round (DECISIONS.md 038), now for a second reason recorded in DECISIONS.md 087. The phone-only behaviors in exploration 017 (a static line before a transfer, a caller talking over the safety lines, the end node cutting a goodbye) were not tested on a call.
