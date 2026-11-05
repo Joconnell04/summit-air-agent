@@ -12,6 +12,15 @@ Discussion: docs/ai-process/transcripts/... or docs/explorations/...
 Issue: #N
 -->
 
+## 107. OpenAI's full-duplex model (GPT-Live-1) is dropped
+
+Decided: GPT-Live-1, on OpenAI's Live Sessions endpoint over SIP with our tool server, is off the slate and not tested further. Its lane is stopped. Its code stays on PR #163, unmerged, and the gate line (+1 929 810 4875) stays as a test number for the other entries.
+Why: on its one slate call, Jackson's verdict was "it's not in a place right now where it's even worth continuing to iterate on". It answered the trivia wrong and didn't steer back to heating, took too long to respond, sometimes didn't respond at all, and didn't remember what had been said. Before that call it had also read back an invented phone number until our server's sentences were sent as exact-speech instructions. The forum research called it the most natural model on a phone line but weak at following instructions (docs/explorations/019-forum-stacks.md), and on this job instructions are what matter: safety lines word for word, gates, exact read-backs.
+Considered: more prompt work, or playing our own audio for the server's sentences. Both add the layering the slate exists to test, for a model that failed on the basics.
+Would change if: a later full-duplex release follows instructions and tool results reliably on a scripted phone call.
+Discussion: evals/rounds/simplicity-slate-01.md (call 3)
+Issue: none (slate entry 7)
+
 ## 099. A live-like audio suite, with a caller like Jackson, is the bar for how calls sound
 
 Decided: the eval set tests how a call sounds, not only what it records. A caller style drawn from Jackson's live calls 1 and 2 (`evals/personas/jackson.yaml`: his manner, seventeen of his exact lines as examples, his 20 s patience on a silence, cutting in on a turn past 10 s), both calls replayed on the audio rig, and nine audio checks read from the rig's timeline of each call: a silence (over 4 s after the caller, over 3 s in a lookup), a half reply (a line that asks nothing, then silence), the same line twice, time to first sound against S-36, talking over the caller, model requests per turn, a read-back faster than 3 digits a second, a hang-up under 1 s after the goodbye, and a requested time not said back as asked. Twelve scenarios in `evals/scenarios/live/`, run with `make rig STACK=livekit SUITE=live`; the baseline on main is the bar the behavior lane (#149) and the latency lane (#150) must clear.

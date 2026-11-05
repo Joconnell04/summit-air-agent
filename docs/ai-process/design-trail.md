@@ -128,3 +128,4 @@ How the design was reached, in order, so a reader can follow each choice back to
 | Lookup prefetch | Measured on the rig, no difference; not merged, code on its branch | DECISIONS.md 092, #153 |
 | Schedule edits, live into the agent | Block a slot or window, add an event or a job, change a job and (admins) a customer's phone from the owner view and the bench; each edit goes through the adapter, is logged with who, and clears the slot cache | DECISIONS.md 093, #152 |
 | Live-like audio suite | A caller like Jackson, both live calls replayed on the rig, and nine audio checks for silences, half replies, repeats, delay, talking over the caller, model requests per turn, read-back speed, hang-up and the time asked for | DECISIONS.md 099, #151, evals/rounds/live-like-01.md |
+| GPT-Live-1 | One slate call: answered wrong, slow, sometimes silent, forgot the call; dropped and its lane stopped | DECISIONS.md 107, PR #163, evals/rounds/simplicity-slate-01.md |
