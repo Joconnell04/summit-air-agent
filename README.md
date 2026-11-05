@@ -1,8 +1,12 @@
 # Summit Air inbound agent
 
-An AI phone agent that answers inbound calls for Summit Air, a 40-tech residential HVAC company in NYC. It works out what's wrong, checks whether the caller is residential and a member, collects what a technician needs, flags urgent calls, and books the visit or sets next steps. The model asks; the tool server decides: booking, refusals, hang-ups, priority and the safety lines are server rules, not prompt instructions.
+An AI phone agent that answers inbound calls for Summit Air, a 40-tech residential HVAC company in NYC. It works out what's wrong, checks whether the caller is residential and a member, collects what a technician needs, flags urgent calls, and books the visit or sets next steps.
+
+It runs on two parts. A Retell agent handles the phone line, listening, turn-taking and the voice, with Claude Haiku 5.5 on a short prompt. Our tool server owns every fact and every rule: lookups, the read-back before booking, the service area, the residential check, priority, identity checks and the safety lines are server code, not prompt instructions. The model asks; the server decides.
 
 Call it at (646) 624-0418. The owner view is at https://45-77-105-247.sslip.io/owner and the debug bench at https://45-77-105-247.sslip.io/bench (both need a login).
+
+**How we got here.** We tried several stacks and gave each a fair test. Most of the build went into a layered custom stack (LiveKit, Deepgram, Claude and Cartesia, with a side model, stage-scoped rules and a speech filter), because owning every layer promised more control. On the audio rig and on live calls, the layering itself caused the stalls and repeats, while Retell's integrated stack answered faster and sounded better. So the voice moved to Retell and the rules stayed in our server. The custom stack stays in the repo as the reference. The full story: [DECISIONS.md](DECISIONS.md) 111 and 112, and the [simplicity slate](evals/rounds/simplicity-slate-01.md).
 
 ## Start here
 
@@ -13,6 +17,7 @@ Call it at (646) 624-0418. The owner view is at https://45-77-105-247.sslip.io/o
 | Who calls and what each caller needs | [docs/users.md](docs/users.md), then [docs/call-journeys.md](docs/call-journeys.md) |
 | What it must do, as testable lines | [docs/spec.md](docs/spec.md) |
 | How it's put together | [docs/architecture.md](docs/architecture.md), [docs/tools.md](docs/tools.md) |
+| The Retell agent: prompt, tools, knowledge base and settings, versioned | [retell/summit-air-jackson/](retell/summit-air-jackson/), with every setting explained in [docs/retell-knobs.md](docs/retell-knobs.md) |
 | Every choice and why | [DECISIONS.md](DECISIONS.md) (newest first), or in order in [docs/ai-process/design-trail.md](docs/ai-process/design-trail.md) |
 | How it's tested | [evals/README.md](evals/README.md), with each round's results in [evals/rounds/](evals/rounds/README.md) |
 
@@ -51,8 +56,9 @@ Call it at (646) 624-0418. The owner view is at https://45-77-105-247.sslip.io/o
 | Folder | What it is |
 |---|---|
 | [app/](app/README.md) | The tool server every call talks to: gates, priority, safety, booking, the owner view and the debug bench |
-| [voice/livekit/](voice/livekit/README.md) | Our voice stack: the LiveKit worker with Deepgram ears, Claude, and a Cartesia voice |
-| [voice/retell/](voice/retell/README.md) and the other `voice/` folders | The baseline and the bake-off entrants |
+| `retell/summit-air-jackson/` | The live agent as Retell holds it, snapshotted into the repo after every change |
+| [voice/retell/](voice/retell/README.md) | The bridge between Retell and the tool server: greeting and call context before hello, the safety lines, server notes, the hang-up |
+| [voice/livekit/](voice/livekit/README.md) and the other `voice/` folders | The custom stack and the bake-off entrants, kept as the reference (DECISIONS.md 112) |
 | [servicetitan_mock/](servicetitan_mock/README.md) | The mock ServiceTitan the integration layer talks to |
 | [prompts/](prompts/README.md) | The prompts, split by job |
 | `config/models.yaml` | Every model and voice setting, by named profile; no model id is written anywhere else |
