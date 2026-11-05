@@ -191,3 +191,13 @@ def test_preemptive_generation_is_off_because_its_drafts_were_never_kept():
     """LiveKit keeps an early draft only when the caller's line reaches the model unchanged, and
     the worker adds the server's notes to most lines (issue #150)."""
     assert turn_handling(load_voice())["preemptive_generation"]["enabled"] is False
+def test_a_short_acknowledgment_at_the_start_of_a_line_is_left_to_the_adaptive_detector():
+    """Issue #150: "Okay, great. Thanks." as the agent's next line began cut it off, because LiveKit
+    lets plain voice activity interrupt in the first second of a line."""
+    from livekit.agents import AgentSession
+
+    handling = turn_handling(load_voice())
+    assert handling["interruption"]["mode"] == "adaptive"
+    assert handling["interruption"]["backchannel_boundary"] == (0.0, 1.0)
+    session = AgentSession(turn_handling=handling)
+    assert session.options.interruption["backchannel_boundary"] == (0.0, 1.0)
