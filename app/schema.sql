@@ -673,3 +673,20 @@ CREATE TABLE IF NOT EXISTS schedule_edits (
     fsm_modified_on TEXT
 );
 CREATE INDEX IF NOT EXISTS ix_schedule_edits ON schedule_edits (tenant, id);
+
+-- A reset of the live world (scripts/reset_live_world.py): the mock ServiceTitan was reseeded, so
+-- the customer, location and job ids recorded before it point at nothing. A call never picks up
+-- one that started before the latest reset (lifecycle._linked).
+CREATE TABLE IF NOT EXISTS world_resets (
+    id INTEGER PRIMARY KEY,
+    at TEXT NOT NULL
+);
+
+-- The name a visit goes under, when the agent asked for it before the read-back and passed it to
+-- read_back (Jackson's Retell agent asks at the start of the call): the read-back then doesn't
+-- ask again, and a booking with no details.name uses it.
+CREATE TABLE IF NOT EXISTS booking_names (
+    call_id TEXT PRIMARY KEY REFERENCES calls (id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    at TEXT NOT NULL
+);
