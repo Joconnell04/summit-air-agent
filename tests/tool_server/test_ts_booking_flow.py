@@ -255,7 +255,7 @@ def test_heating_and_cooling_lines_are_never_declined(line):
 def test_a_request_for_plumbing_gets_the_server_line_once_and_a_lead(agent):
     call = agent.start(UNKNOWN)["data"]["call_id"]
     hints = agent.turn(call, "My heat is out and my sink leaks.")["data"]["hints"]
-    line = "I'm sorry, we don't do plumbing, so a plumber would be the right call for that."
+    line = "Unfortunately we don't do plumbing, so a plumber would be the right call for that."
     assert f"not_offered:{line}" in hints
     notes = " ".join(server_notes(hints))
     assert line in notes and "carry on" in notes
@@ -743,3 +743,13 @@ def test_the_read_backs_own_phone_said_again_is_not_a_house_number(line):
 def test_a_time_preference_is_not_a_technician(line):
     """Eval run 20261104-234633, reschedule-own-booking: "Earlier" was noted as a technician."""
     assert asks.technician_request(line) is None
+
+
+def test_the_server_lines_say_sorry_only_for_our_own_mistakes():
+    """Jackson on Retell call call_9826ff9f0dfa8bc835a3601368b: it says "I'm sorry" too often.
+    "Unfortunately" says something isn't possible; an apology stays only for our system being
+    down and the signed-off billing line about a charge."""
+    agent = load_agent(TENANT_DIR)[0]
+    lines = {**agent["lines"], **agent["voice"]}
+    sorry = sorted(k for k, v in lines.items() if isinstance(v, str) and "sorry" in v.lower())
+    assert sorry == ["billing_callback", "server_down"]
