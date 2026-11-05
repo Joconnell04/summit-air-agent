@@ -1,0 +1,11 @@
+# Public HTTPS for the GPT-Live entry, installed as /etc/caddy/sites/summit-gpt-live.caddy by
+# deploy/gpt_live/deploy.sh. Its own hostname, so the Retell site stays untouched. Only OpenAI's
+# webhook (signature checked in voice/gpt_live/sip.py) and the health check are public.
+gpt-live.45-77-105-247.sslip.io {
+	handle /gpt-live/* {
+		reverse_proxy 127.0.0.1:8104
+	}
+	handle {
+		respond 404
+	}
+}

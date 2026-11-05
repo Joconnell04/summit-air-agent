@@ -37,10 +37,6 @@
 	handle /bench* {
 		reverse_proxy 127.0.0.1:8100
 	}
-	# OpenAI's webhook for GPT-Live calls (voice/gpt_live/sip.py), signed and checked there.
-	handle /gpt-live/* {
-		reverse_proxy 127.0.0.1:8104
-	}
 	handle {
 		respond 404
 	}
