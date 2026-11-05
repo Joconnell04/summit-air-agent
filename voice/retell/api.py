@@ -35,6 +35,7 @@ ALLOWED = (
     ("POST", r"/create-chat"),
     ("POST", r"/create-chat-completion"),
     ("GET", r"/get-chat/[\w-]+"),
+    ("PATCH", r"/update-chat/[\w-]+"),
     ("PATCH", r"/end-chat/[\w-]+"),
     # The Conversation Flow agent (voice/retell_flow/push.py). It finds its flow through the agent
     # that holds it, so it needs no list.

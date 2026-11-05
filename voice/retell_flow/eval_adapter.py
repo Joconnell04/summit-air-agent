@@ -23,8 +23,7 @@ NEEDED = (
 
 class FlowChatAgent(single.RetellChatAgent):
     def end(self, reason: str) -> None:
-        if self.server is not None:
-            self.server.end(self.call_id, reason)
+        self.mark_end(reason)
         response = self.http.patch(f"/end-chat/{self.chat_id}")
         # A chat the flow's end node closed answers 4xx; it is already ended, which is the point.
         if response.status_code >= 500:
@@ -41,6 +40,5 @@ def open_agent(call_id: str, caller_id: str, env: dict | None = None):
     env["RETELL_CHAT_AGENT_ID"] = env["RETELL_FLOW_CHAT_AGENT_ID"]
     agent, server = single.open_agent(call_id, caller_id, env)
     flow_agent = FlowChatAgent(agent.http, agent.open_chat, caller_id, call_id, agent.env)
-    flow_agent.server = server
     return flow_agent, server
 

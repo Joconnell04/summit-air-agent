@@ -444,7 +444,11 @@ class Ended:
 
 
 class Http:
-    def patch(self, path):
+    def __init__(self):
+        self.sent = []
+
+    def patch(self, path, json=None):
+        self.sent.append((path, json))
         return Ended()
 
 
@@ -453,14 +457,30 @@ def test_ending_a_chat_the_end_node_already_closed_is_not_an_error():
     agent.end("agent_end")
 
 
-def test_a_caller_hanging_up_is_recorded_as_the_callers_end_before_the_chat_closes():
-    ended = []
-
-    class Server:
-        def end(self, call_id, reason):
-            ended.append((call_id, reason))
-
-    agent = FlowChatAgent(Http(), None, "+12125550999", "eval-x", {})
-    agent.server = Server()
+def test_the_harnesss_end_reason_goes_in_the_chat_before_it_ends():
+    http = Http()
+    agent = FlowChatAgent(http, None, "+12125550999", "eval-x", {})
+    agent.chat_id = "c1"
     agent.end("caller_hangup")
-    assert ended == [("eval-x", "caller_hangup")]
+    assert http.sent == [
+        ("/update-chat/c1", {"metadata": {"summit_call_id": "eval-x", "end_reason": "caller_hangup"}}),
+        ("/end-chat/c1", None),
+    ]
+
+
+def test_a_chat_ends_with_the_reason_in_its_metadata_after_its_last_lines(flow_client, tool_app):
+    chat = {
+        "chat_id": "c2",
+        "retell_llm_dynamic_variables": {"summit_call_id": "eval-gas"},
+        "metadata": {"summit_call_id": "eval-gas", "end_reason": "caller_hangup"},
+        "message_with_tool_calls": [
+            {"role": "user", "content": "I smell gas."},
+            {"role": "agent", "content": GAS_LINES},
+        ],
+    }
+    signed(flow_client, "/retell/flow/turn", {"name": "caller_turn", "chat": chat})
+    response = signed(flow_client, "/retell/webhook", {"event": "chat_ended", "chat": chat})
+    assert response.status_code == 204
+    call = rows(tool_app, "SELECT end_reason, safety_state FROM calls WHERE id = 'eval-gas'")[0]
+    # The agent's last line reached the server before the call closed, with the caller's reason.
+    assert call == {"end_reason": "caller_hangup", "safety_state": "lines_said"}

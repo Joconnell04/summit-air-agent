@@ -33,15 +33,20 @@ def test_start_opens_the_chat_and_keeps_our_call_id():
     assert (a.call_id, a.chat_id) == ("eval-x", "chat_9")
 
 
-def test_end_ends_the_chat():
+def test_end_puts_the_reason_in_the_chat_then_ends_it():
     seen = []
 
     def handler(request):
-        seen.append((request.method, request.url.path))
+        body = json.loads(request.content) if request.content else None
+        seen.append((request.method, request.url.path, body))
         return httpx.Response(200, json={})
 
     agent(handler).end("caller_hangup")
-    assert seen == [("PATCH", "/end-chat/chat_9")]
+    metadata = {"summit_call_id": "eval-x", "end_reason": "caller_hangup"}
+    assert seen == [
+        ("PATCH", "/update-chat/chat_9", {"metadata": metadata}),
+        ("PATCH", "/end-chat/chat_9", None),
+    ]
 
 
 def test_hear_joins_agent_lines_and_marks_tool_turns():

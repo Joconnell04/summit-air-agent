@@ -18,8 +18,9 @@ On Retell the safety lines are said by its model (the server checks the wording)
 code: Retell chat can't insert them mid-reply. That is a real bake-off difference.
 
 Endpoints (SOURCE: https://docs.retellai.com/api-references/create-chat-completion.md):
-POST /create-chat-completion {chat_id, content} returns the new messages; PATCH /end-chat/{chat_id}
-ends the chat, and its webhook closes the call on the tool server.
+POST /create-chat-completion {chat_id, content} returns the new messages; PATCH /update-chat/{chat_id}
+sets the chat's metadata (https://docs.retellai.com/api-references/update-chat.md); PATCH
+/end-chat/{chat_id} ends the chat, and its webhook closes the call on the tool server.
 """
 import json
 import os
@@ -52,8 +53,6 @@ class RetellChatAgent:
         self.call_id = call_id
         self.chat_id = ""
         self.env = env
-        # The eval tool server, set by open_agent.
-        self.server = None
 
     def start(self) -> AgentTurn:
         t0 = time.perf_counter()
@@ -84,13 +83,15 @@ class RetellChatAgent:
         return AgentTurn(" ".join(said), timing, ended=ended)
 
     def end(self, reason: str) -> None:
-        """Close the call on the tool server with the harness's reason first, as our own stack's
-        agent does (evals/stacks.py): the bridge closes every chat as the agent's end, so a caller
-        hanging up would otherwise look like the agent hanging up. Then end the chat; its webhook
-        finds the call already closed."""
-        if self.server is not None:
-            self.server.end(self.call_id, reason)
+        """Ending the chat fires Retell's webhook, which posts the last lines and closes the call on
+        the tool server. The harness's reason goes in the chat's metadata first, so a caller who
+        hangs up isn't recorded as the agent hanging up (voice/retell/bridge.py chat_end_reason)."""
+        self.mark_end(reason)
         self.http.patch(f"/end-chat/{self.chat_id}").raise_for_status()
+
+    def mark_end(self, reason: str) -> None:
+        metadata = {"summit_call_id": self.call_id, "end_reason": reason}
+        self.http.patch(f"/update-chat/{self.chat_id}", json={"metadata": metadata})
 
 
 def _hang_up(messages: list[dict], tool_call_id: str) -> bool:
@@ -163,6 +164,4 @@ def open_agent(call_id: str, caller_id: str, env: dict | None = None):
         token,
     )
     chat_env = {**env, "DEBUG_TOKEN": token}
-    agent = RetellChatAgent(http, open_chat, caller_id, call_id, chat_env)
-    agent.server = server
-    return agent, server
+    return RetellChatAgent(http, open_chat, caller_id, call_id, chat_env), server

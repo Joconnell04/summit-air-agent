@@ -75,6 +75,16 @@ def end_reason(disconnection: str | None, hung_up: bool) -> str:
     return END_REASONS.get(disconnection, "dropped")
 
 
+# Who ended an eval chat, as the harness put it in the chat's metadata before ending it
+# (voice/retell/eval_adapter.py). A chat has no caller to hang up, so anything else is the agent's.
+CHAT_END_REASONS = ("caller_hangup", "agent_end", "transfer")
+
+
+def chat_end_reason(chat: dict) -> str:
+    reason = (chat.get("metadata") or {}).get("end_reason")
+    return reason if reason in CHAT_END_REASONS else "agent_end"
+
+
 def idempotency_key(call_id: str, tool: str, args: dict) -> str:
     """Derived from call id, tool and arguments (docs/tools.md), so a repeat returns the first
     answer."""
@@ -273,7 +283,7 @@ class Bridge:
             self.sync(chat, call_id)
             row = self.ledger.get(rid)
             if not row["ended"]:
-                if self.tools.end(call_id, "agent_end") is None:
+                if self.tools.end(call_id, chat_end_reason(chat)) is None:
                     return False
                 self.ledger.mark(rid, ended=1)
         return True
