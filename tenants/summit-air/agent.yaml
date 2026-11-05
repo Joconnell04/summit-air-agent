@@ -269,6 +269,9 @@ pace:
   fastest: 1.3
   older_adult_age: 65
   older_adult_speed: 0.85
+  # Steps slower for the address and the number in every read-back (live call 2: "too fast on the
+  # readback of address and phone", and "the slower speaking was good").
+  read_back_steps: 1
   # "Sorry, what?" this many times since the pace last moved is one step slower.
   repeats_before_slower: 2
   # A request counts only when it is about how the agent speaks: a phrase with a speech word, "slow

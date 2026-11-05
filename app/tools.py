@@ -2191,8 +2191,12 @@ def read_back(ctx: Ctx, args: ReadBackIn) -> Result:
                 readback_confirmed_at=None,
             )
             if not args.confirmed:
-                # The caller asked for the address slower: the worker speaks these parts as given.
-                parts = pace.read_back_parts(ctx.conn, ctx.call["id"], sentence, spoken_address)
+                # The address and number slower than the words around them (app/pace.py): the
+                # worker speaks these parts as given.
+                parts = pace.read_back_parts(
+                    ctx.conn, ctx.call["id"], sentence, [spoken_address, phone_said(phone)],
+                    ctx.tenant.pace,
+                )
     if args.confirmed:
         raise Refused(
             "gate_read_back",

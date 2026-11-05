@@ -334,8 +334,8 @@ def _settings(tenant: Tenant) -> list[Rule]:
             f"Slower ({p['older_adult_speed']} of normal) for a caller who says they're elderly "
             f"or {p['older_adult_age']} or over; a step slower or faster when the caller asks, "
             f"kept for their next call; a step slower after \"sorry, what?\" "
-            f"{p['repeats_before_slower']} times; just the address slower when that's all they "
-            "ask", why=why))
+            f"{p['repeats_before_slower']} times; the address and number in a read-back a step "
+            "slower than the rest; the address slower again when that's all they ask", why=why))
     declined = tenant.services.get("not_offered", {})
     if declined:
         found.append(Rule(

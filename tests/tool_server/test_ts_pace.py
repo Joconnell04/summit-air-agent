@@ -201,7 +201,7 @@ def test_slowing_down_for_the_address_applies_to_the_address_alone(agent):
     agent.turn(call, "It's 101 Union St, 11231.")
     address = in_area_address()
     asked = agent.tool("read_back", call, address=address, phone="caller_id")
-    assert "parts" not in asked["data"]
+    assert [p["speed"] for p in asked["data"]["parts"]] == [1.0, 0.85, 1.0, 0.85, 1.0]
     agent.say(call, asked["say"])
     result = agent.turn(call, "Sorry, can you say that again slower?")
     assert speed(result) == 1.0
@@ -209,15 +209,37 @@ def test_slowing_down_for_the_address_applies_to_the_address_alone(agent):
     again = agent.tool("read_back", call, address=address, phone="caller_id")
     parts = again["data"]["parts"]
     assert " ".join(p["text"] for p in parts) == again["say"]
-    assert parts[1] == {"text": "101 Union St, Brooklyn, ZIP code one one two three one,", "speed": 0.85}
-    assert parts[0]["speed"] == parts[2]["speed"] == 1.0
-    # Used once: the call's pace is unchanged and the next read-back is whole.
-    assert changes(agent, call) == [(3, 0.85, "address", "request")]
+    # The address a step below the read-back's usual detail speed; the number as usual.
+    assert parts[1] == {"text": "101 Union St, Brooklyn, ZIP code one one two three one,", "speed": 0.7}
+    assert [p["speed"] for p in parts] == [1.0, 0.7, 1.0, 0.85, 1.0]
+    # Used once: the call's pace is unchanged and the next read-back is as usual.
+    assert changes(agent, call) == [(3, 0.7, "address", "request")]
     agent.say(call, again["say"])
     assert speed(agent.turn(call, "Yes, that's right.")) == 1.0
     third = agent.tool("read_back", call, address=address, phone="caller_id")
-    assert "parts" not in third["data"]
+    assert [p["speed"] for p in third["data"]["parts"]] == [1.0, 0.85, 1.0, 0.85, 1.0]
     assert remembered(agent) is None
+
+
+def test_every_read_back_says_the_address_and_number_a_step_slower(agent):
+    call = agent.start()["data"]["call_id"]
+    agent.turn(call, "It's 101 Union St, 11231.")
+    asked = agent.tool("read_back", call, address=in_area_address(), phone="caller_id")
+    parts = asked["data"]["parts"]
+    assert " ".join(p["text"] for p in parts) == asked["say"]
+    assert parts[0] == {"text": "I have your home at", "speed": 1.0}
+    assert parts[1] == {"text": "101 Union St, Brooklyn, ZIP code one one two three one,", "speed": 0.85}
+    assert parts[3]["speed"] == 0.85 and parts[3]["text"][0].isalpha()
+    assert parts[4] == {"text": "That's all correct, right?", "speed": 1.0}
+
+
+def test_at_the_slowest_pace_the_read_back_is_one_part(agent):
+    call = agent.start()["data"]["call_id"]
+    agent.turn(call, "Slow down please.")
+    agent.turn(call, "Slower, please.")
+    agent.turn(call, "It's 101 Union St, 11231.")
+    asked = agent.tool("read_back", call, address=in_area_address(), phone="caller_id")
+    assert "parts" not in asked["data"]
 
 
 def test_the_address_slows_one_step_below_the_calls_own_pace(agent):
@@ -226,7 +248,7 @@ def test_the_address_slows_one_step_below_the_calls_own_pace(agent):
     agent.turn(call, "Please say the address slower when you read it.")
     agent.turn(call, "It's 101 Union St, 11231.")
     asked = agent.tool("read_back", call, address=in_area_address(), phone="caller_id")
-    assert [p["speed"] for p in asked["data"]["parts"]] == [0.85, 0.7, 0.85]
+    assert [p["speed"] for p in asked["data"]["parts"]] == [0.85, 0.7, 0.85, 0.7, 0.85]
 
 
 def test_a_requested_pace_carries_to_a_linked_call_the_same_day(agent, clock):
@@ -386,7 +408,7 @@ def test_an_older_caller_asking_for_the_address_slower_gets_both(agent):
     assert changes(agent, call) == [(1, 0.85, "call", "older_adult"), (1, 0.7, "address", "request")]
     agent.turn(call, "It's 101 Union St, 11231.")
     asked = agent.tool("read_back", call, address=in_area_address(), phone="caller_id")
-    assert [p["speed"] for p in asked["data"]["parts"]] == [0.85, 0.7, 0.85]
+    assert [p["speed"] for p in asked["data"]["parts"]] == [0.85, 0.7, 0.85, 0.7, 0.85]
 
 
 # ---- bounds and scope ------------------------------------------------------------------------

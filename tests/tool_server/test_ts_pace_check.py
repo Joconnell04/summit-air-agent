@@ -101,20 +101,20 @@ def address_call(agent, slow_part: bool, back_to_pace: bool = True) -> str:
 
 def test_the_check_passes_when_only_the_address_was_slower(agent):
     call = address_call(agent, slow_part=True)
-    assert pace({"held": 1.0, "address": 0.85, "remembered": "none"}, evidence(agent, call)) == []
+    assert pace({"held": 1.0, "address": 0.7, "remembered": "none"}, evidence(agent, call)) == []
 
 
 def test_the_check_fails_when_the_address_was_not_spoken_slower(agent):
     call = address_call(agent, slow_part=False)
-    assert pace({"address": 0.85}, evidence(agent, call)) == [
+    assert pace({"address": 0.7}, evidence(agent, call)) == [
         "the address was never spoken at its own pace"
     ]
 
 
 def test_the_check_fails_when_the_pace_stays_slow_after_the_address(agent):
     call = address_call(agent, slow_part=True, back_to_pace=False)
-    assert pace({"held": 1.0, "address": 0.85}, evidence(agent, call)) == [
-        "agent line 8 was spoken at 0.85; the server's pace was 1.0"
+    assert pace({"held": 1.0, "address": 0.7}, evidence(agent, call)) == [
+        "agent line 10 was spoken at 0.85; the server's pace was 1.0"
     ]
 
 
