@@ -42,7 +42,7 @@ Through `voice/retell_flow/eval_adapter.py`: the baseline's adapter on the flow'
 
 ## Results
 
-Round 1 (evals/rounds/retell-flow-01.md, DECISIONS.md 083): every gate held and the safety lines were word for word on every safety call, but 53% on the standard suite against our stack's 92%, because nothing filters the model's own speech. Not put on the 678 number.
+Round 1 (evals/rounds/retell-flow-01.md, DECISIONS.md 091): every gate held and the safety lines were word for word on every safety call, but 53% on the standard suite against our stack's 92%, because nothing filters the model's own speech. Not put on the 678 number.
 
 ## Settings, and why
 

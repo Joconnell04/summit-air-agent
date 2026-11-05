@@ -53,7 +53,7 @@ The same scorecard, so results compare across bake-offs. Numbers in brackets are
 - **Decide:** the rule in DECISIONS.md 026. Research: docs/explorations/013-more-bakeoff-entrants.md.
 - **Round 1 results:** evals/rounds/bakeoff-audio-01.md. No newcomer chosen under the rule; ElevenLabs on our brain was 0.44 s faster on plain turns with the safety lines exact, and failed on reading addresses and numbers back (MEASURED there).
 
-### 7. Retell Conversation Flow: our design on Retell's own stage graph (DECISIONS.md 083)
+### 7. Retell Conversation Flow: our design on Retell's own stage graph (DECISIONS.md 091)
 
 - **Hypothesis:** Retell's static-sentence nodes, function nodes and equation edges can carry every rule our stack enforces, with our tool server still deciding every gate, and close the gap that ruled the single-prompt agent out: the safety lines paraphrased.
 - **Build:** `voice/retell_flow/`, mapped rule by rule in docs/explorations/017-retell-conversation-flow.md. A function node runs our turn check before every reply; every line our worker speaks word for word is a static-sentence node saying the server's text; the end and transfer nodes are reached only on values our server returned; the prompt, model (Claude Haiku 5.5) and voice are our stack's. Reviewed twice against the map and the spec before the paid runs.
