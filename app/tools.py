@@ -1288,12 +1288,21 @@ def _someone_else(ctx: Ctx, customer_id: int) -> bool:
 
 
 def _callers_accounts(ctx: Ctx) -> dict:
-    """The customers matched on this call, less one the caller said they aren't."""
-    return {
-        cid: row
-        for cid, row in records.scoped_customers(ctx.conn, ctx.call["id"]).items()
-        if not _someone_else(ctx, cid)
-    }
+    """The customers matched on this call, less one the caller said they aren't, and less one
+    ServiceTitan no longer has: a scripted call after the live world was reseeded carried customer
+    301 from the old world, skipped the name question, and the new customer was sent with no name
+    (call-_+16466240418_ECUCgf3cyyQP, a 400 from ServiceTitan)."""
+    found = {}
+    for cid, row in records.scoped_customers(ctx.conn, ctx.call["id"]).items():
+        try:
+            ctx.fsm.customer(cid)
+        except FsmRejected:
+            continue
+        except FsmUnavailable:
+            pass
+        if not _someone_else(ctx, cid):
+            found[cid] = row
+    return found
 
 
 def _check_failed_on_call(ctx: Ctx) -> bool:

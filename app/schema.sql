@@ -673,3 +673,11 @@ CREATE TABLE IF NOT EXISTS schedule_edits (
     fsm_modified_on TEXT
 );
 CREATE INDEX IF NOT EXISTS ix_schedule_edits ON schedule_edits (tenant, id);
+
+-- A reset of the live world (scripts/reset_live_world.py): the mock ServiceTitan was reseeded, so
+-- the customer, location and job ids recorded before it point at nothing. A call never picks up
+-- one that started before the latest reset (lifecycle._linked).
+CREATE TABLE IF NOT EXISTS world_resets (
+    id INTEGER PRIMARY KEY,
+    at TEXT NOT NULL
+);
