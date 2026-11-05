@@ -199,6 +199,7 @@ LINE_STAGES = {
     "next_unit": ("booking", "Next unit"),
     "slot_taken": ("booking", "Window just filled"),
     "urgent_priority": ("booking", "Marked urgent"),
+    "raised_priority": ("booking", "Moved up"),
     "fsm_unavailable": ("booking", "Can't book now"),
     "fsm_unavailable_no_callback": ("booking", "Can't book, noted"),
     "anything_else_first": ("closing", "Anything else"),

@@ -142,6 +142,7 @@ WHEN = {
     "slot_taken": "The window fills while booking",
     "visit_passed": "An open visit's window has passed",
     "urgent_priority": "The call is marked urgent",
+    "raised_priority": "The caller's own words raise the priority",
     "next_unit": "Booking a building's next unit",
     "arrival_no_fit": "The caller wants an exact arrival time",
     "booking_name": "A new caller confirms the read-back without having said a name",

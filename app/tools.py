@@ -1863,6 +1863,14 @@ def find_slots(ctx: Ctx, args: FindSlotsIn) -> Result:
             urgent_said = line + " "
             data["spoken_first"] = line
             data["note"] = "The top-priority sentence was just said for you; don't say it again."
+    elif decided.raised_by_caller:
+        # Below Urgent, a caller whose own words moved them up hears so, once: "it makes them feel
+        # heard" (Jackson). A comfort complaint alone raises nothing, so it says nothing.
+        line = ctx.tenant.line("raised_priority")
+        if _hand_out_once(ctx, line):
+            urgent_said = line + " "
+            data["spoken_first"] = line
+            data["note"] = "The moved-up sentence was just said for you; don't say it again."
     if decided.level == "Urgent" and windows:
         first = _describe(ctx, windows[0])
         data["first_urgent"] = first

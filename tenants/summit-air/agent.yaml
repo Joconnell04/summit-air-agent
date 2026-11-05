@@ -502,6 +502,9 @@ lines:
     can't promise an exact time.
   # Said once when the server marks a call Urgent (spec S-21a). Below Urgent, no priority is named.
   urgent_priority: I've marked this call top priority, so you get our soonest opening.
+  # Said once when the caller's own facts raised the priority below Urgent (Jackson: "it makes them
+  # feel heard").
+  raised_priority: Thanks for telling me. I've moved you up so you'll get one of our earlier openings.
   anything_else_first: Is there anything else I can help with?
   # Ends a booking sentence instead of after_confirmation when the caller named another unit that
   # has no booking yet (DECISIONS.md 085). {unit} is "5C".
