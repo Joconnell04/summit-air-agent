@@ -1451,3 +1451,11 @@ def test_a_call_with_no_number_asks_for_it_by_name(agent, caller, phone):
     asked = agent.tool("read_back", call, address=in_area_address(), phone=phone)
     assert asked["refused"] == "no_caller_number"
     assert asked["say"] == "I can't see the number you're calling from. Could you read it out for me?"
+
+
+def test_find_slots_takes_since_in_its_facts(agent):
+    """Retell eval suite round 1: 16 find_slots calls refused facts.since as an unknown field."""
+    call = ready_to_book(agent)
+    found = agent.tool("find_slots", call, job_type="tune_up",
+                       facts={"issue": "yearly tune-up", "since": "last week"})
+    assert found["ok"], found

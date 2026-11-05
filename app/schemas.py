@@ -151,10 +151,13 @@ class FindAddressIn(CallRef):
 
 class Facts(Body):
     """What the agent has heard that bears on priority. The server sets priority from the caller's
-    own lines; `who_home` and `issue` raise nothing, and `inside_temp_f` counts only when a caller
-    line carries that number (DECISIONS.md 072)."""
+    own lines; `who_home`, `issue` and `since` raise nothing, and `inside_temp_f` counts only when
+    a caller line carries that number (DECISIONS.md 072)."""
 
     issue: str = Field("", max_length=300)
+    # Since when, as the agent heard it: the Retell agent passes it here, and it was refused as an
+    # unknown field (Retell eval suite round 1, 16 cases).
+    since: str = Field("", max_length=120)
     who_home: str = Field("", max_length=300)
     inside_temp_f: float | None = Field(None, ge=0, le=130)
     temp_falling_fast: bool = False
