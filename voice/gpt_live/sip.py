@@ -81,7 +81,11 @@ def number(headers: list[dict], name: str) -> str:
     return ""
 
 
-def end_reason(closed: dict | None) -> str:
+def end_reason(closed: dict | None, hung_up: bool = False) -> str:
+    # OpenAI can report our own hangup as the remote side ending the call (MEASURED, first call
+    # on the gate line), so a hangup we asked for wins.
+    if hung_up:
+        return "agent_end"
     if not closed:
         return "dropped"
     return END_REASONS.get(closed.get("reason", ""), "dropped")
@@ -193,7 +197,11 @@ class Phone:
             except websockets.ConnectionClosed:
                 pass
 
+        hung_up = False
+
         async def hang_up() -> None:
+            nonlocal hung_up
+            hung_up = True
             log.info("%s: hanging up", call_id)
             response = await self.api.post(f"{API}/{session_id}/hangup", headers=self.auth)
             if response.status_code != 200:
@@ -220,7 +228,7 @@ class Phone:
         finally:
             await conversation.drain()
             await ws.close()
-            reason = end_reason(conversation.closed)
+            reason = end_reason(conversation.closed, hung_up)
             await asyncio.to_thread(self.server.end, call_id, reason)
             cost = conversation.cost(self.cfg["price"]["per_minute"])
             log.info("%s: ended (%s), %.0f s, cost %s", call_id, reason,

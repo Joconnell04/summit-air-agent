@@ -259,6 +259,13 @@ def test_the_caller_number_comes_from_the_sip_from_header():
     assert sip.number([], "From") == ""
 
 
+def test_a_hangup_we_asked_for_is_the_agents_even_if_reported_as_remote():
+    closed = {"type": "session.closed", "reason": "remote_hangup"}
+    assert sip.end_reason(closed, hung_up=True) == "agent_end"
+    assert sip.end_reason(closed) == "caller_hangup"
+    assert sip.end_reason(None) == "dropped"
+
+
 class FakeApi:
     """OpenAI's Live call-control endpoints."""
 
