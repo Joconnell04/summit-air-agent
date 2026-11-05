@@ -690,3 +690,12 @@ CREATE TABLE IF NOT EXISTS booking_names (
     name TEXT NOT NULL,
     at TEXT NOT NULL
 );
+
+-- A kept check that found no job in ServiceTitan (a reseeded or reset world): tried again later,
+-- further apart each time, and given up after a few (jobs.check_kept). The eval server asked for
+-- one missing job about 30 times a minute without it.
+CREATE TABLE IF NOT EXISTS kept_misses (
+    booking_id INTEGER PRIMARY KEY REFERENCES bookings (id) ON DELETE CASCADE,
+    attempts INTEGER NOT NULL,
+    next_at TEXT NOT NULL
+);
