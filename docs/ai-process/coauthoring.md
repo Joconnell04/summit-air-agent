@@ -363,3 +363,14 @@ Changed at sign-off:
 - The server adds an `electrical_said` note after the line so the agent offers to book at once; a test pins that a sparks caller books with nothing said about the unit or the breaker being off.
 Commit: PR #132
 Status: closed
+
+## rules page r1 (issue #140: one simple Rules page on the bench)
+Feedback (verbatim, Jackson, relayed by the coordinating session):
+> I just thought that the owner guidance and like customization tab was just overcomplicated and kind of makes the system look like a hodgepodge of different rules and stuff. So ideate a way to just fully simplify the owner guidance so that way they can still see what would trigger a fixed response and still be able to add in their own rules, but only keep it in the debug bench, not on the owner view, and simplify it so it's just less all at once. I don't think most of those fields need to be included. And just make sure it doesn't look like a hodgepodge of random rules that are disparately connected. Also make that page show the assembled system prompt sectioned by each sub prompt that's assembled in the order that it's assembled on that page somewhere. ensure proper design, system implementation, and do another check after your first pass to ensure a simplified user interface and user experience.
+Changed: three directions mocked in docs/explorations/018-rules-page.md, with every field on the two old pages marked kept, merged or dropped.
+
+Pick (verbatim, Jackson, relayed by the coordinating session):
+> let's go with your recommendation of one topic at a time.
+Changed at the pick: option A built at `/bench/rules` (DECISIONS.md 091); `/owner/rules` redirects there.
+Commit: (this PR)
+Status: open

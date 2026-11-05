@@ -110,11 +110,6 @@
 {%- endif -%}
 {%- endmacro %}
 
-{# A rule's status on the Rules page; a locked one says why in its tooltip. #}
-{% macro rule_status(r) -%}
-{%- if r.editable %}<span class="tag info">Editable</span>{% else %}<span class="tag outline" tabindex="0" data-tip="{{ r.why }}" aria-label="Locked: {{ r.why }}">Locked</span>{% endif -%}
-{%- endmacro %}
-
 {# A call's recording on one row (story O-6). The script swaps the browser's controls for the
    play button, scrub bar and time; without it the browser's own controls show. #}
 {% macro player(src, label="Call recording") -%}

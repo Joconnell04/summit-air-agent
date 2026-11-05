@@ -1,0 +1,392 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="../../../app/static/owner/revin-mark.png">
+<link rel="preload" href="../../../app/static/owner/fonts/PublicSans-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../../../app/static/owner/tokens.css">
+<link rel="stylesheet" href="../../../app/static/owner/components.css">
+
+<title>Option B: tabs</title>
+</head>
+<body>
+
+
+<header class="app-header">
+  <div class="inner">
+    <a class="brand" href="/owner"><img src="../../../app/static/owner/revin-logo.svg" alt="Revin" width="88" height="15"><span class="rule"></span><span class="company">Summit Air</span></a>
+    <nav class="tabs" aria-label="Bench pages">
+  <a href="/bench">Calls</a>
+  <a href="/bench/settings">Settings</a>
+  <a href="/bench/evals">Evals</a>
+  <a href="/bench/rules" aria-current="page">Rules</a>
+  <a href="/owner">Owner view</a>
+</nav>
+    <div class="end">
+      <form class="search" role="search" method="get" action="/owner/search" data-suggest="/owner/search/suggest">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+        <label class="sr-only" for="search-q">Search calls</label>
+        <input id="search-q" type="search" name="q" value="" placeholder="Search calls, people, jobs, words said" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="search-list" aria-autocomplete="list">
+        <ul class="suggest" id="search-list" role="listbox" aria-label="Matches" hidden></ul>
+        
+      </form>
+      <span class="status" role="status" title="No voice worker has reported in on this server"><span class="dot"></span>Last call 5:15 PM</span>
+      <form class="account" method="post" action="/owner/logout"><button class="btn quiet" type="submit" data-tip="Signed in as Pat Moreno, admin" aria-label="Sign out Pat Moreno">Sign out</button></form>
+    </div>
+  </div>
+</header>
+
+
+<main class="page">
+  <div class="page-head">
+  <div class="lead"><div class="crumbs">Debug bench<span>/</span><span>Version 3 live</span></div><h1 class="page-title">Rules</h1></div>
+  <div class="actions">
+    <button class="btn" type="button">Save draft</button>
+    <details class="more pop"><summary><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>Override</summary></details>
+    <button class="btn primary" type="button">Publish</button>
+  </div>
+</div>
+  <section class="panel">
+    <div class="tray-tabs" role="tablist">
+      <button type="button" role="tab" aria-selected="false">Your rules<span class="count">1</span></button>
+      <button type="button" role="tab" aria-selected="true">Fixed responses<span class="count">100</span></button>
+      <button type="button" role="tab" aria-selected="false">System prompt<span class="count">8</span></button>
+      <button type="button" role="tab" aria-selected="false">Versions<span class="count">3</span></button>
+    </div>
+    <div class="table-wrap"><table class="table form">
+  <thead><tr><th>When</th><th>The agent says</th></tr></thead>
+  <tbody>
+  
+    <tr class="group"><td colspan="2"><span class="what">Safety</span> <span class="count">11</span></td></tr>
+    <tr>
+  <td>A dropped safety call picks up where it stopped</td>
+  <td><span class="tag outline">Always</span></td>
+</tr><tr>
+  <td>Listens for a safety emergency on every caller line</td>
+  <td><span class="tag outline">Always</span></td>
+</tr><tr>
+  <td>Speaks the signed-off safety lines itself, never the agent&#39;s own</td>
+  <td><span class="tag outline">Always</span></td>
+</tr><tr>
+  <td>Never puts a safety call through to a person</td>
+  <td><span class="tag outline">Always</span></td>
+</tr><tr>
+  <td>Holds any booking until the safety lines are said and a person is flagged</td>
+  <td><span class="tag outline">Always</span></td>
+</tr><tr>
+  <td>On a safety call, signs off instead of hanging up</td>
+  <td><span class="tag outline">Always</span></td>
+</tr><tr>
+  <td>A dropped safety call gets an urgent flag and a quick callback</td>
+  <td><span class="tag outline">Always</span></td>
+</tr><tr>
+  <td><span class="what">The caller describes a gas smell</span></td>
+  <td>&ldquo;Please get everyone out of the house now. Don&#39;t flip any switches or use the stove, and call 911 or the gas company once you&#39;re outside.&rdquo; <span class="tip-i" tabindex="0" data-tip="Please get outside and call 911 from there. / The safest thing is to head outside now and call 911 or the gas company. / Just to be safe, are you smelling gas in the house right now? / Just to confirm, it doesn&#39;t smell like sulfur or rotten eggs, right?"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg></span><span class="faint"> 3 more</span></td>
+</tr><tr>
+  <td><span class="what">A carbon monoxide alarm or symptoms</span></td>
+  <td>&ldquo;If a window is right there, open it. Then get everyone out of the house now and call 911 once you&#39;re outside.&rdquo; <span class="tip-i" tabindex="0" data-tip="Please get outside and call 911 from there. / The safest thing is to get everyone outside now and call 911. / Just to be safe, is a carbon monoxide alarm going off, or is anyone feeling sick or dizzy?"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg></span><span class="faint"> 2 more</span></td>
+</tr><tr>
+  <td><span class="what">A visit is booked on a safety call</span></td>
+  <td>&ldquo;The technician can only work on it once the gas company or 911 has shut it off and said it&#39;s safe, so please stay outside until then.&rdquo;</td>
+</tr><tr>
+  <td><span class="what">A safety call ends</span></td>
+  <td>&ldquo;For your safety, I&#39;d recommend hanging up now, getting outside, and calling 911 from there. We&#39;ll follow up once you&#39;re safe.&rdquo;</td>
+</tr>
+  
+    <tr class="group"><td colspan="2"><span class="what">Greeting</span> <span class="count">7</span></td></tr>
+    <tr>
+  <td>Looks the caller up by their number before the agent speaks</td>
+  <td><span class="tag outline">Always</span></td>
+</tr><tr>
+  <td><span class="what">A call is answered</span></td>
+  <td><input class="field" value="Hi, this is Summit Air. Is this [first name]?"></td>
+</tr><tr>
+  <td><span class="what">Recording needs the caller&#39;s consent</span></td>
+  <td>&ldquo;This call may be recorded.&rdquo;</td>
+</tr><tr>
+  <td><span class="what">The caller asks not to be recorded</span></td>
+  <td>&ldquo;Okay, I&#39;ve turned the recording off.&rdquo;</td>
+</tr><tr>
+  <td><span class="what">Nobody answers a callback</span></td>
+  <td>&ldquo;Hi, this is Summit Air calling about your appointment. Please give us a call back at [phone].&rdquo;</td>
+</tr><tr>
+  <td><span class="what">An earlier opening comes up for a booked caller</span></td>
+  <td>&ldquo;Hi, this is Summit Air calling about your appointment. We&#39;ve had an opening [day] at [window], would you like it?&rdquo;</td>
+</tr><tr>
+  <td><span class="what">We call a caller back</span></td>
+  <td><input class="field" value="Hi, this is Summit Air calling back for [first name]. Is that you?"></td>
+</tr>
+  
+    <tr class="group"><td colspan="2"><span class="what">Drops and outages</span> <span class="count">8</span></td></tr>
+    <tr>
+  <td><span class="what">A caller rings back after being cut off</span></td>
+  <td>&ldquo;Hi, this is Summit Air&#39;s virtual assistant again. I think we got cut off earlier. Is this [first name]?&rdquo; <span class="tip-i" tabindex="0" data-tip="Hi, this is Summit Air&#39;s virtual assistant again. I think we got cut off earlier. Who am I speaking with? / Hi, this is Summit Air&#39;s virtual assistant again. We got disconnected earlier when you stepped away; let&#39;s pick up where we left off. Is this [first name]? / Hi, this is Summit Air&#39;s virtual assistant again. We got disconnected earlier when you stepped away; let&#39;s pick up where we left off. Who am I speaking with?"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg></span><span class="faint"> 3 more</span></td>
+</tr><tr>
+  <td><span class="what">The caller goes quiet</span></td>
+  <td>&ldquo;Take your time, I&#39;m still here.&rdquo;</td>
+</tr><tr>
+  <td><span class="what">The caller has stepped away for too long</span></td>
+  <td>&ldquo;It sounds like you&#39;ve stepped away, so I&#39;m going to hang up for now. Once you&#39;re ready, feel free to call this number back, and we can pick up...&rdquo;</td>
+</tr><tr>
+  <td><span class="what">Our system has trouble mid-call</span></td>
+  <td>&ldquo;Sorry, our system is having trouble right now. Please call us back in a few minutes, and if you smell gas, hang up and call 911 from outside.&rdquo;</td>
+</tr><tr>
+  <td><span class="what">The phones are down</span></td>
+  <td>&ldquo;Thanks for calling Summit Air. If you smell gas, hang up and call 911 from outside. We can&#39;t take your call right now. Please leave your name,...&rdquo;</td>
+</tr><tr>
+  <td><span class="what">A lookup takes a moment</span></td>
+  <td>&ldquo;Let me check.&rdquo; <span class="tip-i" tabindex="0" data-tip="One sec. / Okay, checking now."><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg></span><span class="faint"> 2 more</span></td>
+</tr><tr>
+  <td><span class="what">Every line is busy</span></td>
+  <td>&ldquo;Thanks for calling Summit Air. If you smell gas, hang up and call 911 from outside. All our lines are busy right now. Please leave your name,...&rdquo;</td>
+</tr><tr>
+  <td><span class="what">The call has dropped more than once</span></td>
+  <td>&ldquo;Looks like we keep getting cut off, the signal might be spotty. Want me to have someone call you back in a few minutes instead?&rdquo;</td>
+</tr>
+  
+    <tr class="group"><td colspan="2"><span class="what">Who&#39;s calling</span> <span class="count">21</span></td></tr>
+    <tr>
+  <td>Marks a caller who describes a business, such as a store, as commercial</td>
+  <td><span class="tag outline">Always</span></td>
+</tr><tr>
+  <td>Stops calling anyone who asks not to be called</td>
+  <td><span class="tag outline">Always</span></td>
+</tr><tr>
+  <td>Says once that the company doesn&#39;t do work it doesn&#39;t, and keeps it as a lead</td>
+  <td><span class="tag outline">Always</span></td>
+</tr><tr>
+  <td>Can&#39;t delete records or look at another customer&#39;s</td>
+  <td><span class="tag outline">Always</span></td>
+</tr><tr>
+  <td>Won&#39;t book a commercial customer</td>
+  <td><span class="tag outline">Always</span></td>
+</tr><tr>
+  <td>Asks whose account a new address goes on before booking it</td>
+  <td><span class="tag outline">Always</span></td>
+</tr><tr>
+  <td>A number on two accounts books under the name the caller says</td>
+  <td><span class="tag outline">Always</span></td>
+</tr><tr>
+  <td>Changes a visit or account from an unknown number only after a name and address</td>
+  <td><span class="tag outline">Always</span></td>
+</tr><tr>
+  <td>A caller who moved gets the new address, and no visit goes to the old one</td>
+  <td><span class="tag outline">Always</span></td>
+</tr><tr>
+  <td><span class="what">The caller describes a business</span></td>
+  <td>&ldquo;Thanks for thinking of us. Unfortunately Summit Air works on homes and apartments, not businesses, so we&#39;re not the right fit for this one.&rdquo;</td>
+</tr><tr>
+  <td><span class="what">The caller starts reading a card number</span></td>
+  <td>&ldquo;For your security, please don&#39;t read a card number over the phone. Our office will send you a secure payment link, or call you to take the payment.&rdquo;</td>
+</tr><tr>
+  <td><span class="what">The caller disputes a charge</span></td>
+  <td>&ldquo;I&#39;m sorry about that. Billing goes through our office, so I&#39;ve asked them to look into the charge, and someone from the office will call you [when].&rdquo;</td>
+</tr><tr>
+  <td><span class="what">The caller asks for work we don&#39;t do</span></td>
+  <td>&ldquo;I&#39;m sorry, we don&#39;t do [what], so [suggest] would be the right call for that.&rdquo;</td>
+</tr><tr>
+  <td><span class="what">The caller asks not to be called</span></td>
+  <td>&ldquo;Understood, we won&#39;t call you.&rdquo; <span class="tip-i" tabindex="0" data-tip="Understood, we won&#39;t call you. That means the callback is off, so give us a call any time you need us."><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg></span><span class="faint"> 1 more</span></td>
+</tr><tr>
+  <td><span class="what">A new address could go on two accounts</span></td>
+  <td>&ldquo;Should that address go on its own account, with you as a contact, or under your account?&rdquo;</td>
+</tr><tr>
+  <td><span class="what">A new account needs a name</span></td>
+  <td>&ldquo;Whose name should the account for that address be under?&rdquo;</td>
+</tr><tr>
+  <td><span class="what">The number is on more than one account</span></td>
+  <td>&ldquo;I see more than one account on this number. Whose name should the visit go under?&rdquo;</td>
+</tr><tr>
+  <td><span class="what">A change is asked for from an unknown number</span></td>
+  <td>&ldquo;Of course. And just to confirm you&#39;re the person for the [thing], could you tell me your name and the address?&rdquo; <span class="tip-i" tabindex="0" data-tip="Of course. And just to confirm you&#39;re the person for the [thing], what name is it under? / Of course. And just to confirm you&#39;re the person for the [thing], could you tell me the address? / Thanks. And what&#39;s the address? / Thanks. And what&#39;s the name on the [thing]? / Sorry, I didn&#39;t catch that. Could you tell me your name and the address for the [thing]?"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg></span><span class="faint"> 5 more</span></td>
+</tr><tr>
+  <td><span class="what">The name and address don&#39;t match</span></td>
+  <td>&ldquo;I&#39;m sorry, I&#39;m not able to make that change from this number. I can have someone from our office call the number we have on file for it. Would that help?&rdquo;</td>
+</tr><tr>
+  <td><span class="what">The caller says they moved</span></td>
+  <td>&ldquo;Which address did you move from?&rdquo; <span class="tip-i" tabindex="0" data-tip="Thanks for letting us know. I&#39;ve updated your address to [street]. / Your upcoming visit is now set for the new address, same day and time. / Your visit [when] is now set for the new address, same time. / Thanks for letting us know. I&#39;m sorry, the new address is outside the area we cover, so we won&#39;t be able to come out there, and I&#39;ve made a note on your account. / I&#39;ve also cancelled the visit you had at the old address, so nobody heads there. / A technician is already on the way to the old address, so someone from our office will call you to sort that out."><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg></span><span class="faint"> 6 more</span></td>
+</tr><tr>
+  <td><span class="what">A change came from another number</span></td>
+  <td>&ldquo;This is Summit Air. [change] by a caller from another number. If that wasn&#39;t you, please call us back at [phone].&rdquo;</td>
+</tr>
+  
+    <tr class="group"><td colspan="2"><span class="what">Address and area</span> <span class="count">15</span></td></tr>
+    <tr>
+  <td>Holds any booking until the address and phone are read back and confirmed</td>
+  <td><span class="tag outline">Always</span></td>
+</tr><tr>
+  <td>Reads the address and phone back once; confirmed details aren&#39;t read again</td>
+  <td><span class="tag outline">Always</span></td>
+</tr><tr>
+  <td>A detail the caller changes after confirming is read back again before booking</td>
+  <td><span class="tag outline">Always</span></td>
+</tr><tr>
+  <td>Won&#39;t book outside the service area</td>
+  <td><span class="tag outline">Always</span></td>
+</tr><tr>
+  <td>Checks the area and books only on a ZIP the caller said or one on their record</td>
+  <td><span class="tag outline">Always</span></td>
+</tr><tr>
+  <td>Looks up a ZIP only for a street the caller said, and asks when it can&#39;t tell</td>
+  <td><span class="tag outline">Always</span></td>
+</tr><tr>
+  <td>Won&#39;t book on a ZIP that disagrees with the caller&#39;s street until they settle it</td>
+  <td><span class="tag outline">Always</span></td>
+</tr><tr>
+  <td><span class="what">Before any booking</span></td>
+  <td>&ldquo;I have your home at [address], and the best number is [phone], is that right?&rdquo; <span class="tip-i" tabindex="0" data-tip="I have your home at [address], and the number to reach [who] is [phone], is that right?"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg></span><span class="faint"> 1 more</span></td>
+</tr><tr>
+  <td><span class="what">The address is outside the area</span></td>
+  <td>&ldquo;I&#39;m sorry, that&#39;s outside the area we cover, so we&#39;re not able to send someone. A local heating company should be able to help.&rdquo;</td>
+</tr><tr>
+  <td><span class="what">The ZIP doesn&#39;t match the street</span></td>
+  <td>&ldquo;I have [street] in [where] as [found], not [said]. Which one is right?&rdquo;</td>
+</tr><tr>
+  <td><span class="what">The street is in more than one place</span></td>
+  <td>&ldquo;Is that the one in [places]?&rdquo;</td>
+</tr><tr>
+  <td><span class="what">The street can&#39;t be found</span></td>
+  <td>&ldquo;I&#39;m not finding that street. Could you spell the street name for me?&rdquo;</td>
+</tr><tr>
+  <td><span class="what">The ZIP isn&#39;t known yet</span></td>
+  <td>&ldquo;What&#39;s the ZIP code there?&rdquo;</td>
+</tr><tr>
+  <td><span class="what">A booking is for an address they left</span></td>
+  <td>&ldquo;Our records show you&#39;ve moved from that address. Where should the technician go?&rdquo;</td>
+</tr><tr>
+  <td><span class="what">A visit is still at their old address</span></td>
+  <td>&ldquo;That visit is still set for your old address, so let me have someone from our office sort it out with you.&rdquo;</td>
+</tr>
+  
+    <tr class="group"><td colspan="2"><span class="what">Booking</span> <span class="count">19</span></td></tr>
+    <tr>
+  <td>Sets priority from what the caller says, and only ever raises it</td>
+  <td><span class="tag outline">Always</span></td>
+</tr><tr>
+  <td>Two bookings for different jobs, one change, one cancel, then a person</td>
+  <td><span class="tag outline">Always</span></td>
+</tr><tr>
+  <td>Never books one visit twice; a second at one address is a different job</td>
+  <td><span class="tag outline">Always</span></td>
+</tr><tr>
+  <td>Asks about an open visit whose window has passed, never calls it upcoming</td>
+  <td><span class="tag outline">Always</span></td>
+</tr><tr>
+  <td>When who can approve isn&#39;t settled, a booking gets a call before dispatch</td>
+  <td><span class="tag outline">Always</span></td>
+</tr><tr>
+  <td>Books only openings ServiceTitan offered, and never the same one twice</td>
+  <td><span class="tag outline">Always</span></td>
+</tr><tr>
+  <td>Changes only the caller&#39;s own visits</td>
+  <td><span class="tag outline">Always</span></td>
+</tr><tr>
+  <td>After hours, books a tonight visit only once the on-call technician is alerted</td>
+  <td><span class="tag outline">Always</span></td>
+</tr><tr>
+  <td>When ServiceTitan is down, keeps the booking and sets a callback</td>
+  <td><span class="tag outline">Always</span></td>
+</tr><tr>
+  <td>Retries a queued booking until ServiceTitan takes it</td>
+  <td><span class="tag outline">Always</span></td>
+</tr><tr>
+  <td><span class="what">ServiceTitan can&#39;t take a booking</span></td>
+  <td>&ldquo;I can&#39;t book that right now, but I&#39;ve written it all down and someone will call you by [time] to confirm.&rdquo; <span class="tip-i" tabindex="0" data-tip="I can&#39;t get to that right now, but I&#39;ve written it all down for the team."><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg></span><span class="faint"> 1 more</span></td>
+</tr><tr>
+  <td><span class="what">It&#39;s unclear who can approve the work</span></td>
+  <td>&ldquo;Before the technician heads out, someone from our team will call you [when] to confirm who can approve the work.&rdquo; <span class="tip-i" tabindex="0" data-tip="Someone from our team will call you [when] to confirm who can approve the work, and the technician won&#39;t start until that&#39;s settled."><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg></span><span class="faint"> 1 more</span></td>
+</tr><tr>
+  <td><span class="what">The window fills while booking</span></td>
+  <td>&ldquo;That window just filled up.&rdquo;</td>
+</tr><tr>
+  <td><span class="what">An open visit&#39;s window has passed</span></td>
+  <td>&ldquo;I see a visit there that was due [day] between [between], and it&#39;s still open on our end. Did the technician make it out?&rdquo;</td>
+</tr><tr>
+  <td><span class="what">We were just out at the home</span></td>
+  <td>&ldquo;Since we were just out there, a manager will look over this visit, including whether it&#39;s covered, before the technician arrives.&rdquo;</td>
+</tr><tr>
+  <td><span class="what">The caller wants an exact arrival time</span></td>
+  <td>&ldquo;Our arrival windows are [windows], and the technician can come any time in the window, so I can&#39;t promise an exact time.&rdquo;</td>
+</tr><tr>
+  <td><span class="what">The call is marked urgent</span></td>
+  <td>&ldquo;I&#39;ve marked this call top priority, so you get our soonest opening.&rdquo;</td>
+</tr><tr>
+  <td><span class="what">Booking a building&#39;s next unit</span></td>
+  <td>&ldquo;Now let&#39;s set up apartment [unit].&rdquo;</td>
+</tr><tr>
+  <td><span class="what">The caller wants an earlier opening</span></td>
+  <td>&ldquo;I&#39;ve also asked our team to look for an earlier opening.&rdquo;</td>
+</tr>
+  
+    <tr class="group"><td colspan="2"><span class="what">Passing to a person</span> <span class="count">15</span></td></tr>
+    <tr>
+  <td>Passes on a request for a technician by name, and never promises one</td>
+  <td><span class="tag outline">Always</span></td>
+</tr><tr>
+  <td>Can&#39;t place a call to 911 or anyone outside the company&#39;s callbacks</td>
+  <td><span class="tag outline">Always</span></td>
+</tr><tr>
+  <td>Puts a caller through to a person only when the server says so</td>
+  <td><span class="tag outline">Always</span></td>
+</tr><tr>
+  <td>Every callback has a named time inside calling hours</td>
+  <td><span class="tag outline">Always</span></td>
+</tr><tr>
+  <td>Calls back only to the caller, once, and never to a do-not-call number</td>
+  <td><span class="tag outline">Always</span></td>
+</tr><tr>
+  <td><span class="what">The team needs to call the caller</span></td>
+  <td>&ldquo;I&#39;ve let our team know, and someone will call you [when].&rdquo; <span class="tip-i" tabindex="0" data-tip="I&#39;ve let our team know this call is top priority, and someone will call you [when]. / I&#39;ve let our on-call team know this call is top priority, and someone will call you [when]. / I&#39;ve let our team know. / I&#39;ve let our team know, and someone will call the number we have on file [when]."><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg></span><span class="faint"> 4 more</span></td>
+</tr><tr>
+  <td><span class="what">A caller is put through</span></td>
+  <td>&ldquo;I&#39;m connecting you with someone from our team now.&rdquo;</td>
+</tr><tr>
+  <td><span class="what">Nobody picks up the transfer</span></td>
+  <td>&ldquo;I couldn&#39;t reach anyone just now, so I&#39;ve let the team know and someone will call you [when].&rdquo;</td>
+</tr><tr>
+  <td><span class="what">The person answering a transfer</span></td>
+  <td>&ldquo;Summit Air has a caller for the [role]. Press 1 to take the call.&rdquo;</td>
+</tr><tr>
+  <td><span class="what">They take the transfer</span></td>
+  <td>&ldquo;[priority]Caller at [phone]: [reason]. Putting you through now.&rdquo;</td>
+</tr><tr>
+  <td><span class="what">The caller is sent straight to a person</span></td>
+  <td>&ldquo;Transferring you to a person now.&rdquo;</td>
+</tr><tr>
+  <td><span class="what">The caller wants to hear about a service</span></td>
+  <td>&ldquo;Someone from our team will call you [when] to tell you more.&rdquo;</td>
+</tr><tr>
+  <td><span class="what">A callback time is said</span></td>
+  <td>&ldquo;by [time]&rdquo; <span class="tip-i" tabindex="0" data-tip="around [time] / before [time] / between [start] and [end] / as soon as they can"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg></span><span class="faint"> 4 more</span></td>
+</tr><tr>
+  <td><span class="what">A callback is asked for outside calling hours</span></td>
+  <td>&ldquo;Our team makes calls between [opens] and [closes]. What time in there works?&rdquo;</td>
+</tr><tr>
+  <td><span class="what">The call reaches its booking limit</span></td>
+  <td>&ldquo;I&#39;ve already got that taken care of on this call, so let me have someone from the team follow up.&rdquo;</td>
+</tr>
+  
+    <tr class="group"><td colspan="2"><span class="what">Closing</span> <span class="count">4</span></td></tr>
+    <tr>
+  <td>Asks if there&#39;s anything else before hanging up on a booked call</td>
+  <td><span class="tag outline">Always</span></td>
+</tr><tr>
+  <td><span class="what">The call ends</span></td>
+  <td><input class="field" value="Thanks for calling Summit Air. Have a great rest of your day."></td>
+</tr><tr>
+  <td><span class="what">Before ending a booked call</span></td>
+  <td><input class="field" value="Is there anything else I can help with?"></td>
+</tr><tr>
+  <td><span class="what">After a booking is confirmed</span></td>
+  <td>&ldquo;Anything else?&rdquo;</td>
+</tr>
+  
+  </tbody>
+</table></div>
+  </section>
+</main>
+
+<script src="../../../app/static/owner/owner.js" defer></script>
+</body>
+</html>

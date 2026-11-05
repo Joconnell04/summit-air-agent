@@ -1,29 +1,28 @@
 {% extends "base.html" %}
-{% from "_ui.html" import q, count, empty, gate_result, bench_tabs with context %}
+{% from "_ui.html" import q, count, info, gate_result, bench_tabs with context %}
 {% set checking = draft and draft.status == "checking" %}
 {% block head %}{% if checking %}<meta http-equiv="refresh" content="30">{% endif %}{% endblock %}
-{% block title %}Bench: edit rules{% endblock %}
+{% block title %}Bench: rules{% endblock %}
 {% block tabs %}{{ bench_tabs(tab) }}{% endblock %}
 {% block body %}
+{% set chevron %}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>{% endset %}
 <main class="page">
   <form class="stack" method="post" action="/bench/rules/draft{{ q(slug) }}">
   <div class="page-head">
     <div class="lead">
-      <div class="crumbs">Debug bench<span>/</span><a href="/owner/rules{{ q(slug) }}">The owner's Rules page</a></div>
-      <h1 class="page-title">Edit rules</h1>
+      <div class="crumbs">Debug bench</div>
+      <h1 class="page-title">Rules</h1>
     </div>
     <div class="actions">
       {% if checking %}<span class="tag high">Checking</span>{% elif draft %}<span class="tag outline">Draft saved</span>{% elif blocked %}{{ gate_result(blocked) }}{% endif %}
-      <label class="sr-only" for="note">What changed</label>
-      <input class="field" id="note" name="note" value="{{ note }}" maxlength="200" placeholder="What changed"{% if checking %} disabled{% endif %}>
       {# Save draft comes first: pressing Enter in a field submits with the first button, and that
-         must never discard or stop a check. #}
+         must never discard, remove a rule or stop a check. #}
       <button class="btn" type="submit"{% if checking %} disabled{% endif %}>Save draft</button>
       {% if checking %}<button class="btn quiet" type="submit" formaction="/bench/rules/cancel{{ q(slug) }}" formnovalidate>Stop check</button>{% endif %}
       {% if draft and not checking %}<button class="btn quiet" type="submit" formaction="/bench/rules/discard{{ q(slug) }}" formnovalidate>Discard</button>{% endif %}
       {% if not checking %}
       <details class="more pop">
-        <summary><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>Override</summary>
+        <summary>{{ chevron }}Override</summary>
         <div class="pop-body">
           <label for="reason">Why skip the check</label>
           <input class="field" id="reason" name="reason" maxlength="{{ max_reason }}" placeholder="Fixing a typo in the goodbye">
@@ -37,51 +36,83 @@
   </div>
   {% for message in general %}<p class="error" role="alert">{{ message }}</p>{% endfor %}
 
-  <section class="panel">
-    <div class="panel-head"><h2>Wording</h2>{{ count(lines | length) }}<span class="sub">said word for word</span></div>
+  <section class="panel" id="yours">
+    <div class="panel-head"><h2>Your rules</h2></div>
     <div class="table-wrap">
     <table class="table form">
-      <thead><tr><th>Line</th><th>When</th><th>Wording</th></tr></thead>
+      <thead><tr><th>When</th><th>Rule</th><th><span class="sr-only">Remove</span></th></tr></thead>
       <tbody>
-      {% for key, label, stage, value, default in lines %}
-        {% set err = errors.get("lines." ~ key) %}
+      {% for stage, n, text, err in owner_rules %}
+        {% set i = loop.index0 %}
         <tr>
-          <td class="fit"><label class="what" for="line-{{ key }}">{{ label }}</label></td>
-          <td class="fit muted">{{ "Opening" if stage == "opening" else "Closing" }}</td>
-          <td><input class="field" id="line-{{ key }}" name="line.{{ key }}" value="{{ value }}" maxlength="{{ max_line }}" placeholder="{{ default }}"{% if err %} aria-invalid="true" aria-describedby="err-{{ key }}"{% endif %}{% if checking %} disabled{% endif %}>{% if err %}<span class="error field-error" id="err-{{ key }}">{{ err }}</span>{% endif %}</td>
+          <td class="fit"><label class="sr-only" for="when-{{ i }}">When rule {{ loop.index }} applies</label><select class="select" id="when-{{ i }}" name="when.{{ i }}"{% if checking %} disabled{% endif %}>{% for key, name in stages %}<option value="{{ key }}"{% if key == stage %} selected{% endif %}>{{ name }}</option>{% endfor %}</select></td>
+          <td><label class="sr-only" for="rule-{{ i }}">Rule {{ loop.index }}</label><input class="field" id="rule-{{ i }}" name="rule.{{ i }}" value="{{ text }}" maxlength="{{ max_guide }}"{% if err %} aria-invalid="true" aria-describedby="err-rule-{{ i }}"{% endif %}{% if checking %} disabled{% endif %}>{% if err %}<span class="error field-error" id="err-rule-{{ i }}">{{ err }}</span>{% endif %}</td>
+          <td class="fit right">{% if not checking %}<button class="btn quiet" type="submit" name="remove" value="{{ i }}">Remove</button>{% endif %}</td>
         </tr>
       {% endfor %}
+      {% if room and not checking %}
+        {% set i = owner_rules | length %}
+        <tr>
+          <td class="fit"><label class="sr-only" for="when-{{ i }}">When the new rule applies</label><select class="select" id="when-{{ i }}" name="when.{{ i }}">{% for key, name in stages %}<option value="{{ key }}">{{ name }}</option>{% endfor %}</select></td>
+          <td><label class="sr-only" for="rule-{{ i }}">New rule</label><input class="field" id="rule-{{ i }}" name="rule.{{ i }}" maxlength="{{ max_guide }}" placeholder="Add a rule"></td>
+          <td class="fit"></td>
+        </tr>
+      {% endif %}
       </tbody>
     </table>
     </div>
+    <div class="panel-foot">Opening and whole-call rules go in the prompt; booking and closing rules are told to the agent when the call gets there.</div>
   </section>
 
-  <section class="panel">
-    <div class="panel-head"><h2>Guidance</h2><span class="sub">followed most of the time; never overrides a locked rule</span></div>
-    <div class="table-wrap">
+  <section class="panel" id="fixed" data-tray>
+    <div class="panel-head"><h2>Fixed responses</h2><span class="sub">said word for word, whatever the agent is told</span></div>
+    <div class="tray-tabs" role="tablist" aria-label="Topics">
+      {% for key, name, rows in topics %}<button type="button" role="tab" id="tab-{{ key }}" aria-controls="topic-{{ key }}" aria-selected="{{ 'true' if key == picked else 'false' }}">{{ name }}{{ count(rows | length) }}</button>{% endfor %}
+    </div>
+    {% for key, name, rows in topics %}
+    <div class="tray-panel table-wrap" role="tabpanel" id="topic-{{ key }}" aria-labelledby="tab-{{ key }}"{% if key != picked %} hidden{% endif %}>
     <table class="table form">
-      <thead><tr><th>Stage</th><th>Note to the agent</th></tr></thead>
+      <thead><tr><th>When</th><th>The agent says</th></tr></thead>
       <tbody>
-      {% for stage, name, items in guidance %}
-        {% set filled = items | select | list %}
-        {% set shown = (filled | length) + (1 if filled | length < items | length else 0) %}
-        {% for text in items[:shown] %}
-        {% set err = errors.get("guidance." ~ stage ~ "." ~ loop.index0) or (errors.get("guidance." ~ stage) if loop.first else none) %}
+      {% for r in rows if r.line or r.editable %}
+        {% set err = errors.get("lines." ~ r.editable) if r.editable else none %}
         <tr>
-          <td class="fit">{% if loop.first %}<span class="what">{{ name }}</span>{% endif %}</td>
-          <td><label class="sr-only" for="guide-{{ stage }}-{{ loop.index0 }}">{{ name }} note {{ loop.index }}</label><input class="field" id="guide-{{ stage }}-{{ loop.index0 }}" name="guide.{{ stage }}.{{ loop.index0 }}" value="{{ text }}" maxlength="{{ max_guide }}" placeholder="{% if not text %}Add a note{% endif %}"{% if err %} aria-invalid="true"{% endif %}{% if checking %} disabled{% endif %}>{% if err %}<span class="error field-error">{{ err }}</span>{% endif %}</td>
+          <td><span class="what">{% if r.editable %}<label for="line-{{ r.editable }}">{{ r.when }}</label>{% else %}{{ r.when }}{% endif %}</span></td>
+          <td>
+            {%- if r.editable -%}
+            <input class="field" id="line-{{ r.editable }}" name="line.{{ r.editable }}" value="{{ values[r.editable] }}" maxlength="{{ max_line }}" placeholder="{{ defaults[r.editable] }}"{% if err %} aria-invalid="true" aria-describedby="err-{{ r.editable }}"{% endif %}{% if checking %} disabled{% endif %}>{% if err %}<span class="error field-error" id="err-{{ r.editable }}">{{ err }}</span>{% endif %}
+            {%- else -%}
+            &ldquo;{{ r.line }}&rdquo;{% if r.variants %} <span class="tip-i" tabindex="0" data-tip="{{ r.variants | join(' / ') }}" aria-label="Also: {{ r.variants | join(' / ') }}">{{ info() }}</span> <span class="faint">{{ r.variants | length }} more</span>{% endif %}
+            {%- endif -%}
+          </td>
         </tr>
-        {% endfor %}
       {% endfor %}
+      {% set held = rows | rejectattr("line") | rejectattr("editable") | list %}
+      {% if held %}
+        <tr class="group"><td colspan="2"><span class="what">Always</span></td></tr>
+        {% for r in held %}<tr><td><span class="what">{{ r.when }}</span></td><td class="muted">{{ r.rule_text }}</td></tr>{% endfor %}
+      {% endif %}
       </tbody>
     </table>
     </div>
-    <div class="panel-foot">Publish runs the must-pass test calls on the draft, and it goes live only if every one passes. Override publishes at once and is logged as such.</div>
+    {% endfor %}
+  </section>
+
+  <section class="panel" id="prompt">
+    <div class="panel-head"><h2>System prompt</h2></div>
+    <ol class="sections">
+      {% for name, text in sections %}
+      <li><details>
+        <summary>{{ chevron }}<span class="n">{{ loop.index }}</span><span class="name">{{ name }}</span><span class="job">{{ jobs.get(name, "") }}</span></summary>
+        <pre class="tech-block scroll">{{ text }}</pre>
+      </details></li>
+      {% endfor %}
+    </ol>
   </section>
   </form>
 
   <section class="panel" id="versions">
-    <div class="panel-head"><h2>Versions</h2>{{ count(versions | length) }}<span class="sub">every change, kept</span></div>
+    <div class="panel-head"><h2>Versions</h2></div>
     <div class="table-wrap">
     <table class="table">
       <thead><tr><th>Version</th><th>Changed</th><th>By</th><th>What changed</th><th class="right">Check</th><th><span class="sr-only">Roll back</span></th></tr></thead>

@@ -56,4 +56,4 @@ Text meets 4.5:1 on its ground: `ink` 17.5:1 on white, `muted` 6.7:1, `faint` 5.
 
 ## Not synced
 
-The components here are static renditions: the owner view's own markup, captured from the running app and styled by its unchanged stylesheet. The page script (`owner.js`: board packing, row clicks, tooltips, search as you type, resizable columns, the technical details switch) is not bundled, so previews do not respond. Whole pages built from these parts are not cards: the Rules page, the Settings page and the prose panel on the debug bench.
+The components here are static renditions: the owner view's own markup, captured from the running app and styled by its unchanged stylesheet. The page script (`owner.js`: board packing, row clicks, tooltips, search as you type, resizable columns, the technical details switch) is not bundled, so previews do not respond. Whole pages built from these parts are not cards: the bench's Rules page, the Settings page and the prose panel on the debug bench.
