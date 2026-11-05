@@ -341,6 +341,10 @@
           "confirmed": {
             "type": "boolean"
           },
+          "name": {
+            "description": "The caller's name, if they gave it earlier in the call. Pass it so the server doesn't ask again.",
+            "type": "string"
+          },
           "phone": {
             "description": "The digits as the caller said them, caller_id for the number calling, or the last four digits of a number on file",
             "maxLength": 40,
