@@ -454,6 +454,8 @@ lines:
     visit. Would that help?
   # A time the caller named that no visit window holds ("at 8 PM"); the nearest window follows.
   arrival_outside_hours: Our visits run from {hours}.
+  # Right after the read-back, for a caller with no account who hasn't said a name.
+  booking_name: Thanks. And what name should I put the visit under?
   identity_check_address: Thanks. And what's the address?
   identity_check_name: Thanks. And what's the name on the {thing}?
   identity_check_again: >-

@@ -144,6 +144,7 @@ WHEN = {
     "urgent_priority": "The call is marked urgent",
     "next_unit": "Booking a building's next unit",
     "arrival_no_fit": "The caller wants an exact arrival time",
+    "booking_name": "A new caller confirms the read-back without having said a name",
     "arrival_outside_hours": "The caller names a time outside visit hours",
     "return_visit_review": "We were just out at the home",
     "seek_earlier_note": "The caller wants an earlier opening",

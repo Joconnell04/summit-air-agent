@@ -100,10 +100,12 @@ def agents():
 
 
 # Each caller gives their ZIP before the read-back, since the server acts only on a ZIP the caller
-# said (app/tools.py _zip_known).
+# said (app/tools.py _zip_known), and their name, so the read-back doesn't ask for it.
 CALLERS = [
-    ["Hi, my heat is out at 8410 Ridge Blvd, 11209.", "Yes, that's right.", "Okay, that works."],
-    ["Hi, my heat is out at 412 Avenue C, 11218.", "Yes, that's right.", "Okay, that works."],
+    ["Hi, this is Janelle Brooks, my heat is out at 8410 Ridge Blvd, 11209.", "Yes, that's right.",
+     "Okay, that works."],
+    ["Hi, this is Omar Haddad, my heat is out at 412 Avenue C, 11218.", "Yes, that's right.",
+     "Okay, that works."],
 ]
 
 

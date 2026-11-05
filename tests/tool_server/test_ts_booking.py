@@ -1248,3 +1248,22 @@ def test_every_nyc_residential_zip_is_in_the_area():
     for zip_code in ("10009", "10458", "11201", "11373", "10314", "10463", "11691"):
         assert zip_code in area, zip_code
     assert "07302" not in area and "11501" not in area
+
+
+def test_a_new_caller_is_asked_their_name_right_after_the_read_back(agent):
+    """A scripted call on #159 (call-_+16466240418_bUwDUCZFrKN8): "Perfect, booking that now.",
+    then a refused booking asked "Can I get a name for the booking?"."""
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "I'd like to book my furnace's yearly tune-up, please.")
+    confirmed = agent.confirm_read_back(call, in_area_address())
+    assert confirmed["say"] == "Thanks. And what name should I put the visit under?"
+    agent.say(call, confirmed["say"])
+    agent.turn(call, "Pat Rivera.")
+    booked = book(agent, call, first_open(agent, call), name="Pat Rivera")
+    assert booked["ok"], booked
+
+
+def test_a_new_caller_who_already_gave_a_name_is_not_asked_again(agent):
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "Hi, this is Pat Rivera, I need a tune-up.")
+    assert agent.confirm_read_back(call, in_area_address())["say"] == ""

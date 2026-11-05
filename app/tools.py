@@ -1196,6 +1196,15 @@ def _identity_gate(ctx: Ctx, customer_id: int, addresses: list[dict], thing: str
     _record_mismatch(ctx, customer_id, check["call_id"], thing)
 
 
+def _caller_named_anyone(ctx: Ctx) -> bool:
+    """The caller said some name on this call."""
+    return any(
+        _gave_a_name(r["text"], ctx.tenant.not_names)
+        for r in records.thread_turns(ctx.conn, ctx.call["id"])
+        if r["call_id"] == ctx.call["id"] and r["speaker"] == "caller"
+    )
+
+
 def _check_failed_on_call(ctx: Ctx) -> bool:
     """A name and address check failed on this call."""
     return bool(
@@ -2025,6 +2034,18 @@ def read_back(ctx: Ctx, args: ReadBackIn) -> Result:
                 account_choice=True,
                 need="this question was said for you; when the caller answers, book_appointment "
                 "with new_address_account own (and details.name for that address) or caller",
+            )
+        # A caller with no account who hasn't said a name: the name is asked here, right after
+        # the read-back, not by a refused booking after "booking that now" (a scripted call on
+        # #159, call-_+16466240418_bUwDUCZFrKN8).
+        if not records.scoped_customers(ctx.conn, ctx.call["id"]) and not _caller_named_anyone(ctx):
+            return ok(
+                ctx.tenant.line("booking_name"),
+                confirmed=True,
+                address=address,
+                phone=phone,
+                need="this question was said for you; pass the caller's answer as details.name "
+                "when you book",
             )
         return ok(confirmed=True, address=address, phone=phone)
     parts = None
