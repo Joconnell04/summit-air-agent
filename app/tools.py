@@ -2256,22 +2256,20 @@ def read_back(ctx: Ctx, args: ReadBackIn) -> Result:
     address["street"] = spelled_street
     address["spelled"] = ""
     address["unit"] = _unit_without_zip(address["unit"], address["zip"])
-    place = address["street"] + (f", unit {address['unit']}" if address["unit"] else "")
-    city = f", {address['city']}" if address["city"] else ""
-    # The sentence names the address as a home, so every booking has the caller confirm it's
-    # residential (assignment; spec S-07). A caller who corrects it is caught by the turn check.
-    # The ZIP and the number are written out digit by digit, as the caller should hear them, the ZIP
-    # after the words "ZIP code" so a unit before it doesn't run into it ("unit two one zero zero
-    # zero nine" on Retell call call_1840576e622e3d729b760085142; Jackson in call 2: "just say the
-    # zip code is").
-    spoken_address = f"{place}{city}, ZIP code {digits_spoken(address['zip'])}"
+    # Shorthand: the street and the unit, and the number, with no ZIP, city or "your home"
+    # (Jackson: "just shorthand like 'the 199 e 4th street and unit 2'"). The lookup already
+    # checked the ZIP, and a ZIP the caller gave that disagrees with it is asked about first
+    # (zip_mismatch). The number calling is "the number you're calling from".
+    spoken_address = address["street"] + (f", unit {address['unit']}" if address["unit"] else "")
     phone_for = _phone_for(ctx, args.phone_for)
     if phone_for:
         sentence = ctx.tenant.line(
             "read_back_for", address=spoken_address, who=phone_for, phone=phone_said(phone)
         )
     else:
-        sentence = ctx.tenant.line("read_back", address=spoken_address, phone=phone_said(phone))
+        calling = phone == ctx.call["caller_key"]
+        said = ctx.tenant.line("read_back_calling_from") if calling else phone_said(phone)
+        sentence = ctx.tenant.line("read_back", address=spoken_address, phone=said)
     asked = records.readback(ctx.call)
     current = {**address, "phone": phone, "phone_for": phone_for, "sentence": sentence}
     same = asked is not None and _readback_key(asked) == _readback_key(current)
@@ -2590,8 +2588,11 @@ def book_appointment(ctx: Ctx, args: BookIn) -> Result:
             "start": request["window_start"],
         },
     )
+    # "Okay, I've booked it" opens it, so the agent needs no "let me book that" first (Jackson). Today
+    # and tomorrow are said as such; a later day keeps its date, so a wrong day is caught.
+    day = when["day"] if when["day"] in ("today", "tomorrow") else f"{when['day_and_date']},"
     say = (
-        f"You're all set for {when['day_and_date']}, with the technician arriving between "
+        f"Okay, I've booked it: the technician will arrive {day} between "
         f"{when['label'].replace(' to ', ' and ')}."
     )
     # An Urgent call booked without find_slots first still hears the line once, here.

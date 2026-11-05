@@ -290,7 +290,11 @@ def _reads_back(text: str, ev: Evidence) -> bool:
     raw = ev.call.get("readback_json")
     if not raw:
         return False
-    zip_code = json.loads(raw)["zip"]
+    # The shorthand read-back names the street and no ZIP; older traces read the ZIP back.
+    asked = json.loads(raw)
+    if asked.get("street") and street_key(asked["street"]) in street_key(text):
+        return True
+    zip_code = asked["zip"]
     spoken = " ".join(DIGIT_WORDS[int(d)] for d in zip_code)
     return zip_code in text or words(spoken) in words(text.replace("zero", "oh"))
 

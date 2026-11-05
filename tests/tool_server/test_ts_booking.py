@@ -101,17 +101,21 @@ def test_a_correction_after_the_read_back_needs_a_new_read_back(agent):
     assert book(agent, call, first_open(agent, call))["refused"] == "gate_read_back"
 
 
-def test_the_read_back_is_one_sentence_with_the_number_in_groups(agent):
-    """Eval round 3: one sentence, no "let me read that back" lead-in, no internal words."""
+def test_the_read_back_is_shorthand_with_the_number_in_groups(agent):
+    """Eval round 3: one sentence, no "let me read that back" lead-in, no internal words. Jackson:
+    "just shorthand like 'the 199 e 4th street and unit 2'": no ZIP, city or "your home"."""
     call = agent.start(UNKNOWN)["data"]["call_id"]
     agent.turn(call, "It's 101 Union St, 11231.")
-    asked = agent.tool("read_back", call, address=in_area_address(), phone="caller_id")
+    asked = agent.tool("read_back", call, address=in_area_address(), phone="2125550142")
     assert asked["say"] == (
-        "I have your home at 101 Union St, Brooklyn, ZIP code one one two three one, and the best "
-        "number is "
-        "two one two, five five five, zero nine nine nine. That's all correct, right?"
+        "So that's 101 Union St, and two one two, five five five, zero one four two. "
+        "That's all correct, right?"
     )
     assert "read" not in asked["say"].lower()
+    calling = agent.tool("read_back", call, address=in_area_address(), phone="caller_id")
+    assert calling["say"] == (
+        "So that's 101 Union St, and the number you're calling from. That's all correct, right?"
+    )
 
 
 @pytest.mark.parametrize(
@@ -125,7 +129,7 @@ def test_the_number_calling_said_as_a_phrase_is_the_caller_id(agent, phone):
     agent.turn(call, "It's 101 Union St, 11231.")
     asked = agent.tool("read_back", call, address=in_area_address(), phone=phone)
     assert asked["ok"], asked
-    assert "three four seven, five five five, zero one zero one" in asked["say"]
+    assert "the number you're calling from" in asked["say"]
 
 
 @pytest.mark.parametrize("phone", ["555 0142", "212 555 014", "212 555 01422"])
@@ -152,7 +156,7 @@ def test_the_number_im_calling_from_is_the_real_caller_id(agent):
     call = agent.start("+1 (347) 555-0101")["data"]["call_id"]
     agent.turn(call, "It's 101 Union St, 11231.")
     asked = agent.tool("read_back", call, address=in_area_address(), phone="caller_id")
-    assert "three four seven, five five five, zero one zero one" in asked["say"]
+    assert "the number you're calling from" in asked["say"]
 
 
 def test_the_one_ending_in_picks_the_matching_number_on_file(agent, scenarios):
@@ -675,7 +679,7 @@ def test_a_spelled_street_is_joined_into_the_name_for_the_read_back(agent, addre
         "read_back", call, address={"zip": "10302", **address}, phone="caller_id"
     )
     assert asked["ok"], asked
-    assert f"your home at {street}, ZIP code one zero three zero two" in asked["say"]
+    assert asked["say"].startswith(f"So that's {street}, and ")
 
 
 def test_an_owner_who_lives_downstairs_with_a_tenant_upstairs_can_book(agent):
@@ -958,14 +962,16 @@ def test_the_confirmation_names_the_day_and_the_date(agent):
     today = next(d for d in found["data"]["days"] if d["day"] == "today")
     booked = book(agent, call, {"date": today["date"], "window": today["windows"][0]})
     assert booked["ok"], booked
-    assert booked["say"].startswith("You're all set for today, Monday, November 2, with the")
+    assert booked["say"].startswith("Okay, I've booked it: the technician will arrive today between")
     # Another caller, so the new address isn't a second home for the first one.
     later = ready_to_book(agent, caller_id="(212) 555-0998", address=in_area_address(5))
     thursday = agent.tool("find_slots", later, job_type="tune_up", day="2026-11-05")
     window = thursday["data"]["windows"][0]["window"]
     on_thursday = book(agent, later, {"date": "2026-11-05", "window": window})
     assert on_thursday["ok"], on_thursday
-    assert on_thursday["say"].startswith("You're all set for Thursday, November 5, with the")
+    assert on_thursday["say"].startswith(
+        "Okay, I've booked it: the technician will arrive Thursday, November 5, between"
+    )
 
 
 def test_the_same_problem_back_after_a_recent_visit_flags_a_person_to_review_it(agent, scenarios):
@@ -1075,7 +1081,7 @@ def test_confirmed_details_are_not_read_back_again(agent):
     assert book(agent, call, first_open(agent, call))["ok"]
     later = ready_to_book(agent)
     changed = agent.tool("read_back", later, address=in_area_address(3), phone="caller_id")
-    assert changed["say"].startswith("I have your home at 103 Union St")
+    assert changed["say"].startswith("So that's 103 Union St")
 
 
 def test_a_renter_with_an_unknown_approver_books_with_a_call_before_dispatch(agent):
@@ -1094,7 +1100,7 @@ def test_the_booking_confirmation_is_the_whole_turn_and_asks_anything_else(agent
     call = ready_to_book(agent)
     booked = book(agent, call, first_open(agent, call))
     assert booked["ok"], booked
-    assert booked["say"].startswith("You're all set for ")
+    assert booked["say"].startswith("Okay, I've booked it: ")
     assert booked["say"].endswith(" Anything else?")
 
 
@@ -1102,9 +1108,9 @@ def test_the_booking_confirmation_is_the_whole_turn_and_asks_anything_else(agent
     "advance,day",
     [
         # 11:50 PM Monday: Tuesday's visit is tomorrow.
-        ({"hours": 14, "minutes": 50}, "tomorrow, Tuesday, November 3"),
+        ({"hours": 14, "minutes": 50}, "tomorrow"),
         # 12:20 AM Tuesday: the same visit is today (a live call heard "tomorrow").
-        ({"hours": 15, "minutes": 20}, "today, Tuesday, November 3"),
+        ({"hours": 15, "minutes": 20}, "today"),
     ],
 )
 def test_today_and_tomorrow_come_from_the_visit_date_against_the_local_date(
@@ -1116,7 +1122,7 @@ def test_today_and_tomorrow_come_from_the_visit_date_against_the_local_date(
     window = found["data"]["windows"][0]["window"]
     booked = book(agent, call, {"date": "2026-11-03", "window": window})
     assert booked["ok"], booked
-    assert booked["say"].startswith(f"You're all set for {day}, with the")
+    assert booked["say"].startswith(f"Okay, I've booked it: the technician will arrive {day} between")
 
 
 def test_whose_account_is_asked_with_the_confirmed_read_back_not_by_a_refused_booking(
@@ -1361,7 +1367,7 @@ def test_a_unit_and_the_zip_are_said_apart_in_the_read_back(agent):
     agent.turn(call, "It's 199 East 4th Street, unit 2, 10009.")
     address = {"street": "199 E 4th St", "unit": "2", "city": "New York", "zip": "10009"}
     asked = agent.tool("read_back", call, address=address, phone="caller_id")
-    assert "unit 2, New York, ZIP code one zero zero zero nine" in asked["say"]
+    assert asked["say"].startswith("So that's 199 E 4th St, unit 2, and ")
 
 
 def test_a_unit_heard_with_the_zip_on_the_end_keeps_only_the_unit(agent):
@@ -1371,7 +1377,7 @@ def test_a_unit_heard_with_the_zip_on_the_end_keeps_only_the_unit(agent):
     agent.turn(call, "Yes, 10009.")
     address = {"street": "199 E 4th St", "unit": "210009", "city": "New York", "zip": "10009"}
     asked = agent.tool("read_back", call, address=address, phone="caller_id")
-    assert "unit 2, New York, ZIP code one zero zero zero nine" in asked["say"]
+    assert asked["say"].startswith("So that's 199 E 4th St, unit 2, and ")
 
 
 def test_a_caller_who_says_they_are_someone_else_is_booked_as_a_new_customer(
