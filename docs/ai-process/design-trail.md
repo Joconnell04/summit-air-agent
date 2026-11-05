@@ -135,3 +135,4 @@ How the design was reached, in order, so a reader can follow each choice back to
 | All five boroughs and addresses said any way | 214 residential ZIPs in five boroughs; numbers, directions and ordinals matched however said; no hang-up after an out-of-area answer; Retell hangs up after the final line | DECISIONS.md 105, #149 |
 | A caller who says they're someone else | Not treated as the account on the number; the account question is one plain yes or no; the read-back says "ZIP code"; the Retell hang-up keeps on a "Thanks. Bye." | DECISIONS.md 106, #149 |
 | Arrival windows of 30-minute blocks | Any run of blocks, two hours by default; a named time starts the window ("7:30" gives 7:30 to 8); other lengths on request; the seeded world unchanged | DECISIONS.md 108, #149 |
+| GPT-Live-1 | One slate call: answered wrong, slow, sometimes silent, forgot the call; dropped and its lane stopped | DECISIONS.md 107, PR #163, evals/rounds/simplicity-slate-01.md |

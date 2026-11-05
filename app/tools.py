@@ -58,8 +58,10 @@ from .text import (
     phone_key,
     phone_said,
     says_goodbye,
+    spelled_word,
     street_key,
     unit_key,
+    with_spelled_name,
     words,
 )
 from .text import (
@@ -368,6 +370,29 @@ def _answers_number(ctx: Ctx, row: sqlite3.Row, want: str) -> bool:
         (row["call_id"], row["seq"]),
     ).fetchone()
     return bool(asked) and "number" in words(asked["text"])
+
+
+def _with_spelling(ctx: Ctx, street: str, spelled: str) -> str:
+    """The street with the name the caller spelled in it, only when one of the caller's lines on
+    this call spells those letters, and never over a street the caller said as it is. Slate call 4
+    (Retell call_f8a3ad3177fa2c62fc9db00dcfa): the model passed spelled "E, A, S, T, 4, T, H, S, T,
+    R, E, E, T" for "199 East 4th Street", which the caller never spelled, and the booking went to
+    "199 Eastthstreet Street"."""
+    word = spelled_word(spelled or "")
+    if not word:
+        return street
+    lines = _caller_lines(ctx)
+    spelled_by_caller = any(
+        spelled_word(run.group()).lower() == word.lower()
+        for row in lines
+        for run in SPELLED_RUN.finditer(row["text"])
+    )
+    if not spelled_by_caller:
+        return street
+    split = geocode.split_address(street)
+    if split and _address_said(ctx, split[0], split[1], lines):
+        return street
+    return with_spelled_name(street, spelled)
 
 
 def _street_in(line: str, names: list[str]) -> bool:
@@ -1495,7 +1520,9 @@ def find_customer(ctx: Ctx, args: FindCustomerIn) -> Result:
     # A number that matches nobody, with an address too: the address is looked up (eval run
     # 20261104-200759, a caller on a work phone whose visit was under her cell).
     if not customers and args.address:
-        address = args.address
+        address = args.address.model_copy(
+            update={"street": _with_spelling(ctx, args.address.street, args.address.spelled)}
+        )
         # A ZIP the caller never said is no part of the search: the model guessed 11211 for an old
         # address in 11235 and found nothing (Jackson's call 2 replayed in the eval). The street,
         # house number and unit must still match exactly, and the name check guards any change.
@@ -1591,6 +1618,7 @@ def find_address(ctx: Ctx, args: FindAddressIn) -> Result:
     one. None: the caller repeats or spells the street, then a second miss asks for the ZIP. A
     lookup that is down or slow asks for the ZIP."""
     _limit(ctx, "find_address", records.count_tool(ctx.conn, ctx.call["id"], "find_address"))
+    args = args.model_copy(update={"street": _with_spelling(ctx, args.street, args.spelled)})
     split = geocode.split_address(args.street)
     if not split:
         raise Refused(
@@ -2146,8 +2174,11 @@ def read_back(ctx: Ctx, args: ReadBackIn) -> Result:
             errors={"unit": "one unit"},
         )
     _zip_known(ctx, args.address.zip)
-    _zip_mismatch(ctx, args.address.zip, args.address.street, args.address.city)
+    spelled_street = _with_spelling(ctx, args.address.street, args.address.spelled)
+    _zip_mismatch(ctx, args.address.zip, spelled_street, args.address.city)
     address = args.address.model_dump()
+    address["street"] = spelled_street
+    address["spelled"] = ""
     address["unit"] = _unit_without_zip(address["unit"], address["zip"])
     place = address["street"] + (f", unit {address['unit']}" if address["unit"] else "")
     city = f", {address['city']}" if address["city"] else ""

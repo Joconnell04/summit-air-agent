@@ -20,6 +20,15 @@ Would change if: real ServiceTitan's capacity can't be read in blocks for the te
 Discussion: Retell call call_9826ff9f0dfa8bc835a3601368b
 Issue: #149
 
+## 107. OpenAI's full-duplex model (GPT-Live-1) is dropped
+
+Decided: GPT-Live-1, on OpenAI's Live Sessions endpoint over SIP with our tool server, is off the slate and not tested further. Its lane is stopped. Its code stays on PR #163, unmerged, and the gate line (+1 929 810 4875) stays as a test number for the other entries.
+Why: on its one slate call, Jackson's verdict was "it's not in a place right now where it's even worth continuing to iterate on". It answered the trivia wrong and didn't steer back to heating, took too long to respond, sometimes didn't respond at all, and didn't remember what had been said. Before that call it had also read back an invented phone number until our server's sentences were sent as exact-speech instructions. The forum research called it the most natural model on a phone line but weak at following instructions (docs/explorations/019-forum-stacks.md), and on this job instructions are what matter: safety lines word for word, gates, exact read-backs.
+Considered: more prompt work, or playing our own audio for the server's sentences. Both add the layering the slate exists to test, for a model that failed on the basics.
+Would change if: a later full-duplex release follows instructions and tool results reliably on a scripted phone call.
+Discussion: evals/rounds/simplicity-slate-01.md (call 3)
+Issue: none (slate entry 7)
+
 ## 106. A caller who says they're someone else isn't the account on the number
 Decided: when the caller introduces themself by a name that isn't the matched customer's ("No, I'm Jordan Lee. I'm new."), the server stops treating that customer as the caller: no question about whose account a new address goes on, and the visit goes on a new account in the caller's name alone. The account question, when it is asked, is one plain yes or no: "Should I put this under your account?" The read-back says "ZIP code" before the digits, and a unit heard with the ZIP run into it ("Unit 210009") keeps only the unit. On Retell, a caller's goodbye-only line inside the hang-up grace keeps the hang-up, and a goodbye the agent repeats arms it again.
 Why: Retell call call_1840576e622e3d729b760085142 (MEASURED, tool log on the server). The number was on file under Pat Rivera; the caller said they were Jordan Lee and new, was asked "Should that address go on its own account, with you as a contact, or under your account?", answered "I'm not sure what you mean by account", and was booked on a new account with Pat Rivera as its contact. The unit was read as "unit 210009", and after "Thanks. Bye." the line stayed open 22 seconds until the caller hung up.

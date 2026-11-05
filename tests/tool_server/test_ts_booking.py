@@ -670,6 +670,7 @@ def test_an_arrival_time_no_window_fits_is_said_plainly_without_a_promise(agent)
 def test_a_spelled_street_is_joined_into_the_name_for_the_read_back(agent, address, street):
     call = agent.start(UNKNOWN)["data"]["call_id"]
     agent.turn(call, "It's on Houston, 10302, let me spell it.")
+    agent.turn(call, address.get("spelled") or "H O U S T O N")
     asked = agent.tool(
         "read_back", call, address={"zip": "10302", **address}, phone="caller_id"
     )
@@ -1403,3 +1404,17 @@ def test_the_default_offer_is_the_earliest_open_two_hour_window(agent):
     window = found["data"]["offer"]["window"]
     start, end = int(window[:2]) * 60 + int(window[2:4]), int(window[5:7]) * 60 + int(window[7:])
     assert end - start == 120
+
+
+def test_a_spelling_the_caller_never_said_leaves_the_street_alone(agent):
+    """Slate call 4 (Retell call_f8a3ad3177fa2c62fc9db00dcfa): the model passed spelled "E, A, S,
+    T, 4, T, H, S, T, R, E, E, T" for "199 East 4th Street", which the caller never spelled, and
+    the read-back and the booking said "199 Eastthstreet Street"."""
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "It's 199 East 4th Street, unit 2, 10009.")
+    address = {"street": "199 East 4th Street", "unit": "2", "city": "New York", "zip": "10009",
+               "spelled": "E, A, S, T, 4, T, H, S, T, R, E, E, T"}
+    asked = agent.tool("read_back", call, address=address, phone="caller_id")
+    assert asked["ok"], asked
+    assert "199 East 4th Street, unit 2" in asked["say"]
+    assert "Eastth" not in asked["say"]
