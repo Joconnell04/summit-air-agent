@@ -107,7 +107,8 @@ Our worker speaks these word for word; on the single-prompt baseline the model s
 | Recording notice and greeting (two-party consent) | `/calls/start`, `conversation.opening` | greeting, a static sentence (voice; the chat harness shows it to the caller, as for the baseline) |
 | Server-down line | `conversation.server_down` at the start; the tenant's line mid-call | the greeting slot, then the bridge's stop-call, as on the baseline; mid-call, end_with_line or the server_down end node |
 | The slower read-back in parts (`pace_address`) | `read_back` `parts` | Can't be done in a flow: one static sentence has one voice speed. The whole sentence is said at the node's speed |
-| The electrical (sparks) line, the dead-air check-in and goodbye | call-handling lane (#130), not on main yet | The sparks line arrives as a safety action from `/turn`, so it lands in safety_line with no change. The dead-air check-in is a timer in our worker; Retell's reminders are model-written (`reminder_trigger_ms`), so it can't be the server's line in a flow |
+| The card stop, the billing callback and the electrical (sparks) lines | `/turn` `spoken` (call-handling lane, #130) | firm_line, uninterruptible, as our worker says them. A card stop also turns Retell's storage down to basic attributes, as a recording objection does |
+| The dead-air check-in and goodbye | our worker's timer (`voice/dead_air.py`) | Can't be done in a flow: Retell's reminders are model-written (`reminder_trigger_ms`), so the check-in can't be the server's line |
 
 ## Speech filter (layer 3)
 
@@ -161,6 +162,7 @@ The global prompt is `{{instructions}}`, unchanged. Stage nodes add a few lines 
 7. **The press-1 accept step on a warm transfer** (above).
 8. **One agent line per reply in the server's record**: the model's own words and the server's static line are two Retell messages, so the server logs them as two agent lines. The caller hears them back to back; a check that wants the confirmation's lead-in in the same line (`booking_lead_in`) can't see it.
 9. **Outbound callbacks** (journey 12), as on the baseline.
+10. **Not answering an aside**: when the caller talks to someone else or the TV, `/turn` marks the line `hold: aside` and our worker says nothing. A flow's dialogue node always replies to a caller turn, so the stage node answers it; the server's notes still say what the call is waiting on.
 
 ## Cost and risk
 

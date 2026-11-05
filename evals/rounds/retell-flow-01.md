@@ -22,7 +22,7 @@ Before the paid runs, the reviewer agent read the build against exploration 017 
 
 The standard and must-pass sets below are each combined into one set of runs by `retell-flow-01-data/combine.py`: every scenario and sample comes from the first run unless that one errored or was scored with a harness fault fixed later, in which case it comes from the later run. The combined files are `retell-flow-01-data/standard-combined.json` (124 runs, 1 error) and `retell-flow-01-data/must-pass-combined.json` (42 runs).
 
-Our stack's numbers are the current reference, `evals/results/20261104-185508-livekit-fast-standard.json` (evals/baseline.json), and for must-pass the two-sample must-pass run before it, `evals/results/20261104-172343-livekit-fast-custom.json`.
+Our stack's numbers are the reference when this lane started, `evals/results/20261104-185508-livekit-fast-standard.json`, and for must-pass the two-sample must-pass run before it, `evals/results/20261104-172343-livekit-fast-custom.json`, so both stacks ran the same 62 standard scenarios on the same tool server code. Main has since adopted a new reference with more scenarios and the call-handling, booking-flow and caller-changes lanes: 168 of 185 scored, 91% (`evals/results/20261104-234633-livekit-fast-standard.json`). The flow ran before those lanes' server changes reached the eval instance, so it is compared with the earlier reference; the gap is far wider than the one point between the two references.
 
 ## 2. Results
 
