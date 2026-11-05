@@ -28,11 +28,12 @@ from typing import Protocol
 
 import yaml
 
-from . import lookup, owner_settings, records
+from . import cards, lookup, owner_settings, records
 from .db import iso, parse_iso, tx
 from .fsm import FsmAdapter, FsmRejected, FsmUnavailable
 from .settings import QUEUE_MAX_ATTEMPTS
 from .tenant import Tenant
+from .text import phone_display
 
 log = logging.getLogger(__name__)
 
@@ -56,6 +57,7 @@ MAX_AGE = timedelta(hours=24)
 MAX_LINE_CHARS = 120
 HISTORY_MONTHS = 24
 HEADER = "Summary from the call:"
+ASKED_FOR = "Asked for"
 
 FIELDS = {
     "problem": "Problem",
@@ -181,6 +183,16 @@ def record(
             r["text"]
             for r in conn.execute("SELECT text FROM notes WHERE call_id = ?", (call["id"],))
         ],
+        "technician_asked": [
+            r["text"].removeprefix("Caller asked for ").split(".")[0] + ", not promised"
+            if r["text"].startswith("Caller asked for ")
+            else "not " + r["text"].removeprefix("Caller asked not to send ").split(".")[0]
+            for r in conn.execute(
+                "SELECT text FROM notes WHERE call_id = ? AND (text LIKE 'Caller asked for %' "
+                "OR text LIKE 'Caller asked not to send %')",
+                (call["id"],),
+            )
+        ],
         "customer_notes": [n["text"] for n in fsm.notes(customer_id)],
         "completed_jobs": [
             {"completed": j["completed"], "job_type": j["job_type"], "summary": j["summary"]}
@@ -227,7 +239,25 @@ def lines(fields: dict, rec: dict) -> tuple[list[list[str]], list[dict]]:
     told = [f"Arrival window {rec['arrival_window']}"]
     told += [f"call back by {c['by']} ({c['why']})" for c in rec["callbacks_promised"]]
     kept.setdefault("told", clip("; ".join(told)))
-    return [[FIELDS[f], kept[f]] for f in FIELDS if f in kept], dropped
+    found = [[FIELDS[f], kept[f]] for f in FIELDS if f in kept]
+    # A technician the caller asked for, from the server's own note, never the model's words
+    # (DECISIONS.md 085).
+    asked = rec.get("technician_asked") or []
+    if asked:
+        found.append([ASKED_FOR, clip("; ".join(asked))])
+    return found, dropped
+
+
+def contact_lines(request: dict) -> list[list[str]]:
+    """The visit's number when it reaches someone else, and the account's own beside it, written
+    by the server from the booking rather than by the model, which never sees a phone number
+    (issue #128)."""
+    if not request.get("contact_for"):
+        return []
+    text = f"{request['contact_for']}, {phone_display(request['phone'])}"
+    if request.get("account_phone"):
+        text += f"; account phone {phone_display(request['account_phone'])}"
+    return [["Contact", text]]
 
 
 def note_text(summary_lines: list[list[str]]) -> str:
@@ -322,6 +352,10 @@ def _summarize(conn, tenant, fsm, model, call, booking, now) -> str:
             # keeps its notes and the model is asked once more on the next run.
             return _model_failed(conn, call["id"], row["model_attempts"] + 1, exc, now)
         kept, dropped = lines(fields, rec)
+        # The record it was written from has no card digits; a slip by the model still never
+        # reaches the technician's note (DECISIONS.md 080).
+        kept = cards.scrub(kept)
+        kept += contact_lines(json.loads(booking["request_json"]))
         for d in dropped:
             log.warning("summary for call %s: dropped %s, %s", call["id"], d["field"], d["reason"])
         with tx(conn):

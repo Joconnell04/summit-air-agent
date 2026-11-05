@@ -1,0 +1,24 @@
+id: open-visit-during-window
+flow: [repeat-caller]
+difficulty: easy
+journeys: [J7]
+spec: [S-31]
+tags: ["issue:129"]
+caller_id: seed:repeatCallerOpenJob
+time: "2026-11-02T13:00"
+persona: Maria Delgado, a homeowner in Brooklyn with a no-heat visit due this afternoon, calling to check what time it is. Calm.
+hidden_facts:
+  name: Maria Delgado
+  address: 620 Bedford Ave, Brooklyn, 11235 (on file)
+  phone: the number you're calling from
+  wants: only to know when the technician is coming; she keeps the visit as it is
+opening: Hi, I've got someone coming about my heat today, what time is that again?
+script:
+  - When told the window, say great, that works, and you don't need anything else.
+  - Say goodbye.
+must:
+  - agent_says: "(?:12|twelve)[^.]*(?:4|four)"
+  - no_changes: true
+  - tool_not_called: book_appointment
+should:
+  - Gives the 12 to 4 window today as still coming, without suggesting it has passed.

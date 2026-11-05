@@ -11,8 +11,9 @@ import time
 from collections.abc import Callable
 
 from livekit.agents import RunContext, function_tool
+from livekit.agents.llm import ToolResult
 
-from prompts.assemble import SpokenReply, spoken_by_server
+from prompts.assemble import SpokenReply, for_model, spoken_by_server, spoken_first
 
 from .bridge import Bridge
 from .server import ToolServer
@@ -25,6 +26,8 @@ class ToolLog:
     def __init__(self):
         self.ms = 0.0
         self.bridge = False
+        # Tools waiting on the server now: the call isn't silent while one runs (voice/dead_air.py).
+        self.running = 0
 
     def take(self) -> tuple[float, bool]:
         ms, bridge = self.ms, self.bridge
@@ -54,7 +57,11 @@ def make_tool(
     async def handler(raw_arguments: dict[str, object], context: RunContext) -> str | None:
         started = time.perf_counter()
         before = len(bridge.played)
-        result = await bridge.run(server.tool(spec["name"], dict(raw_arguments), spec["write"]))
+        log.running += 1
+        try:
+            result = await bridge.run(server.tool(spec["name"], dict(raw_arguments), spec["write"]))
+        finally:
+            log.running -= 1
         log.ms += (time.perf_counter() - started) * 1000
         log.bridge = log.bridge or len(bridge.played) > before
         if reply is not None:
@@ -72,6 +79,9 @@ def make_tool(
             # sentence and a booking's confirmation are spoken by the worker word for word, never
             # by the model. end_call only carries a sentence on a safety call.
             spoken = speak(line)
+        elif spoken_first(result):
+            # The top-priority line, word for word; the model's reply (the times) follows it.
+            speak(spoken_first(result))
         if ending and result["data"].get("hang_up"):
             # The server agreed: hang up once this turn's speech, and any line above, has played.
             # After the safety sign-off the call has had its goodbye, so the worker adds none.
@@ -80,13 +90,20 @@ def make_tool(
         # for the agent from there.
         put_through = spec["name"] == "flag_person" and result["ok"] and transfer is not None
         if put_through and await transfer.offer(context.speech_handle, result):
-            return None
+            return _no_reply(result)
         if spoken is not None or ending:
-            # None tells the session not to generate another reply.
-            return None
-        return compact(result)
+            return _no_reply(result)
+        return compact(for_model(result))
 
     return handler
+
+
+def _no_reply(result: dict) -> ToolResult:
+    """The worker spoke for the agent, so the session generates no reply now, and the model's
+    context keeps the result. A tool returning None also asks for no reply, but leaves an empty
+    output in the context; on the next turn the model read that as a missing result and said so
+    ("the reschedule ran without a confirmation message", a scripted test call after #135)."""
+    return ToolResult(compact(for_model(result)), reply_required=False)
 
 
 def build_tools(

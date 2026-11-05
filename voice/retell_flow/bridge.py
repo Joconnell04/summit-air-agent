@@ -112,16 +112,22 @@ class FlowBridge(Bridge):
             return self._handoff(kind, rid, call_id, last["say"], handoff) | {
                 "stage": stage, "notes": notes
             }
+        recording = data.get("recording") or {}
+        # Retell records until the call ends, but with storage at basic attributes it keeps no
+        # recording or transcript once the webhooks have gone out.
+        kept = False
+        if recording.get("action") == "stop" and kind == "call":
+            kept = not self.keep_no_recording(rid)
         if safety_text:
             return routed("safety", safety_text, stage=stage, notes=notes)
-        recording = data.get("recording") or {}
-        if recording.get("action") == "stop" and recording.get("text"):
-            # Retell records until the call ends, but with storage at basic attributes it keeps no
-            # recording or transcript once the webhooks have gone out. The line is said, then the
-            # model answers the rest of what the caller said, as on our worker.
-            if kind == "call" and not self.keep_no_recording(rid):
-                # Retell would keep the recording, so the line would be untrue; the model answers.
-                return routed(stage=stage, notes=notes)
+        spoken = data.get("spoken") or {}
+        if spoken.get("text"):
+            # The card stop, the billing callback or the electrical lines: the server's words, said
+            # with interruptions off, as on our worker (voice/livekit/call.py).
+            return routed("firm", spoken["text"], stage=stage, notes=notes)
+        if recording.get("action") == "stop" and recording.get("text") and not kept:
+            # The line is said, then the model answers the rest of what the caller said. If Retell
+            # would keep the recording the line would be untrue, so the model answers alone.
             return routed("notice", recording["text"], stage=stage, notes=notes)
         return routed(stage=stage, notes=notes)
 

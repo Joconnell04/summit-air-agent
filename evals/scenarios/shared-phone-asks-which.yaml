@@ -1,0 +1,25 @@
+id: shared-phone-asks-which
+flow: [booking, repeat-caller]
+difficulty: standard
+traits: [filler]
+journeys: [J4]
+spec: [S-31a]
+tags: [caller-changes]
+caller_id: seed:sharedPhone
+persona: Marisol Ruiz, who shares a home phone with her husband Hector. She wants the yearly heating tune-up booked in her own name. Friendly, says um.
+hidden_facts:
+  name: Marisol Ruiz
+  address: the house on file, 507 Coney Island Ave, Brooklyn, 11210
+  phone: the number you're calling from
+  wants: the yearly heating tune-up, any morning this week, in your name
+opening: Hi, um, I'd like to book the yearly heating tune-up for the house.
+script:
+  - Don't say your name until the agent asks whose name the visit goes under; then say "Marisol".
+  - Answer yes to a correct read-back.
+  - Take the first morning window offered. Say goodbye once the agent confirms.
+must:
+  - booking: {count: 1, job_type: tune_up}
+  - booked_under: Marisol Ruiz
+  - read_back: before_booking
+should:
+  - Asks whose name the visit goes under, once, and books it under the name the caller gives.

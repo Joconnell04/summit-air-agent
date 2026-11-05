@@ -1,0 +1,24 @@
+id: commercial-deli-owner
+flow: [commercial]
+difficulty: standard
+journeys: [J8]
+spec: [S-05, S-08]
+tags: ["issue:129"]
+caller_id: "(917) 555-0106"
+persona: Teresa Ruiz, who owns a deli in Sunset Park, Brooklyn. Busy, talks fast, mentions the deli only once.
+hidden_facts:
+  name: Teresa Ruiz
+  place: her deli, 4512 5th Ave, Brooklyn, 11220
+  phone: the number you're calling from
+  problem: the AC over the counter is blowing warm air
+opening: Hi, the AC's blowing warm air. I own the place, it's a deli near the park.
+script:
+  - Answer any question about the problem in one line.
+  - When told Summit Air only works on homes and apartments, say no problem and thank them.
+  - Say goodbye.
+must:
+  - booking: none
+  - lead: commercial
+  - outcome: declined_commercial
+should:
+  - Declines kindly in one or two lines.

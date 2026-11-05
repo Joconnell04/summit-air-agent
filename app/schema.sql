@@ -97,6 +97,15 @@ CREATE TABLE IF NOT EXISTS waits (
     at TEXT NOT NULL
 );
 
+-- A line the server hands out to be said once a call (the top-priority line), recorded when it is
+-- handed out, so two tool calls in one caller turn can't both carry it (PR #139 review).
+CREATE TABLE IF NOT EXISTS lines_handed (
+    call_id TEXT NOT NULL REFERENCES calls (id) ON DELETE CASCADE,
+    line TEXT NOT NULL,
+    at TEXT NOT NULL,
+    PRIMARY KEY (call_id, line)
+);
+
 CREATE TABLE IF NOT EXISTS flags (
     id INTEGER PRIMARY KEY,
     call_id TEXT REFERENCES calls (id) ON DELETE CASCADE,
@@ -561,4 +570,81 @@ CREATE TABLE IF NOT EXISTS call_names (
     source TEXT NOT NULL,
     at TEXT NOT NULL,
     saved_at TEXT
+);
+
+-- The name and address check before a change for a caller whose number isn't on the customer's
+-- account (tools._identity_gate). `status` is asked, verified or mismatch; `asked_seq` the turn the
+-- question was last asked on. After a mismatch the callback the caller accepts goes to
+-- `on_file_phone`, the account's own number, and `callback_id` is that callback.
+CREATE TABLE IF NOT EXISTS identity_checks (
+    call_id TEXT NOT NULL REFERENCES calls (id) ON DELETE CASCADE,
+    customer_id INTEGER NOT NULL,
+    status TEXT NOT NULL CHECK (status IN ('asked', 'verified', 'mismatch')),
+    asked_seq INTEGER NOT NULL,
+    asks INTEGER NOT NULL DEFAULT 1,
+    on_file_phone TEXT NOT NULL DEFAULT '',
+    callback_id INTEGER,
+    at TEXT NOT NULL,
+    PRIMARY KEY (call_id, customer_id)
+);
+
+-- A customer who moved (tools.record_move). In the area: the new location, the old ones made
+-- inactive and the open jobs moved to the new one. Out of the area: nothing changes but a note,
+-- and the open jobs at the old address are cancelled. Job ids are JSON lists.
+CREATE TABLE IF NOT EXISTS address_moves (
+    id INTEGER PRIMARY KEY,
+    call_id TEXT NOT NULL REFERENCES calls (id) ON DELETE CASCADE,
+    customer_id INTEGER NOT NULL,
+    old_location_ids TEXT NOT NULL,
+    new_location_id INTEGER,
+    new_location_made TEXT NOT NULL DEFAULT '',
+    street TEXT NOT NULL,
+    unit TEXT NOT NULL DEFAULT '',
+    zip TEXT NOT NULL,
+    in_area INTEGER NOT NULL,
+    jobs_moved TEXT NOT NULL DEFAULT '[]',
+    jobs_cancelled TEXT NOT NULL DEFAULT '[]',
+    jobs_for_person TEXT NOT NULL DEFAULT '[]',
+    at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS ix_address_moves_call ON address_moves (call_id);
+
+-- A heads-up call to the customer's number on file after a change made from another number
+-- (app/heads_up.py). queued waits for the call to end; dialing, then sent with `result` answered,
+-- voicemail or no_answer; would_call when the number isn't on HEADSUP_ALLOWLIST (never dialed);
+-- skipped for a do-not-call number. `line` is the sentence said once.
+CREATE TABLE IF NOT EXISTS heads_ups (
+    id INTEGER PRIMARY KEY,
+    tenant TEXT NOT NULL,
+    call_id TEXT NOT NULL REFERENCES calls (id) ON DELETE CASCADE,
+    customer_id INTEGER NOT NULL,
+    job_id INTEGER,
+    phone TEXT NOT NULL,
+    line TEXT NOT NULL,
+    status TEXT NOT NULL CHECK (status IN ('queued', 'dialing', 'sent', 'would_call', 'skipped')),
+    result TEXT,
+    placed_call_id TEXT,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS ix_heads_ups_status ON heads_ups (status);
+
+-- A caller who asked the agent to wait (app/dead_air.py, DECISIONS.md 081): the turn they asked on,
+-- and the turn they came back on (NULL while the hold lasts).
+CREATE TABLE IF NOT EXISTS holds (
+    call_id TEXT NOT NULL REFERENCES calls (id) ON DELETE CASCADE,
+    seq INTEGER NOT NULL,
+    at TEXT NOT NULL,
+    back_seq INTEGER,
+    PRIMARY KEY (call_id, seq)
+);
+
+-- The electrical route (app/safety.py electrical_line, DECISIONS.md 082): the caller's line that
+-- reported sparks or an electrical smell, and when the tenant's electrical lines were said. Kept
+-- apart from the calls table's safety columns, which this route never sets.
+CREATE TABLE IF NOT EXISTS electrical (
+    call_id TEXT PRIMARY KEY REFERENCES calls (id) ON DELETE CASCADE,
+    heard_seq INTEGER NOT NULL,
+    heard_line TEXT NOT NULL,
+    said_at TEXT
 );

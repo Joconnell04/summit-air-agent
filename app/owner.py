@@ -11,9 +11,10 @@ import sqlite3
 from collections import Counter
 from datetime import date, datetime, time, timedelta
 
-from . import records, summary
+from . import heads_up, records, summary
 from .db import iso, parse_iso
 from .tenant import Tenant
+from .text import phone_display
 
 LOOKBACK_DAYS = 30
 LEAD_PHRASES = {
@@ -852,7 +853,29 @@ def call_page(conn: sqlite3.Connection, tenant: Tenant, trace: dict, now: dateti
         "open_flags": [f for f in trace["flags"] if f["status"] == "open"],
         "raised_after_wait": bool(request.get("raised_after_wait")),
         "number_raised_after_wait": raised_after_wait(conn, call["tenant"], call["caller_key"]),
+        # A number for someone else on the visit, beside the account's own (issue #128).
+        "contact": {
+            "for": request["contact_for"],
+            "phone": phone_display(request["phone"]),
+            "account_phone": phone_display(request.get("account_phone") or ""),
+        } if request.get("contact_for") else None,
+        "moves": [_move_line(m) for m in trace.get("address_moves") or []],
+        "heads_ups": heads_up.for_call(conn, tenant, call["id"]),
     }
+
+
+def _move_line(move: dict) -> str:
+    """A customer who moved, in a line: where to, and what happened to their open visits."""
+    place = move["street"] + (f", {move['unit']}" if move["unit"] else "")
+    moved, cancelled = json.loads(move["jobs_moved"]), json.loads(move["jobs_cancelled"])
+    if move["in_area"]:
+        visits = f", {len(moved)} open visit{'s' if len(moved) != 1 else ''} moved" if moved else ""
+        return f"Moved to {place}, {move['zip']}; address updated{visits}"
+    visits = (
+        f", {len(cancelled)} visit{'s' if len(cancelled) != 1 else ''} at the old address cancelled"
+        if cancelled else ""
+    )
+    return f"Moved to {place}, {move['zip']}, outside the area; not changed{visits}"
 
 
 def raised_after_wait(conn: sqlite3.Connection, tenant: str, caller_key: str) -> int:

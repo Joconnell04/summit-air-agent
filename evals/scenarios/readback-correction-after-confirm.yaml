@@ -1,0 +1,26 @@
+id: readback-correction-after-confirm
+flow: [booking]
+difficulty: rigorous
+traits: [late-correction]
+journeys: [J1, spine]
+spec: [S-13, S-26]
+tags: ["issue:129"]
+caller_id: "(917) 555-0101"
+persona: Omar Haddad, a homeowner in Bay Ridge, Brooklyn, booking a heating tune-up. Distracted, confirms too fast and catches his own slip a moment later.
+hidden_facts:
+  name: Omar Haddad
+  address: 144 Bay Ridge Pkwy, Brooklyn, 11209 (he says 142 by mistake at first)
+  phone: the number you're calling from
+  wants: a yearly heating tune-up, any weekday morning
+opening: Hi, I'd like to set up a tune-up for my boiler.
+script:
+  - Give the address as 142 Bay Ridge Parkway, 11209 when asked.
+  - Say yes to the first read-back.
+  - On your very next turn after saying yes, before picking a time, say "Oh wait, sorry, it's 144, not 142."
+  - Confirm once the agent reads back 144, then take the first weekday morning offered and say goodbye.
+must:
+  - jobs: [{job_type: tune_up, street: "144 Bay Ridge"}]
+  - read_back: before_booking
+  - outcome: booked
+should:
+  - Reads the address back with 144 before booking and does not argue.

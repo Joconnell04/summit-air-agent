@@ -58,6 +58,10 @@ LOCKED = {
         "The read-back is locked. It names the address as the caller's home, which is how every "
         "booking checks it isn't a business."
     ),
+    "read_back_for": (
+        "The read-back is locked. It names the address as the caller's home, which is how every "
+        "booking checks it isn't a business."
+    ),
     "priority": "Priority is locked. It can only go up, and only engineers change it.",
     "safety": "The safety script is locked. It was signed off word for word.",
 }

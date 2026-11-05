@@ -87,8 +87,14 @@ class ToolServer:
         body = {"egress_id": egress_id, "object_key": object_key}
         return await self._post(f"/calls/{self.call_id}/recording", body)
 
-    async def outbound_done(self, outbound_id: int, answered: bool, voicemail: bool) -> dict:
+    async def outbound_done(
+        self, outbound_id: int, answered: bool, voicemail: bool, kind: str = ""
+    ) -> dict:
+        """A heads-up call (app/heads_up.py) reports to its own route; every other kind to
+        /outbound/{id}/done."""
         body = {"answered": answered, "voicemail": voicemail}
+        if kind == "heads_up":
+            return await self._post(f"/outbound/heads-up/{outbound_id}/done", body)
         return await self._post(f"/outbound/{outbound_id}/done", body)
 
     async def claim(self, worker: str) -> dict | None:

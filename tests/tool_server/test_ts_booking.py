@@ -175,11 +175,21 @@ def test_eight_callers_racing_for_the_last_slot_get_it_once(agent, mock):
     assert loser["data"]["alternatives"], "a taken slot comes back with windows to offer"
 
 
-def test_a_second_booking_on_one_call_is_refused_and_flags_a_person(agent):
+def test_the_same_visit_twice_on_one_call_is_refused(agent):
     call = ready_to_book(agent)
     assert book(agent, call, first_open(agent, call))["ok"]
-    second = book(agent, call, ONE_LEFT)
-    assert second["refused"] == "limit"
+    assert book(agent, call, ONE_LEFT)["refused"] == "already_booked"
+
+
+def test_a_third_booking_on_one_call_is_refused_and_flags_a_person(agent):
+    """Two jobs per call at most (DECISIONS.md 085), then a person takes over."""
+    call = ready_to_book(agent)
+    assert book(agent, call, first_open(agent, call))["ok"]
+    second = book(agent, call, first_open(agent, call, "no_heat"), job_type="no_heat",
+                  separate_problem=True)
+    assert second["ok"], second
+    third = book(agent, call, ONE_LEFT, job_type="estimate", separate_problem=True)
+    assert third["refused"] == "limit"
     assert count(agent, "SELECT COUNT(*) FROM flags WHERE kind = 'limit'") == 1
 
 
@@ -703,18 +713,21 @@ def test_a_number_the_caller_only_states_is_not_enough_to_change_a_visit(agent):
     found = agent.tool("find_customer", other, phone="(212) 555-0930")
     assert found["data"]["matches"]
     refused = agent.tool("cancel_appointment", other, booking_id=job_id, reason="not needed")
-    assert refused["refused"] == "not_owner"
-    # Confirming the visit's address in the read-back is what a call-taker would ask for.
-    agent.turn(other, "It's for my mother's place.")
-    agent.confirm_read_back(other, in_area_address(30))
+    # From a number not on the account, the caller says the name and address first (issue #128).
+    assert refused["refused"] == "identity_check"
+    agent.say(other, refused["say"])
+    agent.turn(other, "It's Pat Caller, 130 Union Street.")
     assert agent.tool("cancel_appointment", other, booking_id=job_id, reason="not needed")["ok"]
 
 
 def test_a_limit_flags_a_person_once_however_often_it_is_hit(agent):
     call = ready_to_book(agent)
     assert book(agent, call, first_open(agent, call))["ok"]
+    assert book(agent, call, first_open(agent, call, "no_heat"), job_type="no_heat",
+                separate_problem=True)["ok"]
     for _ in range(3):
-        assert book(agent, call, ONE_LEFT)["refused"] == "limit"
+        assert book(agent, call, ONE_LEFT, job_type="estimate",
+                    separate_problem=True)["refused"] == "limit"
     assert count(agent, "SELECT COUNT(*) FROM flags WHERE kind = 'limit'") == 1
 
 

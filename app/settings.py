@@ -5,6 +5,12 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 
+def heads_up_allowlist() -> frozenset[str]:
+    from .heads_up import allowlist
+
+    return allowlist()
+
+
 @dataclass
 class Settings:
     db_path: Path = field(
@@ -101,6 +107,9 @@ class Settings:
     # Transfer numbers by environment variable name, used instead of the environment when set. Evals
     # set it so a run never reads a real number from the shell (app/transfer.py).
     transfer_numbers: dict[str, str] | None = None
+    # The numbers a heads-up call may dial (app/heads_up.py): comma-separated, empty by default,
+    # so the mock's made-up customers are never called. Real numbers live only in the server .env.
+    headsup_allowlist: frozenset[str] = field(default_factory=lambda: heads_up_allowlist())
     # Development only: serve every request as if it were this moment (ISO, with offset). The
     # owner demo sets it to the evening of the seeded day so "now" sits on the board.
     fixed_now: str = field(default_factory=lambda: os.environ.get("FIXED_NOW", ""))
@@ -120,9 +129,11 @@ class Settings:
 
 # Per-call limits. Hitting one flags a person instead of continuing (docs/architecture.md).
 LIMITS = {
-    "book": 1,
+    # Two jobs on one call, each its own visit (DECISIONS.md 085, tools._second_job).
+    "book": 2,
     "reschedule": 1,
     "cancel": 1,
+    "move": 1,
     "find_customer": 5,
     "get_customer_history": 5,
     "find_address": 4,

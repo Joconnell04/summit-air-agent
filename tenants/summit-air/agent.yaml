@@ -22,7 +22,7 @@ fsm:
   # The ServiceTitan user the integration acts as: notes it adds carry this createdById.
   agent_user_id: 9001
   # The call reason a lead carries for each of record_lead's kinds (config.yaml call_reasons).
-  lead_call_reason_ids: {commercial: 704, install: 702, membership: 705}
+  lead_call_reason_ids: {commercial: 704, install: 702, membership: 705, not_offered: 706}
   # Tag types (config.yaml tag_types) that say how a callback call went. A person at the office
   # puts one on the call in ServiceTitan; the server puts one on the callbacks it places itself.
   # Only "resolved" marks a callback done (docs/decisions/26-callback-done.md).
@@ -83,6 +83,15 @@ safety:
   # stays in control: the concern is said once, offered once more, then the agent helps (eval round
   # 3, Jackson: "if they reject your advice, just let it be and maybe offer one more time").
   repeat_limit: 1
+  # Sparks, arcing or an electrical smell (app/safety.py electrical_signal, DECISIONS.md 082): said
+  # once per call, word for word, then the agent helps book. Never the gas or carbon monoxide
+  # lines. Booking never waits on the unit or the breaker being off. Signed off by Jackson
+  # (coauthoring safety r1).
+  electrical:
+    signed_off: true
+    lines: >-
+      Please step away from the unit and turn it off, and if you can safely reach the breaker,
+      switch that off too. I can get a technician out to look at it.
 
 # A caller line that describes a business marks the call commercial: it can't book (spec S-05,
 # journey 8). Commercial means commercial-grade equipment: offices, stores, restaurants and the like.
@@ -91,6 +100,13 @@ safety:
 # tenants", "our building", "the building I manage" and a count of units mark nothing. Three ways to
 # match: "my restaurant" or "our bakery" (my or our right before a business), "I run a restaurant"
 # (a running word, then a, an or the and at most one more word, then a business), and fixed phrases.
+# Ownership counts only when it attaches to the business: "the bakery across from me is mine"
+# (mine, right after the business and at most four words), or "I own the place, it's a deli" (an
+# own_place phrase with "it's a" and the business). "I own the place, the bar next door is loud"
+# names a neighbor, so it marks nothing (PR #135 review). An office counts only with its heating or
+# cooling ("the heat in my office", "our office AC"), since "my office called me" is about work.
+# A line that names the caller's home as the place ("at home", "my house") is residential, whatever
+# job words come before it ("I'm a church deacon calling about my house").
 # Exclusions are removed before matching, so "my business partner" stays a home.
 commercial:
   owned: [restaurant, bakery, deli, cafe, bar, store, shop, salon, gym, clinic, daycare, warehouse, business]
@@ -107,7 +123,27 @@ commercial:
   not_home: [not a home, not my home]
   apartment_signs: [units, apartments, apartment building, unit building, family house, walk up,
                     building, tenants]
+  mine: [is mine, is ours, belongs to me, belongs to us]
+  own_place: [i own the place, we own the place, i own this place, we own this place, i own it,
+              we own it, im the owner, were the owners]
+  office: {words: [office], systems: [heat, heating, ac, air conditioning, air conditioner, cooling,
+                                      furnace, boiler, thermostat, radiators, hvac]}
+  home_signs: [at home, my house, my home, my apartment, our house, our home, our apartment]
   not: [business partner, business trip, business card, home office, my own business hours]
+
+# What Summit Air does and doesn't (issue #129). Bookable work is the job types in config.yaml;
+# offered says it in words for the owner view and the docs. A request for work in not_offered (the
+# trade's services.kinds say how callers put it) gets the not_offered line, said once per kind, and
+# is kept as a lead so the office sees the demand. suggest is a general kind of business, never a
+# brand. Duct cleaning isn't a job type here, so it is declined like the others (ASSUMED).
+services:
+  offered: [heating repair, cooling repair, maintenance tune-ups, gas and carbon monoxide safety
+            checks, replacement estimates]
+  not_offered:
+    plumbing: {what: plumbing, suggest: a plumber}
+    appliances: {what: appliance repair, suggest: an appliance repair shop}
+    water_heater: {what: water heaters, suggest: a plumber}
+    duct_cleaning: {what: duct cleaning, suggest: a duct cleaning company}
 
 # Who can approve the work (eval round 2, co-op-owner-mentions-board). A caller who says a board or
 # a landlord has to approve is offered a callback to settle it; if they ask to book anyway, the
@@ -153,12 +189,14 @@ priority:
   # A side model reads the caller's lines for someone at risk the phrase rules above miss ("my pop
   # turned ninety", "she's on dialysis"). It answers one question (prompts/side/questions.yaml) and
   # can only raise priority, like the rules. Used only when the server runs with SIDE_MODEL set
-  # (app/side_model.py); a late or failed answer leaves the rules to decide. Threshold ASSUMED from
-  # the quick run in evals/decision-models (no dev and test split yet).
+  # (app/side_model.py); a late or failed answer leaves the rules to decide. Threshold 0.65, raised
+  # from 0.5 because the question allows implied mentions, so a borderline line can cross 0.5; on the
+  # 80 test lines the only answer between 0.5 and 0.65 was a false alarm, and every true one scored
+  # 0.78 or more (MEASURED, evals/decision-models, DECISIONS.md 090).
   side_model:
     question: vulnerable_person
     job_types: [no_heat, no_cooling]
-    threshold: 0.5
+    threshold: 0.65
     raise_to: Urgent
     raise_to_when_mild: High
     reason: someone at home at risk from the heat or cold
@@ -190,6 +228,9 @@ callbacks:
   dropped_safety_minutes: 10
   # A callback asked for "after 5" is promised for this long after the start ("around 5:30"). ASSUMED.
   after_lead_minutes: 30
+  # A billing dispute: the office calls back within this, inside office hours (DECISIONS.md 080).
+  # ASSUMED.
+  billing_minutes: 120
   # A callback stored with no time because the caller had already said goodbye. ASSUMED.
   after_goodbye_minutes: 60
   # When the FSM is down or refuses a booking, someone calls back within this.
@@ -341,6 +382,16 @@ lines:
   commercial: >-
     Thanks for thinking of us. Unfortunately Summit Air works on homes and apartments, not
     businesses, so we're not the right fit for this one.
+  # A caller who offers a card (DECISIONS.md 080): said word for word by the voice layer. The
+  # office follows up from the flag the server stores. Signed off by Jackson (coauthoring safety r1).
+  card_stop: >-
+    For your security, please don't read a card number over the phone. Our office will send you a
+    secure payment link, or call you to take the payment.
+  # A caller who disputes a charge. {when} is the office callback time, such as "by 10:30 AM".
+  # Signed off by Jackson (coauthoring safety r1).
+  billing_callback: >-
+    I'm sorry about that. Billing goes through our office, so I've asked them to look into the
+    charge, and someone from the office will call you {when}.
   # Added to a booking's sentence when who can approve isn't settled. {when} is "by 9 PM".
   approval_callback: >-
     Before the technician heads out, someone from our team will call you {when} to confirm who can
@@ -349,6 +400,10 @@ lines:
   approval_callback_late: >-
     Someone from our team will call you {when} to confirm who can approve the work, and the
     technician won't start until that's settled.
+  # Work the company doesn't do (services.not_offered). {what} is "plumbing"; {suggest} is "a
+  # plumber".
+  not_offered: >-
+    I'm sorry, we don't do {what}, so {suggest} would be the right call for that.
   out_of_area: >-
     I'm sorry, that's outside the area we cover, so we're not able to send someone. A local heating
     company should be able to help.
@@ -372,6 +427,55 @@ lines:
   account_choice: >-
     Should that address go on its own account, with you as a contact, or under your account?
   account_name: Whose name should the account for that address be under?
+  # An open visit at the address whose arrival window has ended (tools._passed_visit). {day} is
+  # "today", "yesterday" or a weekday; {between} is "8 and 12".
+  visit_passed: >-
+    I see a visit there that was due {day} between {between}, and it's still open on our end. Did
+    the technician make it out?
+  # A number that matched more than one account, when the address doesn't say which (issue #128).
+  account_which: I see more than one account on this number. Whose name should the visit go under?
+  # The read-back when the number reaches someone else ("call my daughter at ..."). {who} is how
+  # the caller named them.
+  read_back_for: I have your home at {address}, and the number to reach {who} is {phone}, is that right?
+  # Before a change from a number that isn't on the account (issue #128). {thing} is "visit" or
+  # "account". The caller says the details; the agent never reads them out.
+  identity_check: >-
+    Of course. And just to confirm you're the person for the {thing}, could you tell me your name
+    and the address?
+  identity_check_name_only: >-
+    Of course. And just to confirm you're the person for the {thing}, what name is it under?
+  identity_check_address_only: >-
+    Of course. And just to confirm you're the person for the {thing}, could you tell me the address?
+  identity_check_address: Thanks. And what's the address?
+  identity_check_name: Thanks. And what's the name on the {thing}?
+  identity_check_again: >-
+    Sorry, I didn't catch that. Could you tell me your name and the address for the {thing}?
+  identity_mismatch: >-
+    I'm sorry, I'm not able to make that change from this number. I can have someone from our
+    office call the number we have on file for it. Would that help?
+  flag_stored_on_file: I've let our team know, and someone will call the number we have on file {when}.
+  # A caller who moved (tools.record_move). {street} is the new street and unit.
+  move_which: Which address did you move from?
+  move_done: Thanks for letting us know. I've updated your address to {street}.
+  move_visit_moved: Your upcoming visit is now set for the new address, same day and time.
+  move_visit_moved_when: Your visit {when} is now set for the new address, same time.
+  move_out_of_area: >-
+    Thanks for letting us know. I'm sorry, the new address is outside the area we cover, so we
+    won't be able to come out there, and I've made a note on your account.
+  move_visit_cancelled: >-
+    I've also cancelled the visit you had at the old address, so nobody heads there.
+  move_visit_person: >-
+    A technician is already on the way to the old address, so someone from our office will call
+    you to sort that out.
+  # The heads-up call to the number on file after a change from another number (app/heads_up.py),
+  # said once, also as the voicemail. {change} is what happened; {phone} is our number, read out.
+  heads_up: >-
+    This is Summit Air. {change} by a caller from another number. If that wasn't you, please call
+    us back at {phone}.
+  moved_from_address: Our records show you've moved from that address. Where should the technician go?
+  location_superseded: >-
+    That visit is still set for your old address, so let me have someone from our office sort it
+    out with you.
   # Added to the booking sentence for a return visit soon after a job at the same address.
   return_visit_review: >-
     Since we were just out there, a manager will look over this visit, including whether it's
@@ -383,6 +487,9 @@ lines:
   # Said once when the server marks a call Urgent (spec S-21a). Below Urgent, no priority is named.
   urgent_priority: I've marked this call top priority, so you get our soonest opening.
   anything_else_first: Is there anything else I can help with?
+  # Ends a booking sentence instead of after_confirmation when the caller named another unit that
+  # has no booking yet (DECISIONS.md 085). {unit} is "5C".
+  next_unit: Now let's set up apartment {unit}.
   # Ends a booking, reschedule or cancel sentence, which the voice layer speaks with no model step.
   after_confirmation: Anything else?
   # Added to an urgent booking with no window today; the server has flagged a person to move it up.
@@ -415,6 +522,21 @@ voice:
   greeting_linked_unknown: >-
     Hi, this is Summit Air's virtual assistant again. I think we got cut off earlier. Who am I
     speaking with?
+  # A caller whose earlier call ended because they stepped away (DECISIONS.md 081). Signed off by
+  # Jackson (coauthoring safety r1), as are still_here and stepped_away below.
+  greeting_linked_stepped_away: >-
+    Hi, this is Summit Air's virtual assistant again. We got disconnected earlier when you stepped
+    away; let's pick up where we left off. Is this {first_name}?
+  greeting_linked_stepped_away_unknown: >-
+    Hi, this is Summit Air's virtual assistant again. We got disconnected earlier when you stepped
+    away; let's pick up where we left off. Who am I speaking with?
+  # Dead air (DECISIONS.md 081, voice.dead_air in config/models.yaml for the timings): the check-in
+  # said every couple of minutes of silence, and the goodbye before the agent hangs up, in Jackson's
+  # words.
+  still_here: Take your time, I'm still here.
+  stepped_away: >-
+    It sounds like you've stepped away, so I'm going to hang up for now. Once you're ready, feel free
+    to call this number back, and we can pick up where we left off.
   # Said when the model ends the call without a goodbye of its own (knowledge/sign-off.md). Generic
   # and kind, the same on any day (eval round 3).
   goodbye: Thanks for calling Summit Air. Have a great rest of your day.

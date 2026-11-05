@@ -83,6 +83,11 @@ voice:
     min_duration: 0.5
     resume_false_interruption: true
     false_interruption_timeout: 1.5
+  # Dead air (voice/dead_air.py, DECISIONS.md 081): after this much silence from the caller
+  # the agent says the tenant's `still_here` line, and again each time; at hang_up_s it says
+  # `stepped_away` and hangs up. poll_s is how often the worker looks. Jackson's numbers (2 and 8
+  # minutes); the text harness runs the same timer on a short clock.
+  dead_air: {check_in_s: 120, hang_up_s: 480, poll_s: 1.0}
   # Bridge line (docs/latency.md): played only when a tool hasn't answered after this long, and at
   # most once every this many caller turns.
   bridge: {after_s: 0.7, min_turns_between: 3}

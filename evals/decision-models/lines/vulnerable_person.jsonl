@@ -78,3 +78,21 @@
 {"id": "vp-078", "text": "it's my late mother's house and we're getting it ready to sell / need the furnace checked", "label": false, "tags": ["hard_negative"], "source": "written-blind"}
 {"id": "vp-079", "text": "my husband is doing chemo right now / and the ac just quit", "label": true, "tags": ["soft"], "source": "written-blind"}
 {"id": "vp-080", "text": "the baby grand in the living room is going out of tune because the ac isn't cooling", "label": false, "tags": ["hard_negative"], "source": "written-blind"}
+{"id": "vp-081", "text": "my husband has a bad back so he can't get down to the basement to look at the furnace", "label": false, "tags": ["hard_negative"], "source": "coordinator-after-question"}
+{"id": "vp-082", "text": "I broke my wrist last month so I can't reset the thermostat myself", "label": false, "tags": ["hard_negative"], "source": "coordinator-after-question"}
+{"id": "vp-083", "text": "my mom calls me every day, she's 90, she lives down in Florida", "label": false, "tags": ["hard_negative"], "source": "coordinator-after-question"}
+{"id": "vp-084", "text": "my neighbor upstairs is 88 and she's always complaining about the heat in the building", "label": false, "tags": ["hard_negative"], "source": "coordinator-after-question"}
+{"id": "vp-085", "text": "I'm calling about my dad's house, he's 45, I'm at work right now", "label": false, "tags": ["hard_negative"], "source": "coordinator-after-question"}
+{"id": "vp-086", "text": "I have allergies so that dusty smell from the vents really bothers me", "label": false, "tags": ["hard_negative"], "source": "coordinator-after-question"}
+{"id": "vp-087", "text": "my son has ADHD and he keeps playing with the thermostat", "label": false, "tags": ["hard_negative"], "source": "coordinator-after-question"}
+{"id": "vp-088", "text": "I'm a nurse, I work nights at the hospital, so call me after noon", "label": false, "tags": ["hard_negative"], "source": "coordinator-after-question"}
+{"id": "vp-089", "text": "the old lady next door said her heat's out too", "label": false, "tags": ["hard_negative"], "source": "coordinator-after-question"}
+{"id": "vp-090", "text": "my grandmother used to live here, she passed last year, the furnace was hers", "label": false, "tags": ["hard_negative"], "source": "coordinator-after-question"}
+{"id": "vp-091", "text": "I have a migraine so please keep this quick", "label": false, "tags": ["hard_negative"], "source": "coordinator-after-question"}
+{"id": "vp-092", "text": "my wife's a doctor and she says the carbon monoxide detector is fine", "label": false, "tags": ["hard_negative"], "source": "coordinator-after-question"}
+{"id": "vp-093", "text": "my husband has COPD and it's getting really cold in here", "label": true, "tags": ["explicit"], "source": "coordinator-after-question"}
+{"id": "vp-094", "text": "I'm 72 and the apartment is freezing", "label": true, "tags": ["explicit"], "source": "coordinator-after-question"}
+{"id": "vp-095", "text": "my wife just had heart surgery and she's home recovering", "label": true, "tags": ["explicit"], "source": "coordinator-after-question"}
+{"id": "vp-096", "text": "I'm diabetic and my feet go numb when it's this cold in the house", "label": true, "tags": ["explicit"], "source": "coordinator-after-question"}
+{"id": "vp-097", "text": "my son has asthma and the cold air in here sets it off", "label": true, "tags": ["explicit"], "source": "coordinator-after-question"}
+{"id": "vp-098", "text": "we have a newborn, she's three weeks old", "label": true, "tags": ["explicit"], "source": "coordinator-after-question"}

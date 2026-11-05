@@ -70,6 +70,8 @@ class Harness:
                       weather=scenario.weather)
         if scenario.earlier_call:
             world.earlier_call(f"{call_id}-earlier", caller_id, scenario.earlier_call)
+        # So the checks can read what ServiceTitan holds after the call (evals/checks.py).
+        world.server.st_db = world.st_db
         agent = InProcessAgent(world.server, self.models.agent, call_id, caller_id, world.clock,
                                handoff=scenario.transfer or "sent")
         return agent, world.server
@@ -119,6 +121,13 @@ class Harness:
                 if turn.ended:
                     reason = turn.end_reason
                     break
+                # The caller asked the agent to wait and walks away: the worker's timer runs on a
+                # short clock (voice/dead_air.py), and the call ends as stepped_away.
+                if scenario.steps_away and getattr(agent, "holding", False):
+                    turn = agent.step_away()
+                    transcript.append(Turn(role="agent", text=turn.text))
+                    reason = turn.end_reason
+                    break
                 if replay is not None:
                     said = replay.pop(0) if replay else None
                 else:
@@ -163,7 +172,7 @@ def score(scenario, sample, call_id, server, transcript, timings, usage, error, 
                 ToolCall(name=e["tool"], arguments=e["args"])
                 for e in trace["events"] if e["type"] == "tool" and e["tool"] in TOOLS
             ]
-            evidence = Evidence(trace, safety)
+            evidence = Evidence(trace, safety, getattr(server, "st_db", None))
             done = set_up(trace, safety)
             if not error.startswith("harness"):
                 failures = run_checks(scenario.must, evidence)

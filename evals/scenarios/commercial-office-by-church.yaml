@@ -1,0 +1,24 @@
+id: commercial-office-by-church
+flow: [commercial]
+difficulty: standard
+journeys: [J8]
+spec: [S-05, S-08]
+tags: ["issue:129"]
+caller_id: "(917) 555-0104"
+persona: Carl Benedetto, who runs a small accounting office in Bensonhurst, Brooklyn. Friendly and chatty, never says the word business.
+hidden_facts:
+  name: Carl Benedetto
+  place: his accounting office, ground floor, 2031 86th St, Brooklyn, 11214
+  phone: the number you're calling from
+  problem: the heat in the office stopped working this morning
+opening: Hi, the heat stopped working at my office this morning. My office is by the church on 86th.
+script:
+  - If asked, say it's your accounting office, where you and two staff work.
+  - When told Summit Air only works on homes and apartments, say okay, thanks anyway.
+  - Say goodbye.
+must:
+  - booking: none
+  - lead: commercial
+  - outcome: declined_commercial
+should:
+  - Declines kindly and early without a full intake.

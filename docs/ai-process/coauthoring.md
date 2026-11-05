@@ -321,3 +321,45 @@ Changed:
 - S-53 (new): a form of address the caller asks for is used for the call, a linked call and later calls, and a mocking or abusive one is never used or kept.
 Commit: 0df6132 (amended to add this line)
 Status: open
+
+## spec r12 (amendment after lock: caller changes, issue #128)
+Feedback (verbatim, Jackson, relayed by the coordinating session):
+> if somebody's calling to say they moved to a different address and to update that accordingly, like that flow should encompass a few things, like the voice agent acknowledging the request, you know, getting the new address, verifying the zip code is still in the service region, and then if it is, properly updating in the CRM and checking that there's no potential resend, like dispatch, to the stale old address.
+
+> make the agent be polite about it, but make it just be like, and just to confirm that, you know, you were the person for the visit. Could you just confirm your name and address?
+
+> Call my daughter at this number instead
+
+On the heads-up to the number on file after a change from another number (relayed by the coordinating session):
+> Yes. As far as you can go on that one, that'd be a very good idea.
+
+Changed:
+- S-31b (new): a caller who moved; new location, old one inactive, open visits moved, or cancelled out of the area; nothing sent to the old address (DECISIONS.md 075).
+- S-31c (new): the name and address check before a change from a number not on the account, in the server's polite words; a mismatch changes nothing and offers a call to the number on file; a change that passes sends a heads-up call to the number on file after the call (DECISIONS.md 076).
+- S-13b (new): another person's number is the visit's contact, never the customer's own (DECISIONS.md 077).
+- S-31d (new): a number on more than one account asks whose name the visit goes under (#127 item 3, DECISIONS.md 077).
+Commit: (this PR)
+Status: open
+
+## safety r1 (issue #130: electrical route, card and billing lines, dead air)
+Feedback (verbatim, Jackson, relayed by the coordinating session):
+> it should check in every 2 minutes. And then if it's been 8 minutes, it should say, I'm gonna hang up, but you know, once you're ready, feel free to call this number back. So we can pick up from where we left off. And then let it hang up. That way it doesn't just burn a ton of minutes. And then make sure the decision for that is like properly logged so that if the person calls back, the agent can be like, hey, we disconnected earlier because you stepped out, but we can pick up where we left off.
+
+> if AC water is coming through the ceiling, that should get urgent priority. A breaker that keeps tripping isn't inherently urgent priority, but it's still an issue that should get some priority. Sparks should... be acknowledged, but it's not like a get everybody out of the house thing. It's just like a you know, step away, try to turn off the machine. If you can turn off the breaker, that would be a good idea. So it should kind of get its own safety route because it doesn't need to be taken as seriously as a gas leak or carbon monoxide leak thing.
+Changed (all new lines in tenants/summit-air/agent.yaml, DRAFTED for Jackson's sign-off; the gas and carbon monoxide lines are unchanged):
+- `safety.electrical.lines`, with `signed_off: false`: "Please step away from the unit and turn it off, and if you can safely reach the breaker, switch that off too. Once it's off, I can get a technician out to look at it."
+- `voice.still_here`: "Take your time, I'm still here."
+- `voice.stepped_away`: "It sounds like you've stepped away, so I'm going to hang up for now. Once you're ready, feel free to call this number back, and we can pick up where we left off."
+- `voice.greeting_linked_stepped_away` (and `_unknown`): "Hi, this is Summit Air's virtual assistant again. We got disconnected earlier when you stepped away; let's pick up where we left off. Is this {first_name}?"
+- `lines.card_stop`: "For your security, please don't read a card number over the phone. Our office will send you a secure payment link, or call you to take the payment."
+- `lines.billing_callback`: "I'm sorry about that. Billing goes through our office, so I've asked them to look into the charge, and someone from the office will call you {when}."
+Decisions: DECISIONS.md 080 to 082.
+
+Sign-off (verbatim, Jackson, relayed by the coordinating session):
+> for the Spark safety line, that's good, but don't say once it's off, I can get a technician out to look at it. Just say, I can get a technician out to look at it. Then turning off the breaker isn't a requirement to dispatch a technician. But the other stuff looks good. That all makes sense. So I approve of those 6 lines. Just make sure to implement my feedback on the Spark safety line.
+Changed at sign-off:
+- `safety.electrical.lines` now ends "I can get a technician out to look at it." instead of "Once it's off, I can get a technician out to look at it.", and `signed_off` is true.
+- The other five lines are signed off as drafted.
+- The server adds an `electrical_said` note after the line so the agent offers to book at once; a test pins that a sparks caller books with nothing said about the unit or the breaker being off.
+Commit: PR #132
+Status: closed

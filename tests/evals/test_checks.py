@@ -375,3 +375,57 @@ def test_priority_raise_catches_a_who_home_the_caller_never_gave():
     assert failures(
         "priority_raise", {"who_home_from_caller": True}, trace(said, bookings=[booking])
     ) == []
+
+
+# ---- issue #129: the job records -------------------------------------------------------------
+
+
+def _job(job_type="no_heat", unit="", street="101 Union St", notes=(), status="booked"):
+    return {"kind": "book", "status": status, "job_type": job_type, "unit": unit,
+            "street": street, "job_notes": json.dumps(list(notes))}
+
+
+def test_jobs_matches_each_booked_job_by_type_unit_street_and_note():
+    t = trace(bookings=[_job(unit="2A"), _job("tune_up", unit="5C", notes=["Caller asked for Mike."])])
+    assert failures("jobs", [{"unit": "5C", "job_type": "tune_up"}, {"unit": "2a"}], t) == []
+    assert failures("jobs", [{"note": "asked for mike"}, {"street": "101 Union"}], t) == []
+
+
+def test_jobs_fails_on_a_missing_unit_or_a_different_count():
+    t = trace(bookings=[_job(unit="")])
+    assert "no booked job matches" in failures("jobs", [{"unit": "4B"}], t)[0]
+    assert failures("jobs", [{"unit": ""}, {"unit": "5C"}], t) == ["1 job(s) booked, expected 2"]
+    # A failed booking is not a job.
+    failed = trace(bookings=[_job(unit="4B", status="failed")])
+    assert failures("jobs", [{"unit": "4B"}], failed) == ["0 job(s) booked, expected 1"]
+
+
+def test_jobs_argument_is_validated():
+    with pytest.raises(ValueError):
+        CHECKS["jobs"].validate([{"color": "red"}])
+    with pytest.raises(ValueError):
+        CHECKS["jobs"].validate({"unit": "4B"})
+
+
+def test_job_note_reads_the_calls_job_notes_and_the_booking():
+    after = {**trace(bookings=[_job()]),
+             "notes": [{"attach_to": "job", "text": "Caller asked for Rosa. Not promised."}]}
+    assert failures("job_note", "asked for Rosa", after) == []
+    before = trace(bookings=[_job(notes=["Caller asked for Mike."])])
+    assert failures("job_note", "asked for Mike", before) == []
+    assert failures("job_note", "asked for Mike", trace(bookings=[_job()])) == [
+        "no job note matches 'asked for Mike'"
+    ]
+
+
+def test_a_lead_the_server_kept_counts_for_the_lead_check():
+    t = {**trace(), "leads": [{"kind": "not_offered", "summary": "", "status": "queued"}]}
+    assert failures("lead", "not_offered", t) == []
+    assert failures("lead", "commercial", t) == ["no commercial lead recorded"]
+
+
+
+def test_jobs_reads_a_queens_house_number_with_or_without_its_hyphen():
+    t = trace(bookings=[_job(street="19611 Hillside Avenue")])
+    assert failures("jobs", [{"street": "196-11 Hillside"}], t) == []
+    assert failures("jobs", [{"street": "196-12 Hillside"}], t) != []

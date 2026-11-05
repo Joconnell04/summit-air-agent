@@ -46,7 +46,7 @@ def test_nothing_done_on_the_dropped_call_is_done_again(agent, clock):
     agent.turn(second["call_id"], "Hi, we got cut off.")
     agent.confirm_read_back(second["call_id"], {"street": "101 Union St", "zip": "11231"})
     assert (
-        book(agent, second["call_id"], first_open(agent, second["call_id"]))["refused"] == "limit"
+        book(agent, second["call_id"], first_open(agent, second["call_id"]))["refused"] == "already_booked"
     )
 
 
@@ -156,7 +156,7 @@ def test_a_dropped_call_and_its_call_back_later_today_book_once(agent, clock):
     second = agent.start(UNKNOWN)["data"]["call_id"]
     agent.turn(second, "Hi, we got cut off earlier.")
     agent.confirm_read_back(second, {"street": "101 Union St", "zip": "11231"})
-    assert book(agent, second, first_open(agent, second))["refused"] == "limit"
+    assert book(agent, second, first_open(agent, second))["refused"] == "already_booked"
 
 
 @pytest.mark.parametrize(

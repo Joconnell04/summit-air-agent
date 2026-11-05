@@ -1,0 +1,24 @@
+id: fridge-repair-declined
+flow: [off-topic]
+difficulty: easy
+journeys: [spine]
+spec: [S-08]
+tags: ["issue:129"]
+caller_id: "(917) 555-0112"
+persona: Victor Lam, renting in Astoria, Queens. His fridge stopped cooling and he called the first repair number he found.
+hidden_facts:
+  name: Victor Lam
+  address: 31-14 30th Ave, Astoria, 11102
+  phone: the number you're calling from
+  problem: the fridge stopped cooling overnight; heat and AC are fine
+opening: Hi, my fridge stopped cooling overnight, can you send someone to fix it?
+script:
+  - If asked, say the heating and AC are fine, it's just the fridge.
+  - When told Summit Air doesn't do appliance repair, say okay, thanks, and say goodbye.
+must:
+  - booking: none
+  - lead: not_offered
+  - agent_says: "appliance"
+  - callback: none
+should:
+  - Declines kindly in one line and suggests appliance repair in general words, naming no company.

@@ -66,6 +66,10 @@ class Call:
         self.planned: dict[str, float] = {}
         # What each speech was synthesized at, by its first words, so its line reports the speed.
         self._spoken: list[tuple[str, float]] = []
+        # Set by the worker: the silence count (voice/dead_air.py), and the lines its
+        # check-ins say, which are not a reply and don't restart it.
+        self.dead_air = None
+        self.timer_lines: set[str] = set()
 
     def apply_pace(self, data: dict) -> None:
         """Takes the speed from a server result. The worker never decides a pace itself."""
@@ -136,6 +140,11 @@ class Call:
             raise StopResponse()
         data = result.get("data") or {}
         self.apply_pace(data)
+        # A line said on hold to someone else, or a TV, isn't a reply: the silence keeps counting
+        # and the model doesn't answer it (app/dead_air.py).
+        aside = (data.get("hold") or {}).get("state") == "aside"
+        if self.dead_air and not aside:
+            self.dead_air.reply()
         # The caller objected to being recorded: stop at once.
         stop = (data.get("recording") or {}).get("action") == "stop"
         if stop and self.stop_recording:
@@ -159,10 +168,17 @@ class Call:
                 self.handoff(line, plan, handoff["fallback"])
             raise StopResponse()
         safety = data.get("safety")
-        self.reply.heard(safety, text)
+        self.reply.heard(safety, text, data.get("hints"))
         if safety and safety["action"] in SPOKEN_ACTIONS and safety.get("text"):
             # Spoken from the server's text, never generated, and the caller can't cut it short.
             self.session.say(safety["text"], allow_interruptions=False)
+            raise StopResponse()
+        spoken = data.get("spoken")
+        if spoken and spoken.get("text"):
+            # The card stop, the billing callback or the electrical lines: the server's words.
+            self.session.say(spoken["text"], allow_interruptions=False)
+            raise StopResponse()
+        if aside:
             raise StopResponse()
         if stop and data["recording"].get("text"):
             # The server's line, said before the model answers the rest of what the caller said.
@@ -173,6 +189,8 @@ class Call:
         text = message.text_content or ""
         if not text.strip():
             return
+        if self.dead_air and " ".join(text.split()) not in self.timer_lines:
+            self.dead_air.reply()
         tool_ms, bridge = self.tool_log.take()
         timings = agent_timings(
             message.metrics, self.caller_stopped_at, tool_ms, bridge, self.llm_log.take(),

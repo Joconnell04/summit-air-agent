@@ -259,6 +259,16 @@ def test_a_caller_who_objects_to_recording_hears_the_line_and_retell_keeps_nothi
     assert retell.unrecorded == ["abc"]
 
 
+def test_a_card_number_gets_the_servers_line_uninterrupted_and_retell_keeps_nothing(
+    flow_client, retell
+):
+    inbound(flow_client, "card")
+    card = utterance("user", "Can I just pay now? My card number is 4111 1111 1111 1111.")
+    answer = turn(flow_client, call_obj("card", GREETING, card))
+    assert answer["route"] == "firm" and answer["line"]
+    assert retell.unrecorded == ["card"]
+
+
 def test_a_demand_with_no_number_set_gets_the_callback_line_uninterrupted(flow_client, monkeypatch):
     monkeypatch.delenv("TRANSFER_OFFICE_NUMBER", raising=False)
     inbound(flow_client, "mad")

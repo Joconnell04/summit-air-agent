@@ -72,12 +72,19 @@ def timeline(conn: sqlite3.Connection, call_id: str) -> dict | None:
             "json_extract(request_json, '$.raised_after_wait') AS raised_after_wait, "
             "json_extract(request_json, '$.priority_rules') AS priority_rules, "
             "json_extract(request_json, '$.priority_reasons') AS priority_reason_list, "
-            "json_extract(request_json, '$.details.who_home') AS who_home "
+            "json_extract(request_json, '$.details.who_home') AS who_home, job_type, "
+            "json_extract(request_json, '$.address.street') AS street, "
+            "json_extract(request_json, '$.address.unit') AS unit, "
+            "json_extract(request_json, '$.notes') AS job_notes "
             "FROM bookings WHERE call_id = ? ORDER BY id"
         ),
+        "notes": rows("SELECT attach_to, text, fsm_note_id FROM notes WHERE call_id = ? ORDER BY id"),
         "leads": rows("SELECT id, kind, summary, status FROM leads WHERE call_id = ? ORDER BY id"),
         "out_of_area": rows("SELECT zip, at FROM out_of_area WHERE call_id = ?"),
         "summary": rows("SELECT * FROM summaries WHERE call_id = ?"),
+        # The electrical route and holds (DECISIONS.md 081, 082).
+        "electrical": rows("SELECT * FROM electrical WHERE call_id = ?"),
+        "holds": rows("SELECT * FROM holds WHERE call_id = ? ORDER BY seq"),
         # Speaking rate (app/pace.py): the pace in effect, each change, and what is remembered for
         # the caller's number.
         "pace": rows("SELECT * FROM call_pace WHERE call_id = ?"),
@@ -102,6 +109,15 @@ def timeline(conn: sqlite3.Connection, call_id: str) -> dict | None:
         ),
         "address_checks": rows("SELECT * FROM address_checks WHERE call_id = ?"),
         "names": rows("SELECT name, seq, saved_at FROM call_names WHERE call_id = ?"),
+        # A caller who moved, and the name and address check for a change from a number that
+        # isn't on the account (issue #128).
+        "address_moves": rows("SELECT * FROM address_moves WHERE call_id = ? ORDER BY id"),
+        "identity_checks": rows(
+            "SELECT customer_id, status, asks, callback_id FROM identity_checks WHERE call_id = ?"
+        ),
+        "heads_ups": rows(
+            "SELECT id, customer_id, job_id, status, result, line FROM heads_ups WHERE call_id = ?"
+        ),
     }
 
 

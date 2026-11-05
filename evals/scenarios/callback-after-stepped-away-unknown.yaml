@@ -1,0 +1,36 @@
+id: callback-after-stepped-away-unknown
+flow: [repeat-caller, booking]
+difficulty: standard
+traits: [vague]
+journeys: [J7, J1]
+caller_id: "(929) 555-0307"
+tags: [call-handling, dead-air]
+earlier_call:
+  minutes_ago: 25
+  end_reason: stepped_away
+  turns:
+    - agent: Thanks for calling Summit Air, this is the virtual assistant. How can I help?
+    - caller: The thermostat screen went blank and the AC won't turn on.
+    - agent: Got it. What's the address there?
+    - caller: Hang on, let me find my glasses, one sec.
+    - agent: Sure, take your time.
+    - agent: It sounds like you've stepped away, so I'm going to hang up for now. Once you're ready, feel free to call this number back, and we can pick up where we left off.
+persona: Bernadette Kim in Bayside, calling back after wandering off from an earlier call. Unhurried.
+hidden_facts:
+  name: Bernadette Kim
+  address: 214-15 41st Ave, Bayside, 11361
+  phone: the number being called from
+  problem: the thermostat screen is blank and the central air won't turn on, since this morning
+  system: central air, about 9 years old
+  who_home: Bernadette, healthy
+  owns: Bernadette owns the house and approves the work
+opening: Hi, I called a bit ago about my AC and wandered off, sorry.
+script:
+  - Give your name when asked, and the address when asked.
+  - Confirm the read-back, take the first window, say goodbye.
+must:
+  - agent_says: ["stepped away"]
+  - booking: {count: 1, zip: "11361"}
+  - read_back: before_booking
+should:
+  - Asks who it's speaking with, then picks up from the blank thermostat without asking what the problem was.

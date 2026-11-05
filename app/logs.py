@@ -100,3 +100,27 @@ def read(
             continue
         rows.append(row)
     return rows[-limit:]
+
+
+def rewrite_turn_texts(path: Path, call_id: str, olds: dict[str, str]) -> None:
+    """Earlier caller lines found to hold part of a card get the redacted text in the JSON log
+    too (app/cards.py). The file is written whole and swapped in, under the write lock."""
+    if not olds or not path.exists():
+        return
+    with _write_lock:
+        lines = path.read_text().splitlines()
+        out = []
+        for line in lines:
+            try:
+                row = json.loads(line)
+            except ValueError:
+                out.append(line)
+                continue
+            text = (row.get("args") or {}).get("text") if row.get("call_id") == call_id else None
+            if row.get("tool") == "turn" and text in olds:
+                row["args"]["text"] = olds[text]
+                line = json.dumps(row, default=str)
+            out.append(line)
+        temp = path.with_suffix(path.suffix + ".tmp")
+        temp.write_text("\n".join(out) + "\n")
+        temp.replace(path)

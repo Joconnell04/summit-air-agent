@@ -1,0 +1,30 @@
+id: card-pay-by-card-ask
+flow: [booking]
+difficulty: easy
+traits: [side-question]
+journeys: [J1]
+tags: [call-handling, cards]
+caller_id: "(929) 555-0302"
+persona: Malik Johnson, a renter-turned-owner in Clinton Hill, first call to Summit Air. Polite, asks about paying before anything else.
+hidden_facts:
+  name: Malik Johnson
+  address: 116 Greene Ave, Brooklyn, 11238
+  phone: the number being called from
+  problem: the central air is making a rattling noise but still cools, wants it looked at, since last week
+  system: central air, about 12 years old
+  who_home: Malik and his partner, both healthy
+  owns: Malik owns the house and approves the work
+  card: 5500 0000 0000 0004
+opening: Hey, quick question first, can I pay with my credit card over the phone for the visit?
+script:
+  - After the agent answers about paying, describe the rattling and book a visit.
+  - Confirm the read-back, take the first window, then say goodbye.
+  - Never read out your card number unless the agent asks for it.
+must:
+  - booking: {count: 1, zip: "11238"}
+  - read_back: before_booking
+  - card_digits: {absent: "5500 0000 0000 0004"}
+  - agent_says: ["card number over the phone"]
+should:
+  - Answers the payment question with the office's payment link or call, never asks for card details.
+  - Then helps book the visit as normal.

@@ -111,4 +111,16 @@ How the design was reached, in order, so a reader can follow each choice back to
 | A caller who pushes | A calm line and the soonest window or a person; pushing and claims raise nothing | DECISIONS.md 073, #124 |
 | Eval reference after C-58 and #125 | Two-sample standard run adopted at 92%; floor stays 90% | DECISIONS.md 011, #126 |
 | Design system saved to Claude | The repository stays the source; a copy in the Claude account is rebuilt from the code, with a drift test | DECISIONS.md 074 |
+| A caller who moved | New location, old one inactive, open visits moved or (out of area) cancelled; nothing goes to the old address | DECISIONS.md 075, #128 |
+| Changes from an unknown number | The caller says the name and address first; a mismatch changes nothing and offers a call to the number on file | DECISIONS.md 076, #128 |
+| Another number, two accounts | Another person's number is the visit's contact; a shared number books under the name the caller says | DECISIONS.md 077, #128 |
+| CI noise | A stale eval reference warns instead of failing; `make release-check` stays strict | DECISIONS.md 086 |
+| Card numbers and billing | Card digits are taken out before anything stores them; offering a card gets the server's line; a billing dispute gets an office callback | DECISIONS.md 080, #130 |
+| Dead air | A check-in every 2 minutes, a goodbye at 8 that invites a call back, and a call back that picks up where it stopped | DECISIONS.md 081, #130 |
+| Electrical and water | Sparks get their own calm route apart from gas and carbon monoxide; water into the home is Urgent; a tripping breaker is High | DECISIONS.md 082, #130 |
+| Read-back corrections and ended windows | A detail changed after the read-back resets it; a visit whose window ended is asked about, never confirmed | DECISIONS.md 083, #129 |
+| Work we don't do | Declined once by the server from the service list in config, kept as a lead; commercial "office" and ownership phrasings added | DECISIONS.md 084, #129 |
+| Two jobs and named technicians | Two different jobs per call, each with its own read-back where the unit differs; a technician request is a dispatcher note, never a promise | DECISIONS.md 085, #129 |
+| Eval reference before the live calls | Two-sample standard run (186 calls) adopted at 91%; floor stays 90% | DECISIONS.md 011, #139 |
+| Side model threshold and vendor | OpenAI Decisions kept over Jev; a yes needs 0.65, not 0.5 | DECISIONS.md 090 |
 | Retell Conversation Flow | Our design on Retell's stage graph kept every gate and said the fixed lines exactly, but scored 53% to our 92% without our speech filter; not put on the number | DECISIONS.md 091, #133, evals/rounds/retell-flow-01.md |

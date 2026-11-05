@@ -1,0 +1,29 @@
+id: readback-yes-but-unit
+flow: [booking]
+difficulty: rigorous
+traits: [late-correction]
+journeys: [J1, spine]
+spec: [S-13, S-26]
+tags: ["issue:129"]
+caller_id: "(917) 555-0100"
+persona: Dana Whitfield, renting in Carroll Gardens, Brooklyn, with no heat since this morning. Quick and friendly, answers in short bursts and leaves the apartment number out the first time.
+hidden_facts:
+  name: Dana Whitfield
+  address: 412 Court St, apartment 4B, Brooklyn, 11231
+  phone: the number you're calling from
+  problem: no heat since this morning, radiators cold, about 63 degrees inside
+  approver: the landlord already said to call
+  home: Dana, all day
+opening: Hi, my heat's been out since this morning.
+script:
+  - When first asked for the address, give "412 Court Street, 11231" with no apartment number.
+  - When the agent reads the address back without an apartment, answer in one line, "Yes, but it's 4B."
+  - Confirm once the agent reads it back with 4B.
+  - Take the first time offered, then say goodbye.
+must:
+  - jobs: [{job_type: no_heat, unit: 4B}]
+  - read_back: before_booking
+  - safety_lines: not_said
+  - outcome: booked
+should:
+  - Reads the address back again with apartment 4B before booking, without asking the caller to start over.
