@@ -189,12 +189,14 @@ priority:
   # A side model reads the caller's lines for someone at risk the phrase rules above miss ("my pop
   # turned ninety", "she's on dialysis"). It answers one question (prompts/side/questions.yaml) and
   # can only raise priority, like the rules. Used only when the server runs with SIDE_MODEL set
-  # (app/side_model.py); a late or failed answer leaves the rules to decide. Threshold ASSUMED from
-  # the quick run in evals/decision-models (no dev and test split yet).
+  # (app/side_model.py); a late or failed answer leaves the rules to decide. Threshold 0.65, raised
+  # from 0.5 because the question allows implied mentions, so a borderline line can cross 0.5; on the
+  # 80 test lines the only answer between 0.5 and 0.65 was a false alarm, and every true one scored
+  # 0.78 or more (MEASURED, evals/decision-models, DECISIONS.md 090).
   side_model:
     question: vulnerable_person
     job_types: [no_heat, no_cooling]
-    threshold: 0.5
+    threshold: 0.65
     raise_to: Urgent
     raise_to_when_mild: High
     reason: someone at home at risk from the heat or cold

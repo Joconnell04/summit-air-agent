@@ -123,6 +123,10 @@ NOT_NAMES = {
     "another", "info", "information", "details", "price", "prices", "pricing", "quote",
     "confirmation", "number", "appointment", "visit", "time", "times", "slot", "window", "first",
     "earliest", "soonest", "sooner", "next", "later", "home", "yes", "no", "please",
+    # Times and ways to pay: "I'd prefer earlier", "I'd like mornings" (eval run 20261104-234633,
+    # reschedule-own-booking).
+    "earlier", "early", "late", "asap", "mornings", "afternoons", "evenings", "nights", "weekdays",
+    "weekend", "weekends", "cash", "card", "check", "noon",
 }
 
 

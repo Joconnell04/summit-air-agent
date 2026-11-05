@@ -343,13 +343,19 @@ def _job_matches(want: dict, job: dict) -> bool:
         return False
     if "unit" in want and unit_key(job.get("unit") or "") != unit_key(str(want["unit"])):
         return False
-    if "street" in want and street_key(want["street"]) not in street_key(job.get("street") or ""):
+    if "street" in want and _house_joined(want["street"]) not in _house_joined(job.get("street") or ""):
         return False
     if "note" in want:
         notes = json.loads(job.get("job_notes") or "[]")
         if not any(re.search(want["note"], n, re.IGNORECASE) for n in notes):
             return False
     return True
+
+
+def _house_joined(street: str) -> str:
+    """The street key with a Queens house number joined: "196-11 Hillside" and "19611 Hillside
+    Avenue" name the same house (eval run 20261104-231045)."""
+    return re.sub(r"(?<=\d) (?=\d)", "", street_key(street))
 
 
 def jobs(arg: list[dict], ev: Evidence) -> list[str]:

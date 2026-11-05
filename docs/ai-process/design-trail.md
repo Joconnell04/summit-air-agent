@@ -121,3 +121,5 @@ How the design was reached, in order, so a reader can follow each choice back to
 | Read-back corrections and ended windows | A detail changed after the read-back resets it; a visit whose window ended is asked about, never confirmed | DECISIONS.md 083, #129 |
 | Work we don't do | Declined once by the server from the service list in config, kept as a lead; commercial "office" and ownership phrasings added | DECISIONS.md 084, #129 |
 | Two jobs and named technicians | Two different jobs per call, each with its own read-back where the unit differs; a technician request is a dispatcher note, never a promise | DECISIONS.md 085, #129 |
+| Eval reference before the live calls | Two-sample standard run (186 calls) adopted at 91%; floor stays 90% | DECISIONS.md 011, #139 |
+| Side model threshold and vendor | OpenAI Decisions kept over Jev; a yes needs 0.65, not 0.5 | DECISIONS.md 090 |

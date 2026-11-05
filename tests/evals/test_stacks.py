@@ -253,3 +253,27 @@ def test_every_agent_line_carries_the_servers_speed_and_a_slower_read_back_is_sp
     assert server.speeds == [1.0, 0.85, 0.85, 0.7, 0.85]
     # The parts were spoken from code: the model had no step after read_back.
     assert len(model.calls) == 2
+
+
+class MoveServer(StubServer):
+    """Moves the visit and returns the server's confirmation."""
+
+    def tool(self, name, call_id, args, key=None):
+        return {"ok": True, "say": "Done, I've moved it to Friday, between 12 and 4. Anything else?",
+                "data": {"booking_id": 7}, "refused": None}
+
+
+def test_a_move_is_spoken_once_from_the_server_and_the_model_gets_no_reply_step():
+    """A scripted test call after #135: after the server's confirmation the model narrated "the
+    reschedule ran without a confirmation message" and confirmed the time again."""
+    model = ScriptedModel([
+        use("reschedule_appointment", booking_id=7, slot={"date": "2026-11-06", "window": "afternoon"},
+            reason="can't be home"),
+        say("The reschedule ran without a confirmation message."),
+    ])
+    server = MoveServer()
+    agent = InProcessAgent(server, model, "c1", "(212) 555-0999")
+    agent.start()
+    turn = agent.hear("Friday afternoon works.")
+    assert turn.text == "Done, I've moved it to Friday, between 12 and 4. Anything else?"
+    assert len(model.calls) == 1

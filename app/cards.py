@@ -181,6 +181,16 @@ def _card_grouping(sizes: list[int]) -> bool:
     return all(size == 4 for size in sizes[:-1]) and 1 <= sizes[-1] <= 4
 
 
+def _phone_run(run: Run) -> bool:
+    """A run read as a phone number is: ten digits (eleven starting with 1) in one block, in
+    3-3-4 (1-3-3-4), or one digit at a time. A card's 4-6 start ("3782 822463") is not one."""
+    digits = run.digits
+    if not (len(digits) == 10 or (len(digits) == 11 and digits.startswith("1"))):
+        return False
+    sizes = [len(g) for g in run.groups]
+    return len(sizes) == 1 or sizes in ([3, 3, 4], [1, 3, 3, 4]) or all(n == 1 for n in sizes)
+
+
 def _is_card(runs: list[Run]) -> bool:
     """After a card word any grouping counts ("41", "11", ... read two at a time). Without one,
     the digits must be grouped as a card is read and pass Luhn, except a full 4-4-4-4 or Amex
@@ -231,6 +241,12 @@ def _mark(chain: list[Run]) -> None:
             if j > i and chain[j].after_and:
                 break
             if len("".join(r.digits for r in chain[i : j + 1])) > max(WHOLE_CARD):
+                break
+            # A phone number said whole is never one piece of a card with no card word before it:
+            # "the number's not six four one, it's seven one eight five five five oh one four two"
+            # joined into 13 digits that passed Luhn (eval run 20261104-232053,
+            # moved-out-of-area-open-job).
+            if j > i and not chain[i].cued and any(_phone_run(r) for r in chain[i : j + 1]):
                 break
             if _is_card(chain[i : j + 1]):
                 found = j

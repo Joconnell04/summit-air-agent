@@ -155,6 +155,14 @@ def server_notes(
     return [f"(Server note: {HINT_NOTES[h]})" for h in hints if h in HINT_NOTES]
 
 
+def _for_model(envelope: dict) -> dict:
+    """The result as the worker hands it to the model (prompts/assemble.py for_model)."""
+    assemble = _assemble()
+    if assemble is not None and hasattr(assemble, "for_model"):
+        return assemble.for_model(envelope)
+    return envelope
+
+
 def spoken_by_code(name: str, envelope: dict) -> str | None:
     """Tool results the worker speaks word for word with no model step: a refusal by the safety
     gate, the read-back sentence, and the safety sign-off an end_call returns. The worker's own
@@ -361,9 +369,15 @@ class InProcessAgent:
                 parts = parts or split
                 if not split:
                     from_code = from_code or spoken_by_code(use["name"], envelope)
+                # Said by the worker before the model's reply, which still follows (the
+                # top-priority line from find_slots).
+                first = (envelope.get("data") or {}).get("spoken_first")
+                if first and not from_code:
+                    spoken.append(first)
+                    first_word = first_word or time.perf_counter()
                 results.append(
                     {"type": "tool_result", "tool_use_id": use["id"],
-                     "content": json.dumps(envelope)}
+                     "content": json.dumps(_for_model(envelope))}
                 )
             self.messages.append({"role": "user", "content": results})
             if from_code:
