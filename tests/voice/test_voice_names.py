@@ -145,7 +145,7 @@ def test_the_voice_settings_reach_the_session():
     voice = load_voice()
     tokenizer = tts_options(voice, NAMES)["tokenizer"]
     assert tokenizer._config.min_sentence_len == voice["tts"]["min_sentence_chars"]
-    trial = {**voice, "preemptive_tts": True}
+    trial = {**voice, "preemptive_generation": True, "preemptive_tts": True}
     assert turn_handling(trial)["preemptive_generation"] == {"enabled": True, "preemptive_tts": True}
 
 
@@ -185,3 +185,9 @@ def test_flux_is_switched_on_by_its_provider_and_keeps_the_local_names_as_keyter
     assert turn_handling(flipped)["turn_detection"] == "stt"
     candidate = {**voice, "stt": {**voice["stt_candidates"]["flux"], "eager_eot_threshold": 0.5}}
     assert stt_options(candidate, NAMES)["eager_eot_threshold"] == 0.5
+
+
+def test_preemptive_generation_is_off_because_its_drafts_were_never_kept():
+    """LiveKit keeps an early draft only when the caller's line reaches the model unchanged, and
+    the worker adds the server's notes to most lines (issue #150)."""
+    assert turn_handling(load_voice())["preemptive_generation"]["enabled"] is False

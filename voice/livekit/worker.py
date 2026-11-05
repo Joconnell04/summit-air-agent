@@ -131,7 +131,10 @@ def turn_handling(voice: dict) -> dict:
         # A copy: LiveKit keeps this dict and writes later option changes into it.
         "endpointing": dict(voice["endpointing"]["normal"]),
         "interruption": voice["interruption"],
-        "preemptive_generation": {"enabled": True, "preemptive_tts": voice["preemptive_tts"]},
+        "preemptive_generation": {
+            "enabled": voice["preemptive_generation"],
+            "preemptive_tts": voice["preemptive_tts"],
+        },
     }
 
 

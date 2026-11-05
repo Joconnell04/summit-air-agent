@@ -75,8 +75,13 @@ voice:
   # one (LiveKit's default, 20).
   tts: {provider: cartesia, model: sonic-3, voice_id: 3945925b-9143-4b7d-9ab5-cc4878001106, name: Max,
         min_sentence_chars: 20}
-  # Start the voice on the early reply LiveKit drafts from the final transcript, before the turn
-  # is confirmed over; thrown away if the caller keeps talking.
+  # LiveKit's early reply, drafted from the final transcript before the turn is confirmed over.
+  # Off: LiveKit keeps a draft only when the caller's line reaches the model unchanged, and the
+  # worker adds the server's notes to most lines, so no draft was ever kept (MEASURED: 0 used of 67
+  # on the live worker's log; 0 of 36 and 0 of 13 on summit-rig runs of 5b57b92 and 4b160eb), for
+  # an extra model request on most turns (issue #150).
+  preemptive_generation: false
+  # Start the voice on that early reply too; only applies while preemptive_generation is on.
   preemptive_tts: false
   # The silence that ends the caller's speech. LiveKit's turn detector refuses less than 0.25 s;
   # 0.25 s measured no faster than 0.35 s on the audio rig (evals/rounds/bakeoff-audio-02.md).
