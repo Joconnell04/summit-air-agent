@@ -35,6 +35,8 @@ CREATE TABLE IF NOT EXISTS calls (
     -- 1 between an end_call the server allowed and the bridge stopping the call.
     hangup_pending INTEGER NOT NULL DEFAULT 0,
     hung_up INTEGER NOT NULL DEFAULT 0,
+    -- 1 once the server allowed end_call: a later goodbye from the agent arms the hang-up again.
+    end_allowed INTEGER NOT NULL DEFAULT 0,
     summary_json TEXT
 );
 """
@@ -46,6 +48,9 @@ class Ledger:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         with self.connect() as conn:
             conn.executescript(SCHEMA)
+            columns = {r["name"] for r in conn.execute("PRAGMA table_info(calls)")}
+            if "end_allowed" not in columns:
+                conn.execute("ALTER TABLE calls ADD COLUMN end_allowed INTEGER NOT NULL DEFAULT 0")
         self._locks: dict[str, threading.Lock] = {}
         self._guard = threading.Lock()
 

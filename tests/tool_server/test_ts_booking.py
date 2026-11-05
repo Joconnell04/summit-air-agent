@@ -107,7 +107,8 @@ def test_the_read_back_is_one_sentence_with_the_number_in_groups(agent):
     agent.turn(call, "It's 101 Union St, 11231.")
     asked = agent.tool("read_back", call, address=in_area_address(), phone="caller_id")
     assert asked["say"] == (
-        "I have your home at 101 Union St, Brooklyn, one one two three one, and the best number is "
+        "I have your home at 101 Union St, Brooklyn, ZIP code one one two three one, and the best "
+        "number is "
         "two one two, five five five, zero nine nine nine, is that right?"
     )
     assert "read" not in asked["say"].lower()
@@ -564,7 +565,7 @@ def test_a_parents_house_goes_on_its_own_account_with_the_caller_as_contact(agen
     agent.confirm_read_back(call, mothers)
     refused = book(agent, call, first_open(agent, call))
     assert refused["refused"] == "account_choice"
-    assert "its own account" in refused["say"]
+    assert refused["say"] == "Should I put this under your account?"
     no_name = agent.tool(
         "book_appointment",
         call,
@@ -639,7 +640,7 @@ def test_a_spelled_street_is_joined_into_the_name_for_the_read_back(agent, addre
         "read_back", call, address={"zip": "10302", **address}, phone="caller_id"
     )
     assert asked["ok"], asked
-    assert f"your home at {street}, one zero three zero two" in asked["say"]
+    assert f"your home at {street}, ZIP code one zero three zero two" in asked["say"]
 
 
 def test_an_owner_who_lives_downstairs_with_a_tenant_upstairs_can_book(agent):
@@ -1094,7 +1095,7 @@ def test_whose_account_is_asked_with_the_confirmed_read_back_not_by_a_refused_bo
     agent.turn(call, "Hi, the heat's out at my other place.")
     confirmed = agent.confirm_read_back(call, in_area_address(41))
     assert confirmed["data"]["account_choice"] is True
-    assert "its own account" in confirmed["say"]
+    assert confirmed["say"] == "Should I put this under your account?"
     agent.say(call, confirmed["say"])
     agent.turn(call, "Put it under my account.")
     booked = agent.tool(
@@ -1267,3 +1268,48 @@ def test_a_new_caller_who_already_gave_a_name_is_not_asked_again(agent):
     call = agent.start(UNKNOWN)["data"]["call_id"]
     agent.turn(call, "Hi, this is Pat Rivera, I need a tune-up.")
     assert agent.confirm_read_back(call, in_area_address())["say"] == ""
+
+
+def test_a_unit_and_the_zip_are_said_apart_in_the_read_back(agent):
+    """Retell call call_1840576e622e3d729b760085142: "unit two one zero zero zero nine"."""
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "It's 199 East 4th Street, unit 2, 10009.")
+    address = {"street": "199 E 4th St", "unit": "2", "city": "New York", "zip": "10009"}
+    asked = agent.tool("read_back", call, address=address, phone="caller_id")
+    assert "unit 2, New York, ZIP code one zero zero zero nine" in asked["say"]
+
+
+def test_a_unit_heard_with_the_zip_on_the_end_keeps_only_the_unit(agent):
+    """Retell call call_1840576e622e3d729b760085142: "Unit 2, 10009" was heard as "Unit 210009"."""
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "It's 199 East 4th Street, Unit 210009.")
+    agent.turn(call, "Yes, 10009.")
+    address = {"street": "199 E 4th St", "unit": "210009", "city": "New York", "zip": "10009"}
+    asked = agent.tool("read_back", call, address=address, phone="caller_id")
+    assert "unit 2, New York, ZIP code one zero zero zero nine" in asked["say"]
+
+
+def test_a_caller_who_says_they_are_someone_else_is_booked_as_a_new_customer(
+    agent, mock, scenarios
+):
+    """Retell call call_1840576e622e3d729b760085142: the number was on file under another name, the
+    caller said "No, I'm Jordan Lee. I'm new.", was asked whose account a new address goes on, and
+    was booked with the other customer as the contact. A caller who says they're someone else gets
+    no account question, and the visit goes on a new account in their name alone."""
+    maria = scenarios["repeatCallerOpenJob"]
+    call = agent.start(maria["phone"])["data"]["call_id"]
+    agent.turn(call, "No, I'm Jordan Lee. I'm new. Those aren't mine.")
+    confirmed = agent.confirm_read_back(call, in_area_address(41))
+    assert "account_choice" not in confirmed["data"]
+    booked = agent.tool(
+        "book_appointment",
+        call,
+        job_type="tune_up",
+        slot=first_open(agent, call),
+        details={**DETAILS, "name": "Jordan Lee"},
+    )
+    assert booked["ok"], booked
+    customer = _mock_customer_of_job(mock, booked["data"]["booking_id"])
+    assert customer["id"] != maria["customerId"]
+    assert customer["name"] == "Jordan Lee"
+    assert [c["memo"] for c in customer["contacts"]] == ["Jordan Lee"]

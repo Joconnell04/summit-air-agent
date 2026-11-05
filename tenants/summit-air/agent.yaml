@@ -424,9 +424,10 @@ lines:
     back in a few minutes instead?
   limit: I've already got that taken care of on this call, so let me have someone from the team follow up.
   slot_taken: That window just filled up.
-  # A caller on file booking an address that isn't theirs on file (eval round 2, seed 5).
-  account_choice: >-
-    Should that address go on its own account, with you as a contact, or under your account?
+  # A caller on file booking an address that isn't theirs on file (eval round 2, seed 5). Asked as
+  # one plain yes or no (Retell call call_1840576e622e3d729b760085142: the either/or confused a
+  # caller); a no puts the address on its own account, with the caller as a contact.
+  account_choice: Should I put this under your account?
   account_name: Whose name should the account for that address be under?
   # An open visit at the address whose arrival window has ended (tools._passed_visit). {day} is
   # "today", "yesterday" or a weekday; {between} is "8 and 12".

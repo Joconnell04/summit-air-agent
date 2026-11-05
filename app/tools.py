@@ -1205,6 +1205,50 @@ def _caller_named_anyone(ctx: Ctx) -> bool:
     )
 
 
+SELF_LEADS = (("this", "is"), ("name", "is"), ("names",), ("im",), ("i", "am"))
+
+
+def _someone_else(ctx: Ctx, customer_id: int) -> bool:
+    """The caller introduced themself by a name that isn't the matched customer's, in a line with
+    no word of that customer's name in it ("No, I'm Jordan Lee. I'm new." on a number on file under
+    Pat Rivera, Retell call call_1840576e622e3d729b760085142). That customer isn't the caller: no
+    question about whose account a new address goes on, and the visit doesn't go on theirs. A
+    failed lookup counts the caller as the customer, as before."""
+    try:
+        own = {w for w in _name_words(ctx.fsm.customer(customer_id)["name"]) if len(w) > 1}
+    except (FsmUnavailable, FsmRejected):
+        return False
+    things = ctx.tenant.not_names
+    for row in records.thread_turns(ctx.conn, ctx.call["id"]):
+        if row["call_id"] != ctx.call["id"] or row["speaker"] != "caller":
+            continue
+        raw = re.findall(r"[A-Za-z0-9][A-Za-z0-9'-]*", row["text"])
+        keys = [w.lower().replace("'", "").replace("-", "") for w in raw]
+        if own & set(keys):
+            continue
+        for i in range(len(keys)):
+            for lead in SELF_LEADS:
+                if tuple(keys[i:i + len(lead)]) != lead:
+                    continue
+                j = i + len(lead)
+                while j < len(keys) and keys[j] in ("um", "uh"):
+                    j += 1
+                if j >= len(keys) or _not_a_name(keys[j], things):
+                    continue
+                if raw[j][0].isupper() or (j + 1 < len(keys) and not _not_a_name(keys[j + 1], things)):
+                    return True
+    return False
+
+
+def _callers_accounts(ctx: Ctx) -> dict:
+    """The customers matched on this call, less one the caller said they aren't."""
+    return {
+        cid: row
+        for cid, row in records.scoped_customers(ctx.conn, ctx.call["id"]).items()
+        if not _someone_else(ctx, cid)
+    }
+
+
 def _check_failed_on_call(ctx: Ctx) -> bool:
     """A name and address check failed on this call."""
     return bool(
@@ -1938,6 +1982,16 @@ def _readback_corrected(ctx: Ctx, asked: dict) -> str | None:
     return next((f for r in rows if (f := readback_change(r["text"], asked))), None)
 
 
+def _unit_without_zip(unit: str, zip_code: str) -> str:
+    """A unit that ends in the ZIP keeps what comes before it: "Unit 2, 10009" heard as one number
+    ("Unit 210009", Retell call call_1840576e622e3d729b760085142) was read back as unit 210009."""
+    digits = re.sub(r"\D", "", zip_code or "")
+    compact = re.sub(r"[\s,.-]", "", unit or "")
+    if len(digits) == 5 and len(compact) > 5 and compact.endswith(digits):
+        return compact[:-5]
+    return unit
+
+
 def read_back(ctx: Ctx, args: ReadBackIn) -> Result:
     """Two steps. Without confirmed, returns the exact sentence to read and records that it was
     asked. With confirmed, accepts only if that same sentence was returned on this call and a caller
@@ -1955,12 +2009,16 @@ def read_back(ctx: Ctx, args: ReadBackIn) -> Result:
     _zip_known(ctx, args.address.zip)
     _zip_mismatch(ctx, args.address.zip, args.address.street, args.address.city)
     address = args.address.model_dump()
+    address["unit"] = _unit_without_zip(address["unit"], address["zip"])
     place = address["street"] + (f", unit {address['unit']}" if address["unit"] else "")
     city = f", {address['city']}" if address["city"] else ""
     # The sentence names the address as a home, so every booking has the caller confirm it's
     # residential (assignment; spec S-07). A caller who corrects it is caught by the turn check.
-    # The ZIP and the number are written out digit by digit, as the caller should hear them.
-    spoken_address = f"{place}{city}, {digits_spoken(address['zip'])}"
+    # The ZIP and the number are written out digit by digit, as the caller should hear them, the ZIP
+    # after the words "ZIP code" so a unit before it doesn't run into it ("unit two one zero zero
+    # zero nine" on Retell call call_1840576e622e3d729b760085142; Jackson in call 2: "just say the
+    # zip code is").
+    spoken_address = f"{place}{city}, ZIP code {digits_spoken(address['zip'])}"
     phone_for = _phone_for(ctx, args.phone_for)
     if phone_for:
         sentence = ctx.tenant.line(
@@ -2033,12 +2091,13 @@ def read_back(ctx: Ctx, args: ReadBackIn) -> Result:
                 phone=phone,
                 account_choice=True,
                 need="this question was said for you; when the caller answers, book_appointment "
-                "with new_address_account own (and details.name for that address) or caller",
+                "with new_address_account caller for a yes, or own for a no (with details.name of "
+                "whoever the address's account is for)",
             )
         # A caller with no account who hasn't said a name: the name is asked here, right after
         # the read-back, not by a refused booking after "booking that now" (a scripted call on
         # #159, call-_+16466240418_bUwDUCZFrKN8).
-        if not records.scoped_customers(ctx.conn, ctx.call["id"]) and not _caller_named_anyone(ctx):
+        if not _callers_accounts(ctx) and not _caller_named_anyone(ctx):
             return ok(
                 ctx.tenant.line("booking_name"),
                 confirmed=True,
@@ -2138,7 +2197,7 @@ def book_appointment(ctx: Ctx, args: BookIn) -> Result:
             ctx.tenant.line("slot_taken"),
             alternatives=_alternatives(ctx, job_type, decided.level),
         )
-    scoped = records.scoped_customers(ctx.conn, ctx.call["id"])
+    scoped = _callers_accounts(ctx)
     if not scoped and not details["name"]:
         raise Refused(
             "invalid_arguments", "Can I get a name for the booking?", errors={"name": "needed"}
@@ -2563,7 +2622,7 @@ def _passed_visit(ctx: Ctx, job: dict) -> None:
 def _account_phone(ctx: Ctx, chosen: int | None) -> str:
     """The account's own number, for a booking whose number reaches someone else: the one on file
     for the one customer matched, otherwise the number the call came from."""
-    scoped = [chosen] if chosen else list(records.scoped_customers(ctx.conn, ctx.call["id"]))
+    scoped = [chosen] if chosen else list(_callers_accounts(ctx))
     if len(scoped) == 1:
         on_file = _on_file_phone(ctx, scoped[0])
         if on_file:
@@ -2577,7 +2636,7 @@ def _new_address_customer(ctx: Ctx, readback: dict, chosen: int | None = None) -
     asked; None otherwise. FSM errors are raised for the caller to handle."""
     scoped = [
         (cid, row)
-        for cid, row in records.scoped_customers(ctx.conn, ctx.call["id"]).items()
+        for cid, row in _callers_accounts(ctx).items()
         if row["customer_type"] not in ctx.tenant.rejected_customer_types
         and (chosen is None or cid == chosen)
     ]
@@ -2613,8 +2672,8 @@ def _new_address_account(
         raise Refused(
             "account_choice",
             ctx.tenant.line("account_choice"),
-            need="ask, then book_appointment with new_address_account own (and details.name for "
-            "that address) or caller",
+            need="ask, then book_appointment with new_address_account caller for a yes, or own "
+            "for a no (with details.name of whoever the address's account is for)",
         )
     if args.new_address_account == "caller":
         return "caller", None

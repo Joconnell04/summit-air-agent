@@ -430,3 +430,30 @@ def test_a_goodbye_already_said_with_a_tool_sentence_stops_one_grace_after_it(
     assert delay == pytest.approx(3.0 + 0.35 * len(bye.split()) + HANGUP_GRACE_S)
     later.run()
     assert retell.stopped == ["abc"], "stopped at the first check, no extra wait"
+
+
+def test_a_thanks_and_bye_in_the_grace_keeps_the_hang_up(client, retell, later):
+    """Retell call call_1840576e622e3d729b760085142: the caller said "Thanks. Bye." inside the
+    grace, the hang-up was called off, and the call ran to its 5-minute limit."""
+    said = booked_call(client)
+    bye = [*said, utterance("user", "That's all."), utterance("agent", "Thanks for calling, take care.")]
+    tool(client, "end_call", call_obj("abc", *bye), reason="resolved")
+    event(client, "transcript_updated", call_obj("abc", *bye, utterance("user", "Thanks. Bye.")))
+    later.run()
+    assert retell.stopped == ["abc"]
+
+
+def test_a_goodbye_said_again_after_the_hang_up_was_called_off_arms_it_again(
+    client, retell, later
+):
+    said = booked_call(client)
+    bye = [*said, utterance("user", "That's all."), utterance("agent", "Thanks for calling, take care.")]
+    tool(client, "end_call", call_obj("abc", *bye), reason="resolved")
+    more = [*bye, utterance("user", "Oh wait, is the tech bringing filters?")]
+    event(client, "transcript_updated", call_obj("abc", *more))
+    later.run()
+    assert retell.stopped == [], "the caller asked something more"
+    again = [*more, utterance("agent", "Yes, they will. Thanks for calling, have a great day.")]
+    event(client, "transcript_updated", call_obj("abc", *again))
+    later.run()
+    assert retell.stopped == ["abc"]
