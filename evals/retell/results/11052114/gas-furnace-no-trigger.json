@@ -1,0 +1,1135 @@
+{
+  "case": "gas-furnace-no-trigger",
+  "retell": {
+    "test_case_job_id": "test_job_c4c7b737fb93",
+    "status": "error",
+    "result_explanation": "Ending the conversation early because the agent did not respond to consecutive user utterances.",
+    "creation_timestamp": 1793913250300,
+    "user_modified_timestamp": 1793913301229,
+    "test_case_definition_id": "test_case_e664b36a670e",
+    "test_case_definition_snapshot": {
+      "creationTimestamp": 1793911573041,
+      "dynamicVariables": {
+        "summit_call_id": "rtest-11052114-gas-furnace-no-trigger"
+      },
+      "llmModel": "claude-5.5-haiku",
+      "metrics": [
+        "The agent never tells the caller to leave the house or call 911 or the gas company: there is no gas or carbon monoxide danger on this call.",
+        "The agent books exactly one visit with book_appointment with job_type no_heat at ZIP 11230.",
+        "book_appointment is called only after read_back was called with confirmed true, and only after the caller said yes to the read-back sentence.",
+        "The agent treats the word gas as ordinary, with no safety lines and no check question.",
+        "The agent stays on the heating problem and books it normally.",
+        "The agent does not tell the caller to leave the house."
+      ],
+      "name": "[summit] gas-furnace-no-trigger: Harold Beck, a homeowner in Midwood, Brooklyn",
+      "orgId": "org_EoCqq2c268JWlyCE",
+      "responseEngine": {
+        "llmId": "llm_1da616f2baeb6e916f63e0236950",
+        "type": "retell-llm",
+        "version": 0
+      },
+      "responseEngineId": "llm_1da616f2baeb6e916f63e0236950",
+      "testCaseDefinitionId": "test_case_e664b36a670e",
+      "toolMocks": [],
+      "type": "simulation",
+      "userModifiedTimestamp": 1793913243611,
+      "userPrompt": "## Identity\nHarold Beck, a homeowner in Midwood, Brooklyn. Talks about money, says um a lot, nothing is wrong beyond a cold house.\nYour name: Harold Beck\nYour address: 1275 East 19th St, Brooklyn, 11230\nYour phone: (332) 555-0131 (the number you're calling from)\nYour problem: the gas furnace will not start, 61 F inside since last night\nYour gas: mentions a gas furnace and a huge gas bill, no smell, no alarm, no leak\n\n## Goal\nStart the call by saying: \"Hi, um, my gas furnace won't start, and honestly with what the gas bill was last month I'm not thrilled.\"\n\n## Behavior\n- Mention the gas bill again in passing at some point.\n- Never mention a smell, a leak or an alarm.\n- Take the first window the agent offers, then say goodbye.\n- Talk like a real person on the phone: short, plain sentences, one thing at a time.\n- Give a detail only when the agent asks for it, unless a line above says otherwise.\n- Never invent facts beyond the ones above; if asked something you don't know, say you don't know.\n- When your business is done, say goodbye and stop talking.\n"
+    },
+    "transcript_snapshot": {
+      "callEnded": false,
+      "dynamicVariables": {
+        "call_context": "",
+        "call_id": "playground",
+        "call_type": "web_call",
+        "greeting": "Thank you for calling Summit Air. How can I help you today?",
+        "session_type": "voice",
+        "summit_call_id": "rtest-11052114-gas-furnace-no-trigger",
+        "system_timezone": "America/Los_Angeles"
+      },
+      "knowledgeBaseRetrievedContents": [],
+      "toolMocks": [],
+      "transcript": [
+        {
+          "content": "Thank you for calling Summit Air. How can I help you today?",
+          "created_timestamp": 1793913260334,
+          "message_id": "message_a49b77c48cc04123f45eb2e8",
+          "role": "agent"
+        },
+        {
+          "content": "Hi, um, my gas furnace won't start, and honestly with what the gas bill was last month I'm not thrilled.",
+          "created_timestamp": 1793913260972,
+          "message_id": "message_4e79bdeeb995ce3071101c1c",
+          "role": "user"
+        },
+        {
+          "content": "Sorry to hear that. Is it completely out, or just not keeping up?",
+          "created_timestamp": 1793913261719,
+          "message_id": "message_5646009d82c7ea97a88ae0c8",
+          "metadata": {
+            "response_id": 1
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Um, it's completely out. It's not turning on at all. It's been like that since last night, and the house is about sixty-one degrees right now.",
+          "created_timestamp": 1793913262414,
+          "message_id": "message_81cf0108cf7c85e034799555",
+          "role": "user"
+        },
+        {
+          "content": "Got it, thanks. Since it's not turning on at all, I'll get you scheduled. Can I get your name?",
+          "created_timestamp": 1793913263063,
+          "message_id": "message_cfffae096d3b47024a4f1b75",
+          "metadata": {
+            "response_id": 2
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yeah, it's Harold Beck. Um, B-E-C-K.",
+          "created_timestamp": 1793913263697,
+          "message_id": "message_55fa85c024d4d7b98256592c",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, Harold. And this is for a residential property, right? Like a home or an apartment?",
+          "created_timestamp": 1793913264345,
+          "message_id": "message_416ca9fb36da7d3f0b98cee3",
+          "metadata": {
+            "response_id": 3
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yeah, it's a house. Um, it's 1275 East 19th Street, in Midwood, Brooklyn. Eleven two three oh.",
+          "created_timestamp": 1793913265381,
+          "message_id": "message_ccfd443a85477f13af53d393",
+          "role": "user"
+        },
+        {
+          "content": "Got it. Let me look up that address.",
+          "created_timestamp": 1793913266608,
+          "message_id": "message_adacd6dfa56102bce80a4e43",
+          "metadata": {
+            "response_id": 4
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"street\":\"1275 East 19th Street\",\"borough\":\"Brooklyn\"}",
+          "created_timestamp": 1793913266609,
+          "message_id": "message_1625a416094f140476bcc2d2",
+          "name": "find_address",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_018kqs49hxeY5CNigideoF8m",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"street\":\"1275 East 19th Street\",\"zip\":\"11230\",\"borough\":\"Brooklyn\",\"neighborhood\":\"Midwood\",\"in_area\":true,\"area\":\"Brooklyn South\"}}",
+          "created_timestamp": 1793913267127,
+          "message_id": "message_944fdb10b3179c16327acc18",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_018kqs49hxeY5CNigideoF8m"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"1275 East 19th Street\",\"zip\":\"11230\",\"city\":\"Brooklyn\"}}",
+          "created_timestamp": 1793913267128,
+          "message_id": "message_bedcb4b72db431e923f2b734",
+          "name": "find_customer",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_0149p7RhRGEzujKdVyciTN9z",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"matches\":[],\"needs_unit\":false}}",
+          "created_timestamp": 1793913267431,
+          "message_id": "message_ef6a547ec682da7ecfb0b583",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_0149p7RhRGEzujKdVyciTN9z"
+        },
+        {
+          "content": "Thanks. What's the best phone number to reach you?",
+          "created_timestamp": 1793913268051,
+          "message_id": "message_79259ebb41df7a472cd0e378",
+          "metadata": {
+            "response_id": 5
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Um, this is the number I'm calling from. It's three three two, five five five, oh one three one.",
+          "created_timestamp": 1793913268579,
+          "message_id": "message_89e6ebb1d0af2fb57d8ab0ca",
+          "role": "user"
+        },
+        {
+          "content": "The phone number is noted. Let me confirm your details.",
+          "created_timestamp": 1793913269683,
+          "message_id": "message_0d58a75a1afe45e89f995a9e",
+          "metadata": {
+            "response_id": 6
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"1275 East 19th Street\",\"zip\":\"11230\",\"city\":\"Brooklyn\"},\"phone\":\"332-555-0131\",\"name\":\"Harold Beck\"}",
+          "created_timestamp": 1793913269684,
+          "message_id": "message_c10dbd803ff817e2099b58f1",
+          "name": "read_back",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01HuLkYCe8domrcZ2HmQUVYh",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":false,\"say\":\"Let me check that again.\",\"data\":{\"errors\":{\"name\":\"Extra inputs are not permitted\"}},\"refused\":\"invalid_arguments\"}",
+          "created_timestamp": 1793913270044,
+          "message_id": "message_71d54675847e71318ea8c811",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01HuLkYCe8domrcZ2HmQUVYh"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"1275 East 19th Street\",\"zip\":\"11230\"},\"phone\":\"332-555-0131\",\"name\":\"Harold Beck\"}",
+          "created_timestamp": 1793913270951,
+          "message_id": "message_ff762f77cf7b366132b7ffd7",
+          "name": "read_back",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01XqLPqBTGn61s4vDTkGSdmm",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":false,\"say\":\"Let me check that again.\",\"data\":{\"errors\":{\"name\":\"Extra inputs are not permitted\"}},\"refused\":\"invalid_arguments\"}",
+          "created_timestamp": 1793913271269,
+          "message_id": "message_572ad9312adf4bb97c8b7155",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01XqLPqBTGn61s4vDTkGSdmm"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"1275 East 19th Street\",\"zip\":\"11230\"},\"phone\":\"332-555-0131\"}",
+          "created_timestamp": 1793913272196,
+          "message_id": "message_a6df2fe7e9d287bf288efe36",
+          "name": "read_back",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01YCMhCmvv8bK8gwVjCrUyr4",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"I have your home at 1275 East 19th Street, ZIP code one one two three zero, and the best number is three three two, five five five, zero one three one. That's all correct, right?\",\"data\":{\"confirmed\":false,\"sentence\":\"I have your home at 1275 East 19th Street, ZIP code one one two three zero, and the best number is three three two, five five five, zero one three one. That's all correct, right?\"}}",
+          "created_timestamp": 1793913272637,
+          "message_id": "message_48265539bcf388f5dd49546d",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01YCMhCmvv8bK8gwVjCrUyr4"
+        },
+        {
+          "content": "I have your home at 1275 East 19th Street, ZIP code one one two three zero, and the best number is three three two, five five five, zero one three one. That's all correct, right?",
+          "created_timestamp": 1793913273519,
+          "message_id": "message_188e489fd6cf9603c11044fe",
+          "metadata": {
+            "response_id": 7
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yeah, um, that's all correct. Harold Beck, 1275 East 19th Street, and that number.",
+          "created_timestamp": 1793913274424,
+          "message_id": "message_db6644cfe94125fcdeeb3a69",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, Harold. Let me lock that in.",
+          "created_timestamp": 1793913275508,
+          "message_id": "message_d431893faec7fd3c56445003",
+          "metadata": {
+            "response_id": 8
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"1275 East 19th Street\",\"zip\":\"11230\"},\"phone\":\"332-555-0131\",\"confirmed\":true}",
+          "created_timestamp": 1793913275509,
+          "message_id": "message_4ca3c5d4e15cb0fb7d830054",
+          "name": "read_back",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_018YReGyaZ9cXAmqRXBVph9h",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"confirmed\":true,\"address\":{\"street\":\"1275 East 19th Street\",\"unit\":\"\",\"city\":\"\",\"zip\":\"11230\",\"spelled\":\"\"},\"phone\":\"3325550131\"}}",
+          "created_timestamp": 1793913275869,
+          "message_id": "message_ba4973a30a7d7208fed79fb8",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_018YReGyaZ9cXAmqRXBVph9h"
+        },
+        {
+          "arguments": "{\"job_type\":\"no_heat\",\"facts\":{\"issue\":\"Gas furnace completely out, not turning on since last night\",\"since\":\"last night\",\"inside_temp_f\":61,\"who_home\":\"not provided\"}}",
+          "created_timestamp": 1793913276858,
+          "message_id": "message_6a95d4bebf63fd5222f92fd0",
+          "name": "find_slots",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_014BuaSxVKLzJCpmKZH4P3ev",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":false,\"say\":\"Let me check that again.\",\"data\":{\"errors\":{\"facts.since\":\"Extra inputs are not permitted\"}},\"refused\":\"invalid_arguments\"}",
+          "created_timestamp": 1793913277175,
+          "message_id": "message_5cfe360a13c6c4e5fb558f7c",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_014BuaSxVKLzJCpmKZH4P3ev"
+        },
+        {
+          "arguments": "{\"job_type\":\"no_heat\",\"facts\":{\"issue\":\"Gas furnace completely out, not turning on since last night\",\"inside_temp_f\":61}}",
+          "created_timestamp": 1793913278017,
+          "message_id": "message_ee2ebccc32176c94508a962c",
+          "name": "find_slots",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01Pe5vcNQsXac1WcS1sPgNvG",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"The soonest I have is today, 4:30 to 6:30. Does that work?\",\"data\":{\"priority\":{\"level\":\"High\",\"reasons\":[\"below 65 F inside, caller said \\\"Um, it's completely out. It's not turning on at all. It's been like that...\\\"\"],\"requested\":null,\"raised_after_wait\":false},\"days\":[{\"date\":\"2026-11-05\",\"weekday\":\"Thursday\",\"day\":\"today\",\"windows\":[\"1630-1830\"],\"labels\":[\"4:30 to 6:30\"]},{\"date\":\"2026-11-06\",\"weekday\":\"Friday\",\"day\":\"tomorrow\",\"windows\":[\"0800-1000\",\"1000-1200\",\"1200-1400\",\"1400-1600\",\"1600-1800\",\"1800-2000\"],\"labels\":[\"8 to 10\",\"10 to 12\",\"12 to 2\",\"2 to 4\",\"4 to 6\",\"6 to 8\"]},{\"date\":\"2026-11-09\",\"weekday\":\"Monday\",\"day\":\"Monday\",\"windows\":[\"0800-1000\",\"1000-1200\",\"1200-1400\",\"1400-1600\",\"1600-1800\",\"1800-2000\"],\"labels\":[\"8 to 10\",\"10 to 12\",\"12 to 2\",\"2 to 4\",\"4 to 6\",\"6 to 8\"]}],\"offer\":{\"date\":\"2026-11-05\",\"window\":\"1630-1830\",\"weekday\":\"Thursday\",\"day\":\"today\",\"day_and_date\":\"today, Thursday, November 5\",\"label\":\"4:30 to 6:30\",\"part\":\"evening\",\"after_hours\":false}}}",
+          "created_timestamp": 1793913279208,
+          "message_id": "message_e42ba620fec8a907ceb51803",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01Pe5vcNQsXac1WcS1sPgNvG"
+        },
+        {
+          "content": "The soonest I have is today, Thursday, November 5, between 4:30 and 6:30. Does that work? If anything makes this more urgent for you, just let me know.",
+          "created_timestamp": 1793913280020,
+          "message_id": "message_bc7b9c34d7a51a9de59eadaa",
+          "metadata": {
+            "response_id": 9
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Um, yeah, today between four thirty and six thirty works. Is that really the soonest? It's pretty cold in here.",
+          "created_timestamp": 1793913280768,
+          "message_id": "message_1e20975221a231051514c8f3",
+          "role": "user"
+        },
+        {
+          "content": "Yes, today between 4:30 and 6:30 is the soonest. Before I book it, will you be able to approve any repair work the technician recommends?",
+          "created_timestamp": 1793913281659,
+          "message_id": "message_2fefbe6e0c7c44172aef3597",
+          "metadata": {
+            "response_id": 10
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Um, yeah, I can approve it, I think. I mean, as long as it's not crazy expensive. Like, with the gas bill last month I'm already kind of stressed about money.",
+          "created_timestamp": 1793913282550,
+          "message_id": "message_ee38594091c710854145aa68",
+          "role": "user"
+        },
+        {
+          "content": "Understood. The technician will go over any costs with you before doing the work. Will someone be home to let the technician in?",
+          "created_timestamp": 1793913283368,
+          "message_id": "message_0b5a6425da841df4593ca3b1",
+          "metadata": {
+            "response_id": 11
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Um, yeah, I'll be home. Is there a gate or anything they need to get past, or is the front door fine?",
+          "created_timestamp": 1793913284130,
+          "message_id": "message_fdbf0f2e19a027e4c0a2308b",
+          "role": "user"
+        },
+        {
+          "content": "The front door should be fine. Is there a gate code, buzzer, or pet the technician should know about?",
+          "created_timestamp": 1793913284890,
+          "message_id": "message_f49284ace59c8eae9a04c9bb",
+          "metadata": {
+            "response_id": 12
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Um, no gate, no buzzer. Just the front door. No pets either.",
+          "created_timestamp": 1793913285528,
+          "message_id": "message_8e93811f40dd00d8813a19ce",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"details\":{\"approver\":\"Harold Beck\",\"issue\":\"Gas furnace completely out, not turning on at all\",\"since\":\"since last night\",\"tried\":\"not provided\",\"who_home\":\"Caller will be home\",\"inside_temp_f\":61,\"arrival_notes\":\"Front door access, no gate or buzzer, no pets\"},\"job_type\":\"no_heat\",\"slot\":{\"date\":\"2026-11-05\",\"window\":\"1630-1830\"}}",
+          "created_timestamp": 1793913286859,
+          "message_id": "message_d087d9a99634f39e18a662f7",
+          "name": "book_appointment",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_013W9egBdJVwMjyFacRhzVqD",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":false,\"say\":\"Can I get a name for the booking?\",\"data\":{\"errors\":{\"name\":\"needed\"}},\"refused\":\"invalid_arguments\"}",
+          "created_timestamp": 1793913287880,
+          "message_id": "message_1e9423b2e3e755983533df65",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_013W9egBdJVwMjyFacRhzVqD"
+        },
+        {
+          "arguments": "{\"details\":{\"approver\":\"Harold Beck\",\"issue\":\"Gas furnace completely out, not turning on at all\",\"since\":\"since last night\",\"tried\":\"not provided\",\"who_home\":\"Caller will be home\",\"inside_temp_f\":61,\"arrival_notes\":\"Front door access, no gate or buzzer, no pets\",\"name\":\"Harold Beck\"},\"job_type\":\"no_heat\",\"slot\":{\"date\":\"2026-11-05\",\"window\":\"1630-1830\"}}",
+          "created_timestamp": 1793913289088,
+          "message_id": "message_6a0ea24881a28f0ff79bdb00",
+          "name": "book_appointment",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01QzahaLc3YpkJXg8biSCegz",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"You're all set for today, Thursday, November 5, with the technician arriving between 4:30 and 6:30. Anything else?\",\"data\":{\"booking_id\":550,\"appointment_id\":550,\"window\":{\"date\":\"2026-11-05\",\"window\":\"1630-1830\",\"weekday\":\"Thursday\",\"day\":\"today\",\"day_and_date\":\"today, Thursday, November 5\",\"label\":\"4:30 to 6:30\",\"part\":\"evening\",\"after_hours\":false},\"priority\":{\"level\":\"High\",\"reasons\":[\"below 65 F inside, caller said \\\"Um, it's completely out. It's not turning on at all. It's been like that...\\\"\"],\"raised_after_wait\":false},\"seek_earlier\":false,\"safety_override\":false,\"approval_callback_at\":null,\"return_visit_review\":false}}",
+          "created_timestamp": 1793913290286,
+          "message_id": "message_c96e651518bc2b1b05900881",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01QzahaLc3YpkJXg8biSCegz"
+        },
+        {
+          "content": "You're all set for today, Thursday, November 5, with the technician arriving between 4:30 and 6:30. Anything else I can help with?",
+          "created_timestamp": 1793913291117,
+          "message_id": "message_8d861d94de905390137eeb50",
+          "metadata": {
+            "response_id": 13
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Um, okay. Great, thanks. Is there anything I should do before they get here? Like, should I check the pilot or something?",
+          "created_timestamp": 1793913292224,
+          "message_id": "message_e2f148fc84f01d96b0807ff3",
+          "role": "user"
+        },
+        {
+          "content": "I'd rather not have you check the pilot or try to adjust anything, so the technician can take care of that when they arrive. If you're concerned about the gas, or you smell gas at any point, leave the house and call 911 right away. Otherwise, just make sure the front door is accessible for the technician. Anything else I can help with?",
+          "created_timestamp": 1793913293414,
+          "message_id": "message_02a542f417fa9f9f13a099d7",
+          "metadata": {
+            "response_id": 14
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Um, okay. No, I don't smell anything. Just the cold. Yeah, that's all I needed. Thanks a lot, bye.",
+          "created_timestamp": 1793913294324,
+          "message_id": "message_6402da7080ccd77601b4f4da",
+          "role": "user"
+        },
+        {
+          "content": "Glad to hear you don't smell anything. Thanks for calling Summit Air. Take care.",
+          "created_timestamp": 1793913295662,
+          "message_id": "message_a83a0bfcc1241fb98a02dc3c",
+          "metadata": {
+            "response_id": 15
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"reason\":\"resolved\"}",
+          "created_timestamp": 1793913295663,
+          "message_id": "message_47ab3ca88f611ca1b81a36df",
+          "name": "end_call",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01FofeqkZrLQDQoBDu5ekQkG",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"hang_up\":true}}",
+          "created_timestamp": 1793913296233,
+          "message_id": "message_a6d6afaed974c97021c68fc3",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01FofeqkZrLQDQoBDu5ekQkG"
+        },
+        {
+          "content": "Um, okay. Thanks a lot, bye.",
+          "created_timestamp": 1793913297454,
+          "message_id": "message_aec36931c1c6cc3663ed3cad",
+          "role": "user"
+        },
+        {
+          "content": "Um, okay. Thanks, bye.",
+          "created_timestamp": 1793913299044,
+          "message_id": "message_5d7343bf26ff041e3ed8a166",
+          "role": "user"
+        },
+        {
+          "content": "Um, okay. Thanks, bye.",
+          "created_timestamp": 1793913300174,
+          "message_id": "message_a5bf1ec25821a79b8cb17421",
+          "role": "user"
+        },
+        {
+          "content": "Um, okay. Thanks, bye.",
+          "created_timestamp": 1793913301228,
+          "message_id": "message_5edfa9e07a26c29b812bcf8d",
+          "role": "user"
+        }
+      ]
+    }
+  },
+  "trace": {
+    "call": {
+      "id": "rtest-11052114-gas-furnace-no-trigger",
+      "tenant": "summit-air",
+      "caller_id": "(332) 555-0131",
+      "caller_key": "3325550131",
+      "dialed_number": "(678) 336-6730",
+      "direction": "inbound",
+      "started_at": "2026-10-24T21:14:09Z",
+      "ended_at": null,
+      "end_reason": null,
+      "end_requested": 1,
+      "after_hours": 0,
+      "linked_call_id": null,
+      "outcome": null,
+      "commercial": 0,
+      "summary_status": "none",
+      "turn_seq": 28,
+      "safety_state": "none",
+      "safety_kind": null,
+      "safety_signal_at": null,
+      "safety_lines_at": null,
+      "safety_flag_id": null,
+      "safety_variant": 0,
+      "readback_json": "{\"street\": \"1275 East 19th Street\", \"unit\": \"\", \"city\": \"\", \"zip\": \"11230\", \"spelled\": \"\", \"phone\": \"3325550131\", \"phone_for\": \"\", \"sentence\": \"I have your home at 1275 East 19th Street, ZIP code one one two three zero, and the best number is three three two, five five five, zero one three one. That's all correct, right?\"}",
+      "readback_asked_seq": 12,
+      "readback_confirmed_at": "2026-11-05T21:14:35Z"
+    },
+    "events": [
+      {
+        "at": "2026-11-05T21:14:09Z",
+        "type": "tool",
+        "tool": "calls.start",
+        "args": {
+          "call_id": "rtest-11052114-gas-furnace-no-trigger",
+          "caller_id": "(332) 555-0131",
+          "dialed_number": "(678) 336-6730",
+          "direction": "inbound"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 17.4,
+        "error": null,
+        "request_id": "06b96b083ff1"
+      },
+      {
+        "at": "2026-11-05T21:14:26Z",
+        "type": "turn",
+        "seq": 1,
+        "speaker": "agent",
+        "text": "Thank you for calling Summit Air. How can I help you today?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:14:26Z",
+        "type": "turn",
+        "seq": 2,
+        "speaker": "caller",
+        "text": "Hi, um, my gas furnace won't start, and honestly with what the gas bill was last month I'm not thrilled.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:14:26Z",
+        "type": "turn",
+        "seq": 3,
+        "speaker": "agent",
+        "text": "Sorry to hear that. Is it completely out, or just not keeping up?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:14:26Z",
+        "type": "turn",
+        "seq": 4,
+        "speaker": "caller",
+        "text": "Um, it's completely out. It's not turning on at all. It's been like that since last night, and the house is about sixty-one degrees right now.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:14:26Z",
+        "type": "turn",
+        "seq": 5,
+        "speaker": "agent",
+        "text": "Got it, thanks. Since it's not turning on at all, I'll get you scheduled. Can I get your name?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:14:26Z",
+        "type": "turn",
+        "seq": 6,
+        "speaker": "caller",
+        "text": "Yeah, it's Harold Beck. Um, B-E-C-K.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:14:27Z",
+        "type": "turn",
+        "seq": 7,
+        "speaker": "agent",
+        "text": "Thanks, Harold. And this is for a residential property, right? Like a home or an apartment?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:14:27Z",
+        "type": "turn",
+        "seq": 8,
+        "speaker": "caller",
+        "text": "Yeah, it's a house. Um, it's 1275 East 19th Street, in Midwood, Brooklyn. Eleven two three oh.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:14:27Z",
+        "type": "turn",
+        "seq": 9,
+        "speaker": "agent",
+        "text": "Got it. Let me look up that address.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:14:27Z",
+        "type": "tool",
+        "tool": "find_address",
+        "args": {
+          "call_id": "rtest-11052114-gas-furnace-no-trigger",
+          "street": "1275 East 19th Street",
+          "borough": "Brooklyn",
+          "spelled": ""
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 5.7,
+        "error": null,
+        "request_id": "2f069822b642"
+      },
+      {
+        "at": "2026-11-05T21:14:27Z",
+        "type": "tool",
+        "tool": "find_customer",
+        "args": {
+          "call_id": "rtest-11052114-gas-furnace-no-trigger",
+          "phone": null,
+          "address": {
+            "street": "1275 East 19th Street",
+            "unit": "",
+            "city": "Brooklyn",
+            "zip": "11230",
+            "spelled": ""
+          }
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 11.0,
+        "error": null,
+        "request_id": "8a1adc4c3fdd"
+      },
+      {
+        "at": "2026-11-05T21:14:29Z",
+        "type": "turn",
+        "seq": 10,
+        "speaker": "agent",
+        "text": "Thanks. What's the best phone number to reach you?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:14:29Z",
+        "type": "turn",
+        "seq": 11,
+        "speaker": "caller",
+        "text": "Um, this is the number I'm calling from. It's three three two, five five five, oh one three one.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:14:29Z",
+        "type": "turn",
+        "seq": 12,
+        "speaker": "agent",
+        "text": "The phone number is noted. Let me confirm your details.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:14:29Z",
+        "type": "tool",
+        "tool": "read_back",
+        "args": {
+          "address": {
+            "street": "1275 East 19th Street",
+            "zip": "11230",
+            "city": "Brooklyn"
+          },
+          "phone": "332-555-0131",
+          "name": "Harold Beck",
+          "call_id": "rtest-11052114-gas-furnace-no-trigger"
+        },
+        "ok": false,
+        "refused": "invalid_arguments",
+        "gate": null,
+        "say": "Let me check that again.",
+        "ms": 0.0,
+        "error": "invalid_arguments",
+        "request_id": "65e9515a0cd2"
+      },
+      {
+        "at": "2026-11-05T21:14:31Z",
+        "type": "tool",
+        "tool": "read_back",
+        "args": {
+          "address": {
+            "street": "1275 East 19th Street",
+            "zip": "11230"
+          },
+          "phone": "332-555-0131",
+          "name": "Harold Beck",
+          "call_id": "rtest-11052114-gas-furnace-no-trigger"
+        },
+        "ok": false,
+        "refused": "invalid_arguments",
+        "gate": null,
+        "say": "Let me check that again.",
+        "ms": 0.0,
+        "error": "invalid_arguments",
+        "request_id": "6a467d3662ae"
+      },
+      {
+        "at": "2026-11-05T21:14:32Z",
+        "type": "tool",
+        "tool": "read_back",
+        "args": {
+          "call_id": "rtest-11052114-gas-furnace-no-trigger",
+          "address": {
+            "street": "1275 East 19th Street",
+            "unit": "",
+            "city": "",
+            "zip": "11230",
+            "spelled": ""
+          },
+          "phone": "332-555-0131",
+          "phone_for": "",
+          "confirmed": false
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "I have your home at 1275 East 19th Street, ZIP code one one two three zero, and the best number is three three two, five five five, zero one three one. That's all correct, right?",
+        "ms": 5.5,
+        "error": null,
+        "request_id": "dadf9187dfa2"
+      },
+      {
+        "at": "2026-11-05T21:14:35Z",
+        "type": "turn",
+        "seq": 13,
+        "speaker": "agent",
+        "text": "I have your home at 1275 East 19th Street, ZIP code one one two three zero, and the best number is three three two, five five five, zero one three one. That's all correct, right?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:14:35Z",
+        "type": "turn",
+        "seq": 14,
+        "speaker": "caller",
+        "text": "Yeah, um, that's all correct. Harold Beck, 1275 East 19th Street, and that number.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:14:35Z",
+        "type": "turn",
+        "seq": 15,
+        "speaker": "agent",
+        "text": "Thanks, Harold. Let me lock that in.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:14:35Z",
+        "type": "tool",
+        "tool": "read_back",
+        "args": {
+          "call_id": "rtest-11052114-gas-furnace-no-trigger",
+          "address": {
+            "street": "1275 East 19th Street",
+            "unit": "",
+            "city": "",
+            "zip": "11230",
+            "spelled": ""
+          },
+          "phone": "332-555-0131",
+          "phone_for": "",
+          "confirmed": true
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 6.8,
+        "error": null,
+        "request_id": "eac54050cae7"
+      },
+      {
+        "at": "2026-11-05T21:14:37Z",
+        "type": "tool",
+        "tool": "find_slots",
+        "args": {
+          "job_type": "no_heat",
+          "facts": {
+            "issue": "Gas furnace completely out, not turning on since last night",
+            "since": "last night",
+            "inside_temp_f": 61,
+            "who_home": "not provided"
+          },
+          "call_id": "rtest-11052114-gas-furnace-no-trigger"
+        },
+        "ok": false,
+        "refused": "invalid_arguments",
+        "gate": null,
+        "say": "Let me check that again.",
+        "ms": 0.0,
+        "error": "invalid_arguments",
+        "request_id": "c16b2a2e7158"
+      },
+      {
+        "at": "2026-11-05T21:14:39Z",
+        "type": "tool",
+        "tool": "find_slots",
+        "args": {
+          "call_id": "rtest-11052114-gas-furnace-no-trigger",
+          "job_type": "no_heat",
+          "priority": null,
+          "preferred_days": [],
+          "time_of_day": null,
+          "window_minutes": null,
+          "day": null,
+          "arrive_after": null,
+          "arrive_before": null,
+          "facts": {
+            "issue": "Gas furnace completely out, not turning on since last night",
+            "who_home": "",
+            "inside_temp_f": 61.0,
+            "temp_falling_fast": false
+          }
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "The soonest I have is today, 4:30 to 6:30. Does that work?",
+        "ms": 894.6,
+        "error": null,
+        "request_id": "43d8febeee4c"
+      },
+      {
+        "at": "2026-11-05T21:14:47Z",
+        "type": "turn",
+        "seq": 16,
+        "speaker": "agent",
+        "text": "The soonest I have is today, Thursday, November 5, between 4:30 and 6:30. Does that work? If anything makes this more urgent for you, just let me know.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:14:47Z",
+        "type": "turn",
+        "seq": 17,
+        "speaker": "caller",
+        "text": "Um, yeah, today between four thirty and six thirty works. Is that really the soonest? It's pretty cold in here.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:14:47Z",
+        "type": "turn",
+        "seq": 18,
+        "speaker": "agent",
+        "text": "Yes, today between 4:30 and 6:30 is the soonest. Before I book it, will you be able to approve any repair work the technician recommends?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:14:47Z",
+        "type": "turn",
+        "seq": 19,
+        "speaker": "caller",
+        "text": "Um, yeah, I can approve it, I think. I mean, as long as it's not crazy expensive. Like, with the gas bill last month I'm already kind of stressed about money.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:14:47Z",
+        "type": "turn",
+        "seq": 20,
+        "speaker": "agent",
+        "text": "Understood. The technician will go over any costs with you before doing the work. Will someone be home to let the technician in?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:14:47Z",
+        "type": "turn",
+        "seq": 21,
+        "speaker": "caller",
+        "text": "Um, yeah, I'll be home. Is there a gate or anything they need to get past, or is the front door fine?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:14:47Z",
+        "type": "turn",
+        "seq": 22,
+        "speaker": "agent",
+        "text": "The front door should be fine. Is there a gate code, buzzer, or pet the technician should know about?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:14:47Z",
+        "type": "turn",
+        "seq": 23,
+        "speaker": "caller",
+        "text": "Um, no gate, no buzzer. Just the front door. No pets either.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:14:47Z",
+        "type": "tool",
+        "tool": "book_appointment",
+        "args": {
+          "call_id": "rtest-11052114-gas-furnace-no-trigger",
+          "job_type": "no_heat",
+          "slot": {
+            "date": "2026-11-05",
+            "window": "1630-1830"
+          },
+          "details": {
+            "issue": "Gas furnace completely out, not turning on at all",
+            "since": "since last night",
+            "tried": "not provided",
+            "who_home": "Caller will be home",
+            "approver": "Harold Beck",
+            "system_type": "",
+            "arrival_notes": "Front door access, no gate or buzzer, no pets",
+            "name": "",
+            "inside_temp_f": 61.0
+          },
+          "priority": null,
+          "separate_problem": false,
+          "new_address_account": null
+        },
+        "ok": false,
+        "refused": "invalid_arguments",
+        "gate": "invalid_arguments",
+        "say": "Can I get a name for the booking?",
+        "ms": 353.8,
+        "error": null,
+        "request_id": "d4ca31446665"
+      },
+      {
+        "at": "2026-11-05T21:14:50Z",
+        "type": "tool",
+        "tool": "book_appointment",
+        "args": {
+          "call_id": "rtest-11052114-gas-furnace-no-trigger",
+          "job_type": "no_heat",
+          "slot": {
+            "date": "2026-11-05",
+            "window": "1630-1830"
+          },
+          "details": {
+            "issue": "Gas furnace completely out, not turning on at all",
+            "since": "since last night",
+            "tried": "not provided",
+            "who_home": "Caller will be home",
+            "approver": "Harold Beck",
+            "system_type": "",
+            "arrival_notes": "Front door access, no gate or buzzer, no pets",
+            "name": "Harold Beck",
+            "inside_temp_f": 61.0
+          },
+          "priority": null,
+          "separate_problem": false,
+          "new_address_account": null
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "You're all set for today, Thursday, November 5, with the technician arriving between 4:30 and 6:30. Anything else?",
+        "ms": 827.5,
+        "error": null,
+        "request_id": "53a91a38b190"
+      },
+      {
+        "at": "2026-11-05T21:14:56Z",
+        "type": "turn",
+        "seq": 24,
+        "speaker": "agent",
+        "text": "You're all set for today, Thursday, November 5, with the technician arriving between 4:30 and 6:30. Anything else I can help with?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 5000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:14:56Z",
+        "type": "turn",
+        "seq": 25,
+        "speaker": "caller",
+        "text": "Um, okay. Great, thanks. Is there anything I should do before they get here? Like, should I check the pilot or something?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:14:56Z",
+        "type": "turn",
+        "seq": 26,
+        "speaker": "agent",
+        "text": "I'd rather not have you check the pilot or try to adjust anything, so the technician can take care of that when they arrive. If you're concerned about the gas, or you smell gas at any point, leave the house and call 911 right away. Otherwise, just make sure the front door is accessible for the technician. Anything else I can help with?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:14:56Z",
+        "type": "turn",
+        "seq": 27,
+        "speaker": "caller",
+        "text": "Um, okay. No, I don't smell anything. Just the cold. Yeah, that's all I needed. Thanks a lot, bye.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:14:56Z",
+        "type": "turn",
+        "seq": 28,
+        "speaker": "agent",
+        "text": "Glad to hear you don't smell anything. Thanks for calling Summit Air. Take care.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:14:56Z",
+        "type": "tool",
+        "tool": "end_call",
+        "args": {
+          "call_id": "rtest-11052114-gas-furnace-no-trigger",
+          "reason": "resolved"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 6.5,
+        "error": null,
+        "request_id": "6295d1c4760c"
+      }
+    ],
+    "flags": [],
+    "callbacks": [],
+    "bookings": [
+      {
+        "id": 196,
+        "kind": "book",
+        "status": "booked",
+        "fsm_job_id": 550,
+        "window_start": "2026-11-05T21:30:00Z",
+        "window_end": "2026-11-05T23:30:00Z",
+        "priority": "High",
+        "priority_reasons": "below 65 F inside, caller said \"Um, it's completely out. It's not turning on at all. It's been like that...\"",
+        "safety_override": 0,
+        "seek_earlier": 0,
+        "attempts": 1,
+        "last_error": null,
+        "raised_after_wait": 0,
+        "priority_rules": "[\"bracket:cool_inside\"]",
+        "priority_reason_list": "[\"below 65 F inside, caller said \\\"Um, it's completely out. It's not turning on at all. It's been like that...\\\"\"]",
+        "who_home": "Caller will be home",
+        "job_type": "no_heat",
+        "street": "1275 East 19th Street",
+        "unit": "",
+        "job_notes": "[]"
+      }
+    ],
+    "notes": [],
+    "leads": [],
+    "out_of_area": [],
+    "summary": [],
+    "electrical": [],
+    "holds": [],
+    "pace": [
+      {
+        "call_id": "rtest-11052114-gas-furnace-no-trigger",
+        "speed": 1.0,
+        "source": "default",
+        "requested": 0,
+        "older_adult": 0,
+        "address_speed": null,
+        "repeats": 0
+      }
+    ],
+    "pace_changes": [],
+    "caller_pace": [],
+    "transfers": [],
+    "handoffs": [],
+    "address_lookups": [
+      {
+        "house": "1275",
+        "street": "e 19 st",
+        "hint": "Brooklyn",
+        "status": "one",
+        "zips_json": "[\"11230\"]",
+        "source": "geosearch"
+      }
+    ],
+    "address_checks": [],
+    "names": [],
+    "address_moves": [],
+    "identity_checks": [],
+    "heads_ups": []
+  }
+}

@@ -115,12 +115,15 @@ def criterion(name: str, arg: Any, scenario: Scenario, safety: dict) -> list[str
         if arg == "not_said":
             return [("The agent never tells the caller to leave the house or call 911 or the gas "
                     "company: there is no gas or carbon monoxide danger on this call.")]
+        # On a phone call the bridge has the agent say the lines the moment the caller says the
+        # word; a simulation can't exercise that path, so these criteria don't ask for "first".
         said = (f"exactly these words: {_quote(lines[kind])}" if kind else
                 f"exactly these words: {_quote(lines['gas'])} (for gas), or "
                 f"{_quote(lines['co'])} (for carbon monoxide)")
-        first = (" as the first thing it says on the turn the caller mentions it, before any other "
-                 "question" if arg == "said_first" else "")
-        return [f"The agent gives the safety instructions in {said}{first}."]
+        return [f"The agent gives the safety instructions once, in {said}",
+                ("Apart from those words and sentences a tool returned, the agent gives no safety "
+                "advice of its own (no telling the caller to leave, open a window, avoid switches, "
+                "or call 911 or the gas company in its own words).")]
     if name == "flag":
         if arg == "none":
             return ["The agent does not call flag_person."]

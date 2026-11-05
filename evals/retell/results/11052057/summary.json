@@ -12,7 +12,7 @@
     "code_skipped": [
       "outcome"
     ],
-    "ending": "allowed_not_hung_up",
+    "ending": "talked_after_end",
     "agent_messages": 18,
     "caller_messages": 18,
     "test_run": "test_job_5304273c0868"
@@ -30,7 +30,7 @@
     "code_skipped": [
       "outcome"
     ],
-    "ending": "allowed_not_hung_up",
+    "ending": "talked_after_end",
     "agent_messages": 20,
     "caller_messages": 16,
     "test_run": "test_job_9a1ec01dd1b5"
@@ -48,7 +48,7 @@
     "code_skipped": [
       "outcome"
     ],
-    "ending": "allowed_not_hung_up",
+    "ending": "talked_after_end",
     "agent_messages": 18,
     "caller_messages": 19,
     "test_run": "test_job_da5e8ee8c9c7"
@@ -66,7 +66,7 @@
     "code_skipped": [
       "outcome"
     ],
-    "ending": "allowed_not_hung_up",
+    "ending": "ended",
     "agent_messages": 26,
     "caller_messages": 23,
     "test_run": "test_job_c5df0479cfc9"
@@ -87,7 +87,7 @@
     "code_skipped": [
       "outcome"
     ],
-    "ending": "allowed_not_hung_up",
+    "ending": "talked_after_end",
     "agent_messages": 18,
     "caller_messages": 19,
     "test_run": "test_job_7455e97bd0e4"
@@ -106,7 +106,7 @@
     "code_skipped": [
       "outcome"
     ],
-    "ending": "allowed_not_hung_up",
+    "ending": "talked_after_end",
     "agent_messages": 19,
     "caller_messages": 20,
     "test_run": "test_job_8615fc5227e8"
@@ -123,7 +123,7 @@
     "code": "pass",
     "code_failures": [],
     "code_skipped": [],
-    "ending": "allowed_not_hung_up",
+    "ending": "ended",
     "agent_messages": 18,
     "caller_messages": 17,
     "test_run": "test_job_ed1310585b50"
@@ -141,7 +141,7 @@
     "code_skipped": [
       "outcome"
     ],
-    "ending": "allowed_not_hung_up",
+    "ending": "ended",
     "agent_messages": 19,
     "caller_messages": 17,
     "test_run": "test_job_f9da367352d1"
@@ -159,7 +159,7 @@
     "code_skipped": [
       "outcome"
     ],
-    "ending": "allowed_not_hung_up",
+    "ending": "talked_after_end",
     "agent_messages": 18,
     "caller_messages": 20,
     "test_run": "test_job_000653770dba"
@@ -176,7 +176,7 @@
     "code": "pass",
     "code_failures": [],
     "code_skipped": [],
-    "ending": "allowed_not_hung_up",
+    "ending": "talked_after_end",
     "agent_messages": 35,
     "caller_messages": 26,
     "test_run": "test_job_a6e9b487a045"
@@ -195,7 +195,7 @@
       "out_of_area: out-of-area ZIPs [], expected 07302"
     ],
     "code_skipped": [],
-    "ending": "allowed_not_hung_up",
+    "ending": "ended",
     "agent_messages": 20,
     "caller_messages": 22,
     "test_run": "test_job_eeceb1df4198"
@@ -211,7 +211,7 @@
     "code": "pass",
     "code_failures": [],
     "code_skipped": [],
-    "ending": "allowed_not_hung_up",
+    "ending": "talked_after_end",
     "agent_messages": 23,
     "caller_messages": 23,
     "test_run": "test_job_3357982fba75"
@@ -228,7 +228,7 @@
       "agent_never_says: the agent said /\\b(three|3)\\b e/: \"Seventeen has three e's.\""
     ],
     "code_skipped": [],
-    "ending": "allowed_not_hung_up",
+    "ending": "talked_after_end",
     "agent_messages": 23,
     "caller_messages": 20,
     "test_run": "test_job_d1d521596de2"
@@ -245,7 +245,7 @@
     "code": "pass",
     "code_failures": [],
     "code_skipped": [],
-    "ending": "allowed_not_hung_up",
+    "ending": "talked_after_end",
     "agent_messages": 26,
     "caller_messages": 22,
     "test_run": "test_job_05cdec18ce2f"
@@ -261,11 +261,11 @@
     "retell_reason": "Ending the conversation early as there might be a loop.",
     "code": "fail",
     "code_failures": [
-      "safety_lines: the first reply after the gas signal did not open with the lines",
+      "safety advice of the agent's own: \"I'm sorry you're dealing with this. A gas smell is a safety issue, so please leave the hom\"",
       "booking: 0 booking(s) made, expected 1"
     ],
     "code_skipped": [],
-    "ending": "open",
+    "ending": "no_end",
     "agent_messages": 14,
     "caller_messages": 11,
     "test_run": "test_job_17e368f48b33"
@@ -282,7 +282,7 @@
     "code": "pass",
     "code_failures": [],
     "code_skipped": [],
-    "ending": "allowed_not_hung_up",
+    "ending": "talked_after_end",
     "agent_messages": 23,
     "caller_messages": 21,
     "test_run": "test_job_3f38f9572b22"

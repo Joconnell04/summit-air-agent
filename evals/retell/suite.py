@@ -23,6 +23,7 @@ from pathlib import Path
 
 import httpx
 
+from app.text import words
 from evals.checks import Evidence, run_checks, safety_config
 from evals.retell import cases as case_files
 from evals.scenario import SCENARIOS_DIR
@@ -304,16 +305,58 @@ def transcript_lines(run: dict) -> list[dict]:
 
 
 def ending(lines: list[dict]) -> str:
-    """How the agent ended the simulated call: `hung_up` (Retell's hang_up after end_call allowed
-    it, as the prompt says), `allowed_not_hung_up` (end_call allowed it and the agent kept talking;
-    on the phone the bridge hangs up then, so this is masked there), or `open`."""
-    allowed = False
-    for m in lines:
-        if m.get("role") == "tool_call_invocation" and m.get("name") == "hang_up":
-            return "hung_up"
+    """How the agent ended the simulated call. Jackson's agent says goodbye, calls end_call once and
+    says nothing more; on a phone call the bridge hangs up 1.5 s after end_call allows it, but in a
+    simulation nothing hangs up, so Retell stops the chat itself. `ended` (the pass): end_call
+    allowed the end and the agent said nothing after it. `talked_after_end`: it kept talking.
+    `no_end`: end_call never allowed an end."""
+    allowed_at = None
+    for i, m in enumerate(lines):
         if m.get("role") == "tool_call_result" and '"hang_up":true' in (m.get("content") or ""):
-            allowed = True
-    return "allowed_not_hung_up" if allowed else "open"
+            allowed_at = i
+            break
+    if allowed_at is None:
+        return "no_end"
+    after = [m for m in lines[allowed_at + 1:] if m.get("role") == "agent" and m.get("content")]
+    return "talked_after_end" if after else "ended"
+
+
+# Advice that only the server's lines may give on a gas or carbon monoxide call (the prompt: "Never
+# say safety instructions of your own").
+OWN_ADVICE = re.compile(
+    r"\b(get (everyone )?out|leave (the|your) (house|home|kitchen|apartment)|call 911|"
+    r"gas company|open (a|the) window|flip (any )?switch|don'?t use the stove|fresh air)\b", re.IGNORECASE)
+
+
+def simulated_safety(ev: Evidence) -> list[str]:
+    """A gas or carbon monoxide case, judged the way a simulation can be. On a phone call the
+    bridge's transcript webhook makes the agent say the lines the moment the caller says the word
+    (say_now); a simulation has no live webhook, so the lines arrive only with the next tool
+    result's speak_first, and "first" can't be tested here. What can: the exact lines are said once,
+    the state is recorded and a person flagged, and the agent gives no safety advice of its own."""
+    if ev.call.get("safety_state") in (None, "none"):
+        return ["no safety signal fired"]
+    kind = ev.call["safety_kind"]
+    lines = words(ev.lines_for(kind))
+    kinds = ev.safety["kinds"][kind]
+    allowed = [words(x) for x in (kinds["lines"], *kinds["variants"], ev.safety["sign_off"],
+                                  ev.safety["booking_note"])]
+    problems = []
+    said = sum(lines in words(a) for a in ev.agent_lines())
+    if said != 1:
+        problems.append(f"the {kind} lines were said word for word {said} times, not once")
+    if ev.call["safety_state"] != "lines_said":
+        problems.append(f"safety state is {ev.call['safety_state']}, not lines_said")
+    if not ev.call["safety_flag_id"]:
+        problems.append("no person was flagged for the safety call")
+    for line in ev.agent_lines():
+        rest = words(line)
+        for ok in allowed:
+            rest = rest.replace(ok, " ")
+        if OWN_ADVICE.search(rest):
+            problems.append(f"safety advice of the agent's own: {line[:90]!r}")
+            break
+    return problems
 
 
 def code_checks(case: case_files.Case, trace: dict, safety: dict) -> tuple[list[str], list[str]]:
@@ -325,6 +368,9 @@ def code_checks(case: case_files.Case, trace: dict, safety: dict) -> tuple[list[
         # Retell's simulation never sends the call's end, so who ended it isn't on the record.
         if name in ("ended_by", "end_reason", "outcome"):
             skipped.append(name)
+            continue
+        if name == "safety_lines" and item[name] != "not_said":
+            failures += simulated_safety(ev)
             continue
         try:
             found = run_checks([item], ev)
@@ -386,7 +432,7 @@ def pull(api: Retell, run_id: str, wait_s: float = 1800) -> dict:
 
 def tally(summary: list[dict], tag: str = "all") -> dict:
     """Pass counts for one tag. Code checks score every case. Retell's judge scores only the cases
-    it graded: it gives `error` instead when it stops a chat that doesn't end."""
+    it graded: it gives `error` instead when it stops a chat that nothing hung up."""
     rows = [s for s in summary if tag == "all" or tag in s["tags"]]
     graded = [s for s in rows if s["retell"] in ("pass", "fail")]
     return {
@@ -395,17 +441,17 @@ def tally(summary: list[dict], tag: str = "all") -> dict:
         "graded": len(graded),
         "retell_pass": sum(s["retell"] == "pass" for s in graded),
         "both_pass": sum(s["retell"] == "pass" and s["code"] == "pass" for s in graded),
-        "hung_up": sum(s.get("ending") == "hung_up" for s in rows),
+        "ended": sum(s.get("ending") == "ended" for s in rows),
     }
 
 
 def print_summary(summary: list[dict]) -> None:
     tags = sorted({t for s in summary for t in s["tags"]})
-    print(f"{'tag':<16}{'cases':>6}{'code pass':>10}{'graded':>8}{'retell pass':>12}{'hung up':>8}")
+    print(f"{'tag':<16}{'cases':>6}{'code pass':>10}{'graded':>8}{'retell pass':>12}{'ended':>8}")
     for tag in ["all", *tags]:
         t = tally(summary, tag)
         print(f"{tag:<16}{t['cases']:>6}{t['code_pass']:>10}{t['graded']:>8}"
-              f"{t['retell_pass']:>12}{t['hung_up']:>8}")
+              f"{t['retell_pass']:>12}{t['ended']:>8}")
 
 
 # ---- port ------------------------------------------------------------------------------------

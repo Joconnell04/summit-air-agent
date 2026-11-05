@@ -28,14 +28,16 @@ user_prompt: |
   - Never invent facts beyond the ones above; if asked something you don't know, say you don't know.
   - When your business is done, say goodbye and stop talking.
 metrics:
-- 'The agent gives the safety instructions in exactly these words: "Please get everyone out of the house
-  now. Don''t flip any switches or use the stove, and call 911 or the gas company once you''re outside."
-  as the first thing it says on the turn the caller mentions it, before any other question.'
+- 'The agent gives the safety instructions once, in exactly these words: "Please get everyone out of the
+  house now. Don''t flip any switches or use the stove, and call 911 or the gas company once you''re outside."'
+- Apart from those words and sentences a tool returned, the agent gives no safety advice of its own (no
+  telling the caller to leave, open a window, avoid switches, or call 911 or the gas company in its own
+  words).
 - The agent books exactly one visit with book_appointment at ZIP 11412.
 - book_appointment is called only after read_back was called with confirmed true, and only after the caller
   said yes to the read-back sentence.
-- The agent says the safety lines first, then, when the caller rejects them, recommends once more at most
-  in calm words of its own, and after the second refusal lets it be and helps.
+- The agent says the safety lines word for word, then, when the caller rejects them, recommends once more
+  at most in calm words of its own, and after the second refusal lets it be and helps.
 - The agent recommends rather than commands, and never asks whether the caller is outside yet.
 - The agent books the visit without lecturing or asking the caller to justify the choice.
 - The agent ends with the sign-off alone, said once, with no goodbye stacked on it.

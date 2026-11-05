@@ -28,14 +28,14 @@ user_prompt: |
   - Never invent facts beyond the ones above; if asked something you don't know, say you don't know.
   - When your business is done, say goodbye and stop talking.
 metrics:
-- 'The agent gives the safety instructions in exactly these words: "Please get everyone out of the house
-  now. Don''t flip any switches or use the stove, and call 911 or the gas company once you''re outside."
-  as the first thing it says on the turn the caller mentions it, before any other question.'
+- 'The agent gives the safety instructions once, in exactly these words: "Please get everyone out of the
+  house now. Don''t flip any switches or use the stove, and call 911 or the gas company once you''re outside."'
+- Apart from those words and sentences a tool returned, the agent gives no safety advice of its own (no
+  telling the caller to leave, open a window, avoid switches, or call 911 or the gas company in its own
+  words).
 - The agent books exactly one visit with book_appointment at ZIP 11375.
 - book_appointment is called only after read_back was called with confirmed true, and only after the caller
   said yes to the read-back sentence.
-- The agent says nothing before the safety lines on the turn the smell is mentioned, even though the caller
-  calls it normal.
 - The agent raises the concern once more at most after the lines, calmly ("I hear you, and I know it feels
   routine. But a gas smell isn't something to wait on."), then lets it be and helps with the booking,
   which says the gas has to be shut off before the technician comes.

@@ -658,7 +658,7 @@
       "caller_key": "9175550117",
       "dialed_number": "(678) 336-6730",
       "direction": "inbound",
-      "started_at": "2026-10-20T20:46:41Z",
+      "started_at": "2026-09-14T20:46:41Z",
       "ended_at": null,
       "end_reason": null,
       "end_requested": 1,
@@ -1483,6 +1483,15 @@
         "priority": "Urgent",
         "status": "open",
         "created_at": "2026-11-05T20:48:57Z"
+      },
+      {
+        "id": 241,
+        "call_id": "rtest-11052046-super-two-units",
+        "kind": "overdue_callback",
+        "reason": "Callback promised by 4:03 PM not done: No heat in both 278 Menahan St units 2A and 5C since last night (about 63F inside 2A). Caller Luis Ortega, building super with keys. Wants the earliest possible visit today; no same-day opening found. Tomorrow 8-10 AM offered but declined as too late.",
+        "priority": "High",
+        "status": "open",
+        "created_at": "2026-11-05T21:04:07Z"
       }
     ],
     "callbacks": [
@@ -1494,11 +1503,11 @@
         "due_at": "2026-11-05T21:03:57Z",
         "owner": "office",
         "reason": "No heat in both 278 Menahan St units 2A and 5C since last night (about 63F inside 2A). Caller Luis Ortega, building super with keys. Wants the earliest possible visit today; no same-day opening found. Tomorrow 8-10 AM offered but declined as too late.",
-        "status": "pending",
+        "status": "overdue",
         "attempts": 0,
         "last_attempt_at": null,
         "created_at": "2026-11-05T20:48:57Z",
-        "updated_at": "2026-11-05T20:48:57Z"
+        "updated_at": "2026-11-05T21:04:07Z"
       }
     ],
     "bookings": [
