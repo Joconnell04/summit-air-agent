@@ -19,6 +19,8 @@ class Reply:
     content: list[dict] = field(default_factory=list)
     tool_uses: list[dict] = field(default_factory=list)
     first_token_ms: float = 0.0
+    # Input (uncached, cache read, cache write) and output tokens, for the run's cost.
+    tokens: dict[str, int] = field(default_factory=dict)
 
 
 def thinking_request(profile: Profile) -> dict:
@@ -59,6 +61,13 @@ class Brain:
                     yield event.delta.text
             message = await stream.get_final_message()
         reply.content = [b.model_dump(exclude_none=True) for b in message.content]
+        usage = message.usage
+        reply.tokens = {
+            "input": usage.input_tokens,
+            "cache_read": usage.cache_read_input_tokens or 0,
+            "cache_write": usage.cache_creation_input_tokens or 0,
+            "output": usage.output_tokens,
+        }
         reply.tool_uses = [
             {"id": b.id, "name": b.name, "input": b.input}
             for b in message.content

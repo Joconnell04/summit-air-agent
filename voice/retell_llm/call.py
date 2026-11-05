@@ -155,6 +155,7 @@ class LlmCall:
         self.transfer_number: str | None = None
         self.began = 0.0
         self.closed = False
+        self.tokens: dict[str, int] = {}
 
     async def begin(self, greeting: str) -> None:
         """The first line, already built by whoever started the call on the tool server."""
@@ -318,6 +319,8 @@ class LlmCall:
                     if said := self.reply.sentence(sentence):
                         kept.append(said)
                         await out.say(said)
+            for kind, count in reply.tokens.items():
+                self.tokens[kind] = self.tokens.get(kind, 0) + count
             if hop == 0:
                 stages["llm_first_token_ms"] = round(reply.first_token_ms, 1)
             if out.stale():
@@ -431,3 +434,5 @@ class LlmCall:
             await self.server.transfer_done(self.transfer_id, "handed_off")
         await self.server.end(self.ended)
         await self.server.aclose()
+        log.info("%s ended (%s), model tokens %s", self.server.call_id, self.ended,
+                 json.dumps(self.tokens, sort_keys=True))
