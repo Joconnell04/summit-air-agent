@@ -13,6 +13,7 @@ schedule, not deleted, and a whole-shop block is one block per technician on shi
 Who may make which edit is checked here as well as in the routes.
 """
 
+import json
 import re
 import sqlite3
 import uuid
@@ -35,7 +36,13 @@ AGENT_LEVELS = ("Normal", "Urgent")
 
 
 class EditError(Exception):
-    """An edit that was refused, with the words to show the person who made it."""
+    """An edit that was refused, with the words to show the person who made it. code names a
+    refusal the page offers a next step for; pending is what that step needs."""
+
+    def __init__(self, message: str, code: str | None = None, pending: dict | None = None):
+        super().__init__(message)
+        self.code = code
+        self.pending = pending
 
 
 @dataclass
@@ -166,7 +173,12 @@ def day(
         for window in windows:
             if b_start < window["end"] and b_end > window["start"]:
                 cell(block["technicianId"], window["id"])["blocks"].append(
-                    {"id": block["id"], "name": block["name"], "ref": _ref(block["summary"])}
+                    {
+                        "id": block["id"],
+                        "name": block["name"],
+                        "ref": _ref(block["summary"]),
+                        "ours": MADE_HERE in (block["summary"] or ""),
+                    }
                 )
 
     rows = []
@@ -286,14 +298,17 @@ def _log(
     detail: str,
     error: str | None = None,
     modified: str | None = None,
+    code: str | None = None,
+    pending: dict | None = None,
 ) -> None:
     with tx(conn):
         conn.execute(
             """INSERT INTO schedule_edits (tenant, at, user_id, author, role, surface, action,
-                   target, detail, ok, error, fsm_modified_on)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                   target, detail, ok, error, code, pending_json, fsm_modified_on)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (tenant.slug, iso(now), who.user_id, who.name, who.role, who.surface, action, target,
-             detail, int(error is None), error, modified),
+             detail, int(error is None), error, code, json.dumps(pending) if pending else None,
+             modified),
         )
 
 
@@ -392,7 +407,7 @@ def _run(conn, tenant, cache, who, now, action, target, detail, write):
     try:
         result, modified, *fuller = write()
     except EditError as exc:
-        _log(conn, tenant, who, now, action, target, detail, str(exc))
+        _log(conn, tenant, who, now, action, target, detail, str(exc), None, exc.code, exc.pending)
         raise
     except (FsmRejected, FsmUnavailable) as exc:
         cache.invalidate()  # a write may have gone through before the one that failed
@@ -408,61 +423,95 @@ def block(
     on: date, window_id: str, technician_id: int | None, name: str = "",
 ) -> int:
     """Take one technician, or every technician free in the window, off jobs for that window. A
-    name makes it an event ("Team meeting"); without one it reads "Blocked". Returns how many
-    technicians it took."""
+    name makes it an event ("Team meeting"); without one it reads "Blocked". A technician with a
+    visit or a block there is refused; for a whole window, the visits stay and the log says how
+    many. Returns how many technicians it took."""
     title = _text(name, NAME_MAX) or BLOCK_NAME
     when = _when(tenant, on, window_id)
     whom = f"technician {technician_id}" if technician_id else "every free technician"
-    detail = f"{'Blocked' if title == BLOCK_NAME else 'Added ' + title + ' for'} {whom}, {when}"
+    verb = "Blocked" if title == BLOCK_NAME else f"Added {title} for"
+    detail = f"{verb} {whom}, {when}"
 
     def write():
         _, start, end = _window_from(tenant, on, window_id, now)
         frames = [f for f in _frames(fsm, tenant, on) if _bounds(f) == (start, end)]
+        names = {t["id"]: t["name"] for f in frames for t in f["technicians"]}
         free = sorted(
             {t["id"] for f in frames for t in f["technicians"] if t["status"] == "Available"}
         )
+        visits = _visits(fsm, start, end)
         if technician_id is not None:
-            on_shift = {t["id"] for f in frames for t in f["technicians"]}
-            if technician_id not in on_shift:
+            name_of = names.get(technician_id, f"Technician {technician_id}")
+            if technician_id not in names:
                 raise EditError("That technician isn't working then.")
+            if technician_id in visits:
+                raise EditError(f"{name_of} has a visit then. Move the job first.")
+            if technician_id not in free:
+                raise EditError(f"{name_of} is already blocked then.")
             wanted = [technician_id]
         else:
             wanted = free
         if not wanted:
             raise EditError("Nobody is free in that window.")
         key = _key()
-        summary = f"Added on the {'bench' if who.surface == 'bench' else 'owner view'} by {who.name}"
         made = [
-            fsm.create_non_job_appointment(key, tech, start, end, title, summary)
+            fsm.create_non_job_appointment(key, tech, start, end, title, _made_here(who))
             for tech in wanted
         ]
         if technician_id is not None:
-            names = {t["id"]: t["name"] for f in frames for t in f["technicians"]}
-            who_got = names.get(technician_id, f"technician {technician_id}")
+            fuller = f"{verb} {names.get(technician_id)}, {when}"
         else:
-            who_got = f"{len(made)} free technicians"
-        verb = "Blocked" if title == BLOCK_NAME else f"Added {title} for"
-        return len(made), made[-1].get("modifiedOn"), f"{verb} {who_got}, {when}"
+            staying = len(set(names) & set(visits))
+            fuller = f"{verb} {len(made)} free technicians, {when}" + (
+                f"; {staying} booked visit{'s' if staying != 1 else ''} stay" if staying else ""
+            )
+        return len(made), made[-1].get("modifiedOn"), fuller
 
     return _run(conn, tenant, cache, who, now, "block", when, detail, write)
+
+
+def _visits(fsm: FsmAdapter, start: datetime, end: datetime) -> set[int]:
+    """Technicians with a live appointment in exactly this window."""
+    appointments = [
+        a for a in fsm.appointments_between(start, end)
+        if a["status"] != "Canceled"
+        and (parse_iso(a["arrivalWindowStart"]), parse_iso(a["arrivalWindowEnd"])) == (start, end)
+    ]
+    if not appointments:
+        return set()
+    return {a["technicianId"] for a in fsm.assignments([a["id"] for a in appointments])}
+
+
+MADE_HERE = "Added on the"
+
+
+def _made_here(who: Who) -> str:
+    """The summary a block made here carries, so unblock can tell it from one made in ServiceTitan."""
+    return f"{MADE_HERE} {'bench' if who.surface == 'bench' else 'owner view'} by {who.name}"
 
 
 def unblock(
     conn, fsm: FsmAdapter, cache: SlotCache, tenant: Tenant, who: Who, now: datetime,
     non_job_id: int, whole_group: bool = False, on: date | None = None,
 ) -> int:
-    """Take a block off the schedule; with whole_group, every block the same edit made that day."""
+    """Take a block made here off the schedule; with whole_group, every block the same edit made
+    that day. A block made in ServiceTitan itself (a technician's training, say) is left alone."""
     detail = f"Took block {non_job_id} off the schedule" + (" with its group" if whole_group else "")
 
     def write():
+        if on is None or on == date.min:
+            raise EditError("Pick a day.")
+        start, end = _day_range(tenant, on)
+        blocks = fsm.non_job_appointments(start, end)
+        mine = next((b for b in blocks if b["id"] == non_job_id), None)
+        if mine is None:
+            raise EditError("That block isn't on this day's schedule.")
+        ref = _ref(mine["summary"])
+        if not ref or MADE_HERE not in (mine["summary"] or ""):
+            raise EditError("That block was made in ServiceTitan. Change it there.")
         ids = [non_job_id]
-        if whole_group and on is not None:
-            start, end = _day_range(tenant, on)
-            blocks = fsm.non_job_appointments(start, end)
-            mine = next((b for b in blocks if b["id"] == non_job_id), None)
-            ref = _ref(mine["summary"]) if mine else ""
-            if ref:
-                ids = [b["id"] for b in blocks if _ref(b["summary"]) == ref]
+        if whole_group:
+            ids = [b["id"] for b in blocks if _ref(b["summary"]) == ref]
         ended = [fsm.end_non_job_appointment(_key(), i) for i in ids]
         return len(ended), ended[-1].get("modifiedOn")
 
@@ -472,11 +521,13 @@ def unblock(
 def add_job(
     conn, fsm: FsmAdapter, cache: SlotCache, tenant: Tenant, who: Who, now: datetime,
     on: date, window_id: str, phone: str, job_type_code: str, notes: str,
-    technician_id: int | None = None,
+    technician_id: int | None = None, customer_id: int | None = None,
 ) -> int:
     """Put a job for the customer with this phone number in the window, at their first service
-    location. The person chose the window, so the company's urgent holds (app/capacity.py) don't
-    apply: any free technician with the skills may take it. Returns the job id."""
+    location. When the number is on more than one customer, the person picks one (customer_id);
+    the first is never taken for them. The person chose the window, so the company's urgent
+    holds (app/capacity.py) don't apply: any free technician with the skills may take it.
+    Returns the job id."""
     job_type = tenant.job_types.get(job_type_code)
     when = _when(tenant, on, window_id)
     detail = f"Added a {job_type['name'].lower() if job_type else 'new'} job, {when}"
@@ -486,12 +537,28 @@ def add_job(
         if job_type is None:
             raise EditError("Pick a job type.")
         _, start, end = _window_from(tenant, on, window_id, now)
-        if len(digits) != 10:
-            raise EditError("Enter the customer's 10-digit phone number.")
-        found = fsm.customers_by_phone(digits)
-        if not found:
-            raise EditError("No customer has that phone number.")
-        customer = found[0]
+        if customer_id is not None:
+            customer = fsm.customer(customer_id)
+        else:
+            if len(digits) != 10:
+                raise EditError("Enter the customer's 10-digit phone number.")
+            found = fsm.customers_by_phone(digits)
+            if not found:
+                raise EditError("No customer has that phone number.")
+            if len(found) > 1:
+                pending = {
+                    "day": on.isoformat(), "window": window_id, "technician": technician_id,
+                    "job_type": job_type_code, "notes": _text(notes, NOTES_MAX),
+                    "customers": [
+                        {"id": c["id"], "name": c["name"],
+                         "street": (c.get("address") or {}).get("street", "")}
+                        for c in found[:10]
+                    ],
+                }
+                raise EditError(
+                    f"{len(found)} customers have that number. Pick one.", "pick_customer", pending
+                )
+            customer = found[0]
         locations = fsm.locations(customer["id"])
         if not locations:
             raise EditError("That customer has no service location.")
@@ -537,8 +604,8 @@ def edit_job(
         current = job_detail(fsm, tenant, job_id, now)
         if not current["open"]:
             raise EditError("A closed job can't change.")
-        changed, modified = [], None
-        patch = {}
+        # Everything is checked before anything is sent, so a refused edit changes nothing.
+        changed, patch, move, new_address = [], {}, None, None
         if job_type_code and job_type_code != current["type"]:
             job_type = tenant.job_types.get(job_type_code)
             if job_type is None:
@@ -546,8 +613,7 @@ def edit_job(
             patch["jobTypeId"] = job_type["id"]
             changed.append(f"type to {job_type['name'].lower()}")
         if notes is not None and _text(notes, NOTES_MAX) != _text(current["notes"], NOTES_MAX):
-            job = fsm.job(job_id)
-            patch["summary"] = _with_refs(job["summary"], notes[:NOTES_MAX])
+            patch["summary"] = _with_refs(fsm.job(job_id)["summary"], notes[:NOTES_MAX])
             changed.append("notes")
         if address is not None:
             new = {k: _text(address.get(k, ""), 80) for k in ("street", "unit", "city", "zip")}
@@ -555,21 +621,31 @@ def edit_job(
             if new != old:
                 if not new["street"] or not re.fullmatch(r"\d{5}", new["zip"]):
                     raise EditError("A service location needs a street and a 5-digit ZIP.")
-                done = fsm.correct_location_address(_key(), current["location_id"], new)
-                modified = done.get("modifiedOn")
+                new_address = new
                 changed.append("service location")
         if window and window != current["window"]:
             on, _, window_id = window.partition("|")
-            spec, start, end = _window_from(tenant, date.fromisoformat(on), window_id, now)
+            try:
+                day_of = date.fromisoformat(on)
+            except ValueError:
+                raise EditError("Pick an arrival window.") from None
+            spec, start, end = _window_from(tenant, day_of, window_id, now)
             if current["appointment_id"] is None:
                 raise EditError("This job has no appointment to move.")
-            fsm.reschedule(_key(), current["appointment_id"], start, end)
-            changed.append(f"window to {date.fromisoformat(on).strftime('%a %b %-d')}, {spec.label()}")
-        if patch:
-            done = fsm.change_job(_key(), job_id, patch)
-            modified = done.get("modifiedOn")
+            move = (start, end)
+            changed.append(f"window to {day_of.strftime('%a %b %-d')}, {spec.label()}")
         if not changed:
             raise EditError("Nothing to change.")
+        # The move goes first: it is the one ServiceTitan can still refuse (a full window).
+        modified = None
+        if move:
+            fsm.reschedule(_key(), current["appointment_id"], *move)
+        if new_address:
+            modified = fsm.correct_location_address(_key(), current["location_id"], new_address).get(
+                "modifiedOn"
+            )
+        if patch:
+            modified = fsm.change_job(_key(), job_id, patch).get("modifiedOn")
         return changed, modified, f"Changed job {job_id}: " + ", ".join(changed)
 
     return _run(conn, tenant, cache, who, now, "edit_job", target, f"Changed job {job_id}", write)
@@ -578,20 +654,21 @@ def edit_job(
 def edit_customer(
     conn, fsm: FsmAdapter, cache: SlotCache, tenant: Tenant, who: Who, now: datetime,
     customer_id: int, name: str | None = None, contact_id: int | None = None,
-    phone: str | None = None,
+    phone: str | None = None, confirm: bool = False,
 ) -> list[str]:
     """Rename a customer or change one of their phone numbers. Admins only: a wrong number sends
-    the customer's calls to a stranger's record."""
+    the customer's calls to a stranger's record. A number already on another customer is refused
+    unless confirm, since a call from it would then match both."""
     target = f"customer {customer_id}"
 
     def write():
         if not who.is_admin:
             raise EditError("Only an admin can change a customer.")
         current = customer_detail(fsm, customer_id)
-        changed, modified = [], None
+        changed, new_phone = [], None
         new_name = _text(name or "", NAME_MAX)
-        if name is not None and new_name and new_name != current["name"]:
-            modified = fsm.rename_customer(_key(), customer_id, new_name).get("modifiedOn")
+        rename = name is not None and bool(new_name) and new_name != current["name"]
+        if rename:
             changed.append("name")
         if phone is not None and contact_id is not None:
             mine = {p["id"]: p for p in current["phones"]}
@@ -601,10 +678,24 @@ def edit_customer(
             if len(digits) != 10:
                 raise EditError("A phone number needs 10 digits.")
             if digits != phone_key(mine[contact_id]["value"]):
-                fsm.change_phone(_key(), customer_id, contact_id, phone_display(digits))
+                others = [c for c in fsm.customers_by_phone(digits) if c["id"] != customer_id]
+                if others and not confirm:
+                    raise EditError(
+                        f"That number is on {others[0]['name']}'s record"
+                        + (f" and {len(others) - 1} more" if len(others) > 1 else "")
+                        + ". Calls from it would match both. Tick Use anyway to save it.",
+                        "phone_taken",
+                        {"contact": contact_id, "phone": phone_display(digits)},
+                    )
+                new_phone = digits
                 changed.append(f"phone to {phone_display(digits)}")
         if not changed:
             raise EditError("Nothing to change.")
+        modified = None
+        if rename:
+            modified = fsm.rename_customer(_key(), customer_id, new_name).get("modifiedOn")
+        if new_phone:
+            fsm.change_phone(_key(), customer_id, contact_id, phone_display(new_phone))
         return changed, modified, f"Changed customer {customer_id}: " + ", ".join(changed)
 
     return _run(

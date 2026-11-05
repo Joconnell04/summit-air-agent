@@ -253,7 +253,7 @@ a.figure:hover .label { color: var(--ink); }
 
 /* Actions: a page's controls on one row, the same height; a field in the row keeps a fixed width. */
 .actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2); }
-.actions .field { width: 280px; }
+.actions .field { width: var(--field-w); }
 .actions form { display: contents; }
 /* A field and its button that share a narrow box: the field takes what the button leaves. */
 .actions.fill { flex-wrap: nowrap; }
@@ -351,7 +351,7 @@ a.figure:hover .label { color: var(--ink); }
    that needs a reason before it runs (the bench's override). */
 .pop { position: relative; }
 .pop-body {
-  position: absolute; right: 0; top: calc(100% + 6px); z-index: 30; width: 320px; display: flex; flex-direction: column; gap: var(--s-2);
+  position: absolute; right: 0; top: calc(100% + 6px); z-index: 30; width: var(--pop-w); display: flex; flex-direction: column; gap: var(--s-2);
   padding: var(--s-3); background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); box-shadow: var(--shadow-pop);
 }
 .pop-body label { font-size: var(--text-sm); color: var(--muted); }
@@ -362,8 +362,8 @@ a.figure:hover .label { color: var(--ink); }
    cell. A job links to its page; a free cell or a block opens a popover with its actions. The
    popover is the browser's own (the popover attribute), so it sits above the table's scroll and
    needs no script. */
-.sched { table-layout: fixed; min-width: 760px; }
-.sched col.sched-who { width: 176px; }
+.sched { table-layout: fixed; min-width: var(--sched-min-w); }
+.sched col.sched-who { width: var(--lane-head-w); }
 .sched th { vertical-align: top; }
 .sched th.win { white-space: normal; }
 .sched th.win .w-name { display: block; color: var(--ink); font-size: var(--text-sm); font-weight: var(--semibold); }
@@ -393,7 +393,7 @@ a.sched-item.urgent:hover { border-color: var(--urgent-line); }
 .sched-item.free .sub, .sched-item.off .sub { color: var(--faint); }
 .sched-item:focus-visible { outline: none; box-shadow: var(--focus); }
 .sched-pop {
-  width: 320px; max-width: calc(100vw - 2 * var(--s-4)); height: fit-content; margin: auto; padding: 0;
+  width: var(--pop-w); max-width: calc(100vw - 2 * var(--s-4)); height: fit-content; margin: auto; padding: 0;
   background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: var(--r-lg); box-shadow: var(--shadow-pop);
 }
 /* Where the browser can anchor it, the popover opens under the cell that opened it, as the other
@@ -409,8 +409,13 @@ a.sched-item.urgent:hover { border-color: var(--urgent-line); }
 .sched-pop-part .select { width: 100%; }
 .sched-pop-part > .btn { align-self: flex-start; }
 
+/* Check: one box and its words, one control high (the schedule's Use anyway). */
+.check { display: inline-flex; align-items: center; gap: var(--s-2); height: var(--control-h); font-size: var(--text-sm); color: var(--ink-2); cursor: pointer; }
+.check input { width: var(--icon-sm); height: var(--icon-sm); margin: 0; accent-color: var(--info); }
+.check input:focus-visible { outline: none; box-shadow: var(--focus); }
+
 /* What changed in ServiceTitan, on the bench: the newest few rows, the rest scroll in place. */
-.changes { max-height: 280px; overflow-y: auto; }
+.changes { max-height: var(--list-max-h); overflow-y: auto; }
 
 /* Range picker: a disclosure whose popover holds two dates and Apply. */
 .range { position: relative; }
@@ -429,7 +434,7 @@ a.sched-item.urgent:hover { border-color: var(--urgent-line); }
 
 .board { overflow-x: auto; }
 .board-grid { min-width: 920px; position: relative; }
-.board-row { display: grid; grid-template-columns: 176px minmax(0, 1fr); }
+.board-row { display: grid; grid-template-columns: var(--lane-head-w) minmax(0, 1fr); }
 .board-row + .board-row { border-top: 1px solid var(--line-soft); }
 .board-row .head { padding: var(--s-3) var(--s-4); display: flex; flex-direction: column; justify-content: center; gap: 1px; border-right: 1px solid var(--line-soft); }
 .board-row .head .name { font-weight: var(--semibold); font-size: var(--text-sm); display: flex; align-items: center; gap: var(--s-2); }

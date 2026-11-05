@@ -665,6 +665,11 @@ CREATE TABLE IF NOT EXISTS schedule_edits (
     detail TEXT NOT NULL,
     ok INTEGER NOT NULL CHECK (ok IN (0, 1)),
     error TEXT,
+    -- What kind of refusal, when the page offers a next step for it (phone_taken, pick_customer).
+    code TEXT,
+    -- For pick_customer: the add-job request and the customers who share the number, so the page
+    -- can ask which one without the number in the URL.
+    pending_json TEXT,
     fsm_modified_on TEXT
 );
 CREATE INDEX IF NOT EXISTS ix_schedule_edits ON schedule_edits (tenant, id);

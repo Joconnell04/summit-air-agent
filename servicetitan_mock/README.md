@@ -101,7 +101,7 @@ Everything the mock does that ServiceTitan does not, kept on purpose, and what t
 | `openAvailability` and `totalAvailability` are technicians times the frame's hours | The unit is hours in ServiceTitan's current spec and unconfirmed in practice | Reads the technicians, not the numbers |
 | Technicians list `skills` as `{id, name}` objects | ServiceTitan keeps skills on `dispatch/technician-skills` | Does not read technicians |
 
-Blocks: an active non-job appointment with `removeTechnicianFromCapacityPlanning` (the default here) makes its technician `Unavailable` in every capacity frame it overlaps, and a job can't be booked or moved onto that technician there (409). The table came after the live world was seeded, so `db.add_missing_tables` adds it to an existing database at start-up instead of a reseed, which would wipe the bookings.
+Blocks: an active non-job appointment with `removeTechnicianFromCapacityPlanning` (the default here) makes its technician `Unavailable` in every capacity frame it overlaps, and a job can't be booked or moved onto that technician there (409). The table came after the live world was seeded, so it lives in `schema_added.sql`, which `db.add_missing_tables` runs on an existing database at start-up instead of a reseed, which would wipe the bookings. A block can't go over a technician's live appointment (409 `technician_busy`), which is stricter than ServiceTitan (ASSUMED).
 
 ## What is modeled on real ServiceTitan, and what is ASSUMED
 
@@ -141,7 +141,7 @@ The adapter owns every difference, so the agent does not change.
 ## Template files and tenant files
 
 Template (works for any trade; do not edit per company):
-`servicetitan_mock/` (code, `schema.sql`, `worldkit.py`), `scripts/build_postman_st.py`, `scripts/run_postman_st.sh`, `postman/`, and everything under `tests/servicetitan_mock/` except the fixtures that name Summit Air.
+`servicetitan_mock/` (code, `schema.sql`, `schema_added.sql`, `worldkit.py`), `scripts/build_postman_st.py`, `scripts/run_postman_st.sh`, `postman/`, and everything under `tests/servicetitan_mock/` except the fixtures that name Summit Air.
 
 Tenant (Summit Air only): `tenants/summit-air/config.yaml` (company name, phone, email domain, hours and refused customer types; fees; counties and ZIPs; business units; job types; arrival windows; urgent holds by day and business unit; lead kinds; equipment names; membership plans and the names of their visits; mock credentials) and `tenants/summit-air/seed.py` (names, streets, scenarios). A second company is a new folder under `tenants/` with the same two files; point `ST_MOCK_TENANT` at it. `tests/servicetitan_mock/test_st_platform.py` proves company facts come from the config by serving a different company from a copied folder.
 

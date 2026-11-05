@@ -5,6 +5,24 @@
 {%- if result %}{% if result.ok %}<span class="tag done">Saved</span><span class="small muted">{{ result.text }}</span>{% else %}<span class="error small" role="alert">{{ result.text }}</span>{% endif %}{% endif -%}
 {%- endmacro %}
 
+{# The number was on more than one customer: which one the job is for. Asked in the page head,
+   from the request the edit log kept, so the number never travels in the URL. #}
+{% macro pick_customer(result, here) -%}
+{%- if result and result.code == "pick_customer" and result.pending %}{% set p = result.pending %}
+<form class="actions" method="post" action="/owner/schedule/jobs">
+  <input type="hidden" name="day" value="{{ p.day }}"><input type="hidden" name="window" value="{{ p.window }}"><input type="hidden" name="technician" value="{{ p.technician or '' }}"><input type="hidden" name="job_type" value="{{ p.job_type }}"><input type="hidden" name="notes" value="{{ p.notes }}"><input type="hidden" name="next" value="{{ here }}">
+  <label class="sr-only" for="pick-customer">Customer</label>
+  <select class="select" id="pick-customer" name="customer">{% for c in p.customers %}<option value="{{ c.id }}">{{ c.name }}{% if c.street %}, {{ c.street }}{% endif %}</option>{% endfor %}</select>
+  <button class="btn primary" type="submit">Add job</button>
+</form>
+{%- endif -%}
+{%- endmacro %}
+
+{# The number is already on another customer: saving it anyway needs a tick. #}
+{% macro use_anyway(result) -%}
+{%- if result and result.code == "phone_taken" %}<tr><td class="fit"></td><td><label class="check"><input type="checkbox" name="confirm" value="1"> Use anyway</label></td></tr>{% endif -%}
+{%- endmacro %}
+
 {% macro type_select(name, job_types, chosen="", id="") -%}
 <select class="select" name="{{ name }}"{% if id %} id="{{ id }}"{% endif %}>
   {% for code, label in job_types %}<option value="{{ code }}"{% if code == chosen %} selected{% endif %}>{{ label }}</option>{% endfor %}
@@ -82,8 +100,9 @@
         {% endfor %}
         {% for b in c.blocks %}
         {% set bid = pid ~ "-b" ~ b.id %}
-        <button class="sched-item block" type="button" popovertarget="{{ bid }}"><span class="name">{{ b.name }}</span></button>
+        {% if b.ours %}<button class="sched-item block" type="button" popovertarget="{{ bid }}"><span class="name">{{ b.name }}</span></button>
         {{ block_pop(bid, r.name ~ ", " ~ w.label, b, g.day, here, g.groups.get(b.ref, 1)) }}
+        {% else %}<span class="sched-item block" title="Made in ServiceTitan"><span class="name">{{ b.name }}</span></span>{% endif %}
         {% endfor %}
         {% if c.state == "free" %}
           {% if w.started %}<span class="sched-item free"><span class="sub">Free</span></span>

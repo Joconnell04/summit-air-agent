@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% from "_ui.html" import bench_tabs, empty, priority_text with context %}
-{% from "_schedule.html" import result_line, type_select with context %}
+{% from "_schedule.html" import result_line, type_select, use_anyway with context %}
 {% block title %}{{ tenant }}: job {{ job_id }}{% endblock %}
 {% block tabs %}{% if bench %}{{ bench_tabs(tab) }}{% else %}{{ super() }}{% endif %}{% endblock %}
 {% block body %}
@@ -55,8 +55,9 @@
         <tbody>
           <tr><td class="fit"><label for="c-name">Name</label></td><td>{% if is_admin %}<input class="field" id="c-name" name="name" maxlength="60" value="{{ cu.name }}">{% else %}{{ cu.name }}{% endif %}</td></tr>
           {% for p in cu.phones %}
-          <tr><td class="fit">{% if loop.first %}<label for="c-phone">Phone</label>{% else %}<span class="muted">{{ p.memo or "Other phone" }}</span>{% endif %}</td><td class="num">{% if is_admin and loop.first %}<input type="hidden" name="contact" value="{{ p.id }}"><input class="field num" id="c-phone" name="phone" inputmode="tel" maxlength="20" value="{{ p.value }}">{% else %}{{ p.value }}{% endif %}</td></tr>
+          <tr><td class="fit">{% if loop.first %}<label for="c-phone">Phone</label>{% else %}<span class="muted">{{ p.memo or "Other phone" }}</span>{% endif %}</td><td class="num">{% if is_admin and loop.first %}<input type="hidden" name="contact" value="{{ p.id }}"><input class="field num" id="c-phone" name="phone" inputmode="tel" maxlength="20" value="{{ result.pending.phone if result and result.code == 'phone_taken' and result.pending and result.pending.contact == p.id else p.value }}">{% else %}{{ p.value }}{% endif %}</td></tr>
           {% endfor %}
+          {% if is_admin %}{{ use_anyway(result) }}{% endif %}
         </tbody>
       </table>
     </form>

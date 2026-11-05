@@ -9,6 +9,7 @@ from fastapi.responses import JSONResponse
 from .errors import ApiError
 
 SCHEMA = Path(__file__).with_name("schema.sql")
+ADDED = Path(__file__).with_name("schema_added.sql")
 # Raised whenever schema.sql changes, so a database seeded under an older one is rebuilt
 # (python -m servicetitan_mock.seed --if-stale) instead of failing on a missing column.
 SCHEMA_VERSION = 2
@@ -32,25 +33,20 @@ def create_schema(path: str | Path) -> None:
     conn = connect(path)
     conn.execute("PRAGMA journal_mode = WAL")
     conn.executescript(SCHEMA.read_text())
+    conn.executescript(ADDED.read_text())
     conn.execute("INSERT INTO meta VALUES ('schema_version', ?)", (str(SCHEMA_VERSION),))
     conn.close()
 
 
 def add_missing_tables(path: str | Path) -> None:
-    """Create the tables schema.sql writes IF NOT EXISTS, on a database that predates them. Those
-    tables came after the live world was seeded; adding them this way keeps its bookings, where
-    raising SCHEMA_VERSION would rebuild the world from the seed."""
+    """Create the tables in schema_added.sql on a database that predates them. Those tables came
+    after the live world was seeded; adding them this way keeps its bookings, where raising
+    SCHEMA_VERSION would rebuild the world from the seed."""
     if not Path(path).exists():
         return
-    statements = [
-        s.strip() for s in SCHEMA.read_text().split(";") if "IF NOT EXISTS" in s
-    ]
     conn = connect(path)
     try:
-        for statement in statements:
-            # Drop the comment lines above the statement; sqlite runs one statement per call.
-            body = "\n".join(line for line in statement.splitlines() if not line.startswith("--"))
-            conn.execute(body)
+        conn.executescript(ADDED.read_text())
     finally:
         conn.close()
 

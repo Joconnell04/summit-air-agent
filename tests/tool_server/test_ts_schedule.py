@@ -2,7 +2,7 @@
 goes through the FSM adapter, is logged with who made it, and reaches the agent's next find_slots
 or call start, past the slot cache."""
 
-from datetime import date
+from datetime import date, datetime
 
 from toolkit import ready_to_book, sign_in
 
@@ -328,3 +328,149 @@ def test_a_whole_shop_block_takes_only_the_technicians_free_then(agent, mock):
         assert conn.execute("SELECT count(*) FROM non_job_appointments").fetchone()[0] == free
     finally:
         conn.close()
+
+
+def _day_grid(agent, on: date) -> dict:
+    services = agent.app.state.services
+    return schedule.day(services.fsm["summit-air"], services.tenants.default,
+                        services.caches["summit-air"], on, services.clock())
+
+
+def _active_blocks(mock) -> int:
+    conn = _mock_db(mock)
+    try:
+        return conn.execute(
+            "SELECT count(*) FROM non_job_appointments WHERE active = 1"
+        ).fetchone()[0]
+    finally:
+        conn.close()
+
+
+TOMORROW = date(2026, 11, 3)
+
+
+def test_a_block_on_a_technician_with_a_visit_is_refused_by_name(agent, mock):
+    sign_in(agent, "staff")
+    grid = _day_grid(agent, TOMORROW)
+    col = [w["id"] for w in grid["windows"]].index("morning")
+    busy = next(r for r in grid["rows"] if r["cells"][col]["state"] == "job")
+    _post(agent, "/owner/schedule/block", day=TOMORROW.isoformat(), window="morning",
+          technician=str(busy["id"]))
+    [edit] = _edits(agent)
+    assert edit["ok"] == 0 and edit["error"] == f"{busy['name']} has a visit then. Move the job first."
+    assert _active_blocks(mock) == 0
+
+
+def test_a_block_on_an_already_blocked_technician_is_refused(agent, mock):
+    sign_in(agent, "staff")
+    grid = _day_grid(agent, TOMORROW)
+    col = [w["id"] for w in grid["windows"]].index("morning")
+    free = next(r for r in grid["rows"] if r["cells"][col]["state"] == "free")
+    for _ in range(2):
+        _post(agent, "/owner/schedule/block", day=TOMORROW.isoformat(), window="morning",
+              technician=str(free["id"]))
+    assert [e["ok"] for e in _edits(agent)] == [1, 0]
+    assert "already blocked" in _edits(agent)[1]["error"]
+    assert _active_blocks(mock) == 1
+
+
+def test_a_whole_window_block_says_how_many_visits_stay(agent):
+    sign_in(agent, "staff")
+    grid = _day_grid(agent, TOMORROW)
+    col = [w["id"] for w in grid["windows"]].index("morning")
+    jobs = sum(r["cells"][col]["state"] == "job" for r in grid["rows"])
+    assert jobs > 0
+    _post(agent, "/owner/schedule/block", day=TOMORROW.isoformat(), window="morning")
+    [edit] = _edits(agent)
+    assert edit["detail"].endswith(f"; {jobs} booked visit{'s' if jobs != 1 else ''} stay")
+    after = _day_grid(agent, TOMORROW)
+    assert sum(r["cells"][col]["state"] == "job" for r in after["rows"]) == jobs
+
+
+def test_a_phone_number_on_another_customer_needs_use_anyway(agent, scenarios):
+    maria, brennan = scenarios["repeatCallerOpenJob"], scenarios["jobDoneLastWeek"]
+    sign_in(agent, "admin")
+    contact = schedule.customer_detail(
+        agent.app.state.services.fsm["summit-air"], maria["customerId"]
+    )["phones"][0]
+    path = f"/owner/customers/{maria['customerId']}"
+    sent = _post(agent, path, contact=str(contact["id"]), phone=brennan["phone"],
+                 next=f"/owner/jobs/{maria['jobId']}")
+    [refused] = _edits(agent)
+    assert refused["code"] == "phone_taken" and "Thomas Brennan" in refused["error"]
+    shown = agent.client.get(sent.headers["location"]).text
+    assert "Use anyway" in shown and f'value="{brennan["phone"]}"' in shown
+    assert [c["customer_id"] for c in agent.start(brennan["phone"])["data"]["customers"]] == [
+        brennan["customerId"]
+    ]
+    _post(agent, path, contact=str(contact["id"]), phone=brennan["phone"], confirm="1")
+    assert _edits(agent)[-1]["ok"] == 1
+    found = {c["customer_id"] for c in agent.start(brennan["phone"])["data"]["customers"]}
+    assert found == {brennan["customerId"], maria["customerId"]}
+
+
+def test_a_shared_phone_asks_which_customer_before_adding_a_job(agent, mock, scenarios):
+    shared = scenarios["sharedPhone"]
+    sign_in(agent, "staff")
+    call_id = ready_to_book(agent)
+    day, window = min(_offered(agent, call_id))
+    sent = _post(agent, "/owner/schedule/jobs", day=day, window=window, phone=shared["phone"],
+                 job_type="tune_up", notes="Side gate")
+    [asked] = _edits(agent)
+    assert asked["code"] == "pick_customer" and asked["ok"] == 0
+    page = agent.client.get(sent.headers["location"]).text
+    assert 'name="customer"' in page and shared["phone"] not in sent.headers["location"]
+    chosen = shared["customerIds"][1]
+    _post(agent, "/owner/schedule/jobs", day=day, window=window, customer=str(chosen),
+          job_type="tune_up", notes="Side gate")
+    assert _edits(agent)[-1]["ok"] == 1
+    conn = _mock_db(mock)
+    try:
+        job = conn.execute("SELECT * FROM jobs ORDER BY id DESC LIMIT 1").fetchone()
+    finally:
+        conn.close()
+    assert job["customer_id"] == chosen and "Side gate" in job["summary"]
+
+
+def test_a_refused_job_edit_changes_nothing(agent, scenarios):
+    maria = scenarios["repeatCallerOpenJob"]
+    services = agent.app.state.services
+    fsm, tenant = services.fsm["summit-air"], services.tenants.default
+    sign_in(agent, "staff")
+    before = schedule.job_detail(fsm, tenant, maria["jobId"], services.clock())
+    _post(agent, f"/owner/jobs/{maria['jobId']}", window="2026-11-01|morning",
+          street=before["address"]["street"], unit="9Z", city=before["address"]["city"],
+          zip=before["address"]["zip"], notes="Changed")
+    [edit] = _edits(agent)
+    assert edit["ok"] == 0 and edit["error"] == "That window has already started."
+    after = schedule.job_detail(fsm, tenant, maria["jobId"], services.clock())
+    assert (after["address"], after["notes"], after["window"]) == (
+        before["address"], before["notes"], before["window"]
+    )
+
+
+def test_a_block_made_in_servicetitan_is_not_taken_off_from_here(agent, mock):
+    services = agent.app.state.services
+    fsm, tenant = services.fsm["summit-air"], services.tenants.default
+    sign_in(agent, "staff")
+    grid = _day_grid(agent, TOMORROW)
+    col = [w["id"] for w in grid["windows"]].index("afternoon")
+    free = next(r for r in grid["rows"] if r["cells"][col]["state"] == "free")
+    start, end = tenant.window_bounds(TOMORROW, tenant.window("afternoon"))
+    made = fsm.create_non_job_appointment("st-own", free["id"], start, end, "Training", "")
+    assert not next(
+        b for r in _day_grid(agent, TOMORROW)["rows"] for c in r["cells"] for b in c["blocks"]
+    )["ours"]
+    _post(agent, f"/owner/schedule/blocks/{made['id']}/remove", day=TOMORROW.isoformat())
+    [edit] = _edits(agent)
+    assert edit["error"] == "That block was made in ServiceTitan. Change it there."
+    assert _active_blocks(mock) == 1
+
+
+def test_filter_times_go_to_servicetitan_in_utc_whatever_zone_they_are_in():
+    from zoneinfo import ZoneInfo
+
+    from app.fsm.servicetitan import _stamp
+
+    eight_am = datetime(2026, 11, 3, 8, 0, tzinfo=ZoneInfo("America/New_York"))
+    assert _stamp(eight_am) == "2026-11-03T13:00:00Z"

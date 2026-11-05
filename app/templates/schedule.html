@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% from "_ui.html" import day_nav, empty with context %}
-{% from "_schedule.html" import grid, result_line with context %}
+{% from "_schedule.html" import grid, result_line, pick_customer, use_anyway with context %}
 {% block title %}{{ tenant }}: schedule {{ day.strftime("%a %b %-d") }}{% endblock %}
 {% block body %}
 <main class="page">
@@ -12,7 +12,7 @@
         {{ day_nav("/owner/schedule", slug, day, is_today) }}
       </div>
     </div>
-    <div class="actions">{{ result_line(result) }}</div>
+    <div class="actions">{{ result_line(result) }}{{ pick_customer(result, here) }}</div>
   </div>
 
   <section class="panel">

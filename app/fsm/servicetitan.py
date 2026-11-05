@@ -11,7 +11,7 @@ below is the mock's stand-in for it).
 import hashlib
 import threading
 import time
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 import httpx
 
@@ -28,7 +28,8 @@ def _utc(moment: datetime) -> str:
 
 
 def _stamp(moment: datetime) -> str:
-    return moment.strftime("%Y-%m-%dT%H:%M:%SZ")
+    """A time as ServiceTitan's filters take it, in UTC whatever zone it was given in."""
+    return moment.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def ref_of(key: str) -> str:

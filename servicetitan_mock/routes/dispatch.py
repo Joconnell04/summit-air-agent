@@ -392,6 +392,23 @@ def _non_job_values(c: sqlite3.Connection, body: NonJobIn) -> tuple:
     )
 
 
+def _refuse_over_a_visit(c: sqlite3.Connection, technician_id: int, start: str, end: str) -> None:
+    """A block can't go over a technician's live appointment: the visit would stay booked with a
+    technician the schedule says is away. Stricter than ServiceTitan (ASSUMED), which lets an
+    office double up a technician's time."""
+    clash = c.execute(
+        """SELECT id FROM appointments
+           WHERE technician_id = ? AND status <> 'Canceled' AND start < ? AND end > ?""",
+        (technician_id, end, start),
+    ).fetchone()
+    if clash:
+        raise ApiError(
+            409,
+            "technician_busy",
+            f"Technician {technician_id} has appointment {clash['id']} in that time.",
+        )
+
+
 @router.get("/non-job-appointments")
 def list_non_job(
     conn: sqlite3.Connection = Depends(get_conn),
@@ -440,13 +457,16 @@ def create_non_job(
     idempotency_key: str | None = Header(None),
 ):
     def run(c: sqlite3.Connection):
+        values = _non_job_values(c, body)
+        if values[-1]:  # active
+            _refuse_over_a_visit(c, *values[:3])
         stamp = iso(now)
         new_id = c.execute(
             """INSERT INTO non_job_appointments (technician_id, start, end, name, summary, all_day,
                    remove_from_capacity, show_on_schedule, active, created_by_id, created_on,
                    modified_on)
                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-            (*_non_job_values(c, body), user_id, stamp, stamp),
+            (*values, user_id, stamp, stamp),
         ).lastrowid
         row = c.execute("SELECT * FROM non_job_appointments WHERE id = ?", (new_id,)).fetchone()
         return 200, shape_non_job(row)
@@ -474,12 +494,15 @@ def update_non_job(
     def run(c: sqlite3.Connection):
         if not c.execute("SELECT 1 FROM non_job_appointments WHERE id = ?", (non_job_id,)).fetchone():
             raise ApiError(404, "not_found", f"Non-job appointment {non_job_id} does not exist.")
+        values = _non_job_values(c, body)
+        if values[-1]:
+            _refuse_over_a_visit(c, *values[:3])
         c.execute(
             """UPDATE non_job_appointments SET technician_id = ?, start = ?, end = ?, name = ?,
                    summary = ?, all_day = ?, remove_from_capacity = ?, show_on_schedule = ?,
                    active = ?, modified_on = ?
                WHERE id = ?""",
-            (*_non_job_values(c, body), iso(now), non_job_id),
+            (*values, iso(now), non_job_id),
         )
         row = c.execute("SELECT * FROM non_job_appointments WHERE id = ?", (non_job_id,)).fetchone()
         return 200, shape_non_job(row)

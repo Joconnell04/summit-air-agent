@@ -178,3 +178,15 @@ def test_an_existing_world_gains_the_new_table_without_losing_its_data(tmp_path)
         assert conn.execute("SELECT value FROM meta WHERE key = 'kept'").fetchone()[0] == "yes"
     finally:
         conn.close()
+
+
+def test_a_block_over_a_technicians_visit_is_refused(small):
+    api, ids = small
+    booked = api.post("/jpm/jobs", job_body(*ids["home"], TOMORROW, "morning", appointments=[
+        {**job_body(*ids["home"], TOMORROW, "morning")["appointments"][0], "technicianIds": [7001]}
+    ]))
+    assert booked.status_code == 200
+    refused = _block(api, 7001)
+    assert refused.status_code == 409 and refused.json()["data"]["code"] == "technician_busy"
+    assert _block(api, 7002).status_code == 200
+    assert _block(api, 7001, "afternoon").status_code == 200

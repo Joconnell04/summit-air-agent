@@ -8,6 +8,7 @@ app/schedule.py. The bench pages need an admin. A form posts to the owner routes
 surface and says where to go back to; the edit is logged with the surface it came from.
 """
 
+import json
 from datetime import date
 
 from fastapi import FastAPI, Form, Request
@@ -37,7 +38,12 @@ def _result(conn, tenant, user, edit_id: int | None) -> dict | None:
     ).fetchone()
     if row is None:
         return None
-    return {"ok": bool(row["ok"]), "text": row["detail"] if row["ok"] else row["error"]}
+    return {
+        "ok": bool(row["ok"]),
+        "text": row["detail"] if row["ok"] else row["error"],
+        "code": row["code"],
+        "pending": json.loads(row["pending_json"]) if row["pending_json"] else None,
+    }
 
 
 def _with_edit(path: str, edit_id: int | None) -> str:
@@ -254,6 +260,7 @@ def add_routes(app: FastAPI) -> None:
         phone: str = Form(""),
         job_type: str = Form(""),
         notes: str = Form(""),
+        customer: str = Form(""),
         next: str = Form("/owner/schedule"),
     ):
         on = _day(day, date.min)
@@ -261,7 +268,7 @@ def add_routes(app: FastAPI) -> None:
             request, next,
             lambda conn, fsm, cache, tenant, who, now: schedule.add_job(
                 conn, fsm, cache, tenant, who, now, on, window, phone, job_type, notes,
-                _int(technician),
+                _int(technician), _int(customer),
             ),
         )
 
@@ -327,6 +334,7 @@ def add_routes(app: FastAPI) -> None:
         name: str = Form(""),
         contact: str = Form(""),
         phone: str = Form(""),
+        confirm: str = Form(""),
         next: str = Form("/owner/schedule"),
     ):
         refused = _need_admin(request)
@@ -336,6 +344,6 @@ def add_routes(app: FastAPI) -> None:
             request, next,
             lambda conn, fsm, cache, tenant, who, now: schedule.edit_customer(
                 conn, fsm, cache, tenant, who, now, customer_id, name or None, _int(contact),
-                phone or None,
+                phone or None, confirm == "1",
             ),
         )

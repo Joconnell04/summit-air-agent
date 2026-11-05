@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% from "_ui.html" import bench_tabs, day_nav, empty with context %}
-{% from "_schedule.html" import grid, result_line with context %}
+{% from "_schedule.html" import grid, result_line, pick_customer, use_anyway with context %}
 {% block title %}Bench: schedule{% endblock %}
 {% block tabs %}{{ bench_tabs(tab) }}{% endblock %}
 {% block body %}
@@ -13,7 +13,7 @@
         {{ day_nav("/bench/schedule", slug, day, is_today) }}
       </div>
     </div>
-    <div class="actions">{{ result_line(result) }}</div>
+    <div class="actions">{{ result_line(result) }}{{ pick_customer(result, here) }}</div>
   </div>
 
   <div class="split narrow-side">
@@ -55,8 +55,9 @@
           <tbody>
             <tr><td class="fit"><label for="c-name">Name</label></td><td><input class="field" id="c-name" name="name" maxlength="60" value="{{ customer.name }}"></td></tr>
             {% if customer.phones %}{% set p = customer.phones[0] %}
-            <tr><td class="fit"><label for="c-phone">Phone</label></td><td><input type="hidden" name="contact" value="{{ p.id }}"><input class="field num" id="c-phone" name="phone" inputmode="tel" maxlength="20" value="{{ p.value }}"></td></tr>
+            <tr><td class="fit"><label for="c-phone">Phone</label></td><td><input type="hidden" name="contact" value="{{ p.id }}"><input class="field num" id="c-phone" name="phone" inputmode="tel" maxlength="20" value="{{ result.pending.phone if result and result.code == 'phone_taken' and result.pending and result.pending.contact == p.id else p.value }}"></td></tr>
             {% endif %}
+            {{ use_anyway(result) }}
           </tbody>
         </table>
         <div class="panel-foot actions"><span>Customer {{ customer.id }}</span><button class="btn primary" type="submit">Save</button></div>
