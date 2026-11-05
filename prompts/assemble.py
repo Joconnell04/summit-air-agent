@@ -53,12 +53,15 @@ def sections(start: dict, now: datetime | None = None) -> list[tuple[str, str]]:
     if house:
         parts.insert(PARTS.index(HOUSE_AFTER) + 1, (HOUSE_GUIDANCE, house))
     parts = [(name, text.replace("{company}", tenant["name"])) for name, text in parts]
+    if now is None and start.get("now"):
+        now = datetime.fromisoformat(start["now"])
     local = (now or datetime.now(ZoneInfo(tenant["timezone"]))).astimezone(
         ZoneInfo(tenant["timezone"])
     )
     knowledge = "\n\n".join(body.strip() for body in start.get("knowledge", {}).values())
     context = {
-        k: v for k, v in start.items() if k not in ("knowledge", "tenant", "call_id", "house_rules")
+        k: v for k, v in start.items()
+        if k not in ("knowledge", "tenant", "call_id", "house_rules", "now")
     }
     notes = call_notes(start)
     noted = "".join(f"- {n}\n" for n in notes)

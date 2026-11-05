@@ -169,7 +169,10 @@ The text suite scored 91% while Jackson's live calls 1 and 2 went badly (a 20-se
 ```
 make rig STACK=livekit SUITE=live ENV_FILE=<path to .env> MAX_COST=5
 uv run python -m evals.audio_rig.live_report evals/results/<run>.json [<rerun>.json ...]
+uv run python -m evals.audio_rig.live_report --rescore data/sim/<batch>   # today's checks on saved timelines
 ```
+
+Each call's timeline is saved in its batch transcript (`S1.json`, `timeline`), so a check that changes can re-score old calls without new ones.
 
 **Scenarios.** Twelve, in `evals/scenarios/live/` (kept out of the text suites, which load only the top folder): the two live calls replayed with Jackson's own lines and patience (`live-replay-1-...`, `live-replay-2-...`, from `evals/live_calls/`), calls 3 to 10 of `evals/live-calls.md`, and two calls that add a second task. None carries a must-pass spec line, so the rig runs each once.
 
@@ -180,16 +183,20 @@ uv run python -m evals.audio_rig.live_report evals/results/<run>.json [<rerun>.j
 | Check | Fails when |
 |---|---|
 | `silence` | over 4 s from the caller stopping to the agent's first sound, or no reply; inside a turn, over 3 s with no sound during a lookup (4 s otherwise) |
-| `half_reply` | an agent line with no question, followed by 3 s or more of silence before anyone speaks |
+| `half_reply` | an agent line with no question, followed by 3 s or more of silence before anyone speaks, or before the caller hangs up; a goodbye is left to `hangup_gap` |
 | `repeat` | a sentence said twice in one turn, or a turn said again when the caller hadn't asked to hear it again |
 | `first_sound` | the call's median or slowest 10% of reply delays over the target: 1,200 and 2,000 ms on plain turns, 2,500 and 3,500 ms on lookups |
 | `talk_over` | the agent makes a sound while the caller is still speaking, or its reply starts within one 20 ms frame of the caller's end (already playing); not after the caller cut in |
 | `llm_requests` | a turn spends more model requests than it needs: 1 on a plain turn, 2 on a lookup (call the tool, then speak), as the worker logs them |
 | `readback_rate` | a run of five or more spoken digits (a phone number, a ZIP) faster than 3 digits a second |
-| `hangup_gap` | the agent drops the line less than 1 s after its goodbye ends |
-| `time_as_asked` | the caller asks for a clock time and the agent's next turn that names a time doesn't say it back on that day, unless it asks whether another time works ("anything else?" doesn't count) |
+| `hangup_gap` | the agent drops the line less than 1 s after its goodbye ends, or ends the call with no hang-up the rig could time |
+| `time_as_asked` | the caller asks for a clock time and the agent's next turn that names a time doesn't say it back on that day, as a time rather than one end of a window ("between 2 and 3"), unless it asks whether another time works ("anything else?" doesn't count); or no turn after it names a time at all. A caller who names a window is taking it, not asking for a time |
 
 The checks also run on the two live calls themselves (`timeline_from_live_call`, placed from the worker's own timings), and `tests/evals/test_live_checks.py` holds them to failing there: call 1 on the half reply, the reply delay and the callback time; call 2 on the repeat, the half replies, the callback time and three model requests on plain turns.
+
+A call where the agent never answered a caller line fails as `silence`: there was nothing to time.
+
+The rig's agent and its tool server keep one clock: the call start carries the server's `now`, and the prompt's "Now:" is written from it, so on the rig the agent hears the scenario's time (it heard the wall clock before #157).
 
 **Limits.** No background noise and no second voice, so live calls 4 and 5 lose their noise. The caller can cut in on a long turn but not on a cue, so call 10 corrects the unit after the read-back. The live calls' visit at 142 Main Street is the seeded one at 620 Bedford Avenue.
 

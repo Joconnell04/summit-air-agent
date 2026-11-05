@@ -50,7 +50,7 @@ from evals.audio_rig.recording import (
 from evals.audio_rig.router import Serving, Worlds, build_app
 from evals.audio_rig.speech import Deepgram
 from evals.audio_rig.store import open_store
-from evals.audio_rig.timeline import AgentPart, AgentTurn, CallerLine, Timeline, Word
+from evals.audio_rig.timeline import AgentPart, AgentTurn, CallerLine, Timeline, Word, to_dict
 from evals.caller import SimulatedCaller, load_style
 from evals.checks import safety_config
 from evals.models import Model, Usage, for_profile, load_config
@@ -217,6 +217,7 @@ class Rig:
         self.vad = Vad(**rig["vad"])
         self.rig_config = rig
         self.verbose = verbose
+        self.last_timeline = Timeline()
 
     def log(self, call_id: str, text: str) -> None:
         if self.verbose:
@@ -374,6 +375,7 @@ class Rig:
             else:
                 error = f"the call did not finish within {scenario.max_turns} caller turns"
             sender.stopped = True
+            timeline.ended_at = time.perf_counter()
             await line.close(reason or "caller_hangup")
             usage.add(caller.usage)
         except Exception as err:  # noqa: BLE001 - a broken rig run is an error, not a fail
@@ -400,6 +402,8 @@ class Rig:
         parts["grader"] = max(0.0, result.cost_usd - sum(parts.values()))
         result.cost_parts = {k: round(v, 6) for k, v in parts.items()}
         timeline.hung_up_at = listener.hung_up_at if reason == "agent_end" else None
+        timeline.ended_by = {"agent_end": "agent", "caller_hangup": "caller"}.get(reason or "")
+        self.last_timeline = timeline
         if scenario.audio_checks:
             result = with_audio_checks(result, timeline, self.ctx.config)
         self.ctx.worlds.drop(call_id)
@@ -449,7 +453,8 @@ async def run_entrant(name: str, chosen: list[Scenario], repeats: int, max_cost:
                     break
                 done.append(result)
                 if batch is not None:
-                    entry = await asyncio.to_thread(batch.add, recorder, result, scenario.persona)
+                    entry = await asyncio.to_thread(batch.add, recorder, result, scenario.persona,
+                                                    to_dict(rig.last_timeline))
                     print(f"recorded {entry['code']}: {entry['audio']}", flush=True)
                 spent = sum(r.cost_usd for r in done)
                 delays = ", ".join(f"{t.reply_delay_ms:.0f}" for t in result.turn_timings)

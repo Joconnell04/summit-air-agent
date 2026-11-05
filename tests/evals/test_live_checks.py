@@ -408,3 +408,90 @@ def test_a_call_that_ran_out_of_turns_is_still_checked_and_a_broken_one_is_not(s
     assert checked.check_failures == [
         'silence: no reply at all after the caller said "Two four eight Duffield Street."']
     assert with_audio_checks(broken, silent, load_config()).check_failures == []
+
+
+# review of #157
+
+def test_an_empty_or_greeting_only_call_does_not_pass():
+    assert lc.run(Timeline(), load_config()) == [
+        "silence: the call never got past the greeting, so nothing could be checked"]
+    assert lc.run(call(GREETING), load_config())[0].startswith("silence: the call never got")
+
+
+def test_a_window_starting_at_the_asked_time_is_not_the_time_as_asked():
+    assert asked_then("Friday at 2 PM.", "Someone will call Friday between 2 PM and 3 PM.")
+    assert asked_then("Friday at 2 PM.", "Friday, 2 to 3, works. Anything else?")
+    assert asked_then("Friday at 2 PM.", "Okay, Friday at 2 PM.") == []
+
+
+def test_a_time_asked_for_and_never_said_back_fails():
+    t = call(GREETING, caller("Call me Friday at two PM.", 4, 5), agent(5, part("Got it. Anything else?", 6)),
+             caller("No.", 9, 10), agent(10, part("Thanks for calling.", 11)))
+    (line,) = lc.time_as_asked(t, CFG)
+    assert line.endswith("the agent never said a time back")
+
+
+def test_a_caller_taking_a_window_is_not_asking_for_a_time():
+    assert asked_then("Yeah, twelve to four is fine. Two PM works.",
+                      "You're set for Friday, between 12 and 4. Anything else?") == []
+
+
+def test_contractions_are_not_questions_and_offers_of_help_are_closers():
+    for line in ("Can't do that.", "Don't worry.", "Didn't catch it.", "Won't be long."):
+        assert not lc.is_question(line), line
+    assert lc.CLOSERS.search("Is there anything I can help with?")
+
+
+def test_a_half_reply_the_caller_hangs_up_on_is_flagged():
+    t = call(GREETING, caller("Cancel it.", 4, 5), agent(5, part("Got it.", 6, 6.5)))
+    t.ended_at, t.ended_by = 27.0, "caller"
+    (line,) = lc.half_reply(t, CFG)
+    assert line.endswith("before the caller hung up")
+
+
+def test_a_goodbye_is_not_a_half_reply():
+    t = call(GREETING, caller("Bye.", 4, 5), agent(5, part("Thanks for calling Summit Air.", 6, 8)))
+    t.ended_at = 30.0
+    assert lc.half_reply(t, CFG) == []
+
+
+def test_an_agent_ending_with_no_hang_up_time_fails():
+    t = call(GREETING, caller("Bye.", 4, 5), agent(5, part("Thanks for calling.", 6, 8)))
+    t.ended_by = "agent"
+    assert lc.hangup_gap(t, CFG) == [
+        "hangup_gap: the agent ended the call but the rig recorded no hang-up time"]
+
+
+def test_a_timeline_survives_the_trip_through_json_and_rescores_the_same():
+    from evals.audio_rig.timeline import from_dict, to_dict
+
+    t = call(GREETING, caller("Friday at 2 PM.", 4, 5),
+             agent(5, part("Tomorrow between 1 PM and 3 PM.", 6, 8,
+                           words=[Word("Tomorrow", 6, 6.5)]), lookup=True), hung_up_at=9.0)
+    t.ended_by = "agent"
+    back = from_dict(json.loads(json.dumps(to_dict(t))))
+    assert back == t
+    assert lc.run(back, load_config()) == lc.run(t, load_config())
+
+
+def test_rescore_replaces_the_audio_failures_from_the_saved_timeline(tmp_path, scenario_data):
+    from evals.audio_rig.live_report import rescore
+    from evals.audio_rig.timeline import to_dict
+    from evals.results import Run
+
+    t = call(GREETING, caller("Cancel it.", 4, 5), agent(5, part("Got it.", 6, 6.5)),
+             caller("Is that all?", 26, 27), agent(27, part("Yes. Anything else?", 28)))
+    s = scenario_data(call_id="call-x", outcome="fail",
+                      check_failures=["identity: expected mismatch", "repeat: old wording"])
+    run = Run.model_validate({"run_id": "r1", "created": "2026-11-05T00:00:00Z", "suite": "live",
+                              "tags": [], "stack": "livekit", "profile": "fast", "hash": "h",
+                              "scenarios": [s]})
+    (tmp_path / "r1.json").write_text(run.model_dump_json())
+    (tmp_path / "S1.json").write_text(json.dumps({"call_id": "call-x", "timeline": to_dict(t)}))
+    (tmp_path / "manifest.json").write_text(json.dumps({
+        "results": [str(tmp_path / "r1.json")], "calls": [{"transcript": "S1.json"}]}))
+    out = rescore(tmp_path, load_config())
+    failures = json.loads(out.read_text())["scenarios"][0]["check_failures"]
+    assert failures[0] == "identity: expected mismatch"
+    assert not any(f.startswith("repeat:") for f in failures)
+    assert any(f.startswith('half_reply: "Got it."') for f in failures)

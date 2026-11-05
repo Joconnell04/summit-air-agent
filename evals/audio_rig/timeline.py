@@ -3,7 +3,7 @@ between. The rig builds it as the call runs (evals/audio_rig/rig.py) and the liv
 read it (evals/audio_rig/live_checks.py). Times are seconds on the rig's clock
 (time.perf_counter), the same clock the reply delays are measured on.
 """
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 from datetime import datetime
 
 
@@ -72,6 +72,9 @@ class Timeline:
     started: datetime | None = None
     # When the agent's side of the line dropped, if the agent ended the call.
     hung_up_at: float | None = None
+    # Who ended the call ("agent" or "caller"), and when the rig closed the line.
+    ended_by: str | None = None
+    ended_at: float | None = None
 
     def agent_turns(self) -> list[AgentTurn]:
         return [e for e in self.events if isinstance(e, AgentTurn)]
@@ -91,3 +94,32 @@ class Timeline:
             if isinstance(e, CallerLine):
                 return e
         return None
+
+
+def to_dict(timeline: Timeline) -> dict:
+    """The timeline as JSON-ready data, kept beside each recording so a call can be re-scored
+    when a check changes (evals/audio_rig/live_report.py --rescore)."""
+    events = [{"kind": "caller" if isinstance(e, CallerLine) else "agent", **asdict(e)}
+              for e in timeline.events]
+    return {"events": events,
+            "started": timeline.started.isoformat() if timeline.started else None,
+            "hung_up_at": timeline.hung_up_at, "ended_by": timeline.ended_by,
+            "ended_at": timeline.ended_at}
+
+
+def from_dict(data: dict) -> Timeline:
+    events: list[AgentTurn | CallerLine] = []
+    for e in data["events"]:
+        e = dict(e)
+        if e.pop("kind") == "caller":
+            events.append(CallerLine(**e))
+            continue
+        parts = []
+        for p in e.pop("parts"):
+            words = [Word(**w) for w in p.pop("words")]
+            parts.append(AgentPart(**{**p, "sounds": [tuple(x) for x in p["sounds"]],
+                                      "words": words}))
+        events.append(AgentTurn(**e, parts=parts))
+    started = datetime.fromisoformat(data["started"]) if data.get("started") else None
+    return Timeline(events, started, data.get("hung_up_at"), data.get("ended_by"),
+                    data.get("ended_at"))

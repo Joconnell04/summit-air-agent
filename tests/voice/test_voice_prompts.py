@@ -401,3 +401,10 @@ def test_coaching_on_caring_for_someone_is_never_spoken(sentence):
 )
 def test_the_911_advice_and_ordinary_lines_are_kept(sentence):
     assert assemble.SpokenReply().sentence(sentence) == sentence
+
+
+def test_now_comes_from_the_servers_clock_when_the_start_carries_it():
+    """On the audio rig the server runs on the scenario's time; the prompt says that time."""
+    base = {"tenant": {"slug": "x", "name": "Summit Air", "timezone": "America/New_York"}}
+    text = dict(assemble.sections({**base, "now": "2026-11-04T21:30:00Z"}))["This call"]
+    assert "Now: Wednesday 4 November 2026, 4:30 PM" in text

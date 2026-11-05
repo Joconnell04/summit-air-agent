@@ -396,6 +396,9 @@ def start(
     offer_callback = drops >= tenant.repeat["drops_before_callback_offer"]
     data = {
         "call_id": args.call_id,
+        # The server's clock, which the prompt's "Now:" is written from, so the agent and the
+        # server agree on the time (a scratch world's clock runs at the scenario's time).
+        "now": iso(now),
         "tenant": {"slug": tenant.slug, "name": tenant.name, "timezone": str(tenant.tz)},
         "after_hours": bool(call["after_hours"]),
         "caller": {

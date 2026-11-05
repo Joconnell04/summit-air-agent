@@ -3,15 +3,24 @@ suite"): per scenario, the audio checks that failed with the line each quotes, a
 first sound across the run against the S-36 targets.
 
     uv run python -m evals.audio_rig.live_report evals/results/<run>.json [...]
+    uv run python -m evals.audio_rig.live_report --rescore data/sim/<batch>
 
 Several files (a run and its reruns) are read as one, the later file winning for a scenario both
-ran. Prints Markdown.
+ran. Prints Markdown. `--rescore` runs today's checks again on a batch's saved timelines and
+writes `<results>-rescored.json` beside the batch's results file, for a check that changed after
+the calls were made.
 """
 import argparse
+import json
 import sys
 from collections import defaultdict
+from pathlib import Path
 
+from evals import results as results_mod
+from evals.audio_rig import live_checks
 from evals.audio_rig.live_checks import NAMES
+from evals.audio_rig.recording import MANIFEST, ROOT
+from evals.audio_rig.timeline import from_dict
 from evals.compare import percentile
 from evals.models import load_config
 from evals.results import ScenarioResult, load
@@ -85,10 +94,49 @@ def report(scenarios: list[ScenarioResult], config: dict) -> list[str]:
     return lines
 
 
+def rescored(s: ScenarioResult, timeline, config: dict) -> ScenarioResult:
+    """The result with its audio check failures replaced by today's checks on `timeline`."""
+    kept = record_failures(s)
+    fresh = live_checks.run(timeline, config)
+    outcome = s.outcome
+    if outcome != "error":
+        outcome = "fail" if kept or fresh else "pass"
+    return s.model_copy(update={"check_failures": kept + fresh, "outcome": outcome})
+
+
+def rescore(batch: Path, config: dict) -> Path:
+    manifest = json.loads((batch / MANIFEST).read_text())
+    runs = manifest.get("results") or []
+    runs = [runs] if isinstance(runs, str) else runs
+    if not runs:
+        raise SystemExit(f"{batch} has no results file to rescore")
+    timelines = {}
+    for call in manifest["calls"]:
+        data = json.loads((batch / call["transcript"]).read_text())
+        if "timeline" in data:
+            timelines[data["call_id"]] = from_dict(data["timeline"])
+    out = None
+    for name in runs:
+        path = Path(name) if Path(name).is_absolute() else ROOT / name
+        run = results_mod.load(path)
+        missing = [s.scenario_id for s in run.scenarios if s.call_id not in timelines]
+        if missing:
+            raise SystemExit(f"no saved timeline for {', '.join(missing)}; rerun those calls")
+        run = run.model_copy(update={"scenarios": [
+            rescored(s, timelines[s.call_id], config) for s in run.scenarios]})
+        out = path.with_name(f"{path.stem}-rescored.json")
+        out.write_text(run.model_dump_json(indent=2) + "\n")
+    return out
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="The live-like suite's table.")
-    parser.add_argument("runs", nargs="+")
+    parser.add_argument("runs", nargs="*")
+    parser.add_argument("--rescore", default="", help="a batch folder under data/sim")
     args = parser.parse_args(argv)
+    if args.rescore:
+        print(f"rescored: {rescore(Path(args.rescore), load_config())}")
+        return 0
     by_id: dict[str, ScenarioResult] = {}
     for path in args.runs:
         for s in load(path).scenarios:

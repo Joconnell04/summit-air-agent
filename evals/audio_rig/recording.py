@@ -160,7 +160,8 @@ class Batch:
     def next_code(self) -> str:
         return f"S{len(self.manifest['calls']) + 1}"
 
-    def add(self, recorder: CallRecorder, result, persona: str = "") -> dict:
+    def add(self, recorder: CallRecorder, result, persona: str = "",
+            timeline: dict | None = None) -> dict:
         code = self.next_code()
         audio = self.folder / f"{code}.wav"
         duration = recorder.write_wav(audio)
@@ -173,6 +174,9 @@ class Batch:
             "audio": audio.name, "duration_s": round(duration, 2), "rate": recorder.rate,
             "lines": lines,
         }
+        if timeline is not None:
+            # The rig's timeline of the call, for re-scoring the audio checks later.
+            transcript["timeline"] = timeline
         (self.folder / f"{code}.json").write_text(json.dumps(transcript, indent=2) + "\n")
         entry = {"code": code, "scenario_id": result.scenario_id, "sample": result.sample,
                  "audio": audio.name, "transcript": f"{code}.json",

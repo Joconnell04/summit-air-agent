@@ -27,14 +27,17 @@ DIGIT_WORDS = {w for w, n in NUMBER_WORDS.items() if n < 10}
 # A last sentence that opens like this is a question even when the ears dropped the "?".
 QUESTION_START = re.compile(
     r"^(would|should|shall|can|could|do|does|did|is|are|was|were|will|what|when|which|how|who|"
-    r"where|may|want|anything)\b", re.IGNORECASE)
+    r"where|may|want|anything)\s", re.IGNORECASE)
 # The caller asking to hear something again: an exact repeat then is the right answer.
 REPEAT_ASK = re.compile(
     r"\b(again|repeat|pardon|come again|didn't (catch|hear)|what was that|hello)\b|^\W*(what|sorry|"
     r"huh)\W*$", re.IGNORECASE)
 # Questions that close a call rather than ask the caller to agree to something.
-CLOSERS = re.compile(r"\b(anything else|something else|else i can help|help with anything)\b",
-                     re.IGNORECASE)
+CLOSERS = re.compile(r"\b(anything else|something else|else i can help|help with anything|"
+                     r"anything i can help|is there anything)\b", re.IGNORECASE)
+# A goodbye ends the call; the silence after one is the hang-up check's, not a half reply.
+GOODBYE = re.compile(r"\b(thanks for calling|thank you for calling|goodbye|bye now|"
+                     r"have a (great|good|nice))\b", re.IGNORECASE)
 NEGATION = re.compile(r"\bnot\b|n't\b|\bcannot\b|\bno\b", re.IGNORECASE)
 DAYS = ("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday")
 
@@ -129,14 +132,20 @@ def half_reply(timeline: Timeline, cfg: dict) -> list[str]:
             continue
         parts = [p for p in e.parts if p.first_sound is not None]
         for n, part in enumerate(parts):
-            if part.cut or not part.text or ends_with_question(part.text):
+            if (part.cut or not part.text or ends_with_question(part.text)
+                    or GOODBYE.search(part.text)):
                 continue
-            nxt = parts[n + 1].first_sound if n + 1 < len(parts) else timeline.next_start(i)
+            last = n + 1 == len(parts)
+            nxt = parts[n + 1].first_sound if not last else timeline.next_start(i)
+            # Nothing after it: the caller gave up on the silence and hung up.
+            nxt = nxt if nxt is not None else timeline.ended_at
             if nxt is None:
                 continue
             gap = nxt - part.last_sound
             if gap >= cfg["half_reply_silence_s"]:
-                who = "the agent went on" if n + 1 < len(parts) else "the caller spoke"
+                who = ("the agent went on" if not last else
+                       "the caller spoke" if timeline.next_start(i) is not None else
+                       "the caller hung up")
                 out.append(f"half_reply: {quote(part.text)} asked nothing, then {gap:.1f} s of "
                            f"silence before {who}")
     return out
@@ -274,6 +283,8 @@ def readback_rate(timeline: Timeline, cfg: dict) -> list[str]:
 def hangup_gap(timeline: Timeline, cfg: dict) -> list[str]:
     """The agent dropping the line less than `hangup_after_goodbye_s` after its last sound."""
     turns = [t for t in timeline.agent_turns() if t.last_sound is not None]
+    if timeline.ended_by == "agent" and timeline.hung_up_at is None:
+        return ["hangup_gap: the agent ended the call but the rig recorded no hang-up time"]
     if timeline.hung_up_at is None or not turns:
         return []
     gap = timeline.hung_up_at - turns[-1].last_sound
@@ -312,11 +323,18 @@ def days_named(text: str, started) -> set[str]:
     return days
 
 
+def in_window(plain: str, at: int) -> bool:
+    """The time at `at` opens or closes a window ("between 2 PM and 3 PM", "2 to 3")."""
+    return any(m.start() <= at < m.end() for m in RANGE.finditer(plain))
+
+
 def said_back(asked: set[tuple[int, int]], text: str) -> bool:
+    """The asked time said as a time: not negated ("not at 2 PM") and not as one end of a
+    window ("between 2 and 3")."""
     plain = words_to_numbers(text)
     for hour, minute, at in clock_times(text):
         before = plain[max(0, at - 10):at]
-        if (hour, minute) in asked and not NEGATION.search(before):
+        if (hour, minute) in asked and not NEGATION.search(before) and not in_window(plain, at):
             return True
     return False
 
@@ -331,9 +349,11 @@ def time_as_asked(timeline: Timeline, cfg: dict) -> list[str]:
         if not isinstance(e, CallerLine):
             continue
         asked = {(h, m) for h, m, _ in clock_times(e.text)}
-        if not asked:
+        # A caller naming a window ("twelve to four is fine, two works") is taking the window.
+        if not asked or RANGE.search(words_to_numbers(e.text)):
             continue
         asked_days = days_named(e.text, timeline.started)
+        answered = False
         for later in events[i + 1:]:
             if isinstance(later, CallerLine):
                 if clock_times(later.text):
@@ -342,6 +362,7 @@ def time_as_asked(timeline: Timeline, cfg: dict) -> list[str]:
             text = later.text
             if not (clock_times(text) or RANGE.search(words_to_numbers(text))):
                 continue
+            answered = True
             offers = [s for s in sentences(text) if is_question(s) and not CLOSERS.search(s)]
             told_days = days_named(text, timeline.started)
             wrong_day = bool(asked_days and told_days and not asked_days & told_days)
@@ -349,6 +370,9 @@ def time_as_asked(timeline: Timeline, cfg: dict) -> list[str]:
                 out.append(f"time_as_asked: the caller asked {quote(e.text)}; the agent said "
                            f"{quote(text, 20)}")
             break
+        if not answered:
+            out.append(f"time_as_asked: the caller asked {quote(e.text)}; the agent never said "
+                       f"a time back")
     return out
 
 
@@ -358,10 +382,18 @@ CHECKS = {
 }
 
 
+def exchange(timeline: Timeline) -> list[str]:
+    """A call with no caller line can't pass: there was nothing to time. (A caller line with no
+    reply is the `silence` check's.)"""
+    if any(isinstance(e, CallerLine) for e in timeline.events):
+        return []
+    return ["silence: the call never got past the greeting, so nothing could be checked"]
+
+
 def run(timeline: Timeline, config: dict) -> list[str]:
     """Every live-like check on one call, as failure lines."""
     cfg = cfg_of(config)
-    return [line for name in NAMES for line in CHECKS[name](timeline, cfg)]
+    return exchange(timeline) + [line for name in NAMES for line in CHECKS[name](timeline, cfg)]
 
 
 # the live calls themselves ----------------------------------------------------------------------
