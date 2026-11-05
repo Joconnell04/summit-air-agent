@@ -12,6 +12,7 @@ from zoneinfo import ZoneInfo
 
 import yaml
 
+from app.text import words
 from app.tools import TOOLS
 
 PROMPTS = Path(__file__).resolve().parent
@@ -325,6 +326,19 @@ FINISHING_TOOLS = (
     "book_appointment", "reschedule_appointment", "cancel_appointment", "record_move",
     "flag_person", "record_lead", "mark_do_not_call", "end_call",
 )
+# An acknowledgment with the caller's name after it ("Got it, Pat.", "Thanks, Sam.", "Hi Maria,"):
+# the name is dropped when the caller just said it (Jackson after live call 2, issue #149: "didnt
+# like how it said my name right back").
+NAME_ECHO = re.compile(
+    r"^(?P<ack>(?:hi|hello|hey|got it|thanks|thank you|okay|ok|sure|great|perfect|alright|all right|"
+    r"nice to meet you)),?\s+(?P<name>[A-Za-z][a-z'-]+)(?P<end>[.!,])\s*",
+    re.IGNORECASE,
+)
+# "ZIP 11201" read as a word and a number (Jackson: "just say the zip code is"): said as "the ZIP
+# code is 1 1 2 0 1", digit by digit.
+ZIP_WORD = re.compile(r"\bZIP(?:\s+code)?(?:\s+is)?:?\s+(\d{5})\b", re.IGNORECASE)
+# Sentences this long or longer are never said twice in one turn (SpokenReply.sentence).
+REPEAT_MIN_WORDS = 6
 # Look-ups whose answer needs a second model step before the caller hears anything. A reply that
 # calls one, and says nothing first but an acknowledgment, ends with a holding line
 # (SpokenReply.holding_line). Bookings, moves and cancels are left out: the server's confirmation
@@ -336,7 +350,8 @@ LOOKUPS = ("find_customer", "get_customer_history", "find_slots")
 # after each of those two lines).
 ONLY_ACKNOWLEDGES = re.compile(
     r"(?:(?:sure|okay|ok|got it|yes|yeah|yep|alright|all right|of course|absolutely|no problem|"
-    r"great|perfect|understood|sounds good|right|thanks|thank you)[,.!]?\s*)+(?:i can [^.?!]*[.!]?)?"
+    r"great|perfect|understood|sounds good|right|thanks|thank you|sorry|sorry about that|"
+    r"my apologies|apologies|no worries|my bad)[,.!]?\s*)+(?:i can [^.?!]*[.!]?)?"
     r"|i can (?:do|set up|help with|book|get|take care of) [^.?!]*[.!]?",
     re.IGNORECASE,
 )
@@ -353,7 +368,8 @@ FOLLOW_UP_NOTES = {
     ),
     "stalled": (
         "[server] Your last reply only acknowledged the caller, and they are waiting on you. Take "
-        "the next step now: call the tool it needs, or ask your next question."
+        "the next step now: call the tool it needs, or ask your next question. Don't repeat their "
+        "address, ZIP or number, and don't ask them to confirm it."
     ),
 }
 
@@ -591,6 +607,11 @@ class SpokenReply:
         self._followed_up = False
         # A booking, callback or other request was completed since the caller last spoke.
         self._finished = False
+        # What the caller heard since they last spoke: the model's kept sentences and the server's
+        # lines, by their words, so neither is said twice in a row.
+        self._heard_lines: list[str] = []
+        # The words of the caller's last line, for a name said straight back.
+        self._caller_words: set[str] = set()
         # Technicians the caller asked for by name (DECISIONS.md 085).
         self.technicians: set[str] = set()
 
@@ -609,6 +630,8 @@ class SpokenReply:
         self.streets |= caller_streets(caller_text)
         self._followed_up = False
         self._finished = False
+        self._heard_lines = []
+        self._caller_words = set(words(caller_text).split())
         action = (safety or {}).get("action")
         if action in ("speak_lines", "speak_variant"):
             self.safety_call = True
@@ -650,7 +673,37 @@ class SpokenReply:
 
     def sentence(self, sentence: str) -> str:
         """One sentence of the model's text, in order within a reply, or "" when the caller
-        shouldn't hear it."""
+        shouldn't hear it. A name the caller just gave isn't said back, and a ZIP is said as "the
+        ZIP code is" and its digits."""
+        kept = self._filtered(sentence)
+        return self._without_name_echo(self._zip_said_plainly(kept)) if kept else ""
+
+    def _without_name_echo(self, sentence: str) -> str:
+        match = NAME_ECHO.match(sentence)
+        if not match or match["name"].lower() not in self._caller_words:
+            return sentence
+        rest = sentence[match.end():].strip()
+        ack = match["ack"][0].upper() + match["ack"][1:]
+        if match["end"] == "," and rest:
+            return f"{ack}, {rest}"
+        return f"{ack}. {rest}".strip() if rest else f"{ack}."
+
+    @staticmethod
+    def _zip_said_plainly(sentence: str) -> str:
+        def spell(match: re.Match) -> str:
+            digits = " ".join(match[1])
+            before = sentence[: match.start()].rstrip().lower()
+            if not before:
+                return f"The ZIP code is {digits}"
+            if before.endswith(("your", "the")):
+                return f"ZIP code is {digits}"
+            if before.endswith(","):
+                return f"and the ZIP code is {digits}"
+            return f"ZIP code {digits}"
+
+        return ZIP_WORD.sub(spell, sentence)
+
+    def _filtered(self, sentence: str) -> str:
         after_restatement, self._dropped_restatement = self._dropped_restatement, False
         if ANNOUNCES_READ_BACK.search(sentence) or DESCRIBES_TOOLS.search(sentence):
             return ""
@@ -687,6 +740,12 @@ class SpokenReply:
             if self._asked:
                 return ""
             self._asked = True
+        # A long sentence the caller already heard this turn, the server's or the model's own, isn't
+        # said again (live call 2: the identity refusal twice back to back). Short ones ("Today
+        # works.") may come back naturally.
+        if len(words(sentence).split()) >= REPEAT_MIN_WORDS and self.already_said(sentence):
+            return ""
+        self._heard_lines.append(sentence)
         return sentence
 
     def _names_technician(self, sentence: str) -> bool:
@@ -712,6 +771,15 @@ class SpokenReply:
                 for number, word in self.streets
             )
         )
+
+    def server_said(self, line: str) -> None:
+        """The voice layer spoke one of the server's lines."""
+        self._heard_lines.append(line)
+
+    def already_said(self, line: str) -> bool:
+        """The caller heard these exact words since they last spoke."""
+        said = words(line)
+        return said.strip() != "" and said in words(" ".join(self._heard_lines))
 
     def holding_line(self, kept: str, calls: list[tuple[str, dict]]) -> str:
         """A holding line to end a reply that calls a look-up when the caller would hear nothing

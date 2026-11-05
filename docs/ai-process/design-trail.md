@@ -129,3 +129,4 @@ How the design was reached, in order, so a reader can follow each choice back to
 | Seven-day bookings and an open live schedule | 8 AM to 8 PM every day; a script opens the live mock's schedule; the eval world unchanged | DECISIONS.md 095, #149 |
 | Holding line and no silent replies | A short holding line or clip before a look-up; a reply that leaves the caller waiting is asked again at once | DECISIONS.md 096, #149 |
 | Name check and cancel reason | One wrong answer ends the name check with a callback offer; a cancel needs no reason | DECISIONS.md 097, #149 |
+| Name checks per call, plain names and ZIPs | A failed check stays on its call; an old address is found without a guessed ZIP; the caller's name isn't echoed; ZIPs said digit by digit | DECISIONS.md 098, #149 |

@@ -1016,15 +1016,20 @@ def _identity_gate(ctx: Ctx, customer_id: int, addresses: list[dict], thing: str
     check = _identity_row(ctx, customer_id)
     if check is not None and check["status"] == "verified":
         return True
-    # A question asked on a call that dropped is asked again on this one.
-    if check is not None and check["status"] == "asked" and check["call_id"] != ctx.call["id"]:
+    # A question asked on an earlier call is asked again on this one, and a failed check there
+    # doesn't refuse this call: live call 2 (issue #149) was linked to call 1, whose wrong name
+    # ("Sam Rivera") refused Pat Rivera's move before they were asked anything.
+    if check is not None and check["status"] in ("asked", "mismatch") and (
+        check["call_id"] != ctx.call["id"]
+    ):
         check = None
     if check is not None and check["status"] == "mismatch":
         raise Refused(
             "identity_mismatch",
             ctx.tenant.line("identity_mismatch"),
             need="no change can be made on this call; offer the callback, and flag_person if "
-            "the caller wants it",
+            "the caller wants it. The callback always goes to the number on file: never offer "
+            "to call another number, and never say what the number on file is",
         )
     name_ok, address_ok = _identity_said(ctx, customer["name"], addresses)
     if name_ok and address_ok:
@@ -1125,7 +1130,8 @@ def _record_mismatch(
         "identity_mismatch",
         ctx.tenant.line("identity_mismatch"),
         need="no change can be made on this call; offer the callback, and flag_person if the "
-        "caller wants it",
+        "caller wants it. The callback always goes to the number on file: never offer to call "
+        "another number, and never say what the number on file is",
     )
 
 
@@ -1156,14 +1162,13 @@ def _settle_unanswered_check(ctx: Ctx) -> None:
 
 
 def _mismatch_callback(ctx: Ctx) -> sqlite3.Row | None:
-    """An identity check this call failed whose callback to the number on file isn't set yet."""
+    """An identity check this call failed whose callback to the number on file isn't set yet. A
+    check an earlier call failed doesn't send this call's callbacks there (issue #149)."""
     _settle_unanswered_check(ctx)
-    thread = records.thread(ctx.conn, ctx.call["id"])
     return ctx.conn.execute(
-        f"SELECT * FROM identity_checks WHERE status = 'mismatch' AND callback_id IS NULL "
-        f"AND on_file_phone <> '' AND call_id IN ({','.join('?' * len(thread))}) "
-        f"ORDER BY rowid DESC LIMIT 1",
-        thread,
+        "SELECT * FROM identity_checks WHERE status = 'mismatch' AND callback_id IS NULL "
+        "AND on_file_phone <> '' AND call_id = ? ORDER BY rowid DESC LIMIT 1",
+        (ctx.call["id"],),
     ).fetchone()
 
 
@@ -1296,7 +1301,15 @@ def find_customer(ctx: Ctx, args: FindCustomerIn) -> Result:
     # 20261104-200759, a caller on a work phone whose visit was under her cell).
     if not customers and args.address:
         address = args.address
-        locations = ctx.fsm.locations_by_address(address.street, address.zip, address.unit or None)
+        # A ZIP the caller never said is no part of the search: the model guessed 11211 for an old
+        # address in 11235 and found nothing (Jackson's call 2 replayed in the eval). The street,
+        # house number and unit must still match exactly, and the name check guards any change.
+        zip_code = address.zip
+        try:
+            _zip_known(ctx, zip_code)
+        except Refused:
+            zip_code = None
+        locations = ctx.fsm.locations_by_address(address.street, zip_code, address.unit or None)
         # Only exact matches: without a unit, a building's other units are other people's records.
         exact = [
             loc
@@ -2627,7 +2640,7 @@ MOVED_PHRASES = tuple(
     f"{who} {what}"
     for who in ("i", "we", "ive", "weve", "i have", "we have", "i just", "we just", "ive just",
                 "weve just", "i recently", "we recently")
-    for what in ("moved to", "moved into", "moved out", "moved house", "moved apartments")
+    for what in ("moved to", "moved into", "moved from", "moved out", "moved house", "moved apartments")
 ) + (
     "i just moved", "we just moved", "ive just moved", "weve just moved", "i recently moved",
     "we recently moved", "i have moved", "we have moved", "ive moved", "weve moved",
@@ -2682,8 +2695,14 @@ def record_move(ctx: Ctx, args: MoveIn) -> Result:
     if customer_id is None and len(scoped) == 1:
         customer_id = next(iter(scoped))
     if customer_id not in scoped:
+        # A caller from a number not on the account: their account is found by the old address
+        # first (Jackson's call 2 replayed in the eval, where the agent told the caller it couldn't
+        # find the account and gave up).
         raise Refused(
-            "not_owner", "", gate="scope", errors={"customer_id": "not matched on this call"}
+            "not_owner", "", gate="scope", errors={"customer_id": "not matched on this call"},
+            need="find the caller's account first: call find_customer with the old address they "
+            "moved from, then call record_move again; never tell the caller you can't find it "
+            "before you have looked",
         )
     old = ctx.fsm.locations(customer_id)
     if args.from_location_id is not None:

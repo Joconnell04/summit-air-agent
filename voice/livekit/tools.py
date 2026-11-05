@@ -71,17 +71,24 @@ def make_tool(
         # reply to the model, so the caller is never left in silence (issue #149).
         ending = spec["name"] == "end_call" and result["ok"] and bool(result["data"].get("hang_up"))
         spoken = None
+        # The caller already heard this exact line this turn (live call 2, issue #149: the refusal
+        # said twice back to back): the turn ends without saying it again.
+        repeat = False
         parts = result["data"].get("parts") if result["ok"] else None
         line = spoken_by_server(spec["name"], result)
         if parts and say_parts is not None:
             # A read-back the caller asked to hear slower: the server's sentence in parts, the
             # address at its own speed (app/pace.py), spoken word for word.
             spoken = say_parts(parts)
+        elif line and reply is not None and reply.already_said(line):
+            repeat = True
         elif line:
             # Safety text (the lines, the check question, the safety sign-off), the read-back
             # sentence and a booking's confirmation are spoken by the worker word for word, never
             # by the model. end_call only carries a sentence on a safety call.
             spoken = speak(line)
+            if reply is not None:
+                reply.server_said(line)
         elif spoken_first(result):
             # The top-priority line, word for word; the model's reply (the times) follows it.
             speak(spoken_first(result))
@@ -94,7 +101,7 @@ def make_tool(
         put_through = spec["name"] == "flag_person" and result["ok"] and transfer is not None
         if put_through and await transfer.offer(context.speech_handle, result):
             return _no_reply(result)
-        if spoken is not None or ending:
+        if spoken is not None or ending or repeat:
             return _no_reply(result)
         return compact(for_model(result))
 

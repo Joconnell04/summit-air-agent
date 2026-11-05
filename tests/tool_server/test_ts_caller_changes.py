@@ -477,6 +477,26 @@ def test_a_question_from_a_dropped_call_is_asked_again(agent, scenarios):
     assert agent.tool("cancel_appointment", again, booking_id=maria["jobId"], reason="fixed")["ok"]
 
 
+def test_live_call_2_a_wrong_name_on_the_last_call_doesnt_refuse_this_one(agent, scenarios):
+    """Live call 2 (issue #149) was linked to call 1, where the caller gave a wrong name. Call 1's
+    refusal carried over, so the right name and old address on call 2 were never checked, and the
+    move was refused after a confirmed read-back."""
+    call, maria = unknown_caller_finds_maria(agent, scenarios)
+    asked = agent.tool("cancel_appointment", call, booking_id=maria["jobId"])
+    agent.say(call, asked["say"])
+    agent.turn(call, "Sam Rivera.")
+    assert agent.tool("cancel_appointment", call, booking_id=maria["jobId"])["refused"] == (
+        "identity_mismatch"
+    )
+    agent.end(call, "agent_end")
+    agent.clock.advance(minutes=3)
+    again = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(again, "This is, uh, Maria Delgado.")
+    agent.turn(again, "I need to cancel the heating visit at 620 Bedford Avenue, 11235.")
+    agent.tool("find_customer", again, address={"street": "620 Bedford Ave", "unit": "", "zip": "11235"})
+    assert agent.tool("cancel_appointment", again, booking_id=maria["jobId"])["ok"]
+
+
 # ---- the heads-up to the number on file ---------------------------------------------------------
 
 
@@ -842,3 +862,26 @@ def test_may_dial_compares_the_whole_number():
 def test_what_counts_as_giving_an_address(line, address):
     """PR #155 review: "Give me one second" counted as a wrong address and locked the check."""
     assert tools._gave_an_address(line) is address
+
+
+def test_a_mover_from_an_unknown_number_is_told_to_find_the_account_first(agent):
+    """Jackson's call 2 replayed in the eval: record_move with no account matched came back with
+    no guidance, and the agent told the caller it couldn't find the account."""
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "I moved from 620 Bedford Avenue to 380 Washington Avenue.")
+    agent.confirm_read_back(call, NEW_HOME)
+    refused = agent.tool("record_move", call)
+    assert refused["refused"] == "not_owner"
+    assert "find_customer" in refused["data"]["need"]
+
+
+def test_an_old_address_is_found_without_a_zip_the_caller_never_said(agent, scenarios):
+    """Jackson's call 2 replayed in the eval: the model guessed ZIP 11211 for 620 Bedford Avenue
+    (it is 11235) and the account was never found."""
+    maria = scenarios["repeatCallerOpenJob"]
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "I moved from six two oh Bedford Avenue to three eighty Washington Avenue.")
+    found = agent.tool(
+        "find_customer", call, address={"street": "620 Bedford Avenue", "unit": "", "zip": "11211"}
+    )
+    assert [m["customer_id"] for m in found["data"]["matches"]] == [maria["customerId"]]

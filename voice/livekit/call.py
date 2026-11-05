@@ -279,6 +279,10 @@ class SummitAgent(Agent):
             # The caller would wait through the model's next step on "Got it." or nothing at all.
             yield (" " if kept else "") + hold
             heard.append(hold)
+        if raw.strip() and " ".join(heard).split() != raw.split():
+            # What the speech filter held back, for reading a call afterwards: no record of it was
+            # kept, so live call 2's half replies could only be inferred from token counts.
+            log.info("model text not all spoken: %r; said %r", raw.strip(), " ".join(heard))
         reason = reply.dead_end(raw, " ".join(heard), calls)
         if reason:
             self.call.follow_up(reason)

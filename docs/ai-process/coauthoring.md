@@ -389,3 +389,15 @@ Changed:
 - Cancel and the name check: the reason is optional and asked once at most; one wrong name gets one polite refusal and the callback offer. DECISIONS.md 097.
 Commit: (this PR)
 Status: open
+
+## live call 2 (issue #149: half replies, refused move, name echo, ZIP, callbacks, scheduling)
+Feedback (verbatim, Jackson, relayed by the coordinating session, after call `call-_+16784774024_MXJ5xsvpZQ5H`):
+> didnt like how it said my name right back....and just say the zip code is, not just zip 11201....then when i asked it something, it just said sorry about that and stopped. terrible... too fast on the readback of address and phone. then a weird repeat on the call the right number thing. and then it repeat it trying to call again. also i say 2pm, and it says 1-3pm. just let it say it can do it exactly... it just like pauses...like when i asked for a second task....and then asked it if it was going to ask me a question. and then it says 'yes' and then pauses....and doesn't say anything... and why is it saying it doesn't have openings for a tune-up wtf. why didn't it check friday first?... and too many double booking questions....like it asking me two sets of multi-options for the booking stuff.
+Changed:
+- "Sorry about that.", "Sure, I can set up an AC tune-up." and "Yes." alone are asked again at once (DECISIONS.md 096).
+- The move was refused because call 1's failed name check carried over to call 2; a check now stays on its call, and the repeated refusal isn't said twice (DECISIONS.md 098).
+- A name the caller just gave isn't said back; "ZIP 11201" is said as "the ZIP code is 1 1 2 0 1" (DECISIONS.md 098).
+- The read-back pace is the latency lane's (issue #150).
+Commit: (this PR)
+Status: open
+

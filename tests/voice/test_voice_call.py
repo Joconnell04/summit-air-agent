@@ -677,3 +677,61 @@ def test_after_a_booking_or_callback_went_through_nothing_is_asked_again():
     assert reply.dead_end("Got it.", "Got it.", []) is None
     reply.heard(None, "And one more thing.")
     assert reply.dead_end("Got it.", "Got it.", []) == "stalled"
+
+
+
+MISMATCH = (
+    "I'm sorry, I'm not able to make that change from this number. I can have someone from our "
+    "office call the number we have on file for it. Would that help?"
+)
+
+
+def test_live_call_2_the_refusal_is_said_once_when_the_model_already_said_it():
+    """Live call 2 (issue #149), turns 17 and 18: the same refusal twice back to back. The model
+    had the line from the linked call's turns and said it, then the worker spoke the server's."""
+    reply = SpokenReply()
+    reply.heard(None, "Yeah. That's correct.")
+    assert reply.text(MISMATCH, []) == MISMATCH
+    assert reply.already_said(MISMATCH)
+
+
+def test_a_server_line_already_spoken_is_not_said_again_by_the_model():
+    reply = SpokenReply()
+    reply.heard(None, "Yeah. That's correct.")
+    reply.server_said(MISMATCH)
+    model = "I'm sorry, I'm not able to make that change from this number. Want a callback?"
+    assert reply.text(model, []) == "Want a callback?"
+
+
+
+def _call_2_zip(reply):
+    reply.heard(None, "I moved from one four two Main Street. To seventy five Hoyt Street.")
+    reply.tool_done("find_address", {"ok": True, "data": {"zip": "11201"}})
+    reply.heard(None, "Yeah. But why do you say ZIP one one two zero one? Just say the ZIP code is.")
+
+
+def test_live_call_2_turn_9_sorry_about_that_is_not_the_whole_reply(monkeypatch):
+    """Live call 2 (issue #149), turn 9: "Sorry about that." and then nothing until the caller
+    asked "Well, what's going on?" 23 s later. The ZIP sentence after it was dropped as a
+    restatement, and the bare "Is that right?" with it."""
+    text, replies = _follow_ups(
+        monkeypatch, _call_2_zip, "Sorry about that. ",
+        "The new address is 75 Hoyt Street, Brooklyn, ZIP code 11201. ",
+        "Is that right?",
+    )
+    assert text == "Sorry about that."
+    assert [r["instructions"] for r in replies] == [FOLLOW_UP_NOTES["stalled"]]
+
+
+def test_live_call_2_turns_24_and_27_are_asked_to_go_on(monkeypatch):
+    """Turn 24 "Sure, I can set up an AC tune-up." then 24 s of silence; turn 27 "Yes." then
+    silence until "Hello?"."""
+    for caller, line in (
+        ("Yeah. I need to do my a c six as well.", "Sure, I can set up an AC tune-up. "),
+        ("Okay. Are you gonna ask me a question?", "Yes. "),
+    ):
+        text, replies = _follow_ups(
+            monkeypatch, lambda reply, c=caller: reply.heard(None, c), line
+        )
+        assert text == line.strip()
+        assert [r["instructions"] for r in replies] == [FOLLOW_UP_NOTES["stalled"]], line

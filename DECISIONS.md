@@ -12,6 +12,15 @@ Discussion: docs/ai-process/transcripts/... or docs/explorations/...
 Issue: #N
 -->
 
+## 098. A failed name check stays on its call, an old address is found without a guessed ZIP, and names and ZIPs are said back plainly
+
+Decided: a name and address check that failed on an earlier call no longer refuses a change on a later linked call: the new call asks its own question (and a callback it offers goes to the number on file only if this call's check failed). `find_customer` by address leaves out a ZIP the caller never said, matching the house number, street and unit exactly. A mover from a number not on file who reaches `record_move` unmatched is told to find the account by the old address first, and "I moved from" now counts as saying they moved. A long sentence the caller already heard this turn, the server's or the model's, isn't said again. In speech, a name the caller just gave isn't said straight back ("Got it, Pat." becomes "Got it."), and "ZIP 11201" is said as "the ZIP code is 1 1 2 0 1".
+Why: on live call 2 Pat Rivera, the customer on file, gave the right name and old address, confirmed the read-back, and was refused: the call was linked to call 1 three minutes earlier, where the caller had given a wrong name ("Sam Rivera"), and that refusal carried over (MEASURED: identity_checks has one row, call 1's mismatch, and call 2's `linked_call_id` is call 1). The refusal was then said twice back to back. Replaying call 2 in the eval with Jackson's lines, the model guessed ZIP 11211 for an old address in 11235 and never found the account, in 2 of 2 samples, until the guessed ZIP was left out (then 2 of 2 moves went through). Jackson: "didnt like how it said my name right back....and just say the zip code is, not just zip 11201".
+Considered: keeping a failed check across linked calls (it refuses the real customer when someone else called first, as here); refusing a guessed ZIP with "What's the ZIP code there?" (a mover often doesn't know the old one, so the search would stall).
+Would change if: a caller tries name after name across calls (then a limit on checks per number per day).
+Discussion: Jackson after live call 2, docs/ai-process/coauthoring.md; call `call-_+16784774024_MXJ5xsvpZQ5H`
+Issue: #149
+
 ## 097. One wrong answer to the name check ends it, and a cancel needs no reason
 
 Decided: from a number that isn't on the account, an answer to the name and address check that gives what was missing and doesn't match is final: the server refuses the change once, politely, and offers a callback to the number on file. It asks again only when the answer had no name or address in it ("Why do you need that?"). A cancel's reason is optional: the agent may ask once, lightly, and cancels whether or not the caller says. "I'll cancel it now" and "I need to find the booking first" are dropped from speech.

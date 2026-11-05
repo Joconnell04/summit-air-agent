@@ -401,3 +401,25 @@ def test_coaching_on_caring_for_someone_is_never_spoken(sentence):
 )
 def test_the_911_advice_and_ordinary_lines_are_kept(sentence):
     assert assemble.SpokenReply().sentence(sentence) == sentence
+
+
+
+def test_a_name_the_caller_just_gave_is_not_said_straight_back():
+    """Jackson after live call 2 (issue #149): "didnt like how it said my name right back"."""
+    reply = assemble.SpokenReply()
+    reply.heard(None, "This is, uh, Pat Rivera.")
+    assert reply.text("Got it, Pat. Let me get the new address.", []) == (
+        "Got it. Let me get the new address."
+    )
+    assert reply.text("Hi Pat, what's going on?", []) == "Hi, what's going on?"
+    # A name the caller didn't just say is left alone.
+    assert reply.text("Thanks, Dana.", []) == "Thanks, Dana."
+
+
+def test_a_zip_is_said_as_the_zip_code_is_and_its_digits():
+    """Jackson after live call 2: "just say the zip code is, not just zip 11201"."""
+    reply = assemble.SpokenReply()
+    reply.heard(None, "I moved to seventy five Hoyt Street.")
+    assert reply.text("I found 75 Hoyt Street in Brooklyn, ZIP 11201. Is that the new address?", []) == (
+        "I found 75 Hoyt Street in Brooklyn, and the ZIP code is 1 1 2 0 1. Is that the new address?"
+    )

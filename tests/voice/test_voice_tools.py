@@ -275,3 +275,26 @@ def test_the_worker_speaks_the_top_priority_line_first_and_the_model_still_repli
     # A string result asks the session for the model's reply; its say no longer carries the line.
     assert isinstance(result, str)
     assert "top priority" not in json.loads(result).get("say", "")
+
+
+
+def test_a_server_line_the_caller_just_heard_is_not_spoken_again(agent, connect):
+    """Live call 2 (issue #149): the identity refusal was said by the model and then by the worker."""
+    from prompts.assemble import SpokenReply
+
+    call_id = "call-1"
+    agent.start(call_id=call_id)
+    lines = agent.turn(call_id, "I smell gas")["say"]
+    voice = Voice()
+    reply = SpokenReply()
+    reply.heard(None, "I smell gas")
+    reply.server_said(" ".join(SAFETY["sign_off"].split()))
+    agent.say(call_id, lines)
+    bridge = Bridge([], play=None, silent=lambda: True)
+    built = build_tools(
+        assemble.tool_specs(JOB_TYPES), connect(call_id), bridge, ToolLog(), Hangups(), voice,
+        reply=reply,
+    )
+    tools = {tool.info.name: tool for tool in built}
+    assert no_reply(asyncio.run(tools["end_call"]({"reason": "resolved"}, "ctx")))
+    assert voice.said == []

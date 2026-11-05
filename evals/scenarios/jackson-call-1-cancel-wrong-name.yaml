@@ -1,0 +1,32 @@
+id: jackson-call-1-cancel-wrong-name
+flow: [repeat-caller]
+difficulty: adversarial
+journeys: [J7]
+spec: [S-39]
+tags: [caller-changes, live-calls]
+caller_id: "(678) 555-0124"
+persona: Jackson's first live test call (issue #149), replayed with his own lines. A caller from a number not on the account who wants to cancel a visit, gives a name that isn't the one on file, won't say why, and wants a callback on Friday at 2. Short, a little annoyed by repeats and pauses.
+hidden_facts:
+  name: Sam Rivera
+  address: 620 Bedford Ave, Brooklyn, 11235
+  phone: the number you're calling from
+  reason: you'd rather not say; if pushed, "Just didn't like it."
+opening: Yeah. I just need to cancel the appointment at six two oh Bedford Avenue. I think it is.
+script:
+  - If asked why you're cancelling, say "No." the first time, and "Just didn't like it." if asked again.
+  - If asked for a name, say "Sam Rivera." If asked again, say "I just gave you the name."
+  - If the agent goes quiet or only says "Got it.", say "Is that all?"
+  - If offered a callback, say yes, and when asked for a time say "Friday at two PM."
+  - If the agent says a time other than Friday around 2 PM, say "Hey. That's not what I said. I said Friday at two PM."
+  - Say goodbye once the callback is set.
+must:
+  - identity: mismatch
+  - no_changes: true
+  - agent_never_says: ["exactly as", "need a reason", "haven't cancelled", "I.ll cancel it now", "Today is \\w+day", "days from now", "callback is off"]
+  - agent_says_at_most: {"what('s| is) the name|name (it'?s|is) (booked )?under|your name": 1}
+  - agent_says: ["Friday"]
+  - agent_never_says: ["(Got it|Thanks|Okay), Sam", "call (you at )?the number you.re calling from"]
+should:
+  - Asks the reason at most once and never holds the cancel for it.
+  - Asks for the name once; after a name that doesn't match, says once and politely that it can't make the change here, and offers a call to the number on file.
+  - Says the callback back as the caller asked for it, plainly ("Friday around 2 PM"), with no talk about dates.
