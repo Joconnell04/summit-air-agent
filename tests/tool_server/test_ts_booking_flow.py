@@ -469,6 +469,9 @@ def test_a_name_written_in_lower_case_still_counts(line, asked):
         ("is anyone available", None),
         ("can you come Friday", None),
         ("Is it still available Friday?", None),
+        # Retell call call_3f65a9aea68c561c5c7de616f9f, at 56 s.
+        ("It's at my coffee shop that I run. And it's, um, the HVAC, the heating is not working. "
+         "In all the rooms.", None),
     ],
 )
 def test_a_word_in_the_names_place_that_is_no_name_asks_for_nobody(line, asked):
