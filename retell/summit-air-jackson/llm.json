@@ -6,9 +6,9 @@
   },
   "is_published": false,
   "kb_config": {
-    "filter_score": 0.9,
-    "kb_instruction": "Retrieve only when the caller asks a technical question about heating or cooling equipment, how it works, or what a symptom might mean. Do not retrieve for yes or no answers, names, addresses, phone numbers, times, greetings, or small talk.",
-    "top_k": 1
+    "filter_score": 0.75,
+    "kb_instruction": "Search for the heating or cooling equipment, symptom or maintenance topic the caller is asking about.",
+    "top_k": 2
   },
   "knowledge_base_ids": [],
   "llm_id": "llm_12eba5f1d4a3b067f0635097de30",
