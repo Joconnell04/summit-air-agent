@@ -81,7 +81,7 @@ GATES = (
     ("booking", "Holds any booking until the safety lines are said and a person is flagged",
      ("gate_safety",), ("S-18",)),
     ("booking", "Holds any booking until the address and phone are read back and confirmed",
-     ("gate_read_back", "invalid_phone"), ("S-26",)),
+     ("gate_read_back", "invalid_phone", "no_caller_number"), ("S-26",)),
     ("booking", "Reads the address and phone back once; confirmed details aren't read again",
      ("read_back_confirmed",), ("S-26",)),
     ("booking", "A detail the caller changes after confirming is read back again before booking",
