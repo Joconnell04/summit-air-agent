@@ -55,9 +55,13 @@ def change(text: str, readback: dict) -> str | None:
     if units and unit_key(readback.get("unit", "")) not in units:
         return "unit"
     house = _house(readback.get("street", ""))
+    # The read-back's own ZIP and phone groups said again ("it's 11231", "did you say seven one
+    # eight", "the number you said, five five five") are never a house number (eval run
+    # 20261104-234633, inside-temp-only-when-asked and expired-member-hard-of-hearing).
+    phone = phone_key(readback.get("phone", ""))
+    echoes = {house, readback.get("zip"), phone, phone[:3], phone[3:6], phone[6:], phone[3:]}
     for said in _houses_said(text, readback.get("street", "")):
-        # "It's 11231" is the ZIP said again, not a house number.
-        if said not in (house, readback.get("zip")):
+        if said not in echoes:
             return "house number"
     street = _street_said(text)
     if street and street not in street_key(readback.get("street", "")):

@@ -11,6 +11,7 @@ from livekit import api
 
 from prompts import assemble
 from tests.tool_server.toolkit import UNKNOWN
+from tests.voice.replies import no_reply
 from voice.livekit.bridge import Bridge
 from voice.livekit.tools import ToolLog, build_tools
 from voice.livekit.transfer import PERSON, Transfer
@@ -155,7 +156,7 @@ def test_a_person_who_presses_1_is_joined_to_the_caller_and_the_agent_leaves(
     asked_for_a_person(agent)
     worker = Worker(connect("call-1"))
     # The model says nothing more: the worker speaks from here.
-    assert worker.flag() is None
+    assert no_reply(worker.flag())
     assert worker.outcome == "connected"
     assert worker.voice.said == ["I'm connecting you with someone from our team now."]
     assert worker.holds == [True]
@@ -181,7 +182,7 @@ def test_a_person_who_presses_1_is_joined_to_the_caller_and_the_agent_leaves(
 def test_nobody_answers_and_the_agent_comes_back_with_the_callback_time(agent, connect, numbers):
     asked_for_a_person(agent)
     worker = Worker(connect("call-1"), answers=False)
-    assert worker.flag() is None
+    assert no_reply(worker.flag())
     assert worker.outcome == "no_answer"
     assert worker.holds == [True, False]
     assert worker.voice.said[-1] == (
@@ -251,7 +252,7 @@ def test_an_error_mid_transfer_takes_the_caller_off_hold_with_the_callback_time(
         raise RuntimeError("room service unavailable")
 
     worker.transfer.hand_over = broken
-    assert worker.flag() is None
+    assert no_reply(worker.flag())
     assert worker.outcome == "failed"
     # Back off hold, and the flag's own sentence: the callback stored before anyone was dialed.
     assert worker.holds[-1] is False
@@ -269,7 +270,7 @@ def test_an_error_before_the_report_tells_the_server_it_failed(agent, connect, n
             raise RuntimeError("audio output gone")
 
     worker.transfer.hold = hold
-    assert worker.flag() is None
+    assert no_reply(worker.flag())
     assert worker.outcome == "failed"
     assert worker.holds == [True, False]
     assert status(agent) == "failed"
