@@ -10,9 +10,7 @@
     "kb_instruction": "Retrieve only when the caller asks a technical question about heating or cooling equipment, how it works, or what a symptom might mean. Do not retrieve for yes or no answers, names, addresses, phone numbers, times, greetings, or small talk.",
     "top_k": 1
   },
-  "knowledge_base_ids": [
-    "knowledge_base_5445e21be68d38ed"
-  ],
+  "knowledge_base_ids": [],
   "llm_id": "llm_12eba5f1d4a3b067f0635097de30",
   "model": "claude-5.5-haiku",
   "model_config": {

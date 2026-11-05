@@ -5,10 +5,9 @@
   "assigned_tags": [],
   "backchannel_frequency": 0.4,
   "backchannel_words": [
-    "mm-hmm",
     "okay",
-    "uh-huh",
-    "gotcha"
+    "got it",
+    "right"
   ],
   "base_version": 1,
   "begin_message_delay_ms": 800,
@@ -75,8 +74,16 @@
     ]
   },
   "handbook_config": {
+    "ai_disclosure": true,
     "conversational_personality": false,
-    "default_personality": true
+    "default_personality": true,
+    "echo_verification": false,
+    "high_empathy": false,
+    "nato_phonetic_alphabet": false,
+    "natural_filler_words": false,
+    "scope_boundaries": true,
+    "smart_matching": true,
+    "speech_normalization": true
   },
   "interruption_sensitivity": 0.8,
   "is_published": false,
@@ -186,9 +193,9 @@
   "stt_mode": "accurate",
   "user_dtmf_options": {},
   "version": 2,
-  "voice_id": "retell-Cimo",
+  "voice_id": "custom_voice_c37419aaeaa68016fe1138f8a2",
   "voice_speed": 1,
-  "voice_temperature": 0.5,
+  "voice_temperature": 0.6,
   "volume": 1,
   "webhook_events": [
     "call_started",
