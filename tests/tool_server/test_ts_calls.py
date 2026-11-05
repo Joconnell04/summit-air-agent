@@ -697,3 +697,13 @@ def test_a_hedged_system_and_a_house_number_are_not_taken_as_known(agent):
     known = agent.turn(call, "The house is two one two three zero 41st Avenue.")["data"]["known"]
     assert "system" not in known
     assert "ZIP said" not in known
+
+
+def test_an_iso_time_outside_calling_hours_gets_the_nearest_one_not_an_error(agent):
+    """PR #155 review: 3 AM as an ISO time crashed the hours check."""
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    refused = agent.tool(
+        "flag_person", call, reason="Call me back", callback_time="2026-11-04T03:00:00-05:00"
+    )
+    assert refused["refused"] == "invalid_callback_time"
+    assert "the closest I can do is Wednesday at 8 AM" in refused["say"]

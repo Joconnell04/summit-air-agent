@@ -1,6 +1,6 @@
 """Opens the live demo's schedule (issue #149, DECISIONS.md 095): most windows free, weekends
 staffed, and shifts for the next two weeks. Run on the server against the live mock ServiceTitan,
-between calls (deploy/summit-air/run.sh also runs it after a reseed):
+between calls, once at deploy and again after a reseed:
 
     uv run python -m scripts.open_live_schedule --db data/servicetitan_mock.db
 
@@ -99,6 +99,9 @@ def cancel_fillers(conn: sqlite3.Connection, first: date, keep_every: int) -> in
     rows = conn.execute(
         f"SELECT j.id FROM jobs j JOIN appointments a ON a.job_id = j.id "
         f"WHERE j.summary IN ({marks}) AND j.status = 'Scheduled' AND a.status = 'Scheduled' "
+        # Untouched since the seed: a visit a live caller moved or changed is left alone (PR #155
+        # review).
+        f"AND j.modified_on = j.created_on AND a.modified_on = a.created_on "
         f"AND a.window_date >= ?",
         (*FILLER_SUMMARIES, first.isoformat()),
     ).fetchall()

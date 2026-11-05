@@ -128,12 +128,14 @@ def push(
 
 
 def live_profile(config: dict) -> tuple[str, dict]:
-    """The live model and voice the LiveKit stack runs, from config/models.yaml."""
+    """The live model the LiveKit stack runs, and the voice for Retell's agents: `retell.voice`
+    when set (Katie, kept for Jackson's comparison call), else the LiveKit stack's, all from
+    config/models.yaml."""
     profile = config["profiles"][os.environ.get("MODEL_PROFILE") or config["default"]]
     if profile["provider"] != "anthropic":
         raise SystemExit("the Retell baseline runs the Anthropic profiles only")
-    tts = config["voice"]["tts"]
-    voice = {"voice_id": tts["voice_id"], "model": tts["model"], "name": tts.get("name", "Katie")}
+    tts = (config.get("retell") or {}).get("voice") or config["voice"]["tts"]
+    voice = {"voice_id": tts["voice_id"], "model": tts["model"], "name": tts["name"]}
     return profile["model"], voice
 
 

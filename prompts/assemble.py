@@ -306,16 +306,24 @@ def server_notes(hints: list[str], known: dict[str, str] | None = None) -> list[
     return notes
 
 
-# The model saying it is about to do something ("I'll look up the visit now", "Let me find that",
-# "One moment"). In a reply with no tool call it is a dead end: the caller waits on work that never
-# starts (live call 1, issue #149: "Got it." then 19 s of silence).
+# A lead-in announcing a look-up about to happen in this turn ("I'll look up the visit now", "Let
+# me find that", "One moment"). In a reply with no tool call it is a dead end: the caller waits on
+# work that never starts (live call 1, issue #149: "Got it." then 19 s of silence). Closings that
+# promise something later ("I'll let the team know", "I'll get that to the technician") are not
+# lead-ins (PR #155 review).
 PROMISES_ACTION = re.compile(
     r"\b(?:let me|i'?ll|i will|i'?m going to|i am going to)\s+(?:just\s+)?(?:go ahead and\s+)?"
-    r"(?:look|check|find|pull|search|cancel|book|move|reschedule|set|put|get|send|update|"
-    r"take care|verify|grab|request|let (?:the|our) team)\b"
+    r"(?:look|check|find|pull up|search|verify)\b"
     r"|\b(?:one|a|just a) (?:moment|sec)\b|\b(?:one|just a) second\b|\bgive me a (?:moment|sec|second)\b"
-    r"|\bbear with me\b|\bhold on\b",
+    r"|\bbear with me\b",
     re.IGNORECASE,
+)
+# Tool results that finish the caller's request: after one of them succeeds, a reply with nothing
+# more to say is not left hanging (PR #155 review: no follow-up after a confirmed booking or
+# callback).
+FINISHING_TOOLS = (
+    "book_appointment", "reschedule_appointment", "cancel_appointment", "record_move",
+    "flag_person", "record_lead", "mark_do_not_call", "end_call",
 )
 # Look-ups whose answer needs a second model step before the caller hears anything. A reply that
 # calls one, and says nothing first but an acknowledgment, ends with a holding line
@@ -335,8 +343,9 @@ ONLY_ACKNOWLEDGES = re.compile(
 # What the voice layer asks the model for when a reply would leave the caller waiting in silence.
 FOLLOW_UP_NOTES = {
     "promised": (
-        "[server] You said you would do something but called no tool, so nothing is happening and "
-        "the caller is waiting. Call the tool now. Say nothing before it."
+        "[server] You said you would look something up but called no tool, so nothing is "
+        "happening and the caller is waiting. Do it now, or tell the caller plainly what happens "
+        "next."
     ),
     "silent": (
         "[server] The caller heard nothing from your last reply. Answer them now in one short "
@@ -580,6 +589,8 @@ class SpokenReply:
         self._asked = False
         # A follow-up was asked for since the caller last spoke: at most one a turn.
         self._followed_up = False
+        # A booking, callback or other request was completed since the caller last spoke.
+        self._finished = False
         # Technicians the caller asked for by name (DECISIONS.md 085).
         self.technicians: set[str] = set()
 
@@ -597,6 +608,7 @@ class SpokenReply:
         self.phones |= phones
         self.streets |= caller_streets(caller_text)
         self._followed_up = False
+        self._finished = False
         action = (safety or {}).get("action")
         if action in ("speak_lines", "speak_variant"):
             self.safety_call = True
@@ -605,6 +617,8 @@ class SpokenReply:
 
     def tool_done(self, name: str, envelope: dict) -> None:
         data = envelope.get("data") or {}
+        if name in FINISHING_TOOLS and envelope.get("ok"):
+            self._finished = True
         if name in ("check_service_area", "find_address") and envelope.get("ok"):
             self.address_checked = True
         if name == "find_slots" and (data.get("priority") or {}).get("level") == "Urgent":
@@ -728,7 +742,7 @@ class SpokenReply:
         only acknowledged them ("stalled"). None when the reply calls a tool, ends on a question,
         or says something of substance; and after one follow-up since the caller last spoke, so a
         model that keeps failing can't loop."""
-        if calls or self._followed_up or kept.rstrip().endswith("?"):
+        if calls or self._followed_up or self._finished or kept.rstrip().endswith("?"):
             return None
         if any(PROMISES_ACTION.search(s) for s in sentences(raw)):
             reason = "promised"

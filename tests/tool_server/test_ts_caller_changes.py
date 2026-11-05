@@ -828,3 +828,17 @@ def test_may_dial_compares_the_whole_number():
     assert not may_dial("+44 20 7946 0958", allowed)
     assert may_dial("(207) 946-0958", allowed) and may_dial("1 207 946 0958", allowed)
     assert not may_dial("207-946-0958 ext 5", allowed)
+
+
+@pytest.mark.parametrize(
+    "line, address",
+    [
+        ("it's one four two Main Street", True),
+        ("620 Bedford Avenue", True),
+        ("Give me one second.", False),
+        ("I've got two kids at home", False),
+    ],
+)
+def test_what_counts_as_giving_an_address(line, address):
+    """PR #155 review: "Give me one second" counted as a wrong address and locked the check."""
+    assert tools._gave_an_address(line) is address

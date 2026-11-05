@@ -96,3 +96,29 @@ def test_the_seven_day_hours_leave_the_seeded_world_as_it_was(seeded, tmp_path):
             conn.close()
 
     assert rows(before) == rows(seeded[0])
+
+
+def test_a_filler_visit_a_live_caller_changed_is_left_alone(seeded, tmp_path):
+    db = tmp_path / "live.db"
+    db.write_bytes(seeded[0].read_bytes())
+    conn = sqlite3.connect(db)
+    try:
+        touched = conn.execute(
+            "SELECT j.id FROM jobs j JOIN appointments a ON a.job_id = j.id WHERE j.summary = "
+            "'Booked by phone.' AND a.window_date >= '2026-11-04' AND j.id % 6 <> 0 LIMIT 1"
+        ).fetchone()[0]
+        with conn:
+            conn.execute(
+                "UPDATE appointments SET modified_on = '2026-11-04T15:00:00Z' WHERE job_id = ?",
+                (touched,),
+            )
+    finally:
+        conn.close()
+    open_schedule(db, TENANT, date(2026, 11, 4))
+    conn = sqlite3.connect(db)
+    try:
+        assert conn.execute("SELECT status FROM jobs WHERE id = ?", (touched,)).fetchone() == (
+            "Scheduled",
+        )
+    finally:
+        conn.close()

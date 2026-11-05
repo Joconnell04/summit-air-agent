@@ -14,7 +14,10 @@ from voice.retell.api import Retell, RetellError, allowed
 from voice.retell.push import PHONE_NUMBER, push
 
 BASE = "https://bridge.example.com"
-VOICE = {"voice_id": "f786b574-daa5-4673-aa0c-cbe3e8534c02", "model": "sonic-3", "name": "Katie"}
+MODELS_CONFIG = yaml.safe_load(
+    (Path(__file__).resolve().parents[2] / "config" / "models.yaml").read_text()
+)
+VOICE = dict(MODELS_CONFIG["retell"]["voice"])
 OLD_AGENT = "agent_8e083a54718dcabbbe2c5c4f3d"
 MODELS = Path(__file__).resolve().parents[2] / "config" / "models.yaml"
 
@@ -206,3 +209,13 @@ def test_parameters_are_compared_in_the_form_retell_stores_them():
         prop.pop("title", None)
     ours.pop("title")
     assert build.retell_schema(ours) == stored
+
+
+def test_retell_keeps_its_own_voice_from_config_for_the_comparison_call():
+    """PR #155 review: the voice name came from a hard-coded "Katie" default."""
+    from voice.retell.push import live_profile
+
+    _, voice = live_profile(MODELS_CONFIG)
+    assert voice == MODELS_CONFIG["retell"]["voice"]
+    without = {**MODELS_CONFIG, "retell": {}}
+    assert live_profile(without)[1]["name"] == MODELS_CONFIG["voice"]["tts"]["name"]

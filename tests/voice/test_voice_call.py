@@ -521,7 +521,7 @@ def _asked_to_cancel(reply):
     reply.heard(None, "Just didn't like it.")
 
 
-def test_a_promise_with_no_tool_call_is_asked_again_with_a_tool_required(monkeypatch):
+def test_a_promise_with_no_tool_call_is_asked_again(monkeypatch):
     """Live call 1 (issue #149), turn 7: the model said it would look the visit up, the sentence
     naming the street was dropped as a restatement, no tool ran, and the caller heard "Got it."
     then 19 s of silence."""
@@ -530,14 +530,14 @@ def test_a_promise_with_no_tool_call_is_asked_again_with_a_tool_required(monkeyp
     )
     assert text == "Got it."
     assert len(replies) == 1
-    assert replies[0]["tool_choice"] == "required"
+    assert "tool_choice" not in replies[0], "no tool is forced (PR #155 review)"
     assert replies[0]["instructions"] == FOLLOW_UP_NOTES["promised"]
 
 
 def test_a_reply_the_caller_heard_nothing_of_is_asked_again(monkeypatch):
     text, replies = _follow_ups(monkeypatch, _gave_address, "Your ZIP is 11234.")
     assert text == ""
-    assert [r["tool_choice"] for r in replies] == ["auto"]
+    assert [r["instructions"] for r in replies] == [FOLLOW_UP_NOTES["silent"]]
 
 
 def test_a_promise_that_calls_its_tool_is_not_asked_again(monkeypatch):
@@ -555,7 +555,6 @@ def test_a_reply_that_only_acknowledges_is_asked_to_take_the_next_step(monkeypat
     for line in ("Sure, I can set up an AC tune-up.", "Yes.", "Got it."):
         _, replies = _follow_ups(monkeypatch, lambda reply: None, line)
         assert [r["instructions"] for r in replies] == [FOLLOW_UP_NOTES["stalled"]], line
-        assert replies[0]["tool_choice"] == "auto"
 
 
 def test_a_question_or_a_plain_answer_is_not_asked_again(monkeypatch):
@@ -651,5 +650,30 @@ def test_a_caller_who_speaks_after_the_goodbye_keeps_the_call_open():
     assert asyncio.run(run()) is False
 
 
-def test_the_goodbye_pause_is_one_second():
-    assert load_voice()["end_call_grace_s"] == 1.0
+def test_the_goodbye_pause_is_a_second_and_a_half():
+    assert load_voice()["end_call_grace_s"] == 1.5
+
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "Someone will call you Friday around 2 PM. I'll let the team know.",
+        "I'll get that to the technician. Goodbye.",
+        "I'll send that over to the office.",
+    ],
+)
+def test_a_closing_that_promises_something_later_is_not_a_dead_end(line):
+    """PR #155 review: these read as "promised" and forced a tool call after a finished request."""
+    reply = SpokenReply()
+    reply.heard(None, "Okay, thanks.")
+    assert reply.dead_end(line, line, []) is None
+
+
+def test_after_a_booking_or_callback_went_through_nothing_is_asked_again():
+    reply = SpokenReply()
+    reply.heard(None, "Friday at two works.")
+    reply.tool_done("flag_person", {"ok": True, "data": {}})
+    assert reply.dead_end("Got it.", "Got it.", []) is None
+    reply.heard(None, "And one more thing.")
+    assert reply.dead_end("Got it.", "Got it.", []) == "stalled"

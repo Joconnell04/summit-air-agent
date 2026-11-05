@@ -981,8 +981,12 @@ def _gave_a_name(text: str) -> bool:
 
 
 def _gave_an_address(text: str) -> bool:
-    """The caller said a house number: digits, or number words ("one four two Main")."""
-    return any(t.isdigit() or t in NUMBER_WORDS for t in _name_words(text))
+    """The caller said an address: a house number (digits or number words, "one four two") and a
+    street word after it ("Main Street"). A number on its own ("give me one second") is none (PR
+    #155 review)."""
+    tokens = _name_words(text)
+    numbered = [i for i, t in enumerate(tokens) if t.isdigit() or t in NUMBER_WORDS]
+    return any(t in STREET_AFTER for i, t in enumerate(tokens) if numbered and i > numbered[0])
 
 
 def _answered_check(ctx: Ctx, check: sqlite3.Row, name_ok: bool, address_ok: bool) -> bool:
@@ -2890,6 +2894,18 @@ def _nearest_in_hours(tenant: Tenant, moment: datetime, now: datetime) -> dateti
     return max(nearest, now)
 
 
+def _asked_moment(tenant: Tenant, now: datetime, days: int, asked: CallbackTime) -> datetime:
+    """The moment the caller asked for, from an ISO time with an offset or a clock time on the
+    day asked (PR #155 review: an ISO time outside calling hours was read as a clock time and
+    failed)."""
+    value = asked.callback_time or asked.callback_after or asked.callback_before or ""
+    try:
+        moment = datetime.fromisoformat(value.strip())
+    except ValueError:
+        return records.clock_on(value, tenant, now, days)
+    return moment if moment.tzinfo else records.clock_on(value, tenant, now, days)
+
+
 def _callback_due(ctx: Ctx, asked: CallbackTime) -> CallbackWhen:
     """The callback time and the words for it. The words always come from here, never the model."""
     tenant, now = ctx.tenant, ctx.now
@@ -2923,10 +2939,7 @@ def _callback_due(ctx: Ctx, asked: CallbackTime) -> CallbackWhen:
                 )
                 for t in tenant.callbacks["outbound_hours"]
             )
-            asked_at = records.clock_on(
-                asked.callback_time or asked.callback_after or asked.callback_before,
-                tenant, now, days,
-            )
+            asked_at = _asked_moment(tenant, now, days, asked)
             nearest = tenant.time_spoken(_nearest_in_hours(tenant, asked_at, now), now)
             say = tenant.line(
                 "callback_outside_hours", opens=opens, closes=closes, nearest=nearest

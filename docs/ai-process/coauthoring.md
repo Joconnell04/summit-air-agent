@@ -382,7 +382,7 @@ Changed:
 - The turn detector's longest wait after the caller stops: left to the issue #150 lane, whose audio rig can put pauses inside a caller's line.
 - A reply that promised work but called no tool, or that the caller heard none of, is asked again at once (the 19 s of silence after "Got it.").
 - A holding line before a look-up: the model's own in the same reply, or the tenant's ("Just give me one second.") added to it when the caller would hear only "Got it." or nothing. DECISIONS.md 096.
-- The voice: Cartesia "Max" instead of Katie, and the clips re-recorded in it. DECISIONS.md 093.
+- The voice: Cartesia "Max" instead of Katie, and the clips re-recorded in it. DECISIONS.md 094.
 - Callbacks: a weekday the caller names is the day booked ("Friday around 2 PM"), and the agent never explains the calendar.
 - The live schedule: weekends open 8 AM to 8 PM, and a script cancels most of the live world's filler visits, keeping the named customers' visits and one filler in six. DECISIONS.md 095.
 - Ending: no "That means the callback is off", and a one-second wait after the goodbye that keeps the call open if the caller speaks.

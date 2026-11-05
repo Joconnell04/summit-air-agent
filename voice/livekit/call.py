@@ -186,13 +186,10 @@ class Call:
 
     def follow_up(self, reason: str) -> None:
         """The model's reply would leave the caller waiting in silence (SpokenReply.dead_end): ask
-        it again at once, queued after this reply's speech. A promise it didn't keep must be a tool
-        call now (issue #149: "Got it." then 19 s of silence)."""
+        it again at once, with a note, queued after this reply's speech (issue #149: "Got it." then
+        19 s of silence). No tool is forced: the note says what's missing."""
         log.warning("reply left the caller waiting (%s); asking the model again", reason)
-        self.session.generate_reply(
-            instructions=FOLLOW_UP_NOTES[reason],
-            tool_choice="required" if reason == "promised" else "auto",
-        )
+        self.session.generate_reply(instructions=FOLLOW_UP_NOTES[reason])
 
     def agent_line(self, message: ChatMessage) -> None:
         """Called when an agent line has been spoken (or cut off)."""
