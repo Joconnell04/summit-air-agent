@@ -44,6 +44,7 @@ def test_asking_to_wait(line, holds):
         ("I found it, it's a Carrier", True),
         ("Can you still hear me?", True),
         ("Um, what was the question?", True),
+        ("um what was the question", True),
         ("Sorry, which day did you say?", True),
         ("Okay, honey, where's the remote?", False),
         ("It's a Carrier, I think", False),

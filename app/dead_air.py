@@ -47,6 +47,8 @@ ANSWER_STARTS = ("it says", "it is", "its", "theres", "there is", "i have", "the
 # A line that opens by naming someone else is said to them: "honey, where did you put it?"
 OTHERS = {"honey", "hon", "babe", "baby", "sweetie", "sweetheart", "dear", "kids", "guys", "mom",
           "dad", "buddy", "bud"}
+QUESTION_WORDS = {"what", "whats", "which", "when", "where", "who", "how", "why", "can", "could",
+                  "do", "did", "does", "is", "are", "was", "will", "would", "should"}
 NUMBER = re.compile(r"\d")
 SENTENCES = re.compile(r"(?<=[.!?])\s+|\n")
 
@@ -76,7 +78,9 @@ def is_reply(text: str) -> bool:
     # call_3cd4c8065f26d3de686f7a1e002) answered with "Take your time." as an aside.
     first = [w for w in said.split() if w not in LEAD_WORDS][:1]
     to_someone_else = bool(first) and first[0] in OTHERS
-    if "?" in text and not to_someone_else:
+    # Speech-to-text and the text harness can drop the question mark: a line that starts with a
+    # question word asks too ("um what was the question").
+    if not to_someone_else and ("?" in text or (first and first[0] in QUESTION_WORDS)):
         return True
     if said.startswith(" it says "):
         return True
