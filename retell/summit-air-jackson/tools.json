@@ -168,7 +168,7 @@
     },
     {
       "args_at_root": false,
-      "description": "Openings for a job type. Windows are built from half-hour blocks, two hours unless the caller asks for another length. Without `day` it returns the coming days; with `day` (today, tomorrow, a weekday or a date) that day's exact windows. When the caller names a time, pass it as `arrive_after` and the window starts then. Put what bears on priority in `facts` (issue, since when, inside temperature, who's home). Its `say` offers the soonest opening as one choice; say it as written.",
+      "description": "Openings for a job type. Windows are built from half-hour blocks, 30 minutes unless the caller asks for another length. Without `day` it returns the coming days; with `day` (today, tomorrow, a weekday or a date) that day's exact windows. When the caller names a time, pass it as `arrive_after` and the window starts then. Put what bears on priority in `facts` (issue, since when, inside temperature, who's home). Its `say` offers the soonest opening as one choice; say it as written.",
       "max_retry": 1,
       "method": "POST",
       "name": "find_slots",
@@ -241,6 +241,10 @@
             ],
             "maxLength": 40,
             "type": "string"
+          },
+          "moving_a_visit": {
+            "description": "True when finding a new time for a visit the caller already has, before reschedule_appointment.",
+            "type": "boolean"
           },
           "preferred_days": {
             "items": {
@@ -888,7 +892,16 @@
       "name": "mark_do_not_call",
       "parameters": {
         "additionalProperties": false,
-        "properties": {},
+        "properties": {
+          "confirmed": {
+            "description": "True once the caller said yes to the confirm question it returned.",
+            "type": "boolean"
+          },
+          "undo": {
+            "description": "True when the caller wants to be called again after all.",
+            "type": "boolean"
+          }
+        },
         "type": "object"
       },
       "speak_after_execution": true,
@@ -929,6 +942,31 @@
       "timeout_ms": 10000,
       "type": "custom",
       "url": "https://45-77-105-247.sslip.io/retell/tools/end_call"
+    },
+    {
+      "args_at_root": false,
+      "description": "Call only when the caller asks how heating or cooling equipment works, what a sound or symptom might mean, or about maintenance. Pass their question.",
+      "max_retry": 1,
+      "method": "POST",
+      "name": "lookup_hvac_info",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "question": {
+            "maxLength": 300,
+            "type": "string"
+          }
+        },
+        "required": [
+          "question"
+        ],
+        "type": "object"
+      },
+      "speak_after_execution": true,
+      "speak_during_execution": false,
+      "timeout_ms": 10000,
+      "type": "custom",
+      "url": "https://45-77-105-247.sslip.io/retell/tools/lookup_hvac_info"
     }
   ]
 }
