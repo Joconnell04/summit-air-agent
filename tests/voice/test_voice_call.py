@@ -753,3 +753,15 @@ def test_the_known_facts_note_is_added_once_not_to_every_caller_line(agent, conn
     asyncio.run(conversation())
     assert "Already known" in lines[0].text_content
     assert "[server]" not in lines[1].text_content
+
+
+def test_the_servers_question_is_not_asked_again_after_the_model_asked_it():
+    """Stripped rig check on #160, live-multi-book-then-callback: "And what name should I put the
+    visit under? Thanks. What name should I put the visit under?" The server's line ends in the
+    question the model just asked, so the worker says nothing more. A short question isn't
+    matched this way."""
+    reply = SpokenReply()
+    reply.heard(None, "Yeah. That's correct.")
+    assert reply.text("And what name should I put the visit under?", []) != ""
+    assert reply.already_said("Thanks. And what name should I put the visit under?")
+    assert not reply.already_said("Thanks. Is that right?")

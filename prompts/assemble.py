@@ -869,9 +869,17 @@ class SpokenReply:
         self._heard_lines.append(line)
 
     def already_said(self, line: str) -> bool:
-        """The caller heard these exact words since they last spoke."""
+        """The caller heard these exact words since they last spoke, or the line's closing
+        question: the model asked "And what name should I put the visit under?" in the reply that
+        confirmed the read-back, and the server's "Thanks. And what name should I put the visit
+        under?" followed it (stripped rig check on #160, live-multi-book-then-callback)."""
+        heard = words(" ".join(self._heard_lines))
         said = words(line)
-        return said.strip() != "" and said in words(" ".join(self._heard_lines))
+        if said.strip() and said in heard:
+            return True
+        last = (sentences(line) or [""])[-1].strip()
+        question = words(last)
+        return last.endswith("?") and len(question.split()) >= 4 and question in heard
 
     def holding_line(self, kept: str, calls: list[tuple[str, dict]]) -> str:
         """A holding line to end a reply that calls a look-up when the caller would hear nothing
