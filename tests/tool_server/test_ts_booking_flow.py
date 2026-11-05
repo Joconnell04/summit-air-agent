@@ -460,6 +460,23 @@ def test_a_name_written_in_lower_case_still_counts(line, asked):
     assert asks.technician_asked(line) == asked
 
 
+@pytest.mark.parametrize(
+    "line, asked",
+    [
+        ("Uh, what booking time is not available?", None),
+        ("what booking time is not available", None),
+        ("is Mike available Friday", "Mike"),
+        ("is anyone available", None),
+        ("can you come Friday", None),
+        ("Is it still available Friday?", None),
+    ],
+)
+def test_a_word_in_the_names_place_that_is_no_name_asks_for_nobody(line, asked):
+    """Retell call call_cda6d9abd395cbb8859e0d09b14: "Uh, what booking time is not available?"
+    was read as a request for a technician named Not."""
+    assert asks.technician_asked(line) == asked
+
+
 def test_the_trades_equipment_words_are_never_a_technician():
     equipment = frozenset(load_agent(TENANT_DIR)[0]["equipment_words"])
     assert asks.technician_asked("can you get the heat back", equipment) is None

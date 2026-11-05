@@ -81,9 +81,11 @@ def decline_not_offered(
 
 
 # A technician asked for by name: "can I get Mike again", "send Mike back out", "is Mike
-# available", "I want Mike", "send Mike?". Speech-to-text may write the name in lower case, so a
-# word in the name's place counts unless it is a common word ("can you get someone out", "get it
-# working again", "I'd like the morning").
+# available", "I want Mike", "send Mike?". Speech-to-text capitalizes names, so in a line with
+# capitals the name must have one ("Uh, what booking time is not available?" asked for "Not",
+# Retell call call_cda6d9abd395cbb8859e0d09b14). A line written all in lower case (the text
+# harness's) counts a word in the name's place unless it is a common word ("can you get someone
+# out", "get it working again", "I'd like the morning").
 NAME = r"([A-Za-z][a-z]+)"
 NAMED = (
     re.compile(
@@ -127,6 +129,9 @@ NOT_NAMES = {
     # reschedule-own-booking).
     "earlier", "early", "late", "asap", "mornings", "afternoons", "evenings", "nights", "weekdays",
     "weekend", "weekends", "cash", "card", "check", "noon",
+    # Negations and fillers in the name's place: "is not available", "is still free".
+    "not", "never", "still", "really", "even", "also", "already", "just", "going", "coming",
+    "ever",
 }
 
 
@@ -134,9 +139,12 @@ def technician_request(text: str, equipment: frozenset[str] = frozenset()) -> tu
     """The technician a line names and whether the caller wants them (False for "I don't want
     Mike again"), or "the same technician as last time"; None when the line names nobody.
     `equipment` is the trade's words for its systems, so "get the heat back" names nobody."""
+    capitals = any(c.isupper() for c in text or "")
     for pattern in NAMED:
         for match in pattern.finditer(text or ""):
             word = match.group(1).lower()
+            if capitals and not match.group(1)[0].isupper():
+                continue
             if word not in NOT_NAMES and word not in equipment:
                 wanted = not DECLINES.search(text[: match.start()])
                 return match.group(1).capitalize(), wanted
