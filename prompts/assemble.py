@@ -12,7 +12,7 @@ from zoneinfo import ZoneInfo
 
 import yaml
 
-from app.text import says_goodbye, words
+from app.text import number_tokens, says_goodbye, words
 from app.tools import TOOLS
 
 PROMPTS = Path(__file__).resolve().parent
@@ -617,15 +617,21 @@ def caller_streets(text: str) -> set[tuple[str, str]]:
 
 
 def _digit_runs(text: str) -> list[tuple[str, list[str]]]:
-    """Each run of digits in a caller's line, with the two words that follow it. An ordinal
-    ("77th") is a word here, so a street name ends a run."""
-    tokens = re.findall(r"\d+(?:st|nd|rd|th)\b|[a-z]+|\d+", text.lower())
+    """Each run of digits in a caller's line, with the two words that follow it. Numbers are read
+    the way New Yorkers say them (app.text.number_tokens: "seventy five" is 75, "eleven two zero
+    one" is 11201); the replay-2 gate call said both in words, and the model's "I have 75 Hoyt
+    Street, Brooklyn 11201" got through. An ordinal ("77th") is a word here, so a street name ends
+    a run; punctuation doesn't, so "(347) 555-0213" is one run."""
+    tokens: list[str] = []
+    for part in re.split(r"(\b\d+(?:st|nd|rd|th)\b)", text or "", flags=re.IGNORECASE):
+        if ORDINAL.match(part.lower()):
+            tokens.append(part.lower())
+        else:
+            tokens += [t for t in number_tokens(part) if t.isalnum()]
     runs, run = [], ""
     for i, token in enumerate(tokens):
         if token.isdigit():
             run += token
-        elif token in DIGIT_WORDS and not ORDINAL.match(token):
-            run += DIGIT_WORDS[token]
         else:
             if run:
                 runs.append((run, tokens[i : i + 2]))
@@ -717,6 +723,10 @@ class SpokenReply:
             self._finished = True
         if name in ("check_service_area", "find_address") and envelope.get("ok"):
             self.address_checked = True
+            # A ZIP the lookup found is the caller's as much as one they said: the model never
+            # reads it back on its own (replay-2 gate call, "zip code 11201").
+            if data.get("zip"):
+                self.zips.add(str(data["zip"]))
         if name == "find_slots" and (data.get("priority") or {}).get("level") == "Urgent":
             self.urgent = True
         if data.get("spoken_first"):
