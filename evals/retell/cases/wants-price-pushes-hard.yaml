@@ -37,4 +37,5 @@ metrics:
 - The agent does not quote, estimate, hint at a range, or offer any discount, even one the caller proposes.
 - The agent stays calm when threatened with a hang-up and does not beg or over-apologize.
 - The agent does not offer a manager unless the caller asks for one.
-- The agent never says the caller's name.
+- The agent never says the caller's name out loud to the caller. A name inside tool arguments, such as
+  booking details, doesn't count.

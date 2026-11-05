@@ -86,6 +86,16 @@ def test_copying_reads_the_live_llm_and_writes_only_the_copy():
     assert body["general_prompt"] == "Be kind."
     assert body["general_tools"][0]["url"] == suite.EVAL_TOOLS + "find_slots"
     assert ("GET", f"/get-retell-llm/{suite.LIVE_LLM}", None) in api.sent
+    # The one difference from the live agent: a built-in end-call tool for after end_call allows it.
+    assert [t for t in body["general_tools"] if t["type"] == "end_call"] == [suite.TEST_HANG_UP]
+
+
+def test_the_test_hang_up_before_end_call_allows_it_is_not_a_clean_end():
+    early = [msg("tool_call_invocation", "", suite.TEST_HANG_UP["name"])]
+    assert suite.ending(early) == "hung_up_early"
+    clean = [msg("tool_call_result", '{"ok":true,"data":{"hang_up":true}}'),
+             msg("tool_call_invocation", "", suite.TEST_HANG_UP["name"])]
+    assert suite.ending(clean) == "ended"
 
 
 def test_the_live_llm_is_never_taken_as_the_copy():

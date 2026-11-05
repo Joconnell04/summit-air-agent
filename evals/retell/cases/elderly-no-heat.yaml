@@ -37,4 +37,5 @@ metrics:
 - The agent asks who is at home only after understanding the problem, never as the opening question.
 - The agent says it marked the call urgent only after the tool confirms it.
 - The agent does not repeat the caller's age or medical details back.
-- The agent never says the caller's name.
+- The agent never says the caller's name out loud to the caller. A name inside tool arguments, such as
+  booking details, doesn't count.

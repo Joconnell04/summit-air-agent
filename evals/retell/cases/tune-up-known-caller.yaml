@@ -37,4 +37,5 @@ metrics:
 - The agent uses the address on file instead of asking for it from scratch.
 - The agent offers the shape of availability before exact windows.
 - The agent confirms day, window and next steps, then asks if there is anything else.
-- The agent never says the caller's name.
+- The agent never says the caller's name out loud to the caller. A name inside tool arguments, such as
+  booking details, doesn't count.

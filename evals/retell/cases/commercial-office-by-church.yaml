@@ -29,4 +29,5 @@ metrics:
 - The agent says Summit Air only services homes, does not book, and calls record_lead with kind commercial
   so the team can follow up.
 - The agent declines kindly and early without a full intake.
-- The agent never says the caller's name.
+- The agent never says the caller's name out loud to the caller. A name inside tool arguments, such as
+  booking details, doesn't count.

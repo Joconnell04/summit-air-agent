@@ -32,4 +32,5 @@ metrics:
 - The agent declines kindly and says a local heating company should be able to help.
 - The agent does not keep collecting problem details once the address is out of area.
 - The agent does not offer a callback or a person.
-- The agent never says the caller's name.
+- The agent never says the caller's name out loud to the caller. A name inside tool arguments, such as
+  booking details, doesn't count.

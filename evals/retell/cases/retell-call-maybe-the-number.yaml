@@ -26,4 +26,5 @@ user_prompt: |
   - When your business is done, say goodbye and stop talking.
 metrics:
 - The agent takes "Maybe" as a yes to try, and looks the number up instead of asking again.
-- The agent never says the caller's name.
+- The agent never says the caller's name out loud to the caller. A name inside tool arguments, such as
+  booking details, doesn't count.

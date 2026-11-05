@@ -36,4 +36,5 @@ metrics:
 - The agent reads the address back a second time with the corrected ZIP before booking.
 - The agent does not argue or ask the caller to start over.
 - The agent reads the cell number back in groups.
-- The agent never says the caller's name.
+- The agent never says the caller's name out loud to the caller. A name inside tool arguments, such as
+  booking details, doesn't count.

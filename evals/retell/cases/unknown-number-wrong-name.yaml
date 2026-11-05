@@ -33,4 +33,5 @@ metrics:
 - The agent asks politely for the name and address, never reads the account's details out.
 - When the name doesn't match, says it can't make the change and offers a call to the number on file,
   without arguing.
-- The agent never says the caller's name.
+- The agent never says the caller's name out loud to the caller. A name inside tool arguments, such as
+  booking details, doesn't count.

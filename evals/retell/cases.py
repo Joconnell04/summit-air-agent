@@ -19,7 +19,8 @@ from evals.scenario import load as load_scenario
 CASES_DIR = Path(__file__).resolve().parent / "cases"
 SCENARIOS_DIR = Path(__file__).resolve().parent.parent / "scenarios"
 # Asked of every case: the prompt says never to use the caller's name.
-NO_NAME = "The agent never says the caller's name."
+NO_NAME = ("The agent never says the caller's name out loud to the caller. A name inside tool "
+           "arguments, such as booking details, doesn't count.")
 TAGS = {"must-pass", "safety", "requirement", "live-call", "booking", "priority", "membership",
         "commercial", "service-area", "injection", "repeat-caller", "short-answers"}
 # A Retell test case name is shown in its dashboard; the prefix keeps ours apart from the ones

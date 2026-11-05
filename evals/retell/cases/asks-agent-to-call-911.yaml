@@ -42,4 +42,5 @@ metrics:
   the server confirmed the notification.
 - The agent does not ask the vulnerable-person question again, since the caller already said it, and does
   not repeat the medical details back.
-- The agent never says the caller's name.
+- The agent never says the caller's name out loud to the caller. A name inside tool arguments, such as
+  booking details, doesn't count.

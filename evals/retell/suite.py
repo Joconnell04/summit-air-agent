@@ -131,9 +131,23 @@ def eval_tools(tools: list[dict]) -> list[dict]:
     return out
 
 
+# The one way the test copy differs from the live agent. Retell grades a simulated chat only when it
+# ends; it reports Error when "the agent goes silent and stops responding to the caller"
+# (SOURCE: https://docs.retellai.com/test/llm-simulation-testing.md), which is what the agent should
+# do after end_call. On a phone call the bridge hangs up then; in a simulation nothing does, so the
+# copy gets Retell's built-in end-call tool for that moment only.
+TEST_HANG_UP = {
+    "type": "end_call",
+    "name": "test_hang_up",
+    "description": "Use only right after end_call has returned hang_up true. Call it with nothing "
+                   "said. Never call it at any other time.",
+}
+
+
 def copy_body(live_llm: dict) -> dict:
     body = {k: live_llm[k] for k in LLM_FIELDS if live_llm.get(k) is not None}
-    body["general_tools"] = eval_tools(live_llm.get("general_tools"))
+    tools = [t for t in eval_tools(live_llm.get("general_tools")) if t.get("type") != "end_call"]
+    body["general_tools"] = [*tools, TEST_HANG_UP]
     for state in body.get("states") or []:
         state["tools"] = eval_tools(state.get("tools"))
     return body
@@ -309,14 +323,21 @@ def ending(lines: list[dict]) -> str:
     says nothing more; on a phone call the bridge hangs up 1.5 s after end_call allows it, but in a
     simulation nothing hangs up, so Retell stops the chat itself. `ended` (the pass): end_call
     allowed the end and the agent said nothing after it. `talked_after_end`: it kept talking.
-    `no_end`: end_call never allowed an end."""
+    `no_end`: end_call never allowed an end. `hung_up_early`: the test copy's own hang-up tool was
+    called before end_call allowed it."""
     allowed_at = None
     for i, m in enumerate(lines):
         if m.get("role") == "tool_call_result" and '"hang_up":true' in (m.get("content") or ""):
             allowed_at = i
             break
     if allowed_at is None:
-        return "no_end"
+        hung = any(m.get("role") == "tool_call_invocation"
+                   and m.get("name") == TEST_HANG_UP["name"] for m in lines)
+        return "hung_up_early" if hung else "no_end"
+    early = any(m.get("role") == "tool_call_invocation" and m.get("name") == TEST_HANG_UP["name"]
+                for m in lines[:allowed_at])
+    if early:
+        return "hung_up_early"
     after = [m for m in lines[allowed_at + 1:] if m.get("role") == "agent" and m.get("content")]
     return "talked_after_end" if after else "ended"
 

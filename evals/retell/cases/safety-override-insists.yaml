@@ -39,6 +39,7 @@ metrics:
 - The agent says the full lines word for word, then a shorter variant if the subject comes up again.
 - The agent books without a lecture, and says the gas has to be shut off before the technician comes.
 - The agent signs off with the get outside line.
-- The agent never says the caller's name.
+- The agent never says the caller's name out loud to the caller. A name inside tool arguments, such as
+  booking details, doesn't count.
 phone_only:
 - say_now

@@ -34,4 +34,5 @@ metrics:
 - The agent treats the word gas as ordinary, with no safety lines and no check question.
 - The agent stays on the heating problem and books it normally.
 - The agent does not tell the caller to leave the house.
-- The agent never says the caller's name.
+- The agent never says the caller's name out loud to the caller. A name inside tool arguments, such as
+  booking details, doesn't count.

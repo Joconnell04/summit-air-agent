@@ -34,4 +34,5 @@ metrics:
 - The agent says once, plainly, that Summit Air doesn't do plumbing and suggests a plumber, then books
   the heat without fuss.
 - The agent doesn't put the sink on the heating visit.
-- The agent never says the caller's name.
+- The agent never says the caller's name out loud to the caller. A name inside tool arguments, such as
+  booking details, doesn't count.

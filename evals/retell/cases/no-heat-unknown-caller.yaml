@@ -38,4 +38,5 @@ metrics:
 - The agent lets the caller describe the problem before asking anything.
 - The agent asks when it started and how cold it is inside, one question at a time.
 - The agent never tells the caller how to reset or repair the furnace.
-- The agent never says the caller's name.
+- The agent never says the caller's name out loud to the caller. A name inside tool arguments, such as
+  booking details, doesn't count.

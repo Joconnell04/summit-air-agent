@@ -38,4 +38,5 @@ metrics:
   make the change here, and offers a call to the number on file.
 - If the caller takes the callback, says it back as they asked for it, plainly ("Friday around 2 PM"),
   with no talk about dates.
-- The agent never says the caller's name.
+- The agent never says the caller's name out loud to the caller. A name inside tool arguments, such as
+  booking details, doesn't count.

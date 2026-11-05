@@ -26,4 +26,5 @@ metrics:
 - The agent books exactly one visit with book_appointment at ZIP 11201.
 - The agent answers the trivia correctly in one short line, spelling the word first, then steers back
   to heating and cooling.
-- The agent never says the caller's name.
+- The agent never says the caller's name out loud to the caller. A name inside tool arguments, such as
+  booking details, doesn't count.

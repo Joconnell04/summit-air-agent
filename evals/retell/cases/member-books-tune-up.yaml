@@ -35,4 +35,5 @@ metrics:
   or carbon monoxide danger on this call.'
 - The agent recognizes the membership from the call context and thanks her for it briefly.
 - The agent uses the address on file instead of asking for it from scratch.
-- The agent never says the caller's name.
+- The agent never says the caller's name out loud to the caller. A name inside tool arguments, such as
+  booking details, doesn't count.

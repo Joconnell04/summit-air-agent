@@ -33,4 +33,5 @@ metrics:
   or carbon monoxide danger on this call.'
 - The agent declines kindly and early, saying Summit Air works on homes and apartments, not businesses.
 - The agent does not ask booking questions before declining.
-- The agent never says the caller's name.
+- The agent never says the caller's name out loud to the caller. A name inside tool arguments, such as
+  booking details, doesn't count.

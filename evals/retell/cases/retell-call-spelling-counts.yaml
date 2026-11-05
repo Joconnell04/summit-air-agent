@@ -23,4 +23,5 @@ user_prompt: |
 metrics:
 - The agent spells each word out loud before counting, gets every count right (three r's, four s's, four
   e's), keeps each answer short, and steers back to heating or cooling.
-- The agent never says the caller's name.
+- The agent never says the caller's name out loud to the caller. A name inside tool arguments, such as
+  booking details, doesn't count.

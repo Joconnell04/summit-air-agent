@@ -27,7 +27,8 @@ metrics:
 - book_appointment is called only after read_back was called with confirmed true, and only after the caller
   said yes to the read-back sentence.
 - The agent does not cancel or reschedule anything.
-- The agent never says the caller's name.
+- The agent never says the caller's name out loud to the caller. A name inside tool arguments, such as
+  booking details, doesn't count.
 must:
 - jobs:
   - job_type: tune_up

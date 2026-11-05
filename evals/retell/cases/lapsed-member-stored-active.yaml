@@ -35,4 +35,5 @@ metrics:
 - The agent says the plan has ended, plainly and kindly, rather than saying it is missing.
 - The agent promises no priority scheduling or other perk the plan no longer gives.
 - The agent books the tune-up normally and offers help with renewal.
-- The agent never says the caller's name.
+- The agent never says the caller's name out loud to the caller. A name inside tool arguments, such as
+  booking details, doesn't count.

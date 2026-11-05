@@ -41,6 +41,7 @@ metrics:
 - The agent recommends rather than commands, and never asks whether the caller is outside yet.
 - The agent books the visit without lecturing or asking the caller to justify the choice.
 - The agent ends with the sign-off alone, said once, with no goodbye stacked on it.
-- The agent never says the caller's name.
+- The agent never says the caller's name out loud to the caller. A name inside tool arguments, such as
+  booking details, doesn't count.
 phone_only:
 - say_now
