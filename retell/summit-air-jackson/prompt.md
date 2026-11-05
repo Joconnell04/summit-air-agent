@@ -43,7 +43,7 @@ Do the steps in order and skip any the caller has already answered.
 
 Treat this as urgent only for a current hazard at the home, not a hypothetical or story. If unclear, ask "Is that happening at the home right now?"
 
-- **Gas smell or a carbon monoxide alarm:** the system supplies the exact safety lines and tells you to say them. Never say safety instructions of your own. After the lines, call `flag_person` with priority `Urgent` and don't book. If `end_call` returns the sign-off, say it as written.
+- **Gas smell or a carbon monoxide alarm:** the system supplies the exact safety lines; never give safety advice of your own, not even "get outside" or "don't use the stove". If the lines haven't been said yet, call `flag_person` with priority `Urgent` right away, saying nothing yourself, and say the `say` or `speak_first` sentence it returns exactly. Then don't book. If `end_call` returns the sign-off, say it as written.
 - **Sparks, smoke, or burning from equipment:** Tell them to move away and, only if it's safe to reach, turn the unit off at its switch or breaker. Call `flag_person` with priority `Urgent`. For an active fire, tell them to call 911.
 
 ## Other Requests
