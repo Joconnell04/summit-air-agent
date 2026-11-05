@@ -58,13 +58,25 @@ SIP = rtc.ParticipantKind.PARTICIPANT_KIND_SIP
 settings = Settings()
 
 
+# Ears that decide the end of the turn themselves, so LiveKit's turn detector is left out.
+DECIDES_TURN = ("cartesia", "deepgram-flux")
+FLUX_MODEL = "flux-general-en"
+
+
 def stt_options(voice: dict, names: local_names.Names) -> dict:
     """The ears' settings: the tenant's local names as keyterms, so they are written as spelled.
-    Deepgram also takes its endpointing; Cartesia's Ink-2 decides the end of turn itself."""
+    Deepgram Nova-3 also takes its endpointing; Cartesia's Ink-2 and Deepgram Flux decide the end
+    of turn themselves. Setting `provider: deepgram-flux` alone switches to Flux: a Nova model
+    named beside it is replaced by Flux's."""
     stt = voice["stt"]
     options = {"model": stt["model"]}
     if stt["provider"] == "deepgram":
         options["endpointing_ms"] = stt["endpointing_ms"]
+    if stt["provider"] == "deepgram-flux":
+        options["model"] = stt["model"] if stt["model"].startswith("flux") else FLUX_MODEL
+        for key in ("eot_threshold", "eager_eot_threshold", "eot_timeout_ms"):
+            if stt.get(key) is not None:
+                options[key] = stt[key]
     if names.keyterms():
         options["keyterm"] = names.keyterms()
     return options
@@ -73,7 +85,9 @@ def stt_options(voice: dict, names: local_names.Names) -> dict:
 def build_stt(voice: dict, names: local_names.Names, **extra):
     from livekit.plugins import cartesia, deepgram
 
-    plugin = {"deepgram": deepgram.STT, "cartesia": cartesia.STT}[voice["stt"]["provider"]]
+    plugin = {"deepgram": deepgram.STT, "deepgram-flux": deepgram.STTv2, "cartesia": cartesia.STT}[
+        voice["stt"]["provider"]
+    ]
     return plugin(**stt_options(voice, names), **extra)
 
 
@@ -107,9 +121,11 @@ def build_session(vad, voice: dict, names: local_names.Names) -> AgentSession:
 
 
 def turn_handling(voice: dict) -> dict:
-    # Ink-2 ends the turn from the words and the silence together, and sends its final transcript
-    # only then, so a second detector on top would only wait for it.
-    detector = "stt" if voice["stt"]["provider"] == "cartesia" else inference.TurnDetector()
+    # Ink-2 and Flux end the turn from the words and the silence together, and send the final
+    # transcript only then, so a second detector on top would only wait for them. Silero still
+    # hears the caller start talking, for interruptions.
+    decides = voice["stt"]["provider"] in DECIDES_TURN
+    detector = "stt" if decides else inference.TurnDetector()
     return {
         "turn_detection": detector,
         # A copy: LiveKit keeps this dict and writes later option changes into it.

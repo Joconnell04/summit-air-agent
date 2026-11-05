@@ -162,3 +162,17 @@ def test_push_creates_the_dictionary_then_updates_it_in_place(tmp_path):
     assert body["items"] == NAMES.cartesia_items() and body["name"]
     assert (method2, path2) == ("PATCH", "/pronunciation-dicts/pdict_new")
     assert "name" not in body2
+
+
+def test_flux_is_switched_on_by_its_provider_and_keeps_the_local_names_as_keyterms():
+    from livekit.plugins import deepgram
+
+    voice = load_voice()
+    assert voice["stt"]["provider"] == "deepgram", "Nova-3 stays the default"
+    assert turn_handling(voice)["turn_detection"] != "stt"
+    flipped = {**voice, "stt": {**voice["stt"], "provider": "deepgram-flux"}}
+    assert stt_options(flipped, NAMES) == {"model": "flux-general-en", "keyterm": NAMES.keyterms()}
+    assert isinstance(build_stt(flipped, NAMES, api_key="test"), deepgram.STTv2)
+    assert turn_handling(flipped)["turn_detection"] == "stt"
+    candidate = {**voice, "stt": {**voice["stt_candidates"]["flux"], "eager_eot_threshold": 0.5}}
+    assert stt_options(candidate, NAMES)["eager_eot_threshold"] == 0.5

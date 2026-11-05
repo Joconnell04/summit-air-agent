@@ -58,6 +58,11 @@ voice:
   # the Pro overage of $65 per 1M credits we pay now, so $0.0117 a minute.
   stt_candidates:
     ink-2: {provider: cartesia, model: ink-2, price_per_minute: 0.0117}
+    # Deepgram Flux decides the end of the turn itself (exploration 014). To try it live, set
+    # `provider: deepgram-flux` on `stt` above; the Nova model there is then replaced by Flux's.
+    # Thresholds are Deepgram's defaults when left out (eot_threshold 0.7, eot_timeout_ms 3000,
+    # SOURCE: the LiveKit Deepgram plugin's STTv2 docstring). Price ASSUMED equal to Nova-3's.
+    flux: {provider: deepgram-flux, model: flux-general-en, price_per_minute: 0.0090}
   # Max ("Conversational Support", a warm, natural American male) from Cartesia's voice library,
   # chosen after live call 1 to replace Katie (f786b574-...), the plugin default (DECISIONS.md, issue
   # #149). The pre-recorded clips (voice/livekit/clips.py) use the same voice.
