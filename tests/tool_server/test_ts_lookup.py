@@ -2,11 +2,13 @@
 S-11, S-15a, S-39)."""
 
 import sqlite3
+from datetime import time
 from pathlib import Path
 
 from toolkit import UNKNOWN, book, first_open, ready_to_book
 
 from app.fsm.servicetitan import ServiceTitanAdapter
+from app.tenant import window_said
 from app.tools import TOOLS
 
 
@@ -282,3 +284,13 @@ def test_only_the_schedule_module_makes_the_owners_edits():
         and any(f".{name}(" in path.read_text() for name in SCHEDULE_EDITS)
     }
     assert callers == {"schedule.py"}
+
+
+def test_a_window_past_midnight_says_which_part_of_the_day_each_end_is():
+    """Realism suite on #155 (live-call-04, 07, 08): the after-hours window said as "between 8 and
+    8" was taken for a mistake. Windows inside one half of the day stay short."""
+    assert window_said(time(20), time(8)) == "8 at night to 8 in the morning"
+    assert window_said(time(10), time(14)) == "10 in the morning to 2 in the afternoon"
+    assert window_said(time(8), time(12)) == "8 to 12"
+    assert window_said(time(12), time(16)) == "12 to 4"
+    assert window_said(time(16), time(20)) == "4 to 8"
