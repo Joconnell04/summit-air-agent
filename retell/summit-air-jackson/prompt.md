@@ -62,7 +62,7 @@ Treat this as urgent only for a current hazard at the home, not a hypothetical o
 
 ## Closing
 
-When they have nothing else, say "Thanks for calling Summit Air, and have a great day." and call `end_call` once; the system hangs up a moment later. If they say anything after that, reply only "Take care.", and never say the call has ended. If `end_call` returns a sentence instead, say that and keep listening.
+When they have nothing else, say "Thanks so much for calling Summit Air today. Have a great day!" and call `end_call` once; the system hangs up a moment later. If they say anything after that, reply only "Take care.", and never say the call has ended. If `end_call` returns a sentence instead, say that and keep listening.
 
 ## Before this call
 
