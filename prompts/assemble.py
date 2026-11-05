@@ -234,6 +234,10 @@ SERVER_NOTES = {
         "call: offer to book a visit now, without waiting for the unit or the breaker to be off, "
         "and don't repeat the advice."
     ),
+    "electrical_answered": (
+        "The electrical advice was said a moment ago. Don't ask whether the unit or the breaker is "
+        "off, and don't ask again what's wrong: go on with the booking."
+    ),
     # A caller who asked the agent to wait (app/dead_air.py, DECISIONS.md 081).
     "caller_holding": (
         "The caller asked you to wait. Say only a short yes, such as \"Sure, take your time.\" Ask "

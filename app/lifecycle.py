@@ -518,6 +518,22 @@ def _electrical(
     return row is not None and row["said_at"] is None
 
 
+def _electrical_just_said(conn: sqlite3.Connection, call_id: str, seq: int) -> bool:
+    """The electrical lines were said, and this is one of the caller's two lines after them: the
+    caller has had their chance to answer them ("Yeah. Done."), and the agent asked whether the
+    breaker was off anyway (realism suite on #155, live-call-08-sparks-and-leak)."""
+    row = conn.execute("SELECT * FROM electrical WHERE call_id = ?", (call_id,)).fetchone()
+    if row is None or row["said_at"] is None:
+        return False
+    # This line isn't stored yet, so it counts itself.
+    before = conn.execute(
+        "SELECT COUNT(*) FROM turns WHERE call_id = ? AND speaker = 'caller' AND seq > ? "
+        "AND seq < ?",
+        (call_id, row["heard_seq"], seq),
+    ).fetchone()[0]
+    return before < 2
+
+
 def _spoken_line(
     conn: sqlite3.Connection,
     tenant: Tenant,
@@ -640,6 +656,8 @@ def turn(
             # (DECISIONS.md 082, Jackson's sign-off).
             if spoken and spoken["kind"] == "electrical":
                 hints.append("electrical_said")
+            elif spoken is None and _electrical_just_said(conn, call["id"], seq):
+                hints.append("electrical_answered")
             # Card digits were read out: the recording stops and is deleted, as for a caller who
             # objects, so the digits aren't kept in the audio either (DECISIONS.md 080).
             if cards.removed(args.text) and not recordings.declined(conn, call["id"]):
