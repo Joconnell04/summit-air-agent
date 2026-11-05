@@ -12,7 +12,13 @@ from livekit import rtc
 from livekit.agents import Agent, ModelSettings, StopResponse, llm
 from livekit.agents.llm import ChatContext, ChatMessage
 
-from prompts.assemble import SENTENCE_END, SpokenReply, server_notes
+from prompts.assemble import (
+    FOLLOW_UP_NOTES,
+    LOOKUPS,
+    SENTENCE_END,
+    SpokenReply,
+    server_notes,
+)
 
 from .bridge import Bridge
 from .server import UNREACHABLE, ToolServer
@@ -184,6 +190,16 @@ class Call:
             # The server's line, said before the model answers the rest of what the caller said.
             self.session.say(data["recording"]["text"])
 
+    def follow_up(self, reason: str) -> None:
+        """The model's reply would leave the caller waiting in silence (SpokenReply.dead_end): ask
+        it again at once, queued after this reply's speech. A promise it didn't keep must be a tool
+        call now (issue #149: "Got it." then 19 s of silence)."""
+        log.warning("reply left the caller waiting (%s); asking the model again", reason)
+        self.session.generate_reply(
+            instructions=FOLLOW_UP_NOTES[reason],
+            tool_choice="required" if reason == "promised" else "auto",
+        )
+
     def agent_line(self, message: ChatMessage) -> None:
         """Called when an agent line has been spoken (or cut off)."""
         text = message.text_content or ""
@@ -236,7 +252,7 @@ class SummitAgent(Agent):
         reply = self.call.reply
         reply.start_reply()
         holding = reply.holding()
-        pending, held = "", []
+        pending, held, raw, heard = "", [], "", []
         calls: list[tuple[str, dict]] = []
         async for chunk in Agent.default.llm_node(self, chat_ctx, tools, model_settings):
             text = chunk if isinstance(chunk, str) else None
@@ -248,6 +264,7 @@ class SummitAgent(Agent):
                         update={"delta": chunk.delta.model_copy(update={"content": None})}
                     )
             if text:
+                raw += text
                 pending += text
                 *done, pending = split_sentences(pending)
                 if holding:
@@ -255,6 +272,7 @@ class SummitAgent(Agent):
                 else:
                     for sentence in done:
                         if kept := reply.sentence(sentence):
+                            heard.append(kept)
                             yield kept + " "
             if not isinstance(chunk, str):
                 yield chunk
@@ -263,7 +281,14 @@ class SummitAgent(Agent):
         else:
             kept = reply.sentence(pending) if pending.strip() else ""
         if kept:
+            heard.append(kept)
             yield kept
+        if not heard and any(name in LOOKUPS for name, _ in calls):
+            # The caller would wait in silence for the model's next step: a holding line now.
+            self.call.bridge.lead_in()
+        reason = reply.dead_end(raw, " ".join(heard), calls)
+        if reason:
+            self.call.follow_up(reason)
 
     async def tts_node(
         self, text: AsyncIterable[str], model_settings: ModelSettings

@@ -554,11 +554,11 @@ voice:
   outbound_voicemail: >-
     Hi, this is Summit Air calling about your appointment. Please give us a call back at {phone}.
   # Pre-recorded, so they need no voice stream (docs/scaling.md). Regenerate the clips after a change:
-  # uv run python -m voice.livekit.clips. Each bridge clip must stay under about 1 second.
+  # uv run python -m voice.livekit.clips. Each bridge clip must stay under 1.6 seconds (voice/livekit/bridge.py).
   clips:
-    bridge_check: Let me check.
-    bridge_sec: One sec.
-    bridge_look: Okay, checking now.
+    bridge_one_sec: Okay, just give me one second.
+    bridge_pull_up: Sure, let me pull that up.
+    bridge_moment: Alright, one moment.
     at_capacity: >-
       Thanks for calling Summit Air. If you smell gas, hang up and call 911 from outside. All our
       lines are busy right now. Please leave your name, number and what's going on after the tone,

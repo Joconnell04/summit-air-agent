@@ -13,7 +13,7 @@ from livekit.agents.llm import ChatMessage
 
 from app.tenant import load_agent
 from app.trace import as_text, timeline
-from prompts.assemble import greeting
+from prompts.assemble import FOLLOW_UP_NOTES, SpokenReply, greeting
 from tests.tool_server.toolkit import TENANT_DIR
 from voice.livekit.bridge import Bridge
 from voice.livekit.call import Call, SummitAgent
@@ -33,12 +33,16 @@ class Session:
     def __init__(self):
         self.said: list[tuple[str, bool]] = []
         self.endpointing: list[dict] = []
+        self.replies: list[dict] = []
 
     def say(self, text, allow_interruptions=True):
         self.said.append((text, allow_interruptions))
 
     def update_options(self, endpointing_opts):
         self.endpointing.append(endpointing_opts)
+
+    def generate_reply(self, **kwargs):
+        self.replies.append(kwargs)
 
 
 def make_call(connect, call_id="call-1") -> Call:
@@ -380,7 +384,8 @@ def _heard(monkeypatch, reply_setup, *parts) -> tuple[str, list[str]]:
     from livekit.agents import llm
 
     monkeypatch.setattr(Agent.default, "llm_node", _stream(*parts))
-    call = Call(None, None, ToolLog(), ENDPOINTING)
+    call = Call(None, LeadIns(), ToolLog(), ENDPOINTING)
+    call.session = Session()
     reply_setup(call.reply)
     agent = SummitAgent(call, "", [])
 
@@ -475,3 +480,110 @@ def test_a_reply_with_nothing_left_is_silent(monkeypatch):
         monkeypatch, _gave_address, "Let me read that back. ", "Your ZIP is 11234."
     )
     assert text == ""
+
+
+class LeadIns:
+    """Stands in for the bridge: counts the holding lines the worker asked for."""
+
+    def __init__(self):
+        self.count = 0
+
+    def lead_in(self) -> bool:
+        self.count += 1
+        return True
+
+
+def _follow_ups(monkeypatch, reply_setup, *parts) -> tuple[str, list[dict]]:
+    """What the caller heard, and the follow-up replies the worker asked the session for."""
+    from livekit.agents import llm
+
+    monkeypatch.setattr(Agent.default, "llm_node", _stream(*parts))
+    call = Call(None, LeadIns(), ToolLog(), ENDPOINTING)
+    call.session = Session()
+    reply_setup(call.reply)
+    agent = SummitAgent(call, "", [])
+    _follow_ups.call = call
+
+    async def run():
+        text = []
+        async for chunk in agent.llm_node(None, [], None):
+            if isinstance(chunk, str):
+                text.append(chunk)
+            elif isinstance(chunk, llm.ChatChunk) and chunk.delta:
+                text.append(chunk.delta.content or "")
+        return "".join(text).strip()
+
+    return asyncio.run(run()), call.session.replies
+
+
+def _asked_to_cancel(reply):
+    reply.heard(None, "Yeah. I just need to cancel the tune up at one four two Main Street.")
+    reply.heard(None, "Just didn't like it.")
+
+
+def test_a_promise_with_no_tool_call_is_asked_again_with_a_tool_required(monkeypatch):
+    """Live call 1 (issue #149), turn 7: the model said it would look the visit up, the sentence
+    naming the street was dropped as a restatement, no tool ran, and the caller heard "Got it."
+    then 19 s of silence."""
+    text, replies = _follow_ups(
+        monkeypatch, _asked_to_cancel, "Got it. ", "I'll look up the tune-up at 142 Main Street now."
+    )
+    assert text == "Got it."
+    assert len(replies) == 1
+    assert replies[0]["tool_choice"] == "required"
+    assert replies[0]["instructions"] == FOLLOW_UP_NOTES["promised"]
+
+
+def test_a_reply_the_caller_heard_nothing_of_is_asked_again(monkeypatch):
+    text, replies = _follow_ups(monkeypatch, _gave_address, "Your ZIP is 11234.")
+    assert text == ""
+    assert [r["tool_choice"] for r in replies] == ["auto"]
+
+
+def test_a_promise_that_calls_its_tool_is_not_asked_again(monkeypatch):
+    text, replies = _follow_ups(
+        monkeypatch, _asked_to_cancel, "Got it. ", "One moment.",
+        ("find_customer", {"phone": "+16784774024"}),
+    )
+    assert text == "Got it. One moment."
+    assert replies == []
+
+
+def test_a_question_or_a_plain_answer_is_not_asked_again(monkeypatch):
+    for line in ("Let me check: what's the ZIP there?", "We're open until 8 tonight."):
+        _, replies = _follow_ups(monkeypatch, lambda reply: None, line)
+        assert replies == [], line
+
+
+def test_only_one_follow_up_until_the_caller_speaks_again():
+    reply = SpokenReply()
+    assert reply.dead_end("Let me check on that.", "Let me check on that.", []) == "promised"
+    assert reply.dead_end("Let me check on that.", "Let me check on that.", []) is None
+    reply.heard(None, "Hello?")
+    assert reply.dead_end("Let me check on that.", "Let me check on that.", []) == "promised"
+
+
+
+def test_a_look_up_with_nothing_said_before_it_gets_a_holding_line(monkeypatch):
+    """Issue #149: the lead-in naming the street is dropped, so the caller would hear nothing until
+    the model's second step; the worker plays a holding clip at once."""
+    text, replies = _follow_ups(
+        monkeypatch, _asked_to_cancel, "I'll look up the tune-up at 142 Main Street now.",
+        ("find_customer", {"phone": "+16784774024"}),
+    )
+    assert text == "" and replies == []
+    assert _follow_ups.call.bridge.count == 1
+
+
+def test_a_look_up_after_the_models_own_holding_line_gets_no_clip(monkeypatch):
+    text, _ = _follow_ups(
+        monkeypatch, _asked_to_cancel, "Okay, just give me one second.",
+        ("find_customer", {"phone": "+16784774024"}),
+    )
+    assert text == "Okay, just give me one second."
+    assert _follow_ups.call.bridge.count == 0
+
+
+def test_a_booking_gets_no_clip_since_its_confirmation_is_spoken_at_once(monkeypatch):
+    _follow_ups(monkeypatch, _gave_address, ("book_appointment", {"slot_id": "x"}))
+    assert _follow_ups.call.bridge.count == 0

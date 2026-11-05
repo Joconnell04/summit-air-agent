@@ -350,6 +350,16 @@ class InProcessAgent:
                 if first_word is None:
                     first_word = hop_start + reply.first_token_ms / 1000
             if not reply.tool_uses:
+                # A reply that would leave the caller waiting in silence is asked again at once,
+                # as the worker does (voice/livekit/call.py follow_up).
+                follow = self.reply.dead_end(reply.text or "", said or "", []) if self.reply else None
+                if follow:
+                    if not self.messages[-1]["content"]:
+                        self.messages.pop()
+                    self.messages.append(
+                        {"role": "user", "content": _assemble().FOLLOW_UP_NOTES[follow]}
+                    )
+                    continue
                 break
             results, from_code = [], None
             for use in reply.tool_uses:

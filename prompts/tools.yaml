@@ -39,8 +39,8 @@ reschedule_appointment: >-
   Move a booking that belongs to this caller to a new window, with the reason. `slot.window` is the
   window code from find_slots, not the spoken label.
 cancel_appointment: >-
-  Cancel a booking that belongs to this caller, after a clear yes and the reason. Returns two windows
-  to offer instead.
+  Cancel a booking that belongs to this caller, after a clear yes. The reason is optional: pass what
+  the caller said, or leave it out. Returns two windows to offer instead.
 record_move: >-
   For a caller on file who says they moved house. First find the new address (find_address, or
   check_service_area with their ZIP), then read it back with read_back, then call this. It saves the

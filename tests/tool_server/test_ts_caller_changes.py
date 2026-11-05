@@ -200,11 +200,8 @@ def test_a_wrong_name_changes_nothing_and_the_callback_goes_to_the_number_on_fil
     asked = agent.tool("cancel_appointment", call, booking_id=maria["jobId"], reason="fixed")
     agent.say(call, asked["say"])
     agent.turn(call, "It's Joanne Price.")
-    again = agent.tool("cancel_appointment", call, booking_id=maria["jobId"], reason="fixed")
-    # The address was said; only the name is asked for again.
-    assert again["refused"] == "identity_check" and again["say"] == "Thanks. And what's the name on the visit?"
-    agent.say(call, again["say"])
-    agent.turn(call, "Joanne Price, like I said.")
+    # One wrong name is final: one polite refusal and the callback, never the question again
+    # (live call 1, issue #149).
     refused = agent.tool("cancel_appointment", call, booking_id=maria["jobId"], reason="fixed")
     assert refused["refused"] == "identity_mismatch"
     assert "number we have on file" in refused["say"]
@@ -223,6 +220,39 @@ def test_a_wrong_name_changes_nothing_and_the_callback_goes_to_the_number_on_fil
     phone = conn.execute("SELECT phone_key FROM callbacks WHERE call_id = ?", (call,)).fetchone()
     conn.close()
     assert phone[0] == "".join(c for c in maria["phone"] if c.isdigit())
+
+
+def test_live_call_1_a_bare_wrong_name_is_refused_once_with_the_callback(agent, scenarios):
+    """Live call 1 (issue #149): "Sam Rivera." to the name question was asked for again twice."""
+    call, maria = unknown_caller_finds_maria(agent, scenarios)
+    asked = agent.tool("cancel_appointment", call, booking_id=maria["jobId"])
+    agent.say(call, asked["say"])
+    agent.turn(call, "Sam Rivera.")
+    refused = agent.tool("cancel_appointment", call, booking_id=maria["jobId"])
+    assert refused["refused"] == "identity_mismatch"
+    assert "name" not in refused["say"].lower()
+
+
+def test_an_answer_with_no_name_in_it_is_asked_once_more(agent, scenarios):
+    call, maria = unknown_caller_finds_maria(agent, scenarios)
+    asked = agent.tool("cancel_appointment", call, booking_id=maria["jobId"])
+    agent.say(call, asked["say"])
+    agent.turn(call, "Why do you need that?")
+    again = agent.tool("cancel_appointment", call, booking_id=maria["jobId"])
+    assert again["refused"] == "identity_check"
+    agent.say(call, again["say"])
+    agent.turn(call, "It's Maria Delgado.")
+    assert agent.tool("cancel_appointment", call, booking_id=maria["jobId"])["ok"]
+
+
+def test_a_cancel_needs_no_reason(agent, mock, scenarios):
+    """Issue #149: a caller who won't say why still gets the cancel."""
+    maria = scenarios["repeatCallerOpenJob"]
+    call = agent.start(maria["phone"])["data"]["call_id"]
+    agent.turn(call, "Cancel my visit please. No, I'd rather not say why.")
+    cancelled = agent.tool("cancel_appointment", call, booking_id=maria["jobId"])
+    assert cancelled["ok"], cancelled
+    assert st(mock, "SELECT status FROM jobs WHERE id = ?", maria["jobId"])[0]["status"] != "Scheduled"
 
 
 def test_details_the_agent_said_first_do_not_count(agent, scenarios):

@@ -256,7 +256,10 @@ class RescheduleIn(CallRef):
 
 class CancelIn(CallRef):
     booking_id: int
-    reason: str = Field(min_length=3, max_length=200)
+    # Optional: a caller who won't say why still gets the cancel (issue #149).
+    reason: str = Field(
+        "", max_length=200, description="Why, if the caller said; leave it out if they didn't"
+    )
 
 
 class MoveIn(CallRef):

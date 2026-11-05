@@ -66,7 +66,10 @@ def make_tool(
         log.bridge = log.bridge or len(bridge.played) > before
         if reply is not None:
             reply.tool_done(spec["name"], result)
-        ending = spec["name"] == "end_call" and result["ok"]
+        # Only a hang-up the server agreed to ends the turn: an end_call that comes back with no
+        # sentence and no hang-up (a goodbye already said, the caller still talking) leaves the
+        # reply to the model, so the caller is never left in silence (issue #149).
+        ending = spec["name"] == "end_call" and result["ok"] and bool(result["data"].get("hang_up"))
         spoken = None
         parts = result["data"].get("parts") if result["ok"] else None
         line = spoken_by_server(spec["name"], result)
@@ -82,7 +85,7 @@ def make_tool(
         elif spoken_first(result):
             # The top-priority line, word for word; the model's reply (the times) follows it.
             speak(spoken_first(result))
-        if ending and result["data"].get("hang_up"):
+        if ending:
             # The server agreed: hang up once this turn's speech, and any line above, has played.
             # After the safety sign-off the call has had its goodbye, so the worker adds none.
             hang_up(context, spoken, quiet=bool(result["data"].get("signed_off")))

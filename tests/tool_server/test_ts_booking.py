@@ -363,11 +363,10 @@ def test_a_caller_can_move_their_own_booking_once(agent):
     assert again["refused"] == "limit"
 
 
-def test_a_cancel_needs_a_reason_and_offers_two_windows(agent, scenarios):
+def test_a_cancel_offers_two_windows(agent, scenarios):
+    # The reason is optional since issue #149 (test_ts_caller_changes.py, test_a_cancel_needs_no_reason).
     maria = scenarios["repeatCallerOpenJob"]
     call = agent.start(maria["phone"])["data"]["call_id"]
-    no_reason = agent.tool("cancel_appointment", call, booking_id=maria["jobId"], reason="")
-    assert no_reason["refused"] == "invalid_arguments"
     # Eval round 1, cancel-offers-windows: her afternoon visit isn't dispatched yet, so it cancels.
     cancelled = agent.tool(
         "cancel_appointment", call, booking_id=maria["jobId"], reason="cousin will look at it"

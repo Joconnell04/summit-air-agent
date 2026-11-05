@@ -136,6 +136,23 @@ def test_a_goodbye_after_the_sign_off_adds_no_second_goodbye(agent, connect):
     assert hangups.calls == [("ctx", None)] and hangups.quiet is True
 
 
+def test_an_end_call_that_speaks_nothing_and_keeps_the_line_open_leaves_the_reply_to_the_model(
+    agent, connect
+):
+    """After the sign-off, an end_call that isn't a goodbye comes back with no sentence and no
+    hang-up. Ending the turn there left the caller in silence (issue #149); the model answers."""
+    call_id = "call-1"
+    agent.start(call_id=call_id)
+    agent.say(call_id, agent.turn(call_id, "I smell gas")["say"])
+    agent.say(call_id, " ".join(SAFETY["sign_off"].split()))
+    agent.turn(call_id, "Okay. Also, is the furnace safe to run?")
+    hangups, voice = Hangups(), Voice()
+    tools = tools_for(connect(call_id), hangups, voice)
+    result = asyncio.run(tools["end_call"]({"reason": "resolved"}, "ctx"))
+    assert not no_reply(result)
+    assert voice.said == [] and hangups.calls == []
+
+
 def test_end_call_that_the_server_allows_hangs_up_and_ends_the_turn(agent, connect):
     agent.start(call_id="call-1")
     hangups, voice = Hangups(), Voice()

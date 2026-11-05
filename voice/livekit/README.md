@@ -43,7 +43,7 @@ Values live in `config/models.yaml` under `voice`, all ASSUMED starting points f
 
 `bridge.Bridge`, rules from docs/latency.md and spec S-37a:
 
-- A pre-recorded clip (`tenants/<tenant>/clips/bridge_*.wav`, each under 1.1 s) plays only when a tool hasn't answered after 0.7 s, and only while the agent and the caller are both silent.
+- A pre-recorded clip (`tenants/<tenant>/clips/bridge_*.wav`, each under 1.6 s, "Okay, just give me one second.") plays when a tool hasn't answered after 0.7 s, or at once when the model's reply calls a look-up and the caller heard nothing from it first; only while the agent and the caller are both silent, and never the same clip twice in a row.
 - At most once every 3 caller turns, never the same clip twice in a call.
 - It never overlaps the agent: if the tool answers mid-clip, the model's next step starts at once, but the reply's first audio waits for the clip to end (`SummitAgent.tts_node`).
 

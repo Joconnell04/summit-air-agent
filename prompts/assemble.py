@@ -306,6 +306,35 @@ def server_notes(hints: list[str], known: dict[str, str] | None = None) -> list[
     return notes
 
 
+# The model saying it is about to do something ("I'll look up the visit now", "Let me find that",
+# "One moment"). In a reply with no tool call it is a dead end: the caller waits on work that never
+# starts (live call 1, issue #149: "Got it." then 19 s of silence).
+PROMISES_ACTION = re.compile(
+    r"\b(?:let me|i'?ll|i will|i'?m going to|i am going to)\s+(?:just\s+)?(?:go ahead and\s+)?"
+    r"(?:look|check|find|pull|search|cancel|book|move|reschedule|set|put|get|send|update|"
+    r"take care|verify|grab|request|let (?:the|our) team)\b"
+    r"|\b(?:one|a|just a) (?:moment|sec)\b|\b(?:one|just a) second\b|\bgive me a (?:moment|sec|second)\b"
+    r"|\bbear with me\b|\bhold on\b",
+    re.IGNORECASE,
+)
+# Look-ups whose answer needs a second model step before the caller hears anything. A reply that
+# calls one with nothing said first gets a bridge clip at once (voice/livekit/bridge.py lead_in).
+# Bookings, moves and cancels are left out: the server's confirmation is spoken the moment the tool
+# answers, so a clip would only push it back.
+LOOKUPS = ("find_customer", "get_customer_history", "find_slots")
+# What the voice layer asks the model for when a reply would leave the caller waiting in silence.
+FOLLOW_UP_NOTES = {
+    "promised": (
+        "[server] You said you would do something but called no tool, so nothing is happening and "
+        "the caller is waiting. Call the tool now. Say nothing before it."
+    ),
+    "silent": (
+        "[server] The caller heard nothing from your last reply. Answer them now in one short "
+        "sentence, without repeating their address, ZIP or phone number."
+    ),
+}
+
+
 # A sentence that announces the read-back ("let me read that back", "I'll read back the details",
 # "let me confirm your address and number"). The server's own sentence says it; the caller hears
 # it once (eval round 3).
@@ -332,7 +361,14 @@ TOOL_TALK = re.compile(
     r"|\b(?:the|my|that) (?:reschedule|rescheduling|booking|move|cancel(?:lation)?|request|update|"
     r"change|lookup|call) (?:ran|didn'?t (?:return|come back|confirm)|returned|came back|went "
     r"through without|failed to (?:return|confirm))\b"
-    r"|\bi can'?t confirm the new time yet\b",
+    r"|\bi can'?t confirm the new time yet\b"
+    # Live call 1 (issue #149): "I haven't cancelled anything yet, because I need to find the
+    # booking first", and "I'll cancel it now" said before the name check had passed.
+    r"|\bi haven'?t (?:cancel+ed|moved|rescheduled|changed|booked) anything\b"
+    r"|\bi (?:need|have) to (?:find|locate|look up|pull up) (?:the|your) "
+    r"(?:booking|visit|appointment|record|account)\b"
+    r"|\b(?:i'?ll|i will|i'?m going to|let me)\s+(?:go ahead and\s+)?(?:cancel|reschedule|move)\s+"
+    r"(?:it|that|this|the (?:visit|appointment|booking|tune-?up)|your (?:visit|appointment|booking))\b",
     re.IGNORECASE,
 )
 # A question confirming the address or the number ("Is 142 Main Street still the right address?",
@@ -518,6 +554,8 @@ class SpokenReply:
         self.advised = False
         self._dropped_restatement = False
         self._asked = False
+        # A follow-up was asked for since the caller last spoke: at most one a turn.
+        self._followed_up = False
         # Technicians the caller asked for by name (DECISIONS.md 085).
         self.technicians: set[str] = set()
 
@@ -534,6 +572,7 @@ class SpokenReply:
         self.zips |= zips
         self.phones |= phones
         self.streets |= caller_streets(caller_text)
+        self._followed_up = False
         action = (safety or {}).get("action")
         if action in ("speak_lines", "speak_variant"):
             self.safety_call = True
@@ -633,6 +672,22 @@ class SpokenReply:
                 for number, word in self.streets
             )
         )
+
+    def dead_end(self, raw: str, kept: str, calls: list[tuple[str, dict]]) -> str | None:
+        """A reply that would leave the caller waiting in silence, and why: it called no tool yet
+        promised to do something ("promised"), or the caller heard nothing of it ("silent"). None
+        when the reply calls a tool, ends on a question, or simply says something; and after one
+        follow-up since the caller last spoke, so a model that keeps failing can't loop."""
+        if calls or self._followed_up or kept.rstrip().endswith("?"):
+            return None
+        if any(PROMISES_ACTION.search(s) for s in sentences(raw)):
+            reason = "promised"
+        elif not kept.strip():
+            reason = "silent"
+        else:
+            return None
+        self._followed_up = True
+        return reason
 
     def text(self, text: str, calls: list[tuple[str, dict]]) -> str:
         """The model's text for one reply, given the (name, arguments) of the tools it called."""

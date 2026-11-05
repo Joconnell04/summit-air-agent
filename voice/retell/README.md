@@ -55,7 +55,7 @@ Also builds the chat agent the eval harness drives through Retell's text chat AP
 | Model | `claude-5.5-haiku`, standard tier, temperature 0.3 | The `fast` profile in config/models.yaml and the worker's temperature. Retell's `fast` tier and its fast-fallback backup model would lower tail latency but are a platform extra our stack doesn't have; left off so the brain is the same, and worth one variant run. |
 | Prompt | `{{instructions}}` | The whole per-call prompt from prompts/assemble.py, call context included. |
 | First line | `{{greeting}}`, agent speaks first | The worker's greeting rule (`greeting_known` with one matched home customer, else `greeting_unknown`); the safety lines first on a call that resumes a dropped safety call. |
-| Voice | Cartesia Sonic 3, voice `f786b574-...` ("Katie") | The worker's voice, added to Retell by its Cartesia id, so both stacks sound the same. |
+| Voice | Cartesia Sonic 3, voice `3945925b-...` ("Max", Katie before issue #149) | The worker's voice, added to Retell by its Cartesia id, so both stacks sound the same. |
 | Transcription | `stt_mode: fast`, noise cancellation | Retell's own turn-taking stack. Its custom mode (Deepgram with fixed endpointing) would copy our ears but drop Retell's turn detection, which is what this bake-off measures. |
 | Responsiveness | 0.9, dynamic responsiveness on | Slightly slower than Retell's default 1.0 so callers reading digits in groups aren't cut off; dynamic mode adapts to each caller's pace. Retell has no per-question setting like the worker's longer wait after asking for digits (C-48). |
 | Interruption sensitivity | 0.8 | Retell's guidance for background noise: lower it from 0.9 to 0.8 (SOURCE: https://docs.retellai.com/build/handle-background-noise.md). |

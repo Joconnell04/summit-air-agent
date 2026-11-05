@@ -945,11 +945,56 @@ def _on_file_phone(ctx: Ctx, customer_id: int) -> str:
     return phone_key(phones[0]["value"]) if phones else ""
 
 
+# Capitalized words that are no name: "No.", "What?", "I already told you."
+NOT_NAMES = {
+    "i", "no", "nope", "yes", "yeah", "yep", "what", "why", "who", "sorry", "hello", "hi", "hey",
+    "okay", "ok", "huh", "wait", "hold", "sure", "um", "uh", "please", "thanks", "thank", "just",
+    "it", "its", "the", "a", "an", "my", "is", "that", "this", "you", "your", "hmm", "right",
+}
+
+
+def _gave_a_name(text: str) -> bool:
+    """The caller said some name, whoever's: after a name lead ("it's Sam Rivera", "my name is
+    Sam") or as a line that is only a name ("Sam Rivera."). Speech to text capitalizes names, so
+    a lowercase word is no name, and "I just gave you the name" gives none."""
+    raw = re.findall(r"[A-Za-z][A-Za-z'-]*", text)
+    keys = [w.lower().replace("'", "") for w in raw]
+    for i in range(len(keys)):
+        for lead in NAME_LEADS:
+            after = i + len(lead)
+            if tuple(keys[i:after]) == lead and after < len(raw) and raw[after][0].isupper() and (
+                keys[after] not in NOT_NAMES
+            ):
+                return True
+    named = [w for w, k in zip(raw, keys) if k not in NAME_LINE_FILLER]
+    return 0 < len(named) <= 3 and all(
+        w[0].isupper() and w.lower() not in NOT_NAMES for w in named
+    )
+
+
+def _gave_an_address(text: str) -> bool:
+    """The caller said a house number: digits, or number words ("one four two Main")."""
+    return any(t.isdigit() or t in NUMBER_WORDS for t in _name_words(text))
+
+
+def _answered_check(ctx: Ctx, check: sqlite3.Row, name_ok: bool, address_ok: bool) -> bool:
+    """Since the check was asked, the caller gave what was still missing (a name, or an address),
+    and it didn't match."""
+    lines = [
+        r["text"] for r in records.thread_turns(ctx.conn, ctx.call["id"])
+        if r["call_id"] == check["call_id"] and r["speaker"] == "caller"
+        and r["seq"] > check["asked_seq"]
+    ]
+    gave_name = any(_gave_a_name(t) for t in lines)
+    gave_address = any(_gave_an_address(t) for t in lines)
+    return (not name_ok and gave_name) or (not address_ok and gave_address)
+
+
 def _identity_gate(ctx: Ctx, customer_id: int, addresses: list[dict], thing: str) -> bool:
     """Refuses with identity_check until the caller has said a name and address matching the
-    customer, when the call's number isn't on that customer's account. After two answers that
-    don't match, the change is refused for the call (identity_mismatch) and the agent offers a
-    callback to the number on file. Returns True when the check was needed and passed, so the
+    customer, when the call's number isn't on that customer's account. After an answer that
+    doesn't match, the change is refused for the call (identity_mismatch) and the agent offers a
+    callback to the number on file; only an answer with no name or address in it is asked again. Returns True when the check was needed and passed, so the
     change is noted for the office."""
     scoped = records.scoped_customers(ctx.conn, ctx.call["id"])
     if customer_id in scoped and scoped[customer_id]["matched_by"] == "caller_id":
@@ -1000,7 +1045,11 @@ def _identity_gate(ctx: Ctx, customer_id: int, addresses: list[dict], thing: str
         raise Refused("identity_check", ctx.tenant.line(line, thing=thing), need=note)
     if not records.caller_turn_after(ctx.conn, check["call_id"], check["asked_seq"]):
         raise Refused("identity_check", ctx.tenant.line("identity_check", thing=thing), need=note)
-    if check["asks"] < IDENTITY_ASKS:
+    # An answer that doesn't match is final: one polite refusal and the callback, never the same
+    # question again (live call 1, issue #149: "Sam Rivera", then "And what's the name on the
+    # visit?" twice). Only a caller who gave no name or address at all is asked once more.
+    answered = _answered_check(ctx, check, name_ok, address_ok)
+    if check["asks"] < IDENTITY_ASKS and not answered:
         line = (
             "identity_check_address" if name_ok
             else "identity_check_name" if address_ok
@@ -2490,7 +2539,10 @@ def cancel_appointment(ctx: Ctx, args: CancelIn) -> Result:
     row_id = _record_action(ctx, "cancel", key, job, args.model_dump(mode="json"), args.reason)
     try:
         ctx.fsm.cancel_job(
-            key, job["id"], ctx.tenant.fsm["cancel_reason_id"], f"Cancelled by phone: {args.reason}"
+            key,
+            job["id"],
+            ctx.tenant.fsm["cancel_reason_id"],
+            f"Cancelled by phone: {args.reason.strip() or 'no reason given'}",
         )
     except (FsmUnavailable, FsmRejected) as exc:
         _action_failed(ctx, row_id, exc, "cancel")

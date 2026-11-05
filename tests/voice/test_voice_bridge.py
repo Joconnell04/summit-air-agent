@@ -92,20 +92,70 @@ def test_the_reply_waits_for_a_clip_the_tool_answered_during():
     assert cleared >= player.ended_at
 
 
-def test_at_most_once_every_few_turns_and_never_the_same_clip_twice():
+def test_at_most_once_every_few_turns_and_never_the_same_clip_twice_in_a_row():
     player = Player()
 
     async def run():
         bridge = make(player, min_turns_between=3)
-        for _turn in range(7):
+        for _turn in range(13):
             bridge.caller_turn()
             await bridge.run(tool(0.08))
             await bridge.wait_clear()
 
     asyncio.run(run())
     played = [clip for clip, _ in player.started]
-    assert played == ["a", "b", "c"][: len(played)]
-    assert len(played) == len(set(played)) == 3
+    # Turns 1, 4, 7, 10 and 13; the clips in turn, so a long call never runs out of them.
+    assert played == ["a", "b", "c", "a", "b"]
+
+
+def test_one_clip_is_never_played_twice_in_a_row():
+    player = Player()
+
+    async def run():
+        bridge = Bridge(["a"], player.play, lambda: True, after_s=0.05, min_turns_between=1)
+        for _turn in range(3):
+            bridge.caller_turn()
+            await bridge.run(tool(0.08))
+            await bridge.wait_clear()
+
+    asyncio.run(run())
+    assert [clip for clip, _ in player.started] == ["a"]
+
+
+def test_a_lead_in_plays_at_once_and_the_tool_adds_no_second_clip():
+    """Live call 1 (issue #149): every tool answered inside 0.3 s, so the timed clip never played,
+    and the caller sat through the model's second step in silence."""
+    player = Player()
+
+    async def run():
+        bridge = make(player, after_s=0.5)
+        bridge.caller_turn()
+        assert bridge.lead_in() is True
+        await bridge.run(tool(0.6))
+        await bridge.wait_clear()
+        return bridge
+
+    bridge = asyncio.run(run())
+    assert [clip for clip, _ in player.started] == ["a"]
+    assert bridge.clip_started_at is not None
+
+
+def test_a_lead_in_follows_the_same_rules():
+    player = Player()
+
+    async def run():
+        quiet = make(player, silent=False)
+        quiet.caller_turn()
+        assert quiet.lead_in() is False
+        bridge = make(player, min_turns_between=2)
+        bridge.caller_turn()
+        assert bridge.lead_in() is True
+        await bridge.wait_clear()
+        bridge.caller_turn()
+        assert bridge.lead_in() is False, "too soon after the last one"
+
+    asyncio.run(run())
+    assert [clip for clip, _ in player.started] == ["a"]
 
 
 def test_two_slow_tools_in_one_turn_play_one_clip():
