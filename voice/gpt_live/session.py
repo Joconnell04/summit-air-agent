@@ -38,7 +38,11 @@ ROOT = Path(__file__).resolve().parents[2]
 PROMPTS = ROOT / "prompts" / "gpt_live"
 TENANTS = ROOT / "tenants"
 SAFETY_ACTIONS = ("speak_lines", "speak_variant", "ask_check")
-SAY_NOW = "Say this to the caller now, exactly as written, with no word changed: {text}"
+# OpenAI's documented wording for exact speech (live-conversations guide, "Deliver a disclosure").
+# Commentary appends and backend results are paraphrased: a read-back of 929 810 4875 came out
+# as "212 555 0123" on a scripted call (MEASURED, gate line).
+SAY_NOW = ("Immediately say the following exactly and in full before responding to the caller: "
+           "{text}")
 GREET = "Greet the caller now in English with exactly these words, then pause and listen: {text}"
 # A speaker's line is complete after this much quiet in their transcript (ASSUMED; transcript
 # fragments arrive unevenly, and a longer gap only delays the turn check).
@@ -162,6 +166,10 @@ class Conversation:
         self.seq = {"caller": 0, "agent": 0}
         self.posting = asyncio.Lock()
         self.answered: set[str] = set()
+        # The latest tool sentence of the backend's current run, said once the run ends: a new
+        # exact-speech instruction cuts off the one being spoken (MEASURED, gate line).
+        self.pending_say = ""
+        self.run_has_call = False
         self.tasks: set[asyncio.Task] = set()
         self.last_agent_delta = 0.0
         self.hang_up_task: asyncio.Task | None = None
@@ -245,15 +253,23 @@ class Conversation:
 
     async def _backend(self, inner: dict) -> None:
         kind = inner.get("type")
-        if kind == "response.output_item.done":
+        if kind == "response.created":
+            self.run_has_call = False
+        elif kind == "response.output_item.done":
             item = inner.get("item") or {}
             if item.get("type") == "function_call" and item.get("call_id") not in self.answered:
+                self.run_has_call = True
                 self.answered.add(item["call_id"])
                 self._spawn(self.function_call(item))
         elif kind in ("response.completed", "response.done", "response.incomplete"):
             usage = (inner.get("response") or {}).get("usage") or {}
             if usage and self.price:
                 self.backend_usd += backend_cost(usage, self.price)
+            if not self.run_has_call and self.pending_say:
+                # The backend has finished with no call left to answer: say its last sentence.
+                say, self.pending_say = self.pending_say, ""
+                await self.send({"type": "session.instructions.append", "delegation_id": None,
+                                 "content": SAY_NOW.format(text=say)})
 
     async def function_call(self, item: dict) -> None:
         # Lines not yet posted go first, so the server's checks have the caller's latest words.
@@ -268,6 +284,12 @@ class Conversation:
         else:
             key = idempotency_key(self.call_id, name, args) if name in self.writes else None
             envelope = await self._server("tool", name, self.call_id, args, key)
+        say = (envelope.get("say") or "").strip()
+        if say:
+            # The server's sentence goes to the voice model word for word when the backend's run
+            # ends; the backend learns it will be said, so its answer doesn't add a paraphrase.
+            self.pending_say = say
+            envelope = {**envelope, "say": "", "said_to_caller": say}
         await self.send({"type": "response.item.create", "item": {
             "type": "function_call_output", "call_id": item["call_id"],
             "output": json.dumps(compact(envelope), default=str)}})

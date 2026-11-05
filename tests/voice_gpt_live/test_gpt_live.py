@@ -75,6 +75,11 @@ def agent(text):
     return {"type": "session.output_transcript.delta", "delta": text}
 
 
+def backend(kind):
+    return {"type": "response.event", "delegation_id": "d1", "event": {"type": kind,
+                                                                       "response": {}}}
+
+
 def function_call(name, args, call_id="call_1"):
     return {"type": "response.event", "delegation_id": "d1", "event": {
         "type": "response.output_item.done",
@@ -149,7 +154,7 @@ def test_a_gas_smell_asks_for_the_signed_off_lines_word_for_word(app):
     sock = asyncio.run(go())
     asked = sock.of_type("session.instructions.append")
     assert len(asked) == 1
-    assert asked[0]["content"].startswith("Say this to the caller now, exactly as written")
+    assert asked[0]["content"].startswith("Immediately say the following exactly and in full")
     assert "gas" in asked[0]["content"].lower()
 
 
@@ -172,6 +177,49 @@ def test_a_function_call_runs_on_the_tool_server_and_resumes_the_backend(app):
     assert kinds.index("response.create") > kinds.index("response.item.create")
     # The caller's line was posted before the tool ran, so the server checked it first.
     assert ("caller", "I'm in 11201.") in turns(app, "gl-1")
+
+
+def test_a_tool_sentence_is_asked_for_word_for_word_and_kept_from_the_backend(app):
+    async def go():
+        line, sock, _ = await opened(app)
+        await feed(line, backend("response.created"), function_call("read_back", {
+            "address": {"street": "248 Duffield Street", "city": "Brooklyn", "zip": "11201"},
+            "phone": "+12125550999"}), backend("response.completed"))
+        await asyncio.sleep(0.1)
+        # Nothing is said while the backend's run is still going.
+        assert not sock.of_type("session.instructions.append")
+        await feed(line, backend("response.created"), backend("response.completed"))
+        await line.close("caller_hangup")
+        return sock
+
+    sock = asyncio.run(go())
+    asked = sock.of_type("session.instructions.append")
+    assert len(asked) == 1
+    assert asked[0]["content"].startswith("Immediately say the following exactly and in full")
+    output = json.loads(sock.of_type("response.item.create")[0]["item"]["output"])
+    assert "say" not in output
+    assert output["said_to_caller"] and output["said_to_caller"] in asked[0]["content"]
+
+
+def test_only_the_last_tool_sentence_of_a_run_is_said(app):
+    async def go():
+        line, sock, _ = await opened(app)
+        await feed(line, backend("response.created"),
+                   function_call("check_service_area", {"zip": "11201"}, "call_a"),
+                   backend("response.completed"))
+        await asyncio.sleep(0.1)
+        await feed(line, backend("response.created"),
+                   function_call("find_slots", {"job_type": "tune_up"}, "call_b"),
+                   backend("response.completed"))
+        await asyncio.sleep(0.1)
+        await feed(line, backend("response.created"), backend("response.completed"))
+        await line.close("caller_hangup")
+        return sock
+
+    sock = asyncio.run(go())
+    asked = sock.of_type("session.instructions.append")
+    outputs = [json.loads(m["item"]["output"]) for m in sock.of_type("response.item.create")]
+    assert len(asked) == 1 and outputs[-1]["said_to_caller"] in asked[0]["content"]
 
 
 def test_a_repeated_function_call_runs_once(app):
