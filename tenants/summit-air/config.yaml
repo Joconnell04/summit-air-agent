@@ -154,10 +154,12 @@ job_types:
 # Capacity is held in 30-minute blocks from opening to closing, and an arrival window is any run of
 # blocks (Jackson after Retell call call_9826ff9f0dfa8bc835a3601368b: "4 hours is too large a gap to
 # be a window", and "the atomic unit becomes 30 minutes"). A window's id is its local start and end,
-# "0730-0930". `window_minutes` is the length offered when the caller names none.
+# "0730-0930". `window_minutes` is the length offered when the caller names none: 30 minutes
+# (Jackson, gas test call call_0246b91f77e01a4b18583e6ca8b: "by default, it should give a 30 minute
+# way, not a 2 hour window"). A caller can still ask for a longer one.
 scheduling:
   block_minutes: 30
-  window_minutes: 120
+  window_minutes: 30
 
 # The 2-hour windows the schedule shows and the seeded world books, and the on-call night window.
 # Any other run of blocks can be booked too.

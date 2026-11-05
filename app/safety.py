@@ -18,6 +18,9 @@ Heating the home with an oven, stove, generator or grill indoors gets the carbon
 question once per call. Only wording that says it is used for heat counts ("the oven on to keep
 warm"), never a plain mention ("my oven works", "the generator is outside").
 
+A caller who takes it back ("never mind", "false alarm", "the gas company said it's fine") clears the
+call at any point, so it goes on to booking (retracts).
+
 States, kept on the call: none, checking, signal (lines not said yet), lines_said, cleared.
 """
 
@@ -466,6 +469,23 @@ def stands_down(text: str, kind: str | None, cfg: dict) -> bool:
     ) and not clear_signal(text, cfg)
 
 
+# Where the caller is, which says they followed the advice, not that there was nothing: "it's fine,
+# I'm outside now" keeps the call a safety call.
+GONE_OUT = ("outside", "out here", "out of the house", "out of the building")
+
+
+def retracts(text: str, cfg: dict) -> bool:
+    """The caller takes the report back: "never mind", "false alarm", "I don't think it's leaking",
+    "the gas company said it's fine". Never when the same line still reports a smell or alarm, or
+    only says they've gone outside."""
+    text_words = words(text)
+    if not any(has_phrase(text_words, p) for p in cfg.get("retractions", [])):
+        return False
+    if any(has_phrase(text_words, g) for g in GONE_OUT + UNSURE + ("maybe",)):
+        return False
+    return not clear_signal(text, cfg)
+
+
 def vague_signal(text: str, cfg: dict, answering_check: bool = False) -> str | None:
     for text_words in (words(sentence) for sentence in _sentences(text)):
         for kind, spec in cfg["vague"].items():
@@ -617,6 +637,30 @@ def _says_yes(text_words: str, word: str) -> bool:
     return False
 
 
+# Words of a gas or carbon monoxide scare, kept out of the next call's context: safety is per call
+# (Jackson's call call_7255ab47e30637f207e49f5bdeb opened with "please make sure you're outside and
+# have called 911" from the call before).
+SCARE_WORDS = re.compile(
+    r"\b9-?1-?1\b|\bgas\b|carbon monoxide|\bco alarm|evacuat|stay safe|"
+    r"\bget (?:everyone )?out(?:side)?\b|\bgetting outside\b",
+    re.IGNORECASE,
+)
+
+
+def mentions_scare(text: str) -> bool:
+    return bool(SCARE_WORDS.search(text or ""))
+
+
+def without_scare(summary: str) -> str:
+    """A job summary for another call's context: its priority line and any line about a scare
+    dropped. The job in the field service system keeps them for the technician."""
+    return "\n".join(
+        line
+        for line in (summary or "").split("\n")
+        if not line.startswith("Priority:") and not mentions_scare(line)
+    )
+
+
 def lines_for(cfg: dict, kind: str) -> str:
     return " ".join(cfg["kinds"][kind]["lines"].split())
 
@@ -661,6 +705,8 @@ def check_caller_turn(
     and confirm_asked are True once that question has been asked on this call; answering_confirm
     when the question being answered is the confirm question."""
     text = _spelled_co(text)
+    if state in ("signal", "lines_said", "checking") and retracts(text, cfg):
+        return SafetyAction("cleared", kind)
     if state == "lines_said" and stands_down(text, kind, cfg):
         return SafetyAction("cleared", kind)
     signal = clear_signal(text, cfg, answering_check=state == "checking")
@@ -709,9 +755,16 @@ def check_caller_turn(
     return SafetyAction("none", kind)
 
 
+def _emergency_number(text_words: str) -> str:
+    # The lines write "9-1-1" so the voice says nine one one; a transcript may write "911".
+    return text_words.replace(" 9 1 1 ", " 911 ")
+
+
 def agent_said_lines(text: str, kind: str | None, cfg: dict) -> bool:
     """The agent line contains the full safety lines for the call's kind, word for word."""
-    return bool(kind) and words(lines_for(cfg, kind)) in words(text)
+    return bool(kind) and _emergency_number(words(lines_for(cfg, kind))) in _emergency_number(
+        words(text)
+    )
 
 
 # Electrical trouble (DECISIONS.md 082): its own route, apart from gas and carbon monoxide. It never

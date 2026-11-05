@@ -118,7 +118,8 @@ def tenant_with(tmp_path, change) -> Tenant:
     "drop, named",
     [
         (lambda s: s["kinds"]["gas"].pop("lines"), "kinds.gas.lines"),
-        (lambda s: s["kinds"]["co"].pop("variants"), "kinds.co.variants"),
+        # Shorter lines are needed only when a repeat gets any (Summit Air's repeat_limit is 0).
+        (lambda s: s.update(repeat_limit=1), "kinds.co.variants"),
         (lambda s: s["vague"]["gas"].pop("question"), "vague.gas.question"),
         (lambda s: s.pop("vague"), "vague.co.question"),
         (lambda s: s.pop("sign_off"), "sign_off"),

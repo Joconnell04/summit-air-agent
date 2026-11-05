@@ -162,6 +162,17 @@ def first_open(agent: Agent, call_id: str, job_type: str = "tune_up") -> dict:
     return {"date": day["date"], "window": day["windows"][0]}
 
 
+def confirm_do_not_call(agent: Agent, call_id: str) -> dict:
+    """mark_do_not_call asks first; the caller says yes; then it marks (DECISIONS.md 115)."""
+    asked = agent.tool("mark_do_not_call", call_id)
+    assert asked["refused"] == "confirm_first", asked
+    agent.say(call_id, asked["say"])
+    agent.turn(call_id, "Yes.")
+    marked = agent.tool("mark_do_not_call", call_id, confirmed=True)
+    assert marked["ok"], marked
+    return marked
+
+
 def count(agent: Agent, sql: str, *params) -> int:
     conn = agent.db()
     try:

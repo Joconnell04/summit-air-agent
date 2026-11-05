@@ -254,8 +254,8 @@ def test_a_structural_error_is_refused_before_the_check_runs(agent):
     "Hi {first_name}, ask about our free tune-up.",
 ])
 def test_a_number_or_price_in_a_line_is_for_the_check_not_a_word_list(text):
-    clean, errors = rules.validate(TENANT, {"lines": {"greeting_known": text}})
-    assert errors == {} and clean["lines"]["greeting_known"] == text
+    clean, errors = rules.validate(TENANT, {"lines": {"callback_opening": text}})
+    assert errors == {} and clean["lines"]["callback_opening"] == text
 
 
 def test_the_check_never_runs_on_a_call_or_a_rollback(tmp_path, clock, mock):

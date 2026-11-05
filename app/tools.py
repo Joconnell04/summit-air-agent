@@ -16,7 +16,19 @@ from dataclasses import dataclass, field
 from datetime import date, datetime, time, timedelta
 from itertools import pairwise
 
-from . import booking, geocode, heads_up, lookup, outbound, pace, records, safety, transfer, weather
+from . import (
+    booking,
+    geocode,
+    heads_up,
+    hvac_info,
+    lookup,
+    outbound,
+    pace,
+    records,
+    safety,
+    transfer,
+    weather,
+)
 from . import capacity as capacity_rules
 from . import priority as prio
 from .db import iso, parse_iso, tx
@@ -37,6 +49,7 @@ from .schemas import (
     FlagIn,
     HistoryIn,
     LeadIn,
+    LookupIn,
     MoveIn,
     NoteIn,
     ReadBackIn,
@@ -53,6 +66,7 @@ from .text import (
     digit_runs,
     digits_spoken,
     has_phrase,
+    kidding,
     number_tokens,
     phone_display,
     phone_key,
@@ -122,15 +136,17 @@ def _safety_gate(ctx: Ctx) -> bool:
     that the agent may offer a visit for once the problem is shut off, without the caller having to
     insist (eval round 2). Returns True when this is a safety call past that point, so the booking
     is logged as made on a safety call."""
-    state, safety = ctx.call["safety_state"], ctx.tenant.safety
+    # The caller's line already handed the voice layer the lines or the question to say, so the
+    # refusal says nothing: said twice, they'd be the repetition Jackson heard ("make sure the
+    # safety thing is just also in general less repetitive").
+    state = ctx.call["safety_state"]
     if state == "signal":
-        lines = " ".join(safety["kinds"][ctx.call["safety_kind"]]["lines"].split())
-        raise Refused("gate_safety", lines, need="safety_lines")
+        raise Refused(
+            "gate_safety", "", need="safety_lines: they are being said for you; say nothing more"
+        )
     if state == "checking":
         raise Refused(
-            "gate_safety",
-            safety["vague"][ctx.call["safety_kind"]]["question"],
-            need="safety_check_answer",
+            "gate_safety", "", need="safety_check_answer: the question was asked; wait for the answer"
         )
     return state == "lines_said" and ctx.call["safety_flag_id"] is not None
 
@@ -1877,7 +1893,12 @@ def find_slots(ctx: Ctx, args: FindSlotsIn) -> Result:
     # The voice layer speaks it from the server, word for word, before the model offers times, so
     # it is never paraphrased (asks-agent-to-call-911 kept failing `top priority`).
     urgent_said = ""
-    if decided.level == "Urgent":
+    if args.moving_a_visit:
+        # A new time for a visit already booked: the priority line is for a new problem (Jackson's
+        # call call_7255ab47e30637f207e49f5bdeb heard "I've marked this call top priority" while
+        # moving his visit).
+        pass
+    elif decided.level == "Urgent":
         line = ctx.tenant.line("urgent_priority")
         if _hand_out_once(ctx, line):
             # Kept in `say` too, so the call's record shows the system said it; the voice layer
@@ -2259,18 +2280,27 @@ def read_back(ctx: Ctx, args: ReadBackIn) -> Result:
     # Shorthand: the street and the unit, and the number, with no ZIP, city or "your home"
     # (Jackson: "just shorthand like 'the 199 e 4th street and unit 2'"). The lookup already
     # checked the ZIP, and a ZIP the caller gave that disagrees with it is asked about first
-    # (zip_mismatch). The number calling is "the number you're calling from".
+    # (zip_mismatch). The number calling is "the number you're calling from, ending in ...". A
+    # number read in full once on this call is named by its last four digits after that.
     spoken_address = address["street"] + (f", unit {address['unit']}" if address["unit"] else "")
     phone_for = _phone_for(ctx, args.phone_for)
-    if phone_for:
-        sentence = ctx.tenant.line(
-            "read_back_for", address=spoken_address, who=phone_for, phone=phone_said(phone)
-        )
-    else:
-        calling = phone == ctx.call["caller_key"]
-        said = ctx.tenant.line("read_back_calling_from") if calling else phone_said(phone)
-        sentence = ctx.tenant.line("read_back", address=spoken_address, phone=said)
     asked = records.readback(ctx.call)
+    last_four = digits_spoken(phone[-4:])
+    read_in_full = asked is not None and asked["phone"] == phone and phone_said(phone) in (
+        asked.get("sentence") or ""
+    )
+    if phone == ctx.call["caller_key"]:
+        said = ctx.tenant.line("read_back_calling_from", last_four=last_four)
+    elif read_in_full and _readback_key(asked) != _readback_key(
+        {**address, "phone": phone, "phone_for": phone_for}
+    ):
+        said = ctx.tenant.line("read_back_number_ending", last_four=last_four)
+    else:
+        said = phone_said(phone)
+    if phone_for:
+        sentence = ctx.tenant.line("read_back_for", address=spoken_address, who=phone_for, phone=said)
+    else:
+        sentence = ctx.tenant.line("read_back", address=spoken_address, phone=said)
     current = {**address, "phone": phone, "phone_for": phone_for, "sentence": sentence}
     same = asked is not None and _readback_key(asked) == _readback_key(current)
     # Details the caller already confirmed are never read back again on the call (eval rounds 3
@@ -2449,9 +2479,7 @@ def book_appointment(ctx: Ctx, args: BookIn) -> Result:
         )
     scoped = _callers_accounts(ctx)
     if not scoped and not details["name"]:
-        raise Refused(
-            "invalid_arguments", "Can I get a name for the booking?", errors={"name": "needed"}
-        )
+        raise Refused("invalid_arguments", ctx.tenant.line("booking_name"), errors={"name": "needed"})
 
     thread = records.thread(ctx.conn, ctx.call["id"])
     pending_notes = [
@@ -2972,6 +3000,13 @@ def _owned_job(ctx: Ctx, job_id: int) -> tuple[dict, bool]:
     except FsmRejected:
         job = None
     scoped = records.scoped_customers(ctx.conn, ctx.call["id"])
+    if not job and booked_here:
+        # Booked on this thread but gone from the field service system (the live world was reset
+        # mid-call on call_7255ab47e30637f207e49f5bdeb): not the caller's fault, so a person looks.
+        _flag_and_refuse(
+            ctx, "visit_missing", ctx.tenant.line("visit_missing"), "person",
+            f"Visit {job_id} was booked from this number but the system can't find it",
+        )
     if not job or not (booked_here or job["customerId"] in scoped):
         raise Refused(
             "not_owner", "I can only change a visit that's booked for you.", gate="ownership"
@@ -3740,8 +3775,16 @@ def flag_person(ctx: Ctx, args: FlagIn) -> Result:
             note="The caller said goodbye. End the call now; ask nothing more.",
         )
     if callback_id is None:
-        say = ctx.tenant.line("flag_stored_no_callback")
-    elif args.priority == "Urgent" and ctx.call["after_hours"]:
+        # No callback was stored (the number is on the do-not-call list), so no time goes back:
+        # Jackson's call call_7255ab47e30637f207e49f5bdeb was told "by 5:18 PM" with none behind it.
+        return ok(
+            ctx.tenant.line("flag_stored_no_callback"),
+            flag_id=flag_id,
+            callback_id=None,
+            note="No callback was scheduled: the number is on the do-not-call list. Don't promise "
+            "a call or a time; if the caller wants calls again, use mark_do_not_call with undo.",
+        )
+    if args.priority == "Urgent" and ctx.call["after_hours"]:
         say = ctx.tenant.line("flag_stored_on_call", when=spoken)
     elif args.priority == "Urgent":
         say = ctx.tenant.line("flag_stored_urgent", when=spoken)
@@ -3971,8 +4014,29 @@ def attach_late_job_notes(ctx: Ctx) -> None:
 
 
 def mark_do_not_call(ctx: Ctx, args: DoNotCallIn) -> Result:
+    """Marks only after the caller said yes to the confirm question, which the first call returns
+    (Jackson's number went on the list from "don't call me then" said in passing). `undo` takes
+    it off again."""
     if len(ctx.call["caller_key"]) != 10:
         raise Refused("invalid_phone", ctx.tenant.line("do_not_call"))
+    if args.undo:
+        with tx(ctx.conn):
+            records.unmark_do_not_call(ctx.conn, ctx.call["caller_key"])
+        return ok(ctx.tenant.line("do_not_call_undone"))
+    question = ctx.tenant.line("do_not_call_confirm")
+    asked = ctx.conn.execute(
+        "SELECT MAX(seq) FROM turns WHERE call_id = ? AND speaker = 'agent' AND instr(text, ?) > 0",
+        (ctx.call["id"], question),
+    ).fetchone()[0]
+    answered = asked is not None and records.caller_turn_after(ctx.conn, ctx.call["id"], asked)
+    if not (args.confirmed and answered):
+        raise Refused(
+            "confirm_first",
+            "" if asked is not None and not answered else question,
+            need="call again with confirmed: true only after the caller says yes to the question",
+        )
+    if kidding(records.last_caller_line(ctx.conn, ctx.call["id"])):
+        raise Refused("confirm_first", "", need="the caller was joking; don't mark the number")
     with tx(ctx.conn):
         records.mark_do_not_call(ctx.conn, ctx.call, ctx.now)
     # The caller's own words may already have marked it on their turn, so count what this call
@@ -3987,29 +4051,28 @@ def mark_do_not_call(ctx: Ctx, args: DoNotCallIn) -> Result:
 
 def end_call(ctx: Ctx, args: EndCallIn) -> Result:
     """Refused on a safety call until the lines were said and a person flagged; after that it
-    returns the sign-off, and the call ends when the caller goes (spec S-19)."""
+    returns the sign-off, said once, and the call hangs up (spec S-19)."""
     state, safety = ctx.call["safety_state"], ctx.tenant.safety
     if state in ("signal", "checking"):
         _safety_gate(ctx)
     had_signal = ctx.call["safety_signal_at"] is not None and state != "cleared"
     if had_signal and args.reason in ("spam", "wrong_number", "not_a_customer"):
-        raise Refused(
-            "gate_safety",
-            " ".join(safety["sign_off"].split()),
-            need="no spam label on a safety call",
-        )
+        raise Refused("gate_safety", "", need="no spam label on a safety call; end it as resolved")
     if had_signal:
-        hang_up = args.reason == "caller_goodbye"
-        if hang_up:
-            with tx(ctx.conn):
-                records.update_call(ctx.conn, ctx.call["id"], end_requested=1)
+        # The sign-off is said once, then the call hangs up like any other (Jackson's gas test call
+        # call_0246b91f77e01a4b18583e6ca8b stayed open after "Nope" and "I'm done").
+        with tx(ctx.conn):
+            records.update_call(ctx.conn, ctx.call["id"], end_requested=1)
         sign_off = " ".join(safety["sign_off"].split())
-        # One ending: the sign-off is said once a call, whether the caller is leaving or keeps
-        # talking (eval round 3).
-        if records.agent_said(ctx.conn, ctx.call["id"], sign_off):
+        # This call only: an earlier call's sign-off isn't this one's (safety is per call).
+        said = ctx.conn.execute(
+            "SELECT 1 FROM turns WHERE call_id = ? AND speaker = 'agent' AND instr(text, ?) > 0",
+            (ctx.call["id"], sign_off),
+        ).fetchone()
+        if said:
             # signed_off tells the voice layer the goodbye has been said, so it adds none.
-            return ok("", hang_up=hang_up, signed_off=True)
-        return ok(sign_off, hang_up=hang_up)
+            return ok("", hang_up=True, signed_off=True)
+        return ok(sign_off, hang_up=True)
     if args.reason != "caller_goodbye" and _out_of_area_unanswered(ctx) and not says_goodbye(
         records.last_caller_line(ctx.conn, ctx.call["id"])
     ):
@@ -4029,6 +4092,7 @@ def end_call(ctx: Ctx, args: EndCallIn) -> Result:
     if (
         last
         and args.reason != "caller_goodbye"
+        and not says_goodbye(records.last_caller_line(ctx.conn, ctx.call["id"]))
         and not records.caller_turn_after(ctx.conn, ctx.call["id"], last["turn_seq"])
     ):
         # Never end in the same turn as the confirmation (spec S-30).
@@ -4036,6 +4100,21 @@ def end_call(ctx: Ctx, args: EndCallIn) -> Result:
     with tx(ctx.conn):
         records.update_call(ctx.conn, ctx.call["id"], end_requested=1)
     return ok(hang_up=True)
+
+
+def lookup_hvac_info(ctx: Ctx, args: LookupIn) -> Result:
+    """How heating and cooling equipment works, what a sound or symptom might mean, maintenance:
+    the one or two parts of the tenant's lookup documents that answer the caller's question, as
+    facts for the agent to put in its own words. No say. Nothing relevant returns no facts, and
+    the agent answers from general knowledge or offers a technician."""
+    facts = [
+        fact
+        for document in ctx.tenant.lookup_knowledge.values()
+        for fact in hvac_info.answer(
+            args.question, document, ctx.tenant.agent.get("lookup_synonyms", {})
+        )
+    ][: hvac_info.MAX_FACTS]
+    return ok(facts=facts)
 
 
 # Every model tool: (handler, request body, writes). Writes take an Idempotency-Key.
@@ -4055,4 +4134,5 @@ TOOLS = {
     "add_note": (add_note, NoteIn, True),
     "mark_do_not_call": (mark_do_not_call, DoNotCallIn, True),
     "end_call": (end_call, EndCallIn, True),
+    "lookup_hvac_info": (lookup_hvac_info, LookupIn, False),
 }

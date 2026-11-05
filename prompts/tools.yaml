@@ -22,9 +22,9 @@ find_slots: >-
   caller can only be home some hours ("I'm home 8 to 2", "I leave at 10"), pass them as
   arrive_after and arrive_before as they said them; the server reads "8 to 2" as 8 AM to 2 PM and
   offers only windows inside those hours. A single time the caller names ("tomorrow at 7:30") starts
-  the window, two hours long unless closing comes first: pass `day`, and offer that window. Windows
-  are two hours; when the caller asks for another length ("an hour", "a three-hour window"), pass it
-  in `window_minutes`.
+  the window, 30 minutes long: pass `day`, and offer that window. Windows are 30 minutes; when the
+  caller asks for another length ("an hour", "a two-hour window"), pass it in `window_minutes`.
+  When the caller is moving a visit they already have, pass `moving_a_visit: true`.
 read_back: >-
   Confirms the address and number before booking. The first call's sentence is spoken to the caller
   for you, word for word, so call it without announcing it and say nothing yourself. After the
@@ -64,8 +64,16 @@ record_lead: >-
   replacement quote. A window the caller asked for goes in callback_after and callback_before, and
   "tomorrow" in callback_day. Say the sentence it returns as written.
 add_note: Append a short note for the team about this customer or this call's job.
-mark_do_not_call: The caller asked not to be called again. Say the sentence it returns.
+mark_do_not_call: >-
+  The caller asked not to be called again. The first call returns a confirm question, spoken for
+  you; after a clear yes, call it again with `confirmed: true`. A joke ("just kidding") is not a
+  request. If they want calls again after all, call it with `undo: true`.
 end_call: >-
   Ask to end the call, with the reason. Call it after your goodbye. If it says not to hang up yet,
   say its sentence and keep listening. On a safety call it returns the sign-off, which is the
   goodbye: say nothing of your own in that turn.
+lookup_hvac_info: >-
+  Call only when the caller asks how heating or cooling equipment works, what a sound or symptom
+  might mean, or about maintenance. Pass their question. It returns `facts` to put in your own
+  words, briefly; with no facts, answer from general knowledge or offer a technician. Never give
+  repair steps or prices.

@@ -302,6 +302,10 @@ def mark_do_not_call(conn: sqlite3.Connection, call: sqlite3.Row, now: datetime)
     ).rowcount
 
 
+def unmark_do_not_call(conn: sqlite3.Connection, phone_key_value: str) -> int:
+    return conn.execute("DELETE FROM do_not_call WHERE phone_key = ?", (phone_key_value,)).rowcount
+
+
 def outbound_allowed(
     conn: sqlite3.Connection, tenant: Tenant, callback: sqlite3.Row, now: datetime
 ) -> tuple[bool, str]:

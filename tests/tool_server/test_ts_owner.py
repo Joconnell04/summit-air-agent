@@ -9,6 +9,7 @@ from toolkit import (
     UNKNOWN,
     Agent,
     book,
+    confirm_do_not_call,
     count,
     first_open,
     in_area_address,
@@ -187,7 +188,7 @@ def test_callbacks_promised_against_done_leave_out_cancelled_and_count_overdue(a
     conn = agent.db()
     conn.execute("UPDATE callbacks SET status = 'done' WHERE call_id = ?", (calls[0],))
     conn.close()
-    agent.tool("mark_do_not_call", calls[1])
+    confirm_do_not_call(agent, calls[1])
     clock.advance(minutes=31)
     conn = agent.db()
     conn.execute("UPDATE callbacks SET status = 'done' WHERE call_id = ?", (calls[2],))

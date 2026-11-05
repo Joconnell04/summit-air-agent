@@ -4,7 +4,7 @@ S-23, S-32, S-38, S-42, S-48, S-49)."""
 import sqlite3
 
 import pytest
-from toolkit import DETAILS, UNKNOWN, book, count, first_open, ready_to_book
+from toolkit import DETAILS, UNKNOWN, book, confirm_do_not_call, count, first_open, ready_to_book
 
 from app import jobs, lifecycle, records
 from app.settings import QUEUE_MAX_ATTEMPTS
@@ -430,7 +430,7 @@ def test_outbound_calls_go_only_to_the_caller_in_hours_once_and_never_to_do_not_
     conn.execute("UPDATE callbacks SET attempts = 0, phone_key = '7185550000'")
     assert allowed() == (False, "not_the_caller")
     conn.execute("UPDATE callbacks SET phone_key = '2125550999'")
-    agent.tool("mark_do_not_call", call)
+    confirm_do_not_call(agent, call)
     conn.execute("UPDATE callbacks SET status = 'pending'")
     assert allowed() == (False, "do_not_call")
     conn.close()
@@ -448,15 +448,14 @@ def test_there_is_no_tool_that_calls_911_or_an_outside_number(agent):
 # ---- do not call -------------------------------------------------------------------------------
 
 
-def test_do_not_call_is_marked_on_the_callers_words_and_cancels_callbacks(agent):
+def test_do_not_call_is_confirmed_then_marked_and_cancels_callbacks(agent):
     call = agent.start(UNKNOWN)["data"]["call_id"]
     agent.tool("flag_person", call, reason="Callback requested", callback_in_minutes=30)
     turn = agent.turn(call, "Actually, don't call me, I'll call you.")
     assert "do_not_call" in turn["data"]["hints"]
-    # Marked at once, before the agent does anything.
-    assert count(agent, "SELECT COUNT(*) FROM do_not_call") == 1
-    assert count(agent, "SELECT COUNT(*) FROM callbacks WHERE status = 'pending'") == 0
-    marked = agent.tool("mark_do_not_call", call)
+    # Not marked on the words alone: the agent confirms first (DECISIONS.md 115).
+    assert count(agent, "SELECT COUNT(*) FROM do_not_call") == 0
+    marked = confirm_do_not_call(agent, call)
     # No internal wording ("That means the callback is off"), issue #149.
     assert marked["say"] == "Understood, we won't call you. Give us a call any time you need us."
     assert marked["data"]["cancelled_callbacks"] == 1
@@ -470,7 +469,7 @@ def test_do_not_call_is_marked_on_the_callers_words_and_cancels_callbacks(agent)
 
 def test_do_not_call_without_a_callback_says_the_short_line(agent):
     call = agent.start(UNKNOWN)["data"]["call_id"]
-    assert agent.tool("mark_do_not_call", call)["say"] == "Understood, we won't call you."
+    assert confirm_do_not_call(agent, call)["say"] == "Understood, we won't call you."
     assert agent.start(UNKNOWN)["data"]["caller"]["do_not_call"] is True
 
 

@@ -151,7 +151,7 @@ def test_a_gas_smell_makes_the_agent_say_the_safety_lines_now(client, retell, to
     rid, context = retell.said[0]
     lines_ = rows(tool_app, "SELECT safety_state FROM calls WHERE id = 'retell_abc'")
     assert rid == "abc" and lines_ == [{"safety_state": "signal"}]
-    assert "Please get everyone out of the house now." in context
+    assert "If you're smelling gas, the safest thing is" in context
     # The model says them; the server marks them said only from the agent's words.
     spoken = utterance("agent", context.split("punctuation changed: ", 1)[1])
     okay = utterance("user", "Okay, we're going outside.")
@@ -165,8 +165,8 @@ def test_a_safety_line_that_arrives_with_a_tool_call_goes_into_its_result(client
     gas = utterance("user", "It smells like gas in here.")
     answer = tool(client, "check_service_area", call_obj("abc", GREETING, gas), zip="11231")
     assert answer["speak_first"].endswith(
-        "Please get everyone out of the house now. Don't flip any switches or use the stove, and "
-        "call 911 or the gas company once you're outside."
+        "If you're smelling gas, the safest thing is to get everyone outside and call 9-1-1 or the "
+        "gas company from there."
     )
     assert retell.said == []
 

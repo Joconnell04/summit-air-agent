@@ -39,23 +39,18 @@ fsm:
 # its own. The phrases that trigger it are the trade's.
 safety:
   signed_off: true
+  # Advice, never an order: no "please get out now" and no "are you outside?" (Jackson, gas test
+  # call call_0246b91f77e01a4b18583e6ca8b: "it shouldn't be demanding me to do anything"). "9-1-1"
+  # so the voice says nine one one, not nine hundred and eleven.
   kinds:
     gas:
       lines: >-
-        Please get everyone out of the house now. Don't flip any switches or use the stove, and call
-        911 or the gas company once you're outside.
-      # Said instead of the full lines when the caller raises it again, in turn, never the same one
-      # twice in a row.
-      variants:
-        - Please get outside and call 911 from there.
-        - The safest thing is to head outside now and call 911 or the gas company.
+        If you're smelling gas, the safest thing is to get everyone outside and call 9-1-1 or the gas
+        company from there.
     co:
       lines: >-
-        If a window is right there, open it. Then get everyone out of the house now and call 911
-        once you're outside.
-      variants:
-        - Please get outside and call 911 from there.
-        - The safest thing is to get everyone outside now and call 911.
+        If a CO alarm is going off, the safest thing is to open a window if one's right there, get
+        everyone outside, and call 9-1-1 from there.
   # The one check question a vague description gets first (the trade's vague phrases).
   vague:
     gas:
@@ -66,23 +61,17 @@ safety:
       confirm_question: Just to confirm, it doesn't smell like sulfur or rotten eggs, right?
     co:
       question: Just to be safe, is a carbon monoxide alarm going off, or is anyone feeling sick or dizzy?
-  # Said when the agent wants to end a safety call: it signs off rather than hangs up. A polite
-  # recommendation, and "getting outside", not "everyone": by the sign-off the caller may have said
-  # they're alone. Signed off by Jackson (call-journeys r4).
-  sign_off: >-
-    For your safety, I'd recommend hanging up now, getting outside, and calling 911 from there.
-    We'll follow up once you're safe.
+  # Said once when a safety call ends, then the call hangs up (Jackson, call
+  # call_0246b91f77e01a4b18583e6ca8b: the call stayed open after "I'm done").
+  sign_off: Thanks for calling, and please stay safe. We'll follow up with you.
   flag_reason: "{label} reported on the call"
   # Added to the booking sentence when a visit is booked on a safety call (eval round 2, Jackson: "we'll
   # book a technician for you, but first it's important that whatever the problem is shut off").
   # Signed off by Jackson (spec r8 in docs/ai-process/coauthoring.md).
-  booking_note: >-
-    The technician can only work on it once the gas company or 911 has shut it off and said it's
-    safe, so please stay outside until then.
-  # How many shorter lines a caller hears after the full lines when they raise it again. The caller
-  # stays in control: the concern is said once, offered once more, then the agent helps (eval round
-  # 3, Jackson: "if they reject your advice, just let it be and maybe offer one more time").
-  repeat_limit: 1
+  booking_note: Just so you know, the technician can only work on it once it's been checked and found safe.
+  # The lines are said once per hazard; the same smell or alarm raised again gets nothing more
+  # (Jackson: "it keeps repeating the same statement"). A different hazard still gets its own lines.
+  repeat_limit: 0
   # Sparks, arcing or an electrical smell (app/safety.py electrical_signal, DECISIONS.md 082): said
   # once per call, word for word, then the agent helps book. Never the gas or carbon monoxide
   # lines. Booking never waits on the unit or the breaker being off. Signed off by Jackson
@@ -389,7 +378,11 @@ lines:
   # and unit 2'"), ending "That's all correct, right?" (Retell call call_9826ff9f0dfa8bc835a3601368b).
   read_back: So that's {address}, and {phone}. That's all correct, right?
   # The number the call came from, said instead of its digits in the read-back.
-  read_back_calling_from: the number you're calling from
+  read_back_calling_from: the number you're calling from, ending in {last_four}
+  # A later read-back on the same call names the number by its last four digits (Jackson: "one full
+  # readback, but then if there's ever other readbacks necessary, it just says and the phone number
+  # ending in 4024").
+  read_back_number_ending: the number ending in {last_four}
   commercial: >-
     Thanks for thinking of us. Unfortunately Summit Air works on homes and apartments, not
     businesses, so we're not the right fit for this one.
@@ -425,7 +418,15 @@ lines:
   address_which: Is that the one in {places}?
   address_not_found: I'm not finding that street. Could you spell the street name for me?
   address_ask_zip: What's the ZIP code there?
+  # Asked before a number goes on the do-not-call list (Jackson's number went on it from "don't call
+  # me then" said in passing).
+  # A visit booked from this number that the field service system can't find.
+  visit_missing: >-
+    I can't pull up that visit in our system right now, so I've asked the team to look into it and
+    get back to you.
+  do_not_call_confirm: Just to confirm, you'd like us to stop calling this number?
   do_not_call: Understood, we won't call you.
+  do_not_call_undone: No problem, we'll call you again when we need to.
   do_not_call_with_callback: Understood, we won't call you. Give us a call any time you need us.
   repeated_drops: >-
     Looks like we keep getting cut off, the signal might be spotty. Want me to have someone call you
@@ -499,7 +500,7 @@ lines:
   return_visit_review: >-
     Since we were just out there, a manager will look over this visit, including whether it's
     covered, before the technician arrives.
-  # {length} is the usual window length, such as "two hours".
+  # {length} is the usual window length, such as "30 minutes".
   arrival_no_fit: >-
     Our arrival windows are {length}, and the technician can come any time in the window, so I
     can't promise an exact time.
@@ -529,29 +530,17 @@ lines:
 # What the voice worker says on its own, without the model (voice/livekit). {first_name} is the
 # matched customer's first name; {phone} is our number, on outbound calls.
 voice:
-  greeting_known: Hi, this is Summit Air. Is this {first_name}?
-  greeting_unknown: Thanks for calling Summit Air, this is the virtual assistant. How can I help?
+  # Summit Air never ends a sentence, so the voice doesn't lift on it (Jackson, call
+  # call_7727509d3289c4434b27efdad5b).
+  greeting_known: Hi {first_name}, thanks so much for calling Summit Air today! I'm Brooke, the virtual assistant. How can I help?
+  greeting_unknown: Hi there, thanks so much for calling Summit Air today! I'm Brooke, the virtual assistant. How can I help?
   # Two-party consent (the owner's Settings page, app/owner_settings.py): said just before the
   # greeting, and by the worker when a caller objects and the recording stops. Off by default:
   # New York needs only one party's consent to record.
   recording_notice: This call may be recorded.
   recording_stopped: Okay, I've turned the recording off.
-  # A caller whose earlier call today dropped (repeat_callers): the agent remembers it and checks it
-  # is the same person before picking up where it stopped.
-  greeting_linked: >-
-    Hi, this is Summit Air's virtual assistant again. I think we got cut off earlier. Is this
-    {first_name}?
-  greeting_linked_unknown: >-
-    Hi, this is Summit Air's virtual assistant again. I think we got cut off earlier. Who am I
-    speaking with?
-  # A caller whose earlier call ended because they stepped away (DECISIONS.md 081). Signed off by
-  # Jackson (coauthoring safety r1), as are still_here and stepped_away below.
-  greeting_linked_stepped_away: >-
-    Hi, this is Summit Air's virtual assistant again. We got disconnected earlier when you stepped
-    away; let's pick up where we left off. Is this {first_name}?
-  greeting_linked_stepped_away_unknown: >-
-    Hi, this is Summit Air's virtual assistant again. We got disconnected earlier when you stepped
-    away; let's pick up where we left off. Who am I speaking with?
+  # No "we got cut off" greeting on a call that follows a dropped one: in a demo the same number
+  # calls several times (Jackson, call call_7255ab47e30637f207e49f5bdeb).
   # Dead air (DECISIONS.md 081, voice.dead_air in config/models.yaml for the timings): the check-in
   # said every couple of minutes of silence, and the goodbye before the agent hangs up, in Jackson's
   # words.
@@ -565,12 +554,12 @@ voice:
   # Said by the worker when the tool server can't be reached, then the call ends.
   server_down: >-
     Sorry, our system is having trouble right now. Please call us back in a few minutes, and if you
-    smell gas, hang up and call 911 from outside.
+    smell gas, hang up and call 9-1-1 from outside.
   # A voicemail left while every line was busy gets a callback within this. ASSUMED.
   voicemail_callback_minutes: 60
   # Played by Twilio when the voice worker is down (scripts/phone/fallback.py), then a voicemail.
   fallback: >-
-    Thanks for calling Summit Air. If you smell gas, hang up and call 911 from outside. We can't take
+    Thanks for calling Summit Air. If you smell gas, hang up and call 9-1-1 from outside. We can't take
     your call right now. Please leave your name, number and what's going on after the tone, and we'll
     call you back.
   outbound_voicemail: >-
@@ -588,9 +577,15 @@ voice:
     bridge_pull_up: Sure, let me pull that up.
     bridge_moment: Alright, one moment.
     at_capacity: >-
-      Thanks for calling Summit Air. If you smell gas, hang up and call 911 from outside. All our
+      Thanks for calling Summit Air. If you smell gas, hang up and call 9-1-1 from outside. All our
       lines are busy right now. Please leave your name, number and what's going on after the tone,
       and we'll call you back.
+
+# Documents in knowledge/ that only lookup_hvac_info reads (app/hvac_info.py): kept out of the prompt,
+# and searched when the caller asks how equipment works, what a sound means, or about maintenance.
+# The source is Jackson's Retell knowledge base (retell/summit-air-jackson/kb-source on
+# joco/retell-agent). It holds no repair steps or prices.
+lookup_knowledge: [hvac-basics]
 
 # Owner edits (app/rules.py). A wording line whose default says this must keep it, so an owner can't
 # reword away the line that tells callers they're talking to an AI.

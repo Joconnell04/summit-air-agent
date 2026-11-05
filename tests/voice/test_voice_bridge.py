@@ -161,4 +161,4 @@ def test_the_busy_line_message_is_recorded_and_starts_with_the_safety_line():
     tenant = ROOT / "tenants" / "summit-air"
     text = yaml.safe_load((tenant / "agent.yaml").read_text())["voice"]["clips"]["at_capacity"]
     assert (clips.folder(tenant) / "at_capacity.wav").exists()
-    assert text.index("911") < text.index("busy")
+    assert text.index("9-1-1") < text.index("busy")

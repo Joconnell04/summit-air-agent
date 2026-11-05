@@ -118,6 +118,8 @@ def test_every_pair_file_loads_and_leaves_only_its_open_windows(seed_dir, tmp_pa
         found = world.server.tool("find_slots", call, {
             "job_type": pair.world.job_type,
             "facts": {"issue": "no heat", "who_home": "two healthy adults", "inside_temp_f": 63},
+            # The pair worlds keep a two-hour window open; offers are 30 minutes by default.
+            "window_minutes": 120,
         })
         days = {d["date"]: d["windows"] for d in found["data"]["days"]}
         kept = {}

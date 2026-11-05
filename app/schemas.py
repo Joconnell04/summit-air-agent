@@ -168,6 +168,11 @@ class FindSlotsIn(CallRef):
     priority: Priority | None = Field(None, description="The agent's view; logged, not used")
     preferred_days: list[str] = Field(default_factory=list, max_length=7)
     time_of_day: Literal["morning", "afternoon", "evening"] | None = None
+    moving_a_visit: bool = Field(
+        False,
+        description="True when finding a new time for a visit the caller already has, before "
+        "reschedule_appointment",
+    )
     window_minutes: int | None = Field(
         None,
         ge=30,
@@ -354,7 +359,14 @@ class NoteIn(CallRef):
 
 
 class DoNotCallIn(CallRef):
-    pass
+    confirmed: bool = Field(
+        False, description="True once the caller said yes to the confirm question it returned"
+    )
+    undo: bool = Field(False, description="True when the caller wants to be called again after all")
+
+
+class LookupIn(CallRef):
+    question: str = Field(min_length=1, max_length=300)
 
 
 class EndCallIn(CallRef):

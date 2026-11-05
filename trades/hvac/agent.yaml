@@ -47,6 +47,47 @@ safety:
         - monoxide
         - co alarm
         - co detector
+  # A caller taking the report back clears the safety state, whatever point it had reached, so the
+  # call goes on to booking with a note on the job (Jackson, gas test call
+  # call_0246b91f77e01a4b18583e6ca8b: "the caller should be able to be like 'wait nvm, im
+  # tripping'... it should be able to get out of its own safety loop"). Not when the same line
+  # still reports a smell or alarm, or says the caller has only gone outside.
+  retractions:
+    - never mind
+    - nevermind
+    - nvm
+    - false alarm
+    - its fine
+    - it is fine
+    - its okay
+    - its ok
+    - all good
+    - its been checked
+    - been checked
+    - checked it
+    - checked with the gas company
+    - gas company said
+    - said its fine
+    - said its safe
+    - its fixed
+    - been fixed
+    - fixed it
+    - im tripping
+    - i was tripping
+    - its not gas
+    - it isnt gas
+    - its not a gas
+    - not a gas leak
+    - dont think its leaking
+    - dont think it is leaking
+    - its not leaking
+    - not leaking
+    - isnt leaking
+    - i was wrong
+    - i was mistaken
+    - i misspoke
+    - scratch that
+    - forget that
   # A vague description gets one check question first (the tenant's `question`). A yes counts as a
   # clear signal of that kind; a clear no returns the call to its journey and is logged.
   vague:
@@ -371,3 +412,22 @@ payments:
                     billed me twice, billing mistake, billing error, dispute a charge, dispute the charge,
                     dispute the bill, didnt authorize, did not authorize, never authorized,
                     want a refund, need a refund, get a refund, refund my]
+
+# lookup_hvac_info (app/hvac_info.py): words callers use for the same thing, read as one before a
+# question is matched against the tenant's lookup documents.
+lookup_synonyms:
+  air conditioning: ac
+  air conditioner: ac
+  a c: ac
+  central air: ac
+  heater: furnace
+  knocking: banging
+  knock: banging
+  clanking: banging
+  clanging: banging
+  bang: banging
+  rads: radiator
+  turns on and off: short cycling
+  on and off: short cycling
+  keeps cycling: short cycling
+  co: carbon monoxide

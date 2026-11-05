@@ -248,6 +248,8 @@ lines:
   commercial: Thanks for thinking of us. Unfortunately Summit Air works on homes and apartments, not businesses,
     so we're not the right fit for this one.
   do_not_call: Understood, we won't call you.
+  do_not_call_confirm: Just to confirm, you'd like us to stop calling this number?
+  do_not_call_undone: No problem, we'll call you again when we need to.
   do_not_call_with_callback: Understood, we won't call you. Give us a call any time you need us.
   earlier_slot_offer: Hi, this is Summit Air calling about your appointment. We've had an opening {day}
     at {window}, would you like it?
@@ -299,8 +301,9 @@ lines:
     heating company should be able to help.
   raised_priority: Thanks for telling me. I've moved you up so you'll get one of our earlier openings.
   read_back: So that's {address}, and {phone}. That's all correct, right?
-  read_back_calling_from: the number you're calling from
+  read_back_calling_from: the number you're calling from, ending in {last_four}
   read_back_for: So that's {address}, and the number to reach {who} is {phone}. That's all correct, right?
+  read_back_number_ending: the number ending in {last_four}
   repeated_drops: Looks like we keep getting cut off, the signal might be spotty. Want me to have someone
     call you back in a few minutes instead?
   return_visit_review: Since we were just out there, a manager will look over this visit, including whether
@@ -313,9 +316,29 @@ lines:
   transfer_prompt: Summit Air has a caller for the {role}. Press 1 to take the call.
   transfer_summary: '{priority}Caller at {phone}: {reason}. Putting you through now.'
   urgent_priority: I've marked this call top priority, so you get our soonest opening.
+  visit_missing: I can't pull up that visit in our system right now, so I've asked the team to look into
+    it and get back to you.
   visit_passed: I see a visit there that was due {day} between {between}, and it's still open on our end.
     Did the technician make it out?
   zip_mismatch: I have {street} in {where} as {found}, not {said}. Which one is right?
+lookup_knowledge:
+- hvac-basics
+lookup_synonyms:
+  a c: ac
+  air conditioner: ac
+  air conditioning: ac
+  bang: banging
+  central air: ac
+  clanging: banging
+  clanking: banging
+  co: carbon monoxide
+  heater: furnace
+  keeps cycling: short cycling
+  knock: banging
+  knocking: banging
+  on and off: short cycling
+  rads: radiator
+  turns on and off: short cycling
 on_call_alerts:
   email: on-call@summit-air.example
   max_age_minutes: 120
@@ -1175,8 +1198,8 @@ retention:
   record_calls: true
   transcript_days: 30
 safety:
-  booking_note: The technician can only work on it once the gas company or 911 has shut it off and said
-    it's safe, so please stay outside until then.
+  booking_note: Just so you know, the technician can only work on it once it's been checked and found
+    safe.
   denials:
   - not gas
   - no gas
@@ -1304,11 +1327,8 @@ safety:
       - co alarm
       - co detector
       label: carbon monoxide
-      lines: If a window is right there, open it. Then get everyone out of the house now and call 911
-        once you're outside.
-      variants:
-      - Please get outside and call 911 from there.
-      - The safest thing is to get everyone outside now and call 911.
+      lines: If a CO alarm is going off, the safest thing is to open a window if one's right there, get
+        everyone outside, and call 9-1-1 from there.
     gas:
       clear:
       - smell gas
@@ -1329,14 +1349,46 @@ safety:
       - hissing gas
       - hiss of gas
       label: gas smell
-      lines: Please get everyone out of the house now. Don't flip any switches or use the stove, and call
-        911 or the gas company once you're outside.
-      variants:
-      - Please get outside and call 911 from there.
-      - The safest thing is to head outside now and call 911 or the gas company.
-  repeat_limit: 1
-  sign_off: For your safety, I'd recommend hanging up now, getting outside, and calling 911 from there.
-    We'll follow up once you're safe.
+      lines: If you're smelling gas, the safest thing is to get everyone outside and call 9-1-1 or the
+        gas company from there.
+  repeat_limit: 0
+  retractions:
+  - never mind
+  - nevermind
+  - nvm
+  - false alarm
+  - its fine
+  - it is fine
+  - its okay
+  - its ok
+  - all good
+  - its been checked
+  - been checked
+  - checked it
+  - checked with the gas company
+  - gas company said
+  - said its fine
+  - said its safe
+  - its fixed
+  - been fixed
+  - fixed it
+  - im tripping
+  - i was tripping
+  - its not gas
+  - it isnt gas
+  - its not a gas
+  - not a gas leak
+  - dont think its leaking
+  - dont think it is leaking
+  - its not leaking
+  - not leaking
+  - isnt leaking
+  - i was wrong
+  - i was mistaken
+  - i misspoke
+  - scratch that
+  - forget that
+  sign_off: Thanks for calling, and please stay safe. We'll follow up with you.
   signed_off: true
   vague:
     co:
@@ -1477,26 +1529,20 @@ transfer:
     on_call: TRANSFER_ON_CALL_NUMBER
 voice:
   clips:
-    at_capacity: Thanks for calling Summit Air. If you smell gas, hang up and call 911 from outside. All
-      our lines are busy right now. Please leave your name, number and what's going on after the tone,
+    at_capacity: Thanks for calling Summit Air. If you smell gas, hang up and call 9-1-1 from outside.
+      All our lines are busy right now. Please leave your name, number and what's going on after the tone,
       and we'll call you back.
     bridge_moment: Alright, one moment.
     bridge_one_sec: Okay, just give me one second.
     bridge_pull_up: Sure, let me pull that up.
-  fallback: Thanks for calling Summit Air. If you smell gas, hang up and call 911 from outside. We can't
+  fallback: Thanks for calling Summit Air. If you smell gas, hang up and call 9-1-1 from outside. We can't
     take your call right now. Please leave your name, number and what's going on after the tone, and we'll
     call you back.
   goodbye: Thanks for calling Summit Air. Have a great rest of your day.
-  greeting_known: Hi, this is Summit Air. Is this {first_name}?
-  greeting_linked: Hi, this is Summit Air's virtual assistant again. I think we got cut off earlier. Is
-    this {first_name}?
-  greeting_linked_stepped_away: Hi, this is Summit Air's virtual assistant again. We got disconnected
-    earlier when you stepped away; let's pick up where we left off. Is this {first_name}?
-  greeting_linked_stepped_away_unknown: Hi, this is Summit Air's virtual assistant again. We got disconnected
-    earlier when you stepped away; let's pick up where we left off. Who am I speaking with?
-  greeting_linked_unknown: Hi, this is Summit Air's virtual assistant again. I think we got cut off earlier.
-    Who am I speaking with?
-  greeting_unknown: Thanks for calling Summit Air, this is the virtual assistant. How can I help?
+  greeting_known: Hi {first_name}, thanks so much for calling Summit Air today! I'm Brooke, the virtual
+    assistant. How can I help?
+  greeting_unknown: Hi there, thanks so much for calling Summit Air today! I'm Brooke, the virtual assistant.
+    How can I help?
   holding:
   - Just give me one second.
   - Let me pull that up.
@@ -1506,7 +1552,7 @@ voice:
   recording_notice: This call may be recorded.
   recording_stopped: Okay, I've turned the recording off.
   server_down: Sorry, our system is having trouble right now. Please call us back in a few minutes, and
-    if you smell gas, hang up and call 911 from outside.
+    if you smell gas, hang up and call 9-1-1 from outside.
   stepped_away: It sounds like you've stepped away, so I'm going to hang up for now. Once you're ready,
     feel free to call this number back, and we can pick up where we left off.
   still_here: Take your time, I'm still here.

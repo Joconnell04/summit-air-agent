@@ -11,7 +11,7 @@ from datetime import timedelta
 
 import pytest
 from test_ts_jobs import claim, done, place, services
-from toolkit import UNKNOWN, book, count, first_open, in_area_address
+from toolkit import UNKNOWN, book, confirm_do_not_call, count, first_open, in_area_address
 
 from app import jobs, outbound, owner, records
 from app.fsm import FsmAdapter, FsmRejected, FsmUnavailable
@@ -347,6 +347,7 @@ def test_a_caller_who_asked_not_to_be_called_again_is_open_and_not_handed_to_any
 ):
     claimed, placed = dial(agent, clock)
     agent.turn(placed, "Please don't call me again.")
+    confirm_do_not_call(agent, placed)
     finish(agent, claimed, placed)
     assert outcome(agent, claimed["outbound_id"])[0] == "open"
     assert callback_status(agent) == "cancelled"

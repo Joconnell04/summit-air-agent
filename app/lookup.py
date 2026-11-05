@@ -4,6 +4,7 @@
 import sqlite3
 from datetime import datetime, timedelta
 
+from . import safety
 from .db import iso, parse_iso
 from .fsm import FsmAdapter
 from .tenant import Tenant, window_said
@@ -92,7 +93,7 @@ def open_jobs(
                 "job_type": tenant.job_type_codes.get(job["jobTypeId"]),
                 "status": job["jobStatus"],
                 "priority": job["priority"],
-                "summary": job["summary"],
+                "summary": safety.without_scare(job["summary"]),
                 "location_id": job["locationId"],
                 "street": streets.get(job["locationId"], ""),
                 "appointment_id": next_appt["id"] if next_appt else None,
@@ -193,7 +194,7 @@ def history(
                 "job_id": j["id"],
                 "job_type": tenant.job_type_codes.get(j["jobTypeId"]),
                 "status": j["jobStatus"],
-                "summary": j["summary"],
+                "summary": safety.without_scare(j["summary"]),
                 "created": j["createdOn"][:10],
                 "completed": (j["completedOn"] or "")[:10] or None,
             }

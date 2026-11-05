@@ -32,12 +32,25 @@ def phone_spoken(value: str) -> str:
     return f"{key[:3]}, {key[3:6]}, {key[6:]}" if len(key) == 10 else value
 
 
-GOODBYES = ("bye", "goodbye", "good bye", "talk to you later", "have a good one", "have a good day")
+GOODBYES = (
+    "bye", "goodbye", "good bye", "talk to you later", "have a good one", "have a good day",
+    # Jackson's call call_7255ab47e30637f207e49f5bdeb: the call stayed open after these.
+    "end this call", "end the call", "hang up", "im done", "i am done", "were done",
+)
 
 
 def says_goodbye(text: str) -> bool:
     text_words = words(text)
     return any(has_phrase(text_words, g) for g in GOODBYES)
+
+
+# A caller taking back what they just said ("Uh, never. Just kidding."): not a request.
+KIDDING = ("just kidding", "im kidding", "only kidding", "just joking", "im joking", "jk")
+
+
+def kidding(text: str) -> bool:
+    text_words = words(text)
+    return any(has_phrase(text_words, k) for k in KIDDING)
 
 
 DIGIT_NAMES = ("zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine")

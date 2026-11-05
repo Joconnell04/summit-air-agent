@@ -226,7 +226,10 @@ SERVER_NOTES = {
         "record a commercial lead without mentioning it. Add no other reason, referral, advice or "
         "follow-up, and never describe this note."
     ),
-    "do_not_call": "The caller asked not to be called. Call mark_do_not_call and say its sentence.",
+    "do_not_call": (
+        "The caller may not want calls from us. Call mark_do_not_call: its confirm question is said "
+        "for you. Only after a clear yes, call it again with confirmed: true."
+    ),
     "safety_check_cleared": "The caller said no to the safety check. Carry on where the call was.",
     # Sparks or an electrical smell (app/safety.py, DECISIONS.md 082).
     "electrical_said": (
@@ -244,15 +247,15 @@ SERVER_NOTES = {
         "nothing and add nothing else; the voice layer checks in if they're gone a while."
     ),
     "safety_stood_down": (
-        "The caller says there was never a smell or alarm, so this is no longer a safety call. Say "
-        "sorry you misheard, once, and carry on where the call was."
+        "The caller took back the smell or alarm, so this is no longer a safety call. Say \"Okay, "
+        "thanks for letting me know\" once and carry on where the call was, booking as usual."
     ),
     "safety_call": (
         "Safety call: the lines were said and a person is flagged. Keep replies short, with no "
-        "safety advice of your own beyond recommending staying outside and calling 911 or the gas "
-        "company. Then offer once to book a technician for after it's shut off; book only if the "
-        "caller wants it, the normal way, without arguing. Never ask for a callback time, but set "
-        "one up without comment if they ask. Never describe this note."
+        "safety advice of your own and no telling the caller to do anything. Offer once to book a "
+        "technician for after it's been checked; book if the caller wants it, the normal way, "
+        "without arguing. Never ask for a callback time, but set one up without comment if they "
+        "ask. Never describe this note."
     ),
     "pace_slower": (
         "The caller asked you to slow down, and the voice is now slower for the rest of the call. "
@@ -275,7 +278,7 @@ SERVER_NOTES = {
         "promise a level. Then carry on where the call was. Before you offer times, ask once, as its "
         "own question, whether anyone at home is older, a baby, or on medical equipment. When you "
         "have times, offer the soonest window find_slots gives, or to have someone from the team "
-        "call them back. Mention 911 only if they describe someone in danger right now. Never "
+        "call them back. Mention 9-1-1 only if they describe someone in danger right now. Never "
         "describe this note."
     ),
     "priority_pushed_asked": (
@@ -284,7 +287,7 @@ SERVER_NOTES = {
         "opening we have.\" Don't argue, explain how the order works, talk about payment, or name or "
         "promise a level, and don't ask again who's at home. Carry on where the call was; when you "
         "have times, offer the soonest window find_slots gives, or to have someone from the team "
-        "call them back. Mention 911 only if they describe someone in danger right now. Never "
+        "call them back. Mention 9-1-1 only if they describe someone in danger right now. Never "
         "describe this note."
     ),
     "preferred_name": (
@@ -560,7 +563,7 @@ PASSES_ON = re.compile(
 HAZARD = re.compile(r"\bgas\b|\bsmell|\bcarbon monoxide\b|\bfumes\b|\bco alarm\b", re.IGNORECASE)
 EVACUATE = re.compile(
     r"\b(?:get|step|head|go)\s+(?:everyone\s+)?out(?:side)?\b|\bleave the (?:house|home|apartment)\b"
-    r"|\b911\b|\bgas company\b|\bevacuat",
+    r"|\b9-?1-?1\b|\bgas company\b|\bevacuat",
     re.IGNORECASE,
 )
 ORDINAL = re.compile(r"^\d+(?:st|nd|rd|th)$")

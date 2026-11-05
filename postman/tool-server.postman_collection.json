@@ -1629,7 +1629,7 @@
           }
         },
         {
-          "name": "Do not call",
+          "name": "Equipment basics",
           "event": [
             {
               "listen": "test",
@@ -1637,7 +1637,41 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('ok', () => pm.expect(pm.response.json().ok).to.eql(true));",
-                  "pm.test('the callback is off', () => pm.expect(pm.response.json().data.cancelled_callbacks).to.be.above(0));",
+                  "pm.test('facts come back', () => pm.expect(pm.response.json().data.facts).to.not.be.empty);",
+                  "pm.test('HTTP 200 with the envelope', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  const b = pm.response.json();",
+                  "  ['ok', 'say', 'data', 'refused'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/tools/lookup_hvac_info",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"call_id\": \"{{known_call_id}}\",\n  \"question\": \"Why is my radiator banging?\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Do not call, asked first",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('refused: confirm_first', () => pm.expect(pm.response.json().refused).to.eql('confirm_first'));",
+                  "",
                   "pm.test('HTTP 200 with the envelope', () => {",
                   "  pm.response.to.have.status(200);",
                   "  const b = pm.response.json();",

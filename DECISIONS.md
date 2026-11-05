@@ -12,6 +12,33 @@ Discussion: docs/ai-process/transcripts/... or docs/explorations/...
 Issue: #N
 -->
 
+## 115. Each call stands alone: no cut-off greeting, no safety carried over, do-not-call after a yes
+
+Decided: a call from a number that called a minute ago greets like any other call (no "we got cut off"), and nothing about an earlier gas or carbon monoxide scare carries into it: not its safety state, its sign-off, its priority reason, the earlier call's safety lines in the context, or the job summary's priority line. mark_do_not_call returns a confirm question first and marks only after the caller says yes; `undo` takes it back, and "just kidding" is not a request. A flag whose callback couldn't be stored (a do-not-call number) returns no callback time. "End this call", "hang up" and "I'm done" count as goodbyes. find_slots takes `moving_a_visit`, and a move hears no priority line. The live-world reset refuses while a call is live, and clears the do-not-call list.
+Why: Jackson's call call_7255ab47e30637f207e49f5bdeb, 82 seconds after his gas test call: it opened with the earlier call's "make sure you're outside and have called 911", listed gas as a priority reason, wouldn't hang up, announced top priority on a move, refused his own visit after a reset one second into the call, promised a callback at 5:18 PM with none stored, and his number was on the do-not-call list from "don't call me then" said in passing on an earlier call. His words: "i want to get rid of the cut-off thing because likely in the demo he'll call the same number a few times."
+Considered: keeping a dropped call's safety state when its lines weren't said yet; Jackson asked for safety per call, and a drop before the lines already flags a person to call back.
+Would change if: real callers drop mid-safety call and call straight back often enough that the lines should carry over.
+Discussion: docs/ai-process/coauthoring.md safety r2
+Issue: #149
+
+## 114. Arrival windows are 30 minutes by default
+
+Decided: find_slots offers 30-minute arrival windows unless the caller asks for another length (`window_minutes`, any run of 30-minute blocks as in 108). A time the caller names starts a 30-minute window. Supersedes 108's two-hour default; nothing else in 108 changes.
+Why: Jackson on his gas test call call_0246b91f77e01a4b18583e6ca8b heard "5 to 7": "by default, it should give a 30 minute way, not a 2 hour window."
+Considered: one hour, as a middle ground; Jackson named 30 minutes, and the capacity blocks are already 30 minutes, so it needs no new unit.
+Would change if: technicians can't keep 30-minute promises on real days (late arrivals in the live schedule or from Summit Air's dispatcher), in which case the default widens and the caller can still ask for a tighter one.
+Discussion: docs/ai-process/coauthoring.md safety r2
+Issue: #149
+
+## 113. Safety lines are advice said once, a caller can take them back, and a safety call hangs up after its sign-off
+
+Decided: the gas and carbon monoxide lines are advice ("the safest thing is to get everyone outside and call 9-1-1..."), asked nothing, and said once per hazard (repeat_limit 0, no shorter variants). They count as said once the agent has spoken after they were handed out. A caller who takes the report back ("never mind", "false alarm", "the gas company said it's fine") clears the safety state at any point unless the same line still reports a smell or only says they've gone outside; the job gets a note and the call books as usual. end_call on a safety call says the sign-off once and hangs up. Lines write "9-1-1".
+Why: Jackson's gas test call call_0246b91f77e01a4b18583e6ca8b: the lines were repeated, the agent asked "are you outside the house now?" and told him to get out, "No, I mean, I don't think it's leaking" didn't clear it, and the call never ended after "I'm done". His words are in docs/ai-process/coauthoring.md (safety r2).
+Considered: keeping one shorter repeat (eval round 3's "offer one more time"), which Jackson heard as the same statement again; clearing only on "there was never a smell", which missed every way he took it back; leaving the call open after the sign-off, as the gas utility advice behind it is about the caller's phone, not ours.
+Would change if: a retraction phrase clears a call that still had a real smell in the evals or live calls, in which case the phrase list narrows.
+Discussion: docs/ai-process/coauthoring.md safety r2
+Issue: #149
+
 ## 112. Summit Air runs on Retell, starting from Jackson's own agent
 
 Decided: the product is a Retell agent, "Summit Air Jackson" (agent_a3e38e6aa3d4e75dfac12aafc8, LLM llm_12eba5f1d4a3b067f0635097de30), which Jackson built and tunes in Retell's dashboard with Retell's builder assistant. Retell runs the phone line, listening, turn-taking and voice; Claude Haiku 5.5 runs on a short prompt; our FastAPI tool server and mock ServiceTitan still own every fact and every rule (lookups, the read-back, booking, safety, priority, identity). Work stops on the LiveKit custom stack and on the other slate entries. Testing moves to Retell's platform: web calls from a laptop and Retell's own test tools, against our tool server.

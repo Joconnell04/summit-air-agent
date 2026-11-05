@@ -71,7 +71,10 @@ def test_the_check_answer_decides(answer, result):
 
 
 def test_lines_said_once_then_variants_never_twice_in_a_row():
-    unlimited = {k: v for k, v in CFG.items() if k != "repeat_limit"}
+    # A tenant that allows repeats with shorter lines; Summit Air's repeat_limit is 0.
+    variants = ["Please get outside and call 9-1-1 from there.", "The safest thing is outside."]
+    kinds = {**CFG["kinds"], "gas": {**CFG["kinds"]["gas"], "variants": variants}}
+    unlimited = {**{k: v for k, v in CFG.items() if k != "repeat_limit"}, "kinds": kinds}
     first = safety.check_caller_turn("I smell gas", "none", None, 0, unlimited)
     assert first.action == "speak_lines" and first.text == GAS_LINES
     seen = []
@@ -102,14 +105,23 @@ def test_a_clear_signal_on_any_turn_returns_the_exact_lines_and_flags_a_person(a
     assert agent.turn(call, "So can you send someone tomorrow?")["say"] == GAS_LINES
 
 
-def test_a_repeat_mention_gets_a_shorter_variant(agent):
+def test_a_repeat_mention_gets_nothing_more(agent):
+    """Jackson's gas test call (call_0246b91f77e01a4b18583e6ca8b): "it keeps repeating the same
+    statement". The lines are said once per hazard."""
     call = agent.start(UNKNOWN)["data"]["call_id"]
     agent.turn(call, "There's a CO alarm going off")
     agent.say(call, CO_LINES)
     again = agent.turn(call, "The CO alarm is still beeping")
-    assert again["data"]["safety"]["action"] == "speak_variant"
-    assert again["say"] in CFG["kinds"]["co"]["variants"]
+    assert again["data"]["safety"] is None and again["say"] == ""
     assert count(agent, "SELECT COUNT(*) FROM flags WHERE kind = 'safety'") == 1
+
+
+def test_a_new_hazard_still_gets_its_own_lines(agent):
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "I smell gas in the kitchen.")
+    agent.say(call, GAS_LINES)
+    co = agent.turn(call, "And now the carbon monoxide alarm is going off too.")
+    assert co["data"]["safety"]["action"] == "speak_lines" and co["say"] == CO_LINES
 
 
 def test_booking_tools_wait_for_the_lines_then_an_insisting_caller_can_book(agent):
@@ -118,7 +130,8 @@ def test_booking_tools_wait_for_the_lines_then_an_insisting_caller_can_book(agen
     agent.turn(call, "Wait, I smell gas.")
     refused = book(agent, call, slot)
     assert refused["refused"] == "gate_safety"
-    assert refused["say"] == GAS_LINES
+    # The caller's line handed out the lines; the refusal doesn't say them again.
+    assert refused["say"] == ""
     assert agent.tool("end_call", call, reason="resolved")["refused"] == "gate_safety"
 
     # A caller can't talk past the lines: "skip that" is a caller turn, not the agent saying them.
@@ -145,8 +158,8 @@ def test_end_call_signs_off_on_a_safety_call_and_never_takes_a_spam_label(agent)
     signed_off = agent.tool("end_call", call, reason="resolved")
     assert signed_off["ok"]
     assert signed_off["say"] == " ".join(CFG["sign_off"].split())
-    assert signed_off["data"]["hang_up"] is False
-    assert agent.tool("end_call", call, reason="caller_goodbye")["data"]["hang_up"] is True
+    # Jackson's gas test call stayed open after "Nope" and "I'm done": the sign-off, then hang up.
+    assert signed_off["data"]["hang_up"] is True
 
 
 def test_a_cleared_check_returns_the_call_to_its_journey_and_is_logged(agent):
@@ -169,14 +182,18 @@ def test_a_safety_call_that_drops_before_the_lines_gets_a_person_and_a_callback(
     assert count(agent, "SELECT COUNT(*) FROM callbacks WHERE call_id = ?", call) == 1
 
 
-def test_a_dropped_safety_call_that_calls_back_hears_the_lines_first(agent, clock):
+def test_a_dropped_safety_call_that_calls_back_starts_fresh_with_a_person_flagged(agent, clock):
+    """Safety is per call (DECISIONS.md 115): the drop already flagged a person to call back, and
+    the new call hears the lines only if the caller raises it again."""
     first = agent.start(UNKNOWN)["data"]["call_id"]
     agent.turn(first, "I smell gas")
     agent.end(first, "dropped")
+    assert count(agent, "SELECT COUNT(*) FROM flags WHERE kind = 'safety_dropped'") == 1
     clock.advance(minutes=2)
     second = agent.start(UNKNOWN)
-    assert second["say"] == GAS_LINES
-    assert second["data"]["safety"]["action"] == "speak_lines"
+    assert second["say"] == "" and not second["data"].get("safety")
+    again = agent.turn(second["data"]["call_id"], "I still smell gas.")
+    assert again["say"] == GAS_LINES
 
 
 MARCIA_NO = (
@@ -434,15 +451,16 @@ def test_after_the_lines_each_caller_line_reminds_the_agent_how_to_carry_on(agen
     from prompts.assemble import server_notes
 
     note = server_notes(after["data"]["hints"])[0]
-    assert "offer once to book" in note
+    assert "Offer once to book" in note
     # A caller who wants a visit gets one (spec S-18); the note must not read as a no.
-    assert "book only if the caller wants it" in note
+    assert "book if the caller wants it" in note
+    assert "outside" not in note and "9-1-1" not in note
 
 
-def test_the_sign_off_suits_a_caller_who_is_alone_and_recommends_rather_than_orders():
+def test_the_sign_off_suits_a_caller_who_is_alone_and_asks_nothing_of_them():
     sign_off = " ".join(CFG["sign_off"].split())
-    assert "everyone" not in sign_off
-    assert sign_off.startswith("For your safety, I'd recommend hanging up now, getting outside")
+    assert "everyone" not in sign_off and "hanging up" not in sign_off
+    assert sign_off == "Thanks for calling, and please stay safe. We'll follow up with you."
 
 
 def test_a_caller_saying_goodbye_after_the_sign_off_does_not_hear_it_again(agent):
@@ -572,7 +590,7 @@ def test_the_safety_call_note_offers_a_visit_and_never_a_callback_time():
     from prompts.assemble import SERVER_NOTES
 
     note = SERVER_NOTES["safety_call"]
-    assert "offer once to book" in note and "Never ask for a callback time" in note
+    assert "Offer once to book" in note and "Never ask for a callback time" in note
     assert "insist" not in note
 
 
@@ -698,14 +716,14 @@ def test_a_stood_down_call_books_and_ends_like_any_other(agent):
     assert bye["say"] == "" and bye["data"]["hang_up"] is True
 
 
-def test_the_caller_hears_the_lines_and_one_shorter_line_then_nothing_more(agent):
-    """Eval round 3, gas-downplayed-wants-booking: the caller stays in control."""
+def test_the_caller_hears_the_lines_once_then_nothing_more(agent):
+    """Eval round 3, gas-downplayed-wants-booking, and Jackson's gas test call: the caller stays in
+    control, and the lines aren't repeated."""
     call = agent.start(UNKNOWN)["data"]["call_id"]
     agent.turn(call, "There's a gas smell by the furnace but that's normal.")
     agent.say(call, GAS_LINES)
     again = agent.turn(call, "Come on, it's just a little gas smell, it always does that.")
-    assert again["data"]["safety"]["action"] == "speak_variant"
-    agent.say(call, again["say"])
+    assert again["data"]["safety"] is None and again["say"] == ""
     third = agent.turn(call, "I told you, the gas smell is normal. Just book Thursday.")
     assert third["data"]["safety"] is None
     assert third["say"] == ""
@@ -723,7 +741,7 @@ def test_the_sign_off_is_said_once_even_if_the_caller_keeps_talking(agent):
     agent.turn(call, "Okay, but what number will you call me back on?")
     second = agent.tool("end_call", call, reason="resolved")
     assert second["ok"] and second["say"] == ""
-    assert second["data"]["hang_up"] is False
+    assert second["data"]["hang_up"] is True and second["data"]["signed_off"] is True
 
 
 def test_a_caller_on_a_safety_call_can_ask_for_a_callback_at_their_time(agent):
@@ -893,3 +911,112 @@ def test_a_one_word_no_before_a_gas_report_still_brings_the_lines(line):
 def test_a_hedged_denial_gets_the_check_question_and_a_plain_one_nothing(line, action, kind):
     found = safety.check_caller_turn(line, "none", None, 0, CFG)
     assert (found.action, found.kind) == (action, kind)
+
+
+GAS_CALL = "call_0246b91f77e01a4b18583e6ca8b"
+
+
+def test_the_lines_are_advice_with_9_1_1_written_out_and_no_question():
+    """Jackson's gas test call: "it shouldn't be demanding me to do anything", and "911" was read
+    as nine hundred and eleven."""
+    for kind in ("gas", "co"):
+        lines = " ".join(CFG["kinds"][kind]["lines"].split())
+        assert "the safest thing is" in lines and "9-1-1" in lines
+        assert "911" not in lines.replace("9-1-1", "") and "?" not in lines
+        assert not lines.startswith("Please")
+    assert CFG["repeat_limit"] == 0
+    assert "9-1-1" not in CFG["booking_note"] and "stay outside" not in CFG["booking_note"]
+
+
+def test_the_lines_count_as_said_once_the_agent_has_spoken_even_in_pieces(agent):
+    """Jackson's gas test call: the agent's line reached the server in pieces, so the lines never
+    matched and the caller's next line ("No, I mean...") was handed them again."""
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "Well, it smells a little like gas, like near the boiler. Is that normal?")
+    agent.say(call, "Please ")
+    agent.say(call, "get ")
+    nxt = agent.turn(call, "Um, I just want you to schedule a technician.")
+    assert nxt["say"] == "" and nxt["data"]["safety"] is None
+    state = agent.db().execute("SELECT safety_state FROM calls WHERE id = ?", (call,)).fetchone()[0]
+    assert state == "lines_said"
+
+
+def test_the_agent_saying_911_as_a_number_still_counts_as_the_lines(agent):
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "I smell gas.")
+    agent.say(call, GAS_LINES.replace("9-1-1", "911"))
+    state = agent.db().execute("SELECT safety_state FROM calls WHERE id = ?", (call,)).fetchone()[0]
+    assert state == "lines_said"
+
+
+@pytest.mark.parametrize("said", [
+    "No, I mean, I don't think it's leaking.",
+    "Wait, never mind, I'm tripping.",
+    "Nvm, it's not gas.",
+    "False alarm, sorry.",
+    "Okay, it's fine.",
+    "It's been checked.",
+    "I checked with the gas company. And they said it's fine.",
+])
+def test_a_caller_who_takes_it_back_clears_the_call_and_can_book(agent, said):
+    """Jackson's gas test call: "the caller should be able to be like 'wait nvm, im tripping'...
+    it should be able to get out of its own safety loop"."""
+    call = ready_to_book(agent)
+    agent.turn(call, "It smells a little like gas near the boiler.")
+    agent.say(call, GAS_LINES)
+    took_back = agent.turn(call, said)
+    assert took_back["data"]["safety"]["action"] == "cleared", said
+    assert "safety_stood_down" in took_back["data"]["hints"]
+    booked = book(agent, call, first_open(agent, call))
+    assert booked["ok"], booked
+    assert "safety_override" not in booked["data"] or not booked["data"]["safety_override"]
+    assert CFG["booking_note"].split()[0] not in booked["say"]
+    notes = [r[0] for r in agent.db().execute("SELECT text FROM notes WHERE attach_to = 'job'")]
+    assert any(n.startswith("Caller took back the gas smell report") for n in notes), notes
+    ended = agent.tool("end_call", call, reason="caller_goodbye")
+    assert ended["say"] != " ".join(CFG["sign_off"].split())
+
+
+def test_a_take_back_before_the_lines_are_said_clears_too(agent):
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "I smell gas.")
+    cleared = agent.turn(call, "Never mind, false alarm, it's the stove pilot.")
+    assert cleared["data"]["safety"]["action"] == "cleared"
+
+
+@pytest.mark.parametrize("said", [
+    "Never mind the boiler, I still smell gas.",
+    "It's fine, I'm outside now.",
+    "Maybe it's fine, I'm not sure.",
+])
+def test_a_line_that_still_reports_it_or_only_moved_outside_is_not_a_take_back(agent, said):
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "I smell gas.")
+    agent.say(call, GAS_LINES)
+    turn = agent.turn(call, said)
+    assert (turn["data"]["safety"] or {}).get("action") != "cleared", said
+
+
+def test_a_caller_who_still_wants_a_visit_after_the_lines_books_with_the_note(agent):
+    """Jackson's gas test call: booking after the lines is allowed once a person is flagged, with
+    the booking note, which advises rather than demands."""
+    call = ready_to_book(agent)
+    agent.turn(call, "There's a gas smell by the boiler.")
+    agent.say(call, GAS_LINES)
+    agent.turn(call, "I still want a technician to come out.")
+    booked = book(agent, call, first_open(agent, call))
+    assert booked["ok"], booked
+    assert booked["data"]["safety_override"] is True
+    assert booked["say"].endswith(" ".join(CFG["booking_note"].split()) + " Anything else?") or (
+        " ".join(CFG["booking_note"].split()) in booked["say"]
+    )
+
+
+def test_the_greetings_name_brooke():
+    """Jackson's gas test call: the assistant is Brooke, and a touch warmer."""
+    voice = load_agent(TENANT_DIR)[0]["voice"]
+    assert voice["greeting_unknown"] == (
+        "Hi there, thanks so much for calling Summit Air today! I'm Brooke, the virtual "
+        "assistant. How can I help?"
+    )
+    assert "I'm Brooke" in voice["greeting_known"]

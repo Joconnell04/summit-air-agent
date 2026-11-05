@@ -103,7 +103,7 @@ def test_open_windows_keeps_only_the_tenants_windows_in_range_and_in_time_order(
         frame(date(2026, 11, 20), "0800-1000", plenty),
         odd,
     ]
-    found = capacity.open_windows(TENANT, frames, "Normal", TUESDAY, wednesday)
+    found = capacity.open_windows(TENANT, frames, "Normal", TUESDAY, wednesday, minutes=120)
     assert [(w["date"], w["window"]) for w in found] == [
         ("2026-11-03", "0800-1000"),
         ("2026-11-03", "1200-1400"),
@@ -117,8 +117,8 @@ def test_open_windows_keeps_only_the_tenants_windows_in_range_and_in_time_order(
 def test_open_windows_depends_on_the_priority(agent):
     two = [(1, FREE, True), (2, FREE, True)]
     frames = [frame(TUESDAY, "0800-1000", two), frame(TUESDAY, "after_hours", [(5, FREE, True)])]
-    assert capacity.open_windows(TENANT, frames, "Normal", TUESDAY, TUESDAY) == []
-    urgent = capacity.open_windows(TENANT, frames, "Urgent", TUESDAY, TUESDAY)
+    assert capacity.open_windows(TENANT, frames, "Normal", TUESDAY, TUESDAY, minutes=120) == []
+    urgent = capacity.open_windows(TENANT, frames, "Urgent", TUESDAY, TUESDAY, minutes=120)
     assert [(w["window"], w["after_hours"]) for w in urgent] == [
         ("0800-1000", False),
         ("after_hours", True),
@@ -480,7 +480,7 @@ def test_a_window_is_a_run_of_blocks_a_technician_is_free_in_all_of(agent):
     free = [(i, FREE, True) for i in range(1, 5)]
     frames = blocks(TUESDAY, 8, 4, free)
     frames[3]["technicians"][0]["status"] = BUSY  # T1 is busy 9:30 to 10
-    found = capacity.open_windows(TENANT, frames, "Urgent", TUESDAY, TUESDAY)
+    found = capacity.open_windows(TENANT, frames, "Urgent", TUESDAY, TUESDAY, minutes=120)
     assert [(w["window"], w["technician_ids"]) for w in found] == [("0800-1000", [2, 3, 4])]
     hour = capacity.open_windows(TENANT, frames, "Urgent", TUESDAY, TUESDAY, minutes=60)
     assert [w["window"] for w in hour] == ["0800-0900", "0830-0930", "0900-1000"]
@@ -500,4 +500,4 @@ def test_the_urgent_hold_applies_in_every_block(agent):
     three = [(1, FREE, True), (2, FREE, True), (3, FREE, True)]
     frames = blocks(TUESDAY, 8, 4, three)
     frames[2]["technicians"][2]["status"] = BUSY  # one fewer free at 9 to 9:30
-    assert capacity.open_windows(TENANT, frames, "Normal", TUESDAY, TUESDAY) == []
+    assert capacity.open_windows(TENANT, frames, "Normal", TUESDAY, TUESDAY, minutes=120) == []

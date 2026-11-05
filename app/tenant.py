@@ -131,7 +131,8 @@ def missing_safety_wording(safety: dict) -> list[str]:
     for kind, cfg in safety.get("kinds", {}).items():
         if not cfg.get("lines"):
             missing.append(f"kinds.{kind}.lines")
-        if not cfg.get("variants"):
+        # Shorter lines for a smell raised again are needed only when a repeat gets any.
+        if safety.get("repeat_limit", 1) and not cfg.get("variants"):
             missing.append(f"kinds.{kind}.variants")
     for kind, cfg in safety.get("vague", {}).items():
         if kind not in safety.get("kinds", {}):
@@ -204,6 +205,7 @@ class Tenant:
         agent: dict,
         knowledge: dict[str, str],
         trade: str | None = None,
+        lookup_knowledge: dict[str, str] | None = None,
     ):
         self.folder = folder
         self.slug = folder.name
@@ -211,6 +213,8 @@ class Tenant:
         self.raw = company
         self.agent = agent
         self.knowledge = knowledge
+        # Read only by lookup_hvac_info (app/hvac_info.py), never put in the prompt.
+        self.lookup_knowledge = lookup_knowledge or {}
         self.fsm_tenant_id: int = company["tenant_id"]
         self.name: str = company["company"]["name"]
         self.tz = ZoneInfo(company["company"]["timezone"])
@@ -294,12 +298,21 @@ class Tenant:
         folder = Path(folder)
         company = yaml.safe_load((folder / "config.yaml").read_text())
         agent, trade = load_agent(folder, trades_dir)
+        # Documents only lookup_hvac_info reads stay out of the knowledge every prompt carries.
+        lookup_only = set(agent.get("lookup_knowledge", []))
         knowledge = {
             p.stem: p.read_text()
             for p in sorted((folder / "knowledge").glob("*.md"))
             if p.name != "README.md"
         }
-        return cls(folder, company, agent, knowledge, trade)
+        return cls(
+            folder,
+            company,
+            agent,
+            {k: v for k, v in knowledge.items() if k not in lookup_only},
+            trade,
+            {k: v for k, v in knowledge.items() if k in lookup_only},
+        )
 
     def line(self, key: str, **values) -> str:
         return self.lines[key].format(**values)

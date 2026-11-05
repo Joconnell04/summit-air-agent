@@ -99,7 +99,7 @@ def test_asking_to_wait_on_a_gas_call_is_not_a_hold(agent):
     assert result["data"]["hold"] is None
 
 
-def test_a_call_back_after_stepping_away_is_greeted_as_such(agent, clock):
+def test_a_call_back_after_stepping_away_keeps_the_earlier_turns_and_the_usual_greeting(agent, clock):
     first = agent.start(caller_id=CALLER, call_id="call-1")["data"]["call_id"]
     agent.turn(first, "Hi, this is Tomasz. Our boiler's not firing.")
     agent.turn(first, "Hold on, let me find the model number.")
@@ -109,20 +109,18 @@ def test_a_call_back_after_stepping_away_is_greeted_as_such(agent, clock):
     linked = started["linked_call"]
     assert linked["stepped_away"] is True and linked["dropped"] is True
     assert any("boiler" in t["text"] for t in linked["turns"])
-    line = greeting(started, VOICE)
-    assert "We got disconnected earlier when you stepped away" in line
-    assert "let's pick up where we left off" in line
-    assert line.endswith("Is this Tomasz?")
+    # No "we got disconnected" greeting (DECISIONS.md 115): the usual one.
+    assert greeting(started, VOICE) == greeting({}, VOICE)
 
 
-def test_a_plain_dropped_call_keeps_the_cut_off_greeting(agent, clock):
+def test_a_plain_dropped_call_gets_no_cut_off_greeting(agent, clock):
     first = agent.start(caller_id=CALLER, call_id="call-1")["data"]["call_id"]
     agent.turn(first, "Hi, this is Tomasz. Our boiler's not firing.")
     agent.end(first, "dropped")
     clock.advance(minutes=2)
     started = agent.start(caller_id=CALLER, call_id="call-2")["data"]
     assert started["linked_call"]["stepped_away"] is False
-    assert "cut off" in greeting(started, VOICE)
+    assert "cut off" not in greeting(started, VOICE)
 
 
 @pytest.mark.parametrize(

@@ -434,12 +434,17 @@ def build() -> dict:
             key="{{known_call_id}}-note",
         ),
         tool(
+            "lookup_hvac_info",
+            "Equipment basics",
+            {"question": "Why is my radiator banging?"},
+            ok("pm.test('facts come back', () => pm.expect(pm.response.json().data.facts).to.not.be.empty);"),
+            call="known_call_id",
+        ),
+        tool(
             "mark_do_not_call",
-            "Do not call",
+            "Do not call, asked first",
             {},
-            ok(
-                "pm.test('the callback is off', () => pm.expect(pm.response.json().data.cancelled_callbacks).to.be.above(0));"
-            ),
+            refused("confirm_first"),
             call="known_call_id",
             key="{{known_call_id}}-dnc",
         ),

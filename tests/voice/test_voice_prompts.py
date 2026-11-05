@@ -78,9 +78,9 @@ def test_instructions_keep_the_fixes_from_the_must_pass_reliability_round(agent)
     assert "to a renter only, never to an owner or landlord" in text
     assert "A yes still counts when the caller says more in the same turn" in text
     assert 'Give no medical advice, not even "keep them upright"' in text
-    assert "if they ask what to do for the person, the 911 operator will tell them" in text
+    assert "if they ask what to do for the person, the 9-1-1 operator will tell them" in text
     assert "never an owner or landlord: one neutral line" in text
-    assert "Once someone is calling 911, carry on to booking the visit as usual." in text
+    assert "Once someone is calling 9-1-1, carry on to booking the visit as usual." in text
     assert "Add no other reason, referral, advice or follow-up" in assemble.server_notes(["commercial"])[0]
     assert "it's the soonest there is: say so plainly rather than offering to move it up" in text
     assert "A caller who threatens to hang up hasn't" in text
