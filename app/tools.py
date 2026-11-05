@@ -2715,7 +2715,7 @@ MOVED_PHRASES = tuple(
     f"{who} {what}"
     for who in ("i", "we", "ive", "weve", "i have", "we have", "i just", "we just", "ive just",
                 "weve just", "i recently", "we recently")
-    for what in ("moved to", "moved into", "moved from", "moved out", "moved house", "moved apartments")
+    for what in ("moved to", "moved into", "moved out", "moved house", "moved apartments")
 ) + (
     "i just moved", "we just moved", "ive just moved", "weve just moved", "i recently moved",
     "we recently moved", "i have moved", "we have moved", "ive moved", "weve moved",
@@ -2724,11 +2724,22 @@ MOVED_PHRASES = tuple(
     "i dont live there", "we dont live there", "i no longer live", "we no longer live",
     "im not living there", "were not living there",
 )
+# "Moved from" says a move only with a street address in the same line ("I moved from 142 Main
+# Street"), so "we moved it from the basement to the attic" doesn't (PR #155 re-check).
+MOVED_FROM_PHRASES = ("moved from", "moving from", "recently moved from", "moved here from")
 
 
 def _said_moved(ctx: Ctx) -> bool:
     caller = words(records.caller_text(ctx.conn, ctx.call["id"]))
-    return any(has_phrase(caller, phrase) for phrase in MOVED_PHRASES)
+    if any(has_phrase(caller, phrase) for phrase in MOVED_PHRASES):
+        return True
+    lines = [
+        r["text"] for r in records.thread_turns(ctx.conn, ctx.call["id"]) if r["speaker"] == "caller"
+    ]
+    return any(
+        _gave_an_address(line) and any(has_phrase(words(line), p) for p in MOVED_FROM_PHRASES)
+        for line in lines
+    )
 
 
 def _moved_on_call(ctx: Ctx) -> bool:
@@ -2997,7 +3008,21 @@ def _asked_moment(tenant: Tenant, now: datetime, days: int, asked: CallbackTime)
         moment = datetime.fromisoformat(value.strip())
     except ValueError:
         return records.clock_on(value, tenant, now, days)
-    return moment if moment.tzinfo else records.clock_on(value, tenant, now, days)
+    return moment if moment.tzinfo else moment.replace(tzinfo=tenant.tz)
+
+
+def _local_iso(tenant: Tenant, asked: CallbackTime) -> CallbackTime:
+    """An ISO callback time with no offset is the company's local time, so it gets the same
+    checks, and the nearest allowed time, as any other (PR #155 re-check: it was refused as
+    "an ISO time needs a UTC offset")."""
+    value = (asked.callback_time or "").strip()
+    try:
+        moment = datetime.fromisoformat(value)
+    except ValueError:
+        return asked
+    if moment.tzinfo is not None or "T" not in value:
+        return asked
+    return asked.model_copy(update={"callback_time": moment.replace(tzinfo=tenant.tz).isoformat()})
 
 
 # Words that make a caller's line a window, not one time: "between 1 and 3", "after 2", "2 to 4".
@@ -3049,7 +3074,7 @@ def _as_the_caller_said_it(ctx: Ctx, asked: CallbackTime) -> CallbackTime:
 def _callback_due(ctx: Ctx, asked: CallbackTime) -> CallbackWhen:
     """The callback time and the words for it. The words always come from here, never the model."""
     tenant, now = ctx.tenant, ctx.now
-    asked = _as_the_caller_said_it(ctx, asked)
+    asked = _local_iso(tenant, _as_the_caller_said_it(ctx, asked))
     days = _days_ahead(tenant, now, asked.callback_day)
     try:
         if asked.callback_after or asked.callback_before:

@@ -909,3 +909,20 @@ def test_a_mover_whose_check_failed_hears_why_the_visit_cant_be_booked(agent, sc
     assert refused["refused"] == "move_unverified"
     assert "can't book the visit there" in refused["say"]
     assert maria["customerId"]
+
+
+@pytest.mark.parametrize(
+    "line, moved",
+    [
+        ("I'm moving from 142 Main Street to 75 Hoyt Street.", True),
+        ("We recently moved from six two oh Bedford Avenue.", True),
+        ("We moved here from 88 Court Street last month.", True),
+        ("We moved the thermostat from the basement to the attic.", False),
+    ],
+)
+def test_moved_from_counts_only_with_a_street_address(agent, line, moved):
+    """PR #155 re-check: "moved from" phrases need an address, so "basement to the attic" doesn't."""
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, line)
+    refused = agent.tool("record_move", call)
+    assert (refused["refused"] != "move_not_said") is moved, refused

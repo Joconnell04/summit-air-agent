@@ -423,3 +423,40 @@ def test_a_zip_is_said_as_the_zip_code_is_and_its_digits():
     assert reply.text("I found 75 Hoyt Street in Brooklyn, ZIP 11201. Is that the new address?", []) == (
         "I found 75 Hoyt Street in Brooklyn, and the ZIP code is 1 1 2 0 1. Is that the new address?"
     )
+
+
+@pytest.mark.parametrize(
+    "said, heard",
+    [
+        ("What's the ZIP code 11201?", "What's the ZIP code 1 1 2 0 1?"),
+        ("ZIP: 11201 is in our service area.", "ZIP: 1 1 2 0 1 is in our service area."),
+        ("I have 75 Hoyt Street, ZIP 11201.", "I have 75 Hoyt Street, and the ZIP code is 1 1 2 0 1."),
+    ],
+)
+def test_only_a_bare_zip_is_reworded_and_other_forms_only_space_the_digits(said, heard):
+    """PR #155 re-check: "What's the ZIP code is 1 1 2 0 1?" and "The ZIP code is ... is in"."""
+    reply = assemble.SpokenReply()
+    reply.heard(None, "I need a tune-up.")
+    assert reply.text(said, []) == heard
+
+
+def test_the_name_is_not_echoed_from_earlier_in_the_call_or_the_account():
+    """A scripted call on main after #156: "Thanks, Pat.", "Sounds good, Pat."; and a full name."""
+    reply = assemble.SpokenReply()
+    reply.names = {"pat", "rivera"}
+    reply.heard(None, "I need a tune-up.")
+    assert reply.text("Thanks, Pat Rivera.", []) == "Thanks."
+    assert reply.text("Sounds good, Pat. What day works?", []) == "Sounds good. What day works?"
+    assert reply.text("Sure, Friday.", []) == "Sure, Friday."
+
+
+def test_the_names_on_the_matched_accounts_come_from_the_call_start():
+    start = {"customers": [{"name": "Pat Rivera"}], "preferred_name": "Dr. Patel"}
+    assert assemble.call_names(start) == {"pat", "rivera", "dr", "patel"}
+
+
+def test_no_follow_up_after_the_callers_goodbye():
+    """PR #155 re-check: a lone "Sure." after the caller said bye is the end, not a stall."""
+    reply = assemble.SpokenReply()
+    reply.heard(None, "Okay, thanks, bye.")
+    assert reply.dead_end("Sure.", "Sure.", []) is None

@@ -12,7 +12,7 @@ from zoneinfo import ZoneInfo
 
 import yaml
 
-from app.text import words
+from app.text import says_goodbye, words
 from app.tools import TOOLS
 
 PROMPTS = Path(__file__).resolve().parent
@@ -155,6 +155,14 @@ def tool_specs(job_types: list[str]) -> list[dict]:
 
 def first_name(full_name: str) -> str:
     return full_name.split()[0] if full_name.strip() else ""
+
+
+def call_names(start: dict) -> set[str]:
+    """The names on the accounts /calls/start matched, and the name the caller goes by, as
+    lowercase words: the reply filter drops them when the model says them straight back."""
+    names = [c.get("name") or "" for c in start.get("customers") or []]
+    names.append(start.get("preferred_name") or "")
+    return {w for name in names for w in words(name).split() if len(w) > 1}
 
 
 def spoken(start: dict, voice: dict) -> dict:
@@ -331,12 +339,13 @@ FINISHING_TOOLS = (
 # like how it said my name right back").
 NAME_ECHO = re.compile(
     r"^(?P<ack>(?:hi|hello|hey|got it|thanks|thank you|okay|ok|sure|great|perfect|alright|all right|"
-    r"nice to meet you)),?\s+(?P<name>[A-Za-z][a-z'-]+)(?P<end>[.!,])\s*",
+    r"nice to meet you|sounds good|of course|no problem)),?\s+"
+    r"(?P<name>[A-Za-z][a-z'-]+(?:\s+[A-Za-z][a-z'-]+)?)(?P<end>[.!,])\s*",
     re.IGNORECASE,
 )
 # "ZIP 11201" read as a word and a number (Jackson: "just say the zip code is"): said as "the ZIP
 # code is 1 1 2 0 1", digit by digit.
-ZIP_WORD = re.compile(r"\bZIP(?:\s+code)?(?:\s+is)?:?\s+(\d{5})\b", re.IGNORECASE)
+ZIP_WORD = re.compile(r"\bZIP(?P<rest>\s+code(?:\s+is)?|:)?\s+(?P<digits>\d{5})\b", re.IGNORECASE)
 # Sentences this long or longer are never said twice in one turn (SpokenReply.sentence).
 REPEAT_MIN_WORDS = 6
 # Look-ups whose answer needs a second model step before the caller hears anything. A reply that
@@ -610,8 +619,12 @@ class SpokenReply:
         # What the caller heard since they last spoke: the model's kept sentences and the server's
         # lines, by their words, so neither is said twice in a row.
         self._heard_lines: list[str] = []
-        # The words of the caller's last line, for a name said straight back.
+        # Every word the caller said on the call, and the names on the accounts the call found, for
+        # a name said back: the name is used once, in the greeting (Jackson after live call 2).
         self._caller_words: set[str] = set()
+        self.names: set[str] = set()
+        # The caller's last line said goodbye: a lone "Sure." after it is the end, not a stall.
+        self._goodbye = False
         # Technicians the caller asked for by name (DECISIONS.md 085).
         self.technicians: set[str] = set()
 
@@ -631,7 +644,8 @@ class SpokenReply:
         self._followed_up = False
         self._finished = False
         self._heard_lines = []
-        self._caller_words = set(words(caller_text).split())
+        self._caller_words |= set(words(caller_text).split())
+        self._goodbye = says_goodbye(caller_text)
         action = (safety or {}).get("action")
         if action in ("speak_lines", "speak_variant"):
             self.safety_call = True
@@ -680,7 +694,8 @@ class SpokenReply:
 
     def _without_name_echo(self, sentence: str) -> str:
         match = NAME_ECHO.match(sentence)
-        if not match or match["name"].lower() not in self._caller_words:
+        known = self._caller_words | self.names
+        if not match or not all(w in known for w in words(match["name"]).split()):
             return sentence
         rest = sentence[match.end():].strip()
         ack = match["ack"][0].upper() + match["ack"][1:]
@@ -691,7 +706,11 @@ class SpokenReply:
     @staticmethod
     def _zip_said_plainly(sentence: str) -> str:
         def spell(match: re.Match) -> str:
-            digits = " ".join(match[1])
+            digits = " ".join(match["digits"])
+            if match["rest"]:
+                # "ZIP code 11201", "ZIP: 11201": the words stay; only the digits are spaced (PR
+                # #155 re-check: rewriting these garbled the sentence).
+                return f"{match[0][: match.start('digits') - match.start()]}{digits}"
             before = sentence[: match.start()].rstrip().lower()
             if not before:
                 return f"The ZIP code is {digits}"
@@ -810,7 +829,9 @@ class SpokenReply:
         only acknowledged them ("stalled"). None when the reply calls a tool, ends on a question,
         or says something of substance; and after one follow-up since the caller last spoke, so a
         model that keeps failing can't loop."""
-        if calls or self._followed_up or self._finished or kept.rstrip().endswith("?"):
+        if calls or self._followed_up or self._finished or self._goodbye:
+            return None
+        if kept.rstrip().endswith("?"):
             return None
         if any(PROMISES_ACTION.search(s) for s in sentences(raw)):
             reason = "promised"

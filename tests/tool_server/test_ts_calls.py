@@ -730,3 +730,13 @@ def test_a_window_the_caller_asked_for_stays_a_window(agent):
         callback_day="tomorrow",
     )
     assert flagged["say"].endswith("call you tomorrow between 1 PM and 3 PM.")
+
+
+def test_an_iso_time_with_no_offset_is_local_and_gets_the_nearest_time(agent):
+    """PR #155 re-check: refused as "an ISO time needs a UTC offset"."""
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    refused = agent.tool("flag_person", call, reason="Call me back", callback_time="2026-11-04T03:00:00")
+    assert refused["refused"] == "invalid_callback_time"
+    assert "the closest I can do is Wednesday at 8 AM" in refused["say"]
+    ok = agent.tool("flag_person", call, reason="Call me back", callback_time="2026-11-04T14:00:00")
+    assert ok["ok"] and ok["say"].endswith("Wednesday around 2 PM."), ok

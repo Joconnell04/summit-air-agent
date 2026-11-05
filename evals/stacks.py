@@ -225,6 +225,8 @@ class InProcessAgent:
         self.system = system_prompt(started["data"], now=now)
         slug = started["data"]["tenant"]["slug"]
         self.slug = slug
+        if self.reply is not None and hasattr(self.reply, "names"):
+            self.reply.names = _assemble().call_names(started["data"])
         if self.reply is not None and hasattr(self.reply, "holding_lines"):
             voice = yaml.safe_load((TENANTS_DIR / slug / "agent.yaml").read_text()).get("voice") or {}
             self.reply.holding_lines = list(voice.get("holding") or [])
