@@ -31,7 +31,7 @@ Calling order: 1, 3b, 3c, 2, 3, 4, 5, 6, 7 (ready entries go first; Deepgram, en
 | 4 | Our stack, stripped | Entry 1's parts with a one-page prompt, the side model, the speech filter, owner guidance and stage rules off | pending (being built) | | |
 | 5 | Deepgram Voice Agent API | Deepgram ears and Flux turn-taking, Aura-2 Arcas voice, Haiku 5.5 through Deepgram's custom Anthropic endpoint, our tool server; PR #162 | Rig 0 of 4 on the checks, but every call ran its flow: a booking made, the gas lines said, the sign-off fixed. Plain reply p50 1.64 s; lookup p50 3.2 to 3.7 s, with 3.6 to 5.1 s silences during lookups; ZIP read at 7.3 digits/s (MEASURED). Passes the no-gross-errors bar; goes to Jackson as-is. | | |
 | 6 | Vapi on its defaults | Vapi's default ears, model and voice; one-page prompt; our tool server | blocked: needs a Vapi account | | |
-| 7 | GPT-Live-1 | OpenAI full duplex on Live Sessions over SIP; our tool server; PR #163. Answers the gate line +1 (929) 810-4875 (its own secure trunk), not 646 | Phone gate passed: greeting, find_address and find_slots on the live tool server, end_call, our hang-up; 74 s, $0.064. Rig 0 of 4 on the checks: median reply 1.3 s, 3 to 5 s silences on lookups (MEASURED). Ready. | | |
+| 7 | GPT-Live-1 | OpenAI full duplex on Live Sessions over SIP; our tool server; PR #163. Answers the gate line +1 (929) 810-4875 (its own secure trunk), not 646 | Phone gate passed after a fix for an invented phone number in the read-back. Rig 0 of 4 on the checks: median reply 1.3 s (MEASURED). | Call 3 | Dropped (DECISIONS.md 107): slow, sometimes silent, forgot the call, answered the trivia wrong |
 
 Not a call entry: Deepgram entity detection (docs/later.md C-71) stays a rig check if addresses fail again.
 
@@ -84,4 +84,13 @@ Each call adds a section here: the entry, the call link, the rig check it passed
 
 On the gate line +1 (929) 810-4875, after the abbfd8b deploy (fresh mock, open schedule). Gate history: the first scripted call (gptlive_live_u7_EgwuIp3oNEavqTZG5BpuuBwt7but5ewt) read back an invented phone number; fixed by sending each server sentence as an exact-speech instruction; the proof call (gptlive_live_u7_Egx2jp3oMunWz447XPAyaZe2ZCeuoRtE) read it word for word. Persona Jordan Lee. Twist: opens with the trivia question.
 
-Jackson's feedback (verbatim): pending.
+Jackson's feedback (verbatim): "* stop telling me to ask the how many e's in seventeen.
+* it answered it wrong and then didn't try to redirect convo back to an hvac topic.
+* takes too long to respond.
+* doesn't even respond.
+* doesn't remember
+
+So I just hung up on it. I'm not sure why it was so ass at basically everything, but it's not in a place right now where it's even worth continuing to iterate on, especially since it's a speech-to-speech model, like the full duplex model. So let's just document that decision and kill that like lane or whatever it's called. Like, we don't need to test OpenAI stuff anymore. Or I mean, we don't need to test OpenAI's full duplex model anymore. It's not in a place that can do what we need it to do."
+
+What changes: GPT-Live-1 is dropped (DECISIONS.md 107) and its lane stopped. Call sheets no longer include the trivia question.
+

@@ -12,6 +12,15 @@ Discussion: docs/ai-process/transcripts/... or docs/explorations/...
 Issue: #N
 -->
 
+## 107. OpenAI's full-duplex model (GPT-Live-1) is dropped
+
+Decided: GPT-Live-1, on OpenAI's Live Sessions endpoint over SIP with our tool server, is off the slate and not tested further. Its lane is stopped. Its code stays on PR #163, unmerged, and the gate line (+1 929 810 4875) stays as a test number for the other entries.
+Why: on its one slate call, Jackson's verdict was "it's not in a place right now where it's even worth continuing to iterate on". It answered the trivia wrong and didn't steer back to heating, took too long to respond, sometimes didn't respond at all, and didn't remember what had been said. Before that call it had also read back an invented phone number until our server's sentences were sent as exact-speech instructions. The forum research called it the most natural model on a phone line but weak at following instructions (docs/explorations/019-forum-stacks.md), and on this job instructions are what matter: safety lines word for word, gates, exact read-backs.
+Considered: more prompt work, or playing our own audio for the server's sentences. Both add the layering the slate exists to test, for a model that failed on the basics.
+Would change if: a later full-duplex release follows instructions and tool results reliably on a scripted phone call.
+Discussion: evals/rounds/simplicity-slate-01.md (call 3)
+Issue: none (slate entry 7)
+
 ## 093. The schedule can be edited from the owner view and the bench, live into the agent
 
 Decided: a Schedule tab on the owner view and on the bench shows the day as ServiceTitan holds it, a row per technician and a column per arrival window. A person can block a slot or a whole window, put a named event on it, add a job for a customer found by phone, change a job's window, type, notes and service location address, and (admins only) a customer's name and phone number. Blocks are ServiceTitan's non-job appointments, which the mock now takes out of capacity; every edit goes through the FSM adapter, is logged in `schedule_edits` with who made it, and clears the slot cache, so the agent's next find_slots, call start or find_customer sees it. The bench adds what the agent would offer in each window and a live list of what changed in ServiceTitan. A block is taken off the schedule, never deleted, and never goes over a technician's visit; Block all is one block per technician free in that window. A phone number already on another customer needs a confirm, and a shared number makes the person pick the customer.
