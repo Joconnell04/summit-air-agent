@@ -444,7 +444,7 @@ def test_a_line_tampered_into_the_table_still_cannot_change_a_locked_line(agent)
     said = agent.tool("read_back", call, address={"street": "101 Union St", "unit": "",
                                                     "city": "Brooklyn", "zip": "11231"},
                       phone="caller_id")
-    assert said["ok"] and "your home at" in said["say"]
+    assert said["ok"] and said["say"].startswith("So that's 101 Union St")
 
 
 def test_a_placed_callback_opens_with_the_live_wording(agent):

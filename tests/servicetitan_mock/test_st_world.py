@@ -421,8 +421,6 @@ def test_a_note_must_have_text_and_a_known_customer(world):
 def test_every_seeded_address_in_the_city_is_in_the_area(seeded_db):
     """Retell eval suite round 1: a seeded customer's address came back out of area. The ones
     seeded outside the area on purpose are outside the city too (Jersey City, Westchester, Nassau)."""
-    from conftest import CFG
-
     conn = sqlite3.connect(seeded_db)
     try:
         rows = conn.execute(
