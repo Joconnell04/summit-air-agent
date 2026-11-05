@@ -2,7 +2,7 @@
 
 Issue #133. Does Retell's Conversation Flow, built to mirror our design (exploration 017), do what our stack does as well or better? Every number here is MEASURED from the results files named, through the text harness (evals/README.md), unless it says otherwise.
 
-**In short.** No. The flow kept every gate: the safety lines were said word for word on every safety call (79 of 79 checks on the standard suite, 36 of 36 on must-pass), no booking went through without a confirmed read-back, no commercial or out-of-area caller was booked, and no call ended or transferred except on the server's answer. But it passed 53% of the standard suite against our stack's 92%, and 45% of the must-pass set against 88%. On the scenarios the Retell eval instance can set up the same way our harness does, it was 61% against 92%. Almost all of the gap is how the agent talks: it read the address back again and again, asked two questions at once and described its own tools, which is what our speech filter drops before anything is spoken (DECISIONS.md 060). Retell streams the model's text straight to the voice, so a flow has no place to run that filter. The flow is not put on (678) 336-6730.
+**In short.** No. The flow kept every gate: the safety lines were said word for word on every safety call (79 of 79 checks on the standard suite, 36 of 36 on must-pass), no booking went through without a confirmed read-back, no commercial or out-of-area caller was booked, and no call ended or transferred except on the server's answer. But it passed 53% of the standard suite against our stack's 92%, and 45% of the must-pass set against 88%. On the scenarios the Retell eval instance can set up the same way our harness does, it was 61% against 92%. Almost all of the gap is how the agent talks: it read the address back again and again, asked two questions at once and described its own tools, which is what our speech filter drops before anything is spoken (DECISIONS.md 060). Retell streams the model's text straight to the voice, so a flow has no place to run that filter. On the audio rig it was also the slowest: 2.63 s median on a plain turn against our stack's 1.90 s and the single-prompt agent's 1.57 s, because every caller line goes through our server's turn check before the reply. The flow is not put on (678) 336-6730.
 
 ## 1. What ran
 
@@ -76,10 +76,32 @@ Three faults in the Retell eval path, shared with the single-prompt baseline, ca
 2. **Who ended the call.** The bridge closed every chat as the agent's end, so a simulated caller who hung up after the safety lines failed `ended_by`. The first fix closed the call on the server before ending the chat, which lost the agent's last line when the caller hung up right after it (one call, the CO lines said and the server still at signal). Now the adapter writes the harness's reason into the chat's metadata and ends the chat, and the bridge posts the last lines, then closes the call with that reason.
 3. **The eval instance runs in real time.** It can't take a scenario's clock, a booking system that's down, an earlier call, a scenario's weather or a failed transfer, as our harness's fresh world per scenario can. The 11 scenarios that need one are left out of the "set up the same way" row: `after-hours-tune-up`, `after-hours-no-heat-cold`, `mild-after-hours-no-heat` (clock), `booking-system-down` (booking system), `dropped-call-resumes` (earlier call), `inside-temp-only-when-asked` (weather), and the five pace scenarios, whose per-line voice speed a flow can't set.
 
-## 5. Cost
+## 5. On the audio rig: what the caller hears
 
-$9.49 for the lane (MEASURED): $6.90 for the simulated caller and grader across the eight flow runs (the results files' `cost_usd`), $2.49 of Retell chat charges for the 241 eval chats Retell's records cover, $0.0103 a chat (each chat's `chat_cost` from `GET /get-chat`), and about $0.10 for the five prototype chats. Retell billed no post-chat analysis on the flow's chat agent after its model was set to `gpt-5.4-nano` (config/models.yaml `retell`).
+Run the same way as the single-prompt agent in evals/rounds/bakeoff-audio-01.md: the smoke suite on the simulated audio rig, the same scenarios, caller voice and timing, each must-pass scenario three times, as Retell web calls on a voice agent kept for the rig (`voice/retell_flow/rig_adapter.py`) against the eval instance. The flow's results file is `evals/results/20261105-012409-retell-flow-rig-fast-smoke.json`; the other two rows are round 1's files, put through the same report (`make rig-report`).
 
-## 6. Verdict
+| Stack | Calls | Plain median | Plain slowest 10% | Lookup median | Lookup slowest 10% | Must-pass checks held | Safety lines, server's check | Stack cost per call |
+|---|---|---|---|---|---|---|---|---|
+| Our stack | 12 | 1.90 s (29 turns) | 2.67 s | 1.96 s (29) | 3.96 s | 10 of 10 | 6 of 6 | $0.044 |
+| Retell single-prompt | 12 | 1.57 s (36) | 2.60 s | 2.27 s (29) | 3.90 s | 5 of 10 | 1 of 6 | $0.180 |
+| Retell flow | 20 | 2.63 s (41) | 3.60 s | 3.09 s (41) | 4.72 s | 13 of 18 | 4 of 6 | $0.150 |
 
-The flow does not pass every must-pass code check and is 39 points below our stack on the standard suite, so it does not go on the Retell number for live calls (issue #133's bar: every must-pass code check, and within 5 points). Retell stays out of the real-call round (DECISIONS.md 038), now for a second reason recorded in DECISIONS.md 087. The phone-only behaviors in exploration 017 (a static line before a transfer, a caller talking over the safety lines, the end node cutting a goodbye) were not tested on a call.
+Round 1's table showed our stack at 1.89 s plain; the report, rerun on the same file with its later talk-over rule (bakeoff-audio-02.md, section 4), now gives 1.90 s.
+
+**The flow is the slowest of the three**, about 0.7 s behind our stack and 1.1 s behind the single-prompt agent on a plain turn. Every caller turn first goes through the turn-check function node, a round trip from Retell to the bridge on the summit-air server and back, before the model starts. That round trip is what puts the safety check and the `[server]` notes before the reply, so the flow pays for its control in time.
+
+**The safety lines.** The flow said them from the server's text every time the server asked for them. Two of the six safety calls still failed the server's check, neither through the flow:
+- `co-alarm-clear` #2: Retell's ears heard "my carbon alarm is going off" for "my carbon monoxide alarm", so the server's turn check never saw a safety signal and the model gave its own advice. On our stack (Deepgram Nova-3 hearing) the server's check passed on all three `co-alarm-clear` runs.
+- `gas-smell-in-passing` #2: the lines were said word for word, but Retell's backchannel "Uh-huh", said while the caller was still talking, was written at the start of the agent's line, so the server's check that the first reply opens with the lines failed. Backchannel is a setting the flow shares with the single-prompt agent (voice/retell/README.md); turning it off on the flow is the obvious fix, not tried here.
+
+The flow made sound while the caller was still speaking on 11 turns, against none for the single-prompt agent and none for our stack. The likeliest cause, not confirmed, is the same backchannel, along with the safety node's interruption setting of 0.
+
+**Round 1's Retell safety result.** Its four "no safety signal fired" calls ran before the eval instance forgot earlier calls (section 4), so they were probably repeat-call links, as that round suspected; this round's rig runs forget them first.
+
+## 6. Cost
+
+$13.31 for the lane (MEASURED): $6.90 for the simulated caller and grader across the eight text runs (the results files' `cost_usd`), $2.49 of Retell chat charges for the 241 eval chats Retell's records cover, $0.0103 a chat (each chat's `chat_cost` from `GET /get-chat`), about $0.10 for the five prototype chats, and $3.82 for the 20 rig calls (the rig's own total, Retell's per-call charge included). Retell billed no post-chat analysis on the flow's chat agent after its model was set to `gpt-5.4-nano` (config/models.yaml `retell`).
+
+## 7. Verdict
+
+The flow does not pass every must-pass code check and is 39 points below our stack on the standard suite, so it does not go on the Retell number for live calls (issue #133's bar: every must-pass code check, and within 5 points). Retell stays out of the real-call round (DECISIONS.md 038), now for a second reason recorded in DECISIONS.md 087. On the audio rig it is also the slowest entrant, 0.7 s behind our stack on a plain turn, the cost of checking every caller line with our server before the reply. A static line before a transfer was not tested by voice, since no rig scenario transfers.
