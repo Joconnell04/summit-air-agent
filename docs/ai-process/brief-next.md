@@ -8,7 +8,7 @@ The one page to read before the live calls and the interview: what needs Jackson
 2. **One feedback pass after the calls.** The end of the script maps each kind of complaint to one setting. Two fixes are already built and waiting on what you hear: the lookup fix for long silences on address turns (switched off), and the "yes, that's right" fast path for a slow booking moment (later list, C-63).
 3. **Retell prototype agents.** The Retell flow lane left its prototype agents on the Retell account. Say whether to delete them; nothing deletes without your OK.
 
-Nothing needs a top-up: no run failed for credit. Paid eval runs today come to roughly $95 across all lanes, added from their reports, not invoices; Cartesia's added spend is about $0.13.
+Nothing needs a top-up: no run failed for credit. Paid eval runs since last night come to roughly $100 across all lanes (about $60 before the last batch, then $4 caller changes, $6 call handling, $18 booking flow, $13 Retell flow; the lookup lane is still running), added from their reports, not invoices; Cartesia's added spend is about $0.13.
 
 ## Decisions to know cold
 
