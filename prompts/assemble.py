@@ -276,6 +276,24 @@ SERVER_NOTES = {
 }
 
 
+class KnownFacts:
+    """The server's "already known" facts, given to the model with a caller's line only when they
+    changed. The last note stays in the model's history, so repeating it adds nothing, and a
+    caller's line the worker leaves unchanged lets LiveKit keep the reply it drafted before the
+    turn was confirmed over (issue #150: 26 of 43 caller lines on the live test number carried
+    only this note)."""
+
+    def __init__(self) -> None:
+        self._given: dict | None = None
+
+    def new(self, known: dict[str, str] | None) -> dict[str, str] | None:
+        """`known` when it differs from the last facts given, else None."""
+        if not known or known == self._given:
+            return None
+        self._given = dict(known)
+        return known
+
+
 def server_notes(hints: list[str], known: dict[str, str] | None = None) -> list[str]:
     """`[server]` lines added to a caller's line for the model, from a turn result's hints (the
     tool-use prompt explains them). Safety lines are spoken by the voice layer, not described. A

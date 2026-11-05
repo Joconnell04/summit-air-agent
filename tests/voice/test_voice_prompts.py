@@ -411,3 +411,12 @@ def test_coaching_on_caring_for_someone_is_never_spoken(sentence):
 )
 def test_the_911_advice_and_ordinary_lines_are_kept(sentence):
     assert assemble.SpokenReply().sentence(sentence) == sentence
+
+
+def test_known_facts_are_new_only_when_they_change():
+    facts = assemble.KnownFacts()
+    assert facts.new(None) is None and facts.new({}) is None
+    assert facts.new({"name": "Pat"}) == {"name": "Pat"}
+    assert facts.new({"name": "Pat"}) is None
+    assert facts.new({"name": "Pat", "zip": "11201"}) == {"name": "Pat", "zip": "11201"}
+    assert facts.new({"name": "Pat"}) == {"name": "Pat"}, "a fact taken back is a change too"

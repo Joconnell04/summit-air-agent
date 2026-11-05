@@ -1,0 +1,2249 @@
+{
+  "run_id": "20261105-180802-livekit-rig-e1-fast-custom",
+  "created": "2026-11-05T18:08:02.527855Z",
+  "suite": "custom",
+  "tags": [],
+  "stack": "livekit-rig-e1",
+  "profile": "fast",
+  "hash": "89bdadce1140b776",
+  "prompt_hash": "655da00d76acb908",
+  "model": "claude-haiku-5-5",
+  "transport": "audio",
+  "overlay": null,
+  "scenarios": [
+    {
+      "scenario_id": "live-replay-2-move-and-tuneup",
+      "sample": 1,
+      "persona": "Maria Delgado, who has moved from 620 Bedford Avenue to 75 Hoyt Street in Brooklyn and wants the address changed, then wants an AC tune-up on a Friday afternoon. Calling from a cell that isn't on the account.",
+      "flow": [
+        "repeat-caller",
+        "booking",
+        "after-hours"
+      ],
+      "difficulty": "adversarial",
+      "traits": [
+        "self-correction",
+        "interruption"
+      ],
+      "outcome": "fail",
+      "must_pass_failures": [],
+      "check_failures": [
+        "grader: The agent read the address back three times (including a wrong \"White Street\") and confused the caller by pushing an unrequested Monday visit, then asked a garbled \"Did the technician come out that day?\" In the 2 PM turn it promised \"they'll be there from two,\" a time the 12–4 booking never set up.",
+        "silence: 5.3 s before the agent spoke after the caller said \"Wait. Say that again? Did the technician come out what day?\"",
+        "first_sound: plain median 2075 ms over 1200 ms (2 turns)",
+        "first_sound: plain p90 3045 ms over 2000 ms (2 turns)",
+        "first_sound: lookup median 2886 ms over 2500 ms (11 turns)",
+        "first_sound: lookup p90 3789 ms over 3500 ms (11 turns)",
+        "llm_requests: 4 model requests on a lookup turn (limit 2) after the caller said \"This is, uh, Maria Delgado. I moved to, uh, or no, from... ...\"",
+        "llm_requests: 3 model requests on a lookup turn (limit 2) after the caller said \"H-O-Y-T. Yeah.\"",
+        "llm_requests: 3 model requests on a lookup turn (limit 2) after the caller said \"Wait. That's not right. It's Hoyt Street, not White Street. Say the ...\"",
+        "llm_requests: 4 model requests on a lookup turn (limit 2) after the caller said \"Wait. Monday? I didn't ask for a visit Monday. I need, uh, ...\"",
+        "llm_requests: 3 model requests on a plain turn (limit 1) after the caller said \"Yeah. Friday afternoon works. But, uh, what time exactly?\"",
+        "llm_requests: 5 model requests on a lookup turn (limit 2) after the caller said \"Yeah. Book it. But I need a callback too, tomorrow at two ...\"",
+        "llm_requests: 3 model requests on a plain turn (limit 1) after the caller said \"Hey. That's not what I said. I said Friday at two PM. ...\"",
+        "readback_rate: \"11201,\" at 3.9 digits/s, over 3.0",
+        "readback_rate: \"(347) 555-0213.\" at 4.1 digits/s, over 3.0"
+      ],
+      "error": "",
+      "checks": [
+        "tool_ok",
+        "silence",
+        "half_reply",
+        "repeat",
+        "first_sound",
+        "talk_over",
+        "llm_requests",
+        "readback_rate",
+        "hangup_gap",
+        "time_as_asked"
+      ],
+      "grader_score": 2,
+      "grader_notes": "The agent read the address back three times (including a wrong \"White Street\") and confused the caller by pushing an unrequested Monday visit, then asked a garbled \"Did the technician come out that day?\" In the 2 PM turn it promised \"they'll be there from two,\" a time the 12–4 booking never set up.",
+      "reply_delay_p50_ms": 2885.5635390000316,
+      "reply_delay_p90_ms": 3788.521065000168,
+      "cost_usd": 0.186291,
+      "agent_cost_usd": 0.116985,
+      "duration_ms": 323461.5406920002,
+      "transcript": [
+        {
+          "role": "agent",
+          "text": "For calling Summit Aero. This is the virtual assistant. How can I help?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "This is, uh, Maria Delgado. I moved to, uh, or no, from... I moved from six two zero Bedford Avenue. To seventy five Hoyt Street in Brooklyn.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Got it. Let me look up your account first. Now, let me check the new address at 75 Hoyt Street. Could you spell Hoyt for me letter by letter?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "H-O-Y-T. Yeah.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Thanks. I have 75 Hoyt Street, Brooklyn 11201. Is that right?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "Yeah. But why do you say ZIP? Just say the ZIP code.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "I have your home at 75 White Street, Brooklyn. ZIP code 11201, and the best number is (347) 555-0213. Is that right?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "Wait. That's not right. It's Hoyt Street, not White Street. Say the new address again.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Got it. 75 Hoyt Street. Let me check that again. Got it. 75 Hoyt Street, Brooklyn, zip code 11201.",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "Yeah. That's correct.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Thanks for letting us know. I've updated your address to 75 Hoyt Street. Your visit Monday between twelve and four is now set for the new address, same time. Anything else?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "Wait. Monday? I didn't ask for a visit Monday. I need, uh, I need an AC tune-up. Do you have anything?",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Yes. The soonest I have is tomorrow, Thursday, November 5 between twelve and four. Does that work?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "No. I need Friday afternoon. Friday.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Just give me one second. Friday, have twelve to four. Does that work?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "Yeah. Friday afternoon works. But, uh, what time exactly?",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "The technician will arrive sometime between twelve and four on Friday. They can come anytime in that window, so I can't give you an exact time. Is there anything the technician should know when they get there? Like",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "Wait. I can't do anytime. I'm home at two PM, not anytime. Can you do two PM Friday?",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Friday at 2PM fits in the twelve to four window, so I can book that. The technician may arrive anytime in the window, but they'll be there from two. Shall I book Friday?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "Yeah. Book it. But I need a callback too, tomorrow at two PM. Can you do that?",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Perfect. Booking that now. The callback is set. Someone will call you tomorrow around 2PM. Before I book Friday, see an earlier visit on Monday, November",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "Hey. That's not what I said. I said Friday at two PM. Don't book Monday. Just Friday at two PM.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Make it out that day? Sorry about that. I misheard. Friday at 2PM is what I'll book. Did the technician come out that day?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "Wait. Say that again? Did the technician come out what day?",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Sure. I'm booking your AC tune up for Friday, November 6 between twelve and four, and you'll be home at 2PM. The visit on Monday isn't part of this booking. You're all set for",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "Yeah. That's correct. Friday, November 6. Two PM. That's all.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Arriving between twelve and four. Anything else? Got it. You'll be home at 2PM Friday. Someone will call you tomorrow around 2PM. Thanks for calling Summit Air. Have a great rest of your",
+          "said": null
+        }
+      ],
+      "tool_calls": [
+        {
+          "name": "find_customer",
+          "arguments": {
+            "call_id": "rig-live-replay-2-move-and-tuneup-1-6339a319",
+            "phone": "(347) 555-0213",
+            "address": {
+              "street": "620 Bedford Avenue",
+              "unit": "",
+              "city": "Brooklyn",
+              "zip": "11216",
+              "spelled": ""
+            }
+          }
+        },
+        {
+          "name": "find_address",
+          "arguments": {
+            "call_id": "rig-live-replay-2-move-and-tuneup-1-6339a319",
+            "street": "75 Hoyt Street",
+            "borough": "Brooklyn",
+            "spelled": ""
+          }
+        },
+        {
+          "name": "read_back",
+          "arguments": {
+            "call_id": "rig-live-replay-2-move-and-tuneup-1-6339a319",
+            "address": {
+              "street": "75 Hoyt Street",
+              "unit": "",
+              "city": "Brooklyn",
+              "zip": "11201",
+              "spelled": ""
+            },
+            "phone": "3475550213",
+            "phone_for": "",
+            "confirmed": false
+          }
+        },
+        {
+          "name": "find_address",
+          "arguments": {
+            "call_id": "rig-live-replay-2-move-and-tuneup-1-6339a319",
+            "street": "75 Hoyt Street",
+            "borough": "Brooklyn",
+            "spelled": ""
+          }
+        },
+        {
+          "name": "read_back",
+          "arguments": {
+            "call_id": "rig-live-replay-2-move-and-tuneup-1-6339a319",
+            "address": {
+              "street": "75 Hoyt Street",
+              "unit": "",
+              "city": "Brooklyn",
+              "zip": "11201",
+              "spelled": ""
+            },
+            "phone": "3475550213",
+            "phone_for": "",
+            "confirmed": true
+          }
+        },
+        {
+          "name": "record_move",
+          "arguments": {
+            "call_id": "rig-live-replay-2-move-and-tuneup-1-6339a319",
+            "customer_id": null,
+            "from_location_id": null
+          }
+        },
+        {
+          "name": "find_slots",
+          "arguments": {
+            "call_id": "rig-live-replay-2-move-and-tuneup-1-6339a319",
+            "job_type": "tune_up",
+            "priority": null,
+            "preferred_days": [],
+            "time_of_day": null,
+            "day": null,
+            "arrive_after": null,
+            "arrive_before": null,
+            "facts": {
+              "issue": "AC tune-up requested by caller",
+              "who_home": "",
+              "inside_temp_f": null,
+              "temp_falling_fast": false
+            }
+          }
+        },
+        {
+          "name": "find_slots",
+          "arguments": {
+            "call_id": "rig-live-replay-2-move-and-tuneup-1-6339a319",
+            "job_type": "tune_up",
+            "priority": null,
+            "preferred_days": [],
+            "time_of_day": "afternoon",
+            "day": "2026-11-06",
+            "arrive_after": null,
+            "arrive_before": null,
+            "facts": {
+              "issue": "AC tune-up requested by caller",
+              "who_home": "",
+              "inside_temp_f": null,
+              "temp_falling_fast": false
+            }
+          }
+        },
+        {
+          "name": "find_slots",
+          "arguments": {
+            "call_id": "rig-live-replay-2-move-and-tuneup-1-6339a319",
+            "job_type": "tune_up",
+            "priority": null,
+            "preferred_days": [],
+            "time_of_day": null,
+            "day": "2026-11-06",
+            "arrive_after": "2 PM",
+            "arrive_before": "4 PM",
+            "facts": {
+              "issue": "AC tune-up requested by caller",
+              "who_home": "caller home at 2 PM",
+              "inside_temp_f": null,
+              "temp_falling_fast": false
+            }
+          }
+        },
+        {
+          "name": "book_appointment",
+          "arguments": {
+            "call_id": "rig-live-replay-2-move-and-tuneup-1-6339a319",
+            "job_type": "tune_up",
+            "slot": {
+              "date": "2026-11-06",
+              "window": "afternoon"
+            },
+            "details": {
+              "issue": "AC tune-up",
+              "since": "not stated",
+              "tried": "nothing",
+              "who_home": "caller home at 2 PM",
+              "approver": "owner",
+              "system_type": "central AC, Lennox, installed 2025",
+              "arrival_notes": "",
+              "name": "Maria Delgado",
+              "inside_temp_f": null
+            },
+            "priority": "Normal",
+            "separate_problem": false,
+            "new_address_account": null
+          }
+        },
+        {
+          "name": "flag_person",
+          "arguments": {
+            "callback_time": "2 PM",
+            "callback_in_minutes": null,
+            "callback_after": null,
+            "callback_before": null,
+            "callback_day": "tomorrow",
+            "call_id": "rig-live-replay-2-move-and-tuneup-1-6339a319",
+            "reason": "Caller Maria Delgado requests a callback tomorrow, Thursday November 5, at 2 PM about her Friday AC tune-up at 75 Hoyt Street.",
+            "priority": "Normal",
+            "system_calls_back": false
+          }
+        },
+        {
+          "name": "book_appointment",
+          "arguments": {
+            "call_id": "rig-live-replay-2-move-and-tuneup-1-6339a319",
+            "job_type": "tune_up",
+            "slot": {
+              "date": "2026-11-06",
+              "window": "afternoon"
+            },
+            "details": {
+              "issue": "AC tune-up",
+              "since": "not stated",
+              "tried": "nothing",
+              "who_home": "caller home at 2 PM",
+              "approver": "owner",
+              "system_type": "central AC, Lennox, installed 2025",
+              "arrival_notes": "",
+              "name": "Maria Delgado",
+              "inside_temp_f": null
+            },
+            "priority": "Normal",
+            "separate_problem": true,
+            "new_address_account": null
+          }
+        },
+        {
+          "name": "end_call",
+          "arguments": {
+            "call_id": "rig-live-replay-2-move-and-tuneup-1-6339a319",
+            "reason": "resolved"
+          }
+        }
+      ],
+      "turn_timings": [
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 2137.34461400054,
+          "model_first_token_ms": 723.5,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 11500.00108200038,
+          "agent_speech_ms": 6760.0,
+          "platform_reply_ms": 1789.5,
+          "over_caller_ms": null,
+          "platform_stages": {
+            "transcript_ms": 343.9,
+            "end_of_turn_ms": 353.5,
+            "llm_first_token_ms": 723.5,
+            "tts_first_byte_ms": 164.8,
+            "tool_ms": 455.7,
+            "bridge": 0.0,
+            "llm_requests": 4.0,
+            "llm_cancelled": 1.0,
+            "prompt_tokens": 17600.0,
+            "cache_read_tokens": 7137.0,
+            "cache_write_tokens": 10442.0,
+            "llm_output_tokens": 27.0,
+            "reply_ms": 1789.5,
+            "server_ms": 112.9,
+            "speed": 1.0,
+            "agent_lines": 2.0
+          }
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 3664.255671000319,
+          "model_first_token_ms": 589.7,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 2239.999839999655,
+          "agent_speech_ms": 5730.0,
+          "platform_reply_ms": 3209.0,
+          "over_caller_ms": null,
+          "platform_stages": {
+            "transcript_ms": 233.1,
+            "end_of_turn_ms": 1500.4,
+            "llm_first_token_ms": 589.7,
+            "tts_first_byte_ms": 190.8,
+            "tool_ms": 57.1,
+            "bridge": 0.0,
+            "llm_requests": 3.0,
+            "llm_cancelled": 0.0,
+            "prompt_tokens": 18366.0,
+            "cache_read_tokens": 17790.0,
+            "cache_write_tokens": 560.0,
+            "llm_output_tokens": 129.0,
+            "reply_ms": 3209.0,
+            "server_ms": 60.1,
+            "speed": 1.0
+          }
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 1748.9231709996602,
+          "model_first_token_ms": 0.0,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 3799.9996490007106,
+          "agent_speech_ms": 7890.0,
+          "platform_reply_ms": 2006.7,
+          "over_caller_ms": null,
+          "platform_stages": {
+            "transcript_ms": 386.5,
+            "end_of_turn_ms": 402.9,
+            "tts_first_byte_ms": 199.0,
+            "tool_ms": 111.0,
+            "bridge": 0.0,
+            "llm_requests": 2.0,
+            "llm_cancelled": 0.0,
+            "prompt_tokens": 18674.0,
+            "cache_read_tokens": 18501.0,
+            "cache_write_tokens": 121.0,
+            "llm_output_tokens": 183.0,
+            "reply_ms": 2006.7,
+            "server_ms": 101.2,
+            "speed": 1.0
+          }
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 3025.2225020003607,
+          "model_first_token_ms": 879.6,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 5100.000780999835,
+          "agent_speech_ms": 7675.375,
+          "platform_reply_ms": 2090.9,
+          "over_caller_ms": null,
+          "platform_stages": {
+            "transcript_ms": 295.5,
+            "end_of_turn_ms": 900.5,
+            "llm_first_token_ms": 879.6,
+            "tts_first_byte_ms": 182.4,
+            "tool_ms": 35.9,
+            "bridge": 0.0,
+            "llm_requests": 3.0,
+            "llm_cancelled": 1.0,
+            "prompt_tokens": 19040.0,
+            "cache_read_tokens": 18795.0,
+            "cache_write_tokens": 215.0,
+            "llm_output_tokens": 139.0,
+            "reply_ms": 2090.9,
+            "server_ms": 99.5,
+            "speed": 1.0,
+            "agent_lines": 2.0
+          }
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 3788.521065000168,
+          "model_first_token_ms": 0.0,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 1399.998837999192,
+          "agent_speech_ms": 7547.458333333333,
+          "platform_reply_ms": 3420.4,
+          "over_caller_ms": null,
+          "platform_stages": {
+            "transcript_ms": 292.1,
+            "end_of_turn_ms": 901.0,
+            "tts_first_byte_ms": 151.0,
+            "tool_ms": 745.1,
+            "bridge": 0.0,
+            "llm_requests": 2.0,
+            "llm_cancelled": 0.0,
+            "prompt_tokens": 19437.0,
+            "cache_read_tokens": 19366.0,
+            "cache_write_tokens": 0.0,
+            "llm_output_tokens": 164.0,
+            "reply_ms": 3420.4,
+            "server_ms": 85.2,
+            "speed": 1.0
+          }
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 1884.778039999219,
+          "model_first_token_ms": 667.7,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 7100.000451001506,
+          "agent_speech_ms": 4790.0,
+          "platform_reply_ms": 1516.5,
+          "over_caller_ms": null,
+          "platform_stages": {
+            "transcript_ms": 355.5,
+            "end_of_turn_ms": 357.9,
+            "llm_first_token_ms": 667.7,
+            "tts_first_byte_ms": 185.7,
+            "tool_ms": 165.9,
+            "bridge": 0.0,
+            "llm_requests": 4.0,
+            "llm_cancelled": 0.0,
+            "prompt_tokens": 20007.0,
+            "cache_read_tokens": 19585.0,
+            "cache_write_tokens": 341.0,
+            "llm_output_tokens": 53.0,
+            "reply_ms": 1516.5,
+            "server_ms": 61.8,
+            "speed": 1.0
+          }
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 1715.9146550011428,
+          "model_first_token_ms": 871.2,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 3419.999569999163,
+          "agent_speech_ms": 2890.0,
+          "platform_reply_ms": 1442.8,
+          "over_caller_ms": null,
+          "platform_stages": {
+            "transcript_ms": 311.4,
+            "end_of_turn_ms": 354.6,
+            "llm_first_token_ms": 871.2,
+            "tts_first_byte_ms": 150.1,
+            "tool_ms": 110.5,
+            "bridge": 0.0,
+            "llm_requests": 2.0,
+            "llm_cancelled": 0.0,
+            "prompt_tokens": 20919.0,
+            "cache_read_tokens": 20763.0,
+            "cache_write_tokens": 0.0,
+            "llm_output_tokens": 163.0,
+            "reply_ms": 1442.8,
+            "server_ms": 52.4,
+            "speed": 1.0,
+            "agent_lines": 2.0
+          }
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 3044.500578000225,
+          "model_first_token_ms": 546.4,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 4719.999238999662,
+          "agent_speech_ms": 8449.5,
+          "platform_reply_ms": 2370.6,
+          "over_caller_ms": null,
+          "platform_stages": {
+            "transcript_ms": 293.7,
+            "end_of_turn_ms": 1500.8,
+            "llm_first_token_ms": 546.4,
+            "tts_first_byte_ms": 183.3,
+            "tool_ms": 0.0,
+            "bridge": 0.0,
+            "llm_requests": 3.0,
+            "llm_cancelled": 0.0,
+            "prompt_tokens": 21422.0,
+            "cache_read_tokens": 21074.0,
+            "cache_write_tokens": 328.0,
+            "llm_output_tokens": 193.0,
+            "reply_ms": 2370.6,
+            "server_ms": 69.2,
+            "speed": 1.0
+          }
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 3074.5145460005006,
+          "model_first_token_ms": 0.0,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 7240.000430999316,
+          "agent_speech_ms": 8340.125,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {
+            "transcript_ms": 358.0,
+            "end_of_turn_ms": 1500.7
+          }
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 2885.5635390000316,
+          "model_first_token_ms": 607.3,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 6500.000921000719,
+          "agent_speech_ms": 7800.291666666666,
+          "platform_reply_ms": 2584.4,
+          "over_caller_ms": null,
+          "platform_stages": {
+            "transcript_ms": 293.2,
+            "end_of_turn_ms": 353.4,
+            "llm_first_token_ms": 607.3,
+            "tts_first_byte_ms": 199.2,
+            "tool_ms": 402.6,
+            "bridge": 0.0,
+            "llm_requests": 5.0,
+            "llm_cancelled": 0.0,
+            "prompt_tokens": 21658.0,
+            "cache_read_tokens": 21402.0,
+            "cache_write_tokens": 172.0,
+            "llm_output_tokens": 27.0,
+            "reply_ms": 2584.4,
+            "server_ms": 49.6,
+            "speed": 1.0,
+            "agent_lines": 2.0
+          }
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 2074.597447000997,
+          "model_first_token_ms": 615.2,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 6979.998075998992,
+          "agent_speech_ms": 5160.0,
+          "platform_reply_ms": null,
+          "over_caller_ms": 7092.560256998695,
+          "platform_stages": {
+            "transcript_ms": 337.2,
+            "end_of_turn_ms": 355.2,
+            "llm_first_token_ms": 615.2,
+            "tts_first_byte_ms": 175.9,
+            "tool_ms": 0.0,
+            "bridge": 0.0,
+            "llm_requests": 3.0,
+            "llm_cancelled": 0.0,
+            "prompt_tokens": 23236.0,
+            "cache_read_tokens": 22265.0,
+            "cache_write_tokens": 622.0,
+            "llm_output_tokens": 83.0,
+            "speed": 1.0,
+            "agent_lines": 2.0
+          }
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 5334.533246998944,
+          "model_first_token_ms": 2301.6,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 3459.9996590004594,
+          "agent_speech_ms": 8462.0,
+          "platform_reply_ms": 4917.7,
+          "over_caller_ms": null,
+          "platform_stages": {
+            "transcript_ms": 286.2,
+            "end_of_turn_ms": 1501.0,
+            "llm_first_token_ms": 2301.6,
+            "tts_first_byte_ms": 209.1,
+            "tool_ms": 408.9,
+            "bridge": 0.0,
+            "llm_requests": 2.0,
+            "llm_cancelled": 0.0,
+            "prompt_tokens": 23714.0,
+            "cache_read_tokens": 23310.0,
+            "cache_write_tokens": 287.0,
+            "llm_output_tokens": 55.0,
+            "reply_ms": 4917.7,
+            "server_ms": 41.2,
+            "speed": 1.0
+          }
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 1763.8927019997936,
+          "model_first_token_ms": 0.0,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 5159.998117001123,
+          "agent_speech_ms": 8970.0,
+          "platform_reply_ms": null,
+          "over_caller_ms": 5258.825444000649,
+          "platform_stages": {
+            "transcript_ms": 325.6,
+            "end_of_turn_ms": 354.7,
+            "tts_first_byte_ms": 195.8,
+            "tool_ms": 33.2,
+            "bridge": 0.0,
+            "speed": 1.0,
+            "llm_requests": 1.0,
+            "agent_lines": 2.0
+          }
+        }
+      ],
+      "call_id": "rig-live-replay-2-move-and-tuneup-1-6339a319",
+      "silent_turns": 0,
+      "cost_parts": {
+        "caller_voice": 0.02658,
+        "agent_ears": 0.011963,
+        "brain_model": 0.00637,
+        "platform": 0.110616,
+        "caller_model": 0.000687,
+        "grader": 0.030076
+      }
+    },
+    {
+      "scenario_id": "live-multi-book-then-callback",
+      "sample": 1,
+      "persona": "A homeowner who wants an AC tune-up on a Friday afternoon, then a callback about a new thermostat.",
+      "flow": [
+        "booking"
+      ],
+      "difficulty": "rigorous",
+      "traits": [
+        "side-question"
+      ],
+      "outcome": "fail",
+      "must_pass_failures": [],
+      "check_failures": [
+        "half_reply: \"I have 248 Duffield Street in Brooklyn.\" asked nothing, then 21.9 s of silence before the caller spoke",
+        "first_sound: plain median 2030 ms over 1200 ms (7 turns)",
+        "first_sound: plain p90 2481 ms over 2000 ms (7 turns)",
+        "first_sound: lookup median 2580 ms over 2500 ms (7 turns)",
+        "first_sound: lookup p90 3659 ms over 3500 ms (7 turns)",
+        "llm_requests: 2 model requests on a plain turn (limit 1) after the caller said \"Yeah. I need an AC tune-up. Friday at two PM.\"",
+        "llm_requests: 3 model requests on a plain turn (limit 1) after the caller said \"Yeah, twelve to four works. But I said two PM. Can you ...\"",
+        "llm_requests: 3 model requests on a lookup turn (limit 2) after the caller said \"Yeah. Take the afternoon window. Just put me down for Friday.\"",
+        "llm_requests: 2 model requests on a plain turn (limit 1) after the caller said \"It's a regular tune-up. Nothing's broken.\"",
+        "llm_requests: 3 model requests on a lookup turn (limit 2) after the caller said \"No gate code. No pets. Just ring the buzzer. Is that all?\"",
+        "llm_requests: 3 model requests on a plain turn (limit 1) after the caller said \"Hello? Wait. Say that again? What time is it, and is it ...\"",
+        "llm_requests: 2 model requests on a plain turn (limit 1) after the caller said \"Yeah. Also, can someone call me tomorrow at ten AM about a ...\"",
+        "llm_requests: 5 model requests on a lookup turn (limit 2) after the caller said \"I don't know the model. It's a central AC system, maybe ten ...\"",
+        "readback_rate: \"11201,\" at 3.2 digits/s, over 3.0",
+        "readback_rate: \"(347) 555-0213.\" at 3.8 digits/s, over 3.0",
+        "time_as_asked: the caller asked \"Yeah. Also, can someone call me tomorrow at ten AM about a ...\"; the agent never said a time back"
+      ],
+      "error": "",
+      "checks": [
+        "booking",
+        "silence",
+        "half_reply",
+        "repeat",
+        "first_sound",
+        "talk_over",
+        "llm_requests",
+        "readback_rate",
+        "hangup_gap",
+        "time_as_asked"
+      ],
+      "grader_score": 3,
+      "grader_notes": "The agent stalled after restating the address (\"I have 248 Duffield Street in Brooklyn\"), so the caller had to prompt it, then read the address back a second time with the ZIP, breaking the one-read-back standard once. It also asked whether the AC was acting up after the caller had already asked for a tune-up, though the Friday 12–4 booking and the 10 AM callback were confirmed correctly.",
+      "reply_delay_p50_ms": 2030.3041509996547,
+      "reply_delay_p90_ms": 3042.6729290002186,
+      "cost_usd": 0.15741,
+      "agent_cost_usd": 0.096463,
+      "duration_ms": 307561.7546909998,
+      "transcript": [
+        {
+          "role": "agent",
+          "text": "For calling Summon Air. This is the virtual assistant. How can I help?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "Yeah. I need an AC tune-up. Friday at two PM.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Sure. I can look at a cooling tune up for Friday. Can I get the address where the system is?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "Two forty-eight Duffield Street. Brooklyn.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "I have 248 Duffield Street in Brooklyn.",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "Are you gonna ask me a question?",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "About that. Let me check Friday's openings. Friday, I have twelve to four. Does that work?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "Yeah, twelve to four works. But I said two PM. Can you do two?",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "The twelve to four window is what I have on Friday, and the technician can arrive anytime within it. Would you like that one?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "Yeah. Take the afternoon window. Just put me down for Friday.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "I have your home at 248 Duffield Street, Brooklyn, ZIP code 11201, and the best number is (347) 555-0213. Is that right?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "Yeah. That's correct.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Thanks. And what name should I put the visit under?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "Jackson Lee. I just gave you the name.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Sorry. I missed that. Thanks. How long has the AC been acting up or is this a regular tune",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "It's a regular tune-up. Nothing's broken.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Got it. A regular tune up. Who will be home for the visit?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "Just me. I'm home and healthy.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Got it. Anything the technician should know when they arrive, like a gate code, a buzzer, or a pet?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "No gate code. No pets. Just ring the buzzer. Is that all?",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Okay. I'll let the technician know to ring the buzzer. Booking that now. You're all set for Friday, November 6 with the technician arriving...",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "Hello? Wait. Say that again? What time is it, and is it the afternoon window?",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Friday, November 6, between twelve and four in the afternoon. The technician can arrive anytime in that window. Anything else?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "Yeah. Also, can someone call me tomorrow at ten AM about a new thermostat?",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "A thermostat is an install quote, so I'll pass that along to our sales team. Can I ask what kind of system it's for and roughly how old it is? No worries if you",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "I don't know the model. It's a central AC system, maybe ten years old. Can they call me tomorrow at ten AM?",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Someone from our team will call you tomorrow around 10AM to tell you more. Anything else?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "Yeah. That's all. Thanks.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Thanks for calling Summit Air. Have a great rest of your day.",
+          "said": null
+        }
+      ],
+      "tool_calls": [
+        {
+          "name": "find_address",
+          "arguments": {
+            "call_id": "rig-live-multi-book-then-callback-1-fab84144",
+            "street": "248 Duffield Street",
+            "borough": "",
+            "spelled": ""
+          }
+        },
+        {
+          "name": "find_slots",
+          "arguments": {
+            "call_id": "rig-live-multi-book-then-callback-1-fab84144",
+            "job_type": "tune_up",
+            "priority": null,
+            "preferred_days": [
+              "friday"
+            ],
+            "time_of_day": "afternoon",
+            "day": null,
+            "arrive_after": null,
+            "arrive_before": null,
+            "facts": {
+              "issue": "",
+              "who_home": "",
+              "inside_temp_f": null,
+              "temp_falling_fast": false
+            }
+          }
+        },
+        {
+          "name": "read_back",
+          "arguments": {
+            "call_id": "rig-live-multi-book-then-callback-1-fab84144",
+            "address": {
+              "street": "248 Duffield Street",
+              "unit": "",
+              "city": "Brooklyn",
+              "zip": "11201",
+              "spelled": ""
+            },
+            "phone": "3475550213",
+            "phone_for": "",
+            "confirmed": false
+          }
+        },
+        {
+          "name": "read_back",
+          "arguments": {
+            "call_id": "rig-live-multi-book-then-callback-1-fab84144",
+            "address": {
+              "street": "248 Duffield Street",
+              "unit": "",
+              "city": "Brooklyn",
+              "zip": "11201",
+              "spelled": ""
+            },
+            "phone": "3475550213",
+            "phone_for": "",
+            "confirmed": true
+          }
+        },
+        {
+          "name": "book_appointment",
+          "arguments": {
+            "call_id": "rig-live-multi-book-then-callback-1-fab84144",
+            "job_type": "tune_up",
+            "slot": {
+              "date": "2026-11-06",
+              "window": "afternoon"
+            },
+            "details": {
+              "issue": "Regular AC tune-up, nothing broken",
+              "since": "Scheduled maintenance",
+              "tried": "Nothing, routine maintenance",
+              "who_home": "Just the caller, home and healthy",
+              "approver": "Caller",
+              "system_type": "",
+              "arrival_notes": "No gate code, no pets. Ring the buzzer.",
+              "name": "Jackson Lee",
+              "inside_temp_f": null
+            },
+            "priority": "Normal",
+            "separate_problem": false,
+            "new_address_account": null
+          }
+        },
+        {
+          "name": "record_lead",
+          "arguments": {
+            "call_id": "rig-live-multi-book-then-callback-1-fab84144",
+            "kind": "install",
+            "details": {
+              "callback_time": "10 AM",
+              "callback_in_minutes": null,
+              "callback_after": null,
+              "callback_before": null,
+              "callback_day": "tomorrow",
+              "contact_name": "Jackson Lee",
+              "company": "",
+              "need": "New thermostat for central AC system, about 10 years old, model unknown. Customer at 248 Duffield Street, Brooklyn 11201, phone ending 0213."
+            }
+          }
+        },
+        {
+          "name": "end_call",
+          "arguments": {
+            "call_id": "rig-live-multi-book-then-callback-1-fab84144",
+            "reason": "caller_goodbye"
+          }
+        }
+      ],
+      "turn_timings": [
+        {
+          "kind": "plain",
+          "reply_delay_ms": 2229.894666000291,
+          "model_first_token_ms": 751.8,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 3380.000452000786,
+          "agent_speech_ms": 3600.0,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {
+            "llm_first_token_ms": 751.8,
+            "tts_first_byte_ms": 156.3,
+            "tool_ms": 0.0,
+            "bridge": 0.0,
+            "llm_requests": 2.0,
+            "llm_cancelled": 0.0,
+            "prompt_tokens": 17595.0,
+            "cache_read_tokens": 7137.0,
+            "cache_write_tokens": 10438.0,
+            "llm_output_tokens": 29.0,
+            "speed": 1.0
+          }
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 1939.5551490006255,
+          "model_first_token_ms": 560.8,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 2559.9995289994695,
+          "agent_speech_ms": 1970.0,
+          "platform_reply_ms": 1180.4,
+          "over_caller_ms": null,
+          "platform_stages": {
+            "transcript_ms": 0.0,
+            "end_of_turn_ms": 353.7,
+            "llm_first_token_ms": 560.8,
+            "tts_first_byte_ms": 158.0,
+            "tool_ms": 36.9,
+            "bridge": 0.0,
+            "llm_requests": 2.0,
+            "llm_cancelled": 0.0,
+            "prompt_tokens": 17654.0,
+            "cache_read_tokens": 17575.0,
+            "cache_write_tokens": 60.0,
+            "llm_output_tokens": 71.0,
+            "reply_ms": 1180.4,
+            "server_ms": 55.7,
+            "speed": 1.0
+          }
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 2579.7485859993685,
+          "model_first_token_ms": 856.5,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 1260.0003010002183,
+          "agent_speech_ms": 4150.0,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {
+            "llm_first_token_ms": 856.5,
+            "tts_first_byte_ms": 146.9,
+            "tool_ms": 122.9,
+            "bridge": 0.0,
+            "llm_requests": 2.0,
+            "llm_cancelled": 0.0,
+            "prompt_tokens": 17881.0,
+            "cache_read_tokens": 17708.0,
+            "cache_write_tokens": 108.0,
+            "llm_output_tokens": 134.0,
+            "speed": 1.0,
+            "agent_lines": 2.0
+          }
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 2030.3041509996547,
+          "model_first_token_ms": 780.1,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 4440.076172999397,
+          "agent_speech_ms": 6230.0,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {
+            "llm_first_token_ms": 780.1,
+            "tts_first_byte_ms": 172.5,
+            "tool_ms": 0.0,
+            "bridge": 0.0,
+            "llm_requests": 3.0,
+            "llm_cancelled": 0.0,
+            "prompt_tokens": 18414.0,
+            "cache_read_tokens": 18010.0,
+            "cache_write_tokens": 385.0,
+            "llm_output_tokens": 26.0,
+            "speed": 1.0
+          }
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 3659.4726200000878,
+          "model_first_token_ms": 0.0,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 3579.99899799961,
+          "agent_speech_ms": 9000.0,
+          "platform_reply_ms": 2685.3,
+          "over_caller_ms": null,
+          "platform_stages": {
+            "transcript_ms": 473.3,
+            "end_of_turn_ms": 1500.4,
+            "tts_first_byte_ms": 170.1,
+            "tool_ms": 31.6,
+            "bridge": 0.0,
+            "llm_requests": 3.0,
+            "llm_cancelled": 0.0,
+            "prompt_tokens": 18529.0,
+            "cache_read_tokens": 18395.0,
+            "cache_write_tokens": 114.0,
+            "llm_output_tokens": 122.0,
+            "reply_ms": 2685.3,
+            "server_ms": 72.8,
+            "speed": 1.0
+          }
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 1860.008321999885,
+          "model_first_token_ms": 0.0,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 1580.0001400011752,
+          "agent_speech_ms": 2330.0,
+          "platform_reply_ms": 1530.6,
+          "over_caller_ms": null,
+          "platform_stages": {
+            "transcript_ms": 426.6,
+            "end_of_turn_ms": 438.0,
+            "tts_first_byte_ms": 149.7,
+            "tool_ms": 33.8,
+            "bridge": 0.0,
+            "llm_requests": 1.0,
+            "llm_cancelled": 0.0,
+            "prompt_tokens": 18939.0,
+            "cache_read_tokens": 18509.0,
+            "cache_write_tokens": 369.0,
+            "llm_output_tokens": 145.0,
+            "reply_ms": 1530.6,
+            "server_ms": 36.3,
+            "speed": 1.0
+          }
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 2061.4956549989074,
+          "model_first_token_ms": 1071.4,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 2279.9995890009086,
+          "agent_speech_ms": 4190.0,
+          "platform_reply_ms": 1792.3,
+          "over_caller_ms": null,
+          "platform_stages": {
+            "transcript_ms": 468.3,
+            "end_of_turn_ms": 486.0,
+            "llm_first_token_ms": 1071.4,
+            "tts_first_byte_ms": 144.2,
+            "tool_ms": 0.0,
+            "bridge": 0.0,
+            "llm_requests": 1.0,
+            "llm_cancelled": 0.0,
+            "prompt_tokens": 19298.0,
+            "cache_read_tokens": 18878.0,
+            "cache_write_tokens": 341.0,
+            "llm_output_tokens": 51.0,
+            "reply_ms": 1792.3,
+            "server_ms": 61.8,
+            "speed": 1.0
+          }
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1610.540224000033,
+          "model_first_token_ms": 685.1,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 2579.999398999462,
+          "agent_speech_ms": 2230.0,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {
+            "llm_first_token_ms": 685.1,
+            "tts_first_byte_ms": 164.6,
+            "tool_ms": 0.0,
+            "bridge": 0.0,
+            "llm_requests": 2.0,
+            "llm_cancelled": 0.0,
+            "prompt_tokens": 19350.0,
+            "cache_read_tokens": 19219.0,
+            "cache_write_tokens": 116.0,
+            "llm_output_tokens": 24.0,
+            "speed": 1.0
+          }
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 2481.207150000955,
+          "model_first_token_ms": 756.7,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 1740.001321998534,
+          "agent_speech_ms": 5240.0,
+          "platform_reply_ms": 1528.6,
+          "over_caller_ms": null,
+          "platform_stages": {
+            "transcript_ms": 468.0,
+            "end_of_turn_ms": 487.0,
+            "llm_first_token_ms": 756.7,
+            "tts_first_byte_ms": 155.5,
+            "tool_ms": 0.0,
+            "bridge": 0.0,
+            "llm_requests": 1.0,
+            "llm_cancelled": 0.0,
+            "prompt_tokens": 19570.0,
+            "cache_read_tokens": 19335.0,
+            "cache_write_tokens": 159.0,
+            "llm_output_tokens": 38.0,
+            "reply_ms": 1528.6,
+            "server_ms": 75.0,
+            "speed": 1.0
+          }
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 2619.3291560002763,
+          "model_first_token_ms": 633.9,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 4459.999259999677,
+          "agent_speech_ms": 7218.541666666667,
+          "platform_reply_ms": 2182.2,
+          "over_caller_ms": null,
+          "platform_stages": {
+            "transcript_ms": 488.5,
+            "end_of_turn_ms": 491.7,
+            "llm_first_token_ms": 633.9,
+            "tts_first_byte_ms": 186.3,
+            "tool_ms": 361.5,
+            "bridge": 0.0,
+            "llm_requests": 3.0,
+            "llm_cancelled": 0.0,
+            "prompt_tokens": 19619.0,
+            "cache_read_tokens": 19494.0,
+            "cache_write_tokens": 110.0,
+            "llm_output_tokens": 33.0,
+            "reply_ms": 2182.2,
+            "server_ms": 74.7,
+            "speed": 1.0
+          }
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1719.7432989996742,
+          "model_first_token_ms": 0.0,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 3999.9987279998095,
+          "agent_speech_ms": 7710.0,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {
+            "tts_first_byte_ms": 206.6,
+            "tool_ms": 0.0,
+            "bridge": 0.0,
+            "speed": 1.0,
+            "llm_requests": 3.0,
+            "agent_lines": 2.0
+          }
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1961.8410970006153,
+          "model_first_token_ms": 795.0,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 4339.99842600042,
+          "agent_speech_ms": 8132.958333333333,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {
+            "llm_first_token_ms": 795.0,
+            "tts_first_byte_ms": 167.8,
+            "tool_ms": 0.0,
+            "bridge": 0.0,
+            "llm_requests": 2.0,
+            "llm_cancelled": 0.0,
+            "prompt_tokens": 20654.0,
+            "cache_read_tokens": 20349.0,
+            "cache_write_tokens": 291.0,
+            "llm_output_tokens": 22.0,
+            "speed": 1.0
+          }
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 3042.6729290002186,
+          "model_first_token_ms": 564.4,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 6920.000680999692,
+          "agent_speech_ms": 3870.0,
+          "platform_reply_ms": 2611.0,
+          "over_caller_ms": null,
+          "platform_stages": {
+            "transcript_ms": 511.3,
+            "end_of_turn_ms": 514.3,
+            "llm_first_token_ms": 564.4,
+            "tts_first_byte_ms": 195.0,
+            "tool_ms": 108.6,
+            "bridge": 0.0,
+            "llm_requests": 5.0,
+            "llm_cancelled": 0.0,
+            "prompt_tokens": 20963.0,
+            "cache_read_tokens": 20640.0,
+            "cache_write_tokens": 310.0,
+            "llm_output_tokens": 38.0,
+            "reply_ms": 2611.0,
+            "server_ms": 107.4,
+            "speed": 1.0
+          }
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 1811.2436750006964,
+          "model_first_token_ms": 777.3,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 2259.999738999795,
+          "agent_speech_ms": 2910.0,
+          "platform_reply_ms": 1470.8,
+          "over_caller_ms": null,
+          "platform_stages": {
+            "transcript_ms": 0.0,
+            "end_of_turn_ms": 355.3,
+            "llm_first_token_ms": 777.3,
+            "tts_first_byte_ms": 177.6,
+            "tool_ms": 59.7,
+            "bridge": 0.0,
+            "llm_requests": 2.0,
+            "llm_cancelled": 0.0,
+            "prompt_tokens": 21609.0,
+            "cache_read_tokens": 21491.0,
+            "cache_write_tokens": 103.0,
+            "llm_output_tokens": 81.0,
+            "reply_ms": 1470.8,
+            "server_ms": 135.5,
+            "speed": 1.0
+          }
+        }
+      ],
+      "call_id": "rig-live-multi-book-then-callback-1-fab84144",
+      "silent_turns": 0,
+      "cost_parts": {
+        "caller_voice": 0.02136,
+        "agent_ears": 0.009147,
+        "brain_model": 0.004994,
+        "platform": 0.091469,
+        "caller_model": 0.000584,
+        "grader": 0.029856
+      }
+    },
+    {
+      "scenario_id": "live-call3-address-digit-by-digit",
+      "sample": 1,
+      "persona": "A new customer setting up an AC tune-up who gives the address in pieces.",
+      "flow": [
+        "booking"
+      ],
+      "difficulty": "rigorous",
+      "traits": [
+        "split-digits"
+      ],
+      "outcome": "error",
+      "must_pass_failures": [],
+      "check_failures": [
+        "out_of_area: out-of-area ZIPs [], expected 10009",
+        "first_sound: plain median 2003 ms over 1200 ms (9 turns)",
+        "first_sound: plain p90 3093 ms over 2000 ms (9 turns)",
+        "first_sound: lookup median 3055 ms over 2500 ms (3 turns)",
+        "first_sound: lookup p90 3994 ms over 3500 ms (3 turns)",
+        "llm_requests: 2 model requests on a plain turn (limit 1) after the caller said \"I'm looking to set up a new account. I need an AC ...\"",
+        "llm_requests: 4 model requests on a plain turn (limit 1) after the caller said \"Is there a unit? I'm not sure you need it. Actually, sorry. ...\"",
+        "llm_requests: 3 model requests on a lookup turn (limit 2) after the caller said \"One zero zero zero nine.\"",
+        "llm_requests: 2 model requests on a plain turn (limit 1) after the caller said \"Yeah. That's correct. Wait, is that the number you have for me? ...\"",
+        "llm_requests: 3 model requests on a lookup turn (limit 2) after the caller said \"Yeah. That's correct. Can you tell me what's the earliest you can ...\"",
+        "llm_requests: 2 model requests on a plain turn (limit 1) after the caller said \"Hey. That's not what I said. I said Friday at two PM. ...\"",
+        "llm_requests: 2 model requests on a plain turn (limit 1) after the caller said \"Yeah. That's correct. Book it for Friday, two PM.\"",
+        "llm_requests: 4 model requests on a plain turn (limit 1) after the caller said \"I don't know the system type. It's a window unit, I think. ...\"",
+        "readback_rate: \"(347) 555-0213.\" at 3.9 digits/s, over 3.0",
+        "time_as_asked: the caller asked \"Yeah. That's correct. Book it for Friday, two PM.\"; the agent never said a time back"
+      ],
+      "error": "the call did not finish within 12 caller turns",
+      "checks": [
+        "silence",
+        "half_reply",
+        "repeat",
+        "first_sound",
+        "talk_over",
+        "llm_requests",
+        "readback_rate",
+        "hangup_gap",
+        "time_as_asked"
+      ],
+      "grader_score": null,
+      "grader_notes": "",
+      "reply_delay_p50_ms": 2252.850594000847,
+      "reply_delay_p90_ms": 3093.4183790013776,
+      "cost_usd": 0.117742,
+      "agent_cost_usd": 0.087833,
+      "duration_ms": 286069.96355000045,
+      "transcript": [
+        {
+          "role": "agent",
+          "text": "For calling Summit Air. This is the virtual assistant. How can I help?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "I'm looking to set up a new account. I need an AC tune-up.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Sure. I can help with that. What's the address where the AC is?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "One nine nine East fourth Street.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Let me look that up. What's the zip code there?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "Is there a unit? I'm not sure you need it. Actually, sorry. Unit two.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Got it. Unit 2. And what's the zip code for 199 East 4th Street?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "One zero zero zero nine.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "I have your home at 199 East 4th Street, Unit 2, ZIP code 10009. And the best number is (347) 555-0213. Is that right?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "Yeah. That's correct. Wait, is that the number you have for me? I didn't give you a phone number.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Sorry about that. The number I have is the one you're calling from ending in 0213. Is that the best number for the technician to reach you?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "Yeah. That's correct. Can you tell me what's the earliest you can get someone out here? I'd like Friday at two PM if you have it.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Okay. Let me check Friday afternoon. Friday, November 6, I have twelve to four. Does that work?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "Hey. That's not what I said. I said Friday at two PM. Can you check that?",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "You're right. Sorry. The 2PM arrival fits within Friday's twelve to four window. Shall I book Friday, November 6, twelve to four, with the technician arriving around",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "Wait. Say that again?",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Friday, November 6 is open from twelve to 4PM. Your 2PM request falls inside that window. Does that work for you?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "Yeah. That's correct. Book it for Friday, two PM.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Before I book, I need a few details. What's the system type and what's the rough age? No worries if you don't know.",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "I don't know the system type. It's a window unit, I think. Maybe ten years old?",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Got it. A window unit about ten years old. Is anyone at home Friday who can let the technician in?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "Yeah. I'll be home.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Perfect. Is there anything the technician should know when they arrive, like a buzzer or a pet?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "Is that all? I need anything else?",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "That's almost everything. Who approves the work? Is it your place? Are you renting?",
+          "said": null
+        }
+      ],
+      "tool_calls": [
+        {
+          "name": "find_address",
+          "arguments": {
+            "call_id": "rig-live-call3-address-digit-by-digit-1-77878d2e",
+            "street": "199 East Fourth Street",
+            "borough": "",
+            "spelled": ""
+          }
+        },
+        {
+          "name": "check_service_area",
+          "arguments": {
+            "call_id": "rig-live-call3-address-digit-by-digit-1-77878d2e",
+            "zip": "10009"
+          }
+        },
+        {
+          "name": "find_address",
+          "arguments": {
+            "call_id": "rig-live-call3-address-digit-by-digit-1-77878d2e",
+            "street": "199 East Fourth Street, unit 2",
+            "borough": "Manhattan",
+            "spelled": ""
+          }
+        },
+        {
+          "name": "read_back",
+          "arguments": {
+            "call_id": "rig-live-call3-address-digit-by-digit-1-77878d2e",
+            "address": {
+              "street": "199 East Fourth Street",
+              "unit": "2",
+              "city": "",
+              "zip": "10009",
+              "spelled": ""
+            },
+            "phone": "3475550213",
+            "phone_for": "",
+            "confirmed": false
+          }
+        },
+        {
+          "name": "find_slots",
+          "arguments": {
+            "call_id": "rig-live-call3-address-digit-by-digit-1-77878d2e",
+            "job_type": "tune_up",
+            "priority": null,
+            "preferred_days": [
+              "friday"
+            ],
+            "time_of_day": "afternoon",
+            "day": null,
+            "arrive_after": null,
+            "arrive_before": null,
+            "facts": {
+              "issue": "",
+              "who_home": "",
+              "inside_temp_f": null,
+              "temp_falling_fast": false
+            }
+          }
+        }
+      ],
+      "turn_timings": [
+        {
+          "kind": "plain",
+          "reply_delay_ms": 2293.484036001246,
+          "model_first_token_ms": 673.7,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 3779.9990779994914,
+          "agent_speech_ms": 2540.0,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {
+            "llm_first_token_ms": 673.7,
+            "tts_first_byte_ms": 174.6,
+            "tool_ms": 0.0,
+            "bridge": 0.0,
+            "llm_requests": 2.0,
+            "llm_cancelled": 0.0,
+            "prompt_tokens": 17596.0,
+            "cache_read_tokens": 7137.0,
+            "cache_write_tokens": 10441.0,
+            "llm_output_tokens": 47.0,
+            "speed": 1.0
+          }
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 2313.042169000255,
+          "model_first_token_ms": 777.5,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 2280.000471000676,
+          "agent_speech_ms": 1950.0,
+          "platform_reply_ms": 1368.9,
+          "over_caller_ms": null,
+          "platform_stages": {
+            "transcript_ms": 411.9,
+            "end_of_turn_ms": 426.4,
+            "llm_first_token_ms": 777.5,
+            "tts_first_byte_ms": 157.7,
+            "tool_ms": 69.3,
+            "bridge": 0.0,
+            "llm_requests": 1.0,
+            "llm_cancelled": 0.0,
+            "prompt_tokens": 17644.0,
+            "cache_read_tokens": 17578.0,
+            "cache_write_tokens": 47.0,
+            "llm_output_tokens": 65.0,
+            "reply_ms": 1368.9,
+            "server_ms": 72.3,
+            "speed": 1.0,
+            "agent_lines": 2.0
+          }
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 2603.4863020004195,
+          "model_first_token_ms": 706.9,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 4520.001523000246,
+          "agent_speech_ms": 4300.0,
+          "platform_reply_ms": 1878.8,
+          "over_caller_ms": null,
+          "platform_stages": {
+            "transcript_ms": 515.8,
+            "end_of_turn_ms": 900.3,
+            "llm_first_token_ms": 706.9,
+            "tts_first_byte_ms": 202.0,
+            "tool_ms": 0.0,
+            "bridge": 0.0,
+            "llm_requests": 4.0,
+            "llm_cancelled": 0.0,
+            "prompt_tokens": 17790.0,
+            "cache_read_tokens": 17625.0,
+            "cache_write_tokens": 152.0,
+            "llm_output_tokens": 22.0,
+            "reply_ms": 1878.8,
+            "server_ms": 54.3,
+            "speed": 1.0
+          }
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 3994.39532300039,
+          "model_first_token_ms": 0.0,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 1440.0020640005096,
+          "agent_speech_ms": 9921.291666666666,
+          "platform_reply_ms": 3741.4,
+          "over_caller_ms": null,
+          "platform_stages": {
+            "transcript_ms": 517.3,
+            "end_of_turn_ms": 1501.2,
+            "tts_first_byte_ms": 179.1,
+            "tool_ms": 244.4,
+            "bridge": 0.0,
+            "llm_requests": 3.0,
+            "llm_cancelled": 0.0,
+            "prompt_tokens": 17859.0,
+            "cache_read_tokens": 17777.0,
+            "cache_write_tokens": 66.0,
+            "llm_output_tokens": 75.0,
+            "reply_ms": 3741.4,
+            "server_ms": 97.2,
+            "speed": 1.0
+          }
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1853.8868939995155,
+          "model_first_token_ms": 726.0,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 5079.999450001196,
+          "agent_speech_ms": 7080.0,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {
+            "llm_first_token_ms": 726.0,
+            "tts_first_byte_ms": 168.9,
+            "tool_ms": 0.0,
+            "bridge": 0.0,
+            "llm_requests": 2.0,
+            "llm_cancelled": 0.0,
+            "prompt_tokens": 18563.0,
+            "cache_read_tokens": 18543.0,
+            "cache_write_tokens": 0.0,
+            "llm_output_tokens": 12.0,
+            "speed": 1.0
+          }
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 3055.1187600003686,
+          "model_first_token_ms": 928.1,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 7079.999388000033,
+          "agent_speech_ms": 5120.0,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {
+            "llm_first_token_ms": 928.1,
+            "tts_first_byte_ms": 200.7,
+            "tool_ms": 205.1,
+            "bridge": 0.0,
+            "llm_requests": 3.0,
+            "llm_cancelled": 0.0,
+            "prompt_tokens": 18778.0,
+            "cache_read_tokens": 18543.0,
+            "cache_write_tokens": 219.0,
+            "llm_output_tokens": 192.0,
+            "speed": 1.0,
+            "agent_lines": 2.0
+          }
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 2252.850594000847,
+          "model_first_token_ms": 929.4,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 4579.999509999652,
+          "agent_speech_ms": 7751.791666666667,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {
+            "llm_first_token_ms": 929.4,
+            "tts_first_byte_ms": 158.6,
+            "tool_ms": 0.0,
+            "bridge": 0.0,
+            "llm_requests": 2.0,
+            "llm_cancelled": 1.0,
+            "prompt_tokens": 19299.0,
+            "cache_read_tokens": 19076.0,
+            "cache_write_tokens": 206.0,
+            "llm_output_tokens": 174.0,
+            "speed": 1.0
+          }
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1956.719795999561,
+          "model_first_token_ms": 781.9,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 1080.000280000604,
+          "agent_speech_ms": 7740.0,
+          "platform_reply_ms": 1617.0,
+          "over_caller_ms": null,
+          "platform_stages": {
+            "transcript_ms": 461.3,
+            "end_of_turn_ms": 478.3,
+            "llm_first_token_ms": 781.9,
+            "tts_first_byte_ms": 194.1,
+            "tool_ms": 0.0,
+            "bridge": 0.0,
+            "llm_requests": 1.0,
+            "llm_cancelled": 0.0,
+            "prompt_tokens": 19532.0,
+            "cache_read_tokens": 19282.0,
+            "cache_write_tokens": 189.0,
+            "llm_output_tokens": 54.0,
+            "reply_ms": 1617.0,
+            "server_ms": 150.6,
+            "speed": 1.0
+          }
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 2002.6593610000418,
+          "model_first_token_ms": 764.0,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 3160.0008909999815,
+          "agent_speech_ms": 4840.0,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {
+            "llm_first_token_ms": 764.0,
+            "tts_first_byte_ms": 171.4,
+            "tool_ms": 0.0,
+            "bridge": 0.0,
+            "llm_requests": 2.0,
+            "llm_cancelled": 0.0,
+            "prompt_tokens": 19591.0,
+            "cache_read_tokens": 19471.0,
+            "cache_write_tokens": 104.0,
+            "llm_output_tokens": 39.0,
+            "speed": 1.0
+          }
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 3093.4183790013776,
+          "model_first_token_ms": 793.6,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 4499.999848999323,
+          "agent_speech_ms": 4960.0,
+          "platform_reply_ms": 2559.7,
+          "over_caller_ms": null,
+          "platform_stages": {
+            "transcript_ms": 430.8,
+            "end_of_turn_ms": 1500.9,
+            "llm_first_token_ms": 793.6,
+            "tts_first_byte_ms": 172.0,
+            "tool_ms": 0.0,
+            "bridge": 0.0,
+            "llm_requests": 4.0,
+            "llm_cancelled": 0.0,
+            "prompt_tokens": 19743.0,
+            "cache_read_tokens": 19575.0,
+            "cache_write_tokens": 154.0,
+            "llm_output_tokens": 39.0,
+            "reply_ms": 2559.7,
+            "server_ms": 79.0,
+            "speed": 1.0
+          }
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1862.9440800004886,
+          "model_first_token_ms": 742.1,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 1360.0059110003713,
+          "agent_speech_ms": 5120.0,
+          "platform_reply_ms": 1535.2,
+          "over_caller_ms": null,
+          "platform_stages": {
+            "transcript_ms": 504.9,
+            "end_of_turn_ms": 521.3,
+            "llm_first_token_ms": 742.1,
+            "tts_first_byte_ms": 164.4,
+            "tool_ms": 0.0,
+            "bridge": 0.0,
+            "llm_requests": 1.0,
+            "llm_cancelled": 0.0,
+            "prompt_tokens": 19904.0,
+            "cache_read_tokens": 19729.0,
+            "cache_write_tokens": 112.0,
+            "llm_output_tokens": 36.0,
+            "reply_ms": 1535.2,
+            "server_ms": 97.4,
+            "speed": 1.0
+          }
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1902.9141990004064,
+          "model_first_token_ms": 826.6,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 1999.9972659998093,
+          "agent_speech_ms": 3860.0,
+          "platform_reply_ms": 1570.7,
+          "over_caller_ms": null,
+          "platform_stages": {
+            "transcript_ms": 502.8,
+            "end_of_turn_ms": 520.7,
+            "llm_first_token_ms": 826.6,
+            "tts_first_byte_ms": 159.8,
+            "tool_ms": 0.0,
+            "bridge": 0.0,
+            "llm_requests": 1.0,
+            "llm_cancelled": 0.0,
+            "prompt_tokens": 19999.0,
+            "cache_read_tokens": 19841.0,
+            "cache_write_tokens": 95.0,
+            "llm_output_tokens": 32.0,
+            "reply_ms": 1570.7,
+            "server_ms": 52.8,
+            "speed": 1.0
+          }
+        }
+      ],
+      "call_id": "rig-live-call3-address-digit-by-digit-1-77878d2e",
+      "silent_turns": 0,
+      "cost_parts": {
+        "caller_voice": 0.02058,
+        "agent_ears": 0.008807,
+        "brain_model": 0.004301,
+        "platform": 0.083532,
+        "caller_model": 0.000523,
+        "grader": 0.0
+      }
+    },
+    {
+      "scenario_id": "live-call3-pause-mid-sentence",
+      "sample": 1,
+      "persona": "Maria Delgado, who wants to cancel the heating visit booked for today and pauses mid-sentence to think.",
+      "flow": [
+        "repeat-caller"
+      ],
+      "difficulty": "rigorous",
+      "traits": [
+        "filler"
+      ],
+      "outcome": "fail",
+      "must_pass_failures": [],
+      "check_failures": [
+        "half_reply: \"That visit is canceled. If you'd like another time, I have today ...\" asked nothing, then 22.8 s of silence before the caller spoke",
+        "first_sound: plain median 1739 ms over 1200 ms (2 turns)",
+        "first_sound: plain p90 2598 ms over 2000 ms (2 turns)",
+        "talk_over: the agent made a sound 3143 ms before the caller finished \"Yeah, I'm just wondering if I can cancel my appointment.\"",
+        "llm_requests: 3 model requests on a plain turn (limit 1) after the caller said \"Yeah, I'm just wondering if I can cancel my appointment.\"",
+        "llm_requests: 2 model requests on a plain turn (limit 1) after the caller said \"Yeah. The heat came back on by itself. So I don't... I ...\""
+      ],
+      "error": "",
+      "checks": [
+        "tool_ok",
+        "silence",
+        "half_reply",
+        "repeat",
+        "first_sound",
+        "talk_over",
+        "llm_requests",
+        "readback_rate",
+        "hangup_gap",
+        "time_as_asked"
+      ],
+      "grader_score": 3,
+      "grader_notes": "The second agent turn stacks leftover filler (\"Go ahead. I'm listening. What's on your mind?\") on top of a new question, which sounds robotic, suggests it didn't wait for the caller to finish, and asks two questions at once. The rest of the call is clean: one confirmation, the correct cancel wording, the offered times and a proper sign-off.",
+      "reply_delay_p50_ms": 2012.1382349998385,
+      "reply_delay_p90_ms": 2597.9860060006104,
+      "cost_usd": 0.06468,
+      "agent_cost_usd": 0.033396,
+      "duration_ms": 121092.97782199974,
+      "transcript": [
+        {
+          "role": "agent",
+          "text": "Hi. This is Summit Air. Is this Maria?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "Yeah, I'm just wondering if I can cancel my appointment.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Go ahead. I'm listening. What's on your mind? Sure. Before I do anything, can I ask what changed?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "Yeah. The heat came back on by itself. So I don't... I don't need it.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "That's good news that it came back on. Should I cancel your visit for 620 Bedford Avenue?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "Yeah. That's correct. Cancel it.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "That visit is canceled. If you'd like another time, I have today twelve to four or today four to eight.",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "No. Not today. Is that all?",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Yes. That's everything. If the heat goes out again, just call us back. Thanks for calling Summit Air. Have a great rest of your day.",
+          "said": null
+        }
+      ],
+      "tool_calls": [
+        {
+          "name": "cancel_appointment",
+          "arguments": {
+            "call_id": "rig-live-call3-pause-mid-sentence-1-67b00c11",
+            "booking_id": 1,
+            "reason": "Heat came back on by itself; caller no longer needs the visit."
+          }
+        },
+        {
+          "name": "end_call",
+          "arguments": {
+            "call_id": "rig-live-call3-pause-mid-sentence-1-67b00c11",
+            "reason": "resolved"
+          }
+        }
+      ],
+      "turn_timings": [
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1738.7748809987897,
+          "model_first_token_ms": 674.7,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 7339.997535001203,
+          "agent_speech_ms": 3960.0,
+          "platform_reply_ms": null,
+          "over_caller_ms": 3142.6638590010043,
+          "platform_stages": {
+            "transcript_ms": 480.4,
+            "end_of_turn_ms": 494.4,
+            "llm_first_token_ms": 674.7,
+            "tts_first_byte_ms": 161.1,
+            "tool_ms": 0.0,
+            "bridge": 0.0,
+            "llm_requests": 3.0,
+            "llm_cancelled": 0.0,
+            "prompt_tokens": 18292.0,
+            "cache_read_tokens": 7137.0,
+            "cache_write_tokens": 11144.0,
+            "llm_output_tokens": 19.0,
+            "speed": 1.0,
+            "agent_lines": 2.0
+          }
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 2597.9860060006104,
+          "model_first_token_ms": 689.4,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 3939.9953219990493,
+          "agent_speech_ms": 4460.0,
+          "platform_reply_ms": 1739.3,
+          "over_caller_ms": null,
+          "platform_stages": {
+            "transcript_ms": 464.8,
+            "end_of_turn_ms": 1500.7,
+            "llm_first_token_ms": 689.4,
+            "tts_first_byte_ms": 158.6,
+            "tool_ms": 0.0,
+            "bridge": 0.0,
+            "llm_requests": 2.0,
+            "llm_cancelled": 0.0,
+            "prompt_tokens": 18380.0,
+            "cache_read_tokens": 18319.0,
+            "cache_write_tokens": 36.0,
+            "llm_output_tokens": 44.0,
+            "reply_ms": 1739.3,
+            "server_ms": 72.3,
+            "speed": 1.0
+          }
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 2012.1382349998385,
+          "model_first_token_ms": 0.0,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 1760.0025950005147,
+          "agent_speech_ms": 5550.0,
+          "platform_reply_ms": 1629.2,
+          "over_caller_ms": null,
+          "platform_stages": {
+            "transcript_ms": 464.1,
+            "end_of_turn_ms": 484.2,
+            "tts_first_byte_ms": 167.1,
+            "tool_ms": 245.5,
+            "bridge": 0.0,
+            "llm_requests": 1.0,
+            "llm_cancelled": 0.0,
+            "prompt_tokens": 18440.0,
+            "cache_read_tokens": 18355.0,
+            "cache_write_tokens": 63.0,
+            "llm_output_tokens": 120.0,
+            "reply_ms": 1629.2,
+            "server_ms": 62.3,
+            "speed": 1.0
+          }
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 2248.9717309990738,
+          "model_first_token_ms": 653.5,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 2520.001133000733,
+          "agent_speech_ms": 5140.0,
+          "platform_reply_ms": 1769.3,
+          "over_caller_ms": null,
+          "platform_stages": {
+            "transcript_ms": 476.0,
+            "end_of_turn_ms": 1500.7,
+            "llm_first_token_ms": 653.5,
+            "tts_first_byte_ms": 188.8,
+            "tool_ms": 41.2,
+            "bridge": 0.0,
+            "llm_requests": 1.0,
+            "llm_cancelled": 0.0,
+            "prompt_tokens": 18841.0,
+            "cache_read_tokens": 18418.0,
+            "cache_write_tokens": 406.0,
+            "llm_output_tokens": 104.0,
+            "reply_ms": 1769.3,
+            "server_ms": 72.8,
+            "speed": 1.0
+          }
+        }
+      ],
+      "call_id": "rig-live-call3-pause-mid-sentence-1-67b00c11",
+      "silent_turns": 0,
+      "cost_parts": {
+        "caller_voice": 0.00549,
+        "agent_ears": 0.002722,
+        "brain_model": 0.002431,
+        "platform": 0.030965,
+        "caller_model": 0.000201,
+        "grader": 0.022871
+      }
+    }
+  ]
+}

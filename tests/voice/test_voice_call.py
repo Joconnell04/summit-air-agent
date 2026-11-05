@@ -525,3 +525,25 @@ def test_a_reply_with_nothing_left_is_silent(monkeypatch):
         monkeypatch, _gave_address, "Let me read that back. ", "Your ZIP is 11234."
     )
     assert text == ""
+
+
+def test_the_known_facts_note_goes_with_a_caller_line_only_when_the_facts_change():
+    """An unchanged caller line lets LiveKit keep the reply it drafted early (issue #150); the last
+    note stays in the model's history."""
+    known = [{"name": "Pat Rivera"}, {"name": "Pat Rivera"}, {"name": "Pat Rivera", "zip": "11201"}]
+
+    class Server:
+        async def turn(self, speaker, text, timings):
+            return {"refused": None, "say": "", "data": {"hints": [], "known": known.pop(0)}}
+
+    call = Call(Server(), Bridge([], play=None, silent=lambda: True), ToolLog(), ENDPOINTING)
+    call.session = Session()
+    lines = [caller("It's Pat."), caller("Yes."), caller("It's 11201.")]
+
+    async def run():
+        for line in lines:
+            await call.caller_line(line)
+
+    asyncio.run(run())
+    assert ["Already known" in "".join(line.content) for line in lines] == [True, False, True]
+    assert "zip 11201" in lines[2].content[-1]

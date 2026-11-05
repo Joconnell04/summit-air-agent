@@ -176,3 +176,15 @@ def test_deepgram_is_asked_for_its_final_transcript_at_the_end_of_speech_when_se
     on = {**voice, "stt": {**voice["stt"], "finalize_at_end_of_speech": True}}
     assert build_stt(off, NAMES, api_key="test").capabilities.manual_flush is False
     assert build_stt(on, NAMES, api_key="test").capabilities.manual_flush is True
+
+
+def test_flux_decides_the_turn_and_keeps_the_local_names_as_keyterms():
+    from livekit.plugins import deepgram
+
+    voice = load_voice()
+    flux = {**voice, "stt": voice["stt_candidates"]["flux"]}
+    assert stt_options(flux, NAMES) == {"model": "flux-general-en", "keyterm": NAMES.keyterms()}
+    assert isinstance(build_stt(flux, NAMES, api_key="test"), deepgram.STTv2)
+    assert turn_handling(flux)["turn_detection"] == "stt"
+    eager = {**voice, "stt": {**flux["stt"], "eager_eot_threshold": 0.5}}
+    assert stt_options(eager, NAMES)["eager_eot_threshold"] == 0.5

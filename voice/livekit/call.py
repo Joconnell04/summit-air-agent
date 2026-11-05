@@ -12,7 +12,7 @@ from livekit import rtc
 from livekit.agents import Agent, ModelSettings, StopResponse, llm
 from livekit.agents.llm import ChatContext, ChatMessage
 
-from prompts.assemble import SENTENCE_END, SpokenReply, server_notes
+from prompts.assemble import SENTENCE_END, KnownFacts, SpokenReply, server_notes
 
 from .bridge import Bridge
 from .server import UNREACHABLE, ToolServer
@@ -60,6 +60,8 @@ class Call:
         self._last_post: asyncio.Task | None = None
         # What of the model's replies the caller hears (prompts/assemble.py SpokenReply).
         self.reply = SpokenReply()
+        # The facts the server says are known, given to the model only when they change.
+        self.known = KnownFacts()
         # The speaking rate the server set for this call; None leaves the voice at its default.
         self.speed: float | None = None
         # Text the worker speaks at its own speed (the parts of a slower read-back), by its text.
@@ -149,7 +151,7 @@ class Call:
         stop = (data.get("recording") or {}).get("action") == "stop"
         if stop and self.stop_recording:
             asyncio.create_task(self.stop_recording())
-        notes = server_notes(data.get("hints", []), data.get("known"))
+        notes = server_notes(data.get("hints", []), self.known.new(data.get("known")))
         if notes:
             message.content.append("\n" + "\n".join(notes))
         handoff = data.get("handoff")

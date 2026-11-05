@@ -1,0 +1,692 @@
+{
+  "run_id": "20261105-182922-livekit-rig-ackA-fast-custom",
+  "created": "2026-11-05T18:29:22.255133Z",
+  "suite": "custom",
+  "tags": [],
+  "stack": "livekit-rig-ackA",
+  "profile": "fast",
+  "hash": "5d9c50ed82f8030c",
+  "prompt_hash": "655da00d76acb908",
+  "model": "claude-haiku-5-5",
+  "transport": "audio",
+  "overlay": null,
+  "scenarios": [
+    {
+      "scenario_id": "live-call3-one-word-quiet",
+      "sample": 1,
+      "persona": "A caller who wants to cancel an appointment and answers in one word.",
+      "flow": [
+        "repeat-caller"
+      ],
+      "difficulty": "rigorous",
+      "traits": [
+        "vague"
+      ],
+      "outcome": "error",
+      "must_pass_failures": [],
+      "check_failures": [
+        "half_reply: \"Go ahead with the zip code.\" asked nothing, then 22.7 s of silence before the caller spoke",
+        "half_reply: \"Me try finding the address without the zip.\" asked nothing, then 22.9 s of silence before the caller spoke",
+        "half_reply: \"Ahead with the ZIP code whenever you have\" asked nothing, then 21.2 s of silence before the caller spoke",
+        "half_reply: \"I'm still here.\" asked nothing, then 21.9 s of silence before the caller spoke",
+        "half_reply: \"Sorry. I can't find the address without the ZIP code. If you're ...\" asked nothing, then 20.6 s of silence before the caller hung up",
+        "first_sound: plain median 2128 ms over 1200 ms (9 turns)",
+        "first_sound: plain p90 2367 ms over 2000 ms (9 turns)",
+        "llm_requests: 2 model requests on a plain turn (limit 1) after the caller said \"Hello? Are you gonna ask me a question? I don't have the ...\"",
+        "llm_requests: 2 model requests on a plain turn (limit 1) after the caller said \"Are you gonna ask me a question? What is the question?\""
+      ],
+      "error": "the call did not finish within 10 caller turns",
+      "checks": [
+        "silence",
+        "half_reply",
+        "repeat",
+        "first_sound",
+        "talk_over",
+        "llm_requests",
+        "readback_rate",
+        "hangup_gap",
+        "time_as_asked"
+      ],
+      "grader_score": null,
+      "grader_notes": "",
+      "reply_delay_p50_ms": 2097.9777120001017,
+      "reply_delay_p90_ms": 2348.065542999393,
+      "cost_usd": 0.076884,
+      "agent_cost_usd": 0.062698,
+      "duration_ms": 232176.29069800023,
+      "transcript": [
+        {
+          "role": "agent",
+          "text": "For calling Summit Air. This is the virtual assistant. How can I help?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "I want to cancel my appointment.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Sure. I can help with that. Can I ask what changed?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "Maybe.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Okay. The number you're calling from isn't on an account I can see, so I'll need to look up your booking. Can you give me the address the appointment is for?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "One four two Main Street.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Got it. What's the zip code for 142 Main Street?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "Why do you need that? Just pull up the address.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "I'll need the zip to find the right address since there are main streets in more than one place. Do you know the zip code?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "Sure.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Go ahead with the zip code.",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "Hello? Are you gonna ask me a question? I don't have the zip code memorized, I'm not sure.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Me try finding the address without the zip.",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "Hello? Why do you take so long to respond?",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Sorry about that. What's the zip code there?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "Sure.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Ahead with the ZIP code whenever you have",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "Hello?",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "I'm still here.",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "Are you gonna ask me a question? What is the question?",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Sorry. I can't find the address without the ZIP code. If you're not sure, you can call back when you have it, or I can have someone from our team call you.",
+          "said": null
+        }
+      ],
+      "tool_calls": [
+        {
+          "name": "find_address",
+          "arguments": {
+            "call_id": "rig-live-call3-one-word-quiet-1-2410708e",
+            "street": "142 Main Street",
+            "borough": "",
+            "spelled": ""
+          }
+        }
+      ],
+      "turn_timings": [
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1930.0142419988333,
+          "model_first_token_ms": 889.1,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 1500.0000810005076,
+          "agent_speech_ms": 2040.0,
+          "platform_reply_ms": 1402.4,
+          "over_caller_ms": null,
+          "platform_stages": {
+            "transcript_ms": 326.5,
+            "end_of_turn_ms": 355.2,
+            "llm_first_token_ms": 889.1,
+            "tts_first_byte_ms": 165.3,
+            "tool_ms": 0.0,
+            "bridge": 0.0,
+            "llm_requests": 1.0,
+            "llm_cancelled": 0.0,
+            "prompt_tokens": 17592.0,
+            "cache_read_tokens": 7137.0,
+            "cache_write_tokens": 10438.0,
+            "llm_output_tokens": 23.0,
+            "reply_ms": 1402.4,
+            "server_ms": 119.0,
+            "speed": 1.0
+          }
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 2168.1227539993415,
+          "model_first_token_ms": 609.7,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 419.9995780008976,
+          "agent_speech_ms": 7120.0,
+          "platform_reply_ms": 1731.0,
+          "over_caller_ms": null,
+          "platform_stages": {
+            "transcript_ms": 319.6,
+            "end_of_turn_ms": 1500.9,
+            "llm_first_token_ms": 609.7,
+            "tts_first_byte_ms": 177.4,
+            "tool_ms": 0.0,
+            "bridge": 0.0,
+            "llm_requests": 1.0,
+            "llm_cancelled": 0.0,
+            "prompt_tokens": 17622.0,
+            "cache_read_tokens": 17575.0,
+            "cache_write_tokens": 36.0,
+            "llm_output_tokens": 53.0,
+            "reply_ms": 1731.0,
+            "server_ms": 46.5,
+            "speed": 1.0
+          }
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 2348.065542999393,
+          "model_first_token_ms": 684.0,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 1900.0012120004612,
+          "agent_speech_ms": 2730.0,
+          "platform_reply_ms": 1751.9,
+          "over_caller_ms": null,
+          "platform_stages": {
+            "transcript_ms": 374.1,
+            "end_of_turn_ms": 1501.0,
+            "llm_first_token_ms": 684.0,
+            "tts_first_byte_ms": 202.8,
+            "tool_ms": 0.0,
+            "bridge": 0.0,
+            "llm_requests": 1.0,
+            "llm_cancelled": 0.0,
+            "prompt_tokens": 17682.0,
+            "cache_read_tokens": 17611.0,
+            "cache_write_tokens": 58.0,
+            "llm_output_tokens": 25.0,
+            "reply_ms": 1751.9,
+            "server_ms": 42.6,
+            "speed": 1.0
+          }
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 2326.5942480002195,
+          "model_first_token_ms": 843.8,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 2779.9938499993004,
+          "agent_speech_ms": 6110.0,
+          "platform_reply_ms": 1778.1,
+          "over_caller_ms": null,
+          "platform_stages": {
+            "transcript_ms": 357.0,
+            "end_of_turn_ms": 1503.6,
+            "llm_first_token_ms": 843.8,
+            "tts_first_byte_ms": 171.3,
+            "tool_ms": 0.0,
+            "bridge": 0.0,
+            "llm_requests": 1.0,
+            "llm_cancelled": 0.0,
+            "prompt_tokens": 17724.0,
+            "cache_read_tokens": 17669.0,
+            "cache_write_tokens": 34.0,
+            "llm_output_tokens": 46.0,
+            "reply_ms": 1778.1,
+            "server_ms": 95.1,
+            "speed": 1.0
+          }
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1896.2725250003132,
+          "model_first_token_ms": 759.0,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 459.9622489995454,
+          "agent_speech_ms": 1240.0,
+          "platform_reply_ms": 1262.6,
+          "over_caller_ms": null,
+          "platform_stages": {
+            "transcript_ms": 315.2,
+            "end_of_turn_ms": 900.5,
+            "llm_first_token_ms": 759.0,
+            "tts_first_byte_ms": 182.6,
+            "tool_ms": 0.0,
+            "bridge": 0.0,
+            "llm_requests": 1.0,
+            "llm_cancelled": 0.0,
+            "prompt_tokens": 17774.0,
+            "cache_read_tokens": 17703.0,
+            "cache_write_tokens": 61.0,
+            "llm_output_tokens": 23.0,
+            "reply_ms": 1262.6,
+            "server_ms": 41.3,
+            "speed": 1.0
+          }
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1867.1516929998688,
+          "model_first_token_ms": 770.5,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 5859.999840000455,
+          "agent_speech_ms": 2110.0,
+          "platform_reply_ms": 1276.4,
+          "over_caller_ms": null,
+          "platform_stages": {
+            "transcript_ms": 322.5,
+            "end_of_turn_ms": 354.4,
+            "llm_first_token_ms": 770.5,
+            "tts_first_byte_ms": 169.6,
+            "tool_ms": 0.0,
+            "bridge": 0.0,
+            "llm_requests": 2.0,
+            "llm_cancelled": 0.0,
+            "prompt_tokens": 17812.0,
+            "cache_read_tokens": 17764.0,
+            "cache_write_tokens": 26.0,
+            "llm_output_tokens": 40.0,
+            "reply_ms": 1276.4,
+            "server_ms": 86.8,
+            "speed": 1.0
+          }
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 2097.9777120001017,
+          "model_first_token_ms": 935.2,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 2760.0003210009163,
+          "agent_speech_ms": 1680.0,
+          "platform_reply_ms": 1456.8,
+          "over_caller_ms": null,
+          "platform_stages": {
+            "transcript_ms": 328.0,
+            "end_of_turn_ms": 356.1,
+            "llm_first_token_ms": 935.2,
+            "tts_first_byte_ms": 159.1,
+            "tool_ms": 59.4,
+            "bridge": 0.0,
+            "llm_requests": 1.0,
+            "llm_cancelled": 0.0,
+            "prompt_tokens": 17870.0,
+            "cache_read_tokens": 17790.0,
+            "cache_write_tokens": 59.0,
+            "llm_output_tokens": 82.0,
+            "reply_ms": 1456.8,
+            "server_ms": 74.1,
+            "speed": 1.0,
+            "agent_lines": 2.0
+          }
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 2367.109239000456,
+          "model_first_token_ms": 858.8,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 460.0013029994443,
+          "agent_speech_ms": 1440.0,
+          "platform_reply_ms": 1331.5,
+          "over_caller_ms": null,
+          "platform_stages": {
+            "transcript_ms": 284.9,
+            "end_of_turn_ms": 905.2,
+            "llm_first_token_ms": 858.8,
+            "tts_first_byte_ms": 180.2,
+            "tool_ms": 0.0,
+            "bridge": 0.0,
+            "llm_requests": 1.0,
+            "llm_cancelled": 0.0,
+            "prompt_tokens": 18011.0,
+            "cache_read_tokens": 17849.0,
+            "cache_write_tokens": 152.0,
+            "llm_output_tokens": 23.0,
+            "reply_ms": 1331.5,
+            "server_ms": 60.3,
+            "speed": 1.0
+          }
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 2128.372322999894,
+          "model_first_token_ms": 854.5,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 539.9929959994552,
+          "agent_speech_ms": 790.0,
+          "platform_reply_ms": 1416.8,
+          "over_caller_ms": null,
+          "platform_stages": {
+            "transcript_ms": 367.9,
+            "end_of_turn_ms": 402.0,
+            "llm_first_token_ms": 854.5,
+            "tts_first_byte_ms": 154.8,
+            "tool_ms": 0.0,
+            "bridge": 0.0,
+            "llm_requests": 1.0,
+            "llm_cancelled": 0.0,
+            "prompt_tokens": 18040.0,
+            "cache_read_tokens": 18001.0,
+            "cache_write_tokens": 29.0,
+            "llm_output_tokens": 33.0,
+            "reply_ms": 1416.8,
+            "server_ms": 46.3,
+            "speed": 1.0
+          }
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1689.6911419999014,
+          "model_first_token_ms": 543.5,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 2960.0000390000787,
+          "agent_speech_ms": 6070.0,
+          "platform_reply_ms": 1421.0,
+          "over_caller_ms": null,
+          "platform_stages": {
+            "transcript_ms": 354.9,
+            "end_of_turn_ms": 357.2,
+            "llm_first_token_ms": 543.5,
+            "tts_first_byte_ms": 164.6,
+            "tool_ms": 0.0,
+            "bridge": 0.0,
+            "llm_requests": 2.0,
+            "llm_cancelled": 0.0,
+            "prompt_tokens": 18065.0,
+            "cache_read_tokens": 18030.0,
+            "cache_write_tokens": 17.0,
+            "llm_output_tokens": 72.0,
+            "reply_ms": 1421.0,
+            "server_ms": 55.4,
+            "speed": 1.0
+          }
+        }
+      ],
+      "call_id": "rig-live-call3-one-word-quiet-1-2410708e",
+      "silent_turns": 0,
+      "cost_parts": {
+        "caller_voice": 0.00936,
+        "agent_ears": 0.004471,
+        "brain_model": 0.00326,
+        "platform": 0.059437,
+        "caller_model": 0.000356,
+        "grader": 0.0
+      }
+    },
+    {
+      "scenario_id": "live-call3-the-what",
+      "sample": 1,
+      "persona": "A caller who wants to cancel an appointment and doesn't follow the agent's first question.",
+      "flow": [
+        "repeat-caller"
+      ],
+      "difficulty": "standard",
+      "traits": [
+        "hard-of-hearing"
+      ],
+      "outcome": "fail",
+      "must_pass_failures": [],
+      "check_failures": [
+        "first_sound: plain median 1833 ms over 1200 ms (2 turns)",
+        "first_sound: plain p90 2231 ms over 2000 ms (2 turns)",
+        "llm_requests: 2 model requests on a plain turn (limit 1) after the caller said \"I want to cancel my appointment. It's under Jackson.\""
+      ],
+      "error": "",
+      "checks": [
+        "agent_never_says",
+        "silence",
+        "half_reply",
+        "repeat",
+        "first_sound",
+        "talk_over",
+        "llm_requests",
+        "readback_rate",
+        "hangup_gap",
+        "time_as_asked"
+      ],
+      "grader_score": 3,
+      "grader_notes": "The agent rephrased well after \"The what?\", but its next turn, \"You tell me the address on the appointment?\", was clunky and pressed a caller who had already said bye. It then ended without saying whether the Jackson appointment was cancelled or what happens next.",
+      "reply_delay_p50_ms": 1430.0545480000437,
+      "reply_delay_p90_ms": 2230.6819239993274,
+      "cost_usd": 0.050025,
+      "agent_cost_usd": 0.022212,
+      "duration_ms": 75255.63915199928,
+      "transcript": [
+        {
+          "role": "agent",
+          "text": "Thanks for calling Summit Air. This is the virtual assistant. How can I help?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "I want to cancel my appointment. It's under Jackson.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Sure. Can I ask what changed?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "The what?",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Just wanted to know why you're canceling. Is it because the heat came back on or something else?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "I don't know. Just cancel it. Bye.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "You tell me the address on the appointment?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "Uh, I'm not sure which address it's under. Okay. Bye.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Okay. Thanks for calling Summit Air. Have a great rest of your day.",
+          "said": null
+        }
+      ],
+      "tool_calls": [
+        {
+          "name": "cancel_appointment",
+          "arguments": {
+            "call_id": "rig-live-call3-the-what-1-6db86b12",
+            "reason": "Caller asked to cancel; did not give a reason."
+          }
+        },
+        {
+          "name": "end_call",
+          "arguments": {
+            "call_id": "rig-live-call3-the-what-1-6db86b12",
+            "reason": "caller_goodbye"
+          }
+        }
+      ],
+      "turn_timings": [
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1832.6916649994018,
+          "model_first_token_ms": 650.2,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 2820.0002600005973,
+          "agent_speech_ms": 1190.0,
+          "platform_reply_ms": 1351.6,
+          "over_caller_ms": null,
+          "platform_stages": {
+            "transcript_ms": 475.1,
+            "end_of_turn_ms": 479.4,
+            "llm_first_token_ms": 650.2,
+            "tts_first_byte_ms": 159.7,
+            "tool_ms": 0.0,
+            "bridge": 0.0,
+            "llm_requests": 2.0,
+            "llm_cancelled": 0.0,
+            "prompt_tokens": 17589.0,
+            "cache_read_tokens": 7137.0,
+            "cache_write_tokens": 10435.0,
+            "llm_output_tokens": 20.0,
+            "reply_ms": 1351.6,
+            "server_ms": 49.7,
+            "speed": 1.0
+          }
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 2230.6819239993274,
+          "model_first_token_ms": 731.3,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 339.99913800107606,
+          "agent_speech_ms": 3970.0,
+          "platform_reply_ms": 1703.2,
+          "over_caller_ms": null,
+          "platform_stages": {
+            "transcript_ms": 468.9,
+            "end_of_turn_ms": 1500.2,
+            "llm_first_token_ms": 731.3,
+            "tts_first_byte_ms": 151.0,
+            "tool_ms": 0.0,
+            "bridge": 0.0,
+            "llm_requests": 1.0,
+            "llm_cancelled": 0.0,
+            "prompt_tokens": 17619.0,
+            "cache_read_tokens": 17572.0,
+            "cache_write_tokens": 38.0,
+            "llm_output_tokens": 35.0,
+            "reply_ms": 1703.2,
+            "server_ms": 43.9,
+            "speed": 1.0
+          }
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 1109.9549419996038,
+          "model_first_token_ms": 506.9,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 2720.0017740005933,
+          "agent_speech_ms": 1700.0,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {
+            "llm_first_token_ms": 506.9,
+            "tts_first_byte_ms": 163.9,
+            "tool_ms": 31.6,
+            "bridge": 0.0,
+            "llm_requests": 2.0,
+            "llm_cancelled": 0.0,
+            "prompt_tokens": 17659.0,
+            "cache_read_tokens": 17610.0,
+            "cache_write_tokens": 38.0,
+            "llm_output_tokens": 92.0,
+            "speed": 1.0
+          }
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 1430.0545480000437,
+          "model_first_token_ms": 809.6,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": 3000.0006909995136,
+          "agent_speech_ms": 2620.0,
+          "platform_reply_ms": 901.5,
+          "over_caller_ms": null,
+          "platform_stages": {
+            "transcript_ms": 0.0,
+            "end_of_turn_ms": 355.0,
+            "llm_first_token_ms": 809.6,
+            "tts_first_byte_ms": 178.2,
+            "tool_ms": 68.9,
+            "bridge": 0.0,
+            "llm_requests": 1.0,
+            "llm_cancelled": 0.0,
+            "prompt_tokens": 17839.0,
+            "cache_read_tokens": 17727.0,
+            "cache_write_tokens": 86.0,
+            "llm_output_tokens": 86.0,
+            "reply_ms": 901.5,
+            "server_ms": 94.3,
+            "speed": 1.0
+          }
+        }
+      ],
+      "call_id": "rig-live-call3-the-what-1-6db86b12",
+      "silent_turns": 0,
+      "cost_parts": {
+        "caller_voice": 0.00444,
+        "agent_ears": 0.001691,
+        "brain_model": 0.002048,
+        "platform": 0.020164,
+        "caller_model": 0.000181,
+        "grader": 0.021501
+      }
+    }
+  ]
+}

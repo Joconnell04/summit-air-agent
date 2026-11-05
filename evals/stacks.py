@@ -201,11 +201,17 @@ class InProcessAgent:
         # and the checks see what a caller would (prompts/assemble.py SpokenReply).
         assemble = _assemble()
         self.reply = assemble.SpokenReply() if hasattr(assemble, "SpokenReply") else None
+        self.known = assemble.KnownFacts() if hasattr(assemble, "KnownFacts") else None
         # The speaking rate the server set (app/pace.py); every agent line is posted with the
         # speed it would be spoken at, as the worker does.
         self.speed: float | None = None
         # The caller asked the agent to wait on their last line (app/dead_air.py).
         self.holding = False
+
+    def _known(self, data: dict) -> dict | None:
+        """The known facts for this line's note, only when they changed, as the worker sends them."""
+        known = data.get("known")
+        return self.known.new(known) if self.known is not None else known
 
     def _pace(self, data: dict) -> None:
         pace = (data or {}).get("pace")
@@ -255,7 +261,7 @@ class InProcessAgent:
         spoken = result["data"].get("spoken") or {}
         if spoken.get("text"):
             # The worker adds the server's notes to the caller's line before it speaks the line.
-            notes = server_notes(result["data"].get("hints", []), result["data"].get("known"))
+            notes = server_notes(result["data"].get("hints", []), self._known(result["data"]))
             self.messages.append({"role": "user", "content": "\n".join([caller_text, *notes])})
             return self._speak_from_code(spoken["text"], t0)
         hold = (result["data"].get("hold") or {}).get("state")
@@ -264,7 +270,7 @@ class InProcessAgent:
             # Said on hold to someone else: the worker lets the model say nothing.
             self.messages.append({"role": "user", "content": caller_text})
             return AgentTurn("", TurnTiming(kind="plain", reply_delay_ms=0, model_first_token_ms=0))
-        notes = server_notes(result["data"].get("hints", []), result["data"].get("known"))
+        notes = server_notes(result["data"].get("hints", []), self._known(result["data"]))
         return self._think("\n".join([caller_text, *notes]), t0)
 
     def step_away(self) -> AgentTurn:
