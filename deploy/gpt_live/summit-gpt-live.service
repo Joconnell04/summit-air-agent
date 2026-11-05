@@ -1,0 +1,17 @@
+# The GPT-Live phone service (voice/gpt_live/sip.py), run as jackson from ~/summit-air/gpt-live
+# (deploy/gpt_live/deploy.sh), in front of the shared tool server on 8100.
+[Unit]
+Description=Summit Air GPT-Live phone service
+After=network-online.target
+
+[Service]
+User=jackson
+WorkingDirectory=/home/jackson/summit-air/gpt-live
+EnvironmentFile=/home/jackson/summit-air/.env
+Environment=TOOL_SERVER_URL=http://127.0.0.1:8100
+ExecStart=/home/jackson/.local/bin/uv run uvicorn --factory --host 127.0.0.1 --port 8104 voice.gpt_live.sip:create_app
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

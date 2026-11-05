@@ -184,6 +184,20 @@ realtime:
     # (read 2026-11-03). Transcription ASSUMED at gpt-4o-mini-transcribe's audio input rate.
     price: {text_input: 4.00, audio_input: 32.00, cached_input: 0.40, text_output: 24.00,
             audio_output: 64.00, transcribe_per_minute: 0.003}
+  # GPT-Live on the live-call slate (voice/gpt_live): a full-duplex voice model that delegates
+  # tool use to a Responses backend model. Both the phone path and the rig use this profile.
+  gpt_live:
+    provider: openai
+    model: gpt-live-1
+    voice: marin
+    backend_model: gpt-6-luna
+    # Low keeps tool turns quick; medium is the model's default (SOURCE: model page below).
+    reasoning_effort: low
+    # SOURCE (read 2026-11-05): https://developers.openai.com/api/docs/models/gpt-live-1 ($0.05 a
+    # minute, billed per second) and https://developers.openai.com/api/docs/models/gpt-6-luna
+    # (USD per million tokens).
+    price: {per_minute: 0.05, backend_input: 0.10, backend_cached_input: 0.01,
+            backend_output: 0.50}
   gemini:
     provider: gemini
     model: gemini-3.8-live
