@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% from "_ui.html" import bench_tabs, day_nav, empty with context %}
+{% from "_schedule.html" import grid, result_line, pick_customer, use_anyway with context %}
+{% block title %}Bench: schedule{% endblock %}
+{% block tabs %}{{ bench_tabs(tab) }}{% endblock %}
+{% block body %}
+<main class="page">
+  <div class="page-head">
+    <div class="lead">
+      <div class="crumbs">Debug bench<span>/</span><span>ServiceTitan, read live through the adapter the agent uses</span></div>
+      <div class="actions">
+        <h1 class="page-title">Schedule, {{ day.strftime("%a %b %-d") }}</h1>
+        {{ day_nav("/bench/schedule", slug, day, is_today) }}
+      </div>
+    </div>
+    <div class="actions">{{ result_line(result) }}{{ pick_customer(result, here) }}</div>
+  </div>
+
+  <div class="split narrow-side">
+    <section class="panel" id="changes" data-changes="/bench/schedule/changes">
+      <div class="panel-head"><h2>Changes in ServiceTitan</h2><span class="sub">edits from here and the owner view, and the agent's bookings, live</span></div>
+      <div class="table-wrap changes">
+      <table class="table">
+        <thead><tr><th>Sent</th><th>Who</th><th>What</th><th>In ServiceTitan</th></tr></thead>
+        <tbody data-changes-body>
+        {% for c in changes %}
+          <tr>
+            <td class="time">{{ c.at_local }}</td>
+            <td class="fit">{{ c.by }}{% if c.where in ("owner", "bench") %} <span class="faint">{{ c.where }}</span>{% endif %}</td>
+            <td>{% if c.ok %}{{ c.what }}{% else %}<span class="error">{{ c.what }}: {{ c.error }}</span>{% endif %}</td>
+            <td class="time">{{ c.landed_local }}</td>
+          </tr>
+        {% else %}
+          <tr><td colspan="4" class="muted">No changes yet.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+      </div>
+    </section>
+
+    <section class="panel" id="customer">
+      <div class="panel-head"><h2>Customer</h2></div>
+      <div class="panel-body">
+        <form class="actions fill" method="post" action="/bench/schedule/find">
+          <input type="hidden" name="day" value="{{ day.isoformat() }}">
+          <label class="sr-only" for="find-phone">Phone</label>
+          <input class="field num" id="find-phone" name="phone" inputmode="tel" placeholder="(718) 555-0142">
+          <button class="btn" type="submit">Find</button>
+        </form>
+      </div>
+      {% if customer %}
+      <form method="post" action="/owner/customers/{{ customer.id }}">
+        <input type="hidden" name="next" value="{{ here }}&customer={{ customer.id }}">
+        <table class="table form">
+          <tbody>
+            <tr><td class="fit"><label for="c-name">Name</label></td><td><input class="field" id="c-name" name="name" maxlength="60" value="{{ customer.name }}"></td></tr>
+            {% if customer.phones %}{% set p = customer.phones[0] %}
+            <tr><td class="fit"><label for="c-phone">Phone</label></td><td><input type="hidden" name="contact" value="{{ p.id }}"><input class="field num" id="c-phone" name="phone" inputmode="tel" maxlength="20" value="{{ result.pending.phone if result and result.code == 'phone_taken' and result.pending and result.pending.contact == p.id else p.value }}"></td></tr>
+            {% endif %}
+            {{ use_anyway(result) }}
+          </tbody>
+        </table>
+        <div class="panel-foot actions"><span>Customer {{ customer.id }}</span><button class="btn primary" type="submit">Save</button></div>
+      </form>
+      {% elif not_found %}{{ empty("No customer has that number.") }}{% endif %}
+    </section>
+  </div>
+  <section class="panel">
+    <div class="panel-head"><h2>Technicians</h2><span class="sub">each column says what find_slots would offer now</span></div>
+    {% if sched %}{% if sched.rows %}{{ grid(sched, here, job_types, bench=true) }}{% else %}{{ empty("Nobody is working this day.") }}{% endif %}
+    {% else %}{{ empty(problem) }}{% endif %}
+  </section>
+
+</main>
+{% endblock %}

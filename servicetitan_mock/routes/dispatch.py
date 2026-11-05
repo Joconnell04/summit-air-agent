@@ -10,7 +10,7 @@ from pydantic import AwareDatetime, BaseModel, Field
 from .. import capacity
 from ..config import TenantConfig, iso
 from ..db import page_of, write
-from ..deps import get_cfg, get_conn, get_now, paging
+from ..deps import get_cfg, get_conn, get_now, get_user_id, paging
 from ..errors import ApiError
 from . import tenant_router
 from .jpm import shape_appointment
@@ -299,3 +299,218 @@ def list_shifts(
         + " ORDER BY start, id"
     )
     return page_of(conn, sql, params, shape_shift, *pg)
+
+
+# ---- non-job appointments: time a technician is away from jobs -----------------------------------
+# Field names are those of ServiceTitan's dispatch API (NonJobAppointments). Which fields are
+# required, and that duration is a .NET time span ("04:00:00", "1.00:00:00"), are ASSUMED from its
+# reference. The mock keeps no timesheet codes, so timesheetCodeId is stored nowhere. There is no
+# delete here: a block is taken off the schedule by a PUT with active false, so its history stays.
+
+MAX_BLOCK = timedelta(days=7)
+
+
+def _span(value: str) -> timedelta:
+    """A .NET time span: [d.]hh:mm[:ss]."""
+    days, clock = value.split(".", 1) if "." in value else ("0", value)
+    parts = clock.split(":")
+    if not days.isdigit() or len(parts) not in (2, 3) or not all(p.isdigit() for p in parts):
+        raise ApiError(
+            400, "validation_error", "duration must look like 04:00:00.", {"duration": "bad span"}
+        )
+    hours, minutes, seconds = (int(p) for p in (parts + ["0"])[:3])
+    return timedelta(days=int(days), hours=hours, minutes=minutes, seconds=seconds)
+
+
+def _span_text(delta: timedelta) -> str:
+    seconds = int(delta.total_seconds())
+    days, seconds = divmod(seconds, 86400)
+    clock = f"{seconds // 3600:02d}:{seconds % 3600 // 60:02d}:{seconds % 60:02d}"
+    return f"{days}.{clock}" if days else clock
+
+
+class NonJobIn(BaseModel):
+    technicianId: int
+    start: AwareDatetime
+    name: str = Field(min_length=1, max_length=100)
+    duration: str
+    timesheetCodeId: int | None = None
+    summary: str | None = Field(None, max_length=2000)
+    clearDispatchBoard: bool | None = None
+    clearTechnicianView: bool | None = None
+    removeTechnicianFromCapacityPlanning: bool | None = None
+    allDay: bool | None = None
+    showOnTechnicianSchedule: bool | None = None
+    active: bool | None = None
+
+
+def shape_non_job(r: sqlite3.Row) -> dict:
+    start, end = datetime.fromisoformat(r["start"]), datetime.fromisoformat(r["end"])
+    return {
+        "id": r["id"],
+        "technicianId": r["technician_id"],
+        "start": r["start"],
+        "name": r["name"],
+        "duration": _span_text(end - start),
+        "timesheetCodeId": None,
+        "summary": r["summary"],
+        "clearDispatchBoard": False,
+        "clearTechnicianView": False,
+        "removeTechnicianFromCapacityPlanning": bool(r["remove_from_capacity"]),
+        "allDay": bool(r["all_day"]),
+        "showOnTechnicianSchedule": bool(r["show_on_schedule"]),
+        "active": bool(r["active"]),
+        "createdById": r["created_by_id"],
+        "createdOn": r["created_on"],
+        "modifiedOn": r["modified_on"],
+    }
+
+
+def _non_job_values(c: sqlite3.Connection, body: NonJobIn) -> tuple:
+    tech = c.execute("SELECT 1 FROM technicians WHERE id = ?", (body.technicianId,)).fetchone()
+    if not tech:
+        raise ApiError(
+            422, "unknown_reference", f"Technician {body.technicianId} does not exist.",
+            {"technicianId": "unknown"},
+        )
+    length = _span(body.duration)
+    if not timedelta(0) < length <= MAX_BLOCK:
+        raise ApiError(
+            400, "validation_error", "duration must be more than zero and at most 7 days.",
+            {"duration": "out of range"},
+        )
+    return (
+        body.technicianId,
+        iso(body.start),
+        iso(body.start + length),
+        body.name,
+        body.summary or "",
+        int(bool(body.allDay)),
+        int(body.removeTechnicianFromCapacityPlanning is not False),
+        int(body.showOnTechnicianSchedule is not False),
+        int(body.active is not False),
+    )
+
+
+def _refuse_over_a_visit(c: sqlite3.Connection, technician_id: int, start: str, end: str) -> None:
+    """A block can't go over a technician's live appointment: the visit would stay booked with a
+    technician the schedule says is away. Stricter than ServiceTitan (ASSUMED), which lets an
+    office double up a technician's time."""
+    clash = c.execute(
+        """SELECT id FROM appointments
+           WHERE technician_id = ? AND status <> 'Canceled' AND start < ? AND end > ?""",
+        (technician_id, end, start),
+    ).fetchone()
+    if clash:
+        raise ApiError(
+            409,
+            "technician_busy",
+            f"Technician {technician_id} has appointment {clash['id']} in that time.",
+        )
+
+
+@router.get("/non-job-appointments")
+def list_non_job(
+    conn: sqlite3.Connection = Depends(get_conn),
+    pg: tuple[int, int] = Depends(paging),
+    technicianId: int | None = None,
+    startsOnOrAfter: AwareDatetime | None = None,
+    startsOnOrBefore: AwareDatetime | None = None,
+    activeOnly: bool = True,
+):
+    """By start time. activeOnly false lists the ones taken off the schedule too."""
+    where, params = [], []
+    if technicianId is not None:
+        where.append("technician_id = ?")
+        params.append(technicianId)
+    if startsOnOrAfter:
+        where.append("start >= ?")
+        params.append(iso(startsOnOrAfter))
+    if startsOnOrBefore:
+        where.append("start <= ?")
+        params.append(iso(startsOnOrBefore))
+    if activeOnly:
+        where.append("active = 1")
+    sql = (
+        "SELECT * FROM non_job_appointments"
+        + (" WHERE " + " AND ".join(where) if where else "")
+        + " ORDER BY start, id"
+    )
+    return page_of(conn, sql, params, shape_non_job, *pg)
+
+
+@router.get("/non-job-appointments/{non_job_id}")
+def get_non_job(non_job_id: int, conn: sqlite3.Connection = Depends(get_conn)):
+    row = conn.execute("SELECT * FROM non_job_appointments WHERE id = ?", (non_job_id,)).fetchone()
+    if not row:
+        raise ApiError(404, "not_found", f"Non-job appointment {non_job_id} does not exist.")
+    return shape_non_job(row)
+
+
+@router.post("/non-job-appointments")
+def create_non_job(
+    body: NonJobIn,
+    request: Request,
+    conn: sqlite3.Connection = Depends(get_conn),
+    now: datetime = Depends(get_now),
+    user_id: int = Depends(get_user_id),
+    idempotency_key: str | None = Header(None),
+):
+    def run(c: sqlite3.Connection):
+        values = _non_job_values(c, body)
+        if values[-1]:  # active
+            _refuse_over_a_visit(c, *values[:3])
+        stamp = iso(now)
+        new_id = c.execute(
+            """INSERT INTO non_job_appointments (technician_id, start, end, name, summary, all_day,
+                   remove_from_capacity, show_on_schedule, active, created_by_id, created_on,
+                   modified_on)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (*values, user_id, stamp, stamp),
+        ).lastrowid
+        row = c.execute("SELECT * FROM non_job_appointments WHERE id = ?", (new_id,)).fetchone()
+        return 200, shape_non_job(row)
+
+    return write(
+        conn,
+        run,
+        idem_key=idempotency_key,
+        route=f"{request.method} {request.url.path}",
+        body=body.model_dump(mode="json"),
+    )
+
+
+@router.put("/non-job-appointments/{non_job_id}")
+def update_non_job(
+    non_job_id: int,
+    body: NonJobIn,
+    request: Request,
+    conn: sqlite3.Connection = Depends(get_conn),
+    now: datetime = Depends(get_now),
+    idempotency_key: str | None = Header(None),
+):
+    """A full update, as ServiceTitan's PUT is: every field is sent again."""
+
+    def run(c: sqlite3.Connection):
+        if not c.execute("SELECT 1 FROM non_job_appointments WHERE id = ?", (non_job_id,)).fetchone():
+            raise ApiError(404, "not_found", f"Non-job appointment {non_job_id} does not exist.")
+        values = _non_job_values(c, body)
+        if values[-1]:
+            _refuse_over_a_visit(c, *values[:3])
+        c.execute(
+            """UPDATE non_job_appointments SET technician_id = ?, start = ?, end = ?, name = ?,
+                   summary = ?, all_day = ?, remove_from_capacity = ?, show_on_schedule = ?,
+                   active = ?, modified_on = ?
+               WHERE id = ?""",
+            (*values, iso(now), non_job_id),
+        )
+        row = c.execute("SELECT * FROM non_job_appointments WHERE id = ?", (non_job_id,)).fetchone()
+        return 200, shape_non_job(row)
+
+    return write(
+        conn,
+        run,
+        idem_key=idempotency_key,
+        route=f"{request.method} {request.url.path}",
+        body={"nonJob": non_job_id, **body.model_dump(mode="json")},
+    )

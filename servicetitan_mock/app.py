@@ -13,6 +13,7 @@ from fastapi import Depends, FastAPI, Form, Header, Request
 
 from . import logs, worldkit
 from .config import DEFAULT_TENANT_DIR, TenantConfig, parse_dt
+from .db import add_missing_tables
 from .deps import get_conn
 from .errors import ApiError, install_handlers
 from .routes import crm, dispatch, jpm, memberships, settings
@@ -39,6 +40,7 @@ def create_app(
         frozen = os.environ.get("ST_MOCK_NOW")
         clock = (lambda: parse_dt(frozen)) if frozen else (lambda: datetime.now(UTC))
 
+    add_missing_tables(db_path)
     app = FastAPI(title="ServiceTitan mock", version="0.1.0")
     app.state.cfg = TenantConfig.load(tenant_dir)
     app.state.db_path = db_path

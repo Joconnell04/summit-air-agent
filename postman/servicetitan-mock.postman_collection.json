@@ -695,6 +695,178 @@
           }
         },
         {
+          "name": "Rename customer",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('renamed', () => pm.expect(pm.response.json().name).to.eql('Newman Tester'));",
+                  "",
+                  "if (pm.response.code >= 400) {",
+                  "  pm.test('error uses the standard shape', () => {",
+                  "    const b = pm.response.json();",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    pm.expect(b.status).to.eql(pm.response.code);",
+                  "  });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "ST-App-Key",
+                "value": "{{app_key}}"
+              }
+            ],
+            "url": "{{base_url}}/crm/v2/tenant/{{tenant_id}}/customers/{{new_customer_id}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Newman Tester\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Correct the address",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('has the unit', () => pm.expect(pm.response.json().address.unit).to.eql('2F'));",
+                  "",
+                  "if (pm.response.code >= 400) {",
+                  "  pm.test('error uses the standard shape', () => {",
+                  "    const b = pm.response.json();",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    pm.expect(b.status).to.eql(pm.response.code);",
+                  "  });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "ST-App-Key",
+                "value": "{{app_key}}"
+              }
+            ],
+            "url": "{{base_url}}/crm/v2/tenant/{{tenant_id}}/locations/{{new_location_id}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"address\": {\n    \"street\": \"9 Test St\",\n    \"unit\": \"2F\",\n    \"city\": \"Brooklyn\",\n    \"state\": \"NY\",\n    \"zip\": \"11201\",\n    \"country\": \"USA\"\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "New customer's contacts",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.collectionVariables.set('new_contact_id', pm.response.json().data[0].id);",
+                  "",
+                  "if (pm.response.code >= 400) {",
+                  "  pm.test('error uses the standard shape', () => {",
+                  "    const b = pm.response.json();",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    pm.expect(b.status).to.eql(pm.response.code);",
+                  "  });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "ST-App-Key",
+                "value": "{{app_key}}"
+              }
+            ],
+            "url": "{{base_url}}/crm/v2/tenant/{{tenant_id}}/customers/{{new_customer_id}}/contacts"
+          }
+        },
+        {
+          "name": "Change the phone",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('new number', () => pm.expect(pm.response.json().phoneSettings.phoneNumber).to.eql('6465550101'));",
+                  "",
+                  "if (pm.response.code >= 400) {",
+                  "  pm.test('error uses the standard shape', () => {",
+                  "    const b = pm.response.json();",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    pm.expect(b.status).to.eql(pm.response.code);",
+                  "  });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "ST-App-Key",
+                "value": "{{app_key}}"
+              }
+            ],
+            "url": "{{base_url}}/crm/v2/tenant/{{tenant_id}}/customers/{{new_customer_id}}/contacts/{{new_contact_id}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"value\": \"(646) 555-0101\"\n}"
+            }
+          }
+        },
+        {
           "name": "Customers",
           "event": [
             {
@@ -1680,6 +1852,171 @@
               "raw": "{\n  \"startsOnOrAfter\": \"{{cap_from}}\",\n  \"endsOnOrBefore\": \"{{cap_to}}\",\n  \"businessUnitIds\": [\n    11\n  ],\n  \"jobTypeId\": 203,\n  \"skillBasedAvailability\": true\n}"
             }
           }
+        },
+        {
+          "name": "Block a technician",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.collectionVariables.set('non_job_id', pm.response.json().id);",
+                  "pm.test('active', () => pm.expect(pm.response.json().active).to.eql(true));",
+                  "",
+                  "if (pm.response.code >= 400) {",
+                  "  pm.test('error uses the standard shape', () => {",
+                  "    const b = pm.response.json();",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    pm.expect(b.status).to.eql(pm.response.code);",
+                  "  });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "ST-App-Key",
+                "value": "{{app_key}}"
+              }
+            ],
+            "url": "{{base_url}}/dispatch/v2/tenant/{{tenant_id}}/non-job-appointments",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"technicianId\": {{technician_id}}, \"start\": \"{{win1_start}}\", \"name\": \"Newman block\", \"duration\": \"04:00:00\", \"removeTechnicianFromCapacityPlanning\": true}"
+            }
+          }
+        },
+        {
+          "name": "Non-job appointments",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('lists the block', () => pm.expect(pm.response.json().data.map(b => b.id)).to.include(Number(pm.collectionVariables.get('non_job_id'))));",
+                  "",
+                  "if (pm.response.code >= 400) {",
+                  "  pm.test('error uses the standard shape', () => {",
+                  "    const b = pm.response.json();",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    pm.expect(b.status).to.eql(pm.response.code);",
+                  "  });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "ST-App-Key",
+                "value": "{{app_key}}"
+              }
+            ],
+            "url": "{{base_url}}/dispatch/v2/tenant/{{tenant_id}}/non-job-appointments?technicianId={{technician_id}}"
+          }
+        },
+        {
+          "name": "Non-job appointment",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "",
+                  "",
+                  "if (pm.response.code >= 400) {",
+                  "  pm.test('error uses the standard shape', () => {",
+                  "    const b = pm.response.json();",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    pm.expect(b.status).to.eql(pm.response.code);",
+                  "  });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "ST-App-Key",
+                "value": "{{app_key}}"
+              }
+            ],
+            "url": "{{base_url}}/dispatch/v2/tenant/{{tenant_id}}/non-job-appointments/{{non_job_id}}"
+          }
+        },
+        {
+          "name": "Take the block off",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('inactive', () => pm.expect(pm.response.json().active).to.eql(false));",
+                  "",
+                  "if (pm.response.code >= 400) {",
+                  "  pm.test('error uses the standard shape', () => {",
+                  "    const b = pm.response.json();",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    pm.expect(b.status).to.eql(pm.response.code);",
+                  "  });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "ST-App-Key",
+                "value": "{{app_key}}"
+              }
+            ],
+            "url": "{{base_url}}/dispatch/v2/tenant/{{tenant_id}}/non-job-appointments/{{non_job_id}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"technicianId\": {{technician_id}}, \"start\": \"{{win1_start}}\", \"name\": \"Newman block\", \"duration\": \"04:00:00\", \"active\": false}"
+            }
+          }
         }
       ]
     },
@@ -1858,6 +2195,51 @@
             "body": {
               "mode": "raw",
               "raw": "{\n  \"customerId\": {{park_customer_id}},\n  \"locationId\": {{park_location_id}},\n  \"businessUnitId\": 11,\n  \"jobTypeId\": 203,\n  \"priority\": \"Normal\",\n  \"campaignId\": 301,\n  \"summary\": \"Newman check\",\n  \"appointments\": [\n    {\n      \"start\": \"{{win1_start}}\",\n      \"end\": \"{{win1_end}}\",\n      \"arrivalWindowStart\": \"{{win1_start}}\",\n      \"arrivalWindowEnd\": \"{{win1_end}}\"\n    }\n  ]\n}"
+            }
+          }
+        },
+        {
+          "name": "Change the job",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('changed', () => pm.expect([pm.response.json().summary, pm.response.json().priority]).to.eql(['Newman edit', 'High']));",
+                  "",
+                  "if (pm.response.code >= 400) {",
+                  "  pm.test('error uses the standard shape', () => {",
+                  "    const b = pm.response.json();",
+                  "    ['type', 'title', 'status', 'traceId', 'errors', 'data'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "    pm.expect(b.status).to.eql(pm.response.code);",
+                  "  });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "ST-App-Key",
+                "value": "{{app_key}}"
+              }
+            ],
+            "url": "{{base_url}}/jpm/v2/tenant/{{tenant_id}}/jobs/{{job_id}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"summary\": \"Newman edit\",\n  \"priority\": \"High\"\n}"
             }
           }
         },

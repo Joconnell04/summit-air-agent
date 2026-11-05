@@ -242,6 +242,35 @@
       <div class="panel-body spec-row">{{ basis("MEASURED") }}{{ basis("SOURCE") }}{{ basis("ASSUMED") }}{{ outcome("pass") }}{{ outcome("fail") }}{{ outcome("fired") }}{{ outcome("error") }}{{ outcome("not reached") }}</div>
     </section>
     <section class="panel">
+      <div class="panel-head"><h2>Schedule</h2><span class="sub">a row per technician, a column per window; a free cell or a block opens its popover</span></div>
+      <div class="table-wrap">
+      <table class="table sched">
+        <colgroup><col class="sched-who"><col><col><col></colgroup>
+        <thead><tr><th>Technician</th>
+          <th class="win"><span class="w-name">Morning</span><span class="w-time">8 to 12</span><span class="w-open">13 open to book</span><button class="btn quiet sched-all" type="button">Block all</button></th>
+          <th class="win"><span class="w-name">Afternoon</span><span class="w-time">12 to 4</span><span class="w-open">Urgent only</span><button class="btn quiet sched-all" type="button">Block all</button></th>
+          <th class="win"><span class="w-name">Evening</span><span class="w-time">4 to 8</span><span class="w-open">Started</span></th></tr></thead>
+        <tbody>
+          <tr><td class="what">Aisha Nguyen</td>
+            <td class="cell"><a class="sched-item job urgent" href="#"><span class="name">No heat</span><span class="sub">Dennis Rivera</span></a></td>
+            <td class="cell"><button class="sched-item block" type="button"><span class="name">Team meeting</span></button></td>
+            <td class="cell"><span class="sched-item off"><span class="sub">Off</span></span></td></tr>
+          <tr><td class="what">Aisha Wong</td>
+            <td class="cell"><a class="sched-item job" href="#"><span class="name">Safety check</span><span class="sub">Wei Bianchi</span></a></td>
+            <td class="cell"><button class="sched-item open" type="button"><span class="sub">Free</span></button></td>
+            <td class="cell"><span class="sched-item free"><span class="sub">Free</span></span></td></tr>
+        </tbody>
+      </table>
+      </div>
+      <div class="panel-body spec-row">
+        <div class="sched-pop">
+          <div class="sched-pop-head"><span class="what">Aisha Wong, 12 to 4</span></div>
+          <div class="sched-pop-part"><label for="spec-event">Event name</label><div class="actions fill"><input class="field" id="spec-event" placeholder="Team meeting"><button class="btn" type="button">Block</button></div><span class="hint">Leave it empty to block the time.</span></div>
+          <div class="sched-pop-part"><label for="spec-phone">Customer phone</label><input class="field num" id="spec-phone" placeholder="(718) 555-0142"><button class="btn primary" type="button">Add job</button></div>
+        </div>
+      </div>
+    </section>
+    <section class="panel">
       <div class="panel-head"><h2>Section list</h2><span class="sub">a long text's parts in join order; the system prompt on the bench</span></div>
       <ol class="sections">
         {% for name, job, body in [("identity.md", "Who it is and how it sounds", "You answer the phone for the company."), ("spine.md", "The steps every call shares", "")] %}

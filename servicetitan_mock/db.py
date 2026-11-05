@@ -9,6 +9,7 @@ from fastapi.responses import JSONResponse
 from .errors import ApiError
 
 SCHEMA = Path(__file__).with_name("schema.sql")
+ADDED = Path(__file__).with_name("schema_added.sql")
 # Raised whenever schema.sql changes, so a database seeded under an older one is rebuilt
 # (python -m servicetitan_mock.seed --if-stale) instead of failing on a missing column.
 SCHEMA_VERSION = 2
@@ -32,8 +33,22 @@ def create_schema(path: str | Path) -> None:
     conn = connect(path)
     conn.execute("PRAGMA journal_mode = WAL")
     conn.executescript(SCHEMA.read_text())
+    conn.executescript(ADDED.read_text())
     conn.execute("INSERT INTO meta VALUES ('schema_version', ?)", (str(SCHEMA_VERSION),))
     conn.close()
+
+
+def add_missing_tables(path: str | Path) -> None:
+    """Create the tables in schema_added.sql on a database that predates them. Those tables came
+    after the live world was seeded; adding them this way keeps its bookings, where raising
+    SCHEMA_VERSION would rebuild the world from the seed."""
+    if not Path(path).exists():
+        return
+    conn = connect(path)
+    try:
+        conn.executescript(ADDED.read_text())
+    finally:
+        conn.close()
 
 
 def schema_is_current(path: str | Path) -> bool:

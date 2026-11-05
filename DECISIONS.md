@@ -12,6 +12,15 @@ Discussion: docs/ai-process/transcripts/... or docs/explorations/...
 Issue: #N
 -->
 
+## 093. The schedule can be edited from the owner view and the bench, live into the agent
+
+Decided: a Schedule tab on the owner view and on the bench shows the day as ServiceTitan holds it, a row per technician and a column per arrival window. A person can block a slot or a whole window, put a named event on it, add a job for a customer found by phone, change a job's window, type, notes and service location address, and (admins only) a customer's name and phone number. Blocks are ServiceTitan's non-job appointments, which the mock now takes out of capacity; every edit goes through the FSM adapter, is logged in `schedule_edits` with who made it, and clears the slot cache, so the agent's next find_slots, call start or find_customer sees it. The bench adds what the agent would offer in each window and a live list of what changed in ServiceTitan. A block is taken off the schedule, never deleted, and never goes over a technician's visit; Block all is one block per technician free in that window. A phone number already on another customer needs a confirm, and a shared number makes the person pick the customer.
+Why: for the demo, Jackson wants to answer "what if that slot was booked?" by booking it on screen and showing the agent work around it on the next call. The slot cache would otherwise keep the old capacity for up to 60 s (`SLOT_CACHE_SECONDS`, MEASURED: `tests/tool_server/test_ts_schedule.py` blocks a window that find_slots offered a moment before and finds it gone on the next find_slots).
+Considered: blocks as technician shifts of type TimeOff (ServiceTitan's shifts are the working pattern and the mock lists only Normal and OnCall; a non-job appointment is how an office takes one slot); writing the mock's database from the tool server (faster, but the agent's path would not be the one tested); a cache time of 0 (every turn would wait on capacity; clearing on write gives the same freshness for edits made here).
+Would change if: a real tenant refuses a non-job appointment that takes a technician out of capacity, or the edits move to ServiceTitan's own screens, where a webhook or a short cache time would have to replace clearing on write.
+Discussion: issue #152; docs/design-system.md, Schedule
+Issue: #152
+
 ## 092. Lookup prefetch made no difference and stays on its branch
 
 Decided: not merged. The code stays on branch `joco/lookup-prefetch-4106b2` (PR #153, closed), so main stays simpler; with it, the tool server can run the area or address lookup a caller line asks for before the model answers, and hand the model the result as a note (`voice.prefetch_lookups` in config/models.yaml, app/prefetch.py). It stays off. Turn it on only if live calls show lookup turns that feel slow, and then first try the next step below. It runs `check_service_area` on a line with one ZIP and `find_address` on a line with a street and no ZIP, through the real handlers, so every gate refuses as before; it never runs `find_slots`, because the read-back comes before slots and `find_slots` records the wait the caller heard and decides priority.
