@@ -1,7 +1,5 @@
-"""Turn helpers: the longer wait after asking for digits (C-48), stage timings (docs/latency.md),
-and the wait after the goodbye."""
+"""Turn helpers: the longer wait after asking for digits (C-48), stage timings (docs/latency.md)."""
 
-import asyncio
 from types import SimpleNamespace
 
 import pytest
@@ -11,7 +9,6 @@ from voice.livekit.turns import (
     LlmLog,
     agent_timings,
     asked_for_digits,
-    caller_quiet_after_goodbye,
     caller_timings,
 )
 
@@ -133,47 +130,3 @@ def test_the_digits_wait_outlasts_the_silence_wait():
     voice = load_voice()
     assert voice["endpointing"]["digits"]["min_delay"] >= 0.9
     assert voice["endpointing"]["digits"]["min_delay"] > voice["vad"]["min_silence_s"]
-
-
-class Clock:
-    """A fake sleep that only moves time, so the goodbye wait runs instantly."""
-
-    def __init__(self):
-        self.now = 0.0
-
-    async def sleep(self, seconds: float) -> None:
-        self.now += seconds
-
-
-def goodbye_wait(clock: Clock, heard_at: float | None = None, speaking=(None, None), **kw) -> bool:
-    start, stop = speaking
-    return asyncio.run(caller_quiet_after_goodbye(
-        1.5,
-        heard=lambda: heard_at is not None and clock.now >= heard_at,
-        speaking=lambda: start is not None and start <= clock.now < stop,
-        sleep=clock.sleep,
-        **kw,
-    ))
-
-
-def test_the_line_stays_open_a_moment_after_the_goodbye():
-    clock = Clock()
-    assert goodbye_wait(clock) is True
-    assert clock.now == pytest.approx(1.5, abs=0.06)
-
-
-def test_words_after_the_goodbye_keep_the_call_going():
-    clock = Clock()
-    assert goodbye_wait(clock, heard_at=0.8) is False
-    assert clock.now < 1.0
-
-
-def test_a_caller_who_starts_talking_late_gets_time_for_their_words():
-    clock = Clock()
-    assert goodbye_wait(clock, heard_at=1.9, speaking=(1.3, 2.5)) is False
-
-
-def test_sound_with_no_words_cannot_hold_the_line_open():
-    clock = Clock()
-    assert goodbye_wait(clock, speaking=(0.0, 60.0)) is True
-    assert clock.now == pytest.approx(3.0, abs=0.06)

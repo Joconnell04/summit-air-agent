@@ -96,10 +96,6 @@ voice:
   # `stepped_away` and hangs up. poll_s is how often the worker looks. Jackson's numbers (2 and 8
   # minutes); the text harness runs the same timer on a short clock.
   dead_air: {check_in_s: 120, hang_up_s: 480, poll_s: 1.0}
-  # How long the line stays open after the goodbye has played (live call 2: "bang, immediate hang
-  # up"). Words from the caller in that time keep the call going (voice/livekit/turns.py).
-  # Jackson asked for "like a 1 or 2 second wait"; 1.5 s is the middle (ASSUMED).
-  hang_up_grace_s: 1.5
   # Bridge line (docs/latency.md): played only when a tool hasn't answered after this long, and at
   # most once every this many caller turns.
   bridge: {after_s: 0.7, min_turns_between: 3}

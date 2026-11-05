@@ -8,7 +8,6 @@ and every rule is the tool server's (docs/architecture.md).
 import asyncio
 import json
 import logging
-import time
 from pathlib import Path
 
 import yaml
@@ -46,7 +45,7 @@ from .server import ToolServer
 from .settings import Settings, fallback_tenant, load_voice
 from .tools import ToolLog, build_tools
 from .transfer import ConsultRoom, Transfer
-from .turns import LlmLog, caller_quiet_after_goodbye
+from .turns import LlmLog
 
 log = logging.getLogger("voice.worker")
 
@@ -255,18 +254,10 @@ async def entrypoint(ctx: JobContext) -> None:
     def speak(text: str):
         return session.say(text, allow_interruptions=False)
 
-    heard = {"at": 0.0}
-
-    @session.on("user_input_transcribed")
-    def on_words(ev: UserInputTranscribedEvent) -> None:
-        if ev.transcript.strip():
-            heard["at"] = time.monotonic()
-
     def hang_up(context: RunContext, last_line, quiet: bool = False) -> None:
         """After this turn's speech: the worker's own last line if it said one, else the tenant's
-        goodbye when the model said nothing (never after the safety sign-off, which is the goodbye).
-        Then a short wait, so the line doesn't drop the instant the goodbye ends (live call 2), and
-        a caller who says something in it keeps the call going."""
+        goodbye when the model said nothing (never after the safety sign-off, which is the goodbye),
+        then the line drops."""
 
         async def run() -> None:
             await context.speech_handle.wait_for_playout()
@@ -278,15 +269,6 @@ async def entrypoint(ctx: JobContext) -> None:
                 await last_line.wait_for_playout()
             elif not spoke and not quiet:
                 await speak(spoken["goodbye"]).wait_for_playout()
-            ended_at = time.monotonic()
-            if not await caller_quiet_after_goodbye(
-                voice["hang_up_grace_s"],
-                heard=lambda: heard["at"] > ended_at,
-                speaking=lambda: session.user_state == "speaking",
-            ):
-                log.info("call %s: the caller spoke after the goodbye; staying on", call_id)
-                call.hang_up_task = None
-                return
             ended["reason"] = "agent_end"
             await ctx.delete_room()
 

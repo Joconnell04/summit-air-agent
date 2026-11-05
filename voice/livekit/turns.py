@@ -1,10 +1,7 @@
 """Small pure helpers for each turn: when to wait longer, the stage timings sent with every turn
-(docs/latency.md), the model requests behind an agent line (prompt cache numbers), and the
-wait after the goodbye before the line drops."""
+(docs/latency.md), and the model requests behind an agent line (prompt cache numbers)."""
 
-import asyncio
 import re
-from collections.abc import Awaitable, Callable
 
 # Right after the agent asks for these, the caller reads out digits with pauses between groups.
 DIGITS = re.compile(
@@ -94,24 +91,3 @@ def agent_timings(
     if started and caller_stopped_at:
         timings["reply_ms"] = _ms(started - caller_stopped_at)
     return {k: v for k, v in timings.items() if v is not None}
-
-
-async def caller_quiet_after_goodbye(
-    grace_s: float,
-    heard: Callable[[], bool],
-    speaking: Callable[[], bool],
-    extra_s: float = 1.5,
-    poll_s: float = 0.05,
-    sleep: Callable[[float], Awaitable[None]] = asyncio.sleep,
-) -> bool:
-    """Waits `grace_s` after the goodbye has played. False as soon as the caller says words (the
-    call goes on); True when they stayed quiet. Sound with no words yet at the end of the wait gets
-    up to `extra_s` more for its words, so a caller who starts talking late isn't cut off, while a
-    TV in the room can't hold the line open."""
-    waited = 0.0
-    while waited < grace_s or (speaking() and waited < grace_s + extra_s):
-        if heard():
-            return False
-        await sleep(poll_s)
-        waited += poll_s
-    return not heard()
