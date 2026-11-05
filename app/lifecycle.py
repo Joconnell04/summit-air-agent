@@ -252,7 +252,20 @@ def _linked(
     # drop (a callback, say) starts fresh (PR #75 review).
     today = [c for c in calls if parse_iso(c["started_at"]) >= day_start]
     same_day_drop = today[0] if today and records.dropped(today[0]) else None
-    return (recent[0] if recent else same_day_drop), recent
+    previous = recent[0] if recent else same_day_drop
+    # A drop is picked up only by a call that starts soon after it (link_after_drop_minutes):
+    # slate call 2 heard "I think we got cut off earlier" long after Jackson's earlier calls. A
+    # caller who stepped away is still picked up later that day, with its own greeting
+    # (DECISIONS.md 081).
+    drop_window = now - timedelta(minutes=tenant.repeat.get("link_after_drop_minutes", 5))
+    if (
+        previous is not None
+        and records.dropped(previous)
+        and previous["end_reason"] != "stepped_away"
+        and parse_iso(previous["ended_at"]) < drop_window
+    ):
+        previous = None
+    return previous, recent
 
 
 def _resume(conn: sqlite3.Connection, previous: sqlite3.Row) -> dict:

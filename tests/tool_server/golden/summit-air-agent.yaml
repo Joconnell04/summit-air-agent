@@ -1165,6 +1165,7 @@ priority:
     threshold: 0.65
 repeat_callers:
   drops_before_callback_offer: 2
+  link_after_drop_minutes: 5
   link_within_minutes: 10
   return_visit_days: 30
 retention:

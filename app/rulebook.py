@@ -321,9 +321,10 @@ def _settings(tenant: Tenant) -> list[Rule]:
     found = [
         Rule("setting.hours", "before_hello", "setting", "Office hours", _hours(tenant), why=why),
         Rule("setting.repeat_callers", "before_hello", "setting", "Repeat callers",
-             f"A call back within {tenant.repeat['link_within_minutes']} minutes, or later the "
-             "same day after a dropped call, picks up the last one and checks it's the same "
-             f"person; after {tenant.repeat['drops_before_callback_offer']} dropped calls the "
+             f"A call back within {tenant.repeat['link_within_minutes']} minutes picks up the "
+             "last one, but a dropped call only within "
+             f"{tenant.repeat.get('link_after_drop_minutes', 5)} minutes of the drop, and checks "
+             f"it's the same person; after {tenant.repeat['drops_before_callback_offer']} dropped calls the "
              "agent offers a callback", why=why),
     ]
     if tenant.pace:

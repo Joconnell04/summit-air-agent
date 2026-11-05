@@ -248,6 +248,10 @@ on_call_alerts:
 
 repeat_callers:
   link_within_minutes: 10
+  # A dropped call is picked up ("I think we got cut off earlier") only by a call that starts this
+  # soon after the drop. Jackson after slate call 2 (call_3cd4c8065f26d3de686f7a1e002): "only if
+  # called within a few minutes".
+  link_after_drop_minutes: 5
   drops_before_callback_offer: 2
   # A booking at an address with a job finished this recently flags a person to review it (journey
   # 7 step 3). ASSUMED: a month, the usual window a callback on recent work is checked in.
