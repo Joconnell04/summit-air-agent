@@ -171,9 +171,9 @@ def test_a_queued_booking_for_the_old_address_is_refused_when_sent(agent, mock, 
 def unknown_caller_finds_maria(agent, scenarios) -> tuple[str, dict]:
     maria = scenarios["repeatCallerOpenJob"]
     call = agent.start(UNKNOWN)["data"]["call_id"]
-    agent.turn(call, "Hi, I need to cancel the heating visit at 620 Bedford Avenue, 11235.")
+    agent.turn(call, "Hi, I need to cancel the heating visit at 620 Bedford Avenue, 11249.")
     found = agent.tool("find_customer", call,
-                       address={"street": "620 Bedford Ave", "unit": "", "zip": "11235"})
+                       address={"street": "620 Bedford Ave", "unit": "", "zip": "11249"})
     assert [m["customer_id"] for m in found["data"]["matches"]] == [maria["customerId"]]
     return call, maria
 
@@ -497,8 +497,8 @@ def test_live_call_2_a_wrong_name_on_the_last_call_doesnt_refuse_this_one(agent,
     agent.clock.advance(minutes=3)
     again = agent.start(UNKNOWN)["data"]["call_id"]
     agent.turn(again, "This is, uh, Maria Delgado.")
-    agent.turn(again, "I need to cancel the heating visit at 620 Bedford Avenue, 11235.")
-    agent.tool("find_customer", again, address={"street": "620 Bedford Ave", "unit": "", "zip": "11235"})
+    agent.turn(again, "I need to cancel the heating visit at 620 Bedford Avenue, 11249.")
+    agent.tool("find_customer", again, address={"street": "620 Bedford Ave", "unit": "", "zip": "11249"})
     assert agent.tool("cancel_appointment", again, booking_id=maria["jobId"])["ok"]
 
 
@@ -604,16 +604,16 @@ def test_a_number_taken_off_the_allowlist_before_the_claim_is_not_dialed(tmp_pat
 
 def test_a_customer_found_by_address_comes_back_without_name_or_numbers(agent, scenarios):
     call = agent.start(UNKNOWN)["data"]["call_id"]
-    agent.turn(call, "I need to cancel the visit at 620 Bedford Avenue, 11235.")
+    agent.turn(call, "I need to cancel the visit at 620 Bedford Avenue, 11249.")
     found = agent.tool("find_customer", call,
-                       address={"street": "620 Bedford Ave", "unit": "", "zip": "11235"})
+                       address={"street": "620 Bedford Ave", "unit": "", "zip": "11249"})
     match = found["data"]["matches"][0]
     assert match["name"] == "" and match["phones"] == [] and match["withheld"]
     assert match["has_open_visit"] is True
     assert set(match["open_jobs"][0]) == {"job_id"}, "only the id, to ask for a change with"
     agent.turn(call, "It's Maria Delgado.")
     again = agent.tool("find_customer", call,
-                       address={"street": "620 Bedford Ave", "unit": "", "zip": "11235"})
+                       address={"street": "620 Bedford Ave", "unit": "", "zip": "11249"})
     assert again["data"]["matches"][0]["name"] == "Maria Delgado"
 
 
@@ -666,9 +666,9 @@ def test_a_callback_after_an_unmatched_answer_goes_to_the_number_on_file(agent, 
 
 def test_a_number_that_matches_nobody_falls_back_to_the_address(agent, scenarios):
     call = agent.start("(212) 555-0151")["data"]["call_id"]
-    agent.turn(call, "It's 620 Bedford Avenue, 11235.")
+    agent.turn(call, "It's 620 Bedford Avenue, 11249.")
     found = agent.tool("find_customer", call, phone="(212) 555-0151",
-                       address={"street": "620 Bedford Ave", "unit": "", "zip": "11235"})
+                       address={"street": "620 Bedford Ave", "unit": "", "zip": "11249"})
     assert [m["customer_id"] for m in found["data"]["matches"]] == [
         scenarios["repeatCallerOpenJob"]["customerId"]
     ]
@@ -692,14 +692,14 @@ def unknown_caller_cancels(agent, scenarios, line: str, unit: str = "") -> dict:
     call = agent.start(UNKNOWN)["data"]["call_id"]
     agent.turn(call, line)
     agent.tool("find_customer", call,
-               address={"street": "620 Bedford Ave", "unit": unit, "zip": "11235"})
+               address={"street": "620 Bedford Ave", "unit": unit, "zip": "11249"})
     return agent.tool("cancel_appointment", call, booking_id=maria["jobId"], reason="not needed")
 
 
 def test_a_surname_that_is_the_street_name_is_not_a_name(agent, mock, scenarios):
     rename_maria(mock, scenarios, "Maria Bedford")
     refused = unknown_caller_cancels(
-        agent, scenarios, "Cancel the visit at 620 Bedford Avenue, 11235."
+        agent, scenarios, "Cancel the visit at 620 Bedford Avenue, 11249."
     )
     assert refused["refused"] == "identity_check"
     assert refused["say"].endswith("what name is it under?")
@@ -708,7 +708,7 @@ def test_a_surname_that_is_the_street_name_is_not_a_name(agent, mock, scenarios)
 def test_a_surname_said_in_passing_is_not_a_name(agent, mock, scenarios):
     rename_maria(mock, scenarios, "Maria Price")
     refused = unknown_caller_cancels(
-        agent, scenarios, "What's the price to cancel the visit at 620 Bedford Avenue, 11235?"
+        agent, scenarios, "What's the price to cancel the visit at 620 Bedford Avenue, 11249?"
     )
     assert refused["refused"] == "identity_check"
 
@@ -717,7 +717,7 @@ def test_a_street_name_surname_counts_when_given_as_a_name(agent, mock, scenario
     rename_maria(mock, scenarios, "Maria Washington")
     assert unknown_caller_cancels(
         agent, scenarios,
-        "This is Maria Washington, cancel the visit at 620 Bedford Avenue, 11235.",
+        "This is Maria Washington, cancel the visit at 620 Bedford Avenue, 11249.",
     )["ok"]
 
 
@@ -735,7 +735,7 @@ def test_a_hudson_living_on_hudson_counts_only_by_name(agent, mock, scenarios):
 def test_the_unit_on_file_must_be_the_one_the_caller_said(agent, mock, scenarios):
     rename_maria(mock, scenarios, "Maria Delgado", unit="3B")
     wrong = unknown_caller_cancels(
-        agent, scenarios, "Maria Delgado, 620 Bedford apartment 9Z, 11235, cancel my visit.",
+        agent, scenarios, "Maria Delgado, 620 Bedford apartment 9Z, 11249, cancel my visit.",
         unit="3B",
     )
     assert wrong["refused"] == "identity_check"
@@ -746,7 +746,7 @@ def test_the_unit_said_in_words_counts(agent, mock, scenarios):
     rename_maria(mock, scenarios, "Maria Delgado", unit="3B")
     assert unknown_caller_cancels(
         agent, scenarios,
-        "Maria Delgado, 620 Bedford Avenue apartment three B, 11235, cancel my visit.", unit="3B",
+        "Maria Delgado, 620 Bedford Avenue apartment three B, 11249, cancel my visit.", unit="3B",
     )["ok"]
 
 
@@ -783,16 +783,16 @@ def test_notes_and_job_details_wait_for_the_full_check(agent, scenarios):
     call = agent.start(UNKNOWN)["data"]["call_id"]
     agent.turn(call, "This is Maria Delgado, I need to cancel a visit.")
     found = agent.tool("find_customer", call,
-                       address={"street": "620 Bedford Ave", "unit": "", "zip": "11235"})
+                       address={"street": "620 Bedford Ave", "unit": "", "zip": "11249"})
     match = found["data"]["matches"][0]
     # The name she gave shows; the gate code note and the visit's summary don't, yet.
     assert match["name"] == "Maria Delgado"
     assert match["notes"] == [] and set(match["open_jobs"][0]) == {"job_id"}
     assert match["has_open_visit"] is True, "the visit's type, status, street and time wait too"
-    agent.turn(call, "It's 620 Bedford Avenue, 11235.")
+    agent.turn(call, "It's 620 Bedford Avenue, 11249.")
     assert agent.tool("cancel_appointment", call, booking_id=maria["jobId"], reason="not needed")["ok"]
     again = agent.tool("find_customer", call,
-                       address={"street": "620 Bedford Ave", "unit": "", "zip": "11235"})
+                       address={"street": "620 Bedford Ave", "unit": "", "zip": "11249"})
     assert again["data"]["matches"][0]["notes"]
 
 
@@ -883,7 +883,7 @@ def test_a_mover_from_an_unknown_number_is_told_to_find_the_account_first(agent)
 
 def test_an_old_address_is_found_without_a_zip_the_caller_never_said(agent, scenarios):
     """Jackson's call 2 replayed in the eval: the model guessed ZIP 11211 for 620 Bedford Avenue
-    (it is 11235) and the account was never found."""
+    (it is 11249) and the account was never found."""
     maria = scenarios["repeatCallerOpenJob"]
     call = agent.start(UNKNOWN)["data"]["call_id"]
     agent.turn(call, "I moved from six two oh Bedford Avenue to three eighty Washington Avenue.")
@@ -900,7 +900,7 @@ def test_a_mover_whose_check_failed_hears_why_the_visit_cant_be_booked(agent, sc
     maria = scenarios["repeatCallerOpenJob"]
     call = agent.start(UNKNOWN)["data"]["call_id"]
     agent.turn(call, "Hi, I moved from 620 Bedford Avenue to 380 Washington Avenue.")
-    agent.tool("find_customer", call, address={"street": "620 Bedford Ave", "unit": "", "zip": "11235"})
+    agent.tool("find_customer", call, address={"street": "620 Bedford Ave", "unit": "", "zip": "11249"})
     asked = agent.tool("record_move", call)
     agent.say(call, asked["say"])
     agent.turn(call, "Sam Rivera.")
@@ -947,8 +947,8 @@ def test_a_name_offered_unasked_gets_the_check_before_any_refusal(agent, scenari
     number too."""
     maria = scenarios["repeatCallerOpenJob"]
     call = agent.start(caller)["data"]["call_id"]
-    agent.turn(call, "Hi, this is Jordan, I need to move the visit at 620 Bedford Avenue, 11235.")
-    agent.tool("find_customer", call, address={"street": "620 Bedford Ave", "unit": "", "zip": "11235"})
+    agent.turn(call, "Hi, this is Jordan, I need to move the visit at 620 Bedford Avenue, 11249.")
+    agent.tool("find_customer", call, address={"street": "620 Bedford Ave", "unit": "", "zip": "11249"})
     asked = agent.tool("reschedule_appointment", call, booking_id=maria["jobId"], slot=ONE_LEFT,
                        reason="work")
     assert asked["refused"] == "identity_check", asked
@@ -958,10 +958,10 @@ def test_a_wrong_name_given_when_asked_is_still_the_one_refusal(agent, scenarios
     """Issue #149: a name given in answer to the agent asking isn't asked for again."""
     maria = scenarios["repeatCallerOpenJob"]
     call = agent.start(UNKNOWN)["data"]["call_id"]
-    agent.turn(call, "I need to move the visit at 620 Bedford Avenue, 11235.")
+    agent.turn(call, "I need to move the visit at 620 Bedford Avenue, 11249.")
     agent.say(call, "Sure. Can I get your name?")
     agent.turn(call, "It's Sam Rivera.")
-    agent.tool("find_customer", call, address={"street": "620 Bedford Ave", "unit": "", "zip": "11235"})
+    agent.tool("find_customer", call, address={"street": "620 Bedford Ave", "unit": "", "zip": "11249"})
     asked = agent.tool("reschedule_appointment", call, booking_id=maria["jobId"], slot=ONE_LEFT,
                        reason="work")
     assert asked["refused"] == "identity_mismatch", asked

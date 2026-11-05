@@ -55,7 +55,7 @@ def test_a_zip_on_the_callers_record_needs_no_saying(agent, scenarios):
     maria = scenarios["repeatCallerOpenJob"]
     call = agent.start(maria["phone"])["data"]["call_id"]
     agent.turn(call, "Hi, it's Maria again.")
-    assert agent.tool("check_service_area", call, zip="11235")["ok"]
+    assert agent.tool("check_service_area", call, zip="11249")["ok"]
 
 
 def test_a_zip_said_on_a_linked_call_counts(agent, clock):

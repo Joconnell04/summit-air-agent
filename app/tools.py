@@ -560,8 +560,31 @@ def _said_since(ctx: Ctx, zip_code: str, seq: int) -> bool:
     )
 
 
+def _found_in_the_city(ctx: Ctx, zip_code: str) -> bool:
+    """GeoSearch, the city's own address directory, found this ZIP on the call: it is a New York
+    City ZIP, whether or not the census ZIP areas the zones come from list it (11249, a building's
+    own ZIP). The Retell eval suite found 620 Bedford Ave out of area: GeoSearch gives 11249."""
+    ids = records.thread(ctx.conn, ctx.call["id"])
+    rows = ctx.conn.execute(
+        # "recorded" is the eval world's GeoSearch answers (evals/addresses.py).
+        f"SELECT zips_json FROM address_lookups WHERE source IN ('geosearch', 'recorded') "
+        f"AND call_id IN ({','.join('?' * len(ids))})",
+        ids,
+    )
+    return any(zip_code in json.loads(r["zips_json"]) for r in rows)
+
+
+def _in_area(ctx: Ctx, zip_code: str) -> bool:
+    return zip_code in ctx.tenant.service_area or _found_in_the_city(ctx, zip_code)
+
+
+def _area_name(ctx: Ctx, zip_code: str, borough: str = "") -> str:
+    zone = ctx.tenant.service_area.get(zip_code)
+    return zone["name"] if zone else borough or "New York City"
+
+
 def _out_of_area(ctx: Ctx, zip_code: str) -> None:
-    if zip_code not in ctx.tenant.service_area:
+    if not _in_area(ctx, zip_code):
         _record_out_of_area(ctx, zip_code)
         # A customer who moved out of the area still has visits at the old address to cancel, so
         # the decline waits for record_move, whose sentence says it with the cancellation.
@@ -1634,8 +1657,7 @@ def check_service_area(ctx: Ctx, args: ServiceAreaIn) -> Result:
     _zip_known(ctx, args.zip)
     _zip_mismatch(ctx, args.zip)
     _out_of_area(ctx, args.zip)
-    zone = ctx.tenant.service_area[args.zip]
-    return ok(zip=args.zip, in_area=True, area=zone["name"])
+    return ok(zip=args.zip, in_area=True, area=_area_name(ctx, args.zip))
 
 
 def find_address(ctx: Ctx, args: FindAddressIn) -> Result:
@@ -1722,14 +1744,14 @@ def find_address(ctx: Ctx, args: FindAddressIn) -> Result:
     if said and said != place.zip and not _on_file_here(ctx, house, street, said):
         _ask_mismatch(ctx, house, street, place, said)
     _out_of_area(ctx, place.zip)
-    zone = ctx.tenant.service_area[place.zip]
+    area = _area_name(ctx, place.zip, place.borough)
     return ok(
         street=place.spoken_street(),
         zip=place.zip,
         borough=place.borough,
         neighborhood=place.area,
         in_area=True,
-        area=zone["name"],
+        area=area,
     )
 
 

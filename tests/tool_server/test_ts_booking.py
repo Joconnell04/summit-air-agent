@@ -620,7 +620,7 @@ def test_a_known_caller_at_an_address_on_file_is_not_asked_about_accounts(agent,
     call = agent.start(thomas["phone"])["data"]["call_id"]
     agent.turn(call, "The heat's out again.")
     agent.confirm_read_back(
-        call, {"street": "800 Springfield Blvd", "unit": "", "city": "Queens", "zip": "11368"}
+        call, {"street": "89-15 Springfield Blvd", "unit": "", "city": "Queens", "zip": "11427"}
     )
     assert book(agent, call, first_open(agent, call))["ok"]
 
@@ -974,7 +974,7 @@ def test_the_same_problem_back_after_a_recent_visit_flags_a_person_to_review_it(
     call = agent.start(thomas["phone"])["data"]["call_id"]
     agent.turn(call, "You were here last week for no heat and it's out again.")
     agent.confirm_read_back(
-        call, {"street": "800 Springfield Blvd", "unit": "", "city": "Queens", "zip": "11368"}
+        call, {"street": "89-15 Springfield Blvd", "unit": "", "city": "Queens", "zip": "11427"}
     )
     booked = book(agent, call, first_open(agent, call, "no_heat"), job_type="no_heat")
     assert booked["ok"], booked
@@ -1001,7 +1001,7 @@ def test_an_unrelated_booking_after_a_recent_visit_is_not_a_return_visit(agent, 
     call = agent.start(thomas["phone"])["data"]["call_id"]
     agent.turn(call, "Hi, I'd like to book my yearly heating tune-up.")
     agent.confirm_read_back(
-        call, {"street": "800 Springfield Blvd", "unit": "", "city": "Queens", "zip": "11368"}
+        call, {"street": "89-15 Springfield Blvd", "unit": "", "city": "Queens", "zip": "11427"}
     )
     booked = book(agent, call, first_open(agent, call))
     assert booked["ok"], booked
@@ -1148,7 +1148,7 @@ def test_an_address_already_on_file_confirms_with_no_account_question(agent, sce
     maria = scenarios["repeatCallerOpenJob"]
     call = agent.start(maria["phone"])["data"]["call_id"]
     agent.turn(call, "It's about the tune-up.")
-    home = {"street": "620 Bedford Ave", "unit": "", "city": "Brooklyn", "zip": "11235"}
+    home = {"street": "620 Bedford Ave", "unit": "", "city": "Brooklyn", "zip": "11249"}
     confirmed = agent.confirm_read_back(call, home)
     assert "account_choice" not in confirmed["data"] and not confirmed["say"]
 
@@ -1307,8 +1307,9 @@ def test_every_nyc_residential_zip_is_in_the_area():
     from app.tenant import Tenant
 
     area = Tenant.load(TENANT_DIR).service_area
-    assert len(area) == 214
-    for zip_code in ("10009", "10458", "11201", "11373", "10314", "10463", "11691"):
+    # MODZCTA's 214, and 11249, a USPS ZIP no census ZIP area has (Retell eval suite round 1).
+    assert len(area) == 215
+    for zip_code in ("10009", "10458", "11201", "11373", "10314", "10463", "11691", "11249"):
         assert zip_code in area, zip_code
     assert "07302" not in area and "11501" not in area
 

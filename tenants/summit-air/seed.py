@@ -26,6 +26,18 @@ SERVICE_TECHS, ADVISORS = 36, 4
 
 AREA_CODES = ["718", "347", "929", "917", "646", "212"]
 CITY_BY_COUNTY = {"Kings": "Brooklyn", "Queens": "Queens", "Richmond": "Staten Island"}
+# The named customers live at real addresses with the ZIP the city's directory gives them (GeoSearch,
+# read 2026-11-05): a made-up house and ZIP pair ("620 Bedford Ave, 11235") came back out of area or
+# as a ZIP mismatch once the lookup was live (Retell eval suite round 1). The random address is
+# still drawn first, so the rest of the world doesn't move.
+REAL_ADDRESSES = {
+    "Maria Delgado": ("620 Bedford Ave", "11249"),
+    "Thomas Brennan": ("89-15 Springfield Blvd", "11427"),
+    "Linda Park": ("73-30 Springfield Blvd", "11364"),
+    "Frank Moretti": ("290 Bedford Ave", "11249"),
+    "Gloria Santos": ("809 Union St", "11215"),
+    "Harbor Bakery Group": ("232 Lexington Ave", "11216"),
+}
 # ServiceTitan contacts carry no role, so who a number belongs to is written in the memo.
 ROLE_LABELS = {"owner": "Owner", "tenant": "Tenant", "adult_child": "Adult child"}
 
@@ -289,6 +301,9 @@ class World:
         extra: list[dict] | None = None,
     ) -> tuple[int, int]:
         when = self.stamp(days_ago if days_ago is not None else self.rng.randint(30, 1200))
+        if name in REAL_ADDRESSES:
+            street, zip_code = REAL_ADDRESSES[name]
+            address = {**address, "street": street, "zip": zip_code}
         customer_id = repo.insert_customer(self.conn, when, name, kind)
         location_id = repo.insert_location(
             self.conn, self.cfg, when, customer_id, address["street"], address

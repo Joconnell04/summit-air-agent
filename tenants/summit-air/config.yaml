@@ -120,7 +120,10 @@ zones:
     county: Kings
     seeded: false
     zips: ["11203", "11207", "11208", "11212", "11213", "11215", "11217", "11219", "11220", "11224",
-      "11225", "11226", "11232", "11233", "11236", "11239"]
+      "11225", "11226", "11232", "11233", "11236", "11239",
+      # A USPS ZIP that isn't a census ZIP area, so MODZCTA has none: the Williamsburg waterfront,
+      # where GeoSearch puts 620 Bedford Ave (Retell eval suite round 1 found it out of area).
+      "11249"]
   - id: 10
     name: Queens, rest of borough
     county: Queens

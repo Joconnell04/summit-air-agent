@@ -416,3 +416,44 @@ def test_a_note_must_have_text_and_a_known_customer(world):
     assert api.post("/crm/customers/1/notes", {"text": "x" * 2001}).status_code == 400
     missing = api.post("/crm/customers/999999/notes", {"text": "hi"})
     assert missing.json()["data"]["code"] == "unknown_reference"
+
+
+def test_every_seeded_address_in_the_city_is_in_the_area(seeded_db):
+    """Retell eval suite round 1: a seeded customer's address came back out of area. The ones
+    seeded outside the area on purpose are outside the city too (Jersey City, Westchester, Nassau)."""
+    from conftest import CFG
+
+    conn = sqlite3.connect(seeded_db)
+    try:
+        rows = conn.execute(
+            "SELECT c.name, l.street, l.zip FROM locations l JOIN customers c ON c.id = l.customer_id"
+        ).fetchall()
+    finally:
+        conn.close()
+    city_prefixes = set(CFG.raw["address_lookup"]["zip_boroughs"])
+    outside = [(name, z) for name, _, z in rows if z not in CFG.zone_by_zip]
+    assert outside and all(z[:3] not in city_prefixes for _, z in outside), outside
+
+
+def test_the_named_customers_live_where_the_citys_directory_puts_them(seeded_db):
+    """Their ZIP is the one GeoSearch gives their house and street (evals/addresses.yaml): "620
+    Bedford Ave, 11235" was made up, and the live lookup put it in 11249."""
+    from app import geocode
+    from evals import addresses
+
+    book = addresses.load()
+    conn = sqlite3.connect(seeded_db)
+    try:
+        for name in ("Maria Delgado", "Thomas Brennan", "Linda Park", "Frank Moretti",
+                     "Gloria Santos", "Harbor Bakery Group"):
+            street, zip_code = conn.execute(
+                "SELECT l.street, l.zip FROM locations l JOIN customers c ON c.id = l.customer_id "
+                "WHERE c.name = ? ORDER BY l.id LIMIT 1",
+                (name,),
+            ).fetchone()
+            house, rest = geocode.split_address(street)
+            places = [p for p in book[addresses.key(house, rest)]
+                      if geocode.house_key(p.house) == geocode.house_key(house)]
+            assert zip_code in {p.zip for p in places}, (name, street, zip_code)
+    finally:
+        conn.close()

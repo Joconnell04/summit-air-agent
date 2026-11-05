@@ -364,13 +364,13 @@ def test_a_lookup_that_comes_back_late_still_stops_the_booking(tmp_path, clock, 
 
 def test_a_zip_on_the_callers_record_wins_over_the_lookup(tmp_path, clock, mock, scenarios):
     maria = scenarios["repeatCallerOpenJob"]
-    # The seed's address is made up: the real 620 Bedford Ave is in 11249, not 11235.
-    bedford = Place("620", "BEDFORD AVENUE", "11249", "Brooklyn", "Williamsburg")
+    # A lookup that disagrees with the ZIP on the caller's record (the seed's is 11249).
+    bedford = Place("620", "BEDFORD AVENUE", "11211", "Brooklyn", "Williamsburg")
     geo = lookup([("book", Book({("620", "bedford ave"): [bedford]}))])
     agent = Agent(make_server(tmp_path, clock, mock[0], geocoder=geo), clock)
     call = agent.start(maria["phone"])["data"]["call_id"]
-    agent.turn(call, "It's 620 Bedford Ave, 11235.")
-    assert agent.tool("check_service_area", call, zip="11235")["ok"]
+    agent.turn(call, "It's 620 Bedford Ave, 11249.")
+    assert agent.tool("check_service_area", call, zip="11249")["ok"]
 
 
 def test_without_a_lookup_the_callers_zip_stands(agent):
@@ -640,3 +640,29 @@ def test_a_round_house_number_before_an_ordinal_street_still_matches(
     call = located.start(UNKNOWN)["data"]["call_id"]
     located.turn(call, said)
     assert located.tool("find_address", call, street=street)["refused"] != "address_not_heard"
+
+
+@pytest.mark.parametrize("source, in_area", [("geosearch", True), ("census", False)])
+def test_any_zip_the_citys_directory_returns_is_in_the_area(tmp_path, clock, mock, source, in_area):
+    """Retell eval suite round 1: 620 Bedford Ave came back out of area, because GeoSearch gives
+    11249, a USPS ZIP no census ZIP area (MODZCTA) has. Any ZIP the city's own directory finds is
+    a city ZIP; one only the Census fallback found is not taken on trust. 11249 is listed now too,
+    so a made-up ZIP stands in for the next one."""
+    bedford = Place("620", "BEDFORD AVENUE", "11299", "Brooklyn", "Williamsburg")
+
+    def answer(house, street):
+        return [bedford]
+
+    agent = Agent(make_server(tmp_path, clock, mock[0], geocoder=lookup([(source, answer)])), clock)
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "It's 620 Bedford Avenue in Brooklyn.")
+    found = agent.tool("find_address", call, street="620 Bedford Ave", borough="Brooklyn")
+    assert found["ok"] is in_area, found
+    if in_area:
+        assert found["data"]["zip"] == "11299" and found["data"]["area"] == "Brooklyn"
+        assert agent.tool("check_service_area", call, zip="11299")["ok"]
+
+
+def test_11249_is_in_the_area():
+    config = yaml.safe_load((TENANT_DIR / "config.yaml").read_text())
+    assert "11249" in {z for zone in config["zones"] for z in zone["zips"]}
