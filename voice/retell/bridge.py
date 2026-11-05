@@ -228,6 +228,11 @@ class Bridge:
         # The last call object each call's events brought, for the word timings the hang-up
         # reads when get-call has none.
         self.seen: dict[str, dict] = {}
+        # Safety lines already asked for on each call: a caller line that grows between Retell's
+        # events is posted again, and each post asked for the same lines again (three times off
+        # one line on Jackson's call call_0246b91f77e01a4b18583e6ca8b). A hazard's lines go out
+        # once per call; new text from the server (another hazard) still goes.
+        self.safety_sent: dict[str, set[str]] = {}
 
     def verified(self, raw: bytes, header: str | None) -> bool:
         return signature.verify(raw, self.api_key, header, self.now_ms())
@@ -335,7 +340,7 @@ class Bridge:
         call_id = self.ensure_started(call, "call")
         if name == "transcript_updated":
             safety, notes = self.sync(call, call_id, settled=False)
-            if safety:
+            if safety and self.first_time(rid, safety[-1]["text"]):
                 self.say_now(rid, SAY_NOW.format(text=safety[-1]["text"]))
             elif notes and call.get("agent_id") not in self.no_note_agents:
                 text = " ".join(notes)
@@ -386,10 +391,19 @@ class Bridge:
         # of the result's own sentence, which the agent says as written. The SAY_NOW wrapper is
         # only for update-live-call's context; in a result the model read it aloud ("Please say
         # this now, exactly as written:", Retell eval suite on Jackson's agent).
-        if safety:
+        if safety and self.first_time(rid, safety[-1]["text"]):
             lines_ = safety[-1]["text"]
             answer["speak_first"] = lines_
             answer["say"] = " ".join(x for x in (lines_, answer.get("say") or "") if x)
+        # The server's top-priority or raised-priority line, said through Retell now, and taken
+        # out of the result's say, so the model can't drop it (it said only the window on
+        # Jackson's call call_0246b91f77e01a4b18583e6ca8b).
+        first = (answer.get("data") or {}).get("spoken_first")
+        if first and kind == "call":
+            self.say_now(rid, SAY_NOW.format(text=first))
+            say = answer.get("say") or ""
+            if say.startswith(first):
+                answer["say"] = say[len(first):].strip()
         if notes:
             answer["server_notes"] = notes
         hang_up = answer.get("ok") and (answer.get("data") or {}).get("hang_up")
@@ -465,6 +479,14 @@ class Bridge:
             return None
         spoken_until = start + float(said[-1].words[-1].get("end", 0)) * 1000
         return HANGUP_GRACE_S - (self.now_ms() - spoken_until) / 1000
+
+    def first_time(self, rid: str, text: str) -> bool:
+        """True the first time these safety lines are asked for on this call."""
+        sent = self.safety_sent.setdefault(rid, set())
+        if text in sent:
+            return False
+        sent.add(text)
+        return True
 
     def say_now(self, rid: str, context: str) -> None:
         try:

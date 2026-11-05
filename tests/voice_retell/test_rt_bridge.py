@@ -205,6 +205,31 @@ def test_an_agent_with_notes_off_gets_none_but_still_gets_the_safety_lines(clien
     assert len(retell.said) == 1 and "exactly as written" in retell.said[0][1]
 
 
+def test_the_safety_lines_are_asked_for_once_when_the_caller_line_grows(client, retell):
+    """Jackson's call call_0246b91f77e01a4b18583e6ca8b: one caller line, posted again as it grew
+    between Retell's events, asked for the gas lines twice back to back."""
+    inbound(client, "abc")
+    first = utterance("user", "It smells a little like gas")
+    grown = utterance("user", "It smells a little like gas, like near the boiler.")
+    event(client, "transcript_updated", call_obj("abc", GREETING, first))
+    event(client, "transcript_updated", call_obj("abc", GREETING, grown))
+    assert len(retell.said) == 1
+
+
+def test_the_top_priority_line_is_said_through_retell_and_taken_out_of_the_result(
+    client, retell, bridge, monkeypatch
+):
+    """The same call: the agent said only the window and dropped the priority line."""
+    line = "I've marked this call top priority, so you get our soonest opening."
+    envelope = {"ok": True, "say": f"{line} The soonest I have is today, 5 to 7. Does that work?",
+                "data": {"spoken_first": line}}
+    monkeypatch.setattr(bridge.tools, "tool", lambda call_id, name, args: envelope)
+    inbound(client, "abc")
+    answer = tool(client, "find_slots", call_obj("abc", GREETING), job_type="no_heat")
+    assert retell.said and retell.said[-1][1].endswith(line)
+    assert answer["say"] == "The soonest I have is today, 5 to 7. Does that work?"
+
+
 def test_an_allowed_end_call_stops_the_call_after_the_goodbye(client, retell, later, tool_app):
     said = booked_call(client)
     bye = [*said, utterance("user", "That's all, thanks."), utterance("agent", "Take care, bye.")]
