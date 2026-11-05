@@ -505,3 +505,11 @@ def test_the_known_facts_are_passed_on_only_when_they_change():
         "system": "furnace", "ZIP said": "11201"
     }
     assert known.fresh({"system": "furnace", "ZIP said": "11201"}) is None
+
+
+def test_a_reply_that_offers_choices_ends_with_a_question_in_both_profiles():
+    """Live-like rig run on 4b160eb (issue #150): windows offered with no question, then 22 s of
+    silence while the caller waited for one."""
+    for name in ("identity.md", "stripped.md"):
+        text = (assemble.PROMPTS / name).read_text()
+        assert "ends with a direct question" in text, name
