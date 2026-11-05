@@ -90,7 +90,8 @@ def call_notes(start: dict) -> list[str]:
         notes.append(
             f"They already have a visit booked ({when}). To move it, call reschedule_appointment "
             "for that visit, never book_appointment; book a new visit only for a different problem "
-            "the caller confirms."
+            "the caller confirms. Moving their own visit needs no read-back: don't ask them to "
+            "confirm the address or number, just offer times and move it."
         )
     if passed:
         when = ", ".join(
@@ -311,6 +312,40 @@ DESCRIBES_TOOLS = re.compile(
     r"(?:says?|said|shows?|showed|marked|returned|gave|is giving|tells? me|flagged|came back)\b",
     re.IGNORECASE,
 )
+# Talk about a tool's run or its result ("The reschedule ran without a confirmation message", "Let
+# me check the appointment again"), from a scripted test call after #135. The caller only ever
+# hears what the call means for them.
+TOOL_TALK = re.compile(
+    r"\bran without\b|\bconfirmation message\b|\bwithout a confirmation\b"
+    r"|\b(?:let me|i'?ll|i need to) (?:check|look at|pull up|verify) (?:the|your) "
+    r"(?:appointment|booking|visit|reschedule|request) again\b"
+    r"|\b(?:the|my|that) (?:reschedule|rescheduling|booking|move|cancel(?:lation)?|request|update|"
+    r"change|lookup|call) (?:ran|didn'?t (?:return|come back|confirm)|returned|came back|went "
+    r"through without|failed to (?:return|confirm))\b"
+    r"|\bi can'?t confirm the new time yet\b",
+    re.IGNORECASE,
+)
+# A question confirming the address or the number ("Is 142 Main Street still the right address?",
+# "And the number ending in 0418, the best to reach you?"). The server's read-back confirms them,
+# and a caller's own visit is moved with no read-back at all (the same test call).
+ASKS_TO_CONFIRM = re.compile(
+    r"\bis\b[^.?!]{0,50}\b(?:still )?(?:the )?(?:right|correct) (?:address|number|place)\b[^.?!]*\?"
+    r"|\bnumber ending in\b[^.?!]*\?"
+    r"|\bstill the (?:best|right|correct)\b[^.?!]*\?",
+    re.IGNORECASE,
+)
+# Coaching on how to care for someone ("stay with your partner", "keep them sitting up"). The
+# agent's safety job is to escalate politely, not to coach (DECISIONS.md 033); dropped on every
+# call (eval run 20261104-232053, asks-agent-to-call-911).
+COACHING = re.compile(
+    r"\bstay (?:with|beside|next to|close to) (?:your|the|him|her|them)\b"
+    r"|\bkeep (?:him|her|them|your \w+|the \w+) (?:calm|still|sitting|lying|talking|warm|awake|"
+    r"comfortable|upright|breathing)\b"
+    r"|\b(?:sitting|sit (?:him|her|them)) up\b|\blie (?:him|her|them )?down\b|\blay (?:him|her|them) down\b"
+    r"|\bkeep talking to (?:him|her|them)\b|\bkeep an eye on (?:him|her|them|your \w+)\b"
+    r"|\bmake sure (?:he|she|they)(?:'s|'re| is| are)? (?:breathing|comfortable|warm|sitting)\b",
+    re.IGNORECASE,
+)
 # A word from inside the company ("I'll flag this for our team"). The server's own sentences say
 # "I've let our team know" (eval run 20261104-053435, complaint-flag).
 INTERNAL_WORD = re.compile(r"\bflag(?:s|ged|ging)?\b", re.IGNORECASE)
@@ -469,6 +504,7 @@ class SpokenReply:
         self.phones: set[str] = set()
         self.streets: set[tuple[str, str]] = set()
         self.urgent = False
+        self.urgent_spoken = False
         self.advised = False
         self._dropped_restatement = False
         self._asked = False
@@ -500,6 +536,9 @@ class SpokenReply:
             self.address_checked = True
         if name == "find_slots" and (data.get("priority") or {}).get("level") == "Urgent":
             self.urgent = True
+        if data.get("spoken_first"):
+            # The server's own line was spoken; the model's version of it is never said too.
+            self.urgent_spoken = True
         if name == "read_back" and data.get("confirmed"):
             self.read_back_confirmed = True
             # Confirmed details are said once, in the server's sentence: never again by the model.
@@ -528,6 +567,8 @@ class SpokenReply:
         after_restatement, self._dropped_restatement = self._dropped_restatement, False
         if ANNOUNCES_READ_BACK.search(sentence) or DESCRIBES_TOOLS.search(sentence):
             return ""
+        if TOOL_TALK.search(sentence) or ASKS_TO_CONFIRM.search(sentence) or COACHING.search(sentence):
+            return ""
         if INTERNAL_WORD.search(sentence) or CLAIMS_FEE.search(sentence):
             return ""
         promised = PROMISES_TECHNICIAN.search(sentence) and not PASSES_ON.search(sentence)
@@ -542,7 +583,7 @@ class SpokenReply:
             self.advised = True
         if not self.safety_call and CARBON_MONOXIDE.search(sentence):
             return ""
-        if not self.urgent and CLAIMS_PRIORITY.search(sentence):
+        if (not self.urgent or self.urgent_spoken) and CLAIMS_PRIORITY.search(sentence):
             return ""
         if not self.safety_call and HAZARD.search(sentence) and EVACUATE.search(sentence):
             return ""
@@ -589,6 +630,22 @@ class SpokenReply:
             return ""
         self.start_reply()
         return " ".join(kept for s in sentences(text) if (kept := self.sentence(s)))
+
+
+def spoken_first(envelope: dict) -> str | None:
+    """A sentence the voice layer speaks from a tool result word for word before the model's
+    reply, which still follows: the top-priority line from find_slots (spec S-21a)."""
+    return (envelope.get("data") or {}).get("spoken_first") or None
+
+
+def for_model(envelope: dict) -> dict:
+    """The tool result as the model sees it: a sentence the voice layer already spoke first is
+    taken out of `say`, so the model doesn't say it again (the top-priority line)."""
+    first = spoken_first(envelope)
+    say = envelope.get("say") or ""
+    if not first or not say.startswith(first):
+        return envelope
+    return {**envelope, "say": say[len(first):].strip()}
 
 
 def spoken_by_server(name: str, envelope: dict) -> str | None:

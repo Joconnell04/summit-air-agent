@@ -362,3 +362,16 @@ def test_without_transfer_set_the_shells_numbers_are_never_read(seed_dir, tmp_pa
     s = handoff_scenario(must=[{"handoff": {"status": "not_dialed"}}])
     result, *_ = run(seed_dir, tmp_path, s, [say("Is there anything else?")], [say("[END]")])
     assert result.outcome == "pass", result.check_failures
+
+
+def test_the_top_priority_line_is_spoken_from_the_server_before_the_models_times(seed_dir, tmp_path):
+    """asks-agent-to-call-911 kept failing `top priority`: the model reworded the server's line."""
+    s = scenario(opening="No heat, and my 84-year-old mother lives with me.",
+                 must=[{"agent_says": "marked this call top priority"}])
+    result, *_ = run(seed_dir, tmp_path, s,
+                     [use("find_slots", job_type="no_heat"), say("I have this afternoon.")],
+                     [say("[END]")])
+    reply = result.transcript[2].text
+    assert reply.startswith("I've marked this call top priority, so you get our soonest opening.")
+    assert reply.endswith("I have this afternoon.")
+    assert result.check_failures == []

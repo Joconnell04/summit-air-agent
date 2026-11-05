@@ -10,6 +10,7 @@ from livekit.agents.llm import ChatMessage
 
 from prompts import assemble
 from tests.tool_server.toolkit import in_area_address
+from tests.voice.replies import no_reply
 from tests.voice.test_voice_call import make_call
 from tests.voice.test_voice_tools import JOB_TYPES, Hangups, Voice
 from voice.livekit.bridge import Bridge
@@ -104,10 +105,10 @@ def test_the_read_back_tool_hands_the_parts_to_the_worker_and_the_model_says_not
         )
     }
     args = {"address": address, "phone": "caller_id"}
-    assert asyncio.run(tools["read_back"](args, None)) is None
+    assert no_reply(asyncio.run(tools["read_back"](args, None)))
     assert [p["speed"] for p in heard[0]] == [1.0, 0.85, 1.0]
     # The next read-back is whole again, spoken by the worker as it is (eval round 4).
-    assert asyncio.run(tools["read_back"](args, None)) is None
+    assert no_reply(asyncio.run(tools["read_back"](args, None)))
     assert len(heard) == 1
 
 

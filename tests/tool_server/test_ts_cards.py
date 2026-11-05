@@ -390,3 +390,23 @@ def test_a_card_one_digit_a_line_is_never_stored(agent):
     finally:
         conn.close()
     assert not any(re.search(r"\d", t) for t in texts)
+
+
+CORRECTED_PHONE = (
+    "almost um the number's not six four one it's seven one eight five five five oh one four two "
+    "yes that's the number i'm calling from the address is right"
+)
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        CORRECTED_PHONE,
+        "no its not 641 its 718 555 0142",
+        "it's 71 hudson street hoboken new jersey oh seven oh three oh",
+    ],
+)
+def test_a_phone_number_corrected_in_one_line_is_never_a_card(line):
+    """Eval run 20261104-232053, moved-out-of-area-open-job: a corrected phone number joined the
+    wrong area code into 13 digits that passed Luhn, and the caller heard the card line."""
+    assert cards.redact(line) == line
