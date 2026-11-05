@@ -4,10 +4,11 @@ a number not on the account, another number for the visit, and a number on two a
 import json
 import sqlite3
 
+import pytest
 from test_ts_owner_view import signed_in
 from toolkit import UNKNOWN, book, count, first_open, in_area_address, ready_to_book
 
-from app import booking, summary
+from app import booking, summary, tools
 
 NEW_HOME = {"street": "380 Washington Ave", "unit": "", "city": "Brooklyn", "zip": "11238"}
 HOBOKEN = {"street": "71 Hudson St", "unit": "", "city": "Hoboken", "zip": "07030"}
@@ -231,6 +232,44 @@ def test_live_call_1_a_bare_wrong_name_is_refused_once_with_the_callback(agent, 
     refused = agent.tool("cancel_appointment", call, booking_id=maria["jobId"])
     assert refused["refused"] == "identity_mismatch"
     assert "name" not in refused["say"].lower()
+
+
+def test_a_wrong_name_given_before_the_check_is_not_asked_for_again(agent, scenarios):
+    """Must-pass run on PR #155, unknown-number-wrong-name: the agent asked the name itself, the
+    caller said "joanne price", and the check then asked "what name is it under?" again."""
+    call, maria = unknown_caller_finds_maria(agent, scenarios)
+    agent.say(call, "Sure. Before I cancel anything, can I ask what the name is on the account?")
+    agent.turn(call, "joanne price")
+    refused = agent.tool("cancel_appointment", call, booking_id=maria["jobId"])
+    assert refused["refused"] == "identity_mismatch"
+
+
+def test_a_lowercase_wrong_name_after_the_question_is_final(agent, scenarios):
+    call, maria = unknown_caller_finds_maria(agent, scenarios)
+    asked = agent.tool("cancel_appointment", call, booking_id=maria["jobId"])
+    agent.say(call, asked["say"])
+    agent.turn(call, "look i've told you, it's joanne price")
+    assert agent.tool("cancel_appointment", call, booking_id=maria["jobId"])["refused"] == (
+        "identity_mismatch"
+    )
+
+
+@pytest.mark.parametrize(
+    "line, named",
+    [
+        ("Sam Rivera.", True),
+        ("joanne price", True),
+        ("this is uh pat rivera", True),
+        ("it's under Delgado", True),
+        ("I just gave you the name.", False),
+        ("No.", False),
+        ("it's under my wife's name", False),
+        ("why do you need that", False),
+        ("hold on", False),
+    ],
+)
+def test_what_counts_as_giving_a_name(line, named):
+    assert tools._gave_a_name(line) is named
 
 
 def test_an_answer_with_no_name_in_it_is_asked_once_more(agent, scenarios):

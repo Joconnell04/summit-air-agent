@@ -945,31 +945,39 @@ def _on_file_phone(ctx: Ctx, customer_id: int) -> str:
     return phone_key(phones[0]["value"]) if phones else ""
 
 
-# Capitalized words that are no name: "No.", "What?", "I already told you."
+# Words that are no name, after a name lead ("it's the visit at...", "under my wife's name") or in
+# a short line ("No.", "What?", "hold on").
 NOT_NAMES = {
     "i", "no", "nope", "yes", "yeah", "yep", "what", "why", "who", "sorry", "hello", "hi", "hey",
-    "okay", "ok", "huh", "wait", "hold", "sure", "um", "uh", "please", "thanks", "thank", "just",
-    "it", "its", "the", "a", "an", "my", "is", "that", "this", "you", "your", "hmm", "right",
+    "okay", "ok", "huh", "wait", "hold", "on", "sure", "um", "uh", "please", "thanks", "thank",
+    "just", "it", "its", "the", "a", "an", "my", "is", "that", "thats", "this", "you", "your",
+    "hmm", "right", "for", "under", "me", "mine", "our", "his", "her", "their", "same", "not",
+    "already", "told", "said", "name", "names", "booked", "booking", "visit", "appointment",
+    "account", "here", "there", "today", "tomorrow", "now", "fine", "good", "cold", "hot", "out",
+    "broken", "leaking", "off", "calling", "about", "again", "really", "correct", "wrong", "too",
+    "and", "or", "but", "so", "to", "of", "in", "at", "with", "do", "did", "can", "cant", "dont",
+    "im", "am", "was", "be", "been", "have", "has", "had", "need", "want", "know", "guess",
+    "think", "maybe", "still", "also", "all", "one", "number", "phone", "address", "street",
 }
 
 
 def _gave_a_name(text: str) -> bool:
     """The caller said some name, whoever's: after a name lead ("it's Sam Rivera", "my name is
-    Sam") or as a line that is only a name ("Sam Rivera."). Speech to text capitalizes names, so
-    a lowercase word is no name, and "I just gave you the name" gives none."""
-    raw = re.findall(r"[A-Za-z][A-Za-z'-]*", text)
-    keys = [w.lower().replace("'", "") for w in raw]
+    Sam", "under Rivera") or as a short line of nothing else ("Sam Rivera.", "joanne price").
+    Lowercase counts too (the text harness's lines are), so a word on the NOT_NAMES list is never
+    taken for a name, and "I just gave you the name" gives none."""
+    keys = _name_words(text)
     for i in range(len(keys)):
         for lead in NAME_LEADS:
             after = i + len(lead)
-            if tuple(keys[i:after]) == lead and after < len(raw) and raw[after][0].isupper() and (
-                keys[after] not in NOT_NAMES
+            while after < len(keys) and keys[after] in ("um", "uh"):
+                after += 1
+            if tuple(keys[i:i + len(lead)]) == lead and after < len(keys) and (
+                keys[after].isalpha() and keys[after] not in NOT_NAMES
             ):
                 return True
-    named = [w for w, k in zip(raw, keys) if k not in NAME_LINE_FILLER]
-    return 0 < len(named) <= 3 and all(
-        w[0].isupper() and w.lower() not in NOT_NAMES for w in named
-    )
+    named = [k for k in keys if k not in NAME_LINE_FILLER]
+    return 0 < len(named) <= 3 and all(k.isalpha() and k not in NOT_NAMES for k in named)
 
 
 def _gave_an_address(text: str) -> bool:
@@ -985,7 +993,8 @@ def _answered_check(ctx: Ctx, check: sqlite3.Row, name_ok: bool, address_ok: boo
         if r["call_id"] == check["call_id"] and r["speaker"] == "caller"
         and r["seq"] > check["asked_seq"]
     ]
-    gave_name = any(_gave_a_name(t) for t in lines)
+    surname = _surname(ctx.fsm.customer(check["customer_id"])["name"])
+    gave_name = any(_gave_a_name(t) and not (surname and _has_word(t, surname)) for t in lines)
     gave_address = any(_gave_an_address(t) for t in lines)
     return (not name_ok and gave_name) or (not address_ok and gave_address)
 
@@ -1028,6 +1037,10 @@ def _identity_gate(ctx: Ctx, customer_id: int, addresses: list[dict], thing: str
         "server checks the answer. Never say whether it matches, and never say the name or "
         "address on file"
     )
+    if check is None and not name_ok and _named_on_call(ctx, customer["name"]):
+        # The caller already gave a name that isn't the one on file (they were asked by the agent,
+        # or said it): asking again is the repeat issue #149 is about, so it is the one refusal.
+        _record_mismatch(ctx, customer_id, ctx.call["id"], thing, insert=True)
     if check is None:
         with tx(ctx.conn):
             ctx.conn.execute(
@@ -1062,13 +1075,39 @@ def _identity_gate(ctx: Ctx, customer_id: int, addresses: list[dict], thing: str
                 (ctx.call["turn_seq"], check["call_id"], customer_id),
             )
         raise Refused("identity_check", ctx.tenant.line(line, thing=thing), need=note)
+    _record_mismatch(ctx, customer_id, check["call_id"], thing)
+
+
+def _named_on_call(ctx: Ctx, name: str) -> bool:
+    """The caller said a name on this call that isn't the customer's. A line with the customer's
+    surname in it is no wrong name, even when it doesn't count because the agent said it first."""
+    surname = _surname(name)
+    return any(
+        _gave_a_name(r["text"]) and not (surname and _has_word(r["text"], surname))
+        for r in records.thread_turns(ctx.conn, ctx.call["id"])
+        if r["call_id"] == ctx.call["id"] and r["speaker"] == "caller"
+    )
+
+
+def _record_mismatch(
+    ctx: Ctx, customer_id: int, call_id: str, thing: str, insert: bool = False
+) -> None:
+    """The change is refused for the rest of the call: the check is a mismatch, the office is
+    flagged, and the agent offers a callback to the number on file."""
     phone = _on_file_phone(ctx, customer_id)
     with tx(ctx.conn):
-        ctx.conn.execute(
-            "UPDATE identity_checks SET status = 'mismatch', on_file_phone = ? "
-            "WHERE call_id = ? AND customer_id = ?",
-            (phone, check["call_id"], customer_id),
-        )
+        if insert:
+            ctx.conn.execute(
+                "INSERT INTO identity_checks (call_id, customer_id, status, asked_seq, at, "
+                "on_file_phone) VALUES (?, ?, 'mismatch', ?, ?, ?)",
+                (call_id, customer_id, ctx.call["turn_seq"], iso(ctx.now), phone),
+            )
+        else:
+            ctx.conn.execute(
+                "UPDATE identity_checks SET status = 'mismatch', on_file_phone = ? "
+                "WHERE call_id = ? AND customer_id = ?",
+                (phone, call_id, customer_id),
+            )
         records.add_flag(
             ctx.conn,
             ctx.call["id"],

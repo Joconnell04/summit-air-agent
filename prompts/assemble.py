@@ -328,7 +328,7 @@ LOOKUPS = ("find_customer", "get_customer_history", "find_slots")
 # after each of those two lines).
 ONLY_ACKNOWLEDGES = re.compile(
     r"(?:(?:sure|okay|ok|got it|yes|yeah|yep|alright|all right|of course|absolutely|no problem|"
-    r"great|perfect|understood|sounds good|right)[,.!]?\s*)+(?:i can [^.?!]*[.!]?)?"
+    r"great|perfect|understood|sounds good|right|thanks|thank you)[,.!]?\s*)+(?:i can [^.?!]*[.!]?)?"
     r"|i can (?:do|set up|help with|book|get|take care of) [^.?!]*[.!]?",
     re.IGNORECASE,
 )
@@ -706,6 +706,9 @@ class SpokenReply:
         was dropped for naming the street). "" when the reply said something of its own, called
         no look-up, or the tenant has no lines. Never the same line twice in a row."""
         if not self.holding_lines or not any(name in LOOKUPS for name, _ in calls):
+            return ""
+        # A read-back the server speaks next is what the caller hears, with no wait to fill.
+        if any(self.server_speaks(n, a) or n == "read_back" for n, a in calls):
             return ""
         if kept.strip() and not all(
             ONLY_ACKNOWLEDGES.fullmatch(s.strip()) for s in sentences(kept)

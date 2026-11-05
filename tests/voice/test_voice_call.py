@@ -612,6 +612,13 @@ def test_a_booking_gets_no_holding_line_since_its_confirmation_is_spoken_at_once
     assert text == "Got it."
 
 
+def test_a_look_up_beside_a_read_back_gets_no_holding_line():
+    """Must-pass run on PR #155, heat-and-sink-leak: "Just give me one second." came right before
+    the server's read-back sentence, with no wait to fill."""
+    reply = SpokenReply(HOLDING)
+    assert reply.holding_line("", [("find_slots", {}), ("read_back", {"phone": "x"})]) == ""
+
+
 def test_holding_lines_take_turns_and_never_repeat_back_to_back():
     reply = SpokenReply(HOLDING)
     look = [("find_slots", {})]
