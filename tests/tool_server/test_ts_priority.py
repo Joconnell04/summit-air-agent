@@ -96,6 +96,14 @@ def test_the_side_model_slot_needs_its_config_and_can_only_raise():
     assert low.level == "Urgent", "a low score never lowers what a rule raised"
 
 
+def test_the_tenant_side_model_needs_065_not_050_to_raise():
+    # DECISIONS.md 090: 0.63 was the one false alarm on the labeled lines; true yeses scored 0.78+.
+    assert CFG["side_model"]["threshold"] == 0.65
+    mild = prio.Facts("no_heat", "", 64, caller_text="my daughter just turned five")
+    assert "side_model" not in prio.decide(mild, CFG, FakeSideModel(0.63)).rules
+    assert "side_model" in prio.decide(mild, CFG, FakeSideModel(0.78)).rules
+
+
 def test_the_agent_asking_for_urgent_does_not_make_it_urgent(agent):
     call = agent.start(UNKNOWN)["data"]["call_id"]
     agent.turn(call, "I need my annual tune-up.")
