@@ -38,6 +38,8 @@ RETELL = "https://api.retellai.com"
 RETELL_SIP = "sip:sip.retellai.com;transport=tcp"
 RETELL_AGENT = "agent_5c00ceef6a443a4ffa7f7cbeed"
 VAPI_INBOUND = "https://api.vapi.ai/twilio/inbound_call"
+# The Deepgram entry's own hostname (deploy/deepgram_agent/Caddyfile).
+DEEPGRAM_TWIML = "https://deepgram.45-77-105-247.sslip.io/deepgram/twiml"
 NUMBER_FIELDS = ("trunk_sid", "voice_url", "voice_method", "voice_application_sid",
                  "voice_fallback_url")
 ENTRIES = ("livekit", "retell", "deepgram", "vapi", "gpt_live")
@@ -137,7 +139,7 @@ def target(http, entry: str, saved: dict, number: str) -> dict:
         retell_import(number, trunk)
         return {**off_trunk, "trunk_sid": trunk["sid"], "voice_url": None}
     if entry == "deepgram":
-        return {**off_trunk, "voice_url": f"{bridge_url()}/deepgram/twiml"}
+        return {**off_trunk, "voice_url": os.environ.get("DEEPGRAM_TWIML_URL", DEEPGRAM_TWIML)}
     if entry == "vapi":
         if not os.environ.get("VAPI_API_KEY"):
             raise SystemExit("vapi: no VAPI_API_KEY yet, so the number isn't imported into Vapi")
