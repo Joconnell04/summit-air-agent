@@ -1,0 +1,1182 @@
+{
+  "run_id": "20261105-051002-livekit-fast-custom",
+  "created": "2026-11-05T05:10:02.891525Z",
+  "suite": "custom",
+  "tags": [
+    "id:jackson-call-1-cancel-wrong-name",
+    "id:jackson-call-2-moves-from-unknown-number"
+  ],
+  "stack": "livekit",
+  "profile": "fast",
+  "hash": "880f7e6b40e4ab74",
+  "prompt_hash": "b2bc62a265d8da09",
+  "model": "claude-haiku-5-5",
+  "transport": "text",
+  "overlay": null,
+  "scenarios": [
+    {
+      "scenario_id": "jackson-call-1-cancel-wrong-name",
+      "sample": 1,
+      "persona": "Jackson's first live test call (issue",
+      "flow": [
+        "repeat-caller"
+      ],
+      "difficulty": "adversarial",
+      "traits": [],
+      "outcome": "pass",
+      "must_pass_failures": [],
+      "check_failures": [],
+      "error": "",
+      "checks": [
+        "identity",
+        "no_changes",
+        "agent_never_says",
+        "agent_says_at_most",
+        "agent_says"
+      ],
+      "grader_score": 3,
+      "grader_notes": "The turn \"I'll have someone from the office call you back at this number\" told the caller their cell would be called, but the system set the callback to the number on file. That left the caller confused and needing a correction, and the agent ends without clearly telling them their cell won't be the one called. The time itself (Friday around 2 PM) was set up, the name was asked once and the reason never, so this is a robotic, confusing stretch rather than a fail.",
+      "reply_delay_p50_ms": 639.5165419962723,
+      "reply_delay_p90_ms": 1838.5588329983875,
+      "cost_usd": 0.033722,
+      "agent_cost_usd": 0.004569,
+      "duration_ms": 24820.29916602187,
+      "transcript": [
+        {
+          "role": "agent",
+          "text": "Thanks for calling Summit Air, this is the virtual assistant. How can I help?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "yeah i just need to cancel the appointment at six two oh bedford avenue i think it is",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Sure, let me pull that up. I'm not finding an appointment at that address under this number. Could you tell me the ZIP code for that address?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "it's one one two three five",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Thanks, I'll check that ZIP. Before I cancel anything, can I get the name on the account?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "sam rivera",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Thanks, Sam. I'm sorry, I'm not able to make that change from this number. I can have someone from our office call the number we have on file for it. Would that help?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "sorry what who's the number on file i'm calling from my cell",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "I can't share the number on file, sorry. Our office can call the number we have for that address and help you from there. Would that work?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "wait so you can't cancel it for me right now that's kind of annoying fine can someone call me back my number is the one i'm calling from",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "I understand, sorry for the hassle. I'll have someone from the office call you back at this number. What time works best?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "friday at two pm",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "I've let our team know, and someone will call the number we have on file Friday around 2 PM. Anything else?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "wait you said the number on file again i'm calling from six seven eight five five five oh one two four so make sure they call that one and is that it can you tell me why i can't just cancel this from the phone",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "I'm sorry, I can't say which number is on file. The callback is set for the number on file, and I can't change that from here. As for why, I can't see the reason for that check on my end. Our office can go over it with you Friday. Anything else I can help with?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "is that all okay just make sure they call six seven eight five five five oh one two four not some other number thanks bye",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Thanks for calling Summit Air. Have a great rest of your day.",
+          "said": null
+        }
+      ],
+      "tool_calls": [
+        {
+          "name": "find_customer",
+          "arguments": {
+            "call_id": "eval-jackson-call-1-cancel-wrong-name-1-aa321bc8",
+            "phone": null,
+            "address": {
+              "street": "620 Bedford Avenue",
+              "unit": "",
+              "city": "",
+              "zip": "11211",
+              "spelled": ""
+            }
+          }
+        },
+        {
+          "name": "find_customer",
+          "arguments": {
+            "call_id": "eval-jackson-call-1-cancel-wrong-name-1-aa321bc8",
+            "phone": null,
+            "address": {
+              "street": "620 Bedford Avenue",
+              "unit": "",
+              "city": "",
+              "zip": "11235",
+              "spelled": ""
+            }
+          }
+        },
+        {
+          "name": "cancel_appointment",
+          "arguments": {
+            "call_id": "eval-jackson-call-1-cancel-wrong-name-1-aa321bc8",
+            "booking_id": 1,
+            "reason": ""
+          }
+        },
+        {
+          "name": "flag_person",
+          "arguments": {
+            "callback_time": "2 PM",
+            "callback_in_minutes": null,
+            "callback_after": null,
+            "callback_before": null,
+            "callback_day": "friday",
+            "call_id": "eval-jackson-call-1-cancel-wrong-name-1-aa321bc8",
+            "reason": "Caller Sam Rivera wants to cancel the appointment at 620 Bedford Ave; cancellation was refused from this number (identity mismatch). Callback requested on the caller ID number.",
+            "priority": "Normal",
+            "system_calls_back": false
+          }
+        },
+        {
+          "name": "end_call",
+          "arguments": {
+            "call_id": "eval-jackson-call-1-cancel-wrong-name-1-aa321bc8",
+            "reason": "caller_goodbye"
+          }
+        }
+      ],
+      "turn_timings": [
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 847.1114160201978,
+          "model_first_token_ms": 833.2348330004606,
+          "tool_ms": 6.064374989364296,
+          "second_hop_ms": 627.2521660139319,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 481.1092909949366,
+          "model_first_token_ms": 476.53712501050904,
+          "tool_ms": 32.344624982215464,
+          "second_hop_ms": 588.4335410082713,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 542.7634159859736,
+          "model_first_token_ms": 536.4169579988811,
+          "tool_ms": 20.310958003392443,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 675.0557920022402,
+          "model_first_token_ms": 668.4099170088302,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 639.5165419962723,
+          "model_first_token_ms": 628.9796250057407,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 1838.5588329983875,
+          "model_first_token_ms": 606.0587499814574,
+          "tool_ms": 5.287084000883624,
+          "second_hop_ms": 642.0890830049757,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 664.7007509891409,
+          "model_first_token_ms": 651.8724169873167,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 585.0959169911221,
+          "model_first_token_ms": 578.5442919877823,
+          "tool_ms": 10.413167008664459,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        }
+      ],
+      "call_id": "eval-jackson-call-1-cancel-wrong-name-1-aa321bc8",
+      "silent_turns": 0,
+      "cost_parts": {}
+    },
+    {
+      "scenario_id": "jackson-call-1-cancel-wrong-name",
+      "sample": 2,
+      "persona": "Jackson's first live test call (issue",
+      "flow": [
+        "repeat-caller"
+      ],
+      "difficulty": "adversarial",
+      "traits": [],
+      "outcome": "pass",
+      "must_pass_failures": [],
+      "check_failures": [],
+      "error": "",
+      "checks": [
+        "identity",
+        "no_changes",
+        "agent_never_says",
+        "agent_says_at_most",
+        "agent_says"
+      ],
+      "grader_score": 3,
+      "grader_notes": "The turn \"No problem. Cancelling that now. I'm sorry, I'm not able to make that change\" contradicts itself and confused the caller. The agent also never asked for a name before refusing, and it brushed past the caller's worry that they might not be on file; the Friday around 2 PM callback was stated plainly.",
+      "reply_delay_p50_ms": 657.5078330060933,
+      "reply_delay_p90_ms": 1593.9194999809843,
+      "cost_usd": 0.028924,
+      "agent_cost_usd": 0.004292,
+      "duration_ms": 20342.58029097691,
+      "transcript": [
+        {
+          "role": "agent",
+          "text": "Thanks for calling Summit Air, this is the virtual assistant. How can I help?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "yeah i just need to cancel the appointment at six two oh bedford avenue i think it is",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Sure, let me pull that up. I'm not finding an appointment under that address yet.",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "huh okay it's six two oh bedford ave brooklyn one one two three five",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Let me try that. Before I cancel it, can I ask what changed?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "no",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "No problem. Cancelling that now. I'm sorry, I'm not able to make that change from this number. I can have someone from our office call the number we have on file for it. Would that help?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "wait what hold on can you look up the account by my number it's six seven eight five five five oh one two four actually no i'm not sure you have me on file at all who's going to call me",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "I can't look up the account from this number for a change like this. Someone from our office will call the number we have on file for the appointment. Would you like that callback?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "yes can you have them call me back",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "What time works for the call?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "friday at two pm",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "I've let our team know, and someone will call the number we have on file Friday around 2 PM. Anything else?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "is that all",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Yes, that's all. Thanks for calling Summit Air. Have a great rest of your day.",
+          "said": null
+        }
+      ],
+      "tool_calls": [
+        {
+          "name": "find_customer",
+          "arguments": {
+            "call_id": "eval-jackson-call-1-cancel-wrong-name-2-5be9b1ba",
+            "phone": null,
+            "address": {
+              "street": "620 Bedford Avenue",
+              "unit": "",
+              "city": "",
+              "zip": "11211",
+              "spelled": ""
+            }
+          }
+        },
+        {
+          "name": "find_customer",
+          "arguments": {
+            "call_id": "eval-jackson-call-1-cancel-wrong-name-2-5be9b1ba",
+            "phone": null,
+            "address": {
+              "street": "620 Bedford Avenue",
+              "unit": "",
+              "city": "Brooklyn",
+              "zip": "11235",
+              "spelled": ""
+            }
+          }
+        },
+        {
+          "name": "cancel_appointment",
+          "arguments": {
+            "call_id": "eval-jackson-call-1-cancel-wrong-name-2-5be9b1ba",
+            "booking_id": 1,
+            "reason": ""
+          }
+        },
+        {
+          "name": "flag_person",
+          "arguments": {
+            "callback_time": "2 PM",
+            "callback_in_minutes": null,
+            "callback_after": null,
+            "callback_before": null,
+            "callback_day": "friday",
+            "call_id": "eval-jackson-call-1-cancel-wrong-name-2-5be9b1ba",
+            "reason": "Caller wants to cancel the no-heat appointment at 620 Bedford Ave, Brooklyn 11235. Caller could not be verified from this number; wants a callback to confirm the cancellation.",
+            "priority": "Normal",
+            "system_calls_back": false
+          }
+        },
+        {
+          "name": "end_call",
+          "arguments": {
+            "call_id": "eval-jackson-call-1-cancel-wrong-name-2-5be9b1ba",
+            "reason": "resolved"
+          }
+        }
+      ],
+      "turn_timings": [
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 856.8023340194486,
+          "model_first_token_ms": 845.3549590194598,
+          "tool_ms": 8.22762498864904,
+          "second_hop_ms": 576.9680409866851,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 501.48241699207574,
+          "model_first_token_ms": 496.2662920006551,
+          "tool_ms": 31.486708001466468,
+          "second_hop_ms": 870.2082080126274,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 615.282875020057,
+          "model_first_token_ms": 600.4745000100229,
+          "tool_ms": 24.184375011827797,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 634.9957909842487,
+          "model_first_token_ms": 626.1419579968788,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 740.8924170013051,
+          "model_first_token_ms": 733.9621669962071,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 1593.9194999809843,
+          "model_first_token_ms": 578.5455419973005,
+          "tool_ms": 5.034750007325783,
+          "second_hop_ms": 468.72487498330884,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 657.5078330060933,
+          "model_first_token_ms": 647.6200830074959,
+          "tool_ms": 4.256040992913768,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        }
+      ],
+      "call_id": "eval-jackson-call-1-cancel-wrong-name-2-5be9b1ba",
+      "silent_turns": 0,
+      "cost_parts": {}
+    },
+    {
+      "scenario_id": "jackson-call-2-moves-from-unknown-number",
+      "sample": 1,
+      "persona": "Jackson's second live test call (issue",
+      "flow": [
+        "repeat-caller"
+      ],
+      "difficulty": "standard",
+      "traits": [
+        "filler"
+      ],
+      "outcome": "pass",
+      "must_pass_failures": [],
+      "check_failures": [],
+      "error": "",
+      "checks": [
+        "tool_ok",
+        "moved",
+        "identity",
+        "agent_never_says"
+      ],
+      "grader_score": 2,
+      "grader_notes": "After the caller's ZIP complaint, the agent leaked an internal-sounding line (\"The caller confirmed the address and number.\") and never restated the ZIP as asked; earlier it re-asked whether the account was under \"Maria Delgado\" after she had already given her name, and its opening account-lookup turn was confusing. The confirmation also gives \"Monday\" without a date, but no owner standard is broken twice and nothing invented was promised, so this passes.",
+      "reply_delay_p50_ms": 597.1546669898089,
+      "reply_delay_p90_ms": 1147.8953749756329,
+      "cost_usd": 0.037589,
+      "agent_cost_usd": 0.004918,
+      "duration_ms": 27211.188040993875,
+      "transcript": [
+        {
+          "role": "agent",
+          "text": "Thanks for calling Summit Air, this is the virtual assistant. How can I help?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "this is uh maria delgado",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Hi Maria, thanks for calling. What's going on with your heat or cooling today?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "oh yeah so i need to change the address on my appointment i moved um i moved from i moved to no i moved from six two oh bedford avenue to three eighty washington avenue",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Okay, let me pull up your account first. I found 380 Washington Avenue in Brooklyn. Your number didn't match an account by phone, so I'll need to look up your old address.",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "okay um that's that's the one i gave you six two oh bedford avenue it should be under maria delgado",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Got it. Let me look up the Bedford Avenue address. Is there a unit number, or do you remember the ZIP code for that address?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "um no unit it's just the building i think the zip is one one two three five but uh i'm not totally sure",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Let me check that ZIP. Is the account under your name, Maria Delgado?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "yes maria delgado that's me",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "I have your home at 380 Washington Avenue, Brooklyn, one one two three eight, and the best number is six seven eight, five five five, zero one two four, is that right?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "yeah but why do you say zip one one two three eight just say the zip code is",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Sorry about that. The caller confirmed the address and number. Thanks for letting us know. I've updated your address to 380 Washington Avenue. Your visit Monday between 12 and 4 is now set for the new address, same time. Anything else?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "yeah that's correct um is there anything else i need to do no that's it thanks bye",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Nothing else needed, your visit is all set. Thanks for calling Summit Air. Have a great rest of your day.",
+          "said": null
+        }
+      ],
+      "tool_calls": [
+        {
+          "name": "find_customer",
+          "arguments": {
+            "call_id": "eval-jackson-call-2-moves-from-unknown-number-1-9261d1d0",
+            "phone": "6785550124",
+            "address": null
+          }
+        },
+        {
+          "name": "find_address",
+          "arguments": {
+            "call_id": "eval-jackson-call-2-moves-from-unknown-number-1-9261d1d0",
+            "street": "380 Washington Avenue",
+            "borough": "",
+            "spelled": ""
+          }
+        },
+        {
+          "name": "find_customer",
+          "arguments": {
+            "call_id": "eval-jackson-call-2-moves-from-unknown-number-1-9261d1d0",
+            "phone": null,
+            "address": {
+              "street": "620 Bedford Avenue",
+              "unit": "",
+              "city": "",
+              "zip": "11238",
+              "spelled": ""
+            }
+          }
+        },
+        {
+          "name": "find_customer",
+          "arguments": {
+            "call_id": "eval-jackson-call-2-moves-from-unknown-number-1-9261d1d0",
+            "phone": null,
+            "address": {
+              "street": "620 Bedford Avenue",
+              "unit": "",
+              "city": "",
+              "zip": "11235",
+              "spelled": ""
+            }
+          }
+        },
+        {
+          "name": "read_back",
+          "arguments": {
+            "call_id": "eval-jackson-call-2-moves-from-unknown-number-1-9261d1d0",
+            "address": {
+              "street": "380 Washington Avenue",
+              "unit": "",
+              "city": "Brooklyn",
+              "zip": "11238",
+              "spelled": ""
+            },
+            "phone": "6785550124",
+            "phone_for": "",
+            "confirmed": false
+          }
+        },
+        {
+          "name": "read_back",
+          "arguments": {
+            "call_id": "eval-jackson-call-2-moves-from-unknown-number-1-9261d1d0",
+            "address": {
+              "street": "380 Washington Avenue",
+              "unit": "",
+              "city": "Brooklyn",
+              "zip": "11238",
+              "spelled": ""
+            },
+            "phone": "6785550124",
+            "phone_for": "",
+            "confirmed": true
+          }
+        },
+        {
+          "name": "record_move",
+          "arguments": {
+            "call_id": "eval-jackson-call-2-moves-from-unknown-number-1-9261d1d0",
+            "customer_id": null,
+            "from_location_id": null
+          }
+        },
+        {
+          "name": "end_call",
+          "arguments": {
+            "call_id": "eval-jackson-call-2-moves-from-unknown-number-1-9261d1d0",
+            "reason": "caller_goodbye"
+          }
+        }
+      ],
+      "turn_timings": [
+        {
+          "kind": "plain",
+          "reply_delay_ms": 761.2378330086358,
+          "model_first_token_ms": 747.1951250045095,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 581.1964170134161,
+          "model_first_token_ms": 574.1174590075389,
+          "tool_ms": 12.160499987658113,
+          "second_hop_ms": 547.696374997031,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 580.1662499725353,
+          "model_first_token_ms": 567.8379579912871,
+          "tool_ms": 15.08441602345556,
+          "second_hop_ms": 611.4849579753354,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 597.1546669898089,
+          "model_first_token_ms": 590.4974580043927,
+          "tool_ms": 36.33758399519138,
+          "second_hop_ms": 568.0745000136085,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1147.8953749756329,
+          "model_first_token_ms": 644.7537499770988,
+          "tool_ms": 11.905749997822568,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 796.260999981314,
+          "model_first_token_ms": 788.1817079905886,
+          "tool_ms": 56.018207978922874,
+          "second_hop_ms": 589.1022499999963,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 529.5297069824301,
+          "model_first_token_ms": 520.382165996125,
+          "tool_ms": 9.306332998676226,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        }
+      ],
+      "call_id": "eval-jackson-call-2-moves-from-unknown-number-1-9261d1d0",
+      "silent_turns": 0,
+      "cost_parts": {}
+    },
+    {
+      "scenario_id": "jackson-call-2-moves-from-unknown-number",
+      "sample": 2,
+      "persona": "Jackson's second live test call (issue",
+      "flow": [
+        "repeat-caller"
+      ],
+      "difficulty": "standard",
+      "traits": [
+        "filler"
+      ],
+      "outcome": "fail",
+      "must_pass_failures": [],
+      "check_failures": [
+        "tool_ok: record_move never succeeded",
+        "moved: no move was recorded",
+        "identity: identity check never ran, expected verified",
+        "agent_never_says: the agent said /(Got it|Thanks|Okay), Maria/: \"Thanks, Maria. I still can't match that to your account from this call, so I can\"",
+        "agent_never_says: the agent said /\\bZIP 1/: 'Okay, let me look that up. I found it: 380 Washington Avenue in Brooklyn, ZIP 11'"
+      ],
+      "error": "",
+      "checks": [
+        "tool_ok",
+        "moved",
+        "identity",
+        "agent_never_says"
+      ],
+      "grader_score": 3,
+      "grader_notes": "In the 'I found it' turn the agent said \"ZIP 11238\", which drew a complaint, and then read the address back a second time in the next turn. Asking for Maria's name again after she gave it at the start is another small slip, but each owner standard is broken only once, so the call passes.",
+      "reply_delay_p50_ms": 602.4870409746654,
+      "reply_delay_p90_ms": 1351.9745410012547,
+      "cost_usd": 0.038047,
+      "agent_cost_usd": 0.005281,
+      "duration_ms": 31217.619834002107,
+      "transcript": [
+        {
+          "role": "agent",
+          "text": "Thanks for calling Summit Air, this is the virtual assistant. How can I help?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "this is uh maria delgado",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Hi Maria, what's going on with your heat or cooling today?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "um i'm actually calling to change my address i had a visit booked and uh i moved or no from i moved from six two oh bedford avenue to three eighty washington avenue",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Okay, let me look up the new address. What's the ZIP for 380 Washington Avenue?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "um i don't have the zip memorized so i'm not sure can you tell me the zip for washington avenue i think it's uh i don't know",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Sure. Do you know which borough or neighborhood that's in?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "brooklyn it's in brooklyn",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Okay, let me look that up. I found it: 380 Washington Avenue in Brooklyn, ZIP 11238. Is that right?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "yeah that sounds right but why do you say zip one one two three eight just say the zip code is",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "I have your home at 380 Washington Avenue, Brooklyn, one one two three eight, and the best number is six seven eight, five five five, zero one two four, is that right?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "yeah that's correct",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Got it. Let me record the move. I'm not able to find your account by this phone number, so I can't update the address on it from this call. I can have someone from our team call you back to make the change. What time works for that?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "um wait what do you mean you can't find the account i just need the address changed on my visit can't you just update it from here",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "I understand. Since this number isn't on your account, I need you to confirm the account details first. Can you give me the name and the address the visit is under?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "okay it's under maria delgado the address on it is six two oh bedford avenue brooklyn one one two three five that's the old address and i'm not there anymore",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Thanks, Maria. I still can't match that to your account from this call, so I can't move the visit myself. I'll have someone from our team call you back to update it. What time works best for them to reach you?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "um i guess uh whenever they can any time after five would be good i think",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "I've let our team know, and someone will call you around 5:30 PM. Anything else?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "no that's it thanks bye",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Thanks for calling Summit Air. Have a great rest of your day.",
+          "said": null
+        }
+      ],
+      "tool_calls": [
+        {
+          "name": "find_address",
+          "arguments": {
+            "call_id": "eval-jackson-call-2-moves-from-unknown-number-2-7b0bfc9a",
+            "street": "380 Washington Avenue",
+            "borough": "Brooklyn",
+            "spelled": ""
+          }
+        },
+        {
+          "name": "read_back",
+          "arguments": {
+            "call_id": "eval-jackson-call-2-moves-from-unknown-number-2-7b0bfc9a",
+            "address": {
+              "street": "380 Washington Avenue",
+              "unit": "",
+              "city": "Brooklyn",
+              "zip": "11238",
+              "spelled": ""
+            },
+            "phone": "6785550124",
+            "phone_for": "",
+            "confirmed": false
+          }
+        },
+        {
+          "name": "read_back",
+          "arguments": {
+            "call_id": "eval-jackson-call-2-moves-from-unknown-number-2-7b0bfc9a",
+            "address": {
+              "street": "380 Washington Avenue",
+              "unit": "",
+              "city": "Brooklyn",
+              "zip": "11238",
+              "spelled": ""
+            },
+            "phone": "6785550124",
+            "phone_for": "",
+            "confirmed": true
+          }
+        },
+        {
+          "name": "record_move",
+          "arguments": {
+            "call_id": "eval-jackson-call-2-moves-from-unknown-number-2-7b0bfc9a",
+            "customer_id": null,
+            "from_location_id": null
+          }
+        },
+        {
+          "name": "record_move",
+          "arguments": {
+            "call_id": "eval-jackson-call-2-moves-from-unknown-number-2-7b0bfc9a",
+            "customer_id": null,
+            "from_location_id": null
+          }
+        },
+        {
+          "name": "flag_person",
+          "arguments": {
+            "callback_time": null,
+            "callback_in_minutes": null,
+            "callback_after": "5 PM",
+            "callback_before": null,
+            "callback_day": "today",
+            "call_id": "eval-jackson-call-2-moves-from-unknown-number-2-7b0bfc9a",
+            "reason": "Caller Maria Delgado moved from 620 Bedford Avenue, Brooklyn 11235 to 380 Washington Avenue, Brooklyn 11238 and needs her visit moved to the new address. Account could not be matched on this call.",
+            "priority": "Normal",
+            "system_calls_back": false
+          }
+        },
+        {
+          "name": "end_call",
+          "arguments": {
+            "call_id": "eval-jackson-call-2-moves-from-unknown-number-2-7b0bfc9a",
+            "reason": "caller_goodbye"
+          }
+        }
+      ],
+      "turn_timings": [
+        {
+          "kind": "plain",
+          "reply_delay_ms": 755.8674169704318,
+          "model_first_token_ms": 743.5584999911953,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 511.3169590185862,
+          "model_first_token_ms": 504.9447499914095,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 526.7332499788608,
+          "model_first_token_ms": 518.2219999842346,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 507.0471659710165,
+          "model_first_token_ms": 501.3922499783803,
+          "tool_ms": 5.859041993971914,
+          "second_hop_ms": 547.4042079877108,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 962.6392089994624,
+          "model_first_token_ms": 565.8110000076704,
+          "tool_ms": 3.513666015351191,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 595.9846669866238,
+          "model_first_token_ms": 588.240000011865,
+          "tool_ms": 10.409041977254674,
+          "second_hop_ms": 766.5206250094343,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 603.2040840073023,
+          "model_first_token_ms": 596.855375013547,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 1351.9745410012547,
+          "model_first_token_ms": 607.707124989247,
+          "tool_ms": 5.354332999559119,
+          "second_hop_ms": 585.7844999991357,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "lookup",
+          "reply_delay_ms": 1961.6770000138786,
+          "model_first_token_ms": 790.9414590103552,
+          "tool_ms": 12.49987501068972,
+          "second_hop_ms": 560.9965840121731,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 602.4870409746654,
+          "model_first_token_ms": 595.4840829945169,
+          "tool_ms": 3.394542000023648,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        }
+      ],
+      "call_id": "eval-jackson-call-2-moves-from-unknown-number-2-7b0bfc9a",
+      "silent_turns": 0,
+      "cost_parts": {}
+    }
+  ]
+}

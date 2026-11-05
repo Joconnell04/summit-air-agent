@@ -13,10 +13,10 @@ from livekit.agents.llm import ChatMessage
 
 from app.tenant import load_agent
 from app.trace import as_text, timeline
-from prompts.assemble import greeting
+from prompts.assemble import FOLLOW_UP_NOTES, SpokenReply, greeting
 from tests.tool_server.toolkit import TENANT_DIR
 from voice.livekit.bridge import Bridge
-from voice.livekit.call import Call, SummitAgent
+from voice.livekit.call import Call, SummitAgent, goodbye_grace
 from voice.livekit.server import ToolServer
 from voice.livekit.settings import load_voice
 from voice.livekit.tools import ToolLog
@@ -33,12 +33,16 @@ class Session:
     def __init__(self):
         self.said: list[tuple[str, bool]] = []
         self.endpointing: list[dict] = []
+        self.replies: list[dict] = []
 
     def say(self, text, allow_interruptions=True):
         self.said.append((text, allow_interruptions))
 
     def update_options(self, endpointing_opts):
         self.endpointing.append(endpointing_opts)
+
+    def generate_reply(self, **kwargs):
+        self.replies.append(kwargs)
 
 
 def make_call(connect, call_id="call-1") -> Call:
@@ -380,7 +384,8 @@ def _heard(monkeypatch, reply_setup, *parts) -> tuple[str, list[str]]:
     from livekit.agents import llm
 
     monkeypatch.setattr(Agent.default, "llm_node", _stream(*parts))
-    call = Call(None, None, ToolLog(), ENDPOINTING)
+    call = Call(None, LeadIns(), ToolLog(), ENDPOINTING)
+    call.session = Session()
     reply_setup(call.reply)
     agent = SummitAgent(call, "", [])
 
@@ -475,3 +480,302 @@ def test_a_reply_with_nothing_left_is_silent(monkeypatch):
         monkeypatch, _gave_address, "Let me read that back. ", "Your ZIP is 11234."
     )
     assert text == ""
+
+
+class LeadIns:
+    """Stands in for the bridge: counts the holding lines the worker asked for."""
+
+    def __init__(self):
+        self.count = 0
+
+    def lead_in(self) -> bool:
+        self.count += 1
+        return True
+
+
+def _follow_ups(monkeypatch, reply_setup, *parts) -> tuple[str, list[dict]]:
+    """What the caller heard, and the follow-up replies the worker asked the session for."""
+    from livekit.agents import llm
+
+    monkeypatch.setattr(Agent.default, "llm_node", _stream(*parts))
+    call = Call(None, LeadIns(), ToolLog(), ENDPOINTING)
+    call.session = Session()
+    reply_setup(call.reply)
+    agent = SummitAgent(call, "", [])
+    _follow_ups.call = call
+
+    async def run():
+        text = []
+        async for chunk in agent.llm_node(None, [], None):
+            if isinstance(chunk, str):
+                text.append(chunk)
+            elif isinstance(chunk, llm.ChatChunk) and chunk.delta:
+                text.append(chunk.delta.content or "")
+        return "".join(text).strip()
+
+    return asyncio.run(run()), call.session.replies
+
+
+def _asked_to_cancel(reply):
+    reply.heard(None, "Yeah. I just need to cancel the tune up at one four two Main Street.")
+    reply.heard(None, "Just didn't like it.")
+
+
+def test_a_promise_with_no_tool_call_is_asked_again(monkeypatch):
+    """Live call 1 (issue #149), turn 7: the model said it would look the visit up, the sentence
+    naming the street was dropped as a restatement, no tool ran, and the caller heard "Got it."
+    then 19 s of silence."""
+    text, replies = _follow_ups(
+        monkeypatch, _asked_to_cancel, "Got it. ", "I'll look up the tune-up at 142 Main Street now."
+    )
+    assert text == "Got it."
+    assert len(replies) == 1
+    assert "tool_choice" not in replies[0], "no tool is forced (PR #155 review)"
+    assert replies[0]["instructions"] == FOLLOW_UP_NOTES["promised"]
+
+
+def test_a_reply_the_caller_heard_nothing_of_is_asked_again(monkeypatch):
+    text, replies = _follow_ups(monkeypatch, _gave_address, "Your ZIP is 11234.")
+    assert text == ""
+    assert [r["instructions"] for r in replies] == [FOLLOW_UP_NOTES["silent"]]
+
+
+def test_a_promise_that_calls_its_tool_is_not_asked_again(monkeypatch):
+    text, replies = _follow_ups(
+        monkeypatch, _asked_to_cancel, "Got it. ", "One moment.",
+        ("find_customer", {"phone": "+16784774024"}),
+    )
+    assert text == "Got it. One moment."
+    assert replies == []
+
+
+def test_a_reply_that_only_acknowledges_is_asked_to_take_the_next_step(monkeypatch):
+    """The second live call (call-_+16784774024_MXJ5xsvpZQ5H): "Sure, I can set up an AC tune-up."
+    and later "Yes.", each followed by about 20 s of silence."""
+    for line in ("Sure, I can set up an AC tune-up.", "Yes.", "Got it."):
+        _, replies = _follow_ups(monkeypatch, lambda reply: None, line)
+        assert [r["instructions"] for r in replies] == [FOLLOW_UP_NOTES["stalled"]], line
+
+
+def test_a_reply_whose_question_was_filtered_out_is_asked_to_take_the_next_step():
+    """Live-like rig run on 5b57b92 (issue #150): the question was dropped and the restatement,
+    said in words by the caller, stayed, so the reply asked nothing and the caller waited 21 s."""
+    reply = SpokenReply()
+    raw = "Got it, 248 Duffield Street. Is that the right address?"
+    assert reply.dead_end(raw, "Got it, 248 Duffield Street.", []) == "stalled"
+    reply = SpokenReply()
+    raw = "Got it, 10009. Let me check that it's in our service area."
+    assert reply.dead_end(raw, "Let me check that it's in our service area.", []) == "promised"
+    checked = SpokenReply().dead_end(raw, "Let me check that it's in our service area.",
+                                     [("check_service_area", {"zip": "10009"})])
+    assert checked is None, "a promise that calls its tool goes on"
+
+
+def test_a_question_or_a_plain_answer_is_not_asked_again(monkeypatch):
+    for line in ("Let me check: what's the ZIP there?", "We're open until 8 tonight."):
+        _, replies = _follow_ups(monkeypatch, lambda reply: None, line)
+        assert replies == [], line
+
+
+def test_only_one_follow_up_until_the_caller_speaks_again():
+    reply = SpokenReply()
+    assert reply.dead_end("Let me check on that.", "Let me check on that.", []) == "promised"
+    assert reply.dead_end("Let me check on that.", "Let me check on that.", []) is None
+    reply.heard(None, "Hello?")
+    assert reply.dead_end("Let me check on that.", "Let me check on that.", []) == "promised"
+
+
+
+
+HOLDING = ["Just give me one second.", "Let me pull that up.", "One moment."]
+
+
+def _with_holding(setup):
+    def apply(reply):
+        reply.holding_lines = HOLDING
+        setup(reply)
+
+    return apply
+
+
+def test_live_call_1_got_it_before_a_look_up_ends_with_a_holding_line(monkeypatch):
+    """Issue #149: the sentence naming the street is dropped, so the caller heard "Got it." and then
+    waited through the model's second step in silence."""
+    text, replies = _follow_ups(
+        monkeypatch, _with_holding(_asked_to_cancel), "Got it. ",
+        "I'll look up the tune-up at 142 Main Street now.",
+        ("find_customer", {"phone": "+16784774024"}),
+    )
+    assert text == "Got it. Just give me one second."
+    assert replies == []
+
+
+def test_a_look_up_after_the_models_own_words_gets_no_holding_line(monkeypatch):
+    text, _ = _follow_ups(
+        monkeypatch, _with_holding(_asked_to_cancel), "Okay, let me find that visit for you.",
+        ("find_customer", {"phone": "+16784774024"}),
+    )
+    assert text == "Okay, let me find that visit for you."
+
+
+def test_a_booking_gets_no_holding_line_since_its_confirmation_is_spoken_at_once(monkeypatch):
+    text, _ = _follow_ups(
+        monkeypatch, _with_holding(_gave_address), "Got it. ", ("book_appointment", {"slot_id": "x"})
+    )
+    assert text == "Got it."
+
+
+def test_a_look_up_beside_a_read_back_gets_no_holding_line():
+    """Must-pass run on PR #155, heat-and-sink-leak: "Just give me one second." came right before
+    the server's read-back sentence, with no wait to fill."""
+    reply = SpokenReply(HOLDING)
+    assert reply.holding_line("", [("find_slots", {}), ("read_back", {"phone": "x"})]) == ""
+
+
+def test_holding_lines_take_turns_and_never_repeat_back_to_back():
+    reply = SpokenReply(HOLDING)
+    look = [("find_slots", {})]
+    said = [reply.holding_line("Okay.", look) for _ in range(4)]
+    assert said == [*HOLDING, HOLDING[0]]
+    assert SpokenReply(["One moment."]).holding_line("", look) == "One moment."
+    single = SpokenReply(["One moment."])
+    single.holding_line("", look)
+    assert single.holding_line("", look) == ""
+
+def test_the_line_drops_only_after_a_quiet_second_past_the_goodbye():
+    """Issue #149: the call ended the instant the goodbye finished."""
+
+    async def run():
+        began = asyncio.get_running_loop().time()
+        quiet = await goodbye_grace(0.2, lambda: False, poll_s=0.01)
+        return quiet, asyncio.get_running_loop().time() - began
+
+    quiet, waited = asyncio.run(run())
+    assert quiet is True
+    assert waited >= 0.2
+
+
+def test_a_caller_who_speaks_after_the_goodbye_keeps_the_call_open():
+    async def run():
+        loop = asyncio.get_running_loop()
+        began = loop.time()
+        return await goodbye_grace(1.0, lambda: loop.time() - began > 0.05, poll_s=0.01)
+
+    assert asyncio.run(run()) is False
+
+
+def test_the_goodbye_pause_is_a_second_and_a_half():
+    assert load_voice()["end_call_grace_s"] == 1.5
+
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "Someone will call you Friday around 2 PM. I'll let the team know.",
+        "I'll get that to the technician. Goodbye.",
+        "I'll send that over to the office.",
+    ],
+)
+def test_a_closing_that_promises_something_later_is_not_a_dead_end(line):
+    """PR #155 review: these read as "promised" and forced a tool call after a finished request."""
+    reply = SpokenReply()
+    reply.heard(None, "Okay, thanks.")
+    assert reply.dead_end(line, line, []) is None
+
+
+def test_after_a_booking_or_callback_went_through_nothing_is_asked_again():
+    reply = SpokenReply()
+    reply.heard(None, "Friday at two works.")
+    reply.tool_done("flag_person", {"ok": True, "data": {}})
+    assert reply.dead_end("Got it.", "Got it.", []) is None
+    reply.heard(None, "And one more thing.")
+    assert reply.dead_end("Got it.", "Got it.", []) == "stalled"
+
+
+
+MISMATCH = (
+    "I'm sorry, I'm not able to make that change from this number. I can have someone from our "
+    "office call the number we have on file for it. Would that help?"
+)
+
+
+def test_live_call_2_the_refusal_is_said_once_when_the_model_already_said_it():
+    """Live call 2 (issue #149), turns 17 and 18: the same refusal twice back to back. The model
+    had the line from the linked call's turns and said it, then the worker spoke the server's."""
+    reply = SpokenReply()
+    reply.heard(None, "Yeah. That's correct.")
+    assert reply.text(MISMATCH, []) == MISMATCH
+    assert reply.already_said(MISMATCH)
+
+
+def test_a_server_line_already_spoken_is_not_said_again_by_the_model():
+    reply = SpokenReply()
+    reply.heard(None, "Yeah. That's correct.")
+    reply.server_said(MISMATCH)
+    model = "I'm sorry, I'm not able to make that change from this number. Want a callback?"
+    assert reply.text(model, []) == "Want a callback?"
+
+
+
+def _call_2_zip(reply):
+    reply.heard(None, "I moved from one four two Main Street. To seventy five Hoyt Street.")
+    reply.tool_done("find_address", {"ok": True, "data": {"zip": "11201"}})
+    reply.heard(None, "Yeah. But why do you say ZIP one one two zero one? Just say the ZIP code is.")
+
+
+def test_live_call_2_turn_9_sorry_about_that_is_not_the_whole_reply(monkeypatch):
+    """Live call 2 (issue #149), turn 9: "Sorry about that." and then nothing until the caller
+    asked "Well, what's going on?" 23 s later. The ZIP sentence after it was dropped as a
+    restatement, and the bare "Is that right?" with it."""
+    text, replies = _follow_ups(
+        monkeypatch, _call_2_zip, "Sorry about that. ",
+        "The new address is 75 Hoyt Street, Brooklyn, ZIP code 11201. ",
+        "Is that right?",
+    )
+    assert text == "Sorry about that."
+    assert [r["instructions"] for r in replies] == [FOLLOW_UP_NOTES["stalled"]]
+
+
+def test_live_call_2_turns_24_and_27_are_asked_to_go_on(monkeypatch):
+    """Turn 24 "Sure, I can set up an AC tune-up." then 24 s of silence; turn 27 "Yes." then
+    silence until "Hello?"."""
+    for caller, line in (
+        ("Yeah. I need to do my a c six as well.", "Sure, I can set up an AC tune-up. "),
+        ("Okay. Are you gonna ask me a question?", "Yes. "),
+    ):
+        text, replies = _follow_ups(
+            monkeypatch, lambda reply, c=caller: reply.heard(None, c), line
+        )
+        assert text == line.strip()
+        assert [r["instructions"] for r in replies] == [FOLLOW_UP_NOTES["stalled"]], line
+
+
+def test_the_known_facts_note_is_added_once_not_to_every_caller_line(agent, connect):
+    """Realism suite on #155: the same "Already known" note on every caller line threw away
+    LiveKit's early model request on every turn. It goes on the line where the facts change."""
+    agent.start(call_id="call-1")
+    call = make_call(connect)
+    lines = [caller("My furnace is running but it's not getting warm."), caller("Since yesterday.")]
+
+    async def conversation():
+        await call.caller_line(lines[0])
+        call.agent_line(agent_says("Since when?"))
+        await call.caller_line(lines[1])
+        await call.flush()
+
+    asyncio.run(conversation())
+    assert "Already known" in lines[0].text_content
+    assert "[server]" not in lines[1].text_content
+
+
+def test_the_servers_question_is_not_asked_again_after_the_model_asked_it():
+    """Stripped rig check on #160, live-multi-book-then-callback: "And what name should I put the
+    visit under? Thanks. What name should I put the visit under?" The server's line ends in the
+    question the model just asked, so the worker says nothing more. A short question isn't
+    matched this way."""
+    reply = SpokenReply()
+    reply.heard(None, "Yeah. That's correct.")
+    assert reply.text("And what name should I put the visit under?", []) != ""
+    assert reply.already_said("Thanks. And what name should I put the visit under?")
+    assert not reply.already_said("Thanks. Is that right?")

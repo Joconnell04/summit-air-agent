@@ -163,12 +163,16 @@ CALL_REASONS = [
     "Question about my visit",
 ]
 
+# The seeded world books its visits as these runs of blocks, the 4-hour windows it was first built
+# with, so the world (and every eval scenario's) stayed the same when windows became any run of
+# 30-minute blocks.
+SEED_WINDOWS = ("0800-1200", "1200-1600", "1600-2000")
 # Offsets from the start date, and how many normal slots stay open per window (the urgent hold
 # stays on top of that).
 NEARLY_FULL = {
-    2: {"morning": 0, "afternoon": 0, "evening": 0},
-    3: {"morning": 0, "afternoon": 1, "evening": 0},
-    9: {"morning": 1, "afternoon": 1, "evening": 2},
+    2: {"0800-1200": 0, "1200-1600": 0, "1600-2000": 0},
+    3: {"0800-1200": 0, "1200-1600": 1, "1600-2000": 0},
+    9: {"0800-1200": 1, "1200-1600": 1, "1600-2000": 2},
 }
 DAYS_OF_CAPACITY = 14
 
@@ -249,6 +253,9 @@ class World:
         self.work_day = start if start.weekday() < 6 else start + timedelta(days=1)
         self.service_techs: list[int] = []
         self.advisors: list[int] = []
+        # The zones the world is drawn from: not the ones added for the rest of the five boroughs
+        # (config.yaml, seeded: false), so the seeded world, the eval world, stays as it was.
+        self.zones = [z for z in cfg.zones if z.get("seeded", True)]
 
     # ---- small helpers --------------------------------------------------------------------
 
@@ -262,7 +269,7 @@ class World:
         return f"{self.rng.choice(FIRST)} {self.rng.choice(LAST)}"
 
     def address(self, zone: dict | None = None, unit: str = "") -> dict:
-        zone = zone or self.rng.choice(self.cfg.zones)
+        zone = zone or self.rng.choice(self.zones)
         return {
             "street": f"{self.rng.randint(11, 989)} {self.rng.choice(STREETS[zone['county']])}",
             "unit": unit,
@@ -400,7 +407,7 @@ class World:
     # ---- technicians and shifts -----------------------------------------------------------
 
     def technicians(self) -> None:
-        rng, cfg = self.rng, self.cfg
+        rng = self.rng
         names = set()
         while len(names) < SERVICE_TECHS + ADVISORS:
             names.add(self.name())
@@ -409,7 +416,7 @@ class World:
         for i in range(SERVICE_TECHS + ADVISORS):
             tech_id = FIRST_TECH_ID + i
             phone = f"(917) 555-{200 + i:04d}"
-            zone_id = cfg.zones[i % len(cfg.zones)]["id"]
+            zone_id = self.zones[i % len(self.zones)]["id"]
             if i < SERVICE_TECHS:
                 skills = ["maintenance"]
                 if i % 6 != 0:
@@ -509,7 +516,7 @@ class World:
             lid,
             NO_HEAT,
             self.work_day,
-            "afternoon",
+            "1200-1600",
             # Booked this morning for the afternoon, so no technician is on the way yet: the
             # caller can still move or cancel it by phone.
             "Scheduled",
@@ -550,7 +557,7 @@ class World:
             lid,
             NO_COOLING,
             done_day,
-            "morning",
+            "0800-1200",
             "Completed",
             tech_id=self.service_techs[3],
             summary="AC not cooling. Replaced capacitor.",
@@ -786,7 +793,7 @@ class World:
     def random_customers(self) -> None:
         rng = self.rng
         while self.customers < CUSTOMER_TOTAL:
-            zone = rng.choice(self.cfg.zones)
+            zone = rng.choice(self.zones)
             roll = rng.random()
             if roll < 0.60:
                 name, address = self.name(), self.address(zone)
@@ -857,7 +864,7 @@ class World:
                                 p["lid"],
                                 job_type,
                                 day,
-                                rng.choice(["morning", "afternoon", "evening"]),
+                                rng.choice(SEED_WINDOWS),
                                 "Completed",
                                 tech_id=rng.choice(self.service_techs),
                                 summary="Completed visit.",
@@ -900,10 +907,14 @@ class World:
         service_types = [NO_HEAT, NO_COOLING, TUNE_UP, SAFETY_CHECK]
         for offset in range(DAYS_OF_CAPACITY):
             day = self.start + timedelta(days=offset)
-            for window in cfg.windows:
-                if window.after_hours or not cfg.window_offered(day, window):
+            for window in map(cfg.window, SEED_WINDOWS):
+                if not cfg.window_offered(day, window):
                     continue
                 free = capacity.slots(conn, cfg, day, window, SERVICE_UNIT, [])
+                if not free.total:
+                    # A window nobody is on shift for (a Sunday in the seeded world) books nothing
+                    # and draws no random number, so opening hours never reshuffles the world.
+                    continue
                 # The urgent hold is the company's rule, not the mock's, but the schedule is shaped
                 # around it so normal slots run out first.
                 held = cfg.hold_for(day, window.id, SERVICE_UNIT)
@@ -939,7 +950,7 @@ class World:
         # Comfort advisors get a light schedule of estimates.
         for offset in range(DAYS_OF_CAPACITY):
             day = self.start + timedelta(days=offset)
-            for window in cfg.windows[:2]:
+            for window in map(cfg.window, SEED_WINDOWS[:2]):
                 if not cfg.window_offered(day, window):
                     continue
                 for tech_id in capacity.slots(

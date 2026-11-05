@@ -92,20 +92,34 @@ def test_the_reply_waits_for_a_clip_the_tool_answered_during():
     assert cleared >= player.ended_at
 
 
-def test_at_most_once_every_few_turns_and_never_the_same_clip_twice():
+def test_at_most_once_every_few_turns_and_never_the_same_clip_twice_in_a_row():
     player = Player()
 
     async def run():
         bridge = make(player, min_turns_between=3)
-        for _turn in range(7):
+        for _turn in range(13):
             bridge.caller_turn()
             await bridge.run(tool(0.08))
             await bridge.wait_clear()
 
     asyncio.run(run())
     played = [clip for clip, _ in player.started]
-    assert played == ["a", "b", "c"][: len(played)]
-    assert len(played) == len(set(played)) == 3
+    # Turns 1, 4, 7, 10 and 13; the clips in turn, so a long call never runs out of them.
+    assert played == ["a", "b", "c", "a", "b"]
+
+
+def test_one_clip_is_never_played_twice_in_a_row():
+    player = Player()
+
+    async def run():
+        bridge = Bridge(["a"], player.play, lambda: True, after_s=0.05, min_turns_between=1)
+        for _turn in range(3):
+            bridge.caller_turn()
+            await bridge.run(tool(0.08))
+            await bridge.wait_clear()
+
+    asyncio.run(run())
+    assert [clip for clip, _ in player.started] == ["a"]
 
 
 def test_two_slow_tools_in_one_turn_play_one_clip():

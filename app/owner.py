@@ -13,7 +13,7 @@ from datetime import date, datetime, time, timedelta
 
 from . import heads_up, records, summary
 from .db import iso, parse_iso
-from .tenant import Tenant
+from .tenant import Tenant, Window, window_of
 from .text import phone_display
 
 LOOKBACK_DAYS = 30
@@ -182,11 +182,33 @@ def booking_rates(tenant: Tenant, day_calls: list[dict]) -> dict:
     }
 
 
-def _window_of(tenant: Tenant, window_start: str | None, now: datetime) -> dict | None:
+def _starts_in(moment: time, window: Window) -> bool:
+    if window.end <= window.start:  # the night window runs past midnight
+        return moment >= window.start or moment < window.end
+    return window.start <= moment < window.end
+
+
+def _spec_at(tenant: Tenant, window_start: str, window_end: str | None) -> Window | None:
+    """The window a booking is in, from its start and end: a configured one, or the run of
+    30-minute blocks it covers ("7:30 to 8"). With no end, the configured one starting then."""
+    local = tenant.local(parse_iso(window_start))
+    if window_end:
+        local_end = tenant.local(parse_iso(window_end))
+        for w in tenant.windows:
+            if w.start == local.time() and (w.after_hours or w.end == local_end.time()):
+                return w
+        if local_end.date() == local.date():
+            return window_of(local.time(), local_end.time())
+    return next((w for w in tenant.windows if w.start == local.time()), None)
+
+
+def _window_of(
+    tenant: Tenant, window_start: str | None, now: datetime, window_end: str | None = None
+) -> dict | None:
     if not window_start:
         return None
     local = tenant.local(parse_iso(window_start))
-    spec = next((w for w in tenant.windows if w.start == local.time()), None)
+    spec = _spec_at(tenant, window_start, window_end)
     label = spec.label() if spec else local.strftime("%-I:%M %p")
     return {
         "day": tenant.day_spoken(local.date(), now),
@@ -213,7 +235,7 @@ def bookings(conn: sqlite3.Connection, tenant: Tenant, day: date, now: datetime)
             "SELECT status, result FROM outbound WHERE booking_id = ? ORDER BY id DESC LIMIT 1",
             (row["id"],),
         ).fetchone()
-        window = _window_of(tenant, row["window_start"], now)
+        window = _window_of(tenant, row["window_start"], now, row["window_end"])
         found.append(
             {
                 "call_id": row["call_id"],
@@ -606,7 +628,9 @@ def board(
     for w in tenant.windows:
         w_start = w.start.hour * 60 + w.start.minute
         w_end = 24 * 60 if w.end <= w.start else w.end.hour * 60 + w.end.minute
-        landing = [j for j in on_day if tenant.local(j["at"]).time() == w.start]
+        # A visit lands in the window its arrival starts in: any run of 30-minute blocks can be
+        # booked, so "12 to 4" counts in the 12 to 2 column.
+        landing = [j for j in on_day if _starts_in(tenant.local(j["at"]).time(), w)]
         past = day < tenant.local(now).date() or (now_minute is not None and now_minute >= w_end)
         windows.append(
             {
@@ -767,7 +791,7 @@ def call_summary(tenant: Tenant, trace: dict, kind: str, now: datetime) -> str:
     window = ""
     if job and job["window_start"]:
         local = tenant.local(parse_iso(job["window_start"]))
-        spec = next((w for w in tenant.windows if w.start == local.time()), None)
+        spec = _spec_at(tenant, job["window_start"], job["window_end"])
         when = "after hours" if spec and spec.after_hours else (spec.label() if spec else "")
         window = f" for {tenant.day_spoken(local.date(), now)}{', ' + when if when else ''}"
     parts = []
@@ -847,7 +871,10 @@ def call_page(conn: sqlite3.Connection, tenant: Tenant, trace: dict, now: dateti
         "job_type": type_label(tenant, request["job_type"]) if request.get("job_type") else "",
         "address": address,
         "details": request.get("details", {}),
-        "job": _window_of(tenant, booked[-1]["window_start"], now) if booked else None,
+        "job": (
+            _window_of(tenant, booked[-1]["window_start"], now, booked[-1]["window_end"])
+            if booked else None
+        ),
         "booking": booked[-1] if booked else None,
         "tech_summary": summary.for_call(conn, call) if booked else None,
         "open_flags": [f for f in trace["flags"] if f["status"] == "open"],

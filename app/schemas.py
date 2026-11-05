@@ -7,7 +7,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from .settings import NOTE_MAX_CHARS
-from .text import join_spelled, with_spelled_name
+from .text import join_spelled
 
 Priority = Literal["Low", "Normal", "High", "Urgent"]
 Zip = Field(pattern=r"^\d{5}$")
@@ -35,10 +35,9 @@ class Address(Body):
 
     @model_validator(mode="after")
     def join_letters(self):
-        # Letters said one by one become the name, so the read-back says the word, not the letters.
-        street = with_spelled_name(self.street, self.spelled) if self.spelled else self.street
-        self.street = join_spelled(street)
-        self.spelled = ""
+        # Letters said one by one inside the street become the word. `spelled` is applied by the
+        # tool, which can check the caller spelled it (tools._with_spelling).
+        self.street = join_spelled(self.street)
         return self
 
 
@@ -146,9 +145,7 @@ class FindAddressIn(CallRef):
 
     @model_validator(mode="after")
     def join_letters(self):
-        street = with_spelled_name(self.street, self.spelled) if self.spelled else self.street
-        self.street = join_spelled(street)
-        self.spelled = ""
+        self.street = join_spelled(self.street)
         return self
 
 
@@ -168,7 +165,18 @@ class FindSlotsIn(CallRef):
     priority: Priority | None = Field(None, description="The agent's view; logged, not used")
     preferred_days: list[str] = Field(default_factory=list, max_length=7)
     time_of_day: Literal["morning", "afternoon", "evening"] | None = None
-    day: dt.date | None = Field(None, description="Ask for one day's exact windows")
+    window_minutes: int | None = Field(
+        None,
+        ge=30,
+        le=720,
+        multiple_of=30,
+        description="How long a window the caller wants, in minutes, when they name one (\"an "
+        "hour\", \"a 3-hour window\"); left out, the company's usual length",
+    )
+    day: dt.date | str | None = Field(
+        None,
+        description="Ask for one day's exact windows: a date, or today, tomorrow or a weekday name",
+    )
     arrive_after: str | None = Field(
         None,
         max_length=20,
@@ -256,7 +264,10 @@ class RescheduleIn(CallRef):
 
 class CancelIn(CallRef):
     booking_id: int
-    reason: str = Field(min_length=3, max_length=200)
+    # Optional: a caller who won't say why still gets the cancel (issue #149).
+    reason: str = Field(
+        "", max_length=200, description="Why, if the caller said; leave it out if they didn't"
+    )
 
 
 class MoveIn(CallRef):
@@ -287,10 +298,14 @@ class CallbackTime(Body):
         description='The caller asked to be called before this local time today, such as "3 PM". '
         "Only what the caller said; use it instead of callback_time.",
     )
-    callback_day: Literal["today", "tomorrow"] = Field(
+    callback_day: Literal[
+        "today", "tomorrow", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday",
+        "sunday",
+    ] = Field(
         "today",
-        description="The day the caller asked for. The times above are on that day; a bare hour "
-        'such as "2" means 2 PM.',
+        description='The day the caller asked for: "today", "tomorrow", or the weekday they named '
+        '("friday" for "Friday at 2"), the next one coming. The times above are on that day; a bare '
+        'hour such as "2" means 2 PM.',
     )
 
     @model_validator(mode="after")

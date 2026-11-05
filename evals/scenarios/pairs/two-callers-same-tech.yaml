@@ -9,7 +9,7 @@ world:
   job_type: no_heat
   fill: ["2026-11-02", "2026-11-03"]
   keep_open:
-    - {date: "2026-11-02", window: afternoon, technicians: 2}
+    - {date: "2026-11-02", window: "1200-1400", technicians: 2}
 callers:
   - caller_id: "(332) 555-0163"
     persona: Priya Shah, a homeowner in Kensington, Brooklyn, calling during a cold snap. Calm and clear, wants the earliest visit.
@@ -48,7 +48,7 @@ must:
 together:
   - booked_together: true
   - one_job_per_technician_window: true
-  - window_jobs: {date: "2026-11-02", window: afternoon, count: 2}
+  - window_jobs: {date: "2026-11-02", window: "1200-1400", count: 2}
   - taken_refusals: 0
 should:
   - Each caller is booked into the window they asked for with no mention of the other call.

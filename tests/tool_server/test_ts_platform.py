@@ -76,7 +76,7 @@ def test_a_reused_idempotency_key_with_different_arguments_is_refused(agent):
     call = ready_to_book(agent)
     slot = first_open(agent, call)
     assert book(agent, call, slot, key="k")["ok"]
-    other = book(agent, call, {"date": "2026-11-06", "window": "morning"}, key="k")
+    other = book(agent, call, {"date": "2026-11-06", "window": "0800-1200"}, key="k")
     assert other["refused"] == "idempotency_key_reused"
 
 
@@ -104,7 +104,7 @@ def test_every_request_and_turn_is_one_json_line_with_ids_gate_and_timings(agent
         "book_appointment",
         call,
         job_type="tune_up",
-        slot={"date": "2026-11-03", "window": "morning"},
+        slot={"date": "2026-11-03", "window": "0800-1200"},
         details={"issue": "x", "since": "x", "tried": "x", "who_home": "x", "approver": "x"},
     )
     lines = [

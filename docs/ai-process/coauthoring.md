@@ -375,9 +375,47 @@ Changed at the pick: option A built at `/bench/rules` (DECISIONS.md 091); `/owne
 Commit: (this PR)
 Status: open
 
+## live call 1 (issue #149: wait time, voice, holding line, callback day, schedule, ending)
+Feedback (verbatim, Jackson, relayed by the coordinating session, after call `call-_+16784774024_qSVS59jLcAPP`):
+> the wait time was way too long, like very long. And I didn't like the voice as well. So if we can just change the voice from that like weird like girl voice to something else... Just choose any other one... It said got it, but wasn't telling me that it would need a second to do a task. Like it should just be like, okay, I'm gonna do that. Just give me 1 second. You know, something very human, with like the proper swing of the voice... I asked for an appointment Friday. It said, I'll book you tomorrow, anywhere from whatever it said, like 3 to 5 p.m.... Tomorrow would be Thursday. So that's just completely wrong. And that's not what I asked for... there should be no active appointments right now... Actually, no, that's not true, because the eval set needs to test for active appointments. So keep whatever active appointments would be in on the eval set. And then a few extra ones in case I want to do like my own run of the eval set. But most times should be available... Saturday and Sunday should also be available... It also just abruptly ended the call. There should always be a 1 second wait before ending the call to at least ensure in case the person said anything else.
+Changed:
+- The turn detector's longest wait after the caller stops: left to the issue #150 lane, whose audio rig can put pauses inside a caller's line.
+- A reply that promised work but called no tool, or that the caller heard none of, is asked again at once (the 19 s of silence after "Got it.").
+- A holding line before a look-up: the model's own in the same reply, or the tenant's ("Just give me one second.") added to it when the caller would hear only "Got it." or nothing. DECISIONS.md 096.
+- The voice: Cartesia "Max" instead of Katie, and the clips re-recorded in it. DECISIONS.md 094.
+- Callbacks: a weekday the caller names is the day booked ("Friday around 2 PM"), and the agent never explains the calendar.
+- The live schedule: weekends open 8 AM to 8 PM, and a script cancels most of the live world's filler visits, keeping the named customers' visits and one filler in six. DECISIONS.md 095.
+- Ending: no "That means the callback is off", and a one-second wait after the goodbye that keeps the call open if the caller speaks.
+- Cancel and the name check: the reason is optional and asked once at most; one wrong name gets one polite refusal and the callback offer. DECISIONS.md 097.
+Commit: (this PR)
+Status: open
+
+## live call 2 (issue #149: half replies, refused move, name echo, ZIP, callbacks, scheduling)
+Feedback (verbatim, Jackson, relayed by the coordinating session, after call `call-_+16784774024_MXJ5xsvpZQ5H`):
+> didnt like how it said my name right back....and just say the zip code is, not just zip 11201....then when i asked it something, it just said sorry about that and stopped. terrible... too fast on the readback of address and phone. then a weird repeat on the call the right number thing. and then it repeat it trying to call again. also i say 2pm, and it says 1-3pm. just let it say it can do it exactly... it just like pauses...like when i asked for a second task....and then asked it if it was going to ask me a question. and then it says 'yes' and then pauses....and doesn't say anything... and why is it saying it doesn't have openings for a tune-up wtf. why didn't it check friday first?... and too many double booking questions....like it asking me two sets of multi-options for the booking stuff.
+Changed:
+- "Sorry about that.", "Sure, I can set up an AC tune-up." and "Yes." alone are asked again at once (DECISIONS.md 096).
+- The move was refused because call 1's failed name check carried over to call 2; a check now stays on its call, and the repeated refusal isn't said twice (DECISIONS.md 098).
+- A name the caller just gave isn't said back; "ZIP 11201" is said as "the ZIP code is 1 1 2 0 1" (DECISIONS.md 098).
+- The read-back pace is the latency lane's (issue #150).
+Commit: (this PR)
+Status: open
+
 ## schedule edits r1 (issue #152: edit the schedule and customers, live into the agent)
 Ask (verbatim, Jackson, relayed by the coordinating session):
 > add to both the owner's view and the debug bench is the ability to directly edit the calendar with custom events that could take time slots. The owner's view should also have a way to do things like, adding a job, editing details, and stuff like that. But it should also, along with the debug bench, have a way to just block calendar availability and change the assigned phone numbers of different clients. Because in the demo, I suspect that he might be like, well, what if that time slot was booked? And then I can just book it and give him like the live test that changing the booking on the debug bench or the owner's view creates a live update in the mock Service Titan CRM, which in real time or near real time with only like a small delay can create a change in how the voice agent works because it's calling the database and other tools.
 Changed: a Schedule tab on the owner view and the bench (block a slot or a window, add an event or a job), a job page (window, type, notes, address; customer name and phone for admins), and on the bench what the agent would offer per window and a live list of changes in ServiceTitan. Every edit goes through the adapter and clears the slot cache (DECISIONS.md 093).
 Commit: (this PR)
 Status: open, look to be reviewed from the screenshots in the PR
+
+## service area r1 (issue #149: Jackson's call on the Retell number, call_ca9bfcec0b968db42ac2f428bea)
+Feedback (verbatim, Jackson, relayed by the coordinating session):
+> you should make this agent capable of any nyc, any of 5 boroughs zip code should be in zone
+> "one. nine. nine." should be same as "one hundred ninety nine"
+Changed:
+- docs/spec.md S-28: the service area is all five boroughs, every residential ZIP; the call never ends before the caller answers an out-of-area line.
+- docs/users.md: the service area named as all five boroughs.
+- The address check takes "one nine nine", "one ninety nine", "a hundred ninety nine" and "one hundred and ninety nine" alike, with "East" between the number and the street and "fourth", "4th" or "4" for the street (DECISIONS.md 105).
+Commit: (PR for joco/call-3-fixes)
+Status: open
+

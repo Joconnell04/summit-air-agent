@@ -1,0 +1,29 @@
+# Slate call 4 (Retell call_f8a3ad3177fa2c62fc9db00dcfa): the caller said "199 East 4th Street" and
+# never spelled it, the model passed a spelling anyway, and the read-back and the booking said
+# "199 Eastthstreet Street". The server applies a spelling only when the caller spelled it.
+id: address-not-spelled-kept-as-said
+flow: [booking]
+difficulty: standard
+traits: [split-digits]
+journeys: [J1, spine]
+tags: [address]
+caller_id: "(646) 555-0199"
+persona: Jordan Lee in the East Village, calling about a cold radiator. Clear and brief; says the address once, plainly, and never spells it.
+hidden_facts:
+  name: Jordan Lee
+  address: 199 East 4th Street, unit 2, New York, 10009
+  phone: the number you're calling from
+  problem: one radiator has been cold since yesterday; the rest of the apartment is fine
+  home: Jordan, healthy adult, home all day
+  approver: Jordan, the owner
+opening: Hi, one of my radiators has been cold since yesterday.
+script:
+  - Give the address as "199 East 4th Street, unit 2, 10009" when asked. Never spell any part of it, even if asked.
+  - Answer yes to a correct read-back; if the street in it is wrong, say so.
+  - Take the first window offered. Say goodbye after the agent confirms and asks if there is anything else.
+must:
+  - booking: {count: 1, street: "199 East 4th"}
+  - read_back: before_booking
+  - agent_never_says: ["eastth"]
+should:
+  - Reads the street back as the caller said it, "199 East 4th Street".

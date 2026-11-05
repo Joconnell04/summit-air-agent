@@ -230,7 +230,7 @@ def test_with_no_number_set_the_model_reads_the_flag_as_before(agent, connect):
             {"reason": "Caller wants to talk to someone", "callback_time": "11 AM"}, Turn()
         )
     )
-    assert json.loads(reply)["say"] == "I've let our team know, and someone will call you by 11 AM."
+    assert json.loads(reply)["say"] == "I've let our team know, and someone will call you around 11 AM."
     assert worker.transfer.task is None and not worker.lk.sip.requests
 
 

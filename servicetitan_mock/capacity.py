@@ -1,10 +1,11 @@
 """Capacity and technician assignment.
 
-A slot is one technician in one arrival window on one day. Capacity for a window is the
-technicians whose shift covers it (and whose skills fit the job type) minus the ones already
-booked, and minus the ones a non-job appointment (a block, a meeting) takes out of capacity for
-any part of the window. The database enforces the final rule: one live appointment per technician
-per window.
+A slot is one technician in one arrival window on one day. A window is any run of the company's
+30-minute blocks (tenants/<name>/config.yaml scheduling), so capacity for a window is the
+technicians whose shift covers it (and whose skills fit the job type) minus the ones with a live
+appointment overlapping any part of it, and minus the ones a non-job appointment (a block, a
+meeting) takes out of capacity for any part of it. Allocation runs inside the write transaction,
+so two bookings can't take one technician for overlapping windows.
 
 Nothing here knows about priority, ZIPs or urgent holds. Those are the company's rules, not
 ServiceTitan's, and the tool server applies them (app/capacity.py) to the technicians this answers
@@ -83,19 +84,25 @@ def slots(
     exclude_appointment: int | None = None,
 ) -> Slots:
     staff = _on_shift(conn, cfg, day, window, bu_id)
+    start, end = cfg.window_bounds(day, window)
     # One statement for both, so a booking that commits meanwhile cannot make the busy list and the
     # day's load disagree (the order of technicians depends on the load).
     live = conn.execute(
-        """SELECT id, technician_id, window_id FROM appointments
-           WHERE window_date = ? AND status <> 'Canceled'""",
-        (day.isoformat(),),
+        """SELECT id, technician_id, window_date, arrival_window_start, arrival_window_end
+           FROM appointments
+           WHERE status <> 'Canceled' AND (window_date = ? OR (arrival_window_start < ?
+                 AND arrival_window_end > ?))""",
+        (day.isoformat(), iso(end), iso(start)),
     ).fetchall()
     busy = {
         r["technician_id"]
         for r in live
-        if r["window_id"] == window.id and r["id"] != exclude_appointment
+        if r["arrival_window_start"] < iso(end)
+        and r["arrival_window_end"] > iso(start)
+        and r["id"] != exclude_appointment
     }
-    busy |= blocked(conn, *cfg.window_bounds(day, window))
+    busy |= blocked(conn, start, end)
+    live = [r for r in live if r["window_date"] == day.isoformat()]
     daily = Counter(r["technician_id"] for r in live)
     staff = sorted(staff, key=lambda t: (daily.get(t["id"], 0), t["id"]))
     fit = {t["id"] for t in staff if set(skills) <= set(json.loads(t["skills_json"]))}

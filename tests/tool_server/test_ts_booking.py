@@ -26,8 +26,8 @@ from app.text import phone_said
 
 AGENT = load_agent(TENANT_DIR)[0]
 
-FULL_DAY = {"date": "2026-11-04", "window": "morning"}  # nearly-full day: no normal slots
-ONE_LEFT = {"date": "2026-11-05", "window": "afternoon"}  # exactly one normal slot open
+FULL_DAY = {"date": "2026-11-04", "window": "0800-1200"}  # nearly-full day: no normal slots
+ONE_LEFT = {"date": "2026-11-05", "window": "1200-1600"}  # exactly one normal slot open
 
 
 def fsm_jobs(mock) -> int:
@@ -107,10 +107,36 @@ def test_the_read_back_is_one_sentence_with_the_number_in_groups(agent):
     agent.turn(call, "It's 101 Union St, 11231.")
     asked = agent.tool("read_back", call, address=in_area_address(), phone="caller_id")
     assert asked["say"] == (
-        "I have your home at 101 Union St, Brooklyn, one one two three one, and the best number is "
-        "two one two, five five five, zero nine nine nine, is that right?"
+        "I have your home at 101 Union St, Brooklyn, ZIP code one one two three one, and the best "
+        "number is "
+        "two one two, five five five, zero nine nine nine. That's all correct, right?"
     )
     assert "read" not in asked["say"].lower()
+
+
+@pytest.mark.parametrize(
+    "phone",
+    ["the number I'm calling from", "this number", "this one", "the one I'm calling from"],
+)
+def test_the_number_calling_said_as_a_phrase_is_the_caller_id(agent, phone):
+    """Retell call call_9826ff9f0dfa8bc835a3601368b: read_back got "the number I'm calling from"
+    and the caller heard "all ten digits" again."""
+    call = agent.start("+1 (347) 555-0101")["data"]["call_id"]
+    agent.turn(call, "It's 101 Union St, 11231.")
+    asked = agent.tool("read_back", call, address=in_area_address(), phone=phone)
+    assert asked["ok"], asked
+    assert "three four seven, five five five, zero one zero one" in asked["say"]
+
+
+@pytest.mark.parametrize("phone", ["555 0142", "212 555 014", "212 555 01422"])
+def test_a_number_that_isnt_ten_digits_is_asked_for_again_in_full(agent, phone):
+    """Retell call call_cda6d9abd395cbb8859e0d09b14 review: a number short or long by a digit is
+    never read back, and the caller is asked for all ten digits."""
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, f"It's 101 Union St, 11231, and my number is {phone}.")
+    asked = agent.tool("read_back", call, address=in_area_address(), phone=phone)
+    assert asked["refused"] == "invalid_phone"
+    assert asked["say"] == "Could I get that number again, all ten digits?"
 
 
 def test_a_caller_who_answers_the_read_back_with_a_business_cannot_book(agent):
@@ -299,7 +325,7 @@ def test_a_slot_that_is_not_offered_is_refused(agent):
         book(agent, call, {"date": "2026-11-03", "window": "brunch"})["refused"] == "invalid_slot"
     )
     assert (
-        book(agent, call, {"date": "2027-01-01", "window": "morning"})["refused"] == "invalid_slot"
+        book(agent, call, {"date": "2027-01-01", "window": "0800-1200"})["refused"] == "invalid_slot"
     )
     # Normal jobs never get the after-hours window or the held urgent slots.
     assert (
@@ -318,7 +344,7 @@ def test_an_urgent_job_with_no_window_today_books_tomorrow_and_is_flagged(agent,
     first = found["data"]["first_urgent"]
     if first["day"] == "today":  # the on-call after-hours window is urgent-only, offered tonight
         assert first["window"] == "after_hours"
-    tomorrow = {"date": "2026-11-03", "window": "morning"}
+    tomorrow = {"date": "2026-11-03", "window": "0800-1200"}
     # After hours with an older person at home, the on-call technician is alerted first.
     assert agent.tool("flag_person", call, reason="On-call: no heat, 84 at home", priority="Urgent")[
         "ok"
@@ -357,17 +383,16 @@ def test_a_caller_can_move_their_own_booking_once(agent):
         "reschedule_appointment",
         call,
         booking_id=job_id,
-        slot={"date": "2026-11-06", "window": "morning"},
+        slot={"date": "2026-11-06", "window": "0800-1200"},
         reason="again",
     )
     assert again["refused"] == "limit"
 
 
-def test_a_cancel_needs_a_reason_and_offers_two_windows(agent, scenarios):
+def test_a_cancel_offers_two_windows(agent, scenarios):
+    # The reason is optional since issue #149 (test_ts_caller_changes.py, test_a_cancel_needs_no_reason).
     maria = scenarios["repeatCallerOpenJob"]
     call = agent.start(maria["phone"])["data"]["call_id"]
-    no_reason = agent.tool("cancel_appointment", call, booking_id=maria["jobId"], reason="")
-    assert no_reason["refused"] == "invalid_arguments"
     # Eval round 1, cancel-offers-windows: her afternoon visit isn't dispatched yet, so it cancels.
     cancelled = agent.tool(
         "cancel_appointment", call, booking_id=maria["jobId"], reason="cousin will look at it"
@@ -399,7 +424,7 @@ def test_a_dispatched_visit_is_handed_to_a_person_not_cancelled(agent, tmp_path)
 
 
 AFTER_HOURS = {"hours": 12, "minutes": 30}  # 9:30 p.m. New York
-TOMORROW_MORNING = {"date": "2026-11-03", "window": "morning"}
+TOMORROW_MORNING = {"date": "2026-11-03", "window": "0800-1200"}
 
 
 def test_after_hours_a_cold_house_alerts_the_on_call_technician_before_booking(agent, clock):
@@ -565,7 +590,7 @@ def test_a_parents_house_goes_on_its_own_account_with_the_caller_as_contact(agen
     agent.confirm_read_back(call, mothers)
     refused = book(agent, call, first_open(agent, call))
     assert refused["refused"] == "account_choice"
-    assert "its own account" in refused["say"]
+    assert refused["say"] == "Should I put this under your account?"
     no_name = agent.tool(
         "book_appointment",
         call,
@@ -610,17 +635,26 @@ def test_arrival_hours_read_8_to_2_as_daytime_and_offer_only_windows_inside(agen
     )
     assert found["ok"], found
     assert found["data"]["arrival"] == {"after": "08:00", "before": "14:00", "fits": True}
-    assert {w for d in found["data"]["days"] for w in d["windows"]} == {"morning"}
+    windows = [w for d in found["data"]["days"] for w in d["windows"]]
+    assert windows and all("0800" <= w[:4] and w[5:] <= "1400" for w in windows)
+
+
+def test_arrival_hours_narrower_than_a_window_get_a_shorter_one_that_fits(agent):
+    call = ready_to_book(agent)
+    found = agent.tool("find_slots", call, job_type="tune_up", arrive_before="9")
+    assert found["ok"], found
+    assert found["data"]["arrival"]["fits"] is True
+    assert {label for d in found["data"]["days"] for label in d["labels"]} == {"8 to 9"}
 
 
 def test_an_arrival_time_no_window_fits_is_said_plainly_without_a_promise(agent):
     call = ready_to_book(agent)
-    found = agent.tool("find_slots", call, job_type="tune_up", arrive_before="9")
+    found = agent.tool("find_slots", call, job_type="tune_up", arrive_before="8:15")
     assert found["ok"], found
     assert found["data"]["arrival"]["fits"] is False
     assert found["say"].startswith(
-        "Our arrival windows are 8 to 12, 12 to 4 and 4 to 8, and the technician can come any "
-        "time in the window, so I can't promise an exact time."
+        "Our arrival windows are two hours, and the technician can come any time in the window, "
+        "so I can't promise an exact time."
     )
 
 
@@ -636,11 +670,12 @@ def test_an_arrival_time_no_window_fits_is_said_plainly_without_a_promise(agent)
 def test_a_spelled_street_is_joined_into_the_name_for_the_read_back(agent, address, street):
     call = agent.start(UNKNOWN)["data"]["call_id"]
     agent.turn(call, "It's on Houston, 10302, let me spell it.")
+    agent.turn(call, address.get("spelled") or "H O U S T O N")
     asked = agent.tool(
         "read_back", call, address={"zip": "10302", **address}, phone="caller_id"
     )
     assert asked["ok"], asked
-    assert f"your home at {street}, one zero three zero two" in asked["say"]
+    assert f"your home at {street}, ZIP code one zero three zero two" in asked["say"]
 
 
 def test_an_owner_who_lives_downstairs_with_a_tenant_upstairs_can_book(agent):
@@ -1095,7 +1130,7 @@ def test_whose_account_is_asked_with_the_confirmed_read_back_not_by_a_refused_bo
     agent.turn(call, "Hi, the heat's out at my other place.")
     confirmed = agent.confirm_read_back(call, in_area_address(41))
     assert confirmed["data"]["account_choice"] is True
-    assert "its own account" in confirmed["say"]
+    assert confirmed["say"] == "Should I put this under your account?"
     agent.say(call, confirmed["say"])
     agent.turn(call, "Put it under my account.")
     booked = agent.tool(
@@ -1139,3 +1174,247 @@ def test_a_landmark_the_address_is_placed_by_is_not_a_business(line):
 )
 def test_a_business_said_as_the_callers_own_still_declines(line):
     assert sounds_commercial(line, AGENT["commercial"]), line
+
+
+# ---- one simple choice (issue #149, live call 2) ------------------------------------------------
+
+
+def test_slots_offer_one_choice_the_soonest_when_no_day_was_named(agent):
+    """Jackson: "too many double booking questions... two sets of multi-options"."""
+    call = ready_to_book(agent)
+    found = agent.tool("find_slots", call, job_type="tune_up")
+    assert found["ok"], found
+    assert found["say"].startswith("The soonest I have is ")
+    assert found["say"].endswith("Does that work?")
+    assert found["say"].count(" to ") == 1, "one window, not a list"
+    dates = [d["date"] for d in found["data"]["days"]]
+    assert dates == sorted(dates), "days in date order"
+
+
+def test_slots_offer_the_callers_day_first(agent):
+    """Jackson: "why didn't it check friday first?"."""
+    call = ready_to_book(agent)
+    found = agent.tool("find_slots", call, job_type="tune_up", preferred_days=["Friday"])
+    assert found["say"].startswith("Friday I have "), found["say"]
+    assert found["data"]["offer"]["weekday"] == "Friday"
+
+
+@pytest.mark.parametrize("day, date", [("today", "2026-11-02"), ("tomorrow", "2026-11-03"),
+                                       ("Friday", "2026-11-06"), ("monday", "2026-11-02")])
+def test_find_slots_takes_today_tomorrow_and_weekday_names_as_its_day(agent, day, date):
+    """Retell call call_3f65a9aea68c561c5c7de616f9f: day "today" was refused as no date."""
+    call = ready_to_book(agent)
+    found = agent.tool("find_slots", call, job_type="tune_up", day=day)
+    assert found["ok"], found
+    assert {w["date"] for w in found["data"]["windows"]} <= {date}
+
+
+def test_a_day_find_slots_cannot_read_is_asked_for(agent):
+    call = ready_to_book(agent)
+    found = agent.tool("find_slots", call, job_type="tune_up", day="someday")
+    assert found["refused"] == "invalid_arguments"
+    assert found["say"] == "Which day works for you?"
+
+
+def test_preferred_today_offers_today_and_never_says_today_as_a_name(agent):
+    """Retell call call_3f65a9aea68c561c5c7de616f9f: "I don't have Today open in the next two
+    weeks. The soonest I have is today, 4 to 8."."""
+    call = ready_to_book(agent)
+    found = agent.tool("find_slots", call, job_type="tune_up", preferred_days=["today"])
+    assert found["ok"], found
+    assert "Today" not in found["say"][1:] and "don't have" not in found["say"]
+    assert found["data"]["offer"]["date"] == "2026-11-02"
+
+
+def test_live_call_2_tomorrow_at_two_is_the_window_that_holds_two(agent):
+    """Live call 2: "Tomorrow at two PM." passed as arrive 1 PM to 5 PM, which no window fits,
+    and the caller heard there were no openings."""
+    call = ready_to_book(agent)
+    agent.turn(call, "Yeah. Tomorrow at two PM.")
+    found = agent.tool(
+        "find_slots", call, job_type="tune_up", day="2026-11-03", arrive_after="1 PM",
+        arrive_before="5 PM",
+    )
+    assert found["data"]["arrival"] == {"time": "14:00", "fits": True}
+    assert [w["label"] for w in found["data"]["windows"]] == ["2 to 4"]
+    assert found["say"] == "Tomorrow I have 2 to 4."
+
+
+def test_a_named_day_full_this_week_says_so_and_offers_next_weeks_with_its_date():
+    """Live call 2: "Friday the 13th, Saturday the 7th, or Monday the 9th", out of order, when this
+    Friday was full."""
+    from types import SimpleNamespace
+
+    from app import tools
+    from app.tenant import Tenant
+
+    tenant = Tenant.load(TENANT_DIR)
+    ctx = SimpleNamespace(tenant=tenant, now=datetime(2026, 11, 4, 15, 0, tzinfo=UTC))
+
+    def slot(day: str, weekday: str, window: str, label: str) -> dict:
+        return {"date": day, "window": window, "weekday": weekday, "day": weekday,
+                "day_and_date": f"{weekday}, November {int(day[-2:])}", "label": label}
+
+    by_day = {
+        "2026-11-07": [slot("2026-11-07", "Saturday", "morning", "8 to 12")],
+        "2026-11-13": [slot("2026-11-13", "Friday", "afternoon", "12 to 4")],
+    }
+    offer, say = tools._one_offer(ctx, by_day, sorted(by_day), {"friday"}, None)
+    assert offer["date"] == "2026-11-13"
+    assert say == "This Friday is full. Friday, November 13, I have 12 to 4. Does that work?"
+
+
+def test_book_for_tomorrow_at_two_in_a_longer_line_is_the_window_that_holds_it(agent):
+    """PR #155 check: "I want to book for tomorrow at 2" got fits False and every window."""
+    call = ready_to_book(agent)
+    agent.turn(call, "I want to book for tomorrow at 2")
+    found = agent.tool(
+        "find_slots", call, job_type="tune_up", arrive_after="1 PM", arrive_before="3 PM"
+    )
+    assert found["data"]["arrival"] == {"time": "14:00", "fits": True}
+    assert [w["label"] for w in found["data"]["windows"]] == ["2 to 4"]
+    assert found["say"] == "Tomorrow I have 2 to 4.", "the day comes from the caller's words"
+
+
+def test_a_named_time_outside_visit_hours_says_the_hours_and_offers_the_nearest(agent):
+    call = ready_to_book(agent)
+    agent.turn(call, "Tomorrow at 8 PM works.")
+    found = agent.tool("find_slots", call, job_type="tune_up", arrive_after="8 PM")
+    assert found["data"]["arrival"]["fits"] is False
+    assert found["say"] == "Our visits run from 8 AM to 8 PM. Tomorrow I have 6 to 8."
+
+
+# ---- all five boroughs (Jackson's call on the Retell number) ------------------------------------
+
+
+@pytest.mark.parametrize(
+    "address",
+    [
+        {"street": "199 E 4th St", "unit": "2", "city": "New York", "zip": "10009"},
+        {"street": "2500 Grand Concourse", "unit": "", "city": "Bronx", "zip": "10458"},
+    ],
+)
+def test_manhattan_and_the_bronx_are_in_the_area_and_book(agent, address):
+    """199 E 4th St, 10009 was refused out_of_area: the zones listed only some Brooklyn, Queens and
+    Staten Island ZIPs. Jackson: "any of 5 boroughs zip code should be in zone"."""
+    call = ready_to_book(agent, address=address)
+    assert agent.tool("check_service_area", call, zip=address["zip"])["ok"]
+    booked = book(agent, call, first_open(agent, call))
+    assert booked["ok"], booked
+
+
+def test_every_nyc_residential_zip_is_in_the_area():
+    from app.tenant import Tenant
+
+    area = Tenant.load(TENANT_DIR).service_area
+    assert len(area) == 214
+    for zip_code in ("10009", "10458", "11201", "11373", "10314", "10463", "11691"):
+        assert zip_code in area, zip_code
+    assert "07302" not in area and "11501" not in area
+
+
+def test_a_new_caller_is_asked_their_name_right_after_the_read_back(agent):
+    """A scripted call on #159 (call-_+16466240418_bUwDUCZFrKN8): "Perfect, booking that now.",
+    then a refused booking asked "Can I get a name for the booking?"."""
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "I'd like to book my furnace's yearly tune-up, please.")
+    confirmed = agent.confirm_read_back(call, in_area_address())
+    assert confirmed["say"] == "Thanks. And what name should I put the visit under?"
+    agent.say(call, confirmed["say"])
+    agent.turn(call, "Pat Rivera.")
+    booked = book(agent, call, first_open(agent, call), name="Pat Rivera")
+    assert booked["ok"], booked
+
+
+def test_a_new_caller_who_already_gave_a_name_is_not_asked_again(agent):
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "Hi, this is Pat Rivera, I need a tune-up.")
+    assert agent.confirm_read_back(call, in_area_address())["say"] == ""
+
+
+def test_a_unit_and_the_zip_are_said_apart_in_the_read_back(agent):
+    """Retell call call_1840576e622e3d729b760085142: "unit two one zero zero zero nine"."""
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "It's 199 East 4th Street, unit 2, 10009.")
+    address = {"street": "199 E 4th St", "unit": "2", "city": "New York", "zip": "10009"}
+    asked = agent.tool("read_back", call, address=address, phone="caller_id")
+    assert "unit 2, New York, ZIP code one zero zero zero nine" in asked["say"]
+
+
+def test_a_unit_heard_with_the_zip_on_the_end_keeps_only_the_unit(agent):
+    """Retell call call_1840576e622e3d729b760085142: "Unit 2, 10009" was heard as "Unit 210009"."""
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "It's 199 East 4th Street, Unit 210009.")
+    agent.turn(call, "Yes, 10009.")
+    address = {"street": "199 E 4th St", "unit": "210009", "city": "New York", "zip": "10009"}
+    asked = agent.tool("read_back", call, address=address, phone="caller_id")
+    assert "unit 2, New York, ZIP code one zero zero zero nine" in asked["say"]
+
+
+def test_a_caller_who_says_they_are_someone_else_is_booked_as_a_new_customer(
+    agent, mock, scenarios
+):
+    """Retell call call_1840576e622e3d729b760085142: the number was on file under another name, the
+    caller said "No, I'm Jordan Lee. I'm new.", was asked whose account a new address goes on, and
+    was booked with the other customer as the contact. A caller who says they're someone else gets
+    no account question, and the visit goes on a new account in their name alone."""
+    maria = scenarios["repeatCallerOpenJob"]
+    call = agent.start(maria["phone"])["data"]["call_id"]
+    agent.turn(call, "No, I'm Jordan Lee. I'm new. Those aren't mine.")
+    confirmed = agent.confirm_read_back(call, in_area_address(41))
+    assert "account_choice" not in confirmed["data"]
+    booked = agent.tool(
+        "book_appointment",
+        call,
+        job_type="tune_up",
+        slot=first_open(agent, call),
+        details={**DETAILS, "name": "Jordan Lee"},
+    )
+    assert booked["ok"], booked
+    customer = _mock_customer_of_job(mock, booked["data"]["booking_id"])
+    assert customer["id"] != maria["customerId"]
+    assert customer["name"] == "Jordan Lee"
+    assert [c["memo"] for c in customer["contacts"]] == ["Jordan Lee"]
+
+
+def test_a_named_half_hour_gets_a_window_from_then_cut_at_closing(agent):
+    """Jackson on Retell call call_9826ff9f0dfa8bc835a3601368b asked for 7:30 and heard "4 to 8";
+    a named time now starts the window at the half hour on or before it."""
+    call = ready_to_book(agent)
+    agent.turn(call, "Tomorrow at 7:30 PM works.")
+    found = agent.tool("find_slots", call, job_type="tune_up")
+    assert found["data"]["arrival"] == {"time": "19:30", "fits": True}
+    assert found["say"] == "Tomorrow I have 7:30 to 8."
+
+
+def test_a_caller_can_ask_for_a_shorter_window(agent):
+    call = ready_to_book(agent)
+    found = agent.tool("find_slots", call, job_type="tune_up", day="tomorrow", window_minutes=60)
+    assert found["ok"], found
+    assert all(
+        int(w["window"][5:7]) * 60 + int(w["window"][7:]) - int(w["window"][:2]) * 60
+        - int(w["window"][2:4]) == 60
+        for w in found["data"]["windows"]
+    )
+
+
+def test_the_default_offer_is_the_earliest_open_two_hour_window(agent):
+    call = ready_to_book(agent)
+    found = agent.tool("find_slots", call, job_type="tune_up")
+    window = found["data"]["offer"]["window"]
+    start, end = int(window[:2]) * 60 + int(window[2:4]), int(window[5:7]) * 60 + int(window[7:])
+    assert end - start == 120
+
+
+def test_a_spelling_the_caller_never_said_leaves_the_street_alone(agent):
+    """Slate call 4 (Retell call_f8a3ad3177fa2c62fc9db00dcfa): the model passed spelled "E, A, S,
+    T, 4, T, H, S, T, R, E, E, T" for "199 East 4th Street", which the caller never spelled, and
+    the read-back and the booking said "199 Eastthstreet Street"."""
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "It's 199 East 4th Street, unit 2, 10009.")
+    address = {"street": "199 East 4th Street", "unit": "2", "city": "New York", "zip": "10009",
+               "spelled": "E, A, S, T, 4, T, H, S, T, R, E, E, T"}
+    asked = agent.tool("read_back", call, address=address, phone="caller_id")
+    assert asked["ok"], asked
+    assert "199 East 4th Street, unit 2" in asked["say"]
+    assert "Eastth" not in asked["say"]

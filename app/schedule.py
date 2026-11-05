@@ -24,7 +24,7 @@ from . import tools
 from .db import iso, parse_iso, tx
 from .fsm import FsmAdapter, FsmRejected, FsmUnavailable, SlotCache
 from .lookup import OPEN_JOB_STATUSES
-from .tenant import Tenant, Window
+from .tenant import Tenant, Window, window_of
 from .text import phone_display, phone_key
 
 NAME_MAX = 60
@@ -68,9 +68,13 @@ def _day_range(tenant: Tenant, day: date) -> tuple[datetime, datetime]:
 
 
 def _window_at(tenant: Tenant, day: date, start: str, end: str) -> Window | None:
+    """The window an appointment is in: a configured one, or the run of blocks it covers."""
     for window in tenant.windows:
         if tenant.window_bounds(day, window) == (parse_iso(start), parse_iso(end)):
             return window
+    local_start, local_end = tenant.local(parse_iso(start)), tenant.local(parse_iso(end))
+    if local_start.date() == day == local_end.date() and local_start < local_end:
+        return window_of(local_start.time(), local_end.time())
     return None
 
 
@@ -89,6 +93,26 @@ def _frames(fsm: FsmAdapter, tenant: Tenant, day: date) -> list[dict]:
 
 def _bounds(frame: dict) -> tuple[datetime, datetime]:
     return parse_iso(frame["startUtc"]), parse_iso(frame["endUtc"])
+
+
+def _inside(frames: list[dict], start: datetime, end: datetime) -> list[dict]:
+    """The frames inside a window: its 30-minute blocks, or the night window's own frame."""
+    return [f for f in frames if start <= _bounds(f)[0] and _bounds(f)[1] <= end]
+
+
+def _free_all_through(frames: list[dict], skills: bool = False) -> list[int]:
+    """Technicians available in every one of their business unit's frames (with the job's skills,
+    if asked)."""
+    by_unit: dict[int, set[int] | None] = {}
+    for frame in frames:
+        unit = frame["businessUnitIds"][0]
+        here = {
+            t["id"] for t in frame["technicians"]
+            if t["status"] == "Available" and (not skills or t.get("hasRequiredSkills"))
+        }
+        seen = by_unit.get(unit)
+        by_unit[unit] = here if seen is None else seen & here
+    return sorted(set().union(*(free for free in by_unit.values() if free)))
 
 
 def typical_job_type(tenant: Tenant, level: str) -> dict | None:
@@ -116,7 +140,8 @@ def day(
     windows, staff, on_shift = [], {}, set()
     for window in tenant.windows:
         start, end = tenant.window_bounds(on, window)
-        frame_list = [f for f in frames if _bounds(f) == (start, end)]
+        # The 30-minute blocks inside the window (app/capacity.py), or the night window's frame.
+        frame_list = [f for f in frames if start <= _bounds(f)[0] and _bounds(f)[1] <= end]
         if not frame_list:
             continue
         windows.append(
@@ -147,24 +172,28 @@ def day(
         return cells.setdefault((tech_id, window_id), {"jobs": [], "blocks": []})
 
     for appt in appointments:
-        window = _window_at(tenant, on, appt["arrivalWindowStart"], appt["arrivalWindowEnd"])
+        a_start, a_end = parse_iso(appt["arrivalWindowStart"]), parse_iso(appt["arrivalWindowEnd"])
         tech_id = tech_of.get(appt["id"])
-        if window is None or tech_id is None:
+        # A visit shows in every column its arrival window overlaps: a booking can be any run of
+        # 30-minute blocks, so "8 to 12" fills two 2-hour columns and "7:30 to 8" part of one.
+        covered = [w for w in windows if a_start < w["end"] and a_end > w["start"]]
+        if not covered or tech_id is None:
             continue
         job = fsm.job(appt["jobId"])
         if job["customerId"] not in customers:
             customers[job["customerId"]] = fsm.customer(job["customerId"])
         staff.setdefault(tech_id, f"Technician {tech_id}")
-        cell(tech_id, window.id)["jobs"].append(
-            {
-                "job_id": job["id"],
-                "number": job["jobNumber"],
-                "type": tenant.job_type_codes.get(job["jobTypeId"], ""),
-                "priority": job["priority"],
-                "customer": customers[job["customerId"]]["name"],
-                "status": job["jobStatus"],
-            }
-        )
+        for window in covered:
+            cell(tech_id, window["id"])["jobs"].append(
+                {
+                    "job_id": job["id"],
+                    "number": job["jobNumber"],
+                    "type": tenant.job_type_codes.get(job["jobTypeId"], ""),
+                    "priority": job["priority"],
+                    "customer": customers[job["customerId"]]["name"],
+                    "status": job["jobStatus"],
+                }
+            )
 
     for block in fsm.non_job_appointments(day_start, day_end):
         b_start = parse_iso(block["start"])
@@ -434,11 +463,9 @@ def block(
 
     def write():
         _, start, end = _window_from(tenant, on, window_id, now)
-        frames = [f for f in _frames(fsm, tenant, on) if _bounds(f) == (start, end)]
+        frames = _inside(_frames(fsm, tenant, on), start, end)
         names = {t["id"]: t["name"] for f in frames for t in f["technicians"]}
-        free = sorted(
-            {t["id"] for f in frames for t in f["technicians"] if t["status"] == "Available"}
-        )
+        free = _free_all_through(frames)
         visits = _visits(fsm, start, end)
         if technician_id is not None:
             name_of = names.get(technician_id, f"Technician {technician_id}")
@@ -471,11 +498,12 @@ def block(
 
 
 def _visits(fsm: FsmAdapter, start: datetime, end: datetime) -> set[int]:
-    """Technicians with a live appointment in exactly this window."""
+    """Technicians with a live appointment overlapping this window."""
     appointments = [
         a for a in fsm.appointments_between(start, end)
         if a["status"] != "Canceled"
-        and (parse_iso(a["arrivalWindowStart"]), parse_iso(a["arrivalWindowEnd"])) == (start, end)
+        and parse_iso(a["arrivalWindowStart"]) < end
+        and parse_iso(a["arrivalWindowEnd"]) > start
     ]
     if not appointments:
         return set()
@@ -564,12 +592,7 @@ def add_job(
             raise EditError("That customer has no service location.")
         unit = job_type["businessUnitIds"][0]
         frames = fsm.capacity(start, end, unit, job_type["id"])
-        free = [
-            t["id"] for f in frames
-            if _bounds(f) == (start, end)
-            for t in f["technicians"]
-            if t["status"] == "Available" and t.get("hasRequiredSkills")
-        ]
+        free = _free_all_through(_inside(frames, start, end), skills=True)
         if technician_id is not None:
             if technician_id not in free:
                 raise EditError("That technician isn't free for this job then.")

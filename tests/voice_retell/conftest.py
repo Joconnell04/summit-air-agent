@@ -29,6 +29,7 @@ class FakeRetell:
         self.context: list[tuple[str, str]] = []
         self.stopped: list[str] = []
         self.unrecorded: list[str] = []
+        self.calls: dict[str, dict] = {}
 
     def say_next(self, call_id: str, context: str) -> None:
         self.said.append((call_id, context))
@@ -38,6 +39,10 @@ class FakeRetell:
 
     def stop_call(self, call_id: str) -> None:
         self.stopped.append(call_id)
+
+    def get_call(self, call_id: str) -> dict:
+        """The call as Retell has it now: a test sets `calls` to show a line still being said."""
+        return self.calls.get(call_id, {})
 
     def keep_no_recording(self, call_id: str) -> None:
         self.unrecorded.append(call_id)

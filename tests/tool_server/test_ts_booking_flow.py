@@ -255,7 +255,7 @@ def test_heating_and_cooling_lines_are_never_declined(line):
 def test_a_request_for_plumbing_gets_the_server_line_once_and_a_lead(agent):
     call = agent.start(UNKNOWN)["data"]["call_id"]
     hints = agent.turn(call, "My heat is out and my sink leaks.")["data"]["hints"]
-    line = "I'm sorry, we don't do plumbing, so a plumber would be the right call for that."
+    line = "Unfortunately we don't do plumbing, so a plumber would be the right call for that."
     assert f"not_offered:{line}" in hints
     notes = " ".join(server_notes(hints))
     assert line in notes and "carry on" in notes
@@ -409,14 +409,14 @@ def test_a_second_unit_needs_its_own_read_back_and_books_there(agent):
 def test_no_opening_for_the_second_job_asks_for_a_named_callback(agent, monkeypatch):
     call = ready_to_book(agent)
     assert book(agent, call, first_open(agent, call, "no_heat"), job_type="no_heat")["ok"]
-    monkeypatch.setattr("app.tools._open_windows", lambda ctx, job_type, level: [])
+    monkeypatch.setattr("app.tools._open_windows", lambda *args, **kwargs: [])
     found = agent.tool("find_slots", call, job_type="tune_up")
     assert "flag_person" in found["data"]["need"]
 
 
 def test_no_opening_on_a_first_job_has_no_second_job_note(agent, monkeypatch):
     call = ready_to_book(agent)
-    monkeypatch.setattr("app.tools._open_windows", lambda ctx, job_type, level: [])
+    monkeypatch.setattr("app.tools._open_windows", lambda *args, **kwargs: [])
     assert "need" not in agent.tool("find_slots", call, job_type="tune_up")["data"]
 
 
@@ -457,6 +457,31 @@ def test_a_promise_of_a_named_technician_is_never_said(sentence, dropped):
 )
 def test_a_name_written_in_lower_case_still_counts(line, asked):
     """Eval run 20261104-200546: the transcript came through in lower case."""
+    assert asks.technician_asked(line) == asked
+
+
+@pytest.mark.parametrize(
+    "line, asked",
+    [
+        ("Uh, what booking time is not available?", None),
+        ("what booking time is not available", None),
+        ("is Mike available Friday", "Mike"),
+        ("is anyone available", None),
+        ("can you come Friday", None),
+        ("Is it still available Friday?", None),
+        # Retell call call_3f65a9aea68c561c5c7de616f9f, at 56 s.
+        (
+            (
+                "It's at my coffee shop that I run. And it's, um, the HVAC, the heating is not "
+                "working. In all the rooms."
+            ),
+            None,
+        ),
+    ],
+)
+def test_a_word_in_the_names_place_that_is_no_name_asks_for_nobody(line, asked):
+    """Retell call call_cda6d9abd395cbb8859e0d09b14: "Uh, what booking time is not available?"
+    was read as a request for a technician named Not."""
     assert asks.technician_asked(line) == asked
 
 
@@ -726,3 +751,13 @@ def test_the_read_backs_own_phone_said_again_is_not_a_house_number(line):
 def test_a_time_preference_is_not_a_technician(line):
     """Eval run 20261104-234633, reschedule-own-booking: "Earlier" was noted as a technician."""
     assert asks.technician_request(line) is None
+
+
+def test_the_server_lines_say_sorry_only_for_our_own_mistakes():
+    """Jackson on Retell call call_9826ff9f0dfa8bc835a3601368b: it says "I'm sorry" too often.
+    "Unfortunately" says something isn't possible; an apology stays only for our system being
+    down and the signed-off billing line about a charge."""
+    agent = load_agent(TENANT_DIR)[0]
+    lines = {**agent["lines"], **agent["voice"]}
+    sorry = sorted(k for k, v in lines.items() if isinstance(v, str) and "sorry" in v.lower())
+    assert sorry == ["billing_callback", "server_down"]

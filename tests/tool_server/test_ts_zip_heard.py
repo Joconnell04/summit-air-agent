@@ -15,7 +15,10 @@ from app.text import digit_runs
         ("one one two two six", ["11226"]),
         ("one one double two six", ["11226"]),
         ("1 1 2 2 6", ["11226"]),
-        ("it's eleven two two six", ["226"]),
+        # Said in pairs (realism suite on #155, live-replay-2-move-and-tuneup).
+        ("it's eleven two two six", ["11226"]),
+        ("Seventy five Hoyt Street. Brooklyn. Eleven two zero one.", ["75", "11201"]),
+        ("one one two thirty eight", ["11238"]),
         ("1520 Flatbush Ave, apartment 4C", ["1520"]),
         ("zip is one oh three oh one, phone 929 555 0112", ["10301", "9295550112"]),
     ],
@@ -39,12 +42,13 @@ def test_a_zip_the_caller_never_said_is_refused_and_nothing_is_recorded(agent):
 
 
 @pytest.mark.parametrize(
-    "line", ["It's 11226.", "Zip's one one two two six.", "one one double two six"]
+    "line", ["It's 11550.", "Zip's one one five five zero.", "one one double five zero"]
 )
 def test_a_zip_the_caller_said_in_digits_or_words_is_checked(agent, line):
     call = agent.start(UNKNOWN)["data"]["call_id"]
     agent.turn(call, line)
-    assert agent.tool("check_service_area", call, zip="11226")["refused"] == "out_of_area"
+    # 11550 (Hempstead, Nassau): every ZIP in the five boroughs is in the area since DECISIONS.md 105.
+    assert agent.tool("check_service_area", call, zip="11550")["refused"] == "out_of_area"
 
 
 def test_a_zip_on_the_callers_record_needs_no_saying(agent, scenarios):

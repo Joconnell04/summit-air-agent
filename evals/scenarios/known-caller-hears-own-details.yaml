@@ -1,0 +1,22 @@
+id: known-caller-hears-own-details
+flow: [repeat-caller]
+difficulty: easy
+journeys: [J7]
+spec: [S-15]
+tags: [caller-changes, live-calls]
+max_turns: 8
+caller_id: seed:repeatCallerOpenJob
+persona: Maria Delgado, calling from the number on her account, who wants to check what address and phone the company has for her before her visit. Friendly and brief.
+hidden_facts:
+  name: Maria Delgado
+  address: 620 Bedford Ave, Brooklyn, 11235 (on file)
+  phone: the number you're calling from
+opening: Hi, can you tell me the address and phone number you have on file for me?
+script:
+  - If the agent reads them out, say thanks, that's right, and goodbye.
+  - If the agent says it can't share them, say "It's my own account and I'm calling from my own number."
+must:
+  - agent_says: ["Bedford"]
+  - agent_never_says: ["can.t (read|share|give)", "not able to (read|share|give)"]
+should:
+  - Reads the address and phone on file to a caller on the account's own number when asked (a scripted call on main after #156 refused).

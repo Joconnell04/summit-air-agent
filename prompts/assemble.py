@@ -12,6 +12,7 @@ from zoneinfo import ZoneInfo
 
 import yaml
 
+from app.text import number_tokens, says_goodbye, words
 from app.tools import TOOLS
 
 PROMPTS = Path(__file__).resolve().parent
@@ -41,6 +42,31 @@ STAGE_NOTES = {
 def instructions(start: dict, now: datetime | None = None) -> str:
     """The system prompt for one call. `start` is the data of the /calls/start result."""
     return "\n\n".join(text for _name, text in sections(start, now))
+
+
+# The one-page prompt for `voice.profile: stripped` (config/models.yaml): the same tools and server,
+# none of the long prompt, owner guidance or stage notes.
+STRIPPED = "stripped.md"
+
+
+def stripped_instructions(start: dict, tenant_dir: Path, now: datetime | None = None) -> str:
+    """The system prompt for a call on the stripped profile: prompts/stripped.md with the tenant's
+    safety lines and sign-off word for word, then the company knowledge and this call, as in the
+    full prompt."""
+    from app.tenant import load_agent
+
+    safety = load_agent(tenant_dir)[0]["safety"]
+    lines = "\n".join(
+        f"- {kind}: \"{' '.join(spec['lines'].split())}\"" for kind, spec in safety["kinds"].items()
+    )
+    page = (
+        (PROMPTS / STRIPPED).read_text().strip()
+        .replace("{company}", start["tenant"]["name"])
+        .replace("{safety_lines}", lines)
+        .replace("{sign_off}", f"\"{' '.join(safety['sign_off'].split())}\"")
+    )
+    tail = [text for name, text in sections(start, now) if name in ("Company knowledge", "This call")]
+    return "\n\n".join([page, *tail])
 
 
 def sections(start: dict, now: datetime | None = None) -> list[tuple[str, str]]:
@@ -156,6 +182,14 @@ def first_name(full_name: str) -> str:
     return full_name.split()[0] if full_name.strip() else ""
 
 
+def call_names(start: dict) -> set[str]:
+    """The names on the accounts /calls/start matched, and the name the caller goes by, as
+    lowercase words: the reply filter drops them when the model says them straight back."""
+    names = [c.get("name") or "" for c in start.get("customers") or []]
+    names.append(start.get("preferred_name") or "")
+    return {w for name in names for w in words(name).split() if len(w) > 1}
+
+
 def spoken(start: dict, voice: dict) -> dict:
     """The tenant's `voice` lines with the owner's live edits for this call (greeting, goodbye)
     laid over them, as /calls/start returned them."""
@@ -199,6 +233,10 @@ SERVER_NOTES = {
         "The electrical advice has just been said for you. This isn't a gas or carbon monoxide "
         "call: offer to book a visit now, without waiting for the unit or the breaker to be off, "
         "and don't repeat the advice."
+    ),
+    "electrical_answered": (
+        "The electrical advice was said a moment ago. Don't ask whether the unit or the breaker is "
+        "off, and don't ask again what's wrong: go on with the booking."
     ),
     # A caller who asked the agent to wait (app/dead_air.py, DECISIONS.md 081).
     "caller_holding": (
@@ -276,6 +314,11 @@ SERVER_NOTES = {
 }
 
 
+def without_guidance(hints: list[str]) -> list[str]:
+    """Hints without the owner's guidance and the stage notes, for the stripped profile."""
+    return [h for h in hints if h not in STAGE_NOTES and not h.startswith("guidance:")]
+
+
 def server_notes(hints: list[str], known: dict[str, str] | None = None) -> list[str]:
     """`[server]` lines added to a caller's line for the model, from a turn result's hints (the
     tool-use prompt explains them). Safety lines are spoken by the voice layer, not described. A
@@ -306,6 +349,95 @@ def server_notes(hints: list[str], known: dict[str, str] | None = None) -> list[
     return notes
 
 
+class KnownFacts:
+    """The facts for the "Already known" note, passed on only when they change. The note stays on
+    the caller line it was added to, so the model keeps it; adding it again to every line changed
+    the context after LiveKit's early model request had started, which threw that request away and
+    made one more on every turn (realism suite on #155: 3 requests on a lookup turn, 2 on a plain
+    one)."""
+
+    def __init__(self):
+        self._last: dict | None = None
+
+    def fresh(self, known: dict | None) -> dict | None:
+        if not known or known == self._last:
+            return None
+        self._last = dict(known)
+        return known
+
+
+# A lead-in announcing a look-up about to happen in this turn ("I'll look up the visit now", "Let
+# me find that", "One moment"). In a reply with no tool call it is a dead end: the caller waits on
+# work that never starts (live call 1, issue #149: "Got it." then 19 s of silence). Closings that
+# promise something later ("I'll let the team know", "I'll get that to the technician") are not
+# lead-ins (PR #155 review).
+PROMISES_ACTION = re.compile(
+    r"\b(?:let me|i'?ll|i will|i'?m going to|i am going to)\s+(?:just\s+)?(?:go ahead and\s+)?"
+    r"(?:look|check|find|pull up|search|verify)\b"
+    r"|\b(?:one|a|just a) (?:moment|sec)\b|\b(?:one|just a) second\b|\bgive me a (?:moment|sec|second)\b"
+    r"|\bbear with me\b",
+    re.IGNORECASE,
+)
+# Tool results that finish the caller's request: after one of them succeeds, a reply with nothing
+# more to say is not left hanging (PR #155 review: no follow-up after a confirmed booking or
+# callback).
+FINISHING_TOOLS = (
+    "book_appointment", "reschedule_appointment", "cancel_appointment", "record_move",
+    "flag_person", "record_lead", "mark_do_not_call", "end_call",
+)
+# An acknowledgment with the caller's name after it ("Got it, Pat.", "Thanks, Sam.", "Hi Maria,"):
+# the name is dropped when the caller just said it (Jackson after live call 2, issue #149: "didnt
+# like how it said my name right back").
+NAME_ECHO = re.compile(
+    r"^(?P<ack>(?:hi|hello|hey|got it|thanks|thank you|okay|ok|sure|great|perfect|alright|all right|"
+    r"nice to meet you|sounds good|of course|no problem)),?\s+"
+    r"(?P<name>[A-Za-z][a-z'-]+(?:\s+[A-Za-z][a-z'-]+)?)(?P<end>[.!,])\s*",
+    re.IGNORECASE,
+)
+# "ZIP 11201" read as a word and a number (Jackson: "just say the zip code is"): said as "the ZIP
+# code is 1 1 2 0 1", digit by digit.
+ZIP_WORD = re.compile(r"\bZIP(?P<rest>\s+code(?:\s+is)?|:)?\s+(?P<digits>\d{5})\b", re.IGNORECASE)
+# "No problem" with nothing to answer: only after a thank-you or an apology (Jackson's call on the
+# Retell number: "No problem" to "The what?").
+NO_PROBLEM = re.compile(r"^\s*(?:no problem|no worries)(?:\s+at all)?\s*(?:[.!,]\s*|$)", re.IGNORECASE)
+THANKS_OR_SORRY = re.compile(r"\b(?:thanks|thank you|thx|appreciate|sorry|apologi[sz]e|my bad)\b", re.IGNORECASE)
+# Sentences this long or longer are never said twice in one turn (SpokenReply.sentence).
+REPEAT_MIN_WORDS = 6
+# Look-ups whose answer needs a second model step before the caller hears anything. A reply that
+# calls one, and says nothing first but an acknowledgment, ends with a holding line
+# (SpokenReply.holding_line). Bookings, moves and cancels are left out: the server's confirmation
+# is spoken the moment the tool answers.
+LOOKUPS = ("find_customer", "get_customer_history", "find_slots")
+# A sentence that only acknowledges the caller ("Got it.", "Yes.", "Sure, I can set up an AC
+# tune-up."). A reply of nothing else, with no tool call and no question, leaves the caller waiting
+# for the agent's next step (the second live call, call-_+16784774024_MXJ5xsvpZQ5H: 20 s of silence
+# after each of those two lines).
+ONLY_ACKNOWLEDGES = re.compile(
+    r"(?:(?:sure|okay|ok|got it|yes|yeah|yep|alright|all right|of course|absolutely|no problem|"
+    r"great|perfect|understood|sounds good|right|thanks|thank you|sorry|sorry about that|"
+    r"my apologies|apologies|no worries|my bad)[,.!]?\s*)+(?:i can [^.?!]*[.!]?)?"
+    r"|i can (?:do|set up|help with|book|get|take care of) [^.?!]*[.!]?",
+    re.IGNORECASE,
+)
+# What the voice layer asks the model for when a reply would leave the caller waiting in silence.
+FOLLOW_UP_NOTES = {
+    "promised": (
+        "[server] You said you would look something up but called no tool, so nothing is "
+        "happening and the caller is waiting. Do it now, or tell the caller plainly what happens "
+        "next."
+    ),
+    "silent": (
+        "[server] The caller heard nothing from your last reply. Answer them now in one short "
+        "sentence, without repeating their address, ZIP or phone number."
+    ),
+    "stalled": (
+        "[server] Your last reply only acknowledged the caller, and they are waiting on you. Take "
+        "the next step now: call the tool it needs, or ask your next question. Don't repeat their "
+        "address, ZIP or number, and don't ask them to confirm it."
+    ),
+}
+
+
 # A sentence that announces the read-back ("let me read that back", "I'll read back the details",
 # "let me confirm your address and number"). The server's own sentence says it; the caller hears
 # it once (eval round 3).
@@ -332,7 +464,14 @@ TOOL_TALK = re.compile(
     r"|\b(?:the|my|that) (?:reschedule|rescheduling|booking|move|cancel(?:lation)?|request|update|"
     r"change|lookup|call) (?:ran|didn'?t (?:return|come back|confirm)|returned|came back|went "
     r"through without|failed to (?:return|confirm))\b"
-    r"|\bi can'?t confirm the new time yet\b",
+    r"|\bi can'?t confirm the new time yet\b"
+    # Live call 1 (issue #149): "I haven't cancelled anything yet, because I need to find the
+    # booking first", and "I'll cancel it now" said before the name check had passed.
+    r"|\bi haven'?t (?:cancel+ed|moved|rescheduled|changed|booked) anything\b"
+    r"|\bi (?:need|have) to (?:find|locate|look up|pull up) (?:the|your) "
+    r"(?:booking|visit|appointment|record|account)\b"
+    r"|\b(?:i'?ll|i will|i'?m going to|let me)\s+(?:go ahead and\s+)?(?:cancel|reschedule|move)\s+"
+    r"(?:it|that|this|the (?:visit|appointment|booking|tune-?up)|your (?:visit|appointment|booking))\b",
     re.IGNORECASE,
 )
 # A question confirming the address or the number ("Is 142 Main Street still the right address?",
@@ -342,6 +481,13 @@ ASKS_TO_CONFIRM = re.compile(
     r"\bis\b[^.?!]{0,50}\b(?:still )?(?:the )?(?:right|correct) (?:address|number|place)\b[^.?!]*\?"
     r"|\bnumber ending in\b[^.?!]*\?"
     r"|\bstill the (?:best|right|correct)\b[^.?!]*\?",
+    re.IGNORECASE,
+)
+# The model working out the date aloud ("Today is Wednesday, so Friday is two days from now"):
+# the server's sentence names the day plainly (live call 1, issue #149).
+EXPLAINS_CALENDAR = re.compile(
+    r"\btoday is (?:a )?(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b"
+    r"|\b(?:is|are|that'?s) (?:one|two|three|four|five|six|\d) days? (?:from now|from today|away)\b",
     re.IGNORECASE,
 )
 # Coaching on how to care for someone ("stay with your partner", "keep them sitting up"). The
@@ -471,15 +617,21 @@ def caller_streets(text: str) -> set[tuple[str, str]]:
 
 
 def _digit_runs(text: str) -> list[tuple[str, list[str]]]:
-    """Each run of digits in a caller's line, with the two words that follow it. An ordinal
-    ("77th") is a word here, so a street name ends a run."""
-    tokens = re.findall(r"\d+(?:st|nd|rd|th)\b|[a-z]+|\d+", text.lower())
+    """Each run of digits in a caller's line, with the two words that follow it. Numbers are read
+    the way New Yorkers say them (app.text.number_tokens: "seventy five" is 75, "eleven two zero
+    one" is 11201); the replay-2 gate call said both in words, and the model's "I have 75 Hoyt
+    Street, Brooklyn 11201" got through. An ordinal ("77th") is a word here, so a street name ends
+    a run; punctuation doesn't, so "(347) 555-0213" is one run."""
+    tokens: list[str] = []
+    for part in re.split(r"(\b\d+(?:st|nd|rd|th)\b)", text or "", flags=re.IGNORECASE):
+        if ORDINAL.match(part.lower()):
+            tokens.append(part.lower())
+        else:
+            tokens += [t for t in number_tokens(part) if t.isalnum()]
     runs, run = [], ""
     for i, token in enumerate(tokens):
         if token.isdigit():
             run += token
-        elif token in DIGIT_WORDS and not ORDINAL.match(token):
-            run += DIGIT_WORDS[token]
         else:
             if run:
                 runs.append((run, tokens[i : i + 2]))
@@ -506,7 +658,11 @@ class SpokenReply:
     ends. That is from the first in-area ZIP check, when a read-back can come, until the
     read-back is confirmed, and for the whole of a safety call."""
 
-    def __init__(self) -> None:
+    def __init__(self, holding_lines: list[str] | tuple[str, ...] = ()) -> None:
+        # The tenant's holding lines (agent.yaml voice.holding), said in turn.
+        self.holding_lines = list(holding_lines)
+        self._last_holding: str | None = None
+        self._lone_no_problem = ""
         self.address_checked = False
         self.read_back_confirmed = False
         self.safety_call = False
@@ -518,6 +674,21 @@ class SpokenReply:
         self.advised = False
         self._dropped_restatement = False
         self._asked = False
+        # A follow-up was asked for since the caller last spoke: at most one a turn.
+        self._followed_up = False
+        # A booking, callback or other request was completed since the caller last spoke.
+        self._finished = False
+        # What the caller heard since they last spoke: the model's kept sentences and the server's
+        # lines, by their words, so neither is said twice in a row.
+        self._heard_lines: list[str] = []
+        # Every word the caller said on the call, and the names on the accounts the call found, for
+        # a name said back: the name is used once, in the greeting (Jackson after live call 2).
+        self._caller_words: set[str] = set()
+        self.names: set[str] = set()
+        # The caller's last line thanked the agent or apologized: "No problem" answers it.
+        self._thanked = False
+        # The caller's last line said goodbye: a lone "Sure." after it is the end, not a stall.
+        self._goodbye = False
         # Technicians the caller asked for by name (DECISIONS.md 085).
         self.technicians: set[str] = set()
 
@@ -534,6 +705,12 @@ class SpokenReply:
         self.zips |= zips
         self.phones |= phones
         self.streets |= caller_streets(caller_text)
+        self._followed_up = False
+        self._finished = False
+        self._heard_lines = []
+        self._caller_words |= set(words(caller_text).split())
+        self._thanked = bool(THANKS_OR_SORRY.search(caller_text or ""))
+        self._goodbye = says_goodbye(caller_text)
         action = (safety or {}).get("action")
         if action in ("speak_lines", "speak_variant"):
             self.safety_call = True
@@ -542,8 +719,14 @@ class SpokenReply:
 
     def tool_done(self, name: str, envelope: dict) -> None:
         data = envelope.get("data") or {}
+        if name in FINISHING_TOOLS and envelope.get("ok"):
+            self._finished = True
         if name in ("check_service_area", "find_address") and envelope.get("ok"):
             self.address_checked = True
+            # A ZIP the lookup found is the caller's as much as one they said: the model never
+            # reads it back on its own (replay-2 gate call, "zip code 11201").
+            if data.get("zip"):
+                self.zips.add(str(data["zip"]))
         if name == "find_slots" and (data.get("priority") or {}).get("level") == "Urgent":
             self.urgent = True
         if data.get("spoken_first"):
@@ -570,16 +753,67 @@ class SpokenReply:
     def start_reply(self) -> None:
         self._dropped_restatement = False
         self._asked = False
+        self._lone_no_problem = ""
+
+    def leftover(self) -> str:
+        """A lone "No problem." held back, for a reply that would otherwise say nothing."""
+        line, self._lone_no_problem = self._lone_no_problem, ""
+        return line
 
     def sentence(self, sentence: str) -> str:
         """One sentence of the model's text, in order within a reply, or "" when the caller
-        shouldn't hear it."""
+        shouldn't hear it. A name the caller just gave isn't said back, and a ZIP is said as "the
+        ZIP code is" and its digits."""
+        if not self._thanked and NO_PROBLEM.match(sentence):
+            rest = NO_PROBLEM.sub("", sentence, count=1)
+            if not rest.strip():
+                # Held back: said only if nothing else in the reply is, so a lone "No problem."
+                # never leaves silence (PR #158 review, "Is it ok if I'm not home?").
+                self._lone_no_problem = sentence
+                return ""
+            sentence = rest[0].upper() + rest[1:]
+        kept = self._filtered(sentence)
+        return self._without_name_echo(self._zip_said_plainly(kept)) if kept else ""
+
+    def _without_name_echo(self, sentence: str) -> str:
+        match = NAME_ECHO.match(sentence)
+        known = self._caller_words | self.names
+        if not match or not all(w in known for w in words(match["name"]).split()):
+            return sentence
+        rest = sentence[match.end():].strip()
+        ack = match["ack"][0].upper() + match["ack"][1:]
+        if match["end"] == "," and rest:
+            return f"{ack}, {rest}"
+        return f"{ack}. {rest}".strip() if rest else f"{ack}."
+
+    @staticmethod
+    def _zip_said_plainly(sentence: str) -> str:
+        def spell(match: re.Match) -> str:
+            digits = " ".join(match["digits"])
+            if match["rest"]:
+                # "ZIP code 11201", "ZIP: 11201": the words stay; only the digits are spaced (PR
+                # #155 re-check: rewriting these garbled the sentence).
+                return f"{match[0][: match.start('digits') - match.start()]}{digits}"
+            before = sentence[: match.start()].rstrip().lower()
+            if not before:
+                return f"The ZIP code is {digits}"
+            if before.endswith(("your", "the")):
+                return f"ZIP code is {digits}"
+            if before.endswith(","):
+                return f"and the ZIP code is {digits}"
+            return f"ZIP code {digits}"
+
+        return ZIP_WORD.sub(spell, sentence)
+
+    def _filtered(self, sentence: str) -> str:
         after_restatement, self._dropped_restatement = self._dropped_restatement, False
         if ANNOUNCES_READ_BACK.search(sentence) or DESCRIBES_TOOLS.search(sentence):
             return ""
         if TOOL_TALK.search(sentence) or ASKS_TO_CONFIRM.search(sentence) or COACHING.search(sentence):
             return ""
         if INTERNAL_WORD.search(sentence) or CLAIMS_FEE.search(sentence):
+            return ""
+        if EXPLAINS_CALENDAR.search(sentence):
             return ""
         promised = PROMISES_TECHNICIAN.search(sentence) and not PASSES_ON.search(sentence)
         if promised or self._names_technician(sentence):
@@ -608,6 +842,12 @@ class SpokenReply:
             if self._asked:
                 return ""
             self._asked = True
+        # A long sentence the caller already heard this turn, the server's or the model's own, isn't
+        # said again (live call 2: the identity refusal twice back to back). Short ones ("Today
+        # works.") may come back naturally.
+        if len(words(sentence).split()) >= REPEAT_MIN_WORDS and self.already_said(sentence):
+            return ""
+        self._heard_lines.append(sentence)
         return sentence
 
     def _names_technician(self, sentence: str) -> bool:
@@ -634,12 +874,78 @@ class SpokenReply:
             )
         )
 
+    def server_said(self, line: str) -> None:
+        """The voice layer spoke one of the server's lines."""
+        self._heard_lines.append(line)
+
+    def already_said(self, line: str) -> bool:
+        """The caller heard these exact words since they last spoke, or the line's closing
+        question: the model asked "And what name should I put the visit under?" in the reply that
+        confirmed the read-back, and the server's "Thanks. And what name should I put the visit
+        under?" followed it (stripped rig check on #160, live-multi-book-then-callback)."""
+        heard = words(" ".join(self._heard_lines))
+        said = words(line)
+        if said.strip() and said in heard:
+            return True
+        last = (sentences(line) or [""])[-1].strip()
+        question = words(last)
+        return last.endswith("?") and len(question.split()) >= 4 and question in heard
+
+    def holding_line(self, kept: str, calls: list[tuple[str, dict]]) -> str:
+        """A holding line to end a reply that calls a look-up when the caller would hear nothing
+        before the wait but an acknowledgment (live call 1, issue #149: "Got it." and then the
+        model's second step in silence, because "I'll look up the tune-up at 142 Main Street now"
+        was dropped for naming the street). "" when the reply said something of its own, called
+        no look-up, or the tenant has no lines. Never the same line twice in a row."""
+        if not self.holding_lines or not any(name in LOOKUPS for name, _ in calls):
+            return ""
+        # A read-back the server speaks next is what the caller hears, with no wait to fill.
+        if any(self.server_speaks(n, a) or n == "read_back" for n, a in calls):
+            return ""
+        if kept.strip() and not all(
+            ONLY_ACKNOWLEDGES.fullmatch(s.strip()) for s in sentences(kept)
+        ):
+            return ""
+        lines = self.holding_lines
+        start = (lines.index(self._last_holding) + 1) if self._last_holding in lines else 0
+        line = lines[start % len(lines)]
+        if line == self._last_holding:
+            return ""
+        self._last_holding = line
+        return line
+
+    def dead_end(self, raw: str, kept: str, calls: list[tuple[str, dict]]) -> str | None:
+        """A reply that would leave the caller waiting in silence, and why: it called no tool yet
+        promised to do something ("promised"), the caller heard nothing of it ("silent"), or it
+        only acknowledged them, or the question it asked was filtered out ("stalled"). None when
+        the reply calls a tool, ends on a question, or says something of substance; and after one
+        follow-up since the caller last spoke, so a model that keeps failing can't loop."""
+        if calls or self._followed_up or self._finished or self._goodbye:
+            return None
+        if kept.rstrip().endswith("?"):
+            return None
+        if any(PROMISES_ACTION.search(s) for s in sentences(raw)):
+            reason = "promised"
+        elif not kept.strip():
+            reason = "silent"
+        elif all(ONLY_ACKNOWLEDGES.fullmatch(s.strip()) for s in sentences(kept)):
+            reason = "stalled"
+        elif any(s.rstrip().endswith("?") for s in sentences(raw)):
+            # The model asked something the caller didn't hear ("Is that the right address?"
+            # after a restatement): what was said asks nothing, and the caller waits (issue #150).
+            reason = "stalled"
+        else:
+            return None
+        self._followed_up = True
+        return reason
+
     def text(self, text: str, calls: list[tuple[str, dict]]) -> str:
         """The model's text for one reply, given the (name, arguments) of the tools it called."""
         if any(self.server_speaks(n, a) for n, a in calls):
             return ""
         self.start_reply()
-        return " ".join(kept for s in sentences(text) if (kept := self.sentence(s)))
+        said = " ".join(kept for s in sentences(text) if (kept := self.sentence(s)))
+        return said or self.leftover()
 
 
 def spoken_first(envelope: dict) -> str | None:
@@ -683,7 +989,7 @@ def spoken_by_server(name: str, envelope: dict) -> str | None:
     # for a yes (issue #128).
     if envelope.get("refused") in (
         "identity_check", "identity_mismatch", "account_which", "which_old_address",
-        "location_superseded",
+        "location_superseded", "move_unverified",
     ):
         return say
     if name == "end_call" and envelope.get("ok"):

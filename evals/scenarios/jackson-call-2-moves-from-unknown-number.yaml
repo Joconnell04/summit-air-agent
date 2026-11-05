@@ -1,0 +1,31 @@
+id: jackson-call-2-moves-from-unknown-number
+flow: [repeat-caller]
+difficulty: standard
+traits: [filler]
+journeys: [J7]
+spec: [S-31]
+tags: [caller-changes, live-calls]
+max_turns: 18
+caller_id: "(678) 555-0124"
+persona: Jackson's second live test call (issue #149), replayed with his own lines. Maria Delgado, calling from a number that isn't on her account, moved and wants her visit to go to the new place. Halting at first ("I moved to, uh, or no, from..."), then plain. Dislikes hearing her name echoed back and "ZIP" read out as a word.
+hidden_facts:
+  name: Maria Delgado
+  old_address: 620 Bedford Ave, Brooklyn, 11235, where the visit was booked; you don't live there anymore
+  new_address: 380 Washington Avenue, Brooklyn. You don't know the new ZIP (it is 11238).
+  phone: the number you're calling from, the best number now
+opening: This is, uh, Maria Delgado.
+script:
+  - After the greeting reply, say "I moved to, uh, or no, from I moved to... No. I moved from six two oh Bedford Avenue. To three eighty Washington Avenue."
+  - If the agent says "ZIP" followed by the digits, say "Yeah. But why do you say ZIP one one two three eight? Just say the ZIP code is."
+  - If the agent says only "Sorry about that." or goes quiet, say "Well, what's going on?"
+  - Answer yes to a correct read-back of the new address and your number ("Yeah. That's correct.").
+  - Say goodbye once the agent confirms the change and asks if there is anything else.
+must:
+  - tool_ok: record_move
+  - moved: {in_area: true, zip: "11238", street: "380 Washington", jobs: 1}
+  - identity: verified
+  - agent_never_says: ["(Got it|Thanks|Okay), Maria", "not able to make that change", "\\bZIP 1"]
+should:
+  - Asks for the new address without echoing the caller's name back.
+  - Says the ZIP as "the ZIP code is" with its digits, or inside the address, never "ZIP" and a number.
+  - Never answers with only an apology; after "Sorry about that." it carries on with the next step.

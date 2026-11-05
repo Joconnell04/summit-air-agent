@@ -249,15 +249,19 @@ class PairEvidence:
 
 
 def one_job_per_technician_window(arg: bool, ev: PairEvidence) -> list[str]:
-    """Read from ServiceTitan itself, over the whole mock: no technician has two live jobs in one
-    window on one day."""
+    """Read from ServiceTitan itself, over the whole mock: no technician has two live jobs whose
+    windows overlap (windows are any run of 30-minute blocks)."""
     rows = ev.query(
-        """SELECT technician_id, window_date, window_id, COUNT(*) AS n FROM appointments
-           WHERE status <> 'Canceled' GROUP BY 1, 2, 3 HAVING COUNT(*) > 1"""
+        """SELECT a.technician_id, a.window_date, a.window_id, b.window_id AS other
+           FROM appointments a JOIN appointments b
+             ON a.technician_id = b.technician_id AND a.id < b.id
+            AND a.arrival_window_start < b.arrival_window_end
+            AND b.arrival_window_start < a.arrival_window_end
+           WHERE a.status <> 'Canceled' AND b.status <> 'Canceled'"""
     )
     return [
-        f"technician {r['technician_id']} has {r['n']} jobs in the {r['window_id']} window on "
-        f"{r['window_date']}"
+        f"technician {r['technician_id']} has jobs in overlapping windows {r['window_id']} and "
+        f"{r['other']} on {r['window_date']}"
         for r in rows
     ]
 

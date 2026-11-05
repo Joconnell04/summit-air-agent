@@ -73,6 +73,7 @@ FAMILIES = {
     "identity_check": "identity_check",
     "move_": "move",
     "callback_by": "callback_time",
+    "callback_at": "callback_time",
     "callback_after": "callback_time",
     "callback_before": "callback_time",
     "callback_between": "callback_time",
@@ -143,6 +144,8 @@ WHEN = {
     "urgent_priority": "The call is marked urgent",
     "next_unit": "Booking a building's next unit",
     "arrival_no_fit": "The caller wants an exact arrival time",
+    "booking_name": "A new caller confirms the read-back without having said a name",
+    "arrival_outside_hours": "The caller names a time outside visit hours",
     "return_visit_review": "We were just out at the home",
     "seek_earlier_note": "The caller wants an earlier opening",
     "safety.booking_note": "A visit is booked on a safety call",
@@ -260,6 +263,9 @@ GATES = {
     "Asks if there's anything else before hanging up on a booked call": (
         'closing', 'Before ending a booked call', None,
     ),
+    "Never hangs up right after telling a caller they're outside the area": (
+        'closing', 'Right after an out-of-area answer', None,
+    ),
     'On a safety call, signs off instead of hanging up': (
         'safety', 'A safety call ends', 'safety.sign_off',
     ),
@@ -279,6 +285,7 @@ GATE_LINES = {
     "customer_type": "commercial",
     "invalid_callback_time": "callback_outside_hours",
     "move_not_said": "move",
+    "move_unverified": "move",
     "gate_read_back": "read_back",
     "read_back_confirmed": "read_back",
 }

@@ -401,3 +401,115 @@ def test_coaching_on_caring_for_someone_is_never_spoken(sentence):
 )
 def test_the_911_advice_and_ordinary_lines_are_kept(sentence):
     assert assemble.SpokenReply().sentence(sentence) == sentence
+
+
+
+def test_a_name_the_caller_just_gave_is_not_said_straight_back():
+    """Jackson after live call 2 (issue #149): "didnt like how it said my name right back"."""
+    reply = assemble.SpokenReply()
+    reply.heard(None, "This is, uh, Pat Rivera.")
+    assert reply.text("Got it, Pat. Let me get the new address.", []) == (
+        "Got it. Let me get the new address."
+    )
+    assert reply.text("Hi Pat, what's going on?", []) == "Hi, what's going on?"
+    # A name the caller didn't just say is left alone.
+    assert reply.text("Thanks, Dana.", []) == "Thanks, Dana."
+
+
+def test_a_zip_is_said_as_the_zip_code_is_and_its_digits():
+    """Jackson after live call 2: "just say the zip code is, not just zip 11201"."""
+    reply = assemble.SpokenReply()
+    reply.heard(None, "I moved to Hoyt Street.")
+    assert reply.text("I found 75 Hoyt Street in Brooklyn, ZIP 11201. Is that the new address?", []) == (
+        "I found 75 Hoyt Street in Brooklyn, and the ZIP code is 1 1 2 0 1. Is that the new address?"
+    )
+
+
+def test_an_address_the_caller_said_in_words_is_not_said_back_by_the_model():
+    """Replay-2 gate call: the caller said "seventy five Hoyt Street" and "eleven two zero one",
+    and the model read both back on top of the server's read-back."""
+    reply = assemble.SpokenReply()
+    reply.heard(None, "I moved to seventy five Hoyt Street in Brooklyn. Eleven two zero one.")
+    assert reply.text("Thanks. I have 75 Hoyt Street, Brooklyn 11201. Is that right?", []) == "Thanks."
+
+
+def test_a_zip_the_lookup_found_is_never_read_back_by_the_model():
+    reply = assemble.SpokenReply()
+    reply.heard(None, "It's 75 Hoyt Street.")
+    reply.tool_done("find_address", {"ok": True, "data": {"zip": "11201"}})
+    assert reply.text("Got it, the zip code is 11201.", []) == ""
+
+
+@pytest.mark.parametrize(
+    "said, heard",
+    [
+        ("What's the ZIP code 11201?", "What's the ZIP code 1 1 2 0 1?"),
+        ("ZIP: 11201 is in our service area.", "ZIP: 1 1 2 0 1 is in our service area."),
+        ("I have 75 Hoyt Street, ZIP 11201.", "I have 75 Hoyt Street, and the ZIP code is 1 1 2 0 1."),
+    ],
+)
+def test_only_a_bare_zip_is_reworded_and_other_forms_only_space_the_digits(said, heard):
+    """PR #155 re-check: "What's the ZIP code is 1 1 2 0 1?" and "The ZIP code is ... is in"."""
+    reply = assemble.SpokenReply()
+    reply.heard(None, "I need a tune-up.")
+    assert reply.text(said, []) == heard
+
+
+def test_the_name_is_not_echoed_from_earlier_in_the_call_or_the_account():
+    """A scripted call on main after #156: "Thanks, Pat.", "Sounds good, Pat."; and a full name."""
+    reply = assemble.SpokenReply()
+    reply.names = {"pat", "rivera"}
+    reply.heard(None, "I need a tune-up.")
+    assert reply.text("Thanks, Pat Rivera.", []) == "Thanks."
+    assert reply.text("Sounds good, Pat. What day works?", []) == "Sounds good. What day works?"
+    assert reply.text("Sure, Friday.", []) == "Sure, Friday."
+
+
+def test_the_names_on_the_matched_accounts_come_from_the_call_start():
+    start = {"customers": [{"name": "Pat Rivera"}], "preferred_name": "Dr. Patel"}
+    assert assemble.call_names(start) == {"pat", "rivera", "dr", "patel"}
+
+
+def test_no_follow_up_after_the_callers_goodbye():
+    """PR #155 re-check: a lone "Sure." after the caller said bye is the end, not a stall."""
+    reply = assemble.SpokenReply()
+    reply.heard(None, "Okay, thanks, bye.")
+    assert reply.dead_end("Sure.", "Sure.", []) is None
+
+
+def test_no_problem_answers_only_a_thank_you_or_an_apology():
+    """Jackson's call on the Retell number: "No problem" to "The what?"."""
+    reply = assemble.SpokenReply()
+    reply.heard(None, "The what?")
+    assert reply.text("No problem. What's the address there?", []) == "What's the address there?"
+    assert reply.text("No worries if not.", []) == "No worries if not."
+    reply.heard(None, "Okay, thanks.")
+    assert reply.text("No problem.", []) == "No problem."
+
+
+def test_a_lone_no_problem_is_kept_rather_than_left_silent():
+    """PR #158 review: "Is it ok if I'm not home?" got "No problem." and the filter blanked it."""
+    reply = assemble.SpokenReply()
+    reply.heard(None, "Is it ok if I'm not home?")
+    assert reply.text("No problem.", []) == "No problem."
+
+
+def test_the_known_facts_are_passed_on_only_when_they_change():
+    """Realism suite on #155: the "Already known" note on every caller line changed the context
+    after LiveKit's early model request had started, so every turn made one request more."""
+    known = assemble.KnownFacts()
+    assert known.fresh({}) is None
+    assert known.fresh({"system": "furnace"}) == {"system": "furnace"}
+    assert known.fresh({"system": "furnace"}) is None
+    assert known.fresh({"system": "furnace", "ZIP said": "11201"}) == {
+        "system": "furnace", "ZIP said": "11201"
+    }
+    assert known.fresh({"system": "furnace", "ZIP said": "11201"}) is None
+
+
+def test_a_reply_that_offers_choices_ends_with_a_question_in_both_profiles():
+    """Live-like rig run on 4b160eb (issue #150): windows offered with no question, then 22 s of
+    silence while the caller waited for one."""
+    for name in ("identity.md", "stripped.md"):
+        text = (assemble.PROMPTS / name).read_text()
+        assert "ends with a direct question" in text, name

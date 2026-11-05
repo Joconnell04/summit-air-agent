@@ -248,6 +248,10 @@ on_call_alerts:
 
 repeat_callers:
   link_within_minutes: 10
+  # A dropped call is picked up ("I think we got cut off earlier") only by a call that starts this
+  # soon after the drop. Jackson after slate call 2 (call_3cd4c8065f26d3de686f7a1e002): "only if
+  # called within a few minutes".
+  link_after_drop_minutes: 5
   drops_before_callback_offer: 2
   # A booking at an address with a job finished this recently flags a person to review it (journey
   # 7 step 3). ASSUMED: a month, the usual window a callback on recent work is checked in.
@@ -374,11 +378,15 @@ lines:
   callback_before: before {time}
   callback_between: between {start} and {end}
   callback_asap: as soon as they can
-  callback_outside_hours: Our team makes calls between {opens} and {closes}. What time in there works?
+  callback_at: around {time}
+  callback_outside_hours: >-
+    Our team makes calls between {opens} and {closes}, so the closest I can do is {nearest}. Would
+    that work?
   # {address} is street, unit, city and ZIP; {phone} is read in groups. Naming it a home is how
   # every booking confirms the caller is residential.
   # One sentence with no lead-in, said once (eval round 3).
-  read_back: I have your home at {address}, and the best number is {phone}, is that right?
+  # Jackson on Retell call call_9826ff9f0dfa8bc835a3601368b: "That's all correct, right?" to end it.
+  read_back: I have your home at {address}, and the best number is {phone}. That's all correct, right?
   commercial: >-
     Thanks for thinking of us. Unfortunately Summit Air works on homes and apartments, not
     businesses, so we're not the right fit for this one.
@@ -403,9 +411,9 @@ lines:
   # Work the company doesn't do (services.not_offered). {what} is "plumbing"; {suggest} is "a
   # plumber".
   not_offered: >-
-    I'm sorry, we don't do {what}, so {suggest} would be the right call for that.
+    Unfortunately we don't do {what}, so {suggest} would be the right call for that.
   out_of_area: >-
-    I'm sorry, that's outside the area we cover, so we're not able to send someone. A local heating
+    Unfortunately that's outside the area we cover, so we're not able to send someone. A local heating
     company should be able to help.
   # The address lookup (tools.find_address and the ZIP check). {street} is "248 Duffield Street",
   # {where} the neighborhood or borough, {found} and {said} ZIPs written out digit by digit.
@@ -415,17 +423,16 @@ lines:
   address_not_found: I'm not finding that street. Could you spell the street name for me?
   address_ask_zip: What's the ZIP code there?
   do_not_call: Understood, we won't call you.
-  do_not_call_with_callback: >-
-    Understood, we won't call you. That means the callback is off, so give us a call any time you
-    need us.
+  do_not_call_with_callback: Understood, we won't call you. Give us a call any time you need us.
   repeated_drops: >-
     Looks like we keep getting cut off, the signal might be spotty. Want me to have someone call you
     back in a few minutes instead?
   limit: I've already got that taken care of on this call, so let me have someone from the team follow up.
   slot_taken: That window just filled up.
-  # A caller on file booking an address that isn't theirs on file (eval round 2, seed 5).
-  account_choice: >-
-    Should that address go on its own account, with you as a contact, or under your account?
+  # A caller on file booking an address that isn't theirs on file (eval round 2, seed 5). Asked as
+  # one plain yes or no (Retell call call_1840576e622e3d729b760085142: the either/or confused a
+  # caller); a no puts the address on its own account, with the caller as a contact.
+  account_choice: Should I put this under your account?
   account_name: Whose name should the account for that address be under?
   # An open visit at the address whose arrival window has ended (tools._passed_visit). {day} is
   # "today", "yesterday" or a weekday; {between} is "8 and 12".
@@ -436,7 +443,7 @@ lines:
   account_which: I see more than one account on this number. Whose name should the visit go under?
   # The read-back when the number reaches someone else ("call my daughter at ..."). {who} is how
   # the caller named them.
-  read_back_for: I have your home at {address}, and the number to reach {who} is {phone}, is that right?
+  read_back_for: I have your home at {address}, and the number to reach {who} is {phone}. That's all correct, right?
   # Before a change from a number that isn't on the account (issue #128). {thing} is "visit" or
   # "account". The caller says the details; the agent never reads them out.
   identity_check: >-
@@ -446,12 +453,21 @@ lines:
     Of course. And just to confirm you're the person for the {thing}, what name is it under?
   identity_check_address_only: >-
     Of course. And just to confirm you're the person for the {thing}, could you tell me the address?
+  # A mover whose name check failed asks to book at the new address (issue #149).
+  move_unverified: >-
+    I can't add a new address to the account from this number, so I can't book the visit there
+    yet. Someone from our office can call the number we have on file to update it and book the
+    visit. Would that help?
+  # A time the caller named that no visit window holds ("at 8 PM"); the nearest window follows.
+  arrival_outside_hours: Our visits run from {hours}.
+  # Right after the read-back, for a caller with no account who hasn't said a name.
+  booking_name: Thanks. And what name should I put the visit under?
   identity_check_address: Thanks. And what's the address?
   identity_check_name: Thanks. And what's the name on the {thing}?
   identity_check_again: >-
-    Sorry, I didn't catch that. Could you tell me your name and the address for the {thing}?
+    I didn't quite catch that. Could you tell me your name and the address for the {thing}?
   identity_mismatch: >-
-    I'm sorry, I'm not able to make that change from this number. I can have someone from our
+    Unfortunately I'm not able to make that change from this number. I can have someone from our
     office call the number we have on file for it. Would that help?
   flag_stored_on_file: I've let our team know, and someone will call the number we have on file {when}.
   # A caller who moved (tools.record_move). {street} is the new street and unit.
@@ -460,7 +476,7 @@ lines:
   move_visit_moved: Your upcoming visit is now set for the new address, same day and time.
   move_visit_moved_when: Your visit {when} is now set for the new address, same time.
   move_out_of_area: >-
-    Thanks for letting us know. I'm sorry, the new address is outside the area we cover, so we
+    Thanks for letting us know. Unfortunately the new address is outside the area we cover, so we
     won't be able to come out there, and I've made a note on your account.
   move_visit_cancelled: >-
     I've also cancelled the visit you had at the old address, so nobody heads there.
@@ -480,9 +496,9 @@ lines:
   return_visit_review: >-
     Since we were just out there, a manager will look over this visit, including whether it's
     covered, before the technician arrives.
-  # {windows} is the arrival windows, such as "8 to 12, 12 to 4 and 4 to 8".
+  # {length} is the usual window length, such as "two hours".
   arrival_no_fit: >-
-    Our arrival windows are {windows}, and the technician can come any time in the window, so I
+    Our arrival windows are {length}, and the technician can come any time in the window, so I
     can't promise an exact time.
   # Said once when the server marks a call Urgent (spec S-21a). Below Urgent, no priority is named.
   urgent_priority: I've marked this call top priority, so you get our soonest opening.
@@ -553,12 +569,18 @@ voice:
     call you back.
   outbound_voicemail: >-
     Hi, this is Summit Air calling about your appointment. Please give us a call back at {phone}.
+  # Said at the end of a reply that calls a look-up when the caller would otherwise hear only "Got
+  # it." before the wait (issue #149), in turn, never the same one twice in a row.
+  holding:
+    - Just give me one second.
+    - Let me pull that up.
+    - One moment.
   # Pre-recorded, so they need no voice stream (docs/scaling.md). Regenerate the clips after a change:
-  # uv run python -m voice.livekit.clips. Each bridge clip must stay under about 1 second.
+  # uv run python -m voice.livekit.clips. Each bridge clip must stay under 1.6 seconds (voice/livekit/bridge.py).
   clips:
-    bridge_check: Let me check.
-    bridge_sec: One sec.
-    bridge_look: Okay, checking now.
+    bridge_one_sec: Okay, just give me one second.
+    bridge_pull_up: Sure, let me pull that up.
+    bridge_moment: Alright, one moment.
     at_capacity: >-
       Thanks for calling Summit Air. If you smell gas, hang up and call 911 from outside. All our
       lines are busy right now. Please leave your name, number and what's going on after the tone,

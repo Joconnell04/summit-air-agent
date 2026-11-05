@@ -110,7 +110,8 @@ GATES = (
     ("whole_call", "Changes a visit or account from an unknown number only after a name and address",
      ("identity_check", "identity_mismatch"), ()),
     ("whole_call", "A caller who moved gets the new address, and no visit goes to the old one",
-     ("move_not_said", "which_old_address", "same_address", "location_superseded", "move_first"),
+     ("move_not_said", "which_old_address", "same_address", "location_superseded", "move_first",
+      "move_unverified"),
      ()),
     ("booking", "After hours, books a tonight visit only once the on-call technician is alerted",
      ("on_call_first",), ()),
@@ -118,6 +119,8 @@ GATES = (
      ("fsm_unavailable", "fsm_rejected"), ()),
     ("closing", "Asks if there's anything else before hanging up on a booked call",
      ("anything_else_first",), ()),
+    ("closing", "Never hangs up right after telling a caller they're outside the area",
+     ("answer_first",), ()),
     ("closing", "On a safety call, signs off instead of hanging up", (), ("S-19",)),
     ("after_call", "A dropped safety call gets an urgent flag and a quick callback", (),
      ("S-18",)),
@@ -158,14 +161,16 @@ LINE_STAGES = {
     "transfer_summary": ("whole_call", "Summary once they take it"),
     "lead_stored": ("whole_call", "Lead saved"),
     "callback_by": ("whole_call", "Callback by a time"),
+    "callback_at": ("whole_call", "Callback at a time the caller named"),
+    "move_unverified": ("whole_call", "Mover not verified asks to book"),
     "callback_after": ("whole_call", "Callback after a time"),
     "callback_before": ("whole_call", "Callback before a time"),
     "callback_between": ("whole_call", "Callback between times"),
     "callback_outside_hours": ("whole_call", "Outside calling hours"),
     "limit": ("whole_call", "Call limit reached"),
-    "bridge_check": ("whole_call", "While checking"),
-    "bridge_sec": ("whole_call", "While checking, short"),
-    "bridge_look": ("whole_call", "While looking"),
+    "bridge_one_sec": ("whole_call", "While checking"),
+    "bridge_pull_up": ("whole_call", "While looking"),
+    "bridge_moment": ("whole_call", "While checking, short"),
     "server_down": ("whole_call", "System trouble"),
     "read_back": ("booking", "Read-back"),
     "read_back_for": ("booking", "Read-back, someone else's number"),
@@ -316,9 +321,10 @@ def _settings(tenant: Tenant) -> list[Rule]:
     found = [
         Rule("setting.hours", "before_hello", "setting", "Office hours", _hours(tenant), why=why),
         Rule("setting.repeat_callers", "before_hello", "setting", "Repeat callers",
-             f"A call back within {tenant.repeat['link_within_minutes']} minutes, or later the "
-             "same day after a dropped call, picks up the last one and checks it's the same "
-             f"person; after {tenant.repeat['drops_before_callback_offer']} dropped calls the "
+             f"A call back within {tenant.repeat['link_within_minutes']} minutes picks up the "
+             "last one, but a dropped call only within "
+             f"{tenant.repeat.get('link_after_drop_minutes', 5)} minutes of the drop, and checks "
+             f"it's the same person; after {tenant.repeat['drops_before_callback_offer']} dropped calls the "
              "agent offers a callback", why=why),
     ]
     if tenant.pace:
@@ -383,16 +389,18 @@ def _settings(tenant: Tenant) -> list[Rule]:
     zones = sorted({zone["name"] for zone in tenant.service_area.values()})
     found.append(Rule("setting.service_area", "booking", "setting", "Service area",
                       f"{len(zips)} ZIP codes in {_few(zones, 3)}", why=why, spec=("S-28",)))
+    night = next((w for w in tenant.windows if w.after_hours), None)
     found.append(Rule("setting.windows", "booking", "setting", "Arrival windows",
-                      ", ".join(("After hours " if w.after_hours else "")
-                                + f"{_clock(w.start.strftime('%H:%M'))} to "
-                                + _clock(w.end.strftime("%H:%M")) for w in tenant.windows),
+                      f"Any run of {tenant.block_minutes}-minute blocks in the company's hours, "
+                      f"{tenant.window_minutes // 60} hours unless the caller asks for another "
+                      "length"
+                      + (f"; after hours {_clock(night.start.strftime('%H:%M'))} to "
+                         f"{_clock(night.end.strftime('%H:%M'))}" if night else ""),
                       why=why))
-    holds = tenant.urgent_hold.get("per_day", {})
-    weekday = holds.get("mon", {})
+    weekday = tenant.urgent_hold.get("per_day", {}).get("mon", 0)
     if weekday:
         found.append(Rule("setting.urgent_hold", "booking", "setting", "Technicians held for urgent",
-                          f"{max(weekday.values())} per weekday window", why=why))
+                          f"{weekday} in every weekday half hour", why=why))
     cut = tenant.after_hours_cutoffs
     found.append(Rule("setting.after_hours", "booking", "setting", "No heat after hours",
                       f"Tonight if it will drop below {cut['tonight_below_f']} F; first morning "

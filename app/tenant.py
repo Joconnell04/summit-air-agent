@@ -150,15 +150,50 @@ class Window:
     start: time
     end: time
     after_hours: bool
+    # The part of the day a caller names for it: "morning", "afternoon" or "evening".
+    part: str = ""
 
     def label(self) -> str:
-        """Spoken form of the window, such as "8 to 12"."""
+        """Spoken form of the window, such as "8 to 12" (window_said)."""
+        return window_said(self.start, self.end)
 
-        def hour(t: time) -> str:
-            h = t.hour % 12 or 12
-            return f"{h}" if t.minute == 0 else f"{h}:{t.minute:02d}"
 
-        return f"{hour(self.start)} to {hour(self.end)}"
+def window_of(start: time, end: time) -> Window:
+    """A daytime window by its local start and end: any run of 30-minute blocks. Its id is
+    "0730-0930"; its part of the day is where it starts."""
+    part = "morning" if start.hour < 12 else "afternoon" if start.hour < 16 else "evening"
+    return Window(f"{start:%H%M}-{end:%H%M}", start, end, False, part)
+
+
+def window_from_id(window_id: str) -> Window | None:
+    try:
+        start, end = (time(int(p[:2]), int(p[2:])) for p in window_id.split("-"))
+    except (ValueError, TypeError):
+        return None
+    return window_of(start, end) if start < end else None
+
+
+def _clock(t: time) -> str:
+    h = t.hour % 12 or 12
+    return f"{h}" if t.minute == 0 else f"{h}:{t.minute:02d}"
+
+
+def _part_of_day(t: time) -> str:
+    if t.hour < 12:
+        return "in the morning"
+    if t.hour < 17:
+        return "in the afternoon"
+    return "in the evening" if t.hour < 20 else "at night"
+
+
+def window_said(start: time, end: time) -> str:
+    """An arrival window as said: "8 to 12". One that runs past midnight or from the morning into the
+    afternoon says which part of the day each end is ("8 at night to 8 in the morning"): the
+    after-hours window said as "between 8 and 8" was taken for a mistake on three live-like calls
+    (realism suite on #155, live-call-04, 07 and 08)."""
+    if start < end and not (start.hour < 12 < end.hour):
+        return f"{_clock(start)} to {_clock(end)}"
+    return f"{_clock(start)} {_part_of_day(start)} to {_clock(end)} {_part_of_day(end)}"
 
 
 class Tenant:
@@ -191,15 +226,17 @@ class Tenant:
         self.service_area = {z: zone for zone in company["zones"] for z in zone["zips"]}
         # Where the address lookup asks and the place names callers use (app/geocode.py).
         self.address_lookup: dict | None = company.get("address_lookup")
+        # The windows the schedule shows and the night window; any run of blocks can be booked.
         self.windows = [
-            Window(
-                w["id"],
-                time.fromisoformat(w["start"]),
-                time.fromisoformat(w["end"]),
-                w.get("after_hours", False),
-            )
+            Window(w["id"], time.fromisoformat(w["start"]), time.fromisoformat(w["end"]), True,
+                   "night")
+            if w.get("after_hours")
+            else window_of(time.fromisoformat(w["start"]), time.fromisoformat(w["end"]))
             for w in company["arrival_windows"]
         ]
+        scheduling = company.get("scheduling") or {}
+        self.block_minutes: int = scheduling.get("block_minutes", 30)
+        self.window_minutes: int = scheduling.get("window_minutes", 120)
         self.phone_keys = {phone_key(n) for n in agent["phone_numbers"]}
         self.safety: dict = agent["safety"]
         missing = missing_safety_wording(self.safety)
@@ -232,6 +269,14 @@ class Tenant:
         )
         # The systems a caller names, so the agent doesn't ask for one already given (app/lifecycle.py).
         self.system_words: tuple[str, ...] = tuple(agent.get("system_words", []))
+        # Things and places that are never a person's name in the name check ("It's the furnace",
+        # "It's Brooklyn"): the trade's equipment and home words, and the words of the service
+        # area's zone names (app/tools.py _gave_a_name).
+        self.not_names: frozenset[str] = (
+            self.equipment_words
+            | {w.lower() for w in agent.get("home_words", [])}
+            | {w for zone in company["zones"] for w in zone["name"].lower().replace(",", " ").split()}
+        )
         # Warm transfer to a person (app/transfer.py). None turns it off.
         self.transfer: dict | None = agent.get("transfer")
         self.fsm: dict = agent["fsm"]
@@ -269,14 +314,17 @@ class Tenant:
         return changed
 
     def window(self, window_id: str) -> Window | None:
-        return next((w for w in self.windows if w.id == window_id), None)
+        """A configured window, or any run of blocks by its id ("0730-0930")."""
+        found = next((w for w in self.windows if w.id == window_id), None)
+        return found or window_from_id(window_id)
 
     def hold_for(self, day: date, window_id: str, business_unit_id: int) -> int:
         """How many technicians stay free for urgent jobs in this window. It is the company's rule,
         not ServiceTitan's, so it is applied here to the technicians ServiceTitan says are free."""
         if business_unit_id not in self.urgent_hold["business_unit_ids"]:
             return 0
-        return self.urgent_hold["per_day"].get(DAY_NAMES[day.weekday()], {}).get(window_id, 0)
+        held = self.urgent_hold["per_day"].get(DAY_NAMES[day.weekday()], 0)
+        return held if isinstance(held, int) else 0
 
     def local(self, moment: datetime) -> datetime:
         return moment.astimezone(self.tz)

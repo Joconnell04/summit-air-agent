@@ -3,12 +3,20 @@ and logs as a LiveKit call."""
 
 import json
 
+import pytest
 from fastapi.testclient import TestClient
-from retell_kit import SPOKEN, call_obj, event, inbound, signed, tool, utterance
+from retell_kit import NOW_MS, SPOKEN, call_obj, event, inbound, signed, tool, utterance
 from toolkit import DETAILS, in_area_address
 
 from app.tools import TOOLS
-from voice.retell.bridge import Bridge, ToolServer, build_app, end_reason, idempotency_key
+from voice.retell.bridge import (
+    HANGUP_GRACE_S,
+    Bridge,
+    ToolServer,
+    build_app,
+    end_reason,
+    idempotency_key,
+)
 from voice.retell.ledger import Ledger
 
 
@@ -381,3 +389,135 @@ def test_call_analyzed_keeps_retells_latency_and_cost_for_the_report(client, bri
             "duration_s": 112,
         }
     ]
+
+
+def test_the_hang_up_waits_for_a_final_line_still_being_said(client, retell, later):
+    """Jackson's call on the Retell number (call_ca9bfcec0b968db42ac2f428bea): end_call came at
+    the start of the turn, the delay was sized from "I'm sorry," and the call was stopped in the
+    middle of the out-of-area sentence."""
+    said = booked_call(client)
+    so_far = [*said, utterance("user", "Never mind, bye."), utterance("agent", "I'm sorry,")]
+    tool(client, "end_call", call_obj("abc", *so_far), reason="caller_goodbye")
+    full = "I'm sorry, but we only work in the five boroughs. Thanks for calling, take care."
+    retell.calls["abc"] = call_obj("abc", *said, utterance("user", "Never mind, bye."),
+                                   utterance("agent", full))
+    later.run()
+    assert retell.stopped == [], "the longer line gets its own time to play"
+    delay = later.pending[0][0]
+    assert delay >= HANGUP_GRACE_S + 0.35 * len(full.split())
+    later.run()
+    assert retell.stopped == ["abc"]
+
+
+def test_a_goodbye_already_said_with_a_tool_sentence_stops_one_grace_after_it(
+    client, bridge, retell, later, monkeypatch
+):
+    """PR #158 review: the line compared before stopping was the last agent line plus the tool's
+    `say`, which never matched the transcript, so every hang-up waited one extra cycle."""
+    said = booked_call(client)
+    bye = "Thanks for calling Summit Air, take care."
+    so_far = [*said, utterance("user", "That's all, bye."), utterance("agent", bye)]
+    real = bridge.tools.tool
+
+    def with_say(call_id, name, args):
+        answer = real(call_id, name, args)
+        return {**answer, "say": bye} if name == "end_call" else answer
+
+    monkeypatch.setattr(bridge.tools, "tool", with_say)
+    tool(client, "end_call", call_obj("abc", *so_far), reason="caller_goodbye")
+    retell.calls["abc"] = call_obj("abc", *so_far)
+    delay = later.pending[0][0]
+    assert delay == pytest.approx(3.0 + 0.35 * len(bye.split()) + HANGUP_GRACE_S)
+    later.run()
+    assert retell.stopped == ["abc"], "stopped at the first check, no extra wait"
+
+
+def test_a_thanks_and_bye_in_the_grace_keeps_the_hang_up(client, retell, later):
+    """Retell call call_1840576e622e3d729b760085142: the caller said "Thanks. Bye." inside the
+    grace, the hang-up was called off, and the call ran to its 5-minute limit."""
+    said = booked_call(client)
+    bye = [*said, utterance("user", "That's all."), utterance("agent", "Thanks for calling, take care.")]
+    tool(client, "end_call", call_obj("abc", *bye), reason="resolved")
+    event(client, "transcript_updated", call_obj("abc", *bye, utterance("user", "Thanks. Bye.")))
+    later.run()
+    assert retell.stopped == ["abc"]
+
+
+def test_a_goodbye_said_again_after_the_hang_up_was_called_off_arms_it_again(
+    client, retell, later
+):
+    said = booked_call(client)
+    bye = [*said, utterance("user", "That's all."), utterance("agent", "Thanks for calling, take care.")]
+    tool(client, "end_call", call_obj("abc", *bye), reason="resolved")
+    more = [*bye, utterance("user", "Oh wait, is the tech bringing filters?")]
+    event(client, "transcript_updated", call_obj("abc", *more))
+    later.run()
+    assert retell.stopped == [], "the caller asked something more"
+    again = [*more, utterance("agent", "Yes, they will. Thanks for calling, have a great day.")]
+    event(client, "transcript_updated", call_obj("abc", *again))
+    later.run()
+    assert retell.stopped == ["abc"]
+
+
+def test_the_hang_up_comes_about_one_grace_after_the_goodbye_ends(client, bridge, retell, later):
+    """Retell call call_5600e8a36929e14b4b3915c9fcb: end_call came before the goodbye was said,
+    the wait was sized from the agent's 26-word line before it, and the hang-up came 4.7 s after
+    the last word. The first check is a goodbye's length away, and Retell's word timings then
+    stop the call 1.5 s after the agent's last word."""
+    start = NOW_MS - 26_460  # end_call came 26.46 s into the call
+    clock = {"ms": NOW_MS}
+    bridge.now_ms = lambda: clock["ms"]
+    said = booked_call(client)
+    asked = utterance("agent", "Is there something I can help you with about your heating "
+                      "or cooling today, or anything else at all for your home?", start=11.3)
+    bye = utterance("user", "Great, that's all I needed. Thanks, bye.", start=20.9)
+    tool(client, "end_call", call_obj("abc", *said, asked, bye), reason="caller_goodbye")
+    delay = later.pending[0][0]
+    assert delay == pytest.approx(3.0 + HANGUP_GRACE_S)
+    goodbye = "Thanks for calling Summit Air. Have a great rest of your day."
+    playing = utterance("agent", goodbye, start=26.7, gap=0.22)  # last word ends 29.29 s in
+    retell.calls["abc"] = call_obj("abc", *said, asked, bye, playing, start_timestamp=start)
+    # At the first check the goodbye ended 29.3 s in; it's now 31.0 s, past the grace.
+    clock["ms"] = start + 26_460 + int(delay * 1000)
+    later.run()
+    assert retell.stopped == ["abc"]
+
+
+def test_a_goodbye_still_playing_at_the_check_gets_the_grace_after_its_last_word(
+    client, bridge, retell, later
+):
+    start = NOW_MS - 20_000
+    clock = {"ms": NOW_MS}
+    bridge.now_ms = lambda: clock["ms"]
+    said = booked_call(client)
+    bye = utterance("user", "That's all, bye.", start=18.0)
+    tool(client, "end_call", call_obj("abc", *said, bye), reason="caller_goodbye")
+    long_bye = " ".join(["word"] * 20)
+    playing = utterance("agent", long_bye, start=20.5, gap=0.3)  # last word ends 26.45 s in
+    retell.calls["abc"] = call_obj("abc", *said, bye, playing, start_timestamp=start)
+    clock["ms"] = start + 24_500
+    later.run()
+    assert retell.stopped == []
+    assert later.pending[0][0] == pytest.approx(26.45 + HANGUP_GRACE_S - 24.5)
+    clock["ms"] = start + 27_950
+    later.run()
+    assert retell.stopped == ["abc"]
+
+
+def test_without_timings_from_get_call_the_last_events_timings_are_used(
+    client, bridge, retell, later
+):
+    """A live call's get-call may carry no word timings; the transcript_updated event does."""
+    start = NOW_MS - 20_000
+    clock = {"ms": NOW_MS}
+    bridge.now_ms = lambda: clock["ms"]
+    said = booked_call(client)
+    bye = utterance("user", "That's all, bye.", start=18.0)
+    tool(client, "end_call", call_obj("abc", *said, bye), reason="caller_goodbye")
+    goodbye = utterance("agent", "Thanks for calling, take care.", start=20.5, gap=0.25)
+    event(client, "transcript_updated",
+          call_obj("abc", *said, bye, goodbye, start_timestamp=start))
+    retell.calls["abc"] = call_obj("abc", *said, bye, utterance("agent", goodbye["content"]))
+    clock["ms"] = start + 24_500  # the goodbye ended 21.7 s in: past the grace
+    later.run()
+    assert retell.stopped == ["abc"]

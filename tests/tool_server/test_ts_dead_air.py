@@ -43,6 +43,10 @@ def test_asking_to_wait(line, holds):
         ("it says 48", True),
         ("I found it, it's a Carrier", True),
         ("Can you still hear me?", True),
+        ("Um, what was the question?", True),
+        ("um what was the question", True),
+        ("Sorry, which day did you say?", True),
+        ("Okay, honey, where's the remote?", False),
         ("It's a Carrier, I think", False),
         ("Honey, where did you put the last bill?", False),
         ("okay kids come on", False),
@@ -53,6 +57,18 @@ def test_asking_to_wait(line, holds):
 )
 def test_on_hold_a_line_said_to_someone_else_is_an_aside(line, reply):
     assert dead_air.is_reply(line) is reply
+
+
+def test_a_question_after_a_wait_ends_the_hold_and_gets_no_take_your_time(agent):
+    """Slate call 2 (Retell call_3cd4c8065f26d3de686f7a1e002): "Uh, yeah, one second", then "Um,
+    what was the question?" still got "Take your time."."""
+    call_id = agent.start(call_id="call-1")["data"]["call_id"]
+    held = agent.turn(call_id, "Uh, yeah, one second")
+    assert "caller_holding" in held["data"]["hints"]
+    agent.say(call_id, "Sure, take your time.")
+    back = agent.turn(call_id, "Um, what was the question?")
+    assert back["data"]["hold"] == {"state": "back"}
+    assert "caller_holding" not in back["data"]["hints"]
 
 
 def test_a_hold_then_an_aside_then_the_caller_back(agent):

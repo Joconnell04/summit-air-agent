@@ -1,0 +1,23 @@
+id: retell-call-manhattan-digit-by-digit
+flow: [booking]
+difficulty: standard
+journeys: [J1]
+spec: [S-28]
+tags: [live-calls]
+max_turns: 16
+caller_id: "(678) 555-0131"
+persona: Jackson on the Retell number, in the East Village. Says the house number digit by digit, with "East" before the street and a unit after it.
+hidden_facts:
+  address: 199 East 4th Street, Apartment 2, Manhattan, New York, 10009
+  phone: the number you're calling from
+  wants: a heating tune-up, any day
+opening: Hi, I need a heating tune-up.
+script:
+  - Give the address as "One nine nine East fourth Street, apartment two." Give the ZIP as "one zero zero zero nine" only if asked.
+  - Confirm a correct read-back.
+  - Say goodbye once booked.
+must:
+  - booking: {count: 1, zip: "10009"}
+  - agent_never_says: ["outside (of )?our (service )?area", "don't (cover|serve)"]
+should:
+  - Takes the address as said, with no repeated asks for the street.

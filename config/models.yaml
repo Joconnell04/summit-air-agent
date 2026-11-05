@@ -48,6 +48,11 @@ profiles:
 # points from the earlier practice agent (from-other-projects/bobert/latency-notes.md) until
 # measured on real phone audio (docs/latency.md).
 voice:
+  # full: the assembled prompt, the speech filter, owner guidance, stage notes and the side model.
+  # stripped: Jackson's "our stack, stripped": a one-page prompt (prompts/stripped.md), the model's
+  # text spoken as it streams, no owner guidance or stage notes, no side model. The tool server and
+  # every gate are the same either way. Restart the worker and the tool server after a change.
+  profile: full
   # price_per_minute is streaming plus Deepgram's keyterm add-on, $0.0077 + $0.0013 (SOURCE:
   # https://deepgram.com/pricing, read 2026-11-04).
   stt: {provider: deepgram, model: nova-3, endpointing_ms: 100, price_per_minute: 0.0090}
@@ -58,13 +63,25 @@ voice:
   # the Pro overage of $65 per 1M credits we pay now, so $0.0117 a minute.
   stt_candidates:
     ink-2: {provider: cartesia, model: ink-2, price_per_minute: 0.0117}
-  # Katie, the Cartesia plugin default. The pre-recorded clips (voice/livekit/clips.py) use the same voice.
+    # Deepgram Flux decides the end of the turn itself (exploration 014). To try it live, set
+    # `provider: deepgram-flux` on `stt` above; the Nova model there is then replaced by Flux's.
+    # Thresholds are Deepgram's defaults when left out (eot_threshold 0.7, eot_timeout_ms 3000,
+    # SOURCE: the LiveKit Deepgram plugin's STTv2 docstring). Price ASSUMED equal to Nova-3's.
+    flux: {provider: deepgram-flux, model: flux-general-en, price_per_minute: 0.0090}
+  # Max ("Conversational Support", a warm, natural American male) from Cartesia's voice library,
+  # chosen after live call 1 to replace Katie (f786b574-...), the plugin default (DECISIONS.md, issue
+  # #149). The pre-recorded clips (voice/livekit/clips.py) use the same voice.
   # min_sentence_chars: a sentence shorter than this waits to be sent to the voice with the next
   # one (LiveKit's default, 20).
-  tts: {provider: cartesia, model: sonic-3, voice_id: f786b574-daa5-4673-aa0c-cbe3e8534c02,
+  tts: {provider: cartesia, model: sonic-3, voice_id: 3945925b-9143-4b7d-9ab5-cc4878001106, name: Max,
         min_sentence_chars: 20}
-  # Start the voice on the early reply LiveKit drafts from the final transcript, before the turn
-  # is confirmed over; thrown away if the caller keeps talking.
+  # LiveKit's early reply, drafted from the final transcript before the turn is confirmed over.
+  # Off: LiveKit keeps a draft only when the caller's line reaches the model unchanged, and the
+  # worker adds the server's notes to most lines, so no draft was ever kept (MEASURED: 0 used of 67
+  # on the live worker's log; 0 of 36 and 0 of 13 on summit-rig runs of 5b57b92 and 4b160eb), for
+  # an extra model request on most turns (issue #150).
+  preemptive_generation: false
+  # Start the voice on that early reply too; only applies while preemptive_generation is on.
   preemptive_tts: false
   # The silence that ends the caller's speech. LiveKit's turn detector refuses less than 0.25 s;
   # 0.25 s measured no faster than 0.35 s on the audio rig (evals/rounds/bakeoff-audio-02.md).
@@ -83,6 +100,13 @@ voice:
     min_duration: 0.5
     resume_false_interruption: true
     false_interruption_timeout: 1.5
+    # Seconds at the start and end of each agent line where LiveKit lets plain voice activity (any
+    # min_words recognized words) interrupt, instead of its adaptive detector, which tells a
+    # backchannel ("okay, great, thanks") from a real interruption. LiveKit's default start of
+    # 1.0 s cut the agent off on "Okay, great. Thanks." said as its next line began, and it then
+    # apologized for being cut off (a scripted call on 5b57b92, issue #150). 0 at the start leaves
+    # the whole line to the detector; the end keeps LiveKit's 1.0 s.
+    backchannel_boundary: [0.0, 1.0]
   # Dead air (voice/dead_air.py, DECISIONS.md 081): after this much silence from the caller
   # the agent says the tenant's `still_here` line, and again each time; at hang_up_s it says
   # `stepped_away` and hangs up. poll_s is how often the worker looks. Jackson's numbers (2 and 8
@@ -90,7 +114,10 @@ voice:
   dead_air: {check_in_s: 120, hang_up_s: 480, poll_s: 1.0}
   # Bridge line (docs/latency.md): played only when a tool hasn't answered after this long, and at
   # most once every this many caller turns.
-  bridge: {after_s: 0.7, min_turns_between: 3}
+  bridge: {after_s: 0.7, min_turns_between: 2}
+  # The pause after the goodbye before the line drops; a caller who speaks in it keeps the call
+  # open (Jackson: "a 1 or 2 second wait", issue #149; 1.5 s is the middle, ASSUMED).
+  end_call_grace_s: 1.5
 
 # Off the live path: nobody is waiting, so thinking is on where quality matters.
 offline:

@@ -19,7 +19,7 @@ from evals.world import World, seeded_db
 LAST_SLOT = pairs.load(pairs.PAIRS_DIR / "two-callers-last-slot.yaml")
 SAME_TECH = pairs.load(pairs.PAIRS_DIR / "two-callers-same-tech.yaml")
 TODAY = date(2026, 11, 2)
-AFTERNOON = {"date": "2026-11-02", "window": "afternoon"}
+AFTERNOON = {"date": "2026-11-02", "window": "1200-1400"}
 DETAILS = {"issue": "no heat", "since": "this morning", "tried": "the thermostat",
            "who_home": "two healthy adults", "approver": "the caller", "inside_temp_f": 63}
 
@@ -100,10 +100,12 @@ def agents():
 
 
 # Each caller gives their ZIP before the read-back, since the server acts only on a ZIP the caller
-# said (app/tools.py _zip_known).
+# said (app/tools.py _zip_known), and their name, so the read-back doesn't ask for it.
 CALLERS = [
-    ["Hi, my heat is out at 8410 Ridge Blvd, 11209.", "Yes, that's right.", "Okay, that works."],
-    ["Hi, my heat is out at 412 Avenue C, 11218.", "Yes, that's right.", "Okay, that works."],
+    ["Hi, this is Janelle Brooks, my heat is out at 8410 Ridge Blvd, 11209.", "Yes, that's right.",
+     "Okay, that works."],
+    ["Hi, this is Omar Haddad, my heat is out at 412 Avenue C, 11218.", "Yes, that's right.",
+     "Okay, that works."],
 ]
 
 
@@ -245,7 +247,7 @@ def test_with_no_lock_and_no_constraint_the_pair_checks_catch_the_double_booking
     assert [r.outcome for r in results] == ["fail", "fail"]
     failed = results[0].check_failures
     assert any(f.startswith("one_job_per_technician_window: technician") for f in failed), failed
-    assert "window_jobs: 2 of the calls' jobs are in the afternoon window on 2026-11-02, " \
+    assert "window_jobs: 2 of the calls' jobs are in the 1200-1400 window on 2026-11-02, " \
            "expected 1" in failed
     assert results[0].must_pass_failures, "S-27 is a must-pass line"
 

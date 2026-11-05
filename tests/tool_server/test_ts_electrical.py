@@ -253,3 +253,19 @@ def test_a_sparks_caller_can_book_right_after_the_line(agent):
 )
 def test_the_review_cases_for_water_and_breakers(text, level):
     assert decide("no_cooling", text, outside_now_f=70).level == level
+
+
+def test_the_two_caller_lines_after_the_electrical_lines_say_not_to_ask_about_the_breaker(agent):
+    """Realism suite on #155, live-call-08-sparks-and-leak: the caller said "Yeah. Done." and was
+    asked whether the breaker was off anyway."""
+    call_id = agent.start(call_id="call-1")["data"]["call_id"]
+    said = agent.turn(call_id, "I saw a spark from the AC unit, and there's water coming through.")
+    agent.say(call_id, said["say"])
+    first = agent.turn(call_id, "Yeah. Done.")
+    assert "electrical_answered" in first["data"]["hints"]
+    agent.say(call_id, "Thanks. What's the address?")
+    second = agent.turn(call_id, "150 Greenpoint Avenue, Brooklyn.")
+    assert "electrical_answered" in second["data"]["hints"]
+    agent.say(call_id, "And the ZIP?")
+    third = agent.turn(call_id, "11222.")
+    assert "electrical_answered" not in third["data"]["hints"]

@@ -64,7 +64,7 @@ def test_the_board_puts_flags_jobs_and_other_calls_in_their_lanes(agent, clock):
     asked = agent.start(caller(2))["data"]["call_id"]
     agent.tool("flag_person", asked, reason="Billing question", callback_in_minutes=60)
     clock.advance(minutes=30)
-    away = out_of_area(agent, 3, "10001")
+    away = out_of_area(agent, 3, "11501")
     b = page(agent)["board"]
     assert [m["call_id"] for m in b["lanes"]["jobs"]] == [booked]
     assert [(m["call_id"], m["label"], m["tone"]) for m in b["lanes"]["needs"]] == [
@@ -103,17 +103,17 @@ def test_the_board_widens_for_a_call_outside_its_hours(agent, clock):
 
 def test_arrival_windows_count_the_jobs_landing_in_them(agent, clock):
     call = ready_to_book(agent, caller(1))
-    afternoon = {"date": "2026-11-02", "window": "afternoon"}
+    afternoon = {"date": "2026-11-02", "window": "1200-1600"}
     assert book(agent, call, afternoon, job_type="no_heat")["ok"]
     later = ready_to_book(agent, caller(2))
-    assert book(agent, later, {"date": "2026-11-03", "window": "morning"})["ok"]
+    assert book(agent, later, {"date": "2026-11-03", "window": "0800-1200"})["ok"]
     b = page(agent)["board"]
     by_name = {w["name"]: w for w in b["windows"]}
-    assert by_name["12 to 4"]["jobs"] == 1 and by_name["8 to 12"]["jobs"] == 0
+    assert by_name["12 to 2"]["jobs"] == 1 and by_name["8 to 10"]["jobs"] == 0
     assert b["scheduled"] == 1 and b["later"] == 1
-    assert by_name["8 to 12"]["past"] is False, "9 a.m. is inside the morning window"
+    assert by_name["8 to 10"]["past"] is False, "9 a.m. is inside the first window"
     clock.advance(hours=4)
-    assert {w["name"]: w["past"] for w in page(agent)["board"]["windows"]}["8 to 12"] is True
+    assert {w["name"]: w["past"] for w in page(agent)["board"]["windows"]}["8 to 10"] is True
 
 
 def change(agent: Agent, booked_call: str, kind: str, window_start: str | None = None) -> None:
@@ -132,18 +132,18 @@ def change(agent: Agent, booked_call: str, kind: str, window_start: str | None =
 
 def test_a_cancelled_job_leaves_its_window_and_a_moved_one_follows_its_new_window(agent):
     kept = ready_to_book(agent, caller(1))
-    assert book(agent, kept, {"date": "2026-11-02", "window": "afternoon"}, job_type="no_heat")[
+    assert book(agent, kept, {"date": "2026-11-02", "window": "1200-1600"}, job_type="no_heat")[
         "ok"
     ]
     gone = ready_to_book(agent, caller(2))
-    assert book(agent, gone, {"date": "2026-11-02", "window": "afternoon"})["ok"]
+    assert book(agent, gone, {"date": "2026-11-02", "window": "1200-1600"})["ok"]
     moved = ready_to_book(agent, caller(3))
-    assert book(agent, moved, {"date": "2026-11-03", "window": "morning"})["ok"]
+    assert book(agent, moved, {"date": "2026-11-03", "window": "0800-1200"})["ok"]
     change(agent, gone, "cancel")
     change(agent, moved, "reschedule", "2026-11-02T21:00:00Z")  # 4 p.m. New York, today
     by_name = {w["name"]: w["jobs"] for w in page(agent)["board"]["windows"]}
-    assert by_name["12 to 4"] == 1, "the cancelled job is gone"
-    assert by_name["4 to 8"] == 1, "the moved job counts in its new window"
+    assert by_name["12 to 2"] == 1, "the cancelled job is gone"
+    assert by_name["4 to 6"] == 1, "the moved job counts in its new window"
     assert page(agent)["board"]["scheduled"] == 2
 
 
@@ -381,13 +381,13 @@ def test_each_tool_call_reads_as_a_plain_note(agent):
         note(event("check_service_area", zip="11231"))["text"]
         == "ZIP 11231 is in the service area."
     )
-    assert note(event("check_service_area", ok=False, refused="out_of_area", zip="10001")) == {
-        "text": "ZIP 10001 is outside the service area, so it can't be booked.",
+    assert note(event("check_service_area", ok=False, refused="out_of_area", zip="11501")) == {
+        "text": "ZIP 11501 is outside the service area, so it can't be booked.",
         "tone": "warn",
     }
     held = note(event("book_appointment", ok=False, refused="gate_safety"))
     assert held == {"text": "Held the booking until the safety lines were said.", "tone": "hold"}
-    booked = note(event("book_appointment", job_type="no_heat", slot={"window": "morning"}))
+    booked = note(event("book_appointment", job_type="no_heat", slot={"window": "0800-1200"}))
     assert booked["text"] == "Booked in ServiceTitan: No heat, 8 to 12."
     override = note(
         event("book_appointment", gate="safety_override", job_type="safety_check", slot={})
@@ -551,7 +551,7 @@ def test_results_measure_a_period_against_the_one_before(agent, clock):
 def test_results_list_every_inbound_call_by_hour_and_what_was_turned_away(agent, clock):
     booked_tune_up(agent, 1)
     clock.advance(hours=2)
-    out_of_area(agent, 2, "10001")
+    out_of_area(agent, 2, "11501")
     gas_call_that_booked(agent, 3)
     r = results(agent, 1)
     assert sorted((h["hour"], h["type"], h["booked"]) for h in r["hours"]) == [
@@ -559,7 +559,7 @@ def test_results_list_every_inbound_call_by_hour_and_what_was_turned_away(agent,
         (11, "out_of_area", False),
         (11, "safety", True),
     ]
-    assert r["zips"] == [{"zip": "10001", "calls": 1}]
+    assert r["zips"] == [{"zip": "11501", "calls": 1}]
     assert r["held"] == {"calls": 1, "lines_first": 1, "booked": 1}
     rows = {row["label"]: row for row in owner.ledger(r["now"], r["before"])}
     assert rows["Safety lines said first"]["now"] == "100%", "a share of safety calls, not a count"

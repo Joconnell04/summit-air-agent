@@ -159,7 +159,7 @@ class ServiceTitanAdapter:
     def customers_by_phone(self, phone: str) -> list[dict]:
         return self._list("crm", "customers", "customers_by_phone", phone=phone)
 
-    def locations_by_address(self, street: str, zip_code: str, unit: str | None) -> list[dict]:
+    def locations_by_address(self, street: str, zip_code: str | None, unit: str | None) -> list[dict]:
         return self._list(
             "crm", "locations", "locations_by_address", street=street, zip=zip_code, unit=unit
         )

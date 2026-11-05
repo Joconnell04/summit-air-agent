@@ -141,7 +141,8 @@ def test_the_locked_rules_come_from_the_rulebook():
     assert "Won't book a commercial customer" in text
     assert "The agent never quotes a fee or a price" in text and "None" not in text
     assert "only ever raises it" in text
-    assert "Staten Island North" in text and "Manhattan" not in text
+    # All five boroughs since DECISIONS.md 105; a place outside them is still not listed.
+    assert "Staten Island North" in text and "Manhattan" in text and "Hoboken" not in text
 
 
 def test_the_check_runs_on_a_named_profile_with_thinking_off():

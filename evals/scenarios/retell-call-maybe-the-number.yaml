@@ -1,0 +1,23 @@
+id: retell-call-maybe-the-number
+flow: [repeat-caller]
+difficulty: standard
+journeys: [J7]
+spec: [S-15]
+tags: [live-calls]
+max_turns: 12
+caller_id: "(678) 555-0131"
+persona: A caller who isn't sure which number the account is under and answers "Maybe." when asked.
+hidden_facts:
+  name: Maria Delgado
+  address: 620 Bedford Ave, Brooklyn, 11235
+  phone: your account is under (718) 555-0142, but you aren't sure
+  wants: to know when the technician is coming today
+opening: Hi, when is my technician coming today?
+script:
+  - If asked whether it's under the number you're calling from, say "Maybe."
+  - If asked for another number, say "Maybe seven one eight five five five zero one four two."
+  - Say goodbye once you hear the window or a plain answer.
+must:
+  - tool_ok: find_customer
+should:
+  - Takes "Maybe" as a yes to try, and looks the number up instead of asking again.

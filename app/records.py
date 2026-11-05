@@ -190,6 +190,11 @@ def _clock_on(value: str, tenant: Tenant, now: datetime, days: int = 0,
     return datetime.combine(day, clock_time(value, after), tenant.tz)
 
 
+def clock_on(value: str, tenant: Tenant, now: datetime, days: int = 0) -> datetime:
+    """A local clock time today or `days` later, for a caller's words ("2 PM", "10")."""
+    return _clock_on(value, tenant, now, days)
+
+
 def parse_callback_window(
     after: str | None, before: str | None, tenant: Tenant, now: datetime, days: int = 0
 ) -> tuple[datetime | None, datetime | None]:

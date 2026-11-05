@@ -294,12 +294,15 @@ def test_no_geocoder_asks_for_the_zip(agent):
     )
 
 
-def test_an_address_found_outside_the_area_is_declined_and_recorded(located):
+def test_an_address_found_in_manhattan_is_in_the_area(located):
+    """Manhattan was outside the area until Jackson's call on the Retell number (DECISIONS.md 105);
+    an address the city lookup finds is outside it only past the five boroughs, which the lookup
+    doesn't cover, so out-of-area is the ZIP check's (test_ts_calls.py)."""
     call = located.start(UNKNOWN)["data"]["call_id"]
     located.turn(call, "100 Broadway, Manhattan.")
     result = located.tool("find_address", call, street="100 Broadway", borough="Manhattan")
-    assert result["refused"] == "out_of_area"
-    assert count(located, "SELECT COUNT(*) FROM out_of_area WHERE zip = '10005'") == 1
+    assert result["ok"] and result["data"]["in_area"], result
+    assert count(located, "SELECT COUNT(*) FROM out_of_area") == 0
 
 
 # ---- a ZIP that disagrees with the lookup ---------------------------------------------------
@@ -583,3 +586,57 @@ def test_a_zip_said_before_the_street_is_asked_about_not_replaced(located):
     located.turn(call, "I'm in 11205.")
     located.turn(call, "The address is 248 Duffield Street.")
     assert located.tool("find_address", call, street="248 Duffield St")["refused"] == "zip_mismatch"
+
+
+# ---- Jackson's call on the Retell number (call_ca9bfcec0b968db42ac2f428bea) ---------------------
+
+EAST_4TH = Place("199", "EAST 4 STREET", "10009", "Manhattan", "East Village")
+
+
+@pytest.mark.parametrize(
+    "said",
+    [
+        "One nine nine East fourth Street.",
+        "one ninety nine east fourth street",
+        "a hundred ninety nine east fourth street",
+        "one hundred and ninety nine East 4th Street, unit 2",
+        "It's 199 E 4th St, apartment 2.",
+        "one nine nine east fourth street number 2",
+    ],
+)
+@pytest.mark.parametrize("model_street", ["199 East Fourth Street", "199 East 4th Street", "199 E 4 St"])
+def test_a_direction_and_an_ordinal_said_any_way_still_match(located, answers, said, model_street):
+    """The caller said "One nine nine East fourth Street." and the model sent "199 East Fourth
+    Street": refused address_not_heard three times, because "e" sat between the number and the
+    street, and "4th" never matched "fourth"."""
+    answers.book[("199", geocode.street_match_key("East 4 Street"))] = [EAST_4TH]
+    call = located.start(UNKNOWN)["data"]["call_id"]
+    located.turn(call, said)
+    result = located.tool("find_address", call, street=model_street)
+    assert result["refused"] != "address_not_heard", result
+
+
+FOURTH_AVE = Place("50", "4 AVENUE", "11217", "Brooklyn", "Park Slope")
+SECOND_AVE = Place("20", "2 AVENUE", "10003", "Manhattan", "East Village")
+FIRST_PL = Place("10", "1 PLACE", "11231", "Brooklyn", "Carroll Gardens")
+
+
+@pytest.mark.parametrize(
+    "said, street, place",
+    [
+        ("50 Fourth Avenue", "50 Fourth Avenue", FOURTH_AVE),
+        ("fifty fourth avenue", "50 Fourth Avenue", FOURTH_AVE),
+        ("twenty second avenue", "20 Second Avenue", SECOND_AVE),
+        ("ten first place", "10 First Place", FIRST_PL),
+    ],
+)
+def test_a_round_house_number_before_an_ordinal_street_still_matches(
+    located, answers, said, street, place
+):
+    """PR #158 review: merging "fifty fourth" into 54 broke "50 Fourth Avenue"; both readings
+    count."""
+    split = geocode.split_address(street)
+    answers.book[(geocode.house_key(split[0]), geocode.street_match_key(split[1]))] = [place]
+    call = located.start(UNKNOWN)["data"]["call_id"]
+    located.turn(call, said)
+    assert located.tool("find_address", call, street=street)["refused"] != "address_not_heard"
