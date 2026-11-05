@@ -48,7 +48,8 @@ CLIPS = ["sure", "maybe", "idoubt", "thewhat", "isaidsure", "wondering"]
 
 BASE = {**build.SPEECH, "reminder_trigger_ms": 30000, "reminder_max_count": 0}
 VARIANTS = {
-    "now": {},
+    "before": {"stt_mode": "fast", "responsiveness": 0.9, "enable_dynamic_responsiveness": True,
+               "reminder_trigger_ms": 30000},
     "accurate": {"stt_mode": "accurate"},
     "no-denoise": {"denoising_mode": "no-denoise"},
     "accurate-no-denoise": {"stt_mode": "accurate", "denoising_mode": "no-denoise"},
@@ -57,6 +58,8 @@ VARIANTS = {
                "enable_backchannel": False},
     "accurate-quiet": {"stt_mode": "accurate", "denoising_mode": "no-denoise",
                        "enable_backchannel": False},
+    # What went live after Jackson's notes: accurate, responsiveness 1.0, backchannel kept on.
+    "live": {},
     "accurate-quick": {"stt_mode": "accurate", "denoising_mode": "no-denoise",
                        "enable_backchannel": False, "responsiveness": 1.0,
                        "enable_dynamic_responsiveness": False},

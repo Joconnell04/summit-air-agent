@@ -22,17 +22,19 @@ AGENT_NAME = "Summit Air (Retell baseline)"
 CHAT_AGENT_NAME = "Summit Air chat (Retell baseline, evals)"
 
 # Turn-taking for phone audio and digit answers. Set after live call 3 by replaying that call's
-# caller audio under each option (voice/retell/turn_probe.py, evals/rounds/retell-02.md): noise
-# cancellation dropped a quiet one-word "sure", and only accurate transcription waited through a
-# pause in the middle of a sentence.
+# caller audio under each option (voice/retell/turn_probe.py, evals/rounds/retell-02.md): fast
+# transcription with noise cancellation dropped a quiet one-word "sure", and only accurate
+# transcription caught it while also waiting through a pause in the middle of a sentence.
 SPEECH = {
     "language": "en-US",
     "stt_mode": "accurate",
-    "denoising_mode": "no-denoise",
+    "denoising_mode": "noise-cancellation",
     "interruption_sensitivity": 0.8,
     "responsiveness": 1.0,
     "enable_dynamic_responsiveness": False,
-    "enable_backchannel": False,
+    "enable_backchannel": True,
+    "backchannel_frequency": 0.4,
+    "backchannel_words": ["mm-hmm", "okay", "uh-huh"],
     "reminder_trigger_ms": 6000,
     "reminder_max_count": 2,
     "end_call_after_silence_ms": 45000,

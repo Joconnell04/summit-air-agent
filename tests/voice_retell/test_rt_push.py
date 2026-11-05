@@ -210,13 +210,11 @@ def test_parameters_are_compared_in_the_form_retell_stores_them():
 
 
 def test_the_agent_hears_one_word_replies_and_waits_through_a_pause_mid_sentence():
-    """Live call 3: noise cancellation dropped a quiet "sure", backchannel and fast transcription
-    answered into a pause mid-sentence, and the caller waited 10 s for a check-in
+    """Live call 3: fast transcription dropped a quiet "sure" and answered into a pause
+    mid-sentence, and the caller waited 10 s for a check-in
     (voice/retell/turn_probe.py, evals/rounds/retell-02.md)."""
     body = build.agent_body("llm_1", BASE, "custom_voice_1", "sonic-3")
     assert body["stt_mode"] == "accurate"
-    assert body["denoising_mode"] == "no-denoise"
-    assert body["enable_backchannel"] is False
     assert body["responsiveness"] == 1.0 and body["enable_dynamic_responsiveness"] is False
     assert body["reminder_trigger_ms"] == 6000
 

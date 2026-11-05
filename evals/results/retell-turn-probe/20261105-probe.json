@@ -10126,5 +10126,1338 @@
   "cost_usd": 0.09888,
   "variant": "accurate-quick",
   "attempt": 2
+ },
+ {
+  "call_id": "call_5adbb659a15b22c8a9b13f369a9",
+  "turns": [
+   {
+    "clip": "sure",
+    "answer_s": 1.69,
+    "over_caller_s": null
+   },
+   {
+    "clip": "maybe",
+    "answer_s": 2.52,
+    "over_caller_s": null
+   },
+   {
+    "clip": "idoubt",
+    "answer_s": 1.54,
+    "over_caller_s": null
+   },
+   {
+    "clip": "thewhat",
+    "answer_s": 1.58,
+    "over_caller_s": null
+   },
+   {
+    "clip": "isaidsure",
+    "answer_s": 1.7,
+    "over_caller_s": null
+   },
+   {
+    "clip": "wondering",
+    "answer_s": 1.82,
+    "over_caller_s": null
+   }
+  ],
+  "transcript": [
+   {
+    "role": "agent",
+    "content": "Quick question before we start. Would Thursday morning work for you?",
+    "words": [
+     {
+      "word": "Quick ",
+      "start": 0.200333251953125,
+      "end": 0.441
+     },
+     {
+      "word": "question ",
+      "start": 0.441000244140625,
+      "end": 1.001
+     },
+     {
+      "word": "before ",
+      "start": 1.001,
+      "end": 1.321
+     },
+     {
+      "word": "we ",
+      "start": 1.401,
+      "end": 1.401
+     },
+     {
+      "word": "start. ",
+      "start": 1.401,
+      "end": 1.881
+     },
+     {
+      "word": "Would ",
+      "start": 2.165466552734375,
+      "end": 2.441
+     },
+     {
+      "word": "Thursday ",
+      "start": 2.441143798828125,
+      "end": 2.841
+     },
+     {
+      "word": "morning ",
+      "start": 2.841,
+      "end": 3.161
+     },
+     {
+      "word": "work ",
+      "start": 3.161,
+      "end": 3.321
+     },
+     {
+      "word": "for ",
+      "start": 3.401,
+      "end": 3.481
+     },
+     {
+      "word": "you?",
+      "start": 3.481,
+      "end": 3.721
+     }
+    ],
+    "metadata": {
+     "response_id": 0
+    }
+   },
+   {
+    "role": "user",
+    "content": "Sure. ",
+    "words": [
+     {
+      "word": "Sure. ",
+      "start": 4.563,
+      "end": 6.003
+     }
+    ]
+   },
+   {
+    "role": "agent",
+    "content": "Thursday morning confirmed. Do you need the furnace checked before winter?",
+    "words": [
+     {
+      "word": "Thursday ",
+      "start": 7.407381103515625,
+      "end": 7.888
+     },
+     {
+      "word": "morning ",
+      "start": 7.888,
+      "end": 8.528
+     },
+     {
+      "word": "confirmed. ",
+      "start": 8.528447509765625,
+      "end": 9.328
+     },
+     {
+      "word": "Do ",
+      "start": 9.619552734375,
+      "end": 9.728
+     },
+     {
+      "word": "you ",
+      "start": 9.808,
+      "end": 10.048
+     },
+     {
+      "word": "need ",
+      "start": 10.048000732421874,
+      "end": 10.288
+     },
+     {
+      "word": "the ",
+      "start": 10.288,
+      "end": 10.368
+     },
+     {
+      "word": "furnace ",
+      "start": 10.368,
+      "end": 10.768
+     },
+     {
+      "word": "checked ",
+      "start": 10.768,
+      "end": 11.088
+     },
+     {
+      "word": "before ",
+      "start": 11.08800048828125,
+      "end": 11.328
+     },
+     {
+      "word": "winter?",
+      "start": 11.408,
+      "end": 11.808
+     }
+    ],
+    "metadata": {
+     "response_id": 1
+    }
+   },
+   {
+    "role": "user",
+    "content": "Maybe. ",
+    "words": [
+     {
+      "word": "Maybe. ",
+      "start": 12.627,
+      "end": 14.619
+     }
+    ]
+   },
+   {
+    "role": "agent",
+    "content": "Maybe noted. Would you like us to schedule a furnace visit?",
+    "words": [
+     {
+      "word": "Maybe ",
+      "start": 16.427976806640626,
+      "end": 16.748
+     },
+     {
+      "word": "noted. ",
+      "start": 16.748,
+      "end": 17.308
+     },
+     {
+      "word": "Would ",
+      "start": 17.576177978515624,
+      "end": 17.708
+     },
+     {
+      "word": "you ",
+      "start": 17.708,
+      "end": 17.868
+     },
+     {
+      "word": "like ",
+      "start": 17.868,
+      "end": 18.028
+     },
+     {
+      "word": "us ",
+      "start": 18.108,
+      "end": 18.108
+     },
+     {
+      "word": "to ",
+      "start": 18.108,
+      "end": 18.268
+     },
+     {
+      "word": "schedule ",
+      "start": 18.348,
+      "end": 18.588
+     },
+     {
+      "word": "a ",
+      "start": 18.668,
+      "end": 18.668
+     },
+     {
+      "word": "furnace ",
+      "start": 18.668,
+      "end": 18.988
+     },
+     {
+      "word": "visit?",
+      "start": 18.988,
+      "end": 19.468
+     }
+    ],
+    "metadata": {
+     "response_id": 2
+    }
+   },
+   {
+    "role": "user",
+    "content": "I don't. ",
+    "words": [
+     {
+      "word": "I ",
+      "start": 20.403,
+      "end": 20.598
+     },
+     {
+      "word": "don't. ",
+      "start": 20.636999999999997,
+      "end": 21.81
+     }
+    ]
+   },
+   {
+    "role": "agent",
+    "content": "Don't want one. Do you have a furnace in your home?",
+    "words": [
+     {
+      "word": "Don't ",
+      "start": 23.686681884765626,
+      "end": 23.928
+     },
+     {
+      "word": "want ",
+      "start": 23.928,
+      "end": 24.168
+     },
+     {
+      "word": "one. ",
+      "start": 24.248,
+      "end": 24.568
+     },
+     {
+      "word": "Do ",
+      "start": 24.87303271484375,
+      "end": 25.048
+     },
+     {
+      "word": "you ",
+      "start": 25.128,
+      "end": 25.128
+     },
+     {
+      "word": "have ",
+      "start": 25.128,
+      "end": 25.208
+     },
+     {
+      "word": "a ",
+      "start": 25.288,
+      "end": 25.288
+     },
+     {
+      "word": "furnace ",
+      "start": 25.288,
+      "end": 25.688
+     },
+     {
+      "word": "in ",
+      "start": 25.768,
+      "end": 25.768
+     },
+     {
+      "word": "your ",
+      "start": 25.848,
+      "end": 25.848
+     },
+     {
+      "word": "home?",
+      "start": 25.848,
+      "end": 26.168
+     }
+    ],
+    "metadata": {
+     "response_id": 3
+    }
+   },
+   {
+    "role": "user",
+    "content": "The what? ",
+    "words": [
+     {
+      "word": "The ",
+      "start": 28.691,
+      "end": 29.430999999999997
+     },
+     {
+      "word": "what? ",
+      "start": 29.479999999999997,
+      "end": 30.714
+     }
+    ]
+   },
+   {
+    "role": "agent",
+    "content": "Furnace question. Do you have one at home?",
+    "words": [
+     {
+      "word": "Furnace ",
+      "start": 31.650897705078126,
+      "end": 32.131
+     },
+     {
+      "word": "question. ",
+      "start": 32.131,
+      "end": 32.771
+     },
+     {
+      "word": "Do ",
+      "start": 33.145161376953126,
+      "end": 33.251
+     },
+     {
+      "word": "you ",
+      "start": 33.331,
+      "end": 33.331
+     },
+     {
+      "word": "have ",
+      "start": 33.331,
+      "end": 33.491
+     },
+     {
+      "word": "one ",
+      "start": 33.571,
+      "end": 33.651
+     },
+     {
+      "word": "at ",
+      "start": 33.651,
+      "end": 33.731
+     },
+     {
+      "word": "home?",
+      "start": 33.811,
+      "end": 34.051
+     }
+    ],
+    "metadata": {
+     "response_id": 4
+    }
+   },
+   {
+    "role": "user",
+    "content": "I said sure. ",
+    "words": [
+     {
+      "word": "I ",
+      "start": 36.498999999999995,
+      "end": 36.722
+     },
+     {
+      "word": "said ",
+      "start": 36.766,
+      "end": 37.658
+     },
+     {
+      "word": "sure. ",
+      "start": 37.702,
+      "end": 38.817
+     }
+    ]
+   },
+   {
+    "role": "agent",
+    "content": "Sure, got it. Do you want the furnace visit on Thursday?",
+    "words": [
+     {
+      "word": "Sure, ",
+      "start": 39.75493408203125,
+      "end": 40.235
+     },
+     {
+      "word": "got ",
+      "start": 40.327158447265624,
+      "end": 40.635
+     },
+     {
+      "word": "it. ",
+      "start": 40.635,
+      "end": 40.795
+     },
+     {
+      "word": "Do ",
+      "start": 41.18063330078125,
+      "end": 41.355
+     },
+     {
+      "word": "you ",
+      "start": 41.435,
+      "end": 41.435
+     },
+     {
+      "word": "want ",
+      "start": 41.435,
+      "end": 41.595
+     },
+     {
+      "word": "the ",
+      "start": 41.675,
+      "end": 41.675
+     },
+     {
+      "word": "furnace ",
+      "start": 41.675,
+      "end": 42.075
+     },
+     {
+      "word": "visit ",
+      "start": 42.155,
+      "end": 42.395
+     },
+     {
+      "word": "on ",
+      "start": 42.395,
+      "end": 42.555
+     },
+     {
+      "word": "Thursday?",
+      "start": 42.555,
+      "end": 43.115
+     }
+    ],
+    "metadata": {
+     "response_id": 5
+    }
+   },
+   {
+    "role": "user",
+    "content": "Um, yeah, I'm just wondering Um, if I can cancel my appointment ",
+    "words": [
+     {
+      "word": "Um, ",
+      "start": 44.339,
+      "end": 44.772
+     },
+     {
+      "word": "yeah, ",
+      "start": 44.8,
+      "end": 45.521
+     },
+     {
+      "word": "I'm ",
+      "start": 45.549,
+      "end": 45.982
+     },
+     {
+      "word": "just ",
+      "start": 46.01,
+      "end": 46.586999999999996
+     },
+     {
+      "word": "wondering ",
+      "start": 46.614999999999995,
+      "end": 47.914
+     },
+     {
+      "word": "Um, ",
+      "start": 48.467,
+      "end": 50.391
+     },
+     {
+      "word": "if ",
+      "start": 50.451,
+      "end": 50.725
+     },
+     {
+      "word": "I ",
+      "start": 50.751999999999995,
+      "end": 50.888999999999996
+     },
+     {
+      "word": "can ",
+      "start": 50.916,
+      "end": 51.327
+     },
+     {
+      "word": "cancel ",
+      "start": 51.354,
+      "end": 52.177
+     },
+     {
+      "word": "my ",
+      "start": 52.204,
+      "end": 52.478
+     },
+     {
+      "word": "appointment ",
+      "start": 52.504999999999995,
+      "end": 54.013999999999996
+     }
+    ]
+   },
+   {
+    "role": "agent",
+    "content": "Cancel appointment. Do you want to cancel the Thursday furnace visit?",
+    "words": [
+     {
+      "word": "Cancel ",
+      "start": 56.237305419921874,
+      "end": 56.719
+     },
+     {
+      "word": "appointment. ",
+      "start": 56.719,
+      "end": 57.439
+     },
+     {
+      "word": "Do ",
+      "start": 57.66297314453125,
+      "end": 57.919
+     },
+     {
+      "word": "you ",
+      "start": 57.919,
+      "end": 58.159
+     },
+     {
+      "word": "want ",
+      "start": 58.15900048828125,
+      "end": 58.399
+     },
+     {
+      "word": "to ",
+      "start": 58.479,
+      "end": 58.479
+     },
+     {
+      "word": "cancel ",
+      "start": 58.47900048828125,
+      "end": 59.119
+     },
+     {
+      "word": "the ",
+      "start": 59.119,
+      "end": 59.199
+     },
+     {
+      "word": "Thursday ",
+      "start": 59.19900146484375,
+      "end": 59.599
+     },
+     {
+      "word": "furnace ",
+      "start": 59.67900122070313,
+      "end": 59.999
+     },
+     {
+      "word": "visit?",
+      "start": 59.999,
+      "end": 60.479
+     }
+    ],
+    "metadata": {
+     "response_id": 7
+    }
+   }
+  ],
+  "cost_usd": 0.09522,
+  "variant": "live",
+  "attempt": 1
+ },
+ {
+  "call_id": "call_2f4a3925d5e44d3129c74a28df5",
+  "turns": [
+   {
+    "clip": "sure",
+    "answer_s": 1.84,
+    "over_caller_s": null
+   },
+   {
+    "clip": "maybe",
+    "answer_s": 1.85,
+    "over_caller_s": null
+   },
+   {
+    "clip": "idoubt",
+    "answer_s": 1.68,
+    "over_caller_s": null
+   },
+   {
+    "clip": "thewhat",
+    "answer_s": 1.66,
+    "over_caller_s": null
+   },
+   {
+    "clip": "isaidsure",
+    "answer_s": 1.82,
+    "over_caller_s": null
+   },
+   {
+    "clip": "wondering",
+    "answer_s": 2.48,
+    "over_caller_s": null
+   }
+  ],
+  "transcript": [
+   {
+    "role": "agent",
+    "content": "Quick question before we start. Would Thursday morning work for you?",
+    "words": [
+     {
+      "word": "Quick ",
+      "start": 0.198854736328125,
+      "end": 0.439
+     },
+     {
+      "word": "question ",
+      "start": 0.439,
+      "end": 0.919
+     },
+     {
+      "word": "before ",
+      "start": 0.919,
+      "end": 1.239
+     },
+     {
+      "word": "we ",
+      "start": 1.319,
+      "end": 1.319
+     },
+     {
+      "word": "start. ",
+      "start": 1.319,
+      "end": 1.879
+     },
+     {
+      "word": "Would ",
+      "start": 2.09297412109375,
+      "end": 2.759
+     },
+     {
+      "word": "Thursday ",
+      "start": 2.839014404296875,
+      "end": 3.159
+     },
+     {
+      "word": "morning ",
+      "start": 3.159,
+      "end": 3.479
+     },
+     {
+      "word": "work ",
+      "start": 3.479,
+      "end": 3.719
+     },
+     {
+      "word": "for ",
+      "start": 3.719,
+      "end": 3.799
+     },
+     {
+      "word": "you?",
+      "start": 3.879,
+      "end": 3.959
+     }
+    ],
+    "metadata": {
+     "response_id": 0
+    }
+   },
+   {
+    "role": "user",
+    "content": "Sure. ",
+    "words": [
+     {
+      "word": "Sure. ",
+      "start": 5.026,
+      "end": 6.402
+     }
+    ]
+   },
+   {
+    "role": "agent",
+    "content": "Thursday morning, got it. Would you like the furnace visit to include a safety inspection?",
+    "words": [
+     {
+      "word": "Thursday ",
+      "start": 7.7623232421875,
+      "end": 8.163
+     },
+     {
+      "word": "morning, ",
+      "start": 8.163,
+      "end": 8.643
+     },
+     {
+      "word": "got ",
+      "start": 8.924486083984375,
+      "end": 9.203
+     },
+     {
+      "word": "it. ",
+      "start": 9.283,
+      "end": 9.443
+     },
+     {
+      "word": "Would ",
+      "start": 9.647203857421875,
+      "end": 9.843
+     },
+     {
+      "word": "you ",
+      "start": 9.843,
+      "end": 9.923
+     },
+     {
+      "word": "like ",
+      "start": 9.923,
+      "end": 10.163
+     },
+     {
+      "word": "the ",
+      "start": 10.243,
+      "end": 10.243
+     },
+     {
+      "word": "furnace ",
+      "start": 10.243,
+      "end": 10.723
+     },
+     {
+      "word": "visit ",
+      "start": 10.803,
+      "end": 11.043
+     },
+     {
+      "word": "to ",
+      "start": 11.043,
+      "end": 11.123
+     },
+     {
+      "word": "include ",
+      "start": 11.203,
+      "end": 11.443
+     },
+     {
+      "word": "a ",
+      "start": 11.523,
+      "end": 11.523
+     },
+     {
+      "word": "safety ",
+      "start": 11.523,
+      "end": 11.923
+     },
+     {
+      "word": "inspection?",
+      "start": 11.923,
+      "end": 12.483
+     }
+    ],
+    "metadata": {
+     "response_id": 1
+    }
+   },
+   {
+    "role": "user",
+    "content": "Maybe. ",
+    "words": [
+     {
+      "word": "Maybe. ",
+      "start": 13.442,
+      "end": 14.594000000000001
+     }
+    ]
+   },
+   {
+    "role": "agent",
+    "content": "Maybe, noted. Would you like the technician to check your furnace filter while they're there?",
+    "words": [
+     {
+      "word": "Maybe, ",
+      "start": 16.46098974609375,
+      "end": 17.101
+     },
+     {
+      "word": "noted. ",
+      "start": 17.317855712890626,
+      "end": 17.901
+     },
+     {
+      "word": "Would ",
+      "start": 18.20124267578125,
+      "end": 18.461
+     },
+     {
+      "word": "you ",
+      "start": 18.461,
+      "end": 18.541
+     },
+     {
+      "word": "like ",
+      "start": 18.621,
+      "end": 18.701
+     },
+     {
+      "word": "the ",
+      "start": 18.781,
+      "end": 18.781
+     },
+     {
+      "word": "technician ",
+      "start": 18.781,
+      "end": 19.261
+     },
+     {
+      "word": "to ",
+      "start": 19.261,
+      "end": 19.421
+     },
+     {
+      "word": "check ",
+      "start": 19.501,
+      "end": 19.661
+     },
+     {
+      "word": "your ",
+      "start": 19.741,
+      "end": 19.821
+     },
+     {
+      "word": "furnace ",
+      "start": 19.821,
+      "end": 20.141
+     },
+     {
+      "word": "filter ",
+      "start": 20.141000244140624,
+      "end": 20.461
+     },
+     {
+      "word": "while ",
+      "start": 20.541,
+      "end": 20.701
+     },
+     {
+      "word": "they're ",
+      "start": 20.781,
+      "end": 20.781
+     },
+     {
+      "word": "there?",
+      "start": 20.781,
+      "end": 21.101
+     }
+    ],
+    "metadata": {
+     "response_id": 2
+    }
+   },
+   {
+    "role": "user",
+    "content": "I don't. ",
+    "words": [
+     {
+      "word": "I ",
+      "start": 21.73,
+      "end": 22.044999999999998
+     },
+     {
+      "word": "don't. ",
+      "start": 22.108,
+      "end": 24.000999999999998
+     }
+    ]
+   },
+   {
+    "role": "agent",
+    "content": "Don't, understood. Would you like a reminder call before the Thursday visit?",
+    "words": [
+     {
+      "word": "Don't, ",
+      "start": 25.206428466796876,
+      "end": 25.847
+     },
+     {
+      "word": "understood. ",
+      "start": 26.130751708984373,
+      "end": 26.727
+     },
+     {
+      "word": "Would ",
+      "start": 26.994642578125,
+      "end": 27.207
+     },
+     {
+      "word": "you ",
+      "start": 27.287,
+      "end": 27.287
+     },
+     {
+      "word": "like ",
+      "start": 27.287,
+      "end": 27.447
+     },
+     {
+      "word": "a ",
+      "start": 27.527,
+      "end": 27.527
+     },
+     {
+      "word": "reminder ",
+      "start": 27.607,
+      "end": 27.927
+     },
+     {
+      "word": "call ",
+      "start": 27.927001708984374,
+      "end": 28.327
+     },
+     {
+      "word": "before ",
+      "start": 28.327,
+      "end": 28.567
+     },
+     {
+      "word": "the ",
+      "start": 28.647,
+      "end": 28.727
+     },
+     {
+      "word": "Thursday ",
+      "start": 28.727,
+      "end": 29.047
+     },
+     {
+      "word": "visit?",
+      "start": 29.047,
+      "end": 29.607
+     }
+    ],
+    "metadata": {
+     "response_id": 3
+    }
+   },
+   {
+    "role": "user",
+    "content": "The what? ",
+    "words": [
+     {
+      "word": "The ",
+      "start": 30.337999999999997,
+      "end": 31.093
+     },
+     {
+      "word": "what? ",
+      "start": 31.142999999999997,
+      "end": 32.401
+     }
+    ]
+   },
+   {
+    "role": "agent",
+    "content": "Reminder call, got it. Would you like us to call you the day before the Thursday visit?",
+    "words": [
+     {
+      "word": "Reminder ",
+      "start": 33.3519267578125,
+      "end": 33.832
+     },
+     {
+      "word": "call, ",
+      "start": 33.832,
+      "end": 34.552
+     },
+     {
+      "word": "got ",
+      "start": 34.7399990234375,
+      "end": 35.032
+     },
+     {
+      "word": "it.",
+      "start": 35.032,
+      "end": 35.352
+     },
+     {
+      "word": " Would ",
+      "start": 35.72901733398437,
+      "end": 35.912
+     },
+     {
+      "word": "you ",
+      "start": 35.992,
+      "end": 35.992
+     },
+     {
+      "word": "like ",
+      "start": 35.992,
+      "end": 36.152
+     },
+     {
+      "word": "us ",
+      "start": 36.152,
+      "end": 36.312
+     },
+     {
+      "word": "to ",
+      "start": 36.312,
+      "end": 36.392
+     },
+     {
+      "word": "call ",
+      "start": 36.472,
+      "end": 36.632
+     },
+     {
+      "word": "you ",
+      "start": 36.632,
+      "end": 36.712
+     },
+     {
+      "word": "the ",
+      "start": 36.712,
+      "end": 36.872
+     },
+     {
+      "word": "day ",
+      "start": 36.952,
+      "end": 37.032
+     },
+     {
+      "word": "before ",
+      "start": 37.112,
+      "end": 37.352
+     },
+     {
+      "word": "the ",
+      "start": 37.432,
+      "end": 37.432
+     },
+     {
+      "word": "Thursday ",
+      "start": 37.432000244140625,
+      "end": 37.832
+     },
+     {
+      "word": "visit?",
+      "start": 37.832,
+      "end": 38.152
+     }
+    ],
+    "metadata": {
+     "response_id": 4
+    }
+   },
+   {
+    "role": "user",
+    "content": "I said sure. ",
+    "words": [
+     {
+      "word": "I ",
+      "start": 38.978,
+      "end": 39.191
+     },
+     {
+      "word": "said ",
+      "start": 39.233000000000004,
+      "end": 40.088
+     },
+     {
+      "word": "sure. ",
+      "start": 40.13,
+      "end": 41.199000000000005
+     }
+    ]
+   },
+   {
+    "role": "agent",
+    "content": "Sure, got it. Is the furnace visit still set for Thursday morning?",
+    "words": [
+     {
+      "word": "Sure, ",
+      "start": 42.29393188476563,
+      "end": 42.774
+     },
+     {
+      "word": "got ",
+      "start": 42.91168408203125,
+      "end": 43.174
+     },
+     {
+      "word": "it.",
+      "start": 43.174,
+      "end": 43.334
+     },
+     {
+      "word": " Is ",
+      "start": 43.63806884765625,
+      "end": 43.814
+     },
+     {
+      "word": "the ",
+      "start": 43.894,
+      "end": 43.974
+     },
+     {
+      "word": "furnace ",
+      "start": 43.974,
+      "end": 44.294
+     },
+     {
+      "word": "visit ",
+      "start": 44.294,
+      "end": 44.694
+     },
+     {
+      "word": "still ",
+      "start": 44.694,
+      "end": 44.934
+     },
+     {
+      "word": "set ",
+      "start": 44.934,
+      "end": 45.254
+     },
+     {
+      "word": "for ",
+      "start": 45.334,
+      "end": 45.414
+     },
+     {
+      "word": "Thursday ",
+      "start": 45.414,
+      "end": 45.734
+     },
+     {
+      "word": "morning?",
+      "start": 45.734,
+      "end": 46.054
+     }
+    ],
+    "metadata": {
+     "response_id": 5
+    }
+   },
+   {
+    "role": "user",
+    "content": "Um, yeah, I'm just wondering Um, if I can cancel my appointment ",
+    "words": [
+     {
+      "word": "Um, ",
+      "start": 46.754000000000005,
+      "end": 47.18
+     },
+     {
+      "word": "yeah, ",
+      "start": 47.208000000000006,
+      "end": 47.918
+     },
+     {
+      "word": "I'm ",
+      "start": 47.946000000000005,
+      "end": 48.372
+     },
+     {
+      "word": "just ",
+      "start": 48.400000000000006,
+      "end": 48.968
+     },
+     {
+      "word": "wondering ",
+      "start": 48.996,
+      "end": 50.274
+     },
+     {
+      "word": "Um, ",
+      "start": 50.85,
+      "end": 52.874
+     },
+     {
+      "word": "if ",
+      "start": 52.93,
+      "end": 53.204
+     },
+     {
+      "word": "I ",
+      "start": 53.231,
+      "end": 53.368
+     },
+     {
+      "word": "can ",
+      "start": 53.395,
+      "end": 53.807
+     },
+     {
+      "word": "cancel ",
+      "start": 53.834,
+      "end": 54.658
+     },
+     {
+      "word": "my ",
+      "start": 54.685,
+      "end": 54.959
+     },
+     {
+      "word": "appointment ",
+      "start": 54.986000000000004,
+      "end": 56.497
+     }
+    ]
+   },
+   {
+    "role": "agent",
+    "content": "Cancel, got it. Would you like to reschedule the furnace visit for a ",
+    "words": [
+     {
+      "word": "Cancel, ",
+      "start": 59.427476318359375,
+      "end": 60.148
+     },
+     {
+      "word": "got ",
+      "start": 60.437935546875,
+      "end": 60.628
+     },
+     {
+      "word": "it.",
+      "start": 60.628,
+      "end": 60.788
+     },
+     {
+      "word": " Would ",
+      "start": 61.17015576171875,
+      "end": 61.348
+     },
+     {
+      "word": "you ",
+      "start": 61.428,
+      "end": 61.428
+     },
+     {
+      "word": "like ",
+      "start": 61.428,
+      "end": 61.588
+     },
+     {
+      "word": "to ",
+      "start": 61.668,
+      "end": 61.748
+     },
+     {
+      "word": "reschedule ",
+      "start": 61.74800024414063,
+      "end": 62.308
+     },
+     {
+      "word": "the ",
+      "start": 62.308,
+      "end": 62.388
+     },
+     {
+      "word": "furnace ",
+      "start": 62.468,
+      "end": 62.788
+     },
+     {
+      "word": "visit ",
+      "start": 62.788,
+      "end": 63.188
+     },
+     {
+      "word": "for ",
+      "start": 63.188,
+      "end": 63.268
+     },
+     {
+      "word": "a ",
+      "start": 63.348,
+      "end": 63.348
+     }
+    ],
+    "metadata": {
+     "response_id": 7
+    }
+   }
+  ],
+  "cost_usd": 0.09888,
+  "variant": "live",
+  "attempt": 2
  }
 ]
