@@ -166,6 +166,21 @@ def newest_caller_timings(trace: dict) -> dict:
     return (lines[-1].get("timings") or {}) if lines else {}
 
 
+# A line this long can carry a pause mid-thought (--pause-s).
+PAUSE_MIN_WORDS = 8
+
+
+def pause_split(text: str) -> tuple[str, str] | None:
+    """Where a caller would stop mid-thought: after the first comma or "..." past the third word,
+    else at the middle word. None for a short line, which people say in one go."""
+    words = text.split()
+    if len(words) < PAUSE_MIN_WORDS:
+        return None
+    at = next((i + 1 for i, w in enumerate(words[3:-2], start=3) if w.endswith((",", "..."))),
+              len(words) // 2)
+    return " ".join(words[:at]), " ".join(words[at:])
+
+
 def must_repeat(scenario: Scenario) -> bool:
     """The decision rule's three repeats cover every must-pass scenario."""
     return scenario.must_pass
@@ -173,8 +188,11 @@ def must_repeat(scenario: Scenario) -> bool:
 
 class Rig:
     def __init__(self, entrant, ctx: RigContext, workdir: Path, caller_model: Model,
-                 grader: Model, verbose: bool = True):
+                 grader: Model, verbose: bool = True, pause_s: float = 0.0):
         self.entrant = entrant
+        # Silence put inside each long caller line (pause_split), to see whether a shorter
+        # end-of-turn wait cuts off a caller who stops mid-thought. 0 is off.
+        self.pause_s = pause_s
         self.ctx = ctx
         self.workdir = workdir
         self.seed = seeded_db(workdir / "seed")
@@ -185,6 +203,16 @@ class Rig:
         self.vad = Vad(**rig["vad"])
         self.rig_config = rig
         self.verbose = verbose
+
+    async def caller_audio(self, speech: Deepgram, said: str) -> bytes:
+        """The caller's line as audio, with the mid-line pause when one is set."""
+        rate = self.entrant.in_rate
+        halves = pause_split(said) if self.pause_s > 0 else None
+        if halves is None:
+            return self.vad.trim(await speech.say(said, rate), rate)
+        first, second = [self.vad.trim(await speech.say(half, rate), rate) for half in halves]
+        gap = bytes(2 * round(self.pause_s * rate))
+        return first + gap + second
 
     def log(self, call_id: str, text: str) -> None:
         if self.verbose:
@@ -233,8 +261,7 @@ class Rig:
                 if listener.is_hung_up:
                     reason = "agent_end"
                     break
-                pcm = self.vad.trim(await speech.say(said, self.entrant.in_rate),
-                                    self.entrant.in_rate)
+                pcm = await self.caller_audio(speech, said)
                 transcript.append(Turn(role="caller", text=said))
                 self.log(call_id, f"caller: {said}")
                 spoken = not sender.stopped
@@ -332,14 +359,15 @@ def plan(chosen: list[Scenario], repeats: int, samples: int = 1) -> list[tuple[S
 
 async def run_entrant(name: str, chosen: list[Scenario], repeats: int, max_cost: float | None,
                       env: dict, workdir: Path, samples: int = 1,
-                      batch: Batch | None = None) -> tuple[list[ScenarioResult], object]:
+                      batch: Batch | None = None,
+                      pause_s: float = 0.0) -> tuple[list[ScenarioResult], object]:
     config = load_config()
     worlds = Worlds()
     with Serving(build_app(worlds)) as router:
         ctx = RigContext(worlds, router.url, config, env)
         entrant = load_entrant(name).entrant(ctx)
         rig = Rig(entrant, ctx, workdir, for_profile("offline.caller"),
-                  for_profile("offline.grader"))
+                  for_profile("offline.grader"), pause_s=pause_s)
         done: list[ScenarioResult] = []
         await entrant.start()
         try:
@@ -397,6 +425,8 @@ def main(argv: list[str] | None = None) -> int:
                         help="add the calls to this existing batch, numbering on from its last")
     parser.add_argument("--results-in-batch", action="store_true",
                         help="write the results file into the batch folder, not evals/results")
+    parser.add_argument("--pause-s", type=float, default=0.0,
+                        help="silence inside each long caller line, to test for cut-offs")
     args = parser.parse_args(argv)
 
     chosen, _ = suites.select(load_all(), args.suite, suites.parse_tags(args.tags))
@@ -422,7 +452,7 @@ def main(argv: list[str] | None = None) -> int:
     with tempfile.TemporaryDirectory(prefix="summit-rig-") as tmp:
         done, entrant = asyncio.run(
             run_entrant(args.stack, chosen, args.repeats, args.max_cost, dict(os.environ),
-                        Path(tmp), args.samples, batch)
+                        Path(tmp), args.samples, batch, args.pause_s)
         )
     if not done:
         print("no scenario finished", file=sys.stderr)

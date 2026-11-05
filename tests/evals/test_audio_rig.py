@@ -21,6 +21,7 @@ from evals.audio_rig.rig import (
     load_entrant,
     must_repeat,
     newest_caller_timings,
+    pause_split,
     plan,
     tool_count,
     turn_agent_timings,
@@ -524,3 +525,31 @@ def test_a_whole_call_is_timed_on_the_audio_and_scored_on_the_record(tmp_path, m
     assert result.cost_parts["platform"] == 0.01
     assert result.agent_cost_usd == 0.01
     assert result.cost_usd >= 0.01
+
+
+def test_a_long_line_pauses_at_its_first_comma_and_a_short_one_never():
+    assert pause_split("Yes, that is fine by me") is None
+    assert pause_split("I moved from one forty two Main Street, to seventy five Hoyt Street") == (
+        "I moved from one forty two Main Street,", "to seventy five Hoyt Street")
+    # No comma: the middle word.
+    assert pause_split("one two three four five six seven eight") == (
+        "one two three four", "five six seven eight")
+
+
+def test_the_pause_is_silence_between_the_two_halves(tmp_path):
+    ctx = RigContext(Worlds(), "http://unused", load_config(), {})
+    rig = Rig(FakeEntrant(FakeLine([])), ctx, tmp_path, ScriptedModel([]), ScriptedModel([]),
+              verbose=False, pause_s=0.5)
+
+    class Voice:
+        async def say(self, text, rate):
+            return tone(200, rate=rate)
+
+    line = "I moved from one forty two Main Street, to seventy five Hoyt Street"
+    pcm = asyncio.run(rig.caller_audio(Voice(), line))
+    rate = rig.entrant.in_rate
+    voiced = [rig.vad.voiced(f) for f in frames(pcm, rate)]
+    # Two voiced halves around 0.5 s (25 frames) of silence.
+    assert voiced.count(False) == 25
+    rig.pause_s = 0
+    assert len(asyncio.run(rig.caller_audio(Voice(), line))) < len(pcm)
