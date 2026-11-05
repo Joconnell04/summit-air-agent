@@ -140,9 +140,16 @@ def create_app() -> FastAPI:
                 elif event == "media" and call is not None:
                     await call.send(base64.b64decode(message["media"]["payload"]))
                 elif event == "stop":
+                    log.info("%s: Twilio stopped the stream", call.call_id if call else stream_sid)
                     break
-        except WebSocketDisconnect:
-            pass
+        except WebSocketDisconnect as exc:
+            log.info("%s: Twilio socket closed (code %s)", call.call_id if call else stream_sid,
+                     exc.code)
+        except Exception:
+            # Logged, so a dropped call shows why (call 1 ended with nothing in this log).
+            log.exception("%s: the stream failed", call.call_id if call else stream_sid)
+            reason = "error"
+            raise
         finally:
             if call is not None:
                 await call.close(reason)

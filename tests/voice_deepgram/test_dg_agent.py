@@ -157,3 +157,33 @@ def test_twilio_signatures_and_stream_keys():
     assert signature != server.twilio_signature("other", "https://host/deepgram/twiml", params)
     body = server.twiml("wss://host/deepgram/stream", "CA1", "+1555", "+1646", "k1")
     assert '<Stream url="wss://host/deepgram/stream">' in body and 'value="k1"' in body
+
+
+def test_the_read_back_is_said_by_the_bridge_word_for_word_not_rewritten():
+    """Call 1: the model rewrote the read-back with numerals, which Aura read as numbers."""
+    line = "I have your home at 199 East 4th Street, ZIP code one zero zero zero nine. Is that right?"
+    fake = FakeServer(tools={"read_back": {"ok": True, "say": line, "data": {}}})
+    call, _ = make_call(fake)
+    call.said_this_turn = 1
+    run(call.handle({"type": "FunctionCallRequest", "functions": [
+        {"id": "fc_5", "name": "read_back", "arguments": "{}", "client_side": True}]}))
+    assert call.ws.sent[0] == {"type": "InjectAgentMessage", "message": line, "behavior": "queue"}
+    result = json.loads(call.ws.sent[-1]["content"])
+    assert "say" not in result and result["said"] == line
+
+
+def test_a_lookup_starts_with_one_short_line_when_the_agent_has_said_nothing():
+    fake = FakeServer()
+    call, _ = make_call(fake)
+
+    async def scenario():
+        await call.handle({"type": "ConversationText", "role": "user", "content": "10009."})
+        for i in (1, 2):
+            await call.handle({"type": "FunctionCallRequest", "functions": [
+                {"id": f"fc_{i}", "name": "check_service_area", "arguments": '{"zip": "10009"}',
+                 "client_side": True}]})
+
+    run(scenario())
+    injected = [m for m in call.ws.sent if m.get("type") == "InjectAgentMessage"]
+    assert injected == [{"type": "InjectAgentMessage", "message": agent.LOOKUP_LINE,
+                         "behavior": "queue"}]

@@ -10,7 +10,9 @@ WorkingDirectory=/home/jackson/summit-air/deepgram
 EnvironmentFile=/home/jackson/summit-air/.env
 Environment=TOOL_SERVER_URL=http://127.0.0.1:8100
 Environment=DEEPGRAM_AGENT_URL=https://deepgram.45-77-105-247.sslip.io
-ExecStart=/home/jackson/.local/bin/uv run uvicorn --factory --host 127.0.0.1 --port 8120 voice.deepgram_agent.server:create_app
+# Twilio's media stream has no use for uvicorn's keepalive: a pong that waits behind a busy moment
+# closes the stream with 1011, and the caller hears the line drop (suspected on Jackson's call 1).
+ExecStart=/home/jackson/.local/bin/uv run uvicorn --factory --host 127.0.0.1 --port 8120 --ws-ping-interval 60 --ws-ping-timeout 60 voice.deepgram_agent.server:create_app
 Restart=always
 RestartSec=3
 

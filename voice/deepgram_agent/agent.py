@@ -44,6 +44,28 @@ SPOKEN_ACTIONS = ("speak_lines", "speak_variant", "ask_check")
 # the tenant's, and the pause after the last word before the line drops (ASSUMED, the LiveKit
 # stack's end_call_grace_s).
 GOODBYE_WAIT_S = 3.0
+# Said by the bridge when a lookup starts and the agent has said nothing since the caller spoke,
+# so the caller doesn't sit through the lookup in silence (Jackson's call 1: about 4 s after the
+# address).
+LOOKUPS = ("find_customer", "find_address", "check_service_area", "find_slots")
+LOOKUP_LINE = "Let me check that real quick."
+# What the model reads when the bridge has already said the server's sentence for it.
+SAID_FOR_YOU = ("The sentence in `said` was spoken to the caller word for word just now. Don't "
+                "repeat or rephrase it; wait for the caller's answer.")
+# Added to the stripped prompt for this entry: Aura reads numerals as numbers ("ten thousand
+# nine"), so digits the model writes itself go out as words.
+SPOKEN_FORM = """## Said for you
+
+`read_back`, a safety refusal and the address lookup's questions are said to the caller for you,
+word for word, the moment the tool returns. Never say them yourself, before or after: call the
+tool with nothing before it, then wait for the caller.
+
+## Saying numbers
+
+Write every ZIP code and phone number in words, one digit at a time: "ZIP code one zero zero zero
+nine", "six seven eight, four seven seven, four zero two four". After an address lookup, say the
+address back with its ZIP code before going on: "199 East Fourth Street, unit 2, ZIP code one zero
+zero zero nine, in the East Village." """
 HANG_UP_GRACE_S = 1.5
 # The latest the line drops after an allowed end_call whose goodbye was already said (ASSUMED:
 # longer than a goodbye takes to play).
@@ -143,7 +165,13 @@ class Call:
                     await self.handle(json.loads(raw))
         except websockets.ConnectionClosed:
             pass
+        except Exception:
+            # A failure here would otherwise end the reader silently and leave the caller in
+            # dead air; it is logged, and the call ends as an error.
+            log.exception("%s: the Deepgram reader failed", self.call_id)
         finally:
+            log.info("%s: Deepgram socket closed (code %s, %s)", self.call_id,
+                     getattr(self.ws, "close_code", None), getattr(self.ws, "close_reason", None))
             self.closed.set()
 
     async def handle(self, event: dict) -> None:
@@ -171,7 +199,10 @@ class Call:
             else:
                 self.done()
         elif kind in ("Error", "Warning"):
-            log.warning("%s: Deepgram %s %s", self.call_id, kind, event.get("description"))
+            log.warning("%s: Deepgram %s %s %s", self.call_id, kind, event.get("code"),
+                        event.get("description"))
+        if kind not in ("History", "ConversationText"):
+            log.info("%s: Deepgram %s", self.call_id, kind)
 
     async def caller_line(self, text: str) -> None:
         if not text:
@@ -181,9 +212,9 @@ class Call:
         if safety.get("action") in SPOKEN_ACTIONS and result.get("say"):
             await self.inject(result["say"])
 
-    async def inject(self, text: str) -> None:
+    async def inject(self, text: str, behavior: str = "interrupt") -> None:
         await self.ws.send(json.dumps({"type": "InjectAgentMessage", "message": text,
-                                       "behavior": "interrupt"}))
+                                       "behavior": behavior}))
 
     async def function(self, request: dict) -> None:
         name = request.get("name", "")
@@ -191,11 +222,25 @@ class Call:
             args = json.loads(request.get("arguments") or "{}")
         except ValueError:
             args = {}
+        if name in LOOKUPS and not self.said_this_turn:
+            self.said_this_turn += 1
+            await self.inject(LOOKUP_LINE, "queue")
         if name not in TOOLS:
             envelope = {"ok": False, "refused": "unknown_tool"}
         else:
             key = idempotency_key(self.call_id, name, args) if name in self.writes else None
             envelope = await self.server.tool(name, args, key)
+        # The server's own sentences (the read-back, a safety refusal, the lookup's questions, the
+        # top-priority line) are said word for word by the bridge, as the LiveKit worker does: on
+        # call 1 the model rewrote the read-back with numerals, which Aura read as numbers.
+        first = assemble.spoken_first(envelope)
+        server_line = None if name == "end_call" else assemble.spoken_by_server(name, envelope)
+        if first:
+            await self.inject(first, "queue")
+            envelope = assemble.for_model(envelope)
+        if server_line:
+            await self.inject(server_line, "queue")
+            envelope = {**envelope, "say": "", "said": server_line, "note": SAID_FOR_YOU}
         compact = {k: v for k, v in envelope.items() if v not in (None, "", {})}
         if name == "end_call" and envelope.get("ok") and self.said_this_turn:
             # The model has said its goodbye already; the server's would be said a second time
@@ -244,7 +289,8 @@ def prepare(started: dict, cfg: dict, model: str, anthropic_key: str, audio: dic
     specs = assemble.tool_specs(assemble.job_types(folder))
     voice = assemble.spoken(data, yaml.safe_load((folder / "agent.yaml").read_text())["voice"])
     message = settings(
-        instructions=assemble.stripped_instructions(data, folder), specs=specs,
+        instructions=assemble.stripped_instructions(data, folder) + "\n\n" + SPOKEN_FORM,
+        specs=specs,
         greeting=first_line(started, voice), cfg=cfg, model=model, anthropic_key=anthropic_key,
         keyterms=local_names.load(folder).keyterms(), audio=audio,
     )
