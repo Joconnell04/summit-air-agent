@@ -223,19 +223,20 @@ lines:
     into the charge, and someone from the office will call you {when}.
   callback_after: around {time}
   callback_asap: as soon as they can
+  callback_at: around {time}
   callback_before: before {time}
   callback_between: between {start} and {end}
   callback_by: by {time}
   callback_opening: Hi, this is Summit Air calling back for {first_name}. Is that you?
   callback_opening_unknown: Hi, this is Summit Air calling you back, like we said we would.
-  callback_outside_hours: Our team makes calls between {opens} and {closes}. What time in there works?
+  callback_outside_hours: Our team makes calls between {opens} and {closes}, so the closest I can do is
+    {nearest}. Would that work?
   card_stop: For your security, please don't read a card number over the phone. Our office will send you
     a secure payment link, or call you to take the payment.
   commercial: Thanks for thinking of us. Unfortunately Summit Air works on homes and apartments, not businesses,
     so we're not the right fit for this one.
   do_not_call: Understood, we won't call you.
-  do_not_call_with_callback: Understood, we won't call you. That means the callback is off, so give us
-    a call any time you need us.
+  do_not_call_with_callback: Understood, we won't call you. Give us a call any time you need us.
   earlier_slot_offer: Hi, this is Summit Air calling about your appointment. We've had an opening {day}
     at {window}, would you like it?
   flag_stored: I've let our team know, and someone will call you {when}.

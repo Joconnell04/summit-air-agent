@@ -153,7 +153,9 @@ def test_unreadable_grader_output_is_an_error(seed_dir, tmp_path):
 def test_safety_lines_come_from_the_server_not_the_model(seed_dir, tmp_path):
     s = scenario(opening="I smell gas in the kitchen.", must=[{"safety_lines": "said_first"}],
                  spec=["S-17"])
-    result, agent, *_ = run(seed_dir, tmp_path, s, [], [say("Okay, going out. Bye."), say("[END]")])
+    # A reply of substance: a bare "Okay." is asked again (issue #149), which would add a call.
+    result, agent, *_ = run(seed_dir, tmp_path, s, [say("Take care out there.")],
+                            [say("Okay, going out. Bye."), say("[END]")])
     assert result.outcome == "pass", result.check_failures
     assert result.transcript[2].text.startswith("Please get everyone out of the house now.")
     # Only the reply to the goodbye; the greeting and the safety lines needed no model call.
@@ -203,7 +205,7 @@ def test_replayed_turns_are_used_word_for_word(seed_dir, tmp_path):
 
 
 def test_cost_adds_the_agent_the_caller_and_the_grader(seed_dir, tmp_path):
-    result, *_ = run(seed_dir, tmp_path, scenario(), [say("Okay.", cost=0.01)],
+    result, *_ = run(seed_dir, tmp_path, scenario(), [say("We're open until 8 tonight.", cost=0.01)],
                      [say("[END]", cost=0.002)], grade=grade_reply())
     # reply 0.01 + caller 0.002 + grader 0.001; the greeting is spoken from code and costs nothing
     assert result.cost_usd == pytest.approx(0.013)

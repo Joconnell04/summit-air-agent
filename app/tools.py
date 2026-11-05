@@ -2816,10 +2816,45 @@ class CallbackWhen:
     spoken: str  # "by 4:30 PM", "after 5 PM", "between 1 PM and 3 PM"
 
 
+WEEKDAYS = ("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday")
+
+
+def _days_ahead(tenant: Tenant, now: datetime, day: str) -> int:
+    """How many days from today the caller's day is: a weekday is the next one coming, today
+    itself when it is today (issue #149: "Friday at two" was booked for tomorrow)."""
+    if day == "tomorrow":
+        return 1
+    if day in WEEKDAYS:
+        return (WEEKDAYS.index(day) - tenant.local(now).weekday()) % 7
+    return 0
+
+
+def _on_day(tenant: Tenant, moment: datetime, now: datetime, spoken: str) -> str:
+    """The day in front of a callback time: "tomorrow between 1 PM and 3 PM", "Friday around 2
+    PM". Plain, with no date and no count of days."""
+    days = (tenant.local(moment).date() - tenant.local(now).date()).days
+    if days <= 0:
+        return spoken
+    day = "tomorrow" if days == 1 else tenant.local(moment).strftime("%A")
+    return f"{day} {spoken}"
+
+
+def _nearest_in_hours(tenant: Tenant, moment: datetime, now: datetime) -> datetime:
+    """The calling-hours time closest to one outside them, on the same day: when calls start, or
+    half an hour before they stop (records.in_outbound_hours ends before `closes`)."""
+    opens, closes = (time.fromisoformat(t) for t in tenant.callbacks["outbound_hours"])
+    local = tenant.local(moment)
+    if local.time() < opens:
+        nearest = datetime.combine(local.date(), opens, tenant.tz)
+    else:
+        nearest = datetime.combine(local.date(), closes, tenant.tz) - timedelta(minutes=30)
+    return max(nearest, now)
+
+
 def _callback_due(ctx: Ctx, asked: CallbackTime) -> CallbackWhen:
     """The callback time and the words for it. The words always come from here, never the model."""
     tenant, now = ctx.tenant, ctx.now
-    days = 1 if asked.callback_day == "tomorrow" else 0
+    days = _days_ahead(tenant, now, asked.callback_day)
     try:
         if asked.callback_after or asked.callback_before:
             earliest, latest = records.parse_callback_window(
@@ -2829,7 +2864,15 @@ def _callback_due(ctx: Ctx, asked: CallbackTime) -> CallbackWhen:
             due = records.parse_callback_time(
                 asked.callback_time, asked.callback_in_minutes, tenant, now, days
             )
-            spoken = tenant.line("callback_by", time=tenant.time_spoken(due, now))
+            if asked.callback_in_minutes is not None:
+                spoken = tenant.line("callback_by", time=tenant.time_spoken(due, now))
+                return CallbackWhen(due, due, spoken)
+            # A time the caller named is said back as theirs ("Friday around 2 PM"), and kept
+            # inside calling hours.
+            if not records.in_outbound_hours(tenant, due):
+                raise ValueError("outside callback hours")
+            clock = tenant.time_spoken(due, now).split(" at ")[-1]
+            spoken = _on_day(tenant, due, now, tenant.line("callback_at", time=clock))
             return CallbackWhen(due, due, spoken)
     except ValueError as exc:
         reason = str(exc)
@@ -2841,7 +2884,14 @@ def _callback_due(ctx: Ctx, asked: CallbackTime) -> CallbackWhen:
                 )
                 for t in tenant.callbacks["outbound_hours"]
             )
-            say = tenant.line("callback_outside_hours", opens=opens, closes=closes)
+            asked_at = records.clock_on(
+                asked.callback_time or asked.callback_after or asked.callback_before,
+                tenant, now, days,
+            )
+            nearest = tenant.time_spoken(_nearest_in_hours(tenant, asked_at, now), now)
+            say = tenant.line(
+                "callback_outside_hours", opens=opens, closes=closes, nearest=nearest
+            )
         else:
             say = "What time should I tell them someone will call by?"
         raise Refused("invalid_callback_time", say, errors={"callback_time": reason}) from None
@@ -2864,8 +2914,7 @@ def _callback_due(ctx: Ctx, asked: CallbackTime) -> CallbackWhen:
         spoken = tenant.line("callback_after", time=clock(target))
     else:
         spoken = tenant.line("callback_before", time=clock(latest))
-    if days:
-        spoken = f"tomorrow {spoken}"
+    spoken = _on_day(tenant, earliest or latest, now, spoken)
     if target:
         return CallbackWhen(target, max(earliest, now), spoken)
     # "Tomorrow, before 3" is never dialed today: a window with no start begins when calling hours

@@ -158,6 +158,7 @@ LINE_STAGES = {
     "transfer_summary": ("whole_call", "Summary once they take it"),
     "lead_stored": ("whole_call", "Lead saved"),
     "callback_by": ("whole_call", "Callback by a time"),
+    "callback_at": ("whole_call", "Callback at a time the caller named"),
     "callback_after": ("whole_call", "Callback after a time"),
     "callback_before": ("whole_call", "Callback before a time"),
     "callback_between": ("whole_call", "Callback between times"),

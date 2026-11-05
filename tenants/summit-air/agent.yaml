@@ -374,7 +374,10 @@ lines:
   callback_before: before {time}
   callback_between: between {start} and {end}
   callback_asap: as soon as they can
-  callback_outside_hours: Our team makes calls between {opens} and {closes}. What time in there works?
+  callback_at: around {time}
+  callback_outside_hours: >-
+    Our team makes calls between {opens} and {closes}, so the closest I can do is {nearest}. Would
+    that work?
   # {address} is street, unit, city and ZIP; {phone} is read in groups. Naming it a home is how
   # every booking confirms the caller is residential.
   # One sentence with no lead-in, said once (eval round 3).
@@ -415,9 +418,7 @@ lines:
   address_not_found: I'm not finding that street. Could you spell the street name for me?
   address_ask_zip: What's the ZIP code there?
   do_not_call: Understood, we won't call you.
-  do_not_call_with_callback: >-
-    Understood, we won't call you. That means the callback is off, so give us a call any time you
-    need us.
+  do_not_call_with_callback: Understood, we won't call you. Give us a call any time you need us.
   repeated_drops: >-
     Looks like we keep getting cut off, the signal might be spotty. Want me to have someone call you
     back in a few minutes instead?

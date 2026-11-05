@@ -17,15 +17,18 @@ company:
   # leave a lead.
   rejected_customer_types:
     Commercial: This company only books residential customers. Record a commercial lead instead.
-  # ASSUMED hours. Arrival windows below stay inside them.
+  # ASSUMED hours, seven days since live call 1 (Jackson: "Saturday and Sunday should also be
+  # available", DECISIONS.md 095). Arrival windows below stay inside them. The seeded world staffs
+  # weekends lightly (tenants/summit-air/seed.py); the live demo staffs them through
+  # scripts/open_live_schedule.py.
   hours:
     mon: ["08:00", "20:00"]
     tue: ["08:00", "20:00"]
     wed: ["08:00", "20:00"]
     thu: ["08:00", "20:00"]
     fri: ["08:00", "20:00"]
-    sat: ["08:00", "16:00"]
-    sun: null
+    sat: ["08:00", "20:00"]
+    sun: ["08:00", "20:00"]
 
 # Fees are null because Summit Air's real fees are unknown. The agent never states a fee
 # unless one is configured here.
@@ -120,8 +123,8 @@ urgent_hold:
     wed: *weekday_hold
     thu: *weekday_hold
     fri: *weekday_hold
-    sat: {morning: 1, afternoon: 1}
-    sun: {}
+    sat: {morning: 1, afternoon: 1, evening: 1}
+    sun: {morning: 1, afternoon: 1, evening: 1}
 
 # Call reasons, as ServiceTitan's jbce call-reasons list returns them. A lead carries one of the
 # lead reasons (isLead) as its callReasonId; the agent's lead kinds map onto these in agent.yaml.

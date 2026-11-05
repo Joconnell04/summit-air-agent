@@ -322,6 +322,16 @@ PROMISES_ACTION = re.compile(
 # Bookings, moves and cancels are left out: the server's confirmation is spoken the moment the tool
 # answers, so a clip would only push it back.
 LOOKUPS = ("find_customer", "get_customer_history", "find_slots")
+# A sentence that only acknowledges the caller ("Got it.", "Yes.", "Sure, I can set up an AC
+# tune-up."). A reply of nothing else, with no tool call and no question, leaves the caller waiting
+# for the agent's next step (the second live call, call-_+16784774024_MXJ5xsvpZQ5H: 20 s of silence
+# after each of those two lines).
+ONLY_ACKNOWLEDGES = re.compile(
+    r"(?:(?:sure|okay|ok|got it|yes|yeah|yep|alright|all right|of course|absolutely|no problem|"
+    r"great|perfect|understood|sounds good|right)[,.!]?\s*)+(?:i can [^.?!]*[.!]?)?"
+    r"|i can (?:do|set up|help with|book|get|take care of) [^.?!]*[.!]?",
+    re.IGNORECASE,
+)
 # What the voice layer asks the model for when a reply would leave the caller waiting in silence.
 FOLLOW_UP_NOTES = {
     "promised": (
@@ -331,6 +341,10 @@ FOLLOW_UP_NOTES = {
     "silent": (
         "[server] The caller heard nothing from your last reply. Answer them now in one short "
         "sentence, without repeating their address, ZIP or phone number."
+    ),
+    "stalled": (
+        "[server] Your last reply only acknowledged the caller, and they are waiting on you. Take "
+        "the next step now: call the tool it needs, or ask your next question."
     ),
 }
 
@@ -378,6 +392,13 @@ ASKS_TO_CONFIRM = re.compile(
     r"\bis\b[^.?!]{0,50}\b(?:still )?(?:the )?(?:right|correct) (?:address|number|place)\b[^.?!]*\?"
     r"|\bnumber ending in\b[^.?!]*\?"
     r"|\bstill the (?:best|right|correct)\b[^.?!]*\?",
+    re.IGNORECASE,
+)
+# The model working out the date aloud ("Today is Wednesday, so Friday is two days from now"):
+# the server's sentence names the day plainly (live call 1, issue #149).
+EXPLAINS_CALENDAR = re.compile(
+    r"\btoday is (?:a )?(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b"
+    r"|\b(?:is|are|that'?s) (?:one|two|three|four|five|six|\d) days? (?:from now|from today|away)\b",
     re.IGNORECASE,
 )
 # Coaching on how to care for someone ("stay with your partner", "keep them sitting up"). The
@@ -620,6 +641,8 @@ class SpokenReply:
             return ""
         if INTERNAL_WORD.search(sentence) or CLAIMS_FEE.search(sentence):
             return ""
+        if EXPLAINS_CALENDAR.search(sentence):
+            return ""
         promised = PROMISES_TECHNICIAN.search(sentence) and not PASSES_ON.search(sentence)
         if promised or self._names_technician(sentence):
             return ""
@@ -675,15 +698,18 @@ class SpokenReply:
 
     def dead_end(self, raw: str, kept: str, calls: list[tuple[str, dict]]) -> str | None:
         """A reply that would leave the caller waiting in silence, and why: it called no tool yet
-        promised to do something ("promised"), or the caller heard nothing of it ("silent"). None
-        when the reply calls a tool, ends on a question, or simply says something; and after one
-        follow-up since the caller last spoke, so a model that keeps failing can't loop."""
+        promised to do something ("promised"), the caller heard nothing of it ("silent"), or it
+        only acknowledged them ("stalled"). None when the reply calls a tool, ends on a question,
+        or says something of substance; and after one follow-up since the caller last spoke, so a
+        model that keeps failing can't loop."""
         if calls or self._followed_up or kept.rstrip().endswith("?"):
             return None
         if any(PROMISES_ACTION.search(s) for s in sentences(raw)):
             reason = "promised"
         elif not kept.strip():
             reason = "silent"
+        elif all(ONLY_ACKNOWLEDGES.fullmatch(s.strip()) for s in sentences(kept)):
+            reason = "stalled"
         else:
             return None
         self._followed_up = True

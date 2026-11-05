@@ -39,7 +39,7 @@ from voice import names as local_names
 from . import clips, recording
 from .brain import build_llm
 from .bridge import Bridge
-from .call import Call, SummitAgent
+from .call import Call, SummitAgent, goodbye_grace
 from .capacity import Lines
 from .server import ToolServer
 from .settings import Settings, fallback_tenant, load_voice
@@ -248,7 +248,7 @@ async def entrypoint(ctx: JobContext) -> None:
     def hang_up(context: RunContext, last_line, quiet: bool = False) -> None:
         """After this turn's speech: the worker's own last line if it said one, else the tenant's
         goodbye when the model said nothing (never after the safety sign-off, which is the goodbye),
-        then the line drops."""
+        then a short pause, and the line drops unless the caller spoke in it."""
 
         async def run() -> None:
             await context.speech_handle.wait_for_playout()
@@ -260,6 +260,13 @@ async def entrypoint(ctx: JobContext) -> None:
                 await last_line.wait_for_playout()
             elif not spoke and not quiet:
                 await speak(spoken["goodbye"]).wait_for_playout()
+            if not await goodbye_grace(
+                voice["end_call_grace_s"], lambda: session.user_state == "speaking"
+            ):
+                # The caller said something more: the call stays open and the turn carries on.
+                log.info("call %s: caller spoke after the goodbye; staying on", call_id)
+                call.hang_up_task = None
+                return
             ended["reason"] = "agent_end"
             await ctx.delete_room()
 

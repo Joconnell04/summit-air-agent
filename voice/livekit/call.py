@@ -6,7 +6,7 @@ import asyncio
 import json
 import logging
 import time
-from collections.abc import AsyncIterable
+from collections.abc import AsyncIterable, Callable
 
 from livekit import rtc
 from livekit.agents import Agent, ModelSettings, StopResponse, llm
@@ -315,6 +315,20 @@ class SummitAgent(Agent):
         async for frame in Agent.default.tts_node(self, whole(), model_settings):
             await self.call.bridge.wait_clear()
             yield frame
+
+
+async def goodbye_grace(
+    seconds: float, speaking: Callable[[], bool], poll_s: float = 0.05
+) -> bool:
+    """The pause after the goodbye, before the line drops (issue #149: the call ended the instant
+    the goodbye finished). False when the caller starts speaking in it, so the call stays open."""
+    loop = asyncio.get_running_loop()
+    until = loop.time() + seconds
+    while loop.time() < until:
+        if speaking():
+            return False
+        await asyncio.sleep(poll_s)
+    return not speaking()
 
 
 def split_sentences(text: str) -> list[str]:

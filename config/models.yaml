@@ -92,7 +92,10 @@ voice:
   dead_air: {check_in_s: 120, hang_up_s: 480, poll_s: 1.0}
   # Bridge line (docs/latency.md): played only when a tool hasn't answered after this long, and at
   # most once every this many caller turns.
-  bridge: {after_s: 0.7, min_turns_between: 3}
+  bridge: {after_s: 0.7, min_turns_between: 2}
+  # The pause after the goodbye before the line drops; a caller who speaks in it keeps the call
+  # open (Jackson after live call 1, issue #149).
+  end_call_grace_s: 1.0
 
 # Off the live path: nobody is waiting, so thinking is on where quality matters.
 offline:

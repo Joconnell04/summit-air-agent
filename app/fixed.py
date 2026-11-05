@@ -73,6 +73,7 @@ FAMILIES = {
     "identity_check": "identity_check",
     "move_": "move",
     "callback_by": "callback_time",
+    "callback_at": "callback_time",
     "callback_after": "callback_time",
     "callback_before": "callback_time",
     "callback_between": "callback_time",

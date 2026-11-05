@@ -904,6 +904,10 @@ class World:
                 if window.after_hours or not cfg.window_offered(day, window):
                     continue
                 free = capacity.slots(conn, cfg, day, window, SERVICE_UNIT, [])
+                if not free.total:
+                    # A window nobody is on shift for (a Sunday in the seeded world) books nothing
+                    # and draws no random number, so opening hours never reshuffles the world.
+                    continue
                 # The urgent hold is the company's rule, not the mock's, but the schedule is shaped
                 # around it so normal slots run out first.
                 held = cfg.hold_for(day, window.id, SERVICE_UNIT)

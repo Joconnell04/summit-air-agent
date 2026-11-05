@@ -51,7 +51,10 @@ flag_person: >-
   person, someone at risk. When the caller asked for a window ("after 5", "before 3", "between 1
   and 3"), pass it as callback_after and callback_before, not callback_time. "This afternoon" is
   after 12 PM and before 5 PM, "this morning" before 12 PM, "this evening" after 5 PM. "Tomorrow"
-  goes in callback_day. Say the sentence it returns as written; it names the time.
+  goes in callback_day, and so does a weekday the caller names ("Friday at 2 PM" is callback_day
+  friday, callback_time "2 PM"). A time the caller names goes in callback_time as said, never a
+  window around it. Say the sentence it returns as written; it names the day and time, so never
+  explain the date or count the days yourself.
 record_lead: >-
   Save one lead: commercial (company, contact, need), membership sign-up interest, or an install or
   replacement quote. A window the caller asked for goes in callback_after and callback_before, and

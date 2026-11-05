@@ -181,7 +181,8 @@ def test_a_flag_returns_its_sentence_only_once_stored_and_names_a_time(agent):
         "flag_person", call, reason="Wants to talk about a warranty", callback_time="4:30 PM"
     )
     assert flagged["ok"]
-    assert flagged["say"] == "I've let our team know, and someone will call you by 4:30 PM."
+    # A time the caller named is said back as theirs (issue #149).
+    assert flagged["say"] == "I've let our team know, and someone will call you around 4:30 PM."
     assert count(agent, "SELECT COUNT(*) FROM flags WHERE kind = 'person'") == 1
     assert count(agent, "SELECT COUNT(*) FROM callbacks WHERE status = 'pending'") == 1
     urgent = agent.tool(
@@ -300,7 +301,44 @@ def test_a_window_in_the_past_or_outside_callback_hours_is_refused_with_a_reason
 def test_a_window_outside_callback_hours_names_the_hours(agent):
     call = agent.start(UNKNOWN)["data"]["call_id"]
     refused = agent.tool("flag_person", call, reason="Call me back", callback_after="10 PM")
-    assert refused["say"] == "Our team makes calls between 8 AM and 9 PM. What time in there works?"
+    assert refused["say"] == (
+        "Our team makes calls between 8 AM and 9 PM, so the closest I can do is 8:30 PM. Would "
+        "that work?"
+    )
+
+
+def test_live_call_1_friday_at_two_is_booked_for_friday_around_two(agent):
+    """Live call 1 (issue #149): "Friday at two PM" became "tomorrow between 1 PM and 3 PM"."""
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    flagged = agent.tool(
+        "flag_person", call, reason="Call me back", callback_time="2 PM", callback_day="friday"
+    )
+    assert flagged["ok"], flagged
+    assert flagged["say"] == "I've let our team know, and someone will call you Friday around 2 PM."
+    conn = agent.db()
+    try:
+        due = conn.execute("SELECT due_at FROM callbacks").fetchone()["due_at"]
+    finally:
+        conn.close()
+    assert due.startswith("2026-11-06T19:00")  # 2 PM New York on Friday the 6th
+
+
+def test_a_weekday_window_names_the_day(agent):
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    flagged = agent.tool(
+        "flag_person", call, reason="Call me back", callback_after="1 PM", callback_before="3 PM",
+        callback_day="saturday",
+    )
+    assert flagged["say"].endswith("call you Saturday between 1 PM and 3 PM.")
+
+
+def test_a_named_time_outside_calling_hours_gets_the_nearest_one(agent):
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    refused = agent.tool(
+        "flag_person", call, reason="Call me back", callback_time="7 AM", callback_day="friday"
+    )
+    assert refused["refused"] == "invalid_callback_time"
+    assert "the closest I can do is Friday at 8 AM" in refused["say"]
 
 
 def test_a_window_and_a_named_time_together_are_refused(agent):
@@ -394,10 +432,8 @@ def test_do_not_call_is_marked_on_the_callers_words_and_cancels_callbacks(agent)
     assert count(agent, "SELECT COUNT(*) FROM do_not_call") == 1
     assert count(agent, "SELECT COUNT(*) FROM callbacks WHERE status = 'pending'") == 0
     marked = agent.tool("mark_do_not_call", call)
-    assert marked["say"] == (
-        "Understood, we won't call you. That means the callback is off, so give us a call any "
-        "time you need us."
-    )
+    # No internal wording ("That means the callback is off"), issue #149.
+    assert marked["say"] == "Understood, we won't call you. Give us a call any time you need us."
     assert marked["data"]["cancelled_callbacks"] == 1
     assert count(agent, "SELECT COUNT(*) FROM callbacks WHERE status = 'pending'") == 0
     assert count(agent, "SELECT COUNT(*) FROM do_not_call") == 1
@@ -466,7 +502,7 @@ def test_a_membership_lead_needs_a_named_callback_time(agent, mock):
         "record_lead", call, kind="membership", details={**details, "callback_time": "2 PM"}
     )
     assert lead["ok"]
-    assert lead["say"] == "Someone from our team will call you by 2 PM to tell you more."
+    assert lead["say"] == "Someone from our team will call you around 2 PM to tell you more."
     assert count(agent, "SELECT COUNT(*) FROM callbacks") == 1
     row = (
         sqlite3.connect(mock[0].state.db_path)

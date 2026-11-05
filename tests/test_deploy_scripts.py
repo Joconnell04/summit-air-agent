@@ -21,3 +21,10 @@ def test_the_summit_air_deploy_restarts_the_mock_and_seeds_only_when_stale():
     assert "[s]ervicetitan_mock.app" in deploy and "--port 8101" in deploy
     assert "--if-stale" in (ROOT / "deploy" / "summit-air" / "run.sh").read_text()
     assert "--if-stale" in (ROOT / "deploy" / "retell" / "run.sh").read_text()
+
+
+def test_the_live_mock_opens_its_schedule_after_seeding_and_the_eval_mock_does_not():
+    """Issue #149: the live demo's schedule is opened; the eval world keeps the seed's."""
+    live = (ROOT / "deploy" / "summit-air" / "run.sh").read_text()
+    assert live.index("servicetitan_mock.seed") < live.index("scripts.open_live_schedule")
+    assert "open_live_schedule" not in (ROOT / "deploy" / "retell" / "run.sh").read_text()

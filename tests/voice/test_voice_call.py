@@ -16,7 +16,7 @@ from app.trace import as_text, timeline
 from prompts.assemble import FOLLOW_UP_NOTES, SpokenReply, greeting
 from tests.tool_server.toolkit import TENANT_DIR
 from voice.livekit.bridge import Bridge
-from voice.livekit.call import Call, SummitAgent
+from voice.livekit.call import Call, SummitAgent, goodbye_grace
 from voice.livekit.server import ToolServer
 from voice.livekit.settings import load_voice
 from voice.livekit.tools import ToolLog
@@ -549,6 +549,15 @@ def test_a_promise_that_calls_its_tool_is_not_asked_again(monkeypatch):
     assert replies == []
 
 
+def test_a_reply_that_only_acknowledges_is_asked_to_take_the_next_step(monkeypatch):
+    """The second live call (call-_+16784774024_MXJ5xsvpZQ5H): "Sure, I can set up an AC tune-up."
+    and later "Yes.", each followed by about 20 s of silence."""
+    for line in ("Sure, I can set up an AC tune-up.", "Yes.", "Got it."):
+        _, replies = _follow_ups(monkeypatch, lambda reply: None, line)
+        assert [r["instructions"] for r in replies] == [FOLLOW_UP_NOTES["stalled"]], line
+        assert replies[0]["tool_choice"] == "auto"
+
+
 def test_a_question_or_a_plain_answer_is_not_asked_again(monkeypatch):
     for line in ("Let me check: what's the ZIP there?", "We're open until 8 tonight."):
         _, replies = _follow_ups(monkeypatch, lambda reply: None, line)
@@ -587,3 +596,29 @@ def test_a_look_up_after_the_models_own_holding_line_gets_no_clip(monkeypatch):
 def test_a_booking_gets_no_clip_since_its_confirmation_is_spoken_at_once(monkeypatch):
     _follow_ups(monkeypatch, _gave_address, ("book_appointment", {"slot_id": "x"}))
     assert _follow_ups.call.bridge.count == 0
+
+
+def test_the_line_drops_only_after_a_quiet_second_past_the_goodbye():
+    """Issue #149: the call ended the instant the goodbye finished."""
+
+    async def run():
+        began = asyncio.get_running_loop().time()
+        quiet = await goodbye_grace(0.2, lambda: False, poll_s=0.01)
+        return quiet, asyncio.get_running_loop().time() - began
+
+    quiet, waited = asyncio.run(run())
+    assert quiet is True
+    assert waited >= 0.2
+
+
+def test_a_caller_who_speaks_after_the_goodbye_keeps_the_call_open():
+    async def run():
+        loop = asyncio.get_running_loop()
+        began = loop.time()
+        return await goodbye_grace(1.0, lambda: loop.time() - began > 0.05, poll_s=0.01)
+
+    assert asyncio.run(run()) is False
+
+
+def test_the_goodbye_pause_is_one_second():
+    assert load_voice()["end_call_grace_s"] == 1.0
