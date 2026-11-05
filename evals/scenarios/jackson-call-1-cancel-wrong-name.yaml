@@ -24,9 +24,8 @@ must:
   - no_changes: true
   - agent_never_says: ["exactly as", "need a reason", "haven't cancelled", "I.ll cancel it now", "Today is \\w+day", "days from now", "callback is off"]
   - agent_says_at_most: {"what('s| is) the name|name (it'?s|is) (booked )?under|your name": 1}
-  - agent_says: ["Friday"]
   - agent_never_says: ["(Got it|Thanks|Okay), Sam", "call (you at )?the number you.re calling from"]
 should:
   - Asks the reason at most once and never holds the cancel for it.
   - Asks for the name once; after a name that doesn't match, says once and politely that it can't make the change here, and offers a call to the number on file.
-  - Says the callback back as the caller asked for it, plainly ("Friday around 2 PM"), with no talk about dates.
+  - If the caller takes the callback, says it back as they asked for it, plainly ("Friday around 2 PM"), with no talk about dates.
