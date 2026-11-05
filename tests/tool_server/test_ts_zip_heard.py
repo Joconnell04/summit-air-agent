@@ -44,7 +44,7 @@ def test_a_zip_the_caller_never_said_is_refused_and_nothing_is_recorded(agent):
 def test_a_zip_the_caller_said_in_digits_or_words_is_checked(agent, line):
     call = agent.start(UNKNOWN)["data"]["call_id"]
     agent.turn(call, line)
-    # 11550 (Hempstead, Nassau): every ZIP in the five boroughs is in the area since DECISIONS.md 099.
+    # 11550 (Hempstead, Nassau): every ZIP in the five boroughs is in the area since DECISIONS.md 105.
     assert agent.tool("check_service_area", call, zip="11550")["refused"] == "out_of_area"
 
 

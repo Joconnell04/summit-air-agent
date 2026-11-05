@@ -295,7 +295,7 @@ def test_no_geocoder_asks_for_the_zip(agent):
 
 
 def test_an_address_found_in_manhattan_is_in_the_area(located):
-    """Manhattan was outside the area until Jackson's call on the Retell number (DECISIONS.md 099);
+    """Manhattan was outside the area until Jackson's call on the Retell number (DECISIONS.md 105);
     an address the city lookup finds is outside it only past the five boroughs, which the lookup
     doesn't cover, so out-of-area is the ZIP check's (test_ts_calls.py)."""
     call = located.start(UNKNOWN)["data"]["call_id"]

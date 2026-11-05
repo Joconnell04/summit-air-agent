@@ -415,7 +415,7 @@ Feedback (verbatim, Jackson, relayed by the coordinating session):
 Changed:
 - docs/spec.md S-28: the service area is all five boroughs, every residential ZIP; the call never ends before the caller answers an out-of-area line.
 - docs/users.md: the service area named as all five boroughs.
-- The address check takes "one nine nine", "one ninety nine", "a hundred ninety nine" and "one hundred and ninety nine" alike, with "East" between the number and the street and "fourth", "4th" or "4" for the street (DECISIONS.md 099).
+- The address check takes "one nine nine", "one ninety nine", "a hundred ninety nine" and "one hundred and ninety nine" alike, with "East" between the number and the street and "fourth", "4th" or "4" for the street (DECISIONS.md 105).
 Commit: (PR for joco/call-3-fixes)
 Status: open
 
