@@ -470,3 +470,10 @@ def test_no_problem_answers_only_a_thank_you_or_an_apology():
     assert reply.text("No worries if not.", []) == "No worries if not."
     reply.heard(None, "Okay, thanks.")
     assert reply.text("No problem.", []) == "No problem."
+
+
+def test_a_lone_no_problem_is_kept_rather_than_left_silent():
+    """PR #158 review: "Is it ok if I'm not home?" got "No problem." and the filter blanked it."""
+    reply = assemble.SpokenReply()
+    reply.heard(None, "Is it ok if I'm not home?")
+    assert reply.text("No problem.", []) == "No problem."

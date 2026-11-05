@@ -313,9 +313,13 @@ class Bridge:
         hang_up = answer.get("ok") and (answer.get("data") or {}).get("hang_up")
         if name == "end_call" and kind == "call" and hang_up:
             said = [line.text for line in lines(obj) if line.speaker == "agent"]
-            # The tool's own sentence may be the last thing said, after the lines so far.
-            final = " ".join(x for x in (said[-1] if said else "", answer.get("say") or "") if x)
-            self.hang_up_later(rid, hangup_delay(final), final)
+            last = said[-1] if said else ""
+            # The tool's own sentence may still be said after the lines so far: its time counts,
+            # but the line compared later is the transcript's own (PR #158 review: comparing the
+            # two together never matched and added a whole extra wait after the goodbye).
+            say = answer.get("say") or ""
+            final = last if say and say in last else " ".join(x for x in (last, say) if x)
+            self.hang_up_later(rid, hangup_delay(final), last)
         return answer
 
     def hang_up_later(self, rid: str, delay: float, last_line: str = "", checks: int = 0) -> None:

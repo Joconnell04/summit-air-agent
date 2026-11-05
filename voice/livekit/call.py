@@ -274,6 +274,9 @@ class SummitAgent(Agent):
         if kept:
             heard.append(kept)
             yield kept
+        if not heard and (alone := reply.leftover()):
+            heard.append(alone)
+            yield alone
         hold = reply.holding_line(" ".join(heard), calls)
         if hold:
             # The caller would wait through the model's next step on "Got it." or nothing at all.

@@ -614,3 +614,29 @@ def test_a_direction_and_an_ordinal_said_any_way_still_match(located, answers, s
     located.turn(call, said)
     result = located.tool("find_address", call, street=model_street)
     assert result["refused"] != "address_not_heard", result
+
+
+FOURTH_AVE = Place("50", "4 AVENUE", "11217", "Brooklyn", "Park Slope")
+SECOND_AVE = Place("20", "2 AVENUE", "10003", "Manhattan", "East Village")
+FIRST_PL = Place("10", "1 PLACE", "11231", "Brooklyn", "Carroll Gardens")
+
+
+@pytest.mark.parametrize(
+    "said, street, place",
+    [
+        ("50 Fourth Avenue", "50 Fourth Avenue", FOURTH_AVE),
+        ("fifty fourth avenue", "50 Fourth Avenue", FOURTH_AVE),
+        ("twenty second avenue", "20 Second Avenue", SECOND_AVE),
+        ("ten first place", "10 First Place", FIRST_PL),
+    ],
+)
+def test_a_round_house_number_before_an_ordinal_street_still_matches(
+    located, answers, said, street, place
+):
+    """PR #158 review: merging "fifty fourth" into 54 broke "50 Fourth Avenue"; both readings
+    count."""
+    split = geocode.split_address(street)
+    answers.book[(geocode.house_key(split[0]), geocode.street_match_key(split[1]))] = [place]
+    call = located.start(UNKNOWN)["data"]["call_id"]
+    located.turn(call, said)
+    assert located.tool("find_address", call, street=street)["refused"] != "address_not_heard"

@@ -605,6 +605,7 @@ class SpokenReply:
         # The tenant's holding lines (agent.yaml voice.holding), said in turn.
         self.holding_lines = list(holding_lines)
         self._last_holding: str | None = None
+        self._lone_no_problem = ""
         self.address_checked = False
         self.read_back_confirmed = False
         self.safety_call = False
@@ -691,16 +692,25 @@ class SpokenReply:
     def start_reply(self) -> None:
         self._dropped_restatement = False
         self._asked = False
+        self._lone_no_problem = ""
+
+    def leftover(self) -> str:
+        """A lone "No problem." held back, for a reply that would otherwise say nothing."""
+        line, self._lone_no_problem = self._lone_no_problem, ""
+        return line
 
     def sentence(self, sentence: str) -> str:
         """One sentence of the model's text, in order within a reply, or "" when the caller
         shouldn't hear it. A name the caller just gave isn't said back, and a ZIP is said as "the
         ZIP code is" and its digits."""
         if not self._thanked and NO_PROBLEM.match(sentence):
-            sentence = NO_PROBLEM.sub("", sentence, count=1)
-            if not sentence.strip():
+            rest = NO_PROBLEM.sub("", sentence, count=1)
+            if not rest.strip():
+                # Held back: said only if nothing else in the reply is, so a lone "No problem."
+                # never leaves silence (PR #158 review, "Is it ok if I'm not home?").
+                self._lone_no_problem = sentence
                 return ""
-            sentence = sentence[0].upper() + sentence[1:]
+            sentence = rest[0].upper() + rest[1:]
         kept = self._filtered(sentence)
         return self._without_name_echo(self._zip_said_plainly(kept)) if kept else ""
 
@@ -861,7 +871,8 @@ class SpokenReply:
         if any(self.server_speaks(n, a) for n, a in calls):
             return ""
         self.start_reply()
-        return " ".join(kept for s in sentences(text) if (kept := self.sentence(s)))
+        said = " ".join(kept for s in sentences(text) if (kept := self.sentence(s)))
+        return said or self.leftover()
 
 
 def spoken_first(envelope: dict) -> str | None:

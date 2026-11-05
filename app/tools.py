@@ -235,13 +235,14 @@ ORDINAL_WORDS = {
 }
 
 
-def _ordinals_as_numbers(tokens: list[str]) -> list[str]:
-    """ "fourth" as "4", and a tens number before an ordinal unit as one ("40 second" is "42"), so
-    a street said either way matches the street written either way."""
+def _ordinals_as_numbers(tokens: list[str], merge: bool = True) -> list[str]:
+    """ "fourth" as "4", and with `merge`, a tens number before an ordinal unit as one ("40
+    second" is "42"), so a street said either way matches the street written either way. Without
+    `merge` the tens number stays a house number ("fifty fourth avenue" is 50 Fourth Avenue)."""
     out: list[str] = []
     for token in tokens:
-        if token in ORDINAL_UNITS and out and out[-1].isdigit() and out[-1].endswith("0") and (
-            len(out[-1]) == 2
+        if merge and token in ORDINAL_UNITS and out and out[-1].isdigit() and (
+            out[-1].endswith("0") and len(out[-1]) == 2
         ):
             out[-1] = str(int(out[-1]) + ORDINAL_UNITS[token])
             continue
@@ -249,12 +250,12 @@ def _ordinals_as_numbers(tokens: list[str]) -> list[str]:
     return out
 
 
-def _address_tokens(text: str) -> list[str]:
+def _address_tokens(text: str, merge: bool = True) -> list[str]:
     """A caller's line as address tokens: numbers as digits however they were said ("one nine
     nine", "one ninety nine", "a hundred ninety nine", "one hundred and ninety nine"), street words
     keyed, and ordinals as numbers."""
     text = re.sub(r"\ba hundred\b", "one hundred", text or "", flags=re.IGNORECASE)
-    return _ordinals_as_numbers(_keyed(number_tokens(text)))
+    return _ordinals_as_numbers(_keyed(number_tokens(text)), merge)
 
 
 def _street_names(street: str) -> list[str]:
@@ -280,7 +281,17 @@ def _address_said(ctx: Ctx, house: str, street: str, rows: list | None = None) -
     names = _street_names(street)
     if not want or not names:
         return False
-    lines = [_split_run_on(_address_tokens(r["text"]), want, names, r["text"]) for r in rows]
+    # Both readings of a tens number before an ordinal: "fifty fourth avenue" is 50 Fourth Avenue
+    # or 54th Avenue; "forty second street" is 42nd Street (PR #158 review).
+    return any(
+        _address_said_as(ctx, want, names, rows, merge) for merge in (True, False)
+    )
+
+
+def _address_said_as(ctx: Ctx, want: str, names: list[str], rows: list, merge: bool) -> bool:
+    lines = [
+        _split_run_on(_address_tokens(r["text"], merge), want, names, r["text"]) for r in rows
+    ]
     for i, tokens in enumerate(lines):
         for k, token in enumerate(tokens):
             if token != want or "zip" in tokens[max(0, k - 2) : k] or "code" in tokens[max(0, k - 2) : k]:
@@ -360,8 +371,9 @@ def _answers_number(ctx: Ctx, row: sqlite3.Row, want: str) -> bool:
 
 
 def _street_in(line: str, names: list[str]) -> bool:
-    tokens = set(_address_tokens(line))
-    return all(name in tokens for name in names)
+    return any(
+        all(name in set(_address_tokens(line, merge)) for name in names) for merge in (True, False)
+    )
 
 
 def _record_lookup(ctx: Ctx, house: str, street: str, hint: str, found: geocode.Found) -> None:

@@ -3,6 +3,7 @@ and logs as a LiveKit call."""
 
 import json
 
+import pytest
 from fastapi.testclient import TestClient
 from retell_kit import SPOKEN, call_obj, event, inbound, signed, tool, utterance
 from toolkit import DETAILS, in_area_address
@@ -406,3 +407,26 @@ def test_the_hang_up_waits_for_a_final_line_still_being_said(client, retell, lat
     assert delay >= HANGUP_GRACE_S + 0.35 * len(full.split())
     later.run()
     assert retell.stopped == ["abc"]
+
+
+def test_a_goodbye_already_said_with_a_tool_sentence_stops_one_grace_after_it(
+    client, bridge, retell, later, monkeypatch
+):
+    """PR #158 review: the line compared before stopping was the last agent line plus the tool's
+    `say`, which never matched the transcript, so every hang-up waited one extra cycle."""
+    said = booked_call(client)
+    bye = "Thanks for calling Summit Air, take care."
+    so_far = [*said, utterance("user", "That's all, bye."), utterance("agent", bye)]
+    real = bridge.tools.tool
+
+    def with_say(call_id, name, args):
+        answer = real(call_id, name, args)
+        return {**answer, "say": bye} if name == "end_call" else answer
+
+    monkeypatch.setattr(bridge.tools, "tool", with_say)
+    tool(client, "end_call", call_obj("abc", *so_far), reason="caller_goodbye")
+    retell.calls["abc"] = call_obj("abc", *so_far)
+    delay = later.pending[0][0]
+    assert delay == pytest.approx(3.0 + 0.35 * len(bye.split()) + HANGUP_GRACE_S)
+    later.run()
+    assert retell.stopped == ["abc"], "stopped at the first check, no extra wait"
