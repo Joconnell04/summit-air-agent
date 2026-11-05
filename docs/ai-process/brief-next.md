@@ -4,14 +4,11 @@ The one page to read before the live calls and the interview: what needs Jackson
 
 ## Needs Jackson
 
-1. **The 10 live calls, whenever you're ready.** Call (646) 624-0418 with the script in `evals/live-calls.md`. Everything merged is deployed, and a scripted test call passed after the last deploy. While you listen, note:
-   - The first words of a line may be clipped: "Good to hear from you" came through as "To hear from you", and the goodbye still splits around the hang-up.
-   - Two questions in one turn slipped through once ("Is that the one you want to keep? Do you want a different day?").
-   - If you ask for a person, the transfer rings your cell.
-2. **One feedback pass after the calls.** Say what felt off, and I'll map each complaint to a setting in `docs/tuning.md` and try the obvious fix first. A lower turn-detector maximum is already queued.
-3. **Call the Retell Conversation Flow version when it's ready.** If it passes every must-pass check and comes within 5 points of our stack, it goes on (678) 336-6730 for you to call and compare.
+1. **The 10 live calls, in the order in `evals/live-calls.md`.** Call (646) 624-0418 from your cell. The calls that don't book go first, because the first booking puts your cell on file. Every address is real and in the service area. Calls 5, 7 and 9 behave differently after 8 PM (on-call instead of booking or the office); the script says what to expect either way. Everything merged is deployed and a scripted test call passed on it.
+2. **One feedback pass after the calls.** The end of the script maps each kind of complaint to one setting. Two fixes are already built and waiting on what you hear: the lookup fix for long silences on address turns (switched off), and the "yes, that's right" fast path for a slow booking moment (later list, C-63).
+3. **Retell prototype agents.** The Retell flow lane left its prototype agents on the Retell account. Say whether to delete them; nothing deletes without your OK.
 
-Nothing needs a top-up: no run has failed for credit. Paid eval runs since last night come to roughly $60 across all lanes, added from their reports, not from invoices. The three new lanes are capped at $6 each, plus about $4 for the shared reference run. The only extra Cartesia use was the Ink-2 test's $0.13; voice on test calls runs on the plan, so the overage stays far under your $20.
+Nothing needs a top-up: no run failed for credit. Paid eval runs today come to roughly $95 across all lanes, added from their reports, not invoices; Cartesia's added spend is about $0.13.
 
 ## Decisions to know cold
 
