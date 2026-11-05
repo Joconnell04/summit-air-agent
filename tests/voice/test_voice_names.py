@@ -27,9 +27,9 @@ def name(written: str) -> local_names.Name:
     return next(n for n in NAMES.names if n.written == written)
 
 
-def test_the_summit_air_list_is_the_fifteen_sourced_names_and_valid():
+def test_the_summit_air_list_is_the_sixteen_sourced_names_and_valid():
     assert local_names.problems(NAMES) == []
-    assert len(NAMES.names) == 15
+    assert len(NAMES.names) == 16
     assert all(entry["sources"] for entry in RAW["names"])
 
 
@@ -38,6 +38,15 @@ def test_kosciuszko_is_said_one_way_and_heard_three_ways():
     assert kosciuszko.says == "koss-ee-OSS-koh"
     assert set(kosciuszko.heard_as) == {"kuh-SHOOS-koh", "kah-skee-OOS-koh"}
     assert "Kosciuszko Street" in NAMES.keyterms()
+
+
+def test_hoyt_is_a_keyterm_and_heard_through_white():
+    """The replay-2 gate call: Cartesia's "Hoyt" came back as "White Street"."""
+    hoyt = name("Hoyt Street")
+    assert "Hoyt Street" in NAMES.keyterms()
+    assert "White Street" in hoyt.heard_as
+    keys = [item["text"] for item in NAMES.cartesia_items()]
+    assert any(local_names.matches(k, "75 Hoyt Street, Brooklyn") for k in keys)
 
 
 def test_houston_is_replaced_only_as_a_street():
