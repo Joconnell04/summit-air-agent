@@ -62,6 +62,25 @@ A fifth build, Pipecat with smart-turn on Deepgram Flux, Gemini Flash and Cartes
 
 **C. Strip-back test on our own stack instead.** Run our stack with a one-page prompt and the gates still on, and compare by ear. Cheapest test of the "too much prompt" theory (a few dollars, ASSUMED), but it can't tell us whether a vendor's turn-taking sounds better.
 
+### 5a. Follow-up: only what hasn't been tested (Jackson, 2026-11-05)
+
+Checked against docs/bakeoffs.md, DECISIONS.md and `voice/`:
+
+| Option | Tested before? | Keep? |
+|---|---|---|
+| Retell single-prompt | Yes, bake-off 1 and the audio rig, on our prompt and our Haiku brain (DECISIONS 012); Conversation Flow too (087) | Drop. A short-prompt Retell only tests prompt weight, which C tests more cheaply on our own stack |
+| ElevenLabs Agents | Yes, on our brain (bake-off 6, 1.45 s, DECISIONS 038) | Drop. Its voice and turn-taking are measured; a stock build would only swap in its model and a short prompt |
+| Vapi | No. Planned as one gas call (DECISIONS 020), never run: no `voice/vapi`, no results file | Keep |
+| GPT-Live-1 | No. Bake-off 6 ran `gpt-realtime-2.1`, an older model on a different endpoint | Keep |
+| Deepgram Voice Agent API | No. Listed under "Considered and not tested" | Keep, as the integrated-stack test |
+| Our stack, one-page prompt (option C) | No | Keep |
+
+**Deepgram's intelligence features.** Sentiment, intent, topic detection and summarization run on recorded audio only, not on a live stream, and English only (SOURCE: https://developers.deepgram.com/docs/stt-intelligence-feature-overview, read 2026-11-05). So they can't steer a live call; they could tag finished calls for the owner view or post-call summary, at $0.0003 a unit on pay as you go (SOURCE: deepgram.com/pricing; the unit wasn't stated on the page). Entity detection does run live, on Nova-3, which is our ears, but not on Flux, and it labels names, addresses and phone numbers (SOURCE: https://developers.deepgram.com/docs/detect-entities). That is the one live feature that touches a known weak spot: it could cross-check the address and phone the model wrote down against what the caller said. It is a feature on our current stack, not a stack change, and costs one parameter (`detect_entities=true`) to try on the rig.
+
+**The integrated stack.** The Deepgram Voice Agent API is one vendor for ears, turn-taking and voice, with our model and tool server plugged in: $0.065 a minute with our own model (SOURCE: exploration 013). It differs from what we've tested in two ways: Deepgram, not LiveKit, decides when the caller is done (Flux has end-of-turn built in), and the voice is Aura unless we bring Cartesia. One builder runs most clients on Deepgram with Flux and says models on it follow instructions better than realtime models (1u4lz71). Our server can still speak fixed lines (`InjectAgentMessage`) and guard hang-ups (exploration 013). Entity detection isn't available on Flux, so an integrated build would give that up.
+
+Revised test set: Vapi stock, GPT-Live-1, Deepgram Voice Agent API, our stack on a one-page prompt, and entity detection on our current ears as a rig check. Usage about $30 to $60 (ASSUMED, same per-build minutes as above, three outside builds plus two runs on our own stack).
+
 ## 6. Recommendation and what would change it
 
 B and C together, in that order: B tells us whether anything off the shelf sounds clearly better; C tells us how much of the gap is our prompt. If a stock build sounds no better than ours, the stack question is closed and the work is delay and prompt length. If GPT-Live-1 sounds clearly better, the question becomes whether our server can still own the safety lines and hang-ups around it, which it could not for the older realtime model (DECISIONS 038).
