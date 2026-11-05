@@ -231,8 +231,8 @@ class SummitAgent(Agent):
     ) -> AsyncIterable[llm.ChatChunk | str]:
         """The model's reply, a sentence at a time through the reply rule (prompts/assemble.py
         SpokenReply), so a read-back announcement or a restated ZIP or number is never spoken.
-        While the rule is holding, the text waits for the end of the reply and is dropped if the
-        reply calls a tool whose result the worker speaks itself."""
+        While the rule is holding (a safety call), the text waits for the end of the reply and is
+        dropped if the reply calls a tool whose result the worker speaks itself."""
         reply = self.call.reply
         reply.start_reply()
         holding = reply.holding()

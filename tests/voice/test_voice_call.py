@@ -357,7 +357,9 @@ def test_the_worker_stops_the_recording_when_the_caller_objects(agent, connect):
     asyncio.run(run("The AC is still out."))
     assert stopped == [True], "once"
     assert len(call.session.said) == 1
-# Eval round 3: the caller hears the server's read-back sentence alone, never a lead-in.
+# Eval round 3: the caller hears the server's read-back once, never announced. Since issue #150
+# a short lead-in before it streams like any reply ("Got it."), so the caller isn't kept waiting
+# for the model's whole reply.
 
 
 def _stream(*parts):
@@ -402,12 +404,37 @@ def _at_booking(reply):
     reply.tool_done("check_service_area", {"ok": True})
 
 
-def test_a_reply_that_calls_read_back_drops_the_text_before_it(monkeypatch):
+def test_a_reply_that_calls_read_back_keeps_its_lead_in_but_not_the_announcement(monkeypatch):
     text, tools = _heard(
         monkeypatch, _at_booking, "Got it. ", "Let me read that back.", ("read_back", {"phone": "x"})
     )
-    assert text == ""
+    assert text == "Got it."
     assert tools == ["read_back"]
+
+
+def test_after_the_address_is_checked_the_first_sentence_is_out_before_the_reply_ends(monkeypatch):
+    """The first sentence reaches the voice while the model is still writing (issue #150)."""
+    from livekit.agents import llm
+
+    order = []
+
+    async def slow_llm(_agent, _ctx, _tools, _settings):
+        for part in ("Sure thing. ", "What day works for you? "):
+            order.append(f"model: {part.strip()}")
+            yield llm.ChatChunk(id="c", delta=llm.ChoiceDelta(content=part))
+
+    monkeypatch.setattr(Agent.default, "llm_node", slow_llm)
+    call = Call(None, None, ToolLog(), ENDPOINTING)
+    _at_booking(call.reply)
+    agent = SummitAgent(call, "", [])
+
+    async def run():
+        async for chunk in agent.llm_node(None, [], None):
+            if isinstance(chunk, str) and chunk.strip():
+                order.append(f"voice: {chunk.strip()}")
+
+    asyncio.run(run())
+    assert order.index("voice: Sure thing.") < order.index("model: What day works for you?")
 
 
 def test_a_reply_that_calls_another_tool_keeps_its_text(monkeypatch):

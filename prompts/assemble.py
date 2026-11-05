@@ -495,19 +495,20 @@ class SpokenReply:
     (eval round 3):
 
     - Some tool results are spoken by the voice layer itself, word for word: the read-back
-      sentence, and on a safety call the sign-off end_call returns. In a reply that calls one of
-      those, the text the model wrote first is dropped: no lead-in, no second goodbye.
+      sentence, and on a safety call the sign-off end_call returns. On a safety call, a reply that
+      calls one of those has the text the model wrote first dropped: no second goodbye. Elsewhere
+      a short lead-in before the read-back ("Got it.") is heard; an announcement of it is not.
     - In any reply, a sentence announcing the read-back is dropped, and so is a sentence that
       restates the ZIP or phone number the caller gave. The rest of the reply is kept; a reply
       with nothing left is silent.
 
     A streaming voice layer can only drop text it hasn't spoken yet. It passes each sentence
     through `sentence` as it completes, and while `holding` it keeps the whole reply until it
-    ends. That is from the first in-area ZIP check, when a read-back can come, until the
-    read-back is confirmed, and for the whole of a safety call."""
+    ends. That is only on a safety call: holding every reply from the first ZIP check to the
+    confirmed read-back made the caller wait for the model's whole reply, about 0.3 s more per
+    model request (issue #150)."""
 
     def __init__(self) -> None:
-        self.address_checked = False
         self.read_back_confirmed = False
         self.safety_call = False
         self.zips: set[str] = set()
@@ -522,7 +523,7 @@ class SpokenReply:
         self.technicians: set[str] = set()
 
     def holding(self) -> bool:
-        return self.safety_call or (self.address_checked and not self.read_back_confirmed)
+        return self.safety_call
 
     def heard(self, safety: dict | None, caller_text: str = "", hints: list[str] | None = None) -> None:
         """A caller line and its turn result: the safety action the server returned, if any, and
@@ -542,8 +543,6 @@ class SpokenReply:
 
     def tool_done(self, name: str, envelope: dict) -> None:
         data = envelope.get("data") or {}
-        if name in ("check_service_area", "find_address") and envelope.get("ok"):
-            self.address_checked = True
         if name == "find_slots" and (data.get("priority") or {}).get("level") == "Urgent":
             self.urgent = True
         if data.get("spoken_first"):
@@ -636,7 +635,7 @@ class SpokenReply:
 
     def text(self, text: str, calls: list[tuple[str, dict]]) -> str:
         """The model's text for one reply, given the (name, arguments) of the tools it called."""
-        if any(self.server_speaks(n, a) for n, a in calls):
+        if self.holding() and any(self.server_speaks(n, a) for n, a in calls):
             return ""
         self.start_reply()
         return " ".join(kept for s in sentences(text) if (kept := self.sentence(s)))

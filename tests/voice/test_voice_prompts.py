@@ -99,13 +99,14 @@ def test_the_voice_layer_speaks_the_read_back_the_safety_refusal_and_the_sign_of
     assert spoken("find_slots", {"ok": True, "say": "Tuesday works."}) is None
 
 
-def test_the_reply_rule_holds_text_only_while_a_read_back_can_come_or_on_a_safety_call():
+def test_the_reply_rule_holds_text_only_on_a_safety_call():
+    """Holding from the ZIP check to the confirmed read-back made the caller wait for the model's
+    whole reply on every turn of a booking (issue #150)."""
     reply = assemble.SpokenReply()
     assert not reply.holding()
     reply.tool_done("check_service_area", {"ok": True})
-    assert reply.holding()
-    reply.tool_done("read_back", {"ok": True, "data": {"confirmed": True}})
     assert not reply.holding()
+    assert reply.text("Got it. Let me read that back.", [("read_back", {})]) == "Got it."
     reply.heard({"action": "speak_lines"})
     assert reply.holding() and reply.server_speaks("end_call", {})
     reply.heard({"action": "cleared"})
