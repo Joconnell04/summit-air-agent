@@ -7,7 +7,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from .settings import NOTE_MAX_CHARS
-from .text import join_spelled, with_spelled_name
+from .text import join_spelled
 
 Priority = Literal["Low", "Normal", "High", "Urgent"]
 Zip = Field(pattern=r"^\d{5}$")
@@ -35,10 +35,9 @@ class Address(Body):
 
     @model_validator(mode="after")
     def join_letters(self):
-        # Letters said one by one become the name, so the read-back says the word, not the letters.
-        street = with_spelled_name(self.street, self.spelled) if self.spelled else self.street
-        self.street = join_spelled(street)
-        self.spelled = ""
+        # Letters said one by one inside the street become the word. `spelled` is applied by the
+        # tool, which can check the caller spelled it (tools._with_spelling).
+        self.street = join_spelled(self.street)
         return self
 
 
@@ -146,9 +145,7 @@ class FindAddressIn(CallRef):
 
     @model_validator(mode="after")
     def join_letters(self):
-        street = with_spelled_name(self.street, self.spelled) if self.spelled else self.street
-        self.street = join_spelled(street)
-        self.spelled = ""
+        self.street = join_spelled(self.street)
         return self
 
 
