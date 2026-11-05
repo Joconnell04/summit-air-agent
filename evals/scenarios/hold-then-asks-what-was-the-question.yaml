@@ -1,0 +1,27 @@
+# Slate call 2 (Retell call_3cd4c8065f26d3de686f7a1e002): "Uh, yeah, one second" put the call on
+# hold, and "Um, what was the question?" right after still got "Take your time."
+id: hold-then-asks-what-was-the-question
+flow: [booking]
+difficulty: standard
+traits: [filler]
+journeys: [spine]
+tags: [call-handling, dead-air]
+caller_id: "(929) 555-0307"
+persona: Dana Ortiz in Sunnyside, calling about no heat while distracted at home. Asks the agent to wait, then loses track of what was asked.
+hidden_facts:
+  name: Dana Ortiz
+  address: 43-10 47th Street, Queens, 11104
+  phone: the number you're calling from
+  problem: the heat has been out since this morning; it's about 62 inside
+opening: Hi, my heat went out this morning.
+script:
+  - When the agent asks its first question, say "Uh, yeah, one second" and nothing else.
+  - On your next line, say only "Um, what was the question?"
+  - Then answer what the agent asks, and book the first window it offers.
+  - Say goodbye once the agent asks if there is anything else.
+must:
+  - agent_says_at_most: {"take your time": 1}
+  - booking: one
+  - read_back: before_booking
+should:
+  - After "what was the question?", asks its question again in plain words instead of telling the caller to take their time.

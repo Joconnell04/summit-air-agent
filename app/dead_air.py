@@ -8,7 +8,7 @@ end reason `stepped_away`. A call back from the same number then opens by saying
 Only a sentence that starts with the request counts ("hold on", "sorry, one sec"); "it runs for
 one minute then shuts off" is a symptom. While the call is on hold, a caller line counts as the
 caller coming back only when it is said to the agent: "I'm still here", "I'm back", "one more sec",
-"I can't find it", a question to the agent, an answer with a number ("it says 48"), or another
+"I can't find it", any question not put to someone else by name, an answer with a number ("it says 48"), or another
 request to wait. Anything else ("okay kids, come on", "honey, where's the last bill?", a TV in the
 room) is an aside: it is kept
 on the record and still goes through the safety check, but the agent doesn't answer it and the
@@ -71,11 +71,12 @@ def is_reply(text: str) -> bool:
     said = words(text)
     if asks_to_hold(text) or any(has_phrase(said, r) for r in RETURNS):
         return True
-    # A question to the agent: "Hello?", "can you still hear me?"
-    to_someone_else = said.split()[:1] and said.split()[0] in OTHERS
-    if "?" in text and not to_someone_else and (
-        has_phrase(said, "you") or said.startswith(" hello ")
-    ):
+    # A question is to the agent unless it opens by naming someone else: "Hello?", "can you
+    # still hear me?", and "Um, what was the question?", which slate call 2 (Retell
+    # call_3cd4c8065f26d3de686f7a1e002) answered with "Take your time." as an aside.
+    first = [w for w in said.split() if w not in LEAD_WORDS][:1]
+    to_someone_else = bool(first) and first[0] in OTHERS
+    if "?" in text and not to_someone_else:
         return True
     if said.startswith(" it says "):
         return True
