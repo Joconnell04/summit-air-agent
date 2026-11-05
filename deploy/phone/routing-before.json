@@ -1,0 +1,19 @@
+{
+ "number": {
+  "phone_number": "+16466240418",
+  "sid": "PN703e2dbaf902837770b196f1fd3f200c",
+  "trunk_sid": "TK46efbd558f63a52db437b0d65c6aa41a",
+  "voice_url": null,
+  "voice_method": "POST",
+  "voice_application_sid": null,
+  "voice_fallback_url": null
+ },
+ "trunk": {
+  "sid": "TK46efbd558f63a52db437b0d65c6aa41a",
+  "friendly_name": "summit-air",
+  "domain_name": "summit-air-468e56.pstn.twilio.com",
+  "origination": [
+   "sip:18sbznrao6p.sip.livekit.cloud;transport=tcp"
+  ]
+ }
+}
