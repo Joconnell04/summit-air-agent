@@ -191,13 +191,16 @@ realtime:
     model: gpt-live-1
     voice: marin
     backend_model: gpt-6-luna
-    # Low keeps tool turns quick; medium is the model's default (SOURCE: model page below).
-    reasoning_effort: low
+    # No reasoning and the priority tier keep the wait behind a lookup short; a first rig call at
+    # low effort had 3.4 to 4.3 s silences in lookups (MEASURED, rig, live-call-06). Priority is
+    # billed at 2x (SOURCE: model page below).
+    reasoning_effort: none
+    service_tier: priority
     # SOURCE (read 2026-11-05): https://developers.openai.com/api/docs/models/gpt-live-1 ($0.05 a
     # minute, billed per second) and https://developers.openai.com/api/docs/models/gpt-6-luna
     # (USD per million tokens).
     price: {per_minute: 0.05, backend_input: 0.10, backend_cached_input: 0.01,
-            backend_output: 0.50}
+            backend_output: 0.50, backend_tier_multiplier: 2}
   gemini:
     provider: gemini
     model: gemini-3.8-live

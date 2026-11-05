@@ -37,6 +37,7 @@ class Line:
         self.conversation: live.Conversation | None = None
         self.started = asyncio.Event()
         self.ended = False
+        self.greeting = ""
 
     async def _send(self, event: dict) -> None:
         if self.ws is not None and not self.ended:
@@ -60,7 +61,7 @@ class Line:
         await self.ws.send(json.dumps({"type": "session.start", "event_id": "start",
                                        "session": config}))
         await asyncio.wait_for(self.started.wait(), 15)
-        await self._send(live.greet_event(greeting))
+        self.greeting = greeting
         return world.server
 
     async def _read(self) -> None:
@@ -101,9 +102,15 @@ class Line:
         await self.ws.close()
 
     async def send(self, pcm: bytes) -> None:
-        if not self.ended:
-            await self._send({"type": "session.input_audio.append",
-                              "audio": base64.b64encode(pcm).decode()})
+        if self.ended:
+            return
+        await self._send({"type": "session.input_audio.append",
+                          "audio": base64.b64encode(pcm).decode()})
+        if self.greeting:
+            # The greeting is asked for once input audio is running (the docs' sequence); asked
+            # for before the first frame, it was skipped on one of two rig calls (MEASURED).
+            greeting, self.greeting = self.greeting, ""
+            await self._send(live.greet_event(greeting))
 
     async def close(self, reason: str) -> None:
         if self.conversation is not None:

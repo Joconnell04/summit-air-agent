@@ -105,9 +105,12 @@ def test_the_session_has_both_one_page_prompts_and_our_tools_on_the_backend(app)
         assert len((live.PROMPTS / name).read_text().split()) < 500
 
 
-def test_the_greeting_is_set_at_start_and_asked_for_once_after(app):
+def test_the_greeting_is_set_at_start_and_asked_for_once_audio_runs(app):
     async def go():
         line, sock, _ = await opened(app)
+        assert not sock.of_type("session.commentary.append")
+        await line.send(b"\0\0")
+        await line.send(b"\0\0")
         await line.close("test")
         return sock
 
@@ -224,7 +227,7 @@ def test_cost_is_voice_seconds_plus_backend_tokens(app):
         return cost
 
     cost = asyncio.run(go())
-    assert cost == pytest.approx({"platform": 0.05, "brain_model": 0.10})
+    assert cost == pytest.approx({"platform": 0.05, "brain_model": 0.20})
 
 
 # ---- the phone path --------------------------------------------------------------------------

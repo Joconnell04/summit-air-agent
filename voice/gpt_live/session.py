@@ -114,6 +114,7 @@ def session_config(start: dict, specs: list[dict], cfg: dict, greeting: str,
                 "tool_choice": "auto",
                 "parallel_tool_calls": False,
                 "reasoning": {"effort": cfg["reasoning_effort"]},
+                "service_tier": cfg["service_tier"],
             },
         },
     }
@@ -130,8 +131,9 @@ def backend_cost(usage: dict, price: dict) -> float:
     cached = (usage.get("input_tokens_details") or {}).get("cached_tokens", 0) or 0
     fresh = max((usage.get("input_tokens", 0) or 0) - cached, 0)
     out = usage.get("output_tokens", 0) or 0
-    return (fresh * price["backend_input"] + cached * price["backend_cached_input"]
-            + out * price["backend_output"]) / 1e6
+    rate = price.get("backend_tier_multiplier", 1)
+    return rate * (fresh * price["backend_input"] + cached * price["backend_cached_input"]
+                   + out * price["backend_output"]) / 1e6
 
 
 class Conversation:

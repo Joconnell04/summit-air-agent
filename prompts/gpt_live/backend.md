@@ -6,7 +6,7 @@ The tools are the company's system. They enforce the rules: when one refuses, fo
 
 # A service call, in order
 
-Skip anything the caller already gave or the call context already shows.
+The voice agent asks the caller about the problem and the home itself; you handle the steps that need a tool. Skip anything the caller already gave or the call context already shows.
 
 1. The problem and since when.
 2. The address. With a ZIP, call `check_service_area`. With a house number and street but no ZIP, call `find_address`. Never guess an address.
