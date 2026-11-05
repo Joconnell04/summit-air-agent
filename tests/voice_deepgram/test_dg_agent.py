@@ -56,7 +56,13 @@ def make_call(fake_server, **kwargs):
 
 
 def run(coro):
-    return asyncio.run(coro)
+    """Run a scenario, then let the function calls it started (tasks of their own) finish."""
+    async def scenario():
+        result = await coro
+        await asyncio.sleep(0.05)
+        return result
+
+    return asyncio.run(scenario())
 
 
 def test_a_function_runs_on_the_tool_server_and_its_envelope_goes_back():
@@ -91,6 +97,7 @@ def test_a_refused_end_call_keeps_the_line_open():
         await call.handle({"type": "ConversationText", "role": "assistant", "content": "Bye now."})
         await call.handle({"type": "FunctionCallRequest", "functions": [
             {"id": "fc_2", "name": "end_call", "arguments": "{}", "client_side": True}]})
+        await asyncio.sleep(0.01)
         await call.handle({"type": "AgentAudioDone"})
 
     run(scenario())
@@ -109,6 +116,7 @@ def test_the_goodbye_said_with_end_call_drops_the_line_once_it_has_played(monkey
                            "content": "Thanks for calling. Bye."})
         await call.handle({"type": "FunctionCallRequest", "functions": [
             {"id": "fc_3", "name": "end_call", "arguments": "{}", "client_side": True}]})
+        await asyncio.sleep(0.01)
         await call.handle({"type": "AgentAudioDone"})
 
     run(scenario())
@@ -120,7 +128,8 @@ def test_the_goodbye_said_with_end_call_drops_the_line_once_it_has_played(monkey
 
 
 def test_an_end_call_with_nothing_said_gets_the_tenants_goodbye(monkeypatch):
-    monkeypatch.setattr(agent, "GOODBYE_WAIT_S", 0)
+    monkeypatch.setattr(agent, "SAID_WAIT_S", 0.01)
+    monkeypatch.setattr(agent, "GOODBYE_TEXT_WAIT_S", 0.1)
     fake = FakeServer(tools={"end_call": {"ok": True, "say": "", "data": {"hang_up": True}}})
     call, _ = make_call(fake)
 
@@ -128,11 +137,14 @@ def test_an_end_call_with_nothing_said_gets_the_tenants_goodbye(monkeypatch):
         await call.handle({"type": "ConversationText", "role": "user", "content": "Bye."})
         await call.handle({"type": "FunctionCallRequest", "functions": [
             {"id": "fc_4", "name": "end_call", "arguments": "{}", "client_side": True}]})
-        await asyncio.sleep(0.01)
+        await asyncio.sleep(0.3)
 
     run(scenario())
-    assert call.ws.sent[-1] == {"type": "InjectAgentMessage",
-                                "message": "Thanks for calling Summit Air.", "behavior": "interrupt"}
+    # Said first, then the model reads that it was said, so it adds no goodbye of its own.
+    assert call.ws.sent[0] == {"type": "InjectAgentMessage",
+                               "message": "Thanks for calling Summit Air.", "behavior": "queue"}
+    result = json.loads(call.ws.sent[1]["content"])
+    assert result["said"] == "Thanks for calling Summit Air." and "say" not in result
 
 
 def test_the_settings_send_haiku_through_the_custom_endpoint_without_temperature():
@@ -159,15 +171,23 @@ def test_twilio_signatures_and_stream_keys():
     assert '<Stream url="wss://host/deepgram/stream">' in body and 'value="k1"' in body
 
 
-def test_the_read_back_is_said_by_the_bridge_word_for_word_not_rewritten():
-    """Call 1: the model rewrote the read-back with numerals, which Aura read as numbers."""
+def test_the_read_back_is_said_first_and_the_result_follows_once_it_was_heard():
+    """Call 1: the model rewrote the read-back with numerals; the gate call after it: sent with
+    the result, the model said the read-back a second time in its own words."""
     line = "I have your home at 199 East 4th Street, ZIP code one zero zero zero nine. Is that right?"
     fake = FakeServer(tools={"read_back": {"ok": True, "say": line, "data": {}}})
     call, _ = make_call(fake)
     call.said_this_turn = 1
-    run(call.handle({"type": "FunctionCallRequest", "functions": [
-        {"id": "fc_5", "name": "read_back", "arguments": "{}", "client_side": True}]}))
-    assert call.ws.sent[0] == {"type": "InjectAgentMessage", "message": line, "behavior": "queue"}
+
+    async def scenario():
+        await call.handle({"type": "FunctionCallRequest", "functions": [
+            {"id": "fc_5", "name": "read_back", "arguments": "{}", "client_side": True}]})
+        await asyncio.sleep(0.05)
+        assert call.ws.sent == [{"type": "InjectAgentMessage", "message": line, "behavior": "queue"}]
+        await call.handle({"type": "ConversationText", "role": "assistant", "content": line})
+        await asyncio.sleep(0.05)
+
+    run(scenario())
     result = json.loads(call.ws.sent[-1]["content"])
     assert "say" not in result and result["said"] == line
 
@@ -187,3 +207,23 @@ def test_a_lookup_starts_with_one_short_line_when_the_agent_has_said_nothing():
     injected = [m for m in call.ws.sent if m.get("type") == "InjectAgentMessage"]
     assert injected == [{"type": "InjectAgentMessage", "message": agent.LOOKUP_LINE,
                          "behavior": "queue"}]
+
+
+def test_a_cancelled_function_says_nothing_and_every_function_waits_for_the_turn():
+    line = "I have your home at 199 East 4th Street. Is that right?"
+    fake = FakeServer(tools={"read_back": {"ok": True, "say": line, "data": {}}})
+    call, _ = make_call(fake)
+
+    async def scenario():
+        await call.handle({"type": "FunctionCallCancelled",
+                           "functions": [{"id": "fc_9", "name": "read_back"}]})
+        await call.handle({"type": "FunctionCallRequest", "functions": [
+            {"id": "fc_9", "name": "read_back", "arguments": "{}", "client_side": True}]})
+
+    run(scenario())
+    assert call.ws.sent == []
+    message = agent.settings(instructions="x", specs=[{"name": "read_back", "description": "d",
+                             "parameters": {"type": "object"}, "write": False}], greeting="Hi.",
+                             cfg={"listen_model": "flux-general-en", "voice": "v"}, model="m",
+                             anthropic_key="k", keyterms=[], audio=server.PHONE_AUDIO)
+    assert message["agent"]["think"]["functions"][0]["defer_until_eot"] is True

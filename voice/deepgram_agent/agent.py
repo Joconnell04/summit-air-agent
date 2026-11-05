@@ -23,6 +23,7 @@ import asyncio
 import hashlib
 import json
 import logging
+import re
 from collections.abc import Awaitable, Callable
 from pathlib import Path
 
@@ -44,14 +45,19 @@ SPOKEN_ACTIONS = ("speak_lines", "speak_variant", "ask_check")
 # the tenant's, and the pause after the last word before the line drops (ASSUMED, the LiveKit
 # stack's end_call_grace_s).
 GOODBYE_WAIT_S = 3.0
+GOODBYE_TEXT_WAIT_S = 1.5
 # Said by the bridge when a lookup starts and the agent has said nothing since the caller spoke,
 # so the caller doesn't sit through the lookup in silence (Jackson's call 1: about 4 s after the
 # address).
 LOOKUPS = ("find_customer", "find_address", "check_service_area", "find_slots")
 LOOKUP_LINE = "Let me check that real quick."
 # What the model reads when the bridge has already said the server's sentence for it.
-SAID_FOR_YOU = ("The sentence in `said` was spoken to the caller word for word just now. Don't "
-                "repeat or rephrase it; wait for the caller's answer.")
+SAID_FOR_YOU = ("Your last turn already said `said` to the caller, word for word. Say nothing more "
+                "now: the caller answers next.")
+# How long the bridge waits for Deepgram to report an injected sentence as said before it hands
+# the model the tool result anyway. At 12 s, one sentence never reported left the caller in dead
+# air on the third gate call; 5 s is ASSUMED, enough for the report to arrive.
+SAID_WAIT_S = 5.0
 # Added to the stripped prompt for this entry: Aura reads numerals as numbers ("ten thousand
 # nine"), so digits the model writes itself go out as words.
 SPOKEN_FORM = """## Said for you
@@ -70,6 +76,10 @@ HANG_UP_GRACE_S = 1.5
 # The latest the line drops after an allowed end_call whose goodbye was already said (ASSUMED:
 # longer than a goodbye takes to play).
 FALLBACK_HANG_UP_S = 6.0
+
+
+def words(text: str) -> set[str]:
+    return set(re.findall(r"[a-z0-9']+", (text or "").lower()))
 
 
 def idempotency_key(call_id: str, tool: str, args: dict) -> str:
@@ -94,8 +104,12 @@ def settings(*, instructions: str, specs: list[dict], greeting: str, cfg: dict, 
                 "provider": {"type": "anthropic", "model": model},
                 "endpoint": {"url": ANTHROPIC, "headers": {"x-api-key": anthropic_key}},
                 "prompt": instructions,
+                # Held until the caller's turn is confirmed: sent speculatively, a read-back the
+                # caller then talked over was said, cancelled, and said again (gate call after
+                # call 1, FunctionCallCancelled in the log).
                 "functions": [{"name": s["name"], "description": s["description"],
-                               "parameters": s["parameters"]} for s in specs],
+                               "parameters": s["parameters"], "defer_until_eot": True}
+                              for s in specs],
             },
             "speak": {"provider": {"type": "deepgram", "model": cfg["voice"]}},
         },
@@ -127,6 +141,12 @@ class Call:
         # The goodbye after an allowed end_call has started; its AgentAudioDone drops the line.
         self.goodbye_started = False
         self.agent_lines: list[str] = []
+        # Injected sentences not yet reported back as said, each with the event that sets when
+        # its ConversationText arrives.
+        self.waiting: list[tuple[set[str], asyncio.Event]] = []
+        # Function call ids Deepgram withdrew: none of their sentences are said, and no result
+        # goes back (FunctionCallCancelled, SOURCE: Deepgram's function call request docs).
+        self.cancelled: set = set()
         # Agent lines since the caller last spoke: a goodbye said before end_call counts.
         self.said_this_turn = 0
         self.closed = asyncio.Event()
@@ -186,12 +206,21 @@ class Call:
             elif text:
                 self.agent_lines.append(text)
                 self.said_this_turn += 1
+                self.mark_said(text)
                 self.goodbye_started = self.goodbye_started or self.hanging_up
                 await self.server.turn("agent", text)
         elif kind == "FunctionCallRequest":
+            # Run apart from the reader, so it can see the injected sentence come back as said.
             for function in event.get("functions") or []:
                 if function.get("client_side", True):
-                    await self.function(function)
+                    asyncio.get_running_loop().create_task(self.function(function))
+        elif kind == "InjectionRefused":
+            # Deepgram won't say it (the caller is mid-turn): stop holding the tool result.
+            for _, event_ in self.waiting:
+                event_.set()
+            self.waiting = []
+        elif kind == "FunctionCallCancelled":
+            self.cancelled.update(f.get("id") for f in event.get("functions") or [])
         elif kind == "AgentAudioDone":
             if self.goodbye_started:
                 await asyncio.sleep(HANG_UP_GRACE_S)
@@ -211,6 +240,26 @@ class Call:
         safety = (result.get("data") or {}).get("safety") or {}
         if safety.get("action") in SPOKEN_ACTIONS and result.get("say"):
             await self.inject(result["say"])
+
+    def mark_said(self, text: str) -> None:
+        heard = words(text)
+        for wanted, event in self.waiting:
+            if wanted and len(wanted & heard) >= 0.8 * len(wanted):
+                event.set()
+        self.waiting = [(w, e) for w, e in self.waiting if not e.is_set()]
+
+    async def say_first(self, text: str) -> None:
+        """Inject a sentence and wait until Deepgram reports it as the agent's own turn, so the
+        model's history has it before the tool result arrives. Sent together, the model answered
+        the result by saying the read-back a second time in its own words (gate call after call
+        1: "I have your home at... Is that alright? I'm waiting for you to confirm...")."""
+        event = asyncio.Event()
+        self.waiting.append((words(text), event))
+        await self.inject(text, "queue")
+        try:
+            await asyncio.wait_for(event.wait(), SAID_WAIT_S)
+        except TimeoutError:
+            log.warning("%s: injected sentence not reported as said", self.call_id)
 
     async def inject(self, text: str, behavior: str = "interrupt") -> None:
         await self.ws.send(json.dumps({"type": "InjectAgentMessage", "message": text,
@@ -233,14 +282,33 @@ class Call:
         # The server's own sentences (the read-back, a safety refusal, the lookup's questions, the
         # top-priority line) are said word for word by the bridge, as the LiveKit worker does: on
         # call 1 the model rewrote the read-back with numerals, which Aura read as numbers.
+        if request.get("id") in self.cancelled:
+            log.info("%s: %s was cancelled; nothing said", self.call_id, name)
+            return
         first = assemble.spoken_first(envelope)
         server_line = None if name == "end_call" else assemble.spoken_by_server(name, envelope)
+        # The booking's confirmation too, so it isn't followed by "Booking that now".
+        if name == "book_appointment" and envelope.get("ok") and envelope.get("say"):
+            server_line = envelope["say"]
         if first:
-            await self.inject(first, "queue")
+            await self.say_first(first)
             envelope = assemble.for_model(envelope)
         if server_line:
-            await self.inject(server_line, "queue")
+            await self.say_first(server_line)
             envelope = {**envelope, "say": "", "said": server_line, "note": SAID_FOR_YOU}
+        hangs_up = name == "end_call" and envelope.get("ok") and (envelope.get("data") or {}).get("hang_up")
+        if hangs_up and not self.said_this_turn:
+            # The model's goodbye text can reach us just after the end_call request; give it a
+            # moment before adding the tenant's (rig run: both said, one after the other).
+            for _ in range(int(GOODBYE_TEXT_WAIT_S / 0.1)):
+                if self.said_this_turn:
+                    break
+                await asyncio.sleep(0.1)
+        if hangs_up and not self.said_this_turn:
+            # No goodbye from the model yet: the bridge says the tenant's, and the model reads
+            # that it was said (sent with the result instead, it said one of its own on top).
+            await self.say_first(self.goodbye)
+            envelope = {**envelope, "say": "", "said": self.goodbye, "note": SAID_FOR_YOU}
         compact = {k: v for k, v in envelope.items() if v not in (None, "", {})}
         if name == "end_call" and envelope.get("ok") and self.said_this_turn:
             # The model has said its goodbye already; the server's would be said a second time
