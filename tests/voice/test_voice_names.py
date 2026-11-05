@@ -176,3 +176,15 @@ def test_flux_is_switched_on_by_its_provider_and_keeps_the_local_names_as_keyter
     assert turn_handling(flipped)["turn_detection"] == "stt"
     candidate = {**voice, "stt": {**voice["stt_candidates"]["flux"], "eager_eot_threshold": 0.5}}
     assert stt_options(candidate, NAMES)["eager_eot_threshold"] == 0.5
+
+
+def test_a_short_acknowledgment_at_the_start_of_a_line_is_left_to_the_adaptive_detector():
+    """Issue #150: "Okay, great. Thanks." as the agent's next line began cut it off, because LiveKit
+    lets plain voice activity interrupt in the first second of a line."""
+    from livekit.agents import AgentSession
+
+    handling = turn_handling(load_voice())
+    assert handling["interruption"]["mode"] == "adaptive"
+    assert handling["interruption"]["backchannel_boundary"] == (0.0, 1.0)
+    session = AgentSession(turn_handling=handling)
+    assert session.options.interruption["backchannel_boundary"] == (0.0, 1.0)
