@@ -18,7 +18,8 @@ ssh "$HOST" 'set -e; cd ~/summit-air/gpt-live; ~/.local/bin/uv sync -q
   if ! sudo grep -q "handle /gpt-live/" "$SITE"; then
     sudo cp "$SITE" "$SITE.$(date +%Y%m%d%H%M%S).bak"
     sudo sed -i "0,/^\thandle {$/s//\thandle \/gpt-live\/* {\n\t\treverse_proxy 127.0.0.1:8104\n\t}\n\thandle {/" "$SITE"
-    sudo caddy validate --config /etc/caddy/Caddyfile >/dev/null
+    # Caddy reads the eval token from its own environment (deploy/retell/deploy.sh).
+    sudo sh -c "set -a; . /home/jackson/summit-air/retell.env; caddy validate --config /etc/caddy/Caddyfile" >/dev/null
     sudo systemctl reload caddy
   fi
   sudo systemctl daemon-reload
