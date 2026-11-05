@@ -498,7 +498,57 @@
     });
   }
 
+  // What changed in ServiceTitan (debug bench schedule): the list is read again every few seconds,
+  // so an edit or a booking made anywhere shows here as it lands. Rows are built as text nodes.
+  function setupChanges(panel) {
+    var body = panel.querySelector("[data-changes-body]");
+    var url = panel.getAttribute("data-changes");
+    function cell(row, text, cls) {
+      var td = document.createElement("td");
+      if (cls) td.className = cls;
+      td.textContent = text;
+      row.appendChild(td);
+      return td;
+    }
+    function draw(items) {
+      body.textContent = "";
+      if (!items.length) {
+        var none = document.createElement("tr");
+        cell(none, "No changes yet.", "muted").colSpan = 4;
+        body.appendChild(none);
+      }
+      items.forEach(function (c) {
+        var row = document.createElement("tr");
+        cell(row, c.at_local, "time");
+        var who = cell(row, c.by + " ", "fit");
+        if (c.where === "owner" || c.where === "bench") {
+          var where = document.createElement("span");
+          where.className = "faint";
+          where.textContent = c.where;
+          who.appendChild(where);
+        }
+        var what = cell(row, "");
+        if (c.ok) { what.textContent = c.what; } else {
+          var err = document.createElement("span");
+          err.className = "error";
+          err.textContent = c.what + ": " + c.error;
+          what.appendChild(err);
+        }
+        cell(row, c.landed_local, "time");
+        body.appendChild(row);
+      });
+    }
+    setInterval(function () {
+      if (document.hidden) return;
+      fetch(url, { credentials: "same-origin" })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (data) { if (data) draw(data.items); })
+        .catch(function () {});
+    }, 3000);
+  }
+
   document.addEventListener("DOMContentLoaded", function () {
+    each(document, "[data-changes]", setupChanges);
     each(document, "form.search[data-suggest]", setupSuggest);
     each(document, "table[data-resize]", setupResize);
     setupRowLinks();

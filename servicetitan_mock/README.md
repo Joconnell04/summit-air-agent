@@ -68,11 +68,11 @@ All tenant routes live under `/{module}/v2/tenant/{tenantId}/` (the call feed is
 
 | Module | Endpoints |
 |---|---|
-| `crm` | `GET/POST customers`, `GET customers/{id}`, `GET/POST customers/{id}/contacts`, `GET/POST customers/{id}/notes`, `GET/POST locations`, `GET/PATCH locations/{id}`, `GET locations/{id}/contacts`, `GET bookings`, `GET bookings/{id}`, `POST booking-provider/{id}/bookings`, `GET/POST leads`, `GET leads/{id}` |
+| `crm` | `GET/POST customers`, `GET/PATCH customers/{id}`, `GET/POST customers/{id}/contacts`, `PATCH customers/{id}/contacts/{contactId}`, `GET/POST customers/{id}/notes`, `GET/POST locations`, `GET/PATCH locations/{id}`, `GET locations/{id}/contacts`, `GET bookings`, `GET bookings/{id}`, `POST booking-provider/{id}/bookings`, `GET/POST leads`, `GET leads/{id}` |
 | `memberships` | `GET membership-types`, `GET membership-types/{id}`, `GET memberships`, `GET memberships/{id}`, `GET recurring-service-events` |
 | `equipmentsystems` | `GET installed-equipment` |
 | `jpm` | `GET job-types`, `GET job-types/{id}`, `GET job-cancel-reasons`, `GET/POST jobs`, `GET/PATCH jobs/{id}`, `GET jobs/{id}/history`, `GET/POST jobs/{id}/notes`, `PUT jobs/{id}/cancel`, `GET appointments`, `GET appointments/{id}`, `PATCH appointments/{id}/reschedule` |
-| `dispatch` | `POST capacity`, `GET appointment-assignments`, `POST appointment-assignments/assign-technicians`, `GET arrival-windows`, `GET zones`, `GET technician-shifts` |
+| `dispatch` | `POST capacity`, `GET appointment-assignments`, `POST appointment-assignments/assign-technicians`, `GET arrival-windows`, `GET zones`, `GET technician-shifts`, `GET/POST non-job-appointments`, `GET/PUT non-job-appointments/{id}` |
 | `settings` | `GET business-units`, `GET technicians`, `GET technicians/{id}`, `GET tag-types` |
 | `jbce` | `GET call-reasons` |
 | `marketing` | `GET campaigns` |
@@ -101,6 +101,8 @@ Everything the mock does that ServiceTitan does not, kept on purpose, and what t
 | `openAvailability` and `totalAvailability` are technicians times the frame's hours | The unit is hours in ServiceTitan's current spec and unconfirmed in practice | Reads the technicians, not the numbers |
 | Technicians list `skills` as `{id, name}` objects | ServiceTitan keeps skills on `dispatch/technician-skills` | Does not read technicians |
 
+Blocks: an active non-job appointment with `removeTechnicianFromCapacityPlanning` (the default here) makes its technician `Unavailable` in every capacity frame it overlaps, and a job can't be booked or moved onto that technician there (409). The table came after the live world was seeded, so it lives in `schema_added.sql`, which `db.add_missing_tables` runs on an existing database at start-up instead of a reseed, which would wipe the bookings. A block can't go over a technician's live appointment (409 `technician_busy`), which is stricter than ServiceTitan (ASSUMED).
+
 ## What is modeled on real ServiceTitan, and what is ASSUMED
 
 Source for every SOURCE line: ServiceTitan's own OpenAPI documents, downloaded and read for `docs/explorations/006-servicetitan-field-names.md` (table of 56 rows, each with a verdict). Nothing here has been run against a live tenant, and a published spec can lag the running service, so one sandbox call per area is still the way to settle what remains.
@@ -121,6 +123,8 @@ Source for every SOURCE line: ServiceTitan's own OpenAPI documents, downloaded a
 - Time zone and the weekly on-call rotation.
 - That `PATCH jobs/{id}` accepts a new `locationId` for an open job (the mock applies only `locationId` and `summary`, and only to an active location of the job's customer), and that `PATCH locations/{id}` with `active: false` retires a location the customer moved out of. Both are in the published spec; neither has been called on a tenant. If a tenant refuses the job move, the tool server cancels and rebooks instead (DECISIONS.md 075).
 
+- The edits the owner view and the bench make (issue #152): `PATCH customers/{id}` with a `name`, `PATCH customers/{id}/contacts/{contactId}` with a `value`, `PATCH locations/{id}` with an `address`, `PATCH jobs/{id}` with `jobTypeId` and `priority`, and the dispatch non-job appointments (`technicianId`, `start`, `name`, `duration` as a time span such as `04:00:00`, `removeTechnicianFromCapacityPlanning`, `active`). The routes and field names follow ServiceTitan's reference; which fields are required, the span format, and that a non-job appointment with `removeTechnicianFromCapacityPlanning` takes its technician out of every capacity frame it overlaps are ASSUMED, and nothing has been called on a tenant. The mock has no DELETE for a non-job appointment (the real API does): a block comes off the schedule by a `PUT` with `active: false`, so its history stays.
+
 **Where the mock is stricter than the real thing.** Real ServiceTitan capacity is advisory: two callers can both see the last slot and the second job still saves (practice agent notes). The mock refuses the second booking. The adapter looks at capacity again right before it creates a job, and a real tenant still needs a dispatcher process for overbooking.
 
 ## Pointing the adapter at real ServiceTitan
@@ -137,7 +141,7 @@ The adapter owns every difference, so the agent does not change.
 ## Template files and tenant files
 
 Template (works for any trade; do not edit per company):
-`servicetitan_mock/` (code, `schema.sql`, `worldkit.py`), `scripts/build_postman_st.py`, `scripts/run_postman_st.sh`, `postman/`, and everything under `tests/servicetitan_mock/` except the fixtures that name Summit Air.
+`servicetitan_mock/` (code, `schema.sql`, `schema_added.sql`, `worldkit.py`), `scripts/build_postman_st.py`, `scripts/run_postman_st.sh`, `postman/`, and everything under `tests/servicetitan_mock/` except the fixtures that name Summit Air.
 
 Tenant (Summit Air only): `tenants/summit-air/config.yaml` (company name, phone, email domain, hours and refused customer types; fees; counties and ZIPs; business units; job types; arrival windows; urgent holds by day and business unit; lead kinds; equipment names; membership plans and the names of their visits; mock credentials) and `tenants/summit-air/seed.py` (names, streets, scenarios). A second company is a new folder under `tenants/` with the same two files; point `ST_MOCK_TENANT` at it. `tests/servicetitan_mock/test_st_platform.py` proves company facts come from the config by serving a different company from a copied folder.
 

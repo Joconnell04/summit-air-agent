@@ -339,6 +339,37 @@ def build() -> dict:
                         + "}",
                     ),
                     item(
+                        "Rename customer",
+                        "PATCH",
+                        "customers/{{new_customer_id}}",
+                        module="crm",
+                        body={"name": "Newman Tester"},
+                        check="pm.test('renamed', () => pm.expect(pm.response.json().name).to.eql('Newman Tester'));",
+                    ),
+                    item(
+                        "Correct the address",
+                        "PATCH",
+                        "locations/{{new_location_id}}",
+                        module="crm",
+                        body={"address": {**TEST_ADDRESS, "unit": "2F"}},
+                        check="pm.test('has the unit', () => pm.expect(pm.response.json().address.unit).to.eql('2F'));",
+                    ),
+                    item(
+                        "New customer's contacts",
+                        "GET",
+                        "customers/{{new_customer_id}}/contacts",
+                        module="crm",
+                        check="pm.collectionVariables.set('new_contact_id', pm.response.json().data[0].id);",
+                    ),
+                    item(
+                        "Change the phone",
+                        "PATCH",
+                        "customers/{{new_customer_id}}/contacts/{{new_contact_id}}",
+                        module="crm",
+                        body={"value": "(646) 555-0101"},
+                        check="pm.test('new number', () => pm.expect(pm.response.json().phoneSettings.phoneNumber).to.eql('6465550101'));",
+                    ),
+                    item(
                         "Customers",
                         "GET",
                         "customers",
@@ -510,6 +541,37 @@ def build() -> dict:
                         pre=cap_pre,
                         check=PICK_WINDOWS,
                     ),
+                    item(
+                        "Block a technician",
+                        "POST",
+                        "non-job-appointments",
+                        module="dispatch",
+                        body='{"technicianId": {{technician_id}}, "start": "{{win1_start}}", "name": "Newman block", "duration": "04:00:00", "removeTechnicianFromCapacityPlanning": true}',
+                        check="pm.collectionVariables.set('non_job_id', pm.response.json().id);\n"
+                        "pm.test('active', () => pm.expect(pm.response.json().active).to.eql(true));",
+                    ),
+                    item(
+                        "Non-job appointments",
+                        "GET",
+                        "non-job-appointments",
+                        module="dispatch",
+                        query={"technicianId": "{{technician_id}}"},
+                        check="pm.test('lists the block', () => pm.expect(pm.response.json().data.map(b => b.id)).to.include(Number(pm.collectionVariables.get('non_job_id'))));",
+                    ),
+                    item(
+                        "Non-job appointment",
+                        "GET",
+                        "non-job-appointments/{{non_job_id}}",
+                        module="dispatch",
+                    ),
+                    item(
+                        "Take the block off",
+                        "PUT",
+                        "non-job-appointments/{{non_job_id}}",
+                        module="dispatch",
+                        body='{"technicianId": {{technician_id}}, "start": "{{win1_start}}", "name": "Newman block", "duration": "04:00:00", "active": false}',
+                        check="pm.test('inactive', () => pm.expect(pm.response.json().active).to.eql(false));",
+                    ),
                 ],
             ),
             folder(
@@ -535,6 +597,14 @@ def build() -> dict:
                         check="pm.collectionVariables.set('job_id', pm.response.json().id);\n"
                         "pm.collectionVariables.set('appointment_id', pm.response.json().firstAppointmentId);\n"
                         "pm.test('scheduled', () => pm.expect(pm.response.json().jobStatus).to.eql('Scheduled'));",
+                    ),
+                    item(
+                        "Change the job",
+                        "PATCH",
+                        "jobs/{{job_id}}",
+                        module="jpm",
+                        body={"summary": "Newman edit", "priority": "High"},
+                        check="pm.test('changed', () => pm.expect([pm.response.json().summary, pm.response.json().priority]).to.eql(['Newman edit', 'High']));",
                     ),
                     item(
                         "Book again with the same key",

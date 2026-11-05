@@ -11,7 +11,7 @@ below is the mock's stand-in for it).
 import hashlib
 import threading
 import time
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 import httpx
 
@@ -28,7 +28,8 @@ def _utc(moment: datetime) -> str:
 
 
 def _stamp(moment: datetime) -> str:
-    return moment.strftime("%Y-%m-%dT%H:%M:%SZ")
+    """A time as ServiceTitan's filters take it, in UTC whatever zone it was given in."""
+    return moment.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def ref_of(key: str) -> str:
@@ -288,6 +289,36 @@ class ServiceTitanAdapter:
                 return job
         return None
 
+    def customers_by_name(self, name: str) -> list[dict]:
+        return self._list("crm", "customers", "customers_by_name", name=name)
+
+    def technicians(self) -> list[dict]:
+        return self._list("settings", "technicians", "technicians", active="true")
+
+    def appointments_between(self, start: datetime, end: datetime) -> list[dict]:
+        """Appointments starting in the range, every status."""
+        return self._list(
+            "jpm", "appointments", "appointments_between",
+            startsOnOrAfter=_stamp(start), startsBefore=_stamp(end),
+        )
+
+    def assignments(self, appointment_ids: list[int]) -> list[dict]:
+        """Who is on each appointment, read in chunks to keep the query string short."""
+        found: list[dict] = []
+        for i in range(0, len(appointment_ids), 50):
+            chunk = ",".join(map(str, appointment_ids[i : i + 50]))
+            found += self._list("dispatch", "appointment-assignments", "assignments",
+                                appointmentIds=chunk, active="True")
+        return found
+
+    def non_job_appointments(self, start: datetime, end: datetime) -> list[dict]:
+        """Active blocks and events starting in the range. One that started before it and runs into
+        it is not listed: blocks here are a window long, and the caller reads a day at a time."""
+        return self._list(
+            "dispatch", "non-job-appointments", "non_job_appointments",
+            startsOnOrAfter=_stamp(start), startsOnOrBefore=_stamp(end),
+        )
+
     def health(self) -> bool:
         """Can the adapter sign in? (ServiceTitan has no health route.)"""
         try:
@@ -423,6 +454,60 @@ class ServiceTitanAdapter:
         if job_id is not None:
             return self._call("POST", "jpm", f"jobs/{job_id}/notes", "add_note", json=body)
         return self._call("POST", "crm", f"customers/{customer_id}/notes", "add_note", json=body)
+
+    def create_non_job_appointment(
+        self, key: str, technician_id: int, start: datetime, end: datetime, name: str, summary: str
+    ) -> dict:
+        """Take a technician off jobs from start to end (ServiceTitan's non-job appointment). The
+        key's reference goes into the summary, as on a job, so a person can tell which edit made it."""
+        seconds = int((end - start).total_seconds())
+        body = {
+            "technicianId": technician_id,
+            "start": _utc(start),
+            "name": name,
+            "duration": f"{seconds // 3600:02d}:{seconds % 3600 // 60:02d}:00",
+            "summary": f"{summary}\nRef: {ref_of(key)}".strip(),
+            "removeTechnicianFromCapacityPlanning": True,
+            "showOnTechnicianSchedule": True,
+            "allDay": False,
+            "active": True,
+        }
+        return self._call(
+            "POST", "dispatch", "non-job-appointments", "create_non_job", json=body
+        )
+
+    def end_non_job_appointment(self, key: str, non_job_id: int) -> dict:
+        """Take a block off the schedule. ServiceTitan's PUT replaces the whole record, so the
+        block is read and sent back with active false."""
+        path = f"non-job-appointments/{non_job_id}"
+        current = self._call("GET", "dispatch", path, "non_job")
+        fields = ("technicianId", "start", "name", "duration", "summary",
+                  "removeTechnicianFromCapacityPlanning", "showOnTechnicianSchedule", "allDay")
+        body = {**{f: current.get(f) for f in fields}, "active": False}
+        return self._call("PUT", "dispatch", path, "end_non_job", json=body)
+
+    def change_job(self, key: str, job_id: int, changes: dict) -> dict:
+        """PATCH jobs/{id} with some of summary, jobTypeId and priority."""
+        allowed = {k: v for k, v in changes.items() if k in ("summary", "jobTypeId", "priority")}
+        return self._call("PATCH", "jpm", f"jobs/{job_id}", "update_job", json=allowed)
+
+    def correct_location_address(self, key: str, location_id: int, address: dict) -> dict:
+        """Correct a location's address in place (a typo, a missing unit)."""
+        return self._call(
+            "PATCH", "crm", f"locations/{location_id}", "update_location",
+            json={"address": self._address(address)},
+        )
+
+    def rename_customer(self, key: str, customer_id: int, name: str) -> dict:
+        return self._call(
+            "PATCH", "crm", f"customers/{customer_id}", "update_customer", json={"name": name}
+        )
+
+    def change_phone(self, key: str, customer_id: int, contact_id: int, value: str) -> dict:
+        return self._call(
+            "PATCH", "crm", f"customers/{customer_id}/contacts/{contact_id}", "update_contact",
+            json={"value": value},
+        )
 
     # ---- the call log -----------------------------------------------------------------------
 

@@ -401,3 +401,9 @@ Changed:
 Commit: (this PR)
 Status: open
 
+## schedule edits r1 (issue #152: edit the schedule and customers, live into the agent)
+Ask (verbatim, Jackson, relayed by the coordinating session):
+> add to both the owner's view and the debug bench is the ability to directly edit the calendar with custom events that could take time slots. The owner's view should also have a way to do things like, adding a job, editing details, and stuff like that. But it should also, along with the debug bench, have a way to just block calendar availability and change the assigned phone numbers of different clients. Because in the demo, I suspect that he might be like, well, what if that time slot was booked? And then I can just book it and give him like the live test that changing the booking on the debug bench or the owner's view creates a live update in the mock Service Titan CRM, which in real time or near real time with only like a small delay can create a change in how the voice agent works because it's calling the database and other tools.
+Changed: a Schedule tab on the owner view and the bench (block a slot or a window, add an event or a job), a job page (window, type, notes, address; customer name and phone for admins), and on the bench what the agent would offer per window and a live list of changes in ServiceTitan. Every edit goes through the adapter and clears the slot cache (DECISIONS.md 093).
+Commit: (this PR)
+Status: open, look to be reviewed from the screenshots in the PR

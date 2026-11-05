@@ -130,3 +130,5 @@ How the design was reached, in order, so a reader can follow each choice back to
 | Holding line and no silent replies | A short holding line or clip before a look-up; a reply that leaves the caller waiting is asked again at once | DECISIONS.md 096, #149 |
 | Name check and cancel reason | One wrong answer ends the name check with a callback offer; a cancel needs no reason | DECISIONS.md 097, #149 |
 | Name checks per call, plain names and ZIPs | A failed check stays on its call; an old address is found without a guessed ZIP; the caller's name isn't echoed; ZIPs said digit by digit | DECISIONS.md 098, #149 |
+| Lookup prefetch | Measured on the rig, no difference; not merged, code on its branch | DECISIONS.md 092, #153 |
+| Schedule edits, live into the agent | Block a slot or window, add an event or a job, change a job and (admins) a customer's phone from the owner view and the bench; each edit goes through the adapter, is logged with who, and clears the slot cache | DECISIONS.md 093, #152 |

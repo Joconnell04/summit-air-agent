@@ -103,6 +103,11 @@ SPACE_USAGE = {
     "gutter": "The page's side padding.",
     "field-min": "The narrowest a field in a form table gets; on a phone the table scrolls sideways.",
     "icon-sm": "A small inline icon: a disclosure's chevron.",
+    "field-w": "A field set beside buttons in a row of actions.",
+    "pop-w": "A popover: the override form, a schedule cell's actions.",
+    "lane-head-w": "The name column of the day board's lanes and of the schedule's technicians.",
+    "sched-min-w": "Below this width the schedule table scrolls sideways.",
+    "list-max-h": "A list that refreshes in place; taller scrolls inside it.",
 }
 RADIUS_USAGE = {
     "r-sm": "Tags and the active segmented button.",

@@ -111,7 +111,7 @@ error: {{ item.tech.error }}{% endif %}</div>
       <section class="panel compact">
         <div class="panel-head">
           <h2>Job booked</h2>
-          <span class="end source"><img src="/owner/static/servicetitan-logo.svg" alt="ServiceTitan" width="93" height="16">{% if p.booking.fsm_job_id %}Job {{ p.booking.fsm_job_id }}{% else %}not sent yet{% endif %}</span>
+          <span class="end source"><img src="/owner/static/servicetitan-logo.svg" alt="ServiceTitan" width="93" height="16">{% if p.booking.fsm_job_id %}Job {{ p.booking.fsm_job_id }}<a class="btn quiet" href="/owner/jobs/{{ p.booking.fsm_job_id }}?back=/owner/calls/{{ call.id }}">Edit</a>{% else %}not sent yet{% endif %}</span>
         </div>
         <div class="panel-body">
           <dl class="kv">
