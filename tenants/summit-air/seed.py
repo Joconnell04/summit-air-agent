@@ -163,12 +163,16 @@ CALL_REASONS = [
     "Question about my visit",
 ]
 
+# The seeded world books its visits as these runs of blocks, the 4-hour windows it was first built
+# with, so the world (and every eval scenario's) stayed the same when windows became any run of
+# 30-minute blocks.
+SEED_WINDOWS = ("0800-1200", "1200-1600", "1600-2000")
 # Offsets from the start date, and how many normal slots stay open per window (the urgent hold
 # stays on top of that).
 NEARLY_FULL = {
-    2: {"morning": 0, "afternoon": 0, "evening": 0},
-    3: {"morning": 0, "afternoon": 1, "evening": 0},
-    9: {"morning": 1, "afternoon": 1, "evening": 2},
+    2: {"0800-1200": 0, "1200-1600": 0, "1600-2000": 0},
+    3: {"0800-1200": 0, "1200-1600": 1, "1600-2000": 0},
+    9: {"0800-1200": 1, "1200-1600": 1, "1600-2000": 2},
 }
 DAYS_OF_CAPACITY = 14
 
@@ -512,7 +516,7 @@ class World:
             lid,
             NO_HEAT,
             self.work_day,
-            "afternoon",
+            "1200-1600",
             # Booked this morning for the afternoon, so no technician is on the way yet: the
             # caller can still move or cancel it by phone.
             "Scheduled",
@@ -553,7 +557,7 @@ class World:
             lid,
             NO_COOLING,
             done_day,
-            "morning",
+            "0800-1200",
             "Completed",
             tech_id=self.service_techs[3],
             summary="AC not cooling. Replaced capacitor.",
@@ -860,7 +864,7 @@ class World:
                                 p["lid"],
                                 job_type,
                                 day,
-                                rng.choice(["morning", "afternoon", "evening"]),
+                                rng.choice(SEED_WINDOWS),
                                 "Completed",
                                 tech_id=rng.choice(self.service_techs),
                                 summary="Completed visit.",
@@ -903,8 +907,8 @@ class World:
         service_types = [NO_HEAT, NO_COOLING, TUNE_UP, SAFETY_CHECK]
         for offset in range(DAYS_OF_CAPACITY):
             day = self.start + timedelta(days=offset)
-            for window in cfg.windows:
-                if window.after_hours or not cfg.window_offered(day, window):
+            for window in map(cfg.window, SEED_WINDOWS):
+                if not cfg.window_offered(day, window):
                     continue
                 free = capacity.slots(conn, cfg, day, window, SERVICE_UNIT, [])
                 if not free.total:
@@ -946,7 +950,7 @@ class World:
         # Comfort advisors get a light schedule of estimates.
         for offset in range(DAYS_OF_CAPACITY):
             day = self.start + timedelta(days=offset)
-            for window in cfg.windows[:2]:
+            for window in map(cfg.window, SEED_WINDOWS[:2]):
                 if not cfg.window_offered(day, window):
                     continue
                 for tech_id in capacity.slots(

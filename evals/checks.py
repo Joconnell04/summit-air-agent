@@ -16,7 +16,7 @@ from zoneinfo import ZoneInfo
 
 from app import cards
 from app import priority as prio
-from app.tenant import load_agent
+from app.tenant import load_agent, window_from_id
 from app.text import street_key, unit_key, words
 
 TENANT_DIR = Path(__file__).resolve().parent.parent / "tenants" / "summit-air"
@@ -196,7 +196,10 @@ def booking(arg: Any, ev: Evidence) -> list[str]:
             problems.append(f"job type {types}, expected {want['job_type']}")
     if "window" in want:
         windows = [a.get("slot", {}).get("window") for a in booked_args]
-        if want["window"] not in windows:
+        # A part of the day ("morning") matches any window that starts in it; windows are any run
+        # of 30-minute blocks, "0800-1000".
+        parts = [getattr(window_from_id(w or ""), "part", "") for w in windows]
+        if want["window"] not in windows and want["window"] not in parts:
             problems.append(f"window {windows}, expected {want['window']}")
     if "street" in want:
         raw = ev.call.get("readback_json")

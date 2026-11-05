@@ -269,7 +269,7 @@ def today(voice: Voice, clock: Clock, day: date, gas_lines: str, co_lines: str) 
     c = voice.start("c10", "(718) 555-0124")
     voice.caller(c, "Our heat is out and we have a newborn baby at home.")
     voice.read_back(c, "15 Bay Ridge Pkwy", "11209")
-    tomorrow = {"date": (day + timedelta(days=1)).isoformat(), "window": "morning"}
+    tomorrow = {"date": (day + timedelta(days=1)).isoformat(), "window": "0800-1000"}
     voice.book(c, "no_heat", tomorrow, "No heat, newborn at home", who_home="Parents and a newborn")
     voice.end(c)
 

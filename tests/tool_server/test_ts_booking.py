@@ -26,8 +26,8 @@ from app.text import phone_said
 
 AGENT = load_agent(TENANT_DIR)[0]
 
-FULL_DAY = {"date": "2026-11-04", "window": "morning"}  # nearly-full day: no normal slots
-ONE_LEFT = {"date": "2026-11-05", "window": "afternoon"}  # exactly one normal slot open
+FULL_DAY = {"date": "2026-11-04", "window": "0800-1200"}  # nearly-full day: no normal slots
+ONE_LEFT = {"date": "2026-11-05", "window": "1200-1600"}  # exactly one normal slot open
 
 
 def fsm_jobs(mock) -> int:
@@ -325,7 +325,7 @@ def test_a_slot_that_is_not_offered_is_refused(agent):
         book(agent, call, {"date": "2026-11-03", "window": "brunch"})["refused"] == "invalid_slot"
     )
     assert (
-        book(agent, call, {"date": "2027-01-01", "window": "morning"})["refused"] == "invalid_slot"
+        book(agent, call, {"date": "2027-01-01", "window": "0800-1200"})["refused"] == "invalid_slot"
     )
     # Normal jobs never get the after-hours window or the held urgent slots.
     assert (
@@ -344,7 +344,7 @@ def test_an_urgent_job_with_no_window_today_books_tomorrow_and_is_flagged(agent,
     first = found["data"]["first_urgent"]
     if first["day"] == "today":  # the on-call after-hours window is urgent-only, offered tonight
         assert first["window"] == "after_hours"
-    tomorrow = {"date": "2026-11-03", "window": "morning"}
+    tomorrow = {"date": "2026-11-03", "window": "0800-1200"}
     # After hours with an older person at home, the on-call technician is alerted first.
     assert agent.tool("flag_person", call, reason="On-call: no heat, 84 at home", priority="Urgent")[
         "ok"
@@ -383,7 +383,7 @@ def test_a_caller_can_move_their_own_booking_once(agent):
         "reschedule_appointment",
         call,
         booking_id=job_id,
-        slot={"date": "2026-11-06", "window": "morning"},
+        slot={"date": "2026-11-06", "window": "0800-1200"},
         reason="again",
     )
     assert again["refused"] == "limit"
@@ -424,7 +424,7 @@ def test_a_dispatched_visit_is_handed_to_a_person_not_cancelled(agent, tmp_path)
 
 
 AFTER_HOURS = {"hours": 12, "minutes": 30}  # 9:30 p.m. New York
-TOMORROW_MORNING = {"date": "2026-11-03", "window": "morning"}
+TOMORROW_MORNING = {"date": "2026-11-03", "window": "0800-1200"}
 
 
 def test_after_hours_a_cold_house_alerts_the_on_call_technician_before_booking(agent, clock):
@@ -635,17 +635,26 @@ def test_arrival_hours_read_8_to_2_as_daytime_and_offer_only_windows_inside(agen
     )
     assert found["ok"], found
     assert found["data"]["arrival"] == {"after": "08:00", "before": "14:00", "fits": True}
-    assert {w for d in found["data"]["days"] for w in d["windows"]} == {"morning"}
+    windows = [w for d in found["data"]["days"] for w in d["windows"]]
+    assert windows and all("0800" <= w[:4] and w[5:] <= "1400" for w in windows)
+
+
+def test_arrival_hours_narrower_than_a_window_get_a_shorter_one_that_fits(agent):
+    call = ready_to_book(agent)
+    found = agent.tool("find_slots", call, job_type="tune_up", arrive_before="9")
+    assert found["ok"], found
+    assert found["data"]["arrival"]["fits"] is True
+    assert {label for d in found["data"]["days"] for label in d["labels"]} == {"8 to 9"}
 
 
 def test_an_arrival_time_no_window_fits_is_said_plainly_without_a_promise(agent):
     call = ready_to_book(agent)
-    found = agent.tool("find_slots", call, job_type="tune_up", arrive_before="9")
+    found = agent.tool("find_slots", call, job_type="tune_up", arrive_before="8:15")
     assert found["ok"], found
     assert found["data"]["arrival"]["fits"] is False
     assert found["say"].startswith(
-        "Our arrival windows are 8 to 12, 12 to 4 and 4 to 8, and the technician can come any "
-        "time in the window, so I can't promise an exact time."
+        "Our arrival windows are two hours, and the technician can come any time in the window, "
+        "so I can't promise an exact time."
     )
 
 
@@ -1226,8 +1235,8 @@ def test_live_call_2_tomorrow_at_two_is_the_window_that_holds_two(agent):
         arrive_before="5 PM",
     )
     assert found["data"]["arrival"] == {"time": "14:00", "fits": True}
-    assert [w["label"] for w in found["data"]["windows"]] == ["12 to 4"]
-    assert found["say"] == "Tomorrow I have 12 to 4."
+    assert [w["label"] for w in found["data"]["windows"]] == ["2 to 4"]
+    assert found["say"] == "Tomorrow I have 2 to 4."
 
 
 def test_a_named_day_full_this_week_says_so_and_offers_next_weeks_with_its_date():
@@ -1262,8 +1271,8 @@ def test_book_for_tomorrow_at_two_in_a_longer_line_is_the_window_that_holds_it(a
         "find_slots", call, job_type="tune_up", arrive_after="1 PM", arrive_before="3 PM"
     )
     assert found["data"]["arrival"] == {"time": "14:00", "fits": True}
-    assert [w["label"] for w in found["data"]["windows"]] == ["12 to 4"]
-    assert found["say"] == "Tomorrow I have 12 to 4.", "the day comes from the caller's words"
+    assert [w["label"] for w in found["data"]["windows"]] == ["2 to 4"]
+    assert found["say"] == "Tomorrow I have 2 to 4.", "the day comes from the caller's words"
 
 
 def test_a_named_time_outside_visit_hours_says_the_hours_and_offers_the_nearest(agent):
@@ -1271,7 +1280,7 @@ def test_a_named_time_outside_visit_hours_says_the_hours_and_offers_the_nearest(
     agent.turn(call, "Tomorrow at 8 PM works.")
     found = agent.tool("find_slots", call, job_type="tune_up", arrive_after="8 PM")
     assert found["data"]["arrival"]["fits"] is False
-    assert found["say"] == "Our visits run from 8 AM to 8 PM. Tomorrow I have 4 to 8."
+    assert found["say"] == "Our visits run from 8 AM to 8 PM. Tomorrow I have 6 to 8."
 
 
 # ---- all five boroughs (Jackson's call on the Retell number) ------------------------------------
@@ -1365,3 +1374,32 @@ def test_a_caller_who_says_they_are_someone_else_is_booked_as_a_new_customer(
     assert customer["id"] != maria["customerId"]
     assert customer["name"] == "Jordan Lee"
     assert [c["memo"] for c in customer["contacts"]] == ["Jordan Lee"]
+
+
+def test_a_named_half_hour_gets_a_window_from_then_cut_at_closing(agent):
+    """Jackson on Retell call call_9826ff9f0dfa8bc835a3601368b asked for 7:30 and heard "4 to 8";
+    a named time now starts the window at the half hour on or before it."""
+    call = ready_to_book(agent)
+    agent.turn(call, "Tomorrow at 7:30 PM works.")
+    found = agent.tool("find_slots", call, job_type="tune_up")
+    assert found["data"]["arrival"] == {"time": "19:30", "fits": True}
+    assert found["say"] == "Tomorrow I have 7:30 to 8."
+
+
+def test_a_caller_can_ask_for_a_shorter_window(agent):
+    call = ready_to_book(agent)
+    found = agent.tool("find_slots", call, job_type="tune_up", day="tomorrow", window_minutes=60)
+    assert found["ok"], found
+    assert all(
+        int(w["window"][5:7]) * 60 + int(w["window"][7:]) - int(w["window"][:2]) * 60
+        - int(w["window"][2:4]) == 60
+        for w in found["data"]["windows"]
+    )
+
+
+def test_the_default_offer_is_the_earliest_open_two_hour_window(agent):
+    call = ready_to_book(agent)
+    found = agent.tool("find_slots", call, job_type="tune_up")
+    window = found["data"]["offer"]["window"]
+    start, end = int(window[:2]) * 60 + int(window[2:4]), int(window[5:7]) * 60 + int(window[7:])
+    assert end - start == 120

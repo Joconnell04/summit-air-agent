@@ -47,7 +47,8 @@ def test_most_windows_open_weekends_included_and_named_visits_stay(seeded, tmp_p
     # Friday the 6th was nearly full in the seed; Sunday the 8th had nobody on.
     for day in (date(2026, 11, 6), date(2026, 11, 7), date(2026, 11, 8)):
         windows = free(db, day)
-        assert set(windows) == {"morning", "afternoon", "evening"}, day
+        assert set(windows) == {"0800-1000", "1000-1200", "1200-1400", "1400-1600", "1600-1800",
+                                "1800-2000"}, day
         for opened, total in windows.values():
             assert total and opened / total > 0.6, (day, windows)
     conn = sqlite3.connect(db)

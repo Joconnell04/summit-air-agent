@@ -23,11 +23,11 @@ def test_every_kind_of_failure_uses_one_json_shape(small):
         400: api.post("/jpm/jobs", {"customerId": "not a number"}),
         404: api.get("/crm/customers/99999"),
         409: None,
-        422: api.post("/jpm/jobs", job_body(*ids["home"], TOMORROW, "morning", job_type=999)),
+        422: api.post("/jpm/jobs", job_body(*ids["home"], TOMORROW, "0800-1200", job_type=999)),
     }
     for _ in range(3):  # all three technicians
-        api.post("/jpm/jobs", job_body(customer_id, location_id, TOMORROW, "morning"))
-    failures[409] = api.post("/jpm/jobs", job_body(customer_id, location_id, TOMORROW, "morning"))
+        api.post("/jpm/jobs", job_body(customer_id, location_id, TOMORROW, "0800-1200"))
+    failures[409] = api.post("/jpm/jobs", job_body(customer_id, location_id, TOMORROW, "0800-1200"))
     failures[401] = api.client.get(api.url("/crm/customers"))
     failures[403] = api.client.get(
         api.url("/crm/customers"), headers={**api.headers, "ST-App-Key": "wrong"}
@@ -130,13 +130,13 @@ def test_logs_can_be_filtered_by_call_id_request_id_and_errors(small):
     customer_id, location_id = ids["home"]
     api.post(
         "/jpm/jobs",
-        job_body(customer_id, location_id, TOMORROW, "morning"),
+        job_body(customer_id, location_id, TOMORROW, "0800-1200"),
         key="a",
         **{"X-Call-Id": "call-A"},
     )
     failed = api.post(
         "/jpm/jobs",
-        job_body(customer_id, location_id, TOMORROW, "morning", job_type=999),
+        job_body(customer_id, location_id, TOMORROW, "0800-1200", job_type=999),
         **{"X-Call-Id": "call-A"},
     )
     api.get("/crm/customers")
@@ -213,9 +213,12 @@ def test_the_arrival_windows_are_listed_the_way_servicetitan_lists_them(small):
     api, _ = small
     windows = api.get("/dispatch/arrival-windows").json()["data"]
     assert [(w["start"], w["duration"]) for w in windows] == [
-        ("08:00:00", "04:00:00"),
-        ("12:00:00", "04:00:00"),
-        ("16:00:00", "04:00:00"),
+        ("08:00:00", "02:00:00"),
+        ("10:00:00", "02:00:00"),
+        ("12:00:00", "02:00:00"),
+        ("14:00:00", "02:00:00"),
+        ("16:00:00", "02:00:00"),
+        ("18:00:00", "02:00:00"),
         ("20:00:00", "12:00:00"),
     ]
     assert set(windows[0]) == {"id", "start", "duration", "businessUnitIds", "active"}
@@ -325,17 +328,17 @@ def test_membership_visit_names_come_from_the_config(tmp_path):
 def test_the_urgent_hold_comes_from_the_config(tmp_path):
     cfg = tenant_copy(
         tmp_path,
-        lambda c: c["urgent_hold"].update(business_unit_ids=[12], per_day={"tue": {"morning": 1}}),
+        lambda c: c["urgent_hold"].update(business_unit_ids=[12], per_day={"tue": 1}),
     )
     tuesday, wednesday = date(2026, 11, 3), date(2026, 11, 4)
-    assert cfg.hold_for(tuesday, "morning", 12) == 1
-    assert cfg.hold_for(tuesday, "morning", 11) == 0  # business unit not listed
-    assert cfg.hold_for(tuesday, "afternoon", 12) == 0  # window not listed
-    assert cfg.hold_for(wednesday, "morning", 12) == 0  # day not listed
+    assert cfg.hold_for(tuesday, "0800-1200", 12) == 1
+    assert cfg.hold_for(tuesday, "1230-1300", 12) == 1  # every block of the day
+    assert cfg.hold_for(tuesday, "0800-1200", 11) == 0  # business unit not listed
+    assert cfg.hold_for(wednesday, "0800-1200", 12) == 0  # day not listed
     summit = TenantConfig.load(TENANT_DIR)
-    assert summit.hold_for(tuesday, "morning", 11) == 2
-    assert summit.hold_for(date(2026, 11, 7), "morning", 11) == 1  # Saturday
-    assert summit.hold_for(date(2026, 11, 8), "morning", 11) == 1  # Sunday, open since issue #149
+    assert summit.hold_for(tuesday, "0800-1200", 11) == 2
+    assert summit.hold_for(date(2026, 11, 7), "0800-1200", 11) == 1  # Saturday
+    assert summit.hold_for(date(2026, 11, 8), "0800-1200", 11) == 1  # Sunday, open since issue #149
 
 
 def test_debug_logs_limit_must_be_from_1_to_1000(small):

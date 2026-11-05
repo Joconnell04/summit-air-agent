@@ -9,7 +9,7 @@ world:
   job_type: no_heat
   fill: ["2026-11-02", "2026-11-03"]
   keep_open:
-    - {date: "2026-11-02", window: afternoon, technicians: 1}
+    - {date: "2026-11-02", window: "1200-1400", technicians: 1}
 callers:
   - caller_id: "(332) 555-0161"
     persona: Janelle Brooks, a homeowner in Bay Ridge, Brooklyn, calling during a cold snap. Polite, quick, wants someone today if at all possible.
@@ -49,7 +49,7 @@ must:
 together:
   - booked_together: true
   - one_job_per_technician_window: true
-  - window_jobs: {date: "2026-11-02", window: afternoon, count: 1}
+  - window_jobs: {date: "2026-11-02", window: "1200-1400", count: 1}
   - taken_refusals: 1
 should:
   - The caller who lost the window hears it plainly, once, without blame, and is offered the next opening right away.

@@ -358,11 +358,11 @@ def _resolve_window(cfg: TenantConfig, now: datetime, start: datetime, end: date
     Who may take an after-hours window is the company's rule, not the mock's."""
     matched = cfg.match_window(start, end)
     if not matched:
-        names = ", ".join(w.id for w in cfg.windows)
         raise ApiError(
             400,
             "invalid_window",
-            f"arrivalWindowStart and arrivalWindowEnd must match one of the configured windows ({names}).",
+            "arrivalWindowStart and arrivalWindowEnd must be whole "
+            f"{cfg.block_minutes}-minute blocks on one day, or the night window.",
             {"arrivalWindowStart": "no matching window"},
         )
     day, window = matched

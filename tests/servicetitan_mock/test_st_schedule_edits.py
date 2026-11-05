@@ -6,7 +6,7 @@ from conftest import CFG, TOMORROW, TUNE_UP, capacity_frame, job_body, open_slot
 from servicetitan_mock.db import add_missing_tables, connect, create_schema
 
 
-def _block(api, technician_id: int, window_id: str = "morning", **extra):
+def _block(api, technician_id: int, window_id: str = "0800-1200", **extra):
     start, end = CFG.window_bounds(TOMORROW, CFG.window(window_id))
     hours = int((end - start).total_seconds() // 3600)
     body = {
@@ -22,25 +22,25 @@ def _block(api, technician_id: int, window_id: str = "morning", **extra):
 
 def test_a_block_takes_its_technician_out_of_the_window_and_only_that_window(small):
     api, _ = small
-    assert open_slots(api, TOMORROW, "morning") == 3
+    assert open_slots(api, TOMORROW, "0800-1200") == 3
     made = _block(api, 7001)
     assert made.status_code == 200, made.text
     assert made.json()["duration"] == "04:00:00" and made.json()["active"] is True
-    frame = capacity_frame(api, TOMORROW, "morning")
+    frame = capacity_frame(api, TOMORROW, "0800-1200")
     assert {t["id"]: t["status"] for t in frame["technicians"]}[7001] == "Unavailable"
-    assert open_slots(api, TOMORROW, "morning") == 2
-    assert open_slots(api, TOMORROW, "afternoon") == 3
+    assert open_slots(api, TOMORROW, "0800-1200") == 2
+    assert open_slots(api, TOMORROW, "1200-1600") == 3
 
 
 def test_a_job_cannot_be_booked_with_a_blocked_technician(small):
     api, ids = small
     for tech in (7001, 7002, 7003):
         _block(api, tech)
-    booked = api.post("/jpm/jobs", job_body(*ids["home"], TOMORROW, "morning"))
+    booked = api.post("/jpm/jobs", job_body(*ids["home"], TOMORROW, "0800-1200"))
     assert booked.status_code == 409
     chosen = api.post(
-        "/jpm/jobs", job_body(*ids["home"], TOMORROW, "afternoon", appointments=[
-            {**job_body(*ids["home"], TOMORROW, "afternoon")["appointments"][0],
+        "/jpm/jobs", job_body(*ids["home"], TOMORROW, "1200-1600", appointments=[
+            {**job_body(*ids["home"], TOMORROW, "1200-1600")["appointments"][0],
              "technicianIds": [7001]}
         ])
     )
@@ -55,7 +55,7 @@ def test_a_block_taken_off_the_schedule_frees_the_window_and_stays_listed(small)
         "PUT", f"/dispatch/non-job-appointments/{made['id']}", json={**body, "active": False}
     )
     assert off.status_code == 200 and off.json()["active"] is False
-    assert open_slots(api, TOMORROW, "morning") == 3
+    assert open_slots(api, TOMORROW, "0800-1200") == 3
     assert api.get("/dispatch/non-job-appointments").json()["data"] == []
     every = api.get("/dispatch/non-job-appointments", activeOnly="false").json()["data"]
     assert [b["id"] for b in every] == [made["id"]]
@@ -65,7 +65,7 @@ def test_a_block_taken_off_the_schedule_frees_the_window_and_stays_listed(small)
 def test_a_block_that_leaves_capacity_alone_is_only_on_the_schedule(small):
     api, _ = small
     _block(api, 7001, removeTechnicianFromCapacityPlanning=False)
-    assert open_slots(api, TOMORROW, "morning") == 3
+    assert open_slots(api, TOMORROW, "0800-1200") == 3
 
 
 def test_a_block_needs_a_real_technician_and_a_sensible_length(small):
@@ -80,8 +80,8 @@ def test_a_block_needs_a_real_technician_and_a_sensible_length(small):
 def test_blocks_list_by_start_and_technician(small):
     api, _ = small
     _block(api, 7001)
-    _block(api, 7002, "afternoon")
-    start, _ = CFG.window_bounds(TOMORROW, CFG.window("afternoon"))
+    _block(api, 7002, "1200-1600")
+    start, _ = CFG.window_bounds(TOMORROW, CFG.window("1200-1600"))
     later = api.get("/dispatch/non-job-appointments", startsOnOrAfter=start.isoformat()).json()
     assert [b["technicianId"] for b in later["data"]] == [7002]
     mine = api.get("/dispatch/non-job-appointments", technicianId=7001).json()["data"]
@@ -90,7 +90,7 @@ def test_blocks_list_by_start_and_technician(small):
 
 def test_a_job_changes_type_priority_and_summary_in_place(small):
     api, ids = small
-    job = api.post("/jpm/jobs", job_body(*ids["home"], TOMORROW, "morning")).json()
+    job = api.post("/jpm/jobs", job_body(*ids["home"], TOMORROW, "0800-1200")).json()
     patched = api.request(
         "PATCH",
         f"/jpm/jobs/{job['id']}",
@@ -105,7 +105,7 @@ def test_a_job_changes_type_priority_and_summary_in_place(small):
 
 def test_a_job_type_from_another_business_unit_is_refused(small):
     api, ids = small
-    job = api.post("/jpm/jobs", job_body(*ids["home"], TOMORROW, "morning")).json()
+    job = api.post("/jpm/jobs", job_body(*ids["home"], TOMORROW, "0800-1200")).json()
     moved = api.request("PATCH", f"/jpm/jobs/{job['id']}", json={"jobTypeId": 205})
     assert moved.status_code == 422
     assert api.get(f"/jpm/jobs/{job['id']}").json()["jobTypeId"] == TUNE_UP
@@ -182,11 +182,11 @@ def test_an_existing_world_gains_the_new_table_without_losing_its_data(tmp_path)
 
 def test_a_block_over_a_technicians_visit_is_refused(small):
     api, ids = small
-    booked = api.post("/jpm/jobs", job_body(*ids["home"], TOMORROW, "morning", appointments=[
-        {**job_body(*ids["home"], TOMORROW, "morning")["appointments"][0], "technicianIds": [7001]}
+    booked = api.post("/jpm/jobs", job_body(*ids["home"], TOMORROW, "0800-1200", appointments=[
+        {**job_body(*ids["home"], TOMORROW, "0800-1200")["appointments"][0], "technicianIds": [7001]}
     ]))
     assert booked.status_code == 200
     refused = _block(api, 7001)
     assert refused.status_code == 409 and refused.json()["data"]["code"] == "technician_busy"
     assert _block(api, 7002).status_code == 200
-    assert _block(api, 7001, "afternoon").status_code == 200
+    assert _block(api, 7001, "1200-1600").status_code == 200

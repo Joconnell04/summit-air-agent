@@ -409,14 +409,14 @@ def test_a_second_unit_needs_its_own_read_back_and_books_there(agent):
 def test_no_opening_for_the_second_job_asks_for_a_named_callback(agent, monkeypatch):
     call = ready_to_book(agent)
     assert book(agent, call, first_open(agent, call, "no_heat"), job_type="no_heat")["ok"]
-    monkeypatch.setattr("app.tools._open_windows", lambda ctx, job_type, level: [])
+    monkeypatch.setattr("app.tools._open_windows", lambda *args, **kwargs: [])
     found = agent.tool("find_slots", call, job_type="tune_up")
     assert "flag_person" in found["data"]["need"]
 
 
 def test_no_opening_on_a_first_job_has_no_second_job_note(agent, monkeypatch):
     call = ready_to_book(agent)
-    monkeypatch.setattr("app.tools._open_windows", lambda ctx, job_type, level: [])
+    monkeypatch.setattr("app.tools._open_windows", lambda *args, **kwargs: [])
     assert "need" not in agent.tool("find_slots", call, job_type="tune_up")["data"]
 
 

@@ -189,7 +189,7 @@ def test_the_out_of_area_customer_exists_and_the_mock_does_not_refuse_the_bookin
     zips = {z for zone in api.get("/dispatch/zones").json()["data"] for z in zone["zips"]}
     assert "11501" not in zips
     response = api.post(
-        "/jpm/jobs", job_body(whitman["customerId"], whitman["locationId"], TOMORROW, "afternoon")
+        "/jpm/jobs", job_body(whitman["customerId"], whitman["locationId"], TOMORROW, "1200-1600")
     )
     assert response.status_code == 200
 
@@ -267,7 +267,7 @@ def test_two_weeks_of_capacity_with_some_days_nearly_full(world):
             continue
         by_day.setdefault(frame["start"][:10], {})[frame["start"][11:13]] = free(frame)
     assert "2026-11-02" in by_day and "2026-11-14" in by_day
-    hold = CFG.hold_for(date(2026, 11, 4), "morning", 11)
+    hold = CFG.hold_for(date(2026, 11, 4), "0800-1200", 11)
     assert all(count == hold for count in by_day["2026-11-04"].values()), by_day["2026-11-04"]
     assert max(sum(d.values()) for d in by_day.values()) > 20
     assert set(scenarios["nearlyFullDays"]) == {"2026-11-04", "2026-11-05", "2026-11-11"}
@@ -290,14 +290,14 @@ def test_a_booking_in_the_full_world_works_end_to_end(world):
     api, scenarios = world
     park = scenarios["activeMemberWithAdultChild"]
 
-    before = open_slots(api, TOMORROW, "afternoon")
+    before = open_slots(api, TOMORROW, "1200-1600")
     response = api.post(
         "/jpm/jobs",
-        job_body(park["customerId"], park["locationId"], TOMORROW, "afternoon"),
+        job_body(park["customerId"], park["locationId"], TOMORROW, "1200-1600"),
         key="x",
     )
     assert response.status_code == 200
-    assert open_slots(api, TOMORROW, "afternoon") == before - 1
+    assert open_slots(api, TOMORROW, "1200-1600") == before - 1
 
 
 def test_the_seed_is_deterministic(tmp_path):

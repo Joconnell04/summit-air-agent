@@ -125,7 +125,7 @@ def test_bookings_show_window_priority_reasons_and_the_earlier_slot_search(agent
     clock.advance(minutes=5)
     call = ready_to_book(agent, caller(2))
     agent.turn(call, "My 84-year-old parent lives with me and it's 52 in here.")
-    tomorrow = {"date": "2026-11-03", "window": "morning"}
+    tomorrow = {"date": "2026-11-03", "window": "0800-1200"}
     assert book(agent, call, tomorrow, job_type="no_heat", inside_temp_f=52)["ok"]
     urgent, routine = page(agent)["bookings"]
     assert urgent["priority"] == "Urgent"
@@ -211,7 +211,7 @@ def test_booked_and_kept_over_thirty_days(agent, clock):
     calls = []
     for n in range(1, 4):
         call = ready_to_book(agent, caller(n))
-        job_id = book(agent, call, {"date": "2026-11-03", "window": "morning"})["data"][
+        job_id = book(agent, call, {"date": "2026-11-03", "window": "0800-1200"})["data"][
             "booking_id"
         ]
         calls.append((call, job_id))

@@ -496,9 +496,9 @@ lines:
   return_visit_review: >-
     Since we were just out there, a manager will look over this visit, including whether it's
     covered, before the technician arrives.
-  # {windows} is the arrival windows, such as "8 to 12, 12 to 4 and 4 to 8".
+  # {length} is the usual window length, such as "two hours".
   arrival_no_fit: >-
-    Our arrival windows are {windows}, and the technician can come any time in the window, so I
+    Our arrival windows are {length}, and the technician can come any time in the window, so I
     can't promise an exact time.
   # Said once when the server marks a call Urgent (spec S-21a). Below Urgent, no priority is named.
   urgent_priority: I've marked this call top priority, so you get our soonest opening.

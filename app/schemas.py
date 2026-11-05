@@ -168,6 +168,14 @@ class FindSlotsIn(CallRef):
     priority: Priority | None = Field(None, description="The agent's view; logged, not used")
     preferred_days: list[str] = Field(default_factory=list, max_length=7)
     time_of_day: Literal["morning", "afternoon", "evening"] | None = None
+    window_minutes: int | None = Field(
+        None,
+        ge=30,
+        le=720,
+        multiple_of=30,
+        description="How long a window the caller wants, in minutes, when they name one (\"an "
+        "hour\", \"a 3-hour window\"); left out, the company's usual length",
+    )
     day: dt.date | str | None = Field(
         None,
         description="Ask for one day's exact windows: a date, or today, tomorrow or a weekday name",

@@ -19,7 +19,7 @@ from itertools import pairwise
 from . import booking, geocode, heads_up, lookup, outbound, pace, records, safety, transfer, weather
 from . import capacity as capacity_rules
 from . import priority as prio
-from .db import iso, tx
+from .db import iso, parse_iso, tx
 from .envelope import Refused, Result, ok
 from .fsm import FsmAdapter, FsmRejected, FsmUnavailable, SlotCache
 from .lifecycle import approval_unclear
@@ -758,8 +758,12 @@ def open_windows(
     now: datetime,
     job_type: dict,
     level: str,
+    minutes: int | None = None,
+    start_at: time | None = None,
 ) -> list[dict]:
-    """Open windows from now to the end of the booking range, earliest first. ServiceTitan's time
+    """Open windows from now to the end of the booking range, earliest first: runs of `minutes`
+    (the tenant's window length by default) on the company's 30-minute blocks, or with `start_at`,
+    the run starting then (app/capacity.py). ServiceTitan's time
     frames come through the cache, and the company's rules (urgent holds, after-hours) are applied
     for this priority (app/capacity.py). Also used by the job that offers earlier openings, so
     both read the same cached capacity."""
@@ -773,11 +777,28 @@ def open_windows(
         return fsm.capacity(now, range_end, unit, job_type["id"])
 
     frames = cache.get((tenant.slug, job_type["code"], today), fetch)
-    return capacity_rules.open_windows(tenant, frames, level, today, end_day)
+    found = capacity_rules.open_windows(tenant, frames, level, today, end_day, minutes, start_at)
+    # A daytime window that starts this minute is no window to offer: there is no time to get
+    # there, and a call before it (an approval check) would have no room.
+    return [w for w in found if w["after_hours"] or parse_iso(w["start"]) > now]
 
 
-def _open_windows(ctx: Ctx, job_type: dict, level: str) -> list[dict]:
-    return open_windows(ctx.tenant, ctx.fsm, ctx.cache, ctx.now, job_type, level)
+def _open_windows(
+    ctx: Ctx, job_type: dict, level: str, minutes: int | None = None, start_at: time | None = None
+) -> list[dict]:
+    return open_windows(
+        ctx.tenant, ctx.fsm, ctx.cache, ctx.now, job_type, level, minutes, start_at
+    )
+
+
+def _tiled(windows: list[dict]) -> list[dict]:
+    """Windows that don't overlap, earliest first, for a day said as a list: "8 to 10, 10 to 12
+    or 12 to 2", not every half-hour start."""
+    kept: list[dict] = []
+    for window in sorted(windows, key=lambda w: (w["start"], w["end"])):
+        if not kept or window["after_hours"] or window["start"] >= kept[-1]["end"]:
+            kept.append(window)
+    return kept
 
 
 def _describe(ctx: Ctx, window: dict) -> dict:
@@ -798,6 +819,7 @@ def _describe(ctx: Ctx, window: dict) -> dict:
         "day": day_word,
         "day_and_date": dated if day_word == weekday else f"{day_word}, {dated}",
         "label": spec.label() if spec else window["window"],
+        "part": spec.part if spec else "",
         "after_hours": window["after_hours"],
     }
 
@@ -1705,7 +1727,8 @@ def find_slots(ctx: Ctx, args: FindSlotsIn) -> Result:
     job_type = _job_type(ctx, args.job_type)
     found = _priority(ctx, args.job_type, args.facts.inside_temp_f)
     facts, decided = found.facts, found.priority
-    windows = _open_windows(ctx, job_type, decided.level)
+    length = args.window_minutes
+    windows = _open_windows(ctx, job_type, decided.level, length)
     priority = {
         "level": decided.level,
         "reasons": decided.reasons,
@@ -1728,7 +1751,13 @@ def find_slots(ctx: Ctx, args: FindSlotsIn) -> Result:
         # One time the caller named ("tomorrow at two PM") is the window that holds it, not a
         # limit on when the technician may come: live call 2 passed 1 PM to 5 PM, which no 4-hour
         # window fits, and heard that tomorrow had no openings (issue #149).
-        holding = [w for w in windows if _window_holds(ctx, w, named)]
+        # The window starts at the half hour on or before the time, its usual length, cut short at
+        # closing time: "7:30" gives 7:30 to 8 (Jackson after Retell call
+        # call_9826ff9f0dfa8bc835a3601368b, who asked for 7:30 and heard "4 to 8").
+        step = ctx.tenant.block_minutes
+        starts = time(named.hour, named.minute - named.minute % step)
+        exact = _open_windows(ctx, job_type, decided.level, length, starts)
+        holding = exact or [w for w in windows if _window_holds(ctx, w, named)]
         data["arrival"] = {"time": named.strftime("%H:%M"), "fits": bool(holding)}
         if holding:
             windows = holding
@@ -1740,6 +1769,9 @@ def find_slots(ctx: Ctx, args: FindSlotsIn) -> Result:
     elif args.arrive_after or args.arrive_before:
         after, before = _arrival_hours(args)
         fitting = [w for w in windows if _window_inside(ctx, w, after, before)]
+        if not fitting:
+            # Narrower than a usual window ("before 9"): a shorter run of blocks that fits.
+            fitting = _short_windows(ctx, job_type, decided.level, after, before)
         data["arrival"] = {
             "after": after.strftime("%H:%M") if after else None,
             "before": before.strftime("%H:%M") if before else None,
@@ -1748,8 +1780,8 @@ def find_slots(ctx: Ctx, args: FindSlotsIn) -> Result:
         if fitting:
             windows = fitting
         else:
-            labels = _join([w.label() for w in ctx.tenant.windows if not w.after_hours], "and")
-            arrival_say = ctx.tenant.line("arrival_no_fit", windows=labels) + " "
+            length = _minutes_said(args.window_minutes or ctx.tenant.window_minutes)
+            arrival_say = ctx.tenant.line("arrival_no_fit", length=length) + " "
     # From here the caller hears a window or the wait; a fact they first give after it is flagged.
     with tx(ctx.conn):
         ctx.conn.execute(
@@ -1784,7 +1816,9 @@ def find_slots(ctx: Ctx, args: FindSlotsIn) -> Result:
         data["seek_earlier"] = first["day"] != "today"
 
     if args.day:
-        on_day = [_describe(ctx, w) for w in windows if w["date"] == args.day.isoformat()]
+        on_day = [
+            _describe(ctx, w) for w in _tiled(windows) if w["date"] == args.day.isoformat()
+        ]
         data["windows"] = on_day
         if not on_day:
             _keep_second_job(ctx, data)
@@ -1795,7 +1829,7 @@ def find_slots(ctx: Ctx, args: FindSlotsIn) -> Result:
         )
 
     by_day: dict[str, list[dict]] = {}
-    for window in windows:
+    for window in _tiled(windows):
         by_day.setdefault(window["date"], []).append(_describe(ctx, window))
     preferred = {d.lower() for d in args.preferred_days}
     dates = sorted(by_day)
@@ -1940,6 +1974,38 @@ def _arrival_hours(args: FindSlotsIn) -> tuple[time | None, time | None]:
             errors={"arrive_before": "ends before it starts"},
         )
     return after, before
+
+
+def _minutes_said(minutes: int) -> str:
+    """ "two hours", "an hour", "an hour and a half", "30 minutes"."""
+    hours, rest = divmod(minutes, 60)
+    words = {1: "an hour", 2: "two hours", 3: "three hours", 4: "four hours"}
+    if not hours:
+        return f"{rest} minutes"
+    said = words.get(hours, f"{hours} hours")
+    return f"{said} and a half" if rest == 30 and hours == 1 else (
+        said if not rest else f"{said} and {rest} minutes"
+    )
+
+
+def _short_windows(
+    ctx: Ctx, job_type: dict, level: str, after: time | None, before: time | None
+) -> list[dict]:
+    """Windows inside the caller's arrival hours when no usual-length one fits: from the later of
+    `after` and opening, rounded up to a block, to `before` rounded down."""
+    regular = [w for w in ctx.tenant.windows if not w.after_hours]
+    step = ctx.tenant.block_minutes
+    lo = max(after or regular[0].start, regular[0].start)
+    hi = min(before or regular[-1].end, regular[-1].end)
+    lo_min = -(-(lo.hour * 60 + lo.minute) // step) * step
+    hi_min = (hi.hour * 60 + hi.minute) // step * step
+    if hi_min - lo_min < step:
+        return []
+    starts = time(lo_min // 60, lo_min % 60)
+    return [
+        w for w in _open_windows(ctx, job_type, level, hi_min - lo_min, starts)
+        if _window_inside(ctx, w, after, before)
+    ]
 
 
 def _distance_to(ctx: Ctx, window: dict, moment: time) -> float:

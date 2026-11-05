@@ -26,7 +26,7 @@ from conftest import (
 )
 
 
-def book(api, ids, window="morning", key=None, who="home", **extra):
+def book(api, ids, window="0800-1200", key=None, who="home", **extra):
     customer_id, location_id = ids[who]
     return api.post(
         "/jpm/jobs", job_body(customer_id, location_id, TOMORROW, window, **extra), key=key
@@ -44,7 +44,7 @@ def technician_of(api, appointment_id):
 
 def test_booking_creates_a_job_and_takes_capacity(small):
     api, ids = small
-    assert open_slots(api, TOMORROW, "morning") == 3
+    assert open_slots(api, TOMORROW, "0800-1200") == 3
     response = book(api, ids)
     assert response.status_code == 200, "ServiceTitan answers a create with 200"
     job = response.json()
@@ -53,13 +53,13 @@ def test_booking_creates_a_job_and_takes_capacity(small):
     assert appointment["status"] == "Scheduled"
     assert "technicianIds" not in appointment, "assignments are read from dispatch"
     assert technician_of(api, appointment["id"]) in (7001, 7002, 7003)
-    assert open_slots(api, TOMORROW, "morning") == 2
+    assert open_slots(api, TOMORROW, "0800-1200") == 2
 
 
 def test_a_job_needs_the_appointment_start_and_end_priority_and_a_campaign(small):
     api, ids = small
     customer_id, location_id = ids["home"]
-    body = job_body(customer_id, location_id, TOMORROW, "morning")
+    body = job_body(customer_id, location_id, TOMORROW, "0800-1200")
     for field in ("start", "end"):
         without = {**body, "appointments": [{**body["appointments"][0]}]}
         del without["appointments"][0][field]
@@ -69,7 +69,7 @@ def test_a_job_needs_the_appointment_start_and_end_priority_and_a_campaign(small
             api.post("/jpm/jobs", {k: v for k, v in body.items() if k != field}).status_code == 400
         )
     # The arrival window is optional: start and end name the window when it is left out.
-    times = window_times(TOMORROW, "morning")
+    times = window_times(TOMORROW, "0800-1200")
     only = {**body, "appointments": [{"start": times["start"], "end": times["end"]}]}
     assert api.post("/jpm/jobs", only).status_code == 200
 
@@ -84,13 +84,13 @@ def test_same_idempotency_key_returns_the_first_booking(small):
     assert second.headers["Idempotent-Replayed"] == "true"
     assert "Idempotent-Replayed" not in first.headers
     assert api.get("/jpm/jobs").json()["totalCount"] == 1
-    assert open_slots(api, TOMORROW, "morning") == 2
+    assert open_slots(api, TOMORROW, "0800-1200") == 2
 
 
 def test_idempotency_key_with_a_different_body_is_rejected(small):
     api, ids = small
     book(api, ids, key="k1")
-    response = book(api, ids, key="k1", window="afternoon")
+    response = book(api, ids, key="k1", window="1200-1600")
     assert response.status_code == 422
     assert response.json()["data"]["code"] == "idempotency_key_reused"
 
@@ -136,7 +136,7 @@ def test_eight_parallel_bookings_for_one_named_technician_one_wins(small):
     customer_id, location_id = ids["home"]
 
     def attempt(i):
-        body = job_body(customer_id, location_id, TOMORROW, "afternoon", priority="Urgent")
+        body = job_body(customer_id, location_id, TOMORROW, "1200-1600", priority="Urgent")
         body["appointments"][0]["technicianIds"] = [7002]
         return api.post("/jpm/jobs", body, key=f"named-{i}")
 
@@ -166,14 +166,14 @@ def test_database_refuses_a_second_live_appointment_for_one_slot(tmp_path):
 def test_cancel_gives_the_capacity_back(small):
     api, ids = small
     job = book(api, ids).json()
-    assert open_slots(api, TOMORROW, "morning") == 2
+    assert open_slots(api, TOMORROW, "0800-1200") == 2
     cancelled = api.request(
         "PUT", f"/jpm/jobs/{job['id']}/cancel", json={"reasonId": 401, "memo": "changed mind"}
     )
     assert cancelled.status_code == 200
     assert cancelled.json() == {}, "the real cancel answers with no body"
     assert api.get(f"/jpm/jobs/{job['id']}").json()["jobStatus"] == "Canceled"
-    assert open_slots(api, TOMORROW, "morning") == 3
+    assert open_slots(api, TOMORROW, "0800-1200") == 3
     again = api.request("PUT", f"/jpm/jobs/{job['id']}/cancel", json={"reasonId": 401, "memo": "x"})
     assert again.status_code == 200
     assert appointment_of(api, job["id"])["status"] == "Canceled"
@@ -193,31 +193,31 @@ def test_a_finished_job_cannot_be_cancelled(world):
 
 def test_reschedule_moves_capacity_from_one_window_to_the_other(small):
     api, ids = small
-    job = book(api, ids, window="morning").json()
+    job = book(api, ids, window="0800-1200").json()
     appointment = appointment_of(api, job["id"])
-    assert (open_slots(api, TOMORROW, "morning"), open_slots(api, TOMORROW, "afternoon")) == (2, 3)
+    assert (open_slots(api, TOMORROW, "0800-1200"), open_slots(api, TOMORROW, "1200-1600")) == (2, 3)
     moved = api.request(
         "PATCH",
         f"/jpm/appointments/{appointment['id']}/reschedule",
-        json=window_times(TOMORROW, "afternoon"),
+        json=window_times(TOMORROW, "1200-1600"),
     )
     assert moved.status_code == 200
     assert (
         moved.json()["arrivalWindowStart"]
-        == window_times(TOMORROW, "afternoon")["arrivalWindowStart"]
+        == window_times(TOMORROW, "1200-1600")["arrivalWindowStart"]
     )
-    assert (open_slots(api, TOMORROW, "morning"), open_slots(api, TOMORROW, "afternoon")) == (3, 2)
+    assert (open_slots(api, TOMORROW, "0800-1200"), open_slots(api, TOMORROW, "1200-1600")) == (3, 2)
 
 
 def test_reschedule_keeps_the_technician_when_that_technician_is_free(small):
     api, ids = small
-    job = book(api, ids, window="morning").json()
+    job = book(api, ids, window="0800-1200").json()
     appointment = appointment_of(api, job["id"])
     before = technician_of(api, appointment["id"])
     api.request(
         "PATCH",
         f"/jpm/appointments/{appointment['id']}/reschedule",
-        json=window_times(TOMORROW, "afternoon"),
+        json=window_times(TOMORROW, "1200-1600"),
     )
     assert technician_of(api, appointment["id"]) == before
 
@@ -225,23 +225,23 @@ def test_reschedule_keeps_the_technician_when_that_technician_is_free(small):
 def test_reschedule_into_a_full_window_leaves_the_booking_alone(small):
     api, ids = small
     for _ in range(3):
-        book(api, ids, window="afternoon")
-    job = book(api, ids, window="morning").json()
+        book(api, ids, window="1200-1600")
+    job = book(api, ids, window="0800-1200").json()
     appointment = appointment_of(api, job["id"])
     response = api.request(
         "PATCH",
         f"/jpm/appointments/{appointment['id']}/reschedule",
-        json=window_times(TOMORROW, "afternoon"),
+        json=window_times(TOMORROW, "1200-1600"),
     )
     assert response.status_code == 409
     unchanged = api.get(f"/jpm/appointments/{appointment['id']}").json()
     assert unchanged["arrivalWindowStart"] == appointment["arrivalWindowStart"]
-    assert open_slots(api, TOMORROW, "morning") == 2
+    assert open_slots(api, TOMORROW, "0800-1200") == 2
 
 
 def test_a_technician_can_be_assigned_through_dispatch(small):
     api, ids = small
-    job = book(api, ids, window="morning").json()
+    job = book(api, ids, window="0800-1200").json()
     appointment = appointment_of(api, job["id"])
     current = technician_of(api, appointment["id"])
     other = next(t for t in (7001, 7002, 7003) if t != current)
@@ -260,8 +260,8 @@ def test_a_technician_can_be_assigned_through_dispatch(small):
 
 def test_assigning_a_technician_who_is_busy_is_a_conflict(small):
     api, ids = small
-    first = appointment_of(api, book(api, ids, window="morning").json()["id"])
-    second = appointment_of(api, book(api, ids, window="morning").json()["id"])
+    first = appointment_of(api, book(api, ids, window="0800-1200").json()["id"])
+    second = appointment_of(api, book(api, ids, window="0800-1200").json()["id"])
     busy = technician_of(api, first["id"])
     response = api.post(
         "/dispatch/appointment-assignments/assign-technicians",
@@ -279,8 +279,8 @@ def test_the_mock_does_not_apply_the_companys_own_rules(small):
     night = book(api, ids, window="after_hours", priority="Normal", job_type=NO_HEAT)
     assert night.status_code == 200
     assert technician_of(api, appointment_of(api, night.json()["id"])["id"]) == 7001
-    assert book(api, ids, who="commercial", window="afternoon").status_code == 200
-    assert book(api, ids, who="far", window="afternoon").status_code == 200
+    assert book(api, ids, who="commercial", window="1200-1600").status_code == 200
+    assert book(api, ids, who="far", window="1200-1600").status_code == 200
 
 
 def test_a_job_needs_a_technician_with_the_right_skill(tmp_path):
@@ -294,18 +294,18 @@ def test_a_job_needs_a_technician_with_the_right_skill(tmp_path):
     assert book(api, ids, job_type=NO_HEAT, priority="Urgent").status_code == 200
 
 
-def test_an_arrival_window_must_match_a_configured_window(small):
+def test_an_arrival_window_must_be_whole_blocks_on_one_day(small):
     api, ids = small
     customer_id, location_id = ids["home"]
-    body = job_body(customer_id, location_id, TOMORROW, "morning")
-    body["appointments"][0]["arrivalWindowEnd"] = "2026-11-03T18:00:00Z"
+    body = job_body(customer_id, location_id, TOMORROW, "0800-1200")
+    body["appointments"][0]["arrivalWindowEnd"] = "2026-11-03T18:10:00Z"
     response = api.post("/jpm/jobs", body)
     assert response.status_code == 400
     assert response.json()["data"]["code"] == "invalid_window"
 
 
 @pytest.mark.parametrize(
-    "day, window", [(date(2026, 11, 7), "evening"), (date(2026, 11, 8), "morning")]
+    "day, window", [(date(2026, 11, 7), "1600-2000"), (date(2026, 11, 8), "0800-1200")]
 )
 def test_a_window_outside_business_hours_cannot_be_booked(tmp_path, day, window):
     """A company closed Saturday evening and Sunday (Summit Air was, until issue #149) never offers
@@ -328,7 +328,7 @@ def test_a_window_outside_business_hours_cannot_be_booked(tmp_path, day, window)
 def test_a_window_that_has_started_cannot_be_booked(small):
     api, ids = small
     customer_id, location_id = ids["home"]
-    response = api.post("/jpm/jobs", job_body(customer_id, location_id, START, "morning"))
+    response = api.post("/jpm/jobs", job_body(customer_id, location_id, START, "0800-1200"))
     assert response.status_code == 422
     assert response.json()["data"]["code"] == "slot_in_past"
 
@@ -382,7 +382,7 @@ def test_an_intake_booking_takes_no_capacity_and_repeats_return_the_first(small)
     assert booking["status"] == "New" and booking["bookingProviderId"] == 501
     assert booking["isFirstTimeClient"] is True and "providerId" not in booking
     assert api.get("/crm/bookings", externalId="call-77").json()["totalCount"] == 1
-    assert open_slots(api, TOMORROW, "morning") == 3
+    assert open_slots(api, TOMORROW, "0800-1200") == 3
     required = {"source", "name", "summary", "isFirstTimeClient", "externalId"}
     for field in required:
         assert (
@@ -396,7 +396,7 @@ def test_an_intake_booking_takes_no_capacity_and_repeats_return_the_first(small)
 def test_capacity_answers_with_flat_time_frames_and_named_technicians(small):
     api, ids = small
     book(api, ids)  # one technician is booked in the morning
-    frame = capacity_frame(api, TOMORROW, "morning")
+    frame = capacity_frame(api, TOMORROW, "0800-1200")
     assert set(frame) == {
         "start",
         "end",
@@ -419,8 +419,13 @@ def test_capacity_answers_with_flat_time_frames_and_named_technicians(small):
     assert statuses == ["Available", "Available", "Unavailable"]
     assert {t["hasRequiredSkills"] for t in frame["technicians"]} == {True}
     assert set(frame["technicians"][0]) == {"id", "name", "status", "hasRequiredSkills"}
-    # hours: three technicians in a four-hour frame, one of them booked (ASSUMED unit)
-    assert (frame["totalAvailability"], frame["openAvailability"]) == (12, 8)
+    # The blocks: three technicians in a half-hour block, one of them booked (ASSUMED unit).
+    first = api.post("/dispatch/capacity", {
+        "startsOnOrAfter": "2026-11-03T13:00:00Z", "endsOnOrBefore": "2026-11-03T13:30:00Z",
+        "businessUnitIds": [11], "jobTypeId": TUNE_UP, "skillBasedAvailability": True,
+    }).json()["availabilities"]
+    assert len(first) == 1
+    assert (first[0]["totalAvailability"], first[0]["openAvailability"]) == (1.5, 1.0)
 
 
 def test_capacity_is_one_flat_list_ordered_by_time_with_the_night_frame_last(small):
@@ -435,8 +440,10 @@ def test_capacity_is_one_flat_list_ordered_by_time_with_the_night_frame_last(sma
     assert "timeStamp" in response
     frames = response["availabilities"]
     assert [f["startUtc"] for f in frames] == sorted(f["startUtc"] for f in frames)
-    assert [f["start"][11:16] for f in frames[:4]] == ["08:00", "12:00", "16:00", "20:00"]
-    night = frames[3]
+    # Half-hour blocks from 8 AM to 8 PM, then the night window.
+    starts = [f["start"][11:16] for f in frames]
+    assert starts[:3] == ["08:00", "08:30", "09:00"] and starts[23] == "19:30"
+    night = frames[24]
     assert [t["id"] for t in night["technicians"]] == [7001], "only the on-call technician"
     assert night["end"] == "2026-11-04T08:00:00-05:00"
 
@@ -448,3 +455,16 @@ def test_capacity_requires_skill_based_availability_and_has_no_priority_or_zip(s
     with_extras = {**body, "skillBasedAvailability": False, "priority": "Urgent", "zip": "11201"}
     frames = api.post("/dispatch/capacity", with_extras).json()["availabilities"]
     assert all(t["hasRequiredSkills"] is None for f in frames for t in f["technicians"])
+
+
+def test_a_window_is_any_run_of_half_hour_blocks_and_overlaps_take_the_technician(small):
+    """Windows became any run of 30-minute blocks (Jackson after Retell call
+    call_9826ff9f0dfa8bc835a3601368b). A technician booked 8 to 12 is busy at 9 to 9:30, and free
+    again at 12."""
+    api, ids = small
+    for i in range(3):
+        assert book(api, ids, key=f"morning-{i}").status_code == 200
+    overlap = book(api, ids, window="0900-0930", key="overlap")
+    assert overlap.status_code == 409 and overlap.json()["data"]["code"] == "no_capacity"
+    assert book(api, ids, window="1200-1230", key="after").status_code == 200
+    assert book(api, ids, window="1930-2000", key="last").status_code == 200

@@ -148,7 +148,7 @@ def test_every_edit_is_logged_with_who_made_it_and_where(agent):
     day, window = min(_offered(agent, call_id))
     _post(agent, "/owner/schedule/block", day=day, window=window, name="Team meeting",
           next="/owner/schedule")
-    _post(agent, "/owner/schedule/block", day="2026-11-01", window="morning")  # already past
+    _post(agent, "/owner/schedule/block", day="2026-11-01", window="0800-1000")  # already past
     [made, refused] = _edits(agent)
     assert (made["author"], made["role"], made["surface"], made["ok"]) == ("Dana", "staff", "owner", 1)
     assert "Team meeting" in made["detail"] and made["fsm_modified_on"]
@@ -235,10 +235,10 @@ def test_a_moved_job_shows_in_its_new_window_on_the_next_call_start(agent, scena
     sign_in(agent, "staff")
     job = schedule.job_detail(services.fsm["summit-air"], services.tenants.default,
                               maria["jobId"], services.clock())
-    target = next(c for c in job["choices"] if c["value"].endswith("|morning"))
+    target = next(c for c in job["choices"] if c["value"].endswith("|0800-1000"))
     _post(agent, f"/owner/jobs/{maria['jobId']}", window=target["value"])
     [customer] = agent.start(maria["phone"])["data"]["customers"]
-    assert customer["open_jobs"][0]["window"]["label"] == "8 to 12"
+    assert customer["open_jobs"][0]["window"]["label"] == "8 to 10"
     assert customer["open_jobs"][0]["window"]["date"] == target["value"].split("|")[0]
 
 
@@ -291,13 +291,13 @@ def test_the_job_page_from_the_bench_needs_an_admin(agent, scenarios):
 
 def test_an_edit_never_sends_the_browser_off_the_site(agent):
     sign_in(agent, "staff")
-    sent = _post(agent, "/owner/schedule/block", day="2026-11-03", window="morning",
+    sent = _post(agent, "/owner/schedule/block", day="2026-11-03", window="0800-1000",
                  next="https://example.com/")
     assert sent.headers["location"].startswith("/owner?edit=")
 
 
 def test_signed_out_edits_change_nothing(agent):
-    sent = _post(agent, "/owner/schedule/block", day="2026-11-03", window="morning")
+    sent = _post(agent, "/owner/schedule/block", day="2026-11-03", window="0800-1000")
     assert sent.status_code == 401
     assert _edits(agent) == []
 
@@ -320,9 +320,9 @@ def test_a_whole_shop_block_takes_only_the_technicians_free_then(agent, mock):
     on = date(2026, 11, 3)
     before = schedule.day(services.fsm["summit-air"], tenant, services.caches["summit-air"], on,
                           services.clock())
-    col = [w["id"] for w in before["windows"]].index("morning")
+    col = [w["id"] for w in before["windows"]].index("0800-1000")
     free = sum(r["cells"][col]["state"] == "free" for r in before["rows"])
-    _post(agent, "/owner/schedule/block", day=on.isoformat(), window="morning")
+    _post(agent, "/owner/schedule/block", day=on.isoformat(), window="0800-1000")
     conn = _mock_db(mock)
     try:
         assert conn.execute("SELECT count(*) FROM non_job_appointments").fetchone()[0] == free
@@ -352,9 +352,9 @@ TOMORROW = date(2026, 11, 3)
 def test_a_block_on_a_technician_with_a_visit_is_refused_by_name(agent, mock):
     sign_in(agent, "staff")
     grid = _day_grid(agent, TOMORROW)
-    col = [w["id"] for w in grid["windows"]].index("morning")
+    col = [w["id"] for w in grid["windows"]].index("0800-1000")
     busy = next(r for r in grid["rows"] if r["cells"][col]["state"] == "job")
-    _post(agent, "/owner/schedule/block", day=TOMORROW.isoformat(), window="morning",
+    _post(agent, "/owner/schedule/block", day=TOMORROW.isoformat(), window="0800-1000",
           technician=str(busy["id"]))
     [edit] = _edits(agent)
     assert edit["ok"] == 0 and edit["error"] == f"{busy['name']} has a visit then. Move the job first."
@@ -364,10 +364,10 @@ def test_a_block_on_a_technician_with_a_visit_is_refused_by_name(agent, mock):
 def test_a_block_on_an_already_blocked_technician_is_refused(agent, mock):
     sign_in(agent, "staff")
     grid = _day_grid(agent, TOMORROW)
-    col = [w["id"] for w in grid["windows"]].index("morning")
+    col = [w["id"] for w in grid["windows"]].index("0800-1000")
     free = next(r for r in grid["rows"] if r["cells"][col]["state"] == "free")
     for _ in range(2):
-        _post(agent, "/owner/schedule/block", day=TOMORROW.isoformat(), window="morning",
+        _post(agent, "/owner/schedule/block", day=TOMORROW.isoformat(), window="0800-1000",
               technician=str(free["id"]))
     assert [e["ok"] for e in _edits(agent)] == [1, 0]
     assert "already blocked" in _edits(agent)[1]["error"]
@@ -377,10 +377,10 @@ def test_a_block_on_an_already_blocked_technician_is_refused(agent, mock):
 def test_a_whole_window_block_says_how_many_visits_stay(agent):
     sign_in(agent, "staff")
     grid = _day_grid(agent, TOMORROW)
-    col = [w["id"] for w in grid["windows"]].index("morning")
+    col = [w["id"] for w in grid["windows"]].index("0800-1000")
     jobs = sum(r["cells"][col]["state"] == "job" for r in grid["rows"])
     assert jobs > 0
-    _post(agent, "/owner/schedule/block", day=TOMORROW.isoformat(), window="morning")
+    _post(agent, "/owner/schedule/block", day=TOMORROW.isoformat(), window="0800-1000")
     [edit] = _edits(agent)
     assert edit["detail"].endswith(f"; {jobs} booked visit{'s' if jobs != 1 else ''} stay")
     after = _day_grid(agent, TOMORROW)
@@ -438,7 +438,7 @@ def test_a_refused_job_edit_changes_nothing(agent, scenarios):
     fsm, tenant = services.fsm["summit-air"], services.tenants.default
     sign_in(agent, "staff")
     before = schedule.job_detail(fsm, tenant, maria["jobId"], services.clock())
-    _post(agent, f"/owner/jobs/{maria['jobId']}", window="2026-11-01|morning",
+    _post(agent, f"/owner/jobs/{maria['jobId']}", window="2026-11-01|0800-1000",
           street=before["address"]["street"], unit="9Z", city=before["address"]["city"],
           zip=before["address"]["zip"], notes="Changed")
     [edit] = _edits(agent)
@@ -454,9 +454,9 @@ def test_a_block_made_in_servicetitan_is_not_taken_off_from_here(agent, mock):
     fsm, tenant = services.fsm["summit-air"], services.tenants.default
     sign_in(agent, "staff")
     grid = _day_grid(agent, TOMORROW)
-    col = [w["id"] for w in grid["windows"]].index("afternoon")
+    col = [w["id"] for w in grid["windows"]].index("1200-1400")
     free = next(r for r in grid["rows"] if r["cells"][col]["state"] == "free")
-    start, end = tenant.window_bounds(TOMORROW, tenant.window("afternoon"))
+    start, end = tenant.window_bounds(TOMORROW, tenant.window("1200-1400"))
     made = fsm.create_non_job_appointment("st-own", free["id"], start, end, "Training", "")
     assert not next(
         b for r in _day_grid(agent, TOMORROW)["rows"] for c in r["cells"] for b in c["blocks"]

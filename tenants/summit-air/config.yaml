@@ -148,27 +148,40 @@ job_types:
   - {id: 204, code: safety_check, name: Safety check, duration: 5400, priority: High, businessUnitIds: [11], skills: [heating], active: true}
   - {id: 205, code: estimate, name: Replacement estimate, duration: 5400, priority: Normal, businessUnitIds: [12], skills: [], active: true}
 
+# Capacity is held in 30-minute blocks from opening to closing, and an arrival window is any run of
+# blocks (Jackson after Retell call call_9826ff9f0dfa8bc835a3601368b: "4 hours is too large a gap to
+# be a window", and "the atomic unit becomes 30 minutes"). A window's id is its local start and end,
+# "0730-0930". `window_minutes` is the length offered when the caller names none.
+scheduling:
+  block_minutes: 30
+  window_minutes: 120
+
+# The 2-hour windows the schedule shows and the seeded world books, and the on-call night window.
+# Any other run of blocks can be booked too.
 arrival_windows:
-  - {id: morning, start: "08:00", end: "12:00"}
-  - {id: afternoon, start: "12:00", end: "16:00"}
-  - {id: evening, start: "16:00", end: "20:00"}
+  - {id: "0800-1000", start: "08:00", end: "10:00"}
+  - {id: "1000-1200", start: "10:00", end: "12:00"}
+  - {id: "1200-1400", start: "12:00", end: "14:00"}
+  - {id: "1400-1600", start: "14:00", end: "16:00"}
+  - {id: "1600-1800", start: "16:00", end: "18:00"}
+  - {id: "1800-2000", start: "18:00", end: "20:00"}
   - {id: after_hours, start: "20:00", end: "08:00", ends_next_day: true, after_hours: true}
 
-# Technicians kept free for urgent jobs, per arrival window. This is Summit Air's own rule, applied
+# Technicians kept free for urgent jobs, in every 30-minute block of the day. This is Summit Air's own rule, applied
 # by the tool server when it offers times (app/capacity.py); ServiceTitan's capacity has no such
 # hold and the mock does not apply it. After-hours windows (the on-call technician) are urgent-only
-# the same way. Only the business units listed in business_unit_ids hold any. per_day is keyed by the same day names as company.hours; a day or
-# window left out holds none.
+# the same way. Only the business units listed in business_unit_ids hold any. per_day is keyed by
+# the same day names as company.hours; a day left out holds none.
 urgent_hold:
   business_unit_ids: [11]
   per_day:
-    mon: &weekday_hold {morning: 2, afternoon: 2, evening: 2}
-    tue: *weekday_hold
-    wed: *weekday_hold
-    thu: *weekday_hold
-    fri: *weekday_hold
-    sat: {morning: 1, afternoon: 1, evening: 1}
-    sun: {morning: 1, afternoon: 1, evening: 1}
+    mon: 2
+    tue: 2
+    wed: 2
+    thu: 2
+    fri: 2
+    sat: 1
+    sun: 1
 
 # Call reasons, as ServiceTitan's jbce call-reasons list returns them. A lead carries one of the
 # lead reasons (isLead) as its callReasonId; the agent's lead kinds map onto these in agent.yaml.

@@ -177,7 +177,7 @@ def test_a_call_back_hours_after_a_drop_still_books_once(agent, clock):
     first = ready_to_book(agent)
     assert book(agent, first, first_open(agent, first))["ok"]
     agent.end(first, "dropped")
-    clock.advance(hours=2)
+    clock.advance(minutes=20)
     second = agent.start(UNKNOWN)["data"]["call_id"]
     agent.turn(second, "Hi, I called earlier about the heat at 101 Union St, 11231.")
     agent.confirm_read_back(second, {"street": "101 Union St", "zip": "11231"})

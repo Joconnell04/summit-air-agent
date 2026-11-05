@@ -67,7 +67,7 @@ def timeline(conn: sqlite3.Connection, call_id: str) -> dict | None:
         "flags": rows("SELECT * FROM flags WHERE call_id = ? ORDER BY id"),
         "callbacks": rows("SELECT * FROM callbacks WHERE call_id = ? ORDER BY id"),
         "bookings": rows(
-            "SELECT id, kind, status, fsm_job_id, window_start, priority, priority_reasons, "
+            "SELECT id, kind, status, fsm_job_id, window_start, window_end, priority, priority_reasons, "
             "safety_override, seek_earlier, attempts, last_error, "
             "json_extract(request_json, '$.raised_after_wait') AS raised_after_wait, "
             "json_extract(request_json, '$.priority_rules') AS priority_rules, "

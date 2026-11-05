@@ -250,7 +250,7 @@ def test_an_urgent_booking_made_without_find_slots_opens_with_the_line(agent):
     call = agent.start(UNKNOWN)["data"]["call_id"]
     agent.turn(call, "No heat, and my 84-year-old mother lives with me.")
     agent.confirm_read_back(call, in_area_address())
-    slot = {"date": START.isoformat(), "window": "afternoon"}
+    slot = {"date": START.isoformat(), "window": "1200-1600"}
     booked = book(agent, call, slot, job_type="no_heat")
     assert booked["ok"], booked
     assert booked["say"].startswith("I've marked this call top priority")
