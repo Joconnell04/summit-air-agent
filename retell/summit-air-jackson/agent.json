@@ -83,9 +83,9 @@
     "natural_filler_words": false,
     "scope_boundaries": true,
     "smart_matching": true,
-    "speech_normalization": true
+    "speech_normalization": false
   },
-  "interruption_sensitivity": 0.8,
+  "interruption_sensitivity": 1,
   "is_published": false,
   "language": "en-US",
   "max_call_duration_ms": 1200000,
@@ -193,7 +193,7 @@
   "stt_mode": "accurate",
   "user_dtmf_options": {},
   "version": 2,
-  "voice_id": "custom_voice_c37419aaeaa68016fe1138f8a2",
+  "voice_id": "cartesia-Brooke",
   "voice_speed": 1,
   "voice_temperature": 0.6,
   "volume": 1,
