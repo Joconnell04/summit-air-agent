@@ -297,8 +297,8 @@ lines:
   not_offered: I'm sorry, we don't do {what}, so {suggest} would be the right call for that.
   out_of_area: I'm sorry, that's outside the area we cover, so we're not able to send someone. A local
     heating company should be able to help.
-  read_back: I have your home at {address}, and the best number is {phone}, is that right?
-  read_back_for: I have your home at {address}, and the number to reach {who} is {phone}, is that right?
+  read_back: I have your home at {address}, and the best number is {phone}. That's all correct, right?
+  read_back_for: I have your home at {address}, and the number to reach {who} is {phone}. That's all correct, right?
   repeated_drops: Looks like we keep getting cut off, the signal might be spotty. Want me to have someone
     call you back in a few minutes instead?
   return_visit_review: Since we were just out there, a manager will look over this visit, including whether
