@@ -382,9 +382,14 @@ class Bridge:
         safety, notes = self.sync(obj, call_id)
         args = body.get("args") or {}
         answer = compact(self.tools.tool(call_id, name, args))
-        # Lines that came in with this tool call go to the model in its result.
+        # Lines that came in with this tool call go to the model in its result: bare, and ahead
+        # of the result's own sentence, which the agent says as written. The SAY_NOW wrapper is
+        # only for update-live-call's context; in a result the model read it aloud ("Please say
+        # this now, exactly as written:", Retell eval suite on Jackson's agent).
         if safety:
-            answer["speak_first"] = SAY_NOW.format(text=safety[-1]["text"])
+            lines_ = safety[-1]["text"]
+            answer["speak_first"] = lines_
+            answer["say"] = " ".join(x for x in (lines_, answer.get("say") or "") if x)
         if notes:
             answer["server_notes"] = notes
         hang_up = answer.get("ok") and (answer.get("data") or {}).get("hang_up")

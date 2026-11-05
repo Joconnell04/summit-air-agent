@@ -164,10 +164,11 @@ def test_a_safety_line_that_arrives_with_a_tool_call_goes_into_its_result(client
     inbound(client, "abc")
     gas = utterance("user", "It smells like gas in here.")
     answer = tool(client, "check_service_area", call_obj("abc", GREETING, gas), zip="11231")
-    assert answer["speak_first"].endswith(
-        "Please get everyone out of the house now. Don't flip any switches or use the stove, and "
-        "call 911 or the gas company once you're outside."
-    )
+    lines_ = ("Please get everyone out of the house now. Don't flip any switches or use the stove, "
+              "and call 911 or the gas company once you're outside.")
+    # Bare lines, first in what the agent says; no instruction text for it to read aloud.
+    assert answer["speak_first"] == lines_
+    assert answer["say"].startswith(lines_) and "exactly as written" not in answer["say"]
     assert retell.said == []
 
 
