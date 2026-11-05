@@ -2188,11 +2188,28 @@ def _unit_without_zip(unit: str, zip_code: str) -> str:
     return unit
 
 
+def _booking_name(ctx: Ctx) -> str:
+    """The name passed to read_back for the visit, if any."""
+    row = ctx.conn.execute(
+        "SELECT name FROM booking_names WHERE call_id = ?", (ctx.call["id"],)
+    ).fetchone()
+    return row["name"] if row else ""
+
+
 def read_back(ctx: Ctx, args: ReadBackIn) -> Result:
     """Two steps. Without confirmed, returns the exact sentence to read and records that it was
     asked. With confirmed, accepts only if that same sentence was returned on this call and a caller
     line followed it (spec S-26)."""
     phone = _resolve_phone(ctx, args.phone)
+    # The name the caller already gave (Jackson's Retell agent asks at the start): kept for the
+    # call, so the confirmed read-back doesn't ask "what name should I put the visit under?" again.
+    if args.name.strip():
+        with tx(ctx.conn):
+            ctx.conn.execute(
+                "INSERT INTO booking_names (call_id, name, at) VALUES (?, ?, ?) "
+                "ON CONFLICT (call_id) DO UPDATE SET name = excluded.name, at = excluded.at",
+                (ctx.call["id"], args.name.strip(), iso(ctx.now)),
+            )
     # One unit a read-back: two units are two jobs, each read back and booked on its own
     # (DECISIONS.md 085; eval run 20261104-200546 read back "unit 2A and 5C" as one).
     if re.search(r"\band\b|[,&+/]", args.address.unit or ""):
@@ -2296,7 +2313,11 @@ def read_back(ctx: Ctx, args: ReadBackIn) -> Result:
         # A caller with no account who hasn't said a name: the name is asked here, right after
         # the read-back, not by a refused booking after "booking that now" (a scripted call on
         # #159, call-_+16466240418_bUwDUCZFrKN8).
-        if not _callers_accounts(ctx) and not _caller_named_anyone(ctx):
+        if (
+            not _booking_name(ctx)
+            and not _callers_accounts(ctx)
+            and not _caller_named_anyone(ctx)
+        ):
             return ok(
                 ctx.tenant.line("booking_name"),
                 confirmed=True,
@@ -2384,6 +2405,8 @@ def book_appointment(ctx: Ctx, args: BookIn) -> Result:
     account, contact_name = _new_address_account(ctx, readback, args, chosen)
     job_type = _job_type(ctx, args.job_type)
     details = args.details.model_dump()
+    if not details["name"].strip():
+        details["name"] = _booking_name(ctx)
     found = _priority(ctx, args.job_type, details["inside_temp_f"])
     facts, decided = found.facts, found.priority
     if not override:

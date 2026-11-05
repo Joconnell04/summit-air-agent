@@ -1326,6 +1326,28 @@ def test_a_new_caller_is_asked_their_name_right_after_the_read_back(agent):
     assert booked["ok"], booked
 
 
+def test_a_name_passed_to_read_back_is_not_asked_again_and_goes_on_the_visit(agent, mock):
+    """Jackson's Retell agent asks the name at the start of the call; the confirmed read-back
+    still asked "what name should I put the visit under?", because the name only reached the
+    server in book_appointment."""
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "I'd like to book my furnace's yearly tune-up, please.")
+    address = in_area_address()
+    agent.turn(call, f"It's {address['street']}, {address['zip']}.")
+
+    def read_back(**extra):
+        body = {"call_id": call, "address": address, "phone": "caller_id", "name": "Jordan Lee"}
+        return agent.client.post("/tools/read_back", json={**body, **extra}).json()
+
+    asked = read_back()
+    agent.say(call, asked["say"])
+    agent.turn(call, "Yes, that's right.")
+    confirmed = read_back(confirmed=True)
+    assert confirmed["ok"] and confirmed["say"] == ""
+    booked = book(agent, call, first_open(agent, call), name="")
+    assert booked["ok"], booked
+
+
 def test_a_new_caller_who_already_gave_a_name_is_not_asked_again(agent):
     call = agent.start(UNKNOWN)["data"]["call_id"]
     agent.turn(call, "Hi, this is Pat Rivera, I need a tune-up.")

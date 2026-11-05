@@ -206,6 +206,12 @@ class ReadBackIn(CallRef):
         '"my daughter Ana". Always set when the caller says the number is someone else\'s; empty '
         "for the caller's own number.",
     )
+    name: str = Field(
+        "",
+        max_length=80,
+        description="The name the visit goes under, when the caller already gave it; the server "
+        "then doesn't ask for it after the read-back",
+    )
     confirmed: bool = False
 
 
