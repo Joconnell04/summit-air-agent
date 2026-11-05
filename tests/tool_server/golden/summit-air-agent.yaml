@@ -227,7 +227,7 @@ lines:
     who can approve the work.
   approval_callback_late: Someone from our team will call you {when} to confirm who can approve the work,
     and the technician won't start until that's settled.
-  arrival_no_fit: Our arrival windows are {windows}, and the technician can come any time in the window,
+  arrival_no_fit: Our arrival windows are {length}, and the technician can come any time in the window,
     so I can't promise an exact time.
   arrival_outside_hours: Our visits run from {hours}.
   billing_callback: I'm sorry about that. Billing goes through our office, so I've asked them to look
@@ -268,12 +268,12 @@ lines:
   identity_check_address: Thanks. And what's the address?
   identity_check_address_only: Of course. And just to confirm you're the person for the {thing}, could
     you tell me the address?
-  identity_check_again: Sorry, I didn't catch that. Could you tell me your name and the address for the
+  identity_check_again: I didn't quite catch that. Could you tell me your name and the address for the
     {thing}?
   identity_check_name: Thanks. And what's the name on the {thing}?
   identity_check_name_only: Of course. And just to confirm you're the person for the {thing}, what name
     is it under?
-  identity_mismatch: I'm sorry, I'm not able to make that change from this number. I can have someone
+  identity_mismatch: Unfortunately I'm not able to make that change from this number. I can have someone
     from our office call the number we have on file for it. Would that help?
   lead_stored: Someone from our team will call you {when} to tell you more.
   limit: I've already got that taken care of on this call, so let me have someone from the team follow
@@ -281,7 +281,7 @@ lines:
   location_superseded: That visit is still set for your old address, so let me have someone from our office
     sort it out with you.
   move_done: Thanks for letting us know. I've updated your address to {street}.
-  move_out_of_area: Thanks for letting us know. I'm sorry, the new address is outside the area we cover,
+  move_out_of_area: Thanks for letting us know. Unfortunately the new address is outside the area we cover,
     so we won't be able to come out there, and I've made a note on your account.
   move_unverified: I can't add a new address to the account from this number, so I can't book the visit
     there yet. Someone from our office can call the number we have on file to update it and book the visit.
@@ -294,11 +294,11 @@ lines:
   move_which: Which address did you move from?
   moved_from_address: Our records show you've moved from that address. Where should the technician go?
   next_unit: Now let's set up apartment {unit}.
-  not_offered: I'm sorry, we don't do {what}, so {suggest} would be the right call for that.
-  out_of_area: I'm sorry, that's outside the area we cover, so we're not able to send someone. A local
+  not_offered: Unfortunately we don't do {what}, so {suggest} would be the right call for that.
+  out_of_area: Unfortunately that's outside the area we cover, so we're not able to send someone. A local
     heating company should be able to help.
-  read_back: I have your home at {address}, and the best number is {phone}, is that right?
-  read_back_for: I have your home at {address}, and the number to reach {who} is {phone}, is that right?
+  read_back: I have your home at {address}, and the best number is {phone}. That's all correct, right?
+  read_back_for: I have your home at {address}, and the number to reach {who} is {phone}. That's all correct, right?
   repeated_drops: Looks like we keep getting cut off, the signal might be spotty. Want me to have someone
     call you back in a few minutes instead?
   return_visit_review: Since we were just out there, a manager will look over this visit, including whether
@@ -1165,6 +1165,7 @@ priority:
     threshold: 0.65
 repeat_callers:
   drops_before_callback_offer: 2
+  link_after_drop_minutes: 5
   link_within_minutes: 10
   return_visit_days: 30
 retention:

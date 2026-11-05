@@ -61,19 +61,32 @@ def test_repeated_drops_get_a_callback_offer(agent, clock):
     assert "keep getting cut off" in third["say"]
 
 
-def test_a_dropped_call_earlier_the_same_day_is_linked_with_the_name_given(agent, clock):
-    """Eval round 2, seed 6: same number and same day are the gate, and the greeting asks by name."""
+def test_a_dropped_call_is_linked_with_the_name_given(agent, clock):
+    """Eval round 2, seed 6: the greeting asks by name."""
     first = agent.start(UNKNOWN)["data"]["call_id"]
     agent.turn(first, "Hi, this is Tomasz Nowak. Our heat went out this morning.")
     agent.say(first, "Oh no. What's the address there?")
     agent.turn(first, "145 Java Street, 11222.")
     agent.end(first, "dropped")
-    clock.advance(hours=3)
+    clock.advance(minutes=4)
     linked = agent.start(UNKNOWN)["data"]["linked_call"]
     assert linked["call_id"] == first
     assert linked["caller_name"] == "Tomasz"
     assert [t["speaker"] for t in linked["turns"]] == ["caller", "agent", "caller"]
     assert linked["turns"][-1]["text"] == "145 Java Street, 11222."
+
+
+@pytest.mark.parametrize("minutes, linked", [(4, True), (6, False), (180, False)])
+def test_a_drop_is_picked_up_only_by_a_call_within_five_minutes_of_it(agent, clock, minutes, linked):
+    """Slate call 2 (call_3cd4c8065f26d3de686f7a1e002) heard "I think we got cut off earlier" long
+    after Jackson's earlier calls; he wants it "only if called within a few minutes"."""
+    first = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(first, "Hi, the heat's out.")
+    clock.advance(minutes=8)
+    agent.end(first, "dropped")
+    clock.advance(minutes=minutes)
+    found = agent.start(UNKNOWN)["data"]["linked_call"]
+    assert (found is not None and found["dropped"]) is linked
 
 
 def test_a_call_from_the_same_number_the_next_day_is_not_linked(agent, clock):
@@ -123,7 +136,7 @@ def test_the_resume_name_is_the_callers_not_the_account_holders(agent, clock, sc
     )
     assert booked["ok"], booked
     agent.end(first, "dropped")
-    clock.advance(hours=2)
+    clock.advance(minutes=3)
     assert agent.start(maria["phone"])["data"]["linked_call"]["caller_name"] == "Maria"
 
 
@@ -148,15 +161,27 @@ def test_a_before_only_window_tomorrow_is_dialed_tomorrow(agent):
     assert dial.startswith("2026-11-03T13:00")  # 8 AM New York tomorrow, when calling hours open
 
 
-def test_a_dropped_call_and_its_call_back_later_today_book_once(agent, clock):
+def test_a_dropped_call_and_its_call_back_book_once(agent, clock):
     first = ready_to_book(agent)
     assert book(agent, first, first_open(agent, first))["ok"]
     agent.end(first, "dropped")
-    clock.advance(hours=2)
+    clock.advance(minutes=3)
     second = agent.start(UNKNOWN)["data"]["call_id"]
     agent.turn(second, "Hi, we got cut off earlier.")
     agent.confirm_read_back(second, {"street": "101 Union St", "zip": "11231"})
     assert book(agent, second, first_open(agent, second))["refused"] == "already_booked"
+
+
+def test_a_call_back_hours_after_a_drop_still_books_once(agent, clock):
+    """Not linked after five minutes, the open visit at the address still stops a second one."""
+    first = ready_to_book(agent)
+    assert book(agent, first, first_open(agent, first))["ok"]
+    agent.end(first, "dropped")
+    clock.advance(minutes=20)
+    second = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(second, "Hi, I called earlier about the heat at 101 Union St, 11231.")
+    agent.confirm_read_back(second, {"street": "101 Union St", "zip": "11231"})
+    assert book(agent, second, first_open(agent, second))["refused"] == "open_job"
 
 
 @pytest.mark.parametrize(

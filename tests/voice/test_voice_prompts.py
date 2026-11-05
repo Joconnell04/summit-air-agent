@@ -419,10 +419,25 @@ def test_a_name_the_caller_just_gave_is_not_said_straight_back():
 def test_a_zip_is_said_as_the_zip_code_is_and_its_digits():
     """Jackson after live call 2: "just say the zip code is, not just zip 11201"."""
     reply = assemble.SpokenReply()
-    reply.heard(None, "I moved to seventy five Hoyt Street.")
+    reply.heard(None, "I moved to Hoyt Street.")
     assert reply.text("I found 75 Hoyt Street in Brooklyn, ZIP 11201. Is that the new address?", []) == (
         "I found 75 Hoyt Street in Brooklyn, and the ZIP code is 1 1 2 0 1. Is that the new address?"
     )
+
+
+def test_an_address_the_caller_said_in_words_is_not_said_back_by_the_model():
+    """Replay-2 gate call: the caller said "seventy five Hoyt Street" and "eleven two zero one",
+    and the model read both back on top of the server's read-back."""
+    reply = assemble.SpokenReply()
+    reply.heard(None, "I moved to seventy five Hoyt Street in Brooklyn. Eleven two zero one.")
+    assert reply.text("Thanks. I have 75 Hoyt Street, Brooklyn 11201. Is that right?", []) == "Thanks."
+
+
+def test_a_zip_the_lookup_found_is_never_read_back_by_the_model():
+    reply = assemble.SpokenReply()
+    reply.heard(None, "It's 75 Hoyt Street.")
+    reply.tool_done("find_address", {"ok": True, "data": {"zip": "11201"}})
+    assert reply.text("Got it, the zip code is 11201.", []) == ""
 
 
 @pytest.mark.parametrize(
@@ -490,3 +505,11 @@ def test_the_known_facts_are_passed_on_only_when_they_change():
         "system": "furnace", "ZIP said": "11201"
     }
     assert known.fresh({"system": "furnace", "ZIP said": "11201"}) is None
+
+
+def test_a_reply_that_offers_choices_ends_with_a_question_in_both_profiles():
+    """Live-like rig run on 4b160eb (issue #150): windows offered with no question, then 22 s of
+    silence while the caller waited for one."""
+    for name in ("identity.md", "stripped.md"):
+        text = (assemble.PROMPTS / name).read_text()
+        assert "ends with a direct question" in text, name

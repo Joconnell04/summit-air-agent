@@ -88,7 +88,7 @@ def test_two_people_mind_change_asks_for_windows_the_seed_has_open(tmp_path):
         found = world.server.tool("find_slots", "c1", {"job_type": "no_heat", "day": day,
                                                        "facts": facts})
         assert found["data"]["priority"]["level"] == "High"
-        return [w["window"] for w in found["data"]["windows"]]
+        return [w["part"] for w in found["data"]["windows"]]
 
     assert "Tuesday morning" in scenario.hidden_facts["final_choice"]
     assert "morning" in windows("2026-11-03")

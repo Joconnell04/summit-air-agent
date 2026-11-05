@@ -41,8 +41,9 @@ def get_capacity(
     cfg: TenantConfig = Depends(get_cfg),
     now: datetime = Depends(get_now),
 ):
-    """Availability by time frame: one frame per arrival window and business unit, with the named
-    technicians and whether each is free. The unit of totalAvailability and openAvailability is
+    """Availability by time frame: one frame per 30-minute block of the company's hours (and one
+    for the night window) and business unit, with the named technicians and whether each is free.
+    A caller builds a longer window from consecutive blocks. The unit of totalAvailability and openAvailability is
     hours in ServiceTitan's current spec; here it is technicians times the frame's hours (ASSUMED).
     Callers should read the technicians, not the numbers."""
     if body.endsOnOrBefore <= body.startsOnOrAfter:
@@ -67,7 +68,7 @@ def get_capacity(
     frames = []
     day = first_day
     while day <= last_day:
-        for window in cfg.windows:
+        for window in [*cfg.blocks(day), *(w for w in cfg.windows if w.after_hours)]:
             start, end = cfg.window_bounds(day, window)
             if not (body.startsOnOrAfter <= start and end <= body.endsOnOrBefore):
                 continue

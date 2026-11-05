@@ -129,3 +129,14 @@ names:
     says: uh-ROH-sher
     in_area: false
     sources: [Wikipedia (one source; locals unchecked)]
+
+  - written: Hoyt Street
+    match: [Hoyt Street, Hoyt St]
+    ipa: <<ˈ|h|ɔɪ|t>> <<ˈ|s|t|ɹ|i|t>>
+    says: HOYT Street
+    heard_as: [White Street, Hoit]
+    in_area: true
+    # Found by a miss, not a guide: the replay-2 gate call's "Hoyt" came back as "White Street" or
+    # "Hoit" in offline listening tests (MEASURED by the latency lane). The pronunciation is the
+    # plain English one (ASSUMED; no guide found).
+    sources: [ASSUMED]

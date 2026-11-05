@@ -130,9 +130,20 @@ def turn_handling(voice: dict) -> dict:
         "turn_detection": detector,
         # A copy: LiveKit keeps this dict and writes later option changes into it.
         "endpointing": dict(voice["endpointing"]["normal"]),
-        "interruption": voice["interruption"],
-        "preemptive_generation": {"enabled": True, "preemptive_tts": voice["preemptive_tts"]},
+        "interruption": interruption_options(voice["interruption"]),
+        "preemptive_generation": {
+            "enabled": voice["preemptive_generation"],
+            "preemptive_tts": voice["preemptive_tts"],
+        },
     }
+
+
+def interruption_options(options: dict) -> dict:
+    """LiveKit's interruption settings; a two-value backchannel boundary is a (start, end) pair."""
+    out = dict(options)
+    if isinstance(out.get("backchannel_boundary"), list):
+        out["backchannel_boundary"] = tuple(out["backchannel_boundary"])
+    return out
 
 
 def load_vad(voice: dict):

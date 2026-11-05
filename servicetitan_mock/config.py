@@ -31,6 +31,19 @@ class Window:
     after_hours: bool
 
 
+def window_of(start: time, end: time) -> Window:
+    """A daytime window by its local start and end; its id is "0730-0930"."""
+    return Window(f"{start:%H%M}-{end:%H%M}", start, end, False, False)
+
+
+def window_from_id(window_id: str) -> Window | None:
+    try:
+        start, end = (time(int(p[:2]), int(p[2:])) for p in window_id.split("-"))
+    except (ValueError, TypeError):
+        return None
+    return window_of(start, end) if start < end else None
+
+
 class TenantConfig:
     def __init__(self, raw: dict):
         self.raw = raw
@@ -51,6 +64,9 @@ class TenantConfig:
         self.urgent_hold: dict = raw["urgent_hold"]
         self.rejected_customer_types: dict[str, str] = self.company["rejected_customer_types"]
         self.equipment_labels: dict[str, str] = raw["equipment_labels"]
+        scheduling = raw.get("scheduling") or {}
+        self.block_minutes: int = scheduling.get("block_minutes", 30)
+        self.window_minutes: int = scheduling.get("window_minutes", 120)
         self.windows = [
             Window(
                 w["id"],
@@ -70,7 +86,28 @@ class TenantConfig:
         return cls(yaml.safe_load(path.read_text()))
 
     def window(self, window_id: str) -> Window:
-        return next(w for w in self.windows if w.id == window_id)
+        """A configured window, or any run of blocks by its id ("0730-0930")."""
+        found = next((w for w in self.windows if w.id == window_id), None)
+        if found is not None:
+            return found
+        made = window_from_id(window_id)
+        if made is None:
+            raise KeyError(window_id)
+        return made
+
+    def blocks(self, day: date) -> list[Window]:
+        """The day's 30-minute blocks from opening to closing; none on a closed day."""
+        hours = self.company["hours"][DAY_NAMES[day.weekday()]]
+        if not hours:
+            return []
+        start = datetime.combine(day, time.fromisoformat(hours[0]))
+        close = datetime.combine(day, time.fromisoformat(hours[1]))
+        step = timedelta(minutes=self.block_minutes)
+        out = []
+        while start + step <= close:
+            out.append(window_of(start.time(), (start + step).time()))
+            start += step
+        return out
 
     def window_bounds(self, day: date, window: Window) -> tuple[datetime, datetime]:
         start = datetime.combine(day, window.start, tzinfo=self.tz)
@@ -79,10 +116,21 @@ class TenantConfig:
         return start.astimezone(UTC), end.astimezone(UTC)
 
     def match_window(self, start: datetime, end: datetime) -> tuple[date, Window] | None:
+        """The window a start and end are: a configured one, or any run of whole blocks on one day."""
         local = start.astimezone(self.tz)
         for w in self.windows:
             if (start, end) == self.window_bounds(local.date(), w):
                 return local.date(), w
+        local_end = end.astimezone(self.tz)
+        step = self.block_minutes
+        if (
+            local.date() == local_end.date()
+            and end > start
+            and local.second == local_end.second == 0
+            and (local.hour * 60 + local.minute) % step == 0
+            and (local_end.hour * 60 + local_end.minute) % step == 0
+        ):
+            return local.date(), window_of(local.time(), local_end.time())
         return None
 
     def window_offered(self, day: date, window: Window) -> bool:
@@ -106,7 +154,8 @@ class TenantConfig:
         shape a believable schedule, and the tool server applies it when it offers times."""
         if business_unit_id not in self.urgent_hold["business_unit_ids"]:
             return 0
-        return self.urgent_hold["per_day"].get(DAY_NAMES[day.weekday()], {}).get(window_id, 0)
+        held = self.urgent_hold["per_day"].get(DAY_NAMES[day.weekday()], 0)
+        return held if isinstance(held, int) else 0
 
     def visit_name(self, membership_type: dict, due: date) -> str:
         """The name of an included service visit that falls on the due date."""

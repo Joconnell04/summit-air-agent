@@ -95,7 +95,8 @@ def job_body(
 def capacity_frame(
     api: Api, day: date, window_id: str, job_type: int = TUNE_UP, unit: int = SERVICE
 ) -> dict:
-    """The one time frame for a window, as capacity answers it."""
+    """A window's capacity, from the 30-minute block frames capacity answers with: a technician is
+    available when free in every block of it."""
     start, end = CFG.window_bounds(day, CFG.window(window_id))
     body = {
         "startsOnOrAfter": start.isoformat(),
@@ -105,8 +106,25 @@ def capacity_frame(
         "skillBasedAvailability": True,
     }
     frames = api.post("/dispatch/capacity", body).json()["availabilities"]
-    assert len(frames) == 1, frames
-    return frames[0]
+    assert frames, body
+    if len(frames) == 1:
+        return frames[0]
+    busy = {
+        t["id"] for f in frames for t in f["technicians"] if t["status"] != "Available"
+    }
+    technicians = [
+        {**t, "status": "Unavailable" if t["id"] in busy else "Available"}
+        for t in frames[0]["technicians"]
+    ]
+    free = [t for t in technicians if t["status"] == "Available" and t["hasRequiredSkills"]]
+    return {
+        **frames[0],
+        "end": frames[-1]["end"],
+        "endUtc": frames[-1]["endUtc"],
+        "technicians": technicians,
+        "isAvailable": bool(free),
+        "openAvailability": len(free),
+    }
 
 
 def open_slots(api: Api, day: date, window_id: str, job_type: int = TUNE_UP) -> int:

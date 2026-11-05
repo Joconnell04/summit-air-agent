@@ -21,8 +21,10 @@ find_slots: >-
   day's exact arrival windows. Pass what you've heard that bears on priority in `facts`. When the
   caller can only be home some hours ("I'm home 8 to 2", "I leave at 10"), pass them as
   arrive_after and arrive_before as they said them; the server reads "8 to 2" as 8 AM to 2 PM and
-  offers only windows inside those hours. A single time the caller names ("tomorrow at 2") is the
-  window that holds it: pass `day`, and offer that window.
+  offers only windows inside those hours. A single time the caller names ("tomorrow at 7:30") starts
+  the window, two hours long unless closing comes first: pass `day`, and offer that window. Windows
+  are two hours; when the caller asks for another length ("an hour", "a three-hour window"), pass it
+  in `window_minutes`.
 read_back: >-
   Confirms the address and number before booking. The first call's sentence is spoken to the caller
   for you, word for word, so call it without announcing it and say nothing yourself. After the

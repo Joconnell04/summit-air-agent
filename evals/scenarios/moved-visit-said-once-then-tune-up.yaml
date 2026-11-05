@@ -1,0 +1,33 @@
+# Replay-2 gate call on joco/stripped: after record_move announced the moved visit, the model kept
+# raising it ("Did the technician come out that day?") while the caller booked something else.
+id: moved-visit-said-once-then-tune-up
+flow: [repeat-caller, booking]
+difficulty: standard
+traits: [filler]
+journeys: [J7, J1]
+spec: [S-31]
+tags: [caller-changes]
+max_turns: 20
+caller_id: seed:repeatCallerOpenJob
+persona: Maria Delgado, who has a no-heat visit booked for today and moved to a new apartment over the weekend. She also wants the AC at the new place tuned up. Friendly, a little rushed.
+hidden_facts:
+  name: Maria Delgado
+  old_address: 620 Bedford Ave, Brooklyn, 11235, where the visit was booked; you don't live there anymore
+  new_address: 380 Washington Avenue, Clinton Hill, Brooklyn, 11238
+  phone: the number you're calling from, still the best number
+  problem: the heat at the new apartment won't come on, so today's technician should come there instead, same time. Separately, the central air there needs its yearly tune-up, any weekday morning next week.
+opening: Hi, um, I have a technician coming today, but we just moved, so I need to update my address.
+script:
+  - Give the new address as "380 Washington Avenue, eleven two three eight" when asked.
+  - Answer yes to a correct read-back of the new address and your number.
+  - Keep today's visit as it is; don't ask about it again once the agent says it moved.
+  - After the move is done, ask for an AC tune-up at the new place, a separate job from the heat, any weekday morning next week.
+  - Take the first morning the agent offers, and say goodbye once it is booked.
+must:
+  - tool_ok: [record_move, book_appointment]
+  - moved: {in_area: true, zip: "11238", street: "380 Washington", jobs: 1}
+  - agent_never_says: ['did (the|our) (technician|tech) (come|make it|show)', '(technician|tech) (come|came) out']
+  - agent_says_at_most: {'visit (today|this afternoon|this morning)': 2}
+should:
+  - Tells the caller once that today's visit now goes to the new address, and doesn't raise it again.
+  - Books the tune-up as its own job without questioning the caller about today's visit.

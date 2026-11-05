@@ -21,7 +21,7 @@ def test_an_inactive_location_is_listed_only_when_asked_for(small):
 def test_an_open_job_moves_only_to_an_active_location_of_its_customer(small):
     api, ids = small
     customer_id, old_id = ids["home"]
-    job = api.post("/jpm/jobs", job_body(customer_id, old_id, TOMORROW, "morning")).json()
+    job = api.post("/jpm/jobs", job_body(customer_id, old_id, TOMORROW, "0800-1200")).json()
     new = api.post("/crm/locations", {"customerId": customer_id, "name": "New",
                                       "address": ADDRESS}).json()
     moved = api.request("PATCH", f"/jpm/jobs/{job['id']}", json={"locationId": new["id"]})

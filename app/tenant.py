@@ -150,10 +150,27 @@ class Window:
     start: time
     end: time
     after_hours: bool
+    # The part of the day a caller names for it: "morning", "afternoon" or "evening".
+    part: str = ""
 
     def label(self) -> str:
         """Spoken form of the window, such as "8 to 12" (window_said)."""
         return window_said(self.start, self.end)
+
+
+def window_of(start: time, end: time) -> Window:
+    """A daytime window by its local start and end: any run of 30-minute blocks. Its id is
+    "0730-0930"; its part of the day is where it starts."""
+    part = "morning" if start.hour < 12 else "afternoon" if start.hour < 16 else "evening"
+    return Window(f"{start:%H%M}-{end:%H%M}", start, end, False, part)
+
+
+def window_from_id(window_id: str) -> Window | None:
+    try:
+        start, end = (time(int(p[:2]), int(p[2:])) for p in window_id.split("-"))
+    except (ValueError, TypeError):
+        return None
+    return window_of(start, end) if start < end else None
 
 
 def _clock(t: time) -> str:
@@ -209,15 +226,17 @@ class Tenant:
         self.service_area = {z: zone for zone in company["zones"] for z in zone["zips"]}
         # Where the address lookup asks and the place names callers use (app/geocode.py).
         self.address_lookup: dict | None = company.get("address_lookup")
+        # The windows the schedule shows and the night window; any run of blocks can be booked.
         self.windows = [
-            Window(
-                w["id"],
-                time.fromisoformat(w["start"]),
-                time.fromisoformat(w["end"]),
-                w.get("after_hours", False),
-            )
+            Window(w["id"], time.fromisoformat(w["start"]), time.fromisoformat(w["end"]), True,
+                   "night")
+            if w.get("after_hours")
+            else window_of(time.fromisoformat(w["start"]), time.fromisoformat(w["end"]))
             for w in company["arrival_windows"]
         ]
+        scheduling = company.get("scheduling") or {}
+        self.block_minutes: int = scheduling.get("block_minutes", 30)
+        self.window_minutes: int = scheduling.get("window_minutes", 120)
         self.phone_keys = {phone_key(n) for n in agent["phone_numbers"]}
         self.safety: dict = agent["safety"]
         missing = missing_safety_wording(self.safety)
@@ -295,14 +314,17 @@ class Tenant:
         return changed
 
     def window(self, window_id: str) -> Window | None:
-        return next((w for w in self.windows if w.id == window_id), None)
+        """A configured window, or any run of blocks by its id ("0730-0930")."""
+        found = next((w for w in self.windows if w.id == window_id), None)
+        return found or window_from_id(window_id)
 
     def hold_for(self, day: date, window_id: str, business_unit_id: int) -> int:
         """How many technicians stay free for urgent jobs in this window. It is the company's rule,
         not ServiceTitan's, so it is applied here to the technicians ServiceTitan says are free."""
         if business_unit_id not in self.urgent_hold["business_unit_ids"]:
             return 0
-        return self.urgent_hold["per_day"].get(DAY_NAMES[day.weekday()], {}).get(window_id, 0)
+        held = self.urgent_hold["per_day"].get(DAY_NAMES[day.weekday()], 0)
+        return held if isinstance(held, int) else 0
 
     def local(self, moment: datetime) -> datetime:
         return moment.astimezone(self.tz)

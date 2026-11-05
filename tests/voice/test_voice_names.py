@@ -1,6 +1,7 @@
 """The local names list (voice/names.py, tenants/summit-air/names.yaml) and how it feeds the voice
 and the ears."""
 
+import asyncio
 import json
 
 import httpx
@@ -27,9 +28,9 @@ def name(written: str) -> local_names.Name:
     return next(n for n in NAMES.names if n.written == written)
 
 
-def test_the_summit_air_list_is_the_fifteen_sourced_names_and_valid():
+def test_the_summit_air_list_is_the_sixteen_sourced_names_and_valid():
     assert local_names.problems(NAMES) == []
-    assert len(NAMES.names) == 15
+    assert len(NAMES.names) == 16
     assert all(entry["sources"] for entry in RAW["names"])
 
 
@@ -38,6 +39,15 @@ def test_kosciuszko_is_said_one_way_and_heard_three_ways():
     assert kosciuszko.says == "koss-ee-OSS-koh"
     assert set(kosciuszko.heard_as) == {"kuh-SHOOS-koh", "kah-skee-OOS-koh"}
     assert "Kosciuszko Street" in NAMES.keyterms()
+
+
+def test_hoyt_is_a_keyterm_and_heard_through_white():
+    """The replay-2 gate call: Cartesia's "Hoyt" came back as "White Street"."""
+    hoyt = name("Hoyt Street")
+    assert "Hoyt Street" in NAMES.keyterms()
+    assert "White Street" in hoyt.heard_as
+    keys = [item["text"] for item in NAMES.cartesia_items()]
+    assert any(local_names.matches(k, "75 Hoyt Street, Brooklyn") for k in keys)
 
 
 def test_houston_is_replaced_only_as_a_street():
@@ -136,7 +146,7 @@ def test_the_voice_settings_reach_the_session():
     voice = load_voice()
     tokenizer = tts_options(voice, NAMES)["tokenizer"]
     assert tokenizer._config.min_sentence_len == voice["tts"]["min_sentence_chars"]
-    trial = {**voice, "preemptive_tts": True}
+    trial = {**voice, "preemptive_generation": True, "preemptive_tts": True}
     assert turn_handling(trial)["preemptive_generation"] == {"enabled": True, "preemptive_tts": True}
 
 
@@ -176,3 +186,23 @@ def test_flux_is_switched_on_by_its_provider_and_keeps_the_local_names_as_keyter
     assert turn_handling(flipped)["turn_detection"] == "stt"
     candidate = {**voice, "stt": {**voice["stt_candidates"]["flux"], "eager_eot_threshold": 0.5}}
     assert stt_options(candidate, NAMES)["eager_eot_threshold"] == 0.5
+
+
+def test_preemptive_generation_is_off_because_its_drafts_were_never_kept():
+    """LiveKit keeps an early draft only when the caller's line reaches the model unchanged, and
+    the worker adds the server's notes to most lines (issue #150)."""
+    assert turn_handling(load_voice())["preemptive_generation"]["enabled"] is False
+def test_a_short_acknowledgment_at_the_start_of_a_line_is_left_to_the_adaptive_detector():
+    """Issue #150: "Okay, great. Thanks." as the agent's next line began cut it off, because LiveKit
+    lets plain voice activity interrupt in the first second of a line."""
+    from livekit.agents import AgentSession
+
+    handling = turn_handling(load_voice())
+    assert handling["interruption"]["mode"] == "adaptive"
+    assert handling["interruption"]["backchannel_boundary"] == (0.0, 1.0)
+
+    async def build():
+        return AgentSession(turn_handling=handling)
+
+    session = asyncio.run(build())
+    assert session.options.interruption["backchannel_boundary"] == (0.0, 1.0)

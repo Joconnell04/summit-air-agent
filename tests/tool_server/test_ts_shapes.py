@@ -55,33 +55,33 @@ def usable(day, window, technicians, level, unit=11):
 
 def test_an_ordinary_job_leaves_the_held_technicians_free(agent):
     three = [(1, FREE, True), (2, FREE, True), (3, FREE, True)]
-    assert TENANT.hold_for(TUESDAY, "morning", 11) == 2
-    assert usable(TUESDAY, "morning", three, "Normal") == [1], "three free, two held: one usable"
-    assert usable(TUESDAY, "morning", three[:2], "Normal") == []
-    assert usable(TUESDAY, "morning", three, "High") == [1]
+    assert TENANT.hold_for(TUESDAY, "0800-1000", 11) == 2
+    assert usable(TUESDAY, "0800-1000", three, "Normal") == [1], "three free, two held: one usable"
+    assert usable(TUESDAY, "0800-1000", three[:2], "Normal") == []
+    assert usable(TUESDAY, "0800-1000", three, "High") == [1]
 
 
 def test_an_urgent_job_may_take_any_free_technician_with_the_skills(agent):
     mixed = [(1, FREE, True), (2, FREE, False), (3, BUSY, True), (4, FREE, True)]
-    assert usable(TUESDAY, "morning", mixed, "Urgent") == [1, 4]
+    assert usable(TUESDAY, "0800-1000", mixed, "Urgent") == [1, 4]
 
 
 def test_the_hold_counts_free_technicians_whatever_their_skills(agent):
     one_fit = [(1, FREE, True), (2, FREE, False), (3, FREE, False)]
-    assert usable(TUESDAY, "morning", one_fit, "Normal") == [1]
+    assert usable(TUESDAY, "0800-1000", one_fit, "Normal") == [1]
     two = [(1, FREE, True), (2, FREE, False)]
-    assert usable(TUESDAY, "morning", two, "Normal") == []
+    assert usable(TUESDAY, "0800-1000", two, "Normal") == []
 
 
 def test_booked_technicians_are_not_free_and_not_counted(agent):
     some_busy = [(1, BUSY, True), (2, FREE, True), (3, FREE, True), (4, FREE, True)]
-    assert usable(TUESDAY, "morning", some_busy, "Normal") == [2]
+    assert usable(TUESDAY, "0800-1000", some_busy, "Normal") == [2]
 
 
 def test_the_hold_follows_the_day_and_the_business_unit(agent):
     two = [(1, FREE, True), (2, FREE, True)]
-    assert usable(SATURDAY, "morning", two, "Normal") == [1], "a Saturday holds one"
-    assert usable(TUESDAY, "morning", two, "Normal", unit=12) == [1, 2], "installs hold none"
+    assert usable(SATURDAY, "0800-1000", two, "Normal") == [1], "a Saturday holds one"
+    assert usable(TUESDAY, "0800-1000", two, "Normal", unit=12) == [1, 2], "installs hold none"
 
 
 def test_the_night_window_is_for_urgent_jobs_only(agent):
@@ -94,20 +94,20 @@ def test_the_night_window_is_for_urgent_jobs_only(agent):
 def test_open_windows_keeps_only_the_tenants_windows_in_range_and_in_time_order(agent):
     plenty = [(i, FREE, True) for i in range(1, 6)]
     wednesday = date(2026, 11, 4)
-    odd = frame(TUESDAY, "morning", plenty)
+    odd = frame(TUESDAY, "0800-1000", plenty)
     odd["startUtc"], odd["endUtc"] = "2026-11-03T14:00:00Z", "2026-11-03T15:00:00Z"
     frames = [
-        frame(wednesday, "morning", plenty),
-        frame(TUESDAY, "afternoon", plenty),
-        frame(TUESDAY, "morning", plenty),
-        frame(date(2026, 11, 20), "morning", plenty),
+        frame(wednesday, "0800-1000", plenty),
+        frame(TUESDAY, "1200-1400", plenty),
+        frame(TUESDAY, "0800-1000", plenty),
+        frame(date(2026, 11, 20), "0800-1000", plenty),
         odd,
     ]
     found = capacity.open_windows(TENANT, frames, "Normal", TUESDAY, wednesday)
     assert [(w["date"], w["window"]) for w in found] == [
-        ("2026-11-03", "morning"),
-        ("2026-11-03", "afternoon"),
-        ("2026-11-04", "morning"),
+        ("2026-11-03", "0800-1000"),
+        ("2026-11-03", "1200-1400"),
+        ("2026-11-04", "0800-1000"),
     ]
     assert found[0]["technician_ids"] == [1, 2, 3]
     assert set(found[0]) == {"date", "window", "after_hours", "start", "end", "technician_ids"}
@@ -116,26 +116,26 @@ def test_open_windows_keeps_only_the_tenants_windows_in_range_and_in_time_order(
 
 def test_open_windows_depends_on_the_priority(agent):
     two = [(1, FREE, True), (2, FREE, True)]
-    frames = [frame(TUESDAY, "morning", two), frame(TUESDAY, "after_hours", [(5, FREE, True)])]
+    frames = [frame(TUESDAY, "0800-1000", two), frame(TUESDAY, "after_hours", [(5, FREE, True)])]
     assert capacity.open_windows(TENANT, frames, "Normal", TUESDAY, TUESDAY) == []
     urgent = capacity.open_windows(TENANT, frames, "Urgent", TUESDAY, TUESDAY)
     assert [(w["window"], w["after_hours"]) for w in urgent] == [
-        ("morning", False),
+        ("0800-1000", False),
         ("after_hours", True),
     ]
 
 
 def test_pick_technician_reads_the_exact_window_and_applies_the_rules(agent):
-    start, end = TENANT.window_bounds(TUESDAY, TENANT.window("morning"))
+    start, end = TENANT.window_bounds(TUESDAY, TENANT.window("0800-1000"))
     three = [(1, FREE, True), (2, FREE, True), (3, FREE, True)]
-    frames = [frame(TUESDAY, "morning", three), frame(TUESDAY, "afternoon", [(9, FREE, True)])]
+    frames = [frame(TUESDAY, "0800-1000", three), frame(TUESDAY, "1200-1400", [(9, FREE, True)])]
     assert capacity.pick_technician(TENANT, frames, start, end, "Normal") == 1, (
         "the others are held"
     )
     picked = {capacity.pick_technician(TENANT, frames, start, end, "Urgent") for _ in range(60)}
     assert picked == {1, 2, 3}, "an urgent job may take any, and the pick is spread over them"
     assert capacity.pick_technician(TENANT, frames[1:], start, end, "Urgent") is None
-    taken = [frame(TUESDAY, "morning", [(1, BUSY, True), (2, FREE, True), (3, FREE, True)])]
+    taken = [frame(TUESDAY, "0800-1000", [(1, BUSY, True), (2, FREE, True), (3, FREE, True)])]
     assert capacity.pick_technician(TENANT, taken, start, end, "Normal") is None
     assert capacity.pick_technician(TENANT, taken, start, end, "Urgent") in (2, 3)
 
@@ -241,7 +241,7 @@ def test_a_conflict_is_slot_taken_a_missing_job_is_not_found_and_anything_else_i
     assert (bad.value.status, bad.value.code) == (422, "rejected")
     assert bad.value.detail, "the problem title is the detail"
     # The same technician twice in one window is a conflict (409), which the tools read as slot_taken.
-    start, end = TENANT.window_bounds(TUESDAY, TENANT.window("afternoon"))
+    start, end = TENANT.window_bounds(TUESDAY, TENANT.window("1200-1400"))
     frames = adapter.capacity(start, end, 11, 203)
     technician = next(
         t["id"]
@@ -364,7 +364,7 @@ def test_callers_booking_one_window_together_all_get_it_while_technicians_are_fr
     again and takes the next. Only a window with no one left is a taken slot."""
     monkeypatch.setattr(capacity.random, "choice", lambda technicians: technicians[0])
     adapter = agent.app.state.services.fsm["summit-air"]
-    window = TENANT.window("afternoon")
+    window = TENANT.window("1200-1400")
     slot = None
     for offset in range(3, 12):
         day = date(2026, 11, 2) + timedelta(days=offset)
@@ -385,7 +385,7 @@ def test_callers_booking_one_window_together_all_get_it_while_technicians_are_fr
 
 def test_a_window_that_has_started_is_offered_back_as_a_taken_slot_with_other_times(agent):
     call = ready_to_book(agent)
-    started = book(agent, call, {"date": "2026-11-02", "window": "morning"})  # it is 9 a.m.
+    started = book(agent, call, {"date": "2026-11-02", "window": "0800-1000"})  # it is 9 a.m.
     assert started["refused"] == "slot_taken"
     assert started["data"]["alternatives"], "other windows come back"
     assert count(agent, "SELECT COUNT(*) FROM flags WHERE kind = 'booking_failed'") == 0
@@ -400,14 +400,14 @@ def test_moving_a_visit_into_a_window_that_has_started_offers_other_times(agent)
         "reschedule_appointment",
         call,
         booking_id=job_id,
-        slot={"date": "2026-11-02", "window": "morning"},  # it is 9 a.m.
+        slot={"date": "2026-11-02", "window": "0800-1000"},  # it is 9 a.m.
         reason="works better",
     )
     assert started["refused"] == "slot_taken"
     assert started["data"]["alternatives"], "other windows come back"
     assert count(agent, "SELECT COUNT(*) FROM flags WHERE kind = 'reschedule_failed'") == 0
     assert count(agent, "SELECT COUNT(*) FROM callbacks") == 0, "nobody is promised a callback"
-    later = {"date": "2026-11-06", "window": "morning"}
+    later = {"date": "2026-11-06", "window": "0800-1000"}
     moved = agent.tool(
         "reschedule_appointment", call, booking_id=job_id, slot=later, reason="works better"
     )
@@ -424,11 +424,11 @@ def test_a_job_of_a_type_no_longer_booked_can_still_be_moved(agent, monkeypatch)
         "reschedule_appointment",
         call,
         booking_id=job_id,
-        slot={"date": "2026-11-02", "window": "morning"},  # it is 9 a.m.
+        slot={"date": "2026-11-02", "window": "0800-1000"},  # it is 9 a.m.
         reason="works better",
     )
     assert started["refused"] == "slot_taken" and started["data"]["alternatives"] == []
-    later = {"date": "2026-11-06", "window": "morning"}
+    later = {"date": "2026-11-06", "window": "0800-1000"}
     moved = agent.tool(
         "reschedule_appointment", call, booking_id=job_id, slot=later, reason="works better"
     )
@@ -460,3 +460,44 @@ def test_a_list_is_read_page_by_page_until_it_runs_out():
     )
     assert [job["id"] for job in adapter.jobs(5)] == [10, 11, 20, 21, 30, 31]
     assert seen == [(1, "200"), (2, "200"), (3, "200")]
+
+
+def blocks(day, start_hour, count, technicians, unit=11) -> list[dict]:
+    """Consecutive half-hour block frames from start_hour."""
+    from datetime import time
+
+    out = []
+    for n in range(count):
+        minutes = start_hour * 60 + 30 * n
+        s, e = time(minutes // 60, minutes % 60), time((minutes + 30) // 60, (minutes + 30) % 60)
+        out.append(frame(day, f"{s:%H%M}-{e:%H%M}", technicians, unit))
+    return out
+
+
+def test_a_window_is_a_run_of_blocks_a_technician_is_free_in_all_of(agent):
+    """Windows became any run of 30-minute blocks (Jackson after Retell call
+    call_9826ff9f0dfa8bc835a3601368b)."""
+    free = [(i, FREE, True) for i in range(1, 5)]
+    frames = blocks(TUESDAY, 8, 4, free)
+    frames[3]["technicians"][0]["status"] = BUSY  # T1 is busy 9:30 to 10
+    found = capacity.open_windows(TENANT, frames, "Urgent", TUESDAY, TUESDAY)
+    assert [(w["window"], w["technician_ids"]) for w in found] == [("0800-1000", [2, 3, 4])]
+    hour = capacity.open_windows(TENANT, frames, "Urgent", TUESDAY, TUESDAY, minutes=60)
+    assert [w["window"] for w in hour] == ["0800-0900", "0830-0930", "0900-1000"]
+
+
+def test_a_window_from_a_named_time_is_cut_short_at_closing(agent):
+    free = [(i, FREE, True) for i in range(1, 5)]
+    frames = blocks(TUESDAY, 18, 4, free)
+    from datetime import time
+
+    found = capacity.open_windows(TENANT, frames, "Normal", TUESDAY, TUESDAY, start_at=time(19, 30))
+    assert [w["window"] for w in found] == ["1930-2000"]
+    assert TENANT.window("1930-2000").label() == "7:30 to 8"
+
+
+def test_the_urgent_hold_applies_in_every_block(agent):
+    three = [(1, FREE, True), (2, FREE, True), (3, FREE, True)]
+    frames = blocks(TUESDAY, 8, 4, three)
+    frames[2]["technicians"][2]["status"] = BUSY  # one fewer free at 9 to 9:30
+    assert capacity.open_windows(TENANT, frames, "Normal", TUESDAY, TUESDAY) == []

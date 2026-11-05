@@ -1,0 +1,28 @@
+# Live-like rig run on joco/stripped 4b160eb (issue #150): after cancelling, the agent said "That
+# visit is canceled. If you'd like another time, I have today 12 to 4, today 4 to 8." with no
+# question, and the caller waited 22 s for one.
+id: cancel-then-offer-asks
+flow: [repeat-caller]
+difficulty: standard
+traits: [filler]
+journeys: [J7]
+spec: [S-31]
+caller_id: seed:repeatCallerOpenJob
+persona: Maria Delgado, a homeowner in Brooklyn whose heat came back on by itself, so she wants to cancel today's visit. Waits for the agent to ask before answering.
+hidden_facts:
+  name: Maria Delgado
+  address: 620 Bedford Ave, Brooklyn, 11235
+  phone: the number they are calling from
+  reason: the heat came back on by itself
+opening: Hi, I need to cancel my appointment for today.
+script:
+  - Give the reason when asked.
+  - When the agent offers other windows, answer only once it asks you a question, then decline them.
+  - Say thanks and goodbye after the agent confirms the cancellation.
+must:
+  - tool_ok: cancel_appointment
+  - tool_not_called: [book_appointment, reschedule_appointment]
+  # Windows offered in a line that never asks a question leave the caller waiting.
+  - agent_never_says: ['(?:I have|openings?|available)\b[^?]*\b(?:to (?:four|eight|twelve|noon|\d+)|morning|afternoon|evening)\b[^?]*$']
+should:
+  - Ends the line that offers new windows with a direct question, such as "Which works better?".

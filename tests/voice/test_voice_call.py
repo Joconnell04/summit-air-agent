@@ -557,6 +557,20 @@ def test_a_reply_that_only_acknowledges_is_asked_to_take_the_next_step(monkeypat
         assert [r["instructions"] for r in replies] == [FOLLOW_UP_NOTES["stalled"]], line
 
 
+def test_a_reply_whose_question_was_filtered_out_is_asked_to_take_the_next_step():
+    """Live-like rig run on 5b57b92 (issue #150): the question was dropped and the restatement,
+    said in words by the caller, stayed, so the reply asked nothing and the caller waited 21 s."""
+    reply = SpokenReply()
+    raw = "Got it, 248 Duffield Street. Is that the right address?"
+    assert reply.dead_end(raw, "Got it, 248 Duffield Street.", []) == "stalled"
+    reply = SpokenReply()
+    raw = "Got it, 10009. Let me check that it's in our service area."
+    assert reply.dead_end(raw, "Let me check that it's in our service area.", []) == "promised"
+    checked = SpokenReply().dead_end(raw, "Let me check that it's in our service area.",
+                                     [("check_service_area", {"zip": "10009"})])
+    assert checked is None, "a promise that calls its tool goes on"
+
+
 def test_a_question_or_a_plain_answer_is_not_asked_again(monkeypatch):
     for line in ("Let me check: what's the ZIP there?", "We're open until 8 tonight."):
         _, replies = _follow_ups(monkeypatch, lambda reply: None, line)

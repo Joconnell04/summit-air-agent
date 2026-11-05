@@ -12,7 +12,7 @@ from app import booking, summary, tools
 
 NEW_HOME = {"street": "380 Washington Ave", "unit": "", "city": "Brooklyn", "zip": "11238"}
 HOBOKEN = {"street": "71 Hudson St", "unit": "", "city": "Hoboken", "zip": "07030"}
-ONE_LEFT = {"date": "2026-11-05", "window": "morning"}
+ONE_LEFT = {"date": "2026-11-05", "window": "0800-1200"}
 
 
 def st(mock, sql: str, *params) -> list[sqlite3.Row]:

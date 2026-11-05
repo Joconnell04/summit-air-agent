@@ -19,7 +19,7 @@ Two callers at the same time on one world (evals/README.md, "Two calls at once")
 
 | Check | Argument | Passes when |
 |---|---|---|
-| `one_job_per_technician_window` | `true` | read from the mock: no technician has two live jobs in one window on one day |
+| `one_job_per_technician_window` | `true` | read from the mock: no technician has two live jobs whose windows overlap |
 | `window_jobs` | `{date, window, count}` | that many of the two calls' jobs are in the window in the mock, each with its own technician |
 | `booked_together` | `true` | both calls' first booking after a confirmed read-back reached the tool server at the same moment |
 | `taken_refusals` | a number | that many calls were told by `book_appointment` that the window was just taken |

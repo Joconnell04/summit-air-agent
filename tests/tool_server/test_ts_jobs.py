@@ -8,7 +8,7 @@ from toolkit import UNKNOWN, Agent, book, count, in_area_address, make_server, r
 
 from app import jobs
 
-TOMORROW_MORNING = {"date": "2026-11-03", "window": "morning"}
+TOMORROW_MORNING = {"date": "2026-11-03", "window": "0800-1200"}
 
 
 def services(agent: Agent):
@@ -302,7 +302,7 @@ def test_a_cancelled_booking_is_not_kept(agent, clock):
 def test_a_booking_moved_later_waits_for_its_new_window(agent, clock):
     call = ready_to_book(agent)
     job_id = book(agent, call, TOMORROW_MORNING)["data"]["booking_id"]
-    later = {"date": "2026-11-06", "window": "morning"}
+    later = {"date": "2026-11-06", "window": "0800-1200"}
     agent.turn(call, "Can we do Friday instead?")
     assert agent.tool("reschedule_appointment", call, booking_id=job_id, slot=later, reason="x")[
         "ok"

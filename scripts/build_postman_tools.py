@@ -711,11 +711,11 @@ def build() -> dict:
             check="pm.test('opens the schedule', () => pm.response.to.have.status(200));\n" + html,
         ),
         item(
-            "Block tomorrow's morning for every free technician",
+            "Block tomorrow 8 to 10 for every free technician",
             "POST",
             "owner/schedule/block",
             envelope=False,
-            form={"day": "{{sched_day}}", "window": "morning", "name": "Team meeting",
+            form={"day": "{{sched_day}}", "window": "0800-1000", "name": "Team meeting",
                   "next": "/owner/schedule?day={{sched_day}}"},
             pre="const d = new Date(Date.now() + 86400000);\npm.collectionVariables.set('sched_day', d.toISOString().slice(0, 10));",
             check="pm.test('back on the schedule', () => pm.response.to.have.status(200));\n"
@@ -737,7 +737,7 @@ def build() -> dict:
             "POST",
             "owner/schedule/jobs",
             envelope=False,
-            form={"day": "{{sched_day}}", "window": "afternoon", "phone": "(718) 555-0142",
+            form={"day": "{{sched_day}}", "window": "1200-1400", "phone": "(718) 555-0142",
                   "job_type": "tune_up", "notes": "Side gate",
                   "next": "/owner/schedule?day={{sched_day}}"},
             check="pm.test('back on the schedule', () => pm.response.to.have.status(200));\n"

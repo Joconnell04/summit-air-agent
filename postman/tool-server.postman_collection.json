@@ -2494,7 +2494,7 @@
           }
         },
         {
-          "name": "Block tomorrow's morning for every free technician",
+          "name": "Block tomorrow 8 to 10 for every free technician",
           "event": [
             {
               "listen": "prerequest",
@@ -2530,7 +2530,7 @@
                 },
                 {
                   "key": "window",
-                  "value": "morning"
+                  "value": "0800-1000"
                 },
                 {
                   "key": "name",
@@ -2617,7 +2617,7 @@
                 },
                 {
                   "key": "window",
-                  "value": "afternoon"
+                  "value": "1200-1400"
                 },
                 {
                   "key": "phone",

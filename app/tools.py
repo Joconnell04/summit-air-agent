@@ -19,7 +19,7 @@ from itertools import pairwise
 from . import booking, geocode, heads_up, lookup, outbound, pace, records, safety, transfer, weather
 from . import capacity as capacity_rules
 from . import priority as prio
-from .db import iso, tx
+from .db import iso, parse_iso, tx
 from .envelope import Refused, Result, ok
 from .fsm import FsmAdapter, FsmRejected, FsmUnavailable, SlotCache
 from .lifecycle import approval_unclear
@@ -758,8 +758,12 @@ def open_windows(
     now: datetime,
     job_type: dict,
     level: str,
+    minutes: int | None = None,
+    start_at: time | None = None,
 ) -> list[dict]:
-    """Open windows from now to the end of the booking range, earliest first. ServiceTitan's time
+    """Open windows from now to the end of the booking range, earliest first: runs of `minutes`
+    (the tenant's window length by default) on the company's 30-minute blocks, or with `start_at`,
+    the run starting then (app/capacity.py). ServiceTitan's time
     frames come through the cache, and the company's rules (urgent holds, after-hours) are applied
     for this priority (app/capacity.py). Also used by the job that offers earlier openings, so
     both read the same cached capacity."""
@@ -773,11 +777,28 @@ def open_windows(
         return fsm.capacity(now, range_end, unit, job_type["id"])
 
     frames = cache.get((tenant.slug, job_type["code"], today), fetch)
-    return capacity_rules.open_windows(tenant, frames, level, today, end_day)
+    found = capacity_rules.open_windows(tenant, frames, level, today, end_day, minutes, start_at)
+    # A daytime window that starts this minute is no window to offer: there is no time to get
+    # there, and a call before it (an approval check) would have no room.
+    return [w for w in found if w["after_hours"] or parse_iso(w["start"]) > now]
 
 
-def _open_windows(ctx: Ctx, job_type: dict, level: str) -> list[dict]:
-    return open_windows(ctx.tenant, ctx.fsm, ctx.cache, ctx.now, job_type, level)
+def _open_windows(
+    ctx: Ctx, job_type: dict, level: str, minutes: int | None = None, start_at: time | None = None
+) -> list[dict]:
+    return open_windows(
+        ctx.tenant, ctx.fsm, ctx.cache, ctx.now, job_type, level, minutes, start_at
+    )
+
+
+def _tiled(windows: list[dict]) -> list[dict]:
+    """Windows that don't overlap, earliest first, for a day said as a list: "8 to 10, 10 to 12
+    or 12 to 2", not every half-hour start."""
+    kept: list[dict] = []
+    for window in sorted(windows, key=lambda w: (w["start"], w["end"])):
+        if not kept or window["after_hours"] or window["start"] >= kept[-1]["end"]:
+            kept.append(window)
+    return kept
 
 
 def _describe(ctx: Ctx, window: dict) -> dict:
@@ -798,6 +819,7 @@ def _describe(ctx: Ctx, window: dict) -> dict:
         "day": day_word,
         "day_and_date": dated if day_word == weekday else f"{day_word}, {dated}",
         "label": spec.label() if spec else window["window"],
+        "part": spec.part if spec else "",
         "after_hours": window["after_hours"],
     }
 
@@ -1657,11 +1679,56 @@ def find_address(ctx: Ctx, args: FindAddressIn) -> Result:
     )
 
 
+WEEKDAYS = ("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday")
+
+
+def _day_named(ctx: Ctx, name: str) -> date | None:
+    """The date a day word means from today: "today", "tomorrow", or the next such weekday (today
+    when it is one). None for anything else."""
+    word = name.strip().lower()
+    today = ctx.tenant.local(ctx.now).date()
+    if word == "today":
+        return today
+    if word == "tomorrow":
+        return today + timedelta(days=1)
+    if word in WEEKDAYS:
+        return today + timedelta(days=(WEEKDAYS.index(word) - today.weekday()) % 7)
+    return None
+
+
+def _named_days(ctx: Ctx, args: FindSlotsIn) -> FindSlotsIn:
+    """`day` and `preferred_days` with "today", "tomorrow" and weekday names as the model passed
+    them (Retell call call_3f65a9aea68c561c5c7de616f9f: day "today" was refused as no date, and
+    preferred_days ["today"] heard "I don't have Today open")."""
+    day = args.day
+    if isinstance(day, str):
+        try:
+            day = date.fromisoformat(day.strip())
+        except ValueError:
+            day = _day_named(ctx, day)
+            if day is None:
+                raise Refused(
+                    "invalid_arguments",
+                    "Which day works for you?",
+                    errors={"day": "a date, today, tomorrow or a weekday"},
+                ) from None
+    preferred = []
+    for name in args.preferred_days:
+        word = name.strip().lower()
+        if word in ("today", "tomorrow"):
+            preferred.append(_day_named(ctx, word).isoformat())
+        else:
+            preferred.append(word)
+    return args.model_copy(update={"day": day, "preferred_days": preferred})
+
+
 def find_slots(ctx: Ctx, args: FindSlotsIn) -> Result:
+    args = _named_days(ctx, args)
     job_type = _job_type(ctx, args.job_type)
     found = _priority(ctx, args.job_type, args.facts.inside_temp_f)
     facts, decided = found.facts, found.priority
-    windows = _open_windows(ctx, job_type, decided.level)
+    length = args.window_minutes
+    windows = _open_windows(ctx, job_type, decided.level, length)
     priority = {
         "level": decided.level,
         "reasons": decided.reasons,
@@ -1684,7 +1751,13 @@ def find_slots(ctx: Ctx, args: FindSlotsIn) -> Result:
         # One time the caller named ("tomorrow at two PM") is the window that holds it, not a
         # limit on when the technician may come: live call 2 passed 1 PM to 5 PM, which no 4-hour
         # window fits, and heard that tomorrow had no openings (issue #149).
-        holding = [w for w in windows if _window_holds(ctx, w, named)]
+        # The window starts at the half hour on or before the time, its usual length, cut short at
+        # closing time: "7:30" gives 7:30 to 8 (Jackson after Retell call
+        # call_9826ff9f0dfa8bc835a3601368b, who asked for 7:30 and heard "4 to 8").
+        step = ctx.tenant.block_minutes
+        starts = time(named.hour, named.minute - named.minute % step)
+        exact = _open_windows(ctx, job_type, decided.level, length, starts)
+        holding = exact or [w for w in windows if _window_holds(ctx, w, named)]
         data["arrival"] = {"time": named.strftime("%H:%M"), "fits": bool(holding)}
         if holding:
             windows = holding
@@ -1696,6 +1769,9 @@ def find_slots(ctx: Ctx, args: FindSlotsIn) -> Result:
     elif args.arrive_after or args.arrive_before:
         after, before = _arrival_hours(args)
         fitting = [w for w in windows if _window_inside(ctx, w, after, before)]
+        if not fitting:
+            # Narrower than a usual window ("before 9"): a shorter run of blocks that fits.
+            fitting = _short_windows(ctx, job_type, decided.level, after, before)
         data["arrival"] = {
             "after": after.strftime("%H:%M") if after else None,
             "before": before.strftime("%H:%M") if before else None,
@@ -1704,8 +1780,8 @@ def find_slots(ctx: Ctx, args: FindSlotsIn) -> Result:
         if fitting:
             windows = fitting
         else:
-            labels = _join([w.label() for w in ctx.tenant.windows if not w.after_hours], "and")
-            arrival_say = ctx.tenant.line("arrival_no_fit", windows=labels) + " "
+            length = _minutes_said(args.window_minutes or ctx.tenant.window_minutes)
+            arrival_say = ctx.tenant.line("arrival_no_fit", length=length) + " "
     # From here the caller hears a window or the wait; a fact they first give after it is flagged.
     with tx(ctx.conn):
         ctx.conn.execute(
@@ -1740,7 +1816,9 @@ def find_slots(ctx: Ctx, args: FindSlotsIn) -> Result:
         data["seek_earlier"] = first["day"] != "today"
 
     if args.day:
-        on_day = [_describe(ctx, w) for w in windows if w["date"] == args.day.isoformat()]
+        on_day = [
+            _describe(ctx, w) for w in _tiled(windows) if w["date"] == args.day.isoformat()
+        ]
         data["windows"] = on_day
         if not on_day:
             _keep_second_job(ctx, data)
@@ -1751,7 +1829,7 @@ def find_slots(ctx: Ctx, args: FindSlotsIn) -> Result:
         )
 
     by_day: dict[str, list[dict]] = {}
-    for window in windows:
+    for window in _tiled(windows):
         by_day.setdefault(window["date"], []).append(_describe(ctx, window))
     preferred = {d.lower() for d in args.preferred_days}
     dates = sorted(by_day)
@@ -1776,6 +1854,14 @@ def find_slots(ctx: Ctx, args: FindSlotsIn) -> Result:
     return ok(f"{urgent_said}{arrival_say}{lead}", **data)
 
 
+def _day_said(ctx: Ctx, key: str) -> str:
+    """A preferred day as said: "today", "tomorrow" or "Friday", never "Today"."""
+    try:
+        return ctx.tenant.day_spoken(date.fromisoformat(key), ctx.now)
+    except ValueError:
+        return key.capitalize()
+
+
 def _one_offer(
     ctx: Ctx, by_day: dict[str, list[dict]], dates: list[str], preferred: set[str],
     time_of_day: str | None,
@@ -1796,8 +1882,11 @@ def _one_offer(
     named = offer["day_and_date"] if (visit - today).days >= 7 else offer["day"]
     lead = ""
     if preferred and not liked:
-        asked = _join(sorted(d.capitalize() for d in preferred), "or")
-        lead = f"I don't have {asked} open in the next two weeks. "
+        asked = _join(sorted(_day_said(ctx, d) for d in preferred), "or")
+        if all(d[:1].isdigit() for d in preferred):
+            lead = f"I don't have anything open {asked}. "
+        else:
+            lead = f"I don't have {asked} open in the next two weeks. "
     elif liked:
         weekday = offer["weekday"]
         first = today + timedelta(days=(visit.weekday() - today.weekday()) % 7)
@@ -1887,6 +1976,38 @@ def _arrival_hours(args: FindSlotsIn) -> tuple[time | None, time | None]:
     return after, before
 
 
+def _minutes_said(minutes: int) -> str:
+    """ "two hours", "an hour", "an hour and a half", "30 minutes"."""
+    hours, rest = divmod(minutes, 60)
+    words = {1: "an hour", 2: "two hours", 3: "three hours", 4: "four hours"}
+    if not hours:
+        return f"{rest} minutes"
+    said = words.get(hours, f"{hours} hours")
+    return f"{said} and a half" if rest == 30 and hours == 1 else (
+        said if not rest else f"{said} and {rest} minutes"
+    )
+
+
+def _short_windows(
+    ctx: Ctx, job_type: dict, level: str, after: time | None, before: time | None
+) -> list[dict]:
+    """Windows inside the caller's arrival hours when no usual-length one fits: from the later of
+    `after` and opening, rounded up to a block, to `before` rounded down."""
+    regular = [w for w in ctx.tenant.windows if not w.after_hours]
+    step = ctx.tenant.block_minutes
+    lo = max(after or regular[0].start, regular[0].start)
+    hi = min(before or regular[-1].end, regular[-1].end)
+    lo_min = -(-(lo.hour * 60 + lo.minute) // step) * step
+    hi_min = (hi.hour * 60 + hi.minute) // step * step
+    if hi_min - lo_min < step:
+        return []
+    starts = time(lo_min // 60, lo_min % 60)
+    return [
+        w for w in _open_windows(ctx, job_type, level, hi_min - lo_min, starts)
+        if _window_inside(ctx, w, after, before)
+    ]
+
+
 def _distance_to(ctx: Ctx, window: dict, moment: time) -> float:
     """Hours from a window to a time outside it."""
     spec = ctx.tenant.window(window["window"])
@@ -1915,9 +2036,24 @@ def _window_inside(ctx: Ctx, window: dict, after: time | None, before: time | No
     return (after is None or spec.start >= after) and (before is None or spec.end <= before)
 
 
+# The number calling, said as a phrase and passed through as one ("the number I'm calling from" on
+# Retell call call_9826ff9f0dfa8bc835a3601368b, which heard "all ten digits" for it).
+CALLING_FROM = re.compile(
+    r"^(?:the |this |my )?(?:number|one|phone|cell|line)?\s*(?:i'?m|i am)\s+calling\s+(?:you\s+)?"
+    r"(?:from|on|with)$|^(?:this|that)(?: (?:number|one|phone|cell|line))?$|^same(?: number| one)?$",
+    re.IGNORECASE,
+)
+
+
+def _calling_from(value: str) -> bool:
+    phrase = " ".join(re.sub(r"[^\w' ]", " ", value).split())
+    phrase = re.sub(r"^(?:it'?s|use|yes|yeah)\s+", "", phrase, flags=re.IGNORECASE)
+    return value.lower().replace(" ", "_") == "caller_id" or bool(CALLING_FROM.match(phrase))
+
+
 def _resolve_phone(ctx: Ctx, value: str) -> str:
     value = value.strip()
-    if value.lower().replace(" ", "_") == "caller_id":
+    if _calling_from(value):
         if len(ctx.call["caller_key"]) != 10:
             raise Refused(
                 "invalid_phone", "The number didn't come through. What's the best number?"
@@ -1937,7 +2073,10 @@ def _resolve_phone(ctx: Ctx, value: str) -> str:
             f"I don't see just one number ending in {digits}. What's the full number?",
             matches=len(on_file),
         )
-    if len(digits) != 10:
+    # Ten digits, or eleven with the country code. phone_key keeps the last ten, so an extra digit
+    # heard anywhere else would be read back as some other number.
+    said = re.sub(r"\D", "", value)
+    if len(digits) != 10 or not (len(said) == 10 or (len(said) == 11 and said.startswith("1"))):
         raise Refused("invalid_phone", "Could I get that number again, all ten digits?")
     return digits
 
