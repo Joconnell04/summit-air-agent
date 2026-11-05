@@ -587,6 +587,21 @@ def test_the_design_system_files_are_served(agent):
     assert "--ember: #FA3500" in agent.client.get("/owner/static/tokens.css").text
 
 
+def test_the_header_and_wide_parts_fit_a_phone():
+    """Issue #144: at 390 px the header made every page about 1,200 px wide. Measured by headless
+    screenshots of every page (docs/images/header-phone); these are the rules that keep it fixed."""
+    css = (ROOT / "app" / "static" / "owner" / "components.css").read_text()
+    header = css[css.index("@media (max-width: 1120px)"):css.index("/* Matches as you type")]
+    assert ".app-header .inner { height: auto; flex-wrap: wrap;" in header
+    assert ".tabs { order: 1; flex: 1 0 100%;" in header and "overflow-x: auto" in header
+    assert "@media (max-width: 600px)" in header
+    search = css[css.index(".search {"):css.index(".search input::placeholder")]
+    assert "flex: 0 1 300px" in search and "width: 100%" in search, "the search must shrink"
+    # An absolutely placed screen-reader label inside a table escapes an unpositioned wrapper.
+    assert ".table-wrap { overflow-x: auto; position: relative; }" in css
+    assert ".seg { position: relative; min-width: 0; max-width: 100%; overflow-x: auto;" in css
+
+
 def test_a_poster_that_breaks_in_any_way_fails_that_report_only(agent, clock):
     call = booked_tune_up(agent, 1)
 
