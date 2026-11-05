@@ -961,23 +961,44 @@ NOT_NAMES = {
 }
 
 
+# A name lead strong enough that the word after it is a name in any case ("this is pat"), and ones
+# that need more: "it's", "I'm" ("it's working", "I'm home") count before a capitalized word, or
+# before two words that are neither common nor numbers ("its joanne price").
+STRONG_NAME_LEADS = (("this", "is"), ("name", "is"), ("names",), ("under",), ("call", "me"))
+WEAK_NAME_LEADS = (("its",), ("im",), ("i", "am"))
+VERBISH = {
+    "working", "running", "leaking", "getting", "making", "going", "coming", "doing", "been",
+    "worse", "better", "really", "pretty", "very", "still", "back", "off", "on", "up", "down",
+}
+
+
+def _not_a_name(key: str) -> bool:
+    return (not key.isalpha()) or key in NOT_NAMES or key in NUMBER_WORDS or key in VERBISH
+
+
 def _gave_a_name(text: str) -> bool:
-    """The caller said some name, whoever's: after a name lead ("it's Sam Rivera", "my name is
-    Sam", "under Rivera") or as a short line of nothing else ("Sam Rivera.", "joanne price").
-    Lowercase counts too (the text harness's lines are), so a word on the NOT_NAMES list is never
-    taken for a name, and "I just gave you the name" gives none."""
-    keys = _name_words(text)
-    for i in range(len(keys)):
-        for lead in NAME_LEADS:
-            after = i + len(lead)
-            while after < len(keys) and keys[after] in ("um", "uh"):
-                after += 1
-            if tuple(keys[i:i + len(lead)]) == lead and after < len(keys) and (
-                keys[after].isalpha() and keys[after] not in NOT_NAMES
-            ):
-                return True
+    """The caller said some name, whoever's: after a name lead ("this is uh pat rivera", "my name
+    is Sam", "under Rivera", "It's Sam Rivera") or as a short line of nothing else ("Sam Rivera.",
+    "joanne price"). Lowercase counts too (the text harness's lines are), so common words, numbers
+    and verbs are never taken for a name, and "I just gave you the name" gives none."""
+    raw = re.findall(r"[A-Za-z0-9][A-Za-z0-9'-]*", text)
+    keys = [w.lower().replace("'", "").replace("-", "") for w in raw]
+    for leads, strong in ((STRONG_NAME_LEADS, True), (WEAK_NAME_LEADS, False)):
+        for i in range(len(keys)):
+            for lead in leads:
+                if tuple(keys[i:i + len(lead)]) != lead:
+                    continue
+                j = i + len(lead)
+                while j < len(keys) and keys[j] in ("um", "uh"):
+                    j += 1
+                if j >= len(keys) or _not_a_name(keys[j]):
+                    continue
+                if strong or raw[j][0].isupper():
+                    return True
+                if j + 1 < len(keys) and not _not_a_name(keys[j + 1]):
+                    return True
     named = [k for k in keys if k not in NAME_LINE_FILLER]
-    return 0 < len(named) <= 3 and all(k.isalpha() and k not in NOT_NAMES for k in named)
+    return 0 < len(named) <= 3 and not any(_not_a_name(k) for k in named)
 
 
 def _gave_an_address(text: str) -> bool:

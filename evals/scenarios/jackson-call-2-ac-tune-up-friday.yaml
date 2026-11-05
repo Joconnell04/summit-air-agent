@@ -11,7 +11,8 @@ hidden_facts:
   name: Maria Delgado
   address: 620 Bedford Ave, Brooklyn, 11235 (on file)
   phone: the number you're calling from
-  wants: an AC tune-up, Friday afternoon if possible, otherwise the next Friday afternoon
+  visit: you already have a heat visit booked; keep it as it is
+  wants: an AC tune-up as a separate visit, Friday afternoon if possible, otherwise the next Friday afternoon
 opening: Yeah. I need to do my a c tune up as well.
 script:
   - If the agent says only "Sure" or "I can set that up" and nothing else, say "Okay. Are you gonna ask me a question?"
@@ -19,10 +20,12 @@ script:
   - When asked when, say "Friday at two PM."
   - If the agent says there are no openings, say "Why can't you check Friday?"
   - If offered a list of days and a list of windows at once, say "That's a lot of options. Just Friday afternoon."
+  - If asked whether the AC tune-up is a separate visit from the heat visit, say yes, a separate visit; keep the heat visit.
   - Take the first Friday afternoon offered, and answer yes to a correct read-back.
   - Say goodbye once the agent confirms the booking and asks if there is anything else.
 must:
   - tool_ok: book_appointment
+  - tool_not_called: [reschedule_appointment, cancel_appointment]
   - agent_never_says: ["no openings for a tune-up", "Which day works, and which window", "(Got it|Thanks|Okay), Maria", "\\bZIP 1"]
 should:
   - Never answers with only an acknowledgment; each reply asks a question or takes the next step.

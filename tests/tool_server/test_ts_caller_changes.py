@@ -266,6 +266,11 @@ def test_a_lowercase_wrong_name_after_the_question_is_final(agent, scenarios):
         ("it's under my wife's name", False),
         ("why do you need that", False),
         ("hold on", False),
+        # Must-pass run 20261105-054039, unknown-number-cancels-with-details: these read as names.
+        ("it's six two oh bedford ave brooklyn one one two three five", False),
+        ("um yeah the heat actually came back on this morning by itself it's working now", False),
+        ("I'm home all day.", False),
+        ("It's Sam Rivera.", True),
     ],
 )
 def test_what_counts_as_giving_a_name(line, named):
