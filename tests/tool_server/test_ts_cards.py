@@ -101,6 +101,9 @@ def test_redaction_is_idempotent_and_scrubs_nested_values():
         (f"here's the number, {VISA}", True),
         ("I paid by card last time and it was fine", False),
         ("My card says the heat is out", False),
+        ("Can I pay my bill now? My card is 4111", True),
+        ("I want to make a payment on my account", True),
+        ("I paid the bill last month, the heat is out again", False),
     ],
 )
 def test_offering_a_card(line, offers):

@@ -84,7 +84,7 @@
             {% for s in switches %}
             <tr><td><span class="what">{{ s.name }}</span></td><td class="fit"><code>{{ s.where }}</code></td><td class="fit right">{{ s.value }}</td></tr>
             {% endfor %}
-            <tr><td><span class="what">Owner rules</span></td><td class="fit"><code>/owner/rules</code></td><td class="fit right">{% if live_rules %}version {{ live_rules.number }}, by {{ live_rules.author }}{% else %}defaults{% endif %}</td></tr>
+            <tr><td><span class="what">Owner rules</span></td><td class="fit"><code>/bench/rules</code></td><td class="fit right">{% if live_rules %}version {{ live_rules.number }}, by {{ live_rules.author }}{% else %}defaults{% endif %}</td></tr>
           </tbody>
         </table>
       </div>

@@ -106,6 +106,15 @@ class Ledger:
                 )
         return answers
 
+    def posted_all(self, call_id: str, lines: list[Line]) -> bool:
+        """Has every line reached the tool server, in the sense `sync` skips it?"""
+        with self.connect() as conn:
+            posted = {
+                r["idx"]: r["text"]
+                for r in conn.execute("SELECT idx, text FROM posted WHERE call_id = ?", (call_id,))
+            }
+        return all(posted.get(i, "\0").startswith(line.text) for i, line in enumerate(lines))
+
     # ---- the Retell id to our call id, and what happened to it ---------------------------------
 
     def remember(self, retell_id: str, call_id: str, kind: str) -> None:

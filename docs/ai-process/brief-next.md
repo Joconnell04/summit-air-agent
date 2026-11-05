@@ -4,14 +4,11 @@ The one page to read before the live calls and the interview: what needs Jackson
 
 ## Needs Jackson
 
-1. **The 10 live calls, whenever you're ready.** Call (646) 624-0418 with the script in `evals/live-calls.md`. Everything merged is deployed, and a scripted test call passed after the last deploy. While you listen, note:
-   - The first words of a line may be clipped: "Good to hear from you" came through as "To hear from you", and the goodbye still splits around the hang-up.
-   - Two questions in one turn slipped through once ("Is that the one you want to keep? Do you want a different day?").
-   - If you ask for a person, the transfer rings your cell.
-2. **One feedback pass after the calls.** Say what felt off, and I'll map each complaint to a setting in `docs/tuning.md` and try the obvious fix first. A lower turn-detector maximum is already queued.
-3. **Call the Retell Conversation Flow version when it's ready.** If it passes every must-pass check and comes within 5 points of our stack, it goes on (678) 336-6730 for you to call and compare.
+1. **The 10 live calls, in the order in `evals/live-calls.md`.** Call (646) 624-0418 from your cell. The calls that don't book go first, because the first booking puts your cell on file. Every address is real and in the service area. Calls 5, 7 and 9 behave differently after 8 PM (on-call instead of booking or the office); the script says what to expect either way. Everything merged is deployed and a scripted test call passed on it.
+2. **One feedback pass after the calls.** The end of the script maps each kind of complaint to one setting. Two fixes are already built and waiting on what you hear: the lookup fix for long silences on address turns (switched off), and the "yes, that's right" fast path for a slow booking moment (later list, C-63).
+3. **Retell prototype agents.** The Retell flow lane left its prototype agents on the Retell account. Say whether to delete them; nothing deletes without your OK.
 
-Nothing needs a top-up: no run has failed for credit. Paid eval runs since last night come to roughly $60 across all lanes, added from their reports, not from invoices. The three new lanes are capped at $6 each, plus about $4 for the shared reference run. The only extra Cartesia use was the Ink-2 test's $0.13; voice on test calls runs on the plan, so the overage stays far under your $20.
+Nothing needs a top-up: no run failed for credit. Paid eval runs since last night come to roughly $100 across all lanes (about $60 before the last batch, then $4 caller changes, $6 call handling, $18 booking flow, $13 Retell flow; the lookup lane is still running), added from their reports, not invoices; Cartesia's added spend is about $0.13.
 
 ## Decisions to know cold
 
@@ -43,23 +40,36 @@ Say if you disagree with any of these.
 - **Card digits are never stored anywhere.** That's the one exception to "the bench shows everything as recorded" (064).
 - **The eval floor stayed at 90%** when the address lane's run came in at 87%. The two agent gaps it found were fixed instead, and the next run came in at 92%.
 - **Reviews now re-check each fix.** Three priority and safety changes in a row fixed one case and broke another ("No heat, baby in the house" dropping to High; "What do I do? I smell gas" losing the gas lines). Every fix gets a second targeted review before it merges.
+- **Lane caps raised twice,** to $13 and $18, rather than skip the must-pass runs; 20 of the 33 must-pass cases are the rigorous and adversarial safety ones.
+- **A stale eval reference warns instead of failing CI** (086): 41 of 42 failed CI runs were that one check, so GitHub's failure emails now mean a real failure.
 - **Lane-level runs, one reference.** Each lane tests its own scenarios and the must-pass set; one standard run after a batch sets the reference.
 
 ## Still being built
 
-Three lanes started from your approved list. Each has an issue, and progress is in [lanes.md](lanes.md).
+Progress for every lane is in [lanes.md](lanes.md).
 
-- **Caller changes (#128):** a caller who moved (new address looked up, service area checked, CRM updated, open visits moved so nothing goes to the old address); a polite name-and-address check before changes from an unknown number, plus the heads-up; another callback number; a caller with two accounts.
-- **Booking flow (#129):** a correction after the read-back resets it; a visit whose window has ended is never confirmed as upcoming; businesses that slipped past the decline; work Summit Air doesn't do; two jobs in one call; a requested technician becomes a note, never a promise.
-- **Call handling (#130):** card numbers stopped and never stored, billing to an office callback; dead air checked in on every 2 minutes, a polite hang-up at 8 with a call-back invite and a resume on the next call; the sparks route; AC water through the ceiling is Urgent; a breaker that keeps tripping is High.
-
-- **Retell Conversation Flow (#133):** our design mapped onto Retell's stage graph, with the safety lines as static sentences and our tool server still deciding every gate. Checked against the spec, then run on the must-pass set and the standard suite at two samples. A fair second test of whether a managed platform does this better.
-
-After the first three merge: one two-sample standard run for the new reference, a deploy, and a scripted test call. The next prompt idea, giving the model only the current stage's instructions, is in [exploration 016](../explorations/016-stage-scoped-prompts.md).
+- **Lookup results in the same turn (#142):** the fix for silent lookup turns, built behind a switch that's off by default and measured both ways. Ready to turn on only if your calls show lookups feel slow.
 
 ## Live on the server
 
-Everything merged is deployed. The bench shows calls as recorded. The round 3 final pass and the CO spelling fix, the address lookup with preferred names, and priority from the caller's own words are all live. The address lookup is switched on.
+Everything below is merged and deployed, and a scripted test call passed after the last deploy:
+- Caller changes (#134): a moved address, the name-and-address check from an unknown number with a heads-up call (allowlisted in the demo), another callback number, two accounts.
+- Booking flow (#135): corrections after the read-back reset it, ended windows never confirmed as upcoming, businesses and work Summit Air doesn't do declined, two jobs in one call, a requested technician as a note.
+- Call handling (#132): card numbers stopped and never stored, dead air (check-in at 2 minutes, goodbye at 8, resume on the call back), the sparks line, AC water through the ceiling Urgent, a tripping breaker High.
+- Must-pass fixes (#139): "top priority" spoken word for word by the server, the caller's ZIP taken when the address lookup finds nothing, no tool talk or double confirmation after a reschedule, no coaching on a 911 call, no false card prompt when a caller corrects their phone number.
+- Side model (#141): the tighter at-risk question and the 0.65 threshold.
+- Rules page (#143): one page at `/bench/rules`, one topic at a time: your rules, 83 fixed responses each with a plain trigger and its exact line, the system prompt in assembly order on a sample call, and versions. `/owner/rules` redirects there; the owner view no longer has a Rules tab.
+- Retell Conversation Flow (#146, decision 087): built and measured, not put on a number. Every gate held and the safety lines were exact, but it scored 53% against our 92%, because Retell sends the model's words straight to the voice with no place for our speech filter, and on the audio rig it was the slowest (MEASURED):
+
+  | | Plain reply | Turn with a lookup | Gas or CO lines triggered |
+  |---|---|---|---|
+  | Our stack | 1.90 s | 1.96 s | 6 of 6 |
+  | Retell, single-prompt | 1.57 s | 2.27 s | 1 of 6 |
+  | Retell, flow | 2.63 s | 3.09 s | 4 of 6 |
+
+- A safety pack (#147): 40 real-caller lines from every regression review that must always bring the lines or raise priority, run by every `make check`.
+- Phone widths (#145): the header wraps and wide parts scroll in place on every owner and bench page.
+- The eval reference: 91% at two samples (169 of 186), every must-pass case passing (run 20261104-234633). The side-model change makes it stale, which now only warns (decision 086); the next batch run re-adopts.
 
 Signing in: https://45-77-105-247.sslip.io/owner (owner view) and https://45-77-105-247.sslip.io/bench (debug bench), both as `jackson`. The password is in the macOS Keychain (`security find-generic-password -a summit-air -s owner-admin-password -w`). The side model, warm transfer and recordings are on.
 

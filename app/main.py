@@ -689,6 +689,29 @@ def create_app(
             return JSONResponse({"detail": f"no call {call_id}"}, 404)
         return found
 
+    @app.post("/debug/forget-calls")
+    def debug_forget_calls(request: Request):
+        """Move every recorded call two days back, so none is within the repeat-call window of the
+        next one (lifecycle._linked). Our own eval harness gives each scenario a fresh server; the
+        Retell eval instance shares one, so it asks for this before every scenario."""
+        denied = _check_debug(request)
+        if denied:
+            return denied
+        if not services.settings.allow_forget_calls:
+            return JSONResponse({"detail": "not allowed on this server"}, 403)
+        conn = services.connect()
+        try:
+            with conn:
+                rows = conn.execute("SELECT id, started_at FROM calls").fetchall()
+                for row in rows:
+                    earlier = db.parse_iso(row["started_at"]) - timedelta(days=2)
+                    conn.execute(
+                        "UPDATE calls SET started_at = ? WHERE id = ?", (db.iso(earlier), row["id"])
+                    )
+        finally:
+            conn.close()
+        return {"ok": True, "aged": len(rows)}
+
     @app.get("/debug/logs")
     def debug_logs(
         request: Request,

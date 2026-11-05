@@ -12,6 +12,15 @@ Discussion: docs/ai-process/transcripts/... or docs/explorations/...
 Issue: #N
 -->
 
+## 091. One simple Rules page, on the debug bench only
+
+Decided: the owner view's Rules page and the bench's rule editor become one page at `/bench/rules`, in reading order: **Your rules** (a short list, each rule with its stage and where it reaches the agent, plus one row to add one), **Fixed responses** (the server's lines and hard rules, one row per trigger with the exact line, behind eight topic tabs so one topic shows at a time), **System prompt** (the sections `prompts/assemble.py` joins, in order, on a sample call, collapsed), then Versions. `/owner/rules` redirects there (308) and the owner view has no Rules tab. Every row is a trigger in plain words and the exact line; variants of one line share a row, a check that says a line shows it on its row, and each line is said on one row only, so 95 lines and 40 checks read as 83 rows. The 49 company settings and the prompt cut into 66 rows are gone from the page: settings are configuration, and the prompt is shown whole. The six lines the owner may reword are fields in place among the fixed responses. A version's note is written from the change. The page reads the prompt from `assemble.sections()`, which `instructions()` is now built from, so the two can't drift; the prompt text is unchanged byte for byte. Every server rule, the guidance check and the must-pass gate on publish (031, 055) are unchanged.
+Why: Jackson found the two pages overcomplicated, "a hodgepodge of random rules that are disparately connected", and asked for less at once, on the bench only, with the assembled prompt on the page. The owner page was 251 rows and 17,032 px tall (MEASURED, headless Chromium at 1440 px on `make owner-demo`); the new page is about 1,860 px.
+Considered: tabs for rules, fixed responses, prompt and versions (B: the least at once, but your rules never sit beside what they are checked against); fixed responses and your rules side by side (C: everything in one scroll, 6,975 px, cramped on a phone).
+Would change if: the page's main use turns out to be an engineer scanning every fixed line rather than an admin adding a rule (then C's single scroll).
+Discussion: docs/explorations/018-rules-page.md; Jackson picked A ("let's go with your recommendation of one topic at a time").
+Issue: #140
+
 ## 090. The side model stays on OpenAI Decisions, at a 0.65 threshold
 
 Decided: the side model that reads whether someone at home is at risk stays on OpenAI Decisions, not Jev, and a yes now needs a probability of 0.65 or more instead of 0.5.
@@ -21,6 +30,15 @@ The question was also tightened, at Jackson's request, so a condition heat or co
 Considered: keeping 0.5 (the measured eval calls never sat near it, but the test set did); a first rewrite that asked whether someone was at risk "from the heat or cold there" (it stopped counting plain facts like "my grandmother is 82", missing 8 of 43); Jev (equally accurate, faster where nobody hears it, no retention terms).
 Would change if: the 480-line plan run shows true yeses between 0.5 and 0.65 (lower it back), or a decision model goes on the reply path, where the caller waits on it (Jev's speed then matters).
 Discussion: Jackson in chat; evals/rounds/side-model-01.md, side-model-02.md; DECISIONS.md 037, 056
+
+## 087. Retell's Conversation Flow keeps every gate but can't filter the model's speech, so our stack stays
+
+Decided: the Retell Conversation Flow version of the agent (`voice/retell_flow/`, issue #133) does not go on (678) 336-6730 for live calls, and our LiveKit stack stays the product. The flow is kept in the repository, reproducible with `make retell-flow-push`, as the tested form of Retell for bake-off 7.
+Why: built to mirror our design, with our tool server behind every gate, it said the safety lines word for word on every safety call (79 of 79 standard, 36 of 36 must-pass), booked only after a confirmed read-back, booked no commercial or out-of-area caller and ended calls only on the server's answer. That closes the gap that ruled out the single-prompt agent (038). But it passed 53% of the standard suite against our stack's 92% (61% against 92% where the eval instance sets scenarios up the same way) and 45% of must-pass against 88%, with must-pass code checks failing in 4 scenarios, and on the audio rig it was the slowest stack, 2.63 s median on a plain turn against our 1.90 s, because every caller line goes through our server before the reply (MEASURED, evals/rounds/retell-flow-01.md). Almost all of the gap is the model's own speech: repeated read-backs, two questions at once, internal words. Our speech filter (060) drops those before they are spoken; Retell streams the model's text straight to the voice, so a flow has nowhere to run it.
+Considered: putting the flow on the number anyway for a side-by-side call (the issue's bar was every must-pass code check and within 5 points, and it missed both by far); stage-scoped prompts inside the flow (exploration 016's idea, a separate change that wouldn't add the missing filter); Retell's custom-LLM socket, where our server would see each reply before it is spoken and could filter it, at the cost of running the model ourselves, which is our stack again behind Retell's ears and voice.
+Would change if: Retell adds a hook between the model's text and the voice, or a live-call round shows the filter matters less on the phone than in the grader's reading, in which case the flow is the Retell entrant to rerun.
+Discussion: docs/explorations/017-retell-conversation-flow.md; docs/bakeoffs.md, bake-off 7. Jackson in chat: "if retell's conversation flow can do what we're trying to do better, then that's worth testing."
+Issue: #133
 
 ## 086. A stale eval reference warns; it doesn't fail the build
 
@@ -725,5 +743,3 @@ Would change if: LiveKit wins the platform decision and our harness grows past a
 Updated after Jackson's review: the same harness scores both voice stacks (Retell through its text chat interface, not its own simulator), scenarios are realistic (stutters, corrections, transcription errors) and labelled by flow and difficulty so suites are chosen by tag, and LangGraph and Langflow were considered and not used (docs/decisions/06-eval-design.md).
 Discussion: docs/decisions/06-eval-design.md
 Issue: #6
-
-

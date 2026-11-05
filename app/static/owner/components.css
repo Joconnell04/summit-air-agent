@@ -46,22 +46,38 @@ button { font: inherit; color: inherit; }
 }
 .tabs a:hover { color: var(--ink); text-decoration: none; }
 .tabs a[aria-current="page"] { color: var(--ink); font-weight: var(--semibold); border-bottom-color: var(--ember); }
-.app-header .end { margin-left: auto; display: flex; align-items: center; gap: var(--s-4); }
+.app-header .end { margin-left: auto; min-width: 0; display: flex; justify-content: flex-end; align-items: center; gap: var(--s-4); }
 /* Account: Sign out at the end of the header, set off by a hairline; its tooltip says who is
    signed in, so the header keeps its room for the tabs, search and status. */
 .account { display: flex; align-items: center; padding-left: var(--s-3); border-left: 1px solid var(--line); }
 
 /* Search: one field in the header that finds a call by person, number, address or job. */
-.search { position: relative; display: flex; align-items: center; }
+.search { position: relative; display: flex; align-items: center; flex: 0 1 300px; min-width: 180px; }
 .search svg { position: absolute; left: 10px; width: 15px; height: 15px; color: var(--faint); pointer-events: none; }
 .search input {
-  width: 300px; height: var(--control-h); padding: 0 var(--s-3) 0 32px; border-radius: var(--r-md);
+  width: 100%; height: var(--control-h); padding: 0 var(--s-3) 0 32px; border-radius: var(--r-md);
   border: 1px solid var(--line); background: var(--sunken); font: inherit; font-size: var(--text-sm); color: var(--ink);
   transition: border-color var(--fast) var(--ease), background var(--fast) var(--ease);
 }
 .search input::placeholder { color: var(--faint); }
 .search input:hover { border-color: var(--line-strong); }
 .search input:focus { outline: none; background: var(--surface); border-color: var(--info); box-shadow: var(--focus); }
+/* A narrower window: the search field gives up width first; below 1120 px the tabs take their own
+   row and scroll sideways and the search takes the room that is left; on a phone the search, status
+   and Sign out drop to a row of their own, and the header stops sticking so it never covers a
+   third of the screen. */
+@media (max-width: 1120px) {
+  .app-header .inner { height: auto; flex-wrap: wrap; gap: 0 var(--s-4); padding-top: var(--s-2); }
+  .brand { min-height: var(--control-h); }
+  .app-header .end { flex: 1 1 0; min-width: 0; gap: var(--s-3); }
+  .search { flex: 1 1 auto; min-width: 0; }
+  .tabs { order: 1; flex: 1 0 100%; height: var(--row-h); overflow-x: auto; scrollbar-width: none; }
+  .tabs a { white-space: nowrap; }
+}
+@media (max-width: 600px) {
+  .app-header { position: static; }
+  .app-header .end { flex: 1 0 100%; padding-top: var(--s-2); }
+}
 /* Matches as you type: a popover under the field, one row per match, the kind on the right. */
 .suggest {
   position: absolute; top: calc(100% + 6px); right: 0; width: 440px; max-height: 420px; overflow-y: auto; z-index: 40;
@@ -166,11 +182,13 @@ a.figure:hover .label { color: var(--ink); }
 
 /* Filters: segmented choice and on/off toggles, one height */
 
-.filters { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2); }
+.filters { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2); min-width: 0; max-width: 100%; }
 .filters .rule { width: 1px; height: 20px; background: var(--line); margin: 0 var(--s-1); }
 .filters .label { font-size: var(--text-sm); color: var(--muted); margin-right: var(--s-1); }
 
 .seg { display: inline-flex; height: var(--control-h); padding: 2px; border-radius: var(--r-md); background: var(--neutral-wash); }
+/* More choices than the width holds (the call list's five on a phone) scroll sideways in place. */
+.seg { position: relative; min-width: 0; max-width: 100%; overflow-x: auto; scrollbar-width: none; }
 .seg button, .seg a {
   display: inline-flex; align-items: center; gap: 6px; height: 100%; padding: 0 var(--s-3); border: 0; border-radius: var(--r-sm);
   background: transparent; color: var(--muted); font-size: var(--text-sm); font-weight: var(--medium); cursor: pointer; white-space: nowrap;
@@ -221,6 +239,8 @@ a.figure:hover .label { color: var(--ink); }
 /* A form table: a label and its field on each row, centred on the field's line. */
 .table.form td { vertical-align: middle; padding-top: var(--s-2); padding-bottom: var(--s-2); }
 .table.form td .field-error { margin-bottom: calc(-1 * var(--s-1)); }
+/* A field never shrinks below a readable width; on a phone the table scrolls sideways instead. */
+.table.form td .field { min-width: var(--field-min); }
 /* A row with no control is as tall as one with a control, so a list of users reads evenly. */
 .table.form tbody tr { height: calc(var(--control-h) + 2 * var(--s-2) + 1px); }
 
@@ -249,7 +269,9 @@ a.figure:hover .label { color: var(--ink); }
 
 /* Tables: dense, scannable rows */
 
-.table-wrap { overflow-x: auto; }
+/* Positioned, so a screen-reader label or a hidden radio inside scrolls with the table instead of
+   widening the page on a phone. */
+.table-wrap { overflow-x: auto; position: relative; }
 .table { width: 100%; border-collapse: collapse; font-size: var(--text-md); }
 .table th {
   text-align: left; font-size: var(--text-xs); font-weight: var(--medium); color: var(--faint);
@@ -311,7 +333,7 @@ a.figure:hover .label { color: var(--ink); }
   transition: background var(--fast) var(--ease), border-color var(--fast) var(--ease);
 }
 .more summary::-webkit-details-marker { display: none; }
-.more summary svg { width: 14px; height: 14px; color: var(--muted); transition: transform var(--fast) var(--ease); }
+.more summary svg { width: var(--icon-sm); height: var(--icon-sm); color: var(--muted); transition: transform var(--fast) var(--ease); }
 .more summary:hover { background: var(--hover); border-color: var(--line-strong); }
 .more[open] summary svg { transform: rotate(90deg); }
 
@@ -410,13 +432,31 @@ a.figure:hover .label { color: var(--ink); }
 
 /* Tray: tabs inside a panel */
 
-.tray-tabs { display: flex; gap: var(--s-1); padding: 0 var(--s-3); border-bottom: 1px solid var(--line); }
+.tray-tabs { display: flex; gap: var(--s-1); padding: 0 var(--s-3); border-bottom: 1px solid var(--line); overflow-x: auto; }
 .tray-tabs button {
   display: inline-flex; align-items: center; gap: 6px; height: 48px; padding: 0 var(--s-2); border: 0; border-bottom: 2px solid transparent; margin-bottom: -1px;
   background: none; color: var(--muted); font-size: var(--text-sm); font-weight: var(--medium); cursor: pointer; white-space: nowrap;
 }
 .tray-tabs button[aria-selected="true"] { color: var(--ink); font-weight: var(--semibold); border-bottom-color: var(--ember); }
 .tray-panel[hidden] { display: none; }
+
+/* Section list: the parts of a long text in the order they are joined, each opening in place (the
+   system prompt on the bench's Rules page). */
+.sections { list-style: none; margin: 0; padding: 0; }
+.sections > li + li { border-top: 1px solid var(--line-soft); }
+.sections summary {
+  display: flex; align-items: center; gap: var(--s-3); min-height: var(--row-h); padding: 0 var(--s-4);
+  cursor: pointer; list-style: none; font-size: var(--text-md);
+}
+.sections summary::-webkit-details-marker { display: none; }
+.sections summary:hover { background: var(--hover); }
+.sections summary svg { width: var(--icon-sm); height: var(--icon-sm); flex: none; color: var(--muted); transition: transform var(--fast) var(--ease); }
+.sections details[open] summary svg { transform: rotate(90deg); }
+.sections .n { min-width: 16px; color: var(--faint); font-variant-numeric: tabular-nums; }
+.sections .name { font-weight: var(--semibold); white-space: nowrap; }
+.sections .job { min-width: 0; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sections .tech-block { margin: 0 var(--s-4) var(--s-3); }
+@media (max-width: 720px) { .sections .job { display: none; } }
 .list { list-style: none; margin: 0; padding: 0; }
 .list li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px var(--s-3); padding: var(--s-3) var(--s-4); border-top: 1px solid var(--line-soft); }
 .list li:first-child { border-top: 0; }
@@ -603,6 +643,12 @@ div.note {
 .ng { list-style: none; margin: 0; padding: var(--s-1) 0 var(--s-2); }
 .ng-head, .ng > li { display: grid; grid-template-columns: var(--ng-time) calc(var(--lane-w) * var(--lanes)) minmax(0, 1fr) var(--ng-ms); column-gap: var(--s-2); padding: 0 var(--s-4); }
 .ng-head { height: var(--ng-row); align-items: center; border-bottom: 1px solid var(--line-soft); font-size: var(--text-xs); color: var(--faint); font-weight: var(--medium); }
+/* On a phone the lanes and timings narrow so a step's name keeps some room, cut short if it must. */
+@media (max-width: 600px) {
+  .ng-head, .ng { --lane-w: 36px; --ng-ms: 64px; }
+  .ng-head, .ng > li { column-gap: var(--s-1); padding: 0 var(--s-2); }
+  .ng .node b { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}
 .ng-head .lanes { display: grid; grid-template-columns: repeat(var(--lanes), var(--lane-w)); text-align: center; }
 .ng-head .ms, .ng .ms { text-align: right; }
 .ng > li { position: relative; }

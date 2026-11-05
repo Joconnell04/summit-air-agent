@@ -501,6 +501,14 @@ def build() -> dict:
             envelope=False,
             check="pm.test('is refused', () => pm.response.to.have.status(401));",
         ),
+        item(
+            "Forget calls, eval instance only",
+            "POST",
+            "debug/forget-calls",
+            headers=DEBUG,
+            envelope=False,
+            check="pm.test('refused off the Retell eval instance', () => pm.response.to.have.status(403));",
+        ),
     ]
     setup = [
         item(
@@ -639,14 +647,14 @@ def build() -> dict:
             check="pm.test('opens the specimen', () => pm.response.to.have.status(200));\n" + html,
         ),
         item(
-            "The rules by call stage",
+            "The old Rules address leads to the bench's page",
             "GET",
-            "owner/rules?show=editable",
+            "owner/rules",
             envelope=False,
-            check="pm.test('opens the rules', () => pm.response.to.have.status(200));\n" + html,
+            check="pm.test('lands on the bench', () => pm.response.to.have.status(200));\n" + html,
         ),
         item(
-            "The rules editor opens for an admin",
+            "The Rules page opens for an admin",
             "GET",
             "bench/rules",
             envelope=False,

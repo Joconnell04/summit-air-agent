@@ -1,9 +1,9 @@
 """The owner view: three read-only pages for the owner and dispatcher (Today, Calls, Results), each
-call's page, the report to Revin (story O-8), the read-only Rules page (the editor is on the debug
-bench, app/bench_rules.py), the Settings page with its users, and the design system's live specimen. The numbers come from app/owner.py, the plain
-notes from app/plain.py, the rulebook from app/rulebook.py, owner edits from app/rules.py, settings
-from app/owner_settings.py and accounts from app/accounts.py; this module checks who is signed in
-and renders HTML. Design: docs/design-system.md.
+call's page, the report to Revin (story O-8), the Settings page with its users, and the design
+system's live specimen. The rules live on the debug bench only (app/bench_rules.py, DECISIONS.md
+091); the old Rules address redirects there. The numbers come from app/owner.py, the plain notes
+from app/plain.py, settings from app/owner_settings.py and accounts from app/accounts.py; this
+module checks who is signed in and renders HTML. Design: docs/design-system.md.
 
 Every page needs a signed-in user. Staff can open every page and send a report; changing a setting
 or a user needs an admin, and each of those routes checks the role here, on the server, whatever
@@ -32,8 +32,6 @@ from . import (
     plain,
     recordings,
     reports,
-    rulebook,
-    rules,
     search,
     trace,
 )
@@ -44,7 +42,6 @@ COOKIE = "owner_session"
 # The cookies of the shared read token and the rules edit code, from before accounts. Cleared at
 # sign-in; nothing reads them.
 OLD_COOKIES = ("owner_token", "owner_edit")
-RULE_FILTERS = ("all", "editable", "locked")
 SEARCH_MAX_CHARS = 80
 HERE = Path(__file__).parent
 templates = Jinja2Templates(directory=HERE / "templates")
@@ -398,44 +395,11 @@ def add_routes(app: FastAPI) -> None:
             conn.close()
         return _render(request, "results.html", context)
 
-    def rules_context(request: Request, tenant, slug: str, conn) -> dict:
-        found = rules.live(conn, tenant.slug)
-        return {
-            **_common(request, tenant, slug, "rules", conn),
-            "live": found,
-            "versions": rules.history(conn, tenant.slug),
-            "local": lambda value: tenant.local(parse_iso(value)),
-        }
-
-    @app.get("/owner/rules", response_class=HTMLResponse)
-    def owner_rules(request: Request, show: str = "all", tenant: str = ""):
-        """Every rule the agent follows, by call stage, each locked or editable (exploration 009)."""
-        if not _signed_in(request):
-            return _login(request)
-        found = tenant_for(request, tenant)
-        if found is None:
-            return HTMLResponse("No such company.", 404)
-        show = show if show in RULE_FILTERS else "all"
-        conn = request.app.state.services.connect()
-        try:
-            context = rules_context(request, found, tenant, conn)
-            book = rulebook.rulebook(found, context["live"]["content"] if context["live"] else {})
-            shown = [
-                r for r in book
-                if show == "all" or (show == "editable") == r.editable
-            ]
-            context |= {
-                "show": show,
-                "stages": [s for s in rulebook.by_stage(shown) if s[2]],
-                "counts": {
-                    "all": len(book),
-                    "editable": sum(r.editable for r in book),
-                    "locked": sum(not r.editable for r in book),
-                },
-            }
-        finally:
-            conn.close()
-        return _render(request, "rules.html", context)
+    @app.get("/owner/rules")
+    def owner_rules(tenant: str = ""):
+        """The rules moved to the debug bench (DECISIONS.md 091); old links and bookmarks land there,
+        where the bench asks for an admin."""
+        return RedirectResponse(f"/bench/rules{_tenant_q(tenant)}", 308)
 
     def settings_page(request: Request, found, slug: str, conn, errors=None, added=None,
                       remove: int | None = None, saved: str = "", status: int = 200) -> Response:

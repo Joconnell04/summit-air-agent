@@ -17,5 +17,6 @@ One file per round of testing, with its numbers and the results files behind the
 | [bakeoff-audio-01.md](bakeoff-audio-01.md) | Five stacks on the simulated audio rig |
 | [bakeoff-audio-02.md](bakeoff-audio-02.md) | Our stack's end-of-turn wait |
 | [stt-ink2-01.md](stt-ink2-01.md) | Cartesia Ink-2 against Deepgram Nova-3 for speech-to-text |
+| [retell-flow-01.md](retell-flow-01.md) | Retell's Conversation Flow built to our design, against our stack |
 
 The ten real phone calls are scripted in [../live-calls.md](../live-calls.md).

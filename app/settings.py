@@ -51,6 +51,11 @@ class Settings:
     slot_cache_seconds: float = field(
         default_factory=lambda: float(os.environ.get("SLOT_CACHE_SECONDS", "60"))
     )
+    # The Retell eval instance only: lets /debug/forget-calls age every recorded call, so scenarios
+    # that reuse a caller ID never link to each other as repeat calls (voice/retell/eval_adapter.py).
+    allow_forget_calls: bool = field(
+        default_factory=lambda: os.environ.get("TOOL_ALLOW_FORGET_CALLS", "") == "1"
+    )
     # Read the outside temperature from the National Weather Service (app/weather.py). Off in
     # tests and development so nothing calls out; on for the deployed server.
     weather: bool = field(default_factory=lambda: os.environ.get("WEATHER", "") == "1")

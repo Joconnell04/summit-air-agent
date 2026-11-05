@@ -297,7 +297,7 @@ def test_an_existing_database_gains_the_account_tables(tmp_path):
 
 def test_rule_versions_written_under_edit_codes_keep_their_author(agent):
     publish(agent, {"guidance": {"booking": [PETS]}})
-    page = sign_in(agent, "staff", "sam").client.get("/owner/rules").text
+    page = sign_in(agent, "admin", "ann").client.get("/bench/rules").text
     assert "<td class=\"fit\">Dana</td>" in page
 
 
@@ -400,7 +400,7 @@ def _ids(agent: Agent) -> dict[str, int]:
 
 WRITES = [
     ("get", "/bench/rules", {}),
-    ("post", "/bench/rules/draft", {"guide.booking.0": PETS}),
+    ("post", "/bench/rules/draft", {"rule.0": PETS, "when.0": "booking"}),
     ("post", "/bench/rules/discard", {}),
     ("post", "/bench/rules/cancel", {}),
     ("post", "/bench/rules/rollback", {"number": "0"}),
@@ -477,7 +477,7 @@ def test_staff_can_send_a_report_to_revin(agent):
 
 def test_an_admin_publishes_under_their_own_name(agent):
     sign_in(agent, "admin", "pat")
-    agent.client.post("/bench/rules/draft", data={"guide.booking.0": PETS, "publish": "1"})
+    agent.client.post("/bench/rules/draft", data={"rule.0": PETS, "when.0": "booking", "publish": "1"})
     conn = conn_of(agent)
     try:
         row = rules.open_draft(conn, "summit-air")

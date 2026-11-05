@@ -52,6 +52,7 @@ def test_every_request_has_assertions_and_the_triage_folder_reads_the_debug_endp
     assert {normalize(e["request"]["url"]) for e in triage["item"]} == {
         "/debug/calls/{}",
         "/debug/logs",
+        "/debug/forget-calls",
     }
 
 
