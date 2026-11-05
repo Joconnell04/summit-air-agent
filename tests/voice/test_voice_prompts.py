@@ -477,3 +477,16 @@ def test_a_lone_no_problem_is_kept_rather_than_left_silent():
     reply = assemble.SpokenReply()
     reply.heard(None, "Is it ok if I'm not home?")
     assert reply.text("No problem.", []) == "No problem."
+
+
+def test_the_known_facts_are_passed_on_only_when_they_change():
+    """Realism suite on #155: the "Already known" note on every caller line changed the context
+    after LiveKit's early model request had started, so every turn made one request more."""
+    known = assemble.KnownFacts()
+    assert known.fresh({}) is None
+    assert known.fresh({"system": "furnace"}) == {"system": "furnace"}
+    assert known.fresh({"system": "furnace"}) is None
+    assert known.fresh({"system": "furnace", "ZIP said": "11201"}) == {
+        "system": "furnace", "ZIP said": "11201"
+    }
+    assert known.fresh({"system": "furnace", "ZIP said": "11201"}) is None

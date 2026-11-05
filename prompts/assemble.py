@@ -234,6 +234,10 @@ SERVER_NOTES = {
         "call: offer to book a visit now, without waiting for the unit or the breaker to be off, "
         "and don't repeat the advice."
     ),
+    "electrical_answered": (
+        "The electrical advice was said a moment ago. Don't ask whether the unit or the breaker is "
+        "off, and don't ask again what's wrong: go on with the booking."
+    ),
     # A caller who asked the agent to wait (app/dead_air.py, DECISIONS.md 081).
     "caller_holding": (
         "The caller asked you to wait. Say only a short yes, such as \"Sure, take your time.\" Ask "
@@ -343,6 +347,23 @@ def server_notes(hints: list[str], known: dict[str, str] | None = None) -> list[
         facts = "; ".join(f"{k} {v}" for k, v in known.items())
         notes.append(f"[server] Already known, don't ask again: {facts}.")
     return notes
+
+
+class KnownFacts:
+    """The facts for the "Already known" note, passed on only when they change. The note stays on
+    the caller line it was added to, so the model keeps it; adding it again to every line changed
+    the context after LiveKit's early model request had started, which threw that request away and
+    made one more on every turn (realism suite on #155: 3 requests on a lookup turn, 2 on a plain
+    one)."""
+
+    def __init__(self):
+        self._last: dict | None = None
+
+    def fresh(self, known: dict | None) -> dict | None:
+        if not known or known == self._last:
+            return None
+        self._last = dict(known)
+        return known
 
 
 # A lead-in announcing a look-up about to happen in this turn ("I'll look up the visit now", "Let
@@ -848,9 +869,17 @@ class SpokenReply:
         self._heard_lines.append(line)
 
     def already_said(self, line: str) -> bool:
-        """The caller heard these exact words since they last spoke."""
+        """The caller heard these exact words since they last spoke, or the line's closing
+        question: the model asked "And what name should I put the visit under?" in the reply that
+        confirmed the read-back, and the server's "Thanks. And what name should I put the visit
+        under?" followed it (stripped rig check on #160, live-multi-book-then-callback)."""
+        heard = words(" ".join(self._heard_lines))
         said = words(line)
-        return said.strip() != "" and said in words(" ".join(self._heard_lines))
+        if said.strip() and said in heard:
+            return True
+        last = (sentences(line) or [""])[-1].strip()
+        question = words(last)
+        return last.endswith("?") and len(question.split()) >= 4 and question in heard
 
     def holding_line(self, kept: str, calls: list[tuple[str, dict]]) -> str:
         """A holding line to end a reply that calls a look-up when the caller would hear nothing
@@ -878,9 +907,9 @@ class SpokenReply:
     def dead_end(self, raw: str, kept: str, calls: list[tuple[str, dict]]) -> str | None:
         """A reply that would leave the caller waiting in silence, and why: it called no tool yet
         promised to do something ("promised"), the caller heard nothing of it ("silent"), or it
-        only acknowledged them ("stalled"). None when the reply calls a tool, ends on a question,
-        or says something of substance; and after one follow-up since the caller last spoke, so a
-        model that keeps failing can't loop."""
+        only acknowledged them, or the question it asked was filtered out ("stalled"). None when
+        the reply calls a tool, ends on a question, or says something of substance; and after one
+        follow-up since the caller last spoke, so a model that keeps failing can't loop."""
         if calls or self._followed_up or self._finished or self._goodbye:
             return None
         if kept.rstrip().endswith("?"):
@@ -890,6 +919,10 @@ class SpokenReply:
         elif not kept.strip():
             reason = "silent"
         elif all(ONLY_ACKNOWLEDGES.fullmatch(s.strip()) for s in sentences(kept)):
+            reason = "stalled"
+        elif any(s.rstrip().endswith("?") for s in sentences(raw)):
+            # The model asked something the caller didn't hear ("Is that the right address?"
+            # after a restatement): what was said asks nothing, and the caller waits (issue #150).
             reason = "stalled"
         else:
             return None

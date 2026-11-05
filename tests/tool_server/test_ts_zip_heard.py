@@ -15,7 +15,10 @@ from app.text import digit_runs
         ("one one two two six", ["11226"]),
         ("one one double two six", ["11226"]),
         ("1 1 2 2 6", ["11226"]),
-        ("it's eleven two two six", ["226"]),
+        # Said in pairs (realism suite on #155, live-replay-2-move-and-tuneup).
+        ("it's eleven two two six", ["11226"]),
+        ("Seventy five Hoyt Street. Brooklyn. Eleven two zero one.", ["75", "11201"]),
+        ("one one two thirty eight", ["11238"]),
         ("1520 Flatbush Ave, apartment 4C", ["1520"]),
         ("zip is one oh three oh one, phone 929 555 0112", ["10301", "9295550112"]),
     ],

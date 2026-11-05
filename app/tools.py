@@ -1937,7 +1937,10 @@ def _resolve_phone(ctx: Ctx, value: str) -> str:
             f"I don't see just one number ending in {digits}. What's the full number?",
             matches=len(on_file),
         )
-    if len(digits) != 10:
+    # Ten digits, or eleven with the country code. phone_key keeps the last ten, so an extra digit
+    # heard anywhere else would be read back as some other number.
+    said = re.sub(r"\D", "", value)
+    if len(digits) != 10 or not (len(said) == 10 or (len(said) == 11 and said.startswith("1"))):
         raise Refused("invalid_phone", "Could I get that number again, all ten digits?")
     return digits
 

@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 
 from .db import iso, parse_iso
 from .fsm import FsmAdapter
-from .tenant import Tenant
+from .tenant import Tenant, window_said
 from .text import phone_display, phone_key
 
 OPEN_JOB_STATUSES = ["Scheduled", "Dispatched", "InProgress", "Hold"]
@@ -36,13 +36,10 @@ def window_text(tenant: Tenant, start: str, end: str, now: datetime | None = Non
     still open after its window is never told to the caller as coming up (DECISIONS.md 083 note)."""
     local_start, local_end = tenant.local(parse_iso(start)), tenant.local(parse_iso(end))
 
-    def hour(moment: datetime) -> str:
-        return moment.strftime("%-I:%M").replace(":00", "")
-
     text = {
         "date": local_start.date().isoformat(),
         "weekday": local_start.strftime("%A"),
-        "label": f"{hour(local_start)} to {hour(local_end)}",
+        "label": window_said(local_start.time(), local_end.time()),
     }
     if now is not None:
         text["passed"] = local_end <= now

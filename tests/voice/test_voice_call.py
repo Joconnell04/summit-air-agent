@@ -557,6 +557,20 @@ def test_a_reply_that_only_acknowledges_is_asked_to_take_the_next_step(monkeypat
         assert [r["instructions"] for r in replies] == [FOLLOW_UP_NOTES["stalled"]], line
 
 
+def test_a_reply_whose_question_was_filtered_out_is_asked_to_take_the_next_step():
+    """Live-like rig run on 5b57b92 (issue #150): the question was dropped and the restatement,
+    said in words by the caller, stayed, so the reply asked nothing and the caller waited 21 s."""
+    reply = SpokenReply()
+    raw = "Got it, 248 Duffield Street. Is that the right address?"
+    assert reply.dead_end(raw, "Got it, 248 Duffield Street.", []) == "stalled"
+    reply = SpokenReply()
+    raw = "Got it, 10009. Let me check that it's in our service area."
+    assert reply.dead_end(raw, "Let me check that it's in our service area.", []) == "promised"
+    checked = SpokenReply().dead_end(raw, "Let me check that it's in our service area.",
+                                     [("check_service_area", {"zip": "10009"})])
+    assert checked is None, "a promise that calls its tool goes on"
+
+
 def test_a_question_or_a_plain_answer_is_not_asked_again(monkeypatch):
     for line in ("Let me check: what's the ZIP there?", "We're open until 8 tonight."):
         _, replies = _follow_ups(monkeypatch, lambda reply: None, line)
@@ -735,3 +749,33 @@ def test_live_call_2_turns_24_and_27_are_asked_to_go_on(monkeypatch):
         )
         assert text == line.strip()
         assert [r["instructions"] for r in replies] == [FOLLOW_UP_NOTES["stalled"]], line
+
+
+def test_the_known_facts_note_is_added_once_not_to_every_caller_line(agent, connect):
+    """Realism suite on #155: the same "Already known" note on every caller line threw away
+    LiveKit's early model request on every turn. It goes on the line where the facts change."""
+    agent.start(call_id="call-1")
+    call = make_call(connect)
+    lines = [caller("My furnace is running but it's not getting warm."), caller("Since yesterday.")]
+
+    async def conversation():
+        await call.caller_line(lines[0])
+        call.agent_line(agent_says("Since when?"))
+        await call.caller_line(lines[1])
+        await call.flush()
+
+    asyncio.run(conversation())
+    assert "Already known" in lines[0].text_content
+    assert "[server]" not in lines[1].text_content
+
+
+def test_the_servers_question_is_not_asked_again_after_the_model_asked_it():
+    """Stripped rig check on #160, live-multi-book-then-callback: "And what name should I put the
+    visit under? Thanks. What name should I put the visit under?" The server's line ends in the
+    question the model just asked, so the worker says nothing more. A short question isn't
+    matched this way."""
+    reply = SpokenReply()
+    reply.heard(None, "Yeah. That's correct.")
+    assert reply.text("And what name should I put the visit under?", []) != ""
+    assert reply.already_said("Thanks. And what name should I put the visit under?")
+    assert not reply.already_said("Thanks. Is that right?")

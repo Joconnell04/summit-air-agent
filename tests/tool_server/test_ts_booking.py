@@ -114,6 +114,17 @@ def test_the_read_back_is_one_sentence_with_the_number_in_groups(agent):
     assert "read" not in asked["say"].lower()
 
 
+@pytest.mark.parametrize("phone", ["555 0142", "212 555 014", "212 555 01422"])
+def test_a_number_that_isnt_ten_digits_is_asked_for_again_in_full(agent, phone):
+    """Retell call call_cda6d9abd395cbb8859e0d09b14 review: a number short or long by a digit is
+    never read back, and the caller is asked for all ten digits."""
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, f"It's 101 Union St, 11231, and my number is {phone}.")
+    asked = agent.tool("read_back", call, address=in_area_address(), phone=phone)
+    assert asked["refused"] == "invalid_phone"
+    assert asked["say"] == "Could I get that number again, all ten digits?"
+
+
 def test_a_caller_who_answers_the_read_back_with_a_business_cannot_book(agent):
     call = agent.start(UNKNOWN)["data"]["call_id"]
     agent.turn(call, "The heat's out at 101 Union St, 11231.")
