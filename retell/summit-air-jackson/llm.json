@@ -1,0 +1,26 @@
+{
+  "begin_message": "Thank you for calling Summit Air. How can I help you today?",
+  "default_dynamic_variables": {},
+  "is_published": false,
+  "kb_config": {
+    "filter_score": 0.6,
+    "kb_instruction": "Focus retrieval on HVAC topics covered in the knowledge base, including system and component names, heating and cooling concepts, symptoms, troubleshooting, maintenance, installation basics, and safety guidance. Preserve specific equipment types, parts, error codes, measurements, and user-stated symptoms. Use the user's situation and goal to form a concise search query. Ignore greetings, small talk, and unrelated conversation; do not invent technical details.",
+    "top_k": 3
+  },
+  "knowledge_base_ids": [],
+  "llm_id": "llm_12eba5f1d4a3b067f0635097de30",
+  "model": "claude-5.5-haiku",
+  "model_config": {
+    "primary": {
+      "model": "claude-5.5-haiku",
+      "tier": "standard"
+    },
+    "temperature": 0.3,
+    "type": "cascading"
+  },
+  "model_high_priority": false,
+  "model_temperature": 0.3,
+  "model_ultrafast": false,
+  "start_speaker": "agent",
+  "version": 2
+}
