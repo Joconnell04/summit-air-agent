@@ -249,6 +249,9 @@ class World:
         self.work_day = start if start.weekday() < 6 else start + timedelta(days=1)
         self.service_techs: list[int] = []
         self.advisors: list[int] = []
+        # The zones the world is drawn from: not the ones added for the rest of the five boroughs
+        # (config.yaml, seeded: false), so the seeded world, the eval world, stays as it was.
+        self.zones = [z for z in cfg.zones if z.get("seeded", True)]
 
     # ---- small helpers --------------------------------------------------------------------
 
@@ -262,7 +265,7 @@ class World:
         return f"{self.rng.choice(FIRST)} {self.rng.choice(LAST)}"
 
     def address(self, zone: dict | None = None, unit: str = "") -> dict:
-        zone = zone or self.rng.choice(self.cfg.zones)
+        zone = zone or self.rng.choice(self.zones)
         return {
             "street": f"{self.rng.randint(11, 989)} {self.rng.choice(STREETS[zone['county']])}",
             "unit": unit,
@@ -400,7 +403,7 @@ class World:
     # ---- technicians and shifts -----------------------------------------------------------
 
     def technicians(self) -> None:
-        rng, cfg = self.rng, self.cfg
+        rng = self.rng
         names = set()
         while len(names) < SERVICE_TECHS + ADVISORS:
             names.add(self.name())
@@ -409,7 +412,7 @@ class World:
         for i in range(SERVICE_TECHS + ADVISORS):
             tech_id = FIRST_TECH_ID + i
             phone = f"(917) 555-{200 + i:04d}"
-            zone_id = cfg.zones[i % len(cfg.zones)]["id"]
+            zone_id = self.zones[i % len(self.zones)]["id"]
             if i < SERVICE_TECHS:
                 skills = ["maintenance"]
                 if i % 6 != 0:
@@ -786,7 +789,7 @@ class World:
     def random_customers(self) -> None:
         rng = self.rng
         while self.customers < CUSTOMER_TOTAL:
-            zone = rng.choice(self.cfg.zones)
+            zone = rng.choice(self.zones)
             roll = rng.random()
             if roll < 0.60:
                 name, address = self.name(), self.address(zone)
@@ -904,6 +907,10 @@ class World:
                 if window.after_hours or not cfg.window_offered(day, window):
                     continue
                 free = capacity.slots(conn, cfg, day, window, SERVICE_UNIT, [])
+                if not free.total:
+                    # A window nobody is on shift for (a Sunday in the seeded world) books nothing
+                    # and draws no random number, so opening hours never reshuffles the world.
+                    continue
                 # The urgent hold is the company's rule, not the mock's, but the schedule is shaped
                 # around it so normal slots run out first.
                 held = cfg.hold_for(day, window.id, SERVICE_UNIT)

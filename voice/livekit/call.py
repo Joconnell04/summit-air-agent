@@ -6,13 +6,20 @@ import asyncio
 import json
 import logging
 import time
-from collections.abc import AsyncIterable
+from collections.abc import AsyncIterable, Callable
 
 from livekit import rtc
 from livekit.agents import Agent, ModelSettings, StopResponse, llm
 from livekit.agents.llm import ChatContext, ChatMessage
 
-from prompts.assemble import SENTENCE_END, SpokenReply, server_notes
+from prompts.assemble import (
+    FOLLOW_UP_NOTES,
+    SENTENCE_END,
+    KnownFacts,
+    SpokenReply,
+    server_notes,
+    without_guidance,
+)
 
 from .bridge import Bridge
 from .server import UNREACHABLE, ToolServer
@@ -38,7 +45,12 @@ class Call:
         tool_log: ToolLog,
         endpointing: dict,
         llm_log: LlmLog | None = None,
+        stripped: bool = False,
     ):
+        # `voice.profile: stripped` (config/models.yaml): the model's text is spoken as it streams,
+        # with no speech filter, and the owner's guidance and stage notes are left out. The tool
+        # server and every gate are unchanged.
+        self.stripped = stripped
         self.server = server
         self.bridge = bridge
         self.tool_log = tool_log
@@ -60,6 +72,7 @@ class Call:
         self._last_post: asyncio.Task | None = None
         # What of the model's replies the caller hears (prompts/assemble.py SpokenReply).
         self.reply = SpokenReply()
+        self.known = KnownFacts()
         # The speaking rate the server set for this call; None leaves the voice at its default.
         self.speed: float | None = None
         # Text the worker speaks at its own speed (the parts of a slower read-back), by its text.
@@ -149,7 +162,10 @@ class Call:
         stop = (data.get("recording") or {}).get("action") == "stop"
         if stop and self.stop_recording:
             asyncio.create_task(self.stop_recording())
-        notes = server_notes(data.get("hints", []), data.get("known"))
+        hints = data.get("hints", [])
+        if self.stripped:
+            hints = without_guidance(hints)
+        notes = server_notes(hints, self.known.fresh(data.get("known")))
         if notes:
             message.content.append("\n" + "\n".join(notes))
         handoff = data.get("handoff")
@@ -183,6 +199,13 @@ class Call:
         if stop and data["recording"].get("text"):
             # The server's line, said before the model answers the rest of what the caller said.
             self.session.say(data["recording"]["text"])
+
+    def follow_up(self, reason: str) -> None:
+        """The model's reply would leave the caller waiting in silence (SpokenReply.dead_end): ask
+        it again at once, with a note, queued after this reply's speech (issue #149: "Got it." then
+        19 s of silence). No tool is forced: the note says what's missing."""
+        log.warning("reply left the caller waiting (%s); asking the model again", reason)
+        self.session.generate_reply(instructions=FOLLOW_UP_NOTES[reason])
 
     def agent_line(self, message: ChatMessage) -> None:
         """Called when an agent line has been spoken (or cut off)."""
@@ -233,10 +256,15 @@ class SummitAgent(Agent):
         SpokenReply), so a read-back announcement or a restated ZIP or number is never spoken.
         While the rule is holding, the text waits for the end of the reply and is dropped if the
         reply calls a tool whose result the worker speaks itself."""
+        if self.call.stripped:
+            # The stripped profile speaks the model's text as it streams, unfiltered.
+            async for chunk in Agent.default.llm_node(self, chat_ctx, tools, model_settings):
+                yield chunk
+            return
         reply = self.call.reply
         reply.start_reply()
         holding = reply.holding()
-        pending, held = "", []
+        pending, held, raw, heard = "", [], "", []
         calls: list[tuple[str, dict]] = []
         async for chunk in Agent.default.llm_node(self, chat_ctx, tools, model_settings):
             text = chunk if isinstance(chunk, str) else None
@@ -248,6 +276,7 @@ class SummitAgent(Agent):
                         update={"delta": chunk.delta.model_copy(update={"content": None})}
                     )
             if text:
+                raw += text
                 pending += text
                 *done, pending = split_sentences(pending)
                 if holding:
@@ -255,6 +284,7 @@ class SummitAgent(Agent):
                 else:
                     for sentence in done:
                         if kept := reply.sentence(sentence):
+                            heard.append(kept)
                             yield kept + " "
             if not isinstance(chunk, str):
                 yield chunk
@@ -263,7 +293,23 @@ class SummitAgent(Agent):
         else:
             kept = reply.sentence(pending) if pending.strip() else ""
         if kept:
+            heard.append(kept)
             yield kept
+        if not heard and (alone := reply.leftover()):
+            heard.append(alone)
+            yield alone
+        hold = reply.holding_line(" ".join(heard), calls)
+        if hold:
+            # The caller would wait through the model's next step on "Got it." or nothing at all.
+            yield (" " if kept else "") + hold
+            heard.append(hold)
+        if raw.strip() and " ".join(heard).split() != raw.split():
+            # What the speech filter held back, for reading a call afterwards: no record of it was
+            # kept, so live call 2's half replies could only be inferred from token counts.
+            log.info("model text not all spoken: %r; said %r", raw.strip(), " ".join(heard))
+        reason = reply.dead_end(raw, " ".join(heard), calls)
+        if reason:
+            self.call.follow_up(reason)
 
     async def tts_node(
         self, text: AsyncIterable[str], model_settings: ModelSettings
@@ -290,6 +336,20 @@ class SummitAgent(Agent):
         async for frame in Agent.default.tts_node(self, whole(), model_settings):
             await self.call.bridge.wait_clear()
             yield frame
+
+
+async def goodbye_grace(
+    seconds: float, speaking: Callable[[], bool], poll_s: float = 0.05
+) -> bool:
+    """The pause after the goodbye, before the line drops (issue #149: the call ended the instant
+    the goodbye finished). False when the caller starts speaking in it, so the call stays open."""
+    loop = asyncio.get_running_loop()
+    until = loop.time() + seconds
+    while loop.time() < until:
+        if speaking():
+            return False
+        await asyncio.sleep(poll_s)
+    return not speaking()
 
 
 def split_sentences(text: str) -> list[str]:

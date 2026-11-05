@@ -3,12 +3,20 @@ and logs as a LiveKit call."""
 
 import json
 
+import pytest
 from fastapi.testclient import TestClient
 from retell_kit import SPOKEN, call_obj, event, inbound, signed, tool, utterance
 from toolkit import DETAILS, in_area_address
 
 from app.tools import TOOLS
-from voice.retell.bridge import Bridge, ToolServer, build_app, end_reason, idempotency_key
+from voice.retell.bridge import (
+    HANGUP_GRACE_S,
+    Bridge,
+    ToolServer,
+    build_app,
+    end_reason,
+    idempotency_key,
+)
 from voice.retell.ledger import Ledger
 
 
@@ -381,3 +389,71 @@ def test_call_analyzed_keeps_retells_latency_and_cost_for_the_report(client, bri
             "duration_s": 112,
         }
     ]
+
+
+def test_the_hang_up_waits_for_a_final_line_still_being_said(client, retell, later):
+    """Jackson's call on the Retell number (call_ca9bfcec0b968db42ac2f428bea): end_call came at
+    the start of the turn, the delay was sized from "I'm sorry," and the call was stopped in the
+    middle of the out-of-area sentence."""
+    said = booked_call(client)
+    so_far = [*said, utterance("user", "Never mind, bye."), utterance("agent", "I'm sorry,")]
+    tool(client, "end_call", call_obj("abc", *so_far), reason="caller_goodbye")
+    full = "I'm sorry, but we only work in the five boroughs. Thanks for calling, take care."
+    retell.calls["abc"] = call_obj("abc", *said, utterance("user", "Never mind, bye."),
+                                   utterance("agent", full))
+    later.run()
+    assert retell.stopped == [], "the longer line gets its own time to play"
+    delay = later.pending[0][0]
+    assert delay >= HANGUP_GRACE_S + 0.35 * len(full.split())
+    later.run()
+    assert retell.stopped == ["abc"]
+
+
+def test_a_goodbye_already_said_with_a_tool_sentence_stops_one_grace_after_it(
+    client, bridge, retell, later, monkeypatch
+):
+    """PR #158 review: the line compared before stopping was the last agent line plus the tool's
+    `say`, which never matched the transcript, so every hang-up waited one extra cycle."""
+    said = booked_call(client)
+    bye = "Thanks for calling Summit Air, take care."
+    so_far = [*said, utterance("user", "That's all, bye."), utterance("agent", bye)]
+    real = bridge.tools.tool
+
+    def with_say(call_id, name, args):
+        answer = real(call_id, name, args)
+        return {**answer, "say": bye} if name == "end_call" else answer
+
+    monkeypatch.setattr(bridge.tools, "tool", with_say)
+    tool(client, "end_call", call_obj("abc", *so_far), reason="caller_goodbye")
+    retell.calls["abc"] = call_obj("abc", *so_far)
+    delay = later.pending[0][0]
+    assert delay == pytest.approx(3.0 + 0.35 * len(bye.split()) + HANGUP_GRACE_S)
+    later.run()
+    assert retell.stopped == ["abc"], "stopped at the first check, no extra wait"
+
+
+def test_a_thanks_and_bye_in_the_grace_keeps_the_hang_up(client, retell, later):
+    """Retell call call_1840576e622e3d729b760085142: the caller said "Thanks. Bye." inside the
+    grace, the hang-up was called off, and the call ran to its 5-minute limit."""
+    said = booked_call(client)
+    bye = [*said, utterance("user", "That's all."), utterance("agent", "Thanks for calling, take care.")]
+    tool(client, "end_call", call_obj("abc", *bye), reason="resolved")
+    event(client, "transcript_updated", call_obj("abc", *bye, utterance("user", "Thanks. Bye.")))
+    later.run()
+    assert retell.stopped == ["abc"]
+
+
+def test_a_goodbye_said_again_after_the_hang_up_was_called_off_arms_it_again(
+    client, retell, later
+):
+    said = booked_call(client)
+    bye = [*said, utterance("user", "That's all."), utterance("agent", "Thanks for calling, take care.")]
+    tool(client, "end_call", call_obj("abc", *bye), reason="resolved")
+    more = [*bye, utterance("user", "Oh wait, is the tech bringing filters?")]
+    event(client, "transcript_updated", call_obj("abc", *more))
+    later.run()
+    assert retell.stopped == [], "the caller asked something more"
+    again = [*more, utterance("agent", "Yes, they will. Thanks for calling, have a great day.")]
+    event(client, "transcript_updated", call_obj("abc", *again))
+    later.run()
+    assert retell.stopped == ["abc"]

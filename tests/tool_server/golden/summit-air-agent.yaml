@@ -204,8 +204,18 @@ fsm:
     membership: 705
     not_offered: 706
   log_calls_via_debug: true
+home_words:
+- unit
+- system
+- pump
+- apartment
+- house
+- building
+- basement
+- kitchen
+- attic
 lines:
-  account_choice: Should that address go on its own account, with you as a contact, or under your account?
+  account_choice: Should I put this under your account?
   account_name: Whose name should the account for that address be under?
   account_which: I see more than one account on this number. Whose name should the visit go under?
   address_ask_zip: What's the ZIP code there?
@@ -219,23 +229,26 @@ lines:
     and the technician won't start until that's settled.
   arrival_no_fit: Our arrival windows are {windows}, and the technician can come any time in the window,
     so I can't promise an exact time.
+  arrival_outside_hours: Our visits run from {hours}.
   billing_callback: I'm sorry about that. Billing goes through our office, so I've asked them to look
     into the charge, and someone from the office will call you {when}.
+  booking_name: Thanks. And what name should I put the visit under?
   callback_after: around {time}
   callback_asap: as soon as they can
+  callback_at: around {time}
   callback_before: before {time}
   callback_between: between {start} and {end}
   callback_by: by {time}
   callback_opening: Hi, this is Summit Air calling back for {first_name}. Is that you?
   callback_opening_unknown: Hi, this is Summit Air calling you back, like we said we would.
-  callback_outside_hours: Our team makes calls between {opens} and {closes}. What time in there works?
+  callback_outside_hours: Our team makes calls between {opens} and {closes}, so the closest I can do is
+    {nearest}. Would that work?
   card_stop: For your security, please don't read a card number over the phone. Our office will send you
     a secure payment link, or call you to take the payment.
   commercial: Thanks for thinking of us. Unfortunately Summit Air works on homes and apartments, not businesses,
     so we're not the right fit for this one.
   do_not_call: Understood, we won't call you.
-  do_not_call_with_callback: Understood, we won't call you. That means the callback is off, so give us
-    a call any time you need us.
+  do_not_call_with_callback: Understood, we won't call you. Give us a call any time you need us.
   earlier_slot_offer: Hi, this is Summit Air calling about your appointment. We've had an opening {day}
     at {window}, would you like it?
   flag_stored: I've let our team know, and someone will call you {when}.
@@ -270,6 +283,9 @@ lines:
   move_done: Thanks for letting us know. I've updated your address to {street}.
   move_out_of_area: Thanks for letting us know. I'm sorry, the new address is outside the area we cover,
     so we won't be able to come out there, and I've made a note on your account.
+  move_unverified: I can't add a new address to the account from this number, so I can't book the visit
+    there yet. Someone from our office can call the number we have on file to update it and book the visit.
+    Would that help?
   move_visit_cancelled: I've also cancelled the visit you had at the old address, so nobody heads there.
   move_visit_moved: Your upcoming visit is now set for the new address, same day and time.
   move_visit_moved_when: Your visit {when} is now set for the new address, same time.
@@ -1457,9 +1473,9 @@ voice:
     at_capacity: Thanks for calling Summit Air. If you smell gas, hang up and call 911 from outside. All
       our lines are busy right now. Please leave your name, number and what's going on after the tone,
       and we'll call you back.
-    bridge_check: Let me check.
-    bridge_look: Okay, checking now.
-    bridge_sec: One sec.
+    bridge_moment: Alright, one moment.
+    bridge_one_sec: Okay, just give me one second.
+    bridge_pull_up: Sure, let me pull that up.
   fallback: Thanks for calling Summit Air. If you smell gas, hang up and call 911 from outside. We can't
     take your call right now. Please leave your name, number and what's going on after the tone, and we'll
     call you back.
@@ -1474,6 +1490,10 @@ voice:
   greeting_linked_unknown: Hi, this is Summit Air's virtual assistant again. I think we got cut off earlier.
     Who am I speaking with?
   greeting_unknown: Thanks for calling Summit Air, this is the virtual assistant. How can I help?
+  holding:
+  - Just give me one second.
+  - Let me pull that up.
+  - One moment.
   outbound_voicemail: Hi, this is Summit Air calling about your appointment. Please give us a call back
     at {phone}.
   recording_notice: This call may be recorded.

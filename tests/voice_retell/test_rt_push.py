@@ -14,7 +14,11 @@ from voice.retell.api import Retell, RetellError, allowed
 from voice.retell.push import PHONE_NUMBER, push
 
 BASE = "https://bridge.example.com"
-VOICE = {"voice_id": "f786b574-daa5-4673-aa0c-cbe3e8534c02", "model": "sonic-3", "name": "Katie"}
+MODELS_CONFIG = yaml.safe_load(
+    (Path(__file__).resolve().parents[2] / "config" / "models.yaml").read_text()
+)
+VOICE = {k: MODELS_CONFIG["voice"]["tts"][k] for k in ("voice_id", "model", "name")}
+# The voice on the recorded account (tests/voice_retell/recorded), from before issue #149.
 OLD_AGENT = "agent_8e083a54718dcabbbe2c5c4f3d"
 MODELS = Path(__file__).resolve().parents[2] / "config" / "models.yaml"
 
@@ -219,10 +223,10 @@ def test_the_agent_hears_one_word_replies_and_waits_through_a_pause_mid_sentence
     assert body["reminder_trigger_ms"] == 6000
 
 
-def test_retell_speaks_in_the_live_stacks_voice():
+
+def test_retell_speaks_with_the_workers_voice_from_config():
+    """Both stacks on Max, so the comparison is fair; the name comes from config, never a default."""
     from voice.retell.push import live_profile
 
-    config = yaml.safe_load(MODELS.read_text())
-    _, voice = live_profile(config)
-    assert voice["voice_id"] == config["voice"]["tts"]["voice_id"]
-    assert voice["name"] == "Max"
+    _, voice = live_profile(MODELS_CONFIG)
+    assert voice == VOICE and voice["name"] == "Max"

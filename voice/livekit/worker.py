@@ -39,7 +39,7 @@ from voice import names as local_names
 from . import clips, recording
 from .brain import build_llm
 from .bridge import Bridge
-from .call import Call, SummitAgent
+from .call import Call, SummitAgent, goodbye_grace
 from .capacity import Lines
 from .server import ToolServer
 from .settings import Settings, fallback_tenant, load_voice
@@ -58,13 +58,25 @@ SIP = rtc.ParticipantKind.PARTICIPANT_KIND_SIP
 settings = Settings()
 
 
+# Ears that decide the end of the turn themselves, so LiveKit's turn detector is left out.
+DECIDES_TURN = ("cartesia", "deepgram-flux")
+FLUX_MODEL = "flux-general-en"
+
+
 def stt_options(voice: dict, names: local_names.Names) -> dict:
     """The ears' settings: the tenant's local names as keyterms, so they are written as spelled.
-    Deepgram also takes its endpointing; Cartesia's Ink-2 decides the end of turn itself."""
+    Deepgram Nova-3 also takes its endpointing; Cartesia's Ink-2 and Deepgram Flux decide the end
+    of turn themselves. Setting `provider: deepgram-flux` alone switches to Flux: a Nova model
+    named beside it is replaced by Flux's."""
     stt = voice["stt"]
     options = {"model": stt["model"]}
     if stt["provider"] == "deepgram":
         options["endpointing_ms"] = stt["endpointing_ms"]
+    if stt["provider"] == "deepgram-flux":
+        options["model"] = stt["model"] if stt["model"].startswith("flux") else FLUX_MODEL
+        for key in ("eot_threshold", "eager_eot_threshold", "eot_timeout_ms"):
+            if stt.get(key) is not None:
+                options[key] = stt[key]
     if names.keyterms():
         options["keyterm"] = names.keyterms()
     return options
@@ -73,7 +85,9 @@ def stt_options(voice: dict, names: local_names.Names) -> dict:
 def build_stt(voice: dict, names: local_names.Names, **extra):
     from livekit.plugins import cartesia, deepgram
 
-    plugin = {"deepgram": deepgram.STT, "cartesia": cartesia.STT}[voice["stt"]["provider"]]
+    plugin = {"deepgram": deepgram.STT, "deepgram-flux": deepgram.STTv2, "cartesia": cartesia.STT}[
+        voice["stt"]["provider"]
+    ]
     return plugin(**stt_options(voice, names), **extra)
 
 
@@ -107,9 +121,11 @@ def build_session(vad, voice: dict, names: local_names.Names) -> AgentSession:
 
 
 def turn_handling(voice: dict) -> dict:
-    # Ink-2 ends the turn from the words and the silence together, and sends its final transcript
-    # only then, so a second detector on top would only wait for it.
-    detector = "stt" if voice["stt"]["provider"] == "cartesia" else inference.TurnDetector()
+    # Ink-2 and Flux end the turn from the words and the silence together, and send the final
+    # transcript only then, so a second detector on top would only wait for them. Silero still
+    # hears the caller start talking, for interruptions.
+    decides = voice["stt"]["provider"] in DECIDES_TURN
+    detector = "stt" if decides else inference.TurnDetector()
     return {
         "turn_detection": detector,
         # A copy: LiveKit keeps this dict and writes later option changes into it.
@@ -150,6 +166,18 @@ def tenant_dir(start: dict | None) -> Path:
     if start and start.get("tenant"):
         return settings.tenants_dir / start["tenant"]["slug"]
     return fallback_tenant(settings)
+
+
+def is_stripped(voice: dict) -> bool:
+    """`voice.profile: stripped` in config/models.yaml (Jackson's "our stack, stripped")."""
+    return voice.get("profile", "full") == "stripped"
+
+
+def agent_instructions(voice: dict, data: dict, folder: Path) -> str:
+    """The system prompt: the one-page stripped prompt, or the full assembled one."""
+    if is_stripped(voice):
+        return assemble.stripped_instructions(data, folder)
+    return assemble.instructions(data)
 
 
 def voice_lines(folder: Path) -> dict:
@@ -223,7 +251,10 @@ async def entrypoint(ctx: JobContext) -> None:
     )
     tool_log = ToolLog()
     llm_log = LlmLog()
-    call = Call(tools_server, bridge, tool_log, voice["endpointing"], llm_log)
+    stripped = is_stripped(voice)
+    call = Call(tools_server, bridge, tool_log, voice["endpointing"], llm_log, stripped=stripped)
+    call.reply.holding_lines = list(voice_lines(folder).get("holding") or [])
+    call.reply.names = assemble.call_names(data)
     call.session = session
     # The pace the server chose for this caller (app/pace.py), from the greeting on.
     call.apply_pace(data)
@@ -248,7 +279,7 @@ async def entrypoint(ctx: JobContext) -> None:
     def hang_up(context: RunContext, last_line, quiet: bool = False) -> None:
         """After this turn's speech: the worker's own last line if it said one, else the tenant's
         goodbye when the model said nothing (never after the safety sign-off, which is the goodbye),
-        then the line drops."""
+        then a short pause, and the line drops unless the caller spoke in it."""
 
         async def run() -> None:
             await context.speech_handle.wait_for_playout()
@@ -260,6 +291,13 @@ async def entrypoint(ctx: JobContext) -> None:
                 await last_line.wait_for_playout()
             elif not spoke and not quiet:
                 await speak(spoken["goodbye"]).wait_for_playout()
+            if not await goodbye_grace(
+                voice["end_call_grace_s"], lambda: session.user_state == "speaking"
+            ):
+                # The caller said something more: the call stays open and the turn carries on.
+                log.info("call %s: caller spoke after the goodbye; staying on", call_id)
+                call.hang_up_task = None
+                return
             ended["reason"] = "agent_end"
             await ctx.delete_room()
 
@@ -325,7 +363,7 @@ async def entrypoint(ctx: JobContext) -> None:
     specs = assemble.tool_specs(assemble.job_types(folder))
     agent = SummitAgent(
         call,
-        assemble.instructions(data),
+        agent_instructions(voice, data, folder),
         build_tools(
             specs, tools_server, bridge, tool_log, hang_up, speak, transfer, call.say_parts,
             call.reply,

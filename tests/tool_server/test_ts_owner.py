@@ -95,7 +95,7 @@ def test_booking_rate_by_call_type_and_the_headline_over_visit_calls(agent):
     booked_tune_up(agent, 2)
     asked_no_heat(agent, 3)
     commercial(agent, 4)
-    out_of_area(agent, 5, "10001")
+    out_of_area(agent, 5, "11501")
     rates = page(agent)["rates"]
     by_type = {r["type"]: (r["calls"], r["booked"], r["rate"]) for r in rates["rows"]}
     assert by_type == {
@@ -248,11 +248,11 @@ def test_leads_of_the_day_with_their_callback(agent):
 
 
 def test_out_of_area_calls_by_zip_most_first_over_thirty_days(agent, clock):
-    out_of_area(agent, 1, "10001")
+    out_of_area(agent, 1, "11501")
     out_of_area(agent, 2, "07030")
-    out_of_area(agent, 3, "10001")
+    out_of_area(agent, 3, "11501")
     assert page(agent)["out_of_area"] == [
-        {"zip": "10001", "calls": 2},
+        {"zip": "11501", "calls": 2},
         {"zip": "07030", "calls": 1},
     ]
     clock.advance(days=31)
@@ -332,7 +332,7 @@ def test_another_days_page_reads_only_that_day(agent, clock):
 def test_the_page_renders_a_seeded_day(agent, clock):
     booked = booked_tune_up(agent, 1)
     commercial(agent, 2)
-    out_of_area(agent, 3, "10001")
+    out_of_area(agent, 3, "11501")
     sign_in(agent)
     html = agent.client.get("/owner").text
     for text in ("Day board", "Needs attention", "Jobs booked", "booking rate", "Callbacks"):
@@ -342,7 +342,7 @@ def test_the_page_renders_a_seeded_day(agent, clock):
     for text in (
         "Booking rate by call type",
         "Outside the service area",
-        "10001",
+        "11501",
         "Court St Offices",
     ):
         assert text in results, text

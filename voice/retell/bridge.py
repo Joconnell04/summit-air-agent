@@ -22,6 +22,7 @@ import hashlib
 import json
 import logging
 import os
+import re
 import threading
 import time
 from collections.abc import Callable
@@ -57,6 +58,11 @@ SAY_NOW = (
 HANGUP_BASE_S = 3.0
 HANGUP_PER_WORD_S = 0.35
 HANGUP_MAX_S = 15.0
+# After the final line has played, the same pause the LiveKit worker keeps before hanging up
+# (config/models.yaml voice.end_call_grace_s).
+HANGUP_GRACE_S = 1.5
+# How many times the hang-up looks again for a final line that is still coming or growing.
+HANGUP_CHECKS = 4
 
 END_REASONS = {
     "user_hangup": "caller_hangup",
@@ -92,8 +98,39 @@ def idempotency_key(call_id: str, tool: str, args: dict) -> str:
     return hashlib.sha256(raw.encode()).hexdigest()[:40]
 
 
+# A caller line that is only thanks or a goodbye ("Thanks. Bye.", "Okay, you too."): no reason to
+# keep a call open that the server already agreed to end.
+GOODBYE_ONLY = re.compile(
+    r"^(?:(?:ok(?:ay)?|alright|all right|great|perfect|yeah|yes|yep|sure|thanks|thank you(?: so much)?"
+    r"|thx|bye(?: bye)?|goodbye|good bye|you too|same to you|have a good (?:one|day|night)"
+    r"|take care|see you|later|cheers|appreciate it)[\s,.!]*)+$",
+    re.IGNORECASE,
+)
+# The agent's own goodbye: the tenant's ("Thanks for calling Summit Air. Have a great rest of your
+# day.") or any line with a goodbye in it.
+AGENT_GOODBYE = re.compile(
+    r"\b(?:thanks for calling|have a great (?:rest of your )?day|take care|goodbye|bye)\b",
+    re.IGNORECASE,
+)
+
+
+def only_goodbye(text: str) -> bool:
+    return bool(text.strip()) and bool(GOODBYE_ONLY.match(text.strip()))
+
+
+def agent_goodbye(text: str) -> bool:
+    return bool(AGENT_GOODBYE.search(text or ""))
+
+
+def last_line(said: list, speaker: str) -> str:
+    texts = [line.text for line in said if line.speaker == speaker]
+    return texts[-1] if texts else ""
+
+
 def hangup_delay(agent_text: str) -> float:
-    return min(HANGUP_BASE_S + HANGUP_PER_WORD_S * len(agent_text.split()), HANGUP_MAX_S)
+    """Time for a line to play, then the grace."""
+    played = min(HANGUP_BASE_S + HANGUP_PER_WORD_S * len(agent_text.split()), HANGUP_MAX_S)
+    return played + HANGUP_GRACE_S
 
 
 def compact(answer: dict) -> dict:
@@ -218,16 +255,30 @@ class Bridge:
         """Post new lines. Returns the safety actions the turn check asked for, and the notes for
         the model from its hints (commercial, do-not-call)."""
         actions, hints = [], []
-        posted = self.ledger.sync(call_id, lines(obj), self.tools.turn, settled)
+        rid = retell_id(obj)
+        said = lines(obj)
+        posted = self.ledger.sync(call_id, said, self.tools.turn, settled)
         for speaker, answer in posted:
-            if speaker == "caller":
-                # The caller spoke after an allowed end_call: keep the call open.
-                self.ledger.mark(retell_id(obj), hangup_pending=0)
+            if speaker == "caller" and not only_goodbye(last_line(said, "caller")):
+                # The caller said something more after an allowed end_call: keep the call open.
+                # A "Thanks. Bye." in the grace keeps the hang-up (Retell call
+                # call_1840576e622e3d729b760085142 ran to its 5-minute limit after one).
+                self.ledger.mark(rid, hangup_pending=0)
             data = answer.get("data") or {}
             safety = data.get("safety")
             if safety and safety.get("action") in SAFETY_ACTIONS and safety.get("text"):
                 actions.append(safety)
             hints += data.get("hints") or []
+        # The model said its goodbye again after the hang-up was called off, without end_call:
+        # the hang-up is armed again for that goodbye.
+        # The line may still be playing (not yet posted); the hang-up waits for it to finish.
+        row = self.ledger.get(rid)
+        last = said[-1].text if said and said[-1].speaker == "agent" else ""
+        if (
+            row and row["end_allowed"] and not row["hangup_pending"] and not row["hung_up"]
+            and not row["ended"] and obj.get("call_id") and agent_goodbye(last)
+        ):
+            self.hang_up_later(rid, hangup_delay(last), last)
         return actions, self.notes(hints)
 
     def webhook(self, event: dict) -> bool:
@@ -305,16 +356,31 @@ class Bridge:
             answer["server_notes"] = notes
         hang_up = answer.get("ok") and (answer.get("data") or {}).get("hang_up")
         if name == "end_call" and kind == "call" and hang_up:
-            said = [line for line in lines(obj) if line.speaker == "agent"]
-            self.hang_up_later(rid, hangup_delay(said[-1].text if said else ""))
+            self.ledger.mark(rid, end_allowed=1)
+            said = [line.text for line in lines(obj) if line.speaker == "agent"]
+            last = said[-1] if said else ""
+            # The tool's own sentence may still be said after the lines so far: its time counts,
+            # but the line compared later is the transcript's own (PR #158 review: comparing the
+            # two together never matched and added a whole extra wait after the goodbye).
+            say = answer.get("say") or ""
+            final = last if say and say in last else " ".join(x for x in (last, say) if x)
+            self.hang_up_later(rid, hangup_delay(final), last)
         return answer
 
-    def hang_up_later(self, rid: str, delay: float) -> None:
+    def hang_up_later(self, rid: str, delay: float, last_line: str = "", checks: int = 0) -> None:
+        """Stop the call once its final line has played, plus the grace. end_call can come at the
+        start of the turn, before the goodbye is said (Jackson's call on the Retell number hung up
+        after "I'm sorry,"), so before stopping, the bridge reads the call again: a final agent
+        line that has appeared or grown since gets its own time to play."""
         self.ledger.mark(rid, hangup_pending=1)
 
         def stop():
             row = self.ledger.get(rid)
             if not row or not row["hangup_pending"] or row["ended"]:
+                return
+            latest = self.last_agent_line(rid)
+            if latest and latest != last_line and checks < HANGUP_CHECKS:
+                self.hang_up_later(rid, hangup_delay(latest), latest, checks + 1)
                 return
             try:
                 self.retell.stop_call(rid)
@@ -323,6 +389,15 @@ class Bridge:
                 log.warning("stop-call %s failed: %s", rid, exc)
 
         self.later(delay, stop)
+
+    def last_agent_line(self, rid: str) -> str:
+        """The call's last agent line as Retell has it now, or "" if it can't be read."""
+        try:
+            said = [line.text for line in lines(self.retell.get_call(rid)) if line.speaker == "agent"]
+        except (RetellError, httpx.HTTPError) as exc:
+            log.warning("get-call %s failed: %s", rid, exc)
+            return ""
+        return said[-1] if said else ""
 
     def say_now(self, rid: str, context: str) -> None:
         try:

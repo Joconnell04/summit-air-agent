@@ -2,11 +2,13 @@
 The mock sells technician-windows (DECISIONS 003); the company's own rules (urgent holds, after-hours,
 customer types, service area) are not ServiceTitan's and are tested in the tool server."""
 
+import shutil
 import sqlite3
 from concurrent.futures import ThreadPoolExecutor
 from datetime import date
 
 import pytest
+import yaml
 from conftest import (
     NO_COOLING,
     NO_HEAT,
@@ -305,9 +307,18 @@ def test_an_arrival_window_must_match_a_configured_window(small):
 @pytest.mark.parametrize(
     "day, window", [(date(2026, 11, 7), "evening"), (date(2026, 11, 8), "morning")]
 )
-def test_a_window_outside_business_hours_cannot_be_booked(small, day, window):
-    """Saturday evening and Sunday morning are never offered by capacity, so booking refuses them too."""
-    api, ids = small
+def test_a_window_outside_business_hours_cannot_be_booked(tmp_path, day, window):
+    """A company closed Saturday evening and Sunday (Summit Air was, until issue #149) never offers
+    those windows by capacity, so booking refuses them too."""
+    from servicetitan_mock.app import create_app
+
+    tenant = tmp_path / "closed-weekends"
+    shutil.copytree(TENANT_DIR, tenant)
+    config = yaml.safe_load((tenant / "config.yaml").read_text())
+    config["company"]["hours"].update(sat=["08:00", "16:00"], sun=None)
+    (tenant / "config.yaml").write_text(yaml.safe_dump(config))
+    ids = build_small_world(tmp_path / "w.db")
+    api = Api(create_app(tmp_path / "w.db", tenant, tmp_path / "w.log", clock=lambda: NOW))
     customer_id, location_id = ids["home"]
     response = api.post("/jpm/jobs", job_body(customer_id, location_id, day, window))
     assert response.status_code == 422

@@ -21,3 +21,9 @@ def test_the_summit_air_deploy_restarts_the_mock_and_seeds_only_when_stale():
     assert "[s]ervicetitan_mock.app" in deploy and "--port 8101" in deploy
     assert "--if-stale" in (ROOT / "deploy" / "summit-air" / "run.sh").read_text()
     assert "--if-stale" in (ROOT / "deploy" / "retell" / "run.sh").read_text()
+
+
+def test_the_live_schedule_is_opened_by_hand_at_deploy_not_on_every_start():
+    """PR #155 review: run on every mock start, it could cancel a visit a live caller had moved."""
+    for stack in ("summit-air", "retell"):
+        assert "open_live_schedule" not in (ROOT / "deploy" / stack / "run.sh").read_text()

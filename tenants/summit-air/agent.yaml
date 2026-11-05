@@ -374,7 +374,10 @@ lines:
   callback_before: before {time}
   callback_between: between {start} and {end}
   callback_asap: as soon as they can
-  callback_outside_hours: Our team makes calls between {opens} and {closes}. What time in there works?
+  callback_at: around {time}
+  callback_outside_hours: >-
+    Our team makes calls between {opens} and {closes}, so the closest I can do is {nearest}. Would
+    that work?
   # {address} is street, unit, city and ZIP; {phone} is read in groups. Naming it a home is how
   # every booking confirms the caller is residential.
   # One sentence with no lead-in, said once (eval round 3).
@@ -415,17 +418,16 @@ lines:
   address_not_found: I'm not finding that street. Could you spell the street name for me?
   address_ask_zip: What's the ZIP code there?
   do_not_call: Understood, we won't call you.
-  do_not_call_with_callback: >-
-    Understood, we won't call you. That means the callback is off, so give us a call any time you
-    need us.
+  do_not_call_with_callback: Understood, we won't call you. Give us a call any time you need us.
   repeated_drops: >-
     Looks like we keep getting cut off, the signal might be spotty. Want me to have someone call you
     back in a few minutes instead?
   limit: I've already got that taken care of on this call, so let me have someone from the team follow up.
   slot_taken: That window just filled up.
-  # A caller on file booking an address that isn't theirs on file (eval round 2, seed 5).
-  account_choice: >-
-    Should that address go on its own account, with you as a contact, or under your account?
+  # A caller on file booking an address that isn't theirs on file (eval round 2, seed 5). Asked as
+  # one plain yes or no (Retell call call_1840576e622e3d729b760085142: the either/or confused a
+  # caller); a no puts the address on its own account, with the caller as a contact.
+  account_choice: Should I put this under your account?
   account_name: Whose name should the account for that address be under?
   # An open visit at the address whose arrival window has ended (tools._passed_visit). {day} is
   # "today", "yesterday" or a weekday; {between} is "8 and 12".
@@ -446,6 +448,15 @@ lines:
     Of course. And just to confirm you're the person for the {thing}, what name is it under?
   identity_check_address_only: >-
     Of course. And just to confirm you're the person for the {thing}, could you tell me the address?
+  # A mover whose name check failed asks to book at the new address (issue #149).
+  move_unverified: >-
+    I can't add a new address to the account from this number, so I can't book the visit there
+    yet. Someone from our office can call the number we have on file to update it and book the
+    visit. Would that help?
+  # A time the caller named that no visit window holds ("at 8 PM"); the nearest window follows.
+  arrival_outside_hours: Our visits run from {hours}.
+  # Right after the read-back, for a caller with no account who hasn't said a name.
+  booking_name: Thanks. And what name should I put the visit under?
   identity_check_address: Thanks. And what's the address?
   identity_check_name: Thanks. And what's the name on the {thing}?
   identity_check_again: >-
@@ -553,12 +564,18 @@ voice:
     call you back.
   outbound_voicemail: >-
     Hi, this is Summit Air calling about your appointment. Please give us a call back at {phone}.
+  # Said at the end of a reply that calls a look-up when the caller would otherwise hear only "Got
+  # it." before the wait (issue #149), in turn, never the same one twice in a row.
+  holding:
+    - Just give me one second.
+    - Let me pull that up.
+    - One moment.
   # Pre-recorded, so they need no voice stream (docs/scaling.md). Regenerate the clips after a change:
-  # uv run python -m voice.livekit.clips. Each bridge clip must stay under about 1 second.
+  # uv run python -m voice.livekit.clips. Each bridge clip must stay under 1.6 seconds (voice/livekit/bridge.py).
   clips:
-    bridge_check: Let me check.
-    bridge_sec: One sec.
-    bridge_look: Okay, checking now.
+    bridge_one_sec: Okay, just give me one second.
+    bridge_pull_up: Sure, let me pull that up.
+    bridge_moment: Alright, one moment.
     at_capacity: >-
       Thanks for calling Summit Air. If you smell gas, hang up and call 911 from outside. All our
       lines are busy right now. Please leave your name, number and what's going on after the tone,

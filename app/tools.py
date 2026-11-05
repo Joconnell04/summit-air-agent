@@ -139,6 +139,26 @@ def _record_out_of_area(ctx: Ctx, zip_code: str) -> None:
             "INSERT OR IGNORE INTO out_of_area (call_id, zip, at) VALUES (?, ?, ?)",
             (ctx.call["id"], zip_code, iso(ctx.now)),
         )
+        # The turn the caller heard it on, so the call can't end before they answer (end_call).
+        ctx.conn.execute(
+            "INSERT OR IGNORE INTO lines_handed (call_id, line, at) VALUES (?, ?, ?)",
+            (ctx.call["id"], f"{OUT_OF_AREA_TURN}{ctx.call['turn_seq']}", iso(ctx.now)),
+        )
+
+
+OUT_OF_AREA_TURN = "out_of_area_turn:"
+
+
+def _out_of_area_unanswered(ctx: Ctx) -> bool:
+    """The caller was told their address is outside the area and hasn't spoken since."""
+    rows = ctx.conn.execute(
+        "SELECT line FROM lines_handed WHERE call_id = ? AND line LIKE ?",
+        (ctx.call["id"], OUT_OF_AREA_TURN + "%"),
+    ).fetchall()
+    if not rows:
+        return False
+    seq = max(int(r["line"].removeprefix(OUT_OF_AREA_TURN)) for r in rows)
+    return not records.caller_turn_after(ctx.conn, ctx.call["id"], seq)
 
 
 def _zip_known(ctx: Ctx, zip_code: str) -> None:
@@ -194,8 +214,53 @@ def _caller_lines(ctx: Ctx) -> list[sqlite3.Row]:
 
 
 # How many words may sit between a house number and its street ("248 on Duffield").
-STREET_GAP = 2
-STREET_GAP_WORDS = {"on", "at", "the", "off", "um", "uh", "is", "its", "spelled"}
+STREET_GAP = 3
+# Small words, and a direction, between a house number and its street: "199 East Fourth", "248 on
+# Duffield" (Jackson's call on the Retell number: "One nine nine East fourth Street" was refused
+# three times because "e" sat between the number and "fourth").
+STREET_GAP_WORDS = {
+    "on", "at", "the", "off", "um", "uh", "is", "its", "spelled",
+    "e", "w", "n", "s", "east", "west", "north", "south",
+}
+# Ordinals said as words, as the street key writes them: "fourth" is "4", "forty second" is "42".
+ORDINAL_UNITS = {
+    "first": 1, "second": 2, "third": 3, "fourth": 4, "fifth": 5, "sixth": 6, "seventh": 7,
+    "eighth": 8, "ninth": 9,
+}
+ORDINAL_WORDS = {
+    **ORDINAL_UNITS, "tenth": 10, "eleventh": 11, "twelfth": 12, "thirteenth": 13,
+    "fourteenth": 14, "fifteenth": 15, "sixteenth": 16, "seventeenth": 17, "eighteenth": 18,
+    "nineteenth": 19, "twentieth": 20, "thirtieth": 30, "fortieth": 40, "fiftieth": 50,
+    "sixtieth": 60, "seventieth": 70, "eightieth": 80, "ninetieth": 90, "hundredth": 100,
+}
+
+
+def _ordinals_as_numbers(tokens: list[str], merge: bool = True) -> list[str]:
+    """ "fourth" as "4", and with `merge`, a tens number before an ordinal unit as one ("40
+    second" is "42"), so a street said either way matches the street written either way. Without
+    `merge` the tens number stays a house number ("fifty fourth avenue" is 50 Fourth Avenue)."""
+    out: list[str] = []
+    for token in tokens:
+        if merge and token in ORDINAL_UNITS and out and out[-1].isdigit() and (
+            out[-1].endswith("0") and len(out[-1]) == 2
+        ):
+            out[-1] = str(int(out[-1]) + ORDINAL_UNITS[token])
+            continue
+        out.append(str(ORDINAL_WORDS[token]) if token in ORDINAL_WORDS else token)
+    return out
+
+
+def _address_tokens(text: str, merge: bool = True) -> list[str]:
+    """A caller's line as address tokens: numbers as digits however they were said ("one nine
+    nine", "one ninety nine", "a hundred ninety nine", "one hundred and ninety nine"), street words
+    keyed, and ordinals as numbers."""
+    text = re.sub(r"\ba hundred\b", "one hundred", text or "", flags=re.IGNORECASE)
+    return _ordinals_as_numbers(_keyed(number_tokens(text)), merge)
+
+
+def _street_names(street: str) -> list[str]:
+    """The words that name a street, ordinals as numbers: "East Fourth Street" is ["4"]."""
+    return _ordinals_as_numbers(geocode.street_name_words(street))
 # Words around a bare house number given as an answer: "it's 248", "um, two forty eight".
 ANSWER_FILLER = {"its", "it", "is", "um", "uh", "the", "number", "house", "okay", "ok", "yeah",
                  "yes", "so", "oh", "thats", "building", "were", "at", "im"}
@@ -213,11 +278,19 @@ def _address_said(ctx: Ctx, house: str, street: str, rows: list | None = None) -
     rows limits it to those caller lines (call_id, seq, text); all of the thread's by default."""
     rows = _caller_lines(ctx) if rows is None else rows
     want = geocode.house_key(house)
-    names = geocode.street_name_words(street)
+    names = _street_names(street)
     if not want or not names:
         return False
+    # Both readings of a tens number before an ordinal: "fifty fourth avenue" is 50 Fourth Avenue
+    # or 54th Avenue; "forty second street" is 42nd Street (PR #158 review).
+    return any(
+        _address_said_as(ctx, want, names, rows, merge) for merge in (True, False)
+    )
+
+
+def _address_said_as(ctx: Ctx, want: str, names: list[str], rows: list, merge: bool) -> bool:
     lines = [
-        _split_run_on(_keyed(number_tokens(r["text"])), want, names, r["text"]) for r in rows
+        _split_run_on(_address_tokens(r["text"], merge), want, names, r["text"]) for r in rows
     ]
     for i, tokens in enumerate(lines):
         for k, token in enumerate(tokens):
@@ -298,8 +371,9 @@ def _answers_number(ctx: Ctx, row: sqlite3.Row, want: str) -> bool:
 
 
 def _street_in(line: str, names: list[str]) -> bool:
-    tokens = set(_keyed(number_tokens(line)))
-    return all(name in tokens for name in names)
+    return any(
+        all(name in set(_address_tokens(line, merge)) for name in names) for merge in (True, False)
+    )
 
 
 def _record_lookup(ctx: Ctx, house: str, street: str, hint: str, found: geocode.Found) -> None:
@@ -798,7 +872,7 @@ def _has_word(text: str, word: str) -> bool:
 
 
 def _address_tokens_in(text: str, house: str, names: list[str]) -> bool:
-    tokens = _keyed(number_tokens(text))
+    tokens = _address_tokens(text)
     return house in tokens and all(n in tokens for n in names)
 
 
@@ -913,7 +987,7 @@ def _identity_said(ctx: Ctx, name: str, addresses: list[dict]) -> tuple[bool, bo
         split = geocode.split_address(address["street"])
         if not split:
             continue
-        house, names = geocode.house_key(split[0]), geocode.street_name_words(split[1])
+        house, names = geocode.house_key(split[0]), _street_names(split[1])
         rows = _said_before_agent(turns, lambda t, h=house, n=names: _address_tokens_in(t, h, n))
         if rows and _address_said(ctx, split[0], split[1], rows) and _unit_said(
             rows, address.get("unit") or ""
@@ -945,11 +1019,104 @@ def _on_file_phone(ctx: Ctx, customer_id: int) -> str:
     return phone_key(phones[0]["value"]) if phones else ""
 
 
+# Words that are no name, after a name lead ("it's the visit at...", "under my wife's name") or in
+# a short line ("No.", "What?", "hold on").
+NOT_NAMES = {
+    "i", "no", "nope", "yes", "yeah", "yep", "what", "why", "who", "sorry", "hello", "hi", "hey",
+    "okay", "ok", "huh", "wait", "hold", "on", "sure", "um", "uh", "please", "thanks", "thank",
+    "just", "it", "its", "the", "a", "an", "my", "is", "that", "thats", "this", "you", "your",
+    "hmm", "right", "for", "under", "me", "mine", "our", "his", "her", "their", "same", "not",
+    "already", "told", "said", "name", "names", "booked", "booking", "visit", "appointment",
+    "account", "here", "there", "today", "tomorrow", "now", "fine", "good", "cold", "hot", "out",
+    "broken", "leaking", "off", "calling", "about", "again", "really", "correct", "wrong", "too",
+    "and", "or", "but", "so", "to", "of", "in", "at", "with", "do", "did", "can", "cant", "dont",
+    "im", "am", "was", "be", "been", "have", "has", "had", "need", "want", "know", "guess",
+    "think", "maybe", "still", "also", "all", "one", "number", "phone", "address", "street",
+}
+
+
+# A name lead strong enough that the word after it is a name in any case ("this is pat"), and ones
+# that need more: "it's", "I'm" ("it's working", "I'm home") count before a capitalized word, or
+# before two words that are neither common nor numbers ("its joanne price").
+STRONG_NAME_LEADS = (("this", "is"), ("name", "is"), ("names",), ("under",), ("call", "me"))
+WEAK_NAME_LEADS = (("its",), ("im",), ("i", "am"))
+VERBISH = {
+    "working", "running", "leaking", "getting", "making", "going", "coming", "doing", "been",
+    "worse", "better", "really", "pretty", "very", "still", "back", "off", "on", "up", "down",
+}
+
+
+def _not_a_name(key: str, things: frozenset[str] = frozenset()) -> bool:
+    """A word that is no person's name: a common word, a number, a verb, a street word, or one of
+    the tenant's things and places (Tenant.not_names: "It's the furnace", "It's Brooklyn")."""
+    return (
+        (not key.isalpha()) or key in NOT_NAMES or key in NUMBER_WORDS or key in VERBISH
+        or key in things or key in STREET_AFTER
+    )
+
+
+def _gave_a_name(text: str, things: frozenset[str] = frozenset()) -> bool:
+    """The caller said some name, whoever's: after a name lead ("this is uh pat rivera", "my name
+    is Sam", "under Rivera", "It's Sam Rivera") or as a short line of nothing else ("Sam Rivera.",
+    "joanne price"). Lowercase counts too (the text harness's lines are), so common words, numbers
+    and verbs are never taken for a name, and "I just gave you the name" gives none."""
+    raw = re.findall(r"[A-Za-z0-9][A-Za-z0-9'-]*", text)
+    keys = [w.lower().replace("'", "").replace("-", "") for w in raw]
+    if any(k in STREET_AFTER for k in keys):
+        # A line with a street in it is an address, whatever else it has ("It's Bedford Avenue").
+        named_lead = any(tuple(keys[i:i + len(lead)]) == lead
+                         for lead in STRONG_NAME_LEADS for i in range(len(keys)))
+        if not named_lead:
+            return False
+    for leads, strong in ((STRONG_NAME_LEADS, True), (WEAK_NAME_LEADS, False)):
+        for i in range(len(keys)):
+            for lead in leads:
+                if tuple(keys[i:i + len(lead)]) != lead:
+                    continue
+                j = i + len(lead)
+                while j < len(keys) and keys[j] in ("um", "uh"):
+                    j += 1
+                if j >= len(keys) or _not_a_name(keys[j], things):
+                    continue
+                if strong or raw[j][0].isupper():
+                    return True
+                if j + 1 < len(keys) and not _not_a_name(keys[j + 1], things):
+                    return True
+    named = [k for k in keys if k not in NAME_LINE_FILLER]
+    return 0 < len(named) <= 3 and not any(_not_a_name(k, things) for k in named)
+
+
+def _gave_an_address(text: str) -> bool:
+    """The caller said an address: a house number (digits or number words, "one four two") and a
+    street word after it ("Main Street"). A number on its own ("give me one second") is none (PR
+    #155 review)."""
+    tokens = _name_words(text)
+    numbered = [i for i, t in enumerate(tokens) if t.isdigit() or t in NUMBER_WORDS]
+    return any(t in STREET_AFTER for i, t in enumerate(tokens) if numbered and i > numbered[0])
+
+
+def _answered_check(ctx: Ctx, check: sqlite3.Row, name_ok: bool, address_ok: bool) -> bool:
+    """Since the check was asked, the caller gave what was still missing (a name, or an address),
+    and it didn't match."""
+    lines = [
+        r["text"] for r in records.thread_turns(ctx.conn, ctx.call["id"])
+        if r["call_id"] == check["call_id"] and r["speaker"] == "caller"
+        and r["seq"] > check["asked_seq"]
+    ]
+    surname = _surname(ctx.fsm.customer(check["customer_id"])["name"])
+    gave_name = any(
+        _gave_a_name(t, ctx.tenant.not_names) and not (surname and _has_word(t, surname))
+        for t in lines
+    )
+    gave_address = any(_gave_an_address(t) for t in lines)
+    return (not name_ok and gave_name) or (not address_ok and gave_address)
+
+
 def _identity_gate(ctx: Ctx, customer_id: int, addresses: list[dict], thing: str) -> bool:
     """Refuses with identity_check until the caller has said a name and address matching the
-    customer, when the call's number isn't on that customer's account. After two answers that
-    don't match, the change is refused for the call (identity_mismatch) and the agent offers a
-    callback to the number on file. Returns True when the check was needed and passed, so the
+    customer, when the call's number isn't on that customer's account. After an answer that
+    doesn't match, the change is refused for the call (identity_mismatch) and the agent offers a
+    callback to the number on file; only an answer with no name or address in it is asked again. Returns True when the check was needed and passed, so the
     change is noted for the office."""
     scoped = records.scoped_customers(ctx.conn, ctx.call["id"])
     if customer_id in scoped and scoped[customer_id]["matched_by"] == "caller_id":
@@ -958,15 +1125,20 @@ def _identity_gate(ctx: Ctx, customer_id: int, addresses: list[dict], thing: str
     check = _identity_row(ctx, customer_id)
     if check is not None and check["status"] == "verified":
         return True
-    # A question asked on a call that dropped is asked again on this one.
-    if check is not None and check["status"] == "asked" and check["call_id"] != ctx.call["id"]:
+    # A question asked on an earlier call is asked again on this one, and a failed check there
+    # doesn't refuse this call: live call 2 (issue #149) was linked to call 1, whose wrong name
+    # ("Sam Rivera") refused Pat Rivera's move before they were asked anything.
+    if check is not None and check["status"] in ("asked", "mismatch") and (
+        check["call_id"] != ctx.call["id"]
+    ):
         check = None
     if check is not None and check["status"] == "mismatch":
         raise Refused(
             "identity_mismatch",
             ctx.tenant.line("identity_mismatch"),
             need="no change can be made on this call; offer the callback, and flag_person if "
-            "the caller wants it",
+            "the caller wants it. The callback always goes to the number on file: never offer "
+            "to call another number, and never say what the number on file is",
         )
     name_ok, address_ok = _identity_said(ctx, customer["name"], addresses)
     if name_ok and address_ok:
@@ -983,6 +1155,10 @@ def _identity_gate(ctx: Ctx, customer_id: int, addresses: list[dict], thing: str
         "server checks the answer. Never say whether it matches, and never say the name or "
         "address on file"
     )
+    if check is None and not name_ok and _named_on_call(ctx, customer["name"]):
+        # The caller already gave a name that isn't the one on file (they were asked by the agent,
+        # or said it): asking again is the repeat issue #149 is about, so it is the one refusal.
+        _record_mismatch(ctx, customer_id, ctx.call["id"], thing, insert=True)
     if check is None:
         with tx(ctx.conn):
             ctx.conn.execute(
@@ -1000,7 +1176,11 @@ def _identity_gate(ctx: Ctx, customer_id: int, addresses: list[dict], thing: str
         raise Refused("identity_check", ctx.tenant.line(line, thing=thing), need=note)
     if not records.caller_turn_after(ctx.conn, check["call_id"], check["asked_seq"]):
         raise Refused("identity_check", ctx.tenant.line("identity_check", thing=thing), need=note)
-    if check["asks"] < IDENTITY_ASKS:
+    # An answer that doesn't match is final: one polite refusal and the callback, never the same
+    # question again (live call 1, issue #149: "Sam Rivera", then "And what's the name on the
+    # visit?" twice). Only a caller who gave no name or address at all is asked once more.
+    answered = _answered_check(ctx, check, name_ok, address_ok)
+    if check["asks"] < IDENTITY_ASKS and not answered:
         line = (
             "identity_check_address" if name_ok
             else "identity_check_name" if address_ok
@@ -1013,13 +1193,103 @@ def _identity_gate(ctx: Ctx, customer_id: int, addresses: list[dict], thing: str
                 (ctx.call["turn_seq"], check["call_id"], customer_id),
             )
         raise Refused("identity_check", ctx.tenant.line(line, thing=thing), need=note)
+    _record_mismatch(ctx, customer_id, check["call_id"], thing)
+
+
+def _caller_named_anyone(ctx: Ctx) -> bool:
+    """The caller said some name on this call."""
+    return any(
+        _gave_a_name(r["text"], ctx.tenant.not_names)
+        for r in records.thread_turns(ctx.conn, ctx.call["id"])
+        if r["call_id"] == ctx.call["id"] and r["speaker"] == "caller"
+    )
+
+
+SELF_LEADS = (("this", "is"), ("name", "is"), ("names",), ("im",), ("i", "am"))
+
+
+def _someone_else(ctx: Ctx, customer_id: int) -> bool:
+    """The caller introduced themself by a name that isn't the matched customer's, in a line with
+    no word of that customer's name in it ("No, I'm Jordan Lee. I'm new." on a number on file under
+    Pat Rivera, Retell call call_1840576e622e3d729b760085142). That customer isn't the caller: no
+    question about whose account a new address goes on, and the visit doesn't go on theirs. A
+    failed lookup counts the caller as the customer, as before."""
+    try:
+        own = {w for w in _name_words(ctx.fsm.customer(customer_id)["name"]) if len(w) > 1}
+    except (FsmUnavailable, FsmRejected):
+        return False
+    things = ctx.tenant.not_names
+    for row in records.thread_turns(ctx.conn, ctx.call["id"]):
+        if row["call_id"] != ctx.call["id"] or row["speaker"] != "caller":
+            continue
+        raw = re.findall(r"[A-Za-z0-9][A-Za-z0-9'-]*", row["text"])
+        keys = [w.lower().replace("'", "").replace("-", "") for w in raw]
+        if own & set(keys):
+            continue
+        for i in range(len(keys)):
+            for lead in SELF_LEADS:
+                if tuple(keys[i:i + len(lead)]) != lead:
+                    continue
+                j = i + len(lead)
+                while j < len(keys) and keys[j] in ("um", "uh"):
+                    j += 1
+                if j >= len(keys) or _not_a_name(keys[j], things):
+                    continue
+                if raw[j][0].isupper() or (j + 1 < len(keys) and not _not_a_name(keys[j + 1], things)):
+                    return True
+    return False
+
+
+def _callers_accounts(ctx: Ctx) -> dict:
+    """The customers matched on this call, less one the caller said they aren't."""
+    return {
+        cid: row
+        for cid, row in records.scoped_customers(ctx.conn, ctx.call["id"]).items()
+        if not _someone_else(ctx, cid)
+    }
+
+
+def _check_failed_on_call(ctx: Ctx) -> bool:
+    """A name and address check failed on this call."""
+    return bool(
+        ctx.conn.execute(
+            "SELECT 1 FROM identity_checks WHERE call_id = ? AND status = 'mismatch'",
+            (ctx.call["id"],),
+        ).fetchone()
+    )
+
+
+def _named_on_call(ctx: Ctx, name: str) -> bool:
+    """The caller said a name on this call that isn't the customer's. A line with the customer's
+    surname in it is no wrong name, even when it doesn't count because the agent said it first."""
+    surname = _surname(name)
+    return any(
+        _gave_a_name(r["text"], ctx.tenant.not_names)
+        and not (surname and _has_word(r["text"], surname))
+        for r in records.thread_turns(ctx.conn, ctx.call["id"])
+        if r["call_id"] == ctx.call["id"] and r["speaker"] == "caller"
+    )
+
+
+def _record_mismatch(
+    ctx: Ctx, customer_id: int, call_id: str, thing: str, insert: bool = False
+) -> None:
+    """The change is refused for the rest of the call: the check is a mismatch, the office is
+    flagged, and the agent offers a callback to the number on file."""
     phone = _on_file_phone(ctx, customer_id)
     with tx(ctx.conn):
-        ctx.conn.execute(
-            "UPDATE identity_checks SET status = 'mismatch', on_file_phone = ? "
-            "WHERE call_id = ? AND customer_id = ?",
-            (phone, check["call_id"], customer_id),
-        )
+        if insert:
+            ctx.conn.execute(
+                "INSERT INTO identity_checks (call_id, customer_id, status, asked_seq, at, "
+                "on_file_phone) VALUES (?, ?, 'mismatch', ?, ?, ?)",
+                (call_id, customer_id, ctx.call["turn_seq"], iso(ctx.now), phone),
+            )
+        else:
+            ctx.conn.execute(
+                "UPDATE identity_checks SET status = 'mismatch', on_file_phone = ? "
+                "WHERE call_id = ? AND customer_id = ?",
+                (phone, call_id, customer_id),
+            )
         records.add_flag(
             ctx.conn,
             ctx.call["id"],
@@ -1033,7 +1303,8 @@ def _identity_gate(ctx: Ctx, customer_id: int, addresses: list[dict], thing: str
         "identity_mismatch",
         ctx.tenant.line("identity_mismatch"),
         need="no change can be made on this call; offer the callback, and flag_person if the "
-        "caller wants it",
+        "caller wants it. The callback always goes to the number on file: never offer to call "
+        "another number, and never say what the number on file is",
     )
 
 
@@ -1064,14 +1335,13 @@ def _settle_unanswered_check(ctx: Ctx) -> None:
 
 
 def _mismatch_callback(ctx: Ctx) -> sqlite3.Row | None:
-    """An identity check this call failed whose callback to the number on file isn't set yet."""
+    """An identity check this call failed whose callback to the number on file isn't set yet. A
+    check an earlier call failed doesn't send this call's callbacks there (issue #149)."""
     _settle_unanswered_check(ctx)
-    thread = records.thread(ctx.conn, ctx.call["id"])
     return ctx.conn.execute(
-        f"SELECT * FROM identity_checks WHERE status = 'mismatch' AND callback_id IS NULL "
-        f"AND on_file_phone <> '' AND call_id IN ({','.join('?' * len(thread))}) "
-        f"ORDER BY rowid DESC LIMIT 1",
-        thread,
+        "SELECT * FROM identity_checks WHERE status = 'mismatch' AND callback_id IS NULL "
+        "AND on_file_phone <> '' AND call_id = ? ORDER BY rowid DESC LIMIT 1",
+        (ctx.call["id"],),
     ).fetchone()
 
 
@@ -1204,7 +1474,15 @@ def find_customer(ctx: Ctx, args: FindCustomerIn) -> Result:
     # 20261104-200759, a caller on a work phone whose visit was under her cell).
     if not customers and args.address:
         address = args.address
-        locations = ctx.fsm.locations_by_address(address.street, address.zip, address.unit or None)
+        # A ZIP the caller never said is no part of the search: the model guessed 11211 for an old
+        # address in 11235 and found nothing (Jackson's call 2 replayed in the eval). The street,
+        # house number and unit must still match exactly, and the name check guards any change.
+        zip_code = address.zip
+        try:
+            _zip_known(ctx, zip_code)
+        except Refused:
+            zip_code = None
+        locations = ctx.fsm.locations_by_address(address.street, zip_code, address.unit or None)
         # Only exact matches: without a unit, a building's other units are other people's records.
         exact = [
             loc
@@ -1395,7 +1673,27 @@ def find_slots(ctx: Ctx, args: FindSlotsIn) -> Result:
     # technician may come any time in a window, so a window that runs past them is never offered
     # as if it fit ("by 9" inside 8 to 12, eval round 2, seed 7).
     arrival_say = ""
-    if args.arrive_after or args.arrive_before:
+    named = _caller_named_one_time(ctx)
+    if named is not None and args.day is None:
+        # "Tomorrow at two PM" with no day passed: the day comes from the caller's words, never
+        # today by default (PR #155 check).
+        said_day = _caller_named_day(ctx)
+        if said_day is not None:
+            args = args.model_copy(update={"day": said_day})
+    if named is not None:
+        # One time the caller named ("tomorrow at two PM") is the window that holds it, not a
+        # limit on when the technician may come: live call 2 passed 1 PM to 5 PM, which no 4-hour
+        # window fits, and heard that tomorrow had no openings (issue #149).
+        holding = [w for w in windows if _window_holds(ctx, w, named)]
+        data["arrival"] = {"time": named.strftime("%H:%M"), "fits": bool(holding)}
+        if holding:
+            windows = holding
+        elif windows:
+            # Outside the visit hours ("at 8 PM"): say the hours and offer the nearest window.
+            nearest = min(windows, key=lambda w: _distance_to(ctx, w, named))
+            windows = [w for w in windows if w["window"] == nearest["window"]]
+            arrival_say = ctx.tenant.line("arrival_outside_hours", hours=_visit_hours(ctx)) + " "
+    elif args.arrive_after or args.arrive_before:
         after, before = _arrival_hours(args)
         fitting = [w for w in windows if _window_inside(ctx, w, after, before)]
         data["arrival"] = {
@@ -1456,39 +1754,59 @@ def find_slots(ctx: Ctx, args: FindSlotsIn) -> Result:
     for window in windows:
         by_day.setdefault(window["date"], []).append(_describe(ctx, window))
     preferred = {d.lower() for d in args.preferred_days}
-
-    def rank(item):
-        day, slots = item
-        liked_day = bool(preferred) and (
-            day in preferred or slots[0]["weekday"].lower() in preferred
-        )
-        liked_time = args.time_of_day in {s["window"] for s in slots}
-        return (not liked_day, not liked_time, day)
-
-    shape = []
-    for day, slots in sorted(by_day.items(), key=rank)[:SHAPE_DAYS]:
-        if args.time_of_day:
-            slots.sort(key=lambda s: s["window"] != args.time_of_day)
-        shape.append(
-            {
-                "date": day,
-                "weekday": slots[0]["weekday"],
-                "day": slots[0]["day"],
-                "windows": [s["window"] for s in slots],
-                "labels": [s["label"] for s in slots],
-            }
-        )
-    data["days"] = shape
-    if not shape:
+    dates = sorted(by_day)
+    # The shape of what's open, in date order, for the model to answer a follow-up from.
+    data["days"] = [
+        {
+            "date": day,
+            "weekday": by_day[day][0]["weekday"],
+            "day": by_day[day][0]["day"],
+            "windows": [s["window"] for s in by_day[day]],
+            "labels": [s["label"] for s in by_day[day]],
+        }
+        for day in dates[:SHAPE_DAYS]
+    ]
+    if not dates:
         _keep_second_job(ctx, data)
         return ok(
             urgent_said + arrival_say + "I don't have anything open in the next two weeks.", **data
         )
-    parts = []
-    for d in shape:
-        names = _join([w.replace("_", " ") for w in d["windows"]], "or")
-        parts.append(f"this {names}" if d["day"] == "today" else f"{d['day']} {names}")
-    return ok(f"{urgent_said}{arrival_say}I've got openings {_join(parts, 'and')}.", **data)
+    offer, lead = _one_offer(ctx, by_day, dates, preferred, args.time_of_day)
+    data["offer"] = offer
+    return ok(f"{urgent_said}{arrival_say}{lead}", **data)
+
+
+def _one_offer(
+    ctx: Ctx, by_day: dict[str, list[dict]], dates: list[str], preferred: set[str],
+    time_of_day: str | None,
+) -> tuple[dict, str]:
+    """One simple choice to offer, and the sentence for it (Jackson after live call 2: "too many
+    double booking questions... two sets of multi-options"; and "why didn't it check friday
+    first?"). The caller's day comes first when they named one, else the soonest opening; within
+    the day, the part of the day they asked for. A later week's day says its date, and a named day
+    that is full this week says so in a few words."""
+    liked = [
+        d for d in dates if d in preferred or by_day[d][0]["weekday"].lower() in preferred
+    ]
+    day = liked[0] if liked else dates[0]
+    slots = by_day[day]
+    offer = next((s for s in slots if s["window"] == time_of_day), slots[0])
+    visit = date.fromisoformat(day)
+    today = ctx.tenant.local(ctx.now).date()
+    named = offer["day_and_date"] if (visit - today).days >= 7 else offer["day"]
+    lead = ""
+    if preferred and not liked:
+        asked = _join(sorted(d.capitalize() for d in preferred), "or")
+        lead = f"I don't have {asked} open in the next two weeks. "
+    elif liked:
+        weekday = offer["weekday"]
+        first = today + timedelta(days=(visit.weekday() - today.weekday()) % 7)
+        if visit != first and weekday.lower() in preferred:
+            lead = f"This {weekday} is full. "
+    if liked:
+        named = named[0].upper() + named[1:] + ("," if "," in named else "")
+        return offer, f"{lead}{named} I have {offer['label']}. Does that work?"
+    return offer, f"{lead}The soonest I have is {named}, {offer['label']}. Does that work?"
 
 
 def _zip_asked_key(house: str, street: str) -> str:
@@ -1569,6 +1887,27 @@ def _arrival_hours(args: FindSlotsIn) -> tuple[time | None, time | None]:
     return after, before
 
 
+def _distance_to(ctx: Ctx, window: dict, moment: time) -> float:
+    """Hours from a window to a time outside it."""
+    spec = ctx.tenant.window(window["window"])
+    if spec is None or spec.after_hours:
+        return 99.0
+    mins = moment.hour * 60 + moment.minute
+    start, end = spec.start.hour * 60 + spec.start.minute, spec.end.hour * 60 + spec.end.minute
+    return max(start - mins, mins - end, 0) / 60
+
+
+def _visit_hours(ctx: Ctx) -> str:
+    """ "8 AM to 8 PM", from the first and last regular arrival windows."""
+    regular = [w for w in ctx.tenant.windows if not w.after_hours]
+    return f"{_clock_said(regular[0].start)} to {_clock_said(regular[-1].end)}"
+
+
+def _window_holds(ctx: Ctx, window: dict, moment: time) -> bool:
+    spec = ctx.tenant.window(window["window"])
+    return bool(spec) and not spec.after_hours and spec.start <= moment < spec.end
+
+
 def _window_inside(ctx: Ctx, window: dict, after: time | None, before: time | None) -> bool:
     spec = ctx.tenant.window(window["window"])
     if spec is None or spec.after_hours:
@@ -1643,6 +1982,16 @@ def _readback_corrected(ctx: Ctx, asked: dict) -> str | None:
     return next((f for r in rows if (f := readback_change(r["text"], asked))), None)
 
 
+def _unit_without_zip(unit: str, zip_code: str) -> str:
+    """A unit that ends in the ZIP keeps what comes before it: "Unit 2, 10009" heard as one number
+    ("Unit 210009", Retell call call_1840576e622e3d729b760085142) was read back as unit 210009."""
+    digits = re.sub(r"\D", "", zip_code or "")
+    compact = re.sub(r"[\s,.-]", "", unit or "")
+    if len(digits) == 5 and len(compact) > 5 and compact.endswith(digits):
+        return compact[:-5]
+    return unit
+
+
 def read_back(ctx: Ctx, args: ReadBackIn) -> Result:
     """Two steps. Without confirmed, returns the exact sentence to read and records that it was
     asked. With confirmed, accepts only if that same sentence was returned on this call and a caller
@@ -1660,12 +2009,16 @@ def read_back(ctx: Ctx, args: ReadBackIn) -> Result:
     _zip_known(ctx, args.address.zip)
     _zip_mismatch(ctx, args.address.zip, args.address.street, args.address.city)
     address = args.address.model_dump()
+    address["unit"] = _unit_without_zip(address["unit"], address["zip"])
     place = address["street"] + (f", unit {address['unit']}" if address["unit"] else "")
     city = f", {address['city']}" if address["city"] else ""
     # The sentence names the address as a home, so every booking has the caller confirm it's
     # residential (assignment; spec S-07). A caller who corrects it is caught by the turn check.
-    # The ZIP and the number are written out digit by digit, as the caller should hear them.
-    spoken_address = f"{place}{city}, {digits_spoken(address['zip'])}"
+    # The ZIP and the number are written out digit by digit, as the caller should hear them, the ZIP
+    # after the words "ZIP code" so a unit before it doesn't run into it ("unit two one zero zero
+    # zero nine" on Retell call call_1840576e622e3d729b760085142; Jackson in call 2: "just say the
+    # zip code is").
+    spoken_address = f"{place}{city}, ZIP code {digits_spoken(address['zip'])}"
     phone_for = _phone_for(ctx, args.phone_for)
     if phone_for:
         sentence = ctx.tenant.line(
@@ -1738,7 +2091,20 @@ def read_back(ctx: Ctx, args: ReadBackIn) -> Result:
                 phone=phone,
                 account_choice=True,
                 need="this question was said for you; when the caller answers, book_appointment "
-                "with new_address_account own (and details.name for that address) or caller",
+                "with new_address_account caller for a yes, or own for a no (with details.name of "
+                "whoever the address's account is for)",
+            )
+        # A caller with no account who hasn't said a name: the name is asked here, right after
+        # the read-back, not by a refused booking after "booking that now" (a scripted call on
+        # #159, call-_+16466240418_bUwDUCZFrKN8).
+        if not _callers_accounts(ctx) and not _caller_named_anyone(ctx):
+            return ok(
+                ctx.tenant.line("booking_name"),
+                confirmed=True,
+                address=address,
+                phone=phone,
+                need="this question was said for you; pass the caller's answer as details.name "
+                "when you book",
             )
         return ok(confirmed=True, address=address, phone=phone)
     parts = None
@@ -1796,6 +2162,16 @@ def book_appointment(ctx: Ctx, args: BookIn) -> Result:
     # A caller who said they moved books the new address only once the move is recorded, so the
     # old address stops getting visits (issue #128).
     if _mover_pending(ctx, readback):
+        if _check_failed_on_call(ctx):
+            # The new address can't go on the account from this number, so the visit can't be
+            # booked there: the caller hears why in plain words, not a callback with no reason
+            # (live call 2, issue #149: "The address change still has to go through first").
+            raise Refused(
+                "move_unverified",
+                ctx.tenant.line("move_unverified"),
+                need="the visit can't be booked at the new address on this call; offer the "
+                "callback to the number on file with flag_person if the caller wants it",
+            )
         raise Refused(
             "move_first",
             "",
@@ -1821,7 +2197,7 @@ def book_appointment(ctx: Ctx, args: BookIn) -> Result:
             ctx.tenant.line("slot_taken"),
             alternatives=_alternatives(ctx, job_type, decided.level),
         )
-    scoped = records.scoped_customers(ctx.conn, ctx.call["id"])
+    scoped = _callers_accounts(ctx)
     if not scoped and not details["name"]:
         raise Refused(
             "invalid_arguments", "Can I get a name for the booking?", errors={"name": "needed"}
@@ -2246,7 +2622,7 @@ def _passed_visit(ctx: Ctx, job: dict) -> None:
 def _account_phone(ctx: Ctx, chosen: int | None) -> str:
     """The account's own number, for a booking whose number reaches someone else: the one on file
     for the one customer matched, otherwise the number the call came from."""
-    scoped = [chosen] if chosen else list(records.scoped_customers(ctx.conn, ctx.call["id"]))
+    scoped = [chosen] if chosen else list(_callers_accounts(ctx))
     if len(scoped) == 1:
         on_file = _on_file_phone(ctx, scoped[0])
         if on_file:
@@ -2260,7 +2636,7 @@ def _new_address_customer(ctx: Ctx, readback: dict, chosen: int | None = None) -
     asked; None otherwise. FSM errors are raised for the caller to handle."""
     scoped = [
         (cid, row)
-        for cid, row in records.scoped_customers(ctx.conn, ctx.call["id"]).items()
+        for cid, row in _callers_accounts(ctx).items()
         if row["customer_type"] not in ctx.tenant.rejected_customer_types
         and (chosen is None or cid == chosen)
     ]
@@ -2296,8 +2672,8 @@ def _new_address_account(
         raise Refused(
             "account_choice",
             ctx.tenant.line("account_choice"),
-            need="ask, then book_appointment with new_address_account own (and details.name for "
-            "that address) or caller",
+            need="ask, then book_appointment with new_address_account caller for a yes, or own "
+            "for a no (with details.name of whoever the address's account is for)",
         )
     if args.new_address_account == "caller":
         return "caller", None
@@ -2490,7 +2866,10 @@ def cancel_appointment(ctx: Ctx, args: CancelIn) -> Result:
     row_id = _record_action(ctx, "cancel", key, job, args.model_dump(mode="json"), args.reason)
     try:
         ctx.fsm.cancel_job(
-            key, job["id"], ctx.tenant.fsm["cancel_reason_id"], f"Cancelled by phone: {args.reason}"
+            key,
+            job["id"],
+            ctx.tenant.fsm["cancel_reason_id"],
+            f"Cancelled by phone: {args.reason.strip() or 'no reason given'}",
         )
     except (FsmUnavailable, FsmRejected) as exc:
         _action_failed(ctx, row_id, exc, "cancel")
@@ -2541,11 +2920,22 @@ MOVED_PHRASES = tuple(
     "i dont live there", "we dont live there", "i no longer live", "we no longer live",
     "im not living there", "were not living there",
 )
+# "Moved from" says a move only with a street address in the same line ("I moved from 142 Main
+# Street"), so "we moved it from the basement to the attic" doesn't (PR #155 re-check).
+MOVED_FROM_PHRASES = ("moved from", "moving from", "recently moved from", "moved here from")
 
 
 def _said_moved(ctx: Ctx) -> bool:
     caller = words(records.caller_text(ctx.conn, ctx.call["id"]))
-    return any(has_phrase(caller, phrase) for phrase in MOVED_PHRASES)
+    if any(has_phrase(caller, phrase) for phrase in MOVED_PHRASES):
+        return True
+    lines = [
+        r["text"] for r in records.thread_turns(ctx.conn, ctx.call["id"]) if r["speaker"] == "caller"
+    ]
+    return any(
+        _gave_an_address(line) and any(has_phrase(words(line), p) for p in MOVED_FROM_PHRASES)
+        for line in lines
+    )
 
 
 def _moved_on_call(ctx: Ctx) -> bool:
@@ -2587,8 +2977,14 @@ def record_move(ctx: Ctx, args: MoveIn) -> Result:
     if customer_id is None and len(scoped) == 1:
         customer_id = next(iter(scoped))
     if customer_id not in scoped:
+        # A caller from a number not on the account: their account is found by the old address
+        # first (Jackson's call 2 replayed in the eval, where the agent told the caller it couldn't
+        # find the account and gave up).
         raise Refused(
-            "not_owner", "", gate="scope", errors={"customer_id": "not matched on this call"}
+            "not_owner", "", gate="scope", errors={"customer_id": "not matched on this call"},
+            need="find the caller's account first: call find_customer with the old address they "
+            "moved from, then call record_move again; never tell the caller you can't find it "
+            "before you have looked",
         )
     old = ctx.fsm.locations(customer_id)
     if args.from_location_id is not None:
@@ -2764,10 +3160,158 @@ class CallbackWhen:
     spoken: str  # "by 4:30 PM", "after 5 PM", "between 1 PM and 3 PM"
 
 
+WEEKDAYS = ("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday")
+
+
+def _days_ahead(tenant: Tenant, now: datetime, day: str) -> int:
+    """How many days from today the caller's day is: a weekday is the next one coming, today
+    itself when it is today (issue #149: "Friday at two" was booked for tomorrow)."""
+    if day == "tomorrow":
+        return 1
+    if day in WEEKDAYS:
+        return (WEEKDAYS.index(day) - tenant.local(now).weekday()) % 7
+    return 0
+
+
+def _on_day(tenant: Tenant, moment: datetime, now: datetime, spoken: str) -> str:
+    """The day in front of a callback time: "tomorrow between 1 PM and 3 PM", "Friday around 2
+    PM". Plain, with no date and no count of days."""
+    days = (tenant.local(moment).date() - tenant.local(now).date()).days
+    if days <= 0:
+        return spoken
+    day = "tomorrow" if days == 1 else tenant.local(moment).strftime("%A")
+    return f"{day} {spoken}"
+
+
+def _nearest_in_hours(tenant: Tenant, moment: datetime, now: datetime) -> datetime:
+    """The calling-hours time closest to one outside them, on the same day: when calls start, or
+    half an hour before they stop (records.in_outbound_hours ends before `closes`)."""
+    opens, closes = (time.fromisoformat(t) for t in tenant.callbacks["outbound_hours"])
+    local = tenant.local(moment)
+    if local.time() < opens:
+        nearest = datetime.combine(local.date(), opens, tenant.tz)
+    else:
+        nearest = datetime.combine(local.date(), closes, tenant.tz) - timedelta(minutes=30)
+    return max(nearest, now)
+
+
+def _asked_moment(tenant: Tenant, now: datetime, days: int, asked: CallbackTime) -> datetime:
+    """The moment the caller asked for, from an ISO time with an offset or a clock time on the
+    day asked (PR #155 review: an ISO time outside calling hours was read as a clock time and
+    failed)."""
+    value = asked.callback_time or asked.callback_after or asked.callback_before or ""
+    try:
+        moment = datetime.fromisoformat(value.strip())
+    except ValueError:
+        return records.clock_on(value, tenant, now, days)
+    return moment if moment.tzinfo else moment.replace(tzinfo=tenant.tz)
+
+
+def _local_iso(tenant: Tenant, asked: CallbackTime) -> CallbackTime:
+    """An ISO callback time with no offset is the company's local time, so it gets the same
+    checks, and the nearest allowed time, as any other (PR #155 re-check: it was refused as
+    "an ISO time needs a UTC offset")."""
+    value = (asked.callback_time or "").strip()
+    try:
+        moment = datetime.fromisoformat(value)
+    except ValueError:
+        return asked
+    if moment.tzinfo is not None or "T" not in value:
+        return asked
+    return asked.model_copy(update={"callback_time": moment.replace(tzinfo=tenant.tz).isoformat()})
+
+
+# Words that make a caller's line a window, not one time: "between 1 and 3", "after 2", "2 to 4".
+# A time the caller named, after "at" or "for", or with AM, PM or minutes: "at 2", "2:30", "2 PM".
+NAMED_TIME = re.compile(
+    r"(?:\b(?:at|for)\s+)?\b(\d{1,2})(?:\s*:\s*(\d{2}))?\s*(am|pm|a|p)?\b(?!\s*:)"
+)
+# Two times as a range ("between 1 and 3", "2 to 4", "1 till 3") or a time with a limit word ("after
+# 2", "before noon", "by 4"): a window, not one time.
+WINDOW_SAID = re.compile(
+    r"\bbetween\b[^.?!]*\d[^.?!]*\band\b[^.?!]*\d"
+    r"|\d{1,2}(?:\s*:\s*\d{2})?\s*(?:am|pm|a|p)?\s*(?:to|til|till|until|-)\s*\d"
+    r"|\b(?:after|before|by|until|till|not before|no later than)\s+\d"
+)
+WEEKDAY_NAMES = ("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday")
+
+
+def _caller_line_digits(ctx: Ctx) -> str:
+    """The caller's last line with spoken numbers as digits ("two thirty" as "2 30")."""
+    line = records.last_caller_line(ctx.conn, ctx.call["id"])
+    return " ".join(t for t in number_tokens(line.replace("noon", "12 pm")) if t)
+
+
+def _caller_named_one_time(ctx: Ctx) -> time | None:
+    """The one clock time in the caller's last line, minutes kept ("tomorrow at 2:30"), when it
+    names exactly one and no window. "To", "and" and "or" alone are no window ("I'd like a call
+    tomorrow at 2", PR #155 check); only two times as a range, or a limit word, are."""
+    text = _caller_line_digits(ctx)
+    if WINDOW_SAID.search(text):
+        return None
+    found = set()
+    for match in NAMED_TIME.finditer(text):
+        hour, minute, meridiem = match[1], match[2], match[3]
+        lead = match[0].lstrip()[:3] in ("at ", "for")
+        if not (lead or minute or meridiem):
+            continue
+        value = hour + (f":{minute}" if minute else "") + (
+            {"am": " AM", "a": " AM", "pm": " PM", "p": " PM"}.get(meridiem or "", "")
+        )
+        try:
+            found.add(clock_time(value))
+        except ValueError:
+            continue
+    return found.pop() if len(found) == 1 else None
+
+
+def _caller_named_day(ctx: Ctx) -> date | None:
+    """The day in the caller's last line: "today", "tomorrow" or a weekday, the next one coming."""
+    said = words(records.last_caller_line(ctx.conn, ctx.call["id"]))
+    today = ctx.tenant.local(ctx.now).date()
+    if " tomorrow " in said:
+        return today + timedelta(days=1)
+    if " today " in said or " tonight " in said:
+        return today
+    for i, name in enumerate(WEEKDAY_NAMES):
+        if f" {name} " in said:
+            return today + timedelta(days=(i - today.weekday()) % 7)
+    return None
+
+
+def _clock_said(moment: time) -> str:
+    """ "2 PM", "2:30 PM", "noon"."""
+    if moment == time(12, 0):
+        return "noon"
+    return datetime.combine(date.today(), moment).strftime("%-I:%M %p").replace(":00 ", " ")
+
+
+def _as_the_caller_said_it(ctx: Ctx, asked: CallbackTime) -> CallbackTime:
+    """A window the model built around the one time the caller named is that time: "Tomorrow at
+    two PM" was passed as 1 PM to 3 PM and said back as "between 1 PM and 3 PM, not at 2 PM
+    exactly" (live call 2, issue #149)."""
+    if not (asked.callback_after and asked.callback_before) or asked.callback_time:
+        return asked
+    named = _caller_named_one_time(ctx)
+    if named is None:
+        return asked
+    try:
+        start, end = clock_time(asked.callback_after), clock_time(asked.callback_before)
+    except ValueError:
+        return asked
+    if not start <= named <= end:
+        return asked
+    spoken = datetime.combine(date.today(), named).strftime("%-I:%M %p")
+    return asked.model_copy(
+        update={"callback_after": None, "callback_before": None, "callback_time": spoken}
+    )
+
+
 def _callback_due(ctx: Ctx, asked: CallbackTime) -> CallbackWhen:
     """The callback time and the words for it. The words always come from here, never the model."""
     tenant, now = ctx.tenant, ctx.now
-    days = 1 if asked.callback_day == "tomorrow" else 0
+    asked = _local_iso(tenant, _as_the_caller_said_it(ctx, asked))
+    days = _days_ahead(tenant, now, asked.callback_day)
     try:
         if asked.callback_after or asked.callback_before:
             earliest, latest = records.parse_callback_window(
@@ -2777,7 +3321,15 @@ def _callback_due(ctx: Ctx, asked: CallbackTime) -> CallbackWhen:
             due = records.parse_callback_time(
                 asked.callback_time, asked.callback_in_minutes, tenant, now, days
             )
-            spoken = tenant.line("callback_by", time=tenant.time_spoken(due, now))
+            if asked.callback_in_minutes is not None:
+                spoken = tenant.line("callback_by", time=tenant.time_spoken(due, now))
+                return CallbackWhen(due, due, spoken)
+            # A time the caller named is said back as theirs ("Friday around 2 PM"), and kept
+            # inside calling hours.
+            if not records.in_outbound_hours(tenant, due):
+                raise ValueError("outside callback hours")
+            clock = _clock_said(tenant.local(due).time())
+            spoken = _on_day(tenant, due, now, tenant.line("callback_at", time=clock))
             return CallbackWhen(due, due, spoken)
     except ValueError as exc:
         reason = str(exc)
@@ -2789,7 +3341,11 @@ def _callback_due(ctx: Ctx, asked: CallbackTime) -> CallbackWhen:
                 )
                 for t in tenant.callbacks["outbound_hours"]
             )
-            say = tenant.line("callback_outside_hours", opens=opens, closes=closes)
+            asked_at = _asked_moment(tenant, now, days, asked)
+            nearest = tenant.time_spoken(_nearest_in_hours(tenant, asked_at, now), now)
+            say = tenant.line(
+                "callback_outside_hours", opens=opens, closes=closes, nearest=nearest
+            )
         else:
             say = "What time should I tell them someone will call by?"
         raise Refused("invalid_callback_time", say, errors={"callback_time": reason}) from None
@@ -2812,8 +3368,7 @@ def _callback_due(ctx: Ctx, asked: CallbackTime) -> CallbackWhen:
         spoken = tenant.line("callback_after", time=clock(target))
     else:
         spoken = tenant.line("callback_before", time=clock(latest))
-    if days:
-        spoken = f"tomorrow {spoken}"
+    spoken = _on_day(tenant, earliest or latest, now, spoken)
     if target:
         return CallbackWhen(target, max(earliest, now), spoken)
     # "Tomorrow, before 3" is never dialed today: a window with no start begins when calling hours
@@ -3202,6 +3757,17 @@ def end_call(ctx: Ctx, args: EndCallIn) -> Result:
             # signed_off tells the voice layer the goodbye has been said, so it adds none.
             return ok("", hang_up=hang_up, signed_off=True)
         return ok(sign_off, hang_up=hang_up)
+    if args.reason != "caller_goodbye" and _out_of_area_unanswered(ctx) and not says_goodbye(
+        records.last_caller_line(ctx.conn, ctx.call["id"])
+    ):
+        # Jackson's call on the Retell number: end_call right after the out-of-area answer, so a
+        # caller who gave a wrong address never got to correct it.
+        raise Refused(
+            "answer_first",
+            "",
+            need="the caller just heard their address is outside the area: don't hang up. Ask "
+            "whether there's another address to check, and wait for their answer",
+        )
     last = ctx.conn.execute(
         "SELECT turn_seq FROM bookings WHERE call_id = ? AND kind = 'book' AND status IN ('sending', 'booked', 'queued') "
         "ORDER BY id DESC LIMIT 1",

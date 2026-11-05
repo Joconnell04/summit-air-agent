@@ -50,11 +50,13 @@ class CancelIn(BaseModel):
 
 
 class JobUpdate(BaseModel):
-    """A partial update, as ServiceTitan's PATCH jobs/{id} takes. The mock applies only these two;
+    """A partial update, as ServiceTitan's PATCH jobs/{id} takes. The mock applies only these four;
     the real endpoint takes more fields."""
 
     locationId: int | None = None
-    summary: str | None = None
+    summary: str | None = Field(None, max_length=4000)
+    jobTypeId: int | None = None
+    priority: Priority | None = None
 
 
 class JobNoteIn(BaseModel):
@@ -564,11 +566,14 @@ def update_job(
     body: JobUpdate,
     request: Request,
     conn: sqlite3.Connection = Depends(get_conn),
+    cfg: TenantConfig = Depends(get_cfg),
     now: datetime = Depends(get_now),
     idempotency_key: str | None = Header(None),
 ):
-    """Change a job's location or summary. The new location must be an active one of the job's
-    customer, and a closed job can't change."""
+    """Change a job's location, summary, job type or priority. The new location must be an active
+    one of the job's customer, the job type an active one of the job's business unit, and a closed
+    job can't change. Its technician stays on it whatever the new job type needs, as in
+    ServiceTitan, where dispatch decides who goes."""
 
     def run(c: sqlite3.Connection):
         job = _one(c, "jobs", job_id, "Job")
@@ -600,6 +605,37 @@ def update_job(
             c.execute(
                 "UPDATE jobs SET summary = ?, modified_on = ? WHERE id = ?",
                 (body.summary, stamp, job_id),
+            )
+        if body.jobTypeId is not None and body.jobTypeId != job["job_type_id"]:
+            job_type = cfg.job_type(body.jobTypeId)
+            if (
+                not job_type
+                or not job_type["active"]
+                or job["business_unit_id"] not in job_type["businessUnitIds"]
+            ):
+                raise ApiError(
+                    422,
+                    "unknown_reference",
+                    f"Job type {body.jobTypeId} is not available in business unit "
+                    f"{job['business_unit_id']}.",
+                    {"jobTypeId": "unknown"},
+                )
+            c.execute(
+                "UPDATE jobs SET job_type_id = ?, modified_on = ? WHERE id = ?",
+                (body.jobTypeId, stamp, job_id),
+            )
+            _history(
+                c, job_id, now, "JobTypeChanged",
+                f"Job type changed from {job['job_type_id']} to {body.jobTypeId}.",
+            )
+        if body.priority is not None and body.priority != job["priority"]:
+            c.execute(
+                "UPDATE jobs SET priority = ?, modified_on = ? WHERE id = ?",
+                (body.priority, stamp, job_id),
+            )
+            _history(
+                c, job_id, now, "PriorityChanged",
+                f"Priority changed from {job['priority']} to {body.priority}.",
             )
         return 200, shape_job(c, _one(c, "jobs", job_id, "Job"))
 

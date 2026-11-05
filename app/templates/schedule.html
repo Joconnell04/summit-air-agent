@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% from "_ui.html" import day_nav, empty with context %}
+{% from "_schedule.html" import grid, result_line, pick_customer, use_anyway with context %}
+{% block title %}{{ tenant }}: schedule {{ day.strftime("%a %b %-d") }}{% endblock %}
+{% block body %}
+<main class="page">
+  <div class="page-head">
+    <div class="lead">
+      <div class="crumbs">Schedule</div>
+      <div class="actions">
+        <h1 class="page-title">{{ day.strftime("%A, %b %-d") }}</h1>
+        {{ day_nav("/owner/schedule", slug, day, is_today) }}
+      </div>
+    </div>
+    <div class="actions">{{ result_line(result) }}{{ pick_customer(result, here) }}</div>
+  </div>
+
+  <section class="panel">
+    <div class="panel-head">
+      <h2>Technicians</h2>
+      <span class="end source"><img src="/owner/static/servicetitan-logo.svg" alt="ServiceTitan" width="93" height="16">live</span>
+    </div>
+    {% if sched %}{% if sched.rows %}{{ grid(sched, here, job_types) }}{% else %}{{ empty("Nobody is working this day.") }}{% endif %}
+    {% else %}{{ empty(problem) }}{% endif %}
+  </section>
+</main>
+{% endblock %}

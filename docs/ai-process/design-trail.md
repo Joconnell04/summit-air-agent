@@ -125,3 +125,11 @@ How the design was reached, in order, so a reader can follow each choice back to
 | Side model threshold and vendor | OpenAI Decisions kept over Jev; a yes needs 0.65, not 0.5 | DECISIONS.md 090 |
 | One simple Rules page on the bench | The owner's rules, the fixed responses by topic and the system prompt by section on one bench page; the owner view's Rules page redirects there | DECISIONS.md 091, #140 |
 | Retell Conversation Flow | Our design on Retell's stage graph kept every gate and said the fixed lines exactly, but scored 53% to our 92% without our speech filter; not put on the number | DECISIONS.md 087, #133, evals/rounds/retell-flow-01.md |
+| New voice after live call 1 | Cartesia "Max" replaces Katie; clips re-recorded | DECISIONS.md 094, #149 |
+| Seven-day bookings and an open live schedule | 8 AM to 8 PM every day; a script opens the live mock's schedule; the eval world unchanged | DECISIONS.md 095, #149 |
+| Holding line and no silent replies | A short holding line or clip before a look-up; a reply that leaves the caller waiting is asked again at once | DECISIONS.md 096, #149 |
+| Name check and cancel reason | One wrong answer ends the name check with a callback offer; a cancel needs no reason | DECISIONS.md 097, #149 |
+| Name checks per call, plain names and ZIPs | A failed check stays on its call; an old address is found without a guessed ZIP; the caller's name isn't echoed; ZIPs said digit by digit | DECISIONS.md 098, #149 |
+| Lookup prefetch | Measured on the rig, no difference; not merged, code on its branch | DECISIONS.md 092, #153 |
+| Schedule edits, live into the agent | Block a slot or window, add an event or a job, change a job and (admins) a customer's phone from the owner view and the bench; each edit goes through the adapter, is logged with who, and clears the slot cache | DECISIONS.md 093, #152 |
+| All five boroughs and addresses said any way | 214 residential ZIPs in five boroughs; numbers, directions and ordinals matched however said; no hang-up after an out-of-area answer; Retell hangs up after the final line | DECISIONS.md 105, #149 |

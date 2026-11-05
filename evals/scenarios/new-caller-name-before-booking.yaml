@@ -1,0 +1,26 @@
+id: new-caller-name-before-booking
+flow: [booking]
+difficulty: easy
+journeys: [J1]
+spec: [S-01]
+tags: [live-calls]
+max_turns: 14
+caller_id: "(646) 555-0187"
+persona: A scripted test call on #159 (call-_+16466240418_bUwDUCZFrKN8), replayed. A homeowner with no account who books a furnace tune-up and gives the name only when asked. Brief, answers each question in a few words.
+hidden_facts:
+  name: Pat Rivera
+  address: 142 Main Street, Brooklyn, 11201, a single-family house, no unit
+  phone: the number you're calling from
+  wants: a yearly furnace tune-up, today if possible
+opening: Hi. Yeah. I'd like to book my furnace's yearly tune-up, please.
+script:
+  - Give the address as "One four two Main Street, one one two zero one." and say there's no unit.
+  - Say the best number is the one you're calling from, and confirm a correct read-back.
+  - Give your name only when asked for it, as "Pat Rivera."
+  - Take the first time offered, and say goodbye once booked.
+must:
+  - booking: {count: 1, zip: "11201"}
+  - agent_says_at_most: {"name (for|should|on) (the|I put)|what name|get a name": 1}
+  - agent_never_says: ["booking that now[^?]*name"]
+should:
+  - Asks the name once, right after the read-back, and books without asking it again.

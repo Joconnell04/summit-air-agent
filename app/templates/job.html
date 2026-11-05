@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% from "_ui.html" import bench_tabs, empty, priority_text with context %}
+{% from "_schedule.html" import result_line, type_select, use_anyway with context %}
+{% block title %}{{ tenant }}: job {{ job_id }}{% endblock %}
+{% block tabs %}{% if bench %}{{ bench_tabs(tab) }}{% else %}{{ super() }}{% endif %}{% endblock %}
+{% block body %}
+<main class="page">
+  <div class="page-head">
+    <div class="lead">
+      <div class="crumbs"><a href="{{ back }}">Schedule</a><span>/</span><span>Job {{ job.number if job else job_id }}</span></div>
+      <h1 class="page-title">{% if job %}{{ type_name(job.type) }}, {{ job.customer.name }}{% else %}Job {{ job_id }}{% endif %}</h1>
+    </div>
+    <div class="actions">{{ result_line(result) }}</div>
+  </div>
+
+  {% if not job %}
+  <section class="panel">{{ empty("ServiceTitan isn't answering, so the job can't be shown.") }}</section>
+  {% else %}
+  <div class="split narrow-side">
+    <form class="panel" id="job" method="post" action="/owner/jobs/{{ job.job_id }}">
+      <input type="hidden" name="next" value="{{ here }}?back={{ back | urlencode }}">
+      <div class="panel-head">
+        <h2>Job</h2>
+        <span class="source"><img src="/owner/static/servicetitan-logo.svg" alt="ServiceTitan" width="93" height="16">Job {{ job.number }}, {{ job.status }}</span>
+        {% if job.open %}<div class="end"><button class="btn primary" type="submit">Save</button></div>{% endif %}
+      </div>
+      <div class="table-wrap">
+      <table class="table form stacked">
+        <tbody>
+          <tr><td class="fit"><label for="j-window">Arrival window</label></td><td>
+            <select class="select" id="j-window" name="window"{% if not job.open %} disabled{% endif %}>
+              {% if not job.window %}<option value="">None</option>{% endif %}
+              {% for c in job.choices %}<option value="{{ c.value }}"{% if c.value == job.window %} selected{% endif %}>{{ c.label }}</option>{% endfor %}
+            </select></td></tr>
+          <tr><td class="fit"><label for="j-type">Job type</label></td><td>{{ type_select("job_type", job_types, job.type, "j-type") }}</td></tr>
+          <tr><td class="fit">Priority</td><td>{{ priority_text(job.priority) }}</td></tr>
+          <tr><td class="fit"><label for="j-notes">Notes</label></td><td><input class="field" id="j-notes" name="notes" maxlength="1000" value="{{ job.notes }}"></td></tr>
+          <tr><td class="fit"><label for="j-street">Street</label></td><td><input class="field" id="j-street" name="street" maxlength="80" value="{{ job.address.street }}"></td></tr>
+          <tr><td class="fit"><label for="j-unit">Unit</label></td><td><input class="field" id="j-unit" name="unit" maxlength="20" value="{{ job.address.unit or '' }}"></td></tr>
+          <tr><td class="fit"><label for="j-city">City</label></td><td><input class="field" id="j-city" name="city" maxlength="40" value="{{ job.address.city }}"></td></tr>
+          <tr><td class="fit"><label for="j-zip">ZIP</label></td><td><input class="field num" id="j-zip" name="zip" inputmode="numeric" maxlength="5" value="{{ job.address.zip }}"></td></tr>
+        </tbody>
+      </table>
+      </div>
+    </form>
+
+    {% set cu = job.customer %}
+    <form class="panel" id="customer" method="post" action="/owner/customers/{{ cu.id }}">
+      <input type="hidden" name="next" value="{{ here }}?back={{ back | urlencode }}">
+      <div class="panel-head">
+        <h2>Customer</h2>
+        {% if is_admin %}<div class="end"><button class="btn" type="submit">Save</button></div>{% else %}<span class="end sub">Admins change these</span>{% endif %}
+      </div>
+      <table class="table form stacked">
+        <tbody>
+          <tr><td class="fit"><label for="c-name">Name</label></td><td>{% if is_admin %}<input class="field" id="c-name" name="name" maxlength="60" value="{{ cu.name }}">{% else %}{{ cu.name }}{% endif %}</td></tr>
+          {% for p in cu.phones %}
+          <tr><td class="fit">{% if loop.first %}<label for="c-phone">Phone</label>{% else %}<span class="muted">{{ p.memo or "Other phone" }}</span>{% endif %}</td><td class="num">{% if is_admin and loop.first %}<input type="hidden" name="contact" value="{{ p.id }}"><input class="field num" id="c-phone" name="phone" inputmode="tel" maxlength="20" value="{{ result.pending.phone if result and result.code == 'phone_taken' and result.pending and result.pending.contact == p.id else p.value }}">{% else %}{{ p.value }}{% endif %}</td></tr>
+          {% endfor %}
+          {% if is_admin %}{{ use_anyway(result) }}{% endif %}
+        </tbody>
+      </table>
+    </form>
+  </div>
+  {% endif %}
+</main>
+{% endblock %}

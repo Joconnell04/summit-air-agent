@@ -201,8 +201,12 @@ def test_there_is_no_company_profile_endpoint_because_servicetitan_has_none(smal
 def test_summit_air_leaves_fees_unset_so_the_agent_never_quotes_one():
     cfg = TenantConfig.load(TENANT_DIR)
     assert cfg.fees == {"diagnostic": None, "after_hours": None}
-    assert cfg.company["hours"]["sun"] is None
-    assert sorted({z["county"] for z in cfg.zones}) == ["Kings", "Queens", "Richmond"]
+    # Open every day since issue #149 (DECISIONS.md 095).
+    assert cfg.company["hours"]["sun"] == ["08:00", "20:00"]
+    # All five boroughs since issue #149 (DECISIONS.md 105).
+    assert sorted({z["county"] for z in cfg.zones}) == [
+        "Bronx", "Kings", "New York", "Queens", "Richmond"
+    ]
 
 
 def test_the_arrival_windows_are_listed_the_way_servicetitan_lists_them(small):
@@ -331,7 +335,7 @@ def test_the_urgent_hold_comes_from_the_config(tmp_path):
     summit = TenantConfig.load(TENANT_DIR)
     assert summit.hold_for(tuesday, "morning", 11) == 2
     assert summit.hold_for(date(2026, 11, 7), "morning", 11) == 1  # Saturday
-    assert summit.hold_for(date(2026, 11, 8), "morning", 11) == 0  # Sunday
+    assert summit.hold_for(date(2026, 11, 8), "morning", 11) == 1  # Sunday, open since issue #149
 
 
 def test_debug_logs_limit_must_be_from_1_to_1000(small):

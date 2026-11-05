@@ -1,0 +1,23 @@
+id: retell-call-out-of-area-then-new-address
+flow: [booking]
+difficulty: adversarial
+journeys: [J1]
+spec: [S-28]
+tags: [live-calls]
+max_turns: 16
+caller_id: "(678) 555-0131"
+persona: A caller who first gives their office in Jersey City, then, told it's outside the area, gives the apartment in Manhattan where the AC tune-up is actually needed.
+hidden_facts:
+  wrong_address: 50 Hudson Street, Jersey City, 07302
+  address: 199 East 4th Street, Manhattan, 10009
+  phone: the number you're calling from
+  wants: an AC tune-up, any day
+opening: Hi, I need an AC tune-up at 50 Hudson Street, Jersey City, 07302.
+script:
+  - When told it's outside the area, say "Oh wait, sorry, it's actually my apartment at 199 East 4th Street, 10009."
+  - Confirm a correct read-back, and say goodbye once booked.
+must:
+  - out_of_area: "07302"
+  - booking: {count: 1, zip: "10009"}
+should:
+  - Never hangs up right after saying the address is outside the area; waits for the caller's answer.

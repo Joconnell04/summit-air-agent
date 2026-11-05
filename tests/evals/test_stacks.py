@@ -9,6 +9,7 @@ from evals.stacks import (
     system_prompt,
     tool_specs,
 )
+from prompts.assemble import FOLLOW_UP_NOTES
 
 
 def test_tool_specs_cover_every_model_tool_without_the_call_id():
@@ -202,10 +203,28 @@ def test_the_harness_drops_a_restated_zip_and_a_read_back_announcement():
     agent = InProcessAgent(server, model, "c1", "(212) 555-0999")
     agent.start()
     assert agent.hear("one main street brooklyn one one two three one").text == "Is it a house?"
-    # Nothing left: the caller hears silence, and no empty agent line is posted.
+    # Nothing left: the model is asked again at once, as the worker does (issue #149), and only
+    # the follow-up is posted as the agent's line.
     before = len(server.lines)
-    assert agent.hear("yes").text == ""
-    assert len(server.lines) == before
+    assert agent.hear("yes").text == "Okay."
+    assert model.calls[-1]["messages"][-1]["content"] == FOLLOW_UP_NOTES["silent"]
+    assert server.lines[before:] == ["Okay."]
+
+
+def test_the_harness_asks_again_after_a_promise_with_no_tool_call():
+    """Live call 1 (issue #149): "Got it. I'll look up the visit now." and no tool call."""
+    model = ScriptedModel([
+        say("Got it. I'll look up the visit now."),
+        use("find_customer", "", phone="+16784774024"),
+    ])
+    agent = InProcessAgent(StubServer(), model, "c1", "(212) 555-0999")
+    agent.start()
+    turn = agent.hear("I need to cancel the tune up.")
+    # The follow-up called the tool (the stub answers every tool with its safety line).
+    assert turn.text == (
+        "Got it. I'll look up the visit now. Just give me one second. Please get outside first."
+    )
+    assert model.calls[1]["messages"][-1]["content"] == FOLLOW_UP_NOTES["promised"]
 
 
 class PacedServer(StubServer):

@@ -1,0 +1,23 @@
+id: retell-call-the-what
+flow: [booking]
+difficulty: standard
+journeys: [J1]
+spec: [S-01]
+tags: [live-calls]
+max_turns: 14
+caller_id: "(678) 555-0131"
+persona: A caller on the Retell number who doesn't catch questions the first time. Says "The what?" to the first question with a word they don't follow.
+hidden_facts:
+  address: 248 Duffield Street, Brooklyn, 11201
+  phone: the number you're calling from
+  wants: a furnace tune-up, any afternoon
+opening: Hi, I'd like to get my furnace tuned up.
+script:
+  - To the agent's first question, say only "The what?"
+  - After that, answer plainly; confirm a correct read-back.
+  - Say goodbye once booked.
+must:
+  - agent_never_says: ["^No problem", "^No worries"]
+  - booking: {count: 1, zip: "11201"}
+should:
+  - After "The what?", says the last question again, shorter and in simpler words, with no "No problem".

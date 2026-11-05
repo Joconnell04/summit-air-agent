@@ -256,7 +256,10 @@ class RescheduleIn(CallRef):
 
 class CancelIn(CallRef):
     booking_id: int
-    reason: str = Field(min_length=3, max_length=200)
+    # Optional: a caller who won't say why still gets the cancel (issue #149).
+    reason: str = Field(
+        "", max_length=200, description="Why, if the caller said; leave it out if they didn't"
+    )
 
 
 class MoveIn(CallRef):
@@ -287,10 +290,14 @@ class CallbackTime(Body):
         description='The caller asked to be called before this local time today, such as "3 PM". '
         "Only what the caller said; use it instead of callback_time.",
     )
-    callback_day: Literal["today", "tomorrow"] = Field(
+    callback_day: Literal[
+        "today", "tomorrow", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday",
+        "sunday",
+    ] = Field(
         "today",
-        description="The day the caller asked for. The times above are on that day; a bare hour "
-        'such as "2" means 2 PM.',
+        description='The day the caller asked for: "today", "tomorrow", or the weekday they named '
+        '("friday" for "Friday at 2"), the next one coming. The times above are on that day; a bare '
+        'hour such as "2" means 2 PM.',
     )
 
     @model_validator(mode="after")

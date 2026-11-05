@@ -152,13 +152,31 @@ class Window:
     after_hours: bool
 
     def label(self) -> str:
-        """Spoken form of the window, such as "8 to 12"."""
+        """Spoken form of the window, such as "8 to 12" (window_said)."""
+        return window_said(self.start, self.end)
 
-        def hour(t: time) -> str:
-            h = t.hour % 12 or 12
-            return f"{h}" if t.minute == 0 else f"{h}:{t.minute:02d}"
 
-        return f"{hour(self.start)} to {hour(self.end)}"
+def _clock(t: time) -> str:
+    h = t.hour % 12 or 12
+    return f"{h}" if t.minute == 0 else f"{h}:{t.minute:02d}"
+
+
+def _part_of_day(t: time) -> str:
+    if t.hour < 12:
+        return "in the morning"
+    if t.hour < 17:
+        return "in the afternoon"
+    return "in the evening" if t.hour < 20 else "at night"
+
+
+def window_said(start: time, end: time) -> str:
+    """An arrival window as said: "8 to 12". One that runs past midnight or from the morning into the
+    afternoon says which part of the day each end is ("8 at night to 8 in the morning"): the
+    after-hours window said as "between 8 and 8" was taken for a mistake on three live-like calls
+    (realism suite on #155, live-call-04, 07 and 08)."""
+    if start < end and not (start.hour < 12 < end.hour):
+        return f"{_clock(start)} to {_clock(end)}"
+    return f"{_clock(start)} {_part_of_day(start)} to {_clock(end)} {_part_of_day(end)}"
 
 
 class Tenant:
@@ -232,6 +250,14 @@ class Tenant:
         )
         # The systems a caller names, so the agent doesn't ask for one already given (app/lifecycle.py).
         self.system_words: tuple[str, ...] = tuple(agent.get("system_words", []))
+        # Things and places that are never a person's name in the name check ("It's the furnace",
+        # "It's Brooklyn"): the trade's equipment and home words, and the words of the service
+        # area's zone names (app/tools.py _gave_a_name).
+        self.not_names: frozenset[str] = (
+            self.equipment_words
+            | {w.lower() for w in agent.get("home_words", [])}
+            | {w for zone in company["zones"] for w in zone["name"].lower().replace(",", " ").split()}
+        )
         # Warm transfer to a person (app/transfer.py). None turns it off.
         self.transfer: dict | None = agent.get("transfer")
         self.fsm: dict = agent["fsm"]

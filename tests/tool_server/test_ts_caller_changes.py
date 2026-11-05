@@ -4,10 +4,11 @@ a number not on the account, another number for the visit, and a number on two a
 import json
 import sqlite3
 
+import pytest
 from test_ts_owner_view import signed_in
-from toolkit import UNKNOWN, book, count, first_open, in_area_address, ready_to_book
+from toolkit import TENANT_DIR, UNKNOWN, book, count, first_open, in_area_address, ready_to_book
 
-from app import booking, summary
+from app import booking, summary, tools
 
 NEW_HOME = {"street": "380 Washington Ave", "unit": "", "city": "Brooklyn", "zip": "11238"}
 HOBOKEN = {"street": "71 Hudson St", "unit": "", "city": "Hoboken", "zip": "07030"}
@@ -200,11 +201,8 @@ def test_a_wrong_name_changes_nothing_and_the_callback_goes_to_the_number_on_fil
     asked = agent.tool("cancel_appointment", call, booking_id=maria["jobId"], reason="fixed")
     agent.say(call, asked["say"])
     agent.turn(call, "It's Joanne Price.")
-    again = agent.tool("cancel_appointment", call, booking_id=maria["jobId"], reason="fixed")
-    # The address was said; only the name is asked for again.
-    assert again["refused"] == "identity_check" and again["say"] == "Thanks. And what's the name on the visit?"
-    agent.say(call, again["say"])
-    agent.turn(call, "Joanne Price, like I said.")
+    # One wrong name is final: one polite refusal and the callback, never the question again
+    # (live call 1, issue #149).
     refused = agent.tool("cancel_appointment", call, booking_id=maria["jobId"], reason="fixed")
     assert refused["refused"] == "identity_mismatch"
     assert "number we have on file" in refused["say"]
@@ -223,6 +221,82 @@ def test_a_wrong_name_changes_nothing_and_the_callback_goes_to_the_number_on_fil
     phone = conn.execute("SELECT phone_key FROM callbacks WHERE call_id = ?", (call,)).fetchone()
     conn.close()
     assert phone[0] == "".join(c for c in maria["phone"] if c.isdigit())
+
+
+def test_live_call_1_a_bare_wrong_name_is_refused_once_with_the_callback(agent, scenarios):
+    """Live call 1 (issue #149): "Sam Rivera." to the name question was asked for again twice."""
+    call, maria = unknown_caller_finds_maria(agent, scenarios)
+    asked = agent.tool("cancel_appointment", call, booking_id=maria["jobId"])
+    agent.say(call, asked["say"])
+    agent.turn(call, "Sam Rivera.")
+    refused = agent.tool("cancel_appointment", call, booking_id=maria["jobId"])
+    assert refused["refused"] == "identity_mismatch"
+    assert "name" not in refused["say"].lower()
+
+
+def test_a_wrong_name_given_before_the_check_is_not_asked_for_again(agent, scenarios):
+    """Must-pass run on PR #155, unknown-number-wrong-name: the agent asked the name itself, the
+    caller said "joanne price", and the check then asked "what name is it under?" again."""
+    call, maria = unknown_caller_finds_maria(agent, scenarios)
+    agent.say(call, "Sure. Before I cancel anything, can I ask what the name is on the account?")
+    agent.turn(call, "joanne price")
+    refused = agent.tool("cancel_appointment", call, booking_id=maria["jobId"])
+    assert refused["refused"] == "identity_mismatch"
+
+
+def test_a_lowercase_wrong_name_after_the_question_is_final(agent, scenarios):
+    call, maria = unknown_caller_finds_maria(agent, scenarios)
+    asked = agent.tool("cancel_appointment", call, booking_id=maria["jobId"])
+    agent.say(call, asked["say"])
+    agent.turn(call, "look i've told you, it's joanne price")
+    assert agent.tool("cancel_appointment", call, booking_id=maria["jobId"])["refused"] == (
+        "identity_mismatch"
+    )
+
+
+@pytest.mark.parametrize(
+    "line, named",
+    [
+        ("Sam Rivera.", True),
+        ("joanne price", True),
+        ("this is uh pat rivera", True),
+        ("it's under Delgado", True),
+        ("I just gave you the name.", False),
+        ("No.", False),
+        ("it's under my wife's name", False),
+        ("why do you need that", False),
+        ("hold on", False),
+        # Must-pass run 20261105-054039, unknown-number-cancels-with-details: these read as names.
+        ("it's six two oh bedford ave brooklyn one one two three five", False),
+        ("um yeah the heat actually came back on this morning by itself it's working now", False),
+        ("I'm home all day.", False),
+        ("It's Sam Rivera.", True),
+    ],
+)
+def test_what_counts_as_giving_a_name(line, named):
+    assert tools._gave_a_name(line) is named
+
+
+def test_an_answer_with_no_name_in_it_is_asked_once_more(agent, scenarios):
+    call, maria = unknown_caller_finds_maria(agent, scenarios)
+    asked = agent.tool("cancel_appointment", call, booking_id=maria["jobId"])
+    agent.say(call, asked["say"])
+    agent.turn(call, "Why do you need that?")
+    again = agent.tool("cancel_appointment", call, booking_id=maria["jobId"])
+    assert again["refused"] == "identity_check"
+    agent.say(call, again["say"])
+    agent.turn(call, "It's Maria Delgado.")
+    assert agent.tool("cancel_appointment", call, booking_id=maria["jobId"])["ok"]
+
+
+def test_a_cancel_needs_no_reason(agent, mock, scenarios):
+    """Issue #149: a caller who won't say why still gets the cancel."""
+    maria = scenarios["repeatCallerOpenJob"]
+    call = agent.start(maria["phone"])["data"]["call_id"]
+    agent.turn(call, "Cancel my visit please. No, I'd rather not say why.")
+    cancelled = agent.tool("cancel_appointment", call, booking_id=maria["jobId"])
+    assert cancelled["ok"], cancelled
+    assert st(mock, "SELECT status FROM jobs WHERE id = ?", maria["jobId"])[0]["status"] != "Scheduled"
 
 
 def test_details_the_agent_said_first_do_not_count(agent, scenarios):
@@ -406,6 +480,26 @@ def test_a_question_from_a_dropped_call_is_asked_again(agent, scenarios):
     agent.say(again, refused["say"])
     agent.turn(again, "Maria Delgado.")
     assert agent.tool("cancel_appointment", again, booking_id=maria["jobId"], reason="fixed")["ok"]
+
+
+def test_live_call_2_a_wrong_name_on_the_last_call_doesnt_refuse_this_one(agent, scenarios):
+    """Live call 2 (issue #149) was linked to call 1, where the caller gave a wrong name. Call 1's
+    refusal carried over, so the right name and old address on call 2 were never checked, and the
+    move was refused after a confirmed read-back."""
+    call, maria = unknown_caller_finds_maria(agent, scenarios)
+    asked = agent.tool("cancel_appointment", call, booking_id=maria["jobId"])
+    agent.say(call, asked["say"])
+    agent.turn(call, "Sam Rivera.")
+    assert agent.tool("cancel_appointment", call, booking_id=maria["jobId"])["refused"] == (
+        "identity_mismatch"
+    )
+    agent.end(call, "agent_end")
+    agent.clock.advance(minutes=3)
+    again = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(again, "This is, uh, Maria Delgado.")
+    agent.turn(again, "I need to cancel the heating visit at 620 Bedford Avenue, 11235.")
+    agent.tool("find_customer", again, address={"street": "620 Bedford Ave", "unit": "", "zip": "11235"})
+    assert agent.tool("cancel_appointment", again, booking_id=maria["jobId"])["ok"]
 
 
 # ---- the heads-up to the number on file ---------------------------------------------------------
@@ -759,3 +853,86 @@ def test_may_dial_compares_the_whole_number():
     assert not may_dial("+44 20 7946 0958", allowed)
     assert may_dial("(207) 946-0958", allowed) and may_dial("1 207 946 0958", allowed)
     assert not may_dial("207-946-0958 ext 5", allowed)
+
+
+@pytest.mark.parametrize(
+    "line, address",
+    [
+        ("it's one four two Main Street", True),
+        ("620 Bedford Avenue", True),
+        ("Give me one second.", False),
+        ("I've got two kids at home", False),
+    ],
+)
+def test_what_counts_as_giving_an_address(line, address):
+    """PR #155 review: "Give me one second" counted as a wrong address and locked the check."""
+    assert tools._gave_an_address(line) is address
+
+
+def test_a_mover_from_an_unknown_number_is_told_to_find_the_account_first(agent):
+    """Jackson's call 2 replayed in the eval: record_move with no account matched came back with
+    no guidance, and the agent told the caller it couldn't find the account."""
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "I moved from 620 Bedford Avenue to 380 Washington Avenue.")
+    agent.confirm_read_back(call, NEW_HOME)
+    refused = agent.tool("record_move", call)
+    assert refused["refused"] == "not_owner"
+    assert "find_customer" in refused["data"]["need"]
+
+
+def test_an_old_address_is_found_without_a_zip_the_caller_never_said(agent, scenarios):
+    """Jackson's call 2 replayed in the eval: the model guessed ZIP 11211 for 620 Bedford Avenue
+    (it is 11235) and the account was never found."""
+    maria = scenarios["repeatCallerOpenJob"]
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "I moved from six two oh Bedford Avenue to three eighty Washington Avenue.")
+    found = agent.tool(
+        "find_customer", call, address={"street": "620 Bedford Avenue", "unit": "", "zip": "11211"}
+    )
+    assert [m["customer_id"] for m in found["data"]["matches"]] == [maria["customerId"]]
+
+
+
+def test_a_mover_whose_check_failed_hears_why_the_visit_cant_be_booked(agent, scenarios):
+    """Live call 2 (issue #149), turn 44: the booking was parked behind a callback ("The address
+    change still has to go through first") without a plain reason."""
+    maria = scenarios["repeatCallerOpenJob"]
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "Hi, I moved from 620 Bedford Avenue to 380 Washington Avenue.")
+    agent.tool("find_customer", call, address={"street": "620 Bedford Ave", "unit": "", "zip": "11235"})
+    asked = agent.tool("record_move", call)
+    agent.say(call, asked["say"])
+    agent.turn(call, "Sam Rivera.")
+    assert agent.tool("record_move", call)["refused"] == "identity_mismatch"
+    agent.confirm_read_back(call, NEW_HOME)
+    refused = book(agent, call, first_open(agent, call))
+    assert refused["refused"] == "move_unverified"
+    assert "can't book the visit there" in refused["say"]
+    assert maria["customerId"]
+
+
+@pytest.mark.parametrize(
+    "line, moved",
+    [
+        ("I'm moving from 142 Main Street to 75 Hoyt Street.", True),
+        ("We recently moved from six two oh Bedford Avenue.", True),
+        ("We moved here from 88 Court Street last month.", True),
+        ("We moved the thermostat from the basement to the attic.", False),
+    ],
+)
+def test_moved_from_counts_only_with_a_street_address(agent, line, moved):
+    """PR #155 re-check: "moved from" phrases need an address, so "basement to the attic" doesn't."""
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, line)
+    refused = agent.tool("record_move", call)
+    assert (refused["refused"] != "move_not_said") is moved, refused
+
+
+@pytest.mark.parametrize("line", ["It's the furnace.", "It's Brooklyn.", "It's Bedford Avenue."])
+def test_things_and_places_are_not_names(line):
+    """PR #155 check: these counted as names (failing closed, but still wrong). The words come
+    from the tenant's config, not the code (test_ts_platform.py)."""
+    from app.tenant import Tenant
+
+    things = Tenant.load(TENANT_DIR).not_names
+    assert tools._gave_a_name(line, things) is False

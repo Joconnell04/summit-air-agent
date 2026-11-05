@@ -176,8 +176,8 @@ DIGIT_WORDS = {
 
 def digit_runs(text: str) -> list[str]:
     """The runs of digits a line says, however speech-to-text wrote them: "11226", "11 226", "one
-    one two two six" and "one one two double six" are each one run, "11226". Punctuation ends a
-    run, so "11226, 718 555 0142" is two."""
+    one two two six", "one one two double six" and "eleven two two six" are each one run, "11226";
+    "seventy five" is "75". Punctuation ends a run, so "11226, 718 555 0142" is two."""
     runs = []
     for part in re.split(r"[.,;:!?]", text or ""):
         runs += _digit_runs(part)
@@ -185,19 +185,28 @@ def digit_runs(text: str) -> list[str]:
 
 
 def _digit_runs(text: str) -> list[str]:
-    runs, current, double = [], "", False
+    # A ZIP said in pairs ("Eleven two zero one") was heard as "201" and asked for again (realism
+    # suite on #155, live-replay-2-move-and-tuneup).
+    runs, current, double, tens = [], "", False, False
     for token in words(text).split():
         if token == "double":
             double = True
             continue
         digits = token if token.isdigit() else DIGIT_WORDS.get(token)
+        if digits is None and token in TEENS:
+            digits = str(TEENS[token])
+        if digits is None and token in TENS:
+            digits = str(TENS[token])
         if digits is None:
             if current:
                 runs.append(current)
-            current, double = "", False
+            current, double, tens = "", False, False
             continue
-        current += digits * 2 if double and len(digits) == 1 else digits
-        double = False
+        if tens and token in DIGIT_WORDS and digits != "0":
+            current = current[:-1] + digits  # "seventy five" is 75, not 705
+        else:
+            current += digits * 2 if double and len(digits) == 1 else digits
+        double, tens = False, token in TENS
     if current:
         runs.append(current)
     return runs

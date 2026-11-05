@@ -1,0 +1,22 @@
+id: retell-call-bronx-zip
+flow: [booking]
+difficulty: easy
+journeys: [J1]
+spec: [S-28]
+tags: [live-calls]
+max_turns: 14
+caller_id: "(678) 555-0131"
+persona: A Bronx homeowner booking a no-heat visit.
+hidden_facts:
+  address: 2500 Grand Concourse, Bronx, 10458
+  phone: the number you're calling from
+  inside_temp: 62 degrees
+  wants: someone today or tomorrow
+opening: Hi, my heat stopped working this morning. I'm in the Bronx, ZIP one zero four five eight.
+script:
+  - Give the street address when asked and confirm a correct read-back.
+  - Say goodbye once booked.
+must:
+  - booking: {count: 1, zip: "10458"}
+should:
+  - Treats the Bronx as in the area.

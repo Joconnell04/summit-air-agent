@@ -1,0 +1,118 @@
+{# The schedule grid and its popovers, shared by the owner view and the bench (docs/design-system.md, Schedule). #}
+
+{# What a change came back with, read from the edit log. #}
+{% macro result_line(result) -%}
+{%- if result %}{% if result.ok %}<span class="tag done">Saved</span><span class="small muted">{{ result.text }}</span>{% else %}<span class="error small" role="alert">{{ result.text }}</span>{% endif %}{% endif -%}
+{%- endmacro %}
+
+{# The number was on more than one customer: which one the job is for. Asked in the page head,
+   from the request the edit log kept, so the number never travels in the URL. #}
+{% macro pick_customer(result, here) -%}
+{%- if result and result.code == "pick_customer" and result.pending %}{% set p = result.pending %}
+<form class="actions" method="post" action="/owner/schedule/jobs">
+  <input type="hidden" name="day" value="{{ p.day }}"><input type="hidden" name="window" value="{{ p.window }}"><input type="hidden" name="technician" value="{{ p.technician or '' }}"><input type="hidden" name="job_type" value="{{ p.job_type }}"><input type="hidden" name="notes" value="{{ p.notes }}"><input type="hidden" name="next" value="{{ here }}">
+  <label class="sr-only" for="pick-customer">Customer</label>
+  <select class="select" id="pick-customer" name="customer">{% for c in p.customers %}<option value="{{ c.id }}">{{ c.name }}{% if c.street %}, {{ c.street }}{% endif %}</option>{% endfor %}</select>
+  <button class="btn primary" type="submit">Add job</button>
+</form>
+{%- endif -%}
+{%- endmacro %}
+
+{# The number is already on another customer: saving it anyway needs a tick. #}
+{% macro use_anyway(result) -%}
+{%- if result and result.code == "phone_taken" %}<tr><td class="fit"></td><td><label class="check"><input type="checkbox" name="confirm" value="1"> Use anyway</label></td></tr>{% endif -%}
+{%- endmacro %}
+
+{% macro type_select(name, job_types, chosen="", id="") -%}
+<select class="select" name="{{ name }}"{% if id %} id="{{ id }}"{% endif %}>
+  {% for code, label in job_types %}<option value="{{ code }}"{% if code == chosen %} selected{% endif %}>{{ label }}</option>{% endfor %}
+</select>
+{%- endmacro %}
+
+{# A free slot: block it, put an event on it or add a job. technician is none for the whole window. #}
+{% macro slot_pop(id, title, day, window, technician, here, job_types) -%}
+<div class="sched-pop" id="{{ id }}" popover>
+  <div class="sched-pop-head"><span class="what">{{ title }}</span><button class="btn quiet icon" type="button" popovertarget="{{ id }}" popovertargetaction="hide" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div>
+  <form method="post" action="/owner/schedule/block" class="sched-pop-part">
+    <input type="hidden" name="day" value="{{ day.isoformat() }}"><input type="hidden" name="window" value="{{ window }}"><input type="hidden" name="technician" value="{{ technician or '' }}"><input type="hidden" name="next" value="{{ here }}">
+    <label for="{{ id }}-name">Event name</label>
+    <div class="actions fill"><input class="field" id="{{ id }}-name" name="name" maxlength="60" placeholder="Team meeting"><button class="btn" type="submit">Block</button></div>
+    <span class="hint">Leave it empty to block the time.</span>
+  </form>
+  {% if job_types %}
+  <form method="post" action="/owner/schedule/jobs" class="sched-pop-part">
+    <input type="hidden" name="day" value="{{ day.isoformat() }}"><input type="hidden" name="window" value="{{ window }}"><input type="hidden" name="technician" value="{{ technician or '' }}"><input type="hidden" name="next" value="{{ here }}">
+    <label for="{{ id }}-phone">Customer phone</label>
+    <input class="field num" id="{{ id }}-phone" name="phone" inputmode="tel" maxlength="20" placeholder="(718) 555-0142" required>
+    <label for="{{ id }}-type">Job type</label>
+    {{ type_select("job_type", job_types, default_type, id ~ "-type") }}
+    <label for="{{ id }}-notes">Notes</label>
+    <input class="field" id="{{ id }}-notes" name="notes" maxlength="200" placeholder="Side gate, dog in yard">
+    <button class="btn primary" type="submit">Add job</button>
+  </form>
+  {% endif %}
+</div>
+{%- endmacro %}
+
+{% macro block_pop(id, title, block, day, here, group_size) -%}
+<div class="sched-pop" id="{{ id }}" popover>
+  <div class="sched-pop-head"><span class="what">{{ title }}</span><button class="btn quiet icon" type="button" popovertarget="{{ id }}" popovertargetaction="hide" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div>
+  <form method="post" action="/owner/schedule/blocks/{{ block.id }}/remove" class="sched-pop-part">
+    <input type="hidden" name="day" value="{{ day.isoformat() }}"><input type="hidden" name="next" value="{{ here }}">
+    <span class="hint">{{ block.name }}. The agent can't book this technician here.</span>
+    <div class="actions">
+      <button class="btn" type="submit">Remove</button>
+      {% if group_size > 1 %}<button class="btn quiet" type="submit" name="group" value="1">Remove all {{ group_size }}</button>{% endif %}
+    </div>
+  </form>
+</div>
+{%- endmacro %}
+
+{# The day: a row per technician, a column per arrival window. bench shows the agent's view of urgent jobs too. #}
+{% macro grid(g, here, job_types, bench=false) -%}
+<div class="table-wrap">
+<table class="table sched">
+  <colgroup><col class="sched-who">{% for w in g.windows %}<col>{% endfor %}</colgroup>
+  <thead>
+    <tr>
+      <th>Technician</th>
+      {% for w in g.windows %}
+      {% set pid = "w-" ~ w.id %}
+      <th class="win" id="{{ pid }}-head">
+        <span class="w-name">{{ "After hours" if w.after_hours else w.id | capitalize }}</span>
+        <span class="w-time">{{ w.label }}</span>
+        <span class="w-open">{% if w.started %}Started{% else %}{% set normal = w.offered.get("Normal", 0) %}{% set urgent = w.offered.get("Urgent", 0) %}{% if bench %}Agent offers: {{ normal }} normal, {{ urgent }} urgent{% elif normal %}{{ normal }} open to book{% elif urgent %}Urgent only{% else %}Full{% endif %}{% endif %}</span>
+        {% if not w.started %}<button class="btn quiet sched-all" type="button" popovertarget="{{ pid }}">Block all</button>{{ slot_pop(pid, ("After hours" if w.after_hours else w.id | capitalize) ~ ", " ~ w.label ~ ", every free technician", g.day, w.id, none, here, none) }}{% endif %}
+      </th>
+      {% endfor %}
+    </tr>
+  </thead>
+  <tbody>
+  {% for r in g.rows %}
+    <tr>
+      <td class="what">{{ r.name }}</td>
+      {% for c in r.cells %}
+      {% set w = g.windows[loop.index0] %}
+      {% set pid = "c-" ~ r.id ~ "-" ~ c.window %}
+      <td class="cell">
+        {% for j in c.jobs %}
+        <a class="sched-item job{% if j.priority == 'Urgent' %} urgent{% endif %}" href="/owner/jobs/{{ j.job_id }}?back={{ here | urlencode }}" title="Job {{ j.number }}, {{ j.customer }}"><span class="name">{{ type_name(j.type) }}</span><span class="sub">{{ j.customer }}</span></a>
+        {% endfor %}
+        {% for b in c.blocks %}
+        {% set bid = pid ~ "-b" ~ b.id %}
+        {% if b.ours %}<button class="sched-item block" type="button" popovertarget="{{ bid }}"><span class="name">{{ b.name }}</span></button>
+        {{ block_pop(bid, r.name ~ ", " ~ w.label, b, g.day, here, g.groups.get(b.ref, 1)) }}
+        {% else %}<span class="sched-item block" title="Made in ServiceTitan"><span class="name">{{ b.name }}</span></span>{% endif %}
+        {% endfor %}
+        {% if c.state == "free" %}
+          {% if w.started %}<span class="sched-item free"><span class="sub">Free</span></span>
+          {% else %}<button class="sched-item open" type="button" popovertarget="{{ pid }}"><span class="sub">Free</span></button>{{ slot_pop(pid, r.name ~ ", " ~ w.label, g.day, w.id, r.id, here, job_types) }}{% endif %}
+        {% elif c.state == "off" %}<span class="sched-item off"><span class="sub">Off</span></span>{% endif %}
+      </td>
+      {% endfor %}
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{%- endmacro %}

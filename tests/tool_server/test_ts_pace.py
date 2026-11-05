@@ -209,7 +209,7 @@ def test_slowing_down_for_the_address_applies_to_the_address_alone(agent):
     again = agent.tool("read_back", call, address=address, phone="caller_id")
     parts = again["data"]["parts"]
     assert " ".join(p["text"] for p in parts) == again["say"]
-    assert parts[1] == {"text": "101 Union St, Brooklyn, one one two three one,", "speed": 0.85}
+    assert parts[1] == {"text": "101 Union St, Brooklyn, ZIP code one one two three one,", "speed": 0.85}
     assert parts[0]["speed"] == parts[2]["speed"] == 1.0
     # Used once: the call's pace is unchanged and the next read-back is whole.
     assert changes(agent, call) == [(3, 0.85, "address", "request")]
