@@ -1578,12 +1578,15 @@ def _unsaid_withheld(ctx: Ctx, bundle: dict) -> dict:
         **bundle,
         "name": bundle["name"] if named else "",
         "phones": [],
-        # What the visit is about stays out too; the job id and window are enough to change it.
-        "open_jobs": [{**j, "summary": "", "window": None} for j in bundle["open_jobs"]],
+        # Only that there is a visit, and its id to ask for a change with, which starts the check:
+        # its type, status, street and window told a caller from an unknown number about someone
+        # else's visit (Retell's builder agent).
+        "has_open_visit": bool(bundle["open_jobs"]),
+        "open_jobs": [{"job_id": j["job_id"]} for j in bundle["open_jobs"]],
         "notes": [],
-        "withheld": "the numbers, notes and what the visit is about are not shown, and the "
-        "name only once the caller gives it, until the server's name and address check passes; "
-        "a change asks for them first",
+        "withheld": "the numbers, notes and anything about the visit but its id are not shown, "
+        "and the name only once the caller gives it, until the server's name and address check "
+        "passes; a change asks for them first",
     }
 
 
@@ -2092,8 +2095,11 @@ def _resolve_phone(ctx: Ctx, value: str) -> str:
     value = value.strip()
     if _calling_from(value):
         if len(ctx.call["caller_key"]) != 10:
+            # A web call or a blocked caller ID has no number to read back (Retell's builder).
             raise Refused(
-                "invalid_phone", "The number didn't come through. What's the best number?"
+                "no_caller_number",
+                "I can't see the number you're calling from. Could you read it out for me?",
+                need="ask for the number, then read back with the digits the caller says",
             )
         return ctx.call["caller_key"]
     digits = phone_key(value)

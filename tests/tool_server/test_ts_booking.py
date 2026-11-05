@@ -1418,3 +1418,14 @@ def test_a_spelling_the_caller_never_said_leaves_the_street_alone(agent):
     assert asked["ok"], asked
     assert "199 East 4th Street, unit 2" in asked["say"]
     assert "Eastth" not in asked["say"]
+
+
+@pytest.mark.parametrize("caller", ["", "anonymous"])
+@pytest.mark.parametrize("phone", ["caller_id", "the number I'm calling from"])
+def test_a_call_with_no_number_asks_for_it_by_name(agent, caller, phone):
+    """Retell's builder agent: a web call or a blocked caller ID has no number to read back."""
+    call = agent.start(caller)["data"]["call_id"]
+    agent.turn(call, "It's 101 Union St, 11231.")
+    asked = agent.tool("read_back", call, address=in_area_address(), phone=phone)
+    assert asked["refused"] == "no_caller_number"
+    assert asked["say"] == "I can't see the number you're calling from. Could you read it out for me?"

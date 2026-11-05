@@ -609,7 +609,8 @@ def test_a_customer_found_by_address_comes_back_without_name_or_numbers(agent, s
                        address={"street": "620 Bedford Ave", "unit": "", "zip": "11235"})
     match = found["data"]["matches"][0]
     assert match["name"] == "" and match["phones"] == [] and match["withheld"]
-    assert match["open_jobs"] and match["open_jobs"][0]["summary"] == ""
+    assert match["has_open_visit"] is True
+    assert set(match["open_jobs"][0]) == {"job_id"}, "only the id, to ask for a change with"
     agent.turn(call, "It's Maria Delgado.")
     again = agent.tool("find_customer", call,
                        address={"street": "620 Bedford Ave", "unit": "", "zip": "11235"})
@@ -786,8 +787,8 @@ def test_notes_and_job_details_wait_for_the_full_check(agent, scenarios):
     match = found["data"]["matches"][0]
     # The name she gave shows; the gate code note and the visit's summary don't, yet.
     assert match["name"] == "Maria Delgado"
-    assert match["notes"] == [] and match["open_jobs"][0]["summary"] == ""
-    assert match["open_jobs"][0]["window"] is None, "the visit's day and time wait too"
+    assert match["notes"] == [] and set(match["open_jobs"][0]) == {"job_id"}
+    assert match["has_open_visit"] is True, "the visit's type, status, street and time wait too"
     agent.turn(call, "It's 620 Bedford Avenue, 11235.")
     assert agent.tool("cancel_appointment", call, booking_id=maria["jobId"], reason="not needed")["ok"]
     again = agent.tool("find_customer", call,
