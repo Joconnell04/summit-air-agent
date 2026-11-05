@@ -222,7 +222,7 @@ a.figure:hover .label { color: var(--ink); }
 .table.form td { vertical-align: middle; padding-top: var(--s-2); padding-bottom: var(--s-2); }
 .table.form td .field-error { margin-bottom: calc(-1 * var(--s-1)); }
 /* A field never shrinks below a readable width; on a phone the table scrolls sideways instead. */
-.table.form td .field { min-width: 220px; }
+.table.form td .field { min-width: var(--field-min); }
 /* A row with no control is as tall as one with a control, so a list of users reads evenly. */
 .table.form tbody tr { height: calc(var(--control-h) + 2 * var(--s-2) + 1px); }
 
@@ -313,7 +313,7 @@ a.figure:hover .label { color: var(--ink); }
   transition: background var(--fast) var(--ease), border-color var(--fast) var(--ease);
 }
 .more summary::-webkit-details-marker { display: none; }
-.more summary svg { width: 14px; height: 14px; color: var(--muted); transition: transform var(--fast) var(--ease); }
+.more summary svg { width: var(--icon-sm); height: var(--icon-sm); color: var(--muted); transition: transform var(--fast) var(--ease); }
 .more summary:hover { background: var(--hover); border-color: var(--line-strong); }
 .more[open] summary svg { transform: rotate(90deg); }
 
@@ -430,7 +430,7 @@ a.figure:hover .label { color: var(--ink); }
 }
 .sections summary::-webkit-details-marker { display: none; }
 .sections summary:hover { background: var(--hover); }
-.sections summary svg { width: 14px; height: 14px; flex: none; color: var(--muted); transition: transform var(--fast) var(--ease); }
+.sections summary svg { width: var(--icon-sm); height: var(--icon-sm); flex: none; color: var(--muted); transition: transform var(--fast) var(--ease); }
 .sections details[open] summary svg { transform: rotate(90deg); }
 .sections .n { min-width: 16px; color: var(--faint); font-variant-numeric: tabular-nums; }
 .sections .name { font-weight: var(--semibold); white-space: nowrap; }

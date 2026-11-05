@@ -123,8 +123,8 @@ def test_live_edits_show_as_the_owners_own_rows():
 
 
 def test_every_line_and_every_server_check_has_a_topic():
-    assert {title for _stage, title, _codes, _spec in rulebook.GATES} == set(fixed.GATE_TOPICS)
-    assert set(fixed.GATE_TOPICS.values()) <= set(fixed.TOPICS)
+    assert {title for _stage, title, _codes, _spec in rulebook.GATES} == set(fixed.GATES)
+    assert {topic for topic, _when, _line in fixed.GATES.values()} <= set(fixed.TOPICS)
     keys = [r.id.removeprefix("line.") for r in rulebook.rulebook(TENANT) if r.kind == "wording"]
     assert all(fixed.topic_of(k) in fixed.TOPICS for k in keys)
 
@@ -133,9 +133,8 @@ def test_every_line_is_said_on_exactly_one_row():
     rows = [r for _key, _name, found in fixed.responses(TENANT) for r in found]
     said = [r.line for r in rows if r.line] + [v for r in rows for v in r.variants]
     lines = [r.detail for r in rulebook.rulebook(TENANT) if r.kind == "wording"]
-    # A line two checks both hold on (the read-back) shows on both; every other line once.
-    assert set(said) == set(lines)
-    assert len([r for r in rows if not r.rule]) + len([r for r in rows if r.rule]) == len(rows)
+    assert sorted(said) == sorted(lines), "every line is said on exactly one row"
+    assert sum("I have your home at" in r.line for r in rows) == 1, "the read-back shows once"
     assert all(rows for _key, _name, rows in fixed.responses(TENANT)), "a topic with no rows"
 
 
@@ -149,11 +148,21 @@ def test_variants_of_one_response_share_a_row():
     rows = {r.when: r for _key, _name, found in fixed.responses(TENANT) for r in found}
     assert len(rows["A lookup takes a moment"].variants) == 2
     # A check that holds the call says its line on its own row, with the line's variants.
-    check = rows["Changes a visit or account from an unknown number only after a name and address"]
+    check = rows["A change is asked for from an unknown number"]
     assert check.rule and check.line.startswith("Of course.") and len(check.variants) >= 5
     # The owner may reword a line a check says, in place on the check's row.
-    assert rows["Asks if there's anything else before hanging up on a booked call"].editable == (
-        "anything_else_first")
+    assert rows["Before ending a booked call"].editable == "anything_else_first"
+
+
+def test_every_row_has_its_own_plain_trigger():
+    rows = [r for _key, _name, found in fixed.responses(TENANT) for r in found]
+    whens = [r.when for r in rows]
+    assert len(whens) == len(set(whens)), "two rows with one trigger"
+    titles = {title for _stage, title, _codes, _spec in rulebook.GATES}
+    assert not titles & set(whens), "a check shows its trigger, not its rule"
+    # A check that says nothing shows what it does beside its trigger.
+    held = [r for r in rows if r.rule and not r.line]
+    assert held and all(r.rule_text in titles for r in held)
 
 
 # ---- The page -----------------------------------------------------------------------------------
@@ -163,6 +172,7 @@ def test_checks_that_say_nothing_are_listed_once_under_always(agent):
     text = editor(agent).client.get("/bench/rules").text
     safety = text[text.index('id="topic-safety"'):text.index('id="topic-greeting"')]
     assert '<span class="what">Always</span>' in safety
+    assert "A safety caller asks for a person" in safety
     assert "Never puts a safety call through to a person" in safety
     assert "Held by the server" not in text
 
@@ -170,6 +180,15 @@ def test_checks_that_say_nothing_are_listed_once_under_always(agent):
 def test_the_owner_view_has_no_rules_page_and_its_address_moved_to_the_bench(agent):
     moved = agent.client.get("/owner/rules?tenant=x", follow_redirects=False)
     assert moved.status_code == 308 and moved.headers["location"] == "/bench/rules?tenant=x"
+    # Signed in, staff land on the bench's Admins only page and an admin on the Rules page.
+    staff = reader(agent).client.get("/owner/rules", follow_redirects=False)
+    assert staff.status_code == 308 and staff.headers["location"] == "/bench/rules"
+    landed = agent.client.get("/owner/rules")
+    assert landed.status_code == 403 and "Admins only" in landed.text
+    admin = editor(agent).client.get("/owner/rules", follow_redirects=False)
+    assert admin.status_code == 308 and admin.headers["location"] == "/bench/rules"
+    landed = agent.client.get("/owner/rules")
+    assert landed.status_code == 200 and "<h2>Your rules</h2>" in landed.text
     page = reader(agent).client.get("/owner").text
     assert "/owner/rules" not in page and ">Rules</a>" not in page
     assert not (ROOT / "app" / "templates" / "rules.html").exists()
@@ -201,6 +220,17 @@ def test_the_prompt_sections_come_from_assemble_in_join_order(agent):
     assert found == sorted(found)
     assert "Ask how their day is going." in text
     assert "A sample caller, not a real one" in text
+
+
+def test_the_sample_call_has_the_shape_of_a_real_call_start(agent):
+    real = agent.start()["data"]
+    sample = bench_rules.sample_call(TENANT, {})
+    assert set(sample) == set(real) - {"call_id"}
+    for key in ("tenant", "caller", "house_rules"):
+        assert set(sample[key]) == set(real[key]), key
+    assert sample["knowledge"] == real["knowledge"]
+    # Both build the same sections, so the page shows what a call gets.
+    assert [n for n, _t in assemble.sections(sample)] == [n for n, _t in assemble.sections(real)]
 
 
 def test_the_prompt_is_its_sections_joined():

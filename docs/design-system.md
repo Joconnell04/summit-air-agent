@@ -72,7 +72,7 @@ Times, phone numbers and counts use `.num` (tabular figures) so columns line up.
 
 - Space is on a 4 px grid: `--s-1` (4) to `--s-12` (48). Panels pad 16; the page gutter is 24; panels stack 24 apart.
 - Radius: `--r-sm` 4 for tags, `--r-md` 6 for controls, `--r-lg` 8 for panels.
-- Sizes: every control in a row is `--control-h` (32 px); tags inside tables are `--tag-h` (22 px); the header is `--header-h` (56 px); the page is at most `--page-w` (1280 px).
+- Sizes: every control in a row is `--control-h` (32 px); tags inside tables are `--tag-h` (22 px); the header is `--header-h` (56 px); the page is at most `--page-w` (1280 px); a field in a form table is at least `--field-min` (220 px); a disclosure chevron is `--icon-sm` (14 px).
 - Depth: panels are flat with a 1 px line. Only the active segmented button gets `--shadow-1`. Focus is a 3 px blue ring (`--focus`).
 - Motion: `--fast` (120 ms) for hover, `--base` (200 ms) when board marks move. Both drop to zero under `prefers-reduced-motion`.
 
@@ -170,7 +170,7 @@ Titled "Performance", under the chart. A table of measures down the side and per
 The Results period: Day, 7 days or 30 days, and "Custom", a disclosure whose popover takes a from and a to date and Apply. Up to 92 days; the dates can come in either order, an end after today is read as today, and a longer range shows its last 92 days and says so. The period before is the same number of days.
 
 ### Field
-One line of text an owner types: 32 px high, the same edge and radius as a select, a blue focus ring. An invalid field gets a red edge (`aria-invalid`) and the reason under it in red (`.error.field-error`), written by the server, never a browser alert. Used on the bench's Rules page. In a form table a field keeps at least 220 px, and the table scrolls sideways on a phone.
+One line of text an owner types: 32 px high, the same edge and radius as a select, a blue focus ring. An invalid field gets a red edge (`aria-invalid`) and the reason under it in red (`.error.field-error`), written by the server, never a browser alert. Used on the bench's Rules page. In a form table a field keeps at least `--field-min` (220 px), and the table scrolls sideways on a phone.
 
 ### Form table
 A table (`.table.form`) whose rows are a label and its field, centred on the field's line so a label reads level with its box, every row at least one control high so rows without a control line up with those that have one. The Rules page's Your rules and Fixed responses panels, and the Settings page's Calls and Users panels. Controls at a row's end stay on one line.
@@ -185,7 +185,7 @@ A disclosure (the quiet outlined button with a chevron) whose popover holds one 
 `/bench/rules`, on the debug bench only (DECISIONS.md 091; `/owner/rules` redirects here and the owner view has no Rules tab). One form, three panels in reading order, then the versions (exploration 018, option A):
 
 - **Your rules**: a form table, one row per rule: **When** (a select of Opening, Whole call, Booking, Closing), the rule in a field and **Remove**; the last row adds one ("Add a rule"). A refused rule shows the guidance check's reason under its field. The foot says where rules reach the agent: opening and whole-call rules in the prompt, booking and closing rules when the call gets there.
-- **Fixed responses**: a tray of eight topics (Safety, Greeting, Drops and outages, Who's calling, Address and area, Booking, Passing to a person, Closing), one open at a time. Each row is **When** and **The agent says**: the trigger in plain words and the exact line in quotes, with its variants behind an "i" ("3 more"). A server check that says a line is a row like any other; the checks that say nothing are listed under an **Always** group row at the end of the topic. The six lines the owner may reword are fields in place.
+- **Fixed responses**: a tray of eight topics (Safety, Greeting, Drops and outages, Who's calling, Address and area, Booking, Passing to a person, Closing), one open at a time. Each row is **When** and **The agent says**: the trigger in plain words and the exact line in quotes, with its variants behind an "i" ("3 more"). A server check shows its trigger in plain words too ("A business wants a visit"), with the line it says; a line is said on one row only, so a second check on the same line (the read-back) and the checks that say nothing are listed under an **Always** group row at the end of the topic, each trigger beside what the server does. The six lines the owner may reword are fields in place.
 - **System prompt**: a section list of what `prompts/assemble.py` joins, in order, on a sample call: each part's number, name and what it is for, collapsed; the last, This call, says it is a sample caller.
 - **Versions**: each version with its check: **Passed 18 of 18** (done), **Blocked, 2 of 18 failed** (urgent, the failed calls in the tooltip), **Checking** (high), **Rolled back**, **Check skipped** (high, published with the override; who and why in the tooltip), **Draft**, **Not published, live changed** and **1 on a rerun** (outline), and **Roll back**.
 

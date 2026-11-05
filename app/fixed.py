@@ -149,48 +149,129 @@ WHEN = {
     "safety.sign_off": "A safety call ends",
 }
 
-# The topic of each server check, by its rulebook title.
-GATE_TOPICS = {
-    "Looks the caller up by their number before the agent speaks": "greeting",
-    "A dropped safety call picks up where it stopped": "safety",
-    "Listens for a safety emergency on every caller line": "safety",
-    "Speaks the signed-off safety lines itself, never the agent's own": "safety",
-    "Marks a caller who describes a business, such as a store, as commercial": "who",
-    "Stops calling anyone who asks not to be called": "who",
-    "Says once that the company doesn't do work it doesn't, and keeps it as a lead": "who",
-    "Passes on a request for a technician by name, and never promises one": "person",
-    "Sets priority from what the caller says, and only ever raises it": "booking",
-    "Two bookings for different jobs, one change, one cancel, then a person": "person",
-    "Never books one visit twice; a second at one address is a different job": "booking",
-    "Can't delete records or look at another customer's": "who",
-    "Can't place a call to 911 or anyone outside the company's callbacks": "person",
-    "Puts a caller through to a person only when the server says so": "person",
-    "Never puts a safety call through to a person": "safety",
-    "Every callback has a named time inside calling hours": "person",
-    "Holds any booking until the safety lines are said and a person is flagged": "safety",
-    "Holds any booking until the address and phone are read back and confirmed": "address",
-    "Reads the address and phone back once; confirmed details aren't read again": "address",
-    "A detail the caller changes after confirming is read back again before booking": "address",
-    "Asks about an open visit whose window has passed, never calls it upcoming": "booking",
-    "Won't book outside the service area": "address",
-    "Checks the area and books only on a ZIP the caller said or one on their record": "address",
-    "Looks up a ZIP only for a street the caller said, and asks when it can't tell": "address",
-    "Won't book on a ZIP that disagrees with the caller's street until they settle it": "address",
-    "Won't book a commercial customer": "who",
-    "When who can approve isn't settled, a booking gets a call before dispatch": "booking",
-    "Books only openings ServiceTitan offered, and never the same one twice": "booking",
-    "Changes only the caller's own visits": "booking",
-    "Asks whose account a new address goes on before booking it": "who",
-    "A number on two accounts books under the name the caller says": "who",
-    "Changes a visit or account from an unknown number only after a name and address": "who",
-    "A caller who moved gets the new address, and no visit goes to the old one": "who",
-    "After hours, books a tonight visit only once the on-call technician is alerted": "booking",
-    "When ServiceTitan is down, keeps the booking and sets a callback": "booking",
-    "Asks if there's anything else before hanging up on a booked call": "closing",
-    "On a safety call, signs off instead of hanging up": "safety",
-    "A dropped safety call gets an urgent flag and a quick callback": "safety",
-    "Calls back only to the caller, once, and never to a do-not-call number": "person",
-    "Retries a queued booking until ServiceTitan takes it": "booking",
+# Each server check by its rulebook title: its topic, what sets it off in plain words, and the
+# line it says when its refusal code doesn't name one (GATE_LINES covers the codes).
+GATES = {
+    'Looks the caller up by their number before the agent speaks': (
+        'greeting', 'A call comes in', None,
+    ),
+    'A dropped safety call picks up where it stopped': (
+        'safety', 'A safety caller rings back', None,
+    ),
+    'Listens for a safety emergency on every caller line': (
+        'safety', 'Every time the caller speaks', None,
+    ),
+    "Speaks the signed-off safety lines itself, never the agent's own": (
+        'safety', 'The caller describes an emergency', None,
+    ),
+    'Marks a caller who describes a business, such as a store, as commercial': (
+        'who', 'The caller describes a business', 'commercial',
+    ),
+    'Stops calling anyone who asks not to be called': (
+        'who', 'The caller asks not to be called', 'do_not_call',
+    ),
+    "Says once that the company doesn't do work it doesn't, and keeps it as a lead": (
+        'who', "The caller asks for work we don't do", 'not_offered',
+    ),
+    'Passes on a request for a technician by name, and never promises one': (
+        'person', 'The caller asks for a technician by name', None,
+    ),
+    'Sets priority from what the caller says, and only ever raises it': (
+        'booking', 'The caller describes the problem', None,
+    ),
+    'Two bookings for different jobs, one change, one cancel, then a person': (
+        'person', 'The call asks for more than it can do', None,
+    ),
+    'Never books one visit twice; a second at one address is a different job': (
+        'booking', 'A second visit is asked for at one address', None,
+    ),
+    "Can't delete records or look at another customer's": (
+        'who', "Anyone asks for another customer's records", None,
+    ),
+    "Can't place a call to 911 or anyone outside the company's callbacks": (
+        'person', 'A call out is asked for', None,
+    ),
+    'Puts a caller through to a person only when the server says so': (
+        'person', 'The caller asks for a person', None,
+    ),
+    'Never puts a safety call through to a person': (
+        'safety', 'A safety caller asks for a person', None,
+    ),
+    'Every callback has a named time inside calling hours': (
+        'person', 'A callback is promised', None,
+    ),
+    'Holds any booking until the safety lines are said and a person is flagged': (
+        'safety', 'A safety caller wants a visit', None,
+    ),
+    'Holds any booking until the address and phone are read back and confirmed': (
+        'address', 'Before any booking', None,
+    ),
+    "Reads the address and phone back once; confirmed details aren't read again": (
+        'address', 'The details are already confirmed', None,
+    ),
+    'A detail the caller changes after confirming is read back again before booking': (
+        'address', 'The caller changes a confirmed detail', None,
+    ),
+    'Asks about an open visit whose window has passed, never calls it upcoming': (
+        'booking', "An open visit's window has passed", 'visit_passed',
+    ),
+    "Won't book outside the service area": (
+        'address', 'The address is outside the area', None,
+    ),
+    'Checks the area and books only on a ZIP the caller said or one on their record': (
+        'address', 'A ZIP is needed to book', None,
+    ),
+    "Looks up a ZIP only for a street the caller said, and asks when it can't tell": (
+        'address', 'The caller gives a street', None,
+    ),
+    "Won't book on a ZIP that disagrees with the caller's street until they settle it": (
+        'address', "The ZIP doesn't match the street", None,
+    ),
+    "Won't book a commercial customer": (
+        'who', 'A business wants a visit', None,
+    ),
+    "When who can approve isn't settled, a booking gets a call before dispatch": (
+        'booking', "It's unclear who can approve the work", 'approval_callback',
+    ),
+    'Books only openings ServiceTitan offered, and never the same one twice': (
+        'booking', 'The caller picks a time', None,
+    ),
+    "Changes only the caller's own visits": (
+        'booking', 'The caller asks to change a visit', None,
+    ),
+    'Asks whose account a new address goes on before booking it': (
+        'who', 'A new address is given', None,
+    ),
+    'A number on two accounts books under the name the caller says': (
+        'who', 'The number is on more than one account', None,
+    ),
+    'Changes a visit or account from an unknown number only after a name and address': (
+        'who', 'A change is asked for from an unknown number', None,
+    ),
+    'A caller who moved gets the new address, and no visit goes to the old one': (
+        'who', 'The caller says they moved', None,
+    ),
+    'After hours, books a tonight visit only once the on-call technician is alerted': (
+        'booking', 'An urgent visit is booked after hours', None,
+    ),
+    'When ServiceTitan is down, keeps the booking and sets a callback': (
+        'booking', "ServiceTitan can't take a booking", None,
+    ),
+    "Asks if there's anything else before hanging up on a booked call": (
+        'closing', 'Before ending a booked call', None,
+    ),
+    'On a safety call, signs off instead of hanging up': (
+        'safety', 'A safety call ends', 'safety.sign_off',
+    ),
+    'A dropped safety call gets an urgent flag and a quick callback': (
+        'safety', 'A safety call drops', None,
+    ),
+    'Calls back only to the caller, once, and never to a do-not-call number': (
+        'person', 'A callback is placed', None,
+    ),
+    'Retries a queued booking until ServiceTitan takes it': (
+        'booking', 'A booking waits for ServiceTitan', None,
+    ),
 }
 
 # A check whose refusal says a line other than the one named by its code.
@@ -211,6 +292,8 @@ class Fixed:
     # The line's key when the owner may reword it (rules.EDITABLE_LINES), shown as a field.
     editable: str = ""
     rule: bool = False
+    # For a server check that says no line: what it does, in its rulebook words.
+    rule_text: str = ""
 
 
 def topic_of(key: str) -> str:
@@ -255,16 +338,19 @@ def responses(tenant: Tenant, content: dict | None = None) -> list[tuple[str, st
         topics[family] = topic_of(key)
 
     found: dict[str, list[Fixed]] = {t: [] for t in TOPICS}
+    # A line is said on one row only: the first check that holds on it takes it, and a later
+    # check on the same line (the read-back) is listed with what it does instead.
     shown: set[str] = set()
     for _stage, title, codes, _spec in rulebook.GATES:
+        topic, when, line = GATES[title]
         linked = [
-            family_of(GATE_LINES.get(c, c)) for c in codes
-            if family_of(GATE_LINES.get(c, c)) in lines
+            f for f in ([line] if line else []) + [family_of(GATE_LINES.get(c, c)) for c in codes]
+            if f in lines and f not in shown
         ]
         said = lines[linked[0]] if linked else None
-        found[GATE_TOPICS[title]].append(Fixed(
-            title, said.line if said else "", said.variants if said else [],
-            said.editable if said else "", rule=True,
+        found[topic].append(Fixed(
+            when, said.line if said else "", said.variants if said else [],
+            said.editable if said else "", rule=True, rule_text="" if said else title,
         ))
         if said:
             shown.add(linked[0])

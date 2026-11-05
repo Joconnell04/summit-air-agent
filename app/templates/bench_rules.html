@@ -90,7 +90,7 @@
       {% set held = rows | rejectattr("line") | rejectattr("editable") | list %}
       {% if held %}
         <tr class="group"><td colspan="2"><span class="what">Always</span></td></tr>
-        {% for r in held %}<tr><td colspan="2">{{ r.when }}</td></tr>{% endfor %}
+        {% for r in held %}<tr><td><span class="what">{{ r.when }}</span></td><td class="muted">{{ r.rule_text }}</td></tr>{% endfor %}
       {% endif %}
       </tbody>
     </table>
