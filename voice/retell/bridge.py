@@ -207,6 +207,9 @@ class Bridge:
         self.tool_names = tool_names
         self.now_ms = now_ms or (lambda: int(time.time() * 1000))
         self.later = later or _timer
+        # The last call object each call's events brought, for the word timings the hang-up
+        # reads when get-call has none.
+        self.seen: dict[str, dict] = {}
 
     def verified(self, raw: bytes, header: str | None) -> bool:
         return signature.verify(raw, self.api_key, header, self.now_ms())
@@ -257,6 +260,8 @@ class Bridge:
         actions, hints = [], []
         rid = retell_id(obj)
         said = lines(obj)
+        if obj.get("start_timestamp") and any(line.words for line in said):
+            self.seen[rid] = obj
         posted = self.ledger.sync(call_id, said, self.tools.turn, settled)
         for speaker, answer in posted:
             if speaker == "caller" and not only_goodbye(last_line(said, "caller")):
@@ -357,13 +362,21 @@ class Bridge:
         hang_up = answer.get("ok") and (answer.get("data") or {}).get("hang_up")
         if name == "end_call" and kind == "call" and hang_up:
             self.ledger.mark(rid, end_allowed=1)
-            said = [line.text for line in lines(obj) if line.speaker == "agent"]
+            so_far = lines(obj)
+            said = [line.text for line in so_far if line.speaker == "agent"]
             last = said[-1] if said else ""
+            # An end_call before the agent has said anything this turn is timed from the goodbye
+            # still to come, not from the agent's line before the caller's: that line was 26 words
+            # long and the hang-up came 4.7 s after the goodbye (call_5600e8a36929e14b4b3915c9fcb).
+            this_turn = last if so_far and so_far[-1].speaker == "agent" else ""
             # The tool's own sentence may still be said after the lines so far: its time counts,
             # but the line compared later is the transcript's own (PR #158 review: comparing the
             # two together never matched and added a whole extra wait after the goodbye).
             say = answer.get("say") or ""
-            final = last if say and say in last else " ".join(x for x in (last, say) if x)
+            final = (
+                this_turn if say and say in this_turn
+                else " ".join(x for x in (this_turn, say) if x)
+            )
             self.hang_up_later(rid, hangup_delay(final), last)
         return answer
 
@@ -377,27 +390,48 @@ class Bridge:
         def stop():
             row = self.ledger.get(rid)
             if not row or not row["hangup_pending"] or row["ended"]:
+                self.seen.pop(rid, None)
                 return
-            latest = self.last_agent_line(rid)
-            if latest and latest != last_line and checks < HANGUP_CHECKS:
+            call = self.read_call(rid)
+            said = [line for line in lines(call) if line.speaker == "agent"]
+            latest = said[-1].text if said else ""
+            left = self.grace_left(call)
+            if left is None and rid in self.seen:
+                left = self.grace_left(self.seen[rid])
+            if left is not None:
+                # Retell's word timings say when the agent last spoke: stop the grace after it.
+                if left > 0 and checks < HANGUP_CHECKS:
+                    self.hang_up_later(rid, left, latest, checks + 1)
+                    return
+            elif latest and latest != last_line and checks < HANGUP_CHECKS:
                 self.hang_up_later(rid, hangup_delay(latest), latest, checks + 1)
                 return
             try:
                 self.retell.stop_call(rid)
                 self.ledger.mark(rid, hung_up=1, hangup_pending=0)
+                self.seen.pop(rid, None)
             except (RetellError, httpx.HTTPError) as exc:
                 log.warning("stop-call %s failed: %s", rid, exc)
 
         self.later(delay, stop)
 
-    def last_agent_line(self, rid: str) -> str:
-        """The call's last agent line as Retell has it now, or "" if it can't be read."""
+    def read_call(self, rid: str) -> dict:
+        """The call as Retell has it now, or {} if it can't be read."""
         try:
-            said = [line.text for line in lines(self.retell.get_call(rid)) if line.speaker == "agent"]
+            return self.retell.get_call(rid) or {}
         except (RetellError, httpx.HTTPError) as exc:
             log.warning("get-call %s failed: %s", rid, exc)
-            return ""
-        return said[-1] if said else ""
+            return {}
+
+    def grace_left(self, call: dict) -> float | None:
+        """Seconds until the grace after the agent's last spoken word has passed (zero or less:
+        stop now), or None when the call has no word timings to tell."""
+        said = [line for line in lines(call) if line.speaker == "agent" and line.words]
+        start = call.get("start_timestamp")
+        if not said or not start:
+            return None
+        spoken_until = start + float(said[-1].words[-1].get("end", 0)) * 1000
+        return HANGUP_GRACE_S - (self.now_ms() - spoken_until) / 1000
 
     def say_now(self, rid: str, context: str) -> None:
         try:
