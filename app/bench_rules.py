@@ -1,7 +1,9 @@
-"""The rules editor on the debug bench (DECISIONS.md 055): an admin drafts the owner's wording and
-guidance (app/rules.py), and publishing runs the must-pass eval gate (evals/gate.py) by default.
-An override publishes at once without the gate; the version records who skipped it, when and why,
-and the server log gets a line for it. The owner view keeps the read-only Rules page.
+"""The Rules page on the debug bench (exploration 018, DECISIONS.md 055 and 091): the owner's own
+rules, the fixed responses they can't override (app/fixed.py), and the system prompt a call gets,
+section by section from prompts/assemble.py. An admin drafts the rules and the few lines the owner
+may reword (app/rules.py); publishing runs the must-pass eval gate (evals/gate.py) by default. An
+override publishes at once without the gate; the version records who skipped it, when and why, and
+the server log gets a line for it. The owner view has no rules page.
 
 Every route needs an admin (app/bench.py require_admin).
 """
@@ -13,12 +15,25 @@ import uuid
 from fastapi import FastAPI, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
 
-from . import logs, rules
+from prompts import assemble
+
+from . import fixed, logs, rules
 from .bench import require_admin
 from .db import parse_iso
 from .owner_view import _common, _render, _tenant_q, _user
 
 EDITOR = "/bench/rules"
+# What each part of the prompt is for, from prompts/README.md.
+JOBS = {
+    "identity.md": "Who it is and how it sounds",
+    "spine.md": "The steps every call shares",
+    "journeys.md": "Each kind of caller",
+    "house-guidance.md": "Your opening and whole-call rules",
+    "tool-use.md": "Reading the tools' answers",
+    "safety.md": "Around the safety lines",
+    "Company knowledge": "The company's own facts",
+    "This call": "A sample caller, not a real one",
+}
 
 
 def start_gate(services) -> None:
@@ -37,20 +52,49 @@ def start_gate(services) -> None:
 
 
 def edit_form(form) -> tuple[dict, str]:
-    """A draft's content and note from the edit form: line.<key> and guide.<stage>.<n> fields.
-    Any field name is read, so a locked key sent by hand reaches validation and is refused there."""
+    """A draft's content and note from the page: line.<key> for a reworded line, and rule.<n> with
+    when.<n> (its stage) for each of the owner's rules, less the one named by remove. Any field
+    name is read, so a locked key sent by hand reaches validation and is refused there."""
     content: dict = {"lines": {}, "guidance": {}}
+    stages = {}
+    texts = {}
     for name, value in form.multi_items():
         kind, _, rest = name.partition(".")
         if kind == "line" and rest:
             content["lines"][rest] = value
-        elif kind == "guide" and rest:
-            stage = rest.split(".")[0]
-            content["guidance"].setdefault(stage, []).append(value)
+        elif kind == "rule" and rest:
+            texts[rest] = str(value)
+        elif kind == "when" and rest:
+            stages[rest] = str(value)
         elif kind == "set" and rest:
             # A raw setting, such as set.priority: there is no field for one, so it is refused.
             content[rest] = value
+    removed = str(form.get("remove", ""))
+    for n, text in texts.items():
+        if n != removed and text.strip():
+            content["guidance"].setdefault(stages.get(n, ""), []).append(text)
     return content, str(form.get("note", ""))
+
+
+def sample_call(tenant, content: dict) -> dict:
+    """What /calls/start returns for a new caller with no history, with the draft's rules: the
+    call context the page's prompt is built on, and labelled there as a sample."""
+    return {
+        "tenant": {"slug": tenant.slug, "name": tenant.name, "timezone": str(tenant.tz)},
+        "after_hours": False,
+        "caller": {"phone": "+12125550100", "known_number": False, "do_not_call": False},
+        "customers": [],
+        "fsm_available": True,
+        "linked_call": None,
+        "preferred_name": None,
+        "offer_callback": False,
+        "knowledge": tenant.knowledge,
+        "house_rules": {"version": None, "guidance": rules.applied(tenant, content)["guidance"],
+                        "lines": {}},
+        "pace": None,
+        "recording": None,
+        "recording_notice": None,
+    }
 
 
 def log_override(services, now):
@@ -87,8 +131,8 @@ def add_routes(app: FastAPI) -> None:
         tenants = request.app.state.services.tenants
         return tenants.by_slug.get(slug) if slug else tenants.default
 
-    def edit_page(request: Request, found, slug: str, conn, content=None, note: str = "",
-                  errors=None, status: int = 200) -> Response:
+    def edit_page(request: Request, found, slug: str, conn, content=None, errors=None,
+                  status: int = 200) -> Response:
         rules.expire_checks(conn, found.slug, request.app.state.services.clock())
         versions = rules.history(conn, found.slug)
         live = rules.live(conn, found.slug)
@@ -98,17 +142,30 @@ def add_routes(app: FastAPI) -> None:
         if content is None:
             base = draft or blocked or live
             content = base["content"] if base else {}
-            note = base["note"] if (draft or blocked) else ""
         lines = content.get("lines") or {}
         guidance = content.get("guidance") or {}
+        if not isinstance(lines, dict) or not isinstance(guidance, dict):
+            lines, guidance = {}, {}
         errors = errors or {}
-        # Errors with no field on the page, such as a locked rule sent by hand, show at the top.
-        fields = {f"lines.{k}" for k in rules.EDITABLE_LINES}
-        general = [
-            message for key, message in errors.items()
-            if key not in fields
-            and not any(key.startswith(f"guidance.{s}") for s in rules.GUIDANCE_STAGES)
+        owner_rules = [
+            (stage, n, text, errors.get(f"guidance.{stage}.{n}"))
+            for stage in rules.GUIDANCE_STAGES
+            if isinstance(guidance.get(stage), list)
+            for n, text in enumerate(guidance[stage])
         ]
+        # Errors with no field on the page, such as a locked rule sent by hand, show at the top.
+        shown = {f"lines.{k}" for k in rules.EDITABLE_LINES} | {
+            f"guidance.{stage}.{n}" for stage, n, _text, _err in owner_rules
+        }
+        general = [message for key, message in errors.items() if key not in shown]
+        topics = fixed.responses(found, content)
+        # The tab to open: the first topic with a refused line in it, else the first topic.
+        picked = next(
+            (key for key, _name, rows in topics
+             if any(r.editable and f"lines.{r.editable}" in errors for r in rows)),
+            topics[0][0],
+        )
+        services = request.app.state.services
         context = {
             **_common(request, found, slug, "bench-rules", conn),
             "live": live,
@@ -116,20 +173,19 @@ def add_routes(app: FastAPI) -> None:
             "local": lambda value: found.local(parse_iso(value)),
             "draft": draft,
             "blocked": blocked,
-            "note": note,
             "errors": errors,
             "general": general,
-            "lines": [
-                (key, label, stage, lines.get(key) or rules.default_line(found, key),
-                 rules.default_line(found, key))
-                for key, (_where, stage, label) in rules.EDITABLE_LINES.items()
-            ],
-            "guidance": [
-                (stage, rules.STAGES[stage],
-                 (list(guidance.get(stage) or []) + [""] * rules.GUIDANCE_PER_STAGE)[
-                     : rules.GUIDANCE_PER_STAGE])
-                for stage in rules.GUIDANCE_STAGES
-            ],
+            "owner_rules": owner_rules,
+            "room": len(owner_rules) < rules.GUIDANCE_PER_STAGE * len(rules.GUIDANCE_STAGES),
+            "stages": [(s, rules.STAGES[s]) for s in rules.GUIDANCE_STAGES],
+            "topics": topics,
+            "picked": picked,
+            "values": {
+                key: lines.get(key) or rules.default_line(found, key) for key in rules.EDITABLE_LINES
+            },
+            "defaults": {key: rules.default_line(found, key) for key in rules.EDITABLE_LINES},
+            "sections": assemble.sections(sample_call(found, content), services.clock()),
+            "jobs": JOBS,
             "max_line": rules.LINE_MAX_CHARS,
             "max_guide": rules.GUIDANCE_MAX_CHARS,
             "max_reason": rules.OVERRIDE_MAX_CHARS,
@@ -170,11 +226,14 @@ def add_routes(app: FastAPI) -> None:
         content, note = edit_form(form)
         conn = services.connect()
         try:
+            if not note.strip():
+                current = rules.live(conn, found.slug)
+                note = rules.describe(found, content, current["content"] if current else None)
             _saved, errors = rules.save_draft(
                 conn, found, content, author, note, services.clock(), services.guidance_check
             )
             if errors:
-                return edit_page(request, found, tenant, conn, content, note, errors, 422)
+                return edit_page(request, found, tenant, conn, content, errors, 422)
             try:
                 if form.get("override"):
                     now = services.clock()
@@ -184,10 +243,10 @@ def add_routes(app: FastAPI) -> None:
                     rules.request_publish(conn, found.slug, author, services.clock())
                     start_gate(services)
             except rules.RulesError as err:
-                return edit_page(request, found, tenant, conn, content, note,
+                return edit_page(request, found, tenant, conn, content,
                                  {"content": str(err)}, 422)
             except OSError:
-                return edit_page(request, found, tenant, conn, content, note,
+                return edit_page(request, found, tenant, conn, content,
                                  {"content": "The override couldn't be logged, so nothing was "
                                              "published. The draft is saved."}, 503)
         finally:

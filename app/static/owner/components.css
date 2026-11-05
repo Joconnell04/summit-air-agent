@@ -221,6 +221,8 @@ a.figure:hover .label { color: var(--ink); }
 /* A form table: a label and its field on each row, centred on the field's line. */
 .table.form td { vertical-align: middle; padding-top: var(--s-2); padding-bottom: var(--s-2); }
 .table.form td .field-error { margin-bottom: calc(-1 * var(--s-1)); }
+/* A field never shrinks below a readable width; on a phone the table scrolls sideways instead. */
+.table.form td .field { min-width: 220px; }
 /* A row with no control is as tall as one with a control, so a list of users reads evenly. */
 .table.form tbody tr { height: calc(var(--control-h) + 2 * var(--s-2) + 1px); }
 
@@ -410,13 +412,31 @@ a.figure:hover .label { color: var(--ink); }
 
 /* Tray: tabs inside a panel */
 
-.tray-tabs { display: flex; gap: var(--s-1); padding: 0 var(--s-3); border-bottom: 1px solid var(--line); }
+.tray-tabs { display: flex; gap: var(--s-1); padding: 0 var(--s-3); border-bottom: 1px solid var(--line); overflow-x: auto; }
 .tray-tabs button {
   display: inline-flex; align-items: center; gap: 6px; height: 48px; padding: 0 var(--s-2); border: 0; border-bottom: 2px solid transparent; margin-bottom: -1px;
   background: none; color: var(--muted); font-size: var(--text-sm); font-weight: var(--medium); cursor: pointer; white-space: nowrap;
 }
 .tray-tabs button[aria-selected="true"] { color: var(--ink); font-weight: var(--semibold); border-bottom-color: var(--ember); }
 .tray-panel[hidden] { display: none; }
+
+/* Section list: the parts of a long text in the order they are joined, each opening in place (the
+   system prompt on the bench's Rules page). */
+.sections { list-style: none; margin: 0; padding: 0; }
+.sections > li + li { border-top: 1px solid var(--line-soft); }
+.sections summary {
+  display: flex; align-items: center; gap: var(--s-3); min-height: var(--row-h); padding: 0 var(--s-4);
+  cursor: pointer; list-style: none; font-size: var(--text-md);
+}
+.sections summary::-webkit-details-marker { display: none; }
+.sections summary:hover { background: var(--hover); }
+.sections summary svg { width: 14px; height: 14px; flex: none; color: var(--muted); transition: transform var(--fast) var(--ease); }
+.sections details[open] summary svg { transform: rotate(90deg); }
+.sections .n { min-width: 16px; color: var(--faint); font-variant-numeric: tabular-nums; }
+.sections .name { font-weight: var(--semibold); white-space: nowrap; }
+.sections .job { min-width: 0; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sections .tech-block { margin: 0 var(--s-4) var(--s-3); }
+@media (max-width: 720px) { .sections .job { display: none; } }
 .list { list-style: none; margin: 0; padding: 0; }
 .list li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px var(--s-3); padding: var(--s-3) var(--s-4); border-top: 1px solid var(--line-soft); }
 .list li:first-child { border-top: 0; }

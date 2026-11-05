@@ -121,3 +121,4 @@ How the design was reached, in order, so a reader can follow each choice back to
 | Read-back corrections and ended windows | A detail changed after the read-back resets it; a visit whose window ended is asked about, never confirmed | DECISIONS.md 083, #129 |
 | Work we don't do | Declined once by the server from the service list in config, kept as a lead; commercial "office" and ownership phrasings added | DECISIONS.md 084, #129 |
 | Two jobs and named technicians | Two different jobs per call, each with its own read-back where the unit differs; a technician request is a dispatcher note, never a promise | DECISIONS.md 085, #129 |
+| One simple Rules page on the bench | The owner's rules, the fixed responses by topic and the system prompt by section on one bench page; the owner view's Rules page redirects there | DECISIONS.md 091, #140 |

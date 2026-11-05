@@ -73,3 +73,18 @@ What would change it: if the bench's main use turns out to be an engineer scanni
 - The prompt panel reads its sections from `prompts/assemble.py` itself (a `sections()` function that `instructions()` is built from), on a sample call context labelled as a sample, so it can't drift from what a call gets.
 - The owner's rules show where each lands: opening and whole-call rules in the prompt's house guidance section, booking and closing rules in a `[server]` note when the call reaches that stage (`assemble.py`, `STAGE_NOTES`).
 - `/owner/rules` redirects to `/bench/rules`, and the owner view loses its Rules tab.
+
+## Built (option A) and the second check
+
+Jackson picked A. The first build is `build-1-desktop.png` and `build-1-phone.png`; the reviewer agent was then asked one question, whether anything on the page is not needed, repeated or disconnected. What changed from its answer (`build-2-desktop.png`, `build-2-phone.png`):
+
+- Server checks that say no line no longer fill the second column with "Held by the server" seven times; they are listed once under an **Always** group row at the end of their topic.
+- Counts only on the topic tabs; the panel totals are gone.
+- Panel subtitles only on Fixed responses, the one place that needs to say why it can't be edited.
+- The "Goes" column is gone; one line under Your rules says where rules reach the agent.
+- The prompt sections lost their character counts; each keeps what it is for.
+- The crumb no longer repeats the live version, which the Versions table tags.
+
+Kept against the review, with the reason: the six lines the owner may reword stay as fields in place among the fixed responses, as this option specified (moving them into Your rules would make it long again); the By column stays, because an override records who skipped the check; tables scroll sideways on a phone, the design system's pattern, instead of turning into cards.
+
+Measured on the built page (headless Chromium, 1440 px): every control in the head and in a rule's row is 32 px high with a 6 px radius and 13 px type; the page is 1,915 px tall against 17,032 px for the old owner page.

@@ -241,6 +241,14 @@
       </div>
       <div class="panel-body spec-row">{{ basis("MEASURED") }}{{ basis("SOURCE") }}{{ basis("ASSUMED") }}{{ outcome("pass") }}{{ outcome("fail") }}{{ outcome("fired") }}{{ outcome("error") }}{{ outcome("not reached") }}</div>
     </section>
+    <section class="panel">
+      <div class="panel-head"><h2>Section list</h2><span class="sub">a long text's parts in join order; the system prompt on the bench</span></div>
+      <ol class="sections">
+        {% for name, job, body in [("identity.md", "Who it is and how it sounds", "You answer the phone for the company."), ("spine.md", "The steps every call shares", "")] %}
+        <li><details{% if body %} open{% endif %}><summary><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg><span class="n">{{ loop.index }}</span><span class="name">{{ name }}</span><span class="job">{{ job }}</span></summary>{% if body %}<pre class="tech-block scroll">{{ body }}</pre>{% endif %}</details></li>
+        {% endfor %}
+      </ol>
+    </section>
   </div>
 </main>
 {% endblock %}

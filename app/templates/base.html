@@ -21,7 +21,6 @@
       <a href="/owner{{ q(slug, day if day is defined and not is_today else none) }}"{% if tab == "today" %} aria-current="page"{% endif %}>Today</a>
       <a href="/owner/calls{{ q(slug, day if day is defined and not is_today else none) }}"{% if tab == "calls" %} aria-current="page"{% endif %}>Calls</a>
       <a href="/owner/results{{ q(slug, day if day is defined and not is_today else none) }}"{% if tab == "results" %} aria-current="page"{% endif %}>Results</a>
-      <a href="/owner/rules{{ q(slug) }}"{% if tab == "rules" %} aria-current="page"{% endif %}>Rules</a>
       <a href="/owner/settings{{ q(slug) }}"{% if tab == "settings" %} aria-current="page"{% endif %}>Settings</a>
       {% if is_admin %}<a href="/bench">Bench</a>{% endif %}
     </nav>
