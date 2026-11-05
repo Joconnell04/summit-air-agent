@@ -206,6 +206,18 @@ realtime:
     # USD per million tokens. SOURCE: https://ai.google.dev/gemini-api/docs/pricing (read
     # 2026-11-03), paid tier.
     price: {text_input: 0.75, audio_input: 3.00, text_output: 4.50, audio_output: 12.00}
+  # Deepgram's Voice Agent API (voice/deepgram_agent): Flux ears and turn-taking, an Aura-2 voice,
+  # and the brain profile through Deepgram's custom Anthropic endpoint. Arcas: "Natural, Smooth,
+  # Clear, Comfortable", American, for customer service, the nearest Aura-2 voice to Cartesia's Max
+  # (SOURCE: https://developers.deepgram.com/docs/tts-models.md, read 2026-11-05).
+  deepgram_agent:
+    provider: deepgram
+    brain: fast
+    listen_model: flux-general-en
+    voice: aura-2-arcas-en
+    # USD per minute for the Voice Agent API with our own LLM (ASSUMED from Deepgram's published
+    # standard agent rate; check the console after the first calls). Claude tokens are separate.
+    price_per_minute: 0.08
   elevenlabs:
     provider: elevenlabs
     # The brain behind ElevenLabs' custom-LLM mode is our own live profile.

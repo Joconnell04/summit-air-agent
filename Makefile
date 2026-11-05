@@ -1,4 +1,4 @@
-.PHONY: setup test lint check release-check ratchet ratchet-update eval eval-pairs eval-decisions replay langsmith eval-upload seed-st mock-st postman-st server postman trace \
+.PHONY: setup deepgram-deploy test lint check release-check ratchet ratchet-update eval eval-pairs eval-decisions replay langsmith eval-upload seed-st mock-st postman-st server postman trace \
 	owner-demo owner-user design-export rules-gate summary-check voice-livekit phone-setup deploy test-call measure-delay \
 	retell-push retell-flow-push retell-bridge retell-deploy retell-report rig rig-report sim listen lanes stt-bench
 
@@ -190,6 +190,10 @@ retell-bridge:
 
 retell-deploy:
 	sh deploy/retell/deploy.sh
+
+# The Deepgram Voice Agent phone bridge (voice/deepgram_agent), on its own unit and hostname.
+deepgram-deploy:
+	sh deploy/deepgram_agent/deploy.sh
 
 retell-report:
 	uv run python -m voice.retell.report $(if $(DB),--db $(DB))

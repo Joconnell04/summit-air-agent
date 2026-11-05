@@ -1,0 +1,12 @@
+# Public HTTPS for the Deepgram entry, installed as /etc/caddy/sites/summit-deepgram.caddy by
+# deploy/deepgram_agent/deploy.sh. Its own hostname, so the Retell site stays untouched. Only the
+# bridge's two routes are public: Twilio's webhook (signature checked) and the media stream
+# (keyed per call).
+deepgram.45-77-105-247.sslip.io {
+	handle /deepgram/* {
+		reverse_proxy 127.0.0.1:8120
+	}
+	handle {
+		respond 404
+	}
+}
