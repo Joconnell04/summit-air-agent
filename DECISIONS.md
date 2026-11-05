@@ -21,6 +21,14 @@ Would change if: the page's main use turns out to be an engineer scanning every 
 Discussion: docs/explorations/018-rules-page.md; Jackson picked A ("let's go with your recommendation of one topic at a time").
 Issue: #140
 
+## 087. Retell's Conversation Flow keeps every gate but can't filter the model's speech, so our stack stays
+
+Decided: the Retell Conversation Flow version of the agent (`voice/retell_flow/`, issue #133) does not go on (678) 336-6730 for live calls, and our LiveKit stack stays the product. The flow is kept in the repository, reproducible with `make retell-flow-push`, as the tested form of Retell for bake-off 7.
+Why: built to mirror our design, with our tool server behind every gate, it said the safety lines word for word on every safety call (79 of 79 standard, 36 of 36 must-pass), booked only after a confirmed read-back, booked no commercial or out-of-area caller and ended calls only on the server's answer. That closes the gap that ruled out the single-prompt agent (038). But it passed 53% of the standard suite against our stack's 92% (61% against 92% where the eval instance sets scenarios up the same way) and 45% of must-pass against 88%, with must-pass code checks failing in 4 scenarios, and on the audio rig it was the slowest stack, 2.63 s median on a plain turn against our 1.90 s, because every caller line goes through our server before the reply (MEASURED, evals/rounds/retell-flow-01.md). Almost all of the gap is the model's own speech: repeated read-backs, two questions at once, internal words. Our speech filter (060) drops those before they are spoken; Retell streams the model's text straight to the voice, so a flow has nowhere to run it.
+Considered: putting the flow on the number anyway for a side-by-side call (the issue's bar was every must-pass code check and within 5 points, and it missed both by far); stage-scoped prompts inside the flow (exploration 016's idea, a separate change that wouldn't add the missing filter); Retell's custom-LLM socket, where our server would see each reply before it is spoken and could filter it, at the cost of running the model ourselves, which is our stack again behind Retell's ears and voice.
+Would change if: Retell adds a hook between the model's text and the voice, or a live-call round shows the filter matters less on the phone than in the grader's reading, in which case the flow is the Retell entrant to rerun.
+Discussion: docs/explorations/017-retell-conversation-flow.md; docs/bakeoffs.md, bake-off 7. Jackson in chat: "if retell's conversation flow can do what we're trying to do better, then that's worth testing."
+Issue: #133
 ## 090. The side model stays on OpenAI Decisions, at a 0.65 threshold
 
 Decided: the side model that reads whether someone at home is at risk stays on OpenAI Decisions, not Jev, and a yes now needs a probability of 0.65 or more instead of 0.5.

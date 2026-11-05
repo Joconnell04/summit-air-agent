@@ -1,5 +1,6 @@
 #!/bin/sh
-# Start one Retell-lane process (see summit-retell@.service). Ports: 8102 bridge; eval instance
+# Start one Retell-lane process (see summit-retell@.service). Both bridges serve the single-prompt
+# and the Conversation Flow agents (voice/retell_flow/bridge.py). Ports: 8102 bridge; eval instance
 # 8110 tool server, 8111 mock, 8112 bridge. The shared mock (8101) and tool server (8100) are
 # started by deploy/summit-air/run.sh (the LiveKit lane, brief 03), which finds them with `pgrep -f "uvicorn app.main"` and
 # "uvicorn servicetitan_mock"; the app comes last on the command lines below so those patterns
@@ -11,7 +12,7 @@ mkdir -p "$DATA"
 case "$1" in
   bridge)
     TOOL_SERVER_URL=http://127.0.0.1:8100 RETELL_BRIDGE_DB="$DATA/bridge.db" \
-      exec uv run uvicorn --factory --host 127.0.0.1 --port 8102 voice.retell.bridge:create_app ;;
+      exec uv run uvicorn --factory --host 127.0.0.1 --port 8102 voice.retell_flow.bridge:create_app ;;
   eval-mock)
     uv run python -m servicetitan_mock.seed --db "$DATA/eval_mock.db" --if-stale
     # Only this process allows POST /debug/reset (the eval harness rebuilds the seeded world with it
@@ -19,11 +20,12 @@ case "$1" in
     ST_MOCK_DB="$DATA/eval_mock.db" ST_MOCK_ALLOW_RESET=1 ST_MOCK_RESET_TOKEN="$SUMMIT_EVAL_TOKEN" \
       exec uv run uvicorn --factory --host 127.0.0.1 --port 8111 servicetitan_mock.app:create_app ;;
   eval-tools)
+    # TOOL_ALLOW_FORGET_CALLS: the harness ages earlier scenarios' calls so none links as a repeat.
     FSM_BASE_URL=http://127.0.0.1:8111 TOOL_DB="$DATA/eval_tools.db" DEBUG_TOKEN="$SUMMIT_EVAL_TOKEN" \
-      SLOT_CACHE_SECONDS=0 \
+      SLOT_CACHE_SECONDS=0 TOOL_ALLOW_FORGET_CALLS=1 \
       exec uv run uvicorn --factory --host 127.0.0.1 --port 8110 app.main:create_app ;;
   eval-bridge)
     TOOL_SERVER_URL=http://127.0.0.1:8110 RETELL_BRIDGE_DB="$DATA/eval_bridge.db" \
-      exec uv run uvicorn --factory --host 127.0.0.1 --port 8112 voice.retell.bridge:create_app ;;
+      exec uv run uvicorn --factory --host 127.0.0.1 --port 8112 voice.retell_flow.bridge:create_app ;;
   *) echo "unknown process $1" >&2; exit 2 ;;
 esac

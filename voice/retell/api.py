@@ -35,7 +35,13 @@ ALLOWED = (
     ("POST", r"/create-chat"),
     ("POST", r"/create-chat-completion"),
     ("GET", r"/get-chat/[\w-]+"),
+    ("PATCH", r"/update-chat/[\w-]+"),
     ("PATCH", r"/end-chat/[\w-]+"),
+    # The Conversation Flow agent (voice/retell_flow/push.py). It finds its flow through the agent
+    # that holds it, so it needs no list.
+    ("POST", r"/create-conversation-flow"),
+    ("GET", r"/get-conversation-flow/[\w-]+"),
+    ("PATCH", r"/update-conversation-flow/[\w-]+"),
     ("GET", r"/list-voices"),
     ("POST", r"/add-community-voice"),
 )
@@ -92,6 +98,15 @@ class Retell:
             "PATCH",
             f"/v2/update-live-call/{call_id}",
             json={"call_control": {"additional_context": context}},
+        )
+
+    def keep_no_recording(self, call_id: str) -> None:
+        """Retell keeps no recording or transcript of this call once its webhooks have gone out
+        (Update Live Call, data_storage_setting; it can only be made stricter)."""
+        self.request(
+            "PATCH",
+            f"/v2/update-live-call/{call_id}",
+            json={"fields_to_override": {"data_storage_setting": "basic_attributes_only"}},
         )
 
     def stop_call(self, call_id: str) -> None:

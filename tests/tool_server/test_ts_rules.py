@@ -488,6 +488,18 @@ def test_the_server_says_when_booking_and_closing_start(agent):
     assert "stage_closing" not in agent.turn(call, "Bye now.")["data"]["hints"], "said once"
 
 
+def test_every_caller_turn_carries_the_stage_even_with_no_guidance(agent):
+    """The Retell flow routes each reply to the node for this stage (voice/retell_flow)."""
+    call = agent.start()["data"]["call_id"]
+    assert agent.turn(call, "My heat is out.")["data"]["stage"] == "opening"
+    slot = first_open(agent, call)
+    assert agent.turn(call, "Tuesday morning works.")["data"]["stage"] == "booking"
+    agent.confirm_read_back(call, {"street": "101 Union St", "unit": "", "city": "Brooklyn",
+                                   "zip": "11231"})
+    assert book(agent, call, slot)["ok"]
+    assert agent.turn(call, "Great, thanks.")["data"]["stage"] == "closing"
+
+
 def test_no_stage_note_without_guidance_for_that_stage(agent):
     publish(agent, {"guidance": {"closing": [PATH]}})
     call = agent.start()["data"]["call_id"]

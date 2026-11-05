@@ -144,6 +144,12 @@ post_call:
     thinking: true
     price: {input: 2.00, output: 10.00}
 
+# Retell's post-chat analysis on the Conversation Flow agent's eval chat agent
+# (voice/retell_flow/build.py). Retell runs it after every chat and nothing reads it; its default
+# model cost 2.08 cents a chat (MEASURED, exploration 017), so the cheapest model in Retell's list.
+retell:
+  post_chat_analysis: {model: gpt-5.4-nano}
+
 # The simulated audio bake-off (evals/audio_rig, DECISIONS.md 026). The rig's own voice for the
 # simulated caller and ears for the agent's replies, the voice-activity threshold that times the
 # agent's first sound, and per-minute prices for the parts a platform doesn't report itself.

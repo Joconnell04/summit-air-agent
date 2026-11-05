@@ -14,6 +14,8 @@ from voice.retell.api import BASE_URL, Retell
 LLM_DEFAULTS = {"version": 0, "is_published": False, "last_modification_timestamp": 1}
 TOOL_DEFAULTS = {"execution_message_type": "prompt", "parameter_type": "json"}
 AGENT_DEFAULTS = {"version": 0, "volume": 1, "language": "en-US", "is_published": False}
+FLOW_DEFAULTS = {"version": 0, "is_published": False}
+NODE_DEFAULTS = {"skippable": False}
 
 
 class FakeRetell:
@@ -23,6 +25,7 @@ class FakeRetell:
         self.agents: dict[str, dict] = recorded.get("agents", {})
         self.numbers: list[dict] = recorded.get("numbers", [])
         self.voices: list[dict] = recorded.get("voices", [])
+        self.flows: dict[str, dict] = recorded.get("flows", {})
         self.requests: list[tuple[str, str, dict | None]] = []
         self.ids = 0
 
@@ -78,6 +81,21 @@ class FakeRetell:
             agent = {**AGENT_DEFAULTS, **copy.deepcopy(body), "agent_id": self.new_id("agent")}
             self.agents[agent["agent_id"]] = agent
             return agent
+        if (method, path) == ("POST", "/create-conversation-flow"):
+            flow = {**FLOW_DEFAULTS, **copy.deepcopy(body), "conversation_flow_id": self.new_id("cf")}
+            flow["nodes"] = [{**NODE_DEFAULTS, **n} for n in flow["nodes"]]
+            self.flows[flow["conversation_flow_id"]] = flow
+            return flow
+        match = re.fullmatch(r"/(get|update)-conversation-flow/([\w-]+)", path)
+        if match:
+            verb, ident = match.groups()
+            if ident not in self.flows:
+                return None
+            if verb == "update":
+                self.flows[ident].update(copy.deepcopy(body))
+                if "nodes" in body:
+                    self.flows[ident]["nodes"] = [{**NODE_DEFAULTS, **n} for n in body["nodes"]]
+            return self.flows[ident]
         match = re.fullmatch(r"/(get|update)-(retell-llm|agent|chat-agent)/([\w-]+)", path)
         if match:
             verb, kind, ident = match.groups()

@@ -124,3 +124,4 @@ How the design was reached, in order, so a reader can follow each choice back to
 | Eval reference before the live calls | Two-sample standard run (186 calls) adopted at 91%; floor stays 90% | DECISIONS.md 011, #139 |
 | Side model threshold and vendor | OpenAI Decisions kept over Jev; a yes needs 0.65, not 0.5 | DECISIONS.md 090 |
 | One simple Rules page on the bench | The owner's rules, the fixed responses by topic and the system prompt by section on one bench page; the owner view's Rules page redirects there | DECISIONS.md 091, #140 |
+| Retell Conversation Flow | Our design on Retell's stage graph kept every gate and said the fixed lines exactly, but scored 53% to our 92% without our speech filter; not put on the number | DECISIONS.md 087, #133, evals/rounds/retell-flow-01.md |

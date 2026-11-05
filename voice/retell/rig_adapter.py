@@ -6,7 +6,8 @@ opens with the call's access token (evals/audio_rig/webrtc.py) and streams the c
 into. The calls use a voice agent kept for the rig and named as a test agent, set at the start of
 each run to the production voice agent's voice and dials and the eval chat agent's LLM, whose
 functions and webhooks go to the eval instance's bridge, tool server and mock
-(voice/retell/README.md). As for the chat evals, the mock is reset before every call, the call is
+(voice/retell/README.md). As for the chat evals, the mock is reset and earlier calls are forgotten
+before every call, the call is
 started on the eval tool server under the rig's call id, and calls run one at a time.
 
 Endpoints (SOURCE: https://docs.retellai.com/api-references/create-web-call and
@@ -29,7 +30,7 @@ from prompts.assemble import instructions
 from . import build, conversation
 from .api import Retell
 from .chat import RETELL_NUMBER
-from .eval_adapter import NEEDED, RetellNotReady, reset_world
+from .eval_adapter import NEEDED, RetellNotReady, forget_calls, reset_world
 
 PROXY = "https://api.retellai.com/webrtc-proxy/{call_id}/v1/webrtc/sessions"
 RATE = 24000
@@ -56,6 +57,9 @@ class Line:
     async def open(self, call_id, caller_id, world, listener):
         env = self.entrant.env
         await asyncio.to_thread(reset_world, env)
+        # The eval tool server is shared, so an earlier call from the same number would be taken
+        # for this caller calling back (evals/rounds/retell-flow-01.md, section 4).
+        await asyncio.to_thread(forget_calls, env)
         server = self.entrant.tool_server()
         started = await asyncio.to_thread(server.start, call_id, caller_id, RETELL_NUMBER)
         if not started.get("ok"):

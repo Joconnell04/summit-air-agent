@@ -18,8 +18,9 @@ On Retell the safety lines are said by its model (the server checks the wording)
 code: Retell chat can't insert them mid-reply. That is a real bake-off difference.
 
 Endpoints (SOURCE: https://docs.retellai.com/api-references/create-chat-completion.md):
-POST /create-chat-completion {chat_id, content} returns the new messages; PATCH /end-chat/{chat_id}
-ends the chat, and its webhook closes the call on the tool server.
+POST /create-chat-completion {chat_id, content} returns the new messages; PATCH /update-chat/{chat_id}
+sets the chat's metadata (https://docs.retellai.com/api-references/update-chat.md); PATCH
+/end-chat/{chat_id} ends the chat, and its webhook closes the call on the tool server.
 """
 import json
 import os
@@ -82,8 +83,15 @@ class RetellChatAgent:
         return AgentTurn(" ".join(said), timing, ended=ended)
 
     def end(self, reason: str) -> None:
-        """Ending the chat fires Retell's webhook, which closes the call on the tool server."""
+        """Ending the chat fires Retell's webhook, which posts the last lines and closes the call on
+        the tool server. The harness's reason goes in the chat's metadata first, so a caller who
+        hangs up isn't recorded as the agent hanging up (voice/retell/bridge.py chat_end_reason)."""
+        self.mark_end(reason)
         self.http.patch(f"/end-chat/{self.chat_id}").raise_for_status()
+
+    def mark_end(self, reason: str) -> None:
+        metadata = {"summit_call_id": self.call_id, "end_reason": reason}
+        self.http.patch(f"/update-chat/{self.chat_id}", json={"metadata": metadata})
 
 
 def _hang_up(messages: list[dict], tool_call_id: str) -> bool:
@@ -117,6 +125,23 @@ def reset_world(env: dict, client: httpx.Client | None = None) -> None:
         )
 
 
+def forget_calls(env: dict, client: httpx.Client | None = None) -> None:
+    """Ask the eval tool server to age every call it has recorded, so this scenario's caller isn't
+    taken for one calling back a few minutes after the last scenario with the same caller ID
+    (lifecycle._linked). Our own stack gets a fresh tool server per scenario; this one is shared."""
+    url = env["RETELL_EVAL_TOOL_SERVER"].rstrip("/") + "/debug/forget-calls"
+    client = client or httpx.Client(timeout=60)
+    try:
+        response = client.post(url, headers={"X-Debug-Token": env["RETELL_EVAL_DEBUG_TOKEN"]})
+    except httpx.HTTPError as err:
+        raise RetellNotReady(f"could not reach the eval tool server at {url}: {err}") from err
+    if response.status_code != 200:
+        raise RetellNotReady(
+            f"the eval tool server refused to forget its calls ({response.status_code} at {url}); "
+            "it needs TOOL_ALLOW_FORGET_CALLS=1 (deploy/retell/run.sh)"
+        )
+
+
 def open_agent(call_id: str, caller_id: str, env: dict | None = None):
     """The agent under test and the tool server whose record the checks read, on a clean mock."""
     env = env if env is not None else os.environ
@@ -126,6 +151,7 @@ def open_agent(call_id: str, caller_id: str, env: dict | None = None):
             f"Retell runs need {', '.join(missing)}; the Retell lane (brief 05) sets them up"
         )
     reset_world(env)
+    forget_calls(env)
     http = httpx.Client(
         base_url=BASE_URL, headers={"Authorization": f"Bearer {env['RETELL_API_KEY']}"},
         timeout=30,

@@ -1834,6 +1834,30 @@
             "header": [],
             "url": "{{base_url}}/debug/logs"
           }
+        },
+        {
+          "name": "Forget calls, eval instance only",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('refused off the Retell eval instance', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Debug-Token",
+                "value": "{{debug_token}}"
+              }
+            ],
+            "url": "{{base_url}}/debug/forget-calls"
+          }
         }
       ]
     },
