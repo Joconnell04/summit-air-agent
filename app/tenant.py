@@ -232,6 +232,14 @@ class Tenant:
         )
         # The systems a caller names, so the agent doesn't ask for one already given (app/lifecycle.py).
         self.system_words: tuple[str, ...] = tuple(agent.get("system_words", []))
+        # Things and places that are never a person's name in the name check ("It's the furnace",
+        # "It's Brooklyn"): the trade's equipment and home words, and the words of the service
+        # area's zone names (app/tools.py _gave_a_name).
+        self.not_names: frozenset[str] = (
+            self.equipment_words
+            | {w.lower() for w in agent.get("home_words", [])}
+            | {w for zone in company["zones"] for w in zone["name"].lower().replace(",", " ").split()}
+        )
         # Warm transfer to a person (app/transfer.py). None turns it off.
         self.transfer: dict | None = agent.get("transfer")
         self.fsm: dict = agent["fsm"]

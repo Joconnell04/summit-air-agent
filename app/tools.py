@@ -1046,23 +1046,16 @@ VERBISH = {
 }
 
 
-# Words that name a thing or a place, never a person: "It's the furnace", "It's Brooklyn", "It's
-# Bedford Avenue" (PR #155 check).
-NOT_PERSON = {
-    "furnace", "boiler", "heat", "heater", "heating", "ac", "air", "unit", "thermostat", "radiator",
-    "radiators", "pump", "system", "filter", "vent", "vents", "brooklyn", "queens", "manhattan",
-    "bronx", "staten", "island", "apartment", "house", "building", "basement", "kitchen",
-}
-
-
-def _not_a_name(key: str) -> bool:
+def _not_a_name(key: str, things: frozenset[str] = frozenset()) -> bool:
+    """A word that is no person's name: a common word, a number, a verb, a street word, or one of
+    the tenant's things and places (Tenant.not_names: "It's the furnace", "It's Brooklyn")."""
     return (
         (not key.isalpha()) or key in NOT_NAMES or key in NUMBER_WORDS or key in VERBISH
-        or key in NOT_PERSON or key in STREET_AFTER
+        or key in things or key in STREET_AFTER
     )
 
 
-def _gave_a_name(text: str) -> bool:
+def _gave_a_name(text: str, things: frozenset[str] = frozenset()) -> bool:
     """The caller said some name, whoever's: after a name lead ("this is uh pat rivera", "my name
     is Sam", "under Rivera", "It's Sam Rivera") or as a short line of nothing else ("Sam Rivera.",
     "joanne price"). Lowercase counts too (the text harness's lines are), so common words, numbers
@@ -1083,14 +1076,14 @@ def _gave_a_name(text: str) -> bool:
                 j = i + len(lead)
                 while j < len(keys) and keys[j] in ("um", "uh"):
                     j += 1
-                if j >= len(keys) or _not_a_name(keys[j]):
+                if j >= len(keys) or _not_a_name(keys[j], things):
                     continue
                 if strong or raw[j][0].isupper():
                     return True
-                if j + 1 < len(keys) and not _not_a_name(keys[j + 1]):
+                if j + 1 < len(keys) and not _not_a_name(keys[j + 1], things):
                     return True
     named = [k for k in keys if k not in NAME_LINE_FILLER]
-    return 0 < len(named) <= 3 and not any(_not_a_name(k) for k in named)
+    return 0 < len(named) <= 3 and not any(_not_a_name(k, things) for k in named)
 
 
 def _gave_an_address(text: str) -> bool:
@@ -1111,7 +1104,10 @@ def _answered_check(ctx: Ctx, check: sqlite3.Row, name_ok: bool, address_ok: boo
         and r["seq"] > check["asked_seq"]
     ]
     surname = _surname(ctx.fsm.customer(check["customer_id"])["name"])
-    gave_name = any(_gave_a_name(t) and not (surname and _has_word(t, surname)) for t in lines)
+    gave_name = any(
+        _gave_a_name(t, ctx.tenant.not_names) and not (surname and _has_word(t, surname))
+        for t in lines
+    )
     gave_address = any(_gave_an_address(t) for t in lines)
     return (not name_ok and gave_name) or (not address_ok and gave_address)
 
@@ -1215,7 +1211,8 @@ def _named_on_call(ctx: Ctx, name: str) -> bool:
     surname in it is no wrong name, even when it doesn't count because the agent said it first."""
     surname = _surname(name)
     return any(
-        _gave_a_name(r["text"]) and not (surname and _has_word(r["text"], surname))
+        _gave_a_name(r["text"], ctx.tenant.not_names)
+        and not (surname and _has_word(r["text"], surname))
         for r in records.thread_turns(ctx.conn, ctx.call["id"])
         if r["call_id"] == ctx.call["id"] and r["speaker"] == "caller"
     )

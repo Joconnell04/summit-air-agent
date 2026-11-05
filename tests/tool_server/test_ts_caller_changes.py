@@ -6,7 +6,7 @@ import sqlite3
 
 import pytest
 from test_ts_owner_view import signed_in
-from toolkit import UNKNOWN, book, count, first_open, in_area_address, ready_to_book
+from toolkit import TENANT_DIR, UNKNOWN, book, count, first_open, in_area_address, ready_to_book
 
 from app import booking, summary, tools
 
@@ -930,5 +930,9 @@ def test_moved_from_counts_only_with_a_street_address(agent, line, moved):
 
 @pytest.mark.parametrize("line", ["It's the furnace.", "It's Brooklyn.", "It's Bedford Avenue."])
 def test_things_and_places_are_not_names(line):
-    """PR #155 check: these counted as names (failing closed, but still wrong)."""
-    assert tools._gave_a_name(line) is False
+    """PR #155 check: these counted as names (failing closed, but still wrong). The words come
+    from the tenant's config, not the code (test_ts_platform.py)."""
+    from app.tenant import Tenant
+
+    things = Tenant.load(TENANT_DIR).not_names
+    assert tools._gave_a_name(line, things) is False

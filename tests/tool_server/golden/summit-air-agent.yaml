@@ -204,6 +204,16 @@ fsm:
     membership: 705
     not_offered: 706
   log_calls_via_debug: true
+home_words:
+- unit
+- system
+- pump
+- apartment
+- house
+- building
+- basement
+- kitchen
+- attic
 lines:
   account_choice: Should that address go on its own account, with you as a contact, or under your account?
   account_name: Whose name should the account for that address be under?

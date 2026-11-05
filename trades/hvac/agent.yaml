@@ -14,6 +14,8 @@
 system_words: [heat pump, mini split, central air, boiler, furnace, radiators, radiator]
 equipment_words: [furnace, furnaces, boiler, boilers, heat, heater, heating, ac, air, radiator,
   radiators, thermostat, pipe, pipes, vent, vents, filter, fan, compressor]
+# Parts of a home, never a person's name in the name check (app/tools.py _gave_a_name).
+home_words: [unit, system, pump, apartment, house, building, basement, kitchen, attic]
 
 # Safety signals. The server matches these on every caller line; the tenant's lines say what to do.
 safety:
