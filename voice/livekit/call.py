@@ -12,7 +12,13 @@ from livekit import rtc
 from livekit.agents import Agent, ModelSettings, StopResponse, llm
 from livekit.agents.llm import ChatContext, ChatMessage
 
-from prompts.assemble import FOLLOW_UP_NOTES, SENTENCE_END, SpokenReply, server_notes
+from prompts.assemble import (
+    FOLLOW_UP_NOTES,
+    SENTENCE_END,
+    SpokenReply,
+    server_notes,
+    without_guidance,
+)
 
 from .bridge import Bridge
 from .server import UNREACHABLE, ToolServer
@@ -38,7 +44,12 @@ class Call:
         tool_log: ToolLog,
         endpointing: dict,
         llm_log: LlmLog | None = None,
+        stripped: bool = False,
     ):
+        # `voice.profile: stripped` (config/models.yaml): the model's text is spoken as it streams,
+        # with no speech filter, and the owner's guidance and stage notes are left out. The tool
+        # server and every gate are unchanged.
+        self.stripped = stripped
         self.server = server
         self.bridge = bridge
         self.tool_log = tool_log
@@ -149,7 +160,10 @@ class Call:
         stop = (data.get("recording") or {}).get("action") == "stop"
         if stop and self.stop_recording:
             asyncio.create_task(self.stop_recording())
-        notes = server_notes(data.get("hints", []), data.get("known"))
+        hints = data.get("hints", [])
+        if self.stripped:
+            hints = without_guidance(hints)
+        notes = server_notes(hints, data.get("known"))
         if notes:
             message.content.append("\n" + "\n".join(notes))
         handoff = data.get("handoff")
@@ -240,6 +254,11 @@ class SummitAgent(Agent):
         SpokenReply), so a read-back announcement or a restated ZIP or number is never spoken.
         While the rule is holding, the text waits for the end of the reply and is dropped if the
         reply calls a tool whose result the worker speaks itself."""
+        if self.call.stripped:
+            # The stripped profile speaks the model's text as it streams, unfiltered.
+            async for chunk in Agent.default.llm_node(self, chat_ctx, tools, model_settings):
+                yield chunk
+            return
         reply = self.call.reply
         reply.start_reply()
         holding = reply.holding()

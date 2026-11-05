@@ -48,6 +48,11 @@ profiles:
 # points from the earlier practice agent (from-other-projects/bobert/latency-notes.md) until
 # measured on real phone audio (docs/latency.md).
 voice:
+  # full: the assembled prompt, the speech filter, owner guidance, stage notes and the side model.
+  # stripped: Jackson's "our stack, stripped": a one-page prompt (prompts/stripped.md), the model's
+  # text spoken as it streams, no owner guidance or stage notes, no side model. The tool server and
+  # every gate are the same either way. Restart the worker and the tool server after a change.
+  profile: full
   # price_per_minute is streaming plus Deepgram's keyterm add-on, $0.0077 + $0.0013 (SOURCE:
   # https://deepgram.com/pricing, read 2026-11-04).
   stt: {provider: deepgram, model: nova-3, endpointing_ms: 100, price_per_minute: 0.0090}

@@ -44,6 +44,31 @@ def instructions(start: dict, now: datetime | None = None) -> str:
     return "\n\n".join(text for _name, text in sections(start, now))
 
 
+# The one-page prompt for `voice.profile: stripped` (config/models.yaml): the same tools and server,
+# none of the long prompt, owner guidance or stage notes.
+STRIPPED = "stripped.md"
+
+
+def stripped_instructions(start: dict, tenant_dir: Path, now: datetime | None = None) -> str:
+    """The system prompt for a call on the stripped profile: prompts/stripped.md with the tenant's
+    safety lines and sign-off word for word, then the company knowledge and this call, as in the
+    full prompt."""
+    from app.tenant import load_agent
+
+    safety = load_agent(tenant_dir)[0]["safety"]
+    lines = "\n".join(
+        f"- {kind}: \"{' '.join(spec['lines'].split())}\"" for kind, spec in safety["kinds"].items()
+    )
+    page = (
+        (PROMPTS / STRIPPED).read_text().strip()
+        .replace("{company}", start["tenant"]["name"])
+        .replace("{safety_lines}", lines)
+        .replace("{sign_off}", f"\"{' '.join(safety['sign_off'].split())}\"")
+    )
+    tail = [text for name, text in sections(start, now) if name in ("Company knowledge", "This call")]
+    return "\n\n".join([page, *tail])
+
+
 def sections(start: dict, now: datetime | None = None) -> list[tuple[str, str]]:
     """The system prompt for one call as (name, text) parts, in the order they are joined: the
     prompt files, the owner's guidance after the journeys when there is some, the company
@@ -283,6 +308,11 @@ SERVER_NOTES = {
         "flag_person. Book only if the caller asks to, and then say the booking's sentence as written."
     ),
 }
+
+
+def without_guidance(hints: list[str]) -> list[str]:
+    """Hints without the owner's guidance and the stage notes, for the stripped profile."""
+    return [h for h in hints if h not in STAGE_NOTES and not h.startswith("guidance:")]
 
 
 def server_notes(hints: list[str], known: dict[str, str] | None = None) -> list[str]:

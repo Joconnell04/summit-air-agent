@@ -207,9 +207,18 @@ class SideModel:
         return value
 
 
-def from_settings(profile: str) -> SideModel | None:
-    """The side model SIDE_MODEL names, or None when it is empty."""
-    if not profile:
+def stripped_profile(path: Path | None = None) -> bool:
+    """config/models.yaml says `voice.profile: stripped` (or the copy MODELS_CONFIG names): the
+    one-page prompt with no side model, speech filter, owner guidance or stage notes."""
+    config = yaml.safe_load((path or Path(os.environ.get("MODELS_CONFIG") or CONFIG_PATH)).read_text())
+    return (config.get("voice") or {}).get("profile", "full") == "stripped"
+
+
+def from_settings(profile: str, stripped: bool | None = None) -> SideModel | None:
+    """The side model SIDE_MODEL names, or None when it is empty or the profile is stripped."""
+    if stripped is None:
+        stripped = stripped_profile()
+    if not profile or stripped:
         return None
     cfg = load_profile(profile)
     askers: dict[str, Asker] = {}

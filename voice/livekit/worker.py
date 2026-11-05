@@ -168,6 +168,18 @@ def tenant_dir(start: dict | None) -> Path:
     return fallback_tenant(settings)
 
 
+def is_stripped(voice: dict) -> bool:
+    """`voice.profile: stripped` in config/models.yaml (Jackson's "our stack, stripped")."""
+    return voice.get("profile", "full") == "stripped"
+
+
+def agent_instructions(voice: dict, data: dict, folder: Path) -> str:
+    """The system prompt: the one-page stripped prompt, or the full assembled one."""
+    if is_stripped(voice):
+        return assemble.stripped_instructions(data, folder)
+    return assemble.instructions(data)
+
+
 def voice_lines(folder: Path) -> dict:
     return yaml.safe_load((folder / "agent.yaml").read_text())["voice"]
 
@@ -239,7 +251,8 @@ async def entrypoint(ctx: JobContext) -> None:
     )
     tool_log = ToolLog()
     llm_log = LlmLog()
-    call = Call(tools_server, bridge, tool_log, voice["endpointing"], llm_log)
+    stripped = is_stripped(voice)
+    call = Call(tools_server, bridge, tool_log, voice["endpointing"], llm_log, stripped=stripped)
     call.reply.holding_lines = list(voice_lines(folder).get("holding") or [])
     call.reply.names = assemble.call_names(data)
     call.session = session
@@ -350,7 +363,7 @@ async def entrypoint(ctx: JobContext) -> None:
     specs = assemble.tool_specs(assemble.job_types(folder))
     agent = SummitAgent(
         call,
-        assemble.instructions(data),
+        agent_instructions(voice, data, folder),
         build_tools(
             specs, tools_server, bridge, tool_log, hang_up, speak, transfer, call.say_parts,
             call.reply,
