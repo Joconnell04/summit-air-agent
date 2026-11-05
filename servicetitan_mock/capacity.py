@@ -2,7 +2,9 @@
 
 A slot is one technician in one arrival window on one day. Capacity for a window is the
 technicians whose shift covers it (and whose skills fit the job type) minus the ones already
-booked. The database enforces the final rule: one live appointment per technician per window.
+booked, and minus the ones a non-job appointment (a block, a meeting) takes out of capacity for
+any part of the window. The database enforces the final rule: one live appointment per technician
+per window.
 
 Nothing here knows about priority, ZIPs or urgent holds. Those are the company's rules, not
 ServiceTitan's, and the tool server applies them (app/capacity.py) to the technicians this answers
@@ -15,7 +17,7 @@ from collections import Counter
 from dataclasses import dataclass
 from datetime import date
 
-from .config import TenantConfig, Window
+from .config import TenantConfig, Window, iso
 from .errors import ApiError
 
 
@@ -61,6 +63,16 @@ def _on_shift(conn: sqlite3.Connection, cfg: TenantConfig, day: date, window: Wi
     ).fetchall()
 
 
+def blocked(conn: sqlite3.Connection, start, end) -> set[int]:
+    """Technicians an active non-job appointment takes out of capacity for any part of start to end."""
+    rows = conn.execute(
+        """SELECT technician_id FROM non_job_appointments
+           WHERE active = 1 AND remove_from_capacity = 1 AND start < ? AND end > ?""",
+        (iso(end), iso(start)),
+    ).fetchall()
+    return {r["technician_id"] for r in rows}
+
+
 def slots(
     conn: sqlite3.Connection,
     cfg: TenantConfig,
@@ -83,6 +95,7 @@ def slots(
         for r in live
         if r["window_id"] == window.id and r["id"] != exclude_appointment
     }
+    busy |= blocked(conn, *cfg.window_bounds(day, window))
     daily = Counter(r["technician_id"] for r in live)
     staff = sorted(staff, key=lambda t: (daily.get(t["id"], 0), t["id"]))
     fit = {t["id"] for t in staff if set(skills) <= set(json.loads(t["skills_json"]))}

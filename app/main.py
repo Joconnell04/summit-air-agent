@@ -40,6 +40,7 @@ from . import (
     records,
     reports,
     rules,
+    schedule_view,
     summary,
     trace,
     transfer,
@@ -617,6 +618,7 @@ def create_app(
         return {"ok": True, "say": "", "data": found, "refused": None}
 
     owner_view.add_routes(app)
+    schedule_view.add_routes(app)
     bench.add_routes(app)
     bench_rules.add_routes(app)
 
