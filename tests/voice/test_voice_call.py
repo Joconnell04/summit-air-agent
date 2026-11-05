@@ -735,3 +735,21 @@ def test_live_call_2_turns_24_and_27_are_asked_to_go_on(monkeypatch):
         )
         assert text == line.strip()
         assert [r["instructions"] for r in replies] == [FOLLOW_UP_NOTES["stalled"]], line
+
+
+def test_the_known_facts_note_is_added_once_not_to_every_caller_line(agent, connect):
+    """Realism suite on #155: the same "Already known" note on every caller line threw away
+    LiveKit's early model request on every turn. It goes on the line where the facts change."""
+    agent.start(call_id="call-1")
+    call = make_call(connect)
+    lines = [caller("My furnace is running but it's not getting warm."), caller("Since yesterday.")]
+
+    async def conversation():
+        await call.caller_line(lines[0])
+        call.agent_line(agent_says("Since when?"))
+        await call.caller_line(lines[1])
+        await call.flush()
+
+    asyncio.run(conversation())
+    assert "Already known" in lines[0].text_content
+    assert "[server]" not in lines[1].text_content

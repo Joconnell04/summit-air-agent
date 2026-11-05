@@ -15,6 +15,7 @@ from livekit.agents.llm import ChatContext, ChatMessage
 from prompts.assemble import (
     FOLLOW_UP_NOTES,
     SENTENCE_END,
+    KnownFacts,
     SpokenReply,
     server_notes,
     without_guidance,
@@ -71,6 +72,7 @@ class Call:
         self._last_post: asyncio.Task | None = None
         # What of the model's replies the caller hears (prompts/assemble.py SpokenReply).
         self.reply = SpokenReply()
+        self.known = KnownFacts()
         # The speaking rate the server set for this call; None leaves the voice at its default.
         self.speed: float | None = None
         # Text the worker speaks at its own speed (the parts of a slower read-back), by its text.
@@ -163,7 +165,7 @@ class Call:
         hints = data.get("hints", [])
         if self.stripped:
             hints = without_guidance(hints)
-        notes = server_notes(hints, data.get("known"))
+        notes = server_notes(hints, self.known.fresh(data.get("known")))
         if notes:
             message.content.append("\n" + "\n".join(notes))
         handoff = data.get("handoff")

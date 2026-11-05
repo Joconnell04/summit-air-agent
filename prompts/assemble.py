@@ -349,6 +349,23 @@ def server_notes(hints: list[str], known: dict[str, str] | None = None) -> list[
     return notes
 
 
+class KnownFacts:
+    """The facts for the "Already known" note, passed on only when they change. The note stays on
+    the caller line it was added to, so the model keeps it; adding it again to every line changed
+    the context after LiveKit's early model request had started, which threw that request away and
+    made one more on every turn (realism suite on #155: 3 requests on a lookup turn, 2 on a plain
+    one)."""
+
+    def __init__(self):
+        self._last: dict | None = None
+
+    def fresh(self, known: dict | None) -> dict | None:
+        if not known or known == self._last:
+            return None
+        self._last = dict(known)
+        return known
+
+
 # A lead-in announcing a look-up about to happen in this turn ("I'll look up the visit now", "Let
 # me find that", "One moment"). In a reply with no tool call it is a dead end: the caller waits on
 # work that never starts (live call 1, issue #149: "Got it." then 19 s of silence). Closings that
