@@ -1475,6 +1475,10 @@ voice:
   greeting_linked_unknown: Hi, this is Summit Air's virtual assistant again. I think we got cut off earlier.
     Who am I speaking with?
   greeting_unknown: Thanks for calling Summit Air, this is the virtual assistant. How can I help?
+  holding:
+  - Just give me one second.
+  - Let me pull that up.
+  - One moment.
   outbound_voicemail: Hi, this is Summit Air calling about your appointment. Please give us a call back
     at {phone}.
   recording_notice: This call may be recorded.

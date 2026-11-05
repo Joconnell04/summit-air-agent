@@ -224,6 +224,7 @@ async def entrypoint(ctx: JobContext) -> None:
     tool_log = ToolLog()
     llm_log = LlmLog()
     call = Call(tools_server, bridge, tool_log, voice["endpointing"], llm_log)
+    call.reply.holding_lines = list(voice_lines(folder).get("holding") or [])
     call.session = session
     # The pace the server chose for this caller (app/pace.py), from the greeting on.
     call.apply_pace(data)

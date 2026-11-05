@@ -1,13 +1,10 @@
-"""The bridge line: a short pre-recorded clip ("Okay, just give me one second.") so the caller hears
-something instead of silence while work runs (docs/latency.md, spec S-37a).
-
-Two triggers:
-- A tool that hasn't answered after `after_s`.
-- A look-up the model's reply calls when the caller heard nothing from that reply first (`lead_in`):
-  the wait there is the model's second step after the tool, about a second, not the tool itself
-  (live call 1, issue #149, where every tool answered inside 0.3 s and the caller heard silence).
+"""The bridge line: a short pre-recorded clip ("Okay, just give me one second.") played while a slow
+tool runs, so the caller hears something instead of silence (docs/latency.md, spec S-37a). The wait
+after a fast look-up is covered by the holding line said in the reply itself (prompts/assemble.py
+SpokenReply.holding_line).
 
 Rules, all enforced here:
+- Only when the tool hasn't answered after `after_s`; fast tools never trigger it.
 - Only while the agent and the caller are both silent.
 - At most once every `min_turns_between` caller turns, and never the same clip twice in a row.
 - Never overlaps the agent: the reply's audio waits for the clip to finish (`wait_clear`), while the
@@ -78,13 +75,6 @@ class Bridge:
         self.clip_started_at = time.time()
         self._playing = asyncio.create_task(self._play(clip))
 
-    def lead_in(self) -> bool:
-        """The model's reply calls a look-up and the caller heard nothing from it first: a clip
-        now, if the rules allow one, rather than silence until the model's next step speaks."""
-        clip = self._pick()
-        if clip:
-            self._start(clip)
-        return clip is not None
 
     async def run(self, work: Awaitable):
         """Run a tool call; start a clip if it is slow and the rules allow one."""

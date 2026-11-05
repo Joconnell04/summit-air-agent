@@ -225,6 +225,9 @@ class InProcessAgent:
         self.system = system_prompt(started["data"], now=now)
         slug = started["data"]["tenant"]["slug"]
         self.slug = slug
+        if self.reply is not None and hasattr(self.reply, "holding_lines"):
+            voice = yaml.safe_load((TENANTS_DIR / slug / "agent.yaml").read_text()).get("voice") or {}
+            self.reply.holding_lines = list(voice.get("holding") or [])
         self.tools = assembled_tool_specs(slug) if _assemble() else tool_specs()
         safety = started["data"].get("safety")
         if safety and started["say"]:
@@ -336,14 +339,21 @@ class InProcessAgent:
             usage.add(reply.usage)
             hops.append(reply.first_token_ms)
             said, content = reply.text, reply.content
+            calls = [(u["name"], u["input"]) for u in reply.tool_uses]
             if self.reply is not None and said:
-                calls = [(u["name"], u["input"]) for u in reply.tool_uses]
                 said = self.reply.text(said, calls)
                 # The model's own history keeps what the worker would have spoken, as LiveKit's
                 # chat context does.
                 content = [b for b in content if b.get("type") != "text"]
                 if said:
                     content.insert(0, {"type": "text", "text": said})
+            # A look-up with only "Got it." or nothing before it ends with a holding line, as the
+            # worker says it (issue #149).
+            hold = self.reply.holding_line(said or "", calls) if self.reply is not None else ""
+            if hold:
+                said = f"{said} {hold}" if said else hold
+                content = [b for b in content if b.get("type") != "text"]
+                content.insert(0, {"type": "text", "text": said})
             self.messages.append({"role": "assistant", "content": content})
             if said:
                 spoken.append(said)

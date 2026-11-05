@@ -374,6 +374,10 @@ def test_the_top_priority_line_is_spoken_from_the_server_before_the_models_times
                      [use("find_slots", job_type="no_heat"), say("I have this afternoon.")],
                      [say("[END]")])
     reply = result.transcript[2].text
-    assert reply.startswith("I've marked this call top priority, so you get our soonest opening.")
+    # The look-up's holding line, said before the wait (issue #149), then the server's line.
+    assert reply.startswith(
+        "Just give me one second. I've marked this call top priority, so you get our soonest "
+        "opening."
+    )
     assert reply.endswith("I have this afternoon.")
     assert result.check_failures == []

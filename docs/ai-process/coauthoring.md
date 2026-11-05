@@ -374,3 +374,18 @@ Pick (verbatim, Jackson, relayed by the coordinating session):
 Changed at the pick: option A built at `/bench/rules` (DECISIONS.md 091); `/owner/rules` redirects there.
 Commit: (this PR)
 Status: open
+
+## live call 1 (issue #149: wait time, voice, holding line, callback day, schedule, ending)
+Feedback (verbatim, Jackson, relayed by the coordinating session, after call `call-_+16784774024_qSVS59jLcAPP`):
+> the wait time was way too long, like very long. And I didn't like the voice as well. So if we can just change the voice from that like weird like girl voice to something else... Just choose any other one... It said got it, but wasn't telling me that it would need a second to do a task. Like it should just be like, okay, I'm gonna do that. Just give me 1 second. You know, something very human, with like the proper swing of the voice... I asked for an appointment Friday. It said, I'll book you tomorrow, anywhere from whatever it said, like 3 to 5 p.m.... Tomorrow would be Thursday. So that's just completely wrong. And that's not what I asked for... there should be no active appointments right now... Actually, no, that's not true, because the eval set needs to test for active appointments. So keep whatever active appointments would be in on the eval set. And then a few extra ones in case I want to do like my own run of the eval set. But most times should be available... Saturday and Sunday should also be available... It also just abruptly ended the call. There should always be a 1 second wait before ending the call to at least ensure in case the person said anything else.
+Changed:
+- The turn detector's longest wait after the caller stops: left to the issue #150 lane, whose audio rig can put pauses inside a caller's line.
+- A reply that promised work but called no tool, or that the caller heard none of, is asked again at once (the 19 s of silence after "Got it.").
+- A holding line before a look-up: the model's own in the same reply, or the tenant's ("Just give me one second.") added to it when the caller would hear only "Got it." or nothing. DECISIONS.md 096.
+- The voice: Cartesia "Max" instead of Katie, and the clips re-recorded in it. DECISIONS.md 093.
+- Callbacks: a weekday the caller names is the day booked ("Friday around 2 PM"), and the agent never explains the calendar.
+- The live schedule: weekends open 8 AM to 8 PM, and a script cancels most of the live world's filler visits, keeping the named customers' visits and one filler in six. DECISIONS.md 095.
+- Ending: no "That means the callback is off", and a one-second wait after the goodbye that keeps the call open if the caller speaks.
+- Cancel and the name check: the reason is optional and asked once at most; one wrong name gets one polite refusal and the callback offer. DECISIONS.md 097.
+Commit: (this PR)
+Status: open

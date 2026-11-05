@@ -573,30 +573,54 @@ def test_only_one_follow_up_until_the_caller_speaks_again():
 
 
 
-def test_a_look_up_with_nothing_said_before_it_gets_a_holding_line(monkeypatch):
-    """Issue #149: the lead-in naming the street is dropped, so the caller would hear nothing until
-    the model's second step; the worker plays a holding clip at once."""
+
+HOLDING = ["Just give me one second.", "Let me pull that up.", "One moment."]
+
+
+def _with_holding(setup):
+    def apply(reply):
+        reply.holding_lines = HOLDING
+        setup(reply)
+
+    return apply
+
+
+def test_live_call_1_got_it_before_a_look_up_ends_with_a_holding_line(monkeypatch):
+    """Issue #149: the sentence naming the street is dropped, so the caller heard "Got it." and then
+    waited through the model's second step in silence."""
     text, replies = _follow_ups(
-        monkeypatch, _asked_to_cancel, "I'll look up the tune-up at 142 Main Street now.",
+        monkeypatch, _with_holding(_asked_to_cancel), "Got it. ",
+        "I'll look up the tune-up at 142 Main Street now.",
         ("find_customer", {"phone": "+16784774024"}),
     )
-    assert text == "" and replies == []
-    assert _follow_ups.call.bridge.count == 1
+    assert text == "Got it. Just give me one second."
+    assert replies == []
 
 
-def test_a_look_up_after_the_models_own_holding_line_gets_no_clip(monkeypatch):
+def test_a_look_up_after_the_models_own_words_gets_no_holding_line(monkeypatch):
     text, _ = _follow_ups(
-        monkeypatch, _asked_to_cancel, "Okay, just give me one second.",
+        monkeypatch, _with_holding(_asked_to_cancel), "Okay, let me find that visit for you.",
         ("find_customer", {"phone": "+16784774024"}),
     )
-    assert text == "Okay, just give me one second."
-    assert _follow_ups.call.bridge.count == 0
+    assert text == "Okay, let me find that visit for you."
 
 
-def test_a_booking_gets_no_clip_since_its_confirmation_is_spoken_at_once(monkeypatch):
-    _follow_ups(monkeypatch, _gave_address, ("book_appointment", {"slot_id": "x"}))
-    assert _follow_ups.call.bridge.count == 0
+def test_a_booking_gets_no_holding_line_since_its_confirmation_is_spoken_at_once(monkeypatch):
+    text, _ = _follow_ups(
+        monkeypatch, _with_holding(_gave_address), "Got it. ", ("book_appointment", {"slot_id": "x"})
+    )
+    assert text == "Got it."
 
+
+def test_holding_lines_take_turns_and_never_repeat_back_to_back():
+    reply = SpokenReply(HOLDING)
+    look = [("find_slots", {})]
+    said = [reply.holding_line("Okay.", look) for _ in range(4)]
+    assert said == [*HOLDING, HOLDING[0]]
+    assert SpokenReply(["One moment."]).holding_line("", look) == "One moment."
+    single = SpokenReply(["One moment."])
+    single.holding_line("", look)
+    assert single.holding_line("", look) == ""
 
 def test_the_line_drops_only_after_a_quiet_second_past_the_goodbye():
     """Issue #149: the call ended the instant the goodbye finished."""

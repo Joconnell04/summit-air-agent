@@ -318,9 +318,9 @@ PROMISES_ACTION = re.compile(
     re.IGNORECASE,
 )
 # Look-ups whose answer needs a second model step before the caller hears anything. A reply that
-# calls one with nothing said first gets a bridge clip at once (voice/livekit/bridge.py lead_in).
-# Bookings, moves and cancels are left out: the server's confirmation is spoken the moment the tool
-# answers, so a clip would only push it back.
+# calls one, and says nothing first but an acknowledgment, ends with a holding line
+# (SpokenReply.holding_line). Bookings, moves and cancels are left out: the server's confirmation
+# is spoken the moment the tool answers.
 LOOKUPS = ("find_customer", "get_customer_history", "find_slots")
 # A sentence that only acknowledges the caller ("Got it.", "Yes.", "Sure, I can set up an AC
 # tune-up."). A reply of nothing else, with no tool call and no question, leaves the caller waiting
@@ -563,7 +563,10 @@ class SpokenReply:
     ends. That is from the first in-area ZIP check, when a read-back can come, until the
     read-back is confirmed, and for the whole of a safety call."""
 
-    def __init__(self) -> None:
+    def __init__(self, holding_lines: list[str] | tuple[str, ...] = ()) -> None:
+        # The tenant's holding lines (agent.yaml voice.holding), said in turn.
+        self.holding_lines = list(holding_lines)
+        self._last_holding: str | None = None
         self.address_checked = False
         self.read_back_confirmed = False
         self.safety_call = False
@@ -695,6 +698,26 @@ class SpokenReply:
                 for number, word in self.streets
             )
         )
+
+    def holding_line(self, kept: str, calls: list[tuple[str, dict]]) -> str:
+        """A holding line to end a reply that calls a look-up when the caller would hear nothing
+        before the wait but an acknowledgment (live call 1, issue #149: "Got it." and then the
+        model's second step in silence, because "I'll look up the tune-up at 142 Main Street now"
+        was dropped for naming the street). "" when the reply said something of its own, called
+        no look-up, or the tenant has no lines. Never the same line twice in a row."""
+        if not self.holding_lines or not any(name in LOOKUPS for name, _ in calls):
+            return ""
+        if kept.strip() and not all(
+            ONLY_ACKNOWLEDGES.fullmatch(s.strip()) for s in sentences(kept)
+        ):
+            return ""
+        lines = self.holding_lines
+        start = (lines.index(self._last_holding) + 1) if self._last_holding in lines else 0
+        line = lines[start % len(lines)]
+        if line == self._last_holding:
+            return ""
+        self._last_holding = line
+        return line
 
     def dead_end(self, raw: str, kept: str, calls: list[tuple[str, dict]]) -> str | None:
         """A reply that would leave the caller waiting in silence, and why: it called no tool yet

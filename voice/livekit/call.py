@@ -12,13 +12,7 @@ from livekit import rtc
 from livekit.agents import Agent, ModelSettings, StopResponse, llm
 from livekit.agents.llm import ChatContext, ChatMessage
 
-from prompts.assemble import (
-    FOLLOW_UP_NOTES,
-    LOOKUPS,
-    SENTENCE_END,
-    SpokenReply,
-    server_notes,
-)
+from prompts.assemble import FOLLOW_UP_NOTES, SENTENCE_END, SpokenReply, server_notes
 
 from .bridge import Bridge
 from .server import UNREACHABLE, ToolServer
@@ -283,9 +277,11 @@ class SummitAgent(Agent):
         if kept:
             heard.append(kept)
             yield kept
-        if not heard and any(name in LOOKUPS for name, _ in calls):
-            # The caller would wait in silence for the model's next step: a holding line now.
-            self.call.bridge.lead_in()
+        hold = reply.holding_line(" ".join(heard), calls)
+        if hold:
+            # The caller would wait through the model's next step on "Got it." or nothing at all.
+            yield (" " if kept else "") + hold
+            heard.append(hold)
         reason = reply.dead_end(raw, " ".join(heard), calls)
         if reason:
             self.call.follow_up(reason)

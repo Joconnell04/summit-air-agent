@@ -221,7 +221,9 @@ def test_the_harness_asks_again_after_a_promise_with_no_tool_call():
     agent.start()
     turn = agent.hear("I need to cancel the tune up.")
     # The follow-up called the tool (the stub answers every tool with its safety line).
-    assert turn.text == "Got it. I'll look up the visit now. Please get outside first."
+    assert turn.text == (
+        "Got it. I'll look up the visit now. Just give me one second. Please get outside first."
+    )
     assert model.calls[1]["messages"][-1]["content"] == FOLLOW_UP_NOTES["promised"]
 
 
