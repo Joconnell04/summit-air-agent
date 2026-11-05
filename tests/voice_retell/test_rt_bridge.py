@@ -553,3 +553,14 @@ def test_without_timings_from_get_call_the_last_events_timings_are_used(
     clock["ms"] = start + 24_500  # the goodbye ended 21.7 s in: past the grace
     later.run()
     assert retell.stopped == ["abc"]
+
+
+def test_the_electrical_lines_reach_the_agent_now(client, retell):
+    """Retell eval suite round 1: the server's electrical lines came back in the turn's `spoken`,
+    which the bridge dropped, so they were said in neither electrical case."""
+    inbound(client, "abc")
+    sparked = utterance("user", "Hi, um, my outdoor AC unit just sparked and made a popping sound "
+                        "when it kicked on, and now it won't run.")
+    event(client, "transcript_updated", call_obj("abc", GREETING, sparked))
+    assert len(retell.said) == 1
+    assert "Please step away from the unit and turn it off" in retell.said[0][1]
