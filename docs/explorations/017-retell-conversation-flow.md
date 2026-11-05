@@ -176,6 +176,10 @@ The reviewer agent (`.claude/agents/reviewer.md`) read the first build against t
 
 Build it as mapped, run the must-pass set and the standard suite at two samples, and judge it against our stack's 92% reference. It should do better than the baseline on the safety lines word for word and on notes arriving before the reply; it can't match our stack on the speech filter.
 
+## What the run showed
+
+Built as mapped, the flow held every server rule and said every fixed line exactly, and scored 53% on the standard suite against our stack's 92%: the gap is the speech filter in layer 3, which this map listed as "can't be done in a flow" (evals/rounds/retell-flow-01.md, DECISIONS.md 083).
+
 ## Sources
 
 - Retell docs as listed above, read 2026-11-04.

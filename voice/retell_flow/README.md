@@ -40,6 +40,10 @@ make eval SUITE=standard STACKS=retell_flow SAMPLES=2
 
 Through `voice/retell_flow/eval_adapter.py`: the baseline's adapter on the flow's chat agent, with the same eval instance and mock reset per scenario.
 
+## Results
+
+Round 1 (evals/rounds/retell-flow-01.md, DECISIONS.md 083): every gate held and the safety lines were word for word on every safety call, but 53% on the standard suite against our stack's 92%, because nothing filters the model's own speech. Not put on the 678 number.
+
 ## Settings, and why
 
 The voice, ears, turn-taking and timeouts are the baseline's (`voice/retell/build.py` `SPEECH`), so the comparison with the baseline is about the flow. What the flow sets:

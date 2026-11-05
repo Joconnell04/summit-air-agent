@@ -12,6 +12,15 @@ Discussion: docs/ai-process/transcripts/... or docs/explorations/...
 Issue: #N
 -->
 
+## 083. Retell's Conversation Flow keeps every gate but can't filter the model's speech, so our stack stays
+
+Decided: the Retell Conversation Flow version of the agent (`voice/retell_flow/`, issue #133) does not go on (678) 336-6730 for live calls, and our LiveKit stack stays the product. The flow is kept in the repository, reproducible with `make retell-flow-push`, as the tested form of Retell for bake-off 7.
+Why: built to mirror our design, with our tool server behind every gate, it said the safety lines word for word on every safety call (79 of 79 standard, 36 of 36 must-pass), booked only after a confirmed read-back, booked no commercial or out-of-area caller and ended calls only on the server's answer. That closes the gap that ruled out the single-prompt agent (038). But it passed 53% of the standard suite against our stack's 92% (61% against 92% where the eval instance sets scenarios up the same way) and 45% of must-pass against 88%, with must-pass code checks failing in 4 scenarios (MEASURED, evals/rounds/retell-flow-01.md). Almost all of the gap is the model's own speech: repeated read-backs, two questions at once, internal words. Our speech filter (060) drops those before they are spoken; Retell streams the model's text straight to the voice, so a flow has nowhere to run it.
+Considered: putting the flow on the number anyway for a side-by-side call (the issue's bar was every must-pass code check and within 5 points, and it missed both by far); stage-scoped prompts inside the flow (exploration 016's idea, a separate change that wouldn't add the missing filter); Retell's custom-LLM socket, where our server would see each reply before it is spoken and could filter it, at the cost of running the model ourselves, which is our stack again behind Retell's ears and voice.
+Would change if: Retell adds a hook between the model's text and the voice, or a live-call round shows the filter matters less on the phone than in the grader's reading, in which case the flow is the Retell entrant to rerun.
+Discussion: docs/explorations/017-retell-conversation-flow.md; docs/bakeoffs.md, bake-off 7. Jackson in chat: "if retell's conversation flow can do what we're trying to do better, then that's worth testing."
+Issue: #133
+
 ## 074. The design system is saved to the Claude account, built from the repository
 
 Decided: keep the design system's source in this repository (`tokens.css`, `components.css`, `/owner/design`, docs/design-system.md) and save a copy to the Claude account as a design system, "Revin owner view", rebuilt from the code by `scripts/export_design_system.py`. Its brand book is docs/design-system-rules.md, the short form of the design system page written as rules for an agent.

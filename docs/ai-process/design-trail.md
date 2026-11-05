@@ -111,3 +111,4 @@ How the design was reached, in order, so a reader can follow each choice back to
 | A caller who pushes | A calm line and the soonest window or a person; pushing and claims raise nothing | DECISIONS.md 073, #124 |
 | Eval reference after C-58 and #125 | Two-sample standard run adopted at 92%; floor stays 90% | DECISIONS.md 011, #126 |
 | Design system saved to Claude | The repository stays the source; a copy in the Claude account is rebuilt from the code, with a drift test | DECISIONS.md 074 |
+| Retell Conversation Flow | Our design on Retell's stage graph kept every gate and said the fixed lines exactly, but scored 53% to our 92% without our speech filter; not put on the number | DECISIONS.md 083, #133, evals/rounds/retell-flow-01.md |
