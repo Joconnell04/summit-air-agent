@@ -48,6 +48,13 @@ HANDBOOK = {
     "scope_boundaries": True,
 }
 
+PLATFORM_VOICE = "cartesia-Max"
+EXPRESSIVE_PROMPT = (
+    "Sound warm, upbeat and optimistic, like a friendly neighbour who is glad to help. Let "
+    "questions rise at the end. Use [happy] for greetings and good news, [empathetic] when the "
+    "caller has a problem."
+)
+
 # Words the ears should expect beyond the baseline's list and the tenant's street names.
 EXTRA_KEYWORDS = ["Manhattan", "Brooklyn", "Queens", "Bronx", "Staten Island", "tune-up"]
 
@@ -91,8 +98,8 @@ FUNCTIONS = {
     },
     "book_appointment": {
         "description": "Book the window the caller chose, after read_back is confirmed. Its sentence "
-        "is the confirmation; say it as written. Don't call it twice for the same window.",
-        "wait": "Say a short natural line such as \"Booking that now.\"",
+        "is the confirmation; say it as written. Don't call it twice for the same window. Call it "
+        "the moment the caller picks, with nothing said first.",
     },
     "reschedule_appointment": {
         "description": "Move a visit this caller already has to a window they chose from find_slots, "
@@ -126,7 +133,19 @@ PROMPT_ADDITIONS = """## Intake, briefly
 A tune-up needs no problem and no start date: the reason is the yearly service. Ask how cold or
 warm it is only on a no-heat or no-cooling call. Once a detail is said, don't ask for it again;
 `read_back` is the one confirmation of the address and number, so don't read them back yourself
-first. When the caller picks a window, book it.
+first. When the caller picks a window, call `book_appointment` at once without saying anything,
+then say only its confirmation: never repeat the window back or say "let me book that".
+
+One question per turn, always, including after "No rush" or a check-in. Skip any question the
+caller has already answered or that's obvious from what they said: no heat with a broken radiator
+means it's cold inside, so don't ask.
+
+Ask a new caller's name once. When they give it, take it as said and go on; don't confirm it back.
+
+When the caller gives a house number and street without a ZIP, call `find_address` right away;
+ask for the ZIP only if the lookup asks for it.
+
+Sound warm and upbeat: glad to help, positive about getting someone out, never flat or curt.
 
 Everything you write is spoken aloud. Never write brackets, stage directions or notes to yourself,
 and never mention the server, tools, systems, confirmations, notes, reference info or a knowledge
@@ -199,9 +218,8 @@ def page(tenant_dir: Path, letters: bool = False) -> str:
         .replace("{company}", company)
         .replace("{safety_lines}", lines)
         .replace("{sign_off}", f"\"{' '.join(safety['sign_off'].split())}\"")
-        # Here end_call is Retell's own: it hangs up once the agent has finished speaking.
-        .replace(END_CALL_LINE, "- `end_call` after your goodbye. It hangs up once you've finished "
-                 "speaking.")
+        .replace(END_CALL_LINE, "- `end_call` after your goodbye. The line drops a moment after "
+                 "you finish speaking.")
     )
     extra = f"\n\n{LETTERS_PROMPT}" if letters else ""
     facts = "\n\n".join(f"### {t['title']}\n\n{t['text']}" for t in knowledge(tenant_dir))
@@ -268,12 +286,14 @@ def functions(specs: list[dict], base_url: str, office_number: str, letters: boo
             tool.update(speak_during_execution=True, execution_message_description=native["wait"],
                         execution_message_type="prompt")
         tools.append(tool)
-    # Nothing is said during End Call: a spoken message doubled the goodbye in the review chats,
-    # and a spaced-dash pause (Retell's pause mark) added no time before the hang-up (0.07 s and
-    # 0.02 s after the last word, MEASURED on two calls after Jackson's call 2).
-    tools.append({"type": "end_call", "name": "end_call", "speak_during_execution": False,
-                  "description": "Hang up, after you have said goodbye and the caller has nothing "
-                  "else. Never in the middle of a safety call before the sign-off."})
+    # Our own end_call through the bridge, not Retell's: Retell's hung up 0.02 to 0.07 s after the
+    # goodbye (MEASURED), which Jackson found rushed after call 2, and has no delay setting; the
+    # bridge stops the call 1.5 s after the goodbye's last word (voice/retell/bridge.py), and
+    # the server keeps its end_call gate.
+    [end] = baseline.custom_tools([by_name["end_call"]], base_url)
+    end["description"] = ("Hang up, after you have said goodbye and the caller has nothing else. "
+                          "Never in the middle of a safety call before the sign-off.")
+    tools.append(end)
     tools.append({"type": "transfer_call", "name": "transfer_to_office",
                   "description": "Put the caller through to the office, only when they ask for a "
                   "person right now during office hours. Tell them you're transferring first.",
@@ -311,6 +331,17 @@ def agent_body(llm_id: str, base_url: str, voice_id: str, voice_model: str, name
     # Speak the greeting the moment the call connects, and start every slate call clean.
     body["begin_message_delay_ms"] = 0
     body["contact_memory_config"] = {"enable_read": False, "enable_update": False}
+    # Max "happy", Jackson's pick from the Cartesia samples. Retell can't pass Cartesia's emotion
+    # setting to a custom voice, and Expressive mode works only on Retell's platform voices, so
+    # this is Retell's own Cartesia Max with Expressive mode and a warm, upbeat guide. Recorded
+    # through Retell (data/voice-samples/retell/), its questions rose about 75% in pitch on the
+    # last word, against 50% for the custom Max and a fall on sonic-3.6 (MEASURED, rough
+    # autocorrelation pitch track).
+    body["voice_id"] = PLATFORM_VOICE
+    body["voice_model"] = "sonic-3"
+    body["enable_expressive_mode"] = True
+    body["expressive_emotion_tags"] = ["happy", "empathetic"]
+    body["expressive_mode_prompt"] = EXPRESSIVE_PROMPT
     # One check-in after 10 s of silence, then quiet: on Jackson's call 2 the 6 s reminders nudged
     # him three times while he thought.
     body["reminder_trigger_ms"] = 10000

@@ -49,11 +49,11 @@ def test_the_functions_are_scoped_and_end_call_is_retells_own():
     assert names[:-2] == list(build.FUNCTIONS)
     assert "add_note" not in names and "mark_do_not_call" not in names
     end, transfer = tools[-2], tools[-1]
-    assert end == {**end, "type": "end_call", "speak_during_execution": False}
+    assert end["type"] == "custom" and end["url"] == f"{BASE}/retell/tools/end_call"
     assert transfer["type"] == "transfer_call"
     assert transfer["transfer_destination"] == {"type": "predefined", "number": "+15555550100"}
     slow = {t["name"] for t in tools if t.get("speak_during_execution") and t["type"] == "custom"}
-    assert {"find_slots", "book_appointment", "find_address"} <= slow
+    assert {"find_slots", "find_address"} <= slow and "book_appointment" not in slow
     assert all(t["url"].startswith(f"{BASE}/retell/tools/") for t in tools if t["type"] == "custom")
 
 
@@ -67,6 +67,8 @@ def test_the_agent_keeps_the_tested_dials_and_adds_the_handbook():
     assert body["handbook_config"]["echo_verification"] is True
     assert body["contact_memory_config"] == {"enable_read": False, "enable_update": False}
     assert body["begin_message_delay_ms"] == 0
+    assert body["voice_id"] == "cartesia-Max" and body["enable_expressive_mode"] is True
+    assert "happy" in body["expressive_emotion_tags"]
     houston = [d for d in body["pronunciation_dictionary"] if d["word"] == "Houston Street"]
     assert houston and houston[0]["phoneme"].startswith("ˈhaʊ")
     assert {"Manhattan", "Bronx", "radiator", "boiler", "carbon monoxide"} <= set(body["boosted_keywords"])
