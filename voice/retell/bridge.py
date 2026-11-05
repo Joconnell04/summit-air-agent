@@ -273,6 +273,13 @@ class Bridge:
             safety = data.get("safety")
             if safety and safety.get("action") in SAFETY_ACTIONS and safety.get("text"):
                 actions.append(safety)
+            # The server's own words for the turn (the electrical lines, the card stop, the billing
+            # callback) go to the agent the same way: they were dropped, so the electrical lines
+            # were said in neither electrical case (Retell eval suite round 1).
+            spoken = data.get("spoken")
+            if spoken and spoken.get("text"):
+                actions.append({"action": "speak_lines", "kind": spoken.get("kind"),
+                                "text": spoken["text"]})
             hints += data.get("hints") or []
         # The model said its goodbye again after the hang-up was called off, without end_call:
         # the hang-up is armed again for that goodbye.
