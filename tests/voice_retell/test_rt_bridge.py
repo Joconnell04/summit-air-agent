@@ -179,6 +179,17 @@ def test_a_business_caller_gets_the_servers_note_without_cutting_in(client, rete
     assert retell.said == []
 
 
+def test_the_native_agent_gets_the_servers_note_marked_private(client, retell, bridge):
+    """Jackson's call 2: the bare note read to the native model as its own words."""
+    bridge.private_note_agents = {"agent_native"}
+    inbound(client, "abc")
+    business = utterance("user", "I manage a restaurant on Atlantic Avenue and the AC died.")
+    event(client, "transcript_updated",
+          call_obj("abc", GREETING, business, agent_id="agent_native"))
+    [(_, note)] = retell.context
+    assert note.startswith("Private note") and note.endswith("[server] commercial")
+
+
 def test_an_allowed_end_call_stops_the_call_after_the_goodbye(client, retell, later, tool_app):
     said = booked_call(client)
     bye = [*said, utterance("user", "That's all, thanks."), utterance("agent", "Take care, bye.")]

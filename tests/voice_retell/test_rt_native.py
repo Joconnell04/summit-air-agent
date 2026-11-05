@@ -43,7 +43,8 @@ def test_the_functions_are_scoped_and_end_call_is_retells_own():
     assert names[:-2] == list(build.FUNCTIONS)
     assert "add_note" not in names and "mark_do_not_call" not in names
     end, transfer = tools[-2], tools[-1]
-    assert end == {**end, "type": "end_call", "speak_during_execution": False}
+    assert end == {**end, "type": "end_call", "execution_message_type": "static_text"}
+    assert end["execution_message_description"].strip() == "-"
     assert transfer["type"] == "transfer_call"
     assert transfer["transfer_destination"] == {"type": "predefined", "number": "+15555550100"}
     slow = {t["name"] for t in tools if t.get("speak_during_execution") and t["type"] == "custom"}
@@ -55,7 +56,8 @@ def test_the_agent_keeps_the_tested_dials_and_adds_the_handbook():
     body = build.agent_body("llm_1", BASE, "voice_1", "sonic-3", local_names.load(TENANT))
     assert body["agent_name"] == build.AGENT_NAME
     assert body["stt_mode"] == "accurate" and body["responsiveness"] == 1.0
-    assert body["enable_backchannel"] is True and body["reminder_trigger_ms"] == 6000
+    assert body["enable_backchannel"] is True and body["reminder_trigger_ms"] == 10000
+    assert body["reminder_max_count"] == 1
     assert body["handbook_config"]["nato_phonetic_alphabet"] is False
     assert body["handbook_config"]["echo_verification"] is True
     assert body["contact_memory_config"] == {"enable_read": False, "enable_update": False}

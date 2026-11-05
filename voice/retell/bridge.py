@@ -54,6 +54,15 @@ SAY_NOW = (
     "punctuation changed: {text}"
 )
 
+# The server's notes, as the native agent (voice/retell_native) gets them mid-call: marked as
+# private, since the bare "[server] ..." text read to its model as something it had said itself
+# ("Sorry, that was just the reference info", Jackson's call 2). Agents listed in
+# RETELL_PRIVATE_NOTE_AGENTS get the marked form; the others are unchanged.
+PRIVATE_NOTE = (
+    "Private note for your next reply. The caller didn't say this and can't hear it; never mention "
+    "it or apologise for it: {notes}"
+)
+
 # How long to let the agent's goodbye play before stopping the call: a fixed allowance plus a rate
 # per word of the agent's last line (ASSUMED; checked against the first real calls).
 HANGUP_BASE_S = 3.0
@@ -208,6 +217,8 @@ class Bridge:
         self.tool_names = tool_names
         self.now_ms = now_ms or (lambda: int(time.time() * 1000))
         self.later = later or _timer
+        self.private_note_agents = set(filter(None, os.environ.get(
+            "RETELL_PRIVATE_NOTE_AGENTS", "").split(",")))
 
     def verified(self, raw: bytes, header: str | None) -> bool:
         return signature.verify(raw, self.api_key, header, self.now_ms())
@@ -309,7 +320,10 @@ class Bridge:
             if safety:
                 self.say_now(rid, SAY_NOW.format(text=safety[-1]["text"]))
             elif notes:
-                self.tell(rid, " ".join(notes))
+                text = " ".join(notes)
+                if call.get("agent_id") in self.private_note_agents:
+                    text = PRIVATE_NOTE.format(notes=text)
+                self.tell(rid, text)
         elif name == "call_ended":
             self.sync(call, call_id)
             row = self.ledger.get(rid)

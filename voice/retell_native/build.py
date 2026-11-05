@@ -32,10 +32,12 @@ END_CALL_LINE = "- `end_call` once the caller is done. The server decides whethe
 # The Agent Handbook (create-agent `handbook_config`, SOURCE:
 # https://docs.retellai.com/api-references/create-agent.md, read 2026-11-05). NATO spelling stays off:
 # "B as in Bravo" on every street name sounds robotic to a homeowner, and echo verification already
-# repeats the details back. The professional preset is off because the conversational one replaces it.
+# repeats the details back. The conversational personality is off: its rewrite split replies in two
+# with a pause between ("Great.  You're booked...", Jackson's call 2), 3 of 6 replies on a replayed
+# web call against 0 of 6 without it (MEASURED, voice/retell/turn_probe.py clips on the next copy).
 HANDBOOK = {
     "default_personality": False,
-    "conversational_personality": True,
+    "conversational_personality": False,
     "natural_filler_words": True,
     "high_empathy": True,
     "echo_verification": True,
@@ -127,7 +129,15 @@ warm it is only on a no-heat or no-cooling call. Once a detail is said, don't as
 first. When the caller picks a window, book it.
 
 Everything you write is spoken aloud. Never write brackets, stage directions or notes to yourself,
-and never mention the server, tools, systems or confirmations; just say the next thing to the caller.
+and never mention the server, tools, systems, confirmations, notes, reference info or a knowledge
+base, and never apologize for them; just say the next thing to the caller. If the caller says
+"What?" or "Sorry?", repeat your last question in fewer, plainer words.
+
+Ask politely: "Could you give me the street and house number, please?", never "Give me...".
+
+When you've asked "Anything else?" and the caller answers only "sure", "yeah", "okay" or "all
+right", take it as yes: "Sure, what else can I help with?" If the next answer is unclear too, wrap
+up kindly, say goodbye and end the call.
 
 ## Facts and ending
 
@@ -256,9 +266,11 @@ def functions(specs: list[dict], base_url: str, office_number: str, letters: boo
             tool.update(speak_during_execution=True, execution_message_description=native["wait"],
                         execution_message_type="prompt")
         tools.append(tool)
-    # Nothing is said during End Call: the goodbye is already said, and a second one doubled it
-    # in the review chats.
-    tools.append({"type": "end_call", "name": "end_call", "speak_during_execution": False,
+    # During End Call only a pause is said (Retell reads a spaced dash as one), so the line drops
+    # a moment after the goodbye: Jackson wanted about a second more than on call 2. A spoken
+    # message doubled the goodbye in the review chats.
+    tools.append({"type": "end_call", "name": "end_call", "speak_during_execution": True,
+                  "execution_message_description": " - ", "execution_message_type": "static_text",
                   "description": "Hang up, after you have said goodbye and the caller has nothing "
                   "else. Never in the middle of a safety call before the sign-off."})
     tools.append({"type": "transfer_call", "name": "transfer_to_office",
@@ -282,6 +294,9 @@ def llm_body(tenant_dir: Path, specs: list[dict], base_url: str, model_id: str, 
         "begin_message": "{{greeting}}",
         "start_speaker": "agent",
         "knowledge_base_ids": [knowledge_base_id],
+        # Only close matches: at Retell's default 0.6, a "The what?" pulled in FAQ text the model
+        # then apologised for ("that was just some reference material").
+        "kb_config": {"filter_score": 0.75, "top_k": 2},
     }
 
 
@@ -294,4 +309,8 @@ def agent_body(llm_id: str, base_url: str, voice_id: str, voice_model: str, name
     # Speak the greeting the moment the call connects, and start every slate call clean.
     body["begin_message_delay_ms"] = 0
     body["contact_memory_config"] = {"enable_read": False, "enable_update": False}
+    # One check-in after 10 s of silence, then quiet: on Jackson's call 2 the 6 s reminders nudged
+    # him three times while he thought.
+    body["reminder_trigger_ms"] = 10000
+    body["reminder_max_count"] = 1
     return body

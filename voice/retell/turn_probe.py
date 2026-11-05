@@ -65,6 +65,17 @@ VARIANTS = {
                                    "high_empathy": True, "echo_verification": True,
                                    "speech_normalization": True, "smart_matching": True,
                                    "ai_disclosure": True, "scope_boundaries": True}},
+    # Which Handbook toggle splits a reply into two pieces with a pause between (Jackson's call 2).
+    "native-no-conversational": {"handbook_config": {"conversational_personality": False,
+                                 "natural_filler_words": True, "high_empathy": True,
+                                 "echo_verification": True, "speech_normalization": True,
+                                 "smart_matching": True, "ai_disclosure": True,
+                                 "scope_boundaries": True}},
+    "native-no-fillers": {"handbook_config": {"conversational_personality": True,
+                          "natural_filler_words": False, "high_empathy": True,
+                          "echo_verification": True, "speech_normalization": True,
+                          "smart_matching": True, "ai_disclosure": True,
+                          "scope_boundaries": True}},
     "accurate-quick": {"stt_mode": "accurate", "denoising_mode": "no-denoise",
                        "enable_backchannel": False, "responsiveness": 1.0,
                        "enable_dynamic_responsiveness": False},
@@ -130,8 +141,13 @@ class Mic:
         return started, time.perf_counter()
 
 
-async def one_call(retell: Retell, agent_id: str, clips: dict[str, bytes]) -> dict:
-    web = retell.request("POST", "/v3/create-web-call", {"agent_id": agent_id})
+async def one_call(retell: Retell, agent_id: str, clips: dict[str, bytes],
+                   variables: dict | None = None) -> dict:
+    """`variables` are the dynamic variables for an agent whose prompt needs them."""
+    body = {"agent_id": agent_id}
+    if variables:
+        body["retell_llm_dynamic_variables"] = variables
+    web = retell.request("POST", "/v3/create-web-call", body)
     call_id, token = web["call_id"], web["access_token"]
     session = {}
 
