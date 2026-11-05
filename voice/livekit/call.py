@@ -254,12 +254,18 @@ class SummitAgent(Agent):
                     held += done
                 else:
                     for sentence in done:
-                        if kept := reply.sentence(sentence):
+                        # From a sentence that could say the address or number back, the rest of
+                        # the reply waits for its end (SpokenReply.holds_from).
+                        if held or reply.holds_from(sentence):
+                            held.append(sentence)
+                        elif kept := reply.sentence(sentence):
                             yield kept + " "
             if not isinstance(chunk, str):
                 yield chunk
         if holding:
             kept = reply.text(" ".join([*held, pending]), calls)
+        elif held or (pending.strip() and reply.holds_from(pending)):
+            kept = reply.tail([*held, pending], calls)
         else:
             kept = reply.sentence(pending) if pending.strip() else ""
         if kept:

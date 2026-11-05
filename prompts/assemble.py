@@ -310,7 +310,7 @@ def server_notes(hints: list[str], known: dict[str, str] | None = None) -> list[
 # "let me confirm your address and number"). The server's own sentence says it; the caller hears
 # it once (eval round 3).
 ANNOUNCES_READ_BACK = re.compile(
-    r"\bread(?:\s+\w+){0,3}\s+back\b|\bread-back\b"
+    r"\bread(?:\s+\w+){0,4}\s+back\b|\bread-back\b"
     r"|\b(?:let me|i'?ll|i will|i need to|i have to|i'?m going to)\s+confirm\s+(?:\w+\s+){0,2}"
     r"(?:details|address|number)",
     re.IGNORECASE,
@@ -419,6 +419,14 @@ EVACUATE = re.compile(
 )
 ORDINAL = re.compile(r"^\d+(?:st|nd|rd|th)$")
 SENTENCE_END = re.compile(r"(?<=[.!?])\s+")
+# A sentence that could carry an address or phone number back, or announce the read-back: digits,
+# number words, "address" or "number", or a "confirm" / "read" word (SpokenReply.holds_from).
+MAY_RESTATE = re.compile(
+    r"\d|\b(?:zero|oh|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|\w+teen|"
+    r"twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|confirm\w*|read\w*|"
+    r"address\w*|number\w*)\b",
+    re.IGNORECASE,
+)
 # A question that only asks about the sentence before it: dropped with a dropped restatement, so
 # the caller never hears a bare "Is that right?" (eval round 3 run 20261104-031113).
 CONFIRMS_ONLY = re.compile(
@@ -497,7 +505,8 @@ class SpokenReply:
     - Some tool results are spoken by the voice layer itself, word for word: the read-back
       sentence, and on a safety call the sign-off end_call returns. On a safety call, a reply that
       calls one of those has the text the model wrote first dropped: no second goodbye. Elsewhere
-      a short lead-in before the read-back ("Got it.") is heard; an announcement of it is not.
+      a short lead-in before the read-back ("Got it.") is heard; a sentence that could restate
+      the address or number, or announce the read-back, is not.
     - In any reply, a sentence announcing the read-back is dropped, and so is a sentence that
       restates the ZIP or phone number the caller gave. The rest of the reply is kept; a reply
       with nothing left is silent.
@@ -506,9 +515,11 @@ class SpokenReply:
     through `sentence` as it completes, and while `holding` it keeps the whole reply until it
     ends. That is only on a safety call: holding every reply from the first ZIP check to the
     confirmed read-back made the caller wait for the model's whole reply, about 0.3 s more per
-    model request (issue #150)."""
+    model request (issue #150). In that window only the part of a reply from a sentence that
+    could say the address or number back waits (`holds_from`)."""
 
     def __init__(self) -> None:
+        self.address_checked = False
         self.read_back_confirmed = False
         self.safety_call = False
         self.zips: set[str] = set()
@@ -524,6 +535,20 @@ class SpokenReply:
 
     def holding(self) -> bool:
         return self.safety_call
+
+    def holds_from(self, sentence: str) -> bool:
+        """While a read-back can come (the address checked, the read-back not yet confirmed), a
+        sentence that could say the address or number back, or announce the read-back, waits with
+        the rest of its reply until the reply ends: dropped if the reply calls the read-back,
+        filtered as usual if not. A short lead-in before it ("Got it.") is spoken at once."""
+        pending = self.address_checked and not self.read_back_confirmed
+        return pending and bool(MAY_RESTATE.search(sentence))
+
+    def tail(self, held: list[str], calls: list[tuple[str, dict]]) -> str:
+        """The sentences `holds_from` kept back, once the reply has ended."""
+        if any(self.server_speaks(n, a) for n, a in calls):
+            return ""
+        return " ".join(kept for s in held if s.strip() and (kept := self.sentence(s)))
 
     def heard(self, safety: dict | None, caller_text: str = "", hints: list[str] | None = None) -> None:
         """A caller line and its turn result: the safety action the server returned, if any, and
@@ -543,6 +568,8 @@ class SpokenReply:
 
     def tool_done(self, name: str, envelope: dict) -> None:
         data = envelope.get("data") or {}
+        if name in ("check_service_area", "find_address") and envelope.get("ok"):
+            self.address_checked = True
         if name == "find_slots" and (data.get("priority") or {}).get("level") == "Urgent":
             self.urgent = True
         if data.get("spoken_first"):
@@ -634,11 +661,16 @@ class SpokenReply:
         )
 
     def text(self, text: str, calls: list[tuple[str, dict]]) -> str:
-        """The model's text for one reply, given the (name, arguments) of the tools it called."""
+        """The model's text for one reply, given the (name, arguments) of the tools it called, as
+        a streaming voice layer would speak it."""
         if self.holding() and any(self.server_speaks(n, a) for n, a in calls):
             return ""
         self.start_reply()
-        return " ".join(kept for s in sentences(text) if (kept := self.sentence(s)))
+        said = sentences(text)
+        at = next((i for i, s in enumerate(said) if self.holds_from(s)), len(said))
+        lead = [kept for s in said[:at] if (kept := self.sentence(s))]
+        rest = self.tail(said[at:], calls) if at < len(said) else ""
+        return " ".join([*lead, rest]).strip()
 
 
 def spoken_first(envelope: dict) -> str | None:

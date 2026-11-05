@@ -107,6 +107,15 @@ def test_the_reply_rule_holds_text_only_on_a_safety_call():
     reply.tool_done("check_service_area", {"ok": True})
     assert not reply.holding()
     assert reply.text("Got it. Let me read that back.", [("read_back", {})]) == "Got it."
+    restated = "Sure. Got it, 1847 East 36th Street. Is that right?"
+    assert reply.text(restated, [("read_back", {})]) == "Sure."
+    # Text harness run 20261105-055223, caller-declines-safety-advice.
+    assert reply.text("Let me check that address.", [("read_back", {})]) == ""
+    assert reply.text("I'll read the address and number back once more.", []) == ""
+    assert reply.text("Okay. One more thing: is it a boiler?", []) == (
+        "Okay. One more thing: is it a boiler?")
+    reply.tool_done("read_back", {"ok": True, "data": {"confirmed": True}})
+    assert not reply.holds_from("Tuesday from 8 to 12 works.")
     reply.heard({"action": "speak_lines"})
     assert reply.holding() and reply.server_speaks("end_call", {})
     reply.heard({"action": "cleared"})

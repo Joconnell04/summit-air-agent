@@ -412,6 +412,29 @@ def test_a_reply_that_calls_read_back_keeps_its_lead_in_but_not_the_announcement
     assert tools == ["read_back"]
 
 
+def test_a_restated_address_before_the_read_back_is_dropped_but_the_lead_in_is_heard(monkeypatch):
+    """Text harness run 20261105-054235, two-people-mind-change: "Got it, 1847 East 36th Street in
+    Brooklyn. Let me confirm that." before the server's read-back sentence."""
+    text, _ = _heard(
+        monkeypatch, _at_booking, "Sure. ", "Got it, 1847 East 36th Street in Brooklyn. ",
+        "Let me confirm that.", ("read_back", {"phone": "x"}),
+    )
+    assert text == "Sure."
+    text, _ = _heard(
+        monkeypatch, _at_booking, "Got it, the number is seven one eight, five five five. ",
+        ("read_back", {"phone": "x"}),
+    )
+    assert text == ""
+
+
+def test_a_held_sentence_is_spoken_at_the_end_when_no_read_back_follows(monkeypatch):
+    text, _ = _heard(
+        monkeypatch, _at_booking, "Okay. ", "Is it about fourteen years old? ",
+        ("find_slots", {"job_type": "tune_up"}),
+    )
+    assert text == "Okay. Is it about fourteen years old?"
+
+
 def test_after_the_address_is_checked_the_first_sentence_is_out_before_the_reply_ends(monkeypatch):
     """The first sentence reaches the voice while the model is still writing (issue #150)."""
     from livekit.agents import llm
