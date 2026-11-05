@@ -1,6 +1,6 @@
 """Point the Twilio number at one voice stack, for single live calls per stack on one number.
 
-    uv run --env-file .env python -m scripts.route_number livekit|retell|deepgram|vapi|gpt_live|status
+    uv run --env-file .env python -m scripts.route_number livekit|retell|retell_native|deepgram|vapi|gpt_live|status
 
 `livekit` restores the setup scripts/phone/setup.py makes, as saved before the first change in
 deploy/phone/routing-before.json: the number on the "summit-air" Elastic SIP trunk, whose
@@ -10,6 +10,7 @@ trunk itself untouched, so going back is one field.
 - `retell`: the number on its own trunk, "summit-air-retell", whose origination is Retell's SIP
   server, with the number imported into Retell on the production voice agent and the bridge's
   inbound webhook (SOURCE: https://docs.retellai.com/deploy/custom-telephony.md).
+- `retell_native`: the same, on the native Retell agent (voice/retell_native).
 - `deepgram`: no trunk; the number's voice URL returns TwiML that streams the call to the Deepgram
   Voice Agent bridge on the server (voice/deepgram_agent/).
 - `vapi`: no trunk; the voice URL is Vapi's Twilio inbound endpoint, once the number is imported
@@ -37,12 +38,14 @@ SNAPSHOT = ROOT / "deploy" / "phone" / "routing-before.json"
 RETELL = "https://api.retellai.com"
 RETELL_SIP = "sip:sip.retellai.com;transport=tcp"
 RETELL_AGENT = "agent_5c00ceef6a443a4ffa7f7cbeed"
+# The native Retell entry (voice/retell_native), found by name since push.py may recreate it.
+RETELL_NATIVE_NAME = "Summit Air (Retell native)"
 VAPI_INBOUND = "https://api.vapi.ai/twilio/inbound_call"
 # The Deepgram entry's own hostname (deploy/deepgram_agent/Caddyfile).
 DEEPGRAM_TWIML = "https://deepgram.45-77-105-247.sslip.io/deepgram/twiml"
 NUMBER_FIELDS = ("trunk_sid", "voice_url", "voice_method", "voice_application_sid",
                  "voice_fallback_url")
-ENTRIES = ("livekit", "retell", "deepgram", "vapi", "gpt_live")
+ENTRIES = ("livekit", "retell", "retell_native", "deepgram", "vapi", "gpt_live")
 
 
 def bridge_url() -> str:
@@ -103,18 +106,30 @@ def own_trunk(http, name: str, sip_url: str, credentials_from: str) -> dict:
     return trunk
 
 
-def retell_import(number: str, trunk: dict) -> None:
-    """The number in Retell, on the production voice agent, ringing its latest version."""
+def native_agent(retell: httpx.Client) -> str:
+    listed = retell.post("/v2/list-agents", json={}).raise_for_status().json()
+    items = listed.get("items", []) if isinstance(listed, dict) else listed
+    found = [a["agent_id"] for a in items if a.get("agent_name") == RETELL_NATIVE_NAME]
+    if len(set(found)) != 1:
+        raise SystemExit(f"retell_native: want one agent named {RETELL_NATIVE_NAME!r}, found {found}")
+    return found[0]
+
+
+def retell_import(number: str, trunk: dict, native: bool = False) -> None:
+    """The number in Retell, on the baseline or the native voice agent, ringing its latest
+    version."""
     headers = {"Authorization": f"Bearer {os.environ['RETELL_API_KEY']}"}
     with httpx.Client(base_url=RETELL, headers=headers, timeout=20) as retell:
         listed = retell.get("/v2/list-phone-numbers").raise_for_status().json()
         items = listed.get("items", []) if isinstance(listed, dict) else listed
-        agents = [{"agent_id": RETELL_AGENT, "agent_version": "latest", "weight": 1}]
+        agent = native_agent(retell) if native else RETELL_AGENT
+        agents = [{"agent_id": agent, "agent_version": "latest", "weight": 1}]
         webhook = f"{bridge_url()}/retell/inbound"
         if any(n["phone_number"] == number for n in items):
             retell.patch(f"/update-phone-number/{number}",
                          json={"inbound_agents": agents, "inbound_webhook_url": webhook}
                          ).raise_for_status()
+            print(f"Retell answers {number} with {agent}")
             return
         retell.post("/import-phone-number", json={
             "phone_number": number,
@@ -125,7 +140,7 @@ def retell_import(number: str, trunk: dict) -> None:
             "inbound_webhook_url": webhook,
             "nickname": "Summit Air on the 646 number (live-call slate)",
         }).raise_for_status()
-        print(f"imported {number} into Retell on {RETELL_AGENT}")
+        print(f"imported {number} into Retell on {agent}")
 
 
 def target(http, entry: str, saved: dict, number: str) -> dict:
@@ -134,9 +149,9 @@ def target(http, entry: str, saved: dict, number: str) -> dict:
                  "voice_fallback_url": None}
     if entry == "livekit":
         return {k: saved["number"][k] for k in NUMBER_FIELDS}
-    if entry == "retell":
+    if entry in ("retell", "retell_native"):
         trunk = own_trunk(http, f"{NAME}-retell", RETELL_SIP, saved["trunk"]["sid"])
-        retell_import(number, trunk)
+        retell_import(number, trunk, native=entry == "retell_native")
         return {**off_trunk, "trunk_sid": trunk["sid"], "voice_url": None}
     if entry == "deepgram":
         return {**off_trunk, "voice_url": os.environ.get("DEEPGRAM_TWIML_URL", DEEPGRAM_TWIML)}
