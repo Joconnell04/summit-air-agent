@@ -691,3 +691,18 @@ def test_a_frame_that_never_goes_out_marks_the_line_stalled(monkeypatch):
 
     sender = asyncio.run(go())
     assert sender.stopped and sender.stalled
+
+
+def test_the_caller_audio_has_the_pause_as_silence_and_short_lines_quieter(tmp_path, monkeypatch):
+    ctx = RigContext(Worlds(), "http://unused", load_config(), {})
+    rig = Rig(FakeEntrant(None), ctx, tmp_path, ScriptedModel([]), ScriptedModel([]),
+              verbose=False)
+    speech = fake_deepgram([])
+    paused = asyncio.run(rig.caller_audio(speech, "Yeah (pause 1s) cancel it.", scenario()))
+    assert len(paused) == 2 * len(tone(300)) + RATE * 2  # one second of 16-bit silence
+    quiet = scenario(quiet_short_lines=True)
+    loud = asyncio.run(rig.caller_audio(speech, "Maybe.", scenario()))
+    soft = asyncio.run(rig.caller_audio(speech, "Maybe.", quiet))
+    assert dbfs(soft) == pytest.approx(dbfs(loud) - 12.04, abs=0.1)
+    long_line = asyncio.run(rig.caller_audio(speech, "Maybe on Friday, then.", quiet))
+    assert dbfs(long_line) == pytest.approx(dbfs(loud), abs=0.1)

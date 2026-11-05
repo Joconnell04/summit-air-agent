@@ -1,0 +1,28 @@
+# From live call 3: "One nine nine East fourth Street" was asked for three times ("Sorry, I
+# didn't catch that"), then the call ended mid-sentence on the out-of-area line. 199 East 4th
+# Street is in Manhattan, ZIP 10009, outside the service area.
+id: live-call3-address-digit-by-digit
+flow: [booking]
+difficulty: rigorous
+traits: [split-digits]
+journeys: [J1]
+spec: [S-36]
+tags: [live, call-3]
+caller_style: jackson
+audio_checks: true
+caller_id: "(347) 555-0213"
+time: "2026-11-05T11:00"
+max_turns: 12
+persona: A new customer setting up an AC tune-up who gives the address in pieces.
+hidden_facts:
+  name: Jackson Lee
+  address: 199 East 4th Street, unit 2, New York, 10009
+opening: I'm looking to set up a new account. I need an AC tune-up.
+script:
+  - Give the address in three turns, as "One nine nine East fourth Street.", then "Unit two.", then "One zero zero zero nine."
+  - Accept what the agent says about the area, then say goodbye.
+must:
+  - agent_never_says: ["didn't catch", "not getting the address", "having trouble"]
+  - out_of_area: "10009"
+should:
+  - Takes the address on the first try and says plainly the area isn't covered.

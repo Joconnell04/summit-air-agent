@@ -111,6 +111,8 @@ class Scenario(BaseModel):
     caller_style: str | None = Field(None, pattern=SLUG)
     # Run the audio checks on the rig's timeline of the call (evals/audio_rig/live_checks.py).
     audio_checks: bool = False
+    # On the audio rig, a caller line of one or two words is said about 12 dB quieter ("Maybe.").
+    quiet_short_lines: bool = False
     must: list[dict[str, Any]] = Field(min_length=1)
     should: list[str] = Field(default_factory=list)
 

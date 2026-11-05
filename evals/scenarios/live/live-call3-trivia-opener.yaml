@@ -1,0 +1,27 @@
+# From Jackson's live call 3 (Retell, call_ca9bfcec0b968db42ac2f428bea): the call opened with
+# trivia, and the agent answered it wrongly ("There are three e's in seventeen") before asking
+# about heating. Pass is the right answer (four), then back to heating and cooling.
+id: live-call3-trivia-opener
+flow: [off-topic]
+difficulty: adversarial
+traits: [side-question]
+journeys: [J1]
+spec: [S-36]
+tags: [live, call-3]
+caller_style: jackson
+audio_checks: true
+caller_id: "(347) 555-0213"
+time: "2026-11-05T11:00"
+max_turns: 6
+persona: A caller testing the assistant with a trivia question before anything else.
+hidden_facts:
+  name: Jackson Lee
+opening: How many e's are in seventeen?
+script:
+  - After the agent answers, say "Okay. Never mind. Bye."
+must:
+  # Jackson wants the question answered, then the call steered back: seventeen has four e's.
+  - agent_says: ["\\b(four|4) e'?s\\b", "heating|cooling"]
+  - agent_never_says: ["\\b(one|two|three|five|six|seven|eight|nine|[1-35-9]) e'?s\\b"]
+should:
+  - Answers the trivia correctly in a few words, then steers back to heating and cooling.

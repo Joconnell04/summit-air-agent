@@ -1,0 +1,26 @@
+# From live call 3: the caller paused four seconds mid-sentence and the agent cut in with
+# "Sure," before the caller finished. The rig plays the pause as silence inside the line.
+id: live-call3-pause-mid-sentence
+flow: [repeat-caller]
+difficulty: rigorous
+traits: [filler]
+journeys: [J7]
+spec: [S-36]
+tags: [live, call-3]
+caller_style: jackson
+audio_checks: true
+caller_id: seed:repeatCallerOpenJob
+time: "2026-11-05T11:00"
+max_turns: 12
+persona: Maria Delgado, who wants to cancel the heating visit booked for today and pauses mid-sentence to think.
+hidden_facts:
+  name: Maria Delgado
+  address: 620 Bedford Avenue, Brooklyn, 11235
+  reason: the heat came back on by itself
+opening: Yeah, I'm just wondering (pause 4s) if I can cancel my appointment.
+script:
+  - Give the reason when asked, confirm the cancel, then say goodbye.
+must:
+  - tool_ok: cancel_appointment
+should:
+  - Waits for the caller to finish the sentence before replying.

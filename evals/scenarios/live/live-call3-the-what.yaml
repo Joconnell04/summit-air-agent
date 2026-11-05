@@ -1,0 +1,26 @@
+# From live call 3: the caller said "The what?" after a question, and the agent answered
+# "No problem." and asked something else instead of saying the question again more plainly.
+id: live-call3-the-what
+flow: [repeat-caller]
+difficulty: standard
+traits: [hard-of-hearing]
+journeys: [J7]
+spec: [S-36]
+tags: [live, call-3]
+caller_style: jackson
+audio_checks: true
+caller_id: "(347) 555-0213"
+time: "2026-11-05T11:00"
+max_turns: 10
+persona: A caller who wants to cancel an appointment and doesn't follow the agent's first question.
+hidden_facts:
+  name: Jackson Lee
+  address: you're not sure which address it is under
+opening: I want to cancel my appointment. It's under Jackson.
+script:
+  - After the agent's first question, say only "The what?"
+  - After that, say you don't know, then say goodbye.
+must:
+  - agent_never_says: ["no problem"]
+should:
+  - Says the question again in plainer words after "The what?".

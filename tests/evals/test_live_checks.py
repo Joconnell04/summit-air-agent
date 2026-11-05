@@ -261,7 +261,7 @@ def test_every_live_scenario_loads_runs_the_audio_checks_and_uses_the_jackson_st
     from evals.scenario import load_live
 
     scenarios = load_live()
-    assert len(scenarios) == 12
+    assert len(scenarios) == 18
     for s in scenarios:
         assert "live" in s.all_tags() and s.audio_checks and s.caller_style == "jackson", s.id
         assert not s.must_pass, f"{s.id}: a must-pass spec would run three times on the rig"
@@ -495,3 +495,23 @@ def test_rescore_replaces_the_audio_failures_from_the_saved_timeline(tmp_path, s
     assert failures[0] == "identity: expected mismatch"
     assert not any(f.startswith("repeat:") for f in failures)
     assert any(f.startswith('half_reply: "Got it."') for f in failures)
+
+
+# call 3: a pause inside a line, and quiet short lines
+
+def test_a_pause_mark_splits_the_line_and_leaves_the_transcript_clean():
+    from evals.audio_rig.rig import line_pieces, spoken_text
+
+    line = "Yeah, I'm just wondering (pause 4s) if I can cancel my appointment."
+    assert line_pieces(line) == ["Yeah, I'm just wondering", 4.0, "if I can cancel my appointment."]
+    assert spoken_text(line) == "Yeah, I'm just wondering if I can cancel my appointment."
+    assert line_pieces("Sure.") == ["Sure."]
+
+
+def test_quieter_lowers_the_level_by_the_gain():
+    import numpy as np
+
+    from evals.audio_rig.rig import QUIET_GAIN, quieter
+
+    pcm = (np.full(160, 8000, dtype="<i2")).tobytes()
+    assert np.frombuffer(quieter(pcm, QUIET_GAIN), dtype="<i2")[0] == 2000

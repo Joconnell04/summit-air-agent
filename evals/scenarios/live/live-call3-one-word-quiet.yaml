@@ -1,0 +1,26 @@
+# From live call 3: "Maybe." and "Sure." said short and quiet; after "Sure." the agent waited
+# eleven seconds and asked "Are you still there?".
+id: live-call3-one-word-quiet
+flow: [repeat-caller]
+difficulty: rigorous
+traits: [vague]
+journeys: [J7]
+spec: [S-36]
+tags: [live, call-3]
+caller_style: jackson
+audio_checks: true
+quiet_short_lines: true
+caller_id: "(347) 555-0213"
+time: "2026-11-05T11:00"
+max_turns: 10
+persona: A caller who wants to cancel an appointment and answers in one word.
+hidden_facts:
+  name: Jackson Lee
+opening: I want to cancel my appointment.
+script:
+  - Answer any yes-or-no question with only "Maybe." the first time and only "Sure." after that.
+  - When the agent can't find anything, say goodbye.
+must:
+  - agent_never_says: ["still there"]
+should:
+  - Replies to each one-word answer promptly and moves on.

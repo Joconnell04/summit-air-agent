@@ -24,6 +24,7 @@ on `make listen`.
 import argparse
 import asyncio
 import importlib
+import re
 import sys
 import tempfile
 import time
@@ -32,6 +33,8 @@ from collections import deque
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
+
+import numpy as np
 
 from app.tools import TOOLS
 from evals import compare, results, suites
@@ -177,6 +180,36 @@ def newest_caller_timings(trace: dict) -> dict:
     return (lines[-1].get("timings") or {}) if lines else {}
 
 
+# A caller line can carry a pause mid-sentence, "(pause 4s)", which the rig plays as silence.
+PAUSE = re.compile(r"\(pause (\d+(?:\.\d+)?) ?s\)", re.IGNORECASE)
+# ASSUMED: a short, quiet reply ("Maybe.") sits about 12 dB under the caller's normal level.
+QUIET_GAIN = 0.25
+
+
+def spoken_text(line: str) -> str:
+    """The caller's line without its timing marks, as the transcript keeps it."""
+    return " ".join(PAUSE.sub(" ", line).split())
+
+
+def line_pieces(line: str) -> list[str | float]:
+    """The line as text to say and pauses in seconds, in order."""
+    out: list[str | float] = []
+    at = 0
+    for m in PAUSE.finditer(line):
+        if line[at:m.start()].strip():
+            out.append(line[at:m.start()].strip())
+        out.append(float(m.group(1)))
+        at = m.end()
+    if line[at:].strip():
+        out.append(line[at:].strip())
+    return out
+
+
+def quieter(pcm: bytes, gain: float) -> bytes:
+    x = np.frombuffer(pcm[: len(pcm) - len(pcm) % 2], dtype="<i2").astype(np.float64) * gain
+    return x.round().astype("<i2").tobytes()
+
+
 # A stall that follows the agent's own words: the caller waits this many times at most for the
 # agent to go on before speaking up, so a turn of "Let me look." then results is heard whole.
 MAX_PARTS = 3
@@ -218,6 +251,20 @@ class Rig:
         self.rig_config = rig
         self.verbose = verbose
         self.last_timeline = Timeline()
+
+    async def caller_audio(self, speech, line: str, scenario: Scenario) -> bytes:
+        """The caller's line as audio: each piece said, each pause as silence, and a short line
+        made quieter when the scenario asks for it."""
+        rate = self.entrant.in_rate
+        out = b""
+        for piece in line_pieces(line):
+            if isinstance(piece, float):
+                out += b"\0" * (round(piece * rate) * 2)
+            else:
+                out += self.vad.trim(await speech.say(piece, rate), rate)
+        if scenario.quiet_short_lines and len(spoken_text(line).split()) <= 2:
+            out = quieter(out, QUIET_GAIN)
+        return out
 
     def log(self, call_id: str, text: str) -> None:
         if self.verbose:
@@ -272,18 +319,18 @@ class Rig:
                 if listener.is_hung_up:
                     reason = "agent_end"
                     break
-                pcm = self.vad.trim(await speech.say(said, self.entrant.in_rate),
-                                    self.entrant.in_rate)
-                transcript.append(Turn(role="caller", text=said))
+                pcm = await self.caller_audio(speech, said, scenario)
+                heard_said = spoken_text(said)
+                transcript.append(Turn(role="caller", text=heard_said))
                 self.log(call_id, f"caller: {said}")
                 spoken = not sender.stopped
                 start, end = await sender.speak(pcm, on_start=listener.new_turn)
                 if spoken:
-                    timeline.events.append(CallerLine(said, start, end))
+                    timeline.events.append(CallerLine(heard_said, start, end))
                 if recorder and spoken:
                     padded = b"".join(frames(pcm, self.entrant.in_rate))
                     began_at = recorder.caller(padded, self.entrant.in_rate, end)
-                    recorder.line("caller", said, began_at)
+                    recorder.line("caller", heard_said, began_at)
                 if sender.stalled:
                     error = f"harness: the line stalled: no audio went out for {SEND_TIMEOUT_S:.0f} s"
                     break

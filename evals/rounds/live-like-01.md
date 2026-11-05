@@ -54,16 +54,41 @@ Model requests per turn:
 - **Repeats.** "I've moved it to Friday, November 6 between twelve and four." twice in one turn. The unit-correction read-back again unasked.
 - **Record checks.** Replay 1 never ran the identity check and marked the number do-not-call when the caller said "don't call me then". Replay 2 never recorded the move. No-ZIP booking booked nothing. Pushes-priority wasn't raised after the wait.
 
+## PR #155 at b1a8219, against the baseline
+
+Run: 12 calls, $1.84 (MEASURED), started 11:02 New York time with load 10 (Bluetooth pinning one core, nothing else busy) and no other rig or test run. Code: #155's head b1a8219 merged with this branch's fixed checks and the one-clock fix (C-68), so this run's agent heard the scenario's time while the baseline's heard midnight. Results `evals/results/20261105-170415-livekit-rig-fast-live.json`.
+
+To compare like for like, the table counts only the 8 scenarios both runs checked (the baseline left 04, 05, 07 and 08 unchecked at their turn limits). Each cell is how many of those 8 scenarios failed the check.
+
+| Check | Baseline (main) | #155 at b1a8219 |
+|---|---|---|
+| silence | 6 | 5 |
+| half_reply | 4 | 3 |
+| repeat | 2 | 0 |
+| first_sound | 8 | 8 |
+| talk_over | 3 | 4 |
+| llm_requests | 8 | 8 |
+| readback_rate | 4 | 4 |
+| hangup_gap | 6 | 0 |
+
+Time to first sound, every timed turn: plain median 2,474 ms on main and 2,578 ms on #155, slowest 10% 3,666 and 3,488 ms; lookup median 2,799 and 2,819 ms, slowest 10% 3,899 and 4,130 ms. Model requests per turn went up on lookups, from a median of 2 to 3 (most 8), and stayed at 2 on plain turns. #155 fixed the hang-up on the goodbye (6 to 0) and the repeated lines; it didn't make replies any faster.
+
+**The time checks on their own.** `time_as_asked` went from 4 scenarios to 0. Two things moved at once: #155's callback fixes, and C-68, after which the agent's "tomorrow" means the scenario's tomorrow. Read the drop as both together.
+
+All 12 still fail. On the four calls the baseline left unchecked, #155 fails on the same kinds of thing. The grader adds re-asked questions (the ZIP, the breaker) and a confusing "eight to eight" window on three calls. live-call-05 still never hands off.
+
+**Why it took an hour.** The calls ran 62 minutes, about 5 minutes each, the same as the baseline's 58. My 35-minute estimate was wrong. Each call runs 12 to 28 caller turns at 2.5 to 3.5 s per reply, and the caller waits up to 20 s on every half reply. After the last call the run then hung in an SSL read, uploading to LangSmith; the results were already written, and the process was stopped.
+
 ## Where a check may be wrong
 
 - `talk_over` on live-call-03 flags the agent stopping a card number mid-read. That interruption is designed (the card line), so those two flags don't count against the agent.
-- `time_as_asked` on live-multi-book-then-callback flags "Friday between twelve and four" after the caller said "twelve to four is fine. Two PM works.". The caller had already accepted the window, so that flag is the check's mistake.
+- `time_as_asked` on live-multi-book-then-callback flagged "Friday between twelve and four" after the caller said "twelve to four is fine. Two PM works.". The caller had already accepted the window, so that flag was the check's mistake. Fixed in #157: a caller who names a window is taking it.
 - Every threshold except the S-36 medians is ASSUMED. They get tuned against what Jackson hears on call 3 (docs/later.md C-67).
 
 ## Fixed in the rig during this round
 
 - The first attempt had the caller cut in on every turn, because the cut-in timer kept running while the rig waited for the worker's "listening" signal after the agent had stopped. The caller now cuts in only while the agent is still talking. That run was stopped after one call, $0.13, and isn't counted.
-- Calls that hit their turn limit are now checked too. Four calls ran out of turns (8 for gas and person-now, 18 for older-no-heat and sparks); their limits are now 14 and 28. **Pending:** those four rerun on the same code, appended below.
+- Calls that hit their turn limit are now checked too. Four calls ran out of turns (8 for gas and person-now, 18 for older-no-heat and sparks); their limits are now 14 and 28. Their rerun on main was dropped: the latency lane's first arm (main, on the fixed checks) becomes the new main baseline, so these four stay unchecked here.
 
 ## Overlap with other rig runs
 

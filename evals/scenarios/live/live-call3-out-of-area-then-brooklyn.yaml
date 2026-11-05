@@ -1,0 +1,33 @@
+# From live call 3: the out-of-area line was cut off when the call ended. Here the caller
+# gives a Jersey City address, hears it isn't covered, then gives a Brooklyn one: the call has
+# to go on, and the agent never hangs up mid-sentence.
+id: live-call3-out-of-area-then-brooklyn
+flow: [booking]
+difficulty: rigorous
+traits: [late-correction]
+journeys: [J1]
+spec: [S-36]
+tags: [live, call-3]
+caller_style: jackson
+audio_checks: true
+caller_id: "(347) 555-0213"
+time: "2026-11-05T11:00"
+max_turns: 20
+persona: A homeowner booking a furnace tune-up who first gives their office in Jersey City.
+hidden_facts:
+  name: Jackson Lee
+  first_address: 30 Montgomery Street, Jersey City, 07302
+  home_address: 248 Duffield Street, Brooklyn, 11201
+  phone: the number you're calling from
+  who_home: you, healthy
+  owns: you own it and approve the work
+opening: I need a furnace tune-up.
+script:
+  - Give "thirty Montgomery Street, Jersey City" first.
+  - When told it isn't covered, say "Sorry, I meant my place in Brooklyn. Two forty eight Duffield Street."
+  - Confirm a correct read-back, take the first window, then say goodbye.
+must:
+  - booking: {count: 1, zip: "11201"}
+  - ended_by: caller
+should:
+  - Keeps the call going after the out-of-area answer and books the Brooklyn address.
