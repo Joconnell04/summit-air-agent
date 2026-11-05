@@ -1138,3 +1138,64 @@ def test_a_landmark_the_address_is_placed_by_is_not_a_business(line):
 )
 def test_a_business_said_as_the_callers_own_still_declines(line):
     assert sounds_commercial(line, AGENT["commercial"]), line
+
+
+# ---- one simple choice (issue #149, live call 2) ------------------------------------------------
+
+
+def test_slots_offer_one_choice_the_soonest_when_no_day_was_named(agent):
+    """Jackson: "too many double booking questions... two sets of multi-options"."""
+    call = ready_to_book(agent)
+    found = agent.tool("find_slots", call, job_type="tune_up")
+    assert found["ok"], found
+    assert found["say"].startswith("The soonest I have is ")
+    assert found["say"].endswith("Does that work?")
+    assert found["say"].count(" to ") == 1, "one window, not a list"
+    dates = [d["date"] for d in found["data"]["days"]]
+    assert dates == sorted(dates), "days in date order"
+
+
+def test_slots_offer_the_callers_day_first(agent):
+    """Jackson: "why didn't it check friday first?"."""
+    call = ready_to_book(agent)
+    found = agent.tool("find_slots", call, job_type="tune_up", preferred_days=["Friday"])
+    assert found["say"].startswith("Friday I have "), found["say"]
+    assert found["data"]["offer"]["weekday"] == "Friday"
+
+
+def test_live_call_2_tomorrow_at_two_is_the_window_that_holds_two(agent):
+    """Live call 2: "Tomorrow at two PM." passed as arrive 1 PM to 5 PM, which no window fits,
+    and the caller heard there were no openings."""
+    call = ready_to_book(agent)
+    agent.turn(call, "Yeah. Tomorrow at two PM.")
+    found = agent.tool(
+        "find_slots", call, job_type="tune_up", day="2026-11-03", arrive_after="1 PM",
+        arrive_before="5 PM",
+    )
+    assert found["data"]["arrival"] == {"time": "14:00", "fits": True}
+    assert [w["label"] for w in found["data"]["windows"]] == ["12 to 4"]
+    assert found["say"] == "Tomorrow I have 12 to 4."
+
+
+def test_a_named_day_full_this_week_says_so_and_offers_next_weeks_with_its_date():
+    """Live call 2: "Friday the 13th, Saturday the 7th, or Monday the 9th", out of order, when this
+    Friday was full."""
+    from types import SimpleNamespace
+
+    from app import tools
+    from app.tenant import Tenant
+
+    tenant = Tenant.load(TENANT_DIR)
+    ctx = SimpleNamespace(tenant=tenant, now=datetime(2026, 11, 4, 15, 0, tzinfo=UTC))
+
+    def slot(day: str, weekday: str, window: str, label: str) -> dict:
+        return {"date": day, "window": window, "weekday": weekday, "day": weekday,
+                "day_and_date": f"{weekday}, November {int(day[-2:])}", "label": label}
+
+    by_day = {
+        "2026-11-07": [slot("2026-11-07", "Saturday", "morning", "8 to 12")],
+        "2026-11-13": [slot("2026-11-13", "Friday", "afternoon", "12 to 4")],
+    }
+    offer, say = tools._one_offer(ctx, by_day, sorted(by_day), {"friday"}, None)
+    assert offer["date"] == "2026-11-13"
+    assert say == "This Friday is full. Friday, November 13, I have 12 to 4. Does that work?"

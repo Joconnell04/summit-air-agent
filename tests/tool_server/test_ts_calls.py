@@ -707,3 +707,26 @@ def test_an_iso_time_outside_calling_hours_gets_the_nearest_one_not_an_error(age
     )
     assert refused["refused"] == "invalid_callback_time"
     assert "the closest I can do is Wednesday at 8 AM" in refused["say"]
+
+
+def test_live_call_2_tomorrow_at_two_is_said_as_around_two_not_a_window(agent):
+    """Live call 2 (issue #149): "Tomorrow at two PM." was passed as 1 PM to 3 PM and said back as
+    "between 1 PM and 3 PM, not at 2 PM exactly"."""
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "Tomorrow at two PM.")
+    flagged = agent.tool(
+        "flag_person", call, reason="Call me back", callback_after="1 PM", callback_before="3 PM",
+        callback_day="tomorrow",
+    )
+    assert flagged["ok"], flagged
+    assert flagged["say"].endswith("call you tomorrow around 2 PM.")
+
+
+def test_a_window_the_caller_asked_for_stays_a_window(agent):
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "Tomorrow, between one and three.")
+    flagged = agent.tool(
+        "flag_person", call, reason="Call me back", callback_after="1 PM", callback_before="3 PM",
+        callback_day="tomorrow",
+    )
+    assert flagged["say"].endswith("call you tomorrow between 1 PM and 3 PM.")

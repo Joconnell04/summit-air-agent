@@ -271,6 +271,9 @@ lines:
   move_done: Thanks for letting us know. I've updated your address to {street}.
   move_out_of_area: Thanks for letting us know. I'm sorry, the new address is outside the area we cover,
     so we won't be able to come out there, and I've made a note on your account.
+  move_unverified: I can't add a new address to the account from this number, so I can't book the visit
+    there yet. Someone from our office can call the number we have on file to update it and book the visit.
+    Would that help?
   move_visit_cancelled: I've also cancelled the visit you had at the old address, so nobody heads there.
   move_visit_moved: Your upcoming visit is now set for the new address, same day and time.
   move_visit_moved_when: Your visit {when} is now set for the new address, same time.

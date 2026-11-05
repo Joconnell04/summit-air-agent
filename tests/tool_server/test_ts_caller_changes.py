@@ -885,3 +885,22 @@ def test_an_old_address_is_found_without_a_zip_the_caller_never_said(agent, scen
         "find_customer", call, address={"street": "620 Bedford Avenue", "unit": "", "zip": "11211"}
     )
     assert [m["customer_id"] for m in found["data"]["matches"]] == [maria["customerId"]]
+
+
+
+def test_a_mover_whose_check_failed_hears_why_the_visit_cant_be_booked(agent, scenarios):
+    """Live call 2 (issue #149), turn 44: the booking was parked behind a callback ("The address
+    change still has to go through first") without a plain reason."""
+    maria = scenarios["repeatCallerOpenJob"]
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "Hi, I moved from 620 Bedford Avenue to 380 Washington Avenue.")
+    agent.tool("find_customer", call, address={"street": "620 Bedford Ave", "unit": "", "zip": "11235"})
+    asked = agent.tool("record_move", call)
+    agent.say(call, asked["say"])
+    agent.turn(call, "Sam Rivera.")
+    assert agent.tool("record_move", call)["refused"] == "identity_mismatch"
+    agent.confirm_read_back(call, NEW_HOME)
+    refused = book(agent, call, first_open(agent, call))
+    assert refused["refused"] == "move_unverified"
+    assert "can't book the visit there" in refused["say"]
+    assert maria["customerId"]

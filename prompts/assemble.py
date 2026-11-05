@@ -872,7 +872,7 @@ def spoken_by_server(name: str, envelope: dict) -> str | None:
     # for a yes (issue #128).
     if envelope.get("refused") in (
         "identity_check", "identity_mismatch", "account_which", "which_old_address",
-        "location_superseded",
+        "location_superseded", "move_unverified",
     ):
         return say
     if name == "end_call" and envelope.get("ok"):

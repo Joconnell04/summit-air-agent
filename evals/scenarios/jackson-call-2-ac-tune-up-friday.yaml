@@ -1,0 +1,30 @@
+id: jackson-call-2-ac-tune-up-friday
+flow: [booking]
+difficulty: standard
+journeys: [J1]
+spec: [S-21]
+tags: [live-calls]
+max_turns: 16
+caller_id: seed:repeatCallerOpenJob
+persona: Jackson's second live test call (issue #149), replayed with his own lines. Maria Delgado, a known caller, adds an AC tune-up as a second task and wants Friday afternoon. Short answers; asks why when the agent stalls, says no openings, or reads out lists.
+hidden_facts:
+  name: Maria Delgado
+  address: 620 Bedford Ave, Brooklyn, 11235 (on file)
+  phone: the number you're calling from
+  wants: an AC tune-up, Friday afternoon if possible, otherwise the next Friday afternoon
+opening: Yeah. I need to do my a c tune up as well.
+script:
+  - If the agent says only "Sure" or "I can set that up" and nothing else, say "Okay. Are you gonna ask me a question?"
+  - If the agent says only "Yes." and nothing else, say "What is the question?"
+  - When asked when, say "Friday at two PM."
+  - If the agent says there are no openings, say "Why can't you check Friday?"
+  - If offered a list of days and a list of windows at once, say "That's a lot of options. Just Friday afternoon."
+  - Take the first Friday afternoon offered, and answer yes to a correct read-back.
+  - Say goodbye once the agent confirms the booking and asks if there is anything else.
+must:
+  - tool_ok: book_appointment
+  - agent_never_says: ["no openings for a tune-up", "Which day works, and which window", "(Got it|Thanks|Okay), Maria", "\\bZIP 1"]
+should:
+  - Never answers with only an acknowledgment; each reply asks a question or takes the next step.
+  - Tries Friday first and offers one simple choice at a time ("Friday I have 12 to 4. Does that work?").
+  - Days come in date order, and a later week's Friday says its date.

@@ -1087,6 +1087,16 @@ def _identity_gate(ctx: Ctx, customer_id: int, addresses: list[dict], thing: str
     _record_mismatch(ctx, customer_id, check["call_id"], thing)
 
 
+def _check_failed_on_call(ctx: Ctx) -> bool:
+    """A name and address check failed on this call."""
+    return bool(
+        ctx.conn.execute(
+            "SELECT 1 FROM identity_checks WHERE call_id = ? AND status = 'mismatch'",
+            (ctx.call["id"],),
+        ).fetchone()
+    )
+
+
 def _named_on_call(ctx: Ctx, name: str) -> bool:
     """The caller said a name on this call that isn't the customer's. A line with the customer's
     surname in it is no wrong name, even when it doesn't count because the agent said it first."""
@@ -1500,7 +1510,16 @@ def find_slots(ctx: Ctx, args: FindSlotsIn) -> Result:
     # technician may come any time in a window, so a window that runs past them is never offered
     # as if it fit ("by 9" inside 8 to 12, eval round 2, seed 7).
     arrival_say = ""
-    if args.arrive_after or args.arrive_before:
+    named = _caller_named_one_time(ctx) if (args.arrive_after or args.arrive_before) else None
+    if named is not None:
+        # One time the caller named ("tomorrow at two PM") is the window that holds it, not a
+        # limit on when the technician may come: live call 2 passed 1 PM to 5 PM, which no 4-hour
+        # window fits, and heard that tomorrow had no openings (issue #149).
+        holding = [w for w in windows if _window_holds(ctx, w, named)]
+        data["arrival"] = {"time": named.strftime("%H:%M"), "fits": bool(holding)}
+        if holding:
+            windows = holding
+    elif args.arrive_after or args.arrive_before:
         after, before = _arrival_hours(args)
         fitting = [w for w in windows if _window_inside(ctx, w, after, before)]
         data["arrival"] = {
@@ -1561,39 +1580,59 @@ def find_slots(ctx: Ctx, args: FindSlotsIn) -> Result:
     for window in windows:
         by_day.setdefault(window["date"], []).append(_describe(ctx, window))
     preferred = {d.lower() for d in args.preferred_days}
-
-    def rank(item):
-        day, slots = item
-        liked_day = bool(preferred) and (
-            day in preferred or slots[0]["weekday"].lower() in preferred
-        )
-        liked_time = args.time_of_day in {s["window"] for s in slots}
-        return (not liked_day, not liked_time, day)
-
-    shape = []
-    for day, slots in sorted(by_day.items(), key=rank)[:SHAPE_DAYS]:
-        if args.time_of_day:
-            slots.sort(key=lambda s: s["window"] != args.time_of_day)
-        shape.append(
-            {
-                "date": day,
-                "weekday": slots[0]["weekday"],
-                "day": slots[0]["day"],
-                "windows": [s["window"] for s in slots],
-                "labels": [s["label"] for s in slots],
-            }
-        )
-    data["days"] = shape
-    if not shape:
+    dates = sorted(by_day)
+    # The shape of what's open, in date order, for the model to answer a follow-up from.
+    data["days"] = [
+        {
+            "date": day,
+            "weekday": by_day[day][0]["weekday"],
+            "day": by_day[day][0]["day"],
+            "windows": [s["window"] for s in by_day[day]],
+            "labels": [s["label"] for s in by_day[day]],
+        }
+        for day in dates[:SHAPE_DAYS]
+    ]
+    if not dates:
         _keep_second_job(ctx, data)
         return ok(
             urgent_said + arrival_say + "I don't have anything open in the next two weeks.", **data
         )
-    parts = []
-    for d in shape:
-        names = _join([w.replace("_", " ") for w in d["windows"]], "or")
-        parts.append(f"this {names}" if d["day"] == "today" else f"{d['day']} {names}")
-    return ok(f"{urgent_said}{arrival_say}I've got openings {_join(parts, 'and')}.", **data)
+    offer, lead = _one_offer(ctx, by_day, dates, preferred, args.time_of_day)
+    data["offer"] = offer
+    return ok(f"{urgent_said}{arrival_say}{lead}", **data)
+
+
+def _one_offer(
+    ctx: Ctx, by_day: dict[str, list[dict]], dates: list[str], preferred: set[str],
+    time_of_day: str | None,
+) -> tuple[dict, str]:
+    """One simple choice to offer, and the sentence for it (Jackson after live call 2: "too many
+    double booking questions... two sets of multi-options"; and "why didn't it check friday
+    first?"). The caller's day comes first when they named one, else the soonest opening; within
+    the day, the part of the day they asked for. A later week's day says its date, and a named day
+    that is full this week says so in a few words."""
+    liked = [
+        d for d in dates if d in preferred or by_day[d][0]["weekday"].lower() in preferred
+    ]
+    day = liked[0] if liked else dates[0]
+    slots = by_day[day]
+    offer = next((s for s in slots if s["window"] == time_of_day), slots[0])
+    visit = date.fromisoformat(day)
+    today = ctx.tenant.local(ctx.now).date()
+    named = offer["day_and_date"] if (visit - today).days >= 7 else offer["day"]
+    lead = ""
+    if preferred and not liked:
+        asked = _join(sorted(d.capitalize() for d in preferred), "or")
+        lead = f"I don't have {asked} open in the next two weeks. "
+    elif liked:
+        weekday = offer["weekday"]
+        first = today + timedelta(days=(visit.weekday() - today.weekday()) % 7)
+        if visit != first and weekday.lower() in preferred:
+            lead = f"This {weekday} is full. "
+    if liked:
+        named = named[0].upper() + named[1:] + ("," if "," in named else "")
+        return offer, f"{lead}{named} I have {offer['label']}. Does that work?"
+    return offer, f"{lead}The soonest I have is {named}, {offer['label']}. Does that work?"
 
 
 def _zip_asked_key(house: str, street: str) -> str:
@@ -1672,6 +1711,11 @@ def _arrival_hours(args: FindSlotsIn) -> tuple[time | None, time | None]:
             errors={"arrive_before": "ends before it starts"},
         )
     return after, before
+
+
+def _window_holds(ctx: Ctx, window: dict, moment: time) -> bool:
+    spec = ctx.tenant.window(window["window"])
+    return bool(spec) and not spec.after_hours and spec.start <= moment < spec.end
 
 
 def _window_inside(ctx: Ctx, window: dict, after: time | None, before: time | None) -> bool:
@@ -1901,6 +1945,16 @@ def book_appointment(ctx: Ctx, args: BookIn) -> Result:
     # A caller who said they moved books the new address only once the move is recorded, so the
     # old address stops getting visits (issue #128).
     if _mover_pending(ctx, readback):
+        if _check_failed_on_call(ctx):
+            # The new address can't go on the account from this number, so the visit can't be
+            # booked there: the caller hears why in plain words, not a callback with no reason
+            # (live call 2, issue #149: "The address change still has to go through first").
+            raise Refused(
+                "move_unverified",
+                ctx.tenant.line("move_unverified"),
+                need="the visit can't be booked at the new address on this call; offer the "
+                "callback to the number on file with flag_person if the caller wants it",
+            )
         raise Refused(
             "move_first",
             "",
@@ -2925,9 +2979,56 @@ def _asked_moment(tenant: Tenant, now: datetime, days: int, asked: CallbackTime)
     return moment if moment.tzinfo else records.clock_on(value, tenant, now, days)
 
 
+# Words that make a caller's line a window, not one time: "between 1 and 3", "after 2", "2 to 4".
+WINDOW_WORDS = {"between", "after", "before", "to", "and", "til", "till", "until", "or", "around"}
+
+
+def _caller_named_one_time(ctx: Ctx) -> time | None:
+    """The one clock time in the caller's last line, when it names exactly one and no window
+    ("Tomorrow at two PM."), else None."""
+    tokens = [t for t in number_tokens(records.last_caller_line(ctx.conn, ctx.call["id"])) if t]
+    if any(t in WINDOW_WORDS for t in tokens):
+        return None
+    found = []
+    for i, token in enumerate(tokens):
+        if not token.isdigit() or len(token) > 2:
+            continue
+        nxt = tokens[i + 1] if i + 1 < len(tokens) else ""
+        meridiem = {"pm": " PM", "am": " AM", "p": " PM", "a": " AM"}.get(nxt, "")
+        if not meridiem and (i == 0 or tokens[i - 1] not in ("at", "for")):
+            continue
+        try:
+            found.append(clock_time(token + meridiem))
+        except ValueError:
+            continue
+    return found[0] if len(found) == 1 else None
+
+
+def _as_the_caller_said_it(ctx: Ctx, asked: CallbackTime) -> CallbackTime:
+    """A window the model built around the one time the caller named is that time: "Tomorrow at
+    two PM" was passed as 1 PM to 3 PM and said back as "between 1 PM and 3 PM, not at 2 PM
+    exactly" (live call 2, issue #149)."""
+    if not (asked.callback_after and asked.callback_before) or asked.callback_time:
+        return asked
+    named = _caller_named_one_time(ctx)
+    if named is None:
+        return asked
+    try:
+        start, end = clock_time(asked.callback_after), clock_time(asked.callback_before)
+    except ValueError:
+        return asked
+    if not start <= named <= end:
+        return asked
+    spoken = datetime.combine(date.today(), named).strftime("%-I:%M %p").replace(":00 ", " ")
+    return asked.model_copy(
+        update={"callback_after": None, "callback_before": None, "callback_time": spoken}
+    )
+
+
 def _callback_due(ctx: Ctx, asked: CallbackTime) -> CallbackWhen:
     """The callback time and the words for it. The words always come from here, never the model."""
     tenant, now = ctx.tenant, ctx.now
+    asked = _as_the_caller_said_it(ctx, asked)
     days = _days_ahead(tenant, now, asked.callback_day)
     try:
         if asked.callback_after or asked.callback_before:

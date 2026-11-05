@@ -16,11 +16,13 @@ find_address: >-
   ask for the ZIP. If it asks which one or asks to spell the street, ask the caller its sentence
   and call it again with `borough` or `spelled`.
 find_slots: >-
-  Availability for a job type. Without `day` it returns the shape of availability over the coming
-  days; with `day` it returns that day's exact arrival windows. Pass what you've heard that bears on
-  priority in `facts`. When the caller can only be home some hours ("I'm home 8 to 2", "I leave at
-  10"), pass them as arrive_after and arrive_before as they said them; the server reads "8 to 2" as
-  8 AM to 2 PM and offers only windows inside those hours.
+  Availability for a job type. Without `day` it returns one opening to offer (the caller's
+  preferred day first, else the soonest) and the days that are open; with `day` it returns that
+  day's exact arrival windows. Pass what you've heard that bears on priority in `facts`. When the
+  caller can only be home some hours ("I'm home 8 to 2", "I leave at 10"), pass them as
+  arrive_after and arrive_before as they said them; the server reads "8 to 2" as 8 AM to 2 PM and
+  offers only windows inside those hours. A single time the caller names ("tomorrow at 2") is the
+  window that holds it: pass `day`, and offer that window.
 read_back: >-
   Confirms the address and number before booking. The first call's sentence is spoken to the caller
   for you, word for word, so call it without announcing it and say nothing yourself. After the

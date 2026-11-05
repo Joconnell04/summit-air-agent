@@ -280,6 +280,7 @@ GATE_LINES = {
     "customer_type": "commercial",
     "invalid_callback_time": "callback_outside_hours",
     "move_not_said": "move",
+    "move_unverified": "move",
     "gate_read_back": "read_back",
     "read_back_confirmed": "read_back",
 }

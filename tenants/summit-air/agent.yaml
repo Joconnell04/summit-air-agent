@@ -447,6 +447,11 @@ lines:
     Of course. And just to confirm you're the person for the {thing}, what name is it under?
   identity_check_address_only: >-
     Of course. And just to confirm you're the person for the {thing}, could you tell me the address?
+  # A mover whose name check failed asks to book at the new address (issue #149).
+  move_unverified: >-
+    I can't add a new address to the account from this number, so I can't book the visit there
+    yet. Someone from our office can call the number we have on file to update it and book the
+    visit. Would that help?
   identity_check_address: Thanks. And what's the address?
   identity_check_name: Thanks. And what's the name on the {thing}?
   identity_check_again: >-
