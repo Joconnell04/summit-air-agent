@@ -146,10 +146,12 @@ def greeting(start_data: dict) -> str | None:
     return assemble.greeting(start_data, voice)
 
 
-def server_notes(hints: list[str], known: dict | None = None) -> list[str]:
+def server_notes(
+    hints: list[str], known: dict | None = None, lookup: dict | None = None
+) -> list[str]:
     assemble = _assemble()
     if assemble is not None and hasattr(assemble, "server_notes"):
-        return assemble.server_notes(hints, known)
+        return assemble.server_notes(hints, known, lookup)
     return [f"(Server note: {HINT_NOTES[h]})" for h in hints if h in HINT_NOTES]
 
 
@@ -256,7 +258,9 @@ class InProcessAgent:
             # Said on hold to someone else: the worker lets the model say nothing.
             self.messages.append({"role": "user", "content": caller_text})
             return AgentTurn("", TurnTiming(kind="plain", reply_delay_ms=0, model_first_token_ms=0))
-        notes = server_notes(result["data"].get("hints", []), result["data"].get("known"))
+        notes = server_notes(
+            result["data"].get("hints", []), result["data"].get("known"), result["data"].get("lookup")
+        )
         return self._think("\n".join([caller_text, *notes]), t0)
 
     def step_away(self) -> AgentTurn:

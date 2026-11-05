@@ -258,6 +258,11 @@ SERVER_NOTES = {
         "never promise who will come or that it will be that person. It's already noted for the "
         "dispatcher, so don't add a note for it."
     ),
+    # The caller took back the address the server had just looked up (app/prefetch.py).
+    "lookup_taken_back": (
+        "The caller is correcting the address the server looked up on their last line. Don't "
+        "rely on that lookup: check the address they give now with the tools."
+    ),
     "approval_unclear": (
         "Who can approve the work isn't settled. Offer a callback to confirm who can approve, with "
         "flag_person. Book only if the caller asks to, and then say the booking's sentence as written."
@@ -265,11 +270,14 @@ SERVER_NOTES = {
 }
 
 
-def server_notes(hints: list[str], known: dict[str, str] | None = None) -> list[str]:
+def server_notes(
+    hints: list[str], known: dict[str, str] | None = None, lookup: dict | None = None
+) -> list[str]:
     """`[server]` lines added to a caller's line for the model, from a turn result's hints (the
     tool-use prompt explains them). Safety lines are spoken by the voice layer, not described. A
     stage hint ("stage_booking") is followed by the owner's notes for it ("guidance:<text>"), and
-    the two become one note."""
+    the two become one note. `lookup` is a tool the server already ran for this line
+    (app/prefetch.py, off by default), handed over as that tool's result."""
     notes = [f"[server] {SERVER_NOTES[h]}" for h in hints if h in SERVER_NOTES]
     # Two units named in one line (DECISIONS.md 085).
     for units in (h.removeprefix("units:") for h in hints if h.startswith("units:")):
@@ -292,7 +300,20 @@ def server_notes(hints: list[str], known: dict[str, str] | None = None) -> list[
     if known:
         facts = "; ".join(f"{k} {v}" for k, v in known.items())
         notes.append(f"[server] Already known, don't ask again: {facts}.")
+    if lookup:
+        notes.append(lookup_note(lookup))
     return notes
+
+
+def lookup_note(lookup: dict) -> str:
+    """A lookup the server ran for the caller's line, written as the tool call and the result it
+    returned, so the model reads it as if it had called the tool and doesn't call it again."""
+    args = ", ".join(f"{k}={json.dumps(v)}" for k, v in lookup["args"].items() if v != "")
+    result = json.dumps(lookup["result"], separators=(", ", ": "))
+    return (
+        f"[server] Already called for this line: {lookup['tool']}({args}) returned {result}. "
+        "Treat it as that tool's result: don't call it again for this, and answer from it now."
+    )
 
 
 # A sentence that announces the read-back ("let me read that back", "I'll read back the details",

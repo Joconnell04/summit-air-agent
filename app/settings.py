@@ -4,6 +4,18 @@ import os
 from dataclasses import dataclass, field
 from pathlib import Path
 
+MODELS_CONFIG = Path(__file__).resolve().parent.parent / "config" / "models.yaml"
+
+
+def prefetch_lookups() -> bool:
+    """`voice.prefetch_lookups` in config/models.yaml, or PREFETCH_LOOKUPS=1 or 0 for one run."""
+    if os.environ.get("PREFETCH_LOOKUPS") in ("0", "1"):
+        return os.environ["PREFETCH_LOOKUPS"] == "1"
+    import yaml
+
+    voice = yaml.safe_load(MODELS_CONFIG.read_text()).get("voice") or {}
+    return bool(voice.get("prefetch_lookups", False))
+
 
 def heads_up_allowlist() -> frozenset[str]:
     from .heads_up import allowlist
@@ -49,6 +61,10 @@ class Settings:
     # Planning's GeoSearch with the Census geocoder behind it. Empty is off, as in tests and
     # development, so nothing calls out; the agent then asks for the ZIP as before.
     geocoder: str = field(default_factory=lambda: os.environ.get("GEOCODER", ""))
+    # Run the area or address lookup a caller line asks for before the model answers, and hand
+    # the model the result, so it answers in one request (app/prefetch.py, issue #142). Off by
+    # default; turn on if live calls show slow lookup turns.
+    prefetch_lookups: bool = field(default_factory=prefetch_lookups)
     # Write the technician's summary after each booked call (app/summary.py). Off in tests and
     # development so nothing calls out; it needs ANTHROPIC_API_KEY as well.
     summaries: bool = field(default_factory=lambda: os.environ.get("SUMMARIES", "") == "1")

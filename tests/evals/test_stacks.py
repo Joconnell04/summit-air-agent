@@ -69,7 +69,7 @@ def test_the_worker_greeting_and_server_notes_come_from_assemble(monkeypatch):
 
     fake = types.ModuleType("prompts.assemble")
     fake.greeting = lambda start, voice: f"Hi, this is {start['tenant']['name']}."
-    fake.server_notes = lambda hints, known=None: [f"[server] {h}" for h in hints]
+    fake.server_notes = lambda hints, known=None, lookup=None: [f"[server] {h}" for h in hints]
     monkeypatch.setitem(sys.modules, "prompts.assemble", fake)
     monkeypatch.setattr(stacks.yaml, "safe_load", lambda text: {"voice": {"greeting_unknown": "x"}})
     assert stacks.greeting({"tenant": {"slug": "summit-air", "name": "Summit Air"}}) == (

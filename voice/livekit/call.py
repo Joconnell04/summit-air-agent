@@ -149,7 +149,7 @@ class Call:
         stop = (data.get("recording") or {}).get("action") == "stop"
         if stop and self.stop_recording:
             asyncio.create_task(self.stop_recording())
-        notes = server_notes(data.get("hints", []), data.get("known"))
+        notes = server_notes(data.get("hints", []), data.get("known"), data.get("lookup"))
         if notes:
             message.content.append("\n" + "\n".join(notes))
         handoff = data.get("handoff")

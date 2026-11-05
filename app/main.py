@@ -36,6 +36,7 @@ from . import (
     logs,
     outbound,
     owner_view,
+    prefetch,
     recordings,
     records,
     reports,
@@ -260,6 +261,51 @@ def _ctx(services: Services, conn, call_id: str, key: str | None) -> Ctx:
     )
 
 
+def prefetch_lookup(services: Services, conn, ctx: Ctx, text: str, result: Result) -> None:
+    """The area or address lookup this caller line asks for, run now through the tool's own
+    handler and logged as that tool, so the model reads the result with the turn instead of
+    calling it (app/prefetch.py). A line taking back the last prefetched address gets a note
+    instead."""
+    ctx.reload()
+    picked = prefetch.pick(conn, ctx.tenant, ctx.call, text, result.data)
+    if picked is None:
+        if prefetch.taken_back(conn, ctx.call, text):
+            result.data["hints"] = [*result.data.get("hints", []), "lookup_taken_back"]
+        return
+    tool, args = picked
+    handler, model, _ = TOOLS[tool]
+    started = time.perf_counter()
+    timings: list = []
+    token = fsm_timings.set(timings)
+    error = None
+    try:
+        found = handler(ctx, model.model_validate(args))
+    except Refused as exc:
+        found = exc.result
+    except FsmUnavailable as exc:
+        error = f"fsm_unavailable: {exc}"
+        found = Result(False, SAY_FSM_DOWN, refused="fsm_unavailable")
+    finally:
+        fsm_timings.reset(token)
+    body = found.body()
+    line = logs.record(
+        now=services.clock(),
+        request_id=f"prefetch-{uuid.uuid4().hex[:12]}",
+        call_id=ctx.call["id"],
+        tool=tool,
+        args=prefetch.logged_args(args, ctx.call["turn_seq"]),
+        body=body,
+        gate=found.gate,
+        ms=round((time.perf_counter() - started) * 1000, 1),
+        fsm=timings,
+        error=error,
+        replayed=False,
+    )
+    with db.tx(conn):
+        logs.write(services.settings.log_path, conn, line)
+    result.data["lookup"] = prefetch.note(tool, args, body)
+
+
 # How many earlier caller lines a card read aloud can span: one digit a line, with a few "um"s.
 CARD_WINDOW_LINES = 24
 
@@ -438,6 +484,8 @@ def create_app(
             slot = ctx.tenant.priority.get("side_model")
             if body.speaker == "caller" and services.side_model and slot:
                 services.side_model.prefetch(slot["question"], records.caller_text(conn, call_id))
+            if body.speaker == "caller" and services.settings.prefetch_lookups:
+                prefetch_lookup(services, conn, ctx, body.text, result)
             return result
 
         return run(services, request, "turn", call_id, body.model_dump(), fn)

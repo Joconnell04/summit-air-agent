@@ -100,6 +100,28 @@ def test_a_business_caller_gets_a_server_note_for_the_model(agent, connect):
     assert "[server]" in message.text_content and "commercial" in message.text_content
 
 
+def test_a_lookup_the_server_ran_reaches_the_model_with_the_line(agent, connect):
+    """With prefetch_lookups on (app/prefetch.py), the area check the server ran for a ZIP is in
+    the caller's line for the model, so it answers without calling the tool."""
+    agent.app.state.services.settings.prefetch_lookups = True
+    agent.start(call_id="call-1")
+    call = make_call(connect)
+    message = caller("It's 101 Union Street, 11231.")
+    asyncio.run(call.caller_line(message))
+    assert call.session.said == []
+    assert '[server] Already called for this line: check_service_area(zip="11231")' in (
+        message.text_content
+    )
+
+
+def test_with_the_switch_off_no_lookup_reaches_the_model(agent, connect):
+    agent.start(call_id="call-1")
+    call = make_call(connect)
+    message = caller("It's 101 Union Street, 11231.")
+    asyncio.run(call.caller_line(message))
+    assert "Already called" not in message.text_content
+
+
 def test_lines_are_posted_in_the_order_they_happened(agent, connect):
     agent.start(call_id="call-1")
     call = make_call(connect)

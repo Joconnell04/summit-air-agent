@@ -524,3 +524,28 @@ def test_a_whole_call_is_timed_on_the_audio_and_scored_on_the_record(tmp_path, m
     assert result.cost_parts["platform"] == 0.01
     assert result.agent_cost_usd == 0.01
     assert result.cost_usd >= 0.01
+
+
+def test_caller_audio_is_kept_by_its_text_so_two_arms_hear_the_same(tmp_path, monkeypatch):
+    """RIG_SPEECH_CACHE: a line said again, in this run or the next, plays the stored audio and
+    costs nothing; a different line is rendered."""
+    monkeypatch.setenv("RIG_SPEECH_CACHE", str(tmp_path / "voice"))
+    rendered = []
+
+    def handle(request: httpx.Request) -> httpx.Response:
+        rendered.append(request.read())
+        return httpx.Response(200, content=tone(100 * len(rendered)))
+
+    config = load_config()["audio_rig"]
+
+    def deepgram() -> Deepgram:
+        client = httpx.AsyncClient(base_url="https://dg.test", transport=httpx.MockTransport(handle))
+        return Deepgram(config, client=client)
+
+    first, second = deepgram(), deepgram()
+    a = asyncio.run(first.say("It's 11231.", RATE))
+    b = asyncio.run(second.say("It's 11231.", RATE))
+    c = asyncio.run(second.say("It's 11215.", RATE))
+    assert a == b and a != c
+    assert len(rendered) == 2
+    assert second.chars == len("It's 11215.")

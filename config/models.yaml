@@ -88,6 +88,11 @@ voice:
   # `stepped_away` and hangs up. poll_s is how often the worker looks. Jackson's numbers (2 and 8
   # minutes); the text harness runs the same timer on a short clock.
   dead_air: {check_in_s: 120, hang_up_s: 480, poll_s: 1.0}
+  # Run the area or address lookup a caller line asks for on the server, before the model
+  # answers, and hand the model the result, so a silent lookup turn takes one model request instead
+  # of two (app/prefetch.py, issue #142, evals/rounds/lookup-prefetch-01.md). Off: turn on if live
+  # calls show slow lookup turns. PREFETCH_LOOKUPS=1 or 0 overrides it for one run.
+  prefetch_lookups: false
   # Bridge line (docs/latency.md): played only when a tool hasn't answered after this long, and at
   # most once every this many caller turns.
   bridge: {after_s: 0.7, min_turns_between: 3}
