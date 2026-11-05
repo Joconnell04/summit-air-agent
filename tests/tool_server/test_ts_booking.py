@@ -22,7 +22,7 @@ from app import lifecycle
 from app.db import iso
 from app.lifecycle import sounds_commercial
 from app.tenant import load_agent
-from app.text import phone_said
+from app.text import phone_said, street_said
 
 AGENT = load_agent(TENANT_DIR)[0]
 
@@ -97,7 +97,7 @@ def test_booking_is_refused_until_the_read_back_was_returned_and_answered(agent,
 def test_a_correction_after_the_read_back_needs_a_new_read_back(agent):
     call = ready_to_book(agent)
     corrected = agent.tool("read_back", call, address=in_area_address(7), phone="caller_id")
-    assert corrected["ok"] and "107 Union St" in corrected["say"]
+    assert corrected["ok"] and "one oh seven Union St" in corrected["say"]
     assert book(agent, call, first_open(agent, call))["refused"] == "gate_read_back"
 
 
@@ -108,13 +108,13 @@ def test_the_read_back_is_shorthand_with_the_number_in_groups(agent):
     agent.turn(call, "It's 101 Union St, 11231.")
     asked = agent.tool("read_back", call, address=in_area_address(), phone="2125550142")
     assert asked["say"] == (
-        "So that's 101 Union St, and two one two, five five five, zero one four two. "
+        "So that's one oh one Union St, and two one two, five five five, zero one four two. "
         "That's all correct, right?"
     )
     assert "read" not in asked["say"].lower()
     calling = agent.tool("read_back", call, address=in_area_address(), phone="caller_id")
     assert calling["say"] == (
-        "So that's 101 Union St, and the number you're calling from, ending in zero nine nine "
+        "So that's one oh one Union St, and the number you're calling from, ending in zero nine nine "
         "nine. That's all correct, right?"
     )
 
@@ -696,7 +696,7 @@ def test_a_spelled_street_is_joined_into_the_name_for_the_read_back(agent, addre
         "read_back", call, address={"zip": "10302", **address}, phone="caller_id"
     )
     assert asked["ok"], asked
-    assert asked["say"].startswith(f"So that's {street}, and ")
+    assert asked["say"].startswith(f"So that's {street_said(street)}, and ")
 
 
 def test_an_owner_who_lives_downstairs_with_a_tenant_upstairs_can_book(agent):
@@ -1098,7 +1098,7 @@ def test_confirmed_details_are_not_read_back_again(agent):
     assert book(agent, call, first_open(agent, call))["ok"]
     later = ready_to_book(agent)
     changed = agent.tool("read_back", later, address=in_area_address(3), phone="caller_id")
-    assert changed["say"].startswith("So that's 103 Union St")
+    assert changed["say"].startswith("So that's one oh three Union St")
 
 
 def test_a_renter_with_an_unknown_approver_books_with_a_call_before_dispatch(agent):
@@ -1395,7 +1395,7 @@ def test_a_unit_and_the_zip_are_said_apart_in_the_read_back(agent):
     agent.turn(call, "It's 199 East 4th Street, unit 2, 10009.")
     address = {"street": "199 E 4th St", "unit": "2", "city": "New York", "zip": "10009"}
     asked = agent.tool("read_back", call, address=address, phone="caller_id")
-    assert asked["say"].startswith("So that's 199 E 4th St, unit 2, and ")
+    assert asked["say"].startswith("So that's one ninety-nine E Fourth St, unit two, and ")
 
 
 def test_a_unit_heard_with_the_zip_on_the_end_keeps_only_the_unit(agent):
@@ -1405,7 +1405,7 @@ def test_a_unit_heard_with_the_zip_on_the_end_keeps_only_the_unit(agent):
     agent.turn(call, "Yes, 10009.")
     address = {"street": "199 E 4th St", "unit": "210009", "city": "New York", "zip": "10009"}
     asked = agent.tool("read_back", call, address=address, phone="caller_id")
-    assert asked["say"].startswith("So that's 199 E 4th St, unit 2, and ")
+    assert asked["say"].startswith("So that's one ninety-nine E Fourth St, unit two, and ")
 
 
 def test_a_caller_who_says_they_are_someone_else_is_booked_as_a_new_customer(
@@ -1473,7 +1473,7 @@ def test_a_spelling_the_caller_never_said_leaves_the_street_alone(agent):
                "spelled": "E, A, S, T, 4, T, H, S, T, R, E, E, T"}
     asked = agent.tool("read_back", call, address=address, phone="caller_id")
     assert asked["ok"], asked
-    assert "199 East 4th Street, unit 2" in asked["say"]
+    assert "one ninety-nine East Fourth Street, unit two" in asked["say"]
     assert "Eastth" not in asked["say"]
 
 

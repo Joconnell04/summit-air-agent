@@ -17,7 +17,7 @@ from zoneinfo import ZoneInfo
 from app import cards
 from app import priority as prio
 from app.tenant import load_agent, window_from_id
-from app.text import street_key, unit_key, words
+from app.text import street_key, street_said, unit_key, words
 
 TENANT_DIR = Path(__file__).resolve().parent.parent / "tenants" / "summit-air"
 BOOKED = ("booked", "queued")
@@ -290,9 +290,11 @@ def _reads_back(text: str, ev: Evidence) -> bool:
     raw = ev.call.get("readback_json")
     if not raw:
         return False
-    # The shorthand read-back names the street and no ZIP; older traces read the ZIP back.
+    # The shorthand read-back names the street (in words, "one oh one Union St") and no ZIP; older
+    # traces read the numerals or the ZIP back.
     asked = json.loads(raw)
-    if asked.get("street") and street_key(asked["street"]) in street_key(text):
+    street = asked.get("street")
+    if street and (street_key(street) in street_key(text) or words(street_said(street)) in words(text)):
         return True
     zip_code = asked["zip"]
     spoken = " ".join(DIGIT_WORDS[int(d)] for d in zip_code)

@@ -10,6 +10,7 @@ from test_ts_safety import CFG, GAS_LINES
 from toolkit import UNKNOWN, book, count, first_open, in_area_address, ready_to_book
 
 from app import safety
+from app.text import street_said
 from prompts.assemble import greeting
 
 SIGN_OFF = " ".join(CFG["sign_off"].split())
@@ -140,7 +141,7 @@ def test_the_caller_id_read_back_ends_with_its_last_four(agent):
     agent.turn(call, f"It's {address['street']}, {address['zip']}.")
     asked = agent.tool("read_back", call, address=address, phone="caller_id")
     assert asked["say"] == (
-        f"So that's {address['street']}, and the number you're calling from, ending in zero nine "
+        f"So that's {street_said(address['street'])}, and the number you're calling from, ending in zero nine "
         "nine nine. That's all correct, right?"
     )
 
@@ -157,7 +158,7 @@ def test_a_number_read_in_full_is_named_by_its_last_four_after_that(agent):
     agent.turn(call, "No, it's unit 3.")
     second = agent.tool("read_back", call, address={**address, "unit": "3"}, phone="718 555 0142")
     assert second["say"].endswith(
-        "unit 3, and the number ending in zero one four two. That's all correct, right?"
+        "unit three, and the number ending in zero one four two. That's all correct, right?"
     )
     # The same details asked again (the caller didn't hear) are read in full.
     again = agent.tool("read_back", call, address={**address, "unit": "3"}, phone="718 555 0142")

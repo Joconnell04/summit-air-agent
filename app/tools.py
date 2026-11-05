@@ -62,6 +62,7 @@ from .tenant import Tenant
 from .text import (
     DIGIT_WORDS,
     SPELLED_RUN,
+    address_said,
     clock_time,
     digit_runs,
     digits_spoken,
@@ -74,6 +75,7 @@ from .text import (
     says_goodbye,
     spelled_word,
     street_key,
+    street_said,
     unit_key,
     with_spelled_name,
     words,
@@ -528,7 +530,7 @@ def _ask_mismatch(ctx: Ctx, house: str, street: str, place: geocode.Place, said_
         "zip_mismatch",
         ctx.tenant.line(
             "zip_mismatch",
-            street=place.spoken_street(),
+            street=street_said(place.spoken_street()),
             where=place.area or place.borough,
             found=digits_spoken(place.zip),
             said=digits_spoken(said_zip),
@@ -1763,6 +1765,8 @@ def find_address(ctx: Ctx, args: FindAddressIn) -> Result:
     area = _area_name(ctx, place.zip, place.borough)
     return ok(
         street=place.spoken_street(),
+        # How to say it, if the agent says it at all: "one ninety-nine East Fourth Street".
+        street_said=street_said(place.spoken_street()),
         zip=place.zip,
         borough=place.borough,
         neighborhood=place.area,
@@ -2282,7 +2286,9 @@ def read_back(ctx: Ctx, args: ReadBackIn) -> Result:
     # checked the ZIP, and a ZIP the caller gave that disagrees with it is asked about first
     # (zip_mismatch). The number calling is "the number you're calling from, ending in ...". A
     # number read in full once on this call is named by its last four digits after that.
-    spoken_address = address["street"] + (f", unit {address['unit']}" if address["unit"] else "")
+    # Said as people say it ("one ninety-nine East Fourth Street, unit two"); the stored address
+    # and the confirmation key keep the numerals.
+    spoken_address = address_said(address["street"], address["unit"])
     phone_for = _phone_for(ctx, args.phone_for)
     asked = records.readback(ctx.call)
     last_four = digits_spoken(phone[-4:])
@@ -3407,7 +3413,7 @@ def record_move(ctx: Ctx, args: MoveIn) -> Result:
         _note_unknown_number(ctx, customer_id, None, "Address change by phone.",
                              "The address on your account was changed")
     if in_area:
-        say = ctx.tenant.line("move_done", street=_place(new))
+        say = ctx.tenant.line("move_done", street=address_said(new["street"], new.get("unit", "")))
         if moved:
             visit = next(j for j in jobs if j["id"] == moved[0])
             try:

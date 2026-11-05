@@ -214,7 +214,7 @@ def test_one_place_fills_the_zip_and_the_read_back_confirms_it(located):
     assert found["data"]["in_area"] is True
     asked = located.tool("read_back", call, address=_address("248 Duffield Street"), phone="caller_id")
     assert asked["ok"]
-    assert asked["say"].startswith("So that's 248 Duffield Street, and ")
+    assert asked["say"].startswith("So that's two forty-eight Duffield Street, and ")
 
 
 def test_the_lookup_zip_passes_the_zip_gate_but_a_guess_does_not(located):
@@ -314,7 +314,7 @@ def test_a_mismatched_zip_is_read_against_the_lookup_and_not_booked(located):
     checked = located.tool("check_service_area", call, zip="11205")
     assert checked["refused"] == "zip_mismatch"
     assert checked["say"] == (
-        "I have 248 Duffield Street in Downtown Brooklyn as one one two zero one, not one one two "
+        "I have two forty-eight Duffield Street in Downtown Brooklyn as one one two zero one, not one one two "
         "zero five. Which one is right?"
     )
     asked = located.tool("read_back", call, address=_address(zip_code="11205"), phone="caller_id")
