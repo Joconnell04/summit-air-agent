@@ -51,10 +51,8 @@ Say if you disagree with any of these.
 
 Progress for every lane is in [lanes.md](lanes.md).
 
-- **Rules page on the bench (#140, PR #143):** option A, one topic at a time: your rules, fixed responses by topic, the system prompt in assembly order, and versions. The owner view's Rules tab is gone. In final fixes after review.
 - **Lookup results in the same turn (#142):** the fix for silent lookup turns, built behind a switch that's off by default and measured both ways. Ready to turn on only if your calls show lookups feel slow.
 - **Retell Conversation Flow (#133):** our design on Retell's own stage graph, with our server still deciding every gate. An audio-rig timing run will compare it with our stack (1.89 s plain, 1.96 s lookup) and Retell's single-prompt agent (1.57 s and 2.27 s), what a caller hears (MEASURED, bake-off round 1).
-- **Phone-width header:** the shared header overflows at phone width on every owner and bench page; a small fix is coming.
 
 ## Live on the server
 
@@ -64,6 +62,8 @@ Everything below is merged and deployed, and a scripted test call passed after t
 - Call handling (#132): card numbers stopped and never stored, dead air (check-in at 2 minutes, goodbye at 8, resume on the call back), the sparks line, AC water through the ceiling Urgent, a tripping breaker High.
 - Must-pass fixes (#139): "top priority" spoken word for word by the server, the caller's ZIP taken when the address lookup finds nothing, no tool talk or double confirmation after a reschedule, no coaching on a 911 call, no false card prompt when a caller corrects their phone number.
 - Side model (#141): the tighter at-risk question and the 0.65 threshold.
+- Rules page (#143): one page at `/bench/rules`, one topic at a time: your rules, 83 fixed responses each with a plain trigger and its exact line, the system prompt in assembly order on a sample call, and versions. `/owner/rules` redirects there; the owner view no longer has a Rules tab.
+- Phone widths (#145): the header wraps and wide parts scroll in place on every owner and bench page.
 - The eval reference: 91% at two samples (169 of 186), every must-pass case passing (run 20261104-234633). The side-model change makes it stale, which now only warns (decision 086); the next batch run re-adopts.
 
 Signing in: https://45-77-105-247.sslip.io/owner (owner view) and https://45-77-105-247.sslip.io/bench (debug bench), both as `jackson`. The password is in the macOS Keychain (`security find-generic-password -a summit-air -s owner-admin-password -w`). The side model, warm transfer and recordings are on.
