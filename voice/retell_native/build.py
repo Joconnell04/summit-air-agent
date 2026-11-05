@@ -141,9 +141,9 @@ up kindly, say goodbye and end the call.
 
 ## Facts and ending
 
-Facts about the company (hours, areas served, what a visit or the membership covers, payment) are in
-your knowledge base. If something isn't there, don't guess: say someone from the office can call
-back, and offer `flag_person`.
+Facts about the company (hours, areas served, what a visit or the membership covers, payment) are
+under "Company facts" below. If something isn't there, don't guess: say someone from the office can
+call back, and offer `flag_person`.
 
 `end_call` is how you hang up. Say goodbye first, then call it. On a call with a safety signal,
 use the sign-off above before ending. `transfer_to_office` puts the caller through to the office;
@@ -204,7 +204,9 @@ def page(tenant_dir: Path, letters: bool = False) -> str:
                  "speaking.")
     )
     extra = f"\n\n{LETTERS_PROMPT}" if letters else ""
-    return f"{text}\n\n{PROMPT_ADDITIONS}{extra}\n\n{CALL_CONTEXT}"
+    facts = "\n\n".join(f"### {t['title']}\n\n{t['text']}" for t in knowledge(tenant_dir))
+    return (f"{text}\n\n{PROMPT_ADDITIONS}{extra}\n\n## Company facts\n\n{facts}"
+            f"\n\n{CALL_CONTEXT}")
 
 
 def clock(hhmm: str) -> str:
@@ -266,11 +268,10 @@ def functions(specs: list[dict], base_url: str, office_number: str, letters: boo
             tool.update(speak_during_execution=True, execution_message_description=native["wait"],
                         execution_message_type="prompt")
         tools.append(tool)
-    # During End Call only a pause is said (Retell reads a spaced dash as one), so the line drops
-    # a moment after the goodbye: Jackson wanted about a second more than on call 2. A spoken
-    # message doubled the goodbye in the review chats.
-    tools.append({"type": "end_call", "name": "end_call", "speak_during_execution": True,
-                  "execution_message_description": " - ", "execution_message_type": "static_text",
+    # Nothing is said during End Call: a spoken message doubled the goodbye in the review chats,
+    # and a spaced-dash pause (Retell's pause mark) added no time before the hang-up (0.07 s and
+    # 0.02 s after the last word, MEASURED on two calls after Jackson's call 2).
+    tools.append({"type": "end_call", "name": "end_call", "speak_during_execution": False,
                   "description": "Hang up, after you have said goodbye and the caller has nothing "
                   "else. Never in the middle of a safety call before the sign-off."})
     tools.append({"type": "transfer_call", "name": "transfer_to_office",
@@ -293,10 +294,11 @@ def llm_body(tenant_dir: Path, specs: list[dict], base_url: str, model_id: str, 
         "general_tools": functions(specs, base_url, office_number, letters),
         "begin_message": "{{greeting}}",
         "start_speaker": "agent",
-        "knowledge_base_ids": [knowledge_base_id],
-        # Only close matches: at Retell's default 0.6, a "The what?" pulled in FAQ text the model
-        # then apologised for ("that was just some reference material").
-        "kb_config": {"filter_score": 0.75, "top_k": 2},
+        # No knowledge base on the call: Retell puts what it retrieves inside the caller's turn,
+        # and the model kept answering it as something the caller said ("That knowledge based
+        # text came through in your message", three times on the scripted call after Jackson's
+        # call 2, with the threshold at 0.75). The same facts go in the prompt instead (page()).
+        "knowledge_base_ids": [],
     }
 
 

@@ -26,6 +26,12 @@ def test_the_prompt_has_every_safety_line_word_for_word_and_the_calls_context():
     assert build.END_CALL_LINE not in page and "{company}" not in page
 
 
+def test_the_facts_go_in_the_prompt_not_a_knowledge_base_on_the_call():
+    body = build.llm_body(TENANT, specs(), BASE, "claude-haiku-5-5", "+15555550100", "kb_1")
+    assert body["knowledge_base_ids"] == []
+    assert "## Company facts" in body["general_prompt"] and "Manhattan" in body["general_prompt"]
+
+
 def test_the_knowledge_base_has_all_five_boroughs_and_no_prices():
     texts = build.knowledge(TENANT)
     joined = "\n".join(t["text"] for t in texts)
@@ -43,8 +49,7 @@ def test_the_functions_are_scoped_and_end_call_is_retells_own():
     assert names[:-2] == list(build.FUNCTIONS)
     assert "add_note" not in names and "mark_do_not_call" not in names
     end, transfer = tools[-2], tools[-1]
-    assert end == {**end, "type": "end_call", "execution_message_type": "static_text"}
-    assert end["execution_message_description"].strip() == "-"
+    assert end == {**end, "type": "end_call", "speak_during_execution": False}
     assert transfer["type"] == "transfer_call"
     assert transfer["transfer_destination"] == {"type": "predefined", "number": "+15555550100"}
     slow = {t["name"] for t in tools if t.get("speak_during_execution") and t["type"] == "custom"}
