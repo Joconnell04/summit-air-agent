@@ -97,6 +97,15 @@ CREATE TABLE IF NOT EXISTS waits (
     at TEXT NOT NULL
 );
 
+-- A line the server hands out to be said once a call (the top-priority line), recorded when it is
+-- handed out, so two tool calls in one caller turn can't both carry it (PR #139 review).
+CREATE TABLE IF NOT EXISTS lines_handed (
+    call_id TEXT NOT NULL REFERENCES calls (id) ON DELETE CASCADE,
+    line TEXT NOT NULL,
+    at TEXT NOT NULL,
+    PRIMARY KEY (call_id, line)
+);
+
 CREATE TABLE IF NOT EXISTS flags (
     id INTEGER PRIMARY KEY,
     call_id TEXT REFERENCES calls (id) ON DELETE CASCADE,

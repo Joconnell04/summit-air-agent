@@ -702,3 +702,27 @@ def test_a_dispatch_word_with_a_name_is_dropped_with_no_hint(sentence):
 )
 def test_a_dispatch_word_without_a_technician_name_is_kept(sentence):
     assert SpokenReply().sentence(sentence) == sentence
+
+
+ASKED_AGAIN = ("hold on you're breaking up a little the number you said five five five read me "
+               "that one more time please")
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        ASKED_AGAIN,
+        "yes that's right wait did you say seven one eight that's the number i'm calling from",
+    ],
+)
+def test_the_read_backs_own_phone_said_again_is_not_a_house_number(line):
+    """Eval run 20261104-234633: these reset a confirmed read-back, so the booking was refused."""
+    rb = {**READ_BACK, "street": "290 Bedford Ave", "zip": "11218", "phone": "7185550131"}
+    assert readback.change(line, rb) is None
+
+
+@pytest.mark.parametrize("line", ["I'd prefer earlier if that's possible.", "I'd like mornings.",
+                                  "Can I get earlier again?"])
+def test_a_time_preference_is_not_a_technician(line):
+    """Eval run 20261104-234633, reschedule-own-booking: "Earlier" was noted as a technician."""
+    assert asks.technician_request(line) is None

@@ -1,10 +1,11 @@
 """The priority engine and the after-hours outcome (spec S-04, S-21, S-33; DECISIONS.md 006)."""
 
 import pytest
-from toolkit import TENANT_DIR, UNKNOWN, book, ready_to_book
+from toolkit import START, TENANT_DIR, UNKNOWN, book, in_area_address, ready_to_book
 
 from app import priority as prio
 from app.tenant import load_agent
+from prompts.assemble import SpokenReply, for_model, spoken_by_server, spoken_first
 
 AGENT = load_agent(TENANT_DIR)[0]
 CFG = AGENT["priority"]
@@ -230,14 +231,42 @@ def test_an_urgent_caller_hears_it_once_and_a_routine_caller_never_does(agent):
     call = agent.start(UNKNOWN)["data"]["call_id"]
     agent.turn(call, "No heat, and my 84-year-old mother lives with me.")
     first = agent.tool("find_slots", call, job_type="no_heat")
-    assert line in first["say"]
+    # Spoken by the voice layer word for word before the times, never left for the model to say;
+    # the record's `say` keeps it, and the model is shown the rest.
+    assert line in first["data"]["spoken_first"] and first["say"].startswith(
+        first["data"]["spoken_first"]
+    )
+    assert line not in for_model(first)["say"] and for_model(first)["say"]
     agent.say(call, first["say"])
     again = agent.tool("find_slots", call, job_type="no_heat")
-    assert line not in again["say"]
+    assert "spoken_first" not in again["data"]
 
     routine = agent.start("(212) 555-0177")["data"]["call_id"]
     agent.turn(routine, "I'd like my annual tune-up.")
-    assert line not in agent.tool("find_slots", routine, job_type="tune_up")["say"]
+    assert "spoken_first" not in agent.tool("find_slots", routine, job_type="tune_up")["data"]
+
+
+def test_an_urgent_booking_made_without_find_slots_opens_with_the_line(agent):
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "No heat, and my 84-year-old mother lives with me.")
+    agent.confirm_read_back(call, in_area_address())
+    slot = {"date": START.isoformat(), "window": "afternoon"}
+    booked = book(agent, call, slot, job_type="no_heat")
+    assert booked["ok"], booked
+    assert booked["say"].startswith("I've marked this call top priority")
+
+
+def test_the_voice_layer_speaks_the_line_and_drops_the_models_own():
+    reply = SpokenReply()
+    envelope = {"ok": True, "say": "I've got openings this afternoon.",
+                "data": {"priority": {"level": "Urgent"},
+                         "spoken_first": "I've marked this call top priority, so you get our "
+                                         "soonest opening."}}
+    assert spoken_first(envelope).startswith("I've marked this call top priority")
+    assert spoken_by_server("find_slots", envelope) is None  # the model's reply still follows
+    reply.tool_done("find_slots", envelope)
+    assert reply.sentence("I've marked this as top priority for you.") == ""
+    assert reply.sentence("I have this afternoon from 12 to 4.") == "I have this afternoon from 12 to 4."
 
 
 @pytest.mark.parametrize("text,urgent", [("my 61-year-old dad lives here", True), ("I'm 59", False)])
@@ -399,3 +428,22 @@ def test_a_stroke_of_luck_is_not_an_illness(text):
     result = decide("no_heat", text, 61)
     assert "a chronic illness at home" not in result.reasons
     assert result.level == "High"
+
+
+
+def test_two_find_slots_in_one_turn_hand_out_the_line_once(agent):
+    """PR #139 review: "once" was read from the transcript, written only after the turn."""
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "No heat, and my 84-year-old mother lives with me.")
+    first = agent.tool("find_slots", call, job_type="no_heat")
+    second = agent.tool("find_slots", call, job_type="no_heat", time_of_day="morning")
+    assert "spoken_first" in first["data"]
+    assert "spoken_first" not in second["data"] and "top priority" not in second["say"]
+
+
+def test_the_line_waits_for_the_safety_lines(agent):
+    """PR #139 review: it could play before the safety lines."""
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "I smell gas, and the heat is out.")
+    held = agent.tool("find_slots", call, job_type="no_heat")
+    assert "spoken_first" not in held["data"]
