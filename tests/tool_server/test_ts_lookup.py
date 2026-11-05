@@ -2,6 +2,7 @@
 S-11, S-15a, S-39)."""
 
 import sqlite3
+from pathlib import Path
 
 from toolkit import UNKNOWN, book, first_open, ready_to_book
 
@@ -245,4 +246,39 @@ def test_the_adapter_exposes_no_delete_bulk_or_free_query_call():
         "cancel_job",
         "create_lead",
         "add_note",
+        # The schedule edits a person makes on the owner view or the bench (issue #152)
+        "customers_by_name",
+        "technicians",
+        "appointments_between",
+        "assignments",
+        "non_job_appointments",
+        "create_non_job_appointment",
+        "end_non_job_appointment",
+        "change_job",
+        "correct_location_address",
+        "rename_customer",
+        "change_phone",
     }
+
+
+SCHEDULE_EDITS = (
+    "create_non_job_appointment",
+    "end_non_job_appointment",
+    "change_job",
+    "correct_location_address",
+    "rename_customer",
+    "change_phone",
+)
+
+
+def test_only_the_schedule_module_makes_the_owners_edits():
+    """The agent's tools never block time, rename a customer or change a phone number: those
+    adapter calls are made from app/schedule.py, behind a signed-in person, and nowhere else."""
+    app_dir = Path(__file__).resolve().parents[2] / "app"
+    callers = {
+        path.name
+        for path in app_dir.rglob("*.py")
+        if path.parent.name != "fsm"
+        and any(f".{name}(" in path.read_text() for name in SCHEDULE_EDITS)
+    }
+    assert callers == {"schedule.py"}

@@ -69,10 +69,28 @@ class LocationCreate(LocationIn):
 
 class LocationUpdate(BaseModel):
     """A partial update, as ServiceTitan's PATCH locations/{id} takes: a location that is no
-    longer the customer's is made inactive, which keeps its history and equipment."""
+    longer the customer's is made inactive, which keeps its history and equipment. A new address
+    corrects this location (a typo, a missing unit); a move is a new location."""
 
     name: str | None = None
     active: bool | None = None
+    address: Address | None = None
+
+
+class CustomerUpdate(BaseModel):
+    """A partial update, as ServiceTitan's PATCH customers/{id} takes. The mock applies only the
+    name; the real endpoint takes more fields."""
+
+    name: str | None = Field(None, min_length=1, max_length=100)
+
+
+class ContactUpdate(BaseModel):
+    """A partial update of one contact, as ServiceTitan's PATCH customers/{id}/contacts/{contactId}
+    takes."""
+
+    type: Literal["Phone", "MobilePhone", "Email", "Fax"] | None = None
+    value: str | None = Field(None, min_length=3, max_length=100)
+    memo: str | None = Field(None, max_length=200)
 
 
 class BookingIn(BaseModel):
@@ -302,6 +320,7 @@ def update_location(
     body: LocationUpdate,
     request: Request,
     conn: sqlite3.Connection = Depends(get_conn),
+    cfg: TenantConfig = Depends(get_cfg),
     now=Depends(get_now),
     idempotency_key: str | None = Header(None),
 ):
@@ -318,6 +337,26 @@ def update_location(
                 "UPDATE locations SET active = ?, modified_on = ? WHERE id = ?",
                 (int(body.active), stamp, location_id),
             )
+        if body.address is not None:
+            place = body.address
+            zone = cfg.zone_by_zip.get(place.zip)
+            c.execute(
+                """UPDATE locations SET street = ?, street_key = ?, unit = ?, unit_key = ?, city = ?,
+                       state = ?, zip = ?, zone_id = ?, modified_on = ?
+                   WHERE id = ?""",
+                (
+                    place.street,
+                    street_key(place.street),
+                    place.unit or "",
+                    unit_key(place.unit or ""),
+                    place.city,
+                    place.state,
+                    place.zip,
+                    zone["id"] if zone else None,
+                    stamp,
+                    location_id,
+                ),
+            )
         return 200, repo.shape_location(_one(c, "locations", location_id, "Location"))
 
     return write(
@@ -326,6 +365,83 @@ def update_location(
         idem_key=idempotency_key,
         route=_route(request),
         body={"location": location_id, **body.model_dump()},
+    )
+
+
+@router.patch("/customers/{customer_id}")
+def update_customer(
+    customer_id: int,
+    body: CustomerUpdate,
+    request: Request,
+    conn: sqlite3.Connection = Depends(get_conn),
+    now=Depends(get_now),
+    idempotency_key: str | None = Header(None),
+):
+    def run(c):
+        _one(c, "customers", customer_id, "Customer")
+        if body.name is not None:
+            c.execute(
+                "UPDATE customers SET name = ?, modified_on = ? WHERE id = ?",
+                (body.name, iso(now), customer_id),
+            )
+        return 200, repo.shape_customer(c, _one(c, "customers", customer_id, "Customer"))
+
+    return write(
+        conn,
+        run,
+        idem_key=idempotency_key,
+        route=_route(request),
+        body={"customer": customer_id, **body.model_dump()},
+    )
+
+
+@router.patch("/customers/{customer_id}/contacts/{contact_id}")
+def update_customer_contact(
+    customer_id: int,
+    contact_id: int,
+    body: ContactUpdate,
+    request: Request,
+    conn: sqlite3.Connection = Depends(get_conn),
+    now=Depends(get_now),
+    idempotency_key: str | None = Header(None),
+):
+    """Change one of the customer's contacts. A phone number must have ten digits; its lookup key
+    changes with it, so a call from the new number finds the customer at once."""
+
+    def run(c):
+        contact = c.execute(
+            "SELECT * FROM contacts WHERE id = ? AND customer_id = ?", (contact_id, customer_id)
+        ).fetchone()
+        if not contact:
+            raise ApiError(
+                404, "not_found", f"Contact {contact_id} is not one of customer {customer_id}'s."
+            )
+        kind = body.type or contact["type"]
+        value = body.value if body.value is not None else contact["value"]
+        is_phone = kind in ("Phone", "MobilePhone")
+        if is_phone and len(phone_key(value)) != 10:
+            raise ApiError(
+                400, "validation_error", "A phone number needs 10 digits.", {"value": "10 digits"}
+            )
+        c.execute(
+            "UPDATE contacts SET type = ?, value = ?, phone_key = ?, memo = ? WHERE id = ?",
+            (
+                kind,
+                value,
+                phone_key(value) if is_phone else "",
+                body.memo if body.memo is not None else contact["memo"],
+                contact_id,
+            ),
+        )
+        c.execute("UPDATE customers SET modified_on = ? WHERE id = ?", (iso(now), customer_id))
+        return 200, repo.shape_contact(_one(c, "contacts", contact_id, "Contact"))
+
+    return write(
+        conn,
+        run,
+        idem_key=idempotency_key,
+        route=_route(request),
+        body={"customer": customer_id, "contact": contact_id, **body.model_dump()},
     )
 
 

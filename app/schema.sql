@@ -648,3 +648,23 @@ CREATE TABLE IF NOT EXISTS electrical (
     heard_line TEXT NOT NULL,
     said_at TEXT
 );
+
+-- Every change a person made to ServiceTitan from the owner view or the bench (app/schedule.py),
+-- with who made it, whether ServiceTitan took it, and the time it says the record changed. Never
+-- edited or deleted. A refused edit is kept too, with the reason.
+CREATE TABLE IF NOT EXISTS schedule_edits (
+    id INTEGER PRIMARY KEY,
+    tenant TEXT NOT NULL,
+    at TEXT NOT NULL,
+    user_id INTEGER,
+    author TEXT NOT NULL,
+    role TEXT NOT NULL,
+    surface TEXT NOT NULL CHECK (surface IN ('owner', 'bench')),
+    action TEXT NOT NULL,
+    target TEXT NOT NULL,
+    detail TEXT NOT NULL,
+    ok INTEGER NOT NULL CHECK (ok IN (0, 1)),
+    error TEXT,
+    fsm_modified_on TEXT
+);
+CREATE INDEX IF NOT EXISTS ix_schedule_edits ON schedule_edits (tenant, id);

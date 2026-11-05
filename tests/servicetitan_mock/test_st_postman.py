@@ -21,7 +21,9 @@ SKIPPED = {"/docs", "/redoc", "/openapi.json", "/docs/oauth2-redirect", "/debug/
 
 
 def normalize(path: str) -> str:
-    return re.sub(r"\{\{?[^}]+\}\}?", "{}", path.split("?")[0].removeprefix("{{base_url}}"))
+    """A path with its variables and literal ids (job-types/203) read as {}."""
+    path = re.sub(r"\{\{?[^}]+\}\}?", "{}", path.split("?")[0].removeprefix("{{base_url}}"))
+    return re.sub(r"/\d+(?=/|$)", "/{}", path)
 
 
 def collection_requests(items) -> set[tuple[str, str]]:
@@ -35,13 +37,16 @@ def collection_requests(items) -> set[tuple[str, str]]:
 
 
 def test_the_collection_has_a_request_for_every_endpoint(tmp_path):
+    # Read from the OpenAPI paths: from FastAPI 0.16x, app.routes holds included routers as one
+    # entry each, so a walk of it saw only the app's own routes and passed whatever was missing.
     app = create_app(tmp_path / "x.db", TENANT_DIR, tmp_path / "x.log")
     endpoints = {
-        (method, normalize(route.path))
-        for route in app.routes
-        if hasattr(route, "methods") and route.path not in SKIPPED
-        for method in route.methods - {"HEAD", "OPTIONS"}
+        (method.upper(), normalize(path))
+        for path, methods in app.openapi()["paths"].items()
+        if path not in SKIPPED
+        for method in methods
     }
+    assert len(endpoints) > 40
     covered = collection_requests(json.loads(COLLECTION.read_text())["item"])
     assert endpoints - covered == set()
 

@@ -36,6 +36,25 @@ def create_schema(path: str | Path) -> None:
     conn.close()
 
 
+def add_missing_tables(path: str | Path) -> None:
+    """Create the tables schema.sql writes IF NOT EXISTS, on a database that predates them. Those
+    tables came after the live world was seeded; adding them this way keeps its bookings, where
+    raising SCHEMA_VERSION would rebuild the world from the seed."""
+    if not Path(path).exists():
+        return
+    statements = [
+        s.strip() for s in SCHEMA.read_text().split(";") if "IF NOT EXISTS" in s
+    ]
+    conn = connect(path)
+    try:
+        for statement in statements:
+            # Drop the comment lines above the statement; sqlite runs one statement per call.
+            body = "\n".join(line for line in statement.splitlines() if not line.startswith("--"))
+            conn.execute(body)
+    finally:
+        conn.close()
+
+
 def schema_is_current(path: str | Path) -> bool:
     """Does the database exist and was it built under the current schema?"""
     if not Path(path).exists():
