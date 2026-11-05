@@ -1915,9 +1915,24 @@ def _window_inside(ctx: Ctx, window: dict, after: time | None, before: time | No
     return (after is None or spec.start >= after) and (before is None or spec.end <= before)
 
 
+# The number calling, said as a phrase and passed through as one ("the number I'm calling from" on
+# Retell call call_9826ff9f0dfa8bc835a3601368b, which heard "all ten digits" for it).
+CALLING_FROM = re.compile(
+    r"^(?:the |this |my )?(?:number|one|phone|cell|line)?\s*(?:i'?m|i am)\s+calling\s+(?:you\s+)?"
+    r"(?:from|on|with)$|^(?:this|that)(?: (?:number|one|phone|cell|line))?$|^same(?: number| one)?$",
+    re.IGNORECASE,
+)
+
+
+def _calling_from(value: str) -> bool:
+    phrase = " ".join(re.sub(r"[^\w' ]", " ", value).split())
+    phrase = re.sub(r"^(?:it'?s|use|yes|yeah)\s+", "", phrase, flags=re.IGNORECASE)
+    return value.lower().replace(" ", "_") == "caller_id" or bool(CALLING_FROM.match(phrase))
+
+
 def _resolve_phone(ctx: Ctx, value: str) -> str:
     value = value.strip()
-    if value.lower().replace(" ", "_") == "caller_id":
+    if _calling_from(value):
         if len(ctx.call["caller_key"]) != 10:
             raise Refused(
                 "invalid_phone", "The number didn't come through. What's the best number?"

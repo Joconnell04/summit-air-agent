@@ -109,9 +109,23 @@ def test_the_read_back_is_one_sentence_with_the_number_in_groups(agent):
     assert asked["say"] == (
         "I have your home at 101 Union St, Brooklyn, ZIP code one one two three one, and the best "
         "number is "
-        "two one two, five five five, zero nine nine nine, is that right?"
+        "two one two, five five five, zero nine nine nine. That's all correct, right?"
     )
     assert "read" not in asked["say"].lower()
+
+
+@pytest.mark.parametrize(
+    "phone",
+    ["the number I'm calling from", "this number", "this one", "the one I'm calling from"],
+)
+def test_the_number_calling_said_as_a_phrase_is_the_caller_id(agent, phone):
+    """Retell call call_9826ff9f0dfa8bc835a3601368b: read_back got "the number I'm calling from"
+    and the caller heard "all ten digits" again."""
+    call = agent.start("+1 (347) 555-0101")["data"]["call_id"]
+    agent.turn(call, "It's 101 Union St, 11231.")
+    asked = agent.tool("read_back", call, address=in_area_address(), phone=phone)
+    assert asked["ok"], asked
+    assert "three four seven, five five five, zero one zero one" in asked["say"]
 
 
 @pytest.mark.parametrize("phone", ["555 0142", "212 555 014", "212 555 01422"])
