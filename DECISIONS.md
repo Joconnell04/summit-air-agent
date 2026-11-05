@@ -12,6 +12,15 @@ Discussion: docs/ai-process/transcripts/... or docs/explorations/...
 Issue: #N
 -->
 
+## 107. OpenAI's full-duplex model (GPT-Live-1) is dropped
+
+Decided: GPT-Live-1, on OpenAI's Live Sessions endpoint over SIP with our tool server, is off the slate and not tested further. Its lane is stopped. Its code stays on PR #163, unmerged, and the gate line (+1 929 810 4875) stays as a test number for the other entries.
+Why: on its one slate call, Jackson's verdict was "it's not in a place right now where it's even worth continuing to iterate on". It answered the trivia wrong and didn't steer back to heating, took too long to respond, sometimes didn't respond at all, and didn't remember what had been said. Before that call it had also read back an invented phone number until our server's sentences were sent as exact-speech instructions. The forum research called it the most natural model on a phone line but weak at following instructions (docs/explorations/019-forum-stacks.md), and on this job instructions are what matter: safety lines word for word, gates, exact read-backs.
+Considered: more prompt work, or playing our own audio for the server's sentences. Both add the layering the slate exists to test, for a model that failed on the basics.
+Would change if: a later full-duplex release follows instructions and tool results reliably on a scripted phone call.
+Discussion: evals/rounds/simplicity-slate-01.md (call 3)
+Issue: none (slate entry 7)
+
 ## 105. All five boroughs, addresses said any way, and no hang-up after an out-of-area answer
 
 Decided: the service area is every residential ZIP in Manhattan, the Bronx, Brooklyn, Queens and Staten Island: 214 ZIPs from NYC Open Data's Modified ZIP Code Tabulation Areas (SOURCE: https://data.cityofnewyork.us/Health/Modified-Zip-Code-Tabulation-Areas-MODZCTA-/pri4-ifjk, read 2026-11-05, every one with a population estimate above zero), grouped by borough. The six zones the seeded world uses keep their ZIPs and the new ones are marked `seeded: false`, so the eval world is unchanged row for row (MEASURED, the same rows before and after); capacity isn't by zone, so a Manhattan or Bronx address books like any other. The address check matches a house number however it was said ("one nine nine", "one ninety nine", "a hundred ninety nine", "one hundred and ninety nine"), with a direction word ("East") between the number and the street, an ordinal said either way ("fourth", "4th", "4"), and a unit after it. `end_call` is refused as a hang-up right after an out-of-area answer until the caller speaks or says goodbye. The Retell bridge hangs up only after the agent's final line has played, plus 1.5 s, reading the call again if a longer final line has appeared. In speech, an off-topic question is answered correctly in one line and then steered back (a letter count spells the word out first: "Seventeen is s, e, v, e, n, t, e, e, n, so four e's."), Retell's agents use the same voice as ours (Max), "The what?" gets the last question again in simpler words, "No problem" follows only a thank-you or an apology, and "Maybe" to "is it the number on the account?" means try it.

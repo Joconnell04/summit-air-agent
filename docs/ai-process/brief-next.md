@@ -4,7 +4,7 @@ The one page to read before the live calls and the interview: what needs Jackson
 
 ## Needs Jackson
 
-1. **The 10 live calls, in the order in `evals/live-calls.md`.** Call (646) 624-0418 from your cell. The calls that don't book go first, because the first booking puts your cell on file. Every address is real and in the service area. Calls 5, 7 and 9 behave differently after 8 PM (on-call instead of booking or the office); the script says what to expect either way. Everything merged is deployed and a scripted test call passed on it.
+1. **The simplicity slate.** One live call per stack, each gated by a short rig check and a scripted call first, with Jackson's feedback logged verbatim in [evals/rounds/simplicity-slate-01.md](../../evals/rounds/simplicity-slate-01.md). The entries are our stack (improved, with Flux, and stripped), Retell (improved, native and Jackson's own build), Deepgram Voice Agent, Vapi (waiting on an account) and GPT-Live-1. Calls so far: Deepgram (to redo after fixes), Retell native (liked; voice and pacing fixes underway) and GPT-Live-1 (call 3). Our own stack hasn't passed its gate yet: the speech filter caused stalls, now fixed and being re-checked.
 2. **One feedback pass after the calls.** The end of the script maps each kind of complaint to one setting. Two fixes are already built and waiting on what you hear: the lookup fix for long silences on address turns (switched off), and the "yes, that's right" fast path for a slow booking moment (later list, C-63).
 3. **Retell prototype agents.** The Retell flow lane left its prototype agents on the Retell account. Say whether to delete them; nothing deletes without your OK.
 
