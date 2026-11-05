@@ -27,3 +27,10 @@ def test_the_live_schedule_is_opened_by_hand_at_deploy_not_on_every_start():
     """PR #155 review: run on every mock start, it could cancel a visit a live caller had moved."""
     for stack in ("summit-air", "retell"):
         assert "open_live_schedule" not in (ROOT / "deploy" / stack / "run.sh").read_text()
+
+
+def test_the_watchdog_leaves_the_numbers_routing_alone_unless_fallback_is_on():
+    """The number rings Retell now (DECISIONS.md 112); the fallback's way back is the LiveKit trunk."""
+    script = (Path(__file__).resolve().parents[1] / "deploy" / "summit-air" / "watchdog.sh").read_text()
+    assert script.count("scripts.phone.fallback") == 2
+    assert script.count('[ "${PHONE_FALLBACK:-off}" = on ]') == 2

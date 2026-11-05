@@ -219,6 +219,12 @@ class Bridge:
         self.later = later or _timer
         self.private_note_agents = set(filter(None, os.environ.get(
             "RETELL_PRIVATE_NOTE_AGENTS", "").split(",")))
+        # Agents that get no mid-call notes at all; the safety lines still go by say_now, and
+        # tool results still carry their notes. Jackson's agent said "that was just the reference
+        # material" three times on one call after notes came in this way
+        # (call_17353a5115066cd2e0ad091ddad, no knowledge base attached).
+        self.no_note_agents = set(filter(None, os.environ.get(
+            "RETELL_NO_NOTE_AGENTS", "").split(",")))
         # The last call object each call's events brought, for the word timings the hang-up
         # reads when get-call has none.
         self.seen: dict[str, dict] = {}
@@ -324,7 +330,7 @@ class Bridge:
             safety, notes = self.sync(call, call_id, settled=False)
             if safety:
                 self.say_now(rid, SAY_NOW.format(text=safety[-1]["text"]))
-            elif notes:
+            elif notes and call.get("agent_id") not in self.no_note_agents:
                 text = " ".join(notes)
                 if call.get("agent_id") in self.private_note_agents:
                     text = PRIVATE_NOTE.format(notes=text)

@@ -190,6 +190,20 @@ def test_the_native_agent_gets_the_servers_note_marked_private(client, retell, b
     assert note.startswith("Private note") and note.endswith("[server] commercial")
 
 
+def test_an_agent_with_notes_off_gets_none_but_still_gets_the_safety_lines(client, retell, bridge):
+    """Jackson's agent read the bare notes as reference text and apologised for them."""
+    bridge.no_note_agents = {"agent_jackson"}
+    inbound(client, "abc")
+    business = utterance("user", "I manage a restaurant on Atlantic Avenue and the AC died.")
+    event(client, "transcript_updated",
+          call_obj("abc", GREETING, business, agent_id="agent_jackson"))
+    assert retell.context == []
+    gas = utterance("user", "Actually I think I smell gas in the kitchen.")
+    event(client, "transcript_updated",
+          call_obj("abc", GREETING, business, gas, agent_id="agent_jackson"))
+    assert len(retell.said) == 1 and "exactly as written" in retell.said[0][1]
+
+
 def test_an_allowed_end_call_stops_the_call_after_the_goodbye(client, retell, later, tool_app):
     said = booked_call(client)
     bye = [*said, utterance("user", "That's all, thanks."), utterance("agent", "Take care, bye.")]

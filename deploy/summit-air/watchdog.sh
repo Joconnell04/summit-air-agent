@@ -1,7 +1,9 @@
 #!/bin/sh
 # Every minute from cron: restart what stopped, post the worker heartbeat, ping the outside monitor,
-# and move the phone number to the recorded fallback after two failed worker checks in a row (and
-# back once it passes). docs/architecture.md, hosting.
+# and, only with PHONE_FALLBACK=on in .env, move the phone number to the recorded fallback after two
+# failed worker checks in a row (and back once it passes). docs/architecture.md, hosting.
+# Off by default since the number moved to Retell (DECISIONS.md 112): the fallback's "back once it
+# passes" puts the number on the LiveKit trunk, whatever it was routed to.
 set -u
 BASE="$HOME/summit-air"
 STATE="$BASE/watchdog.state"
@@ -17,7 +19,7 @@ if curl -fsS -m 5 http://127.0.0.1:8081/ >/dev/null 2>&1 \
   curl -fsS -m 5 -X POST -H 'Content-Type: application/json' -d '{"worker":"livekit"}' \
     http://127.0.0.1:8100/healthz/heartbeat >/dev/null 2>&1
   [ -n "${HEALTHCHECK_URL:-}" ] && curl -fsS -m 10 "$HEALTHCHECK_URL" >/dev/null 2>&1
-  if [ "$(cat "$STATE" 2>/dev/null)" = "fallback" ]; then
+  if [ "${PHONE_FALLBACK:-off}" = on ] && [ "$(cat "$STATE" 2>/dev/null)" = "fallback" ]; then
     uv run python -m scripts.phone.fallback off >>"$BASE/logs/watchdog.log" 2>&1
   fi
   echo 0 >"$STATE"
@@ -26,7 +28,8 @@ else
   case "$failures" in fallback) exit 0 ;; ''|*[!0-9]*) failures=0 ;; esac
   failures=$((failures + 1))
   echo "$(date -u +%FT%TZ) worker check failed ($failures)" >>"$BASE/logs/watchdog.log"
-  if [ "$failures" -ge 2 ] && uv run python -m scripts.phone.fallback on >>"$BASE/logs/watchdog.log" 2>&1; then
+  if [ "${PHONE_FALLBACK:-off}" = on ] && [ "$failures" -ge 2 ] \
+     && uv run python -m scripts.phone.fallback on >>"$BASE/logs/watchdog.log" 2>&1; then
     failures=fallback
   fi
   echo "$failures" >"$STATE"
