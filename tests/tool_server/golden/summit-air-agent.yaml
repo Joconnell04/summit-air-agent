@@ -219,6 +219,7 @@ lines:
     and the technician won't start until that's settled.
   arrival_no_fit: Our arrival windows are {windows}, and the technician can come any time in the window,
     so I can't promise an exact time.
+  arrival_outside_hours: Our visits run from {hours}.
   billing_callback: I'm sorry about that. Billing goes through our office, so I've asked them to look
     into the charge, and someone from the office will call you {when}.
   callback_after: around {time}

@@ -740,3 +740,33 @@ def test_an_iso_time_with_no_offset_is_local_and_gets_the_nearest_time(agent):
     assert "the closest I can do is Wednesday at 8 AM" in refused["say"]
     ok = agent.tool("flag_person", call, reason="Call me back", callback_time="2026-11-04T14:00:00")
     assert ok["ok"] and ok["say"].endswith("Wednesday around 2 PM."), ok
+
+
+@pytest.mark.parametrize(
+    "line, window, said",
+    [
+        ("I'd like a call tomorrow at 2", ("1 PM", "3 PM"), "tomorrow around 2 PM."),
+        ("Tomorrow at 2:30.", ("2 PM", "3 PM"), "tomorrow around 2:30 PM."),
+        ("Can someone call me tomorrow at noon?", ("11 AM", "1 PM"), "tomorrow around noon."),
+    ],
+)
+def test_one_named_time_in_a_longer_line_is_that_time(agent, line, window, said):
+    """PR #155 check: "to", "and" and "or" made "I'd like a call tomorrow at 2" a window, and 2:30
+    came back as 2 PM."""
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, line)
+    flagged = agent.tool(
+        "flag_person", call, reason="Call me back", callback_after=window[0],
+        callback_before=window[1], callback_day="tomorrow",
+    )
+    assert flagged["say"].endswith(said), flagged["say"]
+
+
+def test_two_times_as_a_range_stay_a_window(agent):
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "Tomorrow, 1 to 3 is good.")
+    flagged = agent.tool(
+        "flag_person", call, reason="Call me back", callback_after="1 PM", callback_before="3 PM",
+        callback_day="tomorrow",
+    )
+    assert flagged["say"].endswith("tomorrow between 1 PM and 3 PM.")

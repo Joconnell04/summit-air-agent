@@ -926,3 +926,9 @@ def test_moved_from_counts_only_with_a_street_address(agent, line, moved):
     agent.turn(call, line)
     refused = agent.tool("record_move", call)
     assert (refused["refused"] != "move_not_said") is moved, refused
+
+
+@pytest.mark.parametrize("line", ["It's the furnace.", "It's Brooklyn.", "It's Bedford Avenue."])
+def test_things_and_places_are_not_names(line):
+    """PR #155 check: these counted as names (failing closed, but still wrong)."""
+    assert tools._gave_a_name(line) is False

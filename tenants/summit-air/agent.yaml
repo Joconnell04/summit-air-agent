@@ -452,6 +452,8 @@ lines:
     I can't add a new address to the account from this number, so I can't book the visit there
     yet. Someone from our office can call the number we have on file to update it and book the
     visit. Would that help?
+  # A time the caller named that no visit window holds ("at 8 PM"); the nearest window follows.
+  arrival_outside_hours: Our visits run from {hours}.
   identity_check_address: Thanks. And what's the address?
   identity_check_name: Thanks. And what's the name on the {thing}?
   identity_check_again: >-

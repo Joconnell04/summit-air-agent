@@ -1199,3 +1199,23 @@ def test_a_named_day_full_this_week_says_so_and_offers_next_weeks_with_its_date(
     offer, say = tools._one_offer(ctx, by_day, sorted(by_day), {"friday"}, None)
     assert offer["date"] == "2026-11-13"
     assert say == "This Friday is full. Friday, November 13, I have 12 to 4. Does that work?"
+
+
+def test_book_for_tomorrow_at_two_in_a_longer_line_is_the_window_that_holds_it(agent):
+    """PR #155 check: "I want to book for tomorrow at 2" got fits False and every window."""
+    call = ready_to_book(agent)
+    agent.turn(call, "I want to book for tomorrow at 2")
+    found = agent.tool(
+        "find_slots", call, job_type="tune_up", arrive_after="1 PM", arrive_before="3 PM"
+    )
+    assert found["data"]["arrival"] == {"time": "14:00", "fits": True}
+    assert [w["label"] for w in found["data"]["windows"]] == ["12 to 4"]
+    assert found["say"] == "Tomorrow I have 12 to 4.", "the day comes from the caller's words"
+
+
+def test_a_named_time_outside_visit_hours_says_the_hours_and_offers_the_nearest(agent):
+    call = ready_to_book(agent)
+    agent.turn(call, "Tomorrow at 8 PM works.")
+    found = agent.tool("find_slots", call, job_type="tune_up", arrive_after="8 PM")
+    assert found["data"]["arrival"]["fits"] is False
+    assert found["say"] == "Our visits run from 8 AM to 8 PM. Tomorrow I have 4 to 8."

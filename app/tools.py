@@ -972,8 +972,20 @@ VERBISH = {
 }
 
 
+# Words that name a thing or a place, never a person: "It's the furnace", "It's Brooklyn", "It's
+# Bedford Avenue" (PR #155 check).
+NOT_PERSON = {
+    "furnace", "boiler", "heat", "heater", "heating", "ac", "air", "unit", "thermostat", "radiator",
+    "radiators", "pump", "system", "filter", "vent", "vents", "brooklyn", "queens", "manhattan",
+    "bronx", "staten", "island", "apartment", "house", "building", "basement", "kitchen",
+}
+
+
 def _not_a_name(key: str) -> bool:
-    return (not key.isalpha()) or key in NOT_NAMES or key in NUMBER_WORDS or key in VERBISH
+    return (
+        (not key.isalpha()) or key in NOT_NAMES or key in NUMBER_WORDS or key in VERBISH
+        or key in NOT_PERSON or key in STREET_AFTER
+    )
 
 
 def _gave_a_name(text: str) -> bool:
@@ -983,6 +995,12 @@ def _gave_a_name(text: str) -> bool:
     and verbs are never taken for a name, and "I just gave you the name" gives none."""
     raw = re.findall(r"[A-Za-z0-9][A-Za-z0-9'-]*", text)
     keys = [w.lower().replace("'", "").replace("-", "") for w in raw]
+    if any(k in STREET_AFTER for k in keys):
+        # A line with a street in it is an address, whatever else it has ("It's Bedford Avenue").
+        named_lead = any(tuple(keys[i:i + len(lead)]) == lead
+                         for lead in STRONG_NAME_LEADS for i in range(len(keys)))
+        if not named_lead:
+            return False
     for leads, strong in ((STRONG_NAME_LEADS, True), (WEAK_NAME_LEADS, False)):
         for i in range(len(keys)):
             for lead in leads:
@@ -1531,7 +1549,13 @@ def find_slots(ctx: Ctx, args: FindSlotsIn) -> Result:
     # technician may come any time in a window, so a window that runs past them is never offered
     # as if it fit ("by 9" inside 8 to 12, eval round 2, seed 7).
     arrival_say = ""
-    named = _caller_named_one_time(ctx) if (args.arrive_after or args.arrive_before) else None
+    named = _caller_named_one_time(ctx)
+    if named is not None and args.day is None:
+        # "Tomorrow at two PM" with no day passed: the day comes from the caller's words, never
+        # today by default (PR #155 check).
+        said_day = _caller_named_day(ctx)
+        if said_day is not None:
+            args = args.model_copy(update={"day": said_day})
     if named is not None:
         # One time the caller named ("tomorrow at two PM") is the window that holds it, not a
         # limit on when the technician may come: live call 2 passed 1 PM to 5 PM, which no 4-hour
@@ -1540,6 +1564,11 @@ def find_slots(ctx: Ctx, args: FindSlotsIn) -> Result:
         data["arrival"] = {"time": named.strftime("%H:%M"), "fits": bool(holding)}
         if holding:
             windows = holding
+        elif windows:
+            # Outside the visit hours ("at 8 PM"): say the hours and offer the nearest window.
+            nearest = min(windows, key=lambda w: _distance_to(ctx, w, named))
+            windows = [w for w in windows if w["window"] == nearest["window"]]
+            arrival_say = ctx.tenant.line("arrival_outside_hours", hours=_visit_hours(ctx)) + " "
     elif args.arrive_after or args.arrive_before:
         after, before = _arrival_hours(args)
         fitting = [w for w in windows if _window_inside(ctx, w, after, before)]
@@ -1732,6 +1761,22 @@ def _arrival_hours(args: FindSlotsIn) -> tuple[time | None, time | None]:
             errors={"arrive_before": "ends before it starts"},
         )
     return after, before
+
+
+def _distance_to(ctx: Ctx, window: dict, moment: time) -> float:
+    """Hours from a window to a time outside it."""
+    spec = ctx.tenant.window(window["window"])
+    if spec is None or spec.after_hours:
+        return 99.0
+    mins = moment.hour * 60 + moment.minute
+    start, end = spec.start.hour * 60 + spec.start.minute, spec.end.hour * 60 + spec.end.minute
+    return max(start - mins, mins - end, 0) / 60
+
+
+def _visit_hours(ctx: Ctx) -> str:
+    """ "8 AM to 8 PM", from the first and last regular arrival windows."""
+    regular = [w for w in ctx.tenant.windows if not w.after_hours]
+    return f"{_clock_said(regular[0].start)} to {_clock_said(regular[-1].end)}"
 
 
 def _window_holds(ctx: Ctx, window: dict, moment: time) -> bool:
@@ -3026,28 +3071,68 @@ def _local_iso(tenant: Tenant, asked: CallbackTime) -> CallbackTime:
 
 
 # Words that make a caller's line a window, not one time: "between 1 and 3", "after 2", "2 to 4".
-WINDOW_WORDS = {"between", "after", "before", "to", "and", "til", "till", "until", "or", "around"}
+# A time the caller named, after "at" or "for", or with AM, PM or minutes: "at 2", "2:30", "2 PM".
+NAMED_TIME = re.compile(
+    r"(?:\b(?:at|for)\s+)?\b(\d{1,2})(?:\s*:\s*(\d{2}))?\s*(am|pm|a|p)?\b(?!\s*:)"
+)
+# Two times as a range ("between 1 and 3", "2 to 4", "1 till 3") or a time with a limit word ("after
+# 2", "before noon", "by 4"): a window, not one time.
+WINDOW_SAID = re.compile(
+    r"\bbetween\b[^.?!]*\d[^.?!]*\band\b[^.?!]*\d"
+    r"|\d{1,2}(?:\s*:\s*\d{2})?\s*(?:am|pm|a|p)?\s*(?:to|til|till|until|-)\s*\d"
+    r"|\b(?:after|before|by|until|till|not before|no later than)\s+\d"
+)
+WEEKDAY_NAMES = ("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday")
+
+
+def _caller_line_digits(ctx: Ctx) -> str:
+    """The caller's last line with spoken numbers as digits ("two thirty" as "2 30")."""
+    line = records.last_caller_line(ctx.conn, ctx.call["id"])
+    return " ".join(t for t in number_tokens(line.replace("noon", "12 pm")) if t)
 
 
 def _caller_named_one_time(ctx: Ctx) -> time | None:
-    """The one clock time in the caller's last line, when it names exactly one and no window
-    ("Tomorrow at two PM."), else None."""
-    tokens = [t for t in number_tokens(records.last_caller_line(ctx.conn, ctx.call["id"])) if t]
-    if any(t in WINDOW_WORDS for t in tokens):
+    """The one clock time in the caller's last line, minutes kept ("tomorrow at 2:30"), when it
+    names exactly one and no window. "To", "and" and "or" alone are no window ("I'd like a call
+    tomorrow at 2", PR #155 check); only two times as a range, or a limit word, are."""
+    text = _caller_line_digits(ctx)
+    if WINDOW_SAID.search(text):
         return None
-    found = []
-    for i, token in enumerate(tokens):
-        if not token.isdigit() or len(token) > 2:
+    found = set()
+    for match in NAMED_TIME.finditer(text):
+        hour, minute, meridiem = match[1], match[2], match[3]
+        lead = match[0].lstrip()[:3] in ("at ", "for")
+        if not (lead or minute or meridiem):
             continue
-        nxt = tokens[i + 1] if i + 1 < len(tokens) else ""
-        meridiem = {"pm": " PM", "am": " AM", "p": " PM", "a": " AM"}.get(nxt, "")
-        if not meridiem and (i == 0 or tokens[i - 1] not in ("at", "for")):
-            continue
+        value = hour + (f":{minute}" if minute else "") + (
+            {"am": " AM", "a": " AM", "pm": " PM", "p": " PM"}.get(meridiem or "", "")
+        )
         try:
-            found.append(clock_time(token + meridiem))
+            found.add(clock_time(value))
         except ValueError:
             continue
-    return found[0] if len(found) == 1 else None
+    return found.pop() if len(found) == 1 else None
+
+
+def _caller_named_day(ctx: Ctx) -> date | None:
+    """The day in the caller's last line: "today", "tomorrow" or a weekday, the next one coming."""
+    said = words(records.last_caller_line(ctx.conn, ctx.call["id"]))
+    today = ctx.tenant.local(ctx.now).date()
+    if " tomorrow " in said:
+        return today + timedelta(days=1)
+    if " today " in said or " tonight " in said:
+        return today
+    for i, name in enumerate(WEEKDAY_NAMES):
+        if f" {name} " in said:
+            return today + timedelta(days=(i - today.weekday()) % 7)
+    return None
+
+
+def _clock_said(moment: time) -> str:
+    """ "2 PM", "2:30 PM", "noon"."""
+    if moment == time(12, 0):
+        return "noon"
+    return datetime.combine(date.today(), moment).strftime("%-I:%M %p").replace(":00 ", " ")
 
 
 def _as_the_caller_said_it(ctx: Ctx, asked: CallbackTime) -> CallbackTime:
@@ -3065,7 +3150,7 @@ def _as_the_caller_said_it(ctx: Ctx, asked: CallbackTime) -> CallbackTime:
         return asked
     if not start <= named <= end:
         return asked
-    spoken = datetime.combine(date.today(), named).strftime("%-I:%M %p").replace(":00 ", " ")
+    spoken = datetime.combine(date.today(), named).strftime("%-I:%M %p")
     return asked.model_copy(
         update={"callback_after": None, "callback_before": None, "callback_time": spoken}
     )
@@ -3092,7 +3177,7 @@ def _callback_due(ctx: Ctx, asked: CallbackTime) -> CallbackWhen:
             # inside calling hours.
             if not records.in_outbound_hours(tenant, due):
                 raise ValueError("outside callback hours")
-            clock = tenant.time_spoken(due, now).split(" at ")[-1]
+            clock = _clock_said(tenant.local(due).time())
             spoken = _on_day(tenant, due, now, tenant.line("callback_at", time=clock))
             return CallbackWhen(due, due, spoken)
     except ValueError as exc:
