@@ -254,8 +254,9 @@ class SummitAgent(Agent):
     ) -> AsyncIterable[llm.ChatChunk | str]:
         """The model's reply, a sentence at a time through the reply rule (prompts/assemble.py
         SpokenReply), so a read-back announcement or a restated ZIP or number is never spoken.
-        While the rule is holding, the text waits for the end of the reply and is dropped if the
-        reply calls a tool whose result the worker speaks itself."""
+        While the rule is holding (a safety call), the text waits for the end of the reply and is
+        dropped if the reply calls a tool whose result the worker speaks itself; around the
+        read-back only the part from a sentence that could restate the address or number waits."""
         if self.call.stripped:
             # The stripped profile speaks the model's text as it streams, unfiltered.
             async for chunk in Agent.default.llm_node(self, chat_ctx, tools, model_settings):
@@ -283,13 +284,19 @@ class SummitAgent(Agent):
                     held += done
                 else:
                     for sentence in done:
-                        if kept := reply.sentence(sentence):
+                        # From a sentence that could say the address or number back, the rest of
+                        # the reply waits for its end (SpokenReply.holds_from).
+                        if held or reply.holds_from(sentence):
+                            held.append(sentence)
+                        elif kept := reply.sentence(sentence):
                             heard.append(kept)
                             yield kept + " "
             if not isinstance(chunk, str):
                 yield chunk
         if holding:
             kept = reply.text(" ".join([*held, pending]), calls)
+        elif held or (pending.strip() and reply.holds_from(pending)):
+            kept = reply.tail([*held, pending], calls)
         else:
             kept = reply.sentence(pending) if pending.strip() else ""
         if kept:

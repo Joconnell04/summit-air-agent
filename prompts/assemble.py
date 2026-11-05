@@ -565,6 +565,14 @@ EVACUATE = re.compile(
 )
 ORDINAL = re.compile(r"^\d+(?:st|nd|rd|th)$")
 SENTENCE_END = re.compile(r"(?<=[.!?])\s+")
+# A sentence that could carry an address or phone number back, or announce the read-back: digits,
+# number words, "address" or "number", or a "confirm" / "read" word (SpokenReply.holds_from).
+MAY_RESTATE = re.compile(
+    r"\d|\b(?:zero|oh|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|\w+teen|"
+    r"twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|confirm\w*|read\w*|"
+    r"address\w*|number\w*)\b",
+    re.IGNORECASE,
+)
 # A question that only asks about the sentence before it: dropped with a dropped restatement, so
 # the caller never hears a bare "Is that right?" (eval round 3 run 20261104-031113).
 CONFIRMS_ONLY = re.compile(
@@ -693,7 +701,25 @@ class SpokenReply:
         self.technicians: set[str] = set()
 
     def holding(self) -> bool:
-        return self.safety_call or (self.address_checked and not self.read_back_confirmed)
+        """The whole reply waits for its end only on a safety call. Holding every reply from the
+        first ZIP check to the confirmed read-back made the caller wait for the model's whole
+        reply, about 0.3 s more per model request (issue #150); in that window only the part of a
+        reply from a sentence that could say the address or number back waits (`holds_from`)."""
+        return self.safety_call
+
+    def holds_from(self, sentence: str) -> bool:
+        """While a read-back can come (the address checked, the read-back not yet confirmed), a
+        sentence that could say the address or number back, or announce the read-back, waits with
+        the rest of its reply until the reply ends: dropped if the reply calls the read-back,
+        filtered as usual if not. A short lead-in before it ("Got it.") is spoken at once."""
+        pending = self.address_checked and not self.read_back_confirmed
+        return pending and bool(MAY_RESTATE.search(sentence))
+
+    def tail(self, held: list[str], calls: list[tuple[str, dict]]) -> str:
+        """The sentences `holds_from` kept back, once the reply has ended."""
+        if any(self.server_speaks(n, a) for n, a in calls):
+            return ""
+        return " ".join(kept for s in held if s.strip() and (kept := self.sentence(s)))
 
     def heard(self, safety: dict | None, caller_text: str = "", hints: list[str] | None = None) -> None:
         """A caller line and its turn result: the safety action the server returned, if any, and
@@ -940,12 +966,16 @@ class SpokenReply:
         return reason
 
     def text(self, text: str, calls: list[tuple[str, dict]]) -> str:
-        """The model's text for one reply, given the (name, arguments) of the tools it called."""
-        if any(self.server_speaks(n, a) for n, a in calls):
+        """The model's text for one reply, given the (name, arguments) of the tools it called, as
+        a streaming voice layer would speak it."""
+        if self.holding() and any(self.server_speaks(n, a) for n, a in calls):
             return ""
         self.start_reply()
-        said = " ".join(kept for s in sentences(text) if (kept := self.sentence(s)))
-        return said or self.leftover()
+        said = sentences(text)
+        at = next((i for i, s in enumerate(said) if self.holds_from(s)), len(said))
+        lead = [kept for s in said[:at] if (kept := self.sentence(s))]
+        rest = self.tail(said[at:], calls) if at < len(said) else ""
+        return " ".join([*lead, rest]).strip() or self.leftover()
 
 
 def spoken_first(envelope: dict) -> str | None:

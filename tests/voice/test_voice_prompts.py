@@ -99,13 +99,18 @@ def test_the_voice_layer_speaks_the_read_back_the_safety_refusal_and_the_sign_of
     assert spoken("find_slots", {"ok": True, "say": "Tuesday works."}) is None
 
 
-def test_the_reply_rule_holds_text_only_while_a_read_back_can_come_or_on_a_safety_call():
+def test_the_reply_rule_holds_whole_replies_only_on_a_safety_call():
+    """Issue #150: holding every reply around the read-back made the caller wait for the model's
+    whole reply; only a sentence that could restate the address or number waits now."""
     reply = assemble.SpokenReply()
     assert not reply.holding()
     reply.tool_done("check_service_area", {"ok": True})
-    assert reply.holding()
-    reply.tool_done("read_back", {"ok": True, "data": {"confirmed": True}})
     assert not reply.holding()
+    assert reply.holds_from("Got it, 1847 East 36th Street.") and not reply.holds_from("Got it.")
+    assert reply.text("Sure. Got it, 1847 East 36th Street. Is that right?",
+                      [("read_back", {})]) == "Sure."
+    reply.tool_done("read_back", {"ok": True, "data": {"confirmed": True}})
+    assert not reply.holding() and not reply.holds_from("Tuesday from 8 to 12 works.")
     reply.heard({"action": "speak_lines"})
     assert reply.holding() and reply.server_speaks("end_call", {})
     reply.heard({"action": "cleared"})

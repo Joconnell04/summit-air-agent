@@ -264,12 +264,12 @@ def test_every_agent_line_carries_the_servers_speed_and_a_slower_read_back_is_sp
     agent.start()
     agent.hear("Can you slow down please?")
     turn = agent.hear("Can you read the address slower?")
-    # The model's "Okay." in the read-back reply is dropped (eval round 3): the caller hears the
-    # server's sentence alone.
-    assert turn.text == "Your home at 101 Union St, 11231, is that right?"
-    assert server.lines[1:] == ["Sure, I'll slow down.", "Your home at",
+    # The model's short "Okay." before the read-back is heard, as the worker streams it (issue
+    # #150); the read-back itself is the server's sentence, in its parts.
+    assert turn.text == "Okay. Your home at 101 Union St, 11231, is that right?"
+    assert server.lines[1:] == ["Sure, I'll slow down.", "Okay.", "Your home at",
                                 "101 Union St, 11231,", "is that right?"]
-    assert server.speeds == [1.0, 0.85, 0.85, 0.7, 0.85]
+    assert server.speeds == [1.0, 0.85, 0.85, 0.85, 0.7, 0.85]
     # The parts were spoken from code: the model had no step after read_back.
     assert len(model.calls) == 2
 

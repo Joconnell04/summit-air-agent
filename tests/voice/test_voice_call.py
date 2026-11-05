@@ -407,12 +407,29 @@ def _at_booking(reply):
     reply.tool_done("check_service_area", {"ok": True})
 
 
-def test_a_reply_that_calls_read_back_drops_the_text_before_it(monkeypatch):
+def test_a_reply_that_calls_read_back_keeps_its_lead_in_but_not_the_announcement(monkeypatch):
+    """Issue #150: the lead-in streams instead of waiting for the whole reply."""
     text, tools = _heard(
         monkeypatch, _at_booking, "Got it. ", "Let me read that back.", ("read_back", {"phone": "x"})
     )
-    assert text == ""
+    assert text == "Got it."
     assert tools == ["read_back"]
+
+
+def test_a_restated_address_before_the_read_back_is_dropped_but_the_lead_in_is_heard(monkeypatch):
+    text, _ = _heard(
+        monkeypatch, _at_booking, "Sure. ", "Got it, 1847 East 36th Street in Brooklyn. ",
+        "Let me confirm that.", ("read_back", {"phone": "x"}),
+    )
+    assert text == "Sure."
+
+
+def test_a_held_sentence_is_spoken_at_the_end_when_no_read_back_follows(monkeypatch):
+    text, _ = _heard(
+        monkeypatch, _at_booking, "Okay. ", "Is it about fourteen years old? ",
+        ("find_slots", {"job_type": "tune_up"}),
+    )
+    assert text == "Okay. Is it about fourteen years old?"
 
 
 def test_a_reply_that_calls_another_tool_keeps_its_text(monkeypatch):
