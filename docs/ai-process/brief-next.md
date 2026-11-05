@@ -43,23 +43,28 @@ Say if you disagree with any of these.
 - **Card digits are never stored anywhere.** That's the one exception to "the bench shows everything as recorded" (064).
 - **The eval floor stayed at 90%** when the address lane's run came in at 87%. The two agent gaps it found were fixed instead, and the next run came in at 92%.
 - **Reviews now re-check each fix.** Three priority and safety changes in a row fixed one case and broke another ("No heat, baby in the house" dropping to High; "What do I do? I smell gas" losing the gas lines). Every fix gets a second targeted review before it merges.
+- **Lane caps raised twice,** to $13 and $18, rather than skip the must-pass runs; 20 of the 33 must-pass cases are the rigorous and adversarial safety ones.
+- **A stale eval reference warns instead of failing CI** (086): 41 of 42 failed CI runs were that one check, so GitHub's failure emails now mean a real failure.
 - **Lane-level runs, one reference.** Each lane tests its own scenarios and the must-pass set; one standard run after a batch sets the reference.
 
 ## Still being built
 
-Three lanes started from your approved list. Each has an issue, and progress is in [lanes.md](lanes.md).
+Progress for every lane is in [lanes.md](lanes.md).
 
-- **Caller changes (#128):** a caller who moved (new address looked up, service area checked, CRM updated, open visits moved so nothing goes to the old address); a polite name-and-address check before changes from an unknown number, plus the heads-up; another callback number; a caller with two accounts.
-- **Booking flow (#129):** a correction after the read-back resets it; a visit whose window has ended is never confirmed as upcoming; businesses that slipped past the decline; work Summit Air doesn't do; two jobs in one call; a requested technician becomes a note, never a promise.
-- **Call handling (#130):** card numbers stopped and never stored, billing to an office callback; dead air checked in on every 2 minutes, a polite hang-up at 8 with a call-back invite and a resume on the next call; the sparks route; AC water through the ceiling is Urgent; a breaker that keeps tripping is High.
-
-- **Retell Conversation Flow (#133):** our design mapped onto Retell's stage graph, with the safety lines as static sentences and our tool server still deciding every gate. Checked against the spec, then run on the must-pass set and the standard suite at two samples. A fair second test of whether a managed platform does this better.
-
-After the first three merge: one two-sample standard run for the new reference, a deploy, and a scripted test call. The next prompt idea, giving the model only the current stage's instructions, is in [exploration 016](../explorations/016-stage-scoped-prompts.md).
+- **Rules page on the bench (#140, PR #143):** option A, one topic at a time: your rules, fixed responses by topic, the system prompt in assembly order, and versions. The owner view's Rules tab is gone. In final fixes after review.
+- **Lookup results in the same turn (#142):** the fix for silent lookup turns, built behind a switch that's off by default and measured both ways. Ready to turn on only if your calls show lookups feel slow.
+- **Retell Conversation Flow (#133):** our design on Retell's own stage graph, with our server still deciding every gate. An audio-rig timing run will compare it with our stack (1.89 s plain, 1.96 s lookup) and Retell's single-prompt agent (1.57 s and 2.27 s), what a caller hears (MEASURED, bake-off round 1).
+- **Phone-width header:** the shared header overflows at phone width on every owner and bench page; a small fix is coming.
 
 ## Live on the server
 
-Everything merged is deployed. The bench shows calls as recorded. The round 3 final pass and the CO spelling fix, the address lookup with preferred names, and priority from the caller's own words are all live. The address lookup is switched on.
+Everything below is merged and deployed, and a scripted test call passed after the last deploy:
+- Caller changes (#134): a moved address, the name-and-address check from an unknown number with a heads-up call (allowlisted in the demo), another callback number, two accounts.
+- Booking flow (#135): corrections after the read-back reset it, ended windows never confirmed as upcoming, businesses and work Summit Air doesn't do declined, two jobs in one call, a requested technician as a note.
+- Call handling (#132): card numbers stopped and never stored, dead air (check-in at 2 minutes, goodbye at 8, resume on the call back), the sparks line, AC water through the ceiling Urgent, a tripping breaker High.
+- Must-pass fixes (#139): "top priority" spoken word for word by the server, the caller's ZIP taken when the address lookup finds nothing, no tool talk or double confirmation after a reschedule, no coaching on a 911 call, no false card prompt when a caller corrects their phone number.
+- Side model (#141): the tighter at-risk question and the 0.65 threshold.
+- The eval reference: 91% at two samples (169 of 186), every must-pass case passing (run 20261104-234633). The side-model change makes it stale, which now only warns (decision 086); the next batch run re-adopts.
 
 Signing in: https://45-77-105-247.sslip.io/owner (owner view) and https://45-77-105-247.sslip.io/bench (debug bench), both as `jackson`. The password is in the macOS Keychain (`security find-generic-password -a summit-air -s owner-admin-password -w`). The side model, warm transfer and recordings are on.
 
