@@ -706,3 +706,27 @@ def test_the_caller_audio_has_the_pause_as_silence_and_short_lines_quieter(tmp_p
     assert dbfs(soft) == pytest.approx(dbfs(loud) - 12.04, abs=0.1)
     long_line = asyncio.run(rig.caller_audio(speech, "Maybe on Friday, then.", quiet))
     assert dbfs(long_line) == pytest.approx(dbfs(loud), abs=0.1)
+
+
+def test_the_ears_hear_a_word_on_the_first_sample_and_keep_word_times_on_the_audio():
+    from evals.audio_rig.speech import LEAD_S
+
+    posted = []
+
+    def handle(request: httpx.Request) -> httpx.Response:
+        posted.append(request.content)
+        return httpx.Response(200, json={"results": {"channels": [{"alternatives": [{
+            "transcript": "Thanks for calling.",
+            "words": [{"word": "thanks", "punctuated_word": "Thanks", "start": 0.28, "end": 0.6},
+                      {"word": "calling", "punctuated_word": "calling.", "start": 0.9,
+                       "end": 1.3}]}]}]}})
+
+    client = httpx.AsyncClient(base_url="https://dg.test", transport=httpx.MockTransport(handle))
+    ears = Deepgram(load_config()["audio_rig"], client=client)
+    pcm = tone(500)
+    text, words = asyncio.run(ears.hear_words(pcm, RATE))
+    lead = round(LEAD_S * RATE) * 2
+    assert posted[0][:lead] == b"\0" * lead and posted[0][lead:] == pcm
+    assert text == "Thanks for calling."
+    assert words == [("Thanks", 0.0, pytest.approx(0.3)), ("calling.", pytest.approx(0.6),
+                                                          pytest.approx(1.0))]

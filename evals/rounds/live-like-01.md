@@ -79,6 +79,17 @@ All 12 still fail. On the four calls the baseline left unchecked, #155 fails on 
 
 **Why it took an hour.** The calls ran 62 minutes, about 5 minutes each, the same as the baseline's 58. My 35-minute estimate was wrong. Each call runs 12 to 28 caller turns at 2.5 to 3.5 s per reply, and the caller waits up to 20 s on every half reply. After the last call the run then hung in an SSL read, uploading to LangSmith; the results were already written, and the process was stopped.
 
+## A rig artifact in both runs: the first word of a reply
+
+The rig's ears sent each agent clip to Deepgram starting on its first sample, so a word right at the edge could be dropped. Both runs above were transcribed this way: "Thanks for calling Summit Air" came back as "For calling Summit Air", and the latency lane counted 6 of 20 Retell greetings clipped. Fixed in #157: 0.3 s of silence goes in front of each clip, and word times move back by the same amount, so the timeline keeps its clock.
+
+What it could have touched in the numbers above:
+- **Unaffected.** `silence`, `first_sound`, `talk_over` and `hangup_gap` read the audio levels, not the words, so they stand.
+- **`half_reply`.** It could over-count, but only on a one-sentence reply that opens a question ("Would you ...") and that the ears also heard without its "?". Each half reply quoted above ends in a statement, so none is from this.
+- **`repeat`.** It could under-count: a clipped first word makes two copies of a line look less alike.
+- **`readback_rate`.** Only a digit run at the very start of a clip could be lost; none of the flagged ones started there.
+- **The grader and the simulated caller.** Both read the clipped text, so a greeting heard as "For calling Summit Air" may have colored a grader note.
+
 ## Where a check may be wrong
 
 - `talk_over` on live-call-03 flags the agent stopping a card number mid-read. That interruption is designed (the card line), so those two flags don't count against the agent.

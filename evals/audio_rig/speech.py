@@ -11,6 +11,10 @@ import os
 import httpx
 
 BASE_URL = "https://api.deepgram.com"
+# Silence put before the agent's audio when it is transcribed. A word that starts on the very
+# first sample was lost without it ("Thanks for calling" heard as "For calling", 6 of 20 Retell
+# greetings, MEASURED by the latency lane); word times are moved back by the same amount.
+LEAD_S = 0.3
 
 
 class SpeechError(RuntimeError):
@@ -48,14 +52,17 @@ class Deepgram:
             return "", []
         params = {"model": self.ears["model"], "encoding": "linear16", "sample_rate": rate,
                   "channels": 1, "smart_format": "true"}
+        padded = b"\0" * (round(LEAD_S * rate) * 2) + pcm
         response = await self.client.post(
-            "/v1/listen", params=params, content=pcm, headers={"Content-Type": "application/octet-stream"}
+            "/v1/listen", params=params, content=padded,
+            headers={"Content-Type": "application/octet-stream"}
         )
         if response.status_code != 200:
             raise SpeechError(f"agent transcription failed ({response.status_code}): {response.text[:200]}")
-        self.seconds += len(pcm) / 2 / rate
+        self.seconds += len(padded) / 2 / rate
         best = response.json()["results"]["channels"][0]["alternatives"][0]
-        words = [(w.get("punctuated_word") or w["word"], float(w["start"]), float(w["end"]))
+        words = [(w.get("punctuated_word") or w["word"], max(0.0, float(w["start"]) - LEAD_S),
+                  max(0.0, float(w["end"]) - LEAD_S))
                  for w in best.get("words", [])]
         return best["transcript"].strip(), words
 
