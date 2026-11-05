@@ -7,15 +7,33 @@ from evals.models import Model, Usage
 from evals.scenario import Scenario
 
 PROMPT = Path(__file__).resolve().parent.parent / "prompts" / "evals" / "caller.md"
+PERSONAS = Path(__file__).resolve().parent / "personas"
 END = "[END]"
+
+
+def load_style(name: str | None, directory: Path = PERSONAS) -> dict:
+    """A caller style (evals/personas/README.md), or an empty one when the scenario sets none."""
+    if not name:
+        return {}
+    return yaml.safe_load((directory / f"{name}.yaml").read_text())
 
 
 def system_prompt(scenario: Scenario, extra_facts: dict | None = None) -> str:
     facts = {**scenario.hidden_facts, **(extra_facts or {})}
+    style = load_style(scenario.caller_style)
+    persona = scenario.persona.strip()
+    script = [f"- {line}" for line in scenario.script]
+    if style:
+        # The style rides in the persona and script slots, so the caller prompt itself (and the
+        # hash of every run that doesn't use a style) is unchanged.
+        persona += "\n\nHow you talk: " + " ".join(style["manner"].split())
+        examples = "; ".join(f'"{line}"' for line in style.get("lines", []))
+        script.append(f"- Lines you have said on calls like this, to use where they fit, never as "
+                      f"a script: {examples}")
     return PROMPT.read_text().format(
-        persona=scenario.persona.strip(),
+        persona=persona,
         hidden_facts=yaml.safe_dump(facts, sort_keys=False, allow_unicode=True).strip() or "none",
-        script="\n".join(f"- {line}" for line in scenario.script) or "- Behave naturally.",
+        script="\n".join(script) or "- Behave naturally.",
         traits=", ".join(scenario.traits) or "none",
     )
 

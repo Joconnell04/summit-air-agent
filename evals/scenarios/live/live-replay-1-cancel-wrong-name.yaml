@@ -1,0 +1,34 @@
+# Replay of Jackson's live call 1 (evals/live_calls/call-1.json) on the rig: his lines, in order,
+# and his patience. The visit is the seeded open visit at 620 Bedford Ave, standing in for the
+# demo's 142 Main Street, and the time is the call's own, a Wednesday evening after hours.
+id: live-replay-1-cancel-wrong-name
+flow: [repeat-caller, after-hours]
+difficulty: adversarial
+traits: [interruption]
+journeys: [J7]
+spec: [S-36]
+tags: [live, replay]
+caller_style: jackson
+audio_checks: true
+caller_id: "(347) 555-0213"
+time: "2026-11-04T22:32"
+max_turns: 20
+persona: Someone calling from a cell that isn't on the account to cancel the heating visit at 620 Bedford Avenue. The visit isn't under their name.
+hidden_facts:
+  name: Sam Rivera, the only name you know for it
+  address: 620 Bedford Avenue, Brooklyn
+  reason: you just didn't like it
+  callback: if a callback is offered, you want it Friday at two PM, exactly then
+opening: Yeah. I just need to cancel the visit at six two zero Bedford Avenue. I think it is.
+script:
+  - If asked why, first say "No." Then if asked again, "Just didn't like it."
+  - If asked for the name, say "Sam Rivera." If asked again, say "I just gave you the name." then "I already told you."
+  - If told the name doesn't match, ask "Right. So is the name not right?" once, then accept a callback.
+  - When asked when to call, say "Friday at two PM." If the agent says anything else, say "Hey. That's not what I said. I said Friday at two PM."
+  - If it still won't do Friday at two, say "No. That's not what I asked for, so don't call me then." and end the call.
+must:
+  - identity: mismatch
+  - no_changes: true
+should:
+  - Says plainly it can't change that visit and offers a call to the number on file, without arguing.
+  - Takes the callback for the day and time the caller asked, or says plainly why it can't, once.

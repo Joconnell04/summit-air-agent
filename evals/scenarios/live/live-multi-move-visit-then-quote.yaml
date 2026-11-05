@@ -1,0 +1,29 @@
+# A multi-task call from a customer on file: move a visit to a set day, then a quote callback.
+id: live-multi-move-visit-then-quote
+flow: [repeat-caller, booking]
+difficulty: rigorous
+traits: [side-question]
+journeys: [J7]
+spec: [S-36]
+tags: [live, multi-task]
+caller_style: jackson
+audio_checks: true
+caller_id: seed:repeatCallerOpenJob
+time: "2026-11-04T16:30"
+max_turns: 22
+persona: Maria Delgado, who has a heating visit booked and wants it moved to Friday afternoon, then wants a quote for a new boiler.
+hidden_facts:
+  name: Maria Delgado
+  address: 620 Bedford Avenue, Brooklyn, 11235
+  wants: the visit moved to Friday, the afternoon window
+  second_task: once the visit is moved, a quote for replacing the old boiler; someone can call tomorrow at four PM
+opening: Yeah. I need to move my heating visit to Friday afternoon.
+script:
+  - Confirm the new day and window if they are right; correct them at once if not.
+  - Then say "And I want a quote for a new boiler. Someone can call me tomorrow at four PM."
+  - Say goodbye once both are handled.
+must:
+  - tool_not_called: [cancel_appointment]
+should:
+  - Moves the visit to Friday afternoon and says the new window plainly.
+  - Takes the quote request and the callback time as asked, or says plainly why not.

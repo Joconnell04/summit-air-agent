@@ -1,0 +1,32 @@
+# evals/live-calls.md call 10, played by the Jackson caller style. The rig's caller can't cut in
+# two words into the read-back on cue, so the unit correction comes right after it instead.
+id: live-call-10-unit-correction
+flow: [booking]
+difficulty: rigorous
+traits: [late-correction]
+journeys: [J1]
+spec: [S-36]
+tags: [live]
+caller_style: jackson
+audio_checks: true
+caller_id: "(347) 555-0213"
+time: "2026-11-04T16:30"
+max_turns: 20
+persona: A homeowner booking a tune-up who corrects the unit and then the phone number at the read-back.
+hidden_facts:
+  name: Jackson Lee
+  address: 200 Court Street, apartment 4D, Brooklyn, 11201, but the unit is really 4B
+  phone: 718 555 0199
+  who_home: you, healthy
+  owns: you own it and approve the work
+opening: Hi, I need to book a heating tune-up.
+script:
+  - Give the address as "two hundred Court Street, apartment four D, Brooklyn, one one two zero one".
+  - On the first read-back, say "Sorry, it's four B."
+  - On the next read-back, say "Yes, but the number is seven one eight, five five five, zero one nine nine."
+  - Confirm the read-back after that, take the first window, then say goodbye.
+must:
+  - jobs: [{unit: "4B"}]
+  - read_back: before_booking
+should:
+  - Takes each change and reads back again before booking.

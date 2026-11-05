@@ -524,3 +524,143 @@ def test_a_whole_call_is_timed_on_the_audio_and_scored_on_the_record(tmp_path, m
     assert result.cost_parts["platform"] == 0.01
     assert result.agent_cost_usd == 0.01
     assert result.cost_usd >= 0.01
+
+
+# The live-like suite on the rig: the caller's patience, cutting in, the timeline and its checks
+
+class PartsLine(FakeLine):
+    """Answers each caller line with parts: (pause before it in seconds, text, ms of voice). Can
+    hang up right after its last reply."""
+
+    def __init__(self, replies: list[list[tuple[float, str, int]]], hang_up_after: bool = False):
+        super().__init__([])
+        self.parts = replies
+        self.hang_up_after = hang_up_after
+
+    async def speak(self, parts) -> None:
+        for pause, text, ms in parts:
+            await asyncio.sleep(pause)
+            self.listener.audio(tone(ms), RATE)
+            self.server.turn(self.call_id, "agent", text, {"tts_first_byte_ms": 150.0})
+            await asyncio.sleep(ms / 1000)
+            self.listener.done()
+        if self.hang_up_after and not self.parts:
+            self.listener.hung_up()
+
+    async def open(self, call_id, caller_id, world, listener):
+        self.call_id, self.listener, self.server = call_id, listener, world.server
+        self.server.start(call_id, caller_id)
+        await self.speak([(0.2, "Thanks for calling Summit Air. How can I help?", 300)])
+        return world.server
+
+    async def send(self, pcm: bytes) -> None:
+        voiced = pcm != b"\0" * len(pcm)
+        if voiced:
+            self.speaking, self.quiet_frames = True, 0
+        elif self.speaking:
+            self.speaking = False
+            self.server.turn(self.call_id, "caller", "a caller line", {})
+            parts = self.parts.pop(0) if self.parts else [(0.3, "Okay?", 200)]
+            asyncio.get_running_loop().create_task(self.speak(parts))
+
+
+def parts_deepgram(heard: list[str], words: dict[str, list] | None = None) -> Deepgram:
+    """Hears each agent clip as the next line of `heard`, with optional word timings by line."""
+    queue = list(heard)
+
+    def handle(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/v1/speak":
+            return httpx.Response(200, content=silence(40) + tone(300) + silence(40))
+        text = queue.pop(0) if queue else ""
+        timed = [{"word": w, "punctuated_word": w, "start": a, "end": b}
+                 for w, a, b in (words or {}).get(text, [])]
+        return httpx.Response(200, json={"results": {"channels": [
+            {"alternatives": [{"transcript": text, "words": timed}]}]}})
+
+    config = load_config()["audio_rig"]
+    client = httpx.AsyncClient(base_url="https://dg.test", transport=httpx.MockTransport(handle))
+    return Deepgram(config, client=client)
+
+
+def run_call(monkeypatch, tmp_path, line, heard, caller_lines, timing, **overrides):
+    monkeypatch.setattr(line_mod, "SETTLE_S", 0.05)
+    monkeypatch.setattr("evals.audio_rig.rig.load_style", lambda name: {"timing": timing})
+    ctx = RigContext(Worlds(), "http://unused", load_config(), {})
+    caller = ScriptedModel([say(t) for t in caller_lines])
+    rig = Rig(FakeEntrant(line), ctx, tmp_path, caller, ScriptedModel([grade_reply()]),
+              verbose=False)
+    deepgram = parts_deepgram(heard)
+    monkeypatch.setattr("evals.audio_rig.rig.Deepgram", lambda *a, **k: deepgram)
+    result = asyncio.run(rig.call(scenario(**overrides)))
+    return result, caller
+
+
+def test_the_caller_waits_out_a_line_that_asks_nothing_and_hears_what_comes_next(tmp_path,
+                                                                                monkeypatch):
+    line = PartsLine([[(0.2, "Let me look.", 200), (0.8, "I have Friday. Okay?", 300)]])
+    heard = ["Thanks for calling Summit Air. How can I help?", "Let me look.",
+             "I have Friday. Okay?"]
+    result, caller = run_call(monkeypatch, tmp_path, line, heard, ["[END]"],
+                              {"patience_s": 2.0})
+    assert result.transcript[-1].text == "Let me look. I have Friday. Okay?"
+    # The caller model was answering the whole turn, not the first half of it.
+    assert caller.calls[0]["messages"][-1]["content"] == "Let me look. I have Friday. Okay?"
+    assert len(result.turn_timings) == 1
+
+
+def test_a_half_reply_then_silence_is_told_to_the_caller_and_fails_the_audio_checks(tmp_path,
+                                                                                    monkeypatch):
+    line = PartsLine([[(0.2, "Got it.", 200)]])
+    heard = ["Thanks for calling Summit Air. How can I help?", "Got it."]
+    heard.append("Okay?")
+    result, caller = run_call(monkeypatch, tmp_path, line, heard, ["Is that all?", "[END]"],
+                              {"patience_s": 3.2}, audio_checks=True)
+    assert caller.calls[0]["messages"][-1]["content"] == "Got it. (Then nothing for 3 seconds.)"
+    assert result.outcome == "fail"
+    assert any(f.startswith('half_reply: "Got it." asked nothing') for f in result.check_failures)
+    assert "half_reply" in result.checks and "time_as_asked" in result.checks
+
+
+def test_without_audio_checks_the_same_call_is_scored_as_before(tmp_path, monkeypatch):
+    line = PartsLine([[(0.2, "Got it.", 200)]])
+    heard = ["Thanks for calling Summit Air. How can I help?", "Got it."]
+    result, _ = run_call(monkeypatch, tmp_path, line, heard, ["[END]"], {"patience_s": 0.5})
+    assert result.outcome == "pass", result.check_failures
+    assert "half_reply" not in result.checks
+
+
+def test_the_caller_cuts_in_on_a_turn_that_runs_too_long(tmp_path, monkeypatch):
+    line = PartsLine([[(0.2, "A very long explanation of the visit and the windows", 3000)]])
+    heard = ["Thanks for calling Summit Air. How can I help?", "A very long explanation"]
+    result, caller = run_call(monkeypatch, tmp_path, line, heard, ["[END]"],
+                              {"patience_s": 1.0, "cut_in_after_s": 0.5})
+    assert caller.calls[0]["messages"][-1]["content"] == "A very long explanation ..."
+    (timing,) = result.turn_timings
+    assert timing.agent_speech_ms < 2000, "the caller stopped listening before the agent finished"
+
+
+def test_a_hang_up_right_after_the_goodbye_fails_the_audio_checks(tmp_path, monkeypatch):
+    line = PartsLine([[(0.2, "Thanks for calling. Goodbye.", 300)]], hang_up_after=True)
+    heard = ["Thanks for calling Summit Air. How can I help?", "Thanks for calling. Goodbye."]
+    result, _ = run_call(monkeypatch, tmp_path, line, heard, ["Bye."], {"patience_s": 1.0},
+                         audio_checks=True)
+    assert any(f.startswith("hangup_gap:") for f in result.check_failures), result.check_failures
+
+
+def test_voiced_runs_join_short_pauses_and_split_long_ones():
+    pcm = tone(200) + silence(100) + tone(200) + silence(1000) + tone(100)
+    runs = Vad().runs(pcm, RATE)
+    assert len(runs) == 2
+    assert runs[0][0] == 0 and runs[1][0] == pytest.approx(RATE * 1.5, abs=RATE * 0.03)
+
+
+def test_a_heard_turn_dates_its_samples_from_the_playout():
+    clock = Clock(10.0)
+    listener = Listener(Vad(), clock, RATE)
+    listener.audio(tone(200), RATE)
+    clock.t = 11.0
+    listener.audio(tone(200), RATE)
+    clock.t = 20.0
+    heard = asyncio.run(listener.turn(False, 10.0))
+    assert heard.at(0) == 10.0
+    assert heard.at(RATE // 5) == 11.0

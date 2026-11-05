@@ -52,5 +52,5 @@ def test_parse_tags_and_bare_tags():
     assert not matches({"flow:x"}, ["smoke"])
 
 
-def test_suites_file_has_the_four_suites():
-    assert set(load_suites()) == {"smoke", "standard", "rigorous", "full"}
+def test_suites_file_has_the_four_text_suites_and_the_live_like_one():
+    assert set(load_suites()) == {"smoke", "standard", "rigorous", "full", "live"}

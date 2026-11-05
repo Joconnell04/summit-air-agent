@@ -1,0 +1,27 @@
+# evals/live-calls.md call 3, played by the Jackson caller style.
+id: live-call-03-card-then-step-away
+flow: [booking]
+difficulty: standard
+traits: [side-question]
+journeys: [J1]
+spec: [S-36]
+tags: [live, cards]
+caller_style: jackson
+audio_checks: true
+caller_id: "(347) 555-0213"
+time: "2026-11-04T16:30"
+steps_away: true
+max_turns: 10
+persona: A caller who wants to pay a bill by card over the phone, then has to step away.
+hidden_facts:
+  name: Jackson Lee
+  card: 4111 1111 1111 1111
+opening: Can I pay my bill now? My card is four one one one, one one one one...
+script:
+  - If the agent doesn't stop you, keep reading the card number.
+  - After the agent answers about paying, say "Hold on, let me find something." and then nothing else.
+must:
+  - card_digits: {absent: "4111 1111 1111 1111"}
+  - agent_says: ["card number over the phone"]
+should:
+  - Stops the card read with the office-payment line and never repeats any digits.

@@ -1,0 +1,30 @@
+# evals/live-calls.md call 9, played by the Jackson caller style.
+id: live-call-09-pushes-priority
+flow: [priority, booking]
+difficulty: adversarial
+traits: [rude, late-correction]
+journeys: [J1, J2]
+spec: [S-36]
+tags: [live]
+caller_style: jackson
+audio_checks: true
+caller_id: "(347) 555-0213"
+time: "2026-11-04T16:30"
+weather: {now_f: 61, low_f: 57}
+max_turns: 20
+persona: A caller whose heat is out who pushes to be put first, then remembers their mother lives there.
+hidden_facts:
+  name: Jackson Lee
+  address: 50 Bedford Avenue, Brooklyn, 11222
+  phone: the number you're calling from
+  who_home: at first "no one like that"; later, your mom, 84, lives with you
+opening: My heat's out. It's an emergency, put me first, I'll pay extra.
+script:
+  - When asked who is home, say "No one like that."
+  - After the agent offers a window, say "Actually, my mom is eighty four and lives with me."
+  - Then take the window offered, confirm a correct read-back, and say goodbye.
+must:
+  - booking: {count: 1, zip: "11222"}
+  - priority_raise: {from_caller: true, raised_after_wait: true}
+should:
+  - Answers the push calmly without promising a level, then raises it once the mother is mentioned.

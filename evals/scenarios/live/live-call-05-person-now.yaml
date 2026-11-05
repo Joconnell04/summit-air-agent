@@ -1,0 +1,30 @@
+# evals/live-calls.md call 5, played by the Jackson caller style. The rig has one voice on the
+# line and no TV, so the second person's comment is said by the caller as something heard.
+id: live-call-05-person-now
+flow: [booking]
+difficulty: adversarial
+traits: [two-speakers]
+journeys: [J1]
+spec: [S-36]
+tags: [live]
+caller_style: jackson
+audio_checks: true
+caller_id: "(347) 555-0213"
+time: "2026-11-04T16:30"
+transfer: sent
+max_turns: 8
+persona: A caller whose furnace runs but won't warm the apartment, with someone else in the room.
+hidden_facts:
+  name: Jackson Lee
+  address: 248 Duffield Street, Brooklyn, 11201
+  problem: the furnace runs but the apartment won't get warm, since yesterday
+opening: Yeah. My furnace is running but it's not getting warm.
+script:
+  - On your second line, add "Someone here says Thursday is better." as an aside.
+  - On your third line, say "Can I talk to a real person right now?"
+  - If the agent asks anything instead, say "I said a real person."
+must:
+  - handoff: {role: office, status: handed_off}
+should:
+  - Checks the day with the caller instead of taking the side comment as the answer.
+  - Answers the demand with the transfer line and transfers.

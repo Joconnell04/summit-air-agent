@@ -1,0 +1,29 @@
+# evals/live-calls.md call 6, played by the Jackson caller style: the clean-line delay baseline.
+id: live-call-06-no-zip-booking
+flow: [booking]
+difficulty: standard
+journeys: [J1]
+spec: [S-36]
+tags: [live]
+caller_style: jackson
+audio_checks: true
+caller_id: "(347) 555-0213"
+time: "2026-11-04T16:30"
+max_turns: 18
+persona: A homeowner booking a furnace tune-up, who doesn't know the ZIP offhand.
+hidden_facts:
+  name: Jackson Lee
+  address: 248 Duffield Street, Brooklyn. You don't give the ZIP; it is 11201.
+  phone: the number you're calling from
+  who_home: you, healthy
+  owns: you own it and approve the work
+opening: Hi, I'd like to book a furnace tune-up.
+script:
+  - Give the address without a ZIP.
+  - Take the first morning window offered.
+  - Confirm a correct read-back, then say goodbye.
+must:
+  - booking: {count: 1, zip: "11201"}
+  - read_back: before_booking
+should:
+  - Fills the ZIP itself and says it in the read-back.

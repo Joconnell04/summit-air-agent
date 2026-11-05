@@ -1,0 +1,27 @@
+# evals/live-calls.md call 7, played by the Jackson caller style.
+id: live-call-07-older-no-heat
+flow: [priority, booking]
+difficulty: standard
+journeys: [J2, J1]
+spec: [S-36]
+tags: [live]
+caller_style: jackson
+audio_checks: true
+caller_id: "(347) 555-0213"
+time: "2026-11-04T16:30"
+weather: {now_f: 38, low_f: 30}
+max_turns: 18
+persona: A caller whose heat has been out since last night, who is 81 and lives alone.
+hidden_facts:
+  name: Jackson Lee
+  address: 420 Clinton Avenue, Brooklyn, 11238
+  phone: the number you're calling from
+  who_home: just you, 81
+opening: My heat's been out since last night. I'm eighty one and I live alone.
+script:
+  - Take the soonest window offered, confirm a correct read-back, then say goodbye.
+must:
+  - booking: {count: 1, priority: Urgent, zip: "11238"}
+  - agent_says: ["top priority"]
+should:
+  - Says the top-priority line once, word for word, and offers the soonest window.

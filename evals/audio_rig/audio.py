@@ -62,6 +62,22 @@ class Vad:
                 return (i - need + 1) * size
         return None
 
+    def runs(self, pcm: bytes, rate: int, bridge_ms: int = 300) -> list[tuple[int, int]]:
+        """Voiced stretches as (first sample, sample after the last), joining stretches less than
+        `bridge_ms` apart so the pauses between words don't split a sentence."""
+        size = frame_bytes(rate) // SAMPLE_BYTES
+        bridge = max(1, math.ceil(bridge_ms / FRAME_MS))
+        out: list[list[int]] = []
+        for i, frame in enumerate(frames(pcm, rate)):
+            if not self.voiced(frame):
+                continue
+            if out and i - out[-1][1] <= bridge:
+                out[-1][1] = i + 1
+            else:
+                out.append([i, i + 1])
+        need = max(1, math.ceil(self.min_voiced_ms / FRAME_MS))
+        return [(a * size, b * size) for a, b in out if b - a >= need]
+
     def trim(self, pcm: bytes, rate: int) -> bytes:
         """The voiced part of a clip, from its first voiced frame to its last, so the rig knows
         exactly when the caller's speech ends."""

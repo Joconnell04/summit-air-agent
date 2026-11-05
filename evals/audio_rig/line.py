@@ -56,6 +56,17 @@ class HeardTurn:
     # When the agent made a sound while the caller was still speaking: a reply started in a pause
     # mid-line, or a backchannel on a platform that makes them. None if it stayed quiet.
     over_caller: float | None = None
+    # (first sample index of a chunk, when it starts playing), to date any sample of `pcm`.
+    chunks: list[tuple[int, float]] = field(default_factory=list)
+    # The caller cut in before the agent finished (`Listener.turn`'s `cut_after_s`).
+    cut: bool = False
+
+    def at(self, sample: int) -> float:
+        """When a sample of this turn's audio played."""
+        if not self.chunks:
+            return 0.0
+        playout = Playout(self.rate, chunks=self.chunks)
+        return playout.heard_at(sample)
 
 
 class Listener:
@@ -73,6 +84,8 @@ class Listener:
         self._rate_set = False
         self._onset: float | None = None
         self._after: float | None = None
+        # When the agent's side dropped the line, on the rig's clock.
+        self.hung_up_at: float | None = None
 
     # Called by the adapter.
     def audio(self, pcm: bytes, rate: int, live: bool = False) -> None:
@@ -91,6 +104,8 @@ class Listener:
         self._done = True
 
     def hung_up(self) -> None:
+        if not self._hung_up:
+            self.hung_up_at = self.clock()
         self._hung_up = True
 
     def said(self, text: str) -> None:
@@ -143,19 +158,30 @@ class Listener:
             return now >= self.playout.end + settle
         return now >= self.playout.end + QUIET_S
 
-    async def turn(self, signals_done: bool, since: float) -> HeardTurn:
+    async def turn(self, signals_done: bool, since: float, timeout_s: float = FIRST_SOUND_TIMEOUT_S,
+                   cut_after_s: float | None = None) -> HeardTurn:
         """Wait for the agent's whole turn. `since` is when the caller stopped (or the call
-        connected); no sound by FIRST_SOUND_TIMEOUT_S after it is a silent turn."""
+        connected, or the agent last went quiet); no sound by `timeout_s` after it is a silent
+        turn. With `cut_after_s`, the caller stops listening once the agent has been talking that
+        long, to cut in."""
         self._after = since
         self._onset = None
+        cut, heard_to = False, None
         while True:
             now = self.clock()
             if self.finished(now, signals_done):
                 break
-            if self.first_sound() is None and now - since > FIRST_SOUND_TIMEOUT_S:
+            first = self.first_sound()
+            if first is None and now - since > timeout_s:
                 break
-            if now - since > TURN_CAP_S or (self._hung_up and self.first_sound() is None):
+            if cut_after_s is not None and first is not None and now - first > cut_after_s:
+                # What the caller heard before cutting in; a platform that sends audio in bursts
+                # may have sent more that hasn't played.
+                cut, heard_to = True, self.playout.sample_at(now) * 2
+                break
+            if now - since > TURN_CAP_S or (self._hung_up and first is None):
                 break
             await asyncio.sleep(POLL_S)
-        return HeardTurn(bytes(self.playout.pcm), self.playout.rate, self.first_sound(),
-                         list(self._said), self._hung_up, self.over_caller())
+        return HeardTurn(bytes(self.playout.pcm[:heard_to]), self.playout.rate, self.first_sound(),
+                         list(self._said), self._hung_up, self.over_caller(),
+                         list(self.playout.chunks), cut)

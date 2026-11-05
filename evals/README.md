@@ -66,6 +66,7 @@ Suites are saved tag filters in `evals/suites.yaml`, so a run can be reshaped in
 | standard | All easy and standard | Before merging a build lane |
 | rigorous | All rigorous and adversarial | Before a demo or a release gate |
 | full | Everything, 3 samples each | Release gate only, about $15 (ASSUMED) |
+| live | The 12 live-like audio scenarios in `evals/scenarios/live/`, audio rig only ("Live-like suite" below) | Before and after a change meant to fix how calls sound |
 
 Commands:
 
@@ -160,6 +161,37 @@ make listen                                      # http://127.0.0.1:8130, the ne
 **Needs.** `DEEPGRAM_API_KEY` and `ANTHROPIC_API_KEY` for every run; `LIVEKIT_URL`, `LIVEKIT_API_KEY` and `LIVEKIT_API_SECRET` for ours; the Retell eval variables above for Retell; `ELEVENLABS_API_KEY` and an installed `ngrok` for ElevenLabs; `OPENAI_API_KEY` and `GEMINI_API_KEY` for the speech-to-speech entrants. Run our stack on its own: its worker runs on the same machine, and other runs beside it share the processor its turn detector uses.
 
 **Limits.** No phone network or codec on most paths, so a phone call adds its own delay on top (bake-off 6 sends the final two to real calls for that). The caller answers adaptively, so each entrant hears different turns; the checks still read the same record.
+
+## Live-like suite
+
+The text suite scored 91% while Jackson's live calls 1 and 2 went badly (a 20-second silence after "Got it.", the same line twice, a callback asked for at 2 PM booked "between 1 and 3"), because a transcript has no silences and no timing. The live-like suite runs on the audio rig and fails on those.
+
+```
+make rig STACK=livekit SUITE=live ENV_FILE=<path to .env> MAX_COST=5
+uv run python -m evals.audio_rig.live_report evals/results/<run>.json [<rerun>.json ...]
+```
+
+**Scenarios.** Twelve, in `evals/scenarios/live/` (kept out of the text suites, which load only the top folder): the two live calls replayed with Jackson's own lines and patience (`live-replay-1-...`, `live-replay-2-...`, from `evals/live_calls/`), calls 3 to 10 of `evals/live-calls.md`, and two calls that add a second task. None carries a must-pass spec line, so the rig runs each once.
+
+**A caller like Jackson.** `caller_style: jackson` (`evals/personas/jackson.yaml`) adds his manner and seventeen of his exact lines to the caller prompt as examples, not a script: short lines, "Say that again?", "Are you gonna ask me a question?", correcting a wrong day at once, asking for a set day and time, a second task once the first is done. On the rig it also sets his timing. After an agent line that asks nothing, the caller waits up to `patience_s` (20 s, MEASURED from his three waits in the live calls) for the agent to go on; whatever the agent says in that time is the same turn, and if it says nothing the caller model is told "(Then nothing for 20 seconds.)". An agent turn that runs past `cut_in_after_s` (10 s, ASSUMED) is cut into: the caller stops listening and answers what it heard so far.
+
+**Audio checks.** Nine of them. `audio_checks: true` runs `evals/audio_rig/live_checks.py` on the rig's timeline of the call: when each caller line started and ended, and each stretch of agent speech with its words dated from the rig's ears. Each failure joins `check_failures` as `name: what happened`, quoting the line, and fails the call. Thresholds are in `config/models.yaml` `audio_rig.live_checks`; all are ASSUMED except the S-36 medians.
+
+| Check | Fails when |
+|---|---|
+| `silence` | over 4 s from the caller stopping to the agent's first sound, or no reply; inside a turn, over 3 s with no sound during a lookup (4 s otherwise) |
+| `half_reply` | an agent line with no question, followed by 3 s or more of silence before anyone speaks |
+| `repeat` | a sentence said twice in one turn, or a turn said again when the caller hadn't asked to hear it again |
+| `first_sound` | the call's median or slowest 10% of reply delays over the target: 1,200 and 2,000 ms on plain turns, 2,500 and 3,500 ms on lookups |
+| `talk_over` | the agent makes a sound while the caller is still speaking, or its reply starts within one 20 ms frame of the caller's end (already playing); not after the caller cut in |
+| `llm_requests` | a turn spends more model requests than it needs: 1 on a plain turn, 2 on a lookup (call the tool, then speak), as the worker logs them |
+| `readback_rate` | a run of five or more spoken digits (a phone number, a ZIP) faster than 3 digits a second |
+| `hangup_gap` | the agent drops the line less than 1 s after its goodbye ends |
+| `time_as_asked` | the caller asks for a clock time and the agent's next turn that names a time doesn't say it back on that day, unless it asks whether another time works ("anything else?" doesn't count) |
+
+The checks also run on the two live calls themselves (`timeline_from_live_call`, placed from the worker's own timings), and `tests/evals/test_live_checks.py` holds them to failing there: call 1 on the half reply, the reply delay and the callback time; call 2 on the repeat, the half replies, the callback time and three model requests on plain turns.
+
+**Limits.** No background noise and no second voice, so live calls 4 and 5 lose their noise. The caller can cut in on a long turn but not on a cue, so call 10 corrects the unit after the read-back. The live calls' visit at 142 Main Street is the seeded one at 620 Bedford Avenue.
 
 ## Results in LangSmith
 

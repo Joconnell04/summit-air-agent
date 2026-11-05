@@ -12,3 +12,7 @@ rigorous:
 full:
   tags: []
   samples: 3
+# The live-like suite: audio only (make rig STACK=livekit SUITE=live), from evals/scenarios/live/.
+live:
+  tags: [live]
+  samples: 1

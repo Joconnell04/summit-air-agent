@@ -30,12 +30,14 @@ import time
 import uuid
 from collections import deque
 from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
 
 from app.tools import TOOLS
 from evals import compare, results, suites
+from evals.audio_rig import live_checks
 from evals.audio_rig.audio import FRAME_MS, Vad, frames, reply_delay_ms
-from evals.audio_rig.line import Listener
+from evals.audio_rig.line import HeardTurn, Listener
 from evals.audio_rig.recording import (
     LISTEN_URL,
     MANIFEST,
@@ -48,12 +50,13 @@ from evals.audio_rig.recording import (
 from evals.audio_rig.router import Serving, Worlds, build_app
 from evals.audio_rig.speech import Deepgram
 from evals.audio_rig.store import open_store
-from evals.caller import SimulatedCaller
+from evals.audio_rig.timeline import AgentPart, AgentTurn, CallerLine, Timeline, Word
+from evals.caller import SimulatedCaller, load_style
 from evals.checks import safety_config
 from evals.models import Model, Usage, for_profile, load_config
 from evals.results import RESULTS_DIR, ScenarioResult, Turn, TurnTiming
 from evals.run import LOOP_REPEATS, build_run, score, upload
-from evals.scenario import Scenario, load_all
+from evals.scenario import Scenario, load_all, load_live
 from evals.world import World, resolve_caller, seeded_db
 
 # The parts of a call's cost that are the stack's own; the rest is the rig's.
@@ -155,6 +158,8 @@ def turn_agent_timings(trace: dict, seen: int) -> tuple[dict, int]:
     tool_ms = sum(float(t.get("tool_ms") or 0) for t in new)
     if tool_ms:
         stages["tool_ms"] = tool_ms
+    if any("llm_requests" in t for t in new):
+        stages["llm_requests"] = sum(float(t.get("llm_requests") or 0) for t in new)
     if len(new) > 1:
         stages["agent_lines"] = float(len(new))
     return stages, len(lines)
@@ -164,6 +169,27 @@ def newest_caller_timings(trace: dict) -> dict:
     """Stage timings the voice program logged with the newest caller line, if any."""
     lines = [e for e in trace["events"] if e["type"] == "turn" and e["speaker"] == "caller"]
     return (lines[-1].get("timings") or {}) if lines else {}
+
+
+# A stall that follows the agent's own words: the caller waits this many times at most for the
+# agent to go on before speaking up, so a turn of "Let me look." then results is heard whole.
+MAX_PARTS = 3
+
+
+def agent_part(heard: HeardTurn, start: int, text: str, words: list, vad: Vad,
+               since: float) -> AgentPart:
+    """The agent speech in `heard` from sample `start` on, dated on the rig's clock. Sound
+    before `since` (over the caller's line) is left out of the part's stretches."""
+    pcm = heard.pcm[start * 2:]
+    sounds = [(heard.at(start + a), heard.at(start + b))
+              for a, b in vad.runs(pcm, heard.rate)]
+    sounds = [(max(a, since), b) for a, b in sounds if b > since]
+    timed = [Word(w, heard.at(start + round(a * heard.rate)), heard.at(start + round(b * heard.rate)))
+             for w, a, b in words]
+    first = heard.first_sound if heard.first_sound is not None else (
+        sounds[0][0] if sounds else None)
+    last = sounds[-1][1] if sounds else first
+    return AgentPart(text, first, last, sounds, timed, heard.cut)
 
 
 def must_repeat(scenario: Scenario) -> bool:
@@ -197,7 +223,7 @@ class Rig:
         transcript: list[Turn] = []
         timings: list[TurnTiming] = []
         usage = Usage()
-        error, server, silent = "", None, 0
+        error, server, silent, reason = "", None, 0, None
         speech = Deepgram(self.rig_config, self.ctx.env.get("DEEPGRAM_API_KEY"))
         line = self.entrant.line()
         listener = Listener(self.vad, rate=self.entrant.in_rate, recorder=recorder)
@@ -205,6 +231,10 @@ class Rig:
         sending = None
         caller = SimulatedCaller(scenario, self.caller_model)
         platform: dict[str, float] = {}
+        timing = load_style(scenario.caller_style).get("timing", {})
+        patience = float(timing.get("patience_s") or 0)
+        cut_after = timing.get("cut_in_after_s")
+        timeline = Timeline(started=datetime.fromisoformat(scenario.time))
         try:
             caller_id = resolve_caller(scenario.caller_id, self.seed[1])
             world = None
@@ -215,8 +245,11 @@ class Rig:
             server = await line.open(call_id, caller_id, world, listener)
             sending = asyncio.create_task(sender.run())
             since = time.perf_counter()
+            greeting_turn = AgentTurn(after=since)
+            timeline.events.append(greeting_turn)
             heard_turn = await listener.turn(self.entrant.signals_done, since)
-            greeting = await speech.hear(heard_turn.pcm, heard_turn.rate)
+            greeting, words = await speech.hear_words(heard_turn.pcm, heard_turn.rate)
+            greeting_turn.parts.append(agent_part(heard_turn, 0, greeting, words, self.vad, since))
             self.log(call_id, f"agent: {greeting}")
             if recorder:
                 recorder.line("agent", greeting or " ".join(heard_turn.said),
@@ -228,7 +261,6 @@ class Rig:
             _, agent_lines = turn_agent_timings(trace, 0)
             said = caller.first_line(greeting)
             recent: list[str] = []
-            reason = None
             for _ in range(scenario.max_turns):
                 if listener.is_hung_up:
                     reason = "agent_end"
@@ -239,6 +271,8 @@ class Rig:
                 self.log(call_id, f"caller: {said}")
                 spoken = not sender.stopped
                 start, end = await sender.speak(pcm, on_start=listener.new_turn)
+                if spoken:
+                    timeline.events.append(CallerLine(said, start, end))
                 if recorder and spoken:
                     padded = b"".join(frames(pcm, self.entrant.in_rate))
                     began_at = recorder.caller(padded, self.entrant.in_rate, end)
@@ -246,44 +280,80 @@ class Rig:
                 if sender.stopped and listener.is_hung_up:
                     reason = "agent_end"
                     break
-                heard_turn = await listener.turn(self.entrant.signals_done, end)
-                heard = await speech.hear(heard_turn.pcm, heard_turn.rate)
+                turn = AgentTurn(after=end)
+                timeline.events.append(turn)
+                heard_turn = await listener.turn(self.entrant.signals_done, end,
+                                                 cut_after_s=cut_after)
+                heard, words = await speech.hear_words(heard_turn.pcm, heard_turn.rate)
+                turn.parts.append(agent_part(heard_turn, 0, heard, words, self.vad, end))
+                first_turn = heard_turn
+                waited = 0.0
+                # The caller waits out a line that asks nothing, as a person would, and hears
+                # whatever the agent says next as the same turn.
+                while (patience and heard_turn.first_sound is not None and not heard_turn.hung_up
+                       and not heard_turn.cut and len(turn.parts) < MAX_PARTS
+                       and not live_checks.ends_with_question(turn.parts[-1].text)):
+                    quiet = turn.parts[-1].last_sound or time.perf_counter()
+                    mark = len(heard_turn.pcm) // 2
+                    more = await listener.turn(self.entrant.signals_done, quiet,
+                                               timeout_s=patience, cut_after_s=cut_after)
+                    if more.first_sound is None:
+                        waited = patience
+                        heard_turn = more
+                        break
+                    text, words = await speech.hear_words(more.pcm[mark * 2:], more.rate)
+                    turn.parts.append(agent_part(more, mark, text, words, self.vad, quiet))
+                    if recorder:
+                        recorder.line("agent", text, more.first_sound)
+                    self.log(call_id, f"agent, after {more.first_sound - quiet:.1f} s: {text}")
+                    heard = f"{heard} {text}".strip()
+                    heard_turn = more
                 trace = await asyncio.to_thread(server.trace, call_id)
                 lookup = tool_count(trace) > tools_so_far
+                turn.lookup = lookup
+                turn.over_caller = first_turn.over_caller
                 tools_so_far = tool_count(trace)
                 stages, agent_lines = turn_agent_timings(trace, agent_lines)
+                if "llm_requests" in stages:
+                    turn.llm_requests = int(stages["llm_requests"])
                 logged = {k: float(v) for k, v in {**newest_caller_timings(trace), **stages}.items()
                           if isinstance(v, (int, float))}
-                if heard_turn.first_sound is None:
+                if first_turn.first_sound is None:
                     silent += 1
                 else:
                     timings.append(TurnTiming(
                         kind="lookup" if lookup else "plain",
-                        reply_delay_ms=reply_delay_ms(end, heard_turn.first_sound),
+                        reply_delay_ms=reply_delay_ms(end, first_turn.first_sound),
                         # The rig times the sound; the model's first token is the voice
                         # program's, when it logs one.
                         model_first_token_ms=stages.get("llm_first_token_ms") or 0,
                         platform_reply_ms=stages.get("reply_ms"),
                         caller_speech_ms=(end - start) * 1000,
                         agent_speech_ms=len(heard_turn.pcm) / 2 / heard_turn.rate * 1000,
-                        over_caller_ms=(None if heard_turn.over_caller is None
-                                        else max(0.0, (end - heard_turn.over_caller) * 1000)),
+                        over_caller_ms=(None if first_turn.over_caller is None
+                                        else max(0.0, (end - first_turn.over_caller) * 1000)),
                         platform_stages=logged,
                     ))
-                delay = (f"{reply_delay_ms(end, heard_turn.first_sound):.0f} ms"
-                         if heard_turn.first_sound is not None else "silent")
-                self.log(call_id, f"agent ({delay}{', lookup' if lookup else ''}): {heard}")
-                if recorder and heard_turn.first_sound is not None:
-                    recorder.line("agent", heard or " ".join(heard_turn.said),
-                                  heard_turn.first_sound,
-                                  reply_delay_ms(end, heard_turn.first_sound))
+                delay = (f"{reply_delay_ms(end, first_turn.first_sound):.0f} ms"
+                         if first_turn.first_sound is not None else "silent")
+                self.log(call_id, f"agent ({delay}{', lookup' if lookup else ''}"
+                                  f"{', cut in' if heard_turn.cut else ''}): {heard}")
+                if recorder and first_turn.first_sound is not None:
+                    recorder.line("agent", turn.parts[0].text or " ".join(first_turn.said),
+                                  first_turn.first_sound,
+                                  reply_delay_ms(end, first_turn.first_sound))
                 if heard or heard_turn.said:
                     transcript.append(Turn(role="agent", text=heard,
                                            said=" ".join(heard_turn.said) or None))
                 if heard_turn.hung_up:
                     reason = "agent_end"
                     break
-                next_line = await asyncio.to_thread(caller.reply, heard, said)
+                to_caller = heard
+                if heard_turn.cut:
+                    to_caller = f"{heard} ..."
+                elif waited:
+                    to_caller = f"{heard} (Then nothing for {waited:.0f} seconds.)"
+                next_line = await asyncio.to_thread(caller.reply, to_caller, said)
                 if next_line is None:
                     reason = "caller_hangup"
                     break
@@ -320,8 +390,24 @@ class Rig:
         )
         parts["grader"] = max(0.0, result.cost_usd - sum(parts.values()))
         result.cost_parts = {k: round(v, 6) for k, v in parts.items()}
+        timeline.hung_up_at = listener.hung_up_at if reason == "agent_end" else None
+        if scenario.audio_checks:
+            result = with_audio_checks(result, timeline, self.ctx.config)
         self.ctx.worlds.drop(call_id)
         return result
+
+
+def with_audio_checks(result: ScenarioResult, timeline: Timeline, config: dict) -> ScenarioResult:
+    """The live-like audio checks added to a scored call: each failure joins `check_failures`, and
+    a call that passed the record's checks fails on them. A run with no verdict stays one."""
+    if result.outcome == "error":
+        return result
+    failures = live_checks.run(timeline, config)
+    update = {"check_failures": result.check_failures + failures,
+              "checks": result.checks + list(live_checks.NAMES)}
+    if failures:
+        update["outcome"] = "fail"
+    return result.model_copy(update=update)
 
 
 def plan(chosen: list[Scenario], repeats: int, samples: int = 1) -> list[tuple[Scenario, int]]:
@@ -399,7 +485,7 @@ def main(argv: list[str] | None = None) -> int:
                         help="write the results file into the batch folder, not evals/results")
     args = parser.parse_args(argv)
 
-    chosen, _ = suites.select(load_all(), args.suite, suites.parse_tags(args.tags))
+    chosen, _ = suites.select(load_all() + load_live(), args.suite, suites.parse_tags(args.tags))
     if args.only:
         wanted = set(suites.parse_tags(args.only))
         missing = wanted - {s.id for s in chosen}

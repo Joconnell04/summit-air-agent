@@ -168,6 +168,37 @@ audio_rig:
   stt_bench:
     voices: [aura-2-thalia-en, aura-2-orion-en]
     noise_dbfs: -60
+  # The live-like suite's audio checks (evals/audio_rig/live_checks.py), read from the rig's
+  # timeline of each call. Every value is ASSUMED unless its comment says otherwise.
+  live_checks:
+    # ASSUMED: past 4 s after the caller stops, a caller wonders if the line dropped (live call 1
+    # had 20 s gaps, MEASURED from its turns); during a lookup, 3 s with no sound at all.
+    silence_after_caller_s: 4.0
+    silence_in_lookup_s: 3.0
+    # ASSUMED: an agent line with no question that is followed by this much silence left the
+    # caller waiting to be asked something ("Got it." then 19 s, live call 1, MEASURED).
+    half_reply_silence_s: 3.0
+    # Two lines count as the same at this similarity (difflib ratio, ASSUMED) and length in words.
+    repeat_similarity: 0.9
+    repeat_min_words: 4
+    # SOURCE: docs/spec.md S-36, the median targets. The slowest-10% targets are ASSUMED.
+    first_sound_ms:
+      plain: {median: 1200, p90: 2000}
+      lookup: {median: 2500, p90: 3500}
+    # ASSUMED: a read-back of a phone number or ZIP faster than this many digits a second is hard
+    # to follow on a phone ("Say that again?" after the ZIP read-back, live call 2). A digit run
+    # needs this many digits to count as a read-back.
+    readback_digits_per_s: 3.0
+    readback_min_digits: 5
+    # ASSUMED: the line should stay open this long after the goodbye's last sound.
+    hangup_after_goodbye_s: 1.0
+    # A reply that starts within one 20 ms frame of the caller's end was already playing when
+    # the caller finished (evals/audio_rig/report.py TALK_OVER_MS); any agent sound while the
+    # caller is still speaking counts too.
+    talk_over_ms: 20
+    # ASSUMED: a plain turn needs one model request and a lookup turn two (call the tool, then
+    # speak). The lookup lane measured a median of 3 on lookup turns (DECISIONS.md 092).
+    max_llm_requests: {plain: 1, lookup: 2}
 
 # Speech-to-speech and managed-voice entrants on the rig. Profile names are dotted
 # ("realtime.openai") so a results file names them like any other profile.

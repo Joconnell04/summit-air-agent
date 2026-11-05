@@ -1,0 +1,33 @@
+# A multi-task call: a booking for a set day and time, then a callback at a set time.
+id: live-multi-book-then-callback
+flow: [booking]
+difficulty: rigorous
+traits: [side-question]
+journeys: [J1]
+spec: [S-36]
+tags: [live, multi-task]
+caller_style: jackson
+audio_checks: true
+caller_id: "(347) 555-0213"
+time: "2026-11-04T16:30"
+max_turns: 22
+persona: A homeowner who wants an AC tune-up on a Friday afternoon, then a callback about a new thermostat.
+hidden_facts:
+  name: Jackson Lee
+  address: 248 Duffield Street, Brooklyn, 11201
+  phone: the number you're calling from
+  who_home: you, healthy
+  owns: you own it and approve the work
+  wants: an AC tune-up Friday at two PM; take the afternoon window if that's how it works
+  second_task: once the tune-up is booked, you want someone to call you tomorrow at ten AM about a new smart thermostat
+opening: Yeah. I need an AC tune-up. Friday at two PM.
+script:
+  - Confirm a correct read-back.
+  - Once the tune-up is booked, say "Also, can someone call me tomorrow at ten AM about a new thermostat?"
+  - Correct any wrong day or time at once.
+  - Say goodbye once both are handled.
+must:
+  - booking: {count: 1, zip: "11201"}
+should:
+  - Books the tune-up in the window that holds 2 PM on Friday, said as the caller asked.
+  - Takes the callback for tomorrow at 10 AM, said back as asked, or says plainly why not.

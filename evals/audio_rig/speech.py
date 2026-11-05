@@ -40,8 +40,12 @@ class Deepgram:
         return response.content
 
     async def hear(self, pcm: bytes, rate: int) -> str:
+        return (await self.hear_words(pcm, rate))[0]
+
+    async def hear_words(self, pcm: bytes, rate: int) -> tuple[str, list[tuple[str, float, float]]]:
+        """The transcript, and each word with its start and end in seconds into `pcm`."""
         if not pcm:
-            return ""
+            return "", []
         params = {"model": self.ears["model"], "encoding": "linear16", "sample_rate": rate,
                   "channels": 1, "smart_format": "true"}
         response = await self.client.post(
@@ -50,8 +54,10 @@ class Deepgram:
         if response.status_code != 200:
             raise SpeechError(f"agent transcription failed ({response.status_code}): {response.text[:200]}")
         self.seconds += len(pcm) / 2 / rate
-        channel = response.json()["results"]["channels"][0]
-        return channel["alternatives"][0]["transcript"].strip()
+        best = response.json()["results"]["channels"][0]["alternatives"][0]
+        words = [(w.get("punctuated_word") or w["word"], float(w["start"]), float(w["end"]))
+                 for w in best.get("words", [])]
+        return best["transcript"].strip(), words
 
     def cost(self) -> dict[str, float]:
         return {

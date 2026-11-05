@@ -25,6 +25,8 @@ One YAML file per simulated call, named `<id>.yaml`. `evals/scenario.py` validat
 | `misheard` | Words the simulated speech-to-text writes wrong, such as `{Houston: Hughes ton}`, applied before the line is roughened; spelled letters come through |
 | `transfer` | The office and on-call transfer numbers set in the scratch world (made up; nothing is dialed), and what happens to a cold handoff's SIP transfer: `sent` ends the call as handed off, `fails` brings the agent back with the callback line. Unset, no number is set |
 | `weather` | `{now_f, low_f}`: the outside temperature now and the lowest in the next 12 hours, stored as the server's reading at the call's start. Unset, the server has none and a no-heat call starts as if it were cold out |
+| `caller_style` | How the caller talks, from `evals/personas/<name>.yaml`: wording for the caller model and, on the audio rig, how long the caller waits on a silence and when they cut in (`jackson`) |
+| `audio_checks` | `true` runs the live-like audio checks on the rig's timeline of the call (evals/README.md, "Live-like suite"); the text harness ignores it |
 | `must` | Code checks; every one has to pass |
 | `should` | What the grader looks for in how the call felt |
 

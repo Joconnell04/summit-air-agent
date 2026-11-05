@@ -18,6 +18,10 @@ from evals.results import SLUG, Difficulty, Flow, Trait
 
 ROOT = Path(__file__).resolve().parent.parent
 SCENARIOS_DIR = Path(__file__).resolve().parent / "scenarios"
+# The live-like suite's audio scenarios (evals/README.md, "Live-like suite"), kept out of the text
+# suites: they test how a call sounds, which only the audio rig can hear.
+LIVE_DIR = SCENARIOS_DIR / "live"
+PERSONAS_DIR = Path(__file__).resolve().parent / "personas"
 SPEC = ROOT / "docs" / "spec.md"
 NEW_YORK = ZoneInfo("America/New_York")
 # A Monday at 9 a.m. in New York, inside business hours, unless a scenario sets its own time.
@@ -102,6 +106,11 @@ class Scenario(BaseModel):
     # The caller asks the agent to wait and never comes back: once a caller line puts the call on
     # hold, the worker's silence timer runs on a short clock (DECISIONS.md 081).
     steps_away: bool = False
+    # How the simulated caller talks (evals/personas/<name>.yaml): wording for the caller model and,
+    # on the audio rig, how long the caller waits on a silence and when they cut in.
+    caller_style: str | None = Field(None, pattern=SLUG)
+    # Run the audio checks on the rig's timeline of the call (evals/audio_rig/live_checks.py).
+    audio_checks: bool = False
     must: list[dict[str, Any]] = Field(min_length=1)
     should: list[str] = Field(default_factory=list)
 
@@ -131,6 +140,13 @@ class Scenario(BaseModel):
             if name not in CHECKS:
                 raise ValueError(f"unknown check {name!r}")
             CHECKS[name].validate(arg)
+        return value
+
+    @field_validator("caller_style")
+    @classmethod
+    def known_style(cls, value: str | None) -> str | None:
+        if value and not (PERSONAS_DIR / f"{value}.yaml").is_file():
+            raise ValueError(f"no caller style {value!r} in {PERSONAS_DIR.name}/")
         return value
 
     @field_validator("time")
@@ -178,5 +194,11 @@ def load_all(directory: Path = SCENARIOS_DIR) -> list[Scenario]:
     return [load(p) for p in sorted(directory.glob("*.yaml"))]
 
 
+def load_live(directory: Path = LIVE_DIR) -> list[Scenario]:
+    return load_all(directory) if directory.is_dir() else []
+
+
 def scenario_path(scenario_id: str, directory: Path = SCENARIOS_DIR) -> Path:
-    return directory / f"{scenario_id}.yaml"
+    path = directory / f"{scenario_id}.yaml"
+    live = directory / LIVE_DIR.name / f"{scenario_id}.yaml"
+    return live if not path.is_file() and live.is_file() else path

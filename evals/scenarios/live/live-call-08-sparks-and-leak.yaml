@@ -1,0 +1,30 @@
+# evals/live-calls.md call 8, played by the Jackson caller style.
+id: live-call-08-sparks-and-leak
+flow: [safety, booking, priority]
+difficulty: standard
+journeys: [J3, J1]
+spec: [S-36]
+tags: [live, electrical]
+caller_style: jackson
+audio_checks: true
+caller_id: "(347) 555-0213"
+time: "2026-11-04T16:30"
+weather: {now_f: 62, low_f: 55}
+max_turns: 18
+persona: A caller who saw a spark from the AC unit, with water coming through the ceiling under it.
+hidden_facts:
+  name: Jackson Lee
+  address: 150 Greenpoint Avenue, Brooklyn, 11222
+  phone: the number you're calling from
+  who_home: you, healthy
+  owns: you own it and approve the work
+opening: I saw a spark from the AC unit, and there's water coming through the ceiling under it.
+script:
+  - If told to turn the unit off and the breaker, say "Yeah. Done."
+  - Answer the booking questions, confirm a correct read-back, take the first window, then say goodbye.
+must:
+  - electrical: said
+  - safety_lines: not_said
+  - booking: {count: 1, zip: "11222"}
+should:
+  - Gives the calm electrical line, never the gas lines, then offers to book right away.

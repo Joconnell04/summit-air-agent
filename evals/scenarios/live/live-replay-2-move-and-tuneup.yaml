@@ -1,0 +1,39 @@
+# Replay of Jackson's live call 2 (evals/live_calls/call-2.json) on the rig: his lines, in order,
+# and his patience. The caller is the seeded customer with the open visit at 620 Bedford Ave,
+# standing in for the demo's Pat Rivera at 142 Main Street, calling from a cell that isn't on
+# file. A Wednesday evening after hours, as the call was.
+id: live-replay-2-move-and-tuneup
+flow: [repeat-caller, booking, after-hours]
+difficulty: adversarial
+traits: [self-correction, interruption]
+journeys: [J7, J1]
+spec: [S-36]
+tags: [live, replay, multi-task]
+caller_style: jackson
+audio_checks: true
+caller_id: "(347) 555-0213"
+time: "2026-11-04T22:39"
+max_turns: 26
+persona: Maria Delgado, who has moved from 620 Bedford Avenue to 75 Hoyt Street in Brooklyn and wants the address changed, then wants an AC tune-up on a Friday afternoon. Calling from a cell that isn't on the account.
+hidden_facts:
+  name: Maria Delgado
+  old_address: 620 Bedford Avenue, Brooklyn
+  new_address: 75 Hoyt Street, Brooklyn. You don't say the ZIP unless asked; it is 11201.
+  phone: this cell, the best number now
+  callback: if a callback is offered, you want it tomorrow at two PM, exactly then
+  second_task: once the address is handled, you also want an AC tune-up, on a Friday afternoon
+opening: This is, uh, Maria Delgado. I moved to, uh, or no, from... I moved from six two zero Bedford Avenue. To seventy five Hoyt Street in Brooklyn.
+script:
+  - After the first read-back of the new address, say "Say that again?"
+  - If the agent reads the ZIP as "ZIP one one two zero one", say "Yeah. But why do you say ZIP? Just say the ZIP code."
+  - Confirm a correct read-back with "Yeah. That's correct."
+  - If offered a callback, take it. When asked when, say "Tomorrow at two PM."
+  - Then say "Yeah. I need to do my AC tune-up as well." If asked a day, say "Tomorrow at two PM." first; if there is nothing then, ask "Why can't you check Friday?"
+  - You want a Friday afternoon. Correct any wrong day at once.
+  - If the agent says something long you didn't follow, say "Wait. Say that again?"
+  - Say "Yeah. That's all." and goodbye once both things are handled.
+must:
+  - tool_ok: record_move
+should:
+  - Handles the move and the tune-up in one call, asking only for what is still missing.
+  - Says back the callback and visit times the caller asked for, or offers the nearest as a question.
