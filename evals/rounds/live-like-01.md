@@ -65,6 +65,10 @@ Model requests per turn:
 - The first attempt had the caller cut in on every turn, because the cut-in timer kept running while the rig waited for the worker's "listening" signal after the agent had stopped. The caller now cuts in only while the agent is still talking. That run was stopped after one call, $0.13, and isn't counted.
 - Calls that hit their turn limit are now checked too. Four calls ran out of turns (8 for gas and person-now, 18 for older-no-heat and sparks); their limits are now 14 and 28. **Pending:** those four rerun on the same code, appended below.
 
+## Overlap with other rig runs
+
+None of the baseline's calls overlapped another rig. The baseline's results file was written at 00:29:40 New York time; the latency lane's next arm started at 00:29:47, and its earlier run (pid 30818) had exited before this run began at 23:26. The first rerun of the four turn-limit calls, and the first #155 attempt, both stopped at the worker's start under a load average of about 57 and made no calls. Rig runs now take turns through a lock (`rig.lock` in the lanes' shared notes folder): one rig at a time, no test run during one, and a 1-minute load under 8 before starting.
+
 ## Limits
 
 - The worker writes "Now:" into the prompt from the wall clock, while the rig's tool server runs on the scenario's time. This run was near midnight, so the agent treated every call as after hours, as the live calls were (docs/later.md C-68).

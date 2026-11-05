@@ -59,6 +59,9 @@ from evals.run import LOOP_REPEATS, build_run, score, upload
 from evals.scenario import Scenario, load_all, load_live
 from evals.world import World, resolve_caller, seeded_db
 
+# A frame that hasn't gone out this long after it was handed over means the line has stalled (a
+# dead media connection), not dropped; the call stops with an error instead of waiting forever.
+SEND_TIMEOUT_S = 5.0
 # The parts of a call's cost that are the stack's own; the rest is the rig's.
 STACK_PARTS = ("platform", "platform_transcription", "brain_model")
 ENTRANTS = ("livekit", "retell", "retell_flow", "elevenlabs", "openai_realtime", "gemini_live")
@@ -97,6 +100,7 @@ class Sender:
         self.queue: deque[bytes] = deque()
         self.silence = b"\0" * (rate * FRAME_MS // 1000 * 2)
         self.stopped = False
+        self.stalled = False
         self._spoken: asyncio.Future | None = None
         self._started: float | None = None
 
@@ -111,7 +115,9 @@ class Sender:
             speech = bool(self.queue)
             frame = self.queue.popleft() if speech else self.silence
             try:
-                await self.send(frame)
+                await asyncio.wait_for(self.send(frame), SEND_TIMEOUT_S)
+            except TimeoutError:
+                self.stopped, self.stalled = True, True
             except Exception:  # noqa: BLE001 - the line dropped; the rig sees the hang-up
                 self.stopped = True
             now = self.clock() + self.queued()
@@ -277,6 +283,9 @@ class Rig:
                     padded = b"".join(frames(pcm, self.entrant.in_rate))
                     began_at = recorder.caller(padded, self.entrant.in_rate, end)
                     recorder.line("caller", said, began_at)
+                if sender.stalled:
+                    error = f"harness: the line stalled: no audio went out for {SEND_TIMEOUT_S:.0f} s"
+                    break
                 if sender.stopped and listener.is_hung_up:
                     reason = "agent_end"
                     break

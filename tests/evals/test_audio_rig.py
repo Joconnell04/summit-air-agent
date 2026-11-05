@@ -676,3 +676,18 @@ def test_a_turn_held_open_after_the_agent_stopped_is_not_cut_into():
     # last sound; the caller only cuts in while the agent is still talking.
     heard = asyncio.run(listener.turn(True, 9.0, cut_after_s=1.0))
     assert not heard.cut and len(heard.pcm) == len(tone(200))
+
+
+def test_a_frame_that_never_goes_out_marks_the_line_stalled(monkeypatch):
+    monkeypatch.setattr("evals.audio_rig.rig.SEND_TIMEOUT_S", 0.05)
+
+    async def send(frame):
+        await asyncio.sleep(10)
+
+    async def go():
+        sender = Sender(send, RATE)
+        await asyncio.wait_for(sender.run(), 2)
+        return sender
+
+    sender = asyncio.run(go())
+    assert sender.stopped and sender.stalled
