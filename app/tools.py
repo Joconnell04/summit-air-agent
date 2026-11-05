@@ -1288,12 +1288,21 @@ def _someone_else(ctx: Ctx, customer_id: int) -> bool:
 
 
 def _callers_accounts(ctx: Ctx) -> dict:
-    """The customers matched on this call, less one the caller said they aren't."""
-    return {
-        cid: row
-        for cid, row in records.scoped_customers(ctx.conn, ctx.call["id"]).items()
-        if not _someone_else(ctx, cid)
-    }
+    """The customers matched on this call, less one the caller said they aren't, and less one
+    ServiceTitan no longer has: a scripted call after the live world was reseeded carried customer
+    301 from the old world, skipped the name question, and the new customer was sent with no name
+    (call-_+16466240418_ECUCgf3cyyQP, a 400 from ServiceTitan)."""
+    found = {}
+    for cid, row in records.scoped_customers(ctx.conn, ctx.call["id"]).items():
+        try:
+            ctx.fsm.customer(cid)
+        except FsmRejected:
+            continue
+        except FsmUnavailable:
+            pass
+        if not _someone_else(ctx, cid):
+            found[cid] = row
+    return found
 
 
 def _check_failed_on_call(ctx: Ctx) -> bool:
@@ -1306,16 +1315,30 @@ def _check_failed_on_call(ctx: Ctx) -> bool:
     )
 
 
+ASKS_FOR_NAME = re.compile(
+    r"\bname\b|\bwho am i (?:speaking|talking) (?:with|to)\b|\bwho(?:'s| is) (?:calling|this)\b",
+    re.IGNORECASE,
+)
+
+
 def _named_on_call(ctx: Ctx, name: str) -> bool:
-    """The caller said a name on this call that isn't the customer's. A line with the customer's
-    surname in it is no wrong name, even when it doesn't count because the agent said it first."""
+    """The caller answered the agent asking for a name with one that isn't the customer's. A
+    line with the customer's surname in it is no wrong name, even when it doesn't count because
+    the agent said it first. A name the caller offered unasked ("Hi, this is Jordan") is no answer:
+    the check is asked first (Retell's builder agent, a reschedule from an unknown number that
+    went straight to identity_mismatch)."""
     surname = _surname(name)
-    return any(
-        _gave_a_name(r["text"], ctx.tenant.not_names)
-        and not (surname and _has_word(r["text"], surname))
-        for r in records.thread_turns(ctx.conn, ctx.call["id"])
-        if r["call_id"] == ctx.call["id"] and r["speaker"] == "caller"
-    )
+    turns = [r for r in records.thread_turns(ctx.conn, ctx.call["id"]) if r["call_id"] == ctx.call["id"]]
+    for before, row in pairwise(turns):
+        if row["speaker"] != "caller" or before["speaker"] != "agent":
+            continue
+        if not ASKS_FOR_NAME.search(before["text"]) or "?" not in before["text"]:
+            continue
+        if _gave_a_name(row["text"], ctx.tenant.not_names) and not (
+            surname and _has_word(row["text"], surname)
+        ):
+            return True
+    return False
 
 
 def _record_mismatch(
@@ -1569,12 +1592,15 @@ def _unsaid_withheld(ctx: Ctx, bundle: dict) -> dict:
         **bundle,
         "name": bundle["name"] if named else "",
         "phones": [],
-        # What the visit is about stays out too; the job id and window are enough to change it.
-        "open_jobs": [{**j, "summary": "", "window": None} for j in bundle["open_jobs"]],
+        # Only that there is a visit, and its id to ask for a change with, which starts the check:
+        # its type, status, street and window told a caller from an unknown number about someone
+        # else's visit (Retell's builder agent).
+        "has_open_visit": bool(bundle["open_jobs"]),
+        "open_jobs": [{"job_id": j["job_id"]} for j in bundle["open_jobs"]],
         "notes": [],
-        "withheld": "the numbers, notes and what the visit is about are not shown, and the "
-        "name only once the caller gives it, until the server's name and address check passes; "
-        "a change asks for them first",
+        "withheld": "the numbers, notes and anything about the visit but its id are not shown, "
+        "and the name only once the caller gives it, until the server's name and address check "
+        "passes; a change asks for them first",
     }
 
 
@@ -1837,6 +1863,14 @@ def find_slots(ctx: Ctx, args: FindSlotsIn) -> Result:
             urgent_said = line + " "
             data["spoken_first"] = line
             data["note"] = "The top-priority sentence was just said for you; don't say it again."
+    elif decided.raised_by_caller:
+        # Below Urgent, a caller whose own words moved them up hears so, once: "it makes them feel
+        # heard" (Jackson). A comfort complaint alone raises nothing, so it says nothing.
+        line = ctx.tenant.line("raised_priority")
+        if _hand_out_once(ctx, line):
+            urgent_said = line + " "
+            data["spoken_first"] = line
+            data["note"] = "The moved-up sentence was just said for you; don't say it again."
     if decided.level == "Urgent" and windows:
         first = _describe(ctx, windows[0])
         data["first_urgent"] = first
@@ -2083,8 +2117,11 @@ def _resolve_phone(ctx: Ctx, value: str) -> str:
     value = value.strip()
     if _calling_from(value):
         if len(ctx.call["caller_key"]) != 10:
+            # A web call or a blocked caller ID has no number to read back (Retell's builder).
             raise Refused(
-                "invalid_phone", "The number didn't come through. What's the best number?"
+                "no_caller_number",
+                "I can't see the number you're calling from. Could you read it out for me?",
+                need="ask for the number, then read back with the digits the caller says",
             )
         return ctx.call["caller_key"]
     digits = phone_key(value)
@@ -2159,11 +2196,28 @@ def _unit_without_zip(unit: str, zip_code: str) -> str:
     return unit
 
 
+def _booking_name(ctx: Ctx) -> str:
+    """The name passed to read_back for the visit, if any."""
+    row = ctx.conn.execute(
+        "SELECT name FROM booking_names WHERE call_id = ?", (ctx.call["id"],)
+    ).fetchone()
+    return row["name"] if row else ""
+
+
 def read_back(ctx: Ctx, args: ReadBackIn) -> Result:
     """Two steps. Without confirmed, returns the exact sentence to read and records that it was
     asked. With confirmed, accepts only if that same sentence was returned on this call and a caller
     line followed it (spec S-26)."""
     phone = _resolve_phone(ctx, args.phone)
+    # The name the caller already gave (Jackson's Retell agent asks at the start): kept for the
+    # call, so the confirmed read-back doesn't ask "what name should I put the visit under?" again.
+    if args.name.strip():
+        with tx(ctx.conn):
+            ctx.conn.execute(
+                "INSERT INTO booking_names (call_id, name, at) VALUES (?, ?, ?) "
+                "ON CONFLICT (call_id) DO UPDATE SET name = excluded.name, at = excluded.at",
+                (ctx.call["id"], args.name.strip(), iso(ctx.now)),
+            )
     # One unit a read-back: two units are two jobs, each read back and booked on its own
     # (DECISIONS.md 085; eval run 20261104-200546 read back "unit 2A and 5C" as one).
     if re.search(r"\band\b|[,&+/]", args.address.unit or ""):
@@ -2267,7 +2321,11 @@ def read_back(ctx: Ctx, args: ReadBackIn) -> Result:
         # A caller with no account who hasn't said a name: the name is asked here, right after
         # the read-back, not by a refused booking after "booking that now" (a scripted call on
         # #159, call-_+16466240418_bUwDUCZFrKN8).
-        if not _callers_accounts(ctx) and not _caller_named_anyone(ctx):
+        if (
+            not _booking_name(ctx)
+            and not _callers_accounts(ctx)
+            and not _caller_named_anyone(ctx)
+        ):
             return ok(
                 ctx.tenant.line("booking_name"),
                 confirmed=True,
@@ -2355,6 +2413,8 @@ def book_appointment(ctx: Ctx, args: BookIn) -> Result:
     account, contact_name = _new_address_account(ctx, readback, args, chosen)
     job_type = _job_type(ctx, args.job_type)
     details = args.details.model_dump()
+    if not details["name"].strip():
+        details["name"] = _booking_name(ctx)
     found = _priority(ctx, args.job_type, details["inside_temp_f"])
     facts, decided = found.facts, found.priority
     if not override:

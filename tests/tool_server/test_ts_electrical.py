@@ -269,3 +269,19 @@ def test_the_two_caller_lines_after_the_electrical_lines_say_not_to_ask_about_th
     agent.say(call_id, "And the ZIP?")
     third = agent.turn(call_id, "11222.")
     assert "electrical_answered" not in third["data"]["hints"]
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "Hi, um, my outdoor AC unit just sparked and made a popping sound when it kicked on.",
+        "The unit is sparking.",
+        "I saw sparks come out of the furnace.",
+        "There's a burning smell from the unit.",
+        "There's a burning smell coming from the unit.",
+        "There's smoke from the unit.",
+    ],
+)
+def test_sparks_burning_smells_and_smoke_from_the_unit_fire(line):
+    """Retell eval suite round 1 (ac-sparking-books, furnace-burning-plastic)."""
+    assert safety.electrical_signal(line, SAFETY)

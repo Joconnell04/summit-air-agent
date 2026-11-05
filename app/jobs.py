@@ -37,6 +37,10 @@ STUCK_SENDING_MINUTES = 5
 UNCLAIMED_MINUTES = 15
 # FSM reads per run for the booked-and-kept check, so a backlog can't hold up the other jobs.
 KEPT_CHECKS_PER_RUN = 50
+# A booking whose job ServiceTitan no longer has is checked again after 5, 10, 20, 40 minutes, then
+# not again: its kept result stays unknown.
+KEPT_MISS_FIRST = timedelta(minutes=5)
+KEPT_MISS_MAX = 5
 # The safety call's flags: emailed after hours whatever the owner's on-call alerts setting says.
 SAFETY_FLAG_KINDS = ("safety", "safety_dropped")
 
@@ -284,6 +288,25 @@ def confirm_callbacks(
     return counts
 
 
+def _kept_missed(conn: sqlite3.Connection, booking_id: int, now: datetime) -> None:
+    """ServiceTitan has no job for the booking: back off, and after KEPT_MISS_MAX stop asking."""
+    row = conn.execute(
+        "SELECT attempts FROM kept_misses WHERE booking_id = ?", (booking_id,)
+    ).fetchone()
+    attempts = (row["attempts"] if row else 0) + 1
+    later = (
+        "9999-12-31T00:00:00Z" if attempts >= KEPT_MISS_MAX
+        else iso(now + KEPT_MISS_FIRST * 2 ** (attempts - 1))
+    )
+    with tx(conn):
+        conn.execute(
+            "INSERT INTO kept_misses (booking_id, attempts, next_at) VALUES (?, ?, ?) "
+            "ON CONFLICT (booking_id) DO UPDATE SET attempts = excluded.attempts, "
+            "next_at = excluded.next_at",
+            (booking_id, attempts, later),
+        )
+
+
 def check_kept(conn: sqlite3.Connection, tenant: Tenant, fsm: FsmAdapter, now: datetime) -> dict:
     """Booked-and-kept (C-42): once a booking's current appointment has started, record whether the
     job was still on the schedule or had been cancelled. A booking moved later waits for its new
@@ -292,9 +315,10 @@ def check_kept(conn: sqlite3.Connection, tenant: Tenant, fsm: FsmAdapter, now: d
     rows = conn.execute(
         "SELECT b.* FROM bookings b JOIN calls c ON c.id = b.call_id "
         "WHERE c.tenant = ? AND b.kind = 'book' AND b.status = 'booked' AND b.window_start <= ? "
-        "AND NOT EXISTS (SELECT 1 FROM kept k WHERE k.booking_id = b.id) ORDER BY b.window_start "
-        "LIMIT ?",
-        (tenant.slug, iso(now), KEPT_CHECKS_PER_RUN),
+        "AND NOT EXISTS (SELECT 1 FROM kept k WHERE k.booking_id = b.id) "
+        "AND NOT EXISTS (SELECT 1 FROM kept_misses m WHERE m.booking_id = b.id AND m.next_at > ?) "
+        "ORDER BY b.window_start LIMIT ?",
+        (tenant.slug, iso(now), iso(now), KEPT_CHECKS_PER_RUN),
     ).fetchall()
     for row in rows:
         try:
@@ -306,6 +330,7 @@ def check_kept(conn: sqlite3.Connection, tenant: Tenant, fsm: FsmAdapter, now: d
         except FsmUnavailable:
             break
         except FsmRejected:
+            _kept_missed(conn, row["id"], now)
             continue
         kept = job["jobStatus"] != "Canceled"
         with tx(conn):

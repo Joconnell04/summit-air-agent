@@ -1326,6 +1326,28 @@ def test_a_new_caller_is_asked_their_name_right_after_the_read_back(agent):
     assert booked["ok"], booked
 
 
+def test_a_name_passed_to_read_back_is_not_asked_again_and_goes_on_the_visit(agent, mock):
+    """Jackson's Retell agent asks the name at the start of the call; the confirmed read-back
+    still asked "what name should I put the visit under?", because the name only reached the
+    server in book_appointment."""
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "I'd like to book my furnace's yearly tune-up, please.")
+    address = in_area_address()
+    agent.turn(call, f"It's {address['street']}, {address['zip']}.")
+
+    def read_back(**extra):
+        body = {"call_id": call, "address": address, "phone": "caller_id", "name": "Jordan Lee"}
+        return agent.client.post("/tools/read_back", json={**body, **extra}).json()
+
+    asked = read_back()
+    agent.say(call, asked["say"])
+    agent.turn(call, "Yes, that's right.")
+    confirmed = read_back(confirmed=True)
+    assert confirmed["ok"] and confirmed["say"] == ""
+    booked = book(agent, call, first_open(agent, call), name="")
+    assert booked["ok"], booked
+
+
 def test_a_new_caller_who_already_gave_a_name_is_not_asked_again(agent):
     call = agent.start(UNKNOWN)["data"]["call_id"]
     agent.turn(call, "Hi, this is Pat Rivera, I need a tune-up.")
@@ -1418,3 +1440,22 @@ def test_a_spelling_the_caller_never_said_leaves_the_street_alone(agent):
     assert asked["ok"], asked
     assert "199 East 4th Street, unit 2" in asked["say"]
     assert "Eastth" not in asked["say"]
+
+
+@pytest.mark.parametrize("caller", ["", "anonymous"])
+@pytest.mark.parametrize("phone", ["caller_id", "the number I'm calling from"])
+def test_a_call_with_no_number_asks_for_it_by_name(agent, caller, phone):
+    """Retell's builder agent: a web call or a blocked caller ID has no number to read back."""
+    call = agent.start(caller)["data"]["call_id"]
+    agent.turn(call, "It's 101 Union St, 11231.")
+    asked = agent.tool("read_back", call, address=in_area_address(), phone=phone)
+    assert asked["refused"] == "no_caller_number"
+    assert asked["say"] == "I can't see the number you're calling from. Could you read it out for me?"
+
+
+def test_find_slots_takes_since_in_its_facts(agent):
+    """Retell eval suite round 1: 16 find_slots calls refused facts.since as an unknown field."""
+    call = ready_to_book(agent)
+    found = agent.tool("find_slots", call, job_type="tune_up",
+                       facts={"issue": "yearly tune-up", "since": "last week"})
+    assert found["ok"], found

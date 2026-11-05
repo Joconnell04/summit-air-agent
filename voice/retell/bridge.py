@@ -39,6 +39,7 @@ from prompts.assemble import instructions, server_notes
 from . import conversation, signature
 from .api import Retell, RetellError
 from .ledger import Ledger
+from .letters import count_letters
 from .timings import call_summary
 from .transcript import PREFIX, lines, our_call_id, retell_id
 
@@ -51,6 +52,15 @@ SAFETY_ACTIONS = ("speak_lines", "speak_variant", "ask_check")
 SAY_NOW = (
     "Say this to the caller now, before anything else, exactly as written with no word or "
     "punctuation changed: {text}"
+)
+
+# The server's notes, as the native agent (voice/retell_native) gets them mid-call: marked as
+# private, since the bare "[server] ..." text read to its model as something it had said itself
+# ("Sorry, that was just the reference info", Jackson's call 2). Agents listed in
+# RETELL_PRIVATE_NOTE_AGENTS get the marked form; the others are unchanged.
+PRIVATE_NOTE = (
+    "Private note for your next reply. The caller didn't say this and can't hear it; never mention "
+    "it or apologise for it: {notes}"
 )
 
 # How long to let the agent's goodbye play before stopping the call: a fixed allowance plus a rate
@@ -207,9 +217,22 @@ class Bridge:
         self.tool_names = tool_names
         self.now_ms = now_ms or (lambda: int(time.time() * 1000))
         self.later = later or _timer
+        self.private_note_agents = set(filter(None, os.environ.get(
+            "RETELL_PRIVATE_NOTE_AGENTS", "").split(",")))
+        # Agents that get no mid-call notes at all; the safety lines still go by say_now, and
+        # tool results still carry their notes. Jackson's agent said "that was just the reference
+        # material" three times on one call after notes came in this way
+        # (call_17353a5115066cd2e0ad091ddad, no knowledge base attached).
+        self.no_note_agents = set(filter(None, os.environ.get(
+            "RETELL_NO_NOTE_AGENTS", "").split(",")))
         # The last call object each call's events brought, for the word timings the hang-up
         # reads when get-call has none.
         self.seen: dict[str, dict] = {}
+        # Safety lines already asked for on each call: a caller line that grows between Retell's
+        # events is posted again, and each post asked for the same lines again (three times off
+        # one line on Jackson's call call_0246b91f77e01a4b18583e6ca8b). A hazard's lines go out
+        # once per call; new text from the server (another hazard) still goes.
+        self.safety_sent: dict[str, set[str]] = {}
 
     def verified(self, raw: bytes, header: str | None) -> bool:
         return signature.verify(raw, self.api_key, header, self.now_ms())
@@ -273,6 +296,13 @@ class Bridge:
             safety = data.get("safety")
             if safety and safety.get("action") in SAFETY_ACTIONS and safety.get("text"):
                 actions.append(safety)
+            # The server's own words for the turn (the electrical lines, the card stop, the billing
+            # callback) go to the agent the same way: they were dropped, so the electrical lines
+            # were said in neither electrical case (Retell eval suite round 1).
+            spoken = data.get("spoken")
+            if spoken and spoken.get("text"):
+                actions.append({"action": "speak_lines", "kind": spoken.get("kind"),
+                                "text": spoken["text"]})
             hints += data.get("hints") or []
         # The model said its goodbye again after the hang-up was called off, without end_call:
         # the hang-up is armed again for that goodbye.
@@ -310,10 +340,13 @@ class Bridge:
         call_id = self.ensure_started(call, "call")
         if name == "transcript_updated":
             safety, notes = self.sync(call, call_id, settled=False)
-            if safety:
+            if safety and self.first_time(rid, safety[-1]["text"]):
                 self.say_now(rid, SAY_NOW.format(text=safety[-1]["text"]))
-            elif notes:
-                self.tell(rid, " ".join(notes))
+            elif notes and call.get("agent_id") not in self.no_note_agents:
+                text = " ".join(notes)
+                if call.get("agent_id") in self.private_note_agents:
+                    text = PRIVATE_NOTE.format(notes=text)
+                self.tell(rid, text)
         elif name == "call_ended":
             self.sync(call, call_id)
             row = self.ledger.get(rid)
@@ -354,9 +387,23 @@ class Bridge:
         safety, notes = self.sync(obj, call_id)
         args = body.get("args") or {}
         answer = compact(self.tools.tool(call_id, name, args))
-        # Lines that came in with this tool call go to the model in its result.
-        if safety:
-            answer["speak_first"] = SAY_NOW.format(text=safety[-1]["text"])
+        # Lines that came in with this tool call go to the model in its result: bare, and ahead
+        # of the result's own sentence, which the agent says as written. The SAY_NOW wrapper is
+        # only for update-live-call's context; in a result the model read it aloud ("Please say
+        # this now, exactly as written:", Retell eval suite on Jackson's agent).
+        if safety and self.first_time(rid, safety[-1]["text"]):
+            lines_ = safety[-1]["text"]
+            answer["speak_first"] = lines_
+            answer["say"] = " ".join(x for x in (lines_, answer.get("say") or "") if x)
+        # The server's top-priority or raised-priority line, said through Retell now, and taken
+        # out of the result's say, so the model can't drop it (it said only the window on
+        # Jackson's call call_0246b91f77e01a4b18583e6ca8b).
+        first = (answer.get("data") or {}).get("spoken_first")
+        if first and kind == "call":
+            self.say_now(rid, SAY_NOW.format(text=first))
+            say = answer.get("say") or ""
+            if say.startswith(first):
+                answer["say"] = say[len(first):].strip()
         if notes:
             answer["server_notes"] = notes
         hang_up = answer.get("ok") and (answer.get("data") or {}).get("hang_up")
@@ -433,6 +480,14 @@ class Bridge:
         spoken_until = start + float(said[-1].words[-1].get("end", 0)) * 1000
         return HANGUP_GRACE_S - (self.now_ms() - spoken_until) / 1000
 
+    def first_time(self, rid: str, text: str) -> bool:
+        """True the first time these safety lines are asked for on this call."""
+        sent = self.safety_sent.setdefault(rid, set())
+        if text in sent:
+            return False
+        sent.add(text)
+        return True
+
     def say_now(self, rid: str, context: str) -> None:
         try:
             self.retell.say_next(rid, context)
@@ -491,6 +546,15 @@ def build_app(bridge: Bridge) -> FastAPI:
         if name not in bridge.tool_names:
             return JSONResponse({"detail": f"no tool {name}"}, 404)
         return await run_in_threadpool(bridge.tool, name, body)
+
+    @app.post("/retell/letters")
+    async def letters(request: Request):
+        """Not a tool server tool: the bridge counts the letters itself (letters.py)."""
+        body = await signed_json(request)
+        if body is None:
+            return JSONResponse({"detail": "bad signature"}, 401)
+        args = body.get("args") or {}
+        return count_letters(str(args.get("word", "")), str(args.get("letter", "")))
 
     @app.get("/retell/healthz")
     def healthz():

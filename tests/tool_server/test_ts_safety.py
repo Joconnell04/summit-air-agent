@@ -874,3 +874,22 @@ def test_nothing_negates_only_a_like_phrase_in_a_check_answer(answer, result):
 def test_a_one_word_no_before_a_gas_report_still_brings_the_lines(line):
     # PR #126 re-check: the live turn check joined the sentences and "no" negated the smell.
     assert safety.check_caller_turn(line, "none", None, 0, CFG).action == "speak_lines"
+
+
+@pytest.mark.parametrize(
+    "line,action,kind",
+    [
+        # Retell eval suite round 1: the lines fired on a hedged denial. Unsure, so the question.
+        ("I don't think there's a CO alarm going off", "ask_check", "co"),
+        ("I don't believe there's a carbon monoxide alarm going off", "ask_check", "co"),
+        ("No, the CO alarm isn't going off.", "none", None),
+        ("There's no CO alarm going off.", "none", None),
+        ("My CO alarm is going off.", "speak_lines", "co"),
+        ("I think there's a gas smell.", "speak_lines", "gas"),
+        ("It's not, there is a gas leak.", "speak_lines", "gas"),
+        ("Oh no, the carbon monoxide alarm is going off.", "speak_lines", "co"),
+    ],
+)
+def test_a_hedged_denial_gets_the_check_question_and_a_plain_one_nothing(line, action, kind):
+    found = safety.check_caller_turn(line, "none", None, 0, CFG)
+    assert (found.action, found.kind) == (action, kind)

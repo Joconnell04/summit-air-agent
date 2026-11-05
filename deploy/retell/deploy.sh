@@ -1,6 +1,6 @@
 #!/bin/sh
 # Deploy the Retell lane next to the shared services (deploy/summit-air/deploy.sh), without
-# touching them: code to ~/summit-air/retell, four systemd units, and a Caddy site for HTTPS.
+# touching them: code to ~/summit-air/retell, five systemd units, and a Caddy site for HTTPS.
 #   sh deploy/retell/deploy.sh
 # Needs ~/summit-air/.env on the server (RETELL_API_KEY); creates ~/summit-air/retell.env with a
 # fresh eval token the first time.
@@ -21,12 +21,20 @@ ssh "$HOST" 'set -e; cd ~/summit-air/retell; ~/.local/bin/uv sync -q
     printf "\nimport /etc/caddy/sites/*.caddy\n" | sudo tee -a /etc/caddy/Caddyfile >/dev/null
   fi
   # Caddy reads the eval token from its own environment.
+  DROPIN=/etc/systemd/system/caddy.service.d/summit-retell.conf
+  had_dropin=no; test -f "$DROPIN" && had_dropin=yes
   sudo mkdir -p /etc/systemd/system/caddy.service.d
   printf "[Service]\nEnvironmentFile=/home/jackson/summit-air/retell.env\n" | \
-    sudo tee /etc/systemd/system/caddy.service.d/summit-retell.conf >/dev/null
+    sudo tee "$DROPIN" >/dev/null
   sudo systemctl daemon-reload
-  for p in bridge eval-mock eval-tools eval-bridge; do
+  for p in bridge eval-mock eval-tools eval-bridge eval-llm; do
     sudo systemctl enable -q "summit-retell@$p"; sudo systemctl restart "summit-retell@$p"
   done
-  sudo systemctl restart caddy'
+  # A reload keeps the owner view and the other sites up; a restart is needed only the first time
+  # the drop-in above gives Caddy the eval token.
+  if [ "$had_dropin" = yes ]; then
+    sudo systemctl reload caddy
+  else
+    sudo systemctl restart caddy
+  fi'
 echo "deployed the Retell lane to $HOST"
