@@ -1,0 +1,1062 @@
+{
+  "case": "kb-garbled-borough",
+  "retell": {
+    "test_case_job_id": "test_job_aa21b19a00f9",
+    "status": "error",
+    "result_explanation": "Ending the conversation early as there might be a loop.",
+    "creation_timestamp": 1793915406205,
+    "user_modified_timestamp": 1793915455862,
+    "test_case_definition_id": "test_case_f7488aa43850",
+    "test_case_definition_snapshot": {
+      "creationTimestamp": 1793915402403,
+      "dynamicVariables": {
+        "summit_call_id": "rtest-11052150-kb-garbled-borough"
+      },
+      "llmModel": "claude-5.5-haiku",
+      "metrics": [
+        "The agent never refers to text, reference material, a knowledge base or context, never says it is ignoring, setting aside or repeating anything, and never speaks of \"the caller\" in the third person.",
+        "The agent asks plainly which borough or ZIP the address is in, once, without commenting on what it heard.",
+        "book_appointment is called only after read_back was called with confirmed true, and only after the caller said yes to the read-back sentence.",
+        "The agent books exactly one visit with book_appointment with job_type no_heat.",
+        "The agent never says the caller's name out loud to the caller. A name inside tool arguments, such as booking details, doesn't count."
+      ],
+      "name": "[summit] kb-garbled-borough: Caller whose borough comes through garbled",
+      "orgId": "org_EoCqq2c268JWlyCE",
+      "responseEngine": {
+        "llmId": "llm_1da616f2baeb6e916f63e0236950",
+        "type": "retell-llm",
+        "version": 0
+      },
+      "responseEngineId": "llm_1da616f2baeb6e916f63e0236950",
+      "testCaseDefinitionId": "test_case_f7488aa43850",
+      "toolMocks": [],
+      "type": "simulation",
+      "userModifiedTimestamp": 1793915402403,
+      "userPrompt": "## Identity\nRobin Diaz, a homeowner in the Soundview part of the Bronx. Speaks fast.\nYour name: Robin Diaz\nYour address: 1120 Ward Ave, it's in \"East Selleck\" (that's how it comes out; you mean the Bronx), ZIP 10472\nYour phone: 678 555 0273 (the number you're calling from)\nYour problem: no heat since last night, about 63 inside, nobody at risk; you can approve repairs, you'll be home, no gate code or pets\n\n## Goal\nStart the call by saying: \"Hi, my heat's out, I'm at 1120 Ward Avenue, it's in East Selleck.\"\n\n## Behavior\n- If the agent asks where that is or which borough, say \"the Bronx\".\n- Give the ZIP only if asked.\n- Confirm a correct read-back. Take the first window offered.\n- When your business is done, say bye and stop talking.\n"
+    },
+    "transcript_snapshot": {
+      "callEnded": false,
+      "dynamicVariables": {
+        "call_context": "",
+        "call_id": "playground",
+        "call_type": "web_call",
+        "greeting": "Thank you for calling Summit Air. How can I help you today?",
+        "session_type": "voice",
+        "summit_call_id": "rtest-11052150-kb-garbled-borough",
+        "system_timezone": "America/Los_Angeles"
+      },
+      "knowledgeBaseRetrievedContents": [],
+      "toolMocks": [],
+      "transcript": [
+        {
+          "content": "Thank you for calling Summit Air. How can I help you today?",
+          "created_timestamp": 1793915416265,
+          "message_id": "message_57dc71cf5ff44594492496d6",
+          "role": "agent"
+        },
+        {
+          "content": "Hi, my heat's out, I'm at 1120 Ward Avenue, it's in East Selleck.",
+          "created_timestamp": 1793915418207,
+          "message_id": "message_7ca8aa7c625c943dc0db7437",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"street\":\"1120 Ward Avenue\",\"borough\":\"East Selleck\"}",
+          "created_timestamp": 1793915419377,
+          "message_id": "message_02e747f32699a5949bb8e1a3",
+          "name": "find_address",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01ARZrjBGP75ko7mJeVrsRf7",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":false,\"say\":\"I'm not finding that street. Could you spell the street name for me?\",\"data\":{\"need\":\"ask the caller to spell the street, then look it up again with spelled\"},\"refused\":\"address_not_found\"}",
+          "created_timestamp": 1793915419778,
+          "message_id": "message_1254bdd2a9c6bdf3b83de0ee",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01ARZrjBGP75ko7mJeVrsRf7"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"1120 Ward Avenue\",\"zip\":\"00000\",\"city\":\"East Selleck\"},\"phone\":\"caller_id\"}",
+          "created_timestamp": 1793915419779,
+          "message_id": "message_72c09cb2bfa23226cfff6216",
+          "name": "find_customer",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_018HHxbNZNoU5XzH3z7JaNmg",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":false,\"say\":\"Could I get that number again, all ten digits?\",\"refused\":\"invalid_arguments\"}",
+          "created_timestamp": 1793915420003,
+          "message_id": "message_50701ecaddf53a91ac90fffc",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_018HHxbNZNoU5XzH3z7JaNmg"
+        },
+        {
+          "content": "I'm not finding that street. Could you spell the street name for me, letter by letter?",
+          "created_timestamp": 1793915420685,
+          "message_id": "message_d7d89deb9f4c5c697c180abc",
+          "metadata": {
+            "response_id": 1
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Sure, it's W-A-R-D. Ward Avenue. It's in the Bronx, by Soundview. Sorry, I said East Selleck, that's how it comes out, but it's the Bronx.",
+          "created_timestamp": 1793915421658,
+          "message_id": "message_9e5cd28652ec3485206dbbca",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"street\":\"1120 Ward Avenue\",\"spelled\":\"W, A, R, D\",\"borough\":\"Bronx\"}",
+          "created_timestamp": 1793915422526,
+          "message_id": "message_4ec1fe3494e818debc818633",
+          "name": "find_address",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01JSEoUG3Zzpikqvb73RaMt6",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":false,\"say\":\"What's the ZIP code there?\",\"data\":{\"need\":\"ask for the ZIP\"},\"refused\":\"address_not_found\"}",
+          "created_timestamp": 1793915422807,
+          "message_id": "message_5e281cda76cbed45e2b2c099",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01JSEoUG3Zzpikqvb73RaMt6"
+        },
+        {
+          "content": "What's the ZIP code for that address?",
+          "created_timestamp": 1793915423456,
+          "message_id": "message_4b4b39d494dcd3792b346771",
+          "metadata": {
+            "response_id": 2
+          },
+          "role": "agent"
+        },
+        {
+          "content": "It's 10472.",
+          "created_timestamp": 1793915424207,
+          "message_id": "message_b423683ca0f09ff381538d06",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"zip\":\"10472\"}",
+          "created_timestamp": 1793915425210,
+          "message_id": "message_cb93aae0aa974e55d47b5f81",
+          "name": "check_service_area",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_017w1tLSKMX5kJ6NyRTpmWPb",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"zip\":\"10472\",\"in_area\":true,\"area\":\"Bronx\"}}",
+          "created_timestamp": 1793915425503,
+          "message_id": "message_c634c436668aa2e20767affe",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_017w1tLSKMX5kJ6NyRTpmWPb"
+        },
+        {
+          "arguments": "{\"street\":\"1120 Ward Avenue\",\"spelled\":\"W, A, R, D\",\"borough\":\"Bronx\"}",
+          "created_timestamp": 1793915425504,
+          "message_id": "message_1ba90bfc77839b993958e6e6",
+          "name": "find_address",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01L2ae1UifjuMuKawPnsD8fG",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"zip\":\"10472\",\"street\":\"1120 Ward Avenue\",\"from_caller\":true,\"in_area\":true,\"area\":\"Bronx\",\"note\":\"The lookup couldn't confirm the street; the caller's ZIP stands. Go on to the read-back, which confirms it with them.\"}}",
+          "created_timestamp": 1793915425736,
+          "message_id": "message_25decfd98b06a12e1e08cd99",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01L2ae1UifjuMuKawPnsD8fG"
+        },
+        {
+          "content": "Got it. Is the heat completely out, or is it just not keeping up?",
+          "created_timestamp": 1793915426472,
+          "message_id": "message_1ded4e253d26adcb112d05bd",
+          "metadata": {
+            "response_id": 3
+          },
+          "role": "agent"
+        },
+        {
+          "content": "It's completely out. No heat since last night, and it's about 63 inside right now. Nobody's at risk here, but it's getting cold and I need someone out today if you can. I'll be home all day, there's no gate code, and no pets. You can go ahead and approve repairs too.",
+          "created_timestamp": 1793915429134,
+          "message_id": "message_e1082c8459a7a4704f7a1ba0",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, that helps. Can I get your name?",
+          "created_timestamp": 1793915429778,
+          "message_id": "message_f98b0417a971207efb814c7b",
+          "metadata": {
+            "response_id": 4
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Robin Diaz. D-I-A-Z. And my number is 678 555 0273.",
+          "created_timestamp": 1793915430498,
+          "message_id": "message_3bc06a8d5dd2efd40cb8f927",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, Robin. And this is for a residential property, right? Like a home or an apartment?",
+          "created_timestamp": 1793915431195,
+          "message_id": "message_fea22195f34780472b321d16",
+          "metadata": {
+            "response_id": 5
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, it's an apartment. I'm on the first floor of a two-family house, so it's the whole unit that's cold. Is someone coming out today?",
+          "created_timestamp": 1793915431925,
+          "message_id": "message_c0203748af756046440e6607",
+          "role": "user"
+        },
+        {
+          "content": "Let me read back your address and number so we can get you on the schedule.",
+          "created_timestamp": 1793915433080,
+          "message_id": "message_684c653d86883916287dd481",
+          "metadata": {
+            "response_id": 6
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"1120 Ward Avenue\",\"zip\":\"10472\",\"spelled\":\"W, A, R, D\",\"city\":\"Bronx\"},\"phone\":\"6785550273\",\"name\":\"Robin Diaz\"}",
+          "created_timestamp": 1793915433081,
+          "message_id": "message_4a737671cd962488c33e5798",
+          "name": "read_back",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01G1w19Bit2UfqapFqN51HSa",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"I have your home at 1120 Ward Avenue, Bronx, ZIP code one zero four seven two, and the best number is six seven eight, five five five, zero two seven three. That's all correct, right?\",\"data\":{\"confirmed\":false,\"sentence\":\"I have your home at 1120 Ward Avenue, Bronx, ZIP code one zero four seven two, and the best number is six seven eight, five five five, zero two seven three. That's all correct, right?\"}}",
+          "created_timestamp": 1793915433551,
+          "message_id": "message_6dcb04ef67bc4800661818ff",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01G1w19Bit2UfqapFqN51HSa"
+        },
+        {
+          "content": "I have your home at 1120 Ward Avenue, Bronx, ZIP code one zero four seven two, and the best number is six seven eight, five five five, zero two seven three. That's all correct, right?",
+          "created_timestamp": 1793915434340,
+          "message_id": "message_72d9dc3310aaba5e40c8c460",
+          "metadata": {
+            "response_id": 7
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, that's all correct. 1120 Ward Avenue, Bronx, 10472, and that number is right. Can someone come out today? And what's the first time you have available?",
+          "created_timestamp": 1793915435208,
+          "message_id": "message_f2b48783de71254677cd7b78",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"1120 Ward Avenue\",\"zip\":\"10472\",\"spelled\":\"W, A, R, D\",\"city\":\"Bronx\"},\"phone\":\"6785550273\",\"name\":\"Robin Diaz\",\"confirmed\":true}",
+          "created_timestamp": 1793915436674,
+          "message_id": "message_e67286909c9b61b3de2b6bef",
+          "name": "read_back",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01GuyCmtuGML3UfanhPFBUkT",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"confirmed\":true,\"address\":{\"street\":\"1120 Ward Avenue\",\"unit\":\"\",\"city\":\"Bronx\",\"zip\":\"10472\",\"spelled\":\"\"},\"phone\":\"6785550273\"}}",
+          "created_timestamp": 1793915437025,
+          "message_id": "message_481a6102deafaf3c56cce87b",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01GuyCmtuGML3UfanhPFBUkT"
+        },
+        {
+          "arguments": "{\"job_type\":\"no_heat\",\"day\":\"today\",\"facts\":{\"issue\":\"Heat completely out since last night, apartment is about 63 degrees inside\",\"since\":\"last night\",\"who_home\":\"Caller home all day, no one at risk\"}}",
+          "created_timestamp": 1793915437026,
+          "message_id": "message_c3f95ad185e1061249f15e93",
+          "name": "find_slots",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01UCcpzbuLELqpzcKQbSj3af",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"Today I have 5 to 7.\",\"data\":{\"priority\":{\"level\":\"Normal\",\"reasons\":[\"warm inside and a mild day\"],\"requested\":null,\"raised_after_wait\":false},\"windows\":[{\"date\":\"2026-11-05\",\"window\":\"1700-1900\",\"weekday\":\"Thursday\",\"day\":\"today\",\"day_and_date\":\"today, Thursday, November 5\",\"label\":\"5 to 7\",\"part\":\"evening\",\"after_hours\":false}]}}",
+          "created_timestamp": 1793915438200,
+          "message_id": "message_149d846bf587513920beeac0",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01UCcpzbuLELqpzcKQbSj3af"
+        },
+        {
+          "content": "Today I have an arrival window of 5 to 7 in the evening. Would that work for you?",
+          "created_timestamp": 1793915438884,
+          "message_id": "message_de7a074e932dd565800406b5",
+          "metadata": {
+            "response_id": 8
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, 5 to 7 works. Put me down for that. Thanks.",
+          "created_timestamp": 1793915439441,
+          "message_id": "message_d982f4f53637ae1f7e999cfa",
+          "role": "user"
+        },
+        {
+          "content": "Will you be able to approve any repair work the technician recommends? You mentioned that already, so I'll confirm: yes, you can approve repairs.",
+          "created_timestamp": 1793915441041,
+          "message_id": "message_3ba393dd7c5dde76fb1641e1",
+          "metadata": {
+            "response_id": 9
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"details\":{\"approver\":\"Robin Diaz\",\"issue\":\"Heat completely out since last night, apartment about 63 degrees inside, first floor of two-family house\",\"since\":\"last night\",\"tried\":\"Not provided\",\"who_home\":\"Caller home all day, no one at risk\",\"arrival_notes\":\"No gate code, no pets. Caller approves repairs.\",\"inside_temp_f\":63,\"name\":\"Robin Diaz\"},\"job_type\":\"no_heat\",\"slot\":{\"date\":\"2026-11-05\",\"window\":\"1700-1900\"}}",
+          "created_timestamp": 1793915441042,
+          "message_id": "message_bae28f766114c6bc426a12a7",
+          "name": "book_appointment",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_0162WYkAkxaiZ9Za4jPQ9jp1",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"You're all set for today, Thursday, November 5, with the technician arriving between 5 and 7. Anything else?\",\"data\":{\"booking_id\":550,\"appointment_id\":550,\"window\":{\"date\":\"2026-11-05\",\"window\":\"1700-1900\",\"weekday\":\"Thursday\",\"day\":\"today\",\"day_and_date\":\"today, Thursday, November 5\",\"label\":\"5 to 7\",\"part\":\"evening\",\"after_hours\":false},\"priority\":{\"level\":\"High\",\"reasons\":[\"below 65 F inside, caller said \\\"It's completely out. No heat since last night, and it's about 63 inside...\\\"\"],\"raised_after_wait\":false},\"seek_earlier\":false,\"safety_override\":false,\"approval_callback_at\":null,\"return_visit_review\":false}}",
+          "created_timestamp": 1793915441906,
+          "message_id": "message_21fb5c916363d15ef9cdcf13",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_0162WYkAkxaiZ9Za4jPQ9jp1"
+        },
+        {
+          "content": "You're all set for today, Thursday, November 5, with the technician arriving between 5 and 7. Anything else I can help with?",
+          "created_timestamp": 1793915442636,
+          "message_id": "message_fd7dd7502560e0303ed520ec",
+          "metadata": {
+            "response_id": 10
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Nope, that's it. Thanks so much, bye.",
+          "created_timestamp": 1793915443439,
+          "message_id": "message_19dde6d2e15163203f80bf45",
+          "role": "user"
+        },
+        {
+          "content": "Thanks for calling Summit Air, and have a great day.",
+          "created_timestamp": 1793915444165,
+          "message_id": "message_3d4b3690f9c9c7ec0e252021",
+          "metadata": {
+            "response_id": 11
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"reason\":\"resolved\"}",
+          "created_timestamp": 1793915444166,
+          "message_id": "message_075f5096219bac6df7996d0d",
+          "name": "end_call",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_0122ES1C4yDs4tB87X6KgGud",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"hang_up\":true}}",
+          "created_timestamp": 1793915444734,
+          "message_id": "message_b029283e6b1c7c155881f07e",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_0122ES1C4yDs4tB87X6KgGud"
+        },
+        {
+          "content": "Thanks so much, bye.",
+          "created_timestamp": 1793915445784,
+          "message_id": "message_8d370ae413f32d5361da0103",
+          "role": "user"
+        },
+        {
+          "content": "Take care.",
+          "created_timestamp": 1793915446416,
+          "message_id": "message_87c81ac3df9af71d5c89af49",
+          "metadata": {
+            "response_id": 12
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Bye, thanks!",
+          "created_timestamp": 1793915447272,
+          "message_id": "message_82e46b53fd02dee00d5c7cdf",
+          "role": "user"
+        },
+        {
+          "content": "Take care.",
+          "created_timestamp": 1793915447860,
+          "message_id": "message_a0354a2235b4fc04d4f368eb",
+          "metadata": {
+            "response_id": 13
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Bye, thanks!",
+          "created_timestamp": 1793915448866,
+          "message_id": "message_bcadf0a4a5755a5f69a9307d",
+          "role": "user"
+        },
+        {
+          "content": "Take care.",
+          "created_timestamp": 1793915449447,
+          "message_id": "message_6d3668294325ae9ea378e6d2",
+          "metadata": {
+            "response_id": 14
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Bye, thanks!",
+          "created_timestamp": 1793915450045,
+          "message_id": "message_2536a778aec59ed581d4dd4d",
+          "role": "user"
+        },
+        {
+          "content": "Take care.",
+          "created_timestamp": 1793915450658,
+          "message_id": "message_2bb8ed536eebd086bc2a98e0",
+          "metadata": {
+            "response_id": 15
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Bye, thanks!",
+          "created_timestamp": 1793915451183,
+          "message_id": "message_c549221046cbb5e8e244a89b",
+          "role": "user"
+        },
+        {
+          "content": "Take care.",
+          "created_timestamp": 1793915451778,
+          "message_id": "message_348ed95417fe947141945ee4",
+          "metadata": {
+            "response_id": 16
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Bye, thanks!",
+          "created_timestamp": 1793915452228,
+          "message_id": "message_2126cbea53d6f55a060d18d8",
+          "role": "user"
+        },
+        {
+          "content": "Take care.",
+          "created_timestamp": 1793915452843,
+          "message_id": "message_b2e7f286c38802167d7e42ca",
+          "metadata": {
+            "response_id": 17
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Bye, thanks!",
+          "created_timestamp": 1793915453519,
+          "message_id": "message_0be1727fdcb6121097d7c607",
+          "role": "user"
+        },
+        {
+          "content": "Take care.",
+          "created_timestamp": 1793915454100,
+          "message_id": "message_d1c3ae95b5759805baf70b3f",
+          "metadata": {
+            "response_id": 18
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Bye, thanks!",
+          "created_timestamp": 1793915454749,
+          "message_id": "message_3156dedfd23fccc394d7d610",
+          "role": "user"
+        },
+        {
+          "content": "Take care.",
+          "created_timestamp": 1793915455343,
+          "message_id": "message_b128c9186d0cc301c5a67425",
+          "metadata": {
+            "response_id": 19
+          },
+          "role": "agent"
+        }
+      ]
+    }
+  },
+  "trace": {
+    "call": {
+      "id": "rtest-11052150-kb-garbled-borough",
+      "tenant": "summit-air",
+      "caller_id": "(678) 555-0273",
+      "caller_key": "6785550273",
+      "dialed_number": "(678) 336-6730",
+      "direction": "inbound",
+      "started_at": "2026-10-30T21:50:04Z",
+      "ended_at": null,
+      "end_reason": null,
+      "end_requested": 1,
+      "after_hours": 0,
+      "linked_call_id": null,
+      "outcome": null,
+      "commercial": 0,
+      "summary_status": "none",
+      "turn_seq": 21,
+      "safety_state": "none",
+      "safety_kind": null,
+      "safety_signal_at": null,
+      "safety_lines_at": null,
+      "safety_flag_id": null,
+      "safety_variant": 0,
+      "readback_json": "{\"street\": \"1120 Ward Avenue\", \"unit\": \"\", \"city\": \"Bronx\", \"zip\": \"10472\", \"spelled\": \"\", \"phone\": \"6785550273\", \"phone_for\": \"\", \"sentence\": \"I have your home at 1120 Ward Avenue, Bronx, ZIP code one zero four seven two, and the best number is six seven eight, five five five, zero two seven three. That's all correct, right?\"}",
+      "readback_asked_seq": 13,
+      "readback_confirmed_at": "2026-11-05T21:50:36Z"
+    },
+    "events": [
+      {
+        "at": "2026-11-05T21:50:04Z",
+        "type": "tool",
+        "tool": "calls.start",
+        "args": {
+          "call_id": "rtest-11052150-kb-garbled-borough",
+          "caller_id": "(678) 555-0273",
+          "dialed_number": "(678) 336-6730",
+          "direction": "inbound"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 19.6,
+        "error": null,
+        "request_id": "0b5f1f6577bf"
+      },
+      {
+        "at": "2026-11-05T21:50:19Z",
+        "type": "turn",
+        "seq": 1,
+        "speaker": "agent",
+        "text": "Thank you for calling Summit Air. How can I help you today?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:50:19Z",
+        "type": "turn",
+        "seq": 2,
+        "speaker": "caller",
+        "text": "Hi, my heat's out, I'm at 1120 Ward Avenue, it's in East Selleck.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:50:19Z",
+        "type": "tool",
+        "tool": "find_address",
+        "args": {
+          "call_id": "rtest-11052150-kb-garbled-borough",
+          "street": "1120 Ward Avenue",
+          "borough": "East Selleck",
+          "spelled": ""
+        },
+        "ok": false,
+        "refused": "address_not_found",
+        "gate": "address_not_found",
+        "say": "I'm not finding that street. Could you spell the street name for me?",
+        "ms": 126.3,
+        "error": null,
+        "request_id": "d13a78443b62"
+      },
+      {
+        "at": "2026-11-05T21:50:19Z",
+        "type": "tool",
+        "tool": "find_customer",
+        "args": {
+          "call_id": "rtest-11052150-kb-garbled-borough",
+          "phone": "caller_id",
+          "address": {
+            "street": "1120 Ward Avenue",
+            "unit": "",
+            "city": "East Selleck",
+            "zip": "00000",
+            "spelled": ""
+          }
+        },
+        "ok": false,
+        "refused": "invalid_arguments",
+        "gate": "invalid_arguments",
+        "say": "Could I get that number again, all ten digits?",
+        "ms": 2.1,
+        "error": null,
+        "request_id": "03867a5eeafe"
+      },
+      {
+        "at": "2026-11-05T21:50:22Z",
+        "type": "turn",
+        "seq": 3,
+        "speaker": "agent",
+        "text": "I'm not finding that street. Could you spell the street name for me, letter by letter?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 5000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:50:22Z",
+        "type": "turn",
+        "seq": 4,
+        "speaker": "caller",
+        "text": "Sure, it's W-A-R-D. Ward Avenue. It's in the Bronx, by Soundview. Sorry, I said East Selleck, that's how it comes out, but it's the Bronx.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:50:22Z",
+        "type": "tool",
+        "tool": "find_address",
+        "args": {
+          "call_id": "rtest-11052150-kb-garbled-borough",
+          "street": "1120 Ward Avenue",
+          "borough": "Bronx",
+          "spelled": "W, A, R, D"
+        },
+        "ok": false,
+        "refused": "address_not_found",
+        "gate": "address_not_found",
+        "say": "What's the ZIP code there?",
+        "ms": 6.3,
+        "error": null,
+        "request_id": "efeeb29f614b"
+      },
+      {
+        "at": "2026-11-05T21:50:25Z",
+        "type": "turn",
+        "seq": 5,
+        "speaker": "agent",
+        "text": "What's the ZIP code for that address?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 3000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:50:25Z",
+        "type": "turn",
+        "seq": 6,
+        "speaker": "caller",
+        "text": "It's 10472.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:50:25Z",
+        "type": "tool",
+        "tool": "check_service_area",
+        "args": {
+          "call_id": "rtest-11052150-kb-garbled-borough",
+          "zip": "10472"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 9.1,
+        "error": null,
+        "request_id": "8ff8c23c4ad4"
+      },
+      {
+        "at": "2026-11-05T21:50:25Z",
+        "type": "tool",
+        "tool": "find_address",
+        "args": {
+          "call_id": "rtest-11052150-kb-garbled-borough",
+          "street": "1120 Ward Avenue",
+          "borough": "Bronx",
+          "spelled": "W, A, R, D"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 7.4,
+        "error": null,
+        "request_id": "e161a0f9ed2a"
+      },
+      {
+        "at": "2026-11-05T21:50:33Z",
+        "type": "turn",
+        "seq": 7,
+        "speaker": "agent",
+        "text": "Got it. Is the heat completely out, or is it just not keeping up?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 5000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:50:33Z",
+        "type": "turn",
+        "seq": 8,
+        "speaker": "caller",
+        "text": "It's completely out. No heat since last night, and it's about 63 inside right now. Nobody's at risk here, but it's getting cold and I need someone out today if you can. I'll be home all day, there's no gate code, and no pets. You can go ahead and approve repairs too.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:50:33Z",
+        "type": "turn",
+        "seq": 9,
+        "speaker": "agent",
+        "text": "Thanks, that helps. Can I get your name?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:50:33Z",
+        "type": "turn",
+        "seq": 10,
+        "speaker": "caller",
+        "text": "Robin Diaz. D-I-A-Z. And my number is 678 555 0273.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:50:33Z",
+        "type": "turn",
+        "seq": 11,
+        "speaker": "agent",
+        "text": "Thanks, Robin. And this is for a residential property, right? Like a home or an apartment?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:50:33Z",
+        "type": "turn",
+        "seq": 12,
+        "speaker": "caller",
+        "text": "Yes, it's an apartment. I'm on the first floor of a two-family house, so it's the whole unit that's cold. Is someone coming out today?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:50:33Z",
+        "type": "turn",
+        "seq": 13,
+        "speaker": "agent",
+        "text": "Let me read back your address and number so we can get you on the schedule.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:50:33Z",
+        "type": "tool",
+        "tool": "read_back",
+        "args": {
+          "call_id": "rtest-11052150-kb-garbled-borough",
+          "address": {
+            "street": "1120 Ward Avenue",
+            "unit": "",
+            "city": "Bronx",
+            "zip": "10472",
+            "spelled": "W, A, R, D"
+          },
+          "phone": "6785550273",
+          "phone_for": "",
+          "name": "Robin Diaz",
+          "confirmed": false
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "I have your home at 1120 Ward Avenue, Bronx, ZIP code one zero four seven two, and the best number is six seven eight, five five five, zero two seven three. That's all correct, right?",
+        "ms": 6.5,
+        "error": null,
+        "request_id": "a25e3bca5439"
+      },
+      {
+        "at": "2026-11-05T21:50:36Z",
+        "type": "turn",
+        "seq": 14,
+        "speaker": "agent",
+        "text": "I have your home at 1120 Ward Avenue, Bronx, ZIP code one zero four seven two, and the best number is six seven eight, five five five, zero two seven three. That's all correct, right?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:50:36Z",
+        "type": "turn",
+        "seq": 15,
+        "speaker": "caller",
+        "text": "Yes, that's all correct. 1120 Ward Avenue, Bronx, 10472, and that number is right. Can someone come out today? And what's the first time you have available?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:50:36Z",
+        "type": "tool",
+        "tool": "read_back",
+        "args": {
+          "call_id": "rtest-11052150-kb-garbled-borough",
+          "address": {
+            "street": "1120 Ward Avenue",
+            "unit": "",
+            "city": "Bronx",
+            "zip": "10472",
+            "spelled": "W, A, R, D"
+          },
+          "phone": "6785550273",
+          "phone_for": "",
+          "name": "Robin Diaz",
+          "confirmed": true
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 7.8,
+        "error": null,
+        "request_id": "cf577e530514"
+      },
+      {
+        "at": "2026-11-05T21:50:38Z",
+        "type": "tool",
+        "tool": "find_slots",
+        "args": {
+          "call_id": "rtest-11052150-kb-garbled-borough",
+          "job_type": "no_heat",
+          "priority": null,
+          "preferred_days": [],
+          "time_of_day": null,
+          "window_minutes": null,
+          "day": "today",
+          "arrive_after": null,
+          "arrive_before": null,
+          "facts": {
+            "issue": "Heat completely out since last night, apartment is about 63 degrees inside",
+            "since": "last night",
+            "who_home": "Caller home all day, no one at risk",
+            "inside_temp_f": null,
+            "temp_falling_fast": false
+          }
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "Today I have 5 to 7.",
+        "ms": 886.8,
+        "error": null,
+        "request_id": "b2f674059084"
+      },
+      {
+        "at": "2026-11-05T21:50:41Z",
+        "type": "turn",
+        "seq": 16,
+        "speaker": "agent",
+        "text": "Today I have an arrival window of 5 to 7 in the evening. Would that work for you?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 5000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:50:41Z",
+        "type": "turn",
+        "seq": 17,
+        "speaker": "caller",
+        "text": "Yes, 5 to 7 works. Put me down for that. Thanks.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:50:41Z",
+        "type": "turn",
+        "seq": 18,
+        "speaker": "agent",
+        "text": "Will you be able to approve any repair work the technician recommends? You mentioned that already, so I'll confirm: yes, you can approve repairs.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:50:41Z",
+        "type": "tool",
+        "tool": "book_appointment",
+        "args": {
+          "call_id": "rtest-11052150-kb-garbled-borough",
+          "job_type": "no_heat",
+          "slot": {
+            "date": "2026-11-05",
+            "window": "1700-1900"
+          },
+          "details": {
+            "issue": "Heat completely out since last night, apartment about 63 degrees inside, first floor of two-family house",
+            "since": "last night",
+            "tried": "Not provided",
+            "who_home": "Caller home all day, no one at risk",
+            "approver": "Robin Diaz",
+            "system_type": "",
+            "arrival_notes": "No gate code, no pets. Caller approves repairs.",
+            "name": "Robin Diaz",
+            "inside_temp_f": 63.0
+          },
+          "priority": null,
+          "separate_problem": false,
+          "new_address_account": null
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "You're all set for today, Thursday, November 5, with the technician arriving between 5 and 7. Anything else?",
+        "ms": 434.4,
+        "error": null,
+        "request_id": "f6f34a515380"
+      },
+      {
+        "at": "2026-11-05T21:50:44Z",
+        "type": "turn",
+        "seq": 19,
+        "speaker": "agent",
+        "text": "You're all set for today, Thursday, November 5, with the technician arriving between 5 and 7. Anything else I can help with?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:50:44Z",
+        "type": "turn",
+        "seq": 20,
+        "speaker": "caller",
+        "text": "Nope, that's it. Thanks so much, bye.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:50:44Z",
+        "type": "turn",
+        "seq": 21,
+        "speaker": "agent",
+        "text": "Thanks for calling Summit Air, and have a great day.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:50:44Z",
+        "type": "tool",
+        "tool": "end_call",
+        "args": {
+          "call_id": "rtest-11052150-kb-garbled-borough",
+          "reason": "resolved"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 7.5,
+        "error": null,
+        "request_id": "f626918ad214"
+      }
+    ],
+    "flags": [],
+    "callbacks": [],
+    "bookings": [
+      {
+        "id": 218,
+        "kind": "book",
+        "status": "booked",
+        "fsm_job_id": 550,
+        "window_start": "2026-11-05T22:00:00Z",
+        "window_end": "2026-11-06T00:00:00Z",
+        "priority": "High",
+        "priority_reasons": "below 65 F inside, caller said \"It's completely out. No heat since last night, and it's about 63 inside...\"",
+        "safety_override": 0,
+        "seek_earlier": 0,
+        "attempts": 1,
+        "last_error": null,
+        "raised_after_wait": 0,
+        "priority_rules": "[\"bracket:cool_inside\"]",
+        "priority_reason_list": "[\"below 65 F inside, caller said \\\"It's completely out. No heat since last night, and it's about 63 inside...\\\"\"]",
+        "who_home": "Caller home all day, no one at risk",
+        "job_type": "no_heat",
+        "street": "1120 Ward Avenue",
+        "unit": "",
+        "job_notes": "[]"
+      }
+    ],
+    "notes": [],
+    "leads": [],
+    "out_of_area": [],
+    "summary": [],
+    "electrical": [],
+    "holds": [],
+    "pace": [
+      {
+        "call_id": "rtest-11052150-kb-garbled-borough",
+        "speed": 1.0,
+        "source": "default",
+        "requested": 0,
+        "older_adult": 0,
+        "address_speed": null,
+        "repeats": 0
+      }
+    ],
+    "pace_changes": [],
+    "caller_pace": [],
+    "transfers": [],
+    "handoffs": [],
+    "address_lookups": [
+      {
+        "house": "1120",
+        "street": "ward ave",
+        "hint": "East Selleck",
+        "status": "none",
+        "zips_json": "[]",
+        "source": "geosearch"
+      },
+      {
+        "house": "1120",
+        "street": "ward ave",
+        "hint": "Bronx",
+        "status": "none",
+        "zips_json": "[]",
+        "source": "geosearch"
+      },
+      {
+        "house": "1120",
+        "street": "ward ave",
+        "hint": "Bronx",
+        "status": "none",
+        "zips_json": "[]",
+        "source": "geosearch"
+      }
+    ],
+    "address_checks": [],
+    "names": [],
+    "address_moves": [],
+    "identity_checks": [],
+    "heads_ups": []
+  }
+}

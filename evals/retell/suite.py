@@ -146,6 +146,9 @@ TEST_HANG_UP = {
 
 def copy_body(live_llm: dict) -> dict:
     body = {k: live_llm[k] for k in LLM_FIELDS if live_llm.get(k) is not None}
+    # Sent even when empty: a PATCH leaves out what it isn't given, so a knowledge base taken off
+    # the live agent would otherwise stay on the copy.
+    body["knowledge_base_ids"] = live_llm.get("knowledge_base_ids") or []
     tools = [t for t in eval_tools(live_llm.get("general_tools")) if t.get("type") != "end_call"]
     body["general_tools"] = [*tools, TEST_HANG_UP]
     for state in body.get("states") or []:

@@ -1,0 +1,29 @@
+id: kb-garbled-borough
+title: Caller whose borough comes through garbled
+tags: [live-call, booking]
+caller_id: (678) 555-0273
+user_prompt: |
+  ## Identity
+  Robin Diaz, a homeowner in the Soundview part of the Bronx. Speaks fast.
+  Your name: Robin Diaz
+  Your address: 1120 Ward Ave, it's in "East Selleck" (that's how it comes out; you mean the Bronx), ZIP 10472
+  Your phone: 678 555 0273 (the number you're calling from)
+  Your problem: no heat since last night, about 63 inside, nobody at risk; you can approve repairs, you'll be home, no gate code or pets
+
+  ## Goal
+  Start the call by saying: "Hi, my heat's out, I'm at 1120 Ward Avenue, it's in East Selleck."
+
+  ## Behavior
+  - If the agent asks where that is or which borough, say "the Bronx".
+  - Give the ZIP only if asked.
+  - Confirm a correct read-back. Take the first window offered.
+  - When your business is done, say bye and stop talking.
+metrics:
+- The agent never refers to text, reference material, a knowledge base or context, never says it is ignoring, setting aside or repeating anything, and never speaks of "the caller" in the third person.
+- The agent asks plainly which borough or ZIP the address is in, once, without commenting on what it heard.
+- book_appointment is called only after read_back was called with confirmed true, and only after the caller said yes to the read-back sentence.
+- The agent books exactly one visit with book_appointment with job_type no_heat.
+- "The agent never says the caller's name out loud to the caller. A name inside tool arguments, such as booking details, doesn't count."
+must:
+- booking: {count: 1, job_type: no_heat, zip: "10472"}
+- read_back: before_booking

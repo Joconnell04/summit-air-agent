@@ -14,7 +14,7 @@ from evals.world import seeded_db
 
 def test_every_case_file_loads_with_known_tags_and_checks():
     cases = case_files.load_all()
-    assert 40 <= len(cases) <= 60
+    assert 40 <= len(cases) <= 70
     for case in cases:
         case.checks()  # the scenario's checks, or the case's own, all known to evals/checks.py
 
@@ -88,6 +88,7 @@ def test_copying_reads_the_live_llm_and_writes_only_the_copy():
     assert ("GET", f"/get-retell-llm/{suite.LIVE_LLM}", None) in api.sent
     # The one difference from the live agent: a built-in end-call tool for after end_call allows it.
     assert [t for t in body["general_tools"] if t["type"] == "end_call"] == [suite.TEST_HANG_UP]
+    assert body["knowledge_base_ids"] == []  # none on the live LLM, so none left on the copy
 
 
 def test_the_test_hang_up_before_end_call_allows_it_is_not_a_clean_end():
