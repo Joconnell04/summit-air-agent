@@ -110,3 +110,9 @@ None of the baseline's calls overlapped another rig. The baseline's results file
 - The worker writes "Now:" into the prompt from the wall clock, while the rig's tool server runs on the scenario's time. This run was near midnight, so the agent treated every call as after hours, as the live calls were (docs/later.md C-68).
 - There's no background noise and no second voice, and the caller can't cut in on a cue (C-65, C-66).
 - The caller is a model, so each rerun hears different turns. Compare runs check by check across the suite, not line by line.
+
+## Closing note: the project moved to Retell
+
+**What the suite found.** The text suite scored 91% while 0 of 12 live-like calls passed, on main and on #155. The gap was in how the calls sounded, which a transcript can't show: every call was slow to its first sound (plain median about 2.5 s against the 1.2 s target, MEASURED above), every call made more model requests than it needed, and most had half replies or long silences that left the caller waiting. #155 fixed the hang-up on the goodbye and the repeated lines; nothing in this round made replies faster.
+
+**What happened next.** Jackson chose to take the project forward on Retell, starting from his own Retell agent. The LiveKit custom stack stops here, and so does this suite: testing moves to Retell's own platform, with web calls from his laptop and Retell's simulation and test tools. PR #157 is closed unmerged and its branch is kept, with the checks, the 18 live scenarios, the caller style, both results files and this round doc.
