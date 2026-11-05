@@ -1,0 +1,39 @@
+id: elderly-no-heat
+title: Evelyn Marsh, 84, who lives alone on Staten Island and is calling from a landline
+tags:
+- requirement
+- booking
+- priority
+scenario: elderly-no-heat
+caller_id: (332) 555-0118
+user_prompt: |
+  ## Identity
+  Evelyn Marsh, 84, who lives alone on Staten Island and is calling from a landline. Polite, speaks slowly, does not volunteer that age is a worry.
+  Your name: Evelyn Marsh
+  Your address: 45 Forest Ave, Staten Island, 10310
+  Your phone: (332) 555-0118 (the number you're calling from)
+  Your problem: the radiators went cold last evening, 55 F inside now
+  Your home: lives alone, 84, uses a cane, only says so when asked who is at home
+
+  ## Goal
+  Start the call by saying: "Hello, my heat isn't working and it's getting awfully cold in here."
+
+  ## Behavior
+  - Answer the temperature question with 55 degrees.
+  - When asked who is at home, say it is just you, you are 84, and you are managing but cold.
+  - Take the first window the agent offers.
+  - Thank the agent and say goodbye once asked if there is anything else.
+  - Talk like a real person on the phone: short, plain sentences, one thing at a time.
+  - Give a detail only when the agent asks for it, unless a line above says otherwise.
+  - Never invent facts beyond the ones above; if asked something you don't know, say you don't know.
+  - When your business is done, say goodbye and stop talking.
+metrics:
+- The agent books exactly one visit with book_appointment with job_type no_heat at ZIP 10310. The find_slots
+  or book_appointment result shows priority Urgent, set by the server from the facts the agent passed.
+- book_appointment is called only after read_back was called with confirmed true, and only after the caller
+  said yes to the read-back sentence.
+- 'The agent never tells the caller to leave the house or call 911 or the gas company: there is no gas
+  or carbon monoxide danger on this call.'
+- The agent asks who is at home only after understanding the problem, never as the opening question.
+- The agent says it marked the call urgent only after the tool confirms it.
+- The agent does not repeat the caller's age or medical details back.

@@ -1,0 +1,1089 @@
+{
+  "case": "tune-up-known-caller",
+  "retell": {
+    "test_case_job_id": "test_job_6d7ad0d02980",
+    "status": "error",
+    "result_explanation": "Ending the conversation early because the agent did not respond to consecutive user utterances.",
+    "creation_timestamp": 1793911605949,
+    "user_modified_timestamp": 1793911735863,
+    "test_case_definition_id": "test_case_1eab3131ccfe",
+    "test_case_definition_snapshot": {
+      "creationTimestamp": 1793911576962,
+      "dynamicVariables": {
+        "summit_call_id": "rtest-11052046-tune-up-known-caller"
+      },
+      "llmModel": "claude-5.5-haiku",
+      "metrics": [
+        "The agent books exactly one visit with book_appointment with job_type tune_up at ZIP 11206.",
+        "book_appointment is called only after read_back was called with confirmed true, and only after the caller said yes to the read-back sentence.",
+        "The agent never tells the caller to leave the house or call 911 or the gas company: there is no gas or carbon monoxide danger on this call.",
+        "The agent uses the address on file instead of asking for it from scratch.",
+        "The agent offers the shape of availability before exact windows.",
+        "The agent confirms day, window and next steps, then asks if there is anything else."
+      ],
+      "name": "[summit] tune-up-known-caller: Dennis Ocasio, who owns and lives in a two-family house in Brooklyn and has used Summit Ai",
+      "orgId": "org_EoCqq2c268JWlyCE",
+      "responseEngine": {
+        "llmId": "llm_1da616f2baeb6e916f63e0236950",
+        "type": "retell-llm",
+        "version": 0
+      },
+      "responseEngineId": "llm_1da616f2baeb6e916f63e0236950",
+      "testCaseDefinitionId": "test_case_1eab3131ccfe",
+      "toolMocks": [],
+      "type": "simulation",
+      "userModifiedTimestamp": 1793911576962,
+      "userPrompt": "## Identity\nDennis Ocasio, who owns and lives in a two-family house in Brooklyn and has used Summit Air before. Calm, friendly, answers in full sentences.\nYour name: Dennis Ocasio\nYour address: 801 Fenimore St, Brooklyn, 11206 (the downstairs unit; a tenant rents unit 2)\nYour phone: the number they are calling from\nYour system: gas boiler, about 8 years old, running fine\nYour wants: the annual boiler tune-up, any weekday morning next week\nYour home: works from home; ring the downstairs bell\n\n## Goal\nStart the call by saying: \"Hi, I'd like to book my annual boiler tune-up.\"\n\n## Behavior\n- Confirm the address on file when asked.\n- Say the number you're calling from is the best one.\n- Pick the first weekday morning the agent offers.\n- Say goodbye once the agent confirms and asks if there is anything else.\n- Talk like a real person on the phone: short, plain sentences, one thing at a time.\n- Give a detail only when the agent asks for it, unless a line above says otherwise.\n- Never invent facts beyond the ones above; if asked something you don't know, say you don't know.\n- When your business is done, say goodbye and stop talking.\n"
+    },
+    "transcript_snapshot": {
+      "callEnded": false,
+      "dynamicVariables": {
+        "call_context": "",
+        "call_id": "playground",
+        "call_type": "web_call",
+        "greeting": "Thank you for calling Summit Air. How can I help you today?",
+        "session_type": "voice",
+        "summit_call_id": "rtest-11052046-tune-up-known-caller",
+        "system_timezone": "America/Los_Angeles"
+      },
+      "knowledgeBaseRetrievedContents": [],
+      "toolMocks": [],
+      "transcript": [
+        {
+          "content": "Thank you for calling Summit Air. How can I help you today?",
+          "created_timestamp": 1793911693236,
+          "message_id": "message_53420b63be00ec61dd86ec82",
+          "role": "agent"
+        },
+        {
+          "content": "Hi, I'd like to book my annual boiler tune-up.",
+          "created_timestamp": 1793911693801,
+          "message_id": "message_265b144d3887c66648247312",
+          "role": "user"
+        },
+        {
+          "content": "I can help with that. Can I get your name?",
+          "created_timestamp": 1793911694485,
+          "message_id": "message_c61d0564fae753ba04baf956",
+          "metadata": {
+            "response_id": 1
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Dennis Ocasio.",
+          "created_timestamp": 1793911695047,
+          "message_id": "message_83224c6896ae38c7f7ac100c",
+          "role": "user"
+        },
+        {
+          "content": "Thanks. And this is for a residential property, right? Like a home or an apartment?",
+          "created_timestamp": 1793911695720,
+          "message_id": "message_29b3b38e7b52e0f800c294da",
+          "metadata": {
+            "response_id": 2
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, it's a residential property. It's a two-family house.",
+          "created_timestamp": 1793911696214,
+          "message_id": "message_5f11b58a3b03c6064a6c124f",
+          "role": "user"
+        },
+        {
+          "content": "Got it, thanks. What's the address for the visit, including the ZIP code?",
+          "created_timestamp": 1793911697126,
+          "message_id": "message_37d671de896cd5758a8babe5",
+          "metadata": {
+            "response_id": 3
+          },
+          "role": "agent"
+        },
+        {
+          "content": "801 Fenimore Street, Brooklyn, 11206. I'm in the downstairs unit, so the bell there is the one to ring.",
+          "created_timestamp": 1793911697813,
+          "message_id": "message_4e9e28e66c285f5e3cef4a1a",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"street\":\"801 Fenimore Street\",\"borough\":\"Brooklyn\"}",
+          "created_timestamp": 1793911698997,
+          "message_id": "message_db4c312e29f0667f0de9f958",
+          "name": "find_address",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01M6XZ3ibsiQDu7T4MsPkwDB",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"zip\":\"11206\",\"street\":\"801 Fenimore Street\",\"from_caller\":true,\"in_area\":true,\"area\":\"Brooklyn North\",\"note\":\"The lookup couldn't confirm the street; the caller's ZIP stands. Go on to the read-back, which confirms it with them.\"}}",
+          "created_timestamp": 1793911699761,
+          "message_id": "message_3e12851354d78087b62c48a4",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01M6XZ3ibsiQDu7T4MsPkwDB"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"801 Fenimore Street\",\"zip\":\"11206\",\"unit\":\"downstairs\"}}",
+          "created_timestamp": 1793911699762,
+          "message_id": "message_b2e07d576be6dfc75230b1cc",
+          "name": "find_customer",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01RrDrEG5CYWCn9EFc7UdJwM",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"matches\":[],\"needs_unit\":false}}",
+          "created_timestamp": 1793911699997,
+          "message_id": "message_e61d63beb01bab3177494ae0",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01RrDrEG5CYWCn9EFc7UdJwM"
+        },
+        {
+          "content": "Thanks. Roughly how warm is it inside right now?",
+          "created_timestamp": 1793911700779,
+          "message_id": "message_01fe32774cfbceb5e70b4918",
+          "metadata": {
+            "response_id": 4
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Um, it's pretty mild in here right now, so I'm not sure of an exact number. Why do you ask? Does that affect the tune-up?",
+          "created_timestamp": 1793911701553,
+          "message_id": "message_509124272fb00e566d15b57f",
+          "role": "user"
+        },
+        {
+          "content": "Temperature doesn't change a tune-up, but I'll note it for the technician. Next, what's the best phone number to reach you?",
+          "created_timestamp": 1793911702329,
+          "message_id": "message_6f3a00ec3db74589f23593c3",
+          "metadata": {
+            "response_id": 5
+          },
+          "role": "agent"
+        },
+        {
+          "content": "The number I'm calling from is the best one to reach me.",
+          "created_timestamp": 1793911702866,
+          "message_id": "message_7e1486a6dd874e1d8ab61e31",
+          "role": "user"
+        },
+        {
+          "content": "The number you're calling from is fine. I'll use that. Let me read back your address and phone.",
+          "created_timestamp": 1793911704080,
+          "message_id": "message_d858ffa18be54795ba162c3a",
+          "metadata": {
+            "response_id": 6
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"801 Fenimore Street\",\"zip\":\"11206\",\"unit\":\"downstairs\"},\"phone\":\"caller_id\"}",
+          "created_timestamp": 1793911704081,
+          "message_id": "message_93c6496724928c5c314b2836",
+          "name": "read_back",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01CRHPfsn5bPsrUQUTt7Wcin",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"I have your home at 801 Fenimore Street, unit downstairs, ZIP code one one two zero six, and the best number is three four seven, five five five, zero one six two. That's all correct, right?\",\"data\":{\"confirmed\":false,\"sentence\":\"I have your home at 801 Fenimore Street, unit downstairs, ZIP code one one two zero six, and the best number is three four seven, five five five, zero one six two. That's all correct, right?\"}}",
+          "created_timestamp": 1793911704552,
+          "message_id": "message_e989c60a3c0d63ff274806bb",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01CRHPfsn5bPsrUQUTt7Wcin"
+        },
+        {
+          "content": "I have your home at 801 Fenimore Street, unit downstairs, ZIP code one one two zero six, and the best number is three four seven, five five five, zero one six two. That's all correct, right?",
+          "created_timestamp": 1793911705470,
+          "message_id": "message_5771ac3e91e58bd40cc81e89",
+          "metadata": {
+            "response_id": 7
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, that's correct. The address and the number are both right.",
+          "created_timestamp": 1793911706058,
+          "message_id": "message_c754e56aa82042a6d9820ab6",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"801 Fenimore Street\",\"zip\":\"11206\",\"unit\":\"downstairs\"},\"phone\":\"caller_id\",\"confirmed\":true}",
+          "created_timestamp": 1793911707341,
+          "message_id": "message_09d55faabd11448b59d10180",
+          "name": "read_back",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01U9dKMJwU1emXhujuopYHxK",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"Should I put this under your account?\",\"data\":{\"confirmed\":true,\"address\":{\"street\":\"801 Fenimore Street\",\"unit\":\"downstairs\",\"city\":\"\",\"zip\":\"11206\",\"spelled\":\"\"},\"phone\":\"3475550162\",\"account_choice\":true,\"need\":\"this question was said for you; when the caller answers, book_appointment with new_address_account caller for a yes, or own for a no (with details.name of whoever the address's account is for)\"}}",
+          "created_timestamp": 1793911707862,
+          "message_id": "message_cbe5f076ef41a88176a6bc9d",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01U9dKMJwU1emXhujuopYHxK"
+        },
+        {
+          "arguments": "{\"job_type\":\"tune_up\",\"facts\":{\"issue\":\"annual boiler tune-up\"}}",
+          "created_timestamp": 1793911707863,
+          "message_id": "message_e05121a14b8dd8b8df111c3e",
+          "name": "find_slots",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01FCZJfs1cmwEgV9jBWgfy8h",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"The soonest I have is today, 6 to 8. Does that work?\",\"data\":{\"priority\":{\"level\":\"Normal\",\"reasons\":[],\"requested\":null,\"raised_after_wait\":false},\"days\":[{\"date\":\"2026-11-05\",\"weekday\":\"Thursday\",\"day\":\"today\",\"windows\":[\"1800-2000\"],\"labels\":[\"6 to 8\"]},{\"date\":\"2026-11-06\",\"weekday\":\"Friday\",\"day\":\"tomorrow\",\"windows\":[\"0800-1000\",\"1000-1200\",\"1200-1400\",\"1400-1600\",\"1600-1800\",\"1800-2000\"],\"labels\":[\"8 to 10\",\"10 to 12\",\"12 to 2\",\"2 to 4\",\"4 to 6\",\"6 to 8\"]},{\"date\":\"2026-11-09\",\"weekday\":\"Monday\",\"day\":\"Monday\",\"windows\":[\"0800-1000\",\"1000-1200\",\"1200-1400\",\"1400-1600\",\"1600-1800\",\"1800-2000\"],\"labels\":[\"8 to 10\",\"10 to 12\",\"12 to 2\",\"2 to 4\",\"4 to 6\",\"6 to 8\"]}],\"offer\":{\"date\":\"2026-11-05\",\"window\":\"1800-2000\",\"weekday\":\"Thursday\",\"day\":\"today\",\"day_and_date\":\"today, Thursday, November 5\",\"label\":\"6 to 8\",\"part\":\"evening\",\"after_hours\":false}}}",
+          "created_timestamp": 1793911709644,
+          "message_id": "message_d0ae76bca5729756dbd43218",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01FCZJfs1cmwEgV9jBWgfy8h"
+        },
+        {
+          "content": "The soonest I have is today, Thursday, November 5, between 6 and 8 in the evening. Does that work?",
+          "created_timestamp": 1793911710381,
+          "message_id": "message_74fabf7095b1d264d60f761c",
+          "metadata": {
+            "response_id": 8
+          },
+          "role": "agent"
+        },
+        {
+          "content": "The agent offered today, Thursday evening, but I want a weekday morning next week. I should ask for that.\n\nNo, that doesn't work for me. I'd like a weekday morning next week, if you have anything.",
+          "created_timestamp": 1793911711124,
+          "message_id": "message_8dbf0df76e8554be3ba47d08",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"job_type\":\"tune_up\",\"facts\":{\"issue\":\"annual boiler tune-up\"},\"preferred_days\":[\"Monday\",\"Tuesday\",\"Wednesday\",\"Thursday\",\"Friday\"],\"time_of_day\":\"morning\",\"day\":\"2026-11-09\"}",
+          "created_timestamp": 1793911712311,
+          "message_id": "message_e9297390704a829967c7ee89",
+          "name": "find_slots",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01MzW1DHztdkhb7b4Mbt1npp",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"Monday I have 8 to 10, 10 to 12, 12 to 2, 2 to 4, 4 to 6 or 6 to 8.\",\"data\":{\"priority\":{\"level\":\"Normal\",\"reasons\":[],\"requested\":null,\"raised_after_wait\":false},\"windows\":[{\"date\":\"2026-11-09\",\"window\":\"0800-1000\",\"weekday\":\"Monday\",\"day\":\"Monday\",\"day_and_date\":\"Monday, November 9\",\"label\":\"8 to 10\",\"part\":\"morning\",\"after_hours\":false},{\"date\":\"2026-11-09\",\"window\":\"1000-1200\",\"weekday\":\"Monday\",\"day\":\"Monday\",\"day_and_date\":\"Monday, November 9\",\"label\":\"10 to 12\",\"part\":\"morning\",\"after_hours\":false},{\"date\":\"2026-11-09\",\"window\":\"1200-1400\",\"weekday\":\"Monday\",\"day\":\"Monday\",\"day_and_date\":\"Monday, November 9\",\"label\":\"12 to 2\",\"part\":\"afternoon\",\"after_hours\":false},{\"date\":\"2026-11-09\",\"window\":\"1400-1600\",\"weekday\":\"Monday\",\"day\":\"Monday\",\"day_and_date\":\"Monday, November 9\",\"label\":\"2 to 4\",\"part\":\"afternoon\",\"after_hours\":false},{\"date\":\"2026-11-09\",\"window\":\"1600-1800\",\"weekday\":\"Monday\",\"day\":\"Monday\",\"day_and_date\":\"Monday, November 9\",\"label\":\"4 to 6\",\"part\":\"evening\",\"after_hours\":false},{\"date\":\"2026-11-09\",\"window\":\"1800-2000\",\"weekday\":\"Monday\",\"day\":\"Monday\",\"day_and_date\":\"Monday, November 9\",\"label\":\"6 to 8\",\"part\":\"evening\",\"after_hours\":false}]}}",
+          "created_timestamp": 1793911714233,
+          "message_id": "message_a071ddf56fb109fdc5596156",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01MzW1DHztdkhb7b4Mbt1npp"
+        },
+        {
+          "content": "Monday, November 9 has openings from 8 to 10 and 10 to 12 in the morning. Which would you like?",
+          "created_timestamp": 1793911715028,
+          "message_id": "message_5f90f5ab4049fd9f9213c9f7",
+          "metadata": {
+            "response_id": 9
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Monday morning works. I'll take the 8 to 10 slot, if you have it.",
+          "created_timestamp": 1793911715751,
+          "message_id": "message_c6bbed8a2ee522a79ead51cb",
+          "role": "user"
+        },
+        {
+          "content": "Those two windows are actually the options I have: 8 to 10 or 10 to 12 on Monday. Which one would you like?",
+          "created_timestamp": 1793911716601,
+          "message_id": "message_8d1fda6c8c01e76c1c25e987",
+          "metadata": {
+            "response_id": 10
+          },
+          "role": "agent"
+        },
+        {
+          "content": "I'll take the 8 to 10 window.",
+          "created_timestamp": 1793911717199,
+          "message_id": "message_2b43bc3fea9bd21205992bca",
+          "role": "user"
+        },
+        {
+          "content": "Monday, November 9, 8 to 10 in the morning. Will you be able to approve any repair work the technician recommends?",
+          "created_timestamp": 1793911718079,
+          "message_id": "message_db3772c0aebf492e2041aa05",
+          "metadata": {
+            "response_id": 11
+          },
+          "role": "agent"
+        },
+        {
+          "content": "I'm not sure yet. I'd want to hear what they find and what it costs before I approve anything. Can you tell me about the price first?",
+          "created_timestamp": 1793911718891,
+          "message_id": "message_bd0cf12bf6da80af273b9c0d",
+          "role": "user"
+        },
+        {
+          "content": "The technician will go over any costs with you before doing the work, so you can decide on any repairs then. For the booking, will you be able to approve any repair work the technician recommends?",
+          "created_timestamp": 1793911719730,
+          "message_id": "message_612422b633439f8ad39ce5fb",
+          "metadata": {
+            "response_id": 12
+          },
+          "role": "agent"
+        },
+        {
+          "content": "I don't know the exact price yet. I'd want the technician to tell me what they find and what it costs before I approve anything. So I'll decide on repairs when they're there.",
+          "created_timestamp": 1793911720793,
+          "message_id": "message_35ded8d3fbcd7563237b8e9a",
+          "role": "user"
+        },
+        {
+          "content": "Understood. Since you'd want to decide on repairs when the technician is there, I'll note that. Will someone be home to let the technician in?",
+          "created_timestamp": 1793911721566,
+          "message_id": "message_8261d522eb606212150c0a7a",
+          "metadata": {
+            "response_id": 13
+          },
+          "role": "agent"
+        },
+        {
+          "content": "I work from home, so I'll be here. Just ring the downstairs bell.",
+          "created_timestamp": 1793911722189,
+          "message_id": "message_69c44397c44bb1ea71246b37",
+          "role": "user"
+        },
+        {
+          "content": "Got it, I'll note the downstairs bell. Is there a gate code, buzzer, or pet the technician should know about?",
+          "created_timestamp": 1793911722956,
+          "message_id": "message_0210eeaf84f7f73cf2137b26",
+          "metadata": {
+            "response_id": 14
+          },
+          "role": "agent"
+        },
+        {
+          "content": "No gate, no pets. Just the downstairs bell. I don't know of any buzzer issues, so that should be fine.",
+          "created_timestamp": 1793911723884,
+          "message_id": "message_af9b6937119db8b57fe62efa",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"details\":{\"approver\":\"Dennis Ocasio\",\"issue\":\"Annual boiler tune-up\",\"since\":\"Annual maintenance\",\"tried\":\"Not applicable, routine tune-up\",\"who_home\":\"Caller works from home and will be home\",\"arrival_notes\":\"Ring the downstairs bell. No gate code, no pets. Caller wants to hear findings and costs before approving any repairs.\",\"name\":\"Dennis Ocasio\",\"inside_temp_f\":null},\"job_type\":\"tune_up\",\"slot\":{\"date\":\"2026-11-09\",\"window\":\"0800-1000\"},\"new_address_account\":\"caller\"}",
+          "created_timestamp": 1793911725492,
+          "message_id": "message_6c88f3faa0558876ec6ec303",
+          "name": "book_appointment",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01F1Nhrju7DkjgY7TBQvqF38",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"You're all set for Monday, November 9, with the technician arriving between 8 and 10. Anything else?\",\"data\":{\"booking_id\":563,\"appointment_id\":563,\"window\":{\"date\":\"2026-11-09\",\"window\":\"0800-1000\",\"weekday\":\"Monday\",\"day\":\"Monday\",\"day_and_date\":\"Monday, November 9\",\"label\":\"8 to 10\",\"part\":\"morning\",\"after_hours\":false},\"priority\":{\"level\":\"Normal\",\"reasons\":[],\"raised_after_wait\":false},\"seek_earlier\":false,\"safety_override\":false,\"approval_callback_at\":null,\"return_visit_review\":false}}",
+          "created_timestamp": 1793911727719,
+          "message_id": "message_29f2808283091ad42ef90795",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01F1Nhrju7DkjgY7TBQvqF38"
+        },
+        {
+          "content": "You're all set for Monday, November 9, with the technician arriving between 8 and 10. Anything else I can help with?",
+          "created_timestamp": 1793911728457,
+          "message_id": "message_5836fce9ed83ae3c6ac1e50d",
+          "metadata": {
+            "response_id": 15
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, that's everything. Thank you, goodbye.",
+          "created_timestamp": 1793911729330,
+          "message_id": "message_da0c082714c86bc8410e1f30",
+          "role": "user"
+        },
+        {
+          "content": "Thanks for calling Summit Air. Take care.",
+          "created_timestamp": 1793911730100,
+          "message_id": "message_45a2a31f2417c3670cd16e9b",
+          "metadata": {
+            "response_id": 16
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"reason\":\"resolved\"}",
+          "created_timestamp": 1793911730101,
+          "message_id": "message_12cdb52e67724ae8f1ed6294",
+          "name": "end_call",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01XCDxEEojSAoEphCwJEmWku",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"hang_up\":true}}",
+          "created_timestamp": 1793911730650,
+          "message_id": "message_7126f49143128b8d6d777734",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01XCDxEEojSAoEphCwJEmWku"
+        },
+        {
+          "content": "The conversation has already reached its end. The agent said goodbye, and my booking is confirmed for Monday, November 9, between 8 and 10 in the morning. I said goodbye earlier, so there is nothing left to say.",
+          "created_timestamp": 1793911732059,
+          "message_id": "message_2bf98ac1a28cfd6eb59cc593",
+          "role": "user"
+        },
+        {
+          "content": "I'm sorry, I think we're done here. Goodbye.",
+          "created_timestamp": 1793911733480,
+          "message_id": "message_3152abde7818647b474a350d",
+          "role": "user"
+        },
+        {
+          "content": "Goodbye, thanks again.",
+          "created_timestamp": 1793911734657,
+          "message_id": "message_ac39925bca039367b6fbdc4c",
+          "role": "user"
+        },
+        {
+          "content": "I'm sorry, I think we're done here. Goodbye.",
+          "created_timestamp": 1793911735863,
+          "message_id": "message_05c9298947332fe6b88222df",
+          "role": "user"
+        }
+      ]
+    }
+  },
+  "trace": {
+    "call": {
+      "id": "rtest-11052046-tune-up-known-caller",
+      "tenant": "summit-air",
+      "caller_id": "(347) 555-0162",
+      "caller_key": "3475550162",
+      "dialed_number": "(678) 336-6730",
+      "direction": "inbound",
+      "started_at": "2026-10-22T20:46:41Z",
+      "ended_at": null,
+      "end_reason": null,
+      "end_requested": 1,
+      "after_hours": 0,
+      "linked_call_id": null,
+      "outcome": null,
+      "commercial": 0,
+      "summary_status": "none",
+      "turn_seq": 32,
+      "safety_state": "none",
+      "safety_kind": null,
+      "safety_signal_at": null,
+      "safety_lines_at": null,
+      "safety_flag_id": null,
+      "safety_variant": 0,
+      "readback_json": "{\"street\": \"801 Fenimore Street\", \"unit\": \"downstairs\", \"city\": \"\", \"zip\": \"11206\", \"spelled\": \"\", \"phone\": \"3475550162\", \"phone_for\": \"\", \"sentence\": \"I have your home at 801 Fenimore Street, unit downstairs, ZIP code one one two zero six, and the best number is three four seven, five five five, zero one six two. That's all correct, right?\"}",
+      "readback_asked_seq": 13,
+      "readback_confirmed_at": "2026-11-05T20:48:27Z"
+    },
+    "events": [
+      {
+        "at": "2026-11-05T20:46:41Z",
+        "type": "tool",
+        "tool": "calls.start",
+        "args": {
+          "call_id": "rtest-11052046-tune-up-known-caller",
+          "caller_id": "(347) 555-0162",
+          "dialed_number": "(678) 336-6730",
+          "direction": "inbound"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 137.7,
+        "error": null,
+        "request_id": "b9c780a0bce5"
+      },
+      {
+        "at": "2026-11-05T20:48:19Z",
+        "type": "turn",
+        "seq": 1,
+        "speaker": "agent",
+        "text": "Thank you for calling Summit Air. How can I help you today?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:19Z",
+        "type": "turn",
+        "seq": 2,
+        "speaker": "caller",
+        "text": "Hi, I'd like to book my annual boiler tune-up.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:19Z",
+        "type": "turn",
+        "seq": 3,
+        "speaker": "agent",
+        "text": "I can help with that. Can I get your name?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:48:19Z",
+        "type": "turn",
+        "seq": 4,
+        "speaker": "caller",
+        "text": "Dennis Ocasio.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:19Z",
+        "type": "turn",
+        "seq": 5,
+        "speaker": "agent",
+        "text": "Thanks. And this is for a residential property, right? Like a home or an apartment?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:48:19Z",
+        "type": "turn",
+        "seq": 6,
+        "speaker": "caller",
+        "text": "Yes, it's a residential property. It's a two-family house.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:19Z",
+        "type": "turn",
+        "seq": 7,
+        "speaker": "agent",
+        "text": "Got it, thanks. What's the address for the visit, including the ZIP code?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:48:19Z",
+        "type": "turn",
+        "seq": 8,
+        "speaker": "caller",
+        "text": "801 Fenimore Street, Brooklyn, 11206. I'm in the downstairs unit, so the bell there is the one to ring.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:19Z",
+        "type": "tool",
+        "tool": "find_address",
+        "args": {
+          "call_id": "rtest-11052046-tune-up-known-caller",
+          "street": "801 Fenimore Street",
+          "borough": "Brooklyn",
+          "spelled": ""
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 92.7,
+        "error": null,
+        "request_id": "a6a2e3e7122f"
+      },
+      {
+        "at": "2026-11-05T20:48:19Z",
+        "type": "tool",
+        "tool": "find_customer",
+        "args": {
+          "call_id": "rtest-11052046-tune-up-known-caller",
+          "phone": null,
+          "address": {
+            "street": "801 Fenimore Street",
+            "unit": "downstairs",
+            "city": "",
+            "zip": "11206",
+            "spelled": ""
+          }
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 12.0,
+        "error": null,
+        "request_id": "06d47787d013"
+      },
+      {
+        "at": "2026-11-05T20:48:24Z",
+        "type": "turn",
+        "seq": 9,
+        "speaker": "agent",
+        "text": "Thanks. Roughly how warm is it inside right now?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 5000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:48:24Z",
+        "type": "turn",
+        "seq": 10,
+        "speaker": "caller",
+        "text": "Um, it's pretty mild in here right now, so I'm not sure of an exact number. Why do you ask? Does that affect the tune-up?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:24Z",
+        "type": "turn",
+        "seq": 11,
+        "speaker": "agent",
+        "text": "Temperature doesn't change a tune-up, but I'll note it for the technician. Next, what's the best phone number to reach you?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:48:24Z",
+        "type": "turn",
+        "seq": 12,
+        "speaker": "caller",
+        "text": "The number I'm calling from is the best one to reach me.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:24Z",
+        "type": "turn",
+        "seq": 13,
+        "speaker": "agent",
+        "text": "The number you're calling from is fine. I'll use that. Let me read back your address and phone.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:48:24Z",
+        "type": "tool",
+        "tool": "read_back",
+        "args": {
+          "call_id": "rtest-11052046-tune-up-known-caller",
+          "address": {
+            "street": "801 Fenimore Street",
+            "unit": "downstairs",
+            "city": "",
+            "zip": "11206",
+            "spelled": ""
+          },
+          "phone": "caller_id",
+          "phone_for": "",
+          "confirmed": false
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "I have your home at 801 Fenimore Street, unit downstairs, ZIP code one one two zero six, and the best number is three four seven, five five five, zero one six two. That's all correct, right?",
+        "ms": 4.9,
+        "error": null,
+        "request_id": "f1995d558358"
+      },
+      {
+        "at": "2026-11-05T20:48:27Z",
+        "type": "turn",
+        "seq": 14,
+        "speaker": "agent",
+        "text": "I have your home at 801 Fenimore Street, unit downstairs, ZIP code one one two zero six, and the best number is three four seven, five five five, zero one six two. That's all correct, right?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:27Z",
+        "type": "turn",
+        "seq": 15,
+        "speaker": "caller",
+        "text": "Yes, that's correct. The address and the number are both right.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:27Z",
+        "type": "tool",
+        "tool": "read_back",
+        "args": {
+          "call_id": "rtest-11052046-tune-up-known-caller",
+          "address": {
+            "street": "801 Fenimore Street",
+            "unit": "downstairs",
+            "city": "",
+            "zip": "11206",
+            "spelled": ""
+          },
+          "phone": "caller_id",
+          "phone_for": "",
+          "confirmed": true
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "Should I put this under your account?",
+        "ms": 151.6,
+        "error": null,
+        "request_id": "116ad938471f"
+      },
+      {
+        "at": "2026-11-05T20:48:29Z",
+        "type": "tool",
+        "tool": "find_slots",
+        "args": {
+          "call_id": "rtest-11052046-tune-up-known-caller",
+          "job_type": "tune_up",
+          "priority": null,
+          "preferred_days": [],
+          "time_of_day": null,
+          "window_minutes": null,
+          "day": null,
+          "arrive_after": null,
+          "arrive_before": null,
+          "facts": {
+            "issue": "annual boiler tune-up",
+            "who_home": "",
+            "inside_temp_f": null,
+            "temp_falling_fast": false
+          }
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "The soonest I have is today, 6 to 8. Does that work?",
+        "ms": 1484.7,
+        "error": null,
+        "request_id": "e369d3a89b11"
+      },
+      {
+        "at": "2026-11-05T20:48:32Z",
+        "type": "turn",
+        "seq": 16,
+        "speaker": "agent",
+        "text": "The soonest I have is today, Thursday, November 5, between 6 and 8 in the evening. Does that work?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 5000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:48:32Z",
+        "type": "turn",
+        "seq": 17,
+        "speaker": "caller",
+        "text": "The agent offered today, Thursday evening, but I want a weekday morning next week. I should ask for that.\n\nNo, that doesn't work for me. I'd like a weekday morning next week, if you have anything.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:34Z",
+        "type": "tool",
+        "tool": "find_slots",
+        "args": {
+          "call_id": "rtest-11052046-tune-up-known-caller",
+          "job_type": "tune_up",
+          "priority": null,
+          "preferred_days": [
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday"
+          ],
+          "time_of_day": "morning",
+          "window_minutes": null,
+          "day": "2026-11-09",
+          "arrive_after": null,
+          "arrive_before": null,
+          "facts": {
+            "issue": "annual boiler tune-up",
+            "who_home": "",
+            "inside_temp_f": null,
+            "temp_falling_fast": false
+          }
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "Monday I have 8 to 10, 10 to 12, 12 to 2, 2 to 4, 4 to 6 or 6 to 8.",
+        "ms": 1540.1,
+        "error": null,
+        "request_id": "83b11fbf4670"
+      },
+      {
+        "at": "2026-11-05T20:48:45Z",
+        "type": "turn",
+        "seq": 18,
+        "speaker": "agent",
+        "text": "Monday, November 9 has openings from 8 to 10 and 10 to 12 in the morning. Which would you like?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 3000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:48:45Z",
+        "type": "turn",
+        "seq": 19,
+        "speaker": "caller",
+        "text": "Monday morning works. I'll take the 8 to 10 slot, if you have it.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:45Z",
+        "type": "turn",
+        "seq": 20,
+        "speaker": "agent",
+        "text": "Those two windows are actually the options I have: 8 to 10 or 10 to 12 on Monday. Which one would you like?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:48:45Z",
+        "type": "turn",
+        "seq": 21,
+        "speaker": "caller",
+        "text": "I'll take the 8 to 10 window.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:45Z",
+        "type": "turn",
+        "seq": 22,
+        "speaker": "agent",
+        "text": "Monday, November 9, 8 to 10 in the morning. Will you be able to approve any repair work the technician recommends?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:48:46Z",
+        "type": "turn",
+        "seq": 23,
+        "speaker": "caller",
+        "text": "I'm not sure yet. I'd want to hear what they find and what it costs before I approve anything. Can you tell me about the price first?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:46Z",
+        "type": "turn",
+        "seq": 24,
+        "speaker": "agent",
+        "text": "The technician will go over any costs with you before doing the work, so you can decide on any repairs then. For the booking, will you be able to approve any repair work the technician recommends?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:48:46Z",
+        "type": "turn",
+        "seq": 25,
+        "speaker": "caller",
+        "text": "I don't know the exact price yet. I'd want the technician to tell me what they find and what it costs before I approve anything. So I'll decide on repairs when they're there.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:46Z",
+        "type": "turn",
+        "seq": 26,
+        "speaker": "agent",
+        "text": "Understood. Since you'd want to decide on repairs when the technician is there, I'll note that. Will someone be home to let the technician in?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:48:46Z",
+        "type": "turn",
+        "seq": 27,
+        "speaker": "caller",
+        "text": "I work from home, so I'll be here. Just ring the downstairs bell.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:46Z",
+        "type": "turn",
+        "seq": 28,
+        "speaker": "agent",
+        "text": "Got it, I'll note the downstairs bell. Is there a gate code, buzzer, or pet the technician should know about?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:48:46Z",
+        "type": "turn",
+        "seq": 29,
+        "speaker": "caller",
+        "text": "No gate, no pets. Just the downstairs bell. I don't know of any buzzer issues, so that should be fine.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:47Z",
+        "type": "tool",
+        "tool": "book_appointment",
+        "args": {
+          "call_id": "rtest-11052046-tune-up-known-caller",
+          "job_type": "tune_up",
+          "slot": {
+            "date": "2026-11-09",
+            "window": "0800-1000"
+          },
+          "details": {
+            "issue": "Annual boiler tune-up",
+            "since": "Annual maintenance",
+            "tried": "Not applicable, routine tune-up",
+            "who_home": "Caller works from home and will be home",
+            "approver": "Dennis Ocasio",
+            "system_type": "",
+            "arrival_notes": "Ring the downstairs bell. No gate code, no pets. Caller wants to hear findings and costs before approving any repairs.",
+            "name": "Dennis Ocasio",
+            "inside_temp_f": null
+          },
+          "priority": null,
+          "separate_problem": false,
+          "new_address_account": "caller"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "You're all set for Monday, November 9, with the technician arriving between 8 and 10. Anything else?",
+        "ms": 1418.7,
+        "error": null,
+        "request_id": "2c1d6ebee87d"
+      },
+      {
+        "at": "2026-11-05T20:48:50Z",
+        "type": "turn",
+        "seq": 30,
+        "speaker": "agent",
+        "text": "You're all set for Monday, November 9, with the technician arriving between 8 and 10. Anything else I can help with?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 3000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:48:50Z",
+        "type": "turn",
+        "seq": 31,
+        "speaker": "caller",
+        "text": "Yes, that's everything. Thank you, goodbye.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:50Z",
+        "type": "turn",
+        "seq": 32,
+        "speaker": "agent",
+        "text": "Thanks for calling Summit Air. Take care.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:48:50Z",
+        "type": "tool",
+        "tool": "end_call",
+        "args": {
+          "call_id": "rtest-11052046-tune-up-known-caller",
+          "reason": "resolved"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 6.1,
+        "error": null,
+        "request_id": "a2663a503cfc"
+      }
+    ],
+    "flags": [],
+    "callbacks": [],
+    "bookings": [
+      {
+        "id": 176,
+        "kind": "book",
+        "status": "booked",
+        "fsm_job_id": 563,
+        "window_start": "2026-11-09T13:00:00Z",
+        "window_end": "2026-11-09T15:00:00Z",
+        "priority": "Normal",
+        "priority_reasons": "",
+        "safety_override": 0,
+        "seek_earlier": 0,
+        "attempts": 1,
+        "last_error": null,
+        "raised_after_wait": 0,
+        "priority_rules": "[]",
+        "priority_reason_list": "[]",
+        "who_home": "Caller works from home and will be home",
+        "job_type": "tune_up",
+        "street": "801 Fenimore Street",
+        "unit": "downstairs",
+        "job_notes": "[]"
+      }
+    ],
+    "notes": [],
+    "leads": [],
+    "out_of_area": [],
+    "summary": [],
+    "electrical": [],
+    "holds": [],
+    "pace": [
+      {
+        "call_id": "rtest-11052046-tune-up-known-caller",
+        "speed": 1.0,
+        "source": "default",
+        "requested": 0,
+        "older_adult": 0,
+        "address_speed": null,
+        "repeats": 0
+      }
+    ],
+    "pace_changes": [],
+    "caller_pace": [],
+    "transfers": [],
+    "handoffs": [],
+    "address_lookups": [
+      {
+        "house": "801",
+        "street": "fenimore st",
+        "hint": "Brooklyn",
+        "status": "none",
+        "zips_json": "[]",
+        "source": "geosearch"
+      }
+    ],
+    "address_checks": [],
+    "names": [],
+    "address_moves": [],
+    "identity_checks": [],
+    "heads_ups": []
+  }
+}

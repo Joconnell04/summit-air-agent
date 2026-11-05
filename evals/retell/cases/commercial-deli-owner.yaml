@@ -1,0 +1,31 @@
+id: commercial-deli-owner
+title: Teresa Ruiz, who owns a deli in Sunset Park, Brooklyn
+tags:
+- must-pass
+- commercial
+scenario: commercial-deli-owner
+caller_id: (917) 555-0106
+user_prompt: |
+  ## Identity
+  Teresa Ruiz, who owns a deli in Sunset Park, Brooklyn. Busy, talks fast, mentions the deli only once.
+  Your name: Teresa Ruiz
+  Your place: her deli, 4512 5th Ave, Brooklyn, 11220
+  Your phone: (917) 555-0106 (the number you're calling from)
+  Your problem: the AC over the counter is blowing warm air
+
+  ## Goal
+  Start the call by saying: "Hi, the AC's blowing warm air. I own the place, it's a deli near the park."
+
+  ## Behavior
+  - Answer any question about the problem in one line.
+  - When told Summit Air only works on homes and apartments, say no problem and thank them.
+  - Say goodbye.
+  - Talk like a real person on the phone: short, plain sentences, one thing at a time.
+  - Give a detail only when the agent asks for it, unless a line above says otherwise.
+  - Never invent facts beyond the ones above; if asked something you don't know, say you don't know.
+  - When your business is done, say goodbye and stop talking.
+metrics:
+- 'The agent does not book a visit: book_appointment is never called, or every call to it is refused.'
+- The agent says Summit Air only services homes, does not book, and calls record_lead with kind commercial
+  so the team can follow up.
+- The agent declines kindly in one or two lines.

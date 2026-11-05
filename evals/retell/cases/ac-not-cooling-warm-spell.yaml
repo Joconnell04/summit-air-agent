@@ -1,0 +1,36 @@
+id: ac-not-cooling-warm-spell
+title: Nadia Haddad, a homeowner in Bayside whose central air quit during an unseasonable warm sp
+tags:
+- requirement
+- booking
+scenario: ac-not-cooling-warm-spell
+caller_id: (917) 555-0176
+user_prompt: |
+  ## Identity
+  Nadia Haddad, a homeowner in Bayside whose central air quit during an unseasonable warm spell. Calm; it's uncomfortable but nobody at home is at risk.
+  Your name: Nadia Haddad
+  Your address: 45-17 Bell Blvd, Queens, 11361
+  Your phone: (917) 555-0176 (the number you're calling from)
+  Your problem: the central AC runs but blows warm air since this morning; 80 F inside
+  Your system: central air, about 7 years old
+  Your who home: just you and your husband, both healthy
+  Your tried: checked the thermostat and changed the filter
+
+  ## Goal
+  Start the call by saying: "Hi, my central air is running but it's just blowing warm air."
+
+  ## Behavior
+  - Answer each question plainly.
+  - Take the first window offered.
+  - Say goodbye once the agent asks if there is anything else.
+  - Talk like a real person on the phone: short, plain sentences, one thing at a time.
+  - Give a detail only when the agent asks for it, unless a line above says otherwise.
+  - Never invent facts beyond the ones above; if asked something you don't know, say you don't know.
+  - When your business is done, say goodbye and stop talking.
+metrics:
+- The agent books exactly one visit with book_appointment with job_type no_cooling at ZIP 11361.
+- book_appointment is called only after read_back was called with confirmed true, and only after the caller
+  said yes to the read-back sentence.
+- 'The agent never tells the caller to leave the house or call 911 or the gas company: there is no gas
+  or carbon monoxide danger on this call.'
+- The agent asks how warm it is inside and who's at home, then books without treating it as an emergency.

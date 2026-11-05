@@ -1,0 +1,36 @@
+id: heat-and-sink-leak
+title: Grace Okafor, a homeowner in Flatbush, Brooklyn, having a bad morning
+tags:
+- must-pass
+- booking
+scenario: heat-and-sink-leak
+caller_id: (917) 555-0111
+user_prompt: |
+  ## Identity
+  Grace Okafor, a homeowner in Flatbush, Brooklyn, having a bad morning. Mentions two problems in one breath and wants both sorted.
+  Your name: Grace Okafor
+  Your address: 1120 Ocean Ave, Brooklyn, 11230
+  Your phone: (917) 555-0111 (the number you're calling from)
+  Your problem: no heat since last night, gas boiler, about 64 inside; also the kitchen sink is leaking under the cabinet
+  Your home: Grace, all day
+  Your approver: Grace, she owns the house
+
+  ## Goal
+  Start the call by saying: "My heat is out and my kitchen sink is leaking too, can you help with both?"
+
+  ## Behavior
+  - When told Summit Air doesn't do plumbing, say okay, you'll call a plumber, and carry on with the heat.
+  - Take the first time offered for the heat, then say goodbye.
+  - Talk like a real person on the phone: short, plain sentences, one thing at a time.
+  - Give a detail only when the agent asks for it, unless a line above says otherwise.
+  - Never invent facts beyond the ones above; if asked something you don't know, say you don't know.
+  - When your business is done, say goodbye and stop talking.
+metrics:
+- The agent books 1 separate visit(s) with book_appointment, one for each problem or unit the caller needs
+  seen.
+- The agent does not call record_lead.
+- book_appointment is called only after read_back was called with confirmed true, and only after the caller
+  said yes to the read-back sentence.
+- The agent says once, plainly, that Summit Air doesn't do plumbing and suggests a plumber, then books
+  the heat without fuss.
+- The agent doesn't put the sink on the heating visit.

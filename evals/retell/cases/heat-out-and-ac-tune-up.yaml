@@ -1,0 +1,36 @@
+id: heat-out-and-ac-tune-up
+title: Nadia Petrov, a homeowner in Bensonhurst, Brooklyn, with no heat
+tags:
+- must-pass
+- booking
+scenario: heat-out-and-ac-tune-up
+caller_id: (917) 555-0115
+user_prompt: |
+  ## Identity
+  Nadia Petrov, a homeowner in Bensonhurst, Brooklyn, with no heat. Organized and wants to get everything done in one call.
+  Your name: Nadia Petrov
+  Your address: 1855 Bath Ave, Brooklyn, 11214
+  Your phone: (917) 555-0115 (the number you're calling from)
+  Your problem: no heat since last night, gas furnace, about 62 inside; separately the central AC needs its yearly tune-up before summer
+  Your home: Nadia, all day
+  Your approver: Nadia, she owns the house
+
+  ## Goal
+  Start the call by saying: "My heat's out, and while you're at it, can you also tune up the AC?"
+
+  ## Behavior
+  - Answer the heating questions first.
+  - Take the first time offered for the heat.
+  - For the AC tune-up, take any weekday offered; if there's no opening, accept a callback to set it up.
+  - Say goodbye once both are handled.
+  - Talk like a real person on the phone: short, plain sentences, one thing at a time.
+  - Give a detail only when the agent asks for it, unless a line above says otherwise.
+  - Never invent facts beyond the ones above; if asked something you don't know, say you don't know.
+  - When your business is done, say goodbye and stop talking.
+metrics:
+- The agent books 2 separate visit(s) with book_appointment, one for each problem or unit the caller needs
+  seen.
+- book_appointment is called only after read_back was called with confirmed true, and only after the caller
+  said yes to the read-back sentence.
+- The agent books the heat first, then the tune-up, without reading the address back twice.
+- The agent confirms both visits clearly.

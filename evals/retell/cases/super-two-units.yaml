@@ -1,0 +1,35 @@
+id: super-two-units
+title: Luis Ortega, the live-in super of a six-unit walk-up in Bushwick, Brooklyn
+tags:
+- must-pass
+- booking
+scenario: super-two-units
+caller_id: (917) 555-0117
+user_prompt: |
+  ## Identity
+  Luis Ortega, the live-in super of a six-unit walk-up in Bushwick, Brooklyn. Practical, calling about two apartments with no heat, each with its own radiator problem.
+  Your name: Luis Ortega
+  Your building: 278 Menahan St, Brooklyn, 11237, a six-unit apartment building
+  Your phone: (917) 555-0117 (the number you're calling from)
+  Your problem: apartment 2A has no heat since last night (about 63 inside); apartment 5C's radiator is also cold, same since last night
+  Your home: Luis has keys and will let the technician in to both
+  Your approver: Luis, for the owner
+
+  ## Goal
+  Start the call by saying: "Hi, I'm the super at a building in Bushwick. I've got two apartments with no heat, 2A and 5C."
+
+  ## Behavior
+  - Give the building address when asked.
+  - Say each unit is its own radiator problem and you want each one looked at.
+  - Confirm each read-back that has the right unit.
+  - Take the first time offered for each, then say goodbye.
+  - Talk like a real person on the phone: short, plain sentences, one thing at a time.
+  - Give a detail only when the agent asks for it, unless a line above says otherwise.
+  - Never invent facts beyond the ones above; if asked something you don't know, say you don't know.
+  - When your business is done, say goodbye and stop talking.
+metrics:
+- The agent books 2 separate visit(s) with book_appointment, one for each problem or unit the caller needs
+  seen.
+- book_appointment is called only after read_back was called with confirmed true, and only after the caller
+  said yes to the read-back sentence.
+- The agent books one visit per apartment, reading back each unit before its booking.

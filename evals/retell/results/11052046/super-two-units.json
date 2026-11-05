@@ -1,0 +1,1565 @@
+{
+  "case": "super-two-units",
+  "retell": {
+    "test_case_job_id": "test_job_018eca887820",
+    "status": "error",
+    "result_explanation": "Ending the conversation early because the agent did not respond to consecutive user utterances.",
+    "creation_timestamp": 1793911605939,
+    "user_modified_timestamp": 1793911751396,
+    "test_case_definition_id": "test_case_67127cdd1144",
+    "test_case_definition_snapshot": {
+      "creationTimestamp": 1793911576757,
+      "dynamicVariables": {
+        "summit_call_id": "rtest-11052046-super-two-units"
+      },
+      "llmModel": "claude-5.5-haiku",
+      "metrics": [
+        "The agent books 2 separate visit(s) with book_appointment, one for each problem or unit the caller needs seen.",
+        "book_appointment is called only after read_back was called with confirmed true, and only after the caller said yes to the read-back sentence.",
+        "The agent books one visit per apartment, reading back each unit before its booking."
+      ],
+      "name": "[summit] super-two-units: Luis Ortega, the live-in super of a six-unit walk-up in Bushwick, Brooklyn",
+      "orgId": "org_EoCqq2c268JWlyCE",
+      "responseEngine": {
+        "llmId": "llm_1da616f2baeb6e916f63e0236950",
+        "type": "retell-llm",
+        "version": 0
+      },
+      "responseEngineId": "llm_1da616f2baeb6e916f63e0236950",
+      "testCaseDefinitionId": "test_case_67127cdd1144",
+      "toolMocks": [],
+      "type": "simulation",
+      "userModifiedTimestamp": 1793911576757,
+      "userPrompt": "## Identity\nLuis Ortega, the live-in super of a six-unit walk-up in Bushwick, Brooklyn. Practical, calling about two apartments with no heat, each with its own radiator problem.\nYour name: Luis Ortega\nYour building: 278 Menahan St, Brooklyn, 11237, a six-unit apartment building\nYour phone: (917) 555-0117 (the number you're calling from)\nYour problem: apartment 2A has no heat since last night (about 63 inside); apartment 5C's radiator is also cold, same since last night\nYour home: Luis has keys and will let the technician in to both\nYour approver: Luis, for the owner\n\n## Goal\nStart the call by saying: \"Hi, I'm the super at a building in Bushwick. I've got two apartments with no heat, 2A and 5C.\"\n\n## Behavior\n- Give the building address when asked.\n- Say each unit is its own radiator problem and you want each one looked at.\n- Confirm each read-back that has the right unit.\n- Take the first time offered for each, then say goodbye.\n- Talk like a real person on the phone: short, plain sentences, one thing at a time.\n- Give a detail only when the agent asks for it, unless a line above says otherwise.\n- Never invent facts beyond the ones above; if asked something you don't know, say you don't know.\n- When your business is done, say goodbye and stop talking.\n"
+    },
+    "transcript_snapshot": {
+      "callEnded": false,
+      "dynamicVariables": {
+        "call_context": "",
+        "call_id": "playground",
+        "call_type": "web_call",
+        "greeting": "Thank you for calling Summit Air. How can I help you today?",
+        "session_type": "voice",
+        "summit_call_id": "rtest-11052046-super-two-units",
+        "system_timezone": "America/Los_Angeles"
+      },
+      "knowledgeBaseRetrievedContents": [],
+      "toolMocks": [],
+      "transcript": [
+        {
+          "content": "Thank you for calling Summit Air. How can I help you today?",
+          "created_timestamp": 1793911685152,
+          "message_id": "message_1aa0e08a895b1d71c0abb9d1",
+          "role": "agent"
+        },
+        {
+          "content": "Hi, I'm the super at a building in Bushwick. I've got two apartments with no heat, 2A and 5C.",
+          "created_timestamp": 1793911685852,
+          "message_id": "message_664efe20e040b3d5c7656522",
+          "role": "user"
+        },
+        {
+          "content": "I can help with that. Since this is a no-heat issue, is the heat out in both apartments right now?",
+          "created_timestamp": 1793911686630,
+          "message_id": "message_ca9554dec00abd4cb1c04d87",
+          "metadata": {
+            "response_id": 1
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, both of them. 2A has no heat since last night, it's about 63 in there. 5C's radiator is cold too, same since last night. They're two different problems, so I want each one looked at.",
+          "created_timestamp": 1793911687358,
+          "message_id": "message_e142a0c2321b7d5eef7fbcc1",
+          "role": "user"
+        },
+        {
+          "content": "Got it, I'll note that for the technician. Since this is a building, I'll need to set up two separate visits. Let's start with 2A. What's the street address of the building?",
+          "created_timestamp": 1793911688477,
+          "message_id": "message_d3c5fa78a025246bcb8dd7b3",
+          "metadata": {
+            "response_id": 2
+          },
+          "role": "agent"
+        },
+        {
+          "content": "278 Menahan St, Brooklyn, 11237.",
+          "created_timestamp": 1793911688934,
+          "message_id": "message_a05d069fea147fc7d94a17c5",
+          "role": "user"
+        },
+        {
+          "content": "Thanks. What's the apartment number for 2A, and I'll look up the address.",
+          "created_timestamp": 1793911689985,
+          "message_id": "message_7fd2d60abfbf7246c2f5889f",
+          "metadata": {
+            "response_id": 3
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"street\":\"278 Menahan St\",\"borough\":\"Brooklyn\"}",
+          "created_timestamp": 1793911689986,
+          "message_id": "message_c64ac4b23bc9eb0d3ceb90a3",
+          "name": "find_address",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_015Ei3nxTAhP3XFUnAG4KRc7",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"street\":\"278 Menahan Street\",\"zip\":\"11237\",\"borough\":\"Brooklyn\",\"neighborhood\":\"Bushwick\",\"in_area\":true,\"area\":\"Brooklyn North\"},\"server_notes\":[\"[server] The caller named more than one unit (2A, 5C). Each unit is its own job: read back and book one unit at a time, with that unit alone in the read-back, then the next. Never book one visit to cover several units.\"]}",
+          "created_timestamp": 1793911690925,
+          "message_id": "message_94a1ac72642491c125c9d5a9",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_015Ei3nxTAhP3XFUnAG4KRc7"
+        },
+        {
+          "content": "I found 278 Menahan Street in Bushwick, which is in our service area. Let's do 2A first. Can I get your name?",
+          "created_timestamp": 1793911691713,
+          "message_id": "message_e65865640729ee517ca850d5",
+          "metadata": {
+            "response_id": 4
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Luis Ortega.",
+          "created_timestamp": 1793911692184,
+          "message_id": "message_9e8e6ea6680fc63915830dba",
+          "role": "user"
+        },
+        {
+          "content": "Thanks. And this is for a residential property, right? Like a home or an apartment?",
+          "created_timestamp": 1793911692912,
+          "message_id": "message_d2382153389de4eaf027945d",
+          "metadata": {
+            "response_id": 5
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, it's a six-unit apartment building. I'm the super here, and I have keys, so I can let the technician in to both units.",
+          "created_timestamp": 1793911693591,
+          "message_id": "message_a37e209cb133ddce355c3bd4",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, that works. It's a building, so for each unit I'll need to know it's residential. Since this is an apartment building that you manage, we can book it. Let's continue with 2A. What's the best phone number to reach you?",
+          "created_timestamp": 1793911694861,
+          "message_id": "message_3dda8190d8b2cfbd6f5149cb",
+          "metadata": {
+            "response_id": 6
+          },
+          "role": "agent"
+        },
+        {
+          "content": "(917) 555-0117. That's the number I'm calling from.",
+          "created_timestamp": 1793911695432,
+          "message_id": "message_1326a9e6cbf589688d05fb46",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"278 Menahan Street\",\"unit\":\"2A\",\"zip\":\"11237\",\"city\":\"Brooklyn\"},\"phone\":\"caller_id\"}",
+          "created_timestamp": 1793911696482,
+          "message_id": "message_6a7d932c6db67639cad708f6",
+          "name": "read_back",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01GV882mNC1Gwaw8kFkRJXF5",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"I have your home at 278 Menahan Street, unit 2A, Brooklyn, ZIP code one one two three seven, and the best number is nine one seven, five five five, zero one one seven. That's all correct, right?\",\"data\":{\"confirmed\":false,\"sentence\":\"I have your home at 278 Menahan Street, unit 2A, Brooklyn, ZIP code one one two three seven, and the best number is nine one seven, five five five, zero one one seven. That's all correct, right?\"}}",
+          "created_timestamp": 1793911697250,
+          "message_id": "message_1e013d8876ba68357dc70e12",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01GV882mNC1Gwaw8kFkRJXF5"
+        },
+        {
+          "content": "I have 278 Menahan Street, unit 2A, Brooklyn, ZIP 11237, and the best number is 917-555-0117. That's all correct, right?",
+          "created_timestamp": 1793911698072,
+          "message_id": "message_ccbddda243f921dfc6544bfc",
+          "metadata": {
+            "response_id": 7
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, that's right. Unit 2A, 278 Menahan Street, Brooklyn, 11237, and 917-555-0117. Go ahead and book that one. Then I need the other one too, 5C, same building.",
+          "created_timestamp": 1793911698962,
+          "message_id": "message_b542791c0cd03f191d1fe083",
+          "role": "user"
+        },
+        {
+          "content": "The read-back is confirmed. Before I book 2A, I'll go ahead with the confirmation.",
+          "created_timestamp": 1793911700212,
+          "message_id": "message_ff1865392e2407ddf981cc26",
+          "metadata": {
+            "response_id": 8
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"278 Menahan Street\",\"unit\":\"2A\",\"zip\":\"11237\",\"city\":\"Brooklyn\"},\"phone\":\"917-555-0117\",\"confirmed\":true}",
+          "created_timestamp": 1793911700213,
+          "message_id": "message_03f8db16140d49af0e3fb07c",
+          "name": "read_back",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01C5EBQSUncrJquEQcNpTkCp",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"confirmed\":true,\"address\":{\"street\":\"278 Menahan Street\",\"unit\":\"2A\",\"city\":\"Brooklyn\",\"zip\":\"11237\",\"spelled\":\"\"},\"phone\":\"9175550117\"},\"server_notes\":[\"[server] The caller named more than one unit (2A, 5C). Each unit is its own job: read back and book one unit at a time, with that unit alone in the read-back, then the next. Never book one visit to cover several units.\"]}",
+          "created_timestamp": 1793911700637,
+          "message_id": "message_957d82fe1600d14900dc5789",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01C5EBQSUncrJquEQcNpTkCp"
+        },
+        {
+          "content": "Thanks. Now I'll check the openings for 2A. Did you want a specific time of day?",
+          "created_timestamp": 1793911701494,
+          "message_id": "message_13a0765b2394aab6bae4d3f0",
+          "metadata": {
+            "response_id": 9
+          },
+          "role": "agent"
+        },
+        {
+          "content": "I don't have a preference on time, just whatever's soonest. Both units have been cold since last night, so earlier is better. And I need 5C booked too, same building, same address.",
+          "created_timestamp": 1793911702380,
+          "message_id": "message_7a4e6c67b3ba3a701d542c3f",
+          "role": "user"
+        },
+        {
+          "content": "Got it. Let me check the soonest openings for 2A.",
+          "created_timestamp": 1793911703697,
+          "message_id": "message_4e74390c712272a3eb136236",
+          "metadata": {
+            "response_id": 10
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"job_type\":\"no_heat\",\"facts\":{\"issue\":\"No heat in unit 2A since last night, radiator cold\",\"since\":\"since last night\",\"inside_temp_f\":63,\"who_home\":\"building super has keys and can let the technician in\"}}",
+          "created_timestamp": 1793911703698,
+          "message_id": "message_a4529e7d103f535e02a374c3",
+          "name": "find_slots",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01Va2Eoz8oNoRc4D3XG2cDfw",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":false,\"say\":\"Let me check that again.\",\"data\":{\"errors\":{\"facts.since\":\"Extra inputs are not permitted\"}},\"refused\":\"invalid_arguments\",\"server_notes\":[\"[server] The caller gave a different address detail or number after confirming the read-back. Call read_back with the details they just gave, so the new sentence is read for you; nothing books until they confirm it. Don't ask them to repeat what they already said.\"]}",
+          "created_timestamp": 1793911704484,
+          "message_id": "message_408774b4542d65a43a930bae",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01Va2Eoz8oNoRc4D3XG2cDfw"
+        },
+        {
+          "arguments": "{\"job_type\":\"no_heat\",\"facts\":{\"issue\":\"No heat in unit 2A since last night, radiator cold\",\"inside_temp_f\":63,\"who_home\":\"building super has keys and can let the technician in\"}}",
+          "created_timestamp": 1793911705633,
+          "message_id": "message_11e7737ea3b066963c9b25cf",
+          "name": "find_slots",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01EPCzpVWGoQVrQ9DgxzNTnS",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"The soonest I have is today, 6 to 8. Does that work?\",\"data\":{\"priority\":{\"level\":\"Normal\",\"reasons\":[\"warm inside and a mild day\"],\"requested\":null,\"raised_after_wait\":false},\"days\":[{\"date\":\"2026-11-05\",\"weekday\":\"Thursday\",\"day\":\"today\",\"windows\":[\"1800-2000\"],\"labels\":[\"6 to 8\"]},{\"date\":\"2026-11-06\",\"weekday\":\"Friday\",\"day\":\"tomorrow\",\"windows\":[\"0800-1000\",\"1000-1200\",\"1200-1400\",\"1400-1600\",\"1600-1800\",\"1800-2000\"],\"labels\":[\"8 to 10\",\"10 to 12\",\"12 to 2\",\"2 to 4\",\"4 to 6\",\"6 to 8\"]},{\"date\":\"2026-11-09\",\"weekday\":\"Monday\",\"day\":\"Monday\",\"windows\":[\"0800-1000\",\"1000-1200\",\"1200-1400\",\"1400-1600\",\"1600-1800\",\"1800-2000\"],\"labels\":[\"8 to 10\",\"10 to 12\",\"12 to 2\",\"2 to 4\",\"4 to 6\",\"6 to 8\"]}],\"offer\":{\"date\":\"2026-11-05\",\"window\":\"1800-2000\",\"weekday\":\"Thursday\",\"day\":\"today\",\"day_and_date\":\"today, Thursday, November 5\",\"label\":\"6 to 8\",\"part\":\"evening\",\"after_hours\":false}}}",
+          "created_timestamp": 1793911707870,
+          "message_id": "message_06461d5cec944348a2abf4d0",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01EPCzpVWGoQVrQ9DgxzNTnS"
+        },
+        {
+          "content": "The soonest opening for 2A is today, Thursday, November 5, between 6 and 8 PM. Does that work?",
+          "created_timestamp": 1793911708578,
+          "message_id": "message_263842a4b4926afd5bcbaf79",
+          "metadata": {
+            "response_id": 11
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, that works. Book 2A for today between 6 and 8. Then I need 5C too, same building.",
+          "created_timestamp": 1793911709234,
+          "message_id": "message_855edcb96ede45f2c321f996",
+          "role": "user"
+        },
+        {
+          "content": "Before I book, I need a few details for 2A. Will you be able to approve any repair work the technician recommends?",
+          "created_timestamp": 1793911710520,
+          "message_id": "message_07fef8e15e522ece2df938a0",
+          "metadata": {
+            "response_id": 12
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, I can approve repair work for the owner. Go ahead and book 5C too, same building, same address. Let's get it on the soonest opening.",
+          "created_timestamp": 1793911711285,
+          "message_id": "message_05f7a9856e3baeacf4d8306e",
+          "role": "user"
+        },
+        {
+          "content": "Thanks. Will someone be home to let the technician in?",
+          "created_timestamp": 1793911712052,
+          "message_id": "message_cb41c6d23ec50143d6b7b6f7",
+          "metadata": {
+            "response_id": 13
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, I'll be there. I'm the super, so I have keys and can let them in to both units.",
+          "created_timestamp": 1793911713420,
+          "message_id": "message_387f5d4d8ff6550860f3381b",
+          "role": "user"
+        },
+        {
+          "content": "Thanks. Is there a gate code, buzzer, or pet the technician should know about?",
+          "created_timestamp": 1793911714127,
+          "message_id": "message_bc98fba3953d19eef4d114e1",
+          "metadata": {
+            "response_id": 14
+          },
+          "role": "agent"
+        },
+        {
+          "content": "No gate code, no pets, and I don't know about a buzzer. I'm the super, so I have keys and I'll be there to let them in for both units.",
+          "created_timestamp": 1793911714888,
+          "message_id": "message_f2154b802a6209f40e3b9bb6",
+          "role": "user"
+        },
+        {
+          "content": "Thanks. Now I'll book 2A for today, 6 to 8 PM.",
+          "created_timestamp": 1793911716567,
+          "message_id": "message_66e3808f9a1c18f682750344",
+          "metadata": {
+            "response_id": 15
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"details\":{\"approver\":\"Luis Ortega, building super; can approve repairs for the owner\",\"issue\":\"No heat in unit 2A since last night, radiator cold\",\"since\":\"since last night\",\"tried\":\"Not provided\",\"who_home\":\"Building super Luis Ortega will be on site with keys\",\"inside_temp_f\":63,\"name\":\"Luis Ortega\",\"arrival_notes\":\"Building super has keys; no gate code or pets. Same building also has unit 5C with no heat, separate visit.\"},\"job_type\":\"no_heat\",\"slot\":{\"date\":\"2026-11-05\",\"window\":\"1800-2000\"}}",
+          "created_timestamp": 1793911716568,
+          "message_id": "message_01ddb3a17b66b3d7a56ec4db",
+          "name": "book_appointment",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_016FbGmLE2baUgt3zwzNsFo7",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":false,\"say\":\"Before I book it, let me read back the address and number.\",\"data\":{\"need\":\"read_back\"},\"refused\":\"gate_read_back\",\"server_notes\":[\"[server] The caller named more than one unit (2A, 5C). Each unit is its own job: read back and book one unit at a time, with that unit alone in the read-back, then the next. Never book one visit to cover several units.\"]}",
+          "created_timestamp": 1793911717238,
+          "message_id": "message_7895f05934863e5f7c94b702",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_016FbGmLE2baUgt3zwzNsFo7"
+        },
+        {
+          "content": "The read-back already happened for 2A, so I'll confirm it again to book.",
+          "created_timestamp": 1793911719144,
+          "message_id": "message_ba2c162e33ac01585c8363ef",
+          "metadata": {
+            "response_id": 16
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"278 Menahan Street\",\"unit\":\"2A\",\"zip\":\"11237\",\"city\":\"Brooklyn\"},\"phone\":\"917-555-0117\",\"confirmed\":true}",
+          "created_timestamp": 1793911719145,
+          "message_id": "message_92f55c76be8c8f0c0a55bdd8",
+          "name": "read_back",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01YSKa1pDodTLmR3uhCWFfPH",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":false,\"data\":{\"need\":\"the caller changed the unit in their answer; call read_back with the corrected details and read the new sentence\",\"changed\":\"unit\"},\"refused\":\"gate_read_back\"}",
+          "created_timestamp": 1793911719614,
+          "message_id": "message_2f88b9732d3e77e52c5db420",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01YSKa1pDodTLmR3uhCWFfPH"
+        },
+        {
+          "arguments": "{\"details\":{\"approver\":\"Luis Ortega, building super; can approve repairs for the owner\",\"issue\":\"No heat in unit 2A since last night, radiator cold\",\"since\":\"since last night\",\"tried\":\"Not provided\",\"who_home\":\"Building super Luis Ortega will be on site with keys\",\"inside_temp_f\":63,\"name\":\"Luis Ortega\",\"arrival_notes\":\"Building super has keys; no gate code or pets. Same building also has unit 5C with no heat, separate visit.\"},\"job_type\":\"no_heat\",\"slot\":{\"date\":\"2026-11-05\",\"window\":\"1800-2000\"}}",
+          "created_timestamp": 1793911719615,
+          "message_id": "message_b4d0b5075a1671ca721dc81c",
+          "name": "book_appointment",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01EYZmw9WtTVKJGDJrVUh7oc",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":false,\"say\":\"Before I book it, let me read back the address and number.\",\"data\":{\"need\":\"read_back\"},\"refused\":\"gate_read_back\"}",
+          "created_timestamp": 1793911720055,
+          "message_id": "message_a710801b10cdfd7e69b8cbf6",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01EYZmw9WtTVKJGDJrVUh7oc"
+        },
+        {
+          "content": "The system needs one more confirmation. I'll read back 2A again.",
+          "created_timestamp": 1793911721210,
+          "message_id": "message_ea387ae2c2d6b8f5202925af",
+          "metadata": {
+            "response_id": 17
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"278 Menahan Street\",\"unit\":\"2A\",\"zip\":\"11237\",\"city\":\"Brooklyn\"},\"phone\":\"917-555-0117\"}",
+          "created_timestamp": 1793911721211,
+          "message_id": "message_3ccf326a0d171f308647e8f2",
+          "name": "read_back",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01UN4t3UrsercrPuELM42fnk",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"I have your home at 278 Menahan Street, unit 2A, Brooklyn, ZIP code one one two three seven, and the best number is nine one seven, five five five, zero one one seven. That's all correct, right?\",\"data\":{\"confirmed\":false,\"sentence\":\"I have your home at 278 Menahan Street, unit 2A, Brooklyn, ZIP code one one two three seven, and the best number is nine one seven, five five five, zero one one seven. That's all correct, right?\"}}",
+          "created_timestamp": 1793911721596,
+          "message_id": "message_fe1d9c61ddbc5ee208218f54",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01UN4t3UrsercrPuELM42fnk"
+        },
+        {
+          "content": "I have 278 Menahan Street, unit 2A, Brooklyn, ZIP 11237, and the best number is 917-555-0117. That's all correct, right?",
+          "created_timestamp": 1793911722432,
+          "message_id": "message_7f350de5bd2a0876b6e40106",
+          "metadata": {
+            "response_id": 18
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, that's all correct. Unit 2A, 278 Menahan Street, Brooklyn, 11237, 917-555-0117. Book it for today, 6 to 8. And then 5C too, same building.",
+          "created_timestamp": 1793911723272,
+          "message_id": "message_227072c420611bf6711b4986",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"278 Menahan Street\",\"unit\":\"2A\",\"zip\":\"11237\",\"city\":\"Brooklyn\"},\"phone\":\"917-555-0117\",\"confirmed\":true}",
+          "created_timestamp": 1793911724987,
+          "message_id": "message_96a432c581270957461780a8",
+          "name": "read_back",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01Dw4FMNekw4kJtL6zYevoFf",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"confirmed\":true,\"address\":{\"street\":\"278 Menahan Street\",\"unit\":\"2A\",\"city\":\"Brooklyn\",\"zip\":\"11237\",\"spelled\":\"\"},\"phone\":\"9175550117\"},\"server_notes\":[\"[server] The caller named more than one unit (2A, 5C). Each unit is its own job: read back and book one unit at a time, with that unit alone in the read-back, then the next. Never book one visit to cover several units.\"]}",
+          "created_timestamp": 1793911725786,
+          "message_id": "message_6bfaf10c7d66de905cc2b193",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01Dw4FMNekw4kJtL6zYevoFf"
+        },
+        {
+          "arguments": "{\"details\":{\"approver\":\"Luis Ortega, building super; can approve repairs for the owner\",\"issue\":\"No heat in unit 2A since last night, radiator cold\",\"since\":\"since last night\",\"tried\":\"Not provided\",\"who_home\":\"Building super Luis Ortega will be on site with keys\",\"inside_temp_f\":63,\"name\":\"Luis Ortega\",\"arrival_notes\":\"Building super has keys; no gate code or pets. Same building also has unit 5C with no heat, separate visit.\"},\"job_type\":\"no_heat\",\"slot\":{\"date\":\"2026-11-05\",\"window\":\"1800-2000\"}}",
+          "created_timestamp": 1793911725787,
+          "message_id": "message_035dd420f28933321b82c618",
+          "name": "book_appointment",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01MQ9XaKF5frvjrfwNN62CtF",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":false,\"say\":\"That window just filled up.\",\"data\":{\"alternatives\":[{\"date\":\"2026-11-06\",\"window\":\"0800-1000\",\"weekday\":\"Friday\",\"day\":\"tomorrow\",\"day_and_date\":\"tomorrow, Friday, November 6\",\"label\":\"8 to 10\",\"part\":\"morning\",\"after_hours\":false},{\"date\":\"2026-11-06\",\"window\":\"0830-1030\",\"weekday\":\"Friday\",\"day\":\"tomorrow\",\"day_and_date\":\"tomorrow, Friday, November 6\",\"label\":\"8:30 to 10:30\",\"part\":\"morning\",\"after_hours\":false}]},\"refused\":\"slot_taken\"}",
+          "created_timestamp": 1793911728539,
+          "message_id": "message_940bd3281a2a6a91403b6709",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01MQ9XaKF5frvjrfwNN62CtF"
+        },
+        {
+          "content": "Unfortunately, today's 6 to 8 window just filled up. The next openings are tomorrow, Friday, November 6, from 8 to 10 AM or 8:30 to 10:30 AM. Would either of those work?",
+          "created_timestamp": 1793911729477,
+          "message_id": "message_8ec21681dbaf0f35fb5d8a59",
+          "metadata": {
+            "response_id": 19
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Tomorrow morning is too late, both units have been cold since last night. Is there anything sooner? Even a later slot today would be better than tomorrow.",
+          "created_timestamp": 1793911730453,
+          "message_id": "message_d312d69caf6a856f5c6661ec",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"job_type\":\"no_heat\",\"day\":\"today\",\"facts\":{\"issue\":\"No heat in unit 2A since last night, radiator cold\",\"inside_temp_f\":63,\"who_home\":\"building super has keys and can let the technician in\"}}",
+          "created_timestamp": 1793911731441,
+          "message_id": "message_337c8c0cbb7f6d5580715088",
+          "name": "find_slots",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_0196pR6LPQfn2XcyjxPuUL4H",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"Nothing's open that day.\",\"data\":{\"priority\":{\"level\":\"Normal\",\"reasons\":[\"warm inside and a mild day\"],\"requested\":null,\"raised_after_wait\":false},\"windows\":[]}}",
+          "created_timestamp": 1793911733394,
+          "message_id": "message_647f0647b1ced1c37d26ae57",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_0196pR6LPQfn2XcyjxPuUL4H"
+        },
+        {
+          "content": "Unfortunately, nothing else is open today. The earliest opening is tomorrow, Friday, November 6, from 8 to 10 AM. Would you like me to book that, or should I have the office call you to look for something sooner?",
+          "created_timestamp": 1793911734547,
+          "message_id": "message_15c49fbceed29fdaa41094d7",
+          "metadata": {
+            "response_id": 20
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Tomorrow morning is too late, and I need 5C handled too. Can you have the office call me at (917) 555-0117? I'd rather talk to someone who can look for something sooner for both units.",
+          "created_timestamp": 1793911735499,
+          "message_id": "message_0e401b3077c33adab9feab16",
+          "role": "user"
+        },
+        {
+          "content": "I'll have the office call you back at (917) 555-0117 about getting both units seen sooner.",
+          "created_timestamp": 1793911737303,
+          "message_id": "message_530b9eb0513e0266964ae375",
+          "metadata": {
+            "response_id": 21
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"reason\":\"No heat in both 278 Menahan St units 2A and 5C since last night (about 63F inside 2A). Caller Luis Ortega, building super with keys. Wants the earliest possible visit today; no same-day opening found. Tomorrow 8-10 AM offered but declined as too late.\",\"priority\":\"Urgent\",\"callback_in_minutes\":15,\"system_calls_back\":false}",
+          "created_timestamp": 1793911737304,
+          "message_id": "message_05cc2b60bb284b370c4bf6aa",
+          "name": "flag_person",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01SWR1nGe8P8DWkZqZyJnmpC",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"I've let our team know this call is top priority, and someone will call you by 4:03 PM.\",\"data\":{\"flag_id\":232,\"callback_id\":69,\"callback_at\":\"2026-11-05T21:03:57Z\",\"callback_spoken\":\"by 4:03 PM\"},\"server_notes\":[\"[server] The caller gave a different address detail or number after confirming the read-back. Call read_back with the details they just gave, so the new sentence is read for you; nothing books until they confirm it. Don't ask them to repeat what they already said.\"]}",
+          "created_timestamp": 1793911737823,
+          "message_id": "message_ee352e01b305c3855e04cfc9",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01SWR1nGe8P8DWkZqZyJnmpC"
+        },
+        {
+          "content": "Our team has marked this as top priority, and someone will call you at (917) 555-0117 by 4:03 PM. They can look for an earlier visit for both units. Is there anything else I can help you with today?",
+          "created_timestamp": 1793911738871,
+          "message_id": "message_4bfd0348f7401359ba570331",
+          "metadata": {
+            "response_id": 22
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, one more thing. The office can call me back at (917) 555-0117, and I'd like them to look at 5C too, same building, same address. Is there anything else I need to confirm on my end?",
+          "created_timestamp": 1793911739890,
+          "message_id": "message_e05db0aefbc237572b5fc5df",
+          "role": "user"
+        },
+        {
+          "content": "The team's callback already covers both units, and I've noted 5C in the request. Nothing else is needed from you right now. Someone will call you at (917) 555-0117 by 4:03 PM.\n\nIs there anything else I can help with?",
+          "created_timestamp": 1793911740966,
+          "message_id": "message_420f9be04e138ce3ac45956c",
+          "metadata": {
+            "response_id": 23
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Nope, that's everything. Thanks for your help.",
+          "created_timestamp": 1793911741700,
+          "message_id": "message_b49e142b226c38303ffe83f1",
+          "role": "user"
+        },
+        {
+          "content": "Thanks for calling Summit Air. Take care.",
+          "created_timestamp": 1793911742495,
+          "message_id": "message_9553675971eabec44d486835",
+          "metadata": {
+            "response_id": 24
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"reason\":\"resolved\"}",
+          "created_timestamp": 1793911742496,
+          "message_id": "message_c46898b64230f03c5d28313e",
+          "name": "end_call",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01BxBDKTUjr268S7v9wkReXJ",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"hang_up\":true}}",
+          "created_timestamp": 1793911743073,
+          "message_id": "message_9480678afd82dc2a4688fe90",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01BxBDKTUjr268S7v9wkReXJ"
+        },
+        {
+          "content": "Thanks, appreciate it. Bye.",
+          "created_timestamp": 1793911744568,
+          "message_id": "message_87e4a4fb669f4b0fb1d0f2bf",
+          "role": "user"
+        },
+        {
+          "content": "Goodbye.",
+          "created_timestamp": 1793911745221,
+          "message_id": "message_a591f155a5e121403465a71f",
+          "metadata": {
+            "response_id": 25
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Bye.",
+          "created_timestamp": 1793911746395,
+          "message_id": "message_dd6cc94eb837feaa2753e475",
+          "role": "user"
+        },
+        {
+          "content": "Thanks. Bye.",
+          "created_timestamp": 1793911748899,
+          "message_id": "message_6b6574f51793ddb11fb60344",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, you too. Bye.",
+          "created_timestamp": 1793911750204,
+          "message_id": "message_2e3eae4b6e3e8e86e27c40ff",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, bye.",
+          "created_timestamp": 1793911751395,
+          "message_id": "message_58fd08a8d6d51043740ffd9c",
+          "role": "user"
+        }
+      ]
+    }
+  },
+  "trace": {
+    "call": {
+      "id": "rtest-11052046-super-two-units",
+      "tenant": "summit-air",
+      "caller_id": "(917) 555-0117",
+      "caller_key": "9175550117",
+      "dialed_number": "(678) 336-6730",
+      "direction": "inbound",
+      "started_at": "2026-10-20T20:46:41Z",
+      "ended_at": null,
+      "end_reason": null,
+      "end_requested": 1,
+      "after_hours": 0,
+      "linked_call_id": null,
+      "outcome": null,
+      "commercial": 0,
+      "summary_status": "none",
+      "turn_seq": 42,
+      "safety_state": "none",
+      "safety_kind": null,
+      "safety_signal_at": null,
+      "safety_lines_at": null,
+      "safety_flag_id": null,
+      "safety_variant": 0,
+      "readback_json": "{\"street\": \"278 Menahan Street\", \"unit\": \"2A\", \"city\": \"Brooklyn\", \"zip\": \"11237\", \"spelled\": \"\", \"phone\": \"9175550117\", \"phone_for\": \"\", \"sentence\": \"I have your home at 278 Menahan Street, unit 2A, Brooklyn, ZIP code one one two three seven, and the best number is nine one seven, five five five, zero one one seven. That's all correct, right?\"}",
+      "readback_asked_seq": 30,
+      "readback_confirmed_at": null
+    },
+    "events": [
+      {
+        "at": "2026-11-05T20:46:41Z",
+        "type": "tool",
+        "tool": "calls.start",
+        "args": {
+          "call_id": "rtest-11052046-super-two-units",
+          "caller_id": "(917) 555-0117",
+          "dialed_number": "(678) 336-6730",
+          "direction": "inbound"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 22.9,
+        "error": null,
+        "request_id": "beb096faeb4d"
+      },
+      {
+        "at": "2026-11-05T20:48:10Z",
+        "type": "turn",
+        "seq": 1,
+        "speaker": "agent",
+        "text": "Thank you for calling Summit Air. How can I help you today?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:10Z",
+        "type": "turn",
+        "seq": 2,
+        "speaker": "caller",
+        "text": "Hi, I'm the super at a building in Bushwick. I've got two apartments with no heat, 2A and 5C.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:10Z",
+        "type": "turn",
+        "seq": 3,
+        "speaker": "agent",
+        "text": "I can help with that. Since this is a no-heat issue, is the heat out in both apartments right now?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:48:10Z",
+        "type": "turn",
+        "seq": 4,
+        "speaker": "caller",
+        "text": "Yes, both of them. 2A has no heat since last night, it's about 63 in there. 5C's radiator is cold too, same since last night. They're two different problems, so I want each one looked at.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:10Z",
+        "type": "turn",
+        "seq": 5,
+        "speaker": "agent",
+        "text": "Got it, I'll note that for the technician. Since this is a building, I'll need to set up two separate visits. Let's start with 2A. What's the street address of the building?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:48:10Z",
+        "type": "turn",
+        "seq": 6,
+        "speaker": "caller",
+        "text": "278 Menahan St, Brooklyn, 11237.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:10Z",
+        "type": "turn",
+        "seq": 7,
+        "speaker": "agent",
+        "text": "Thanks. What's the apartment number for 2A, and I'll look up the address.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:48:10Z",
+        "type": "tool",
+        "tool": "find_address",
+        "args": {
+          "call_id": "rtest-11052046-super-two-units",
+          "street": "278 Menahan St",
+          "borough": "Brooklyn",
+          "spelled": ""
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 374.7,
+        "error": null,
+        "request_id": "853cff4660a3"
+      },
+      {
+        "at": "2026-11-05T20:48:16Z",
+        "type": "turn",
+        "seq": 8,
+        "speaker": "agent",
+        "text": "I found 278 Menahan Street in Bushwick, which is in our service area. Let's do 2A first. Can I get your name?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:16Z",
+        "type": "turn",
+        "seq": 9,
+        "speaker": "caller",
+        "text": "Luis Ortega.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:16Z",
+        "type": "turn",
+        "seq": 10,
+        "speaker": "agent",
+        "text": "Thanks. And this is for a residential property, right? Like a home or an apartment?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:48:16Z",
+        "type": "turn",
+        "seq": 11,
+        "speaker": "caller",
+        "text": "Yes, it's a six-unit apartment building. I'm the super here, and I have keys, so I can let the technician in to both units.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:17Z",
+        "type": "turn",
+        "seq": 12,
+        "speaker": "agent",
+        "text": "Thanks, that works. It's a building, so for each unit I'll need to know it's residential. Since this is an apartment building that you manage, we can book it. Let's continue with 2A. What's the best phone number to reach you?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:48:17Z",
+        "type": "turn",
+        "seq": 13,
+        "speaker": "caller",
+        "text": "(917) 555-0117. That's the number I'm calling from.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:17Z",
+        "type": "tool",
+        "tool": "read_back",
+        "args": {
+          "call_id": "rtest-11052046-super-two-units",
+          "address": {
+            "street": "278 Menahan Street",
+            "unit": "2A",
+            "city": "Brooklyn",
+            "zip": "11237",
+            "spelled": ""
+          },
+          "phone": "caller_id",
+          "phone_for": "",
+          "confirmed": false
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "I have your home at 278 Menahan Street, unit 2A, Brooklyn, ZIP code one one two three seven, and the best number is nine one seven, five five five, zero one one seven. That's all correct, right?",
+        "ms": 13.1,
+        "error": null,
+        "request_id": "5ebc5bafbfcb"
+      },
+      {
+        "at": "2026-11-05T20:48:20Z",
+        "type": "turn",
+        "seq": 14,
+        "speaker": "agent",
+        "text": "I have 278 Menahan Street, unit 2A, Brooklyn, ZIP 11237, and the best number is 917-555-0117. That's all correct, right?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 3000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:48:20Z",
+        "type": "turn",
+        "seq": 15,
+        "speaker": "caller",
+        "text": "Yes, that's right. Unit 2A, 278 Menahan Street, Brooklyn, 11237, and 917-555-0117. Go ahead and book that one. Then I need the other one too, 5C, same building.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:20Z",
+        "type": "turn",
+        "seq": 16,
+        "speaker": "agent",
+        "text": "The read-back is confirmed. Before I book 2A, I'll go ahead with the confirmation.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:48:20Z",
+        "type": "tool",
+        "tool": "read_back",
+        "args": {
+          "call_id": "rtest-11052046-super-two-units",
+          "address": {
+            "street": "278 Menahan Street",
+            "unit": "2A",
+            "city": "Brooklyn",
+            "zip": "11237",
+            "spelled": ""
+          },
+          "phone": "917-555-0117",
+          "phone_for": "",
+          "confirmed": true
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 6.0,
+        "error": null,
+        "request_id": "2bb46deb8aca"
+      },
+      {
+        "at": "2026-11-05T20:48:24Z",
+        "type": "turn",
+        "seq": 17,
+        "speaker": "agent",
+        "text": "Thanks. Now I'll check the openings for 2A. Did you want a specific time of day?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:24Z",
+        "type": "turn",
+        "seq": 18,
+        "speaker": "caller",
+        "text": "I don't have a preference on time, just whatever's soonest. Both units have been cold since last night, so earlier is better. And I need 5C booked too, same building, same address.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:24Z",
+        "type": "turn",
+        "seq": 19,
+        "speaker": "agent",
+        "text": "Got it. Let me check the soonest openings for 2A.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:48:24Z",
+        "type": "tool",
+        "tool": "find_slots",
+        "args": {
+          "job_type": "no_heat",
+          "facts": {
+            "issue": "No heat in unit 2A since last night, radiator cold",
+            "since": "since last night",
+            "inside_temp_f": 63,
+            "who_home": "building super has keys and can let the technician in"
+          },
+          "call_id": "rtest-11052046-super-two-units"
+        },
+        "ok": false,
+        "refused": "invalid_arguments",
+        "gate": null,
+        "say": "Let me check that again.",
+        "ms": 0.0,
+        "error": "invalid_arguments",
+        "request_id": "0e2a497f4b1b"
+      },
+      {
+        "at": "2026-11-05T20:48:27Z",
+        "type": "tool",
+        "tool": "find_slots",
+        "args": {
+          "call_id": "rtest-11052046-super-two-units",
+          "job_type": "no_heat",
+          "priority": null,
+          "preferred_days": [],
+          "time_of_day": null,
+          "window_minutes": null,
+          "day": null,
+          "arrive_after": null,
+          "arrive_before": null,
+          "facts": {
+            "issue": "No heat in unit 2A since last night, radiator cold",
+            "who_home": "building super has keys and can let the technician in",
+            "inside_temp_f": 63.0,
+            "temp_falling_fast": false
+          }
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "The soonest I have is today, 6 to 8. Does that work?",
+        "ms": 1855.3,
+        "error": null,
+        "request_id": "9588ef6f7047"
+      },
+      {
+        "at": "2026-11-05T20:48:36Z",
+        "type": "turn",
+        "seq": 20,
+        "speaker": "agent",
+        "text": "The soonest opening for 2A is today, Thursday, November 5, between 6 and 8 PM. Does that work?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:36Z",
+        "type": "turn",
+        "seq": 21,
+        "speaker": "caller",
+        "text": "Yes, that works. Book 2A for today between 6 and 8. Then I need 5C too, same building.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:37Z",
+        "type": "turn",
+        "seq": 22,
+        "speaker": "agent",
+        "text": "Before I book, I need a few details for 2A. Will you be able to approve any repair work the technician recommends?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:48:37Z",
+        "type": "turn",
+        "seq": 23,
+        "speaker": "caller",
+        "text": "Yes, I can approve repair work for the owner. Go ahead and book 5C too, same building, same address. Let's get it on the soonest opening.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:37Z",
+        "type": "turn",
+        "seq": 24,
+        "speaker": "agent",
+        "text": "Thanks. Will someone be home to let the technician in?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:48:37Z",
+        "type": "turn",
+        "seq": 25,
+        "speaker": "caller",
+        "text": "Yes, I'll be there. I'm the super, so I have keys and can let them in to both units.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:37Z",
+        "type": "turn",
+        "seq": 26,
+        "speaker": "agent",
+        "text": "Thanks. Is there a gate code, buzzer, or pet the technician should know about?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:48:37Z",
+        "type": "turn",
+        "seq": 27,
+        "speaker": "caller",
+        "text": "No gate code, no pets, and I don't know about a buzzer. I'm the super, so I have keys and I'll be there to let them in for both units.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:37Z",
+        "type": "turn",
+        "seq": 28,
+        "speaker": "agent",
+        "text": "Thanks. Now I'll book 2A for today, 6 to 8 PM.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:48:37Z",
+        "type": "tool",
+        "tool": "book_appointment",
+        "args": {
+          "call_id": "rtest-11052046-super-two-units",
+          "job_type": "no_heat",
+          "slot": {
+            "date": "2026-11-05",
+            "window": "1800-2000"
+          },
+          "details": {
+            "issue": "No heat in unit 2A since last night, radiator cold",
+            "since": "since last night",
+            "tried": "Not provided",
+            "who_home": "Building super Luis Ortega will be on site with keys",
+            "approver": "Luis Ortega, building super; can approve repairs for the owner",
+            "system_type": "",
+            "arrival_notes": "Building super has keys; no gate code or pets. Same building also has unit 5C with no heat, separate visit.",
+            "name": "Luis Ortega",
+            "inside_temp_f": 63.0
+          },
+          "priority": null,
+          "separate_problem": false,
+          "new_address_account": null
+        },
+        "ok": false,
+        "refused": "gate_read_back",
+        "gate": "gate_read_back",
+        "say": "Before I book it, let me read back the address and number.",
+        "ms": 2.6,
+        "error": null,
+        "request_id": "fa82f27ae490"
+      },
+      {
+        "at": "2026-11-05T20:48:39Z",
+        "type": "turn",
+        "seq": 29,
+        "speaker": "agent",
+        "text": "The read-back already happened for 2A, so I'll confirm it again to book.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:39Z",
+        "type": "tool",
+        "tool": "read_back",
+        "args": {
+          "call_id": "rtest-11052046-super-two-units",
+          "address": {
+            "street": "278 Menahan Street",
+            "unit": "2A",
+            "city": "Brooklyn",
+            "zip": "11237",
+            "spelled": ""
+          },
+          "phone": "917-555-0117",
+          "phone_for": "",
+          "confirmed": true
+        },
+        "ok": false,
+        "refused": "gate_read_back",
+        "gate": "gate_read_back",
+        "say": "",
+        "ms": 3.9,
+        "error": null,
+        "request_id": "44e8fb64a379"
+      },
+      {
+        "at": "2026-11-05T20:48:40Z",
+        "type": "tool",
+        "tool": "book_appointment",
+        "args": {
+          "call_id": "rtest-11052046-super-two-units",
+          "job_type": "no_heat",
+          "slot": {
+            "date": "2026-11-05",
+            "window": "1800-2000"
+          },
+          "details": {
+            "issue": "No heat in unit 2A since last night, radiator cold",
+            "since": "since last night",
+            "tried": "Not provided",
+            "who_home": "Building super Luis Ortega will be on site with keys",
+            "approver": "Luis Ortega, building super; can approve repairs for the owner",
+            "system_type": "",
+            "arrival_notes": "Building super has keys; no gate code or pets. Same building also has unit 5C with no heat, separate visit.",
+            "name": "Luis Ortega",
+            "inside_temp_f": 63.0
+          },
+          "priority": null,
+          "separate_problem": false,
+          "new_address_account": null
+        },
+        "ok": false,
+        "refused": "gate_read_back",
+        "gate": "gate_read_back",
+        "say": "Before I book it, let me read back the address and number.",
+        "ms": 3.6,
+        "error": null,
+        "request_id": "652c4ea3f9da"
+      },
+      {
+        "at": "2026-11-05T20:48:41Z",
+        "type": "turn",
+        "seq": 30,
+        "speaker": "agent",
+        "text": "The system needs one more confirmation. I'll read back 2A again.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:41Z",
+        "type": "tool",
+        "tool": "read_back",
+        "args": {
+          "call_id": "rtest-11052046-super-two-units",
+          "address": {
+            "street": "278 Menahan Street",
+            "unit": "2A",
+            "city": "Brooklyn",
+            "zip": "11237",
+            "spelled": ""
+          },
+          "phone": "917-555-0117",
+          "phone_for": "",
+          "confirmed": false
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "I have your home at 278 Menahan Street, unit 2A, Brooklyn, ZIP code one one two three seven, and the best number is nine one seven, five five five, zero one one seven. That's all correct, right?",
+        "ms": 6.3,
+        "error": null,
+        "request_id": "c1cc5b29dd31"
+      },
+      {
+        "at": "2026-11-05T20:48:45Z",
+        "type": "turn",
+        "seq": 31,
+        "speaker": "agent",
+        "text": "I have 278 Menahan Street, unit 2A, Brooklyn, ZIP 11237, and the best number is 917-555-0117. That's all correct, right?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:45Z",
+        "type": "turn",
+        "seq": 32,
+        "speaker": "caller",
+        "text": "Yes, that's all correct. Unit 2A, 278 Menahan Street, Brooklyn, 11237, 917-555-0117. Book it for today, 6 to 8. And then 5C too, same building.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:45Z",
+        "type": "tool",
+        "tool": "read_back",
+        "args": {
+          "call_id": "rtest-11052046-super-two-units",
+          "address": {
+            "street": "278 Menahan Street",
+            "unit": "2A",
+            "city": "Brooklyn",
+            "zip": "11237",
+            "spelled": ""
+          },
+          "phone": "917-555-0117",
+          "phone_for": "",
+          "confirmed": true
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 7.2,
+        "error": null,
+        "request_id": "83cfd8e0d11e"
+      },
+      {
+        "at": "2026-11-05T20:48:48Z",
+        "type": "tool",
+        "tool": "book_appointment",
+        "args": {
+          "call_id": "rtest-11052046-super-two-units",
+          "job_type": "no_heat",
+          "slot": {
+            "date": "2026-11-05",
+            "window": "1800-2000"
+          },
+          "details": {
+            "issue": "No heat in unit 2A since last night, radiator cold",
+            "since": "since last night",
+            "tried": "Not provided",
+            "who_home": "Building super Luis Ortega will be on site with keys",
+            "approver": "Luis Ortega, building super; can approve repairs for the owner",
+            "system_type": "",
+            "arrival_notes": "Building super has keys; no gate code or pets. Same building also has unit 5C with no heat, separate visit.",
+            "name": "Luis Ortega",
+            "inside_temp_f": 63.0
+          },
+          "priority": null,
+          "separate_problem": false,
+          "new_address_account": null
+        },
+        "ok": false,
+        "refused": "slot_taken",
+        "gate": "slot_taken",
+        "say": "That window just filled up.",
+        "ms": 2188.2,
+        "error": null,
+        "request_id": "bbf199cc6e37"
+      },
+      {
+        "at": "2026-11-05T20:48:51Z",
+        "type": "turn",
+        "seq": 33,
+        "speaker": "agent",
+        "text": "Unfortunately, today's 6 to 8 window just filled up. The next openings are tomorrow, Friday, November 6, from 8 to 10 AM or 8:30 to 10:30 AM. Would either of those work?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 5000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:48:51Z",
+        "type": "turn",
+        "seq": 34,
+        "speaker": "caller",
+        "text": "Tomorrow morning is too late, both units have been cold since last night. Is there anything sooner? Even a later slot today would be better than tomorrow.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:53Z",
+        "type": "tool",
+        "tool": "find_slots",
+        "args": {
+          "call_id": "rtest-11052046-super-two-units",
+          "job_type": "no_heat",
+          "priority": null,
+          "preferred_days": [],
+          "time_of_day": null,
+          "window_minutes": null,
+          "day": "today",
+          "arrive_after": null,
+          "arrive_before": null,
+          "facts": {
+            "issue": "No heat in unit 2A since last night, radiator cold",
+            "who_home": "building super has keys and can let the technician in",
+            "inside_temp_f": 63.0,
+            "temp_falling_fast": false
+          }
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "Nothing's open that day.",
+        "ms": 1447.5,
+        "error": null,
+        "request_id": "5a0b58a0f6c4"
+      },
+      {
+        "at": "2026-11-05T20:48:57Z",
+        "type": "turn",
+        "seq": 35,
+        "speaker": "agent",
+        "text": "Unfortunately, nothing else is open today. The earliest opening is tomorrow, Friday, November 6, from 8 to 10 AM. Would you like me to book that, or should I have the office call you to look for something sooner?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 3000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:48:57Z",
+        "type": "turn",
+        "seq": 36,
+        "speaker": "caller",
+        "text": "Tomorrow morning is too late, and I need 5C handled too. Can you have the office call me at (917) 555-0117? I'd rather talk to someone who can look for something sooner for both units.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:57Z",
+        "type": "turn",
+        "seq": 37,
+        "speaker": "agent",
+        "text": "I'll have the office call you back at (917) 555-0117 about getting both units seen sooner.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:48:57Z",
+        "type": "tool",
+        "tool": "flag_person",
+        "args": {
+          "callback_time": null,
+          "callback_in_minutes": 15,
+          "callback_after": null,
+          "callback_before": null,
+          "callback_day": "today",
+          "call_id": "rtest-11052046-super-two-units",
+          "reason": "No heat in both 278 Menahan St units 2A and 5C since last night (about 63F inside 2A). Caller Luis Ortega, building super with keys. Wants the earliest possible visit today; no same-day opening found. Tomorrow 8-10 AM offered but declined as too late.",
+          "priority": "Urgent",
+          "system_calls_back": false
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "I've let our team know this call is top priority, and someone will call you by 4:03 PM.",
+        "ms": 6.9,
+        "error": null,
+        "request_id": "c94394e4e172"
+      },
+      {
+        "at": "2026-11-05T20:49:02Z",
+        "type": "turn",
+        "seq": 38,
+        "speaker": "agent",
+        "text": "Our team has marked this as top priority, and someone will call you at (917) 555-0117 by 4:03 PM. They can look for an earlier visit for both units. Is there anything else I can help you with today?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:49:02Z",
+        "type": "turn",
+        "seq": 39,
+        "speaker": "caller",
+        "text": "Yes, one more thing. The office can call me back at (917) 555-0117, and I'd like them to look at 5C too, same building, same address. Is there anything else I need to confirm on my end?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:49:02Z",
+        "type": "turn",
+        "seq": 40,
+        "speaker": "agent",
+        "text": "The team's callback already covers both units, and I've noted 5C in the request. Nothing else is needed from you right now. Someone will call you at (917) 555-0117 by 4:03 PM.\n\nIs there anything else I can help with?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:49:02Z",
+        "type": "turn",
+        "seq": 41,
+        "speaker": "caller",
+        "text": "Nope, that's everything. Thanks for your help.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:49:03Z",
+        "type": "turn",
+        "seq": 42,
+        "speaker": "agent",
+        "text": "Thanks for calling Summit Air. Take care.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:49:03Z",
+        "type": "tool",
+        "tool": "end_call",
+        "args": {
+          "call_id": "rtest-11052046-super-two-units",
+          "reason": "resolved"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 5.3,
+        "error": null,
+        "request_id": "2ddca6bb3280"
+      }
+    ],
+    "flags": [
+      {
+        "id": 232,
+        "call_id": "rtest-11052046-super-two-units",
+        "kind": "person",
+        "reason": "No heat in both 278 Menahan St units 2A and 5C since last night (about 63F inside 2A). Caller Luis Ortega, building super with keys. Wants the earliest possible visit today; no same-day opening found. Tomorrow 8-10 AM offered but declined as too late.",
+        "priority": "Urgent",
+        "status": "open",
+        "created_at": "2026-11-05T20:48:57Z"
+      }
+    ],
+    "callbacks": [
+      {
+        "id": 69,
+        "call_id": "rtest-11052046-super-two-units",
+        "phone": "(917) 555-0117",
+        "phone_key": "9175550117",
+        "due_at": "2026-11-05T21:03:57Z",
+        "owner": "office",
+        "reason": "No heat in both 278 Menahan St units 2A and 5C since last night (about 63F inside 2A). Caller Luis Ortega, building super with keys. Wants the earliest possible visit today; no same-day opening found. Tomorrow 8-10 AM offered but declined as too late.",
+        "status": "pending",
+        "attempts": 0,
+        "last_attempt_at": null,
+        "created_at": "2026-11-05T20:48:57Z",
+        "updated_at": "2026-11-05T20:48:57Z"
+      }
+    ],
+    "bookings": [
+      {
+        "id": 177,
+        "kind": "book",
+        "status": "failed",
+        "fsm_job_id": null,
+        "window_start": "2026-11-05T23:00:00Z",
+        "window_end": "2026-11-06T01:00:00Z",
+        "priority": "Normal",
+        "priority_reasons": "warm inside and a mild day",
+        "safety_override": 0,
+        "seek_earlier": 0,
+        "attempts": 1,
+        "last_error": "slot_taken: No technician may take that window.",
+        "raised_after_wait": 0,
+        "priority_rules": "[\"bracket:mild\"]",
+        "priority_reason_list": "[\"warm inside and a mild day\"]",
+        "who_home": "Building super Luis Ortega will be on site with keys",
+        "job_type": "no_heat",
+        "street": "278 Menahan Street",
+        "unit": "2A",
+        "job_notes": "[]"
+      }
+    ],
+    "notes": [],
+    "leads": [],
+    "out_of_area": [],
+    "summary": [],
+    "electrical": [],
+    "holds": [],
+    "pace": [
+      {
+        "call_id": "rtest-11052046-super-two-units",
+        "speed": 1.0,
+        "source": "default",
+        "requested": 0,
+        "older_adult": 0,
+        "address_speed": null,
+        "repeats": 0
+      }
+    ],
+    "pace_changes": [],
+    "caller_pace": [],
+    "transfers": [],
+    "handoffs": [],
+    "address_lookups": [
+      {
+        "house": "278",
+        "street": "menahan st",
+        "hint": "Brooklyn",
+        "status": "one",
+        "zips_json": "[\"11237\"]",
+        "source": "geosearch"
+      }
+    ],
+    "address_checks": [],
+    "names": [],
+    "address_moves": [],
+    "identity_checks": [],
+    "heads_ups": []
+  }
+}

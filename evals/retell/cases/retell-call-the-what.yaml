@@ -1,0 +1,28 @@
+id: retell-call-the-what
+title: A caller on the Retell number who doesn't catch questions the first time
+tags:
+- live-call
+- booking
+scenario: retell-call-the-what
+caller_id: (678) 555-0204
+user_prompt: |
+  ## Identity
+  A caller on the Retell number who doesn't catch questions the first time. Says "The what?" to the first question with a word they don't follow.
+  Your address: 248 Duffield Street, Brooklyn, 11201
+  Your phone: (678) 555-0204 (the number you're calling from)
+  Your wants: a furnace tune-up, any afternoon
+
+  ## Goal
+  Start the call by saying: "Hi, I'd like to get my furnace tuned up."
+
+  ## Behavior
+  - To the agent's first question, say only "The what?"
+  - After that, answer plainly; confirm a correct read-back.
+  - Say goodbye once booked.
+  - Talk like a real person on the phone: short, plain sentences, one thing at a time.
+  - Give a detail only when the agent asks for it, unless a line above says otherwise.
+  - Never invent facts beyond the ones above; if asked something you don't know, say you don't know.
+  - When your business is done, say goodbye and stop talking.
+metrics:
+- The agent books exactly one visit with book_appointment at ZIP 11201.
+- After "The what?", says the last question again, shorter and in simpler words, with no "No problem".

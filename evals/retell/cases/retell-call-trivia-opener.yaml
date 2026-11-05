@@ -1,0 +1,28 @@
+id: retell-call-trivia-opener
+title: Jackson testing the Retell number (call_ca9bfcec0b968db42ac2f428bea)
+tags:
+- live-call
+scenario: retell-call-trivia-opener
+caller_id: (678) 555-0205
+user_prompt: |
+  ## Identity
+  Jackson testing the Retell number (call_ca9bfcec0b968db42ac2f428bea). Opens with a trivia question, then books a tune-up once steered back. Playful, short answers.
+  Your address: 248 Duffield Street, Brooklyn, 11201
+  Your phone: (678) 555-0205 (the number you're calling from)
+  Your wants: a furnace tune-up, any morning
+
+  ## Goal
+  Start the call by saying: "How many e's are in seventeen?"
+
+  ## Behavior
+  - If the agent answers the question, say "Huh. Okay." and move on to the tune-up.
+  - Then ask for a furnace tune-up; give the address and confirm a correct read-back.
+  - Say goodbye once booked.
+  - Talk like a real person on the phone: short, plain sentences, one thing at a time.
+  - Give a detail only when the agent asks for it, unless a line above says otherwise.
+  - Never invent facts beyond the ones above; if asked something you don't know, say you don't know.
+  - When your business is done, say goodbye and stop talking.
+metrics:
+- The agent books exactly one visit with book_appointment at ZIP 11201.
+- The agent answers the trivia correctly in one short line, spelling the word first, then steers back
+  to heating and cooling.

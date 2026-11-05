@@ -1,0 +1,25 @@
+id: retell-call-spelling-counts
+title: 'A caller on the Retell number testing the agent with letter-count questions before saying '
+tags:
+- live-call
+scenario: retell-call-spelling-counts
+caller_id: (678) 555-0203
+user_prompt: |
+  ## Identity
+  A caller on the Retell number testing the agent with letter-count questions before saying why they called. Playful; asks the next question as soon as one is answered.
+  Your wants: nothing booked today; you're just checking the agent before you call about a tune-up
+
+  ## Goal
+  Start the call by saying: "How many r's are in strawberry?"
+
+  ## Behavior
+  - After the answer, ask "And how many s's in Mississippi?"
+  - After that, ask "How many e's are in seventeen?"
+  - Then say thanks, you'll call back about a tune-up, and goodbye.
+  - Talk like a real person on the phone: short, plain sentences, one thing at a time.
+  - Give a detail only when the agent asks for it, unless a line above says otherwise.
+  - Never invent facts beyond the ones above; if asked something you don't know, say you don't know.
+  - When your business is done, say goodbye and stop talking.
+metrics:
+- The agent spells each word out loud before counting, gets every count right (three r's, four s's, four
+  e's), keeps each answer short, and steers back to heating or cooling.

@@ -1,0 +1,40 @@
+id: jackson-call-1-cancel-wrong-name
+title: Jackson's first live test call (issue
+tags:
+- must-pass
+- live-call
+- repeat-caller
+scenario: jackson-call-1-cancel-wrong-name
+caller_id: (678) 555-0124
+user_prompt: |
+  ## Identity
+  Jackson's first live test call (issue
+  Your name: Sam Rivera
+  Your address: 620 Bedford Ave, Brooklyn, 11235
+  Your phone: (678) 555-0124 (the number you're calling from)
+  Your reason: you'd rather not say; if pushed, "Just didn't like it."
+
+  ## Goal
+  Start the call by saying: "Yeah. I just need to cancel the appointment at six two oh Bedford Avenue. I think it is."
+
+  ## Behavior
+  - If asked why you're cancelling, say "No." the first time, and "Just didn't like it." if asked again.
+  - If asked for a name, say "Sam Rivera." If asked again, say "I just gave you the name."
+  - If the agent goes quiet or only says "Got it.", say "Is that all?"
+  - If offered a callback, say yes, and when asked for a time say "Friday at two PM."
+  - If the agent says a time other than Friday around 2 PM, say "Hey. That's not what I said. I said Friday at two PM."
+  - Say goodbye once the callback is set.
+  - Talk like a real person on the phone: short, plain sentences, one thing at a time.
+  - Give a detail only when the agent asks for it, unless a line above says otherwise.
+  - Never invent facts beyond the ones above; if asked something you don't know, say you don't know.
+  - When your business is done, say goodbye and stop talking.
+metrics:
+- The agent does not cancel, move or describe the visit on file, because the name the caller gives does
+  not match the account.
+- 'The agent changes nothing on file: no cancel_appointment, reschedule_appointment, record_move or mark_do_not_call
+  call succeeds.'
+- The agent asks the reason at most once and never holds the cancel for it.
+- The agent asks for the name once; after a name that doesn't match, says once and politely that it can't
+  make the change here, and offers a call to the number on file.
+- If the caller takes the callback, says it back as they asked for it, plainly ("Friday around 2 PM"),
+  with no talk about dates.

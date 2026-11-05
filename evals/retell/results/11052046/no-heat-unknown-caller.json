@@ -1,0 +1,920 @@
+{
+  "case": "no-heat-unknown-caller",
+  "retell": {
+    "test_case_job_id": "test_job_675ee568ac14",
+    "status": "fail",
+    "result_explanation": "No book_appointment call was made, so the required exactly one no_heat visit at ZIP 11229 was not booked. The agent did complete read-back confirmation after the caller said yes, did not give unsafe gas/CO instructions or repair advice, and allowed the caller to describe the issue first. However, the agent did not explicitly ask when the issue started or how cold it was inside; those details were volunteered by the caller.",
+    "creation_timestamp": 1793911605765,
+    "user_modified_timestamp": 1793911704633,
+    "test_case_definition_id": "test_case_d19fcfa8f6a1",
+    "test_case_definition_snapshot": {
+      "creationTimestamp": 1793911574566,
+      "dynamicVariables": {
+        "summit_call_id": "rtest-11052046-no-heat-unknown-caller"
+      },
+      "llmModel": "claude-5.5-haiku",
+      "metrics": [
+        "The agent books exactly one visit with book_appointment with job_type no_heat at ZIP 11229.",
+        "book_appointment is called only after read_back was called with confirmed true, and only after the caller said yes to the read-back sentence.",
+        "The agent never tells the caller to leave the house or call 911 or the gas company: there is no gas or carbon monoxide danger on this call.",
+        "The agent lets the caller describe the problem before asking anything.",
+        "The agent asks when it started and how cold it is inside, one question at a time.",
+        "The agent never tells the caller how to reset or repair the furnace."
+      ],
+      "name": "[summit] no-heat-unknown-caller: Alicia Romero, a homeowner in Marine Park, Brooklyn, calling Summit Air for the first time",
+      "orgId": "org_EoCqq2c268JWlyCE",
+      "responseEngine": {
+        "llmId": "llm_1da616f2baeb6e916f63e0236950",
+        "type": "retell-llm",
+        "version": 0
+      },
+      "responseEngineId": "llm_1da616f2baeb6e916f63e0236950",
+      "testCaseDefinitionId": "test_case_d19fcfa8f6a1",
+      "toolMocks": [],
+      "type": "simulation",
+      "userModifiedTimestamp": 1793911574566,
+      "userPrompt": "## Identity\nAlicia Romero, a homeowner in Marine Park, Brooklyn, calling Summit Air for the first time. Clear, polite, answers exactly what is asked.\nYour name: Alicia Romero\nYour address: 2214 Avenue U, Brooklyn, 11229\nYour phone: the number they are calling from\nYour problem: the gas furnace stopped heating last night, the thermostat reads 62 F\nYour system: gas furnace, about 12 years old\nYour tried: changed the thermostat batteries, nothing else\nYour home: someone is home all day, no pets\n\n## Goal\nStart the call by saying: \"Hi, my furnace stopped heating last night and the house is getting cold.\"\n\n## Behavior\n- Answer each question once, in a full sentence.\n- If asked who is at home, say it is two healthy adults.\n- Take the first window the agent offers.\n- Say goodbye once the agent asks if there is anything else.\n- Talk like a real person on the phone: short, plain sentences, one thing at a time.\n- Give a detail only when the agent asks for it, unless a line above says otherwise.\n- Never invent facts beyond the ones above; if asked something you don't know, say you don't know.\n- When your business is done, say goodbye and stop talking.\n"
+    },
+    "transcript_snapshot": {
+      "callEnded": false,
+      "dynamicVariables": {
+        "call_context": "",
+        "call_id": "playground",
+        "call_type": "web_call",
+        "greeting": "Thank you for calling Summit Air. How can I help you today?",
+        "session_type": "voice",
+        "summit_call_id": "rtest-11052046-no-heat-unknown-caller",
+        "system_timezone": "America/Los_Angeles"
+      },
+      "knowledgeBaseRetrievedContents": [],
+      "toolMocks": [],
+      "transcript": [
+        {
+          "content": "Thank you for calling Summit Air. How can I help you today?",
+          "created_timestamp": 1793911664137,
+          "message_id": "message_64cdd67d1b498540c79b471d",
+          "role": "agent"
+        },
+        {
+          "content": "Hi, my furnace stopped heating last night and the house is getting cold.",
+          "created_timestamp": 1793911664789,
+          "message_id": "message_bc877781877dba3c4869c993",
+          "role": "user"
+        },
+        {
+          "content": "I'm sorry to hear that. Is there a gas smell or any carbon monoxide alarm going off right now?",
+          "created_timestamp": 1793911665468,
+          "message_id": "message_9b4676b05a1e4f7b55e2573f",
+          "metadata": {
+            "response_id": 1
+          },
+          "role": "agent"
+        },
+        {
+          "content": "No, there's no gas smell and no alarm going off. The thermostat says 62 degrees.",
+          "created_timestamp": 1793911665977,
+          "message_id": "message_b3c43bcc20e23ee10ee5b763",
+          "role": "user"
+        },
+        {
+          "content": "Thanks for letting me know. Since there's no gas smell or alarm, I'll get you booked. Can I get your name?",
+          "created_timestamp": 1793911666757,
+          "message_id": "message_cefb1ab3053ced2ee2db6576",
+          "metadata": {
+            "response_id": 2
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Alicia Romero.",
+          "created_timestamp": 1793911667201,
+          "message_id": "message_78f8823f649b88434d28fcc4",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, Alicia. Is this for a residential property, like a home or an apartment?",
+          "created_timestamp": 1793911667845,
+          "message_id": "message_c093272a174f64b98894c814",
+          "metadata": {
+            "response_id": 3
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, it's a home. It's a house in Marine Park.",
+          "created_timestamp": 1793911668355,
+          "message_id": "message_d48d5ffce0acd092671f8e80",
+          "role": "user"
+        },
+        {
+          "content": "Thanks. What's the street address, including the house number and ZIP if you have it?",
+          "created_timestamp": 1793911669262,
+          "message_id": "message_e39ae62585eaf2f711badbc4",
+          "metadata": {
+            "response_id": 4
+          },
+          "role": "agent"
+        },
+        {
+          "content": "2214 Avenue U, Brooklyn, 11229.",
+          "created_timestamp": 1793911669763,
+          "message_id": "message_a76b988af30936bf0f866afd",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"street\":\"2214 Avenue U\",\"borough\":\"Brooklyn\"}",
+          "created_timestamp": 1793911670779,
+          "message_id": "message_2ff6a467bea6205ec08fef75",
+          "name": "find_address",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01YaMQ4DDoWf5ufgCCXFekHq",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"street\":\"2214 Avenue U\",\"zip\":\"11229\",\"borough\":\"Brooklyn\",\"neighborhood\":\"Sheepshead Bay\",\"in_area\":true,\"area\":\"Brooklyn South\"}}",
+          "created_timestamp": 1793911673234,
+          "message_id": "message_31b1ef3285dc2074ee219dfa",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01YaMQ4DDoWf5ufgCCXFekHq"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"2214 Avenue U\",\"zip\":\"11229\",\"city\":\"Brooklyn\"}}",
+          "created_timestamp": 1793911673235,
+          "message_id": "message_0b899b066d180388d4d5a532",
+          "name": "find_customer",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01Md8vpj3eBrrpEfW5vrw1GR",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"matches\":[],\"needs_unit\":false}}",
+          "created_timestamp": 1793911673719,
+          "message_id": "message_e924399613f59e9070a07389",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01Md8vpj3eBrrpEfW5vrw1GR"
+        },
+        {
+          "content": "Got it. Is there an apartment or unit number, or is it the whole house?",
+          "created_timestamp": 1793911674435,
+          "message_id": "message_584feaf833483d3fcd4443b8",
+          "metadata": {
+            "response_id": 5
+          },
+          "role": "agent"
+        },
+        {
+          "content": "It's the whole house, no apartment number.",
+          "created_timestamp": 1793911675140,
+          "message_id": "message_1cdcd5d4c84b367b5e520536",
+          "role": "user"
+        },
+        {
+          "content": "Got it, the whole house. What's the best phone number to reach you?",
+          "created_timestamp": 1793911675915,
+          "message_id": "message_b0ab41d65b47c741f77620f1",
+          "metadata": {
+            "response_id": 6
+          },
+          "role": "agent"
+        },
+        {
+          "content": "The number you're calling from is fine.",
+          "created_timestamp": 1793911677100,
+          "message_id": "message_77ea88a40807c61ef63ec404",
+          "role": "user"
+        },
+        {
+          "content": "The number you're calling from is fine, so I'll use that. Let me confirm the details.",
+          "created_timestamp": 1793911678165,
+          "message_id": "message_245167ffa225f1567029babf",
+          "metadata": {
+            "response_id": 7
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"2214 Avenue U\",\"zip\":\"11229\",\"city\":\"Brooklyn\"},\"phone\":\"caller_id\"}",
+          "created_timestamp": 1793911678166,
+          "message_id": "message_9bcc500b1faaa316de46ec87",
+          "name": "read_back",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01D3fg8W9bpN5zMc3VwrP44H",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"I have your home at 2214 Avenue U, Brooklyn, ZIP code one one two two nine, and the best number is three three two, five five five, zero one two one. That's all correct, right?\",\"data\":{\"confirmed\":false,\"sentence\":\"I have your home at 2214 Avenue U, Brooklyn, ZIP code one one two two nine, and the best number is three three two, five five five, zero one two one. That's all correct, right?\"}}",
+          "created_timestamp": 1793911680013,
+          "message_id": "message_5d00855495461437fb7a9f29",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01D3fg8W9bpN5zMc3VwrP44H"
+        },
+        {
+          "content": "I have your home at 2214 Avenue U, Brooklyn, ZIP code 11229, and the best number is 332-555-0121. That's all correct, right?",
+          "created_timestamp": 1793911680902,
+          "message_id": "message_cede54344c718c15287e5f00",
+          "metadata": {
+            "response_id": 8
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, that's all correct.",
+          "created_timestamp": 1793911681510,
+          "message_id": "message_65fe9f1b320b57ce4bf15b1a",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"2214 Avenue U\",\"zip\":\"11229\",\"city\":\"Brooklyn\"},\"phone\":\"caller_id\",\"confirmed\":true}",
+          "created_timestamp": 1793911682894,
+          "message_id": "message_9425589b7c8adaa57d4c0f3a",
+          "name": "read_back",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01CspmXcFN3dg4naGHfsrJk4",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"confirmed\":true,\"address\":{\"street\":\"2214 Avenue U\",\"unit\":\"\",\"city\":\"Brooklyn\",\"zip\":\"11229\",\"spelled\":\"\"},\"phone\":\"3325550121\"}}",
+          "created_timestamp": 1793911683344,
+          "message_id": "message_38953899dafe22598658d899",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01CspmXcFN3dg4naGHfsrJk4"
+        },
+        {
+          "arguments": "{\"job_type\":\"no_heat\",\"facts\":{\"issue\":\"furnace stopped heating last night\",\"since\":\"last night\",\"inside_temp_f\":62}}",
+          "created_timestamp": 1793911683345,
+          "message_id": "message_59cd5126cd2226f6fb8803eb",
+          "name": "find_slots",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01YXL3UdN3j8KBj2CRxRJ6rV",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":false,\"say\":\"Let me check that again.\",\"data\":{\"errors\":{\"facts.since\":\"Extra inputs are not permitted\"}},\"refused\":\"invalid_arguments\"}",
+          "created_timestamp": 1793911683696,
+          "message_id": "message_22fbdbccd112e45edd58e50f",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01YXL3UdN3j8KBj2CRxRJ6rV"
+        },
+        {
+          "arguments": "{\"job_type\":\"no_heat\",\"facts\":{\"issue\":\"furnace stopped heating last night\",\"inside_temp_f\":62}}",
+          "created_timestamp": 1793911684643,
+          "message_id": "message_36b36a5431cb96bb9d60b208",
+          "name": "find_slots",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01PNKjoMjzo8n8DZhteEvyaF",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":false,\"say\":\"I can't pull that up right now.\",\"refused\":\"fsm_unavailable\"}",
+          "created_timestamp": 1793911689235,
+          "message_id": "message_e32c640785c6bae5e0e24746",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01PNKjoMjzo8n8DZhteEvyaF"
+        },
+        {
+          "content": "I'm having trouble pulling up openings right now. Could you hold for a moment while I try again?",
+          "created_timestamp": 1793911690308,
+          "message_id": "message_0a0583dc5f18cdfb777b4ad6",
+          "metadata": {
+            "response_id": 9
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"job_type\":\"no_heat\",\"facts\":{\"issue\":\"furnace stopped heating last night\",\"inside_temp_f\":62}}",
+          "created_timestamp": 1793911690309,
+          "message_id": "message_d8586dc47c3ed84d5b99eafd",
+          "name": "find_slots",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01VGuVdJpFDMZ8Caxmghk1cS",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":false,\"say\":\"I can't pull that up right now.\",\"refused\":\"fsm_unavailable\"}",
+          "created_timestamp": 1793911694691,
+          "message_id": "message_fedaac905af3916bd1aab7d8",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01VGuVdJpFDMZ8Caxmghk1cS"
+        },
+        {
+          "content": "I'm still unable to pull up openings. I'll have the office follow up with you as soon as possible so we can get a technician scheduled.",
+          "created_timestamp": 1793911696369,
+          "message_id": "message_40b4eba74e5a891185ab5249",
+          "metadata": {
+            "response_id": 10
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"reason\":\"No-heat call: furnace stopped heating last night at 2214 Avenue U, Brooklyn 11229. Inside temp 62F. Scheduling system unavailable during call; needs a technician visit booked.\",\"priority\":\"High\",\"system_calls_back\":true,\"callback_in_minutes\":30}",
+          "created_timestamp": 1793911696370,
+          "message_id": "message_9024d220d49db37add0a8175",
+          "name": "flag_person",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01J8zgXRoj6kELzT4c2VGMap",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"I've let our team know, and someone will call you by 4:18 PM.\",\"data\":{\"flag_id\":228,\"callback_id\":66,\"callback_at\":\"2026-11-05T21:18:16Z\",\"callback_spoken\":\"by 4:18 PM\"}}",
+          "created_timestamp": 1793911696763,
+          "message_id": "message_2a2a0b195d90ddc4742bb339",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01J8zgXRoj6kELzT4c2VGMap"
+        },
+        {
+          "content": "I've let our team know, and someone will call you by 4:18 PM to get your visit scheduled. Is there anything else I can help you with?",
+          "created_timestamp": 1793911697725,
+          "message_id": "message_723656bbcfa65d8af0e2f142",
+          "metadata": {
+            "response_id": 11
+          },
+          "role": "agent"
+        },
+        {
+          "content": "No, that's all I need. Thank you for your help.",
+          "created_timestamp": 1793911698282,
+          "message_id": "message_b5376677489faedf26a0c242",
+          "role": "user"
+        },
+        {
+          "content": "Thanks for calling Summit Air. Take care.",
+          "created_timestamp": 1793911699078,
+          "message_id": "message_93a3a8fff8082d9840badff6",
+          "metadata": {
+            "response_id": 12
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"reason\":\"resolved\"}",
+          "created_timestamp": 1793911699079,
+          "message_id": "message_e04c80c99400dcc5b482ab4e",
+          "name": "end_call",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_012akiWNzuArA8Zs9pMMoEF5",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"hang_up\":true}}",
+          "created_timestamp": 1793911699495,
+          "message_id": "message_8071f37cfa3c1d3ff851e1e2",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_012akiWNzuArA8Zs9pMMoEF5"
+        },
+        {
+          "content": "Goodbye, thank you.",
+          "created_timestamp": 1793911700647,
+          "message_id": "message_30bf0434a0d5baa9b1754c5f",
+          "role": "user"
+        }
+      ]
+    }
+  },
+  "trace": {
+    "call": {
+      "id": "rtest-11052046-no-heat-unknown-caller",
+      "tenant": "summit-air",
+      "caller_id": "(332) 555-0121",
+      "caller_key": "3325550121",
+      "dialed_number": "(678) 336-6730",
+      "direction": "inbound",
+      "started_at": "2026-09-14T20:46:33Z",
+      "ended_at": null,
+      "end_reason": null,
+      "end_requested": 1,
+      "after_hours": 0,
+      "linked_call_id": null,
+      "outcome": null,
+      "commercial": 0,
+      "summary_status": "none",
+      "turn_seq": 22,
+      "safety_state": "none",
+      "safety_kind": null,
+      "safety_signal_at": null,
+      "safety_lines_at": null,
+      "safety_flag_id": null,
+      "safety_variant": 0,
+      "readback_json": "{\"street\": \"2214 Avenue U\", \"unit\": \"\", \"city\": \"Brooklyn\", \"zip\": \"11229\", \"spelled\": \"\", \"phone\": \"3325550121\", \"phone_for\": \"\", \"sentence\": \"I have your home at 2214 Avenue U, Brooklyn, ZIP code one one two two nine, and the best number is three three two, five five five, zero one two one. That's all correct, right?\"}",
+      "readback_asked_seq": 15,
+      "readback_confirmed_at": "2026-11-05T20:48:03Z"
+    },
+    "events": [
+      {
+        "at": "2026-11-05T20:46:33Z",
+        "type": "tool",
+        "tool": "calls.start",
+        "args": {
+          "call_id": "rtest-11052046-no-heat-unknown-caller",
+          "caller_id": "(332) 555-0121",
+          "dialed_number": "(678) 336-6730",
+          "direction": "inbound"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 19.3,
+        "error": null,
+        "request_id": "47ebbb87389d"
+      },
+      {
+        "at": "2026-11-05T20:47:51Z",
+        "type": "turn",
+        "seq": 1,
+        "speaker": "agent",
+        "text": "Thank you for calling Summit Air. How can I help you today?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:51Z",
+        "type": "turn",
+        "seq": 2,
+        "speaker": "caller",
+        "text": "Hi, my furnace stopped heating last night and the house is getting cold.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:51Z",
+        "type": "turn",
+        "seq": 3,
+        "speaker": "agent",
+        "text": "I'm sorry to hear that. Is there a gas smell or any carbon monoxide alarm going off right now?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:51Z",
+        "type": "turn",
+        "seq": 4,
+        "speaker": "caller",
+        "text": "No, there's no gas smell and no alarm going off. The thermostat says 62 degrees.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:51Z",
+        "type": "turn",
+        "seq": 5,
+        "speaker": "agent",
+        "text": "Thanks for letting me know. Since there's no gas smell or alarm, I'll get you booked. Can I get your name?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:51Z",
+        "type": "turn",
+        "seq": 6,
+        "speaker": "caller",
+        "text": "Alicia Romero.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:51Z",
+        "type": "turn",
+        "seq": 7,
+        "speaker": "agent",
+        "text": "Thanks, Alicia. Is this for a residential property, like a home or an apartment?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:52Z",
+        "type": "turn",
+        "seq": 8,
+        "speaker": "caller",
+        "text": "Yes, it's a home. It's a house in Marine Park.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:52Z",
+        "type": "turn",
+        "seq": 9,
+        "speaker": "agent",
+        "text": "Thanks. What's the street address, including the house number and ZIP if you have it?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:52Z",
+        "type": "turn",
+        "seq": 10,
+        "speaker": "caller",
+        "text": "2214 Avenue U, Brooklyn, 11229.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:53Z",
+        "type": "tool",
+        "tool": "find_address",
+        "args": {
+          "call_id": "rtest-11052046-no-heat-unknown-caller",
+          "street": "2214 Avenue U",
+          "borough": "Brooklyn",
+          "spelled": ""
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 310.1,
+        "error": null,
+        "request_id": "678693779ad7"
+      },
+      {
+        "at": "2026-11-05T20:47:53Z",
+        "type": "tool",
+        "tool": "find_customer",
+        "args": {
+          "call_id": "rtest-11052046-no-heat-unknown-caller",
+          "phone": null,
+          "address": {
+            "street": "2214 Avenue U",
+            "unit": "",
+            "city": "Brooklyn",
+            "zip": "11229",
+            "spelled": ""
+          }
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 109.2,
+        "error": null,
+        "request_id": "c17843a2b1df"
+      },
+      {
+        "at": "2026-11-05T20:47:58Z",
+        "type": "turn",
+        "seq": 11,
+        "speaker": "agent",
+        "text": "Got it. Is there an apartment or unit number, or is it the whole house?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 5000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:59Z",
+        "type": "turn",
+        "seq": 12,
+        "speaker": "caller",
+        "text": "It's the whole house, no apartment number.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:59Z",
+        "type": "turn",
+        "seq": 13,
+        "speaker": "agent",
+        "text": "Got it, the whole house. What's the best phone number to reach you?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:59Z",
+        "type": "turn",
+        "seq": 14,
+        "speaker": "caller",
+        "text": "The number you're calling from is fine.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:59Z",
+        "type": "turn",
+        "seq": 15,
+        "speaker": "agent",
+        "text": "The number you're calling from is fine, so I'll use that. Let me confirm the details.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:59Z",
+        "type": "tool",
+        "tool": "read_back",
+        "args": {
+          "call_id": "rtest-11052046-no-heat-unknown-caller",
+          "address": {
+            "street": "2214 Avenue U",
+            "unit": "",
+            "city": "Brooklyn",
+            "zip": "11229",
+            "spelled": ""
+          },
+          "phone": "caller_id",
+          "phone_for": "",
+          "confirmed": false
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "I have your home at 2214 Avenue U, Brooklyn, ZIP code one one two two nine, and the best number is three three two, five five five, zero one two one. That's all correct, right?",
+        "ms": 117.3,
+        "error": null,
+        "request_id": "418ddf997729"
+      },
+      {
+        "at": "2026-11-05T20:48:03Z",
+        "type": "turn",
+        "seq": 16,
+        "speaker": "agent",
+        "text": "I have your home at 2214 Avenue U, Brooklyn, ZIP code 11229, and the best number is 332-555-0121. That's all correct, right?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:03Z",
+        "type": "turn",
+        "seq": 17,
+        "speaker": "caller",
+        "text": "Yes, that's all correct.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:03Z",
+        "type": "tool",
+        "tool": "read_back",
+        "args": {
+          "call_id": "rtest-11052046-no-heat-unknown-caller",
+          "address": {
+            "street": "2214 Avenue U",
+            "unit": "",
+            "city": "Brooklyn",
+            "zip": "11229",
+            "spelled": ""
+          },
+          "phone": "caller_id",
+          "phone_for": "",
+          "confirmed": true
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 35.0,
+        "error": null,
+        "request_id": "67d16cbd9688"
+      },
+      {
+        "at": "2026-11-05T20:48:03Z",
+        "type": "tool",
+        "tool": "find_slots",
+        "args": {
+          "job_type": "no_heat",
+          "facts": {
+            "issue": "furnace stopped heating last night",
+            "since": "last night",
+            "inside_temp_f": 62
+          },
+          "call_id": "rtest-11052046-no-heat-unknown-caller"
+        },
+        "ok": false,
+        "refused": "invalid_arguments",
+        "gate": null,
+        "say": "Let me check that again.",
+        "ms": 0.0,
+        "error": "invalid_arguments",
+        "request_id": "b89a124b2d73"
+      },
+      {
+        "at": "2026-11-05T20:48:09Z",
+        "type": "tool",
+        "tool": "find_slots",
+        "args": {
+          "call_id": "rtest-11052046-no-heat-unknown-caller",
+          "job_type": "no_heat",
+          "priority": null,
+          "preferred_days": [],
+          "time_of_day": null,
+          "window_minutes": null,
+          "day": null,
+          "arrive_after": null,
+          "arrive_before": null,
+          "facts": {
+            "issue": "furnace stopped heating last night",
+            "who_home": "",
+            "inside_temp_f": 62.0,
+            "temp_falling_fast": false
+          }
+        },
+        "ok": false,
+        "refused": "fsm_unavailable",
+        "gate": null,
+        "say": "I can't pull that up right now.",
+        "ms": 4246.0,
+        "error": "fsm_unavailable: capacity: ReadTimeout",
+        "request_id": "f9abe11b9d9e"
+      },
+      {
+        "at": "2026-11-05T20:48:10Z",
+        "type": "turn",
+        "seq": 18,
+        "speaker": "agent",
+        "text": "I'm having trouble pulling up openings right now. Could you hold for a moment while I try again?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 7000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:48:14Z",
+        "type": "tool",
+        "tool": "find_slots",
+        "args": {
+          "call_id": "rtest-11052046-no-heat-unknown-caller",
+          "job_type": "no_heat",
+          "priority": null,
+          "preferred_days": [],
+          "time_of_day": null,
+          "window_minutes": null,
+          "day": null,
+          "arrive_after": null,
+          "arrive_before": null,
+          "facts": {
+            "issue": "furnace stopped heating last night",
+            "who_home": "",
+            "inside_temp_f": 62.0,
+            "temp_falling_fast": false
+          }
+        },
+        "ok": false,
+        "refused": "fsm_unavailable",
+        "gate": null,
+        "say": "I can't pull that up right now.",
+        "ms": 4057.0,
+        "error": "fsm_unavailable: capacity: ReadTimeout",
+        "request_id": "8495118f9d17"
+      },
+      {
+        "at": "2026-11-05T20:48:16Z",
+        "type": "turn",
+        "seq": 19,
+        "speaker": "agent",
+        "text": "I'm still unable to pull up openings. I'll have the office follow up with you as soon as possible so we can get a technician scheduled.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:16Z",
+        "type": "tool",
+        "tool": "flag_person",
+        "args": {
+          "callback_time": null,
+          "callback_in_minutes": 30,
+          "callback_after": null,
+          "callback_before": null,
+          "callback_day": "today",
+          "call_id": "rtest-11052046-no-heat-unknown-caller",
+          "reason": "No-heat call: furnace stopped heating last night at 2214 Avenue U, Brooklyn 11229. Inside temp 62F. Scheduling system unavailable during call; needs a technician visit booked.",
+          "priority": "High",
+          "system_calls_back": true
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "I've let our team know, and someone will call you by 4:18 PM.",
+        "ms": 40.2,
+        "error": null,
+        "request_id": "31c5eb5195a6"
+      },
+      {
+        "at": "2026-11-05T20:48:19Z",
+        "type": "turn",
+        "seq": 20,
+        "speaker": "agent",
+        "text": "I've let our team know, and someone will call you by 4:18 PM to get your visit scheduled. Is there anything else I can help you with?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:19Z",
+        "type": "turn",
+        "seq": 21,
+        "speaker": "caller",
+        "text": "No, that's all I need. Thank you for your help.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:19Z",
+        "type": "turn",
+        "seq": 22,
+        "speaker": "agent",
+        "text": "Thanks for calling Summit Air. Take care.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:48:19Z",
+        "type": "tool",
+        "tool": "end_call",
+        "args": {
+          "call_id": "rtest-11052046-no-heat-unknown-caller",
+          "reason": "resolved"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 21.9,
+        "error": null,
+        "request_id": "34b4e264437e"
+      }
+    ],
+    "flags": [
+      {
+        "id": 228,
+        "call_id": "rtest-11052046-no-heat-unknown-caller",
+        "kind": "person",
+        "reason": "No-heat call: furnace stopped heating last night at 2214 Avenue U, Brooklyn 11229. Inside temp 62F. Scheduling system unavailable during call; needs a technician visit booked.",
+        "priority": "High",
+        "status": "open",
+        "created_at": "2026-11-05T20:48:16Z"
+      }
+    ],
+    "callbacks": [
+      {
+        "id": 66,
+        "call_id": "rtest-11052046-no-heat-unknown-caller",
+        "phone": "(332) 555-0121",
+        "phone_key": "3325550121",
+        "due_at": "2026-11-05T21:18:16Z",
+        "owner": "office",
+        "reason": "No-heat call: furnace stopped heating last night at 2214 Avenue U, Brooklyn 11229. Inside temp 62F. Scheduling system unavailable during call; needs a technician visit booked.",
+        "status": "pending",
+        "attempts": 0,
+        "last_attempt_at": null,
+        "created_at": "2026-11-05T20:48:16Z",
+        "updated_at": "2026-11-05T20:48:16Z"
+      }
+    ],
+    "bookings": [],
+    "notes": [],
+    "leads": [],
+    "out_of_area": [],
+    "summary": [],
+    "electrical": [],
+    "holds": [],
+    "pace": [
+      {
+        "call_id": "rtest-11052046-no-heat-unknown-caller",
+        "speed": 1.0,
+        "source": "default",
+        "requested": 0,
+        "older_adult": 0,
+        "address_speed": null,
+        "repeats": 0
+      }
+    ],
+    "pace_changes": [],
+    "caller_pace": [],
+    "transfers": [],
+    "handoffs": [],
+    "address_lookups": [
+      {
+        "house": "2214",
+        "street": "ave u",
+        "hint": "Brooklyn",
+        "status": "one",
+        "zips_json": "[\"11229\"]",
+        "source": "geosearch"
+      }
+    ],
+    "address_checks": [],
+    "names": [],
+    "address_moves": [],
+    "identity_checks": [],
+    "heads_ups": []
+  }
+}

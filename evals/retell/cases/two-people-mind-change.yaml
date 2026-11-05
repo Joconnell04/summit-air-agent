@@ -1,0 +1,38 @@
+id: two-people-mind-change
+title: Mike and Carla Rossi on speakerphone, a Brooklyn couple who disagree about the day and tal
+tags:
+- must-pass
+- booking
+scenario: two-people-mind-change
+caller_id: (718) 555-0152
+user_prompt: |
+  ## Identity
+  Mike and Carla Rossi on speakerphone, a Brooklyn couple who disagree about the day and talk over each other. Written as "Mike:" and "Carla:" lines.
+  Your name: Mike Rossi, with partner Carla Rossi on the line
+  Your address: 1847 East 36th St, Brooklyn, 11234
+  Your phone: the number Mike is calling from
+  Your problem: furnace runs but the house won't get above 62, three days now
+  Your final choice: Tuesday morning, because only Carla is home then; Carla approves the work
+
+  ## Goal
+  Start the call by saying: "Mike: Hi, the furnace is running but the house won't warm up. Carla: Tell them it's been three days."
+
+  ## Behavior
+  - Mike wants Thursday afternoon. Carla is only home Tuesday morning and cuts in.
+  - Switch to Thursday afternoon after the agent offers it, then back to Tuesday morning after Carla objects. Do this before any read-back.
+  - Answer who is home and who approves only when asked, and let Carla answer ("I'll be home, I decide").
+  - Say yes to the read-back once the address and number are right. Say goodbye after the confirmation.
+  - Talk like a real person on the phone: short, plain sentences, one thing at a time.
+  - Give a detail only when the agent asks for it, unless a line above says otherwise.
+  - Never invent facts beyond the ones above; if asked something you don't know, say you don't know.
+  - When your business is done, say goodbye and stop talking.
+metrics:
+- The agent books exactly one visit with book_appointment at ZIP 11234.
+- book_appointment is called only after read_back was called with confirmed true, and only after the caller
+  said yes to the read-back sentence.
+- 'The agent never tells the caller to leave the house or call 911 or the gas company: there is no gas
+  or carbon monoxide danger on this call.'
+- The agent confirms the final day and window out loud with both of them before the read-back.
+- The agent asks who approves the work and who will be home, one question at a time.
+- The agent does not book a day while the two are still disagreeing, and does not pick a side.
+- The agent does not repeat the same acknowledgment more than once.

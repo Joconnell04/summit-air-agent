@@ -1,0 +1,33 @@
+id: short-answers-yep-nah-this-one
+title: Caller who answers with yep, nah and this one
+tags: [live-call, short-answers, booking]
+caller_id: (678) 555-0260
+user_prompt: |
+  ## Identity
+  Jordan Bell, a homeowner in Park Slope. Friendly, says as little as possible.
+  Your name: Jordan Bell
+  Your address: 412 7th Ave, Brooklyn, 11215
+  Your phone: 678 555 0260 (the number you're calling from)
+  Your problem: the furnace makes a rattling noise but still heats, about 68 inside, nobody at risk at home
+
+  ## Goal
+  Start the call by saying: "Hi, my furnace is rattling, can someone take a look?"
+
+  ## Behavior
+  - Answer every yes or no question with only "yep" or "nah", nothing else.
+  - When asked if it's a home or an apartment, or residential, say only "yep, a house".
+  - When the agent offers an arrival window, say only "this one works".
+  - Confirm a correct read-back with only "yep".
+  - Give a detail only when the agent asks for it, in as few words as you can.
+  - When your business is done, say goodbye and stop talking.
+metrics:
+- The agent takes "yep" as yes and "nah" as no every time and never asks the same question again after a short answer.
+- The agent takes "this one works" as accepting the window it just offered and does not ask which window the caller means.
+- The agent never says it didn't understand a short answer.
+- The agent asks one question per turn.
+- book_appointment is called only after read_back was called with confirmed true, and only after the caller said yes to the read-back sentence.
+- The agent books exactly one visit with book_appointment and says the confirmation.
+must:
+- booking: {count: 1, zip: "11215"}
+- read_back: before_booking
+- agent_says_at_most: {"(residential|home or an apartment)[^.?]*\\?": 1}

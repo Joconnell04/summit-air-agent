@@ -1,0 +1,967 @@
+{
+  "case": "everything-up-front-no-reasked",
+  "retell": {
+    "test_case_job_id": "test_job_795a3ffa8e94",
+    "status": "error",
+    "result_explanation": "Ending the conversation early because the agent did not respond to consecutive user utterances.",
+    "creation_timestamp": 1793911605609,
+    "user_modified_timestamp": 1793911663669,
+    "test_case_definition_id": "test_case_c21eb1de1428",
+    "test_case_definition_snapshot": {
+      "creationTimestamp": 1793911572483,
+      "dynamicVariables": {
+        "summit_call_id": "rtest-11052046-everything-up-front-no-reasked"
+      },
+      "llmModel": "claude-5.5-haiku",
+      "metrics": [
+        "The agent never asks for the caller's name, address, ZIP, inside temperature, or what was already tried, since the caller said all of these in the first line.",
+        "The agent asks one question per turn and never asks the same question twice.",
+        "The agent confirms the address and phone number only through the read_back sentence, not by repeating them anywhere else.",
+        "book_appointment is called only after read_back was called with confirmed true, and only after the caller said yes to the read-back sentence.",
+        "The agent books exactly one visit with book_appointment with job_type no_heat at ZIP 11375."
+      ],
+      "name": "[summit] everything-up-front-no-reasked: Caller who gives name, address and problem in the first breath",
+      "orgId": "org_EoCqq2c268JWlyCE",
+      "responseEngine": {
+        "llmId": "llm_1da616f2baeb6e916f63e0236950",
+        "type": "retell-llm",
+        "version": 0
+      },
+      "responseEngineId": "llm_1da616f2baeb6e916f63e0236950",
+      "testCaseDefinitionId": "test_case_c21eb1de1428",
+      "toolMocks": [],
+      "type": "simulation",
+      "userModifiedTimestamp": 1793911572483,
+      "userPrompt": "## Identity\nRobin Chen, a homeowner in Forest Hills. Organized, has rehearsed what to say.\nYour name: Robin Chen\nYour address: 108-20 71st Ave, Forest Hills, 11375\nYour phone: 678 555 0261 (the number you're calling from)\nYour problem: no heat since this morning, 61 inside, a forced-air gas furnace, you reset the thermostat already; just you and your partner at home, both healthy\n\n## Goal\nStart the call by saying: \"Hi, this is Robin Chen at 108-20 71st Avenue in Forest Hills, 11375. My furnace stopped this morning, it's 61 in here, and I already reset the thermostat.\"\n\n## Behavior\n- If the agent asks for anything you already said, say \"I just told you that\" and repeat it once.\n- Answer other questions plainly. Confirm a correct read-back.\n- Take the first window offered.\n- When your business is done, say goodbye and stop talking.\n"
+    },
+    "transcript_snapshot": {
+      "callEnded": false,
+      "dynamicVariables": {
+        "call_context": "",
+        "call_id": "playground",
+        "call_type": "web_call",
+        "greeting": "Thank you for calling Summit Air. How can I help you today?",
+        "session_type": "voice",
+        "summit_call_id": "rtest-11052046-everything-up-front-no-reasked",
+        "system_timezone": "America/Los_Angeles"
+      },
+      "knowledgeBaseRetrievedContents": [],
+      "toolMocks": [],
+      "transcript": [
+        {
+          "content": "Thank you for calling Summit Air. How can I help you today?",
+          "created_timestamp": 1793911625652,
+          "message_id": "message_2dbaa4371c2953ca52696157",
+          "role": "agent"
+        },
+        {
+          "content": "Hi, this is Robin Chen at 108-20 71st Avenue in Forest Hills, 11375. My furnace stopped this morning, it's 61 in here, and I already reset the thermostat.",
+          "created_timestamp": 1793911626263,
+          "message_id": "message_ea75ce670f41bc30c2580da7",
+          "role": "user"
+        },
+        {
+          "content": "Sorry to hear that, Robin. Since the furnace stopped this morning, I'll get that booked. Is anyone at home who's especially sensitive to the cold?",
+          "created_timestamp": 1793911627194,
+          "message_id": "message_97669409909143e547c4523c",
+          "metadata": {
+            "response_id": 1
+          },
+          "role": "agent"
+        },
+        {
+          "content": "No, it's just me and my partner, and we're both healthy. We're fine for now, but it's getting colder in here, so we'd like someone out as soon as possible.",
+          "created_timestamp": 1793911628047,
+          "message_id": "message_0ee7aa5fe721c918971c9a0f",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, Robin. Got it, I'll note that for the technician. Can I get the best phone number to reach you?",
+          "created_timestamp": 1793911628798,
+          "message_id": "message_40c54e7c1f6d73da5f2512fc",
+          "metadata": {
+            "response_id": 2
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Sure, it's 678 555 0261. That's the number I'm calling from.",
+          "created_timestamp": 1793911629410,
+          "message_id": "message_f55d569cc4cc088f54916212",
+          "role": "user"
+        },
+        {
+          "content": "I can't see the number you're calling from. Could you read it out so I can log it?",
+          "created_timestamp": 1793911630344,
+          "message_id": "message_c0890c4172dee6205587a123",
+          "metadata": {
+            "response_id": 3
+          },
+          "role": "agent"
+        },
+        {
+          "content": "I just told you that. It's 678 555 0261, the number I'm calling from.",
+          "created_timestamp": 1793911630932,
+          "message_id": "message_3c794fa6987c1449d97b931d",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, Robin. I'll use 678-555-0261. Let me confirm your address and number.",
+          "created_timestamp": 1793911631982,
+          "message_id": "message_5fd5966cbe28300c564dad5c",
+          "metadata": {
+            "response_id": 4
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"108-20 71st Avenue\",\"city\":\"Forest Hills\",\"zip\":\"11375\"},\"phone\":\"678 555 0261\"}",
+          "created_timestamp": 1793911631983,
+          "message_id": "message_e5ed59e86c0f00453082120e",
+          "name": "read_back",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01HKMobp7p8Q6jZKhCXmb8mD",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"I have your home at 108-20 71st Avenue, Forest Hills, ZIP code one one three seven five, and the best number is six seven eight, five five five, zero two six one. That's all correct, right?\",\"data\":{\"confirmed\":false,\"sentence\":\"I have your home at 108-20 71st Avenue, Forest Hills, ZIP code one one three seven five, and the best number is six seven eight, five five five, zero two six one. That's all correct, right?\"}}",
+          "created_timestamp": 1793911632789,
+          "message_id": "message_06012d5bbfc86524dee526c5",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01HKMobp7p8Q6jZKhCXmb8mD"
+        },
+        {
+          "content": "I have your home at 108-20 71st Avenue, Forest Hills, ZIP code one one three seven five, and the best number is six seven eight, five five five, zero two six one. That's all correct, right?",
+          "created_timestamp": 1793911633655,
+          "message_id": "message_dde09872269f0835695dfab7",
+          "metadata": {
+            "response_id": 5
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, that's all correct. Thank you. What's the earliest window you have today?",
+          "created_timestamp": 1793911634342,
+          "message_id": "message_9203a80d30748d5f58ad1fc6",
+          "role": "user"
+        },
+        {
+          "content": "That's confirmed. Let me check today's openings.",
+          "created_timestamp": 1793911635987,
+          "message_id": "message_aa7fd45a24544e01a6989b91",
+          "metadata": {
+            "response_id": 6
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"108-20 71st Avenue\",\"city\":\"Forest Hills\",\"zip\":\"11375\"},\"phone\":\"678 555 0261\",\"confirmed\":true}",
+          "created_timestamp": 1793911635988,
+          "message_id": "message_5337c4fbd2f7c372c7aa6b2d",
+          "name": "read_back",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_017VrChJMsLqhCNwXDZYscxn",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"confirmed\":true,\"address\":{\"street\":\"108-20 71st Avenue\",\"unit\":\"\",\"city\":\"Forest Hills\",\"zip\":\"11375\",\"spelled\":\"\"},\"phone\":\"6785550261\"}}",
+          "created_timestamp": 1793911636420,
+          "message_id": "message_180b01955fdf1c4ee76391b1",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_017VrChJMsLqhCNwXDZYscxn"
+        },
+        {
+          "arguments": "{\"job_type\":\"no_heat\",\"day\":\"today\",\"facts\":{\"issue\":\"Furnace stopped this morning; thermostat already reset\",\"since\":\"this morning\",\"inside_temp_f\":61,\"who_home\":\"Caller and partner, both healthy, no one especially sensitive to cold\"},\"priority\":\"High\"}",
+          "created_timestamp": 1793911636421,
+          "message_id": "message_00c88a69153b45f135fbf6d9",
+          "name": "find_slots",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01AqQmFf2UXeBxu96x7CoJRK",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":false,\"say\":\"Let me check that again.\",\"data\":{\"errors\":{\"facts.since\":\"Extra inputs are not permitted\"}},\"refused\":\"invalid_arguments\"}",
+          "created_timestamp": 1793911636713,
+          "message_id": "message_b2e02f666c3fc7f2aa9258ea",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01AqQmFf2UXeBxu96x7CoJRK"
+        },
+        {
+          "arguments": "{\"job_type\":\"no_heat\",\"day\":\"today\",\"facts\":{\"issue\":\"Furnace stopped this morning; thermostat already reset. Since this morning. Inside 61F.\",\"inside_temp_f\":61,\"who_home\":\"Caller and partner, both healthy, no one especially sensitive to cold\"},\"priority\":\"High\"}",
+          "created_timestamp": 1793911637951,
+          "message_id": "message_b66d8817f8ce4ad19fb91295",
+          "name": "find_slots",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01WBckPBKnssZNuU9gMCkR4M",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"Today I have 4 to 6 or 6 to 8.\",\"data\":{\"priority\":{\"level\":\"High\",\"reasons\":[\"below 65 F inside, caller said \\\"Hi, this is Robin Chen at 108-20 71st Avenue in Forest Hills, 11375. My...\\\"\"],\"requested\":\"High\",\"raised_after_wait\":false},\"windows\":[{\"date\":\"2026-11-05\",\"window\":\"1600-1800\",\"weekday\":\"Thursday\",\"day\":\"today\",\"day_and_date\":\"today, Thursday, November 5\",\"label\":\"4 to 6\",\"part\":\"evening\",\"after_hours\":false},{\"date\":\"2026-11-05\",\"window\":\"1800-2000\",\"weekday\":\"Thursday\",\"day\":\"today\",\"day_and_date\":\"today, Thursday, November 5\",\"label\":\"6 to 8\",\"part\":\"evening\",\"after_hours\":false}]}}",
+          "created_timestamp": 1793911640957,
+          "message_id": "message_33991d399cc80702b0ff1cf5",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01WBckPBKnssZNuU9gMCkR4M"
+        },
+        {
+          "content": "Today I have 4 to 6 or 6 to 8 in the evening. Which would you like?",
+          "created_timestamp": 1793911641669,
+          "message_id": "message_4e6e499895d4bd452b9cfdc6",
+          "metadata": {
+            "response_id": 7
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Take the first window offered: 4 to 6.\n\n\"Let's do the 4 to 6 window, please.\"",
+          "created_timestamp": 1793911642953,
+          "message_id": "message_36924c78c40bba8f16f71e1a",
+          "role": "user"
+        },
+        {
+          "content": "The 4 to 6 window works. Will you be able to approve any repair work the technician recommends?",
+          "created_timestamp": 1793911643844,
+          "message_id": "message_0dbd7952274d8e3ee5e5342e",
+          "metadata": {
+            "response_id": 8
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, I can approve repair work as long as the technician explains what's needed and gives me a price first. Please call or text me before doing anything beyond the basic diagnosis.",
+          "created_timestamp": 1793911644452,
+          "message_id": "message_094113827fc1a35146adf3ec",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, Robin. Will someone be home to let the technician in?",
+          "created_timestamp": 1793911645164,
+          "message_id": "message_e1d967b41909bb926cef447a",
+          "metadata": {
+            "response_id": 9
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, my partner and I will both be home, so someone will be there to let the technician in.",
+          "created_timestamp": 1793911645634,
+          "message_id": "message_93e4452ee2ea9637c730e79f",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, Robin. Is there a gate code, buzzer, or pet the technician should know about?",
+          "created_timestamp": 1793911646374,
+          "message_id": "message_2a0c86f6542f32a7a052a2c5",
+          "metadata": {
+            "response_id": 10
+          },
+          "role": "agent"
+        },
+        {
+          "content": "No gate, no buzzer, and no pets. Just ring the doorbell and we'll let them in. Thanks, and let me know if you need anything else before the 4 to 6 visit.",
+          "created_timestamp": 1793911647250,
+          "message_id": "message_c4bd8b5fd4c19bca6a40fb5c",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, Robin. I'll book that now.",
+          "created_timestamp": 1793911649088,
+          "message_id": "message_cf50f4e5d94d7718a78a18e2",
+          "metadata": {
+            "response_id": 11
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"job_type\":\"no_heat\",\"slot\":{\"date\":\"2026-11-05\",\"window\":\"1600-1800\"},\"details\":{\"approver\":\"Robin Chen\",\"issue\":\"Furnace stopped this morning; thermostat already reset. Inside 61F. No gate, buzzer, or pets; ring doorbell.\",\"since\":\"this morning\",\"tried\":\"Reset the thermostat\",\"who_home\":\"Caller and partner, both healthy, both home\",\"inside_temp_f\":61,\"arrival_notes\":\"No gate, buzzer, or pets. Ring doorbell. Approve repairs only after technician explains and quotes price; call or text before anything beyond basic diagnosis.\"},\"priority\":\"High\"}",
+          "created_timestamp": 1793911649089,
+          "message_id": "message_6f57ffb941f0ca65e911fb23",
+          "name": "book_appointment",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01UK97MR8iXENKzsB57iZq9S",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":false,\"say\":\"Can I get a name for the booking?\",\"data\":{\"errors\":{\"name\":\"needed\"}},\"refused\":\"invalid_arguments\"}",
+          "created_timestamp": 1793911650733,
+          "message_id": "message_32ceedc74362dcdd1b77ba23",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01UK97MR8iXENKzsB57iZq9S"
+        },
+        {
+          "content": "Can I get your name for the booking?",
+          "created_timestamp": 1793911651454,
+          "message_id": "message_cbed341e9ab3b0dec144b9ee",
+          "metadata": {
+            "response_id": 12
+          },
+          "role": "agent"
+        },
+        {
+          "content": "I just told you that. It's Robin Chen, R-O-B-I-N, Chen, C-H-E-N.",
+          "created_timestamp": 1793911652328,
+          "message_id": "message_65565c87d6c36dfdb1631843",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, Robin. I have your name now, so I'll finish the booking.",
+          "created_timestamp": 1793911654138,
+          "message_id": "message_24cb6a223f81da84a85ac761",
+          "metadata": {
+            "response_id": 13
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"job_type\":\"no_heat\",\"slot\":{\"date\":\"2026-11-05\",\"window\":\"1600-1800\"},\"details\":{\"approver\":\"Robin Chen\",\"name\":\"Robin Chen\",\"issue\":\"Furnace stopped this morning; thermostat already reset. Inside 61F. No gate, buzzer, or pets; ring doorbell.\",\"since\":\"this morning\",\"tried\":\"Reset the thermostat\",\"who_home\":\"Caller and partner, both healthy, both home\",\"inside_temp_f\":61,\"arrival_notes\":\"No gate, buzzer, or pets. Ring doorbell. Approve repairs only after technician explains and quotes price; call or text before anything beyond basic diagnosis.\"},\"priority\":\"High\"}",
+          "created_timestamp": 1793911654139,
+          "message_id": "message_29df78070ca6cdcc61c46ec4",
+          "name": "book_appointment",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_019rVYAkiG3gnLN1PK2K7sZk",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"You're all set for today, Thursday, November 5, with the technician arriving between 4 and 6. Anything else?\",\"data\":{\"booking_id\":552,\"appointment_id\":552,\"window\":{\"date\":\"2026-11-05\",\"window\":\"1600-1800\",\"weekday\":\"Thursday\",\"day\":\"today\",\"day_and_date\":\"today, Thursday, November 5\",\"label\":\"4 to 6\",\"part\":\"evening\",\"after_hours\":false},\"priority\":{\"level\":\"High\",\"reasons\":[\"below 65 F inside, caller said \\\"Hi, this is Robin Chen at 108-20 71st Avenue in Forest Hills, 11375. My...\\\"\"],\"raised_after_wait\":false},\"seek_earlier\":false,\"safety_override\":false,\"approval_callback_at\":null,\"return_visit_review\":false}}",
+          "created_timestamp": 1793911655484,
+          "message_id": "message_ac599694e262851a95429707",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_019rVYAkiG3gnLN1PK2K7sZk"
+        },
+        {
+          "content": "You're all set for today, Thursday, November 5, with the technician arriving between 4 and 6. Anything else?",
+          "created_timestamp": 1793911656243,
+          "message_id": "message_7f05eb996d7371f7d1547a82",
+          "metadata": {
+            "response_id": 14
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Nothing else from me, thanks. Just confirm that's a 4 to 6 window today and the tech will ring the doorbell. Thanks for the quick help.",
+          "created_timestamp": 1793911657503,
+          "message_id": "message_0d967efd4492bf5e403e196c",
+          "role": "user"
+        },
+        {
+          "content": "Yes, that's a 4 to 6 window today, and the technician will ring the doorbell. Thanks for calling Summit Air, Robin. Take care.",
+          "created_timestamp": 1793911658449,
+          "message_id": "message_58822f982d571c55474c60df",
+          "metadata": {
+            "response_id": 15
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"reason\":\"resolved\"}",
+          "created_timestamp": 1793911658450,
+          "message_id": "message_cf9582ea67dbb76f05981207",
+          "name": "end_call",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01RwmC2XLr7dNwWqvrABBmJF",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"hang_up\":true}}",
+          "created_timestamp": 1793911658911,
+          "message_id": "message_5f351e1e8fe6ff6ef84204dc",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01RwmC2XLr7dNwWqvrABBmJF"
+        },
+        {
+          "content": ".",
+          "created_timestamp": 1793911659545,
+          "message_id": "message_0ce470809641486e5964cce3",
+          "metadata": {
+            "response_id": 16
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Thanks, that's everything I need. Goodbye.",
+          "created_timestamp": 1793911660093,
+          "message_id": "message_7d31b4b1b6f05efb55994b04",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, that's everything I need. Goodbye.",
+          "created_timestamp": 1793911661315,
+          "message_id": "message_cab5d6115cbdfb9aab732f5e",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, that's everything I need. Goodbye.",
+          "created_timestamp": 1793911662511,
+          "message_id": "message_6b69ed5d5a2c498b13b4fec1",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, that's everything I need. Goodbye.",
+          "created_timestamp": 1793911663668,
+          "message_id": "message_129c1711c0ff3170922766cd",
+          "role": "user"
+        }
+      ]
+    }
+  },
+  "trace": {
+    "call": {
+      "id": "rtest-11052046-everything-up-front-no-reasked",
+      "tenant": "summit-air",
+      "caller_id": "(678) 555-0261",
+      "caller_key": "6785550261",
+      "dialed_number": "(678) 336-6730",
+      "direction": "inbound",
+      "started_at": "2026-08-13T20:46:26Z",
+      "ended_at": null,
+      "end_reason": null,
+      "end_requested": 1,
+      "after_hours": 0,
+      "linked_call_id": null,
+      "outcome": null,
+      "commercial": 0,
+      "summary_status": "none",
+      "turn_seq": 27,
+      "safety_state": "none",
+      "safety_kind": null,
+      "safety_signal_at": null,
+      "safety_lines_at": null,
+      "safety_flag_id": null,
+      "safety_variant": 0,
+      "readback_json": "{\"street\": \"108-20 71st Avenue\", \"unit\": \"\", \"city\": \"Forest Hills\", \"zip\": \"11375\", \"spelled\": \"\", \"phone\": \"6785550261\", \"phone_for\": \"\", \"sentence\": \"I have your home at 108-20 71st Avenue, Forest Hills, ZIP code one one three seven five, and the best number is six seven eight, five five five, zero two six one. That's all correct, right?\"}",
+      "readback_asked_seq": 9,
+      "readback_confirmed_at": "2026-11-05T20:47:16Z"
+    },
+    "events": [
+      {
+        "at": "2026-11-05T20:46:26Z",
+        "type": "tool",
+        "tool": "calls.start",
+        "args": {
+          "call_id": "rtest-11052046-everything-up-front-no-reasked",
+          "caller_id": "(678) 555-0261",
+          "dialed_number": "(678) 336-6730",
+          "direction": "inbound"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 19.2,
+        "error": null,
+        "request_id": "5d59e4a9ee9f"
+      },
+      {
+        "at": "2026-11-05T20:47:12Z",
+        "type": "turn",
+        "seq": 1,
+        "speaker": "agent",
+        "text": "Thank you for calling Summit Air. How can I help you today?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:12Z",
+        "type": "turn",
+        "seq": 2,
+        "speaker": "caller",
+        "text": "Hi, this is Robin Chen at 108-20 71st Avenue in Forest Hills, 11375. My furnace stopped this morning, it's 61 in here, and I already reset the thermostat.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:12Z",
+        "type": "turn",
+        "seq": 3,
+        "speaker": "agent",
+        "text": "Sorry to hear that, Robin. Since the furnace stopped this morning, I'll get that booked. Is anyone at home who's especially sensitive to the cold?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:12Z",
+        "type": "turn",
+        "seq": 4,
+        "speaker": "caller",
+        "text": "No, it's just me and my partner, and we're both healthy. We're fine for now, but it's getting colder in here, so we'd like someone out as soon as possible.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:12Z",
+        "type": "turn",
+        "seq": 5,
+        "speaker": "agent",
+        "text": "Thanks, Robin. Got it, I'll note that for the technician. Can I get the best phone number to reach you?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:12Z",
+        "type": "turn",
+        "seq": 6,
+        "speaker": "caller",
+        "text": "Sure, it's 678 555 0261. That's the number I'm calling from.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:12Z",
+        "type": "turn",
+        "seq": 7,
+        "speaker": "agent",
+        "text": "I can't see the number you're calling from. Could you read it out so I can log it?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:12Z",
+        "type": "turn",
+        "seq": 8,
+        "speaker": "caller",
+        "text": "I just told you that. It's 678 555 0261, the number I'm calling from.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:12Z",
+        "type": "turn",
+        "seq": 9,
+        "speaker": "agent",
+        "text": "Thanks, Robin. I'll use 678-555-0261. Let me confirm your address and number.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:12Z",
+        "type": "tool",
+        "tool": "read_back",
+        "args": {
+          "call_id": "rtest-11052046-everything-up-front-no-reasked",
+          "address": {
+            "street": "108-20 71st Avenue",
+            "unit": "",
+            "city": "Forest Hills",
+            "zip": "11375",
+            "spelled": ""
+          },
+          "phone": "678 555 0261",
+          "phone_for": "",
+          "confirmed": false
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "I have your home at 108-20 71st Avenue, Forest Hills, ZIP code one one three seven five, and the best number is six seven eight, five five five, zero two six one. That's all correct, right?",
+        "ms": 6.7,
+        "error": null,
+        "request_id": "ad8e2b29a834"
+      },
+      {
+        "at": "2026-11-05T20:47:16Z",
+        "type": "turn",
+        "seq": 10,
+        "speaker": "agent",
+        "text": "I have your home at 108-20 71st Avenue, Forest Hills, ZIP code one one three seven five, and the best number is six seven eight, five five five, zero two six one. That's all correct, right?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:16Z",
+        "type": "turn",
+        "seq": 11,
+        "speaker": "caller",
+        "text": "Yes, that's all correct. Thank you. What's the earliest window you have today?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:16Z",
+        "type": "turn",
+        "seq": 12,
+        "speaker": "agent",
+        "text": "That's confirmed. Let me check today's openings.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:16Z",
+        "type": "tool",
+        "tool": "read_back",
+        "args": {
+          "call_id": "rtest-11052046-everything-up-front-no-reasked",
+          "address": {
+            "street": "108-20 71st Avenue",
+            "unit": "",
+            "city": "Forest Hills",
+            "zip": "11375",
+            "spelled": ""
+          },
+          "phone": "678 555 0261",
+          "phone_for": "",
+          "confirmed": true
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 6.7,
+        "error": null,
+        "request_id": "724b731acb9a"
+      },
+      {
+        "at": "2026-11-05T20:47:16Z",
+        "type": "tool",
+        "tool": "find_slots",
+        "args": {
+          "job_type": "no_heat",
+          "day": "today",
+          "facts": {
+            "issue": "Furnace stopped this morning; thermostat already reset",
+            "since": "this morning",
+            "inside_temp_f": 61,
+            "who_home": "Caller and partner, both healthy, no one especially sensitive to cold"
+          },
+          "priority": "High",
+          "call_id": "rtest-11052046-everything-up-front-no-reasked"
+        },
+        "ok": false,
+        "refused": "invalid_arguments",
+        "gate": null,
+        "say": "Let me check that again.",
+        "ms": 0.0,
+        "error": "invalid_arguments",
+        "request_id": "18e2f25921ac"
+      },
+      {
+        "at": "2026-11-05T20:47:20Z",
+        "type": "tool",
+        "tool": "find_slots",
+        "args": {
+          "call_id": "rtest-11052046-everything-up-front-no-reasked",
+          "job_type": "no_heat",
+          "priority": "High",
+          "preferred_days": [],
+          "time_of_day": null,
+          "window_minutes": null,
+          "day": "today",
+          "arrive_after": null,
+          "arrive_before": null,
+          "facts": {
+            "issue": "Furnace stopped this morning; thermostat already reset. Since this morning. Inside 61F.",
+            "who_home": "Caller and partner, both healthy, no one especially sensitive to cold",
+            "inside_temp_f": 61.0,
+            "temp_falling_fast": false
+          }
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "Today I have 4 to 6 or 6 to 8.",
+        "ms": 2700.3,
+        "error": null,
+        "request_id": "49565ac2f433"
+      },
+      {
+        "at": "2026-11-05T20:47:29Z",
+        "type": "turn",
+        "seq": 13,
+        "speaker": "agent",
+        "text": "Today I have 4 to 6 or 6 to 8 in the evening. Which would you like?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:29Z",
+        "type": "turn",
+        "seq": 14,
+        "speaker": "caller",
+        "text": "Take the first window offered: 4 to 6.\n\n\"Let's do the 4 to 6 window, please.\"",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:29Z",
+        "type": "turn",
+        "seq": 15,
+        "speaker": "agent",
+        "text": "The 4 to 6 window works. Will you be able to approve any repair work the technician recommends?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:29Z",
+        "type": "turn",
+        "seq": 16,
+        "speaker": "caller",
+        "text": "Yes, I can approve repair work as long as the technician explains what's needed and gives me a price first. Please call or text me before doing anything beyond the basic diagnosis.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:29Z",
+        "type": "turn",
+        "seq": 17,
+        "speaker": "agent",
+        "text": "Thanks, Robin. Will someone be home to let the technician in?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:30Z",
+        "type": "turn",
+        "seq": 18,
+        "speaker": "caller",
+        "text": "Yes, my partner and I will both be home, so someone will be there to let the technician in.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:30Z",
+        "type": "turn",
+        "seq": 19,
+        "speaker": "agent",
+        "text": "Thanks, Robin. Is there a gate code, buzzer, or pet the technician should know about?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:30Z",
+        "type": "turn",
+        "seq": 20,
+        "speaker": "caller",
+        "text": "No gate, no buzzer, and no pets. Just ring the doorbell and we'll let them in. Thanks, and let me know if you need anything else before the 4 to 6 visit.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:30Z",
+        "type": "turn",
+        "seq": 21,
+        "speaker": "agent",
+        "text": "Thanks, Robin. I'll book that now.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:30Z",
+        "type": "tool",
+        "tool": "book_appointment",
+        "args": {
+          "call_id": "rtest-11052046-everything-up-front-no-reasked",
+          "job_type": "no_heat",
+          "slot": {
+            "date": "2026-11-05",
+            "window": "1600-1800"
+          },
+          "details": {
+            "issue": "Furnace stopped this morning; thermostat already reset. Inside 61F. No gate, buzzer, or pets; ring doorbell.",
+            "since": "this morning",
+            "tried": "Reset the thermostat",
+            "who_home": "Caller and partner, both healthy, both home",
+            "approver": "Robin Chen",
+            "system_type": "",
+            "arrival_notes": "No gate, buzzer, or pets. Ring doorbell. Approve repairs only after technician explains and quotes price; call or text before anything beyond basic diagnosis.",
+            "name": "",
+            "inside_temp_f": 61.0
+          },
+          "priority": "High",
+          "separate_problem": false,
+          "new_address_account": null
+        },
+        "ok": false,
+        "refused": "invalid_arguments",
+        "gate": "invalid_arguments",
+        "say": "Can I get a name for the booking?",
+        "ms": 395.7,
+        "error": null,
+        "request_id": "39081afae38a"
+      },
+      {
+        "at": "2026-11-05T20:47:34Z",
+        "type": "turn",
+        "seq": 22,
+        "speaker": "agent",
+        "text": "Can I get your name for the booking?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:34Z",
+        "type": "turn",
+        "seq": 23,
+        "speaker": "caller",
+        "text": "I just told you that. It's Robin Chen, R-O-B-I-N, Chen, C-H-E-N.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:34Z",
+        "type": "turn",
+        "seq": 24,
+        "speaker": "agent",
+        "text": "Thanks, Robin. I have your name now, so I'll finish the booking.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:35Z",
+        "type": "tool",
+        "tool": "book_appointment",
+        "args": {
+          "call_id": "rtest-11052046-everything-up-front-no-reasked",
+          "job_type": "no_heat",
+          "slot": {
+            "date": "2026-11-05",
+            "window": "1600-1800"
+          },
+          "details": {
+            "issue": "Furnace stopped this morning; thermostat already reset. Inside 61F. No gate, buzzer, or pets; ring doorbell.",
+            "since": "this morning",
+            "tried": "Reset the thermostat",
+            "who_home": "Caller and partner, both healthy, both home",
+            "approver": "Robin Chen",
+            "system_type": "",
+            "arrival_notes": "No gate, buzzer, or pets. Ring doorbell. Approve repairs only after technician explains and quotes price; call or text before anything beyond basic diagnosis.",
+            "name": "Robin Chen",
+            "inside_temp_f": 61.0
+          },
+          "priority": "High",
+          "separate_problem": false,
+          "new_address_account": null
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "You're all set for today, Thursday, November 5, with the technician arriving between 4 and 6. Anything else?",
+        "ms": 687.1,
+        "error": null,
+        "request_id": "87f4b53f27af"
+      },
+      {
+        "at": "2026-11-05T20:47:38Z",
+        "type": "turn",
+        "seq": 25,
+        "speaker": "agent",
+        "text": "You're all set for today, Thursday, November 5, with the technician arriving between 4 and 6. Anything else?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:38Z",
+        "type": "turn",
+        "seq": 26,
+        "speaker": "caller",
+        "text": "Nothing else from me, thanks. Just confirm that's a 4 to 6 window today and the tech will ring the doorbell. Thanks for the quick help.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:38Z",
+        "type": "turn",
+        "seq": 27,
+        "speaker": "agent",
+        "text": "Yes, that's a 4 to 6 window today, and the technician will ring the doorbell. Thanks for calling Summit Air, Robin. Take care.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:38Z",
+        "type": "tool",
+        "tool": "end_call",
+        "args": {
+          "call_id": "rtest-11052046-everything-up-front-no-reasked",
+          "reason": "resolved"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 7.0,
+        "error": null,
+        "request_id": "35b59eb3229e"
+      }
+    ],
+    "flags": [],
+    "callbacks": [],
+    "bookings": [
+      {
+        "id": 161,
+        "kind": "book",
+        "status": "booked",
+        "fsm_job_id": 552,
+        "window_start": "2026-11-05T21:00:00Z",
+        "window_end": "2026-11-05T23:00:00Z",
+        "priority": "High",
+        "priority_reasons": "below 65 F inside, caller said \"Hi, this is Robin Chen at 108-20 71st Avenue in Forest Hills, 11375. My...\"",
+        "safety_override": 0,
+        "seek_earlier": 0,
+        "attempts": 1,
+        "last_error": null,
+        "raised_after_wait": 0,
+        "priority_rules": "[\"bracket:cool_inside\"]",
+        "priority_reason_list": "[\"below 65 F inside, caller said \\\"Hi, this is Robin Chen at 108-20 71st Avenue in Forest Hills, 11375. My...\\\"\"]",
+        "who_home": "Caller and partner, both healthy, both home",
+        "job_type": "no_heat",
+        "street": "108-20 71st Avenue",
+        "unit": "",
+        "job_notes": "[]"
+      }
+    ],
+    "notes": [],
+    "leads": [],
+    "out_of_area": [],
+    "summary": [],
+    "electrical": [],
+    "holds": [],
+    "pace": [
+      {
+        "call_id": "rtest-11052046-everything-up-front-no-reasked",
+        "speed": 1.0,
+        "source": "default",
+        "requested": 0,
+        "older_adult": 0,
+        "address_speed": null,
+        "repeats": 0
+      }
+    ],
+    "pace_changes": [],
+    "caller_pace": [],
+    "transfers": [],
+    "handoffs": [],
+    "address_lookups": [],
+    "address_checks": [],
+    "names": [],
+    "address_moves": [],
+    "identity_checks": [],
+    "heads_ups": []
+  }
+}

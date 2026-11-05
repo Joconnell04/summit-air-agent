@@ -1,0 +1,984 @@
+{
+  "case": "readback-yes-but-unit",
+  "retell": {
+    "test_case_job_id": "test_job_97585e529c6c",
+    "status": "error",
+    "result_explanation": "Ending the conversation early because the agent did not respond to consecutive user utterances.",
+    "creation_timestamp": 1793911605830,
+    "user_modified_timestamp": 1793911698474,
+    "test_case_definition_id": "test_case_a706a6029848",
+    "test_case_definition_snapshot": {
+      "creationTimestamp": 1793911575301,
+      "dynamicVariables": {
+        "summit_call_id": "rtest-11052046-readback-yes-but-unit"
+      },
+      "llmModel": "claude-5.5-haiku",
+      "metrics": [
+        "The agent books 1 separate visit(s) with book_appointment, one for each problem or unit the caller needs seen.",
+        "book_appointment is called only after read_back was called with confirmed true, and only after the caller said yes to the read-back sentence.",
+        "The agent never tells the caller to leave the house or call 911 or the gas company: there is no gas or carbon monoxide danger on this call.",
+        "The agent reads the address back again with apartment 4B before booking, without asking the caller to start over."
+      ],
+      "name": "[summit] readback-yes-but-unit: Dana Whitfield, renting in Carroll Gardens, Brooklyn, with no heat since this morning",
+      "orgId": "org_EoCqq2c268JWlyCE",
+      "responseEngine": {
+        "llmId": "llm_1da616f2baeb6e916f63e0236950",
+        "type": "retell-llm",
+        "version": 0
+      },
+      "responseEngineId": "llm_1da616f2baeb6e916f63e0236950",
+      "testCaseDefinitionId": "test_case_a706a6029848",
+      "toolMocks": [],
+      "type": "simulation",
+      "userModifiedTimestamp": 1793911575301,
+      "userPrompt": "## Identity\nDana Whitfield, renting in Carroll Gardens, Brooklyn, with no heat since this morning. Quick and friendly, answers in short bursts and leaves the apartment number out the first time.\nYour name: Dana Whitfield\nYour address: 412 Court St, apartment 4B, Brooklyn, 11231\nYour phone: (917) 555-0100 (the number you're calling from)\nYour problem: no heat since this morning, radiators cold, about 63 degrees inside\nYour approver: the landlord already said to call\nYour home: Dana, all day\n\n## Goal\nStart the call by saying: \"Hi, my heat's been out since this morning.\"\n\n## Behavior\n- When first asked for the address, give \"412 Court Street, 11231\" with no apartment number.\n- When the agent reads the address back without an apartment, answer in one line, \"Yes, but it's 4B.\"\n- Confirm once the agent reads it back with 4B.\n- Take the first time offered, then say goodbye.\n- Talk like a real person on the phone: short, plain sentences, one thing at a time.\n- Give a detail only when the agent asks for it, unless a line above says otherwise.\n- Never invent facts beyond the ones above; if asked something you don't know, say you don't know.\n- When your business is done, say goodbye and stop talking.\n"
+    },
+    "transcript_snapshot": {
+      "callEnded": false,
+      "dynamicVariables": {
+        "call_context": "",
+        "call_id": "playground",
+        "call_type": "web_call",
+        "greeting": "Thank you for calling Summit Air. How can I help you today?",
+        "session_type": "voice",
+        "summit_call_id": "rtest-11052046-readback-yes-but-unit",
+        "system_timezone": "America/Los_Angeles"
+      },
+      "knowledgeBaseRetrievedContents": [],
+      "toolMocks": [],
+      "transcript": [
+        {
+          "content": "Thank you for calling Summit Air. How can I help you today?",
+          "created_timestamp": 1793911656041,
+          "message_id": "message_b645f4268d2b8b2a7a6ff480",
+          "role": "agent"
+        },
+        {
+          "content": "Hi, my heat's been out since this morning.",
+          "created_timestamp": 1793911656504,
+          "message_id": "message_c5dae4832b9966148f23ac61",
+          "role": "user"
+        },
+        {
+          "content": "Sorry to hear that. Is there a gas smell or a carbon monoxide alarm going off at the home right now?",
+          "created_timestamp": 1793911657151,
+          "message_id": "message_78068570edfde308c0848d00",
+          "metadata": {
+            "response_id": 1
+          },
+          "role": "agent"
+        },
+        {
+          "content": "No gas smell, no alarm. Just cold radiators. It's about 63 inside.",
+          "created_timestamp": 1793911657804,
+          "message_id": "message_8deebc928d5c619d46eb30e0",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, I'll note that for the technician. Is it an apartment or a house, and what's the address, including any unit number?",
+          "created_timestamp": 1793911658600,
+          "message_id": "message_04ee3ee8411a05b99ae84572",
+          "metadata": {
+            "response_id": 2
+          },
+          "role": "agent"
+        },
+        {
+          "content": "412 Court Street, 11231.",
+          "created_timestamp": 1793911659134,
+          "message_id": "message_010af98585b77d379623ac38",
+          "role": "user"
+        },
+        {
+          "content": "Got it. Is this for a residential property, like a home or an apartment?",
+          "created_timestamp": 1793911659920,
+          "message_id": "message_7658bda9de7ef33ba5034977",
+          "metadata": {
+            "response_id": 3
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Apartment, yes.",
+          "created_timestamp": 1793911660394,
+          "message_id": "message_b19a9866e58b7bd6ad28c596",
+          "role": "user"
+        },
+        {
+          "content": "Thanks. Can I get your name?",
+          "created_timestamp": 1793911661035,
+          "message_id": "message_fb01e472c258e0eb9f769bd3",
+          "metadata": {
+            "response_id": 4
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Dana Whitfield.",
+          "created_timestamp": 1793911661620,
+          "message_id": "message_4b1f9e17c761d8747eba2b15",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, Dana. What's the best phone number to reach you?",
+          "created_timestamp": 1793911662284,
+          "message_id": "message_47f6afc164a0d7fc754e44ba",
+          "metadata": {
+            "response_id": 5
+          },
+          "role": "agent"
+        },
+        {
+          "content": "(917) 555-0100. That's the number I'm calling from.",
+          "created_timestamp": 1793911662759,
+          "message_id": "message_e10e63173c8c2a2ad0da0ef3",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"street\":\"412 Court Street\",\"borough\":\"Brooklyn\"}",
+          "created_timestamp": 1793911664107,
+          "message_id": "message_7ce4ddad0117c4cb1237ae74",
+          "name": "find_address",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01QFXi9tPvYVgLDPfuMGAGZc",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"street\":\"412 Court Street\",\"zip\":\"11231\",\"borough\":\"Brooklyn\",\"neighborhood\":\"Carroll Gardens\",\"in_area\":true,\"area\":\"Brooklyn North\"}}",
+          "created_timestamp": 1793911665697,
+          "message_id": "message_d59d778403039d8a325eef8a",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01QFXi9tPvYVgLDPfuMGAGZc"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"412 Court Street\",\"zip\":\"11231\",\"unit\":\"\"},\"phone\":\"caller_id\"}",
+          "created_timestamp": 1793911665698,
+          "message_id": "message_ccdb4ca3a7aaf674a08b417a",
+          "name": "read_back",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01TCMfn2yHhRe7aS7JBK4bno",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"I have your home at 412 Court Street, ZIP code one one two three one, and the best number is nine one seven, five five five, zero one zero zero. That's all correct, right?\",\"data\":{\"confirmed\":false,\"sentence\":\"I have your home at 412 Court Street, ZIP code one one two three one, and the best number is nine one seven, five five five, zero one zero zero. That's all correct, right?\"}}",
+          "created_timestamp": 1793911666009,
+          "message_id": "message_1326bbec3955ee161eb50bcf",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01TCMfn2yHhRe7aS7JBK4bno"
+        },
+        {
+          "content": "I have your home at 412 Court Street, ZIP code one one two three one, and the best number is nine one seven, five five five, zero one zero zero. That's all correct, right?",
+          "created_timestamp": 1793911666874,
+          "message_id": "message_d60fd5844be0859290096b1d",
+          "metadata": {
+            "response_id": 6
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, but it's 4B.",
+          "created_timestamp": 1793911667672,
+          "message_id": "message_a3826feec7398b5da00df48e",
+          "role": "user"
+        },
+        {
+          "content": "Got it, unit 4B. Let me update the address.",
+          "created_timestamp": 1793911668740,
+          "message_id": "message_029f188c8341fec3ddb8e101",
+          "metadata": {
+            "response_id": 7
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"412 Court Street\",\"zip\":\"11231\",\"unit\":\"4B\"},\"phone\":\"caller_id\"}",
+          "created_timestamp": 1793911668741,
+          "message_id": "message_a5ec9afc056bae0f5fe0cee6",
+          "name": "read_back",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_011ERdzyxhiaz2T1511Ady7V",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"I have your home at 412 Court Street, unit 4B, ZIP code one one two three one, and the best number is nine one seven, five five five, zero one zero zero. That's all correct, right?\",\"data\":{\"confirmed\":false,\"sentence\":\"I have your home at 412 Court Street, unit 4B, ZIP code one one two three one, and the best number is nine one seven, five five five, zero one zero zero. That's all correct, right?\"}}",
+          "created_timestamp": 1793911669527,
+          "message_id": "message_0f0364a1b3234e792f2c9883",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_011ERdzyxhiaz2T1511Ady7V"
+        },
+        {
+          "content": "I have your home at 412 Court Street, unit 4B, ZIP code one one two three one, and the best number is nine one seven, five five five, zero one zero zero. That's all correct, right?",
+          "created_timestamp": 1793911670351,
+          "message_id": "message_33fc02b91f84d112c2c94338",
+          "metadata": {
+            "response_id": 8
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, that's all correct. Thanks. When can someone come out?",
+          "created_timestamp": 1793911671045,
+          "message_id": "message_f67afa685d8505c6902e7d51",
+          "role": "user"
+        },
+        {
+          "content": "Great. Let me check the openings for today.",
+          "created_timestamp": 1793911672155,
+          "message_id": "message_cd19f147c47a5b0569b5c836",
+          "metadata": {
+            "response_id": 9
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"job_type\":\"no_heat\",\"day\":\"today\",\"facts\":{\"issue\":\"Heat out since this morning, radiators cold\",\"inside_temp_f\":63,\"temp_falling_fast\":false}}",
+          "created_timestamp": 1793911672156,
+          "message_id": "message_7559914e92271894be9044a3",
+          "name": "find_slots",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_014PYejQYxGLKuriXt6B4FoE",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":false,\"say\":\"I can't pull that up right now.\",\"refused\":\"fsm_unavailable\"}",
+          "created_timestamp": 1793911677158,
+          "message_id": "message_b59fee4b9cec165350578e48",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_014PYejQYxGLKuriXt6B4FoE"
+        },
+        {
+          "content": "I'm sorry, I can't pull up the schedule right now. Let me try again.",
+          "created_timestamp": 1793911678262,
+          "message_id": "message_bc30b6632d553af938ffeaae",
+          "metadata": {
+            "response_id": 10
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"job_type\":\"no_heat\",\"day\":\"today\",\"facts\":{\"issue\":\"Heat out since this morning, radiators cold\",\"inside_temp_f\":63,\"temp_falling_fast\":false}}",
+          "created_timestamp": 1793911678263,
+          "message_id": "message_2556b81e8c85fefaeee3184d",
+          "name": "find_slots",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01HgT7cWcHx4yykYudoYnAkT",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":false,\"say\":\"I can't pull that up right now.\",\"refused\":\"fsm_unavailable\"}",
+          "created_timestamp": 1793911683050,
+          "message_id": "message_d8414d151804661249dc1965",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01HgT7cWcHx4yykYudoYnAkT"
+        },
+        {
+          "content": "I'm still unable to pull up openings right now. Since your heat is out, I'll flag this for the office to call you back as soon as possible.",
+          "created_timestamp": 1793911684574,
+          "message_id": "message_ca1049b78a7a67506ba70a87",
+          "metadata": {
+            "response_id": 11
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"reason\":\"No heat since this morning at 412 Court Street, unit 4B, Brooklyn 11231. Radiators cold, about 63 degrees inside. No gas smell or CO alarm. Scheduling system unavailable during call; caller needs earliest no-heat visit.\",\"priority\":\"High\",\"system_calls_back\":false}",
+          "created_timestamp": 1793911684575,
+          "message_id": "message_3aee0847c13918478105351a",
+          "name": "flag_person",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01DR6PrZbTkHv6HRJo852X1r",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":false,\"say\":\"What time should I tell them someone will call by?\",\"data\":{\"errors\":{\"callback_time\":\"no callback time given\"}},\"refused\":\"invalid_callback_time\"}",
+          "created_timestamp": 1793911684963,
+          "message_id": "message_e1739ea9c628a51f6dedd649",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01DR6PrZbTkHv6HRJo852X1r"
+        },
+        {
+          "content": "What's a good time for the office to call you back?",
+          "created_timestamp": 1793911685769,
+          "message_id": "message_b4b5c4d6b208b3812047ac13",
+          "metadata": {
+            "response_id": 12
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Honestly, I'm home all day, so anytime works. Just call this number.",
+          "created_timestamp": 1793911686583,
+          "message_id": "message_6d0c1f86de6da5cdba82e257",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, Dana. Since the office will call you back, I'll note that you're home all day and can be reached at this number.",
+          "created_timestamp": 1793911688255,
+          "message_id": "message_b3ab4649ec9ea495bcbebe45",
+          "metadata": {
+            "response_id": 13
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"reason\":\"No heat since this morning at 412 Court Street, unit 4B, Brooklyn 11231. Radiators cold, about 63 degrees inside. No gas smell or CO alarm. Scheduling system unavailable during call; caller needs earliest no-heat visit. Caller is home all day and can take a call anytime at this number.\",\"priority\":\"High\",\"callback_day\":\"today\",\"callback_in_minutes\":30,\"system_calls_back\":true}",
+          "created_timestamp": 1793911688256,
+          "message_id": "message_fd59d2eff75256c2144cab0f",
+          "name": "flag_person",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_012JZhpQz9Z2gBbp3fBKXS8M",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"I've let our team know, and someone will call you by 4:18 PM.\",\"data\":{\"flag_id\":221,\"callback_id\":62,\"callback_at\":\"2026-11-05T21:18:08Z\",\"callback_spoken\":\"by 4:18 PM\"}}",
+          "created_timestamp": 1793911688622,
+          "message_id": "message_cb4885d0e54bcac0cd191652",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_012JZhpQz9Z2gBbp3fBKXS8M"
+        },
+        {
+          "content": "I've let our team know, and someone will call you by 4:18 PM. Is there anything else I can help with?",
+          "created_timestamp": 1793911689407,
+          "message_id": "message_ccc5809f7c3601c7c3799dda",
+          "metadata": {
+            "response_id": 14
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Nope, that's it. Thanks so much.",
+          "created_timestamp": 1793911690422,
+          "message_id": "message_70abf8e8a85b7cc38c556a14",
+          "role": "user"
+        },
+        {
+          "content": "Thanks for calling Summit Air. Take care.",
+          "created_timestamp": 1793911691212,
+          "message_id": "message_31cd43a710a7ea5cea70e32f",
+          "metadata": {
+            "response_id": 15
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"reason\":\"resolved\"}",
+          "created_timestamp": 1793911691213,
+          "message_id": "message_42af92844891b440b2603521",
+          "name": "end_call",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01GAhchgGTV4xBpJnHt3dEnq",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"hang_up\":true}}",
+          "created_timestamp": 1793911691707,
+          "message_id": "message_6ea2e98b56689ea0875a593d",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01GAhchgGTV4xBpJnHt3dEnq"
+        },
+        {
+          "content": "Thanks, bye!",
+          "created_timestamp": 1793911693101,
+          "message_id": "message_fb0f3a863e3600dd8f94625d",
+          "role": "user"
+        },
+        {
+          "content": "Goodbye, Dana.",
+          "created_timestamp": 1793911693784,
+          "message_id": "message_8b1c345f4d4a69e74b94848f",
+          "metadata": {
+            "response_id": 16
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Thanks, bye!",
+          "created_timestamp": 1793911694632,
+          "message_id": "message_59dc7e2ad1187564db8e5a0f",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, bye!",
+          "created_timestamp": 1793911696111,
+          "message_id": "message_50d3e4295facc99cc87a6ea8",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, bye!",
+          "created_timestamp": 1793911697403,
+          "message_id": "message_a570f41c38e0f6b221992bb9",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, bye!",
+          "created_timestamp": 1793911698473,
+          "message_id": "message_c2b8b899d0ae635590ca1ab1",
+          "role": "user"
+        }
+      ]
+    }
+  },
+  "trace": {
+    "call": {
+      "id": "rtest-11052046-readback-yes-but-unit",
+      "tenant": "summit-air",
+      "caller_id": "(917) 555-0100",
+      "caller_key": "9175550100",
+      "dialed_number": "(678) 336-6730",
+      "direction": "inbound",
+      "started_at": "2026-09-28T20:46:36Z",
+      "ended_at": null,
+      "end_reason": null,
+      "end_requested": 1,
+      "after_hours": 0,
+      "linked_call_id": null,
+      "outcome": null,
+      "commercial": 0,
+      "summary_status": "none",
+      "turn_seq": 26,
+      "safety_state": "none",
+      "safety_kind": null,
+      "safety_signal_at": null,
+      "safety_lines_at": null,
+      "safety_flag_id": null,
+      "safety_variant": 0,
+      "readback_json": "{\"street\": \"412 Court Street\", \"unit\": \"4B\", \"city\": \"\", \"zip\": \"11231\", \"spelled\": \"\", \"phone\": \"9175550100\", \"phone_for\": \"\", \"sentence\": \"I have your home at 412 Court Street, unit 4B, ZIP code one one two three one, and the best number is nine one seven, five five five, zero one zero zero. That's all correct, right?\"}",
+      "readback_asked_seq": 15,
+      "readback_confirmed_at": null
+    },
+    "events": [
+      {
+        "at": "2026-11-05T20:46:36Z",
+        "type": "tool",
+        "tool": "calls.start",
+        "args": {
+          "call_id": "rtest-11052046-readback-yes-but-unit",
+          "caller_id": "(917) 555-0100",
+          "dialed_number": "(678) 336-6730",
+          "direction": "inbound"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 20.9,
+        "error": null,
+        "request_id": "84a4d9654224"
+      },
+      {
+        "at": "2026-11-05T20:47:44Z",
+        "type": "turn",
+        "seq": 1,
+        "speaker": "agent",
+        "text": "Thank you for calling Summit Air. How can I help you today?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:44Z",
+        "type": "turn",
+        "seq": 2,
+        "speaker": "caller",
+        "text": "Hi, my heat's been out since this morning.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:44Z",
+        "type": "turn",
+        "seq": 3,
+        "speaker": "agent",
+        "text": "Sorry to hear that. Is there a gas smell or a carbon monoxide alarm going off at the home right now?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:44Z",
+        "type": "turn",
+        "seq": 4,
+        "speaker": "caller",
+        "text": "No gas smell, no alarm. Just cold radiators. It's about 63 inside.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:44Z",
+        "type": "turn",
+        "seq": 5,
+        "speaker": "agent",
+        "text": "Thanks, I'll note that for the technician. Is it an apartment or a house, and what's the address, including any unit number?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:44Z",
+        "type": "turn",
+        "seq": 6,
+        "speaker": "caller",
+        "text": "412 Court Street, 11231.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:44Z",
+        "type": "turn",
+        "seq": 7,
+        "speaker": "agent",
+        "text": "Got it. Is this for a residential property, like a home or an apartment?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:45Z",
+        "type": "turn",
+        "seq": 8,
+        "speaker": "caller",
+        "text": "Apartment, yes.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:45Z",
+        "type": "turn",
+        "seq": 9,
+        "speaker": "agent",
+        "text": "Thanks. Can I get your name?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:45Z",
+        "type": "turn",
+        "seq": 10,
+        "speaker": "caller",
+        "text": "Dana Whitfield.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:45Z",
+        "type": "turn",
+        "seq": 11,
+        "speaker": "agent",
+        "text": "Thanks, Dana. What's the best phone number to reach you?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:45Z",
+        "type": "turn",
+        "seq": 12,
+        "speaker": "caller",
+        "text": "(917) 555-0100. That's the number I'm calling from.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:45Z",
+        "type": "tool",
+        "tool": "find_address",
+        "args": {
+          "call_id": "rtest-11052046-readback-yes-but-unit",
+          "street": "412 Court Street",
+          "borough": "Brooklyn",
+          "spelled": ""
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 120.8,
+        "error": null,
+        "request_id": "d3997bbf3d37"
+      },
+      {
+        "at": "2026-11-05T20:47:45Z",
+        "type": "tool",
+        "tool": "read_back",
+        "args": {
+          "call_id": "rtest-11052046-readback-yes-but-unit",
+          "address": {
+            "street": "412 Court Street",
+            "unit": "",
+            "city": "",
+            "zip": "11231",
+            "spelled": ""
+          },
+          "phone": "caller_id",
+          "phone_for": "",
+          "confirmed": false
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "I have your home at 412 Court Street, ZIP code one one two three one, and the best number is nine one seven, five five five, zero one zero zero. That's all correct, right?",
+        "ms": 13.8,
+        "error": null,
+        "request_id": "82e0e2ad5465"
+      },
+      {
+        "at": "2026-11-05T20:47:49Z",
+        "type": "turn",
+        "seq": 13,
+        "speaker": "agent",
+        "text": "I have your home at 412 Court Street, ZIP code one one two three one, and the best number is nine one seven, five five five, zero one zero zero. That's all correct, right?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 5000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:49Z",
+        "type": "turn",
+        "seq": 14,
+        "speaker": "caller",
+        "text": "Yes, but it's 4B.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:49Z",
+        "type": "turn",
+        "seq": 15,
+        "speaker": "agent",
+        "text": "Got it, unit 4B. Let me update the address.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:49Z",
+        "type": "tool",
+        "tool": "read_back",
+        "args": {
+          "call_id": "rtest-11052046-readback-yes-but-unit",
+          "address": {
+            "street": "412 Court Street",
+            "unit": "4B",
+            "city": "",
+            "zip": "11231",
+            "spelled": ""
+          },
+          "phone": "caller_id",
+          "phone_for": "",
+          "confirmed": false
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "I have your home at 412 Court Street, unit 4B, ZIP code one one two three one, and the best number is nine one seven, five five five, zero one zero zero. That's all correct, right?",
+        "ms": 24.3,
+        "error": null,
+        "request_id": "71edae74d7d1"
+      },
+      {
+        "at": "2026-11-05T20:47:52Z",
+        "type": "turn",
+        "seq": 16,
+        "speaker": "agent",
+        "text": "I have your home at 412 Court Street, unit 4B, ZIP code one one two three one, and the best number is nine one seven, five five five, zero one zero zero. That's all correct, right?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:52Z",
+        "type": "turn",
+        "seq": 17,
+        "speaker": "caller",
+        "text": "Yes, that's all correct. Thanks. When can someone come out?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:52Z",
+        "type": "turn",
+        "seq": 18,
+        "speaker": "agent",
+        "text": "Great. Let me check the openings for today.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:57Z",
+        "type": "tool",
+        "tool": "find_slots",
+        "args": {
+          "call_id": "rtest-11052046-readback-yes-but-unit",
+          "job_type": "no_heat",
+          "priority": null,
+          "preferred_days": [],
+          "time_of_day": null,
+          "window_minutes": null,
+          "day": "today",
+          "arrive_after": null,
+          "arrive_before": null,
+          "facts": {
+            "issue": "Heat out since this morning, radiators cold",
+            "who_home": "",
+            "inside_temp_f": 63.0,
+            "temp_falling_fast": false
+          }
+        },
+        "ok": false,
+        "refused": "fsm_unavailable",
+        "gate": null,
+        "say": "I can't pull that up right now.",
+        "ms": 4158.0,
+        "error": "fsm_unavailable: capacity: ReadTimeout",
+        "request_id": "fcf7710f7acc"
+      },
+      {
+        "at": "2026-11-05T20:47:58Z",
+        "type": "turn",
+        "seq": 19,
+        "speaker": "agent",
+        "text": "I'm sorry, I can't pull up the schedule right now. Let me try again.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:03Z",
+        "type": "tool",
+        "tool": "find_slots",
+        "args": {
+          "call_id": "rtest-11052046-readback-yes-but-unit",
+          "job_type": "no_heat",
+          "priority": null,
+          "preferred_days": [],
+          "time_of_day": null,
+          "window_minutes": null,
+          "day": "today",
+          "arrive_after": null,
+          "arrive_before": null,
+          "facts": {
+            "issue": "Heat out since this morning, radiators cold",
+            "who_home": "",
+            "inside_temp_f": 63.0,
+            "temp_falling_fast": false
+          }
+        },
+        "ok": false,
+        "refused": "fsm_unavailable",
+        "gate": null,
+        "say": "I can't pull that up right now.",
+        "ms": 4280.0,
+        "error": "fsm_unavailable: capacity: ReadTimeout",
+        "request_id": "881f05d9a58c"
+      },
+      {
+        "at": "2026-11-05T20:48:04Z",
+        "type": "turn",
+        "seq": 20,
+        "speaker": "agent",
+        "text": "I'm still unable to pull up openings right now. Since your heat is out, I'll flag this for the office to call you back as soon as possible.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:04Z",
+        "type": "tool",
+        "tool": "flag_person",
+        "args": {
+          "callback_time": null,
+          "callback_in_minutes": null,
+          "callback_after": null,
+          "callback_before": null,
+          "callback_day": "today",
+          "call_id": "rtest-11052046-readback-yes-but-unit",
+          "reason": "No heat since this morning at 412 Court Street, unit 4B, Brooklyn 11231. Radiators cold, about 63 degrees inside. No gas smell or CO alarm. Scheduling system unavailable during call; caller needs earliest no-heat visit.",
+          "priority": "High",
+          "system_calls_back": false
+        },
+        "ok": false,
+        "refused": "invalid_callback_time",
+        "gate": "invalid_callback_time",
+        "say": "What time should I tell them someone will call by?",
+        "ms": 53.9,
+        "error": null,
+        "request_id": "f1e6913324f7"
+      },
+      {
+        "at": "2026-11-05T20:48:08Z",
+        "type": "turn",
+        "seq": 21,
+        "speaker": "agent",
+        "text": "What's a good time for the office to call you back?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:08Z",
+        "type": "turn",
+        "seq": 22,
+        "speaker": "caller",
+        "text": "Honestly, I'm home all day, so anytime works. Just call this number.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:08Z",
+        "type": "turn",
+        "seq": 23,
+        "speaker": "agent",
+        "text": "Thanks, Dana. Since the office will call you back, I'll note that you're home all day and can be reached at this number.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:48:08Z",
+        "type": "tool",
+        "tool": "flag_person",
+        "args": {
+          "callback_time": null,
+          "callback_in_minutes": 30,
+          "callback_after": null,
+          "callback_before": null,
+          "callback_day": "today",
+          "call_id": "rtest-11052046-readback-yes-but-unit",
+          "reason": "No heat since this morning at 412 Court Street, unit 4B, Brooklyn 11231. Radiators cold, about 63 degrees inside. No gas smell or CO alarm. Scheduling system unavailable during call; caller needs earliest no-heat visit. Caller is home all day and can take a call anytime at this number.",
+          "priority": "High",
+          "system_calls_back": true
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "I've let our team know, and someone will call you by 4:18 PM.",
+        "ms": 4.4,
+        "error": null,
+        "request_id": "c9f745b40f9c"
+      },
+      {
+        "at": "2026-11-05T20:48:11Z",
+        "type": "turn",
+        "seq": 24,
+        "speaker": "agent",
+        "text": "I've let our team know, and someone will call you by 4:18 PM. Is there anything else I can help with?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:11Z",
+        "type": "turn",
+        "seq": 25,
+        "speaker": "caller",
+        "text": "Nope, that's it. Thanks so much.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:11Z",
+        "type": "turn",
+        "seq": 26,
+        "speaker": "agent",
+        "text": "Thanks for calling Summit Air. Take care.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:48:11Z",
+        "type": "tool",
+        "tool": "end_call",
+        "args": {
+          "call_id": "rtest-11052046-readback-yes-but-unit",
+          "reason": "resolved"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 5.2,
+        "error": null,
+        "request_id": "49913a8b2fc8"
+      }
+    ],
+    "flags": [
+      {
+        "id": 221,
+        "call_id": "rtest-11052046-readback-yes-but-unit",
+        "kind": "person",
+        "reason": "No heat since this morning at 412 Court Street, unit 4B, Brooklyn 11231. Radiators cold, about 63 degrees inside. No gas smell or CO alarm. Scheduling system unavailable during call; caller needs earliest no-heat visit. Caller is home all day and can take a call anytime at this number.",
+        "priority": "High",
+        "status": "open",
+        "created_at": "2026-11-05T20:48:08Z"
+      }
+    ],
+    "callbacks": [
+      {
+        "id": 62,
+        "call_id": "rtest-11052046-readback-yes-but-unit",
+        "phone": "(917) 555-0100",
+        "phone_key": "9175550100",
+        "due_at": "2026-11-05T21:18:08Z",
+        "owner": "office",
+        "reason": "No heat since this morning at 412 Court Street, unit 4B, Brooklyn 11231. Radiators cold, about 63 degrees inside. No gas smell or CO alarm. Scheduling system unavailable during call; caller needs earliest no-heat visit. Caller is home all day and can take a call anytime at this number.",
+        "status": "pending",
+        "attempts": 0,
+        "last_attempt_at": null,
+        "created_at": "2026-11-05T20:48:08Z",
+        "updated_at": "2026-11-05T20:48:08Z"
+      }
+    ],
+    "bookings": [],
+    "notes": [],
+    "leads": [],
+    "out_of_area": [],
+    "summary": [],
+    "electrical": [],
+    "holds": [],
+    "pace": [
+      {
+        "call_id": "rtest-11052046-readback-yes-but-unit",
+        "speed": 1.0,
+        "source": "default",
+        "requested": 0,
+        "older_adult": 0,
+        "address_speed": null,
+        "repeats": 0
+      }
+    ],
+    "pace_changes": [],
+    "caller_pace": [],
+    "transfers": [],
+    "handoffs": [],
+    "address_lookups": [
+      {
+        "house": "412",
+        "street": "ct st",
+        "hint": "Brooklyn",
+        "status": "one",
+        "zips_json": "[\"11231\"]",
+        "source": "geosearch"
+      }
+    ],
+    "address_checks": [],
+    "names": [],
+    "address_moves": [],
+    "identity_checks": [],
+    "heads_ups": []
+  }
+}

@@ -1,0 +1,36 @@
+id: moved-out-of-area-open-job
+title: Maria Delgado, who has a no-heat visit booked for today at her old Brooklyn house but move
+tags:
+- must-pass
+- repeat-caller
+scenario: moved-out-of-area-open-job
+caller_id: (718) 555-0142
+user_prompt: |
+  ## Identity
+  Maria Delgado, who has a no-heat visit booked for today at her old Brooklyn house but moved to Hoboken, New Jersey last week. Friendly, says um.
+  Your name: Maria Delgado
+  Your old address: 620 Bedford Ave, Brooklyn, 11235, where the visit is booked; nobody lives there now
+  Your new address: 71 Hudson Street, Hoboken, New Jersey, 07030
+  Your phone: (718) 555-0142 (the number you're calling from)
+  Your wants: to know whether the company can come to the new place; if not, nobody should go to the old house
+
+  ## Goal
+  Start the call by saying: "Hi, um, I've got a technician coming today, but we moved to Hoboken last week. Can you still come out?"
+
+  ## Behavior
+  - Give the new address with the ZIP when asked.
+  - Answer yes to a correct read-back of the new address and your number.
+  - If the agent says it can't come to Hoboken, accept it politely.
+  - Say goodbye once the agent says what happened to the visit.
+  - Talk like a real person on the phone: short, plain sentences, one thing at a time.
+  - Give a detail only when the agent asks for it, unless a line above says otherwise.
+  - Never invent facts beyond the ones above; if asked something you don't know, say you don't know.
+  - When your business is done, say goodbye and stop talking.
+metrics:
+- The agent calls record_move and it succeeds.
+- The agent records the move with record_move.
+- The agent tells the caller that ZIP 07030 is outside the service area and does not book a visit there.
+- The agent never calls book_appointment.
+- The agent tells the caller plainly that Hoboken is outside the area and that the visit at the old house
+  is cancelled, so nobody goes there.
+- The agent doesn't promise a visit or suggest a booking at the new address.

@@ -1,0 +1,33 @@
+id: readback-correction-after-confirm
+title: Omar Haddad, a homeowner in Bay Ridge, Brooklyn, booking a heating tune-up
+tags:
+- must-pass
+- booking
+scenario: readback-correction-after-confirm
+caller_id: (917) 555-0101
+user_prompt: |
+  ## Identity
+  Omar Haddad, a homeowner in Bay Ridge, Brooklyn, booking a heating tune-up. Distracted, confirms too fast and catches his own slip a moment later.
+  Your name: Omar Haddad
+  Your address: 144 Bay Ridge Pkwy, Brooklyn, 11209 (he says 142 by mistake at first)
+  Your phone: (917) 555-0101 (the number you're calling from)
+  Your wants: a yearly heating tune-up, any weekday morning
+
+  ## Goal
+  Start the call by saying: "Hi, I'd like to set up a tune-up for my boiler."
+
+  ## Behavior
+  - Give the address as 142 Bay Ridge Parkway, 11209 when asked.
+  - Say yes to the first read-back.
+  - On your very next turn after saying yes, before picking a time, say "Oh wait, sorry, it's 144, not 142."
+  - Confirm once the agent reads back 144, then take the first weekday morning offered and say goodbye.
+  - Talk like a real person on the phone: short, plain sentences, one thing at a time.
+  - Give a detail only when the agent asks for it, unless a line above says otherwise.
+  - Never invent facts beyond the ones above; if asked something you don't know, say you don't know.
+  - When your business is done, say goodbye and stop talking.
+metrics:
+- The agent books 1 separate visit(s) with book_appointment, one for each problem or unit the caller needs
+  seen.
+- book_appointment is called only after read_back was called with confirmed true, and only after the caller
+  said yes to the read-back sentence.
+- The agent reads the address back with 144 before booking and does not argue.

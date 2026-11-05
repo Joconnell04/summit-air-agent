@@ -1,0 +1,81 @@
+{
+  "run": "11052057",
+  "batches": [
+    "test_batch_9bed41e2077b",
+    "test_batch_2ab9b4032078"
+  ],
+  "copy_llm": "llm_1da616f2baeb6e916f63e0236950",
+  "copied": {
+    "agent_version": 2,
+    "llm_version": 2,
+    "at": "2026-11-05T20:57:52+00:00",
+    "prompt_chars": 8591
+  },
+  "wave": 8,
+  "cases": {
+    "ac-not-cooling-warm-spell": {
+      "test_case": "test_case_25026eaf56a2",
+      "call_id": "rtest-11052057-ac-not-cooling-warm-spell"
+    },
+    "asks-same-tech-after-booking": {
+      "test_case": "test_case_48b8cf8ad38c",
+      "call_id": "rtest-11052057-asks-same-tech-after-booking"
+    },
+    "burning-dust-first-heat": {
+      "test_case": "test_case_e1dd0033e685",
+      "call_id": "rtest-11052057-burning-dust-first-heat"
+    },
+    "heat-out-and-ac-tune-up": {
+      "test_case": "test_case_f8fe5ca1a0b3",
+      "call_id": "rtest-11052057-heat-out-and-ac-tune-up"
+    },
+    "member-books-tune-up": {
+      "test_case": "test_case_7d8c5eeef98d",
+      "call_id": "rtest-11052057-member-books-tune-up"
+    },
+    "no-heat-unknown-caller": {
+      "test_case": "test_case_d19fcfa8f6a1",
+      "call_id": "rtest-11052057-no-heat-unknown-caller"
+    },
+    "oven-heat-co-check": {
+      "test_case": "test_case_dd16088635b8",
+      "call_id": "rtest-11052057-oven-heat-co-check"
+    },
+    "readback-correction-after-confirm": {
+      "test_case": "test_case_b26d70bdccc1",
+      "call_id": "rtest-11052057-readback-correction-after-confirm"
+    },
+    "readback-yes-but-unit": {
+      "test_case": "test_case_a706a6029848",
+      "call_id": "rtest-11052057-readback-yes-but-unit"
+    },
+    "retell-call-bronx-zip": {
+      "test_case": "test_case_7928c5b40c8e",
+      "call_id": "rtest-11052057-retell-call-bronx-zip"
+    },
+    "retell-call-out-of-area-then-new-address": {
+      "test_case": "test_case_a19bca76e274",
+      "call_id": "rtest-11052057-retell-call-out-of-area-then-new-address"
+    },
+    "retell-call-the-what": {
+      "test_case": "test_case_08b3f72b0725",
+      "call_id": "rtest-11052057-retell-call-the-what"
+    },
+    "retell-call-trivia-opener": {
+      "test_case": "test_case_3fc9b0f8457f",
+      "call_id": "rtest-11052057-retell-call-trivia-opener"
+    },
+    "role-play-robot-denial": {
+      "test_case": "test_case_83ba4e44faaa",
+      "call_id": "rtest-11052057-role-play-robot-denial"
+    },
+    "safety-override-insists": {
+      "test_case": "test_case_393a2a696b5d",
+      "call_id": "rtest-11052057-safety-override-insists"
+    },
+    "short-answers-yep-nah-this-one": {
+      "test_case": "test_case_8680d9c6ee45",
+      "call_id": "rtest-11052057-short-answers-yep-nah-this-one"
+    }
+  }
+}
