@@ -39,6 +39,7 @@ from prompts.assemble import instructions, server_notes
 from . import conversation, signature
 from .api import Retell, RetellError
 from .ledger import Ledger
+from .letters import count_letters
 from .timings import call_summary
 from .transcript import PREFIX, lines, our_call_id, retell_id
 
@@ -457,6 +458,15 @@ def build_app(bridge: Bridge) -> FastAPI:
         if name not in bridge.tool_names:
             return JSONResponse({"detail": f"no tool {name}"}, 404)
         return await run_in_threadpool(bridge.tool, name, body)
+
+    @app.post("/retell/letters")
+    async def letters(request: Request):
+        """Not a tool server tool: the bridge counts the letters itself (letters.py)."""
+        body = await signed_json(request)
+        if body is None:
+            return JSONResponse({"detail": "bad signature"}, 401)
+        args = body.get("args") or {}
+        return count_letters(str(args.get("word", "")), str(args.get("letter", "")))
 
     @app.get("/retell/healthz")
     def healthz():

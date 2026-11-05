@@ -65,12 +65,19 @@ def test_the_agent_keeps_the_tested_dials_and_adds_the_handbook():
     assert {"Manhattan", "Bronx", "radiator", "boiler", "carbon monoxide"} <= set(body["boosted_keywords"])
 
 
-def test_the_letter_tools_are_only_on_the_next_copy():
-    assert not any(t["type"] == "code" for t in build.functions(specs(), BASE, "+15555550100"))
-    tools = build.functions(specs(), BASE, "+15555550100", letters=True)
-    extract, code = tools[-2], tools[-1]
-    assert extract["type"] == "extract_dynamic_variable" and code["type"] == "code"
-    assert {v["name"] for v in extract["variables"]} == {"letters_word", "letters_letter"}
-    assert "dv.letters_word" in code["code"] and "dv.letters_letter" in code["code"]
+def test_the_letter_function_is_only_on_the_next_copy_and_goes_to_the_bridge():
+    assert not any(t["name"] == "count_letters" for t in build.functions(specs(), BASE, "+15555550100"))
+    tool = build.functions(specs(), BASE, "+15555550100", letters=True)[-1]
+    assert tool["name"] == "count_letters" and tool["url"] == f"{BASE}/retell/letters"
+    assert tool["parameters"]["required"] == ["word"]
     assert build.LETTERS_PROMPT in build.page(TENANT, letters=True)
     assert build.LETTERS_PROMPT not in build.page(TENANT)
+
+
+def test_the_bridge_counts_letters_itself():
+    from voice.retell.letters import count_letters
+
+    assert count_letters("seventeen", "E")["data"]["count"] == 4
+    assert count_letters("Mississippi", "s")["data"]["count"] == 4
+    assert count_letters("Kosciuszko")["data"] == {"word": "Kosciuszko", "spelled": "kosciuszko"}
+    assert count_letters("17", "e")["ok"] is False

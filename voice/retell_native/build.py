@@ -140,51 +140,39 @@ use the sign-off above before ending. `transfer_to_office` puts the caller throu
 use it only when the caller asks for a person right now, during office hours."""
 
 
-# Letter and spelling questions ("how many e's in seventeen?") go to Retell's Code tool, which takes
-# no arguments from the model, only dynamic variables; so a Retell extraction tool sets the word and
-# the letter first (SOURCE: https://docs.retellai.com/build/single-multi-prompt/code-tool.md, read
-# 2026-11-05). On live call 3 the model counted three e's in "seventeen", and the transcript wrote
-# the number as "17", so it first answered "None." for the digits.
+# Letter and spelling questions ("how many e's in seventeen?") go to one function the bridge answers
+# itself (voice/retell/letters.py). On the native agent's gate call the model counted three e's in
+# "seventeen", and the transcript wrote the number as "17", so it first answered "None." for the
+# digits. Retell's Code tool was tried first: it takes no arguments, so it needed an extraction
+# step, and the model described the question aloud before that step on every first turn.
 LETTERS_PROMPT = """## Letters and spelling
 
 For any question about the letters in a word (how many of a letter, or how a word is spelled), call
-`note_letter_question`, then `count_letters`, straight away with no text before them (the tool
-says "Let me count." for you), and answer from its result in one short sentence. A number the
-caller says, such as "17", is the word written out ("seventeen"). To spell a word aloud, put its
-letters alone inside spell tags, with no dashes or spaces, as in: It's spelled
-<spell>Kosciuszko</spell>."""
+`count_letters` before you say anything, then answer from its result in one short sentence. A
+number the caller says, such as "17", is the word written out ("seventeen"). To spell a word aloud,
+put its letters alone inside spell tags, with no dashes or spaces.
 
-COUNT_LETTERS_JS = """const word = String(dv.letters_word || "");
-const letter = String(dv.letters_letter || "").toLowerCase().replace(/[^a-z]/g, "").charAt(0);
-const letters = [...word.toLowerCase()].filter((c) => /[a-z]/.test(c));
-if (!letters.length) return { ok: false, error: "no word" };
-const result = { ok: true, word, spelled: letters.join("") };
-if (letter) {
-  result.letter = letter;
-  result.count = letters.filter((c) => c === letter).length;
-}
-return result;"""
+Example. Caller: "How many e's are in 17?" You call count_letters with word "seventeen" and letter
+"e", writing no text before the call, and then say only: "Seventeen has four e's. What can I help
+you with today?" """
 
 
-def letter_tools() -> list[dict]:
-    return [
-        {"type": "extract_dynamic_variable", "name": "note_letter_question",
-         "description": "Call this at once, with no words first, when the caller asks how many of "
-         "a letter are in a word or how a word is spelled. Numbers become words (17 is seventeen).",
-         "variables": [
-             {"type": "string", "name": "letters_word",
-              "description": "The word the caller asked about, written out in letters.",
-              "examples": ["seventeen", "Kosciuszko"]},
-             {"type": "string", "name": "letters_letter",
-              "description": "The single letter they asked to count, or empty when they asked how "
-              "the word is spelled.", "examples": ["e", "s"]},
-         ]},
-        {"type": "code", "name": "count_letters",
-         "description": "Count a letter in the word note_letter_question saved, and give its "
-         "spelling. Call it right after note_letter_question.",
-         "code": COUNT_LETTERS_JS, "timeout_ms": 5000, "speak_during_execution": True,
-         "execution_message_description": "Let me count.", "execution_message_type": "static_text"},
-    ]
+def letter_tools(base_url: str) -> list[dict]:
+    return [{
+        "type": "custom", "name": "count_letters",
+        "description": "Count a letter in a word, and get the word's spelling. Call it for any "
+        "question about the letters in a word.",
+        "url": f"{base_url}/retell/letters", "method": "POST",
+        "parameters": {"type": "object", "required": ["word"], "properties": {
+            "word": {"type": "string",
+                     "description": "The word written out in letters. A number the caller "
+                     "said is its word: 17 is seventeen."},
+            "letter": {"type": "string",
+                       "description": "The one letter to count; leave it out to get the spelling."},
+        }},
+        "args_at_root": False, "speak_during_execution": False, "speak_after_execution": True,
+        "timeout_ms": 5000, "max_retry": 1,
+    }]
 
 
 def page(tenant_dir: Path, letters: bool = False) -> str:
@@ -281,7 +269,7 @@ def functions(specs: list[dict], base_url: str, office_number: str, letters: boo
                   "speak_during_execution": True,
                   "execution_message_description": "Tell them you're putting them through now.",
                   "execution_message_type": "prompt"})
-    return tools + (letter_tools() if letters else [])
+    return tools + (letter_tools(base_url) if letters else [])
 
 
 def llm_body(tenant_dir: Path, specs: list[dict], base_url: str, model_id: str, office_number: str,

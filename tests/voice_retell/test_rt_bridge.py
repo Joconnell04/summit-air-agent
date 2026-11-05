@@ -371,6 +371,13 @@ def test_a_tool_the_server_does_not_have_is_refused(client):
     assert signed(client, "/retell/tools/delete_everything", body).status_code == 404
 
 
+def test_the_bridge_answers_a_letter_question_itself_and_only_when_signed(client):
+    body = {"name": "count_letters", "call": call_obj("abc"),
+            "args": {"word": "seventeen", "letter": "e"}}
+    assert signed(client, "/retell/letters", body).json()["data"]["count"] == 4
+    assert client.post("/retell/letters", json=body).status_code == 401
+
+
 def test_call_analyzed_keeps_retells_latency_and_cost_for_the_report(client, bridge):
     inbound(client, "abc")
     analyzed = call_obj(
