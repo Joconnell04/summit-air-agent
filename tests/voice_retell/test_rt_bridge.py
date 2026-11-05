@@ -8,7 +8,14 @@ from retell_kit import SPOKEN, call_obj, event, inbound, signed, tool, utterance
 from toolkit import DETAILS, in_area_address
 
 from app.tools import TOOLS
-from voice.retell.bridge import Bridge, ToolServer, build_app, end_reason, idempotency_key
+from voice.retell.bridge import (
+    HANGUP_GRACE_S,
+    Bridge,
+    ToolServer,
+    build_app,
+    end_reason,
+    idempotency_key,
+)
 from voice.retell.ledger import Ledger
 
 
@@ -381,3 +388,21 @@ def test_call_analyzed_keeps_retells_latency_and_cost_for_the_report(client, bri
             "duration_s": 112,
         }
     ]
+
+
+def test_the_hang_up_waits_for_a_final_line_still_being_said(client, retell, later):
+    """Jackson's call on the Retell number (call_ca9bfcec0b968db42ac2f428bea): end_call came at
+    the start of the turn, the delay was sized from "I'm sorry," and the call was stopped in the
+    middle of the out-of-area sentence."""
+    said = booked_call(client)
+    so_far = [*said, utterance("user", "Never mind, bye."), utterance("agent", "I'm sorry,")]
+    tool(client, "end_call", call_obj("abc", *so_far), reason="caller_goodbye")
+    full = "I'm sorry, but we only work in the five boroughs. Thanks for calling, take care."
+    retell.calls["abc"] = call_obj("abc", *said, utterance("user", "Never mind, bye."),
+                                   utterance("agent", full))
+    later.run()
+    assert retell.stopped == [], "the longer line gets its own time to play"
+    delay = later.pending[0][0]
+    assert delay >= HANGUP_GRACE_S + 0.35 * len(full.split())
+    later.run()
+    assert retell.stopped == ["abc"]

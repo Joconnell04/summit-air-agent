@@ -346,6 +346,10 @@ NAME_ECHO = re.compile(
 # "ZIP 11201" read as a word and a number (Jackson: "just say the zip code is"): said as "the ZIP
 # code is 1 1 2 0 1", digit by digit.
 ZIP_WORD = re.compile(r"\bZIP(?P<rest>\s+code(?:\s+is)?|:)?\s+(?P<digits>\d{5})\b", re.IGNORECASE)
+# "No problem" with nothing to answer: only after a thank-you or an apology (Jackson's call on the
+# Retell number: "No problem" to "The what?").
+NO_PROBLEM = re.compile(r"^\s*(?:no problem|no worries)(?:\s+at all)?\s*(?:[.!,]\s*|$)", re.IGNORECASE)
+THANKS_OR_SORRY = re.compile(r"\b(?:thanks|thank you|thx|appreciate|sorry|apologi[sz]e|my bad)\b", re.IGNORECASE)
 # Sentences this long or longer are never said twice in one turn (SpokenReply.sentence).
 REPEAT_MIN_WORDS = 6
 # Look-ups whose answer needs a second model step before the caller hears anything. A reply that
@@ -623,6 +627,8 @@ class SpokenReply:
         # a name said back: the name is used once, in the greeting (Jackson after live call 2).
         self._caller_words: set[str] = set()
         self.names: set[str] = set()
+        # The caller's last line thanked the agent or apologized: "No problem" answers it.
+        self._thanked = False
         # The caller's last line said goodbye: a lone "Sure." after it is the end, not a stall.
         self._goodbye = False
         # Technicians the caller asked for by name (DECISIONS.md 085).
@@ -645,6 +651,7 @@ class SpokenReply:
         self._finished = False
         self._heard_lines = []
         self._caller_words |= set(words(caller_text).split())
+        self._thanked = bool(THANKS_OR_SORRY.search(caller_text or ""))
         self._goodbye = says_goodbye(caller_text)
         action = (safety or {}).get("action")
         if action in ("speak_lines", "speak_variant"):
@@ -689,6 +696,11 @@ class SpokenReply:
         """One sentence of the model's text, in order within a reply, or "" when the caller
         shouldn't hear it. A name the caller just gave isn't said back, and a ZIP is said as "the
         ZIP code is" and its digits."""
+        if not self._thanked and NO_PROBLEM.match(sentence):
+            sentence = NO_PROBLEM.sub("", sentence, count=1)
+            if not sentence.strip():
+                return ""
+            sentence = sentence[0].upper() + sentence[1:]
         kept = self._filtered(sentence)
         return self._without_name_echo(self._zip_said_plainly(kept)) if kept else ""
 

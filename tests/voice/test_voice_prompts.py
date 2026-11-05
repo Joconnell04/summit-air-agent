@@ -460,3 +460,13 @@ def test_no_follow_up_after_the_callers_goodbye():
     reply = assemble.SpokenReply()
     reply.heard(None, "Okay, thanks, bye.")
     assert reply.dead_end("Sure.", "Sure.", []) is None
+
+
+def test_no_problem_answers_only_a_thank_you_or_an_apology():
+    """Jackson's call on the Retell number: "No problem" to "The what?"."""
+    reply = assemble.SpokenReply()
+    reply.heard(None, "The what?")
+    assert reply.text("No problem. What's the address there?", []) == "What's the address there?"
+    assert reply.text("No worries if not.", []) == "No worries if not."
+    reply.heard(None, "Okay, thanks.")
+    assert reply.text("No problem.", []) == "No problem."

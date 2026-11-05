@@ -39,12 +39,13 @@ def test_a_zip_the_caller_never_said_is_refused_and_nothing_is_recorded(agent):
 
 
 @pytest.mark.parametrize(
-    "line", ["It's 11226.", "Zip's one one two two six.", "one one double two six"]
+    "line", ["It's 11550.", "Zip's one one five five zero.", "one one double five zero"]
 )
 def test_a_zip_the_caller_said_in_digits_or_words_is_checked(agent, line):
     call = agent.start(UNKNOWN)["data"]["call_id"]
     agent.turn(call, line)
-    assert agent.tool("check_service_area", call, zip="11226")["refused"] == "out_of_area"
+    # 11550 (Hempstead, Nassau): every ZIP in the five boroughs is in the area since DECISIONS.md 099.
+    assert agent.tool("check_service_area", call, zip="11550")["refused"] == "out_of_area"
 
 
 def test_a_zip_on_the_callers_record_needs_no_saying(agent, scenarios):

@@ -1219,3 +1219,32 @@ def test_a_named_time_outside_visit_hours_says_the_hours_and_offers_the_nearest(
     found = agent.tool("find_slots", call, job_type="tune_up", arrive_after="8 PM")
     assert found["data"]["arrival"]["fits"] is False
     assert found["say"] == "Our visits run from 8 AM to 8 PM. Tomorrow I have 4 to 8."
+
+
+# ---- all five boroughs (Jackson's call on the Retell number) ------------------------------------
+
+
+@pytest.mark.parametrize(
+    "address",
+    [
+        {"street": "199 E 4th St", "unit": "2", "city": "New York", "zip": "10009"},
+        {"street": "2500 Grand Concourse", "unit": "", "city": "Bronx", "zip": "10458"},
+    ],
+)
+def test_manhattan_and_the_bronx_are_in_the_area_and_book(agent, address):
+    """199 E 4th St, 10009 was refused out_of_area: the zones listed only some Brooklyn, Queens and
+    Staten Island ZIPs. Jackson: "any of 5 boroughs zip code should be in zone"."""
+    call = ready_to_book(agent, address=address)
+    assert agent.tool("check_service_area", call, zip=address["zip"])["ok"]
+    booked = book(agent, call, first_open(agent, call))
+    assert booked["ok"], booked
+
+
+def test_every_nyc_residential_zip_is_in_the_area():
+    from app.tenant import Tenant
+
+    area = Tenant.load(TENANT_DIR).service_area
+    assert len(area) == 214
+    for zip_code in ("10009", "10458", "11201", "11373", "10314", "10463", "11691"):
+        assert zip_code in area, zip_code
+    assert "07302" not in area and "11501" not in area

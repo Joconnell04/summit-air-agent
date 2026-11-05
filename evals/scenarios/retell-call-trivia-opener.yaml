@@ -1,0 +1,23 @@
+id: retell-call-trivia-opener
+flow: [off-topic]
+difficulty: standard
+journeys: [J1]
+spec: [S-01]
+tags: [live-calls]
+max_turns: 10
+caller_id: "(678) 555-0131"
+persona: Jackson testing the Retell number (call_ca9bfcec0b968db42ac2f428bea). Opens with a trivia question, then books a tune-up once steered back. Playful, short answers.
+hidden_facts:
+  address: 248 Duffield Street, Brooklyn, 11201
+  phone: the number you're calling from
+  wants: a furnace tune-up, any morning
+opening: How many e's are in seventeen?
+script:
+  - If the agent answers the question, say "Huh. Okay." and move on to the tune-up.
+  - Then ask for a furnace tune-up; give the address and confirm a correct read-back.
+  - Say goodbye once booked.
+must:
+  - agent_never_says: ["\\b(three|four|3|4)\\b e", "there are (three|four|3|4)"]
+  - booking: {count: 1, zip: "11201"}
+should:
+  - Answers the trivia with one short, friendly line back to heating and cooling, never the answer itself.

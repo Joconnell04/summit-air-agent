@@ -119,6 +119,8 @@ GATES = (
      ("fsm_unavailable", "fsm_rejected"), ()),
     ("closing", "Asks if there's anything else before hanging up on a booked call",
      ("anything_else_first",), ()),
+    ("closing", "Never hangs up right after telling a caller they're outside the area",
+     ("answer_first",), ()),
     ("closing", "On a safety call, signs off instead of hanging up", (), ("S-19",)),
     ("after_call", "A dropped safety call gets an urgent flag and a quick callback", (),
      ("S-18",)),

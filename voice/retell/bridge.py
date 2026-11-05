@@ -57,6 +57,11 @@ SAY_NOW = (
 HANGUP_BASE_S = 3.0
 HANGUP_PER_WORD_S = 0.35
 HANGUP_MAX_S = 15.0
+# After the final line has played, the same pause the LiveKit worker keeps before hanging up
+# (config/models.yaml voice.end_call_grace_s).
+HANGUP_GRACE_S = 1.5
+# How many times the hang-up looks again for a final line that is still coming or growing.
+HANGUP_CHECKS = 4
 
 END_REASONS = {
     "user_hangup": "caller_hangup",
@@ -93,7 +98,9 @@ def idempotency_key(call_id: str, tool: str, args: dict) -> str:
 
 
 def hangup_delay(agent_text: str) -> float:
-    return min(HANGUP_BASE_S + HANGUP_PER_WORD_S * len(agent_text.split()), HANGUP_MAX_S)
+    """Time for a line to play, then the grace."""
+    played = min(HANGUP_BASE_S + HANGUP_PER_WORD_S * len(agent_text.split()), HANGUP_MAX_S)
+    return played + HANGUP_GRACE_S
 
 
 def compact(answer: dict) -> dict:
@@ -305,16 +312,26 @@ class Bridge:
             answer["server_notes"] = notes
         hang_up = answer.get("ok") and (answer.get("data") or {}).get("hang_up")
         if name == "end_call" and kind == "call" and hang_up:
-            said = [line for line in lines(obj) if line.speaker == "agent"]
-            self.hang_up_later(rid, hangup_delay(said[-1].text if said else ""))
+            said = [line.text for line in lines(obj) if line.speaker == "agent"]
+            # The tool's own sentence may be the last thing said, after the lines so far.
+            final = " ".join(x for x in (said[-1] if said else "", answer.get("say") or "") if x)
+            self.hang_up_later(rid, hangup_delay(final), final)
         return answer
 
-    def hang_up_later(self, rid: str, delay: float) -> None:
+    def hang_up_later(self, rid: str, delay: float, last_line: str = "", checks: int = 0) -> None:
+        """Stop the call once its final line has played, plus the grace. end_call can come at the
+        start of the turn, before the goodbye is said (Jackson's call on the Retell number hung up
+        after "I'm sorry,"), so before stopping, the bridge reads the call again: a final agent
+        line that has appeared or grown since gets its own time to play."""
         self.ledger.mark(rid, hangup_pending=1)
 
         def stop():
             row = self.ledger.get(rid)
             if not row or not row["hangup_pending"] or row["ended"]:
+                return
+            latest = self.last_agent_line(rid)
+            if latest and latest != last_line and checks < HANGUP_CHECKS:
+                self.hang_up_later(rid, hangup_delay(latest), latest, checks + 1)
                 return
             try:
                 self.retell.stop_call(rid)
@@ -323,6 +340,15 @@ class Bridge:
                 log.warning("stop-call %s failed: %s", rid, exc)
 
         self.later(delay, stop)
+
+    def last_agent_line(self, rid: str) -> str:
+        """The call's last agent line as Retell has it now, or "" if it can't be read."""
+        try:
+            said = [line.text for line in lines(self.retell.get_call(rid)) if line.speaker == "agent"]
+        except (RetellError, httpx.HTTPError) as exc:
+            log.warning("get-call %s failed: %s", rid, exc)
+            return ""
+        return said[-1] if said else ""
 
     def say_now(self, rid: str, context: str) -> None:
         try:

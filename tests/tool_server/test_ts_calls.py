@@ -770,3 +770,23 @@ def test_two_times_as_a_range_stay_a_window(agent):
         callback_day="tomorrow",
     )
     assert flagged["say"].endswith("tomorrow between 1 PM and 3 PM.")
+
+
+def test_no_hang_up_right_after_the_out_of_area_answer(agent):
+    """Jackson's call on the Retell number: end_call ("declined") came straight after the
+    out-of-area answer, so the caller couldn't correct the address."""
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "I'm at 50 Hudson Street, Jersey City, 07302.")
+    assert agent.tool("check_service_area", call, zip="07302")["refused"] == "out_of_area"
+    assert agent.tool("end_call", call, reason="declined")["refused"] == "answer_first"
+    # Once the caller has answered, or says goodbye, the call can end.
+    agent.turn(call, "Oh, never mind then. Bye.")
+    assert agent.tool("end_call", call, reason="declined")["ok"]
+
+
+def test_a_new_address_after_the_out_of_area_answer_keeps_the_call(agent):
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "It's 50 Hudson Street, 07302.")
+    agent.tool("check_service_area", call, zip="07302")
+    agent.turn(call, "Wait, the house is actually at 199 East 4th Street, 10009.")
+    assert agent.tool("check_service_area", call, zip="10009")["ok"]

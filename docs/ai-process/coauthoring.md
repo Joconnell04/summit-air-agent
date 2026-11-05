@@ -407,3 +407,15 @@ Ask (verbatim, Jackson, relayed by the coordinating session):
 Changed: a Schedule tab on the owner view and the bench (block a slot or a window, add an event or a job), a job page (window, type, notes, address; customer name and phone for admins), and on the bench what the agent would offer per window and a live list of changes in ServiceTitan. Every edit goes through the adapter and clears the slot cache (DECISIONS.md 093).
 Commit: (this PR)
 Status: open, look to be reviewed from the screenshots in the PR
+
+## service area r1 (issue #149: Jackson's call on the Retell number, call_ca9bfcec0b968db42ac2f428bea)
+Feedback (verbatim, Jackson, relayed by the coordinating session):
+> you should make this agent capable of any nyc, any of 5 boroughs zip code should be in zone
+> "one. nine. nine." should be same as "one hundred ninety nine"
+Changed:
+- docs/spec.md S-28: the service area is all five boroughs, every residential ZIP; the call never ends before the caller answers an out-of-area line.
+- docs/users.md: the service area named as all five boroughs.
+- The address check takes "one nine nine", "one ninety nine", "a hundred ninety nine" and "one hundred and ninety nine" alike, with "East" between the number and the street and "fourth", "4th" or "4" for the street (DECISIONS.md 099).
+Commit: (PR for joco/call-3-fixes)
+Status: open
+

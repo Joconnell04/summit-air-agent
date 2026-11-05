@@ -203,7 +203,10 @@ def test_summit_air_leaves_fees_unset_so_the_agent_never_quotes_one():
     assert cfg.fees == {"diagnostic": None, "after_hours": None}
     # Open every day since issue #149 (DECISIONS.md 095).
     assert cfg.company["hours"]["sun"] == ["08:00", "20:00"]
-    assert sorted({z["county"] for z in cfg.zones}) == ["Kings", "Queens", "Richmond"]
+    # All five boroughs since issue #149 (DECISIONS.md 099).
+    assert sorted({z["county"] for z in cfg.zones}) == [
+        "Bronx", "Kings", "New York", "Queens", "Richmond"
+    ]
 
 
 def test_the_arrival_windows_are_listed_the_way_servicetitan_lists_them(small):

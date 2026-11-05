@@ -64,7 +64,7 @@ def test_the_board_puts_flags_jobs_and_other_calls_in_their_lanes(agent, clock):
     asked = agent.start(caller(2))["data"]["call_id"]
     agent.tool("flag_person", asked, reason="Billing question", callback_in_minutes=60)
     clock.advance(minutes=30)
-    away = out_of_area(agent, 3, "10001")
+    away = out_of_area(agent, 3, "11501")
     b = page(agent)["board"]
     assert [m["call_id"] for m in b["lanes"]["jobs"]] == [booked]
     assert [(m["call_id"], m["label"], m["tone"]) for m in b["lanes"]["needs"]] == [
@@ -381,8 +381,8 @@ def test_each_tool_call_reads_as_a_plain_note(agent):
         note(event("check_service_area", zip="11231"))["text"]
         == "ZIP 11231 is in the service area."
     )
-    assert note(event("check_service_area", ok=False, refused="out_of_area", zip="10001")) == {
-        "text": "ZIP 10001 is outside the service area, so it can't be booked.",
+    assert note(event("check_service_area", ok=False, refused="out_of_area", zip="11501")) == {
+        "text": "ZIP 11501 is outside the service area, so it can't be booked.",
         "tone": "warn",
     }
     held = note(event("book_appointment", ok=False, refused="gate_safety"))
@@ -551,7 +551,7 @@ def test_results_measure_a_period_against_the_one_before(agent, clock):
 def test_results_list_every_inbound_call_by_hour_and_what_was_turned_away(agent, clock):
     booked_tune_up(agent, 1)
     clock.advance(hours=2)
-    out_of_area(agent, 2, "10001")
+    out_of_area(agent, 2, "11501")
     gas_call_that_booked(agent, 3)
     r = results(agent, 1)
     assert sorted((h["hour"], h["type"], h["booked"]) for h in r["hours"]) == [
@@ -559,7 +559,7 @@ def test_results_list_every_inbound_call_by_hour_and_what_was_turned_away(agent,
         (11, "out_of_area", False),
         (11, "safety", True),
     ]
-    assert r["zips"] == [{"zip": "10001", "calls": 1}]
+    assert r["zips"] == [{"zip": "11501", "calls": 1}]
     assert r["held"] == {"calls": 1, "lines_first": 1, "booked": 1}
     rows = {row["label"]: row for row in owner.ledger(r["now"], r["before"])}
     assert rows["Safety lines said first"]["now"] == "100%", "a share of safety calls, not a count"

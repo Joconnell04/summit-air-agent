@@ -262,6 +262,9 @@ GATES = {
     "Asks if there's anything else before hanging up on a booked call": (
         'closing', 'Before ending a booked call', None,
     ),
+    "Never hangs up right after telling a caller they're outside the area": (
+        'closing', 'Right after an out-of-area answer', None,
+    ),
     'On a safety call, signs off instead of hanging up': (
         'safety', 'A safety call ends', 'safety.sign_off',
     ),

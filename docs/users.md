@@ -4,7 +4,7 @@ Who the agent serves, what each of them needs from a call, how the agent can tel
 
 What the kickoff tells us (SOURCE: docs/assignment.md): residential only, 40 technicians, three counties in NYC, phones overwhelmed on the first heat wave or cold snap, and most calls are an AC that went out, a furnace that won't start, or annual maintenance.
 
-The agent knows the service area from config, not from the prompt: which boroughs and neighborhoods are covered, what housing is typical there (two-family houses, co-ops, detached houses), how people give addresses, and building access like a super or a shared basement. It mentions a city or state program only when that changes what the caller should do, such as a tenant's right to heat (C-36).
+The agent knows the service area from config, not from the prompt: all five boroughs, every residential ZIP in each (Jackson after his call on the Retell number, issue #149), what housing is typical there (two-family houses, co-ops, detached houses), how people give addresses, and building access like a super or a shared basement. It mentions a city or state program only when that changes what the caller should do, such as a tenant's right to heat (C-36).
 
 Background research behind this doc: docs/explorations/001-hvac-shop-operations.md (how a shop this size runs) and docs/explorations/002-nyc-callers.md (who calls in NYC). Numbers stay in those files.
 

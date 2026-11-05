@@ -139,6 +139,26 @@ def _record_out_of_area(ctx: Ctx, zip_code: str) -> None:
             "INSERT OR IGNORE INTO out_of_area (call_id, zip, at) VALUES (?, ?, ?)",
             (ctx.call["id"], zip_code, iso(ctx.now)),
         )
+        # The turn the caller heard it on, so the call can't end before they answer (end_call).
+        ctx.conn.execute(
+            "INSERT OR IGNORE INTO lines_handed (call_id, line, at) VALUES (?, ?, ?)",
+            (ctx.call["id"], f"{OUT_OF_AREA_TURN}{ctx.call['turn_seq']}", iso(ctx.now)),
+        )
+
+
+OUT_OF_AREA_TURN = "out_of_area_turn:"
+
+
+def _out_of_area_unanswered(ctx: Ctx) -> bool:
+    """The caller was told their address is outside the area and hasn't spoken since."""
+    rows = ctx.conn.execute(
+        "SELECT line FROM lines_handed WHERE call_id = ? AND line LIKE ?",
+        (ctx.call["id"], OUT_OF_AREA_TURN + "%"),
+    ).fetchall()
+    if not rows:
+        return False
+    seq = max(int(r["line"].removeprefix(OUT_OF_AREA_TURN)) for r in rows)
+    return not records.caller_turn_after(ctx.conn, ctx.call["id"], seq)
 
 
 def _zip_known(ctx: Ctx, zip_code: str) -> None:
@@ -194,8 +214,52 @@ def _caller_lines(ctx: Ctx) -> list[sqlite3.Row]:
 
 
 # How many words may sit between a house number and its street ("248 on Duffield").
-STREET_GAP = 2
-STREET_GAP_WORDS = {"on", "at", "the", "off", "um", "uh", "is", "its", "spelled"}
+STREET_GAP = 3
+# Small words, and a direction, between a house number and its street: "199 East Fourth", "248 on
+# Duffield" (Jackson's call on the Retell number: "One nine nine East fourth Street" was refused
+# three times because "e" sat between the number and "fourth").
+STREET_GAP_WORDS = {
+    "on", "at", "the", "off", "um", "uh", "is", "its", "spelled",
+    "e", "w", "n", "s", "east", "west", "north", "south",
+}
+# Ordinals said as words, as the street key writes them: "fourth" is "4", "forty second" is "42".
+ORDINAL_UNITS = {
+    "first": 1, "second": 2, "third": 3, "fourth": 4, "fifth": 5, "sixth": 6, "seventh": 7,
+    "eighth": 8, "ninth": 9,
+}
+ORDINAL_WORDS = {
+    **ORDINAL_UNITS, "tenth": 10, "eleventh": 11, "twelfth": 12, "thirteenth": 13,
+    "fourteenth": 14, "fifteenth": 15, "sixteenth": 16, "seventeenth": 17, "eighteenth": 18,
+    "nineteenth": 19, "twentieth": 20, "thirtieth": 30, "fortieth": 40, "fiftieth": 50,
+    "sixtieth": 60, "seventieth": 70, "eightieth": 80, "ninetieth": 90, "hundredth": 100,
+}
+
+
+def _ordinals_as_numbers(tokens: list[str]) -> list[str]:
+    """ "fourth" as "4", and a tens number before an ordinal unit as one ("40 second" is "42"), so
+    a street said either way matches the street written either way."""
+    out: list[str] = []
+    for token in tokens:
+        if token in ORDINAL_UNITS and out and out[-1].isdigit() and out[-1].endswith("0") and (
+            len(out[-1]) == 2
+        ):
+            out[-1] = str(int(out[-1]) + ORDINAL_UNITS[token])
+            continue
+        out.append(str(ORDINAL_WORDS[token]) if token in ORDINAL_WORDS else token)
+    return out
+
+
+def _address_tokens(text: str) -> list[str]:
+    """A caller's line as address tokens: numbers as digits however they were said ("one nine
+    nine", "one ninety nine", "a hundred ninety nine", "one hundred and ninety nine"), street words
+    keyed, and ordinals as numbers."""
+    text = re.sub(r"\ba hundred\b", "one hundred", text or "", flags=re.IGNORECASE)
+    return _ordinals_as_numbers(_keyed(number_tokens(text)))
+
+
+def _street_names(street: str) -> list[str]:
+    """The words that name a street, ordinals as numbers: "East Fourth Street" is ["4"]."""
+    return _ordinals_as_numbers(geocode.street_name_words(street))
 # Words around a bare house number given as an answer: "it's 248", "um, two forty eight".
 ANSWER_FILLER = {"its", "it", "is", "um", "uh", "the", "number", "house", "okay", "ok", "yeah",
                  "yes", "so", "oh", "thats", "building", "were", "at", "im"}
@@ -213,12 +277,10 @@ def _address_said(ctx: Ctx, house: str, street: str, rows: list | None = None) -
     rows limits it to those caller lines (call_id, seq, text); all of the thread's by default."""
     rows = _caller_lines(ctx) if rows is None else rows
     want = geocode.house_key(house)
-    names = geocode.street_name_words(street)
+    names = _street_names(street)
     if not want or not names:
         return False
-    lines = [
-        _split_run_on(_keyed(number_tokens(r["text"])), want, names, r["text"]) for r in rows
-    ]
+    lines = [_split_run_on(_address_tokens(r["text"]), want, names, r["text"]) for r in rows]
     for i, tokens in enumerate(lines):
         for k, token in enumerate(tokens):
             if token != want or "zip" in tokens[max(0, k - 2) : k] or "code" in tokens[max(0, k - 2) : k]:
@@ -298,7 +360,7 @@ def _answers_number(ctx: Ctx, row: sqlite3.Row, want: str) -> bool:
 
 
 def _street_in(line: str, names: list[str]) -> bool:
-    tokens = set(_keyed(number_tokens(line)))
+    tokens = set(_address_tokens(line))
     return all(name in tokens for name in names)
 
 
@@ -798,7 +860,7 @@ def _has_word(text: str, word: str) -> bool:
 
 
 def _address_tokens_in(text: str, house: str, names: list[str]) -> bool:
-    tokens = _keyed(number_tokens(text))
+    tokens = _address_tokens(text)
     return house in tokens and all(n in tokens for n in names)
 
 
@@ -913,7 +975,7 @@ def _identity_said(ctx: Ctx, name: str, addresses: list[dict]) -> tuple[bool, bo
         split = geocode.split_address(address["street"])
         if not split:
             continue
-        house, names = geocode.house_key(split[0]), geocode.street_name_words(split[1])
+        house, names = geocode.house_key(split[0]), _street_names(split[1])
         rows = _said_before_agent(turns, lambda t, h=house, n=names: _address_tokens_in(t, h, n))
         if rows and _address_said(ctx, split[0], split[1], rows) and _unit_said(
             rows, address.get("unit") or ""
@@ -3606,6 +3668,17 @@ def end_call(ctx: Ctx, args: EndCallIn) -> Result:
             # signed_off tells the voice layer the goodbye has been said, so it adds none.
             return ok("", hang_up=hang_up, signed_off=True)
         return ok(sign_off, hang_up=hang_up)
+    if args.reason != "caller_goodbye" and _out_of_area_unanswered(ctx) and not says_goodbye(
+        records.last_caller_line(ctx.conn, ctx.call["id"])
+    ):
+        # Jackson's call on the Retell number: end_call right after the out-of-area answer, so a
+        # caller who gave a wrong address never got to correct it.
+        raise Refused(
+            "answer_first",
+            "",
+            need="the caller just heard their address is outside the area: don't hang up. Ask "
+            "whether there's another address to check, and wait for their answer",
+        )
     last = ctx.conn.execute(
         "SELECT turn_seq FROM bookings WHERE call_id = ? AND kind = 'book' AND status IN ('sending', 'booked', 'queued') "
         "ORDER BY id DESC LIMIT 1",
