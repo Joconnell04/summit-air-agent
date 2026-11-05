@@ -1,0 +1,21 @@
+id: retell-call-spelling-counts
+flow: [off-topic]
+difficulty: standard
+journeys: [J1]
+spec: [S-01]
+tags: [live-calls]
+max_turns: 8
+caller_id: "(678) 555-0131"
+persona: A caller on the Retell number testing the agent with letter-count questions before saying why they called. Playful; asks the next question as soon as one is answered.
+hidden_facts:
+  wants: nothing booked today; you're just checking the agent before you call about a tune-up
+opening: How many r's are in strawberry?
+script:
+  - After the answer, ask "And how many s's in Mississippi?"
+  - After that, ask "How many e's are in seventeen?"
+  - Then say thanks, you'll call back about a tune-up, and goodbye.
+must:
+  - agent_says: ["\\b(three|3)\\b", "\\b(four|4)\\b"]
+  - agent_never_says: ["\\b(two|2) r", "\\b(three|3) s", "\\b(three|3) e"]
+should:
+  - Spells each word out loud before counting, gets every count right (three r's, four s's, four e's), keeps each answer short, and steers back to heating or cooling.

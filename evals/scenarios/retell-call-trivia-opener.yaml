@@ -17,7 +17,8 @@ script:
   - Then ask for a furnace tune-up; give the address and confirm a correct read-back.
   - Say goodbye once booked.
 must:
-  - agent_never_says: ["\\b(three|four|3|4)\\b e", "there are (three|four|3|4)"]
+  - agent_says: ["\\b(four|4)\\b"]
+  - agent_never_says: ["\\b(three|3)\\b e"]
   - booking: {count: 1, zip: "11201"}
 should:
-  - Answers the trivia with one short, friendly line back to heating and cooling, never the answer itself.
+  - Answers the trivia correctly in one short line, spelling the word first, then steers back to heating and cooling.

@@ -154,9 +154,6 @@ post_call:
 # model cost 2.08 cents a chat (MEASURED, exploration 017), so the cheapest model in Retell's list.
 retell:
   post_chat_analysis: {model: gpt-5.4-nano}
-  # Retell's agents keep Katie, the voice our stack had before issue #149, for Jackson's comparison
-  # call; leave this out and they get voice.tts like the LiveKit stack.
-  voice: {voice_id: f786b574-daa5-4673-aa0c-cbe3e8534c02, model: sonic-3, name: Katie}
 
 # The simulated audio bake-off (evals/audio_rig, DECISIONS.md 026). The rig's own voice for the
 # simulated caller and ears for the agent's replies, the voice-activity threshold that times the
