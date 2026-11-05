@@ -11,6 +11,12 @@
 		uri strip_prefix /eval
 		reverse_proxy 127.0.0.1:8112
 	}
+	# Retell's custom-LLM socket for the eval instance. Retell sends no auth header on it; the path
+	# carries a key derived from the Retell API key, which the socket checks.
+	handle /eval/retell-llm/* {
+		uri strip_prefix /eval
+		reverse_proxy 127.0.0.1:8113
+	}
 	# The eval mock's reset, and nothing else on the mock. The mock refuses it unless it was started
 	# with ST_MOCK_ALLOW_RESET=1, which only the eval instance is.
 	@eval_mock_reset {

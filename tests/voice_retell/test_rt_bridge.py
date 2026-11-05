@@ -164,10 +164,11 @@ def test_a_safety_line_that_arrives_with_a_tool_call_goes_into_its_result(client
     inbound(client, "abc")
     gas = utterance("user", "It smells like gas in here.")
     answer = tool(client, "check_service_area", call_obj("abc", GREETING, gas), zip="11231")
-    assert answer["speak_first"].endswith(
-        "If you're smelling gas, the safest thing is to get everyone outside and call 9-1-1 or the "
-        "gas company from there."
-    )
+    lines_ = ("If you're smelling gas, the safest thing is to get everyone outside and call 9-1-1 "
+              "or the gas company from there.")
+    # Bare lines, first in what the agent says; no instruction text for it to read aloud.
+    assert answer["speak_first"] == lines_
+    assert answer["say"].startswith(lines_) and "exactly as written" not in answer["say"]
     assert retell.said == []
 
 
@@ -177,6 +178,56 @@ def test_a_business_caller_gets_the_servers_note_without_cutting_in(client, rete
     event(client, "transcript_updated", call_obj("abc", GREETING, business))
     assert retell.context == [("abc", "[server] commercial")]
     assert retell.said == []
+
+
+def test_the_native_agent_gets_the_servers_note_marked_private(client, retell, bridge):
+    """Jackson's call 2: the bare note read to the native model as its own words."""
+    bridge.private_note_agents = {"agent_native"}
+    inbound(client, "abc")
+    business = utterance("user", "I manage a restaurant on Atlantic Avenue and the AC died.")
+    event(client, "transcript_updated",
+          call_obj("abc", GREETING, business, agent_id="agent_native"))
+    [(_, note)] = retell.context
+    assert note.startswith("Private note") and note.endswith("[server] commercial")
+
+
+def test_an_agent_with_notes_off_gets_none_but_still_gets_the_safety_lines(client, retell, bridge):
+    """Jackson's agent read the bare notes as reference text and apologised for them."""
+    bridge.no_note_agents = {"agent_jackson"}
+    inbound(client, "abc")
+    business = utterance("user", "I manage a restaurant on Atlantic Avenue and the AC died.")
+    event(client, "transcript_updated",
+          call_obj("abc", GREETING, business, agent_id="agent_jackson"))
+    assert retell.context == []
+    gas = utterance("user", "Actually I think I smell gas in the kitchen.")
+    event(client, "transcript_updated",
+          call_obj("abc", GREETING, business, gas, agent_id="agent_jackson"))
+    assert len(retell.said) == 1 and "exactly as written" in retell.said[0][1]
+
+
+def test_the_safety_lines_are_asked_for_once_when_the_caller_line_grows(client, retell):
+    """Jackson's call call_0246b91f77e01a4b18583e6ca8b: one caller line, posted again as it grew
+    between Retell's events, asked for the gas lines twice back to back."""
+    inbound(client, "abc")
+    first = utterance("user", "It smells a little like gas")
+    grown = utterance("user", "It smells a little like gas, like near the boiler.")
+    event(client, "transcript_updated", call_obj("abc", GREETING, first))
+    event(client, "transcript_updated", call_obj("abc", GREETING, grown))
+    assert len(retell.said) == 1
+
+
+def test_the_top_priority_line_is_said_through_retell_and_taken_out_of_the_result(
+    client, retell, bridge, monkeypatch
+):
+    """The same call: the agent said only the window and dropped the priority line."""
+    line = "I've marked this call top priority, so you get our soonest opening."
+    envelope = {"ok": True, "say": f"{line} The soonest I have is today, 5 to 7. Does that work?",
+                "data": {"spoken_first": line}}
+    monkeypatch.setattr(bridge.tools, "tool", lambda call_id, name, args: envelope)
+    inbound(client, "abc")
+    answer = tool(client, "find_slots", call_obj("abc", GREETING), job_type="no_heat")
+    assert retell.said and retell.said[-1][1].endswith(line)
+    assert answer["say"] == "The soonest I have is today, 5 to 7. Does that work?"
 
 
 def test_an_allowed_end_call_stops_the_call_after_the_goodbye(client, retell, later, tool_app):
@@ -369,6 +420,13 @@ def test_a_refused_start_is_tried_again_on_the_next_event(tmp_path, retell, late
 def test_a_tool_the_server_does_not_have_is_refused(client):
     body = {"name": "delete_everything", "call": call_obj("abc"), "args": {}}
     assert signed(client, "/retell/tools/delete_everything", body).status_code == 404
+
+
+def test_the_bridge_answers_a_letter_question_itself_and_only_when_signed(client):
+    body = {"name": "count_letters", "call": call_obj("abc"),
+            "args": {"word": "seventeen", "letter": "e"}}
+    assert signed(client, "/retell/letters", body).json()["data"]["count"] == 4
+    assert client.post("/retell/letters", json=body).status_code == 401
 
 
 def test_call_analyzed_keeps_retells_latency_and_cost_for_the_report(client, bridge):
