@@ -58,10 +58,12 @@ voice:
   # the Pro overage of $65 per 1M credits we pay now, so $0.0117 a minute.
   stt_candidates:
     ink-2: {provider: cartesia, model: ink-2, price_per_minute: 0.0117}
-  # Katie, the Cartesia plugin default. The pre-recorded clips (voice/livekit/clips.py) use the same voice.
+  # Max ("Conversational Support", a warm, natural American male) from Cartesia's voice library,
+  # chosen after live call 1 to replace Katie (f786b574-...), the plugin default (DECISIONS.md, issue
+  # #149). The pre-recorded clips (voice/livekit/clips.py) use the same voice.
   # min_sentence_chars: a sentence shorter than this waits to be sent to the voice with the next
   # one (LiveKit's default, 20).
-  tts: {provider: cartesia, model: sonic-3, voice_id: f786b574-daa5-4673-aa0c-cbe3e8534c02,
+  tts: {provider: cartesia, model: sonic-3, voice_id: 3945925b-9143-4b7d-9ab5-cc4878001106, name: Max,
         min_sentence_chars: 20}
   # Start the voice on the early reply LiveKit drafts from the final transcript, before the turn
   # is confirmed over; thrown away if the caller keeps talking.

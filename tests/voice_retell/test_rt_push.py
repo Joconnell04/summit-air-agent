@@ -186,7 +186,8 @@ def test_against_retells_recorded_responses_a_push_sends_no_writes():
         for t in llm["general_tools"]
     ]
     base = agent["webhook_url"].removesuffix("/retell/webhook")
-    assert push(fake.client(), tools, base, "claude-haiku-5-5", VOICE) == []
+    max_voice = {"voice_id": "3945925b-9143-4b7d-9ab5-cc4878001106", "model": "sonic-3", "name": "Max"}
+    assert push(fake.client(), tools, base, "claude-haiku-5-5", max_voice) == []
     assert fake.writes() == []
 
 
@@ -206,3 +207,24 @@ def test_parameters_are_compared_in_the_form_retell_stores_them():
         prop.pop("title", None)
     ours.pop("title")
     assert build.retell_schema(ours) == stored
+
+
+def test_the_agent_hears_one_word_replies_and_waits_through_a_pause_mid_sentence():
+    """Live call 3: noise cancellation dropped a quiet "sure", backchannel and fast transcription
+    answered into a pause mid-sentence, and the caller waited 10 s for a check-in
+    (voice/retell/turn_probe.py, evals/rounds/retell-02.md)."""
+    body = build.agent_body("llm_1", BASE, "custom_voice_1", "sonic-3")
+    assert body["stt_mode"] == "accurate"
+    assert body["denoising_mode"] == "no-denoise"
+    assert body["enable_backchannel"] is False
+    assert body["responsiveness"] == 1.0 and body["enable_dynamic_responsiveness"] is False
+    assert body["reminder_trigger_ms"] == 6000
+
+
+def test_retell_speaks_in_the_live_stacks_voice():
+    from voice.retell.push import live_profile
+
+    config = yaml.safe_load(MODELS.read_text())
+    _, voice = live_profile(config)
+    assert voice["voice_id"] == config["voice"]["tts"]["voice_id"]
+    assert voice["name"] == "Max"
