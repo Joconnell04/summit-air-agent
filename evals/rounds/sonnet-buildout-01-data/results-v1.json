@@ -1,0 +1,123 @@
+{
+ "arms": {
+  "B": {
+   "calls": 1,
+   "clean_calls": 0,
+   "checks_failed": 2,
+   "safety_errors": 0,
+   "safety_style": 0,
+   "checks_run": 11,
+   "judge_mean": 3,
+   "judge_min": 3,
+   "e2e_p50_ms": 1824,
+   "e2e_p90_ms": 3155,
+   "llm_p50_ms": 1206,
+   "cost_usd": 0.82,
+   "cost_per_min_usd": 0.3478,
+   "names_right": "0/1",
+   "asked_spelling": "0/1",
+   "fails_by_check": {
+    "no_caller_name": 1,
+    "no_narration": 1
+   }
+  }
+ },
+ "journeys": {
+  "B routine": {
+   "runs": 1,
+   "passed": 1
+  }
+ },
+ "safety": {
+  "B": {}
+ },
+ "server_findings": {},
+ "calls": [
+  {
+   "run": "sonnet-probe",
+   "n": 1,
+   "arm": "B",
+   "persona": "r101-01",
+   "agent_id": "agent_871ef6fafe2636244c4bbaca67",
+   "call_id": "call_bbfbed1552e4f96e41400b1897f",
+   "checks": {
+    "no_premature_hangup": {
+     "ok": true,
+     "why": ""
+    },
+    "one_question_per_turn": {
+     "ok": true,
+     "why": ""
+    },
+    "no_caller_name": {
+     "ok": false,
+     "why": "Name given (Fatima), address given. Residential not yet confirmed. Let me look up the address first.And this is for a residential property, right? Like a home or an apartment?"
+    },
+    "no_narration": {
+     "ok": false,
+     "why": "Let me look, let me check"
+    },
+    "server_lines_verbatim": {
+     "ok": true,
+     "why": ""
+    },
+    "closing_said_once": {
+     "ok": true,
+     "why": ""
+    },
+    "read_back_before_slots": {
+     "ok": true,
+     "why": ""
+    },
+    "no_double_confirm": {
+     "ok": true,
+     "why": ""
+    },
+    "nothing_carried_over": {
+     "ok": true,
+     "why": ""
+    },
+    "records_bookings": {
+     "ok": true,
+     "why": ""
+    },
+    "access_detail_captured": {
+     "ok": true,
+     "why": ""
+    },
+    "name_asked": {
+     "ok": true,
+     "spelled_right": false,
+     "spelling": false,
+     "full_name": false,
+     "stored": [
+      "Fatima"
+     ]
+    }
+   },
+   "fails": [
+    "no_caller_name",
+    "no_narration"
+   ],
+   "safety_errors": [],
+   "safety_style": [],
+   "server": [],
+   "invalid": false,
+   "journey": "routine",
+   "journey_pass": true,
+   "judge": {
+    "score": 3,
+    "vibe": "Warm greeting and a clean booking flow, but Brooke read her internal reasoning aloud twice and spelled out 'second floor' letter by letter, which would embarrass the company.",
+    "worst": "Name given (Fatima), address given. Residential not yet confirmed. Let me look up the address first."
+   },
+   "e2e_p50_ms": 1823.5,
+   "e2e_p90_ms": 3155.2,
+   "llm_p50_ms": 1205.5,
+   "cost_usd": 0.8173,
+   "duration_s": 141,
+   "disconnection": "manual_stopped",
+   "safety_line_s": null,
+   "scored": true
+  }
+ ]
+}

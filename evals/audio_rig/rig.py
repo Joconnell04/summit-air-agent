@@ -59,7 +59,15 @@ from evals.world import World, resolve_caller, seeded_db
 
 # The parts of a call's cost that are the stack's own; the rest is the rig's.
 STACK_PARTS = ("platform", "platform_transcription", "brain_model")
-ENTRANTS = ("livekit", "retell", "retell_flow", "retell_llm", "elevenlabs", "openai_realtime", "gemini_live")
+ENTRANTS = (
+    "livekit",
+    "retell",
+    "retell_flow",
+    "retell_llm",
+    "elevenlabs",
+    "openai_realtime",
+    "gemini_live",
+)
 
 
 def load_entrant(name: str):

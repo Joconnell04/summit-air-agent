@@ -53,8 +53,17 @@ main() {
   restore() { py "$HERE/point.py" restore "$NUMBER" "$OUT/number-before.json"; }
   trap restore EXIT
 
+  # The eval and server-led worlds may run on a shifted clock (SUMMIT_CLOCK_OFFSET_H in
+  # retell.env) and stamp their calls in that time, so "the last 30 minutes" is in their time.
+  offset() {
+    case "$1" in
+      live) echo 0 ;;
+      *) grep -s '^SUMMIT_CLOCK_OFFSET_H=' "$HOME/summit-air/retell.env" | cut -d= -f2 | grep . || echo 0 ;;
+    esac
+  }
+
   live() {
-    sqlite3 "$DB" "select count(*) from calls where ended_at is null and started_at > strftime('%Y-%m-%dT%H:%M:%SZ','now','-30 minutes')"
+    sqlite3 "$DB" "select count(*) from calls where ended_at is null and started_at > strftime('%Y-%m-%dT%H:%M:%SZ','now','$(offset "$wname") hours','-30 minutes')"
   }
 
   wait_quiet() {
@@ -82,6 +91,7 @@ main() {
       wait_quiet
     fi
     py "$HERE/point.py" arm "$NUMBER" "$agent" "$INBOUND" || { echo "could not point $NUMBER at $agent"; continue; }
+    before="$(sqlite3 "$DB" "select coalesce(max(rowid), 0) from calls")"
     start_ms="$(date +%s%3N)"
     echo "=== $tag start $(date -u +%T)"
     timeout 420 env PYTHONPATH="$APP" uv run --env-file ../.env python "$HERE/run_persona.py" \
@@ -89,7 +99,7 @@ main() {
     end_ms="$(date +%s%3N)"
     restore
     sleep 15  # call-ended webhooks and the end-of-call writes land
-    python3 "$HERE/rows.py" "$DB" "$start_ms" "$end_ms" > "$OUT/calls/$tag.rows.json" 2>&1
+    python3 "$HERE/rows.py" "$DB" "$start_ms" "$end_ms" "$before" > "$OUT/calls/$tag.rows.json" 2>&1
     room="$(grep -o 'testcall-[0-9a-f]*' "$OUT/calls/$tag.log" | head -1)"
     printf '{"n": %d, "arm": "%s", "agent_id": "%s", "world": "%s", "number": "%s", "persona": "%s", "reset": "%s", "start_ms": %s, "end_ms": %s, "room": "%s", "log": "calls/%s.log", "rows": "calls/%s.rows.json"}\n' \
       "$i" "$arm" "$agent" "$wname" "$NUMBER" "$persona" "$reset" "$start_ms" "$end_ms" "$room" "$tag" "$tag" >> "$OUT/manifest.jsonl"

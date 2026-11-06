@@ -1,0 +1,126 @@
+log:
+  g101-01:
+    address: seventeen hundred Bedford Avenue
+    borough: Brooklyn
+    correction: false
+    early: false
+    interrupt: true
+    journey: gas_real
+    name: Mei Kim
+    one_second: false
+    seed: 101
+    unit: unit 4B
+  o101-01:
+    address: seven forty-two Nostrand Avenue
+    borough: Brooklyn
+    correction: false
+    early: true
+    interrupt: false
+    journey: elderly
+    name: Sam Williams
+    one_second: true
+    seed: 101
+    unit: ''
+    who: my mom's eighty-five and she lives with me
+  o101-02:
+    address: five hundred Ocean Avenue
+    borough: Brooklyn
+    correction: false
+    early: false
+    interrupt: false
+    journey: elderly
+    name: Kwame Goldberg
+    one_second: false
+    seed: 101
+    unit: the second floor
+    who: my grandfather is ninety and he's here with me
+  r101-01:
+    address: twenty-nine ten Ditmars Boulevard
+    borough: Queens
+    correction: false
+    early: true
+    interrupt: true
+    journey: routine
+    name: Fatima Patel
+    one_second: false
+    seed: 101
+    system: boiler
+    unit: the second floor
+  r101-02:
+    address: one sixty Remsen Street
+    borough: Brooklyn
+    corrected_unit: true
+    correction: true
+    early: false
+    interrupt: true
+    journey: routine
+    name: Tomasz Chen
+    one_second: false
+    seed: 101
+    system: boiler
+    unit: unit 4B
+  x101-01:
+    address: ten ten Morris Park Avenue
+    borough: the Bronx
+    correction: false
+    early: true
+    interrupt: false
+    journey: gas_retracted
+    name: Priya Mensah
+    one_second: true
+    seed: 101
+    take_back: wait, never mind, it was the stove, I left a burner on, it's off now
+    unit: apartment two
+personas:
+  g101-01:
+    closes_with: bye|that's it|that's all
+    confirms: 1
+    first: Mei
+    flag: true
+    journey: gas_real
+    name: null
+    real_hazard: true
+    safety: true
+  o101-01:
+    bookings:
+    - book
+    closes_with: bye|that's it|that's all
+    confirms: 1
+    first: Sam
+    journey: elderly
+    name: Sam Williams
+    raised: eighty|85
+  o101-02:
+    bookings:
+    - book
+    closes_with: bye|that's it|that's all
+    confirms: 1
+    first: Kwame
+    journey: elderly
+    name: Kwame Goldberg
+    raised: ninety|90
+  r101-01:
+    bookings:
+    - book
+    closes_with: bye|that's it|that's all
+    confirms: 1
+    first: Fatima
+    journey: routine
+    name: Fatima Patel
+  r101-02:
+    bookings:
+    - book
+    closes_with: bye|that's it|that's all
+    confirms: 2
+    first: Tomasz
+    journey: routine
+    name: Tomasz Chen
+  x101-01:
+    bookings: []
+    closes_with: bye|that's it|that's all
+    confirms: 1
+    first: Priya
+    journey: gas_retracted
+    name: null
+    retraction: nevermind
+    safety: true

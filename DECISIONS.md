@@ -12,6 +12,15 @@ Discussion: docs/ai-process/transcripts/... or docs/explorations/...
 Issue: #N
 -->
 
+## 125. Keep accurate speech-to-text and fixed responsiveness on Jackson's agent
+
+Decided: Jackson's agent keeps `stt_mode: accurate` and `enable_dynamic_responsiveness: false`.
+Why: on the Sonnet arm, with the same callers and only the one setting changed (MEASURED, evals/rounds/sonnet-buildout-01.md), `fast` cut Retell's speech-to-text p50 from 678 to 153 ms, but the end-to-end turn didn't get shorter (p50 1460 against 1556 ms). It also answered three times while the caller's line was still open, against none on `accurate`, and heard one more name wrong. Dynamic responsiveness made every turn about 1.1 s slower (end-to-end p50 1295 against 2391 ms), since responsiveness is already at its maximum. The wait Jackson wants shorter is better met by backchannels and hold lines, which already fire on this voice.
+Considered: `fast` for the speech-to-text saving alone (no end-to-end gain, more cut-ins); dynamic responsiveness for fewer cut-ins (none to remove, and slower).
+Would change if: a larger run (about 10 calls a side) on Jackson's own agent shows `fast` shortening the end-to-end turn without cut-ins.
+Discussion: evals/rounds/sonnet-buildout-01.md (STT and turn-taking A/B)
+Issue: #175
+
 ## 124. Recommended, pending Jackson's call: build on the server-led arm behind the custom-LLM socket, on Haiku; demo B today
 
 Recommended (not decided; Jackson makes the call): build on arm D, the server-led tool server (PR #173), put it behind the custom-LLM socket (`voice/retell_llm/`) so code speaks the server's sentences as written, and keep Claude Haiku 5.5. For the session in front of Paul today, use arm B (Sonnet 5.5) on the fixed server, with A as the fallback. Drop arm C (the behavioral prompt). Drop the idea of promoting a call to Sonnet when a safety trigger fires.

@@ -1,0 +1,30 @@
+dialing +16783366730 from room testcall-c47d6f76
+agent : Hi there. Thanks so much for calling Summit Air today. I'm Brian, the virtual assistant. How can I help?
+caller: Hey, I need to schedule maintenance on my boiler.
+agent : Sure. I can set that up. Don't see an account under the number you're calling from. Can I get your name?
+caller: Luis Shah.
+agent : Thanks. This is for your home. Right?
+caller: Yeah, it is my apartment.
+agent : Got it. What's the street address?
+caller: Five hundred Ocean Avenue, the second floor.
+agent : Unit given as second floor. I'll look up the address.
+agent : I used a wrong ZIP in that lookup, so I'll redo it with the right one. Okay. What's the best phone number to reach you?
+caller: This number.
+agent : So that's five hundred Ocean Avenue, second floor, and the number you're calling from ending in zero four one eight. That's all correct, right?
+caller: Actually, it's the third floor.
+agent : So that's five hundred Ocean Avenue, third floor, and the number you're calling from ending in zero four one eight. That's all correct. Right?
+caller: Yes.
+agent : The soonest I have is today. Eight to eight thirty. Does that work?
+caller: Anything tomorrow morning?
+agent : Yes. Tomorrow morning has openings starting at eight AM. Is there a time you'd like, or does eight to eight thirty work?
+caller: Eight to eight thirty tomorrow works. Thanks.
+agent : Perfect. Will you be able to approve any repair work the technician recommends?
+caller: Sure.
+agent : Okay. Will someone be home to let the technician in? And is there a gate code or buzzer they should know about?
+caller: Yes, all day, and the gate code is four four one two.
+agent : Okay. I've booked it. The technician will arrive tomorrow between eight and eight thirty. Anything else?
+caller: No, that's it, thanks. Bye.
+agent : Thanks so much for calling Summit Air today. Have a great day. Take care.
+failed to synthesize speech: no audio frames were pushed for text: [Call ended], retrying in 0.1s
+the agent hung up
+livekit_ffi::server:279:livekit_ffi::server - Attempted to drop unknown FFI handle: 23

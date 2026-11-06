@@ -56,7 +56,7 @@ def good_call():
         agent("I have one ninety-nine East Fourth Street. Is that right?", 2),
         user("Yes."),
         *tool("find_slots", "t2", say="The soonest is today, 4 to 6."),
-        agent("The soonest is today, Thursday, between 4 and 6. Does that work?", 3),
+        agent("The soonest is today, between 4 and 6. Does that work?", 3),
         user("Sure."),
         agent("Anything else?", 4),
         user("No, that's it."),
@@ -66,7 +66,7 @@ def good_call():
 
 def test_a_clean_call_passes_every_check():
     out = sbs.check_call(PERSONA, good_call(), rows(["book"], name="Jordan Lee"))
-    assert [k for k, v in out.items() if not v["ok"]] == []
+    assert sbs.gross([k for k, v in out.items() if not v["ok"]]) == []
     assert out["name_asked"]["full_name"] is True
 
 
@@ -282,7 +282,7 @@ def test_a_mention_of_the_breaker_is_not_a_second_safety_instruction():
     out = sbs.check_call(persona, call, rows())
     assert out["safety_advice_once"]["ok"]
     assert out["server_lines_verbatim"]["ok"]
-    assert "(The system told Brooke to say" in sbs.transcript_text(call)
+    assert "(The system told the agent to say" in sbs.transcript_text(call)
 
 
 def test_safety_findings_split_into_errors_and_style():
@@ -344,3 +344,174 @@ def test_saying_a_misheard_name_counts_and_a_cut_off_server_safety_line_was_spok
         user("We're all outside already, it was a bad battery."),
     ]
     assert sbs.check_call(hazard, cut, rows())["safety_advice_spoken"]["ok"]
+
+
+def test_the_residential_question_is_not_a_confirmation():
+    call = good_call()
+    call[2] = agent("Thanks. And this is for your home, right?")
+    assert sbs.check_call(PERSONA, call, rows(["book"], name="Jordan Lee"))["no_double_confirm"][
+        "ok"
+    ]
+
+
+def test_the_access_question_is_one_question_and_a_dated_today_fails():
+    assert (
+        sbs.questions(
+            "Will someone be home to let the technician in, and is there a gate code or buzzer they should know about?"
+        )
+        == 1
+    )
+    call = good_call()
+    call[10] = agent("The soonest is tomorrow, Friday, November 6, 8 to 8:30. Does that work?", 3)
+    assert not sbs.check_call(PERSONA, call, rows(["book"], name="Jordan Lee"))[
+        "no_date_with_today_or_tomorrow"
+    ]["ok"]
+    assert sbs.check_call(PERSONA, good_call(), rows(["book"], name="Jordan Lee"))[
+        "no_date_with_today_or_tomorrow"
+    ]["ok"]
+
+
+def test_connectors_before_most_questions_and_never_the_same_twice():
+    call = [
+        agent("Hi, how can I help?"),
+        user("My heat is out."),
+        agent("Got it. Can I get your name?"),
+        user("Jordan Lee."),
+        agent("Thanks. And this is for your home, right?"),
+        user("Yes."),
+        agent("Perfect. What's the street address?"),
+        user("199 East 4th."),
+        agent("Okay, thanks. Is there an apartment or unit number?"),
+        user("No, that's it. Bye."),
+    ]
+    assert sbs.check_call(PERSONA, call, rows())["connectors_varied"]["ok"]
+    call[6] = agent("Thanks. What's the street address?")
+    assert not sbs.check_call(PERSONA, call, rows())["connectors_varied"]["ok"]
+    assert sbs.gross(["connectors_varied"]) == []
+
+
+def test_the_catch_all_is_asked_once_on_a_problem_and_never_on_a_tune_up():
+    def call_with(job, asks):
+        c = [agent("Hi, how can I help?"), user("My heat is out.")]
+        for _ in range(asks):
+            c += [
+                agent("Okay. Anything else the technician should know, like banging pipes?"),
+                user("No."),
+            ]
+        c += [
+            *tool(
+                "find_slots",
+                "t9",
+                say="The soonest is today, 4 to 6.",
+                args=json.dumps({"job_type": job}),
+            )
+        ]
+        c += [
+            agent("The soonest is today, 4 to 6. Does that work?", 7),
+            user("No, that's it. Bye."),
+        ]
+        return sbs.check_call(PERSONA, c, rows())["catch_all_once"]["ok"]
+
+    assert call_with("no_heat", 1) and not call_with("no_heat", 0) and not call_with("no_heat", 2)
+    assert call_with("tune_up", 0) and not call_with("estimate", 1)
+
+
+def test_a_retraction_split_across_two_caller_lines_is_heard():
+    persona = {"first": "Sam", "safety": True, "retraction": "nevermind"}
+    call = [
+        agent("How can I help?"),
+        user("I smell gas by the boiler."),
+        agent("If you're smelling gas, get everyone outside and call 911."),
+        user("Wait, never "),
+        user("mind, it was the stove."),
+        agent("Got it. Anything else?"),
+        user("No."),
+    ]
+    assert sbs.check_call(persona, call, rows())["retraction_honored"]["ok"]
+
+
+def test_a_matched_caller_is_not_asked_the_name_and_the_no_match_line_comes_once():
+    persona = {**PERSONA, "matched": True}
+    out = sbs.check_call(persona, good_call(), rows(["book"], name="Jordan Lee"))
+    assert not out["no_name_question_when_matched"]["ok"]
+    call = good_call()
+    call[2] = agent(
+        "I don't see an account under the number you're calling from. Can I get your name?"
+    )
+    call[6] = agent(
+        "I don't see an account under the number you're calling from. I have one ninety-nine East Fourth Street. Is that right?",
+        2,
+    )
+    assert not sbs.check_call(PERSONA, call, rows(["book"], name="Jordan Lee"))[
+        "no_match_line_once"
+    ]["ok"]
+
+
+def test_change_set_24_goodbye_waiting_and_check_ins():
+    call = good_call()
+    call[-1] = agent("Thanks for calling Summit Air. Have a great day. Take care.", 5)
+    out = sbs.check_call(PERSONA, call, rows(["book"], name="Jordan Lee"))
+    assert not out["closing_one_nicety"]["ok"] and out["closing_said_once"]["ok"]
+    call[-1] = agent("Thanks for calling Summit Air. Have a good night.", 5)
+    call[2] = agent("Thanks for waiting. Can I get your first and last name?")
+    out = sbs.check_call(PERSONA, call, rows(["book"], name="Jordan Lee"))
+    assert out["closing_one_nicety"]["ok"] and not out["no_thanks_for_waiting"]["ok"]
+    nagging = good_call()[:-2] + [
+        agent("Are you still there?"),
+        user("..."),
+        agent("Are you still there?"),
+        user("..."),
+        agent("Are you still there?"),
+        user("No, that's it. Bye."),
+    ]
+    assert not sbs.check_call(PERSONA, nagging, rows(["book"], name="Jordan Lee"))[
+        "still_there_at_most_twice"
+    ]["ok"]
+
+
+def test_a_run_on_an_older_prompt_is_not_held_to_later_rules(tmp_path):
+    folder = tmp_path / "run"
+    (folder / "calls").mkdir(parents=True)
+    entry = {
+        "n": 1,
+        "arm": "A",
+        "persona": "d",
+        "agent_id": "x",
+        "log": "calls/1.log",
+        "rows": "calls/1.rows.json",
+    }
+    (folder / "manifest.jsonl").write_text(json.dumps(entry) + "\n")
+    call = good_call()
+    call[-1] = agent("Thanks so much for calling Summit Air today. Have a great day! Take care.", 5)
+    (folder / "calls" / "1.retell.json").write_text(
+        json.dumps({"call_id": "c1", "transcript_with_tool_calls": call})
+    )
+    (folder / "calls" / "1.rows.json").write_text(json.dumps(rows()))
+    new = sbs.report([str(folder) + "@24"])["calls"][0]["checks"]
+    old = sbs.report([str(folder) + "@18"])["calls"][0]["checks"]
+    assert "closing_one_nicety" in new and "closing_one_nicety" not in old
+
+
+def test_a_buzzer_the_caller_gives_reaches_the_booking_and_a_plain_yes_needs_nothing():
+    call = good_call()
+    call[11] = user("Yes, and the buzzer is 2B.")
+    booked = rows(["book"], name="Jordan Lee")
+    booked["calls"][0]["bookings"][0]["request_json"] = json.dumps(
+        {"details": {"arrival_notes": "No gate code"}}
+    )
+    assert not sbs.check_call(PERSONA, call, booked)["access_detail_captured"]["ok"]
+    booked["calls"][0]["bookings"][0]["request_json"] = json.dumps(
+        {"details": {"arrival_notes": "Buzzer 2B"}}
+    )
+    assert sbs.check_call(PERSONA, call, booked)["access_detail_captured"]["ok"]
+    assert "access_detail_captured" not in sbs.check_call(PERSONA, good_call(), booked)
+
+
+def test_the_calls_own_rows_are_read_when_another_session_shares_the_world():
+    mine = rows(["book"], name="Jordan Lee")
+    mine["calls"][0]["call"]["id"] = "retell_call_1"
+    other = rows([], name=None)["calls"][0]
+    other["call"]["id"] = "prescreen_x"
+    both = {"calls": [mine["calls"][0], other], "do_not_call": []}
+    assert sbs.check_call(PERSONA, good_call(), both, None, "call_1")["records_bookings"]["ok"]
+    assert not sbs.check_call(PERSONA, good_call(), both)["records_bookings"]["ok"]

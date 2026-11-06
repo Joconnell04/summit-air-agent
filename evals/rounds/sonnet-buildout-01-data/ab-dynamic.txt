@@ -1,0 +1,88 @@
+baseline {
+ "calls": 2,
+ "e2e_p50_ms": 1295,
+ "e2e_p90_ms": 1853,
+ "asr_p50_ms": 671,
+ "asr_p90_ms": 962,
+ "cut_ins": 0,
+ "per_call": [
+  {
+   "persona": "r404-01",
+   "e2e": [
+    1057.5,
+    1499.5
+   ],
+   "asr": [
+    641,
+    992
+   ],
+   "cut_ins": [],
+   "heard": {
+    "name": "Sam Ortiz",
+    "street": "500 Ocean Avenue",
+    "unit": null
+   }
+  },
+  {
+   "persona": "o404-01",
+   "e2e": [
+    1533,
+    2207.2999999999997
+   ],
+   "asr": [
+    701,
+    931.5
+   ],
+   "cut_ins": [],
+   "heard": {
+    "name": "Elena Goldberg",
+    "street": "742 Nostrand Avenue",
+    "unit": "3rd floor"
+   }
+  }
+ ]
+}
+dynamic {
+ "calls": 2,
+ "e2e_p50_ms": 2391,
+ "e2e_p90_ms": 3032,
+ "asr_p50_ms": 692,
+ "asr_p90_ms": 927,
+ "cut_ins": 0,
+ "per_call": [
+  {
+   "persona": "r404-01",
+   "e2e": [
+    2482,
+    3002.6
+   ],
+   "asr": [
+    651,
+    903
+   ],
+   "cut_ins": [],
+   "heard": {
+    "name": "Sam Ortiz",
+    "street": "500 Ocean Avenue",
+    "unit": null
+   }
+  },
+  {
+   "persona": "o404-01",
+   "e2e": [
+    2299.5,
+    3060.4
+   ],
+   "asr": [
+    732,
+    951.5
+   ],
+   "cut_ins": [],
+   "heard": {
+    "name": "Elena Goldberg",
+    "street": "742 Nostrand Avenue",
+    "unit": "3rd floor"
+   }
+  }
+ ]
+}

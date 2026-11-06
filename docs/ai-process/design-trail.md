@@ -151,3 +151,4 @@ How the design was reached, in order, so a reader can follow each choice back to
 | The socket build is the demo path | Our server speaks the exact lines and Haiku writes the rest, behind Retell's custom-LLM socket; the hosted single-prompt agent stays as the fallback | DECISIONS.md 121 |
 | One label per call | Urgent, Routine or No visit with a short reason, on each call row and call page with an Urgent filter, and as a tag on the booked job in ServiceTitan | DECISIONS.md 122 |
 | Emergencies are dispatched | No heat or no cooling at High or Urgent books the soonest technician at the read-back, in one sentence that is also the read-back; no times offered | DECISIONS.md 123 |
+| Speech-to-text and responsiveness kept | `fast` speech-to-text cut that step by about 500 ms but not the turn, and cut in more; dynamic responsiveness slowed every turn about 1.1 s; both kept as they were | DECISIONS.md 125, #175, evals/rounds/sonnet-buildout-01.md |

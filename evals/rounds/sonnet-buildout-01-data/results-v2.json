@@ -1,0 +1,400 @@
+{
+ "arms": {
+  "B": {
+   "calls": 4,
+   "clean_calls": 3,
+   "checks_failed": 4,
+   "safety_errors": 0,
+   "safety_style": 0,
+   "checks_run": 48,
+   "judge_mean": 5.5,
+   "judge_min": 2,
+   "e2e_p50_ms": 1531,
+   "e2e_p90_ms": 2263,
+   "llm_p50_ms": 1065,
+   "cost_usd": 4.22,
+   "cost_per_min_usd": 0.337,
+   "names_right": "2/3",
+   "asked_spelling": "1/3",
+   "fails_by_check": {
+    "no_double_confirm": 1,
+    "no_narration": 1,
+    "one_question_per_turn": 1,
+    "server_lines_verbatim": 1
+   }
+  }
+ },
+ "journeys": {
+  "B elderly": {
+   "runs": 1,
+   "passed": 1
+  },
+  "B gas_real": {
+   "runs": 1,
+   "passed": 1
+  },
+  "B routine": {
+   "runs": 2,
+   "passed": 2
+  }
+ },
+ "safety": {
+  "B": {
+   "g202-01": {
+    "seconds_to_safety_line": 3.3,
+    "errors": [],
+    "style": [],
+    "other": [],
+    "server": [],
+    "judge": 6
+   }
+  }
+ },
+ "server_findings": {},
+ "calls": [
+  {
+   "run": "sonnet-1",
+   "n": 1,
+   "arm": "B",
+   "persona": "r202-01",
+   "agent_id": "agent_871ef6fafe2636244c4bbaca67",
+   "call_id": "call_1341daa6a2033ba9376c7b6f23b",
+   "checks": {
+    "no_premature_hangup": {
+     "ok": true,
+     "why": ""
+    },
+    "one_question_per_turn": {
+     "ok": true,
+     "why": ""
+    },
+    "no_caller_name": {
+     "ok": true,
+     "why": ""
+    },
+    "no_narration": {
+     "ok": true,
+     "why": ""
+    },
+    "server_lines_verbatim": {
+     "ok": true,
+     "why": ""
+    },
+    "closing_said_once": {
+     "ok": true,
+     "why": ""
+    },
+    "read_back_before_slots": {
+     "ok": true,
+     "why": ""
+    },
+    "no_double_confirm": {
+     "ok": true,
+     "why": ""
+    },
+    "nothing_carried_over": {
+     "ok": true,
+     "why": ""
+    },
+    "records_bookings": {
+     "ok": true,
+     "why": ""
+    },
+    "access_detail_captured": {
+     "ok": true,
+     "why": ""
+    },
+    "name_asked": {
+     "ok": true,
+     "spelled_right": true,
+     "spelling": false,
+     "full_name": false,
+     "stored": [
+      "Fatima Santos"
+     ]
+    }
+   },
+   "fails": [],
+   "safety_errors": [],
+   "safety_style": [],
+   "server": [],
+   "invalid": false,
+   "journey": "routine",
+   "journey_pass": true,
+   "judge": {
+    "score": 8,
+    "vibe": "Warm, brisk and natural: one question per turn, no narration, no use of the caller's name, the borough isn't asked, a short read-back, a 30-minute window, and a clear 'Okay, I've booked it' confirmation. The only notes are a slightly clunky residential check and a stacked sign-off.",
+    "worst": "Thanks so much for calling Summit Air today. Have a great day!Take care."
+   },
+   "e2e_p50_ms": 1501,
+   "e2e_p90_ms": 2717.4999999999995,
+   "llm_p50_ms": 984,
+   "cost_usd": 0.6969,
+   "duration_s": 128,
+   "disconnection": "manual_stopped",
+   "safety_line_s": null,
+   "scored": true
+  },
+  {
+   "run": "sonnet-1",
+   "n": 2,
+   "arm": "B",
+   "persona": "o202-01",
+   "agent_id": "agent_871ef6fafe2636244c4bbaca67",
+   "call_id": "call_2647c7e38a4043d24ae448736d7",
+   "checks": {
+    "no_premature_hangup": {
+     "ok": true,
+     "why": ""
+    },
+    "one_question_per_turn": {
+     "ok": true,
+     "why": ""
+    },
+    "no_caller_name": {
+     "ok": true,
+     "why": ""
+    },
+    "no_narration": {
+     "ok": true,
+     "why": ""
+    },
+    "server_lines_verbatim": {
+     "ok": true,
+     "why": ""
+    },
+    "closing_said_once": {
+     "ok": true,
+     "why": ""
+    },
+    "read_back_before_slots": {
+     "ok": true,
+     "why": ""
+    },
+    "no_double_confirm": {
+     "ok": true,
+     "why": ""
+    },
+    "nothing_carried_over": {
+     "ok": true,
+     "why": ""
+    },
+    "records_bookings": {
+     "ok": true,
+     "why": ""
+    },
+    "open_door_with_first_offer": {
+     "ok": true,
+     "why": ""
+    },
+    "records_priority_raised": {
+     "ok": true,
+     "why": ""
+    },
+    "name_asked": {
+     "ok": true,
+     "spelled_right": true,
+     "spelling": false,
+     "full_name": false,
+     "stored": [
+      "Fatima Russo"
+     ]
+    }
+   },
+   "fails": [],
+   "safety_errors": [],
+   "safety_style": [],
+   "server": [],
+   "invalid": false,
+   "journey": "elderly",
+   "journey_pass": true,
+   "judge": {
+    "score": 6,
+    "vibe": "Warm, confident and mostly natural, one question at a time with no narration, and the job got booked with the priority callback; one clear mishear and a doubled sign-off take the shine off.",
+    "worst": "Caller: \"Nothing at all.\" \u2014 Brooke: \"Sure, take your time.\""
+   },
+   "e2e_p50_ms": 1760,
+   "e2e_p90_ms": 2233,
+   "llm_p50_ms": 1217,
+   "cost_usd": 0.9169,
+   "duration_s": 165,
+   "disconnection": "manual_stopped",
+   "safety_line_s": null,
+   "scored": true
+  },
+  {
+   "run": "sonnet-1",
+   "n": 3,
+   "arm": "B",
+   "persona": "g202-01",
+   "agent_id": "agent_871ef6fafe2636244c4bbaca67",
+   "call_id": "call_bf2cea43b3233fefd00e5ae4052",
+   "checks": {
+    "no_premature_hangup": {
+     "ok": true,
+     "why": ""
+    },
+    "one_question_per_turn": {
+     "ok": true,
+     "why": ""
+    },
+    "no_caller_name": {
+     "ok": true,
+     "why": ""
+    },
+    "no_narration": {
+     "ok": true,
+     "why": ""
+    },
+    "server_lines_verbatim": {
+     "ok": true,
+     "why": ""
+    },
+    "closing_said_once": {
+     "ok": true,
+     "why": ""
+    },
+    "read_back_before_slots": {
+     "ok": true,
+     "why": ""
+    },
+    "no_double_confirm": {
+     "ok": true,
+     "why": ""
+    },
+    "safety_advice_spoken": {
+     "ok": true,
+     "why": ""
+    },
+    "no_own_safety_question": {
+     "ok": true,
+     "why": ""
+    },
+    "safety_advice_once": {
+     "ok": true,
+     "why": ""
+    },
+    "nothing_carried_over": {
+     "ok": true,
+     "why": ""
+    },
+    "access_detail_captured": {
+     "ok": true,
+     "why": ""
+    },
+    "records_flag": {
+     "ok": true,
+     "why": ""
+    }
+   },
+   "fails": [],
+   "safety_errors": [],
+   "safety_style": [],
+   "server": [],
+   "invalid": false,
+   "journey": "gas_real",
+   "journey_pass": true,
+   "judge": {
+    "score": 6,
+    "vibe": "Warm, confident and mostly natural. It asks one question at a time, never uses the caller's name, gives the safety line once and calmly, and books the visit with a 30-minute window and top priority. A garbled safety line and a doubled sign-off spoil it.",
+    "worst": "\"Is If you're smelling gas, the safest thing is to get everyone outside and call 9-1-1 or the gas company from there.\""
+   },
+   "e2e_p50_ms": 1438,
+   "e2e_p90_ms": 1869.2,
+   "llm_p50_ms": 961,
+   "cost_usd": 0.9938,
+   "duration_s": 172,
+   "disconnection": "manual_stopped",
+   "safety_line_s": 3.3,
+   "scored": true
+  },
+  {
+   "run": "sonnet-1",
+   "n": 4,
+   "arm": "B",
+   "persona": "r202-02",
+   "agent_id": "agent_871ef6fafe2636244c4bbaca67",
+   "call_id": "call_26ded932e4ccc31c13371619851",
+   "checks": {
+    "no_premature_hangup": {
+     "ok": true,
+     "why": ""
+    },
+    "one_question_per_turn": {
+     "ok": false,
+     "why": "Got it. Is that a house or an apartment, and what's the unit if so?"
+    },
+    "no_caller_name": {
+     "ok": true,
+     "why": ""
+    },
+    "no_narration": {
+     "ok": false,
+     "why": "lookup, lookup, Let me get, I'll read"
+    },
+    "server_lines_verbatim": {
+     "ok": false,
+     "why": "find_address: What's the street address there?; find_address: What's the street address there?; find_address: What's the street address there?"
+    },
+    "closing_said_once": {
+     "ok": true,
+     "why": ""
+    },
+    "read_back_before_slots": {
+     "ok": true,
+     "why": ""
+    },
+    "no_double_confirm": {
+     "ok": false,
+     "why": "4 confirmations, 2 earned"
+    },
+    "nothing_carried_over": {
+     "ok": true,
+     "why": ""
+    },
+    "records_bookings": {
+     "ok": true,
+     "why": ""
+    },
+    "access_detail_captured": {
+     "ok": true,
+     "why": ""
+    },
+    "name_asked": {
+     "ok": true,
+     "spelled_right": false,
+     "spelling": true,
+     "full_name": false,
+     "stored": [
+      "Kaisha"
+     ]
+    }
+   },
+   "fails": [
+    "no_double_confirm",
+    "no_narration",
+    "one_question_per_turn",
+    "server_lines_verbatim"
+   ],
+   "safety_errors": [],
+   "safety_style": [],
+   "server": [],
+   "invalid": false,
+   "journey": "routine",
+   "journey_pass": true,
+   "judge": {
+    "score": 2,
+    "vibe": "Friendly enough on the surface, but over and over it reads its own internal reasoning aloud, refers to the caller as 'her' and 'they', invents units, and leaves a confusing ending.",
+    "worst": "The unit may have changed in their last answer, since they said the buzzer is 2B. I'll read it back with unit 2B."
+   },
+   "e2e_p50_ms": 1561,
+   "e2e_p90_ms": 2292.4000000000005,
+   "llm_p50_ms": 1146,
+   "cost_usd": 1.6109,
+   "duration_s": 286,
+   "disconnection": "manual_stopped",
+   "safety_line_s": null,
+   "scored": true
+  }
+ ]
+}

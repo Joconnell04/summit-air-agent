@@ -14,6 +14,7 @@ call. They are deliberately literal (a regex or a count), so a reader can see wh
 """
 
 import argparse
+import itertools
 import json
 import re
 import statistics
@@ -27,6 +28,11 @@ FEEDBACK = ROOT / "evals" / "rounds" / "retell-live-calls-01.md"
 JUDGE_MODEL = "claude-opus-5-5"
 
 CLOSING = "thanks so much for calling summit air today. have a great day"
+# Either goodbye: the earlier "Thanks so much for calling Summit Air today" or change set 24's
+# "Thanks for calling Summit Air."
+CLOSINGS = r"thanks (so much )?for calling summit air"
+NICETY = r"\b(have a (great|good|nice|lovely|wonderful) (day|night|evening|one)|take care|stay (warm|safe|cool))\b"
+THANKS_FOR_WAITING = r"\bthank(s| you) (so much )?for (waiting|holding|your patience|bearing with)"
 OPEN_DOOR = "if anything makes this more urgent for you, just let me know"
 
 # The agent describing its own steps, from Jackson's feedback in retell-live-calls-01.md and the
@@ -66,6 +72,34 @@ ASKED_SPELLING = r"\bspell\b"
 ASKED_FULL_NAME = r"\b(first and last|full name|last name)\b"
 
 
+# A buzzer or gate code the caller gives ("the buzzer is 2b", "gate code is four four one two").
+ACCESS_DETAIL = r"\b(buzzer|gate code)( is| number)? (\w+(?: \w+){0,3})"
+NAME_QUESTION = (
+    r"\b(can i (get|have)|what'?s|what is|may i (get|have)) your (full |first and last )?name\b"
+)
+NO_MATCH = r"i don'?t see an account under the number"
+CATCH_ALL = r"anything else the technician should know"
+PROBLEM_JOBS = ("no_heat", "no_cooling", "repair", "airflow")
+CONNECTORS = (
+    "okay, thanks",
+    "got it",
+    "okay",
+    "perfect",
+    "and",
+    "thanks",
+    "great",
+    "sure",
+    "alright",
+    "thank you",
+)
+
+
+def connector(text: str) -> str | None:
+    """The connector a question opens with, if any."""
+    t = norm(text)
+    return next((c for c in CONNECTORS if t == c or t.startswith(c + " ")), None)
+
+
 def weekday_in_new_york(stamp: str) -> str:
     from datetime import datetime
     from zoneinfo import ZoneInfo
@@ -82,6 +116,13 @@ def norm(text: str) -> str:
 
 TAG_QUESTION = r",?\s*\b(right|correct|okay|yeah)\?"
 CLARIFIER = r"\blike an? [^?.!]*\?"
+ACCESS_QUESTION = r"[^.?!]*let the technician in(, and|\? and) is there a gate code[^?]*\?"
+# Today or tomorrow said with its weekday or date ("tomorrow, Friday, November 6"), which change
+# set 19 rules out.
+DATED_DAY = (
+    r"\b(today|tomorrow)\b,?\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday|"
+    r"january|february|march|april|may|june|july|august|september|october|november|december)\b"
+)
 QUESTION_WORD = (
     r"(is|are|do|does|did|what'?s?|where'?s?|when|which|who|how|can|could|will|would|should)"
 )
@@ -93,6 +134,8 @@ def questions(text: str) -> int:
     ("Like a home or an apartment?") belong to the question before them, so they are not counted."""
     text = re.sub(TAG_QUESTION, "?", text, flags=re.IGNORECASE)
     text = re.sub(CLARIFIER, "", text, flags=re.IGNORECASE)
+    # Jackson's one access question (change set 19) joins two asks on purpose.
+    text = re.sub(ACCESS_QUESTION, "the access question?", text, flags=re.IGNORECASE)
     # "Is it a business, and is that where you'd like the technician?" is two questions; "Got it,
     # and what street?" is one, since the clause before "and" is not a question.
     joined = 0
@@ -112,7 +155,15 @@ def turns(transcript: list[dict]) -> list[dict]:
     for item in transcript:
         role = item.get("role")
         if role == "user":
-            out.append({"who": "caller", "text": item.get("content", "").strip()})
+            # Retell can split one caller sentence into several lines ("Wait, never " then
+            # "mind, it was the stove"); consecutive caller lines are one turn.
+            if out and out[-1]["who"] == "caller":
+                out[-1]["text"] = (out[-1]["text"] + " " + item.get("content", "").strip()).strip()
+            else:
+                out.append({"who": "caller", "text": item.get("content", "").strip()})
+            continue
+        # An injected note that isn't a line to speak is for the model only; it opens no turn.
+        if role == "injected" and not item.get("content", "").startswith("Say this to the caller"):
             continue
         if not out or out[-1]["who"] != "agent":
             out.append({"who": "agent", "text": "", "tools": [], "says": []})
@@ -178,7 +229,11 @@ DECLINE = r"^((no|nope|nah)( (thanks|thank you|that's it|that's all|i'm good|not
 
 
 def check_call(
-    persona: dict, transcript: list[dict], rows: dict, disconnection: str | None = None
+    persona: dict,
+    transcript: list[dict],
+    rows: dict,
+    disconnection: str | None = None,
+    call_id: str | None = None,
 ) -> dict:
     """Gross-error checks for one call. Each value is {"ok": bool, "why": str}; checks that do not
     apply to the persona are left out."""
@@ -259,6 +314,15 @@ def check_call(
             # Slot offers may add the weekday and date; the other tools' lines are said as written.
             if say["tool"] in ("end_call", "find_slots"):
                 continue
+            # A server line that still asks about pets predates change set 18 on the server; it is
+            # a server finding, and an agent that drops the pets is not marked down.
+            if re.search(r"\bpets?\b", say["say"], re.IGNORECASE):
+                results["server_line_mentions_pets"] = {
+                    "ok": True,
+                    "server": True,
+                    "text": say["say"][:120],
+                }
+                continue
             # The bridge's repeated gas check is a server finding; skipping it is not a miss.
             if say["tool"] == "injected" and re.search(SERVER_CHECK, say["say"], re.IGNORECASE):
                 continue
@@ -271,7 +335,62 @@ def check_call(
                 missed.append(f"{say['tool']}: {say['say'][:80]}")
     put("server_lines_verbatim", not missed, "; ".join(missed[:3]))
 
-    closings = [t for t in agents if norm(CLOSING) in norm(t["text"])]
+    # Change set 21: a short, varied connector ("Got it.", "Okay, thanks.", "Perfect.", "And...")
+    # before most questions, never the same one twice in a row. Reported as style.
+    asks = [t["text"].strip() for t in agents[1:] if "?" in t["text"]]
+    leads = [connector(text) for text in asks]
+    if len(asks) >= 3:
+        share = sum(1 for c in leads if c) / len(asks)
+        repeats = [a for a, b in itertools.pairwise(leads) if a and a == b]
+        put(
+            "connectors_varied",
+            share > 0.5 and not repeats,
+            f"connectors on {share:.0%} of {len(asks)} questions, repeated back to back: {repeats[:2]}",
+        )
+
+    # Change set 22: on a heating, cooling or airflow problem, one catch-all ("Anything else the
+    # technician should know, like ...?") in its own turn; never on a tune-up or an estimate.
+    job = next(
+        (
+            json.loads(tool["arguments"] or "{}").get("job_type")
+            for t in agents
+            for tool in t["tools"]
+            if tool["name"] in ("find_slots", "book_appointment") and tool["arguments"]
+        ),
+        None,
+    )
+    catch_alls = sum(1 for t in agents if re.search(CATCH_ALL, t["text"], re.IGNORECASE))
+    if job in PROBLEM_JOBS:
+        put("catch_all_once", catch_alls == 1, f"{job}: the catch-all asked {catch_alls} times")
+    elif job in ("tune_up", "estimate"):
+        put("catch_all_once", catch_alls == 0, f"{job}: the catch-all asked {catch_alls} times")
+
+    # Change set 23: caller ID first. A matched caller is never asked for a name; the no-match
+    # line is said at most once.
+    if persona.get("matched"):
+        asked = [t["text"] for t in agents if re.search(NAME_QUESTION, t["text"], re.IGNORECASE)]
+        put("no_name_question_when_matched", not asked, "; ".join(a[:80] for a in asked[:1]))
+    no_match = sum(1 for t in agents if re.search(NO_MATCH, t["text"], re.IGNORECASE))
+    put("no_match_line_once", no_match <= 1, f"the no-match line said {no_match} times")
+
+    dated = [t["text"] for t in agents if re.search(DATED_DAY, t["text"], re.IGNORECASE)]
+    put("no_date_with_today_or_tomorrow", not dated, "; ".join(d[:100] for d in dated[:2]))
+
+    # The greeting also says "thanks for calling Summit Air", so it is left out.
+    closings = [t for t in agents[1:] if re.search(CLOSINGS, norm(t["text"]))]
+    # Change set 24: the goodbye carries one nicety at most; nobody is thanked for waiting; the
+    # silence check-in comes at most twice.
+    for t in closings[-1:]:
+        niceties = len(re.findall(NICETY, norm(t["text"])))
+        put("closing_one_nicety", niceties <= 1, f"{niceties} niceties: {t['text'][-90:]}")
+    thanked = [t["text"] for t in agents if re.search(THANKS_FOR_WAITING, t["text"], re.IGNORECASE)]
+    put("no_thanks_for_waiting", not thanked, "; ".join(x[:80] for x in thanked[:1]))
+    still_there = sum(
+        1 for t in agents if re.search(r"are you still there", t["text"], re.IGNORECASE)
+    )
+    put(
+        "still_there_at_most_twice", still_there <= 2, f'"Are you still there?" {still_there} times'
+    )
     put("closing_said_once", len(closings) <= 1, f"{len(closings)} closings")
 
     if any(norm(OPEN_DOOR) in norm(s["say"]) for t in agents for s in t["says"]):
@@ -298,6 +417,8 @@ def check_call(
         for t in agents
         if re.search(CONFIRM, t["text"].strip(), re.IGNORECASE | re.MULTILINE)
         and not re.search(SERVER_CHECK, t["text"], re.IGNORECASE)
+        # The residential question (change set 18) ends in "right?" but asks, not confirms.
+        and not re.search(r"for your home, right\?\s*$", t["text"].strip(), re.IGNORECASE)
     )
     server_checks = [t["text"] for t in agents if re.search(SERVER_CHECK, t["text"], re.IGNORECASE)]
     if len(server_checks) > 1:
@@ -368,7 +489,7 @@ def check_call(
             (
                 i
                 for i, t in enumerate(ts)
-                if t["who"] == "caller" and retraction in t["text"].lower().replace(" ", "")
+                if t["who"] == "caller" and retraction in norm(t["text"]).replace(" ", "")
             ),
             None,
         )
@@ -398,7 +519,10 @@ def check_call(
         "; ".join(carried[:1] + foreign[:1] + [f"linked {x}" for x in linked[:1]]),
     )
 
-    ours = calls[-1] if calls else {}
+    # This call's own rows: the tool server's id is "retell_" plus Retell's call id. Another
+    # session's calls in the same world would otherwise be read as ours.
+    mine = [c for c in calls if call_id and c["call"]["id"] == f"retell_{call_id}"]
+    ours = mine[0] if mine else (calls[-1] if calls else {})
     kinds = sorted(
         b["kind"]
         for b in ours.get("bookings", [])
@@ -410,6 +534,50 @@ def check_call(
             "records_bookings",
             all(k in kinds for k in want) and (want or not kinds),
             f"bookings {kinds}, expected {want}",
+        )
+    if persona.get("unit_ask"):
+        # Asked for the apartment or unit before the read-back (change set 18).
+        before = agents[
+            : next(
+                (
+                    i
+                    for i, t in enumerate(agents)
+                    if any(x["name"] == "read_back" for x in t["tools"])
+                ),
+                len(agents),
+            )
+        ]
+        put(
+            "unit_asked",
+            any(
+                re.search(r"\b(apartment|unit)\b[^?]*\?", t["text"], re.IGNORECASE) for t in before
+            ),
+            "a building's unit was never asked before the read-back",
+        )
+    # Change set 25: a plain "yes" to the access question is complete; a buzzer or gate code the
+    # caller gives must reach the booking's arrival notes.
+    code = re.search(ACCESS_DETAIL, caller_text)
+    booked = [
+        b for b in ours.get("bookings", []) if b.get("status") in ("booked", "done", "queued")
+    ]
+    if code and booked:
+        notes = " ".join(
+            norm(json.dumps(json.loads(b.get("request_json") or "{}").get("details", {})))
+            for b in booked
+        )
+        # The keyword is matched, not the value: notes may write "four four one two" as "4412".
+        word = "gate" if "gate" in code.group(1) else "buzzer"
+        put(
+            "access_detail_captured",
+            word in notes,
+            f"said {code.group(0)!r}, no {word} in the booking",
+        )
+    if persona.get("job_type"):
+        jobs = [b.get("job_type") for b in ours.get("bookings", [])]
+        put(
+            "records_job_type",
+            persona["job_type"] in jobs,
+            f"booked {jobs}, expected {persona['job_type']}",
         )
     if persona.get("callback"):
         put("records_callback", bool(ours.get("callbacks")), "no callback row")
@@ -508,7 +676,8 @@ def latency(call: dict) -> dict:
 # ---- the Opus judge ----------------------------------------------------------------------------
 
 JUDGE_SYSTEM = """You judge phone calls to Summit Air, a residential HVAC company in New York, answered
-by a virtual assistant named Brooke. The caller is a scripted test caller. The owner, Jackson, has
+by a virtual assistant (named Brooke on earlier calls and Brian on later ones, at Jackson's
+request; either name is right). The caller is a scripted test caller. The owner, Jackson, has
 given feedback on earlier calls; it is below, word for word, and it is the standard. Score how close
 this call comes to what Jackson wants: warm, confident and natural, one question at a time, no
 narration of its own steps, no saying the caller's name, safety handled once and calmly, the job
@@ -517,9 +686,9 @@ done (booked, moved, callback or lead as the caller asked), and a clean ending.
 Score 1 to 10: 10 is a call Jackson would have no notes on; 7 is good with small notes; 5 has one
 serious problem a caller would notice; 3 or lower would embarrass the company. Judge only what the
 caller hears and what got done; do not reward length. Lines in parentheses are what the system
-told Brooke to say word for word; her next line is what the caller heard.
+told the agent to say word for word; its next line is what the caller heard.
 The caller is an AI following a script and sometimes says odd things (stage directions, its own
-reasoning); judge only Brooke's side.
+reasoning); judge only the agent's side.
 
 Jackson's feedback on earlier calls:
 
@@ -540,10 +709,10 @@ JUDGE_SCHEMA = {
 def transcript_text(transcript: list[dict]) -> str:
     lines = []
     for t in turns(transcript):
-        who = "Caller" if t["who"] == "caller" else "Brooke"
+        who = "Caller" if t["who"] == "caller" else "Agent"
         for say in t.get("says", []):
             if say["tool"] == "injected":
-                lines.append(f"(The system told Brooke to say, word for word: {say['say']})")
+                lines.append(f"(The system told the agent to say, word for word: {say['say']})")
         if t["text"]:
             lines.append(f"{who}: {t['text']}")
     return "\n".join(lines)
@@ -582,9 +751,10 @@ def judge(run: Path) -> None:
         if out.exists() or not src.exists():
             continue
         call = json.loads(src.read_text())
-        persona_text = (
-            ROOT / "evals" / "side-by-side" / "personas" / f"{entry['persona']}.txt"
-        ).read_text()
+        persona_file = ROOT / "evals" / "side-by-side" / "personas" / f"{entry['persona']}.txt"
+        if not persona_file.exists():
+            persona_file = run / "personas" / f"{entry['persona']}.txt"
+        persona_text = persona_file.read_text()
         result = judge_call(client, call.get("transcript_with_tool_calls") or [], persona_text)
         out.write_text(json.dumps(result, indent=1))
         print(f"{entry['log']}: {result['score']} {result['vibe']}")
@@ -614,14 +784,54 @@ def load_json(path: Path) -> dict:
 # Style: an extra caring question, advice said again, or reworded advice.
 SAFETY_ERRORS = ("safety_advice_spoken", "retraction_honored", "records_flag")
 SAFETY_STYLE = ("safety_advice_once", "no_own_safety_question")
+# Wording style that is reported but doesn't make a call unclean.
+STYLE = ("connectors_varied",)
 
 
 def gross(fails: list[str]) -> list[str]:
     """The failures that make a call not clean: everything but safety style."""
-    return [k for k in fails if k not in SAFETY_STYLE]
+    return [k for k in fails if k not in SAFETY_STYLE and k not in STYLE]
 
 
-def score_run(run: Path, personas: dict) -> list[dict]:
+def journey_pass(journey: str | None, checks: dict) -> bool | None:
+    """Whether a call passed its done-bar journey (DECISIONS 119): no safety error, and the
+    journey's record right. None for a call that isn't one of the journeys."""
+    if not journey:
+        return None
+
+    def ok(k: str) -> bool:
+        return k in checks and checks[k]["ok"]
+
+    if any(k in checks and not checks[k]["ok"] for k in SAFETY_ERRORS):
+        return False
+    if journey == "routine":
+        return ok("records_bookings")
+    if journey == "elderly":
+        return ok("records_bookings") and ok("records_priority_raised")
+    if journey == "gas_real":
+        return ok("safety_advice_spoken") and ok("records_flag")
+    if journey == "gas_retracted":
+        return ok("retraction_honored")
+    return None
+
+
+# The change set of Jackson's prompt that brought each later rule. A run on an older prompt is not
+# held to a rule its prompt didn't have (report <run>@<change set>).
+CHECK_SINCE = {
+    "unit_asked": 18,
+    "records_job_type": 18,
+    "no_date_with_today_or_tomorrow": 19,
+    "connectors_varied": 21,
+    "catch_all_once": 22,
+    "no_name_question_when_matched": 23,
+    "no_match_line_once": 23,
+    "closing_one_nicety": 24,
+    "no_thanks_for_waiting": 24,
+    "still_there_at_most_twice": 24,
+}
+
+
+def score_run(run: Path, personas: dict, change_set: int | None = None) -> list[dict]:
     calls = []
     for entry in manifest(run):
         retell = load_json(run / entry["log"].replace(".log", ".retell.json"))
@@ -630,11 +840,17 @@ def score_run(run: Path, personas: dict) -> list[dict]:
         transcript = retell.get("transcript_with_tool_calls") or []
         checks = (
             check_call(
-                personas[entry["persona"]], transcript, rows, retell.get("disconnection_reason")
+                personas[entry["persona"]],
+                transcript,
+                rows,
+                retell.get("disconnection_reason"),
+                retell.get("call_id"),
             )
             if retell
             else {}
         )
+        if change_set is not None:
+            checks = {k: v for k, v in checks.items() if CHECK_SINCE.get(k, 0) <= change_set}
         calls.append(
             {
                 "run": run.name,
@@ -650,6 +866,8 @@ def score_run(run: Path, personas: dict) -> list[dict]:
                 ),
                 "server": sorted(k for k, v in checks.items() if v.get("server")),
                 "invalid": "caller_broke_role" in checks,
+                "journey": personas[entry["persona"]].get("journey"),
+                "journey_pass": journey_pass(personas[entry["persona"]].get("journey"), checks),
                 "judge": {k: verdict.get(k) for k in ("score", "vibe", "worst")}
                 if verdict
                 else None,
@@ -695,13 +913,24 @@ def arm_summary(mine: list[dict]) -> dict:
 EXCLUDED = ROOT / "evals" / "side-by-side" / "excluded.yaml"
 
 
-def report(runs: list[Path], out: Path | None = None) -> dict:
+def load_personas(extra: list[Path] | None = None) -> dict:
+    """The canonical personas, plus any generated variants (evals/caller_variants.py)."""
+    personas = yaml.safe_load(PERSONAS.read_text())["personas"]
+    for path in extra or []:
+        personas.update(yaml.safe_load(path.read_text())["personas"])
+    return personas
+
+
+def report(runs: list[Path], out: Path | None = None, extra: list[Path] | None = None) -> dict:
     """Score the runs in order. A later valid call for the same arm and persona (a rerun under
     fixed conditions) replaces an earlier one in the per-arm numbers; a call where the scripted
     caller broke its role, or one listed in excluded.yaml, is left out. Every call stays in
     `calls`, marked."""
-    personas = yaml.safe_load(PERSONAS.read_text())["personas"]
-    calls = [c for run in runs for c in score_run(run, personas)]
+    personas = load_personas(extra)
+    calls = []
+    for run in runs:
+        path, _, cs = str(run).partition("@")
+        calls += score_run(Path(path), personas, int(cs) if cs else None)
     excluded = yaml.safe_load(EXCLUDED.read_text()) or {}
     for c in calls:
         if c["call_id"] in excluded:
@@ -739,7 +968,19 @@ def report(runs: list[Path], out: Path | None = None) -> dict:
     for c in scored:
         for k in c["server"]:
             server.setdefault(k, []).append(f"{c['arm']}-{c['persona']} {c['call_id']}")
-    result = {"arms": arms, "safety": safety, "server_findings": server, "calls": calls}
+    journeys = {}
+    for c in scored:
+        if c["journey_pass"] is not None:
+            j = journeys.setdefault(f"{c['arm']} {c['journey']}", {"runs": 0, "passed": 0})
+            j["runs"] += 1
+            j["passed"] += bool(c["journey_pass"])
+    result = {
+        "arms": arms,
+        "journeys": dict(sorted(journeys.items())),
+        "safety": safety,
+        "server_findings": server,
+        "calls": calls,
+    }
     if out:
         out.write_text(json.dumps(result, indent=1))
     return result
@@ -808,23 +1049,25 @@ def markdown(result: dict) -> str:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("action", choices=["judge", "report"])
-    parser.add_argument("runs", type=Path, nargs="+")
+    parser.add_argument("runs", nargs="+", help="run folders, each optionally <path>@<change set>")
     parser.add_argument("--out", type=Path, help="report: where to write the results JSON")
     parser.add_argument(
         "--markdown", action="store_true", help="report: print the round doc tables"
     )
+    parser.add_argument(
+        "--personas", type=Path, action="append", help="report: a generated variants.yaml"
+    )
     args = parser.parse_args()
     if args.action == "judge":
         for run in args.runs:
-            judge(run)
+            judge(Path(run.partition("@")[0]))
     else:
-        result = report(args.runs, args.out)
+        result = report(args.runs, args.out, args.personas)
         if args.markdown:
             print(markdown(result))
         else:
-            print(
-                json.dumps({k: result[k] for k in ("arms", "safety", "server_findings")}, indent=1)
-            )
+            keys = ("arms", "journeys", "safety", "server_findings")
+            print(json.dumps({k: result[k] for k in keys}, indent=1))
 
 
 if __name__ == "__main__":
