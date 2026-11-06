@@ -38,7 +38,9 @@ def test_a_yes_is_dispatched_at_the_read_back_as_urgent(agent):
     sent = read_back(agent, call)
     assert sent["ok"] and sent["data"]["dispatched"], sent
     # The visit waits until it's checked and safe, said before the sentence's closing question.
-    assert sent["say"].startswith(NOTE) and sent["say"].endswith("Is that the right address?")
+    say = sent["say"]
+    assert NOTE in say and say.index(NOTE) < say.index("We'll get a technician out")
+    assert say.endswith("Is that the right address?")
     agent.end(call)
     assert label(agent, call) == "Urgent"
 

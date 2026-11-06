@@ -290,7 +290,7 @@ From the done-bar spot-checks. On the CO false-alarm call (call_d101fce0cddb6792
 
 ### v8 (safety dispatch offer)
 
-The safety lines now end by offering a technician right away, and the prompt says what to do with the answer: on a yes, get the address if I don't have it and call `read_back` with `safety_check`, and the server dispatches it as Urgent; on a no, carry on and never bring the hazard back up. I wanted the safety route to end in help, since plenty of people trip it by accident. One sentence in the safety section; nothing else in the prompt moved. Outcome: the server side is tested (tests/tool_server/test_ts_safety_dispatch.py); checked on the phone after deploy, results in the round doc.
+The safety lines now end by offering a technician right away, and the prompt says what to do with the answer: on a yes, get the address if I don't have it and call `read_back` with `safety_check`, and the server dispatches it as Urgent; on a no, carry on and never bring the hazard back up. I wanted the safety route to end in help, since plenty of people trip it by accident. One sentence in the safety section; nothing else in the prompt moved. Outcome: kept. On the phone, a no (call_ce4e1564beb13b911156234d074) got the lines once and went straight to my hours question, no loop; a yes after a world reset (gas_yes rerun) asked for the address and number and dispatched "within the next hour". The first yes fell back to the normal booking steps because the test number already had an open visit at that address, which is the open-job guard doing its job, so reset the live world before the demo.
 
 ### Review (issue #183)
 

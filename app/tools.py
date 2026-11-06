@@ -2990,11 +2990,12 @@ def _dispatch(ctx: Ctx, job_type: str, current: dict) -> Result | None:
             (ctx.call["id"], row["id"], job_type, iso(ctx.now)),
         )
     sentence = _dispatch_said(ctx, window, current, on_call)
-    say = _connector(ctx, sentence)
+    note = ""
     if safety_dispatch and ctx.tenant.safety.get("booking_note"):
         # The visit goes ahead only once the problem is checked and safe, said before the
         # sentence's closing question so the caller answers that.
-        say = " ".join(ctx.tenant.safety["booking_note"].split()) + " " + say
+        note = " ".join(ctx.tenant.safety["booking_note"].split()) + " "
+    say = _connector(ctx, note + sentence)
     with tx(ctx.conn):
         records.update_call(
             ctx.conn, ctx.call["id"], readback_json=json.dumps({**current, "sentence": sentence})
