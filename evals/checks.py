@@ -4,6 +4,7 @@ Each check reads the call's timeline (app/trace.py, the same shape /debug/calls/
 in-process stack and the Retell baseline are judged by the same evidence. A scenario lists checks
 under `must:` as `- <check>: <argument>`; a check returns the reasons it failed, or nothing.
 """
+
 import json
 import re
 import sqlite3
@@ -108,7 +109,9 @@ def _keys(allowed: set[str], short: tuple = ()) -> Callable[[Any], None]:
         if arg in short:
             return
         if not isinstance(arg, dict) or not set(arg) <= allowed:
-            raise ValueError(f"expected {short or ''} or a mapping with keys from {sorted(allowed)}")
+            raise ValueError(
+                f"expected {short or ''} or a mapping with keys from {sorted(allowed)}"
+            )
 
     return validate
 
@@ -243,7 +246,10 @@ def priority_raise(arg: dict, ev: Evidence) -> list[str]:
     said = [" ".join(t["text"].split()) for t in ev.turns() if t["speaker"] == "caller"]
     problems = []
     for b in booked:
-        if "raised_after_wait" in arg and bool(b.get("raised_after_wait")) != arg["raised_after_wait"]:
+        if (
+            "raised_after_wait" in arg
+            and bool(b.get("raised_after_wait")) != arg["raised_after_wait"]
+        ):
             problems.append(
                 f"raised_after_wait is {bool(b.get('raised_after_wait'))}, "
                 f"expected {arg['raised_after_wait']}"
@@ -346,7 +352,9 @@ def _job_matches(want: dict, job: dict) -> bool:
         return False
     if "unit" in want and unit_key(job.get("unit") or "") != unit_key(str(want["unit"])):
         return False
-    if "street" in want and _house_joined(want["street"]) not in _house_joined(job.get("street") or ""):
+    if "street" in want and _house_joined(want["street"]) not in _house_joined(
+        job.get("street") or ""
+    ):
         return False
     if "note" in want:
         notes = json.loads(job.get("job_notes") or "[]")
@@ -413,8 +421,13 @@ def tool_not_called(arg: Any, ev: Evidence) -> list[str]:
     return [f"{n} was called" for n in _as_list(arg) if ev.tools(n)]
 
 
-WRITES = ("book_appointment", "reschedule_appointment", "cancel_appointment", "record_move",
-          "mark_do_not_call")
+WRITES = (
+    "book_appointment",
+    "reschedule_appointment",
+    "cancel_appointment",
+    "record_move",
+    "mark_do_not_call",
+)
 
 
 def no_changes(arg: bool, ev: Evidence) -> list[str]:
@@ -457,8 +470,10 @@ def callback(arg: Any, ev: Evidence) -> list[str]:
     for row in rows:
         due = datetime.fromisoformat(row["due_at"]).astimezone(NEW_YORK)
         if due.date() != day or due < earliest:
-            problems.append(f"callback due {due:%a %-I:%M %p}, expected {day:%a} at or after "
-                            f"{earliest:%-I:%M %p}")
+            problems.append(
+                f"callback due {due:%a %-I:%M %p}, expected {day:%a} at or after "
+                f"{earliest:%-I:%M %p}"
+            )
     return problems
 
 
@@ -472,7 +487,11 @@ def _callback_arg(arg: Any) -> None:
 
 def agent_says(arg: Any, ev: Evidence) -> list[str]:
     text = "\n".join(ev.agent_lines())
-    return [f"the agent never said /{p}/" for p in _as_list(arg) if not re.search(p, text, re.IGNORECASE)]
+    return [
+        f"the agent never said /{p}/"
+        for p in _as_list(arg)
+        if not re.search(p, text, re.IGNORECASE)
+    ]
 
 
 def agent_never_says(arg: Any, ev: Evidence) -> list[str]:
@@ -491,7 +510,9 @@ def agent_says_at_most(arg: dict, ev: Evidence) -> list[str]:
     for pattern, most in arg.items():
         hits = [line for line in ev.agent_lines() if re.search(pattern, line, re.IGNORECASE)]
         if len(hits) > most:
-            problems.append(f"the agent said /{pattern}/ in {len(hits)} lines, at most {most} allowed")
+            problems.append(
+                f"the agent said /{pattern}/ in {len(hits)} lines, at most {most} allowed"
+            )
     return problems
 
 
@@ -541,8 +562,10 @@ def said_booked(arg: str, ev: Evidence) -> list[str]:
     for e in ev.trace["events"]:
         if e["type"] == "tool" and e["tool"] == "book_appointment" and e["ok"]:
             return []
-        if e["type"] == "turn" and e["speaker"] == "agent" and re.search(
-            CLAIMS_BOOKED, e["text"], re.IGNORECASE
+        if (
+            e["type"] == "turn"
+            and e["speaker"] == "agent"
+            and re.search(CLAIMS_BOOKED, e["text"], re.IGNORECASE)
         ):
             return [f"told the caller they were booked before any booking: {e['text'][:80]!r}"]
     return []
@@ -554,11 +577,14 @@ def slot_taken(arg: str, ev: Evidence) -> list[str]:
     the time that went). Passes on a call where no booking came back taken."""
     events = ev.trace["events"]
     for i, e in enumerate(events):
-        if not (e["type"] == "tool" and e["tool"] == "book_appointment"
-                and e.get("refused") == "slot_taken"):
+        if not (
+            e["type"] == "tool"
+            and e["tool"] == "book_appointment"
+            and e.get("refused") == "slot_taken"
+        ):
             continue
         reply = next(
-            (t["text"] for t in events[i + 1:] if t["type"] == "turn" and t["speaker"] == "agent"),
+            (t["text"] for t in events[i + 1 :] if t["type"] == "turn" and t["speaker"] == "agent"),
             None,
         )
         if reply is None:
@@ -567,7 +593,7 @@ def slot_taken(arg: str, ev: Evidence) -> list[str]:
         gone = re.search(SAYS_GONE, reply, re.IGNORECASE)
         if not gone:
             problems.append(f"did not say the window just went: {reply[:80]!r}")
-        offered = reply[gone.end():] if gone else reply
+        offered = reply[gone.end() :] if gone else reply
         if not re.search(NAMES_A_TIME, offered, re.IGNORECASE):
             problems.append(f"did not offer another time: {reply[:80]!r}")
         return problems
@@ -584,8 +610,10 @@ def _pace_arg(arg: Any) -> None:
     for key in ("held", "address"):
         if key in arg and not isinstance(arg[key], (int, float)):
             raise ValueError(f"{key}: expected a speed such as 0.85")
-    if "remembered" in arg and arg["remembered"] != "none" and not isinstance(
-        arg["remembered"], (int, float)
+    if (
+        "remembered" in arg
+        and arg["remembered"] != "none"
+        and not isinstance(arg["remembered"], (int, float))
     ):
         raise ValueError("remembered: expected a speed or none")
     if "source" in arg and arg["source"] not in PACE_SOURCES:
@@ -695,7 +723,8 @@ def moved(arg: dict, ev: Evidence) -> list[str]:
     active = {loc["id"]: loc for loc in locations if loc["active"]}
     old = json.loads(move["old_location_ids"])
     at_new = [
-        loc for loc in active.values()
+        loc
+        for loc in active.values()
         if loc["zip"] == move["zip"] and street_key(loc["street"]) == street_key(move["street"])
     ]
     if "street" in arg and street_key(arg["street"]) not in street_key(move["street"]):
@@ -708,7 +737,11 @@ def moved(arg: dict, ev: Evidence) -> list[str]:
         stale = [j["id"] for j in jobs if j["location_id"] not in active]
         if stale:
             problems.append(f"open job(s) {stale} still point at an inactive location")
-        if "jobs" in arg and len([j for j in jobs if at_new and j["location_id"] == at_new[0]["id"]]) < arg["jobs"]:
+        if (
+            "jobs" in arg
+            and len([j for j in jobs if at_new and j["location_id"] == at_new[0]["id"]])
+            < arg["jobs"]
+        ):
             problems.append(f"expected {arg['jobs']} open job(s) at the new address")
     else:
         if at_new:
@@ -732,8 +765,11 @@ def identity(arg: str, ev: Evidence) -> list[str]:
     if arg not in statuses:
         return [f"identity check {statuses or 'never ran'}, expected {arg}"]
     if arg == "verified":
-        changed = [b["fsm_job_id"] for b in ev.trace["bookings"]
-                   if b["kind"] in ("cancel", "reschedule") and b["status"] == "done"]
+        changed = [
+            b["fsm_job_id"]
+            for b in ev.trace["bookings"]
+            if b["kind"] in ("cancel", "reschedule") and b["status"] == "done"
+        ]
         try:
             for job_id in changed:
                 notes = ev.st("SELECT text FROM notes WHERE job_id = ?", (job_id,))
@@ -757,8 +793,14 @@ def job_contact(arg: dict, ev: Evidence) -> list[str]:
     except LookupError as err:
         return [str(err)]
     problems = []
-    line = next((ln for ln in job["summary"].splitlines()
-                 if ln.startswith("Contact:") and want[-4:] in re.sub(r"\D", "", ln)), "")
+    line = next(
+        (
+            ln
+            for ln in job["summary"].splitlines()
+            if ln.startswith("Contact:") and want[-4:] in re.sub(r"\D", "", ln)
+        ),
+        "",
+    )
     if not line:
         problems.append("the job's contact line doesn't have that number")
     elif arg.get("for") and arg["for"].lower() not in line.lower():
@@ -809,6 +851,7 @@ def _contact_arg(arg: Any) -> None:
     if not isinstance(arg, dict) or "phone" not in arg:
         raise ValueError("expected {phone, for}")
     _keys({"phone", "for"})(arg)
+
 
 def _strings_in(value: Any) -> list[str]:
     if isinstance(value, str):
@@ -887,8 +930,20 @@ CHECKS: dict[str, Check] = {
         lambda arg: arg == "not_asked",
     ),
     "booking": Check(
-        _keys({"count", "priority", "zip", "job_type", "seek_earlier", "safety_override", "window",
-               "street", "new_address_account"}, ("none", "one")),
+        _keys(
+            {
+                "count",
+                "priority",
+                "zip",
+                "job_type",
+                "seek_earlier",
+                "safety_override",
+                "window",
+                "street",
+                "new_address_account",
+            },
+            ("none", "one"),
+        ),
         booking,
         lambda arg: arg == "none",
     ),
@@ -937,7 +992,7 @@ def run_checks(must: list[dict], ev: Evidence, prohibitions_only: bool = False) 
     """Every failure across the scenario's checks, each prefixed with its check name."""
     failures = []
     for item in must:
-        (name, arg), = item.items()
+        ((name, arg),) = item.items()
         if prohibitions_only and not CHECKS[name].prohibits(arg):
             continue
         failures += [f"{name}: {p}" for p in CHECKS[name].run(arg, ev)]
@@ -948,7 +1003,7 @@ def check_names(must: list[dict], prohibitions_only: bool = False) -> list[str]:
     """The names of the checks run_checks evaluates for these `must` entries, once each, in order."""
     names: list[str] = []
     for item in must:
-        (name, arg), = item.items()
+        ((name, arg),) = item.items()
         if prohibitions_only and not CHECKS[name].prohibits(arg):
             continue
         if name not in names:

@@ -4,6 +4,7 @@ A scenario is a persona, hidden facts, a behavior script and the checks that dec
 Every scenario carries tags (flow:, difficulty:, trait:, journey:, spec:, must-pass) that suites
 filter on.
 """
+
 import re
 from datetime import datetime
 from pathlib import Path
@@ -127,7 +128,7 @@ class Scenario(BaseModel):
         for item in value:
             if len(item) != 1:
                 raise ValueError(f"each must item has one check name, got {sorted(item)}")
-            (name, arg), = item.items()
+            ((name, arg),) = item.items()
             if name not in CHECKS:
                 raise ValueError(f"unknown check {name!r}")
             CHECKS[name].validate(arg)

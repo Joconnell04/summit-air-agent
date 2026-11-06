@@ -59,7 +59,7 @@ def record(queries: list[str], url: str, path: Path = BOOK) -> None:
         print(f"{query}: {len(places)} results")
     path.write_text(
         "# Recorded GeoSearch answers for the eval world (evals/addresses.py). Regenerate an entry\n"
-        "# with: uv run python -m evals.addresses \"<house> <street>\"\n"
+        '# with: uv run python -m evals.addresses "<house> <street>"\n'
         + yaml.safe_dump(raw, sort_keys=True, allow_unicode=True)
     )
 

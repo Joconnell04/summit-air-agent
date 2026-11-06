@@ -3,6 +3,7 @@
 Every call streams, so the time to the first word is measured the way a caller would notice it, and
 returns its token cost from the profile's price. Tests pass a fake that has the same `complete`.
 """
+
 import os
 import time
 from dataclasses import dataclass, field
@@ -61,13 +62,18 @@ class Reply:
 
 class Model(Protocol):
     def complete(
-        self, system: str, messages: list[dict], tools: list[dict] | None = None,
-        max_tokens: int = 1024, json_schema: dict | None = None,
+        self,
+        system: str,
+        messages: list[dict],
+        tools: list[dict] | None = None,
+        max_tokens: int = 1024,
+        json_schema: dict | None = None,
     ) -> Reply: ...
 
 
-def cost(price: dict, input_tokens: int, output_tokens: int, cache_write: int = 0,
-         cache_read: int = 0) -> float:
+def cost(
+    price: dict, input_tokens: int, output_tokens: int, cache_write: int = 0, cache_read: int = 0
+) -> float:
     paid_input = input_tokens + CACHE_WRITE * cache_write + CACHE_READ * cache_read
     return (paid_input * price["input"] + output_tokens * price["output"]) / 1_000_000
 
@@ -116,15 +122,23 @@ class AnthropicModel:
             raise ModelError(f"{self.cfg['model']} refused the request")
         u = message.usage
         usage = Usage(
-            u.input_tokens + (u.cache_creation_input_tokens or 0) + (u.cache_read_input_tokens or 0),
+            u.input_tokens
+            + (u.cache_creation_input_tokens or 0)
+            + (u.cache_read_input_tokens or 0),
             u.output_tokens,
-            cost(self.cfg["price"], u.input_tokens, u.output_tokens,
-                 u.cache_creation_input_tokens or 0, u.cache_read_input_tokens or 0),
+            cost(
+                self.cfg["price"],
+                u.input_tokens,
+                u.output_tokens,
+                u.cache_creation_input_tokens or 0,
+                u.cache_read_input_tokens or 0,
+            ),
         )
         text = "".join(b.text for b in message.content if b.type == "text")
         tool_uses = [
             {"id": b.id, "name": b.name, "input": b.input}
-            for b in message.content if b.type == "tool_use"
+            for b in message.content
+            if b.type == "tool_use"
         ]
         return Reply(
             text=text.strip(),
@@ -141,5 +155,7 @@ def for_profile(name: str, config: dict | None = None) -> Model:
     cfg = profile(name, config)
     if cfg["provider"] != "anthropic":
         # The harness only speaks to Anthropic so far; the model bake-off adds the others.
-        raise ModelError(f"profile {name!r} uses {cfg['provider']}, which the harness can't call yet")
+        raise ModelError(
+            f"profile {name!r} uses {cfg['provider']}, which the harness can't call yet"
+        )
     return AnthropicModel(cfg)
