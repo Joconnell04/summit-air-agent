@@ -362,7 +362,8 @@ def test_the_call_page_has_one_status_tag_and_a_technical_mode(agent):
     call = gas_call_that_booked(agent, 1)
     html = signed_in(agent).client.get(f"/owner/calls/{call}").text
     head = html[html.index('class="who"') : html.index('class="facts"')]
-    assert head.count('class="tag') == 1 and "Needs a person" in head
+    # The call's label (DECISIONS.md 122), then one tag for where it stands.
+    assert head.count('class="tag') == 2 and ">Urgent</span>" in head and "Needs a person" in head
     assert "Safety call: gas smell" in html, "the safety kind moves to the facts line"
     assert "data-tech" in html, "technical details are a mode on the same page"
     assert 'class="tech-block tech-only"' in html and 'tech-only" href="/owner/calls/' in html
@@ -699,6 +700,7 @@ def test_a_callback_done_after_it_went_late_is_not_on_time(agent, clock):
     assert results(agent, 1)["now"]["callbacks"] == (1, 2)
 
 
+@pytest.mark.links_calls
 def test_results_leave_out_a_zip_when_the_call_back_on_the_thread_booked(agent, clock):
     first = agent.start(caller(1))["data"]["call_id"]
     agent.turn(first, "Do you go out to Hoboken, 07030? That's my mom's place.")

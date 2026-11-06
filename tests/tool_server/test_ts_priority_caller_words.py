@@ -289,7 +289,7 @@ def test_the_push_hints_become_server_notes():
     assert "Before you offer times" in first[0]  # not before the agent knows the problem
     assert "don't ask again who's at home" in asked[0]
     for note in first + asked:
-        assert "911 only if" in note and "priority" not in note.lower().replace("[server]", "")
+        assert "9-1-1 only if" in note and "priority" not in note.lower().replace("[server]", "")
 
 
 # The tool server: caller words only

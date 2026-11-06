@@ -12,6 +12,22 @@ Discussion: docs/ai-process/transcripts/... or docs/explorations/...
 Issue: #N
 -->
 
+## 123. No heat or no cooling at High or Urgent is dispatched at the read-back
+
+Decided: when a no-heat or no-cooling call is High or Urgent on the server's own priority, read_back (given the job type) books the soonest open window itself, with no times offered, no separate read-back and no approval question. Its one sentence names the address, when the technician comes ("within the next hour" when the window opens within 60 minutes, else "by 2:30 PM today") and the number by its last four, and asks "Is that the right address?". A yes, or no answer, confirms; a corrected unit or number cancels the job and books it again with the same sentence. After hours every dispatch goes to the on-call technician: an Urgent person flag goes out first with a callback within twenty minutes, the sentence says so, and the first morning window stays booked as the fallback (Jackson's midnight call, call_b2302955a9c4054184c5d502e97, reached High and heard 8 AM, then a callback). Then only the access question and "Anything else?". A call on the safety route never dispatches. If the read-back came below High and the caller's facts raise it later, find_slots dispatches instead of offering times.
+Why: on an emergency the caller wants someone coming, not a menu of windows, a second read-back and an approver question. The rule is in server code, so the agent can't skip it or offer windows instead.
+Considered: the agent offering the soonest window as usual (three more turns on the worst calls); dispatching from find_slots on every no-heat call (it scores High by default, so every booking would change shape, including callers who want a later day).
+Would change if: callers often want a later time than the soonest on these calls, or the on-call path needs its own confirmation before booking.
+Discussion: coordinator brief in the session for this change
+
+## 122. Every call gets one label: Urgent, Routine or No visit
+
+Decided: each call has exactly one label with a short reason, such as "Urgent: an older person or a baby at home, no heat". Urgent is the server's priority at High or Urgent, a gas, carbon monoxide or sparks hazard, or a dispatch, and it never drops back on the same call. Routine is any other call about a visit (booked, moved, cancelled, asked about, or a callback). No visit is the third label, for calls that were never about one: a business, an address outside the area, a wrong number, a question answered. The label is stored on the call at its end (`call_labels`), shown as a badge on each call row and on the call page with an Urgent filter, and a booked job carries Urgent or Routine to ServiceTitan as a tag type (804, 805).
+Why: the owner scans for what needs attention first. Folding a wrong number into Routine would make Routine mean "anything", and the booking rate already counts only calls that wanted a visit.
+Considered: two labels only (no-visit calls would pad Routine); using the job's priority field alone in the CRM (only calls with a job have one, and High and Urgent read as the same thing to an owner).
+Would change if: owners want the no-visit calls hidden from the list rather than labeled.
+Discussion: coordinator brief in the session for this change
+
 ## 121. The demo runs on the socket build: our server speaks the fixed lines, Haiku writes the rest
 
 Decided: Summit Air's agent moves to the server-led flow behind Retell's custom-LLM WebSocket (issue #176). Retell keeps the phone line, listening, turn-taking, backchannels and Brian's voice; our tool server decides each turn, speaks the sentences that must be exact (read-back, slot offer, booking confirmation, safety lines, greeting and goodbye) word for word, and asks Haiku 5.5 to write the adaptive replies. A short hold phrase plays only on genuinely long waits. The single-prompt Retell agent (change set 25, archived with a Retell backup copy) stays as the fallback, one phone-number switch away.
@@ -21,6 +37,14 @@ Would change if: the socket fails the done bar (DECISIONS 119) on something the 
 Discussion: evals/rounds/side-by-side-01.md, docs/explorations/retell-exact-speech.md
 Issue: #176
 
+## 120. A daily Opus check flags only true failures, and the server keeps a flag only with evidence from the call
+
+Decided: after calls end, Claude Opus 5.5 (profile `offline.grader`, effort medium) reads each call's Retell transcript and the tool server's rows and answers one question: did one of five true failures happen (hung up on, a wrong or missing booking or callback that was promised, safety advice not spoken or a retraction ignored, something false told to the caller, records that contradict what the caller was told)? Style never counts. The server keeps a failure only when every quoted evidence line is found in the call; a kept failure becomes a `grader` flag on Today, never emailed. It runs daily at a time the owner sets (6 AM by default) and on demand from the owner view and the bench, and grades each call once.
+Why: the owner wants rare serious errors caught without reading every call, and a list full of fine calls stops being read. On 62 real calls labeled by hand (MEASURED, evals/rounds/failure-grader-01.md): zero false flags on clear fine calls in 3 runs, 90% to 100% recall on clear failures by run, 61 of 62 calls flagged the same way in all 3 runs, about $0.03 a call.
+Considered: our own scripted checks (they lean oversensitive: 15 to 34 gross errors an arm in the side-by-side round, most style); a cheaper model (not measured; precision was the hard part even on Opus); emailing the on-call person (the owner asked for no texts or emails).
+Would change if: the one unstable call class (a false claim made mid-call) shows up on the owner's list as noise, or a cheaper profile matches these numbers on the same set.
+Discussion: evals/rounds/failure-grader-01.md, docs/ai-process/briefs/failure-grader.md
+Issue: #178
 ## 119. V1 is done when three journeys are reliable, not when every call is clean
 
 Decided: V1 is done when three journeys pass about 10 scripted runs each with no safety errors: a routine booking, no heat with an elderly person (the raise reaches the booking), and a gas smell (real and retracted). Everything else that still goes wrong is listed in the debrief as a known issue with its fix. A safety error means the advice for a real hazard isn't spoken, a retraction is ignored, a hazard is booked as routine without a flag, or the agent says something unsafe. An extra caring question or a reworded line is a style issue, not a safety error. Asking how to spell a name is expected only when it's needed, not on every call.
@@ -29,6 +53,14 @@ Considered: zero gross errors across all personas (not reachable with a language
 Would change if: Revin's session brief or Paul's calls point at a journey outside these three as the one that matters.
 Discussion: evals/rounds/side-by-side-01.md (on the side-by-side branch, issue #169)
 Issue: #169
+## 118. Summit Air doesn't link a caller's calls
+
+Decided: `repeat_callers.link_calls: false` for Summit Air. A call from a number that called a minute ago starts with nothing from the earlier call: no thread, so no earlier lines in priority or safety, no booking limits or bookings counted across calls, no resumed turns. Bookings still exist in the field service system, so an open visit at the same address is still found there. The linking code stays for a tenant that turns it on, and its tests run as such a tenant.
+Why: five scripted calls from one number as different people (call_feed25cb0e5df1017695f9dc210 to call_f0846787038f654309219adb1e8): a boiler tune-up heard the previous call's sparks line and carried its priority reason, and the next call's booking was refused as over the call's limit. Jackson: state carrying between calls is "gross". DECISIONS.md 115 had already dropped the cut-off greeting and the safety carry-over; this removes the rest.
+Considered: keeping the link and scoping each reader (priority, safety, limits, resume) to the current call, which leaves a link that does nothing and a thread every new reader has to remember to ignore.
+Would change if: real callers drop and call straight back often enough that picking up where the call stopped matters more than the demo's back-to-back calls.
+Discussion: docs/ai-process/coauthoring.md safety r2
+Issue: #149
 
 ## 117. The repo is handed over as Summit Air's deployment repo, not a template
 
@@ -47,6 +79,32 @@ Considered: serving the adapter separately in vLLM (slower than merging it); a 3
 Would change if: there are thousands of real calls to distill from and latency, not behavior, is the limit.
 Discussion: docs/later.md C-79
 Issue: none
+## 115. Each call stands alone: no cut-off greeting, no safety carried over, do-not-call after a yes
+
+Decided: a call from a number that called a minute ago greets like any other call (no "we got cut off"), and nothing about an earlier gas or carbon monoxide scare carries into it: not its safety state, its sign-off, its priority reason, the earlier call's safety lines in the context, or the job summary's priority line. mark_do_not_call returns a confirm question first and marks only after the caller says yes; `undo` takes it back, and "just kidding" is not a request. A flag whose callback couldn't be stored (a do-not-call number) returns no callback time. "End this call", "hang up" and "I'm done" count as goodbyes. find_slots takes `moving_a_visit`, and a move hears no priority line. The live-world reset refuses while a call is live, and clears the do-not-call list.
+Why: Jackson's call call_7255ab47e30637f207e49f5bdeb, 82 seconds after his gas test call: it opened with the earlier call's "make sure you're outside and have called 911", listed gas as a priority reason, wouldn't hang up, announced top priority on a move, refused his own visit after a reset one second into the call, promised a callback at 5:18 PM with none stored, and his number was on the do-not-call list from "don't call me then" said in passing on an earlier call. His words: "i want to get rid of the cut-off thing because likely in the demo he'll call the same number a few times."
+Considered: keeping a dropped call's safety state when its lines weren't said yet; Jackson asked for safety per call, and a drop before the lines already flags a person to call back.
+Would change if: real callers drop mid-safety call and call straight back often enough that the lines should carry over.
+Discussion: docs/ai-process/coauthoring.md safety r2
+Issue: #149
+
+## 114. Arrival windows are 30 minutes by default
+
+Decided: find_slots offers 30-minute arrival windows unless the caller asks for another length (`window_minutes`, any run of 30-minute blocks as in 108). A time the caller names starts a 30-minute window. Supersedes 108's two-hour default; nothing else in 108 changes.
+Why: Jackson on his gas test call call_0246b91f77e01a4b18583e6ca8b heard "5 to 7": "by default, it should give a 30 minute way, not a 2 hour window."
+Considered: one hour, as a middle ground; Jackson named 30 minutes, and the capacity blocks are already 30 minutes, so it needs no new unit.
+Would change if: technicians can't keep 30-minute promises on real days (late arrivals in the live schedule or from Summit Air's dispatcher), in which case the default widens and the caller can still ask for a tighter one.
+Discussion: docs/ai-process/coauthoring.md safety r2
+Issue: #149
+
+## 113. Safety lines are advice said once, a caller can take them back, and a safety call hangs up after its sign-off
+
+Decided: the gas and carbon monoxide lines are advice ("the safest thing is to get everyone outside and call 9-1-1..."), asked nothing, and said once per hazard (repeat_limit 0, no shorter variants). They count as said once the agent has spoken after they were handed out. A caller who takes the report back ("never mind", "false alarm", "the gas company said it's fine") clears the safety state at any point unless the same line still reports a smell or only says they've gone outside; the job gets a note and the call books as usual. end_call on a safety call says the sign-off once and hangs up. Lines write "9-1-1".
+Why: Jackson's gas test call call_0246b91f77e01a4b18583e6ca8b: the lines were repeated, the agent asked "are you outside the house now?" and told him to get out, "No, I mean, I don't think it's leaking" didn't clear it, and the call never ended after "I'm done". His words are in docs/ai-process/coauthoring.md (safety r2).
+Considered: keeping one shorter repeat (eval round 3's "offer one more time"), which Jackson heard as the same statement again; clearing only on "there was never a smell", which missed every way he took it back; leaving the call open after the sign-off, as the gas utility advice behind it is about the caller's phone, not ours.
+Would change if: a retraction phrase clears a call that still had a real smell in the evals or live calls, in which case the phrase list narrows.
+Discussion: docs/ai-process/coauthoring.md safety r2
+Issue: #149
 
 ## 112. Summit Air runs on Retell, starting from Jackson's own agent
 

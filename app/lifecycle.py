@@ -10,6 +10,7 @@ from . import (
     asks,
     cards,
     dead_air,
+    labels,
     lookup,
     owner_settings,
     pace,
@@ -27,7 +28,7 @@ from .readback import change as readback_change
 from .readback import units_said
 from .schemas import EndIn, StartIn, TurnIn
 from .tenant import Tenant
-from .text import digit_runs, has_phrase, phone_key, words
+from .text import digit_runs, has_phrase, kidding, phone_key, words
 
 RUN_WORDS = r"(?:i|we) (?:run|manage|operate|work at)"
 # Owning is matched only against businesses: "I own the building" or "I manage the building" is a
@@ -228,6 +229,12 @@ def _name_said(lines: list[str]) -> str | None:
     return None
 
 
+def links_calls(tenant: Tenant) -> bool:
+    """Whether a call picks up from an earlier one from the same number. Summit Air keeps every
+    call apart (DECISIONS.md 118)."""
+    return tenant.repeat.get("link_calls", True)
+
+
 def _linked(
     conn: sqlite3.Connection, tenant: Tenant, caller_key: str, call_id: str, now: datetime
 ) -> tuple[sqlite3.Row | None, list[sqlite3.Row]]:
@@ -236,7 +243,7 @@ def _linked(
     that dropped, so a caller who finished a call this morning starts fresh this afternoon (eval
     round 2, seed 6). Same number and same local day are the gate; a call before midnight never
     links to one after it unless it falls inside the drop window."""
-    if not caller_key:
+    if not caller_key or not links_calls(tenant):
         return None, []
     day_start = datetime.combine(tenant.local(now).date(), datetime.min.time(), tenant.tz)
     window_start = now - timedelta(minutes=tenant.repeat["link_within_minutes"])
@@ -267,6 +274,10 @@ def _linked(
     ):
         previous = None
     return previous, recent
+
+
+def _without_safety(row: sqlite3.Row | None) -> str | None:
+    return row["text"] if row and not safety.mentions_scare(row["text"]) else None
 
 
 def _resume(conn: sqlite3.Connection, previous: sqlite3.Row) -> dict:
@@ -313,14 +324,18 @@ def _resume(conn: sqlite3.Connection, previous: sqlite3.Row) -> dict:
         # The caller asked the agent to wait and never came back, so the worker hung up after
         # saying they could call back (DECISIONS.md 081). The greeting says so.
         "stepped_away": previous["end_reason"] == "stepped_away",
-        "last_caller_line": last["caller"]["text"] if last["caller"] else None,
-        "last_agent_line": last["agent"]["text"] if last["agent"] else None,
+        "last_caller_line": _without_safety(last["caller"]),
+        "last_agent_line": _without_safety(last["agent"]),
         "booking": dict(booked) if booked else None,
-        "safety_state": previous["safety_state"],
         "started_at": previous["started_at"],
         "caller_name": name.split()[0] if name else None,
         "preferred_name": address_as.current(conn, previous["id"]),
-        "turns": [{"speaker": t["speaker"], "text": t["text"]} for t in turns],
+        # Nothing about an earlier gas or carbon monoxide scare: safety is per call.
+        "turns": [
+            {"speaker": t["speaker"], "text": t["text"]}
+            for t in turns
+            if not safety.mentions_scare(t["text"])
+        ],
     }
 
 
@@ -367,22 +382,10 @@ def start(
             previous["id"] if previous else None,
             now,
         )
-        # A safety call that dropped carries on where it was: if the lines weren't said, they come
-        # first on this call too.
-        if (
-            previous
-            and previous["safety_state"] in ("signal", "lines_said", "checking")
-            and call["safety_state"] == "none"
-        ):
-            records.update_call(
-                conn,
-                args.call_id,
-                safety_state=previous["safety_state"],
-                safety_lines_at=previous["safety_lines_at"],
-                safety_kind=previous["safety_kind"],
-                safety_signal_at=previous["safety_signal_at"],
-                safety_flag_id=previous["safety_flag_id"],
-            )
+        # Safety is per call: a new call from the same number starts with none of the earlier
+        # call's state, so its sign-off, hang-up and priority aren't a safety call's (Jackson's
+        # call call_7255ab47e30637f207e49f5bdeb opened on the earlier gas scare). A drop before the
+        # lines were said already has a person flagged to call back (journey 3, step 6).
     call = records.get_call(conn, args.call_id)
 
     customers, fsm_ok = [], True
@@ -410,7 +413,15 @@ def start(
     offer_callback = drops >= tenant.repeat["drops_before_callback_offer"]
     data = {
         "call_id": args.call_id,
-        "tenant": {"slug": tenant.slug, "name": tenant.name, "timezone": str(tenant.tz)},
+        # The server's own clock, shifted on a test world (app/clock.py), so the prompt's "Now:"
+        # agrees with the slots it offers.
+        "now": iso(now),
+        "tenant": {
+            "slug": tenant.slug,
+            "name": tenant.name,
+            "timezone": str(tenant.tz),
+            "arrival_question": tenant.arrival_question,
+        },
         "after_hours": bool(call["after_hours"]),
         "caller": {
             "phone": args.caller_id,
@@ -582,11 +593,124 @@ def _spoken_line(
     return None
 
 
+def _sparks_first(
+    conn: sqlite3.Connection,
+    tenant: Tenant,
+    call: sqlite3.Row,
+    text: str,
+    seq: int,
+    now: datetime,
+    action: safety.SafetyAction,
+) -> safety.SafetyAction:
+    """Sparks, smoke or an electrical smell get their advice before any gas question: asked first,
+    the gas check held the sparks advice back 21 to 38 seconds on every arm of the side-by-side
+    (MEASURED from Retell word timings; gas and carbon monoxide took 3). A burning smell said with
+    sparks is the sparks, so its gas confirm question is dropped; a smell that still leaves gas
+    possible gets the gas question right after the sparks advice, in the same breath."""
+    if action.action != "ask_check" or not safety.electrical_signal(text, tenant.safety):
+        return action
+    cfg = tenant.safety
+    said = conn.execute(
+        "SELECT 1 FROM electrical WHERE call_id = ? AND said_at IS NOT NULL", (call["id"],)
+    ).fetchone()
+    # A burning smell with sparks is the sparks; so is a smell named again on a call that already
+    # heard the sparks advice ("it's more like burning plastic").
+    if said or action.text == cfg["vague"].get(action.kind, {}).get("confirm_question"):
+        return safety.SafetyAction("none", call["safety_kind"])
+    _electrical(conn, tenant, call["id"], text, seq, now)
+    conn.execute("UPDATE electrical SET said_at = ? WHERE call_id = ?", (iso(now), call["id"]))
+    return safety.SafetyAction(
+        "ask_check", action.kind, f"{safety.electrical_lines(cfg)} {action.text}", action.variant
+    )
+
+
+def _cut_off_advice(
+    conn: sqlite3.Connection, tenant: Tenant, call: sqlite3.Row, text: str, now: datetime
+) -> dict | None:
+    """The gas, carbon monoxide or sparks advice again, once, when the caller cut it off under
+    half said and their line doesn't say they're already safe or take it back (Retell call
+    call_72009cbe16703210509127925b0: only "If a CO" was spoken). Decided on the caller's first
+    line of a few words after the advice; a partial ("I") waits for the rest."""
+    if len(words(text).split()) < safety.DECIDE_AFTER_WORDS:
+        return None
+    cfg = tenant.safety
+    hazards = []
+    if call["safety_state"] == "lines_said" and call["safety_kind"] in cfg["kinds"]:
+        handed = conn.execute(
+            "SELECT MAX(seq) FROM turns WHERE call_id = ? AND speaker = 'caller' "
+            "AND safety_action = 'speak_lines'",
+            (call["id"],),
+        ).fetchone()[0]
+        if handed is not None:
+            agent = conn.execute(
+                "SELECT text FROM turns WHERE call_id = ? AND speaker = 'agent' AND seq > ? "
+                "ORDER BY seq",
+                (call["id"], handed),
+            ).fetchall()
+            hazards.append((call["safety_kind"], safety.lines_for(cfg, call["safety_kind"]), agent))
+    electrical = conn.execute(
+        "SELECT said_at FROM electrical WHERE call_id = ? AND said_at IS NOT NULL", (call["id"],)
+    ).fetchone()
+    if electrical and cfg.get("electrical"):
+        agent = conn.execute(
+            "SELECT text FROM turns WHERE call_id = ? AND speaker = 'agent' AND at >= ? "
+            "ORDER BY seq",
+            (call["id"], electrical["said_at"]),
+        ).fetchall()
+        hazards.append(("electrical", safety.electrical_lines(cfg), agent))
+    for kind, advice, agent in hazards:
+        if not agent:
+            continue  # nothing of the agent's since the advice went out: not cut off, not yet said
+        # Decided once a hazard, on this line, whatever the answer.
+        decided = conn.execute(
+            "INSERT OR IGNORE INTO lines_handed (call_id, line, at) VALUES (?, ?, ?)",
+            (call["id"], f"cut-off check: {kind}", iso(now)),
+        ).rowcount
+        if not decided:
+            continue
+        said = " ".join(r["text"] for r in agent)
+        if safety.spoken_share(advice, said) >= safety.SPOKEN_ENOUGH:
+            continue
+        if safety.says_safe_now(text, cfg):
+            continue
+        return {"kind": kind, "text": advice}
+    return None
+
+
+def _spoke_after_lines(conn: sqlite3.Connection, call_id: str) -> bool:
+    """An agent line was logged after the caller line that handed out the safety lines."""
+    handed = conn.execute(
+        "SELECT MAX(seq) FROM turns WHERE call_id = ? AND speaker = 'caller' "
+        "AND safety_action = 'speak_lines'",
+        (call_id,),
+    ).fetchone()[0]
+    return handed is not None and conn.execute(
+        "SELECT 1 FROM turns WHERE call_id = ? AND speaker = 'agent' AND seq > ?",
+        (call_id, handed),
+    ).fetchone() is not None
+
+
+def _safety_label(cfg: dict, call: sqlite3.Row) -> str:
+    kind = call["safety_kind"]
+    return cfg["kinds"][kind]["label"] if kind in cfg["kinds"] else "safety"
+
+
 def turn(
     conn: sqlite3.Connection, tenant: Tenant, call: sqlite3.Row, args: TurnIn, now: datetime
 ) -> Result:
     """Log the line and run the safety check on every caller line (docs/call-journeys.md, spine 4)."""
     cfg = tenant.safety
+    if args.speaker == "caller" and args.replaces_last:
+        # The voice layer logs a caller line as it grows ("East", then "East 4th, apartment 2.",
+        # Retell call call_feed25cb0e5df1017695f9dc210): the part it sent first is dropped, so
+        # every reader of caller lines (priority, safety, the side model, the address check) sees
+        # one whole line.
+        with tx(conn):
+            conn.execute(
+                "DELETE FROM turns WHERE id = (SELECT id FROM turns WHERE call_id = ? "
+                "AND speaker = 'caller' ORDER BY seq DESC LIMIT 1)",
+                (call["id"],),
+            )
     seq = call["turn_seq"] + 1
     action = safety.SafetyAction("none", call["safety_kind"])
     call_stage = None
@@ -595,6 +719,16 @@ def turn(
     stop_recording = card_stop = False
     spoken, hold = None, None
     with tx(conn):
+        if (
+            args.speaker == "caller"
+            and call["safety_state"] == "signal"
+            and _spoke_after_lines(conn, call["id"])
+        ):
+            # The lines went to the voice layer to be said word for word, and the agent has spoken
+            # since, so they count as said even when its line reached us in pieces (Jackson's gas
+            # test call call_0246b91f77e01a4b18583e6ca8b heard them twice: "it keeps repeating").
+            records.update_call(conn, call["id"], safety_state="lines_said", safety_lines_at=iso(now))
+            call = conn.execute("SELECT * FROM calls WHERE id = ?", (call["id"],)).fetchone()
         if args.speaker == "caller":
             heating = cfg.get("heating_check")
             heating_asked = bool(heating) and records.agent_said(
@@ -625,6 +759,7 @@ def turn(
                 confirm_asked,
                 answering_confirm,
             )
+            action = _sparks_first(conn, tenant, call, args.text, seq, now, action)
             if action.action == "speak_lines":
                 changes.update(safety_state="signal", safety_kind=action.kind)
                 if call["safety_signal_at"] is None or call["safety_kind"] != action.kind:
@@ -644,12 +779,21 @@ def turn(
                 changes.update(safety_state="checking", safety_kind=action.kind)
             elif action.action == "cleared":
                 changes.update(safety_state="cleared")
-                reason = (
-                    "Caller said there was no smell or alarm after the safety lines"
-                    if call["safety_state"] == "lines_said"
-                    else "Caller said no to the safety check"
-                )
+                took_back = safety.retracts(args.text, cfg)
+                if took_back:
+                    reason = f'Caller took back the {_safety_label(cfg, call)} report: "{args.text.strip()}"'
+                elif call["safety_state"] == "lines_said":
+                    reason = "Caller said there was no smell or alarm after the safety lines"
+                else:
+                    reason = "Caller said no to the safety check"
                 records.add_flag(conn, call["id"], "safety_check_cleared", reason, now, "Low")
+                if took_back:
+                    # The technician hears about it on the job, so it is still checked on site.
+                    conn.execute(
+                        "INSERT INTO notes (call_id, attach_to, customer_id, fsm_note_id, text, "
+                        "created_at) VALUES (?, 'job', NULL, NULL, ?, ?)",
+                        (call["id"], reason + ". Please check it on site.", iso(now)),
+                    )
             # Gas or carbon monoxide on this call after this line: their lines and questions come
             # before anything else. A check the caller just cleared isn't.
             gas_or_co = action.action in ("speak_lines", "speak_variant", "ask_check") or (
@@ -660,6 +804,8 @@ def turn(
             spoken = _spoken_line(
                 conn, tenant, call, args.text, seq, now, gas_or_co, speaking_safety
             )
+            if action.action == "none" and spoken is None:
+                spoken = _cut_off_advice(conn, tenant, call, args.text, now)
             # A caller who asks the agent to wait, or comes back (DECISIONS.md 081).
             hold = dead_air.caller_line(
                 conn, call["id"], args.text, seq, now, gas_or_co or spoken is not None
@@ -680,11 +826,14 @@ def turn(
             # The caller asking for a pace, "sorry, what?" twice, or an older caller (app/pace.py).
             hints += pace.caller_line(conn, tenant.pace, call, args.text, seq, now)
             text_words = words(args.text)
-            # Marked at once on the caller's words (spec S-49); the agent still says the line.
-            if len(call["caller_key"]) == 10 and any(
-                has_phrase(text_words, p) for p in DO_NOT_CALL_PHRASES
+            # The caller's words prompt the agent to confirm; mark_do_not_call marks only after a
+            # yes (Jackson's number was put on the list from "don't call me then" said in passing).
+            # "Just kidding" takes the line back.
+            if (
+                len(call["caller_key"]) == 10
+                and any(has_phrase(text_words, p) for p in DO_NOT_CALL_PHRASES)
+                and not kidding(args.text)
             ):
-                records.mark_do_not_call(conn, call, now)
                 hints.append("do_not_call")
             # A caller who says not to record isn't recorded, whatever the consent setting: the
             # voice layer is told to stop and to say so, and the jobs loop deletes the file
@@ -941,7 +1090,8 @@ def end(
                 "Urgent",
             )
         transfer.close_open_handoff(conn, call["id"], args.reason, now)
-        outcome = _outcome(conn, call)
+        outcome = outcome_of(conn, call)
+        labels.settle(conn, tenant, call, outcome, now)
         records.update_call(
             conn,
             call["id"],
@@ -953,7 +1103,8 @@ def end(
     return ok(outcome=outcome)
 
 
-def _outcome(conn: sqlite3.Connection, call: sqlite3.Row) -> str:
+def outcome_of(conn: sqlite3.Connection, call: sqlite3.Row) -> str:
+    """How the call ended, or would end now. The owner's label reads it too (app/labels.py)."""
     def has(sql: str) -> bool:
         return bool(conn.execute(sql, (call["id"],)).fetchone())
 

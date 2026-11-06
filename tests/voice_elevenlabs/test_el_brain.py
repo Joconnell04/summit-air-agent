@@ -126,7 +126,7 @@ def start(brain, call_id="el-1") -> str:
 def test_the_first_message_is_the_tenants_greeting_and_is_on_the_record(app):
     brain, _ = brain_for(app, [])
     first = start(brain)
-    assert first.startswith("Thanks for calling Summit Air")
+    assert first.startswith("Hi there, thanks for calling Summit Air!")
     assert turns(app, "el-1") == [("agent", first)]
 
 
@@ -155,7 +155,7 @@ def test_the_safety_lines_are_streamed_as_given_without_the_model(app):
     start(brain)
     chunks = completions(brain, "el-1", "I smell gas in the kitchen.")
     said = spoken(chunks)
-    assert "911" in said and claude.requests == []
+    assert "9-1-1" in said and claude.requests == []
     assert turns(app, "el-1")[-1] == ("agent", said)
 
 
@@ -186,7 +186,7 @@ def test_on_a_safety_call_end_call_is_refused_and_no_hang_up_is_sent(app):
     asyncio.run(brain.server.turn("el-1", "caller", "I smell gas."))
     chunks = completions(brain, "el-1", "Okay, bye then.")
     assert not end_calls(chunks)
-    assert "911" in spoken(chunks)
+    assert "9-1-1" in spoken(chunks)
 
 
 def test_a_dropped_request_still_finishes_its_turn(app):

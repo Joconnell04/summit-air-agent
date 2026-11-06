@@ -32,7 +32,8 @@ def test_with_no_zip_said_the_agent_asks_once_then_goes_on(unfound):
     if first["refused"] == "address_not_found":  # a miss asks to spell the street first
         unfound.turn(call, "One nine seven, 197th Street.")
         asks = unfound.tool("find_address", call, street="118-24 197th Street")["say"]
-    assert asks == "What's the ZIP code there?"
+    # St. Albans names no borough, so the borough is asked; this caller gives the ZIP instead.
+    assert asks == "And which borough is that in?"
     unfound.turn(call, "It's 11412.")
     again = unfound.tool("find_address", call, street="118-24 197th Street")
     assert again["ok"] and again["data"]["zip"] == "11412", again
@@ -52,7 +53,7 @@ def test_the_callers_zip_then_reads_back_and_confirms(unfound):
     assert unfound.tool("check_service_area", call, zip="11412")["ok"]
     address = {"street": "118-24 197th Street", "unit": "", "city": "St. Albans", "zip": "11412"}
     asked = unfound.tool("read_back", call, address=address, phone="caller_id")
-    assert asked["ok"] and "one one four one two" in asked["say"]
+    assert asked["ok"] and asked["data"]["sentence"].startswith("So that's one eighteen twenty-four One Hundred Ninety-Seventh Street, and ")
     unfound.say(call, asked["say"])
     unfound.turn(call, "Yes.")
     confirmed = unfound.tool("read_back", call, address=address, phone="caller_id", confirmed=True)
@@ -111,21 +112,23 @@ def test_a_corrected_address_gets_its_own_lookup_after_the_zip_was_asked(tmp_pat
     if first["refused"] == "address_not_found":
         agent.turn(call, "One nine seven, 197th Street.")
         first = agent.tool("find_address", call, street="118-24 197th Street")
-    assert first["say"] == "What's the ZIP code there?"
+    assert first["say"] == "And which borough is that in?"
     agent.turn(call, "Sorry, I'm actually at 248 Duffield Street, Brooklyn.")
     corrected = agent.tool("find_address", call, street="248 Duffield Street")
     assert corrected["ok"] and corrected["data"]["zip"] == "11201", corrected
 
 
-def test_a_corrected_address_with_the_lookup_down_is_asked_its_own_zip(tmp_path, clock, mock):
+def test_a_corrected_address_with_the_lookup_down_books_unverified_in_its_borough(
+    tmp_path, clock, mock
+):
     agent = Agent(make_server(tmp_path, clock, mock[0], geocoder=lookup([("down", down)])), clock)
     call = agent.start(UNKNOWN)["data"]["call_id"]
     agent.turn(call, "It's 118-24 197th Street in St. Albans.")
     assert agent.tool("find_address", call, street="118-24 197th Street")["refused"] == "address_lookup_down"
     agent.turn(call, "Sorry, I'm actually at 248 Duffield Street, Brooklyn.")
     corrected = agent.tool("find_address", call, street="248 Duffield Street")
-    assert corrected["refused"] == "address_lookup_down"
-    assert corrected["say"] == "What's the ZIP code there?"
+    assert corrected["ok"] and corrected["data"]["verified"] is False
+    assert corrected["data"]["zip"] == "11201", corrected
 
 
 def test_a_run_said_as_number_words_is_not_split():

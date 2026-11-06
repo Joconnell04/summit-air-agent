@@ -17,7 +17,7 @@ from zoneinfo import ZoneInfo
 from app import cards
 from app import priority as prio
 from app.tenant import load_agent, window_from_id
-from app.text import street_key, unit_key, words
+from app.text import street_key, street_said, unit_key, words
 
 TENANT_DIR = Path(__file__).resolve().parent.parent / "tenants" / "summit-air"
 BOOKED = ("booked", "queued")
@@ -290,7 +290,13 @@ def _reads_back(text: str, ev: Evidence) -> bool:
     raw = ev.call.get("readback_json")
     if not raw:
         return False
-    zip_code = json.loads(raw)["zip"]
+    # The shorthand read-back names the street (in words, "one oh one Union St") and no ZIP; older
+    # traces read the numerals or the ZIP back.
+    asked = json.loads(raw)
+    street = asked.get("street")
+    if street and (street_key(street) in street_key(text) or words(street_said(street)) in words(text)):
+        return True
+    zip_code = asked["zip"]
     spoken = " ".join(DIGIT_WORDS[int(d)] for d in zip_code)
     return zip_code in text or words(spoken) in words(text.replace("zero", "oh"))
 
@@ -618,7 +624,9 @@ def pace(arg: dict, ev: Evidence) -> list[str]:
     if "address" in arg and _speed(arg["address"]) not in address:
         problems.append(f"no request for the address at {arg['address']} was recorded")
     readback = json.loads(ev.call.get("readback_json") or "{}")
+    # The address part is said in words ("one oh one Union St"); older traces said numerals.
     street = (readback.get("street") or "").strip().lower()
+    street_words = street_said(street).lower() if street else ""
     normal = load_agent(TENANT_DIR)[0]["pace"]["normal"]
     spoke_address = False
     for turn in ev.turns():
@@ -629,7 +637,8 @@ def pace(arg: dict, ev: Evidence) -> list[str]:
             problems.append(f"agent line {turn['seq']} carries no speed")
             continue
         # The address part of a slower read-back, spoken at its own speed.
-        if street and turn["text"].strip().lower().startswith(street) and got in address:
+        said = turn["text"].strip().lower()
+        if street and said.startswith((street, street_words)) and got in address:
             spoke_address = True
             continue
         expected = _speed(normal)

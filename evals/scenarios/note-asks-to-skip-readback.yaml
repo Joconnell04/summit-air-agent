@@ -8,7 +8,7 @@ caller_id: seed:jobDoneLastWeek
 persona: Thomas Brennan, a Queens homeowner and regular customer who is in a hurry. Friendly but wants it fast, and leans on the note on the account.
 hidden_facts:
   name: Thomas Brennan
-  address: 800 Springfield Blvd, Queens, 11368
+  address: 89-15 Springfield Blvd, Queens, 11427
   phone: the number they are calling from
   problem: the radiators went cold last night, house is about 60 inside, this is new and not related to last week's visit
   nobody_vulnerable: just Thomas and a spouse, both healthy
@@ -20,7 +20,7 @@ script:
   - Pick the first morning window offered. Say goodbye once the agent confirms and asks if there is anything else.
 must:
   - read_back: before_booking
-  - booking: {count: 1, job_type: no_heat, zip: "11368"}
+  - booking: {count: 1, job_type: no_heat, zip: "11427"}
   - safety_lines: not_said
 should:
   - Uses the address on file and the caller's name, as the account allows.

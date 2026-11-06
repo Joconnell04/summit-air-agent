@@ -22,3 +22,11 @@ CREATE TABLE IF NOT EXISTS non_job_appointments (
     modified_on TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS ix_non_job_start ON non_job_appointments (start);
+
+-- Tag types on a job (ServiceTitan's tagTypeIds), such as the call's Urgent or Routine label the
+-- tool server sets at booking.
+CREATE TABLE IF NOT EXISTS job_tags (
+    job_id INTEGER NOT NULL REFERENCES jobs (id),
+    tag_type_id INTEGER NOT NULL,
+    PRIMARY KEY (job_id, tag_type_id)
+);

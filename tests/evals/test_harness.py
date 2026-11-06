@@ -8,7 +8,10 @@ from evals.scenario import Scenario
 
 # The worker says the greeting from the tenant's `voice` lines with no model step, so the in-process
 # agent does too and the scripted agent model is never asked for one.
-GREETING = "Thanks for calling Summit Air, this is the virtual assistant. How can I help?"
+GREETING = (
+    "Hi there, thanks for calling Summit Air! I'm Brian, the virtual assistant. "
+    "How can I help?"
+)
 
 
 def scenario(**overrides) -> Scenario:
@@ -157,7 +160,7 @@ def test_safety_lines_come_from_the_server_not_the_model(seed_dir, tmp_path):
     result, agent, *_ = run(seed_dir, tmp_path, s, [say("Take care out there.")],
                             [say("Okay, going out. Bye."), say("[END]")])
     assert result.outcome == "pass", result.check_failures
-    assert result.transcript[2].text.startswith("Please get everyone out of the house now.")
+    assert result.transcript[2].text.startswith("If you're smelling gas, the safest thing is")
     # Only the reply to the goodbye; the greeting and the safety lines needed no model call.
     assert len(agent.calls) == 1
 
@@ -288,9 +291,12 @@ def test_retell_runs_go_one_scenario_at_a_time(capsys):
     assert workers_for("livekit", 4) == 4
 
 
-def test_an_earlier_dropped_call_is_on_the_record_and_the_greeting_resumes_it(seed_dir, tmp_path):
+def test_an_earlier_dropped_call_is_on_the_record_but_the_greeting_is_the_usual_one(
+    seed_dir, tmp_path
+):
     """Eval round 2, seed 6: the scenario starts two minutes after a call from the same number
-    dropped, so the server links it and the greeting asks for the caller by name."""
+    dropped, so the server links it. There is no "we got cut off" greeting (Jackson, call
+    call_7255ab47e30637f207e49f5bdeb), but the agent still has the earlier call's turns."""
     s = scenario(
         caller_id="(347) 555-0166",
         earlier_call={
@@ -304,8 +310,9 @@ def test_an_earlier_dropped_call_is_on_the_record_and_the_greeting_resumes_it(se
         },
     )
     result, agent, *_ = run(seed_dir, tmp_path, s, [say("Okay.")], [say("[END]")])
-    assert result.transcript[0].text.endswith("Is this Tomasz?")
-    assert "145 Java Street, 11222." in agent.calls[0]["system"]
+    assert result.transcript[0].text == GREETING
+    # Summit Air doesn't link calls (DECISIONS.md 118): the earlier call isn't in the context.
+    assert "145 Java Street, 11222." not in agent.calls[0]["system"]
 
 
 def test_the_scheduling_system_down_fails_bookings_but_not_lookups(seed_dir, tmp_path):

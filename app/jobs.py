@@ -14,6 +14,7 @@ from pathlib import Path
 
 from . import (
     booking,
+    failure_grader,
     outbound,
     owner_settings,
     recordings,
@@ -28,7 +29,7 @@ from .fsm import FsmAdapter, FsmRejected, FsmUnavailable, SlotCache
 from .mail import Mailer
 from .settings import ALERT_MAX_ATTEMPTS, QUEUE_MAX_ATTEMPTS, STUCK_DIALING_MINUTES
 from .tenant import Tenant
-from .tools import open_windows, send_lead
+from .tools import open_windows, send_lead, warm_capacity
 
 log = logging.getLogger(__name__)
 
@@ -43,6 +44,9 @@ KEPT_MISS_FIRST = timedelta(minutes=5)
 KEPT_MISS_MAX = 5
 # The safety call's flags: emailed after hours whatever the owner's on-call alerts setting says.
 SAFETY_FLAG_KINDS = ("safety", "safety_dropped")
+# Flags that are never emailed, whatever their priority: the failure grader's are for the owner to
+# read on the owner view, not a page to the on-call person (issue #178).
+NEVER_EMAILED_KINDS = (failure_grader.FLAG_KIND,)
 
 
 def retry_queue(
@@ -369,6 +373,8 @@ def alert_on_call(
     ).fetchall()
     counts = {"sent": 0, "held": 0, "failed": 0}
     for flag in flags:
+        if flag["kind"] in NEVER_EMAILED_KINDS:
+            continue
         if flag["kind"] in cfg["skip_kinds"] or tenant.is_open(parse_iso(flag["created_at"])):
             continue
         if (
@@ -482,6 +488,8 @@ def run_once(services) -> dict:
             report[tenant.slug] = {
                 "queue": retry_queue(conn, tenant, fsm, cache, now),
                 "cache_refreshed": cache.refresh(),
+                # Every job type's capacity stays in memory, so find_slots reads it from there.
+                "cache_warmed": warm_capacity(tenant, fsm, cache, now),
                 "weather": (
                     weather.refresh(conn, tenant, services.weather[tenant.slug], now)
                     if services.weather.get(tenant.slug)
@@ -518,6 +526,12 @@ def run_once(services) -> dict:
         for tenant in services.tenants:
             with tx(conn):
                 report["overdue_callbacks"] += records.mark_overdue(conn, tenant, now)
+        # The daily failure check, when the owner's schedule says it is due. It runs on its own
+        # thread, so a run of many calls never holds up the next run of these jobs.
+        for tenant in services.tenants:
+            report[tenant.slug]["failure_check"] = _guarded(
+                failure_grader.start_daily, services, conn, tenant, now
+            )
         # Last, so a slow model call never holds up the jobs above. One deadline for every
         # tenant, so the run's summary time doesn't grow with the number of tenants.
         deadline = time.monotonic() + summary.RUN_SECONDS

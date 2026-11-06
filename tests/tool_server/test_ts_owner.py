@@ -9,6 +9,7 @@ from toolkit import (
     UNKNOWN,
     Agent,
     book,
+    confirm_do_not_call,
     count,
     first_open,
     in_area_address,
@@ -187,7 +188,7 @@ def test_callbacks_promised_against_done_leave_out_cancelled_and_count_overdue(a
     conn = agent.db()
     conn.execute("UPDATE callbacks SET status = 'done' WHERE call_id = ?", (calls[0],))
     conn.close()
-    agent.tool("mark_do_not_call", calls[1])
+    confirm_do_not_call(agent, calls[1])
     clock.advance(minutes=31)
     conn = agent.db()
     conn.execute("UPDATE callbacks SET status = 'done' WHERE call_id = ?", (calls[2],))
@@ -271,6 +272,7 @@ def test_a_zip_asked_about_on_a_call_that_booked_is_not_out_of_area_demand(agent
     assert page(agent)["out_of_area"] == [{"zip": "07030", "calls": 1}]
 
 
+@pytest.mark.links_calls
 def test_a_zip_asked_about_before_a_drop_is_not_demand_when_the_call_back_booked(agent, clock):
     first = agent.start(caller(1))["data"]["call_id"]
     agent.turn(first, "Do you go out to Hoboken, 07030? That's my mom's place.")

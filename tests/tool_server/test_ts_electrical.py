@@ -103,13 +103,13 @@ def test_sparks_and_gas_on_one_line_get_the_gas_lines_first(agent):
     assert result["data"]["spoken"] is None
 
 
-def test_an_electrical_smell_during_the_gas_confirm_question_is_said_once_it_clears(agent):
+def test_an_electrical_smell_gets_the_electrical_lines_first_and_no_gas_confirm(agent):
+    """The side-by-side: the gas confirm question held the sparks advice back 21 to 38 seconds. A
+    burning smell from the unit is the electrical report, so its advice comes first."""
     call_id = agent.start(call_id="call-1")["data"]["call_id"]
-    asked = agent.turn(call_id, "It smells like burning plastic from the furnace.")
-    assert asked["data"]["safety"]["action"] == "ask_check"
-    agent.say(call_id, asked["say"])
-    cleared = agent.turn(call_id, "No, nothing like eggs.")
-    assert cleared["say"] == ELECTRICAL
+    first = agent.turn(call_id, "It smells like burning plastic from the furnace.")
+    assert first["say"] == ELECTRICAL
+    assert first["data"]["safety"] is None
 
 
 def test_burning_dust_on_the_first_heat_still_gets_only_the_confirm_question(agent):

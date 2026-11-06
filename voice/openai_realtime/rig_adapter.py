@@ -30,8 +30,8 @@ import json
 from pathlib import Path
 
 import websockets
-import yaml
 
+from app.tenant import voice_lines
 from app.tools import TOOLS
 from prompts import assemble
 
@@ -122,7 +122,7 @@ class Line:
         folder = TENANTS / data["tenant"]["slug"]
         specs = assemble.tool_specs(assemble.job_types(folder))
         self.writes = {s["name"] for s in specs if s["write"]}
-        self.voice = yaml.safe_load((folder / "agent.yaml").read_text())["voice"]
+        self.voice = voice_lines(folder)
         url = WS_URL.format(model=self.cfg["model"])
         self.ws = await self.connect(
             url, additional_headers={"Authorization": f"Bearer {self.entrant.key}"}, max_size=None

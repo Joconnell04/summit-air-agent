@@ -230,7 +230,9 @@ def test_an_objected_recording_not_in_the_bucket_yet_waits_then_is_closed(record
     assert collect(agent)["declined"] == 1
 
 
-def test_with_consent_on_a_call_that_opens_with_the_safety_lines_isnt_recorded(recorded, clock):
+def test_with_consent_on_a_call_after_a_dropped_safety_call_opens_as_usual(recorded, clock):
+    """Safety is per call (DECISIONS.md 115): the call after a dropped gas call doesn't open with
+    the lines, so it gets the usual recording notice."""
     agent, _ = recorded
     set_to(agent, two_party_consent=True)
     first = agent.start(UNKNOWN)["data"]["call_id"]
@@ -238,8 +240,8 @@ def test_with_consent_on_a_call_that_opens_with_the_safety_lines_isnt_recorded(r
     agent.end(first, "dropped")
     clock.advance(minutes=2)
     second = agent.start(UNKNOWN)
-    assert second["say"] == GAS_LINES
-    assert second["data"]["recording"] is None
+    assert second["say"] != GAS_LINES
+    assert second["data"]["recording"] is not None
 
 
 # ---- call recordings ---------------------------------------------------------------------------

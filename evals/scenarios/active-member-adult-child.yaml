@@ -9,7 +9,7 @@ persona: David Park, an adult child calling from a cell phone to book the yearly
 hidden_facts:
   name: David Park
   parent: Linda Park, the member and the homeowner, home on weekdays
-  address: 689 Springfield Blvd, Queens, 11432
+  address: 73-30 Springfield Blvd, Queens, 11364
   phone: the number being called from is David's own cell, best number to reach David
   wants: the yearly heating tune-up, a weekday afternoon
 opening: Hi, I'm calling for my parent, Linda Park, who's a member with you, to book the yearly furnace tune-up.
@@ -19,7 +19,7 @@ script:
   - Say your cell is the best number to use.
   - Take whichever Thursday window the agent offers, then say goodbye.
 must:
-  - booking: {count: 1, job_type: tune_up, zip: "11432"}
+  - booking: {count: 1, job_type: tune_up, zip: "11364"}
   - read_back: before_booking
   - safety_lines: not_said
   - agent_never_says: "free (repair|repairs|parts|labor)|no charge"

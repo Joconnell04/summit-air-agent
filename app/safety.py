@@ -18,6 +18,9 @@ Heating the home with an oven, stove, generator or grill indoors gets the carbon
 question once per call. Only wording that says it is used for heat counts ("the oven on to keep
 warm"), never a plain mention ("my oven works", "the generator is outside").
 
+A caller who takes it back ("never mind", "false alarm", "the gas company said it's fine") clears the
+call at any point, so it goes on to booking (retracts).
+
 States, kept on the call: none, checking, signal (lines not said yet), lines_said, cleared.
 """
 
@@ -466,6 +469,53 @@ def stands_down(text: str, kind: str | None, cfg: dict) -> bool:
     ) and not clear_signal(text, cfg)
 
 
+# Where the caller is, which says they followed the advice, not that there was nothing: "it's fine,
+# I'm outside now" keeps the call a safety call.
+GONE_OUT = ("outside", "out here", "out of the house", "out of the building")
+# A caller line that says they're already safe or it's been dealt with: cut-off advice isn't said
+# again over it (Retell call call_72009cbe16703210509127925b0: "we're all outside now. The fire
+# department came and said it...").
+# How much of the advice must have been spoken before a barge-in for it to count as said.
+SPOKEN_ENOUGH = 0.5
+# A caller line this short may be the start of a longer one: wait for the rest before deciding.
+DECIDE_AFTER_WORDS = 3
+
+
+def spoken_share(advice: str, agent_text: str) -> float:
+    """How much of the advice, from its start, is in what the agent said: "If a" and "f a CO" of
+    the carbon monoxide lines is a few words of thirty."""
+    want = words(advice).split()
+    said = words(agent_text)
+    longest = 0
+    for i in range(1, len(want) + 1):
+        if f" {' '.join(want[:i])} " in said:
+            longest = i
+        else:
+            break
+    return longest / len(want) if want else 1.0
+
+
+def says_safe_now(text: str, cfg: dict) -> bool:
+    """The caller is already safe, or it's been dealt with (the trade's `safe_now` phrases), or
+    they take it back: cut-off advice isn't said again over that (Retell call
+    call_72009cbe16703210509127925b0: "we're all outside now. The fire department came...")."""
+    text_words = words(text)
+    phrases = GONE_OUT + tuple(cfg.get("safe_now", []))
+    return retracts(text, cfg) or any(has_phrase(text_words, p) for p in phrases)
+
+
+def retracts(text: str, cfg: dict) -> bool:
+    """The caller takes the report back: "never mind", "false alarm", "I don't think it's leaking",
+    "the gas company said it's fine". Never when the same line still reports a smell or alarm, or
+    only says they've gone outside."""
+    text_words = words(text)
+    if not any(has_phrase(text_words, p) for p in cfg.get("retractions", [])):
+        return False
+    if any(has_phrase(text_words, g) for g in GONE_OUT + UNSURE + ("maybe",)):
+        return False
+    return not clear_signal(text, cfg)
+
+
 def vague_signal(text: str, cfg: dict, answering_check: bool = False) -> str | None:
     for text_words in (words(sentence) for sentence in _sentences(text)):
         for kind, spec in cfg["vague"].items():
@@ -602,6 +652,11 @@ def answer_to_confirm(text: str, cfg: dict) -> str:
         w in allowed for w in text_words.split()
     ):
         return "no"
+    # An answer that opens with a plain no is a no, whatever it says the smell is instead: "no,
+    # it's not like rotten eggs, it's more like burning plastic" (Retell call
+    # call_b608687ce923e70a8318a6a6f0e). A yes in it was caught above.
+    if text_words.split()[:1] in (["no"], ["nope"], ["nah"]):
+        return "no"
     return "unclear"
 
 
@@ -615,6 +670,30 @@ def _says_yes(text_words: str, word: str) -> bool:
             return True
         start = text_words.find(target, start + 1)
     return False
+
+
+# Words of a gas or carbon monoxide scare, kept out of the next call's context: safety is per call
+# (Jackson's call call_7255ab47e30637f207e49f5bdeb opened with "please make sure you're outside and
+# have called 911" from the call before).
+SCARE_WORDS = re.compile(
+    r"\b9-?1-?1\b|\bgas\b|carbon monoxide|\bco alarm|evacuat|stay safe|"
+    r"\bget (?:everyone )?out(?:side)?\b|\bgetting outside\b",
+    re.IGNORECASE,
+)
+
+
+def mentions_scare(text: str) -> bool:
+    return bool(SCARE_WORDS.search(text or ""))
+
+
+def without_scare(summary: str) -> str:
+    """A job summary for another call's context: its priority line and any line about a scare
+    dropped. The job in the field service system keeps them for the technician."""
+    return "\n".join(
+        line
+        for line in (summary or "").split("\n")
+        if not line.startswith("Priority:") and not mentions_scare(line)
+    )
 
 
 def lines_for(cfg: dict, kind: str) -> str:
@@ -661,6 +740,8 @@ def check_caller_turn(
     and confirm_asked are True once that question has been asked on this call; answering_confirm
     when the question being answered is the confirm question."""
     text = _spelled_co(text)
+    if state in ("signal", "lines_said", "checking") and retracts(text, cfg):
+        return SafetyAction("cleared", kind)
     if state == "lines_said" and stands_down(text, kind, cfg):
         return SafetyAction("cleared", kind)
     signal = clear_signal(text, cfg, answering_check=state == "checking")
@@ -689,9 +770,9 @@ def check_caller_turn(
             return SafetyAction("speak_lines", kind, lines_for(cfg, kind))
         if answer == "no":
             return SafetyAction("cleared", kind)
-        # An unclear answer to the lighter question gets the plain check question, once.
-        if answering_confirm:
-            return SafetyAction("ask_check", kind, cfg["vague"][kind]["question"])
+        # An unclear answer waits for the next line: no second question (Retell call
+        # call_b608687ce923e70a8318a6a6f0e asked the plain check question while the caller was
+        # still answering the confirm question). The gas check is asked once a call.
         return SafetyAction("none", kind)
     vague = vague_signal(text, cfg) or worry_signal(text, cfg) or _hedged_clear(text, cfg)
     # A check the caller already answered no to isn't asked again for the same kind: "nobody's
@@ -709,9 +790,16 @@ def check_caller_turn(
     return SafetyAction("none", kind)
 
 
+def _emergency_number(text_words: str) -> str:
+    # The lines write "9-1-1" so the voice says nine one one; a transcript may write "911".
+    return text_words.replace(" 9 1 1 ", " 911 ")
+
+
 def agent_said_lines(text: str, kind: str | None, cfg: dict) -> bool:
     """The agent line contains the full safety lines for the call's kind, word for word."""
-    return bool(kind) and words(lines_for(cfg, kind)) in words(text)
+    return bool(kind) and _emergency_number(words(lines_for(cfg, kind))) in _emergency_number(
+        words(text)
+    )
 
 
 # Electrical trouble (DECISIONS.md 082): its own route, apart from gas and carbon monoxide. It never

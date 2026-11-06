@@ -8,13 +8,12 @@ import json
 from collections.abc import Callable
 from pathlib import Path
 
-import yaml
-
+from app.tenant import voice_lines
 from prompts.assemble import greeting, sections
 
 
 def spoken_lines(tenants_dir: Path, slug: str) -> dict:
-    return yaml.safe_load((tenants_dir / slug / "agent.yaml").read_text())["voice"]
+    return voice_lines(tenants_dir / slug)
 
 
 def opening(start: dict, say: str, lines: dict) -> str:

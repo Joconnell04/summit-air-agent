@@ -59,7 +59,7 @@ GATES = (
      ("S-17",)),
     ("whole_call", "Marks a caller who describes a business, such as a store, as commercial", (),
      ("S-05",)),
-    ("whole_call", "Stops calling anyone who asks not to be called", (), ()),
+    ("whole_call", "Stops calling anyone who asks not to be called", ("confirm_first",), ()),
     ("whole_call", "Says once that the company doesn't do work it doesn't, and keeps it as a lead",
      (), ()),
     ("whole_call", "Passes on a request for a technician by name, and never promises one", (),
@@ -93,7 +93,7 @@ GATES = (
      ("zip_not_heard",), ()),
     ("booking", "Looks up a ZIP only for a street the caller said, and asks when it can't tell",
      ("address_not_heard", "address_several", "address_not_found", "address_lookup_down",
-      "zip_asked"),
+      "zip_asked", "unit_needed"),
      ("S-13a",)),
     ("booking", "Won't book on a ZIP that disagrees with the caller's street until they settle it",
      ("zip_mismatch",), ("S-13a",)),
@@ -137,6 +137,7 @@ LINE_STAGES = {
     "greeting_known": ("opening", "Greeting, known caller"),
     "greeting_unknown": ("opening", "Greeting"),
     "zip_mismatch": ("booking", "ZIP mismatch"),
+    "address_ask_unit": ("booking", "Ask for the unit"),
     "address_which": ("booking", "Which address"),
     "address_not_found": ("booking", "Street not found"),
     "address_ask_zip": ("booking", "Ask for the ZIP"),
@@ -224,8 +225,16 @@ PROMPT_STAGES = {
     "End": "closing",
 }
 # agent.yaml sections that hold no rule an owner would read: numbers, connections, plumbing.
-NOT_SHOWN = {"extends", "phone_numbers", "fsm", "weather", "owner_rules"}
+NOT_SHOWN = {"extends", "phone_numbers", "fsm", "weather", "owner_rules", "lookup_knowledge",
+             "visit_questions", "intake", "assistant_name", "connectors"}
 NOT_SHOWN_PROMPTS = {"tool-use.md"}
+
+
+def _length_said(minutes: int) -> str:
+    hours, rest = divmod(minutes, 60)
+    if not hours:
+        return f"{rest} minutes"
+    return f"{hours} hour{'s' if hours > 1 else ''}" + (f" {rest} minutes" if rest else "")
 
 
 def _plain(text: str, tenant: Tenant) -> str:
@@ -276,8 +285,9 @@ def _wording(tenant: Tenant, edits: dict[str, str]) -> list[Rule]:
         label = cfg["label"].capitalize()
         found.append(Rule(f"safety.{kind}.lines", "whole_call", "wording", f"{label}: safety lines",
                           _plain(cfg["lines"], tenant), why=why, spec=("S-17",)))
-        found.append(Rule(f"safety.{kind}.variants", "whole_call", "wording",
-                          f"{label}: said again", " / ".join(cfg.get("variants", [])), why=why))
+        if cfg.get("variants") and safety.get("repeat_limit", 1):
+            found.append(Rule(f"safety.{kind}.variants", "whole_call", "wording",
+                              f"{label}: said again", " / ".join(cfg["variants"]), why=why))
     for kind, cfg in safety.get("vague", {}).items():
         label = safety["kinds"][kind]["label"].capitalize()
         found.append(Rule(f"safety.{kind}.question", "whole_call", "wording",
@@ -393,7 +403,7 @@ def _settings(tenant: Tenant) -> list[Rule]:
     night = next((w for w in tenant.windows if w.after_hours), None)
     found.append(Rule("setting.windows", "booking", "setting", "Arrival windows",
                       f"Any run of {tenant.block_minutes}-minute blocks in the company's hours, "
-                      f"{tenant.window_minutes // 60} hours unless the caller asks for another "
+                      f"{_length_said(tenant.window_minutes)} unless the caller asks for another "
                       "length"
                       + (f"; after hours {_clock(night.start.strftime('%H:%M'))} to "
                          f"{_clock(night.end.strftime('%H:%M'))}" if night else ""),

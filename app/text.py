@@ -32,12 +32,25 @@ def phone_spoken(value: str) -> str:
     return f"{key[:3]}, {key[3:6]}, {key[6:]}" if len(key) == 10 else value
 
 
-GOODBYES = ("bye", "goodbye", "good bye", "talk to you later", "have a good one", "have a good day")
+GOODBYES = (
+    "bye", "goodbye", "good bye", "talk to you later", "have a good one", "have a good day",
+    # Jackson's call call_7255ab47e30637f207e49f5bdeb: the call stayed open after these.
+    "end this call", "end the call", "hang up", "im done", "i am done", "were done",
+)
 
 
 def says_goodbye(text: str) -> bool:
     text_words = words(text)
     return any(has_phrase(text_words, g) for g in GOODBYES)
+
+
+# A caller taking back what they just said ("Uh, never. Just kidding."): not a request.
+KIDDING = ("just kidding", "im kidding", "only kidding", "just joking", "im joking", "jk")
+
+
+def kidding(text: str) -> bool:
+    text_words = words(text)
+    return any(has_phrase(text_words, k) for k in KIDDING)
 
 
 DIGIT_NAMES = ("zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine")
@@ -70,7 +83,10 @@ def street_key(value: str) -> str:
 
 def unit_key(value: str) -> str:
     words = re.sub(r"[^a-z0-9 ]", " ", (value or "").lower()).split()
-    return "".join(w for w in words if w not in {"apt", "apartment", "unit", "fl", "floor"})
+    return "".join(
+        w for w in words
+        if w not in {"apt", "apartment", "unit", "fl", "floor", "suite", "ste", "number", "no"}
+    )
 
 
 def words(value: str) -> str:
@@ -342,3 +358,128 @@ def numbers_said(value: str) -> list[tuple[int, float, float]]:
         elif token.isdigit():
             found.append((i, int(token), int(token)))
     return found
+
+
+# Addresses as people say them (Jackson): with the voice's own number reading off, "199" would be
+# "one hundred ninety-nine" and "77-10" a subtraction. Speech only; the stored address keeps its
+# numerals.
+NUMBER_ONES = (
+    "zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten",
+    "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen",
+    "nineteen",
+)
+NUMBER_TENS = ("", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety")
+ORDINAL_WORDS = {"one": "first", "two": "second", "three": "third", "five": "fifth",
+                 "eight": "eighth", "nine": "ninth", "twelve": "twelfth"}
+NUMBERED_STREET = re.compile(r"\b(\d+)(?:st|nd|rd|th)\b", re.IGNORECASE)
+HOUSE = re.compile(r"^(\d+(?:-\d+)?)([A-Za-z]?)$")
+
+
+def number_words(n: int) -> str:
+    """0 to 999 in words: 34 "thirty-four", 101 "one hundred one"."""
+    if n < 20:
+        return NUMBER_ONES[n]
+    if n < 100:
+        tens, ones = divmod(n, 10)
+        return NUMBER_TENS[tens] + (f"-{NUMBER_ONES[ones]}" if ones else "")
+    hundreds, rest = divmod(n, 100)
+    return f"{NUMBER_ONES[hundreds]} hundred" + (f" {number_words(rest)}" if rest else "")
+
+
+def _pair_said(digits: str) -> str:
+    """Two digits after a first part: "05" "oh five", "10" "ten"."""
+    n = int(digits)
+    return f"oh {NUMBER_ONES[n]}" if n < 10 else number_words(n)
+
+
+def house_said(number: str) -> str:
+    """199 "one ninety-nine", 305 "three oh five", 100 "one hundred", 1500 "fifteen hundred",
+    1010 "ten ten", 2050 "twenty fifty", 77-10 "seventy-seven ten", 34-05 "thirty-four oh five",
+    12A "twelve A"."""
+    match = HOUSE.match(number or "")
+    if not match:
+        return number
+    digits, letter = match[1], match[2].upper()
+    if "-" in digits:
+        first, second = digits.split("-", 1)
+        said = f"{house_said(first)} {_pair_said(second) if len(second) == 2 else house_said(second)}"
+    else:
+        n = int(digits)
+        if n < 100 or (len(digits) == 3 and n % 100 == 0):
+            said = number_words(n)
+        elif len(digits) == 3:
+            said = f"{NUMBER_ONES[n // 100]} {_pair_said(digits[1:])}"
+        elif len(digits) == 4 and n % 1000 == 0:
+            said = f"{NUMBER_ONES[n // 1000]} thousand"
+        elif len(digits) == 4:
+            high, low = digits[:2], digits[2:]
+            said = f"{number_words(int(high))} " + ("hundred" if low == "00" else _pair_said(low))
+        else:
+            said = " ".join(NUMBER_ONES[int(d)] for d in digits)
+    return f"{said} {letter}" if letter else said
+
+
+def ordinal_said(n: int) -> str:
+    """4 "Fourth", 34 "Thirty-Fourth", 101 "One Hundred First"."""
+    head, _, last = number_words(n).rpartition(" ")
+    stem, dash, word = last.rpartition("-")
+    if word in ORDINAL_WORDS:
+        word = ORDINAL_WORDS[word]
+    elif word.endswith("y"):
+        word = word[:-1] + "ieth"
+    else:
+        word += "th"
+    said = f"{head} {stem}{dash}{word}".strip()
+    return " ".join("-".join(part.capitalize() for part in w.split("-")) for w in said.split())
+
+
+UNIT_WORD = re.compile(
+    r"^\s*(?:(?:unit|apt|apartment|suite|ste|number|no)\b\.?|#)\s*#?\s*", re.IGNORECASE
+)
+
+
+def unit_clean(unit: str) -> str:
+    """The unit without a leading "Unit", "Apt.", "Suite" or "#": the model passed "Unit 2", read
+    back as "unit U N I T two" (Retell call call_926427e1d1f2a80cb78dc6a4e04)."""
+    return UNIT_WORD.sub("", unit or "").strip()
+
+
+FLOOR = re.compile(r"^(\d+)\s*(?:st|nd|rd|th)?\s*(?:fl|floor)\.?$|^(?:fl|floor)\.?\s*(\d+)$",
+                   re.IGNORECASE)
+GROUND_FLOORS = {"ground floor", "basement", "garden", "garden level", "ground"}
+
+
+def unit_said(unit: str) -> str:
+    """Digits one at a time and letters as letters: 2 "two", 4B "four B", 12C "one two C". A floor
+    is said as one: "2nd floor" is "second floor", not "two n d f l o o r" (Retell call
+    call_bbfbed1552e4f96e41400b1897f); words like "basement" stay words."""
+    unit = unit_clean(unit)
+    floor = FLOOR.match(unit)
+    if floor:
+        return f"{ordinal_said(int(floor[1] or floor[2])).lower()} floor"
+    if unit.lower() in GROUND_FLOORS:
+        return unit.lower()
+    return " ".join(
+        NUMBER_ONES[int(c)] if c.isdigit() else c.upper()
+        for c in unit
+        if c.isalnum()
+    )
+
+
+def street_said(street: str) -> str:
+    """ "199 East 4th Street" as "one ninety-nine East Fourth Street"."""
+    house, _, rest = (street or "").strip().partition(" ")
+    if not HOUSE.match(house):
+        house, rest = "", street or ""
+    rest = NUMBERED_STREET.sub(lambda m: ordinal_said(int(m[1])), rest)
+    return f"{house_said(house)} {rest}".strip() if house else rest
+
+
+def address_said(street: str, unit: str = "") -> str:
+    """The street and unit as the read-back and other lines say them."""
+    unit = unit_clean(unit)
+    if not unit:
+        return street_said(street)
+    # A floor is said as a floor: "second floor", not "unit second floor".
+    floor = bool(FLOOR.match(unit)) or unit.lower() in GROUND_FLOORS
+    return f"{street_said(street)}, {'' if floor else 'unit '}{unit_said(unit)}"

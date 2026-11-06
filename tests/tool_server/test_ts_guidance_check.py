@@ -136,7 +136,7 @@ def test_a_failed_request_is_tried_once_more_and_no_further():
 
 def test_the_locked_rules_come_from_the_rulebook():
     text = "\n".join(guidance_check.locked_rules(TENANT))
-    assert "call 911" in text, "the safety lines"
+    assert "call 9-1-1" in text, "the safety lines"
     assert "isn't a business" in text, "the read-back is the home check"
     assert "Won't book a commercial customer" in text
     assert "The agent never quotes a fee or a price" in text and "None" not in text

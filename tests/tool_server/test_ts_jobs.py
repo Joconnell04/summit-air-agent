@@ -4,7 +4,16 @@ the system places, booked-and-kept, on-call email after hours, and retention ove
 
 import smtplib
 
-from toolkit import UNKNOWN, Agent, book, count, in_area_address, make_server, ready_to_book
+from toolkit import (
+    UNKNOWN,
+    Agent,
+    book,
+    confirm_do_not_call,
+    count,
+    in_area_address,
+    make_server,
+    ready_to_book,
+)
 
 from app import jobs
 
@@ -499,6 +508,7 @@ def test_a_caller_who_says_dont_call_on_the_callback_stays_cancelled(agent, cloc
     claimed = claim(agent)
     placed = place(agent, claimed)
     agent.turn(placed, "Please don't call me again.")
+    confirm_do_not_call(agent, placed)
     done(agent, claimed["outbound_id"], answered=True)
     assert count(agent, "SELECT status FROM callbacks") == "cancelled"
 

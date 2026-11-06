@@ -1,0 +1,83 @@
+# Labeled calls for the failure grader (app/failure_grader.py, issue #178). Ids and labels only.
+#
+# Every call is a real Retell call. side-by-side: round 1 of the side-by-side eval
+# (evals/rounds/side-by-side-01.md, branch joco/side-by-side-014a4c), whose tool-server rows were
+# dumped right after each call; rows is that dump's path under evals/rounds/side-by-side-01-data.
+# live: calls on the Summit Air numbers from Retell's recent list (POST /v3/list-calls). Their rows
+# were read from the live tool server's database afterward and are kept outside the repo, since they
+# hold callers' real numbers: set LIVE_ROWS_DIR to that folder (one <id>.json per call). Without it
+# the grader is told the rows weren't kept and reads the transcript and its tool results.
+#
+# Each label is a person's reading of the transcript and rows against the five true failures in
+# prompts/failure-grader.md, with the reason in one line. It is not the side-by-side checks: many
+# calls those checks failed (a reworded line, an ended call, a booking the persona expected) are
+# style, or are not a failure a caller or the owner would see.
+# label: fail or ok. kind: the failure kind for a fail. borderline: a reasonable person could
+# label it the other way; scored with and without. hard: the hard case it stands for.
+
+calls:
+  # ---- true failures ----
+  - {id: call_8df5ad10287f0d52fa5a8f50a65, rows: line1/calls/02-A-b.rows.json, label: fail, kind: records, why: "Told the number goes on the do-not-call list; the list is empty and a callback is still pending."}
+  - {id: call_fa7e6a9195cd4e70b45e82a2499, rows: line1/calls/11-A-i.rows.json, label: fail, kind: callback, hard: wrong weekday, why: "Asked for a callback Monday morning; told and stored tomorrow before noon."}
+  - {id: call_fc470f8ddd2d56cf55be68fc119, rows: line1/calls/12-C-i.rows.json, label: fail, kind: callback, hard: wrong weekday, why: "Same Monday-to-tomorrow callback."}
+  - {id: call_360c4fe0ec61e0339879858f61d, rows: line1-rerun/calls/07-A-i.rows.json, label: fail, kind: callback, hard: wrong weekday, why: "Same Monday-to-tomorrow callback."}
+  - {id: call_5b998cf4ab209eb48c2ae5e9a0b, rows: line2d/calls/06-D-i.rows.json, label: fail, kind: callback, hard: wrong weekday, why: "Same Monday-to-tomorrow callback."}
+  - {id: call_c9bf44aee43e165c12837521d8c, rows: line2b-rerun/calls/09-C-i.rows.json, label: fail, kind: callback, hard: wrong weekday, why: "Same Monday-to-tomorrow callback."}
+  - {id: call_3cd4c8065f26d3de686f7a1e002, rows: live, label: fail, kind: hung_up, borderline: true, hard: hang-up mid-request, why: "Caller said 'sure' to 'anything else?' four times; the agent said 'I'll let you go' and ended the call."}
+  - {id: call_9d6182c10f4b47630e70f4fbe4d, rows: live, label: ok, borderline: true, why: "Caller took the earliest window and confirmed the read-back, but the booking was refused and the caller said bye before the agent said it was booked."}
+
+  # ---- not failures: style, clean, or a hard case that looks like a failure ----
+  - {id: call_2dc9e56b577b784f5c79c3a9b75, rows: line1/calls/01-A-e.rows.json, label: ok, hard: Normal with no vulnerable person named, why: "No-heat booked at Normal; the caller never mentioned the 85-year-old mother."}
+  - {id: call_11f8ca0e3ab110857663e60edcc, rows: line2d/calls/08-D-k.rows.json, label: ok, hard: Normal with no vulnerable person named, why: "Booked at Normal; the newborn was never mentioned. Narration is style."}
+  - {id: call_0009860347f1f375c280f704723, rows: line1/calls/03-C-e.rows.json, label: ok, why: "Caller confirmed do-not-call; list set and callbacks cancelled as told. Booked High for the mother."}
+  - {id: call_60a297b19f8a2e1121f6470795a, rows: line1/calls/04-C-b.rows.json, label: ok, why: "Visit moved and note added as told; agent closed after the caller's 'Thanks'."}
+  - {id: call_b68d500b116603c2cf6a0c3b657, rows: line1/calls/05-A-c.rows.json, label: ok, hard: retraction handled, why: "Gas advice spoken, retraction honored. The caller broke role, nothing went wrong."}
+  - {id: call_72ad6abac6f8033fd9813ead44b, rows: line1/calls/06-C-c.rows.json, label: ok, hard: retraction handled, why: "Gas advice spoken, retraction honored; its own safety question is style."}
+  - {id: call_2c871637f07dc6f5b4cb39afc0b, rows: line1/calls/07-A-g.rows.json, label: ok, why: "Commercial lead and an urgent callback within the hour stored; the number the caller gave is in the reason."}
+  - {id: call_a3c8b2a6de25a6e93e4ab9cef13, rows: line1/calls/08-C-g.rows.json, label: ok, why: "Caller agreed to a callback tomorrow morning after hours; stored as told."}
+  - {id: call_d17b0088affb2f6ea3971164e98, rows: line1/calls/09-A-h.rows.json, label: ok, why: "Sparks advice spoken, booked High with the corrected number; double confirm is style."}
+  - {id: call_648823e9423ded73156c791361c, rows: line1/calls/10-C-h.rows.json, label: ok, why: "Sparks advice spoken, booked High, on-call callback stored."}
+  - {id: call_72009cbe16703210509127925b0, rows: line1/calls/13-A-j.rows.json, label: ok, hard: CO line cut with the caller outside, why: "CO alarm: the advice line was cut off by the caller; booked Urgent with an earlier-slot flag."}
+  - {id: call_7fe13e690e57e56405611cad333, rows: line1/calls/14-C-j.rows.json, label: ok, why: "CO advice spoken, booked Urgent; name and narration are style."}
+  - {id: call_8fd9ff40c7f8d9bc587cf5d189c, rows: line1/calls/15-A-k.rows.json, label: ok, hard: abrupt end after goodbye, why: "Caller said 'that's it, bye' in the middle of intake; nothing promised."}
+  - {id: call_6930525bbbd0de20271b03ad9a3, rows: line1/calls/16-C-k.rows.json, label: ok, why: "After hours with a newborn: never told a visit was booked; on-call callback stored for the time given."}
+  - {id: call_90b5daf59b6689139186dbfdeb7, rows: line2b/calls/01-B-e.rows.json, label: ok, why: "After hours: the booking went to the on-call person, who calls by the time stated; never told it was booked."}
+  - {id: call_4f214d509e856dee37f402af81b, rows: line2b/calls/02-B-b.rows.json, label: ok, why: "No visit found to move; told so plainly and callbacks stored."}
+  - {id: call_691ff016e13210be91684957b2c, rows: line2b/calls/03-B-c.rows.json, label: ok, hard: retraction handled, why: "Clean retracted gas call."}
+  - {id: call_8bea915381ea96aed9f23f16021, rows: line2b/calls/04-B-g.rows.json, label: ok, why: "Clean commercial call."}
+  - {id: call_b608687ce923e70a8318a6a6f0e, rows: line2b/calls/05-B-h.rows.json, label: ok, why: "Clean sparks call; the corrected number is on the booking."}
+  - {id: call_818de352e42a0eb17bb7b9634c0, rows: line2b/calls/06-B-i.rows.json, label: ok, why: "Monday callback stored for Monday; reading the tool's limit aloud is style."}
+  - {id: call_bd5004917c3aea28f8fd0cb6b30, rows: line2b/calls/07-B-j.rows.json, label: ok, why: "CO advice spoken, booked Urgent."}
+  - {id: call_2853e6d1d3c7bcede4e86d67fc6, rows: line2b/calls/08-B-k.rows.json, label: ok, why: "Newborn named, booked High with that reason, on-call callback stored."}
+  - {id: call_b4c83f184b5cb64748332a2e3c3, rows: line2d/calls/01-D-e.rows.json, label: ok, hard: abrupt end after goodbye, why: "Caller asked to end the call and said bye; on-call callback stored after hours."}
+  - {id: call_70c2695c53936f197dc37ba88be, rows: line2d/calls/02-D-b.rows.json, label: ok, why: "No visit found to move; callbacks stored as told."}
+  - {id: call_396d8572aecdfbbfac936b7fc48, rows: line2d/calls/03-D-c.rows.json, label: ok, hard: retraction handled, why: "Retracted gas call handled."}
+  - {id: call_a0c123864f67baf0d5cf5bb19ce, rows: line2d/calls/04-D-g.rows.json, label: ok, why: "Commercial callback stored with the given number in its reason."}
+  - {id: call_40dc142eaba78a8933e91e54263, rows: line2d/calls/05-D-h.rows.json, label: ok, why: "Sparks advice spoken (repeated, style), booked High, approval callback stored."}
+  - {id: call_e98ed261ed7da01c31cf096e3ef, rows: line2d/calls/07-D-j.rows.json, label: ok, why: "CO advice spoken, booked Urgent."}
+  - {id: call_6fadca65bda8e685505803eaf13, rows: line1-rerun/calls/01-A-e.rows.json, label: ok, why: "After hours: on-call callback stored with the window asked for; never told it was booked."}
+  - {id: call_aaefcdad80a6be32906d9f54dab, rows: line1-rerun/calls/02-A-b.rows.json, label: ok, why: "No visit found to move; callbacks stored as told."}
+  - {id: call_3fc15029208308042bde5c46b59, rows: line1-rerun/calls/03-C-e.rows.json, label: ok, why: "Told the slot needs on-call review; then the caller chose do-not-call and callbacks were cancelled as told."}
+  - {id: call_b8641369a8b7e72f85cfaecc267, rows: line1-rerun/calls/04-C-b.rows.json, label: ok, why: "Caller's last word was do-not-call, including the callbacks; records match."}
+  - {id: call_3a8da3060376cd206693acab7d0, rows: line1-rerun/calls/05-A-c.rows.json, label: ok, hard: retraction handled, why: "Clean retracted gas call."}
+  - {id: call_9e1bbb6310e006595123e5a0a21, rows: line1-rerun/calls/06-A-l.rows.json, label: ok, hard: abrupt end after goodbye, why: "Real gas, advice spoken; caller left with 'that's it, bye' during the address."}
+  - {id: call_daecc57ee95de4ca98a4dd9a6db, rows: line2b-rerun/calls/01-B-e.rows.json, label: ok, why: "Address couldn't be found, said so; urgent callback stored for the time given."}
+  - {id: call_9bc643de3f76efe9946512b19f0, rows: line2b-rerun/calls/02-B-b.rows.json, label: ok, why: "No visit found to move; callbacks stored as told."}
+  - {id: call_4a774cd492380831262f312d132, rows: line2b-rerun/calls/03-B-c.rows.json, label: ok, hard: retraction handled, why: "Clean retracted gas call."}
+  - {id: call_0e2a9d1bf24a8ff39834d3942bb, rows: line2b-rerun/calls/04-B-l.rows.json, label: ok, hard: abrupt end after goodbye, why: "Real gas, advice spoken; caller said bye while giving the address."}
+  - {id: call_89c1c4a057c0914e567e962564b, rows: line2b-rerun/calls/05-B-i.rows.json, label: ok, why: "Monday callback stored for Monday before noon."}
+  - {id: call_2d43302fa7e8505865657a7fbd7, rows: line2b-rerun/calls/06-D-l.rows.json, label: ok, hard: abrupt end after goodbye, why: "Real gas, advice spoken; caller said bye before the ZIP."}
+  - {id: call_4cb456950965b24ad524776c01a, rows: line2b-rerun/calls/07-C-c.rows.json, label: ok, hard: retraction handled, why: "Retraction honored; the caller broke role."}
+  - {id: call_c5966951b6ae51d1213942dc02e, rows: line2b-rerun/calls/08-C-l.rows.json, label: ok, hard: safety line cut with the caller outside, why: "Real gas, advice spoken first; the last line was cut after the family was outside, and the urgent person flag is the follow-up."}
+  - {id: call_936dbf645c5e077694bfd666ccc, rows: live, label: ok, hard: safety line cut with the caller outside, why: "Gas advice spoken at once; the repeated line was cut after the caller went outside to call 911."}
+  - {id: call_1889f3f95c0f62ffb0ce0508ef6, rows: live, label: ok, borderline: true, hard: abrupt end after goodbye, why: "Caller confirmed a window and said bye while the agent asked for a name; never told it was booked."}
+  - {id: call_79af0414dc77fcabc47b36f49cd, rows: live, label: ok, why: "Caller hung up during the membership description."}
+  - {id: call_7255ab47e30637f207e49f5bdeb, rows: live, label: fail, kind: false_info, why: "Without checking, told the caller their number is on the do-not-call list and can't be removed over the phone; the records show it isn't on the list, and the agent can remove it. Relabeled in round 3 after reading the whole call."}
+  - {id: call_0246b91f77e01a4b18583e6ca8b, rows: live, label: fail, kind: safety, hard: retraction ignored, why: "Caller said the gas company checked and it's fine; after booking the agent still said to stay outside and call 911. Relabeled in round 1 after reading the whole call."}
+  - {id: call_f8a3ad3177fa2c62fc9db00dcfa, rows: live, label: fail, kind: booking, why: "Caller confirmed 199 East 4th Street; the booking was stored as '199 Eastthstreet Street'. Relabeled in round 1 once the rows showed it."}
+  - {id: call_411b6aa0d8810886254f4d3e558, rows: live, label: ok, hard: wrong answer to trivia, why: "Miscounted the e's in seventeen, off-topic; the tune-up was booked as told."}
+  - {id: call_f916fac3014142085f3e5e93fab, rows: live, label: fail, kind: booking, why: "Same garbled '199 Eastthstreet Street' on the booking; the trivia miss is not a failure. Relabeled in round 1."}
+  - {id: call_bd7dcf9c2b49b5a2c13eb37ec57, rows: live, label: ok, hard: wrong answer to trivia, why: "Same trivia miss; booked as told."}
+  - {id: call_bd1a3b8d6901aeef821cd63deb4, rows: live, label: ok, why: "Answered the Saturday hours question correctly; what it said after the call ended wasn't heard."}
+  - {id: call_1840576e622e3d729b760085142, rows: live, label: ok, why: "Corrected the unit on the read-back and booked the tune-up as told."}
+  - {id: call_c091db11996b41ef55b6c928359, rows: live, label: ok, borderline: true, why: "Booked Saturday 8 to 12 at 116 Green Street 11222 as read back and confirmed; the caller had spelled it G-R-E-E-N-E, which sounds the same."}

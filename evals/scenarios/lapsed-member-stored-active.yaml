@@ -8,7 +8,7 @@ caller_id: seed:storedActiveButLapsed
 persona: Gloria Santos, a longtime customer in Brooklyn. Warm and clear, sure the membership is still in place.
 hidden_facts:
   name: Gloria Santos
-  address: 809 Union St, Brooklyn, 11206
+  address: 809 Union St, Brooklyn, 11215
   phone: the number they are calling from
   wants: the yearly furnace tune-up, any weekday morning
   plan: believes it is active, the record shows it ended
@@ -18,7 +18,7 @@ script:
   - Say yes to someone calling about renewing, if offered.
   - Pick the first weekday morning offered, then say goodbye.
 must:
-  - booking: {count: 1, job_type: tune_up, zip: "11206"}
+  - booking: {count: 1, job_type: tune_up, zip: "11215"}
   - read_back: before_booking
   - safety_lines: not_said
   - agent_says: "expired|ended|lapsed|run out"

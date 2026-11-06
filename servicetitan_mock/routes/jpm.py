@@ -41,6 +41,7 @@ class JobIn(BaseModel):
     priority: Priority
     campaignId: int
     summary: str | None = None
+    tagTypeIds: list[int] | None = None
     appointments: list[AppointmentIn] = Field(min_length=1)
 
 
@@ -128,7 +129,12 @@ def shape_job(conn: sqlite3.Connection, r: sqlite3.Row) -> dict:
         "createdOn": r["created_on"],
         "createdById": 4001,
         "modifiedOn": r["modified_on"],
-        "tagTypeIds": [],
+        "tagTypeIds": [
+            t["tag_type_id"]
+            for t in conn.execute(
+                "SELECT tag_type_id FROM job_tags WHERE job_id = ? ORDER BY tag_type_id", (r["id"],)
+            )
+        ],
         "customFields": [],
         "externalData": [],
     }
@@ -470,6 +476,17 @@ def create_job(
             ),
         ).lastrowid
         c.execute("UPDATE jobs SET job_number = ? WHERE id = ?", (str(job_id), job_id))
+        for tag_id in body.tagTypeIds or []:
+            if not any(t["id"] == tag_id and t["active"] for t in cfg.tag_types):
+                raise ApiError(
+                    422,
+                    "unknown_reference",
+                    f"Tag type {tag_id} is not available.",
+                    {"tagTypeIds": "unknown or inactive"},
+                )
+            c.execute(
+                "INSERT OR IGNORE INTO job_tags (job_id, tag_type_id) VALUES (?, ?)", (job_id, tag_id)
+            )
         for n, appt in enumerate(body.appointments, 1):
             day, window = _resolve_window(
                 cfg,

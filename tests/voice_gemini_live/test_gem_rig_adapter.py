@@ -80,7 +80,7 @@ def test_a_gas_smell_interrupts_with_the_signed_off_lines(app):
     line, sock, _ = opened_line(app)
     asyncio.run(line.handle({"serverContent": {"inputTranscription": {"text": "I smell gas."}}}))
     asyncio.run(line.handle(AUDIO))
-    assert texts(sock)[-1].startswith("Say exactly") and "911" in texts(sock)[-1]
+    assert texts(sock)[-1].startswith("Say exactly") and "9-1-1" in texts(sock)[-1]
 
 
 def test_function_calls_go_to_the_tool_server_and_back(app):

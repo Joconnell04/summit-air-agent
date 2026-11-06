@@ -13,7 +13,10 @@ find_address: >-
   or doesn't know it. Pass the house number and street as they said them, and the borough or
   neighborhood only if they said one. When it returns the address, its ZIP is already checked
   against the service area: use that ZIP and street in the read-back, which confirms it, and don't
-  ask for the ZIP. If it asks which one or asks to spell the street, ask the caller its sentence
+  ask for the ZIP. If you say the street yourself, say it as `street_said` ("one ninety-nine East
+  Fourth Street"). When it returns `verified: false` (the city's records don't have the address),
+  its sentence is spoken for you: read back and book with that street and ZIP, and never ask the
+  caller for the ZIP; the office confirms the address before dispatch. If it asks which one or asks to spell the street, ask the caller its sentence
   and call it again with `borough` or `spelled`.
 find_slots: >-
   Availability for a job type. Without `day` it returns one opening to offer (the caller's
@@ -22,9 +25,9 @@ find_slots: >-
   caller can only be home some hours ("I'm home 8 to 2", "I leave at 10"), pass them as
   arrive_after and arrive_before as they said them; the server reads "8 to 2" as 8 AM to 2 PM and
   offers only windows inside those hours. A single time the caller names ("tomorrow at 7:30") starts
-  the window, two hours long unless closing comes first: pass `day`, and offer that window. Windows
-  are two hours; when the caller asks for another length ("an hour", "a three-hour window"), pass it
-  in `window_minutes`.
+  the window, 30 minutes long: pass `day`, and offer that window. Windows are 30 minutes; when the
+  caller asks for another length ("an hour", "a two-hour window"), pass it in `window_minutes`.
+  When the caller is moving a visit they already have, pass `moving_a_visit: true`.
 read_back: >-
   Confirms the address and number before booking. The first call's sentence is spoken to the caller
   for you, word for word, so call it without announcing it and say nothing yourself. After the
@@ -34,9 +37,9 @@ read_back: >-
 book_appointment: >-
   Book the window the caller chose, with the intake details. Only after the read-back was confirmed
   and after find_slots with `day` returned that day's windows. `slot.date` and `slot.window` are the
-  `date` and `window` code from that result (such as "morning"), never the spoken label ("8 to 12").
-  Its confirmation is spoken for you when it returns ok; say a short line first in the same reply
-  ("Perfect, booking that now.") and nothing after. To move a visit the caller already has, use
+  `date` and `window` code from that result (such as "0800-1000"), never the spoken label ("8 to
+  10"). Its confirmation ("Okay, I've booked it: ...") is spoken for you when it returns ok, so say
+  nothing before it in the same reply and nothing after. To move a visit the caller already has, use
   reschedule_appointment instead. If it refuses with account_choice, ask the caller its question
   and book again with new_address_account.
 reschedule_appointment: >-
@@ -61,11 +64,20 @@ flag_person: >-
   explain the date or count the days yourself.
 record_lead: >-
   Save one lead: commercial (company, contact, need), membership sign-up interest, or an install or
-  replacement quote. A window the caller asked for goes in callback_after and callback_before, and
+  replacement quote only when an estimate visit can't be booked (book those with book_appointment,
+  job_type estimate). A window the caller asked for goes in callback_after and callback_before, and
   "tomorrow" in callback_day. Say the sentence it returns as written.
 add_note: Append a short note for the team about this customer or this call's job.
-mark_do_not_call: The caller asked not to be called again. Say the sentence it returns.
+mark_do_not_call: >-
+  The caller asked not to be called again. The first call returns a confirm question, spoken for
+  you; after a clear yes, call it again with `confirmed: true`. A joke ("just kidding") is not a
+  request. If they want calls again after all, call it with `undo: true`.
 end_call: >-
   Ask to end the call, with the reason. Call it after your goodbye. If it says not to hang up yet,
   say its sentence and keep listening. On a safety call it returns the sign-off, which is the
   goodbye: say nothing of your own in that turn.
+lookup_hvac_info: >-
+  Call only when the caller asks how heating or cooling equipment works, what a sound or symptom
+  might mean, or about maintenance. Pass their question. It returns `facts` to put in your own
+  words, briefly; with no facts, answer from general knowledge or offer a technician. Never give
+  repair steps or prices.

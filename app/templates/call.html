@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_ui.html" import priority, window_text, note_icon, empty, player, q with context %}
+{% from "_ui.html" import priority, window_text, note_icon, empty, player, q, label_tag with context %}
 {% set p = page %}
 {% set title = p.name or (p.address.street if p.address else none) or call.caller_id %}
 {% block title %}{{ tenant }}: {{ title }}, {{ clock(p.started) }}{% endblock %}
@@ -13,7 +13,9 @@
       </div>
       <div class="who">
         <h1 class="page-title">{{ title }}</h1>
-        {# One tag: where the call stands now. Everything else is a plain fact on the line below. #}
+        {# The call's label, then one tag for where it stands now. Everything else is a plain fact
+           on the line below. #}
+        {{ label_tag(p.label, p.label_reason) }}
         {% if p.open_flags %}<span class="tag {{ 'urgent' if p.booking and p.booking.priority == 'Urgent' or p.safety_label else 'high' }}">Needs a person</span>
         {% elif p.booking %}<span class="tag done">Booked</span>
         {% elif call.direction == "outbound" %}<span class="tag outline">Placed by us</span>{% endif %}
@@ -21,6 +23,7 @@
       <div class="facts">
         <span class="num">{{ clock(p.started) }}{% if p.seconds is not none %}, {{ p.seconds // 60 }} min {{ p.seconds % 60 }} s{% endif %}</span>
         <span class="num">{{ call.caller_id }}</span>
+        <span data-label-reason>{{ p.label_reason }}</span>
         {% if p.safety_label %}<span class="alarm">{{ note_icon("warn") }}Safety call: {{ p.safety_label | lower }}</span>{% else %}<span>{{ p.type_label }}</span>{% endif %}
         {% if p.booking and p.booking.fsm_job_id %}<span class="num">Job {{ p.booking.fsm_job_id }}</span>{% endif %}
         {% if call.direction == "outbound" and (p.open_flags or p.booking) %}<span>Placed by us</span>{% endif %}
@@ -102,6 +105,30 @@ error: {{ item.tech.error }}{% endif %}</div>
     </div>
 
     <aside class="stack">
+      {% from "_checks.html" import progress %}
+      <section class="panel compact" id="check">
+        <div class="panel-head">
+          <h2>Call check</h2>
+          {% if check and not check.error %}<span class="end">{% if check.failure %}<span class="tag {{ 'urgent' if check.severity == 'critical' else 'high' }}">{{ check.label }}</span>{% else %}<span class="tag done">No problem found</span>{% endif %}</span>{% endif %}
+        </div>
+        <div class="panel-body check-body">
+          {% if check_run %}{{ progress(check_run) }}
+          {% elif check and check.failure %}
+          <p>{{ check.reason }}</p>
+          {% if check.evidence %}<ul class="evidence">{% for e in check.evidence %}<li>&ldquo;{{ e }}&rdquo;</li>{% endfor %}</ul>{% endif %}
+          {% elif check and not check.error %}<p class="muted">Nothing went wrong that a person needs to fix.</p>
+          {% elif not checks_on %}<p class="muted">Checks are off on this server.</p>
+          {% elif not call.ended_at %}<p class="muted">The call is still going.</p>
+          {% else %}<p class="muted">Not checked yet.</p>{% endif %}
+          {% if checks_on and call.ended_at and not check_run %}
+          <form method="post" action="/owner/calls/{{ call.id }}/check">
+            {% if check and not check.error %}<input type="hidden" name="again" value="1">{% endif %}
+            <button class="btn{% if not check or check.error %} primary{% endif %}" type="submit">{% if check and not check.error %}Check again{% else %}Check this call{% endif %}</button>
+          </form>
+          {% endif %}
+        </div>
+      </section>
+
       <section class="panel compact">
         <div class="panel-head"><h2>What happened</h2></div>
         <div class="panel-body"><p>{{ p.summary }}</p>{% for line in p.moves %}<p>{{ line }}</p>{% endfor %}{% for line in p.heads_ups %}<p>{{ line }}</p>{% endfor %}</div>

@@ -1,0 +1,4162 @@
+{
+  "summary": {
+    "round": 3,
+    "prompt": "prompts/failure-grader.md",
+    "profile": "offline.grader",
+    "calls": 62,
+    "fails_labeled": 11,
+    "runs": 3,
+    "graded": 186,
+    "errors": 0,
+    "live_rows": false,
+    "per_run": {
+      "0": {
+        "all": {
+          "tp": 10,
+          "fp": 1,
+          "fn": 1,
+          "precision": 0.909,
+          "recall": 0.909
+        },
+        "clear": {
+          "tp": 10,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0
+        }
+      },
+      "1": {
+        "all": {
+          "tp": 9,
+          "fp": 1,
+          "fn": 2,
+          "precision": 0.9,
+          "recall": 0.818
+        },
+        "clear": {
+          "tp": 9,
+          "fp": 0,
+          "fn": 1,
+          "precision": 1.0,
+          "recall": 0.9
+        }
+      },
+      "2": {
+        "all": {
+          "tp": 10,
+          "fp": 1,
+          "fn": 1,
+          "precision": 0.909,
+          "recall": 0.909
+        },
+        "clear": {
+          "tp": 10,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0
+        }
+      }
+    },
+    "majority": {
+      "all": {
+        "tp": 10,
+        "fp": 1,
+        "fn": 1,
+        "precision": 0.909,
+        "recall": 0.909
+      },
+      "clear": {
+        "tp": 10,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0
+      }
+    },
+    "false_flags_any_run": [
+      "call_c091db11996b41ef55b6c928359"
+    ],
+    "missed_any_run": [
+      "call_3cd4c8065f26d3de686f7a1e002",
+      "call_7255ab47e30637f207e49f5bdeb"
+    ],
+    "unstable": [
+      "call_7255ab47e30637f207e49f5bdeb"
+    ],
+    "spent_usd": 3.2845,
+    "carried_from": 2,
+    "graded_this_round": [
+      "call_7255ab47e30637f207e49f5bdeb",
+      "call_bd7dcf9c2b49b5a2c13eb37ec57",
+      "call_a3c8b2a6de25a6e93e4ab9cef13",
+      "call_8bea915381ea96aed9f23f16021",
+      "call_818de352e42a0eb17bb7b9634c0",
+      "call_b4c83f184b5cb64748332a2e3c3",
+      "call_70c2695c53936f197dc37ba88be",
+      "call_6fadca65bda8e685505803eaf13",
+      "call_aaefcdad80a6be32906d9f54dab",
+      "call_daecc57ee95de4ca98a4dd9a6db",
+      "call_9bc643de3f76efe9946512b19f0",
+      "call_89c1c4a057c0914e567e962564b",
+      "call_c5966951b6ae51d1213942dc02e",
+      "call_fa7e6a9195cd4e70b45e82a2499",
+      "call_fc470f8ddd2d56cf55be68fc119",
+      "call_360c4fe0ec61e0339879858f61d",
+      "call_5b998cf4ab209eb48c2ae5e9a0b",
+      "call_c9bf44aee43e165c12837521d8c",
+      "call_11f8ca0e3ab110857663e60edcc",
+      "call_b68d500b116603c2cf6a0c3b657",
+      "call_72ad6abac6f8033fd9813ead44b",
+      "call_2c871637f07dc6f5b4cb39afc0b",
+      "call_d17b0088affb2f6ea3971164e98",
+      "call_648823e9423ded73156c791361c",
+      "call_72009cbe16703210509127925b0",
+      "call_7fe13e690e57e56405611cad333",
+      "call_8fd9ff40c7f8d9bc587cf5d189c",
+      "call_6930525bbbd0de20271b03ad9a3",
+      "call_b608687ce923e70a8318a6a6f0e",
+      "call_bd5004917c3aea28f8fd0cb6b30",
+      "call_2853e6d1d3c7bcede4e86d67fc6",
+      "call_396d8572aecdfbbfac936b7fc48",
+      "call_a0c123864f67baf0d5cf5bb19ce",
+      "call_40dc142eaba78a8933e91e54263",
+      "call_e98ed261ed7da01c31cf096e3ef",
+      "call_3a8da3060376cd206693acab7d0",
+      "call_9e1bbb6310e006595123e5a0a21",
+      "call_4a774cd492380831262f312d132",
+      "call_0e2a9d1bf24a8ff39834d3942bb",
+      "call_2d43302fa7e8505865657a7fbd7",
+      "call_4cb456950965b24ad524776c01a"
+    ],
+    "rescored": "against labels.yaml as relabeled after this round"
+  },
+  "results": [
+    {
+      "run": 0,
+      "id": "call_7255ab47e30637f207e49f5bdeb",
+      "label": "fail",
+      "flagged": true,
+      "kind": "records",
+      "severity": "serious",
+      "reason": "The agent told the caller their number is on the do-not-call list and could not be removed, but the company's records show the number is not on that list, so the caller was misled about their status.",
+      "evidence": [
+        "Yes, your number is on our do-not-call",
+        "I'm sorry, I can't remove a number from the do-not-call list over the phone.",
+        "\"caller_on_do_not_call_list\": false"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "records",
+        "severity": "serious",
+        "reason": "The agent told the caller their number is on the do-not-call list and could not be removed, but the company's records show the number is not on that list, so the caller was misled about their status.",
+        "evidence": [
+          "Yes, your number is on our do-not-call",
+          "I'm sorry, I can't remove a number from the do-not-call list over the phone.",
+          "\"caller_on_do_not_call_list\": false"
+        ]
+      },
+      "cost_usd": 0.0334
+    },
+    {
+      "run": 1,
+      "id": "call_7255ab47e30637f207e49f5bdeb",
+      "label": "fail",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0327
+    },
+    {
+      "run": 2,
+      "id": "call_7255ab47e30637f207e49f5bdeb",
+      "label": "fail",
+      "flagged": true,
+      "kind": "false_info",
+      "severity": "serious",
+      "reason": "The agent told the caller their number was on the do-not-call list without checking, and refused to take it off, but the records show the number is not on the list.",
+      "evidence": [
+        "Yes, your number is on our do-not-call",
+        "I'm sorry, I can't remove a number from the do-not-call list over the phone.",
+        "\"caller_on_do_not_call_list\": false"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "false_info",
+        "severity": "serious",
+        "reason": "The agent told the caller their number was on the do-not-call list without checking, and refused to take it off, but the records show the number is not on the list.",
+        "evidence": [
+          "Yes, your number is on our do-not-call",
+          "I'm sorry, I can't remove a number from the do-not-call list over the phone.",
+          "\"caller_on_do_not_call_list\": false"
+        ]
+      },
+      "cost_usd": 0.0376
+    },
+    {
+      "run": 0,
+      "id": "call_bd7dcf9c2b49b5a2c13eb37ec57",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0226
+    },
+    {
+      "run": 1,
+      "id": "call_bd7dcf9c2b49b5a2c13eb37ec57",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0226
+    },
+    {
+      "run": 2,
+      "id": "call_bd7dcf9c2b49b5a2c13eb37ec57",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0226
+    },
+    {
+      "run": 0,
+      "id": "call_a3c8b2a6de25a6e93e4ab9cef13",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0238
+    },
+    {
+      "run": 1,
+      "id": "call_a3c8b2a6de25a6e93e4ab9cef13",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0224
+    },
+    {
+      "run": 2,
+      "id": "call_a3c8b2a6de25a6e93e4ab9cef13",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0245
+    },
+    {
+      "run": 0,
+      "id": "call_8bea915381ea96aed9f23f16021",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0204
+    },
+    {
+      "run": 1,
+      "id": "call_8bea915381ea96aed9f23f16021",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0208
+    },
+    {
+      "run": 2,
+      "id": "call_8bea915381ea96aed9f23f16021",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0214
+    },
+    {
+      "run": 0,
+      "id": "call_818de352e42a0eb17bb7b9634c0",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0303
+    },
+    {
+      "run": 1,
+      "id": "call_818de352e42a0eb17bb7b9634c0",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0303
+    },
+    {
+      "run": 2,
+      "id": "call_818de352e42a0eb17bb7b9634c0",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0303
+    },
+    {
+      "run": 0,
+      "id": "call_b4c83f184b5cb64748332a2e3c3",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0331
+    },
+    {
+      "run": 1,
+      "id": "call_b4c83f184b5cb64748332a2e3c3",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.034
+    },
+    {
+      "run": 2,
+      "id": "call_b4c83f184b5cb64748332a2e3c3",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0331
+    },
+    {
+      "run": 0,
+      "id": "call_70c2695c53936f197dc37ba88be",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0286
+    },
+    {
+      "run": 1,
+      "id": "call_70c2695c53936f197dc37ba88be",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0287
+    },
+    {
+      "run": 2,
+      "id": "call_70c2695c53936f197dc37ba88be",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0285
+    },
+    {
+      "run": 0,
+      "id": "call_6fadca65bda8e685505803eaf13",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0309
+    },
+    {
+      "run": 1,
+      "id": "call_6fadca65bda8e685505803eaf13",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0316
+    },
+    {
+      "run": 2,
+      "id": "call_6fadca65bda8e685505803eaf13",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0305
+    },
+    {
+      "run": 0,
+      "id": "call_aaefcdad80a6be32906d9f54dab",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0248
+    },
+    {
+      "run": 1,
+      "id": "call_aaefcdad80a6be32906d9f54dab",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0248
+    },
+    {
+      "run": 2,
+      "id": "call_aaefcdad80a6be32906d9f54dab",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0248
+    },
+    {
+      "run": 0,
+      "id": "call_daecc57ee95de4ca98a4dd9a6db",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0247
+    },
+    {
+      "run": 1,
+      "id": "call_daecc57ee95de4ca98a4dd9a6db",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.024
+    },
+    {
+      "run": 2,
+      "id": "call_daecc57ee95de4ca98a4dd9a6db",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0245
+    },
+    {
+      "run": 0,
+      "id": "call_9bc643de3f76efe9946512b19f0",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0242
+    },
+    {
+      "run": 1,
+      "id": "call_9bc643de3f76efe9946512b19f0",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0264
+    },
+    {
+      "run": 2,
+      "id": "call_9bc643de3f76efe9946512b19f0",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0263
+    },
+    {
+      "run": 0,
+      "id": "call_89c1c4a057c0914e567e962564b",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0366
+    },
+    {
+      "run": 1,
+      "id": "call_89c1c4a057c0914e567e962564b",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0365
+    },
+    {
+      "run": 2,
+      "id": "call_89c1c4a057c0914e567e962564b",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0361
+    },
+    {
+      "run": 0,
+      "id": "call_c5966951b6ae51d1213942dc02e",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0358
+    },
+    {
+      "run": 1,
+      "id": "call_c5966951b6ae51d1213942dc02e",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0364
+    },
+    {
+      "run": 2,
+      "id": "call_c5966951b6ae51d1213942dc02e",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0362
+    },
+    {
+      "run": 0,
+      "id": "call_fa7e6a9195cd4e70b45e82a2499",
+      "label": "fail",
+      "flagged": true,
+      "kind": "callback",
+      "severity": "serious",
+      "reason": "The caller asked for a membership callback on Monday morning, but the agent set it for tomorrow (Friday) before noon and the caller never agreed to that change.",
+      "evidence": [
+        "Monday morning.",
+        "Someone from our team will call you tomorrow before 12 PM to tell you more. Anything else I can help with?",
+        "Fri Nov 6, 12:00 PM"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "callback",
+        "severity": "serious",
+        "reason": "The caller asked for a membership callback on Monday morning, but the agent set it for tomorrow (Friday) before noon and the caller never agreed to that change.",
+        "evidence": [
+          "Monday morning.",
+          "Someone from our team will call you tomorrow before 12 PM to tell you more. Anything else I can help with?",
+          "Fri Nov 6, 12:00 PM"
+        ]
+      },
+      "cost_usd": 0.0317
+    },
+    {
+      "run": 1,
+      "id": "call_fa7e6a9195cd4e70b45e82a2499",
+      "label": "fail",
+      "flagged": true,
+      "kind": "callback",
+      "severity": "serious",
+      "reason": "The caller asked for a membership callback on Monday morning, but the agent set it up for Friday before noon and the caller never agreed to that change.",
+      "evidence": [
+        "caller: Monday morning.",
+        "Someone from our team will call you tomorrow before 12 PM to tell you more. Anything else I can help with?",
+        "membership lead: Interested in signing up for the Summit Standard Membership. Callback requested. (caller asked: tomorrow before 12 PM)"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "callback",
+        "severity": "serious",
+        "reason": "The caller asked for a membership callback on Monday morning, but the agent set it up for Friday before noon and the caller never agreed to that change.",
+        "evidence": [
+          "caller: Monday morning.",
+          "Someone from our team will call you tomorrow before 12 PM to tell you more. Anything else I can help with?",
+          "membership lead: Interested in signing up for the Summit Standard Membership. Callback requested. (caller asked: tomorrow before 12 PM)"
+        ]
+      },
+      "cost_usd": 0.0323
+    },
+    {
+      "run": 2,
+      "id": "call_fa7e6a9195cd4e70b45e82a2499",
+      "label": "fail",
+      "flagged": true,
+      "kind": "callback",
+      "severity": "serious",
+      "reason": "The caller asked to be called back Monday morning about the membership, but the callback was set for Friday before noon and the agent told them tomorrow without the caller agreeing to that change.",
+      "evidence": [
+        "Monday morning.",
+        "Someone from our team will call you tomorrow before 12 PM to tell you more. Anything else I can help with?",
+        "\"due\": \"Fri Nov 6, 12:00 PM\""
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "callback",
+        "severity": "serious",
+        "reason": "The caller asked to be called back Monday morning about the membership, but the callback was set for Friday before noon and the agent told them tomorrow without the caller agreeing to that change.",
+        "evidence": [
+          "Monday morning.",
+          "Someone from our team will call you tomorrow before 12 PM to tell you more. Anything else I can help with?",
+          "\"due\": \"Fri Nov 6, 12:00 PM\""
+        ]
+      },
+      "cost_usd": 0.0319
+    },
+    {
+      "run": 0,
+      "id": "call_fc470f8ddd2d56cf55be68fc119",
+      "label": "fail",
+      "flagged": true,
+      "kind": "callback",
+      "severity": "serious",
+      "reason": "The caller asked for a membership callback on Monday morning, but the callback was set for Friday before noon and the caller never agreed to that change.",
+      "evidence": [
+        "Monday morning.",
+        "Someone from our team will call you tomorrow before 12 PM to tell you more. Anything else I can help with?",
+        "due: Fri Nov 6, 12:00 PM"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "callback",
+        "severity": "serious",
+        "reason": "The caller asked for a membership callback on Monday morning, but the callback was set for Friday before noon and the caller never agreed to that change.",
+        "evidence": [
+          "Monday morning.",
+          "Someone from our team will call you tomorrow before 12 PM to tell you more. Anything else I can help with?",
+          "due: Fri Nov 6, 12:00 PM"
+        ]
+      },
+      "cost_usd": 0.0298
+    },
+    {
+      "run": 1,
+      "id": "call_fc470f8ddd2d56cf55be68fc119",
+      "label": "fail",
+      "flagged": true,
+      "kind": "callback",
+      "severity": "serious",
+      "reason": "The caller asked to be called back Monday morning about signing up for a membership, but the callback was set for Friday before noon and the caller never agreed to that change.",
+      "evidence": [
+        "Monday morning.",
+        "Someone from our team will call you tomorrow before 12 PM to tell you more. Anything else I can help with?",
+        "membership lead: Interested in Summit Standard Membership sign-up, callback requested (caller asked: tomorrow before 12 PM)"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "callback",
+        "severity": "serious",
+        "reason": "The caller asked to be called back Monday morning about signing up for a membership, but the callback was set for Friday before noon and the caller never agreed to that change.",
+        "evidence": [
+          "Monday morning.",
+          "Someone from our team will call you tomorrow before 12 PM to tell you more. Anything else I can help with?",
+          "membership lead: Interested in Summit Standard Membership sign-up, callback requested (caller asked: tomorrow before 12 PM)"
+        ]
+      },
+      "cost_usd": 0.0303
+    },
+    {
+      "run": 2,
+      "id": "call_fc470f8ddd2d56cf55be68fc119",
+      "label": "fail",
+      "flagged": true,
+      "kind": "callback",
+      "severity": "serious",
+      "reason": "The caller asked to be called back Monday morning about the membership, but the agent told them someone would call tomorrow (Friday) before noon and set the callback for Friday, and the caller never agreed to that change.",
+      "evidence": [
+        "caller: Monday morning.",
+        "Someone from our team will call you tomorrow before 12 PM to tell you more. Anything else I can help with?",
+        "membership lead: Interested in Summit Standard Membership sign-up, callback requested (caller asked: tomorrow before 12 PM)"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "callback",
+        "severity": "serious",
+        "reason": "The caller asked to be called back Monday morning about the membership, but the agent told them someone would call tomorrow (Friday) before noon and set the callback for Friday, and the caller never agreed to that change.",
+        "evidence": [
+          "caller: Monday morning.",
+          "Someone from our team will call you tomorrow before 12 PM to tell you more. Anything else I can help with?",
+          "membership lead: Interested in Summit Standard Membership sign-up, callback requested (caller asked: tomorrow before 12 PM)"
+        ]
+      },
+      "cost_usd": 0.0307
+    },
+    {
+      "run": 0,
+      "id": "call_360c4fe0ec61e0339879858f61d",
+      "label": "fail",
+      "flagged": true,
+      "kind": "callback",
+      "severity": "serious",
+      "reason": "The caller asked for a membership callback on Monday morning, but the agent set it for tomorrow (Friday) before noon instead and the caller never agreed to that change.",
+      "evidence": [
+        "caller: Monday morning.",
+        "Someone from our team will call you tomorrow before 12 PM to tell you more. Anything else I can help with?",
+        "membership lead: Interested in signing up for Summit Standard Membership; requested a callback. (caller asked: tomorrow before 12 PM)"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "callback",
+        "severity": "serious",
+        "reason": "The caller asked for a membership callback on Monday morning, but the agent set it for tomorrow (Friday) before noon instead and the caller never agreed to that change.",
+        "evidence": [
+          "caller: Monday morning.",
+          "Someone from our team will call you tomorrow before 12 PM to tell you more. Anything else I can help with?",
+          "membership lead: Interested in signing up for Summit Standard Membership; requested a callback. (caller asked: tomorrow before 12 PM)"
+        ]
+      },
+      "cost_usd": 0.0301
+    },
+    {
+      "run": 1,
+      "id": "call_360c4fe0ec61e0339879858f61d",
+      "label": "fail",
+      "flagged": true,
+      "kind": "callback",
+      "severity": "critical",
+      "reason": "The caller asked for a membership callback on Monday morning, but the callback was set for tomorrow (Friday) before noon and the caller never agreed to that change.",
+      "evidence": [
+        "caller: Monday morning.",
+        "Someone from our team will call you tomorrow before 12 PM to tell you more. Anything else I can help with?",
+        "Fri Nov 6, 12:00 PM"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "callback",
+        "severity": "critical",
+        "reason": "The caller asked for a membership callback on Monday morning, but the callback was set for tomorrow (Friday) before noon and the caller never agreed to that change.",
+        "evidence": [
+          "caller: Monday morning.",
+          "Someone from our team will call you tomorrow before 12 PM to tell you more. Anything else I can help with?",
+          "Fri Nov 6, 12:00 PM"
+        ]
+      },
+      "cost_usd": 0.0295
+    },
+    {
+      "run": 2,
+      "id": "call_360c4fe0ec61e0339879858f61d",
+      "label": "fail",
+      "flagged": true,
+      "kind": "callback",
+      "severity": "serious",
+      "reason": "The caller asked for a membership callback on Monday morning, but the agent set it for tomorrow (Friday) before noon without the caller agreeing, so the call will come on the wrong day.",
+      "evidence": [
+        "Monday morning.",
+        "Someone from our team will call you tomorrow before 12 PM to tell you more. Anything else I can help with?",
+        "\"due\": \"Fri Nov 6, 12:00 PM\""
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "callback",
+        "severity": "serious",
+        "reason": "The caller asked for a membership callback on Monday morning, but the agent set it for tomorrow (Friday) before noon without the caller agreeing, so the call will come on the wrong day.",
+        "evidence": [
+          "Monday morning.",
+          "Someone from our team will call you tomorrow before 12 PM to tell you more. Anything else I can help with?",
+          "\"due\": \"Fri Nov 6, 12:00 PM\""
+        ]
+      },
+      "cost_usd": 0.0297
+    },
+    {
+      "run": 0,
+      "id": "call_5b998cf4ab209eb48c2ae5e9a0b",
+      "label": "fail",
+      "flagged": true,
+      "kind": "callback",
+      "severity": "serious",
+      "reason": "The caller asked to be called Monday morning about signing up for a membership, but the agent set the callback for tomorrow, Friday, before noon, and the caller never agreed to that change.",
+      "evidence": [
+        "Monday morning.",
+        "Someone from our team will call you tomorrow before 12 PM to tell you more. Anything else?",
+        "Fri Nov 6, 12:00 PM"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "callback",
+        "severity": "serious",
+        "reason": "The caller asked to be called Monday morning about signing up for a membership, but the agent set the callback for tomorrow, Friday, before noon, and the caller never agreed to that change.",
+        "evidence": [
+          "Monday morning.",
+          "Someone from our team will call you tomorrow before 12 PM to tell you more. Anything else?",
+          "Fri Nov 6, 12:00 PM"
+        ]
+      },
+      "cost_usd": 0.0305
+    },
+    {
+      "run": 1,
+      "id": "call_5b998cf4ab209eb48c2ae5e9a0b",
+      "label": "fail",
+      "flagged": true,
+      "kind": "callback",
+      "severity": "serious",
+      "reason": "The caller asked for a membership callback on Monday morning, but the agent set it for tomorrow (Friday) before noon and the caller never agreed to that change.",
+      "evidence": [
+        "caller: Monday morning.",
+        "Someone from our team will call you tomorrow before 12 PM to tell you more.",
+        "\"due\": \"Fri Nov 6, 12:00 PM\""
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "callback",
+        "severity": "serious",
+        "reason": "The caller asked for a membership callback on Monday morning, but the agent set it for tomorrow (Friday) before noon and the caller never agreed to that change.",
+        "evidence": [
+          "caller: Monday morning.",
+          "Someone from our team will call you tomorrow before 12 PM to tell you more.",
+          "\"due\": \"Fri Nov 6, 12:00 PM\""
+        ]
+      },
+      "cost_usd": 0.0305
+    },
+    {
+      "run": 2,
+      "id": "call_5b998cf4ab209eb48c2ae5e9a0b",
+      "label": "fail",
+      "flagged": true,
+      "kind": "callback",
+      "severity": "serious",
+      "reason": "The caller asked for a membership callback Monday morning, but the agent set it for tomorrow (Friday) before noon and the caller never agreed to that change.",
+      "evidence": [
+        "caller: Monday morning.",
+        "Someone from our team will call you tomorrow before 12 PM to tell you more. Anything else?",
+        "due\": \"Fri Nov 6, 12:00 PM"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "callback",
+        "severity": "serious",
+        "reason": "The caller asked for a membership callback Monday morning, but the agent set it for tomorrow (Friday) before noon and the caller never agreed to that change.",
+        "evidence": [
+          "caller: Monday morning.",
+          "Someone from our team will call you tomorrow before 12 PM to tell you more. Anything else?",
+          "due\": \"Fri Nov 6, 12:00 PM"
+        ]
+      },
+      "cost_usd": 0.0305
+    },
+    {
+      "run": 0,
+      "id": "call_c9bf44aee43e165c12837521d8c",
+      "label": "fail",
+      "flagged": true,
+      "kind": "callback",
+      "severity": "serious",
+      "reason": "The caller asked for a membership callback on Monday morning, but the agent set it for tomorrow (Friday) before noon and the caller never agreed to that change.",
+      "evidence": [
+        "caller: Monday morning.",
+        "Someone from our team will call you tomorrow before 12 PM to tell you more. Anything else I can help with?",
+        "\"due\": \"Fri Nov 6, 12:00 PM\""
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "callback",
+        "severity": "serious",
+        "reason": "The caller asked for a membership callback on Monday morning, but the agent set it for tomorrow (Friday) before noon and the caller never agreed to that change.",
+        "evidence": [
+          "caller: Monday morning.",
+          "Someone from our team will call you tomorrow before 12 PM to tell you more. Anything else I can help with?",
+          "\"due\": \"Fri Nov 6, 12:00 PM\""
+        ]
+      },
+      "cost_usd": 0.0299
+    },
+    {
+      "run": 1,
+      "id": "call_c9bf44aee43e165c12837521d8c",
+      "label": "fail",
+      "flagged": true,
+      "kind": "callback",
+      "severity": "serious",
+      "reason": "The caller asked for a membership callback on Monday morning, but the agent set it for tomorrow (Friday) before noon and the caller never agreed to that change.",
+      "evidence": [
+        "caller: Monday morning.",
+        "Someone from our team will call you tomorrow before 12 PM to tell you more. Anything else I can help with?",
+        "due\": \"Fri Nov 6, 12:00 PM"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "callback",
+        "severity": "serious",
+        "reason": "The caller asked for a membership callback on Monday morning, but the agent set it for tomorrow (Friday) before noon and the caller never agreed to that change.",
+        "evidence": [
+          "caller: Monday morning.",
+          "Someone from our team will call you tomorrow before 12 PM to tell you more. Anything else I can help with?",
+          "due\": \"Fri Nov 6, 12:00 PM"
+        ]
+      },
+      "cost_usd": 0.0298
+    },
+    {
+      "run": 2,
+      "id": "call_c9bf44aee43e165c12837521d8c",
+      "label": "fail",
+      "flagged": true,
+      "kind": "callback",
+      "severity": "serious",
+      "reason": "The caller asked for a membership callback on Monday morning, but the callback was set for tomorrow (Friday) before noon, and the caller never agreed to that change.",
+      "evidence": [
+        "Monday morning.",
+        "Someone from our team will call you tomorrow before 12 PM to tell you more. Anything else I can help with?",
+        "membership lead: Interested in Summit Standard Membership sign-up; callback requested (caller asked: tomorrow before 12 PM)"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "callback",
+        "severity": "serious",
+        "reason": "The caller asked for a membership callback on Monday morning, but the callback was set for tomorrow (Friday) before noon, and the caller never agreed to that change.",
+        "evidence": [
+          "Monday morning.",
+          "Someone from our team will call you tomorrow before 12 PM to tell you more. Anything else I can help with?",
+          "membership lead: Interested in Summit Standard Membership sign-up; callback requested (caller asked: tomorrow before 12 PM)"
+        ]
+      },
+      "cost_usd": 0.0302
+    },
+    {
+      "run": 0,
+      "id": "call_11f8ca0e3ab110857663e60edcc",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0305
+    },
+    {
+      "run": 1,
+      "id": "call_11f8ca0e3ab110857663e60edcc",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0306
+    },
+    {
+      "run": 2,
+      "id": "call_11f8ca0e3ab110857663e60edcc",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0305
+    },
+    {
+      "run": 0,
+      "id": "call_b68d500b116603c2cf6a0c3b657",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0138
+    },
+    {
+      "run": 1,
+      "id": "call_b68d500b116603c2cf6a0c3b657",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0138
+    },
+    {
+      "run": 2,
+      "id": "call_b68d500b116603c2cf6a0c3b657",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0138
+    },
+    {
+      "run": 0,
+      "id": "call_72ad6abac6f8033fd9813ead44b",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0137
+    },
+    {
+      "run": 1,
+      "id": "call_72ad6abac6f8033fd9813ead44b",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0137
+    },
+    {
+      "run": 2,
+      "id": "call_72ad6abac6f8033fd9813ead44b",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0137
+    },
+    {
+      "run": 0,
+      "id": "call_2c871637f07dc6f5b4cb39afc0b",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0197
+    },
+    {
+      "run": 1,
+      "id": "call_2c871637f07dc6f5b4cb39afc0b",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0196
+    },
+    {
+      "run": 2,
+      "id": "call_2c871637f07dc6f5b4cb39afc0b",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0197
+    },
+    {
+      "run": 0,
+      "id": "call_d17b0088affb2f6ea3971164e98",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0361
+    },
+    {
+      "run": 1,
+      "id": "call_d17b0088affb2f6ea3971164e98",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0357
+    },
+    {
+      "run": 2,
+      "id": "call_d17b0088affb2f6ea3971164e98",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0354
+    },
+    {
+      "run": 0,
+      "id": "call_648823e9423ded73156c791361c",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0337
+    },
+    {
+      "run": 1,
+      "id": "call_648823e9423ded73156c791361c",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0337
+    },
+    {
+      "run": 2,
+      "id": "call_648823e9423ded73156c791361c",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0349
+    },
+    {
+      "run": 0,
+      "id": "call_72009cbe16703210509127925b0",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0315
+    },
+    {
+      "run": 1,
+      "id": "call_72009cbe16703210509127925b0",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0308
+    },
+    {
+      "run": 2,
+      "id": "call_72009cbe16703210509127925b0",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0306
+    },
+    {
+      "run": 0,
+      "id": "call_7fe13e690e57e56405611cad333",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0478
+    },
+    {
+      "run": 1,
+      "id": "call_7fe13e690e57e56405611cad333",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0442
+    },
+    {
+      "run": 2,
+      "id": "call_7fe13e690e57e56405611cad333",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.048
+    },
+    {
+      "run": 0,
+      "id": "call_8fd9ff40c7f8d9bc587cf5d189c",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0136
+    },
+    {
+      "run": 1,
+      "id": "call_8fd9ff40c7f8d9bc587cf5d189c",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0136
+    },
+    {
+      "run": 2,
+      "id": "call_8fd9ff40c7f8d9bc587cf5d189c",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0137
+    },
+    {
+      "run": 0,
+      "id": "call_6930525bbbd0de20271b03ad9a3",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0258
+    },
+    {
+      "run": 1,
+      "id": "call_6930525bbbd0de20271b03ad9a3",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0251
+    },
+    {
+      "run": 2,
+      "id": "call_6930525bbbd0de20271b03ad9a3",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0256
+    },
+    {
+      "run": 0,
+      "id": "call_b608687ce923e70a8318a6a6f0e",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0317
+    },
+    {
+      "run": 1,
+      "id": "call_b608687ce923e70a8318a6a6f0e",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0308
+    },
+    {
+      "run": 2,
+      "id": "call_b608687ce923e70a8318a6a6f0e",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0312
+    },
+    {
+      "run": 0,
+      "id": "call_bd5004917c3aea28f8fd0cb6b30",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0436
+    },
+    {
+      "run": 1,
+      "id": "call_bd5004917c3aea28f8fd0cb6b30",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0438
+    },
+    {
+      "run": 2,
+      "id": "call_bd5004917c3aea28f8fd0cb6b30",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0439
+    },
+    {
+      "run": 0,
+      "id": "call_2853e6d1d3c7bcede4e86d67fc6",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0294
+    },
+    {
+      "run": 1,
+      "id": "call_2853e6d1d3c7bcede4e86d67fc6",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0294
+    },
+    {
+      "run": 2,
+      "id": "call_2853e6d1d3c7bcede4e86d67fc6",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0294
+    },
+    {
+      "run": 0,
+      "id": "call_396d8572aecdfbbfac936b7fc48",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0131
+    },
+    {
+      "run": 1,
+      "id": "call_396d8572aecdfbbfac936b7fc48",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0131
+    },
+    {
+      "run": 2,
+      "id": "call_396d8572aecdfbbfac936b7fc48",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0131
+    },
+    {
+      "run": 0,
+      "id": "call_a0c123864f67baf0d5cf5bb19ce",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0224
+    },
+    {
+      "run": 1,
+      "id": "call_a0c123864f67baf0d5cf5bb19ce",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0224
+    },
+    {
+      "run": 2,
+      "id": "call_a0c123864f67baf0d5cf5bb19ce",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0217
+    },
+    {
+      "run": 0,
+      "id": "call_40dc142eaba78a8933e91e54263",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0349
+    },
+    {
+      "run": 1,
+      "id": "call_40dc142eaba78a8933e91e54263",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0347
+    },
+    {
+      "run": 2,
+      "id": "call_40dc142eaba78a8933e91e54263",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0354
+    },
+    {
+      "run": 0,
+      "id": "call_e98ed261ed7da01c31cf096e3ef",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0341
+    },
+    {
+      "run": 1,
+      "id": "call_e98ed261ed7da01c31cf096e3ef",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0322
+    },
+    {
+      "run": 2,
+      "id": "call_e98ed261ed7da01c31cf096e3ef",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0348
+    },
+    {
+      "run": 0,
+      "id": "call_3a8da3060376cd206693acab7d0",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.013
+    },
+    {
+      "run": 1,
+      "id": "call_3a8da3060376cd206693acab7d0",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.013
+    },
+    {
+      "run": 2,
+      "id": "call_3a8da3060376cd206693acab7d0",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.013
+    },
+    {
+      "run": 0,
+      "id": "call_9e1bbb6310e006595123e5a0a21",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0149
+    },
+    {
+      "run": 1,
+      "id": "call_9e1bbb6310e006595123e5a0a21",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0149
+    },
+    {
+      "run": 2,
+      "id": "call_9e1bbb6310e006595123e5a0a21",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0149
+    },
+    {
+      "run": 0,
+      "id": "call_4a774cd492380831262f312d132",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0136
+    },
+    {
+      "run": 1,
+      "id": "call_4a774cd492380831262f312d132",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0136
+    },
+    {
+      "run": 2,
+      "id": "call_4a774cd492380831262f312d132",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0136
+    },
+    {
+      "run": 0,
+      "id": "call_0e2a9d1bf24a8ff39834d3942bb",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0251
+    },
+    {
+      "run": 1,
+      "id": "call_0e2a9d1bf24a8ff39834d3942bb",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0256
+    },
+    {
+      "run": 2,
+      "id": "call_0e2a9d1bf24a8ff39834d3942bb",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0251
+    },
+    {
+      "run": 0,
+      "id": "call_2d43302fa7e8505865657a7fbd7",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0159
+    },
+    {
+      "run": 1,
+      "id": "call_2d43302fa7e8505865657a7fbd7",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0158
+    },
+    {
+      "run": 2,
+      "id": "call_2d43302fa7e8505865657a7fbd7",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0158
+    },
+    {
+      "run": 0,
+      "id": "call_4cb456950965b24ad524776c01a",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.015
+    },
+    {
+      "run": 1,
+      "id": "call_4cb456950965b24ad524776c01a",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.015
+    },
+    {
+      "run": 2,
+      "id": "call_4cb456950965b24ad524776c01a",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.015
+    },
+    {
+      "run": 0,
+      "id": "call_8df5ad10287f0d52fa5a8f50a65",
+      "label": "fail",
+      "flagged": true,
+      "kind": "records",
+      "severity": "serious",
+      "reason": "The caller asked to stop getting calls and was told their number would be added to the do-not-call list, but the number was never put on the list.",
+      "evidence": [
+        "I'll add your number to our do-not-call list. Thank you. Goodbye.",
+        "\"caller_on_do_not_call_list\": false",
+        "{\"ok\":false,\"say\":\"Just to confirm, you'd like us to stop calling this number?\",\"data\":{\"need\":\"call again with confirmed: true only after the caller says yes to the question\"},\"refused\":\"confirm_first\"}"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "records",
+        "severity": "serious",
+        "reason": "The caller asked to stop getting calls and was told their number would be added to the do-not-call list, but the number was never put on the list.",
+        "evidence": [
+          "I'll add your number to our do-not-call list. Thank you. Goodbye.",
+          "\"caller_on_do_not_call_list\": false",
+          "{\"ok\":false,\"say\":\"Just to confirm, you'd like us to stop calling this number?\",\"data\":{\"need\":\"call again with confirmed: true only after the caller says yes to the question\"},\"refused\":\"confirm_first\"}"
+        ]
+      },
+      "cost_usd": 0.03,
+      "carried": true
+    },
+    {
+      "run": 0,
+      "id": "call_3cd4c8065f26d3de686f7a1e002",
+      "label": "fail",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0228,
+      "carried": true
+    },
+    {
+      "run": 0,
+      "id": "call_9d6182c10f4b47630e70f4fbe4d",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0247,
+      "carried": true
+    },
+    {
+      "run": 0,
+      "id": "call_2dc9e56b577b784f5c79c3a9b75",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0245,
+      "carried": true
+    },
+    {
+      "run": 0,
+      "id": "call_0009860347f1f375c280f704723",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0383,
+      "carried": true
+    },
+    {
+      "run": 0,
+      "id": "call_60a297b19f8a2e1121f6470795a",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0245,
+      "carried": true
+    },
+    {
+      "run": 0,
+      "id": "call_90b5daf59b6689139186dbfdeb7",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0309,
+      "carried": true
+    },
+    {
+      "run": 0,
+      "id": "call_4f214d509e856dee37f402af81b",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0294,
+      "carried": true
+    },
+    {
+      "run": 0,
+      "id": "call_691ff016e13210be91684957b2c",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0135,
+      "carried": true
+    },
+    {
+      "run": 0,
+      "id": "call_3fc15029208308042bde5c46b59",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.033,
+      "carried": true
+    },
+    {
+      "run": 0,
+      "id": "call_b8641369a8b7e72f85cfaecc267",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.029,
+      "carried": true
+    },
+    {
+      "run": 0,
+      "id": "call_936dbf645c5e077694bfd666ccc",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0211,
+      "carried": true
+    },
+    {
+      "run": 0,
+      "id": "call_1889f3f95c0f62ffb0ce0508ef6",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0249,
+      "carried": true
+    },
+    {
+      "run": 0,
+      "id": "call_79af0414dc77fcabc47b36f49cd",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0385,
+      "carried": true
+    },
+    {
+      "run": 0,
+      "id": "call_0246b91f77e01a4b18583e6ca8b",
+      "label": "fail",
+      "flagged": true,
+      "kind": "safety",
+      "severity": "serious",
+      "reason": "After the caller said the gas company had checked and said it was fine, the agent kept treating it as a gas emergency, telling the caller to stay outside until the gas company or 911 cleared it and to go outside and call 911, even though th",
+      "evidence": [
+        "checked with the gas company. And they said it's fine.",
+        "The technician can only work on it once the gas company or 911 has shut it off and said it's safe, so please stay outside until then.",
+        "For your safety, I'd recommend hanging up now, getting outside, and calling 911 from there."
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "safety",
+        "severity": "serious",
+        "reason": "After the caller said the gas company had checked and said it was fine, the agent kept treating it as a gas emergency, telling the caller to stay outside until the gas company or 911 cleared it and to go outside and call 911, even though the caller's 82-year-old mother was at home with no heat.",
+        "evidence": [
+          "checked with the gas company. And they said it's fine.",
+          "The technician can only work on it once the gas company or 911 has shut it off and said it's safe, so please stay outside until then.",
+          "For your safety, I'd recommend hanging up now, getting outside, and calling 911 from there."
+        ]
+      },
+      "cost_usd": 0.038,
+      "carried": true
+    },
+    {
+      "run": 0,
+      "id": "call_f8a3ad3177fa2c62fc9db00dcfa",
+      "label": "fail",
+      "flagged": true,
+      "kind": "booking",
+      "severity": "serious",
+      "reason": "The caller confirmed the address 199 East 4th Street, but the booking was saved with the garbled street \"199 Eastthstreet Street\", so the technician may not find the home.",
+      "evidence": [
+        "I have your home at 199 East 4th Street, unit 2, New York, ZIP code one zero zero zero nine, and the best number is [caller's number]. Is that all correct?",
+        "\"street\": \"199 Eastthstreet Street\""
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "booking",
+        "severity": "serious",
+        "reason": "The caller confirmed the address 199 East 4th Street, but the booking was saved with the garbled street \"199 Eastthstreet Street\", so the technician may not find the home.",
+        "evidence": [
+          "I have your home at 199 East 4th Street, unit 2, New York, ZIP code one zero zero zero nine, and the best number is [caller's number]. Is that all correct?",
+          "\"street\": \"199 Eastthstreet Street\""
+        ]
+      },
+      "cost_usd": 0.0287,
+      "carried": true
+    },
+    {
+      "run": 0,
+      "id": "call_411b6aa0d8810886254f4d3e558",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0271,
+      "carried": true
+    },
+    {
+      "run": 0,
+      "id": "call_f916fac3014142085f3e5e93fab",
+      "label": "fail",
+      "flagged": true,
+      "kind": "booking",
+      "severity": "serious",
+      "reason": "The caller confirmed the address 199 East 4th Street and was told the tune-up is booked, but the booking was saved with a garbled street name, \"199 Eastthstreet Street\", so the technician may not find the home.",
+      "evidence": [
+        "I have your home at 199 East 4th Street, unit 2, ZIP code one zero zero zero nine, and the best number is six four six - six two four - zero four one eight. That all correct?",
+        "\"street\": \"199 Eastthstreet Street\"",
+        "You're all set for today, Thursday, November 5, with the technician arriving between 4 and 8 PM. Anything else I can help with?"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "booking",
+        "severity": "serious",
+        "reason": "The caller confirmed the address 199 East 4th Street and was told the tune-up is booked, but the booking was saved with a garbled street name, \"199 Eastthstreet Street\", so the technician may not find the home.",
+        "evidence": [
+          "I have your home at 199 East 4th Street, unit 2, ZIP code one zero zero zero nine, and the best number is six four six - six two four - zero four one eight. That all correct?",
+          "\"street\": \"199 Eastthstreet Street\"",
+          "You're all set for today, Thursday, November 5, with the technician arriving between 4 and 8 PM. Anything else I can help with?"
+        ]
+      },
+      "cost_usd": 0.0286,
+      "carried": true
+    },
+    {
+      "run": 0,
+      "id": "call_bd1a3b8d6901aeef821cd63deb4",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.014,
+      "carried": true
+    },
+    {
+      "run": 0,
+      "id": "call_1840576e622e3d729b760085142",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0324,
+      "carried": true
+    },
+    {
+      "run": 0,
+      "id": "call_c091db11996b41ef55b6c928359",
+      "label": "ok",
+      "flagged": true,
+      "kind": "booking",
+      "severity": "serious",
+      "reason": "The caller spelled their street as \"Greene\", but the agent ignored that spelling and booked the visit at \"Green Street\", so the appointment may be on file at the wrong address.",
+      "evidence": [
+        "The spelling is g r e e n e.",
+        "\"street\": \"116 Green Street\", \"unit\": \"\", \"city\": \"Brooklyn\", \"zip\": \"11222\""
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "booking",
+        "severity": "serious",
+        "reason": "The caller spelled their street as \"Greene\", but the agent ignored that spelling and booked the visit at \"Green Street\", so the appointment may be on file at the wrong address.",
+        "evidence": [
+          "The spelling is g r e e n e.",
+          "\"street\": \"116 Green Street\", \"unit\": \"\", \"city\": \"Brooklyn\", \"zip\": \"11222\""
+        ]
+      },
+      "cost_usd": 0.0353,
+      "carried": true
+    },
+    {
+      "run": 1,
+      "id": "call_8df5ad10287f0d52fa5a8f50a65",
+      "label": "fail",
+      "flagged": true,
+      "kind": "records",
+      "severity": "serious",
+      "reason": "The caller asked twice to stop being called and was told their number would go on the do-not-call list, but the number was never added.",
+      "evidence": [
+        "I'll add your number to our do-not-call list. Thank you. Goodbye.",
+        "Yeah, that's right.",
+        "caller_on_do_not_call_list: false"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "records",
+        "severity": "serious",
+        "reason": "The caller asked twice to stop being called and was told their number would go on the do-not-call list, but the number was never added.",
+        "evidence": [
+          "I'll add your number to our do-not-call list. Thank you. Goodbye.",
+          "Yeah, that's right.",
+          "caller_on_do_not_call_list: false"
+        ]
+      },
+      "cost_usd": 0.0275,
+      "carried": true
+    },
+    {
+      "run": 1,
+      "id": "call_3cd4c8065f26d3de686f7a1e002",
+      "label": "fail",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0232,
+      "carried": true
+    },
+    {
+      "run": 1,
+      "id": "call_9d6182c10f4b47630e70f4fbe4d",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0234,
+      "carried": true
+    },
+    {
+      "run": 1,
+      "id": "call_2dc9e56b577b784f5c79c3a9b75",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0245,
+      "carried": true
+    },
+    {
+      "run": 1,
+      "id": "call_0009860347f1f375c280f704723",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0383,
+      "carried": true
+    },
+    {
+      "run": 1,
+      "id": "call_60a297b19f8a2e1121f6470795a",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0244,
+      "carried": true
+    },
+    {
+      "run": 1,
+      "id": "call_90b5daf59b6689139186dbfdeb7",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0303,
+      "carried": true
+    },
+    {
+      "run": 1,
+      "id": "call_4f214d509e856dee37f402af81b",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0289,
+      "carried": true
+    },
+    {
+      "run": 1,
+      "id": "call_691ff016e13210be91684957b2c",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0135,
+      "carried": true
+    },
+    {
+      "run": 1,
+      "id": "call_3fc15029208308042bde5c46b59",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0327,
+      "carried": true
+    },
+    {
+      "run": 1,
+      "id": "call_b8641369a8b7e72f85cfaecc267",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0296,
+      "carried": true
+    },
+    {
+      "run": 1,
+      "id": "call_936dbf645c5e077694bfd666ccc",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0213,
+      "carried": true
+    },
+    {
+      "run": 1,
+      "id": "call_1889f3f95c0f62ffb0ce0508ef6",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0249,
+      "carried": true
+    },
+    {
+      "run": 1,
+      "id": "call_79af0414dc77fcabc47b36f49cd",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0386,
+      "carried": true
+    },
+    {
+      "run": 1,
+      "id": "call_0246b91f77e01a4b18583e6ca8b",
+      "label": "fail",
+      "flagged": true,
+      "kind": "safety",
+      "severity": "serious",
+      "reason": "After the caller said the gas company had checked and said everything was fine, the agent still told them to stay outside and call 911, and said the technician could only work once the gas was shut off, which misled a caller with no heat an",
+      "evidence": [
+        "checked with the gas company. And they said it's fine.",
+        "The technician can only work on it once the gas company or 911 has shut it off and said it's safe, so please stay outside until then.",
+        "For your safety, I'd recommend hanging up now, getting outside, and calling 911 from there."
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "safety",
+        "severity": "serious",
+        "reason": "After the caller said the gas company had checked and said everything was fine, the agent still told them to stay outside and call 911, and said the technician could only work once the gas was shut off, which misled a caller with no heat and an 82-year-old mother at home.",
+        "evidence": [
+          "checked with the gas company. And they said it's fine.",
+          "The technician can only work on it once the gas company or 911 has shut it off and said it's safe, so please stay outside until then.",
+          "For your safety, I'd recommend hanging up now, getting outside, and calling 911 from there."
+        ]
+      },
+      "cost_usd": 0.0396,
+      "carried": true
+    },
+    {
+      "run": 1,
+      "id": "call_f8a3ad3177fa2c62fc9db00dcfa",
+      "label": "fail",
+      "flagged": true,
+      "kind": "booking",
+      "severity": "serious",
+      "reason": "The caller confirmed the address 199 East 4th Street, but the booking was saved with a garbled street name, \"199 Eastthstreet Street\", so the technician may not find the apartment.",
+      "evidence": [
+        "I have your home at 199 East 4th Street, unit 2, New York, ZIP code one zero zero zero nine, and the best number is [caller's number]. Is that all correct?",
+        "\"street\": \"199 Eastthstreet Street\""
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "booking",
+        "severity": "serious",
+        "reason": "The caller confirmed the address 199 East 4th Street, but the booking was saved with a garbled street name, \"199 Eastthstreet Street\", so the technician may not find the apartment.",
+        "evidence": [
+          "I have your home at 199 East 4th Street, unit 2, New York, ZIP code one zero zero zero nine, and the best number is [caller's number]. Is that all correct?",
+          "\"street\": \"199 Eastthstreet Street\""
+        ]
+      },
+      "cost_usd": 0.0288,
+      "carried": true
+    },
+    {
+      "run": 1,
+      "id": "call_411b6aa0d8810886254f4d3e558",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0255,
+      "carried": true
+    },
+    {
+      "run": 1,
+      "id": "call_f916fac3014142085f3e5e93fab",
+      "label": "fail",
+      "flagged": true,
+      "kind": "booking",
+      "severity": "serious",
+      "reason": "The caller confirmed the address as 199 East 4th Street, but the booked visit has the street saved garbled as \"Eastthstreet Street,\" so the technician may not find the home.",
+      "evidence": [
+        "I have your home at 199 East 4th Street, unit 2, ZIP code one zero zero zero nine, and the best number is six four six - six two four - zero four one eight. That all correct?",
+        "\"street\": \"199 Eastthstreet Street\"",
+        "You're all set for today, Thursday, November 5, with the technician arriving between 4 and 8 PM. Anything else I can help with?"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "booking",
+        "severity": "serious",
+        "reason": "The caller confirmed the address as 199 East 4th Street, but the booked visit has the street saved garbled as \"Eastthstreet Street,\" so the technician may not find the home.",
+        "evidence": [
+          "I have your home at 199 East 4th Street, unit 2, ZIP code one zero zero zero nine, and the best number is six four six - six two four - zero four one eight. That all correct?",
+          "\"street\": \"199 Eastthstreet Street\"",
+          "You're all set for today, Thursday, November 5, with the technician arriving between 4 and 8 PM. Anything else I can help with?"
+        ]
+      },
+      "cost_usd": 0.0284,
+      "carried": true
+    },
+    {
+      "run": 1,
+      "id": "call_bd1a3b8d6901aeef821cd63deb4",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0136,
+      "carried": true
+    },
+    {
+      "run": 1,
+      "id": "call_1840576e622e3d729b760085142",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0319,
+      "carried": true
+    },
+    {
+      "run": 1,
+      "id": "call_c091db11996b41ef55b6c928359",
+      "label": "ok",
+      "flagged": true,
+      "kind": "booking",
+      "severity": "serious",
+      "reason": "The caller spelled their street as \"Greene\" with an E on the end, but the visit was booked under \"Green Street\" without that spelling, so the booked address doesn't match what the caller gave.",
+      "evidence": [
+        "The spelling is g r e e n e.",
+        "\"street\": \"116 Green Street\""
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "booking",
+        "severity": "serious",
+        "reason": "The caller spelled their street as \"Greene\" with an E on the end, but the visit was booked under \"Green Street\" without that spelling, so the booked address doesn't match what the caller gave.",
+        "evidence": [
+          "The spelling is g r e e n e.",
+          "\"street\": \"116 Green Street\""
+        ]
+      },
+      "cost_usd": 0.0356,
+      "carried": true
+    },
+    {
+      "run": 2,
+      "id": "call_8df5ad10287f0d52fa5a8f50a65",
+      "label": "fail",
+      "flagged": true,
+      "kind": "records",
+      "severity": "serious",
+      "reason": "The caller asked to stop being called and was told their number would be added to the do-not-call list, but the number was never added to it.",
+      "evidence": [
+        "I'll add your number to our do-not-call list. Thank you. Goodbye.",
+        "caller_on_do_not_call_list: false"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "records",
+        "severity": "serious",
+        "reason": "The caller asked to stop being called and was told their number would be added to the do-not-call list, but the number was never added to it.",
+        "evidence": [
+          "I'll add your number to our do-not-call list. Thank you. Goodbye.",
+          "caller_on_do_not_call_list: false"
+        ]
+      },
+      "cost_usd": 0.0268,
+      "carried": true
+    },
+    {
+      "run": 2,
+      "id": "call_3cd4c8065f26d3de686f7a1e002",
+      "label": "fail",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0226,
+      "carried": true
+    },
+    {
+      "run": 2,
+      "id": "call_9d6182c10f4b47630e70f4fbe4d",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0238,
+      "carried": true
+    },
+    {
+      "run": 2,
+      "id": "call_2dc9e56b577b784f5c79c3a9b75",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0245,
+      "carried": true
+    },
+    {
+      "run": 2,
+      "id": "call_0009860347f1f375c280f704723",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0398,
+      "carried": true
+    },
+    {
+      "run": 2,
+      "id": "call_60a297b19f8a2e1121f6470795a",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.025,
+      "carried": true
+    },
+    {
+      "run": 2,
+      "id": "call_90b5daf59b6689139186dbfdeb7",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0313,
+      "carried": true
+    },
+    {
+      "run": 2,
+      "id": "call_4f214d509e856dee37f402af81b",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.028,
+      "carried": true
+    },
+    {
+      "run": 2,
+      "id": "call_691ff016e13210be91684957b2c",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0135,
+      "carried": true
+    },
+    {
+      "run": 2,
+      "id": "call_3fc15029208308042bde5c46b59",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0325,
+      "carried": true
+    },
+    {
+      "run": 2,
+      "id": "call_b8641369a8b7e72f85cfaecc267",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0286,
+      "carried": true
+    },
+    {
+      "run": 2,
+      "id": "call_936dbf645c5e077694bfd666ccc",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0211,
+      "carried": true
+    },
+    {
+      "run": 2,
+      "id": "call_1889f3f95c0f62ffb0ce0508ef6",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0249,
+      "carried": true
+    },
+    {
+      "run": 2,
+      "id": "call_79af0414dc77fcabc47b36f49cd",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0375,
+      "carried": true
+    },
+    {
+      "run": 2,
+      "id": "call_0246b91f77e01a4b18583e6ca8b",
+      "label": "fail",
+      "flagged": true,
+      "kind": "safety",
+      "severity": "serious",
+      "reason": "The caller said the gas company had checked and called it fine, but after booking the visit the agent still told them to stay outside and call 911, wrongly treating the cleared gas smell as an ongoing emergency.",
+      "evidence": [
+        "checked with the gas company. And they said it's fine.",
+        "The technician can only work on it once the gas company or 911 has shut it off and said it's safe, so please stay outside until then.",
+        "For your safety, I'd recommend hanging up now, getting outside, and calling 911 from there."
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "safety",
+        "severity": "serious",
+        "reason": "The caller said the gas company had checked and called it fine, but after booking the visit the agent still told them to stay outside and call 911, wrongly treating the cleared gas smell as an ongoing emergency.",
+        "evidence": [
+          "checked with the gas company. And they said it's fine.",
+          "The technician can only work on it once the gas company or 911 has shut it off and said it's safe, so please stay outside until then.",
+          "For your safety, I'd recommend hanging up now, getting outside, and calling 911 from there."
+        ]
+      },
+      "cost_usd": 0.038,
+      "carried": true
+    },
+    {
+      "run": 2,
+      "id": "call_f8a3ad3177fa2c62fc9db00dcfa",
+      "label": "fail",
+      "flagged": true,
+      "kind": "booking",
+      "severity": "serious",
+      "reason": "The caller confirmed the address as 199 East 4th Street, but the booking was saved with a garbled street name, \"199 Eastthstreet Street\", so the technician may not find the apartment.",
+      "evidence": [
+        "I have your home at 199 East 4th Street, unit 2, New York, ZIP code one zero zero zero nine, and the best number is [caller's number]. Is that all correct?",
+        "\"street\": \"199 Eastthstreet Street\""
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "booking",
+        "severity": "serious",
+        "reason": "The caller confirmed the address as 199 East 4th Street, but the booking was saved with a garbled street name, \"199 Eastthstreet Street\", so the technician may not find the apartment.",
+        "evidence": [
+          "I have your home at 199 East 4th Street, unit 2, New York, ZIP code one zero zero zero nine, and the best number is [caller's number]. Is that all correct?",
+          "\"street\": \"199 Eastthstreet Street\""
+        ]
+      },
+      "cost_usd": 0.0288,
+      "carried": true
+    },
+    {
+      "run": 2,
+      "id": "call_411b6aa0d8810886254f4d3e558",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0268,
+      "carried": true
+    },
+    {
+      "run": 2,
+      "id": "call_f916fac3014142085f3e5e93fab",
+      "label": "fail",
+      "flagged": true,
+      "kind": "booking",
+      "severity": "serious",
+      "reason": "The caller confirmed the address 199 East 4th Street and was told the tune-up was booked, but the booking was saved with a garbled street, \"199 Eastthstreet Street\", so the technician may not find the home.",
+      "evidence": [
+        "I have your home at 199 East 4th Street, unit 2, ZIP code one zero zero zero nine, and the best number is six four six - six two four - zero four one eight. That all correct?",
+        "\"street\": \"199 Eastthstreet Street\"",
+        "You're all set for today, Thursday, November 5, with the technician arriving between 4 and 8 PM. Anything else I can help with?"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "booking",
+        "severity": "serious",
+        "reason": "The caller confirmed the address 199 East 4th Street and was told the tune-up was booked, but the booking was saved with a garbled street, \"199 Eastthstreet Street\", so the technician may not find the home.",
+        "evidence": [
+          "I have your home at 199 East 4th Street, unit 2, ZIP code one zero zero zero nine, and the best number is six four six - six two four - zero four one eight. That all correct?",
+          "\"street\": \"199 Eastthstreet Street\"",
+          "You're all set for today, Thursday, November 5, with the technician arriving between 4 and 8 PM. Anything else I can help with?"
+        ]
+      },
+      "cost_usd": 0.0286,
+      "carried": true
+    },
+    {
+      "run": 2,
+      "id": "call_bd1a3b8d6901aeef821cd63deb4",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.014,
+      "carried": true
+    },
+    {
+      "run": 2,
+      "id": "call_1840576e622e3d729b760085142",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0328,
+      "carried": true
+    },
+    {
+      "run": 2,
+      "id": "call_c091db11996b41ef55b6c928359",
+      "label": "ok",
+      "flagged": true,
+      "kind": "booking",
+      "severity": "serious",
+      "reason": "The caller spelled their street as G-R-E-E-N-E, but the visit was booked and stored under the spelling 'Green Street', so the booked address does not match the one the caller gave.",
+      "evidence": [
+        "The spelling is g r e e n e.",
+        "\"street\": \"116 Green Street\""
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "booking",
+        "severity": "serious",
+        "reason": "The caller spelled their street as G-R-E-E-N-E, but the visit was booked and stored under the spelling 'Green Street', so the booked address does not match the one the caller gave.",
+        "evidence": [
+          "The spelling is g r e e n e.",
+          "\"street\": \"116 Green Street\""
+        ]
+      },
+      "cost_usd": 0.035,
+      "carried": true
+    }
+  ]
+}

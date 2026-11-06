@@ -46,10 +46,25 @@ REJECTED = re.compile(
 )
 
 
+# A code for getting in, which is never a unit or an address: "The buzzer is 2B" answered the
+# access question after the read-back confirmed "unit one F", and forced a second read-back (eval
+# world, Retell call call_7f892564bd0df180ca6eb994b4a).
+ACCESS_CODE = re.compile(
+    r"\b(?:buzzer|intercom|gate code|door code|access code|code|lockbox|lock box|key box)\b"
+    r"(?:\s+(?:is|number|code|its|it's|for|at|the|on|of|to|press|ring|use))*\s*:?\s*[\w-]+",
+    re.IGNORECASE,
+)
+
+
+def without_access_codes(text: str) -> str:
+    return ACCESS_CODE.sub(" ", text or "")
+
+
 def change(text: str, readback: dict) -> str | None:
     """The read-back field this caller line gives a different value for (unit, house number,
-    street, ZIP or phone), or None. A value the caller rejects ("not 142") doesn't count."""
-    text = REJECTED.sub(" ", text or "")
+    street, ZIP or phone), or None. A value the caller rejects ("not 142") doesn't count, nor
+    does a buzzer or gate code."""
+    text = REJECTED.sub(" ", without_access_codes(text))
     # "Yes, 2A and 5C" to a read-back of 5C names the unit read back: no change.
     units = _units_said(text)
     if units and unit_key(readback.get("unit", "")) not in units:
@@ -75,8 +90,9 @@ def change(text: str, readback: dict) -> str | None:
 
 
 def units_said(text: str) -> list[str]:
-    """The units a line names, as unit keys, in order and without repeats: "2A and 5C"."""
-    return list(dict.fromkeys(_units_said(text)))
+    """The units a line names, as unit keys, in order and without repeats: "2A and 5C". A buzzer or
+    gate code isn't one."""
+    return list(dict.fromkeys(_units_said(without_access_codes(text))))
 
 
 def _units_said(text: str) -> list[str]:

@@ -214,7 +214,7 @@ def test_one_place_fills_the_zip_and_the_read_back_confirms_it(located):
     assert found["data"]["in_area"] is True
     asked = located.tool("read_back", call, address=_address("248 Duffield Street"), phone="caller_id")
     assert asked["ok"]
-    assert "one one two zero one" in asked["say"]
+    assert asked["data"]["sentence"].startswith("So that's two forty-eight Duffield Street, and ")
 
 
 def test_the_lookup_zip_passes_the_zip_gate_but_a_guess_does_not(located):
@@ -258,7 +258,9 @@ def test_the_same_street_in_two_boroughs_asks_which(located):
     assert found["ok"] and found["data"]["zip"] == "11201"
 
 
-def test_no_match_asks_to_spell_then_for_the_zip(located):
+def test_no_match_asks_to_spell_then_for_the_borough(located):
+    """Booking-first: with no borough said, the borough is asked before any ZIP (the visit is then
+    booked unverified)."""
     call = located.start(UNKNOWN)["data"]["call_id"]
     located.turn(call, "It's 52 Dufield Street.")
     first = located.tool("find_address", call, street="52 Dufield St")
@@ -266,16 +268,20 @@ def test_no_match_asks_to_spell_then_for_the_zip(located):
     assert "spell" in first["say"]
     second = located.tool("find_address", call, street="52 Dufield St")
     assert second["refused"] == "address_not_found"
-    assert second["say"] == "What's the ZIP code there?"
+    assert second["say"] == "And which borough is that in?"
 
 
-def test_an_outage_asks_for_the_zip(tmp_path, clock, mock):
+def test_an_outage_asks_for_the_borough_then_books_unverified(tmp_path, clock, mock):
     agent = Agent(make_server(tmp_path, clock, mock[0], geocoder=lookup([("down", down)])), clock)
     call = agent.start(UNKNOWN)["data"]["call_id"]
     agent.turn(call, "248 Duffield Street.")
     result = agent.tool("find_address", call, street="248 Duffield St")
     assert result["refused"] == "address_lookup_down"
-    assert result["say"] == "What's the ZIP code there?"
+    assert result["say"] == "And which borough is that in?"
+    agent.say(call, result["say"])
+    agent.turn(call, "Brooklyn.")
+    again = agent.tool("find_address", call, street="248 Duffield St", borough="Brooklyn")
+    assert again["ok"] and again["data"]["verified"] is False and again["data"]["zip"] == "11201"
 
 
 def test_the_tenant_config_turns_the_lookup_on():
@@ -314,7 +320,7 @@ def test_a_mismatched_zip_is_read_against_the_lookup_and_not_booked(located):
     checked = located.tool("check_service_area", call, zip="11205")
     assert checked["refused"] == "zip_mismatch"
     assert checked["say"] == (
-        "I have 248 Duffield Street in Downtown Brooklyn as one one two zero one, not one one two "
+        "I have two forty-eight Duffield Street in Downtown Brooklyn as one one two zero one, not one one two "
         "zero five. Which one is right?"
     )
     asked = located.tool("read_back", call, address=_address(zip_code="11205"), phone="caller_id")
@@ -364,13 +370,13 @@ def test_a_lookup_that_comes_back_late_still_stops_the_booking(tmp_path, clock, 
 
 def test_a_zip_on_the_callers_record_wins_over_the_lookup(tmp_path, clock, mock, scenarios):
     maria = scenarios["repeatCallerOpenJob"]
-    # The seed's address is made up: the real 620 Bedford Ave is in 11249, not 11235.
-    bedford = Place("620", "BEDFORD AVENUE", "11249", "Brooklyn", "Williamsburg")
+    # A lookup that disagrees with the ZIP on the caller's record (the seed's is 11249).
+    bedford = Place("620", "BEDFORD AVENUE", "11211", "Brooklyn", "Williamsburg")
     geo = lookup([("book", Book({("620", "bedford ave"): [bedford]}))])
     agent = Agent(make_server(tmp_path, clock, mock[0], geocoder=geo), clock)
     call = agent.start(maria["phone"])["data"]["call_id"]
-    agent.turn(call, "It's 620 Bedford Ave, 11235.")
-    assert agent.tool("check_service_area", call, zip="11235")["ok"]
+    agent.turn(call, "It's 620 Bedford Ave, 11249.")
+    assert agent.tool("check_service_area", call, zip="11249")["ok"]
 
 
 def test_without_a_lookup_the_callers_zip_stands(agent):
@@ -616,6 +622,62 @@ def test_a_direction_and_an_ordinal_said_any_way_still_match(located, answers, s
     assert result["refused"] != "address_not_heard", result
 
 
+@pytest.mark.parametrize("lines", [
+    ["$199.", "East 4th Street, Unit 2."],
+    ["$199 East 4th Street, unit 2."],
+    ["It's #199 East 4th Street."],
+])
+def test_a_house_number_written_as_money_or_split_from_its_street_still_counts(
+    located, answers, lines
+):
+    """Retell's speech-to-text wrote the spoken "199" as "$199." and put the street in the next
+    line (calls call_926427e1d1f2a80cb78dc6a4e04 and call_b1fa369abb81ba74c1486c1fd67): refused
+    address_not_heard."""
+    answers.book[("199", geocode.street_match_key("East 4 Street"))] = [EAST_4TH]
+    call = located.start(UNKNOWN)["data"]["call_id"]
+    located.say(call, "What's the street address, including any apartment or unit number?")
+    for line in lines:
+        located.turn(call, line)
+    result = located.tool("find_address", call, street="199 East 4th Street")
+    assert result["ok"], result
+
+
+def test_partial_lines_the_voice_layer_logs_dont_break_the_number_and_the_street(located, answers):
+    """Retell call call_feed25cb0e5df1017695f9dc210 logged "One", "$199.", then "East", "East 4th,
+    apartment 2.", and the model passed "199 East 4th Street, apartment 2": refused."""
+    answers.book[("199", geocode.street_match_key("East 4 Street"))] = [EAST_4TH]
+    call = located.start(UNKNOWN)["data"]["call_id"]
+    located.say(call, "What's the street address for the visit?")
+    located.turn(call, "One")
+    located.turn(call, "$199.")
+    located.say(call, "Got it, and what street is that on?")
+    located.turn(call, "East")
+    located.turn(call, "East 4th, apartment 2.")
+    result = located.tool("find_address", call, street="199 East 4th Street, apartment 2")
+    assert result["ok"], result
+
+
+def test_a_thousands_comma_is_one_house_number(located, answers):
+    broadway = Place("1500", "BROADWAY", "10036", "Manhattan", "Midtown")
+    answers.book[("1500", geocode.street_match_key("Broadway"))] = [broadway]
+    call = located.start(UNKNOWN)["data"]["call_id"]
+    located.turn(call, "It's 1,500 Broadway.")
+    assert located.tool("find_address", call, street="1500 Broadway")["refused"] != (
+        "address_not_heard"
+    )
+
+
+def test_a_number_on_its_own_line_and_a_street_much_later_is_not_an_address(located, answers):
+    answers.book[("199", geocode.street_match_key("East 4 Street"))] = [EAST_4TH]
+    call = located.start(UNKNOWN)["data"]["call_id"]
+    located.turn(call, "$199.")
+    located.turn(call, "That's what the last guy charged me, can you believe it?")
+    located.turn(call, "Anyway I'm on East 4th Street.")
+    assert located.tool("find_address", call, street="199 East 4th Street")["refused"] == (
+        "address_not_heard"
+    )
+
+
 FOURTH_AVE = Place("50", "4 AVENUE", "11217", "Brooklyn", "Park Slope")
 SECOND_AVE = Place("20", "2 AVENUE", "10003", "Manhattan", "East Village")
 FIRST_PL = Place("10", "1 PLACE", "11231", "Brooklyn", "Carroll Gardens")
@@ -640,3 +702,156 @@ def test_a_round_house_number_before_an_ordinal_street_still_matches(
     call = located.start(UNKNOWN)["data"]["call_id"]
     located.turn(call, said)
     assert located.tool("find_address", call, street=street)["refused"] != "address_not_heard"
+
+
+@pytest.mark.parametrize("source, in_area", [("geosearch", True), ("census", False)])
+def test_any_zip_the_citys_directory_returns_is_in_the_area(tmp_path, clock, mock, source, in_area):
+    """Retell eval suite round 1: 620 Bedford Ave came back out of area, because GeoSearch gives
+    11249, a USPS ZIP no census ZIP area (MODZCTA) has. Any ZIP the city's own directory finds is
+    a city ZIP; one only the Census fallback found is not taken on trust. 11249 is listed now too,
+    so a made-up ZIP stands in for the next one."""
+    bedford = Place("620", "BEDFORD AVENUE", "11299", "Brooklyn", "Williamsburg")
+
+    def answer(house, street):
+        return [bedford]
+
+    agent = Agent(make_server(tmp_path, clock, mock[0], geocoder=lookup([(source, answer)])), clock)
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "It's 620 Bedford Avenue in Brooklyn.")
+    found = agent.tool("find_address", call, street="620 Bedford Ave", borough="Brooklyn")
+    assert found["ok"] is in_area, found
+    if in_area:
+        assert found["data"]["zip"] == "11299" and found["data"]["area"] == "Brooklyn"
+        assert agent.tool("check_service_area", call, zip="11299")["ok"]
+
+
+def test_11249_is_in_the_area():
+    config = yaml.safe_load((TENANT_DIR / "config.yaml").read_text())
+    assert "11249" in {z for zone in config["zones"] for z in zone["zips"]}
+
+
+EAST_4TH_LOT = Place("199", "EAST 4 STREET", "10009", "Manhattan", "East Village", "1004000058")
+
+
+@pytest.fixture
+def building(tmp_path, clock, mock, answers):
+    """An agent whose lookup also knows a building's homes: nine at 199 East 4th Street."""
+    answers.book[("199", geocode.street_match_key("East 4 Street"))] = [EAST_4TH_LOT]
+    geocoder = geocode.Geocoder([("book", answers)], AREA.boroughs,
+                                units=lambda bbl: {"1004000058": 9}.get(bbl))
+    return Agent(make_server(tmp_path, clock, mock[0], geocoder=geocoder), clock)
+
+
+def test_a_building_of_several_homes_needs_a_unit_and_read_back_asks_once(building):
+    """Jackson's call call_2fb4e053ba8b76b57c348845990: 199 East 4th Street came back with no
+    unit needed, and the read-back went ahead without one."""
+    call = building.start(UNKNOWN)["data"]["call_id"]
+    building.turn(call, "It's 199 East 4th Street.")
+    found = building.tool("find_address", call, street="199 East 4th Street")
+    assert found["ok"] and found["data"]["needs_unit"] is True
+    address = {"street": "199 East 4th Street", "unit": "", "city": "New York", "zip": "10009"}
+    asked = building.tool("read_back", call, address=address, phone="caller_id")
+    assert asked["refused"] == "unit_needed"
+    assert asked["say"] == "And what's the apartment or unit number there?"
+    building.say(call, asked["say"])
+    building.turn(call, "Apartment 2.")
+    with_unit = building.tool("read_back", call, address={**address, "unit": "2"},
+                              phone="caller_id")
+    assert with_unit["ok"] and "unit two" in with_unit["say"]
+
+
+def test_a_caller_who_says_there_is_no_unit_isnt_asked_again(building):
+    call = building.start(UNKNOWN)["data"]["call_id"]
+    building.turn(call, "It's 199 East 4th Street.")
+    building.tool("find_address", call, street="199 East 4th Street")
+    address = {"street": "199 East 4th Street", "unit": "", "city": "New York", "zip": "10009"}
+    asked = building.tool("read_back", call, address=address, phone="caller_id")
+    building.say(call, asked["say"])
+    building.turn(call, "There isn't one, it's the whole building.")
+    again = building.tool("read_back", call, address=address, phone="caller_id")
+    assert again["ok"], again
+
+
+def test_a_house_needs_no_unit(located, answers):
+    call = located.start(UNKNOWN)["data"]["call_id"]
+    located.turn(call, "It's 248 Duffield St.")
+    found = located.tool("find_address", call, street="248 Duffield St")
+    assert found["ok"] and found["data"]["needs_unit"] is False
+
+
+def test_the_units_come_from_the_lot_in_the_city_directory():
+    features = [{"properties": {"housenumber": "199", "street": "EAST 4 STREET",
+                                "postalcode": "10009", "borough": "Manhattan",
+                                "addendum": {"pad": {"bbl": "1004000058"}}}}]
+    assert geocode.geosearch_places(features)[0].bbl == "1004000058"
+
+
+def test_an_address_the_city_doesnt_have_books_unverified_with_a_flag(located, answers):
+    """Socket-arm call call_1bcb4106a02dff87609d8e7fd8b: the street wasn't found, the caller
+    didn't know the ZIP, and the call ended in a callback. Jackson wants the visit booked."""
+    from toolkit import first_open
+
+    call = located.start(UNKNOWN)["data"]["call_id"]
+    located.turn(call, "It's 410 Highland Boulevard in Staten Island.")
+    first = located.tool("find_address", call, street="410 Highland Boulevard",
+                         borough="Staten Island")
+    assert first["refused"] == "address_not_found"
+    located.say(call, first["say"])
+    located.turn(call, "H, I, G, H, L, A, N, D. I don't know the ZIP, sorry.")
+    second = located.tool("find_address", call, street="410 Highland Boulevard",
+                          borough="Staten Island", spelled="H, I, G, H, L, A, N, D")
+    assert second["ok"], second
+    assert second["data"]["verified"] is False and second["data"]["zip"] == "10301"
+    assert "office will confirm the address" in second["say"]
+    address = {"street": second["data"]["street"], "unit": "", "city": "Staten Island",
+               "zip": "10301"}
+    located.confirm_read_back(call, address)
+    booked = located.tool("book_appointment", call, job_type="tune_up",
+                          slot=first_open(located, call),
+                          details={"issue": "Yearly tune-up", "since": "due", "tried": "nothing",
+                                   "who_home": "me", "approver": "me", "name": "Sam Lee"})
+    assert booked["ok"], booked
+    reasons = [r[0] for r in located.db().execute("SELECT reason FROM flags WHERE kind = 'person'")]
+    assert any("Confirm the address before dispatch" in r for r in reasons), reasons
+
+
+def test_with_no_borough_the_caller_is_asked_for_it_before_the_zip(located, answers):
+    call = located.start(UNKNOWN)["data"]["call_id"]
+    located.turn(call, "It's 410 Highland Boulevard.")
+    located.tool("find_address", call, street="410 Highland Boulevard")
+    located.turn(call, "H, I, G, H, L, A, N, D.")
+    second = located.tool("find_address", call, street="410 Highland Boulevard",
+                          spelled="H, I, G, H, L, A, N, D")
+    assert second["say"] == "And which borough is that in?"
+
+
+HYLAN = Place("1250", "HYLAN BOULEVARD", "10305", "Staten Island", "Rosebank")
+
+
+def test_a_street_heard_wrong_and_spelled_by_the_caller_is_looked_up_as_spelled(located, answers):
+    """Socket-arm trace: speech-to-text heard "Hylan" as "Highland", the caller spelled it, and the
+    model passed spelled "H, Y, L, A, N, Highland Boulevard". find_address still said not found,
+    and an estimate became a callback."""
+    answers.book[("1250", geocode.street_match_key("Hylan Boulevard"))] = [HYLAN]
+    call = located.start(UNKNOWN)["data"]["call_id"]
+    located.turn(call, "It's 1250 Highland Boulevard in Staten Island.")
+    first = located.tool("find_address", call, street="1250 Highland Boulevard",
+                         borough="Staten Island")
+    assert first["refused"] == "address_not_found"
+    located.say(call, first["say"])
+    located.turn(call, "H, Y, L, A, N. Hylan.")
+    found = located.tool("find_address", call, street="1250 Highland Boulevard",
+                         borough="Staten Island", spelled="H, Y, L, A, N, Highland Boulevard")
+    assert found["ok"], found
+    assert found["data"]["zip"] == "10305" and found["data"]["street"] == "1250 Hylan Boulevard"
+    assert found["data"].get("verified", True) is True
+
+
+def test_a_surname_the_caller_spelled_doesnt_replace_a_street_they_said(located, answers):
+    from test_ts_address_lookup import DUFFIELD
+
+    answers.book[("248", geocode.street_match_key("Duffield Street"))] = [DUFFIELD]
+    call = located.start(UNKNOWN)["data"]["call_id"]
+    located.turn(call, "It's 248 Duffield Street. My name is Park, P, A, R, K.")
+    found = located.tool("find_address", call, street="248 Duffield Street", spelled="P, A, R, K")
+    assert found["ok"] and found["data"]["street"].startswith("248 Duffield"), found
