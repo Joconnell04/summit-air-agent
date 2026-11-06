@@ -175,8 +175,12 @@ class ToolServer:
         }
         return self._post("/calls/start", body)
 
-    def turn(self, call_id: str, speaker: str, text: str, timings: dict) -> dict | None:
+    def turn(
+        self, call_id: str, speaker: str, text: str, timings: dict, replaces_last: bool = False
+    ) -> dict | None:
         body = {"speaker": speaker, "text": text, "timings": timings}
+        if replaces_last:
+            body["replaces_last"] = True
         return self._post(f"/calls/{call_id}/turn", body)
 
     def end(self, call_id: str, reason: str) -> dict | None:

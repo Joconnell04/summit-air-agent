@@ -733,7 +733,7 @@ def _job_type(ctx: Ctx, code: str) -> dict:
     if not job_type:
         raise Refused(
             "invalid_arguments",
-            "Let me check what kind of visit that is.",
+            "",
             errors={"job_type": f"one of {', '.join(ctx.tenant.job_types)}"},
         )
     return job_type
@@ -958,8 +958,9 @@ def _slot_bounds(ctx: Ctx, slot: Slot, level: str) -> tuple[datetime, datetime]:
     if window is None or not today <= slot.date <= today + timedelta(days=BOOKING_DAYS_AHEAD):
         raise Refused(
             "invalid_slot",
-            "Let me look at the open times again.",
+            "",
             errors={"slot": "not a window the company offers in the booking range"},
+            need="call find_slots for that day and book one of its windows",
         )
     if window.after_hours and level != "Urgent":
         raise Refused(
@@ -2493,10 +2494,10 @@ def book_appointment(ctx: Ctx, args: BookIn) -> Result:
     ]
     _limit(ctx, "book", len(existing))
     if not ctx.call["readback_confirmed_at"]:
+        # No narration ("Before I book it, let me read back..."): read_back's own sentence is what
+        # the caller hears next (the side-by-side).
         raise Refused(
-            "gate_read_back",
-            "Before I book it, let me read back the address and number.",
-            need="read_back",
+            "gate_read_back", "", need="call read_back now; its sentence is spoken for you"
         )
     readback = records.readback(ctx.call)
     try:
@@ -2537,8 +2538,7 @@ def book_appointment(ctx: Ctx, args: BookIn) -> Result:
         details["name"] = _booking_name(ctx)
     found = _priority(ctx, args.job_type, details["inside_temp_f"])
     facts, decided = found.facts, found.priority
-    if not override:
-        _on_call_first(ctx, facts, decided)
+    on_call_said = "" if override else _on_call_first(ctx, facts, decided, details)
     window_start, window_end = _slot_bounds(ctx, args.slot, decided.level)
     if _window_over(ctx, args.slot.window, window_start, window_end):
         ctx.cache.invalidate()
@@ -2695,7 +2695,11 @@ def book_appointment(ctx: Ctx, args: BookIn) -> Result:
     )
     # An Urgent call booked without find_slots first still hears the line once, here.
     urgent_line = ctx.tenant.line("urgent_priority")
-    if decided.level == "Urgent" and _hand_out_once(ctx, urgent_line):
+    if on_call_said:
+        # The on-call sentence already says the call is top priority.
+        _hand_out_once(ctx, urgent_line)
+        say = f"{on_call_said} {say}"
+    elif decided.level == "Urgent" and _hand_out_once(ctx, urgent_line):
         say = f"{urgent_line} {say}"
     # A visit booked on a safety call goes ahead only once the problem is shut off (eval round 2).
     if override and ctx.tenant.safety.get("booking_note"):
@@ -2806,29 +2810,35 @@ def _unit_not_booked(ctx: Ctx) -> str | None:
     return None
 
 
-def _on_call_first(ctx: Ctx, facts: prio.Facts, decided: prio.Priority) -> None:
+def _on_call_first(
+    ctx: Ctx, facts: prio.Facts, decided: prio.Priority, details: dict
+) -> str:
     """After hours, a no-heat or no-cooling call that needs the on-call technician tonight (journey
     11) books only once an urgent person flag has alerted them. The morning visit is then the
-    fallback if the technician can't come."""
+    fallback if the technician can't come. The server raises that flag itself when the agent
+    hasn't, and returns its sentence to say before the booking's: refused with on_call_first, the
+    side-by-side's models stalled (Sonnet never booked or flagged). Empty when nothing is needed."""
     cutoffs = ctx.tenant.after_hours_cutoffs
     if not ctx.call["after_hours"] or facts.job_type not in (
         cutoffs["heating_job_types"] + cutoffs["cooling_job_types"]
     ):
-        return
+        return ""
     if prio.after_hours_outcome(facts, decided, cutoffs, False) != "tonight_if_on_call_agrees":
-        return
+        return ""
     thread = records.thread(ctx.conn, ctx.call["id"])
     alerted = ctx.conn.execute(
         f"SELECT 1 FROM flags WHERE kind = 'person' AND priority = 'Urgent' "
         f"AND call_id IN ({','.join('?' * len(thread))})",
         thread,
     ).fetchone()
-    if not alerted:
-        raise Refused(
-            "on_call_first",
-            "Let me get this to our on-call technician first.",
-            need="flag_person with priority Urgent",
-        )
+    if alerted:
+        return ""
+    reason = (
+        f"After hours, needs the on-call technician tonight: {details.get('issue') or facts.job_type}"
+        f" ({'; '.join(decided.reasons)})"
+    )
+    flagged = flag_person(ctx, FlagIn(call_id=ctx.call["id"], reason=reason, priority="Urgent"))
+    return flagged.say
 
 
 def needs_on_call_tonight(ctx: Ctx) -> bool:
@@ -3361,8 +3371,9 @@ def record_move(ctx: Ctx, args: MoveIn) -> Result:
     if not ctx.call["readback_confirmed_at"]:
         raise Refused(
             "gate_read_back",
-            "Let me read back the new address.",
-            need="read_back with the new address, then record_move again",
+            "",
+            need="call read_back with the new address now (its sentence is spoken for you), then "
+            "record_move again",
         )
     new = records.readback(ctx.call)
     if any(booking.same_address(loc, new) for loc in old):

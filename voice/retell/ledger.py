@@ -17,7 +17,7 @@ from .timings import new_words, turn_timings
 from .transcript import Line
 
 # post(call_id, speaker, text, timings) returns the tool server's envelope, or None if it failed.
-Post = Callable[[str, str, str, dict], dict | None]
+Post = Callable[..., dict | None]
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS posted (
@@ -100,7 +100,12 @@ class Ledger:
                     text = text[len(before) :].strip()
                     words = new_words(line, len(before))
                 timings = turn_timings(lines[:i], words) if line.speaker == "agent" else {}
-                answer = post(call_id, line.speaker, text, timings) if text else {}
+                # A caller line posted before and changed since replaces the part sent then, so
+                # the tool server keeps one whole line, not "One" and "$199." as two.
+                if before is not None and line.speaker == "caller" and text:
+                    answer = post(call_id, line.speaker, text, timings, replaces_last=True)
+                else:
+                    answer = post(call_id, line.speaker, text, timings) if text else {}
                 if answer is None:
                     break  # the tool server didn't take it; the next sync tries again from here
                 answers.append((line.speaker, answer))

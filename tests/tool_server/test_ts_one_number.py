@@ -161,3 +161,34 @@ def test_a_sparks_call_asks_the_gas_check_once(agent):
             agent.say(call, result["say"])
     assert plain not in said and confirm not in said
     assert said.count(ELECTRICAL) == 1
+
+
+def test_a_caller_line_sent_again_whole_replaces_its_part(agent):
+    """The bridge posted "One", "$199.", "East", "East 4th, apartment 2." as four caller lines
+    (Retell call call_feed25cb0e5df1017695f9dc210); the rewritten ones now replace their part."""
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+
+    def caller(text, replaces=False):
+        body = {"speaker": "caller", "text": text, "timings": {}, "replaces_last": replaces}
+        assert agent.client.post(f"/calls/{call}/turn", json=body).status_code == 200
+
+    agent.say(call, "What's the street address for the visit?")
+    caller("One")
+    caller("$199.", replaces=True)
+    agent.say(call, "Got it, and what street is that on?")
+    caller("East")
+    caller("East 4th, apartment 2.", replaces=True)
+    lines = [r[0] for r in agent.db().execute(
+        "SELECT text FROM turns WHERE call_id = ? AND speaker = 'caller' ORDER BY seq", (call,)
+    )]
+    assert lines == ["$199.", "East 4th, apartment 2."]
+
+
+def test_refusals_dont_narrate_the_agents_steps(agent):
+    """The side-by-side heard "Let me check that again." and "Before I book it, let me read back
+    the address and number." from refusals."""
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    bad = agent.tool("add_note", call, text="")
+    assert bad["refused"] == "invalid_arguments" and bad["say"] == ""
+    early = book(agent, call, {"date": "2026-11-03", "window": "0900-0930"}, name="Pat Rivera")
+    assert early["refused"] == "gate_read_back" and early["say"] == ""

@@ -607,6 +607,17 @@ def turn(
 ) -> Result:
     """Log the line and run the safety check on every caller line (docs/call-journeys.md, spine 4)."""
     cfg = tenant.safety
+    if args.speaker == "caller" and args.replaces_last:
+        # The voice layer logs a caller line as it grows ("East", then "East 4th, apartment 2.",
+        # Retell call call_feed25cb0e5df1017695f9dc210): the part it sent first is dropped, so
+        # every reader of caller lines (priority, safety, the side model, the address check) sees
+        # one whole line.
+        with tx(conn):
+            conn.execute(
+                "DELETE FROM turns WHERE id = (SELECT id FROM turns WHERE call_id = ? "
+                "AND speaker = 'caller' ORDER BY seq DESC LIMIT 1)",
+                (call["id"],),
+            )
     seq = call["turn_seq"] + 1
     action = safety.SafetyAction("none", call["safety_kind"])
     call_stage = None
