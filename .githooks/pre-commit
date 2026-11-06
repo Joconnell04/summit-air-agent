@@ -1,6 +1,10 @@
 #!/bin/sh
-# Fast local gate. CI runs the full check on every pull request.
+# Local gate on every commit: lint, then only the tests the staged files need
+# (scripts/changed_tests.py). `make check` and `make ci` run the full suite.
 set -e
 uv run ruff check . --quiet
-uv run pytest -q -x --no-header -p no:cacheprovider > /dev/null || {
+tests=$(uv run python scripts/changed_tests.py)
+[ -z "$tests" ] && exit 0
+[ "$tests" = "ALL" ] && tests=""
+uv run pytest -q -x -n auto --no-header -p no:cacheprovider $tests > /dev/null || {
   echo "pre-commit: tests failed, run 'make test'"; exit 1; }

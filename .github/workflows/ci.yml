@@ -1,14 +1,10 @@
 name: ci
 
-# GitHub Actions minutes are limited on this account, so CI skips commits that only touch docs,
-# eval write-ups or the Retell agent's snapshots, and a newer push cancels the run it replaces.
-# The pre-commit hook still runs the full suite locally on every commit.
+# Off: GitHub Actions is unavailable on this account. The suite runs locally instead, on every
+# commit (the pre-commit hook) and with `make ci`, which marks the pushed commit as checked on
+# GitHub. Runs only when started by hand.
 on:
-  pull_request:
-    paths-ignore: ["docs/**", "evals/rounds/**", "retell/**", "**/*.md"]
-  push:
-    branches: [main]
-    paths-ignore: ["docs/**", "evals/rounds/**", "retell/**", "**/*.md"]
+  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.ref }}
