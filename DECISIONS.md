@@ -21,6 +21,23 @@ Would change if: real callers drop and call straight back often enough that pick
 Discussion: docs/ai-process/coauthoring.md safety r2
 Issue: #149
 
+## 117. The repo is handed over as Summit Air's deployment repo, not a template
+
+Decided: before the handover, the repo gets a clear front door and stays shaped as what a Revin FDE would leave behind for one customer and for the Revin team: the agent, the rules it can't break, the tests that prove them, and the record of why. It doesn't become a generic template or a "plug in your keys" product.
+Why: the assignment frames the work as an FDE building for one customer "tomorrow" and judges "what you chose to build vs. skip"; a template builds for Revin's platform rather than for Summit Air, costs time right before the demo, and Revin already has its own product. The history (decisions, eval rounds, process) shows judgment, but a reviewer looking at "prompting and architecture ahead of time" should find the prompt, the rules and the architecture first and the history one level down.
+Considered: leaving the repo as is (the history crowds the root); a template or starter in the style of a vendor's public repo (off-target for the brief, and turning one customer into a template is better done with a second real customer).
+Would change if: Revin asks for a reusable starting point, in which case `tenants/` is already the seam.
+Discussion: docs/ai-process/phases.md (Repo front door)
+Issue: none
+
+## 116. No post-trained small model for the voice agent
+
+Decided: the agent stays on a Retell-hosted Claude model. We don't post-train and self-host a small model (a Qwen 8B-class model with a merged adapter on a RunPod GPU).
+Why: we considered it only as a possible latency gain. One RTX 5090 serving an 8B model at about 150 tokens a second would cost about $50 for three days (ASSUMED, from RunPod list prices and memory-bandwidth estimates), and a cached system prompt could bring time to first token under 200 ms (ASSUMED). But the failures on live and scripted calls are instruction-following, not speed: Haiku 5.5's median end-to-end turn latency on Retell is already about 1 s (MEASURED, Retell call latency, call_926427e1d1f2a80cb78dc6a4e04), and an 8B model follows instructions worse than Haiku. It would also need a dataset of good calls we don't have, a custom-LLM bridge to Retell, and a GPU server to run, which is the layering DECISIONS 112 moved away from.
+Considered: serving the adapter separately in vLLM (slower than merging it); a 32B model on two H100s (about $390 for three days, ASSUMED, and still a weaker instruction follower).
+Would change if: there are thousands of real calls to distill from and latency, not behavior, is the limit.
+Discussion: docs/later.md C-79
+Issue: none
 ## 115. Each call stands alone: no cut-off greeting, no safety carried over, do-not-call after a yes
 
 Decided: a call from a number that called a minute ago greets like any other call (no "we got cut off"), and nothing about an earlier gas or carbon monoxide scare carries into it: not its safety state, its sign-off, its priority reason, the earlier call's safety lines in the context, or the job summary's priority line. mark_do_not_call returns a confirm question first and marks only after the caller says yes; `undo` takes it back, and "just kidding" is not a request. A flag whose callback couldn't be stored (a do-not-call number) returns no callback time. "End this call", "hang up" and "I'm done" count as goodbyes. find_slots takes `moving_a_visit`, and a move hears no priority line. The live-world reset refuses while a call is live, and clears the do-not-call list.
