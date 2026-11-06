@@ -44,7 +44,7 @@ def test_the_read_back_says_the_address_in_words_and_confirms_on_the_stored_one(
     address = {**in_area_address(), "unit": "4B"}
     agent.turn(call, f"It's {address['street']}, unit 4B, {address['zip']}.")
     asked = agent.tool("read_back", call, address=address, phone="caller_id")
-    assert asked["say"].startswith("So that's one oh one Union St, unit four B, and ")
+    assert asked["data"]["sentence"].startswith("So that's one oh one Union St, unit four B, and ")
     agent.say(call, asked["say"])
     agent.turn(call, "Yes.")
     confirmed = agent.tool("read_back", call, address=address, phone="caller_id", confirmed=True)
@@ -97,7 +97,7 @@ def test_a_street_the_caller_never_said_is_replaced_by_the_one_they_did(agent):
     address = {"street": "199 Eastthstreet Street", "unit": "2", "city": "", "zip": "10009"}
     asked = agent.tool("read_back", call, address=address, phone="caller_id")
     assert asked["ok"], asked
-    assert asked["say"].startswith("So that's one ninety-nine East Fourth Street, unit two")
+    assert asked["data"]["sentence"].startswith("So that's one ninety-nine East Fourth Street, unit two")
     agent.say(call, asked["say"])
     agent.turn(call, "Yes, that's right.")
     confirmed = agent.tool("read_back", call, address=address, phone="caller_id", confirmed=True)
@@ -110,4 +110,4 @@ def test_a_street_the_caller_said_is_kept_as_the_model_wrote_it(agent):
     agent.turn(call, "It's 101 Union St, 11231.")
     address = {"street": "101 Union Street", "unit": "", "city": "", "zip": "11231"}
     asked = agent.tool("read_back", call, address=address, phone="caller_id")
-    assert asked["say"].startswith("So that's one oh one Union Street")
+    assert asked["data"]["sentence"].startswith("So that's one oh one Union Street")

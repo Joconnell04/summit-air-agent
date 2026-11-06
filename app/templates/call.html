@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_ui.html" import priority, window_text, note_icon, empty, player, q with context %}
+{% from "_ui.html" import priority, window_text, note_icon, empty, player, q, label_tag with context %}
 {% set p = page %}
 {% set title = p.name or (p.address.street if p.address else none) or call.caller_id %}
 {% block title %}{{ tenant }}: {{ title }}, {{ clock(p.started) }}{% endblock %}
@@ -13,7 +13,9 @@
       </div>
       <div class="who">
         <h1 class="page-title">{{ title }}</h1>
-        {# One tag: where the call stands now. Everything else is a plain fact on the line below. #}
+        {# The call's label, then one tag for where it stands now. Everything else is a plain fact
+           on the line below. #}
+        {{ label_tag(p.label, p.label_reason) }}
         {% if p.open_flags %}<span class="tag {{ 'urgent' if p.booking and p.booking.priority == 'Urgent' or p.safety_label else 'high' }}">Needs a person</span>
         {% elif p.booking %}<span class="tag done">Booked</span>
         {% elif call.direction == "outbound" %}<span class="tag outline">Placed by us</span>{% endif %}
@@ -21,6 +23,7 @@
       <div class="facts">
         <span class="num">{{ clock(p.started) }}{% if p.seconds is not none %}, {{ p.seconds // 60 }} min {{ p.seconds % 60 }} s{% endif %}</span>
         <span class="num">{{ call.caller_id }}</span>
+        <span data-label-reason>{{ p.label_reason }}</span>
         {% if p.safety_label %}<span class="alarm">{{ note_icon("warn") }}Safety call: {{ p.safety_label | lower }}</span>{% else %}<span>{{ p.type_label }}</span>{% endif %}
         {% if p.booking and p.booking.fsm_job_id %}<span class="num">Job {{ p.booking.fsm_job_id }}</span>{% endif %}
         {% if call.direction == "outbound" and (p.open_flags or p.booking) %}<span>Placed by us</span>{% endif %}

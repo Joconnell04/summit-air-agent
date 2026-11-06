@@ -11,8 +11,9 @@ import sqlite3
 from collections import Counter
 from datetime import date, datetime, time, timedelta
 
-from . import heads_up, records, summary
+from . import heads_up, labels, records, summary
 from .db import iso, parse_iso
+from .lifecycle import outcome_of
 from .tenant import Tenant, Window, window_of
 from .text import phone_display
 
@@ -132,6 +133,7 @@ def calls(conn: sqlite3.Connection, tenant: Tenant, day: date) -> list[dict]:
         open_flags = conn.execute(
             "SELECT COUNT(*) FROM flags WHERE call_id = ? AND status = 'open'", (call["id"],)
         ).fetchone()[0]
+        label, label_reason = call_label(conn, tenant, call)
         found.append(
             {
                 "id": call["id"],
@@ -148,9 +150,24 @@ def calls(conn: sqlite3.Connection, tenant: Tenant, day: date) -> list[dict]:
                 "safety_kind": call["safety_kind"] if call["safety_signal_at"] else None,
                 "safety_lines": bool(call["safety_lines_at"]),
                 "after_hours": bool(call["after_hours"]),
+                "label": label,
+                "label_reason": label_reason,
             }
         )
     return found
+
+
+def call_label(conn: sqlite3.Connection, tenant: Tenant, call: sqlite3.Row) -> tuple[str, str]:
+    """Urgent, Routine or No visit, and why (app/labels.py): the one stored when the call ended,
+    or the one it has so far."""
+    if call["ended_at"]:
+        stored = conn.execute(
+            "SELECT label, reason FROM call_labels WHERE call_id = ?", (call["id"],)
+        ).fetchone()
+        if stored:
+            return stored["label"], stored["reason"]
+    outcome = call["outcome"] or outcome_of(conn, call)
+    return labels.decide(conn, tenant, call, outcome, ended=bool(call["ended_at"]))
 
 
 def booking_rates(tenant: Tenant, day_calls: list[dict]) -> dict:
@@ -861,6 +878,8 @@ def call_page(conn: sqlite3.Connection, tenant: Tenant, trace: dict, now: dateti
         "day": day,
         "type": this["type"],
         "type_label": this["type_label"],
+        "label": this["label"],
+        "label_reason": this["label_reason"],
         "position": index + 1,
         "of": len(day_calls),
         "previous": day_calls[index - 1] if index > 0 else None,

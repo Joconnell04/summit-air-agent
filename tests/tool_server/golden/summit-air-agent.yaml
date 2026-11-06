@@ -168,6 +168,10 @@ commercial:
   - church
   - hotel
   - office
+connectors:
+- Got it.
+- Perfect.
+- Okay.
 equipment_words:
 - furnace
 - furnaces
@@ -199,6 +203,9 @@ fsm:
     resolved: Callback resolved
   campaign_id: 301
   cancel_reason_id: 401
+  label_tag_ids:
+    Routine: 805
+    Urgent: 804
   lead_call_reason_ids:
     commercial: 704
     install: 702
@@ -266,6 +273,13 @@ lines:
     a secure payment link, or call you to take the payment.
   commercial: Thanks for thinking of us. Unfortunately, we only service homes, but I'll pass your details
     to our team.
+  dispatch_now: We'll get a technician out to you right away at {address}. Expect them {eta}, and we'll
+    call the number ending in {last_four} if anything changes. Is that the right address?
+  dispatch_on_call: Our on-call technician will call you within {minutes} minutes and head out to you
+    at {address}. We'll call the number ending in {last_four} if anything changes. Is that the right address?
+  dispatch_soonest: The soonest we can get a technician out to you at {address} is {eta}. We'll call the
+    number ending in {last_four} if anything changes. Is that the right address?
+  dispatch_within_hour: within the next hour
   do_not_call: Understood, we won't call you.
   do_not_call_confirm: Just to confirm, you'd like us to stop calling this number?
   do_not_call_undone: No problem, we'll call you again when we need to.
@@ -1434,7 +1448,7 @@ safety:
   - shut it off
   - breaker is off
   - flipped the breaker
-  sign_off: Thanks for calling, and please stay safe. We'll follow up with you.
+  sign_off: Thanks for calling Summit Air. Please stay safe, and we'll follow up with you.
   signed_off: true
   vague:
     co:
@@ -1574,6 +1588,7 @@ transfer:
     office: TRANSFER_OFFICE_NUMBER
     on_call: TRANSFER_ON_CALL_NUMBER
 visit_questions:
+  catch_all_cue: anything else the technician should know
   pets: false
 voice:
   are_you_there: Are you still there?
@@ -1589,10 +1604,10 @@ voice:
     take your call right now. Please leave your name, number and what's going on after the tone, and we'll
     call you back.
   goodbye: Thanks for calling Summit Air. Have a great rest of your day.
-  greeting_known: Hi {first_name}, thanks so much for calling Summit Air today! I'm Brian, the virtual
-    assistant. How can I help?
-  greeting_unknown: Hi there, thanks so much for calling Summit Air today! I'm Brian, the virtual assistant.
-    How can I help?
+  greeting_known: Hi {first_name}, thanks for calling Summit Air! I'm Brian, the virtual assistant. How
+    can I help?
+  greeting_unknown: Hi there, thanks for calling Summit Air! I'm Brian, the virtual assistant. How can
+    I help?
   hold_phrases:
   - One sec.
   - Okay, one moment.

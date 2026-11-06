@@ -107,13 +107,14 @@ def test_the_read_back_is_shorthand_with_the_number_in_groups(agent):
     call = agent.start(UNKNOWN)["data"]["call_id"]
     agent.turn(call, "It's 101 Union St, 11231.")
     asked = agent.tool("read_back", call, address=in_area_address(), phone="2125550142")
-    assert asked["say"] == (
+    # The sentence after the short connector Jackson asked for ("Perfect."), shorthand otherwise.
+    assert asked["data"]["sentence"] == (
         "So that's one oh one Union St, and two one two, five five five, zero one four two. "
         "That's all correct, right?"
     )
     assert "read" not in asked["say"].lower()
     calling = agent.tool("read_back", call, address=in_area_address(), phone="caller_id")
-    assert calling["say"] == (
+    assert calling["data"]["sentence"] == (
         "So that's one oh one Union St, and the number you're calling from, ending in zero nine nine "
         "nine. That's all correct, right?"
     )
@@ -713,7 +714,7 @@ def test_a_spelled_street_is_joined_into_the_name_for_the_read_back(agent, addre
         "read_back", call, address={"zip": "10302", **address}, phone="caller_id"
     )
     assert asked["ok"], asked
-    assert asked["say"].startswith(f"So that's {street_said(street)}, and ")
+    assert asked["data"]["sentence"].startswith(f"So that's {street_said(street)}, and ")
 
 
 def test_an_owner_who_lives_downstairs_with_a_tenant_upstairs_can_book(agent):
@@ -1115,7 +1116,7 @@ def test_confirmed_details_are_not_read_back_again(agent):
     assert book(agent, call, first_open(agent, call))["ok"]
     later = ready_to_book(agent)
     changed = agent.tool("read_back", later, address=in_area_address(3), phone="caller_id")
-    assert changed["say"].startswith("So that's one oh three Union St")
+    assert changed["data"]["sentence"].startswith("So that's one oh three Union St")
 
 
 def test_a_renter_with_an_unknown_approver_books_with_a_call_before_dispatch(agent):
@@ -1412,7 +1413,7 @@ def test_a_unit_and_the_zip_are_said_apart_in_the_read_back(agent):
     agent.turn(call, "It's 199 East 4th Street, unit 2, 10009.")
     address = {"street": "199 E 4th St", "unit": "2", "city": "New York", "zip": "10009"}
     asked = agent.tool("read_back", call, address=address, phone="caller_id")
-    assert asked["say"].startswith("So that's one ninety-nine E Fourth St, unit two, and ")
+    assert asked["data"]["sentence"].startswith("So that's one ninety-nine E Fourth St, unit two, and ")
 
 
 def test_a_unit_heard_with_the_zip_on_the_end_keeps_only_the_unit(agent):
@@ -1422,7 +1423,7 @@ def test_a_unit_heard_with_the_zip_on_the_end_keeps_only_the_unit(agent):
     agent.turn(call, "Yes, 10009.")
     address = {"street": "199 E 4th St", "unit": "210009", "city": "New York", "zip": "10009"}
     asked = agent.tool("read_back", call, address=address, phone="caller_id")
-    assert asked["say"].startswith("So that's one ninety-nine E Fourth St, unit two, and ")
+    assert asked["data"]["sentence"].startswith("So that's one ninety-nine E Fourth St, unit two, and ")
 
 
 def test_a_caller_who_says_they_are_someone_else_is_booked_as_a_new_customer(

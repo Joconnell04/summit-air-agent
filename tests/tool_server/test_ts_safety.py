@@ -462,7 +462,7 @@ def test_after_the_lines_each_caller_line_reminds_the_agent_how_to_carry_on(agen
 def test_the_sign_off_suits_a_caller_who_is_alone_and_asks_nothing_of_them():
     sign_off = " ".join(CFG["sign_off"].split())
     assert "everyone" not in sign_off and "hanging up" not in sign_off
-    assert sign_off == "Thanks for calling, and please stay safe. We'll follow up with you."
+    assert sign_off == "Thanks for calling Summit Air. Please stay safe, and we'll follow up with you."
 
 
 def test_a_caller_saying_goodbye_after_the_sign_off_does_not_hear_it_again(agent):
@@ -1018,7 +1018,7 @@ def test_the_greetings_name_brooke():
     """Jackson's gas test call: the assistant is Brooke, and a touch warmer."""
     voice = load_agent(TENANT_DIR)[0]["voice"]
     assert voice["greeting_unknown"] == (
-        "Hi there, thanks so much for calling Summit Air today! I'm Brian, the virtual "
+        "Hi there, thanks for calling Summit Air! I'm Brian, the virtual "
         "assistant. How can I help?"
     )
     assert "I'm Brian" in voice["greeting_known"]

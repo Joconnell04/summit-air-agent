@@ -134,11 +134,11 @@ def test_there_is_no_cut_off_greeting():
     start = {"customers": [{"name": "Jackson O", "residential": True}],
              "linked_call": {"dropped": True, "caller_name": "Jackson"}}
     assert greeting(start, voice) == (
-        "Hi Jackson, thanks so much for calling Summit Air today! I'm Brian, the virtual "
+        "Hi Jackson, thanks for calling Summit Air! I'm Brian, the virtual "
         "assistant. How can I help?"
     )
     assert greeting({}, voice) == (
-        "Hi there, thanks so much for calling Summit Air today! I'm Brian, the virtual "
+        "Hi there, thanks for calling Summit Air! I'm Brian, the virtual "
         "assistant. How can I help?"
     )
     assert not any(v.rstrip().endswith("Summit Air.") for v in (voice["greeting_known"],
@@ -150,7 +150,7 @@ def test_the_caller_id_read_back_ends_with_its_last_four(agent):
     address = in_area_address()
     agent.turn(call, f"It's {address['street']}, {address['zip']}.")
     asked = agent.tool("read_back", call, address=address, phone="caller_id")
-    assert asked["say"] == (
+    assert asked["data"]["sentence"] == (
         f"So that's {street_said(address['street'])}, and the number you're calling from, ending in zero nine "
         "nine nine. That's all correct, right?"
     )

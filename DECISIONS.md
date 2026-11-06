@@ -12,6 +12,22 @@ Discussion: docs/ai-process/transcripts/... or docs/explorations/...
 Issue: #N
 -->
 
+## 122. No heat or no cooling at High or Urgent is dispatched at the read-back
+
+Decided: when a no-heat or no-cooling call is High or Urgent on the server's own priority, read_back (given the job type) books the soonest open window itself, with no times offered, no separate read-back and no approval question. Its one sentence names the address, when the technician comes ("within the next hour" when the window opens within 60 minutes, else "by 2:30 PM today") and the number by its last four, and asks "Is that the right address?". A yes, or no answer, confirms; a corrected unit or number cancels the job and books it again with the same sentence. After hours every dispatch goes to the on-call technician: an Urgent person flag goes out first with a callback within twenty minutes, the sentence says so, and the first morning window stays booked as the fallback (Jackson's midnight call, call_b2302955a9c4054184c5d502e97, reached High and heard 8 AM, then a callback). Then only the access question and "Anything else?". A call on the safety route never dispatches. If the read-back came below High and the caller's facts raise it later, find_slots dispatches instead of offering times.
+Why: on an emergency the caller wants someone coming, not a menu of windows, a second read-back and an approver question. The rule is in server code, so the agent can't skip it or offer windows instead.
+Considered: the agent offering the soonest window as usual (three more turns on the worst calls); dispatching from find_slots on every no-heat call (it scores High by default, so every booking would change shape, including callers who want a later day).
+Would change if: callers often want a later time than the soonest on these calls, or the on-call path needs its own confirmation before booking.
+Discussion: coordinator brief in the session for this change
+
+## 121. Every call gets one label: Urgent, Routine or No visit
+
+Decided: each call has exactly one label with a short reason, such as "Urgent: an older person or a baby at home, no heat". Urgent is the server's priority at High or Urgent, a gas, carbon monoxide or sparks hazard, or a dispatch, and it never drops back on the same call. Routine is any other call about a visit (booked, moved, cancelled, asked about, or a callback). No visit is the third label, for calls that were never about one: a business, an address outside the area, a wrong number, a question answered. The label is stored on the call at its end (`call_labels`), shown as a badge on each call row and on the call page with an Urgent filter, and a booked job carries Urgent or Routine to ServiceTitan as a tag type (804, 805).
+Why: the owner scans for what needs attention first. Folding a wrong number into Routine would make Routine mean "anything", and the booking rate already counts only calls that wanted a visit.
+Considered: two labels only (no-visit calls would pad Routine); using the job's priority field alone in the CRM (only calls with a job have one, and High and Urgent read as the same thing to an owner).
+Would change if: owners want the no-visit calls hidden from the list rather than labeled.
+Discussion: coordinator brief in the session for this change
+
 ## 120. A daily Opus check flags only true failures, and the server keeps a flag only with evidence from the call
 
 Decided: after calls end, Claude Opus 5.5 (profile `offline.grader`, effort medium) reads each call's Retell transcript and the tool server's rows and answers one question: did one of five true failures happen (hung up on, a wrong or missing booking or callback that was promised, safety advice not spoken or a retraction ignored, something false told to the caller, records that contradict what the caller was told)? Style never counts. The server keeps a failure only when every quoted evidence line is found in the call; a kept failure becomes a `grader` flag on Today, never emailed. It runs daily at a time the owner sets (6 AM by default) and on demand from the owner view and the bench, and grades each call once.

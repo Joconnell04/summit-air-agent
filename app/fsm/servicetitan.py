@@ -384,6 +384,7 @@ class ServiceTitanAdapter:
         window_start: datetime,
         window_end: datetime,
         technician_ids: list[int] | None = None,
+        tag_type_ids: list[int] | None = None,
     ) -> dict:
         """The appointment's start and end are the arrival window; ServiceTitan requires both."""
         appointment = {
@@ -404,6 +405,8 @@ class ServiceTitanAdapter:
             "summary": f"{summary}\nRef: {ref_of(key)}",
             "appointments": [appointment],
         }
+        if tag_type_ids:
+            body["tagTypeIds"] = tag_type_ids
         return self._call("POST", "jpm", "jobs", "create_job", json=body)
 
     def reschedule(

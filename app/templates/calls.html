@@ -20,6 +20,7 @@
     <div class="panel-head">
       <div class="seg" role="group" aria-label="Show">
         <button type="button" aria-pressed="true" data-show="all">All {{ count(calls | length) }}</button>
+        <button type="button" aria-pressed="false" data-show="urgent">Urgent {{ count(calls | selectattr("label", "equalto", "Urgent") | list | length) }}</button>
         <button type="button" aria-pressed="false" data-show="needs">Needs a person {{ count(needing | length) }}</button>
         <button type="button" aria-pressed="false" data-show="booked">Booked {{ count(booked | length) }}</button>
         <button type="button" aria-pressed="false" data-show="away">Turned away {{ count(away | length) }}</button>

@@ -252,6 +252,12 @@ class Tenant:
             else "Will someone be home to let the technician in, and is there a gate code or "
             "buzzer they should know about?"
         )
+        # The catch-all asked on a heating, cooling or airflow problem ("Anything else the
+        # technician should know, like water leaking ...?"): words of it the server finds in the
+        # agent's line, so the caller's answer goes on the job (tools._catch_all_answer).
+        self.catch_all_cue: str = agent.get("visit_questions", {}).get("catch_all_cue", "")
+        # Said before a read-back sentence, in turn (tools._connector).
+        self.connectors: list[str] = list(agent.get("connectors") or [])
         self.fsm_tenant_id: int = company["tenant_id"]
         self.name: str = company["company"]["name"]
         self.tz = ZoneInfo(company["company"]["timezone"])

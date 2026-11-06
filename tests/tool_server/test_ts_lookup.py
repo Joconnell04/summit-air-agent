@@ -5,6 +5,7 @@ import sqlite3
 from datetime import time
 from pathlib import Path
 
+import pytest
 from toolkit import UNKNOWN, book, first_open, ready_to_book
 
 from app.fsm.servicetitan import ServiceTitanAdapter
@@ -294,3 +295,19 @@ def test_a_window_past_midnight_says_which_part_of_the_day_each_end_is():
     assert window_said(time(8), time(12)) == "8 to 12"
     assert window_said(time(12), time(16)) == "12 to 4"
     assert window_said(time(16), time(20)) == "4 to 8"
+
+
+@pytest.mark.parametrize("zip_part", [{}, {"zip": ""}, {"zip": "00000"}])
+def test_an_address_lookup_needs_no_zip_and_ignores_a_guessed_one(agent, mock, scenarios, zip_part):
+    """#175: the schema made Sonnet invent ZIP 00000, then tell the caller it had used a
+    placeholder. The ZIP is optional, and one nobody said is left out of the search unnoticed."""
+    park = scenarios["activeMemberWithAdultChild"]
+    conn = sqlite3.connect(mock[0].state.db_path)
+    (street,) = conn.execute(
+        "SELECT street FROM locations WHERE id = ?", (park["locationId"],)
+    ).fetchone()
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    found = agent.tool("find_customer", call, address={"street": street, **zip_part})
+    assert found["ok"], found
+    assert found["say"] == ""
+    assert [m["customer_id"] for m in found["data"]["matches"]] == [park["customerId"]]

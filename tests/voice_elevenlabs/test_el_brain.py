@@ -126,7 +126,7 @@ def start(brain, call_id="el-1") -> str:
 def test_the_first_message_is_the_tenants_greeting_and_is_on_the_record(app):
     brain, _ = brain_for(app, [])
     first = start(brain)
-    assert first.startswith("Hi there, thanks so much for calling Summit Air today!")
+    assert first.startswith("Hi there, thanks for calling Summit Air!")
     assert turns(app, "el-1") == [("agent", first)]
 
 
