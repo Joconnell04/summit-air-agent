@@ -42,7 +42,8 @@ NO_HOLD_TOOLS = ("end_call",)
 # Server-led, a sentence of the model's that narrates its own step ("I'm booking that now.",
 # "Confirming the address and phone now.", "Let me check.") is never said.
 NARRATES = re.compile(
-    r"^\W*((okay|ok|alright|got it|sure),?\s+)?(let me\b|i'?ll (check|look|book|confirm|pull|get|"
+    r"^\W*((okay|ok|alright|got it|sure|actually),?\s+)?(let me\b|let'?s (get|go|book|start|"
+    r"set|move)\b|i'?ll (check|look|book|confirm|pull|get|"
     r"find|search|see)\b|(i'?m |i am )?(booking|checking|confirming|looking|pulling|getting|"
     r"searching|finding)\b)",
     re.IGNORECASE,
@@ -93,6 +94,14 @@ def unnarrated(sentence: str) -> str:
 # Thanking the caller for a wait (Jackson's change set 24: never).
 THANKS_FOR_WAITING = re.compile(
     r"\bthanks?( you)?( so much)? for (waiting|holding|your patience|holding on|bearing with)",
+    re.IGNORECASE,
+)
+# A caller who is done ("That's all.", "Nope, thanks."): the model's reply may end the call, so its
+# text waits for the end of the reply and is cut if it does (it repeated the booking before the
+# closing on Jackson's call call_046f37112cac691a50019893717).
+CALLER_DONE = re.compile(
+    r"\b(that'?s (all|it|everything)|nothing else|no,? (that'?s|thank)|nope|i'?m (good|all set)"
+    r"|all good|bye)\b",
     re.IGNORECASE,
 )
 # A goodbye of the model's own; the socket says the closing itself (Jackson's change set 24).
@@ -251,6 +260,7 @@ class LlmCall:
         # Whether the last caller turn got a hold phrase: never two turns in a row.
         self.held_last_turn = False
         self.drops: dict[str, int] = {}
+        self.caller_said = ""
         # For the closing's nicety, fit to the tenant's time of day.
         self.tz = tz
         self.reminders = 0
@@ -365,6 +375,7 @@ class LlmCall:
         self.last_turn = None
 
     async def _caller_turn(self, out: Response, text: str, began: float) -> None:
+        self.caller_said = text
         result = await asyncio.shield(self.server.turn("caller", text, {}))
         server_ms = round((time.perf_counter() - began) * 1000, 1)
         if result.get("refused") == UNREACHABLE:
@@ -500,6 +511,7 @@ class LlmCall:
             # Server-led: the model's goodbyes wait for the end of the reply (the socket says the
             # closing when it ends the call), and the raw sentences, for the fallback.
             goodbyes, raw = [], []
+            closing_turn = self.server_led and bool(CALLER_DONE.search(self.caller_said))
             reply = Reply()
             async for delta in self.brain.stream(self.system, self.messages, self.tools, reply):
                 if out.stale():
@@ -518,7 +530,7 @@ class LlmCall:
                         if reason:
                             self._dropped(raw[-1], reason)
                             continue
-                        if GOODBYE.search(sentence):
+                        if closing_turn or GOODBYE.search(sentence):
                             goodbyes.append(sentence)
                             continue
                     if sentence and (said := self.reply.sentence(sentence)):
@@ -543,7 +555,7 @@ class LlmCall:
                     rest, reason = self._clean(pending)
                     if reason:
                         self._dropped(pending, reason)
-                    elif GOODBYE.search(rest):
+                    elif closing_turn or GOODBYE.search(rest):
                         goodbyes.append(rest)
                         rest = ""
                 last = self.reply.sentence(rest) if rest.strip() else ""

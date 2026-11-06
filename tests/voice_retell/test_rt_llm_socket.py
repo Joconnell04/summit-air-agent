@@ -678,3 +678,30 @@ def test_server_led_no_server_connector_after_the_models_own(server_led):
     with client.websocket_connect(path()) as ws:
         open_call(ws)
         assert said(ask(ws, 1, ["Hi.", "This number."])) == f"Okay, thanks. {READ_BACK}"
+
+
+def test_server_led_nothing_of_the_models_before_the_closing_when_the_caller_is_done(monkeypatch):
+    end = {"id": "t1", "name": "end_call", "input": {"reason": "done"}}
+    server, client, _ = slow_socket(monkeypatch, {}, [(
+        ["You're all set. ", "The technician will arrive today between 8 and 8:30. "], [end])])
+    server.tools["end_call"] = envelope(data={"hang_up": True})
+    with client.websocket_connect(path()) as ws:
+        open_call(ws)
+        text = said(ask(ws, 1, ["Hi.", "That's all."]))
+    assert text.startswith("Thanks for calling Summit Air. ") and "all set" not in text
+
+
+def test_server_led_a_done_caller_still_hears_a_reply_that_keeps_the_call_open(server_led):
+    _, make = server_led
+    client, _ = make([(["Okay. ", "Anything else?"], [])])
+    with client.websocket_connect(path()) as ws:
+        open_call(ws)
+        assert said(ask(ws, 1, ["Hi.", "Nope, not that window."])) == "Okay. Anything else?"
+
+
+def test_server_led_lets_get_you_booked_is_narration(server_led):
+    _, make = server_led
+    client, _ = make([(["Actually, let's get you booked. ", "Can I get your name?"], [])])
+    with client.websocket_connect(path()) as ws:
+        open_call(ws)
+        assert said(ask(ws, 1, ["Hi.", "My AC is leaking."])) == "Can I get your name?"
