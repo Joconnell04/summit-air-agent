@@ -388,3 +388,29 @@ def test_connectors_before_most_questions_and_never_the_same_twice():
     call[6] = agent("Thanks. What's the street address?")
     assert not sbs.check_call(PERSONA, call, rows())["connectors_varied"]["ok"]
     assert sbs.gross(["connectors_varied"]) == []
+
+
+def test_the_catch_all_is_asked_once_on_a_problem_and_never_on_a_tune_up():
+    def call_with(job, asks):
+        c = [agent("Hi, how can I help?"), user("My heat is out.")]
+        for _ in range(asks):
+            c += [
+                agent("Okay. Anything else the technician should know, like banging pipes?"),
+                user("No."),
+            ]
+        c += [
+            *tool(
+                "find_slots",
+                "t9",
+                say="The soonest is today, 4 to 6.",
+                args=json.dumps({"job_type": job}),
+            )
+        ]
+        c += [
+            agent("The soonest is today, 4 to 6. Does that work?", 7),
+            user("No, that's it. Bye."),
+        ]
+        return sbs.check_call(PERSONA, c, rows())["catch_all_once"]["ok"]
+
+    assert call_with("no_heat", 1) and not call_with("no_heat", 0) and not call_with("no_heat", 2)
+    assert call_with("tune_up", 0) and not call_with("estimate", 1)

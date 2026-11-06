@@ -48,7 +48,7 @@ log:
     seed: 404
     system_said: a boiler
     unit: apartment two
-    unit_volunteered: true
+    unit_volunteered: false
     who: my grandfather is ninety and he's here with me
   o404-03:
     address: ten ten Morris Park Avenue
@@ -197,7 +197,7 @@ personas:
     journey: elderly
     name: Priya Brooks
     raised: ninety|90
-    unit_ask: false
+    unit_ask: true
   o404-03:
     bookings:
     - book

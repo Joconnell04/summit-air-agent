@@ -67,6 +67,8 @@ ASKED_SPELLING = r"\bspell\b"
 ASKED_FULL_NAME = r"\b(first and last|full name|last name)\b"
 
 
+CATCH_ALL = r"anything else the technician should know"
+PROBLEM_JOBS = ("no_heat", "no_cooling", "repair", "airflow")
 CONNECTORS = (
     "okay, thanks",
     "got it",
@@ -322,6 +324,23 @@ def check_call(
             share > 0.5 and not repeats,
             f"connectors on {share:.0%} of {len(asks)} questions, repeated back to back: {repeats[:2]}",
         )
+
+    # Change set 22: on a heating, cooling or airflow problem, one catch-all ("Anything else the
+    # technician should know, like ...?") in its own turn; never on a tune-up or an estimate.
+    job = next(
+        (
+            json.loads(tool["arguments"] or "{}").get("job_type")
+            for t in agents
+            for tool in t["tools"]
+            if tool["name"] in ("find_slots", "book_appointment") and tool["arguments"]
+        ),
+        None,
+    )
+    catch_alls = sum(1 for t in agents if re.search(CATCH_ALL, t["text"], re.IGNORECASE))
+    if job in PROBLEM_JOBS:
+        put("catch_all_once", catch_alls == 1, f"{job}: the catch-all asked {catch_alls} times")
+    elif job in ("tune_up", "estimate"):
+        put("catch_all_once", catch_alls == 0, f"{job}: the catch-all asked {catch_alls} times")
 
     dated = [t["text"] for t in agents if re.search(DATED_DAY, t["text"], re.IGNORECASE)]
     put("no_date_with_today_or_tomorrow", not dated, "; ".join(d[:100] for d in dated[:2]))

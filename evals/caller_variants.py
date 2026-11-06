@@ -255,6 +255,10 @@ def elderly(rng: random.Random, name: str, log: dict, s: Script) -> dict:
     s.add(
         f'If asked since when, say "{pick(rng, ["since last night", "since this morning", "since yesterday"])}".'
     )
+    # Change set 22: the catch-all on a heating problem; sometimes "no", sometimes a detail.
+    s.add(
+        f'If asked whether there is anything else the technician should know, say "{pick(rng, ["no, that is it", "nope", "it was banging a lot before it stopped", "it kept shutting off on its own yesterday"])}".'
+    )
     s.add(
         f'The first time they offer a window, or if they invite you to say what makes it more urgent, say "{who}". Then accept the next window with "okay".'
     )
