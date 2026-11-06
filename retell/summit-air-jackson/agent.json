@@ -184,8 +184,8 @@
       "word": "arrochar"
     }
   ],
-  "reminder_max_count": 1,
-  "reminder_trigger_ms": 20000,
+  "reminder_max_count": 2,
+  "reminder_trigger_ms": 8000,
   "response_engine": {
     "llm_id": "llm_12eba5f1d4a3b067f0635097de30",
     "type": "retell-llm",
@@ -195,7 +195,7 @@
   "stt_mode": "accurate",
   "user_dtmf_options": {},
   "version": 2,
-  "voice_id": "cartesia-Brooke",
+  "voice_id": "cartesia-Brian",
   "voice_speed": 1,
   "voice_temperature": 0.6,
   "volume": 1,
