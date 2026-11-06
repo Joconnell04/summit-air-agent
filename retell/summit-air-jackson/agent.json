@@ -3,8 +3,10 @@
   "agent_name": "Summit Air Jackson",
   "allow_user_dtmf": true,
   "assigned_tags": [],
-  "backchannel_frequency": 0.4,
+  "backchannel_frequency": 0.8,
   "backchannel_words": [
+    "mm-hmm",
+    "yeah",
     "okay",
     "got it",
     "right"
@@ -45,7 +47,7 @@
   "data_storage_setting": "everything",
   "denoising_mode": "noise-cancellation",
   "enable_backchannel": true,
-  "enable_dnc_detection": true,
+  "enable_dnc_detection": false,
   "enable_dynamic_responsiveness": false,
   "enable_dynamic_voice_speed": false,
   "enable_expressive_mode": false,
@@ -182,8 +184,8 @@
       "word": "arrochar"
     }
   ],
-  "reminder_max_count": 1,
-  "reminder_trigger_ms": 20000,
+  "reminder_max_count": 2,
+  "reminder_trigger_ms": 16000,
   "response_engine": {
     "llm_id": "llm_12eba5f1d4a3b067f0635097de30",
     "type": "retell-llm",
@@ -193,7 +195,7 @@
   "stt_mode": "accurate",
   "user_dtmf_options": {},
   "version": 2,
-  "voice_id": "cartesia-Brooke",
+  "voice_id": "cartesia-Brian",
   "voice_speed": 1,
   "voice_temperature": 0.6,
   "volume": 1,
