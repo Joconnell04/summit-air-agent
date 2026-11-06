@@ -186,6 +186,9 @@ post_call:
 # model cost 2.08 cents a chat (MEASURED, exploration 017), so the cheapest model in Retell's list.
 retell:
   post_chat_analysis: {model: gpt-5.4-nano}
+  # The hold line a transfer rings while the owner's Hold line switch is on (voice/retell/
+  # hold_line.py). It only repeats fixed hold lines, so the cheapest Claude Retell offers.
+  hold_line: {model: claude-haiku-5-5}
 
 # The simulated audio bake-off (evals/audio_rig, DECISIONS.md 026). The rig's own voice for the
 # simulated caller and ears for the agent's replies, the voice-activity threshold that times the
