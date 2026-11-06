@@ -1,8 +1,10 @@
 """Every call gets one label for the owner, Urgent, Routine or No visit, with its reason
 (DECISIONS.md 122), stored on the call and shown on the owner view; a booked job carries it to the
-CRM as a tag."""
+CRM as a tag. The label describes the visit the call left, not the call (DECISIONS.md 128): a call
+with no visit standing is No visit, whatever else happened on it."""
 
 from test_ts_owner import booked_tune_up, caller, commercial, out_of_area
+from test_ts_safety import GAS_LINES
 from toolkit import UNKNOWN, book, first_open, in_area_address, ready_to_book, sign_in
 
 
@@ -50,17 +52,46 @@ def test_a_dispatch_is_urgent(agent):
     assert label == "Urgent" and "no heat" in reason
 
 
-def test_a_gas_smell_is_urgent_whatever_was_booked(agent):
+def test_a_gas_smell_with_no_visit_is_no_visit_and_says_so(agent):
     call = ready_to_book(agent)
     agent.turn(call, "Wait, I smell gas.")
     agent.end(call)
-    assert _label(agent, call) == ("Urgent", "Urgent: gas smell")
+    assert _label(agent, call) == ("No visit", "No visit: gas smell, no visit booked")
+
+
+def test_a_visit_booked_on_a_gas_call_is_urgent(agent):
+    call = ready_to_book(agent)
+    agent.turn(call, "Wait, I smell gas.")
+    agent.say(call, GAS_LINES)
+    agent.turn(call, "Okay, we're all outside and the gas company is on the way.")
+    booked = book(agent, call, first_open(agent, call, "safety_check"), job_type="safety_check")
+    assert booked["ok"], booked
+    agent.end(call)
+    assert _label(agent, call)[0] == "Urgent"
+
+
+def test_an_urgent_lookup_with_nothing_booked_is_no_visit(agent):
+    call = ready_to_book(agent)
+    agent.turn(call, "My mother is 82 and she's here with me.")
+    agent.tool("find_slots", call, job_type="no_heat")
+    agent.end(call)
+    assert _label(agent, call)[0] == "No visit"
+
+
+def test_a_callback_with_no_visit_is_no_visit(agent):
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "I have a question about my bill, can someone call me back?")
+    flagged = agent.tool("flag_person", call, reason="Billing question", callback_time="11 AM")
+    assert flagged["ok"], flagged
+    agent.end(call)
+    assert _label(agent, call) == ("No visit", "No visit: callback promised")
 
 
 def test_an_urgent_label_stays_when_a_routine_job_follows(agent):
     call = ready_to_book(agent)
     agent.turn(call, "My mother is 82 and she's here with me.")
-    agent.tool("find_slots", call, job_type="no_heat")
+    booked = book(agent, call, first_open(agent, call, "no_heat"), job_type="no_heat")
+    assert booked["ok"], booked
     agent.tool("find_slots", call, job_type="tune_up")
     agent.end(call)
     assert _label(agent, call)[0] == "Urgent"
@@ -81,6 +112,9 @@ def test_the_owner_sees_the_label_and_can_show_urgent_calls(agent):
     routine = booked_tune_up(agent, 1)
     urgent = ready_to_book(agent, caller(2))
     agent.turn(urgent, "Wait, I smell gas.")
+    agent.say(urgent, GAS_LINES)
+    agent.turn(urgent, "Okay, we're all outside and the gas company is on the way.")
+    assert book(agent, urgent, first_open(agent, urgent, "safety_check"), job_type="safety_check")["ok"]
     agent.end(urgent)
     sign_in(agent)
     html = agent.client.get("/owner/calls").text

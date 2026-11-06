@@ -1,11 +1,12 @@
 """One label per call for the owner: Urgent, Routine or No visit, each with its reason in a few
-words, such as "Urgent: an older person or a baby at home, no heat" (DECISIONS.md 122).
+words, such as "Urgent: an older person or a baby at home, no heat" (DECISIONS.md 122, 128).
 
-Urgent is the server's priority at High or Urgent, a hazard the safety route heard (a gas smell, a
-carbon monoxide alarm, sparks), or a technician dispatched on the call. Routine is any other call
-about a visit: one booked, moved, cancelled or asked about, or a callback promised. No visit is a
-call that was never about one: a wrong number, a business, an address outside the area, a question
-answered.
+The label describes the visit the call left standing, not the call. Urgent is a visit booked or
+dispatched at the server's priority High or Urgent, or a visit booked on a safety call (a gas
+smell, a carbon monoxide alarm, sparks). Routine is a visit booked or moved below that. No visit is
+every call that left no visit: a callback promised, a question answered, a cancellation, a safety
+call where nothing was booked, a business, an address outside the area. Safety calls stay marked
+as such on the owner view whatever their label.
 
 The priority a booking tool decided is kept as the call goes (`mark`); the rest is read from the
 call's own record when the label is asked for (`decide`), and stored when the call ends (`settle`).
@@ -22,16 +23,12 @@ URGENT, ROUTINE, NO_VISIT = "Urgent", "Routine", "No visit"
 LABELS = (URGENT, ROUTINE, NO_VISIT)
 URGENT_LEVELS = ("High", "Urgent")
 
-# Outcomes (app/lifecycle.py) that were about a visit, and how the reason says it.
-VISIT_OUTCOMES = {
-    "booked": "visit booked",
-    "queued": "visit booked",
-    "changed_booking": "visit moved or cancelled",
+# Why a call left no visit, by its outcome (app/lifecycle.py), as the reason says it.
+NO_VISIT_OUTCOMES = {
+    "changed_booking": "visit cancelled or address changed",
     "callback": "callback promised",
     "flagged": "passed to a person",
     "transferred": "put through to the office",
-}
-NO_VISIT_OUTCOMES = {
     "declined_commercial": "a business, turned away",
     "declined_out_of_area": "outside the service area",
 }
@@ -76,29 +73,41 @@ def mark(
         )
 
 
+def has_visit(conn: sqlite3.Connection, call_id: str) -> bool:
+    """A visit this call booked, dispatched or moved that still stands."""
+    return bool(conn.execute(
+        "SELECT 1 FROM bookings WHERE call_id = ? AND ((kind = 'book' AND status IN "
+        "('booked', 'queued')) OR (kind = 'reschedule' AND status = 'done'))",
+        (call_id,),
+    ).fetchone())
+
+
 def decide(
     conn: sqlite3.Connection, tenant: Tenant, call: sqlite3.Row, outcome: str, ended: bool
 ) -> tuple[str, str]:
     """The call's label and reason, from what the server recorded so far and the outcome the call
     ended with, or would end with now (app/lifecycle.py, `outcome_of`)."""
+    kinds = tenant.safety.get("kinds", {})
+    hazard = call["safety_signal_at"] and call["safety_state"] != "cleared"
+    heard = kinds.get(call["safety_kind"], {}).get("label", "a safety hazard") if hazard else ""
+    if not has_visit(conn, call["id"]):
+        if heard:
+            return NO_VISIT, f"{NO_VISIT}: {heard}, no visit booked"
+        if outcome in NO_VISIT_OUTCOMES:
+            return NO_VISIT, f"{NO_VISIT}: {NO_VISIT_OUTCOMES[outcome]}"
+        if not ended:
+            return NO_VISIT, f"{NO_VISIT}: nothing booked yet"
+        return NO_VISIT, f"{NO_VISIT}: no visit asked for"
     kept = conn.execute(
         "SELECT label, reason FROM call_labels WHERE call_id = ?", (call["id"],)
     ).fetchone()
+    if heard:
+        return URGENT, f"{URGENT}: {heard}"
     if kept and kept["label"] == URGENT:
         return kept["label"], kept["reason"]
-    kinds = tenant.safety.get("kinds", {})
-    if call["safety_signal_at"] and call["safety_state"] != "cleared":
-        heard = kinds.get(call["safety_kind"], {}).get("label", "a safety hazard")
-        return URGENT, f"{URGENT}: {heard}"
-    if kept:
+    if kept and kept["label"] == ROUTINE:
         return kept["label"], kept["reason"]
-    if outcome in VISIT_OUTCOMES:
-        return ROUTINE, f"{ROUTINE}: {VISIT_OUTCOMES[outcome]}"
-    if outcome in NO_VISIT_OUTCOMES:
-        return NO_VISIT, f"{NO_VISIT}: {NO_VISIT_OUTCOMES[outcome]}"
-    if not ended:
-        return NO_VISIT, f"{NO_VISIT}: nothing booked yet"
-    return NO_VISIT, f"{NO_VISIT}: no visit asked for"
+    return ROUTINE, f"{ROUTINE}: visit booked or moved"
 
 
 def settle(
