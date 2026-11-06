@@ -122,6 +122,16 @@ def without_vocative(sentence: str, known: set[str]) -> str:
     return sentence.strip()[: match.start()] + sentence.strip()[match.end(1):]
 
 
+def part_of_day(hour: int) -> str:
+    if 5 <= hour < 12:
+        return "morning"
+    if 12 <= hour < 17:
+        return "afternoon"
+    if 17 <= hour < 22:
+        return "evening"
+    return "night"
+
+
 def plain_day(sentence: str) -> str:
     """Today and tomorrow are said alone, never with the weekday or date (change set 19)."""
     return WEEKDAY_DATE.sub(lambda m: m[1], sentence)
@@ -446,9 +456,7 @@ class LlmCall:
         (Jackson's change set 24)."""
         base = self.lines.get("closing") or self.lines["goodbye"]
         niceties = self.lines.get("closing_niceties") or {}
-        hour = datetime.now(ZoneInfo(self.tz)).hour
-        part = ("morning" if 5 <= hour < 12 else "afternoon" if hour < 17
-                else "evening" if hour < 22 else "night")
+        part = part_of_day(datetime.now(ZoneInfo(self.tz)).hour)
         options = niceties.get(part) or []
         if not options:
             return base
@@ -599,8 +607,9 @@ class LlmCall:
                 await out.say(" ".join(p["text"] for p in parts), fixed=True)
                 finished = True
             elif self.server_led and say:
-                if out.hold_ms is not None:
-                    # Right after "One sec.", the server's own "Got it." would stack two openers.
+                if out.said:
+                    # After "One sec." or the model's own "Okay, thanks.", the server's "Perfect."
+                    # would stack two openers.
                     say = CONNECTOR.sub("", say, count=1)
                 # Interruptible, so the caller can correct a read-back; a safety refusal is not.
                 await out.say(say, fixed=envelope.get("refused") == "gate_safety")

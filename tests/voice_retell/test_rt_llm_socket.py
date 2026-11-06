@@ -13,7 +13,7 @@ from fastapi.testclient import TestClient
 from starlette.websockets import WebSocketDisconnect
 
 from voice.retell_llm import llm_socket
-from voice.retell_llm.call import caller_text, heard_after
+from voice.retell_llm.call import caller_text, heard_after, part_of_day
 from voice.retell_llm.model import Reply
 from voice.retell_llm.rig_adapter import rig_agent_body, socket_url
 
@@ -658,3 +658,20 @@ def test_server_led_a_goodbye_without_end_call_is_said(server_led):
     with client.websocket_connect(path()) as ws:
         open_call(ws)
         assert said(ask(ws, 1, ["Hi.", "Have a good one."])) == "You too, have a great day!"
+
+
+@pytest.mark.parametrize("hour,part", [(1, "night"), (4, "night"), (5, "morning"), (11, "morning"),
+                                       (12, "afternoon"), (16, "afternoon"), (17, "evening"),
+                                       (21, "evening"), (22, "night"), (23, "night")])
+def test_the_closing_nicety_fits_the_hour(hour, part):
+    assert part_of_day(hour) == part
+
+
+def test_server_led_no_server_connector_after_the_models_own(server_led):
+    server, make = server_led
+    read_back = {"id": "t1", "name": "read_back", "input": {}}
+    server.tools["read_back"] = envelope(say=f"Perfect. {READ_BACK}", data={"confirmed": False})
+    client, _ = make([(["Okay, thanks. "], [read_back])])
+    with client.websocket_connect(path()) as ws:
+        open_call(ws)
+        assert said(ask(ws, 1, ["Hi.", "This number."])) == f"Okay, thanks. {READ_BACK}"
