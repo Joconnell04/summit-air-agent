@@ -1028,6 +1028,40 @@
           }
         },
         {
+          "name": "Never put through on a safety call",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('refused: transfer_safety', () => pm.expect(pm.response.json().refused).to.eql('transfer_safety'));",
+                  "",
+                  "pm.test('HTTP 200 with the envelope', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  const b = pm.response.json();",
+                  "  ['ok', 'say', 'data', 'refused'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/tools/request_transfer",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"call_id\": \"{{safety_call_id}}\",\n  \"reason\": \"person\",\n  \"summary\": \"Wants a person about the gas smell\"\n}"
+            }
+          }
+        },
+        {
           "name": "Flag a person on the safety call",
           "event": [
             {

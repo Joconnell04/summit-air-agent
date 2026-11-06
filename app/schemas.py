@@ -393,6 +393,23 @@ class FlagIn(CallRef, CallbackTime):
     )
 
 
+class RequestTransferIn(CallRef):
+    reason: Literal["person", "complaint", "billing"] = Field(
+        description="person: the caller asked for a real person. complaint or billing: a complaint "
+        "or a billing question, which a person at the office handles."
+    )
+    summary: str = Field(
+        min_length=3,
+        max_length=20000,
+        description="One line on what the caller needs, for the person who takes the call.",
+    )
+
+    @field_validator("summary")
+    @classmethod
+    def _cut(cls, value: str) -> str:
+        return value if len(value) <= FLAG_REASON_CHARS else value[: FLAG_REASON_CHARS - 3] + "..."
+
+
 class LeadDetails(CallbackTime):
     contact_name: str = Field(min_length=1, max_length=80)
     company: str = Field("", max_length=120)

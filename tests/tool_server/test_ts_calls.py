@@ -444,11 +444,13 @@ def test_outbound_calls_go_only_to_the_caller_in_hours_once_and_never_to_do_not_
 
 def test_there_is_no_tool_that_calls_911_or_an_outside_number(agent):
     tools = {r.path for r in agent.app.routes if r.path.startswith("/tools/")}
-    assert not {
+    # request_transfer dials nothing: it hands Retell the tenant's own office number, from the
+    # server's environment, and only when the server allows it (test_ts_request_transfer.py).
+    assert {
         p
         for p in tools
         if any(w in p for w in ("dial", "call_number", "transfer", "911", "place_call"))
-    }
+    } == {"/tools/request_transfer"}
 
 
 # ---- do not call -------------------------------------------------------------------------------
