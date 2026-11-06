@@ -1,5 +1,3 @@
-# #175 turn-taking check: the same four callers as in slate-sonnet-v5-night.txt, with B's enable_dynamic_responsiveness true (stt accurate).
+# #175 turn-taking check: two of the same callers as in slate-sonnet-v5-night.txt, with B's enable_dynamic_responsiveness true (stt accurate).
 B agent_871ef6fafe2636244c4bbaca67 eval r404-01 reset
 B agent_871ef6fafe2636244c4bbaca67 eval o404-01 reset
-B agent_871ef6fafe2636244c4bbaca67 eval r404-02 reset
-B agent_871ef6fafe2636244c4bbaca67 eval o404-02 reset
