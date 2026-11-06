@@ -4,6 +4,7 @@ on error too.
 
     python retell/arms/socket/line.py busy      exit 1 if a call on the line started in the last
                                                 30 minutes and hasn't ended
+    python retell/arms/socket/line.py count     print how many calls are live on the line
     python retell/arms/socket/line.py arm       answer with the socket agent and the server-led
                                                 world's inbound webhook
     python retell/arms/socket/line.py restore   answer with Jackson's agent and the live bridge
@@ -82,6 +83,9 @@ def main() -> int:
         for c in calls:
             print(f"live: {c['call_id']} {c.get('agent_id')} {c.get('call_status')}")
         return 1 if calls else 0
+    if action == "count":
+        print(len(live_calls(retell, int(time.time() * 1000))))
+        return 0
     if action == "arm":
         put(retell, setup(socket_agent(retell)))
     elif action == "restore":

@@ -110,8 +110,7 @@ class Response:
         self.call = call
         self.id = response_id
         self.said = False
-        # Lines sent so far, so a turn can tell whether a tool's sentence was spoken.
-        self.sent = 0
+
         self.closed = False
 
     def stale(self) -> bool:
@@ -124,7 +123,6 @@ class Response:
         if self.said:
             text = " " + text
         self.said = True
-        self.sent += 1
         event = {"response_type": "response", "response_id": self.id, "content": text,
                  "content_complete": False}
         if fixed:
@@ -380,8 +378,9 @@ class LlmCall:
                 ends = [tail, unnarrated(pending) if self.server_led else pending]
                 ends = [s for s in ends if s.strip()]
                 last = " ".join(k for s in ends if (k := self.reply.sentence(s)))
-            # Server-led, text held with a tool call waits for the result: when the server speaks
-            # a sentence of its own, the model's lead-in ("Got it, one sec.") is never said.
+            # Server-led, the text that comes with a tool call is never said: it is the lead-in
+            # ("Got it, one sec.", "Confirming the address now.") or a question the result answers.
+            # The model's next request writes the reply when the server has nothing to say.
             deferred = self.server_led and bool(reply.tool_uses)
             if last and not deferred:
                 kept.append(last)
@@ -395,12 +394,8 @@ class LlmCall:
             if not reply.tool_uses:
                 break
             called = time.perf_counter()
-            sent = out.sent
             results, finished = await self._run_tools(out, reply.tool_uses)
             tool_ms += (time.perf_counter() - called) * 1000
-            if deferred and last and out.sent == sent and not out.stale():
-                await out.say(last)
-                content.insert(0, {"type": "text", "text": last})
             self.messages.append({"role": "user", "content": results})
             if finished or out.stale():
                 break

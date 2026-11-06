@@ -374,10 +374,11 @@ def test_server_led_a_lead_in_held_before_a_server_sentence_is_never_said(server
         ask(ws, 1, ["Hi.", "45 Forest Avenue."])
         events = ask(ws, 2, ["Hi.", "45 Forest Avenue.", "What's the best number?", "My account."])
         assert said(events) == "Should I put this under your account?"
-        # A tool with nothing to say: the held text is said after it answers.
+        # A tool with nothing to say: the model's next request writes the reply, and the text that
+        # came with the call is dropped all the same.
         events = ask(ws, 3, ["Hi.", "45 Forest Avenue.", "What's the best number?", "My account.",
                              "Should I put this under your account?", "Yes."])
-    assert said(events).startswith("Thanks.")
+    assert said(events) == "What's the best number?"
 
 
 def test_server_led_the_arm_brings_its_own_prompt_and_tools(server_led, monkeypatch, tmp_path):
