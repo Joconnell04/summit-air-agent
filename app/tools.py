@@ -1970,7 +1970,7 @@ def find_slots(ctx: Ctx, args: FindSlotsIn) -> Result:
         standing = _dispatched(ctx)
         if standing and standing["job_type"] == args.job_type:
             return ok(
-                "",
+                _dispatch_unheard(ctx),
                 **data,
                 dispatched=True,
                 note="A technician is already dispatched on this call; don't offer times.",
@@ -2838,6 +2838,25 @@ DISPATCH_WAITING = "dispatch waiting:"
 def _dispatch_types(ctx: Ctx) -> list[str]:
     cutoffs = ctx.tenant.after_hours_cutoffs
     return cutoffs["heating_job_types"] + cutoffs["cooling_job_types"]
+
+
+def _dispatch_unheard(ctx: Ctx) -> str:
+    """The dispatch sentence again when no agent line has said it: Retell can replace a response
+    while the dispatch is being booked, and the caller never hears it (rerun of done-bar persona
+    e). "" once it was said."""
+    row = ctx.conn.execute(
+        "SELECT say FROM tool_calls WHERE call_id = ? AND tool IN ('find_slots', 'read_back') "
+        "AND ok = 1 AND say != '' ORDER BY id DESC LIMIT 1",
+        (ctx.call["id"],),
+    ).fetchone()
+    if row is None:
+        return ""
+    # The longest sentence, since a short connector before it may have been cut.
+    said = words(max(re.split(r"(?<=[.?!])\s+", row["say"]), key=len))
+    heard = ctx.conn.execute(
+        "SELECT text FROM turns WHERE call_id = ? AND speaker = 'agent'", (ctx.call["id"],)
+    ).fetchall()
+    return "" if any(said in words(r["text"]) for r in heard) else row["say"]
 
 
 def _dispatched(ctx: Ctx) -> sqlite3.Row | None:

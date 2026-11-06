@@ -229,3 +229,16 @@ def test_the_read_back_starts_with_a_connector_never_twice_the_same(agent):
         said.append(asked["say"][: -len(asked["data"]["sentence"])].strip())
     assert all(word in ("Got it.", "Perfect.", "Okay.") for word in said), said
     assert all(a != b for a, b in pairwise(said)), said
+
+
+def test_a_dispatch_the_caller_never_heard_is_said_again(agent):
+    """Rerun of done-bar persona e: Retell replaced the response while the dispatch was booked,
+    so its sentence never played, and the next find_slots came back with nothing to say."""
+    call = _start_no_heat(agent)
+    sent = _dispatch(agent, call)
+    assert sent["data"]["dispatched"]
+    again = agent.tool("find_slots", call, job_type="no_heat")
+    assert again["say"] == sent["say"]
+    agent.say(call, sent["say"].split(". ", 1)[1])
+    assert agent.tool("find_slots", call, job_type="no_heat")["say"] == ""
+
