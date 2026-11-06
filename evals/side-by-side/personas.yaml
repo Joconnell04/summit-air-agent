@@ -4,14 +4,16 @@
 #
 # name: the name the booking should carry, spelled as intended (null: no booking expected)
 # first: the caller's first name, which the agent must never say
-# bookings: booking kinds the tool server should hold for the call
+# bookings: booking kinds the tool server should hold for the call (left out: not checked)
 # callback / lead / flag: whether a callback, lead or flag row is expected
 # no_thanks: a caller phrase that declines an offer and must not end the call
 # retraction: a caller phrase that takes back a hazard; no safety lines may follow it
 # safety: the call raises a hazard, so the safety lines are said once
+# real_hazard: the hazard is current, so the safety advice must be spoken (l, h, j)
 # prior_visit: the caller has a visit on file from this slate (only b, after e)
 # dnc_undo: the caller asks not to be called, then takes it back; the list must not hold them
 # raised: a pattern for what the caller says, when invited, that should raise the visit's priority
+# callback_day: the weekday the caller asks to be called back on
 # closes_with: words from the caller's own closing line, so a call that ends earlier is a premature hang-up
 #   (without it, the caller declining "anything else?" counts as the close)
 # confirms: how many "is that right?" style confirmations the persona earns
@@ -23,7 +25,8 @@ personas:
   e: {name: Jordan Lee, first: Jordan, bookings: [book], callback: true, dnc_undo: true, raised: "eighty|85", confirms: 2, closes_with: "end the call"}
   f: {name: Jordan Lee, first: Jordan, bookings: [book], raised: newborn, closes_with: "bye"}
   g: {name: null, first: Casey, bookings: [], lead: true, closes_with: "bye"}
-  h: {name: Riley Chen, first: Riley, bookings: [book], safety: true, flag: true, confirms: 2, closes_with: "that's all"}
-  i: {name: Morgan Diaz, first: Morgan, bookings: [book], callback: true, confirms: 2, closes_with: "bye"}
-  j: {name: Taylor Brooks, first: Taylor, bookings: [book], safety: true, flag: true, closes_with: "that's it"}
+  h: {real_hazard: true, name: Riley Chen, first: Riley, bookings: [book], safety: true, flag: true, confirms: 2, closes_with: "that's all"}
+  i: {name: Morgan Diaz, first: Morgan, bookings: [book], callback: true, callback_day: monday, confirms: 2, closes_with: "bye"}
+  j: {real_hazard: true, name: Taylor Brooks, first: Taylor, bookings: [book], safety: true, flag: true, closes_with: "that's it"}
+  l: {name: null, first: Pat, safety: true, real_hazard: true, flag: true, closes_with: "bye"}
   k: {name: Siobhan Nguyen, first: Siobhan, bookings: [book], raised: newborn, closes_with: "bye"}

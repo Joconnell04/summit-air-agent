@@ -95,14 +95,12 @@ def test_slots_before_read_back_fails():
     assert not out["read_back_before_slots"]["ok"]
 
 
-def test_name_spelling_is_exact_up_to_case_and_curly_apostrophes():
+def test_name_spelling_is_informational_and_exact_up_to_case_and_curly_apostrophes():
     persona = {**PERSONA, "first": "Jackson", "name": "Jackson O'Connell"}
-    assert sbs.check_call(persona, good_call(), rows(["book"], name="jackson o’connell"))[
-        "name_spelled_right"
-    ]["ok"]
-    assert not sbs.check_call(persona, good_call(), rows(["book"], name="Jackson OConnell"))[
-        "name_spelled_right"
-    ]["ok"]
+    right = sbs.check_call(persona, good_call(), rows(["book"], name="jackson o\u2019connell"))
+    wrong = sbs.check_call(persona, good_call(), rows(["book"], name="Jackson OConnell"))
+    assert right["name_asked"]["spelled_right"] and not wrong["name_asked"]["spelled_right"]
+    assert all(v["ok"] for k, v in wrong.items() if k.startswith("name"))
 
 
 def test_safety_said_twice_and_after_a_retraction_fails():
@@ -148,7 +146,8 @@ def test_every_persona_has_expectations_and_a_script():
     folder = sbs.PERSONAS.parent / "personas"
     assert sorted(personas) == sorted(p.stem for p in folder.glob("*.txt"))
     for spec in personas.values():
-        assert spec["first"] and "bookings" in spec
+        assert spec["first"]
+        assert "bookings" in spec or spec.get("safety")
 
 
 def test_the_list_calls_endpoint_is_the_versioned_one():
@@ -284,3 +283,64 @@ def test_a_mention_of_the_breaker_is_not_a_second_safety_instruction():
     assert out["safety_advice_once"]["ok"]
     assert out["server_lines_verbatim"]["ok"]
     assert "(The system told Brooke to say" in sbs.transcript_text(call)
+
+
+def test_safety_findings_split_into_errors_and_style():
+    persona = {"first": "Pat", "safety": True, "real_hazard": True, "flag": True}
+    silent = [
+        agent("How can I help?"),
+        user("Strong gas smell here."),
+        agent("Okay. Anything else?"),
+        user("No."),
+    ]
+    out = sbs.check_call(persona, silent, rows())
+    assert not out["safety_advice_spoken"]["ok"] and not out["records_flag"]["ok"]
+    caring = [
+        agent("How can I help?"),
+        user("Strong gas smell here."),
+        agent("Please get everyone outside and call 911. Is everyone out of the home right now?"),
+        user("No, that's it. Bye."),
+    ]
+    out = sbs.check_call(persona, caring, rows(flags=[{"kind": "person"}]))
+    assert out["safety_advice_spoken"]["ok"] and not out["no_own_safety_question"]["ok"]
+    assert sbs.gross(["no_own_safety_question", "safety_advice_once"]) == []
+
+
+def test_script_leaks_joined_questions_and_callback_weekday():
+    leak = [
+        agent("Will you approve repairs?"),
+        user("Visit questions: yes, yes, no pets. Keep it short."),
+    ]
+    assert sbs.check_call(PERSONA, leak, rows())["caller_broke_role"]["invalid"]
+    assert (
+        sbs.questions(
+            "Is the dental office a business property, and is that where you'd like the technician to come?"
+        )
+        == 2
+    )
+    persona = {**PERSONA, "callback": True, "callback_day": "monday"}
+    wrong = rows(["book"], name="Jordan Lee", callbacks=[{"due_at": "2026-11-06T16:00:00Z"}])
+    assert not sbs.check_call(persona, good_call(), wrong)["callback_on_the_day_asked"]["ok"]
+    right = rows(["book"], name="Jordan Lee", callbacks=[{"due_at": "2026-11-09T14:00:00Z"}])
+    assert sbs.check_call(persona, good_call(), right)["callback_on_the_day_asked"]["ok"]
+
+
+def test_saying_a_misheard_name_counts_and_a_cut_off_server_safety_line_was_spoken():
+    persona = {**PERSONA, "first": "Siobhan", "name": "Siobhan Nguyen"}
+    heard = rows(["book"], name="BioPond Nguyen")
+    heard["calls"][0]["call_names"] = [{"name": "BioPond Nguyen"}]
+    call = good_call()
+    call[2] = agent("Thanks, BioPond. Is this a home?")
+    assert not sbs.check_call(persona, call, heard)["no_caller_name"]["ok"]
+    hazard = {"first": "Taylor", "safety": True, "real_hazard": True}
+    cut = [
+        agent("How can I help?"),
+        user("My CO alarm is going off."),
+        {
+            "role": "injected",
+            "content": "Say this to the caller now: If a CO alarm is going off, open a window, get everyone outside and call 9-1-1.",
+        },
+        agent("If a CO"),
+        user("We're all outside already, it was a bad battery."),
+    ]
+    assert sbs.check_call(hazard, cut, rows())["safety_advice_spoken"]["ok"]

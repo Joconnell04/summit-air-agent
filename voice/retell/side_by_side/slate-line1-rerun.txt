@@ -1,7 +1,11 @@
-# Line 1 reruns: Retell's DNC detection off (e, b) and persona c fixed to stay in role.
+# Line 1 reruns: Retell DNC detection off (e, b), persona c fixed to stay in role, the real-gas persona l, and i again (its caller read the script aloud).
 A agent_a3e38e6aa3d4e75dfac12aafc8 live e reset
 A agent_a3e38e6aa3d4e75dfac12aafc8 live b keep
 C agent_d72df072302c81f75d1b7fadf4 live e reset
 C agent_d72df072302c81f75d1b7fadf4 live b keep
 A agent_a3e38e6aa3d4e75dfac12aafc8 live c reset
 C agent_d72df072302c81f75d1b7fadf4 live c reset
+A agent_a3e38e6aa3d4e75dfac12aafc8 live l reset
+C agent_d72df072302c81f75d1b7fadf4 live l reset
+A agent_a3e38e6aa3d4e75dfac12aafc8 live i reset
+C agent_d72df072302c81f75d1b7fadf4 live i reset

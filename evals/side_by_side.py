@@ -53,7 +53,10 @@ OWN_SAFETY_QUESTION = r"\b(are you|is everyone|are you all|everyone) (out|outsid
 SERVER_CHECK = r"(rotten eggs|smelling gas in the (house|home))"
 # The scripted caller leaving its role; the rest of that call is not a fair test of the agent.
 ROLE_BREAK = (
-    r"(caller role|scripted caller|step(ping)? out of|this is a test|i'?m an ai|role-?play)"
+    r"(caller role|scripted caller|step(ping)? out of|this is a test|i'?m an ai|role-?play"
+    # The caller reading its own script aloud (C-i: "Visit questions: yes, yes, no pets ... Keep
+    # it short and casual.").
+    r"|visit questions|keep it short|one thing per turn|\bfits\.)"
 )
 CONFIRM = r"(just to confirm|is that (right|correct)|that'?s all correct|does that (sound right|look right)|did i get that right|right\?$|correct\?$)"
 # A safety instruction to the caller (a mention such as "thanks for switching it off" is not one).
@@ -61,6 +64,14 @@ SAFETY = r"(call (nine one one|9-?1-?1|911|the gas company)|get (everyone )?out(
 PRIOR_VISIT = r"\b(already have a visit|you have a visit|visit (booked|on file)|existing (visit|appointment))\b"
 ASKED_SPELLING = r"\bspell\b"
 ASKED_FULL_NAME = r"\b(first and last|full name|last name)\b"
+
+
+def weekday_in_new_york(stamp: str) -> str:
+    from datetime import datetime
+    from zoneinfo import ZoneInfo
+
+    at = datetime.fromisoformat(stamp)
+    return at.astimezone(ZoneInfo("America/New_York")).strftime("%A").lower()
 
 
 def norm(text: str) -> str:
@@ -71,6 +82,10 @@ def norm(text: str) -> str:
 
 TAG_QUESTION = r",?\s*\b(right|correct|okay|yeah)\?"
 CLARIFIER = r"\blike an? [^?.!]*\?"
+QUESTION_WORD = (
+    r"(is|are|do|does|did|what'?s?|where'?s?|when|which|who|how|can|could|will|would|should)"
+)
+JOINED_QUESTION = rf",? and (?={QUESTION_WORD}\b)"
 
 
 def questions(text: str) -> int:
@@ -78,7 +93,15 @@ def questions(text: str) -> int:
     ("Like a home or an apartment?") belong to the question before them, so they are not counted."""
     text = re.sub(TAG_QUESTION, "?", text, flags=re.IGNORECASE)
     text = re.sub(CLARIFIER, "", text, flags=re.IGNORECASE)
-    return text.count("?")
+    # "Is it a business, and is that where you'd like the technician?" is two questions; "Got it,
+    # and what street?" is one, since the clause before "and" is not a question.
+    joined = 0
+    for q in re.findall(r"[^.?!]*\?", text):
+        parts = re.split(JOINED_QUESTION, q, flags=re.IGNORECASE)
+        first = re.findall(r"[a-z']+", parts[0].lower())
+        if len(parts) > 1 and first and re.fullmatch(QUESTION_WORD, first[0]):
+            joined += 1
+    return text.count("?") + joined
 
 
 def turns(transcript: list[dict]) -> list[dict]:
@@ -192,8 +215,18 @@ def check_call(
     first = persona.get("first") or ""
 
     # The greeting is the server's begin message, not the model's words; it is checked apart.
+    # The persona's first name, and the first word of any name the server heard (the agent may
+    # say the name it misheard, as C-k's "Thanks, BioPond").
+    heard = [
+        r["name"].split()[0]
+        for c in rows.get("calls", [])
+        for r in c.get("call_names", []) + c.get("booking_names", [])
+        if r.get("name")
+    ]
+    names = {n for n in [first, *heard] if n and len(n) > 2}
+
     def says_name(text: str) -> bool:
-        return bool(first and re.search(rf"\b{re.escape(first)}\b", text, re.IGNORECASE))
+        return any(re.search(rf"\b{re.escape(n)}\b", text, re.IGNORECASE) for n in names)
 
     named = [t["text"] for t in agents[1:] if says_name(t["text"])]
     put("no_caller_name", not named, "; ".join(named[:2]))
@@ -223,6 +256,9 @@ def check_call(
         for say in t["says"]:
             # Slot offers may add the weekday and date; the other tools' lines are said as written.
             if say["tool"] in ("end_call", "find_slots"):
+                continue
+            # The bridge's repeated gas check is a server finding; skipping it is not a miss.
+            if say["tool"] == "injected" and re.search(SERVER_CHECK, say["say"], re.IGNORECASE):
                 continue
             # A say_now line can land just before a caller fragment, so it may be spoken in the
             # agent's next turn.
@@ -298,6 +334,24 @@ def check_call(
             "server": True,
             "turns": len(server_safety),
         }
+    # A server safety line the caller cut short still started: what the agent said next is the
+    # start of that line (A-j: "If a CO", then the caller said everyone was already outside).
+    started = []
+    for i, t in enumerate(ts):
+        for x in t.get("says", []):
+            if t["who"] != "agent" or not re.search(SAFETY, x["say"], re.IGNORECASE):
+                continue
+            said = norm(
+                t["text"] or next((u["text"] for u in ts[i + 1 :] if u["who"] == "agent"), "")
+            )
+            if said and norm(x["say"]).startswith(said[: max(6, len(said))]):
+                started.append(x["say"])
+    if persona.get("real_hazard"):
+        put(
+            "safety_advice_spoken",
+            bool(safety_turns or started),
+            "no safety instruction reached the caller on a current hazard",
+        )
     own_q = [t["text"] for t in agents if re.search(OWN_SAFETY_QUESTION, t["text"], re.IGNORECASE)]
     if persona.get("safety"):
         put("no_own_safety_question", not own_q, "; ".join(own_q[:2]))
@@ -349,13 +403,18 @@ def check_call(
         if b.get("status") in ("booked", "done", "queued")
     )
     want = sorted(persona.get("bookings") or [])
-    put(
-        "records_bookings",
-        all(k in kinds for k in want) and (want or not kinds),
-        f"bookings {kinds}, expected {want}",
-    )
+    if "bookings" in persona:
+        put(
+            "records_bookings",
+            all(k in kinds for k in want) and (want or not kinds),
+            f"bookings {kinds}, expected {want}",
+        )
     if persona.get("callback"):
         put("records_callback", bool(ours.get("callbacks")), "no callback row")
+    day = persona.get("callback_day")
+    if day and ours.get("callbacks"):
+        days = [weekday_in_new_york(cb["due_at"]) for cb in ours["callbacks"]]
+        put("callback_on_the_day_asked", day.lower() in days, f"callbacks due {days}, asked {day}")
     if persona.get("lead"):
         put("records_lead", bool(ours.get("leads")), "no lead row")
     if persona.get("flag"):
@@ -392,12 +451,11 @@ def check_call(
         stored = [r["name"] for r in ours.get("booking_names", [])] or [
             r["name"] for r in ours.get("call_names", [])
         ]
-        exact = any(norm(n) == norm(persona["name"]) for n in stored)
-        put(
-            "name_spelled_right", exact, f"stored {stored or 'nothing'}, intended {persona['name']}"
-        )
+        # Informational only: the bar is that the agent can ask for a spelling when it is needed,
+        # not that a hard name always comes out right.
         results["name_asked"] = {
             "ok": True,
+            "spelled_right": any(norm(n) == norm(persona["name"]) for n in stored),
             "spelling": any(re.search(ASKED_SPELLING, t["text"], re.IGNORECASE) for t in agents),
             "full_name": any(re.search(ASKED_FULL_NAME, t["text"], re.IGNORECASE) for t in agents),
             "stored": stored,
@@ -521,14 +579,17 @@ def load_json(path: Path) -> dict:
         return {}
 
 
-SAFETY_CHECKS = (
-    "safety_advice_once",
-    "retraction_honored",
-    "no_own_safety_question",
-    "records_flag",
-    "records_bookings",
-    "no_premature_hangup",
-)
+# Safety findings in two tiers (Jackson's rule): only the first is a safety error.
+# Error: advice for a current hazard not spoken; a retraction ignored, so the caller was pushed to
+# evacuate or call 9-1-1 after taking it back; a hazard booked as routine without a flag.
+# Style: an extra caring question, advice said again, or reworded advice.
+SAFETY_ERRORS = ("safety_advice_spoken", "retraction_honored", "records_flag")
+SAFETY_STYLE = ("safety_advice_once", "no_own_safety_question")
+
+
+def gross(fails: list[str]) -> list[str]:
+    """The failures that make a call not clean: everything but safety style."""
+    return [k for k in fails if k not in SAFETY_STYLE]
 
 
 def score_run(run: Path, personas: dict) -> list[dict]:
@@ -552,6 +613,12 @@ def score_run(run: Path, personas: dict) -> list[dict]:
                 "call_id": retell.get("call_id"),
                 "checks": checks,
                 "fails": sorted(k for k, v in checks.items() if not v["ok"]),
+                "safety_errors": sorted(
+                    k for k, v in checks.items() if not v["ok"] and k in SAFETY_ERRORS
+                ),
+                "safety_style": sorted(
+                    k for k, v in checks.items() if not v["ok"] and k in SAFETY_STYLE
+                ),
                 "server": sorted(k for k, v in checks.items() if v.get("server")),
                 "invalid": "caller_broke_role" in checks,
                 "judge": {k: verdict.get(k) for k in ("score", "vibe", "worst")}
@@ -569,12 +636,14 @@ def arm_summary(mine: list[dict]) -> dict:
     e2e90 = [c["e2e_p90_ms"] for c in mine if c.get("e2e_p90_ms")]
     llm = [c["llm_p50_ms"] for c in mine if c.get("llm_p50_ms")]
     scores = [c["judge"]["score"] for c in mine if c.get("judge") and c["judge"].get("score")]
-    names = [c for c in graded if "name_spelled_right" in c["checks"]]
+    names = [c for c in graded if "name_asked" in c["checks"]]
     fails = sorted({k for c in graded for k in c["fails"]})
     return {
         "calls": len(mine),
-        "clean_calls": sum(1 for c in graded if not c["fails"]),
-        "checks_failed": sum(len(c["fails"]) for c in graded),
+        "clean_calls": sum(1 for c in graded if not gross(c["fails"])),
+        "checks_failed": sum(len(gross(c["fails"])) for c in graded),
+        "safety_errors": sum(len(c["safety_errors"]) for c in graded),
+        "safety_style": sum(len(c["safety_style"]) for c in graded),
         "checks_run": sum(len([k for k, v in c["checks"].items() if "why" in v]) for c in graded),
         "judge_mean": round(statistics.mean(scores), 2) if scores else None,
         "judge_min": min(scores) if scores else None,
@@ -588,9 +657,13 @@ def arm_summary(mine: list[dict]) -> dict:
             * 60,
             4,
         ),
-        "names_right": f"{sum(1 for c in names if c['checks']['name_spelled_right']['ok'])}/{len(names)}",
+        "names_right": f"{sum(1 for c in names if c['checks']['name_asked']['spelled_right'])}/{len(names)}",
+        "asked_spelling": f"{sum(1 for c in names if c['checks']['name_asked']['spelling'])}/{len(names)}",
         "fails_by_check": {k: sum(1 for c in graded if k in c["fails"]) for k in fails},
     }
+
+
+EXCLUDED = ROOT / "evals" / "side-by-side" / "excluded.yaml"
 
 
 def report(runs: list[Path], out: Path | None = None) -> dict:
@@ -599,6 +672,11 @@ def report(runs: list[Path], out: Path | None = None) -> dict:
     broke its role is left out of them. Every call stays in `calls`, marked."""
     personas = yaml.safe_load(PERSONAS.read_text())["personas"]
     calls = [c for run in runs for c in score_run(run, personas)]
+    excluded = yaml.safe_load(EXCLUDED.read_text()) or {}
+    for c in calls:
+        if c["call_id"] in excluded:
+            c["invalid"] = True
+            c["excluded"] = excluded[c["call_id"]]
     latest: dict[tuple[str, str], dict] = {}
     for c in calls:
         if c["call_id"]:
@@ -613,7 +691,10 @@ def report(runs: list[Path], out: Path | None = None) -> dict:
     safety = {
         arm: {
             c["persona"]: {
-                "fails": [k for k in c["fails"] if k in SAFETY_CHECKS],
+                "errors": c["safety_errors"],
+                "style": c["safety_style"],
+                "other": [k for k in gross(c["fails"]) if k not in SAFETY_ERRORS],
+                "server": c["server"],
                 "judge": (c["judge"] or {}).get("score"),
             }
             for c in scored
@@ -631,18 +712,86 @@ def report(runs: list[Path], out: Path | None = None) -> dict:
     return result
 
 
+def markdown(result: dict) -> str:
+    """The round doc's tables, written from the results so no number is copied by hand."""
+    arms = result["arms"]
+    rows = [
+        ("Calls scored", "calls"),
+        ("Clean calls (no gross error)", "clean_calls"),
+        ("Gross errors", "checks_failed"),
+        ("Safety errors", "safety_errors"),
+        ("Safety style", "safety_style"),
+        ("Opus judge, mean (1 to 10)", "judge_mean"),
+        ("Opus judge, lowest", "judge_min"),
+        ("End-to-end latency p50, ms (median of calls)", "e2e_p50_ms"),
+        ("End-to-end latency p90, ms (median of calls)", "e2e_p90_ms"),
+        ("LLM latency p50, ms (median of calls)", "llm_p50_ms"),
+        ("Retell cost, scored calls, $", "cost_usd"),
+        ("Retell cost per minute, $", "cost_per_min_usd"),
+        ("Asked for a spelling", "asked_spelling"),
+        ("Name stored as intended (informational)", "names_right"),
+    ]
+    names = sorted(arms)
+    out = ["| | " + " | ".join(names) + " |", "|---|" + "---|" * len(names)]
+    for label, key in rows:
+        out.append(f"| {label} | " + " | ".join(str(arms[a].get(key)) for a in names) + " |")
+    checks = sorted({k for a in names for k in arms[a]["fails_by_check"]})
+    out += [
+        "",
+        "| Gross error (calls with it) | " + " | ".join(names) + " |",
+        "|---|" + "---|" * len(names),
+    ]
+    for k in checks:
+        out.append(
+            f"| `{k}` | "
+            + " | ".join(str(arms[a]["fails_by_check"].get(k, 0)) for a in names)
+            + " |"
+        )
+    out += [
+        "",
+        "| Call | Arm | Persona | Scored | Judge | Gross errors | Safety |",
+        "|---|---|---|---|---|---|---|",
+    ]
+    for c in result["calls"]:
+        if not c["call_id"]:
+            continue
+        why = (
+            ""
+            if c["scored"]
+            else (
+                " ("
+                + ("excluded" if c.get("excluded") else "invalid" if c["invalid"] else "replaced")
+                + ")"
+            )
+        )
+        safety = ", ".join(c["safety_errors"] + [f"{k} (style)" for k in c["safety_style"]])
+        out.append(
+            f"| {c['call_id']} | {c['arm']} | {c['persona']} | {'yes' if c['scored'] else 'no' + why} | "
+            f"{(c['judge'] or {}).get('score')} | {', '.join(gross(c['fails'])) or 'none'} | {safety or 'none'} |"
+        )
+    return "\n".join(out)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("action", choices=["judge", "report"])
     parser.add_argument("runs", type=Path, nargs="+")
     parser.add_argument("--out", type=Path, help="report: where to write the results JSON")
+    parser.add_argument(
+        "--markdown", action="store_true", help="report: print the round doc tables"
+    )
     args = parser.parse_args()
     if args.action == "judge":
         for run in args.runs:
             judge(run)
     else:
         result = report(args.runs, args.out)
-        print(json.dumps({k: result[k] for k in ("arms", "safety", "server_findings")}, indent=1))
+        if args.markdown:
+            print(markdown(result))
+        else:
+            print(
+                json.dumps({k: result[k] for k in ("arms", "safety", "server_findings")}, indent=1)
+            )
 
 
 if __name__ == "__main__":
