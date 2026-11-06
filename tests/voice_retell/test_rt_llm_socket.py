@@ -101,9 +101,9 @@ def path() -> str:
     return f"/retell-llm/{llm_socket.socket_key(API_KEY)}/call_abc"
 
 
-def open_call(ws) -> None:
+def open_call(ws, details: dict = DETAILS) -> None:
     assert json.loads(ws.receive_text())["response_type"] == "config"
-    ws.send_text(json.dumps(DETAILS))
+    ws.send_text(json.dumps(details))
     begin = json.loads(ws.receive_text())
     assert begin == {"response_type": "response", "response_id": 0,
                      "content": "Thanks for calling Summit Air, this is Katie.",
@@ -278,3 +278,39 @@ def test_the_rig_agent_runs_on_the_socket_with_no_webhook():
     assert socket_url("https://host/eval", API_KEY).startswith("wss://host/eval/retell-llm/")
     assert "webhook_url" not in body
     assert body["reminder_trigger_ms"] == 120_000 and body["reminder_max_count"] == 4
+
+
+CONNECTING = "Okay, I'll connect you with someone from our team now. One moment."
+FALLBACK = (
+    "I couldn't reach anyone just now, so I've let the team know and someone will call you by "
+    "9:30 AM."
+)
+ALLOWED = envelope(say=CONNECTING, data={
+    "transfer": {"id": 7, "role": "office", "number": "+12125550100"}, "fallback": FALLBACK,
+})
+WANTS = {"id": "t1", "name": "request_transfer",
+         "input": {"reason": "person", "summary": "Wants a person"}}
+
+
+def test_an_allowed_transfer_on_a_phone_call_says_the_line_then_transfers(socket):
+    server, make = socket
+    server.tools["request_transfer"] = ALLOWED
+    phone = {**DETAILS, "call": {**DETAILS["call"], "call_type": "phone_call"}}
+    client, _ = make([([], [WANTS])])
+    with client.websocket_connect(path()) as ws:
+        open_call(ws, phone)
+        events = ask(ws, 1, ["Hi.", "Can I talk to a real person?"])
+    assert said(events) == CONNECTING
+    assert events[-1]["transfer_number"] == "+12125550100"
+
+
+def test_on_a_web_call_the_transfer_is_reported_failed_and_the_callback_said(socket):
+    server, make = socket
+    server.tools["request_transfer"] = ALLOWED
+    client, _ = make([([], [WANTS])])
+    with client.websocket_connect(path()) as ws:
+        open_call(ws)
+        events = ask(ws, 1, ["Hi.", "Can I talk to a real person?"])
+    assert said(events) == FALLBACK
+    assert "transfer_number" not in events[-1]
+    assert ("/calls/rig-1/transfer/7/done", {"outcome": "failed"}) in server.posts

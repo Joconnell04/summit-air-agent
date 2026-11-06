@@ -32,8 +32,10 @@ AGAIN = "Thanks for holding, someone will be with you shortly."
 # goodbye. Nine keeps the voice URL under 2,048 characters.
 GAP_SECONDS = 40
 REPEATS = 9
-# Time for Retell to whisper the call's summary to the line before it bridges the caller.
-WHISPER_SECONDS = 6
+# Time for Retell to whisper the call's summary to the line before it bridges the caller. At 6 s
+# the caller missed "Thanks for" (MEASURED, test call call_9ac28afce19519a5f4dc7dd0554: the
+# bridge came about 0.6 s into the line), so 8.
+WHISPER_SECONDS = 8
 GOODBYE = "Sorry, nobody is free to take your call. Someone from Summit Air will call you back."
 ECHO = "https://twimlets.com/echo?Twiml="
 

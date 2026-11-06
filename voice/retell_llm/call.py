@@ -384,6 +384,10 @@ class LlmCall:
             person = name == "flag_person" and envelope.get("ok") and self.phone
             if person and await self._put_through(out, envelope):
                 finished = True
+            if name == "request_transfer" and envelope.get("ok"):
+                await self._transfer_now(out, envelope)
+                envelope = {**envelope, "data": {k: v for k, v in data.items() if k != "transfer"}}
+                finished = True
             if ending:
                 finished = True
             results.append({"type": "tool_result", "tool_use_id": use["id"],
@@ -403,6 +407,21 @@ class LlmCall:
         self.transfer_number = plan["phone"]
         self.ended = "transfer"
         return True
+
+    async def _transfer_now(self, out: Response, allowed: dict) -> None:
+        """request_transfer said yes (app/tools.py): its sentence, then Retell's cold transfer to
+        the office number. A web call has no line to put through, so the server is told it failed
+        and the caller hears the stored callback line instead."""
+        data = allowed.get("data") or {}
+        plan = data.get("transfer") or {}
+        if not self.phone:
+            await self.server.transfer_done(plan["id"], "failed")
+            await out.say(data.get("fallback") or "", fixed=True)
+            return
+        await out.say(allowed.get("say") or "", fixed=True)
+        self.transfer_id = plan["id"]
+        self.transfer_number = plan["number"]
+        self.ended = "transfer"
 
     async def remind(self, response_id: int, transcript: list[dict]) -> None:
         """Dead air (DECISIONS.md 081): Retell asks after each stretch of the caller's silence;
@@ -431,7 +450,8 @@ class LlmCall:
         if self.handoff_id is not None:
             await self.server.handoff_done(self.handoff_id, "handed_off")
         if self.transfer_id is not None:
-            await self.server.transfer_done(self.transfer_id, "handed_off")
+            # A transfers row takes "connected"; "handed_off" is the cold handoff's outcome.
+            await self.server.transfer_done(self.transfer_id, "connected")
         await self.server.end(self.ended)
         await self.server.aclose()
         log.info("%s ended (%s), model tokens %s", self.server.call_id, self.ended,
