@@ -58,6 +58,7 @@ def test_a_zip_on_the_callers_record_needs_no_saying(agent, scenarios):
     assert agent.tool("check_service_area", call, zip="11249")["ok"]
 
 
+@pytest.mark.links_calls
 def test_a_zip_said_on_a_linked_call_counts(agent, clock):
     first = agent.start(UNKNOWN)["data"]["call_id"]
     agent.turn(first, "The heat's out at 101 Union St, 11231.")

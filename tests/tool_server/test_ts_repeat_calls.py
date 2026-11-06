@@ -7,7 +7,15 @@ from datetime import timedelta
 
 import pytest
 from test_ts_safety import CFG, GAS_LINES
-from toolkit import UNKNOWN, book, count, first_open, in_area_address, ready_to_book
+from toolkit import (
+    UNKNOWN,
+    book,
+    confirm_do_not_call,
+    count,
+    first_open,
+    in_area_address,
+    ready_to_book,
+)
 
 from app import safety
 from app.text import street_said
@@ -51,6 +59,8 @@ def test_a_full_gas_call_never_says_a_safety_sentence_twice(agent):
     agent.confirm_read_back(call, in_area_address())
     speak(agent, call, book(agent, call, first_open(agent, call), name="Pat Rivera"))
     speak(agent, call, agent.turn(call, "Thanks, I'm done."))
+    # The agent's goodbye is the sign-off, said by the agent; end_call adds nothing.
+    agent.say(call, SIGN_OFF)
     speak(agent, call, agent.tool("end_call", call, reason="resolved"))
     speak(agent, call, agent.tool("end_call", call, reason="caller_goodbye"))
     said = " ".join(heard(agent, call))
@@ -254,5 +264,20 @@ def test_a_raised_priority_that_keeps_the_offer_asks_again_without_repeating_it(
                         facts={"inside_temp_f": 58, "who_home": "mother, 85"})
     assert second["data"]["offer"] == first["data"]["offer"]
     assert second["say"] == (
-        "I've marked this call top priority, so you get our soonest opening. Does that still work?"
+        "Thanks for telling me. I've moved you up, and this is still our soonest opening. Does "
+        "that still work?"
     )
+
+
+def test_undoing_do_not_call_brings_back_the_callback_it_cancelled(agent):
+    """Retell call call_926427e1d1f2a80cb78dc6a4e04: a billing callback, then "don't call me
+    anymore", then "actually wait, you can still call me": the callback stayed cancelled."""
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.tool("flag_person", call, reason="Billing question", callback_in_minutes=60)
+    marked = confirm_do_not_call(agent, call)
+    assert marked["data"]["cancelled_callbacks"] == 1
+    assert count(agent, "SELECT COUNT(*) FROM callbacks WHERE status = 'pending'") == 0
+    agent.turn(call, "Actually wait, you can still call me.")
+    undone = agent.tool("mark_do_not_call", call, undo=True)
+    assert undone["ok"] and undone["data"]["restored_callbacks"] == 1
+    assert count(agent, "SELECT COUNT(*) FROM callbacks WHERE status = 'pending'") == 1

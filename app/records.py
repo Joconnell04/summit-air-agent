@@ -302,8 +302,21 @@ def mark_do_not_call(conn: sqlite3.Connection, call: sqlite3.Row, now: datetime)
     ).rowcount
 
 
-def unmark_do_not_call(conn: sqlite3.Connection, phone_key_value: str) -> int:
-    return conn.execute("DELETE FROM do_not_call WHERE phone_key = ?", (phone_key_value,)).rowcount
+def unmark_do_not_call(conn: sqlite3.Connection, phone_key_value: str, now: datetime) -> int:
+    """Take the number off the list and bring back the callbacks marking it cancelled (Retell call
+    call_926427e1d1f2a80cb78dc6a4e04: "actually wait, you can still call me" left the billing
+    callback cancelled). Returns how many came back."""
+    row = conn.execute(
+        "SELECT added_at FROM do_not_call WHERE phone_key = ?", (phone_key_value,)
+    ).fetchone()
+    conn.execute("DELETE FROM do_not_call WHERE phone_key = ?", (phone_key_value,))
+    if not row:
+        return 0
+    return conn.execute(
+        "UPDATE callbacks SET status = 'pending', updated_at = ? "
+        "WHERE phone_key = ? AND status = 'cancelled' AND updated_at >= ?",
+        (iso(now), phone_key_value, row["added_at"]),
+    ).rowcount
 
 
 def outbound_allowed(

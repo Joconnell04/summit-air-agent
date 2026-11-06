@@ -142,3 +142,4 @@ How the design was reached, in order, so a reader can follow each choice back to
 | Safety lines as advice, said once | Jackson's gas test call: repeated, demanding lines and no way out; now advice said once, a caller can take it back, and the call hangs up after the sign-off | DECISIONS.md 113, coauthoring safety r2 |
 | 30-minute arrival windows | Jackson heard "5 to 7" and asked for a 30-minute window by default; a caller can still ask for longer | DECISIONS.md 114 |
 | Each call stands alone | A call right after the gas test call opened on the earlier scare, kept the cut-off greeting and promised an unstored callback; safety is now per call and do-not-call needs a yes | DECISIONS.md 115 |
+| Calls aren't linked | Back-to-back calls from one number carried sparks lines, priority and booking limits into each other; Summit Air no longer links calls | DECISIONS.md 118 |

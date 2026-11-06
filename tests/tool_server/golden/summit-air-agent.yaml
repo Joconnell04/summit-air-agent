@@ -245,8 +245,8 @@ lines:
     {nearest}. Would that work?
   card_stop: For your security, please don't read a card number over the phone. Our office will send you
     a secure payment link, or call you to take the payment.
-  commercial: Thanks for thinking of us. Unfortunately Summit Air works on homes and apartments, not businesses,
-    so we're not the right fit for this one.
+  commercial: Thanks for thinking of us. Unfortunately, we only service homes, but I'll pass your details
+    to our team.
   do_not_call: Understood, we won't call you.
   do_not_call_confirm: Just to confirm, you'd like us to stop calling this number?
   do_not_call_undone: No problem, we'll call you again when we need to.
@@ -299,6 +299,8 @@ lines:
   not_offered: Unfortunately we don't do {what}, so {suggest} would be the right call for that.
   out_of_area: Unfortunately that's outside the area we cover, so we're not able to send someone. A local
     heating company should be able to help.
+  priority_same_offer: Thanks for telling me. I've moved you up, and this is still our soonest opening.
+    Does that still work?
   raised_priority: Thanks for telling me. I've moved you up so you'll get one of our earlier openings.
   read_back: So that's {address}, and {phone}. That's all correct, right?
   read_back_calling_from: the number you're calling from, ending in {last_four}
@@ -679,7 +681,7 @@ priority:
       reason: 80 F or more outside
     - id: mild
       level: Normal
-      reason: cool inside and a mild day
+      reason: a mild day
     no_heat:
     - id: cold_inside
       inside_below_f: 55
@@ -697,7 +699,7 @@ priority:
       so the house keeps cooling: null
     - id: mild
       level: Normal
-      reason: warm inside and a mild day
+      reason: a mild day
   combine:
     groups: 2
     raise_to: Urgent
@@ -798,7 +800,9 @@ priority:
     - babys
     - babies
     - infant
+    - infants
     - newborn
+    - newborns
     - months old
     - weeks old
     raise_to: Urgent
@@ -1191,6 +1195,7 @@ priority:
 repeat_callers:
   drops_before_callback_offer: 2
   link_after_drop_minutes: 5
+  link_calls: false
   link_within_minutes: 10
   return_visit_days: 30
 retention:

@@ -100,29 +100,28 @@ def test_end_call_before_the_safety_lines_says_nothing_more_and_does_not_hang_up
     assert hangups.calls == []
 
 
-def test_the_safety_sign_off_is_spoken_by_the_worker_and_the_call_hangs_up(agent, connect):
-    """Jackson's gas test call stayed open after "I'm done"."""
+def test_a_safety_end_call_hangs_up_with_no_second_goodbye(agent, connect):
+    """Jackson's gas test call stayed open after "I'm done"; Retell call
+    call_f0846787038f654309219adb1e8 heard the sign-off after the agent's own goodbye."""
     call_id = "call-1"
     agent.start(call_id=call_id)
     agent.say(call_id, agent.turn(call_id, "I smell gas")["say"])
     hangups, voice = Hangups(), Voice()
     tools = tools_for(connect(call_id), hangups, voice)
-    assert no_reply(asyncio.run(tools["end_call"]({"reason": "resolved"}, "ctx")))
-    sign_off = " ".join(SAFETY["sign_off"].split())
-    assert voice.said == [sign_off]
+    asyncio.run(tools["end_call"]({"reason": "resolved"}, "ctx"))
+    assert voice.said == []
     assert hangups.calls != []
 
 
-def test_a_safety_caller_saying_goodbye_hears_the_sign_off_then_the_line_drops(agent, connect):
+def test_a_safety_caller_saying_goodbye_hears_no_second_goodbye_and_the_line_drops(agent, connect):
     call_id = "call-1"
     agent.start(call_id=call_id)
     agent.say(call_id, agent.turn(call_id, "I smell gas")["say"])
     hangups, voice = Hangups(), Voice()
     tools = tools_for(connect(call_id), hangups, voice)
-    assert no_reply(asyncio.run(tools["end_call"]({"reason": "caller_goodbye"}, "ctx")))
-    assert voice.said == [" ".join(SAFETY["sign_off"].split())]
-    # The hang-up waits for the sign-off's own playout.
-    assert hangups.calls == [("ctx", "handle:1")]
+    asyncio.run(tools["end_call"]({"reason": "caller_goodbye"}, "ctx"))
+    assert voice.said == []
+    assert hangups.calls != []
 
 
 def test_a_goodbye_after_the_sign_off_adds_no_second_goodbye(agent, connect):

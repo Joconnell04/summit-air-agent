@@ -157,8 +157,9 @@ def test_end_call_signs_off_on_a_safety_call_and_never_takes_a_spam_label(agent)
     assert spam["refused"] == "gate_safety"
     signed_off = agent.tool("end_call", call, reason="resolved")
     assert signed_off["ok"]
-    assert signed_off["say"] == " ".join(CFG["sign_off"].split())
-    # Jackson's gas test call stayed open after "Nope" and "I'm done": the sign-off, then hang up.
+    # The agent's own goodbye is the sign-off; end_call adds no second one (Retell call
+    # call_f0846787038f654309219adb1e8), and hangs up (Jackson's gas test call stayed open).
+    assert signed_off["say"] == ""
     assert signed_off["data"]["hang_up"] is True
 
 
@@ -395,6 +396,7 @@ def test_the_oven_priority_rule_hears_the_heating_check_wording(agent):
     )
 
 
+@pytest.mark.links_calls
 def test_the_heating_check_is_asked_once_across_a_linked_repeat_call(agent, clock):
     first = agent.start(UNKNOWN)["data"]["call_id"]
     assert agent.turn(first, "No heat, so the oven's on to keep warm.")["data"]["safety"][
@@ -730,18 +732,16 @@ def test_the_caller_hears_the_lines_once_then_nothing_more(agent):
     assert "safety_call" in third["data"]["hints"]
 
 
-def test_the_sign_off_is_said_once_even_if_the_caller_keeps_talking(agent):
-    """Eval round 3, after-hours-no-heat-cold: the sign-off closed three turns in a row."""
+def test_end_call_never_says_the_sign_off_itself(agent):
+    """Eval round 3, after-hours-no-heat-cold: the sign-off closed three turns in a row; Retell
+    call call_f0846787038f654309219adb1e8 heard it after the agent's own goodbye."""
     call = agent.start(UNKNOWN)["data"]["call_id"]
     agent.turn(call, "My carbon monoxide alarm is going off.")
     agent.say(call, CO_LINES)
-    first = agent.tool("end_call", call, reason="resolved")
-    assert first["say"] == " ".join(CFG["sign_off"].split())
-    agent.say(call, first["say"])
-    agent.turn(call, "Okay, but what number will you call me back on?")
-    second = agent.tool("end_call", call, reason="resolved")
-    assert second["ok"] and second["say"] == ""
-    assert second["data"]["hang_up"] is True and second["data"]["signed_off"] is True
+    for _ in range(2):
+        ended = agent.tool("end_call", call, reason="resolved")
+        assert ended["ok"] and ended["say"] == ""
+        assert ended["data"]["hang_up"] is True and ended["data"]["signed_off"] is True
 
 
 def test_a_caller_on_a_safety_call_can_ask_for_a_callback_at_their_time(agent):

@@ -12,6 +12,15 @@ Discussion: docs/ai-process/transcripts/... or docs/explorations/...
 Issue: #N
 -->
 
+## 118. Summit Air doesn't link a caller's calls
+
+Decided: `repeat_callers.link_calls: false` for Summit Air. A call from a number that called a minute ago starts with nothing from the earlier call: no thread, so no earlier lines in priority or safety, no booking limits or bookings counted across calls, no resumed turns. Bookings still exist in the field service system, so an open visit at the same address is still found there. The linking code stays for a tenant that turns it on, and its tests run as such a tenant.
+Why: five scripted calls from one number as different people (call_feed25cb0e5df1017695f9dc210 to call_f0846787038f654309219adb1e8): a boiler tune-up heard the previous call's sparks line and carried its priority reason, and the next call's booking was refused as over the call's limit. Jackson: state carrying between calls is "gross". DECISIONS.md 115 had already dropped the cut-off greeting and the safety carry-over; this removes the rest.
+Considered: keeping the link and scoping each reader (priority, safety, limits, resume) to the current call, which leaves a link that does nothing and a thread every new reader has to remember to ignore.
+Would change if: real callers drop and call straight back often enough that picking up where the call stopped matters more than the demo's back-to-back calls.
+Discussion: docs/ai-process/coauthoring.md safety r2
+Issue: #149
+
 ## 115. Each call stands alone: no cut-off greeting, no safety carried over, do-not-call after a yes
 
 Decided: a call from a number that called a minute ago greets like any other call (no "we got cut off"), and nothing about an earlier gas or carbon monoxide scare carries into it: not its safety state, its sign-off, its priority reason, the earlier call's safety lines in the context, or the job summary's priority line. mark_do_not_call returns a confirm question first and marks only after the caller says yes; `undo` takes it back, and "just kidding" is not a request. A flag whose callback couldn't be stored (a do-not-call number) returns no callback time. "End this call", "hang up" and "I'm done" count as goodbyes. find_slots takes `moving_a_visit`, and a move hears no priority line. The live-world reset refuses while a call is live, and clears the do-not-call list.

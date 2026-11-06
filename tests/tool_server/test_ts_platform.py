@@ -9,6 +9,7 @@ import subprocess
 import sys
 from datetime import timedelta
 
+import pytest
 import yaml
 from toolkit import ROOT, UNKNOWN, Agent, book, count, first_open, make_server, ready_to_book
 
@@ -146,6 +147,7 @@ def test_forgetting_calls_is_refused_unless_the_server_allows_it(agent):
     assert agent.client.post("/debug/forget-calls", headers=DEBUG).status_code == 403
 
 
+@pytest.mark.links_calls
 def test_forgotten_calls_no_longer_link_a_caller_calling_again(tmp_path, clock, mock):
     agent = Agent(make_server(tmp_path, clock, mock[0], allow_forget_calls=True), clock)
     first = agent.start(UNKNOWN)["data"]["call_id"]

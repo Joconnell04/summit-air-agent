@@ -161,13 +161,13 @@ priority:
       - {id: cool_inside, inside_below_f: 65, level: High, reason: below 65 F inside}
       - {id: cold_outside, outside_coldest_below_f: 55, if_unknown: match, level: High,
          reason: cold outside or tonight, so the house keeps cooling}
-      - {id: mild, level: Normal, reason: warm inside and a mild day}
+      - {id: mild, level: Normal, reason: a mild day}
     no_cooling:
       - {id: hot_inside, inside_above_f: 85, level: Urgent, reason: above 85 F inside}
       - {id: warm_inside, inside_at_least_f: 79, level: High, reason: 79 F or more inside}
       - {id: hot_outside, outside_now_at_least_f: 80, if_unknown: match, level: High,
          reason: 80 F or more outside}
-      - {id: mild, level: Normal, reason: cool inside and a mild day}
+      - {id: mild, level: Normal, reason: a mild day}
   # Added to the trade's rule of the same id. NYC Health heat and cold guidance names adults 60 and
   # over; "I'm 84".
   rules:
@@ -236,6 +236,11 @@ on_call_alerts:
   max_age_minutes: 120
 
 repeat_callers:
+  # Every call stands alone: no earlier call's lines, bookings, limits, safety or priority carry
+  # into the next one from the same number (Jackson, after five scripted calls from one number in a
+  # row, call_feed25cb0e5df1017695f9dc210 to call_f0846787038f654309219adb1e8: a tune-up heard the
+  # previous call's sparks line). The settings below apply only to a tenant that links calls.
+  link_calls: false
   link_within_minutes: 10
   # A dropped call is picked up ("I think we got cut off earlier") only by a call that starts this
   # soon after the drop. Jackson after slate call 2 (call_3cd4c8065f26d3de686f7a1e002): "only if
@@ -383,9 +388,10 @@ lines:
   # readback, but then if there's ever other readbacks necessary, it just says and the phone number
   # ending in 4024").
   read_back_number_ending: the number ending in {last_four}
+  # The spec's line: the details are passed on (record_lead keeps them for the office).
   commercial: >-
-    Thanks for thinking of us. Unfortunately Summit Air works on homes and apartments, not
-    businesses, so we're not the right fit for this one.
+    Thanks for thinking of us. Unfortunately, we only service homes, but I'll pass your details to
+    our team.
   # A caller who offers a card (DECISIONS.md 080): said word for word by the voice layer. The
   # office follows up from the flag the server stores. Signed off by Jackson (coauthoring safety r1).
   card_stop: >-
@@ -509,6 +515,8 @@ lines:
   # Said once when the caller's own facts raised the priority below Urgent (Jackson: "it makes them
   # feel heard").
   raised_priority: Thanks for telling me. I've moved you up so you'll get one of our earlier openings.
+  # A raised priority that leaves the offered window where it was (Jackson's wording).
+  priority_same_offer: Thanks for telling me. I've moved you up, and this is still our soonest opening. Does that still work?
   anything_else_first: Is there anything else I can help with?
   # Ends a booking sentence instead of after_confirmation when the caller named another unit that
   # has no booking yet (DECISIONS.md 085). {unit} is "5C".

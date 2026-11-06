@@ -229,6 +229,7 @@ def test_the_address_slows_one_step_below_the_calls_own_pace(agent):
     assert [p["speed"] for p in asked["data"]["parts"]] == [0.85, 0.7, 0.85]
 
 
+@pytest.mark.links_calls
 def test_a_requested_pace_carries_to_a_linked_call_the_same_day(agent, clock):
     first = agent.start()["data"]["call_id"]
     agent.turn(first, "Slow down please.")

@@ -4,7 +4,7 @@ before a handler runs (docs/architecture.md, checked arguments)."""
 import datetime as dt
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from .settings import NOTE_MAX_CHARS
 from .text import join_spelled
@@ -330,8 +330,18 @@ class CallbackTime(Body):
         return self
 
 
+FLAG_REASON_CHARS = 600
+
+
 class FlagIn(CallRef, CallbackTime):
-    reason: str = Field(min_length=3, max_length=300)
+    # A long reason is cut, never refused: Retell call call_f0846787038f654309219adb1e8 lost its
+    # flag to a 300-character limit.
+    reason: str = Field(min_length=3, max_length=20000)
+
+    @field_validator("reason")
+    @classmethod
+    def _cut(cls, value: str) -> str:
+        return value if len(value) <= FLAG_REASON_CHARS else value[: FLAG_REASON_CHARS - 3] + "..."
     priority: Literal["Normal", "High", "Urgent"] = "Normal"
     system_calls_back: bool = Field(
         False,

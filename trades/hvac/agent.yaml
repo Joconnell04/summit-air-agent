@@ -212,8 +212,10 @@ priority:
     - id: vulnerable_person
       job_types: [no_heat, no_cooling]
       # "Babys" is "the baby's room" once the apostrophe is dropped.
+      # "Newborns" is "my newborn's here" once the apostrophe is dropped (Retell call
+      # call_feed25cb0e5df1017695f9dc210 stayed Normal).
       phrases: [elderly, senior, seniors, grandmother, grandfather, grandma, grandpa, baby, babys,
-                babies, infant, newborn, months old, weeks old]
+                babies, infant, infants, newborn, newborns, months old, weeks old]
       raise_to: Urgent
       raise_to_when_mild: High
       reason: an older person or a baby at home

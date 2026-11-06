@@ -465,6 +465,7 @@ def test_the_owner_view_and_the_technician_summary_show_both_numbers(agent):
     ]
 
 
+@pytest.mark.links_calls
 def test_a_question_from_a_dropped_call_is_asked_again(agent, scenarios):
     call, maria = unknown_caller_finds_maria(agent, scenarios)
     asked = agent.tool("cancel_appointment", call, booking_id=maria["jobId"], reason="fixed")

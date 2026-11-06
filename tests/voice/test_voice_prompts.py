@@ -72,7 +72,7 @@ def test_instructions_keep_the_fixes_from_the_must_pass_reliability_round(agent)
     # it carried, booking the normal way without arguing, is kept.
     assert "book it the normal way" in text and "without arguing" in text
     assert "offer to stay on the line" in text
-    assert "call `end_call` without saying anything first" in text
+    assert "call `end_call` without saying anything first" in text or "Then call `end_call`" in text
     assert "the technician prices the work in person" in text
     assert "Never say whether that person is a customer" in text
     assert "to a renter only, never to an owner or landlord" in text

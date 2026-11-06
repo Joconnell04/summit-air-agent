@@ -228,6 +228,12 @@ def _name_said(lines: list[str]) -> str | None:
     return None
 
 
+def links_calls(tenant: Tenant) -> bool:
+    """Whether a call picks up from an earlier one from the same number. Summit Air keeps every
+    call apart (DECISIONS.md 118)."""
+    return tenant.repeat.get("link_calls", True)
+
+
 def _linked(
     conn: sqlite3.Connection, tenant: Tenant, caller_key: str, call_id: str, now: datetime
 ) -> tuple[sqlite3.Row | None, list[sqlite3.Row]]:
@@ -236,7 +242,7 @@ def _linked(
     that dropped, so a caller who finished a call this morning starts fresh this afternoon (eval
     round 2, seed 6). Same number and same local day are the gate; a call before midnight never
     links to one after it unless it falls inside the drop window."""
-    if not caller_key:
+    if not caller_key or not links_calls(tenant):
         return None, []
     day_start = datetime.combine(tenant.local(now).date(), datetime.min.time(), tenant.tz)
     window_start = now - timedelta(minutes=tenant.repeat["link_within_minutes"])

@@ -699,6 +699,7 @@ def test_a_callback_done_after_it_went_late_is_not_on_time(agent, clock):
     assert results(agent, 1)["now"]["callbacks"] == (1, 2)
 
 
+@pytest.mark.links_calls
 def test_results_leave_out_a_zip_when_the_call_back_on_the_thread_booked(agent, clock):
     first = agent.start(caller(1))["data"]["call_id"]
     agent.turn(first, "Do you go out to Hoboken, 07030? That's my mom's place.")

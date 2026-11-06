@@ -54,6 +54,7 @@ extend-exclude = [".claude/worktrees"]
 testpaths = ["tests"]
 pythonpath = ["."]
 norecursedirs = [".claude"]
+markers = ["links_calls: run as a tenant that links a caller's calls (DECISIONS.md 118)"]
 
 [tool.ruff.lint.flake8-bugbear]
 extend-immutable-calls = ["fastapi.Depends", "fastapi.Header", "fastapi.Form"]

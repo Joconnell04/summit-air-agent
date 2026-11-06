@@ -230,7 +230,7 @@ def test_a_commercial_account_cannot_book_whatever_the_agent_asks(agent, mock, s
         call = ready_to_book(agent, account["phone"])
         refused = book(agent, call, first_open(agent, call), job_type="no_heat")
         assert refused["refused"] == "customer_type", account["name"]
-        assert "works on homes and apartments" in refused["say"]
+        assert "we only service homes" in refused["say"]
     assert fsm_jobs(mock) == before
 
 

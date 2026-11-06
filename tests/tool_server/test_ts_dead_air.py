@@ -99,6 +99,7 @@ def test_asking_to_wait_on_a_gas_call_is_not_a_hold(agent):
     assert result["data"]["hold"] is None
 
 
+@pytest.mark.links_calls
 def test_a_call_back_after_stepping_away_keeps_the_earlier_turns_and_the_usual_greeting(agent, clock):
     first = agent.start(caller_id=CALLER, call_id="call-1")["data"]["call_id"]
     agent.turn(first, "Hi, this is Tomasz. Our boiler's not firing.")
@@ -113,6 +114,7 @@ def test_a_call_back_after_stepping_away_keeps_the_earlier_turns_and_the_usual_g
     assert greeting(started, VOICE) == greeting({}, VOICE)
 
 
+@pytest.mark.links_calls
 def test_a_plain_dropped_call_gets_no_cut_off_greeting(agent, clock):
     first = agent.start(caller_id=CALLER, call_id="call-1")["data"]["call_id"]
     agent.turn(first, "Hi, this is Tomasz. Our boiler's not firing.")

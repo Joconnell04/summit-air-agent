@@ -161,6 +161,7 @@ def test_a_later_name_replaces_the_first(agent):
     assert result["data"]["known"]["call them"] == "Dr. Okafor"
 
 
+@pytest.mark.links_calls
 def test_a_linked_call_keeps_the_name_and_greets_with_it(agent, clock):
     first = agent.start(UNKNOWN)["data"]["call_id"]
     agent.turn(first, "This is Dr. Patel, my heat's out.")

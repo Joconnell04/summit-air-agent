@@ -311,7 +311,8 @@ def test_an_earlier_dropped_call_is_on_the_record_but_the_greeting_is_the_usual_
     )
     result, agent, *_ = run(seed_dir, tmp_path, s, [say("Okay.")], [say("[END]")])
     assert result.transcript[0].text == GREETING
-    assert "145 Java Street, 11222." in agent.calls[0]["system"]
+    # Summit Air doesn't link calls (DECISIONS.md 118): the earlier call isn't in the context.
+    assert "145 Java Street, 11222." not in agent.calls[0]["system"]
 
 
 def test_the_scheduling_system_down_fails_bookings_but_not_lookups(seed_dir, tmp_path):

@@ -304,7 +304,7 @@ def _address_said(ctx: Ctx, house: str, street: str, rows: list | None = None) -
     number may also be the caller's whole answer to the agent asking for it, with the street
     said in another line, or come before a street the caller then spelled letter by letter.
     rows limits it to those caller lines (call_id, seq, text); all of the thread's by default."""
-    rows = _caller_lines(ctx) if rows is None else rows
+    rows = _without_partials(_caller_lines(ctx) if rows is None else rows)
     want = geocode.house_key(house)
     names = _street_names(street)
     if not want or not names:
@@ -348,6 +348,24 @@ def _address_said_as(ctx: Ctx, want: str, names: list[str], rows: list, merge: b
     return any(
         _answers_number(ctx, row, want) for row in rows
     ) and any(_street_in(row["text"], names) for row in rows)
+
+
+def _without_partials(rows: list) -> list:
+    """Caller lines without the partial ones the voice layer logs before the whole line ("East",
+    then "East 4th, apartment 2.", Retell call call_feed25cb0e5df1017695f9dc210): a line the next
+    caller line on the same call starts with."""
+    kept = []
+    for i, row in enumerate(rows):
+        later = rows[i + 1] if i + 1 < len(rows) else None
+        if (
+            later is not None
+            and later["call_id"] == row["call_id"]
+            and later["seq"] == row["seq"] + 1
+            and words(later["text"]).startswith(words(row["text"]).rstrip())
+        ):
+            continue
+        kept.append(row)
+    return kept
 
 
 def _only_number(tokens: list[str], k: int) -> bool:
@@ -1957,7 +1975,9 @@ def find_slots(ctx: Ctx, args: FindSlotsIn) -> Result:
         if not on_day:
             _keep_second_job(ctx, data)
             return ok(urgent_said + arrival_say + "Nothing's open that day.", **data)
-        labels = _join([w["label"] for w in on_day], "or")
+        # The first one or two, never the whole day: a Saturday read out all 16 half hours (Retell
+        # call call_79af0414dc77fcabc47b36f49cd). The rest are in `windows` if the caller asks.
+        labels = _join([w["label"] for w in on_day[:DAY_OFFERS]], "or")
         return ok(
             f"{urgent_said}{arrival_say}{on_day[0]['day'].capitalize()} I have {labels}.", **data
         )
@@ -1986,10 +2006,15 @@ def find_slots(ctx: Ctx, args: FindSlotsIn) -> Result:
     offer, lead = _one_offer(ctx, by_day, dates, preferred, args.time_of_day)
     data["offer"] = offer
     if urgent_said and not arrival_say and _offered_already(ctx, lead):
-        # A raised priority that leaves the offer where it was: the caller hears the line and is
-        # asked again, not the same window twice (Retell call call_926427e1d1f2a80cb78dc6a4e04).
-        return ok(f"{urgent_said}Does that still work?", **data)
+        # A raised priority that leaves the offer where it was: the caller hears that, and is asked
+        # again, not the same window twice (Retell call call_926427e1d1f2a80cb78dc6a4e04).
+        line = ctx.tenant.line("priority_same_offer")
+        data["spoken_first"] = line
+        return ok(line, **data)
     return ok(f"{urgent_said}{arrival_say}{lead}", **data)
+
+
+DAY_OFFERS = 2
 
 
 def _offered_already(ctx: Ctx, lead: str) -> bool:
@@ -3516,6 +3541,20 @@ def _on_day(tenant: Tenant, moment: datetime, now: datetime, spoken: str) -> str
     return f"{day} {spoken}"
 
 
+def _soonest_callback(tenant: Tenant, now: datetime) -> CallbackWhen:
+    """The usual lead time from now, moved into calling hours (the next morning when they've
+    closed)."""
+    due = now + timedelta(minutes=tenant.callbacks["after_lead_minutes"])
+    if not records.in_outbound_hours(tenant, due):
+        opens = time.fromisoformat(tenant.callbacks["outbound_hours"][0])
+        day = tenant.local(due).date()
+        if tenant.local(due).time() >= opens:
+            day += timedelta(days=1)
+        due = datetime.combine(day, opens, tenant.tz)
+    clock = tenant.time_spoken(due, now).split(" at ")[-1]
+    return CallbackWhen(due, now, _on_day(tenant, due, now, tenant.line("callback_by", time=clock)))
+
+
 def _nearest_in_hours(tenant: Tenant, moment: datetime, now: datetime) -> datetime:
     """The calling-hours time closest to one outside them, on the same day: when calls start, or
     half an hour before they stop (records.in_outbound_hours ends before `closes`)."""
@@ -3666,6 +3705,14 @@ def _callback_due(ctx: Ctx, asked: CallbackTime) -> CallbackWhen:
             return CallbackWhen(due, due, spoken)
     except ValueError as exc:
         reason = str(exc)
+        if reason == "that time has passed" and days == 0:
+            # Never asked again (Retell calls call_ad292013eb2db2c6323a003ecf9 and
+            # call_f0846787038f654309219adb1e8: "after 2 PM" said at 7:30 PM was refused, and the
+            # model ended the call with no callback). A bare time is that time tomorrow; "after"
+            # or "before" a time already gone is the soonest callback.
+            if asked.callback_time and not (asked.callback_after or asked.callback_before):
+                return _callback_due(ctx, asked.model_copy(update={"callback_day": "tomorrow"}))
+            return _soonest_callback(tenant, now)
         if reason == "outside callback hours":
             opens, closes = (
                 tenant.time_spoken(
@@ -4066,8 +4113,8 @@ def mark_do_not_call(ctx: Ctx, args: DoNotCallIn) -> Result:
         raise Refused("invalid_phone", ctx.tenant.line("do_not_call"))
     if args.undo:
         with tx(ctx.conn):
-            records.unmark_do_not_call(ctx.conn, ctx.call["caller_key"])
-        return ok(ctx.tenant.line("do_not_call_undone"))
+            restored = records.unmark_do_not_call(ctx.conn, ctx.call["caller_key"], ctx.now)
+        return ok(ctx.tenant.line("do_not_call_undone"), restored_callbacks=restored)
     question = ctx.tenant.line("do_not_call_confirm")
     asked = ctx.conn.execute(
         "SELECT MAX(seq) FROM turns WHERE call_id = ? AND speaker = 'agent' AND instr(text, ?) > 0",
@@ -4097,27 +4144,20 @@ def mark_do_not_call(ctx: Ctx, args: DoNotCallIn) -> Result:
 def end_call(ctx: Ctx, args: EndCallIn) -> Result:
     """Refused on a safety call until the lines were said and a person flagged; after that it
     returns the sign-off, said once, and the call hangs up (spec S-19)."""
-    state, safety = ctx.call["safety_state"], ctx.tenant.safety
+    state = ctx.call["safety_state"]
     if state in ("signal", "checking"):
         _safety_gate(ctx)
     had_signal = ctx.call["safety_signal_at"] is not None and state != "cleared"
     if had_signal and args.reason in ("spam", "wrong_number", "not_a_customer"):
         raise Refused("gate_safety", "", need="no spam label on a safety call; end it as resolved")
     if had_signal:
-        # The sign-off is said once, then the call hangs up like any other (Jackson's gas test call
-        # call_0246b91f77e01a4b18583e6ca8b stayed open after "Nope" and "I'm done").
+        # The call hangs up like any other (Jackson's gas test call call_0246b91f77e01a4b18583e6ca8b
+        # stayed open after "Nope" and "I'm done"), with the agent's own goodbye: the sign-off said
+        # after it was a second goodbye (Retell call call_f0846787038f654309219adb1e8).
         with tx(ctx.conn):
             records.update_call(ctx.conn, ctx.call["id"], end_requested=1)
-        sign_off = " ".join(safety["sign_off"].split())
-        # This call only: an earlier call's sign-off isn't this one's (safety is per call).
-        said = ctx.conn.execute(
-            "SELECT 1 FROM turns WHERE call_id = ? AND speaker = 'agent' AND instr(text, ?) > 0",
-            (ctx.call["id"], sign_off),
-        ).fetchone()
-        if said:
-            # signed_off tells the voice layer the goodbye has been said, so it adds none.
-            return ok("", hang_up=True, signed_off=True)
-        return ok(sign_off, hang_up=True)
+        # signed_off tells the voice layer the goodbye has been said, so it adds none.
+        return ok("", hang_up=True, signed_off=True)
     if args.reason != "caller_goodbye" and _out_of_area_unanswered(ctx) and not says_goodbye(
         records.last_caller_line(ctx.conn, ctx.call["id"])
     ):

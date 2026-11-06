@@ -636,6 +636,21 @@ def test_a_house_number_written_as_money_or_split_from_its_street_still_counts(
     assert result["ok"], result
 
 
+def test_partial_lines_the_voice_layer_logs_dont_break_the_number_and_the_street(located, answers):
+    """Retell call call_feed25cb0e5df1017695f9dc210 logged "One", "$199.", then "East", "East 4th,
+    apartment 2.", and the model passed "199 East 4th Street, apartment 2": refused."""
+    answers.book[("199", geocode.street_match_key("East 4 Street"))] = [EAST_4TH]
+    call = located.start(UNKNOWN)["data"]["call_id"]
+    located.say(call, "What's the street address for the visit?")
+    located.turn(call, "One")
+    located.turn(call, "$199.")
+    located.say(call, "Got it, and what street is that on?")
+    located.turn(call, "East")
+    located.turn(call, "East 4th, apartment 2.")
+    result = located.tool("find_address", call, street="199 East 4th Street, apartment 2")
+    assert result["ok"], result
+
+
 def test_a_thousands_comma_is_one_house_number(located, answers):
     broadway = Place("1500", "BROADWAY", "10036", "Manhattan", "Midtown")
     answers.book[("1500", geocode.street_match_key("Broadway"))] = [broadway]

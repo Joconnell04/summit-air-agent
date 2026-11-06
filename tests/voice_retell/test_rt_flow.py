@@ -313,8 +313,8 @@ def test_end_call_reaches_an_end_node_only_when_the_server_hangs_up(flow_client)
     assert not early["ok"] and early["route"] != "end_line" and early["route"] != "end"
     said = [GREETING, gas, utterance("agent", GAS_LINES), utterance("user", "Okay, bye.")]
     ended = flow_tool(flow_client, "end_call", call_obj("gas", *said), reason="caller_goodbye")
-    assert ended["ok"] and ended["route"] == "end_line"
-    assert ended["line"] == " ".join(SAFETY["sign_off"].split())
+    # The agent's own goodbye ends a safety call; end_call adds no sign-off (DECISIONS.md 118).
+    assert ended["ok"] and ended["route"] == "end"
 
 
 def test_an_ordinary_goodbye_ends_quietly_after_the_agents_own_words(flow_client):

@@ -272,6 +272,7 @@ def test_a_zip_asked_about_on_a_call_that_booked_is_not_out_of_area_demand(agent
     assert page(agent)["out_of_area"] == [{"zip": "07030", "calls": 1}]
 
 
+@pytest.mark.links_calls
 def test_a_zip_asked_about_before_a_drop_is_not_demand_when_the_call_back_booked(agent, clock):
     first = agent.start(caller(1))["data"]["call_id"]
     agent.turn(first, "Do you go out to Hoboken, 07030? That's my mom's place.")
