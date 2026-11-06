@@ -55,9 +55,13 @@ class FakeBrain:
         # Seconds before each reply's first word, so a test can replace a turn mid-way.
         self.wait_s = list(wait_s)
         self.requests: list[list[dict]] = []
+        self.systems: list[str] = []
+        self.tools: list[list[dict]] = []
 
     async def stream(self, system, messages, tools, reply: Reply):
         self.requests.append(json.loads(json.dumps(messages)))
+        self.systems.append(system)
+        self.tools.append(tools)
         chunks, uses = self.replies.pop(0)
         if self.wait_s:
             await asyncio.sleep(self.wait_s.pop(0))
@@ -278,3 +282,174 @@ def test_the_rig_agent_runs_on_the_socket_with_no_webhook():
     assert socket_url("https://host/eval", API_KEY).startswith("wss://host/eval/retell-llm/")
     assert "webhook_url" not in body
     assert body["reminder_trigger_ms"] == 120_000 and body["reminder_max_count"] == 4
+
+
+# ---- the server-led arm (issue #176): every sentence a tool result carries is spoken as written
+
+READ_BACK = "So that's forty-five Forest Avenue, ending in zero one one eight. That's all correct, right?"
+FLAGGED = "I've let our team know, and someone will call you tomorrow before 12 PM."
+
+
+@pytest.fixture
+def server_led(socket, monkeypatch):
+    monkeypatch.setenv("RETELL_LLM_SERVER_LED", "1")
+    return socket
+
+
+def tool_results(request: list[dict]) -> list[dict]:
+    return [json.loads(b["content"]) for m in request if m["role"] == "user"
+            and isinstance(m["content"], list) for b in m["content"]]
+
+
+def test_server_led_a_question_from_the_server_is_the_whole_turn(server_led):
+    server, make = server_led
+    read_back = {"id": "t1", "name": "read_back", "input": {"street": "45 Forest Ave"}}
+    server.tools["read_back"] = envelope(say=READ_BACK, data={"confirmed": False})
+    client, brain = make([([], [read_back])])
+    with client.websocket_connect(path()) as ws:
+        open_call(ws)
+        events = ask(ws, 1, ["Hi.", "It's 718 555 0118."])
+    assert said(events) == READ_BACK
+    # Interruptible, so the caller can correct it.
+    assert "no_interruption_allowed" not in events[0]
+    assert len(brain.requests) == 1
+
+
+def test_server_led_a_statement_is_spoken_then_the_model_carries_on(server_led):
+    server, make = server_led
+    flag = {"id": "t1", "name": "flag_person", "input": {"reason": "billing"}}
+    server.tools["flag_person"] = envelope(say=FLAGGED, data={"flag_id": 3})
+    server.tools["flag_person"]["next"] = "If the sentence didn't ask already, ask 'Anything else?'."
+    client, brain = make([([], [flag]), (["Anything else? "], [])])
+    with client.websocket_connect(path()) as ws:
+        open_call(ws)
+        events = ask(ws, 1, ["Hi.", "Tomorrow morning is fine."])
+    assert said(events) == f"{FLAGGED} Anything else?"
+    # The model is told the caller heard the sentence, and isn't handed it to say again.
+    result = tool_results(brain.requests[1])[0]
+    assert result["said_to_caller"] == FLAGGED
+    assert "say" not in result
+    assert result["next"].startswith("If the sentence")
+
+
+def test_server_led_a_refusals_sentence_is_the_whole_turn(server_led):
+    server, make = server_led
+    book = {"id": "t1", "name": "book_appointment", "input": {}}
+    question = "Will someone be home to let the technician in?"
+    server.tools["book_appointment"] = envelope(ok=False, say=question, refused="visit_questions_first")
+    client, brain = make([([], [book])])
+    with client.websocket_connect(path()) as ws:
+        open_call(ws)
+        events = ask(ws, 1, ["Hi.", "Yes, that works."])
+    assert said(events) == question
+    assert len(brain.requests) == 1
+
+
+def test_server_led_a_safety_refusal_cannot_be_cut_off(server_led):
+    server, make = server_led
+    end = {"id": "t1", "name": "end_call", "input": {"reason": "done"}}
+    server.tools["end_call"] = envelope(ok=False, say=SAFETY, refused="gate_safety")
+    client, _ = make([([], [end])])
+    with client.websocket_connect(path()) as ws:
+        open_call(ws)
+        events = ask(ws, 1, ["Hi.", "Bye."])
+    assert said(events) == SAFETY
+    assert events[0]["no_interruption_allowed"] is True
+
+
+def test_server_led_a_lead_in_held_before_a_server_sentence_is_never_said(server_led):
+    server, make = server_led
+    find = {"id": "t1", "name": "find_address", "input": {"street": "45 Forest Ave"}}
+    lookup = {"id": "t2", "name": "find_customer", "input": {}}
+    history = {"id": "t3", "name": "get_customer_history", "input": {}}
+    server.tools["find_address"] = envelope(data={"zip": "11385"})
+    server.tools["find_customer"] = envelope(say="Should I put this under your account?")
+    client, _ = make([
+        ([], [find]), (["What's the best number? "], []),
+        (["Got it, one sec. "], [lookup]),
+        (["Thanks. "], [history]), (["What's the best number? "], []),
+    ])
+    with client.websocket_connect(path()) as ws:
+        open_call(ws)
+        ask(ws, 1, ["Hi.", "45 Forest Avenue."])
+        events = ask(ws, 2, ["Hi.", "45 Forest Avenue.", "What's the best number?", "My account."])
+        assert said(events) == "Should I put this under your account?"
+        # A tool with nothing to say: the held text is said after it answers.
+        events = ask(ws, 3, ["Hi.", "45 Forest Avenue.", "What's the best number?", "My account.",
+                             "Should I put this under your account?", "Yes."])
+    assert said(events).startswith("Thanks.")
+
+
+def test_server_led_the_arm_brings_its_own_prompt_and_tools(server_led, monkeypatch, tmp_path):
+    prompt = tmp_path / "prompt.md"
+    prompt.write_text("You are Brooke.\n\n## Before this call\n\n{{call_context}}")
+    tools = tmp_path / "tools.json"
+    tools.write_text(json.dumps({"general_tools": [{
+        "name": "book_appointment", "description": "Book it.",
+        "parameters": {"type": "object", "properties": {}}, "url": "https://x/retell/tools/b"}]}))
+    monkeypatch.setenv("RETELL_LLM_PROMPT", str(prompt))
+    monkeypatch.setenv("RETELL_LLM_TOOLS", str(tools))
+    _, make = server_led
+    client, brain = make([(["What's going on? "], [])])
+    details = json.loads(json.dumps(DETAILS))
+    details["call"]["retell_llm_dynamic_variables"]["call_context"] = "Caller is new."
+    with client.websocket_connect(path()) as ws:
+        assert json.loads(ws.receive_text())["response_type"] == "config"
+        ws.send_text(json.dumps(details))
+        ws.receive_text()
+        ask(ws, 1, ["Hi.", "My heat is out."])
+    assert brain.systems[0] == "You are Brooke.\n\n## Before this call\n\nCaller is new."
+    assert [t["name"] for t in brain.tools[0]] == ["book_appointment"]
+    assert brain.tools[0][0]["description"] == "Book it."
+
+
+def test_an_arm_tool_the_tool_server_lacks_is_refused(tmp_path):
+    tools = tmp_path / "tools.json"
+    tools.write_text(json.dumps({"general_tools": [{
+        "name": "order_pizza", "description": "", "parameters": {}}]}))
+    with pytest.raises(ValueError, match="order_pizza"):
+        llm_socket.arm_tools(tools, [{"name": "book_appointment", "write": True}])
+
+
+def test_an_arm_tool_writes_as_our_spec_says():
+    tools = llm_socket.arm_tools(
+        llm_socket.ROOT / "retell" / "arms" / "server-led" / "tools.json",
+        llm_socket.tool_specs(llm_socket.job_types(llm_socket.ROOT / "tenants" / "summit-air")),
+    )
+    writes = {t["name"]: t["write"] for t in tools}
+    assert writes["book_appointment"] is True
+    assert writes["find_slots"] is False
+
+
+def test_server_led_the_sentence_before_a_spoken_result_is_never_said(server_led):
+    server, make = server_led
+    book = {"id": "t1", "name": "book_appointment", "input": {}}
+    booked = "Okay, I've booked it: the technician will arrive today between 11:30 and 12. Anything else?"
+    server.tools["book_appointment"] = envelope(say=booked)
+    client, _ = make([(["Thanks. ", "I'm booking that now. "], [book])])
+    with client.websocket_connect(path()) as ws:
+        open_call(ws)
+        events = ask(ws, 1, ["Hi.", "No gate code, no pets."])
+    assert said(events) == f"Thanks. {booked}"
+
+
+def test_server_led_an_offer_without_a_question_still_waits_for_the_caller(server_led):
+    server, make = server_led
+    slots = {"id": "t1", "name": "find_slots", "input": {"job_type": "no_heat"}}
+    offer = "Today I have 11:30 to 12 or 12 to 12:30."
+    server.tools["find_slots"] = envelope(say=offer, data={"windows": [{"window": "1130-1200"}]})
+    client, brain = make([([], [slots])])
+    with client.websocket_connect(path()) as ws:
+        open_call(ws)
+        events = ask(ws, 1, ["Hi.", "Yes, that's all correct."])
+    assert said(events) == offer
+    assert len(brain.requests) == 1
+
+
+def test_server_led_the_model_never_names_its_step(server_led):
+    _, make = server_led
+    client, _ = make([(["Thanks. ", "Next, what's the best number to reach you?"], [])])
+    with client.websocket_connect(path()) as ws:
+        open_call(ws)
+        events = ask(ws, 1, ["Hi.", "It's 45 Forest Avenue."])
+    assert said(events) == "Thanks. What's the best number to reach you?"

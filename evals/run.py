@@ -35,7 +35,7 @@ from evals.stacks import InProcessAgent, load_adapter
 from evals.transcribe import level_for, mishear, roughen, seeded
 from evals.world import World, resolve_caller, seeded_db
 
-STACKS = ("livekit", "retell", "retell_flow")
+STACKS = ("livekit", "retell", "retell_flow", "retell_llm")
 LOOP_REPEATS = 3
 
 

@@ -41,9 +41,12 @@ def test_the_server_led_instance_never_reaches_the_live_services():
     ports, folders or Caddy site, or restart Caddy."""
     folder = ROOT / "deploy" / "server-led"
     run, deploy = (folder / "run.sh").read_text(), (folder / "deploy.sh").read_text()
-    for live in (":8100", ":8101", ":8102", ":8110", ":8111", ":8112"):
+    for live in (":8100", ":8101", ":8102", ":8110", ":8111", ":8112", ":8113"):
         assert live not in run
     assert "SERVER_LED=1" in run and "--if-stale" in run
+    # The clock can move in this world only, and the socket arm speaks the server's sentences.
+    assert run.count("SUMMIT_WORLD=server-led") == 2
+    assert "RETELL_LLM_SERVER_LED=1" in run and "--port 8133" in run
     assert "summit-air/app" not in deploy and "summit-air/retell/" not in deploy
     assert "restart caddy" not in deploy and "reload caddy" in deploy
     site = (folder / "Caddyfile").read_text()

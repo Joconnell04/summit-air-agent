@@ -16,6 +16,7 @@ the caller heard, cut-offs included, not what was sent."""
 import asyncio
 import json
 import logging
+import re
 import time
 from collections.abc import Awaitable, Callable
 
@@ -44,6 +45,37 @@ Send = Callable[[dict], Awaitable[None]]
 def compact(result: dict) -> str:
     """What the model reads: the envelope, without empty fields (voice/livekit/tools.py)."""
     return json.dumps({k: v for k, v in result.items() if v not in (None, "", {})}, default=str)
+
+
+def as_heard(envelope: dict) -> dict:
+    """Server-led: the result as the model sees it once its sentence was spoken as written. The
+    sentence moves out of `say`, so the model knows the caller heard it and doesn't say it again."""
+    said = envelope.get("say") or ""
+    return {**envelope, "say": "", "said_to_caller": said}
+
+
+def ends_turn(envelope: dict) -> bool:
+    """Server-led: whether the result's sentence is the whole turn. A refusal's sentence and a
+    question are (the flow's `next` says to wait for the caller); a statement that went through
+    ("someone will call you by 8 PM") leaves the model to carry on as `next` says."""
+    if not envelope.get("ok"):
+        return True
+    data = envelope.get("data") or {}
+    # An offer waits for the caller's pick, whether or not its sentence ends in a question ("Today
+    # I have 11:30 to 12 or 12 to 12:30.").
+    return bool(data.get("offer") or data.get("windows")) or (
+        (envelope.get("say") or "").rstrip().endswith("?")
+    )
+
+
+NEXT_STEP = re.compile(r"^\s*(next|now|first|then),\s+", re.IGNORECASE)
+
+
+def unnarrated(sentence: str) -> str:
+    """Server-led: a sentence the model opens with its step ("Next, could you spell the street?")
+    loses the opener; the flow's steps are the server's to name, never said aloud."""
+    rest = NEXT_STEP.sub("", sentence, count=1)
+    return rest[:1].upper() + rest[1:] if rest != sentence else sentence
 
 
 def caller_text(transcript: list[dict]) -> str:
@@ -78,6 +110,8 @@ class Response:
         self.call = call
         self.id = response_id
         self.said = False
+        # Lines sent so far, so a turn can tell whether a tool's sentence was spoken.
+        self.sent = 0
         self.closed = False
 
     def stale(self) -> bool:
@@ -90,6 +124,7 @@ class Response:
         if self.said:
             text = " " + text
         self.said = True
+        self.sent += 1
         event = {"response_type": "response", "response_id": self.id, "content": text,
                  "content_complete": False}
         if fixed:
@@ -121,6 +156,7 @@ class LlmCall:
         lines: dict,
         phone: bool,
         dead_air_checks: int = 4,
+        server_led: bool = False,
     ):
         self.server = server
         self.brain = brain
@@ -135,6 +171,9 @@ class LlmCall:
         # A web call (the audio rig) has no line to transfer; only a phone call can go to a person.
         self.phone = phone
         self.dead_air_checks = dead_air_checks
+        # The server-led flow (app/flow.py, SERVER_LED=1 on the tool server): every sentence a
+        # tool result carries is spoken here as written, and the model writes only the rest.
+        self.server_led = server_led
         self.reminders = 0
         self.messages: list[dict] = []
         self.reply = SpokenReply()
@@ -306,6 +345,10 @@ class LlmCall:
             self.reply.start_reply()
             holding = self.reply.holding()
             pending, held, kept = "", [], []
+            # Server-led, the latest finished sentence waits for the next one: the sentence just
+            # before a tool call ("I'm booking that now.") is the one that narrates, and it is
+            # dropped when the server then speaks.
+            tail = ""
             reply = Reply()
             async for delta in self.brain.stream(self.system, self.messages, self.tools, reply):
                 if out.stale():
@@ -316,7 +359,9 @@ class LlmCall:
                     held += done
                     continue
                 for sentence in done:
-                    if said := self.reply.sentence(sentence):
+                    if self.server_led:
+                        sentence, tail = tail, unnarrated(sentence)
+                    if sentence and (said := self.reply.sentence(sentence)):
                         kept.append(said)
                         await out.say(said)
             for kind, count in reply.tokens.items():
@@ -332,8 +377,13 @@ class LlmCall:
             if holding:
                 last = self.reply.text(" ".join([*held, pending]), calls)
             else:
-                last = self.reply.sentence(pending) if pending.strip() else ""
-            if last:
+                ends = [tail, unnarrated(pending) if self.server_led else pending]
+                ends = [s for s in ends if s.strip()]
+                last = " ".join(k for s in ends if (k := self.reply.sentence(s)))
+            # Server-led, text held with a tool call waits for the result: when the server speaks
+            # a sentence of its own, the model's lead-in ("Got it, one sec.") is never said.
+            deferred = self.server_led and bool(reply.tool_uses)
+            if last and not deferred:
                 kept.append(last)
                 await out.say(last)
             # The history keeps what the caller heard of the model's text, as LiveKit's does.
@@ -345,8 +395,12 @@ class LlmCall:
             if not reply.tool_uses:
                 break
             called = time.perf_counter()
+            sent = out.sent
             results, finished = await self._run_tools(out, reply.tool_uses)
             tool_ms += (time.perf_counter() - called) * 1000
+            if deferred and last and out.sent == sent and not out.stale():
+                await out.say(last)
+                content.insert(0, {"type": "text", "text": last})
             self.messages.append({"role": "user", "content": results})
             if finished or out.stale():
                 break
@@ -366,11 +420,17 @@ class LlmCall:
             ending = name == "end_call" and envelope.get("ok")
             parts = data.get("parts") if envelope.get("ok") else None
             line = spoken_by_server(name, envelope)
+            say = envelope.get("say") or ""
             if parts:
                 # A read-back the caller asked to hear slower. Retell has no per-sentence speed,
                 # so the parts are said at the call's one speed.
                 await out.say(" ".join(p["text"] for p in parts), fixed=True)
                 finished = True
+            elif self.server_led and say:
+                # Interruptible, so the caller can correct a read-back; a safety refusal is not.
+                await out.say(say, fixed=envelope.get("refused") == "gate_safety")
+                if line or ends_turn(envelope):
+                    finished = True
             elif line:
                 await out.say(line, fixed=True)
                 finished = True
@@ -386,8 +446,10 @@ class LlmCall:
                 finished = True
             if ending:
                 finished = True
+            spoken = self.server_led and say and not parts
+            seen = as_heard(envelope) if spoken else for_model(envelope)
             results.append({"type": "tool_result", "tool_use_id": use["id"],
-                            "content": compact(for_model(envelope))})
+                            "content": compact(seen)})
         return results, finished
 
     async def _put_through(self, out: Response, flagged: dict) -> bool:

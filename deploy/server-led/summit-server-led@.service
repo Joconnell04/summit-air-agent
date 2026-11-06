@@ -3,6 +3,7 @@
 #   summit-server-led@mock    its own mock ServiceTitan (8131)
 #   summit-server-led@tools   its tool server, with SERVER_LED=1 (8130)
 #   summit-server-led@bridge  the bridge its Retell agents call (8132)
+#   summit-server-led@socket  the socket arm's custom-LLM socket (8133)
 [Unit]
 Description=Summit Air server-led arm: %i
 After=network-online.target

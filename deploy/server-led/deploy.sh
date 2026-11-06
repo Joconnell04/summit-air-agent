@@ -1,6 +1,6 @@
 #!/bin/sh
 # Deploy the server-led arm's test instance (issue #171) next to the live services, without
-# touching them: code to ~/summit-air/server-led, three systemd units, and a Caddy site on its own
+# touching them: code to ~/summit-air/server-led, four systemd units, and a Caddy site on its own
 # hostname. Caddy is reloaded, never restarted, and gets no new environment: the site reads the
 # eval token Caddy already has (deploy/retell/deploy.sh).
 #   sh deploy/server-led/deploy.sh
@@ -16,7 +16,7 @@ ssh "$HOST" 'set -e; cd ~/summit-air/server-led; ~/.local/bin/uv sync -q
   sudo install -m 644 deploy/server-led/summit-server-led@.service /etc/systemd/system/
   sudo install -m 644 deploy/server-led/Caddyfile /etc/caddy/sites/summit-server-led.caddy
   sudo systemctl daemon-reload
-  for p in mock tools bridge; do
+  for p in mock tools bridge socket; do
     sudo systemctl enable -q "summit-server-led@$p"; sudo systemctl restart "summit-server-led@$p"
   done
   # A site that fails to parse would stop the reload for every site: take it out instead.

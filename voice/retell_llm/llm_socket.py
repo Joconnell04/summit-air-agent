@@ -7,6 +7,12 @@ Retell connects to `<llm_websocket_url>/<retell call id>`. It sends no auth head
 carries a key derived from the Retell API key, and a socket without it is closed at once. The call
 is already open on the tool server when the socket opens (the rig, or the bridge's inbound
 webhook, starts it); its id, prompt and first line come in the call's dynamic variables.
+
+An arm can bring its own prompt and tools instead (issue #176, the server-led arm):
+RETELL_LLM_PROMPT is a prompt file whose {{call_context}} is filled from the call's variables,
+RETELL_LLM_TOOLS a Retell tools.json whose names, descriptions and parameters the model gets, and
+RETELL_LLM_SERVER_LED=1 speaks every sentence a tool result carries as written (voice/retell_llm/
+call.py). The tool server behind it runs the flow (SERVER_LED=1).
 """
 
 import asyncio
@@ -44,6 +50,26 @@ def tenant_lines(tenants_dir: Path, slug: str) -> dict:
     return yaml.safe_load((tenants_dir / slug / "agent.yaml").read_text())["voice"]
 
 
+def arm_prompt(path: Path, variables: dict) -> str:
+    """The arm's prompt, with the call's own part filled in as Retell would."""
+    return path.read_text().replace("{{call_context}}", variables.get("call_context", ""))
+
+
+def arm_tools(path: Path, specs: list[dict]) -> list[dict]:
+    """The arm's tools from its Retell tools.json, in our spec shape. Whether a tool writes comes
+    from our own specs, so a write is always sent with its idempotency key."""
+    writes = {s["name"]: s.get("write", False) for s in specs}
+    tools = json.loads(path.read_text())["general_tools"]
+    unknown = [t["name"] for t in tools if t["name"] not in writes]
+    if unknown:
+        raise ValueError(f"tools the tool server doesn't have: {', '.join(unknown)}")
+    return [
+        {"name": t["name"], "description": t["description"], "parameters": t["parameters"],
+         "write": writes[t["name"]]}
+        for t in tools
+    ]
+
+
 def dead_air_checks(config_path: Path) -> int:
     """How many check-ins Retell asks for before the goodbye (config/models.yaml dead_air)."""
     timings = yaml.safe_load(config_path.read_text())["voice"]["dead_air"]
@@ -59,6 +85,9 @@ def create_app(brain: Brain | None = None, transport=None) -> FastAPI:
     tenants = Path(os.environ.get("TENANTS_DIR") or ROOT / "tenants")
     default_tenant = os.environ.get("RETELL_LLM_TENANT", "summit-air")
     checks = dead_air_checks(ROOT / "config" / "models.yaml")
+    prompt_file = os.environ.get("RETELL_LLM_PROMPT")
+    tools_file = os.environ.get("RETELL_LLM_TOOLS")
+    server_led = os.environ.get("RETELL_LLM_SERVER_LED") == "1"
     calls: dict[str, LlmCall] = {}
     closing: dict[str, asyncio.Task] = {}
     shared = {"brain": brain}
@@ -74,10 +103,17 @@ def create_app(brain: Brain | None = None, transport=None) -> FastAPI:
         call_id = variables.get("summit_call_id") or metadata.get("summit_call_id")
         slug = metadata.get("tenant") or default_tenant
         server = ToolServer(tool_server, call_id, transport=transport)
+        specs = tool_specs(job_types(tenants / slug))
+        system = variables["instructions"]
+        if prompt_file:
+            # On a server-down call the bridge says its line as the greeting and hangs up itself.
+            system = arm_prompt(ROOT / prompt_file, variables)
+        if tools_file:
+            specs = arm_tools(ROOT / tools_file, specs)
         call = LlmCall(
-            server, the_brain(), send, variables["instructions"],
-            tool_specs(job_types(tenants / slug)), tenant_lines(tenants, slug),
+            server, the_brain(), send, system, specs, tenant_lines(tenants, slug),
             phone=details.get("call_type") == "phone_call", dead_air_checks=checks,
+            server_led=server_led,
         )
         return call, variables.get("greeting", "")
 
