@@ -28,7 +28,9 @@ from . import (
     bench,
     bench_rules,
     cards,
+    checks_view,
     db,
+    failure_grader,
     geocode,
     heads_up,
     jobs,
@@ -120,6 +122,15 @@ class Services:
             summary.model_from_config() if settings.summaries else None
         )
         self.guidance_check = guidance_check or check_guidance
+        # The failure grader's model and transcript source (None when off), and how a run is
+        # started: a background thread, or run inline by tests.
+        self.grader_model = (
+            failure_grader.model_from_config() if settings.failure_grader else None
+        )
+        self.grader_transcripts = (
+            failure_grader.transcripts_from_env() if settings.failure_grader else None
+        )
+        self.grader_runner = failure_grader.in_background
         self.report_poster = reports.github_poster(settings)
         self.weather = weather_clients or (
             {t.slug: weather.client(t.weather) for t in self.tenants} if settings.weather else {}
@@ -621,6 +632,7 @@ def create_app(
         return {"ok": True, "say": "", "data": found, "refused": None}
 
     owner_view.add_routes(app)
+    checks_view.add_routes(app)
     schedule_view.add_routes(app)
     bench.add_routes(app)
     bench_rules.add_routes(app)

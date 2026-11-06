@@ -1,0 +1,57 @@
+# Calibration set for the failure grader (app/failure_grader.py, issue #178). Real calls from
+# Retell: side-by-side round 1 (evals/rounds/side-by-side-01.md on joco/side-by-side-014a4c), whose
+# tool-server rows were dumped right after each call, and one live call on the Summit Air line.
+#
+# Each label is a person's reading of the transcript and the rows against the five true failures in
+# prompts/failure-grader.md, not the side-by-side checks: several calls those checks failed (an
+# ended call, a booking the persona expected) are not failures a caller or owner would see.
+# rows: the side-by-side dump under evals/rounds/side-by-side-01-data, or none for a live call
+# (the grader then gets the transcript and its tool results, and is told the rows weren't kept).
+
+failures:
+  - id: call_360c4fe0ec61e0339879858f61d
+    rows: line1-rerun/calls/07-A-i.rows.json
+    kind: callback
+    why: Caller asked for a callback "Monday morning"; the agent said and stored tomorrow before 12 PM, and the caller never agreed.
+  - id: call_5b998cf4ab209eb48c2ae5e9a0b
+    rows: line2d/calls/06-D-i.rows.json
+    kind: callback
+    why: Same as above on arm D.
+  - id: call_c9bf44aee43e165c12837521d8c
+    rows: line2b-rerun/calls/09-C-i.rows.json
+    kind: callback
+    why: Same as above on arm C.
+  - id: call_8df5ad10287f0d52fa5a8f50a65
+    rows: line1/calls/02-A-b.rows.json
+    kind: records
+    why: The agent said it would add the number to the do-not-call list and Retell hung up; the list is empty and the bill callback is still pending.
+  - id: call_3cd4c8065f26d3de686f7a1e002
+    rows: none
+    kind: hung_up
+    why: Live call. The caller answered "sure" to "anything else?" four times, confused; the agent said "I'll let you go" and ended the call. Borderline.
+
+not_failures:
+  - {id: call_2c871637f07dc6f5b4cb39afc0b, rows: line1/calls/07-A-g.rows.json, why: "Style only: said the name, two questions at once."}
+  - {id: call_a3c8b2a6de25a6e93e4ab9cef13, rows: line1/calls/08-C-g.rows.json, why: "Style only: said the name, reworded server lines."}
+  - {id: call_d17b0088affb2f6ea3971164e98, rows: line1/calls/09-A-h.rows.json, why: "Style only: double confirm, address read back three times."}
+  - {id: call_648823e9423ded73156c791361c, rows: line1/calls/10-C-h.rows.json, why: "Style only: name, narration."}
+  - {id: call_72009cbe16703210509127925b0, rows: line1/calls/13-A-j.rows.json, why: "Style only: reworded server lines."}
+  - {id: call_7fe13e690e57e56405611cad333, rows: line1/calls/14-C-j.rows.json, why: "Style only: name, narration, two questions."}
+  - {id: call_691ff016e13210be91684957b2c, rows: line2b/calls/03-B-c.rows.json, why: "Clean retracted gas call."}
+  - {id: call_8bea915381ea96aed9f23f16021, rows: line2b/calls/04-B-g.rows.json, why: "Clean commercial call."}
+  - {id: call_b608687ce923e70a8318a6a6f0e, rows: line2b/calls/05-B-h.rows.json, why: "Clean sparks call."}
+  - {id: call_396d8572aecdfbbfac936b7fc48, rows: line2d/calls/03-D-c.rows.json, why: "Style only: reworded server lines."}
+  - {id: call_a0c123864f67baf0d5cf5bb19ce, rows: line2d/calls/04-D-g.rows.json, why: "Style only: two questions, reworded lines."}
+  - {id: call_40dc142eaba78a8933e91e54263, rows: line2d/calls/05-D-h.rows.json, why: "Style only: name, safety advice repeated."}
+  - {id: call_9e1bbb6310e006595123e5a0a21, rows: line1-rerun/calls/06-A-l.rows.json, why: "Real gas; advice spoken, repeated (style)."}
+  - {id: call_4a774cd492380831262f312d132, rows: line2b-rerun/calls/03-B-c.rows.json, why: "Clean retracted gas call."}
+  - {id: call_11f8ca0e3ab110857663e60edcc, rows: line2d/calls/08-D-k.rows.json, why: "Style only: narration, open door reworded."}
+  - {id: call_b4c83f184b5cb64748332a2e3c3, rows: line2d/calls/01-D-e.rows.json, why: "The check called it a premature hang-up; the caller said end the call and bye. On-call callback stored after hours."}
+  - {id: call_0009860347f1f375c280f704723, rows: line1/calls/03-C-e.rows.json, why: "Caller confirmed do-not-call and the agent closed; list set and callbacks cancelled, as told."}
+  - {id: call_b8641369a8b7e72f85cfaecc267, rows: line1-rerun/calls/04-C-b.rows.json, why: "Same do-not-call close, with callbacks cancelled as the agent said."}
+  - {id: call_60a297b19f8a2e1121f6470795a, rows: line1/calls/04-C-b.rows.json, why: "Agent closed after the caller's 'Thanks'; the visit was moved and the note added as told."}
+
+# Graded and reported, but not counted: a reasonable person could label these either way.
+unlabeled:
+  - {id: call_c5966951b6ae51d1213942dc02e, rows: line2b-rerun/calls/08-C-l.rows.json, why: "Real gas, family outside; the call ended in the middle of the agent's 'Please stay' line after a callback was promised."}
+  - {id: call_6930525bbbd0de20271b03ad9a3, rows: line1/calls/16-C-k.rows.json, why: "Newborn, no heat after hours; 'moved you up to an earlier opening' but no booking, on-call callback stored."}

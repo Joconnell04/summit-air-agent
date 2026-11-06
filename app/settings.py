@@ -57,6 +57,12 @@ class Settings:
     # Write the technician's summary after each booked call (app/summary.py). Off in tests and
     # development so nothing calls out; it needs ANTHROPIC_API_KEY as well.
     summaries: bool = field(default_factory=lambda: os.environ.get("SUMMARIES", "") == "1")
+    # The failure grader (app/failure_grader.py): the daily run and the Check buttons. Off, the pages
+    # say checks are off and nothing is sent to a model. It needs ANTHROPIC_API_KEY, and reads
+    # Retell transcripts with RETELL_API_KEY when set (the server's own turns otherwise).
+    failure_grader: bool = field(
+        default_factory=lambda: os.environ.get("FAILURE_GRADER", "") == "1"
+    )
     # The owner view's first admin, created once at startup when no user has this username
     # (app/accounts.py). More users are added on the Settings page or with make owner-user.
     owner_admin_username: str = field(
