@@ -561,7 +561,7 @@ ASKS_REPEAT = re.compile(
 # about them or the rules.
 NARRATES_THINKING = re.compile(
     r"\bthe caller\b|\bper the rules\b|\bthe rules say\b|\bI should (?:check|ask|confirm)\b"
-    r"|\bI'?ll ask whether\b|\bmy instructions\b",
+    r"|\bI'?ll ask whether\b|\bmy instructions\b|\bI'?ll answer (?:it|that|this) directly\b",
     re.IGNORECASE,
 )
 # The agent talking about where its facts came from, or about text it was handed (the Retell

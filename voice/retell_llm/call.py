@@ -188,13 +188,30 @@ def last_word_at(transcript: list[dict], call_start_ms: int | None) -> float | N
 
 
 def caller_text(transcript: list[dict]) -> str:
-    """What the caller has said since the agent last spoke."""
+    """What the caller has said since the agent last spoke. A caller who starts answering over the
+    end of the agent's line splits that line around their first words, and those words count too
+    (phone check t3, 6 November: "What's the street", "40", "address?", "Fulton Street" reached
+    the server as "Fulton Street", and Brian asked for the house number)."""
     lines = []
-    for entry in reversed(transcript):
+    index = len(transcript) - 1
+    while index >= 0:
+        entry = transcript[index]
         if entry.get("role") == "agent":
-            break
+            before = transcript[index - 1] if index > 0 else None
+            if not (before and before.get("role") != "agent" and _talked_over(before, entry)):
+                break
+            index -= 1
+            continue
         lines.append((entry.get("content") or "").strip())
+        index -= 1
     return " ".join(line for line in reversed(lines) if line)
+
+
+def _talked_over(caller: dict, agent: dict) -> bool:
+    """An agent line listed after the caller's but begun before it: the tail of a line the caller
+    spoke over, not a reply to them. A reply always starts after the caller's words."""
+    heard, said = caller.get("words") or [], agent.get("words") or []
+    return bool(heard and said) and said[0]["start"] < heard[0]["start"]
 
 
 def callers_in(transcript: list[dict]) -> int:

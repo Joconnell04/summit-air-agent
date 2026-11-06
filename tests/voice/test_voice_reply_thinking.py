@@ -13,6 +13,7 @@ from prompts.assemble import SpokenReply
         "The caller already has a visit booked for today.",
         "Per the rules, I'll ask whether this is a different problem needing its own visit.",
         "Since this is a heating problem, I should check whether they want to move that visit.",
+        "I'll answer it directly.",  # phone check t3 leak replay, 6 November
     ],
 )
 def test_reasoning_about_the_caller_or_the_rules_is_never_said(sentence):

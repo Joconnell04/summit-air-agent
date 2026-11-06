@@ -308,6 +308,25 @@ def test_caller_text_is_everything_since_the_agent_last_spoke():
     assert not heard_after(lines, 1)
 
 
+def _said(role: str, text: str, start: float, end: float) -> dict:
+    return {"role": role, "content": text, "words": [{"word": text, "start": start, "end": end}]}
+
+
+def test_words_said_over_the_end_of_the_agents_line_are_kept():
+    """Phone check t3, 6 November (call_293d1b2c08595953ac3aebcbadf): Retell split "What's the
+    street address?" around the caller's "40", and the server heard only "Fulton Street"."""
+    lines = [_said("agent", "What's the street ", 34.59, 38.19), _said("user", "40 ", 38.44, 38.65),
+             _said("agent", "address?", 38.19, 38.75),
+             _said("user", "Fulton Street, Manhattan. It's a house. ", 38.67, 42.4)]
+    assert caller_text(lines) == "40 Fulton Street, Manhattan. It's a house."
+
+
+def test_a_reply_after_the_caller_still_ends_their_line():
+    lines = [_said("user", "My heat is out.", 5.0, 7.0), _said("agent", "Sorry to hear.", 8.0, 9.0),
+             _said("user", "Since last night.", 9.5, 10.5)]
+    assert caller_text(lines) == "Since last night."
+
+
 def test_the_rig_agent_runs_on_the_socket_with_no_webhook():
     body = rig_agent_body("https://host/eval", API_KEY, {"voice_id": "v1", "voice_model": None})
     assert body["response_engine"] == {"type": "custom-llm",
