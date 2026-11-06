@@ -5,7 +5,7 @@ import pytest
 from toolkit import TENANT_DIR, Agent, book, in_area_address, make_server, ready_to_book
 
 from app import flow
-from app.tenant import load_agent
+from app.tenant import Tenant, load_agent
 
 LINES = load_agent(TENANT_DIR)[0]["lines"]
 APPROVAL, HOME = LINES["ask_approval"], LINES["ask_someone_home"]
@@ -141,7 +141,11 @@ def test_an_estimate_has_nothing_to_approve(led):
 
 
 def test_the_unit_is_asked_only_for_a_building(led):
-    ctx_next = flow._after_address
+    ctx = type("Ctx", (), {"tenant": Tenant.load(TENANT_DIR)})()
+
+    def ctx_next(needs_unit):
+        return flow._after_address(ctx, needs_unit)
+
     assert "apartment or unit number" in ctx_next(True)
     assert "apartment or unit number" not in ctx_next(False)
     # The system type is asked once, and 'completely out' only where it means something.

@@ -229,7 +229,7 @@ def _out_jobs(ctx) -> list[str]:
 UNIT_QUESTION = "'Is there an apartment or unit number?'"
 
 
-def _after_address(needs_unit: bool) -> str:
+def _after_address(ctx, needs_unit: bool) -> str:
     """The questions between the address and the read-back. The unit only for a building with more
     than one home (find_address `needs_unit`); 'completely out' only on a no-heat or no-cooling
     call; the system type once (Jackson's live calls)."""
@@ -237,9 +237,9 @@ def _after_address(needs_unit: bool) -> str:
     return (
         f"Ask the next of these you don't have yet, one a turn, skipping any the caller already "
         f"answered: {unit}only on a no-heat or no-cooling call, 'Is it completely out, or just not "
-        "keeping up?', then 'Since when?'; if they haven't said what system it is, 'Is that a "
-        "boiler, a furnace, central air or a mini-split?'; then 'What's the best phone number to "
-        "reach you?'. Once you have the phone number, call read_back."
+        "keeping up?', then 'Since when?'; if they haven't said what system it is, "
+        f"'{ctx.tenant.line('ask_system_type')}'; then 'What's the best phone number to reach "
+        "you?'. Once you have the phone number, call read_back."
     )
 ANYTHING_ELSE = (
     "If the sentence didn't ask already, ask 'Anything else?'. When the caller has nothing else, "
@@ -256,7 +256,7 @@ def _next(ctx, tool: str, args, result: Result) -> str:
     if tool in ("find_address", "check_service_area"):
         if result.say:
             return "Wait for the caller's answer."
-        return _after_address(bool(data.get("needs_unit")))
+        return _after_address(ctx, bool(data.get("needs_unit")))
     if tool == "read_back":
         if data.get("confirmed"):
             then = (

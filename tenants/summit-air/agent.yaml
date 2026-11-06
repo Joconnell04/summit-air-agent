@@ -526,6 +526,8 @@ lines:
   ask_approval: Will you be able to approve any repair work the technician recommends?
   ask_someone_home: Will someone be home to let the technician in?
   ask_access: Is there a gate code, a buzzer, or any pets the technician should know about?
+  # The server-led flow asks the system type once if the caller hasn't said it (Jackson's live calls).
+  ask_system_type: Is that a boiler, a furnace, central air or a mini-split?
   # Ends a booking sentence instead of after_confirmation when the caller named another unit that
   # has no booking yet (DECISIONS.md 085). {unit} is "5C".
   next_unit: Now let's set up apartment {unit}.
