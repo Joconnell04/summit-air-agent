@@ -1,4 +1,4 @@
-.PHONY: setup test lint check ci release-check ratchet ratchet-update eval eval-pairs eval-decisions replay langsmith eval-upload seed-st mock-st postman-st server postman trace \
+.PHONY: retell-tools-check setup test lint check ci release-check ratchet ratchet-update eval eval-pairs eval-decisions replay langsmith eval-upload seed-st mock-st postman-st server postman trace \
 	owner-demo owner-user design-export rules-gate summary-check voice-livekit phone-setup deploy test-call measure-delay \
 	retell-push retell-flow-push retell-bridge retell-deploy retell-report rig rig-report sim listen lanes stt-bench
 
@@ -202,3 +202,7 @@ retell-deploy:
 
 retell-report:
 	uv run python -m voice.retell.report $(if $(DB),--db $(DB))
+
+# The live Retell agents' tools against the tool server's own schemas (scripts/retell_tools.py).
+retell-tools-check:
+	uv run --env-file .env python -m scripts.retell_tools check

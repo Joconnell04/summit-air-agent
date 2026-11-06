@@ -38,8 +38,7 @@
                   }
                 },
                 "required": [
-                  "street",
-                  "zip"
+                  "street"
                 ],
                 "type": "object"
               },
@@ -456,11 +455,7 @@
               }
             },
             "required": [
-              "issue",
-              "since",
-              "tried",
-              "who_home",
-              "approver"
+              "issue"
             ],
             "type": "object"
           },
@@ -611,8 +606,7 @@
           }
         },
         "required": [
-          "booking_id",
-          "reason"
+          "booking_id"
         ],
         "type": "object"
       },

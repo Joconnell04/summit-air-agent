@@ -38,8 +38,7 @@
                   }
                 },
                 "required": [
-                  "street",
-                  "zip"
+                  "street"
                 ],
                 "type": "object"
               },
@@ -221,6 +220,10 @@
                 "maxLength": 300,
                 "type": "string"
               },
+              "since": {
+                "maxLength": 120,
+                "type": "string"
+              },
               "temp_falling_fast": {
                 "type": "boolean"
               },
@@ -345,6 +348,25 @@
           "confirmed": {
             "type": "boolean"
           },
+          "job_type": {
+            "anyOf": [
+              {
+                "enum": [
+                  "no_heat",
+                  "no_cooling",
+                  "tune_up",
+                  "safety_check",
+                  "estimate"
+                ],
+                "maxLength": 40,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The job type of the visit, when the caller has said the problem. For no heat or no cooling the server may dispatch the soonest technician here and say so"
+          },
           "name": {
             "description": "The caller's name, if they gave it earlier in the call. Pass it so the server doesn't ask again.",
             "type": "string"
@@ -385,6 +407,11 @@
             "additionalProperties": false,
             "description": "The intake every booking carries. Address and phone come from the read-back.",
             "properties": {
+              "also_noted": {
+                "description": "The caller's answer to the catch-all (\"Anything else the technician should know, like water leaking or it turning on and off a lot?\"), as they said it",
+                "maxLength": 300,
+                "type": "string"
+              },
               "approver": {
                 "maxLength": 120,
                 "minLength": 1,
@@ -435,11 +462,7 @@
               }
             },
             "required": [
-              "issue",
-              "since",
-              "tried",
-              "who_home",
-              "approver"
+              "issue"
             ],
             "type": "object"
           },
@@ -590,8 +613,7 @@
           }
         },
         "required": [
-          "booking_id",
-          "reason"
+          "booking_id"
         ],
         "type": "object"
       },
@@ -678,7 +700,14 @@
             "description": "The day the caller asked for. The times above are on that day; a bare hour such as \"2\" means 2 PM.",
             "enum": [
               "today",
-              "tomorrow"
+              "tomorrow",
+              "monday",
+              "tuesday",
+              "wednesday",
+              "thursday",
+              "friday",
+              "saturday",
+              "sunday"
             ],
             "type": "string"
           },
@@ -773,7 +802,14 @@
                 "description": "The day the caller asked for. The times above are on that day; a bare hour such as \"2\" means 2 PM.",
                 "enum": [
                   "today",
-                  "tomorrow"
+                  "tomorrow",
+                  "monday",
+                  "tuesday",
+                  "wednesday",
+                  "thursday",
+                  "friday",
+                  "saturday",
+                  "sunday"
                 ],
                 "type": "string"
               },

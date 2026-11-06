@@ -390,10 +390,8 @@ def test_server_led_a_lead_in_held_before_a_server_sentence_is_never_said(server
 def test_server_led_the_arm_brings_its_own_prompt_and_tools(server_led, monkeypatch, tmp_path):
     prompt = tmp_path / "prompt.md"
     prompt.write_text("You are Brooke.\n\n## Before this call\n\n{{call_context}}")
-    tools = tmp_path / "tools.json"
-    tools.write_text(json.dumps({"general_tools": [{
-        "name": "book_appointment", "description": "Book it.",
-        "parameters": {"type": "object", "properties": {}}, "url": "https://x/retell/tools/b"}]}))
+    tools = tmp_path / "tools.yaml"
+    tools.write_text("book_appointment: Book it.\n")
     monkeypatch.setenv("RETELL_LLM_PROMPT", str(prompt))
     monkeypatch.setenv("RETELL_LLM_TOOLS", str(tools))
     _, make = server_led
@@ -406,21 +404,22 @@ def test_server_led_the_arm_brings_its_own_prompt_and_tools(server_led, monkeypa
         ws.receive_text()
         ask(ws, 1, ["Hi.", "My heat is out."])
     assert brain.systems[0] == "You are Brooke.\n\n## Before this call\n\nCaller is new."
-    assert [t["name"] for t in brain.tools[0]] == ["book_appointment"]
-    assert brain.tools[0][0]["description"] == "Book it."
+    # Every tool the server has, with the arm's description where it gives one.
+    by_name = {t["name"]: t for t in brain.tools[0]}
+    assert by_name["book_appointment"]["description"] == "Book it."
+    assert "find_slots" in by_name and by_name["find_slots"]["description"] != "Book it."
 
 
 def test_an_arm_tool_the_tool_server_lacks_is_refused(tmp_path):
-    tools = tmp_path / "tools.json"
-    tools.write_text(json.dumps({"general_tools": [{
-        "name": "order_pizza", "description": "", "parameters": {}}]}))
+    tools = tmp_path / "tools.yaml"
+    tools.write_text("order_pizza: Order a pizza.\n")
     with pytest.raises(ValueError, match="order_pizza"):
         llm_socket.arm_tools(tools, [{"name": "book_appointment", "write": True}])
 
 
 def test_an_arm_tool_writes_as_our_spec_says():
     tools = llm_socket.arm_tools(
-        llm_socket.ROOT / "retell" / "arms" / "server-led" / "tools.json",
+        llm_socket.ROOT / "retell" / "arms" / "socket" / "tools.yaml",
         llm_socket.tool_specs(llm_socket.job_types(llm_socket.ROOT / "tenants" / "summit-air")),
     )
     writes = {t["name"]: t["write"] for t in tools}

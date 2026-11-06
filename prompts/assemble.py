@@ -201,7 +201,11 @@ def tool_specs(job_types: list[str]) -> list[dict]:
         schema = _inline(model.model_json_schema())
         schema["properties"].pop("call_id", None)
         if "job_type" in schema["properties"]:
-            schema["properties"]["job_type"]["enum"] = job_types
+            prop = schema["properties"]["job_type"]
+            # An optional job_type (read_back's) is anyOf [string, null]: the enum goes on the
+            # string, where the model and Retell read it.
+            target = next((b for b in prop.get("anyOf", []) if b.get("type") == "string"), prop)
+            target["enum"] = job_types
         schema["required"] = [r for r in schema.get("required", []) if r != "call_id"]
         specs.append(
             {

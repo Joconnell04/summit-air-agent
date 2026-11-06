@@ -36,7 +36,7 @@ case "$1" in
     # socket-cutover.md): every server sentence spoken as written, the model writes the rest. Its
     # calls run the server-led flow because the bridge starts them so (RETELL_SERVER_LED_AGENTS).
     TOOL_SERVER_URL=http://127.0.0.1:8100 RETELL_LLM_SERVER_LED=1 RETELL_LLM_TOOL_TIMEOUT_S=9 \
-      RETELL_LLM_PROMPT=retell/arms/socket/prompt.md RETELL_LLM_TOOLS=retell/arms/server-led/tools.json \
+      RETELL_LLM_PROMPT=retell/arms/socket/prompt.md RETELL_LLM_TOOLS=retell/arms/socket/tools.yaml \
       exec uv run uvicorn --factory --host 127.0.0.1 --port 8114 voice.retell_llm.llm_socket:create_app ;;
   *) echo "unknown process $1" >&2; exit 2 ;;
 esac

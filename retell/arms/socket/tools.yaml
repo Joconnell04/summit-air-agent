@@ -1,0 +1,14 @@
+# The socket arm's descriptions for the three tools whose steps the server-led flow runs
+# (app/flow.py). Every other tool, and every parameter, comes from the tool server's own specs
+# (prompts/tools.yaml, app/schemas.py), so the socket can't drift from the server
+# (scripts/retell_tools.py).
+read_back: 'Reads back the address and phone number. The first call returns the sentence to say. On the
+  caller''s yes, call again with the same details and `confirmed: true`. When the number reaches someone
+  else ("call my daughter at ..."), pass whom it reaches in `phone_for`, in their words. Always pass `job_type`:
+  the server decides at the read-back whether a no-heat or no-cooling call is dispatched at once.'
+book_appointment: Book the window the caller chose, with the intake details. `slot.date` and `slot.window`
+  are the `date` and `window` code from find_slots' `offer` or `windows`, never the spoken label. If it
+  refuses, follow its `say` and `next`. To move a visit the caller already has, use reschedule_appointment
+  instead.
+end_call: 'Ask to end the call once the caller has nothing else. Say nothing of your own in that turn:
+  the closing is said for you. If it refuses, its sentence is said and you keep listening.'

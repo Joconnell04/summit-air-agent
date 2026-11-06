@@ -10,7 +10,8 @@ webhook, starts it); its id, prompt and first line come in the call's dynamic va
 
 An arm can bring its own prompt and tools instead (issue #176, the server-led arm):
 RETELL_LLM_PROMPT is a prompt file whose {{call_context}} is filled from the call's variables,
-RETELL_LLM_TOOLS a Retell tools.json whose names, descriptions and parameters the model gets, and
+RETELL_LLM_TOOLS a YAML of descriptions for the tools whose steps the arm's flow runs, over the
+server's own specs, and
 RETELL_LLM_SERVER_LED=1 speaks every sentence a tool result carries as written (voice/retell_llm/
 call.py). The tool server behind it runs the flow (SERVER_LED=1).
 """
@@ -57,15 +58,16 @@ def arm_prompt(path: Path, variables: dict) -> str:
 
 
 def arm_tools(path: Path, specs: list[dict]) -> list[dict]:
-    """The arm's tools: the arm's own descriptions from its Retell tools.json, over the tool
-    server's own parameters and write flags (app/tools.py), so an argument the server adds (such
-    as read_back's job_type for dispatch) reaches the model without editing the arm's file."""
-    by_name = {s["name"]: s for s in specs}
-    tools = json.loads(path.read_text())["general_tools"]
-    unknown = [t["name"] for t in tools if t["name"] not in by_name]
+    """The tool server's own specs (names, parameters, write flags, prompts/tools.yaml
+    descriptions), with the arm's description for the few tools whose steps its flow runs
+    (retell/arms/socket/tools.yaml). Parameters always come from the server, so an argument it
+    adds (read_back's job_type) reaches the model, and nothing drifts (scripts/retell_tools.py)."""
+    overrides = yaml.safe_load(path.read_text()) or {}
+    names = {s["name"] for s in specs}
+    unknown = sorted(set(overrides) - names)
     if unknown:
         raise ValueError(f"tools the tool server doesn't have: {', '.join(unknown)}")
-    return [{**by_name[t["name"]], "description": t["description"]} for t in tools]
+    return [{**s, "description": overrides.get(s["name"], s["description"])} for s in specs]
 
 
 def hold_phrase_after_s(config_path: Path) -> float:

@@ -112,8 +112,7 @@ def _gate(ctx, tool: str, args) -> None:
             "",
             gate="flow_job_type",
             need="read_back needs job_type",
-        ).with_next("Say nothing. Call read_back again with the same details and the job type: "
-                    "no_heat, no_cooling, tune_up, safety_check or estimate.")
+        ).with_next("Say nothing. Call read_back again with the same details and the job type.")
     if tool == "find_slots" and not args.moving_a_visit and not ctx.call["readback_confirmed_at"]:
         raise Refused(
             "read_back_first",
