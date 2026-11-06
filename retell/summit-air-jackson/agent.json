@@ -1,0 +1,207 @@
+{
+  "agent_id": "agent_a3e38e6aa3d4e75dfac12aafc8",
+  "agent_name": "Summit Air Jackson",
+  "allow_user_dtmf": true,
+  "assigned_tags": [],
+  "backchannel_frequency": 0.4,
+  "backchannel_words": [
+    "okay",
+    "got it",
+    "right"
+  ],
+  "base_version": 1,
+  "begin_message_delay_ms": 800,
+  "boosted_keywords": [
+    "Summit Air",
+    "HVAC",
+    "furnace",
+    "boiler",
+    "heat pump",
+    "thermostat",
+    "carbon monoxide",
+    "condenser",
+    "radiator",
+    "Houston Street",
+    "Kosciuszko Street",
+    "DeKalb Avenue",
+    "Schermerhorn Street",
+    "Gowanus",
+    "Cortelyou Road",
+    "Van Wyck Expressway",
+    "Wyckoff Avenue",
+    "Nostrand Avenue",
+    "New Utrecht Avenue",
+    "Conselyea Street",
+    "Joralemon Street",
+    "Boerum Hill",
+    "Todt Hill",
+    "Arrochar"
+  ],
+  "channel": "voice",
+  "contact_memory_config": {
+    "enable_read": false,
+    "enable_update": false
+  },
+  "data_storage_setting": "everything",
+  "denoising_mode": "noise-cancellation",
+  "enable_backchannel": true,
+  "enable_dnc_detection": true,
+  "enable_dynamic_responsiveness": false,
+  "enable_dynamic_voice_speed": false,
+  "enable_expressive_mode": false,
+  "end_call_after_silence_ms": 45000,
+  "expressive_emotion_tags": [
+    "empathetic",
+    "excited",
+    "sigh",
+    "clear throat",
+    "emphasis"
+  ],
+  "expressive_mode_prompt": "Use [empathetic] when the caller describes a failed repair, no-heat/no-cooling situation, damage, discomfort, or frustration. Use [excited] sparingly when confirming a helpful outcome, such as an earlier appointment or a repair that should restore comfort. Use [sigh] only when acknowledging a repeated complaint, delay, or frustrating setback, not as annoyance toward the caller. Use [clear throat] when briefly redirecting from a tangent back to the HVAC issue or the next step. Use [emphasis] immediately before the key detail the caller must remember, such as the appointment time, price, safety instruction, or required action.",
+  "fallback_voice_ids": [],
+  "guardrail_config": {
+    "input_topics": [
+      "platform_integrity_jailbreaking"
+    ],
+    "output_topics": [
+      "harassment",
+      "self_harm",
+      "sexual_exploitation",
+      "violence",
+      "illicit_and_harmful_activity",
+      "regulated_professional_advice",
+      "child_safety_and_exploitation"
+    ]
+  },
+  "handbook_config": {
+    "ai_disclosure": true,
+    "conversational_personality": false,
+    "default_personality": true,
+    "echo_verification": false,
+    "high_empathy": false,
+    "nato_phonetic_alphabet": false,
+    "natural_filler_words": false,
+    "scope_boundaries": true,
+    "smart_matching": true,
+    "speech_normalization": false
+  },
+  "interruption_sensitivity": 1,
+  "is_published": false,
+  "language": "en-US",
+  "max_call_duration_ms": 1200000,
+  "opt_in_signed_url": false,
+  "pii_config": {
+    "categories": [],
+    "mode": "post_call"
+  },
+  "post_call_analysis_model": "gpt-5.6-terra",
+  "pronunciation_dictionary": [
+    {
+      "alphabet": "ipa",
+      "phoneme": "ˈhaʊstən ˈstɹit",
+      "word": "Houston Street"
+    },
+    {
+      "alphabet": "ipa",
+      "phoneme": "ˈhaʊstən ˈstɹit",
+      "word": "Houston St"
+    },
+    {
+      "alphabet": "ipa",
+      "phoneme": "ˌkɑsiˈɑskoʊ",
+      "word": "kosciuszko"
+    },
+    {
+      "alphabet": "ipa",
+      "phoneme": "diˈkælb",
+      "word": "dekalb"
+    },
+    {
+      "alphabet": "ipa",
+      "phoneme": "diˈkælb",
+      "word": "DeKalb"
+    },
+    {
+      "alphabet": "ipa",
+      "phoneme": "ˈskɝmɝˌhɔɹn",
+      "word": "schermerhorn"
+    },
+    {
+      "alphabet": "ipa",
+      "phoneme": "ɡəˈwɑnəs",
+      "word": "gowanus"
+    },
+    {
+      "alphabet": "ipa",
+      "phoneme": "kɔɹˈtɛlju",
+      "word": "cortelyou"
+    },
+    {
+      "alphabet": "ipa",
+      "phoneme": "ˌvæn ˈwɪk",
+      "word": "Van Wyck"
+    },
+    {
+      "alphabet": "ipa",
+      "phoneme": "ˈwaɪkɔf",
+      "word": "wyckoff"
+    },
+    {
+      "alphabet": "ipa",
+      "phoneme": "ˈnoʊstɹænd",
+      "word": "nostrand"
+    },
+    {
+      "alphabet": "ipa",
+      "phoneme": "ˈnu ˈjutɹɛk",
+      "word": "New Utrecht"
+    },
+    {
+      "alphabet": "ipa",
+      "phoneme": "kɑnˈsɛljə",
+      "word": "conselyea"
+    },
+    {
+      "alphabet": "ipa",
+      "phoneme": "dʒəˈɹæləmən",
+      "word": "joralemon"
+    },
+    {
+      "alphabet": "ipa",
+      "phoneme": "ˈbɔɹəm",
+      "word": "boerum"
+    },
+    {
+      "alphabet": "ipa",
+      "phoneme": "ˈtoʊt",
+      "word": "todt"
+    },
+    {
+      "alphabet": "ipa",
+      "phoneme": "əˈɹoʊʃɝ",
+      "word": "arrochar"
+    }
+  ],
+  "reminder_max_count": 1,
+  "reminder_trigger_ms": 20000,
+  "response_engine": {
+    "llm_id": "llm_12eba5f1d4a3b067f0635097de30",
+    "type": "retell-llm",
+    "version": 2
+  },
+  "responsiveness": 1,
+  "stt_mode": "accurate",
+  "user_dtmf_options": {},
+  "version": 2,
+  "voice_id": "cartesia-Brooke",
+  "voice_speed": 1,
+  "voice_temperature": 0.6,
+  "volume": 1,
+  "webhook_events": [
+    "call_started",
+    "call_ended",
+    "call_analyzed",
+    "transcript_updated"
+  ],
+  "webhook_url": "https://45-77-105-247.sslip.io/retell/webhook"
+}
