@@ -378,6 +378,17 @@ def close_open_handoff(conn: sqlite3.Connection, call_id: str, reason: str, now:
     )
 
 
+def close_open_transfer(conn: sqlite3.Connection, call_id: str, reason: str, now: datetime) -> None:
+    """At the end of a call, a warm transfer still dialing is settled from how the call ended, in
+    case the voice layer's report never arrived: a call that left us by transfer was connected.
+    The flag and callback stay open for a person to close. Called inside the end-of-call
+    transaction."""
+    conn.execute(
+        "UPDATE transfers SET status = ?, finished_at = ? WHERE call_id = ? AND status = 'dialing'",
+        ("connected" if reason == "transfer" else "failed", iso(now), call_id),
+    )
+
+
 def _summary(tenant: Tenant, call: sqlite3.Row, flag: sqlite3.Row, role: str) -> str:
     # Urgent only when the server decided the on-call technician is needed, not from the flag.
     priority = "Urgent. " if role == "on_call" else ""

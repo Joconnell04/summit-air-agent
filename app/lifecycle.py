@@ -1090,6 +1090,7 @@ def end(
                 "Urgent",
             )
         transfer.close_open_handoff(conn, call["id"], args.reason, now)
+        transfer.close_open_transfer(conn, call["id"], args.reason, now)
         outcome = outcome_of(conn, call)
         labels.settle(conn, tenant, call, outcome, now)
         records.update_call(
@@ -1122,6 +1123,10 @@ def outcome_of(conn: sqlite3.Connection, call: sqlite3.Row) -> str:
         "SELECT 1 FROM bookings WHERE call_id = ? AND kind IN ('reschedule', 'cancel') AND status = 'done'"
     ) or has("SELECT 1 FROM address_moves WHERE call_id = ?"):
         return "changed_booking"
+    # Put through to the office (request_transfer): its fallback callback stays for the office to
+    # close, so the transfer is checked first.
+    if has("SELECT 1 FROM transfers WHERE call_id = ? AND status = 'connected'"):
+        return "transferred"
     if has("SELECT 1 FROM callbacks WHERE call_id = ?"):
         return "callback"
     if has("SELECT 1 FROM flags WHERE call_id = ? AND kind = 'person'"):

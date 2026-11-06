@@ -764,6 +764,43 @@
     },
     {
       "args_at_root": false,
+      "description": "Put the caller through to the office now, when they ask for a real person, or have a complaint or a billing question. The server decides whether the office can take the call; if it says yes, say its sentence and then call transfer_call. If it says no, say its sentence (if any) and follow its need, usually a callback with flag_person.",
+      "max_retry": 1,
+      "method": "POST",
+      "name": "request_transfer",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "reason": {
+            "description": "person: the caller asked for a real person. complaint or billing: a complaint or a billing question, which a person at the office handles.",
+            "enum": [
+              "person",
+              "complaint",
+              "billing"
+            ],
+            "type": "string"
+          },
+          "summary": {
+            "description": "One line on what the caller needs, for the person who takes the call.",
+            "maxLength": 20000,
+            "minLength": 3,
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason",
+          "summary"
+        ],
+        "type": "object"
+      },
+      "speak_after_execution": true,
+      "speak_during_execution": false,
+      "timeout_ms": 10000,
+      "type": "custom",
+      "url": "https://45-77-105-247.sslip.io/retell/tools/request_transfer"
+    },
+    {
+      "args_at_root": false,
       "description": "Save one lead: commercial (company, contact, need), membership sign-up interest, or an install or replacement quote. A window the caller asked for goes in callback_after and callback_before, and \"tomorrow\" in callback_day. Its `say` tells the caller what happens next.",
       "max_retry": 1,
       "method": "POST",

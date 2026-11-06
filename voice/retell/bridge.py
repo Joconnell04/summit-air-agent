@@ -47,6 +47,8 @@ log = logging.getLogger("retell.bridge")
 logging.basicConfig(level=logging.INFO)
 
 SAY_RETRY = "Sorry, give me just a moment."
+# The dynamic variable Retell's transfer_call tool dials (voice/retell/transfer_tool.py).
+TRANSFER_VARIABLE = "transfer_number"
 SAFETY_ACTIONS = ("speak_lines", "speak_variant", "ask_check")
 # The server counts the safety lines as said only when the agent's words contain them exactly.
 SAY_NOW = (
@@ -190,6 +192,9 @@ class ToolServer:
     def end(self, call_id: str, reason: str) -> dict | None:
         return self._post(f"/calls/{call_id}/end", {"reason": reason})
 
+    def transfer_done(self, call_id: str, transfer_id: int, outcome: str) -> dict | None:
+        return self._post(f"/calls/{call_id}/transfer/{transfer_id}/done", {"outcome": outcome})
+
     def tool(self, call_id: str, name: str, args: dict) -> dict:
         headers = {"Idempotency-Key": idempotency_key(call_id, name, args)}
         answer = self._post(f"/tools/{name}", {**args, "call_id": call_id}, headers)
@@ -245,6 +250,9 @@ class Bridge:
         # one line on Jackson's call call_0246b91f77e01a4b18583e6ca8b). A hazard's lines go out
         # once per call; new text from the server (another hazard) still goes.
         self.safety_sent: dict[str, set[str]] = {}
+        # The warm transfer the server allowed on each call (request_transfer): our call id and
+        # the transfer id, so Retell's transfer webhooks can report how it went.
+        self.transfers: dict[str, tuple[str, int]] = {}
 
     def verified(self, raw: bytes, header: str | None) -> bool:
         return signature.verify(raw, self.api_key, header, self.now_ms())
@@ -368,6 +376,8 @@ class Bridge:
                 if self.tools.end(call_id, reason) is None:
                     return False
                 self.ledger.mark(rid, ended=1, hangup_pending=0)
+        elif name in ("transfer_bridged", "transfer_cancelled"):
+            self.transfer_event(name, rid)
         elif name == "call_analyzed":
             self.ledger.mark(rid, summary_json=json.dumps(call_summary(call)))
         return True
@@ -417,6 +427,8 @@ class Bridge:
             say = answer.get("say") or ""
             if say.startswith(first):
                 answer["say"] = say[len(first):].strip()
+        if name == "request_transfer" and kind == "call" and answer.get("ok"):
+            answer = self.allow_transfer(rid, call_id, answer)
         if notes:
             answer["server_notes"] = notes
         hang_up = answer.get("ok") and (answer.get("data") or {}).get("hang_up")
@@ -439,6 +451,33 @@ class Bridge:
             )
             self.hang_up_later(rid, hangup_delay(final), last)
         return answer
+
+    def allow_transfer(self, rid: str, call_id: str, answer: dict) -> dict:
+        """The server said yes: give the call the number its transfer_call tool dials. The tool's
+        destination is {{transfer_number}}, which nothing else sets, so a transfer_call the model
+        makes without the server's yes has no number and fails. The number itself stays out of
+        what the model reads. If Retell can't be told, the transfer is reported failed and the
+        caller hears the stored callback line."""
+        data = dict(answer.get("data") or {})
+        plan = data.pop("transfer", None) or {}
+        try:
+            self.retell.set_variables(rid, {TRANSFER_VARIABLE: plan["number"]})
+        except (RetellError, httpx.HTTPError, KeyError) as exc:
+            log.warning("transfer number for %s not set: %s", rid, exc)
+            if plan.get("id"):
+                self.tools.transfer_done(call_id, plan["id"], "failed")
+            return {"ok": False, "say": data.get("fallback", ""), "refused": "transfer_failed"}
+        self.transfers[rid] = (call_id, plan["id"])
+        return {**answer, "data": data}
+
+    def transfer_event(self, name: str, rid: str) -> None:
+        """Retell's word on the transfer: bridged means the office line picked up and the caller
+        is with it; cancelled means it rang out or failed, and the agent has the caller back."""
+        found = self.transfers.pop(rid, None)
+        if found is None:
+            return
+        outcome = "connected" if name == "transfer_bridged" else "no_answer"
+        self.tools.transfer_done(found[0], found[1], outcome)
 
     def hang_up_later(self, rid: str, delay: float, last_line: str = "", checks: int = 0) -> None:
         """Stop the call once its final line has played, plus the grace. end_call can come at the

@@ -124,6 +124,15 @@ class Retell:
             json={"call_control": {"additional_context": context}},
         )
 
+    def set_variables(self, call_id: str, variables: dict[str, str]) -> None:
+        """Set dynamic variables on the running call (Update Live Call, fields_to_override), such
+        as the number the transfer_call tool dials."""
+        self.request(
+            "PATCH",
+            f"/v2/update-live-call/{call_id}",
+            json={"fields_to_override": {"override_dynamic_variables": variables}},
+        )
+
     def keep_no_recording(self, call_id: str) -> None:
         """Retell keeps no recording or transcript of this call once its webhooks have gone out
         (Update Live Call, data_storage_setting; it can only be made stricter)."""

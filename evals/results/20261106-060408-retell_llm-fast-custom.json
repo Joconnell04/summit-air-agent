@@ -1,0 +1,449 @@
+{
+  "run_id": "20261106-060408-retell_llm-fast-custom",
+  "created": "2026-11-06T06:04:08.818996Z",
+  "suite": "custom",
+  "tags": [
+    "id:tune-up-known-caller"
+  ],
+  "stack": "retell_llm",
+  "profile": "fast",
+  "hash": "6b375105c362c6ec",
+  "prompt_hash": "657f18f33010df0a",
+  "model": "claude-haiku-5-5",
+  "transport": "text",
+  "overlay": null,
+  "scenarios": [
+    {
+      "scenario_id": "tune-up-known-caller",
+      "sample": 1,
+      "persona": "Dennis Ocasio, who owns and lives in a two-family house in Brooklyn and has used Summit Air before. Calm, friendly, answers in full sentences.",
+      "flow": [
+        "booking"
+      ],
+      "difficulty": "easy",
+      "traits": [],
+      "outcome": "fail",
+      "must_pass_failures": [
+        "booking_lead_in: no booking confirmation was said"
+      ],
+      "check_failures": [
+        "booking_lead_in: no booking confirmation was said"
+      ],
+      "error": "",
+      "checks": [
+        "booking_lead_in",
+        "booking",
+        "read_back",
+        "safety_lines"
+      ],
+      "grader_score": 2,
+      "grader_notes": "The agent spelled the unit out as \"D O W N S T A I R S\", asked for a gate code or buzzer after the caller had already said to ring the downstairs bell, and asked to put the visit under an account it already knew. The confirmation never acted on the bell note or on the caller's request that the technician call before any extra work, so the caller felt unheard.",
+      "reply_delay_p50_ms": 962.1599170495756,
+      "reply_delay_p90_ms": 1518.7729590106755,
+      "cost_usd": 0.042304,
+      "agent_cost_usd": 0.0,
+      "duration_ms": 40759.88620799035,
+      "transcript": [
+        {
+          "role": "agent",
+          "text": "Hi Dennis, thanks for calling Summit Air! I'm Brian, the virtual assistant. How can I help?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "Hi, I'd like to book my annual boiler tune-up.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Perfect. And this is for your home, right?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "Yes, it's for my home in Brooklyn.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Got it. Is the address 801 Fenimore Street, same as on file?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "Yes, that's right. It's 801 Fenimore Street, Brooklyn, 11206. I'm in the downstairs unit.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Okay, thanks. Perfect. So that's eight oh one Fenimore St, unit D O W N S T A I R S, and the number you're calling from, ending in zero one six two. That's all correct, right?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "Almost. The downstairs unit isn't labeled that way, so just note it as the downstairs unit. And yes, the number I'm calling from is the best one to reach me, ending in 0162.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "One sec. Should I put this under your account?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "Yes, please put it under my account. I'm Dennis Ocasio, and that's the name on the account.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Thanks. When would you like the tune-up? I can check openings for today, tomorrow, or a specific day.",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "Next week works for me. Whatever weekday morning you have open is fine, so if you have something on Monday, that would be great.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Okay, one moment. Monday I have 12 to 12:30 or 12:30 to 1.",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "The 12 to 12:30 window works for me. Just so the tech knows, I work from home, so I'll be around, and they can ring the downstairs bell when they arrive.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Okay, thanks. Will you be able to approve any repair work the technician recommends?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "I can, as long as they explain what needs fixing and what it costs before doing the work. Please have them call me first if anything beyond the tune-up comes up.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Just a moment. And is there a gate code or buzzer the technician should know about?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "No gate code. Just ring the downstairs bell. It's the unit on the ground floor, and I'll come down to let them in.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Okay, I've booked it: the technician will arrive Monday, November 9, between 12 and 12:30. Anything else?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "That's perfect, thanks, Brian. Have a good day.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "You too. Thanks for calling Summit Air. Have a great afternoon!",
+          "said": null
+        }
+      ],
+      "tool_calls": [
+        {
+          "name": "read_back",
+          "arguments": {
+            "call_id": "eval-tune-up-known-caller-1-8d3297fc",
+            "address": {
+              "street": "801 Fenimore St",
+              "unit": "downstairs",
+              "city": "Brooklyn",
+              "zip": "11206",
+              "spelled": ""
+            },
+            "phone": "(347) 555-0162",
+            "phone_for": "",
+            "name": "Dennis Ocasio",
+            "job_type": null,
+            "confirmed": false
+          }
+        },
+        {
+          "name": "read_back",
+          "arguments": {
+            "call_id": "eval-tune-up-known-caller-1-8d3297fc",
+            "address": {
+              "street": "801 Fenimore St",
+              "unit": "downstairs unit",
+              "city": "Brooklyn",
+              "zip": "11206",
+              "spelled": ""
+            },
+            "phone": "0162",
+            "phone_for": "",
+            "name": "Dennis Ocasio",
+            "job_type": null,
+            "confirmed": true
+          }
+        },
+        {
+          "name": "find_slots",
+          "arguments": {
+            "call_id": "eval-tune-up-known-caller-1-8d3297fc",
+            "job_type": "tune_up",
+            "priority": null,
+            "preferred_days": [
+              "Monday"
+            ],
+            "time_of_day": "morning",
+            "moving_a_visit": false,
+            "window_minutes": null,
+            "day": "Monday",
+            "arrive_after": null,
+            "arrive_before": null,
+            "facts": {
+              "issue": "",
+              "since": "",
+              "who_home": "",
+              "inside_temp_f": null,
+              "temp_falling_fast": false
+            }
+          }
+        },
+        {
+          "name": "book_appointment",
+          "arguments": {
+            "call_id": "eval-tune-up-known-caller-1-8d3297fc",
+            "job_type": "tune_up",
+            "slot": {
+              "date": "2026-11-09",
+              "window": "1200-1230"
+            },
+            "details": {
+              "issue": "Annual boiler tune-up",
+              "since": "not asked yet",
+              "tried": "not asked yet",
+              "who_home": "Caller works from home, will be home; ring the downstairs bell on arrival",
+              "approver": "Dennis Ocasio",
+              "system_type": "boiler",
+              "arrival_notes": "Work from home. Ring the downstairs bell on arrival. Downstairs unit.",
+              "also_noted": "",
+              "name": "Dennis Ocasio",
+              "inside_temp_f": null
+            },
+            "priority": null,
+            "separate_problem": false,
+            "new_address_account": "caller"
+          }
+        },
+        {
+          "name": "book_appointment",
+          "arguments": {
+            "call_id": "eval-tune-up-known-caller-1-8d3297fc",
+            "job_type": "tune_up",
+            "slot": {
+              "date": "2026-11-09",
+              "window": "1200-1230"
+            },
+            "details": {
+              "issue": "Annual boiler tune-up",
+              "since": "not asked yet",
+              "tried": "Annual maintenance, no problem reported",
+              "who_home": "Caller works from home, will be home; ring the downstairs bell on arrival",
+              "approver": "Dennis Ocasio, can approve repairs after the tech explains the issue and cost; call him first for anything beyond the tune-up",
+              "name": "Dennis Ocasio",
+              "arrival_notes": "Work from home. Ring the downstairs bell on arrival. Downstairs unit.",
+              "system_type": "boiler"
+            },
+            "new_address_account": "caller"
+          }
+        },
+        {
+          "name": "book_appointment",
+          "arguments": {
+            "call_id": "eval-tune-up-known-caller-1-8d3297fc",
+            "job_type": "tune_up",
+            "slot": {
+              "date": "2026-11-09",
+              "window": "1200-1230"
+            },
+            "details": {
+              "issue": "Annual boiler tune-up",
+              "since": "not asked yet",
+              "tried": "Annual maintenance, no problem reported",
+              "who_home": "Caller works from home, will be home; ring the downstairs bell on arrival",
+              "approver": "Dennis Ocasio; call first for work beyond tune-up",
+              "system_type": "boiler",
+              "arrival_notes": "Work from home. Ring the downstairs bell on arrival. Downstairs unit. Tech to explain issue and cost before any repair; caller wants a call first for anything beyond the tune-up.",
+              "also_noted": "",
+              "name": "Dennis Ocasio",
+              "inside_temp_f": null
+            },
+            "priority": null,
+            "separate_problem": false,
+            "new_address_account": "caller"
+          }
+        },
+        {
+          "name": "book_appointment",
+          "arguments": {
+            "call_id": "eval-tune-up-known-caller-1-8d3297fc",
+            "job_type": "tune_up",
+            "slot": {
+              "date": "2026-11-09",
+              "window": "1200-1230"
+            },
+            "details": {
+              "issue": "Annual boiler tune-up",
+              "since": "not asked yet",
+              "tried": "Annual maintenance, no problem reported",
+              "who_home": "Caller works from home, will be home; ring the downstairs bell on arrival",
+              "approver": "Dennis Ocasio; call first for work beyond tune-up",
+              "system_type": "boiler",
+              "arrival_notes": "No gate code. Ring the downstairs bell (ground floor unit). Caller will come down to let them in. Tech to explain issue and cost before any repair; caller wants a call first for anything beyond the tune-up.",
+              "also_noted": "",
+              "name": "Dennis Ocasio",
+              "inside_temp_f": null
+            },
+            "priority": null,
+            "separate_problem": false,
+            "new_address_account": "caller"
+          }
+        },
+        {
+          "name": "end_call",
+          "arguments": {
+            "call_id": "eval-tune-up-known-caller-1-8d3297fc",
+            "reason": "resolved"
+          }
+        }
+      ],
+      "turn_timings": [
+        {
+          "kind": "plain",
+          "reply_delay_ms": 962.1599170495756,
+          "model_first_token_ms": 962.1599170495756,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 954.1130419820547,
+          "model_first_token_ms": 954.1130419820547,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 758.2612080150284,
+          "model_first_token_ms": 758.2612080150284,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1033.3970830542967,
+          "model_first_token_ms": 1033.3970830542967,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 849.596832995303,
+          "model_first_token_ms": 849.596832995303,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1044.5689159678295,
+          "model_first_token_ms": 1044.5689159678295,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1518.7729590106755,
+          "model_first_token_ms": 1518.7729590106755,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1057.3000839794986,
+          "model_first_token_ms": 1057.3000839794986,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1767.4029999761842,
+          "model_first_token_ms": 1767.4029999761842,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 747.590416984167,
+          "model_first_token_ms": 747.590416984167,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        }
+      ],
+      "call_id": "eval-tune-up-known-caller-1-8d3297fc",
+      "silent_turns": 0,
+      "cost_parts": {}
+    }
+  ]
+}

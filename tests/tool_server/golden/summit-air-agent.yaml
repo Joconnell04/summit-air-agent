@@ -351,11 +351,16 @@ lines:
     it's covered, before the technician arrives.
   seek_earlier_note: I've also asked our team to look for an earlier opening.
   slot_taken: That window just filled up.
+  transfer_closed: Our office is closed right now, so I can't put you through, but I can have someone
+    call you back. When's a good time?
+  transfer_connecting: Okay, I'll connect you with someone from our team now. One moment.
   transfer_handoff: I'm connecting you with someone from our team now.
   transfer_no_answer: I couldn't reach anyone just now, so I've let the team know and someone will call
     you {when}.
   transfer_prompt: Summit Air has a caller for the {role}. Press 1 to take the call.
   transfer_summary: '{priority}Caller at {phone}: {reason}. Putting you through now.'
+  transfer_unavailable: I can't put you through right now, but I can have someone call you back. When's
+    a good time?
   urgent_priority: I've marked this call top priority, so you get our soonest opening.
   visit_missing: I can't pull up that visit in our system right now, so I've asked the team to look into
     it and get back to you.

@@ -62,6 +62,11 @@ flag_person: >-
   friday, callback_time "2 PM"). A time the caller names goes in callback_time as said, never a
   window around it. Say the sentence it returns as written; it names the day and time, so never
   explain the date or count the days yourself.
+request_transfer: >-
+  Put the caller through to the office now, when they ask for a real person, or have a complaint or
+  a billing question. The server decides whether the office can take the call; if it says yes, say
+  its sentence and then call transfer_call. If it says no, say its sentence (if any) and follow its
+  need, usually a callback with flag_person.
 record_lead: >-
   Save one lead: commercial (company, contact, need), membership sign-up interest, or an install or
   replacement quote only when an estimate visit can't be booked (book those with book_appointment,

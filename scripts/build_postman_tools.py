@@ -284,6 +284,13 @@ def build() -> dict:
             call="safety_call_id",
         ),
         tool(
+            "request_transfer",
+            "Never put through on a safety call",
+            {"reason": "person", "summary": "Wants a person about the gas smell"},
+            refused("transfer_safety"),
+            call="safety_call_id",
+        ),
+        tool(
             "flag_person",
             "Flag a person on the safety call",
             {"reason": "Caller wants to talk to a person about the gas smell", "priority": "Urgent"},
