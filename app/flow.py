@@ -36,6 +36,10 @@ VISIT_QUESTIONS = (
     ("ask_access", r"\bgate code\b|\bbuzzer\b|\bpets?\b", r"\bgate\b|\bbuzzer\b|\bpets?\b|\bdogs?\b|\bcats?\b|\bdoorman\b"),
 )
 
+# The short acknowledgment before each visit question the server asks, in turn, so three quick
+# questions don't all open the same way (Jackson's live calls, retell-live-calls-01.md).
+ACKS = ("Got it.", "Okay.")
+
 # The tools whose sentence ends a piece of work: a booking, a change, a lead, a callback. end_call
 # waits on these. The others are steps a later step answers (an offer the caller took, a read-back
 # they confirmed) or are read, not said; holding the goodbye for them re-offered a window the caller
@@ -82,21 +86,18 @@ def _gate(ctx, tool: str, args) -> None:
             "question a turn: the address, then the phone number. Then call read_back."
         )
     if tool == "book_appointment":
-        missing = visit_questions_missing(ctx)
+        asked = visit_questions(ctx, args.job_type)
+        missing = visit_questions_missing(ctx, args.job_type)
         if missing:
-            rest = len(missing) - 1
-            then = (
-                f"Then ask the {'other question' if rest == 1 else f'other {rest} questions'} "
-                "the same way, one a turn, and call book_appointment again"
-                if rest
-                else "Then call book_appointment again"
-            )
+            # The server asks each question itself, with a short acknowledgment that changes from
+            # one question to the next.
+            ack = ACKS[(len(asked) - len(missing)) % len(ACKS)]
             raise Refused(
                 "visit_questions_first",
-                ctx.tenant.line(missing[0]),
+                f"{ack} {question_line(ctx, missing[0])}",
                 gate="flow_visit_questions",
-            ).with_next(f"Ask this question as written and wait for the answer. {then}, with the "
-                        "answers in details.")
+            ).with_next("Say this sentence as written and wait for the answer. Then call "
+                        "book_appointment again with the answers so far in details, saying nothing.")
     if tool == "end_call":
         unsaid = unsaid_sentence(ctx)
         if unsaid:
@@ -121,13 +122,26 @@ def _offer_seq(ctx) -> int:
     return row["turn_seq"] if row else 0
 
 
-def visit_questions_missing(ctx) -> list[str]:
+def visit_questions(ctx, job_type: str = "") -> tuple:
+    """The visit questions for this job. A job the tenant books without the repair intake (an
+    estimate for a new system) has nothing to approve, so it skips the approval question."""
+    skip = ctx.tenant.agent.get("intake", {}).get("skip_for", [])
+    return tuple(q for q in VISIT_QUESTIONS if not (q[0] == "ask_approval" and job_type in skip))
+
+
+def question_line(ctx, key: str) -> str:
+    """A visit question as the server says it: the tenant's line, and its own open question before
+    booking for access (a gate code or buzzer, pets only when the tenant asks about them)."""
+    return ctx.tenant.arrival_question if key == "ask_access" else ctx.tenant.line(key)
+
+
+def visit_questions_missing(ctx, job_type: str = "") -> list[str]:
     """The visit questions not yet settled since the opening was offered, in the order they are
     asked. One is settled when an agent line asked it and a caller line came after, or when the
     caller answered it unasked."""
     after = [t for t in _turns(ctx) if t["seq"] > _offer_seq(ctx)]
     missing = []
-    for key, asked, volunteered in VISIT_QUESTIONS:
+    for key, asked, volunteered in visit_questions(ctx, job_type):
         settled = any(
             t["speaker"] == "caller" and re.search(volunteered, t["text"], re.IGNORECASE) for t in after
         ) or any(
@@ -212,16 +226,21 @@ def _out_jobs(ctx) -> list[str]:
     return cutoffs["heating_job_types"] + cutoffs["cooling_job_types"]
 
 
-def _questions(ctx) -> tuple[str, str, str]:
-    return tuple(f"'{ctx.tenant.line(key)}'" for key, _, _ in VISIT_QUESTIONS)
+UNIT_QUESTION = "'Is there an apartment or unit number?'"
 
 
-AFTER_ADDRESS = (
-    "Ask the next of these you don't have yet, one a turn: the apartment or unit, only if it's a "
-    "building; on a no-heat or no-cooling call, 'Is it completely out, or just not keeping up?', "
-    "then 'Since when?'; then 'What's the best phone number to reach you?'. Once you have the "
-    "phone number, call read_back."
-)
+def _after_address(needs_unit: bool) -> str:
+    """The questions between the address and the read-back. The unit only for a building with more
+    than one home (find_address `needs_unit`); 'completely out' only on a no-heat or no-cooling
+    call; the system type once (Jackson's live calls)."""
+    unit = f"{UNIT_QUESTION}, unless they said it's a house or gave one; " if needs_unit else ""
+    return (
+        f"Ask the next of these you don't have yet, one a turn, skipping any the caller already "
+        f"answered: {unit}only on a no-heat or no-cooling call, 'Is it completely out, or just not "
+        "keeping up?', then 'Since when?'; if they haven't said what system it is, 'Is that a "
+        "boiler, a furnace, central air or a mini-split?'; then 'What's the best phone number to "
+        "reach you?'. Once you have the phone number, call read_back."
+    )
 ANYTHING_ELSE = (
     "If the sentence didn't ask already, ask 'Anything else?'. When the caller has nothing else, "
     "say the goodbye and call end_call."
@@ -237,7 +256,7 @@ def _next(ctx, tool: str, args, result: Result) -> str:
     if tool in ("find_address", "check_service_area"):
         if result.say:
             return "Wait for the caller's answer."
-        return AFTER_ADDRESS
+        return _after_address(bool(data.get("needs_unit")))
     if tool == "read_back":
         if data.get("confirmed"):
             then = (
@@ -255,11 +274,12 @@ def _next(ctx, tool: str, args, result: Result) -> str:
             return "When the caller picks a window, call reschedule_appointment with it."
         if not (data.get("offer") or data.get("windows")):
             return "Ask whether another day would work, and call find_slots with it."
-        first, second, third = _questions(ctx)
         return (
-            f"When the caller takes a window, ask {first} Then, one a turn, ask {second} and "
-            f"{third} After the last answer, call book_appointment, saying nothing first. If they "
-            "want another time, call find_slots with what they asked for."
+            "When the caller takes a window, call book_appointment with it, saying nothing. Put "
+            "what you know in details and 'not asked yet' for anything you don't. The server asks "
+            "the visit questions itself, one a turn: after each answer, call book_appointment "
+            "again with the answers so far, saying nothing. If they want another time, call "
+            "find_slots with what they asked for."
         )
     if tool == "book_appointment":
         return "Wait for the answer. " + ANYTHING_ELSE

@@ -8,7 +8,9 @@ from app import flow
 from app.tenant import load_agent
 
 LINES = load_agent(TENANT_DIR)[0]["lines"]
-APPROVAL, HOME, ACCESS = LINES["ask_approval"], LINES["ask_someone_home"], LINES["ask_access"]
+APPROVAL, HOME = LINES["ask_approval"], LINES["ask_someone_home"]
+# Summit Air asks no pets question (agent.yaml visit_questions.pets: false).
+ACCESS = "Is there a gate code or buzzer the technician should know about?"
 
 
 @pytest.fixture
@@ -57,7 +59,8 @@ def test_every_result_names_the_next_step(led):
     confirmed = led.tool("read_back", call, address=address, phone="caller_id", confirmed=True)
     assert "find_slots" in confirmed["next"]
     found = offer(led, call)
-    assert APPROVAL in found["next"] and HOME in found["next"] and ACCESS in found["next"]
+    # The server asks the visit questions itself, from book_appointment's refusals.
+    assert "call book_appointment with it" in found["next"]
     assert "book_appointment" in found["next"]
 
 
@@ -111,19 +114,39 @@ def test_a_booking_waits_for_the_visit_questions_one_at_a_time(led):
     slot = slot_of(offer(led, call))
     led.turn(call, "Sure, that works.")
     refused = book(led, call, slot)
-    assert refused["refused"] == "visit_questions_first" and refused["say"] == APPROVAL
-    assert "other 2 questions" in refused["next"]
+    assert refused["refused"] == "visit_questions_first"
+    # Each with a short acknowledgment that changes from one question to the next.
+    assert refused["say"] == f"Got it. {APPROVAL}"
+    assert "call book_appointment again" in refused["next"]
     led.say(call, refused["say"])
     led.turn(call, "Yes.")
     refused = book(led, call, slot)
-    assert refused["say"] == HOME and "other question" in refused["next"]
-    led.say(call, HOME)
+    assert refused["say"] == f"Okay. {HOME}"
+    led.say(call, refused["say"])
     led.turn(call, "Yes, I'll be here.")
     refused = book(led, call, slot)
-    assert refused["say"] == ACCESS and "call book_appointment again" in refused["next"]
-    led.say(call, ACCESS)
-    led.turn(call, "There's a dog.")
+    assert refused["say"] == f"Got it. {ACCESS}"
+    assert "pet" not in refused["say"]
+    led.say(call, refused["say"])
+    led.turn(call, "There's a buzzer.")
     assert book(led, call, slot)["ok"]
+
+
+def test_an_estimate_has_nothing_to_approve(led):
+    call = ready_to_book(led)
+    slot = slot_of(offer(led, call, job_type="estimate"))
+    led.turn(call, "Sure, that works.")
+    refused = book(led, call, slot, job_type="estimate")
+    assert refused["say"] == f"Got it. {HOME}"
+
+
+def test_the_unit_is_asked_only_for_a_building(led):
+    ctx_next = flow._after_address
+    assert "apartment or unit number" in ctx_next(True)
+    assert "apartment or unit number" not in ctx_next(False)
+    # The system type is asked once, and 'completely out' only where it means something.
+    assert "boiler, a furnace, central air or a mini-split" in ctx_next(False)
+    assert "only on a no-heat or no-cooling call" in ctx_next(False)
 
 
 def test_a_question_asked_without_an_answer_is_not_settled(led):
@@ -131,7 +154,7 @@ def test_a_question_asked_without_an_answer_is_not_settled(led):
     slot = slot_of(offer(led, call))
     led.turn(call, "That works.")
     led.say(call, f"{APPROVAL} {HOME} {ACCESS}")
-    assert book(led, call, slot)["say"] == APPROVAL
+    assert book(led, call, slot)["say"] == f"Got it. {APPROVAL}"
 
 
 def test_questions_asked_before_the_offer_do_not_count(led):
