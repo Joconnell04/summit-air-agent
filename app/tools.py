@@ -4908,15 +4908,44 @@ def end_call(ctx: Ctx, args: EndCallIn) -> Result:
     ).fetchone()
     if (
         last
-        and args.reason != "caller_goodbye"
         and not says_goodbye(records.last_caller_line(ctx.conn, ctx.call["id"]))
-        and not records.caller_turn_after(ctx.conn, ctx.call["id"], last["turn_seq"])
+        and not _caller_finished(ctx, last["turn_seq"])
     ):
-        # Never end in the same turn as the confirmation (spec S-30).
+        # Never end in the same turn as the confirmation (spec S-30), nor before the caller was
+        # asked whether there's anything else: done-bar call o176-03 hung up on "Yes, all day",
+        # the answer to the access question after a dispatch. Not on the model's reason alone.
         raise Refused("anything_else_first", ctx.tenant.line("anything_else_first"))
     with tx(ctx.conn):
         records.update_call(ctx.conn, ctx.call["id"], end_requested=1)
     return ok(hang_up=True)
+
+
+# An agent line that asks whether there's more, in the model's words or the tenant's.
+ASKS_ANYTHING_ELSE = ("anything else", "something else")
+# A caller who says there's nothing more without being asked.
+ALL_DONE = ("thats all", "thats it", "thats everything", "all set", "nothing else")
+
+
+def _caller_finished(ctx: Ctx, booked_seq: int) -> bool:
+    """After the booking turn the caller said goodbye or that's all, or was asked whether there's
+    anything else and answered."""
+    rows = ctx.conn.execute(
+        "SELECT speaker, text FROM turns WHERE call_id = ? AND seq > ? ORDER BY seq",
+        (ctx.call["id"], booked_seq),
+    ).fetchall()
+    own = words(ctx.tenant.line("anything_else_first"))
+    asked = False
+    for row in rows:
+        text_words = words(row["text"])
+        if row["speaker"] == "agent":
+            asked = asked or own in text_words or any(
+                has_phrase(text_words, p) for p in ASKS_ANYTHING_ELSE
+            )
+        elif asked or says_goodbye(row["text"]) or any(
+            has_phrase(text_words, p) for p in ALL_DONE
+        ):
+            return True
+    return False
 
 
 def lookup_hvac_info(ctx: Ctx, args: LookupIn) -> Result:

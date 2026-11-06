@@ -160,10 +160,35 @@ def caller_text(transcript: list[dict]) -> str:
     return " ".join(line for line in reversed(lines) if line)
 
 
-def heard_after(transcript: list[dict], index: int) -> bool:
-    """Whether the agent said anything after the first `index` entries."""
-    return any(e.get("role") == "agent" and (e.get("content") or "").strip()
-               for e in transcript[index:])
+def callers_in(transcript: list[dict]) -> int:
+    """How many caller lines the transcript holds."""
+    return sum(1 for e in transcript if e.get("role") != "agent")
+
+
+def heard_after(transcript: list[dict], callers: int) -> bool:
+    """Whether the agent said anything after the transcript's first `callers` caller lines.
+    Counted by caller lines, not entries: Retell merges agent entries it had split (call
+    retell_call_40414280dccd1cbd3eafdab3b62 had "...How can I" and "I help?" as two, then one),
+    which moves every later entry's index."""
+    seen = 0
+    for entry in transcript:
+        if entry.get("role") != "agent":
+            seen += 1
+        elif seen >= callers and (entry.get("content") or "").strip():
+            return True
+    return False
+
+
+def agent_lines(transcript: list[dict]):
+    """Each agent entry with its place: (caller lines before it, agent entries since the last
+    one). The place survives Retell merging entries it had split, which an index doesn't."""
+    callers = since = 0
+    for index, entry in enumerate(transcript):
+        if entry.get("role") != "agent":
+            callers, since = callers + 1, 0
+            continue
+        yield index, (callers, since), entry
+        since += 1
 
 
 def reply_ms(transcript: list[dict], index: int) -> float | None:
@@ -276,11 +301,12 @@ class LlmCall:
         self.current_id = -1
         self.turn_lock = asyncio.Lock()
         self.post_lock = asyncio.Lock()
-        # Transcript entries already posted to the tool server as agent lines.
-        self.posted = 0
+        # Agent lines already posted to the tool server, by their place (agent_lines).
+        self.posted: set[tuple[int, int]] = set()
         self.transcript: list[dict] = []
-        # Where the last turn started, in the history and in Retell's transcript, so a reply the
-        # caller never heard (they kept talking) can be taken back out of the history.
+        # Where the last turn started, in the history and by caller lines in Retell's transcript,
+        # so a reply the caller never heard (they kept talking) can be taken back out of the
+        # history.
         self.last_turn: tuple[int, int] | None = None
         # Stage timings of each reply, attached to the agent line Retell reports for it.
         self.stages: list[dict] = []
@@ -311,12 +337,12 @@ class LlmCall:
     async def _post_heard(self, upto: int) -> None:
         async with self.post_lock:
             transcript = self.transcript
-            while self.posted < min(upto, len(transcript)):
-                index = self.posted
-                self.posted += 1
-                entry = transcript[index]
+            for index, place, entry in agent_lines(transcript[:upto]):
+                if place in self.posted:
+                    continue
+                self.posted.add(place)
                 text = (entry.get("content") or "").strip()
-                if entry.get("role") != "agent" or not text:
+                if not text:
                     continue
                 timings = self.stages.pop(0) if self.stages and index > 0 else {}
                 ms = reply_ms(transcript, index)
@@ -344,7 +370,7 @@ class LlmCall:
             if not text:
                 await out.done()
                 return
-            self.last_turn = (len(self.messages), len(transcript))
+            self.last_turn = (len(self.messages), callers_in(transcript))
             try:
                 await self._caller_turn(out, text, began)
             except asyncio.CancelledError:

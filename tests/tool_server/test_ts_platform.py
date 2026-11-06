@@ -98,6 +98,28 @@ def test_the_call_never_ends_in_the_same_turn_as_the_confirmation(agent):
     assert agent.tool("end_call", call, reason="resolved")["data"]["hang_up"] is True
 
 
+def test_the_call_never_ends_before_the_caller_was_asked_for_anything_else(agent):
+    """Done-bar call o176-03: after the visit was set up the model asked who'd be home, heard "Yes,
+    all day", and hung up with reason "resolved"."""
+    call = ready_to_book(agent)
+    assert book(agent, call, first_open(agent, call))["ok"]
+    agent.say(call, "Will someone be home to let the technician in?")
+    agent.turn(call, "Yes, all day.")
+    too_soon = agent.tool("end_call", call, reason="caller_goodbye")
+    assert too_soon["refused"] == "anything_else_first"
+    agent.say(call, "Anything else I can help with today?")
+    agent.turn(call, "Nope.")
+    assert agent.tool("end_call", call, reason="resolved")["data"]["hang_up"] is True
+
+
+def test_a_caller_who_says_thats_all_unasked_can_be_let_go(agent):
+    call = ready_to_book(agent)
+    assert book(agent, call, first_open(agent, call))["ok"]
+    agent.say(call, "Will someone be home to let the technician in?")
+    agent.turn(call, "Yes. That's all I needed, thanks.")
+    assert agent.tool("end_call", call, reason="resolved")["data"]["hang_up"] is True
+
+
 def test_every_request_and_turn_is_one_json_line_with_ids_gate_and_timings(agent):
     call = agent.start(UNKNOWN)["data"]["call_id"]
     agent.turn(call, "My heat is out", stt_final_ms=180.0, llm_first_token_ms=420.0)

@@ -163,6 +163,28 @@ def test_the_safety_lines_are_the_servers_word_for_word_and_cannot_be_cut_off(so
     assert server.lines("caller") == ["I smell gas in the basement."]
 
 
+def test_an_agent_line_is_posted_when_retell_merges_an_earlier_split_line(socket):
+    """Call retell_call_40414280dccd1cbd3eafdab3b62: Retell first had the greeting as two entries,
+    then one, so the gas advice after it was never posted, the server thought it unsaid, and said
+    it again over the caller taking it back."""
+    server, make = socket
+    server.turns["I smell gas."] = envelope(
+        say=SAFETY, data={"safety": {"action": "speak_lines", "text": SAFETY}})
+    client, _ = make([(["Got it. Anything else?"], [])])
+    greeting = "Thanks for calling Summit Air, this is Katie."
+    split = [{"role": "agent", "content": "Thanks for calling Summit Air, this is"},
+             {"role": "agent", "content": "Katie."}, {"role": "user", "content": "I smell gas."}]
+    with client.websocket_connect(path()) as ws:
+        open_call(ws)
+        ws.send_text(json.dumps({"interaction_type": "response_required", "response_id": 1,
+                                 "transcript": split}))
+        while not json.loads(ws.receive_text()).get("content_complete"):
+            pass
+        ask(ws, 2, [greeting, "I smell gas.", SAFETY, "Oh, actually no, my roommate was cooking."])
+    assert server.lines("agent")[-1] == SAFETY
+    assert server.lines("caller") == ["I smell gas.", "Oh, actually no, my roommate was cooking."]
+
+
 def test_the_models_text_streams_through_the_reply_rule(socket):
     _, make = socket
     client, _ = make([(["Sure, I can help with that. ", "Let me read that back to you. ",
