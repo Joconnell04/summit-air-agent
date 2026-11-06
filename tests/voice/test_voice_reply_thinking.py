@@ -22,3 +22,12 @@ def test_reasoning_about_the_caller_or_the_rules_is_never_said(sentence):
 def test_an_ordinary_question_to_the_caller_is_kept():
     kept = SpokenReply().sentence("Is this a different problem from the one you booked?")
     assert kept == "Is this a different problem from the one you booked?"
+
+
+def test_saying_the_address_back_is_kept_when_the_caller_asked_to_hear_it_again():
+    """Phone check t1 last-one: "Wait, what? Say it again?" got only "Is that all correct?"."""
+    reply = SpokenReply()
+    reply.heard(None, "It's 210 Clinton Street, Brooklyn.")
+    assert reply.sentence("That's 210 Clinton Street.") == ""
+    reply.heard(None, "Wait, what? Say it again?")
+    assert reply.sentence("That's 210 Clinton Street.") == "That's 210 Clinton Street."

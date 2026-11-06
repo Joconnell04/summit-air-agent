@@ -134,3 +134,16 @@ def test_a_plain_dropped_call_gets_no_cut_off_greeting(agent, clock):
 )
 def test_answering_the_check_in_is_a_reply(line):
     assert dead_air.is_reply(line)
+
+
+def test_a_hold_with_the_answer_in_the_same_breath_is_no_hold(agent):
+    """Phone checks b2 and t1 hold-on, 6 November: "Hold on, hold on, let me grab my mail. It's 88
+    Atlantic Avenue." started a hold, so the caller's next answer was taken as an aside and Brian
+    said nothing until "are you still there?"."""
+    call_id = agent.start(call_id="call-1")["data"]["call_id"]
+    line = "Hold on, hold on, let me grab my mail. Pause. It's 88 Atlantic Avenue, Brooklyn, apartment 3R."
+    first = agent.turn(call_id, line)
+    assert first["data"].get("hold") in (None, {}) and "caller_holding" not in first["data"]["hints"]
+    agent.say(call_id, "Is it completely out, or just not keeping up?")
+    answer = agent.turn(call_id, "Yes, it's completely out. Nothing at all since last night.")
+    assert (answer["data"].get("hold") or {}).get("state") != "aside"

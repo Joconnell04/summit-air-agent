@@ -92,6 +92,18 @@ def is_reply(text: str) -> bool:
     return bool(NUMBER.search(text)) and any(said.startswith(f" {s} ") for s in ANSWER_STARTS)
 
 
+def _answers_too(text: str) -> bool:
+    """A hold request with the answer in the same breath ("Hold on, let me grab my mail. It's 88
+    Atlantic Avenue."): the caller is back already. Treated as a hold, their next answer was taken
+    as said to someone else and Brian stayed silent (phone checks b2 and t1 hold-on, 6 November)."""
+    for sentence in SENTENCES.split(text):
+        if not sentence.strip() or _starts_with_hold(sentence):
+            continue
+        if NUMBER.search(sentence) or len(words(sentence).split()) >= 4:
+            return True
+    return False
+
+
 def holding(conn: sqlite3.Connection, call_id: str) -> bool:
     return conn.execute(
         "SELECT 1 FROM holds WHERE call_id = ? AND back_seq IS NULL", (call_id,)
@@ -105,7 +117,7 @@ def caller_line(
     hold), `aside` (said on hold, not to the agent), or None (no hold). Inside the turn's
     transaction. A safety line always counts as a reply, so the agent answers it."""
     was_holding = holding(conn, call_id)
-    if asks_to_hold(text) and not on_safety:
+    if asks_to_hold(text) and not on_safety and not _answers_too(text):
         if not was_holding:
             conn.execute(
                 "INSERT INTO holds (call_id, seq, at) VALUES (?, ?, ?)", (call_id, seq, iso(now))

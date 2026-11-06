@@ -550,6 +550,12 @@ COACHING = re.compile(
 # A word from inside the company ("I'll flag this for our team"). The server's own sentences say
 # "I've let our team know" (eval run 20261104-053435, complaint-flag).
 INTERNAL_WORD = re.compile(r"\bflag(?:s|ged|ging)?\b", re.IGNORECASE)
+# The caller asking to hear the last thing again.
+ASKS_REPEAT = re.compile(
+    r"\b(?:say (?:that|it) again|repeat (?:that|it)|come again|one more time|what was that"
+    r"|didn'?t catch (?:that|it)|wait,? what)\b",
+    re.IGNORECASE,
+)
 # The model's own reasoning written as speech ("The caller already has a visit booked... Per the
 # rules, I'll ask whether...", phone check p3 on 6 November): Brian speaks to the caller, never
 # about them or the rules.
@@ -734,6 +740,7 @@ class SpokenReply:
         self.urgent_spoken = False
         self.advised = False
         self._dropped_restatement = False
+        self._repeat_asked = False
         self._asked = False
         # A follow-up was asked for since the caller last spoke: at most one a turn.
         self._followed_up = False
@@ -769,6 +776,10 @@ class SpokenReply:
         self._followed_up = False
         self._finished = False
         self._heard_lines = []
+        # "Wait, what? Say it again?": the caller asked to hear it again, so saying back their
+        # address or number is what they want (phone check t1 last-one, 6 November, heard only
+        # "Is that all correct?").
+        self._repeat_asked = bool(ASKS_REPEAT.search(caller_text))
         self._caller_words |= set(words(caller_text).split())
         self._thanked = bool(THANKS_OR_SORRY.search(caller_text or ""))
         self._goodbye = says_goodbye(caller_text)
@@ -896,7 +907,7 @@ class SpokenReply:
             return ""
         if after_restatement and CONFIRMS_ONLY.fullmatch(sentence):
             return ""
-        if self._restates(sentence):
+        if not self._repeat_asked and self._restates(sentence):
             self._dropped_restatement = True
             return ""
         # One question a reply: a second separate question waits for the caller's answer to the
