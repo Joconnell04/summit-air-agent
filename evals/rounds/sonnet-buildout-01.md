@@ -102,7 +102,7 @@ Sparks came down from 21 to 38 s in the side-by-side round to 9.0 s once the ser
 
 ## STT and turn-taking A/B
 
-**Verdict: keep `stt_mode: accurate` and `enable_dynamic_responsiveness: false` on Jackson's agent.** Neither knob shortened the wait Jackson wants shortened, and each made something worse. The same v5 callers ran on B with only the one setting changed, so the variant, prompt (v5), server (c458944) and clock (after hours) match.
+**Verdict: neither goes onto Jackson's agent or the socket agent. Keep `stt_mode: accurate` and `enable_dynamic_responsiveness: false` on both.** The socket build keeps Retell's listening and turn-taking, so the same two settings apply to it. Neither knob shortened the wait Jackson wants shortened, and each made something worse. The same v5 callers ran on B with only the one setting changed, so the variant, prompt (v5), server (c458944) and clock (after hours) match.
 
 | | `accurate` (v5) | `fast` |
 |---|---|---|
