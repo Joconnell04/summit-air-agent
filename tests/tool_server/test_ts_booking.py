@@ -1531,3 +1531,16 @@ def test_fully_booked_says_so_and_offers_a_callback(agent, monkeypatch):
     flagged = agent.tool("flag_person", call, reason="Fully booked: call back when an opening comes up",
                          callback_time="2 PM")
     assert flagged["ok"], flagged
+
+
+def test_a_window_that_fills_while_the_caller_decides_offers_the_next_one(agent, monkeypatch):
+    """Phone check b2, 6 November: "That window just filled up." and nothing after it."""
+    from app import tools
+
+    call = ready_to_book(agent)
+    slot = first_open(agent, call)
+    monkeypatch.setattr(tools, "_window_over", lambda *a, **k: True)
+    taken = book(agent, call, slot)
+    assert taken["refused"] == "slot_taken"
+    assert taken["say"].startswith("That window just filled up. The next one I have is ")
+    assert taken["say"].endswith("Does that work?")

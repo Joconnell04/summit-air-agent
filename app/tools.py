@@ -1017,6 +1017,16 @@ def _alternatives(ctx: Ctx, job_type: dict, level: str, n: int = 2) -> list[dict
     return [_describe(ctx, w) for w in windows[:n]]
 
 
+def _slot_taken_said(ctx: Ctx, alternatives: list[dict]) -> str:
+    """The window went while the caller was deciding: say so, and offer the next one in the same
+    breath, so the call never ends on a dead end (phone check b2, 6 November)."""
+    line = ctx.tenant.line("slot_taken")
+    if not alternatives:
+        return f"{line} {ctx.tenant.line('fully_booked')}"
+    first = alternatives[0]
+    return f"{line} The next one I have is {first['day']}, {first['label']}. Does that work?"
+
+
 def _job_alternatives(ctx: Ctx, job: dict) -> list[dict]:
     """Other windows for an existing job. A job whose type the company no longer books (inactive
     in the tenant config) gets none, rather than failing the tool."""
@@ -3220,10 +3230,10 @@ def book_appointment(ctx: Ctx, args: BookIn) -> Result:
     window_start, window_end = _slot_bounds(ctx, args.slot, decided.level)
     if _window_over(ctx, args.slot.window, window_start, window_end):
         ctx.cache.invalidate()
+        alternatives = _alternatives(ctx, job_type, decided.level)
         raise Refused(
-            "slot_taken",
-            ctx.tenant.line("slot_taken"),
-            alternatives=_alternatives(ctx, job_type, decided.level),
+            "slot_taken", _slot_taken_said(ctx, alternatives), alternatives=alternatives,
+            need="if they take the next window, book it; otherwise call find_slots",
         )
     scoped = _callers_accounts(ctx)
     if not scoped and not details["name"]:
@@ -3328,7 +3338,8 @@ def book_appointment(ctx: Ctx, args: BookIn) -> Result:
             ctx.cache.invalidate()
             alternatives = _alternatives(ctx, job_type, decided.level)
             raise Refused(
-                "slot_taken", ctx.tenant.line("slot_taken"), alternatives=alternatives
+                "slot_taken", _slot_taken_said(ctx, alternatives), alternatives=alternatives,
+                need="if they take the next window, book it; otherwise call find_slots",
             ) from None
         if exc.code == "customer_type_not_supported":  # raised by booking.send, not the FSM
             raise Refused("customer_type", ctx.tenant.line("commercial")) from None

@@ -296,6 +296,10 @@ The safety lines now end by offering a technician right away, and the prompt say
 
 The safety lines now end with a menu instead of one offer: someone on the team now, an appointment, or someone sent right away. The prompt says what to do with each: a person now is the server's handoff and I say nothing of my own; an appointment is the normal booking with `safety_check`; someone right away needs the address and a clear picture of where the problem is, asked only if they haven't already said it, and then `read_back` dispatches it. If it's something a heating and cooling tech can't fix, like the gas meter, say who to call. Outcome: checked on the phone after deploy, results in docs/client-notes.md and the round doc.
 
+### v10 (picking from the offer)
+
+On a scripted call Brian offered "eight to eight thirty or eight thirty to nine", the caller said "the last one", and Brian took the last window of the whole day, seven thirty in the evening. One line: "the first one" or "the last one" means among the times just said. The server side of the same call: when a window fills while the caller decides, the server now says so and offers the next one in the same sentence, instead of leaving a dead end. Outcome: tests pass; checked on the next phone round.
+
 ### Review (issue #183)
 
 I checked it against my change sets 18 to 28, with nothing the server does said twice. Two passes went to the socket lane (`socket-prompt-review-183.md` in the session notes). The first pass's items are in v5, except one. The second pass found only small things:
