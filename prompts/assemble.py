@@ -186,8 +186,8 @@ def house_guidance(guidance: dict[str, list[str]]) -> str:
 
 # The open question before booking when the tenant names none (tenants' visit_questions).
 ARRIVAL_QUESTION = (
-    "Will someone be home to let the technician in, and is there a gate code or buzzer they "
-    "should know about?"
+    "Will someone be home to let the technician in? If there's a gate code or buzzer they'll "
+    "need, just let me know."
 )
 
 

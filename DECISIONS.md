@@ -12,7 +12,7 @@ Discussion: docs/ai-process/transcripts/... or docs/explorations/...
 Issue: #N
 -->
 
-## 122. No heat or no cooling at High or Urgent is dispatched at the read-back
+## 123. No heat or no cooling at High or Urgent is dispatched at the read-back
 
 Decided: when a no-heat or no-cooling call is High or Urgent on the server's own priority, read_back (given the job type) books the soonest open window itself, with no times offered, no separate read-back and no approval question. Its one sentence names the address, when the technician comes ("within the next hour" when the window opens within 60 minutes, else "by 2:30 PM today") and the number by its last four, and asks "Is that the right address?". A yes, or no answer, confirms; a corrected unit or number cancels the job and books it again with the same sentence. After hours every dispatch goes to the on-call technician: an Urgent person flag goes out first with a callback within twenty minutes, the sentence says so, and the first morning window stays booked as the fallback (Jackson's midnight call, call_b2302955a9c4054184c5d502e97, reached High and heard 8 AM, then a callback). Then only the access question and "Anything else?". A call on the safety route never dispatches. If the read-back came below High and the caller's facts raise it later, find_slots dispatches instead of offering times.
 Why: on an emergency the caller wants someone coming, not a menu of windows, a second read-back and an approver question. The rule is in server code, so the agent can't skip it or offer windows instead.
@@ -20,13 +20,22 @@ Considered: the agent offering the soonest window as usual (three more turns on 
 Would change if: callers often want a later time than the soonest on these calls, or the on-call path needs its own confirmation before booking.
 Discussion: coordinator brief in the session for this change
 
-## 121. Every call gets one label: Urgent, Routine or No visit
+## 122. Every call gets one label: Urgent, Routine or No visit
 
 Decided: each call has exactly one label with a short reason, such as "Urgent: an older person or a baby at home, no heat". Urgent is the server's priority at High or Urgent, a gas, carbon monoxide or sparks hazard, or a dispatch, and it never drops back on the same call. Routine is any other call about a visit (booked, moved, cancelled, asked about, or a callback). No visit is the third label, for calls that were never about one: a business, an address outside the area, a wrong number, a question answered. The label is stored on the call at its end (`call_labels`), shown as a badge on each call row and on the call page with an Urgent filter, and a booked job carries Urgent or Routine to ServiceTitan as a tag type (804, 805).
 Why: the owner scans for what needs attention first. Folding a wrong number into Routine would make Routine mean "anything", and the booking rate already counts only calls that wanted a visit.
 Considered: two labels only (no-visit calls would pad Routine); using the job's priority field alone in the CRM (only calls with a job have one, and High and Urgent read as the same thing to an owner).
 Would change if: owners want the no-visit calls hidden from the list rather than labeled.
 Discussion: coordinator brief in the session for this change
+
+## 121. The demo runs on the socket build: our server speaks the fixed lines, Haiku writes the rest
+
+Decided: Summit Air's agent moves to the server-led flow behind Retell's custom-LLM WebSocket (issue #176). Retell keeps the phone line, listening, turn-taking, backchannels and Brian's voice; our tool server decides each turn, speaks the sentences that must be exact (read-back, slot offer, booking confirmation, safety lines, greeting and goodbye) word for word, and asks Haiku 5.5 to write the adaptive replies. A short hold phrase plays only on genuinely long waits. The single-prompt Retell agent (change set 25, archived with a Retell backup copy) stays as the fallback, one phone-number switch away.
+Why: across the side-by-side and the build-outs, the errors left on every hosted-model arm were the model rewording or adding to words the server owns (names, narration, read-backs, the open-door line). The socket removes that class by construction: every server sentence was word for word on every socket call (MEASURED, evals/rounds/socket-buildout-01.md on joco/socket-buildout-176). Jackson called it and found the pace fine because of the backchannels, with e2e p50 1.41 s and p90 2.35 s on his call (MEASURED, Retell latency), in line with the hosted Haiku agent. Sonnet 5.5 cut errors but narrated its own reasoning aloud, ran slower and cost about 3.5 times as much (MEASURED, evals/rounds/sonnet-buildout-01.md).
+Considered: the hosted single-prompt Haiku agent with a consolidated prompt (fallback); Sonnet 5.5 hosted (slower, costlier, narrates); Retell Conversation Flow (the model still judges step changes, and a flag the model can set is not a gate).
+Would change if: the socket fails the done bar (DECISIONS 119) on something the server can't fix, or its turn latency drifts above the hosted agent's on Jackson's calls.
+Discussion: evals/rounds/side-by-side-01.md, docs/explorations/retell-exact-speech.md
+Issue: #176
 
 ## 120. A daily Opus check flags only true failures, and the server keeps a flag only with evidence from the call
 

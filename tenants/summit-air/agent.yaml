@@ -523,7 +523,7 @@ lines:
     can't promise an exact time.
   # Said once when the server marks a call Urgent (spec S-21a). Below Urgent, no priority is named.
   urgent_priority: I've marked this call top priority, so you get our soonest opening.
-  # Emergency dispatch (DECISIONS.md 122): the server books the soonest technician at the read-back
+  # Emergency dispatch (DECISIONS.md 123): the server books the soonest technician at the read-back
   # and this sentence is the read-back. {address} is said as read_back says it, {last_four} digit by
   # digit, {eta} is dispatch_within_hour or "by 2:30 PM today".
   dispatch_now: We'll get a technician out to you right away at {address}. Expect them {eta}, and we'll call the number ending in {last_four} if anything changes. Is that the right address?

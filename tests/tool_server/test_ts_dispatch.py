@@ -1,4 +1,4 @@
-"""Emergency dispatch (DECISIONS.md 122): a no-heat or no-cooling call the server scores High or
+"""Emergency dispatch (DECISIONS.md 123): a no-heat or no-cooling call the server scores High or
 Urgent books the soonest technician at the read-back, with no windows offered, and the dispatch
 sentence is the read-back."""
 
