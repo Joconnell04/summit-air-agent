@@ -82,7 +82,9 @@ def defaults(tenant: Tenant) -> dict[str, bool]:
         "two_party_consent": False,
         "call_recordings": bool(tenant.retention.get("record_calls")),
         "warm_transfer": bool(tenant.transfer),
-        "hold_line": False,
+        # On by default, so a test call or a demo never rings the office phone unless the owner
+        # turns it off (Jackson, 2026-11-06). With no hold number set it changes nothing.
+        "hold_line": True,
         "technician_summaries": True,
         "on_call_alerts": True,
     }

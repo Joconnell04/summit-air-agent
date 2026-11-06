@@ -787,7 +787,7 @@ CREATE TABLE IF NOT EXISTS grader_schedule (
 -- call's end stores the one it ended with.
 CREATE TABLE IF NOT EXISTS call_labels (
     call_id TEXT PRIMARY KEY REFERENCES calls (id) ON DELETE CASCADE,
-    label TEXT NOT NULL CHECK (label IN ('Urgent', 'Routine', 'No visit')),
+    label TEXT NOT NULL CHECK (label IN ('Emergency dispatch', 'Scheduled', 'No visit')),
     reason TEXT NOT NULL,
     at TEXT NOT NULL
 );

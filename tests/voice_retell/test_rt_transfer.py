@@ -36,7 +36,7 @@ def asked(client, rid: str = "tx1") -> dict:
 def test_an_allowed_transfer_gives_the_call_its_number_and_not_the_model(client, retell, numbers):
     found = asked(client)
     assert found["ok"], found
-    assert found["say"] == "Okay, I'll connect you with someone from our team now. One moment."
+    assert found["say"] == "Got it, transferring you now."
     assert retell.variables == [("tx1", {"transfer_number": OFFICE})]
     # The model reads the sentence and the fallback line, never the number.
     assert "transfer" not in found["data"] and OFFICE not in str(found)

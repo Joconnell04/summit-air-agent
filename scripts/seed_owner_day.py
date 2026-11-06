@@ -119,10 +119,20 @@ class Voice:
         return booked
 
     def first_slot(self, call_id: str, job_type: str, **facts) -> dict:
-        found = self.tool("find_slots", call_id, job_type=job_type, facts=facts)["data"]
+        result = self.tool("find_slots", call_id, job_type=job_type, facts=facts)
+        if result["data"].get("asked_dispatch"):
+            # A High no-heat call asks whether it can wait first (DECISIONS.md 130).
+            self.agent(call_id, result["say"])
+            self.caller(call_id, "It can wait for a scheduled visit.")
+            result = self.tool("find_slots", call_id, job_type=job_type, facts=facts)
+        found = result["data"]
         if "first_urgent" in found:
             first = found["first_urgent"]
             return {"date": first["date"], "window": first["window"]}
+        if found.get("dispatched"):
+            return None  # Urgent: the server sent a technician instead of offering times
+        if "days" not in found:
+            raise SystemExit(f"no openings on {call_id}: {result}")
         day = found["days"][0]
         return {"date": day["date"], "window": day["windows"][0]}
 
@@ -222,7 +232,11 @@ def today(voice: Voice, clock: Clock, day: date, gas_lines: str, co_lines: str) 
     voice.first_slot(c, "no_heat")
     voice.agent(c, "The first opening I have is tomorrow morning, between 8 and 12.")
     voice.caller(c, "Oh, I should say my dad lives with us, he's 79. Is there anything sooner?")
-    voice.book(c, "no_heat", voice.first_slot(c, "no_heat"), "Upstairs radiators barely warm")
+    # An older person at home in the heating season is Urgent, so the server dispatches
+    # (DECISIONS.md 130) rather than offering times.
+    slot = voice.first_slot(c, "no_heat")
+    if slot:
+        voice.book(c, "no_heat", slot, "Upstairs radiators barely warm")
     voice.end(c)
 
     at(9, 30)

@@ -15,7 +15,7 @@ OFFICE = "+12125550100"
 ON_CALL = "+12125550111"
 # 10 p.m. Monday in New York: the office is closed (config.yaml hours).
 EVENING = datetime(2026, 11, 3, 3, 0, tzinfo=UTC)
-HANDOFF_LINE = "Transferring you to a person now."
+HANDOFF_LINE = "Got it, transferring you now."
 UNPUNCTUATED = (
     "this is ridiculous the furnace you fixed died again put me through to a real person right now"
 )

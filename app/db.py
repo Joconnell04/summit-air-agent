@@ -22,7 +22,36 @@ def init(path: str | Path) -> None:
     conn = connect(path)
     conn.execute("PRAGMA journal_mode = WAL")
     conn.executescript(SCHEMA.read_text())
+    _relabel(conn)
     conn.close()
+
+
+def _relabel(conn: sqlite3.Connection) -> None:
+    """A database from before DECISIONS.md 130 checks call labels against the old names (Urgent,
+    Routine): rebuild that table with the new check. Old rows keep their reason; a visit's label
+    becomes Scheduled, since which were dispatches isn't kept, and No visit stays."""
+    row = conn.execute(
+        "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'call_labels'"
+    ).fetchone()
+    if row is None or "'Routine'" not in row["sql"]:
+        return
+    conn.executescript(
+        """
+        BEGIN;
+        ALTER TABLE call_labels RENAME TO call_labels_old;
+        CREATE TABLE call_labels (
+            call_id TEXT PRIMARY KEY REFERENCES calls (id) ON DELETE CASCADE,
+            label TEXT NOT NULL CHECK (label IN ('Emergency dispatch', 'Scheduled', 'No visit')),
+            reason TEXT NOT NULL,
+            at TEXT NOT NULL
+        );
+        INSERT INTO call_labels (call_id, label, reason, at)
+            SELECT call_id, CASE label WHEN 'No visit' THEN 'No visit' ELSE 'Scheduled' END,
+                   reason, at FROM call_labels_old;
+        DROP TABLE call_labels_old;
+        COMMIT;
+        """
+    )
 
 
 @contextmanager

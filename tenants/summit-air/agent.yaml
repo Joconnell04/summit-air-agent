@@ -24,7 +24,7 @@ fsm:
   agent_user_id: 9001
   # The tag type (config.yaml tag_types) each job gets for its call's label (app/labels.py), the
   # way an office tags a job in ServiceTitan so the board can filter on it.
-  label_tag_ids: {Urgent: 804, Routine: 805}
+  label_tag_ids: {Emergency dispatch: 804, Scheduled: 805}
   # The call reason a lead carries for each of record_lead's kinds (config.yaml call_reasons).
   lead_call_reason_ids: {commercial: 704, install: 702, membership: 705, not_offered: 706}
   # Tag types (config.yaml tag_types) that say how a callback call went. A person at the office
@@ -50,18 +50,36 @@ safety:
     gas:
       lines: >-
         If you're smelling gas, the safest thing is to get everyone outside and call 9-1-1 or the gas
-        company from there. Once everyone's safe, would you like us to send a technician out right
-        away?
+        company from there. Once everyone's safe, I can connect you with someone on our team right now, or book an
+        appointment with one of our technicians to check it out. And if it's really urgent, we can
+        send someone out right away to help.
     co:
       lines: >-
         If a CO alarm is going off, the safest thing is to open a window if one's right there, get
-        everyone outside, and call 9-1-1 from there. Once everyone's safe, would you like us to send
-        a technician out right away?
-  # The lines end by offering an emergency visit (Jackson, 2026-11-06: callers who trigger the lines
-  # by accident should still get help, as an Urgent dispatch). A yes is dispatched at the read-back
-  # as this job type, the same way as an urgent no-heat call; a no carries on, and neither the lines
-  # nor the offer are said again (repeat_limit below). DECISIONS.md 129.
+        everyone outside, and call 9-1-1 from there. Once everyone's safe, I can connect you with someone on our team right now, or book an
+        appointment with one of our technicians to check it out. And if it's really urgent, we can
+        send someone out right away to help.
+    hazard:
+      lines: >-
+        If anyone's in danger, the safest thing is to get away from it and call 9-1-1 from somewhere
+        safe. Once everyone's safe, I can connect you with someone on our team right now, or book an
+        appointment with one of our technicians to check it out. And if it's really urgent, we can
+        send someone out right away to help.
+  # The lines end with the safety menu (Jackson, 2026-11-06, DECISIONS.md 131): a person now (the
+  # handoff, no details taken), an appointment (normal booking, High), or someone sent right away
+  # (the priority rule right_away raises it to Urgent, and it is dispatched at the read-back as this
+  # job type). The lines and the menu are said once (repeat_limit below).
   dispatch_job_type: safety_check
+  # The general hazard check: a caller line with one of these word stems, and no other safety kind
+  # already heard, is read by the side model (prompts/side/questions.yaml active_hazard); a yes at
+  # or over the threshold gets the hazard lines. ASSUMED threshold, set high so ordinary talk
+  # doesn't trip it.
+  hazard_check:
+    question: active_hazard
+    threshold: 0.8
+    wait_s: 1.0
+    stems: [fire, flame, smoke, spark, arc, burn, melt, shock, electr, outlet, wir, panel, flood,
+            water, rising, explo, fume, faint, unconscious, breath, hurt, injur, danger, emergency]
   # The one check question a vague description gets first (the trade's vague phrases).
   vague:
     gas:
@@ -217,6 +235,10 @@ after_hours:
   cooling_tonight_above_f: 85
   cooling_morning_below_f: 80
   on_call_confirms_within_minutes: 20
+  # The on-call roster (DECISIONS.md 130): how many technicians are on call after hours, and how
+  # long each emergency dispatch keeps one busy (ASSUMED), so the arrival time says when both are out.
+  on_call_technicians: 2
+  on_call_job_minutes: 120
 
 callbacks:
   owner_in_hours: office
@@ -367,21 +389,21 @@ lines:
     I've let our on-call team know this call is top priority, and someone will call you {when}.
   flag_stored_no_callback: I've let our team know.
   # Warm transfer. The handoff is said to the caller; the summary only to the person answering.
-  transfer_handoff: I'm connecting you with someone from our team now.
+  transfer_handoff: Got it, transferring you now.
   transfer_no_answer: I couldn't reach anyone just now, so I've let the team know and someone will call you {when}.
   # The first line names no caller, in case a voicemail greeting answered.
   transfer_prompt: Summit Air has a caller for the {role}. Press 1 to take the call.
   transfer_summary: "{priority}Caller at {phone}: {reason}. Putting you through now."
   # Retell's warm transfer (request_transfer): said just before the call goes to the office, and
   # when it can't.
-  transfer_connecting: Okay, I'll connect you with someone from our team now. One moment.
+  transfer_connecting: Got it, transferring you now.
   transfer_closed: >-
     Our office is closed right now, so I can't put you through, but I can have someone call you
     back. When's a good time?
   transfer_unavailable: >-
     I can't put you through right now, but I can have someone call you back. When's a good time?
   # Cold handoff, said to a caller who demanded a person, just before the call is sent through.
-  handoff_now: Transferring you to a person now.
+  handoff_now: Got it, transferring you now.
   lead_stored: Someone from our team will call you {when} to tell you more.
   # The callback time as said: a time we named, or the window the caller asked for. A caller who
   # says "after 5" hears a time inside that window, so they know when to expect it (eval round 3):
@@ -541,6 +563,9 @@ lines:
     can't promise an exact time.
   # Said once when the server marks a call Urgent (spec S-21a). Below Urgent, no priority is named.
   urgent_priority: I've marked this call top priority, so you get our soonest opening.
+  # Asked once before offering times on a High no-heat or no-cooling call (DECISIONS.md 130): a
+  # caller who needs someone now gets the emergency dispatch, at Urgent.
+  dispatch_question: Can this wait for a scheduled visit, or do you need someone out right away?
   # Emergency dispatch (DECISIONS.md 123): the server books the soonest technician at the read-back
   # and this sentence is the read-back. {address} is said as read_back says it, {last_four} digit by
   # digit, {eta} is dispatch_within_hour or "by 2:30 PM today".
@@ -549,6 +574,7 @@ lines:
   dispatch_within_hour: within the next hour
   # After hours, when the on-call technician goes out tonight. {minutes} is spoken, "twenty".
   dispatch_on_call: Our on-call technician will call you within {minutes} minutes and head out to you at {address}. We'll call the number ending in {last_four} if anything changes. Is that the right address?
+  dispatch_on_call_busy: Our on-call technicians are both out on jobs right now, so the first one free will call you and head to {address} after their current job, in about {wait}. We'll call the number ending in {last_four} if anything changes. Is that the right address?
   # Said once when the caller's own facts raised the priority below Urgent (Jackson: "it makes them
   # feel heard").
   raised_priority: Thanks for telling me. I've moved you up so you'll get one of our earlier openings.
@@ -693,6 +719,13 @@ visit_questions:
 # and searched when the caller asks how equipment works, what a sound means, or about maintenance.
 # The source is Jackson's Retell knowledge base (retell/summit-air-jackson/kb-source on
 # joco/retell-agent). It holds no repair steps or prices.
+# No heat in the heating season, or no cooling in the cooling season, is at least High (Jackson,
+# 2026-11-06, DECISIONS.md 130). Month-day, both ends included, in the company's own time zone.
+# NYC's legal heat season is October 1 to May 31.
+seasons:
+  heating: {from: "10-01", to: "05-31", job_types: [no_heat]}
+  cooling: {from: "06-15", to: "09-15", job_types: [no_cooling]}
+
 lookup_knowledge: [hvac-basics]
 
 # Owner edits (app/rules.py). A wording line whose default says this must keep it, so an owner can't

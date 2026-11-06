@@ -64,7 +64,7 @@ def test_a_tenant_inherits_the_trade_with_one_override(tmp_path):
     assert pipes["raise_to"] == "Urgent"
     assert "frozen pipes" in pipes["phrases"]
     decided = prio.decide(prio.Facts("tune_up", "our pipes froze", None, False), tenant.priority)
-    assert decided.level == "Normal"
+    assert decided.level == "Low"
     decided = prio.decide(prio.Facts("no_heat", "our pipes froze", None, False), tenant.priority)
     assert decided.level == "Urgent"
 

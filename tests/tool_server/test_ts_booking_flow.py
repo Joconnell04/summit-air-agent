@@ -372,7 +372,7 @@ def test_two_different_jobs_at_one_address_book_with_their_own_priority(agent):
     assert tune["ok"], tune
     assert heat["data"]["booking_id"] != tune["data"]["booking_id"]
     levels = dict(_rows(agent, "SELECT job_type, priority FROM bookings WHERE kind = 'book'"))
-    assert levels["tune_up"] == "Normal"
+    assert levels["tune_up"] == "Low"
     assert levels["no_heat"] in ("High", "Urgent")
 
 

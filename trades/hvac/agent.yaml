@@ -20,6 +20,11 @@ home_words: [unit, system, pump, apartment, house, building, basement, kitchen, 
 # Safety signals. The server matches these on every caller line; the tenant's lines say what to do.
 safety:
   kinds:
+    # Any other danger to people, as the side model reads it (no phrases of its own; DECISIONS.md
+    # 131). Its lines are general, and the offer after them is the same.
+    hazard:
+      label: a hazard
+      clear: []
     gas:
       label: gas smell
       clear:
@@ -193,7 +198,20 @@ safety:
 # Urgent rule raises to High instead. A "group" rule counts toward the tenant's `combine` rule, if it
 # has one.
 priority:
-  base: {no_heat: High, no_cooling: High, tune_up: Normal, safety_check: High, estimate: Normal}
+  # Planned work is Low, a fault with no strong signal Normal (Jackson, 2026-11-06, DECISIONS.md 130);
+  # the rules below and the tenant's seasons raise it.
+  base: {no_heat: Normal, no_cooling: Normal, tune_up: Low, safety_check: High, estimate: Low}
+  # The caller asked for someone right away, in answer to an offer of that (the dispatch question
+  # on a High call, or the safety lines' offer). `offers` are words of the agent's offer line; a
+  # caller line after it with an `asks` phrase and no `waits` phrase raises the call to Urgent.
+  right_away:
+    offers: [out right away, need someone out right away]
+    asks: [right away, right now, now please, asap, as soon as possible, immediately, cant wait,
+          cannot wait, can not wait, send someone, send somebody, send a technician, send a tech,
+          send them, come now, come out now, need someone now, someone now, today please,
+          its an emergency, this is an emergency, the last one, the third one]
+    waits: [can wait, it can wait, no rush, not urgent, schedule, scheduled, appointment, whenever,
+           book it, book a visit, book an appointment, the second one]
   # The inside temperature the agent passes counts only when a caller line carries that number
   # within `reach_words` of one of the `cues`, or answers an agent line with one of the `asked` words.
   inside_temp:
@@ -380,8 +398,28 @@ priority:
       reason: sparks or an electrical smell at the unit
     - id: safety_signal
       safety_signal: true
-      raise_to: Urgent
+      # High, so a visit booked for later is scheduled ahead of routine work; sending someone now
+      # is the caller's choice, and that raises it to Urgent (right_away).
+      raise_to: High
       reason: gas or carbon monoxide reported on the call
+    # A fault the caller describes in strong words: it's out, not just weak, or it's making a
+    # telling noise or leaking (Jackson: "it's banging", "it's completely out").
+    - id: fault_callout
+      job_types: [no_heat, no_cooling]
+      phrases: [completely out, totally out, all the way out, not working at all, stopped working,
+                quit working, died, is dead, wont turn on, wont come on, doesnt turn on, not turning on,
+                wont start, no air coming out, nothing coming out, banging, clanking, grinding,
+                screeching, squealing, rattling loudly, iced up, frozen up, ice on the,
+                blowing hot air, blowing warm air, blowing cold air]
+      not_phrases: [not completely out, not totally out, water heater, hot water heater, faucet, sink,
+                    toilet, tub, shower, dishwasher, washing machine]
+      raise_to: High
+      reason: a fault the caller described
+    - id: caller_needs_now
+      right_away: true
+      raise_to: Urgent
+      raise_to_when_mild: Urgent
+      reason: the caller needs someone right away
 
 # Journey 11: which job types the after-hours rules apply to, and which priority rules mean someone
 # at home is at extra risk. The tenant sets the temperature cutoffs.

@@ -135,7 +135,7 @@ def test_bookings_show_window_priority_reasons_and_the_earlier_slot_search(agent
     assert urgent["window"]["day"] == "tomorrow" and urgent["window"]["label"] == "8 to 12"
     assert urgent["seek_earlier"] is True and urgent["offer"] is None
     assert urgent["address"] == "101 Union St" and urgent["zip"] == "11231"
-    assert routine["priority"] == "Normal" and routine["seek_earlier"] is False
+    assert routine["priority"] == "Low" and routine["seek_earlier"] is False
     s = agent.app.state.services
     conn = s.connect()
     jobs.offer_earlier_slots(
@@ -386,9 +386,10 @@ def test_an_after_hours_window_reads_as_after_hours(agent, clock):
     call = ready_to_book(agent, caller(1))
     agent.turn(call, "Wait, I smell gas.")
     agent.say(call, GAS_LINES)
-    agent.turn(call, "We're outside. Please just book a check.")
+    agent.turn(call, "We're outside. Please send someone out right away.")
     tonight = {"date": "2026-11-02", "window": "after_hours"}
-    assert book(agent, call, tonight, job_type="safety_check")["ok"]
+    booked = book(agent, call, tonight, job_type="safety_check")
+    assert booked["ok"], booked
     window = page(agent)["bookings"][0]["window"]
     assert (window["day"], window["label"], window["id"]) == ("today", "after hours", "after_hours")
 

@@ -31,3 +31,33 @@ vulnerable_person:
     or house; someone who lives elsewhere, used to live there, drops by now and then, or is away;
     anyone's job; and the age of the equipment, pets or the house. If nobody at the home is in one
     of these groups, the answer is no.
+
+# The general hazard check (app/lifecycle.py, DECISIONS.md 131): a caller line with a danger the
+# phrase lists don't name gets the general safety lines. Asked only on a line with one of the
+# tenant's hazard words, so most lines never ask it.
+active_hazard:
+  instructions: >-
+    Is the caller describing a danger to people happening right now, at the home, that calls for
+    getting away from it or calling 9-1-1? Count: a fire, flames or smoke; a burning or electrical
+    smell together with smoke or heat; sparks or arcing near water or from an outlet or wiring;
+    water rising toward outlets, a panel or electrical equipment, or a flood filling a room; a gas
+    or rotten egg smell; a carbon monoxide alarm; someone hurt, unconscious or unable to breathe. Do
+    not count, and answer no for: a leak, a drip, a puddle or water on the floor from a unit or a
+    pipe; water coming through a ceiling; a noise, a smell of dust when the heat first comes on, a
+    unit that is off, too hot or too cold inside; a danger that is over, was checked and found safe,
+    or the caller takes back; anything about the past, a neighbor's home, or a question about what
+    to do if it ever happened. A leak is a job for a technician, not a 9-1-1 call.
+  system: >-
+    You read one line a caller said on a phone call to a home heating and cooling company and answer
+    one question about it with a probability from 0 to 100 that the answer is yes. Return JSON only.
+
+    Question: Is the caller describing a danger to people happening right now, at the home, that
+    calls for getting away from it or calling 9-1-1? Count: a fire, flames or smoke; a burning or
+    electrical smell together with smoke or heat; sparks or arcing near water or from an outlet or
+    wiring; water rising toward outlets, a panel or electrical equipment, or a flood filling a room;
+    a gas or rotten egg smell; a carbon monoxide alarm; someone hurt, unconscious or unable to
+    breathe. Do not count, and answer no for: a leak, a drip, a puddle or water on the floor from a
+    unit or a pipe; water coming through a ceiling; a noise, a smell of dust when the heat first
+    comes on, a unit that is off, too hot or too cold inside; a danger that is over, was checked and
+    found safe, or the caller takes back; anything about the past, a neighbor's home, or a question
+    about what to do if it ever happened. A leak is a job for a technician, not a 9-1-1 call.

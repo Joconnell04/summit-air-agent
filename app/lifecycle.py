@@ -696,9 +696,12 @@ def _safety_label(cfg: dict, call: sqlite3.Row) -> str:
 
 
 def turn(
-    conn: sqlite3.Connection, tenant: Tenant, call: sqlite3.Row, args: TurnIn, now: datetime
+    conn: sqlite3.Connection, tenant: Tenant, call: sqlite3.Row, args: TurnIn, now: datetime,
+    hazard: bool = False,
 ) -> Result:
-    """Log the line and run the safety check on every caller line (docs/call-journeys.md, spine 4)."""
+    """Log the line and run the safety check on every caller line (docs/call-journeys.md, spine 4).
+    `hazard` is the side model's yes to the general hazard question on this line (DECISIONS.md
+    131): with no other safety kind heard, it brings the hazard lines."""
     cfg = tenant.safety
     if args.speaker == "caller" and args.replaces_last:
         # The voice layer logs a caller line as it grows ("East", then "East 4th, apartment 2.",
@@ -760,6 +763,15 @@ def turn(
                 answering_confirm,
             )
             action = _sparks_first(conn, tenant, call, args.text, seq, now, action)
+            if (
+                hazard
+                and action.action == "none"
+                and call["safety_state"] in ("none", "cleared")
+                and "hazard" in cfg["kinds"]
+            ):
+                action = safety.SafetyAction(
+                    "speak_lines", "hazard", " ".join(cfg["kinds"]["hazard"]["lines"].split())
+                )
             if action.action == "speak_lines":
                 changes.update(safety_state="signal", safety_kind=action.kind)
                 if call["safety_signal_at"] is None or call["safety_kind"] != action.kind:

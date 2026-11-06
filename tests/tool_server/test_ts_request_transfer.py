@@ -42,7 +42,7 @@ def test_a_caller_who_asks_for_a_person_in_office_hours_is_put_through(agent, nu
     call = started(agent, "Can I just talk to a real person, please?")
     found = request(agent, call)
     assert found["ok"], found
-    assert found["say"] == "Okay, I'll connect you with someone from our team now. One moment."
+    assert found["say"] == "Got it, transferring you now."
     data = found["data"]
     assert data["transfer"]["number"] == OFFICE and data["transfer"]["role"] == "office"
     # A transfer nobody answers leaves a named callback, stored before anything is dialed.

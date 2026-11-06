@@ -56,7 +56,7 @@ def test_a_caller_who_asks_for_a_person_in_office_hours_goes_to_the_office(agent
     assert flagged["data"]["callback_spoken"] == "by 9:30 AM"
     found = ask(agent, call, flagged)
     assert found["ok"]
-    assert found["say"] == "I'm connecting you with someone from our team now."
+    assert found["say"] == "Got it, transferring you now."
     plan = found["data"]["transfer"]
     assert plan["role"] == "office" and plan["phone"] == OFFICE
     assert (plan["ring_seconds"], plan["accept_seconds"]) == (20, 10)

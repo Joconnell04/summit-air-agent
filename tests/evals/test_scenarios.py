@@ -108,9 +108,10 @@ def test_two_people_mind_change_asks_for_windows_the_seed_has_open(tmp_path):
 
 def test_a_scenarios_weather_is_the_reading_the_server_uses(tmp_path):
     # On a mild day with nothing said, a no-heat call starts at Normal; with no reading it starts
-    # as if it were cold out (the cold_outside bracket matches an unknown temperature).
+    # as if it were cold out (the cold_outside bracket matches an unknown temperature). Early June,
+    # outside the heating season, which would make it High on any day (DECISIONS.md 130).
     scenario = next(s for s in SCENARIOS if s.id == "pushes-for-priority-no-facts")
-    start = datetime(2026, 11, 2, 9, 0, tzinfo=ZoneInfo("America/New_York"))
+    start = datetime(2026, 6, 2, 9, 0, tzinfo=ZoneInfo("America/New_York"))
     levels = []
     for name, weather in (("mild", scenario.weather), ("none", None)):
         world = World(tmp_path / name, seeded_db(tmp_path / f"seed-{name}"), start, weather=weather)

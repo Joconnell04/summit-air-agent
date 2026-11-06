@@ -401,7 +401,7 @@ def test_a_demand_is_handed_off_by_code_and_the_call_ends_as_a_transfer(seed_dir
     agent says the line and reports the transfer, as the worker does."""
     result, agent, _, _ = run(seed_dir, tmp_path, handoff_scenario(transfer="sent"), [], [])
     assert result.outcome == "pass", result.check_failures
-    assert result.transcript[-1].text == "Transferring you to a person now."
+    assert result.transcript[-1].text == "Got it, transferring you now."
     assert agent.calls == []
 
 
@@ -412,7 +412,7 @@ def test_a_transfer_that_fails_brings_the_agent_back_with_the_callback_line(seed
     result, *_ = run(seed_dir, tmp_path, s, [say("Is there anything else?")], [say("[END]")])
     assert result.outcome == "pass", result.check_failures
     assert result.transcript[2].text == (
-        "Transferring you to a person now. I couldn't reach anyone just now, so I've let the team "
+        "Got it, transferring you now. I couldn't reach anyone just now, so I've let the team "
         "know and someone will call you by 9:30 AM."
     )
 

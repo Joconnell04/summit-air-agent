@@ -266,6 +266,23 @@ def run(
     return body
 
 
+def _hazard(services: Services, ctx: Ctx, body) -> bool:
+    """The side model's read of a caller line for a danger the phrase lists don't name (DECISIONS.md
+    131). Asked only on a line with one of the tenant's hazard word stems, and only while no
+    safety kind is active, so most lines skip it; a slow or failed answer is a no."""
+    check = ctx.tenant.safety.get("hazard_check")
+    side = services.side_model
+    if not check or side is None or body.speaker != "caller":
+        return False
+    if ctx.call["safety_state"] not in ("none", "cleared"):
+        return False
+    text = body.text.lower()
+    if not any(stem in text for stem in check["stems"]):
+        return False
+    score = side.score(check["question"], body.text, wait_s=check["wait_s"])
+    return score is not None and score >= check["threshold"]
+
+
 def _ctx(services: Services, conn, call_id: str, key: str | None) -> Ctx:
     call = records.get_call(conn, call_id)
     if call is None:
@@ -465,7 +482,9 @@ def create_app(
 
         def fn(conn, key):
             ctx = _ctx(services, conn, call_id, key)
-            result = lifecycle.turn(conn, ctx.tenant, ctx.call, body, ctx.now)
+            result = lifecycle.turn(
+                conn, ctx.tenant, ctx.call, body, ctx.now, hazard=_hazard(services, ctx, body)
+            )
             # A technician asked for after the visit was booked goes onto that job now.
             if "technician_requested" in result.data.get("hints", []):
                 attach_late_job_notes(ctx)

@@ -65,9 +65,9 @@ def test_an_old_system_does_not_count_as_an_old_person():
 
 def test_rules_only_raise_priority():
     # A rule for no heat never lowers a tune-up, and a tune-up never jumps on vulnerable words.
-    assert decide("tune_up", "my grandmother is visiting").level == "Normal"
+    assert decide("tune_up", "my grandmother is visiting").level == "Low"
     result = decide("safety_check", safety=True)
-    assert result.level == "Urgent"
+    assert result.level == "High"
     for level in prio.LEVELS:
         cfg = {**CFG, "base": {"tune_up": level}}
         out = prio.decide(prio.Facts("tune_up", "elderly", 40), cfg)
@@ -87,7 +87,7 @@ def test_the_side_model_slot_needs_its_config_and_can_only_raise():
     # Without the config slot, a model that would score high changes nothing.
     no_slot = {**CFG, "side_model": None}
     tune_up = prio.decide(prio.Facts("tune_up"), no_slot, FakeSideModel(0.99))
-    assert tune_up.level == "Normal"
+    assert tune_up.level == "Low"
     slot = {**CFG, "side_model": {"question": "q", "threshold": 0.8, "raise_to": "Urgent",
                                   "reason": "side model"}}
     high = prio.decide(prio.Facts("tune_up"), slot, FakeSideModel(0.95))
@@ -109,7 +109,7 @@ def test_the_agent_asking_for_urgent_does_not_make_it_urgent(agent):
     agent.turn(call, "I need my annual tune-up.")
     found = agent.tool("find_slots", call, job_type="tune_up", priority="Urgent")
     assert found["data"]["priority"] == {
-        "level": "Normal",
+        "level": "Low",
         "reasons": [],
         "requested": "Urgent",
         "raised_after_wait": False,
@@ -223,7 +223,9 @@ def test_find_slots_reads_the_stored_outside_temperature(agent, clock):
     call = agent.start(UNKNOWN)["data"]["call_id"]
     agent.turn(call, "The heat's not coming on, but it's 68 in here.")
     found = agent.tool("find_slots", call, job_type="no_heat", facts={"inside_temp_f": 68})
-    assert found["data"]["priority"]["level"] == "Normal"
+    # November: no heat in the heating season is at least High whatever the temperatures
+    # (DECISIONS.md 130).
+    assert found["data"]["priority"]["level"] == "High"
 
 
 def test_an_urgent_caller_hears_it_once_and_a_routine_caller_never_does(agent):
@@ -486,13 +488,15 @@ def test_a_caller_moved_up_below_urgent_hears_it_once(agent, clock):
         )
     conn.close()
     call = agent.start(UNKNOWN)["data"]["call_id"]
-    agent.turn(call, "No heat, it's 68 in here, and my 84-year-old mother lives with me.")
-    first = agent.tool("find_slots", call, job_type="no_heat", facts={"inside_temp_f": 68})
+    # No cooling in November, out of the cooling season: a mild day starts Normal, so an older
+    # person at home moves it up to High, not Urgent.
+    agent.turn(call, "The AC's out, it's 72 in here, and my 84-year-old mother lives with me.")
+    first = agent.tool("find_slots", call, job_type="no_cooling", facts={"inside_temp_f": 72})
     assert first["data"]["priority"]["level"] == "High"
     line = "Thanks for telling me. I've moved you up so you'll get one of our earlier openings."
     assert first["data"]["spoken_first"] == line and first["say"].startswith(line)
     agent.say(call, first["say"])
-    again = agent.tool("find_slots", call, job_type="no_heat", facts={"inside_temp_f": 68})
+    again = agent.tool("find_slots", call, job_type="no_cooling", facts={"inside_temp_f": 72})
     assert "spoken_first" not in again["data"]
 
 
@@ -503,3 +507,42 @@ def test_a_caller_who_starts_high_from_the_temperature_hears_nothing_extra(agent
     found = agent.tool("find_slots", call, job_type="no_heat", facts={"inside_temp_f": 60})
     assert found["data"]["priority"]["level"] == "High"
     assert "spoken_first" not in found["data"]
+
+
+def test_no_heat_in_the_heating_season_is_at_least_high_and_out_of_it_follows_the_weather():
+    """DECISIONS.md 130: October 1 to May 31 is the heating season, June 15 to September 15 the
+    cooling season."""
+    mild = {"outside_now_f": 70, "outside_coldest_f": 68}
+    out = prio.decide(prio.Facts("no_heat", "it's not keeping up", 68, **mild), CFG)
+    assert out.level == "Normal"
+    inside = prio.decide(prio.Facts("no_heat", "it's not keeping up", 68, in_season=True, **mild), CFG)
+    assert inside.level == "High"
+
+
+def test_a_described_fault_is_high_and_planned_work_is_low():
+    mild = {"outside_now_f": 70, "outside_coldest_f": 68}
+    assert prio.decide(prio.Facts("no_cooling", "it's completely out", 75, **mild), CFG).level == "High"
+    assert prio.decide(prio.Facts("no_cooling", "it's not keeping up", 75, **mild), CFG).level == "Normal"
+    assert prio.decide(prio.Facts("tune_up", "time for my yearly check"), CFG).level == "Low"
+
+
+def test_asking_for_someone_right_away_after_the_offer_is_urgent():
+    cfg = CFG["right_away"]
+    offer = "Can this wait for a scheduled visit, or do you need someone out right away?"
+    assert prio.asked_right_away([("agent", offer), ("caller", "I need someone right away.")], cfg)
+    assert not prio.asked_right_away([("agent", offer), ("caller", "It can wait.")], cfg)
+    # Without the offer, insisting alone raises nothing.
+    assert not prio.asked_right_away([("caller", "I need someone right away.")], cfg)
+    raised = prio.decide(prio.Facts("no_heat", "x", 68, in_season=True, right_away=True), CFG)
+    assert raised.level == "Urgent"
+
+
+def test_a_high_call_asks_whether_it_can_wait_then_dispatches_a_yes(agent):
+    call = ready_to_book(agent)
+    asked = agent.tool("find_slots", call, job_type="no_heat")
+    assert asked["data"]["asked_dispatch"]
+    assert asked["say"] == "Can this wait for a scheduled visit, or do you need someone out right away?"
+    agent.say(call, asked["say"])
+    agent.turn(call, "No, I need someone out right away.")
+    sent = agent.tool("find_slots", call, job_type="no_heat")
+    assert sent["data"].get("dispatched"), sent

@@ -143,7 +143,8 @@ def test_booking_tools_wait_for_the_lines_then_an_insisting_caller_can_book(agen
     booked = book(agent, call, slot, job_type="safety_check")
     assert booked["ok"], booked
     assert booked["data"]["safety_override"] is True
-    assert booked["data"]["priority"]["level"] == "Urgent"
+    # An appointment is High; only someone sent right away is Urgent (DECISIONS.md 131).
+    assert booked["data"]["priority"]["level"] == "High"
     gates = count(agent, "SELECT COUNT(*) FROM tool_calls WHERE gate = 'safety_override'")
     assert gates == 1
 
@@ -924,8 +925,8 @@ def test_the_lines_are_advice_with_9_1_1_written_out_and_one_question_the_dispat
     for kind in ("gas", "co"):
         lines = " ".join(CFG["kinds"][kind]["lines"].split())
         assert "the safest thing is" in lines and "9-1-1" in lines
-        assert "911" not in lines.replace("9-1-1", "") and lines.count("?") == 1
-        assert lines.endswith("would you like us to send a technician out right away?")
+        assert "911" not in lines.replace("9-1-1", "") and "?" not in lines
+        assert lines.endswith("we can send someone out right away to help.")
         assert not lines.startswith("Please")
     assert CFG["repeat_limit"] == 0
     assert "9-1-1" not in CFG["booking_note"] and "stay outside" not in CFG["booking_note"]
@@ -939,6 +940,7 @@ def test_the_lines_count_as_said_once_the_agent_has_spoken_even_in_pieces(agent)
     # The lines reach the server in two pieces, neither of them whole.
     agent.say(call, "If you're smelling gas, the safest thing is to get everyone outside")
     agent.say(call, "and call 9-1-1 or the gas company from there.")
+    agent.say(call, GAS_LINES.split("from there. ", 1)[1])
     nxt = agent.turn(call, "Um, I just want you to schedule a technician.")
     assert nxt["say"] == "" and nxt["data"]["safety"] is None
     state = agent.db().execute("SELECT safety_state FROM calls WHERE id = ?", (call,)).fetchone()[0]

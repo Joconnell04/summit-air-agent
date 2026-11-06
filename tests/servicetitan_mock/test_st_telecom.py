@@ -109,8 +109,8 @@ def test_a_tag_is_the_tag_type_name_and_shows_with_its_id(small):
         "Callback resolved",
         "Callback open",
         "No contact",
-        "Urgent",
-        "Routine",
+        "Emergency dispatch",
+        "Scheduled",
     ]
 
 

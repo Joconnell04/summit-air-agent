@@ -242,3 +242,24 @@ def test_a_dispatch_the_caller_never_heard_is_said_again(agent):
     agent.say(call, sent["say"].split(". ", 1)[1])
     assert agent.tool("find_slots", call, job_type="no_heat")["say"] == ""
 
+
+
+def test_after_hours_with_both_on_call_technicians_out_the_wait_is_said(agent, clock):
+    """The on-call roster (DECISIONS.md 130): two technicians, each busy two hours a dispatch."""
+    from test_ts_transfer import EVENING
+    from toolkit import in_area_address
+
+    clock.now = EVENING
+    sent = []
+    for n in range(3):
+        call = agent.start(f"+1212555{n:04d}")["data"]["call_id"]
+        agent.turn(call, "My heat's out and my mother is 82.")
+        address = in_area_address(n + 1)
+        agent.turn(call, f"It's {address['street']}, {address['zip']}.")
+        sent.append(agent.tool("read_back", call, address=address, phone="caller_id",
+                               job_type="no_heat"))
+        clock.advance(minutes=10)
+    assert "on-call technician will call you" in sent[0]["say"]
+    assert "on-call technician will call you" in sent[1]["say"]
+    assert "both out on jobs right now" in sent[2]["say"]
+    assert "in about an hour and forty-five minutes" in sent[2]["say"]

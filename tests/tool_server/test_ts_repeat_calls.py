@@ -253,20 +253,21 @@ def test_safety_scare_words_are_kept_out_of_another_calls_summary():
     assert safety.without_scare(summary) == "No heat\nHome: mother, 82"
 
 
-def test_a_raised_priority_that_keeps_the_offer_asks_again_without_repeating_it(agent):
+def test_a_raise_to_urgent_after_the_offer_dispatches_instead_of_repeating_it(agent):
     """Retell call call_926427e1d1f2a80cb78dc6a4e04: after "my mom's 85" the second find_slots
-    repeated "The soonest I have is today, 7 to 7:30. Does that work?" for the same window."""
+    repeated the same offer. Now an older person at home with no heat in the heating season is
+    Urgent, and Urgent is an emergency dispatch (DECISIONS.md 130), so the offer isn't said again."""
     call = ready_to_book(agent)
+    asked = agent.tool("find_slots", call, job_type="no_heat", facts={"inside_temp_f": 58})
+    agent.say(call, asked["say"])
+    agent.turn(call, "It can wait for a scheduled visit.")
     first = agent.tool("find_slots", call, job_type="no_heat", facts={"inside_temp_f": 58})
     agent.say(call, first["say"])
     agent.turn(call, "Sure. Oh, and my mom's 85, she lives with me.")
     second = agent.tool("find_slots", call, job_type="no_heat",
                         facts={"inside_temp_f": 58, "who_home": "mother, 85"})
-    assert second["data"]["offer"] == first["data"]["offer"]
-    assert second["say"] == (
-        "Thanks for telling me. I've moved you up, and this is still our soonest opening. Does "
-        "that still work?"
-    )
+    assert second["data"]["priority"]["level"] == "Urgent"
+    assert first["say"] not in second["say"]
 
 
 def test_undoing_do_not_call_brings_back_the_callback_it_cancelled(agent):

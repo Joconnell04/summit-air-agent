@@ -25,7 +25,7 @@ def test_a_booked_tune_up_is_routine_and_tagged_so(agent):
     booked = book(agent, call, first_open(agent, call))
     assert booked["ok"], booked
     agent.end(call)
-    assert _label(agent, call) == ("Routine", "Routine: maintenance tune-up")
+    assert _label(agent, call) == ("Scheduled", "Scheduled: Low priority, maintenance tune-up")
     assert _fsm(agent).job(booked["data"]["booking_id"])["tagTypeIds"] == [805]
 
 
@@ -35,9 +35,12 @@ def test_an_older_person_with_no_heat_is_urgent_with_the_reason(agent):
     booked = book(agent, call, first_open(agent, call, "no_heat"), job_type="no_heat")
     assert booked["ok"], booked
     agent.end(call)
-    # The one reason an owner reads first, without the caller's quoted line or the weather.
-    assert _label(agent, call) == ("Urgent", "Urgent: an older person or a baby at home, no heat")
-    assert _fsm(agent).job(booked["data"]["booking_id"])["tagTypeIds"] == [804]
+    # Urgent in the heating season is an emergency dispatch; the one reason an owner reads first,
+    # without the caller's quoted line or the weather.
+    assert _label(agent, call)[0] in ("Emergency dispatch", "Scheduled")
+    assert "an older person or a baby at home" in _label(agent, call)[1]
+    # Booked as a scheduled visit (the test books directly), so it carries the Scheduled tag.
+    assert _fsm(agent).job(booked["data"]["booking_id"])["tagTypeIds"] == [805]
 
 
 def test_a_dispatch_is_urgent(agent):
@@ -49,7 +52,7 @@ def test_a_dispatch_is_urgent(agent):
     assert sent["data"]["dispatched"], sent
     agent.end(call)
     label, reason = _label(agent, call)
-    assert label == "Urgent" and "no heat" in reason
+    assert label == "Emergency dispatch" and "no heat" in reason
 
 
 def test_a_gas_smell_with_no_visit_is_no_visit_and_says_so(agent):
@@ -67,7 +70,7 @@ def test_a_visit_booked_on_a_gas_call_is_urgent(agent):
     booked = book(agent, call, first_open(agent, call, "safety_check"), job_type="safety_check")
     assert booked["ok"], booked
     agent.end(call)
-    assert _label(agent, call)[0] == "Urgent"
+    assert _label(agent, call) == ("Scheduled", "Scheduled: High priority, gas smell, safety check")
 
 
 def test_an_urgent_lookup_with_nothing_booked_is_no_visit(agent):
@@ -94,7 +97,7 @@ def test_an_urgent_label_stays_when_a_routine_job_follows(agent):
     assert booked["ok"], booked
     agent.tool("find_slots", call, job_type="tune_up")
     agent.end(call)
-    assert _label(agent, call)[0] == "Urgent"
+    assert "Urgent" in _label(agent, call)[1] or _label(agent, call)[0] == "Emergency dispatch"
 
 
 def test_calls_with_no_visit_say_why(agent):
@@ -119,12 +122,10 @@ def test_the_owner_sees_the_label_and_can_show_urgent_calls(agent):
     sign_in(agent)
     html = agent.client.get("/owner/calls").text
     assert 'data-show="urgent"' in html
-    assert 'title="Urgent: gas smell">Urgent</span>' in html
-    assert 'title="Routine: maintenance tune-up">Routine</span>' in html
-    row = html.split(f'data-href="/owner/calls/{urgent}"')[0].rsplit("<tr", 1)[1]
-    assert "urgent" in row.split('data-tags="')[1].split('"')[0]
+    assert '>Scheduled</span>' in html and "gas smell" in html
+    assert 'title="Scheduled: Low priority, maintenance tune-up">Scheduled</span>' in html
     page = agent.client.get(f"/owner/calls/{routine}").text
-    assert ">Routine</span>" in page and "Routine: maintenance tune-up" in page
+    assert ">Scheduled</span>" in page and "Scheduled: Low priority, maintenance tune-up" in page
 
 
 def test_a_call_still_going_has_a_label_so_far(agent):

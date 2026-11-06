@@ -143,7 +143,7 @@ def test_water_into_the_home_is_urgent_even_on_a_mild_day(text):
 
 def test_a_tripping_breaker_raises_one_level_to_high_not_urgent():
     assert decide("tune_up", "the breaker keeps tripping when the AC starts").level == "High"
-    assert decide("tune_up", "my breaker tripped once in the storm").level == "Normal"
+    assert decide("tune_up", "my breaker tripped once in the storm").level == "Low"
 
 
 def test_sparks_raise_to_high_and_quote_the_caller():
@@ -153,9 +153,9 @@ def test_sparks_raise_to_high_and_quote_the_caller():
 
 
 def test_a_negated_or_old_spark_raises_nothing():
-    assert decide("tune_up", "no sparks, it just hums").level == "Normal"
-    assert decide("tune_up", "it sparked once last year and it's been fine").level == "Normal"
-    assert decide("tune_up", "there's no water coming through the ceiling").level == "Normal"
+    assert decide("tune_up", "no sparks, it just hums").level == "Low"
+    assert decide("tune_up", "it sparked once last year and it's been fine").level == "Low"
+    assert decide("tune_up", "there's no water coming through the ceiling").level == "Low"
 
 
 @pytest.mark.parametrize(
@@ -163,7 +163,7 @@ def test_a_negated_or_old_spark_raises_nothing():
     [
         ("no_heat", "my 84-year-old mother lives with me", False, "Urgent"),
         ("no_heat", "we have a newborn baby at home", False, "Urgent"),
-        ("tune_up", "", True, "Urgent"),
+        ("tune_up", "", True, "High"),
         ("no_heat", "I live alone and I use a walker", False, "Urgent"),
     ],
 )
@@ -206,7 +206,7 @@ def test_water_in_the_callers_own_words_is_urgent(text):
         "no leaks on the floor or anything",
         "my water heater is on the basement floor",
         "the ac on the second floor is not cooling",
-        "there's water. The unit in the bedroom won't turn on.",
+        "there's water. The unit in the bedroom isn't cooling well.",
         "there's a puddle on the kitchen floor from the sink",
     ],
 )

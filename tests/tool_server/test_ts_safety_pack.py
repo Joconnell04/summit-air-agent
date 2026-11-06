@@ -77,7 +77,7 @@ def test_living_alone_raises_no_heat(line):
 )
 def test_insisting_alone_never_raises_a_tune_up(line):
     decided = prio.decide(prio.Facts("tune_up", line, None, caller_text=line), PRIORITY)
-    assert decided.level == "Normal", line
+    assert decided.level == "Low", line
 
 
 @pytest.mark.parametrize(

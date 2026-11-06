@@ -48,14 +48,14 @@
 {%- endmacro %}
 
 {# One call in a list of calls: the Calls page and search results. #}
-{# The call's one label, Urgent, Routine or No visit (app/labels.py); the reason is its tooltip. #}
+{# The call's one label, Emergency dispatch, Scheduled or No visit (app/labels.py); the reason is its tooltip. #}
 {% macro label_tag(label, reason) -%}
-<span class="tag {{ {'Urgent': 'urgent', 'Routine': 'info'}.get(label, 'outline') }}" title="{{ reason }}">{{ label }}</span>
+<span class="tag {{ {'Emergency dispatch': 'urgent', 'Scheduled': 'info'}.get(label, 'outline') }}" title="{{ reason }}">{{ label }}</span>
 {%- endmacro %}
 
 {% macro call_row(c, show_day=false) -%}
 {%- set tags = [] -%}
-{%- if c.label == "Urgent" %}{% set _ = tags.append("urgent") %}{% endif -%}
+{%- if c.label == "Emergency dispatch" %}{% set _ = tags.append("urgent") %}{% endif -%}
 {%- if c.open_flags %}{% set _ = tags.append("needs") %}{% endif -%}
 {%- if c.booked %}{% set _ = tags.append("booked") %}{% endif -%}
 {%- if c.outcome.startswith("declined") %}{% set _ = tags.append("away") %}{% endif -%}

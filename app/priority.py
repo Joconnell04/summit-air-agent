@@ -54,6 +54,8 @@ class Facts:
     caller_text: str = ""  # what the side model reads; the same lines as `text`
     inside_temp_line: str = ""  # the caller's line the inside temperature came from
     electrical_line: str = ""  # the caller's line the electrical route heard (app/safety.py)
+    in_season: bool = False  # no heat in the heating season, or no cooling in the cooling season
+    right_away: bool = False  # the caller asked for someone right away when offered (right_away)
 
 
 @dataclass
@@ -250,6 +252,8 @@ def said(rule: dict, text: str) -> bool:
 def _rule_fires(rule: dict, facts: Facts) -> bool:
     if "job_types" in rule and facts.job_type not in rule["job_types"]:
         return False
+    if rule.get("right_away"):
+        return facts.right_away
     if rule.get("safety_signal"):
         return facts.safety_signal
     if rule.get("electrical_signal"):
@@ -283,7 +287,7 @@ def quoted(line: str) -> str:
 def _caller_line(rule: dict, facts: Facts) -> str:
     """The first of the caller's sentences that fires the rule on its own, so the reason shows the
     dispatcher what the caller said rather than only the rule's name."""
-    if rule.get("safety_signal"):
+    if rule.get("safety_signal") or rule.get("right_away"):
         return ""
     if rule.get("electrical_signal"):
         return facts.electrical_line
@@ -338,6 +342,8 @@ def decide(facts: Facts, cfg: dict, side_model: SideModel | None = None) -> Prio
         )
     else:
         result = Priority(cfg["base"].get(facts.job_type, "Normal"))
+    if facts.in_season and LEVELS.index(result.level) < LEVELS.index("High"):
+        result.raise_to("High", "season", "out in the season it's needed")
     result.start = result.level
     mild = result.level == "Normal"
     groups = 0
@@ -440,3 +446,22 @@ def after_hours_outcome(facts: Facts, priority: Priority, cfg: dict, falling_fas
     if temp is not None and temp > cfg["morning_above_f"]:
         return "first_morning_slot"
     return "callback"
+
+
+def asked_right_away(pairs: list[tuple[str, str]], cfg: dict) -> bool:
+    """A caller line after an agent line offering someone right away (the dispatch question, the
+    safety lines' offer) that asks for it: an `asks` phrase and no `waits` phrase. `pairs` are
+    (speaker, text) in order; `cfg` is the trade's priority.right_away block."""
+    if not cfg:
+        return False
+    offered = False
+    for speaker, text in pairs:
+        said = words(text)
+        if speaker == "agent":
+            offered = offered or any(has_phrase(said, o) for o in cfg.get("offers", []))
+            continue
+        if offered and any(has_phrase(said, y) for y in cfg.get("asks", [])) and not any(
+            has_phrase(said, w) for w in cfg.get("waits", [])
+        ):
+            return True
+    return False

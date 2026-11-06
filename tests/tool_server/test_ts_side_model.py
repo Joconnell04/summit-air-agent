@@ -98,8 +98,9 @@ class FakeSideModel:
     def prefetch(self, question, text):
         self.prefetched.append((question, text))
 
-    def score(self, question, text):
+    def score(self, question, text, wait_s=None):
         self.scored.append(text)
+        self.questions = [*getattr(self, "questions", []), question]
         return self.value
 
 
@@ -154,7 +155,7 @@ def test_the_side_model_only_applies_to_no_heat_and_no_cooling(server):
     call = agent.start(UNKNOWN)["data"]["call_id"]
     agent.turn(call, "I need my yearly tune-up. My dad lives with us, he's 91.")
     found = agent.tool("find_slots", call, job_type="tune_up")
-    assert found["data"]["priority"]["level"] == "Normal"
+    assert found["data"]["priority"]["level"] == "Low"
 
 
 @pytest.mark.parametrize("value", [None, 0.1])
@@ -192,3 +193,25 @@ def test_find_slots_doesnt_wait_on_a_slow_side_model_and_the_booking_does(tmp_pa
                   inside_temp_f=61)
     assert booked["ok"], booked
     assert booked["data"]["priority"]["level"] == "Urgent"
+
+
+def test_a_danger_no_list_names_brings_the_hazard_lines(server):
+    """The general hazard check (DECISIONS.md 131): a line with a hazard word stem goes to the side
+    model, and a confident yes brings the general lines with the safety menu."""
+    agent, fake = server(0.95)
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    turn = agent.turn(call, "There's smoke coming out of the furnace closet.")
+    assert turn["data"]["safety"]["kind"] == "hazard"
+    assert turn["say"].startswith("If anyone's in danger, the safest thing is to get away from it")
+    assert "active_hazard" in fake.questions
+
+
+def test_a_line_with_no_hazard_word_never_asks_and_a_low_score_brings_nothing(server):
+    agent, fake = server(0.95)
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "My AC is making a rattling noise.")
+    assert "active_hazard" not in getattr(fake, "questions", [])
+    agent_low, _ = server(0.3)
+    call = agent_low.start(UNKNOWN)["data"]["call_id"]
+    turn = agent_low.turn(call, "There's water leaking from the unit onto the floor.")
+    assert turn["data"]["safety"] is None

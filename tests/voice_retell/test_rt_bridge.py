@@ -165,8 +165,9 @@ def test_a_safety_line_that_arrives_with_a_tool_call_goes_into_its_result(client
     gas = utterance("user", "It smells like gas in here.")
     answer = tool(client, "check_service_area", call_obj("abc", GREETING, gas), zip="11231")
     lines_ = ("If you're smelling gas, the safest thing is to get everyone outside and call 9-1-1 "
-              "or the gas company from there. Once everyone's safe, would you like us to send a "
-              "technician out right away?")
+              "or the gas company from there. Once everyone's safe, I can connect you with someone "
+              "on our team right now, or book an appointment with one of our technicians to check "
+              "it out. And if it's really urgent, we can send someone out right away to help.")
     # Bare lines, first in what the agent says; no instruction text for it to read aloud.
     assert answer["speak_first"] == lines_
     assert answer["say"].startswith(lines_) and "exactly as written" not in answer["say"]

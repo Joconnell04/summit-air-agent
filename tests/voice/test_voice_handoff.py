@@ -21,7 +21,7 @@ from voice.archive.livekit.transfer import Transfer
 OFFICE = "+12125550100"
 CALLER = "sip_caller"
 DEMAND = "Put me through to a manager right now. This is ridiculous."
-HANDOFF_LINE = "Transferring you to a person now."
+HANDOFF_LINE = "Got it, transferring you now."
 CALLBACK = (
     "I couldn't reach anyone just now, so I've let the team know and someone will call you by "
     "9:30 AM."

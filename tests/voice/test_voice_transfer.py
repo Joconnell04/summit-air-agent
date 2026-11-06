@@ -158,7 +158,7 @@ def test_a_person_who_presses_1_is_joined_to_the_caller_and_the_agent_leaves(
     # The model says nothing more: the worker speaks from here.
     assert no_reply(worker.flag())
     assert worker.outcome == "connected"
-    assert worker.voice.said == ["I'm connecting you with someone from our team now."]
+    assert worker.voice.said == ["Got it, transferring you now."]
     assert worker.holds == [True]
     dialed = worker.lk.sip.requests[0]
     assert (dialed.sip_call_to, dialed.sip_trunk_id) == (OFFICE, TRUNK)
@@ -302,4 +302,4 @@ def test_a_caller_who_hangs_up_mid_transfer_stops_the_dial(agent, connect, numbe
     # The person's leg is hung up, and the caller, who has gone, hears nothing more.
     assert worker.lk.room.deleted == ["call-1-transfer"]
     assert worker.consults[0].closed
-    assert worker.voice.said == ["I'm connecting you with someone from our team now."]
+    assert worker.voice.said == ["Got it, transferring you now."]

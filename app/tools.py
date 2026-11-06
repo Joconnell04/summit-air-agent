@@ -116,6 +116,8 @@ class Ctx:
     geocoder: geocode.Geocoder | None = None
     # The numbers a heads-up call may dial (app/heads_up.py); empty dials none.
     heads_up_allowlist: frozenset[str] = frozenset()
+    # Set while _dispatch books, so the job is tagged an emergency dispatch.
+    dispatching: bool = False
 
     def reload(self) -> None:
         self.call = records.get_call(self.conn, self.call["id"])
@@ -814,7 +816,22 @@ def _facts(ctx: Ctx, job_type: str, turns: list, temps: list[float], outside) ->
         electrical_line=safety.electrical_line(caller, ctx.tenant.safety) or "",
         caller_text=caller,
         inside_temp_line=line,
+        in_season=_in_season(ctx, job_type),
+        right_away=prio.asked_right_away(pairs, ctx.tenant.priority.get("right_away", {})),
     )
+
+
+def _in_season(ctx: Ctx, job_type: str) -> bool:
+    """Today falls in the tenant's season for this job type (agent.yaml `seasons`, DECISIONS.md
+    130). A season that runs across New Year (October to May) wraps."""
+    today = ctx.tenant.local(ctx.now).strftime("%m-%d")
+    for season in (ctx.tenant.agent.get("seasons") or {}).values():
+        if job_type not in season.get("job_types", []):
+            continue
+        start, end = season["from"], season["to"]
+        if (start <= today <= end) if start <= end else (today >= start or today <= end):
+            return True
+    return False
 
 
 def _priority(
@@ -1978,14 +1995,32 @@ def find_slots(ctx: Ctx, args: FindSlotsIn) -> Result:
         # The read-back came first, below High; the caller's facts since raised it (DECISIONS.md
         # 123), so the visit is dispatched now rather than offered.
         readback = records.readback(ctx.call)
-        if (
-            readback
-            and decided.level in labels.URGENT_LEVELS
-            and _dispatch_waiting(ctx, args.job_type)
-        ):
+        if readback and decided.level == "Urgent" and _dispatch_waiting(ctx, args.job_type):
             sent = _dispatch(ctx, args.job_type, readback)
             if sent is not None:
                 return sent
+        # High, not Urgent: ask once whether it can wait, before any times (DECISIONS.md 130). A
+        # caller who needs someone now is raised to Urgent (priority rule right_away) and the next
+        # find_slots dispatches.
+        question = ctx.tenant.line("dispatch_question")
+        if (
+            readback
+            and ctx.call["readback_confirmed_at"]
+            and decided.level == "High"
+            and question
+            and _hand_out_once(ctx, question)
+        ):
+            with tx(ctx.conn):
+                ctx.conn.execute(
+                    "INSERT OR IGNORE INTO lines_handed (call_id, line, at) VALUES (?, ?, ?)",
+                    (ctx.call["id"], DISPATCH_WAITING + args.job_type, iso(ctx.now)),
+                )
+            return ok(
+                question,
+                **data,
+                asked_dispatch=True,
+                need="wait for the answer, then call find_slots again with the same job type",
+            )
     # A caller who can only be home part of the day gets only windows inside those hours. The
     # technician may come any time in a window, so a window that runs past them is never offered
     # as if it fit ("by 9" inside 8 to 12, eval round 2, seed 7).
@@ -2930,7 +2965,7 @@ def _dispatch(ctx: Ctx, job_type: str, current: dict) -> Result | None:
         return None
     found = _priority(ctx, job_type, None)
     decided = found.priority
-    if decided.level not in labels.URGENT_LEVELS:
+    if decided.level != "Urgent":
         with tx(ctx.conn):
             ctx.conn.execute(
                 "INSERT OR IGNORE INTO lines_handed (call_id, line, at) VALUES (?, ?, ?)",
@@ -2969,6 +3004,7 @@ def _dispatch(ctx: Ctx, job_type: str, current: dict) -> Result | None:
             approver=NOT_ASKED, name=name,
         ),
     )
+    ctx.dispatching = True
     try:
         booked = book_appointment(ctx, args)
     except Refused:
@@ -2978,6 +3014,8 @@ def _dispatch(ctx: Ctx, job_type: str, current: dict) -> Result | None:
             records.update_call(ctx.conn, ctx.call["id"], readback_confirmed_at=None)
         ctx.reload()
         return None
+    finally:
+        ctx.dispatching = False
     if not booked.ok:
         return booked  # the FSM is down: the booking is queued and a person calls back
     row = ctx.conn.execute(
@@ -3041,6 +3079,12 @@ def _dispatch_said(ctx: Ctx, window: dict, current: dict, on_call: bool) -> str:
     address = address_said(current["street"], current["unit"])
     last_four = digits_spoken(current["phone"][-4:])
     if on_call:
+        free_in = _on_call_free_in(ctx)
+        if free_in:
+            return ctx.tenant.line(
+                "dispatch_on_call_busy", wait=_wait_said(free_in), address=address,
+                last_four=last_four,
+            )
         minutes = ctx.tenant.after_hours_cutoffs["on_call_confirms_within_minutes"]
         return ctx.tenant.line(
             "dispatch_on_call", minutes=number_words(minutes), address=address, last_four=last_four
@@ -3056,6 +3100,37 @@ def _dispatch_said(ctx: Ctx, window: dict, current: dict, on_call: bool) -> str:
         "dispatch_now" if today else "dispatch_soonest",
         address=address, eta=eta, last_four=last_four,
     )
+
+
+def _on_call_free_in(ctx: Ctx) -> int:
+    """Minutes until an on-call technician is free, or 0 when one is free now: each after-hours
+    dispatch on another call keeps one busy for the tenant's job length (DECISIONS.md 130)."""
+    cfg = ctx.tenant.after_hours_cutoffs
+    roster = cfg.get("on_call_technicians", 0)
+    job = cfg.get("on_call_job_minutes", 0)
+    if not roster or not job:
+        return 0
+    since = iso(ctx.now - timedelta(minutes=job))
+    busy = ctx.conn.execute(
+        "SELECT d.at FROM dispatches d JOIN calls c ON c.id = d.call_id WHERE c.after_hours = 1 "
+        "AND d.replaced_at IS NULL AND d.call_id != ? AND d.at > ? ORDER BY d.at",
+        (ctx.call["id"], since),
+    ).fetchall()
+    if len(busy) < roster:
+        return 0
+    # The technician sent longest ago is free first.
+    free_at = parse_iso(busy[len(busy) - roster]["at"]) + timedelta(minutes=job)
+    return max(1, int((free_at - ctx.now).total_seconds() // 60))
+
+
+def _wait_said(minutes: int) -> str:
+    """A wait as said: rounded up to a quarter hour ("forty-five minutes", "an hour and a half")."""
+    quarters = -(-minutes // 15)
+    if quarters < 4:
+        return f"{number_words(quarters * 15)} minutes"
+    hours, rest = divmod(quarters, 4)
+    said = "an hour" if hours == 1 else f"{number_words(hours)} hours"
+    return said + {0: "", 1: " and fifteen minutes", 2: " and a half", 3: " and forty-five minutes"}[rest]
 
 
 def _after_dispatch(ctx: Ctx) -> str:
@@ -3203,9 +3278,7 @@ def book_appointment(ctx: Ctx, args: BookIn) -> Result:
         "window_end": iso(window_end),
         # The job's tag in the FSM: Urgent at High or Urgent or on a safety call, else Routine
         # (app/labels.py).
-        "label": labels.URGENT
-        if decided.level in labels.URGENT_LEVELS or override
-        else labels.ROUTINE,
+        "label": labels.EMERGENCY if ctx.dispatching else labels.SCHEDULED,
     }
     key = _attempt_key(ctx, "book", args.model_dump(mode="json"))
     seek_earlier = decided.level == "Urgent" and args.slot.date > ctx.tenant.local(ctx.now).date()

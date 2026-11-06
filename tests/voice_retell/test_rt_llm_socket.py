@@ -795,7 +795,7 @@ def test_server_led_no_lone_got_it_after_a_hold_phrase(monkeypatch):
         assert said(ask(ws, 1, ["Hi.", "Yes."])) == "One sec. Which day works for you?"
 
 
-CONNECTING = "Okay, I'll connect you with someone from our team now. One moment."
+CONNECTING = "Got it, transferring you now."
 FALLBACK = (
     "I couldn't reach anyone just now, so I've let the team know and someone will call you by "
     "9:30 AM."

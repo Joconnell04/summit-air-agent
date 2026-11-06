@@ -165,6 +165,11 @@ def book(
 
 def first_open(agent: Agent, call_id: str, job_type: str = "tune_up") -> dict:
     found = agent.tool("find_slots", call_id, job_type=job_type)
+    if found["data"].get("asked_dispatch"):
+        # A High no-heat or no-cooling call asks whether it can wait first (DECISIONS.md 130).
+        agent.say(call_id, found["say"])
+        agent.turn(call_id, "It can wait for a scheduled visit.")
+        found = agent.tool("find_slots", call_id, job_type=job_type)
     day = found["data"]["days"][0]
     return {"date": day["date"], "window": day["windows"][0]}
 

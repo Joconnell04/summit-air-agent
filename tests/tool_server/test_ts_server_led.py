@@ -25,6 +25,11 @@ def led(tmp_path, clock, mock):
 
 def offer(agent, call, job_type="tune_up") -> dict:
     found = agent.tool("find_slots", call, job_type=job_type)
+    if found["data"].get("asked_dispatch"):
+        # A High no-heat call asks whether it can wait first (DECISIONS.md 130).
+        agent.say(call, found["say"])
+        agent.turn(call, "It can wait for a scheduled visit.")
+        found = agent.tool("find_slots", call, job_type=job_type)
     assert found["ok"], found
     agent.say(call, found["say"])
     return found

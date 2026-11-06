@@ -54,7 +54,7 @@ def test_the_defaults_are_consent_off_and_everything_else_as_the_tenant_is_set_u
         "two_party_consent": False,
         "call_recordings": True,
         "warm_transfer": True,
-        "hold_line": False,
+        "hold_line": True,
         "technician_summaries": True,
         "on_call_alerts": True,
     }
@@ -326,6 +326,7 @@ def test_with_the_hold_line_on_after_hours_on_call_is_the_hold_line_too(agent, c
 
 
 def test_with_the_hold_line_off_the_office_is_rung(agent, hold):
+    set_to(agent, hold_line=False)
     call = asks_for_a_person(agent)
     plan = ask(agent, call, flag(agent, call))["data"]["transfer"]
     assert plan["phone"] == "+12125550100"
@@ -339,6 +340,7 @@ def test_the_hold_line_with_no_hold_number_still_rings_the_office(agent, numbers
 
 
 def test_flipping_the_hold_line_mid_call_leaves_that_call_as_it_started(agent, hold):
+    set_to(agent, hold_line=False)
     call = asks_for_a_person(agent)
     set_to(agent, hold_line=True)
     plan = ask(agent, call, flag(agent, call))["data"]["transfer"]
@@ -348,6 +350,12 @@ def test_flipping_the_hold_line_mid_call_leaves_that_call_as_it_started(agent, h
 def test_the_hold_line_is_on_the_settings_page_beside_the_warm_transfer(agent):
     shown = [s.key for s in owner_settings.shown(tenant(agent))]
     assert shown.index("hold_line") == shown.index("warm_transfer") + 1
+
+
+def test_the_hold_line_is_on_by_default(agent, hold):
+    call = asks_for_a_person(agent)
+    plan = ask(agent, call, flag(agent, call))["data"]["transfer"]
+    assert plan["phone"] == HOLD
 
 
 # ---- technician summaries ----------------------------------------------------------------------
