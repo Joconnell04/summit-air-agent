@@ -19,8 +19,9 @@ sys.path.insert(0, str(ROOT))
 from voice.retell.api import Retell
 
 NUMBER = "+15162129051"
-# The scripted caller's caller ID (voice/livekit/test_call.py dials out from the test trunk).
-TEST_CALLER = "+16466240418"
+# The scripted callers' caller IDs: the Twilio test trunk (voice/livekit/test_call.py), then our
+# Retell number the test-caller agent dials from (retell_caller.py).
+TEST_CALLERS = ("+16466240418", "+16783366730")
 SOCKET_AGENT_NAME = "Summit Air socket (test)"
 LIVE = ("registered", "ongoing")
 
@@ -41,7 +42,7 @@ def live_calls(retell: Retell, now_ms: int) -> list[dict]:
 def ours(call: dict, agent_id: str) -> bool:
     """A scripted call of this arm: on the socket agent, from the test caller. Anyone else's call
     is never touched."""
-    return call.get("agent_id") == agent_id and call.get("from_number") == TEST_CALLER
+    return call.get("agent_id") == agent_id and call.get("from_number") in TEST_CALLERS
 
 
 def socket_agent(retell: Retell) -> str:

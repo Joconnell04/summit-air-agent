@@ -15,7 +15,7 @@
 set -u
 main() {
   TOOLS="${SOCKET_TOOLS:-$HOME/summit-air/socket-runs/tools}"
-  for f in run_persona.py rows.py; do
+  for f in rows.py; do
     [ -f "$TOOLS/$f" ] || { echo "missing $TOOLS/$f"; exit 2; }
   done
   SLATE="$(cd "$(dirname "$1")" && pwd)/$(basename "$1")"
@@ -56,8 +56,15 @@ main() {
     before="$(sqlite3 "$DATA/tools.db" 'select coalesce(max(rowid), 0) from calls')"
     start_ms="$(date +%s%3N)"
     echo "=== $tag start $(date -u +%T)"
-    timeout 420 env PYTHONPATH="$CODE" uv run --env-file "$HOME/summit-air/.env" python \
-      "$TOOLS/run_persona.py" "$persona" --to "$NUMBER" --minutes 5.5 > "$OUT/calls/$tag.log" 2>&1
+    if [ "${CALLER:-retell}" = retell ]; then
+      # A Retell agent calling from our other Retell number (retell_caller.py): Twilio disabled
+      # voice on the test trunk's account after call r176-01.
+      timeout 460 env PYTHONPATH="$CODE" uv run --env-file "$HOME/summit-air/.env" python \
+        retell/arms/socket/retell_caller.py call "$persona" --to "$NUMBER" > "$OUT/calls/$tag.log" 2>&1
+    else
+      timeout 420 env PYTHONPATH="$CODE" uv run --env-file "$HOME/summit-air/.env" python \
+        "$TOOLS/run_persona.py" "$persona" --to "$NUMBER" --minutes 5.5 > "$OUT/calls/$tag.log" 2>&1
+    fi
     end_ms="$(date +%s%3N)"
     py retell/arms/socket/line.py hangup
     sleep 15  # the socket closes the call on the tool server

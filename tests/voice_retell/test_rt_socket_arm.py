@@ -46,11 +46,12 @@ def test_persona_variants_cover_every_journey_and_repeat_with_the_seed(tmp_path)
 def test_only_our_own_scripted_calls_are_hung_up():
     line = load("line")
     agent = "agent_socket"
-    assert line.ours({"agent_id": agent, "from_number": line.TEST_CALLER}, agent)
+    for caller in line.TEST_CALLERS:
+        assert line.ours({"agent_id": agent, "from_number": caller}, agent)
     # A person calling the line, or any call on another agent, is never ended.
     assert not line.ours({"agent_id": agent, "from_number": "+16784774024"}, agent)
     assert not line.ours({"agent_id": "agent_a3e38e6aa3d4e75dfac12aafc8",
-                          "from_number": line.TEST_CALLER}, agent)
+                          "from_number": line.TEST_CALLERS[0]}, agent)
 
 
 def test_perceived_wait_and_hold_phrase_talk_over_from_word_timings():
