@@ -61,3 +61,16 @@ Jackson's words, verbatim:
 Findings: the call came a few minutes before the Retell-lane deploy of c458944, so the server's greeting still said Brooke; it says Brian now. MEASURED e2e p50 1,493 ms, p90 3,482 ms. "Are you still there?" fired six times at the 8 s setting. On "super urgent" and "my elderly grandma's here" at midnight, priority went to High but the agent still offered 8 AM, then a callback; the emergency dispatch push covers this.
 
 What changed (agent change set 24): goodbye is "Thanks for calling Summit Air." plus one varied nicety; greeting drops "so much ... today"; never thank the caller for waiting; silence check-in at 16 s. The server lane adds a varied connector before the read-back sentence and the same greeting wording on phone calls.
+
+## Call call_0db901d9ffd0873ea2a7b5448a5 (Jackson, 12:25 AM, socket test agent on (516) 212-9051)
+
+Jackson's words, verbatim:
+
+> just called the 516 number and thought it went pretty well: but some feedback:
+> it says "just a moment" and then jumps right to the next phrase. i think it's great for minimizing stall time but could be dialed back slightly / occasionally not happen when it's not a longer wait time or something
+> can you think of a less confusing way to ask the question "will someone be home and is there a gate code or buzzer?" for me, the answer to that question is yes-and-then-no....so i think it would help if the question could be asked in a way where my answer would be a singlular yes for yes-and-yes, like "and to confirm, someone will be home to let the techniicain in right?, if not could you provide the gate code/buzzer"....but i don't like the way i phrased it so come up with a better way and show me
+> also the farewell said the same goodbye twice. investigate and fix.
+
+Findings (MEASURED, Retell): e2e p50 1,410 ms, p90 2,345 ms. The hold phrase came before almost every answer. The goodbye played twice because the socket's code closing and the model's closing both spoke. The socket world was still on its daytime test clock ("today, 1:30 to 2" at 12:25 AM, with "Friday, November 6" added), and its greeting was the old wording. All four went back to the socket lane.
+
+Access question (Jackson picked from three options): "Will someone be home to let the technician in? If there's a gate code or buzzer they'll need, just let me know." It's now on his agent (change set 25), the server and both arms.

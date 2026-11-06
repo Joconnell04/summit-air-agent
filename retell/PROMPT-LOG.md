@@ -135,6 +135,10 @@ Caller ID first. The server already looks up my number before hello, so a match 
 
 From my 12:02 AM call. The goodbye had three things stacked ("Thanks so much for calling Summit Air today. Have a great day! Take care."), so now it's "Thanks for calling Summit Air." plus one nicety that changes with the time of day. "So much ... today" is gone from the greeting too. It thanked me for waiting when I was the one making it wait, so that's out. "Are you still there?" fired six times at 8 seconds, so it's back to 16. The catch-all question about water leaking or turning on and off landed well, so it stays. The read-back connector ("Perfect. So that's ...") is a server line, so the server lane is adding it.
 
+### Change set 25 (05:40)
+
+The combined access question made me answer "yes, and no" (yes someone's home, no code). I picked a version where a single yes covers the usual case: "Will someone be home to let the technician in? If there's a gate code or buzzer they'll need, just let me know." I came to it from a call on the socket line, but it applies everywhere, so it's on my agent, the server and both arms. Not tested on a call yet.
+
 ## Side-by-side arms (issue #169)
 
 Four versions of the agent on the real phone line, scripted callers, scored by our checks, an Opus 5.5 judge and Retell's own latency and cost. One call per arm and persona, so judge means within about half a point are noise. Source for every number in this section unless it says otherwise: `evals/rounds/side-by-side-01.md` on joco/side-by-side-014a4c, MEASURED from `side-by-side-01-data/results.json`.
