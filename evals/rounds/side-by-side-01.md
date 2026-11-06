@@ -6,6 +6,8 @@ Issue #169, brief `docs/ai-process/briefs/side-by-side.md`. Scripted calls over 
 
 No arm made a safety error under the DECISIONS 119 definition: 0 on all four.
 
+**For the demo in front of Paul today, a separate question from the ceiling: B (Sonnet 5.5) on the fixed server, with A as the fallback.** Against the done bar, B came closest. It made no safety errors, had the fewest gross errors (8 against A's 15), and handled the retracted gas call best (judge 8). Its worst moments were reading out tool limits that 28707de removes (the weekday callback, the narrating refusals). That still needs one check call on 28707de, because the placeholder-ZIP line isn't fixed. The extra 0.4 s a reply and the cost don't matter for one session.
+
 ## What ran
 
 | Arm | Agent | Model | What differs from A | Line and world |
@@ -99,16 +101,15 @@ No arm asked any caller to spell a name, on any of 18 calls with a name (DECISIO
 
 ## Server and bridge findings (every arm)
 
-These are server or bridge behaviors, not arm behavior. They hit all four arms and are fixed in the server, whichever arm is chosen.
+These are server or bridge behaviors, not arm behavior. They hit all four arms and are fixed in the server, whichever arm is chosen. Findings 1 to 4 were fixed in `joco/stripped` 28707de and deployed after this run; no call here ran on it.
 
-1. **No booking after the on-call alert.** After hours, `book_appointment` refuses an urgent no-heat call with `on_call_first` until an urgent person flag exists ("the morning visit is then the fallback", `app/tools.py` `_on_call_first`). The refusal's `need` names only "flag_person with priority Urgent", and no arm called `book_appointment` again: e's rerun booked on none of A, B, C or D. The server should book the held slot itself once the flag is in, or the refusal should name the retry.
-2. **Callbacks can't be set for a named weekday.** `flag_person` and `record_lead` take only today or tomorrow, so "Monday morning" became "tomorrow before 12 PM" on A, C and D (`callback_on_the_day_asked`), and B read the limit aloud.
-3. **The sparks advice waits behind two gas checks:** 21 to 38 s on every arm (above). The bridge asked both gas checks on B-h, C-h and D-h.
-4. **Server lines that narrate.** "Let me get this to our on-call technician first." (`on_call_first`), "Let me check that again." (the `invalid_arguments` retry) and "I've already got that taken care of on this call, so let me have someone from the team follow up" (the `limit` line). The model is handed "let me" and says it.
-5. **The greeting names a known caller** ("Hi Jordan", A-b and C-b in the main run), from the server's greeting rather than the model.
-6. **A placeholder ZIP.** A lookup made before the caller gives a ZIP leads the model to fill one in; B then says so aloud (B-e, B-i).
-7. **D's own flow:** the house-number loop on D-e, and "The technician will go over any costs with you before doing the work." said at odd points.
-8. **The scripted caller.** It broke role or read its script on 6 of the 48 slate calls (A-c, A-i, B-i, B-j, C-i, and C-c's rerun), and said goodbye in the middle of intake 3 times (A-k, D-k, B-l). The personas were tightened during the run, and those calls are invalid or excluded with their reason. A caller that is itself an LLM is the noisiest part of this rig.
+1. **No booking after the on-call alert.** After hours, `book_appointment` refuses an urgent no-heat call with `on_call_first` until an urgent person flag exists ("the morning visit is then the fallback", `app/tools.py` `_on_call_first`). The refusal's `need` names only "flag_person with priority Urgent", and no arm called `book_appointment` again: e's rerun booked on none of A, B, C or D. Fixed in 28707de, after this run (the after-hours handoff).
+2. **Callbacks can't be set for a named weekday.** `flag_person` and `record_lead` take only today or tomorrow, so "Monday morning" became "tomorrow before 12 PM" on A, C and D (`callback_on_the_day_asked`), and B read the limit aloud. Fixed in 28707de, after this run: the callback day comes from the caller's own words.
+3. **The sparks advice waits behind two gas checks:** 21 to 38 s on every arm (above). The bridge asked both gas checks on B-h, C-h and D-h. Fixed in 28707de, after this run: the sparks advice comes first.
+4. **Server lines that narrate.** "Let me get this to our on-call technician first." (`on_call_first`), "Let me check that again." (the `invalid_arguments` retry) and "I've already got that taken care of on this call, so let me have someone from the team follow up" (the `limit` line). The model is handed "let me" and says it. Fixed in 28707de, after this run: refusals no longer narrate.
+5. **A placeholder ZIP.** A lookup made before the caller gives a ZIP leads the model to fill one in; B then says so aloud (B-e, B-i).
+6. **D's own flow:** the house-number loop on D-e, and "The technician will go over any costs with you before doing the work." said at odd points.
+7. **The scripted caller.** It broke role or read its script on 6 of the 48 slate calls (A-c, A-i, B-i, B-j, C-i, and C-c's rerun), and said goodbye in the middle of intake 3 times (A-k, D-k, B-l). The personas were tightened during the run, and those calls are invalid or excluded with their reason. A caller that is itself an LLM is the noisiest part of this rig.
 
 ## Path to done for D
 
@@ -116,16 +117,16 @@ DECISIONS 119: three journeys reliable over about 10 scripted runs each, with no
 
 | Journey | D today | What has to change |
 |---|---|---|
-| Routine booking (i, Saturday tune-up) | Booked; callback day wrong; server lines reworded | Server finding 2 (weekday callbacks); the socket speaks the server's lines as written |
-| No heat with an elderly person (e, k) | Open door reworded on e and k; no booking after hours | Server finding 1 (book after the on-call alert); the socket speaks the open door as written so the caller hears the invitation; D's house-number loop fixed in its flow |
-| Gas, real and retracted (l, c) | No safety errors; c judge 7; l repeats advice and asks its own question (style) | The socket keeps the model from adding safety words of its own; server finding 3 for sparks |
+| Routine booking (i, Saturday tune-up) | Booked; callback day wrong; server lines reworded | Server finding 2 (fixed in 28707de); the socket speaks the server's lines as written |
+| No heat with an elderly person (e, k) | Open door reworded on e and k; no booking after hours | Server finding 1 (fixed in 28707de); the socket speaks the open door as written so the caller hears the invitation; D's house-number loop fixed in its flow |
+| Gas, real and retracted (l, c) | No safety errors; c judge 7; l repeats advice and asks its own question (style) | The socket keeps the model from adding safety words of its own; server finding 3 (fixed in 28707de) for sparks |
 
-1. **Fix the server findings 1 to 6 on main.** They help every arm, and none depends on the choice.
+1. **Land the server fixes on main.** Findings 1 to 4 are in 28707de; finding 5 (the placeholder ZIP) is still open. They help every arm, and none depends on the choice.
 2. **Put D behind the custom-LLM socket** (`voice/retell_llm/`, experiment 2 on #154, already deployed as `summit-retell@eval-llm`). Code speaks every `say` as written, and the speech filter drops the caller's name, narration and echoes before anything is heard. Haiku writes only the turns the server leaves to it. D's gates work unchanged behind it (`evals/rounds/server-led-01.md`).
 3. **Fix D's house-number loop and its costs line.**
 4. **Run the 10-run reliability test** (not run in this lane: the lane is at $23.58 of its $30). Ten calls of each journey on D behind the socket, on one line: a routine tune-up (i), no heat with an 85-year-old (e without its billing and do-not-call steps), and gas, five real (l) and five retracted (c). That's 30 calls, split between daytime and after hours, since this round saw only after hours. A journey passes with no safety error on any run and its record right (booking, raise, flag) on at least 9 of 10. Cost about $10 of Retell (ASSUMED: 30 calls at D's MEASURED $0.34 a call) and about $0.40 of judge (ASSUMED from this round's $0.013 a call). Everything else that fails goes into the debrief as a known issue.
 
-If the socket can't be ready in time, the fallback is A, which is Jackson's live agent today, with server findings 1 to 6 fixed. It reaches the same server, at Haiku's cost, with the same error classes as now.
+If the socket can't be ready in time, the fallback is A, which is Jackson's live agent today, on the fixed server. It reaches the same server, at Haiku's cost, with the same error classes as now.
 
 ## Method
 
