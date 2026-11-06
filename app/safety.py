@@ -472,6 +472,36 @@ def stands_down(text: str, kind: str | None, cfg: dict) -> bool:
 # Where the caller is, which says they followed the advice, not that there was nothing: "it's fine,
 # I'm outside now" keeps the call a safety call.
 GONE_OUT = ("outside", "out here", "out of the house", "out of the building")
+# A caller line that says they're already safe or it's been dealt with: cut-off advice isn't said
+# again over it (Retell call call_72009cbe16703210509127925b0: "we're all outside now. The fire
+# department came and said it...").
+# How much of the advice must have been spoken before a barge-in for it to count as said.
+SPOKEN_ENOUGH = 0.5
+# A caller line this short may be the start of a longer one: wait for the rest before deciding.
+DECIDE_AFTER_WORDS = 3
+
+
+def spoken_share(advice: str, agent_text: str) -> float:
+    """How much of the advice, from its start, is in what the agent said: "If a" and "f a CO" of
+    the carbon monoxide lines is a few words of thirty."""
+    want = words(advice).split()
+    said = words(agent_text)
+    longest = 0
+    for i in range(1, len(want) + 1):
+        if f" {' '.join(want[:i])} " in said:
+            longest = i
+        else:
+            break
+    return longest / len(want) if want else 1.0
+
+
+def says_safe_now(text: str, cfg: dict) -> bool:
+    """The caller is already safe, or it's been dealt with (the trade's `safe_now` phrases), or
+    they take it back: cut-off advice isn't said again over that (Retell call
+    call_72009cbe16703210509127925b0: "we're all outside now. The fire department came...")."""
+    text_words = words(text)
+    phrases = GONE_OUT + tuple(cfg.get("safe_now", []))
+    return retracts(text, cfg) or any(has_phrase(text_words, p) for p in phrases)
 
 
 def retracts(text: str, cfg: dict) -> bool:

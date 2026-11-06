@@ -584,6 +584,90 @@ def _spoken_line(
     return None
 
 
+def _sparks_first(
+    conn: sqlite3.Connection,
+    tenant: Tenant,
+    call: sqlite3.Row,
+    text: str,
+    seq: int,
+    now: datetime,
+    action: safety.SafetyAction,
+) -> safety.SafetyAction:
+    """Sparks, smoke or an electrical smell get their advice before any gas question: asked first,
+    the gas check held the sparks advice back 21 to 38 seconds on every arm of the side-by-side
+    (MEASURED from Retell word timings; gas and carbon monoxide took 3). A burning smell said with
+    sparks is the sparks, so its gas confirm question is dropped; a smell that still leaves gas
+    possible gets the gas question right after the sparks advice, in the same breath."""
+    if action.action != "ask_check" or not safety.electrical_signal(text, tenant.safety):
+        return action
+    cfg = tenant.safety
+    said = conn.execute(
+        "SELECT 1 FROM electrical WHERE call_id = ? AND said_at IS NOT NULL", (call["id"],)
+    ).fetchone()
+    # A burning smell with sparks is the sparks; so is a smell named again on a call that already
+    # heard the sparks advice ("it's more like burning plastic").
+    if said or action.text == cfg["vague"].get(action.kind, {}).get("confirm_question"):
+        return safety.SafetyAction("none", call["safety_kind"])
+    _electrical(conn, tenant, call["id"], text, seq, now)
+    conn.execute("UPDATE electrical SET said_at = ? WHERE call_id = ?", (iso(now), call["id"]))
+    return safety.SafetyAction(
+        "ask_check", action.kind, f"{safety.electrical_lines(cfg)} {action.text}", action.variant
+    )
+
+
+def _cut_off_advice(
+    conn: sqlite3.Connection, tenant: Tenant, call: sqlite3.Row, text: str, now: datetime
+) -> dict | None:
+    """The gas, carbon monoxide or sparks advice again, once, when the caller cut it off under
+    half said and their line doesn't say they're already safe or take it back (Retell call
+    call_72009cbe16703210509127925b0: only "If a CO" was spoken). Decided on the caller's first
+    line of a few words after the advice; a partial ("I") waits for the rest."""
+    if len(words(text).split()) < safety.DECIDE_AFTER_WORDS:
+        return None
+    cfg = tenant.safety
+    hazards = []
+    if call["safety_state"] == "lines_said" and call["safety_kind"] in cfg["kinds"]:
+        handed = conn.execute(
+            "SELECT MAX(seq) FROM turns WHERE call_id = ? AND speaker = 'caller' "
+            "AND safety_action = 'speak_lines'",
+            (call["id"],),
+        ).fetchone()[0]
+        if handed is not None:
+            agent = conn.execute(
+                "SELECT text FROM turns WHERE call_id = ? AND speaker = 'agent' AND seq > ? "
+                "ORDER BY seq",
+                (call["id"], handed),
+            ).fetchall()
+            hazards.append((call["safety_kind"], safety.lines_for(cfg, call["safety_kind"]), agent))
+    electrical = conn.execute(
+        "SELECT said_at FROM electrical WHERE call_id = ? AND said_at IS NOT NULL", (call["id"],)
+    ).fetchone()
+    if electrical and cfg.get("electrical"):
+        agent = conn.execute(
+            "SELECT text FROM turns WHERE call_id = ? AND speaker = 'agent' AND at >= ? "
+            "ORDER BY seq",
+            (call["id"], electrical["said_at"]),
+        ).fetchall()
+        hazards.append(("electrical", safety.electrical_lines(cfg), agent))
+    for kind, advice, agent in hazards:
+        if not agent:
+            continue  # nothing of the agent's since the advice went out: not cut off, not yet said
+        # Decided once a hazard, on this line, whatever the answer.
+        decided = conn.execute(
+            "INSERT OR IGNORE INTO lines_handed (call_id, line, at) VALUES (?, ?, ?)",
+            (call["id"], f"cut-off check: {kind}", iso(now)),
+        ).rowcount
+        if not decided:
+            continue
+        said = " ".join(r["text"] for r in agent)
+        if safety.spoken_share(advice, said) >= safety.SPOKEN_ENOUGH:
+            continue
+        if safety.says_safe_now(text, cfg):
+            continue
+        return {"kind": kind, "text": advice}
+    return None
+
+
 def _spoke_after_lines(conn: sqlite3.Connection, call_id: str) -> bool:
     """An agent line was logged after the caller line that handed out the safety lines."""
     handed = conn.execute(
@@ -666,6 +750,7 @@ def turn(
                 confirm_asked,
                 answering_confirm,
             )
+            action = _sparks_first(conn, tenant, call, args.text, seq, now, action)
             if action.action == "speak_lines":
                 changes.update(safety_state="signal", safety_kind=action.kind)
                 if call["safety_signal_at"] is None or call["safety_kind"] != action.kind:
@@ -710,6 +795,8 @@ def turn(
             spoken = _spoken_line(
                 conn, tenant, call, args.text, seq, now, gas_or_co, speaking_safety
             )
+            if action.action == "none" and spoken is None:
+                spoken = _cut_off_advice(conn, tenant, call, args.text, now)
             # A caller who asks the agent to wait, or comes back (DECISIONS.md 081).
             hold = dead_air.caller_line(
                 conn, call["id"], args.text, seq, now, gas_or_co or spoken is not None

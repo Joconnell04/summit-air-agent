@@ -934,8 +934,9 @@ def test_the_lines_count_as_said_once_the_agent_has_spoken_even_in_pieces(agent)
     matched and the caller's next line ("No, I mean...") was handed them again."""
     call = agent.start(UNKNOWN)["data"]["call_id"]
     agent.turn(call, "Well, it smells a little like gas, like near the boiler. Is that normal?")
-    agent.say(call, "Please ")
-    agent.say(call, "get ")
+    # The lines reach the server in two pieces, neither of them whole.
+    agent.say(call, "If you're smelling gas, the safest thing is to get everyone outside")
+    agent.say(call, "and call 9-1-1 or the gas company from there.")
     nxt = agent.turn(call, "Um, I just want you to schedule a technician.")
     assert nxt["say"] == "" and nxt["data"]["safety"] is None
     state = agent.db().execute("SELECT safety_state FROM calls WHERE id = ?", (call,)).fetchone()[0]
