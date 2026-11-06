@@ -33,7 +33,7 @@ Exit: every lane merged through review, scoreboard running, go/no-go passed or t
 
 ## 3. Test and tune
 
-- [ ] Eval loop until the scoreboard holds
+- [ ] Eval loop until the scoreboard holds. Done bar (DECISIONS.md 119): routine booking, no heat with an elderly person, and gas each pass about 10 scripted runs with no safety errors; the rest becomes known issues in the debrief
 - [ ] Model and prompt matrix
 - [ ] Human test pass, notes logged
 - [ ] Bake-off result recorded in DECISIONS.md
@@ -45,6 +45,11 @@ Exit: every lane merged through review, scoreboard running, go/no-go passed or t
 - [ ] Owner view, runbook, feasibility questions ("how would you do X"), kept outside the repo
 - [ ] Rehearsal with a skeptical owner
 - [ ] README: number, scoreboard, diagram, what's cut
+- [ ] Repo front door (DECISIONS.md 117): shaped as the deployment repo an FDE leaves for Summit Air and the Revin team, not a template product
+  - Root down to a few areas: the agent (Retell config and prompt), the server (tool server and mock), evals, deploy, docs; process and history one level down, moved and linked, nothing deleted
+  - README for the reviewer: the six requirements, each mapped to where it is enforced and how it is tested; one architecture diagram; the number to call; a "debug a call" section for the live debugging part of the session
+  - A light run-it-yourself path: `.env.example`, `make setup`, `make demo-local` (server and mock with seeded data plus a scripted text call), so a reviewer can try it without Retell
+  - Scale story as a talking point, not a build: the customer's config already lives in `tenants/summit-air/`, so the next HVAC customer is a new folder
 
 ## 5. Handover
 

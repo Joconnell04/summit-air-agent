@@ -12,6 +12,33 @@ Discussion: docs/ai-process/transcripts/... or docs/explorations/...
 Issue: #N
 -->
 
+## 119. V1 is done when three journeys are reliable, not when every call is clean
+
+Decided: V1 is done when three journeys pass about 10 scripted runs each with no safety errors: a routine booking, no heat with an elderly person (the raise reaches the booking), and a gas smell (real and retracted). Everything else that still goes wrong is listed in the debrief as a known issue with its fix. A safety error means the advice for a real hazard isn't spoken, a retraction is ignored, a hazard is booked as routine without a flag, or the agent says something unsafe. An extra caring question or a reworded line is a style issue, not a safety error. Asking how to spell a name is expected only when it's needed, not on every call.
+Why: each round of scripted calls fixed about ten things and surfaced about five new ones (MEASURED across the self-test rounds in evals/rounds/), so "every call clean" kept receding. The session rewards a demo that works on the calls a customer will make, a safe failure when something odd happens, and an honest debrief. Our own checks had also leaned oversensitive on safety, so the bar separates real safety errors from style.
+Considered: zero gross errors across all personas (not reachable with a language model on a phone line before the session); judge score alone (too soft for safety).
+Would change if: Revin's session brief or Paul's calls point at a journey outside these three as the one that matters.
+Discussion: evals/rounds/side-by-side-01.md (on the side-by-side branch, issue #169)
+Issue: #169
+
+## 117. The repo is handed over as Summit Air's deployment repo, not a template
+
+Decided: before the handover, the repo gets a clear front door and stays shaped as what a Revin FDE would leave behind for one customer and for the Revin team: the agent, the rules it can't break, the tests that prove them, and the record of why. It doesn't become a generic template or a "plug in your keys" product.
+Why: the assignment frames the work as an FDE building for one customer "tomorrow" and judges "what you chose to build vs. skip"; a template builds for Revin's platform rather than for Summit Air, costs time right before the demo, and Revin already has its own product. The history (decisions, eval rounds, process) shows judgment, but a reviewer looking at "prompting and architecture ahead of time" should find the prompt, the rules and the architecture first and the history one level down.
+Considered: leaving the repo as is (the history crowds the root); a template or starter in the style of a vendor's public repo (off-target for the brief, and turning one customer into a template is better done with a second real customer).
+Would change if: Revin asks for a reusable starting point, in which case `tenants/` is already the seam.
+Discussion: docs/ai-process/phases.md (Repo front door)
+Issue: none
+
+## 116. No post-trained small model for the voice agent
+
+Decided: the agent stays on a Retell-hosted Claude model. We don't post-train and self-host a small model (a Qwen 8B-class model with a merged adapter on a RunPod GPU).
+Why: we considered it only as a possible latency gain. One RTX 5090 serving an 8B model at about 150 tokens a second would cost about $50 for three days (ASSUMED, from RunPod list prices and memory-bandwidth estimates), and a cached system prompt could bring time to first token under 200 ms (ASSUMED). But the failures on live and scripted calls are instruction-following, not speed: Haiku 5.5's median end-to-end turn latency on Retell is already about 1 s (MEASURED, Retell call latency, call_926427e1d1f2a80cb78dc6a4e04), and an 8B model follows instructions worse than Haiku. It would also need a dataset of good calls we don't have, a custom-LLM bridge to Retell, and a GPU server to run, which is the layering DECISIONS 112 moved away from.
+Considered: serving the adapter separately in vLLM (slower than merging it); a 32B model on two H100s (about $390 for three days, ASSUMED, and still a weaker instruction follower).
+Would change if: there are thousands of real calls to distill from and latency, not behavior, is the limit.
+Discussion: docs/later.md C-79
+Issue: none
+
 ## 112. Summit Air runs on Retell, starting from Jackson's own agent
 
 Decided: the product is a Retell agent, "Summit Air Jackson" (agent_a3e38e6aa3d4e75dfac12aafc8, LLM llm_12eba5f1d4a3b067f0635097de30), which Jackson built and tunes in Retell's dashboard with Retell's builder assistant. Retell runs the phone line, listening, turn-taking and voice; Claude Haiku 5.5 runs on a short prompt; our FastAPI tool server and mock ServiceTitan still own every fact and every rule (lookups, the read-back, booking, safety, priority, identity). Work stops on the LiveKit custom stack and on the other slate entries. Testing moves to Retell's platform: web calls from a laptop and Retell's own test tools, against our tool server.
@@ -30,6 +57,14 @@ Considered: finishing the whole slate first (more evidence, but too slow); picki
 Would change if: neither stack is good enough on its next call, in which case the paused Deepgram entry is the fallback.
 Discussion: evals/rounds/simplicity-slate-01.md
 Issue: none
+
+## 110. Retell's dials, set from measurement: accurate ears, no conversational rewrite, facts in the prompt, our hang-up
+Decided: the Retell agents run `stt_mode` accurate with noise cancellation, `responsiveness` 1.0 without dynamic responsiveness, backchannel on, one reminder after 10 s, the Handbook's conversational personality off, the company facts in the prompt rather than a knowledge base, and our own `end_call` through the bridge rather than Retell's built-in End Call. Every dial is listed in docs/retell-knobs.md with its source.
+Why: replaying Jackson's own replies from live call 3 into Retell (voice/retell/turn_probe.py): fast transcription missed his quiet "sure" 2 of 2 times and answered into his mid-sentence pause; accurate heard 12 of 12 and waited, median 1.70 s (MEASURED). The conversational personality split replies with a pause in 3 of 6, against 0 of 6 without it, at no speed cost (MEASURED). Retell puts knowledge-base text inside the caller's turn, and the model kept answering it aloud ("reference material", three times on one call); with the facts in the prompt, none (MEASURED, call_411b6aa0d8810886254f4d3e558). Retell's End Call hangs up 0.02 to 0.07 s after the goodbye, which Jackson found rushed, and skips the server's gate; ours waits 1.5 s.
+Considered: Retell's Code tool for letter questions (it takes no arguments, and the model narrated the extra step aloud), a stricter knowledge-base threshold (0.75 still leaked), the professional and conversational Handbook presets, sonic-3.6 (questions fell at the end), Expressive mode on Retell's own Max (closest to Jackson's "Max happy" pick, kept on the native copy).
+Would change if: a live call shows accurate transcription too slow on long answers, or Retell lets a knowledge base answer outside the caller's turn.
+Discussion: docs/retell-knobs.md, voice/retell_native/README.md, evals/results/retell-turn-probe/
+Issue: #154
 
 ## 108. Arrival windows are any run of 30-minute blocks, two hours unless the caller asks
 Decided: capacity is held in 30-minute blocks from opening to closing (config.yaml `scheduling`), and an arrival window is any run of them, booked and stored by its start and end ("0730-0930"). find_slots offers the earliest open two-hour window by default; a caller who names a time is offered the window that starts at the half hour on or before it, two hours long and cut short at closing ("7:30" gives 7:30 to 8); `window_minutes` takes any other length in 30-minute steps, and arrival hours narrower than two hours ("before 9") get a window that fits ("8 to 9"). A technician can take a window when free in every block of it, the urgent hold applies in every block (2 on weekdays, 1 on weekends), and the mock answers capacity in blocks and refuses a technician whose live appointments overlap. A window that starts this minute is not offered. The owner view keeps 2-hour columns; a visit shows in every column its window overlaps. The night window is unchanged.

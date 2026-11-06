@@ -61,6 +61,14 @@ class Priority:
     level: str
     reasons: list[str] = field(default_factory=list)
     rules: list[str] = field(default_factory=list)
+    # The level from the job type and the temperatures alone, before anything the caller said
+    # about the people or the home raised it.
+    start: str = ""
+
+    @property
+    def raised_by_caller(self) -> bool:
+        """The caller's own facts (someone at risk, pipes, water) moved it above where it started."""
+        return bool(self.start) and LEVELS.index(self.level) > LEVELS.index(self.start)
 
     def raise_to(self, level: str, rule: str, reason: str) -> None:
         if LEVELS.index(level) > LEVELS.index(self.level):
@@ -330,6 +338,7 @@ def decide(facts: Facts, cfg: dict, side_model: SideModel | None = None) -> Prio
         )
     else:
         result = Priority(cfg["base"].get(facts.job_type, "Normal"))
+    result.start = result.level
     mild = result.level == "Normal"
     groups = 0
     for rule in cfg["rules"]:

@@ -309,6 +309,27 @@ def _sentences(text: str) -> list[str]:
     return [s for s in re.split(r"(?<=[A-Za-z0-9]{2}[.!?])\s+|\n", text) if s.strip()]
 
 
+# A word that is part of a longer name for the same thing: "monoxide" said after "carbon" is
+# negated by the words before "carbon".
+NAME_PARTS = {"carbon"}
+# A hedge between a negator and the mention: "I don't think there's a CO alarm going off" (Retell eval
+# suite round 1 fired the lines on it). The hedge is skipped to find the negator, and a hedged
+# denial gets the check question rather than nothing (_hedged_clear).
+HEDGE_VERBS = {"think", "believe", "guess", "suppose"}
+HEDGE_LEADS = {"theres", "its", "thats", "that", "there", "is"}
+
+
+def _past_hedge(kept: list[str]) -> tuple[list[str], bool]:
+    """The words before a mention without a trailing hedge ("think there's"), and whether there
+    was one."""
+    i = len(kept)
+    while i and kept[i - 1] in HEDGE_LEADS:
+        i -= 1
+    if i and kept[i - 1] in HEDGE_VERBS:
+        return kept[: i - 1], True
+    return kept, False
+
+
 def _negated(text_words: str, phrase: str, answering: bool = False) -> bool:
     """True only when every mention of the phrase comes straight after a negating word, as in
     "I don't smell gas" or "no gas smell". "I don't know, I smell gas" is not negated. In the answer
@@ -322,10 +343,16 @@ def _negated(text_words: str, phrase: str, answering: bool = False) -> bool:
         before = text_words[: start + 1]
         after = text_words[start + len(target) - 1 :]
         kept = before.split()
+        while kept and kept[-1] in NAME_PARTS:
+            kept.pop()
         while kept and kept[-1] in ARTICLES:
             kept.pop()
+        kept, _ = _past_hedge(kept)
         bare = " " + " ".join(kept) + " "
-        negated = any(bare.endswith(words(n)) for n in NEGATORS) or (
+        # "Oh no, the carbon monoxide alarm is going off" is alarm, not a denial.
+        negated = (
+            any(bare.endswith(words(n)) for n in NEGATORS) and not bare.endswith(" oh no ")
+        ) or (
             answering
             and (_person_negated(before) or _echo_negated(before) or _nothing_like(bare, target))
         )
@@ -501,6 +528,26 @@ def heating_signal(text: str, cfg: dict) -> bool:
     return False
 
 
+def _hedged_clear(text: str, cfg: dict) -> str | None:
+    """The kind of a clear signal the caller denied only with a hedge ("I don't think there's a CO
+    alarm going off"): not sure enough to clear, so it gets the check question."""
+    text_words = words(text)
+    for kind, spec in cfg["kinds"].items():
+        for phrase in spec["clear"]:
+            target = words(phrase)
+            start = text_words.find(target)
+            if start < 0 or not has_phrase(text_words, phrase):
+                continue
+            kept = text_words[: start + 1].split()
+            while kept and kept[-1] in ARTICLES:
+                kept.pop()
+            kept, hedged = _past_hedge(kept)
+            bare = " " + " ".join(kept) + " "
+            if hedged and any(bare.endswith(words(n)) for n in NEGATORS):
+                return kind
+    return None
+
+
 def _negated_clear(text: str, cfg: dict) -> bool:
     text_words = words(text)
     return any(
@@ -646,7 +693,7 @@ def check_caller_turn(
         if answering_confirm:
             return SafetyAction("ask_check", kind, cfg["vague"][kind]["question"])
         return SafetyAction("none", kind)
-    vague = vague_signal(text, cfg) or worry_signal(text, cfg)
+    vague = vague_signal(text, cfg) or worry_signal(text, cfg) or _hedged_clear(text, cfg)
     # A check the caller already answered no to isn't asked again for the same kind: "nobody's
     # dizzy" later on is the same answer (eval round 3, oven-heat-co-check).
     if vague and (state == "none" or (state == "cleared" and vague != kind)):

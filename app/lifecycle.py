@@ -240,12 +240,13 @@ def _linked(
         return None, []
     day_start = datetime.combine(tenant.local(now).date(), datetime.min.time(), tenant.tz)
     window_start = now - timedelta(minutes=tenant.repeat["link_within_minutes"])
+    reset = conn.execute("SELECT MAX(at) FROM world_resets").fetchone()[0]
     calls = [
         c
         for c in records.recent_calls(
             conn, tenant.slug, caller_key, now, min(day_start, window_start)
         )
-        if c["id"] != call_id
+        if c["id"] != call_id and (reset is None or c["started_at"] >= reset)
     ]
     recent = [c for c in calls if parse_iso(c["started_at"]) >= window_start]
     # Only the latest call today, and only if it dropped: a caller who finished a call after the
