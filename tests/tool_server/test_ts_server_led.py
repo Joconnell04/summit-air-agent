@@ -61,6 +61,8 @@ def test_every_result_names_the_next_step(led):
     found = offer(led, call)
     # The server asks the visit questions itself, from book_appointment's refusals.
     assert "call book_appointment with it" in found["next"]
+    # "Okay" to two windows looped the offer ten times (socket batch 1, o176-01).
+    assert "a plain yes or okay takes the first window offered" in found["next"]
     assert "book_appointment" in found["next"]
 
 

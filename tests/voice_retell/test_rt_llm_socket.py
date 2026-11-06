@@ -67,6 +67,10 @@ class FakeBrain:
             await asyncio.sleep(self.wait_s.pop(0))
         for chunk in chunks:
             yield chunk
+        if uses:
+            # As the real stream does when the first tool call starts.
+            reply.tool_started = uses[0]["name"]
+            yield ""
         text = "".join(chunks)
         reply.content = ([{"type": "text", "text": text}] if text else []) + [
             {"type": "tool_use", **u} for u in uses
@@ -309,9 +313,10 @@ def test_server_led_a_question_from_the_server_is_the_whole_turn(server_led):
     with client.websocket_connect(path()) as ws:
         open_call(ws)
         events = ask(ws, 1, ["Hi.", "It's 718 555 0118."])
-    assert said(events) == READ_BACK
+    # A short acknowledgment from code the moment the model starts the look-up, then the sentence.
+    assert said(events) == f"Okay. {READ_BACK}"
     # Interruptible, so the caller can correct it.
-    assert "no_interruption_allowed" not in events[0]
+    assert not any(e.get("no_interruption_allowed") for e in events)
     assert len(brain.requests) == 1
 
 
@@ -373,12 +378,12 @@ def test_server_led_a_lead_in_held_before_a_server_sentence_is_never_said(server
         open_call(ws)
         ask(ws, 1, ["Hi.", "45 Forest Avenue."])
         events = ask(ws, 2, ["Hi.", "45 Forest Avenue.", "What's the best number?", "My account."])
-        assert said(events) == "Should I put this under your account?"
+        assert said(events) == "Got it. Should I put this under your account?"
         # A tool with nothing to say: the model's next request writes the reply, and the text that
         # came with the call is dropped all the same.
         events = ask(ws, 3, ["Hi.", "45 Forest Avenue.", "What's the best number?", "My account.",
                              "Should I put this under your account?", "Yes."])
-    assert said(events) == "What's the best number?"
+    assert said(events) == "Okay. What's the best number?"
 
 
 def test_server_led_the_arm_brings_its_own_prompt_and_tools(server_led, monkeypatch, tmp_path):
@@ -443,7 +448,7 @@ def test_server_led_an_offer_without_a_question_still_waits_for_the_caller(serve
     with client.websocket_connect(path()) as ws:
         open_call(ws)
         events = ask(ws, 1, ["Hi.", "Yes, that's all correct."])
-    assert said(events) == offer
+    assert said(events) == f"Okay. {offer}"
     assert len(brain.requests) == 1
 
 
@@ -476,4 +481,19 @@ def test_server_led_a_slow_tool_gets_one_holding_line(monkeypatch):
         open_call(ws)
         events = ask(ws, 1, ["Hi.", "Yes, that's all correct."])
     # The tenant's holding line, never one that narrates, then the offer as written.
-    assert said(events) == f"Just give me one second. {offer}"
+    assert said(events) == f"Okay. Just give me one second. {offer}"
+
+
+def test_server_led_no_acknowledgment_before_a_booking_or_after_the_model_spoke(server_led):
+    server, make = server_led
+    book = {"id": "t1", "name": "book_appointment", "input": {}}
+    slots = {"id": "t2", "name": "find_slots", "input": {"job_type": "no_heat"}}
+    booked = "Okay, I've booked it: the technician will arrive today between 12 and 12:30. Anything else?"
+    server.tools["book_appointment"] = envelope(say=booked)
+    server.tools["find_slots"] = envelope(ok=False, refused="read_back_first")
+    client, _ = make([([], [book]), (["Sure. ", "What's the address? "], [slots]), ([], [])])
+    with client.websocket_connect(path()) as ws:
+        open_call(ws)
+        assert said(ask(ws, 1, ["Hi.", "No gate code."])) == booked
+        # The model's "Sure." was said already, so no acknowledgment is added before the tool.
+        assert said(ask(ws, 2, ["Hi.", "No gate code.", booked, "Can I book another?"])) == "Sure."

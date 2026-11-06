@@ -39,6 +39,14 @@ MAX_HOPS = 6
 # caller isn't left in silence and Retell doesn't drop the socket (a 4.2 s find_slots on a busy box
 # ended call_9cae55b8f0de04239f783dacecd with error_llm_websocket_runtime).
 HOLD_AFTER_S = 1.5
+# Server-led, the look-ups whose result the caller would otherwise wait for in silence: the moment
+# the model starts calling one, the caller hears a short acknowledgment from code, so the reply
+# starts at the model's first token rather than after the tool and a second model request.
+ACK_TOOLS = (
+    "find_address", "check_service_area", "find_slots", "read_back", "find_customer",
+    "get_customer_history", "lookup_hvac_info",
+)
+ACKS = ("Okay.", "Got it.")
 # Turn results whose text is spoken as the server wrote it, before the model answers.
 SPOKEN_ACTIONS = ("speak_lines", "speak_variant", "ask_check")
 CONNECTED = "(The call has connected.)"
@@ -179,6 +187,7 @@ class LlmCall:
         # The tenant's holding lines without the ones that narrate ("Let me pull that up."), in turn.
         self.holding = [h for h in lines.get("holding") or [] if not h.lower().startswith("let me")]
         self.held = 0
+        self.acks = 0
         self.reminders = 0
         self.messages: list[dict] = []
         self.reply = SpokenReply()
@@ -360,6 +369,9 @@ class LlmCall:
                     break
                 pending += delta
                 *done, pending = SENTENCE_END.split(pending)
+                if self.server_led and reply.tool_started in ACK_TOOLS and not out.said:
+                    await out.say(ACKS[self.acks % len(ACKS)])
+                    self.acks += 1
                 if holding:
                     held += done
                     continue

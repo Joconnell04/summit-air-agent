@@ -275,7 +275,8 @@ def _next(ctx, tool: str, args, result: Result) -> str:
         if not (data.get("offer") or data.get("windows")):
             return "Ask whether another day would work, and call find_slots with it."
         return (
-            "When the caller takes a window, call book_appointment with it, saying nothing. Put "
+            "When the caller takes a window, call book_appointment with it, saying nothing; a "
+            "plain yes or okay takes the first window offered. Put "
             "what you know in details and 'not asked yet' for anything you don't. The server asks "
             "the visit questions itself, one a turn: after each answer, call book_appointment "
             "again with the answers so far, saying nothing. If they want another time, call "
