@@ -208,6 +208,27 @@ def test_the_record_holds_the_turns_and_the_rows(agent):
     assert record["records"]["caller_on_do_not_call_list"] is False
 
 
+def test_do_not_call_is_read_as_this_call_left_it(agent, clock):
+    first = cut_off_call(agent)
+    clock.advance(hours=2)
+    second = cut_off_call(agent)
+    conn = agent.db()
+    try:
+        caller = records.get_call(conn, second)
+        with tx(conn):
+            conn.execute(
+                "INSERT INTO do_not_call (phone_key, phone, call_id, added_at) VALUES (?, ?, ?, ?)",
+                (caller["caller_key"], caller["caller_id"], second, "2026-11-02T16:00:00Z"),
+            )
+    finally:
+        conn.close()
+    model = FakeModel()
+    grade(agent, first, model)
+    grade(agent, second, model)
+    assert model.records[0]["records"]["caller_on_do_not_call_list"] is False
+    assert model.records[1]["records"]["caller_on_do_not_call_list"] is True
+
+
 def test_a_retell_call_is_read_from_retell(agent):
     call_id = cut_off_call(agent, "retell_call_abc123")
     transcripts = FakeTranscripts({"call_abc123": {"transcript_with_tool_calls": [
@@ -324,8 +345,9 @@ def test_a_range_run_grades_each_call_once_and_counts_progress(agent):
 def test_a_big_range_asks_before_it_starts(agent):
     conn = agent.db()
     try:
-        assert grader.cost_of(conn, ["a"] * 8)["ask"] is False
+        assert grader.cost_of(conn, ["a"] * 20)["ask"] is False
         assert grader.cost_of(conn, ["a"] * 9)["usd"] == pytest.approx(9 * grader.DEFAULT_CALL_USD)
+        assert grader.cost_of(conn, ["a"] * 40)["ask"] is True
         assert grader.cost_of(conn, ["a"] * 21)["ask"] is True
     finally:
         conn.close()
@@ -425,7 +447,7 @@ def test_a_big_range_shows_its_cost_first(agent, monkeypatch):
     monkeypatch.setattr(grader, "CONFIRM_CALLS", 2)
     sign_in(agent)
     page = agent.client.post("/owner/checks", data={"span": "day"}).text
-    assert "3 calls to check, about $0.36." in page
+    assert "3 calls to check, about $0.09." in page
     conn = agent.db()
     try:
         assert conn.execute("SELECT COUNT(*) FROM grader_runs").fetchone()[0] == 0

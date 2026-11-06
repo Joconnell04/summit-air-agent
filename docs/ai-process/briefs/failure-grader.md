@@ -29,7 +29,7 @@ Style never counts: wording, an extra question, saying the caller's name, narrat
 - **Flags.** A kept failure adds a flag of kind `grader`: Urgent for critical, High for serious. It shows wherever flags already show. Grader flags are never emailed or texted, enforced in `jobs.alert_on_call`.
 - **Owner view.** A Checks page: "Check calls from" past hour, past day or a custom range, a cost estimate before a run that covers many calls, progress while it runs (a bar with the count, no bare spinner), and the flagged calls with reason and evidence, each linking to its call. "Check this call" on the call page. The schedule on the Settings page (admin only to change).
 - **Bench.** The same range controls, every grade with the raw model output, and Force to grade a call again.
-- **Calibration** (`evals/failure_grader/`). About 20 real calls from the side-by-side round with my own labels, read from the transcripts: true failures (the hang-up after "no thanks", the callbacks stored on the wrong day) and style-only calls. A script grades them and reports precision and recall. Target: no false flags on the style-only calls. Spend under $5, logged.
+- **Calibration** (`evals/failure_grader/`, log in `evals/rounds/failure-grader-01.md`). Added mid-lane by the coordinator: at least 40 real calls from Retell's recent list with their rows, labeled by hand with a one-line reason, including the hard cases it named; prompt rounds that grade each call 3 times and score precision, recall and stability; ship at zero false flags on fine calls, at least 90% recall and stable flags, or report the best version. Spend under $15, logged.
 
 ## Out of scope
 

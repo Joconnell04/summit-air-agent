@@ -73,9 +73,10 @@ EVIDENCE_MAX_CHARS = 300
 # matter, and a whole slot list would only add tokens.
 TOOL_RESULT_CHARS = 600
 
-# What one call costs to grade when there is nothing measured yet. ASSUMED: about 15k input tokens
-# and 3k output tokens with thinking, at the profile's $4 and $20 per million (config/models.yaml).
-DEFAULT_CALL_USD = 0.12
+# What one call costs to grade before this server has graded any. MEASURED on the calibration set
+# (evals/rounds/failure-grader-01.md): $0.027 to $0.030 a call over the 486 grades of rounds 1
+# to 3, at effort medium.
+DEFAULT_CALL_USD = 0.03
 # A range run asks before it starts when it would cost more than this or cover more calls.
 CONFIRM_USD = 1.00
 CONFIRM_CALLS = 20
@@ -240,8 +241,13 @@ def call_rows(conn: sqlite3.Connection, tenant: Tenant, call: sqlite3.Row) -> di
     notes = [
         r["text"] for r in conn.execute("SELECT text FROM notes WHERE call_id = ? ORDER BY id", (call_id,))
     ]
+    # The list as this call left it: an entry a later call added (the same caller asking on another
+    # day) says nothing about what this caller was told, and would read as a contradiction. An
+    # entry is deleted when the caller undoes it, so a later undo can't be told apart; it reads as
+    # not on the list, which can only hide a failure, never invent one.
     on_dnc = conn.execute(
-        "SELECT 1 FROM do_not_call WHERE phone_key = ?", (call["caller_key"],)
+        "SELECT 1 FROM do_not_call WHERE phone_key = ? AND (call_id = ? OR added_at <= ?)",
+        (call["caller_key"], call_id, call["ended_at"]),
     ).fetchone()
     return {
         "bookings": bookings,
