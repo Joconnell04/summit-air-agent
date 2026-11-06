@@ -83,7 +83,10 @@ def street_key(value: str) -> str:
 
 def unit_key(value: str) -> str:
     words = re.sub(r"[^a-z0-9 ]", " ", (value or "").lower()).split()
-    return "".join(w for w in words if w not in {"apt", "apartment", "unit", "fl", "floor"})
+    return "".join(
+        w for w in words
+        if w not in {"apt", "apartment", "unit", "fl", "floor", "suite", "ste", "number", "no"}
+    )
 
 
 def words(value: str) -> str:
@@ -430,10 +433,23 @@ def ordinal_said(n: int) -> str:
     return " ".join("-".join(part.capitalize() for part in w.split("-")) for w in said.split())
 
 
+UNIT_WORD = re.compile(
+    r"^\s*(?:(?:unit|apt|apartment|suite|ste|number|no)\b\.?|#)\s*#?\s*", re.IGNORECASE
+)
+
+
+def unit_clean(unit: str) -> str:
+    """The unit without a leading "Unit", "Apt.", "Suite" or "#": the model passed "Unit 2", read
+    back as "unit U N I T two" (Retell call call_926427e1d1f2a80cb78dc6a4e04)."""
+    return UNIT_WORD.sub("", unit or "").strip()
+
+
 def unit_said(unit: str) -> str:
     """Digits one at a time and letters as letters: 2 "two", 4B "four B", 12C "one two C"."""
     return " ".join(
-        NUMBER_ONES[int(c)] if c.isdigit() else c.upper() for c in unit or "" if c.isalnum()
+        NUMBER_ONES[int(c)] if c.isdigit() else c.upper()
+        for c in unit_clean(unit)
+        if c.isalnum()
     )
 
 
@@ -448,4 +464,4 @@ def street_said(street: str) -> str:
 
 def address_said(street: str, unit: str = "") -> str:
     """The street and unit as the read-back and other lines say them."""
-    return street_said(street) + (f", unit {unit_said(unit)}" if unit else "")
+    return street_said(street) + (f", unit {unit_said(unit)}" if unit_clean(unit) else "")

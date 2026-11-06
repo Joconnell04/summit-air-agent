@@ -241,3 +241,18 @@ def test_reset_refuses_while_a_call_is_live(agent, clock):
 def test_safety_scare_words_are_kept_out_of_another_calls_summary():
     summary = "No heat\nHome: mother, 82\nPriority: Urgent (gas or carbon monoxide reported)"
     assert safety.without_scare(summary) == "No heat\nHome: mother, 82"
+
+
+def test_a_raised_priority_that_keeps_the_offer_asks_again_without_repeating_it(agent):
+    """Retell call call_926427e1d1f2a80cb78dc6a4e04: after "my mom's 85" the second find_slots
+    repeated "The soonest I have is today, 7 to 7:30. Does that work?" for the same window."""
+    call = ready_to_book(agent)
+    first = agent.tool("find_slots", call, job_type="no_heat", facts={"inside_temp_f": 58})
+    agent.say(call, first["say"])
+    agent.turn(call, "Sure. Oh, and my mom's 85, she lives with me.")
+    second = agent.tool("find_slots", call, job_type="no_heat",
+                        facts={"inside_temp_f": 58, "who_home": "mother, 85"})
+    assert second["data"]["offer"] == first["data"]["offer"]
+    assert second["say"] == (
+        "I've marked this call top priority, so you get our soonest opening. Does that still work?"
+    )

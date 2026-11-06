@@ -76,6 +76,7 @@ from .text import (
     spelled_word,
     street_key,
     street_said,
+    unit_clean,
     unit_key,
     with_spelled_name,
     words,
@@ -270,11 +271,18 @@ def _ordinals_as_numbers(tokens: list[str], merge: bool = True) -> list[str]:
     return out
 
 
+def _house_marks_dropped(text: str) -> str:
+    """Speech-to-text writes a spoken house number as money or with marks: "$199." (Retell calls
+    call_926427e1d1f2a80cb78dc6a4e04 and call_b1fa369abb81ba74c1486c1fd67), "#305", "1,500"."""
+    text = re.sub(r"[$#]\s*(?=\d)", "", text or "")
+    return re.sub(r"(?<=\d),(?=\d{3}\b)", "", text)
+
+
 def _address_tokens(text: str, merge: bool = True) -> list[str]:
     """A caller's line as address tokens: numbers as digits however they were said ("one nine
-    nine", "one ninety nine", "a hundred ninety nine", "one hundred and ninety nine"), street words
-    keyed, and ordinals as numbers."""
-    text = re.sub(r"\ba hundred\b", "one hundred", text or "", flags=re.IGNORECASE)
+    nine", "one ninety nine", "a hundred ninety nine", "one hundred and ninety nine", "$199"),
+    street words keyed, and ordinals as numbers."""
+    text = re.sub(r"\ba hundred\b", "one hundred", _house_marks_dropped(text), flags=re.IGNORECASE)
     return _ordinals_as_numbers(_keyed(number_tokens(text)), merge)
 
 
@@ -323,6 +331,15 @@ def _address_said_as(ctx: Ctx, want: str, names: list[str], rows: list, merge: b
                 skip += 1
             if after[skip : skip + len(names)] == names:
                 return True
+            # The number alone, then the street opening the caller's next line: speech-to-text
+            # broke "199 East 4th Street" into "$199." and "East 4th Street, Unit 2.".
+            if not after and i + 1 < len(lines) and _only_number(tokens, k):
+                following = [t for t in lines[i + 1] if t.isalnum()]
+                lead = 0
+                while lead < min(STREET_GAP, len(following)) and following[lead] in STREET_GAP_WORDS:
+                    lead += 1
+                if following[lead : lead + len(names)] == names:
+                    return True
             # "52 Dufield Street", then the street spelled in one of the next lines.
             if any(t in geocode.STREET_TYPE_WORDS for t in after):
                 for later in rows[i + 1 : i + 3]:
@@ -331,6 +348,11 @@ def _address_said_as(ctx: Ctx, want: str, names: list[str], rows: list, merge: b
     return any(
         _answers_number(ctx, row, want) for row in rows
     ) and any(_street_in(row["text"], names) for row in rows)
+
+
+def _only_number(tokens: list[str], k: int) -> bool:
+    """Nothing but filler before the number at k."""
+    return all(t in ANSWER_FILLER for t in tokens[:k] if t.isalnum())
 
 
 def _split_run_on(tokens: list[str], want: str, names: list[str], text: str) -> list[str]:
@@ -379,7 +401,10 @@ def _keyed(tokens: list[str]) -> list[str]:
 
 def _answers_number(ctx: Ctx, row: sqlite3.Row, want: str) -> bool:
     """The line is the house number alone, said right after the agent asked for a number."""
-    said = [t for t in number_tokens(row["text"]) if t.isalnum() and t not in ANSWER_FILLER]
+    said = [
+        t for t in number_tokens(_house_marks_dropped(row["text"]))
+        if t.isalnum() and t not in ANSWER_FILLER
+    ]
     if said != [want]:
         return False
     asked = ctx.conn.execute(
@@ -1960,7 +1985,21 @@ def find_slots(ctx: Ctx, args: FindSlotsIn) -> Result:
         )
     offer, lead = _one_offer(ctx, by_day, dates, preferred, args.time_of_day)
     data["offer"] = offer
+    if urgent_said and not arrival_say and _offered_already(ctx, lead):
+        # A raised priority that leaves the offer where it was: the caller hears the line and is
+        # asked again, not the same window twice (Retell call call_926427e1d1f2a80cb78dc6a4e04).
+        return ok(f"{urgent_said}Does that still work?", **data)
     return ok(f"{urgent_said}{arrival_say}{lead}", **data)
+
+
+def _offered_already(ctx: Ctx, lead: str) -> bool:
+    """The last find_slots on this call already said this offer."""
+    last = ctx.conn.execute(
+        "SELECT say FROM tool_calls WHERE call_id = ? AND tool = 'find_slots' AND ok = 1 "
+        "ORDER BY id DESC LIMIT 1",
+        (ctx.call["id"],),
+    ).fetchone()
+    return bool(last and last["say"] and last["say"].endswith(lead))
 
 
 def _day_said(ctx: Ctx, key: str) -> str:
@@ -2280,7 +2319,7 @@ def read_back(ctx: Ctx, args: ReadBackIn) -> Result:
     address = args.address.model_dump()
     address["street"] = spelled_street
     address["spelled"] = ""
-    address["unit"] = _unit_without_zip(address["unit"], address["zip"])
+    address["unit"] = unit_clean(_unit_without_zip(address["unit"], address["zip"]))
     # Shorthand: the street and the unit, and the number, with no ZIP, city or "your home"
     # (Jackson: "just shorthand like 'the 199 e 4th street and unit 2'"). The lookup already
     # checked the ZIP, and a ZIP the caller gave that disagrees with it is asked about first

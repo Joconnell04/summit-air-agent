@@ -616,6 +616,47 @@ def test_a_direction_and_an_ordinal_said_any_way_still_match(located, answers, s
     assert result["refused"] != "address_not_heard", result
 
 
+@pytest.mark.parametrize("lines", [
+    ["$199.", "East 4th Street, Unit 2."],
+    ["$199 East 4th Street, unit 2."],
+    ["It's #199 East 4th Street."],
+])
+def test_a_house_number_written_as_money_or_split_from_its_street_still_counts(
+    located, answers, lines
+):
+    """Retell's speech-to-text wrote the spoken "199" as "$199." and put the street in the next
+    line (calls call_926427e1d1f2a80cb78dc6a4e04 and call_b1fa369abb81ba74c1486c1fd67): refused
+    address_not_heard."""
+    answers.book[("199", geocode.street_match_key("East 4 Street"))] = [EAST_4TH]
+    call = located.start(UNKNOWN)["data"]["call_id"]
+    located.say(call, "What's the street address, including any apartment or unit number?")
+    for line in lines:
+        located.turn(call, line)
+    result = located.tool("find_address", call, street="199 East 4th Street")
+    assert result["ok"], result
+
+
+def test_a_thousands_comma_is_one_house_number(located, answers):
+    broadway = Place("1500", "BROADWAY", "10036", "Manhattan", "Midtown")
+    answers.book[("1500", geocode.street_match_key("Broadway"))] = [broadway]
+    call = located.start(UNKNOWN)["data"]["call_id"]
+    located.turn(call, "It's 1,500 Broadway.")
+    assert located.tool("find_address", call, street="1500 Broadway")["refused"] != (
+        "address_not_heard"
+    )
+
+
+def test_a_number_on_its_own_line_and_a_street_much_later_is_not_an_address(located, answers):
+    answers.book[("199", geocode.street_match_key("East 4 Street"))] = [EAST_4TH]
+    call = located.start(UNKNOWN)["data"]["call_id"]
+    located.turn(call, "$199.")
+    located.turn(call, "That's what the last guy charged me, can you believe it?")
+    located.turn(call, "Anyway I'm on East 4th Street.")
+    assert located.tool("find_address", call, street="199 East 4th Street")["refused"] == (
+        "address_not_heard"
+    )
+
+
 FOURTH_AVE = Place("50", "4 AVENUE", "11217", "Brooklyn", "Park Slope")
 SECOND_AVE = Place("20", "2 AVENUE", "10003", "Manhattan", "East Village")
 FIRST_PL = Place("10", "1 PLACE", "11231", "Brooklyn", "Carroll Gardens")

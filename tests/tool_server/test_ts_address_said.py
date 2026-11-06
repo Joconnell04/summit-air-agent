@@ -4,7 +4,7 @@
 import pytest
 from toolkit import UNKNOWN, in_area_address
 
-from app.text import address_said, house_said, ordinal_said, street_said, unit_said
+from app.text import address_said, house_said, ordinal_said, street_said, unit_clean, unit_said
 
 
 @pytest.mark.parametrize("number,said", [
@@ -51,3 +51,26 @@ def test_the_read_back_says_the_address_in_words_and_confirms_on_the_stored_one(
     assert confirmed["ok"], confirmed
     assert confirmed["data"]["address"]["street"] == "101 Union St"
     assert confirmed["data"]["address"]["unit"] == "4B"
+
+
+@pytest.mark.parametrize("unit", ["Unit 2", "unit 2", "Apt. 2", "#2", "Apartment 2", "2"])
+def test_a_unit_word_is_dropped_from_the_unit(unit):
+    """The model passed "Unit 2", read back as "unit U N I T two" (Retell call
+    call_926427e1d1f2a80cb78dc6a4e04)."""
+    assert unit_clean(unit) == "2"
+    assert address_said("199 East 4th Street", unit) == "one ninety-nine East Fourth Street, unit two"
+
+
+def test_unit_2_and_2_read_back_and_confirm_as_one_address(agent):
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    address = in_area_address()
+    agent.turn(call, f"It's {address['street']}, unit 2, {address['zip']}.")
+    asked = agent.tool("read_back", call, address={**address, "unit": "Unit 2"}, phone="caller_id")
+    assert "unit two, and" in asked["say"] and "U N I T" not in asked["say"]
+    agent.say(call, asked["say"])
+    agent.turn(call, "Yes.")
+    confirmed = agent.tool(
+        "read_back", call, address={**address, "unit": "2"}, phone="caller_id", confirmed=True
+    )
+    assert confirmed["ok"], confirmed
+    assert confirmed["data"]["address"]["unit"] == "2"
