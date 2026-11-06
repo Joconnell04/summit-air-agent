@@ -91,7 +91,8 @@ def test_moving_a_visit_needs_no_read_back(led):
 def test_the_first_offer_on_a_no_heat_call_ends_with_the_open_door_line_once(led):
     call = ready_to_book(led)
     first = offer(led, call, "no_heat")
-    assert first["say"].endswith(LINES["open_door"])
+    # Before the closing question, which the model keeps.
+    assert f"{LINES['open_door']} Does that work?" in first["say"]
     led.turn(call, "Anything later?")
     second = led.tool("find_slots", call, job_type="no_heat", time_of_day="afternoon")
     assert LINES["open_door"] not in second["say"]
@@ -139,6 +140,17 @@ def test_questions_asked_before_the_offer_do_not_count(led):
     slot = slot_of(offer(led, call))
     led.turn(call, "That works.")
     assert book(led, call, slot)["refused"] == "visit_questions_first"
+
+
+@pytest.mark.parametrize("line", ["Someone is home all day.", "We're home.", "I'm home all day."])
+def test_someone_home_said_unasked_counts(led, line):
+    call = ready_to_book(led)
+    slot = slot_of(offer(led, call))
+    led.turn(call, f"That works. {line}")
+    for question in (APPROVAL, ACCESS):
+        led.say(call, question)
+        led.turn(call, "Yes.")
+    assert book(led, call, slot)["ok"]
 
 
 def test_answers_the_caller_gave_unasked_count(led):

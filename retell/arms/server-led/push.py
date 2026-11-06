@@ -31,10 +31,12 @@ GREETING = (
     "Hi there, thanks so much for calling Summit Air today! I'm Brooke, the virtual assistant. "
     "How can I help?"
 )
-# The model and its settings, as on Jackson's LLM (llm_12eba5f1d4a3b067f0635097de30).
+# The model as on Jackson's LLM (llm_12eba5f1d4a3b067f0635097de30), at temperature 0 instead of
+# 0.3: at 0.3 it reworded the server's sentences on every offer and booking (eval runs
+# 20261106-011527 and -012105).
 MODEL = {
     "model": "claude-5.5-haiku",
-    "model_temperature": 0.3,
+    "model_temperature": 0,
     "model_high_priority": False,
 }
 # Fields of Jackson's agent that are its identity or its wiring, not how it listens and speaks.

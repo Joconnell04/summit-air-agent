@@ -29,7 +29,8 @@ VISIT_QUESTIONS = (
         r"\b(someone|anyone|somebody|you)\b[^.?]*\bhome\b|\blet (the )?(technician|tech|them) in\b",
         (
             r"\b(i'?ll|i will|we'?ll|we will|someone will|somebody will|my \w+ will) be "
-            r"(home|here|there)\b|\bi'?m (always )?(home|here)\b|\bwork from home\b"
+            r"(home|here|there)\b|\b(i'?m|i am|someone'?s|someone is|somebody is|we'?re|we are) "
+            r"(always |usually )?(home|here)\b|\bwork from home\b"
         ),
     ),
     ("ask_access", r"\bgate code\b|\bbuzzer\b|\bpets?\b", r"\bgate\b|\bbuzzer\b|\bpets?\b|\bdogs?\b|\bcats?\b|\bdoorman\b"),
@@ -76,8 +77,8 @@ def _gate(ctx, tool: str, args) -> None:
             gate="flow_read_back_first",
             need="openings come after the caller confirms the read-back",
         ).with_next(
-            "Don't mention this. Ask for what you still need, one question a turn: the address, "
-            "then the phone number. Then call read_back."
+            "Don't mention this or say what you need first. Ask for what you still need, one "
+            "question a turn: the address, then the phone number. Then call read_back."
         )
     if tool == "book_appointment":
         missing = visit_questions_missing(ctx)
@@ -195,7 +196,13 @@ def _open_door(ctx, args, result: Result) -> None:
     ):
         line = ctx.tenant.line("open_door")
         if _hand_out_once(ctx, line):
-            result.say = f"{result.say} {line}".strip()
+            # Before the offer's closing question, not after it: the model dropped a sentence that
+            # came after the question on every offer (eval runs 20261106-010112 and -011527).
+            asked = re.match(r"(.*[.!])\s+([^.!?]*\?)$", result.say)
+            if asked:
+                result.say = f"{asked[1]} {line} {asked[2]}"
+            else:
+                result.say = f"{result.say} {line}".strip()
 
 
 def _out_jobs(ctx) -> list[str]:
