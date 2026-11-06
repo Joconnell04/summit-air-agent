@@ -81,20 +81,43 @@ Bugs found, and where each stands:
 4. **The transcript index shift (section 3).** Fixed in c5f4bc2. The persona calls ran on it, with 0 lines missing.
 5. **Retell's guardrail answered the card number (g).** Both the socket agent and Jackson's agent have Retell's input guardrail `platform_integrity_jailbreaking` on. It took "Can I just give you my card number now? It's four one one one" as a jailbreak and said its canned "Sorry, I can not help with what you are asking for." The socket never got the line, so the server's own card stop and its log never ran. **Not changed.** It's a setting on Jackson's agent too, so it's the coordinator's call.
 
-Also seen and **not fixed**: the reschedule in b offered the window the caller already had. A hyphenated Queens house number (84-22) was read as one number. The intake asked a CO-check caller whether the furnace was "completely out" (j). Some lines open with a doubled "Unfortunately".
+Also seen and **not fixed**: the reschedule in b offered the window the caller already had. A hyphenated Queens house number (84-22) was read as one number. Some lines open with a doubled "Unfortunately".
 
-## 5. Filter and hold phrase
+**Persona j's caller was broken.** The Retell test caller answered "No that's it" to six different questions in a row, so j partly measures the harness. Its flow faults (below) were real all the same.
+
+**e's transfer rang Jackson's own phone.** The test world shared the live `.env`, where both transfer numbers point at his cell, so the 3:29 AM put-through in bug 1 rang it. The coordinator moved the test world's transfer numbers to the hold line, +1 929 296 8604, in `~/summit-air/server-led.env` (test world only). No test call uses his number now.
+
+## 5. Spot-check fixes (54b7f6a)
+
+The coordinator listened to four done-bar calls. Each fault below has a test, none has been on a phone call yet, and all of them reach Jackson's hosted agent through the shared tool server except the socket-only ones, marked.
+
+| Fault | Call | Fix |
+|---|---|---|
+| The unit asked three times; "No, it's just the house" didn't settle it | call_51d7bc63abd9040be451a8bc596 | "Just the house", "no unit" and "single-family" settle the unit: the flow stops asking and the read-back's unit gate is skipped. A unit given with the street ("East 4th Street, unit 2") is named in the flow's next step |
+| "Is it heating that's the issue?" after a gas report; "completely out", "since when" (five times) and "what was tried" after a CO false alarm | call_51d7bc63abd9040be451a8bc596, call_d101fce0cddb6792cb6214aaacb | A call with a gas smell or an alarm is a safety check: the flow asks no outage, since, tried, issue or system questions, and the booking no longer requires since or tried (`intake.no_fault_for: [tune_up, safety_check]`) |
+| "The booking needs one more detail. Has anything been tried on the boiler?" on a tune-up | call_974282c5d5a9e22788abd7075f8 | No since or tried on a tune-up (d080929). Lines that explain the gate are cut in code (socket only) |
+| A detail asked five times; "a safety check?" and "to book the safety check, I need your name" | call_d101fce0cddb6792cb6214aaacb | Prompt v7: a detail is asked at most twice, and no job type or booking need is said aloud (socket only) |
+| The callback time said, then "I'm connecting you" | call_63eff21840ce12f1518561da90f | The put-through is decided before the callback line, so the caller hears one or the other (socket only). A timed callback, or a call already dispatched, is never put through (d080929) |
+| The model's slot offer, then the dispatch line, in one turn | call_63eff21840ce12f1518561da90f | While windows are on offer, the model's text waits for the end of its reply, so a second find_slots that dispatches is the server's line alone (socket only; it adds the model's full reply time to those turns, MEASURED in no call yet) |
+
+**The end-call gate (c5f4bc2), checked for both agents.** Jackson's hosted agent hangs up through our `end_call` (Retell's built-in end-call is off, `retell/summit-air-jackson/tools.json`), so the gate covers both agents. A refusal carries the question to say, and once the caller answers it, the next `end_call` goes through (tested). It counts any question asking for more, such as "anything else", "something else", "all set", "is that it" or "is that everything", and only a question, so "You're all set for Thursday." doesn't count (tested). Silence doesn't go through the gate: Retell ends a silent call itself after 8 minutes (DECISIONS 081), after the two check-ins.
+
+**The coordinator asked for transfers outside office hours to be refused.** The office is never rung after hours already (`app/transfer.py role_for`). The on-call technician still is, for a call the server scores as needing someone tonight (journey 11, C-11), now only when the caller hasn't named a later time and the visit wasn't already dispatched. Turning that off too would be a change to C-11, so it is left as is and raised with the coordinator.
+
+**An address the city can't find (call_974282c5d5a9e22788abd7075f8).** The area check runs only at the borough level. find_address asks the borough once and books on that borough's placeholder ZIP (`unverified_zips`; all five boroughs are in the service area). book_appointment then flags the office to confirm the address before dispatch (`app/tools.py _unverified`). The gap is an address outside the city with no borough given even when asked: it books on the tenant's fallback ZIP, treated as in the area, so only the office flag catches it. Asking the ZIP there would close it, against Jackson's "never ask the ZIP", so it is left for his call.
+
+## 6. Filter and hold phrase
 
 From the socket's per-call close logs (37 socket calls today, including the done bar):
 
 - **Hold phrase:** 96 fired on 165 tool waits. Measured on caller turns, it was 15.8% to 20.9% per batch. It never fired twice in a row, and never overlapped the caller.
 - **Drops,** each logged with its original text: after_question 10, goodbye_with_end_call 8, narrates 7, ack_after_hold 1. The filter never emptied a reply (fallback_spoke_whole_reply 0).
 
-## 6. Before the done bar (7 scored calls, earlier builds)
+## 7. Before the done bar (7 scored calls, earlier builds)
 
 The first round on (646), before the arm had its own number, scored 7 calls. 3 of 7 journeys passed, and the judge mean was 3.71. The failures were a dropped socket on a 4.2 s find_slots, an offer loop, a hold that never ended and an address the lookup couldn't find. All four were fixed before the done bar (a hold phrase and a 9 s tool timeout; "okay" takes the first window; a number-first line ends a hold; the server's address handling). The server's sentences were word for word on every call, then and since.
 
-## 7. What moving the prompt out of Retell's dashboard means for tuning
+## 8. What moving the prompt out of Retell's dashboard means for tuning
 
 - **Where it lives.** The prompt is `retell/arms/socket/prompt.md` in the repo. The socket reads it on every call, so a change is a file sync with no restart. The model is a config/models.yaml profile.
 - **What's lost.** Retell's dashboard, LLM playground, simulation tests, batch tests and builder assistant don't reach a custom-LLM agent (SOURCE: https://docs.retellai.com/integrate-llm/overview). Jackson can no longer tune by editing in Retell, and Retell keeps no version history of the prompt.
@@ -102,7 +125,7 @@ The first round on (646), before the arm had its own number, scored 7 calls. 3 o
 - **Less to tune.** The rules Jackson tuned most (the visit questions, the access question, the read-back, the closing) are now server sentences and gates. Changing their wording is a tenant-line edit in `tenants/summit-air/agent.yaml`, not prompt work.
 - **The cost.** Every change needs a deploy to the box, and someone who can run the harness. It is the trade DECISIONS 112 weighed.
 
-## 8. Spend
+## 9. Spend
 
 | | |
 |---|---|
@@ -110,8 +133,8 @@ The first round on (646), before the arm had its own number, scored 7 calls. 3 o
 | Retell, before the cap | The earlier round on (646) and the Twilio-era calls, $2.35 for 9 calls (MEASURED), not counted against the cap |
 | Anthropic, socket | About $0.07 on a long call: 330k to 410k cache-read, 20k cache-write and 2k output tokens (MEASURED tokens from the socket's close log; price ASSUMED at Haiku list rates of $0.10, $1.25 and $5 a million) |
 
-## 9. Not done
+## 10. Not done
 
 - **Runs 7 to 10 per journey.** Jackson kept the $15 cap, so the bar is reported on 6 runs (DECISIONS 126). gas_retracted's one miss is a known issue with its fix.
-- **The persona-round fixes on the phone.** The on-call transfer, the tune-up intake and the repeated-sentence filter are tested in code only.
+- **The persona-round and spot-check fixes on the phone.** All of d080929 and 54b7f6a are tested in code only. The next paid run should start with persona e and one gas and one tune-up call.
 - **Denoising.** The socket agent still has denoising off for the audio-gap test. It goes back to `noise-cancellation` when the coordinator says.

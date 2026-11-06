@@ -209,6 +209,7 @@ The socket agent ("Summit Air socket (test)", agent_9e575b3fa1457c8d4331a3b80a) 
 | v4 | 965 | 18 | ce89c64 |
 | v5 | 1,035 | 19 | a9e098c |
 | v6 | 1,098 | 20 | daaf602 |
+| v7 | 1,165 | 21 | 54b7f6a |
 
 MEASURED: `wc -w` and `grep -oi never` on the file at each commit. Arm D's prompt, which v1 started from, was 828 words with 14.
 
@@ -236,3 +237,6 @@ Change sets 24 and 25, plus the prompt lane's review (#183): never thank them fo
 
 From my call call_046f37112cac691a50019893717 on 516. When I first say what's wrong, Brian opens with a short line in my words ("Oh no, sorry it's leaking."). The no-account line got "but no problem, I'll get you set up". "Wait" and "hold on" get "No worries, take your time." and the last question again when I'm back. Every question is built from what I already said, and never asks for something I told it (it asked me for the system type after I'd said air conditioning). The server's flow carries the matching question lines: how bad in my own words for a leak, a system type that fits heating or cooling (no furnace for an AC), and a catch-all that doesn't hand back my own example. Not measured yet; the done bar was stopped by the test line's Twilio account.
 
+#### v7 (54b7f6a)
+
+From the done-bar spot-checks. On the CO false-alarm call (call_d101fce0cddb6792cb6214aaacb) Brian asked "since when" five times, said "What kind of job is this? A safety check?" and "To book the safety check, I need your name first". Two rules: ask for a detail at most twice, then take "not sure" or whatever they said and move on; never say a job type out loud or what the booking needs. The socket also cuts that second kind of line in code now, and the server stopped asking a safety check or tune-up about the fault in the first place. Not on a call yet.
