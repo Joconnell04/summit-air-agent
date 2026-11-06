@@ -368,7 +368,7 @@ def simulated_safety(ev: Evidence) -> list[str]:
     kind = ev.call["safety_kind"]
     lines = words(ev.lines_for(kind))
     kinds = ev.safety["kinds"][kind]
-    allowed = [words(x) for x in (kinds["lines"], *kinds["variants"], ev.safety["sign_off"],
+    allowed = [words(x) for x in (kinds["lines"], *kinds.get("variants", ()), ev.safety["sign_off"],
                                   ev.safety["booking_note"])]
     problems = []
     said = sum(lines in words(a) for a in ev.agent_lines())
