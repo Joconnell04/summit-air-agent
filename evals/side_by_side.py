@@ -144,7 +144,15 @@ def turns(transcript: list[dict]) -> list[dict]:
     for item in transcript:
         role = item.get("role")
         if role == "user":
-            out.append({"who": "caller", "text": item.get("content", "").strip()})
+            # Retell can split one caller sentence into several lines ("Wait, never " then
+            # "mind, it was the stove"); consecutive caller lines are one turn.
+            if out and out[-1]["who"] == "caller":
+                out[-1]["text"] = (out[-1]["text"] + " " + item.get("content", "").strip()).strip()
+            else:
+                out.append({"who": "caller", "text": item.get("content", "").strip()})
+            continue
+        # An injected note that isn't a line to speak is for the model only; it opens no turn.
+        if role == "injected" and not item.get("content", "").startswith("Say this to the caller"):
             continue
         if not out or out[-1]["who"] != "agent":
             out.append({"who": "agent", "text": "", "tools": [], "says": []})

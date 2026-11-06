@@ -414,3 +414,17 @@ def test_the_catch_all_is_asked_once_on_a_problem_and_never_on_a_tune_up():
 
     assert call_with("no_heat", 1) and not call_with("no_heat", 0) and not call_with("no_heat", 2)
     assert call_with("tune_up", 0) and not call_with("estimate", 1)
+
+
+def test_a_retraction_split_across_two_caller_lines_is_heard():
+    persona = {"first": "Sam", "safety": True, "retraction": "nevermind"}
+    call = [
+        agent("How can I help?"),
+        user("I smell gas by the boiler."),
+        agent("If you're smelling gas, get everyone outside and call 911."),
+        user("Wait, never "),
+        user("mind, it was the stove."),
+        agent("Got it. Anything else?"),
+        user("No."),
+    ]
+    assert sbs.check_call(persona, call, rows())["retraction_honored"]["ok"]
