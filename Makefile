@@ -1,4 +1,4 @@
-.PHONY: setup test lint check release-check ratchet ratchet-update eval eval-pairs eval-decisions replay langsmith eval-upload seed-st mock-st postman-st server postman trace \
+.PHONY: setup test lint check ci release-check ratchet ratchet-update eval eval-pairs eval-decisions replay langsmith eval-upload seed-st mock-st postman-st server postman trace \
 	owner-demo owner-user design-export rules-gate summary-check voice-livekit phone-setup deploy test-call measure-delay \
 	retell-push retell-flow-push retell-bridge retell-deploy retell-report rig rig-report sim listen lanes stt-bench
 
@@ -6,13 +6,22 @@ setup:
 	uv sync
 	git config core.hooksPath .githooks
 
+# -n auto spreads the suite over every core (pytest-xdist).
 test:
-	uv run pytest -q
+	uv run pytest -q -n auto
 
 lint:
 	uv run ruff check .
 
 check: lint test ratchet
+
+# CI without GitHub Actions: run the full check here, then mark the pushed commit as passed on
+# GitHub (a commit status, context local/make-check). Run it after pushing.
+ci: check
+	@git fetch -q origin && git branch -r --contains HEAD | grep -q . || { echo "push first: HEAD is not on GitHub"; exit 1; }
+	gh api -X POST repos/$$(gh repo view --json nameWithOwner -q .nameWithOwner)/statuses/$$(git rev-parse HEAD) \
+	  -f state=success -f context=local/make-check -f description="make check passed locally" > /dev/null
+	@echo "marked $$(git rev-parse --short HEAD) as passed (local/make-check)"
 
 ratchet:
 	uv run python scripts/ratchet.py
