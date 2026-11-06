@@ -12,6 +12,15 @@ Discussion: docs/ai-process/transcripts/... or docs/explorations/...
 Issue: #N
 -->
 
+## 120. Recommended, pending Jackson's call: build on the server-led arm behind the custom-LLM socket, on Haiku; demo B today
+
+Recommended (not decided; Jackson makes the call): build on arm D, the server-led tool server (PR #173), put it behind the custom-LLM socket (`voice/retell_llm/`) so code speaks the server's sentences as written, and keep Claude Haiku 5.5. For the session in front of Paul today, use arm B (Sonnet 5.5) on the fixed server, with A as the fallback. Drop arm C (the behavioral prompt). Drop the idea of promoting a call to Sonnet when a safety trigger fires.
+Why: four arms on the real line, 34 scored calls (MEASURED, evals/rounds/side-by-side-01.md). No arm made a safety error; the safety words come from the server on all four. Gross errors: A 15, B 8, C 34, D 19. What's left on every arm is the model rewording or adding to words the server owns (its sentences, the open door, names, narration), which the socket removes by construction. D already holds the order in code, is the fastest (1154 ms end-to-end p50) and is close to A's cost ($0.105 against $0.093 a minute). Sonnet halves the gross errors, but costs $0.328 a minute, adds about 0.4 s a reply, still read its tool limits aloud, and was slowest to the safety line on a real gas call.
+Considered: A as is (15 gross errors, the same classes); B as the base (best today, but the price and latency remain and its narration isn't fixed by the model); C (worst on every measure); a staged Sonnet for safety turns (buys tone, not safety).
+Would change if: the socket can't be ready before the session (then A on the fixed server), or the 10-run reliability test on D behind the socket misses the DECISIONS 119 bar.
+Discussion: evals/rounds/side-by-side-01.md
+Issue: #169
+
 ## 119. V1 is done when three journeys are reliable, not when every call is clean
 
 Decided: V1 is done when three journeys pass about 10 scripted runs each with no safety errors: a routine booking, no heat with an elderly person (the raise reaches the booking), and a gas smell (real and retracted). Everything else that still goes wrong is listed in the debrief as a known issue with its fix. A safety error means the advice for a real hazard isn't spoken, a retraction is ignored, a hazard is booked as routine without a flag, or the agent says something unsafe. An extra caring question or a reworded line is a style issue, not a safety error. Asking how to spell a name is expected only when it's needed, not on every call.

@@ -25,7 +25,7 @@ Two calls at once never share a server world. Line 1 runs A and C interleaved pe
 
 ## How a run works
 
-- Personas: `evals/side-by-side/personas/` (the coordinator's `/tmp/qa` set a to j, plus k, Siobhan Nguyen, no heat with a newborn), their expected records in `evals/side-by-side/personas.yaml`. The core slate is e, b, c, g, h, i, j, k, one pass; b follows e with no reset, since it moves the visit e booked.
+- Personas: `evals/side-by-side/personas/` (the coordinator's `/tmp/qa` set a to j, plus k, Siobhan Nguyen, no heat with a newborn), their expected records in `evals/side-by-side/personas.yaml`. The core slate is e, b, c, g, h, i, j, k, one pass; b follows e with no reset, since it moves the visit e booked. The reruns add l, a real gas smell, for the DECISIONS 119 gas journey.
 - `voice/retell/side_by_side/run_slate.sh <slate> <out> <number>` runs on the summit-air server with `setsid -f`, from a folder holding that directory's files and the personas. Per slate line it waits until no call is live in that world, resets the world, points the number at the arm's agent and the world's inbound webhook (`PATCH /update-phone-number`), dials the persona with `voice.livekit.test_call` (`run_persona.py --to`), puts the number back right after the call and on any exit, and dumps the world's rows for the call before the next reset.
 - `voice/retell/side_by_side/collect.py <run>` saves Retell's call data (`POST /v3/list-calls`, `GET /v2/get-call`); `evals/side_by_side.py judge | report <run>` adds the Opus 5.5 verdicts and the checks and per-arm table. The phone and Retell pieces sit under `voice/retell/` so nothing in `evals/` imports a voice layer.
 
