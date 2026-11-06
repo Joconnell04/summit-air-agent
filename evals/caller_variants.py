@@ -360,6 +360,8 @@ def build(journey: str, index: int, seed: int) -> dict:
         "journey": journey,
         # A building's unit the caller didn't volunteer: the agent must ask for it.
         "unit_ask": bool(unit) and "unit_volunteered" in log and not log["unit_volunteered"],
+        # A unit corrected after the read-back earns a second read-back.
+        "confirms": 2 if log.get("corrected_unit") else 1,
         **expect,
     }
     return {

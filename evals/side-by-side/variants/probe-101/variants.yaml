@@ -74,6 +74,7 @@ log:
 personas:
   g101-01:
     closes_with: bye|that's it|that's all
+    confirms: 1
     first: Mei
     flag: true
     journey: gas_real
@@ -84,6 +85,7 @@ personas:
     bookings:
     - book
     closes_with: bye|that's it|that's all
+    confirms: 1
     first: Sam
     journey: elderly
     name: Sam Williams
@@ -92,6 +94,7 @@ personas:
     bookings:
     - book
     closes_with: bye|that's it|that's all
+    confirms: 1
     first: Kwame
     journey: elderly
     name: Kwame Goldberg
@@ -100,6 +103,7 @@ personas:
     bookings:
     - book
     closes_with: bye|that's it|that's all
+    confirms: 1
     first: Fatima
     journey: routine
     name: Fatima Patel
@@ -107,12 +111,14 @@ personas:
     bookings:
     - book
     closes_with: bye|that's it|that's all
+    confirms: 2
     first: Tomasz
     journey: routine
     name: Tomasz Chen
   x101-01:
     bookings: []
     closes_with: bye|that's it|that's all
+    confirms: 1
     first: Priya
     journey: gas_retracted
     name: null

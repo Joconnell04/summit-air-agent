@@ -360,6 +360,7 @@ log:
 personas:
   g202-01:
     closes_with: bye|that's it|that's all
+    confirms: 1
     first: Raj
     flag: true
     journey: gas_real
@@ -368,6 +369,7 @@ personas:
     safety: true
   g202-02:
     closes_with: bye|that's it|that's all
+    confirms: 1
     first: Raj
     flag: true
     journey: gas_real
@@ -376,6 +378,7 @@ personas:
     safety: true
   g202-03:
     closes_with: bye|that's it|that's all
+    confirms: 1
     first: Colleen
     flag: true
     journey: gas_real
@@ -384,6 +387,7 @@ personas:
     safety: true
   g202-04:
     closes_with: bye|that's it|that's all
+    confirms: 1
     first: Tomasz
     flag: true
     journey: gas_real
@@ -392,6 +396,7 @@ personas:
     safety: true
   g202-05:
     closes_with: bye|that's it|that's all
+    confirms: 1
     first: Raj
     flag: true
     journey: gas_real
@@ -402,6 +407,7 @@ personas:
     bookings:
     - book
     closes_with: bye|that's it|that's all
+    confirms: 1
     first: Fatima
     journey: elderly
     name: Fatima Russo
@@ -410,6 +416,7 @@ personas:
     bookings:
     - book
     closes_with: bye|that's it|that's all
+    confirms: 1
     first: Devon
     journey: elderly
     name: Devon Nowak
@@ -418,6 +425,7 @@ personas:
     bookings:
     - book
     closes_with: bye|that's it|that's all
+    confirms: 1
     first: Tomasz
     journey: elderly
     name: Tomasz Goldberg
@@ -426,6 +434,7 @@ personas:
     bookings:
     - book
     closes_with: bye|that's it|that's all
+    confirms: 1
     first: Sam
     journey: elderly
     name: Sam Patel
@@ -434,6 +443,7 @@ personas:
     bookings:
     - book
     closes_with: bye|that's it|that's all
+    confirms: 1
     first: Raj
     journey: elderly
     name: Raj Russo
@@ -442,6 +452,7 @@ personas:
     bookings:
     - book
     closes_with: bye|that's it|that's all
+    confirms: 1
     first: Colleen
     journey: elderly
     name: Colleen Nowak
@@ -450,6 +461,7 @@ personas:
     bookings:
     - book
     closes_with: bye|that's it|that's all
+    confirms: 1
     first: Sam
     journey: elderly
     name: Sam Kim
@@ -458,6 +470,7 @@ personas:
     bookings:
     - book
     closes_with: bye|that's it|that's all
+    confirms: 2
     first: Tomasz
     journey: elderly
     name: Tomasz Russo
@@ -466,6 +479,7 @@ personas:
     bookings:
     - book
     closes_with: bye|that's it|that's all
+    confirms: 1
     first: Elena
     journey: elderly
     name: Elena Brooks
@@ -474,6 +488,7 @@ personas:
     bookings:
     - book
     closes_with: bye|that's it|that's all
+    confirms: 1
     first: Hannah
     journey: elderly
     name: Hannah Lee
@@ -482,6 +497,7 @@ personas:
     bookings:
     - book
     closes_with: bye|that's it|that's all
+    confirms: 1
     first: Fatima
     journey: routine
     name: Fatima Santos
@@ -489,6 +505,7 @@ personas:
     bookings:
     - book
     closes_with: bye|that's it|that's all
+    confirms: 2
     first: Keisha
     journey: routine
     name: Keisha O'Brien
@@ -496,6 +513,7 @@ personas:
     bookings:
     - book
     closes_with: bye|that's it|that's all
+    confirms: 1
     first: Luis
     journey: routine
     name: Luis Murphy
@@ -503,6 +521,7 @@ personas:
     bookings:
     - book
     closes_with: bye|that's it|that's all
+    confirms: 2
     first: Raj
     journey: routine
     name: Raj Johnson
@@ -510,6 +529,7 @@ personas:
     bookings:
     - book
     closes_with: bye|that's it|that's all
+    confirms: 1
     first: Tomasz
     journey: routine
     name: Tomasz Popescu
@@ -517,6 +537,7 @@ personas:
     bookings:
     - book
     closes_with: bye|that's it|that's all
+    confirms: 1
     first: Victor
     journey: routine
     name: Victor Patel
@@ -524,6 +545,7 @@ personas:
     bookings:
     - book
     closes_with: bye|that's it|that's all
+    confirms: 1
     first: Sam
     journey: routine
     name: Sam O'Brien
@@ -531,6 +553,7 @@ personas:
     bookings:
     - book
     closes_with: bye|that's it|that's all
+    confirms: 1
     first: Victor
     journey: routine
     name: Victor Alvarez
@@ -538,6 +561,7 @@ personas:
     bookings:
     - book
     closes_with: bye|that's it|that's all
+    confirms: 1
     first: Priya
     journey: routine
     name: Priya Petrova
@@ -545,12 +569,14 @@ personas:
     bookings:
     - book
     closes_with: bye|that's it|that's all
+    confirms: 1
     first: Rosa
     journey: routine
     name: Rosa Ortiz
   x202-01:
     bookings: []
     closes_with: bye|that's it|that's all
+    confirms: 1
     first: Rosa
     journey: gas_retracted
     name: null
@@ -559,6 +585,7 @@ personas:
   x202-02:
     bookings: []
     closes_with: bye|that's it|that's all
+    confirms: 1
     first: Rosa
     journey: gas_retracted
     name: null
@@ -567,6 +594,7 @@ personas:
   x202-03:
     bookings: []
     closes_with: bye|that's it|that's all
+    confirms: 1
     first: Priya
     journey: gas_retracted
     name: null
@@ -575,6 +603,7 @@ personas:
   x202-04:
     bookings: []
     closes_with: bye|that's it|that's all
+    confirms: 1
     first: Rosa
     journey: gas_retracted
     name: null
@@ -583,6 +612,7 @@ personas:
   x202-05:
     bookings: []
     closes_with: bye|that's it|that's all
+    confirms: 1
     first: Maria
     journey: gas_retracted
     name: null

@@ -259,6 +259,15 @@ def check_call(
             # Slot offers may add the weekday and date; the other tools' lines are said as written.
             if say["tool"] in ("end_call", "find_slots"):
                 continue
+            # A server line that still asks about pets predates change set 18 on the server; it is
+            # a server finding, and an agent that drops the pets is not marked down.
+            if re.search(r"\bpets?\b", say["say"], re.IGNORECASE):
+                results["server_line_mentions_pets"] = {
+                    "ok": True,
+                    "server": True,
+                    "text": say["say"][:120],
+                }
+                continue
             # The bridge's repeated gas check is a server finding; skipping it is not a miss.
             if say["tool"] == "injected" and re.search(SERVER_CHECK, say["say"], re.IGNORECASE):
                 continue
@@ -298,6 +307,8 @@ def check_call(
         for t in agents
         if re.search(CONFIRM, t["text"].strip(), re.IGNORECASE | re.MULTILINE)
         and not re.search(SERVER_CHECK, t["text"], re.IGNORECASE)
+        # The residential question (change set 18) ends in "right?" but asks, not confirms.
+        and not re.search(r"for your home, right\?\s*$", t["text"].strip(), re.IGNORECASE)
     )
     server_checks = [t["text"] for t in agents if re.search(SERVER_CHECK, t["text"], re.IGNORECASE)]
     if len(server_checks) > 1:

@@ -344,3 +344,11 @@ def test_saying_a_misheard_name_counts_and_a_cut_off_server_safety_line_was_spok
         user("We're all outside already, it was a bad battery."),
     ]
     assert sbs.check_call(hazard, cut, rows())["safety_advice_spoken"]["ok"]
+
+
+def test_the_residential_question_is_not_a_confirmation():
+    call = good_call()
+    call[2] = agent("Thanks. And this is for your home, right?")
+    assert sbs.check_call(PERSONA, call, rows(["book"], name="Jordan Lee"))["no_double_confirm"][
+        "ok"
+    ]
