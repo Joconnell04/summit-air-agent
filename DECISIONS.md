@@ -12,6 +12,15 @@ Discussion: docs/ai-process/transcripts/... or docs/explorations/...
 Issue: #N
 -->
 
+## 126. The socket's done bar ran 6 calls per journey under the $15 cap, not 10
+
+Decided: the done bar for the socket build (DECISIONS 119) is reported on 6 scripted phone calls per journey, 24 in all, plus 6 regression personas, and stops there. Any journey under 6 of 6 is a known issue with its fix. Result: routine, elderly and gas_real 6/6; gas_retracted 5/6 (x176-02 said the gas advice again after the caller took it back, an over-cautious repeat fixed in c5f4bc2); no safety errors.
+Why: Jackson kept the $15 cap. Since Twilio disabled voice, the scripted caller is a Retell agent, so each call has two billed legs: $0.426 a call (MEASURED, 30 calls, $12.77 from Retell's `combined_cost`). Ten per journey plus the personas would have cost about $20 (ASSUMED from that rate).
+Considered: raising the cap to $20 for runs 7 to 10 (Jackson said no); fewer personas to fit more journey runs (the personas found five bugs the journeys never reached).
+Would change if: a fix to the socket or flow needs evidence on the phone before the cut-over. Runs 7 to 10 (variants 07 to 10 in `variants3/`) can be added without rerunning anything.
+Discussion: evals/rounds/socket-buildout-01.md
+Issue: #176
+
 ## 125. Keep accurate speech-to-text and fixed responsiveness on Jackson's agent
 
 Decided: Jackson's agent keeps `stt_mode: accurate` and `enable_dynamic_responsiveness: false`.

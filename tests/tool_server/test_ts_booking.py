@@ -310,17 +310,18 @@ def test_an_in_area_zip_passes(agent):
 
 
 def test_every_intake_field_is_required_except_system_and_arrival_notes(agent):
+    # A repair: a tune-up asks nothing about a fault (test_ts_one_number.py).
     call = ready_to_book(agent)
-    slot = first_open(agent, call)
+    slot = first_open(agent, call, "no_heat")
     for field in ("issue", "since", "tried", "who_home", "approver"):
         details = {k: v for k, v in DETAILS.items() if k != field}
         response = agent.tool(
-            "book_appointment", call, job_type="tune_up", slot=slot, details=details
+            "book_appointment", call, job_type="no_heat", slot=slot, details=details
         )
         assert response["refused"] == "invalid_arguments", field
         assert any(field in key for key in response["data"]["errors"]), field
     optional = {k: v for k, v in DETAILS.items() if k not in ("system_type", "arrival_notes")}
-    assert agent.tool("book_appointment", call, job_type="tune_up", slot=slot, details=optional)[
+    assert agent.tool("book_appointment", call, job_type="no_heat", slot=slot, details=optional)[
         "ok"
     ]
 

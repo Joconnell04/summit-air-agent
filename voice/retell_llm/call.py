@@ -200,6 +200,10 @@ def reply_ms(transcript: list[dict], index: int) -> float | None:
     return round((words[0]["start"] - before[-1]["end"]) * 1000, 1)
 
 
+def sentence_words(sentence: str) -> set[str]:
+    return set(re.sub(r"[^a-z0-9 ]", "", sentence.lower().replace("'", "")).split())
+
+
 class Response:
     """The chunks of one response id. Nothing is sent once a newer request has replaced it."""
 
@@ -214,16 +218,26 @@ class Response:
         self.hold_ms: float | None = None
         # Server-led: a question was said in this reply, so nothing more of the model's follows.
         self.asked = False
+        # The words of each sentence said in this reply, so the model can't say one again.
+        self.spoken: list[set[str]] = []
 
         self.closed = False
 
     def stale(self) -> bool:
         return self.id != self.call.current_id
 
+    def repeats(self, sentence: str) -> bool:
+        """The sentence says again one already said in this reply: done-bar persona b heard "I've
+        let our team know, and someone will call you tomorrow..." twice, the server's sentence
+        and then the model's copy of it. Three words or more, most of them in the earlier one."""
+        said = sentence_words(sentence)
+        return len(said) >= 3 and any(len(said & s) >= 0.8 * len(said) for s in self.spoken)
+
     async def say(self, text: str, fixed: bool = False) -> None:
         text = " ".join(text.split())
         if not text or self.stale():
             return
+        self.spoken += [w for w in map(sentence_words, SENTENCE_END.split(text)) if w]
         if self.said:
             text = " " + text
         self.said = True
@@ -474,13 +488,15 @@ class LlmCall:
             stages["hold_ms"] = out.hold_ms
         self.stages.append(stages)
 
-    def _clean(self, sentence: str) -> tuple[str, str]:
+    def _clean(self, sentence: str, out: Response) -> tuple[str, str]:
         """Server-led: a sentence of the model's as the caller will hear it, and why it was cut,
         if it was. A question is never cut, only tidied, so the filter can't take the actual
         question away (DECISIONS 112: the custom stack's filter left half replies)."""
         tidy = plain_day(without_vocative(unnarrated(sentence), self._known_names()))
         if tidy.rstrip().endswith("?"):
             return tidy, ""
+        if out.repeats(tidy):
+            return "", "repeats_said"
         if NARRATES.match(tidy):
             return "", "narrates"
         if THANKS_FOR_WAITING.search(tidy):
@@ -574,7 +590,7 @@ class LlmCall:
                 for sentence in done:
                     if self.server_led:
                         raw.append(sentence)
-                        sentence, reason = self._clean(sentence)
+                        sentence, reason = self._clean(sentence, out)
                         if reason:
                             self._dropped(raw[-1], reason)
                             continue
@@ -610,7 +626,7 @@ class LlmCall:
                 rest = pending
                 if self.server_led and pending.strip():
                     raw.append(pending)
-                    rest, reason = self._clean(pending)
+                    rest, reason = self._clean(pending, out)
                     if reason:
                         self._dropped(pending, reason)
                     elif closing_turn or GOODBYE.search(rest):

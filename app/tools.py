@@ -2497,12 +2497,20 @@ def _readback_corrected(ctx: Ctx, asked: dict) -> str | None:
 # What a repair visit asks before booking (spec S-13). The tenant's `intake.skip_for` job types (a
 # quote for a new system) ask none of it: nothing has broken, and nobody approves a quote.
 REPAIR_INTAKE = ("since", "tried", "who_home", "approver")
+# What only a fault has: the tenant's `intake.no_fault_for` job types (a maintenance visit) skip
+# these, since nothing broke, and still ask who's home and who approves what the technician finds.
+FAULT_INTAKE = ("since", "tried")
 
 
 def _repair_intake(ctx: Ctx, job_type: str, details: dict) -> None:
-    if job_type in ctx.tenant.agent.get("intake", {}).get("skip_for", []):
+    intake = ctx.tenant.agent.get("intake", {})
+    if job_type in intake.get("skip_for", []):
         return
-    missing = [f for f in REPAIR_INTAKE if not str(details.get(f) or "").strip()]
+    asked = [
+        f for f in REPAIR_INTAKE
+        if not (f in FAULT_INTAKE and job_type in intake.get("no_fault_for", []))
+    ]
+    missing = [f for f in asked if not str(details.get(f) or "").strip()]
     if missing:
         raise Refused(
             "invalid_arguments", "", errors={f: "needed for a repair visit" for f in missing}
@@ -3415,6 +3423,12 @@ def needs_on_call_tonight(ctx: Ctx) -> bool:
     puts on a flag is never read."""
     cutoffs = ctx.tenant.after_hours_cutoffs
     if not ctx.call["after_hours"]:
+        return False
+    if ctx.conn.execute(
+        "SELECT 1 FROM dispatches WHERE call_id = ? AND replaced_at IS NULL", (ctx.call["id"],)
+    ).fetchone():
+        # The on-call technician already has this call's job, so a later flag isn't put through
+        # to them (done-bar persona e: a billing callback for tomorrow rang the on-call phone).
         return False
     job_types = cutoffs["heating_job_types"] + cutoffs["cooling_job_types"]
     rows = ctx.conn.execute(

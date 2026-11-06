@@ -24,6 +24,7 @@ flag and a callback are stored first, so a failed transfer or an unset number le
 with the stored callback line, never silence.
 """
 
+import json
 import os
 import re
 import sqlite3
@@ -400,6 +401,25 @@ def _summary(tenant: Tenant, call: sqlite3.Row, flag: sqlite3.Row, role: str) ->
     )
 
 
+# flag_person fields that say when the caller wants the call; callback_day is "today" unless
+# they named a day.
+TIMED = ("callback_time", "callback_after", "callback_before")
+
+
+def _named_a_time(conn: sqlite3.Connection, call_id: str) -> bool:
+    """The caller said when they want the call ("tomorrow afternoon"), so it waits for then and
+    nobody is rung now (done-bar persona e: a billing callback was put through at 3:30 AM)."""
+    row = conn.execute(
+        "SELECT args_json FROM tool_calls WHERE call_id = ? AND tool = 'flag_person' AND ok = 1 "
+        "ORDER BY id DESC LIMIT 1",
+        (call_id,),
+    ).fetchone()
+    args = json.loads(row["args_json"]) if row else {}
+    return any(args.get(field) for field in TIMED) or args.get("callback_day") not in (
+        None, "today"
+    )
+
+
 def plan(
     conn: sqlite3.Connection,
     tenant: Tenant,
@@ -426,9 +446,8 @@ def plan(
     )
     if flag is None or (callback_id and callback is None):
         raise Refused("invalid_state", "")
-    role = None if tried(conn, call["id"]) or flag["kind"] != "person" else role_for(
-        conn, tenant, call, needs_on_call, environ
-    )
+    stays = tried(conn, call["id"]) or flag["kind"] != "person" or _named_a_time(conn, call["id"])
+    role = None if stays else role_for(conn, tenant, call, needs_on_call, environ)
     if role is None:
         return ok(transfer=None)
     summary = _summary(tenant, call, flag, role)

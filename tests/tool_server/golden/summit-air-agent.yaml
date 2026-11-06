@@ -225,6 +225,8 @@ home_words:
 intake:
   skip_for:
   - estimate
+  no_fault_for:
+  - tune_up
 lines:
   account_choice: Should I put this under your account?
   account_name: Whose name should the account for that address be under?

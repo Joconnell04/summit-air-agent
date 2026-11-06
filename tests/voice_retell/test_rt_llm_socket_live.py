@@ -184,6 +184,23 @@ def test_a_callback_goes_on_the_weekday_the_caller_named(tmp_path, world, monkey
     assert "Thursday" in said and "tomorrow" not in said
 
 
+def test_the_models_copy_of_the_servers_sentence_is_not_said_twice(tmp_path, world, monkeypatch):
+    """Done-bar persona b heard the callback sentence twice: the server's, then the model's copy
+    of it before its own question."""
+    flag = {"id": "f1", "name": "flag_person", "input": {
+        "reason": "Billing question", "callback_day": "tomorrow", "callback_after": "12 PM",
+        "callback_before": "5 PM"}}
+    echo = ("I've let our team know, and someone will call you tomorrow between 12 PM and 5 PM. "
+            "Anything else?")
+    live = Live(tmp_path, world, monkeypatch, [
+        (["What can I help with today?"], []), ([], [flag]), ([echo], [])])
+    with live:
+        live.caller("Hi.")
+        said, _ = live.caller("Can someone call me about a bill tomorrow afternoon?")
+    assert said.count("let our team know") == 1
+    assert said.endswith("Anything else?")
+
+
 def test_gas_advice_cut_off_is_said_again_once_and_cant_be_cut(tmp_path, world, monkeypatch):
     co = " ".join(AGENT_CFG["safety"]["kinds"]["co"]["lines"].split())
     live = Live(tmp_path, world, monkeypatch, [(["Can someone come out today?"], [])])
