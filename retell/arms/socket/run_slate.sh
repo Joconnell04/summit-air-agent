@@ -77,6 +77,7 @@ main() {
     kill "$watcher" 2>/dev/null
     end_ms="$(date +%s%3N)"
     restore
+    py retell/arms/socket/line.py hangup
     sleep 15  # the socket closes the call on the tool server
     python3 "$TOOLS/rows.py" "$DATA/tools.db" "$start_ms" "$end_ms" "$before" > "$OUT/calls/$tag.rows.json" 2>&1
     printf '{"n": %d, "arm": "socket", "agent_id": "%s", "world": "server-led", "number": "%s", "persona": "%s", "reset": "%s", "start_ms": %s, "end_ms": %s, "log": "calls/%s.log", "rows": "calls/%s.rows.json"}\n' \

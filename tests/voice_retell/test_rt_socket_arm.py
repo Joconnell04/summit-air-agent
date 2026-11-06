@@ -47,3 +47,14 @@ def test_persona_variants_cover_every_journey_and_repeat_with_the_seed(tmp_path)
     assert len(set(texts)) == 3
     slate = (tmp_path / "a" / "slate.txt").read_text().splitlines()
     assert len(slate) == 12 and all(line.endswith(" reset") for line in slate)
+
+
+def test_only_our_own_scripted_calls_are_hung_up():
+    line = load("line")
+    agent = "agent_socket"
+    assert line.ours({"agent_id": agent, "from_number": line.NUMBER}, agent)
+    # Jackson calling the armed line, or any call on his agent, is never ended.
+    assert not line.ours({"agent_id": agent, "from_number": "+16784774024"}, agent)
+    assert not line.ours({"agent_id": "agent_a3e38e6aa3d4e75dfac12aafc8",
+                          "from_number": line.NUMBER}, agent)
+    assert "line.py hangup" in (ROOT / "retell" / "arms" / "socket" / "run_slate.sh").read_text()

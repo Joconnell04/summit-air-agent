@@ -8,6 +8,8 @@ on error too.
     python retell/arms/socket/line.py arm       answer with the socket agent and the server-led
                                                 world's inbound webhook
     python retell/arms/socket/line.py restore   answer with Jackson's agent and the live bridge
+    python retell/arms/socket/line.py hangup    end our own scripted calls still live on the
+                                                socket agent (their caller ID is the line's own)
 
 Versioned Retell endpoints only (voice/retell/api.py).
 """
@@ -66,6 +68,12 @@ def put(retell: Retell, wanted: dict) -> None:
     print(f"{NUMBER} answers with {ids[0]} via {now['inbound_webhook_url']}")
 
 
+def ours(call: dict, agent_id: str) -> bool:
+    """A scripted call of this arm: on the socket agent, from the test caller, whose caller ID is
+    the line's own number. Anyone else's call is never touched."""
+    return call.get("agent_id") == agent_id and call.get("from_number") == NUMBER
+
+
 def socket_agent(retell: Retell) -> str:
     listed = retell.request("POST", "/v2/list-agents", json={})
     items = listed.get("items", []) if isinstance(listed, dict) else listed
@@ -90,6 +98,14 @@ def main() -> int:
         put(retell, setup(socket_agent(retell)))
     elif action == "restore":
         put(retell, JACKSON)
+    elif action == "hangup":
+        # A scripted caller stopped mid-call leaves its phone leg open, and the socket's dead-air
+        # check-ins ran ten minutes on call_559d36684d7f1153b2df75f1d71.
+        agent_id = socket_agent(retell)
+        for c in live_calls(retell, int(time.time() * 1000)):
+            if ours(c, agent_id):
+                retell.request("POST", f"/v2/stop-call/{c['call_id']}")
+                print(f"ended {c['call_id']}")
     else:
         raise SystemExit(__doc__)
     return 0
