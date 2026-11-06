@@ -72,9 +72,16 @@ def arm_tools(path: Path, specs: list[dict]) -> list[dict]:
 
 
 def hold_phrase_after_s(config_path: Path) -> float:
-    """How long a step's tool work may run, from the caller's last word, before the hold phrase
+    """How long a step's tool work may run before the hold phrase
     (config/models.yaml voice.hold_phrase_after_s)."""
     return float(yaml.safe_load(config_path.read_text())["voice"].get("hold_phrase_after_s", 0.7))
+
+
+def hold_phrase_from(config_path: Path) -> str:
+    """What the hold phrase's wait is counted from: the caller's turn or the tool's start
+    (config/models.yaml voice.hold_phrase_from, RETELL_LLM_HOLD_FROM overrides it)."""
+    voice = yaml.safe_load(config_path.read_text())["voice"]
+    return os.environ.get("RETELL_LLM_HOLD_FROM") or voice.get("hold_phrase_from", "caller")
 
 
 def dead_air_checks(config_path: Path) -> int:
@@ -93,6 +100,7 @@ def create_app(brain: Brain | None = None, transport=None) -> FastAPI:
     default_tenant = os.environ.get("RETELL_LLM_TENANT", "summit-air")
     checks = dead_air_checks(ROOT / "config" / "models.yaml")
     hold_after = hold_phrase_after_s(ROOT / "config" / "models.yaml")
+    hold_from = hold_phrase_from(ROOT / "config" / "models.yaml")
     prompt_file = os.environ.get("RETELL_LLM_PROMPT")
     tools_file = os.environ.get("RETELL_LLM_TOOLS")
     server_led = os.environ.get("RETELL_LLM_SERVER_LED") == "1"
@@ -123,7 +131,7 @@ def create_app(brain: Brain | None = None, transport=None) -> FastAPI:
         call = LlmCall(
             server, the_brain(), send, system, specs, tenant_lines(tenants, slug),
             phone=details.get("call_type") == "phone_call", dead_air_checks=checks,
-            server_led=server_led, hold_after_s=hold_after,
+            server_led=server_led, hold_after_s=hold_after, hold_from=hold_from,
         )
         return call, variables.get("greeting", "")
 

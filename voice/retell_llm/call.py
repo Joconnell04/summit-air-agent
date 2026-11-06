@@ -137,6 +137,8 @@ class Response:
         self.said = False
         # Server-led: a tool is running or being written, the wait the hold phrase covers.
         self.tool_wait = ""
+        # When the first tool call of the wait went to the tool server.
+        self.tool_began: float | None = None
         self.hold_ms: float | None = None
 
         self.closed = False
@@ -184,6 +186,7 @@ class LlmCall:
         dead_air_checks: int = 4,
         server_led: bool = False,
         hold_after_s: float = 0.7,
+        hold_from: str = "caller",
     ):
         self.server = server
         self.brain = brain
@@ -205,6 +208,9 @@ class LlmCall:
         # talking, one hold phrase ("One sec."), the tenant's, in turn, never twice in a row
         # (config/models.yaml voice.hold_phrase_after_s).
         self.hold_after_s = hold_after_s
+        # "caller": counted from the caller's turn (Jackson's ask); "tool": from the moment the
+        # tool itself starts, so the model writing the call doesn't count.
+        self.hold_from = hold_from
         self.hold_phrases = list(lines.get("hold_phrases") or ["One sec."])
         self.hold_stats = {"waits": 0, "fired": 0}
         self.reminders = 0
@@ -399,7 +405,9 @@ class LlmCall:
         the caller stopped talking and the caller has heard nothing yet. Logged when it fires."""
         while not out.closed and not out.stale() and not out.said:
             waited = time.perf_counter() - began
-            if out.tool_wait and waited >= self.hold_after_s:
+            start = out.tool_began if self.hold_from == "tool" else began
+            due = start is not None and time.perf_counter() - start >= self.hold_after_s
+            if out.tool_wait and due:
                 phrase = self.hold_phrases[self.hold_stats["fired"] % len(self.hold_phrases)]
                 self.hold_stats["fired"] += 1
                 out.hold_ms = round(waited * 1000, 1)
@@ -484,6 +492,8 @@ class LlmCall:
             name = use["name"]
             if self.server_led:
                 self._wait_on(out, name)
+                if out.tool_began is None and name not in NO_HOLD_TOOLS:
+                    out.tool_began = time.perf_counter()
             envelope = await self._tool(out, name, dict(use["input"]))
             self.reply.tool_done(name, envelope)
             data = envelope.get("data") or {}

@@ -598,3 +598,15 @@ def test_server_led_no_second_opener_right_after_a_hold_phrase(monkeypatch):
     with client.websocket_connect(path()) as ws:
         open_call(ws)
         assert said(ask(ws, 1, ["Hi.", "Yes, that works."])) == f"One sec. {question}"
+
+
+def test_server_led_counted_from_the_tool_a_slow_model_alone_gets_no_hold_phrase(monkeypatch):
+    monkeypatch.setenv("RETELL_LLM_HOLD_FROM", "tool")
+    slots = {"id": "t1", "name": "find_slots", "input": {"job_type": "no_heat"}}
+    offer = "The soonest I have is today, 12 to 12:30. Does that work?"
+    server, client, brain = slow_socket(monkeypatch, {}, [([], [slots])], after_s=0.1)
+    brain.wait_s = [0.3]  # the model takes longer than the threshold; the tool is instant
+    server.tools["find_slots"] = envelope(say=offer, data={"offer": {"window": "1200-1230"}})
+    with client.websocket_connect(path()) as ws:
+        open_call(ws)
+        assert said(ask(ws, 1, ["Hi.", "Yes."])) == offer
