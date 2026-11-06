@@ -115,6 +115,18 @@ From my call call_2fb4e053ba8b76b57c348845990, on server 28707de after hours. It
 
 From my 11:20 PM call, call_549de89ecc2428e409b64072e34. Today and tomorrow are said as just that, with no weekday or date ("tomorrow, 8 to 8:30", not "tomorrow, Friday, November 6"). The two access questions are one ("Will someone be home to let the technician in, and is there a gate code or buzzer they should know about?"), asking only for the missing half if I answer half. Backchannel frequency up from 0.4 to 0.8 with "mm-hmm" and "yeah" added, because I want quicker backchanneling. Live now (2,437 words, MEASURED above). Outcome not measured yet. Its snapshot isn't committed on this branch yet; the CHANGELOG line is from the coordinator's working copy.
 
+### Change set 20 (04:47)
+
+I switched the voice to Cartesia's Brian and renamed the assistant Brian to match. The prompt and the default greeting changed here; the phone greeting comes from the server, which now reads the name from one setting (`assistant_name`, c458944). Kept. Not a quality fix, just the voice I want.
+
+### Change set 21 (04:58)
+
+From my 11:40 PM call, call_041c4161b20fbd44cd92d3ede64, which actually reached the socket test agent on its daytime clock (that's why it offered "today, 1 to 1:30" at night). What I wanted on every arm anyway: short connectors before most questions ("Got it.", "Okay, thanks.", "Perfect.", "And..."), never the same twice in a row, and a check-in after 8 seconds of silence instead of 20, up to twice. The socket arm got its own number after this so my calls stop landing on test agents. Too early to say if it holds.
+
+### Change set 22 (05:02)
+
+One catch-all question for the technician on heating, cooling and airflow problems, with two short examples that fit the issue: leaking water or turning on and off a lot for cooling, banging pipes or shutting off for heating, weak airflow or dust for vents. I kept "smell" out of the heating example so a yes doesn't set off the gas check. Not tested on a call yet.
+
 ## Side-by-side arms (issue #169)
 
 Four versions of the agent on the real phone line, scripted callers, scored by our checks, an Opus 5.5 judge and Retell's own latency and cost. One call per arm and persona, so judge means within about half a point are noise. Source for every number in this section unless it says otherwise: `evals/rounds/side-by-side-01.md` on joco/side-by-side-014a4c, MEASURED from `side-by-side-01-data/results.json`.
