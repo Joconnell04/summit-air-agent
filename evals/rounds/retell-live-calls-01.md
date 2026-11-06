@@ -32,3 +32,15 @@ What the trace shows and what changed (agent change set 18):
 - The visit questions get a short "Got it." or "Okay." between them.
 - The pets question is removed everywhere, behind a tenant setting that is off; the gate code and buzzer question stays.
 - Also seen: "What's going on with your system, and since when?" asked two questions in one turn, and the opening "I scheduled an appointment" led to a confused exchange about whether a visit existed.
+
+## Call call_549de89ecc2428e409b64072e34 (Jackson, 11:20 PM, Haiku 5.5 agent on server a679a7a)
+
+Jackson's words, verbatim:
+
+> just called the number at 11:20pm. still slightly too long pause on most turns and extra long on some turns. needs som backchanneling more quickly i think. and if the date is tomorrow or today, no need to say "november 6th". and combine the question about someone to let the person in and the gate code question should be combined into one, more like access-related. notice a lot of pauses. but overall pretty good. so investigate what i said, handle it and keep going
+
+> i honestly disagree. i think proper backchanneling and then still relying on the model for a proper response that's more adaptable is a better idea than making it server-side fixed response. it's not always about latency, it's about perceisved latency and patience provisions
+
+What the trace shows (MEASURED, Retell call latency): e2e p50 1,711 ms, p90 3,593 ms, max 3,809 ms. Speech-to-text (asr) p50 724 ms, about 40% of a turn; LLM p50 718 ms, p90 2,619 ms on the tool turns. The slow slot search fix (461154f) wasn't deployed to the live world yet; it is now.
+
+What changed (agent change set 19): no weekday or date for today or tomorrow; one access question ("Will someone be home to let the technician in, and is there a gate code or buzzer they should know about?"); backchannel frequency 0.4 to 0.8 with "mm-hmm" and "yeah" added. Next: an STT fast vs accurate comparison and a check that backchannels fire on the Cartesia voice at all. The socket build keeps the model writing adaptive replies and handles waits with backchannels and a dynamic hold line, not fixed server lines.
