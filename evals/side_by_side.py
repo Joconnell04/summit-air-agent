@@ -72,6 +72,8 @@ ASKED_SPELLING = r"\bspell\b"
 ASKED_FULL_NAME = r"\b(first and last|full name|last name)\b"
 
 
+# A buzzer or gate code the caller gives ("the buzzer is 2b", "gate code is four four one two").
+ACCESS_DETAIL = r"\b(buzzer|gate code)( is| number)? (\w+(?: \w+){0,3})"
 NAME_QUESTION = (
     r"\b(can i (get|have)|what'?s|what is|may i (get|have)) your (full |first and last )?name\b"
 )
@@ -544,6 +546,24 @@ def check_call(
                 re.search(r"\b(apartment|unit)\b[^?]*\?", t["text"], re.IGNORECASE) for t in before
             ),
             "a building's unit was never asked before the read-back",
+        )
+    # Change set 25: a plain "yes" to the access question is complete; a buzzer or gate code the
+    # caller gives must reach the booking's arrival notes.
+    code = re.search(ACCESS_DETAIL, caller_text)
+    booked = [
+        b for b in ours.get("bookings", []) if b.get("status") in ("booked", "done", "queued")
+    ]
+    if code and booked:
+        notes = " ".join(
+            norm(json.dumps(json.loads(b.get("request_json") or "{}").get("details", {})))
+            for b in booked
+        )
+        # The keyword is matched, not the value: notes may write "four four one two" as "4412".
+        word = "gate" if "gate" in code.group(1) else "buzzer"
+        put(
+            "access_detail_captured",
+            word in notes,
+            f"said {code.group(0)!r}, no {word} in the booking",
         )
     if persona.get("job_type"):
         jobs = [b.get("job_type") for b in ours.get("bookings", [])]

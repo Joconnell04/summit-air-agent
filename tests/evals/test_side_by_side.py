@@ -490,3 +490,18 @@ def test_a_run_on_an_older_prompt_is_not_held_to_later_rules(tmp_path):
     new = sbs.report([str(folder) + "@24"])["calls"][0]["checks"]
     old = sbs.report([str(folder) + "@18"])["calls"][0]["checks"]
     assert "closing_one_nicety" in new and "closing_one_nicety" not in old
+
+
+def test_a_buzzer_the_caller_gives_reaches_the_booking_and_a_plain_yes_needs_nothing():
+    call = good_call()
+    call[11] = user("Yes, and the buzzer is 2B.")
+    booked = rows(["book"], name="Jordan Lee")
+    booked["calls"][0]["bookings"][0]["request_json"] = json.dumps(
+        {"details": {"arrival_notes": "No gate code"}}
+    )
+    assert not sbs.check_call(PERSONA, call, booked)["access_detail_captured"]["ok"]
+    booked["calls"][0]["bookings"][0]["request_json"] = json.dumps(
+        {"details": {"arrival_notes": "Buzzer 2B"}}
+    )
+    assert sbs.check_call(PERSONA, call, booked)["access_detail_captured"]["ok"]
+    assert "access_detail_captured" not in sbs.check_call(PERSONA, good_call(), booked)
