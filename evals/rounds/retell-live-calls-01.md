@@ -44,3 +44,20 @@ Jackson's words, verbatim:
 What the trace shows (MEASURED, Retell call latency): e2e p50 1,711 ms, p90 3,593 ms, max 3,809 ms. Speech-to-text (asr) p50 724 ms, about 40% of a turn; LLM p50 718 ms, p90 2,619 ms on the tool turns. The slow slot search fix (461154f) wasn't deployed to the live world yet; it is now.
 
 What changed (agent change set 19): no weekday or date for today or tomorrow; one access question ("Will someone be home to let the technician in, and is there a gate code or buzzer they should know about?"); backchannel frequency 0.4 to 0.8 with "mm-hmm" and "yeah" added. Next: an STT fast vs accurate comparison and a check that backchannels fire on the Cartesia voice at all. The socket build keeps the model writing adaptive replies and handles waits with backchannels and a dynamic hold line, not fixed server lines.
+
+## Call call_b2302955a9c4054184c5d502e97 (Jackson, 12:02 AM, Haiku 5.5 agent, Brian voice)
+
+Jackson's words, verbatim:
+
+> check my most recent call: it's brian voice but says brooke. also i hate how it said "thanks soooo much for calling", it should be "thanks for calling". not a strict rule but ideally. but if it's strictly set as "sooo much" then change that
+> it also asks "are you still there" too frequently. let it sit for double the length of time on silence?
+> also it said "thanks for waiting" when i obviously was the one making it wait.
+> perfect question about water leaking or turning off and on a lot.
+> but overall pretty good
+> and when i confirm my phone #, it goes right to confirming my address. there should be a filler word before stating "[the address], correct, right?"
+> check the logs and go ideate on ways to solve these things but overall it's going in the right direction and even the pauses weren't too bad
+> also the ending is like three things: thank you, have a great day, take care. make it only thank you + one of those nicieties, with variation.
+
+Findings: the call came a few minutes before the Retell-lane deploy of c458944, so the server's greeting still said Brooke; it says Brian now. MEASURED e2e p50 1,493 ms, p90 3,482 ms. "Are you still there?" fired six times at the 8 s setting. On "super urgent" and "my elderly grandma's here" at midnight, priority went to High but the agent still offered 8 AM, then a callback; the emergency dispatch push covers this.
+
+What changed (agent change set 24): goodbye is "Thanks for calling Summit Air." plus one varied nicety; greeting drops "so much ... today"; never thank the caller for waiting; silence check-in at 16 s. The server lane adds a varied connector before the read-back sentence and the same greeting wording on phone calls.

@@ -131,6 +131,10 @@ One catch-all question for the technician on heating, cooling and airflow proble
 
 Caller ID first. The server already looks up my number before hello, so a match gets greeted by name and isn't asked for it again; more than one match gets "Am I speaking with ..."; no match gets "I don't see an account under the number you're calling from. Can I get your name?", once, and only when a name is needed. I'd asked for it to say it's trying, but the lookup is done before the call, so a "let me check" turn would be a fake pause. The no-match line covers it. The server lane is adding a plain call note for each case so the model doesn't have to read it out of the JSON. Not tested on a call yet.
 
+### Change set 24 (05:20)
+
+From my 12:02 AM call. The goodbye had three things stacked ("Thanks so much for calling Summit Air today. Have a great day! Take care."), so now it's "Thanks for calling Summit Air." plus one nicety that changes with the time of day. "So much ... today" is gone from the greeting too. It thanked me for waiting when I was the one making it wait, so that's out. "Are you still there?" fired six times at 8 seconds, so it's back to 16. The catch-all question about water leaking or turning on and off landed well, so it stays. The read-back connector ("Perfect. So that's ...") is a server line, so the server lane is adding it.
+
 ## Side-by-side arms (issue #169)
 
 Four versions of the agent on the real phone line, scripted callers, scored by our checks, an Opus 5.5 judge and Retell's own latency and cost. One call per arm and persona, so judge means within about half a point are noise. Source for every number in this section unless it says otherwise: `evals/rounds/side-by-side-01.md` on joco/side-by-side-014a4c, MEASURED from `side-by-side-01-data/results.json`.
