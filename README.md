@@ -1,12 +1,50 @@
 # Summit Air inbound agent
 
-An AI phone agent that answers inbound calls for Summit Air, a 40-tech residential HVAC company in NYC. It works out what's wrong, checks whether the caller is residential and a member, collects what a technician needs, flags urgent calls, and books the visit or sets next steps.
+An AI phone agent that answers inbound calls for Summit Air, a 40-tech residential HVAC company in NYC. It works out what's wrong, checks whether the caller is residential and a member, collects what a technician needs, separates routine visits from urgent ones, and books the visit or sets the next step.
 
-It runs on two parts. A Retell agent handles the phone line, listening, turn-taking and the voice, with Claude Haiku 5.5 on a short prompt. Our tool server owns every fact and every rule: lookups, the read-back before booking, the service area, the residential check, priority, identity checks and the safety lines are server code, not prompt instructions. The model asks; the server decides.
+**How it's built.** Retell runs the phone line: listening, turn-taking, backchannels and the voice ("Brian"). Our tool server owns the facts and the rules: lookups, the read-back before booking, the service area, the residential check, priority, emergency dispatch, identity checks and the safety lines. Today the agent on the line is a hosted Retell single-prompt agent (Claude Haiku 5.5) that calls the tool server for every fact and gate. The next build, DECISIONS.md 121, moves the turn itself onto our server through Retell's custom-LLM socket, so the server speaks the sentences that must be exact and Haiku writes the rest; it is on branch `joco/socket-buildout-176` (`voice/retell_llm/`, `app/flow.py`) until it passes the done bar (DECISIONS.md 119), and the hosted agent stays as the fallback, one phone-number switch away.
+
+```
+caller --phone--> Retell: ears, turn-taking, backchannels, voice
+                    |  tool calls and call events (HTTPS)
+                    v
+                  tool server (app/): facts, gates, priority, safety lines, labels
+                    |                         |
+                    v                         v
+                  CRM: mock ServiceTitan    owner view and debug bench
+                  (servicetitan_mock/)      (/owner, /bench)
+```
 
 Call it at (646) 624-0418. The owner view is at https://45-77-105-247.sslip.io/owner and the debug bench at https://45-77-105-247.sslip.io/bench (both need a login).
 
-**How we got here.** We tried several stacks and gave each a fair test. Most of the build went into a layered custom stack (LiveKit, Deepgram, Claude and Cartesia, with a side model, stage-scoped rules and a speech filter), because owning every layer promised more control. On the audio rig and on live calls, the layering itself caused the stalls and repeats, while Retell's integrated stack answered faster and sounded better. So the voice moved to Retell and the rules stayed in our server. The custom stack stays in the repo as the reference. The full story: [DECISIONS.md](DECISIONS.md) 111 and 112, and the [simplicity slate](evals/rounds/simplicity-slate-01.md).
+**How we got here.** We tried several stacks and gave each a fair test: a layered custom stack (LiveKit, Deepgram, Claude, Cartesia), Retell native, OpenAI's full-duplex model and others, then four agent arms side by side on the real phone line. The layered stack's own seams caused the stalls; the hosted model kept rewording sentences the server owned. The answer was Retell for the voice and our server for every word that has to be right. The story in order: [DECISIONS.md](DECISIONS.md) 111, 112, 121 and 124, the [simplicity slate](evals/rounds/simplicity-slate-01.md) and the [side-by-side](evals/rounds/side-by-side-01.md).
+
+## The six requirements, where each is enforced and how it's tested
+
+| The assignment asks the agent to | Enforced in | Tested by |
+|---|---|---|
+| Answer and figure out the HVAC issue | The prompt's question order (`retell/summit-air-jackson/prompt.md`; `app/flow.py` in the socket build) and the trade's job types (`trades/hvac/`) | `tests/tool_server/test_ts_booking_flow.py`, `test_ts_trades.py` |
+| Tell residential from commercial | `record_lead` kind `commercial` and the booking gate in `app/tools.py`; the company's rule in `tenants/summit-air/` | `test_ts_booking.py`, `test_ts_calls.py` |
+| Know whether the caller is a member | Caller-ID lookup before hello (`app/lookup.py`, `prompts/assemble.py` call notes) and `find_customer` | `test_ts_lookup.py`, `test_ts_accounts.py` |
+| Collect what a technician needs | `book_appointment`'s required details and the job summary (`app/booking.py`), the access question and the catch-all answer | `test_ts_booking.py`, `test_ts_summary.py` |
+| Separate routine from urgent (no heat in winter, no AC with a medical condition or an older person, gas) | Priority from the caller's own words (`app/priority.py`), safety lines and gates (`app/safety.py`), emergency dispatch, and one Routine, Urgent or No visit label per call (`app/labels.py`) | `test_ts_priority.py`, `test_ts_priority_caller_words.py`, `test_ts_safety.py`, `test_ts_dispatch.py`, `test_ts_labels.py` |
+| Book the visit or confirm next steps | `read_back`, `find_slots`, `book_appointment` against the CRM, with `flag_person`, `record_lead` and the warm transfer for everything else | `test_ts_booking.py`, `test_ts_handoff.py`, `test_ts_transfer.py` |
+
+Every rule that must happen lives in server code, never only in the prompt; a flag the model can set is not a gate.
+
+## The prompt
+
+- The agent's prompt and every version of it, with a note on why each change was made and whether it held: [retell/PROMPT-LOG.md](retell/PROMPT-LOG.md).
+- The hosted agent's prompt, tools and settings, snapshotted after every change: [retell/summit-air-jackson/](retell/summit-air-jackson/).
+- The lines the server speaks itself, word for word: `tenants/summit-air/agent.yaml`.
+- The socket build's prompt pieces: `prompts/` on branch `joco/socket-buildout-176`.
+
+## Debug a call
+
+1. Find the call: the owner view's Calls page, or the bench, both list every call with its label.
+2. `make trace CALL=<id>` prints its timeline: each caller line, each tool call with its arguments and result, and what was said.
+3. The bench's **Checks** tab runs the Opus failure grader on one call, the past hour or the past day, and flags only real failures (DECISIONS 120).
+4. Retell's own record of the call (`GET /v2/get-call/<id>`) has the audio, per-turn latency and the transcript with tool calls.
 
 ## Start here
 
