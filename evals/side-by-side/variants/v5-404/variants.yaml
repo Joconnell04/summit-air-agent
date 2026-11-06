@@ -1,0 +1,301 @@
+log:
+  g404-01:
+    address: five hundred Ocean Avenue
+    borough: Brooklyn
+    correction: true
+    early: true
+    interrupt: false
+    journey: gas_real
+    name: Hannah Russo
+    one_second: true
+    seed: 404
+    unit: ''
+  g404-02:
+    address: seventeen hundred Bedford Avenue
+    borough: Brooklyn
+    correction: true
+    early: false
+    interrupt: false
+    journey: gas_real
+    name: Luis Russo
+    one_second: false
+    seed: 404
+    unit: apartment one F
+  m404-01:
+    address: five hundred Ocean Avenue
+    borough: Brooklyn
+    correction: false
+    early: false
+    interrupt: false
+    journey: routine
+    name: Sam Ortiz
+    one_second: false
+    returning_after: r404-01
+    seed: 404
+    system: furnace
+    unit: ''
+    unit_volunteered: false
+  o404-01:
+    address: seven forty-two Nostrand Avenue
+    borough: Brooklyn
+    corrected_unit: true
+    correction: true
+    early: false
+    interrupt: false
+    journey: elderly
+    name: Elena Goldberg
+    one_second: false
+    seed: 404
+    system_said: central air
+    unit: the second floor
+    unit_volunteered: true
+    who: my grandfather is ninety and he's here with me
+  o404-02:
+    address: twelve fifty Hylan Boulevard
+    borough: Staten Island
+    correction: false
+    early: false
+    interrupt: false
+    journey: elderly
+    name: Priya Brooks
+    one_second: false
+    seed: 404
+    system_said: a boiler
+    unit: apartment two
+    unit_volunteered: false
+    who: my grandfather is ninety and he's here with me
+  o404-03:
+    address: ten ten Morris Park Avenue
+    borough: the Bronx
+    correction: false
+    early: false
+    interrupt: true
+    journey: elderly
+    name: Mei Shah
+    one_second: false
+    seed: 404
+    system_said: a boiler
+    unit: unit 4B
+    unit_volunteered: true
+    who: my grandfather is ninety and he's here with me
+  o404-04:
+    address: twenty-nine ten Ditmars Boulevard
+    borough: Queens
+    corrected_unit: true
+    correction: true
+    early: false
+    interrupt: false
+    journey: elderly
+    name: Raj Popescu
+    one_second: false
+    seed: 404
+    system_said: a gas furnace
+    unit: apartment one F
+    unit_volunteered: false
+    who: my grandfather is ninety and he's here with me
+  r404-01:
+    address: five hundred Ocean Avenue
+    borough: Brooklyn
+    correction: false
+    early: false
+    interrupt: false
+    journey: routine
+    name: Sam Ortiz
+    one_second: false
+    seed: 404
+    system: furnace
+    unit: ''
+    unit_volunteered: false
+  r404-02:
+    address: five hundred Ocean Avenue
+    borough: Brooklyn
+    corrected_unit: true
+    correction: true
+    early: false
+    interrupt: false
+    journey: routine
+    name: Luis Shah
+    one_second: false
+    seed: 404
+    system: boiler
+    unit: the second floor
+    unit_volunteered: true
+  r404-03:
+    address: twenty-nine ten Ditmars Boulevard
+    borough: Queens
+    correction: false
+    early: false
+    interrupt: true
+    journey: routine
+    name: Fatima Shah
+    one_second: false
+    seed: 404
+    system: AC
+    unit: ''
+    unit_volunteered: false
+  r404-04:
+    address: two fifteen Mott Street
+    borough: Manhattan
+    correction: false
+    early: false
+    estimate: true
+    interrupt: true
+    journey: routine
+    name: Nadia Lee
+    one_second: false
+    seed: 404
+    system_said: a gas furnace
+    unit: apartment two
+    unit_volunteered: true
+  x404-01:
+    address: one sixty Remsen Street
+    borough: Brooklyn
+    correction: true
+    early: false
+    interrupt: false
+    journey: gas_retracted
+    name: Devon Nowak
+    one_second: false
+    seed: 404
+    take_back: hold on, sorry, it's the trash, not gas, I took it out
+    unit: ''
+  x404-02:
+    address: twenty-nine ten Ditmars Boulevard
+    borough: Queens
+    correction: false
+    early: false
+    interrupt: false
+    journey: gas_retracted
+    name: Grace Petrova
+    one_second: false
+    seed: 404
+    take_back: wait, never mind, it was the stove, I left a burner on, it's off now
+    unit: apartment two
+personas:
+  g404-01:
+    closes_with: bye|that's it|that's all
+    confirms: 1
+    first: Hannah
+    flag: true
+    journey: gas_real
+    name: null
+    real_hazard: true
+    safety: true
+    unit_ask: false
+  g404-02:
+    closes_with: bye|that's it|that's all
+    confirms: 1
+    first: Luis
+    flag: true
+    journey: gas_real
+    name: null
+    real_hazard: true
+    safety: true
+    unit_ask: false
+  m404-01:
+    bookings:
+    - book
+    closes_with: bye|that's it|that's all
+    confirms: 1
+    first: Sam
+    journey: routine
+    matched: true
+    name: Sam Ortiz
+    unit_ask: false
+  o404-01:
+    bookings:
+    - book
+    closes_with: bye|that's it|that's all
+    confirms: 2
+    first: Elena
+    journey: elderly
+    name: Elena Goldberg
+    raised: ninety|90
+    unit_ask: false
+  o404-02:
+    bookings:
+    - book
+    closes_with: bye|that's it|that's all
+    confirms: 1
+    first: Priya
+    journey: elderly
+    name: Priya Brooks
+    raised: ninety|90
+    unit_ask: true
+  o404-03:
+    bookings:
+    - book
+    closes_with: bye|that's it|that's all
+    confirms: 1
+    first: Mei
+    journey: elderly
+    name: Mei Shah
+    raised: ninety|90
+    unit_ask: false
+  o404-04:
+    bookings:
+    - book
+    closes_with: bye|that's it|that's all
+    confirms: 2
+    first: Raj
+    journey: elderly
+    name: Raj Popescu
+    raised: ninety|90
+    unit_ask: true
+  r404-01:
+    bookings:
+    - book
+    closes_with: bye|that's it|that's all
+    confirms: 1
+    first: Sam
+    journey: routine
+    name: Sam Ortiz
+    unit_ask: false
+  r404-02:
+    bookings:
+    - book
+    closes_with: bye|that's it|that's all
+    confirms: 2
+    first: Luis
+    journey: routine
+    name: Luis Shah
+    unit_ask: false
+  r404-03:
+    bookings:
+    - book
+    closes_with: bye|that's it|that's all
+    confirms: 1
+    first: Fatima
+    journey: routine
+    name: Fatima Shah
+    unit_ask: false
+  r404-04:
+    bookings:
+    - book
+    closes_with: bye|that's it|that's all
+    confirms: 1
+    first: Nadia
+    job_type: estimate
+    journey: routine
+    name: Nadia Lee
+    unit_ask: false
+  x404-01:
+    bookings: []
+    closes_with: bye|that's it|that's all
+    confirms: 1
+    first: Devon
+    journey: gas_retracted
+    name: null
+    retraction: notgas
+    safety: true
+    unit_ask: false
+  x404-02:
+    bookings: []
+    closes_with: bye|that's it|that's all
+    confirms: 1
+    first: Grace
+    journey: gas_retracted
+    name: null
+    retraction: nevermind
+    safety: true
+    unit_ask: false

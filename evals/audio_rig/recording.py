@@ -9,6 +9,7 @@ A batch is one rig run: a folder under data/sim (gitignored) holding S1.flac, S1
 so on, and manifest.json listing them in the order they ran. The short codes never change once
 written, so "S3, line 7" means the same thing a week later.
 """
+
 import json
 import shutil
 import subprocess
@@ -80,8 +81,9 @@ class CallRecorder:
         self.clips.append(Clip(AGENT, start, x))
         self._agent_end = start + len(x) / self.rate
 
-    def line(self, speaker: str, text: str, at: float | None,
-             reply_delay_ms: float | None = None) -> None:
+    def line(
+        self, speaker: str, text: str, at: float | None, reply_delay_ms: float | None = None
+    ) -> None:
         if text and at is not None:
             self.lines.append(Line(speaker, at, text, reply_delay_ms))
 
@@ -94,8 +96,9 @@ class CallRecorder:
         origin = self.origin()
         if origin is None:
             return np.zeros(0, dtype="<i2"), []
-        length = max((round((c.start - origin) * self.rate) + len(c.pcm) for c in self.clips),
-                     default=0)
+        length = max(
+            (round((c.start - origin) * self.rate) + len(c.pcm) for c in self.clips), default=0
+        )
         mix = np.zeros((length, 2), dtype=np.int32)
         for c in self.clips:
             i = round((c.start - origin) * self.rate)
@@ -127,8 +130,11 @@ def to_flac(wav: Path) -> Path:
     if shutil.which("flac") is None:
         return wav
     flac = wav.with_suffix(".flac")
-    done = subprocess.run(["flac", "--silent", "--best", "--force", "-o", str(flac), str(wav)],
-                          capture_output=True, check=False)
+    done = subprocess.run(
+        ["flac", "--silent", "--best", "--force", "-o", str(flac), str(wav)],
+        capture_output=True,
+        check=False,
+    )
     if done.returncode != 0:
         return wav
     wav.unlink()
@@ -151,9 +157,13 @@ class Batch:
             # Adding to a batch: its calls keep their codes and new ones follow on.
             self.manifest = json.loads((folder / MANIFEST).read_text())
         else:
-            self.manifest = {"batch": folder.name, "stack": stack,
-                             "created": datetime.now(UTC).isoformat(timespec="seconds"),
-                             "results": None, "calls": []}
+            self.manifest = {
+                "batch": folder.name,
+                "stack": stack,
+                "created": datetime.now(UTC).isoformat(timespec="seconds"),
+                "results": None,
+                "calls": [],
+            }
         folder.mkdir(parents=True, exist_ok=True)
         self._save()
 
@@ -168,15 +178,26 @@ class Batch:
             audio = to_flac(audio)
         _, lines = recorder.render()
         transcript = {
-            "code": code, "scenario_id": result.scenario_id, "sample": result.sample,
-            "call_id": result.call_id, "persona": persona, "outcome": result.outcome,
-            "audio": audio.name, "duration_s": round(duration, 2), "rate": recorder.rate,
+            "code": code,
+            "scenario_id": result.scenario_id,
+            "sample": result.sample,
+            "call_id": result.call_id,
+            "persona": persona,
+            "outcome": result.outcome,
+            "audio": audio.name,
+            "duration_s": round(duration, 2),
+            "rate": recorder.rate,
             "lines": lines,
         }
         (self.folder / f"{code}.json").write_text(json.dumps(transcript, indent=2) + "\n")
-        entry = {"code": code, "scenario_id": result.scenario_id, "sample": result.sample,
-                 "audio": audio.name, "transcript": f"{code}.json",
-                 "duration_s": transcript["duration_s"]}
+        entry = {
+            "code": code,
+            "scenario_id": result.scenario_id,
+            "sample": result.sample,
+            "audio": audio.name,
+            "transcript": f"{code}.json",
+            "duration_s": transcript["duration_s"],
+        }
         self.manifest["calls"].append(entry)
         self._save()
         if self.store is not None:

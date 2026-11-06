@@ -9,6 +9,7 @@ the simulated caller loops, never finishes or the harness breaks is marked error
 verdict (decision 06). Each run is compared with the previous one of the same suite, stack and
 profile, and mirrored to LangSmith when LANGSMITH_API_KEY is set.
 """
+
 import argparse
 import sys
 import tempfile
@@ -47,8 +48,14 @@ class Models:
 
 
 class Harness:
-    def __init__(self, models: Models, stack: str, workdir: Path, open_agent: Callable | None = None,
-                 overlay: dict | None = None):
+    def __init__(
+        self,
+        models: Models,
+        stack: str,
+        workdir: Path,
+        open_agent: Callable | None = None,
+        overlay: dict | None = None,
+    ):
         if stack not in STACKS:
             raise ValueError(f"unknown stack {stack!r}; known: {', '.join(STACKS)}")
         self.models = models
@@ -65,19 +72,36 @@ class Harness:
         caller_id = resolve_caller(scenario.caller_id, self.seed[1])
         if self.stack != "livekit":
             return load_adapter(self.stack).open_agent(call_id, caller_id)
-        world = World(self.workdir / call_id, self.seed, scenario.start_time, self.overlay,
-                      scenario.fsm_down, transfer=scenario.transfer is not None,
-                      weather=scenario.weather)
+        world = World(
+            self.workdir / call_id,
+            self.seed,
+            scenario.start_time,
+            self.overlay,
+            scenario.fsm_down,
+            transfer=scenario.transfer is not None,
+            weather=scenario.weather,
+        )
         if scenario.earlier_call:
             world.earlier_call(f"{call_id}-earlier", caller_id, scenario.earlier_call)
         # So the checks can read what ServiceTitan holds after the call (evals/checks.py).
         world.server.st_db = world.st_db
-        agent = InProcessAgent(world.server, self.models.agent, call_id, caller_id, world.clock,
-                               handoff=scenario.transfer or "sent")
+        agent = InProcessAgent(
+            world.server,
+            self.models.agent,
+            call_id,
+            caller_id,
+            world.clock,
+            handoff=scenario.transfer or "sent",
+        )
         return agent, world.server
 
-    def run(self, scenario: Scenario, sample: int = 1, caller_turns: list[str] | None = None,
-            open_agent: Callable | None = None) -> ScenarioResult:
+    def run(
+        self,
+        scenario: Scenario,
+        sample: int = 1,
+        caller_turns: list[str] | None = None,
+        open_agent: Callable | None = None,
+    ) -> ScenarioResult:
         """One simulated call. With caller_turns, those lines are replayed instead of a caller.
         open_agent replaces the harness's own, as when two calls share one world (evals/pairs.py)."""
         call_id = f"eval-{scenario.id}-{sample}-{uuid.uuid4().hex[:8]}"
@@ -109,7 +133,8 @@ class Harness:
             reason = None
             for _ in range(scenario.max_turns):
                 heard = (
-                    said if replay is not None
+                    said
+                    if replay is not None
                     else roughen(mishear(said, scenario.misheard), level, rng)
                 )
                 transcript.append(Turn(role="caller", text=heard))
@@ -146,19 +171,66 @@ class Harness:
         except Exception as err:  # noqa: BLE001 - a broken harness run is an error, not a fail
             error = f"harness: {type(err).__name__}: {err}"
         usage.add(agent_usage)
-        return self._score(scenario, sample, call_id, server, transcript, timings, usage, error,
-                           began, agent_usage.cost_usd)
+        return self._score(
+            scenario,
+            sample,
+            call_id,
+            server,
+            transcript,
+            timings,
+            usage,
+            error,
+            began,
+            agent_usage.cost_usd,
+        )
 
-    def _score(self, scenario, sample, call_id, server, transcript, timings, usage, error, began,
-               agent_cost=0.0):
-        return score(scenario, sample, call_id, server, transcript, timings, usage, error, began,
-                     safety=self.safety, grader=self.models.grader,
-                     final=self.stack.startswith("retell"), agent_cost=agent_cost)
+    def _score(
+        self,
+        scenario,
+        sample,
+        call_id,
+        server,
+        transcript,
+        timings,
+        usage,
+        error,
+        began,
+        agent_cost=0.0,
+    ):
+        return score(
+            scenario,
+            sample,
+            call_id,
+            server,
+            transcript,
+            timings,
+            usage,
+            error,
+            began,
+            safety=self.safety,
+            grader=self.models.grader,
+            final=self.stack.startswith("retell"),
+            agent_cost=agent_cost,
+        )
 
 
-def score(scenario, sample, call_id, server, transcript, timings, usage, error, began, *,
-          safety: dict, grader: Model, final: bool = False, agent_cost: float = 0.0,
-          **extra) -> ScenarioResult:
+def score(
+    scenario,
+    sample,
+    call_id,
+    server,
+    transcript,
+    timings,
+    usage,
+    error,
+    began,
+    *,
+    safety: dict,
+    grader: Model,
+    final: bool = False,
+    agent_cost: float = 0.0,
+    **extra,
+) -> ScenarioResult:
     """Code checks on the tool server's record, then the grader, for one finished call. `final`
     waits for a call that is closed by webhook (Retell); `extra` are further result fields, such
     as the audio rig's."""
@@ -170,7 +242,8 @@ def score(scenario, sample, call_id, server, transcript, timings, usage, error, 
             trace = server.final_trace(call_id) if final else server.trace(call_id)
             tool_calls = [
                 ToolCall(name=e["tool"], arguments=e["args"])
-                for e in trace["events"] if e["type"] == "tool" and e["tool"] in TOOLS
+                for e in trace["events"]
+                if e["type"] == "tool" and e["tool"] in TOOLS
             ]
             evidence = Evidence(trace, safety, getattr(server, "st_db", None))
             done = set_up(trace, safety)
@@ -218,7 +291,8 @@ def score(scenario, sample, call_id, server, transcript, timings, usage, error, 
         outcome=outcome,
         must_pass_failures=(
             [f for f in failures if not f.startswith("grader:")]
-            if scenario.must_pass and outcome == "fail" else []
+            if scenario.must_pass and outcome == "fail"
+            else []
         ),
         check_failures=failures,
         checks=ran,
@@ -238,15 +312,17 @@ def score(scenario, sample, call_id, server, transcript, timings, usage, error, 
     )
 
 
-def run_suite(harness: Harness, chosen: list[Scenario], samples: int, workers: int
-              ) -> list[ScenarioResult]:
+def run_suite(
+    harness: Harness, chosen: list[Scenario], samples: int, workers: int
+) -> list[ScenarioResult]:
     jobs = [(s, n) for s in chosen for n in range(1, samples + 1)]
     with ThreadPoolExecutor(max_workers=max(1, workers)) as pool:
         return list(pool.map(lambda job: harness.run(*job), jobs))
 
 
-def run_pair_suite(harness: Harness, chosen: list[pairs.Pair], samples: int, workers: int
-                   ) -> list[ScenarioResult]:
+def run_pair_suite(
+    harness: Harness, chosen: list[pairs.Pair], samples: int, workers: int
+) -> list[ScenarioResult]:
     """Each pair's two calls run together; separate pairs and samples run side by side."""
     jobs = [(p, n) for p in chosen for n in range(1, samples + 1)]
     with ThreadPoolExecutor(max_workers=max(1, workers)) as pool:
@@ -266,9 +342,16 @@ def profile_model(profile: str) -> str | None:
     return models_profile(profile).get("model")
 
 
-def build_run(suite: str, tags: list[str], stack: str, profile: str, scenario_results,
-              now: datetime | None = None, overlay: dict | None = None,
-              transport: str = "text") -> Run:
+def build_run(
+    suite: str,
+    tags: list[str],
+    stack: str,
+    profile: str,
+    scenario_results,
+    now: datetime | None = None,
+    overlay: dict | None = None,
+    transport: str = "text",
+) -> Run:
     now = now or datetime.now(UTC)
     ids = sorted({r.scenario_id for r in scenario_results})
     return Run(
@@ -296,7 +379,9 @@ def upload(run: Run, path: Path) -> None:
 
 
 def default_models(profile: str) -> Models:
-    return Models(for_profile(profile), for_profile("offline.caller"), for_profile("offline.grader"))
+    return Models(
+        for_profile(profile), for_profile("offline.caller"), for_profile("offline.grader")
+    )
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -309,15 +394,21 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--workers", type=int, default=4)
     parser.add_argument("--no-upload", action="store_true")
     parser.add_argument("--results-dir", default=str(RESULTS_DIR))
-    parser.add_argument("--pairs", default="",
-                        help="all, or pair ids: two calls at once on one world (evals/pairs.py)")
+    parser.add_argument(
+        "--pairs",
+        default="",
+        help="all, or pair ids: two calls at once on one world (evals/pairs.py)",
+    )
     args = parser.parse_args(argv)
 
     tags = suites.parse_tags(args.tags)
     if args.pairs:
         if suites.parse_tags(args.stacks) != ["livekit"]:
-            print("pairs run on the livekit stack only: Retell's eval mock is reset before each "
-                  "call, so two calls cannot share it", file=sys.stderr)
+            print(
+                "pairs run on the livekit stack only: Retell's eval mock is reset before each "
+                "call, so two calls cannot share it",
+                file=sys.stderr,
+            )
             return 2
         try:
             chosen, samples, suite = pairs.select(pairs.load_all(), args.pairs), 1, "pairs"

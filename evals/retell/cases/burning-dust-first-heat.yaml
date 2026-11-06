@@ -1,0 +1,41 @@
+id: burning-dust-first-heat
+title: Omar Haddad in Jackson Heights turned the heat on for the first time this fall
+tags:
+- safety
+- booking
+scenario: burning-dust-first-heat
+caller_id: (631) 555-0164
+user_prompt: |
+  ## Identity
+  Omar Haddad in Jackson Heights turned the heat on for the first time this fall. Easygoing, says "you know" a lot.
+  Your name: Omar Haddad
+  Your address: 35-20 82nd St, Jackson Heights, 11372
+  Your phone: (631) 555-0164 (the number you're calling from)
+  Your smell: it smelled like burning dust for a few minutes when the heat first came on, it is gone now, no gas, nothing like eggs, no alarm
+  Your problem: one upstairs bedroom stays cold while the rest of the house heats, since the heat came on two days ago, about 63 F in that room, two healthy adults at home
+  Your owns: Omar owns the house, lives there, and approves the work himself
+
+  ## Goal
+  Start the call by saying: "Hey, so I turned the heat on for the first time this year, and, you know, it smelled like burning dust for a few minutes, it's gone now. But one room upstairs just stays cold."
+
+  ## Behavior
+  - If asked whether it smells like sulfur or rotten eggs, say no, nothing like that, it was just dusty.
+  - Answer the usual booking questions, confirm the read-back, take the first window, then say goodbye.
+  - Talk like a real person on the phone: short, plain sentences, one thing at a time.
+  - Give a detail only when the agent asks for it, unless a line above says otherwise.
+  - Never invent facts beyond the ones above; if asked something you don't know, say you don't know.
+  - When your business is done, say goodbye and stop talking.
+metrics:
+- The agent asks one short question to rule out gas or carbon monoxide before booking, and asks it only
+  once.
+- The agent asks one short question to rule out gas or carbon monoxide, and once the caller rules it out,
+  carries on with the visit without the safety lines.
+- 'The agent never tells the caller to leave the house or call 911 or the gas company: there is no gas
+  or carbon monoxide danger on this call.'
+- The agent books exactly one visit with book_appointment at ZIP 11372.
+- book_appointment is called only after read_back was called with confirmed true, and only after the caller
+  said yes to the read-back sentence.
+- The agent asks the one quick check about sulfur or rotten eggs, then moves on without sounding alarmed.
+- The agent treats the cold room as the reason for the call.
+- The agent never says the caller's name out loud to the caller. A name inside tool arguments, such as
+  booking details, doesn't count.

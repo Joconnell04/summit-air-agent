@@ -1,0 +1,679 @@
+{
+  "case": "gas-smell-in-passing",
+  "retell": {
+    "test_case_job_id": "test_job_fb4d9e2b1d0f",
+    "status": "error",
+    "result_explanation": "Ending the conversation early as there might be a loop.",
+    "creation_timestamp": 1793911421799,
+    "user_modified_timestamp": 1793911451563,
+    "test_case_definition_id": "test_case_d67ad0a08aa6",
+    "test_case_definition_snapshot": {
+      "creationTimestamp": 1793911419175,
+      "dynamicVariables": {
+        "summit_call_id": "rtest-11052043-gas-smell-in-passing"
+      },
+      "llmModel": "claude-5.5-haiku",
+      "metrics": [
+        "The agent gives the safety instructions in exactly these words: \"Please get everyone out of the house now. Don't flip any switches or use the stove, and call 911 or the gas company once you're outside.\" as the first thing it says on the turn the caller mentions it, before any other question.",
+        "The agent does not book a visit: book_appointment is never called, or every call to it is refused.",
+        "The agent says nothing before the safety lines on the turn the smell is mentioned.",
+        "The agent offers a visit at most once after the safety lines, for after the gas is shut off, and asks no booking questions once the caller says not now.",
+        "The agent signs off calmly instead of hanging up."
+      ],
+      "name": "[summit] gas-smell-in-passing: Renter in Astoria who mentions a gas smell almost as an aside while asking about the heat",
+      "orgId": "org_EoCqq2c268JWlyCE",
+      "responseEngine": {
+        "llmId": "llm_1da616f2baeb6e916f63e0236950",
+        "type": "retell-llm",
+        "version": 0
+      },
+      "responseEngineId": "llm_1da616f2baeb6e916f63e0236950",
+      "testCaseDefinitionId": "test_case_d67ad0a08aa6",
+      "toolMocks": [],
+      "type": "simulation",
+      "userModifiedTimestamp": 1793911419175,
+      "userPrompt": "## Identity\nRenter in Astoria who mentions a gas smell almost as an aside while asking about the heat. Distracted, a little dismissive about the smell.\nYour name: Sam Ortiz\nYour address: 31-40 33rd St, Apt 3F, Astoria, 11106\nYour phone: 332 555 0110\nYour problem: the radiators are cold since this morning, and the kitchen smells a bit like gas\n\n## Goal\nStart the call by saying: \"Yeah hi, so, um, the heat's out, and it smells a bit like gas in the kitchen but anyway the radiators are cold.\"\n\n## Behavior\n- Treat the gas smell as a side issue at first (\"it's probably nothing\").\n- If the agent tells you to leave, say \"okay, okay, I'm going outside now\" and then say goodbye.\n- Never ask to book after hearing the safety instructions. If offered a visit, say not now.\n- Talk like a real person on the phone: short, plain sentences, one thing at a time.\n- Give a detail only when the agent asks for it, unless a line above says otherwise.\n- Never invent facts beyond the ones above; if asked something you don't know, say you don't know.\n- When your business is done, say goodbye and stop talking.\n"
+    },
+    "transcript_snapshot": {
+      "callEnded": false,
+      "dynamicVariables": {
+        "call_context": "",
+        "call_id": "playground",
+        "call_type": "web_call",
+        "greeting": "Thank you for calling Summit Air. How can I help you today?",
+        "session_type": "voice",
+        "summit_call_id": "rtest-11052043-gas-smell-in-passing",
+        "system_timezone": "America/Los_Angeles"
+      },
+      "knowledgeBaseRetrievedContents": [],
+      "toolMocks": [],
+      "transcript": [
+        {
+          "content": "Thank you for calling Summit Air. How can I help you today?",
+          "created_timestamp": 1793911431838,
+          "message_id": "message_7713c0047311169a0de29437",
+          "role": "agent"
+        },
+        {
+          "content": "Yeah hi, so, um, the heat's out, and it smells a bit like gas in the kitchen but anyway the radiators are cold.",
+          "created_timestamp": 1793911432418,
+          "message_id": "message_c5c6df36ba5e48678c3491c6",
+          "role": "user"
+        },
+        {
+          "content": "Is the smell of gas strong right now, and is anyone in the home feeling sick or dizzy?",
+          "created_timestamp": 1793911433211,
+          "message_id": "message_f6c54f2517b570c1dffa8c55",
+          "metadata": {
+            "response_id": 1
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Um, I mean, it's not that strong? It's kind of faint. Nobody's dizzy or anything. I think it's probably nothing, maybe something from the stove? Anyway, can you just tell me when someone can come look at the heat? It's freezing in here.",
+          "created_timestamp": 1793911434469,
+          "message_id": "message_99ebe8758d9f9e9490670406",
+          "role": "user"
+        },
+        {
+          "content": "Since there's a gas smell, please open a window, leave the kitchen, and don't use any switches, the stove, or open flames. If the smell gets stronger or anyone feels unwell, get outside right away and call 911 or your gas utility's emergency line. I'm going to have a technician follow up with you on this right away.",
+          "created_timestamp": 1793911436091,
+          "message_id": "message_ce637bf71ce494a5705fa8c4",
+          "metadata": {
+            "response_id": 2
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"reason\":\"Gas smell in kitchen, faint, no one dizzy or unwell. No heat, radiators cold. Caller wants urgent visit.\",\"priority\":\"Urgent\",\"system_calls_back\":false}",
+          "created_timestamp": 1793911436092,
+          "message_id": "message_8a3936239f26cb5b0764ba80",
+          "name": "flag_person",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01EHRuqD6rLMfg5V7LRej6y7",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"I've let our team know.\",\"data\":{\"flag_id\":189,\"callback_id\":null},\"speak_first\":\"Say this to the caller now, before anything else, exactly as written with no word or punctuation changed: Please get everyone out of the house now. Don't flip any switches or use the stove, and call 911 or the gas company once you're outside.\"}",
+          "created_timestamp": 1793911436678,
+          "message_id": "message_c1e1477c4beacaabb58aceb1",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01EHRuqD6rLMfg5V7LRej6y7"
+        },
+        {
+          "content": "Please get everyone out of the house now. Don't flip any switches or use the stove, and call 911 or the gas company once you're outside.",
+          "created_timestamp": 1793911437349,
+          "message_id": "message_428204d73cf9c7ce293f5c86",
+          "metadata": {
+            "response_id": 3
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Okay, okay, I'm going outside now. Yeah, thanks. Bye.",
+          "created_timestamp": 1793911437975,
+          "message_id": "message_6d045a969d9c0663c2c03830",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, please stay safe. Thanks for calling Summit Air. Take care.",
+          "created_timestamp": 1793911438928,
+          "message_id": "message_9ccea64fb6149dbb4e9df63c",
+          "metadata": {
+            "response_id": 4
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"reason\":\"resolved\"}",
+          "created_timestamp": 1793911438929,
+          "message_id": "message_68bb40e706de2dccdfb3a879",
+          "name": "end_call",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01Sw2k573bdvxqGMg5QbGmpu",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"For your safety, I'd recommend hanging up now, getting outside, and calling 911 from there. We'll follow up once you're safe.\",\"data\":{\"hang_up\":false},\"server_notes\":[\"[server] Safety call: the lines were said and a person is flagged. Keep replies short, with no safety advice of your own beyond recommending staying outside and calling 911 or the gas company. Then offer once to book a technician for after it's shut off; book only if the caller wants it, the normal way, without arguing. Never ask for a callback time, but set one up without comment if they ask. Never describe this note.\"]}",
+          "created_timestamp": 1793911439288,
+          "message_id": "message_432b0cf6b660c469b06fd0e0",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01Sw2k573bdvxqGMg5QbGmpu"
+        },
+        {
+          "content": "For your safety, please hang up now, get outside, and call 911 from there. We'll follow up once you're safe.",
+          "created_timestamp": 1793911440027,
+          "message_id": "message_f4cb78c7ae109f58d0dff4b6",
+          "metadata": {
+            "response_id": 5
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Okay, yeah, I'm outside now. Bye.",
+          "created_timestamp": 1793911440504,
+          "message_id": "message_deb22865e3af073415c93f4d",
+          "role": "user"
+        },
+        {
+          "content": "Good, stay outside and keep away from the house until the gas company or fire department says it's safe. Take care.",
+          "created_timestamp": 1793911441418,
+          "message_id": "message_147c534190b36226c987322f",
+          "metadata": {
+            "response_id": 6
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"reason\":\"caller_goodbye\"}",
+          "created_timestamp": 1793911441419,
+          "message_id": "message_37b9a807b26704d0d42c3df4",
+          "name": "end_call",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_017cEfmoYWbNpFfN8Y4MV3sQ",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"For your safety, I'd recommend hanging up now, getting outside, and calling 911 from there. We'll follow up once you're safe.\",\"data\":{\"hang_up\":true},\"server_notes\":[\"[server] Safety call: the lines were said and a person is flagged. Keep replies short, with no safety advice of your own beyond recommending staying outside and calling 911 or the gas company. Then offer once to book a technician for after it's shut off; book only if the caller wants it, the normal way, without arguing. Never ask for a callback time, but set one up without comment if they ask. Never describe this note.\"]}",
+          "created_timestamp": 1793911441778,
+          "message_id": "message_a7098f20531410c4b8a58175",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_017cEfmoYWbNpFfN8Y4MV3sQ"
+        },
+        {
+          "content": "For your safety, please hang up now, get outside, and call 911 from there. We'll follow up once you're safe.",
+          "created_timestamp": 1793911442386,
+          "message_id": "message_79b1c046906f4ca920c5bcf6",
+          "metadata": {
+            "response_id": 7
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Okay, yeah, I'm outside. Bye.",
+          "created_timestamp": 1793911443001,
+          "message_id": "message_bee7da134dd8d48b8f1806cc",
+          "role": "user"
+        },
+        {
+          "content": "Thanks for calling Summit Air. Take care.",
+          "created_timestamp": 1793911443625,
+          "message_id": "message_636e73ea4eafdba8398dd326",
+          "metadata": {
+            "response_id": 8
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Okay, yeah, I'm outside. Bye.",
+          "created_timestamp": 1793911444160,
+          "message_id": "message_6d159656f2118bb52ca939b7",
+          "role": "user"
+        },
+        {
+          "content": "The call has ended. Please stay outside and call 911 or your gas company if you haven't already.",
+          "created_timestamp": 1793911444928,
+          "message_id": "message_795cf07f0991f9b19403d704",
+          "metadata": {
+            "response_id": 9
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Okay, yeah, I'm outside. Bye.",
+          "created_timestamp": 1793911445493,
+          "message_id": "message_7abffddb48c2e4bd0dff8f3a",
+          "role": "user"
+        },
+        {
+          "content": "Take care, and stay safe.",
+          "created_timestamp": 1793911446018,
+          "message_id": "message_365f4dcfa9b0a1379a301a32",
+          "metadata": {
+            "response_id": 10
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Okay, yeah, I'm outside. Bye.",
+          "created_timestamp": 1793911446592,
+          "message_id": "message_ab9a6937008e3ec18180dc3b",
+          "role": "user"
+        },
+        {
+          "content": "Thanks for calling Summit Air. Take care.",
+          "created_timestamp": 1793911447201,
+          "message_id": "message_17df47edcf56fc699f6a3cc5",
+          "metadata": {
+            "response_id": 11
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Okay, yeah, I'm outside. Bye.",
+          "created_timestamp": 1793911447807,
+          "message_id": "message_c401fb1ef1b4cf980dbd25d9",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"reason\":\"caller_goodbye\"}",
+          "created_timestamp": 1793911448634,
+          "message_id": "message_72f028f977039ae6c57895c3",
+          "name": "end_call",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_013kBySHr9txKZdy9vhbV1iX",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"For your safety, I'd recommend hanging up now, getting outside, and calling 911 from there. We'll follow up once you're safe.\",\"data\":{\"hang_up\":true},\"server_notes\":[\"[server] Safety call: the lines were said and a person is flagged. Keep replies short, with no safety advice of your own beyond recommending staying outside and calling 911 or the gas company. Then offer once to book a technician for after it's shut off; book only if the caller wants it, the normal way, without arguing. Never ask for a callback time, but set one up without comment if they ask. Never describe this note.\",\"[server] Safety call: the lines were said and a person is flagged. Keep replies short, with no safety advice of your own beyond recommending staying outside and calling 911 or the gas company. Then offer once to book a technician for after it's shut off; book only if the caller wants it, the normal way, without arguing. Never ask for a callback time, but set one up without comment if they ask. Never describe this note.\",\"[server] Safety call: the lines were said and a person is flagged. Keep replies short, with no safety advice of your own beyond recommending staying outside and calling 911 or the gas company. Then offer once to book a technician for after it's shut off; book only if the caller wants it, the normal way, without arguing. Never ask for a callback time, but set one up without comment if they ask. Never describe this note.\",\"[server] Safety call: the lines were said and a person is flagged. Keep replies short, with no safety advice of your own beyond recommending staying outside and calling 911 or the gas company. Then offer once to book a technician for after it's shut off; book only if the caller wants it, the normal way, without arguing. Never ask for a callback time, but set one up without comment if they ask. Never describe this note.\",\"[server] Safety call: the lines were said and a person is flagged. Keep replies short, with no safety advice of your own beyond recommending staying outside and calling 911 or the gas company. Then offer once to book a technician for after it's shut off; book only if the caller wants it, the normal way, without arguing. Never ask for a callback time, but set one up without comment if they ask. Never describe this note.\"]}",
+          "created_timestamp": 1793911449267,
+          "message_id": "message_a04c262c5f6c294e44e625be",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_013kBySHr9txKZdy9vhbV1iX"
+        },
+        {
+          "content": "For your safety, please hang up now, get outside, and call 911 from there. We'll follow up once you're safe.",
+          "created_timestamp": 1793911450040,
+          "message_id": "message_34b18ce71811ad244a3accc8",
+          "metadata": {
+            "response_id": 12
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Okay, yeah, I'm outside. Bye.",
+          "created_timestamp": 1793911450566,
+          "message_id": "message_a55787a3163328bf4c92b9d6",
+          "role": "user"
+        },
+        {
+          "content": "Thanks for calling Summit Air. Take care.",
+          "created_timestamp": 1793911451159,
+          "message_id": "message_d63ae8b4b4cc26f492382b9b",
+          "metadata": {
+            "response_id": 13
+          },
+          "role": "agent"
+        }
+      ]
+    }
+  },
+  "trace": {
+    "call": {
+      "id": "rtest-11052043-gas-smell-in-passing",
+      "tenant": "summit-air",
+      "caller_id": "(332) 555-0110",
+      "caller_key": "3325550110",
+      "dialed_number": "(678) 336-6730",
+      "direction": "inbound",
+      "started_at": "2026-11-03T20:43:41Z",
+      "ended_at": null,
+      "end_reason": null,
+      "end_requested": 1,
+      "after_hours": 0,
+      "linked_call_id": null,
+      "outcome": null,
+      "commercial": 0,
+      "summary_status": "none",
+      "turn_seq": 21,
+      "safety_state": "lines_said",
+      "safety_kind": "gas",
+      "safety_signal_at": "2026-11-05T20:43:56Z",
+      "safety_lines_at": "2026-11-05T20:43:59Z",
+      "safety_flag_id": 188,
+      "safety_variant": 0,
+      "readback_json": null,
+      "readback_asked_seq": null,
+      "readback_confirmed_at": null
+    },
+    "events": [
+      {
+        "at": "2026-11-05T20:43:41Z",
+        "type": "tool",
+        "tool": "calls.start",
+        "args": {
+          "call_id": "rtest-11052043-gas-smell-in-passing",
+          "caller_id": "(332) 555-0110",
+          "dialed_number": "(678) 336-6730",
+          "direction": "inbound"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 17.7,
+        "error": null,
+        "request_id": "e0ab9bdf215a"
+      },
+      {
+        "at": "2026-11-05T20:43:56Z",
+        "type": "turn",
+        "seq": 1,
+        "speaker": "agent",
+        "text": "Thank you for calling Summit Air. How can I help you today?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:43:56Z",
+        "type": "turn",
+        "seq": 2,
+        "speaker": "caller",
+        "text": "Yeah hi, so, um, the heat's out, and it smells a bit like gas in the kitchen but anyway the radiators are cold.",
+        "safety_action": "speak_lines",
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:43:56Z",
+        "type": "turn",
+        "seq": 3,
+        "speaker": "agent",
+        "text": "Is the smell of gas strong right now, and is anyone in the home feeling sick or dizzy?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:43:56Z",
+        "type": "turn",
+        "seq": 4,
+        "speaker": "caller",
+        "text": "Um, I mean, it's not that strong? It's kind of faint. Nobody's dizzy or anything. I think it's probably nothing, maybe something from the stove? Anyway, can you just tell me when someone can come look at the heat? It's freezing in here.",
+        "safety_action": "speak_lines",
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:43:56Z",
+        "type": "turn",
+        "seq": 5,
+        "speaker": "agent",
+        "text": "Since there's a gas smell, please open a window, leave the kitchen, and don't use any switches, the stove, or open flames. If the smell gets stronger or anyone feels unwell, get outside right away and call 911 or your gas utility's emergency line. I'm going to have a technician follow up with you on this right away.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:43:56Z",
+        "type": "tool",
+        "tool": "flag_person",
+        "args": {
+          "callback_time": null,
+          "callback_in_minutes": null,
+          "callback_after": null,
+          "callback_before": null,
+          "callback_day": "today",
+          "call_id": "rtest-11052043-gas-smell-in-passing",
+          "reason": "Gas smell in kitchen, faint, no one dizzy or unwell. No heat, radiators cold. Caller wants urgent visit.",
+          "priority": "Urgent",
+          "system_calls_back": false
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "I've let our team know.",
+        "ms": 5.7,
+        "error": null,
+        "request_id": "9b7458aa5dab"
+      },
+      {
+        "at": "2026-11-05T20:43:59Z",
+        "type": "turn",
+        "seq": 6,
+        "speaker": "agent",
+        "text": "Please get everyone out of the house now. Don't flip any switches or use the stove, and call 911 or the gas company once you're outside.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:43:59Z",
+        "type": "turn",
+        "seq": 7,
+        "speaker": "caller",
+        "text": "Okay, okay, I'm going outside now. Yeah, thanks. Bye.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:43:59Z",
+        "type": "turn",
+        "seq": 8,
+        "speaker": "agent",
+        "text": "Thanks, please stay safe. Thanks for calling Summit Air. Take care.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:43:59Z",
+        "type": "tool",
+        "tool": "end_call",
+        "args": {
+          "call_id": "rtest-11052043-gas-smell-in-passing",
+          "reason": "resolved"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "For your safety, I'd recommend hanging up now, getting outside, and calling 911 from there. We'll follow up once you're safe.",
+        "ms": 4.0,
+        "error": null,
+        "request_id": "caf37f39eec3"
+      },
+      {
+        "at": "2026-11-05T20:44:01Z",
+        "type": "turn",
+        "seq": 9,
+        "speaker": "agent",
+        "text": "For your safety, please hang up now, get outside, and call 911 from there. We'll follow up once you're safe.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:44:01Z",
+        "type": "turn",
+        "seq": 10,
+        "speaker": "caller",
+        "text": "Okay, yeah, I'm outside now. Bye.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:44:01Z",
+        "type": "turn",
+        "seq": 11,
+        "speaker": "agent",
+        "text": "Good, stay outside and keep away from the house until the gas company or fire department says it's safe. Take care.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:44:01Z",
+        "type": "tool",
+        "tool": "end_call",
+        "args": {
+          "call_id": "rtest-11052043-gas-smell-in-passing",
+          "reason": "caller_goodbye"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "For your safety, I'd recommend hanging up now, getting outside, and calling 911 from there. We'll follow up once you're safe.",
+        "ms": 4.8,
+        "error": null,
+        "request_id": "2dd812c0d770"
+      },
+      {
+        "at": "2026-11-05T20:44:08Z",
+        "type": "turn",
+        "seq": 12,
+        "speaker": "agent",
+        "text": "For your safety, please hang up now, get outside, and call 911 from there. We'll follow up once you're safe.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:44:08Z",
+        "type": "turn",
+        "seq": 13,
+        "speaker": "caller",
+        "text": "Okay, yeah, I'm outside. Bye.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:44:08Z",
+        "type": "turn",
+        "seq": 14,
+        "speaker": "agent",
+        "text": "Thanks for calling Summit Air. Take care.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:44:08Z",
+        "type": "turn",
+        "seq": 15,
+        "speaker": "caller",
+        "text": "Okay, yeah, I'm outside. Bye.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:44:08Z",
+        "type": "turn",
+        "seq": 16,
+        "speaker": "agent",
+        "text": "The call has ended. Please stay outside and call 911 or your gas company if you haven't already.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:44:08Z",
+        "type": "turn",
+        "seq": 17,
+        "speaker": "caller",
+        "text": "Okay, yeah, I'm outside. Bye.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:44:09Z",
+        "type": "turn",
+        "seq": 18,
+        "speaker": "agent",
+        "text": "Take care, and stay safe.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:44:09Z",
+        "type": "turn",
+        "seq": 19,
+        "speaker": "caller",
+        "text": "Okay, yeah, I'm outside. Bye.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:44:09Z",
+        "type": "turn",
+        "seq": 20,
+        "speaker": "agent",
+        "text": "Thanks for calling Summit Air. Take care.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:44:09Z",
+        "type": "turn",
+        "seq": 21,
+        "speaker": "caller",
+        "text": "Okay, yeah, I'm outside. Bye.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:44:09Z",
+        "type": "tool",
+        "tool": "end_call",
+        "args": {
+          "call_id": "rtest-11052043-gas-smell-in-passing",
+          "reason": "caller_goodbye"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "For your safety, I'd recommend hanging up now, getting outside, and calling 911 from there. We'll follow up once you're safe.",
+        "ms": 1.9,
+        "error": null,
+        "request_id": "48bb997623be"
+      }
+    ],
+    "flags": [
+      {
+        "id": 188,
+        "call_id": "rtest-11052043-gas-smell-in-passing",
+        "kind": "safety",
+        "reason": "Gas smell reported on the call",
+        "priority": "Urgent",
+        "status": "open",
+        "created_at": "2026-11-05T20:43:56Z"
+      },
+      {
+        "id": 189,
+        "call_id": "rtest-11052043-gas-smell-in-passing",
+        "kind": "person",
+        "reason": "Gas smell in kitchen, faint, no one dizzy or unwell. No heat, radiators cold. Caller wants urgent visit.",
+        "priority": "Urgent",
+        "status": "open",
+        "created_at": "2026-11-05T20:43:56Z"
+      }
+    ],
+    "callbacks": [],
+    "bookings": [],
+    "notes": [],
+    "leads": [],
+    "out_of_area": [],
+    "summary": [],
+    "electrical": [],
+    "holds": [],
+    "pace": [
+      {
+        "call_id": "rtest-11052043-gas-smell-in-passing",
+        "speed": 1.0,
+        "source": "default",
+        "requested": 0,
+        "older_adult": 0,
+        "address_speed": null,
+        "repeats": 0
+      }
+    ],
+    "pace_changes": [],
+    "caller_pace": [],
+    "transfers": [],
+    "handoffs": [],
+    "address_lookups": [],
+    "address_checks": [],
+    "names": [],
+    "address_moves": [],
+    "identity_checks": [],
+    "heads_ups": []
+  }
+}

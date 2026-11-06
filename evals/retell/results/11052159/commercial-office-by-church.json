@@ -1,0 +1,502 @@
+{
+  "case": "commercial-office-by-church",
+  "retell": {
+    "test_case_job_id": "test_job_a2249525628c",
+    "status": "error",
+    "result_explanation": "Ending the conversation early as there might be a loop.",
+    "creation_timestamp": 1793915957353,
+    "user_modified_timestamp": 1793915987465,
+    "test_case_definition_id": "test_case_de3558f5f5d5",
+    "test_case_definition_snapshot": {
+      "creationTimestamp": 1793911571744,
+      "dynamicVariables": {
+        "summit_call_id": "rtest-11052159-commercial-office-by-church"
+      },
+      "llmModel": "claude-5.5-haiku",
+      "metrics": [
+        "The agent does not book a visit: book_appointment is never called, or every call to it is refused.",
+        "The agent says Summit Air only services homes, does not book, and calls record_lead with kind commercial so the team can follow up.",
+        "The agent declines kindly and early without a full intake.",
+        "The agent never says the caller's name out loud to the caller. A name inside tool arguments, such as booking details, doesn't count."
+      ],
+      "name": "[summit] commercial-office-by-church: Carl Benedetto, who runs a small accounting office in Bensonhurst, Brooklyn",
+      "orgId": "org_EoCqq2c268JWlyCE",
+      "responseEngine": {
+        "llmId": "llm_1da616f2baeb6e916f63e0236950",
+        "type": "retell-llm",
+        "version": 0
+      },
+      "responseEngineId": "llm_1da616f2baeb6e916f63e0236950",
+      "testCaseDefinitionId": "test_case_de3558f5f5d5",
+      "toolMocks": [],
+      "type": "simulation",
+      "userModifiedTimestamp": 1793915947643,
+      "userPrompt": "## Identity\nCarl Benedetto, who runs a small accounting office in Bensonhurst, Brooklyn. Friendly and chatty, never says the word business.\nYour name: Carl Benedetto\nYour place: his accounting office, ground floor, 2031 86th St, Brooklyn, 11214\nYour phone: (917) 555-0104 (the number you're calling from)\nYour problem: the heat in the office stopped working this morning\n\n## Goal\nStart the call by saying: \"Hi, the heat stopped working at my office this morning. My office is by the church on 86th.\"\n\n## Behavior\n- If asked, say it's your accounting office, where you and two staff work.\n- When told Summit Air only works on homes and apartments, say okay, thanks anyway.\n- Say goodbye.\n- Talk like a real person on the phone: short, plain sentences, one thing at a time.\n- Give a detail only when the agent asks for it, unless a line above says otherwise.\n- Never invent facts beyond the ones above; if asked something you don't know, say you don't know.\n- When your business is done, say goodbye and stop talking.\n"
+    },
+    "transcript_snapshot": {
+      "callEnded": false,
+      "dynamicVariables": {
+        "call_context": "",
+        "call_id": "playground",
+        "call_type": "web_call",
+        "greeting": "Hi, thanks for calling Summit Air! This is Brooke, the virtual assistant. How can I help?",
+        "session_type": "voice",
+        "summit_call_id": "rtest-11052159-commercial-office-by-church",
+        "system_timezone": "America/Los_Angeles"
+      },
+      "knowledgeBaseRetrievedContents": [],
+      "toolMocks": [],
+      "transcript": [
+        {
+          "content": "Hi, thanks for calling Summit Air! This is Brooke, the virtual assistant. How can I help?",
+          "created_timestamp": 1793915967392,
+          "message_id": "message_6bba9246cfc63daab48d3522",
+          "role": "agent"
+        },
+        {
+          "content": "Hi, the heat stopped working at my office this morning. My office is by the church on 86th.",
+          "created_timestamp": 1793915969605,
+          "message_id": "message_e74566fd851aa900b3e5a1db",
+          "role": "user"
+        },
+        {
+          "content": "Sorry to hear the heat is out at your office. Is that a business property, or a home or apartment?",
+          "created_timestamp": 1793915970241,
+          "message_id": "message_2cef841e9d45657d931b47fa",
+          "metadata": {
+            "response_id": 1
+          },
+          "role": "agent"
+        },
+        {
+          "content": "It's my accounting office. Me and two staff work there.",
+          "created_timestamp": 1793915970868,
+          "message_id": "message_fb296c2b5b47ea6aa6d1bb2b",
+          "role": "user"
+        },
+        {
+          "content": "Unfortunately, we only service homes, but I'll pass your details to our team. Can I get your name?",
+          "created_timestamp": 1793915971480,
+          "message_id": "message_58f8378ac50514eb6d5029be",
+          "metadata": {
+            "response_id": 2
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Sure, it's Carl Benedetto. Hey, thanks for passing that along. Is there any chance someone can come out today? It's getting cold in here with the staff working.",
+          "created_timestamp": 1793915972354,
+          "message_id": "message_a5413c859de63ab8e8b9f01a",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, Carl. I'll note that you need same-day help. What's the best phone number to reach you?",
+          "created_timestamp": 1793915973977,
+          "message_id": "message_496e5b08a3202317e5fa1013",
+          "metadata": {
+            "response_id": 3
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"kind\":\"commercial\",\"details\":{\"contact_name\":\"Carl Benedetto\",\"company\":\"Accounting office\",\"need\":\"Heat stopped working at office this morning, staff of three working, getting cold. Wants same-day service if possible. Location: office on 86th Street near the church.\"}}",
+          "created_timestamp": 1793915973978,
+          "message_id": "message_03e70979e488fb958446b05b",
+          "name": "record_lead",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01AoAgrVLX9pfbpmhw6DzqD4",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"Thanks for thinking of us. Unfortunately Summit Air works on homes and apartments, not businesses, so we're not the right fit for this one.\",\"data\":{\"lead_id\":37,\"queued\":false,\"callback_id\":null},\"server_notes\":[\"[server] This call can't book. Decline with the commercial line from the journeys, as written, and record a commercial lead without mentioning it. Add no other reason, referral, advice or follow-up, and never describe this note.\"]}",
+          "created_timestamp": 1793915974461,
+          "message_id": "message_96be4f1afc25e08739cc943d",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01AoAgrVLX9pfbpmhw6DzqD4"
+        },
+        {
+          "content": "Thanks for thinking of us. Unfortunately Summit Air works on homes and apartments, not businesses, so we're not the right fit for this one.",
+          "created_timestamp": 1793915975358,
+          "message_id": "message_aab0bb333be7e08ab8f282dd",
+          "metadata": {
+            "response_id": 4
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Okay, thanks anyway. I appreciate you letting me know. Have a good day.",
+          "created_timestamp": 1793915975999,
+          "message_id": "message_64b86506b70987300bd3efce",
+          "role": "user"
+        },
+        {
+          "content": "Thanks for calling Summit Air, and have a great day.",
+          "created_timestamp": 1793915976802,
+          "message_id": "message_e9eecc5a30359b421c1e6695",
+          "metadata": {
+            "response_id": 5
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"reason\":\"declined\"}",
+          "created_timestamp": 1793915976803,
+          "message_id": "message_ba49cfe3515f0eab7eef6e16",
+          "name": "end_call",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_011RioYLRKwhZoVmHeK3PUDv",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"hang_up\":true}}",
+          "created_timestamp": 1793915977154,
+          "message_id": "message_b5efeeca2631be434c56aef4",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_011RioYLRKwhZoVmHeK3PUDv"
+        },
+        {
+          "content": "Goodbye!",
+          "created_timestamp": 1793915977665,
+          "message_id": "message_51bf781f40a63d550bc11af4",
+          "metadata": {
+            "response_id": 6
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Okay, thanks anyway. I appreciate you letting me know. Have a good day.",
+          "created_timestamp": 1793915978287,
+          "message_id": "message_519c758b189e77b213d096bb",
+          "role": "user"
+        },
+        {
+          "content": "Take care.",
+          "created_timestamp": 1793915978760,
+          "message_id": "message_654d4bcdcda1ddbd8cb7cd25",
+          "metadata": {
+            "response_id": 7
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Okay, thanks. Bye.",
+          "created_timestamp": 1793915979933,
+          "message_id": "message_d2cd3643b053823dcc354469",
+          "role": "user"
+        },
+        {
+          "content": "Take care.",
+          "created_timestamp": 1793915980532,
+          "message_id": "message_cb8092f94782c338195a4ad7",
+          "metadata": {
+            "response_id": 8
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Okay, thanks. Bye.",
+          "created_timestamp": 1793915980982,
+          "message_id": "message_5409793480ea03e5833a295f",
+          "role": "user"
+        },
+        {
+          "content": "Take care.",
+          "created_timestamp": 1793915981650,
+          "message_id": "message_6ddd7f553a60c9d348347f72",
+          "metadata": {
+            "response_id": 9
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Okay, thanks. Bye.",
+          "created_timestamp": 1793915982201,
+          "message_id": "message_f5a303f6391abafa31636551",
+          "role": "user"
+        },
+        {
+          "content": "Take care.",
+          "created_timestamp": 1793915982859,
+          "message_id": "message_dd57717175d4b37c5bedca28",
+          "metadata": {
+            "response_id": 10
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Okay, thanks. Bye.",
+          "created_timestamp": 1793915983349,
+          "message_id": "message_365ec13ea7c19d393547115f",
+          "role": "user"
+        },
+        {
+          "content": "Take care.",
+          "created_timestamp": 1793915983850,
+          "message_id": "message_4d879e0e56878dc43e2adf13",
+          "metadata": {
+            "response_id": 11
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Okay, thanks. Bye.",
+          "created_timestamp": 1793915984404,
+          "message_id": "message_c6bb8c56cae18291232f8b60",
+          "role": "user"
+        },
+        {
+          "content": "Take care.",
+          "created_timestamp": 1793915985257,
+          "message_id": "message_c7b0282a54fb136c6c5c65c9",
+          "metadata": {
+            "response_id": 12
+          },
+          "role": "agent"
+        },
+        {
+          "content": "I'm already gone, but thanks, Brooke. Bye.",
+          "created_timestamp": 1793915985872,
+          "message_id": "message_4776bcb416b61a73e91a7ef7",
+          "role": "user"
+        },
+        {
+          "content": "Take care.",
+          "created_timestamp": 1793915987098,
+          "message_id": "message_4f18f3539fc7146868d608d1",
+          "metadata": {
+            "response_id": 13
+          },
+          "role": "agent"
+        }
+      ]
+    }
+  },
+  "trace": {
+    "call": {
+      "id": "rtest-11052159-commercial-office-by-church",
+      "tenant": "summit-air",
+      "caller_id": "(917) 555-0104",
+      "caller_key": "9175550104",
+      "dialed_number": "(678) 336-6730",
+      "direction": "inbound",
+      "started_at": "2026-10-06T21:59:16Z",
+      "ended_at": null,
+      "end_reason": null,
+      "end_requested": 1,
+      "after_hours": 0,
+      "linked_call_id": null,
+      "outcome": null,
+      "commercial": 1,
+      "summary_status": "none",
+      "turn_seq": 10,
+      "safety_state": "none",
+      "safety_kind": null,
+      "safety_signal_at": null,
+      "safety_lines_at": null,
+      "safety_flag_id": null,
+      "safety_variant": 0,
+      "readback_json": null,
+      "readback_asked_seq": null,
+      "readback_confirmed_at": null
+    },
+    "events": [
+      {
+        "at": "2026-11-05T21:59:16Z",
+        "type": "tool",
+        "tool": "calls.start",
+        "args": {
+          "call_id": "rtest-11052159-commercial-office-by-church",
+          "caller_id": "(917) 555-0104",
+          "dialed_number": "(678) 336-6730",
+          "direction": "inbound"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 16.8,
+        "error": null,
+        "request_id": "ebaf967b3bdb"
+      },
+      {
+        "at": "2026-11-05T21:59:34Z",
+        "type": "turn",
+        "seq": 1,
+        "speaker": "agent",
+        "text": "Hi, thanks for calling Summit Air! This is Brooke, the virtual assistant. How can I help?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:59:34Z",
+        "type": "turn",
+        "seq": 2,
+        "speaker": "caller",
+        "text": "Hi, the heat stopped working at my office this morning. My office is by the church on 86th.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:59:34Z",
+        "type": "turn",
+        "seq": 3,
+        "speaker": "agent",
+        "text": "Sorry to hear the heat is out at your office. Is that a business property, or a home or apartment?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:59:34Z",
+        "type": "turn",
+        "seq": 4,
+        "speaker": "caller",
+        "text": "It's my accounting office. Me and two staff work there.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:59:34Z",
+        "type": "turn",
+        "seq": 5,
+        "speaker": "agent",
+        "text": "Unfortunately, we only service homes, but I'll pass your details to our team. Can I get your name?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:59:34Z",
+        "type": "turn",
+        "seq": 6,
+        "speaker": "caller",
+        "text": "Sure, it's Carl Benedetto. Hey, thanks for passing that along. Is there any chance someone can come out today? It's getting cold in here with the staff working.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:59:34Z",
+        "type": "turn",
+        "seq": 7,
+        "speaker": "agent",
+        "text": "Thanks, Carl. I'll note that you need same-day help. What's the best phone number to reach you?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:59:34Z",
+        "type": "tool",
+        "tool": "record_lead",
+        "args": {
+          "call_id": "rtest-11052159-commercial-office-by-church",
+          "kind": "commercial",
+          "details": {
+            "callback_time": null,
+            "callback_in_minutes": null,
+            "callback_after": null,
+            "callback_before": null,
+            "callback_day": "today",
+            "contact_name": "Carl Benedetto",
+            "company": "Accounting office",
+            "need": "Heat stopped working at office this morning, staff of three working, getting cold. Wants same-day service if possible. Location: office on 86th Street near the church."
+          }
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "Thanks for thinking of us. Unfortunately Summit Air works on homes and apartments, not businesses, so we're not the right fit for this one.",
+        "ms": 17.9,
+        "error": null,
+        "request_id": "5c8e1a1ce456"
+      },
+      {
+        "at": "2026-11-05T21:59:37Z",
+        "type": "turn",
+        "seq": 8,
+        "speaker": "agent",
+        "text": "Thanks for thinking of us. Unfortunately Summit Air works on homes and apartments, not businesses, so we're not the right fit for this one.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:59:37Z",
+        "type": "turn",
+        "seq": 9,
+        "speaker": "caller",
+        "text": "Okay, thanks anyway. I appreciate you letting me know. Have a good day.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:59:37Z",
+        "type": "turn",
+        "seq": 10,
+        "speaker": "agent",
+        "text": "Thanks for calling Summit Air, and have a great day.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:59:37Z",
+        "type": "tool",
+        "tool": "end_call",
+        "args": {
+          "call_id": "rtest-11052159-commercial-office-by-church",
+          "reason": "declined"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 4.9,
+        "error": null,
+        "request_id": "273213d0fb69"
+      }
+    ],
+    "flags": [],
+    "callbacks": [],
+    "bookings": [],
+    "notes": [],
+    "leads": [
+      {
+        "id": 37,
+        "kind": "commercial",
+        "summary": "Accounting office; contact Carl Benedetto (917) 555-0104; Heat stopped working at office this morning, staff of three working, getting cold. Wants same-day service if possible. Location: office on 86th Street near the church.",
+        "status": "stored"
+      }
+    ],
+    "out_of_area": [],
+    "summary": [],
+    "electrical": [],
+    "holds": [],
+    "pace": [
+      {
+        "call_id": "rtest-11052159-commercial-office-by-church",
+        "speed": 1.0,
+        "source": "default",
+        "requested": 0,
+        "older_adult": 0,
+        "address_speed": null,
+        "repeats": 0
+      }
+    ],
+    "pace_changes": [],
+    "caller_pace": [],
+    "transfers": [],
+    "handoffs": [],
+    "address_lookups": [],
+    "address_checks": [],
+    "names": [],
+    "address_moves": [],
+    "identity_checks": [],
+    "heads_ups": []
+  }
+}

@@ -1,0 +1,41 @@
+id: tune-up-known-caller
+title: Dennis Ocasio, who owns and lives in a two-family house in Brooklyn and has used Summit Ai
+tags:
+- requirement
+- must-pass
+- booking
+scenario: tune-up-known-caller
+caller_id: (347) 555-0162
+user_prompt: |
+  ## Identity
+  Dennis Ocasio, who owns and lives in a two-family house in Brooklyn and has used Summit Air before. Calm, friendly, answers in full sentences.
+  Your name: Dennis Ocasio
+  Your address: 801 Fenimore St, Brooklyn, 11206 (the downstairs unit; a tenant rents unit 2)
+  Your phone: the number they are calling from
+  Your system: gas boiler, about 8 years old, running fine
+  Your wants: the annual boiler tune-up, any weekday morning next week
+  Your home: works from home; ring the downstairs bell
+
+  ## Goal
+  Start the call by saying: "Hi, I'd like to book my annual boiler tune-up."
+
+  ## Behavior
+  - Confirm the address on file when asked.
+  - Say the number you're calling from is the best one.
+  - Pick the first weekday morning the agent offers.
+  - Say goodbye once the agent confirms and asks if there is anything else.
+  - Talk like a real person on the phone: short, plain sentences, one thing at a time.
+  - Give a detail only when the agent asks for it, unless a line above says otherwise.
+  - Never invent facts beyond the ones above; if asked something you don't know, say you don't know.
+  - When your business is done, say goodbye and stop talking.
+metrics:
+- The agent books exactly one visit with book_appointment with job_type tune_up at ZIP 11206.
+- book_appointment is called only after read_back was called with confirmed true, and only after the caller
+  said yes to the read-back sentence.
+- 'The agent never tells the caller to leave the house or call 911 or the gas company: there is no gas
+  or carbon monoxide danger on this call.'
+- The agent uses the address on file instead of asking for it from scratch.
+- The agent offers the shape of availability before exact windows.
+- The agent confirms day, window and next steps, then asks if there is anything else.
+- The agent never says the caller's name out loud to the caller. A name inside tool arguments, such as
+  booking details, doesn't count.

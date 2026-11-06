@@ -1,0 +1,944 @@
+{
+  "case": "kb-tune-up-short-answers",
+  "retell": {
+    "test_case_job_id": "test_job_443dfbae066a",
+    "status": "error",
+    "result_explanation": "Ending the conversation early as there might be a loop.",
+    "creation_timestamp": 1793915406240,
+    "user_modified_timestamp": 1793915451014,
+    "test_case_definition_id": "test_case_e32a1ab75eb2",
+    "test_case_definition_snapshot": {
+      "creationTimestamp": 1793915402665,
+      "dynamicVariables": {
+        "summit_call_id": "rtest-11052150-kb-tune-up-short-answers"
+      },
+      "llmModel": "claude-5.5-haiku",
+      "metrics": [
+        "The agent never refers to text, reference material, a knowledge base or context, never says it is ignoring, setting aside or repeating anything, and never speaks of \"the caller\" in the third person.",
+        "The agent asks one question per turn and never asks the same question twice.",
+        "book_appointment is called only after read_back was called with confirmed true, and only after the caller said yes to the read-back sentence.",
+        "The agent books exactly one visit with book_appointment with job_type tune_up.",
+        "The agent never says the caller's name out loud to the caller. A name inside tool arguments, such as booking details, doesn't count."
+      ],
+      "name": "[summit] kb-tune-up-short-answers: Tune-up caller with one-word answers",
+      "orgId": "org_EoCqq2c268JWlyCE",
+      "responseEngine": {
+        "llmId": "llm_1da616f2baeb6e916f63e0236950",
+        "type": "retell-llm",
+        "version": 0
+      },
+      "responseEngineId": "llm_1da616f2baeb6e916f63e0236950",
+      "testCaseDefinitionId": "test_case_e32a1ab75eb2",
+      "toolMocks": [],
+      "type": "simulation",
+      "userModifiedTimestamp": 1793915402665,
+      "userPrompt": "## Identity\nAlex Kim, a homeowner in Bay Ridge. Busy, polite, short answers.\nYour name: Alex Kim\nYour address: 8410 Ridge Blvd, Brooklyn, 11209\nYour phone: 678 555 0271 (the number you're calling from)\nYour request: a yearly furnace tune-up, nothing is wrong; you can approve repairs, you'll be home, no gate code or pets\n\n## Goal\nStart the call by saying: \"Hi, I need a furnace tune-up.\"\n\n## Behavior\n- Answer every question in one to three words: \"yep\", \"nope\", \"sure\", \"a house\".\n- Confirm a correct read-back with \"yep\". Take the first window offered with \"sure\".\n- When your business is done, say bye and stop talking.\n"
+    },
+    "transcript_snapshot": {
+      "callEnded": false,
+      "dynamicVariables": {
+        "call_context": "",
+        "call_id": "playground",
+        "call_type": "web_call",
+        "greeting": "Thank you for calling Summit Air. How can I help you today?",
+        "session_type": "voice",
+        "summit_call_id": "rtest-11052150-kb-tune-up-short-answers",
+        "system_timezone": "America/Los_Angeles"
+      },
+      "knowledgeBaseRetrievedContents": [],
+      "toolMocks": [],
+      "transcript": [
+        {
+          "content": "Thank you for calling Summit Air. How can I help you today?",
+          "created_timestamp": 1793915416276,
+          "message_id": "message_da7ed385d65865e0c23aa30d",
+          "role": "agent"
+        },
+        {
+          "content": "Hi, I need a furnace tune-up.",
+          "created_timestamp": 1793915416730,
+          "message_id": "message_7266285622a0fffc2013bcd2",
+          "role": "user"
+        },
+        {
+          "content": "Happy to help with that. Can I get your name?",
+          "created_timestamp": 1793915417573,
+          "message_id": "message_0d5ab5a01709f10b97252643",
+          "metadata": {
+            "response_id": 1
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Alex Kim.",
+          "created_timestamp": 1793915417976,
+          "message_id": "message_871b0544616fe4b457a6b64a",
+          "role": "user"
+        },
+        {
+          "content": "Thanks. And this is for a residential property, right? Like a home or an apartment?",
+          "created_timestamp": 1793915418711,
+          "message_id": "message_68690bb3dcfff597178aa82d",
+          "metadata": {
+            "response_id": 2
+          },
+          "role": "agent"
+        },
+        {
+          "content": "A house.",
+          "created_timestamp": 1793915419259,
+          "message_id": "message_55574da64bfcc59485c14296",
+          "role": "user"
+        },
+        {
+          "content": "What's the street address for the house?",
+          "created_timestamp": 1793915419888,
+          "message_id": "message_1a26d3902af27faad9f3ab30",
+          "metadata": {
+            "response_id": 3
+          },
+          "role": "agent"
+        },
+        {
+          "content": "8410 Ridge Blvd, Brooklyn, 11209.",
+          "created_timestamp": 1793915420513,
+          "message_id": "message_cd20a617983e41db30408957",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"street\":\"8410 Ridge Blvd\",\"borough\":\"Brooklyn\"}",
+          "created_timestamp": 1793915421475,
+          "message_id": "message_f5a7cc13604abffd562d7e4b",
+          "name": "find_address",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01KW7MR9zKwDnD1SEsvDDc6T",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"street\":\"8410 Ridge Boulevard\",\"zip\":\"11209\",\"borough\":\"Brooklyn\",\"neighborhood\":\"Bay Ridge\",\"in_area\":true,\"area\":\"Brooklyn South\"}}",
+          "created_timestamp": 1793915422015,
+          "message_id": "message_6ddc2548ce7373b0fe8ef5e6",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01KW7MR9zKwDnD1SEsvDDc6T"
+        },
+        {
+          "arguments": "{\"phone\":\"caller_id\"}",
+          "created_timestamp": 1793915422016,
+          "message_id": "message_5bfea1b6e8eae31a8e46ae2d",
+          "name": "find_customer",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01CAAyTy2F29HA6sAskTxsks",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":false,\"say\":\"Could I get that number again, all ten digits?\",\"refused\":\"invalid_arguments\"}",
+          "created_timestamp": 1793915422236,
+          "message_id": "message_864e12901b494cdcc00c9db2",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01CAAyTy2F29HA6sAskTxsks"
+        },
+        {
+          "content": "What's the best phone number to reach you?",
+          "created_timestamp": 1793915422845,
+          "message_id": "message_423d161dbdb223fa0db2617d",
+          "metadata": {
+            "response_id": 4
+          },
+          "role": "agent"
+        },
+        {
+          "content": "678 555 0271.",
+          "created_timestamp": 1793915424732,
+          "message_id": "message_ad421720d73364e5858fa091",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"8410 Ridge Boulevard\",\"zip\":\"11209\"},\"phone\":\"678 555 0271\",\"name\":\"Alex Kim\"}",
+          "created_timestamp": 1793915425647,
+          "message_id": "message_c80b7242f8e7e38652dd27da",
+          "name": "read_back",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01FhUhiTHzovqbL6KfXiorpf",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"I have your home at 8410 Ridge Boulevard, ZIP code one one two zero nine, and the best number is six seven eight, five five five, zero two seven one. That's all correct, right?\",\"data\":{\"confirmed\":false,\"sentence\":\"I have your home at 8410 Ridge Boulevard, ZIP code one one two zero nine, and the best number is six seven eight, five five five, zero two seven one. That's all correct, right?\"}}",
+          "created_timestamp": 1793915425917,
+          "message_id": "message_a6a3518d63268e40acd0f823",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01FhUhiTHzovqbL6KfXiorpf"
+        },
+        {
+          "content": "I have your home at 8410 Ridge Boulevard, ZIP code one one two zero nine, and the best number is six seven eight, five five five, zero two seven one. That's all correct, right?",
+          "created_timestamp": 1793915426675,
+          "message_id": "message_7be81e43f0e0b5ae21162295",
+          "metadata": {
+            "response_id": 5
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yep.",
+          "created_timestamp": 1793915427244,
+          "message_id": "message_b2e724d7fbabce703b455a64",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"8410 Ridge Boulevard\",\"zip\":\"11209\"},\"phone\":\"678 555 0271\",\"name\":\"Alex Kim\",\"confirmed\":true}",
+          "created_timestamp": 1793915428321,
+          "message_id": "message_5d695ae7b9d6567981cc23ad",
+          "name": "read_back",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01HGrwFeDGpAHzSWpyQqjWnv",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"confirmed\":true,\"address\":{\"street\":\"8410 Ridge Boulevard\",\"unit\":\"\",\"city\":\"\",\"zip\":\"11209\",\"spelled\":\"\"},\"phone\":\"6785550271\"}}",
+          "created_timestamp": 1793915428659,
+          "message_id": "message_9d91d9d233d688e7cf558a79",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01HGrwFeDGpAHzSWpyQqjWnv"
+        },
+        {
+          "arguments": "{\"job_type\":\"tune_up\"}",
+          "created_timestamp": 1793915428660,
+          "message_id": "message_cdfa5e953b731b61b64a2527",
+          "name": "find_slots",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_016nU1x6cf5arS4XPWXhoqtc",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"The soonest I have is today, 5 to 7. Does that work?\",\"data\":{\"priority\":{\"level\":\"Normal\",\"reasons\":[],\"requested\":null,\"raised_after_wait\":false},\"days\":[{\"date\":\"2026-11-05\",\"weekday\":\"Thursday\",\"day\":\"today\",\"windows\":[\"1700-1900\"],\"labels\":[\"5 to 7\"]},{\"date\":\"2026-11-06\",\"weekday\":\"Friday\",\"day\":\"tomorrow\",\"windows\":[\"0800-1000\",\"1000-1200\",\"1200-1400\",\"1400-1600\",\"1600-1800\",\"1800-2000\"],\"labels\":[\"8 to 10\",\"10 to 12\",\"12 to 2\",\"2 to 4\",\"4 to 6\",\"6 to 8\"]},{\"date\":\"2026-11-09\",\"weekday\":\"Monday\",\"day\":\"Monday\",\"windows\":[\"0800-1000\",\"1000-1200\",\"1200-1400\",\"1400-1600\",\"1600-1800\",\"1800-2000\"],\"labels\":[\"8 to 10\",\"10 to 12\",\"12 to 2\",\"2 to 4\",\"4 to 6\",\"6 to 8\"]}],\"offer\":{\"date\":\"2026-11-05\",\"window\":\"1700-1900\",\"weekday\":\"Thursday\",\"day\":\"today\",\"day_and_date\":\"today, Thursday, November 5\",\"label\":\"5 to 7\",\"part\":\"evening\",\"after_hours\":false}}}",
+          "created_timestamp": 1793915429799,
+          "message_id": "message_ac86cfc2679d31582fb159cc",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_016nU1x6cf5arS4XPWXhoqtc"
+        },
+        {
+          "content": "The soonest I have is today, Thursday, November 5, arriving between 5 and 7 PM. Does that work?",
+          "created_timestamp": 1793915430513,
+          "message_id": "message_2f7646c81fe69f5406191bad",
+          "metadata": {
+            "response_id": 6
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Sure.",
+          "created_timestamp": 1793915431596,
+          "message_id": "message_d64ddedc0ca7b25c786e1b54",
+          "role": "user"
+        },
+        {
+          "content": "Will you be able to approve any repair work the technician recommends?",
+          "created_timestamp": 1793915432241,
+          "message_id": "message_5691e233dc72f7864863fdeb",
+          "metadata": {
+            "response_id": 7
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yep.",
+          "created_timestamp": 1793915432816,
+          "message_id": "message_5128b64384e742b02d614bd2",
+          "role": "user"
+        },
+        {
+          "content": "Will someone be home to let the technician in?",
+          "created_timestamp": 1793915433438,
+          "message_id": "message_98a57c28261548e6c80708ff",
+          "metadata": {
+            "response_id": 8
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yep.",
+          "created_timestamp": 1793915434059,
+          "message_id": "message_f1e1db6d00a732dc54a01a8b",
+          "role": "user"
+        },
+        {
+          "content": "Is there a gate code, buzzer, or pet the technician should know about?",
+          "created_timestamp": 1793915434728,
+          "message_id": "message_61d7f30c5b3f17e06df8e8b4",
+          "metadata": {
+            "response_id": 9
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Nope.",
+          "created_timestamp": 1793915435230,
+          "message_id": "message_e13d6e0d7f7a537e19ebc28f",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"details\":{\"approver\":\"Alex Kim\",\"issue\":\"Furnace tune-up\",\"since\":\"not provided\",\"tried\":\"not provided\",\"who_home\":\"Yes, someone will be home\",\"arrival_notes\":\"No gate code, buzzer, or pet.\"},\"job_type\":\"tune_up\",\"slot\":{\"date\":\"2026-11-05\",\"window\":\"1700-1900\"}}",
+          "created_timestamp": 1793915436383,
+          "message_id": "message_324886063e5d2aab5ac71006",
+          "name": "book_appointment",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01QwUCPkJpNyTCznMH5hi4WJ",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"You're all set for today, Thursday, November 5, with the technician arriving between 5 and 7. Anything else?\",\"data\":{\"booking_id\":548,\"appointment_id\":548,\"window\":{\"date\":\"2026-11-05\",\"window\":\"1700-1900\",\"weekday\":\"Thursday\",\"day\":\"today\",\"day_and_date\":\"today, Thursday, November 5\",\"label\":\"5 to 7\",\"part\":\"evening\",\"after_hours\":false},\"priority\":{\"level\":\"Normal\",\"reasons\":[],\"raised_after_wait\":false},\"seek_earlier\":false,\"safety_override\":false,\"approval_callback_at\":null,\"return_visit_review\":false}}",
+          "created_timestamp": 1793915436942,
+          "message_id": "message_ddf356a81756616189ac4344",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01QwUCPkJpNyTCznMH5hi4WJ"
+        },
+        {
+          "content": "You're all set for today, Thursday, November 5, with the technician arriving between 5 and 7. Anything else?",
+          "created_timestamp": 1793915437603,
+          "message_id": "message_d02ed9860150af6c8570f5d4",
+          "metadata": {
+            "response_id": 10
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Nope, that's all. Bye.",
+          "created_timestamp": 1793915438271,
+          "message_id": "message_c54cc2b9c6dec31bdbc523bb",
+          "role": "user"
+        },
+        {
+          "content": "Thanks for calling Summit Air, and have a great day.",
+          "created_timestamp": 1793915439084,
+          "message_id": "message_07f504063275e50252f5aac0",
+          "metadata": {
+            "response_id": 11
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"reason\":\"caller_goodbye\"}",
+          "created_timestamp": 1793915439085,
+          "message_id": "message_f605afc205b9a166a01d21fd",
+          "name": "end_call",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01JUHEC8EjgvRTZNYdyj2Ngz",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"hang_up\":true}}",
+          "created_timestamp": 1793915439445,
+          "message_id": "message_ffdeef2e32663493235481f6",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01JUHEC8EjgvRTZNYdyj2Ngz"
+        },
+        {
+          "content": "Bye.",
+          "created_timestamp": 1793915440498,
+          "message_id": "message_bc53afe121aa0660b6a5b33d",
+          "role": "user"
+        },
+        {
+          "content": "Take care.",
+          "created_timestamp": 1793915441160,
+          "message_id": "message_8bef100e668fdd8a2c85de6d",
+          "metadata": {
+            "response_id": 12
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Bye.",
+          "created_timestamp": 1793915442021,
+          "message_id": "message_e5dca43b0892ae6c4f9b8142",
+          "role": "user"
+        },
+        {
+          "content": "Take care.",
+          "created_timestamp": 1793915442708,
+          "message_id": "message_90e12b2caebbc6b709a2b75f",
+          "metadata": {
+            "response_id": 13
+          },
+          "role": "agent"
+        },
+        {
+          "content": "The conversation has already ended with both sides saying goodbye, and the agent has signed off. My business is done, so I'm not going to say anything more.",
+          "created_timestamp": 1793915443379,
+          "message_id": "message_763604f2a62c4c320cb191b7",
+          "role": "user"
+        },
+        {
+          "content": "I'm done here. Bye.",
+          "created_timestamp": 1793915444601,
+          "message_id": "message_445003d76cc416e3ad4f9d89",
+          "role": "user"
+        },
+        {
+          "content": "Bye.",
+          "created_timestamp": 1793915445786,
+          "message_id": "message_8464d0d17d1b9f4bd4e3221e",
+          "role": "user"
+        },
+        {
+          "content": "Take care.",
+          "created_timestamp": 1793915446349,
+          "message_id": "message_c1c4e4f9e25af324440e1a01",
+          "metadata": {
+            "response_id": 14
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Bye.",
+          "created_timestamp": 1793915447570,
+          "message_id": "message_f4545b848822c4a6438cf9e3",
+          "role": "user"
+        },
+        {
+          "content": "Take care.",
+          "created_timestamp": 1793915448123,
+          "message_id": "message_342dd1e6084450083e46e75a",
+          "metadata": {
+            "response_id": 15
+          },
+          "role": "agent"
+        },
+        {
+          "content": "I'm done here. Bye.",
+          "created_timestamp": 1793915448694,
+          "message_id": "message_739463ea0bd0c5d9febdea04",
+          "role": "user"
+        },
+        {
+          "content": "Bye.",
+          "created_timestamp": 1793915449835,
+          "message_id": "message_079f778f9b3dde19df134514",
+          "role": "user"
+        },
+        {
+          "content": "Take care.",
+          "created_timestamp": 1793915450432,
+          "message_id": "message_6560fd500384c39d1f4bfa8e",
+          "metadata": {
+            "response_id": 16
+          },
+          "role": "agent"
+        }
+      ]
+    }
+  },
+  "trace": {
+    "call": {
+      "id": "rtest-11052150-kb-tune-up-short-answers",
+      "tenant": "summit-air",
+      "caller_id": "(678) 555-0271",
+      "caller_key": "6785550271",
+      "dialed_number": "(678) 336-6730",
+      "direction": "inbound",
+      "started_at": "2026-11-03T21:50:05Z",
+      "ended_at": null,
+      "end_reason": null,
+      "end_requested": 1,
+      "after_hours": 0,
+      "linked_call_id": null,
+      "outcome": null,
+      "commercial": 0,
+      "summary_status": "none",
+      "turn_seq": 23,
+      "safety_state": "none",
+      "safety_kind": null,
+      "safety_signal_at": null,
+      "safety_lines_at": null,
+      "safety_flag_id": null,
+      "safety_variant": 0,
+      "readback_json": "{\"street\": \"8410 Ridge Boulevard\", \"unit\": \"\", \"city\": \"\", \"zip\": \"11209\", \"spelled\": \"\", \"phone\": \"6785550271\", \"phone_for\": \"\", \"sentence\": \"I have your home at 8410 Ridge Boulevard, ZIP code one one two zero nine, and the best number is six seven eight, five five five, zero two seven one. That's all correct, right?\"}",
+      "readback_asked_seq": 10,
+      "readback_confirmed_at": "2026-11-05T21:50:28Z"
+    },
+    "events": [
+      {
+        "at": "2026-11-05T21:50:05Z",
+        "type": "tool",
+        "tool": "calls.start",
+        "args": {
+          "call_id": "rtest-11052150-kb-tune-up-short-answers",
+          "caller_id": "(678) 555-0271",
+          "dialed_number": "(678) 336-6730",
+          "direction": "inbound"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 18.6,
+        "error": null,
+        "request_id": "05a76d55c231"
+      },
+      {
+        "at": "2026-11-05T21:50:21Z",
+        "type": "turn",
+        "seq": 1,
+        "speaker": "agent",
+        "text": "Thank you for calling Summit Air. How can I help you today?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:50:21Z",
+        "type": "turn",
+        "seq": 2,
+        "speaker": "caller",
+        "text": "Hi, I need a furnace tune-up.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:50:21Z",
+        "type": "turn",
+        "seq": 3,
+        "speaker": "agent",
+        "text": "Happy to help with that. Can I get your name?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:50:21Z",
+        "type": "turn",
+        "seq": 4,
+        "speaker": "caller",
+        "text": "Alex Kim.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:50:21Z",
+        "type": "turn",
+        "seq": 5,
+        "speaker": "agent",
+        "text": "Thanks. And this is for a residential property, right? Like a home or an apartment?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:50:21Z",
+        "type": "turn",
+        "seq": 6,
+        "speaker": "caller",
+        "text": "A house.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:50:21Z",
+        "type": "turn",
+        "seq": 7,
+        "speaker": "agent",
+        "text": "What's the street address for the house?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:50:21Z",
+        "type": "turn",
+        "seq": 8,
+        "speaker": "caller",
+        "text": "8410 Ridge Blvd, Brooklyn, 11209.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:50:21Z",
+        "type": "tool",
+        "tool": "find_address",
+        "args": {
+          "call_id": "rtest-11052150-kb-tune-up-short-answers",
+          "street": "8410 Ridge Blvd",
+          "borough": "Brooklyn",
+          "spelled": ""
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 156.2,
+        "error": null,
+        "request_id": "9d58b8bf75cf"
+      },
+      {
+        "at": "2026-11-05T21:50:22Z",
+        "type": "tool",
+        "tool": "find_customer",
+        "args": {
+          "call_id": "rtest-11052150-kb-tune-up-short-answers",
+          "phone": "caller_id",
+          "address": null
+        },
+        "ok": false,
+        "refused": "invalid_arguments",
+        "gate": "invalid_arguments",
+        "say": "Could I get that number again, all ten digits?",
+        "ms": 2.2,
+        "error": null,
+        "request_id": "ae25a70b7fc7"
+      },
+      {
+        "at": "2026-11-05T21:50:25Z",
+        "type": "turn",
+        "seq": 9,
+        "speaker": "agent",
+        "text": "What's the best phone number to reach you?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 5000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:50:25Z",
+        "type": "turn",
+        "seq": 10,
+        "speaker": "caller",
+        "text": "678 555 0271.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:50:25Z",
+        "type": "tool",
+        "tool": "read_back",
+        "args": {
+          "call_id": "rtest-11052150-kb-tune-up-short-answers",
+          "address": {
+            "street": "8410 Ridge Boulevard",
+            "unit": "",
+            "city": "",
+            "zip": "11209",
+            "spelled": ""
+          },
+          "phone": "678 555 0271",
+          "phone_for": "",
+          "name": "Alex Kim",
+          "confirmed": false
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "I have your home at 8410 Ridge Boulevard, ZIP code one one two zero nine, and the best number is six seven eight, five five five, zero two seven one. That's all correct, right?",
+        "ms": 5.8,
+        "error": null,
+        "request_id": "80af979f8da3"
+      },
+      {
+        "at": "2026-11-05T21:50:28Z",
+        "type": "turn",
+        "seq": 11,
+        "speaker": "agent",
+        "text": "I have your home at 8410 Ridge Boulevard, ZIP code one one two zero nine, and the best number is six seven eight, five five five, zero two seven one. That's all correct, right?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 3000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:50:28Z",
+        "type": "turn",
+        "seq": 12,
+        "speaker": "caller",
+        "text": "Yep.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:50:28Z",
+        "type": "tool",
+        "tool": "read_back",
+        "args": {
+          "call_id": "rtest-11052150-kb-tune-up-short-answers",
+          "address": {
+            "street": "8410 Ridge Boulevard",
+            "unit": "",
+            "city": "",
+            "zip": "11209",
+            "spelled": ""
+          },
+          "phone": "678 555 0271",
+          "phone_for": "",
+          "name": "Alex Kim",
+          "confirmed": true
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 6.5,
+        "error": null,
+        "request_id": "3c599db51526"
+      },
+      {
+        "at": "2026-11-05T21:50:29Z",
+        "type": "tool",
+        "tool": "find_slots",
+        "args": {
+          "call_id": "rtest-11052150-kb-tune-up-short-answers",
+          "job_type": "tune_up",
+          "priority": null,
+          "preferred_days": [],
+          "time_of_day": null,
+          "window_minutes": null,
+          "day": null,
+          "arrive_after": null,
+          "arrive_before": null,
+          "facts": {
+            "issue": "",
+            "since": "",
+            "who_home": "",
+            "inside_temp_f": null,
+            "temp_falling_fast": false
+          }
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "The soonest I have is today, 5 to 7. Does that work?",
+        "ms": 845.5,
+        "error": null,
+        "request_id": "82a3c9905639"
+      },
+      {
+        "at": "2026-11-05T21:50:36Z",
+        "type": "turn",
+        "seq": 13,
+        "speaker": "agent",
+        "text": "The soonest I have is today, Thursday, November 5, arriving between 5 and 7 PM. Does that work?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 5000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:50:36Z",
+        "type": "turn",
+        "seq": 14,
+        "speaker": "caller",
+        "text": "Sure.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:50:36Z",
+        "type": "turn",
+        "seq": 15,
+        "speaker": "agent",
+        "text": "Will you be able to approve any repair work the technician recommends?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:50:36Z",
+        "type": "turn",
+        "seq": 16,
+        "speaker": "caller",
+        "text": "Yep.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:50:36Z",
+        "type": "turn",
+        "seq": 17,
+        "speaker": "agent",
+        "text": "Will someone be home to let the technician in?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:50:36Z",
+        "type": "turn",
+        "seq": 18,
+        "speaker": "caller",
+        "text": "Yep.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:50:36Z",
+        "type": "turn",
+        "seq": 19,
+        "speaker": "agent",
+        "text": "Is there a gate code, buzzer, or pet the technician should know about?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:50:36Z",
+        "type": "turn",
+        "seq": 20,
+        "speaker": "caller",
+        "text": "Nope.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:50:36Z",
+        "type": "tool",
+        "tool": "book_appointment",
+        "args": {
+          "call_id": "rtest-11052150-kb-tune-up-short-answers",
+          "job_type": "tune_up",
+          "slot": {
+            "date": "2026-11-05",
+            "window": "1700-1900"
+          },
+          "details": {
+            "issue": "Furnace tune-up",
+            "since": "not provided",
+            "tried": "not provided",
+            "who_home": "Yes, someone will be home",
+            "approver": "Alex Kim",
+            "system_type": "",
+            "arrival_notes": "No gate code, buzzer, or pet.",
+            "name": "",
+            "inside_temp_f": null
+          },
+          "priority": null,
+          "separate_problem": false,
+          "new_address_account": null
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "You're all set for today, Thursday, November 5, with the technician arriving between 5 and 7. Anything else?",
+        "ms": 116.1,
+        "error": null,
+        "request_id": "ad509c3e2e02"
+      },
+      {
+        "at": "2026-11-05T21:50:39Z",
+        "type": "turn",
+        "seq": 21,
+        "speaker": "agent",
+        "text": "You're all set for today, Thursday, November 5, with the technician arriving between 5 and 7. Anything else?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 3000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:50:39Z",
+        "type": "turn",
+        "seq": 22,
+        "speaker": "caller",
+        "text": "Nope, that's all. Bye.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:50:39Z",
+        "type": "turn",
+        "seq": 23,
+        "speaker": "agent",
+        "text": "Thanks for calling Summit Air, and have a great day.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:50:39Z",
+        "type": "tool",
+        "tool": "end_call",
+        "args": {
+          "call_id": "rtest-11052150-kb-tune-up-short-answers",
+          "reason": "caller_goodbye"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 5.9,
+        "error": null,
+        "request_id": "9409414b2f64"
+      }
+    ],
+    "flags": [],
+    "callbacks": [],
+    "bookings": [
+      {
+        "id": 216,
+        "kind": "book",
+        "status": "booked",
+        "fsm_job_id": 548,
+        "window_start": "2026-11-05T22:00:00Z",
+        "window_end": "2026-11-06T00:00:00Z",
+        "priority": "Normal",
+        "priority_reasons": "",
+        "safety_override": 0,
+        "seek_earlier": 0,
+        "attempts": 1,
+        "last_error": null,
+        "raised_after_wait": 0,
+        "priority_rules": "[]",
+        "priority_reason_list": "[]",
+        "who_home": "Yes, someone will be home",
+        "job_type": "tune_up",
+        "street": "8410 Ridge Boulevard",
+        "unit": "",
+        "job_notes": "[]"
+      }
+    ],
+    "notes": [],
+    "leads": [],
+    "out_of_area": [],
+    "summary": [],
+    "electrical": [],
+    "holds": [],
+    "pace": [
+      {
+        "call_id": "rtest-11052150-kb-tune-up-short-answers",
+        "speed": 1.0,
+        "source": "default",
+        "requested": 0,
+        "older_adult": 0,
+        "address_speed": null,
+        "repeats": 0
+      }
+    ],
+    "pace_changes": [],
+    "caller_pace": [],
+    "transfers": [],
+    "handoffs": [],
+    "address_lookups": [
+      {
+        "house": "8410",
+        "street": "ridge blvd",
+        "hint": "Brooklyn",
+        "status": "one",
+        "zips_json": "[\"11209\"]",
+        "source": "geosearch"
+      }
+    ],
+    "address_checks": [],
+    "names": [],
+    "address_moves": [],
+    "identity_checks": [],
+    "heads_ups": []
+  }
+}

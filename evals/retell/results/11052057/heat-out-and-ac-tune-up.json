@@ -1,0 +1,1502 @@
+{
+  "case": "heat-out-and-ac-tune-up",
+  "retell": {
+    "test_case_job_id": "test_job_c5df0479cfc9",
+    "status": "error",
+    "result_explanation": "Ending the conversation early because the agent did not respond to consecutive user utterances.",
+    "creation_timestamp": 1793912279770,
+    "user_modified_timestamp": 1793912346195,
+    "test_case_definition_id": "test_case_f8fe5ca1a0b3",
+    "test_case_definition_snapshot": {
+      "creationTimestamp": 1793911573618,
+      "dynamicVariables": {
+        "summit_call_id": "rtest-11052057-heat-out-and-ac-tune-up"
+      },
+      "llmModel": "claude-5.5-haiku",
+      "metrics": [
+        "The agent books 2 separate visit(s) with book_appointment, one for each problem or unit the caller needs seen.",
+        "book_appointment is called only after read_back was called with confirmed true, and only after the caller said yes to the read-back sentence.",
+        "The agent books the heat first, then the tune-up, without reading the address back twice.",
+        "The agent confirms both visits clearly."
+      ],
+      "name": "[summit] heat-out-and-ac-tune-up: Nadia Petrov, a homeowner in Bensonhurst, Brooklyn, with no heat",
+      "orgId": "org_EoCqq2c268JWlyCE",
+      "responseEngine": {
+        "llmId": "llm_1da616f2baeb6e916f63e0236950",
+        "type": "retell-llm",
+        "version": 0
+      },
+      "responseEngineId": "llm_1da616f2baeb6e916f63e0236950",
+      "testCaseDefinitionId": "test_case_f8fe5ca1a0b3",
+      "toolMocks": [],
+      "type": "simulation",
+      "userModifiedTimestamp": 1793912273022,
+      "userPrompt": "## Identity\nNadia Petrov, a homeowner in Bensonhurst, Brooklyn, with no heat. Organized and wants to get everything done in one call.\nYour name: Nadia Petrov\nYour address: 1855 Bath Ave, Brooklyn, 11214\nYour phone: (917) 555-0115 (the number you're calling from)\nYour problem: no heat since last night, gas furnace, about 62 inside; separately the central AC needs its yearly tune-up before summer\nYour home: Nadia, all day\nYour approver: Nadia, she owns the house\n\n## Goal\nStart the call by saying: \"My heat's out, and while you're at it, can you also tune up the AC?\"\n\n## Behavior\n- Answer the heating questions first.\n- Take the first time offered for the heat.\n- For the AC tune-up, take any weekday offered; if there's no opening, accept a callback to set it up.\n- Say goodbye once both are handled.\n- Talk like a real person on the phone: short, plain sentences, one thing at a time.\n- Give a detail only when the agent asks for it, unless a line above says otherwise.\n- Never invent facts beyond the ones above; if asked something you don't know, say you don't know.\n- When your business is done, say goodbye and stop talking.\n"
+    },
+    "transcript_snapshot": {
+      "callEnded": false,
+      "dynamicVariables": {
+        "call_context": "",
+        "call_id": "playground",
+        "call_type": "web_call",
+        "greeting": "Thank you for calling Summit Air. How can I help you today?",
+        "session_type": "voice",
+        "summit_call_id": "rtest-11052057-heat-out-and-ac-tune-up",
+        "system_timezone": "America/Los_Angeles"
+      },
+      "knowledgeBaseRetrievedContents": [],
+      "toolMocks": [],
+      "transcript": [
+        {
+          "content": "Thank you for calling Summit Air. How can I help you today?",
+          "created_timestamp": 1793912289887,
+          "message_id": "message_86267be7bbc77e5b1dfd8b37",
+          "role": "agent"
+        },
+        {
+          "content": "My heat's out, and while you're at it, can you also tune up the AC?",
+          "created_timestamp": 1793912290625,
+          "message_id": "message_c30f96c0ed3763ecd688c713",
+          "role": "user"
+        },
+        {
+          "content": "Sorry about the heat being out. I can help with that. Let's start with the heat: what's happening, and since when has it been out?",
+          "created_timestamp": 1793912291404,
+          "message_id": "message_35a68fd0e6edbe1a9e7f38e6",
+          "metadata": {
+            "response_id": 1
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Since last night. The furnace is still running, I think, but the house is only about 62 degrees. It's a gas furnace.",
+          "created_timestamp": 1793912292122,
+          "message_id": "message_8b470059145d7ead8fc7c9e5",
+          "role": "user"
+        },
+        {
+          "content": "Thanks. Since the house is at about 62 degrees and the furnace is still running, I need to ask: do you smell gas or hear a carbon monoxide alarm right now?",
+          "created_timestamp": 1793912292996,
+          "message_id": "message_290c40a72c2cfa7c1d7db066",
+          "metadata": {
+            "response_id": 2
+          },
+          "role": "agent"
+        },
+        {
+          "content": "No, I don't smell gas. I don't hear any alarm either.",
+          "created_timestamp": 1793912293681,
+          "message_id": "message_ec843fc6a5790524a98cb55e",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, that's good to know. Can I get your name?",
+          "created_timestamp": 1793912294378,
+          "message_id": "message_93684e2f6951c525f0641f55",
+          "metadata": {
+            "response_id": 3
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Nadia Petrov.",
+          "created_timestamp": 1793912294948,
+          "message_id": "message_70b8380e725ebe23178a0139",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, Nadia. Is this for a residential property, like a home or an apartment?",
+          "created_timestamp": 1793912295649,
+          "message_id": "message_f0a7df1e23262772064112dc",
+          "metadata": {
+            "response_id": 4
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, it's my home. It's a house at 1855 Bath Ave, Brooklyn, 11214.",
+          "created_timestamp": 1793912296296,
+          "message_id": "message_a92e851f92317af97d03f785",
+          "role": "user"
+        },
+        {
+          "content": "Got it. Let me look up that address.",
+          "created_timestamp": 1793912297371,
+          "message_id": "message_ad7fd4633016fe3158d9d055",
+          "metadata": {
+            "response_id": 5
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"zip\":\"11214\"}",
+          "created_timestamp": 1793912297372,
+          "message_id": "message_eba07ad5ba687b47e9fe0437",
+          "name": "check_service_area",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_017qstyC5ko9g51USHCDQ3Sj",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"zip\":\"11214\",\"in_area\":true,\"area\":\"Brooklyn South\"}}",
+          "created_timestamp": 1793912297906,
+          "message_id": "message_0a4b26890cfa119228294821",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_017qstyC5ko9g51USHCDQ3Sj"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"1855 Bath Ave\",\"zip\":\"11214\",\"city\":\"Brooklyn\"}}",
+          "created_timestamp": 1793912297907,
+          "message_id": "message_1dcb00ffe5742c500e49f217",
+          "name": "find_customer",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01XsVeep2YofB59zvmnYkj4Y",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"matches\":[],\"needs_unit\":false}}",
+          "created_timestamp": 1793912298210,
+          "message_id": "message_ebeb7e7140b55cc99dad7a04",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01XsVeep2YofB59zvmnYkj4Y"
+        },
+        {
+          "content": "Thanks. Is there an apartment or unit number for this address, or is it a standalone house?",
+          "created_timestamp": 1793912298975,
+          "message_id": "message_5814200f429ec216973c1ece",
+          "metadata": {
+            "response_id": 6
+          },
+          "role": "agent"
+        },
+        {
+          "content": "It's a standalone house. No unit number.",
+          "created_timestamp": 1793912299543,
+          "message_id": "message_eb114c95c44bfa0b99a8d964",
+          "role": "user"
+        },
+        {
+          "content": "Thanks. Since your furnace is still running but the house is at 62 degrees, I'll note that for the technician. Is anyone at home who's especially sensitive to the cold, like an older person, a baby, or someone with a medical condition?",
+          "created_timestamp": 1793912300480,
+          "message_id": "message_dc57f72dba021238e058f958",
+          "metadata": {
+            "response_id": 7
+          },
+          "role": "agent"
+        },
+        {
+          "content": "No, it's just me at home. I'm not sure about medical conditions, but I'm fine for now.",
+          "created_timestamp": 1793912301174,
+          "message_id": "message_463baabf9270b5c4d0061096",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, I'll note that no one vulnerable is home for now. Can I get the best phone number to reach you?",
+          "created_timestamp": 1793912302061,
+          "message_id": "message_f0a2b17308e6a76957345d08",
+          "metadata": {
+            "response_id": 8
+          },
+          "role": "agent"
+        },
+        {
+          "content": "(917) 555-0115. That's the number I'm calling from.",
+          "created_timestamp": 1793912302675,
+          "message_id": "message_1f9159a9e17909cec4905e15",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"1855 Bath Ave\",\"zip\":\"11214\",\"city\":\"Brooklyn\"},\"phone\":\"caller_id\"}",
+          "created_timestamp": 1793912303657,
+          "message_id": "message_0d453e31a220f97263880ab5",
+          "name": "read_back",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_017NRJK1XRi8bnMDa3NMpa2D",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"I have your home at 1855 Bath Ave, Brooklyn, ZIP code one one two one four, and the best number is nine one seven, five five five, zero one one five. That's all correct, right?\",\"data\":{\"confirmed\":false,\"sentence\":\"I have your home at 1855 Bath Ave, Brooklyn, ZIP code one one two one four, and the best number is nine one seven, five five five, zero one one five. That's all correct, right?\"}}",
+          "created_timestamp": 1793912304104,
+          "message_id": "message_4bef20061b607cab00e9a3ed",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_017NRJK1XRi8bnMDa3NMpa2D"
+        },
+        {
+          "content": "I have your home at 1855 Bath Ave, Brooklyn, ZIP code one one two one four, and the best number is nine one seven, five five five, zero one one five. That's all correct, right?",
+          "created_timestamp": 1793912304977,
+          "message_id": "message_33b8423d3435dcd96ca334f9",
+          "metadata": {
+            "response_id": 9
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, that's all correct.",
+          "created_timestamp": 1793912305468,
+          "message_id": "message_5507de8e2cbcc02b8ff46da2",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"1855 Bath Ave\",\"zip\":\"11214\",\"city\":\"Brooklyn\"},\"phone\":\"caller_id\",\"confirmed\":true}",
+          "created_timestamp": 1793912307010,
+          "message_id": "message_93da2dfeb6c2d120a2f5962e",
+          "name": "read_back",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01XnJxYfRAxu3HQokz2DcZ9u",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"confirmed\":true,\"address\":{\"street\":\"1855 Bath Ave\",\"unit\":\"\",\"city\":\"Brooklyn\",\"zip\":\"11214\",\"spelled\":\"\"},\"phone\":\"9175550115\"}}",
+          "created_timestamp": 1793912307383,
+          "message_id": "message_e9d625c4e892cc48c9131ee1",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01XnJxYfRAxu3HQokz2DcZ9u"
+        },
+        {
+          "arguments": "{\"job_type\":\"no_heat\",\"facts\":{\"issue\":\"Gas furnace not heating since last night; furnace still running\",\"since\":\"last night\",\"inside_temp_f\":62,\"who_home\":\"only the caller, no vulnerable person home, not sure about medical conditions\"}}",
+          "created_timestamp": 1793912307384,
+          "message_id": "message_e07c5b06ad033db5da7bd558",
+          "name": "find_slots",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01YNnUHoVbrPyboqkRMhN21m",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":false,\"say\":\"Let me check that again.\",\"data\":{\"errors\":{\"facts.since\":\"Extra inputs are not permitted\"}},\"refused\":\"invalid_arguments\"}",
+          "created_timestamp": 1793912307676,
+          "message_id": "message_db8000f8224c5e1222288f25",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01YNnUHoVbrPyboqkRMhN21m"
+        },
+        {
+          "arguments": "{\"job_type\":\"no_heat\",\"facts\":{\"issue\":\"Gas furnace not heating since last night; furnace still running\",\"inside_temp_f\":62,\"who_home\":\"only the caller, no vulnerable person home, not sure about medical conditions\"}}",
+          "created_timestamp": 1793912308715,
+          "message_id": "message_4a4bbe3fe325efaaafef04aa",
+          "name": "find_slots",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01MWfoU3NUGpHY5yyWQvn3Gs",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"The soonest I have is today, 4 to 6. Does that work?\",\"data\":{\"priority\":{\"level\":\"High\",\"reasons\":[\"below 65 F inside, caller said \\\"Since last night. The furnace is still running, I think, but the house is...\\\"\",\"someone at home alone, caller said \\\"No, it's just me at home\\\"\"],\"requested\":null,\"raised_after_wait\":false},\"days\":[{\"date\":\"2026-11-05\",\"weekday\":\"Thursday\",\"day\":\"today\",\"windows\":[\"1600-1800\",\"1800-2000\"],\"labels\":[\"4 to 6\",\"6 to 8\"]},{\"date\":\"2026-11-06\",\"weekday\":\"Friday\",\"day\":\"tomorrow\",\"windows\":[\"0800-1000\",\"1000-1200\",\"1200-1400\",\"1400-1600\",\"1600-1800\",\"1800-2000\"],\"labels\":[\"8 to 10\",\"10 to 12\",\"12 to 2\",\"2 to 4\",\"4 to 6\",\"6 to 8\"]},{\"date\":\"2026-11-09\",\"weekday\":\"Monday\",\"day\":\"Monday\",\"windows\":[\"0800-1000\",\"1000-1200\",\"1200-1400\",\"1400-1600\",\"1600-1800\",\"1800-2000\"],\"labels\":[\"8 to 10\",\"10 to 12\",\"12 to 2\",\"2 to 4\",\"4 to 6\",\"6 to 8\"]}],\"offer\":{\"date\":\"2026-11-05\",\"window\":\"1600-1800\",\"weekday\":\"Thursday\",\"day\":\"today\",\"day_and_date\":\"today, Thursday, November 5\",\"label\":\"4 to 6\",\"part\":\"evening\",\"after_hours\":false}}}",
+          "created_timestamp": 1793912309978,
+          "message_id": "message_fddadb8eb8c821985b9cf63b",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01MWfoU3NUGpHY5yyWQvn3Gs"
+        },
+        {
+          "content": "The soonest I have is today, Thursday, November 5, between 4 and 6 PM. Does that work?",
+          "created_timestamp": 1793912310926,
+          "message_id": "message_a1b6dc584621a468794d3776",
+          "metadata": {
+            "response_id": 10
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, today at 4 to 6 works. Thank you.",
+          "created_timestamp": 1793912311576,
+          "message_id": "message_53a8240b44546d1bc2ec1666",
+          "role": "user"
+        },
+        {
+          "content": "Great, today at 4 to 6 PM it is. Will you be able to approve any repair work the technician recommends?",
+          "created_timestamp": 1793912312453,
+          "message_id": "message_8028f0c05707e8c612131c1d",
+          "metadata": {
+            "response_id": 11
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, I'm the homeowner, so I can approve the work. Just call me first if it's going to cost a lot.",
+          "created_timestamp": 1793912313298,
+          "message_id": "message_f0ce73c57af936b7dd3b5813",
+          "role": "user"
+        },
+        {
+          "content": "Understood. The technician will go over any costs with you before doing the work. Will someone be home to let the technician in?",
+          "created_timestamp": 1793912314086,
+          "message_id": "message_c19f75933540d80f90164a04",
+          "metadata": {
+            "response_id": 12
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, I'll be home all day. Is there anything I need to do before they come, like leaving the side gate open?",
+          "created_timestamp": 1793912315408,
+          "message_id": "message_66f1d4dcaa1d9093c69d254f",
+          "role": "user"
+        },
+        {
+          "content": "Yes, please make sure the technician can reach the furnace easily and leave the side gate unlocked if they'll need access that way. Is there a gate code, buzzer, or pet the technician should know about?",
+          "created_timestamp": 1793912316338,
+          "message_id": "message_fc8491e2e9107d8034f532f5",
+          "metadata": {
+            "response_id": 13
+          },
+          "role": "agent"
+        },
+        {
+          "content": "No gate code, no buzzer, and no pets. The gate just needs to be unlocked. I don't know much about where the furnace is, so I'll let the technician know when they get here.",
+          "created_timestamp": 1793912317275,
+          "message_id": "message_015b89d28dadde116b1afe4b",
+          "role": "user"
+        },
+        {
+          "content": "Thanks for that. I've noted no gate code, buzzer, or pets, and that the side gate should be unlocked. Let me get this booked for you.",
+          "created_timestamp": 1793912319065,
+          "message_id": "message_e679aed1f56e198a92e7dab8",
+          "metadata": {
+            "response_id": 14
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"details\":{\"approver\":\"Nadia Petrov (homeowner)\",\"issue\":\"Gas furnace not heating since last night; furnace still running; house at 62 F\",\"since\":\"last night\",\"tried\":\"not provided\",\"who_home\":\"caller home all day, alone, no vulnerable person known\",\"inside_temp_f\":62,\"name\":\"Nadia Petrov\",\"arrival_notes\":\"Side gate unlocked, no gate code, buzzer or pets. Caller wants a call before any costly work.\"},\"job_type\":\"no_heat\",\"slot\":{\"date\":\"2026-11-05\",\"window\":\"1600-1800\"}}",
+          "created_timestamp": 1793912319066,
+          "message_id": "message_207820f4ac2f71066035be7e",
+          "name": "book_appointment",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_013hAUkhbXiTj6yj7EvW18Ls",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"You're all set for today, Thursday, November 5, with the technician arriving between 4 and 6. Anything else?\",\"data\":{\"booking_id\":550,\"appointment_id\":550,\"window\":{\"date\":\"2026-11-05\",\"window\":\"1600-1800\",\"weekday\":\"Thursday\",\"day\":\"today\",\"day_and_date\":\"today, Thursday, November 5\",\"label\":\"4 to 6\",\"part\":\"evening\",\"after_hours\":false},\"priority\":{\"level\":\"High\",\"reasons\":[\"below 65 F inside, caller said \\\"Since last night. The furnace is still running, I think, but the house is...\\\"\",\"someone at home alone, caller said \\\"No, it's just me at home\\\"\"],\"raised_after_wait\":false},\"seek_earlier\":false,\"safety_override\":false,\"approval_callback_at\":null,\"return_visit_review\":false}}",
+          "created_timestamp": 1793912320390,
+          "message_id": "message_1f227f832c1a8d53cb9acced",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_013hAUkhbXiTj6yj7EvW18Ls"
+        },
+        {
+          "content": "You're all set for today, Thursday, November 5, with the technician arriving between 4 and 6 PM. Anything else I can help with, like the AC tune-up?",
+          "created_timestamp": 1793912321158,
+          "message_id": "message_0f2f0a34f2ac0330d3b0f0fc",
+          "metadata": {
+            "response_id": 15
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, please. I need the AC tune-up too, before summer. Do you have anything on a weekday?",
+          "created_timestamp": 1793912321824,
+          "message_id": "message_ba4fafba35d9063013493650",
+          "role": "user"
+        },
+        {
+          "content": "That's a reference note, and I'll answer your request. Let me check weekday openings for the AC tune-up.",
+          "created_timestamp": 1793912323094,
+          "message_id": "message_be7193e72d6d6e1bdb671941",
+          "metadata": {
+            "response_id": 16
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"job_type\":\"tune_up\",\"preferred_days\":[\"Monday\",\"Tuesday\",\"Wednesday\",\"Thursday\",\"Friday\"],\"facts\":{\"issue\":\"Annual AC tune-up before summer\"}}",
+          "created_timestamp": 1793912323095,
+          "message_id": "message_848f99e997aae276518beaca",
+          "name": "find_slots",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01LQbE7U5kc1FmrTqw7CV5NK",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"Today I have 4 to 6. Does that work?\",\"data\":{\"priority\":{\"level\":\"Normal\",\"reasons\":[],\"requested\":null,\"raised_after_wait\":false},\"days\":[{\"date\":\"2026-11-05\",\"weekday\":\"Thursday\",\"day\":\"today\",\"windows\":[\"1600-1800\",\"1800-2000\"],\"labels\":[\"4 to 6\",\"6 to 8\"]},{\"date\":\"2026-11-06\",\"weekday\":\"Friday\",\"day\":\"tomorrow\",\"windows\":[\"0800-1000\",\"1000-1200\",\"1200-1400\",\"1400-1600\",\"1600-1800\",\"1800-2000\"],\"labels\":[\"8 to 10\",\"10 to 12\",\"12 to 2\",\"2 to 4\",\"4 to 6\",\"6 to 8\"]},{\"date\":\"2026-11-09\",\"weekday\":\"Monday\",\"day\":\"Monday\",\"windows\":[\"0800-1000\",\"1000-1200\",\"1200-1400\",\"1400-1600\",\"1600-1800\",\"1800-2000\"],\"labels\":[\"8 to 10\",\"10 to 12\",\"12 to 2\",\"2 to 4\",\"4 to 6\",\"6 to 8\"]}],\"offer\":{\"date\":\"2026-11-05\",\"window\":\"1600-1800\",\"weekday\":\"Thursday\",\"day\":\"today\",\"day_and_date\":\"today, Thursday, November 5\",\"label\":\"4 to 6\",\"part\":\"evening\",\"after_hours\":false}}}",
+          "created_timestamp": 1793912324787,
+          "message_id": "message_8038f3ecb37829cca1cee98b",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01LQbE7U5kc1FmrTqw7CV5NK"
+        },
+        {
+          "content": "I can offer tomorrow, Friday, November 6, between 8 and 10 AM, or Monday, November 9, between 8 and 10 AM. Which would you prefer?",
+          "created_timestamp": 1793912325559,
+          "message_id": "message_707b81e8d5bfa18e64dd95eb",
+          "metadata": {
+            "response_id": 17
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Friday works. Tomorrow, November 6, from 8 to 10 AM.",
+          "created_timestamp": 1793912326226,
+          "message_id": "message_d2776f773c407fb887579c03",
+          "role": "user"
+        },
+        {
+          "content": "Friday works. Before I book, will you be able to approve any repair work the technician recommends for the AC?",
+          "created_timestamp": 1793912327029,
+          "message_id": "message_43d5b4c195178cb733ac2d4a",
+          "metadata": {
+            "response_id": 18
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, I'm the homeowner, so I can approve the work. Just call me first if it's going to cost a lot.",
+          "created_timestamp": 1793912327628,
+          "message_id": "message_dc34a94c01e49fb0c723a290",
+          "role": "user"
+        },
+        {
+          "content": "Thanks. Since you're the homeowner, I'll note you can approve the work and want a call first if it's going to cost a lot. Will someone be home to let the technician in for the AC visit?",
+          "created_timestamp": 1793912328643,
+          "message_id": "message_22142a29db1bf5246996ef68",
+          "metadata": {
+            "response_id": 19
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, I'll be home. Same gate situation, it just needs to be unlocked. Thanks, that's all I need. Bye.",
+          "created_timestamp": 1793912329786,
+          "message_id": "message_5765c1b83b1fce954dd38894",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, Nadia. I'll note the gate needs to be unlocked for the AC visit too. Before I book, is there anything else you need?",
+          "created_timestamp": 1793912330704,
+          "message_id": "message_fc281e4d8a08728a307ccbde",
+          "metadata": {
+            "response_id": 20
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Nope, that's everything. Thanks, bye.",
+          "created_timestamp": 1793912331317,
+          "message_id": "message_f591591b6fffd881b9f37a5d",
+          "role": "user"
+        },
+        {
+          "content": "I haven't booked the AC tune-up yet. I'll go ahead and book it for Friday, November 6, from 8 to 10 AM.",
+          "created_timestamp": 1793912332844,
+          "message_id": "message_62953dfd2cc586498b029ab3",
+          "metadata": {
+            "response_id": 21
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"details\":{\"approver\":\"Nadia Petrov (homeowner)\",\"issue\":\"Annual AC tune-up before summer\",\"since\":\"not applicable, routine maintenance\",\"tried\":\"not applicable\",\"who_home\":\"caller home, alone, no vulnerable person known\",\"name\":\"Nadia Petrov\",\"arrival_notes\":\"Side gate unlocked, no gate code, buzzer or pets. Caller wants a call before any costly work.\"},\"job_type\":\"tune_up\",\"slot\":{\"date\":\"2026-11-06\",\"window\":\"0800-1000\"}}",
+          "created_timestamp": 1793912332845,
+          "message_id": "message_f360b728fc21ff81e3f45945",
+          "name": "book_appointment",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01Ae1WngGw4NSWz5RDee6dwg",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":false,\"data\":{\"need\":\"a visit is already booked at this address on this call; book this one with separate_problem true only if the caller asked for a second, different job; to change the first, use reschedule_appointment\"},\"refused\":\"second_job\"}",
+          "created_timestamp": 1793912333531,
+          "message_id": "message_de503735afefe8284d9e19e5",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01Ae1WngGw4NSWz5RDee6dwg"
+        },
+        {
+          "content": "The system is treating the AC tune-up as a second visit at this address. Since you asked for it as a separate job, I'll book it as its own visit.",
+          "created_timestamp": 1793912335061,
+          "message_id": "message_1e3647ca02454162fb00b28e",
+          "metadata": {
+            "response_id": 22
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"details\":{\"approver\":\"Nadia Petrov (homeowner)\",\"issue\":\"Annual AC tune-up before summer, separate from today's heating visit\",\"since\":\"not applicable, routine maintenance\",\"tried\":\"not applicable\",\"who_home\":\"caller home, alone, no vulnerable person known\",\"name\":\"Nadia Petrov\",\"arrival_notes\":\"Side gate unlocked, no gate code, buzzer or pets. Caller wants a call before any costly work.\"},\"job_type\":\"tune_up\",\"slot\":{\"date\":\"2026-11-06\",\"window\":\"0800-1000\"},\"separate_problem\":true}",
+          "created_timestamp": 1793912335062,
+          "message_id": "message_be29a2429f4e365842bbe053",
+          "name": "book_appointment",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01XM9Qi6KgssazZKdoNkeVE9",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"You're all set for tomorrow, Friday, November 6, with the technician arriving between 8 and 10. Anything else?\",\"data\":{\"booking_id\":556,\"appointment_id\":556,\"window\":{\"date\":\"2026-11-06\",\"window\":\"0800-1000\",\"weekday\":\"Friday\",\"day\":\"tomorrow\",\"day_and_date\":\"tomorrow, Friday, November 6\",\"label\":\"8 to 10\",\"part\":\"morning\",\"after_hours\":false},\"priority\":{\"level\":\"Normal\",\"reasons\":[],\"raised_after_wait\":false},\"seek_earlier\":false,\"safety_override\":false,\"approval_callback_at\":null,\"return_visit_review\":false}}",
+          "created_timestamp": 1793912335735,
+          "message_id": "message_c3e6f469ff8f224fac51d69c",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01XM9Qi6KgssazZKdoNkeVE9"
+        },
+        {
+          "content": "You're all set for tomorrow, Friday, November 6, with the technician arriving between 8 and 10 AM for your AC tune-up. Thanks for calling Summit Air. Take care.",
+          "created_timestamp": 1793912336784,
+          "message_id": "message_830e0df6ff1bb6281ee5d757",
+          "metadata": {
+            "response_id": 23
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"reason\":\"resolved\"}",
+          "created_timestamp": 1793912336785,
+          "message_id": "message_8c159f77fb5d7bc9bf2131b6",
+          "name": "end_call",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_018QExUNy3DrPhEWs28t8gTR",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":false,\"say\":\"Is there anything else I can help with?\",\"refused\":\"anything_else_first\"}",
+          "created_timestamp": 1793912337307,
+          "message_id": "message_19fdd1a37111d4913d054113",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_018QExUNy3DrPhEWs28t8gTR"
+        },
+        {
+          "content": "Is there anything else I can help you with?",
+          "created_timestamp": 1793912338442,
+          "message_id": "message_e7cf3b251f82f6a9a370fbba",
+          "metadata": {
+            "response_id": 24
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Nope, that's everything. Thanks, bye.",
+          "created_timestamp": 1793912339122,
+          "message_id": "message_1c43bbebce602004c38ca937",
+          "role": "user"
+        },
+        {
+          "content": "Thanks for calling Summit Air. Take care.",
+          "created_timestamp": 1793912339881,
+          "message_id": "message_8d4c3a42ff8ace4651ab4b36",
+          "metadata": {
+            "response_id": 25
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"reason\":\"caller_goodbye\"}",
+          "created_timestamp": 1793912339882,
+          "message_id": "message_81c2b87fbee2d003600410c6",
+          "name": "end_call",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01YSFjHrWdEDPc9qZBWY5mED",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"hang_up\":true}}",
+          "created_timestamp": 1793912340401,
+          "message_id": "message_8787743495515f1c69e0a4cd",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01YSFjHrWdEDPc9qZBWY5mED"
+        },
+        {
+          "content": "Nope, that's everything. Thanks, bye.",
+          "created_timestamp": 1793912341569,
+          "message_id": "message_1bcbe2a38887ec5e7bee432e",
+          "role": "user"
+        },
+        {
+          "content": "Nope, that's everything. Thanks, bye.",
+          "created_timestamp": 1793912342949,
+          "message_id": "message_0a05bcb01749e86b4f698ab9",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, bye.",
+          "created_timestamp": 1793912344287,
+          "message_id": "message_6e3ec1b43ba622e2287949fe",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, bye.",
+          "created_timestamp": 1793912346194,
+          "message_id": "message_fe4d9ed251e9b86539bd27ff",
+          "role": "user"
+        }
+      ]
+    }
+  },
+  "trace": {
+    "call": {
+      "id": "rtest-11052057-heat-out-and-ac-tune-up",
+      "tenant": "summit-air",
+      "caller_id": "(917) 555-0115",
+      "caller_key": "9175550115",
+      "dialed_number": "(678) 336-6730",
+      "direction": "inbound",
+      "started_at": "2026-10-10T20:57:57Z",
+      "ended_at": null,
+      "end_reason": null,
+      "end_requested": 1,
+      "after_hours": 0,
+      "linked_call_id": null,
+      "outcome": null,
+      "commercial": 0,
+      "summary_status": "none",
+      "turn_seq": 45,
+      "safety_state": "none",
+      "safety_kind": null,
+      "safety_signal_at": null,
+      "safety_lines_at": null,
+      "safety_flag_id": null,
+      "safety_variant": 0,
+      "readback_json": "{\"street\": \"1855 Bath Ave\", \"unit\": \"\", \"city\": \"Brooklyn\", \"zip\": \"11214\", \"spelled\": \"\", \"phone\": \"9175550115\", \"phone_for\": \"\", \"sentence\": \"I have your home at 1855 Bath Ave, Brooklyn, ZIP code one one two one four, and the best number is nine one seven, five five five, zero one one five. That's all correct, right?\"}",
+      "readback_asked_seq": 17,
+      "readback_confirmed_at": "2026-11-05T20:58:27Z"
+    },
+    "events": [
+      {
+        "at": "2026-11-05T20:57:57Z",
+        "type": "tool",
+        "tool": "calls.start",
+        "args": {
+          "call_id": "rtest-11052057-heat-out-and-ac-tune-up",
+          "caller_id": "(917) 555-0115",
+          "dialed_number": "(678) 336-6730",
+          "direction": "inbound"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 18.3,
+        "error": null,
+        "request_id": "1b20a6d14160"
+      },
+      {
+        "at": "2026-11-05T20:58:17Z",
+        "type": "turn",
+        "seq": 1,
+        "speaker": "agent",
+        "text": "Thank you for calling Summit Air. How can I help you today?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:58:17Z",
+        "type": "turn",
+        "seq": 2,
+        "speaker": "caller",
+        "text": "My heat's out, and while you're at it, can you also tune up the AC?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:58:17Z",
+        "type": "turn",
+        "seq": 3,
+        "speaker": "agent",
+        "text": "Sorry about the heat being out. I can help with that. Let's start with the heat: what's happening, and since when has it been out?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:58:17Z",
+        "type": "turn",
+        "seq": 4,
+        "speaker": "caller",
+        "text": "Since last night. The furnace is still running, I think, but the house is only about 62 degrees. It's a gas furnace.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:58:17Z",
+        "type": "turn",
+        "seq": 5,
+        "speaker": "agent",
+        "text": "Thanks. Since the house is at about 62 degrees and the furnace is still running, I need to ask: do you smell gas or hear a carbon monoxide alarm right now?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:58:17Z",
+        "type": "turn",
+        "seq": 6,
+        "speaker": "caller",
+        "text": "No, I don't smell gas. I don't hear any alarm either.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:58:17Z",
+        "type": "turn",
+        "seq": 7,
+        "speaker": "agent",
+        "text": "Thanks, that's good to know. Can I get your name?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:58:17Z",
+        "type": "turn",
+        "seq": 8,
+        "speaker": "caller",
+        "text": "Nadia Petrov.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:58:17Z",
+        "type": "turn",
+        "seq": 9,
+        "speaker": "agent",
+        "text": "Thanks, Nadia. Is this for a residential property, like a home or an apartment?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:58:17Z",
+        "type": "turn",
+        "seq": 10,
+        "speaker": "caller",
+        "text": "Yes, it's my home. It's a house at 1855 Bath Ave, Brooklyn, 11214.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:58:17Z",
+        "type": "turn",
+        "seq": 11,
+        "speaker": "agent",
+        "text": "Got it. Let me look up that address.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:58:17Z",
+        "type": "tool",
+        "tool": "check_service_area",
+        "args": {
+          "call_id": "rtest-11052057-heat-out-and-ac-tune-up",
+          "zip": "11214"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 3.2,
+        "error": null,
+        "request_id": "bab5ef535386"
+      },
+      {
+        "at": "2026-11-05T20:58:18Z",
+        "type": "tool",
+        "tool": "find_customer",
+        "args": {
+          "call_id": "rtest-11052057-heat-out-and-ac-tune-up",
+          "phone": null,
+          "address": {
+            "street": "1855 Bath Ave",
+            "unit": "",
+            "city": "Brooklyn",
+            "zip": "11214",
+            "spelled": ""
+          }
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 11.8,
+        "error": null,
+        "request_id": "efb8cb593ca9"
+      },
+      {
+        "at": "2026-11-05T20:58:23Z",
+        "type": "turn",
+        "seq": 12,
+        "speaker": "agent",
+        "text": "Thanks. Is there an apartment or unit number for this address, or is it a standalone house?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:58:23Z",
+        "type": "turn",
+        "seq": 13,
+        "speaker": "caller",
+        "text": "It's a standalone house. No unit number.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:58:23Z",
+        "type": "turn",
+        "seq": 14,
+        "speaker": "agent",
+        "text": "Thanks. Since your furnace is still running but the house is at 62 degrees, I'll note that for the technician. Is anyone at home who's especially sensitive to the cold, like an older person, a baby, or someone with a medical condition?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:58:23Z",
+        "type": "turn",
+        "seq": 15,
+        "speaker": "caller",
+        "text": "No, it's just me at home. I'm not sure about medical conditions, but I'm fine for now.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:58:24Z",
+        "type": "turn",
+        "seq": 16,
+        "speaker": "agent",
+        "text": "Thanks, I'll note that no one vulnerable is home for now. Can I get the best phone number to reach you?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:58:24Z",
+        "type": "turn",
+        "seq": 17,
+        "speaker": "caller",
+        "text": "(917) 555-0115. That's the number I'm calling from.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:58:24Z",
+        "type": "tool",
+        "tool": "read_back",
+        "args": {
+          "call_id": "rtest-11052057-heat-out-and-ac-tune-up",
+          "address": {
+            "street": "1855 Bath Ave",
+            "unit": "",
+            "city": "Brooklyn",
+            "zip": "11214",
+            "spelled": ""
+          },
+          "phone": "caller_id",
+          "phone_for": "",
+          "confirmed": false
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "I have your home at 1855 Bath Ave, Brooklyn, ZIP code one one two one four, and the best number is nine one seven, five five five, zero one one five. That's all correct, right?",
+        "ms": 3.9,
+        "error": null,
+        "request_id": "bdd9b85385b1"
+      },
+      {
+        "at": "2026-11-05T20:58:27Z",
+        "type": "turn",
+        "seq": 18,
+        "speaker": "agent",
+        "text": "I have your home at 1855 Bath Ave, Brooklyn, ZIP code one one two one four, and the best number is nine one seven, five five five, zero one one five. That's all correct, right?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 3000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:58:27Z",
+        "type": "turn",
+        "seq": 19,
+        "speaker": "caller",
+        "text": "Yes, that's all correct.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:58:27Z",
+        "type": "tool",
+        "tool": "read_back",
+        "args": {
+          "call_id": "rtest-11052057-heat-out-and-ac-tune-up",
+          "address": {
+            "street": "1855 Bath Ave",
+            "unit": "",
+            "city": "Brooklyn",
+            "zip": "11214",
+            "spelled": ""
+          },
+          "phone": "caller_id",
+          "phone_for": "",
+          "confirmed": true
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 25.1,
+        "error": null,
+        "request_id": "7b3bd516054a"
+      },
+      {
+        "at": "2026-11-05T20:58:27Z",
+        "type": "tool",
+        "tool": "find_slots",
+        "args": {
+          "job_type": "no_heat",
+          "facts": {
+            "issue": "Gas furnace not heating since last night; furnace still running",
+            "since": "last night",
+            "inside_temp_f": 62,
+            "who_home": "only the caller, no vulnerable person home, not sure about medical conditions"
+          },
+          "call_id": "rtest-11052057-heat-out-and-ac-tune-up"
+        },
+        "ok": false,
+        "refused": "invalid_arguments",
+        "gate": null,
+        "say": "Let me check that again.",
+        "ms": 0.0,
+        "error": "invalid_arguments",
+        "request_id": "44cad86222ed"
+      },
+      {
+        "at": "2026-11-05T20:58:29Z",
+        "type": "tool",
+        "tool": "find_slots",
+        "args": {
+          "call_id": "rtest-11052057-heat-out-and-ac-tune-up",
+          "job_type": "no_heat",
+          "priority": null,
+          "preferred_days": [],
+          "time_of_day": null,
+          "window_minutes": null,
+          "day": null,
+          "arrive_after": null,
+          "arrive_before": null,
+          "facts": {
+            "issue": "Gas furnace not heating since last night; furnace still running",
+            "who_home": "only the caller, no vulnerable person home, not sure about medical conditions",
+            "inside_temp_f": 62.0,
+            "temp_falling_fast": false
+          }
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "The soonest I have is today, 4 to 6. Does that work?",
+        "ms": 961.4,
+        "error": null,
+        "request_id": "719621592ed9"
+      },
+      {
+        "at": "2026-11-05T20:58:39Z",
+        "type": "turn",
+        "seq": 20,
+        "speaker": "agent",
+        "text": "The soonest I have is today, Thursday, November 5, between 4 and 6 PM. Does that work?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 7000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:58:39Z",
+        "type": "turn",
+        "seq": 21,
+        "speaker": "caller",
+        "text": "Yes, today at 4 to 6 works. Thank you.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:58:39Z",
+        "type": "turn",
+        "seq": 22,
+        "speaker": "agent",
+        "text": "Great, today at 4 to 6 PM it is. Will you be able to approve any repair work the technician recommends?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:58:39Z",
+        "type": "turn",
+        "seq": 23,
+        "speaker": "caller",
+        "text": "Yes, I'm the homeowner, so I can approve the work. Just call me first if it's going to cost a lot.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:58:39Z",
+        "type": "turn",
+        "seq": 24,
+        "speaker": "agent",
+        "text": "Understood. The technician will go over any costs with you before doing the work. Will someone be home to let the technician in?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:58:39Z",
+        "type": "turn",
+        "seq": 25,
+        "speaker": "caller",
+        "text": "Yes, I'll be home all day. Is there anything I need to do before they come, like leaving the side gate open?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:58:39Z",
+        "type": "turn",
+        "seq": 26,
+        "speaker": "agent",
+        "text": "Yes, please make sure the technician can reach the furnace easily and leave the side gate unlocked if they'll need access that way. Is there a gate code, buzzer, or pet the technician should know about?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:58:39Z",
+        "type": "turn",
+        "seq": 27,
+        "speaker": "caller",
+        "text": "No gate code, no buzzer, and no pets. The gate just needs to be unlocked. I don't know much about where the furnace is, so I'll let the technician know when they get here.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:58:39Z",
+        "type": "turn",
+        "seq": 28,
+        "speaker": "agent",
+        "text": "Thanks for that. I've noted no gate code, buzzer, or pets, and that the side gate should be unlocked. Let me get this booked for you.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:58:40Z",
+        "type": "tool",
+        "tool": "book_appointment",
+        "args": {
+          "call_id": "rtest-11052057-heat-out-and-ac-tune-up",
+          "job_type": "no_heat",
+          "slot": {
+            "date": "2026-11-05",
+            "window": "1600-1800"
+          },
+          "details": {
+            "issue": "Gas furnace not heating since last night; furnace still running; house at 62 F",
+            "since": "last night",
+            "tried": "not provided",
+            "who_home": "caller home all day, alone, no vulnerable person known",
+            "approver": "Nadia Petrov (homeowner)",
+            "system_type": "",
+            "arrival_notes": "Side gate unlocked, no gate code, buzzer or pets. Caller wants a call before any costly work.",
+            "name": "Nadia Petrov",
+            "inside_temp_f": 62.0
+          },
+          "priority": null,
+          "separate_problem": false,
+          "new_address_account": null
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "You're all set for today, Thursday, November 5, with the technician arriving between 4 and 6. Anything else?",
+        "ms": 474.7,
+        "error": null,
+        "request_id": "e48da1cb695d"
+      },
+      {
+        "at": "2026-11-05T20:58:43Z",
+        "type": "turn",
+        "seq": 29,
+        "speaker": "agent",
+        "text": "You're all set for today, Thursday, November 5, with the technician arriving between 4 and 6 PM. Anything else I can help with, like the AC tune-up?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:58:43Z",
+        "type": "turn",
+        "seq": 30,
+        "speaker": "caller",
+        "text": "Yes, please. I need the AC tune-up too, before summer. Do you have anything on a weekday?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:58:43Z",
+        "type": "turn",
+        "seq": 31,
+        "speaker": "agent",
+        "text": "That's a reference note, and I'll answer your request. Let me check weekday openings for the AC tune-up.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:58:44Z",
+        "type": "tool",
+        "tool": "find_slots",
+        "args": {
+          "call_id": "rtest-11052057-heat-out-and-ac-tune-up",
+          "job_type": "tune_up",
+          "priority": null,
+          "preferred_days": [
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday"
+          ],
+          "time_of_day": null,
+          "window_minutes": null,
+          "day": null,
+          "arrive_after": null,
+          "arrive_before": null,
+          "facts": {
+            "issue": "Annual AC tune-up before summer",
+            "who_home": "",
+            "inside_temp_f": null,
+            "temp_falling_fast": false
+          }
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "Today I have 4 to 6. Does that work?",
+        "ms": 1022.1,
+        "error": null,
+        "request_id": "1f61a656d089"
+      },
+      {
+        "at": "2026-11-05T20:58:53Z",
+        "type": "turn",
+        "seq": 32,
+        "speaker": "agent",
+        "text": "I can offer tomorrow, Friday, November 6, between 8 and 10 AM, or Monday, November 9, between 8 and 10 AM. Which would you prefer?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:58:53Z",
+        "type": "turn",
+        "seq": 33,
+        "speaker": "caller",
+        "text": "Friday works. Tomorrow, November 6, from 8 to 10 AM.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:58:53Z",
+        "type": "turn",
+        "seq": 34,
+        "speaker": "agent",
+        "text": "Friday works. Before I book, will you be able to approve any repair work the technician recommends for the AC?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:58:53Z",
+        "type": "turn",
+        "seq": 35,
+        "speaker": "caller",
+        "text": "Yes, I'm the homeowner, so I can approve the work. Just call me first if it's going to cost a lot.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:58:53Z",
+        "type": "turn",
+        "seq": 36,
+        "speaker": "agent",
+        "text": "Thanks. Since you're the homeowner, I'll note you can approve the work and want a call first if it's going to cost a lot. Will someone be home to let the technician in for the AC visit?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:58:53Z",
+        "type": "turn",
+        "seq": 37,
+        "speaker": "caller",
+        "text": "Yes, I'll be home. Same gate situation, it just needs to be unlocked. Thanks, that's all I need. Bye.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:58:53Z",
+        "type": "turn",
+        "seq": 38,
+        "speaker": "agent",
+        "text": "Thanks, Nadia. I'll note the gate needs to be unlocked for the AC visit too. Before I book, is there anything else you need?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:58:53Z",
+        "type": "turn",
+        "seq": 39,
+        "speaker": "caller",
+        "text": "Nope, that's everything. Thanks, bye.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:58:53Z",
+        "type": "turn",
+        "seq": 40,
+        "speaker": "agent",
+        "text": "I haven't booked the AC tune-up yet. I'll go ahead and book it for Friday, November 6, from 8 to 10 AM.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:58:53Z",
+        "type": "tool",
+        "tool": "book_appointment",
+        "args": {
+          "call_id": "rtest-11052057-heat-out-and-ac-tune-up",
+          "job_type": "tune_up",
+          "slot": {
+            "date": "2026-11-06",
+            "window": "0800-1000"
+          },
+          "details": {
+            "issue": "Annual AC tune-up before summer",
+            "since": "not applicable, routine maintenance",
+            "tried": "not applicable",
+            "who_home": "caller home, alone, no vulnerable person known",
+            "approver": "Nadia Petrov (homeowner)",
+            "system_type": "",
+            "arrival_notes": "Side gate unlocked, no gate code, buzzer or pets. Caller wants a call before any costly work.",
+            "name": "Nadia Petrov",
+            "inside_temp_f": null
+          },
+          "priority": null,
+          "separate_problem": false,
+          "new_address_account": null
+        },
+        "ok": false,
+        "refused": "second_job",
+        "gate": "second_job",
+        "say": "",
+        "ms": 3.7,
+        "error": null,
+        "request_id": "37f30c4caa57"
+      },
+      {
+        "at": "2026-11-05T20:58:55Z",
+        "type": "turn",
+        "seq": 41,
+        "speaker": "agent",
+        "text": "The system is treating the AC tune-up as a second visit at this address. Since you asked for it as a separate job, I'll book it as its own visit.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:58:55Z",
+        "type": "tool",
+        "tool": "book_appointment",
+        "args": {
+          "call_id": "rtest-11052057-heat-out-and-ac-tune-up",
+          "job_type": "tune_up",
+          "slot": {
+            "date": "2026-11-06",
+            "window": "0800-1000"
+          },
+          "details": {
+            "issue": "Annual AC tune-up before summer, separate from today's heating visit",
+            "since": "not applicable, routine maintenance",
+            "tried": "not applicable",
+            "who_home": "caller home, alone, no vulnerable person known",
+            "approver": "Nadia Petrov (homeowner)",
+            "system_type": "",
+            "arrival_notes": "Side gate unlocked, no gate code, buzzer or pets. Caller wants a call before any costly work.",
+            "name": "Nadia Petrov",
+            "inside_temp_f": null
+          },
+          "priority": null,
+          "separate_problem": true,
+          "new_address_account": null
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "You're all set for tomorrow, Friday, November 6, with the technician arriving between 8 and 10. Anything else?",
+        "ms": 215.7,
+        "error": null,
+        "request_id": "f345670082e9"
+      },
+      {
+        "at": "2026-11-05T20:58:57Z",
+        "type": "turn",
+        "seq": 42,
+        "speaker": "agent",
+        "text": "You're all set for tomorrow, Friday, November 6, with the technician arriving between 8 and 10 AM for your AC tune-up. Thanks for calling Summit Air. Take care.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:58:57Z",
+        "type": "tool",
+        "tool": "end_call",
+        "args": {
+          "call_id": "rtest-11052057-heat-out-and-ac-tune-up",
+          "reason": "resolved"
+        },
+        "ok": false,
+        "refused": "anything_else_first",
+        "gate": "anything_else_first",
+        "say": "Is there anything else I can help with?",
+        "ms": 2.4,
+        "error": null,
+        "request_id": "5e5e7e99b71a"
+      },
+      {
+        "at": "2026-11-05T20:59:00Z",
+        "type": "turn",
+        "seq": 43,
+        "speaker": "agent",
+        "text": "Is there anything else I can help you with?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:59:00Z",
+        "type": "turn",
+        "seq": 44,
+        "speaker": "caller",
+        "text": "Nope, that's everything. Thanks, bye.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:59:00Z",
+        "type": "turn",
+        "seq": 45,
+        "speaker": "agent",
+        "text": "Thanks for calling Summit Air. Take care.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:59:00Z",
+        "type": "tool",
+        "tool": "end_call",
+        "args": {
+          "call_id": "rtest-11052057-heat-out-and-ac-tune-up",
+          "reason": "caller_goodbye"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 5.1,
+        "error": null,
+        "request_id": "a6bebc10f202"
+      }
+    ],
+    "flags": [],
+    "callbacks": [],
+    "bookings": [
+      {
+        "id": 180,
+        "kind": "book",
+        "status": "booked",
+        "fsm_job_id": 550,
+        "window_start": "2026-11-05T21:00:00Z",
+        "window_end": "2026-11-05T23:00:00Z",
+        "priority": "High",
+        "priority_reasons": "below 65 F inside, caller said \"Since last night. The furnace is still running, I think, but the house is...\"; someone at home alone, caller said \"No, it's just me at home\"",
+        "safety_override": 0,
+        "seek_earlier": 0,
+        "attempts": 1,
+        "last_error": null,
+        "raised_after_wait": 0,
+        "priority_rules": "[\"bracket:cool_inside\",\"lives_alone\"]",
+        "priority_reason_list": "[\"below 65 F inside, caller said \\\"Since last night. The furnace is still running, I think, but the house is...\\\"\",\"someone at home alone, caller said \\\"No, it's just me at home\\\"\"]",
+        "who_home": "caller home all day, alone, no vulnerable person known",
+        "job_type": "no_heat",
+        "street": "1855 Bath Ave",
+        "unit": "",
+        "job_notes": "[]"
+      },
+      {
+        "id": 186,
+        "kind": "book",
+        "status": "booked",
+        "fsm_job_id": 556,
+        "window_start": "2026-11-06T13:00:00Z",
+        "window_end": "2026-11-06T15:00:00Z",
+        "priority": "Normal",
+        "priority_reasons": "",
+        "safety_override": 0,
+        "seek_earlier": 0,
+        "attempts": 1,
+        "last_error": null,
+        "raised_after_wait": 0,
+        "priority_rules": "[]",
+        "priority_reason_list": "[]",
+        "who_home": "caller home, alone, no vulnerable person known",
+        "job_type": "tune_up",
+        "street": "1855 Bath Ave",
+        "unit": "",
+        "job_notes": "[]"
+      }
+    ],
+    "notes": [],
+    "leads": [],
+    "out_of_area": [],
+    "summary": [],
+    "electrical": [],
+    "holds": [],
+    "pace": [
+      {
+        "call_id": "rtest-11052057-heat-out-and-ac-tune-up",
+        "speed": 1.0,
+        "source": "default",
+        "requested": 0,
+        "older_adult": 0,
+        "address_speed": null,
+        "repeats": 0
+      }
+    ],
+    "pace_changes": [],
+    "caller_pace": [],
+    "transfers": [],
+    "handoffs": [],
+    "address_lookups": [],
+    "address_checks": [],
+    "names": [],
+    "address_moves": [],
+    "identity_checks": [],
+    "heads_ups": []
+  }
+}

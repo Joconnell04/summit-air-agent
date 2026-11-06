@@ -1,0 +1,986 @@
+{
+  "case": "asks-same-tech-after-booking",
+  "retell": {
+    "test_case_job_id": "test_job_8f22d1643c7c",
+    "status": "error",
+    "result_explanation": "Ending the conversation early as there might be a loop.",
+    "creation_timestamp": 1793915957237,
+    "user_modified_timestamp": 1793916007487,
+    "test_case_definition_id": "test_case_48b8cf8ad38c",
+    "test_case_definition_snapshot": {
+      "creationTimestamp": 1793911570666,
+      "dynamicVariables": {
+        "summit_call_id": "rtest-11052159-asks-same-tech-after-booking"
+      },
+      "llmModel": "claude-5.5-haiku",
+      "metrics": [
+        "The agent books exactly one visit with book_appointment with job_type tune_up.",
+        "The agent says it will pass the request on to the team, without promising Rosa.",
+        "The agent never says the caller's name out loud to the caller. A name inside tool arguments, such as booking details, doesn't count."
+      ],
+      "name": "[summit] asks-same-tech-after-booking: Hank Morrison, a homeowner in Marine Park, Brooklyn, booking a furnace tune-up",
+      "orgId": "org_EoCqq2c268JWlyCE",
+      "responseEngine": {
+        "llmId": "llm_1da616f2baeb6e916f63e0236950",
+        "type": "retell-llm",
+        "version": 0
+      },
+      "responseEngineId": "llm_1da616f2baeb6e916f63e0236950",
+      "testCaseDefinitionId": "test_case_48b8cf8ad38c",
+      "toolMocks": [],
+      "type": "simulation",
+      "userModifiedTimestamp": 1793915947005,
+      "userPrompt": "## Identity\nHank Morrison, a homeowner in Marine Park, Brooklyn, booking a furnace tune-up. Remembers a good technician named Rosa only at the end.\nYour name: Hank Morrison\nYour address: 3320 Avenue S, Brooklyn, 11234\nYour phone: (917) 555-0118 (the number you're calling from)\nYour wants: a yearly furnace tune-up, any weekday morning\n\n## Goal\nStart the call by saying: \"Hi, I'd like to book a tune-up for my furnace.\"\n\n## Behavior\n- Give the details when asked and take the first weekday morning offered.\n- After the agent confirms the booking and asks if there's anything else, say \"Oh, could you send Rosa back out? She did a great job last year.\"\n- If the agent says it can't promise who comes, say that's fine and goodbye.\n- Talk like a real person on the phone: short, plain sentences, one thing at a time.\n- Give a detail only when the agent asks for it, unless a line above says otherwise.\n- Never invent facts beyond the ones above; if asked something you don't know, say you don't know.\n- When your business is done, say goodbye and stop talking.\n"
+    },
+    "transcript_snapshot": {
+      "callEnded": false,
+      "dynamicVariables": {
+        "call_context": "",
+        "call_id": "playground",
+        "call_type": "web_call",
+        "greeting": "Hi, thanks for calling Summit Air! This is Brooke, the virtual assistant. How can I help?",
+        "session_type": "voice",
+        "summit_call_id": "rtest-11052159-asks-same-tech-after-booking",
+        "system_timezone": "America/Los_Angeles"
+      },
+      "knowledgeBaseRetrievedContents": [],
+      "toolMocks": [],
+      "transcript": [
+        {
+          "content": "Hi, thanks for calling Summit Air! This is Brooke, the virtual assistant. How can I help?",
+          "created_timestamp": 1793915967288,
+          "message_id": "message_4329a94dd7d596ceb9d0bf91",
+          "role": "agent"
+        },
+        {
+          "content": "Hi, I'd like to book a tune-up for my furnace.",
+          "created_timestamp": 1793915967945,
+          "message_id": "message_056a6bff5dc38872bd3b1d59",
+          "role": "user"
+        },
+        {
+          "content": "Happy to help with that. What's the street address for the property?",
+          "created_timestamp": 1793915969986,
+          "message_id": "message_dce8097ac0e6aa9f3c8c3b85",
+          "metadata": {
+            "response_id": 1
+          },
+          "role": "agent"
+        },
+        {
+          "content": "3320 Avenue S, Brooklyn, 11234.",
+          "created_timestamp": 1793915970564,
+          "message_id": "message_49c98b08cbf9984a542688ce",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"street\":\"3320 Avenue S\",\"borough\":\"Brooklyn\"}",
+          "created_timestamp": 1793915971490,
+          "message_id": "message_cab20176982ede6c32b74042",
+          "name": "find_address",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_012nwdetn2Lw2fkqpRJ9f3zv",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"street\":\"3320 Avenue S\",\"zip\":\"11234\",\"borough\":\"Brooklyn\",\"neighborhood\":\"Marine Park\",\"in_area\":true,\"area\":\"Brooklyn South\"}}",
+          "created_timestamp": 1793915971940,
+          "message_id": "message_3cbf25232b833cafb2e894c0",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_012nwdetn2Lw2fkqpRJ9f3zv"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"3320 Avenue S\",\"zip\":\"11234\"}}",
+          "created_timestamp": 1793915971941,
+          "message_id": "message_37e777e14bda9e18c1c0ab67",
+          "name": "find_customer",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01PZWkNL2sQvAZBy8kbLeEim",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"matches\":[],\"needs_unit\":false}}",
+          "created_timestamp": 1793915972191,
+          "message_id": "message_681448457c5390006eab2d01",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01PZWkNL2sQvAZBy8kbLeEim"
+        },
+        {
+          "content": "Thanks. Can I get your name?",
+          "created_timestamp": 1793915972653,
+          "message_id": "message_5a75b42326ed5aa72c6904a2",
+          "metadata": {
+            "response_id": 2
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Hank Morrison.",
+          "created_timestamp": 1793915973200,
+          "message_id": "message_d0fa63e44ccb7134998d0c3d",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, Hank. And this is for a residential property, right? Like a home or an apartment?",
+          "created_timestamp": 1793915973743,
+          "message_id": "message_ec4b8d0dcdc554bac284f50c",
+          "metadata": {
+            "response_id": 3
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yeah, it's a house. Just the one.",
+          "created_timestamp": 1793915975879,
+          "message_id": "message_d2460182145b0c4ea61224a4",
+          "role": "user"
+        },
+        {
+          "content": "What's the best phone number to reach you?",
+          "created_timestamp": 1793915976445,
+          "message_id": "message_9a8abef89137dd9b18c22835",
+          "metadata": {
+            "response_id": 4
+          },
+          "role": "agent"
+        },
+        {
+          "content": "(917) 555-0118. That's the number I'm calling from.",
+          "created_timestamp": 1793915977052,
+          "message_id": "message_b9d24d9054a77f7a0acd6529",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"3320 Avenue S\",\"zip\":\"11234\",\"city\":\"Brooklyn\"},\"phone\":\"caller_id\",\"name\":\"Hank Morrison\"}",
+          "created_timestamp": 1793915977950,
+          "message_id": "message_bb054f594eef79c766237572",
+          "name": "read_back",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01JepHqkUNzVypVYDBZhrHUB",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"I have your home at 3320 Avenue S, Brooklyn, ZIP code one one two three four, and the best number is nine one seven, five five five, zero one one eight. That's all correct, right?\",\"data\":{\"confirmed\":false,\"sentence\":\"I have your home at 3320 Avenue S, Brooklyn, ZIP code one one two three four, and the best number is nine one seven, five five five, zero one one eight. That's all correct, right?\"}}",
+          "created_timestamp": 1793915978317,
+          "message_id": "message_24c2ce3286388a614a804406",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01JepHqkUNzVypVYDBZhrHUB"
+        },
+        {
+          "content": "I have your home at 3320 Avenue S, Brooklyn, ZIP code one one two three four, and the best number is nine one seven, five five five, zero one one eight. That's all correct, right?",
+          "created_timestamp": 1793915979147,
+          "message_id": "message_763ef929da7bc9b91ca4e183",
+          "metadata": {
+            "response_id": 5
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, that's all correct. Um, I'm free any weekday morning if that helps.",
+          "created_timestamp": 1793915979912,
+          "message_id": "message_693334426bcc96f06109080a",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"3320 Avenue S\",\"zip\":\"11234\",\"city\":\"Brooklyn\"},\"phone\":\"caller_id\",\"name\":\"Hank Morrison\",\"confirmed\":true}",
+          "created_timestamp": 1793915981113,
+          "message_id": "message_6c62082fd2512123568f4eb6",
+          "name": "read_back",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_018BzVfBwCDkhbBoEu52LwA6",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"confirmed\":true,\"address\":{\"street\":\"3320 Avenue S\",\"unit\":\"\",\"city\":\"Brooklyn\",\"zip\":\"11234\",\"spelled\":\"\"},\"phone\":\"9175550118\"}}",
+          "created_timestamp": 1793915981447,
+          "message_id": "message_97c6083552ac20e311d58410",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_018BzVfBwCDkhbBoEu52LwA6"
+        },
+        {
+          "arguments": "{\"job_type\":\"tune_up\",\"preferred_days\":[\"Monday\",\"Tuesday\",\"Wednesday\",\"Thursday\",\"Friday\"],\"time_of_day\":\"morning\"}",
+          "created_timestamp": 1793915981448,
+          "message_id": "message_62e7a7eefb97ab8949a153ce",
+          "name": "find_slots",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01HbF36D6aqFaUbKbUcrLDPj",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"Today I have 5 to 7. Does that work?\",\"data\":{\"priority\":{\"level\":\"Normal\",\"reasons\":[],\"requested\":null,\"raised_after_wait\":false},\"days\":[{\"date\":\"2026-11-05\",\"weekday\":\"Thursday\",\"day\":\"today\",\"windows\":[\"1700-1900\"],\"labels\":[\"5 to 7\"]},{\"date\":\"2026-11-06\",\"weekday\":\"Friday\",\"day\":\"tomorrow\",\"windows\":[\"0800-1000\",\"1000-1200\",\"1200-1400\",\"1400-1600\",\"1600-1800\",\"1800-2000\"],\"labels\":[\"8 to 10\",\"10 to 12\",\"12 to 2\",\"2 to 4\",\"4 to 6\",\"6 to 8\"]},{\"date\":\"2026-11-09\",\"weekday\":\"Monday\",\"day\":\"Monday\",\"windows\":[\"0800-1000\",\"1000-1200\",\"1200-1400\",\"1400-1600\",\"1600-1800\",\"1800-2000\"],\"labels\":[\"8 to 10\",\"10 to 12\",\"12 to 2\",\"2 to 4\",\"4 to 6\",\"6 to 8\"]}],\"offer\":{\"date\":\"2026-11-05\",\"window\":\"1700-1900\",\"weekday\":\"Thursday\",\"day\":\"today\",\"day_and_date\":\"today, Thursday, November 5\",\"label\":\"5 to 7\",\"part\":\"evening\",\"after_hours\":false}}}",
+          "created_timestamp": 1793915982922,
+          "message_id": "message_80ae69f72bda9a2a972f0888",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01HbF36D6aqFaUbKbUcrLDPj"
+        },
+        {
+          "content": "Today's only opening is 5 to 7 this evening. For mornings, I have Friday from 8 to 10 or 10 to 12, or Monday from 8 to 10 or 10 to 12. Which would you like?",
+          "created_timestamp": 1793915983734,
+          "message_id": "message_198ceba4bfbdf174df2fbc08",
+          "metadata": {
+            "response_id": 6
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Friday from 8 to 10, please.",
+          "created_timestamp": 1793915985145,
+          "message_id": "message_57c147661c7b28ba1bdbdb2e",
+          "role": "user"
+        },
+        {
+          "content": "Will you be able to approve any repair work the technician recommends?",
+          "created_timestamp": 1793915985718,
+          "message_id": "message_24c86edcca0d33f9dfc3639b",
+          "metadata": {
+            "response_id": 7
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Um, I guess so, as long as it's not too expensive. Can you tell me roughly what it would cost first?",
+          "created_timestamp": 1793915986427,
+          "message_id": "message_34dfa5224b8e842af2d5baf8",
+          "role": "user"
+        },
+        {
+          "content": "I can't quote prices, but the technician will go over any costs with you before doing the work. Will someone be home to let the technician in?",
+          "created_timestamp": 1793915987001,
+          "message_id": "message_00f7a64af76867923d5969b0",
+          "metadata": {
+            "response_id": 8
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yeah, I'll be home. Is there anything else you need from me?",
+          "created_timestamp": 1793915987579,
+          "message_id": "message_225e7b5fbd94ee0fc6611d24",
+          "role": "user"
+        },
+        {
+          "content": "Just one more: is there a gate code, buzzer, or pet the technician should know about?",
+          "created_timestamp": 1793915988097,
+          "message_id": "message_93693a3b7449c38b1233a0f6",
+          "metadata": {
+            "response_id": 9
+          },
+          "role": "agent"
+        },
+        {
+          "content": "No gate code, no buzzer, no pets. Just the front door.",
+          "created_timestamp": 1793915990391,
+          "message_id": "message_ca2d8f08a2da6cd7f8f6d724",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"details\":{\"approver\":\"Hank Morrison\",\"arrival_notes\":\"No gate code, no buzzer, no pets. Use front door.\",\"issue\":\"Furnace tune-up, annual maintenance\",\"since\":\"Not applicable, routine tune-up\",\"tried\":\"Not applicable, routine tune-up\",\"who_home\":\"Customer will be home\",\"name\":\"Hank Morrison\"},\"job_type\":\"tune_up\",\"slot\":{\"date\":\"2026-11-06\",\"window\":\"0800-1000\"}}",
+          "created_timestamp": 1793915991621,
+          "message_id": "message_1d3cac9b633806ad0806f974",
+          "name": "book_appointment",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01NNUQ6gZySaaXmz4BrgTtyr",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"You're all set for tomorrow, Friday, November 6, with the technician arriving between 8 and 10. Anything else?\",\"data\":{\"booking_id\":548,\"appointment_id\":548,\"window\":{\"date\":\"2026-11-06\",\"window\":\"0800-1000\",\"weekday\":\"Friday\",\"day\":\"tomorrow\",\"day_and_date\":\"tomorrow, Friday, November 6\",\"label\":\"8 to 10\",\"part\":\"morning\",\"after_hours\":false},\"priority\":{\"level\":\"Normal\",\"reasons\":[],\"raised_after_wait\":false},\"seek_earlier\":false,\"safety_override\":false,\"approval_callback_at\":null,\"return_visit_review\":false}}",
+          "created_timestamp": 1793915992287,
+          "message_id": "message_4cf719a8fa74a2bd8a3ab0e9",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01NNUQ6gZySaaXmz4BrgTtyr"
+        },
+        {
+          "content": "You're all set for tomorrow, Friday, November 6, with the technician arriving between 8 and 10. Anything else?",
+          "created_timestamp": 1793915993177,
+          "message_id": "message_fcfcff66c05bfc18625c229b",
+          "metadata": {
+            "response_id": 10
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Oh, could you send Rosa back out? She did a great job last year.",
+          "created_timestamp": 1793915993802,
+          "message_id": "message_90fcc3839c5be0a6f4610702",
+          "role": "user"
+        },
+        {
+          "content": "I'm not able to choose a specific technician, but I've noted your request for Rosa on the visit. Is there anything else I can help you with?",
+          "created_timestamp": 1793915994595,
+          "message_id": "message_2b18e524df2c2a2194b485f1",
+          "metadata": {
+            "response_id": 11
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Okay, that's fine. Thanks for your help. Bye.",
+          "created_timestamp": 1793915995257,
+          "message_id": "message_4ca1ada589a468a03d9379d1",
+          "role": "user"
+        },
+        {
+          "content": "Thanks for calling Summit Air, and have a great day.",
+          "created_timestamp": 1793915996023,
+          "message_id": "message_5e97aa49ebf703cfc5d7918e",
+          "metadata": {
+            "response_id": 12
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"reason\":\"resolved\"}",
+          "created_timestamp": 1793915996024,
+          "message_id": "message_a56cbfd7185736dcc823e034",
+          "name": "end_call",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01Jf5Sqeb5VWgvUtdGb8tufm",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"hang_up\":true},\"server_notes\":[\"[server] The caller asked for a particular technician. Say you'll pass that along to the team, and never promise who will come or that it will be that person. It's already noted for the dispatcher, so don't add a note for it.\"]}",
+          "created_timestamp": 1793915996523,
+          "message_id": "message_a313be52cd4c4dd484b11fb4",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01Jf5Sqeb5VWgvUtdGb8tufm"
+        },
+        {
+          "content": "Thanks for calling Summit Air, and have a great day.",
+          "created_timestamp": 1793915997237,
+          "message_id": "message_4f89be820621700f2d560f22",
+          "metadata": {
+            "response_id": 13
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Okay, that's fine. Thanks for your help. Bye.",
+          "created_timestamp": 1793915997738,
+          "message_id": "message_9ff92d68f9caea159e857586",
+          "role": "user"
+        },
+        {
+          "content": "Take care.",
+          "created_timestamp": 1793915998806,
+          "message_id": "message_205522bd3bd9c9b53d7cc7da",
+          "metadata": {
+            "response_id": 14
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Bye, thanks.",
+          "created_timestamp": 1793916000736,
+          "message_id": "message_0b76bd99f3e40377886f273e",
+          "role": "user"
+        },
+        {
+          "content": "Take care.",
+          "created_timestamp": 1793916001274,
+          "message_id": "message_a53a6def5f01301b262bfda6",
+          "metadata": {
+            "response_id": 15
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Bye, thanks.",
+          "created_timestamp": 1793916001928,
+          "message_id": "message_c7c6b44b91c51d6033415a2f",
+          "role": "user"
+        },
+        {
+          "content": "Take care.",
+          "created_timestamp": 1793916003063,
+          "message_id": "message_91598b994a3574896e96135c",
+          "metadata": {
+            "response_id": 16
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Bye, thanks.",
+          "created_timestamp": 1793916005373,
+          "message_id": "message_ec9978fe194547299b431fc8",
+          "role": "user"
+        },
+        {
+          "content": "Take care.",
+          "created_timestamp": 1793916005881,
+          "message_id": "message_5de45483fa65404d41a6fd01",
+          "metadata": {
+            "response_id": 17
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Bye, thanks.",
+          "created_timestamp": 1793916006445,
+          "message_id": "message_95672633444d884d7521e642",
+          "role": "user"
+        },
+        {
+          "content": "Take care.",
+          "created_timestamp": 1793916007083,
+          "message_id": "message_250a3e2ffc8e0633ccf0a136",
+          "metadata": {
+            "response_id": 18
+          },
+          "role": "agent"
+        }
+      ]
+    }
+  },
+  "trace": {
+    "call": {
+      "id": "rtest-11052159-asks-same-tech-after-booking",
+      "tenant": "summit-air",
+      "caller_id": "(917) 555-0118",
+      "caller_key": "9175550118",
+      "dialed_number": "(678) 336-6730",
+      "direction": "inbound",
+      "started_at": "2026-09-24T21:59:14Z",
+      "ended_at": null,
+      "end_reason": null,
+      "end_requested": 1,
+      "after_hours": 0,
+      "linked_call_id": null,
+      "outcome": null,
+      "commercial": 0,
+      "summary_status": "none",
+      "turn_seq": 25,
+      "safety_state": "none",
+      "safety_kind": null,
+      "safety_signal_at": null,
+      "safety_lines_at": null,
+      "safety_flag_id": null,
+      "safety_variant": 0,
+      "readback_json": "{\"street\": \"3320 Avenue S\", \"unit\": \"\", \"city\": \"Brooklyn\", \"zip\": \"11234\", \"spelled\": \"\", \"phone\": \"9175550118\", \"phone_for\": \"\", \"sentence\": \"I have your home at 3320 Avenue S, Brooklyn, ZIP code one one two three four, and the best number is nine one seven, five five five, zero one one eight. That's all correct, right?\"}",
+      "readback_asked_seq": 10,
+      "readback_confirmed_at": "2026-11-05T21:59:41Z"
+    },
+    "events": [
+      {
+        "at": "2026-11-05T21:59:14Z",
+        "type": "tool",
+        "tool": "calls.start",
+        "args": {
+          "call_id": "rtest-11052159-asks-same-tech-after-booking",
+          "caller_id": "(917) 555-0118",
+          "dialed_number": "(678) 336-6730",
+          "direction": "inbound"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 17.5,
+        "error": null,
+        "request_id": "4d40549cfa6c"
+      },
+      {
+        "at": "2026-11-05T21:59:31Z",
+        "type": "turn",
+        "seq": 1,
+        "speaker": "agent",
+        "text": "Hi, thanks for calling Summit Air! This is Brooke, the virtual assistant. How can I help?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:59:31Z",
+        "type": "turn",
+        "seq": 2,
+        "speaker": "caller",
+        "text": "Hi, I'd like to book a tune-up for my furnace.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:59:31Z",
+        "type": "turn",
+        "seq": 3,
+        "speaker": "agent",
+        "text": "Happy to help with that. What's the street address for the property?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:59:31Z",
+        "type": "turn",
+        "seq": 4,
+        "speaker": "caller",
+        "text": "3320 Avenue S, Brooklyn, 11234.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:59:31Z",
+        "type": "tool",
+        "tool": "find_address",
+        "args": {
+          "call_id": "rtest-11052159-asks-same-tech-after-booking",
+          "street": "3320 Avenue S",
+          "borough": "Brooklyn",
+          "spelled": ""
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 127.5,
+        "error": null,
+        "request_id": "6166956d600d"
+      },
+      {
+        "at": "2026-11-05T21:59:32Z",
+        "type": "tool",
+        "tool": "find_customer",
+        "args": {
+          "call_id": "rtest-11052159-asks-same-tech-after-booking",
+          "phone": null,
+          "address": {
+            "street": "3320 Avenue S",
+            "unit": "",
+            "city": "",
+            "zip": "11234",
+            "spelled": ""
+          }
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 21.3,
+        "error": null,
+        "request_id": "99e8a0990ea8"
+      },
+      {
+        "at": "2026-11-05T21:59:38Z",
+        "type": "turn",
+        "seq": 5,
+        "speaker": "agent",
+        "text": "Thanks. Can I get your name?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 5000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:59:38Z",
+        "type": "turn",
+        "seq": 6,
+        "speaker": "caller",
+        "text": "Hank Morrison.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:59:38Z",
+        "type": "turn",
+        "seq": 7,
+        "speaker": "agent",
+        "text": "Thanks, Hank. And this is for a residential property, right? Like a home or an apartment?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:59:38Z",
+        "type": "turn",
+        "seq": 8,
+        "speaker": "caller",
+        "text": "Yeah, it's a house. Just the one.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:59:38Z",
+        "type": "turn",
+        "seq": 9,
+        "speaker": "agent",
+        "text": "What's the best phone number to reach you?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:59:38Z",
+        "type": "turn",
+        "seq": 10,
+        "speaker": "caller",
+        "text": "(917) 555-0118. That's the number I'm calling from.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:59:38Z",
+        "type": "tool",
+        "tool": "read_back",
+        "args": {
+          "call_id": "rtest-11052159-asks-same-tech-after-booking",
+          "address": {
+            "street": "3320 Avenue S",
+            "unit": "",
+            "city": "Brooklyn",
+            "zip": "11234",
+            "spelled": ""
+          },
+          "phone": "caller_id",
+          "phone_for": "",
+          "name": "Hank Morrison",
+          "confirmed": false
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "I have your home at 3320 Avenue S, Brooklyn, ZIP code one one two three four, and the best number is nine one seven, five five five, zero one one eight. That's all correct, right?",
+        "ms": 7.4,
+        "error": null,
+        "request_id": "a206b9faafee"
+      },
+      {
+        "at": "2026-11-05T21:59:41Z",
+        "type": "turn",
+        "seq": 11,
+        "speaker": "agent",
+        "text": "I have your home at 3320 Avenue S, Brooklyn, ZIP code one one two three four, and the best number is nine one seven, five five five, zero one one eight. That's all correct, right?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 3000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:59:41Z",
+        "type": "turn",
+        "seq": 12,
+        "speaker": "caller",
+        "text": "Yes, that's all correct. Um, I'm free any weekday morning if that helps.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:59:41Z",
+        "type": "tool",
+        "tool": "read_back",
+        "args": {
+          "call_id": "rtest-11052159-asks-same-tech-after-booking",
+          "address": {
+            "street": "3320 Avenue S",
+            "unit": "",
+            "city": "Brooklyn",
+            "zip": "11234",
+            "spelled": ""
+          },
+          "phone": "caller_id",
+          "phone_for": "",
+          "name": "Hank Morrison",
+          "confirmed": true
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 5.0,
+        "error": null,
+        "request_id": "966b7d5e413d"
+      },
+      {
+        "at": "2026-11-05T21:59:42Z",
+        "type": "tool",
+        "tool": "find_slots",
+        "args": {
+          "call_id": "rtest-11052159-asks-same-tech-after-booking",
+          "job_type": "tune_up",
+          "priority": null,
+          "preferred_days": [
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday"
+          ],
+          "time_of_day": "morning",
+          "window_minutes": null,
+          "day": null,
+          "arrive_after": null,
+          "arrive_before": null,
+          "facts": {
+            "issue": "",
+            "since": "",
+            "who_home": "",
+            "inside_temp_f": null,
+            "temp_falling_fast": false
+          }
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "Today I have 5 to 7. Does that work?",
+        "ms": 1176.6,
+        "error": null,
+        "request_id": "aba049ca6fea"
+      },
+      {
+        "at": "2026-11-05T21:59:51Z",
+        "type": "turn",
+        "seq": 13,
+        "speaker": "agent",
+        "text": "Today's only opening is 5 to 7 this evening. For mornings, I have Friday from 8 to 10 or 10 to 12, or Monday from 8 to 10 or 10 to 12. Which would you like?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 5000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:59:51Z",
+        "type": "turn",
+        "seq": 14,
+        "speaker": "caller",
+        "text": "Friday from 8 to 10, please.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:59:51Z",
+        "type": "turn",
+        "seq": 15,
+        "speaker": "agent",
+        "text": "Will you be able to approve any repair work the technician recommends?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:59:51Z",
+        "type": "turn",
+        "seq": 16,
+        "speaker": "caller",
+        "text": "Um, I guess so, as long as it's not too expensive. Can you tell me roughly what it would cost first?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:59:51Z",
+        "type": "turn",
+        "seq": 17,
+        "speaker": "agent",
+        "text": "I can't quote prices, but the technician will go over any costs with you before doing the work. Will someone be home to let the technician in?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:59:51Z",
+        "type": "turn",
+        "seq": 18,
+        "speaker": "caller",
+        "text": "Yeah, I'll be home. Is there anything else you need from me?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:59:52Z",
+        "type": "turn",
+        "seq": 19,
+        "speaker": "agent",
+        "text": "Just one more: is there a gate code, buzzer, or pet the technician should know about?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:59:52Z",
+        "type": "turn",
+        "seq": 20,
+        "speaker": "caller",
+        "text": "No gate code, no buzzer, no pets. Just the front door.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:59:52Z",
+        "type": "tool",
+        "tool": "book_appointment",
+        "args": {
+          "call_id": "rtest-11052159-asks-same-tech-after-booking",
+          "job_type": "tune_up",
+          "slot": {
+            "date": "2026-11-06",
+            "window": "0800-1000"
+          },
+          "details": {
+            "issue": "Furnace tune-up, annual maintenance",
+            "since": "Not applicable, routine tune-up",
+            "tried": "Not applicable, routine tune-up",
+            "who_home": "Customer will be home",
+            "approver": "Hank Morrison",
+            "system_type": "",
+            "arrival_notes": "No gate code, no buzzer, no pets. Use front door.",
+            "name": "Hank Morrison",
+            "inside_temp_f": null
+          },
+          "priority": null,
+          "separate_problem": false,
+          "new_address_account": null
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "You're all set for tomorrow, Friday, November 6, with the technician arriving between 8 and 10. Anything else?",
+        "ms": 175.8,
+        "error": null,
+        "request_id": "f993228a7111"
+      },
+      {
+        "at": "2026-11-05T21:59:56Z",
+        "type": "turn",
+        "seq": 21,
+        "speaker": "agent",
+        "text": "You're all set for tomorrow, Friday, November 6, with the technician arriving between 8 and 10. Anything else?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 3000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:59:56Z",
+        "type": "turn",
+        "seq": 22,
+        "speaker": "caller",
+        "text": "Oh, could you send Rosa back out? She did a great job last year.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:59:56Z",
+        "type": "turn",
+        "seq": 23,
+        "speaker": "agent",
+        "text": "I'm not able to choose a specific technician, but I've noted your request for Rosa on the visit. Is there anything else I can help you with?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:59:56Z",
+        "type": "turn",
+        "seq": 24,
+        "speaker": "caller",
+        "text": "Okay, that's fine. Thanks for your help. Bye.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:59:56Z",
+        "type": "turn",
+        "seq": 25,
+        "speaker": "agent",
+        "text": "Thanks for calling Summit Air, and have a great day.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:59:56Z",
+        "type": "tool",
+        "tool": "end_call",
+        "args": {
+          "call_id": "rtest-11052159-asks-same-tech-after-booking",
+          "reason": "resolved"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 5.8,
+        "error": null,
+        "request_id": "8062bcd12221"
+      }
+    ],
+    "flags": [],
+    "callbacks": [],
+    "bookings": [
+      {
+        "id": 220,
+        "kind": "book",
+        "status": "booked",
+        "fsm_job_id": 548,
+        "window_start": "2026-11-06T13:00:00Z",
+        "window_end": "2026-11-06T15:00:00Z",
+        "priority": "Normal",
+        "priority_reasons": "",
+        "safety_override": 0,
+        "seek_earlier": 0,
+        "attempts": 1,
+        "last_error": null,
+        "raised_after_wait": 0,
+        "priority_rules": "[]",
+        "priority_reason_list": "[]",
+        "who_home": "Customer will be home",
+        "job_type": "tune_up",
+        "street": "3320 Avenue S",
+        "unit": "",
+        "job_notes": "[]"
+      }
+    ],
+    "notes": [
+      {
+        "attach_to": "job",
+        "text": "Caller asked for Rosa. Not promised; dispatcher to decide.",
+        "fsm_note_id": null
+      }
+    ],
+    "leads": [],
+    "out_of_area": [],
+    "summary": [],
+    "electrical": [],
+    "holds": [],
+    "pace": [
+      {
+        "call_id": "rtest-11052159-asks-same-tech-after-booking",
+        "speed": 1.0,
+        "source": "default",
+        "requested": 0,
+        "older_adult": 0,
+        "address_speed": null,
+        "repeats": 0
+      }
+    ],
+    "pace_changes": [],
+    "caller_pace": [],
+    "transfers": [],
+    "handoffs": [],
+    "address_lookups": [
+      {
+        "house": "3320",
+        "street": "ave s",
+        "hint": "Brooklyn",
+        "status": "one",
+        "zips_json": "[\"11234\"]",
+        "source": "geosearch"
+      }
+    ],
+    "address_checks": [],
+    "names": [],
+    "address_moves": [],
+    "identity_checks": [],
+    "heads_ups": []
+  }
+}

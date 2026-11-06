@@ -34,7 +34,8 @@ ALLOWED = (
     ("PATCH", r"/update-chat-agent/[\w-]+"),
     ("PATCH", r"/update-phone-number/\+\d+"),
     ("GET", r"/v2/get-call/[\w-]+"),
-    # Whether a call is live on a line before a test run points it elsewhere (retell/arms/socket/line.py).
+    # The side-by-side eval (evals/side_by_side.py) finds each scripted call by time window, and
+    # the socket arm checks a line is idle before a run (retell/arms/socket/line.py).
     ("POST", r"/v3/list-calls"),
     ("PATCH", r"/v2/update-live-call/[\w-]+"),
     ("POST", r"/v2/stop-call/[\w-]+"),

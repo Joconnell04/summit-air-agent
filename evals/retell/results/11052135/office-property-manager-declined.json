@@ -1,0 +1,594 @@
+{
+  "case": "office-property-manager-declined",
+  "retell": {
+    "test_case_job_id": "test_job_5b9ffd851207",
+    "status": "fail",
+    "result_explanation": "The agent met several criteria: no booking tool was called; it recorded a commercial lead successfully; it did not give gas/CO emergency advice; and it declined before asking booking-related questions. However, it failed criterion 6 by saying the caller's name: \u201cThanks, Marcus.\u201d It also did not give the required homes-and-apartments/not-businesses wording early, initially saying only \u201cwe only service homes,\u201d and later said it would pass details to the team.",
+    "creation_timestamp": 1793914682119,
+    "user_modified_timestamp": 1793914710179,
+    "test_case_definition_id": "test_case_cfe7782daa59",
+    "test_case_definition_snapshot": {
+      "creationTimestamp": 1793911574810,
+      "dynamicVariables": {
+        "summit_call_id": "rtest-11052135-office-property-manager-declined"
+      },
+      "llmModel": "claude-5.5-haiku",
+      "metrics": [
+        "The agent does not book a visit: book_appointment is never called, or every call to it is refused.",
+        "The agent says Summit Air only services homes, does not book, and calls record_lead with kind commercial so the team can follow up.",
+        "The agent never tells the caller to leave the house or call 911 or the gas company: there is no gas or carbon monoxide danger on this call.",
+        "The agent declines kindly and early, saying Summit Air works on homes and apartments, not businesses.",
+        "The agent does not ask booking questions before declining.",
+        "The agent never says the caller's name."
+      ],
+      "name": "[summit] office-property-manager-declined: Marcus Bell manages a four-story office building on Court Street for its owner",
+      "orgId": "org_EoCqq2c268JWlyCE",
+      "responseEngine": {
+        "llmId": "llm_1da616f2baeb6e916f63e0236950",
+        "type": "retell-llm",
+        "version": 0
+      },
+      "responseEngineId": "llm_1da616f2baeb6e916f63e0236950",
+      "testCaseDefinitionId": "test_case_cfe7782daa59",
+      "toolMocks": [],
+      "type": "simulation",
+      "userModifiedTimestamp": 1793914517967,
+      "userPrompt": "## Identity\nMarcus Bell manages a four-story office building on Court Street for its owner. Brisk and polite, used to calling contractors.\nYour name: Marcus Bell\nYour company: Court Street Office Partners\nYour address: 186 Court St, Brooklyn, 11201\nYour phone: (631) 555-0167 (the number you're calling from)\nYour building: a four-story office building, lawyers and accountants, a rooftop unit and a boiler, no one lives there\nYour problem: the heat is out on the third floor since this morning\n\n## Goal\nStart the call by saying: \"Hi, I'm the property manager for an office building on Court Street, and the heat's out on the third floor.\"\n\n## Behavior\n- If asked whether anyone lives there, say no, it's all offices.\n- If declined, say okay, thanks anyway, and goodbye. Don't push back.\n- Talk like a real person on the phone: short, plain sentences, one thing at a time.\n- Give a detail only when the agent asks for it, unless a line above says otherwise.\n- Never invent facts beyond the ones above; if asked something you don't know, say you don't know.\n- When your business is done, say goodbye and stop talking.\n"
+    },
+    "transcript_snapshot": {
+      "callEnded": true,
+      "dynamicVariables": {
+        "call_context": "",
+        "call_id": "playground",
+        "call_type": "web_call",
+        "greeting": "Thank you for calling Summit Air. How can I help you today?",
+        "session_type": "voice",
+        "summit_call_id": "rtest-11052135-office-property-manager-declined",
+        "system_timezone": "America/Los_Angeles"
+      },
+      "knowledgeBaseRetrievedContents": [],
+      "toolMocks": [],
+      "transcript": [
+        {
+          "content": "Thank you for calling Summit Air. How can I help you today?",
+          "created_timestamp": 1793914692157,
+          "message_id": "message_86b2a7b612eb665c1a04def0",
+          "role": "agent"
+        },
+        {
+          "content": "Hi, I'm the property manager for an office building on Court Street, and the heat's out on the third floor.",
+          "created_timestamp": 1793914692723,
+          "message_id": "message_ea8f46f796fdcc2baca27578",
+          "role": "user"
+        },
+        {
+          "content": "Thanks for calling. Unfortunately, we only service homes, but I can pass your details to our team. Can I get your name?",
+          "created_timestamp": 1793914693406,
+          "message_id": "message_04cadadae344cae2912ae9eb",
+          "metadata": {
+            "response_id": 1
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Marcus Bell. Court Street Office Partners.",
+          "created_timestamp": 1793914693859,
+          "message_id": "message_41a06d0429ab327c6fe86a06",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, Marcus. What's the best phone number to reach you?",
+          "created_timestamp": 1793914694400,
+          "message_id": "message_1215b6be1e052754f9a69354",
+          "metadata": {
+            "response_id": 2
+          },
+          "role": "agent"
+        },
+        {
+          "content": "(631) 555-0167. That's the number I'm calling from.",
+          "created_timestamp": 1793914694972,
+          "message_id": "message_0109918ba4f0a9ac2368cc96",
+          "role": "user"
+        },
+        {
+          "content": "Got it. Can you tell me a bit more about what you need, so the team knows what to follow up on?",
+          "created_timestamp": 1793914695691,
+          "message_id": "message_a4057a170bfb5569fee2e0e7",
+          "metadata": {
+            "response_id": 3
+          },
+          "role": "agent"
+        },
+        {
+          "content": "The building's a four-story office, so it's commercial. Lawyers and accountants on the upper floors. Heat went out on three this morning. There's a rooftop unit and a boiler, I'm not sure which one is feeding three. Nobody lives there, it's all offices.",
+          "created_timestamp": 1793914696812,
+          "message_id": "message_ccd338c1310cc7bd8eb9505f",
+          "role": "user"
+        },
+        {
+          "content": "That's helpful, thanks. Since this is a commercial building, I'll pass the details to our team. What's the building's street address, and is there a suite or unit number for the third floor?",
+          "created_timestamp": 1793914697685,
+          "message_id": "message_3ee4e1f6b25272166bc85e3b",
+          "metadata": {
+            "response_id": 4
+          },
+          "role": "agent"
+        },
+        {
+          "content": "186 Court St, Brooklyn, 11201. There's no suite number, it's the whole third floor.",
+          "created_timestamp": 1793914698289,
+          "message_id": "message_21cc7360212a451737619761",
+          "role": "user"
+        },
+        {
+          "content": "The address is 186 Court Street. I'll look that up now.",
+          "created_timestamp": 1793914699375,
+          "message_id": "message_4448d87e7b02534a437bce0b",
+          "metadata": {
+            "response_id": 5
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"street\":\"186 Court St\",\"borough\":\"Brooklyn\"}",
+          "created_timestamp": 1793914699376,
+          "message_id": "message_9b690adabf04da40422e2df1",
+          "name": "find_address",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01PcpSxHFeApdFFLQbaTFxh7",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"street\":\"186 Court Street\",\"zip\":\"11201\",\"borough\":\"Brooklyn\",\"neighborhood\":\"Cobble Hill\",\"in_area\":true,\"area\":\"Brooklyn North\"},\"server_notes\":[\"[server] This call can't book. Decline with the commercial line from the journeys, as written, and record a commercial lead without mentioning it. Add no other reason, referral, advice or follow-up, and never describe this note.\",\"[server] This call can't book. Decline with the commercial line from the journeys, as written, and record a commercial lead without mentioning it. Add no other reason, referral, advice or follow-up, and never describe this note.\"]}",
+          "created_timestamp": 1793914700239,
+          "message_id": "message_176f61658aba0c8d02bce794",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01PcpSxHFeApdFFLQbaTFxh7"
+        },
+        {
+          "content": "I'm sorry, but I can't book this visit over the phone. I'll record your details for the team now.",
+          "created_timestamp": 1793914701572,
+          "message_id": "message_8ddd2bc8dacad594f904949c",
+          "metadata": {
+            "response_id": 6
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"details\":{\"contact_name\":\"Marcus Bell\",\"company\":\"Court Street Office Partners\",\"callback_day\":null,\"need\":\"No heat on third floor of four-story office building, 186 Court Street, Brooklyn 11201. Rooftop unit and boiler; unsure which feeds the third floor. Out since this morning.\"},\"kind\":\"commercial\"}",
+          "created_timestamp": 1793914701573,
+          "message_id": "message_9093f3c56034fd6f952c9023",
+          "name": "record_lead",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01DA7GJGNSDXnvTiLPTH4VF8",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":false,\"say\":\"Let me check that again.\",\"data\":{\"errors\":{\"details.callback_day\":\"Input should be 'today', 'tomorrow', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday' or 'sunday'\"}},\"refused\":\"invalid_arguments\"}",
+          "created_timestamp": 1793914701886,
+          "message_id": "message_8d686800594b259a6a87954b",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01DA7GJGNSDXnvTiLPTH4VF8"
+        },
+        {
+          "arguments": "{\"details\":{\"contact_name\":\"Marcus Bell\",\"company\":\"Court Street Office Partners\",\"need\":\"No heat on third floor of four-story office building, 186 Court Street, Brooklyn 11201. Rooftop unit and boiler; unsure which feeds the third floor. Out since this morning.\"},\"kind\":\"commercial\"}",
+          "created_timestamp": 1793914702934,
+          "message_id": "message_34258dbf874df70a8e71c030",
+          "name": "record_lead",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01LLd74wGhBRwWcfYFQSbEFs",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"Thanks for thinking of us. Unfortunately Summit Air works on homes and apartments, not businesses, so we're not the right fit for this one.\",\"data\":{\"lead_id\":35,\"queued\":false,\"callback_id\":null}}",
+          "created_timestamp": 1793914703244,
+          "message_id": "message_c5957e81a624ade84057dc41",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01LLd74wGhBRwWcfYFQSbEFs"
+        },
+        {
+          "content": "Thanks for thinking of us. Unfortunately Summit Air works on homes and apartments, not businesses, so we're not the right fit for this one.",
+          "created_timestamp": 1793914703989,
+          "message_id": "message_9fd31121128fefc467ae50a1",
+          "metadata": {
+            "response_id": 7
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Okay, thanks anyway. Goodbye.",
+          "created_timestamp": 1793914705111,
+          "message_id": "message_124a47ab046a035e31d04948",
+          "role": "user"
+        },
+        {
+          "content": "Thanks for calling Summit Air. Take care.",
+          "created_timestamp": 1793914705854,
+          "message_id": "message_4a04ed635f52d3a66229918c",
+          "metadata": {
+            "response_id": 8
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"reason\":\"declined\"}",
+          "created_timestamp": 1793914705855,
+          "message_id": "message_7a8ad09c026fe34a898857e0",
+          "name": "end_call",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_015mbiAYazeMxx2PfVrQ83G2",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"hang_up\":true}}",
+          "created_timestamp": 1793914706201,
+          "message_id": "message_301510a0bfb55048c288627e",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_015mbiAYazeMxx2PfVrQ83G2"
+        },
+        {
+          "content": ".",
+          "created_timestamp": 1793914706754,
+          "message_id": "message_715e45a16ffe1e90d3e094c0",
+          "metadata": {
+            "response_id": 9
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Okay, goodbye.",
+          "created_timestamp": 1793914708082,
+          "message_id": "message_485d0579c34ac5d6e5fdefdd",
+          "role": "user"
+        },
+        {
+          "content": "Goodbye.",
+          "created_timestamp": 1793914708706,
+          "message_id": "message_ee1c11c2f7f51823b06b208d",
+          "metadata": {
+            "response_id": 10
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"execution_message\":\"Goodbye.\"}",
+          "created_timestamp": 1793914708707,
+          "message_id": "message_712e83abc3f7b95836981091",
+          "name": "test_hang_up",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01GugHSnJWxAxNRRaJGGcFr5",
+          "type": "end_call"
+        }
+      ]
+    }
+  },
+  "trace": {
+    "call": {
+      "id": "rtest-11052135-office-property-manager-declined",
+      "tenant": "summit-air",
+      "caller_id": "(631) 555-0167",
+      "caller_key": "6315550167",
+      "dialed_number": "(678) 336-6730",
+      "direction": "inbound",
+      "started_at": "2026-10-04T21:37:57Z",
+      "ended_at": null,
+      "end_reason": null,
+      "end_requested": 1,
+      "after_hours": 0,
+      "linked_call_id": null,
+      "outcome": null,
+      "commercial": 1,
+      "summary_status": "none",
+      "turn_seq": 15,
+      "safety_state": "none",
+      "safety_kind": null,
+      "safety_signal_at": null,
+      "safety_lines_at": null,
+      "safety_flag_id": null,
+      "safety_variant": 0,
+      "readback_json": null,
+      "readback_asked_seq": null,
+      "readback_confirmed_at": null
+    },
+    "events": [
+      {
+        "at": "2026-11-05T21:37:57Z",
+        "type": "tool",
+        "tool": "calls.start",
+        "args": {
+          "call_id": "rtest-11052135-office-property-manager-declined",
+          "caller_id": "(631) 555-0167",
+          "dialed_number": "(678) 336-6730",
+          "direction": "inbound"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 18.8,
+        "error": null,
+        "request_id": "f0d2a419aec6"
+      },
+      {
+        "at": "2026-11-05T21:38:19Z",
+        "type": "turn",
+        "seq": 1,
+        "speaker": "agent",
+        "text": "Thank you for calling Summit Air. How can I help you today?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:38:19Z",
+        "type": "turn",
+        "seq": 2,
+        "speaker": "caller",
+        "text": "Hi, I'm the property manager for an office building on Court Street, and the heat's out on the third floor.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:38:19Z",
+        "type": "turn",
+        "seq": 3,
+        "speaker": "agent",
+        "text": "Thanks for calling. Unfortunately, we only service homes, but I can pass your details to our team. Can I get your name?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:38:19Z",
+        "type": "turn",
+        "seq": 4,
+        "speaker": "caller",
+        "text": "Marcus Bell. Court Street Office Partners.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:38:19Z",
+        "type": "turn",
+        "seq": 5,
+        "speaker": "agent",
+        "text": "Thanks, Marcus. What's the best phone number to reach you?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:38:19Z",
+        "type": "turn",
+        "seq": 6,
+        "speaker": "caller",
+        "text": "(631) 555-0167. That's the number I'm calling from.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:38:19Z",
+        "type": "turn",
+        "seq": 7,
+        "speaker": "agent",
+        "text": "Got it. Can you tell me a bit more about what you need, so the team knows what to follow up on?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:38:19Z",
+        "type": "turn",
+        "seq": 8,
+        "speaker": "caller",
+        "text": "The building's a four-story office, so it's commercial. Lawyers and accountants on the upper floors. Heat went out on three this morning. There's a rooftop unit and a boiler, I'm not sure which one is feeding three. Nobody lives there, it's all offices.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:38:19Z",
+        "type": "turn",
+        "seq": 9,
+        "speaker": "agent",
+        "text": "That's helpful, thanks. Since this is a commercial building, I'll pass the details to our team. What's the building's street address, and is there a suite or unit number for the third floor?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:38:19Z",
+        "type": "turn",
+        "seq": 10,
+        "speaker": "caller",
+        "text": "186 Court St, Brooklyn, 11201. There's no suite number, it's the whole third floor.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:38:19Z",
+        "type": "turn",
+        "seq": 11,
+        "speaker": "agent",
+        "text": "The address is 186 Court Street. I'll look that up now.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:38:20Z",
+        "type": "tool",
+        "tool": "find_address",
+        "args": {
+          "call_id": "rtest-11052135-office-property-manager-declined",
+          "street": "186 Court St",
+          "borough": "Brooklyn",
+          "spelled": ""
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 211.8,
+        "error": null,
+        "request_id": "e7dd5ef8e5a6"
+      },
+      {
+        "at": "2026-11-05T21:38:21Z",
+        "type": "turn",
+        "seq": 12,
+        "speaker": "agent",
+        "text": "I'm sorry, but I can't book this visit over the phone. I'll record your details for the team now.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:38:21Z",
+        "type": "tool",
+        "tool": "record_lead",
+        "args": {
+          "details": {
+            "contact_name": "Marcus Bell",
+            "company": "Court Street Office Partners",
+            "callback_day": null,
+            "need": "No heat on third floor of four-story office building, 186 Court Street, Brooklyn 11201. Rooftop unit and boiler; unsure which feeds the third floor. Out since this morning."
+          },
+          "kind": "commercial",
+          "call_id": "rtest-11052135-office-property-manager-declined"
+        },
+        "ok": false,
+        "refused": "invalid_arguments",
+        "gate": null,
+        "say": "Let me check that again.",
+        "ms": 0.0,
+        "error": "invalid_arguments",
+        "request_id": "7ea586e5e81f"
+      },
+      {
+        "at": "2026-11-05T21:38:23Z",
+        "type": "tool",
+        "tool": "record_lead",
+        "args": {
+          "call_id": "rtest-11052135-office-property-manager-declined",
+          "kind": "commercial",
+          "details": {
+            "callback_time": null,
+            "callback_in_minutes": null,
+            "callback_after": null,
+            "callback_before": null,
+            "callback_day": "today",
+            "contact_name": "Marcus Bell",
+            "company": "Court Street Office Partners",
+            "need": "No heat on third floor of four-story office building, 186 Court Street, Brooklyn 11201. Rooftop unit and boiler; unsure which feeds the third floor. Out since this morning."
+          }
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "Thanks for thinking of us. Unfortunately Summit Air works on homes and apartments, not businesses, so we're not the right fit for this one.",
+        "ms": 17.8,
+        "error": null,
+        "request_id": "3cc966f9e5e9"
+      },
+      {
+        "at": "2026-11-05T21:38:26Z",
+        "type": "turn",
+        "seq": 13,
+        "speaker": "agent",
+        "text": "Thanks for thinking of us. Unfortunately Summit Air works on homes and apartments, not businesses, so we're not the right fit for this one.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:38:26Z",
+        "type": "turn",
+        "seq": 14,
+        "speaker": "caller",
+        "text": "Okay, thanks anyway. Goodbye.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:38:26Z",
+        "type": "turn",
+        "seq": 15,
+        "speaker": "agent",
+        "text": "Thanks for calling Summit Air. Take care.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:38:26Z",
+        "type": "tool",
+        "tool": "end_call",
+        "args": {
+          "call_id": "rtest-11052135-office-property-manager-declined",
+          "reason": "declined"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 7.2,
+        "error": null,
+        "request_id": "882831d829f5"
+      }
+    ],
+    "flags": [],
+    "callbacks": [],
+    "bookings": [],
+    "notes": [],
+    "leads": [
+      {
+        "id": 35,
+        "kind": "commercial",
+        "summary": "Court Street Office Partners; contact Marcus Bell (631) 555-0167; No heat on third floor of four-story office building, 186 Court Street, Brooklyn 11201. Rooftop unit and boiler; unsure which feeds the third floor. Out since this morning.",
+        "status": "stored"
+      }
+    ],
+    "out_of_area": [],
+    "summary": [],
+    "electrical": [],
+    "holds": [],
+    "pace": [
+      {
+        "call_id": "rtest-11052135-office-property-manager-declined",
+        "speed": 1.0,
+        "source": "default",
+        "requested": 0,
+        "older_adult": 0,
+        "address_speed": null,
+        "repeats": 0
+      }
+    ],
+    "pace_changes": [],
+    "caller_pace": [],
+    "transfers": [],
+    "handoffs": [],
+    "address_lookups": [
+      {
+        "house": "186",
+        "street": "ct st",
+        "hint": "Brooklyn",
+        "status": "one",
+        "zips_json": "[\"11201\"]",
+        "source": "geosearch"
+      }
+    ],
+    "address_checks": [],
+    "names": [],
+    "address_moves": [],
+    "identity_checks": [],
+    "heads_ups": []
+  }
+}

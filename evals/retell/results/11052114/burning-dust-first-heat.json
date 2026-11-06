@@ -1,0 +1,1066 @@
+{
+  "case": "burning-dust-first-heat",
+  "retell": {
+    "test_case_job_id": "test_job_655f7cc2f43c",
+    "status": "error",
+    "result_explanation": "Ending the conversation early because the agent did not respond to consecutive user utterances.",
+    "creation_timestamp": 1793913250217,
+    "user_modified_timestamp": 1793913299152,
+    "test_case_definition_id": "test_case_e1dd0033e685",
+    "test_case_definition_snapshot": {
+      "creationTimestamp": 1793911571031,
+      "dynamicVariables": {
+        "summit_call_id": "rtest-11052114-burning-dust-first-heat"
+      },
+      "llmModel": "claude-5.5-haiku",
+      "metrics": [
+        "The agent asks one short question to rule out gas or carbon monoxide before booking, and asks it only once.",
+        "The agent asks one short question to rule out gas or carbon monoxide, and once the caller rules it out, carries on with the visit without the safety lines.",
+        "The agent never tells the caller to leave the house or call 911 or the gas company: there is no gas or carbon monoxide danger on this call.",
+        "The agent books exactly one visit with book_appointment at ZIP 11372.",
+        "book_appointment is called only after read_back was called with confirmed true, and only after the caller said yes to the read-back sentence.",
+        "The agent asks the one quick check about sulfur or rotten eggs, then moves on without sounding alarmed.",
+        "The agent treats the cold room as the reason for the call."
+      ],
+      "name": "[summit] burning-dust-first-heat: Omar Haddad in Jackson Heights turned the heat on for the first time this fall",
+      "orgId": "org_EoCqq2c268JWlyCE",
+      "responseEngine": {
+        "llmId": "llm_1da616f2baeb6e916f63e0236950",
+        "type": "retell-llm",
+        "version": 0
+      },
+      "responseEngineId": "llm_1da616f2baeb6e916f63e0236950",
+      "testCaseDefinitionId": "test_case_e1dd0033e685",
+      "toolMocks": [],
+      "type": "simulation",
+      "userModifiedTimestamp": 1793913242824,
+      "userPrompt": "## Identity\nOmar Haddad in Jackson Heights turned the heat on for the first time this fall. Easygoing, says \"you know\" a lot.\nYour name: Omar Haddad\nYour address: 35-20 82nd St, Jackson Heights, 11372\nYour phone: (631) 555-0164 (the number you're calling from)\nYour smell: it smelled like burning dust for a few minutes when the heat first came on, it is gone now, no gas, nothing like eggs, no alarm\nYour problem: one upstairs bedroom stays cold while the rest of the house heats, since the heat came on two days ago, about 63 F in that room, two healthy adults at home\nYour owns: Omar owns the house, lives there, and approves the work himself\n\n## Goal\nStart the call by saying: \"Hey, so I turned the heat on for the first time this year, and, you know, it smelled like burning dust for a few minutes, it's gone now. But one room upstairs just stays cold.\"\n\n## Behavior\n- If asked whether it smells like sulfur or rotten eggs, say no, nothing like that, it was just dusty.\n- Answer the usual booking questions, confirm the read-back, take the first window, then say goodbye.\n- Talk like a real person on the phone: short, plain sentences, one thing at a time.\n- Give a detail only when the agent asks for it, unless a line above says otherwise.\n- Never invent facts beyond the ones above; if asked something you don't know, say you don't know.\n- When your business is done, say goodbye and stop talking.\n"
+    },
+    "transcript_snapshot": {
+      "callEnded": false,
+      "dynamicVariables": {
+        "call_context": "",
+        "call_id": "playground",
+        "call_type": "web_call",
+        "greeting": "Thank you for calling Summit Air. How can I help you today?",
+        "session_type": "voice",
+        "summit_call_id": "rtest-11052114-burning-dust-first-heat",
+        "system_timezone": "America/Los_Angeles"
+      },
+      "knowledgeBaseRetrievedContents": [],
+      "toolMocks": [],
+      "transcript": [
+        {
+          "content": "Thank you for calling Summit Air. How can I help you today?",
+          "created_timestamp": 1793913260255,
+          "message_id": "message_7aaadaf02f31b3509a58322e",
+          "role": "agent"
+        },
+        {
+          "content": "Hey, so I turned the heat on for the first time this year, and, you know, it smelled like burning dust for a few minutes, it's gone now. But one room upstairs just stays cold.",
+          "created_timestamp": 1793913260928,
+          "message_id": "message_7bc249c3c6f806e131fde966",
+          "role": "user"
+        },
+        {
+          "content": "A burning-dust smell when the heat first comes on is common, but it's good you're checking. Is there a gas smell, or any smoke or sparks from the unit right now?",
+          "created_timestamp": 1793913261914,
+          "message_id": "message_c090c6e48111bff5cdcdaf7b",
+          "metadata": {
+            "response_id": 1
+          },
+          "role": "agent"
+        },
+        {
+          "content": "No, no gas smell, no smoke, no sparks. It was just the dusty smell, and it's gone now. Like I said, the upstairs room is the main thing. It's staying cold while the rest of the house heats up fine.",
+          "created_timestamp": 1793913262680,
+          "message_id": "message_cdf29e5c4c16c57e35335702",
+          "role": "user"
+        },
+        {
+          "content": "Thanks for checking. Since the rest of the house is heating fine, this sounds like a single room that isn't getting heat, which we can have a technician look at. Is the upstairs room completely cold, or just not warming up as well as the others?",
+          "created_timestamp": 1793913263670,
+          "message_id": "message_897e7e41282620fb9a4f9650",
+          "metadata": {
+            "response_id": 2
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Just not warming up as well. It's around 63 degrees in there, and the rest of the house is fine. Two of us live here, so we're in and out of that room.",
+          "created_timestamp": 1793913264369,
+          "message_id": "message_3431e37acf2ac5c2029a71d9",
+          "role": "user"
+        },
+        {
+          "content": "Got it, thanks. Since the rest of the house is warm and this is one room, I'll set up a visit. Can I get your name?",
+          "created_timestamp": 1793913265160,
+          "message_id": "message_a7dc2e41c5d296fe4e4adf79",
+          "metadata": {
+            "response_id": 3
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yeah, it's Omar Haddad.",
+          "created_timestamp": 1793913265844,
+          "message_id": "message_72f89d4d655251d61897ab1e",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, Omar. And this is for a residential property, right? Like a home or an apartment?",
+          "created_timestamp": 1793913266573,
+          "message_id": "message_1051a69c546d14ce93c79d1b",
+          "metadata": {
+            "response_id": 4
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yeah, it's a house. I own it and I live there. The address is 35-20 82nd Street, Jackson Heights, 11372.",
+          "created_timestamp": 1793913267174,
+          "message_id": "message_956687c4501d3a07b23827f5",
+          "role": "user"
+        },
+        {
+          "content": "The caller has answered the residential question with a yes and given an address. I'll look up that address.",
+          "created_timestamp": 1793913268202,
+          "message_id": "message_a2591e52fcfe9fa3f1f0f415",
+          "metadata": {
+            "response_id": 5
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"street\":\"35-20 82nd Street\",\"borough\":\"Jackson Heights\"}",
+          "created_timestamp": 1793913268203,
+          "message_id": "message_98e9aaa01cf2a916ca70a2bb",
+          "name": "find_address",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_013kZ4wpUNbH79WzVY4yPc7J",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"street\":\"35-20 82nd Street\",\"zip\":\"11372\",\"borough\":\"Queens\",\"neighborhood\":\"Jackson Heights\",\"in_area\":true,\"area\":\"Queens West\"},\"speak_first\":\"Say this to the caller now, before anything else, exactly as written with no word or punctuation changed: Just to confirm, it doesn't smell like sulfur or rotten eggs, right?\",\"server_notes\":[\"[server] The caller said no to the safety check. Carry on where the call was.\"]}",
+          "created_timestamp": 1793913268760,
+          "message_id": "message_e67c0592b6c9f5e45495f11d",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_013kZ4wpUNbH79WzVY4yPc7J"
+        },
+        {
+          "arguments": "{\"zip\":\"11372\"}",
+          "created_timestamp": 1793913268761,
+          "message_id": "message_052d4b229e45f6a7a4afcda6",
+          "name": "check_service_area",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01P3i8VVjQ8nvntvQwEutCc4",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"zip\":\"11372\",\"in_area\":true,\"area\":\"Queens West\"}}",
+          "created_timestamp": 1793913269057,
+          "message_id": "message_1954d53267d39c9fd855eb8b",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01P3i8VVjQ8nvntvQwEutCc4"
+        },
+        {
+          "content": "Just to confirm, it doesn't smell like sulfur or rotten eggs, right?",
+          "created_timestamp": 1793913269807,
+          "message_id": "message_82bd924da73e1e00ce2b7e1a",
+          "metadata": {
+            "response_id": 6
+          },
+          "role": "agent"
+        },
+        {
+          "content": "No, nothing like that. It was just kind of dusty, like burning dust. It's gone now.",
+          "created_timestamp": 1793913270405,
+          "message_id": "message_016886cc1cf66bbabe08d124",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, Omar. Got it. Your address is confirmed as in our service area. Since you're already here, can I get a phone number to reach you at?",
+          "created_timestamp": 1793913271181,
+          "message_id": "message_836b3cc6e2615ad8fde966eb",
+          "metadata": {
+            "response_id": 7
+          },
+          "role": "agent"
+        },
+        {
+          "content": "(631) 555-0164. That's the number I'm calling from.",
+          "created_timestamp": 1793913271732,
+          "message_id": "message_20ec797bfb4fcdc3ae7f0977",
+          "role": "user"
+        },
+        {
+          "content": "Since you said it's the number you're calling from, I'll use that.",
+          "created_timestamp": 1793913272813,
+          "message_id": "message_7fbd7525172147a9c2c9aee4",
+          "metadata": {
+            "response_id": 8
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"35-20 82nd Street\",\"city\":\"Jackson Heights\",\"zip\":\"11372\"},\"phone\":\"caller_id\",\"name\":\"Omar Haddad\"}",
+          "created_timestamp": 1793913272814,
+          "message_id": "message_d21504b3a2f8c2a97c73733d",
+          "name": "read_back",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01Ldafre2M3agyq1ybw7Z1qJ",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":false,\"say\":\"Let me check that again.\",\"data\":{\"errors\":{\"name\":\"Extra inputs are not permitted\"}},\"refused\":\"invalid_arguments\"}",
+          "created_timestamp": 1793913273235,
+          "message_id": "message_0ba6d8f8501174e8c92cde8d",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01Ldafre2M3agyq1ybw7Z1qJ"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"35-20 82nd Street\",\"city\":\"Jackson Heights\",\"zip\":\"11372\"},\"phone\":\"caller_id\"}",
+          "created_timestamp": 1793913274173,
+          "message_id": "message_a923c7964a6e413f88193dde",
+          "name": "read_back",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01KxpCzXuDu2nL8VqEC2KQwW",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"I have your home at 35-20 82nd Street, Jackson Heights, ZIP code one one three seven two, and the best number is six three one, five five five, zero one six four. That's all correct, right?\",\"data\":{\"confirmed\":false,\"sentence\":\"I have your home at 35-20 82nd Street, Jackson Heights, ZIP code one one three seven two, and the best number is six three one, five five five, zero one six four. That's all correct, right?\"}}",
+          "created_timestamp": 1793913274473,
+          "message_id": "message_88a4a8787cba9a9f39a4138c",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01KxpCzXuDu2nL8VqEC2KQwW"
+        },
+        {
+          "content": "I have your home at 35-20 82nd Street, Jackson Heights, ZIP code one one three seven two, and the best number is six three one, five five five, zero one six four. That's all correct, right?",
+          "created_timestamp": 1793913275334,
+          "message_id": "message_7adeffb5b8fbaa56c85ab1a1",
+          "metadata": {
+            "response_id": 9
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yeah, that's all correct.",
+          "created_timestamp": 1793913275807,
+          "message_id": "message_476876603fb0de4da58a71b1",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"35-20 82nd Street\",\"city\":\"Jackson Heights\",\"zip\":\"11372\"},\"phone\":\"caller_id\",\"confirmed\":true}",
+          "created_timestamp": 1793913277361,
+          "message_id": "message_700f5b7c841cb7de42c473a8",
+          "name": "read_back",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01Sp1qLy9KXApDW7Z7gKz1cA",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"confirmed\":true,\"address\":{\"street\":\"35-20 82nd Street\",\"unit\":\"\",\"city\":\"Jackson Heights\",\"zip\":\"11372\",\"spelled\":\"\"},\"phone\":\"6315550164\"}}",
+          "created_timestamp": 1793913277835,
+          "message_id": "message_500bf479136ea7f1e3491990",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01Sp1qLy9KXApDW7Z7gKz1cA"
+        },
+        {
+          "arguments": "{\"job_type\":\"no_heat\",\"facts\":{\"issue\":\"Upstairs room not warming up as well as the rest of the house; burning-dust smell when heat first came on this season, now gone; no gas smell\",\"since\":\"heat turned on this season\",\"who_home\":\"Two residents, in and out of the upstairs room\"}}",
+          "created_timestamp": 1793913277836,
+          "message_id": "message_9397392f6e506e76dbc2a84e",
+          "name": "find_slots",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_012sq7gRiWNgTvjhb3X5CzUc",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":false,\"say\":\"Let me check that again.\",\"data\":{\"errors\":{\"facts.since\":\"Extra inputs are not permitted\"}},\"refused\":\"invalid_arguments\"}",
+          "created_timestamp": 1793913278199,
+          "message_id": "message_97b8b53aa8186a0325361359",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_012sq7gRiWNgTvjhb3X5CzUc"
+        },
+        {
+          "arguments": "{\"job_type\":\"no_heat\",\"facts\":{\"issue\":\"Upstairs room not warming up as well as the rest of the house; burning-dust smell when heat first came on this season, now gone; no gas smell\",\"who_home\":\"Two residents, in and out of the upstairs room\"}}",
+          "created_timestamp": 1793913279188,
+          "message_id": "message_7eb1a74e536729fc5638c12f",
+          "name": "find_slots",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_016cPhLw12YVapzh6nNwWDyn",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"The soonest I have is today, 4:30 to 6:30. Does that work?\",\"data\":{\"priority\":{\"level\":\"Normal\",\"reasons\":[\"warm inside and a mild day\"],\"requested\":null,\"raised_after_wait\":false},\"days\":[{\"date\":\"2026-11-05\",\"weekday\":\"Thursday\",\"day\":\"today\",\"windows\":[\"1630-1830\"],\"labels\":[\"4:30 to 6:30\"]},{\"date\":\"2026-11-06\",\"weekday\":\"Friday\",\"day\":\"tomorrow\",\"windows\":[\"0800-1000\",\"1000-1200\",\"1200-1400\",\"1400-1600\",\"1600-1800\",\"1800-2000\"],\"labels\":[\"8 to 10\",\"10 to 12\",\"12 to 2\",\"2 to 4\",\"4 to 6\",\"6 to 8\"]},{\"date\":\"2026-11-09\",\"weekday\":\"Monday\",\"day\":\"Monday\",\"windows\":[\"0800-1000\",\"1000-1200\",\"1200-1400\",\"1400-1600\",\"1600-1800\",\"1800-2000\"],\"labels\":[\"8 to 10\",\"10 to 12\",\"12 to 2\",\"2 to 4\",\"4 to 6\",\"6 to 8\"]}],\"offer\":{\"date\":\"2026-11-05\",\"window\":\"1630-1830\",\"weekday\":\"Thursday\",\"day\":\"today\",\"day_and_date\":\"today, Thursday, November 5\",\"label\":\"4:30 to 6:30\",\"part\":\"evening\",\"after_hours\":false}}}",
+          "created_timestamp": 1793913280972,
+          "message_id": "message_542d57f480e48dbab81b5942",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_016cPhLw12YVapzh6nNwWDyn"
+        },
+        {
+          "content": "The soonest I have is today, Thursday, November 5, between 4:30 and 6:30. Does that work for you?",
+          "created_timestamp": 1793913281737,
+          "message_id": "message_0ed0657af94123e27979f235",
+          "metadata": {
+            "response_id": 10
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yeah, today works. Um, what time did you say, like 4:30 to 6:30? Yeah, that's fine. I'll take it.",
+          "created_timestamp": 1793913282400,
+          "message_id": "message_2beacb3821cc699476cc6879",
+          "role": "user"
+        },
+        {
+          "content": "That window is booked as today, Thursday, November 5, 4:30 to 6:30. Before I lock it in, will you be able to approve any repair work the technician recommends?",
+          "created_timestamp": 1793913283260,
+          "message_id": "message_c687c5457d5f55fe73af444d",
+          "metadata": {
+            "response_id": 11
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yeah, I own the house, so I can approve it. Just me, you know, I'm the one who decides.",
+          "created_timestamp": 1793913283884,
+          "message_id": "message_5426e133efb57426e418f50c",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, Omar. Will someone be home to let the technician in?",
+          "created_timestamp": 1793913284546,
+          "message_id": "message_e6586b05fbcb72d1b5a0d228",
+          "metadata": {
+            "response_id": 12
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yeah, I'll be home. Just me and my wife, so someone's always around. Thanks.",
+          "created_timestamp": 1793913285264,
+          "message_id": "message_7bc21110873342ad10c83650",
+          "role": "user"
+        },
+        {
+          "content": "Great. Is there a gate code, buzzer, or pet the technician should know about?",
+          "created_timestamp": 1793913285960,
+          "message_id": "message_73bd32903e206697bf0a793e",
+          "metadata": {
+            "response_id": 13
+          },
+          "role": "agent"
+        },
+        {
+          "content": "No, no gate, no buzzer, no pets. Just ring the bell. Thanks, that sounds good.",
+          "created_timestamp": 1793913287021,
+          "message_id": "message_6dfbadaeee46b04bbc3e8c03",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"job_type\":\"no_heat\",\"details\":{\"approver\":\"Omar Haddad (homeowner)\",\"issue\":\"Upstairs room not warming up as well as the rest of the house; burning-dust smell when heat first came on this season, now gone; no gas smell, no smoke or sparks\",\"since\":\"Heat turned on this season\",\"tried\":\"Heat turned on for the first time this year; no troubleshooting done by caller\",\"who_home\":\"Homeowner and wife, both home at visit\",\"arrival_notes\":\"Ring the bell. No gate, buzzer, or pets.\",\"inside_temp_f\":63,\"name\":\"Omar Haddad\",\"system_type\":\"not provided\"},\"slot\":{\"date\":\"2026-11-05\",\"window\":\"1630-1830\"}}",
+          "created_timestamp": 1793913288660,
+          "message_id": "message_f34fd055842dc7391315d989",
+          "name": "book_appointment",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01KCZvvx9cZr8KhJmkaKcDa4",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"You're all set for today, Thursday, November 5, with the technician arriving between 4:30 and 6:30. Anything else?\",\"data\":{\"booking_id\":549,\"appointment_id\":549,\"window\":{\"date\":\"2026-11-05\",\"window\":\"1630-1830\",\"weekday\":\"Thursday\",\"day\":\"today\",\"day_and_date\":\"today, Thursday, November 5\",\"label\":\"4:30 to 6:30\",\"part\":\"evening\",\"after_hours\":false},\"priority\":{\"level\":\"High\",\"reasons\":[\"below 65 F inside, caller said \\\"Just not warming up as well. It's around 63 degrees in there, and the rest...\\\"\"],\"raised_after_wait\":false},\"seek_earlier\":false,\"safety_override\":false,\"approval_callback_at\":null,\"return_visit_review\":false}}",
+          "created_timestamp": 1793913290217,
+          "message_id": "message_5f5276a5bf512336ba67ff87",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01KCZvvx9cZr8KhJmkaKcDa4"
+        },
+        {
+          "content": "You're all set for today, Thursday, November 5, with the technician arriving between 4:30 and 6:30. Is there anything else I can help you with?",
+          "created_timestamp": 1793913291155,
+          "message_id": "message_b261c09a87e4fa3386fea485",
+          "metadata": {
+            "response_id": 14
+          },
+          "role": "agent"
+        },
+        {
+          "content": "No, that's it. Thanks, you guys are great. Bye.",
+          "created_timestamp": 1793913291835,
+          "message_id": "message_2c782a23f2aacdfd37587969",
+          "role": "user"
+        },
+        {
+          "content": "Thanks for calling Summit Air. Take care.",
+          "created_timestamp": 1793913292935,
+          "message_id": "message_51f58be418ac84fd58aef50e",
+          "metadata": {
+            "response_id": 15
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"reason\":\"resolved\"}",
+          "created_timestamp": 1793913292936,
+          "message_id": "message_5635ce456dd802a8af83ee46",
+          "name": "end_call",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01FrU1taPyZQKUyWaBsNRo1w",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"hang_up\":true}}",
+          "created_timestamp": 1793913293444,
+          "message_id": "message_2f756f12ffd7a10d6ad9cb9d",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01FrU1taPyZQKUyWaBsNRo1w"
+        },
+        {
+          "content": "The conversation is already wrapped up: the agent confirmed the appointment and said goodbye. Omar's business is done, so he says goodbye and stops.\n\nBye, thanks!",
+          "created_timestamp": 1793913295474,
+          "message_id": "message_cd7a28682c4b52834622f433",
+          "role": "user"
+        },
+        {
+          "content": "Bye, thanks!",
+          "created_timestamp": 1793913296956,
+          "message_id": "message_bdeebd7cd35bfac5589b9381",
+          "role": "user"
+        },
+        {
+          "content": "Bye, thanks!",
+          "created_timestamp": 1793913297981,
+          "message_id": "message_f12b8948fcec6213121caf91",
+          "role": "user"
+        },
+        {
+          "content": "Bye, thanks!",
+          "created_timestamp": 1793913299151,
+          "message_id": "message_2b3f10c18bf14b14de056bc9",
+          "role": "user"
+        }
+      ]
+    }
+  },
+  "trace": {
+    "call": {
+      "id": "rtest-11052114-burning-dust-first-heat",
+      "tenant": "summit-air",
+      "caller_id": "(631) 555-0164",
+      "caller_key": "6315550164",
+      "dialed_number": "(678) 336-6730",
+      "direction": "inbound",
+      "started_at": "2026-10-10T21:14:06Z",
+      "ended_at": null,
+      "end_reason": null,
+      "end_requested": 1,
+      "after_hours": 0,
+      "linked_call_id": null,
+      "outcome": null,
+      "commercial": 0,
+      "summary_status": "none",
+      "turn_seq": 29,
+      "safety_state": "cleared",
+      "safety_kind": "gas",
+      "safety_signal_at": null,
+      "safety_lines_at": null,
+      "safety_flag_id": null,
+      "safety_variant": 0,
+      "readback_json": "{\"street\": \"35-20 82nd Street\", \"unit\": \"\", \"city\": \"Jackson Heights\", \"zip\": \"11372\", \"spelled\": \"\", \"phone\": \"6315550164\", \"phone_for\": \"\", \"sentence\": \"I have your home at 35-20 82nd Street, Jackson Heights, ZIP code one one three seven two, and the best number is six three one, five five five, zero one six four. That's all correct, right?\"}",
+      "readback_asked_seq": 16,
+      "readback_confirmed_at": "2026-11-05T21:14:37Z"
+    },
+    "events": [
+      {
+        "at": "2026-11-05T21:14:06Z",
+        "type": "tool",
+        "tool": "calls.start",
+        "args": {
+          "call_id": "rtest-11052114-burning-dust-first-heat",
+          "caller_id": "(631) 555-0164",
+          "dialed_number": "(678) 336-6730",
+          "direction": "inbound"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 16.3,
+        "error": null,
+        "request_id": "511f9f6cce01"
+      },
+      {
+        "at": "2026-11-05T21:14:28Z",
+        "type": "turn",
+        "seq": 1,
+        "speaker": "agent",
+        "text": "Thank you for calling Summit Air. How can I help you today?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:14:28Z",
+        "type": "turn",
+        "seq": 2,
+        "speaker": "caller",
+        "text": "Hey, so I turned the heat on for the first time this year, and, you know, it smelled like burning dust for a few minutes, it's gone now. But one room upstairs just stays cold.",
+        "safety_action": "ask_check",
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:14:28Z",
+        "type": "turn",
+        "seq": 3,
+        "speaker": "agent",
+        "text": "A burning-dust smell when the heat first comes on is common, but it's good you're checking. Is there a gas smell, or any smoke or sparks from the unit right now?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:14:28Z",
+        "type": "turn",
+        "seq": 4,
+        "speaker": "caller",
+        "text": "No, no gas smell, no smoke, no sparks. It was just the dusty smell, and it's gone now. Like I said, the upstairs room is the main thing. It's staying cold while the rest of the house heats up fine.",
+        "safety_action": "cleared",
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:14:28Z",
+        "type": "turn",
+        "seq": 5,
+        "speaker": "agent",
+        "text": "Thanks for checking. Since the rest of the house is heating fine, this sounds like a single room that isn't getting heat, which we can have a technician look at. Is the upstairs room completely cold, or just not warming up as well as the others?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:14:28Z",
+        "type": "turn",
+        "seq": 6,
+        "speaker": "caller",
+        "text": "Just not warming up as well. It's around 63 degrees in there, and the rest of the house is fine. Two of us live here, so we're in and out of that room.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:14:28Z",
+        "type": "turn",
+        "seq": 7,
+        "speaker": "agent",
+        "text": "Got it, thanks. Since the rest of the house is warm and this is one room, I'll set up a visit. Can I get your name?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:14:28Z",
+        "type": "turn",
+        "seq": 8,
+        "speaker": "caller",
+        "text": "Yeah, it's Omar Haddad.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:14:28Z",
+        "type": "turn",
+        "seq": 9,
+        "speaker": "agent",
+        "text": "Thanks, Omar. And this is for a residential property, right? Like a home or an apartment?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:14:28Z",
+        "type": "turn",
+        "seq": 10,
+        "speaker": "caller",
+        "text": "Yeah, it's a house. I own it and I live there. The address is 35-20 82nd Street, Jackson Heights, 11372.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:14:28Z",
+        "type": "turn",
+        "seq": 11,
+        "speaker": "agent",
+        "text": "The caller has answered the residential question with a yes and given an address. I'll look up that address.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:14:28Z",
+        "type": "tool",
+        "tool": "find_address",
+        "args": {
+          "call_id": "rtest-11052114-burning-dust-first-heat",
+          "street": "35-20 82nd Street",
+          "borough": "Jackson Heights",
+          "spelled": ""
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 7.8,
+        "error": null,
+        "request_id": "fc00e8e6c91c"
+      },
+      {
+        "at": "2026-11-05T21:14:29Z",
+        "type": "tool",
+        "tool": "check_service_area",
+        "args": {
+          "call_id": "rtest-11052114-burning-dust-first-heat",
+          "zip": "11372"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 3.6,
+        "error": null,
+        "request_id": "46a94bd4635a"
+      },
+      {
+        "at": "2026-11-05T21:14:33Z",
+        "type": "turn",
+        "seq": 12,
+        "speaker": "agent",
+        "text": "Just to confirm, it doesn't smell like sulfur or rotten eggs, right?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:14:33Z",
+        "type": "turn",
+        "seq": 13,
+        "speaker": "caller",
+        "text": "No, nothing like that. It was just kind of dusty, like burning dust. It's gone now.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:14:33Z",
+        "type": "turn",
+        "seq": 14,
+        "speaker": "agent",
+        "text": "Thanks, Omar. Got it. Your address is confirmed as in our service area. Since you're already here, can I get a phone number to reach you at?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:14:33Z",
+        "type": "turn",
+        "seq": 15,
+        "speaker": "caller",
+        "text": "(631) 555-0164. That's the number I'm calling from.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:14:33Z",
+        "type": "turn",
+        "seq": 16,
+        "speaker": "agent",
+        "text": "Since you said it's the number you're calling from, I'll use that.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:14:33Z",
+        "type": "tool",
+        "tool": "read_back",
+        "args": {
+          "address": {
+            "street": "35-20 82nd Street",
+            "city": "Jackson Heights",
+            "zip": "11372"
+          },
+          "phone": "caller_id",
+          "name": "Omar Haddad",
+          "call_id": "rtest-11052114-burning-dust-first-heat"
+        },
+        "ok": false,
+        "refused": "invalid_arguments",
+        "gate": null,
+        "say": "Let me check that again.",
+        "ms": 0.0,
+        "error": "invalid_arguments",
+        "request_id": "b7c83ad147eb"
+      },
+      {
+        "at": "2026-11-05T21:14:34Z",
+        "type": "tool",
+        "tool": "read_back",
+        "args": {
+          "call_id": "rtest-11052114-burning-dust-first-heat",
+          "address": {
+            "street": "35-20 82nd Street",
+            "unit": "",
+            "city": "Jackson Heights",
+            "zip": "11372",
+            "spelled": ""
+          },
+          "phone": "caller_id",
+          "phone_for": "",
+          "confirmed": false
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "I have your home at 35-20 82nd Street, Jackson Heights, ZIP code one one three seven two, and the best number is six three one, five five five, zero one six four. That's all correct, right?",
+        "ms": 6.2,
+        "error": null,
+        "request_id": "10ddc7341b54"
+      },
+      {
+        "at": "2026-11-05T21:14:37Z",
+        "type": "turn",
+        "seq": 17,
+        "speaker": "agent",
+        "text": "I have your home at 35-20 82nd Street, Jackson Heights, ZIP code one one three seven two, and the best number is six three one, five five five, zero one six four. That's all correct, right?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:14:37Z",
+        "type": "turn",
+        "seq": 18,
+        "speaker": "caller",
+        "text": "Yeah, that's all correct.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:14:37Z",
+        "type": "tool",
+        "tool": "read_back",
+        "args": {
+          "call_id": "rtest-11052114-burning-dust-first-heat",
+          "address": {
+            "street": "35-20 82nd Street",
+            "unit": "",
+            "city": "Jackson Heights",
+            "zip": "11372",
+            "spelled": ""
+          },
+          "phone": "caller_id",
+          "phone_for": "",
+          "confirmed": true
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 7.9,
+        "error": null,
+        "request_id": "41c11aba30aa"
+      },
+      {
+        "at": "2026-11-05T21:14:38Z",
+        "type": "tool",
+        "tool": "find_slots",
+        "args": {
+          "job_type": "no_heat",
+          "facts": {
+            "issue": "Upstairs room not warming up as well as the rest of the house; burning-dust smell when heat first came on this season, now gone; no gas smell",
+            "since": "heat turned on this season",
+            "who_home": "Two residents, in and out of the upstairs room"
+          },
+          "call_id": "rtest-11052114-burning-dust-first-heat"
+        },
+        "ok": false,
+        "refused": "invalid_arguments",
+        "gate": null,
+        "say": "Let me check that again.",
+        "ms": 0.0,
+        "error": "invalid_arguments",
+        "request_id": "3541a1b1f821"
+      },
+      {
+        "at": "2026-11-05T21:14:40Z",
+        "type": "tool",
+        "tool": "find_slots",
+        "args": {
+          "call_id": "rtest-11052114-burning-dust-first-heat",
+          "job_type": "no_heat",
+          "priority": null,
+          "preferred_days": [],
+          "time_of_day": null,
+          "window_minutes": null,
+          "day": null,
+          "arrive_after": null,
+          "arrive_before": null,
+          "facts": {
+            "issue": "Upstairs room not warming up as well as the rest of the house; burning-dust smell when heat first came on this season, now gone; no gas smell",
+            "who_home": "Two residents, in and out of the upstairs room",
+            "inside_temp_f": null,
+            "temp_falling_fast": false
+          }
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "The soonest I have is today, 4:30 to 6:30. Does that work?",
+        "ms": 1423.7,
+        "error": null,
+        "request_id": "f1cbfb258119"
+      },
+      {
+        "at": "2026-11-05T21:14:49Z",
+        "type": "turn",
+        "seq": 19,
+        "speaker": "agent",
+        "text": "The soonest I have is today, Thursday, November 5, between 4:30 and 6:30. Does that work for you?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 7000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:14:49Z",
+        "type": "turn",
+        "seq": 20,
+        "speaker": "caller",
+        "text": "Yeah, today works. Um, what time did you say, like 4:30 to 6:30? Yeah, that's fine. I'll take it.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:14:49Z",
+        "type": "turn",
+        "seq": 21,
+        "speaker": "agent",
+        "text": "That window is booked as today, Thursday, November 5, 4:30 to 6:30. Before I lock it in, will you be able to approve any repair work the technician recommends?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:14:49Z",
+        "type": "turn",
+        "seq": 22,
+        "speaker": "caller",
+        "text": "Yeah, I own the house, so I can approve it. Just me, you know, I'm the one who decides.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:14:49Z",
+        "type": "turn",
+        "seq": 23,
+        "speaker": "agent",
+        "text": "Thanks, Omar. Will someone be home to let the technician in?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:14:49Z",
+        "type": "turn",
+        "seq": 24,
+        "speaker": "caller",
+        "text": "Yeah, I'll be home. Just me and my wife, so someone's always around. Thanks.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:14:49Z",
+        "type": "turn",
+        "seq": 25,
+        "speaker": "agent",
+        "text": "Great. Is there a gate code, buzzer, or pet the technician should know about?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:14:49Z",
+        "type": "turn",
+        "seq": 26,
+        "speaker": "caller",
+        "text": "No, no gate, no buzzer, no pets. Just ring the bell. Thanks, that sounds good.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:14:50Z",
+        "type": "tool",
+        "tool": "book_appointment",
+        "args": {
+          "call_id": "rtest-11052114-burning-dust-first-heat",
+          "job_type": "no_heat",
+          "slot": {
+            "date": "2026-11-05",
+            "window": "1630-1830"
+          },
+          "details": {
+            "issue": "Upstairs room not warming up as well as the rest of the house; burning-dust smell when heat first came on this season, now gone; no gas smell, no smoke or sparks",
+            "since": "Heat turned on this season",
+            "tried": "Heat turned on for the first time this year; no troubleshooting done by caller",
+            "who_home": "Homeowner and wife, both home at visit",
+            "approver": "Omar Haddad (homeowner)",
+            "system_type": "not provided",
+            "arrival_notes": "Ring the bell. No gate, buzzer, or pets.",
+            "name": "Omar Haddad",
+            "inside_temp_f": 63.0
+          },
+          "priority": null,
+          "separate_problem": false,
+          "new_address_account": null
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "You're all set for today, Thursday, November 5, with the technician arriving between 4:30 and 6:30. Anything else?",
+        "ms": 848.7,
+        "error": null,
+        "request_id": "16877ea16102"
+      },
+      {
+        "at": "2026-11-05T21:14:53Z",
+        "type": "turn",
+        "seq": 27,
+        "speaker": "agent",
+        "text": "You're all set for today, Thursday, November 5, with the technician arriving between 4:30 and 6:30. Is there anything else I can help you with?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 3000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:14:53Z",
+        "type": "turn",
+        "seq": 28,
+        "speaker": "caller",
+        "text": "No, that's it. Thanks, you guys are great. Bye.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:14:53Z",
+        "type": "turn",
+        "seq": 29,
+        "speaker": "agent",
+        "text": "Thanks for calling Summit Air. Take care.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:14:53Z",
+        "type": "tool",
+        "tool": "end_call",
+        "args": {
+          "call_id": "rtest-11052114-burning-dust-first-heat",
+          "reason": "resolved"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 6.4,
+        "error": null,
+        "request_id": "00d7868d0be3"
+      }
+    ],
+    "flags": [
+      {
+        "id": 253,
+        "call_id": "rtest-11052114-burning-dust-first-heat",
+        "kind": "safety_check_cleared",
+        "reason": "Caller said no to the safety check",
+        "priority": "Low",
+        "status": "open",
+        "created_at": "2026-11-05T21:14:28Z"
+      }
+    ],
+    "callbacks": [],
+    "bookings": [
+      {
+        "id": 195,
+        "kind": "book",
+        "status": "booked",
+        "fsm_job_id": 549,
+        "window_start": "2026-11-05T21:30:00Z",
+        "window_end": "2026-11-05T23:30:00Z",
+        "priority": "High",
+        "priority_reasons": "below 65 F inside, caller said \"Just not warming up as well. It's around 63 degrees in there, and the rest...\"",
+        "safety_override": 0,
+        "seek_earlier": 0,
+        "attempts": 1,
+        "last_error": null,
+        "raised_after_wait": 0,
+        "priority_rules": "[\"bracket:cool_inside\"]",
+        "priority_reason_list": "[\"below 65 F inside, caller said \\\"Just not warming up as well. It's around 63 degrees in there, and the rest...\\\"\"]",
+        "who_home": "Homeowner and wife, both home at visit",
+        "job_type": "no_heat",
+        "street": "35-20 82nd Street",
+        "unit": "",
+        "job_notes": "[]"
+      }
+    ],
+    "notes": [],
+    "leads": [],
+    "out_of_area": [],
+    "summary": [],
+    "electrical": [],
+    "holds": [],
+    "pace": [
+      {
+        "call_id": "rtest-11052114-burning-dust-first-heat",
+        "speed": 1.0,
+        "source": "default",
+        "requested": 0,
+        "older_adult": 0,
+        "address_speed": null,
+        "repeats": 0
+      }
+    ],
+    "pace_changes": [],
+    "caller_pace": [],
+    "transfers": [],
+    "handoffs": [],
+    "address_lookups": [
+      {
+        "house": "3520",
+        "street": "82 st",
+        "hint": "Jackson Heights",
+        "status": "one",
+        "zips_json": "[\"11372\"]",
+        "source": "geosearch"
+      }
+    ],
+    "address_checks": [],
+    "names": [],
+    "address_moves": [],
+    "identity_checks": [],
+    "heads_ups": []
+  }
+}

@@ -1,0 +1,33 @@
+id: retell-call-out-of-area-then-new-address
+title: A caller who first gives their office in Jersey City, then, told it's outside the area, gi
+tags:
+- must-pass
+- live-call
+- booking
+scenario: retell-call-out-of-area-then-new-address
+caller_id: (678) 555-0201
+user_prompt: |
+  ## Identity
+  A caller who first gives their office in Jersey City, then, told it's outside the area, gives the apartment in Manhattan where the AC tune-up is actually needed.
+  Your wrong address: 50 Hudson Street, Jersey City, 07302
+  Your address: 199 East 4th Street, Manhattan, 10009
+  Your phone: (678) 555-0201 (the number you're calling from)
+  Your wants: an AC tune-up, any day
+
+  ## Goal
+  Start the call by saying: "Hi, I need an AC tune-up at 50 Hudson Street, Jersey City, 07302."
+
+  ## Behavior
+  - When told it's outside the area, say "Oh wait, sorry, it's actually my apartment at 199 East 4th Street, 10009."
+  - Confirm a correct read-back, and say goodbye once booked.
+  - Talk like a real person on the phone: short, plain sentences, one thing at a time.
+  - Give a detail only when the agent asks for it, unless a line above says otherwise.
+  - Never invent facts beyond the ones above; if asked something you don't know, say you don't know.
+  - When your business is done, say goodbye and stop talking.
+metrics:
+- The agent tells the caller that ZIP 07302 is outside the service area and does not book a visit there.
+- The agent books exactly one visit with book_appointment at ZIP 10009.
+- The agent never hangs up right after saying the address is outside the area; waits for the caller's
+  answer.
+- The agent never says the caller's name out loud to the caller. A name inside tool arguments, such as
+  booking details, doesn't count.

@@ -16,14 +16,27 @@ def tool(name, args=None, ok=True):
     return {"type": "tool", "tool": name, "args": args or {}, "ok": ok}
 
 
-def trace(turns=(), tools=(), bookings=(), flags=(), callbacks=(), out_of_area=(), events=(),
-          **call):
+def trace(
+    turns=(), tools=(), bookings=(), flags=(), callbacks=(), out_of_area=(), events=(), **call
+):
     """Turns, then tools, unless `events` gives the exact order."""
     events = list(events) or [turn(*t) for t in turns] + [tool(*t) for t in tools]
-    base = {"safety_state": "none", "safety_kind": None, "safety_flag_id": None,
-            "readback_json": None, "outcome": None, "end_reason": None}
-    return {"call": {**base, **call}, "events": events, "bookings": list(bookings),
-            "flags": list(flags), "callbacks": list(callbacks), "out_of_area": list(out_of_area)}
+    base = {
+        "safety_state": "none",
+        "safety_kind": None,
+        "safety_flag_id": None,
+        "readback_json": None,
+        "outcome": None,
+        "end_reason": None,
+    }
+    return {
+        "call": {**base, **call},
+        "events": events,
+        "bookings": list(bookings),
+        "flags": list(flags),
+        "callbacks": list(callbacks),
+        "out_of_area": list(out_of_area),
+    }
 
 
 def failures(check, arg, t):
@@ -34,24 +47,38 @@ SIGNAL = [("caller", "it smells like gas", "speak_lines")]
 
 
 def test_safety_lines_said_first_passes_when_the_next_line_is_the_script():
-    t = trace(SIGNAL + [("agent", GAS, None)], safety_state="lines_said", safety_kind="gas",
-              safety_flag_id=1)
+    t = trace(
+        SIGNAL + [("agent", GAS, None)],
+        safety_state="lines_said",
+        safety_kind="gas",
+        safety_flag_id=1,
+    )
     assert failures("safety_lines", "said_first", t) == []
 
 
 def test_safety_lines_said_first_fails_when_the_agent_says_something_else_first():
-    t = trace(SIGNAL + [("agent", "What's your address?", None), ("agent", GAS, None)],
-              safety_state="lines_said", safety_kind="gas", safety_flag_id=1)
+    t = trace(
+        SIGNAL + [("agent", "What's your address?", None), ("agent", GAS, None)],
+        safety_state="lines_said",
+        safety_kind="gas",
+        safety_flag_id=1,
+    )
     assert "first reply" in failures("safety_lines", "said_first", t)[0]
-    late = trace(SIGNAL + [("agent", "Sure, let me book that first. " + GAS, None)],
-                 safety_state="lines_said", safety_kind="gas", safety_flag_id=1)
+    late = trace(
+        SIGNAL + [("agent", "Sure, let me book that first. " + GAS, None)],
+        safety_state="lines_said",
+        safety_kind="gas",
+        safety_flag_id=1,
+    )
     assert "did not open with the lines" in failures("safety_lines", "said_first", late)[0]
 
 
 def test_safety_lines_said_first_fails_without_a_signal_or_a_flag():
     assert failures("safety_lines", "said_first", trace()) == ["no safety signal fired"]
     t = trace(SIGNAL + [("agent", GAS, None)], safety_state="lines_said", safety_kind="gas")
-    assert failures("safety_lines", "said_first", t) == ["no person was flagged for the safety call"]
+    assert failures("safety_lines", "said_first", t) == [
+        "no person was flagged for the safety call"
+    ]
 
 
 def test_safety_lines_not_said_catches_lines_on_a_call_without_a_signal():
@@ -78,8 +105,14 @@ def test_safety_check_asked_once_and_not_asked():
 
 
 def booked(priority="Normal", **extra):
-    return {"kind": "book", "status": "booked", "priority": priority, "seek_earlier": 0,
-            "safety_override": 0, **extra}
+    return {
+        "kind": "book",
+        "status": "booked",
+        "priority": priority,
+        "seek_earlier": 0,
+        "safety_override": 0,
+        **extra,
+    }
 
 
 def test_booking_counts_only_live_bookings():
@@ -95,8 +128,9 @@ def test_booking_checks_priority_zip_and_job_type():
         tools=[("book_appointment", {"job_type": "no_heat"}, True)],
         readback_json=json.dumps({"street": "1 Main St", "zip": "11361"}),
     )
-    assert failures("booking", {"priority": "Urgent", "zip": "11361", "job_type": "no_heat"},
-                    t) == []
+    assert (
+        failures("booking", {"priority": "Urgent", "zip": "11361", "job_type": "no_heat"}, t) == []
+    )
     wrong = failures("booking", {"priority": "Normal", "zip": "11316", "job_type": "tune_up"}, t)
     assert len(wrong) == 3
 
@@ -109,8 +143,7 @@ BOOK = tool("book_appointment")
 
 def test_read_back_must_be_said_then_confirmed_before_booking():
     def check(*events):
-        return failures("read_back", "before_booking", trace(events=events,
-                                                             readback_json=READBACK))
+        return failures("read_back", "before_booking", trace(events=events, readback_json=READBACK))
 
     assert check(tool("read_back"), SAID, CONFIRM, BOOK) == []
     assert check(BOOK, SAID, CONFIRM) == ["booked before a confirmed read-back"]
@@ -122,15 +155,19 @@ def test_read_back_must_be_said_then_confirmed_before_booking():
 
 def test_a_read_back_said_in_words_counts():
     spoken = turn("agent", "That's one Main Street, one one two three one, right?")
-    got = failures("read_back", "before_booking",
-                   trace(events=[spoken, CONFIRM, BOOK], readback_json=READBACK))
+    got = failures(
+        "read_back", "before_booking", trace(events=[spoken, CONFIRM, BOOK], readback_json=READBACK)
+    )
     assert got == []
 
 
 def test_flag_lead_out_of_area_and_callback():
-    t = trace(flags=[{"kind": "person"}], callbacks=[{"status": "pending"}],
-              tools=[("record_lead", {"kind": "commercial"}, True)],
-              out_of_area=[{"zip": "11501"}])
+    t = trace(
+        flags=[{"kind": "person"}],
+        callbacks=[{"status": "pending"}],
+        tools=[("record_lead", {"kind": "commercial"}, True)],
+        out_of_area=[{"zip": "11501"}],
+    )
     assert failures("flag", "person", t) == []
     assert failures("flag", "none", t) != []
     assert failures("lead", "commercial", t) == []
@@ -148,8 +185,11 @@ def test_no_changes_fails_on_any_write():
 
 
 def test_outcome_ended_by_and_tool_checks():
-    t = trace(tools=[("mark_do_not_call", {}, True), ("find_customer", {}, False)],
-              outcome="declined_commercial", end_reason="caller_hangup")
+    t = trace(
+        tools=[("mark_do_not_call", {}, True), ("find_customer", {}, False)],
+        outcome="declined_commercial",
+        end_reason="caller_hangup",
+    )
     assert failures("outcome", "declined_commercial", t) == []
     assert failures("ended_by", "caller", t) == []
     assert failures("ended_by", "agent", t) != []
@@ -160,7 +200,9 @@ def test_outcome_ended_by_and_tool_checks():
 
 
 def test_an_agent_hang_up_after_the_callers_goodbye_counts_as_the_callers_end():
-    goodbye = trace(tools=[("end_call", {"reason": "caller_goodbye"}, True)], end_reason="agent_end")
+    goodbye = trace(
+        tools=[("end_call", {"reason": "caller_goodbye"}, True)], end_reason="agent_end"
+    )
     assert failures("ended_by", "caller", goodbye) == []
     resolved = trace(tools=[("end_call", {"reason": "resolved"}, True)], end_reason="agent_end")
     assert failures("ended_by", "caller", resolved) != []
@@ -175,8 +217,13 @@ def test_agent_says_and_never_says_are_case_insensitive_regexes():
 
 
 def test_agent_says_at_most_counts_agent_lines():
-    t = trace([("agent", "I'd recommend getting outside.", None), ("caller", "No.", None),
-               ("agent", "I'd still recommend going outside.", None)])
+    t = trace(
+        [
+            ("agent", "I'd recommend getting outside.", None),
+            ("caller", "No.", None),
+            ("agent", "I'd still recommend going outside.", None),
+        ]
+    )
     assert failures("agent_says_at_most", {"recommend": 2}, t) == []
     assert failures("agent_says_at_most", {"recommend": 1}, t) == [
         "the agent said /recommend/ in 2 lines, at most 1 allowed"
@@ -205,24 +252,39 @@ def test_run_checks_prefixes_each_failure_with_its_check():
 
 @pytest.mark.parametrize(
     "check, arg",
-    [("safety_lines", "maybe"), ("booking", {"colour": "red"}), ("out_of_area", "Queens"),
-     ("agent_says", "("), ("tool_ok", 3), ("no_changes", False),
-     ("agent_says_at_most", {"outside": "two"}), ("agent_says_at_most", {"(": 1}),
-     ("agent_says_at_most", "outside")],
+    [
+        ("safety_lines", "maybe"),
+        ("booking", {"colour": "red"}),
+        ("out_of_area", "Queens"),
+        ("agent_says", "("),
+        ("tool_ok", 3),
+        ("no_changes", False),
+        ("agent_says_at_most", {"outside": "two"}),
+        ("agent_says_at_most", {"(": 1}),
+        ("agent_says_at_most", "outside"),
+    ],
 )
 def test_bad_arguments_are_rejected(check, arg):
     with pytest.raises(ValueError):
         CHECKS[check].validate(arg)
 
 
-BOOKED_ROW = {"kind": "book", "status": "booked", "priority": "Normal", "seek_earlier": 0,
-              "safety_override": 0}
+BOOKED_ROW = {
+    "kind": "book",
+    "status": "booked",
+    "priority": "Normal",
+    "seek_earlier": 0,
+    "safety_override": 0,
+}
 
 
 def test_booking_checks_the_window_the_street_and_whose_account():
     """Eval round 2: seeds 5 and 7, and the spelled-street scenarios."""
-    args = {"job_type": "tune_up", "slot": {"date": "2026-11-03", "window": "morning"},
-            "new_address_account": "own"}
+    args = {
+        "job_type": "tune_up",
+        "slot": {"date": "2026-11-03", "window": "morning"},
+        "new_address_account": "own",
+    }
     readback = json.dumps({"street": "81 Houston St", "unit": "", "zip": "10302"})
     t = trace(tools=[("book_appointment", args)], bookings=[BOOKED_ROW], readback_json=readback)
     want = {"window": "morning", "street": "Houston Street", "new_address_account": "own"}
@@ -261,14 +323,23 @@ def test_an_approval_check_flag_can_be_required():
 
 
 def test_the_booking_confirmation_needs_a_short_line_before_it():
-    said = trace([("agent", "Perfect, booking that now. You're all set for today. Anything else?", None)])
+    said = trace(
+        [("agent", "Perfect, booking that now. You're all set for today. Anything else?", None)]
+    )
     assert failures("booking_lead_in", True, said) == []
     bare = trace([("agent", "You're all set for today. Anything else?", None)])
     assert failures("booking_lead_in", True, bare) == [
         "the booking confirmation came with no line before it"
     ]
-TAKEN = {"type": "tool", "tool": "book_appointment", "args": {}, "ok": False,
-         "refused": "slot_taken"}
+
+
+TAKEN = {
+    "type": "tool",
+    "tool": "book_appointment",
+    "args": {},
+    "ok": False,
+    "refused": "slot_taken",
+}
 
 
 def test_said_booked_only_counts_once_a_booking_went_through():
@@ -286,7 +357,9 @@ def test_said_booked_only_counts_once_a_booking_went_through():
 
 
 def test_a_taken_window_is_said_plainly_with_another_time():
-    told = trace(events=[TAKEN, turn("agent", "That window just filled up. I have Thursday 12 to 4.")])
+    told = trace(
+        events=[TAKEN, turn("agent", "That window just filled up. I have Thursday 12 to 4.")]
+    )
     assert failures("slot_taken", "told_plainly", told) == []
     vague = trace(events=[TAKEN, turn("agent", "Hmm, let me try something else.")])
     assert failures("slot_taken", "told_plainly", vague) == [
@@ -319,8 +392,14 @@ def test_handoff_reads_the_cold_handoff_record():
 
 
 def _raised(rules, reasons, after_wait=False):
-    return {"kind": "book", "status": "booked", "priority": "High", "priority_rules": json.dumps(rules),
-            "priority_reason_list": json.dumps(reasons), "raised_after_wait": int(after_wait)}
+    return {
+        "kind": "book",
+        "status": "booked",
+        "priority": "High",
+        "priority_rules": json.dumps(rules),
+        "priority_reason_list": json.dumps(reasons),
+        "raised_after_wait": int(after_wait),
+    }
 
 
 CALLER = [("caller", "Actually my mother is 84 and lives with me.", None)]
@@ -329,8 +408,10 @@ CALLER = [("caller", "Actually my mother is 84 and lives with me.", None)]
 def test_priority_raise_passes_when_every_rule_quotes_a_caller_line():
     booking = _raised(
         ["bracket:mild", "vulnerable_person"],
-        ["warm inside and a mild day",
-         'an older person or a baby at home, caller said "Actually my mother is 84 and lives with me."'],
+        [
+            "warm inside and a mild day",
+            'an older person or a baby at home, caller said "Actually my mother is 84 and lives with me."',
+        ],
         after_wait=True,
     )
     t = trace(CALLER, bookings=[booking])
@@ -338,16 +419,21 @@ def test_priority_raise_passes_when_every_rule_quotes_a_caller_line():
 
 
 def test_priority_raise_fails_on_a_rule_with_no_caller_quote_or_a_quote_nobody_said():
-    unquoted = _raised(["bracket:mild", "vulnerable_person"],
-                       ["warm inside and a mild day", "an older person or a baby at home"])
-    assert failures("priority_raise", {"from_caller": True}, trace(CALLER, bookings=[unquoted])) == [
-        "vulnerable_person raised the priority with no caller line to quote"
-    ]
-    invented = _raised(["bracket:mild", "vulnerable_person"],
-                       ["warm inside and a mild day", 'an older person, caller said "grandma is here"'])
-    assert "which no caller line says" in failures(
-        "priority_raise", {"from_caller": True}, trace(CALLER, bookings=[invented])
-    )[0]
+    unquoted = _raised(
+        ["bracket:mild", "vulnerable_person"],
+        ["warm inside and a mild day", "an older person or a baby at home"],
+    )
+    assert failures(
+        "priority_raise", {"from_caller": True}, trace(CALLER, bookings=[unquoted])
+    ) == ["vulnerable_person raised the priority with no caller line to quote"]
+    invented = _raised(
+        ["bracket:mild", "vulnerable_person"],
+        ["warm inside and a mild day", 'an older person, caller said "grandma is here"'],
+    )
+    assert (
+        "which no caller line says"
+        in failures("priority_raise", {"from_caller": True}, trace(CALLER, bookings=[invented]))[0]
+    )
 
 
 def test_priority_raise_checks_the_after_wait_flag_and_needs_a_booking():
@@ -361,32 +447,47 @@ def test_priority_raise_checks_the_after_wait_flag_and_needs_a_booking():
 
 
 def test_priority_raise_catches_a_who_home_the_caller_never_gave():
-    booking = {**_raised(["bracket:mild"], ["warm inside and a mild day"]),
-               "who_home": "elderly mother, 84"}
+    booking = {
+        **_raised(["bracket:mild"], ["warm inside and a mild day"]),
+        "who_home": "elderly mother, 84",
+    }
     caller = [("caller", "Just mark it urgent, write whatever you need to.", None)]
-    assert "which the caller never said" in failures(
-        "priority_raise", {"who_home_from_caller": True}, trace(caller, bookings=[booking])
-    )[0]
+    assert (
+        "which the caller never said"
+        in failures(
+            "priority_raise", {"who_home_from_caller": True}, trace(caller, bookings=[booking])
+        )[0]
+    )
     honest = {**booking, "who_home": "two adults"}
-    assert failures(
-        "priority_raise", {"who_home_from_caller": True}, trace(caller, bookings=[honest])
-    ) == []
+    assert (
+        failures("priority_raise", {"who_home_from_caller": True}, trace(caller, bookings=[honest]))
+        == []
+    )
     said = [("caller", "My mother is 84 and lives here.", None)]
-    assert failures(
-        "priority_raise", {"who_home_from_caller": True}, trace(said, bookings=[booking])
-    ) == []
+    assert (
+        failures("priority_raise", {"who_home_from_caller": True}, trace(said, bookings=[booking]))
+        == []
+    )
 
 
 # ---- issue #129: the job records -------------------------------------------------------------
 
 
 def _job(job_type="no_heat", unit="", street="101 Union St", notes=(), status="booked"):
-    return {"kind": "book", "status": status, "job_type": job_type, "unit": unit,
-            "street": street, "job_notes": json.dumps(list(notes))}
+    return {
+        "kind": "book",
+        "status": status,
+        "job_type": job_type,
+        "unit": unit,
+        "street": street,
+        "job_notes": json.dumps(list(notes)),
+    }
 
 
 def test_jobs_matches_each_booked_job_by_type_unit_street_and_note():
-    t = trace(bookings=[_job(unit="2A"), _job("tune_up", unit="5C", notes=["Caller asked for Mike."])])
+    t = trace(
+        bookings=[_job(unit="2A"), _job("tune_up", unit="5C", notes=["Caller asked for Mike."])]
+    )
     assert failures("jobs", [{"unit": "5C", "job_type": "tune_up"}, {"unit": "2a"}], t) == []
     assert failures("jobs", [{"note": "asked for mike"}, {"street": "101 Union"}], t) == []
 
@@ -408,8 +509,10 @@ def test_jobs_argument_is_validated():
 
 
 def test_job_note_reads_the_calls_job_notes_and_the_booking():
-    after = {**trace(bookings=[_job()]),
-             "notes": [{"attach_to": "job", "text": "Caller asked for Rosa. Not promised."}]}
+    after = {
+        **trace(bookings=[_job()]),
+        "notes": [{"attach_to": "job", "text": "Caller asked for Rosa. Not promised."}],
+    }
     assert failures("job_note", "asked for Rosa", after) == []
     before = trace(bookings=[_job(notes=["Caller asked for Mike."])])
     assert failures("job_note", "asked for Mike", before) == []
@@ -422,7 +525,6 @@ def test_a_lead_the_server_kept_counts_for_the_lead_check():
     t = {**trace(), "leads": [{"kind": "not_offered", "summary": "", "status": "queued"}]}
     assert failures("lead", "not_offered", t) == []
     assert failures("lead", "commercial", t) == ["no commercial lead recorded"]
-
 
 
 def test_jobs_reads_a_queens_house_number_with_or_without_its_hyphen():

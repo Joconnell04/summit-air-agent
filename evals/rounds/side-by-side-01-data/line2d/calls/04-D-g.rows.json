@@ -1,0 +1,94 @@
+{
+ "window": [
+  "2026-11-06T02:07:49Z",
+  "2026-11-06T02:10:58Z"
+ ],
+ "calls": [
+  {
+   "call": {
+    "id": "retell_call_a0c123864f67baf0d5cf5bb19ce",
+    "tenant": "summit-air",
+    "caller_id": "+16466240418",
+    "caller_key": "6466240418",
+    "dialed_number": "+16783366730",
+    "direction": "inbound",
+    "started_at": "2026-11-06T02:08:02Z",
+    "ended_at": "2026-11-06T02:10:52Z",
+    "end_reason": "agent_end",
+    "end_requested": 1,
+    "after_hours": 1,
+    "linked_call_id": null,
+    "outcome": "declined_commercial",
+    "commercial": 1,
+    "summary_status": "skipped",
+    "turn_seq": 33,
+    "safety_state": "none",
+    "safety_kind": null,
+    "safety_signal_at": null,
+    "safety_lines_at": null,
+    "safety_flag_id": null,
+    "safety_variant": 0,
+    "readback_json": null,
+    "readback_asked_seq": null,
+    "readback_confirmed_at": null
+   },
+   "bookings": [],
+   "booking_names": [],
+   "call_names": [],
+   "flags": [
+    {
+     "id": 21,
+     "call_id": "retell_call_a0c123864f67baf0d5cf5bb19ce",
+     "kind": "payment",
+     "reason": "Caller wants to pay by card: send a payment link or call to take the payment",
+     "priority": "Normal",
+     "status": "open",
+     "created_at": "2026-11-06T02:09:30Z"
+    },
+    {
+     "id": 23,
+     "call_id": "retell_call_a0c123864f67baf0d5cf5bb19ce",
+     "kind": "person",
+     "reason": "Commercial caller Casey Park from Park Family Dental wants a human callback ASAP. Commercial AC not cooling, waiting room getting warm. Outside service area type (commercial) so needs a person to advise. Phone 917-555-0142.",
+     "priority": "High",
+     "status": "open",
+     "created_at": "2026-11-06T02:10:27Z"
+    }
+   ],
+   "callbacks": [
+    {
+     "id": 11,
+     "call_id": "retell_call_a0c123864f67baf0d5cf5bb19ce",
+     "phone": "+16466240418",
+     "phone_key": "6466240418",
+     "due_at": "2026-11-06T02:25:27Z",
+     "owner": "on_call",
+     "reason": "Commercial caller Casey Park from Park Family Dental wants a human callback ASAP. Commercial AC not cooling, waiting room getting warm. Outside service area type (commercial) so needs a person to advise. Phone 917-555-0142.",
+     "status": "pending",
+     "attempts": 0,
+     "last_attempt_at": null,
+     "created_at": "2026-11-06T02:10:27Z",
+     "updated_at": "2026-11-06T02:10:27Z"
+    }
+   ],
+   "leads": [
+    {
+     "id": 4,
+     "call_id": "retell_call_a0c123864f67baf0d5cf5bb19ce",
+     "kind": "commercial",
+     "summary": "Park Family Dental; contact Casey Park +16466240418; Commercial AC not cooling at all at the office on the corner; waiting room getting warm. Callback needed to schedule service. Best number 917-555-0142.",
+     "status": "stored",
+     "fsm_key": "retell_call_a0c123864f67baf0d5cf5bb19ce:lead:eb7b823cf819dc00d072a9aa0aba2f7f20caf002",
+     "request_json": "{\"callReasonId\": 704, \"customerId\": null, \"leadCustomerName\": \"Park Family Dental\", \"leadPhone\": \"+16466240418\", \"summary\": \"Park Family Dental; contact Casey Park +16466240418; Commercial AC not cooling at all at the office on the corner; waiting room getting warm. Callback needed to schedule service. Best number 917-555-0142.\", \"campaignId\": 301}",
+     "fsm_lead_id": 3,
+     "callback_id": null,
+     "attempts": 1,
+     "last_error": null,
+     "created_at": "2026-11-06T02:09:01Z"
+    }
+   ]
+  }
+ ],
+ "do_not_call": [],
+ "dumped_at": "2026-11-06T02:11:09Z"
+}

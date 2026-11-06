@@ -1,0 +1,32 @@
+$ uv run python -m app.trace c05 --db data/owner-demo/tool.db
+call c05  summit-air  from (718) 555-0109  started 2026-11-05T14:03:00Z
+ended 2026-11-05T14:06:22Z (agent_end)  outcome booked  safety none  linked to -
+
+14:03:00    tool calls.start -> ok  (3.5 ms)
+              args {"call_id": "c05", "caller_id": "(718) 555-0109", "dialed_number": "(646) 624-0418", "direction": "inbound"}
+14:03:06  caller: The radiators upstairs are barely warm.
+14:03:12  caller: It's 61 Wilson Ave, 11237.
+14:03:12    tool read_back -> ok  (0.6 ms)
+              args {"call_id": "c05", "address": {"street": "61 Wilson Ave", "unit": "", "city": "Brooklyn", "zip": "11237", "spelled": ""}, "phone": "caller_id", "phone_for": "", "name": "", "confirmed": false}
+              say  I have your home at 61 Wilson Ave, Brooklyn, ZIP code one one two three seven, and the best number is seven one eight, five five five, zero one zero nine. That's all correct, right?
+14:03:21   agent: I have your home at 61 Wilson Ave, Brooklyn, ZIP code one one two three seven, and the best number is seven one eight, five five five, zero one zero nine. That's all correct, right?
+14:03:27  caller: Yes, that's right.
+14:03:27    tool read_back -> ok  (0.7 ms)
+              args {"call_id": "c05", "address": {"street": "61 Wilson Ave", "unit": "", "city": "Brooklyn", "zip": "11237", "spelled": ""}, "phone": "caller_id", "phone_for": "", "name": "", "confirmed": true}
+              say  Thanks. And what name should I put the visit under?
+14:03:27    tool find_slots -> ok  (84.8 ms)
+              args {"call_id": "c05", "job_type": "no_heat", "priority": null, "preferred_days": [], "time_of_day": null, "window_minutes": null, "day": null, "arrive_after": null, "arrive_before": null, "facts": {"issue": "", "since": "", "who_home": "", "inside_temp_f": null, "temp_falling_fast": false}}
+              say  The soonest I have is today, 9:30 to 11:30. Does that work?
+14:03:36   agent: The first opening I have is tomorrow morning, between 8 and 12.
+14:03:42  caller: Oh, I should say my dad lives with us, he's 79. Is there anything sooner?
+14:03:42    tool find_slots -> ok  (13.4 ms)
+              args {"call_id": "c05", "job_type": "no_heat", "priority": null, "preferred_days": [], "time_of_day": null, "window_minutes": null, "day": null, "arrive_after": null, "arrive_before": null, "facts": {"issue": "", "since": "", "who_home": "", "inside_temp_f": null, "temp_falling_fast": false}}
+              say  I've marked this call top priority, so you get our soonest opening. The soonest I have is today, 9:30 to 11:30. Does that work?
+14:03:42    tool book_appointment -> ok  (27.0 ms)
+              args {"call_id": "c05", "job_type": "no_heat", "slot": {"date": "2026-11-05", "window": "0930-1130"}, "details": {"issue": "Upstairs radiators barely warm", "since": "this morning", "tried": "Checked the thermostat and the breaker", "who_home": "Caller", "approver": "Caller, the owner", "system_type": "gas boiler", "arrival_notes": "", "name": "Pat Rivera", "inside_temp_f": null}, "priority": null, "separate_problem": false, "new_address_account": null}
+              say  You're all set for today, Thursday, November 5, with the technician arriving between 9:30 and 11:30. Anything else?
+14:06:22    tool calls.end -> ok  (0.7 ms)
+              args {"reason": "agent_end"}
+
+bookings:
+  {"id": 26, "kind": "book", "status": "booked", "fsm_job_id": 610, "window_start": "2026-11-05T14:30:00Z", "window_end": "2026-11-05T16:30:00Z", "priority": "Urgent", "priority_reasons": "cold outside or tonight; an older person or a baby at home, caller said \"Oh, I should say my dad lives with us, he's 79\"; a parent at home, age not given", "safety_override": 0, "seek_earlier": 0, "attempts": 1, "last_error": null, "raised_after_wait": 1, "priority_rules": "[\"bracket:cold_outside\",\"vulnerable_person\",\"parent_no_age\"]", "priority_reason_list": "[\"cold outside or tonight\",\"an older person or a baby at home, caller said \\\"Oh, I should say my dad lives with us, he's 79\\\"\",\"a parent at home, age not given\"]", "who_home": "Caller", "job_type": "no_heat", "street": "61 Wilson Ave", "unit": "", "job_notes": "[]"}

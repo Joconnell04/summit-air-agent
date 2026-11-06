@@ -27,8 +27,17 @@ ROOT = HERE.parent.parent
 # The priority rules that say someone at home is at risk (trades/hvac/agent.yaml). Temperature
 # brackets, improvised heating, pipes and safety rules are about the house, not the people.
 PERSON_RULES = {
-    "vulnerable_person", "medical_equipment", "bedbound", "symptoms_now", "young_child",
-    "parent_no_age", "limited_mobility", "chronic_illness", "cognitive", "pregnancy", "recovering",
+    "vulnerable_person",
+    "medical_equipment",
+    "bedbound",
+    "symptoms_now",
+    "young_child",
+    "parent_no_age",
+    "limited_mobility",
+    "chronic_illness",
+    "cognitive",
+    "pregnancy",
+    "recovering",
 }
 # Tokens per line, for the estimate printed before anything is paid for (ASSUMED from the prompt).
 EST_TOKENS = (400, 15)
@@ -87,7 +96,9 @@ def scores(answers: list[dict], lines: list[dict], threshold: float) -> dict:
         fn = sum(1 for a in scored if not says(a) and by_id[a["id"]]["label"])
         positives = tp + fn
         return {
-            "tp": tp, "fp": fp, "fn": fn,
+            "tp": tp,
+            "fp": fp,
+            "fn": fn,
             "precision": round(tp / (tp + fp), 3) if tp + fp else None,
             "recall": round(tp / positives, 3) if positives else None,
             "recall_95": [round(x, 3) for x in wilson(tp, positives)],
@@ -96,10 +107,22 @@ def scores(answers: list[dict], lines: list[dict], threshold: float) -> dict:
     alone = counts(lambda a: a["p"] is not None and a["p"] >= threshold)
     joined = counts(lambda a: a["rules"] >= 0.5 or (a["p"] is not None and a["p"] >= threshold))
     # Against the rules alone: a fix is a line the join gets right that the rules get wrong.
-    fixes = [a["id"] for a in scored if by_id[a["id"]]["label"] and a["rules"] < 0.5
-             and a["p"] is not None and a["p"] >= threshold]
-    breaks = [a["id"] for a in scored if not by_id[a["id"]]["label"] and a["rules"] < 0.5
-              and a["p"] is not None and a["p"] >= threshold]
+    fixes = [
+        a["id"]
+        for a in scored
+        if by_id[a["id"]]["label"]
+        and a["rules"] < 0.5
+        and a["p"] is not None
+        and a["p"] >= threshold
+    ]
+    breaks = [
+        a["id"]
+        for a in scored
+        if not by_id[a["id"]]["label"]
+        and a["rules"] < 0.5
+        and a["p"] is not None
+        and a["p"] >= threshold
+    ]
     latencies = [a["ms"] for a in answers if a["status"] == "ok"]
     return {
         "alone": alone,
@@ -123,8 +146,15 @@ def ask_all(name: str, ask, lines: list[dict], rules) -> list[dict]:
         except Exception as exc:  # noqa: BLE001 - a failed answer is scored as the fallback
             p, status = None, f"error: {type(exc).__name__}"
         ms = (time.perf_counter() - started) * 1000
-        answers.append({"id": line["id"], "p": p, "status": status, "ms": round(ms, 1),
-                        "rules": rules(line["text"])})
+        answers.append(
+            {
+                "id": line["id"],
+                "p": p,
+                "status": status,
+                "ms": round(ms, 1),
+                "rules": rules(line["text"]),
+            }
+        )
     return answers
 
 
@@ -133,13 +163,17 @@ def summary_md(run: dict, lines: list[dict]) -> str:
     out = [
         f"# Side-model quick run {run['run_id']}",
         "",
-        (f"Question `{run['question']}`, {len(lines)} lines "
-        f"({sum(1 for x in lines if 'borderline' not in x['tags'])} scored, the rest borderline), "
-        f"threshold {run['threshold']}, cost ${run['cost_usd']:.4f}. All numbers MEASURED by this "
-        "run (evals/decision-models/run.py)."),
+        (
+            f"Question `{run['question']}`, {len(lines)} lines "
+            f"({sum(1 for x in lines if 'borderline' not in x['tags'])} scored, the rest borderline), "
+            f"threshold {run['threshold']}, cost ${run['cost_usd']:.4f}. All numbers MEASURED by this "
+            "run (evals/decision-models/run.py)."
+        ),
         "",
-        ("| System | Recall alone | Precision alone | Recall with rules | Precision with rules "
-        "| Fixes | New alarms | McNemar p | p50 ms | p95 ms | Max ms | Failed |"),
+        (
+            "| System | Recall alone | Precision alone | Recall with rules | Precision with rules "
+            "| Fixes | New alarms | McNemar p | p50 ms | p95 ms | Max ms | Failed |"
+        ),
         "|---|---|---|---|---|---|---|---|---|---|---|---|",
     ]
     for name, s in run["systems"].items():
@@ -151,10 +185,16 @@ def summary_md(run: dict, lines: list[dict]) -> str:
             f"{sc['ms_p50']} | {sc['ms_p95']} | {sc['ms_max']} | {sc['failed']} |"
         )
     for name, s in run["systems"].items():
-        misses = [a for a in s["answers"] if by_id[a["id"]]["label"]
-                  and not (a["p"] is not None and a["p"] >= run["threshold"])]
-        alarms = [a for a in s["answers"] if not by_id[a["id"]]["label"]
-                  and a["p"] is not None and a["p"] >= run["threshold"]]
+        misses = [
+            a
+            for a in s["answers"]
+            if by_id[a["id"]]["label"] and not (a["p"] is not None and a["p"] >= run["threshold"])
+        ]
+        alarms = [
+            a
+            for a in s["answers"]
+            if not by_id[a["id"]]["label"] and a["p"] is not None and a["p"] >= run["threshold"]
+        ]
         out += ["", f"## {name}", ""]
         for kind, rows in (("Missed", misses), ("False alarm", alarms)):
             for a in rows:
@@ -177,7 +217,8 @@ def main(argv: list[str] | None = None) -> int:
     names = [n.strip() for n in args.systems.split(",") if n.strip()]
     profiles = {n: side_model.load_profile(n) for n in names if n != "rules"}
     estimate = sum(
-        len(lines) * (EST_TOKENS[0] * p["price"]["input"] + EST_TOKENS[1] * p["price"]["output"])
+        len(lines)
+        * (EST_TOKENS[0] * p["price"]["input"] + EST_TOKENS[1] * p["price"]["output"])
         / 1_000_000
         for p in profiles.values()
     )
@@ -187,8 +228,13 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     now = datetime.now(UTC)
-    run = {"run_id": f"{now:%Y%m%d-%H%M%S}-{args.question}", "question": args.question,
-           "threshold": args.threshold, "systems": {}, "cost_usd": 0.0}
+    run = {
+        "run_id": f"{now:%Y%m%d-%H%M%S}-{args.question}",
+        "question": args.question,
+        "threshold": args.threshold,
+        "systems": {},
+        "cost_usd": 0.0,
+    }
     for name in names:
         if name == "rules":
             ask = rules
@@ -204,10 +250,13 @@ def main(argv: list[str] | None = None) -> int:
             "answers": answers,
         }
         s = run["systems"][name]["scores"]
-        print(f"{name}: recall {s['alone']['recall']}, precision {s['alone']['precision']}, "
-              f"with rules recall {s['with_rules']['recall']} precision "
-              f"{s['with_rules']['precision']}, p50 {s['ms_p50']} ms, p95 {s['ms_p95']} ms, "
-              f"failed {s['failed']}, ${cost:.4f}", flush=True)
+        print(
+            f"{name}: recall {s['alone']['recall']}, precision {s['alone']['precision']}, "
+            f"with rules recall {s['with_rules']['recall']} precision "
+            f"{s['with_rules']['precision']}, p50 {s['ms_p50']} ms, p95 {s['ms_p95']} ms, "
+            f"failed {s['failed']}, ${cost:.4f}",
+            flush=True,
+        )
         if run["cost_usd"] > args.max_usd:
             print(f"spent over --max-usd {args.max_usd:.2f}; stopping", file=sys.stderr)
             break

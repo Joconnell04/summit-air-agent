@@ -1,0 +1,42 @@
+id: window-asked-for-a-time
+title: Caller who asks for 7:30 in the morning
+tags:
+- live-call
+- booking
+caller_id: (678) 555-0262
+user_prompt: |
+  ## Identity
+  Sam Rivera, a renter with the landlord's okay to book, in Astoria. Direct.
+  Your name: Sam Rivera
+  Your address: 23-15 31st St, Apt 2, Astoria, 11105
+  Your phone: 678 555 0262 (the number you're calling from)
+  Your problem: the AC in the bedroom blows warm air since yesterday, 79 inside, nobody at risk; the landlord said you can book it and you can approve repairs
+
+  ## Goal
+  Start the call by saying: "Hi, my AC is blowing warm air. Could someone come tomorrow around 7:30 in the morning?"
+
+  ## Behavior
+  - If the agent offers a window that is four hours long, say "that's too wide, can you narrow it?"
+  - Accept a window that starts at 7:30 or close to it.
+  - Confirm a correct read-back.
+  - When your business is done, say goodbye and stop talking.
+metrics:
+- Every arrival window the agent offers is one find_slots returned, said the way the tool's sentence says
+  it; the agent never makes up, widens or narrows a window itself.
+- The agent never offers an arrival window longer than two hours unless the caller asked for one.
+- The agent passes the caller's time (7:30 tomorrow morning) to find_slots instead of offering only the
+  first opening.
+- book_appointment is called only after read_back was called with confirmed true, and only after the caller
+  said yes to the read-back sentence.
+- The agent books exactly one visit with book_appointment.
+- The agent never says the caller's name out loud to the caller. A name inside tool arguments, such as
+  booking details, doesn't count.
+must:
+- booking:
+    count: 1
+    zip: '11105'
+- read_back: before_booking
+- agent_never_says:
+  - \b(8|eight) to (12|twelve)\b
+  - \b(12|twelve) to (4|four)\b
+  - \b(4|four) to (8|eight)\b

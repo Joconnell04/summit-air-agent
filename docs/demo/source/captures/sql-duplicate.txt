@@ -1,0 +1,2 @@
+$ sqlite3 data/owner-demo/world-copy.db "INSERT INTO appointments (job_id, appointment_number, technician_id, business_unit_id, window_date, window_id, start, end, arrival_window_start, arrival_window_end, status, created_on, modified_on) SELECT job_id, '608-2', technician_id, business_unit_id, window_date, window_id, start, end, arrival_window_start, arrival_window_end, 'Scheduled', created_on, modified_on FROM appointments WHERE job_id = 608;"
+Error: stepping, UNIQUE constraint failed: appointments.technician_id, appointments.window_date, appointments.window_id (19)

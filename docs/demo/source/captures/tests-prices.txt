@@ -1,0 +1,6 @@
+$ uv run pytest -v tests/servicetitan_mock/test_st_platform.py 
+tests/servicetitan_mock/test_st_platform.py::test_summit_air_leaves_fees_unset_so_the_agent_never_quotes_one PASSED
+============================== 1 passed in 0.05s ===============================
+$ uv run pytest -v tests/voice_retell/test_rt_native.py 
+tests/voice_retell/test_rt_native.py::test_the_knowledge_base_has_all_five_boroughs_and_no_prices PASSED
+============================== 1 passed in 0.03s ===============================

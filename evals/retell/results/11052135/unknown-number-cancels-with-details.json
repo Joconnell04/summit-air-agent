@@ -1,0 +1,925 @@
+{
+  "case": "unknown-number-cancels-with-details",
+  "retell": {
+    "test_case_job_id": "test_job_62c0683fe4b3",
+    "status": "fail",
+    "result_explanation": "Although cancel_appointment was called successfully and the cancellation was confirmed, the agent read out the caller's address multiple times and repeated the caller's name indirectly in account lookup context. This violates the requirement not to read details out and never say the caller's name.",
+    "creation_timestamp": 1793914747360,
+    "user_modified_timestamp": 1793914786683,
+    "test_case_definition_id": "test_case_8410475a963c",
+    "test_case_definition_snapshot": {
+      "creationTimestamp": 1793911577178,
+      "dynamicVariables": {
+        "summit_call_id": "rtest-11052135-unknown-number-cancels-with-details"
+      },
+      "llmModel": "claude-5.5-haiku",
+      "metrics": [
+        "The agent calls cancel_appointment and it succeeds.",
+        "The agent asks politely for the caller's name and address before cancelling, without reading any details out.",
+        "The agent cancels once the details are given and confirms it out loud.",
+        "The agent never says the caller's name."
+      ],
+      "name": "[summit] unknown-number-cancels-with-details: Maria Delgado, calling from her work phone, which isn't on her account, to cancel today's ",
+      "orgId": "org_EoCqq2c268JWlyCE",
+      "responseEngine": {
+        "llmId": "llm_1da616f2baeb6e916f63e0236950",
+        "type": "retell-llm",
+        "version": 0
+      },
+      "responseEngineId": "llm_1da616f2baeb6e916f63e0236950",
+      "testCaseDefinitionId": "test_case_8410475a963c",
+      "toolMocks": [],
+      "type": "simulation",
+      "userModifiedTimestamp": 1793914519404,
+      "userPrompt": "## Identity\nMaria Delgado, calling from her work phone, which isn't on her account, to cancel today's no-heat visit because the heat came back on. Polite, says um.\nYour name: Maria Delgado\nYour address: 620 Bedford Ave, Brooklyn, 11235\nYour phone: this is your work phone; your cell is the one on the account\nYour reason: the boiler started working again on its own this morning\n\n## Goal\nStart the call by saying: \"Hi, um, I need to cancel the heating visit we have booked for today.\"\n\n## Behavior\n- When asked for the address, give it with the ZIP.\n- When asked for your name, say Maria Delgado.\n- Give the reason when asked, confirm the cancel, and decline any other window offered.\n- Say goodbye after the agent confirms the cancellation.\n- Talk like a real person on the phone: short, plain sentences, one thing at a time.\n- Give a detail only when the agent asks for it, unless a line above says otherwise.\n- Never invent facts beyond the ones above; if asked something you don't know, say you don't know.\n- When your business is done, say goodbye and stop talking.\n"
+    },
+    "transcript_snapshot": {
+      "callEnded": true,
+      "dynamicVariables": {
+        "call_context": "",
+        "call_id": "playground",
+        "call_type": "web_call",
+        "greeting": "Thank you for calling Summit Air. How can I help you today?",
+        "session_type": "voice",
+        "summit_call_id": "rtest-11052135-unknown-number-cancels-with-details",
+        "system_timezone": "America/Los_Angeles"
+      },
+      "knowledgeBaseRetrievedContents": [],
+      "toolMocks": [],
+      "transcript": [
+        {
+          "content": "Thank you for calling Summit Air. How can I help you today?",
+          "created_timestamp": 1793914757393,
+          "message_id": "message_fec4be4c80360fe370735eab",
+          "role": "agent"
+        },
+        {
+          "content": "Hi, um, I need to cancel the heating visit we have booked for today.",
+          "created_timestamp": 1793914757974,
+          "message_id": "message_02e6c05094b109a2b31b3103",
+          "role": "user"
+        },
+        {
+          "content": "I can help with that. Can I get your name first?",
+          "created_timestamp": 1793914758633,
+          "message_id": "message_817a51920af54ffac951442b",
+          "metadata": {
+            "response_id": 1
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Maria Delgado.",
+          "created_timestamp": 1793914759131,
+          "message_id": "message_39eff058b9f419d34e459bb1",
+          "role": "user"
+        },
+        {
+          "content": "Thanks. What's the address the visit is booked for?",
+          "created_timestamp": 1793914759728,
+          "message_id": "message_46229bd52e186970e0d2b9cc",
+          "metadata": {
+            "response_id": 2
+          },
+          "role": "agent"
+        },
+        {
+          "content": "620 Bedford Ave, Brooklyn, 11235.",
+          "created_timestamp": 1793914760179,
+          "message_id": "message_2d91a1a0cbb031bc6dafb541",
+          "role": "user"
+        },
+        {
+          "content": "Thanks. Let me look up that address.",
+          "created_timestamp": 1793914761369,
+          "message_id": "message_6e6ff53d4d3e4688e3718a47",
+          "metadata": {
+            "response_id": 3
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"street\":\"620 Bedford Ave\",\"borough\":\"Brooklyn\"}",
+          "created_timestamp": 1793914761370,
+          "message_id": "message_f823c13965b6eec2c003151d",
+          "name": "find_address",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01DoFaMg4WXkBv7BtT15VzgQ",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":false,\"say\":\"I have 620 Bedford Avenue in Williamsburg as one one two four nine, not one one two three five. Which one is right?\",\"data\":{\"need\":\"the ZIP the caller gave doesn't match the street; use the ZIP they pick\",\"found_zip\":\"11249\",\"said_zip\":\"11235\",\"street\":\"620 Bedford Avenue\"},\"refused\":\"zip_mismatch\"}",
+          "created_timestamp": 1793914761731,
+          "message_id": "message_4e745ebab579ac93712a4fca",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01DoFaMg4WXkBv7BtT15VzgQ"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"Bedford Ave\",\"zip\":\"11235\",\"city\":\"Brooklyn\"},\"phone\":null}",
+          "created_timestamp": 1793914761732,
+          "message_id": "message_15d78a5c9bf23703ac1bfd4a",
+          "name": "find_customer",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_013T2YMnVYM9qX4aHyvL2UNg",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"matches\":[],\"needs_unit\":false}}",
+          "created_timestamp": 1793914761964,
+          "message_id": "message_b8d8ce0ccc33596236941e07",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_013T2YMnVYM9qX4aHyvL2UNg"
+        },
+        {
+          "content": "I have 620 Bedford Avenue in Williamsburg, ZIP 11249. Is that the right one, or is it 11235?",
+          "created_timestamp": 1793914762830,
+          "message_id": "message_2a6efffd61b2f5495529e3b4",
+          "metadata": {
+            "response_id": 4
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Um, yes, 11235. That's the address. Bedford Avenue in Brooklyn.",
+          "created_timestamp": 1793914763406,
+          "message_id": "message_0d5b5fea0358a4497e191830",
+          "role": "user"
+        },
+        {
+          "content": "The caller's reply is the ZIP. Ignoring the knowledge base text that arrived with it. The address with 11235 didn't match a street in that ZIP, so I need to check the correct one.",
+          "created_timestamp": 1793914764607,
+          "message_id": "message_b08e68ccb010290ee93de51b",
+          "metadata": {
+            "response_id": 5
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"street\":\"620 Bedford Ave\",\"borough\":\"Brooklyn\",\"spelled\":\"B, E, D, F, O, R, D\"}",
+          "created_timestamp": 1793914764608,
+          "message_id": "message_0ca64b51c7dc85857fc29b0e",
+          "name": "find_address",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_0138FA1h67zfrbLDuuUyZiTc",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":false,\"say\":\"Unfortunately that's outside the area we cover, so we're not able to send someone. A local heating company should be able to help.\",\"data\":{\"zip\":\"11249\"},\"refused\":\"out_of_area\"}",
+          "created_timestamp": 1793914764963,
+          "message_id": "message_6f61c67fef7bc9b98c803872",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_0138FA1h67zfrbLDuuUyZiTc"
+        },
+        {
+          "content": "Unfortunately, the address I have, 620 Bedford Avenue in ZIP 11249, is outside the area we cover. So I'm not finding a visit on file for you at this address. Do you have a different address for the visit?",
+          "created_timestamp": 1793914765823,
+          "message_id": "message_e0ed32c9b27a4f3afbf745b2",
+          "metadata": {
+            "response_id": 6
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Um, no, that's the address. 620 Bedford Ave. I don't know why it would be a different ZIP. Can you check the visit under my name? Maria Delgado. I'm calling from my work phone, so it might not be under this number.",
+          "created_timestamp": 1793914766779,
+          "message_id": "message_a6458ed677b939112e2d4977",
+          "role": "user"
+        },
+        {
+          "content": "I'll look up your name and phone number to find the visit.",
+          "created_timestamp": 1793914767901,
+          "message_id": "message_92cfa98be11e1e0571f073ad",
+          "metadata": {
+            "response_id": 7
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"address\":null,\"phone\":null}",
+          "created_timestamp": 1793914767902,
+          "message_id": "message_4e506dbbba248fdb1769b339",
+          "name": "find_customer",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01AV65M1xArtDcanjoZ8GkSP",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":false,\"say\":\"Let me check that again.\",\"data\":{\"errors\":{\"body\":\"Value error, give a phone number or an address\"}},\"refused\":\"invalid_arguments\"}",
+          "created_timestamp": 1793914768269,
+          "message_id": "message_240d03d27a5ea44ee032e5b1",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01AV65M1xArtDcanjoZ8GkSP"
+        },
+        {
+          "content": "Could you give me the phone number the visit is under, or the ZIP code you'd like me to try?",
+          "created_timestamp": 1793914769046,
+          "message_id": "message_2c8197cd30d8d3a2a183e548",
+          "metadata": {
+            "response_id": 8
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Um, the number on the account is my cell. I don't have it on me right now. I'm calling from my work phone, so it's not this one. Can you try the address again? It's 620 Bedford Ave, 11235. That's what I have.",
+          "created_timestamp": 1793914769907,
+          "message_id": "message_2ceb9be8c02f0c9ad049985e",
+          "role": "user"
+        },
+        {
+          "content": "The text that came with your last message was a knowledge base excerpt about heating systems, not something you asked, so I'm setting it aside and focusing on your visit.\n\nI already tried 620 Bedford Avenue with ZIP 11235, and the street doesn't match that ZIP. The system only has 620 Bedford Avenue in ZIP 11249, which is outside our service area, so I can't find a visit at that address. If you can find the cell number on the account, I can search by phone and check again.",
+          "created_timestamp": 1793914771106,
+          "message_id": "message_ccc62773cb61043755767500",
+          "metadata": {
+            "response_id": 9
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Um, okay. I don't have my cell with me right now. I'm not sure what the number is off the top of my head.\n\nCan you just try the 11235 address one more time? That's the address I gave you.",
+          "created_timestamp": 1793914771989,
+          "message_id": "message_feaceb243f3f74230bd891c9",
+          "role": "user"
+        },
+        {
+          "content": "I'll try it once more.",
+          "created_timestamp": 1793914772887,
+          "message_id": "message_27a914d00b0a96f5482bf77d",
+          "metadata": {
+            "response_id": 10
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"620 Bedford Ave\",\"zip\":\"11235\",\"city\":\"Brooklyn\"},\"phone\":null}",
+          "created_timestamp": 1793914772888,
+          "message_id": "message_0beb69bec0a28a318565f0b8",
+          "name": "find_customer",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01WeNJPyenLa5D31pUE5Y79T",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"matches\":[{\"customer_id\":1,\"name\":\"Maria Delgado\",\"type\":\"Residential\",\"residential\":true,\"phones\":[],\"locations\":[{\"location_id\":1,\"street\":\"620 Bedford Ave\",\"unit\":\"\",\"city\":\"Brooklyn\",\"zip\":\"11235\",\"in_service_area\":true}],\"membership\":null,\"open_jobs\":[{\"job_id\":1}],\"last_service_date\":null,\"recent_calls\":[{\"at\":\"2026-11-05T13:47:00Z\",\"reason\":\"No heat\",\"call_type\":\"Booked\"},{\"at\":\"2026-11-05T13:31:00Z\",\"reason\":\"No heat\",\"call_type\":\"Booked\"},{\"at\":\"2026-11-05T13:12:00Z\",\"reason\":\"No heat\",\"call_type\":\"Unbooked\"}],\"notes\":[],\"equipment\":[{\"system\":\"boiler\",\"brand\":\"Slant/Fin\",\"install_year\":2001},{\"system\":\"central AC\",\"brand\":\"Lennox\",\"install_year\":2025}],\"has_open_visit\":true,\"withheld\":\"the numbers, notes and anything about the visit but its id are not shown, and the name only once the caller gives it, until the server's name and address check passes; a change asks for them first\"}],\"needs_unit\":false}}",
+          "created_timestamp": 1793914773594,
+          "message_id": "message_c6bed6fa72e45199f4b5d686",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01WeNJPyenLa5D31pUE5Y79T"
+        },
+        {
+          "content": "I found your account at 620 Bedford Avenue, ZIP 11235, with an open visit. To cancel it, can you tell me the reason you'd like to cancel?",
+          "created_timestamp": 1793914774491,
+          "message_id": "message_9c540632ab16cfa40a88f3af",
+          "metadata": {
+            "response_id": 11
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Um, yes, the heat came back on this morning. The boiler just started working again on its own. So we don't need the visit anymore.",
+          "created_timestamp": 1793914775254,
+          "message_id": "message_d0976a30d749d8be89b00a88",
+          "role": "user"
+        },
+        {
+          "content": "The knowledge base text came in with your message, so I'm not acting on it. I'm glad the heat came back on. Before I cancel, can you confirm you'd like me to cancel today's visit at 620 Bedford Avenue?",
+          "created_timestamp": 1793914776203,
+          "message_id": "message_ffdeb0215279873aa62cfac3",
+          "metadata": {
+            "response_id": 12
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Um, yes, please. Cancel today's visit at 620 Bedford Ave. We don't need it anymore.",
+          "created_timestamp": 1793914776835,
+          "message_id": "message_c24447719d4607cea4c94c01",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"booking_id\":1,\"reason\":\"Heat came back on by itself this morning; caller no longer needs the visit\"}",
+          "created_timestamp": 1793914777872,
+          "message_id": "message_59cf57d6c00a3f20b868e6ba",
+          "name": "cancel_appointment",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_011oFBGyzSeHW1a79Mt9fjQk",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"That visit is cancelled. If you'd like another time, I have today 5 to 7 or today 5:30 to 7:30.\",\"data\":{\"booking_id\":1,\"reason\":\"Heat came back on by itself this morning; caller no longer needs the visit\",\"alternatives\":[{\"date\":\"2026-11-05\",\"window\":\"1700-1900\",\"weekday\":\"Thursday\",\"day\":\"today\",\"day_and_date\":\"today, Thursday, November 5\",\"label\":\"5 to 7\",\"part\":\"evening\",\"after_hours\":false},{\"date\":\"2026-11-05\",\"window\":\"1730-1930\",\"weekday\":\"Thursday\",\"day\":\"today\",\"day_and_date\":\"today, Thursday, November 5\",\"label\":\"5:30 to 7:30\",\"part\":\"evening\",\"after_hours\":false}]}}",
+          "created_timestamp": 1793914780646,
+          "message_id": "message_f9cffc1b83a2eb89e0346285",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_011oFBGyzSeHW1a79Mt9fjQk"
+        },
+        {
+          "content": "That visit is cancelled. If you'd like another time, I have today from 5 to 7 PM or 5:30 to 7:30 PM. Would you like either of those, or are you all set?",
+          "created_timestamp": 1793914781487,
+          "message_id": "message_cf6c8c21afe797f0c63d55e2",
+          "metadata": {
+            "response_id": 13
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Um, no, I'm all set. We don't need either of those. Thank you, bye.",
+          "created_timestamp": 1793914782138,
+          "message_id": "message_1bcd36e0dcdd0683450749c2",
+          "role": "user"
+        },
+        {
+          "content": "Thanks for calling Summit Air. Take care.",
+          "created_timestamp": 1793914782967,
+          "message_id": "message_d180929c0330a622bb6d034f",
+          "metadata": {
+            "response_id": 14
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"reason\":\"resolved\"}",
+          "created_timestamp": 1793914782968,
+          "message_id": "message_e6ddb3167376a746a72d99f2",
+          "name": "end_call",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01AtQ3BU2xfSs2k8VdKqgZiC",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"hang_up\":true}}",
+          "created_timestamp": 1793914783465,
+          "message_id": "message_47da002cd6970bc73597ac01",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01AtQ3BU2xfSs2k8VdKqgZiC"
+        },
+        {
+          "content": "Thank you, bye.",
+          "created_timestamp": 1793914785013,
+          "message_id": "message_67b52a056b09ef32ef28a66d",
+          "role": "user"
+        },
+        {
+          "content": "Bye now.",
+          "created_timestamp": 1793914785836,
+          "message_id": "message_8915d7d7d0d620af573ef57c",
+          "metadata": {
+            "response_id": 15
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"execution_message\":\"Bye now.\"}",
+          "created_timestamp": 1793914785837,
+          "message_id": "message_b507180091d78dea431b1fb5",
+          "name": "test_hang_up",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01W5bmv5iSJTBChkuuZPF48B",
+          "type": "end_call"
+        }
+      ]
+    }
+  },
+  "trace": {
+    "call": {
+      "id": "rtest-11052135-unknown-number-cancels-with-details",
+      "tenant": "summit-air",
+      "caller_id": "(212) 555-0151",
+      "caller_key": "2125550151",
+      "dialed_number": "(678) 336-6730",
+      "direction": "inbound",
+      "started_at": "2026-10-30T21:39:05Z",
+      "ended_at": null,
+      "end_reason": null,
+      "end_requested": 1,
+      "after_hours": 0,
+      "linked_call_id": null,
+      "outcome": null,
+      "commercial": 0,
+      "summary_status": "none",
+      "turn_seq": 25,
+      "safety_state": "none",
+      "safety_kind": null,
+      "safety_signal_at": null,
+      "safety_lines_at": null,
+      "safety_flag_id": null,
+      "safety_variant": 0,
+      "readback_json": null,
+      "readback_asked_seq": null,
+      "readback_confirmed_at": null
+    },
+    "events": [
+      {
+        "at": "2026-11-05T21:39:05Z",
+        "type": "tool",
+        "tool": "calls.start",
+        "args": {
+          "call_id": "rtest-11052135-unknown-number-cancels-with-details",
+          "caller_id": "(212) 555-0151",
+          "dialed_number": "(678) 336-6730",
+          "direction": "inbound"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 23.4,
+        "error": null,
+        "request_id": "957b04e273bc"
+      },
+      {
+        "at": "2026-11-05T21:39:21Z",
+        "type": "turn",
+        "seq": 1,
+        "speaker": "agent",
+        "text": "Thank you for calling Summit Air. How can I help you today?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:39:21Z",
+        "type": "turn",
+        "seq": 2,
+        "speaker": "caller",
+        "text": "Hi, um, I need to cancel the heating visit we have booked for today.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:39:21Z",
+        "type": "turn",
+        "seq": 3,
+        "speaker": "agent",
+        "text": "I can help with that. Can I get your name first?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:39:21Z",
+        "type": "turn",
+        "seq": 4,
+        "speaker": "caller",
+        "text": "Maria Delgado.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:39:21Z",
+        "type": "turn",
+        "seq": 5,
+        "speaker": "agent",
+        "text": "Thanks. What's the address the visit is booked for?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:39:21Z",
+        "type": "turn",
+        "seq": 6,
+        "speaker": "caller",
+        "text": "620 Bedford Ave, Brooklyn, 11235.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:39:21Z",
+        "type": "turn",
+        "seq": 7,
+        "speaker": "agent",
+        "text": "Thanks. Let me look up that address.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:39:21Z",
+        "type": "tool",
+        "tool": "find_address",
+        "args": {
+          "call_id": "rtest-11052135-unknown-number-cancels-with-details",
+          "street": "620 Bedford Ave",
+          "borough": "Brooklyn",
+          "spelled": ""
+        },
+        "ok": false,
+        "refused": "zip_mismatch",
+        "gate": "zip_mismatch",
+        "say": "I have 620 Bedford Avenue in Williamsburg as one one two four nine, not one one two three five. Which one is right?",
+        "ms": 6.8,
+        "error": null,
+        "request_id": "5e0bcef6e10a"
+      },
+      {
+        "at": "2026-11-05T21:39:21Z",
+        "type": "tool",
+        "tool": "find_customer",
+        "args": {
+          "call_id": "rtest-11052135-unknown-number-cancels-with-details",
+          "phone": null,
+          "address": {
+            "street": "Bedford Ave",
+            "unit": "",
+            "city": "Brooklyn",
+            "zip": "11235",
+            "spelled": ""
+          }
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 11.1,
+        "error": null,
+        "request_id": "f270d76cc571"
+      },
+      {
+        "at": "2026-11-05T21:39:24Z",
+        "type": "turn",
+        "seq": 8,
+        "speaker": "agent",
+        "text": "I have 620 Bedford Avenue in Williamsburg, ZIP 11249. Is that the right one, or is it 11235?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:39:24Z",
+        "type": "turn",
+        "seq": 9,
+        "speaker": "caller",
+        "text": "Um, yes, 11235. That's the address. Bedford Avenue in Brooklyn.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:39:24Z",
+        "type": "turn",
+        "seq": 10,
+        "speaker": "agent",
+        "text": "The caller's reply is the ZIP. Ignoring the knowledge base text that arrived with it. The address with 11235 didn't match a street in that ZIP, so I need to check the correct one.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:39:24Z",
+        "type": "tool",
+        "tool": "find_address",
+        "args": {
+          "call_id": "rtest-11052135-unknown-number-cancels-with-details",
+          "street": "620 Bedford Ave",
+          "borough": "Brooklyn",
+          "spelled": "B, E, D, F, O, R, D"
+        },
+        "ok": false,
+        "refused": "out_of_area",
+        "gate": "out_of_area",
+        "say": "Unfortunately that's outside the area we cover, so we're not able to send someone. A local heating company should be able to help.",
+        "ms": 7.3,
+        "error": null,
+        "request_id": "397b5a4010e5"
+      },
+      {
+        "at": "2026-11-05T21:39:28Z",
+        "type": "turn",
+        "seq": 11,
+        "speaker": "agent",
+        "text": "Unfortunately, the address I have, 620 Bedford Avenue in ZIP 11249, is outside the area we cover. So I'm not finding a visit on file for you at this address. Do you have a different address for the visit?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:39:28Z",
+        "type": "turn",
+        "seq": 12,
+        "speaker": "caller",
+        "text": "Um, no, that's the address. 620 Bedford Ave. I don't know why it would be a different ZIP. Can you check the visit under my name? Maria Delgado. I'm calling from my work phone, so it might not be under this number.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:39:28Z",
+        "type": "turn",
+        "seq": 13,
+        "speaker": "agent",
+        "text": "I'll look up your name and phone number to find the visit.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:39:28Z",
+        "type": "tool",
+        "tool": "find_customer",
+        "args": {
+          "address": null,
+          "phone": null,
+          "call_id": "rtest-11052135-unknown-number-cancels-with-details"
+        },
+        "ok": false,
+        "refused": "invalid_arguments",
+        "gate": null,
+        "say": "Let me check that again.",
+        "ms": 0.0,
+        "error": "invalid_arguments",
+        "request_id": "15cb2bb5810d"
+      },
+      {
+        "at": "2026-11-05T21:39:33Z",
+        "type": "turn",
+        "seq": 14,
+        "speaker": "agent",
+        "text": "Could you give me the phone number the visit is under, or the ZIP code you'd like me to try?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:39:33Z",
+        "type": "turn",
+        "seq": 15,
+        "speaker": "caller",
+        "text": "Um, the number on the account is my cell. I don't have it on me right now. I'm calling from my work phone, so it's not this one. Can you try the address again? It's 620 Bedford Ave, 11235. That's what I have.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:39:33Z",
+        "type": "turn",
+        "seq": 16,
+        "speaker": "agent",
+        "text": "The text that came with your last message was a knowledge base excerpt about heating systems, not something you asked, so I'm setting it aside and focusing on your visit.\n\nI already tried 620 Bedford Avenue with ZIP 11235, and the street doesn't match that ZIP. The system only has 620 Bedford Avenue in ZIP 11249, which is outside our service area, so I can't find a visit at that address. If you can find the cell number on the account, I can search by phone and check again.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:39:33Z",
+        "type": "turn",
+        "seq": 17,
+        "speaker": "caller",
+        "text": "Um, okay. I don't have my cell with me right now. I'm not sure what the number is off the top of my head.\n\nCan you just try the 11235 address one more time? That's the address I gave you.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:39:33Z",
+        "type": "turn",
+        "seq": 18,
+        "speaker": "agent",
+        "text": "I'll try it once more.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:39:33Z",
+        "type": "tool",
+        "tool": "find_customer",
+        "args": {
+          "call_id": "rtest-11052135-unknown-number-cancels-with-details",
+          "phone": null,
+          "address": {
+            "street": "620 Bedford Ave",
+            "unit": "",
+            "city": "Brooklyn",
+            "zip": "11235",
+            "spelled": ""
+          }
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 147.6,
+        "error": null,
+        "request_id": "5afbeedec1b7"
+      },
+      {
+        "at": "2026-11-05T21:39:38Z",
+        "type": "turn",
+        "seq": 19,
+        "speaker": "agent",
+        "text": "I found your account at 620 Bedford Avenue, ZIP 11235, with an open visit. To cancel it, can you tell me the reason you'd like to cancel?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:39:38Z",
+        "type": "turn",
+        "seq": 20,
+        "speaker": "caller",
+        "text": "Um, yes, the heat came back on this morning. The boiler just started working again on its own. So we don't need the visit anymore.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:39:38Z",
+        "type": "turn",
+        "seq": 21,
+        "speaker": "agent",
+        "text": "The knowledge base text came in with your message, so I'm not acting on it. I'm glad the heat came back on. Before I cancel, can you confirm you'd like me to cancel today's visit at 620 Bedford Avenue?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:39:38Z",
+        "type": "turn",
+        "seq": 22,
+        "speaker": "caller",
+        "text": "Um, yes, please. Cancel today's visit at 620 Bedford Ave. We don't need it anymore.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:39:40Z",
+        "type": "tool",
+        "tool": "cancel_appointment",
+        "args": {
+          "call_id": "rtest-11052135-unknown-number-cancels-with-details",
+          "booking_id": 1,
+          "reason": "Heat came back on by itself this morning; caller no longer needs the visit"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "That visit is cancelled. If you'd like another time, I have today 5 to 7 or today 5:30 to 7:30.",
+        "ms": 1477.6,
+        "error": null,
+        "request_id": "e0a2b872d5b7"
+      },
+      {
+        "at": "2026-11-05T21:39:43Z",
+        "type": "turn",
+        "seq": 23,
+        "speaker": "agent",
+        "text": "That visit is cancelled. If you'd like another time, I have today from 5 to 7 PM or 5:30 to 7:30 PM. Would you like either of those, or are you all set?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 3000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:39:43Z",
+        "type": "turn",
+        "seq": 24,
+        "speaker": "caller",
+        "text": "Um, no, I'm all set. We don't need either of those. Thank you, bye.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:39:43Z",
+        "type": "turn",
+        "seq": 25,
+        "speaker": "agent",
+        "text": "Thanks for calling Summit Air. Take care.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:39:43Z",
+        "type": "tool",
+        "tool": "end_call",
+        "args": {
+          "call_id": "rtest-11052135-unknown-number-cancels-with-details",
+          "reason": "resolved"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 5.0,
+        "error": null,
+        "request_id": "37abad1868a6"
+      }
+    ],
+    "flags": [],
+    "callbacks": [],
+    "bookings": [
+      {
+        "id": 211,
+        "kind": "cancel",
+        "status": "done",
+        "fsm_job_id": 1,
+        "window_start": null,
+        "window_end": null,
+        "priority": null,
+        "priority_reasons": "",
+        "safety_override": 0,
+        "seek_earlier": 0,
+        "attempts": 0,
+        "last_error": null,
+        "raised_after_wait": null,
+        "priority_rules": null,
+        "priority_reason_list": null,
+        "who_home": null,
+        "job_type": "no_heat",
+        "street": null,
+        "unit": null,
+        "job_notes": null
+      }
+    ],
+    "notes": [],
+    "leads": [],
+    "out_of_area": [
+      {
+        "zip": "11249",
+        "at": "2026-11-05T21:39:24Z"
+      }
+    ],
+    "summary": [],
+    "electrical": [],
+    "holds": [],
+    "pace": [
+      {
+        "call_id": "rtest-11052135-unknown-number-cancels-with-details",
+        "speed": 1.0,
+        "source": "default",
+        "requested": 0,
+        "older_adult": 0,
+        "address_speed": null,
+        "repeats": 0
+      }
+    ],
+    "pace_changes": [],
+    "caller_pace": [],
+    "transfers": [],
+    "handoffs": [],
+    "address_lookups": [
+      {
+        "house": "620",
+        "street": "bedford ave",
+        "hint": "Brooklyn",
+        "status": "one",
+        "zips_json": "[\"11249\"]",
+        "source": "geosearch"
+      },
+      {
+        "house": "620",
+        "street": "bedford ave",
+        "hint": "",
+        "status": "one",
+        "zips_json": "[\"11249\"]",
+        "source": "check"
+      },
+      {
+        "house": "620",
+        "street": "bedford ave",
+        "hint": "Brooklyn",
+        "status": "one",
+        "zips_json": "[\"11249\"]",
+        "source": "geosearch"
+      }
+    ],
+    "address_checks": [
+      {
+        "call_id": "rtest-11052135-unknown-number-cancels-with-details",
+        "house": "620",
+        "street": "bedford ave",
+        "said_zip": "11235",
+        "found_zip": "11249",
+        "asked_seq": 7,
+        "asks": 1,
+        "settled_at": "2026-11-05T21:39:24Z",
+        "at": "2026-11-05T21:39:21Z"
+      }
+    ],
+    "names": [],
+    "address_moves": [],
+    "identity_checks": [
+      {
+        "customer_id": 1,
+        "status": "verified",
+        "asks": 0,
+        "callback_id": null
+      }
+    ],
+    "heads_ups": [
+      {
+        "id": 2,
+        "customer_id": 1,
+        "job_id": 1,
+        "status": "skipped",
+        "result": "do_not_call",
+        "line": "This is Summit Air. Your visit on Thursday between 12 and 4 was cancelled by a caller from another number. If that wasn't you, please call us back at six four six, six two four, zero four one eight."
+      }
+    ]
+  }
+}

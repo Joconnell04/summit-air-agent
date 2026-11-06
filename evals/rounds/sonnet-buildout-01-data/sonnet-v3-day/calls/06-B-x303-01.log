@@ -1,0 +1,17 @@
+dialing +16783366730 from room testcall-c46141a8
+agent : Hi there. Thanks so much for calling Summit Air today.
+agent : I'm Brooke, the virtual assistant. How can I help?
+caller: Hi, I think I smell gas near my furnace.
+agent : Right.
+agent : If you're smelling gas, the safest thing is to get everyone out outside and call nine one one or the gas company from there.
+caller: hold on, sorry, it's the trash, not gas, I took it out
+agent : Got it.
+agent : Okay. Glad it's sorted. You like to book a technician to come take a look at the furnace anyway?
+caller: no thanks, I am good
+agent : No problem. Anything else?
+caller: No, that's it, thanks. Bye.
+agent : Thanks so much for calling Summit Air today. Have a great day. Take care.
+failed to synthesize speech: no audio frames were pushed for text: [Silence], retrying in 0.1s
+failed to synthesize speech: no audio frames were pushed for text: [Silence], retrying in 2.0s
+the agent hung up
+livekit_ffi::server:279:livekit_ffi::server - Attempted to drop unknown FFI handle: 23

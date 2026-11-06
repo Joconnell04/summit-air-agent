@@ -1,0 +1,93 @@
+{
+ "window": [
+  "2026-11-06T01:21:50Z",
+  "2026-11-06T01:26:10Z"
+ ],
+ "calls": [
+  {
+   "call": {
+    "id": "retell_call_4f214d509e856dee37f402af81b",
+    "tenant": "summit-air",
+    "caller_id": "+16466240418",
+    "caller_key": "6466240418",
+    "dialed_number": "+16783366730",
+    "direction": "inbound",
+    "started_at": "2026-11-06T01:22:02Z",
+    "ended_at": "2026-11-06T01:26:04Z",
+    "end_reason": "agent_end",
+    "end_requested": 1,
+    "after_hours": 1,
+    "linked_call_id": null,
+    "outcome": "callback",
+    "commercial": 0,
+    "summary_status": "pending",
+    "turn_seq": 55,
+    "safety_state": "none",
+    "safety_kind": null,
+    "safety_signal_at": null,
+    "safety_lines_at": null,
+    "safety_flag_id": null,
+    "safety_variant": 0,
+    "readback_json": null,
+    "readback_asked_seq": null,
+    "readback_confirmed_at": null
+   },
+   "bookings": [],
+   "booking_names": [],
+   "call_names": [],
+   "flags": [
+    {
+     "id": 333,
+     "call_id": "retell_call_4f214d509e856dee37f402af81b",
+     "kind": "person",
+     "reason": "Caller Jordan Lee wants to move an existing appointment, but no booking or account found under phone 646-624-0418 or address 199 East 4th Street, 10009. Please locate the original appointment and reschedule it. Caller does not want a duplicate new booking. Nothing was booked on this call.",
+     "priority": "Normal",
+     "status": "open",
+     "created_at": "2026-11-06T01:24:01Z"
+    },
+    {
+     "id": 334,
+     "call_id": "retell_call_4f214d509e856dee37f402af81b",
+     "kind": "person",
+     "reason": "Caller Jordan Lee has a question about a bill and wants a call back. Phone 646-624-0418.",
+     "priority": "Normal",
+     "status": "open",
+     "created_at": "2026-11-06T01:25:10Z"
+    }
+   ],
+   "callbacks": [
+    {
+     "id": 83,
+     "call_id": "retell_call_4f214d509e856dee37f402af81b",
+     "phone": "+16466240418",
+     "phone_key": "6466240418",
+     "due_at": "2026-11-06T22:00:00Z",
+     "owner": "office",
+     "reason": "Caller Jordan Lee wants to move an existing appointment, but no booking or account found under phone 646-624-0418 or address 199 East 4th Street, 10009. Please locate the original appointment and reschedule it. Caller does not want a duplicate new booking. Nothing was booked on this call. (caller asked: tomorrow between 12 PM and 5 PM)",
+     "status": "pending",
+     "attempts": 0,
+     "last_attempt_at": null,
+     "created_at": "2026-11-06T01:24:01Z",
+     "updated_at": "2026-11-06T01:25:43Z"
+    },
+    {
+     "id": 84,
+     "call_id": "retell_call_4f214d509e856dee37f402af81b",
+     "phone": "+16466240418",
+     "phone_key": "6466240418",
+     "due_at": "2026-11-06T22:00:00Z",
+     "owner": "office",
+     "reason": "Caller Jordan Lee has a question about a bill and wants a call back. Phone 646-624-0418. (caller asked: tomorrow between 12 PM and 5 PM)",
+     "status": "pending",
+     "attempts": 0,
+     "last_attempt_at": null,
+     "created_at": "2026-11-06T01:25:10Z",
+     "updated_at": "2026-11-06T01:25:43Z"
+    }
+   ],
+   "leads": []
+  }
+ ],
+ "do_not_call": [],
+ "dumped_at": "2026-11-06T01:26:21Z"
+}

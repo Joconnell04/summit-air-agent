@@ -1,0 +1,347 @@
+{
+ "window": [
+  "2026-11-06T05:34:58Z",
+  "2026-11-06T05:38:19Z"
+ ],
+ "calls": [
+  {
+   "call": {
+    "id": "retell_call_f99964f8bca186490b3d022342e",
+    "tenant": "summit-air",
+    "caller_id": "+16466240418",
+    "caller_key": "6466240418",
+    "dialed_number": "+16783366730",
+    "direction": "inbound",
+    "started_at": "2026-11-06T05:35:10Z",
+    "ended_at": "2026-11-06T05:38:12Z",
+    "end_reason": "agent_end",
+    "end_requested": 1,
+    "after_hours": 1,
+    "linked_call_id": null,
+    "outcome": "booked",
+    "commercial": 0,
+    "summary_status": "pending",
+    "turn_seq": 48,
+    "safety_state": "none",
+    "safety_kind": null,
+    "safety_signal_at": null,
+    "safety_lines_at": null,
+    "safety_flag_id": null,
+    "safety_variant": 0,
+    "readback_json": "{\"street\": \"1010 Morris Park Avenue\", \"unit\": \"4B\", \"city\": \"Bronx\", \"zip\": \"10462\", \"spelled\": \"\", \"phone\": \"6466240418\", \"phone_for\": \"\", \"sentence\": \"So that's ten ten Morris Park Avenue, unit four B, and the number you're calling from, ending in zero four one eight. That's all correct, right?\"}",
+    "readback_asked_seq": 28,
+    "readback_confirmed_at": "2026-11-06T05:36:54Z"
+   },
+   "bookings": [
+    {
+     "id": 270,
+     "call_id": "retell_call_f99964f8bca186490b3d022342e",
+     "kind": "book",
+     "status": "booked",
+     "fsm_key": "retell_call_f99964f8bca186490b3d022342e:book:d74f1f8fe772eeb5e86fb850dca9d9a60e1842dd",
+     "request_json": "{\"call_id\": \"retell_call_f99964f8bca186490b3d022342e\", \"job_type\": \"no_heat\", \"details\": {\"issue\": \"Boiler, no heat at all, completely out. Grandfather, 90, at home.\", \"since\": \"yesterday\", \"tried\": \"not provided\", \"who_home\": \"caller and grandfather, who is 90\", \"approver\": \"Mayshaw (caller)\", \"system_type\": \"boiler\", \"arrival_notes\": \"Someone home all day, no gate code or buzzer. Unit 4B.\", \"name\": \"Mayshaw\", \"inside_temp_f\": null}, \"address\": {\"street\": \"1010 Morris Park Avenue\", \"unit\": \"4B\", \"city\": \"Bronx\", \"zip\": \"10462\"}, \"phone\": \"6466240418\", \"scoped_customer_ids\": [], \"contact_for\": \"\", \"account_phone\": \"\", \"priority\": \"High\", \"priority_reasons\": [\"a mild day\", \"an older person or a baby at home, caller said \\\"My grandfather is 90 and he's here with me\\\"\", \"someone at home at risk from the heat or cold, from the side model\"], \"priority_rules\": [\"bracket:mild\", \"vulnerable_person\", \"side_model\"], \"raised_after_wait\": true, \"requested_priority\": \"High\", \"notes\": [], \"account\": null, \"contact_name\": null, \"window_start\": \"2026-11-06T13:00:00Z\", \"window_end\": \"2026-11-06T13:30:00Z\"}",
+     "fsm_job_id": 541,
+     "fsm_appointment_id": 541,
+     "customer_id": 301,
+     "window_start": "2026-11-06T13:00:00Z",
+     "window_end": "2026-11-06T13:30:00Z",
+     "job_type": "no_heat",
+     "priority": "High",
+     "priority_reasons": "a mild day; an older person or a baby at home, caller said \"My grandfather is 90 and he's here with me\"; someone at home at risk from the heat or cold, from the side model",
+     "safety_override": 0,
+     "seek_earlier": 0,
+     "reason": "",
+     "attempts": 1,
+     "last_error": null,
+     "turn_seq": 44,
+     "created_at": "2026-11-06T05:37:46Z",
+     "updated_at": "2026-11-06T05:37:46Z"
+    }
+   ],
+   "booking_names": [
+    {
+     "call_id": "retell_call_f99964f8bca186490b3d022342e",
+     "name": "Mayshaw",
+     "at": "2026-11-06T05:36:54Z"
+    }
+   ],
+   "call_names": [],
+   "flags": [
+    {
+     "id": 429,
+     "call_id": "retell_call_f99964f8bca186490b3d022342e",
+     "kind": "person",
+     "reason": "After hours, needs the on-call technician tonight: Boiler, no heat at all, completely out. Grandfather, 90, at home. (a mild day; an older person or a baby at home, caller said \"My grandfather is 90 and he's here with me\"; someone at home at risk from the heat or cold, from the side model)",
+     "priority": "Urgent",
+     "status": "open",
+     "created_at": "2026-11-06T05:37:46Z"
+    }
+   ],
+   "callbacks": [
+    {
+     "id": 113,
+     "call_id": "retell_call_f99964f8bca186490b3d022342e",
+     "phone": "+16466240418",
+     "phone_key": "6466240418",
+     "due_at": "2026-11-06T05:57:46Z",
+     "owner": "on_call",
+     "reason": "After hours, needs the on-call technician tonight: Boiler, no heat at all, completely out. Grandfather, 90, at home. (a mild day; an older person or a baby at home, caller said \"My grandfather is 90 and he's here with me\"; someone at home at risk from the heat or cold, from the side model)",
+     "status": "pending",
+     "attempts": 0,
+     "last_attempt_at": null,
+     "created_at": "2026-11-06T05:37:46Z",
+     "updated_at": "2026-11-06T05:37:46Z"
+    }
+   ],
+   "leads": []
+  },
+  {
+   "call": {
+    "id": "prescreen_cand_o183-02_1_cca3d0",
+    "tenant": "summit-air",
+    "caller_id": "+19175555225",
+    "caller_key": "9175555225",
+    "dialed_number": "+16783366730",
+    "direction": "inbound",
+    "started_at": "2026-11-06T05:35:14Z",
+    "ended_at": "2026-11-06T05:35:45Z",
+    "end_reason": "caller_hangup",
+    "end_requested": 0,
+    "after_hours": 1,
+    "linked_call_id": null,
+    "outcome": "no_booking",
+    "commercial": 0,
+    "summary_status": "skipped",
+    "turn_seq": 22,
+    "safety_state": "none",
+    "safety_kind": null,
+    "safety_signal_at": null,
+    "safety_lines_at": null,
+    "safety_flag_id": null,
+    "safety_variant": 0,
+    "readback_json": "{\"street\": \"215 Mott Street\", \"unit\": \"4D\", \"city\": \"New York\", \"zip\": \"10012\", \"spelled\": \"\", \"phone\": \"9175555225\", \"phone_for\": \"\", \"sentence\": \"So that's two fifteen Mott Street, unit four D, and the number you're calling from, ending in five two two five. That's all correct, right?\"}",
+    "readback_asked_seq": 20,
+    "readback_confirmed_at": "2026-11-06T05:35:40Z"
+   },
+   "bookings": [],
+   "booking_names": [
+    {
+     "call_id": "prescreen_cand_o183-02_1_cca3d0",
+     "name": "Fatima Shah",
+     "at": "2026-11-06T05:35:40Z"
+    }
+   ],
+   "call_names": [],
+   "flags": [],
+   "callbacks": [],
+   "leads": []
+  },
+  {
+   "call": {
+    "id": "prescreen_cs24_o183-01_1_e54e4c",
+    "tenant": "summit-air",
+    "caller_id": "+19175559171",
+    "caller_key": "9175559171",
+    "dialed_number": "+16783366730",
+    "direction": "inbound",
+    "started_at": "2026-11-06T05:35:14Z",
+    "ended_at": "2026-11-06T05:35:46Z",
+    "end_reason": "caller_hangup",
+    "end_requested": 0,
+    "after_hours": 1,
+    "linked_call_id": null,
+    "outcome": "no_booking",
+    "commercial": 0,
+    "summary_status": "skipped",
+    "turn_seq": 22,
+    "safety_state": "none",
+    "safety_kind": null,
+    "safety_signal_at": null,
+    "safety_lines_at": null,
+    "safety_flag_id": null,
+    "safety_variant": 0,
+    "readback_json": "{\"street\": \"500 Ocean Avenue\", \"unit\": \"1F\", \"city\": \"Brooklyn\", \"zip\": \"11226\", \"spelled\": \"\", \"phone\": \"9175559171\", \"phone_for\": \"\", \"sentence\": \"So that's five hundred Ocean Avenue, unit one F, and the number you're calling from, ending in nine one seven one. That's all correct, right?\"}",
+    "readback_asked_seq": 18,
+    "readback_confirmed_at": "2026-11-06T05:35:35Z"
+   },
+   "bookings": [],
+   "booking_names": [
+    {
+     "call_id": "prescreen_cs24_o183-01_1_e54e4c",
+     "name": "Fatima Alvarez",
+     "at": "2026-11-06T05:35:35Z"
+    }
+   ],
+   "call_names": [],
+   "flags": [],
+   "callbacks": [],
+   "leads": []
+  },
+  {
+   "call": {
+    "id": "prescreen_cand_o183-01_1_760a1c",
+    "tenant": "summit-air",
+    "caller_id": "+19175556082",
+    "caller_key": "9175556082",
+    "dialed_number": "+16783366730",
+    "direction": "inbound",
+    "started_at": "2026-11-06T05:35:14Z",
+    "ended_at": "2026-11-06T05:35:44Z",
+    "end_reason": "caller_hangup",
+    "end_requested": 0,
+    "after_hours": 1,
+    "linked_call_id": null,
+    "outcome": "no_booking",
+    "commercial": 0,
+    "summary_status": "skipped",
+    "turn_seq": 22,
+    "safety_state": "none",
+    "safety_kind": null,
+    "safety_signal_at": null,
+    "safety_lines_at": null,
+    "safety_flag_id": null,
+    "safety_variant": 0,
+    "readback_json": "{\"street\": \"500 Ocean Avenue\", \"unit\": \"1F\", \"city\": \"Brooklyn\", \"zip\": \"11226\", \"spelled\": \"\", \"phone\": \"9175556082\", \"phone_for\": \"\", \"sentence\": \"So that's five hundred Ocean Avenue, unit one F, and the number you're calling from, ending in six zero eight two. That's all correct, right?\"}",
+    "readback_asked_seq": 18,
+    "readback_confirmed_at": "2026-11-06T05:35:35Z"
+   },
+   "bookings": [],
+   "booking_names": [
+    {
+     "call_id": "prescreen_cand_o183-01_1_760a1c",
+     "name": "Fatima Alvarez",
+     "at": "2026-11-06T05:35:35Z"
+    }
+   ],
+   "call_names": [],
+   "flags": [],
+   "callbacks": [],
+   "leads": []
+  },
+  {
+   "call": {
+    "id": "prescreen_cs24_o183-01_2_013a38",
+    "tenant": "summit-air",
+    "caller_id": "+19175557153",
+    "caller_key": "9175557153",
+    "dialed_number": "+16783366730",
+    "direction": "inbound",
+    "started_at": "2026-11-06T05:35:14Z",
+    "ended_at": "2026-11-06T05:35:47Z",
+    "end_reason": "caller_hangup",
+    "end_requested": 0,
+    "after_hours": 1,
+    "linked_call_id": null,
+    "outcome": "no_booking",
+    "commercial": 0,
+    "summary_status": "skipped",
+    "turn_seq": 22,
+    "safety_state": "none",
+    "safety_kind": null,
+    "safety_signal_at": null,
+    "safety_lines_at": null,
+    "safety_flag_id": null,
+    "safety_variant": 0,
+    "readback_json": "{\"street\": \"500 Ocean Avenue\", \"unit\": \"1F\", \"city\": \"Brooklyn\", \"zip\": \"11226\", \"spelled\": \"\", \"phone\": \"9175557153\", \"phone_for\": \"\", \"sentence\": \"So that's five hundred Ocean Avenue, unit one F, and the number you're calling from, ending in seven one five three. That's all correct, right?\"}",
+    "readback_asked_seq": 18,
+    "readback_confirmed_at": "2026-11-06T05:35:35Z"
+   },
+   "bookings": [],
+   "booking_names": [
+    {
+     "call_id": "prescreen_cs24_o183-01_2_013a38",
+     "name": "Fatima Alvarez",
+     "at": "2026-11-06T05:35:35Z"
+    }
+   ],
+   "call_names": [],
+   "flags": [],
+   "callbacks": [],
+   "leads": []
+  },
+  {
+   "call": {
+    "id": "prescreen_cand_o183-01_2_41d9cf",
+    "tenant": "summit-air",
+    "caller_id": "+19175556728",
+    "caller_key": "9175556728",
+    "dialed_number": "+16783366730",
+    "direction": "inbound",
+    "started_at": "2026-11-06T05:35:14Z",
+    "ended_at": "2026-11-06T05:35:44Z",
+    "end_reason": "caller_hangup",
+    "end_requested": 0,
+    "after_hours": 1,
+    "linked_call_id": null,
+    "outcome": "no_booking",
+    "commercial": 0,
+    "summary_status": "skipped",
+    "turn_seq": 22,
+    "safety_state": "none",
+    "safety_kind": null,
+    "safety_signal_at": null,
+    "safety_lines_at": null,
+    "safety_flag_id": null,
+    "safety_variant": 0,
+    "readback_json": "{\"street\": \"500 Ocean Avenue\", \"unit\": \"1F\", \"city\": \"Brooklyn\", \"zip\": \"11226\", \"spelled\": \"\", \"phone\": \"9175556728\", \"phone_for\": \"\", \"sentence\": \"So that's five hundred Ocean Avenue, unit one F, and the number you're calling from, ending in six seven two eight. That's all correct, right?\"}",
+    "readback_asked_seq": 18,
+    "readback_confirmed_at": "2026-11-06T05:35:34Z"
+   },
+   "bookings": [],
+   "booking_names": [
+    {
+     "call_id": "prescreen_cand_o183-01_2_41d9cf",
+     "name": "Fatima Alvarez",
+     "at": "2026-11-06T05:35:34Z"
+    }
+   ],
+   "call_names": [],
+   "flags": [],
+   "callbacks": [],
+   "leads": []
+  },
+  {
+   "call": {
+    "id": "prescreen_cs24_o183-02_1_75344e",
+    "tenant": "summit-air",
+    "caller_id": "+19175557985",
+    "caller_key": "9175557985",
+    "dialed_number": "+16783366730",
+    "direction": "inbound",
+    "started_at": "2026-11-06T05:35:14Z",
+    "ended_at": "2026-11-06T05:35:47Z",
+    "end_reason": "caller_hangup",
+    "end_requested": 0,
+    "after_hours": 1,
+    "linked_call_id": null,
+    "outcome": "no_booking",
+    "commercial": 0,
+    "summary_status": "skipped",
+    "turn_seq": 24,
+    "safety_state": "none",
+    "safety_kind": null,
+    "safety_signal_at": null,
+    "safety_lines_at": null,
+    "safety_flag_id": null,
+    "safety_variant": 0,
+    "readback_json": "{\"street\": \"215 Mott Street\", \"unit\": \"4D\", \"city\": \"New York\", \"zip\": \"10012\", \"spelled\": \"\", \"phone\": \"9175557985\", \"phone_for\": \"\", \"sentence\": \"So that's two fifteen Mott Street, unit four D, and the number you're calling from, ending in seven nine eight five. That's all correct, right?\"}",
+    "readback_asked_seq": 22,
+    "readback_confirmed_at": "2026-11-06T05:35:40Z"
+   },
+   "bookings": [],
+   "booking_names": [
+    {
+     "call_id": "prescreen_cs24_o183-02_1_75344e",
+     "name": "Fatima Shah",
+     "at": "2026-11-06T05:35:40Z"
+    }
+   ],
+   "call_names": [],
+   "flags": [],
+   "callbacks": [],
+   "leads": []
+  }
+ ],
+ "do_not_call": [],
+ "dumped_at": "2026-11-06T05:38:30Z"
+}

@@ -16,7 +16,12 @@ RERUN = "20261105-000710-retell_flow-fast-custom.json"  # the 46 scenarios that 
 FIXED = "20261105-001542-retell_flow-fast-custom.json"  # adapter fixed
 # Scored before the eval adapters reported who ended a chat (ended_by), or with the agent's last
 # line lost on the server (oven-heat-co-check, sample 2): taken from FIXED.
-FROM_FIXED = {"co-alarm-after-details", "co-alarm-clear", "gas-smell-in-passing", "oven-heat-co-check"}
+FROM_FIXED = {
+    "co-alarm-after-details",
+    "co-alarm-clear",
+    "gas-smell-in-passing",
+    "oven-heat-co-check",
+}
 
 
 def load(name: str) -> dict[tuple[str, int], dict]:
@@ -42,7 +47,9 @@ if __name__ == "__main__":
         runs = combined(name)
         scored = [s for s in runs if s["outcome"] != "error"]
         passed = sum(s["outcome"] == "pass" for s in scored)
-        print(f"{label}: {len(runs)} runs, {len(scored)} scored, {passed} passed, "
-              f"{passed / len(scored):.1%}")
+        print(
+            f"{label}: {len(runs)} runs, {len(scored)} scored, {passed} passed, "
+            f"{passed / len(scored):.1%}"
+        )
         out = Path(__file__).with_name(f"{label}-combined.json")
         out.write_text(json.dumps({"scenarios": runs}, indent=1))

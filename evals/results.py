@@ -2,6 +2,7 @@
 
 This file is the source of truth for a run. LangSmith (evals/langsmith_sync.py) only mirrors it.
 """
+
 from pathlib import Path
 from typing import Any, Literal
 
@@ -19,14 +20,33 @@ class ResultsError(ValueError):
 
 # The labels in evals/README.md. A typo here would silently split one tag into two in LangSmith.
 Flow = Literal[
-    "booking", "safety", "priority", "membership", "commercial", "renter",
-    "repeat-caller", "after-hours", "off-topic", "injection", "spam",
+    "booking",
+    "safety",
+    "priority",
+    "membership",
+    "commercial",
+    "renter",
+    "repeat-caller",
+    "after-hours",
+    "off-topic",
+    "injection",
+    "spam",
 ]
 Difficulty = Literal["easy", "standard", "rigorous", "adversarial"]
 Trait = Literal[
-    "stutter", "filler", "self-correction", "late-correction", "split-digits",
-    "transcription-errors", "interruption", "vague", "side-question", "two-speakers",
-    "mind-change", "rude", "hard-of-hearing",
+    "stutter",
+    "filler",
+    "self-correction",
+    "late-correction",
+    "split-digits",
+    "transcription-errors",
+    "interruption",
+    "vague",
+    "side-question",
+    "two-speakers",
+    "mind-change",
+    "rude",
+    "hard-of-hearing",
 ]
 # "error" means the run produced no verdict, for example the simulated caller looped (decision 06).
 # It is not a failure and is left out of pass rates.
@@ -123,7 +143,9 @@ class ScenarioResult(Strict):
     @model_validator(mode="after")
     def check_consistency(self) -> "ScenarioResult":
         if self.must_pass_failures and self.outcome == "pass":
-            raise ValueError(f"{self.scenario_id}: outcome is pass but must_pass_failures is not empty")
+            raise ValueError(
+                f"{self.scenario_id}: outcome is pass but must_pass_failures is not empty"
+            )
         if self.reply_delay_p90_ms < self.reply_delay_p50_ms:
             raise ValueError(f"{self.scenario_id}: reply_delay_p90_ms is below reply_delay_p50_ms")
         # Only a run with no verdict, or a fail the grader couldn't score, has no grade.
@@ -197,4 +219,3 @@ def load(path: str | Path) -> Run:
 
 def _summary(err: ValidationError) -> str:
     return "; ".join(f"{'.'.join(str(p) for p in e['loc'])}: {e['msg']}" for e in err.errors())
-

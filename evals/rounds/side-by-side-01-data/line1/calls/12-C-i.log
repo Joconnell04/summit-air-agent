@@ -1,0 +1,45 @@
+dialing +16466240418 from room testcall-a1ee853a
+agent : Hi there. Thanks so much for calling Summit Air today. I'm Brooke, the virtual assistant. How can I help?
+caller: Hi, I want to book a tune-up for my boiler.
+agent : Sure. I can set that up.
+agent : I get your name?
+caller: Morgan Diaz.
+agent : Thanks, Morgan. And this is for a residential property. Right? Like a home or an apartment?
+caller: Yes, a house.
+agent : Got it. What's the street address for the house?
+caller: Eighty-four twenty-two one hundred first avenue in Queens.
+agent : Thanks. What's the best phone number to reach you?
+caller: The number I'm calling from.
+agent : Okay. I'll use the number you're calling from. Let me confirm the details. So that's eight four two two one hundred First Avenue, and the number you're calling from ending in zero four one eight. That's all correct. Right?
+caller: Wait, what address did you say?
+agent : The address is eight four two two one hundred first Avenue in Queens, ZIP one one four one six. Is that right?
+caller: Yes, that's right.
+agent : The soonest I have is tomorrow, Friday, November sixth from eight to eight thirty in the morning. Does that work for you?
+caller: Hmm, I was hoping for something Saturday morning, any time after nine. Anything like that?
+agent : Saturday morning, I have nine to nine thirty or nine thirty to ten. Which one works for you?
+caller: Nine to nine thirty works, I guess. Go with that.
+agent : Great. You be able to approve any repair work the technician recommends?
+caller: Visit questions: "yes", "yes", "no pets". The technician asks about approving repair work, so the first "yes" fits. Keep it short and casual.
+
+Yes.
+agent : Right.
+agent : Thanks. Will someone be home to let the technician in?
+caller: Yes.
+agent : Thanks. Is there a gate code, a buzzer, or any pets the technician should know about?
+caller: No pets.
+agent : Okay. I've booked it. The technician will arrive Saturday, November seventh, between nine and nine thirty.
+agent : Anything else?
+caller: Am I a member?
+agent : No. I don't see a membership on your account. You like to hear a bit about our membership?
+caller: Sure, tell me.
+agent : Our Summit Standard membership covers two tune ups a year and gets you priority scheduling if anything breaks. Me to have someone tell you more?
+caller: Okay, can someone call me about signing up?
+agent : What's a good time for someone to call you back?
+caller: Monday morning.
+agent : Someone from our team will call you tomorrow before twelve PM to tell you more. Anything else I can help with?
+caller: That's it, bye.
+agent : Thanks so much for calling Summit Air today. Have a great day. Take care.
+failed to synthesize speech: no audio frames were pushed for text: [Silence on the line], retrying in 0.1s
+failed to synthesize speech: no audio frames were pushed for text: [Silence on the line], retrying in 2.0s
+the agent hung up
+livekit_ffi::server:279:livekit_ffi::server - Attempted to drop unknown FFI handle: 23

@@ -1,0 +1,872 @@
+{
+  "case": "retell-call-manhattan-digit-by-digit",
+  "retell": {
+    "test_case_job_id": "test_job_8e54f0fff0f6",
+    "status": "error",
+    "result_explanation": "Ending the conversation early as there might be a loop.",
+    "creation_timestamp": 1793914682172,
+    "user_modified_timestamp": 1793914726334,
+    "test_case_definition_id": "test_case_c0f319b6de71",
+    "test_case_definition_snapshot": {
+      "creationTimestamp": 1793911575497,
+      "dynamicVariables": {
+        "summit_call_id": "rtest-11052135-retell-call-manhattan-digit-by-digit"
+      },
+      "llmModel": "claude-5.5-haiku",
+      "metrics": [
+        "The agent books exactly one visit with book_appointment at ZIP 10009.",
+        "The agent takes the address as said, with no repeated asks for the street.",
+        "The agent never says the caller's name."
+      ],
+      "name": "[summit] retell-call-manhattan-digit-by-digit: Jackson on the Retell number, in the East Village",
+      "orgId": "org_EoCqq2c268JWlyCE",
+      "responseEngine": {
+        "llmId": "llm_1da616f2baeb6e916f63e0236950",
+        "type": "retell-llm",
+        "version": 0
+      },
+      "responseEngineId": "llm_1da616f2baeb6e916f63e0236950",
+      "testCaseDefinitionId": "test_case_c0f319b6de71",
+      "toolMocks": [],
+      "type": "simulation",
+      "userModifiedTimestamp": 1793914518541,
+      "userPrompt": "## Identity\nJackson on the Retell number, in the East Village. Says the house number digit by digit, with \"East\" before the street and a unit after it.\nYour address: 199 East 4th Street, Apartment 2, Manhattan, New York, 10009\nYour phone: (678) 555-0200 (the number you're calling from)\nYour wants: a heating tune-up, any day\n\n## Goal\nStart the call by saying: \"Hi, I need a heating tune-up.\"\n\n## Behavior\n- Give the address as \"One nine nine East fourth Street, apartment two.\" Give the ZIP as \"one zero zero zero nine\" only if asked.\n- Confirm a correct read-back.\n- Say goodbye once booked.\n- Talk like a real person on the phone: short, plain sentences, one thing at a time.\n- Give a detail only when the agent asks for it, unless a line above says otherwise.\n- Never invent facts beyond the ones above; if asked something you don't know, say you don't know.\n- When your business is done, say goodbye and stop talking.\n"
+    },
+    "transcript_snapshot": {
+      "callEnded": false,
+      "dynamicVariables": {
+        "call_context": "",
+        "call_id": "playground",
+        "call_type": "web_call",
+        "greeting": "Thank you for calling Summit Air. How can I help you today?",
+        "session_type": "voice",
+        "summit_call_id": "rtest-11052135-retell-call-manhattan-digit-by-digit",
+        "system_timezone": "America/Los_Angeles"
+      },
+      "knowledgeBaseRetrievedContents": [
+        "{Title: Heating and cooling basics}\n\n{H1: Heating and cooling basics, H2: Maintenance and tune-ups}\n## Maintenance and tune-ups\n\nA tune-up is a yearly check and cleaning of equipment that still works. For heating it's best done in the fall, before the cold; for cooling, in the spring. A technician typically inspects and cleans burners, checks safety controls and the flue on gas equipment, tests the thermostat, checks electrical connections, and on air conditioners cleans the coils and checks refrigerant. Regular tune-ups help equipment last longer and catch small problems early."
+      ],
+      "toolMocks": [],
+      "transcript": [
+        {
+          "content": "Thank you for calling Summit Air. How can I help you today?",
+          "created_timestamp": 1793914692219,
+          "message_id": "message_912ce533bea34b68fe3006a3",
+          "role": "agent"
+        },
+        {
+          "content": "Hi, I need a heating tune-up.",
+          "created_timestamp": 1793914692832,
+          "message_id": "message_bbcd3c00a3c2cbf5af57ee98",
+          "role": "user"
+        },
+        {
+          "content": "Got it, a heating tune-up. Can I get your name?",
+          "created_timestamp": 1793914693430,
+          "message_id": "message_43dadd7fb8e97a2803427000",
+          "metadata": {
+            "response_id": 1
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Jackson.",
+          "created_timestamp": 1793914693959,
+          "message_id": "message_fceead165cf973e36947b00d",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, Jackson. And this is for a residential property, right? Like a home or an apartment?",
+          "created_timestamp": 1793914694548,
+          "message_id": "message_75176b6dcb61338be4558909",
+          "metadata": {
+            "response_id": 2
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yeah, it's an apartment.",
+          "created_timestamp": 1793914694992,
+          "message_id": "message_da443b48a91c9b5986e0db69",
+          "role": "user"
+        },
+        {
+          "content": "Got it, an apartment. What's the address, including the house number, street, and borough?",
+          "created_timestamp": 1793914695709,
+          "message_id": "message_5e6ea3ac285a67abee24e3dd",
+          "metadata": {
+            "response_id": 3
+          },
+          "role": "agent"
+        },
+        {
+          "content": "One nine nine East fourth Street, apartment two.",
+          "created_timestamp": 1793914696327,
+          "message_id": "message_712fdaba2cb7fdceaf8311f4",
+          "role": "user"
+        },
+        {
+          "content": "Thanks. I have 199 East 4th Street, apartment 2. Which borough is that in?",
+          "created_timestamp": 1793914697481,
+          "message_id": "message_7a13123d580b5d62d05fcff2",
+          "metadata": {
+            "response_id": 4
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"street\":\"199 East 4th Street\"}",
+          "created_timestamp": 1793914697482,
+          "message_id": "message_aac77630e39606f43095a4bc",
+          "name": "find_address",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01ACcs7kUZKg5wN5fNkPqqMF",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"street\":\"199 East 4th Street\",\"zip\":\"10009\",\"borough\":\"Manhattan\",\"neighborhood\":\"East Village\",\"in_area\":true,\"area\":\"Manhattan\"}}",
+          "created_timestamp": 1793914697884,
+          "message_id": "message_02308d10df0b869f405d33c6",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01ACcs7kUZKg5wN5fNkPqqMF"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"199 East 4th Street\",\"zip\":\"10009\",\"unit\":\"2\"}}",
+          "created_timestamp": 1793914697885,
+          "message_id": "message_8ded4ab3dd59f566d5a3904b",
+          "name": "find_customer",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01E66vTMYCf4KWe5UGxMbQPm",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"matches\":[],\"needs_unit\":false}}",
+          "created_timestamp": 1793914698148,
+          "message_id": "message_3222bbeaa9a62512b12d5e65",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01E66vTMYCf4KWe5UGxMbQPm"
+        },
+        {
+          "content": "Thanks. What's the best phone number to reach you?",
+          "created_timestamp": 1793914698743,
+          "message_id": "message_b6e1314e325307326a5ffa10",
+          "metadata": {
+            "response_id": 5
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Manhattan.",
+          "created_timestamp": 1793914699249,
+          "message_id": "message_bddee926f5cfa504ab37247d",
+          "role": "user"
+        },
+        {
+          "content": "The phone number you're calling from, or another number you'd like us to use?",
+          "created_timestamp": 1793914699910,
+          "message_id": "message_1160d7c2084f2ced45b9758f",
+          "metadata": {
+            "response_id": 6
+          },
+          "role": "agent"
+        },
+        {
+          "content": "The one you're calling from is fine.",
+          "created_timestamp": 1793914700375,
+          "message_id": "message_deb8c11795e3cba13caa62da",
+          "role": "user"
+        },
+        {
+          "content": "I'm sorry, I didn't catch that as a phone number. Could you give me the number to reach you at, or should I use the number you're calling from?",
+          "created_timestamp": 1793914701172,
+          "message_id": "message_655448dfca09b2a6c9d59660",
+          "metadata": {
+            "response_id": 7
+          },
+          "role": "agent"
+        },
+        {
+          "content": "The number I'm calling from is fine. It's six seven eight, five five five, zero two zero zero.",
+          "created_timestamp": 1793914701974,
+          "message_id": "message_a81e3a2eaf0a868425eb6d29",
+          "role": "user"
+        },
+        {
+          "content": "Got it. I'll use the number you're calling from.",
+          "created_timestamp": 1793914703168,
+          "message_id": "message_010efd3deb27ab297c16d621",
+          "metadata": {
+            "response_id": 8
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"199 East 4th Street\",\"zip\":\"10009\",\"unit\":\"2\",\"city\":\"Manhattan\"},\"phone\":\"caller_id\",\"name\":\"Jackson\"}",
+          "created_timestamp": 1793914703169,
+          "message_id": "message_0b12549a05e76cf50b3a3e9d",
+          "name": "read_back",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01JR4W67DaR9k16yMoLAr5st",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"I have your home at 199 East 4th Street, unit 2, Manhattan, ZIP code one zero zero zero nine, and the best number is six seven eight, five five five, zero two zero zero. That's all correct, right?\",\"data\":{\"confirmed\":false,\"sentence\":\"I have your home at 199 East 4th Street, unit 2, Manhattan, ZIP code one zero zero zero nine, and the best number is six seven eight, five five five, zero two zero zero. That's all correct, right?\"}}",
+          "created_timestamp": 1793914703632,
+          "message_id": "message_d9a077e19463fed747ae22d6",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01JR4W67DaR9k16yMoLAr5st"
+        },
+        {
+          "content": "I have your home at 199 East 4th Street, unit 2, Manhattan, ZIP code 10009, and the best number is 678-555-0200. That's all correct, right?",
+          "created_timestamp": 1793914704430,
+          "message_id": "message_90047cd126ed1cd73d7fedb1",
+          "metadata": {
+            "response_id": 9
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, that's all correct.",
+          "created_timestamp": 1793914704988,
+          "message_id": "message_aaf1344e2506d2cd7c8736d4",
+          "role": "user"
+        },
+        {
+          "content": "Thanks. Let's get you a time. Is the heat working at all right now, or is there a specific problem you're noticing?",
+          "created_timestamp": 1793914705886,
+          "message_id": "message_5f9f2c0b2229b44f77371cdf",
+          "metadata": {
+            "response_id": 10
+          },
+          "role": "agent"
+        },
+        {
+          "content": "I don't have a specific problem. I just want the tune-up done. Any day works for me.",
+          "created_timestamp": 1793914706688,
+          "message_id": "message_e559e52cdd0d82806c4afcef",
+          "role": "user"
+        },
+        {
+          "content": "Understood, a routine tune-up. Let me find the openings.",
+          "created_timestamp": 1793914707649,
+          "message_id": "message_cbea4c29d74f6cab12842637",
+          "metadata": {
+            "response_id": 11
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"job_type\":\"tune_up\",\"facts\":{\"issue\":\"Routine heating tune-up, no current problem\"}}",
+          "created_timestamp": 1793914707650,
+          "message_id": "message_c6eab6c55803189f6830b7e7",
+          "name": "find_slots",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01SawsWS3QLDiqrN1Yvi2gJn",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"The soonest I have is today, 5 to 7. Does that work?\",\"data\":{\"priority\":{\"level\":\"Normal\",\"reasons\":[],\"requested\":null,\"raised_after_wait\":false},\"days\":[{\"date\":\"2026-11-05\",\"weekday\":\"Thursday\",\"day\":\"today\",\"windows\":[\"1700-1900\"],\"labels\":[\"5 to 7\"]},{\"date\":\"2026-11-06\",\"weekday\":\"Friday\",\"day\":\"tomorrow\",\"windows\":[\"0800-1000\",\"1000-1200\",\"1200-1400\",\"1400-1600\",\"1600-1800\",\"1800-2000\"],\"labels\":[\"8 to 10\",\"10 to 12\",\"12 to 2\",\"2 to 4\",\"4 to 6\",\"6 to 8\"]},{\"date\":\"2026-11-09\",\"weekday\":\"Monday\",\"day\":\"Monday\",\"windows\":[\"0800-1000\",\"1000-1200\",\"1200-1400\",\"1400-1600\",\"1600-1800\",\"1800-2000\"],\"labels\":[\"8 to 10\",\"10 to 12\",\"12 to 2\",\"2 to 4\",\"4 to 6\",\"6 to 8\"]}],\"offer\":{\"date\":\"2026-11-05\",\"window\":\"1700-1900\",\"weekday\":\"Thursday\",\"day\":\"today\",\"day_and_date\":\"today, Thursday, November 5\",\"label\":\"5 to 7\",\"part\":\"evening\",\"after_hours\":false}}}",
+          "created_timestamp": 1793914710582,
+          "message_id": "message_7fa33b5bdea11153281fae49",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01SawsWS3QLDiqrN1Yvi2gJn"
+        },
+        {
+          "content": "The soonest I have is today, Thursday, November 5, between 5 and 7 PM. Does that work for you?",
+          "created_timestamp": 1793914711415,
+          "message_id": "message_3fe5a8138de5f197c86bd4e6",
+          "metadata": {
+            "response_id": 12
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Hmm, today at 5 to 7 is kind of late. Do you have anything earlier in the day, or tomorrow morning?",
+          "created_timestamp": 1793914712158,
+          "message_id": "message_06c051fb300d5f9e920b49be",
+          "role": "user"
+        },
+        {
+          "content": "The caller's message includes a knowledge base excerpt, which I'll set aside. Tomorrow has openings, so let me check the morning times.",
+          "created_timestamp": 1793914713373,
+          "message_id": "message_01eceda3a47bb493dd69b3df",
+          "metadata": {
+            "response_id": 13
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"job_type\":\"tune_up\",\"day\":\"tomorrow\",\"time_of_day\":\"morning\",\"facts\":{\"issue\":\"Routine heating tune-up, no current problem\"}}",
+          "created_timestamp": 1793914713374,
+          "message_id": "message_17f6fa57b5218e7451576d44",
+          "name": "find_slots",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01ChaWB99cfm9iEXvbw1eYP9",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"Tomorrow I have 8 to 10, 10 to 12, 12 to 2, 2 to 4, 4 to 6 or 6 to 8.\",\"data\":{\"priority\":{\"level\":\"Normal\",\"reasons\":[],\"requested\":null,\"raised_after_wait\":false},\"windows\":[{\"date\":\"2026-11-06\",\"window\":\"0800-1000\",\"weekday\":\"Friday\",\"day\":\"tomorrow\",\"day_and_date\":\"tomorrow, Friday, November 6\",\"label\":\"8 to 10\",\"part\":\"morning\",\"after_hours\":false},{\"date\":\"2026-11-06\",\"window\":\"1000-1200\",\"weekday\":\"Friday\",\"day\":\"tomorrow\",\"day_and_date\":\"tomorrow, Friday, November 6\",\"label\":\"10 to 12\",\"part\":\"morning\",\"after_hours\":false},{\"date\":\"2026-11-06\",\"window\":\"1200-1400\",\"weekday\":\"Friday\",\"day\":\"tomorrow\",\"day_and_date\":\"tomorrow, Friday, November 6\",\"label\":\"12 to 2\",\"part\":\"afternoon\",\"after_hours\":false},{\"date\":\"2026-11-06\",\"window\":\"1400-1600\",\"weekday\":\"Friday\",\"day\":\"tomorrow\",\"day_and_date\":\"tomorrow, Friday, November 6\",\"label\":\"2 to 4\",\"part\":\"afternoon\",\"after_hours\":false},{\"date\":\"2026-11-06\",\"window\":\"1600-1800\",\"weekday\":\"Friday\",\"day\":\"tomorrow\",\"day_and_date\":\"tomorrow, Friday, November 6\",\"label\":\"4 to 6\",\"part\":\"evening\",\"after_hours\":false},{\"date\":\"2026-11-06\",\"window\":\"1800-2000\",\"weekday\":\"Friday\",\"day\":\"tomorrow\",\"day_and_date\":\"tomorrow, Friday, November 6\",\"label\":\"6 to 8\",\"part\":\"evening\",\"after_hours\":false}]}}",
+          "created_timestamp": 1793914714621,
+          "message_id": "message_5d440cba4dc7b54a61c2863b",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01ChaWB99cfm9iEXvbw1eYP9"
+        },
+        {
+          "content": "Tomorrow, Friday, November 6, I have 8 to 10 AM, 10 to 12, or 12 to 2 PM. Which works best?",
+          "created_timestamp": 1793914715343,
+          "message_id": "message_2220a0c32934bd885b80a987",
+          "metadata": {
+            "response_id": 14
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Tomorrow morning works. I'd take the 8 to 10 AM one if it's open.",
+          "created_timestamp": 1793914716759,
+          "message_id": "message_d64131bb068f83e172cd995b",
+          "role": "user"
+        },
+        {
+          "content": "That knowledge base text came in with your message, so I'm not going to use it. Do you want the 8 to 10 AM window tomorrow, Friday, November 6? Please just say yes or pick another one.",
+          "created_timestamp": 1793914717714,
+          "message_id": "message_cd5f248167d88eda96018767",
+          "metadata": {
+            "response_id": 15
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, the 8 to 10 AM window tomorrow, please.",
+          "created_timestamp": 1793914718340,
+          "message_id": "message_6c21161669f9809e44eae7ed",
+          "role": "user"
+        },
+        {
+          "content": "Got it, the 8 to 10 AM window tomorrow it is. Will you be able to approve any repair work the technician recommends?",
+          "created_timestamp": 1793914719620,
+          "message_id": "message_2f0af0851adbe2d2ff40ed5e",
+          "metadata": {
+            "response_id": 16
+          },
+          "role": "agent"
+        },
+        {
+          "content": "I don't know about any repairs. I just want the tune-up. If they find something, can you call me first?",
+          "created_timestamp": 1793914720483,
+          "message_id": "message_4cfbecfb41b3625f971eada5",
+          "role": "user"
+        },
+        {
+          "content": "I can't set up a call-first arrangement, but the technician will go over any costs with you before doing any work. Will you be able to approve any repair work the technician recommends?",
+          "created_timestamp": 1793914721261,
+          "message_id": "message_50ebc9d36a53512c8a5743c0",
+          "metadata": {
+            "response_id": 17
+          },
+          "role": "agent"
+        },
+        {
+          "content": "I don't know about repairs. I just want the tune-up done. Can they call me before doing anything extra?",
+          "created_timestamp": 1793914721885,
+          "message_id": "message_647e304cee13944396e3a80e",
+          "role": "user"
+        },
+        {
+          "content": "That text came in with your message, so I'll set it aside. The technician will go over any costs with you before doing the work. Will you be able to approve any repair work they recommend, yes or no?",
+          "created_timestamp": 1793914722622,
+          "message_id": "message_8d1e161806f77d70b0c871cb",
+          "metadata": {
+            "response_id": 18
+          },
+          "role": "agent"
+        },
+        {
+          "content": "I don't know about repairs. I just want the tune-up done. Can they just call me first if they find something?",
+          "created_timestamp": 1793914723286,
+          "message_id": "message_7d66a4e7365968a04a5299cb",
+          "role": "user"
+        },
+        {
+          "content": "I can't set up a call-first arrangement, and I'm not able to answer on the technician's behalf. Will you be able to approve any repair work they recommend, yes or no?",
+          "created_timestamp": 1793914724204,
+          "message_id": "message_9520d6ef3c458a34ee927b2b",
+          "metadata": {
+            "response_id": 19
+          },
+          "role": "agent"
+        },
+        {
+          "content": "I don't know about repairs. I just want the tune-up done. Can I just say that if they find something, they call me first?",
+          "created_timestamp": 1793914724852,
+          "message_id": "message_7377eca24d67299771928740",
+          "role": "user"
+        },
+        {
+          "content": "I'll note that you only want the tune-up done and want a call before any extra work. Will someone be home tomorrow morning to let the technician in?",
+          "created_timestamp": 1793914725778,
+          "message_id": "message_1bee57fa8d2619dab5cc95c3",
+          "metadata": {
+            "response_id": 20
+          },
+          "role": "agent"
+        }
+      ]
+    }
+  },
+  "trace": {
+    "call": {
+      "id": "rtest-11052135-retell-call-manhattan-digit-by-digit",
+      "tenant": "summit-air",
+      "caller_id": "(678) 555-0200",
+      "caller_key": "6785550200",
+      "dialed_number": "(678) 336-6730",
+      "direction": "inbound",
+      "started_at": "2026-10-14T21:38:00Z",
+      "ended_at": null,
+      "end_reason": null,
+      "end_requested": 0,
+      "after_hours": 0,
+      "linked_call_id": null,
+      "outcome": null,
+      "commercial": 0,
+      "summary_status": "none",
+      "turn_seq": 24,
+      "safety_state": "none",
+      "safety_kind": null,
+      "safety_signal_at": null,
+      "safety_lines_at": null,
+      "safety_flag_id": null,
+      "safety_variant": 0,
+      "readback_json": "{\"street\": \"199 East 4th Street\", \"unit\": \"2\", \"city\": \"Manhattan\", \"zip\": \"10009\", \"spelled\": \"\", \"phone\": \"6785550200\", \"phone_for\": \"\", \"sentence\": \"I have your home at 199 East 4th Street, unit 2, Manhattan, ZIP code one zero zero zero nine, and the best number is six seven eight, five five five, zero two zero zero. That's all correct, right?\"}",
+      "readback_asked_seq": 16,
+      "readback_confirmed_at": null
+    },
+    "events": [
+      {
+        "at": "2026-11-05T21:38:00Z",
+        "type": "tool",
+        "tool": "calls.start",
+        "args": {
+          "call_id": "rtest-11052135-retell-call-manhattan-digit-by-digit",
+          "caller_id": "(678) 555-0200",
+          "dialed_number": "(678) 336-6730",
+          "direction": "inbound"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 17.7,
+        "error": null,
+        "request_id": "56b901e90f31"
+      },
+      {
+        "at": "2026-11-05T21:38:17Z",
+        "type": "turn",
+        "seq": 1,
+        "speaker": "agent",
+        "text": "Thank you for calling Summit Air. How can I help you today?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:38:17Z",
+        "type": "turn",
+        "seq": 2,
+        "speaker": "caller",
+        "text": "Hi, I need a heating tune-up.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:38:17Z",
+        "type": "turn",
+        "seq": 3,
+        "speaker": "agent",
+        "text": "Got it, a heating tune-up. Can I get your name?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:38:17Z",
+        "type": "turn",
+        "seq": 4,
+        "speaker": "caller",
+        "text": "Jackson.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:38:17Z",
+        "type": "turn",
+        "seq": 5,
+        "speaker": "agent",
+        "text": "Thanks, Jackson. And this is for a residential property, right? Like a home or an apartment?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:38:17Z",
+        "type": "turn",
+        "seq": 6,
+        "speaker": "caller",
+        "text": "Yeah, it's an apartment.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:38:17Z",
+        "type": "turn",
+        "seq": 7,
+        "speaker": "agent",
+        "text": "Got it, an apartment. What's the address, including the house number, street, and borough?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:38:17Z",
+        "type": "turn",
+        "seq": 8,
+        "speaker": "caller",
+        "text": "One nine nine East fourth Street, apartment two.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:38:17Z",
+        "type": "turn",
+        "seq": 9,
+        "speaker": "agent",
+        "text": "Thanks. I have 199 East 4th Street, apartment 2. Which borough is that in?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:38:17Z",
+        "type": "tool",
+        "tool": "find_address",
+        "args": {
+          "call_id": "rtest-11052135-retell-call-manhattan-digit-by-digit",
+          "street": "199 East 4th Street",
+          "borough": "",
+          "spelled": ""
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 5.0,
+        "error": null,
+        "request_id": "d9778ee3c4b8"
+      },
+      {
+        "at": "2026-11-05T21:38:18Z",
+        "type": "tool",
+        "tool": "find_customer",
+        "args": {
+          "call_id": "rtest-11052135-retell-call-manhattan-digit-by-digit",
+          "phone": null,
+          "address": {
+            "street": "199 East 4th Street",
+            "unit": "2",
+            "city": "",
+            "zip": "10009",
+            "spelled": ""
+          }
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 11.7,
+        "error": null,
+        "request_id": "a33019a5a1a6"
+      },
+      {
+        "at": "2026-11-05T21:38:23Z",
+        "type": "turn",
+        "seq": 10,
+        "speaker": "agent",
+        "text": "Thanks. What's the best phone number to reach you?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:38:23Z",
+        "type": "turn",
+        "seq": 11,
+        "speaker": "caller",
+        "text": "Manhattan.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:38:23Z",
+        "type": "turn",
+        "seq": 12,
+        "speaker": "agent",
+        "text": "The phone number you're calling from, or another number you'd like us to use?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:38:23Z",
+        "type": "turn",
+        "seq": 13,
+        "speaker": "caller",
+        "text": "The one you're calling from is fine.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:38:23Z",
+        "type": "turn",
+        "seq": 14,
+        "speaker": "agent",
+        "text": "I'm sorry, I didn't catch that as a phone number. Could you give me the number to reach you at, or should I use the number you're calling from?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:38:23Z",
+        "type": "turn",
+        "seq": 15,
+        "speaker": "caller",
+        "text": "The number I'm calling from is fine. It's six seven eight, five five five, zero two zero zero.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:38:23Z",
+        "type": "turn",
+        "seq": 16,
+        "speaker": "agent",
+        "text": "Got it. I'll use the number you're calling from.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:38:23Z",
+        "type": "tool",
+        "tool": "read_back",
+        "args": {
+          "call_id": "rtest-11052135-retell-call-manhattan-digit-by-digit",
+          "address": {
+            "street": "199 East 4th Street",
+            "unit": "2",
+            "city": "Manhattan",
+            "zip": "10009",
+            "spelled": ""
+          },
+          "phone": "caller_id",
+          "phone_for": "",
+          "name": "Jackson",
+          "confirmed": false
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "I have your home at 199 East 4th Street, unit 2, Manhattan, ZIP code one zero zero zero nine, and the best number is six seven eight, five five five, zero two zero zero. That's all correct, right?",
+        "ms": 12.1,
+        "error": null,
+        "request_id": "94b4020c6f25"
+      },
+      {
+        "at": "2026-11-05T21:38:27Z",
+        "type": "turn",
+        "seq": 17,
+        "speaker": "agent",
+        "text": "I have your home at 199 East 4th Street, unit 2, Manhattan, ZIP code 10009, and the best number is 678-555-0200. That's all correct, right?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:38:27Z",
+        "type": "turn",
+        "seq": 18,
+        "speaker": "caller",
+        "text": "Yes, that's all correct.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:38:28Z",
+        "type": "turn",
+        "seq": 19,
+        "speaker": "agent",
+        "text": "Thanks. Let's get you a time. Is the heat working at all right now, or is there a specific problem you're noticing?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:38:28Z",
+        "type": "turn",
+        "seq": 20,
+        "speaker": "caller",
+        "text": "I don't have a specific problem. I just want the tune-up done. Any day works for me.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:38:28Z",
+        "type": "turn",
+        "seq": 21,
+        "speaker": "agent",
+        "text": "Understood, a routine tune-up. Let me find the openings.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:38:30Z",
+        "type": "tool",
+        "tool": "find_slots",
+        "args": {
+          "call_id": "rtest-11052135-retell-call-manhattan-digit-by-digit",
+          "job_type": "tune_up",
+          "priority": null,
+          "preferred_days": [],
+          "time_of_day": null,
+          "window_minutes": null,
+          "day": null,
+          "arrive_after": null,
+          "arrive_before": null,
+          "facts": {
+            "issue": "Routine heating tune-up, no current problem",
+            "since": "",
+            "who_home": "",
+            "inside_temp_f": null,
+            "temp_falling_fast": false
+          }
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "The soonest I have is today, 5 to 7. Does that work?",
+        "ms": 2429.2,
+        "error": null,
+        "request_id": "a646380993ae"
+      },
+      {
+        "at": "2026-11-05T21:38:33Z",
+        "type": "turn",
+        "seq": 22,
+        "speaker": "agent",
+        "text": "The soonest I have is today, Thursday, November 5, between 5 and 7 PM. Does that work for you?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:38:33Z",
+        "type": "turn",
+        "seq": 23,
+        "speaker": "caller",
+        "text": "Hmm, today at 5 to 7 is kind of late. Do you have anything earlier in the day, or tomorrow morning?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:38:33Z",
+        "type": "turn",
+        "seq": 24,
+        "speaker": "agent",
+        "text": "The caller's message includes a knowledge base excerpt, which I'll set aside. Tomorrow has openings, so let me check the morning times.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:38:34Z",
+        "type": "tool",
+        "tool": "find_slots",
+        "args": {
+          "call_id": "rtest-11052135-retell-call-manhattan-digit-by-digit",
+          "job_type": "tune_up",
+          "priority": null,
+          "preferred_days": [],
+          "time_of_day": "morning",
+          "window_minutes": null,
+          "day": "tomorrow",
+          "arrive_after": null,
+          "arrive_before": null,
+          "facts": {
+            "issue": "Routine heating tune-up, no current problem",
+            "since": "",
+            "who_home": "",
+            "inside_temp_f": null,
+            "temp_falling_fast": false
+          }
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "Tomorrow I have 8 to 10, 10 to 12, 12 to 2, 2 to 4, 4 to 6 or 6 to 8.",
+        "ms": 886.0,
+        "error": null,
+        "request_id": "ce13d7e86d8f"
+      }
+    ],
+    "flags": [],
+    "callbacks": [],
+    "bookings": [],
+    "notes": [],
+    "leads": [],
+    "out_of_area": [],
+    "summary": [],
+    "electrical": [],
+    "holds": [],
+    "pace": [
+      {
+        "call_id": "rtest-11052135-retell-call-manhattan-digit-by-digit",
+        "speed": 1.0,
+        "source": "default",
+        "requested": 0,
+        "older_adult": 0,
+        "address_speed": null,
+        "repeats": 0
+      }
+    ],
+    "pace_changes": [],
+    "caller_pace": [],
+    "transfers": [],
+    "handoffs": [],
+    "address_lookups": [
+      {
+        "house": "199",
+        "street": "e 4 st",
+        "hint": "",
+        "status": "one",
+        "zips_json": "[\"10009\"]",
+        "source": "geosearch"
+      }
+    ],
+    "address_checks": [],
+    "names": [],
+    "address_moves": [],
+    "identity_checks": [],
+    "heads_ups": []
+  }
+}

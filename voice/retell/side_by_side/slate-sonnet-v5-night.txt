@@ -1,0 +1,18 @@
+# #175 v5 after hours: B prompt v5 (change sets 18 and 19), eval world, offset 0, seed 404; with m404-01, a returning caller, right after r404-01; then the regression set g, h, i, j.
+B agent_871ef6fafe2636244c4bbaca67 eval r404-01 reset
+B agent_871ef6fafe2636244c4bbaca67 eval m404-01 keep
+B agent_871ef6fafe2636244c4bbaca67 eval o404-01 reset
+B agent_871ef6fafe2636244c4bbaca67 eval g404-01 reset
+B agent_871ef6fafe2636244c4bbaca67 eval r404-02 reset
+B agent_871ef6fafe2636244c4bbaca67 eval o404-02 reset
+B agent_871ef6fafe2636244c4bbaca67 eval g404-02 reset
+B agent_871ef6fafe2636244c4bbaca67 eval r404-03 reset
+B agent_871ef6fafe2636244c4bbaca67 eval o404-03 reset
+B agent_871ef6fafe2636244c4bbaca67 eval x404-01 reset
+B agent_871ef6fafe2636244c4bbaca67 eval r404-04 reset
+B agent_871ef6fafe2636244c4bbaca67 eval o404-04 reset
+B agent_871ef6fafe2636244c4bbaca67 eval x404-02 reset
+B agent_871ef6fafe2636244c4bbaca67 eval g reset
+B agent_871ef6fafe2636244c4bbaca67 eval h reset
+B agent_871ef6fafe2636244c4bbaca67 eval i reset
+B agent_871ef6fafe2636244c4bbaca67 eval j reset

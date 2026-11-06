@@ -1,0 +1,55 @@
+{
+ "window": [
+  "2026-11-06T02:40:05Z",
+  "2026-11-06T02:42:09Z"
+ ],
+ "calls": [
+  {
+   "call": {
+    "id": "retell_call_0e2a9d1bf24a8ff39834d3942bb",
+    "tenant": "summit-air",
+    "caller_id": "+16466240418",
+    "caller_key": "6466240418",
+    "dialed_number": "+16783366730",
+    "direction": "inbound",
+    "started_at": "2026-11-06T02:40:18Z",
+    "ended_at": "2026-11-06T02:42:02Z",
+    "end_reason": "agent_end",
+    "end_requested": 1,
+    "after_hours": 1,
+    "linked_call_id": null,
+    "outcome": "safety",
+    "commercial": 0,
+    "summary_status": "pending",
+    "turn_seq": 32,
+    "safety_state": "lines_said",
+    "safety_kind": "gas",
+    "safety_signal_at": "2026-11-06T02:40:32Z",
+    "safety_lines_at": "2026-11-06T02:40:35Z",
+    "safety_flag_id": 363,
+    "safety_variant": 0,
+    "readback_json": null,
+    "readback_asked_seq": null,
+    "readback_confirmed_at": null
+   },
+   "bookings": [],
+   "booking_names": [],
+   "call_names": [],
+   "flags": [
+    {
+     "id": 363,
+     "call_id": "retell_call_0e2a9d1bf24a8ff39834d3942bb",
+     "kind": "safety",
+     "reason": "Gas smell reported on the call",
+     "priority": "Urgent",
+     "status": "open",
+     "created_at": "2026-11-06T02:40:32Z"
+    }
+   ],
+   "callbacks": [],
+   "leads": []
+  }
+ ],
+ "do_not_call": [],
+ "dumped_at": "2026-11-06T02:42:20Z"
+}

@@ -1,0 +1,128 @@
+# Video 3: the schedule and double-booking. Boxes are in page pixels of the 1600 px screenshots.
+num: 3
+total: 5
+title: The schedule and double-booking
+chips: [No double-booking, In ServiceTitan, A sooner opening]
+segments:
+  - kind: intro
+    dur: 5
+    kicker: Video 3 of 5
+    big: The schedule and double-booking
+    list:
+      - "Prove it didn't double-book that slot."
+      - "Is it really in ServiceTitan?"
+      - "Can it get the newborn family in sooner?"
+    show: Have the Schedule tab and a terminal ready.
+
+  - kind: ask
+    scenario: 0
+    dur: 3.5
+    kicker: The owner asks
+    big: "“Prove it didn't double-book that slot.”"
+
+  - kind: image
+    src: schedule.png
+    scenario: 0
+    steps:
+      - cam: [0, 70, 1600]
+        box: [361, 218, 151, 480]
+        show: Schedule tab. One column per arrival window.
+        say: This is read live from ServiceTitan. Every technician, every two-hour window, one job per box.
+
+  - kind: code
+    file: app/booking.py
+    lines: [131, 161]
+    scenario: 0
+    steps:
+      - hl: [6, 12]
+        show: Right before booking, the server looks again.
+        say: The schedule can change between offering a time and booking it, so the server checks who's free again first.
+      - scroll: 13
+        hl: [27, 31]
+        show: Someone took that technician a second ago.
+        say: If someone just took that technician, it tries another. Only a window with nobody left is refused.
+
+  - kind: code
+    file: servicetitan_mock/schema.sql
+    lines: [196, 200]
+    scenario: 0
+    steps:
+      - hl: [3, 5]
+        show: Our test copy of ServiceTitan.
+        say: The test schedule can't even hold two live jobs for one technician in one window. That catches any slip.
+
+  - kind: term
+    capture: sql-duplicate.txt
+    scenario: 0
+    label: forcing a second job into job 608's window, on a copy
+    steps:
+      - hl: [2, 2]
+        show: Try to force a second job into that slot.
+        say: Force a second job into the 7:42 call's window and the schedule refuses it.
+
+  - kind: term
+    capture: tests-booking.txt
+    scenario: 0
+    label: the booking tests
+    steps:
+      - hl: [2, 2]
+        show: Eight callers, one last opening.
+        say: Eight callers race for the last opening. One gets it; the others hear it just filled and get the next one.
+
+  - kind: ask
+    scenario: 1
+    dur: 3.5
+    kicker: The owner asks
+    big: "“Is it really in ServiceTitan?”"
+
+  - kind: image
+    src: today.png
+    scenario: 1
+    steps:
+      - zoom: 1150
+        box: [185, 1243, 876, 52]
+        show: Today, Jobs booked. Top right of the table.
+        say: Each booking is written to ServiceTitan while the caller is still on the line. Ten booked, all ten sent.
+
+  - kind: term
+    capture: sql-job-608.txt
+    scenario: 1
+    label: job 608 in ServiceTitan's schedule
+    steps:
+      - hl: [4, 4]
+        show: Job 608, from the 7:42 call.
+        say: The job is on one technician's schedule, today, 8 to 10, with the call's notes on it for the tech.
+
+  - kind: ask
+    scenario: 2
+    dur: 3.5
+    kicker: The owner asks
+    big: "“Can it get the newborn family in sooner?”"
+
+  - kind: image
+    src: today.png
+    scenario: 2
+    steps:
+      - zoom: 1150
+        box: [185, 1549, 876, 44]
+        tag: Moved earlier
+        show: The 11:15 row.
+        say: This family has a newborn and was booked for tomorrow morning. When a slot opened today, the server called back.
+
+  - kind: image
+    src: call-out-2.png
+    scenario: 2
+    steps:
+      - cam: [150, 60, 1300]
+        box: [185, 258, 806, 126]
+        show: The call it placed, at 2:20.
+        say: It offered today, 2:30 to 4:30. The caller said yes, and the job moved in ServiceTitan.
+      - box: [185, 346, 806, 38]
+        show: Be straight about where this stands.
+        say: On the Retell line, these outbound calls aren't built yet; our first voice stack makes them. That's a rollout item.
+
+  - kind: outro
+    dur: 5
+    kicker: Takeaway
+    big: The server checks the schedule at the moment of booking, every time.
+    sub: "Script: docs/demo/03-schedule.md"

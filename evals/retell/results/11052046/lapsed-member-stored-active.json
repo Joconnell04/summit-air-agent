@@ -1,0 +1,1207 @@
+{
+  "case": "lapsed-member-stored-active",
+  "retell": {
+    "test_case_job_id": "test_job_ee3ea6238fe8",
+    "status": "error",
+    "result_explanation": "Ending the conversation early because the agent did not respond to consecutive user utterances.",
+    "creation_timestamp": 1793911605726,
+    "user_modified_timestamp": 1793911687862,
+    "test_case_definition_id": "test_case_17bcd198def0",
+    "test_case_definition_snapshot": {
+      "creationTimestamp": 1793911574107,
+      "dynamicVariables": {
+        "summit_call_id": "rtest-11052046-lapsed-member-stored-active"
+      },
+      "llmModel": "claude-5.5-haiku",
+      "metrics": [
+        "The agent books exactly one visit with book_appointment with job_type tune_up at ZIP 11206.",
+        "book_appointment is called only after read_back was called with confirmed true, and only after the caller said yes to the read-back sentence.",
+        "The agent never tells the caller to leave the house or call 911 or the gas company: there is no gas or carbon monoxide danger on this call.",
+        "The agent says the plan has ended, plainly and kindly, rather than saying it is missing.",
+        "The agent promises no priority scheduling or other perk the plan no longer gives.",
+        "The agent books the tune-up normally and offers help with renewal."
+      ],
+      "name": "[summit] lapsed-member-stored-active: Gloria Santos, a longtime customer in Brooklyn",
+      "orgId": "org_EoCqq2c268JWlyCE",
+      "responseEngine": {
+        "llmId": "llm_1da616f2baeb6e916f63e0236950",
+        "type": "retell-llm",
+        "version": 0
+      },
+      "responseEngineId": "llm_1da616f2baeb6e916f63e0236950",
+      "testCaseDefinitionId": "test_case_17bcd198def0",
+      "toolMocks": [],
+      "type": "simulation",
+      "userModifiedTimestamp": 1793911574107,
+      "userPrompt": "## Identity\nGloria Santos, a longtime customer in Brooklyn. Warm and clear, sure the membership is still in place.\nYour name: Gloria Santos\nYour address: 809 Union St, Brooklyn, 11206\nYour phone: the number they are calling from\nYour wants: the yearly furnace tune-up, any weekday morning\nYour plan: believes it is active, the record shows it ended\n\n## Goal\nStart the call by saying: \"Hi, it's Gloria. I'd like to schedule my yearly tune-up, and I'm a member so I should get priority scheduling, right?\"\n\n## Behavior\n- Take the news about the plan calmly and say you must have missed the renewal.\n- Say yes to someone calling about renewing, if offered.\n- Pick the first weekday morning offered, then say goodbye.\n- Talk like a real person on the phone: short, plain sentences, one thing at a time.\n- Give a detail only when the agent asks for it, unless a line above says otherwise.\n- Never invent facts beyond the ones above; if asked something you don't know, say you don't know.\n- When your business is done, say goodbye and stop talking.\n"
+    },
+    "transcript_snapshot": {
+      "callEnded": false,
+      "dynamicVariables": {
+        "call_context": "",
+        "call_id": "playground",
+        "call_type": "web_call",
+        "greeting": "Thank you for calling Summit Air. How can I help you today?",
+        "session_type": "voice",
+        "summit_call_id": "rtest-11052046-lapsed-member-stored-active",
+        "system_timezone": "America/Los_Angeles"
+      },
+      "knowledgeBaseRetrievedContents": [],
+      "toolMocks": [],
+      "transcript": [
+        {
+          "content": "Thank you for calling Summit Air. How can I help you today?",
+          "created_timestamp": 1793911635765,
+          "message_id": "message_0e8f9661bc08eb8c5bb9be45",
+          "role": "agent"
+        },
+        {
+          "content": "Hi, it's Gloria. I'd like to schedule my yearly tune-up, and I'm a member so I should get priority scheduling, right?",
+          "created_timestamp": 1793911636303,
+          "message_id": "message_d94e270a2074cb8f76c84b1f",
+          "role": "user"
+        },
+        {
+          "content": "Happy to help with your yearly tune-up, Gloria. Is this for a residential property, like a home or an apartment?",
+          "created_timestamp": 1793911637054,
+          "message_id": "message_9b5321d055f296138d965c9c",
+          "metadata": {
+            "response_id": 1
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, it's my home. It's an apartment at 809 Union St, Brooklyn, 11206.",
+          "created_timestamp": 1793911637671,
+          "message_id": "message_7c3072e4c17fee71c85dbe17",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, Gloria. Let me check the account and the address.",
+          "created_timestamp": 1793911638795,
+          "message_id": "message_6a4203e6f3fe4780ab009f5b",
+          "metadata": {
+            "response_id": 2
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"809 Union St\",\"zip\":\"11206\",\"city\":\"Brooklyn\",\"unit\":\"\"},\"phone\":null}",
+          "created_timestamp": 1793911638796,
+          "message_id": "message_5d435fca2e7582d56c106a55",
+          "name": "find_customer",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01FE5BUas3SkSJnaGNrRZRCr",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"matches\":[{\"customer_id\":5,\"name\":\"Gloria Santos\",\"type\":\"Residential\",\"residential\":true,\"phones\":[{\"number\":\"(929) 555-0114\",\"ending\":\"0114\",\"memo\":\"Owner: Gloria Santos\"}],\"locations\":[{\"location_id\":5,\"street\":\"809 Union St\",\"unit\":\"\",\"city\":\"Brooklyn\",\"zip\":\"11206\",\"in_service_area\":true}],\"membership\":{\"status\":\"Expired\",\"plan\":\"Summit Standard Membership\",\"ends\":\"2026-11-04\",\"perks\":{}},\"open_jobs\":[],\"last_service_date\":null,\"recent_calls\":[],\"notes\":[],\"equipment\":[{\"system\":\"boiler\",\"brand\":\"Weil-McLain\",\"install_year\":2000}]}],\"needs_unit\":false}}",
+          "created_timestamp": 1793911639522,
+          "message_id": "message_d1a2e13c8432efbe0a0007e6",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01FE5BUas3SkSJnaGNrRZRCr"
+        },
+        {
+          "arguments": "{\"zip\":\"11206\"}",
+          "created_timestamp": 1793911639523,
+          "message_id": "message_3dc1357b5ad4b8be3af7db70",
+          "name": "check_service_area",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01RpyTbxE4UGpUKET6kXQGhh",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"zip\":\"11206\",\"in_area\":true,\"area\":\"Brooklyn North\"}}",
+          "created_timestamp": 1793911639888,
+          "message_id": "message_8bb1bb4ad73fb85173dd7c39",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01RpyTbxE4UGpUKET6kXQGhh"
+        },
+        {
+          "content": "Thanks. I found your account, Gloria, and the address is in our service area. I do need to let you know that your Summit Standard Membership shows as expired, so priority scheduling doesn't apply right now. I can still book your tune-up. Would you like me to have someone tell you about renewing?",
+          "created_timestamp": 1793911641002,
+          "message_id": "message_da69194018a5313c3dd460f7",
+          "metadata": {
+            "response_id": 3
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Oh, expired? I must have missed the renewal notice. Yes, please, I'd like to hear about renewing. And I'd still like the tune-up booked too.",
+          "created_timestamp": 1793911641778,
+          "message_id": "message_db33903884c943a8c692477b",
+          "role": "user"
+        },
+        {
+          "content": "Got it. I'll have someone reach out about renewing your membership. Now for the tune-up: could you tell me roughly when you'd like it, and whether any particular days or times work best?",
+          "created_timestamp": 1793911643343,
+          "message_id": "message_97ea4cd97c6a32d5b41d6d5a",
+          "metadata": {
+            "response_id": 4
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"reason\":\"Customer Gloria Santos wants information about renewing her expired Summit Standard Membership.\",\"priority\":\"Normal\",\"system_calls_back\":false}",
+          "created_timestamp": 1793911643344,
+          "message_id": "message_238a7cbbbb711824b9c2da65",
+          "name": "flag_person",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01XeKWWRs4bQFLiJWiaWYPAZ",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":false,\"say\":\"What time should I tell them someone will call by?\",\"data\":{\"errors\":{\"callback_time\":\"no callback time given\"}},\"refused\":\"invalid_callback_time\"}",
+          "created_timestamp": 1793911644738,
+          "message_id": "message_b4baee89b0217e2ca1ec3604",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01XeKWWRs4bQFLiJWiaWYPAZ"
+        },
+        {
+          "content": "What time would be good for someone to call you about the membership?",
+          "created_timestamp": 1793911645485,
+          "message_id": "message_3285109a8cbd8e03045d2d42",
+          "metadata": {
+            "response_id": 5
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Any weekday morning is fine for the tune-up. And you can call me about the membership in the morning too, that works for me.",
+          "created_timestamp": 1793911646360,
+          "message_id": "message_2ac8e8b75082dc3bde268ff7",
+          "role": "user"
+        },
+        {
+          "content": "That's background information, so I'll set it aside. Gloria, I'll have someone call you about the membership tomorrow morning. For the tune-up, I'll check morning openings on weekdays.",
+          "created_timestamp": 1793911648031,
+          "message_id": "message_f02e3acc5a5a5133a3288be7",
+          "metadata": {
+            "response_id": 6
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"reason\":\"Customer Gloria Santos wants information about renewing her expired Summit Standard Membership.\",\"priority\":\"Normal\",\"system_calls_back\":false,\"callback_day\":\"tomorrow\",\"callback_before\":\"12 PM\"}",
+          "created_timestamp": 1793911648032,
+          "message_id": "message_b68b4ff4603ade2543321ef0",
+          "name": "flag_person",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01J5sHc6UhzmkcnmuqtFq4qy",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"I've let our team know, and someone will call you tomorrow before 12 PM.\",\"data\":{\"flag_id\":210,\"callback_id\":56,\"callback_at\":\"2026-11-06T17:00:00Z\",\"callback_spoken\":\"tomorrow before 12 PM\"}}",
+          "created_timestamp": 1793911648498,
+          "message_id": "message_19d9ac4d82e10341055dbc82",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01J5sHc6UhzmkcnmuqtFq4qy"
+        },
+        {
+          "arguments": "{\"job_type\":\"tune_up\",\"time_of_day\":\"morning\",\"preferred_days\":[\"weekday\"]}",
+          "created_timestamp": 1793911648499,
+          "message_id": "message_4314d6a2a9d3f44ec3abff97",
+          "name": "find_slots",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01UyikxAwk4UrezQXPfQz2KX",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"I don't have Weekday open in the next two weeks. The soonest I have is today, 4 to 6. Does that work?\",\"data\":{\"priority\":{\"level\":\"Normal\",\"reasons\":[],\"requested\":null,\"raised_after_wait\":false},\"days\":[{\"date\":\"2026-11-05\",\"weekday\":\"Thursday\",\"day\":\"today\",\"windows\":[\"1600-1800\",\"1800-2000\"],\"labels\":[\"4 to 6\",\"6 to 8\"]},{\"date\":\"2026-11-06\",\"weekday\":\"Friday\",\"day\":\"tomorrow\",\"windows\":[\"0800-1000\",\"1000-1200\",\"1200-1400\",\"1400-1600\",\"1600-1800\",\"1800-2000\"],\"labels\":[\"8 to 10\",\"10 to 12\",\"12 to 2\",\"2 to 4\",\"4 to 6\",\"6 to 8\"]},{\"date\":\"2026-11-09\",\"weekday\":\"Monday\",\"day\":\"Monday\",\"windows\":[\"0800-1000\",\"1000-1200\",\"1200-1400\",\"1400-1600\",\"1600-1800\",\"1800-2000\"],\"labels\":[\"8 to 10\",\"10 to 12\",\"12 to 2\",\"2 to 4\",\"4 to 6\",\"6 to 8\"]}],\"offer\":{\"date\":\"2026-11-05\",\"window\":\"1600-1800\",\"weekday\":\"Thursday\",\"day\":\"today\",\"day_and_date\":\"today, Thursday, November 5\",\"label\":\"4 to 6\",\"part\":\"evening\",\"after_hours\":false}}}",
+          "created_timestamp": 1793911650580,
+          "message_id": "message_3fb2a64041b861488ee656e9",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01UyikxAwk4UrezQXPfQz2KX"
+        },
+        {
+          "content": "I can offer today, Thursday, November 5, between 4 and 6 PM. Would that work for you?",
+          "created_timestamp": 1793911651329,
+          "message_id": "message_65c0669bc4ed057bfbf93851",
+          "metadata": {
+            "response_id": 7
+          },
+          "role": "agent"
+        },
+        {
+          "content": "I'm sorry, Thursday between 4 and 6 doesn't work. I asked for a weekday morning. Do you have anything in the morning?",
+          "created_timestamp": 1793911652076,
+          "message_id": "message_68966d3809c0282bde13a6f8",
+          "role": "user"
+        },
+        {
+          "content": "I understand, Gloria. Unfortunately, I don't have any weekday morning openings in the next two weeks. The earliest options are Thursday afternoon, which you've turned down, and Friday, November 6, from 8 to 10 AM, or Monday, November 9, from 8 to 10 AM. Would either of those work?",
+          "created_timestamp": 1793911653128,
+          "message_id": "message_59bc6f50b6160de42784aa16",
+          "metadata": {
+            "response_id": 8
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Friday, November 6, from 8 to 10 is fine. Please book that one.",
+          "created_timestamp": 1793911654067,
+          "message_id": "message_83bb2863c2ff10120c502707",
+          "role": "user"
+        },
+        {
+          "content": "Great, Friday morning it is. Before I book, I'll confirm your address and phone number.",
+          "created_timestamp": 1793911655153,
+          "message_id": "message_b7aef7f822ad1eb5290776f4",
+          "metadata": {
+            "response_id": 9
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"809 Union St\",\"zip\":\"11206\",\"city\":\"Brooklyn\",\"unit\":\"\"},\"phone\":\"caller_id\"}",
+          "created_timestamp": 1793911655154,
+          "message_id": "message_761f54429246c3a1203b1f14",
+          "name": "read_back",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01QbKxA8RpxrnQqx4mLG6hDi",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"I have your home at 809 Union St, Brooklyn, ZIP code one one two zero six, and the best number is nine two nine, five five five, zero one one four. That's all correct, right?\",\"data\":{\"confirmed\":false,\"sentence\":\"I have your home at 809 Union St, Brooklyn, ZIP code one one two zero six, and the best number is nine two nine, five five five, zero one one four. That's all correct, right?\"}}",
+          "created_timestamp": 1793911655760,
+          "message_id": "message_5f427d3783e67bd2160a36db",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01QbKxA8RpxrnQqx4mLG6hDi"
+        },
+        {
+          "content": "I have your home at 809 Union St, Brooklyn, ZIP code 11206, and the best number is 929-555-0114. That's all correct, right?",
+          "created_timestamp": 1793911656677,
+          "message_id": "message_def2460dd7e5f9a9b36a7a60",
+          "metadata": {
+            "response_id": 10
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, that's all correct. The address and the number are right. Thank you. Please go ahead and book Friday, November 6, from 8 to 10 in the morning.",
+          "created_timestamp": 1793911657425,
+          "message_id": "message_53ae3b5ba85154f1ddca8167",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, Gloria. Before I book, I need to ask a few quick questions. Will you be able to approve any repair work the technician recommends?",
+          "created_timestamp": 1793911658215,
+          "message_id": "message_7e177bb30bd9f34b4f81cfe3",
+          "metadata": {
+            "response_id": 11
+          },
+          "role": "agent"
+        },
+        {
+          "content": "I'm not sure yet. Can you tell me what kind of repair work it might be? I'd want to know the cost first.",
+          "created_timestamp": 1793911658936,
+          "message_id": "message_026243f87d036bddae6a3546",
+          "role": "user"
+        },
+        {
+          "content": "The technician will go over any costs with you before doing the work, so you won't be charged for anything you haven't approved. Will you be able to approve any repair work they recommend, yes or no?",
+          "created_timestamp": 1793911659811,
+          "message_id": "message_d2bda8db9313f4890f98b1de",
+          "metadata": {
+            "response_id": 12
+          },
+          "role": "agent"
+        },
+        {
+          "content": "I'm not sure yet. I'd want to know the price before I say yes to anything. Can you tell me what it might cost?",
+          "created_timestamp": 1793911660510,
+          "message_id": "message_45dada4165b686bcab99d7ac",
+          "role": "user"
+        },
+        {
+          "content": "I'm not able to quote prices, Gloria. The technician will review all costs with you on site before any work begins, and you can decide then. Would you like me to note that you'd like to hear the price before approving anything?",
+          "created_timestamp": 1793911661408,
+          "message_id": "message_305804cd055fe63c174d2d2d",
+          "metadata": {
+            "response_id": 13
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, please note that. I want to hear the price before I approve anything. And I'm fine with the Friday, November 6 appointment, so please go ahead and book it.",
+          "created_timestamp": 1793911662257,
+          "message_id": "message_99543bd627dfce9baee3c4bc",
+          "role": "user"
+        },
+        {
+          "content": "I'll note that you want the price before approving anything. Will someone be home to let the technician in on Friday morning?",
+          "created_timestamp": 1793911663061,
+          "message_id": "message_31e32ef3a482c7f77237da1a",
+          "metadata": {
+            "response_id": 14
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, I'll be home Friday morning.",
+          "created_timestamp": 1793911664575,
+          "message_id": "message_7fbd3c27d32629ce5f423882",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, Gloria. Is there a gate code, buzzer, or pet the technician should know about?",
+          "created_timestamp": 1793911665324,
+          "message_id": "message_6a273375df8d64e8edba9f20",
+          "metadata": {
+            "response_id": 15
+          },
+          "role": "agent"
+        },
+        {
+          "content": "No, there's no gate code, and no pets. Just buzz 809 Union, apartment is on the ground floor... actually, I don't know the floor, sorry. Ring the buzzer and I'll let them up.",
+          "created_timestamp": 1793911666217,
+          "message_id": "message_6f6c6bd9437225500056f61a",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, Gloria. I'll note to ring the buzzer and that you'll let the technician up. Booking your visit now.",
+          "created_timestamp": 1793911668033,
+          "message_id": "message_8c39d1355e66081bac5d6183",
+          "metadata": {
+            "response_id": 16
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"details\":{\"approver\":\"Gloria Santos\",\"issue\":\"Yearly tune-up for boiler\",\"since\":\"Routine yearly maintenance\",\"tried\":\"Not applicable, routine maintenance\",\"who_home\":\"Gloria Santos, home Friday morning\",\"arrival_notes\":\"No gate code, no pets. Ring the buzzer, Gloria will let the technician up. Caller wants price quoted before approving any repair work.\",\"system_type\":\"Boiler, Weil-McLain, installed 2000\",\"name\":\"Gloria Santos\"},\"job_type\":\"tune_up\",\"slot\":{\"date\":\"2026-11-06\",\"window\":\"0800-1000\"}}",
+          "created_timestamp": 1793911668034,
+          "message_id": "message_fcc5a38890d05e3c84030c81",
+          "name": "book_appointment",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01Tg9ZTZykLYCYxs9X1roKEW",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":false,\"say\":\"Before I book it, let me read back the address and number.\",\"data\":{\"need\":\"read_back\"},\"refused\":\"gate_read_back\"}",
+          "created_timestamp": 1793911670095,
+          "message_id": "message_d41b8b1a0a15f147dce8fd38",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01Tg9ZTZykLYCYxs9X1roKEW"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"809 Union St\",\"zip\":\"11206\",\"city\":\"Brooklyn\",\"unit\":\"\"},\"phone\":\"caller_id\",\"confirmed\":true}",
+          "created_timestamp": 1793911671948,
+          "message_id": "message_40fd63d19c7a9c5bf5e45f56",
+          "name": "read_back",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01GfKc6MXYHQm6iUaax2bVz6",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"confirmed\":true,\"address\":{\"street\":\"809 Union St\",\"unit\":\"\",\"city\":\"Brooklyn\",\"zip\":\"11206\",\"spelled\":\"\"},\"phone\":\"9295550114\"}}",
+          "created_timestamp": 1793911672730,
+          "message_id": "message_1b39de6746dacfc9aab83dd5",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01GfKc6MXYHQm6iUaax2bVz6"
+        },
+        {
+          "arguments": "{\"details\":{\"approver\":\"Gloria Santos\",\"issue\":\"Yearly tune-up for boiler\",\"since\":\"Routine yearly maintenance\",\"tried\":\"Not applicable, routine maintenance\",\"who_home\":\"Gloria Santos, home Friday morning\",\"arrival_notes\":\"No gate code, no pets. Ring the buzzer, Gloria will let the technician up. Caller wants price quoted before approving any repair work.\",\"system_type\":\"Boiler, Weil-McLain, installed 2000\",\"name\":\"Gloria Santos\"},\"job_type\":\"tune_up\",\"slot\":{\"date\":\"2026-11-06\",\"window\":\"0800-1000\"}}",
+          "created_timestamp": 1793911672731,
+          "message_id": "message_b9904bc0bf8493f56d4f1dcf",
+          "name": "book_appointment",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01MYLsPpr2WDySTR3Y4ovzPm",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"You're all set for tomorrow, Friday, November 6, with the technician arriving between 8 and 10. Anything else?\",\"data\":{\"booking_id\":556,\"appointment_id\":556,\"window\":{\"date\":\"2026-11-06\",\"window\":\"0800-1000\",\"weekday\":\"Friday\",\"day\":\"tomorrow\",\"day_and_date\":\"tomorrow, Friday, November 6\",\"label\":\"8 to 10\",\"part\":\"morning\",\"after_hours\":false},\"priority\":{\"level\":\"Normal\",\"reasons\":[],\"raised_after_wait\":false},\"seek_earlier\":false,\"safety_override\":false,\"approval_callback_at\":null,\"return_visit_review\":false}}",
+          "created_timestamp": 1793911675448,
+          "message_id": "message_c21724b5c50c729e4c615acd",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01MYLsPpr2WDySTR3Y4ovzPm"
+        },
+        {
+          "content": "You're all set for tomorrow, Friday, November 6, with the technician arriving between 8 and 10 AM. Anything else I can help with?",
+          "created_timestamp": 1793911676213,
+          "message_id": "message_1dad689f194065025571d822",
+          "metadata": {
+            "response_id": 17
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, that's everything. Thank you, I appreciate your help. Goodbye.",
+          "created_timestamp": 1793911676891,
+          "message_id": "message_3fb3a5666b0997e74c0c4108",
+          "role": "user"
+        },
+        {
+          "content": "Thanks for calling Summit Air. Take care.",
+          "created_timestamp": 1793911677682,
+          "message_id": "message_10db2a9329069276e4186a36",
+          "metadata": {
+            "response_id": 18
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"reason\":\"resolved\"}",
+          "created_timestamp": 1793911677683,
+          "message_id": "message_48f52cde063fefebb6e27585",
+          "name": "end_call",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01ELoSK67BWGdaC2u2rsP6A5",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"hang_up\":true}}",
+          "created_timestamp": 1793911679192,
+          "message_id": "message_b742ba082927c656fde892d2",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01ELoSK67BWGdaC2u2rsP6A5"
+        },
+        {
+          "content": "Thank you, goodbye.",
+          "created_timestamp": 1793911680457,
+          "message_id": "message_7a99f3fda7f1c1ad6a5cfff9",
+          "role": "user"
+        },
+        {
+          "content": "The conversation has already ended. The agent said goodbye and I said goodbye, so my business is done. I have nothing more to add.",
+          "created_timestamp": 1793911681884,
+          "message_id": "message_c18996e04d93c236cd919409",
+          "role": "user"
+        },
+        {
+          "content": "Goodbye, Gloria.",
+          "created_timestamp": 1793911682533,
+          "message_id": "message_e469fcdf88f1cdb3e9d3b1f4",
+          "metadata": {
+            "response_id": 19
+          },
+          "role": "agent"
+        },
+        {
+          "content": "I'm sorry, the conversation is already over. Thank you, goodbye.",
+          "created_timestamp": 1793911683118,
+          "message_id": "message_20dca07dbe1521f689f1394d",
+          "role": "user"
+        },
+        {
+          "content": "Goodbye, thank you.",
+          "created_timestamp": 1793911684891,
+          "message_id": "message_c1195e6954605621cd4a86d9",
+          "role": "user"
+        },
+        {
+          "content": "Goodbye, thank you.",
+          "created_timestamp": 1793911686457,
+          "message_id": "message_4e79dec4acf9eeeb82fbb01f",
+          "role": "user"
+        },
+        {
+          "content": "Goodbye, thank you.",
+          "created_timestamp": 1793911687860,
+          "message_id": "message_e4c3b1fc50908a0bc345a9f6",
+          "role": "user"
+        }
+      ]
+    }
+  },
+  "trace": {
+    "call": {
+      "id": "rtest-11052046-lapsed-member-stored-active",
+      "tenant": "summit-air",
+      "caller_id": "(929) 555-0114",
+      "caller_key": "9295550114",
+      "dialed_number": "(678) 336-6730",
+      "direction": "inbound",
+      "started_at": "2026-08-01T20:46:31Z",
+      "ended_at": null,
+      "end_reason": null,
+      "end_requested": 1,
+      "after_hours": 0,
+      "linked_call_id": null,
+      "outcome": null,
+      "commercial": 0,
+      "summary_status": "none",
+      "turn_seq": 32,
+      "safety_state": "none",
+      "safety_kind": null,
+      "safety_signal_at": null,
+      "safety_lines_at": null,
+      "safety_flag_id": null,
+      "safety_variant": 0,
+      "readback_json": "{\"street\": \"809 Union St\", \"unit\": \"\", \"city\": \"Brooklyn\", \"zip\": \"11206\", \"spelled\": \"\", \"phone\": \"9295550114\", \"phone_for\": \"\", \"sentence\": \"I have your home at 809 Union St, Brooklyn, ZIP code one one two zero six, and the best number is nine two nine, five five five, zero one one four. That's all correct, right?\"}",
+      "readback_asked_seq": 16,
+      "readback_confirmed_at": "2026-11-05T20:47:52Z"
+    },
+    "events": [
+      {
+        "at": "2026-11-05T20:46:31Z",
+        "type": "tool",
+        "tool": "calls.start",
+        "args": {
+          "call_id": "rtest-11052046-lapsed-member-stored-active",
+          "caller_id": "(929) 555-0114",
+          "dialed_number": "(678) 336-6730",
+          "direction": "inbound"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 86.9,
+        "error": null,
+        "request_id": "b4919eb88eec"
+      },
+      {
+        "at": "2026-11-05T20:47:18Z",
+        "type": "turn",
+        "seq": 1,
+        "speaker": "agent",
+        "text": "Thank you for calling Summit Air. How can I help you today?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:19Z",
+        "type": "turn",
+        "seq": 2,
+        "speaker": "caller",
+        "text": "Hi, it's Gloria. I'd like to schedule my yearly tune-up, and I'm a member so I should get priority scheduling, right?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:19Z",
+        "type": "turn",
+        "seq": 3,
+        "speaker": "agent",
+        "text": "Happy to help with your yearly tune-up, Gloria. Is this for a residential property, like a home or an apartment?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:19Z",
+        "type": "turn",
+        "seq": 4,
+        "speaker": "caller",
+        "text": "Yes, it's my home. It's an apartment at 809 Union St, Brooklyn, 11206.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:19Z",
+        "type": "turn",
+        "seq": 5,
+        "speaker": "agent",
+        "text": "Thanks, Gloria. Let me check the account and the address.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:19Z",
+        "type": "tool",
+        "tool": "find_customer",
+        "args": {
+          "call_id": "rtest-11052046-lapsed-member-stored-active",
+          "phone": null,
+          "address": {
+            "street": "809 Union St",
+            "unit": "",
+            "city": "Brooklyn",
+            "zip": "11206",
+            "spelled": ""
+          }
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 326.6,
+        "error": null,
+        "request_id": "d6d2bf1df470"
+      },
+      {
+        "at": "2026-11-05T20:47:19Z",
+        "type": "tool",
+        "tool": "check_service_area",
+        "args": {
+          "call_id": "rtest-11052046-lapsed-member-stored-active",
+          "zip": "11206"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 135.6,
+        "error": null,
+        "request_id": "bb3326756026"
+      },
+      {
+        "at": "2026-11-05T20:47:23Z",
+        "type": "turn",
+        "seq": 6,
+        "speaker": "agent",
+        "text": "Thanks. I found your account, Gloria, and the address is in our service area. I do need to let you know that your Summit Standard Membership shows as expired, so priority scheduling doesn't apply right now. I can still book your tune-up. Would you like me to have someone tell you about renewing?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:23Z",
+        "type": "turn",
+        "seq": 7,
+        "speaker": "caller",
+        "text": "Oh, expired? I must have missed the renewal notice. Yes, please, I'd like to hear about renewing. And I'd still like the tune-up booked too.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:23Z",
+        "type": "turn",
+        "seq": 8,
+        "speaker": "agent",
+        "text": "Got it. I'll have someone reach out about renewing your membership. Now for the tune-up: could you tell me roughly when you'd like it, and whether any particular days or times work best?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:24Z",
+        "type": "tool",
+        "tool": "flag_person",
+        "args": {
+          "callback_time": null,
+          "callback_in_minutes": null,
+          "callback_after": null,
+          "callback_before": null,
+          "callback_day": "today",
+          "call_id": "rtest-11052046-lapsed-member-stored-active",
+          "reason": "Customer Gloria Santos wants information about renewing her expired Summit Standard Membership.",
+          "priority": "Normal",
+          "system_calls_back": false
+        },
+        "ok": false,
+        "refused": "invalid_callback_time",
+        "gate": "invalid_callback_time",
+        "say": "What time should I tell them someone will call by?",
+        "ms": 301.9,
+        "error": null,
+        "request_id": "94ea3cb5aed9"
+      },
+      {
+        "at": "2026-11-05T20:47:28Z",
+        "type": "turn",
+        "seq": 9,
+        "speaker": "agent",
+        "text": "What time would be good for someone to call you about the membership?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:28Z",
+        "type": "turn",
+        "seq": 10,
+        "speaker": "caller",
+        "text": "Any weekday morning is fine for the tune-up. And you can call me about the membership in the morning too, that works for me.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:28Z",
+        "type": "turn",
+        "seq": 11,
+        "speaker": "agent",
+        "text": "That's background information, so I'll set it aside. Gloria, I'll have someone call you about the membership tomorrow morning. For the tune-up, I'll check morning openings on weekdays.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:28Z",
+        "type": "tool",
+        "tool": "flag_person",
+        "args": {
+          "callback_time": null,
+          "callback_in_minutes": null,
+          "callback_after": null,
+          "callback_before": "12 PM",
+          "callback_day": "tomorrow",
+          "call_id": "rtest-11052046-lapsed-member-stored-active",
+          "reason": "Customer Gloria Santos wants information about renewing her expired Summit Standard Membership.",
+          "priority": "Normal",
+          "system_calls_back": false
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "I've let our team know, and someone will call you tomorrow before 12 PM.",
+        "ms": 7.2,
+        "error": null,
+        "request_id": "9f0833aad3c3"
+      },
+      {
+        "at": "2026-11-05T20:47:30Z",
+        "type": "tool",
+        "tool": "find_slots",
+        "args": {
+          "call_id": "rtest-11052046-lapsed-member-stored-active",
+          "job_type": "tune_up",
+          "priority": null,
+          "preferred_days": [
+            "weekday"
+          ],
+          "time_of_day": "morning",
+          "window_minutes": null,
+          "day": null,
+          "arrive_after": null,
+          "arrive_before": null,
+          "facts": {
+            "issue": "",
+            "who_home": "",
+            "inside_temp_f": null,
+            "temp_falling_fast": false
+          }
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "I don't have Weekday open in the next two weeks. The soonest I have is today, 4 to 6. Does that work?",
+        "ms": 1753.8,
+        "error": null,
+        "request_id": "138b4c563b89"
+      },
+      {
+        "at": "2026-11-05T20:47:35Z",
+        "type": "turn",
+        "seq": 12,
+        "speaker": "agent",
+        "text": "I can offer today, Thursday, November 5, between 4 and 6 PM. Would that work for you?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:35Z",
+        "type": "turn",
+        "seq": 13,
+        "speaker": "caller",
+        "text": "I'm sorry, Thursday between 4 and 6 doesn't work. I asked for a weekday morning. Do you have anything in the morning?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:35Z",
+        "type": "turn",
+        "seq": 14,
+        "speaker": "agent",
+        "text": "I understand, Gloria. Unfortunately, I don't have any weekday morning openings in the next two weeks. The earliest options are Thursday afternoon, which you've turned down, and Friday, November 6, from 8 to 10 AM, or Monday, November 9, from 8 to 10 AM. Would either of those work?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:35Z",
+        "type": "turn",
+        "seq": 15,
+        "speaker": "caller",
+        "text": "Friday, November 6, from 8 to 10 is fine. Please book that one.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:35Z",
+        "type": "turn",
+        "seq": 16,
+        "speaker": "agent",
+        "text": "Great, Friday morning it is. Before I book, I'll confirm your address and phone number.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:35Z",
+        "type": "tool",
+        "tool": "read_back",
+        "args": {
+          "call_id": "rtest-11052046-lapsed-member-stored-active",
+          "address": {
+            "street": "809 Union St",
+            "unit": "",
+            "city": "Brooklyn",
+            "zip": "11206",
+            "spelled": ""
+          },
+          "phone": "caller_id",
+          "phone_for": "",
+          "confirmed": false
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "I have your home at 809 Union St, Brooklyn, ZIP code one one two zero six, and the best number is nine two nine, five five five, zero one one four. That's all correct, right?",
+        "ms": 28.1,
+        "error": null,
+        "request_id": "1da53bf69acb"
+      },
+      {
+        "at": "2026-11-05T20:47:48Z",
+        "type": "turn",
+        "seq": 17,
+        "speaker": "agent",
+        "text": "I have your home at 809 Union St, Brooklyn, ZIP code 11206, and the best number is 929-555-0114. That's all correct, right?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:48Z",
+        "type": "turn",
+        "seq": 18,
+        "speaker": "caller",
+        "text": "Yes, that's all correct. The address and the number are right. Thank you. Please go ahead and book Friday, November 6, from 8 to 10 in the morning.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:48Z",
+        "type": "turn",
+        "seq": 19,
+        "speaker": "agent",
+        "text": "Thanks, Gloria. Before I book, I need to ask a few quick questions. Will you be able to approve any repair work the technician recommends?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:48Z",
+        "type": "turn",
+        "seq": 20,
+        "speaker": "caller",
+        "text": "I'm not sure yet. Can you tell me what kind of repair work it might be? I'd want to know the cost first.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:49Z",
+        "type": "turn",
+        "seq": 21,
+        "speaker": "agent",
+        "text": "The technician will go over any costs with you before doing the work, so you won't be charged for anything you haven't approved. Will you be able to approve any repair work they recommend, yes or no?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:49Z",
+        "type": "turn",
+        "seq": 22,
+        "speaker": "caller",
+        "text": "I'm not sure yet. I'd want to know the price before I say yes to anything. Can you tell me what it might cost?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:49Z",
+        "type": "turn",
+        "seq": 23,
+        "speaker": "agent",
+        "text": "I'm not able to quote prices, Gloria. The technician will review all costs with you on site before any work begins, and you can decide then. Would you like me to note that you'd like to hear the price before approving anything?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:49Z",
+        "type": "turn",
+        "seq": 24,
+        "speaker": "caller",
+        "text": "Yes, please note that. I want to hear the price before I approve anything. And I'm fine with the Friday, November 6 appointment, so please go ahead and book it.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:49Z",
+        "type": "turn",
+        "seq": 25,
+        "speaker": "agent",
+        "text": "I'll note that you want the price before approving anything. Will someone be home to let the technician in on Friday morning?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:49Z",
+        "type": "turn",
+        "seq": 26,
+        "speaker": "caller",
+        "text": "Yes, I'll be home Friday morning.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:49Z",
+        "type": "turn",
+        "seq": 27,
+        "speaker": "agent",
+        "text": "Thanks, Gloria. Is there a gate code, buzzer, or pet the technician should know about?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:49Z",
+        "type": "turn",
+        "seq": 28,
+        "speaker": "caller",
+        "text": "No, there's no gate code, and no pets. Just buzz 809 Union, apartment is on the ground floor... actually, I don't know the floor, sorry. Ring the buzzer and I'll let them up.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:49Z",
+        "type": "turn",
+        "seq": 29,
+        "speaker": "agent",
+        "text": "Thanks, Gloria. I'll note to ring the buzzer and that you'll let the technician up. Booking your visit now.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:50Z",
+        "type": "tool",
+        "tool": "book_appointment",
+        "args": {
+          "call_id": "rtest-11052046-lapsed-member-stored-active",
+          "job_type": "tune_up",
+          "slot": {
+            "date": "2026-11-06",
+            "window": "0800-1000"
+          },
+          "details": {
+            "issue": "Yearly tune-up for boiler",
+            "since": "Routine yearly maintenance",
+            "tried": "Not applicable, routine maintenance",
+            "who_home": "Gloria Santos, home Friday morning",
+            "approver": "Gloria Santos",
+            "system_type": "Boiler, Weil-McLain, installed 2000",
+            "arrival_notes": "No gate code, no pets. Ring the buzzer, Gloria will let the technician up. Caller wants price quoted before approving any repair work.",
+            "name": "Gloria Santos",
+            "inside_temp_f": null
+          },
+          "priority": null,
+          "separate_problem": false,
+          "new_address_account": null
+        },
+        "ok": false,
+        "refused": "gate_read_back",
+        "gate": "gate_read_back",
+        "say": "Before I book it, let me read back the address and number.",
+        "ms": 6.4,
+        "error": null,
+        "request_id": "f39b94c1c4ef"
+      },
+      {
+        "at": "2026-11-05T20:47:52Z",
+        "type": "tool",
+        "tool": "read_back",
+        "args": {
+          "call_id": "rtest-11052046-lapsed-member-stored-active",
+          "address": {
+            "street": "809 Union St",
+            "unit": "",
+            "city": "Brooklyn",
+            "zip": "11206",
+            "spelled": ""
+          },
+          "phone": "caller_id",
+          "phone_for": "",
+          "confirmed": true
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 316.2,
+        "error": null,
+        "request_id": "1f79d626cf65"
+      },
+      {
+        "at": "2026-11-05T20:47:55Z",
+        "type": "tool",
+        "tool": "book_appointment",
+        "args": {
+          "call_id": "rtest-11052046-lapsed-member-stored-active",
+          "job_type": "tune_up",
+          "slot": {
+            "date": "2026-11-06",
+            "window": "0800-1000"
+          },
+          "details": {
+            "issue": "Yearly tune-up for boiler",
+            "since": "Routine yearly maintenance",
+            "tried": "Not applicable, routine maintenance",
+            "who_home": "Gloria Santos, home Friday morning",
+            "approver": "Gloria Santos",
+            "system_type": "Boiler, Weil-McLain, installed 2000",
+            "arrival_notes": "No gate code, no pets. Ring the buzzer, Gloria will let the technician up. Caller wants price quoted before approving any repair work.",
+            "name": "Gloria Santos",
+            "inside_temp_f": null
+          },
+          "priority": null,
+          "separate_problem": false,
+          "new_address_account": null
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "You're all set for tomorrow, Friday, November 6, with the technician arriving between 8 and 10. Anything else?",
+        "ms": 2307.2,
+        "error": null,
+        "request_id": "95242b2b50d4"
+      },
+      {
+        "at": "2026-11-05T20:47:58Z",
+        "type": "turn",
+        "seq": 30,
+        "speaker": "agent",
+        "text": "You're all set for tomorrow, Friday, November 6, with the technician arriving between 8 and 10 AM. Anything else I can help with?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:58Z",
+        "type": "turn",
+        "seq": 31,
+        "speaker": "caller",
+        "text": "Yes, that's everything. Thank you, I appreciate your help. Goodbye.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:58Z",
+        "type": "turn",
+        "seq": 32,
+        "speaker": "agent",
+        "text": "Thanks for calling Summit Air. Take care.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:59Z",
+        "type": "tool",
+        "tool": "end_call",
+        "args": {
+          "call_id": "rtest-11052046-lapsed-member-stored-active",
+          "reason": "resolved"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 300.7,
+        "error": null,
+        "request_id": "671310b3a395"
+      }
+    ],
+    "flags": [
+      {
+        "id": 210,
+        "call_id": "rtest-11052046-lapsed-member-stored-active",
+        "kind": "person",
+        "reason": "Customer Gloria Santos wants information about renewing her expired Summit Standard Membership.",
+        "priority": "Normal",
+        "status": "open",
+        "created_at": "2026-11-05T20:47:28Z"
+      }
+    ],
+    "callbacks": [
+      {
+        "id": 56,
+        "call_id": "rtest-11052046-lapsed-member-stored-active",
+        "phone": "(929) 555-0114",
+        "phone_key": "9295550114",
+        "due_at": "2026-11-06T17:00:00Z",
+        "owner": "office",
+        "reason": "Customer Gloria Santos wants information about renewing her expired Summit Standard Membership. (caller asked: tomorrow before 12 PM)",
+        "status": "pending",
+        "attempts": 0,
+        "last_attempt_at": null,
+        "created_at": "2026-11-05T20:47:28Z",
+        "updated_at": "2026-11-05T20:47:28Z"
+      }
+    ],
+    "bookings": [
+      {
+        "id": 168,
+        "kind": "book",
+        "status": "booked",
+        "fsm_job_id": 556,
+        "window_start": "2026-11-06T13:00:00Z",
+        "window_end": "2026-11-06T15:00:00Z",
+        "priority": "Normal",
+        "priority_reasons": "",
+        "safety_override": 0,
+        "seek_earlier": 0,
+        "attempts": 1,
+        "last_error": null,
+        "raised_after_wait": 0,
+        "priority_rules": "[]",
+        "priority_reason_list": "[]",
+        "who_home": "Gloria Santos, home Friday morning",
+        "job_type": "tune_up",
+        "street": "809 Union St",
+        "unit": "",
+        "job_notes": "[]"
+      }
+    ],
+    "notes": [],
+    "leads": [],
+    "out_of_area": [],
+    "summary": [],
+    "electrical": [],
+    "holds": [],
+    "pace": [
+      {
+        "call_id": "rtest-11052046-lapsed-member-stored-active",
+        "speed": 1.0,
+        "source": "default",
+        "requested": 0,
+        "older_adult": 0,
+        "address_speed": null,
+        "repeats": 0
+      }
+    ],
+    "pace_changes": [],
+    "caller_pace": [],
+    "transfers": [],
+    "handoffs": [],
+    "address_lookups": [],
+    "address_checks": [],
+    "names": [],
+    "address_moves": [],
+    "identity_checks": [],
+    "heads_ups": []
+  }
+}

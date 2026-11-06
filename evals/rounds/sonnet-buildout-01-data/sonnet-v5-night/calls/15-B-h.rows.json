@@ -1,0 +1,101 @@
+{
+ "window": [
+  "2026-11-06T05:52:39Z",
+  "2026-11-06T05:56:13Z"
+ ],
+ "calls": [
+  {
+   "call": {
+    "id": "retell_call_e1d7aa5f08452b9518621ff5b67",
+    "tenant": "summit-air",
+    "caller_id": "+16466240418",
+    "caller_key": "6466240418",
+    "dialed_number": "+16783366730",
+    "direction": "inbound",
+    "started_at": "2026-11-06T05:52:51Z",
+    "ended_at": "2026-11-06T05:56:05Z",
+    "end_reason": "agent_end",
+    "end_requested": 1,
+    "after_hours": 1,
+    "linked_call_id": null,
+    "outcome": "booked",
+    "commercial": 0,
+    "summary_status": "pending",
+    "turn_seq": 44,
+    "safety_state": "none",
+    "safety_kind": null,
+    "safety_signal_at": null,
+    "safety_lines_at": null,
+    "safety_flag_id": null,
+    "safety_variant": 0,
+    "readback_json": "{\"street\": \"620 Bedford Avenue\", \"unit\": \"3\", \"city\": \"Brooklyn\", \"zip\": \"11249\", \"spelled\": \"\", \"phone\": \"9175550198\", \"phone_for\": \"\", \"sentence\": \"So that's six twenty Bedford Avenue, unit three, and nine one seven, five five five, zero one nine eight. That's all correct, right?\"}",
+    "readback_asked_seq": 24,
+    "readback_confirmed_at": "2026-11-06T05:55:09Z"
+   },
+   "bookings": [
+    {
+     "id": 273,
+     "call_id": "retell_call_e1d7aa5f08452b9518621ff5b67",
+     "kind": "book",
+     "status": "booked",
+     "fsm_key": "retell_call_e1d7aa5f08452b9518621ff5b67:book:d831983bae073d468271e4e259bfcc1c77f79ced",
+     "request_json": "{\"call_id\": \"retell_call_e1d7aa5f08452b9518621ff5b67\", \"job_type\": \"safety_check\", \"details\": {\"issue\": \"Burning smell and spark from furnace; unit switched off at breaker\", \"since\": \"tonight\", \"tried\": \"Switched unit off at the breaker\", \"who_home\": \"Caller will be home\", \"approver\": \"Landlord approves repairs\", \"system_type\": \"\", \"arrival_notes\": \"No gate code or buzzer. Apartment 3.\", \"name\": \"Riley Chen\", \"inside_temp_f\": null}, \"address\": {\"street\": \"620 Bedford Avenue\", \"unit\": \"3\", \"city\": \"Brooklyn\", \"zip\": \"11249\"}, \"phone\": \"9175550198\", \"scoped_customer_ids\": [], \"contact_for\": \"\", \"account_phone\": \"\", \"priority\": \"High\", \"priority_reasons\": [\"sparks or an electrical smell at the unit, caller said \\\"Hey, there's a burning smell coming from my furnace, and I saw a spark\\\"\"], \"priority_rules\": [\"electrical_fault\"], \"raised_after_wait\": false, \"requested_priority\": \"Urgent\", \"notes\": [], \"account\": null, \"contact_name\": null, \"window_start\": \"2026-11-06T13:00:00Z\", \"window_end\": \"2026-11-06T13:30:00Z\"}",
+     "fsm_job_id": 541,
+     "fsm_appointment_id": 541,
+     "customer_id": 301,
+     "window_start": "2026-11-06T13:00:00Z",
+     "window_end": "2026-11-06T13:30:00Z",
+     "job_type": "safety_check",
+     "priority": "High",
+     "priority_reasons": "sparks or an electrical smell at the unit, caller said \"Hey, there's a burning smell coming from my furnace, and I saw a spark\"",
+     "safety_override": 0,
+     "seek_earlier": 0,
+     "reason": "",
+     "attempts": 1,
+     "last_error": null,
+     "turn_seq": 37,
+     "created_at": "2026-11-06T05:55:42Z",
+     "updated_at": "2026-11-06T05:55:42Z"
+    }
+   ],
+   "booking_names": [
+    {
+     "call_id": "retell_call_e1d7aa5f08452b9518621ff5b67",
+     "name": "Riley Chen",
+     "at": "2026-11-06T05:55:09Z"
+    }
+   ],
+   "call_names": [],
+   "flags": [
+    {
+     "id": 446,
+     "call_id": "retell_call_e1d7aa5f08452b9518621ff5b67",
+     "kind": "person",
+     "reason": "Burning smell and spark from furnace at the home, caller switched unit off at breaker. Wants technician visit. Caller: Riley Chen, calling from +16466240418.",
+     "priority": "Urgent",
+     "status": "open",
+     "created_at": "2026-11-06T05:53:35Z"
+    }
+   ],
+   "callbacks": [
+    {
+     "id": 115,
+     "call_id": "retell_call_e1d7aa5f08452b9518621ff5b67",
+     "phone": "+16466240418",
+     "phone_key": "6466240418",
+     "due_at": "2026-11-06T06:08:35Z",
+     "owner": "on_call",
+     "reason": "Burning smell and spark from furnace at the home, caller switched unit off at breaker. Wants technician visit. Caller: Riley Chen, calling from +16466240418.",
+     "status": "pending",
+     "attempts": 0,
+     "last_attempt_at": null,
+     "created_at": "2026-11-06T05:53:35Z",
+     "updated_at": "2026-11-06T05:53:35Z"
+    }
+   ],
+   "leads": []
+  }
+ ],
+ "do_not_call": [],
+ "dumped_at": "2026-11-06T05:56:24Z"
+}

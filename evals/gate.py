@@ -16,6 +16,7 @@ manner an owner edit is allowed to change.
 Paid: about $0.02 a scenario on the fast profile (MEASURED, evals/README.md smoke runs), so about
 $0.39 for the 18 must-pass scenarios (MEASURED, evals/README.md), plus about $0.02 a rerun.
 """
+
 import argparse
 import fcntl
 import sys
@@ -82,20 +83,33 @@ def summary(run: Run, content: dict, rerun: Run | None = None) -> dict:
     }
 
 
-def run_gate(content: dict, profile: str, results_dir: Path = RESULTS_DIR, workers: int = 4,
-             harness=None) -> tuple[Run, dict]:
+def run_gate(
+    content: dict, profile: str, results_dir: Path = RESULTS_DIR, workers: int = 4, harness=None
+) -> tuple[Run, dict]:
     """Every must-pass scenario once, then the ones that missed once more."""
     chosen = scenarios()
     with tempfile.TemporaryDirectory(prefix="summit-gate-") as tmp:
         harness = harness or Harness(default_models(profile), STACK, Path(tmp), overlay=content)
-        first = build_run(SUITE, ["must-pass"], STACK, profile, run_suite(harness, chosen, 1, workers),
-                          overlay=content)
+        first = build_run(
+            SUITE,
+            ["must-pass"],
+            STACK,
+            profile,
+            run_suite(harness, chosen, 1, workers),
+            overlay=content,
+        )
         results.save(first, results_dir)
         again = [s for s in chosen if s.id in _missed(first)]
         rerun = None
         if again:
-            rerun = build_run(RERUN_SUITE, ["must-pass"], STACK, profile,
-                              run_suite(harness, again, 1, workers), overlay=content)
+            rerun = build_run(
+                RERUN_SUITE,
+                ["must-pass"],
+                STACK,
+                profile,
+                run_suite(harness, again, 1, workers),
+                overlay=content,
+            )
             results.save(rerun, results_dir)
     return first, summary(first, content, rerun)
 
@@ -121,8 +135,9 @@ def single_runner(db_path: Path) -> Iterator[None]:
         lock.close()
 
 
-def check_waiting(db_path: Path, profile: str, results_dir: Path = RESULTS_DIR, run=run_gate
-                  ) -> list[dict]:
+def check_waiting(
+    db_path: Path, profile: str, results_dir: Path = RESULTS_DIR, run=run_gate
+) -> list[dict]:
     """Run the gate on every version waiting for one and record each result. The draft is tested
     exactly as saved; the server applies it the same way on a real call. A version cancelled or
     timed out while it ran is skipped: its late result is refused."""
@@ -140,9 +155,11 @@ def check_waiting(db_path: Path, profile: str, results_dir: Path = RESULTS_DIR, 
                 version = rules.get(conn, row["id"])
                 _run, found = run(version["content"], profile, results_dir)
                 try:
-                    done.append(rules.record_gate(
-                        conn, row["id"], found, datetime.now(UTC), len(scenarios())
-                    ))
+                    done.append(
+                        rules.record_gate(
+                            conn, row["id"], found, datetime.now(UTC), len(scenarios())
+                        )
+                    )
                 except rules.RulesError as err:
                     print(f"version {version['number']}: result not recorded ({err})")
                     done.append({**rules.get(conn, row["id"]), "skipped": True})

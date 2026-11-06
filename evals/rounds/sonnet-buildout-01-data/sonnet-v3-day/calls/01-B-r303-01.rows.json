@@ -1,0 +1,76 @@
+{
+ "window": [
+  "2026-11-06T03:52:27Z",
+  "2026-11-06T03:54:45Z"
+ ],
+ "calls": [
+  {
+   "call": {
+    "id": "retell_call_8d700848969687135cf12483bd0",
+    "tenant": "summit-air",
+    "caller_id": "+16466240418",
+    "caller_key": "6466240418",
+    "dialed_number": "+16783366730",
+    "direction": "inbound",
+    "started_at": "2026-11-05T16:52:39Z",
+    "ended_at": "2026-11-05T16:54:38Z",
+    "end_reason": "agent_end",
+    "end_requested": 1,
+    "after_hours": 0,
+    "linked_call_id": null,
+    "outcome": "booked",
+    "commercial": 0,
+    "summary_status": "pending",
+    "turn_seq": 33,
+    "safety_state": "none",
+    "safety_kind": null,
+    "safety_signal_at": null,
+    "safety_lines_at": null,
+    "safety_flag_id": null,
+    "safety_variant": 0,
+    "readback_json": "{\"street\": \"248 Duffield Street\", \"unit\": \"\", \"city\": \"Brooklyn\", \"zip\": \"11201\", \"spelled\": \"\", \"phone\": \"6466240418\", \"phone_for\": \"\", \"sentence\": \"So that's two forty-eight Duffield Street, and the number you're calling from, ending in zero four one eight. That's all correct, right?\"}",
+    "readback_asked_seq": 17,
+    "readback_confirmed_at": "2026-11-05T16:53:48Z"
+   },
+   "bookings": [
+    {
+     "id": 239,
+     "call_id": "retell_call_8d700848969687135cf12483bd0",
+     "kind": "book",
+     "status": "booked",
+     "fsm_key": "retell_call_8d700848969687135cf12483bd0:book:5758b151f5a7d3788a6daa5bfd49ca67e0240dd7",
+     "request_json": "{\"call_id\": \"retell_call_8d700848969687135cf12483bd0\", \"job_type\": \"estimate\", \"details\": {\"issue\": \"Estimate for new central air installation\", \"since\": \"not applicable\", \"tried\": \"not applicable\", \"who_home\": \"Someone will be home to let technician in\", \"approver\": \"not applicable - estimate\", \"system_type\": \"central air (new install)\", \"arrival_notes\": \"House, no gate code or buzzer\", \"name\": \"Hannah Alvarez\", \"inside_temp_f\": null}, \"address\": {\"street\": \"248 Duffield Street\", \"unit\": \"\", \"city\": \"Brooklyn\", \"zip\": \"11201\"}, \"phone\": \"6466240418\", \"scoped_customer_ids\": [], \"contact_for\": \"\", \"account_phone\": \"\", \"priority\": \"Normal\", \"priority_reasons\": [], \"priority_rules\": [], \"raised_after_wait\": false, \"requested_priority\": \"Normal\", \"notes\": [], \"account\": null, \"contact_name\": null, \"window_start\": \"2026-11-05T17:00:00Z\", \"window_end\": \"2026-11-05T17:30:00Z\"}",
+     "fsm_job_id": 548,
+     "fsm_appointment_id": 548,
+     "customer_id": 301,
+     "window_start": "2026-11-05T17:00:00Z",
+     "window_end": "2026-11-05T17:30:00Z",
+     "job_type": "estimate",
+     "priority": "Normal",
+     "priority_reasons": "",
+     "safety_override": 0,
+     "seek_earlier": 0,
+     "reason": "",
+     "attempts": 1,
+     "last_error": null,
+     "turn_seq": 27,
+     "created_at": "2026-11-05T16:54:18Z",
+     "updated_at": "2026-11-05T16:54:18Z"
+    }
+   ],
+   "booking_names": [
+    {
+     "call_id": "retell_call_8d700848969687135cf12483bd0",
+     "name": "Hannah Alvarez",
+     "at": "2026-11-05T16:53:48Z"
+    }
+   ],
+   "call_names": [],
+   "flags": [],
+   "callbacks": [],
+   "leads": []
+  }
+ ],
+ "do_not_call": [],
+ "dumped_at": "2026-11-06T03:54:56Z"
+}

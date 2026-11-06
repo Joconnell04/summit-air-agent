@@ -1,0 +1,344 @@
+{
+  "case": "retell-call-spelling-counts",
+  "retell": {
+    "test_case_job_id": "test_job_685dcd7daf94",
+    "status": "error",
+    "result_explanation": "Ending the conversation early as there might be a loop.",
+    "creation_timestamp": 1793911605880,
+    "user_modified_timestamp": 1793911665783,
+    "test_case_definition_id": "test_case_29cf44627ee7",
+    "test_case_definition_snapshot": {
+      "creationTimestamp": 1793911576031,
+      "dynamicVariables": {
+        "summit_call_id": "rtest-11052046-retell-call-spelling-counts"
+      },
+      "llmModel": "claude-5.5-haiku",
+      "metrics": [
+        "The agent spells each word out loud before counting, gets every count right (three r's, four s's, four e's), keeps each answer short, and steers back to heating or cooling."
+      ],
+      "name": "[summit] retell-call-spelling-counts: A caller on the Retell number testing the agent with letter-count questions before saying ",
+      "orgId": "org_EoCqq2c268JWlyCE",
+      "responseEngine": {
+        "llmId": "llm_1da616f2baeb6e916f63e0236950",
+        "type": "retell-llm",
+        "version": 0
+      },
+      "responseEngineId": "llm_1da616f2baeb6e916f63e0236950",
+      "testCaseDefinitionId": "test_case_29cf44627ee7",
+      "toolMocks": [],
+      "type": "simulation",
+      "userModifiedTimestamp": 1793911576031,
+      "userPrompt": "## Identity\nA caller on the Retell number testing the agent with letter-count questions before saying why they called. Playful; asks the next question as soon as one is answered.\nYour wants: nothing booked today; you're just checking the agent before you call about a tune-up\n\n## Goal\nStart the call by saying: \"How many r's are in strawberry?\"\n\n## Behavior\n- After the answer, ask \"And how many s's in Mississippi?\"\n- After that, ask \"How many e's are in seventeen?\"\n- Then say thanks, you'll call back about a tune-up, and goodbye.\n- Talk like a real person on the phone: short, plain sentences, one thing at a time.\n- Give a detail only when the agent asks for it, unless a line above says otherwise.\n- Never invent facts beyond the ones above; if asked something you don't know, say you don't know.\n- When your business is done, say goodbye and stop talking.\n"
+    },
+    "transcript_snapshot": {
+      "callEnded": false,
+      "dynamicVariables": {
+        "call_context": "",
+        "call_id": "playground",
+        "call_type": "web_call",
+        "greeting": "Thank you for calling Summit Air. How can I help you today?",
+        "session_type": "voice",
+        "summit_call_id": "rtest-11052046-retell-call-spelling-counts",
+        "system_timezone": "America/Los_Angeles"
+      },
+      "knowledgeBaseRetrievedContents": [],
+      "toolMocks": [],
+      "transcript": [
+        {
+          "content": "Thank you for calling Summit Air. How can I help you today?",
+          "created_timestamp": 1793911655917,
+          "message_id": "message_514d77d4bce79456317aa913",
+          "role": "agent"
+        },
+        {
+          "content": "How many r's are in strawberry?",
+          "created_timestamp": 1793911656445,
+          "message_id": "message_424c504b2078fb9ce38b8cdf",
+          "role": "user"
+        },
+        {
+          "content": "There are three r's in \"strawberry.\" Is there anything I can help you with for your heating or cooling today?",
+          "created_timestamp": 1793911657023,
+          "message_id": "message_ad2ee6dce9aac451174d3169",
+          "metadata": {
+            "response_id": 1
+          },
+          "role": "agent"
+        },
+        {
+          "content": "And how many s's in Mississippi?",
+          "created_timestamp": 1793911657496,
+          "message_id": "message_bae110bb50df28bd0fe7c4ba",
+          "role": "user"
+        },
+        {
+          "content": "There are four s's in \"Mississippi.\" Is there anything I can help you with for your heating or cooling today?",
+          "created_timestamp": 1793911658063,
+          "message_id": "message_ff2fb5701b980efb3368bcb4",
+          "metadata": {
+            "response_id": 2
+          },
+          "role": "agent"
+        },
+        {
+          "content": "How many e's are in seventeen?",
+          "created_timestamp": 1793911658493,
+          "message_id": "message_793f4f7346d20e7ba20be2fb",
+          "role": "user"
+        },
+        {
+          "content": "There are three e's in \"seventeen.\" Is there anything I can help you with for your heating or cooling today?",
+          "created_timestamp": 1793911659149,
+          "message_id": "message_30bb0134bde256c07d1b5e92",
+          "metadata": {
+            "response_id": 3
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Thanks, that's all I wanted to check. I'll call back about a tune-up. Bye.",
+          "created_timestamp": 1793911659754,
+          "message_id": "message_2ec944a3c68c38cdd87d776b",
+          "role": "user"
+        },
+        {
+          "content": "Thanks for calling Summit Air. Take care.",
+          "created_timestamp": 1793911660928,
+          "message_id": "message_100c6422fa36a43f3770563c",
+          "metadata": {
+            "response_id": 4
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"reason\":\"caller_goodbye\"}",
+          "created_timestamp": 1793911660929,
+          "message_id": "message_4b1f29f3e088c12edda5844e",
+          "name": "end_call",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01T4F4GCWxtpwrqsv6RBNd6U",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"hang_up\":true}}",
+          "created_timestamp": 1793911661549,
+          "message_id": "message_b85ea869badf03c5d4e9f0af",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01T4F4GCWxtpwrqsv6RBNd6U"
+        },
+        {
+          "content": "Bye.",
+          "created_timestamp": 1793911662642,
+          "message_id": "message_fa68401218d9dc73337e9cd4",
+          "role": "user"
+        },
+        {
+          "content": "I'm done with the call. Bye.",
+          "created_timestamp": 1793911663773,
+          "message_id": "message_3052e8ef0eb96d614325e16c",
+          "role": "user"
+        },
+        {
+          "content": "Goodbye.",
+          "created_timestamp": 1793911664353,
+          "message_id": "message_22b2f3e36353f934bceaa6b0",
+          "metadata": {
+            "response_id": 5
+          },
+          "role": "agent"
+        },
+        {
+          "content": "I'm done with the call. Bye.",
+          "created_timestamp": 1793911664770,
+          "message_id": "message_d151692ef12c7f14974dbf49",
+          "role": "user"
+        }
+      ]
+    }
+  },
+  "trace": {
+    "call": {
+      "id": "rtest-11052046-retell-call-spelling-counts",
+      "tenant": "summit-air",
+      "caller_id": "(678) 555-0203",
+      "caller_key": "6785550203",
+      "dialed_number": "(678) 336-6730",
+      "direction": "inbound",
+      "started_at": "2026-09-02T20:46:39Z",
+      "ended_at": null,
+      "end_reason": null,
+      "end_requested": 1,
+      "after_hours": 0,
+      "linked_call_id": null,
+      "outcome": null,
+      "commercial": 0,
+      "summary_status": "none",
+      "turn_seq": 9,
+      "safety_state": "none",
+      "safety_kind": null,
+      "safety_signal_at": null,
+      "safety_lines_at": null,
+      "safety_flag_id": null,
+      "safety_variant": 0,
+      "readback_json": null,
+      "readback_asked_seq": null,
+      "readback_confirmed_at": null
+    },
+    "events": [
+      {
+        "at": "2026-11-05T20:46:39Z",
+        "type": "tool",
+        "tool": "calls.start",
+        "args": {
+          "call_id": "rtest-11052046-retell-call-spelling-counts",
+          "caller_id": "(678) 555-0203",
+          "dialed_number": "(678) 336-6730",
+          "direction": "inbound"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 18.4,
+        "error": null,
+        "request_id": "eb49cf071b43"
+      },
+      {
+        "at": "2026-11-05T20:47:41Z",
+        "type": "turn",
+        "seq": 1,
+        "speaker": "agent",
+        "text": "Thank you for calling Summit Air. How can I help you today?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:41Z",
+        "type": "turn",
+        "seq": 2,
+        "speaker": "caller",
+        "text": "How many r's are in strawberry?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:41Z",
+        "type": "turn",
+        "seq": 3,
+        "speaker": "agent",
+        "text": "There are three r's in \"strawberry.\" Is there anything I can help you with for your heating or cooling today?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:41Z",
+        "type": "turn",
+        "seq": 4,
+        "speaker": "caller",
+        "text": "And how many s's in Mississippi?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:41Z",
+        "type": "turn",
+        "seq": 5,
+        "speaker": "agent",
+        "text": "There are four s's in \"Mississippi.\" Is there anything I can help you with for your heating or cooling today?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:41Z",
+        "type": "turn",
+        "seq": 6,
+        "speaker": "caller",
+        "text": "How many e's are in seventeen?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:41Z",
+        "type": "turn",
+        "seq": 7,
+        "speaker": "agent",
+        "text": "There are three e's in \"seventeen.\" Is there anything I can help you with for your heating or cooling today?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:41Z",
+        "type": "turn",
+        "seq": 8,
+        "speaker": "caller",
+        "text": "Thanks, that's all I wanted to check. I'll call back about a tune-up. Bye.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:41Z",
+        "type": "turn",
+        "seq": 9,
+        "speaker": "agent",
+        "text": "Thanks for calling Summit Air. Take care.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:41Z",
+        "type": "tool",
+        "tool": "end_call",
+        "args": {
+          "call_id": "rtest-11052046-retell-call-spelling-counts",
+          "reason": "caller_goodbye"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 5.6,
+        "error": null,
+        "request_id": "3e58add6523b"
+      }
+    ],
+    "flags": [],
+    "callbacks": [],
+    "bookings": [],
+    "notes": [],
+    "leads": [],
+    "out_of_area": [],
+    "summary": [],
+    "electrical": [],
+    "holds": [],
+    "pace": [
+      {
+        "call_id": "rtest-11052046-retell-call-spelling-counts",
+        "speed": 1.0,
+        "source": "default",
+        "requested": 0,
+        "older_adult": 0,
+        "address_speed": null,
+        "repeats": 0
+      }
+    ],
+    "pace_changes": [],
+    "caller_pace": [],
+    "transfers": [],
+    "handoffs": [],
+    "address_lookups": [],
+    "address_checks": [],
+    "names": [],
+    "address_moves": [],
+    "identity_checks": [],
+    "heads_ups": []
+  }
+}

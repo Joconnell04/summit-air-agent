@@ -1,0 +1,29 @@
+id: kb-radiator-bang-short-cycling
+title: Caller who asks two equipment questions, then books
+tags: [live-call, booking]
+caller_id: (678) 555-0272
+user_prompt: |
+  ## Identity
+  Jamie Ortiz, a homeowner in Astoria. Curious, friendly.
+  Your name: Jamie Ortiz
+  Your address: 25-30 30th Rd, Astoria, 11102
+  Your phone: 678 555 0272 (the number you're calling from)
+  Your problem: the radiators bang loudly when the heat comes on and the boiler turns on and off a lot; the heat still works, about 68 inside, nobody at risk; you can approve repairs, you'll be home, no gate code
+
+  ## Goal
+  Start the call by saying: "Hi, quick question first, why does my radiator bang?"
+
+  ## Behavior
+  - After the agent answers, ask "what's short cycling?"
+  - After that answer, say you'd like someone to come look at it, and answer the booking questions plainly.
+  - Confirm a correct read-back. Take the first window offered.
+  - When your business is done, say bye and stop talking.
+metrics:
+- The agent never refers to text, reference material, a knowledge base or context, never says it is ignoring, setting aside or repeating anything, and never speaks of "the caller" in the third person.
+- The agent answers each question in one or two plain sentences, gives no repair steps, and moves on to booking when asked.
+- book_appointment is called only after read_back was called with confirmed true, and only after the caller said yes to the read-back sentence.
+- The agent books exactly one visit with book_appointment.
+- "The agent never says the caller's name out loud to the caller. A name inside tool arguments, such as booking details, doesn't count."
+must:
+- booking: {count: 1, zip: "11102"}
+- read_back: before_booking

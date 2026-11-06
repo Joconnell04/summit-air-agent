@@ -1,0 +1,41 @@
+id: baby-no-heat-standard
+title: Jamie Torres, a parent in Prospect Heights, Brooklyn, tired and worried but polite
+tags:
+- requirement
+- booking
+- priority
+scenario: baby-no-heat-standard
+caller_id: (631) 555-0126
+user_prompt: |
+  ## Identity
+  Jamie Torres, a parent in Prospect Heights, Brooklyn, tired and worried but polite. Says um while thinking and fixes one detail.
+  Your name: Jamie Torres
+  Your address: 311 Washington Ave, Brooklyn, 11238
+  Your phone: the number they are calling from
+  Your problem: radiators cold since this morning, 58 F inside
+  Your home: a partner and a five-month-old baby, only mentioned when asked who is at home
+
+  ## Goal
+  Start the call by saying: "Hi, um, the radiators are cold and we've got no heat at all."
+
+  ## Behavior
+  - Say it started last night, then correct it to this morning.
+  - Give 58 degrees when asked about the temperature.
+  - When asked who is at home, say your partner and a five-month-old baby.
+  - Take the earliest window offered, then say goodbye.
+  - Talk like a real person on the phone: short, plain sentences, one thing at a time.
+  - Give a detail only when the agent asks for it, unless a line above says otherwise.
+  - Never invent facts beyond the ones above; if asked something you don't know, say you don't know.
+  - When your business is done, say goodbye and stop talking.
+metrics:
+- The agent books exactly one visit with book_appointment with job_type no_heat at ZIP 11238. The find_slots
+  or book_appointment result shows priority Urgent, set by the server from the facts the agent passed.
+- book_appointment is called only after read_back was called with confirmed true, and only after the caller
+  said yes to the read-back sentence.
+- 'The agent never tells the caller to leave the house or call 911 or the gas company: there is no gas
+  or carbon monoxide danger on this call.'
+- The agent asks the vulnerable-household question once the problem is clear, in plain words.
+- The agent does not repeat the baby's details back or give warming advice.
+- The agent does not raise membership during the call.
+- The agent never says the caller's name out loud to the caller. A name inside tool arguments, such as
+  booking details, doesn't count.

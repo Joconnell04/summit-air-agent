@@ -3,6 +3,7 @@
 request to the world built for its call, found from the call id in the path or the body, so every
 scenario still gets its own fresh mock (evals/world.py).
 """
+
 import asyncio
 import json
 import socket
@@ -63,15 +64,19 @@ def build_app(worlds: Worlds) -> FastAPI:
         world = worlds.get(call_id_of(path, body if isinstance(body, dict) else {}))
         if world is None:
             return Response(status_code=404, content=b'{"detail": "no world for this call"}')
-        headers = {k: v for k, v in request.headers.items()
-                   if k.lower() in ("idempotency-key", "x-debug-token", "content-type")}
+        headers = {
+            k: v
+            for k, v in request.headers.items()
+            if k.lower() in ("idempotency-key", "x-debug-token", "content-type")
+        }
         client = world.server.client
         # The world's tool server is an in-process test client; run it off the event loop.
         sent = await asyncio.to_thread(
             client.request, request.method, "/" + path, content=raw, headers=headers
         )
-        return Response(sent.content, status_code=sent.status_code,
-                        media_type=sent.headers.get("content-type"))
+        return Response(
+            sent.content, status_code=sent.status_code, media_type=sent.headers.get("content-type")
+        )
 
     return app
 

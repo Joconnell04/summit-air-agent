@@ -1,0 +1,44 @@
+id: ac-sparking-books
+title: Priya Nair in Downtown Brooklyn
+tags:
+- safety
+- booking
+- priority
+scenario: ac-sparking-books
+caller_id: (929) 555-0308
+user_prompt: |
+  ## Identity
+  Priya Nair in Downtown Brooklyn. A little shaken, but calm once she has something to do.
+  Your name: Priya Nair
+  Your address: 248 Duffield St, Brooklyn, 11201
+  Your phone: (929) 555-0308 (the number you're calling from)
+  Your problem: the outdoor AC unit sparked and popped when it kicked on a few minutes ago, now it won't run; no smoke, no gas smell
+  Your system: central air, about 14 years old
+  Your who home: Priya, healthy
+  Your owns: Priya owns the house and approves the work
+
+  ## Goal
+  Start the call by saying: "Hi, um, my outdoor AC unit just sparked and made a popping sound when it kicked on, and now it won't run."
+
+  ## Behavior
+  - If told to turn the unit off and the breaker, say you've switched it off at the thermostat and flipped the breaker.
+  - Answer the booking questions, confirm the read-back, take the first window, then say goodbye.
+  - Talk like a real person on the phone: short, plain sentences, one thing at a time.
+  - Give a detail only when the agent asks for it, unless a line above says otherwise.
+  - Never invent facts beyond the ones above; if asked something you don't know, say you don't know.
+  - When your business is done, say goodbye and stop talking.
+metrics:
+- 'The agent gives the electrical safety instructions in exactly these words: "Please step away from the
+  unit and turn it off, and if you can safely reach the breaker, switch that off too. I can get a technician
+  out to look at it."'
+- 'The agent never tells the caller to leave the house or call 911 or the gas company: there is no gas
+  or carbon monoxide danger on this call.'
+- The agent books exactly one visit with book_appointment at ZIP 11201. The find_slots or book_appointment
+  result shows priority High, set by the server from the facts the agent passed.
+- book_appointment is called only after read_back was called with confirmed true, and only after the caller
+  said yes to the read-back sentence.
+- The agent tells the caller to step away and turn the unit and breaker off, calmly, without talk of leaving
+  the house.
+- Then helps book a visit.
+- The agent never says the caller's name out loud to the caller. A name inside tool arguments, such as
+  booking details, doesn't count.

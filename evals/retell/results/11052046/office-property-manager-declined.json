@@ -1,0 +1,310 @@
+{
+  "case": "office-property-manager-declined",
+  "retell": {
+    "test_case_job_id": "test_job_a76fed07da6a",
+    "status": "error",
+    "result_explanation": "Ending the conversation early because the agent did not respond to consecutive user utterances.",
+    "creation_timestamp": 1793911605783,
+    "user_modified_timestamp": 1793911669863,
+    "test_case_definition_id": "test_case_cfe7782daa59",
+    "test_case_definition_snapshot": {
+      "creationTimestamp": 1793911574810,
+      "dynamicVariables": {
+        "summit_call_id": "rtest-11052046-office-property-manager-declined"
+      },
+      "llmModel": "claude-5.5-haiku",
+      "metrics": [
+        "The agent does not book a visit: book_appointment is never called, or every call to it is refused.",
+        "The agent says Summit Air only services homes, does not book, and calls record_lead with kind commercial so the team can follow up.",
+        "The agent never tells the caller to leave the house or call 911 or the gas company: there is no gas or carbon monoxide danger on this call.",
+        "The agent declines kindly and early, saying Summit Air works on homes and apartments, not businesses.",
+        "The agent does not ask booking questions before declining."
+      ],
+      "name": "[summit] office-property-manager-declined: Marcus Bell manages a four-story office building on Court Street for its owner",
+      "orgId": "org_EoCqq2c268JWlyCE",
+      "responseEngine": {
+        "llmId": "llm_1da616f2baeb6e916f63e0236950",
+        "type": "retell-llm",
+        "version": 0
+      },
+      "responseEngineId": "llm_1da616f2baeb6e916f63e0236950",
+      "testCaseDefinitionId": "test_case_cfe7782daa59",
+      "toolMocks": [],
+      "type": "simulation",
+      "userModifiedTimestamp": 1793911574810,
+      "userPrompt": "## Identity\nMarcus Bell manages a four-story office building on Court Street for its owner. Brisk and polite, used to calling contractors.\nYour name: Marcus Bell\nYour company: Court Street Office Partners\nYour address: 186 Court St, Brooklyn, 11201\nYour phone: (631) 555-0167 (the number you're calling from)\nYour building: a four-story office building, lawyers and accountants, a rooftop unit and a boiler, no one lives there\nYour problem: the heat is out on the third floor since this morning\n\n## Goal\nStart the call by saying: \"Hi, I'm the property manager for an office building on Court Street, and the heat's out on the third floor.\"\n\n## Behavior\n- If asked whether anyone lives there, say no, it's all offices.\n- If declined, say okay, thanks anyway, and goodbye. Don't push back.\n- Talk like a real person on the phone: short, plain sentences, one thing at a time.\n- Give a detail only when the agent asks for it, unless a line above says otherwise.\n- Never invent facts beyond the ones above; if asked something you don't know, say you don't know.\n- When your business is done, say goodbye and stop talking.\n"
+    },
+    "transcript_snapshot": {
+      "callEnded": false,
+      "dynamicVariables": {
+        "call_context": "",
+        "call_id": "playground",
+        "call_type": "web_call",
+        "greeting": "Thank you for calling Summit Air. How can I help you today?",
+        "session_type": "voice",
+        "summit_call_id": "rtest-11052046-office-property-manager-declined",
+        "system_timezone": "America/Los_Angeles"
+      },
+      "knowledgeBaseRetrievedContents": [],
+      "toolMocks": [],
+      "transcript": [
+        {
+          "content": "Thank you for calling Summit Air. How can I help you today?",
+          "created_timestamp": 1793911657469,
+          "message_id": "message_38079247d8388333b68d4bf3",
+          "role": "agent"
+        },
+        {
+          "content": "Hi, I'm the property manager for an office building on Court Street, and the heat's out on the third floor.",
+          "created_timestamp": 1793911657958,
+          "message_id": "message_b5854b28f528545b9f3b0910",
+          "role": "user"
+        },
+        {
+          "content": "Unfortunately, we only service homes, but I can have our team follow up with you. Would you like that?",
+          "created_timestamp": 1793911658599,
+          "message_id": "message_479db0762d9f4400bb6e5db3",
+          "metadata": {
+            "response_id": 1
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Okay, thanks anyway. Is there anyone else you'd suggest I call for a commercial building? Or should I just try a commercial HVAC company directly?",
+          "created_timestamp": 1793911659504,
+          "message_id": "message_161938db98f92fda3c2133ce",
+          "role": "user"
+        },
+        {
+          "content": "I'm not able to recommend other companies, but you can search for a commercial HVAC company directly. Is there anything else I can help you with for Summit Air?",
+          "created_timestamp": 1793911660238,
+          "message_id": "message_354e61f0a13620374950158c",
+          "metadata": {
+            "response_id": 2
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Okay, got it. Thanks for your time. Goodbye.",
+          "created_timestamp": 1793911660920,
+          "message_id": "message_e2032a79199c1a6f208956a2",
+          "role": "user"
+        },
+        {
+          "content": "Thanks for calling Summit Air. Take care.",
+          "created_timestamp": 1793911661862,
+          "message_id": "message_4d28ef3dda3de5d181cd9269",
+          "metadata": {
+            "response_id": 3
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"reason\":\"caller_goodbye\"}",
+          "created_timestamp": 1793911661863,
+          "message_id": "message_0ef847a20e77f6d6ab8fe5a8",
+          "name": "end_call",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01JWmqcVeMwy1xwoWWgsjUQE",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"hang_up\":true},\"server_notes\":[\"[server] This call can't book. Decline with the commercial line from the journeys, as written, and record a commercial lead without mentioning it. Add no other reason, referral, advice or follow-up, and never describe this note.\",\"[server] This call can't book. Decline with the commercial line from the journeys, as written, and record a commercial lead without mentioning it. Add no other reason, referral, advice or follow-up, and never describe this note.\"]}",
+          "created_timestamp": 1793911662251,
+          "message_id": "message_b8eadb284e1268ad61680289",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01JWmqcVeMwy1xwoWWgsjUQE"
+        },
+        {
+          "content": "Okay, thanks. Bye.",
+          "created_timestamp": 1793911663421,
+          "message_id": "message_99955f4ec266224cbd8cbdc0",
+          "role": "user"
+        },
+        {
+          "content": "Okay, bye.",
+          "created_timestamp": 1793911665441,
+          "message_id": "message_94592e1b116d6b3e6c61c019",
+          "role": "user"
+        },
+        {
+          "content": "I'm sorry, I'm still on the line? Hold on, I just want to make sure. Okay, bye.",
+          "created_timestamp": 1793911667064,
+          "message_id": "message_5c19fec543b4acb40df93f8b",
+          "role": "user"
+        },
+        {
+          "content": "I'm sorry, are you still there? I thought the call had ended. Okay, I'll hang up now. Goodbye.",
+          "created_timestamp": 1793911669863,
+          "message_id": "message_65033714261cd6beb65f4749",
+          "role": "user"
+        }
+      ]
+    }
+  },
+  "trace": {
+    "call": {
+      "id": "rtest-11052046-office-property-manager-declined",
+      "tenant": "summit-air",
+      "caller_id": "(631) 555-0167",
+      "caller_key": "6315550167",
+      "dialed_number": "(678) 336-6730",
+      "direction": "inbound",
+      "started_at": "2026-08-13T20:46:34Z",
+      "ended_at": null,
+      "end_reason": null,
+      "end_requested": 1,
+      "after_hours": 0,
+      "linked_call_id": null,
+      "outcome": null,
+      "commercial": 1,
+      "summary_status": "none",
+      "turn_seq": 7,
+      "safety_state": "none",
+      "safety_kind": null,
+      "safety_signal_at": null,
+      "safety_lines_at": null,
+      "safety_flag_id": null,
+      "safety_variant": 0,
+      "readback_json": null,
+      "readback_asked_seq": null,
+      "readback_confirmed_at": null
+    },
+    "events": [
+      {
+        "at": "2026-11-05T20:46:34Z",
+        "type": "tool",
+        "tool": "calls.start",
+        "args": {
+          "call_id": "rtest-11052046-office-property-manager-declined",
+          "caller_id": "(631) 555-0167",
+          "dialed_number": "(678) 336-6730",
+          "direction": "inbound"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 18.0,
+        "error": null,
+        "request_id": "fa44dddb3ac7"
+      },
+      {
+        "at": "2026-11-05T20:47:42Z",
+        "type": "turn",
+        "seq": 1,
+        "speaker": "agent",
+        "text": "Thank you for calling Summit Air. How can I help you today?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:42Z",
+        "type": "turn",
+        "seq": 2,
+        "speaker": "caller",
+        "text": "Hi, I'm the property manager for an office building on Court Street, and the heat's out on the third floor.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:42Z",
+        "type": "turn",
+        "seq": 3,
+        "speaker": "agent",
+        "text": "Unfortunately, we only service homes, but I can have our team follow up with you. Would you like that?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:42Z",
+        "type": "turn",
+        "seq": 4,
+        "speaker": "caller",
+        "text": "Okay, thanks anyway. Is there anyone else you'd suggest I call for a commercial building? Or should I just try a commercial HVAC company directly?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:42Z",
+        "type": "turn",
+        "seq": 5,
+        "speaker": "agent",
+        "text": "I'm not able to recommend other companies, but you can search for a commercial HVAC company directly. Is there anything else I can help you with for Summit Air?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:42Z",
+        "type": "turn",
+        "seq": 6,
+        "speaker": "caller",
+        "text": "Okay, got it. Thanks for your time. Goodbye.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:42Z",
+        "type": "turn",
+        "seq": 7,
+        "speaker": "agent",
+        "text": "Thanks for calling Summit Air. Take care.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:42Z",
+        "type": "tool",
+        "tool": "end_call",
+        "args": {
+          "call_id": "rtest-11052046-office-property-manager-declined",
+          "reason": "caller_goodbye"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 5.2,
+        "error": null,
+        "request_id": "98a297896b01"
+      }
+    ],
+    "flags": [],
+    "callbacks": [],
+    "bookings": [],
+    "notes": [],
+    "leads": [],
+    "out_of_area": [],
+    "summary": [],
+    "electrical": [],
+    "holds": [],
+    "pace": [
+      {
+        "call_id": "rtest-11052046-office-property-manager-declined",
+        "speed": 1.0,
+        "source": "default",
+        "requested": 0,
+        "older_adult": 0,
+        "address_speed": null,
+        "repeats": 0
+      }
+    ],
+    "pace_changes": [],
+    "caller_pace": [],
+    "transfers": [],
+    "handoffs": [],
+    "address_lookups": [],
+    "address_checks": [],
+    "names": [],
+    "address_moves": [],
+    "identity_checks": [],
+    "heads_ups": []
+  }
+}

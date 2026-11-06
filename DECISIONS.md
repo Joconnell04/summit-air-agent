@@ -12,6 +12,24 @@ Discussion: docs/ai-process/transcripts/... or docs/explorations/...
 Issue: #N
 -->
 
+## 125. Keep accurate speech-to-text and fixed responsiveness on Jackson's agent
+
+Decided: Jackson's agent keeps `stt_mode: accurate` and `enable_dynamic_responsiveness: false`.
+Why: on the Sonnet arm, with the same callers and only the one setting changed (MEASURED, evals/rounds/sonnet-buildout-01.md), `fast` cut Retell's speech-to-text p50 from 678 to 153 ms, but the end-to-end turn didn't get shorter (p50 1460 against 1556 ms). It also answered three times while the caller's line was still open, against none on `accurate`, and heard one more name wrong. Dynamic responsiveness made every turn about 1.1 s slower (end-to-end p50 1295 against 2391 ms), since responsiveness is already at its maximum. The wait Jackson wants shorter is better met by backchannels and hold lines, which already fire on this voice.
+Considered: `fast` for the speech-to-text saving alone (no end-to-end gain, more cut-ins); dynamic responsiveness for fewer cut-ins (none to remove, and slower).
+Would change if: a larger run (about 10 calls a side) on Jackson's own agent shows `fast` shortening the end-to-end turn without cut-ins.
+Discussion: evals/rounds/sonnet-buildout-01.md (STT and turn-taking A/B)
+Issue: #175
+
+## 124. Recommended, pending Jackson's call: build on the server-led arm behind the custom-LLM socket, on Haiku; demo B today
+
+Recommended (not decided; Jackson makes the call): build on arm D, the server-led tool server (PR #173), put it behind the custom-LLM socket (`voice/retell_llm/`) so code speaks the server's sentences as written, and keep Claude Haiku 5.5. For the session in front of Paul today, use arm B (Sonnet 5.5) on the fixed server, with A as the fallback. Drop arm C (the behavioral prompt). Drop the idea of promoting a call to Sonnet when a safety trigger fires.
+Why: four arms on the real line, 34 scored calls (MEASURED, evals/rounds/side-by-side-01.md). No arm made a safety error; the safety words come from the server on all four. Gross errors: A 15, B 8, C 34, D 19. What's left on every arm is the model rewording or adding to words the server owns (its sentences, the open door, names, narration), which the socket removes by construction. D already holds the order in code, is the fastest (1154 ms end-to-end p50) and is close to A's cost ($0.105 against $0.093 a minute). Sonnet halves the gross errors, but costs $0.328 a minute, adds about 0.4 s a reply, still read its tool limits aloud, and was slowest to the safety line on a real gas call.
+Considered: A as is (15 gross errors, the same classes); B as the base (best today, but the price and latency remain and its narration isn't fixed by the model); C (worst on every measure); a staged Sonnet for safety turns (buys tone, not safety).
+Would change if: the socket can't be ready before the session (then A on the fixed server), or the 10-run reliability test on D behind the socket misses the DECISIONS 119 bar.
+Discussion: evals/rounds/side-by-side-01.md
+Issue: #169
+
 ## 123. No heat or no cooling at High or Urgent is dispatched at the read-back
 
 Decided: when a no-heat or no-cooling call is High or Urgent on the server's own priority, read_back (given the job type) books the soonest open window itself, with no times offered, no separate read-back and no approval question. Its one sentence names the address, when the technician comes ("within the next hour" when the window opens within 60 minutes, else "by 2:30 PM today") and the number by its last four, and asks "Is that the right address?". A yes, or no answer, confirms; a corrected unit or number cancels the job and books it again with the same sentence. After hours every dispatch goes to the on-call technician: an Urgent person flag goes out first with a callback within twenty minutes, the sentence says so, and the first morning window stays booked as the fallback (Jackson's midnight call, call_b2302955a9c4054184c5d502e97, reached High and heard 8 AM, then a callback). Then only the access question and "Anything else?". A call on the safety route never dispatches. If the read-back came below High and the caller's facts raise it later, find_slots dispatches instead of offering times.
@@ -77,7 +95,7 @@ Decided: the agent stays on a Retell-hosted Claude model. We don't post-train an
 Why: we considered it only as a possible latency gain. One RTX 5090 serving an 8B model at about 150 tokens a second would cost about $50 for three days (ASSUMED, from RunPod list prices and memory-bandwidth estimates), and a cached system prompt could bring time to first token under 200 ms (ASSUMED). But the failures on live and scripted calls are instruction-following, not speed: Haiku 5.5's median end-to-end turn latency on Retell is already about 1 s (MEASURED, Retell call latency, call_926427e1d1f2a80cb78dc6a4e04), and an 8B model follows instructions worse than Haiku. It would also need a dataset of good calls we don't have, a custom-LLM bridge to Retell, and a GPU server to run, which is the layering DECISIONS 112 moved away from.
 Considered: serving the adapter separately in vLLM (slower than merging it); a 32B model on two H100s (about $390 for three days, ASSUMED, and still a weaker instruction follower).
 Would change if: there are thousands of real calls to distill from and latency, not behavior, is the limit.
-Discussion: docs/later.md C-79
+Discussion: docs/later.md C-85
 Issue: none
 ## 115. Each call stands alone: no cut-off greeting, no safety carried over, do-not-call after a yes
 

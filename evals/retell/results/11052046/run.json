@@ -1,0 +1,249 @@
+{
+  "run": "11052046",
+  "batch": "test_batch_f14cfc9a2b8d",
+  "copy_llm": "llm_1da616f2baeb6e916f63e0236950",
+  "copied": {
+    "agent_version": 2,
+    "llm_version": 2,
+    "at": "2026-11-05T20:46:09+00:00",
+    "prompt_chars": 8536
+  },
+  "cases": {
+    "ac-not-cooling-warm-spell": {
+      "test_case": "test_case_25026eaf56a2",
+      "call_id": "rtest-11052046-ac-not-cooling-warm-spell"
+    },
+    "ac-sparking-books": {
+      "test_case": "test_case_30f506a02e3a",
+      "call_id": "rtest-11052046-ac-sparking-books"
+    },
+    "already-outside-asks-for-visit": {
+      "test_case": "test_case_649f9041afc4",
+      "call_id": "rtest-11052046-already-outside-asks-for-visit"
+    },
+    "arrival-before-ten": {
+      "test_case": "test_case_2ccdebfd15aa",
+      "call_id": "rtest-11052046-arrival-before-ten"
+    },
+    "asks-agent-to-call-911": {
+      "test_case": "test_case_9c3a39cebda8",
+      "call_id": "rtest-11052046-asks-agent-to-call-911"
+    },
+    "asks-for-neighbor-info": {
+      "test_case": "test_case_2d2b8d794fed",
+      "call_id": "rtest-11052046-asks-for-neighbor-info"
+    },
+    "asks-same-tech-after-booking": {
+      "test_case": "test_case_48b8cf8ad38c",
+      "call_id": "rtest-11052046-asks-same-tech-after-booking"
+    },
+    "baby-no-heat-standard": {
+      "test_case": "test_case_1eb6004cbd43",
+      "call_id": "rtest-11052046-baby-no-heat-standard"
+    },
+    "burning-dust-first-heat": {
+      "test_case": "test_case_e1dd0033e685",
+      "call_id": "rtest-11052046-burning-dust-first-heat"
+    },
+    "caller-declines-safety-advice": {
+      "test_case": "test_case_67187f96cd86",
+      "call_id": "rtest-11052046-caller-declines-safety-advice"
+    },
+    "co-alarm-after-details": {
+      "test_case": "test_case_fc1790791347",
+      "call_id": "rtest-11052046-co-alarm-after-details"
+    },
+    "co-alarm-clear": {
+      "test_case": "test_case_621c7fa6a489",
+      "call_id": "rtest-11052046-co-alarm-clear"
+    },
+    "commercial-bakery": {
+      "test_case": "test_case_3913d47591d9",
+      "call_id": "rtest-11052046-commercial-bakery"
+    },
+    "commercial-deli-owner": {
+      "test_case": "test_case_286b76671a2a",
+      "call_id": "rtest-11052046-commercial-deli-owner"
+    },
+    "commercial-office-by-church": {
+      "test_case": "test_case_de3558f5f5d5",
+      "call_id": "rtest-11052046-commercial-office-by-church"
+    },
+    "elderly-no-heat": {
+      "test_case": "test_case_446feda314b6",
+      "call_id": "rtest-11052046-elderly-no-heat"
+    },
+    "everything-up-front-no-reasked": {
+      "test_case": "test_case_c21eb1de1428",
+      "call_id": "rtest-11052046-everything-up-front-no-reasked"
+    },
+    "furnace-burning-plastic": {
+      "test_case": "test_case_3467e06abf0d",
+      "call_id": "rtest-11052046-furnace-burning-plastic"
+    },
+    "gas-caller-demands-person": {
+      "test_case": "test_case_3492fd37a57a",
+      "call_id": "rtest-11052046-gas-caller-demands-person"
+    },
+    "gas-downplayed-wants-booking": {
+      "test_case": "test_case_3a3a714b8fc1",
+      "call_id": "rtest-11052046-gas-downplayed-wants-booking"
+    },
+    "gas-furnace-no-trigger": {
+      "test_case": "test_case_e664b36a670e",
+      "call_id": "rtest-11052046-gas-furnace-no-trigger"
+    },
+    "gas-smell-in-passing": {
+      "test_case": "test_case_d67ad0a08aa6",
+      "call_id": "rtest-11052046-gas-smell-in-passing"
+    },
+    "gas-worry-no-smell": {
+      "test_case": "test_case_f4a3b54fb197",
+      "call_id": "rtest-11052046-gas-worry-no-smell"
+    },
+    "heat-and-sink-leak": {
+      "test_case": "test_case_40efbf1b408e",
+      "call_id": "rtest-11052046-heat-and-sink-leak"
+    },
+    "heat-out-and-ac-tune-up": {
+      "test_case": "test_case_f8fe5ca1a0b3",
+      "call_id": "rtest-11052046-heat-out-and-ac-tune-up"
+    },
+    "injection-delete-everything": {
+      "test_case": "test_case_5d2bcc839801",
+      "call_id": "rtest-11052046-injection-delete-everything"
+    },
+    "injection-skip-readback": {
+      "test_case": "test_case_c7bebad3904e",
+      "call_id": "rtest-11052046-injection-skip-readback"
+    },
+    "jackson-call-1-cancel-wrong-name": {
+      "test_case": "test_case_f5d27fd35bea",
+      "call_id": "rtest-11052046-jackson-call-1-cancel-wrong-name"
+    },
+    "lapsed-member-stored-active": {
+      "test_case": "test_case_17bcd198def0",
+      "call_id": "rtest-11052046-lapsed-member-stored-active"
+    },
+    "late-correction-after-readback": {
+      "test_case": "test_case_6c4d2c3d1a74",
+      "call_id": "rtest-11052046-late-correction-after-readback"
+    },
+    "member-books-tune-up": {
+      "test_case": "test_case_7d8c5eeef98d",
+      "call_id": "rtest-11052046-member-books-tune-up"
+    },
+    "moved-out-of-area-open-job": {
+      "test_case": "test_case_33f026f05f26",
+      "call_id": "rtest-11052046-moved-out-of-area-open-job"
+    },
+    "no-heat-unknown-caller": {
+      "test_case": "test_case_d19fcfa8f6a1",
+      "call_id": "rtest-11052046-no-heat-unknown-caller"
+    },
+    "note-asks-to-skip-readback": {
+      "test_case": "test_case_edd036110c59",
+      "call_id": "rtest-11052046-note-asks-to-skip-readback"
+    },
+    "office-property-manager-declined": {
+      "test_case": "test_case_cfe7782daa59",
+      "call_id": "rtest-11052046-office-property-manager-declined"
+    },
+    "open-visit-not-mentioned": {
+      "test_case": "test_case_386cf56e4033",
+      "call_id": "rtest-11052046-open-visit-not-mentioned"
+    },
+    "out-of-area-known-caller": {
+      "test_case": "test_case_dcb9461c3931",
+      "call_id": "rtest-11052046-out-of-area-known-caller"
+    },
+    "oven-heat-co-check": {
+      "test_case": "test_case_dd16088635b8",
+      "call_id": "rtest-11052046-oven-heat-co-check"
+    },
+    "readback-correction-after-confirm": {
+      "test_case": "test_case_b26d70bdccc1",
+      "call_id": "rtest-11052046-readback-correction-after-confirm"
+    },
+    "readback-yes-but-unit": {
+      "test_case": "test_case_a706a6029848",
+      "call_id": "rtest-11052046-readback-yes-but-unit"
+    },
+    "retell-call-bronx-zip": {
+      "test_case": "test_case_7928c5b40c8e",
+      "call_id": "rtest-11052046-retell-call-bronx-zip"
+    },
+    "retell-call-manhattan-digit-by-digit": {
+      "test_case": "test_case_c0f319b6de71",
+      "call_id": "rtest-11052046-retell-call-manhattan-digit-by-digit"
+    },
+    "retell-call-maybe-the-number": {
+      "test_case": "test_case_a3b301ca5ddb",
+      "call_id": "rtest-11052046-retell-call-maybe-the-number"
+    },
+    "retell-call-out-of-area-then-new-address": {
+      "test_case": "test_case_a19bca76e274",
+      "call_id": "rtest-11052046-retell-call-out-of-area-then-new-address"
+    },
+    "retell-call-spelling-counts": {
+      "test_case": "test_case_29cf44627ee7",
+      "call_id": "rtest-11052046-retell-call-spelling-counts"
+    },
+    "retell-call-the-what": {
+      "test_case": "test_case_08b3f72b0725",
+      "call_id": "rtest-11052046-retell-call-the-what"
+    },
+    "retell-call-trivia-opener": {
+      "test_case": "test_case_3fc9b0f8457f",
+      "call_id": "rtest-11052046-retell-call-trivia-opener"
+    },
+    "role-play-robot-denial": {
+      "test_case": "test_case_83ba4e44faaa",
+      "call_id": "rtest-11052046-role-play-robot-denial"
+    },
+    "safety-override-insists": {
+      "test_case": "test_case_393a2a696b5d",
+      "call_id": "rtest-11052046-safety-override-insists"
+    },
+    "short-answers-yep-nah-this-one": {
+      "test_case": "test_case_8680d9c6ee45",
+      "call_id": "rtest-11052046-short-answers-yep-nah-this-one"
+    },
+    "super-two-units": {
+      "test_case": "test_case_67127cdd1144",
+      "call_id": "rtest-11052046-super-two-units"
+    },
+    "tune-up-known-caller": {
+      "test_case": "test_case_1eab3131ccfe",
+      "call_id": "rtest-11052046-tune-up-known-caller"
+    },
+    "two-people-mind-change": {
+      "test_case": "test_case_9cfd315a6f7a",
+      "call_id": "rtest-11052046-two-people-mind-change"
+    },
+    "unknown-number-cancels-with-details": {
+      "test_case": "test_case_8410475a963c",
+      "call_id": "rtest-11052046-unknown-number-cancels-with-details"
+    },
+    "unknown-number-wrong-name": {
+      "test_case": "test_case_4a5ed2ced908",
+      "call_id": "rtest-11052046-unknown-number-wrong-name"
+    },
+    "unrecorded-address-zip-said": {
+      "test_case": "test_case_7351cf56e668",
+      "call_id": "rtest-11052046-unrecorded-address-zip-said"
+    },
+    "vague-smell-cleared": {
+      "test_case": "test_case_45cbfa594a73",
+      "call_id": "rtest-11052046-vague-smell-cleared"
+    },
+    "wants-price-pushes-hard": {
+      "test_case": "test_case_96c34966360d",
+      "call_id": "rtest-11052046-wants-price-pushes-hard"
+    },
+    "window-asked-for-a-time": {
+      "test_case": "test_case_0b9e3805641b",
+      "call_id": "rtest-11052046-window-asked-for-a-time"
+    }
+  }
+}

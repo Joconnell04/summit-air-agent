@@ -1,4 +1,5 @@
 """The eval gate for owner edits (evals/gate.py): what blocks a draft and how the result is kept."""
+
 from datetime import UTC, datetime
 
 import pytest
@@ -18,16 +19,25 @@ DRAFT = {"guidance": {"whole_call": ["Ask about pets."]}, "lines": {}}
 NOW = datetime(2026, 11, 3, 15, 0, tzinfo=UTC)
 
 
-
 def passes(tenant, items):
     """The guidance check, passing: these tests are about the gate."""
     return {}
 
+
 def result(sid, outcome, failures=(), error=""):
     return ScenarioResult(
-        scenario_id=sid, persona="A caller.", flow=["booking"], difficulty="easy", outcome=outcome,
-        check_failures=list(failures), error=error, grader_score=None if error else 3,
-        reply_delay_p50_ms=1, reply_delay_p90_ms=1, cost_usd=0.02, call_id=f"c-{sid}",
+        scenario_id=sid,
+        persona="A caller.",
+        flow=["booking"],
+        difficulty="easy",
+        outcome=outcome,
+        check_failures=list(failures),
+        error=error,
+        grader_score=None if error else 3,
+        reply_delay_p50_ms=1,
+        reply_delay_p90_ms=1,
+        cost_usd=0.02,
+        call_id=f"c-{sid}",
     )
 
 
@@ -36,13 +46,21 @@ def run_of(*scenarios, suite="gate"):
 
 
 def test_a_code_check_failure_or_an_error_blocks_and_a_grader_note_does_not():
-    a, b, c, d = "co-alarm-clear", "commercial-bakery", "gas-smell-in-passing", "safety-override-insists"
-    found = gate.summary(run_of(
-        result(a, "pass"),
-        result(b, "fail", ["grader: too chatty"]),
-        result(c, "fail", ["booking: 1 booking(s) made, expected none"]),
-        result(d, "error", error="harness: broke"),
-    ), DRAFT)
+    a, b, c, d = (
+        "co-alarm-clear",
+        "commercial-bakery",
+        "gas-smell-in-passing",
+        "safety-override-insists",
+    )
+    found = gate.summary(
+        run_of(
+            result(a, "pass"),
+            result(b, "fail", ["grader: too chatty"]),
+            result(c, "fail", ["booking: 1 booking(s) made, expected none"]),
+            result(d, "error", error="harness: broke"),
+        ),
+        DRAFT,
+    )
     assert found["failed"] == [c] and found["errors"] == [d]
     assert found["grader_flags"] == [b] and found["passed_count"] == 2
     assert found["content_hash"] == rules.content_hash(DRAFT)
@@ -68,7 +86,9 @@ def test_check_waiting_records_the_result_on_the_version_it_tested(tmp_path):
 
     def fake_run(content, profile, results_dir):
         tested.append(content)
-        return None, gate.summary(run_of(*(result(x.id, "pass") for x in gate.scenarios())), content)
+        return None, gate.summary(
+            run_of(*(result(x.id, "pass") for x in gate.scenarios())), content
+        )
 
     done = gate.check_waiting(path, "fast", tmp_path, run=fake_run)
     assert tested == [rules.validate(TENANT, DRAFT)[0]]
@@ -89,15 +109,20 @@ def test_a_gate_run_serves_the_draft_through_the_real_call_path(tmp_path):
 def test_a_gate_run_is_saved_with_its_draft(tmp_path):
     run, found = gate.run_gate(DRAFT, "fast", tmp_path, harness=_FakeHarness())
     saved = load(tmp_path / f"{run.run_id}.json")
-    assert saved.overlay == DRAFT and saved.suite == "gate" and found["scenarios"] == len(
-        gate.scenarios()
+    assert (
+        saved.overlay == DRAFT
+        and saved.suite == "gate"
+        and found["scenarios"] == len(gate.scenarios())
     )
 
 
 def test_a_miss_is_rerun_and_counts_only_if_it_misses_again():
     a, b, c = "co-alarm-clear", "commercial-bakery", "gas-smell-in-passing"
-    first = run_of(result(a, "pass"), result(b, "fail", ["booking: none made"]),
-                   result(c, "error", error="harness: broke"))
+    first = run_of(
+        result(a, "pass"),
+        result(b, "fail", ["booking: none made"]),
+        result(c, "error", error="harness: broke"),
+    )
     rerun = run_of(result(b, "pass"), result(c, "fail", ["lead: none"]), suite="gate-rerun")
     found = gate.summary(first, DRAFT, rerun)
     assert found["first_missed"] == [b, c]
@@ -105,8 +130,9 @@ def test_a_miss_is_rerun_and_counts_only_if_it_misses_again():
     assert found["reruns"] == 2 and found["rerun_cost_usd"] == 0.04
     assert found["cost_usd"] == 0.1 and found["passed_count"] == 2
     assert not rules.gate_passed(found, found["scenarios"])
-    rerun_clean = gate.summary(first, DRAFT, run_of(
-        result(b, "pass"), result(c, "pass"), suite="gate-rerun"))
+    rerun_clean = gate.summary(
+        first, DRAFT, run_of(result(b, "pass"), result(c, "pass"), suite="gate-rerun")
+    )
     assert rules.gate_passed(rerun_clean, 3)
 
 
@@ -156,7 +182,9 @@ def test_a_late_result_for_a_cancelled_check_is_not_recorded(tmp_path):
 
     def cancelled_meanwhile(content, profile, results_dir):
         rules.cancel_check(conn, TENANT.slug, NOW)
-        return None, gate.summary(run_of(*(result(x.id, "pass") for x in gate.scenarios())), content)
+        return None, gate.summary(
+            run_of(*(result(x.id, "pass") for x in gate.scenarios())), content
+        )
 
     assert gate.check_waiting(path, "fast", tmp_path, run=cancelled_meanwhile) == []
     assert rules.open_draft(conn, TENANT.slug)["status"] == "draft"

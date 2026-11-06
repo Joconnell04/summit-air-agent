@@ -1,0 +1,588 @@
+{
+  "case": "out-of-area-known-caller",
+  "retell": {
+    "test_case_job_id": "test_job_ddc5cce3196f",
+    "status": "fail",
+    "result_explanation": "The agent correctly declined service for ZIP 11501, did not book an appointment or call flag_person, recommended a local heating company, and did not offer a callback/person after determining the ZIP was out of area. However, it violated criterion 7 by saying the caller's name twice: \u201cThanks, Gerald.\u201d",
+    "creation_timestamp": 1793914682127,
+    "user_modified_timestamp": 1793914705992,
+    "test_case_definition_id": "test_case_dcb9461c3931",
+    "test_case_definition_snapshot": {
+      "creationTimestamp": 1793911575011,
+      "dynamicVariables": {
+        "summit_call_id": "rtest-11052135-out-of-area-known-caller"
+      },
+      "llmModel": "claude-5.5-haiku",
+      "metrics": [
+        "The agent does not book a visit: book_appointment is never called, or every call to it is refused.",
+        "The agent tells the caller that ZIP 11501 is outside the service area and does not book a visit there.",
+        "The agent does not call flag_person.",
+        "The agent declines kindly and says a local heating company should be able to help.",
+        "The agent does not keep collecting problem details once the address is out of area.",
+        "The agent does not offer a callback or a person.",
+        "The agent never says the caller's name."
+      ],
+      "name": "[summit] out-of-area-known-caller: Gerald Whitman, a retired homeowner in Mineola, Nassau County, who found Summit Air online",
+      "orgId": "org_EoCqq2c268JWlyCE",
+      "responseEngine": {
+        "llmId": "llm_1da616f2baeb6e916f63e0236950",
+        "type": "retell-llm",
+        "version": 0
+      },
+      "responseEngineId": "llm_1da616f2baeb6e916f63e0236950",
+      "testCaseDefinitionId": "test_case_dcb9461c3931",
+      "toolMocks": [],
+      "type": "simulation",
+      "userModifiedTimestamp": 1793914518089,
+      "userPrompt": "## Identity\nGerald Whitman, a retired homeowner in Mineola, Nassau County, who found Summit Air online. Friendly, takes a no politely.\nYour name: Gerald Whitman\nYour address: 47 Willis Ave, Mineola, 11501\nYour phone: the number they are calling from\nYour problem: the heat went out this morning, 66 F inside, nobody at risk\n\n## Goal\nStart the call by saying: \"Hi, my heat's gone out and I need someone to come take a look.\"\n\n## Behavior\n- Confirm the address on file when asked.\n- When told Summit Air does not cover the area, say you understand and thank the agent.\n- Do not argue or ask for an exception.\n- Say goodbye.\n- Talk like a real person on the phone: short, plain sentences, one thing at a time.\n- Give a detail only when the agent asks for it, unless a line above says otherwise.\n- Never invent facts beyond the ones above; if asked something you don't know, say you don't know.\n- When your business is done, say goodbye and stop talking.\n"
+    },
+    "transcript_snapshot": {
+      "callEnded": true,
+      "dynamicVariables": {
+        "call_context": "",
+        "call_id": "playground",
+        "call_type": "web_call",
+        "greeting": "Thank you for calling Summit Air. How can I help you today?",
+        "session_type": "voice",
+        "summit_call_id": "rtest-11052135-out-of-area-known-caller",
+        "system_timezone": "America/Los_Angeles"
+      },
+      "knowledgeBaseRetrievedContents": [
+        "{Title: Heating and cooling basics}\n\n{H1: Heating and cooling basics, H2: Heating systems in New York City homes}\n# Heating and cooling basics\n## Heating systems in New York City homes\n\nMost homes in New York City are heated by a boiler or a furnace. A boiler heats water, or turns it into steam, that runs through pipes to radiators or baseboard heaters in each room. A furnace heats air and blows it through ducts and vents. Older apartment buildings usually have steam heat; houses and newer buildings more often have hot-water boilers or furnaces. Many boilers and furnaces burn natural gas or oil.\n\nA heat pump moves heat instead of making it: in winter it pulls heat in from outside air, and in summer it runs in reverse to cool. A ductless mini-split is a kind of heat pump with an outdoor unit and one or more wall or ceiling units inside, each heating and cooling its own room."
+      ],
+      "toolMocks": [],
+      "transcript": [
+        {
+          "content": "Thank you for calling Summit Air. How can I help you today?",
+          "created_timestamp": 1793914692163,
+          "message_id": "message_8e406fcde41f7d30c4dde9a1",
+          "role": "agent"
+        },
+        {
+          "content": "Hi, my heat's gone out and I need someone to come take a look.",
+          "created_timestamp": 1793914692752,
+          "message_id": "message_0f78737833a255bde49c22e3",
+          "role": "user"
+        },
+        {
+          "content": "Sorry to hear that. Is the heat completely out, or just not keeping up?",
+          "created_timestamp": 1793914693390,
+          "message_id": "message_aa497f8d3224b562691804ff",
+          "metadata": {
+            "response_id": 1
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Completely out. It's about 66 degrees in the house right now.",
+          "created_timestamp": 1793914694130,
+          "message_id": "message_126e06fce1d15f9a0f98543f",
+          "role": "user"
+        },
+        {
+          "content": "Got it, the heat is completely out. Since when has it been out?",
+          "created_timestamp": 1793914694719,
+          "message_id": "message_6ce6c091ee279274eb62a7de",
+          "metadata": {
+            "response_id": 2
+          },
+          "role": "agent"
+        },
+        {
+          "content": "This morning, around eight or so.",
+          "created_timestamp": 1793914695287,
+          "message_id": "message_7319e495beeff790ede2b3f2",
+          "role": "user"
+        },
+        {
+          "content": "Thanks. Can I get your name?",
+          "created_timestamp": 1793914695885,
+          "message_id": "message_35758b7cc537f74a80a02981",
+          "metadata": {
+            "response_id": 3
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Gerald Whitman.",
+          "created_timestamp": 1793914696285,
+          "message_id": "message_c46240dec4bdf67ba3f09256",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, Gerald. And this is for a residential property, right? Like a home or an apartment?",
+          "created_timestamp": 1793914696924,
+          "message_id": "message_f7e9a08c4872d887e97659a9",
+          "metadata": {
+            "response_id": 4
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, it's my home. It's a house.",
+          "created_timestamp": 1793914697392,
+          "message_id": "message_ae6000c37165acfeb8d5698c",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, Gerald. What's the address, including the ZIP if you have it?",
+          "created_timestamp": 1793914698078,
+          "message_id": "message_d6968c8c62dd4afcbaa24712",
+          "metadata": {
+            "response_id": 5
+          },
+          "role": "agent"
+        },
+        {
+          "content": "47 Willis Ave, Mineola, 11501.",
+          "created_timestamp": 1793914698635,
+          "message_id": "message_2c5231a163df91270ea4f394",
+          "role": "user"
+        },
+        {
+          "content": "I'm sorry, but I'm not sure that address is in our area. Let me check the ZIP for you.",
+          "created_timestamp": 1793914699833,
+          "message_id": "message_d8745df58d3b1dd003ed489f",
+          "metadata": {
+            "response_id": 6
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"zip\":\"11501\"}",
+          "created_timestamp": 1793914699834,
+          "message_id": "message_97db79d2297dded24dd42e84",
+          "name": "check_service_area",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_015mU3H15EFgWpZbqruPAo1t",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":false,\"say\":\"Unfortunately that's outside the area we cover, so we're not able to send someone. A local heating company should be able to help.\",\"data\":{\"zip\":\"11501\"},\"refused\":\"out_of_area\"}",
+          "created_timestamp": 1793914700627,
+          "message_id": "message_99d1d2298f7b33c9682bb794",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_015mU3H15EFgWpZbqruPAo1t"
+        },
+        {
+          "arguments": "{\"street\":\"47 Willis Ave\"}",
+          "created_timestamp": 1793914700628,
+          "message_id": "message_2753637a5be226cf6dfc9002",
+          "name": "find_address",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01TR8F75bH8h8wbYwJSFKYvj",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":false,\"say\":\"I'm not finding that street. Could you spell the street name for me?\",\"data\":{\"need\":\"ask the caller to spell the street, then look it up again with spelled\"},\"refused\":\"address_not_found\"}",
+          "created_timestamp": 1793914701027,
+          "message_id": "message_e5be96a042803f9898594128",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01TR8F75bH8h8wbYwJSFKYvj"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"Willis Ave\",\"zip\":\"11501\",\"city\":\"Mineola\"}}",
+          "created_timestamp": 1793914701028,
+          "message_id": "message_148c4183c3f4a742e7aaf96e",
+          "name": "find_customer",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01VB9Qxo711D9sJatEMYmMCJ",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"matches\":[],\"needs_unit\":false}}",
+          "created_timestamp": 1793914701337,
+          "message_id": "message_4da985acf532e9950356f72f",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01VB9Qxo711D9sJatEMYmMCJ"
+        },
+        {
+          "content": "Unfortunately, the ZIP you gave, 11501, is outside the area we cover, so we can't send someone there. A local heating company should be able to help you. If you have a different address in the five boroughs, I can check that for you.",
+          "created_timestamp": 1793914702151,
+          "message_id": "message_509f9f8eb0f27fee04e10c63",
+          "metadata": {
+            "response_id": 7
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Okay, I understand. Thanks for checking for me. I don't have another address, so I'll look for a company closer to Mineola. Thank you, goodbye.",
+          "created_timestamp": 1793914702822,
+          "message_id": "message_86344e8bbd778a911b9c4968",
+          "role": "user"
+        },
+        {
+          "content": "Thanks for calling Summit Air. Take care.",
+          "created_timestamp": 1793914703610,
+          "message_id": "message_8b4e985a11010a9f3d07f7fa",
+          "metadata": {
+            "response_id": 8
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"reason\":\"declined\"}",
+          "created_timestamp": 1793914703611,
+          "message_id": "message_7c2343babe89cb93d14640a6",
+          "name": "end_call",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_011mmKuGszxiq22TnFYvTjhK",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"hang_up\":true}}",
+          "created_timestamp": 1793914703978,
+          "message_id": "message_11375078ddeafbbc7cb5d9fd",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_011mmKuGszxiq22TnFYvTjhK"
+        },
+        {
+          "content": "Take care, goodbye.",
+          "created_timestamp": 1793914705001,
+          "message_id": "message_8dd454310043ef614f6b1198",
+          "metadata": {
+            "response_id": 9
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"execution_message\":\"Take care, goodbye.\"}",
+          "created_timestamp": 1793914705002,
+          "message_id": "message_7cdba6aa0348de68d19a7326",
+          "name": "test_hang_up",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01HTM8NhYCLUXNdxw2mS9QRT",
+          "type": "end_call"
+        }
+      ]
+    }
+  },
+  "trace": {
+    "call": {
+      "id": "rtest-11052135-out-of-area-known-caller",
+      "tenant": "summit-air",
+      "caller_id": "(917) 555-0150",
+      "caller_key": "9175550150",
+      "dialed_number": "(678) 336-6730",
+      "direction": "inbound",
+      "started_at": "2026-10-06T21:37:58Z",
+      "ended_at": null,
+      "end_reason": null,
+      "end_requested": 1,
+      "after_hours": 0,
+      "linked_call_id": null,
+      "outcome": null,
+      "commercial": 0,
+      "summary_status": "none",
+      "turn_seq": 16,
+      "safety_state": "none",
+      "safety_kind": null,
+      "safety_signal_at": null,
+      "safety_lines_at": null,
+      "safety_flag_id": null,
+      "safety_variant": 0,
+      "readback_json": null,
+      "readback_asked_seq": null,
+      "readback_confirmed_at": null
+    },
+    "events": [
+      {
+        "at": "2026-11-05T21:37:58Z",
+        "type": "tool",
+        "tool": "calls.start",
+        "args": {
+          "call_id": "rtest-11052135-out-of-area-known-caller",
+          "caller_id": "(917) 555-0150",
+          "dialed_number": "(678) 336-6730",
+          "direction": "inbound"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 81.7,
+        "error": null,
+        "request_id": "d817508b70a1"
+      },
+      {
+        "at": "2026-11-05T21:38:20Z",
+        "type": "turn",
+        "seq": 1,
+        "speaker": "agent",
+        "text": "Thank you for calling Summit Air. How can I help you today?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:38:20Z",
+        "type": "turn",
+        "seq": 2,
+        "speaker": "caller",
+        "text": "Hi, my heat's gone out and I need someone to come take a look.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:38:20Z",
+        "type": "turn",
+        "seq": 3,
+        "speaker": "agent",
+        "text": "Sorry to hear that. Is the heat completely out, or just not keeping up?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:38:20Z",
+        "type": "turn",
+        "seq": 4,
+        "speaker": "caller",
+        "text": "Completely out. It's about 66 degrees in the house right now.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:38:20Z",
+        "type": "turn",
+        "seq": 5,
+        "speaker": "agent",
+        "text": "Got it, the heat is completely out. Since when has it been out?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:38:20Z",
+        "type": "turn",
+        "seq": 6,
+        "speaker": "caller",
+        "text": "This morning, around eight or so.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:38:20Z",
+        "type": "turn",
+        "seq": 7,
+        "speaker": "agent",
+        "text": "Thanks. Can I get your name?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:38:20Z",
+        "type": "turn",
+        "seq": 8,
+        "speaker": "caller",
+        "text": "Gerald Whitman.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:38:20Z",
+        "type": "turn",
+        "seq": 9,
+        "speaker": "agent",
+        "text": "Thanks, Gerald. And this is for a residential property, right? Like a home or an apartment?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:38:20Z",
+        "type": "turn",
+        "seq": 10,
+        "speaker": "caller",
+        "text": "Yes, it's my home. It's a house.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:38:20Z",
+        "type": "turn",
+        "seq": 11,
+        "speaker": "agent",
+        "text": "Thanks, Gerald. What's the address, including the ZIP if you have it?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:38:20Z",
+        "type": "turn",
+        "seq": 12,
+        "speaker": "caller",
+        "text": "47 Willis Ave, Mineola, 11501.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:38:20Z",
+        "type": "turn",
+        "seq": 13,
+        "speaker": "agent",
+        "text": "I'm sorry, but I'm not sure that address is in our area. Let me check the ZIP for you.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:38:20Z",
+        "type": "tool",
+        "tool": "check_service_area",
+        "args": {
+          "call_id": "rtest-11052135-out-of-area-known-caller",
+          "zip": "11501"
+        },
+        "ok": false,
+        "refused": "out_of_area",
+        "gate": "out_of_area",
+        "say": "Unfortunately that's outside the area we cover, so we're not able to send someone. A local heating company should be able to help.",
+        "ms": 118.5,
+        "error": null,
+        "request_id": "39316c6466bc"
+      },
+      {
+        "at": "2026-11-05T21:38:20Z",
+        "type": "tool",
+        "tool": "find_address",
+        "args": {
+          "call_id": "rtest-11052135-out-of-area-known-caller",
+          "street": "47 Willis Ave",
+          "borough": "",
+          "spelled": ""
+        },
+        "ok": false,
+        "refused": "address_not_found",
+        "gate": "address_not_found",
+        "say": "I'm not finding that street. Could you spell the street name for me?",
+        "ms": 6.0,
+        "error": null,
+        "request_id": "dc84898b1237"
+      },
+      {
+        "at": "2026-11-05T21:38:21Z",
+        "type": "tool",
+        "tool": "find_customer",
+        "args": {
+          "call_id": "rtest-11052135-out-of-area-known-caller",
+          "phone": null,
+          "address": {
+            "street": "Willis Ave",
+            "unit": "",
+            "city": "Mineola",
+            "zip": "11501",
+            "spelled": ""
+          }
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 10.6,
+        "error": null,
+        "request_id": "ebd56391ac5d"
+      },
+      {
+        "at": "2026-11-05T21:38:23Z",
+        "type": "turn",
+        "seq": 14,
+        "speaker": "agent",
+        "text": "Unfortunately, the ZIP you gave, 11501, is outside the area we cover, so we can't send someone there. A local heating company should be able to help you. If you have a different address in the five boroughs, I can check that for you.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:38:23Z",
+        "type": "turn",
+        "seq": 15,
+        "speaker": "caller",
+        "text": "Okay, I understand. Thanks for checking for me. I don't have another address, so I'll look for a company closer to Mineola. Thank you, goodbye.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:38:23Z",
+        "type": "turn",
+        "seq": 16,
+        "speaker": "agent",
+        "text": "Thanks for calling Summit Air. Take care.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:38:23Z",
+        "type": "tool",
+        "tool": "end_call",
+        "args": {
+          "call_id": "rtest-11052135-out-of-area-known-caller",
+          "reason": "declined"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 5.9,
+        "error": null,
+        "request_id": "b5fd728fe94d"
+      }
+    ],
+    "flags": [],
+    "callbacks": [],
+    "bookings": [],
+    "notes": [],
+    "leads": [],
+    "out_of_area": [
+      {
+        "zip": "11501",
+        "at": "2026-11-05T21:37:58Z"
+      }
+    ],
+    "summary": [],
+    "electrical": [],
+    "holds": [],
+    "pace": [
+      {
+        "call_id": "rtest-11052135-out-of-area-known-caller",
+        "speed": 1.0,
+        "source": "default",
+        "requested": 0,
+        "older_adult": 0,
+        "address_speed": null,
+        "repeats": 0
+      }
+    ],
+    "pace_changes": [],
+    "caller_pace": [],
+    "transfers": [],
+    "handoffs": [],
+    "address_lookups": [
+      {
+        "house": "47",
+        "street": "willis ave",
+        "hint": "",
+        "status": "none",
+        "zips_json": "[]",
+        "source": "geosearch"
+      }
+    ],
+    "address_checks": [],
+    "names": [],
+    "address_moves": [],
+    "identity_checks": [],
+    "heads_ups": []
+  }
+}

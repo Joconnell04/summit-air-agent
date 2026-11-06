@@ -1,0 +1,47 @@
+dialing +16783366730 from room testcall-e635af5c
+agent : Hi there. Thanks so much for calling Summit Air today. I'm Brooke, the virtual assistant. How can I help?
+caller: Hi, can I get someone to service my air conditioner?
+agent : Sure. Is the air conditioner not working at all right now? Is this for a regular tune up?
+caller: No, it works fine, it is just due.
+agent : Right. Got it. A tune up. I get your name?
+caller: This is Keisha, at thirty-seven twenty-one eighty-second Street.
+agent : Thanks. And this is for a residential property. Right? Like a home or an apartment?
+caller: it is my home, yes
+agent : The address came through as three hundred seventy two thousand one hundred eighty second Street. Which is ambiguous, so I'll run it through the lookup. Got it. And what's the house number and street again? Wanna make sure I have it right.
+caller: One second.
+agent : Sure. Take your time.
+caller: thirty-seven twenty-one eighty-second Street, the second floor
+agent : Her address is still unclear, It could be thirty seven twenty second Street or three seventy two second Street. I'll try the most likely reading with the lookup. Sorry. I wanna get this right. Could you spell out the street name for me?
+caller: Eighty-second Street. That's E-I-G-H-T-Y, then second.
+agent : I still need the house number. Let me try three hundred and seventy two with eighty second Street. Let me get the house number on its own. What's the number on your building before the street name?
+caller: Thirty-seven twenty-one.
+agent : Got it. Is that a house or an apartment? What's the unit if so?
+caller: It's an apartment, the second floor. The buzzer is 2B.
+agent : Got it. What's the best phone number to reach you?
+caller: this number
+agent : So that's thirty seven twenty one eighty seconds Street, unit two b, and the number you're calling from ending in zero four one eight. That's all correct. Right?
+caller: Actually, it's the third floor.
+agent : The unit may have changed along with the floor, so I'll update it to three b and read it back again. So that's thirty seven twenty one eighty second Street, unit three b, and the number you're calling from ending in zero four one eight. That's all correct. Right?
+caller: Yes
+agent : The soonest I have is tomorrow. Eight to eight thirty. Does that work?
+caller: Anything tomorrow morning?
+agent : Yes. Tomorrow has openings all morning. Starting at eight and running every half hour until noon. Which time works best for you?
+caller: Eight thirty works.
+agent : Sure. Will you be able to approve any repair work the technician recommends?
+caller: Yes, I can.
+agent : Will someone be home to let the technician in?
+caller: Yes.
+agent : Is there a gate code, a buzzer, or any pets the technician should know about?
+caller: One cat, and the buzzer is 2B.
+agent : The unit may have changed in their last answer, since they said the buzzer is two b. I'll read it back with unit two b. So that's thirty seven twenty one eighty second Street, unit two b, and the number you're calling from ending in zero four one eight. That's all correct. Right?
+caller: No, it's three B. The buzzer is 2B, but the apartment is 3B.
+agent : So that's thirty seven twenty one eighty seconds Street, unit three b, and the number you're calling from ending in zero four one eight. That's all correct. Right?
+caller: Yes
+agent : Okay. I've booked it. The technician will arrive tomorrow between eight thirty and nine. Now let's set up apartment two b.
+caller: Is there anything else?
+agent : Apartment three b is all set. Do you need a visit for two b as well, or is that just the buzzer?
+caller: No, that's it, thanks. Bye.
+agent : Thanks so much for calling Summit Air today. Have a great day. Take care.
+the agent hung up
+caller: Bye.
+livekit_ffi::server:279:livekit_ffi::server - Attempted to drop unknown FFI handle: 25

@@ -1,0 +1,5 @@
+$ uv run pytest -v tests/tool_server/test_ts_priority_caller_words.py 
+tests/tool_server/test_ts_priority_caller_words.py::test_the_reason_quotes_the_callers_line_that_raised_it PASSED
+tests/tool_server/test_ts_priority_caller_words.py::test_asking_for_urgent_with_no_fact_raises_nothing PASSED
+tests/tool_server/test_ts_priority_caller_words.py::test_a_fact_first_given_after_the_wait_raises_and_is_flagged PASSED
+============================== 3 passed in 1.12s ===============================

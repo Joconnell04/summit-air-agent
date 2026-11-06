@@ -1,0 +1,980 @@
+{
+  "case": "unrecorded-address-zip-said",
+  "retell": {
+    "test_case_job_id": "test_job_469ba00ff5a3",
+    "status": "fail",
+    "result_explanation": "Criteria 1\u20133 are met: one appointment was booked for the single heat issue, booking occurred after the caller confirmed the read-back and a confirmed=true read_back call, and the agent proceeded from the supplied ZIP to read-back without requesting the address a third time. However, criterion 4 fails because the agent repeatedly said the caller's name, including \u201cThanks, Denise.\u201d",
+    "creation_timestamp": 1793914747373,
+    "user_modified_timestamp": 1793914789204,
+    "test_case_definition_id": "test_case_7351cf56e668",
+    "test_case_definition_snapshot": {
+      "creationTimestamp": 1793911577413,
+      "dynamicVariables": {
+        "summit_call_id": "rtest-11052135-unrecorded-address-zip-said"
+      },
+      "llmModel": "claude-5.5-haiku",
+      "metrics": [
+        "The agent books 1 separate visit(s) with book_appointment, one for each problem or unit the caller needs seen.",
+        "book_appointment is called only after read_back was called with confirmed true, and only after the caller said yes to the read-back sentence.",
+        "The agent takes the ZIP the caller gave and goes to the read-back without asking for the address a third time.",
+        "The agent never says the caller's name."
+      ],
+      "name": "[summit] unrecorded-address-zip-said: Denise Carter, a homeowner in Hollis, Queens, with no heat since this morning",
+      "orgId": "org_EoCqq2c268JWlyCE",
+      "responseEngine": {
+        "llmId": "llm_1da616f2baeb6e916f63e0236950",
+        "type": "retell-llm",
+        "version": 0
+      },
+      "responseEngineId": "llm_1da616f2baeb6e916f63e0236950",
+      "testCaseDefinitionId": "test_case_7351cf56e668",
+      "toolMocks": [],
+      "type": "simulation",
+      "userModifiedTimestamp": 1793914519622,
+      "userPrompt": "## Identity\nDenise Carter, a homeowner in Hollis, Queens, with no heat since this morning. Says her Queens address digit by digit with no breaks, and gets short if asked for it again.\nYour name: Denise Carter\nYour address: 196-11 Hillside Ave, Hollis, 11423 (not in the eval world's address book, so the lookup finds nothing)\nYour phone: (917) 555-0119 (the number you're calling from)\nYour problem: no heat since this morning, gas boiler, about 63 inside\nYour home: Denise, all day\nYour approver: Denise, she owns the house\n\n## Goal\nStart the call by saying: \"Hi, my heat's been out since this morning.\"\n\n## Behavior\n- When asked for the address, say it in one breath with the ZIP, \"one nine six eleven Hillside Avenue, Hollis, one one four two three\".\n- If asked for the address again, repeat it once, a little annoyed.\n- Confirm the read-back and take the first time offered, then say goodbye.\n- Talk like a real person on the phone: short, plain sentences, one thing at a time.\n- Give a detail only when the agent asks for it, unless a line above says otherwise.\n- Never invent facts beyond the ones above; if asked something you don't know, say you don't know.\n- When your business is done, say goodbye and stop talking.\n"
+    },
+    "transcript_snapshot": {
+      "callEnded": true,
+      "dynamicVariables": {
+        "call_context": "",
+        "call_id": "playground",
+        "call_type": "web_call",
+        "greeting": "Thank you for calling Summit Air. How can I help you today?",
+        "session_type": "voice",
+        "summit_call_id": "rtest-11052135-unrecorded-address-zip-said",
+        "system_timezone": "America/Los_Angeles"
+      },
+      "knowledgeBaseRetrievedContents": [],
+      "toolMocks": [],
+      "transcript": [
+        {
+          "content": "Thank you for calling Summit Air. How can I help you today?",
+          "created_timestamp": 1793914757424,
+          "message_id": "message_c91fedb0d485f2a7c1fe5fbf",
+          "role": "agent"
+        },
+        {
+          "content": "Hi, my heat's been out since this morning.",
+          "created_timestamp": 1793914758186,
+          "message_id": "message_6acd42d544284ebbf98725bb",
+          "role": "user"
+        },
+        {
+          "content": "Sorry to hear that. Can I get your name?",
+          "created_timestamp": 1793914758726,
+          "message_id": "message_4979b01a4e447fafac39974c",
+          "metadata": {
+            "response_id": 1
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Denise Carter.",
+          "created_timestamp": 1793914759245,
+          "message_id": "message_262fe16866d48f0f92de3499",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, Denise. And this is for a residential property, right? Like a home or an apartment?",
+          "created_timestamp": 1793914759923,
+          "message_id": "message_67a06fc0ebcb131306bf4859",
+          "metadata": {
+            "response_id": 2
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, it's a house. I own it.",
+          "created_timestamp": 1793914760474,
+          "message_id": "message_c452ab44a911ee2d0197cc1d",
+          "role": "user"
+        },
+        {
+          "content": "Got it, thanks. What's the address of the home, including the ZIP if you have it?",
+          "created_timestamp": 1793914761142,
+          "message_id": "message_97fcc0832a532b993a497840",
+          "metadata": {
+            "response_id": 3
+          },
+          "role": "agent"
+        },
+        {
+          "content": "One nine six eleven Hillside Avenue, Hollis, one one four two three.",
+          "created_timestamp": 1793914761823,
+          "message_id": "message_204910b7024310bb8f20813a",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"street\":\"196-11 Hillside Avenue\",\"borough\":\"Hollis\"}",
+          "created_timestamp": 1793914762839,
+          "message_id": "message_137a4dcfd47dd635e37a755f",
+          "name": "find_address",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01RYP9EVUNjc8xtdMU2gjzWM",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"zip\":\"11423\",\"street\":\"196-11 Hillside Avenue\",\"from_caller\":true,\"in_area\":true,\"area\":\"Queens East\",\"note\":\"The lookup couldn't confirm the street; the caller's ZIP stands. Go on to the read-back, which confirms it with them.\"}}",
+          "created_timestamp": 1793914763486,
+          "message_id": "message_79688a2b22dbcf5e5912c3b0",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01RYP9EVUNjc8xtdMU2gjzWM"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"196-11 Hillside Avenue\",\"zip\":\"11423\",\"city\":\"Hollis\"}}",
+          "created_timestamp": 1793914763487,
+          "message_id": "message_ba564eae169ee2e5d133a349",
+          "name": "find_customer",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01CbVAYMYEiwA6H9H7JDapsW",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"matches\":[],\"needs_unit\":false}}",
+          "created_timestamp": 1793914763718,
+          "message_id": "message_b3865a5e2afe1e3307df2b71",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01CbVAYMYEiwA6H9H7JDapsW"
+        },
+        {
+          "content": "Is the heat completely out, or is it just not keeping up?",
+          "created_timestamp": 1793914764373,
+          "message_id": "message_7902c843a48c867bf977698e",
+          "metadata": {
+            "response_id": 4
+          },
+          "role": "agent"
+        },
+        {
+          "content": "It's completely out. The house is about 63 degrees inside.",
+          "created_timestamp": 1793914765010,
+          "message_id": "message_42dc2f848da4f971904a5603",
+          "role": "user"
+        },
+        {
+          "content": "Got it. Since when has it been out?",
+          "created_timestamp": 1793914765656,
+          "message_id": "message_338c6126ae7b34614749724c",
+          "metadata": {
+            "response_id": 5
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Since this morning, around seven. I'm not sure exactly what time.",
+          "created_timestamp": 1793914766211,
+          "message_id": "message_289a4d44b7eb5037e6e46b02",
+          "role": "user"
+        },
+        {
+          "content": "Thanks for that. Is there anything else that makes this more urgent for you, like someone elderly, a baby, or anyone unwell at home? If so, let me know.",
+          "created_timestamp": 1793914767054,
+          "message_id": "message_1196a7499ee0fe870f366564",
+          "metadata": {
+            "response_id": 6
+          },
+          "role": "agent"
+        },
+        {
+          "content": "No, nobody like that's here. It's just me.",
+          "created_timestamp": 1793914768162,
+          "message_id": "message_7d91ccb4cefc48ce31f78b10",
+          "role": "user"
+        },
+        {
+          "content": "Thanks for telling me, Denise. Let me check the earliest openings for a heat visit.",
+          "created_timestamp": 1793914769379,
+          "message_id": "message_533bd23bebef6fea9e303fee",
+          "metadata": {
+            "response_id": 7
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"job_type\":\"no_heat\",\"facts\":{\"issue\":\"Heat completely out since around 7 AM today\",\"since\":\"since about 7 AM today\",\"inside_temp_f\":63,\"who_home\":\"Caller is alone at home\"}}",
+          "created_timestamp": 1793914769380,
+          "message_id": "message_17da33f8626691c9f4d558db",
+          "name": "find_slots",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01L463vrviYpTpnYZsuhWNv9",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"The soonest I have is today, 5 to 7. Does that work?\",\"data\":{\"priority\":{\"level\":\"High\",\"reasons\":[\"below 65 F inside, caller said \\\"It's completely out. The house is about 63 degrees inside\\\"\",\"someone at home alone, caller said \\\"It's just me\\\"\"],\"requested\":null,\"raised_after_wait\":false},\"days\":[{\"date\":\"2026-11-05\",\"weekday\":\"Thursday\",\"day\":\"today\",\"windows\":[\"1700-1900\"],\"labels\":[\"5 to 7\"]},{\"date\":\"2026-11-06\",\"weekday\":\"Friday\",\"day\":\"tomorrow\",\"windows\":[\"0800-1000\",\"1000-1200\",\"1200-1400\",\"1400-1600\",\"1600-1800\",\"1800-2000\"],\"labels\":[\"8 to 10\",\"10 to 12\",\"12 to 2\",\"2 to 4\",\"4 to 6\",\"6 to 8\"]},{\"date\":\"2026-11-09\",\"weekday\":\"Monday\",\"day\":\"Monday\",\"windows\":[\"0800-1000\",\"1000-1200\",\"1200-1400\",\"1400-1600\",\"1600-1800\",\"1800-2000\"],\"labels\":[\"8 to 10\",\"10 to 12\",\"12 to 2\",\"2 to 4\",\"4 to 6\",\"6 to 8\"]}],\"offer\":{\"date\":\"2026-11-05\",\"window\":\"1700-1900\",\"weekday\":\"Thursday\",\"day\":\"today\",\"day_and_date\":\"today, Thursday, November 5\",\"label\":\"5 to 7\",\"part\":\"evening\",\"after_hours\":false}}}",
+          "created_timestamp": 1793914770925,
+          "message_id": "message_cef34490c041dd8a7fe2fecf",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01L463vrviYpTpnYZsuhWNv9"
+        },
+        {
+          "content": "The soonest I have is today, Thursday, November 5, between 5 and 7 PM. Does that work?",
+          "created_timestamp": 1793914771647,
+          "message_id": "message_4be46f629b92d4bb508ee839",
+          "metadata": {
+            "response_id": 8
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, that works. Five to seven is fine.",
+          "created_timestamp": 1793914772301,
+          "message_id": "message_055b905613462ee4266e3e39",
+          "role": "user"
+        },
+        {
+          "content": "That's a knowledge base excerpt, so I'll stick to your booking. Yes, today's 5 to 7 PM window works. Will you be able to approve any repair work the technician recommends?",
+          "created_timestamp": 1793914773285,
+          "message_id": "message_63477506ac3a8e3b70eceac1",
+          "metadata": {
+            "response_id": 9
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, I'll be the one approving it. I own the house.",
+          "created_timestamp": 1793914773862,
+          "message_id": "message_9cfd347eaa8513181a1b6fc8",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, Denise. Will someone be home to let the technician in?",
+          "created_timestamp": 1793914774533,
+          "message_id": "message_780f4e5680737fbabf8bc490",
+          "metadata": {
+            "response_id": 10
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, I'll be home. It's just me, so I'll let them in.",
+          "created_timestamp": 1793914775103,
+          "message_id": "message_dc5e755f94b095f6be68dc9d",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, Denise. Is there a gate code, buzzer, or pet the technician should know about?",
+          "created_timestamp": 1793914775911,
+          "message_id": "message_e54e436704cf29da1e8c2f4d",
+          "metadata": {
+            "response_id": 11
+          },
+          "role": "agent"
+        },
+        {
+          "content": "No, no gate or pets. Just ring the bell. Um, is it going to be a while? I'm freezing in here.",
+          "created_timestamp": 1793914776756,
+          "message_id": "message_1947be1767ec2e9c47e6c527",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, Denise. Let me read back your details before I book.",
+          "created_timestamp": 1793914777759,
+          "message_id": "message_9e985ce81f50a3573451208f",
+          "metadata": {
+            "response_id": 12
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"196-11 Hillside Avenue\",\"city\":\"Hollis\",\"zip\":\"11423\"},\"phone\":\"caller_id\",\"name\":\"Denise Carter\"}",
+          "created_timestamp": 1793914777760,
+          "message_id": "message_164fb6a02c1d8a8951d6407e",
+          "name": "read_back",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01VeaT2ZCsuJzF4bUrAVxvpR",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"I have your home at 196-11 Hillside Avenue, Hollis, ZIP code one one four two three, and the best number is nine one seven, five five five, zero one one nine. That's all correct, right?\",\"data\":{\"confirmed\":false,\"sentence\":\"I have your home at 196-11 Hillside Avenue, Hollis, ZIP code one one four two three, and the best number is nine one seven, five five five, zero one one nine. That's all correct, right?\"}}",
+          "created_timestamp": 1793914779170,
+          "message_id": "message_333a266f7381a1e4b7d87941",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01VeaT2ZCsuJzF4bUrAVxvpR"
+        },
+        {
+          "content": "I have your home at 196-11 Hillside Avenue, Hollis, ZIP code 11423, and the best number is 917-555-0119. That's all correct, right?",
+          "created_timestamp": 1793914780034,
+          "message_id": "message_8762f1e22197830709667cf2",
+          "metadata": {
+            "response_id": 13
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, that's all correct. Thank you.",
+          "created_timestamp": 1793914781927,
+          "message_id": "message_32974f27d1d173ce67fdc0f0",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"196-11 Hillside Avenue\",\"city\":\"Hollis\",\"zip\":\"11423\"},\"phone\":\"caller_id\",\"name\":\"Denise Carter\",\"confirmed\":true}",
+          "created_timestamp": 1793914783814,
+          "message_id": "message_8ad761ca472f197b8c3641f9",
+          "name": "read_back",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01C4BUCshkS4ErfG2tej1uEa",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"confirmed\":true,\"address\":{\"street\":\"196-11 Hillside Avenue\",\"unit\":\"\",\"city\":\"Hollis\",\"zip\":\"11423\",\"spelled\":\"\"},\"phone\":\"9175550119\"}}",
+          "created_timestamp": 1793914784221,
+          "message_id": "message_802f57254ebfea1c71fd6ebb",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01C4BUCshkS4ErfG2tej1uEa"
+        },
+        {
+          "arguments": "{\"job_type\":\"no_heat\",\"slot\":{\"date\":\"2026-11-05\",\"window\":\"1700-1900\"},\"details\":{\"approver\":\"Denise Carter, homeowner\",\"issue\":\"Heat completely out since about 7 AM today; house about 63 F inside\",\"since\":\"since about 7 AM today\",\"tried\":\"Not provided\",\"who_home\":\"Caller alone; will let technician in\",\"arrival_notes\":\"Just ring the bell. No gate or pets.\",\"inside_temp_f\":63,\"name\":\"Denise Carter\"}}",
+          "created_timestamp": 1793914784222,
+          "message_id": "message_e4b281aa2b58c79c249de1fd",
+          "name": "book_appointment",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_018utro7P45v2daqaxwodPct",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"You're all set for today, Thursday, November 5, with the technician arriving between 5 and 7. Anything else?\",\"data\":{\"booking_id\":548,\"appointment_id\":548,\"window\":{\"date\":\"2026-11-05\",\"window\":\"1700-1900\",\"weekday\":\"Thursday\",\"day\":\"today\",\"day_and_date\":\"today, Thursday, November 5\",\"label\":\"5 to 7\",\"part\":\"evening\",\"after_hours\":false},\"priority\":{\"level\":\"High\",\"reasons\":[\"below 65 F inside, caller said \\\"It's completely out. The house is about 63 degrees inside\\\"\",\"someone at home alone, caller said \\\"It's just me\\\"\"],\"raised_after_wait\":false},\"seek_earlier\":false,\"safety_override\":false,\"approval_callback_at\":null,\"return_visit_review\":false}}",
+          "created_timestamp": 1793914784883,
+          "message_id": "message_c95430cfa96fb0c16f46bb4c",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_018utro7P45v2daqaxwodPct"
+        },
+        {
+          "content": "You're all set for today, Thursday, November 5, with the technician arriving between 5 and 7 PM. Anything else I can help with?",
+          "created_timestamp": 1793914785747,
+          "message_id": "message_c429978c040ed2bfb485ab8f",
+          "metadata": {
+            "response_id": 14
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, that's everything. Thanks, bye.",
+          "created_timestamp": 1793914786384,
+          "message_id": "message_350c3a68a9338f2693ac425a",
+          "role": "user"
+        },
+        {
+          "content": "Thanks for calling Summit Air. Take care.",
+          "created_timestamp": 1793914787106,
+          "message_id": "message_063aa838976c7ea8e9c6daae",
+          "metadata": {
+            "response_id": 15
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"reason\":\"resolved\"}",
+          "created_timestamp": 1793914787107,
+          "message_id": "message_b05f2dbb825ed676270990b0",
+          "name": "end_call",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01CLJCZpHLJACs9MYk5YmJoJ",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"hang_up\":true}}",
+          "created_timestamp": 1793914787532,
+          "message_id": "message_ee4500747d1913147f129788",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01CLJCZpHLJACs9MYk5YmJoJ"
+        },
+        {
+          "content": "Take care, goodbye.",
+          "created_timestamp": 1793914788264,
+          "message_id": "message_5a0d6477d9d7f21aaad27ff6",
+          "metadata": {
+            "response_id": 16
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"execution_message\":\"Take care, goodbye.\"}",
+          "created_timestamp": 1793914788265,
+          "message_id": "message_9685220721333503f2c2f9ca",
+          "name": "test_hang_up",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01JkLM8JRoeXFug5J19Ud2gz",
+          "type": "end_call"
+        }
+      ]
+    }
+  },
+  "trace": {
+    "call": {
+      "id": "rtest-11052135-unrecorded-address-zip-said",
+      "tenant": "summit-air",
+      "caller_id": "(917) 555-0119",
+      "caller_key": "9175550119",
+      "dialed_number": "(678) 336-6730",
+      "direction": "inbound",
+      "started_at": "2026-11-03T21:39:06Z",
+      "ended_at": null,
+      "end_reason": null,
+      "end_requested": 1,
+      "after_hours": 0,
+      "linked_call_id": null,
+      "outcome": null,
+      "commercial": 0,
+      "summary_status": "none",
+      "turn_seq": 29,
+      "safety_state": "none",
+      "safety_kind": null,
+      "safety_signal_at": null,
+      "safety_lines_at": null,
+      "safety_flag_id": null,
+      "safety_variant": 0,
+      "readback_json": "{\"street\": \"196-11 Hillside Avenue\", \"unit\": \"\", \"city\": \"Hollis\", \"zip\": \"11423\", \"spelled\": \"\", \"phone\": \"9175550119\", \"phone_for\": \"\", \"sentence\": \"I have your home at 196-11 Hillside Avenue, Hollis, ZIP code one one four two three, and the best number is nine one seven, five five five, zero one one nine. That's all correct, right?\"}",
+      "readback_asked_seq": 24,
+      "readback_confirmed_at": "2026-11-05T21:39:44Z"
+    },
+    "events": [
+      {
+        "at": "2026-11-05T21:39:06Z",
+        "type": "tool",
+        "tool": "calls.start",
+        "args": {
+          "call_id": "rtest-11052135-unrecorded-address-zip-said",
+          "caller_id": "(917) 555-0119",
+          "dialed_number": "(678) 336-6730",
+          "direction": "inbound"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 146.3,
+        "error": null,
+        "request_id": "24bff799e16c"
+      },
+      {
+        "at": "2026-11-05T21:39:23Z",
+        "type": "turn",
+        "seq": 1,
+        "speaker": "agent",
+        "text": "Thank you for calling Summit Air. How can I help you today?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:39:23Z",
+        "type": "turn",
+        "seq": 2,
+        "speaker": "caller",
+        "text": "Hi, my heat's been out since this morning.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:39:23Z",
+        "type": "turn",
+        "seq": 3,
+        "speaker": "agent",
+        "text": "Sorry to hear that. Can I get your name?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:39:23Z",
+        "type": "turn",
+        "seq": 4,
+        "speaker": "caller",
+        "text": "Denise Carter.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:39:23Z",
+        "type": "turn",
+        "seq": 5,
+        "speaker": "agent",
+        "text": "Thanks, Denise. And this is for a residential property, right? Like a home or an apartment?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:39:23Z",
+        "type": "turn",
+        "seq": 6,
+        "speaker": "caller",
+        "text": "Yes, it's a house. I own it.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:39:23Z",
+        "type": "turn",
+        "seq": 7,
+        "speaker": "agent",
+        "text": "Got it, thanks. What's the address of the home, including the ZIP if you have it?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:39:23Z",
+        "type": "turn",
+        "seq": 8,
+        "speaker": "caller",
+        "text": "One nine six eleven Hillside Avenue, Hollis, one one four two three.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:39:23Z",
+        "type": "tool",
+        "tool": "find_address",
+        "args": {
+          "call_id": "rtest-11052135-unrecorded-address-zip-said",
+          "street": "196-11 Hillside Avenue",
+          "borough": "Hollis",
+          "spelled": ""
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 196.5,
+        "error": null,
+        "request_id": "2aaa2d759051"
+      },
+      {
+        "at": "2026-11-05T21:39:23Z",
+        "type": "tool",
+        "tool": "find_customer",
+        "args": {
+          "call_id": "rtest-11052135-unrecorded-address-zip-said",
+          "phone": null,
+          "address": {
+            "street": "196-11 Hillside Avenue",
+            "unit": "",
+            "city": "Hollis",
+            "zip": "11423",
+            "spelled": ""
+          }
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 9.7,
+        "error": null,
+        "request_id": "b5fe54c2b860"
+      },
+      {
+        "at": "2026-11-05T21:39:29Z",
+        "type": "turn",
+        "seq": 9,
+        "speaker": "agent",
+        "text": "Is the heat completely out, or is it just not keeping up?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 5000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:39:29Z",
+        "type": "turn",
+        "seq": 10,
+        "speaker": "caller",
+        "text": "It's completely out. The house is about 63 degrees inside.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:39:29Z",
+        "type": "turn",
+        "seq": 11,
+        "speaker": "agent",
+        "text": "Got it. Since when has it been out?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:39:29Z",
+        "type": "turn",
+        "seq": 12,
+        "speaker": "caller",
+        "text": "Since this morning, around seven. I'm not sure exactly what time.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:39:29Z",
+        "type": "turn",
+        "seq": 13,
+        "speaker": "agent",
+        "text": "Thanks for that. Is there anything else that makes this more urgent for you, like someone elderly, a baby, or anyone unwell at home? If so, let me know.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:39:29Z",
+        "type": "turn",
+        "seq": 14,
+        "speaker": "caller",
+        "text": "No, nobody like that's here. It's just me.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:39:29Z",
+        "type": "turn",
+        "seq": 15,
+        "speaker": "agent",
+        "text": "Thanks for telling me, Denise. Let me check the earliest openings for a heat visit.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:39:30Z",
+        "type": "tool",
+        "tool": "find_slots",
+        "args": {
+          "call_id": "rtest-11052135-unrecorded-address-zip-said",
+          "job_type": "no_heat",
+          "priority": null,
+          "preferred_days": [],
+          "time_of_day": null,
+          "window_minutes": null,
+          "day": null,
+          "arrive_after": null,
+          "arrive_before": null,
+          "facts": {
+            "issue": "Heat completely out since around 7 AM today",
+            "since": "since about 7 AM today",
+            "who_home": "Caller is alone at home",
+            "inside_temp_f": 63.0,
+            "temp_falling_fast": false
+          }
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "The soonest I have is today, 5 to 7. Does that work?",
+        "ms": 1099.0,
+        "error": null,
+        "request_id": "cc648bf224ae"
+      },
+      {
+        "at": "2026-11-05T21:39:38Z",
+        "type": "turn",
+        "seq": 16,
+        "speaker": "agent",
+        "text": "The soonest I have is today, Thursday, November 5, between 5 and 7 PM. Does that work?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:39:38Z",
+        "type": "turn",
+        "seq": 17,
+        "speaker": "caller",
+        "text": "Yes, that works. Five to seven is fine.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:39:38Z",
+        "type": "turn",
+        "seq": 18,
+        "speaker": "agent",
+        "text": "That's a knowledge base excerpt, so I'll stick to your booking. Yes, today's 5 to 7 PM window works. Will you be able to approve any repair work the technician recommends?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:39:38Z",
+        "type": "turn",
+        "seq": 19,
+        "speaker": "caller",
+        "text": "Yes, I'll be the one approving it. I own the house.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:39:38Z",
+        "type": "turn",
+        "seq": 20,
+        "speaker": "agent",
+        "text": "Thanks, Denise. Will someone be home to let the technician in?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:39:38Z",
+        "type": "turn",
+        "seq": 21,
+        "speaker": "caller",
+        "text": "Yes, I'll be home. It's just me, so I'll let them in.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:39:38Z",
+        "type": "turn",
+        "seq": 22,
+        "speaker": "agent",
+        "text": "Thanks, Denise. Is there a gate code, buzzer, or pet the technician should know about?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:39:38Z",
+        "type": "turn",
+        "seq": 23,
+        "speaker": "caller",
+        "text": "No, no gate or pets. Just ring the bell. Um, is it going to be a while? I'm freezing in here.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:39:38Z",
+        "type": "turn",
+        "seq": 24,
+        "speaker": "agent",
+        "text": "Thanks, Denise. Let me read back your details before I book.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:39:39Z",
+        "type": "tool",
+        "tool": "read_back",
+        "args": {
+          "call_id": "rtest-11052135-unrecorded-address-zip-said",
+          "address": {
+            "street": "196-11 Hillside Avenue",
+            "unit": "",
+            "city": "Hollis",
+            "zip": "11423",
+            "spelled": ""
+          },
+          "phone": "caller_id",
+          "phone_for": "",
+          "name": "Denise Carter",
+          "confirmed": false
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "I have your home at 196-11 Hillside Avenue, Hollis, ZIP code one one four two three, and the best number is nine one seven, five five five, zero one one nine. That's all correct, right?",
+        "ms": 320.4,
+        "error": null,
+        "request_id": "5da29f91f0cc"
+      },
+      {
+        "at": "2026-11-05T21:39:44Z",
+        "type": "turn",
+        "seq": 25,
+        "speaker": "agent",
+        "text": "I have your home at 196-11 Hillside Avenue, Hollis, ZIP code 11423, and the best number is 917-555-0119. That's all correct, right?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:39:44Z",
+        "type": "turn",
+        "seq": 26,
+        "speaker": "caller",
+        "text": "Yes, that's all correct. Thank you.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:39:44Z",
+        "type": "tool",
+        "tool": "read_back",
+        "args": {
+          "call_id": "rtest-11052135-unrecorded-address-zip-said",
+          "address": {
+            "street": "196-11 Hillside Avenue",
+            "unit": "",
+            "city": "Hollis",
+            "zip": "11423",
+            "spelled": ""
+          },
+          "phone": "caller_id",
+          "phone_for": "",
+          "name": "Denise Carter",
+          "confirmed": true
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 6.2,
+        "error": null,
+        "request_id": "946c3b28c9de"
+      },
+      {
+        "at": "2026-11-05T21:39:44Z",
+        "type": "tool",
+        "tool": "book_appointment",
+        "args": {
+          "call_id": "rtest-11052135-unrecorded-address-zip-said",
+          "job_type": "no_heat",
+          "slot": {
+            "date": "2026-11-05",
+            "window": "1700-1900"
+          },
+          "details": {
+            "issue": "Heat completely out since about 7 AM today; house about 63 F inside",
+            "since": "since about 7 AM today",
+            "tried": "Not provided",
+            "who_home": "Caller alone; will let technician in",
+            "approver": "Denise Carter, homeowner",
+            "system_type": "",
+            "arrival_notes": "Just ring the bell. No gate or pets.",
+            "name": "Denise Carter",
+            "inside_temp_f": 63.0
+          },
+          "priority": null,
+          "separate_problem": false,
+          "new_address_account": null
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "You're all set for today, Thursday, November 5, with the technician arriving between 5 and 7. Anything else?",
+        "ms": 296.4,
+        "error": null,
+        "request_id": "7f1a12a96771"
+      },
+      {
+        "at": "2026-11-05T21:39:47Z",
+        "type": "turn",
+        "seq": 27,
+        "speaker": "agent",
+        "text": "You're all set for today, Thursday, November 5, with the technician arriving between 5 and 7 PM. Anything else I can help with?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 5000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:39:47Z",
+        "type": "turn",
+        "seq": 28,
+        "speaker": "caller",
+        "text": "Yes, that's everything. Thanks, bye.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:39:47Z",
+        "type": "turn",
+        "seq": 29,
+        "speaker": "agent",
+        "text": "Thanks for calling Summit Air. Take care.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:39:47Z",
+        "type": "tool",
+        "tool": "end_call",
+        "args": {
+          "call_id": "rtest-11052135-unrecorded-address-zip-said",
+          "reason": "resolved"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 5.1,
+        "error": null,
+        "request_id": "1b6529aa97ac"
+      }
+    ],
+    "flags": [],
+    "callbacks": [],
+    "bookings": [
+      {
+        "id": 212,
+        "kind": "book",
+        "status": "booked",
+        "fsm_job_id": 548,
+        "window_start": "2026-11-05T22:00:00Z",
+        "window_end": "2026-11-06T00:00:00Z",
+        "priority": "High",
+        "priority_reasons": "below 65 F inside, caller said \"It's completely out. The house is about 63 degrees inside\"; someone at home alone, caller said \"It's just me\"",
+        "safety_override": 0,
+        "seek_earlier": 0,
+        "attempts": 1,
+        "last_error": null,
+        "raised_after_wait": 0,
+        "priority_rules": "[\"bracket:cool_inside\",\"lives_alone\"]",
+        "priority_reason_list": "[\"below 65 F inside, caller said \\\"It's completely out. The house is about 63 degrees inside\\\"\",\"someone at home alone, caller said \\\"It's just me\\\"\"]",
+        "who_home": "Caller alone; will let technician in",
+        "job_type": "no_heat",
+        "street": "196-11 Hillside Avenue",
+        "unit": "",
+        "job_notes": "[]"
+      }
+    ],
+    "notes": [],
+    "leads": [],
+    "out_of_area": [],
+    "summary": [],
+    "electrical": [],
+    "holds": [],
+    "pace": [
+      {
+        "call_id": "rtest-11052135-unrecorded-address-zip-said",
+        "speed": 1.0,
+        "source": "default",
+        "requested": 0,
+        "older_adult": 0,
+        "address_speed": null,
+        "repeats": 0
+      }
+    ],
+    "pace_changes": [],
+    "caller_pace": [],
+    "transfers": [],
+    "handoffs": [],
+    "address_lookups": [
+      {
+        "house": "19611",
+        "street": "hillside ave",
+        "hint": "Hollis",
+        "status": "none",
+        "zips_json": "[]",
+        "source": "geosearch"
+      }
+    ],
+    "address_checks": [],
+    "names": [],
+    "address_moves": [],
+    "identity_checks": [],
+    "heads_ups": []
+  }
+}

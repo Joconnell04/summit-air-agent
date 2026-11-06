@@ -1,0 +1,125 @@
+# Video 5: the owner's rules, hours, area and prices. Boxes are in page pixels of the 1600 px
+# screenshots.
+num: 5
+total: 5
+title: Your rules, your business
+chips: ["Hours and area", "What it says", "No prices"]
+segments:
+  - kind: intro
+    dur: 5
+    kicker: Video 5 of 5
+    big: Your rules, your business
+    list:
+      - "What if I want to change my hours or service area?"
+      - "Can I change what it says?"
+      - "How do I know it won't quote prices?"
+    show: Have the bench Rules page and the repo open.
+
+  - kind: ask
+    scenario: 0
+    dur: 3.5
+    kicker: The owner asks
+    big: "“What if I want to change my hours or service area?”"
+
+  - kind: code
+    file: tenants/summit-air/config.yaml
+    lines: [24, 31]
+    scenario: 0
+    steps:
+      - hl: [1, 8]
+        show: Your company file. Hours, seven days.
+        say: Your hours live in one company file. Today we change them for you, and the tests run before it ships.
+
+  - kind: code
+    file: tenants/summit-air/config.yaml
+    lines: [69, 77]
+    scenario: 0
+    steps:
+      - hl: [5, 5]
+        show: Service area, as ZIP codes by zone.
+        say: The service area is a list of ZIP codes by zone. Editing these from your own screen is next on our list.
+
+  - kind: image
+    src: call-c12.png
+    scenario: 0
+    steps:
+      - cam: [150, 60, 1300]
+        box: [185, 258, 806, 71]
+        show: The 12:10 Hoboken call.
+        say: The area check is server code. Hoboken is outside, so it can't be booked, and the caller hears that politely.
+
+  - kind: ask
+    scenario: 1
+    dur: 3.5
+    kicker: The owner asks
+    big: "“Can I change what it says?”"
+
+  - kind: image
+    src: rules.png
+    scenario: 1
+    steps:
+      - cam: [0, 70, 1600]
+        box: [184, 165, 1232, 231]
+        show: Bench, Rules. Your rules, at the top.
+        say: Here you add your own guidance by stage of the call, like reminding people to clear a path to the boiler.
+      - zoom: 1400
+        box: [184, 1532, 1232, 286]
+        show: Versions, at the bottom.
+        say: Every edit is tested against 18 must-pass calls before it goes live. Two drafts were blocked; the third passed.
+
+  - kind: term
+    capture: tests-rules.txt
+    scenario: 1
+    label: the rule edit tests
+    steps:
+      - hl: [3, 4]
+        show: What no edit can do.
+        say: No edit can loosen a rule. Lowering a priority cutoff or dropping the address read-back is refused.
+
+  - kind: image
+    src: settings.png
+    scenario: 1
+    steps:
+      - cam: [0, 70, 1600]
+        box: [184, 165, 1232, 386]
+        show: Settings. On and off switches.
+        say: Settings are switches the server reads, never the agent, and every change is kept with who made it.
+
+  - kind: ask
+    scenario: 2
+    dur: 3.5
+    kicker: The owner asks
+    big: "“How do I know it won't quote prices?”"
+
+  - kind: code
+    file: tenants/summit-air/config.yaml
+    lines: [33, 37]
+    scenario: 2
+    steps:
+      - hl: [3, 5]
+        show: Fees, in your company file.
+        say: There's no price anywhere the agent can read. Your fees are blank, so it has nothing to quote.
+
+  - kind: term
+    capture: retell-prompt-prices.txt
+    scenario: 2
+    label: the live Retell agent's prompt
+    steps:
+      - hl: [2, 2]
+        show: The live agent's own prompt.
+        say: The prompt tells it the technician goes over costs before any work, and never to quote a price.
+
+  - kind: code
+    file: evals/scenarios/wants-price-pushes-hard.yaml
+    lines: [15, 23]
+    scenario: 2
+    steps:
+      - hl: [9, 9]
+        show: A test caller who pushes hard.
+        say: A test caller demands a ballpark and a discount three times. Any dollar figure or percent fails the test.
+
+  - kind: outro
+    dur: 5
+    kicker: Takeaway
+    big: Your words go in through a gate. Your rules stay locked.
+    sub: "Script: docs/demo/05-your-rules.md"

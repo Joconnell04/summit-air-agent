@@ -1,0 +1,1059 @@
+{
+  "case": "kb-yep-uh-huh-no-heat",
+  "retell": {
+    "test_case_job_id": "test_job_c5899d59a0e1",
+    "status": "error",
+    "result_explanation": "Ending the conversation early as there might be a loop.",
+    "creation_timestamp": 1793915406251,
+    "user_modified_timestamp": 1793915457367,
+    "test_case_definition_id": "test_case_58bcd2aad0b5",
+    "test_case_definition_snapshot": {
+      "creationTimestamp": 1793915402777,
+      "dynamicVariables": {
+        "summit_call_id": "rtest-11052150-kb-yep-uh-huh-no-heat"
+      },
+      "llmModel": "claude-5.5-haiku",
+      "metrics": [
+        "The agent never refers to text, reference material, a knowledge base or context, never says it is ignoring, setting aside or repeating anything, and never speaks of \"the caller\" in the third person.",
+        "After \"say that again?\", the agent repeats its last question once, in simple words, without commenting on it.",
+        "The agent takes \"yep\", \"yeah\" and \"uh-huh\" as yes and never asks the same question again after one.",
+        "book_appointment is called only after read_back was called with confirmed true, and only after the caller said yes to the read-back sentence.",
+        "The agent books exactly one visit with book_appointment with job_type no_heat.",
+        "The agent never says the caller's name out loud to the caller. A name inside tool arguments, such as booking details, doesn't count."
+      ],
+      "name": "[summit] kb-yep-uh-huh-no-heat: No-heat caller who answers with yep, uh-huh and say that again",
+      "orgId": "org_EoCqq2c268JWlyCE",
+      "responseEngine": {
+        "llmId": "llm_1da616f2baeb6e916f63e0236950",
+        "type": "retell-llm",
+        "version": 0
+      },
+      "responseEngineId": "llm_1da616f2baeb6e916f63e0236950",
+      "testCaseDefinitionId": "test_case_58bcd2aad0b5",
+      "toolMocks": [],
+      "type": "simulation",
+      "userModifiedTimestamp": 1793915402777,
+      "userPrompt": "## Identity\nCasey Morgan, a homeowner in Flatbush. Tired, mumbles, says \"um\" a lot.\nYour name: Casey Morgan\nYour address: 1520 Ocean Ave, Brooklyn, 11230\nYour phone: 678 555 0270 (the number you're calling from)\nYour problem: no heat since this morning, about 62 inside, a gas furnace, nobody at risk at home; you can approve repairs, you'll be home, no gate code or pets\n\n## Goal\nStart the call by saying: \"Um, hi, yeah, my heat's out.\"\n\n## Behavior\n- Answer almost every question with only \"yep\", \"yeah\" or \"uh-huh\", and start some answers with \"um\".\n- Once, early on, say only \"say that again?\" instead of answering.\n- Give a detail (name, address, phone, temperature) only when asked for that detail, in as few words as you can.\n- Confirm a correct read-back with \"uh-huh\". Take the first window offered with \"yeah\".\n- When your business is done, say bye and stop talking.\n"
+    },
+    "transcript_snapshot": {
+      "callEnded": false,
+      "dynamicVariables": {
+        "call_context": "",
+        "call_id": "playground",
+        "call_type": "web_call",
+        "greeting": "Thank you for calling Summit Air. How can I help you today?",
+        "session_type": "voice",
+        "summit_call_id": "rtest-11052150-kb-yep-uh-huh-no-heat",
+        "system_timezone": "America/Los_Angeles"
+      },
+      "knowledgeBaseRetrievedContents": [],
+      "toolMocks": [],
+      "transcript": [
+        {
+          "content": "Thank you for calling Summit Air. How can I help you today?",
+          "created_timestamp": 1793915416371,
+          "message_id": "message_aa619e3d32272b71890719f1",
+          "role": "agent"
+        },
+        {
+          "content": "Um, hi, yeah, my heat's out.",
+          "created_timestamp": 1793915416908,
+          "message_id": "message_3838be730ba4fe7184f105b5",
+          "role": "user"
+        },
+        {
+          "content": "I'm sorry to hear that. Is it completely out, or just not keeping up? And since when has it been like this?",
+          "created_timestamp": 1793915417599,
+          "message_id": "message_24602c95ab1fee91c44454d0",
+          "metadata": {
+            "response_id": 1
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Um, since this morning.",
+          "created_timestamp": 1793915418094,
+          "message_id": "message_34baa88b14dbe32325582d1f",
+          "role": "user"
+        },
+        {
+          "content": "Got it. Is it completely out, or is it running but not keeping the place warm?",
+          "created_timestamp": 1793915418817,
+          "message_id": "message_eb9342dc7c856378538f8250",
+          "metadata": {
+            "response_id": 2
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Um, yeah, it's running but it's, um, not keeping up. Like it's about 62 inside.",
+          "created_timestamp": 1793915419398,
+          "message_id": "message_0fce3becc117671c2a91fda3",
+          "role": "user"
+        },
+        {
+          "content": "Thanks. Can I get your name?",
+          "created_timestamp": 1793915420056,
+          "message_id": "message_6a2c252540ef706bd5ff5052",
+          "metadata": {
+            "response_id": 3
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Casey.",
+          "created_timestamp": 1793915420667,
+          "message_id": "message_ae65ad3932fa765ba5956adc",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, Casey. And this is for a residential property, right? Like a home or an apartment?",
+          "created_timestamp": 1793915421340,
+          "message_id": "message_15d883c9203ed473a0734e17",
+          "metadata": {
+            "response_id": 4
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yep.",
+          "created_timestamp": 1793915421891,
+          "message_id": "message_78c64d0a93aee1c8236d8e8b",
+          "role": "user"
+        },
+        {
+          "content": "What's the street address, including the apartment or unit number if there is one?",
+          "created_timestamp": 1793915422567,
+          "message_id": "message_3fc8b3e18b0049d883eadb4b",
+          "metadata": {
+            "response_id": 5
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Um, 1520 Ocean Ave.",
+          "created_timestamp": 1793915423163,
+          "message_id": "message_8a308ade20683acb7211dc58",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"street\":\"1520 Ocean Ave\"}",
+          "created_timestamp": 1793915424031,
+          "message_id": "message_ac321329c33dcbe92888b76f",
+          "name": "find_address",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01TXMEgUpUZLdeQdm8oDpUu9",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"street\":\"1520 Ocean Avenue\",\"zip\":\"11230\",\"borough\":\"Brooklyn\",\"neighborhood\":\"Midwood\",\"in_area\":true,\"area\":\"Brooklyn South\"}}",
+          "created_timestamp": 1793915424770,
+          "message_id": "message_170ba0c2e26fb835baf977d0",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01TXMEgUpUZLdeQdm8oDpUu9"
+        },
+        {
+          "content": "Is there an apartment or unit number for that address?",
+          "created_timestamp": 1793915425398,
+          "message_id": "message_a02b073a353eb81f24840ab6",
+          "metadata": {
+            "response_id": 6
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Um, no, it's just the house.",
+          "created_timestamp": 1793915426660,
+          "message_id": "message_fae5feabe98caf668cd901d5",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"1520 Ocean Avenue\",\"zip\":\"11230\",\"city\":\"Brooklyn\"},\"phone\":null}",
+          "created_timestamp": 1793915427555,
+          "message_id": "message_a7432c415089ff595956798c",
+          "name": "find_customer",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_017J2NH6ET49nzKzDHvuXsT8",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"matches\":[],\"needs_unit\":false}}",
+          "created_timestamp": 1793915427903,
+          "message_id": "message_7d191d9fef69f4b91a058b49",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_017J2NH6ET49nzKzDHvuXsT8"
+        },
+        {
+          "content": "What's the best phone number to reach you?",
+          "created_timestamp": 1793915428481,
+          "message_id": "message_5c4689ce59637dd7576d8155",
+          "metadata": {
+            "response_id": 7
+          },
+          "role": "agent"
+        },
+        {
+          "content": "678 555 0270.",
+          "created_timestamp": 1793915429001,
+          "message_id": "message_b6a8d34d288375fa8f29a05f",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"1520 Ocean Avenue\",\"zip\":\"11230\",\"city\":\"Brooklyn\"},\"phone\":\"678 555 0270\",\"name\":\"Casey\"}",
+          "created_timestamp": 1793915429918,
+          "message_id": "message_1debf9059c2cb6c9705bc895",
+          "name": "read_back",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01Fi19hDC2LxAgQhKGZK82tP",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"I have your home at 1520 Ocean Avenue, Brooklyn, ZIP code one one two three zero, and the best number is six seven eight, five five five, zero two seven zero. That's all correct, right?\",\"data\":{\"confirmed\":false,\"sentence\":\"I have your home at 1520 Ocean Avenue, Brooklyn, ZIP code one one two three zero, and the best number is six seven eight, five five five, zero two seven zero. That's all correct, right?\"}}",
+          "created_timestamp": 1793915430257,
+          "message_id": "message_704eadd2c080ef97bf2305b2",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01Fi19hDC2LxAgQhKGZK82tP"
+        },
+        {
+          "content": "I have your home at 1520 Ocean Avenue, Brooklyn, ZIP code one one two three zero, and the best number is six seven eight, five five five, zero two seven zero. That's all correct, right?",
+          "created_timestamp": 1793915431047,
+          "message_id": "message_d6dedd7cb768f34c38b8d06d",
+          "metadata": {
+            "response_id": 8
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Uh-huh.",
+          "created_timestamp": 1793915431499,
+          "message_id": "message_f759e614627a8318f6e4bac5",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"1520 Ocean Avenue\",\"zip\":\"11230\",\"city\":\"Brooklyn\"},\"phone\":\"678 555 0270\",\"name\":\"Casey\",\"confirmed\":true}",
+          "created_timestamp": 1793915432880,
+          "message_id": "message_f542e27e1a2a873e54646938",
+          "name": "read_back",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01DEPgJbDE2a6GD4LLvMFuuH",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"confirmed\":true,\"address\":{\"street\":\"1520 Ocean Avenue\",\"unit\":\"\",\"city\":\"Brooklyn\",\"zip\":\"11230\",\"spelled\":\"\"},\"phone\":\"6785550270\"}}",
+          "created_timestamp": 1793915433217,
+          "message_id": "message_0c27e34a13aa90405824a4f6",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01DEPgJbDE2a6GD4LLvMFuuH"
+        },
+        {
+          "arguments": "{\"job_type\":\"no_heat\",\"facts\":{\"issue\":\"Heat running but not keeping up; inside about 62 degrees\",\"since_when\":\"since this morning\",\"who_home\":\"not provided\",\"temp_falling_fast\":false}}",
+          "created_timestamp": 1793915433218,
+          "message_id": "message_ec8e38a786a06580c39d7a20",
+          "name": "find_slots",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01DSoe6o8Su7urtQffeLveoF",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":false,\"say\":\"Let me check that again.\",\"data\":{\"errors\":{\"facts.since_when\":\"Extra inputs are not permitted\"}},\"refused\":\"invalid_arguments\"}",
+          "created_timestamp": 1793915433514,
+          "message_id": "message_7cd34bec5d0831d46d18575f",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01DSoe6o8Su7urtQffeLveoF"
+        },
+        {
+          "arguments": "{\"job_type\":\"no_heat\",\"facts\":{\"issue\":\"Heat running but not keeping up since this morning; inside about 62 degrees\",\"inside_temp_f\":62,\"who_home\":\"not provided\"}}",
+          "created_timestamp": 1793915434460,
+          "message_id": "message_6facf79077585ee467e524e3",
+          "name": "find_slots",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01JsSXwxaZEvcGXQYn1r9cRF",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"The soonest I have is today, 5 to 7. Does that work?\",\"data\":{\"priority\":{\"level\":\"High\",\"reasons\":[\"below 65 F inside, caller said \\\"Um, yeah, it's running but it's, um, not keeping up. Like it's about 62 inside\\\"\"],\"requested\":null,\"raised_after_wait\":false},\"days\":[{\"date\":\"2026-11-05\",\"weekday\":\"Thursday\",\"day\":\"today\",\"windows\":[\"1700-1900\"],\"labels\":[\"5 to 7\"]},{\"date\":\"2026-11-06\",\"weekday\":\"Friday\",\"day\":\"tomorrow\",\"windows\":[\"0800-1000\",\"1000-1200\",\"1200-1400\",\"1400-1600\",\"1600-1800\",\"1800-2000\"],\"labels\":[\"8 to 10\",\"10 to 12\",\"12 to 2\",\"2 to 4\",\"4 to 6\",\"6 to 8\"]},{\"date\":\"2026-11-09\",\"weekday\":\"Monday\",\"day\":\"Monday\",\"windows\":[\"0800-1000\",\"1000-1200\",\"1200-1400\",\"1400-1600\",\"1600-1800\",\"1800-2000\"],\"labels\":[\"8 to 10\",\"10 to 12\",\"12 to 2\",\"2 to 4\",\"4 to 6\",\"6 to 8\"]}],\"offer\":{\"date\":\"2026-11-05\",\"window\":\"1700-1900\",\"weekday\":\"Thursday\",\"day\":\"today\",\"day_and_date\":\"today, Thursday, November 5\",\"label\":\"5 to 7\",\"part\":\"evening\",\"after_hours\":false}}}",
+          "created_timestamp": 1793915436074,
+          "message_id": "message_b8dccc476be6844ae3ba481b",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01JsSXwxaZEvcGXQYn1r9cRF"
+        },
+        {
+          "content": "The soonest I have is today, Thursday, November 5, arriving between 5 and 7. Does that work for you?",
+          "created_timestamp": 1793915436811,
+          "message_id": "message_92f899e6543c289df4c14575",
+          "metadata": {
+            "response_id": 9
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yeah.",
+          "created_timestamp": 1793915437384,
+          "message_id": "message_08b3f32ee3ae34b5ff6f180b",
+          "role": "user"
+        },
+        {
+          "content": "Will you be able to approve any repair work the technician recommends?",
+          "created_timestamp": 1793915438034,
+          "message_id": "message_8b81ca86055b21e45641b690",
+          "metadata": {
+            "response_id": 10
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Um, yeah, I can approve it.",
+          "created_timestamp": 1793915438543,
+          "message_id": "message_363bb6c513f3473e8e2fd1ba",
+          "role": "user"
+        },
+        {
+          "content": "Will someone be home to let the technician in?",
+          "created_timestamp": 1793915439134,
+          "message_id": "message_d65036d78cad51b0a42fb427",
+          "metadata": {
+            "response_id": 11
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Um, yeah, I'll be home.",
+          "created_timestamp": 1793915439715,
+          "message_id": "message_6bab0dcb290924b2c329fc9a",
+          "role": "user"
+        },
+        {
+          "content": "Is there a gate code, buzzer, or pet the technician should know about?",
+          "created_timestamp": 1793915440679,
+          "message_id": "message_776e3a52141aeb89565d4470",
+          "metadata": {
+            "response_id": 12
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Um, no, no gate or pets.",
+          "created_timestamp": 1793915442255,
+          "message_id": "message_2bfd47533bcacb5ef708905b",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"details\":{\"approver\":\"Casey\",\"issue\":\"Heat running but not keeping up since this morning; inside about 62 degrees\",\"since\":\"since this morning\",\"tried\":\"not provided\",\"who_home\":\"Casey\",\"inside_temp_f\":62,\"arrival_notes\":\"No gate code, buzzer, or pets\"},\"job_type\":\"no_heat\",\"slot\":{\"date\":\"2026-11-05\",\"window\":\"1700-1900\"},\"priority\":\"High\"}",
+          "created_timestamp": 1793915443583,
+          "message_id": "message_5b38ce825eb210462918d38f",
+          "name": "book_appointment",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01Lu6Zz6YxroCQ2xrNrWJ7vM",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"You're all set for today, Thursday, November 5, with the technician arriving between 5 and 7. Anything else?\",\"data\":{\"booking_id\":551,\"appointment_id\":551,\"window\":{\"date\":\"2026-11-05\",\"window\":\"1700-1900\",\"weekday\":\"Thursday\",\"day\":\"today\",\"day_and_date\":\"today, Thursday, November 5\",\"label\":\"5 to 7\",\"part\":\"evening\",\"after_hours\":false},\"priority\":{\"level\":\"High\",\"reasons\":[\"below 65 F inside, caller said \\\"Um, yeah, it's running but it's, um, not keeping up. Like it's about 62 inside\\\"\"],\"raised_after_wait\":false},\"seek_earlier\":false,\"safety_override\":false,\"approval_callback_at\":null,\"return_visit_review\":false}}",
+          "created_timestamp": 1793915444759,
+          "message_id": "message_db741c6ffec3c3c050868d78",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01Lu6Zz6YxroCQ2xrNrWJ7vM"
+        },
+        {
+          "content": "You're all set for today, Thursday, November 5, with the technician arriving between 5 and 7. Anything else?",
+          "created_timestamp": 1793915445427,
+          "message_id": "message_37f02b0fa136e9ddfd10f7a0",
+          "metadata": {
+            "response_id": 13
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Um, no, that's it. Thanks. Bye.",
+          "created_timestamp": 1793915446204,
+          "message_id": "message_26be41dd1f92cdd520f0a657",
+          "role": "user"
+        },
+        {
+          "content": "Thanks for calling Summit Air, and have a great day.",
+          "created_timestamp": 1793915446981,
+          "message_id": "message_46a0f2d7ab3e457665cdaffc",
+          "metadata": {
+            "response_id": 14
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"reason\":\"resolved\"}",
+          "created_timestamp": 1793915446982,
+          "message_id": "message_430f2d624a5c12e1328dbfdd",
+          "name": "end_call",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01RXCTegrXygCvmYT2A5weas",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"hang_up\":true}}",
+          "created_timestamp": 1793915447363,
+          "message_id": "message_f344a9499d56553c58ace81d",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01RXCTegrXygCvmYT2A5weas"
+        },
+        {
+          "content": "Um, yeah. Bye.",
+          "created_timestamp": 1793915449280,
+          "message_id": "message_8dca41db3f6e6b7b61384c1e",
+          "role": "user"
+        },
+        {
+          "content": "Take care.",
+          "created_timestamp": 1793915449886,
+          "message_id": "message_1a3ce49b256d9fd92ac7913f",
+          "metadata": {
+            "response_id": 15
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Bye.",
+          "created_timestamp": 1793915450968,
+          "message_id": "message_5aa650268bcea806cbcb1562",
+          "role": "user"
+        },
+        {
+          "content": "Um, okay. Bye.",
+          "created_timestamp": 1793915453144,
+          "message_id": "message_96f786d0864084f51bde8ebc",
+          "role": "user"
+        },
+        {
+          "content": "Bye.",
+          "created_timestamp": 1793915455185,
+          "message_id": "message_6079c2fe48509fdf2d24ee4c",
+          "role": "user"
+        },
+        {
+          "content": "Take care.",
+          "created_timestamp": 1793915455751,
+          "message_id": "message_2ffc4cffec5f1487dd982af2",
+          "metadata": {
+            "response_id": 16
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Bye.",
+          "created_timestamp": 1793915456206,
+          "message_id": "message_aae14c232749b65aabd364c7",
+          "role": "user"
+        },
+        {
+          "content": "Take care.",
+          "created_timestamp": 1793915456826,
+          "message_id": "message_3e7c26776c21c5ca6e7ccd55",
+          "metadata": {
+            "response_id": 17
+          },
+          "role": "agent"
+        }
+      ]
+    }
+  },
+  "trace": {
+    "call": {
+      "id": "rtest-11052150-kb-yep-uh-huh-no-heat",
+      "tenant": "summit-air",
+      "caller_id": "(678) 555-0270",
+      "caller_key": "6785550270",
+      "dialed_number": "(678) 336-6730",
+      "direction": "inbound",
+      "started_at": "2026-11-05T21:50:06Z",
+      "ended_at": null,
+      "end_reason": null,
+      "end_requested": 1,
+      "after_hours": 0,
+      "linked_call_id": null,
+      "outcome": null,
+      "commercial": 0,
+      "summary_status": "none",
+      "turn_seq": 29,
+      "safety_state": "none",
+      "safety_kind": null,
+      "safety_signal_at": null,
+      "safety_lines_at": null,
+      "safety_flag_id": null,
+      "safety_variant": 0,
+      "readback_json": "{\"street\": \"1520 Ocean Avenue\", \"unit\": \"\", \"city\": \"Brooklyn\", \"zip\": \"11230\", \"spelled\": \"\", \"phone\": \"6785550270\", \"phone_for\": \"\", \"sentence\": \"I have your home at 1520 Ocean Avenue, Brooklyn, ZIP code one one two three zero, and the best number is six seven eight, five five five, zero two seven zero. That's all correct, right?\"}",
+      "readback_asked_seq": 16,
+      "readback_confirmed_at": "2026-11-05T21:50:33Z"
+    },
+    "events": [
+      {
+        "at": "2026-11-05T21:50:06Z",
+        "type": "tool",
+        "tool": "calls.start",
+        "args": {
+          "call_id": "rtest-11052150-kb-yep-uh-huh-no-heat",
+          "caller_id": "(678) 555-0270",
+          "dialed_number": "(678) 336-6730",
+          "direction": "inbound"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 19.6,
+        "error": null,
+        "request_id": "508a31063196"
+      },
+      {
+        "at": "2026-11-05T21:50:24Z",
+        "type": "turn",
+        "seq": 1,
+        "speaker": "agent",
+        "text": "Thank you for calling Summit Air. How can I help you today?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:50:24Z",
+        "type": "turn",
+        "seq": 2,
+        "speaker": "caller",
+        "text": "Um, hi, yeah, my heat's out.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:50:24Z",
+        "type": "turn",
+        "seq": 3,
+        "speaker": "agent",
+        "text": "I'm sorry to hear that. Is it completely out, or just not keeping up? And since when has it been like this?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:50:24Z",
+        "type": "turn",
+        "seq": 4,
+        "speaker": "caller",
+        "text": "Um, since this morning.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:50:24Z",
+        "type": "turn",
+        "seq": 5,
+        "speaker": "agent",
+        "text": "Got it. Is it completely out, or is it running but not keeping the place warm?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:50:24Z",
+        "type": "turn",
+        "seq": 6,
+        "speaker": "caller",
+        "text": "Um, yeah, it's running but it's, um, not keeping up. Like it's about 62 inside.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:50:24Z",
+        "type": "turn",
+        "seq": 7,
+        "speaker": "agent",
+        "text": "Thanks. Can I get your name?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:50:24Z",
+        "type": "turn",
+        "seq": 8,
+        "speaker": "caller",
+        "text": "Casey.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:50:24Z",
+        "type": "turn",
+        "seq": 9,
+        "speaker": "agent",
+        "text": "Thanks, Casey. And this is for a residential property, right? Like a home or an apartment?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:50:24Z",
+        "type": "turn",
+        "seq": 10,
+        "speaker": "caller",
+        "text": "Yep.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:50:24Z",
+        "type": "turn",
+        "seq": 11,
+        "speaker": "agent",
+        "text": "What's the street address, including the apartment or unit number if there is one?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:50:24Z",
+        "type": "turn",
+        "seq": 12,
+        "speaker": "caller",
+        "text": "Um, 1520 Ocean Ave.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:50:24Z",
+        "type": "tool",
+        "tool": "find_address",
+        "args": {
+          "call_id": "rtest-11052150-kb-yep-uh-huh-no-heat",
+          "street": "1520 Ocean Ave",
+          "borough": "",
+          "spelled": ""
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 129.2,
+        "error": null,
+        "request_id": "fe04e347c048"
+      },
+      {
+        "at": "2026-11-05T21:50:27Z",
+        "type": "turn",
+        "seq": 13,
+        "speaker": "agent",
+        "text": "Is there an apartment or unit number for that address?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 3000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:50:27Z",
+        "type": "turn",
+        "seq": 14,
+        "speaker": "caller",
+        "text": "Um, no, it's just the house.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:50:27Z",
+        "type": "tool",
+        "tool": "find_customer",
+        "args": {
+          "call_id": "rtest-11052150-kb-yep-uh-huh-no-heat",
+          "phone": null,
+          "address": {
+            "street": "1520 Ocean Avenue",
+            "unit": "",
+            "city": "Brooklyn",
+            "zip": "11230",
+            "spelled": ""
+          }
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 11.8,
+        "error": null,
+        "request_id": "9cc30363711b"
+      },
+      {
+        "at": "2026-11-05T21:50:30Z",
+        "type": "turn",
+        "seq": 15,
+        "speaker": "agent",
+        "text": "What's the best phone number to reach you?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 3000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:50:30Z",
+        "type": "turn",
+        "seq": 16,
+        "speaker": "caller",
+        "text": "678 555 0270.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:50:30Z",
+        "type": "tool",
+        "tool": "read_back",
+        "args": {
+          "call_id": "rtest-11052150-kb-yep-uh-huh-no-heat",
+          "address": {
+            "street": "1520 Ocean Avenue",
+            "unit": "",
+            "city": "Brooklyn",
+            "zip": "11230",
+            "spelled": ""
+          },
+          "phone": "678 555 0270",
+          "phone_for": "",
+          "name": "Casey",
+          "confirmed": false
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "I have your home at 1520 Ocean Avenue, Brooklyn, ZIP code one one two three zero, and the best number is six seven eight, five five five, zero two seven zero. That's all correct, right?",
+        "ms": 7.5,
+        "error": null,
+        "request_id": "f8ef894222e9"
+      },
+      {
+        "at": "2026-11-05T21:50:33Z",
+        "type": "turn",
+        "seq": 17,
+        "speaker": "agent",
+        "text": "I have your home at 1520 Ocean Avenue, Brooklyn, ZIP code one one two three zero, and the best number is six seven eight, five five five, zero two seven zero. That's all correct, right?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 3000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:50:33Z",
+        "type": "turn",
+        "seq": 18,
+        "speaker": "caller",
+        "text": "Uh-huh.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:50:33Z",
+        "type": "tool",
+        "tool": "read_back",
+        "args": {
+          "call_id": "rtest-11052150-kb-yep-uh-huh-no-heat",
+          "address": {
+            "street": "1520 Ocean Avenue",
+            "unit": "",
+            "city": "Brooklyn",
+            "zip": "11230",
+            "spelled": ""
+          },
+          "phone": "678 555 0270",
+          "phone_for": "",
+          "name": "Casey",
+          "confirmed": true
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 5.7,
+        "error": null,
+        "request_id": "7b83011b789d"
+      },
+      {
+        "at": "2026-11-05T21:50:33Z",
+        "type": "tool",
+        "tool": "find_slots",
+        "args": {
+          "job_type": "no_heat",
+          "facts": {
+            "issue": "Heat running but not keeping up; inside about 62 degrees",
+            "since_when": "since this morning",
+            "who_home": "not provided",
+            "temp_falling_fast": false
+          },
+          "call_id": "rtest-11052150-kb-yep-uh-huh-no-heat"
+        },
+        "ok": false,
+        "refused": "invalid_arguments",
+        "gate": null,
+        "say": "Let me check that again.",
+        "ms": 0.0,
+        "error": "invalid_arguments",
+        "request_id": "ad22b4878764"
+      },
+      {
+        "at": "2026-11-05T21:50:36Z",
+        "type": "tool",
+        "tool": "find_slots",
+        "args": {
+          "call_id": "rtest-11052150-kb-yep-uh-huh-no-heat",
+          "job_type": "no_heat",
+          "priority": null,
+          "preferred_days": [],
+          "time_of_day": null,
+          "window_minutes": null,
+          "day": null,
+          "arrive_after": null,
+          "arrive_before": null,
+          "facts": {
+            "issue": "Heat running but not keeping up since this morning; inside about 62 degrees",
+            "since": "",
+            "who_home": "not provided",
+            "inside_temp_f": 62.0,
+            "temp_falling_fast": false
+          }
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "The soonest I have is today, 5 to 7. Does that work?",
+        "ms": 1321.2,
+        "error": null,
+        "request_id": "aa0ec722ee4d"
+      },
+      {
+        "at": "2026-11-05T21:50:43Z",
+        "type": "turn",
+        "seq": 19,
+        "speaker": "agent",
+        "text": "The soonest I have is today, Thursday, November 5, arriving between 5 and 7. Does that work for you?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 7000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:50:43Z",
+        "type": "turn",
+        "seq": 20,
+        "speaker": "caller",
+        "text": "Yeah.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:50:43Z",
+        "type": "turn",
+        "seq": 21,
+        "speaker": "agent",
+        "text": "Will you be able to approve any repair work the technician recommends?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:50:43Z",
+        "type": "turn",
+        "seq": 22,
+        "speaker": "caller",
+        "text": "Um, yeah, I can approve it.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:50:43Z",
+        "type": "turn",
+        "seq": 23,
+        "speaker": "agent",
+        "text": "Will someone be home to let the technician in?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:50:43Z",
+        "type": "turn",
+        "seq": 24,
+        "speaker": "caller",
+        "text": "Um, yeah, I'll be home.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:50:43Z",
+        "type": "turn",
+        "seq": 25,
+        "speaker": "agent",
+        "text": "Is there a gate code, buzzer, or pet the technician should know about?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:50:44Z",
+        "type": "turn",
+        "seq": 26,
+        "speaker": "caller",
+        "text": "Um, no, no gate or pets.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:50:44Z",
+        "type": "tool",
+        "tool": "book_appointment",
+        "args": {
+          "call_id": "rtest-11052150-kb-yep-uh-huh-no-heat",
+          "job_type": "no_heat",
+          "slot": {
+            "date": "2026-11-05",
+            "window": "1700-1900"
+          },
+          "details": {
+            "issue": "Heat running but not keeping up since this morning; inside about 62 degrees",
+            "since": "since this morning",
+            "tried": "not provided",
+            "who_home": "Casey",
+            "approver": "Casey",
+            "system_type": "",
+            "arrival_notes": "No gate code, buzzer, or pets",
+            "name": "",
+            "inside_temp_f": 62.0
+          },
+          "priority": "High",
+          "separate_problem": false,
+          "new_address_account": null
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "You're all set for today, Thursday, November 5, with the technician arriving between 5 and 7. Anything else?",
+        "ms": 676.5,
+        "error": null,
+        "request_id": "a1804fd591b4"
+      },
+      {
+        "at": "2026-11-05T21:50:47Z",
+        "type": "turn",
+        "seq": 27,
+        "speaker": "agent",
+        "text": "You're all set for today, Thursday, November 5, with the technician arriving between 5 and 7. Anything else?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 3000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:50:47Z",
+        "type": "turn",
+        "seq": 28,
+        "speaker": "caller",
+        "text": "Um, no, that's it. Thanks. Bye.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:50:47Z",
+        "type": "turn",
+        "seq": 29,
+        "speaker": "agent",
+        "text": "Thanks for calling Summit Air, and have a great day.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:50:47Z",
+        "type": "tool",
+        "tool": "end_call",
+        "args": {
+          "call_id": "rtest-11052150-kb-yep-uh-huh-no-heat",
+          "reason": "resolved"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 5.3,
+        "error": null,
+        "request_id": "ea1b85775ab6"
+      }
+    ],
+    "flags": [],
+    "callbacks": [],
+    "bookings": [
+      {
+        "id": 219,
+        "kind": "book",
+        "status": "booked",
+        "fsm_job_id": 551,
+        "window_start": "2026-11-05T22:00:00Z",
+        "window_end": "2026-11-06T00:00:00Z",
+        "priority": "High",
+        "priority_reasons": "below 65 F inside, caller said \"Um, yeah, it's running but it's, um, not keeping up. Like it's about 62 inside\"",
+        "safety_override": 0,
+        "seek_earlier": 0,
+        "attempts": 1,
+        "last_error": null,
+        "raised_after_wait": 0,
+        "priority_rules": "[\"bracket:cool_inside\"]",
+        "priority_reason_list": "[\"below 65 F inside, caller said \\\"Um, yeah, it's running but it's, um, not keeping up. Like it's about 62 inside\\\"\"]",
+        "who_home": "Casey",
+        "job_type": "no_heat",
+        "street": "1520 Ocean Avenue",
+        "unit": "",
+        "job_notes": "[]"
+      }
+    ],
+    "notes": [],
+    "leads": [],
+    "out_of_area": [],
+    "summary": [],
+    "electrical": [],
+    "holds": [],
+    "pace": [
+      {
+        "call_id": "rtest-11052150-kb-yep-uh-huh-no-heat",
+        "speed": 1.0,
+        "source": "default",
+        "requested": 0,
+        "older_adult": 0,
+        "address_speed": null,
+        "repeats": 0
+      }
+    ],
+    "pace_changes": [],
+    "caller_pace": [],
+    "transfers": [],
+    "handoffs": [],
+    "address_lookups": [
+      {
+        "house": "1520",
+        "street": "ocean ave",
+        "hint": "",
+        "status": "one",
+        "zips_json": "[\"11230\"]",
+        "source": "geosearch"
+      }
+    ],
+    "address_checks": [],
+    "names": [],
+    "address_moves": [],
+    "identity_checks": [],
+    "heads_ups": []
+  }
+}

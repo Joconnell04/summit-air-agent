@@ -5,6 +5,7 @@ frame as it arrives, and a `control` data channel carries the platform's call ev
 The platform's signaling is the adapter's: `connect` takes a function that posts our offer and
 returns the answer's SDP.
 """
+
 import asyncio
 import fractions
 import json
@@ -19,8 +20,10 @@ MAX_QUEUED = 5
 def ice_servers(raw: list[dict]):
     from aiortc import RTCIceServer
 
-    return [RTCIceServer(urls=s.get("urls"), username=s.get("username"),
-                         credential=s.get("credential")) for s in raw]
+    return [
+        RTCIceServer(urls=s.get("urls"), username=s.get("username"), credential=s.get("credential"))
+        for s in raw
+    ]
 
 
 def caller_track(rate: int):

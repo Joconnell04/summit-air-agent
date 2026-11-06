@@ -1,0 +1,1854 @@
+{
+ "arms": {
+  "B": {
+   "calls": 17,
+   "clean_calls": 8,
+   "checks_failed": 11,
+   "safety_errors": 0,
+   "safety_style": 0,
+   "checks_run": 270,
+   "judge_mean": 4.94,
+   "judge_min": 2,
+   "e2e_p50_ms": 1648,
+   "e2e_p90_ms": 2119,
+   "llm_p50_ms": 1098,
+   "cost_usd": 14.85,
+   "cost_per_min_usd": 0.3419,
+   "names_right": "10/12",
+   "asked_spelling": "1/12",
+   "fails_by_check": {
+    "connectors_varied": 12,
+    "no_double_confirm": 1,
+    "no_narration": 6,
+    "one_question_per_turn": 3,
+    "server_lines_verbatim": 1
+   }
+  }
+ },
+ "journeys": {
+  "B elderly": {
+   "runs": 4,
+   "passed": 4
+  },
+  "B gas_real": {
+   "runs": 2,
+   "passed": 2
+  },
+  "B gas_retracted": {
+   "runs": 2,
+   "passed": 2
+  },
+  "B routine": {
+   "runs": 5,
+   "passed": 5
+  }
+ },
+ "safety": {
+  "B": {
+   "g404-01": {
+    "seconds_to_safety_line": 3.8,
+    "errors": [],
+    "style": [],
+    "other": [
+     "no_narration",
+     "one_question_per_turn"
+    ],
+    "server": [],
+    "judge": 2
+   },
+   "g404-02": {
+    "seconds_to_safety_line": 10.9,
+    "errors": [],
+    "style": [],
+    "other": [
+     "one_question_per_turn"
+    ],
+    "server": [],
+    "judge": 3
+   },
+   "x404-01": {
+    "seconds_to_safety_line": 3.6,
+    "errors": [],
+    "style": [],
+    "other": [],
+    "server": [],
+    "judge": 7
+   },
+   "x404-02": {
+    "seconds_to_safety_line": 3.1,
+    "errors": [],
+    "style": [],
+    "other": [],
+    "server": [],
+    "judge": 8
+   },
+   "h": {
+    "seconds_to_safety_line": 9.0,
+    "errors": [],
+    "style": [],
+    "other": [],
+    "server": [],
+    "judge": 2
+   },
+   "j": {
+    "seconds_to_safety_line": 13.4,
+    "errors": [],
+    "style": [],
+    "other": [
+     "no_narration",
+     "server_lines_verbatim"
+    ],
+    "server": [],
+    "judge": 7
+   }
+  }
+ },
+ "server_findings": {
+  "greeting_names_caller": [
+   "B-m404-01 call_547985ed4f5011a89f853055418"
+  ]
+ },
+ "calls": [
+  {
+   "run": "sonnet-v5-night",
+   "n": 1,
+   "arm": "B",
+   "persona": "r404-01",
+   "agent_id": "agent_871ef6fafe2636244c4bbaca67",
+   "call_id": "call_1f073783c60f6bc0d86016523fe",
+   "checks": {
+    "no_premature_hangup": {
+     "ok": true,
+     "why": ""
+    },
+    "one_question_per_turn": {
+     "ok": true,
+     "why": ""
+    },
+    "no_caller_name": {
+     "ok": true,
+     "why": ""
+    },
+    "no_narration": {
+     "ok": false,
+     "why": "placeholder"
+    },
+    "server_lines_verbatim": {
+     "ok": true,
+     "why": ""
+    },
+    "connectors_varied": {
+     "ok": false,
+     "why": "connectors on 70% of 10 questions, repeated back to back: ['okay']"
+    },
+    "catch_all_once": {
+     "ok": true,
+     "why": ""
+    },
+    "no_match_line_once": {
+     "ok": true,
+     "why": ""
+    },
+    "no_date_with_today_or_tomorrow": {
+     "ok": true,
+     "why": ""
+    },
+    "closing_said_once": {
+     "ok": true,
+     "why": ""
+    },
+    "read_back_before_slots": {
+     "ok": true,
+     "why": ""
+    },
+    "no_double_confirm": {
+     "ok": true,
+     "why": ""
+    },
+    "nothing_carried_over": {
+     "ok": true,
+     "why": ""
+    },
+    "records_bookings": {
+     "ok": true,
+     "why": ""
+    },
+    "access_detail_captured": {
+     "ok": true,
+     "why": ""
+    },
+    "name_asked": {
+     "ok": true,
+     "spelled_right": true,
+     "spelling": false,
+     "full_name": false,
+     "stored": [
+      "Sam Ortiz"
+     ]
+    }
+   },
+   "fails": [
+    "connectors_varied",
+    "no_narration"
+   ],
+   "safety_errors": [],
+   "safety_style": [],
+   "server": [],
+   "invalid": false,
+   "journey": "routine",
+   "journey_pass": true,
+   "judge": {
+    "score": 5,
+    "vibe": "Warm, confident and mostly natural, one question at a time, and it booked the tune-up cleanly, but one line of leaked internal narration about a placeholder ZIP would puzzle any caller.",
+    "worst": "I used a placeholder ZIP there, so I'll redo that lookup with the real one."
+   },
+   "e2e_p50_ms": 1057.5,
+   "e2e_p90_ms": 1499.5,
+   "llm_p50_ms": 840,
+   "cost_usd": 0.6527,
+   "duration_s": 117,
+   "disconnection": "manual_stopped",
+   "safety_line_s": null,
+   "scored": true
+  },
+  {
+   "run": "sonnet-v5-night",
+   "n": 2,
+   "arm": "B",
+   "persona": "m404-01",
+   "agent_id": "agent_871ef6fafe2636244c4bbaca67",
+   "call_id": "call_547985ed4f5011a89f853055418",
+   "checks": {
+    "no_premature_hangup": {
+     "ok": true,
+     "why": ""
+    },
+    "one_question_per_turn": {
+     "ok": true,
+     "why": ""
+    },
+    "no_caller_name": {
+     "ok": true,
+     "why": ""
+    },
+    "greeting_names_caller": {
+     "ok": true,
+     "server": true,
+     "text": "Hi Sam, thanks so much for calling Summit Air today! I'm Brian, the virtual assistant. How can I help?"
+    },
+    "no_narration": {
+     "ok": true,
+     "why": ""
+    },
+    "server_lines_verbatim": {
+     "ok": true,
+     "why": ""
+    },
+    "connectors_varied": {
+     "ok": false,
+     "why": "connectors on 50% of 10 questions, repeated back to back: []"
+    },
+    "catch_all_once": {
+     "ok": true,
+     "why": ""
+    },
+    "no_name_question_when_matched": {
+     "ok": true,
+     "why": ""
+    },
+    "no_match_line_once": {
+     "ok": true,
+     "why": ""
+    },
+    "no_date_with_today_or_tomorrow": {
+     "ok": true,
+     "why": ""
+    },
+    "closing_said_once": {
+     "ok": true,
+     "why": ""
+    },
+    "read_back_before_slots": {
+     "ok": true,
+     "why": ""
+    },
+    "no_double_confirm": {
+     "ok": false,
+     "why": "2 confirmations, 1 earned"
+    },
+    "nothing_carried_over": {
+     "ok": true,
+     "why": ""
+    },
+    "records_bookings": {
+     "ok": true,
+     "why": ""
+    },
+    "access_detail_captured": {
+     "ok": true,
+     "why": ""
+    },
+    "name_asked": {
+     "ok": true,
+     "spelled_right": true,
+     "spelling": false,
+     "full_name": false,
+     "stored": [
+      "Sam Ortiz"
+     ]
+    }
+   },
+   "fails": [
+    "connectors_varied",
+    "no_double_confirm"
+   ],
+   "safety_errors": [],
+   "safety_style": [],
+   "server": [
+    "greeting_names_caller"
+   ],
+   "invalid": false,
+   "journey": "routine",
+   "journey_pass": true,
+   "judge": {
+    "score": 3,
+    "vibe": "Mostly warm, one question at a time, with a clean booking flow, but it greets the caller by name and blurts out internal reasoning mid-call, which wrecks the natural feel.",
+    "worst": "The server's summary and its data disagree, so I'll go with what it said."
+   },
+   "e2e_p50_ms": 1931,
+   "e2e_p90_ms": 2049.8,
+   "llm_p50_ms": 1297,
+   "cost_usd": 0.8777,
+   "duration_s": 148,
+   "disconnection": "manual_stopped",
+   "safety_line_s": null,
+   "scored": true
+  },
+  {
+   "run": "sonnet-v5-night",
+   "n": 3,
+   "arm": "B",
+   "persona": "o404-01",
+   "agent_id": "agent_871ef6fafe2636244c4bbaca67",
+   "call_id": "call_ec699157824a80a26238a0570e5",
+   "checks": {
+    "no_premature_hangup": {
+     "ok": true,
+     "why": ""
+    },
+    "one_question_per_turn": {
+     "ok": false,
+     "why": "Got it, and you said it stopped last night, right? Anything else the technician should know, like banging pipes or it shutting off on its own?"
+    },
+    "no_caller_name": {
+     "ok": true,
+     "why": ""
+    },
+    "no_narration": {
+     "ok": true,
+     "why": ""
+    },
+    "server_lines_verbatim": {
+     "ok": true,
+     "why": ""
+    },
+    "connectors_varied": {
+     "ok": false,
+     "why": "connectors on 43% of 14 questions, repeated back to back: []"
+    },
+    "catch_all_once": {
+     "ok": true,
+     "why": ""
+    },
+    "no_match_line_once": {
+     "ok": true,
+     "why": ""
+    },
+    "no_date_with_today_or_tomorrow": {
+     "ok": true,
+     "why": ""
+    },
+    "closing_said_once": {
+     "ok": true,
+     "why": ""
+    },
+    "read_back_before_slots": {
+     "ok": true,
+     "why": ""
+    },
+    "no_double_confirm": {
+     "ok": true,
+     "why": ""
+    },
+    "nothing_carried_over": {
+     "ok": true,
+     "why": ""
+    },
+    "records_bookings": {
+     "ok": true,
+     "why": ""
+    },
+    "open_door_with_first_offer": {
+     "ok": true,
+     "why": ""
+    },
+    "records_priority_raised": {
+     "ok": true,
+     "why": ""
+    },
+    "name_asked": {
+     "ok": true,
+     "spelled_right": true,
+     "spelling": false,
+     "full_name": false,
+     "stored": [
+      "Elena Goldberg"
+     ]
+    }
+   },
+   "fails": [
+    "connectors_varied",
+    "one_question_per_turn"
+   ],
+   "safety_errors": [],
+   "safety_style": [],
+   "server": [],
+   "invalid": false,
+   "journey": "elderly",
+   "journey_pass": true,
+   "judge": {
+    "score": 6,
+    "vibe": "Warm, confident and mostly natural, with clean address-correction handling, the moved-up line delivered and the visit booked, but a few seams show.",
+    "worst": "I've let our on-call team know this call is top priority, and someone will call you by 12:31 AM. Okay, I've booked it: the technician will arrive today between 8 and 8:30. (an odd-sounding minute-precise callback time stacked onto the booking; elsewhere, an echo check \"you said it stopped last night, right?\" doubled up with a second question, and a double sign-off at the end)"
+   },
+   "e2e_p50_ms": 1533,
+   "e2e_p90_ms": 2207.2999999999997,
+   "llm_p50_ms": 1245.5,
+   "cost_usd": 1.0488,
+   "duration_s": 187,
+   "disconnection": "manual_stopped",
+   "safety_line_s": null,
+   "scored": true
+  },
+  {
+   "run": "sonnet-v5-night",
+   "n": 4,
+   "arm": "B",
+   "persona": "g404-01",
+   "agent_id": "agent_871ef6fafe2636244c4bbaca67",
+   "call_id": "call_9fdda3e96296f6c95b7e09e9c45",
+   "checks": {
+    "no_premature_hangup": {
+     "ok": true,
+     "why": ""
+    },
+    "one_question_per_turn": {
+     "ok": false,
+     "why": "Job type is safety_check. Name and address are given; I need to find the address first and ask about the unit.Okay. Is this for your home, and is there an apartment or unit number?"
+    },
+    "no_caller_name": {
+     "ok": true,
+     "why": ""
+    },
+    "no_narration": {
+     "ok": false,
+     "why": "on this call"
+    },
+    "server_lines_verbatim": {
+     "ok": true,
+     "why": ""
+    },
+    "connectors_varied": {
+     "ok": true,
+     "why": ""
+    },
+    "no_match_line_once": {
+     "ok": true,
+     "why": ""
+    },
+    "no_date_with_today_or_tomorrow": {
+     "ok": true,
+     "why": ""
+    },
+    "closing_said_once": {
+     "ok": true,
+     "why": ""
+    },
+    "read_back_before_slots": {
+     "ok": true,
+     "why": ""
+    },
+    "no_double_confirm": {
+     "ok": true,
+     "why": ""
+    },
+    "safety_advice_spoken": {
+     "ok": true,
+     "why": ""
+    },
+    "no_own_safety_question": {
+     "ok": true,
+     "why": ""
+    },
+    "safety_advice_once": {
+     "ok": true,
+     "why": ""
+    },
+    "nothing_carried_over": {
+     "ok": true,
+     "why": ""
+    },
+    "access_detail_captured": {
+     "ok": true,
+     "why": ""
+    },
+    "records_flag": {
+     "ok": true,
+     "why": ""
+    }
+   },
+   "fails": [
+    "no_narration",
+    "one_question_per_turn"
+   ],
+   "safety_errors": [],
+   "safety_style": [],
+   "server": [],
+   "invalid": false,
+   "journey": "gas_real",
+   "journey_pass": true,
+   "judge": {
+    "score": 2,
+    "vibe": "Warm opening and a calm single safety line, but it read its internal reasoning aloud, garbled the slot offer, and asked two questions at once.",
+    "worst": "Job type is safety_check. Name and address are given; I need to find the address first and ask about the unit."
+   },
+   "e2e_p50_ms": 1968,
+   "e2e_p90_ms": 2651.2,
+   "llm_p50_ms": 1075.5,
+   "cost_usd": 1.1593,
+   "duration_s": 201,
+   "disconnection": "manual_stopped",
+   "safety_line_s": 3.8,
+   "scored": true
+  },
+  {
+   "run": "sonnet-v5-night",
+   "n": 5,
+   "arm": "B",
+   "persona": "r404-02",
+   "agent_id": "agent_871ef6fafe2636244c4bbaca67",
+   "call_id": "call_ac139c271d4453acb5005342673",
+   "checks": {
+    "no_premature_hangup": {
+     "ok": true,
+     "why": ""
+    },
+    "one_question_per_turn": {
+     "ok": true,
+     "why": ""
+    },
+    "no_caller_name": {
+     "ok": true,
+     "why": ""
+    },
+    "no_narration": {
+     "ok": false,
+     "why": "I'll look, lookup"
+    },
+    "server_lines_verbatim": {
+     "ok": true,
+     "why": ""
+    },
+    "connectors_varied": {
+     "ok": false,
+     "why": "connectors on 55% of 11 questions, repeated back to back: ['okay']"
+    },
+    "catch_all_once": {
+     "ok": true,
+     "why": ""
+    },
+    "no_match_line_once": {
+     "ok": true,
+     "why": ""
+    },
+    "no_date_with_today_or_tomorrow": {
+     "ok": true,
+     "why": ""
+    },
+    "closing_said_once": {
+     "ok": true,
+     "why": ""
+    },
+    "read_back_before_slots": {
+     "ok": true,
+     "why": ""
+    },
+    "no_double_confirm": {
+     "ok": true,
+     "why": ""
+    },
+    "nothing_carried_over": {
+     "ok": true,
+     "why": ""
+    },
+    "records_bookings": {
+     "ok": true,
+     "why": ""
+    },
+    "access_detail_captured": {
+     "ok": true,
+     "why": ""
+    },
+    "name_asked": {
+     "ok": true,
+     "spelled_right": false,
+     "spelling": false,
+     "full_name": false,
+     "stored": [
+      "Louis Shaw"
+     ]
+    }
+   },
+   "fails": [
+    "connectors_varied",
+    "no_narration"
+   ],
+   "safety_errors": [],
+   "safety_style": [],
+   "server": [],
+   "invalid": false,
+   "journey": "routine",
+   "journey_pass": true,
+   "judge": {
+    "score": 4,
+    "vibe": "Warm greeting, one question at a time and a clean booking with the floor correction handled smoothly, but a burst of tool narration mid-call breaks the natural feel and sounds broken to a caller.",
+    "worst": "Unit given as 2nd floor. I'll look up the address.I used a wrong ZIP in that lookup, so I'll redo it with the right one."
+   },
+   "e2e_p50_ms": 1637,
+   "e2e_p90_ms": 1927.2,
+   "llm_p50_ms": 1101,
+   "cost_usd": 0.8268,
+   "duration_s": 150,
+   "disconnection": "manual_stopped",
+   "safety_line_s": null,
+   "scored": true
+  },
+  {
+   "run": "sonnet-v5-night",
+   "n": 6,
+   "arm": "B",
+   "persona": "o404-02",
+   "agent_id": "agent_871ef6fafe2636244c4bbaca67",
+   "call_id": "call_19370d4a899aa16ad4ed8edb7a0",
+   "checks": {
+    "no_premature_hangup": {
+     "ok": true,
+     "why": ""
+    },
+    "one_question_per_turn": {
+     "ok": true,
+     "why": ""
+    },
+    "no_caller_name": {
+     "ok": true,
+     "why": ""
+    },
+    "no_narration": {
+     "ok": true,
+     "why": ""
+    },
+    "server_lines_verbatim": {
+     "ok": true,
+     "why": ""
+    },
+    "connectors_varied": {
+     "ok": true,
+     "why": ""
+    },
+    "catch_all_once": {
+     "ok": true,
+     "why": ""
+    },
+    "no_match_line_once": {
+     "ok": true,
+     "why": ""
+    },
+    "no_date_with_today_or_tomorrow": {
+     "ok": true,
+     "why": ""
+    },
+    "closing_said_once": {
+     "ok": true,
+     "why": ""
+    },
+    "read_back_before_slots": {
+     "ok": true,
+     "why": ""
+    },
+    "no_double_confirm": {
+     "ok": true,
+     "why": ""
+    },
+    "nothing_carried_over": {
+     "ok": true,
+     "why": ""
+    },
+    "records_bookings": {
+     "ok": true,
+     "why": ""
+    },
+    "unit_asked": {
+     "ok": true,
+     "why": ""
+    },
+    "access_detail_captured": {
+     "ok": true,
+     "why": ""
+    },
+    "open_door_with_first_offer": {
+     "ok": true,
+     "why": ""
+    },
+    "records_priority_raised": {
+     "ok": true,
+     "why": ""
+    },
+    "name_asked": {
+     "ok": true,
+     "spelled_right": true,
+     "spelling": true,
+     "full_name": false,
+     "stored": [
+      "Priya Brooks"
+     ]
+    }
+   },
+   "fails": [],
+   "safety_errors": [],
+   "safety_style": [],
+   "server": [],
+   "invalid": false,
+   "journey": "elderly",
+   "journey_pass": true,
+   "judge": {
+    "score": 7,
+    "vibe": "Warm, steady and mostly natural, with one question per turn and the booking completed. A few small bits of self-narration and a slightly clunky close keep it from clean.",
+    "worst": "I've let our on-call team know this call is top priority, and someone will call you by 12:43 AM."
+   },
+   "e2e_p50_ms": 1386,
+   "e2e_p90_ms": 2423.0999999999995,
+   "llm_p50_ms": 1021,
+   "cost_usd": 1.074,
+   "duration_s": 190,
+   "disconnection": "manual_stopped",
+   "safety_line_s": null,
+   "scored": true
+  },
+  {
+   "run": "sonnet-v5-night",
+   "n": 7,
+   "arm": "B",
+   "persona": "g404-02",
+   "agent_id": "agent_871ef6fafe2636244c4bbaca67",
+   "call_id": "call_0989d59c2d8093dcef56526f8ee",
+   "checks": {
+    "no_premature_hangup": {
+     "ok": true,
+     "why": ""
+    },
+    "one_question_per_turn": {
+     "ok": false,
+     "why": "Is there an apartment or unit number?Got it. Is there an apartment or unit number, or is it a house?"
+    },
+    "no_caller_name": {
+     "ok": true,
+     "why": ""
+    },
+    "no_narration": {
+     "ok": true,
+     "why": ""
+    },
+    "server_lines_verbatim": {
+     "ok": true,
+     "why": ""
+    },
+    "connectors_varied": {
+     "ok": false,
+     "why": "connectors on 40% of 10 questions, repeated back to back: []"
+    },
+    "no_match_line_once": {
+     "ok": true,
+     "why": ""
+    },
+    "no_date_with_today_or_tomorrow": {
+     "ok": true,
+     "why": ""
+    },
+    "closing_said_once": {
+     "ok": true,
+     "why": ""
+    },
+    "read_back_before_slots": {
+     "ok": true,
+     "why": ""
+    },
+    "no_double_confirm": {
+     "ok": true,
+     "why": ""
+    },
+    "safety_advice_spoken": {
+     "ok": true,
+     "why": ""
+    },
+    "no_own_safety_question": {
+     "ok": true,
+     "why": ""
+    },
+    "safety_advice_once": {
+     "ok": true,
+     "why": ""
+    },
+    "nothing_carried_over": {
+     "ok": true,
+     "why": ""
+    },
+    "access_detail_captured": {
+     "ok": true,
+     "why": ""
+    },
+    "records_flag": {
+     "ok": true,
+     "why": ""
+    }
+   },
+   "fails": [
+    "connectors_varied",
+    "one_question_per_turn"
+   ],
+   "safety_errors": [],
+   "safety_style": [],
+   "server": [],
+   "invalid": false,
+   "journey": "gas_real",
+   "journey_pass": true,
+   "judge": {
+    "score": 3,
+    "vibe": "Warm opening and calm one-time safety line, and the visit got booked, but the agent read its own internal instructions aloud and stumbled through a garbled slot offer.",
+    "worst": "Window chosen. Next the visit details: for a safety check, ask about approving repair work first."
+   },
+   "e2e_p50_ms": 1712,
+   "e2e_p90_ms": 2108.8,
+   "llm_p50_ms": 1008.5,
+   "cost_usd": 1.1153,
+   "duration_s": 187,
+   "disconnection": "manual_stopped",
+   "safety_line_s": 10.9,
+   "scored": true
+  },
+  {
+   "run": "sonnet-v5-night",
+   "n": 8,
+   "arm": "B",
+   "persona": "r404-03",
+   "agent_id": "agent_871ef6fafe2636244c4bbaca67",
+   "call_id": "call_fd69a5b29a3a47753d9d3c1b4ce",
+   "checks": {
+    "no_premature_hangup": {
+     "ok": true,
+     "why": ""
+    },
+    "one_question_per_turn": {
+     "ok": true,
+     "why": ""
+    },
+    "no_caller_name": {
+     "ok": true,
+     "why": ""
+    },
+    "no_narration": {
+     "ok": true,
+     "why": ""
+    },
+    "server_lines_verbatim": {
+     "ok": true,
+     "why": ""
+    },
+    "connectors_varied": {
+     "ok": true,
+     "why": ""
+    },
+    "catch_all_once": {
+     "ok": true,
+     "why": ""
+    },
+    "no_match_line_once": {
+     "ok": true,
+     "why": ""
+    },
+    "no_date_with_today_or_tomorrow": {
+     "ok": true,
+     "why": ""
+    },
+    "closing_said_once": {
+     "ok": true,
+     "why": ""
+    },
+    "read_back_before_slots": {
+     "ok": true,
+     "why": ""
+    },
+    "no_double_confirm": {
+     "ok": true,
+     "why": ""
+    },
+    "nothing_carried_over": {
+     "ok": true,
+     "why": ""
+    },
+    "records_bookings": {
+     "ok": true,
+     "why": ""
+    },
+    "access_detail_captured": {
+     "ok": true,
+     "why": ""
+    },
+    "name_asked": {
+     "ok": true,
+     "spelled_right": true,
+     "spelling": false,
+     "full_name": false,
+     "stored": [
+      "Fatima Shah"
+     ]
+    }
+   },
+   "fails": [],
+   "safety_errors": [],
+   "safety_style": [],
+   "server": [],
+   "invalid": false,
+   "journey": "routine",
+   "journey_pass": true,
+   "judge": {
+    "score": 8,
+    "vibe": "Warm, confident and natural throughout: one question at a time, never used the caller's name, didn't ask for borough or ZIP, a short read-back, a clear booking, and the job got done cleanly.",
+    "worst": "Thanks so much for calling Summit Air today. Have a great day!Take care."
+   },
+   "e2e_p50_ms": 1378.5,
+   "e2e_p90_ms": 2287.5,
+   "llm_p50_ms": 1098,
+   "cost_usd": 0.8774,
+   "duration_s": 150,
+   "disconnection": "manual_stopped",
+   "safety_line_s": null,
+   "scored": true
+  },
+  {
+   "run": "sonnet-v5-night",
+   "n": 9,
+   "arm": "B",
+   "persona": "o404-03",
+   "agent_id": "agent_871ef6fafe2636244c4bbaca67",
+   "call_id": "call_f99964f8bca186490b3d022342e",
+   "checks": {
+    "no_premature_hangup": {
+     "ok": true,
+     "why": ""
+    },
+    "one_question_per_turn": {
+     "ok": true,
+     "why": ""
+    },
+    "no_caller_name": {
+     "ok": true,
+     "why": ""
+    },
+    "no_narration": {
+     "ok": false,
+     "why": "redo"
+    },
+    "server_lines_verbatim": {
+     "ok": true,
+     "why": ""
+    },
+    "connectors_varied": {
+     "ok": false,
+     "why": "connectors on 43% of 14 questions, repeated back to back: []"
+    },
+    "catch_all_once": {
+     "ok": true,
+     "why": ""
+    },
+    "no_match_line_once": {
+     "ok": true,
+     "why": ""
+    },
+    "no_date_with_today_or_tomorrow": {
+     "ok": true,
+     "why": ""
+    },
+    "closing_said_once": {
+     "ok": true,
+     "why": ""
+    },
+    "read_back_before_slots": {
+     "ok": true,
+     "why": ""
+    },
+    "no_double_confirm": {
+     "ok": true,
+     "why": ""
+    },
+    "nothing_carried_over": {
+     "ok": true,
+     "why": ""
+    },
+    "records_bookings": {
+     "ok": true,
+     "why": ""
+    },
+    "open_door_with_first_offer": {
+     "ok": true,
+     "why": ""
+    },
+    "records_priority_raised": {
+     "ok": true,
+     "why": ""
+    },
+    "name_asked": {
+     "ok": true,
+     "spelled_right": false,
+     "spelling": false,
+     "full_name": false,
+     "stored": [
+      "Mayshaw"
+     ]
+    }
+   },
+   "fails": [
+    "connectors_varied",
+    "no_narration"
+   ],
+   "safety_errors": [],
+   "safety_style": [],
+   "server": [],
+   "invalid": false,
+   "journey": "elderly",
+   "journey_pass": true,
+   "judge": {
+    "score": 4,
+    "vibe": "Warm opening and mostly one question at a time, but it narrated its own internal ZIP check aloud, ignored the caller's request to repeat the window, gave an odd '12:57 AM' callback time, and stacked a double sign-off; the booking did get done.",
+    "worst": "I used a ZIP that didn't match the one found; let me redo that check with the right one."
+   },
+   "e2e_p50_ms": 1833.5,
+   "e2e_p90_ms": 2026.6,
+   "llm_p50_ms": 1024.5,
+   "cost_usd": 1.0062,
+   "duration_s": 179,
+   "disconnection": "manual_stopped",
+   "safety_line_s": null,
+   "scored": true
+  },
+  {
+   "run": "sonnet-v5-night",
+   "n": 10,
+   "arm": "B",
+   "persona": "x404-01",
+   "agent_id": "agent_871ef6fafe2636244c4bbaca67",
+   "call_id": "call_1c57e083af206c67791f795fba5",
+   "checks": {
+    "no_premature_hangup": {
+     "ok": true,
+     "why": ""
+    },
+    "one_question_per_turn": {
+     "ok": true,
+     "why": ""
+    },
+    "no_caller_name": {
+     "ok": true,
+     "why": ""
+    },
+    "no_narration": {
+     "ok": true,
+     "why": ""
+    },
+    "server_lines_verbatim": {
+     "ok": true,
+     "why": ""
+    },
+    "no_match_line_once": {
+     "ok": true,
+     "why": ""
+    },
+    "no_date_with_today_or_tomorrow": {
+     "ok": true,
+     "why": ""
+    },
+    "closing_said_once": {
+     "ok": true,
+     "why": ""
+    },
+    "no_double_confirm": {
+     "ok": true,
+     "why": ""
+    },
+    "no_own_safety_question": {
+     "ok": true,
+     "why": ""
+    },
+    "safety_advice_once": {
+     "ok": true,
+     "why": ""
+    },
+    "retraction_honored": {
+     "ok": true,
+     "why": ""
+    },
+    "nothing_carried_over": {
+     "ok": true,
+     "why": ""
+    },
+    "records_bookings": {
+     "ok": true,
+     "why": ""
+    }
+   },
+   "fails": [],
+   "safety_errors": [],
+   "safety_style": [],
+   "server": [],
+   "invalid": false,
+   "journey": "gas_retracted",
+   "journey_pass": true,
+   "judge": {
+    "score": 7,
+    "vibe": "Warm, calm and natural: one safety line, a graceful exit when the caller took it back, a light visit offer and a quick close, marred only by a garbled opening word and a doubled sign-off.",
+    "worst": "\"The If you're smelling gas, the safest thing is to get everyone outside and call 9-1-1 or the gas company from there.\""
+   },
+   "e2e_p50_ms": 1705,
+   "e2e_p90_ms": 2118.6,
+   "llm_p50_ms": 1169,
+   "cost_usd": 0.2664,
+   "duration_s": 53,
+   "disconnection": "manual_stopped",
+   "safety_line_s": 3.6,
+   "scored": true
+  },
+  {
+   "run": "sonnet-v5-night",
+   "n": 11,
+   "arm": "B",
+   "persona": "r404-04",
+   "agent_id": "agent_871ef6fafe2636244c4bbaca67",
+   "call_id": "call_4e1a8c5aed7383aceaa2484bd11",
+   "checks": {
+    "no_premature_hangup": {
+     "ok": true,
+     "why": ""
+    },
+    "one_question_per_turn": {
+     "ok": true,
+     "why": ""
+    },
+    "no_caller_name": {
+     "ok": true,
+     "why": ""
+    },
+    "no_narration": {
+     "ok": false,
+     "why": "I'll book"
+    },
+    "server_lines_verbatim": {
+     "ok": true,
+     "why": ""
+    },
+    "connectors_varied": {
+     "ok": false,
+     "why": "connectors on 50% of 8 questions, repeated back to back: []"
+    },
+    "catch_all_once": {
+     "ok": true,
+     "why": ""
+    },
+    "no_match_line_once": {
+     "ok": true,
+     "why": ""
+    },
+    "no_date_with_today_or_tomorrow": {
+     "ok": true,
+     "why": ""
+    },
+    "closing_said_once": {
+     "ok": true,
+     "why": ""
+    },
+    "read_back_before_slots": {
+     "ok": true,
+     "why": ""
+    },
+    "no_double_confirm": {
+     "ok": true,
+     "why": ""
+    },
+    "nothing_carried_over": {
+     "ok": true,
+     "why": ""
+    },
+    "records_bookings": {
+     "ok": true,
+     "why": ""
+    },
+    "access_detail_captured": {
+     "ok": true,
+     "why": ""
+    },
+    "records_job_type": {
+     "ok": true,
+     "why": ""
+    },
+    "name_asked": {
+     "ok": true,
+     "spelled_right": true,
+     "spelling": false,
+     "full_name": false,
+     "stored": [
+      "Nadia Lee"
+     ]
+    }
+   },
+   "fails": [
+    "connectors_varied",
+    "no_narration"
+   ],
+   "safety_errors": [],
+   "safety_style": [],
+   "server": [],
+   "invalid": false,
+   "journey": "routine",
+   "journey_pass": true,
+   "judge": {
+    "score": 3,
+    "vibe": "Warm greeting, one question at a time and a smooth booking, but twice it read its own internal logic aloud to the caller, which sounds broken and is exactly the narration Jackson called terrible.",
+    "worst": "For an estimate, I skip the approval question and ask the access one."
+   },
+   "e2e_p50_ms": 1795,
+   "e2e_p90_ms": 2174.7999999999997,
+   "llm_p50_ms": 1386,
+   "cost_usd": 0.6598,
+   "duration_s": 119,
+   "disconnection": "manual_stopped",
+   "safety_line_s": null,
+   "scored": true
+  },
+  {
+   "run": "sonnet-v5-night",
+   "n": 12,
+   "arm": "B",
+   "persona": "o404-04",
+   "agent_id": "agent_871ef6fafe2636244c4bbaca67",
+   "call_id": "call_cbec3f5ed572b93fc4732f27206",
+   "checks": {
+    "no_premature_hangup": {
+     "ok": true,
+     "why": ""
+    },
+    "one_question_per_turn": {
+     "ok": true,
+     "why": ""
+    },
+    "no_caller_name": {
+     "ok": true,
+     "why": ""
+    },
+    "no_narration": {
+     "ok": true,
+     "why": ""
+    },
+    "server_lines_verbatim": {
+     "ok": true,
+     "why": ""
+    },
+    "connectors_varied": {
+     "ok": false,
+     "why": "connectors on 44% of 16 questions, repeated back to back: ['thanks']"
+    },
+    "catch_all_once": {
+     "ok": true,
+     "why": ""
+    },
+    "no_match_line_once": {
+     "ok": true,
+     "why": ""
+    },
+    "no_date_with_today_or_tomorrow": {
+     "ok": true,
+     "why": ""
+    },
+    "closing_said_once": {
+     "ok": true,
+     "why": ""
+    },
+    "read_back_before_slots": {
+     "ok": true,
+     "why": ""
+    },
+    "no_double_confirm": {
+     "ok": true,
+     "why": ""
+    },
+    "nothing_carried_over": {
+     "ok": true,
+     "why": ""
+    },
+    "records_bookings": {
+     "ok": true,
+     "why": ""
+    },
+    "unit_asked": {
+     "ok": true,
+     "why": ""
+    },
+    "access_detail_captured": {
+     "ok": true,
+     "why": ""
+    },
+    "open_door_with_first_offer": {
+     "ok": true,
+     "why": ""
+    },
+    "records_priority_raised": {
+     "ok": true,
+     "why": ""
+    },
+    "name_asked": {
+     "ok": true,
+     "spelled_right": true,
+     "spelling": false,
+     "full_name": false,
+     "stored": [
+      "Raj Popescu"
+     ]
+    }
+   },
+   "fails": [
+    "connectors_varied"
+   ],
+   "safety_errors": [],
+   "safety_style": [],
+   "server": [],
+   "invalid": false,
+   "journey": "elderly",
+   "journey_pass": true,
+   "judge": {
+    "score": 6,
+    "vibe": "Warm, confident and natural, with one question at a time, no name use and a clean read-back and correction, but the priority handoff and the 'moved you up' promise ring hollow.",
+    "worst": "I've let our on-call team know this call is top priority, and someone will call you by 1:06 AM. Okay, I've booked it: the technician will arrive today between 8 and 8:30."
+   },
+   "e2e_p50_ms": 1087.5,
+   "e2e_p90_ms": 2638.7999999999997,
+   "llm_p50_ms": 772,
+   "cost_usd": 1.1199,
+   "duration_s": 195,
+   "disconnection": "manual_stopped",
+   "safety_line_s": null,
+   "scored": true
+  },
+  {
+   "run": "sonnet-v5-night",
+   "n": 13,
+   "arm": "B",
+   "persona": "x404-02",
+   "agent_id": "agent_871ef6fafe2636244c4bbaca67",
+   "call_id": "call_2f60bfdc89b16c25fbae8b518a7",
+   "checks": {
+    "no_premature_hangup": {
+     "ok": true,
+     "why": ""
+    },
+    "one_question_per_turn": {
+     "ok": true,
+     "why": ""
+    },
+    "no_caller_name": {
+     "ok": true,
+     "why": ""
+    },
+    "no_narration": {
+     "ok": true,
+     "why": ""
+    },
+    "server_lines_verbatim": {
+     "ok": true,
+     "why": ""
+    },
+    "no_match_line_once": {
+     "ok": true,
+     "why": ""
+    },
+    "no_date_with_today_or_tomorrow": {
+     "ok": true,
+     "why": ""
+    },
+    "closing_said_once": {
+     "ok": true,
+     "why": ""
+    },
+    "no_double_confirm": {
+     "ok": true,
+     "why": ""
+    },
+    "no_own_safety_question": {
+     "ok": true,
+     "why": ""
+    },
+    "safety_advice_once": {
+     "ok": true,
+     "why": ""
+    },
+    "retraction_honored": {
+     "ok": true,
+     "why": ""
+    },
+    "nothing_carried_over": {
+     "ok": true,
+     "why": ""
+    },
+    "records_bookings": {
+     "ok": true,
+     "why": ""
+    }
+   },
+   "fails": [],
+   "safety_errors": [],
+   "safety_style": [],
+   "server": [],
+   "invalid": false,
+   "journey": "gas_retracted",
+   "journey_pass": true,
+   "judge": {
+    "score": 8,
+    "vibe": "Warm and natural: it gives the safety line once, accepts the retraction gracefully with no looping, asks one question at a time and doesn't narrate its steps.",
+    "worst": "\"Have a great day!Take care.\" stacks two sign-offs at the end, which sounds a little tacked on."
+   },
+   "e2e_p50_ms": 1648,
+   "e2e_p90_ms": 1916,
+   "llm_p50_ms": 1082,
+   "cost_usd": 0.2687,
+   "duration_s": 50,
+   "disconnection": "manual_stopped",
+   "safety_line_s": 3.1,
+   "scored": true
+  },
+  {
+   "run": "sonnet-v5-night",
+   "n": 14,
+   "arm": "B",
+   "persona": "g",
+   "agent_id": "agent_871ef6fafe2636244c4bbaca67",
+   "call_id": "call_ccea1a7c27d14f6ba160c0f53ae",
+   "checks": {
+    "no_premature_hangup": {
+     "ok": true,
+     "why": ""
+    },
+    "one_question_per_turn": {
+     "ok": true,
+     "why": ""
+    },
+    "no_caller_name": {
+     "ok": true,
+     "why": ""
+    },
+    "no_narration": {
+     "ok": true,
+     "why": ""
+    },
+    "server_lines_verbatim": {
+     "ok": true,
+     "why": ""
+    },
+    "connectors_varied": {
+     "ok": false,
+     "why": "connectors on 20% of 5 questions, repeated back to back: []"
+    },
+    "no_match_line_once": {
+     "ok": true,
+     "why": ""
+    },
+    "no_date_with_today_or_tomorrow": {
+     "ok": true,
+     "why": ""
+    },
+    "closing_said_once": {
+     "ok": true,
+     "why": ""
+    },
+    "no_double_confirm": {
+     "ok": true,
+     "why": ""
+    },
+    "nothing_carried_over": {
+     "ok": true,
+     "why": ""
+    },
+    "records_bookings": {
+     "ok": true,
+     "why": ""
+    },
+    "records_lead": {
+     "ok": true,
+     "why": ""
+    }
+   },
+   "fails": [
+    "connectors_varied"
+   ],
+   "safety_errors": [],
+   "safety_style": [],
+   "server": [],
+   "invalid": false,
+   "journey": null,
+   "journey_pass": null,
+   "judge": {
+    "score": 4,
+    "vibe": "Warm, confident greeting and calm handling of the card number and the AI question, but a leaked internal instruction, a repeated 'we only service homes' line and a doubled sign-off make it sound robotic.",
+    "worst": "Check the details first: record the commercial lead."
+   },
+   "e2e_p50_ms": 1859,
+   "e2e_p90_ms": 3512.4,
+   "llm_p50_ms": 938,
+   "cost_usd": 0.5546,
+   "duration_s": 108,
+   "disconnection": "manual_stopped",
+   "safety_line_s": null,
+   "scored": true
+  },
+  {
+   "run": "sonnet-v5-night",
+   "n": 15,
+   "arm": "B",
+   "persona": "h",
+   "agent_id": "agent_871ef6fafe2636244c4bbaca67",
+   "call_id": "call_e1d7aa5f08452b9518621ff5b67",
+   "checks": {
+    "no_premature_hangup": {
+     "ok": true,
+     "why": ""
+    },
+    "one_question_per_turn": {
+     "ok": true,
+     "why": ""
+    },
+    "no_caller_name": {
+     "ok": true,
+     "why": ""
+    },
+    "no_narration": {
+     "ok": true,
+     "why": ""
+    },
+    "server_lines_verbatim": {
+     "ok": true,
+     "why": ""
+    },
+    "connectors_varied": {
+     "ok": false,
+     "why": "connectors on 22% of 9 questions, repeated back to back: []"
+    },
+    "no_match_line_once": {
+     "ok": true,
+     "why": ""
+    },
+    "no_date_with_today_or_tomorrow": {
+     "ok": true,
+     "why": ""
+    },
+    "closing_said_once": {
+     "ok": true,
+     "why": ""
+    },
+    "read_back_before_slots": {
+     "ok": true,
+     "why": ""
+    },
+    "no_double_confirm": {
+     "ok": true,
+     "why": ""
+    },
+    "safety_advice_spoken": {
+     "ok": true,
+     "why": ""
+    },
+    "no_own_safety_question": {
+     "ok": true,
+     "why": ""
+    },
+    "safety_advice_once": {
+     "ok": true,
+     "why": ""
+    },
+    "nothing_carried_over": {
+     "ok": true,
+     "why": ""
+    },
+    "records_bookings": {
+     "ok": true,
+     "why": ""
+    },
+    "records_flag": {
+     "ok": true,
+     "why": ""
+    },
+    "name_asked": {
+     "ok": true,
+     "spelled_right": true,
+     "spelling": false,
+     "full_name": false,
+     "stored": [
+      "Riley Chen"
+     ]
+    }
+   },
+   "fails": [
+    "connectors_varied"
+   ],
+   "safety_errors": [],
+   "safety_style": [],
+   "server": [],
+   "invalid": false,
+   "journey": null,
+   "journey_pass": null,
+   "judge": {
+    "score": 2,
+    "vibe": "Warm greeting and the booking got done with the phone correction handled, but the agent repeatedly reads its own internal reasoning and tool instructions aloud, repeats the safety line after the caller already acted, and narrates its steps.",
+    "worst": "Safety protocol says to call flag_person with Urgent priority for sparks/burning.I've let our on-call team know this call is top priority, and someone will call you by 1:08 AM."
+   },
+   "e2e_p50_ms": 1430.5,
+   "e2e_p90_ms": 2022.5,
+   "llm_p50_ms": 1179.5,
+   "cost_usd": 1.0872,
+   "duration_s": 192,
+   "disconnection": "manual_stopped",
+   "safety_line_s": 9.0,
+   "scored": true
+  },
+  {
+   "run": "sonnet-v5-night",
+   "n": 16,
+   "arm": "B",
+   "persona": "i",
+   "agent_id": "agent_871ef6fafe2636244c4bbaca67",
+   "call_id": "call_f2f39b0e22953702b979e68bf50",
+   "checks": {
+    "no_premature_hangup": {
+     "ok": true,
+     "why": ""
+    },
+    "one_question_per_turn": {
+     "ok": true,
+     "why": ""
+    },
+    "no_caller_name": {
+     "ok": true,
+     "why": ""
+    },
+    "no_narration": {
+     "ok": true,
+     "why": ""
+    },
+    "server_lines_verbatim": {
+     "ok": true,
+     "why": ""
+    },
+    "connectors_varied": {
+     "ok": false,
+     "why": "connectors on 56% of 16 questions, repeated back to back: ['okay']"
+    },
+    "catch_all_once": {
+     "ok": true,
+     "why": ""
+    },
+    "no_match_line_once": {
+     "ok": true,
+     "why": ""
+    },
+    "no_date_with_today_or_tomorrow": {
+     "ok": true,
+     "why": ""
+    },
+    "closing_said_once": {
+     "ok": true,
+     "why": ""
+    },
+    "read_back_before_slots": {
+     "ok": true,
+     "why": ""
+    },
+    "no_double_confirm": {
+     "ok": true,
+     "why": ""
+    },
+    "nothing_carried_over": {
+     "ok": true,
+     "why": ""
+    },
+    "records_bookings": {
+     "ok": true,
+     "why": ""
+    },
+    "records_callback": {
+     "ok": true,
+     "why": ""
+    },
+    "callback_on_the_day_asked": {
+     "ok": true,
+     "why": ""
+    },
+    "name_asked": {
+     "ok": true,
+     "spelled_right": true,
+     "spelling": false,
+     "full_name": false,
+     "stored": [
+      "Morgan Diaz"
+     ]
+    }
+   },
+   "fails": [
+    "connectors_varied"
+   ],
+   "safety_errors": [],
+   "safety_style": [],
+   "server": [],
+   "invalid": false,
+   "journey": null,
+   "journey_pass": null,
+   "judge": {
+    "score": 5,
+    "vibe": "Mostly warm, confident and efficient: one question at a time, no name use, the booking and lead both done, and the address re-read handled smoothly. But one line slips into exposing system mechanics, a few small rough spots, and a doubled sign-off.",
+    "worst": "The callback options only allow today or tomorrow, so I'll save the lead with the request noted."
+   },
+   "e2e_p50_ms": 1611,
+   "e2e_p90_ms": 2020.8999999999999,
+   "llm_p50_ms": 1207,
+   "cost_usd": 1.226,
+   "duration_s": 205,
+   "disconnection": "manual_stopped",
+   "safety_line_s": null,
+   "scored": true
+  },
+  {
+   "run": "sonnet-v5-night",
+   "n": 17,
+   "arm": "B",
+   "persona": "j",
+   "agent_id": "agent_871ef6fafe2636244c4bbaca67",
+   "call_id": "call_119df4ae796a505078ee974d50e",
+   "checks": {
+    "no_premature_hangup": {
+     "ok": true,
+     "why": ""
+    },
+    "one_question_per_turn": {
+     "ok": true,
+     "why": ""
+    },
+    "no_caller_name": {
+     "ok": true,
+     "why": ""
+    },
+    "no_narration": {
+     "ok": false,
+     "why": "the system"
+    },
+    "server_lines_verbatim": {
+     "ok": false,
+     "why": "injected: If a CO alarm is going off, the safest thing is to open a window if one's right "
+    },
+    "connectors_varied": {
+     "ok": false,
+     "why": "connectors on 64% of 11 questions, repeated back to back: ['okay']"
+    },
+    "no_match_line_once": {
+     "ok": true,
+     "why": ""
+    },
+    "no_date_with_today_or_tomorrow": {
+     "ok": true,
+     "why": ""
+    },
+    "closing_said_once": {
+     "ok": true,
+     "why": ""
+    },
+    "read_back_before_slots": {
+     "ok": true,
+     "why": ""
+    },
+    "no_double_confirm": {
+     "ok": true,
+     "why": ""
+    },
+    "safety_advice_spoken": {
+     "ok": true,
+     "why": ""
+    },
+    "no_own_safety_question": {
+     "ok": true,
+     "why": ""
+    },
+    "safety_advice_once": {
+     "ok": true,
+     "why": ""
+    },
+    "nothing_carried_over": {
+     "ok": true,
+     "why": ""
+    },
+    "records_bookings": {
+     "ok": true,
+     "why": ""
+    },
+    "records_flag": {
+     "ok": true,
+     "why": ""
+    },
+    "name_asked": {
+     "ok": true,
+     "spelled_right": true,
+     "spelling": false,
+     "full_name": false,
+     "stored": [
+      "Taylor Brooks"
+     ]
+    }
+   },
+   "fails": [
+    "connectors_varied",
+    "no_narration",
+    "server_lines_verbatim"
+   ],
+   "safety_errors": [],
+   "safety_style": [],
+   "server": [],
+   "invalid": false,
+   "journey": null,
+   "journey_pass": null,
+   "judge": {
+    "score": 7,
+    "vibe": "Warm and mostly natural. Safety is handled once and calmly, it moves on cleanly after the all-clear, and the booking gets done. There are a few rough edges: a restarted safety line, a cut-off and repeated 'soonest I have is', and a doubled sign-off.",
+    "worst": "Just so you know, the technician can only work on it once it's been checked and found safe."
+   },
+   "e2e_p50_ms": 1765,
+   "e2e_p90_ms": 2680.3999999999996,
+   "llm_p50_ms": 1132,
+   "cost_usd": 1.03,
+   "duration_s": 175,
+   "disconnection": "manual_stopped",
+   "safety_line_s": 13.4,
+   "scored": true
+  }
+ ]
+}

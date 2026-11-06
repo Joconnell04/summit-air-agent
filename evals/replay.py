@@ -4,6 +4,7 @@ changes behavior shows up.
 
 Usage: python -m evals.replay <call id> [--results-dir evals/results] [--stack livekit]
 """
+
 import argparse
 import sys
 import tempfile
@@ -43,8 +44,9 @@ def diff(before: list[str], after: list[str]) -> list[str]:
     return lines
 
 
-def replay(result: ScenarioResult, harness: Harness, scenarios_dir: Path = SCENARIOS_DIR
-           ) -> ScenarioResult:
+def replay(
+    result: ScenarioResult, harness: Harness, scenarios_dir: Path = SCENARIOS_DIR
+) -> ScenarioResult:
     scenario = load(scenario_path(result.scenario_id, scenarios_dir))
     lines = [t.text for t in result.transcript if t.role == "caller"]
     return harness.run(scenario, result.sample, caller_turns=lines)
@@ -68,8 +70,9 @@ def main(argv: list[str] | None = None) -> int:
             print(err, file=sys.stderr)
             return 2
     changes = diff(tool_sequence(recorded), tool_sequence(fresh))
-    print(f"replayed {recorded.key} as {fresh.call_id}: outcome {recorded.outcome} -> "
-          f"{fresh.outcome}")
+    print(
+        f"replayed {recorded.key} as {fresh.call_id}: outcome {recorded.outcome} -> {fresh.outcome}"
+    )
     if changes:
         print("tool calls differ:\n" + "\n".join(changes))
     else:

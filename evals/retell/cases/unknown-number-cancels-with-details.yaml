@@ -1,0 +1,34 @@
+id: unknown-number-cancels-with-details
+title: 'Maria Delgado, calling from her work phone, which isn''t on her account, to cancel today''s '
+tags:
+- must-pass
+- repeat-caller
+scenario: unknown-number-cancels-with-details
+caller_id: (212) 555-0151
+user_prompt: |
+  ## Identity
+  Maria Delgado, calling from her work phone, which isn't on her account, to cancel today's no-heat visit because the heat came back on. Polite, says um.
+  Your name: Maria Delgado
+  Your address: 620 Bedford Ave, Brooklyn, 11235
+  Your phone: this is your work phone; your cell is the one on the account
+  Your reason: the boiler started working again on its own this morning
+
+  ## Goal
+  Start the call by saying: "Hi, um, I need to cancel the heating visit we have booked for today."
+
+  ## Behavior
+  - When asked for the address, give it with the ZIP.
+  - When asked for your name, say Maria Delgado.
+  - Give the reason when asked, confirm the cancel, and decline any other window offered.
+  - Say goodbye after the agent confirms the cancellation.
+  - Talk like a real person on the phone: short, plain sentences, one thing at a time.
+  - Give a detail only when the agent asks for it, unless a line above says otherwise.
+  - Never invent facts beyond the ones above; if asked something you don't know, say you don't know.
+  - When your business is done, say goodbye and stop talking.
+metrics:
+- The agent calls cancel_appointment and it succeeds.
+- The agent asks politely for the caller's name and address before cancelling, without reading any details
+  out.
+- The agent cancels once the details are given and confirms it out loud.
+- The agent never says the caller's name out loud to the caller. A name inside tool arguments, such as
+  booking details, doesn't count.
