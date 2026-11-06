@@ -7,6 +7,13 @@ Retell connects to `<llm_websocket_url>/<retell call id>`. It sends no auth head
 carries a key derived from the Retell API key, and a socket without it is closed at once. The call
 is already open on the tool server when the socket opens (the rig, or the bridge's inbound
 webhook, starts it); its id, prompt and first line come in the call's dynamic variables.
+
+An arm can bring its own prompt and tools instead (issue #176, the server-led arm):
+RETELL_LLM_PROMPT is a prompt file whose {{call_context}} is filled from the call's variables,
+RETELL_LLM_TOOLS a YAML of descriptions for the tools whose steps the arm's flow runs, over the
+server's own specs, and
+RETELL_LLM_SERVER_LED=1 speaks every sentence a tool result carries as written (voice/retell_llm/
+call.py). The tool server behind it runs the flow (SERVER_LED=1).
 """
 
 import asyncio
@@ -45,6 +52,37 @@ def tenant_lines(tenants_dir: Path, slug: str) -> dict:
     return voice_lines(tenants_dir / slug)
 
 
+def arm_prompt(path: Path, variables: dict) -> str:
+    """The arm's prompt, with the call's own part filled in as Retell would."""
+    return path.read_text().replace("{{call_context}}", variables.get("call_context", ""))
+
+
+def arm_tools(path: Path, specs: list[dict]) -> list[dict]:
+    """The tool server's own specs (names, parameters, write flags, prompts/tools.yaml
+    descriptions), with the arm's description for the few tools whose steps its flow runs
+    (retell/arms/socket/tools.yaml). Parameters always come from the server, so an argument it
+    adds (read_back's job_type) reaches the model, and nothing drifts (voice/retell/tool_schemas.py)."""
+    overrides = yaml.safe_load(path.read_text()) or {}
+    names = {s["name"] for s in specs}
+    unknown = sorted(set(overrides) - names)
+    if unknown:
+        raise ValueError(f"tools the tool server doesn't have: {', '.join(unknown)}")
+    return [{**s, "description": overrides.get(s["name"], s["description"])} for s in specs]
+
+
+def hold_phrase_after_s(config_path: Path) -> float:
+    """How long a step's tool work may run before the hold phrase
+    (config/models.yaml voice.hold_phrase_after_s)."""
+    return float(yaml.safe_load(config_path.read_text())["voice"].get("hold_phrase_after_s", 0.7))
+
+
+def hold_phrase_from(config_path: Path) -> str:
+    """What the hold phrase's wait is counted from: the caller's turn or the tool's start
+    (config/models.yaml voice.hold_phrase_from, RETELL_LLM_HOLD_FROM overrides it)."""
+    voice = yaml.safe_load(config_path.read_text())["voice"]
+    return os.environ.get("RETELL_LLM_HOLD_FROM") or voice.get("hold_phrase_from", "caller")
+
+
 def dead_air_checks(config_path: Path) -> int:
     """How many check-ins Retell asks for before the goodbye (config/models.yaml dead_air)."""
     timings = yaml.safe_load(config_path.read_text())["voice"]["dead_air"]
@@ -60,6 +98,13 @@ def create_app(brain: Brain | None = None, transport=None) -> FastAPI:
     tenants = Path(os.environ.get("TENANTS_DIR") or ROOT / "tenants")
     default_tenant = os.environ.get("RETELL_LLM_TENANT", "summit-air")
     checks = dead_air_checks(ROOT / "config" / "models.yaml")
+    hold_after = hold_phrase_after_s(ROOT / "config" / "models.yaml")
+    hold_from = hold_phrase_from(ROOT / "config" / "models.yaml")
+    prompt_file = os.environ.get("RETELL_LLM_PROMPT")
+    tools_file = os.environ.get("RETELL_LLM_TOOLS")
+    server_led = os.environ.get("RETELL_LLM_SERVER_LED") == "1"
+    # The worker's 4 s; an arm on a busier box can allow more (a holding line covers the wait).
+    tool_timeout = float(os.environ.get("RETELL_LLM_TOOL_TIMEOUT_S") or 4.0)
     calls: dict[str, LlmCall] = {}
     closing: dict[str, asyncio.Task] = {}
     shared = {"brain": brain}
@@ -74,11 +119,19 @@ def create_app(brain: Brain | None = None, transport=None) -> FastAPI:
         metadata = details.get("metadata") or {}
         call_id = variables.get("summit_call_id") or metadata.get("summit_call_id")
         slug = metadata.get("tenant") or default_tenant
-        server = ToolServer(tool_server, call_id, transport=transport)
+        server = ToolServer(tool_server, call_id, timeout_s=tool_timeout, transport=transport)
+        specs = tool_specs(job_types(tenants / slug))
+        system = variables["instructions"]
+        if prompt_file:
+            # On a server-down call the bridge says its line as the greeting and hangs up itself.
+            system = arm_prompt(ROOT / prompt_file, variables)
+        if tools_file:
+            specs = arm_tools(ROOT / tools_file, specs)
         call = LlmCall(
-            server, the_brain(), send, variables["instructions"],
-            tool_specs(job_types(tenants / slug)), tenant_lines(tenants, slug),
+            server, the_brain(), send, system, specs, tenant_lines(tenants, slug),
             phone=details.get("call_type") == "phone_call", dead_air_checks=checks,
+            server_led=server_led, hold_after_s=hold_after, hold_from=hold_from,
+            call_start_ms=details.get("start_timestamp"),
         )
         return call, variables.get("greeting", "")
 

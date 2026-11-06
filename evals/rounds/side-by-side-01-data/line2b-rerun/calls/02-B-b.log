@@ -1,0 +1,35 @@
+dialing +16783366730 from room testcall-a4278cf3
+agent : Hi there. Thanks so much for calling Summit Air today. I'm Brooke, the virtual assistant. How can I help?
+caller: Hi, I need to move my appointment to a different time.
+agent : Sure. What day would you like to move it to?
+caller: Um, actually, whatever's open sooner would be great. Do you have anything later today or tomorrow morning?
+agent : Tomorrow, I have eight to eight thirty or eight thirty to nine. Me know if one of those works.
+caller: Yeah that works.
+agent : Which one works for you? Eight to eight thirty or eight thirty to nine?
+caller: Eight to eight thirty is good.
+agent : I need the booking ID, which I don't have. I'll look up the customer by their phone number. Unfortunately, I'm not finding an appointment under this number. Is there another phone number the visit might be booked under?
+caller: Hmm, I'm not sure. I'm calling from this number, so that's probably the one it's under. Could you try the address instead? It's one ninety-nine East Fourth Street.
+agent : Unfortunately, I'm not finding a visit under that address either. Can have someone from the office look into it and call you back. When's a good time for that?
+caller: Hmm, okay. Can you just check if there's anything booked for today under that address? I booked it earlier, so it should be there. If not, yeah, have someone call me back. Tomorrow afternoon works.
+agent : I already checked that address, and there's nothing on file for it. I'll have someone call you back tomorrow afternoon. I've let our team know, and someone will call you tomorrow between twelve PM and five PM.
+caller: Okay, thanks. Also, why does my radiator bang so loud?
+agent : Banging or clanking is common with steam heat. It's often water trapped in the pipes, and a technician can check it. Me to set up a visit for that?
+caller: No, I don't need a visit for that. Am I a member with you guys?
+agent : I already looked up this number and your address. So I'll answer from that. I don't see a membership on file. Would you like to hear a bit about our membership?
+caller: No thanks.
+agent : No problem. Anything else?
+caller: I've got a question about a bill, can someone call me?
+agent : Sure. Is tomorrow afternoon still a good time for that call?
+caller: Tomorrow afternoon is fine.
+agent : I've let our team know, and someone will call you tomorrow between twelve PM and five PM. Anything else?
+caller: Honestly, don't call me anymore.
+agent : Just to confirm, 'd like us to stop calling this number?
+caller: Yeah.
+agent : Understood. We won't call you. Give us a call anytime you need us.
+caller: Actually wait, you can still call me.
+agent : No problem. We'll call you again when we need to. Anything else?
+caller: Okay, Brooke, that's it. Thanks for your help.
+agent : Thanks so much for calling Summit Air today. Have a great day. Take care.
+failed to synthesize speech: no audio frames were pushed for text: [Silence], retrying in 0.1s
+the agent hung up
+livekit_ffi::server:279:livekit_ffi::server - Attempted to drop unknown FFI handle: 25

@@ -1,0 +1,282 @@
+{
+ "call": "eval-elderly-no-heat-1-411988ff",
+ "events": [
+  {
+   "at": "2026-11-06T01:17:42Z",
+   "type": "tool",
+   "tool": "calls.start",
+   "args": {
+    "call_id": "eval-elderly-no-heat-1-411988ff",
+    "caller_id": "(332) 555-0118",
+    "dialed_number": "(678) 336-6730",
+    "direction": "inbound"
+   },
+   "ok": true,
+   "refused": null,
+   "gate": null,
+   "say": "",
+   "ms": 22.4,
+   "error": null,
+   "request_id": "ec8ff13e942b"
+  },
+  {
+   "at": "2026-11-06T01:17:43Z",
+   "type": "tool",
+   "tool": "calls.start",
+   "args": {
+    "call_id": "eval-elderly-no-heat-1-411988ff",
+    "caller_id": "chat",
+    "dialed_number": "",
+    "direction": "inbound"
+   },
+   "ok": true,
+   "refused": null,
+   "gate": null,
+   "say": "",
+   "ms": 2.8,
+   "error": null,
+   "request_id": "5f335084c59b"
+  },
+  {
+   "at": "2026-11-06T01:17:50Z",
+   "type": "tool",
+   "tool": "find_address",
+   "args": {
+    "call_id": "eval-elderly-no-heat-1-411988ff",
+    "street": "45 Forest Avenue",
+    "borough": "Staten Island",
+    "spelled": ""
+   },
+   "ok": true,
+   "refused": null,
+   "gate": null,
+   "say": "",
+   "ms": 80.7,
+   "error": null,
+   "request_id": "6f9c470113f8"
+  },
+  {
+   "at": "2026-11-06T01:17:50Z",
+   "type": "tool",
+   "tool": "check_service_area",
+   "args": {
+    "call_id": "eval-elderly-no-heat-1-411988ff",
+    "zip": "10310"
+   },
+   "ok": true,
+   "refused": null,
+   "gate": null,
+   "say": "",
+   "ms": 6.3,
+   "error": null,
+   "request_id": "06a8505ffe90"
+  },
+  {
+   "at": "2026-11-06T01:17:56Z",
+   "type": "tool",
+   "tool": "read_back",
+   "args": {
+    "call_id": "eval-elderly-no-heat-1-411988ff",
+    "address": {
+     "street": "45 Forest Avenue",
+     "unit": "",
+     "city": "Staten Island",
+     "zip": "10310",
+     "spelled": ""
+    },
+    "phone": "(332) 555-0118",
+    "phone_for": "",
+    "name": "Evelyn Marsh",
+    "confirmed": false
+   },
+   "ok": true,
+   "refused": null,
+   "gate": null,
+   "say": "So that's forty-five Forest Avenue, and the number you're calling from, ending in zero one one eight. That's all correct, right?",
+   "ms": 9.8,
+   "error": null,
+   "request_id": "8578445fa419"
+  },
+  {
+   "at": "2026-11-06T01:17:59Z",
+   "type": "tool",
+   "tool": "read_back",
+   "args": {
+    "call_id": "eval-elderly-no-heat-1-411988ff",
+    "address": {
+     "street": "45 Forest Avenue",
+     "unit": "",
+     "city": "Staten Island",
+     "zip": "10310",
+     "spelled": ""
+    },
+    "phone": "(332) 555-0118",
+    "phone_for": "",
+    "name": "Evelyn Marsh",
+    "confirmed": true
+   },
+   "ok": true,
+   "refused": null,
+   "gate": null,
+   "say": "",
+   "ms": 10.3,
+   "error": null,
+   "request_id": "895c92cdd6af"
+  },
+  {
+   "at": "2026-11-06T01:18:04Z",
+   "type": "tool",
+   "tool": "find_slots",
+   "args": {
+    "call_id": "eval-elderly-no-heat-1-411988ff",
+    "job_type": "no_heat",
+    "priority": null,
+    "preferred_days": [],
+    "time_of_day": null,
+    "moving_a_visit": false,
+    "window_minutes": null,
+    "day": null,
+    "arrive_after": null,
+    "arrive_before": null,
+    "facts": {
+     "issue": "Radiators went cold around 7 PM last evening, no heat at all. Caller is 84, lives alone, uses a cane.",
+     "since": "",
+     "who_home": "Caller alone, 84 years old, uses a cane",
+     "inside_temp_f": null,
+     "temp_falling_fast": false
+    }
+   },
+   "ok": true,
+   "refused": null,
+   "gate": null,
+   "say": "Thanks for telling me. I've moved you up so you'll get one of our earlier openings. The soonest I have is tomorrow, 8 to 8:30. Does that work?",
+   "ms": 1035.1,
+   "error": null,
+   "request_id": "21721f811ec2"
+  },
+  {
+   "at": "2026-11-06T01:18:15Z",
+   "type": "tool",
+   "tool": "book_appointment",
+   "args": {
+    "job_type": "no_heat",
+    "slot": {
+     "date": "2026-11-06",
+     "window": "0800-0830"
+    },
+    "details": {
+     "approver": "Evelyn Marsh",
+     "issue": "No heat. Radiators went cold around 7 PM last evening; were warm during the afternoon. Whole system out, no heat coming through.",
+     "since": "Around 7 PM last evening",
+     "tried": "Caller has not tried anything yet",
+     "who_home": "Caller alone, 84, lives alone, uses a cane. Will let technician in. Please don't rush; knock on front door. No gate code, no buzzer, no pets.",
+     "arrival_notes": "Caller is 84, uses a cane and needs extra time to reach the door. Please don't rush. No gate code or buzzer; knock on the front door. No pets.",
+     "name": "Evelyn Marsh"
+    },
+    "call_id": "eval-elderly-no-heat-1-411988ff"
+   },
+   "ok": false,
+   "refused": "invalid_arguments",
+   "gate": null,
+   "say": "Let me check that again.",
+   "ms": 0.0,
+   "error": "invalid_arguments",
+   "request_id": "22ba0658da74"
+  },
+  {
+   "at": "2026-11-06T01:18:18Z",
+   "type": "tool",
+   "tool": "book_appointment",
+   "args": {
+    "call_id": "eval-elderly-no-heat-1-411988ff",
+    "job_type": "no_heat",
+    "slot": {
+     "date": "2026-11-06",
+     "window": "0800-0830"
+    },
+    "details": {
+     "issue": "No heat. Radiators went cold around 7 PM last evening; were warm during the afternoon. Whole system out, no heat coming through.",
+     "since": "Around 7 PM last evening",
+     "tried": "Caller has not tried anything yet",
+     "who_home": "Caller alone, 84, uses a cane",
+     "approver": "Evelyn Marsh",
+     "system_type": "",
+     "arrival_notes": "Caller is 84, uses a cane and needs extra time to reach the door. Please don't rush. No gate code or buzzer; knock on the front door. No pets.",
+     "name": "Evelyn Marsh",
+     "inside_temp_f": null
+    },
+    "priority": null,
+    "separate_problem": false,
+    "new_address_account": null
+   },
+   "ok": false,
+   "refused": "on_call_first",
+   "gate": "on_call_first",
+   "say": "Let me get this to our on-call technician first.",
+   "ms": 332.4,
+   "error": null,
+   "request_id": "378616eb2d7f"
+  },
+  {
+   "at": "2026-11-06T01:18:19Z",
+   "type": "tool",
+   "tool": "flag_person",
+   "args": {
+    "callback_time": "now",
+    "callback_in_minutes": null,
+    "callback_after": null,
+    "callback_before": null,
+    "callback_day": "today",
+    "call_id": "eval-elderly-no-heat-1-411988ff",
+    "reason": "No-heat visit for Evelyn Marsh, 45 Forest Avenue, Staten Island. 84, lives alone, uses a cane. Radiators went cold around 7 PM last evening. Requested tomorrow 8 to 8:30 AM. Caller will be home and approves repair after hearing cost.",
+    "priority": "Urgent",
+    "system_calls_back": false
+   },
+   "ok": false,
+   "refused": "invalid_callback_time",
+   "gate": "invalid_callback_time",
+   "say": "What time should I tell them someone will call by?",
+   "ms": 5.2,
+   "error": null,
+   "request_id": "ccea54e52941"
+  },
+  {
+   "at": "2026-11-06T01:18:25Z",
+   "type": "tool",
+   "tool": "flag_person",
+   "args": {
+    "callback_time": null,
+    "callback_in_minutes": null,
+    "callback_after": "12 PM",
+    "callback_before": "5 PM",
+    "callback_day": "today",
+    "call_id": "eval-elderly-no-heat-1-411988ff",
+    "reason": "No-heat visit for Evelyn Marsh, 45 Forest Avenue, Staten Island. 84, lives alone, uses a cane. Radiators went cold around 7 PM last evening. Requested tomorrow 8 to 8:30 AM. Caller will be home and approves repair after hearing cost. Please let phone ring a while; caller is slow to the phone.",
+    "priority": "Urgent",
+    "system_calls_back": false
+   },
+   "ok": false,
+   "refused": "invalid_callback_time",
+   "gate": "invalid_callback_time",
+   "say": "What time should I tell them someone will call by?",
+   "ms": 6.0,
+   "error": null,
+   "request_id": "2faf3455ebb6"
+  },
+  {
+   "at": "2026-11-06T01:18:28Z",
+   "type": "tool",
+   "tool": "calls.end",
+   "args": {
+    "reason": "caller_hangup"
+   },
+   "ok": true,
+   "refused": null,
+   "gate": null,
+   "say": "",
+   "ms": 8.5,
+   "error": null,
+   "request_id": "eabeafefe5ba"
+  }
+ ]
+}

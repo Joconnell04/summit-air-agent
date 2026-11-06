@@ -1,5 +1,6 @@
 """Recordings of simulated calls (evals/audio_rig/recording.py), their durable copy (store.py), the
 listening page (listen.py) and `make sim` (sim.py)."""
+
 import asyncio
 import json
 import math
@@ -39,6 +40,7 @@ def channels(stereo: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
 
 # The stereo writer's timing
 
+
 def test_the_pause_before_a_reply_is_the_measured_one():
     rec = CallRecorder(RATE)
     start = rec.caller(tone(300), RATE, end=10.3)
@@ -55,8 +57,13 @@ def test_the_pause_before_a_reply_is_the_measured_one():
     assert agent_start - caller_end == pytest.approx(0.7, abs=0.002)
     assert lines == [
         {"n": 1, "speaker": "caller", "t": 0.5, "text": "my heat is out"},
-        {"n": 2, "speaker": "agent", "t": 1.5, "text": "Sorry to hear that.",
-         "reply_delay_ms": 700},
+        {
+            "n": 2,
+            "speaker": "agent",
+            "t": 1.5,
+            "text": "Sorry to hear that.",
+            "reply_delay_ms": 700,
+        },
     ]
 
 
@@ -106,8 +113,14 @@ def test_a_whole_rig_call_is_recorded_with_the_measured_delay(tmp_path, monkeypa
     monkeypatch.setattr(line_mod, "SETTLE_S", 0.05)
     fake = FakeLine(["Sorry to hear that. Goodbye."])
     ctx = RigContext(Worlds(), "http://unused", load_config(), {})
-    rig = Rig(FakeEntrant(fake), ctx, tmp_path, ScriptedModel([say("[END]")]),
-              ScriptedModel([grade_reply()]), verbose=False)
+    rig = Rig(
+        FakeEntrant(fake),
+        ctx,
+        tmp_path,
+        ScriptedModel([say("[END]")]),
+        ScriptedModel([grade_reply()]),
+        verbose=False,
+    )
     deepgram = fake_deepgram(["Thanks for calling Summit Air.", "Sorry to hear that. Goodbye."])
     monkeypatch.setattr("evals.audio_rig.rig.Deepgram", lambda *a, **k: deepgram)
     rec = CallRecorder(RATE)
@@ -127,6 +140,7 @@ def test_a_whole_rig_call_is_recorded_with_the_measured_delay(tmp_path, monkeypa
 
 # A batch and its durable copy
 
+
 class FakeStore:
     def __init__(self):
         self.put_keys = []
@@ -138,8 +152,9 @@ class FakeStore:
 
 
 def result_for(scenario_id: str, sample: int = 1):
-    return SimpleNamespace(scenario_id=scenario_id, sample=sample, call_id=f"rig-{scenario_id}",
-                           outcome="pass")
+    return SimpleNamespace(
+        scenario_id=scenario_id, sample=sample, call_id=f"rig-{scenario_id}", outcome="pass"
+    )
 
 
 def recorded_call() -> CallRecorder:
@@ -165,16 +180,22 @@ def test_calls_get_short_codes_in_the_order_they_ran(tmp_path):
     assert transcript["lines"][0]["text"] == "hello"
     b = "20261104-010203-livekit"
     assert keep.put_keys == [
-        f"{b}/S1.wav", f"{b}/S1.json", f"{b}/manifest.json",
-        f"{b}/S2.wav", f"{b}/S2.json", f"{b}/manifest.json",
+        f"{b}/S1.wav",
+        f"{b}/S1.json",
+        f"{b}/manifest.json",
+        f"{b}/S2.wav",
+        f"{b}/S2.json",
+        f"{b}/manifest.json",
         f"{b}/manifest.json",
     ]
 
 
 def test_bucket_keys_come_only_from_the_bucket_lines_of_an_env_file():
     text = "ANTHROPIC_API_KEY=x\nRECORDING_S3_BUCKET=recordings\nRECORDING_S3_SECRET='s'\n"
-    assert store.parse_env(text) == {"RECORDING_S3_BUCKET": "recordings",
-                                     "RECORDING_S3_SECRET": "s"}
+    assert store.parse_env(text) == {
+        "RECORDING_S3_BUCKET": "recordings",
+        "RECORDING_S3_SECRET": "s",
+    }
 
 
 def test_bucket_keys_here_are_used_before_asking_the_server():
@@ -218,19 +239,35 @@ def test_files_go_under_sim_and_a_refusal_does_not_stop_the_run(tmp_path, capsys
 
 # The listening page
 
+
 def make_batch(root, name: str, codes: list[str]) -> None:
     folder = root / name
     folder.mkdir(parents=True)
     calls = []
     for code in codes:
         (folder / f"{code}.flac").write_bytes(b"fLaC")
-        (folder / f"{code}.json").write_text(json.dumps({
-            "persona": "Tomas & co", "outcome": "fail", "lines": [
-                {"n": 1, "speaker": "agent", "t": 0.5, "text": "Thanks for calling."},
-                {"n": 2, "speaker": "caller", "t": 62.4, "text": "<b>my alarm</b>"},
-            ]}))
-        calls.append({"code": code, "scenario_id": "co-alarm-clear", "sample": 1,
-                      "audio": f"{code}.flac", "transcript": f"{code}.json", "duration_s": 70})
+        (folder / f"{code}.json").write_text(
+            json.dumps(
+                {
+                    "persona": "Tomas & co",
+                    "outcome": "fail",
+                    "lines": [
+                        {"n": 1, "speaker": "agent", "t": 0.5, "text": "Thanks for calling."},
+                        {"n": 2, "speaker": "caller", "t": 62.4, "text": "<b>my alarm</b>"},
+                    ],
+                }
+            )
+        )
+        calls.append(
+            {
+                "code": code,
+                "scenario_id": "co-alarm-clear",
+                "sample": 1,
+                "audio": f"{code}.flac",
+                "transcript": f"{code}.json",
+                "duration_s": 70,
+            }
+        )
     (folder / "manifest.json").write_text(json.dumps({"batch": name, "calls": calls}))
 
 
@@ -291,6 +328,7 @@ def test_an_empty_folder_says_how_to_make_a_batch(tmp_path):
 
 # make sim
 
+
 def test_a_listening_batch_runs_each_named_scenario_once_into_its_own_folder():
     args = sim.rig_args("co-alarm-clear  complaint-flag,asks-if-ai", "", 2.0)
     assert args[args.index("--only") + 1] == "co-alarm-clear,complaint-flag,asks-if-ai"
@@ -324,7 +362,19 @@ def test_adding_to_a_batch_numbers_on_and_keeps_every_results_file(tmp_path):
 def test_adding_to_a_batch_that_does_not_exist_stops_before_any_call(tmp_path, capsys):
     from evals.audio_rig import rig
 
-    code = rig.main(["--stack", "livekit", "--suite", "full", "--only", "co-alarm-clear",
-                     "--record-dir", str(tmp_path), "--batch", "20261104-000000-livekit"])
+    code = rig.main(
+        [
+            "--stack",
+            "livekit",
+            "--suite",
+            "full",
+            "--only",
+            "co-alarm-clear",
+            "--record-dir",
+            str(tmp_path),
+            "--batch",
+            "20261104-000000-livekit",
+        ]
+    )
     assert code == 2 and "no batch" in capsys.readouterr().err
     assert sim.rig_args("a", "", 1.0, batch="x")[-2:] == ["--batch", "x"]

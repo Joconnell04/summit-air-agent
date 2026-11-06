@@ -1,0 +1,31 @@
+dialing +16466240418 from room testcall-1a7f469e
+agent : Hi there. Thanks so much for calling Summit Air today. I'm Brooke, the virtual assistant. How can I help?
+caller: Hi, my boiler is really old, I'd like a quote on a new system.
+agent : Sure. I can set up an estimate visit for that. Can I get your name?
+caller: Priya Shah. That's P-R-I-Y-A, Shah is S-H-A-H.
+agent : Thanks. And this is for your home. Right?
+caller: It is my home, yes.
+agent : Great. What's the street address?
+caller: Twelve fifty Hylan Boulevard, unit 4B.
+agent : I'm not finding that street. Could you spell the street name for me?
+caller: H-Y-L-A-N. Hylan Boulevard.
+agent : What's the ZIP code there?
+caller: I don't know it offhand.
+agent : Which borough or neighborhood is it in?
+caller: Staten Island.
+agent : Could you tell me the ZIP code for that address?
+caller: I don't know it offhand. Is there a way to look it up, or can you find it from the address?
+agent : I'm sorry. I'm not able to look up the ZIP from here. Could you try the street name with the Staten Island ZIP or check it on a mail or delivery label if you have one nearby?
+caller: Hmm, I don't have a mail label handy right now. Can you just find it from the address and borough? It's Hylan Boulevard, Staten Island.
+agent : I understand. Unfortunately, I can't find the ZIP from the address alone. You can grab it when you get a chance, can book the estimate right away. You have another address I could try?
+caller: Sorry, I don't have another address. It's the same one, twelve fifty Hylan Boulevard, unit 4B, Staten Island.
+agent : Okay. No problem. When's a good time for someone to call you back so we can get the ZIP and set up your estimate?
+caller: Anything tomorrow morning?
+agent : I've let our team know, and someone will call you tomorrow before twelve PM. Else I can help with?
+caller: Okay, thanks. Is there anything else you need from me for the estimate, like a buzzer code or whether someone has to be home?
+agent : The team will go over those details with you when they call tomorrow. Else I can help with today?
+caller: Nope, that's all. Bye.
+the agent hung up
+skipping user input, speech scheduling is paused
+agent : Thanks for calling Summit Air. Have a great rest of your day.
+livekit_ffi::server:279:livekit_ffi::server - Attempted to drop unknown FFI handle: 25

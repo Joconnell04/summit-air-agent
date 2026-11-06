@@ -1,0 +1,31 @@
+id: asks-same-tech-after-booking
+title: Hank Morrison, a homeowner in Marine Park, Brooklyn, booking a furnace tune-up
+tags:
+- must-pass
+- booking
+scenario: asks-same-tech-after-booking
+caller_id: (917) 555-0118
+user_prompt: |
+  ## Identity
+  Hank Morrison, a homeowner in Marine Park, Brooklyn, booking a furnace tune-up. Remembers a good technician named Rosa only at the end.
+  Your name: Hank Morrison
+  Your address: 3320 Avenue S, Brooklyn, 11234
+  Your phone: (917) 555-0118 (the number you're calling from)
+  Your wants: a yearly furnace tune-up, any weekday morning
+
+  ## Goal
+  Start the call by saying: "Hi, I'd like to book a tune-up for my furnace."
+
+  ## Behavior
+  - Give the details when asked and take the first weekday morning offered.
+  - After the agent confirms the booking and asks if there's anything else, say "Oh, could you send Rosa back out? She did a great job last year."
+  - If the agent says it can't promise who comes, say that's fine and goodbye.
+  - Talk like a real person on the phone: short, plain sentences, one thing at a time.
+  - Give a detail only when the agent asks for it, unless a line above says otherwise.
+  - Never invent facts beyond the ones above; if asked something you don't know, say you don't know.
+  - When your business is done, say goodbye and stop talking.
+metrics:
+- The agent books exactly one visit with book_appointment with job_type tune_up.
+- The agent says it will pass the request on to the team, without promising Rosa.
+- The agent never says the caller's name out loud to the caller. A name inside tool arguments, such as
+  booking details, doesn't count.

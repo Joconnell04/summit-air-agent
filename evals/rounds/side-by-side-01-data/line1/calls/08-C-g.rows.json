@@ -1,0 +1,94 @@
+{
+ "window": [
+  "2026-11-06T01:46:45Z",
+  "2026-11-06T01:49:18Z"
+ ],
+ "calls": [
+  {
+   "call": {
+    "id": "retell_call_a3c8b2a6de25a6e93e4ab9cef13",
+    "tenant": "summit-air",
+    "caller_id": "+16466240418",
+    "caller_key": "6466240418",
+    "dialed_number": "+16466240418",
+    "direction": "inbound",
+    "started_at": "2026-11-06T01:46:57Z",
+    "ended_at": "2026-11-06T01:49:13Z",
+    "end_reason": "agent_end",
+    "end_requested": 1,
+    "after_hours": 1,
+    "linked_call_id": null,
+    "outcome": "declined_commercial",
+    "commercial": 1,
+    "summary_status": "pending",
+    "turn_seq": 30,
+    "safety_state": "none",
+    "safety_kind": null,
+    "safety_signal_at": null,
+    "safety_lines_at": null,
+    "safety_flag_id": null,
+    "safety_variant": 0,
+    "readback_json": null,
+    "readback_asked_seq": null,
+    "readback_confirmed_at": null
+   },
+   "bookings": [],
+   "booking_names": [],
+   "call_names": [],
+   "flags": [
+    {
+     "id": 39,
+     "call_id": "retell_call_a3c8b2a6de25a6e93e4ab9cef13",
+     "kind": "payment",
+     "reason": "Caller wants to pay by card: send a payment link or call to take the payment",
+     "priority": "Normal",
+     "status": "open",
+     "created_at": "2026-11-06T01:48:05Z"
+    },
+    {
+     "id": 40,
+     "call_id": "retell_call_a3c8b2a6de25a6e93e4ab9cef13",
+     "kind": "person",
+     "reason": "Commercial caller Casey Park, dental office, AC broken and office getting hot. Wants a callback sooner if possible. Phone 917-555-0142.",
+     "priority": "High",
+     "status": "open",
+     "created_at": "2026-11-06T01:49:04Z"
+    }
+   ],
+   "callbacks": [
+    {
+     "id": 14,
+     "call_id": "retell_call_a3c8b2a6de25a6e93e4ab9cef13",
+     "phone": "+16466240418",
+     "phone_key": "6466240418",
+     "due_at": "2026-11-06T17:00:00Z",
+     "owner": "office",
+     "reason": "Commercial caller Casey Park, dental office, AC broken and office getting hot. Wants a callback sooner if possible. Phone 917-555-0142. (caller asked: tomorrow before 12 PM)",
+     "status": "pending",
+     "attempts": 0,
+     "last_attempt_at": null,
+     "created_at": "2026-11-06T01:49:04Z",
+     "updated_at": "2026-11-06T01:49:04Z"
+    }
+   ],
+   "leads": [
+    {
+     "id": 4,
+     "call_id": "retell_call_a3c8b2a6de25a6e93e4ab9cef13",
+     "kind": "commercial",
+     "summary": "Dental practice; contact Casey Park +16466240418; AC broken at dental office, wants someone to look at it",
+     "status": "stored",
+     "fsm_key": "retell_call_a3c8b2a6de25a6e93e4ab9cef13:lead:e01df7fa01195c33cade44a7eaab72cc103e5edb",
+     "request_json": "{\"callReasonId\": 704, \"customerId\": null, \"leadCustomerName\": \"Dental practice\", \"leadPhone\": \"+16466240418\", \"summary\": \"Dental practice; contact Casey Park +16466240418; AC broken at dental office, wants someone to look at it\", \"campaignId\": 301}",
+     "fsm_lead_id": 3,
+     "callback_id": null,
+     "attempts": 1,
+     "last_error": null,
+     "created_at": "2026-11-06T01:47:47Z"
+    }
+   ]
+  }
+ ],
+ "do_not_call": [],
+ "dumped_at": "2026-11-06T01:49:29Z"
+}

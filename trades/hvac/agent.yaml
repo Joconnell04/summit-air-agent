@@ -88,6 +88,11 @@ safety:
     - i misspoke
     - scratch that
     - forget that
+    # An everyday cause for the smell (socket done-bar call x176-02: "oh, actually no, my
+    # roommate was cooking, it's gone now").
+    - was cooking
+    - were cooking
+    - just cooking
   # A caller line that says they're already safe or it's been dealt with: advice the caller cut off
   # under half said isn't said again over it (app/lifecycle.py _cut_off_advice; Retell call
   # call_72009cbe16703210509127925b0).

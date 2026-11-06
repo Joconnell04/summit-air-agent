@@ -1,0 +1,36 @@
+dialing +16783366730 from room testcall-44f36891
+agent : Hi there. Thanks so much for calling Summit Air today. I'm Brooke, the virtual assistant. How can I help?
+caller: Hey, I need to schedule maintenance on my boiler.
+agent : Sure. We can set that up. Can I get your name?
+caller: Grace Petrova.
+agent : Thanks. And this is for your home. Right?
+caller: Yeah, it is my apartment.
+agent : Got it.
+agent : What's the street address?
+caller: One second
+agent : No worries.
+caller: five hundred Ocean Avenue
+agent : Is there an apartment or unit number?
+caller: apartment one F
+agent : Got it. What's the best phone number to reach you?
+caller: you can use this one
+agent : So that's five hundred Ocean Avenue, unit one f, and the number you're calling from. Ending in zero four one eight. That's all correct. Right?
+caller: mm-hmm
+agent : No rush. Is there anything there you'd like to change?
+caller: No, that's all right.
+agent : The soonest I have is today, twelve thirty to one. Does that work?
+caller: That works.
+agent : Okay. Will you be able to approve any repair work the technician recommends?
+caller: sure
+agent : Got it. Someone be home to let the technician in?
+caller: yes, all day
+agent : Okay. Is there a gate code or buzzer the technician should know about?
+caller: the buzzer is 2B
+agent : The caller said the buzzer is two b, which the server read as a unit change. I'll rerun the read back with the unit as one f to confirm. So that's five hundred Ocean Avenue, unit one f, and the number you're calling from ending in zero four one eight. That's all correct. Right?
+caller: mm-hmm
+agent : Okay. I've booked it.
+agent : Technician will arrive today between twelve thirty and one. Anything else?
+caller: No, I'm good. Bye.
+agent : Thanks so much for calling Summit Air today. Have a great day. Take care.
+the agent hung up
+livekit_ffi::server:279:livekit_ffi::server - Attempted to drop unknown FFI handle: 23

@@ -24,6 +24,9 @@ ALLOWED = (
     ("POST", r"/create-agent"),
     # The audio rig's web calls (voice/retell/rig_adapter.py).
     ("POST", r"/v3/create-web-call"),
+    # The socket arm's scripted caller: a Retell agent dialing one of our Retell numbers from
+    # another (retell/arms/socket/retell_caller.py).
+    ("POST", r"/v2/create-phone-call"),
     ("GET", r"/get-agent/[\w-]+"),
     ("PATCH", r"/update-agent/[\w-]+"),
     ("POST", r"/create-chat-agent"),
@@ -31,6 +34,9 @@ ALLOWED = (
     ("PATCH", r"/update-chat-agent/[\w-]+"),
     ("PATCH", r"/update-phone-number/\+\d+"),
     ("GET", r"/v2/get-call/[\w-]+"),
+    # The side-by-side eval (evals/side_by_side.py) finds each scripted call by time window, and
+    # the socket arm checks a line is idle before a run (retell/arms/socket/line.py).
+    ("POST", r"/v3/list-calls"),
     ("PATCH", r"/v2/update-live-call/[\w-]+"),
     ("POST", r"/v2/stop-call/[\w-]+"),
     ("POST", r"/create-chat"),

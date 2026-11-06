@@ -46,6 +46,8 @@ def test_asking_to_wait(line, holds):
         ("Um, what was the question?", True),
         ("um what was the question", True),
         ("Sorry, which day did you say?", True),
+        ("215 Mott Street, Unit 4B.", True),
+        ("Um, 4417 Ninth Avenue.", True),
         ("Okay, honey, where's the remote?", False),
         ("It's a Carrier, I think", False),
         ("Honey, where did you put the last bill?", False),

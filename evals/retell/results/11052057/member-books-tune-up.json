@@ -1,0 +1,1025 @@
+{
+  "case": "member-books-tune-up",
+  "retell": {
+    "test_case_job_id": "test_job_7455e97bd0e4",
+    "status": "error",
+    "result_explanation": "Ending the conversation early because the agent did not respond to consecutive user utterances.",
+    "creation_timestamp": 1793912279779,
+    "user_modified_timestamp": 1793912329566,
+    "test_case_definition_id": "test_case_7d8c5eeef98d",
+    "test_case_definition_snapshot": {
+      "creationTimestamp": 1793911574313,
+      "dynamicVariables": {
+        "summit_call_id": "rtest-11052057-member-books-tune-up"
+      },
+      "llmModel": "claude-5.5-haiku",
+      "metrics": [
+        "The agent books exactly one visit with book_appointment with job_type tune_up at ZIP 11432.",
+        "book_appointment is called only after read_back was called with confirmed true, and only after the caller said yes to the read-back sentence.",
+        "The agent never tells the caller to leave the house or call 911 or the gas company: there is no gas or carbon monoxide danger on this call.",
+        "The agent recognizes the membership from the call context and thanks her for it briefly.",
+        "The agent uses the address on file instead of asking for it from scratch."
+      ],
+      "name": "[summit] member-books-tune-up: Linda Park, a longtime Summit Air member in Queens calling for her yearly tune-up",
+      "orgId": "org_EoCqq2c268JWlyCE",
+      "responseEngine": {
+        "llmId": "llm_1da616f2baeb6e916f63e0236950",
+        "type": "retell-llm",
+        "version": 0
+      },
+      "responseEngineId": "llm_1da616f2baeb6e916f63e0236950",
+      "testCaseDefinitionId": "test_case_7d8c5eeef98d",
+      "toolMocks": [],
+      "type": "simulation",
+      "userModifiedTimestamp": 1793912273388,
+      "userPrompt": "## Identity\nLinda Park, a longtime Summit Air member in Queens calling for her yearly tune-up. Pleasant and clear.\nYour name: Linda Park\nYour address: 689 Springfield Blvd, Queens, 11432 (on file)\nYour phone: (718) 555-0123 (the number you're calling from)\nYour wants: the yearly heating tune-up included with the plan, any weekday afternoon next week\nYour system: gas furnace, about 9 years old\n\n## Goal\nStart the call by saying: \"Hi, it's Linda Park. I'm on your maintenance plan and I'd like to schedule my yearly tune-up.\"\n\n## Behavior\n- Confirm the address on file when asked.\n- Say the number you're calling from is the best one.\n- Take the first weekday afternoon offered.\n- Say goodbye once the agent asks if there is anything else.\n- Talk like a real person on the phone: short, plain sentences, one thing at a time.\n- Give a detail only when the agent asks for it, unless a line above says otherwise.\n- Never invent facts beyond the ones above; if asked something you don't know, say you don't know.\n- When your business is done, say goodbye and stop talking.\n"
+    },
+    "transcript_snapshot": {
+      "callEnded": false,
+      "dynamicVariables": {
+        "call_context": "",
+        "call_id": "playground",
+        "call_type": "web_call",
+        "greeting": "Thank you for calling Summit Air. How can I help you today?",
+        "session_type": "voice",
+        "summit_call_id": "rtest-11052057-member-books-tune-up",
+        "system_timezone": "America/Los_Angeles"
+      },
+      "knowledgeBaseRetrievedContents": [],
+      "toolMocks": [],
+      "transcript": [
+        {
+          "content": "Thank you for calling Summit Air. How can I help you today?",
+          "created_timestamp": 1793912289820,
+          "message_id": "message_05b84323838508381f1d234a",
+          "role": "agent"
+        },
+        {
+          "content": "Hi, it's Linda Park. I'm on your maintenance plan and I'd like to schedule my yearly tune-up.",
+          "created_timestamp": 1793912290544,
+          "message_id": "message_889bde506b51a34f672bb471",
+          "role": "user"
+        },
+        {
+          "content": "Hi Linda, I can help you schedule that tune-up. What's the address the tune-up is for?",
+          "created_timestamp": 1793912291441,
+          "message_id": "message_a3d477eeb2e4eb8361516622",
+          "metadata": {
+            "response_id": 1
+          },
+          "role": "agent"
+        },
+        {
+          "content": "689 Springfield Blvd, Queens, 11432.",
+          "created_timestamp": 1793912291912,
+          "message_id": "message_a83c84c6ed05c7eed759343a",
+          "role": "user"
+        },
+        {
+          "content": "Thanks. Let me pull up that address.",
+          "created_timestamp": 1793912293034,
+          "message_id": "message_ceac405f782e741bd2557667",
+          "metadata": {
+            "response_id": 2
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"street\":\"689 Springfield Blvd\",\"borough\":\"Queens\"}",
+          "created_timestamp": 1793912293035,
+          "message_id": "message_86745bfe19b529e0de4f37cc",
+          "name": "find_address",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_013TavyXsnTVv7t6mAHTpjvc",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"zip\":\"11432\",\"street\":\"689 Springfield Blvd\",\"from_caller\":true,\"in_area\":true,\"area\":\"Queens East\",\"note\":\"The lookup couldn't confirm the street; the caller's ZIP stands. Go on to the read-back, which confirms it with them.\"}}",
+          "created_timestamp": 1793912293370,
+          "message_id": "message_c78876e4e4f30ef0e5653423",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_013TavyXsnTVv7t6mAHTpjvc"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"Springfield Blvd\",\"zip\":\"11432\",\"city\":\"Queens\"}}",
+          "created_timestamp": 1793912293371,
+          "message_id": "message_d0f947a27775babf567d751b",
+          "name": "find_customer",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01WjF9W3xP4bhdsU5UJU4zKs",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"matches\":[],\"needs_unit\":false}}",
+          "created_timestamp": 1793912293607,
+          "message_id": "message_3c35c66ce34e0cdba5a41765",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01WjF9W3xP4bhdsU5UJU4zKs"
+        },
+        {
+          "content": "Got it. Is this for a home or an apartment?",
+          "created_timestamp": 1793912294347,
+          "message_id": "message_151f7a8ab47c7a0ed8e1fff5",
+          "metadata": {
+            "response_id": 3
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Home. It's a house.",
+          "created_timestamp": 1793912294837,
+          "message_id": "message_b84302a4a2f2abce089bf39a",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, a house works. Is it heating or cooling you want the tune-up for, or both?",
+          "created_timestamp": 1793912295639,
+          "message_id": "message_729adc65f93ff1944a28427d",
+          "metadata": {
+            "response_id": 4
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Heating, please. Just the heating tune-up.",
+          "created_timestamp": 1793912296222,
+          "message_id": "message_b971f0762dcf09fa44187fe6",
+          "role": "user"
+        },
+        {
+          "content": "Got it, heating only. What's the best phone number to reach you?",
+          "created_timestamp": 1793912297137,
+          "message_id": "message_5b3d4ef82faa5d85566705e8",
+          "metadata": {
+            "response_id": 5
+          },
+          "role": "agent"
+        },
+        {
+          "content": "(718) 555-0123. That's the best number to reach me.",
+          "created_timestamp": 1793912297714,
+          "message_id": "message_33245fd5481889fabb94e8fb",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"689 Springfield Blvd\",\"zip\":\"11432\"},\"phone\":\"(718) 555-0123\"}",
+          "created_timestamp": 1793912298687,
+          "message_id": "message_81c81a68009b98652ad58e4d",
+          "name": "read_back",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01N3BEa3kX9LQn39Yg5Rhs5C",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"I have your home at 689 Springfield Blvd, ZIP code one one four three two, and the best number is seven one eight, five five five, zero one two three. That's all correct, right?\",\"data\":{\"confirmed\":false,\"sentence\":\"I have your home at 689 Springfield Blvd, ZIP code one one four three two, and the best number is seven one eight, five five five, zero one two three. That's all correct, right?\"}}",
+          "created_timestamp": 1793912299166,
+          "message_id": "message_b5bfbb471c56f52e5098c559",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01N3BEa3kX9LQn39Yg5Rhs5C"
+        },
+        {
+          "content": "I have your home at 689 Springfield Blvd, ZIP code one one four three two, and the best number is seven one eight, five five five, zero one two three. That's all correct, right?",
+          "created_timestamp": 1793912300047,
+          "message_id": "message_c0d9a6388242cf9b8ea6dab4",
+          "metadata": {
+            "response_id": 6
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, that's all correct. What's the soonest you have a weekday afternoon next week?",
+          "created_timestamp": 1793912300708,
+          "message_id": "message_8f35f2664815e76402c61c34",
+          "role": "user"
+        },
+        {
+          "content": "That's correct. Let me check afternoon openings next week.",
+          "created_timestamp": 1793912302069,
+          "message_id": "message_adedfe6d1bb84615633bcae3",
+          "metadata": {
+            "response_id": 7
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"689 Springfield Blvd\",\"zip\":\"11432\"},\"phone\":\"(718) 555-0123\",\"confirmed\":true}",
+          "created_timestamp": 1793912302070,
+          "message_id": "message_d29dbe00c4b7a27d7c8b2369",
+          "name": "read_back",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01Q8a2T2vtWEMmw5vFex4Etk",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"confirmed\":true,\"address\":{\"street\":\"689 Springfield Blvd\",\"unit\":\"\",\"city\":\"\",\"zip\":\"11432\",\"spelled\":\"\"},\"phone\":\"7185550123\"}}",
+          "created_timestamp": 1793912302469,
+          "message_id": "message_a5fb1116af1ac9d1e6e4768a",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01Q8a2T2vtWEMmw5vFex4Etk"
+        },
+        {
+          "arguments": "{\"job_type\":\"tune_up\",\"time_of_day\":\"afternoon\",\"preferred_days\":[\"weekday\"]}",
+          "created_timestamp": 1793912302470,
+          "message_id": "message_c1200aea18b1a8fbb47eca64",
+          "name": "find_slots",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01APtGD1SX4WPdJH8sEcabkj",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"I don't have Weekday open in the next two weeks. The soonest I have is today, 4 to 6. Does that work?\",\"data\":{\"priority\":{\"level\":\"Normal\",\"reasons\":[],\"requested\":null,\"raised_after_wait\":false},\"days\":[{\"date\":\"2026-11-05\",\"weekday\":\"Thursday\",\"day\":\"today\",\"windows\":[\"1600-1800\",\"1800-2000\"],\"labels\":[\"4 to 6\",\"6 to 8\"]},{\"date\":\"2026-11-06\",\"weekday\":\"Friday\",\"day\":\"tomorrow\",\"windows\":[\"0800-1000\",\"1000-1200\",\"1200-1400\",\"1400-1600\",\"1600-1800\",\"1800-2000\"],\"labels\":[\"8 to 10\",\"10 to 12\",\"12 to 2\",\"2 to 4\",\"4 to 6\",\"6 to 8\"]},{\"date\":\"2026-11-09\",\"weekday\":\"Monday\",\"day\":\"Monday\",\"windows\":[\"0800-1000\",\"1000-1200\",\"1200-1400\",\"1400-1600\",\"1600-1800\",\"1800-2000\"],\"labels\":[\"8 to 10\",\"10 to 12\",\"12 to 2\",\"2 to 4\",\"4 to 6\",\"6 to 8\"]}],\"offer\":{\"date\":\"2026-11-05\",\"window\":\"1600-1800\",\"weekday\":\"Thursday\",\"day\":\"today\",\"day_and_date\":\"today, Thursday, November 5\",\"label\":\"4 to 6\",\"part\":\"evening\",\"after_hours\":false}}}",
+          "created_timestamp": 1793912304772,
+          "message_id": "message_a5110fcfb77b86bd9ce2686b",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01APtGD1SX4WPdJH8sEcabkj"
+        },
+        {
+          "content": "The soonest opening is today, Thursday, November 5, between 4 and 6 PM. Does that work for you?",
+          "created_timestamp": 1793912305551,
+          "message_id": "message_6b437c1ea25f635a7bbd884e",
+          "metadata": {
+            "response_id": 8
+          },
+          "role": "agent"
+        },
+        {
+          "content": "No, I need it next week, please. Do you have anything on a weekday afternoon?",
+          "created_timestamp": 1793912306892,
+          "message_id": "message_bdcc86b760efe67cbdc7d2ca",
+          "role": "user"
+        },
+        {
+          "content": "The next available weekday afternoon is Friday, November 6, 12 to 2 PM, Monday, November 9, 2 to 4 PM, is also open. Which would you like?",
+          "created_timestamp": 1793912307818,
+          "message_id": "message_c8e99b08dc121c85f170b635",
+          "metadata": {
+            "response_id": 9
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Monday, November 9, 2 to 4 PM works for me. Please book that one.",
+          "created_timestamp": 1793912308516,
+          "message_id": "message_dd1c05c21f148879f7f16491",
+          "role": "user"
+        },
+        {
+          "content": "Before I book, I need to correct my last message: I misstated the options. The actual openings I have are Friday, November 6, 12 to 2 PM, and Monday, November 9, 2 to 4 PM. Monday, November 9, 2 to 4 PM is the one you chose, so I'll confirm that. Will you be able to approve any repair work the technician recommends?",
+          "created_timestamp": 1793912309691,
+          "message_id": "message_e278ce4f06be05be244be3cf",
+          "metadata": {
+            "response_id": 10
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, I can approve repair work if the technician needs to do something, but please call me first before any repair is done. Just the tune-up for now.",
+          "created_timestamp": 1793912310488,
+          "message_id": "message_3b387c222b6bd672619b4ef0",
+          "role": "user"
+        },
+        {
+          "content": "I'll note that you want to be called before any repair work is done. Will someone be home to let the technician in?",
+          "created_timestamp": 1793912311276,
+          "message_id": "message_2ca631f1f21998a76a05ead8",
+          "metadata": {
+            "response_id": 11
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, I'll be home. Please just ring the bell at the front door.",
+          "created_timestamp": 1793912312021,
+          "message_id": "message_68c4b5ffe4b5ce2f89c1aa34",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, I'll note that you'll be home and to ring the front door bell. Is there a gate code, buzzer, or pet the technician should know about?",
+          "created_timestamp": 1793912312856,
+          "message_id": "message_3c7e68056f33f9a1d9df3aa4",
+          "metadata": {
+            "response_id": 12
+          },
+          "role": "agent"
+        },
+        {
+          "content": "No, there's no gate code, buzzer, or pet. Just the front door bell is fine. Can you read me back the appointment once it's booked?",
+          "created_timestamp": 1793912313701,
+          "message_id": "message_a9f13daf79da03e8a5059c20",
+          "role": "user"
+        },
+        {
+          "content": "I still need one detail first: what's the issue with the heating, and since when? Then I'll book it.",
+          "created_timestamp": 1793912314631,
+          "message_id": "message_97af9c8ec737d76a7b1b4447",
+          "metadata": {
+            "response_id": 13
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Sorry, I'm not having any problems with the heating. It's just the yearly tune-up. Nothing is wrong with it right now, so I don't have an issue to report. Please go ahead and book Monday, November 9, 2 to 4 PM. After that, can you read me back the appointment?",
+          "created_timestamp": 1793912316127,
+          "message_id": "message_db4cfd3697ac27771140bbf6",
+          "role": "user"
+        },
+        {
+          "content": "Got it, no issue, just the yearly tune-up. Booking that now.",
+          "created_timestamp": 1793912317888,
+          "message_id": "message_02c3d7e8243aee5655f6306d",
+          "metadata": {
+            "response_id": 14
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"job_type\":\"tune_up\",\"slot\":{\"date\":\"2026-11-09\",\"window\":\"1400-1600\"},\"details\":{\"approver\":\"Linda Park\",\"issue\":\"Yearly heating tune-up; no problem reported\",\"since\":\"Not applicable, routine maintenance\",\"tried\":\"Not applicable, routine maintenance\",\"who_home\":\"Linda Park, home; ring front door bell\",\"arrival_notes\":\"Ring the front door bell. No gate code, buzzer, or pets. Call customer before any repair work; approves repairs only after being called.\",\"system_type\":\"Heating\"}}",
+          "created_timestamp": 1793912317889,
+          "message_id": "message_5965694ef4f24789bab53bd9",
+          "name": "book_appointment",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01CRt5gj16RbByELHeDkRDH4",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"You're all set for Monday, November 9, with the technician arriving between 2 and 4. Anything else?\",\"data\":{\"booking_id\":549,\"appointment_id\":549,\"window\":{\"date\":\"2026-11-09\",\"window\":\"1400-1600\",\"weekday\":\"Monday\",\"day\":\"Monday\",\"day_and_date\":\"Monday, November 9\",\"label\":\"2 to 4\",\"part\":\"afternoon\",\"after_hours\":false},\"priority\":{\"level\":\"Normal\",\"reasons\":[],\"raised_after_wait\":false},\"seek_earlier\":false,\"safety_override\":false,\"approval_callback_at\":null,\"return_visit_review\":false}}",
+          "created_timestamp": 1793912318782,
+          "message_id": "message_809d1997e53fdc5db3538054",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01CRt5gj16RbByELHeDkRDH4"
+        },
+        {
+          "content": "You're all set for Monday, November 9, with the technician arriving between 2 and 4 PM. The technician will ring the front door bell, and will call you before any repair work. Anything else I can help with?",
+          "created_timestamp": 1793912319621,
+          "message_id": "message_003ba30dc262c8901485fb1f",
+          "metadata": {
+            "response_id": 15
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Thanks, that's everything I needed. Have a good day.",
+          "created_timestamp": 1793912320195,
+          "message_id": "message_2334624531a544387b1a9241",
+          "role": "user"
+        },
+        {
+          "content": "Thanks for calling Summit Air. Take care.",
+          "created_timestamp": 1793912320996,
+          "message_id": "message_050ef6e64cec1300d2ecbffb",
+          "metadata": {
+            "response_id": 16
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"reason\":\"resolved\"}",
+          "created_timestamp": 1793912320997,
+          "message_id": "message_83e71fe6d73ef87f846f6707",
+          "name": "end_call",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_016fpnrHGuGra12U8VACMJg3",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"hang_up\":true}}",
+          "created_timestamp": 1793912321766,
+          "message_id": "message_fd175ca4f5be1ddf953424e5",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_016fpnrHGuGra12U8VACMJg3"
+        },
+        {
+          "content": "Thanks, that's everything. Have a good day.",
+          "created_timestamp": 1793912323023,
+          "message_id": "message_b24bcafa37117ec57033513c",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, you too. Bye.",
+          "created_timestamp": 1793912324202,
+          "message_id": "message_c09da6c92ec8894de7fb0de3",
+          "role": "user"
+        },
+        {
+          "content": "Goodbye.",
+          "created_timestamp": 1793912324827,
+          "message_id": "message_521822c0ad22921f78dedc11",
+          "metadata": {
+            "response_id": 17
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Thanks, bye.",
+          "created_timestamp": 1793912325578,
+          "message_id": "message_7f5f786d7abb62332dce69da",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, bye.",
+          "created_timestamp": 1793912326678,
+          "message_id": "message_6d360c154fd4be3f216a81ce",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, bye.",
+          "created_timestamp": 1793912327967,
+          "message_id": "message_602b94b41a35b47a51ae96ac",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, bye.",
+          "created_timestamp": 1793912329565,
+          "message_id": "message_ba0811c088a06b84f4c4be47",
+          "role": "user"
+        }
+      ]
+    }
+  },
+  "trace": {
+    "call": {
+      "id": "rtest-11052057-member-books-tune-up",
+      "tenant": "summit-air",
+      "caller_id": "(718) 555-0123",
+      "caller_key": "7185550123",
+      "dialed_number": "(678) 336-6730",
+      "direction": "inbound",
+      "started_at": "2026-10-12T20:57:58Z",
+      "ended_at": null,
+      "end_reason": null,
+      "end_requested": 1,
+      "after_hours": 0,
+      "linked_call_id": null,
+      "outcome": null,
+      "commercial": 0,
+      "summary_status": "none",
+      "turn_seq": 30,
+      "safety_state": "none",
+      "safety_kind": null,
+      "safety_signal_at": null,
+      "safety_lines_at": null,
+      "safety_flag_id": null,
+      "safety_variant": 0,
+      "readback_json": "{\"street\": \"689 Springfield Blvd\", \"unit\": \"\", \"city\": \"\", \"zip\": \"11432\", \"spelled\": \"\", \"phone\": \"7185550123\", \"phone_for\": \"\", \"sentence\": \"I have your home at 689 Springfield Blvd, ZIP code one one four three two, and the best number is seven one eight, five five five, zero one two three. That's all correct, right?\"}",
+      "readback_asked_seq": 11,
+      "readback_confirmed_at": "2026-11-05T20:58:22Z"
+    },
+    "events": [
+      {
+        "at": "2026-11-05T20:57:58Z",
+        "type": "tool",
+        "tool": "calls.start",
+        "args": {
+          "call_id": "rtest-11052057-member-books-tune-up",
+          "caller_id": "(718) 555-0123",
+          "dialed_number": "(678) 336-6730",
+          "direction": "inbound"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 94.2,
+        "error": null,
+        "request_id": "0373aa6ea6fb"
+      },
+      {
+        "at": "2026-11-05T20:58:13Z",
+        "type": "turn",
+        "seq": 1,
+        "speaker": "agent",
+        "text": "Thank you for calling Summit Air. How can I help you today?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:58:13Z",
+        "type": "turn",
+        "seq": 2,
+        "speaker": "caller",
+        "text": "Hi, it's Linda Park. I'm on your maintenance plan and I'd like to schedule my yearly tune-up.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:58:13Z",
+        "type": "turn",
+        "seq": 3,
+        "speaker": "agent",
+        "text": "Hi Linda, I can help you schedule that tune-up. What's the address the tune-up is for?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:58:13Z",
+        "type": "turn",
+        "seq": 4,
+        "speaker": "caller",
+        "text": "689 Springfield Blvd, Queens, 11432.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:58:13Z",
+        "type": "turn",
+        "seq": 5,
+        "speaker": "agent",
+        "text": "Thanks. Let me pull up that address.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:58:13Z",
+        "type": "tool",
+        "tool": "find_address",
+        "args": {
+          "call_id": "rtest-11052057-member-books-tune-up",
+          "street": "689 Springfield Blvd",
+          "borough": "Queens",
+          "spelled": ""
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 5.0,
+        "error": null,
+        "request_id": "ab6fa11948f4"
+      },
+      {
+        "at": "2026-11-05T20:58:13Z",
+        "type": "tool",
+        "tool": "find_customer",
+        "args": {
+          "call_id": "rtest-11052057-member-books-tune-up",
+          "phone": null,
+          "address": {
+            "street": "Springfield Blvd",
+            "unit": "",
+            "city": "Queens",
+            "zip": "11432",
+            "spelled": ""
+          }
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 10.5,
+        "error": null,
+        "request_id": "6f66bb51bf0c"
+      },
+      {
+        "at": "2026-11-05T20:58:18Z",
+        "type": "turn",
+        "seq": 6,
+        "speaker": "agent",
+        "text": "Got it. Is this for a home or an apartment?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:58:18Z",
+        "type": "turn",
+        "seq": 7,
+        "speaker": "caller",
+        "text": "Home. It's a house.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:58:18Z",
+        "type": "turn",
+        "seq": 8,
+        "speaker": "agent",
+        "text": "Thanks, a house works. Is it heating or cooling you want the tune-up for, or both?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:58:18Z",
+        "type": "turn",
+        "seq": 9,
+        "speaker": "caller",
+        "text": "Heating, please. Just the heating tune-up.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:58:19Z",
+        "type": "turn",
+        "seq": 10,
+        "speaker": "agent",
+        "text": "Got it, heating only. What's the best phone number to reach you?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:58:19Z",
+        "type": "turn",
+        "seq": 11,
+        "speaker": "caller",
+        "text": "(718) 555-0123. That's the best number to reach me.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:58:19Z",
+        "type": "tool",
+        "tool": "read_back",
+        "args": {
+          "call_id": "rtest-11052057-member-books-tune-up",
+          "address": {
+            "street": "689 Springfield Blvd",
+            "unit": "",
+            "city": "",
+            "zip": "11432",
+            "spelled": ""
+          },
+          "phone": "(718) 555-0123",
+          "phone_for": "",
+          "confirmed": false
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "I have your home at 689 Springfield Blvd, ZIP code one one four three two, and the best number is seven one eight, five five five, zero one two three. That's all correct, right?",
+        "ms": 14.8,
+        "error": null,
+        "request_id": "835e2dab4eed"
+      },
+      {
+        "at": "2026-11-05T20:58:22Z",
+        "type": "turn",
+        "seq": 12,
+        "speaker": "agent",
+        "text": "I have your home at 689 Springfield Blvd, ZIP code one one four three two, and the best number is seven one eight, five five five, zero one two three. That's all correct, right?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 3000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:58:22Z",
+        "type": "turn",
+        "seq": 13,
+        "speaker": "caller",
+        "text": "Yes, that's all correct. What's the soonest you have a weekday afternoon next week?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:58:22Z",
+        "type": "turn",
+        "seq": 14,
+        "speaker": "agent",
+        "text": "That's correct. Let me check afternoon openings next week.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:58:22Z",
+        "type": "tool",
+        "tool": "read_back",
+        "args": {
+          "call_id": "rtest-11052057-member-books-tune-up",
+          "address": {
+            "street": "689 Springfield Blvd",
+            "unit": "",
+            "city": "",
+            "zip": "11432",
+            "spelled": ""
+          },
+          "phone": "(718) 555-0123",
+          "phone_for": "",
+          "confirmed": true
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 37.1,
+        "error": null,
+        "request_id": "16f6918ca0ea"
+      },
+      {
+        "at": "2026-11-05T20:58:24Z",
+        "type": "tool",
+        "tool": "find_slots",
+        "args": {
+          "call_id": "rtest-11052057-member-books-tune-up",
+          "job_type": "tune_up",
+          "priority": null,
+          "preferred_days": [
+            "weekday"
+          ],
+          "time_of_day": "afternoon",
+          "window_minutes": null,
+          "day": null,
+          "arrive_after": null,
+          "arrive_before": null,
+          "facts": {
+            "issue": "",
+            "who_home": "",
+            "inside_temp_f": null,
+            "temp_falling_fast": false
+          }
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "I don't have Weekday open in the next two weeks. The soonest I have is today, 4 to 6. Does that work?",
+        "ms": 2006.2,
+        "error": null,
+        "request_id": "c97340080795"
+      },
+      {
+        "at": "2026-11-05T20:58:38Z",
+        "type": "turn",
+        "seq": 15,
+        "speaker": "agent",
+        "text": "The soonest opening is today, Thursday, November 5, between 4 and 6 PM. Does that work for you?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:58:38Z",
+        "type": "turn",
+        "seq": 16,
+        "speaker": "caller",
+        "text": "No, I need it next week, please. Do you have anything on a weekday afternoon?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:58:38Z",
+        "type": "turn",
+        "seq": 17,
+        "speaker": "agent",
+        "text": "The next available weekday afternoon is Friday, November 6, 12 to 2 PM, Monday, November 9, 2 to 4 PM, is also open. Which would you like?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:58:38Z",
+        "type": "turn",
+        "seq": 18,
+        "speaker": "caller",
+        "text": "Monday, November 9, 2 to 4 PM works for me. Please book that one.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:58:38Z",
+        "type": "turn",
+        "seq": 19,
+        "speaker": "agent",
+        "text": "Before I book, I need to correct my last message: I misstated the options. The actual openings I have are Friday, November 6, 12 to 2 PM, and Monday, November 9, 2 to 4 PM. Monday, November 9, 2 to 4 PM is the one you chose, so I'll confirm that. Will you be able to approve any repair work the technician recommends?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:58:38Z",
+        "type": "turn",
+        "seq": 20,
+        "speaker": "caller",
+        "text": "Yes, I can approve repair work if the technician needs to do something, but please call me first before any repair is done. Just the tune-up for now.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:58:38Z",
+        "type": "turn",
+        "seq": 21,
+        "speaker": "agent",
+        "text": "I'll note that you want to be called before any repair work is done. Will someone be home to let the technician in?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:58:38Z",
+        "type": "turn",
+        "seq": 22,
+        "speaker": "caller",
+        "text": "Yes, I'll be home. Please just ring the bell at the front door.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:58:38Z",
+        "type": "turn",
+        "seq": 23,
+        "speaker": "agent",
+        "text": "Thanks, I'll note that you'll be home and to ring the front door bell. Is there a gate code, buzzer, or pet the technician should know about?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:58:38Z",
+        "type": "turn",
+        "seq": 24,
+        "speaker": "caller",
+        "text": "No, there's no gate code, buzzer, or pet. Just the front door bell is fine. Can you read me back the appointment once it's booked?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:58:38Z",
+        "type": "turn",
+        "seq": 25,
+        "speaker": "agent",
+        "text": "I still need one detail first: what's the issue with the heating, and since when? Then I'll book it.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:58:38Z",
+        "type": "turn",
+        "seq": 26,
+        "speaker": "caller",
+        "text": "Sorry, I'm not having any problems with the heating. It's just the yearly tune-up. Nothing is wrong with it right now, so I don't have an issue to report. Please go ahead and book Monday, November 9, 2 to 4 PM. After that, can you read me back the appointment?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:58:38Z",
+        "type": "turn",
+        "seq": 27,
+        "speaker": "agent",
+        "text": "Got it, no issue, just the yearly tune-up. Booking that now.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:58:38Z",
+        "type": "tool",
+        "tool": "book_appointment",
+        "args": {
+          "call_id": "rtest-11052057-member-books-tune-up",
+          "job_type": "tune_up",
+          "slot": {
+            "date": "2026-11-09",
+            "window": "1400-1600"
+          },
+          "details": {
+            "issue": "Yearly heating tune-up; no problem reported",
+            "since": "Not applicable, routine maintenance",
+            "tried": "Not applicable, routine maintenance",
+            "who_home": "Linda Park, home; ring front door bell",
+            "approver": "Linda Park",
+            "system_type": "Heating",
+            "arrival_notes": "Ring the front door bell. No gate code, buzzer, or pets. Call customer before any repair work; approves repairs only after being called.",
+            "name": "",
+            "inside_temp_f": null
+          },
+          "priority": null,
+          "separate_problem": false,
+          "new_address_account": null
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "You're all set for Monday, November 9, with the technician arriving between 2 and 4. Anything else?",
+        "ms": 244.7,
+        "error": null,
+        "request_id": "64aa1b586f40"
+      },
+      {
+        "at": "2026-11-05T20:58:41Z",
+        "type": "turn",
+        "seq": 28,
+        "speaker": "agent",
+        "text": "You're all set for Monday, November 9, with the technician arriving between 2 and 4 PM. The technician will ring the front door bell, and will call you before any repair work. Anything else I can help with?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:58:41Z",
+        "type": "turn",
+        "seq": 29,
+        "speaker": "caller",
+        "text": "Thanks, that's everything I needed. Have a good day.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:58:41Z",
+        "type": "turn",
+        "seq": 30,
+        "speaker": "agent",
+        "text": "Thanks for calling Summit Air. Take care.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:58:41Z",
+        "type": "tool",
+        "tool": "end_call",
+        "args": {
+          "call_id": "rtest-11052057-member-books-tune-up",
+          "reason": "resolved"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 10.2,
+        "error": null,
+        "request_id": "59dd532e9b3d"
+      }
+    ],
+    "flags": [],
+    "callbacks": [],
+    "bookings": [
+      {
+        "id": 179,
+        "kind": "book",
+        "status": "booked",
+        "fsm_job_id": 549,
+        "window_start": "2026-11-09T19:00:00Z",
+        "window_end": "2026-11-09T21:00:00Z",
+        "priority": "Normal",
+        "priority_reasons": "",
+        "safety_override": 0,
+        "seek_earlier": 0,
+        "attempts": 1,
+        "last_error": null,
+        "raised_after_wait": 0,
+        "priority_rules": "[]",
+        "priority_reason_list": "[]",
+        "who_home": "Linda Park, home; ring front door bell",
+        "job_type": "tune_up",
+        "street": "689 Springfield Blvd",
+        "unit": "",
+        "job_notes": "[]"
+      }
+    ],
+    "notes": [],
+    "leads": [],
+    "out_of_area": [],
+    "summary": [],
+    "electrical": [],
+    "holds": [],
+    "pace": [
+      {
+        "call_id": "rtest-11052057-member-books-tune-up",
+        "speed": 1.0,
+        "source": "default",
+        "requested": 0,
+        "older_adult": 0,
+        "address_speed": null,
+        "repeats": 0
+      }
+    ],
+    "pace_changes": [],
+    "caller_pace": [],
+    "transfers": [],
+    "handoffs": [],
+    "address_lookups": [
+      {
+        "house": "689",
+        "street": "springfield blvd",
+        "hint": "Queens",
+        "status": "none",
+        "zips_json": "[]",
+        "source": "geosearch"
+      }
+    ],
+    "address_checks": [],
+    "names": [],
+    "address_moves": [],
+    "identity_checks": [],
+    "heads_ups": []
+  }
+}

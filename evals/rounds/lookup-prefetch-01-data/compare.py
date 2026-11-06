@@ -34,16 +34,18 @@ def turns(path: str) -> list[dict]:
         callers = [t["text"] for t in s["transcript"] if t["role"] == "caller"]
         for text, timing in zip(callers, s["turn_timings"], strict=False):
             stages = timing.get("platform_stages") or {}
-            rows.append({
-                "scenario": s["scenario_id"],
-                "kind": "lookup" if is_lookup_line(text) else "plain",
-                "tool_kind": timing["kind"],
-                "delay": timing["reply_delay_ms"],
-                "over": timing.get("over_caller_ms") is not None,
-                "requests": stages.get("llm_requests"),
-                "cancelled": stages.get("llm_cancelled"),
-                "text": text,
-            })
+            rows.append(
+                {
+                    "scenario": s["scenario_id"],
+                    "kind": "lookup" if is_lookup_line(text) else "plain",
+                    "tool_kind": timing["kind"],
+                    "delay": timing["reply_delay_ms"],
+                    "over": timing.get("over_caller_ms") is not None,
+                    "requests": stages.get("llm_requests"),
+                    "cancelled": stages.get("llm_cancelled"),
+                    "text": text,
+                }
+            )
     return rows
 
 

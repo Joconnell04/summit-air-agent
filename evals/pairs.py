@@ -8,6 +8,7 @@ The two calls are held at one point so they really race: each call's first booki
 confirmed read-back waits until the other call reaches its own, then both go to the tool server at
 once. A call that ends without booking lets the other go on alone, and `booked_together` says so.
 """
+
 import json
 import sqlite3
 import threading
@@ -82,7 +83,7 @@ class Pair(BaseModel):
         for item in value:
             if len(item) != 1:
                 raise ValueError(f"each together item has one check name, got {sorted(item)}")
-            (name, arg), = item.items()
+            ((name, arg),) = item.items()
             if name not in PAIR_CHECKS:
                 raise ValueError(f"unknown pair check {name!r}")
             PAIR_CHECKS[name].validate(arg)
@@ -98,10 +99,14 @@ class Pair(BaseModel):
         if self.max_turns:
             shared["max_turns"] = self.max_turns
         return [
-            Scenario.model_validate({
-                **shared, **caller, "id": f"{self.id}-{letter}",
-                "script": caller.get("script", []) + self.script,
-            })
+            Scenario.model_validate(
+                {
+                    **shared,
+                    **caller,
+                    "id": f"{self.id}-{letter}",
+                    "script": caller.get("script", []) + self.script,
+                }
+            )
             for letter, caller in zip(LETTERS, self.callers, strict=True)
         ]
 
@@ -170,8 +175,15 @@ def fill(st_db: Path, setup: WorldSetup, tenant_dir: Path = TENANT_DIR) -> None:
                     free = sorted(slots.free_ids, key=lambda t: t in slots.fit)
                     for tech_id in free[: max(0, len(free) - room)]:
                         worldkit.add_job(
-                            conn, cfg, customer_id, location_id, job_type["id"], day, window.id,
-                            tech_id=tech_id, summary="Booked before the calls.",
+                            conn,
+                            cfg,
+                            customer_id,
+                            location_id,
+                            job_type["id"],
+                            day,
+                            window.id,
+                            tech_id=tech_id,
+                            summary="Booked before the calls.",
                         )
     finally:
         conn.close()
@@ -243,7 +255,9 @@ class PairEvidence:
 
     def job_ids(self) -> list[int]:
         return [
-            b["fsm_job_id"] for t in self.traces for b in t["bookings"]
+            b["fsm_job_id"]
+            for t in self.traces
+            for b in t["bookings"]
             if b["kind"] == "book" and b["status"] in BOOKED and b["fsm_job_id"]
         ]
 
@@ -269,12 +283,16 @@ def one_job_per_technician_window(arg: bool, ev: PairEvidence) -> list[str]:
 def window_jobs(arg: dict, ev: PairEvidence) -> list[str]:
     """The two calls' jobs in ServiceTitan in this window: how many, each with its own technician."""
     ids = ev.job_ids()
-    rows = ev.query(
-        f"""SELECT job_id, technician_id FROM appointments
-            WHERE job_id IN ({','.join('?' * len(ids))}) AND window_date = ? AND window_id = ?
+    rows = (
+        ev.query(
+            f"""SELECT job_id, technician_id FROM appointments
+            WHERE job_id IN ({",".join("?" * len(ids))}) AND window_date = ? AND window_id = ?
               AND status <> 'Canceled'""",
-        (*ids, str(arg["date"]), arg["window"]),
-    ) if ids else []
+            (*ids, str(arg["date"]), arg["window"]),
+        )
+        if ids
+        else []
+    )
     problems = []
     if len(rows) != arg["count"]:
         problems.append(
@@ -296,8 +314,10 @@ def booked_together(arg: bool, ev: PairEvidence) -> list[str]:
 def taken_refusals(arg: int, ev: PairEvidence) -> list[str]:
     """How many of the calls were told by book_appointment that the window was just taken."""
     told = sum(
-        any(e["type"] == "tool" and e["tool"] == "book_appointment"
-            and e["refused"] == "slot_taken" for e in t["events"])
+        any(
+            e["type"] == "tool" and e["tool"] == "book_appointment" and e["refused"] == "slot_taken"
+            for e in t["events"]
+        )
         for t in ev.traces
     )
     return [] if told == arg else [f"{told} call(s) told the window was taken, expected {arg}"]
@@ -324,7 +344,7 @@ PAIR_CHECKS: dict[str, Check] = {
 def run_pair_checks(together: list[dict], ev: PairEvidence) -> list[str]:
     failures = []
     for item in together:
-        (name, arg), = item.items()
+        ((name, arg),) = item.items()
         failures += [f"{name}: {p}" for p in PAIR_CHECKS[name].run(arg, ev)]
     return failures
 
@@ -336,8 +356,10 @@ def collisions(st_log: Path) -> int:
         return 0
     rows = [json.loads(line) for line in st_log.read_text().splitlines() if line.strip()]
     return sum(
-        1 for r in rows
-        if r.get("method") == "POST" and str(r.get("path", "")).endswith("/jobs")
+        1
+        for r in rows
+        if r.get("method") == "POST"
+        and str(r.get("path", "")).endswith("/jobs")
         and r.get("error") == "slot_taken"
     )
 
@@ -345,8 +367,13 @@ def collisions(st_log: Path) -> int:
 # ---- running a pair -------------------------------------------------------------------------
 
 
-def run_pair(harness, pair: Pair, sample: int = 1, caller_turns: list[list[str]] | None = None,
-             agent_models: list | None = None) -> list[ScenarioResult]:
+def run_pair(
+    harness,
+    pair: Pair,
+    sample: int = 1,
+    caller_turns: list[list[str]] | None = None,
+    agent_models: list | None = None,
+) -> list[ScenarioResult]:
     """Both calls at once on one world, each scored on its own, then the together checks added to
     both. caller_turns replays lines per caller and agent_models sets each call's model (tests)."""
     scenarios = pair.scenarios()
@@ -377,16 +404,22 @@ def run_pair(harness, pair: Pair, sample: int = 1, caller_turns: list[list[str]]
     try:
         traces = [world.server.trace(r.call_id) for r in results]
     except Exception as err:  # noqa: BLE001 - a broken harness run is an error, not a fail
-        return [r.model_copy(update={"outcome": "error", "error": r.error or f"harness: {err}"})
-                for r in results]
+        return [
+            r.model_copy(update={"outcome": "error", "error": r.error or f"harness: {err}"})
+            for r in results
+        ]
     failures = run_pair_checks(pair.together, PairEvidence(traces, world.st_db, meeting.met))
-    print(f"{pair.id} #{sample}: met at the booking {meeting.met}, "
-          f"mock answered slot_taken {collisions(world.st_log)} time(s)", flush=True)
+    print(
+        f"{pair.id} #{sample}: met at the booking {meeting.met}, "
+        f"mock answered slot_taken {collisions(world.st_log)} time(s)",
+        flush=True,
+    )
     return [with_pair_checks(r, s, pair, failures) for r, s in zip(results, scenarios, strict=True)]
 
 
-def with_pair_checks(result: ScenarioResult, scenario: Scenario, pair: Pair,
-                     failures: list[str]) -> ScenarioResult:
+def with_pair_checks(
+    result: ScenarioResult, scenario: Scenario, pair: Pair, failures: list[str]
+) -> ScenarioResult:
     """A failed together check fails both calls, even one that ended with no verdict: a double
     booking is wrong however the calls ended. A broken harness stays an error."""
     if result.error.startswith("harness") or (result.outcome == "error" and not failures):
@@ -400,4 +433,3 @@ def with_pair_checks(result: ScenarioResult, scenario: Scenario, pair: Pair,
                 f for f in result.check_failures + failures if not f.startswith("grader:")
             ]
     return result.model_copy(update=update)
-

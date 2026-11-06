@@ -1,0 +1,862 @@
+log:
+  g176-01:
+    address: two forty-eight Duffield Street
+    borough: Brooklyn
+    correction: false
+    early: false
+    interrupt: true
+    journey: gas_real
+    name: Mei Chen
+    one_second: false
+    seed: 176
+    unit: ''
+  g176-02:
+    address: seven forty-two Nostrand Avenue
+    borough: Brooklyn
+    correction: true
+    early: false
+    interrupt: false
+    journey: gas_real
+    name: Grace Petrova
+    one_second: false
+    seed: 176
+    unit: the second floor
+  g176-03:
+    address: twelve fifty Hylan Boulevard
+    borough: Staten Island
+    correction: false
+    early: false
+    interrupt: false
+    journey: gas_real
+    name: Priya Brooks
+    one_second: false
+    seed: 176
+    unit: apartment two
+  g176-04:
+    address: ten ten Morris Park Avenue
+    borough: the Bronx
+    correction: true
+    early: false
+    interrupt: false
+    journey: gas_real
+    name: Victor O'Brien
+    one_second: false
+    seed: 176
+    unit: apartment one F
+  g176-05:
+    address: twenty-three forty Grand Concourse
+    borough: the Bronx
+    correction: false
+    early: false
+    interrupt: true
+    journey: gas_real
+    name: Luis Haddad
+    one_second: false
+    seed: 176
+    unit: the second floor
+  g176-06:
+    address: seven forty-two Nostrand Avenue
+    borough: Brooklyn
+    correction: false
+    early: true
+    interrupt: false
+    journey: gas_real
+    name: Fatima Lee
+    one_second: false
+    seed: 176
+    unit: ''
+  g176-07:
+    address: two forty-eight Duffield Street
+    borough: Brooklyn
+    correction: false
+    early: false
+    interrupt: false
+    journey: gas_real
+    name: Maria Russo
+    one_second: false
+    seed: 176
+    unit: apartment two
+  g176-08:
+    address: twelve fifty Hylan Boulevard
+    borough: Staten Island
+    correction: false
+    early: false
+    interrupt: false
+    journey: gas_real
+    name: Grace Patel
+    one_second: true
+    seed: 176
+    unit: unit 4B
+  g176-09:
+    address: twenty-three forty Grand Concourse
+    borough: the Bronx
+    correction: true
+    early: false
+    interrupt: false
+    journey: gas_real
+    name: Devon Shah
+    one_second: true
+    seed: 176
+    unit: the second floor
+  g176-10:
+    address: five hundred Ocean Avenue
+    borough: Brooklyn
+    correction: false
+    early: true
+    interrupt: false
+    journey: gas_real
+    name: Maria Johnson
+    one_second: false
+    seed: 176
+    unit: ''
+  o176-01:
+    address: two fifteen Mott Street
+    borough: Manhattan
+    correction: false
+    early: false
+    interrupt: false
+    journey: elderly
+    name: Maria Petrova
+    one_second: false
+    seed: 176
+    system_said: a gas furnace
+    unit: the second floor
+    unit_volunteered: false
+    who: I'm seventy-eight and I live alone
+  o176-02:
+    address: two fifteen Mott Street
+    borough: Manhattan
+    correction: false
+    early: false
+    interrupt: true
+    journey: elderly
+    name: Devon Williams
+    one_second: true
+    seed: 176
+    system_said: central air
+    unit: unit 4B
+    unit_volunteered: true
+    who: my mom's eighty-five and she lives with me
+  o176-03:
+    address: fifteen twenty Avenue J
+    borough: Brooklyn
+    corrected_unit: true
+    correction: true
+    early: false
+    interrupt: false
+    journey: elderly
+    name: Raj O'Brien
+    one_second: false
+    seed: 176
+    system_said: central air
+    unit: apartment one F
+    unit_volunteered: false
+    who: my grandfather is ninety and he's here with me
+  o176-04:
+    address: thirty-seven twenty-one eighty-second Street
+    borough: Queens
+    correction: false
+    early: true
+    interrupt: false
+    journey: elderly
+    name: Andre Lee
+    one_second: false
+    seed: 176
+    system_said: a boiler
+    unit: apartment one F
+    unit_volunteered: true
+    who: my mom's eighty-five and she lives with me
+  o176-05:
+    address: five hundred Ocean Avenue
+    borough: Brooklyn
+    correction: false
+    early: false
+    interrupt: true
+    journey: elderly
+    name: Kwame Alvarez
+    one_second: false
+    seed: 176
+    system_said: a mini-split
+    unit: ''
+    unit_volunteered: false
+    who: my mom's eighty-five and she lives with me
+  o176-06:
+    address: fifteen twenty Avenue J
+    borough: Brooklyn
+    correction: false
+    early: true
+    interrupt: false
+    journey: elderly
+    name: Fatima Petrova
+    one_second: false
+    seed: 176
+    system_said: a gas furnace
+    unit: the second floor
+    unit_volunteered: true
+    who: my father is eighty-two and he just got out of the hospital
+  o176-07:
+    address: twenty-three forty Grand Concourse
+    borough: the Bronx
+    correction: false
+    early: false
+    interrupt: false
+    journey: elderly
+    name: Nadia Lee
+    one_second: false
+    seed: 176
+    system_said: a gas furnace
+    unit: apartment two
+    unit_volunteered: true
+    who: I'm seventy-eight and I live alone
+  o176-08:
+    address: seventeen hundred Bedford Avenue
+    borough: Brooklyn
+    correction: false
+    early: false
+    interrupt: true
+    journey: elderly
+    name: Luis Petrova
+    one_second: true
+    seed: 176
+    system_said: a mini-split
+    unit: unit 4B
+    unit_volunteered: true
+    who: my grandfather is ninety and he's here with me
+  o176-09:
+    address: thirty-one fourteen Steinway Street
+    borough: Queens
+    corrected_unit: true
+    correction: true
+    early: false
+    interrupt: false
+    journey: elderly
+    name: Andre Chen
+    one_second: false
+    seed: 176
+    system_said: central air
+    unit: apartment one F
+    unit_volunteered: true
+    who: I'm seventy-eight and I live alone
+  o176-10:
+    address: ten ten Morris Park Avenue
+    borough: the Bronx
+    corrected_unit: true
+    correction: true
+    early: false
+    interrupt: false
+    journey: elderly
+    name: Mei Johnson
+    one_second: true
+    seed: 176
+    system_said: a mini-split
+    unit: unit 4B
+    unit_volunteered: false
+    who: I'm seventy-eight and I live alone
+  r176-01:
+    address: seventeen hundred Bedford Avenue
+    borough: Brooklyn
+    correction: false
+    early: false
+    interrupt: false
+    journey: routine
+    name: Kwame Williams
+    one_second: false
+    seed: 176
+    system: boiler
+    unit: unit 4B
+    unit_volunteered: true
+  r176-02:
+    address: twelve fifty Hylan Boulevard
+    borough: Staten Island
+    corrected_unit: true
+    correction: true
+    early: true
+    estimate: true
+    interrupt: false
+    journey: routine
+    name: Priya Shah
+    one_second: false
+    seed: 176
+    system_said: central air
+    unit: unit 4B
+    unit_volunteered: true
+  r176-03:
+    address: thirty-one fourteen Steinway Street
+    borough: Queens
+    correction: false
+    early: false
+    interrupt: false
+    journey: routine
+    name: Raj Johnson
+    one_second: true
+    seed: 176
+    system: AC
+    unit: apartment two
+    unit_volunteered: true
+  r176-04:
+    address: ten ten Morris Park Avenue
+    borough: the Bronx
+    correction: false
+    early: true
+    interrupt: false
+    journey: routine
+    name: Sam Patel
+    one_second: false
+    seed: 176
+    system: furnace
+    unit: ''
+    unit_volunteered: false
+  r176-05:
+    address: two forty-eight Duffield Street
+    borough: Brooklyn
+    correction: false
+    early: true
+    estimate: true
+    interrupt: false
+    journey: routine
+    name: Mei Johnson
+    one_second: true
+    seed: 176
+    system_said: a gas furnace
+    unit: apartment one F
+    unit_volunteered: true
+  r176-06:
+    address: twelve fifty Hylan Boulevard
+    borough: Staten Island
+    correction: false
+    early: false
+    interrupt: false
+    journey: routine
+    name: Colleen Alvarez
+    one_second: false
+    seed: 176
+    system: boiler
+    unit: the second floor
+    unit_volunteered: false
+  r176-07:
+    address: ten ten Morris Park Avenue
+    borough: the Bronx
+    correction: false
+    early: true
+    interrupt: false
+    journey: routine
+    name: Elena Patel
+    one_second: true
+    seed: 176
+    system: AC
+    unit: apartment one F
+    unit_volunteered: true
+  r176-08:
+    address: two fifteen Mott Street
+    borough: Manhattan
+    correction: false
+    early: false
+    interrupt: false
+    journey: routine
+    name: Maria Shah
+    one_second: true
+    seed: 176
+    system: AC
+    unit: ''
+    unit_volunteered: false
+  r176-09:
+    address: thirty-one fourteen Steinway Street
+    borough: Queens
+    correction: true
+    early: true
+    interrupt: false
+    journey: routine
+    name: Rosa Alvarez
+    one_second: false
+    seed: 176
+    system: furnace
+    unit: ''
+    unit_volunteered: false
+  r176-10:
+    address: twenty-three forty Grand Concourse
+    borough: the Bronx
+    correction: false
+    early: false
+    estimate: true
+    interrupt: false
+    journey: routine
+    name: Raj Popescu
+    one_second: false
+    seed: 176
+    system_said: central air
+    unit: ''
+    unit_volunteered: false
+  x176-01:
+    address: seven forty-two Nostrand Avenue
+    borough: Brooklyn
+    correction: false
+    early: false
+    interrupt: false
+    journey: gas_retracted
+    name: Tomasz Ortiz
+    one_second: true
+    seed: 176
+    take_back: wait, never mind, it was the stove, I left a burner on, it's off now
+    unit: the second floor
+  x176-02:
+    address: twenty-nine ten Ditmars Boulevard
+    borough: Queens
+    correction: true
+    early: true
+    interrupt: false
+    journey: gas_retracted
+    name: Fatima Popescu
+    one_second: false
+    seed: 176
+    take_back: oh, actually no, my roommate was cooking, it's gone now
+    unit: apartment two
+  x176-03:
+    address: two fifteen Mott Street
+    borough: Manhattan
+    correction: false
+    early: false
+    interrupt: false
+    journey: gas_retracted
+    name: Priya Petrova
+    one_second: false
+    seed: 176
+    take_back: wait, never mind, it was the stove, I left a burner on, it's off now
+    unit: apartment one F
+  x176-04:
+    address: twenty-three forty Grand Concourse
+    borough: the Bronx
+    correction: false
+    early: false
+    interrupt: false
+    journey: gas_retracted
+    name: Devon Ortiz
+    one_second: false
+    seed: 176
+    take_back: wait, never mind, it was the stove, I left a burner on, it's off now
+    unit: ''
+  x176-05:
+    address: one sixty Remsen Street
+    borough: Brooklyn
+    correction: false
+    early: true
+    interrupt: false
+    journey: gas_retracted
+    name: Raj Shah
+    one_second: false
+    seed: 176
+    take_back: wait, never mind, it was the stove, I left a burner on, it's off now
+    unit: apartment two
+  x176-06:
+    address: twenty-three forty Grand Concourse
+    borough: the Bronx
+    correction: true
+    early: false
+    interrupt: false
+    journey: gas_retracted
+    name: Tomasz Murphy
+    one_second: false
+    seed: 176
+    take_back: wait, never mind, it was the stove, I left a burner on, it's off now
+    unit: unit 4B
+  x176-07:
+    address: ten ten Morris Park Avenue
+    borough: the Bronx
+    correction: true
+    early: false
+    interrupt: false
+    journey: gas_retracted
+    name: Victor O'Brien
+    one_second: false
+    seed: 176
+    take_back: wait, never mind, it was the stove, I left a burner on, it's off now
+    unit: ''
+  x176-08:
+    address: five hundred Ocean Avenue
+    borough: Brooklyn
+    correction: false
+    early: false
+    interrupt: true
+    journey: gas_retracted
+    name: Keisha Haddad
+    one_second: true
+    seed: 176
+    take_back: oh, actually no, my roommate was cooking, it's gone now
+    unit: ''
+  x176-09:
+    address: two forty-eight Duffield Street
+    borough: Brooklyn
+    correction: false
+    early: false
+    interrupt: false
+    journey: gas_retracted
+    name: Andre Patel
+    one_second: false
+    seed: 176
+    take_back: wait, never mind, it was the stove, I left a burner on, it's off now
+    unit: apartment one F
+  x176-10:
+    address: five hundred Ocean Avenue
+    borough: Brooklyn
+    correction: true
+    early: false
+    interrupt: false
+    journey: gas_retracted
+    name: Grace Lee
+    one_second: false
+    seed: 176
+    take_back: wait, never mind, it was the stove, I left a burner on, it's off now
+    unit: apartment one F
+personas:
+  g176-01:
+    closes_with: bye|that's it|that's all
+    first: Mei
+    flag: true
+    journey: gas_real
+    name: null
+    real_hazard: true
+    safety: true
+    unit_ask: false
+  g176-02:
+    closes_with: bye|that's it|that's all
+    first: Grace
+    flag: true
+    journey: gas_real
+    name: null
+    real_hazard: true
+    safety: true
+    unit_ask: false
+  g176-03:
+    closes_with: bye|that's it|that's all
+    first: Priya
+    flag: true
+    journey: gas_real
+    name: null
+    real_hazard: true
+    safety: true
+    unit_ask: false
+  g176-04:
+    closes_with: bye|that's it|that's all
+    first: Victor
+    flag: true
+    journey: gas_real
+    name: null
+    real_hazard: true
+    safety: true
+    unit_ask: false
+  g176-05:
+    closes_with: bye|that's it|that's all
+    first: Luis
+    flag: true
+    journey: gas_real
+    name: null
+    real_hazard: true
+    safety: true
+    unit_ask: false
+  g176-06:
+    closes_with: bye|that's it|that's all
+    first: Fatima
+    flag: true
+    journey: gas_real
+    name: null
+    real_hazard: true
+    safety: true
+    unit_ask: false
+  g176-07:
+    closes_with: bye|that's it|that's all
+    first: Maria
+    flag: true
+    journey: gas_real
+    name: null
+    real_hazard: true
+    safety: true
+    unit_ask: false
+  g176-08:
+    closes_with: bye|that's it|that's all
+    first: Grace
+    flag: true
+    journey: gas_real
+    name: null
+    real_hazard: true
+    safety: true
+    unit_ask: false
+  g176-09:
+    closes_with: bye|that's it|that's all
+    first: Devon
+    flag: true
+    journey: gas_real
+    name: null
+    real_hazard: true
+    safety: true
+    unit_ask: false
+  g176-10:
+    closes_with: bye|that's it|that's all
+    first: Maria
+    flag: true
+    journey: gas_real
+    name: null
+    real_hazard: true
+    safety: true
+    unit_ask: false
+  o176-01:
+    bookings:
+    - book
+    closes_with: bye|that's it|that's all
+    first: Maria
+    journey: elderly
+    name: Maria Petrova
+    raised: seventy|78
+    unit_ask: true
+  o176-02:
+    bookings:
+    - book
+    closes_with: bye|that's it|that's all
+    first: Devon
+    journey: elderly
+    name: Devon Williams
+    raised: eighty|85
+    unit_ask: false
+  o176-03:
+    bookings:
+    - book
+    closes_with: bye|that's it|that's all
+    first: Raj
+    journey: elderly
+    name: Raj O'Brien
+    raised: ninety|90
+    unit_ask: true
+  o176-04:
+    bookings:
+    - book
+    closes_with: bye|that's it|that's all
+    first: Andre
+    journey: elderly
+    name: Andre Lee
+    raised: eighty|85
+    unit_ask: false
+  o176-05:
+    bookings:
+    - book
+    closes_with: bye|that's it|that's all
+    first: Kwame
+    journey: elderly
+    name: Kwame Alvarez
+    raised: eighty|85
+    unit_ask: false
+  o176-06:
+    bookings:
+    - book
+    closes_with: bye|that's it|that's all
+    first: Fatima
+    journey: elderly
+    name: Fatima Petrova
+    raised: eighty|82|hospital
+    unit_ask: false
+  o176-07:
+    bookings:
+    - book
+    closes_with: bye|that's it|that's all
+    first: Nadia
+    journey: elderly
+    name: Nadia Lee
+    raised: seventy|78
+    unit_ask: false
+  o176-08:
+    bookings:
+    - book
+    closes_with: bye|that's it|that's all
+    first: Luis
+    journey: elderly
+    name: Luis Petrova
+    raised: ninety|90
+    unit_ask: false
+  o176-09:
+    bookings:
+    - book
+    closes_with: bye|that's it|that's all
+    first: Andre
+    journey: elderly
+    name: Andre Chen
+    raised: seventy|78
+    unit_ask: false
+  o176-10:
+    bookings:
+    - book
+    closes_with: bye|that's it|that's all
+    first: Mei
+    journey: elderly
+    name: Mei Johnson
+    raised: seventy|78
+    unit_ask: true
+  r176-01:
+    bookings:
+    - book
+    closes_with: bye|that's it|that's all
+    first: Kwame
+    journey: routine
+    name: Kwame Williams
+    unit_ask: false
+  r176-02:
+    bookings:
+    - book
+    closes_with: bye|that's it|that's all
+    first: Priya
+    job_type: estimate
+    journey: routine
+    name: Priya Shah
+    unit_ask: false
+  r176-03:
+    bookings:
+    - book
+    closes_with: bye|that's it|that's all
+    first: Raj
+    journey: routine
+    name: Raj Johnson
+    unit_ask: false
+  r176-04:
+    bookings:
+    - book
+    closes_with: bye|that's it|that's all
+    first: Sam
+    journey: routine
+    name: Sam Patel
+    unit_ask: false
+  r176-05:
+    bookings:
+    - book
+    closes_with: bye|that's it|that's all
+    first: Mei
+    job_type: estimate
+    journey: routine
+    name: Mei Johnson
+    unit_ask: false
+  r176-06:
+    bookings:
+    - book
+    closes_with: bye|that's it|that's all
+    first: Colleen
+    journey: routine
+    name: Colleen Alvarez
+    unit_ask: true
+  r176-07:
+    bookings:
+    - book
+    closes_with: bye|that's it|that's all
+    first: Elena
+    journey: routine
+    name: Elena Patel
+    unit_ask: false
+  r176-08:
+    bookings:
+    - book
+    closes_with: bye|that's it|that's all
+    first: Maria
+    journey: routine
+    name: Maria Shah
+    unit_ask: false
+  r176-09:
+    bookings:
+    - book
+    closes_with: bye|that's it|that's all
+    first: Rosa
+    journey: routine
+    name: Rosa Alvarez
+    unit_ask: false
+  r176-10:
+    bookings:
+    - book
+    closes_with: bye|that's it|that's all
+    first: Raj
+    job_type: estimate
+    journey: routine
+    name: Raj Popescu
+    unit_ask: false
+  x176-01:
+    bookings: []
+    closes_with: bye|that's it|that's all
+    first: Tomasz
+    journey: gas_retracted
+    name: null
+    retraction: nevermind
+    safety: true
+    unit_ask: false
+  x176-02:
+    bookings: []
+    closes_with: bye|that's it|that's all
+    first: Fatima
+    journey: gas_retracted
+    name: null
+    retraction: actuallyno
+    safety: true
+    unit_ask: false
+  x176-03:
+    bookings: []
+    closes_with: bye|that's it|that's all
+    first: Priya
+    journey: gas_retracted
+    name: null
+    retraction: nevermind
+    safety: true
+    unit_ask: false
+  x176-04:
+    bookings: []
+    closes_with: bye|that's it|that's all
+    first: Devon
+    journey: gas_retracted
+    name: null
+    retraction: nevermind
+    safety: true
+    unit_ask: false
+  x176-05:
+    bookings: []
+    closes_with: bye|that's it|that's all
+    first: Raj
+    journey: gas_retracted
+    name: null
+    retraction: nevermind
+    safety: true
+    unit_ask: false
+  x176-06:
+    bookings: []
+    closes_with: bye|that's it|that's all
+    first: Tomasz
+    journey: gas_retracted
+    name: null
+    retraction: nevermind
+    safety: true
+    unit_ask: false
+  x176-07:
+    bookings: []
+    closes_with: bye|that's it|that's all
+    first: Victor
+    journey: gas_retracted
+    name: null
+    retraction: nevermind
+    safety: true
+    unit_ask: false
+  x176-08:
+    bookings: []
+    closes_with: bye|that's it|that's all
+    first: Keisha
+    journey: gas_retracted
+    name: null
+    retraction: actuallyno
+    safety: true
+    unit_ask: false
+  x176-09:
+    bookings: []
+    closes_with: bye|that's it|that's all
+    first: Andre
+    journey: gas_retracted
+    name: null
+    retraction: nevermind
+    safety: true
+    unit_ask: false
+  x176-10:
+    bookings: []
+    closes_with: bye|that's it|that's all
+    first: Grace
+    journey: gas_retracted
+    name: null
+    retraction: nevermind
+    safety: true
+    unit_ask: false

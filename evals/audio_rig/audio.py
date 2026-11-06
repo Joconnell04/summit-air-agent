@@ -4,6 +4,7 @@ agent audio arrived" into "when the caller would hear its first sound".
 
 Audio is 16-bit signed little-endian mono PCM throughout, as every entrant takes and gives it.
 """
+
 import math
 from dataclasses import dataclass, field
 

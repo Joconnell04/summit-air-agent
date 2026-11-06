@@ -1,0 +1,29 @@
+{
+  "begin_message": "{{greeting}}",
+  "default_dynamic_variables": {
+    "call_context": "",
+    "greeting": "Hi there, thanks for calling Summit Air! I'm Brian, the virtual assistant. How can I help?"
+  },
+  "is_published": false,
+  "kb_config": {
+    "filter_score": 0.75,
+    "kb_instruction": "Search for the heating or cooling equipment, symptom or maintenance topic the caller is asking about.",
+    "top_k": 2
+  },
+  "knowledge_base_ids": [],
+  "llm_id": "llm_12eba5f1d4a3b067f0635097de30",
+  "model": "claude-5.5-haiku",
+  "model_config": {
+    "primary": {
+      "model": "claude-5.5-haiku",
+      "tier": "standard"
+    },
+    "temperature": 0.3,
+    "type": "cascading"
+  },
+  "model_high_priority": false,
+  "model_temperature": 0.3,
+  "model_ultrafast": false,
+  "start_speaker": "agent",
+  "version": 2
+}

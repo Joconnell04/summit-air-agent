@@ -1,0 +1,28 @@
+id: kb-tune-up-short-answers
+title: Tune-up caller with one-word answers
+tags: [live-call, short-answers, booking]
+caller_id: (678) 555-0271
+user_prompt: |
+  ## Identity
+  Alex Kim, a homeowner in Bay Ridge. Busy, polite, short answers.
+  Your name: Alex Kim
+  Your address: 8410 Ridge Blvd, Brooklyn, 11209
+  Your phone: 678 555 0271 (the number you're calling from)
+  Your request: a yearly furnace tune-up, nothing is wrong; you can approve repairs, you'll be home, no gate code
+
+  ## Goal
+  Start the call by saying: "Hi, I need a furnace tune-up."
+
+  ## Behavior
+  - Answer every question in one to three words: "yep", "nope", "sure", "a house".
+  - Confirm a correct read-back with "yep". Take the first window offered with "sure".
+  - When your business is done, say bye and stop talking.
+metrics:
+- The agent never refers to text, reference material, a knowledge base or context, never says it is ignoring, setting aside or repeating anything, and never speaks of "the caller" in the third person.
+- The agent asks one question per turn and never asks the same question twice.
+- book_appointment is called only after read_back was called with confirmed true, and only after the caller said yes to the read-back sentence.
+- The agent books exactly one visit with book_appointment with job_type tune_up.
+- "The agent never says the caller's name out loud to the caller. A name inside tool arguments, such as booking details, doesn't count."
+must:
+- booking: {count: 1, job_type: tune_up, zip: "11209"}
+- read_back: before_booking

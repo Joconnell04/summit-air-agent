@@ -5,6 +5,8 @@ import pytest
 from test_ts_address_lookup import Book, down, lookup
 from toolkit import UNKNOWN, Agent, make_server
 
+from app.geocode import Place
+
 ST_ALBANS = "one one eight 24 one nine seven th street st albans one one four one two"
 
 
@@ -27,13 +29,9 @@ def test_with_no_zip_said_the_agent_asks_once_then_goes_on(unfound):
     call = unfound.start(UNKNOWN)["data"]["call_id"]
     unfound.turn(call, "It's 118-24 197th Street in St. Albans.")
     first = unfound.tool("find_address", call, street="118-24 197th Street", borough="St. Albans")
-    assert not first["ok"]
-    asks = first["say"]
-    if first["refused"] == "address_not_found":  # a miss asks to spell the street first
-        unfound.turn(call, "One nine seven, 197th Street.")
-        asks = unfound.tool("find_address", call, street="118-24 197th Street")["say"]
-    # St. Albans names no borough, so the borough is asked; this caller gives the ZIP instead.
-    assert asks == "And which borough is that in?"
+    # A numbered street is never spelled. St. Albans names no borough, so the borough is asked;
+    # this caller gives the ZIP instead.
+    assert not first["ok"] and first["say"] == "And which borough is that in?"
     unfound.turn(call, "It's 11412.")
     again = unfound.tool("find_address", call, street="118-24 197th Street")
     assert again["ok"] and again["data"]["zip"] == "11412", again
@@ -79,16 +77,15 @@ def test_a_run_written_as_digits_is_not_split():
     assert _split_run_on(["112", "ave"], "11", ["2"], "112 2nd Avenue") == ["112", "ave"]
 
 
-def test_the_zip_is_asked_once_and_the_lookup_isnt_tried_again(unfound):
-    """PR #139 review: with no ZIP said, find_address asked for it up to four times."""
+def test_the_zip_is_never_asked_and_the_borough_only_once(unfound):
+    """PR #139 review: with no ZIP said, find_address asked for it up to four times. Jackson: never
+    ask for the ZIP; the visit books unverified and the office confirms the address."""
     call = unfound.start(UNKNOWN)["data"]["call_id"]
     unfound.turn(call, "It's 118-24 197th Street in St. Albans.")
-    asked = []
-    for _ in range(4):
-        result = unfound.tool("find_address", call, street="118-24 197th Street")
-        asked.append(result["say"] == "What's the ZIP code there?")
-    assert asked.count(True) == 1
-    assert result["refused"] == "zip_asked" and result["say"] == ""
+    says = [unfound.tool("find_address", call, street="118-24 197th Street")["say"]
+            for _ in range(4)]
+    assert "What's the ZIP code there?" not in says
+    assert says.count("And which borough is that in?") <= 1
 
 
 def test_a_made_up_street_is_refused_even_with_a_zip_said(unfound):
@@ -109,9 +106,7 @@ def test_a_corrected_address_gets_its_own_lookup_after_the_zip_was_asked(tmp_pat
     call = agent.start(UNKNOWN)["data"]["call_id"]
     agent.turn(call, "It's 118-24 197th Street in St. Albans.")
     first = agent.tool("find_address", call, street="118-24 197th Street")
-    if first["refused"] == "address_not_found":
-        agent.turn(call, "One nine seven, 197th Street.")
-        first = agent.tool("find_address", call, street="118-24 197th Street")
+    # A numbered street goes straight to the borough, never to spelling.
     assert first["say"] == "And which borough is that in?"
     agent.turn(call, "Sorry, I'm actually at 248 Duffield Street, Brooklyn.")
     corrected = agent.tool("find_address", call, street="248 Duffield Street")
@@ -136,3 +131,52 @@ def test_a_run_said_as_number_words_is_not_split():
     from app.tools import _split_run_on
 
     assert _split_run_on(["112", "ave"], "11", ["2"], "one twelve 2nd avenue") == ["112", "ave"]
+
+
+# ---- a numbered street with no East or West (Jackson's call call_046f37112cac691a50019893717) ----
+
+EAST_4TH = Place("199", "EAST 4 STREET", "10009", "Manhattan", "East Village")
+WEST_4TH = Place("199", "WEST 4 STREET", "10014", "Manhattan", "West Village")
+
+
+def numbered(tmp_path, clock, mock, book):
+    return Agent(make_server(tmp_path, clock, mock[0], geocoder=lookup([("book", Book(book))])),
+                 clock)
+
+
+def test_east_or_west_is_asked_never_spelled_never_the_zip(tmp_path, clock, mock):
+    agent = numbered(tmp_path, clock, mock, {("199", "e 4 st"): [EAST_4TH],
+                                            ("199", "w 4 st"): [WEST_4TH]})
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "$199.")
+    agent.turn(call, "Um, 4th Street.")
+    asked = agent.tool("find_address", call, street="199 4th Street")
+    assert asked["refused"] == "address_direction"
+    assert asked["say"] == "Is that East 4th Street or West 4th Street?"
+    agent.say(call, asked["say"])
+    agent.turn(call, "East.")
+    found = agent.tool("find_address", call, street="199 East 4th Street")
+    assert found["ok"] and found["data"]["zip"] == "10009"
+    # The read-back reads the direction back.
+    assert found["data"]["street"] == "199 East 4th Street"
+
+
+def test_one_direction_on_the_books_is_taken_without_asking(tmp_path, clock, mock):
+    agent = numbered(tmp_path, clock, mock, {("199", "e 4 st"): [EAST_4TH]})
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "It's 199 4th Street.")
+    found = agent.tool("find_address", call, street="199 4th Street")
+    assert found["ok"] and found["data"]["street"] == "199 East 4th Street"
+
+
+def test_no_borough_even_after_asking_books_unverified_never_asks_the_zip(tmp_path, clock, mock):
+    agent = numbered(tmp_path, clock, mock, {})
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "It's 199 4th Street.")
+    asked = agent.tool("find_address", call, street="199 4th Street")
+    assert asked["say"] == "And which borough is that in?"
+    agent.say(call, asked["say"])
+    agent.turn(call, "E-A-S. See you. And number 4.")
+    booked = agent.tool("find_address", call, street="199 4th Street")
+    assert booked["ok"] and booked["data"]["verified"] is False
+    assert "ZIP" not in booked["say"]

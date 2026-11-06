@@ -959,6 +959,7 @@ def test_the_agent_saying_911_as_a_number_still_counts_as_the_lines(agent):
     "Okay, it's fine.",
     "It's been checked.",
     "I checked with the gas company. And they said it's fine.",
+    "Oh, actually no, my roommate was cooking, it's gone now.",
 ])
 def test_a_caller_who_takes_it_back_clears_the_call_and_can_book(agent, said):
     """Jackson's gas test call: "the caller should be able to be like 'wait nvm, im tripping'...
@@ -987,6 +988,7 @@ def test_a_take_back_before_the_lines_are_said_clears_too(agent):
 
 
 @pytest.mark.parametrize("said", [
+    "My roommate was cooking and now I smell gas.",
     "Never mind the boiler, I still smell gas.",
     "It's fine, I'm outside now.",
     "Maybe it's fine, I'm not sure.",

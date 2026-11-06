@@ -1,0 +1,95 @@
+{
+ "window": [
+  "2026-11-06T02:13:02Z",
+  "2026-11-06T02:17:28Z"
+ ],
+ "calls": [
+  {
+   "call": {
+    "id": "retell_call_72009cbe16703210509127925b0",
+    "tenant": "summit-air",
+    "caller_id": "+16466240418",
+    "caller_key": "6466240418",
+    "dialed_number": "+16466240418",
+    "direction": "inbound",
+    "started_at": "2026-11-06T02:13:14Z",
+    "ended_at": "2026-11-06T02:17:22Z",
+    "end_reason": "agent_end",
+    "end_requested": 1,
+    "after_hours": 1,
+    "linked_call_id": null,
+    "outcome": "booked",
+    "commercial": 0,
+    "summary_status": "pending",
+    "turn_seq": 67,
+    "safety_state": "lines_said",
+    "safety_kind": "co",
+    "safety_signal_at": "2026-11-06T02:13:28Z",
+    "safety_lines_at": "2026-11-06T02:13:30Z",
+    "safety_flag_id": 44,
+    "safety_variant": 0,
+    "readback_json": "{\"street\": \"55 Water Street\", \"unit\": \"12C\", \"city\": \"Manhattan\", \"zip\": \"10041\", \"spelled\": \"\", \"phone\": \"6466240418\", \"phone_for\": \"\", \"sentence\": \"So that's fifty-five Water Street, unit one two C, and the number you're calling from, ending in zero four one eight. That's all correct, right?\"}",
+    "readback_asked_seq": 37,
+    "readback_confirmed_at": "2026-11-06T02:15:28Z"
+   },
+   "bookings": [
+    {
+     "id": 43,
+     "call_id": "retell_call_72009cbe16703210509127925b0",
+     "kind": "book",
+     "status": "booked",
+     "fsm_key": "retell_call_72009cbe16703210509127925b0:book:a26222632a5c1f36d095b90330f083405c991828",
+     "request_json": "{\"call_id\": \"retell_call_72009cbe16703210509127925b0\", \"job_type\": \"tune_up\", \"details\": {\"issue\": \"Furnace check; CO alarm went off tonight, fire department said it was a bad battery\", \"since\": \"Routine check; CO alarm went off tonight\", \"tried\": \"Opened windows and evacuated; fire department said it was a bad battery\", \"who_home\": \"Taylor Brooks\", \"approver\": \"Taylor Brooks\", \"system_type\": \"\", \"arrival_notes\": \"No gate code, no pets. Buzzer is fine; ring apartment 12C.\", \"name\": \"Taylor Brooks\", \"inside_temp_f\": null}, \"address\": {\"street\": \"55 Water Street\", \"unit\": \"12C\", \"city\": \"Manhattan\", \"zip\": \"10041\"}, \"phone\": \"6466240418\", \"scoped_customer_ids\": [], \"contact_for\": \"\", \"account_phone\": \"\", \"priority\": \"Urgent\", \"priority_reasons\": [\"gas or carbon monoxide reported on the call\"], \"priority_rules\": [\"safety_signal\"], \"raised_after_wait\": false, \"requested_priority\": null, \"notes\": [], \"account\": null, \"contact_name\": null, \"window_start\": \"2026-11-06T13:00:00Z\", \"window_end\": \"2026-11-06T13:30:00Z\"}",
+     "fsm_job_id": 548,
+     "fsm_appointment_id": 548,
+     "customer_id": 301,
+     "window_start": "2026-11-06T13:00:00Z",
+     "window_end": "2026-11-06T13:30:00Z",
+     "job_type": "tune_up",
+     "priority": "Urgent",
+     "priority_reasons": "gas or carbon monoxide reported on the call",
+     "safety_override": 1,
+     "seek_earlier": 1,
+     "reason": "",
+     "attempts": 1,
+     "last_error": null,
+     "turn_seq": 62,
+     "created_at": "2026-11-06T02:16:55Z",
+     "updated_at": "2026-11-06T02:16:55Z"
+    }
+   ],
+   "booking_names": [
+    {
+     "call_id": "retell_call_72009cbe16703210509127925b0",
+     "name": "Taylor Brooks",
+     "at": "2026-11-06T02:15:28Z"
+    }
+   ],
+   "call_names": [],
+   "flags": [
+    {
+     "id": 44,
+     "call_id": "retell_call_72009cbe16703210509127925b0",
+     "kind": "safety",
+     "reason": "Carbon monoxide reported on the call",
+     "priority": "Urgent",
+     "status": "open",
+     "created_at": "2026-11-06T02:13:28Z"
+    },
+    {
+     "id": 45,
+     "call_id": "retell_call_72009cbe16703210509127925b0",
+     "kind": "seek_earlier",
+     "reason": "Urgent job 548 booked for Fri Nov 6; look for an earlier slot",
+     "priority": "Urgent",
+     "status": "open",
+     "created_at": "2026-11-06T02:16:55Z"
+    }
+   ],
+   "callbacks": [],
+   "leads": []
+  }
+ ],
+ "do_not_call": [],
+ "dumped_at": "2026-11-06T02:17:39Z"
+}

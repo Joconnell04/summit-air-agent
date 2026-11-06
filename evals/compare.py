@@ -1,6 +1,7 @@
 """The run report: pass rate by flow and difficulty, reply delay and cost, compared with the previous
 run of the same suite, stack and profile. A delay change over 100 ms or 10% is flagged (ASSUMED
 threshold, evals/README.md), so a change that only affects speed is still caught."""
+
 import math
 from collections import defaultdict
 from pathlib import Path
@@ -74,8 +75,11 @@ def report(run: Run, prev: Run | None = None) -> list[str]:
         ),
         f"pass rate {_pct(run.pass_rate())}"
         + (f" (previous {_pct(prev.pass_rate())})" if prev else ""),
-        *(["audio rig: delay is end of caller speech to the agent's first sound"]
-          if run.transport == "audio" else []),
+        *(
+            ["audio rig: delay is end of caller speech to the agent's first sound"]
+            if run.transport == "audio"
+            else []
+        ),
         "by flow:       " + "  ".join(f"{k} {v}" for k, v in rates(run, lambda s: s.flow).items()),
         "by difficulty: "
         + "  ".join(f"{k} {v}" for k, v in rates(run, lambda s: [s.difficulty]).items()),

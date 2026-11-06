@@ -200,12 +200,25 @@ def retell_lines(call: dict) -> list[str]:
     return out
 
 
-def server_lines(conn: sqlite3.Connection, call_id: str) -> list[str]:
-    """The server's own record of what was said, for a call that didn't come through Retell."""
+def server_lines(conn: sqlite3.Connection, call_id: str, tools: bool = False) -> list[str]:
+    """The server's own record of what was said, for a call that didn't come through Retell. With
+    `tools`, the server's tool calls and their sentences go in order with the lines: a socket call
+    (voice/retell_llm) runs its tools on our server, so Retell's transcript has none."""
     rows = conn.execute(
-        "SELECT speaker, text FROM turns WHERE call_id = ? ORDER BY seq", (call_id,)
+        "SELECT at, seq AS n, speaker, text FROM turns WHERE call_id = ?", (call_id,)
     ).fetchall()
-    return [f"{r['speaker']}: {r['text']}" for r in rows]
+    lines = [(r["at"], 0, r["n"], f"{r['speaker']}: {r['text']}") for r in rows]
+    if tools:
+        for r in conn.execute(
+            "SELECT at, id, tool, args_json, ok, refused, say FROM tool_calls WHERE call_id = ? "
+            "AND tool NOT LIKE 'calls.%'",
+            (call_id,),
+        ):
+            outcome = "ok" if r["ok"] else f"refused {r['refused']}"
+            lines.append((r["at"], 1, r["id"], f"tool: {r['tool']} {r['args_json']}".strip()))
+            lines.append((r["at"], 2, r["id"],
+                          f"result: {outcome} {r['say']}".strip()[:TOOL_RESULT_CHARS]))
+    return [line for *_, line in sorted(lines)]
 
 
 def call_rows(conn: sqlite3.Connection, tenant: Tenant, call: sqlite3.Row) -> dict:
@@ -271,6 +284,13 @@ def build_record(
         retell = transcripts.get(call["id"].removeprefix(RETELL_PREFIX))
         lines = retell_lines(retell) or None
         source = "retell" if lines else source
+        has_tools = conn.execute(
+            "SELECT 1 FROM tool_calls WHERE call_id = ? AND tool NOT LIKE 'calls.%' LIMIT 1",
+            (call["id"],),
+        ).fetchone()
+        if lines and has_tools and not any(line.startswith("tool:") for line in lines):
+            # A socket call: Retell heard the words, but the tools ran on our server.
+            lines, source = server_lines(conn, call["id"], tools=True), "server"
     if lines is None:
         lines = server_lines(conn, call["id"])
     started = parse_iso(call["started_at"])

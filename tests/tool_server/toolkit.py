@@ -58,13 +58,18 @@ class Agent:
         self.app = app
         self.clock = clock
         self.calls = 0
+        # Sent with every read-back when set, as the server-led flow requires (app/flow.py).
+        self.read_back_job_type: str | None = None
 
     def start(
-        self, caller_id: str = UNKNOWN, call_id: str | None = None, dialed: str = DIALED
+        self, caller_id: str = UNKNOWN, call_id: str | None = None, dialed: str = DIALED,
+        flow: str = "",
     ) -> dict:
         self.calls += 1
         call_id = call_id or f"call-{self.calls}"
         body = {"call_id": call_id, "caller_id": caller_id, "dialed_number": dialed}
+        if flow:
+            body["flow"] = flow
         response = self.client.post("/calls/start", json=body)
         assert response.status_code == 200
         return response.json()
@@ -98,11 +103,13 @@ class Agent:
         """The two-step read-back with a caller yes in between. The caller gives the address first,
         since the server acts only on a ZIP the caller said (tools._zip_known)."""
         self.turn(call_id, f"It's {address['street']}, {address['zip']}.")
-        asked = self.tool("read_back", call_id, address=address, phone=phone)
+        extra = {"job_type": self.read_back_job_type} if self.read_back_job_type else {}
+        asked = self.tool("read_back", call_id, address=address, phone=phone, **extra)
         assert asked["ok"], asked
         self.say(call_id, asked["say"])
         self.turn(call_id, "Yes, that's right.")
-        confirmed = self.tool("read_back", call_id, address=address, phone=phone, confirmed=True)
+        confirmed = self.tool("read_back", call_id, address=address, phone=phone, confirmed=True,
+                              **extra)
         assert confirmed["ok"], confirmed
         return confirmed
 

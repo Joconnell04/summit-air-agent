@@ -1,0 +1,221 @@
+{
+ "call": "eval-tune-up-known-caller-1-e133f6c5",
+ "events": [
+  {
+   "at": "2026-11-06T01:14:48Z",
+   "type": "tool",
+   "tool": "calls.start",
+   "args": {
+    "call_id": "eval-tune-up-known-caller-1-e133f6c5",
+    "caller_id": "(347) 555-0162",
+    "dialed_number": "(678) 336-6730",
+    "direction": "inbound"
+   },
+   "ok": true,
+   "refused": null,
+   "gate": null,
+   "say": "",
+   "ms": 118.9,
+   "error": null,
+   "request_id": "2e7e05467550"
+  },
+  {
+   "at": "2026-11-06T01:14:50Z",
+   "type": "tool",
+   "tool": "calls.start",
+   "args": {
+    "call_id": "eval-tune-up-known-caller-1-e133f6c5",
+    "caller_id": "chat",
+    "dialed_number": "",
+    "direction": "inbound"
+   },
+   "ok": true,
+   "refused": null,
+   "gate": null,
+   "say": "",
+   "ms": 3.3,
+   "error": null,
+   "request_id": "511754d8df64"
+  },
+  {
+   "at": "2026-11-06T01:14:59Z",
+   "type": "tool",
+   "tool": "find_slots",
+   "args": {
+    "call_id": "eval-tune-up-known-caller-1-e133f6c5",
+    "job_type": "tune_up",
+    "priority": null,
+    "preferred_days": [
+     "Monday",
+     "Tuesday",
+     "Wednesday",
+     "Thursday",
+     "Friday"
+    ],
+    "time_of_day": "morning",
+    "moving_a_visit": false,
+    "window_minutes": null,
+    "day": null,
+    "arrive_after": null,
+    "arrive_before": null,
+    "facts": {
+     "issue": "",
+     "since": "",
+     "who_home": "",
+     "inside_temp_f": null,
+     "temp_falling_fast": false
+    }
+   },
+   "ok": false,
+   "refused": "read_back_first",
+   "gate": "flow_read_back_first",
+   "say": "",
+   "ms": 4.4,
+   "error": null,
+   "request_id": "ab95392651ea"
+  },
+  {
+   "at": "2026-11-06T01:15:03Z",
+   "type": "tool",
+   "tool": "read_back",
+   "args": {
+    "call_id": "eval-tune-up-known-caller-1-e133f6c5",
+    "address": {
+     "street": "801 Fenimore St",
+     "unit": "",
+     "city": "Brooklyn",
+     "zip": "11206",
+     "spelled": ""
+    },
+    "phone": "caller_id",
+    "phone_for": "",
+    "name": "Dennis Ocasio",
+    "confirmed": false
+   },
+   "ok": true,
+   "refused": null,
+   "gate": null,
+   "say": "So that's eight oh one Fenimore St, and the number you're calling from, ending in zero one six two. That's all correct, right?",
+   "ms": 323.5,
+   "error": null,
+   "request_id": "9c36d911e77a"
+  },
+  {
+   "at": "2026-11-06T01:15:07Z",
+   "type": "tool",
+   "tool": "read_back",
+   "args": {
+    "call_id": "eval-tune-up-known-caller-1-e133f6c5",
+    "address": {
+     "street": "801 Fenimore St",
+     "unit": "",
+     "city": "Brooklyn",
+     "zip": "11206",
+     "spelled": ""
+    },
+    "phone": "caller_id",
+    "phone_for": "",
+    "name": "Dennis Ocasio",
+    "confirmed": true
+   },
+   "ok": true,
+   "refused": null,
+   "gate": null,
+   "say": "",
+   "ms": 109.2,
+   "error": null,
+   "request_id": "abc5f0037e9a"
+  },
+  {
+   "at": "2026-11-06T01:15:11Z",
+   "type": "tool",
+   "tool": "find_slots",
+   "args": {
+    "call_id": "eval-tune-up-known-caller-1-e133f6c5",
+    "job_type": "tune_up",
+    "priority": null,
+    "preferred_days": [
+     "Monday",
+     "Tuesday",
+     "Wednesday",
+     "Thursday",
+     "Friday"
+    ],
+    "time_of_day": "morning",
+    "moving_a_visit": false,
+    "window_minutes": null,
+    "day": null,
+    "arrive_after": "8",
+    "arrive_before": null,
+    "facts": {
+     "issue": "",
+     "since": "",
+     "who_home": "",
+     "inside_temp_f": null,
+     "temp_falling_fast": false
+    }
+   },
+   "ok": false,
+   "refused": "fsm_unavailable",
+   "gate": null,
+   "say": "I can't pull that up right now.",
+   "ms": 4125.3,
+   "error": "fsm_unavailable: capacity: ReadTimeout",
+   "request_id": "28125b3fdd70"
+  },
+  {
+   "at": "2026-11-06T01:15:15Z",
+   "type": "tool",
+   "tool": "flag_person",
+   "args": {
+    "callback_time": null,
+    "callback_in_minutes": null,
+    "callback_after": null,
+    "callback_before": "12 PM",
+    "callback_day": "tomorrow",
+    "call_id": "eval-tune-up-known-caller-1-e133f6c5",
+    "reason": "Annual boiler tune-up request for 801 Fenimore St, Brooklyn 11206. Gas boiler about 8 years old, running fine. Caller prefers a weekday morning next week. Scheduling system was unavailable during the call.",
+    "priority": "Normal",
+    "system_calls_back": false
+   },
+   "ok": true,
+   "refused": null,
+   "gate": null,
+   "say": "I've let our team know, and someone will call you tomorrow before 12 PM.",
+   "ms": 44.4,
+   "error": null,
+   "request_id": "90beba2bbb26"
+  },
+  {
+   "at": "2026-11-06T01:15:19Z",
+   "type": "tool",
+   "tool": "end_call",
+   "args": {
+    "call_id": "eval-tune-up-known-caller-1-e133f6c5",
+    "reason": "resolved"
+   },
+   "ok": true,
+   "refused": null,
+   "gate": null,
+   "say": "",
+   "ms": 19.4,
+   "error": null,
+   "request_id": "e7685e2284c3"
+  },
+  {
+   "at": "2026-11-06T01:15:21Z",
+   "type": "tool",
+   "tool": "calls.end",
+   "args": {
+    "reason": "agent_end"
+   },
+   "ok": true,
+   "refused": null,
+   "gate": null,
+   "say": "",
+   "ms": 19.3,
+   "error": null,
+   "request_id": "4bc80e4b5d8c"
+  }
+ ]
+}

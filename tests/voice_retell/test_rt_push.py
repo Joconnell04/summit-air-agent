@@ -157,6 +157,11 @@ def test_removed_and_unused_endpoints_are_refused_before_sending(method, path):
         Retell("key", client=None).request(method, path)
 
 
+def test_the_versioned_call_list_is_allowed():
+    assert allowed("POST", "/v3/list-calls")
+    assert allowed("POST", "/v2/create-phone-call")
+
+
 def test_a_model_retell_does_not_offer_stops_the_push():
     with pytest.raises(ValueError):
         build.llm_body(specs(), BASE, "gpt-5.4-mini")

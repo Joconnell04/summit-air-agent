@@ -84,6 +84,11 @@ def is_reply(text: str) -> bool:
         return True
     if said.startswith(" it says "):
         return True
+    # A line that opens with a number answers the question asked before the wait: "215 Mott
+    # Street, Unit 4B." after "One second." (socket call call_7db469c659f142130bc192143e2 stayed
+    # silent for two minutes).
+    if first and NUMBER.match(first[0]):
+        return True
     return bool(NUMBER.search(text)) and any(said.startswith(f" {s} ") for s in ANSWER_STARTS)
 
 

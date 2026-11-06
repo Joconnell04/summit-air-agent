@@ -19,17 +19,25 @@ def st_db(tmp_path):
     create_schema(path)
     conn = sqlite3.connect(path)
     with conn:
-        conn.execute("INSERT INTO customers (id, name, type, created_on, modified_on) "
-                     "VALUES (1, 'Maria Delgado', 'Residential', ?, ?)", (T, T))
-        for loc_id, street, zip_code, active in ((10, "620 Bedford Ave", "11235", 0),
-                                                 (11, "380 Washington Ave", "11238", 1)):
+        conn.execute(
+            "INSERT INTO customers (id, name, type, created_on, modified_on) "
+            "VALUES (1, 'Maria Delgado', 'Residential', ?, ?)",
+            (T, T),
+        )
+        for loc_id, street, zip_code, active in (
+            (10, "620 Bedford Ave", "11235", 0),
+            (11, "380 Washington Ave", "11238", 1),
+        ):
             conn.execute(
                 "INSERT INTO locations (id, customer_id, name, street, street_key, zip, active, "
                 "created_on, modified_on) VALUES (?, 1, ?, ?, ?, ?, ?, ?, ?)",
                 (loc_id, street, street, street.lower(), zip_code, active, T, T),
             )
-        conn.execute("INSERT INTO contacts (customer_id, type, value, phone_key, created_on) "
-                     "VALUES (1, 'MobilePhone', '7185550100', '7185550100', ?)", (T,))
+        conn.execute(
+            "INSERT INTO contacts (customer_id, type, value, phone_key, created_on) "
+            "VALUES (1, 'MobilePhone', '7185550100', '7185550100', ?)",
+            (T,),
+        )
     conn.close()
     return path
 
@@ -47,13 +55,24 @@ def job(st_db, job_id, location_id, status="Scheduled", summary=""):
 
 
 def move(in_area=True, zip_code="11238"):
-    return {"customer_id": 1, "old_location_ids": json.dumps([10]), "street": "380 Washington Ave",
-            "zip": zip_code, "in_area": int(in_area)}
+    return {
+        "customer_id": 1,
+        "old_location_ids": json.dumps([10]),
+        "street": "380 Washington Ave",
+        "zip": zip_code,
+        "in_area": int(in_area),
+    }
 
 
 def trace(**extra):
-    base = {"call": {}, "events": [], "bookings": [], "flags": [], "callbacks": [],
-            "out_of_area": []}
+    base = {
+        "call": {},
+        "events": [],
+        "bookings": [],
+        "flags": [],
+        "callbacks": [],
+        "out_of_area": [],
+    }
     return {**base, **extra}
 
 
@@ -80,16 +99,22 @@ def test_moved_fails_without_a_move_or_without_servicetitan(st_db):
 
 def test_identity_reads_the_check_and_the_note(st_db):
     job(st_db, 100, 11)
-    t = trace(identity_checks=[{"status": "verified"}],
-              bookings=[{"kind": "cancel", "status": "done", "fsm_job_id": 100}])
+    t = trace(
+        identity_checks=[{"status": "verified"}],
+        bookings=[{"kind": "cancel", "status": "done", "fsm_job_id": 100}],
+    )
     assert run("identity", "verified", t, st_db) == ["no unknown-number note on job 100"]
     assert run("identity", "none", trace(), st_db) == []
     assert run("identity", "mismatch", t, st_db)
 
 
 def test_job_contact_and_booked_under(st_db):
-    job(st_db, 100, 11, summary="Contact: my daughter Ana, (718) 555-0142\n"
-                                "Account phone: (718) 555-0100")
+    job(
+        st_db,
+        100,
+        11,
+        summary="Contact: my daughter Ana, (718) 555-0142\nAccount phone: (718) 555-0100",
+    )
     t = trace(bookings=[{"kind": "book", "status": "booked", "fsm_job_id": 100}])
     assert run("job_contact", {"phone": "7185550142", "for": "Ana"}, t, st_db) == []
     assert run("job_contact", {"phone": "7185550199"}, t, st_db)

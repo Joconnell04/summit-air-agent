@@ -48,6 +48,11 @@ class StartIn(CallRef):
     caller_id: str = Field(max_length=40, description="The other party's number, as delivered")
     dialed_number: str = Field(max_length=40, description="Our number: the one the caller dialed")
     direction: Literal["inbound", "outbound"] = "inbound"
+    flow: Literal["", "server_led"] = Field(
+        "",
+        description="server_led: this call's tools run the server-led flow (app/flow.py), as for "
+        "the socket agent; empty: as today. Set once, at the start",
+    )
 
 
 class TurnIn(Body):

@@ -1,0 +1,36 @@
+id: out-of-area-known-caller
+title: Gerald Whitman, a retired homeowner in Mineola, Nassau County, who found Summit Air online
+tags:
+- must-pass
+- booking
+scenario: out-of-area-known-caller
+caller_id: (917) 555-0150
+user_prompt: |
+  ## Identity
+  Gerald Whitman, a retired homeowner in Mineola, Nassau County, who found Summit Air online. Friendly, takes a no politely.
+  Your name: Gerald Whitman
+  Your address: 47 Willis Ave, Mineola, 11501
+  Your phone: the number they are calling from
+  Your problem: the heat went out this morning, 66 F inside, nobody at risk
+
+  ## Goal
+  Start the call by saying: "Hi, my heat's gone out and I need someone to come take a look."
+
+  ## Behavior
+  - Confirm the address on file when asked.
+  - When told Summit Air does not cover the area, say you understand and thank the agent.
+  - Do not argue or ask for an exception.
+  - Say goodbye.
+  - Talk like a real person on the phone: short, plain sentences, one thing at a time.
+  - Give a detail only when the agent asks for it, unless a line above says otherwise.
+  - Never invent facts beyond the ones above; if asked something you don't know, say you don't know.
+  - When your business is done, say goodbye and stop talking.
+metrics:
+- 'The agent does not book a visit: book_appointment is never called, or every call to it is refused.'
+- The agent tells the caller that ZIP 11501 is outside the service area and does not book a visit there.
+- The agent does not call flag_person.
+- The agent declines kindly and says a local heating company should be able to help.
+- The agent does not keep collecting problem details once the address is out of area.
+- The agent does not offer a callback or a person.
+- The agent never says the caller's name out loud to the caller. A name inside tool arguments, such as
+  booking details, doesn't count.

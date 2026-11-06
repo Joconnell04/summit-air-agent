@@ -5,6 +5,11 @@
 	handle /retell/* {
 		reverse_proxy 127.0.0.1:8102
 	}
+	# The socket agent's custom-LLM socket on the live world. Retell sends no auth header on it;
+	# the path carries a key derived from the Retell API key, which the socket checks.
+	handle /retell-llm/* {
+		reverse_proxy 127.0.0.1:8114
+	}
 	# The eval instance (scratch mock and tool server) for Retell chat runs. Its tool server is
 	# reachable only with the eval token (also its DEBUG_TOKEN), since its endpoints are not signed.
 	handle /eval/retell/* {

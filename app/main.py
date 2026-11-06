@@ -31,6 +31,7 @@ from . import (
     checks_view,
     db,
     failure_grader,
+    flow,
     geocode,
     heads_up,
     jobs,
@@ -190,7 +191,7 @@ def _replay(conn, key: str, tool: str, call_id: str, args: dict) -> Result | Non
     if row["request_hash"] != _hash(args) or row["call_id"] != call_id:
         raise Refused("idempotency_key_reused", SAY_RETRY)
     body = json.loads(row["response_json"])
-    return Result(body["ok"], body["say"], body["data"], body["refused"])
+    return Result(body["ok"], body["say"], body["data"], body["refused"], next=body.get("next", ""))
 
 
 def _remember(conn, key: str, tool: str, call_id: str, args: dict, result: Result, now) -> None:
@@ -316,15 +317,15 @@ def _tool_route(app: FastAPI, name: str, handler: Callable, model: type[BaseMode
         # Card digits the model copied into an argument are taken out before the tool, the tool
         # log or anything downstream sees them (app/cards.py).
         body = model.model_validate(cards.scrub(body.model_dump(mode="json")))
-        return run(
-            services,
-            request,
-            name,
-            body.call_id,
-            body.model_dump(mode="json"),
-            lambda conn, key: handler(_ctx(services, conn, body.call_id, key), body),
-            write=write,
-        )
+
+        def call(conn, key):
+            ctx = _ctx(services, conn, body.call_id, key)
+            if services.settings.server_led or flow.server_led(conn, body.call_id):
+                return flow.guide(ctx, name, body, handler)
+            return handler(ctx, body)
+
+        return run(services, request, name, body.call_id, body.model_dump(mode="json"), call,
+                   write=write)
 
     endpoint.__name__ = name
     app.post(f"/tools/{name}", summary=name, description=handler.__doc__ or "")(endpoint)
@@ -419,7 +420,7 @@ def create_app(
     def call_start(request: Request, body: StartIn):
         def fn(conn, key):
             tenant = services.tenants.for_number(body.dialed_number)
-            return lifecycle.start(
+            started = lifecycle.start(
                 conn,
                 tenant,
                 services.fsm[tenant.slug],
@@ -427,6 +428,9 @@ def create_app(
                 services.clock(),
                 record=services.bucket is not None,
             )
+            if body.flow and started.ok:
+                flow.set_mode(conn, body.call_id, body.flow)
+            return started
 
         response = run(services, request, "calls.start", body.call_id, body.model_dump(), fn)
         # The capacity find_slots will want, fetched off the request while the greeting plays.

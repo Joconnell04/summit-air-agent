@@ -45,6 +45,9 @@ class Settings:
     allow_forget_calls: bool = field(
         default_factory=lambda: os.environ.get("TOOL_ALLOW_FORGET_CALLS", "") == "1"
     )
+    # The server-led arm (app/flow.py): every result names the next step and the booking order is
+    # enforced. Off, results are as before; only the arm's test instance turns it on.
+    server_led: bool = field(default_factory=lambda: os.environ.get("SERVER_LED", "") == "1")
     # Read the outside temperature from the National Weather Service (app/weather.py). Off in
     # tests and development so nothing calls out; on for the deployed server.
     weather: bool = field(default_factory=lambda: os.environ.get("WEATHER", "") == "1")

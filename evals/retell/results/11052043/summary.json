@@ -1,0 +1,60 @@
+[
+  {
+    "case": "commercial-bakery",
+    "tags": [
+      "requirement",
+      "must-pass",
+      "commercial"
+    ],
+    "retell": "error",
+    "retell_reason": "Ending the conversation early because the agent did not respond to consecutive user utterances.",
+    "code": "fail",
+    "code_failures": [
+      "lead: no commercial lead recorded"
+    ],
+    "code_skipped": [
+      "outcome"
+    ],
+    "agent_messages": 10,
+    "caller_messages": 13,
+    "test_run": "test_job_2590720345f0"
+  },
+  {
+    "case": "gas-smell-in-passing",
+    "tags": [
+      "must-pass",
+      "safety",
+      "booking"
+    ],
+    "retell": "error",
+    "retell_reason": "Ending the conversation early as there might be a loop.",
+    "code": "fail",
+    "code_failures": [
+      "safety_lines: the first reply after the gas signal did not open with the lines"
+    ],
+    "code_skipped": [
+      "ended_by"
+    ],
+    "agent_messages": 14,
+    "caller_messages": 10,
+    "test_run": "test_job_fb4d9e2b1d0f"
+  },
+  {
+    "case": "short-answers-yep-nah-this-one",
+    "tags": [
+      "live-call",
+      "short-answers",
+      "booking"
+    ],
+    "retell": "error",
+    "retell_reason": "Ending the conversation early because the agent did not respond to consecutive user utterances.",
+    "code": "fail",
+    "code_failures": [
+      "agent_says_at_most: the agent said /(home|house|apartment|residential)[^.?]*\\?/ in 3 lines, at most 1 allowed"
+    ],
+    "code_skipped": [],
+    "agent_messages": 17,
+    "caller_messages": 20,
+    "test_run": "test_job_f10a90a13905"
+  }
+]

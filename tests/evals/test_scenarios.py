@@ -27,8 +27,9 @@ def test_every_journey_has_a_scenario():
 
 
 def test_every_must_pass_line_tested_by_eval_has_a_scenario():
-    eval_lines = set(re.findall(r"^\| (S-\d+[a-z]?) \*\*M\*\* \|[^|]*\| [^|]*[Ee]val", SPEC,
-                                flags=re.MULTILINE))
+    eval_lines = set(
+        re.findall(r"^\| (S-\d+[a-z]?) \*\*M\*\* \|[^|]*\| [^|]*[Ee]val", SPEC, flags=re.MULTILINE)
+    )
     covered = {s for sc in SCENARIOS for s in sc.spec}
     assert eval_lines and eval_lines <= covered, eval_lines - covered
 
@@ -64,7 +65,9 @@ def test_literal_caller_numbers_are_not_seeded_customers(tmp_path):
     seeded = {r[0] for r in conn.execute("SELECT phone_key FROM contacts WHERE phone_key != ''")}
     for s in SCENARIOS:
         if s.caller_id != "unknown" and not s.caller_id.startswith("seed:"):
-            assert phone_key(s.caller_id) not in seeded, f"{s.id}: use seed:<key> for a known caller"
+            assert phone_key(s.caller_id) not in seeded, (
+                f"{s.id}: use seed:<key> for a known caller"
+            )
 
 
 def test_seed_references_resolve(tmp_path):
@@ -78,15 +81,23 @@ def test_two_people_mind_change_asks_for_windows_the_seed_has_open(tmp_path):
     # seed, and a caller who insists on a closed day can only end in a flag, never the booking the
     # scenario checks for.
     scenario = next(s for s in SCENARIOS if s.id == "two-people-mind-change")
-    world = World(tmp_path / "w", seeded_db(tmp_path / "seed"),
-                  datetime(2026, 11, 2, 9, 0, tzinfo=ZoneInfo("America/New_York")))
+    world = World(
+        tmp_path / "w",
+        seeded_db(tmp_path / "seed"),
+        datetime(2026, 11, 2, 9, 0, tzinfo=ZoneInfo("America/New_York")),
+    )
     world.server.start("c1", scenario.caller_id)
-    facts = {"issue": "furnace runs, house won't warm", "who_home": "Carla, healthy",
-             "inside_temp_f": 62.0, "temp_falling_fast": False}
+    facts = {
+        "issue": "furnace runs, house won't warm",
+        "who_home": "Carla, healthy",
+        "inside_temp_f": 62.0,
+        "temp_falling_fast": False,
+    }
 
     def windows(day: str) -> list[str]:
-        found = world.server.tool("find_slots", "c1", {"job_type": "no_heat", "day": day,
-                                                       "facts": facts})
+        found = world.server.tool(
+            "find_slots", "c1", {"job_type": "no_heat", "day": day, "facts": facts}
+        )
         assert found["data"]["priority"]["level"] == "High"
         return [w["part"] for w in found["data"]["windows"]]
 
@@ -146,13 +157,30 @@ def test_an_unknown_check_or_argument_is_rejected(tmp_path, check):
 
 
 def test_tags_include_flow_difficulty_trait_journey_spec_and_must_pass():
-    s = Scenario.model_validate({
-        "id": "x", "flow": ["safety"], "difficulty": "rigorous", "traits": ["stutter"],
-        "journeys": ["J3"], "spec": ["S-17"], "tags": ["smoke"], "persona": "p", "opening": "o",
-        "must": [{"booking": "none"}],
-    })
-    assert s.all_tags() >= {"flow:safety", "difficulty:rigorous", "trait:stutter", "journey:J3",
-                            "spec:S-17", "smoke", "must-pass", "id:x"}
+    s = Scenario.model_validate(
+        {
+            "id": "x",
+            "flow": ["safety"],
+            "difficulty": "rigorous",
+            "traits": ["stutter"],
+            "journeys": ["J3"],
+            "spec": ["S-17"],
+            "tags": ["smoke"],
+            "persona": "p",
+            "opening": "o",
+            "must": [{"booking": "none"}],
+        }
+    )
+    assert s.all_tags() >= {
+        "flow:safety",
+        "difficulty:rigorous",
+        "trait:stutter",
+        "journey:J3",
+        "spec:S-17",
+        "smoke",
+        "must-pass",
+        "id:x",
+    }
     assert s.start_time.isoformat() == "2026-11-02T09:00:00-05:00"
 
 

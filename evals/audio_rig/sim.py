@@ -9,6 +9,7 @@ Each scenario runs once (the bake-off's three repeats of gas and CO calls are fo
 listening), and the results file goes into the batch folder beside the recordings, so a listening
 run never lands in evals/results or LangSmith. Stops once the batch has cost MAX_COST dollars.
 """
+
 import argparse
 import re
 
@@ -17,11 +18,24 @@ from evals.audio_rig import rig
 DEFAULT_MAX_COST = 2.0
 
 
-def rig_args(calls: str, tags: str, max_cost: float, stack: str = "livekit",
-             batch: str = "") -> list[str]:
+def rig_args(
+    calls: str, tags: str, max_cost: float, stack: str = "livekit", batch: str = ""
+) -> list[str]:
     """The rig's arguments for a listening batch. Scenario ids may be split by spaces or commas."""
-    args = ["--stack", stack, "--suite", "full", "--repeats", "1", "--samples", "1",
-            "--no-upload", "--results-in-batch", "--max-cost", str(max_cost)]
+    args = [
+        "--stack",
+        stack,
+        "--suite",
+        "full",
+        "--repeats",
+        "1",
+        "--samples",
+        "1",
+        "--no-upload",
+        "--results-in-batch",
+        "--max-cost",
+        str(max_cost),
+    ]
     ids = [i for i in re.split(r"[\s,]+", calls) if i]
     if ids:
         args += ["--only", ",".join(ids)]

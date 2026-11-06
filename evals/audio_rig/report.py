@@ -8,6 +8,7 @@ the tool server's own check on the platform's reported text (the `safety_lines` 
 against the signed-off lines, and what the caller heard (the rig's transcription) against them,
 which allows for transcription noise.
 """
+
 import argparse
 import difflib
 import re
@@ -40,8 +41,7 @@ TALK_OVER_MS = 20
 def gates_held(s: ScenarioResult) -> bool:
     """Every code check passed. The grader's notes are scored apart: on the rig it reads the
     caller's transcription of the agent, so a mishearing can look like an agent's slip."""
-    return s.outcome != "error" and not [f for f in s.check_failures
-                                         if not f.startswith("grader:")]
+    return s.outcome != "error" and not [f for f in s.check_failures if not f.startswith("grader:")]
 
 
 def must_pass(scenario_id: str) -> bool:
@@ -90,25 +90,44 @@ class Stack:
         """Reply delays of one kind. A reply that was already playing when the caller finished
         (recorded as zero, or within a frame of it) talked over the caller; it is counted by
         `talk_overs`, not as a fast reply."""
-        return [t.reply_delay_ms for s in self.scenarios if s.outcome != "error"
-                for t in s.turn_timings if t.kind == kind and t.reply_delay_ms >= TALK_OVER_MS]
+        return [
+            t.reply_delay_ms
+            for s in self.scenarios
+            if s.outcome != "error"
+            for t in s.turn_timings
+            if t.kind == kind and t.reply_delay_ms >= TALK_OVER_MS
+        ]
 
     def talk_overs(self) -> int:
-        return sum(1 for s in self.scenarios if s.outcome != "error"
-                   for t in s.turn_timings if t.reply_delay_ms < TALK_OVER_MS)
+        return sum(
+            1
+            for s in self.scenarios
+            if s.outcome != "error"
+            for t in s.turn_timings
+            if t.reply_delay_ms < TALK_OVER_MS
+        )
 
     def cut_ins(self) -> int:
         """Turns where the agent made a sound before the caller had finished their line. On our
         stack, which never backchannels, each is the agent starting a reply in a pause mid-line."""
-        return sum(1 for s in self.scenarios if s.outcome != "error"
-                   for t in s.turn_timings if t.over_caller_ms is not None)
+        return sum(
+            1
+            for s in self.scenarios
+            if s.outcome != "error"
+            for t in s.turn_timings
+            if t.over_caller_ms is not None
+        )
 
     def silent(self) -> int:
         return sum(s.silent_turns for s in self.scenarios)
 
     def platform_delays(self) -> list[float]:
-        return [t.platform_reply_ms for s in self.scenarios for t in s.turn_timings
-                if t.platform_reply_ms is not None and t.kind == "plain"]
+        return [
+            t.platform_reply_ms
+            for s in self.scenarios
+            for t in s.turn_timings
+            if t.platform_reply_ms is not None and t.kind == "plain"
+        ]
 
     def cost_per_call(self) -> tuple[float, float]:
         """Mean stack cost and mean all-in cost (with the rig's own parts) per call."""
@@ -147,9 +166,11 @@ def ms(values: list[float], share: float) -> str:
 
 def table(stacks: list[Stack]) -> list[str]:
     signed_off = lines_by_kind()
-    header = ("| Stack | Calls | Plain median | Plain slowest 10% | Lookup median "
-              "| Lookup slowest 10% | Talked over / sound over caller / silent | Must-pass checks held | Grader passed "
-              "| Safety lines word for word | Stack cost per call | All-in per call |")
+    header = (
+        "| Stack | Calls | Plain median | Plain slowest 10% | Lookup median "
+        "| Lookup slowest 10% | Talked over / sound over caller / silent | Must-pass checks held | Grader passed "
+        "| Safety lines word for word | Stack cost per call | All-in per call |"
+    )
     rows = [header, "|---|---|---|---|---|---|---|---|---|---|---|---|"]
     for st in stacks:
         plain, lookup = st.delays("plain"), st.delays("lookup")
@@ -161,8 +182,8 @@ def table(stacks: list[Stack]) -> list[str]:
         exact = sum(1 for s in safety if s.server_ok and s.heard >= HEARD_SHARE)
         stack_cost, all_in = st.cost_per_call()
         rows.append(
-            f"| {st.name} | {len(st.scenarios)} | {ms(plain, .5)} ({len(plain)}) | {ms(plain, .9)} "
-            f"| {ms(lookup, .5)} ({len(lookup)}) | {ms(lookup, .9)} "
+            f"| {st.name} | {len(st.scenarios)} | {ms(plain, 0.5)} ({len(plain)}) | {ms(plain, 0.9)} "
+            f"| {ms(lookup, 0.5)} ({len(lookup)}) | {ms(lookup, 0.9)} "
             f"| {st.talk_overs()} / {st.cut_ins()} / {st.silent()} | {held} of {len(must)} | {liked} of {len(graded)} | {exact} of {len(safety)} "
             f"| ${stack_cost:.3f} | ${all_in:.3f} |"
         )
@@ -171,13 +192,17 @@ def table(stacks: list[Stack]) -> list[str]:
 
 def safety_detail(stacks: list[Stack]) -> list[str]:
     signed_off = lines_by_kind()
-    rows = ["| Stack | Call | Outcome | Server check | Platform text exact | Heard |",
-            "|---|---|---|---|---|---|"]
+    rows = [
+        "| Stack | Call | Outcome | Server check | Platform text exact | Heard |",
+        "|---|---|---|---|---|---|",
+    ]
     for st in stacks:
         for s in st.safety(signed_off):
             exact = "n/a" if s.said_exact is None else ("yes" if s.said_exact else "no")
-            rows.append(f"| {st.name} | {s.key} | {s.outcome} | {'pass' if s.server_ok else 'fail'} "
-                        f"| {exact} | {s.heard:.0%} |")
+            rows.append(
+                f"| {st.name} | {s.key} | {s.outcome} | {'pass' if s.server_ok else 'fail'} "
+                f"| {exact} | {s.heard:.0%} |"
+            )
     return rows
 
 
@@ -237,9 +262,11 @@ def verdict(stacks: list[Stack], ours: str) -> list[str]:
         result = "chosen" if faster and clean and held and not gaps else "tie, keep ours"
         gap = (ours_ms - percentile(plain, 0.5)) / 1000 if plain else 0
         pace = f"{abs(gap):.2f} s {'faster' if gap >= 0 else 'slower'} than ours"
-        line = (f"- {st.name}: {result} (plain median {pace}; "
-                f"safety lines {'clean' if clean else 'not clean'} on {len(safety)} calls; "
-                f"must-pass checks {'all held' if held else 'not all held'})")
+        line = (
+            f"- {st.name}: {result} (plain median {pace}; "
+            f"safety lines {'clean' if clean else 'not clean'} on {len(safety)} calls; "
+            f"must-pass checks {'all held' if held else 'not all held'})"
+        )
         if gaps:
             line += f"; incomplete: {'; '.join(gaps)}"
         out.append(line)
@@ -261,7 +288,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--ours", default="livekit-rig")
     args = parser.parse_args(argv)
     stacks = stacks_from(args.paths)
-    print("\n".join(table(stacks) + [""] + safety_detail(stacks) + [""] + verdict(stacks, args.ours)))
+    print(
+        "\n".join(table(stacks) + [""] + safety_detail(stacks) + [""] + verdict(stacks, args.ours))
+    )
     return 0
 
 

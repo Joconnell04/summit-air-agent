@@ -1,0 +1,106 @@
+{
+ "window": [
+  "2026-11-06T03:00:41Z",
+  "2026-11-06T03:04:04Z"
+ ],
+ "calls": [
+  {
+   "call": {
+    "id": "retell_call_360c4fe0ec61e0339879858f61d",
+    "tenant": "summit-air",
+    "caller_id": "+16466240418",
+    "caller_key": "6466240418",
+    "dialed_number": "+16466240418",
+    "direction": "inbound",
+    "started_at": "2026-11-06T03:00:54Z",
+    "ended_at": "2026-11-06T03:03:57Z",
+    "end_reason": "agent_end",
+    "end_requested": 1,
+    "after_hours": 1,
+    "linked_call_id": null,
+    "outcome": "booked",
+    "commercial": 0,
+    "summary_status": "pending",
+    "turn_seq": 50,
+    "safety_state": "none",
+    "safety_kind": null,
+    "safety_signal_at": null,
+    "safety_lines_at": null,
+    "safety_flag_id": null,
+    "safety_variant": 0,
+    "readback_json": "{\"street\": \"8422 101st Avenue\", \"unit\": \"\", \"city\": \"Queens\", \"zip\": \"11416\", \"spelled\": \"\", \"phone\": \"6466240418\", \"phone_for\": \"\", \"sentence\": \"So that's eighty-four twenty-two One Hundred First Avenue, and the number you're calling from, ending in zero four one eight. That's all correct, right?\"}",
+    "readback_asked_seq": 15,
+    "readback_confirmed_at": "2026-11-06T03:02:03Z"
+   },
+   "bookings": [
+    {
+     "id": 45,
+     "call_id": "retell_call_360c4fe0ec61e0339879858f61d",
+     "kind": "book",
+     "status": "booked",
+     "fsm_key": "retell_call_360c4fe0ec61e0339879858f61d:book:c6bac944ef7619ea3a17a6da783e340a1b1b4b33",
+     "request_json": "{\"call_id\": \"retell_call_360c4fe0ec61e0339879858f61d\", \"job_type\": \"tune_up\", \"details\": {\"issue\": \"Boiler tune-up\", \"since\": \"Routine yearly maintenance\", \"tried\": \"Not applicable, routine tune-up\", \"who_home\": \"Yes, someone will be home\", \"approver\": \"Morgan Diaz\", \"system_type\": \"Boiler\", \"arrival_notes\": \"No pets, no gate code or buzzer\", \"name\": \"Morgan Diaz\", \"inside_temp_f\": null}, \"address\": {\"street\": \"8422 101st Avenue\", \"unit\": \"\", \"city\": \"Queens\", \"zip\": \"11416\"}, \"phone\": \"6466240418\", \"scoped_customer_ids\": [], \"contact_for\": \"\", \"account_phone\": \"\", \"priority\": \"Normal\", \"priority_reasons\": [], \"priority_rules\": [], \"raised_after_wait\": false, \"requested_priority\": null, \"notes\": [], \"account\": null, \"contact_name\": null, \"window_start\": \"2026-11-07T14:00:00Z\", \"window_end\": \"2026-11-07T14:30:00Z\"}",
+     "fsm_job_id": 548,
+     "fsm_appointment_id": 548,
+     "customer_id": 301,
+     "window_start": "2026-11-07T14:00:00Z",
+     "window_end": "2026-11-07T14:30:00Z",
+     "job_type": "tune_up",
+     "priority": "Normal",
+     "priority_reasons": "",
+     "safety_override": 0,
+     "seek_earlier": 0,
+     "reason": "",
+     "attempts": 1,
+     "last_error": null,
+     "turn_seq": 33,
+     "created_at": "2026-11-06T03:02:56Z",
+     "updated_at": "2026-11-06T03:02:56Z"
+    }
+   ],
+   "booking_names": [
+    {
+     "call_id": "retell_call_360c4fe0ec61e0339879858f61d",
+     "name": "Morgan Diaz",
+     "at": "2026-11-06T03:02:03Z"
+    }
+   ],
+   "call_names": [],
+   "flags": [],
+   "callbacks": [
+    {
+     "id": 26,
+     "call_id": "retell_call_360c4fe0ec61e0339879858f61d",
+     "phone": "+16466240418",
+     "phone_key": "6466240418",
+     "due_at": "2026-11-06T17:00:00Z",
+     "owner": "office",
+     "reason": "membership lead: Interested in signing up for Summit Standard Membership; requested a callback. (caller asked: tomorrow before 12 PM)",
+     "status": "pending",
+     "attempts": 0,
+     "last_attempt_at": null,
+     "created_at": "2026-11-06T03:03:40Z",
+     "updated_at": "2026-11-06T03:03:40Z"
+    }
+   ],
+   "leads": [
+    {
+     "id": 7,
+     "call_id": "retell_call_360c4fe0ec61e0339879858f61d",
+     "kind": "membership",
+     "summary": "contact Morgan Diaz +16466240418; Interested in signing up for Summit Standard Membership; requested a callback.",
+     "status": "stored",
+     "fsm_key": "retell_call_360c4fe0ec61e0339879858f61d:lead:b6168427e93d06914730ce26f2637fc9cb9a5572",
+     "request_json": "{\"callReasonId\": 705, \"customerId\": null, \"leadCustomerName\": \"Morgan Diaz\", \"leadPhone\": \"+16466240418\", \"summary\": \"contact Morgan Diaz +16466240418; Interested in signing up for Summit Standard Membership; requested a callback.\", \"campaignId\": 301}",
+     "fsm_lead_id": 3,
+     "callback_id": 26,
+     "attempts": 1,
+     "last_error": null,
+     "created_at": "2026-11-06T03:03:40Z"
+    }
+   ]
+  }
+ ],
+ "do_not_call": [],
+ "dumped_at": "2026-11-06T03:04:15Z"
+}

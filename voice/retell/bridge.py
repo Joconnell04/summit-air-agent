@@ -168,13 +168,17 @@ class ToolServer:
             log.warning("tool server %s failed: %s", path, exc)
             return None
 
-    def start(self, call_id: str, caller_id: str, dialed: str, direction: str) -> dict | None:
+    def start(
+        self, call_id: str, caller_id: str, dialed: str, direction: str, flow: str = ""
+    ) -> dict | None:
         body = {
             "call_id": call_id,
             "caller_id": caller_id,
             "dialed_number": dialed,
             "direction": direction,
         }
+        if flow:
+            body["flow"] = flow
         return self._post("/calls/start", body)
 
     def turn(
@@ -234,6 +238,10 @@ class Bridge:
         # (call_17353a5115066cd2e0ad091ddad, no knowledge base attached).
         self.no_note_agents = set(filter(None, os.environ.get(
             "RETELL_NO_NOTE_AGENTS", "").split(",")))
+        # The socket agent's calls run the server-led flow on this same tool server
+        # (docs/ai-process/briefs/socket-cutover.md); every other agent's calls start as before.
+        self.server_led_agents = set(filter(None, os.environ.get(
+            "RETELL_SERVER_LED_AGENTS", "").split(",")))
         # The last call object each call's events brought, for the word timings the hang-up
         # reads when get-call has none.
         self.seen: dict[str, dict] = {}
@@ -258,8 +266,9 @@ class Bridge:
         inbound = event.get("call_inbound") or {}
         rid = inbound.get("call_id", "")
         call_id = PREFIX + rid
+        flow = "server_led" if inbound.get("agent_id") in self.server_led_agents else ""
         start = self.tools.start(
-            call_id, inbound.get("from_number", ""), inbound.get("to_number", ""), "inbound"
+            call_id, inbound.get("from_number", ""), inbound.get("to_number", ""), "inbound", flow
         )
         self.ledger.remember(rid, call_id, "call")
         if start is None or not start.get("ok"):

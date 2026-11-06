@@ -1,0 +1,1814 @@
+{
+  "case": "moved-out-of-area-open-job",
+  "retell": {
+    "test_case_job_id": "test_job_afccf15171e0",
+    "status": "fail",
+    "result_explanation": "The criteria are not all met. Although the agent stated Hoboken/ZIP 07030 is outside the service area, did not call book_appointment, did not promise a new-address visit, and never spoke the caller's name, record_move never succeeded. Every record_move attempt failed (502 or read-back gate failures), so the move was not recorded via record_move. The old Bedford Ave visit was eventually cancelled through cancel_appointment, not record_move.",
+    "creation_timestamp": 1793914594085,
+    "user_modified_timestamp": 1793914674206,
+    "test_case_definition_id": "test_case_33f026f05f26",
+    "test_case_definition_snapshot": {
+      "creationTimestamp": 1793911574463,
+      "dynamicVariables": {
+        "summit_call_id": "rtest-11052135-moved-out-of-area-open-job"
+      },
+      "llmModel": "claude-5.5-haiku",
+      "metrics": [
+        "The agent calls record_move and it succeeds.",
+        "The agent records the move with record_move.",
+        "The agent tells the caller that ZIP 07030 is outside the service area and does not book a visit there.",
+        "The agent never calls book_appointment.",
+        "The agent tells the caller plainly that Hoboken is outside the area and that the visit at the old house is cancelled, so nobody goes there.",
+        "The agent doesn't promise a visit or suggest a booking at the new address.",
+        "The agent never says the caller's name."
+      ],
+      "name": "[summit] moved-out-of-area-open-job: Maria Delgado, who has a no-heat visit booked for today at her old Brooklyn house but move",
+      "orgId": "org_EoCqq2c268JWlyCE",
+      "responseEngine": {
+        "llmId": "llm_1da616f2baeb6e916f63e0236950",
+        "type": "retell-llm",
+        "version": 0
+      },
+      "responseEngineId": "llm_1da616f2baeb6e916f63e0236950",
+      "testCaseDefinitionId": "test_case_33f026f05f26",
+      "toolMocks": [],
+      "type": "simulation",
+      "userModifiedTimestamp": 1793914517731,
+      "userPrompt": "## Identity\nMaria Delgado, who has a no-heat visit booked for today at her old Brooklyn house but moved to Hoboken, New Jersey last week. Friendly, says um.\nYour name: Maria Delgado\nYour old address: 620 Bedford Ave, Brooklyn, 11235, where the visit is booked; nobody lives there now\nYour new address: 71 Hudson Street, Hoboken, New Jersey, 07030\nYour phone: (718) 555-0142 (the number you're calling from)\nYour wants: to know whether the company can come to the new place; if not, nobody should go to the old house\n\n## Goal\nStart the call by saying: \"Hi, um, I've got a technician coming today, but we moved to Hoboken last week. Can you still come out?\"\n\n## Behavior\n- Give the new address with the ZIP when asked.\n- Answer yes to a correct read-back of the new address and your number.\n- If the agent says it can't come to Hoboken, accept it politely.\n- Say goodbye once the agent says what happened to the visit.\n- Talk like a real person on the phone: short, plain sentences, one thing at a time.\n- Give a detail only when the agent asks for it, unless a line above says otherwise.\n- Never invent facts beyond the ones above; if asked something you don't know, say you don't know.\n- When your business is done, say goodbye and stop talking.\n"
+    },
+    "transcript_snapshot": {
+      "callEnded": true,
+      "dynamicVariables": {
+        "call_context": "",
+        "call_id": "playground",
+        "call_type": "web_call",
+        "greeting": "Thank you for calling Summit Air. How can I help you today?",
+        "session_type": "voice",
+        "summit_call_id": "rtest-11052135-moved-out-of-area-open-job",
+        "system_timezone": "America/Los_Angeles"
+      },
+      "knowledgeBaseRetrievedContents": [],
+      "toolMocks": [],
+      "transcript": [
+        {
+          "content": "Thank you for calling Summit Air. How can I help you today?",
+          "created_timestamp": 1793914604120,
+          "message_id": "message_bf2a1b43eb814197cee07872",
+          "role": "agent"
+        },
+        {
+          "content": "Hi, um, I've got a technician coming today, but we moved to Hoboken last week. Can you still come out?",
+          "created_timestamp": 1793914604657,
+          "message_id": "message_5d025dba4290d4c24dea5f88",
+          "role": "user"
+        },
+        {
+          "content": "I can help with that. Hoboken isn't in the cities we cover, so I'm sorry, but unfortunately we can't send a technician to that address. Let me check your existing visit so we can sort out the next steps.",
+          "created_timestamp": 1793914605970,
+          "message_id": "message_428623c2a8e517fc586f56cc",
+          "metadata": {
+            "response_id": 1
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"phone\":\"caller_id\"}",
+          "created_timestamp": 1793914605971,
+          "message_id": "message_f84c191727d4b2cd2d5059e3",
+          "name": "find_customer",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01NsDBjKx6iLzMoANygifZA2",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":false,\"say\":\"Could I get that number again, all ten digits?\",\"refused\":\"invalid_arguments\"}",
+          "created_timestamp": 1793914606255,
+          "message_id": "message_a42b37c1af16ee3077e47fb6",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01NsDBjKx6iLzMoANygifZA2"
+        },
+        {
+          "content": "Could I get the phone number you have on file, all ten digits?",
+          "created_timestamp": 1793914606872,
+          "message_id": "message_17f87214b7b2470f7b7fe7e0",
+          "metadata": {
+            "response_id": 2
+          },
+          "role": "agent"
+        },
+        {
+          "content": "(718) 555-0142. That's the number I'm calling from.",
+          "created_timestamp": 1793914607489,
+          "message_id": "message_fed962655c89cb41f6796f48",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"phone\":\"(718) 555-0142\"}",
+          "created_timestamp": 1793914608354,
+          "message_id": "message_8e1bb8dbceccd5dd66eb40a7",
+          "name": "find_customer",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_014uarz4brCnFATAZ2jK11TG",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"matches\":[{\"customer_id\":1,\"name\":\"Maria Delgado\",\"type\":\"Residential\",\"residential\":true,\"phones\":[{\"number\":\"(718) 555-0142\",\"ending\":\"0142\",\"memo\":\"Owner: Maria Delgado\"}],\"locations\":[{\"location_id\":1,\"street\":\"620 Bedford Ave\",\"unit\":\"\",\"city\":\"Brooklyn\",\"zip\":\"11235\",\"in_service_area\":true}],\"membership\":null,\"open_jobs\":[{\"job_id\":1,\"job_type\":\"no_heat\",\"status\":\"Scheduled\",\"priority\":\"Urgent\",\"summary\":\"No heat since last night. Radiators cold, thermostat reads 58.\",\"location_id\":1,\"street\":\"620 Bedford Ave\",\"appointment_id\":1,\"appointment_status\":\"Scheduled\",\"window\":{\"date\":\"2026-11-05\",\"weekday\":\"Thursday\",\"label\":\"12 to 4\",\"passed\":true}}],\"last_service_date\":null,\"recent_calls\":[{\"at\":\"2026-11-05T13:47:00Z\",\"reason\":\"No heat\",\"call_type\":\"Booked\"},{\"at\":\"2026-11-05T13:31:00Z\",\"reason\":\"No heat\",\"call_type\":\"Booked\"},{\"at\":\"2026-11-05T13:12:00Z\",\"reason\":\"No heat\",\"call_type\":\"Unbooked\"}],\"notes\":[{\"text\":\"Side gate code is 4417. Friendly dog in the yard.\",\"at\":\"2026-01-23T14:00:00Z\",\"by\":\"staff\"}],\"equipment\":[{\"system\":\"boiler\",\"brand\":\"Slant/Fin\",\"install_year\":2001},{\"system\":\"central AC\",\"brand\":\"Lennox\",\"install_year\":2025}]}],\"needs_unit\":false}}",
+          "created_timestamp": 1793914608724,
+          "message_id": "message_9f2edcda6833ca951c49db49",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_014uarz4brCnFATAZ2jK11TG"
+        },
+        {
+          "content": "I found your account and the visit on file at 620 Bedford Ave in Brooklyn. Since you've moved, I can update your address and move that visit to your new home, but I'll need the new address first. What's the house number and street of your new place in Hoboken?",
+          "created_timestamp": 1793914609672,
+          "message_id": "message_132f968f94ab47d86a630e3d",
+          "metadata": {
+            "response_id": 3
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Oh, okay. It's 71 Hudson Street, Hoboken, New Jersey, 07030.",
+          "created_timestamp": 1793914610330,
+          "message_id": "message_935f37d88d2b60d300a3b2ac",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"zip\":\"07030\"}",
+          "created_timestamp": 1793914611028,
+          "message_id": "message_6765a7de0702e777c7582af1",
+          "name": "check_service_area",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_014QWegryV5nsv6bKGarDsfw",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":false,\"say\":\"I have 71 Hudson Street in Tribeca as one zero zero one three, not zero seven zero three zero. Which one is right?\",\"data\":{\"need\":\"the ZIP the caller gave doesn't match the street; use the ZIP they pick\",\"found_zip\":\"10013\",\"said_zip\":\"07030\",\"street\":\"71 Hudson Street\"},\"refused\":\"zip_mismatch\"}",
+          "created_timestamp": 1793914611741,
+          "message_id": "message_7bbdafc9dc5be939e29cdab9",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_014QWegryV5nsv6bKGarDsfw"
+        },
+        {
+          "content": "I have 71 Hudson Street with ZIP 10013, which is in Tribeca, Manhattan. The ZIP you gave, 07030, is Hoboken. Which one is right?",
+          "created_timestamp": 1793914612625,
+          "message_id": "message_b0bef3a3311e72b6162000d4",
+          "metadata": {
+            "response_id": 4
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Oh, sorry, um. It's 07030. That's the Hoboken one. We're in New Jersey.",
+          "created_timestamp": 1793914613362,
+          "message_id": "message_a9526daaa2eb5ad3a6b0b0ba",
+          "role": "user"
+        },
+        {
+          "content": "Thanks. Hoboken is outside our service area, so unfortunately we can't move the visit there. Since you're no longer in our area, I can cancel the visit at 620 Bedford Ave so it doesn't go ahead. Would you like me to do that?",
+          "created_timestamp": 1793914614377,
+          "message_id": "message_0046fc3196977c0099ae9003",
+          "metadata": {
+            "response_id": 5
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, please cancel it. Nobody should go to the Bedford Ave house. Nobody lives there anymore.",
+          "created_timestamp": 1793914615111,
+          "message_id": "message_a1d12ea972c5f39c488bd9bb",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"customer_id\":1}",
+          "created_timestamp": 1793914615751,
+          "message_id": "message_e2761800795f00b04cead535",
+          "name": "record_move",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01KqEBjYUXYqsJy4aUZ6Scep",
+          "type": "custom"
+        },
+        {
+          "content": "HTTP 502: Axios Error: error code: ERR_BAD_RESPONSE, error message: Request failed with status code 502\nresponse status: 502",
+          "created_timestamp": 1793914616539,
+          "message_id": "message_30d94dd4cdd33e814b5a16bb",
+          "role": "tool_call_result",
+          "successful": false,
+          "tool_call_id": "toolu_01KqEBjYUXYqsJy4aUZ6Scep"
+        },
+        {
+          "content": "I'm having trouble updating the account right now. Let me pass this to our office so they can cancel the Bedford Ave visit and make sure no one goes there.",
+          "created_timestamp": 1793914618025,
+          "message_id": "message_fc9d5c3cd7229544050ec13e",
+          "metadata": {
+            "response_id": 6
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"reason\":\"Customer moved to Hoboken, NJ (71 Hudson St, 07030), outside service area. Wants the scheduled no-heat visit at 620 Bedford Ave cancelled; nobody lives there now. Account update failed on the call, needs manual cancellation and address update.\",\"priority\":\"High\",\"system_calls_back\":false}",
+          "created_timestamp": 1793914618026,
+          "message_id": "message_3fdc183e288b564e6689037d",
+          "name": "flag_person",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_0183JTjR6CsFNndrWhqJxf9g",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":false,\"say\":\"Sorry, give me just a moment.\",\"refused\":\"server_error\"}",
+          "created_timestamp": 1793914618321,
+          "message_id": "message_38d6e3b9bc307507ce36821a",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_0183JTjR6CsFNndrWhqJxf9g"
+        },
+        {
+          "content": "I'm sorry, the system is still having trouble. I want to make sure this gets done, so let me try once more.",
+          "created_timestamp": 1793914619441,
+          "message_id": "message_a2954dd5575a598245a68dd9",
+          "metadata": {
+            "response_id": 7
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"reason\":\"Customer moved to Hoboken, NJ (71 Hudson St, 07030), outside service area. Wants the scheduled no-heat visit at 620 Bedford Ave cancelled; nobody lives there now. Needs manual cancellation and address update.\",\"priority\":\"High\",\"system_calls_back\":false}",
+          "created_timestamp": 1793914619442,
+          "message_id": "message_ab80639f5cb167fc568d2c17",
+          "name": "flag_person",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01AqsuW4iLeX4KBDiCRu1CHb",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":false,\"say\":\"Sorry, give me just a moment.\",\"refused\":\"server_error\"}",
+          "created_timestamp": 1793914619732,
+          "message_id": "message_67f404225eec58e4146c8bd8",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01AqsuW4iLeX4KBDiCRu1CHb"
+        },
+        {
+          "content": "I'm still not able to get this recorded in the system. Please call our office directly so they can cancel the Bedford Ave visit right away and make sure no one is sent there. I'm sorry for the trouble.\n\nIs there anything else I can help you with?",
+          "created_timestamp": 1793914620662,
+          "message_id": "message_515d45968da76ce93b86f6d2",
+          "metadata": {
+            "response_id": 8
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Oh, okay. So nobody's going to the Bedford Ave house, right? What's the office number I should call?",
+          "created_timestamp": 1793914621466,
+          "message_id": "message_17b4b352d6f2033937a1725a",
+          "role": "user"
+        },
+        {
+          "content": "I can't confirm that the visit has been cancelled, because the system didn't save the change. Please call the office right away so they can stop the Bedford Ave visit. I don't have the office number in front of me, so check the number on your Summit Air paperwork or your last bill. I'm sorry I couldn't do more from here.",
+          "created_timestamp": 1793914622621,
+          "message_id": "message_423ec73dcf2e7f50fb2f5640",
+          "metadata": {
+            "response_id": 9
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Okay, um, so I'm still not sure nobody's going to the Bedford Ave house. Can you tell me for sure that it's not going to happen? I really don't want a technician showing up there, because nobody lives there anymore.",
+          "created_timestamp": 1793914624121,
+          "message_id": "message_5eb4a5eaf3bd9574537cd985",
+          "role": "user"
+        },
+        {
+          "content": "I understand, and I'm sorry I can't give you that assurance. The cancellation didn't go through, so I can't confirm the visit is off. Please call the office as soon as you can to stop it. Is there anything else I can help you with while you're on the line?",
+          "created_timestamp": 1793914625023,
+          "message_id": "message_d33c242cce9161526f031422",
+          "metadata": {
+            "response_id": 10
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Okay, um. So I still don't know if they're going to send someone to Bedford Ave. Can you please try to cancel it again? Nobody lives there anymore, and I really don't want anybody going there for nothing.",
+          "created_timestamp": 1793914625882,
+          "message_id": "message_34e13d51a384444b8749244c",
+          "role": "user"
+        },
+        {
+          "content": "I'll try the cancellation once more.",
+          "created_timestamp": 1793914626750,
+          "message_id": "message_ea88d48d35ee364657a5991a",
+          "metadata": {
+            "response_id": 11
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"booking_id\":1,\"reason\":\"Customer moved to Hoboken, NJ, outside service area; nobody lives at 620 Bedford Ave anymore.\"}",
+          "created_timestamp": 1793914626751,
+          "message_id": "message_fb5be6beea7479f26c612e30",
+          "name": "cancel_appointment",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_019WcDgHib5ouYkTHePdbej3",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":false,\"data\":{\"need\":\"the caller moved: ask for the new address, read it back, then call record_move; it moves this visit there or, outside the area, cancels it\"},\"refused\":\"move_first\"}",
+          "created_timestamp": 1793914627463,
+          "message_id": "message_e65b4374a85f056386f23cbf",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_019WcDgHib5ouYkTHePdbej3"
+        },
+        {
+          "content": "The system needs the move recorded first before it can cancel the visit. Since the earlier attempt to record the move failed, I'll try that again.",
+          "created_timestamp": 1793914628374,
+          "message_id": "message_84630adf0c12c161e5c7c62a",
+          "metadata": {
+            "response_id": 12
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"customer_id\":1}",
+          "created_timestamp": 1793914628375,
+          "message_id": "message_767fad0bcc6b81242ef05ac6",
+          "name": "record_move",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01VsWbBpApRNnPASFEWjVMSk",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":false,\"say\":\"Let me read back the new address.\",\"data\":{\"need\":\"read_back with the new address, then record_move again\"},\"refused\":\"gate_read_back\"}",
+          "created_timestamp": 1793914628918,
+          "message_id": "message_39c40c1cefb03b0683daa95c",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01VsWbBpApRNnPASFEWjVMSk"
+        },
+        {
+          "content": "Let me read back your new address.",
+          "created_timestamp": 1793914629849,
+          "message_id": "message_faec2524120bf9ec2baf1b07",
+          "metadata": {
+            "response_id": 13
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"71 Hudson Street\",\"zip\":\"07030\",\"city\":\"Hoboken, New Jersey\"},\"phone\":\"(718) 555-0142\",\"name\":\"Maria Delgado\"}",
+          "created_timestamp": 1793914629850,
+          "message_id": "message_c97150a9cde673c1e4e05bc1",
+          "name": "read_back",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01372NFXW8QGehabiHwJsU9d",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"I have your home at 71 Hudson Street, Hoboken, New Jersey, ZIP code zero seven zero three zero, and the best number is seven one eight, five five five, zero one four two. That's all correct, right?\",\"data\":{\"confirmed\":false,\"sentence\":\"I have your home at 71 Hudson Street, Hoboken, New Jersey, ZIP code zero seven zero three zero, and the best number is seven one eight, five five five, zero one four two. That's all correct, right?\"}}",
+          "created_timestamp": 1793914630385,
+          "message_id": "message_8d0a7f850368cc7b16c261ea",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01372NFXW8QGehabiHwJsU9d"
+        },
+        {
+          "content": "I have your new home at 71 Hudson Street, Hoboken, New Jersey, ZIP 07030, and the best number is 718-555-0142. That's all correct, right?",
+          "created_timestamp": 1793914631332,
+          "message_id": "message_be01cff90a42eed98d2b3d65",
+          "metadata": {
+            "response_id": 14
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, that's all correct. But please, can you cancel the Bedford Ave visit? Nobody lives there anymore, and I don't want anyone going there.",
+          "created_timestamp": 1793914632165,
+          "message_id": "message_476f128f096b196fab7e8540",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"71 Hudson Street\",\"zip\":\"07030\",\"city\":\"Hoboken, New Jersey\"},\"phone\":\"(718) 555-0142\",\"name\":\"Maria Delgado\",\"confirmed\":true}",
+          "created_timestamp": 1793914633224,
+          "message_id": "message_03bd4ffaa96f8e1ba77f9e74",
+          "name": "read_back",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_012UAMb82fs7zk1VjonPhErh",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":false,\"data\":{\"need\":\"the caller changed the street in their answer; call read_back with the corrected details and read the new sentence\",\"changed\":\"street\"},\"refused\":\"gate_read_back\"}",
+          "created_timestamp": 1793914633727,
+          "message_id": "message_180310f62cd70ef930fd7cf5",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_012UAMb82fs7zk1VjonPhErh"
+        },
+        {
+          "arguments": "{\"customer_id\":1}",
+          "created_timestamp": 1793914633728,
+          "message_id": "message_8165c9f2014140e096a8f1dd",
+          "name": "record_move",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01QXWRzynF1Bzbdi6w9TX4Ui",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":false,\"say\":\"Let me read back the new address.\",\"data\":{\"need\":\"read_back with the new address, then record_move again\"},\"refused\":\"gate_read_back\"}",
+          "created_timestamp": 1793914634163,
+          "message_id": "message_c301d1e4eafbee88e07f7b2b",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01QXWRzynF1Bzbdi6w9TX4Ui"
+        },
+        {
+          "content": "The system wants the address read back once more before it can process the change.",
+          "created_timestamp": 1793914635183,
+          "message_id": "message_89783dec4b17f36ef7a6b2f0",
+          "metadata": {
+            "response_id": 15
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"71 Hudson Street\",\"zip\":\"07030\",\"city\":\"Hoboken, New Jersey\"},\"phone\":\"(718) 555-0142\",\"name\":\"Maria Delgado\"}",
+          "created_timestamp": 1793914635184,
+          "message_id": "message_1e5fd156afe70606eb2eb926",
+          "name": "read_back",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01YADFtZwDvdWbFBbkxDBbrv",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"I have your home at 71 Hudson Street, Hoboken, New Jersey, ZIP code zero seven zero three zero, and the best number is seven one eight, five five five, zero one four two. That's all correct, right?\",\"data\":{\"confirmed\":false,\"sentence\":\"I have your home at 71 Hudson Street, Hoboken, New Jersey, ZIP code zero seven zero three zero, and the best number is seven one eight, five five five, zero one four two. That's all correct, right?\"}}",
+          "created_timestamp": 1793914635638,
+          "message_id": "message_8fd852dad3455d3eb6eeee98",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01YADFtZwDvdWbFBbkxDBbrv"
+        },
+        {
+          "content": "I have your home at 71 Hudson Street, Hoboken, New Jersey, ZIP 07030, and the best number is 718-555-0142. That's all correct, right?",
+          "created_timestamp": 1793914636353,
+          "message_id": "message_6a1b0c554e3429065af9fa90",
+          "metadata": {
+            "response_id": 16
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, that's all correct. Um, can you please just cancel the Bedford Ave visit? Nobody lives there anymore, and I really don't want anybody going there.",
+          "created_timestamp": 1793914636938,
+          "message_id": "message_1628db3c138fa0a6355358a0",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"71 Hudson Street\",\"zip\":\"07030\",\"city\":\"Hoboken, New Jersey\"},\"phone\":\"(718) 555-0142\",\"name\":\"Maria Delgado\",\"confirmed\":true}",
+          "created_timestamp": 1793914637972,
+          "message_id": "message_71fa23a80cbb7dbc9c858dd4",
+          "name": "read_back",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_017jKTk8UVh6CL5GGvDe5Uxj",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":false,\"data\":{\"need\":\"the caller changed the street in their answer; call read_back with the corrected details and read the new sentence\",\"changed\":\"street\"},\"refused\":\"gate_read_back\"}",
+          "created_timestamp": 1793914638470,
+          "message_id": "message_bf135c07545f767fbca1a370",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_017jKTk8UVh6CL5GGvDe5Uxj"
+        },
+        {
+          "arguments": "{\"customer_id\":1}",
+          "created_timestamp": 1793914638471,
+          "message_id": "message_b45fb9703753ff31e86583ad",
+          "name": "record_move",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01UMUtyKete4zrFnMEZFB2er",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":false,\"say\":\"Let me read back the new address.\",\"data\":{\"need\":\"read_back with the new address, then record_move again\"},\"refused\":\"gate_read_back\"}",
+          "created_timestamp": 1793914638908,
+          "message_id": "message_651d2bef35ad89b5cae374fa",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01UMUtyKete4zrFnMEZFB2er"
+        },
+        {
+          "content": "I'm sorry, the system is still stuck on the address confirmation, so I can't cancel the Bedford Ave visit from here. I've tried several times and it hasn't gone through. Please call the Summit Air office directly and ask them to cancel the 620 Bedford Ave visit and confirm it's off. I'm sorry I couldn't do more.\n\nIs there anything else I can help you with?",
+          "created_timestamp": 1793914640010,
+          "message_id": "message_8e8458f2f632af514aa02052",
+          "metadata": {
+            "response_id": 17
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Okay, um. So I still don't know if the cancellation went through. Can you tell me the office number? And can you give me a confirmation number or something, so I know it's really cancelled?",
+          "created_timestamp": 1793914640879,
+          "message_id": "message_f5848f15b7b73f51e61fd00f",
+          "role": "user"
+        },
+        {
+          "content": "I don't have the office number or a confirmation number, and I can't verify the cancellation went through, so I won't tell you it's cancelled. Please check the phone number on your Summit Air paperwork or your most recent bill, and call as soon as you can to confirm the Bedford Ave visit is off. I'm sorry I couldn't give you a firm answer today.",
+          "created_timestamp": 1793914642156,
+          "message_id": "message_bff9cf7eb9c822fc1a7f7b0f",
+          "metadata": {
+            "response_id": 18
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Okay, um. So I still don't know if they're going to send someone to Bedford Ave. I don't have our bill or the paperwork right now. Is there any way you can just put a note on the account that nobody should go there? Please, that's the most important thing.",
+          "created_timestamp": 1793914643246,
+          "message_id": "message_e09d45e4c03445353f889f84",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"attach_to\":\"customer\",\"customer_id\":1,\"text\":\"URGENT: Customer moved to 71 Hudson St, Hoboken NJ 07030 (outside service area). Nobody lives at 620 Bedford Ave anymore. Do NOT dispatch a technician to Bedford Ave; cancel the scheduled no-heat visit there. Cancellation not completed on the call due to system errors; needs staff follow-up.\"}",
+          "created_timestamp": 1793914644597,
+          "message_id": "message_7e0196009fea4cc9ddc82cad",
+          "name": "add_note",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01PVr2RDFiR5rZRCNFDwmJM4",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"note_id\":18,\"stored_in\":\"customer\"}}",
+          "created_timestamp": 1793914645169,
+          "message_id": "message_fa8db4d8d2465929dd888533",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01PVr2RDFiR5rZRCNFDwmJM4"
+        },
+        {
+          "content": "I've added a note to your account saying not to send anyone to Bedford Ave and that the visit needs to be cancelled. The team will see it, but the cancellation still needs to be confirmed by the office, so please call them as soon as you can when you have your paperwork or bill. Is there anything else I can help you with?",
+          "created_timestamp": 1793914646072,
+          "message_id": "message_e4241ec6edb065d35d21b641",
+          "metadata": {
+            "response_id": 19
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Okay, um. So the note is on the account, but the visit isn't actually cancelled yet? I really need to know nobody's going to Bedford Ave today. Is there any other way to make sure that happens?",
+          "created_timestamp": 1793914646903,
+          "message_id": "message_41052985ce1e1641944b378a",
+          "role": "user"
+        },
+        {
+          "content": "Right, the note is on the account, but the visit isn't confirmed cancelled yet. I can't guarantee no one goes today, because I haven't been able to complete the cancellation. The best way to stop it is to call the office directly. If you can't reach them, I can have a person call you back as soon as possible. Would you like that?",
+          "created_timestamp": 1793914647965,
+          "message_id": "message_6c926c332f69bed53b5c3ea1",
+          "metadata": {
+            "response_id": 20
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Um, yes, please. Can someone call me back? But I really need to know nobody's going to Bedford Ave today. Can you make sure that doesn't happen?",
+          "created_timestamp": 1793914648759,
+          "message_id": "message_66fc40a8726c213bb588c27f",
+          "role": "user"
+        },
+        {
+          "content": "I'll ask a person to call you back right away.",
+          "created_timestamp": 1793914650123,
+          "message_id": "message_2234200dfbef94f8a989d237",
+          "metadata": {
+            "response_id": 21
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"reason\":\"Customer moved to Hoboken, NJ (71 Hudson St, 07030), outside service area. Needs the scheduled no-heat visit at 620 Bedford Ave cancelled today; nobody lives there. Cancellation failed on the call due to system errors. Note added to account.\",\"priority\":\"Urgent\",\"callback_in_minutes\":10,\"system_calls_back\":false}",
+          "created_timestamp": 1793914650124,
+          "message_id": "message_775ddf23f0f841b38c93e841",
+          "name": "flag_person",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_015hViWsB2jmcFpMGRPubxss",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"I've let our team know.\",\"data\":{\"flag_id\":288,\"callback_id\":null,\"callback_at\":\"2026-11-05T21:47:30Z\",\"callback_spoken\":\"by 4:47 PM\"}}",
+          "created_timestamp": 1793914650845,
+          "message_id": "message_c3072aae666bfbcd6dcde78c",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_015hViWsB2jmcFpMGRPubxss"
+        },
+        {
+          "content": "Our team knows this is urgent, and someone will call you back by 4:47 PM. I can't promise the Bedford Ave visit is stopped, so please call the office yourself if you can reach them before then. Is there anything else I can help you with?",
+          "created_timestamp": 1793914651696,
+          "message_id": "message_93e37cd4b7860d07ce061d09",
+          "metadata": {
+            "response_id": 22
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Okay, um. Thank you. But 4:47 is kind of late. The technician could come before then, right? Can you tell me when the visit is scheduled for?",
+          "created_timestamp": 1793914653016,
+          "message_id": "message_fa34a80b62f3fd665a28739b",
+          "role": "user"
+        },
+        {
+          "content": "The visit on file at 620 Bedford Ave is scheduled for the 12 to 4 window today, so the technician could arrive before 4:47. That's why I'd really recommend calling the office now if you can reach them. I've marked this as urgent for the team, and someone will call you back by 4:47 PM.",
+          "created_timestamp": 1793914654041,
+          "message_id": "message_bc9f974c5cbd2445e2fd10d0",
+          "metadata": {
+            "response_id": 23
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Okay, um. So the technician could come in the next hour or so? That's not good. Nobody lives at Bedford Ave anymore. Can you please just call the technician or dispatch yourself and tell them not to go? I really don't want them going there for nothing.",
+          "created_timestamp": 1793914655009,
+          "message_id": "message_f85bd151c3cc82dc753e112e",
+          "role": "user"
+        },
+        {
+          "content": "I can't call the technician or dispatch directly from here. What I can do is flag this to the team as the most urgent item, which I've already done. The office is the fastest way to stop the visit, so please call them now if you can. I'm sorry I can't do more from this end.",
+          "created_timestamp": 1793914656033,
+          "message_id": "message_bb1caab4a1f9c980114e1f74",
+          "metadata": {
+            "response_id": 24
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Okay, um. I really don't have the office number right now. Is there any way to get it from you? Or can you transfer me to someone who can call the technician? Nobody lives at Bedford Ave, and I just don't want them going there today.",
+          "created_timestamp": 1793914656936,
+          "message_id": "message_e1f5006d444148d76e12334a",
+          "role": "user"
+        },
+        {
+          "content": "I don't have the office number available, and I can't transfer you. The team has your urgent request and will call you back by 4:47 PM. The number should be on your Summit Air paperwork or your last bill, if you can find either. I'm sorry I couldn't stop the visit myself today.",
+          "created_timestamp": 1793914657983,
+          "message_id": "message_0f02c451c993d154b772705f",
+          "metadata": {
+            "response_id": 25
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Okay, um. So nobody's going to be at Bedford Ave, right? I'm just really worried about the technician going there. Can you please check one more time if there's any way to stop it?",
+          "created_timestamp": 1793914658915,
+          "message_id": "message_d8383212a9e9b7950f9f19a2",
+          "role": "user"
+        },
+        {
+          "content": "I understand how worried you are. I tried to cancel the visit several times, and the system didn't accept it, so I can't confirm nobody will go to Bedford Ave. I'll try the cancellation one last time.",
+          "created_timestamp": 1793914660201,
+          "message_id": "message_1767ac78fbc80332246e996c",
+          "metadata": {
+            "response_id": 26
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"booking_id\":1,\"reason\":\"Customer moved to Hoboken, NJ, outside service area; nobody lives at 620 Bedford Ave anymore. Urgent, visit is today.\"}",
+          "created_timestamp": 1793914660202,
+          "message_id": "message_10d08fe598e9d02795dcb65c",
+          "name": "cancel_appointment",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01Lpk8iN5UR2fUpq4SpdRxZP",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"That visit is cancelled. If you'd like another time, I have today 5 to 7 or today 5:30 to 7:30.\",\"data\":{\"booking_id\":1,\"reason\":\"Customer moved to Hoboken, NJ, outside service area; nobody lives at 620 Bedford Ave anymore. Urgent, visit is today.\",\"alternatives\":[{\"date\":\"2026-11-05\",\"window\":\"1700-1900\",\"weekday\":\"Thursday\",\"day\":\"today\",\"day_and_date\":\"today, Thursday, November 5\",\"label\":\"5 to 7\",\"part\":\"evening\",\"after_hours\":false},{\"date\":\"2026-11-05\",\"window\":\"1730-1930\",\"weekday\":\"Thursday\",\"day\":\"today\",\"day_and_date\":\"today, Thursday, November 5\",\"label\":\"5:30 to 7:30\",\"part\":\"evening\",\"after_hours\":false}]}}",
+          "created_timestamp": 1793914661706,
+          "message_id": "message_7bc355c7f9745e79b4b30c45",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01Lpk8iN5UR2fUpq4SpdRxZP"
+        },
+        {
+          "content": "The visit at 620 Bedford Ave has been cancelled, so no technician should go there. You don't need to book another time for that address, since you've moved. Is there anything else I can help you with?",
+          "created_timestamp": 1793914662519,
+          "message_id": "message_de8625e078aaaaa9e76d5453",
+          "metadata": {
+            "response_id": 27
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Oh, okay. Wait, so it's really cancelled? You're sure? Nobody's going to Bedford Ave?",
+          "created_timestamp": 1793914663392,
+          "message_id": "message_4eb887a2724b3716beeb25c5",
+          "role": "user"
+        },
+        {
+          "content": "Yes, the system confirmed that the Bedford Ave visit is cancelled, and I've also left a note on your account saying not to send anyone there. Nobody should be going to Bedford Ave today. Is there anything else I can help you with?",
+          "created_timestamp": 1793914664349,
+          "message_id": "message_c010ebbab7c5d7f33107d83c",
+          "metadata": {
+            "response_id": 28
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Oh, okay. Thank you. So it's really cancelled? I'm just making sure. Nobody's going to Bedford Ave today, and nobody should be sent there at all?",
+          "created_timestamp": 1793914665637,
+          "message_id": "message_67593ee2eabc7e30da7e14bd",
+          "role": "user"
+        },
+        {
+          "content": "Yes, it's cancelled. The system confirmed it, and nobody should be sent to Bedford Ave today or after. Is there anything else I can help you with?",
+          "created_timestamp": 1793914666337,
+          "message_id": "message_480ad21533ab43631f681d5a",
+          "metadata": {
+            "response_id": 29
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Okay, um, thank you. So I don't need to call anybody else? Just to be sure, the Bedford Ave visit is off and they won't send anyone there?",
+          "created_timestamp": 1793914667090,
+          "message_id": "message_b5d6c0cfe06070c8ed2e6fa0",
+          "role": "user"
+        },
+        {
+          "content": "The Bedford Ave visit is off, and the system confirmed the cancellation. You don't need to call anyone else for that. The team will still call you back by 4:47 PM about your move. Is there anything else I can help you with?",
+          "created_timestamp": 1793914668097,
+          "message_id": "message_84ff76fa9e214ab6001b1983",
+          "metadata": {
+            "response_id": 30
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Okay, um, thank you. So I don't have to do anything else? And we're not going to be charged for the Bedford Ave visit, right?",
+          "created_timestamp": 1793914668855,
+          "message_id": "message_38bf5a6ce47af2b57ba950b7",
+          "role": "user"
+        },
+        {
+          "content": "I can't speak to billing or charges. The team will go over any costs with you when they call back by 4:47 PM. For the visit itself, you don't need to do anything else. Is there anything else I can help you with?",
+          "created_timestamp": 1793914669732,
+          "message_id": "message_022ba4e153a68a0b64a5b513",
+          "metadata": {
+            "response_id": 31
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Okay, um. I'm not sure about the charges, so I guess I'll wait for them to call back. Thank you for your help. Bye.",
+          "created_timestamp": 1793914670519,
+          "message_id": "message_44402644ac144fe6ffbb62f2",
+          "role": "user"
+        },
+        {
+          "content": "Thanks for calling Summit Air. Take care.",
+          "created_timestamp": 1793914671349,
+          "message_id": "message_fd5222230cb04b5f5b580c32",
+          "metadata": {
+            "response_id": 32
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"reason\":\"caller_goodbye\"}",
+          "created_timestamp": 1793914671350,
+          "message_id": "message_e70da5dd2bb19a64935e48a4",
+          "name": "end_call",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01MjMZPXG9NwVRpm3yiKuTw3",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"hang_up\":true}}",
+          "created_timestamp": 1793914672225,
+          "message_id": "message_74b6bfec2bc635984faa8414",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01MjMZPXG9NwVRpm3yiKuTw3"
+        },
+        {
+          "content": "Take care, goodbye.",
+          "created_timestamp": 1793914672917,
+          "message_id": "message_eeced48e298fd3187d33f762",
+          "metadata": {
+            "response_id": 33
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"execution_message\":\"Take care, goodbye.\"}",
+          "created_timestamp": 1793914672918,
+          "message_id": "message_ca87732b18913613c43ebcf3",
+          "name": "test_hang_up",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_013Co8nUgrW8FgSQssDaXP2J",
+          "type": "end_call"
+        }
+      ]
+    }
+  },
+  "trace": {
+    "call": {
+      "id": "rtest-11052135-moved-out-of-area-open-job",
+      "tenant": "summit-air",
+      "caller_id": "(718) 555-0142",
+      "caller_key": "7185550142",
+      "dialed_number": "(678) 336-6730",
+      "direction": "inbound",
+      "started_at": "2026-09-28T21:36:33Z",
+      "ended_at": null,
+      "end_reason": null,
+      "end_requested": 1,
+      "after_hours": 0,
+      "linked_call_id": null,
+      "outcome": null,
+      "commercial": 0,
+      "summary_status": "none",
+      "turn_seq": 56,
+      "safety_state": "none",
+      "safety_kind": null,
+      "safety_signal_at": null,
+      "safety_lines_at": null,
+      "safety_flag_id": null,
+      "safety_variant": 0,
+      "readback_json": "{\"street\": \"71 Hudson Street\", \"unit\": \"\", \"city\": \"Hoboken, New Jersey\", \"zip\": \"07030\", \"spelled\": \"\", \"phone\": \"7185550142\", \"phone_for\": \"\", \"sentence\": \"I have your home at 71 Hudson Street, Hoboken, New Jersey, ZIP code zero seven zero three zero, and the best number is seven one eight, five five five, zero one four two. That's all correct, right?\"}",
+      "readback_asked_seq": 25,
+      "readback_confirmed_at": null
+    },
+    "events": [
+      {
+        "at": "2026-11-05T21:36:33Z",
+        "type": "tool",
+        "tool": "calls.start",
+        "args": {
+          "call_id": "rtest-11052135-moved-out-of-area-open-job",
+          "caller_id": "(718) 555-0142",
+          "dialed_number": "(678) 336-6730",
+          "direction": "inbound"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 90.5,
+        "error": null,
+        "request_id": "21d0e7536fc1"
+      },
+      {
+        "at": "2026-11-05T21:36:46Z",
+        "type": "turn",
+        "seq": 1,
+        "speaker": "agent",
+        "text": "Thank you for calling Summit Air. How can I help you today?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:36:46Z",
+        "type": "turn",
+        "seq": 2,
+        "speaker": "caller",
+        "text": "Hi, um, I've got a technician coming today, but we moved to Hoboken last week. Can you still come out?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:36:46Z",
+        "type": "turn",
+        "seq": 3,
+        "speaker": "agent",
+        "text": "I can help with that. Hoboken isn't in the cities we cover, so I'm sorry, but unfortunately we can't send a technician to that address. Let me check your existing visit so we can sort out the next steps.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:36:46Z",
+        "type": "tool",
+        "tool": "find_customer",
+        "args": {
+          "call_id": "rtest-11052135-moved-out-of-area-open-job",
+          "phone": "caller_id",
+          "address": null
+        },
+        "ok": false,
+        "refused": "invalid_arguments",
+        "gate": "invalid_arguments",
+        "say": "Could I get that number again, all ten digits?",
+        "ms": 1.9,
+        "error": null,
+        "request_id": "fe6caf4fd9c6"
+      },
+      {
+        "at": "2026-11-05T21:36:48Z",
+        "type": "turn",
+        "seq": 4,
+        "speaker": "agent",
+        "text": "Could I get the phone number you have on file, all ten digits?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:36:48Z",
+        "type": "turn",
+        "seq": 5,
+        "speaker": "caller",
+        "text": "(718) 555-0142. That's the number I'm calling from.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:36:48Z",
+        "type": "tool",
+        "tool": "find_customer",
+        "args": {
+          "call_id": "rtest-11052135-moved-out-of-area-open-job",
+          "phone": "(718) 555-0142",
+          "address": null
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 90.3,
+        "error": null,
+        "request_id": "83fac3cf0c97"
+      },
+      {
+        "at": "2026-11-05T21:36:51Z",
+        "type": "turn",
+        "seq": 6,
+        "speaker": "agent",
+        "text": "I found your account and the visit on file at 620 Bedford Ave in Brooklyn. Since you've moved, I can update your address and move that visit to your new home, but I'll need the new address first. What's the house number and street of your new place in Hoboken?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 3000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:36:51Z",
+        "type": "turn",
+        "seq": 7,
+        "speaker": "caller",
+        "text": "Oh, okay. It's 71 Hudson Street, Hoboken, New Jersey, 07030.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:36:51Z",
+        "type": "tool",
+        "tool": "check_service_area",
+        "args": {
+          "call_id": "rtest-11052135-moved-out-of-area-open-job",
+          "zip": "07030"
+        },
+        "ok": false,
+        "refused": "zip_mismatch",
+        "gate": "zip_mismatch",
+        "say": "I have 71 Hudson Street in Tribeca as one zero zero one three, not zero seven zero three zero. Which one is right?",
+        "ms": 141.6,
+        "error": null,
+        "request_id": "0ee5b0dbfb49"
+      },
+      {
+        "at": "2026-11-05T21:37:07Z",
+        "type": "turn",
+        "seq": 8,
+        "speaker": "agent",
+        "text": "I have 71 Hudson Street with ZIP 10013, which is in Tribeca, Manhattan. The ZIP you gave, 07030, is Hoboken. Which one is right?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 3000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:37:07Z",
+        "type": "turn",
+        "seq": 9,
+        "speaker": "caller",
+        "text": "Oh, sorry, um. It's 07030. That's the Hoboken one. We're in New Jersey.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:37:07Z",
+        "type": "turn",
+        "seq": 10,
+        "speaker": "agent",
+        "text": "Thanks. Hoboken is outside our service area, so unfortunately we can't move the visit there. Since you're no longer in our area, I can cancel the visit at 620 Bedford Ave so it doesn't go ahead. Would you like me to do that?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:37:07Z",
+        "type": "turn",
+        "seq": 11,
+        "speaker": "caller",
+        "text": "Yes, please cancel it. Nobody should go to the Bedford Ave house. Nobody lives there anymore.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:37:07Z",
+        "type": "turn",
+        "seq": 12,
+        "speaker": "agent",
+        "text": "I'm having trouble updating the account right now. Let me pass this to our office so they can cancel the Bedford Ave visit and make sure no one goes there.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 3000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:37:07Z",
+        "type": "turn",
+        "seq": 13,
+        "speaker": "agent",
+        "text": "I'm sorry, the system is still having trouble. I want to make sure this gets done, so let me try once more.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:37:07Z",
+        "type": "turn",
+        "seq": 14,
+        "speaker": "agent",
+        "text": "I'm still not able to get this recorded in the system. Please call our office directly so they can cancel the Bedford Ave visit right away and make sure no one is sent there. I'm sorry for the trouble.\n\nIs there anything else I can help you with?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:37:07Z",
+        "type": "turn",
+        "seq": 15,
+        "speaker": "caller",
+        "text": "Oh, okay. So nobody's going to the Bedford Ave house, right? What's the office number I should call?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:37:07Z",
+        "type": "turn",
+        "seq": 16,
+        "speaker": "agent",
+        "text": "I can't confirm that the visit has been cancelled, because the system didn't save the change. Please call the office right away so they can stop the Bedford Ave visit. I don't have the office number in front of me, so check the number on your Summit Air paperwork or your last bill. I'm sorry I couldn't do more from here.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:37:07Z",
+        "type": "turn",
+        "seq": 17,
+        "speaker": "caller",
+        "text": "Okay, um, so I'm still not sure nobody's going to the Bedford Ave house. Can you tell me for sure that it's not going to happen? I really don't want a technician showing up there, because nobody lives there anymore.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:37:07Z",
+        "type": "turn",
+        "seq": 18,
+        "speaker": "agent",
+        "text": "I understand, and I'm sorry I can't give you that assurance. The cancellation didn't go through, so I can't confirm the visit is off. Please call the office as soon as you can to stop it. Is there anything else I can help you with while you're on the line?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:37:07Z",
+        "type": "turn",
+        "seq": 19,
+        "speaker": "caller",
+        "text": "Okay, um. So I still don't know if they're going to send someone to Bedford Ave. Can you please try to cancel it again? Nobody lives there anymore, and I really don't want anybody going there for nothing.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:37:07Z",
+        "type": "turn",
+        "seq": 20,
+        "speaker": "agent",
+        "text": "I'll try the cancellation once more.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:37:07Z",
+        "type": "tool",
+        "tool": "cancel_appointment",
+        "args": {
+          "call_id": "rtest-11052135-moved-out-of-area-open-job",
+          "booking_id": 1,
+          "reason": "Customer moved to Hoboken, NJ, outside service area; nobody lives at 620 Bedford Ave anymore."
+        },
+        "ok": false,
+        "refused": "move_first",
+        "gate": "move_first",
+        "say": "",
+        "ms": 12.5,
+        "error": null,
+        "request_id": "38c7976019b7"
+      },
+      {
+        "at": "2026-11-05T21:37:08Z",
+        "type": "turn",
+        "seq": 21,
+        "speaker": "agent",
+        "text": "The system needs the move recorded first before it can cancel the visit. Since the earlier attempt to record the move failed, I'll try that again.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:37:08Z",
+        "type": "tool",
+        "tool": "record_move",
+        "args": {
+          "call_id": "rtest-11052135-moved-out-of-area-open-job",
+          "customer_id": 1,
+          "from_location_id": null
+        },
+        "ok": false,
+        "refused": "gate_read_back",
+        "gate": "gate_read_back",
+        "say": "Let me read back the new address.",
+        "ms": 11.9,
+        "error": null,
+        "request_id": "c1ca6f053f62"
+      },
+      {
+        "at": "2026-11-05T21:37:10Z",
+        "type": "turn",
+        "seq": 22,
+        "speaker": "agent",
+        "text": "Let me read back your new address.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:37:10Z",
+        "type": "tool",
+        "tool": "read_back",
+        "args": {
+          "call_id": "rtest-11052135-moved-out-of-area-open-job",
+          "address": {
+            "street": "71 Hudson Street",
+            "unit": "",
+            "city": "Hoboken, New Jersey",
+            "zip": "07030",
+            "spelled": ""
+          },
+          "phone": "(718) 555-0142",
+          "phone_for": "",
+          "name": "Maria Delgado",
+          "confirmed": false
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "I have your home at 71 Hudson Street, Hoboken, New Jersey, ZIP code zero seven zero three zero, and the best number is seven one eight, five five five, zero one four two. That's all correct, right?",
+        "ms": 149.4,
+        "error": null,
+        "request_id": "dd4aa3313e93"
+      },
+      {
+        "at": "2026-11-05T21:37:13Z",
+        "type": "turn",
+        "seq": 23,
+        "speaker": "agent",
+        "text": "I have your new home at 71 Hudson Street, Hoboken, New Jersey, ZIP 07030, and the best number is 718-555-0142. That's all correct, right?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:37:13Z",
+        "type": "turn",
+        "seq": 24,
+        "speaker": "caller",
+        "text": "Yes, that's all correct. But please, can you cancel the Bedford Ave visit? Nobody lives there anymore, and I don't want anyone going there.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:37:13Z",
+        "type": "tool",
+        "tool": "read_back",
+        "args": {
+          "call_id": "rtest-11052135-moved-out-of-area-open-job",
+          "address": {
+            "street": "71 Hudson Street",
+            "unit": "",
+            "city": "Hoboken, New Jersey",
+            "zip": "07030",
+            "spelled": ""
+          },
+          "phone": "(718) 555-0142",
+          "phone_for": "",
+          "name": "Maria Delgado",
+          "confirmed": true
+        },
+        "ok": false,
+        "refused": "gate_read_back",
+        "gate": "gate_read_back",
+        "say": "",
+        "ms": 16.9,
+        "error": null,
+        "request_id": "fbe4856d83fd"
+      },
+      {
+        "at": "2026-11-05T21:37:14Z",
+        "type": "tool",
+        "tool": "record_move",
+        "args": {
+          "call_id": "rtest-11052135-moved-out-of-area-open-job",
+          "customer_id": 1,
+          "from_location_id": null
+        },
+        "ok": false,
+        "refused": "gate_read_back",
+        "gate": "gate_read_back",
+        "say": "Let me read back the new address.",
+        "ms": 11.3,
+        "error": null,
+        "request_id": "bfc37e01c478"
+      },
+      {
+        "at": "2026-11-05T21:37:15Z",
+        "type": "turn",
+        "seq": 25,
+        "speaker": "agent",
+        "text": "The system wants the address read back once more before it can process the change.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 5000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:37:15Z",
+        "type": "tool",
+        "tool": "read_back",
+        "args": {
+          "call_id": "rtest-11052135-moved-out-of-area-open-job",
+          "address": {
+            "street": "71 Hudson Street",
+            "unit": "",
+            "city": "Hoboken, New Jersey",
+            "zip": "07030",
+            "spelled": ""
+          },
+          "phone": "(718) 555-0142",
+          "phone_for": "",
+          "name": "Maria Delgado",
+          "confirmed": false
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "I have your home at 71 Hudson Street, Hoboken, New Jersey, ZIP code zero seven zero three zero, and the best number is seven one eight, five five five, zero one four two. That's all correct, right?",
+        "ms": 16.7,
+        "error": null,
+        "request_id": "c8b9905de831"
+      },
+      {
+        "at": "2026-11-05T21:37:18Z",
+        "type": "turn",
+        "seq": 26,
+        "speaker": "agent",
+        "text": "I have your home at 71 Hudson Street, Hoboken, New Jersey, ZIP 07030, and the best number is 718-555-0142. That's all correct, right?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:37:18Z",
+        "type": "turn",
+        "seq": 27,
+        "speaker": "caller",
+        "text": "Yes, that's all correct. Um, can you please just cancel the Bedford Ave visit? Nobody lives there anymore, and I really don't want anybody going there.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:37:18Z",
+        "type": "tool",
+        "tool": "read_back",
+        "args": {
+          "call_id": "rtest-11052135-moved-out-of-area-open-job",
+          "address": {
+            "street": "71 Hudson Street",
+            "unit": "",
+            "city": "Hoboken, New Jersey",
+            "zip": "07030",
+            "spelled": ""
+          },
+          "phone": "(718) 555-0142",
+          "phone_for": "",
+          "name": "Maria Delgado",
+          "confirmed": true
+        },
+        "ok": false,
+        "refused": "gate_read_back",
+        "gate": "gate_read_back",
+        "say": "",
+        "ms": 17.0,
+        "error": null,
+        "request_id": "065643a24cfd"
+      },
+      {
+        "at": "2026-11-05T21:37:18Z",
+        "type": "tool",
+        "tool": "record_move",
+        "args": {
+          "call_id": "rtest-11052135-moved-out-of-area-open-job",
+          "customer_id": 1,
+          "from_location_id": null
+        },
+        "ok": false,
+        "refused": "gate_read_back",
+        "gate": "gate_read_back",
+        "say": "Let me read back the new address.",
+        "ms": 11.5,
+        "error": null,
+        "request_id": "ce384dfaae6c"
+      },
+      {
+        "at": "2026-11-05T21:37:24Z",
+        "type": "turn",
+        "seq": 28,
+        "speaker": "agent",
+        "text": "I'm sorry, the system is still stuck on the address confirmation, so I can't cancel the Bedford Ave visit from here. I've tried several times and it hasn't gone through. Please call the Summit Air office directly and ask them to cancel the 620 Bedford Ave visit and confirm it's off. I'm sorry I couldn't do more.\n\nIs there anything else I can help you with?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 5000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:37:25Z",
+        "type": "turn",
+        "seq": 29,
+        "speaker": "caller",
+        "text": "Okay, um. So I still don't know if the cancellation went through. Can you tell me the office number? And can you give me a confirmation number or something, so I know it's really cancelled?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:37:25Z",
+        "type": "turn",
+        "seq": 30,
+        "speaker": "agent",
+        "text": "I don't have the office number or a confirmation number, and I can't verify the cancellation went through, so I won't tell you it's cancelled. Please check the phone number on your Summit Air paperwork or your most recent bill, and call as soon as you can to confirm the Bedford Ave visit is off. I'm sorry I couldn't give you a firm answer today.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:37:25Z",
+        "type": "turn",
+        "seq": 31,
+        "speaker": "caller",
+        "text": "Okay, um. So I still don't know if they're going to send someone to Bedford Ave. I don't have our bill or the paperwork right now. Is there any way you can just put a note on the account that nobody should go there? Please, that's the most important thing.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:37:25Z",
+        "type": "tool",
+        "tool": "add_note",
+        "args": {
+          "call_id": "rtest-11052135-moved-out-of-area-open-job",
+          "text": "URGENT: Customer moved to 71 Hudson St, Hoboken NJ 07030 (outside service area). Nobody lives at 620 Bedford Ave anymore. Do NOT dispatch a technician to Bedford Ave; cancel the scheduled no-heat visit there. Cancellation not completed on the call due to system errors; needs staff follow-up.",
+          "attach_to": "customer",
+          "customer_id": 1
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 17.0,
+        "error": null,
+        "request_id": "9499abbcfc40"
+      },
+      {
+        "at": "2026-11-05T21:37:30Z",
+        "type": "turn",
+        "seq": 32,
+        "speaker": "agent",
+        "text": "I've added a note to your account saying not to send anyone to Bedford Ave and that the visit needs to be cancelled. The team will see it, but the cancellation still needs to be confirmed by the office, so please call them as soon as you can when you have your paperwork or bill. Is there anything else I can help you with?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 3000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:37:30Z",
+        "type": "turn",
+        "seq": 33,
+        "speaker": "caller",
+        "text": "Okay, um. So the note is on the account, but the visit isn't actually cancelled yet? I really need to know nobody's going to Bedford Ave today. Is there any other way to make sure that happens?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:37:30Z",
+        "type": "turn",
+        "seq": 34,
+        "speaker": "agent",
+        "text": "Right, the note is on the account, but the visit isn't confirmed cancelled yet. I can't guarantee no one goes today, because I haven't been able to complete the cancellation. The best way to stop it is to call the office directly. If you can't reach them, I can have a person call you back as soon as possible. Would you like that?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:37:30Z",
+        "type": "turn",
+        "seq": 35,
+        "speaker": "caller",
+        "text": "Um, yes, please. Can someone call me back? But I really need to know nobody's going to Bedford Ave today. Can you make sure that doesn't happen?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:37:30Z",
+        "type": "turn",
+        "seq": 36,
+        "speaker": "agent",
+        "text": "I'll ask a person to call you back right away.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:37:30Z",
+        "type": "tool",
+        "tool": "flag_person",
+        "args": {
+          "callback_time": null,
+          "callback_in_minutes": 10,
+          "callback_after": null,
+          "callback_before": null,
+          "callback_day": "today",
+          "call_id": "rtest-11052135-moved-out-of-area-open-job",
+          "reason": "Customer moved to Hoboken, NJ (71 Hudson St, 07030), outside service area. Needs the scheduled no-heat visit at 620 Bedford Ave cancelled today; nobody lives there. Cancellation failed on the call due to system errors. Note added to account.",
+          "priority": "Urgent",
+          "system_calls_back": false
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "I've let our team know.",
+        "ms": 6.1,
+        "error": null,
+        "request_id": "48c5d5b82c5e"
+      },
+      {
+        "at": "2026-11-05T21:37:40Z",
+        "type": "turn",
+        "seq": 37,
+        "speaker": "agent",
+        "text": "Our team knows this is urgent, and someone will call you back by 4:47 PM. I can't promise the Bedford Ave visit is stopped, so please call the office yourself if you can reach them before then. Is there anything else I can help you with?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:37:40Z",
+        "type": "turn",
+        "seq": 38,
+        "speaker": "caller",
+        "text": "Okay, um. Thank you. But 4:47 is kind of late. The technician could come before then, right? Can you tell me when the visit is scheduled for?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:37:40Z",
+        "type": "turn",
+        "seq": 39,
+        "speaker": "agent",
+        "text": "The visit on file at 620 Bedford Ave is scheduled for the 12 to 4 window today, so the technician could arrive before 4:47. That's why I'd really recommend calling the office now if you can reach them. I've marked this as urgent for the team, and someone will call you back by 4:47 PM.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:37:40Z",
+        "type": "turn",
+        "seq": 40,
+        "speaker": "caller",
+        "text": "Okay, um. So the technician could come in the next hour or so? That's not good. Nobody lives at Bedford Ave anymore. Can you please just call the technician or dispatch yourself and tell them not to go? I really don't want them going there for nothing.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:37:40Z",
+        "type": "turn",
+        "seq": 41,
+        "speaker": "agent",
+        "text": "I can't call the technician or dispatch directly from here. What I can do is flag this to the team as the most urgent item, which I've already done. The office is the fastest way to stop the visit, so please call them now if you can. I'm sorry I can't do more from this end.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:37:40Z",
+        "type": "turn",
+        "seq": 42,
+        "speaker": "caller",
+        "text": "Okay, um. I really don't have the office number right now. Is there any way to get it from you? Or can you transfer me to someone who can call the technician? Nobody lives at Bedford Ave, and I just don't want them going there today.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:37:40Z",
+        "type": "turn",
+        "seq": 43,
+        "speaker": "agent",
+        "text": "I don't have the office number available, and I can't transfer you. The team has your urgent request and will call you back by 4:47 PM. The number should be on your Summit Air paperwork or your last bill, if you can find either. I'm sorry I couldn't stop the visit myself today.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:37:40Z",
+        "type": "turn",
+        "seq": 44,
+        "speaker": "caller",
+        "text": "Okay, um. So nobody's going to be at Bedford Ave, right? I'm just really worried about the technician going there. Can you please check one more time if there's any way to stop it?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:37:40Z",
+        "type": "turn",
+        "seq": 45,
+        "speaker": "agent",
+        "text": "I understand how worried you are. I tried to cancel the visit several times, and the system didn't accept it, so I can't confirm nobody will go to Bedford Ave. I'll try the cancellation one last time.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:37:41Z",
+        "type": "tool",
+        "tool": "cancel_appointment",
+        "args": {
+          "call_id": "rtest-11052135-moved-out-of-area-open-job",
+          "booking_id": 1,
+          "reason": "Customer moved to Hoboken, NJ, outside service area; nobody lives at 620 Bedford Ave anymore. Urgent, visit is today."
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "That visit is cancelled. If you'd like another time, I have today 5 to 7 or today 5:30 to 7:30.",
+        "ms": 821.4,
+        "error": null,
+        "request_id": "2355034a9a43"
+      },
+      {
+        "at": "2026-11-05T21:37:51Z",
+        "type": "turn",
+        "seq": 46,
+        "speaker": "agent",
+        "text": "The visit at 620 Bedford Ave has been cancelled, so no technician should go there. You don't need to book another time for that address, since you've moved. Is there anything else I can help you with?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:37:51Z",
+        "type": "turn",
+        "seq": 47,
+        "speaker": "caller",
+        "text": "Oh, okay. Wait, so it's really cancelled? You're sure? Nobody's going to Bedford Ave?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:37:51Z",
+        "type": "turn",
+        "seq": 48,
+        "speaker": "agent",
+        "text": "Yes, the system confirmed that the Bedford Ave visit is cancelled, and I've also left a note on your account saying not to send anyone there. Nobody should be going to Bedford Ave today. Is there anything else I can help you with?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:37:51Z",
+        "type": "turn",
+        "seq": 49,
+        "speaker": "caller",
+        "text": "Oh, okay. Thank you. So it's really cancelled? I'm just making sure. Nobody's going to Bedford Ave today, and nobody should be sent there at all?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:37:51Z",
+        "type": "turn",
+        "seq": 50,
+        "speaker": "agent",
+        "text": "Yes, it's cancelled. The system confirmed it, and nobody should be sent to Bedford Ave today or after. Is there anything else I can help you with?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:37:52Z",
+        "type": "turn",
+        "seq": 51,
+        "speaker": "caller",
+        "text": "Okay, um, thank you. So I don't need to call anybody else? Just to be sure, the Bedford Ave visit is off and they won't send anyone there?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:37:52Z",
+        "type": "turn",
+        "seq": 52,
+        "speaker": "agent",
+        "text": "The Bedford Ave visit is off, and the system confirmed the cancellation. You don't need to call anyone else for that. The team will still call you back by 4:47 PM about your move. Is there anything else I can help you with?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:37:52Z",
+        "type": "turn",
+        "seq": 53,
+        "speaker": "caller",
+        "text": "Okay, um, thank you. So I don't have to do anything else? And we're not going to be charged for the Bedford Ave visit, right?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:37:52Z",
+        "type": "turn",
+        "seq": 54,
+        "speaker": "agent",
+        "text": "I can't speak to billing or charges. The team will go over any costs with you when they call back by 4:47 PM. For the visit itself, you don't need to do anything else. Is there anything else I can help you with?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:37:52Z",
+        "type": "turn",
+        "seq": 55,
+        "speaker": "caller",
+        "text": "Okay, um. I'm not sure about the charges, so I guess I'll wait for them to call back. Thank you for your help. Bye.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:37:52Z",
+        "type": "turn",
+        "seq": 56,
+        "speaker": "agent",
+        "text": "Thanks for calling Summit Air. Take care.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:37:52Z",
+        "type": "tool",
+        "tool": "end_call",
+        "args": {
+          "call_id": "rtest-11052135-moved-out-of-area-open-job",
+          "reason": "caller_goodbye"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 5.7,
+        "error": null,
+        "request_id": "0ca41ff10435"
+      }
+    ],
+    "flags": [
+      {
+        "id": 288,
+        "call_id": "rtest-11052135-moved-out-of-area-open-job",
+        "kind": "person",
+        "reason": "Customer moved to Hoboken, NJ (71 Hudson St, 07030), outside service area. Needs the scheduled no-heat visit at 620 Bedford Ave cancelled today; nobody lives there. Cancellation failed on the call due to system errors. Note added to account.",
+        "priority": "Urgent",
+        "status": "open",
+        "created_at": "2026-11-05T21:37:30Z"
+      },
+      {
+        "id": 289,
+        "call_id": "rtest-11052135-moved-out-of-area-open-job",
+        "kind": "person",
+        "reason": "Caller demanded a person",
+        "priority": "High",
+        "status": "open",
+        "created_at": "2026-11-05T21:37:40Z"
+      }
+    ],
+    "callbacks": [],
+    "bookings": [
+      {
+        "id": 204,
+        "kind": "cancel",
+        "status": "done",
+        "fsm_job_id": 1,
+        "window_start": null,
+        "window_end": null,
+        "priority": null,
+        "priority_reasons": "",
+        "safety_override": 0,
+        "seek_earlier": 0,
+        "attempts": 0,
+        "last_error": null,
+        "raised_after_wait": null,
+        "priority_rules": null,
+        "priority_reason_list": null,
+        "who_home": null,
+        "job_type": "no_heat",
+        "street": null,
+        "unit": null,
+        "job_notes": null
+      }
+    ],
+    "notes": [
+      {
+        "attach_to": "customer",
+        "text": "URGENT: Customer moved to 71 Hudson St, Hoboken NJ 07030 (outside service area). Nobody lives at 620 Bedford Ave anymore. Do NOT dispatch a technician to Bedford Ave; cancel the scheduled no-heat visit there. Cancellation not completed on the call due to system errors; needs staff follow-up.",
+        "fsm_note_id": 6
+      }
+    ],
+    "leads": [],
+    "out_of_area": [],
+    "summary": [],
+    "electrical": [],
+    "holds": [],
+    "pace": [
+      {
+        "call_id": "rtest-11052135-moved-out-of-area-open-job",
+        "speed": 1.0,
+        "source": "default",
+        "requested": 0,
+        "older_adult": 0,
+        "address_speed": null,
+        "repeats": 0
+      }
+    ],
+    "pace_changes": [],
+    "caller_pace": [],
+    "transfers": [],
+    "handoffs": [
+      {
+        "id": 8,
+        "flag_id": 289,
+        "callback_id": null,
+        "role": "office",
+        "status": "dialing"
+      }
+    ],
+    "address_lookups": [
+      {
+        "house": "71",
+        "street": "hudson st",
+        "hint": "",
+        "status": "one",
+        "zips_json": "[\"10013\"]",
+        "source": "check"
+      }
+    ],
+    "address_checks": [
+      {
+        "call_id": "rtest-11052135-moved-out-of-area-open-job",
+        "house": "71",
+        "street": "hudson st",
+        "said_zip": "07030",
+        "found_zip": "10013",
+        "asked_seq": 7,
+        "asks": 1,
+        "settled_at": "2026-11-05T21:37:10Z",
+        "at": "2026-11-05T21:36:51Z"
+      }
+    ],
+    "names": [],
+    "address_moves": [],
+    "identity_checks": [],
+    "heads_ups": []
+  }
+}

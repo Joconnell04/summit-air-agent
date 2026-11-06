@@ -325,12 +325,25 @@ def test_an_estimate_visit_books_with_no_approver_or_repair_questions(agent):
 
 def test_a_repair_visit_still_needs_its_intake(agent):
     call = ready_to_book(agent)
-    slot = first_open(agent, call)
-    refused = agent.tool("book_appointment", call, job_type="tune_up", slot=slot,
-                         details={"issue": "Yearly tune-up", "name": "Pat Rivera"})
+    slot = first_open(agent, call, "no_heat")
+    refused = agent.tool("book_appointment", call, job_type="no_heat", slot=slot,
+                         details={"issue": "No heat", "name": "Pat Rivera"})
     assert refused["refused"] == "invalid_arguments"
     assert set(refused["data"]["errors"]) == {"since", "tried", "who_home", "approver"}
     assert refused["say"] == ""
+
+
+def test_a_tune_up_asks_nothing_about_a_fault(agent):
+    """Done-bar persona i: the server-led flow never asks a tune-up since when or what was tried,
+    and the booking was refused for missing both."""
+    call = ready_to_book(agent)
+    slot = first_open(agent, call)
+    refused = agent.tool("book_appointment", call, job_type="tune_up", slot=slot,
+                         details={"issue": "Yearly tune-up", "name": "Pat Rivera"})
+    assert set(refused["data"]["errors"]) == {"who_home", "approver"}
+    booked = agent.tool("book_appointment", call, job_type="tune_up", slot=slot, details={
+        "issue": "Yearly tune-up", "name": "Pat Rivera", "who_home": "Pat", "approver": "Pat"})
+    assert booked["ok"], booked
 
 
 def test_getting_in_is_one_question(agent):

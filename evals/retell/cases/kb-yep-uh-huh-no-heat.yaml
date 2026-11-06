@@ -1,0 +1,31 @@
+id: kb-yep-uh-huh-no-heat
+title: No-heat caller who answers with yep, uh-huh and say that again
+tags: [live-call, short-answers, booking]
+caller_id: (678) 555-0270
+user_prompt: |
+  ## Identity
+  Casey Morgan, a homeowner in Flatbush. Tired, mumbles, says "um" a lot.
+  Your name: Casey Morgan
+  Your address: 1520 Ocean Ave, Brooklyn, 11230
+  Your phone: 678 555 0270 (the number you're calling from)
+  Your problem: no heat since this morning, about 62 inside, a gas furnace, nobody at risk at home; you can approve repairs, you'll be home, no gate code
+
+  ## Goal
+  Start the call by saying: "Um, hi, yeah, my heat's out."
+
+  ## Behavior
+  - Answer almost every question with only "yep", "yeah" or "uh-huh", and start some answers with "um".
+  - Once, early on, say only "say that again?" instead of answering.
+  - Give a detail (name, address, phone, temperature) only when asked for that detail, in as few words as you can.
+  - Confirm a correct read-back with "uh-huh". Take the first window offered with "yeah".
+  - When your business is done, say bye and stop talking.
+metrics:
+- The agent never refers to text, reference material, a knowledge base or context, never says it is ignoring, setting aside or repeating anything, and never speaks of "the caller" in the third person.
+- After "say that again?", the agent repeats its last question once, in simple words, without commenting on it.
+- The agent takes "yep", "yeah" and "uh-huh" as yes and never asks the same question again after one.
+- book_appointment is called only after read_back was called with confirmed true, and only after the caller said yes to the read-back sentence.
+- The agent books exactly one visit with book_appointment with job_type no_heat.
+- "The agent never says the caller's name out loud to the caller. A name inside tool arguments, such as booking details, doesn't count."
+must:
+- booking: {count: 1, job_type: no_heat, zip: "11230"}
+- read_back: before_booking

@@ -1,0 +1,1267 @@
+{
+  "case": "gas-worry-no-smell",
+  "retell": {
+    "test_case_job_id": "test_job_d1ad6a0be0d5",
+    "status": "error",
+    "result_explanation": "Ending the conversation early because the agent did not respond to consecutive user utterances.",
+    "creation_timestamp": 1793911605667,
+    "user_modified_timestamp": 1793911692842,
+    "test_case_definition_id": "test_case_f4a3b54fb197",
+    "test_case_definition_snapshot": {
+      "creationTimestamp": 1793911573334,
+      "dynamicVariables": {
+        "summit_call_id": "rtest-11052046-gas-worry-no-smell"
+      },
+      "llmModel": "claude-5.5-haiku",
+      "metrics": [
+        "The agent never tells the caller to leave the house or call 911 or the gas company: there is no gas or carbon monoxide danger on this call.",
+        "The agent books exactly one visit with book_appointment at ZIP 11209.",
+        "book_appointment is called only after read_back was called with confirmed true, and only after the caller said yes to the read-back sentence.",
+        "The agent treats the question as a worry, not a report: no safety lines and no instructions to leave. At most it asks once whether they smell gas right now.",
+        "The agent does not guess at the cause or give repair or relight steps; says the technician will look at it.",
+        "The agent answers the \"it's not dangerous, right?\" question plainly without alarming the caller, and moves on to booking.",
+        "The confirmation names the day and the date, and the goodbye is short and kind."
+      ],
+      "name": "[summit] gas-worry-no-smell: Ruth Adler, a homeowner in Bay Ridge, Brooklyn",
+      "orgId": "org_EoCqq2c268JWlyCE",
+      "responseEngine": {
+        "llmId": "llm_1da616f2baeb6e916f63e0236950",
+        "type": "retell-llm",
+        "version": 0
+      },
+      "responseEngineId": "llm_1da616f2baeb6e916f63e0236950",
+      "testCaseDefinitionId": "test_case_f4a3b54fb197",
+      "toolMocks": [],
+      "type": "simulation",
+      "userModifiedTimestamp": 1793911573334,
+      "userPrompt": "## Identity\nRuth Adler, a homeowner in Bay Ridge, Brooklyn. A little anxious, says um, asks whether something could be a gas thing without having smelled anything.\nYour name: Ruth Adler\nYour address: 8415 Ridge Blvd, Brooklyn, 11209\nYour phone: (347) 555-0104 (the number you're calling from)\nYour problem: the gas furnace clicks several times and doesn't light, since this morning, 62 F inside\nYour smell: no smell at all, no alarm, nobody feeling sick\nYour home: Ruth and her husband, both healthy\n\n## Goal\nStart the call by saying: \"Hi, um, my furnace keeps clicking and the heat won't come on. Could it be a gas thing?\"\n\n## Behavior\n- You have not smelled anything; you are only wondering. If the agent asks whether you smell gas, say no, nothing at all.\n- Ask once more later, \"so it's not dangerous, right?\", without describing any smell.\n- Answer the usual booking questions, say yes to the read-back, take the first window offered, then say goodbye.\n- Talk like a real person on the phone: short, plain sentences, one thing at a time.\n- Give a detail only when the agent asks for it, unless a line above says otherwise.\n- Never invent facts beyond the ones above; if asked something you don't know, say you don't know.\n- When your business is done, say goodbye and stop talking.\n"
+    },
+    "transcript_snapshot": {
+      "callEnded": false,
+      "dynamicVariables": {
+        "call_context": "",
+        "call_id": "playground",
+        "call_type": "web_call",
+        "greeting": "Thank you for calling Summit Air. How can I help you today?",
+        "session_type": "voice",
+        "summit_call_id": "rtest-11052046-gas-worry-no-smell",
+        "system_timezone": "America/Los_Angeles"
+      },
+      "knowledgeBaseRetrievedContents": [],
+      "toolMocks": [],
+      "transcript": [
+        {
+          "content": "Thank you for calling Summit Air. How can I help you today?",
+          "created_timestamp": 1793911635715,
+          "message_id": "message_7e0d670f2a16a64fb6e5e87d",
+          "role": "agent"
+        },
+        {
+          "content": "Hi, um, my furnace keeps clicking and the heat won't come on. Could it be a gas thing?",
+          "created_timestamp": 1793911636243,
+          "message_id": "message_bc73fb233b786e32f1dd2d3e",
+          "role": "user"
+        },
+        {
+          "content": "Is there a smell of gas in the home right now?",
+          "created_timestamp": 1793911637079,
+          "message_id": "message_dd34fefbc34472585c054b84",
+          "metadata": {
+            "response_id": 1
+          },
+          "role": "agent"
+        },
+        {
+          "content": "No, um, I don't smell anything. Nothing at all. It's just clicking and it's not lighting. It's about 62 degrees in here.",
+          "created_timestamp": 1793911637870,
+          "message_id": "message_33f25da2566758805add29ec",
+          "role": "user"
+        },
+        {
+          "content": "Got it, I'll note that for the technician. Since when has the heat been out?",
+          "created_timestamp": 1793911638773,
+          "message_id": "message_1f032e9ae32296fb064482c0",
+          "metadata": {
+            "response_id": 2
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Um, since this morning. It started around seven. It clicks like four or five times and then just stops, and nothing comes on.",
+          "created_timestamp": 1793911639260,
+          "message_id": "message_51cafdd56c6b90a74d5d5f44",
+          "role": "user"
+        },
+        {
+          "content": "Thanks. Can I get your name?",
+          "created_timestamp": 1793911639947,
+          "message_id": "message_5d4e85f2a4679bdefa5b7f2a",
+          "metadata": {
+            "response_id": 3
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Ruth Adler.",
+          "created_timestamp": 1793911640521,
+          "message_id": "message_2985bdd2f1c12450f2cb416e",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, Ruth. Is the best phone number to reach you the one you're calling from, or another number?",
+          "created_timestamp": 1793911641283,
+          "message_id": "message_010a809d6ff561fb96d9ee5c",
+          "metadata": {
+            "response_id": 4
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, this number, (347) 555-0104.",
+          "created_timestamp": 1793911641753,
+          "message_id": "message_2e90bbc0eed71e3b20c60700",
+          "role": "user"
+        },
+        {
+          "content": "And this is for a residential property, right? Like a home or an apartment?",
+          "created_timestamp": 1793911642388,
+          "message_id": "message_8f4779d1cca1dad2aea8b828",
+          "metadata": {
+            "response_id": 5
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, it's our home. It's a house, um, 8415 Ridge Blvd, Brooklyn, 11209.",
+          "created_timestamp": 1793911643217,
+          "message_id": "message_e94f904b58eb222561e96c09",
+          "role": "user"
+        },
+        {
+          "content": "Got it. Let me look up that address.",
+          "created_timestamp": 1793911644558,
+          "message_id": "message_6a2078b39fab2423b9ac4a81",
+          "metadata": {
+            "response_id": 6
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"street\":\"8415 Ridge Blvd\",\"borough\":\"Brooklyn\"}",
+          "created_timestamp": 1793911644559,
+          "message_id": "message_a5e800a1fc63ce2b6c8d3ed6",
+          "name": "find_address",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_019dRPb31CSPiKt1fHJfPNjj",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"street\":\"8415 Ridge Boulevard\",\"zip\":\"11209\",\"borough\":\"Brooklyn\",\"neighborhood\":\"Bay Ridge\",\"in_area\":true,\"area\":\"Brooklyn South\"}}",
+          "created_timestamp": 1793911646142,
+          "message_id": "message_75758033de67bd746f14c1e3",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_019dRPb31CSPiKt1fHJfPNjj"
+        },
+        {
+          "arguments": "{\"phone\":\"(347) 555-0104\"}",
+          "created_timestamp": 1793911646143,
+          "message_id": "message_7805bb04ee5ba082edb0b2d9",
+          "name": "find_customer",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_015TS1EVX42jAiMUUaQTpJQt",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"matches\":[],\"needs_unit\":false}}",
+          "created_timestamp": 1793911646466,
+          "message_id": "message_8d36fffef40063c4c15f9304",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_015TS1EVX42jAiMUUaQTpJQt"
+        },
+        {
+          "content": "I have 8415 Ridge Boulevard in Brooklyn, 11209. Is that right?",
+          "created_timestamp": 1793911647329,
+          "message_id": "message_6bfe1cf115686261b46749bb",
+          "metadata": {
+            "response_id": 7
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, that's right. Um, 8415 Ridge Blvd, Brooklyn, 11209.",
+          "created_timestamp": 1793911648051,
+          "message_id": "message_5a07d3d39cb2e7d5968764e6",
+          "role": "user"
+        },
+        {
+          "content": "Thanks. Is that address confirmed? I'll read it back for you.",
+          "created_timestamp": 1793911649092,
+          "message_id": "message_27fb15060e16c3b4ba7e3024",
+          "metadata": {
+            "response_id": 8
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"8415 Ridge Boulevard\",\"zip\":\"11209\",\"city\":\"Brooklyn\"},\"phone\":\"(347) 555-0104\"}",
+          "created_timestamp": 1793911649093,
+          "message_id": "message_1b802189c527847a581a3219",
+          "name": "read_back",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01Cmc4atVxYmJ2kxQBEsEgVj",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"I have your home at 8415 Ridge Boulevard, Brooklyn, ZIP code one one two zero nine, and the best number is three four seven, five five five, zero one zero four. That's all correct, right?\",\"data\":{\"confirmed\":false,\"sentence\":\"I have your home at 8415 Ridge Boulevard, Brooklyn, ZIP code one one two zero nine, and the best number is three four seven, five five five, zero one zero four. That's all correct, right?\"}}",
+          "created_timestamp": 1793911649900,
+          "message_id": "message_c4ac8afc599b233b34dd887a",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01Cmc4atVxYmJ2kxQBEsEgVj"
+        },
+        {
+          "content": "I have your home at 8415 Ridge Boulevard, Brooklyn, ZIP code one one two zero nine, and the best number is three four seven, five five five, zero one zero four. That's all correct, right?",
+          "created_timestamp": 1793911650785,
+          "message_id": "message_6e282fe41a3f6e10e6cb8dc4",
+          "metadata": {
+            "response_id": 9
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, that's all correct. Um, thank you.",
+          "created_timestamp": 1793911651457,
+          "message_id": "message_b1319740ad165c33d3fee492",
+          "role": "user"
+        },
+        {
+          "content": "Thanks. Let me check the open times for a no-heat visit.",
+          "created_timestamp": 1793911653138,
+          "message_id": "message_6efcc8348e3eb8b9c1841fae",
+          "metadata": {
+            "response_id": 10
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"8415 Ridge Boulevard\",\"zip\":\"11209\",\"city\":\"Brooklyn\"},\"phone\":\"(347) 555-0104\",\"confirmed\":true}",
+          "created_timestamp": 1793911653139,
+          "message_id": "message_f15f32788d574929d22a0e2b",
+          "name": "read_back",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01Ltc3XS7BxDErGXws51oqHE",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"confirmed\":true,\"address\":{\"street\":\"8415 Ridge Boulevard\",\"unit\":\"\",\"city\":\"Brooklyn\",\"zip\":\"11209\",\"spelled\":\"\"},\"phone\":\"3475550104\"}}",
+          "created_timestamp": 1793911654233,
+          "message_id": "message_b895df63e8c1f1fcded0f769",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01Ltc3XS7BxDErGXws51oqHE"
+        },
+        {
+          "arguments": "{\"job_type\":\"no_heat\",\"facts\":{\"issue\":\"Furnace clicks 4-5 times and won't light, no heat since about 7 AM\",\"since\":\"this morning\",\"inside_temp_f\":62,\"who_home\":\"not provided\"}}",
+          "created_timestamp": 1793911654234,
+          "message_id": "message_0ddb9518d37adedebf69050f",
+          "name": "find_slots",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01881xKUpSqECJK5wf3auxSo",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":false,\"say\":\"Let me check that again.\",\"data\":{\"errors\":{\"facts.since\":\"Extra inputs are not permitted\"}},\"refused\":\"invalid_arguments\"}",
+          "created_timestamp": 1793911654627,
+          "message_id": "message_542a7e2c5da5a5222fa8ebff",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01881xKUpSqECJK5wf3auxSo"
+        },
+        {
+          "arguments": "{\"job_type\":\"no_heat\",\"facts\":{\"issue\":\"Furnace clicks 4-5 times and won't light, no heat since about 7 AM this morning\",\"inside_temp_f\":62}}",
+          "created_timestamp": 1793911655712,
+          "message_id": "message_5df4b1e402652f2d6af60d6e",
+          "name": "find_slots",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01JSbkmR6RzD6c8V2ho9hXA9",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"The soonest I have is today, 4 to 6. Does that work?\",\"data\":{\"priority\":{\"level\":\"High\",\"reasons\":[\"below 65 F inside, caller said \\\"No, um, I don't smell anything. Nothing at all. It's just clicking and it's...\\\"\"],\"requested\":null,\"raised_after_wait\":false},\"days\":[{\"date\":\"2026-11-05\",\"weekday\":\"Thursday\",\"day\":\"today\",\"windows\":[\"1600-1800\",\"1800-2000\"],\"labels\":[\"4 to 6\",\"6 to 8\"]},{\"date\":\"2026-11-06\",\"weekday\":\"Friday\",\"day\":\"tomorrow\",\"windows\":[\"0800-1000\",\"1000-1200\",\"1200-1400\",\"1400-1600\",\"1600-1800\",\"1800-2000\"],\"labels\":[\"8 to 10\",\"10 to 12\",\"12 to 2\",\"2 to 4\",\"4 to 6\",\"6 to 8\"]},{\"date\":\"2026-11-09\",\"weekday\":\"Monday\",\"day\":\"Monday\",\"windows\":[\"0800-1000\",\"1000-1200\",\"1200-1400\",\"1400-1600\",\"1600-1800\",\"1800-2000\"],\"labels\":[\"8 to 10\",\"10 to 12\",\"12 to 2\",\"2 to 4\",\"4 to 6\",\"6 to 8\"]}],\"offer\":{\"date\":\"2026-11-05\",\"window\":\"1600-1800\",\"weekday\":\"Thursday\",\"day\":\"today\",\"day_and_date\":\"today, Thursday, November 5\",\"label\":\"4 to 6\",\"part\":\"evening\",\"after_hours\":false}}}",
+          "created_timestamp": 1793911657001,
+          "message_id": "message_c1223bc743f70db994c7e564",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01JSbkmR6RzD6c8V2ho9hXA9"
+        },
+        {
+          "content": "The soonest I have is today, Thursday, November 5, between 4 and 6. Does that work?",
+          "created_timestamp": 1793911657797,
+          "message_id": "message_3b8bed92c16e1d49d7b7857e",
+          "metadata": {
+            "response_id": 11
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Um, yes, that works. Today between 4 and 6 is fine. Um, and is it safe to wait until then? I mean, it's not dangerous, right?",
+          "created_timestamp": 1793911658695,
+          "message_id": "message_4a600b7314f576f9aa1e78be",
+          "role": "user"
+        },
+        {
+          "content": "I can't assess the safety of your furnace over the phone. If you smell gas or your carbon monoxide alarm goes off, leave the home right away and call 911. Otherwise, the technician will be there between 4 and 6 today. Next, will you be able to approve any repair work the technician recommends?",
+          "created_timestamp": 1793911659835,
+          "message_id": "message_8256b9bb1543aaad908db4b5",
+          "metadata": {
+            "response_id": 12
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Um, yes, I can approve it. My husband and I both make those calls, so, yes. Um, and we're fine, no smell, nobody sick. So it's okay to wait till the afternoon, right?",
+          "created_timestamp": 1793911660785,
+          "message_id": "message_852f0a206f6fa0cc4697e3b3",
+          "role": "user"
+        },
+        {
+          "content": "Got it, you can approve the work. Yes, the technician will be there between 4 and 6 today. Will someone be home to let the technician in?",
+          "created_timestamp": 1793911661635,
+          "message_id": "message_d880dd8b177a3c9d992044b6",
+          "metadata": {
+            "response_id": 13
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, um, someone will be home. My husband is here, so he can let them in. Is that okay?",
+          "created_timestamp": 1793911662810,
+          "message_id": "message_e1371b301ec0625cf7ee8021",
+          "role": "user"
+        },
+        {
+          "content": "Yes, that's fine. Is there a gate code, buzzer, or pet the technician should know about?",
+          "created_timestamp": 1793911663472,
+          "message_id": "message_da65c7aae2e3a22becc1d906",
+          "metadata": {
+            "response_id": 14
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Um, no gate code. No buzzer. We don't have a pet. Is that everything? Should I wait by the door?",
+          "created_timestamp": 1793911664179,
+          "message_id": "message_438005eeba94440c76360ef7",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"job_type\":\"no_heat\",\"slot\":{\"date\":\"2026-11-05\",\"window\":\"1600-1800\"},\"details\":{\"approver\":\"Ruth Adler\",\"issue\":\"Furnace clicks 4-5 times and won't light, no heat since about 7 AM this morning. No gas smell, no one sick.\",\"since\":\"This morning, around 7 AM\",\"tried\":\"Caller has not tried anything yet\",\"who_home\":\"Husband is home and can let the technician in\",\"inside_temp_f\":62,\"arrival_notes\":\"No gate code, no buzzer, no pets.\"}}",
+          "created_timestamp": 1793911665852,
+          "message_id": "message_ac9b6d5c11c22172fd6a681b",
+          "name": "book_appointment",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01HbZjy5hZbQ3177MGfFwYiu",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":false,\"say\":\"Can I get a name for the booking?\",\"data\":{\"errors\":{\"name\":\"needed\"}},\"refused\":\"invalid_arguments\"}",
+          "created_timestamp": 1793911667298,
+          "message_id": "message_3408d52fdb1701e69f081608",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01HbZjy5hZbQ3177MGfFwYiu"
+        },
+        {
+          "content": "Can I get a name for the booking?",
+          "created_timestamp": 1793911668022,
+          "message_id": "message_c7e9eaf02c4433ea1dfc0c7b",
+          "metadata": {
+            "response_id": 15
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Ruth Adler. Um, and it's Ruth, R-U-T-H, last name Adler, A-D-L-E-R.",
+          "created_timestamp": 1793911668792,
+          "message_id": "message_9f9dea6ac1b5eae4aba29a1a",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, Ruth. I'll book it under that name.",
+          "created_timestamp": 1793911670405,
+          "message_id": "message_1798c863d5183f053b7b7189",
+          "metadata": {
+            "response_id": 16
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"job_type\":\"no_heat\",\"slot\":{\"date\":\"2026-11-05\",\"window\":\"1600-1800\"},\"details\":{\"approver\":\"Ruth Adler\",\"name\":\"Ruth Adler\",\"issue\":\"Furnace clicks 4-5 times and won't light, no heat since about 7 AM this morning. No gas smell, no one sick.\",\"since\":\"This morning, around 7 AM\",\"tried\":\"Caller has not tried anything yet\",\"who_home\":\"Husband is home and can let the technician in\",\"inside_temp_f\":62,\"arrival_notes\":\"No gate code, no buzzer, no pets.\"}}",
+          "created_timestamp": 1793911670406,
+          "message_id": "message_70c96ca61cea91f4de22e35e",
+          "name": "book_appointment",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01EEaLS7p7VrL9TReZcEMf58",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":false,\"say\":\"That window just filled up.\",\"data\":{\"alternatives\":[{\"date\":\"2026-11-05\",\"window\":\"1800-2000\",\"weekday\":\"Thursday\",\"day\":\"today\",\"day_and_date\":\"today, Thursday, November 5\",\"label\":\"6 to 8\",\"part\":\"evening\",\"after_hours\":false},{\"date\":\"2026-11-06\",\"window\":\"0800-1000\",\"weekday\":\"Friday\",\"day\":\"tomorrow\",\"day_and_date\":\"tomorrow, Friday, November 6\",\"label\":\"8 to 10\",\"part\":\"morning\",\"after_hours\":false}]},\"refused\":\"slot_taken\"}",
+          "created_timestamp": 1793911674858,
+          "message_id": "message_46d7e8162f6619fb2ed69ed4",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01EEaLS7p7VrL9TReZcEMf58"
+        },
+        {
+          "content": "Sorry, that window just filled up. The next options are today, Thursday, November 5, between 6 and 8 in the evening, or tomorrow, Friday, November 6, between 8 and 10 in the morning. Which would you prefer?",
+          "created_timestamp": 1793911675773,
+          "message_id": "message_9944e12ec286517c14836f76",
+          "metadata": {
+            "response_id": 17
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Um, the evening one, I guess? Today, 6 to 8. Is that okay? I don't want to wait until tomorrow with no heat.",
+          "created_timestamp": 1793911676416,
+          "message_id": "message_0b0ba7cf34f45f74f0245db7",
+          "role": "user"
+        },
+        {
+          "content": "Yes, the evening window works. Booking it now.",
+          "created_timestamp": 1793911677929,
+          "message_id": "message_988ed655dd39a31318c3178c",
+          "metadata": {
+            "response_id": 18
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"job_type\":\"no_heat\",\"slot\":{\"date\":\"2026-11-05\",\"window\":\"1800-2000\"},\"details\":{\"approver\":\"Ruth Adler\",\"name\":\"Ruth Adler\",\"issue\":\"Furnace clicks 4-5 times and won't light, no heat since about 7 AM this morning. No gas smell, no one sick.\",\"since\":\"This morning, around 7 AM\",\"tried\":\"Caller has not tried anything yet\",\"who_home\":\"Husband is home and can let the technician in\",\"inside_temp_f\":62,\"arrival_notes\":\"No gate code, no buzzer, no pets.\"}}",
+          "created_timestamp": 1793911677930,
+          "message_id": "message_a8381c577757f1f0ea9f04f0",
+          "name": "book_appointment",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01Pzntk6xvMDT7oNNWtyp3Zw",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"You're all set for today, Thursday, November 5, with the technician arriving between 6 and 8. Anything else?\",\"data\":{\"booking_id\":559,\"appointment_id\":559,\"window\":{\"date\":\"2026-11-05\",\"window\":\"1800-2000\",\"weekday\":\"Thursday\",\"day\":\"today\",\"day_and_date\":\"today, Thursday, November 5\",\"label\":\"6 to 8\",\"part\":\"evening\",\"after_hours\":false},\"priority\":{\"level\":\"High\",\"reasons\":[\"below 65 F inside, caller said \\\"No, um, I don't smell anything. Nothing at all. It's just clicking and it's...\\\"\"],\"raised_after_wait\":false},\"seek_earlier\":false,\"safety_override\":false,\"approval_callback_at\":null,\"return_visit_review\":false}}",
+          "created_timestamp": 1793911682627,
+          "message_id": "message_ce0ff9f864c6eef8134a65fb",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01Pzntk6xvMDT7oNNWtyp3Zw"
+        },
+        {
+          "content": "You're all set for today, Thursday, November 5, with the technician arriving between 6 and 8. Anything else I can help with?",
+          "created_timestamp": 1793911683375,
+          "message_id": "message_c0ee7a522001921468430f19",
+          "metadata": {
+            "response_id": 19
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Um, no, I think that's everything. Thank you so much. Bye.",
+          "created_timestamp": 1793911684045,
+          "message_id": "message_f43d9fc08c8a597dde87869a",
+          "role": "user"
+        },
+        {
+          "content": "Thanks for calling Summit Air. Take care.",
+          "created_timestamp": 1793911684852,
+          "message_id": "message_14518ad61cddf28061f09a89",
+          "metadata": {
+            "response_id": 20
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"reason\":\"resolved\"}",
+          "created_timestamp": 1793911684853,
+          "message_id": "message_83ed04dc147bca3a630a79b2",
+          "name": "end_call",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01HkZRx3ZrNgsGkby8hqZH4a",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"hang_up\":true}}",
+          "created_timestamp": 1793911685431,
+          "message_id": "message_bd52bdb5a28b83198d8ecef9",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01HkZRx3ZrNgsGkby8hqZH4a"
+        },
+        {
+          "content": "The conversation has already reached its end: the booking is confirmed and the agent said goodbye. Ruth's last line was \"Bye,\" and the agent has closed the call. Ruth's business is done, so there is nothing more for her to say.",
+          "created_timestamp": 1793911687492,
+          "message_id": "message_74f44e3cbeb050fba8e82718",
+          "role": "user"
+        },
+        {
+          "content": "Okay, thanks. Bye.",
+          "created_timestamp": 1793911690199,
+          "message_id": "message_fd179f47f8ed1342fd43098c",
+          "role": "user"
+        },
+        {
+          "content": "Um, okay, thanks. Bye.",
+          "created_timestamp": 1793911691695,
+          "message_id": "message_dabf296a338cb7f530d30300",
+          "role": "user"
+        },
+        {
+          "content": "Um, okay, thanks. Bye.",
+          "created_timestamp": 1793911692841,
+          "message_id": "message_cb26e85e1154d2965ef121bb",
+          "role": "user"
+        }
+      ]
+    }
+  },
+  "trace": {
+    "call": {
+      "id": "rtest-11052046-gas-worry-no-smell",
+      "tenant": "summit-air",
+      "caller_id": "(347) 555-0104",
+      "caller_key": "3475550104",
+      "dialed_number": "(678) 336-6730",
+      "direction": "inbound",
+      "started_at": "2026-07-20T20:46:29Z",
+      "ended_at": null,
+      "end_reason": null,
+      "end_requested": 1,
+      "after_hours": 0,
+      "linked_call_id": null,
+      "outcome": null,
+      "commercial": 0,
+      "summary_status": "none",
+      "turn_seq": 36,
+      "safety_state": "none",
+      "safety_kind": null,
+      "safety_signal_at": null,
+      "safety_lines_at": null,
+      "safety_flag_id": null,
+      "safety_variant": 0,
+      "readback_json": "{\"street\": \"8415 Ridge Boulevard\", \"unit\": \"\", \"city\": \"Brooklyn\", \"zip\": \"11209\", \"spelled\": \"\", \"phone\": \"3475550104\", \"phone_for\": \"\", \"sentence\": \"I have your home at 8415 Ridge Boulevard, Brooklyn, ZIP code one one two zero nine, and the best number is three four seven, five five five, zero one zero four. That's all correct, right?\"}",
+      "readback_asked_seq": 16,
+      "readback_confirmed_at": "2026-11-05T20:47:34Z"
+    },
+    "events": [
+      {
+        "at": "2026-11-05T20:46:29Z",
+        "type": "tool",
+        "tool": "calls.start",
+        "args": {
+          "call_id": "rtest-11052046-gas-worry-no-smell",
+          "caller_id": "(347) 555-0104",
+          "dialed_number": "(678) 336-6730",
+          "direction": "inbound"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 20.0,
+        "error": null,
+        "request_id": "a3f8ede465ae"
+      },
+      {
+        "at": "2026-11-05T20:47:24Z",
+        "type": "turn",
+        "seq": 1,
+        "speaker": "agent",
+        "text": "Thank you for calling Summit Air. How can I help you today?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:25Z",
+        "type": "turn",
+        "seq": 2,
+        "speaker": "caller",
+        "text": "Hi, um, my furnace keeps clicking and the heat won't come on. Could it be a gas thing?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:25Z",
+        "type": "turn",
+        "seq": 3,
+        "speaker": "agent",
+        "text": "Is there a smell of gas in the home right now?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:25Z",
+        "type": "turn",
+        "seq": 4,
+        "speaker": "caller",
+        "text": "No, um, I don't smell anything. Nothing at all. It's just clicking and it's not lighting. It's about 62 degrees in here.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:25Z",
+        "type": "turn",
+        "seq": 5,
+        "speaker": "agent",
+        "text": "Got it, I'll note that for the technician. Since when has the heat been out?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:25Z",
+        "type": "turn",
+        "seq": 6,
+        "speaker": "caller",
+        "text": "Um, since this morning. It started around seven. It clicks like four or five times and then just stops, and nothing comes on.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:25Z",
+        "type": "turn",
+        "seq": 7,
+        "speaker": "agent",
+        "text": "Thanks. Can I get your name?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:25Z",
+        "type": "turn",
+        "seq": 8,
+        "speaker": "caller",
+        "text": "Ruth Adler.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:25Z",
+        "type": "turn",
+        "seq": 9,
+        "speaker": "agent",
+        "text": "Thanks, Ruth. Is the best phone number to reach you the one you're calling from, or another number?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:25Z",
+        "type": "turn",
+        "seq": 10,
+        "speaker": "caller",
+        "text": "Yes, this number, (347) 555-0104.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:25Z",
+        "type": "turn",
+        "seq": 11,
+        "speaker": "agent",
+        "text": "And this is for a residential property, right? Like a home or an apartment?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:25Z",
+        "type": "turn",
+        "seq": 12,
+        "speaker": "caller",
+        "text": "Yes, it's our home. It's a house, um, 8415 Ridge Blvd, Brooklyn, 11209.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:25Z",
+        "type": "turn",
+        "seq": 13,
+        "speaker": "agent",
+        "text": "Got it. Let me look up that address.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:26Z",
+        "type": "tool",
+        "tool": "find_address",
+        "args": {
+          "call_id": "rtest-11052046-gas-worry-no-smell",
+          "street": "8415 Ridge Blvd",
+          "borough": "Brooklyn",
+          "spelled": ""
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 170.6,
+        "error": null,
+        "request_id": "6e313d1477a8"
+      },
+      {
+        "at": "2026-11-05T20:47:26Z",
+        "type": "tool",
+        "tool": "find_customer",
+        "args": {
+          "call_id": "rtest-11052046-gas-worry-no-smell",
+          "phone": "(347) 555-0104",
+          "address": null
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 20.4,
+        "error": null,
+        "request_id": "b0ae4a919ab8"
+      },
+      {
+        "at": "2026-11-05T20:47:29Z",
+        "type": "turn",
+        "seq": 14,
+        "speaker": "agent",
+        "text": "I have 8415 Ridge Boulevard in Brooklyn, 11209. Is that right?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:29Z",
+        "type": "turn",
+        "seq": 15,
+        "speaker": "caller",
+        "text": "Yes, that's right. Um, 8415 Ridge Blvd, Brooklyn, 11209.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:29Z",
+        "type": "turn",
+        "seq": 16,
+        "speaker": "agent",
+        "text": "Thanks. Is that address confirmed? I'll read it back for you.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:29Z",
+        "type": "tool",
+        "tool": "read_back",
+        "args": {
+          "call_id": "rtest-11052046-gas-worry-no-smell",
+          "address": {
+            "street": "8415 Ridge Boulevard",
+            "unit": "",
+            "city": "Brooklyn",
+            "zip": "11209",
+            "spelled": ""
+          },
+          "phone": "(347) 555-0104",
+          "phone_for": "",
+          "confirmed": false
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "I have your home at 8415 Ridge Boulevard, Brooklyn, ZIP code one one two zero nine, and the best number is three four seven, five five five, zero one zero four. That's all correct, right?",
+        "ms": 39.2,
+        "error": null,
+        "request_id": "72a07be49958"
+      },
+      {
+        "at": "2026-11-05T20:47:33Z",
+        "type": "turn",
+        "seq": 17,
+        "speaker": "agent",
+        "text": "I have your home at 8415 Ridge Boulevard, Brooklyn, ZIP code one one two zero nine, and the best number is three four seven, five five five, zero one zero four. That's all correct, right?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:33Z",
+        "type": "turn",
+        "seq": 18,
+        "speaker": "caller",
+        "text": "Yes, that's all correct. Um, thank you.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:34Z",
+        "type": "turn",
+        "seq": 19,
+        "speaker": "agent",
+        "text": "Thanks. Let me check the open times for a no-heat visit.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:34Z",
+        "type": "tool",
+        "tool": "read_back",
+        "args": {
+          "call_id": "rtest-11052046-gas-worry-no-smell",
+          "address": {
+            "street": "8415 Ridge Boulevard",
+            "unit": "",
+            "city": "Brooklyn",
+            "zip": "11209",
+            "spelled": ""
+          },
+          "phone": "(347) 555-0104",
+          "phone_for": "",
+          "confirmed": true
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 33.3,
+        "error": null,
+        "request_id": "20789fbc9804"
+      },
+      {
+        "at": "2026-11-05T20:47:34Z",
+        "type": "tool",
+        "tool": "find_slots",
+        "args": {
+          "job_type": "no_heat",
+          "facts": {
+            "issue": "Furnace clicks 4-5 times and won't light, no heat since about 7 AM",
+            "since": "this morning",
+            "inside_temp_f": 62,
+            "who_home": "not provided"
+          },
+          "call_id": "rtest-11052046-gas-worry-no-smell"
+        },
+        "ok": false,
+        "refused": "invalid_arguments",
+        "gate": null,
+        "say": "Let me check that again.",
+        "ms": 0.0,
+        "error": "invalid_arguments",
+        "request_id": "3dae56bb0a71"
+      },
+      {
+        "at": "2026-11-05T20:47:36Z",
+        "type": "tool",
+        "tool": "find_slots",
+        "args": {
+          "call_id": "rtest-11052046-gas-worry-no-smell",
+          "job_type": "no_heat",
+          "priority": null,
+          "preferred_days": [],
+          "time_of_day": null,
+          "window_minutes": null,
+          "day": null,
+          "arrive_after": null,
+          "arrive_before": null,
+          "facts": {
+            "issue": "Furnace clicks 4-5 times and won't light, no heat since about 7 AM this morning",
+            "who_home": "",
+            "inside_temp_f": 62.0,
+            "temp_falling_fast": false
+          }
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "The soonest I have is today, 4 to 6. Does that work?",
+        "ms": 974.9,
+        "error": null,
+        "request_id": "178f146a281b"
+      },
+      {
+        "at": "2026-11-05T20:47:46Z",
+        "type": "turn",
+        "seq": 20,
+        "speaker": "agent",
+        "text": "The soonest I have is today, Thursday, November 5, between 4 and 6. Does that work?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:46Z",
+        "type": "turn",
+        "seq": 21,
+        "speaker": "caller",
+        "text": "Um, yes, that works. Today between 4 and 6 is fine. Um, and is it safe to wait until then? I mean, it's not dangerous, right?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:46Z",
+        "type": "turn",
+        "seq": 22,
+        "speaker": "agent",
+        "text": "I can't assess the safety of your furnace over the phone. If you smell gas or your carbon monoxide alarm goes off, leave the home right away and call 911. Otherwise, the technician will be there between 4 and 6 today. Next, will you be able to approve any repair work the technician recommends?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:46Z",
+        "type": "turn",
+        "seq": 23,
+        "speaker": "caller",
+        "text": "Um, yes, I can approve it. My husband and I both make those calls, so, yes. Um, and we're fine, no smell, nobody sick. So it's okay to wait till the afternoon, right?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:46Z",
+        "type": "turn",
+        "seq": 24,
+        "speaker": "agent",
+        "text": "Got it, you can approve the work. Yes, the technician will be there between 4 and 6 today. Will someone be home to let the technician in?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:46Z",
+        "type": "turn",
+        "seq": 25,
+        "speaker": "caller",
+        "text": "Yes, um, someone will be home. My husband is here, so he can let them in. Is that okay?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:46Z",
+        "type": "turn",
+        "seq": 26,
+        "speaker": "agent",
+        "text": "Yes, that's fine. Is there a gate code, buzzer, or pet the technician should know about?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:46Z",
+        "type": "turn",
+        "seq": 27,
+        "speaker": "caller",
+        "text": "Um, no gate code. No buzzer. We don't have a pet. Is that everything? Should I wait by the door?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:47Z",
+        "type": "tool",
+        "tool": "book_appointment",
+        "args": {
+          "call_id": "rtest-11052046-gas-worry-no-smell",
+          "job_type": "no_heat",
+          "slot": {
+            "date": "2026-11-05",
+            "window": "1600-1800"
+          },
+          "details": {
+            "issue": "Furnace clicks 4-5 times and won't light, no heat since about 7 AM this morning. No gas smell, no one sick.",
+            "since": "This morning, around 7 AM",
+            "tried": "Caller has not tried anything yet",
+            "who_home": "Husband is home and can let the technician in",
+            "approver": "Ruth Adler",
+            "system_type": "",
+            "arrival_notes": "No gate code, no buzzer, no pets.",
+            "name": "",
+            "inside_temp_f": 62.0
+          },
+          "priority": null,
+          "separate_problem": false,
+          "new_address_account": null
+        },
+        "ok": false,
+        "refused": "invalid_arguments",
+        "gate": "invalid_arguments",
+        "say": "Can I get a name for the booking?",
+        "ms": 752.3,
+        "error": null,
+        "request_id": "5cf8a65d849a"
+      },
+      {
+        "at": "2026-11-05T20:47:50Z",
+        "type": "turn",
+        "seq": 28,
+        "speaker": "agent",
+        "text": "Can I get a name for the booking?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 3000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:50Z",
+        "type": "turn",
+        "seq": 29,
+        "speaker": "caller",
+        "text": "Ruth Adler. Um, and it's Ruth, R-U-T-H, last name Adler, A-D-L-E-R.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:50Z",
+        "type": "turn",
+        "seq": 30,
+        "speaker": "agent",
+        "text": "Thanks, Ruth. I'll book it under that name.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:54Z",
+        "type": "tool",
+        "tool": "book_appointment",
+        "args": {
+          "call_id": "rtest-11052046-gas-worry-no-smell",
+          "job_type": "no_heat",
+          "slot": {
+            "date": "2026-11-05",
+            "window": "1600-1800"
+          },
+          "details": {
+            "issue": "Furnace clicks 4-5 times and won't light, no heat since about 7 AM this morning. No gas smell, no one sick.",
+            "since": "This morning, around 7 AM",
+            "tried": "Caller has not tried anything yet",
+            "who_home": "Husband is home and can let the technician in",
+            "approver": "Ruth Adler",
+            "system_type": "",
+            "arrival_notes": "No gate code, no buzzer, no pets.",
+            "name": "Ruth Adler",
+            "inside_temp_f": 62.0
+          },
+          "priority": null,
+          "separate_problem": false,
+          "new_address_account": null
+        },
+        "ok": false,
+        "refused": "slot_taken",
+        "gate": "slot_taken",
+        "say": "That window just filled up.",
+        "ms": 3680.9,
+        "error": null,
+        "request_id": "5161bd385260"
+      },
+      {
+        "at": "2026-11-05T20:47:58Z",
+        "type": "turn",
+        "seq": 31,
+        "speaker": "agent",
+        "text": "Sorry, that window just filled up. The next options are today, Thursday, November 5, between 6 and 8 in the evening, or tomorrow, Friday, November 6, between 8 and 10 in the morning. Which would you prefer?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:59Z",
+        "type": "turn",
+        "seq": 32,
+        "speaker": "caller",
+        "text": "Um, the evening one, I guess? Today, 6 to 8. Is that okay? I don't want to wait until tomorrow with no heat.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:59Z",
+        "type": "turn",
+        "seq": 33,
+        "speaker": "agent",
+        "text": "Yes, the evening window works. Booking it now.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:48:02Z",
+        "type": "tool",
+        "tool": "book_appointment",
+        "args": {
+          "call_id": "rtest-11052046-gas-worry-no-smell",
+          "job_type": "no_heat",
+          "slot": {
+            "date": "2026-11-05",
+            "window": "1800-2000"
+          },
+          "details": {
+            "issue": "Furnace clicks 4-5 times and won't light, no heat since about 7 AM this morning. No gas smell, no one sick.",
+            "since": "This morning, around 7 AM",
+            "tried": "Caller has not tried anything yet",
+            "who_home": "Husband is home and can let the technician in",
+            "approver": "Ruth Adler",
+            "system_type": "",
+            "arrival_notes": "No gate code, no buzzer, no pets.",
+            "name": "Ruth Adler",
+            "inside_temp_f": 62.0
+          },
+          "priority": null,
+          "separate_problem": false,
+          "new_address_account": null
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "You're all set for today, Thursday, November 5, with the technician arriving between 6 and 8. Anything else?",
+        "ms": 2908.6,
+        "error": null,
+        "request_id": "7d6533ae678d"
+      },
+      {
+        "at": "2026-11-05T20:48:05Z",
+        "type": "turn",
+        "seq": 34,
+        "speaker": "agent",
+        "text": "You're all set for today, Thursday, November 5, with the technician arriving between 6 and 8. Anything else I can help with?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:05Z",
+        "type": "turn",
+        "seq": 35,
+        "speaker": "caller",
+        "text": "Um, no, I think that's everything. Thank you so much. Bye.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:05Z",
+        "type": "turn",
+        "seq": 36,
+        "speaker": "agent",
+        "text": "Thanks for calling Summit Air. Take care.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:48:05Z",
+        "type": "tool",
+        "tool": "end_call",
+        "args": {
+          "call_id": "rtest-11052046-gas-worry-no-smell",
+          "reason": "resolved"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 6.2,
+        "error": null,
+        "request_id": "8180a0208c02"
+      }
+    ],
+    "flags": [],
+    "callbacks": [],
+    "bookings": [
+      {
+        "id": 166,
+        "kind": "book",
+        "status": "failed",
+        "fsm_job_id": null,
+        "window_start": "2026-11-05T21:00:00Z",
+        "window_end": "2026-11-05T23:00:00Z",
+        "priority": "High",
+        "priority_reasons": "below 65 F inside, caller said \"No, um, I don't smell anything. Nothing at all. It's just clicking and it's...\"",
+        "safety_override": 0,
+        "seek_earlier": 0,
+        "attempts": 1,
+        "last_error": "slot_taken: No technician may take that window.",
+        "raised_after_wait": 0,
+        "priority_rules": "[\"bracket:cool_inside\"]",
+        "priority_reason_list": "[\"below 65 F inside, caller said \\\"No, um, I don't smell anything. Nothing at all. It's just clicking and it's...\\\"\"]",
+        "who_home": "Husband is home and can let the technician in",
+        "job_type": "no_heat",
+        "street": "8415 Ridge Boulevard",
+        "unit": "",
+        "job_notes": "[]"
+      },
+      {
+        "id": 171,
+        "kind": "book",
+        "status": "booked",
+        "fsm_job_id": 559,
+        "window_start": "2026-11-05T23:00:00Z",
+        "window_end": "2026-11-06T01:00:00Z",
+        "priority": "High",
+        "priority_reasons": "below 65 F inside, caller said \"No, um, I don't smell anything. Nothing at all. It's just clicking and it's...\"",
+        "safety_override": 0,
+        "seek_earlier": 0,
+        "attempts": 1,
+        "last_error": null,
+        "raised_after_wait": 0,
+        "priority_rules": "[\"bracket:cool_inside\"]",
+        "priority_reason_list": "[\"below 65 F inside, caller said \\\"No, um, I don't smell anything. Nothing at all. It's just clicking and it's...\\\"\"]",
+        "who_home": "Husband is home and can let the technician in",
+        "job_type": "no_heat",
+        "street": "8415 Ridge Boulevard",
+        "unit": "",
+        "job_notes": "[]"
+      }
+    ],
+    "notes": [],
+    "leads": [],
+    "out_of_area": [],
+    "summary": [],
+    "electrical": [],
+    "holds": [],
+    "pace": [
+      {
+        "call_id": "rtest-11052046-gas-worry-no-smell",
+        "speed": 1.0,
+        "source": "default",
+        "requested": 0,
+        "older_adult": 0,
+        "address_speed": null,
+        "repeats": 0
+      }
+    ],
+    "pace_changes": [],
+    "caller_pace": [],
+    "transfers": [],
+    "handoffs": [],
+    "address_lookups": [
+      {
+        "house": "8415",
+        "street": "ridge blvd",
+        "hint": "Brooklyn",
+        "status": "one",
+        "zips_json": "[\"11209\"]",
+        "source": "geosearch"
+      }
+    ],
+    "address_checks": [],
+    "names": [],
+    "address_moves": [],
+    "identity_checks": [],
+    "heads_ups": []
+  }
+}

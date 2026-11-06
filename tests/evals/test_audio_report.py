@@ -1,4 +1,5 @@
 """The bake-off table and the decision 026 verdict, from synthetic audio-rig runs."""
+
 import pytest
 
 from evals import suites
@@ -20,15 +21,26 @@ GAS = lines_by_kind()["gas"]
 def call(scenario_id, delays, outcome="pass", failures=(), heard=None, sample=1, flow=("booking",)):
     agent = heard if heard is not None else "Sure, I can help."
     return {
-        "scenario_id": scenario_id, "sample": sample, "persona": "A caller.", "flow": list(flow),
-        "difficulty": "easy", "outcome": outcome, "check_failures": list(failures),
-        "grader_score": 4 if outcome == "pass" else None, "reply_delay_p50_ms": 0,
-        "reply_delay_p90_ms": 0, "cost_usd": 0.1, "call_id": f"c-{scenario_id}-{sample}",
+        "scenario_id": scenario_id,
+        "sample": sample,
+        "persona": "A caller.",
+        "flow": list(flow),
+        "difficulty": "easy",
+        "outcome": outcome,
+        "check_failures": list(failures),
+        "grader_score": 4 if outcome == "pass" else None,
+        "reply_delay_p50_ms": 0,
+        "reply_delay_p90_ms": 0,
+        "cost_usd": 0.1,
+        "call_id": f"c-{scenario_id}-{sample}",
         "cost_parts": {"platform": 0.05},
-        "transcript": [{"role": "caller", "text": "hi"}, {"role": "agent", "text": agent,
-                                                          "said": agent}],
-        "turn_timings": [{"kind": "plain", "reply_delay_ms": d, "model_first_token_ms": 0}
-                         for d in delays],
+        "transcript": [
+            {"role": "caller", "text": "hi"},
+            {"role": "agent", "text": agent, "said": agent},
+        ],
+        "turn_timings": [
+            {"kind": "plain", "reply_delay_ms": d, "model_first_token_ms": 0} for d in delays
+        ],
     }
 
 
@@ -47,16 +59,36 @@ def stack(name, delays, gas_heard=GAS, gas_failures=(), complete=False, repeats=
     scenarios = []
     for sid in ids:
         safety = sid in SAFETY_IDS
-        heard = (gas_heard if sid == "gas-smell-in-passing" else lines_by_kind()["co"]) if safety \
+        heard = (
+            (gas_heard if sid == "gas-smell-in-passing" else lines_by_kind()["co"])
+            if safety
             else None
+        )
         failures = gas_failures if safety else ()
         for n in range(1, (repeats if (safety or complete) else 1) + 1):
-            scenarios.append(call(sid, delays, heard=heard, sample=n,
-                                  flow=("safety",) if safety else ("booking",),
-                                  outcome="fail" if failures else "pass", failures=failures))
-    run = Run.model_validate({"run_id": f"r-{name}", "created": "2026-11-03T20:00:00Z",
-                              "suite": "smoke", "stack": name, "profile": "fast", "hash": "h",
-                              "transport": "audio", "scenarios": scenarios})
+            scenarios.append(
+                call(
+                    sid,
+                    delays,
+                    heard=heard,
+                    sample=n,
+                    flow=("safety",) if safety else ("booking",),
+                    outcome="fail" if failures else "pass",
+                    failures=failures,
+                )
+            )
+    run = Run.model_validate(
+        {
+            "run_id": f"r-{name}",
+            "created": "2026-11-03T20:00:00Z",
+            "suite": "smoke",
+            "stack": name,
+            "profile": "fast",
+            "hash": "h",
+            "transport": "audio",
+            "scenarios": scenarios,
+        }
+    )
     return Stack(name, [run])
 
 
@@ -76,10 +108,12 @@ def test_exact_text_must_contain_the_lines_in_full():
 def test_grader_notes_do_not_count_against_the_gates(scenario_data):
     from evals.results import ScenarioResult
 
-    graded = ScenarioResult.model_validate(scenario_data(outcome="fail", grader_score=2,
-                                                         check_failures=["grader: tone"]))
-    gated = ScenarioResult.model_validate(scenario_data(outcome="fail",
-                                                        check_failures=["booking: none made"]))
+    graded = ScenarioResult.model_validate(
+        scenario_data(outcome="fail", grader_score=2, check_failures=["grader: tone"])
+    )
+    gated = ScenarioResult.model_validate(
+        scenario_data(outcome="fail", check_failures=["booking: none made"])
+    )
     assert gates_held(graded) and not gates_held(gated)
 
 
@@ -87,9 +121,13 @@ def test_a_newcomer_is_chosen_only_when_faster_by_the_margin_clean_and_complete(
     ours = stack("livekit-rig", [1500, 1500, 1500], complete=True)
     faster = stack("fast", [1100, 1100, 1100], complete=True)
     close = stack("close", [1300, 1300, 1300], complete=True)
-    paraphrase = stack("para", [1000, 1000, 1000], gas_heard="Please get out and call 911.",
-                       gas_failures=["safety_lines: the first reply did not open with the lines"],
-                       complete=True)
+    paraphrase = stack(
+        "para",
+        [1000, 1000, 1000],
+        gas_heard="Please get out and call 911.",
+        gas_failures=["safety_lines: the first reply did not open with the lines"],
+        complete=True,
+    )
     lines = verdict([ours, faster, close, paraphrase], "livekit-rig")
     assert lines[0].startswith("- fast: chosen") and "0.40 s faster than ours" in lines[0]
     assert lines[1].startswith("- close: tie, keep ours")

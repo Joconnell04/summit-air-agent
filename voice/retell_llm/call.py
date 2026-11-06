@@ -16,6 +16,7 @@ the caller heard, cut-offs included, not what was sent."""
 import asyncio
 import json
 import logging
+import re
 import time
 from collections.abc import Awaitable, Callable
 
@@ -34,6 +35,28 @@ from .model import Brain, Reply
 log = logging.getLogger("voice.retell_llm")
 
 MAX_HOPS = 6
+# Server-led, the steps whose tools answer from the tool server's own records in milliseconds get
+# no hold phrase (the read-back, the area check, the customer lookups), nor does the goodbye.
+NO_HOLD_TOOLS = (
+    "end_call", "read_back", "check_service_area", "find_customer", "get_customer_history",
+)
+# Server-led, a sentence of the model's that narrates its own step ("I'm booking that now.",
+# "Confirming the address and phone now.", "Let me check.") is never said.
+NARRATES = re.compile(
+    r"^\W*((okay|ok|alright|got it|sure|actually),?\s+)?(let me\b|let'?s (get|go|book|start|"
+    r"set|move)\b|i'?ll (check|look|book|confirm|pull|get|"
+    r"find|search|see)\b|(i'?m |i am )?(booking|checking|confirming|looking|pulling|getting|"
+    r"searching|finding)\b)",
+    re.IGNORECASE,
+)
+# A statement about what the booking needs, which explains a gate to the caller ("The booking
+# needs one more detail.", "To book the safety check, I need your name first."; done-bar calls).
+GATE_TALK = re.compile(
+    r"^\W*((okay|ok|alright|got it|sure),?\s+)?(the booking needs\b|to book (it|this|that|the "
+    r"[\w -]+?),? (i )?need\b|i need (one|a) more detail\b|(i|we) need (that|this|a few "
+    r"(more )?details?) (first|before)\b)",
+    re.IGNORECASE,
+)
 # Turn results whose text is spoken as the server wrote it, before the model answers.
 SPOKEN_ACTIONS = ("speak_lines", "speak_variant", "ask_check")
 CONNECTED = "(The call has connected.)"
@@ -46,6 +69,95 @@ def compact(result: dict) -> str:
     return json.dumps({k: v for k, v in result.items() if v not in (None, "", {})}, default=str)
 
 
+def as_heard(envelope: dict) -> dict:
+    """Server-led: the result as the model sees it once its sentence was spoken as written. The
+    sentence moves out of `say`, so the model knows the caller heard it and doesn't say it again."""
+    said = envelope.get("say") or ""
+    return {**envelope, "say": "", "said_to_caller": said}
+
+
+def ends_turn(envelope: dict) -> bool:
+    """Server-led: whether the result's sentence is the whole turn. A refusal's sentence and a
+    question are (the flow's `next` says to wait for the caller); a statement that went through
+    ("someone will call you by 8 PM") leaves the model to carry on as `next` says."""
+    if not envelope.get("ok"):
+        return True
+    data = envelope.get("data") or {}
+    # An offer waits for the caller's pick, whether or not its sentence ends in a question ("Today
+    # I have 11:30 to 12 or 12 to 12:30.").
+    return bool(data.get("offer") or data.get("windows")) or (
+        (envelope.get("say") or "").rstrip().endswith("?")
+    )
+
+
+NEXT_STEP = re.compile(r"^\s*(next|now|first|then),\s+", re.IGNORECASE)
+
+
+def unnarrated(sentence: str) -> str:
+    """Server-led: a sentence the model opens with its step ("Next, could you spell the street?")
+    loses the opener; the flow's steps are the server's to name, never said aloud."""
+    rest = NEXT_STEP.sub("", sentence, count=1)
+    return rest[:1].upper() + rest[1:] if rest != sentence else sentence
+
+
+# A sentence that is only an acknowledgment, cut right after a hold phrase.
+LONE_ACK = re.compile(r"^\W*(got it|okay|ok|perfect|thanks|thank you|sure|alright)[.!]?$", re.IGNORECASE)
+# Thanking the caller for a wait (Jackson's change set 24: never).
+THANKS_FOR_WAITING = re.compile(
+    r"\bthanks?( you)?( so much)? for (waiting|holding|your patience|holding on|bearing with)",
+    re.IGNORECASE,
+)
+# A caller who is done ("That's all.", "Nope, thanks."): the model's reply may end the call, so its
+# text waits for the end of the reply and is cut if it does (it repeated the booking before the
+# closing on Jackson's call call_046f37112cac691a50019893717).
+CALLER_DONE = re.compile(
+    r"\b(that'?s (all|it|everything)|nothing else|no,? (that'?s|thank)|nope|i'?m (good|all set)"
+    r"|all good|bye)\b",
+    re.IGNORECASE,
+)
+# A goodbye of the model's own; the socket says the closing itself (Jackson's change set 24).
+GOODBYE = re.compile(
+    r"\b(thanks?|thank you)( so much)? for calling\b|\bhave a (great|good|nice|wonderful|lovely)\b"
+    r"|\btake care\b|\bgoodbye\b",
+    re.IGNORECASE,
+)
+WEEKDAY_DATE = re.compile(
+    r"\b(today|tomorrow),?\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday),?"
+    r"(\s+(january|february|march|april|may|june|july|august|september|october|november|december)"
+    r"\s+\d{1,2}(st|nd|rd|th)?)?",
+    re.IGNORECASE,
+)
+# A name said to the caller at the end of a sentence: "You're welcome, Evelyn."
+VOCATIVE = re.compile(r",\s+([A-Z][a-z]+)(?=[.!?]?$)")
+# The server's own short connector at the start of a sentence (app/flow.py ACKS).
+CONNECTOR = re.compile(r"^(Got it|Okay, thanks|Perfect|Okay)\.\s+")
+
+
+def without_vocative(sentence: str, known: set[str]) -> str:
+    """Server-led: a caller's name said at the end of a sentence comes out (Jackson: never say
+    the caller's name)."""
+    match = VOCATIVE.search(sentence.strip())
+    if not match or match[1].lower() not in known:
+        return sentence
+    return sentence.strip()[: match.start()] + sentence.strip()[match.end(1):]
+
+
+def plain_day(sentence: str) -> str:
+    """Today and tomorrow are said alone, never with the weekday or date (change set 19)."""
+    return WEEKDAY_DATE.sub(lambda m: m[1], sentence)
+
+
+def last_word_at(transcript: list[dict], call_start_ms: int | None) -> float | None:
+    """When the caller's last word ended, as a Unix time, from Retell's word timings (seconds
+    from the call's start). None when the timings or the start are missing."""
+    if not call_start_ms:
+        return None
+    for entry in reversed(transcript):
+        if entry.get("role") == "user" and entry.get("words"):
+            return call_start_ms / 1000 + entry["words"][-1]["end"]
+    return None
+
+
 def caller_text(transcript: list[dict]) -> str:
     """What the caller has said since the agent last spoke."""
     lines = []
@@ -56,10 +168,35 @@ def caller_text(transcript: list[dict]) -> str:
     return " ".join(line for line in reversed(lines) if line)
 
 
-def heard_after(transcript: list[dict], index: int) -> bool:
-    """Whether the agent said anything after the first `index` entries."""
-    return any(e.get("role") == "agent" and (e.get("content") or "").strip()
-               for e in transcript[index:])
+def callers_in(transcript: list[dict]) -> int:
+    """How many caller lines the transcript holds."""
+    return sum(1 for e in transcript if e.get("role") != "agent")
+
+
+def heard_after(transcript: list[dict], callers: int) -> bool:
+    """Whether the agent said anything after the transcript's first `callers` caller lines.
+    Counted by caller lines, not entries: Retell merges agent entries it had split (call
+    retell_call_40414280dccd1cbd3eafdab3b62 had "...How can I" and "I help?" as two, then one),
+    which moves every later entry's index."""
+    seen = 0
+    for entry in transcript:
+        if entry.get("role") != "agent":
+            seen += 1
+        elif seen >= callers and (entry.get("content") or "").strip():
+            return True
+    return False
+
+
+def agent_lines(transcript: list[dict]):
+    """Each agent entry with its place: (caller lines before it, agent entries since the last
+    one). The place survives Retell merging entries it had split, which an index doesn't."""
+    callers = since = 0
+    for index, entry in enumerate(transcript):
+        if entry.get("role") != "agent":
+            callers, since = callers + 1, 0
+            continue
+        yield index, (callers, since), entry
+        since += 1
 
 
 def reply_ms(transcript: list[dict], index: int) -> float | None:
@@ -71,6 +208,10 @@ def reply_ms(transcript: list[dict], index: int) -> float | None:
     return round((words[0]["start"] - before[-1]["end"]) * 1000, 1)
 
 
+def sentence_words(sentence: str) -> set[str]:
+    return set(re.sub(r"[^a-z0-9 ]", "", sentence.lower().replace("'", "")).split())
+
+
 class Response:
     """The chunks of one response id. Nothing is sent once a newer request has replaced it."""
 
@@ -78,15 +219,33 @@ class Response:
         self.call = call
         self.id = response_id
         self.said = False
+        # Server-led: a tool is running or being written, the wait the hold phrase covers.
+        self.tool_wait = ""
+        # When the first tool call of the wait went to the tool server.
+        self.tool_began: float | None = None
+        self.hold_ms: float | None = None
+        # Server-led: a question was said in this reply, so nothing more of the model's follows.
+        self.asked = False
+        # The words of each sentence said in this reply, so the model can't say one again.
+        self.spoken: list[set[str]] = []
+
         self.closed = False
 
     def stale(self) -> bool:
         return self.id != self.call.current_id
 
+    def repeats(self, sentence: str) -> bool:
+        """The sentence says again one already said in this reply: done-bar persona b heard "I've
+        let our team know, and someone will call you tomorrow..." twice, the server's sentence
+        and then the model's copy of it. Three words or more, most of them in the earlier one."""
+        said = sentence_words(sentence)
+        return len(said) >= 3 and any(len(said & s) >= 0.8 * len(said) for s in self.spoken)
+
     async def say(self, text: str, fixed: bool = False) -> None:
         text = " ".join(text.split())
         if not text or self.stale():
             return
+        self.spoken += [w for w in map(sentence_words, SENTENCE_END.split(text)) if w]
         if self.said:
             text = " " + text
         self.said = True
@@ -121,6 +280,10 @@ class LlmCall:
         lines: dict,
         phone: bool,
         dead_air_checks: int = 4,
+        server_led: bool = False,
+        hold_after_s: float = 0.7,
+        hold_from: str = "caller",
+        call_start_ms: int | None = None,
     ):
         self.server = server
         self.brain = brain
@@ -135,17 +298,39 @@ class LlmCall:
         # A web call (the audio rig) has no line to transfer; only a phone call can go to a person.
         self.phone = phone
         self.dead_air_checks = dead_air_checks
+        # The server-led flow (app/flow.py, SERVER_LED=1 on the tool server): every sentence a
+        # tool result carries is spoken here as written, and the model writes only the rest.
+        self.server_led = server_led
+        # Server-led: when a step's tool work hasn't finished this long after the caller stopped
+        # talking, one hold phrase ("One sec."), the tenant's, in turn, never twice in a row
+        # (config/models.yaml voice.hold_phrase_after_s).
+        self.hold_after_s = hold_after_s
+        # "caller": counted from the caller's turn (Jackson's ask); "tool": from the moment the
+        # tool itself starts, so the model writing the call doesn't count.
+        self.hold_from = hold_from
+        self.hold_phrases = list(lines.get("hold_phrases") or ["One sec."])
+        self.hold_stats = {"waits": 0, "fired": 0}
+        # Whether the last caller turn got a hold phrase: never two turns in a row.
+        self.held_last_turn = False
+        self.drops: dict[str, int] = {}
+        self.caller_said = ""
+        # The call's start (Retell's start_timestamp), so a wait counts from the caller's last word.
+        self.call_start_ms = call_start_ms
+        self.last_word: float | None = None
         self.reminders = 0
+        # Server-led: find_slots offered windows and nothing is booked yet.
+        self.offer_open = False
         self.messages: list[dict] = []
         self.reply = SpokenReply()
         self.current_id = -1
         self.turn_lock = asyncio.Lock()
         self.post_lock = asyncio.Lock()
-        # Transcript entries already posted to the tool server as agent lines.
-        self.posted = 0
+        # Agent lines already posted to the tool server, by their place (agent_lines).
+        self.posted: set[tuple[int, int]] = set()
         self.transcript: list[dict] = []
-        # Where the last turn started, in the history and in Retell's transcript, so a reply the
-        # caller never heard (they kept talking) can be taken back out of the history.
+        # Where the last turn started, in the history and by caller lines in Retell's transcript,
+        # so a reply the caller never heard (they kept talking) can be taken back out of the
+        # history.
         self.last_turn: tuple[int, int] | None = None
         # Stage timings of each reply, attached to the agent line Retell reports for it.
         self.stages: list[dict] = []
@@ -176,12 +361,12 @@ class LlmCall:
     async def _post_heard(self, upto: int) -> None:
         async with self.post_lock:
             transcript = self.transcript
-            while self.posted < min(upto, len(transcript)):
-                index = self.posted
-                self.posted += 1
-                entry = transcript[index]
+            for index, place, entry in agent_lines(transcript[:upto]):
+                if place in self.posted:
+                    continue
+                self.posted.add(place)
                 text = (entry.get("content") or "").strip()
-                if entry.get("role") != "agent" or not text:
+                if not text:
                     continue
                 timings = self.stages.pop(0) if self.stages and index > 0 else {}
                 ms = reply_ms(transcript, index)
@@ -196,6 +381,7 @@ class LlmCall:
             if out.stale():
                 return
             began = self.began = time.perf_counter()
+            self.last_word = last_word_at(transcript, self.call_start_ms)
             self.transcript = transcript
             if self.ended in ("agent_end", "stepped_away"):
                 # The goodbye was cut off and Retell dropped the hang-up: the caller is still
@@ -208,7 +394,7 @@ class LlmCall:
             if not text:
                 await out.done()
                 return
-            self.last_turn = (len(self.messages), len(transcript))
+            self.last_turn = (len(self.messages), callers_in(transcript))
             try:
                 await self._caller_turn(out, text, began)
             except asyncio.CancelledError:
@@ -247,6 +433,7 @@ class LlmCall:
         self.last_turn = None
 
     async def _caller_turn(self, out: Response, text: str, began: float) -> None:
+        self.caller_said = text
         result = await asyncio.shield(self.server.turn("caller", text, {}))
         server_ms = round((time.perf_counter() - began) * 1000, 1)
         if result.get("refused") == UNREACHABLE:
@@ -301,24 +488,142 @@ class LlmCall:
 
     async def _think(self, out: Response, began: float, server_ms: float) -> None:
         stages: dict[str, float] = {"server_ms": server_ms}
+        watch = asyncio.create_task(self._hold_watch(out, began)) if self.server_led else None
+        try:
+            await self._hops(out, stages)
+        finally:
+            if watch is not None:
+                watch.cancel()
+        if out.hold_ms is not None:
+            stages["hold_ms"] = out.hold_ms
+        self.stages.append(stages)
+
+    def _clean(self, sentence: str, out: Response) -> tuple[str, str]:
+        """Server-led: a sentence of the model's as the caller will hear it, and why it was cut,
+        if it was. A question is never cut, only tidied, so the filter can't take the actual
+        question away (DECISIONS 112: the custom stack's filter left half replies)."""
+        tidy = plain_day(without_vocative(unnarrated(sentence), self._known_names()))
+        if tidy.rstrip().endswith("?"):
+            return tidy, ""
+        if out.repeats(tidy):
+            return "", "repeats_said"
+        if NARRATES.match(tidy):
+            return "", "narrates"
+        if GATE_TALK.match(tidy):
+            return "", "explains_gate"
+        if THANKS_FOR_WAITING.search(tidy):
+            return "", "thanks_for_waiting"
+        return tidy, ""
+
+    def _one_question(self, text: str) -> str:
+        """A held reply up to and including its first question; the rest is cut and logged."""
+        parts = [p for p in SENTENCE_END.split(text) if p.strip()]
+        for i, part in enumerate(parts):
+            if part.rstrip().endswith("?"):
+                for rest in parts[i + 1:]:
+                    self._dropped(rest, "after_question")
+                return " ".join(parts[: i + 1])
+        return text
+
+    def _dropped(self, sentence: str, reason: str) -> None:
+        """Every sentence the filter cuts is logged in full, and counted per call."""
+        self.drops[reason] = self.drops.get(reason, 0) + 1
+        log.info("%s: dropped (%s) %r", self.server.call_id, reason, sentence)
+
+    def _known_names(self) -> set[str]:
+        """Every word the caller said and every name on the accounts the call found."""
+        return self.reply._caller_words | self.reply.names
+
+    def _closing(self) -> str:
+        """The tenant's closing plus one of its pinned niceties, each measured to end falling in
+        the agent's voice (agent.yaml closing_niceties), chosen per call, never two."""
+        base = self.lines.get("closing") or self.lines["goodbye"]
+        options = self.lines.get("closing_niceties") or []
+        if not options:
+            return base
+        pick = options[sum(map(ord, self.server.call_id or "")) % len(options)]
+        return f"{base} {pick}"
+
+    def _wait_on(self, out: Response, tool: str) -> None:
+        """A tool is being written or run: the wait the hold phrase may cover, counted once."""
+        if out.tool_wait or tool in NO_HOLD_TOOLS:
+            return
+        out.tool_wait = tool
+        self.hold_stats["waits"] += 1
+
+    async def _hold_watch(self, out: Response, began: float) -> None:
+        """One hold phrase per wait: only when a tool's work hasn't finished `hold_after_s` after
+        the caller stopped talking and the caller has heard nothing yet. Logged when it fires."""
+        if self.held_last_turn:
+            self.held_last_turn = False
+            return
+        while not out.closed and not out.stale() and not out.said:
+            waited = time.perf_counter() - began
+            if self.hold_from == "tool":
+                due = (out.tool_began is not None
+                       and time.perf_counter() - out.tool_began >= self.hold_after_s)
+            elif self.last_word is not None:
+                # From the caller's last word, as the caller feels the wait (Jackson).
+                due = time.time() - self.last_word >= self.hold_after_s
+            else:
+                due = waited >= self.hold_after_s
+            if out.tool_wait and due:
+                phrase = self.hold_phrases[self.hold_stats["fired"] % len(self.hold_phrases)]
+                self.hold_stats["fired"] += 1
+                out.hold_ms = round(waited * 1000, 1)
+                self.held_last_turn = True
+                log.info("%s: hold phrase %r at %.0f ms, waiting on %s", self.server.call_id,
+                         phrase, out.hold_ms, out.tool_wait)
+                await out.say(phrase)
+                return
+            await asyncio.sleep(0.05)
+
+    async def _hops(self, out: Response, stages: dict) -> None:
         tool_ms = 0.0
         for hop in range(MAX_HOPS):
             self.reply.start_reply()
-            holding = self.reply.holding()
+            # While windows are on offer, the model's text waits for the end of its reply: a reply
+            # that calls find_slots again (a fact that makes it urgent) is the server's dispatch
+            # line alone, never the model's slot offer before it (call
+            # call_63eff21840ce12f1518561da90f said both).
+            holding = self.reply.holding() or (self.server_led and self.offer_open)
             pending, held, kept = "", [], []
+            # Server-led: the model's goodbyes wait for the end of the reply (the socket says the
+            # closing when it ends the call), and the raw sentences, for the fallback.
+            goodbyes, raw = [], []
+            closing_turn = self.server_led and bool(CALLER_DONE.search(self.caller_said))
             reply = Reply()
             async for delta in self.brain.stream(self.system, self.messages, self.tools, reply):
                 if out.stale():
                     break
                 pending += delta
                 *done, pending = SENTENCE_END.split(pending)
+                if self.server_led and reply.tool_started:
+                    self._wait_on(out, reply.tool_started)
                 if holding:
                     held += done
                     continue
                 for sentence in done:
-                    if said := self.reply.sentence(sentence):
+                    if self.server_led:
+                        raw.append(sentence)
+                        sentence, reason = self._clean(sentence, out)
+                        if reason:
+                            self._dropped(raw[-1], reason)
+                            continue
+                        if closing_turn or GOODBYE.search(sentence):
+                            goodbyes.append(sentence)
+                            continue
+                    if sentence and (said := self.reply.sentence(sentence)):
+                        if self.server_led and out.hold_ms is not None and LONE_ACK.match(said):
+                            # "One sec." already opened the reply: no "Got it." stacked on it.
+                            self._dropped(said, "ack_after_hold")
+                            continue
+                        if self.server_led and out.asked:
+                            self._dropped(said, "after_question")
+                            continue
                         kept.append(said)
                         await out.say(said)
+                        out.asked = out.asked or said.rstrip().endswith("?")
             for kind, count in reply.tokens.items():
                 self.tokens[kind] = self.tokens.get(kind, 0) + count
             if hop == 0:
@@ -331,9 +636,51 @@ class LlmCall:
             calls = [(u["name"], u["input"]) for u in reply.tool_uses]
             if holding:
                 last = self.reply.text(" ".join([*held, pending]), calls)
+                if self.server_led and last:
+                    last = self._one_question(last)
+                    parts = [p for p in SENTENCE_END.split(last) if p.strip()]
+                    if out.hold_ms is not None and len(parts) > 1 and LONE_ACK.match(parts[0]):
+                        # "One sec." already opened the reply: no "Got it." stacked on it.
+                        self._dropped(parts[0], "ack_after_hold")
+                        last = " ".join(parts[1:])
             else:
-                last = self.reply.sentence(pending) if pending.strip() else ""
-            if last:
+                rest = pending
+                if self.server_led and pending.strip():
+                    raw.append(pending)
+                    rest, reason = self._clean(pending, out)
+                    if reason:
+                        self._dropped(pending, reason)
+                    elif closing_turn or GOODBYE.search(rest):
+                        goodbyes.append(rest)
+                        rest = ""
+                last = self.reply.sentence(rest) if rest.strip() else ""
+            ending = any(name == "end_call" for name, _ in calls)
+            for goodbye in goodbyes:
+                if ending:
+                    self._dropped(goodbye, "goodbye_with_end_call")
+                elif said := self.reply.sentence(goodbye):
+                    if out.asked:
+                        self._dropped(said, "after_question")
+                        continue
+                    kept.append(said)
+                    await out.say(said)
+                    out.asked = out.asked or said.rstrip().endswith("?")
+            if (self.server_led and not reply.tool_uses and not kept and not last and raw
+                    and not out.said):
+                # The filter cut the whole reply: say it as the model wrote it rather than leave
+                # the caller in silence, and log that it happened.
+                last = " ".join(" ".join(raw).split())
+                self._dropped(last, "fallback_spoke_whole_reply")
+            # Server-led, the unfinished text that comes with a tool call is never said: it is the
+            # lead-in or a question the result answers. The model's next request writes the reply
+            # when the server has nothing to say.
+            deferred = self.server_led and bool(reply.tool_uses)
+            if last and self.server_led and out.asked and not deferred:
+                # One question a turn: the model's question already ended this reply (Jackson's
+                # call call_046f37112cac691a50019893717 heard its question and the name line together).
+                self._dropped(last, "after_question")
+                last = ""
+            if last and not deferred:
                 kept.append(last)
                 await out.say(last)
             # The history keeps what the caller heard of the model's text, as LiveKit's does.
@@ -352,7 +699,6 @@ class LlmCall:
                 break
         if tool_ms:
             stages["tool_ms"] = round(tool_ms, 1)
-        self.stages.append(stages)
 
     async def _run_tools(self, out: Response, uses: list[dict]) -> tuple[list[dict], bool]:
         """Each call goes to the tool server; the server's own lines are said as written. True
@@ -360,28 +706,62 @@ class LlmCall:
         results, finished = [], False
         for use in uses:
             name = use["name"]
-            envelope = await self.server.tool(name, dict(use["input"]), self.writes.get(name, False))
+            if self.server_led:
+                self._wait_on(out, name)
+                if out.tool_began is None and name not in NO_HOLD_TOOLS:
+                    out.tool_began = time.perf_counter()
+            envelope = await self._tool(out, name, dict(use["input"]))
             self.reply.tool_done(name, envelope)
+            if name == "find_slots" and envelope.get("ok"):
+                self.offer_open = not (envelope.get("data") or {}).get("dispatched")
+            elif name == "book_appointment" and envelope.get("ok"):
+                self.offer_open = False
             data = envelope.get("data") or {}
             ending = name == "end_call" and envelope.get("ok")
             parts = data.get("parts") if envelope.get("ok") else None
             line = spoken_by_server(name, envelope)
+            say = envelope.get("say") or ""
+            put = False
+            if self.server_led and name == "flag_person" and envelope.get("ok") and self.phone:
+                # Put through first, so the caller hears either the handoff or the callback line,
+                # never both (call call_63eff21840ce12f1518561da90f heard the callback time, then
+                # "I'm connecting you").
+                put = await self._put_through(out, envelope)
+                if put:
+                    say, finished = "", True
             if parts:
                 # A read-back the caller asked to hear slower. Retell has no per-sentence speed,
                 # so the parts are said at the call's one speed.
                 await out.say(" ".join(p["text"] for p in parts), fixed=True)
                 finished = True
+            elif self.server_led and say and name != "request_transfer":
+                # (A transfer's sentence is said by _transfer_now below, or the callback line
+                # instead on a web call, never twice.)
+                if out.said:
+                    # After "One sec." or the model's own "Okay, thanks.", the server's "Perfect."
+                    # would stack two openers.
+                    say = CONNECTOR.sub("", say, count=1)
+                # Interruptible, so the caller can correct a read-back; a safety refusal is not.
+                await out.say(say, fixed=envelope.get("refused") == "gate_safety")
+                if line or ends_turn(envelope):
+                    finished = True
             elif line:
                 await out.say(line, fixed=True)
                 finished = True
             elif spoken_first(envelope):
                 await out.say(spoken_first(envelope), fixed=True)
-            if ending and data.get("hang_up"):
+            if ending and data.get("hang_up") and self.server_led and not say:
+                # The closing is the socket's alone; the model's own goodbye in this reply was cut.
+                await out.say(self._closing(), fixed=True)
+                self.ended = "agent_end"
+                finished = True
+            elif ending and data.get("hang_up"):
                 if not out.said and not data.get("signed_off"):
                     await out.say(self.lines["goodbye"], fixed=True)
                 self.ended = "agent_end"
                 finished = True
-            person = name == "flag_person" and envelope.get("ok") and self.phone
+            person = (name == "flag_person" and envelope.get("ok") and self.phone
+                      and not self.server_led)
             if person and await self._put_through(out, envelope):
                 finished = True
             if name == "request_transfer" and envelope.get("ok"):
@@ -390,9 +770,14 @@ class LlmCall:
                 finished = True
             if ending:
                 finished = True
+            spoken = self.server_led and say and not parts
+            seen = as_heard(envelope) if spoken else for_model(envelope)
             results.append({"type": "tool_result", "tool_use_id": use["id"],
-                            "content": compact(for_model(envelope))})
+                            "content": compact(seen)})
         return results, finished
+
+    async def _tool(self, out: Response, name: str, args: dict) -> dict:
+        return await self.server.tool(name, args, self.writes.get(name, False))
 
     async def _put_through(self, out: Response, flagged: dict) -> bool:
         """After a person flag the server may send the caller to a person now (app/transfer.py).
@@ -433,6 +818,12 @@ class LlmCall:
             self.transcript = transcript
             await self._post_heard(len(transcript))
             self.reminders += 1
+            if self.server_led:
+                # Jackson's check-in after about 8 seconds of silence, at most twice (the agent's
+                # reminder settings); the call stays open, and Retell ends it after a long silence.
+                await out.say(self.lines.get("are_you_there") or self.lines["still_here"])
+                await out.done()
+                return
             if self.reminders < self.dead_air_checks:
                 await out.say(self.lines["still_here"])
                 await out.done()
@@ -454,5 +845,6 @@ class LlmCall:
             await self.server.transfer_done(self.transfer_id, "connected")
         await self.server.end(self.ended)
         await self.server.aclose()
-        log.info("%s ended (%s), model tokens %s", self.server.call_id, self.ended,
-                 json.dumps(self.tokens, sort_keys=True))
+        log.info("%s ended (%s), model tokens %s, hold phrases %s, drops %s", self.server.call_id,
+                 self.ended, json.dumps(self.tokens, sort_keys=True), json.dumps(self.hold_stats),
+                 json.dumps(self.drops, sort_keys=True))

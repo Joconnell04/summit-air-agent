@@ -1,0 +1,98 @@
+{
+ "call": "eval-commercial-bakery-1-374125f5",
+ "events": [
+  {
+   "at": "2026-11-06T01:22:01Z",
+   "type": "tool",
+   "tool": "calls.start",
+   "args": {
+    "call_id": "eval-commercial-bakery-1-374125f5",
+    "caller_id": "(718) 555-0188",
+    "dialed_number": "(678) 336-6730",
+    "direction": "inbound"
+   },
+   "ok": true,
+   "refused": null,
+   "gate": null,
+   "say": "",
+   "ms": 82.3,
+   "error": null,
+   "request_id": "dba5b6842144"
+  },
+  {
+   "at": "2026-11-06T01:22:02Z",
+   "type": "tool",
+   "tool": "calls.start",
+   "args": {
+    "call_id": "eval-commercial-bakery-1-374125f5",
+    "caller_id": "chat",
+    "dialed_number": "",
+    "direction": "inbound"
+   },
+   "ok": true,
+   "refused": null,
+   "gate": null,
+   "say": "",
+   "ms": 2.7,
+   "error": null,
+   "request_id": "f0c8e203c5f0"
+  },
+  {
+   "at": "2026-11-06T01:22:06Z",
+   "type": "tool",
+   "tool": "record_lead",
+   "args": {
+    "call_id": "eval-commercial-bakery-1-374125f5",
+    "kind": "commercial",
+    "details": {
+     "callback_time": null,
+     "callback_in_minutes": null,
+     "callback_after": null,
+     "callback_before": null,
+     "callback_day": "today",
+     "contact_name": "Lucia",
+     "company": "Harbor Bakery Group",
+     "need": "Rooftop unit over kitchen quit; kitchen is very hot. Commercial service request, after hours call."
+    }
+   },
+   "ok": true,
+   "refused": null,
+   "gate": null,
+   "say": "Thanks for thinking of us. Unfortunately Summit Air works on homes and apartments, not businesses, so we're not the right fit for this one.",
+   "ms": 19.3,
+   "error": null,
+   "request_id": "8a0e5c749c5c"
+  },
+  {
+   "at": "2026-11-06T01:22:09Z",
+   "type": "tool",
+   "tool": "end_call",
+   "args": {
+    "call_id": "eval-commercial-bakery-1-374125f5",
+    "reason": "not_a_customer"
+   },
+   "ok": true,
+   "refused": null,
+   "gate": null,
+   "say": "",
+   "ms": 8.1,
+   "error": null,
+   "request_id": "84502feaa875"
+  },
+  {
+   "at": "2026-11-06T01:22:12Z",
+   "type": "tool",
+   "tool": "calls.end",
+   "args": {
+    "reason": "agent_end"
+   },
+   "ok": true,
+   "refused": null,
+   "gate": null,
+   "say": "",
+   "ms": 4.9,
+   "error": null,
+   "request_id": "ea9154a96595"
+  }
+ ]
+}

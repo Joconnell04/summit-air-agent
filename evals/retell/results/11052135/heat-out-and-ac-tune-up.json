@@ -1,0 +1,231 @@
+{
+  "case": "heat-out-and-ac-tune-up",
+  "retell": {
+    "test_case_job_id": "test_job_b04d3a324192",
+    "status": "error",
+    "result_explanation": "Ending the conversation early as there might be a loop.",
+    "creation_timestamp": 1793914594041,
+    "user_modified_timestamp": 1793914612894,
+    "test_case_definition_id": "test_case_f8fe5ca1a0b3",
+    "test_case_definition_snapshot": {
+      "creationTimestamp": 1793911573618,
+      "dynamicVariables": {
+        "summit_call_id": "rtest-11052135-heat-out-and-ac-tune-up"
+      },
+      "llmModel": "claude-5.5-haiku",
+      "metrics": [
+        "The agent books 2 separate visit(s) with book_appointment, one for each problem or unit the caller needs seen.",
+        "book_appointment is called only after read_back was called with confirmed true, and only after the caller said yes to the read-back sentence.",
+        "The agent books the heat first, then the tune-up, without reading the address back twice.",
+        "The agent confirms both visits clearly.",
+        "The agent never says the caller's name."
+      ],
+      "name": "[summit] heat-out-and-ac-tune-up: Nadia Petrov, a homeowner in Bensonhurst, Brooklyn, with no heat",
+      "orgId": "org_EoCqq2c268JWlyCE",
+      "responseEngine": {
+        "llmId": "llm_1da616f2baeb6e916f63e0236950",
+        "type": "retell-llm",
+        "version": 0
+      },
+      "responseEngineId": "llm_1da616f2baeb6e916f63e0236950",
+      "testCaseDefinitionId": "test_case_f8fe5ca1a0b3",
+      "toolMocks": [],
+      "type": "simulation",
+      "userModifiedTimestamp": 1793914517054,
+      "userPrompt": "## Identity\nNadia Petrov, a homeowner in Bensonhurst, Brooklyn, with no heat. Organized and wants to get everything done in one call.\nYour name: Nadia Petrov\nYour address: 1855 Bath Ave, Brooklyn, 11214\nYour phone: (917) 555-0115 (the number you're calling from)\nYour problem: no heat since last night, gas furnace, about 62 inside; separately the central AC needs its yearly tune-up before summer\nYour home: Nadia, all day\nYour approver: Nadia, she owns the house\n\n## Goal\nStart the call by saying: \"My heat's out, and while you're at it, can you also tune up the AC?\"\n\n## Behavior\n- Answer the heating questions first.\n- Take the first time offered for the heat.\n- For the AC tune-up, take any weekday offered; if there's no opening, accept a callback to set it up.\n- Say goodbye once both are handled.\n- Talk like a real person on the phone: short, plain sentences, one thing at a time.\n- Give a detail only when the agent asks for it, unless a line above says otherwise.\n- Never invent facts beyond the ones above; if asked something you don't know, say you don't know.\n- When your business is done, say goodbye and stop talking.\n"
+    },
+    "transcript_snapshot": {
+      "callEnded": false,
+      "dynamicVariables": {
+        "call_context": "",
+        "call_id": "playground",
+        "call_type": "web_call",
+        "greeting": "Thank you for calling Summit Air. How can I help you today?",
+        "session_type": "voice",
+        "summit_call_id": "rtest-11052135-heat-out-and-ac-tune-up",
+        "system_timezone": "America/Los_Angeles"
+      },
+      "knowledgeBaseRetrievedContents": [
+        "{Title: Heating and cooling basics}\n\n{H1: Heating and cooling basics, H2: Heating systems in New York City homes}\n# Heating and cooling basics\n## Heating systems in New York City homes\n\nMost homes in New York City are heated by a boiler or a furnace. A boiler heats water, or turns it into steam, that runs through pipes to radiators or baseboard heaters in each room. A furnace heats air and blows it through ducts and vents. Older apartment buildings usually have steam heat; houses and newer buildings more often have hot-water boilers or furnaces. Many boilers and furnaces burn natural gas or oil.\n\nA heat pump moves heat instead of making it: in winter it pulls heat in from outside air, and in summer it runs in reverse to cool. A ductless mini-split is a kind of heat pump with an outdoor unit and one or more wall or ceiling units inside, each heating and cooling its own room."
+      ],
+      "toolMocks": [],
+      "transcript": [
+        {
+          "content": "Thank you for calling Summit Air. How can I help you today?",
+          "created_timestamp": 1793914604075,
+          "message_id": "message_d1672c965d256f0721b333e7",
+          "role": "agent"
+        },
+        {
+          "content": "My heat's out, and while you're at it, can you also tune up the AC?",
+          "created_timestamp": 1793914604879,
+          "message_id": "message_9638628670802a570e515751",
+          "role": "user"
+        },
+        {
+          "content": "Got it, I can help with both. Let's start with the heat: is it completely out, or just not keeping up? And since when has it been like that?",
+          "created_timestamp": 1793914605650,
+          "message_id": "message_51d7edd8f3b543743eaf2527",
+          "metadata": {
+            "response_id": 1
+          },
+          "role": "agent"
+        },
+        {
+          "content": "No heat since last night. It's not completely cold, it's about 62 inside. It just doesn't seem to be warming up.",
+          "created_timestamp": 1793914606347,
+          "message_id": "message_7f8fa19ae946c7185301eec2",
+          "role": "user"
+        },
+        {
+          "content": "Thanks for the details. Since the caller answered my question about the heat, I'll work from that. Since when has the heat been out, and is it completely off or just not keeping up?",
+          "created_timestamp": 1793914607251,
+          "message_id": "message_9aee35d413e0892330fec9e0",
+          "metadata": {
+            "response_id": 2
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Since last night. It's not off completely, it's just not warming up. It's about 62 in the house.",
+          "created_timestamp": 1793914607852,
+          "message_id": "message_d9bd7544d7df7630086f2e03",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, got it. Is this a home or an apartment?",
+          "created_timestamp": 1793914608526,
+          "message_id": "message_158df9c83474703a09e35ebb",
+          "metadata": {
+            "response_id": 3
+          },
+          "role": "agent"
+        },
+        {
+          "content": "It's a house. It's a two-family, I'm the owner, and I'm home all day.",
+          "created_timestamp": 1793914609153,
+          "message_id": "message_82479f10cdc20d094b3f0b45",
+          "role": "user"
+        },
+        {
+          "content": "Thanks for telling me. Could I get your name?",
+          "created_timestamp": 1793914609784,
+          "message_id": "message_368e61a5c1edeaff636f360e",
+          "metadata": {
+            "response_id": 4
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Nadia Petrov.",
+          "created_timestamp": 1793914610311,
+          "message_id": "message_0220301fc3defd171cbd8b03",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, Nadia. Got it. What's the address where the heat is out?",
+          "created_timestamp": 1793914610961,
+          "message_id": "message_1dc2f581975f3e26e785b791",
+          "metadata": {
+            "response_id": 5
+          },
+          "role": "agent"
+        },
+        {
+          "content": "1855 Bath Ave, Brooklyn, 11214.",
+          "created_timestamp": 1793914611578,
+          "message_id": "message_7e42cbb81251f0163e5a5a3b",
+          "role": "user"
+        },
+        {
+          "content": "I'm sorry, I'm not sure that last message was your address. Could you tell me the house number and street where the heat is out?",
+          "created_timestamp": 1793914612368,
+          "message_id": "message_301126b5ea99a752412bd41e",
+          "metadata": {
+            "response_id": 6
+          },
+          "role": "agent"
+        }
+      ]
+    }
+  },
+  "trace": {
+    "call": {
+      "id": "rtest-11052135-heat-out-and-ac-tune-up",
+      "tenant": "summit-air",
+      "caller_id": "(917) 555-0115",
+      "caller_key": "9175550115",
+      "dialed_number": "(678) 336-6730",
+      "direction": "inbound",
+      "started_at": "2026-09-18T21:36:31Z",
+      "ended_at": null,
+      "end_reason": null,
+      "end_requested": 0,
+      "after_hours": 0,
+      "linked_call_id": null,
+      "outcome": null,
+      "commercial": 0,
+      "summary_status": "none",
+      "turn_seq": 0,
+      "safety_state": "none",
+      "safety_kind": null,
+      "safety_signal_at": null,
+      "safety_lines_at": null,
+      "safety_flag_id": null,
+      "safety_variant": 0,
+      "readback_json": null,
+      "readback_asked_seq": null,
+      "readback_confirmed_at": null
+    },
+    "events": [
+      {
+        "at": "2026-11-05T21:36:31Z",
+        "type": "tool",
+        "tool": "calls.start",
+        "args": {
+          "call_id": "rtest-11052135-heat-out-and-ac-tune-up",
+          "caller_id": "(917) 555-0115",
+          "dialed_number": "(678) 336-6730",
+          "direction": "inbound"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 17.0,
+        "error": null,
+        "request_id": "c287b9c699a4"
+      }
+    ],
+    "flags": [],
+    "callbacks": [],
+    "bookings": [],
+    "notes": [],
+    "leads": [],
+    "out_of_area": [],
+    "summary": [],
+    "electrical": [],
+    "holds": [],
+    "pace": [
+      {
+        "call_id": "rtest-11052135-heat-out-and-ac-tune-up",
+        "speed": 1.0,
+        "source": "default",
+        "requested": 0,
+        "older_adult": 0,
+        "address_speed": null,
+        "repeats": 0
+      }
+    ],
+    "pace_changes": [],
+    "caller_pace": [],
+    "transfers": [],
+    "handoffs": [],
+    "address_lookups": [],
+    "address_checks": [],
+    "names": [],
+    "address_moves": [],
+    "identity_checks": [],
+    "heads_ups": []
+  }
+}

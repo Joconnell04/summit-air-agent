@@ -1,0 +1,94 @@
+{
+ "window": [
+  "2026-11-06T01:41:13Z",
+  "2026-11-06T01:45:11Z"
+ ],
+ "calls": [
+  {
+   "call": {
+    "id": "retell_call_2c871637f07dc6f5b4cb39afc0b",
+    "tenant": "summit-air",
+    "caller_id": "+16466240418",
+    "caller_key": "6466240418",
+    "dialed_number": "+16466240418",
+    "direction": "inbound",
+    "started_at": "2026-11-06T01:41:25Z",
+    "ended_at": "2026-11-06T01:45:03Z",
+    "end_reason": "agent_end",
+    "end_requested": 1,
+    "after_hours": 1,
+    "linked_call_id": null,
+    "outcome": "declined_commercial",
+    "commercial": 1,
+    "summary_status": "pending",
+    "turn_seq": 39,
+    "safety_state": "none",
+    "safety_kind": null,
+    "safety_signal_at": null,
+    "safety_lines_at": null,
+    "safety_flag_id": null,
+    "safety_variant": 0,
+    "readback_json": null,
+    "readback_asked_seq": null,
+    "readback_confirmed_at": null
+   },
+   "bookings": [],
+   "booking_names": [],
+   "call_names": [],
+   "flags": [
+    {
+     "id": 37,
+     "call_id": "retell_call_2c871637f07dc6f5b4cb39afc0b",
+     "kind": "payment",
+     "reason": "Caller wants to pay by card: send a payment link or call to take the payment",
+     "priority": "Normal",
+     "status": "open",
+     "created_at": "2026-11-06T01:43:01Z"
+    },
+    {
+     "id": 38,
+     "call_id": "retell_call_2c871637f07dc6f5b4cb39afc0b",
+     "kind": "person",
+     "reason": "Commercial dental office (Westside Dental) AC broken, losing cool air, office warm with patients present. Caller Casey Park wants callback within the hour at 917-555-0142. Commercial, outside service area.",
+     "priority": "Urgent",
+     "status": "open",
+     "created_at": "2026-11-06T01:44:37Z"
+    }
+   ],
+   "callbacks": [
+    {
+     "id": 13,
+     "call_id": "retell_call_2c871637f07dc6f5b4cb39afc0b",
+     "phone": "+16466240418",
+     "phone_key": "6466240418",
+     "due_at": "2026-11-06T02:44:37Z",
+     "owner": "on_call",
+     "reason": "Commercial dental office (Westside Dental) AC broken, losing cool air, office warm with patients present. Caller Casey Park wants callback within the hour at 917-555-0142. Commercial, outside service area.",
+     "status": "pending",
+     "attempts": 0,
+     "last_attempt_at": null,
+     "created_at": "2026-11-06T01:44:37Z",
+     "updated_at": "2026-11-06T01:44:37Z"
+    }
+   ],
+   "leads": [
+    {
+     "id": 3,
+     "call_id": "retell_call_2c871637f07dc6f5b4cb39afc0b",
+     "kind": "commercial",
+     "summary": "Westside Dental; contact Casey Park +16466240418; AC broken at commercial dental office; requested callback at 917-555-0142",
+     "status": "stored",
+     "fsm_key": "retell_call_2c871637f07dc6f5b4cb39afc0b:lead:7977f6ade7a93a92d893d360fe98769abbd503ed",
+     "request_json": "{\"callReasonId\": 704, \"customerId\": null, \"leadCustomerName\": \"Westside Dental\", \"leadPhone\": \"+16466240418\", \"summary\": \"Westside Dental; contact Casey Park +16466240418; AC broken at commercial dental office; requested callback at 917-555-0142\", \"campaignId\": 301}",
+     "fsm_lead_id": 3,
+     "callback_id": null,
+     "attempts": 1,
+     "last_error": null,
+     "created_at": "2026-11-06T01:42:37Z"
+    }
+   ]
+  }
+ ],
+ "do_not_call": [],
+ "dumped_at": "2026-11-06T01:45:22Z"
+}

@@ -1,0 +1,29 @@
+dialing +16783366730 from room testcall-cb2e97c8
+agent : Hi there. Thanks so much for calling Summit Air today.
+caller: Hi, I'd like to
+agent : I'm Brian, the virtual assistant.
+agent : How can I help?
+caller: Hi, I'd like to book a tune-up for my furnace.
+agent : Sure. I can set that up. I don't see an account under the number you're calling from. Can I get your name?
+caller: Sam Ortiz.
+agent : Thanks. And this is for your home. Right?
+caller: Yes, residential.
+agent : Perfect. What's the street address for the visit?
+caller: Five hundred Ocean Avenue.
+agent : Got it. Is there an apartment or unit number?
+caller: No, it's a house.
+agent : Okay. What's the best phone number to reach you?
+caller: The number I'm calling from.
+agent : The caller already said it's a house, so I'll read back again with no unit. So that's five hundred Ocean Avenue, and the number you're calling from ending in zero four one eight. That's all correct. Right?
+caller: Yep, that is right.
+agent : The soonest I have is today, eight to eight thirty. Does that work?
+caller: Sure, that's fine.
+agent : Great. Will you be able to approve any repair work the technician recommends?
+caller: Yes.
+agent : Okay. Will someone be home to let the technician in? And is there a gate code or buzzer they should know about?
+caller: Yes, I'll be home, and the gate code is four four one two.
+agent : Okay. I've booked it. The technician will arrive today between eight and eight thirty. Anything else?
+caller: That's it, thank you. Bye.
+agent : Thanks so much for calling Summit Air today. Have a great day. Take care.
+the agent hung up
+livekit_ffi::server:279:livekit_ffi::server - Attempted to drop unknown FFI handle: 23

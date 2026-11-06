@@ -1,0 +1,99 @@
+{
+ "window": [
+  "2026-11-06T01:17:15Z",
+  "2026-11-06T01:21:22Z"
+ ],
+ "calls": [
+  {
+   "call": {
+    "id": "retell_call_90b5daf59b6689139186dbfdeb7",
+    "tenant": "summit-air",
+    "caller_id": "+16466240418",
+    "caller_key": "6466240418",
+    "dialed_number": "+16783366730",
+    "direction": "inbound",
+    "started_at": "2026-11-06T01:17:27Z",
+    "ended_at": "2026-11-06T01:20:56Z",
+    "end_reason": "agent_end",
+    "end_requested": 1,
+    "after_hours": 1,
+    "linked_call_id": null,
+    "outcome": "callback",
+    "commercial": 0,
+    "summary_status": "pending",
+    "turn_seq": 65,
+    "safety_state": "none",
+    "safety_kind": null,
+    "safety_signal_at": null,
+    "safety_lines_at": null,
+    "safety_flag_id": null,
+    "safety_variant": 0,
+    "readback_json": "{\"street\": \"199 East 4th Street\", \"unit\": \"2\", \"city\": \"Manhattan\", \"zip\": \"10009\", \"spelled\": \"\", \"phone\": \"6466240418\", \"phone_for\": \"\", \"sentence\": \"So that's one ninety-nine East Fourth Street, unit two, and the number you're calling from, ending in zero four one eight. That's all correct, right?\"}",
+    "readback_asked_seq": 25,
+    "readback_confirmed_at": "2026-11-06T01:18:49Z"
+   },
+   "bookings": [],
+   "booking_names": [
+    {
+     "call_id": "retell_call_90b5daf59b6689139186dbfdeb7",
+     "name": "Jordan Lee",
+     "at": "2026-11-06T01:18:49Z"
+    }
+   ],
+   "call_names": [],
+   "flags": [
+    {
+     "id": 331,
+     "call_id": "retell_call_90b5daf59b6689139186dbfdeb7",
+     "kind": "person",
+     "reason": "No heat since last night at 199 East 4th Street, unit 2, Manhattan. Caller's 85-year-old mother is staying at the home. After hours; on-call technician needed.",
+     "priority": "Urgent",
+     "status": "open",
+     "created_at": "2026-11-06T01:19:41Z"
+    },
+    {
+     "id": 332,
+     "call_id": "retell_call_90b5daf59b6689139186dbfdeb7",
+     "kind": "person",
+     "reason": "Caller has a question about a bill and wants a callback.",
+     "priority": "Normal",
+     "status": "open",
+     "created_at": "2026-11-06T01:20:09Z"
+    }
+   ],
+   "callbacks": [
+    {
+     "id": 81,
+     "call_id": "retell_call_90b5daf59b6689139186dbfdeb7",
+     "phone": "+16466240418",
+     "phone_key": "6466240418",
+     "due_at": "2026-11-06T01:34:41Z",
+     "owner": "on_call",
+     "reason": "No heat since last night at 199 East 4th Street, unit 2, Manhattan. Caller's 85-year-old mother is staying at the home. After hours; on-call technician needed.",
+     "status": "pending",
+     "attempts": 0,
+     "last_attempt_at": null,
+     "created_at": "2026-11-06T01:19:41Z",
+     "updated_at": "2026-11-06T01:20:39Z"
+    },
+    {
+     "id": 82,
+     "call_id": "retell_call_90b5daf59b6689139186dbfdeb7",
+     "phone": "+16466240418",
+     "phone_key": "6466240418",
+     "due_at": "2026-11-06T22:00:00Z",
+     "owner": "office",
+     "reason": "Caller has a question about a bill and wants a callback. (caller asked: tomorrow between 12 PM and 5 PM)",
+     "status": "pending",
+     "attempts": 0,
+     "last_attempt_at": null,
+     "created_at": "2026-11-06T01:20:09Z",
+     "updated_at": "2026-11-06T01:20:39Z"
+    }
+   ],
+   "leads": []
+  }
+ ],
+ "do_not_call": [],
+ "dumped_at": "2026-11-06T01:21:33Z"
+}

@@ -1,0 +1,5 @@
+# #175 STT check: the same four callers as in slate-sonnet-v5-night.txt, with B's stt_mode set to fast.
+B agent_871ef6fafe2636244c4bbaca67 eval r404-01 reset
+B agent_871ef6fafe2636244c4bbaca67 eval o404-01 reset
+B agent_871ef6fafe2636244c4bbaca67 eval r404-02 reset
+B agent_871ef6fafe2636244c4bbaca67 eval o404-02 reset

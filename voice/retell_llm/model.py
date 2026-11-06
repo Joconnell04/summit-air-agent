@@ -19,6 +19,8 @@ class Reply:
     content: list[dict] = field(default_factory=list)
     tool_uses: list[dict] = field(default_factory=list)
     first_token_ms: float = 0.0
+    # The first tool call's name, as soon as the model starts writing it.
+    tool_started: str = ""
     # Input (uncached, cache read, cache write) and output tokens, for the run's cost.
     tokens: dict[str, int] = field(default_factory=dict)
 
@@ -59,6 +61,11 @@ class Brain:
                     reply.first_token_ms = (time.perf_counter() - started) * 1000
                 if event.type == "content_block_delta" and event.delta.type == "text_delta":
                     yield event.delta.text
+                if (event.type == "content_block_start" and event.content_block.type == "tool_use"
+                        and not reply.tool_started):
+                    reply.tool_started = event.content_block.name
+                    # Nothing to say, but the caller of this stream learns a tool is coming.
+                    yield ""
             message = await stream.get_final_message()
         reply.content = [b.model_dump(exclude_none=True) for b in message.content]
         usage = message.usage

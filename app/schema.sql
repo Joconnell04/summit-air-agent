@@ -710,6 +710,19 @@ CREATE TABLE IF NOT EXISTS kept_misses (
     next_at TEXT NOT NULL
 );
 
+-- Every result on a server-led instance (app/flow.py), with the caller turn it answered, so the
+-- gates can tell what was said after it.
+CREATE TABLE IF NOT EXISTS flow_results (
+    id INTEGER PRIMARY KEY,
+    call_id TEXT NOT NULL REFERENCES calls (id) ON DELETE CASCADE,
+    tool TEXT NOT NULL,
+    ok INTEGER NOT NULL,
+    say TEXT NOT NULL,
+    turn_seq INTEGER NOT NULL,
+    at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS ix_flow_results_call ON flow_results (call_id);
+
 -- The failure grader (app/failure_grader.py): one grade per ended call, kept so a call is never
 -- graded twice unless forced. failure is the server's decision on the model's answer (raw_json);
 -- dropped says why a failure the model gave was not kept. A row with an error is graded again.
@@ -791,3 +804,11 @@ CREATE TABLE IF NOT EXISTS dispatches (
     replaced_at TEXT
 );
 CREATE INDEX IF NOT EXISTS ix_dispatches_call ON dispatches (call_id);
+
+-- The flow each call runs (app/flow.py), set at /calls/start: "server_led" for the socket agent's
+-- calls, so one tool server serves the single-prompt agent and the socket agent side by side.
+-- A table of its own so an existing database gains it without a migration.
+CREATE TABLE IF NOT EXISTS call_flows (
+    call_id TEXT PRIMARY KEY REFERENCES calls (id) ON DELETE CASCADE,
+    flow TEXT NOT NULL
+);

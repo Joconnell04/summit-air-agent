@@ -855,3 +855,35 @@ def test_a_surname_the_caller_spelled_doesnt_replace_a_street_they_said(located,
     located.turn(call, "It's 248 Duffield Street. My name is Park, P, A, R, K.")
     found = located.tool("find_address", call, street="248 Duffield Street", spelled="P, A, R, K")
     assert found["ok"] and found["data"]["street"].startswith("248 Duffield"), found
+
+
+def test_just_the_house_settles_the_unit_and_it_isnt_asked_a_third_time(building):
+    """Call call_51d7bc63abd9040be451a8bc596: the unit was asked, the caller answered the borough,
+    it was asked again, "No, it's just the house", and the read-back asked a third time."""
+    call = building.start(UNKNOWN)["data"]["call_id"]
+    building.turn(call, "It's 199 East 4th Street.")
+    found = building.tool("find_address", call, street="199 East 4th Street")
+    assert found["data"]["needs_unit"] is True
+    building.say(call, "Is there an apartment or unit number?")
+    building.turn(call, "The Bronx.")
+    building.say(call, "Is there an apartment or unit number at that address?")
+    building.turn(call, "No, it's just the house.")
+    building.say(call, "What's the best phone number to reach you?")
+    building.turn(call, "This number.")
+    address = {"street": "199 East 4th Street", "unit": "", "city": "New York", "zip": "10009"}
+    read = building.tool("read_back", call, address=address, phone="caller_id")
+    assert read["ok"], read
+    assert "unit" not in read["say"]
+
+
+@pytest.mark.parametrize("said, settled", [
+    ("No, it's just the house.", "none"),
+    ("It's just the house, no unit number.", "none"),
+    ("It's a single-family home.", "none"),
+    ("East Fourth Street, unit two", "unit two"),
+    ("The Bronx.", ""),
+])
+def test_what_settles_the_unit(said, settled):
+    from app.text import unit_settled
+
+    assert unit_settled([said]) == settled

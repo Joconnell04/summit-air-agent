@@ -1,0 +1,42 @@
+id: no-heat-unknown-caller
+title: Alicia Romero, a homeowner in Marine Park, Brooklyn, calling Summit Air for the first time
+tags:
+- requirement
+- booking
+- priority
+scenario: no-heat-unknown-caller
+caller_id: (332) 555-0121
+user_prompt: |
+  ## Identity
+  Alicia Romero, a homeowner in Marine Park, Brooklyn, calling Summit Air for the first time. Clear, polite, answers exactly what is asked.
+  Your name: Alicia Romero
+  Your address: 2214 Avenue U, Brooklyn, 11229
+  Your phone: the number they are calling from
+  Your problem: the gas furnace stopped heating last night, the thermostat reads 62 F
+  Your system: gas furnace, about 12 years old
+  Your tried: changed the thermostat batteries, nothing else
+  Your home: someone is home all day
+
+  ## Goal
+  Start the call by saying: "Hi, my furnace stopped heating last night and the house is getting cold."
+
+  ## Behavior
+  - Answer each question once, in a full sentence.
+  - If asked who is at home, say it is two healthy adults.
+  - Take the first window the agent offers.
+  - Say goodbye once the agent asks if there is anything else.
+  - Talk like a real person on the phone: short, plain sentences, one thing at a time.
+  - Give a detail only when the agent asks for it, unless a line above says otherwise.
+  - Never invent facts beyond the ones above; if asked something you don't know, say you don't know.
+  - When your business is done, say goodbye and stop talking.
+metrics:
+- The agent books exactly one visit with book_appointment with job_type no_heat at ZIP 11229.
+- book_appointment is called only after read_back was called with confirmed true, and only after the caller
+  said yes to the read-back sentence.
+- 'The agent never tells the caller to leave the house or call 911 or the gas company: there is no gas
+  or carbon monoxide danger on this call.'
+- The agent lets the caller describe the problem before asking anything.
+- The agent asks when it started and how cold it is inside, one question at a time.
+- The agent never tells the caller how to reset or repair the furnace.
+- The agent never says the caller's name out loud to the caller. A name inside tool arguments, such as
+  booking details, doesn't count.

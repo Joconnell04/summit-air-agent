@@ -483,3 +483,28 @@ def address_said(street: str, unit: str = "") -> str:
     # A floor is said as a floor: "second floor", not "unit second floor".
     floor = bool(FLOOR.match(unit)) or unit.lower() in GROUND_FLOORS
     return f"{street_said(street)}, {'' if floor else 'unit '}{unit_said(unit)}"
+
+
+# The caller giving a unit ("1700 Bedford Avenue, unit 4B"), or saying there is none ("No, it's
+# just the house"): either way the unit is settled and not asked again (call
+# call_51d7bc63abd9040be451a8bc596 asked it three times).
+UNIT_SAID = re.compile(
+    r"\b(unit|apt|apartment|suite|floor)\s+(?!number\b|or\b)\w+|#\s*\w+|\b\d+(st|nd|rd|th)\s+floor\b",
+    re.IGNORECASE,
+)
+NO_UNIT = re.compile(
+    r"\b(just|only) (the|a|one) (house|home)\b|\b(it'?s|its|it is) a (house|home|single[- ]family)\b|"
+    r"\bsingle[- ]family\b|\bwhole house\b|\bno (unit|apartment|apt)\b|"
+    r"\b(there'?s|there is) no (unit|apartment|apt)\b|\bno (unit|apartment|apt) number\b",
+    re.IGNORECASE,
+)
+
+
+def unit_settled(lines: list[str]) -> str:
+    """What the caller said that settles the unit: the unit itself, "none", or "" if neither."""
+    for line in lines:
+        if NO_UNIT.search(line):
+            return "none"
+        if found := UNIT_SAID.search(line):
+            return found.group(0)
+    return ""

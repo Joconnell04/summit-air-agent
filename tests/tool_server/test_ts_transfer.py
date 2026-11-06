@@ -135,6 +135,32 @@ def test_after_hours_a_call_the_server_sends_to_on_call_goes_to_the_on_call_tech
     assert plan["summary"].startswith("Urgent. Caller at 212, 555, 0999:")
 
 
+def test_after_hours_a_callback_the_caller_timed_for_tomorrow_rings_nobody(agent, clock, numbers):
+    """Done-bar persona e: on a no-heat call the server sends to on-call, the caller then asked for
+    a call about a bill tomorrow afternoon, and the on-call phone rang at 3:30 AM."""
+    clock.now = EVENING
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "The heat's out and my mother is 88.")
+    no_heat_tonight(agent, call, "My mother, she's 88")
+    agent.turn(call, "Also, I've got a question about a bill, can someone call me tomorrow afternoon?")
+    flagged = flag(agent, call, callback_day="tomorrow", callback_after="12 PM",
+                   callback_before="5 PM")
+    assert ask(agent, call, flagged)["data"]["transfer"] is None
+
+
+def test_after_hours_a_flag_after_the_visit_was_dispatched_rings_nobody(agent, clock, numbers):
+    """The on-call technician already has the job, so a later flag isn't put through to them."""
+    from test_ts_dispatch import _dispatch
+
+    clock.now = EVENING
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "The heat's out and my mother is 88.")
+    no_heat_tonight(agent, call, "My mother, she's 88")
+    assert _dispatch(agent, call)["data"]["dispatched"]
+    flagged = flag(agent, call, priority="Urgent")
+    assert ask(agent, call, flagged)["data"]["transfer"] is None
+
+
 def test_after_hours_an_urgent_flag_from_the_model_alone_rings_nobody(agent, clock, numbers):
     """The flag's priority is the model's to set, so it is never what wakes the technician."""
     clock.now = EVENING

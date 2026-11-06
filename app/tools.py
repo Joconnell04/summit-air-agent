@@ -85,6 +85,7 @@ from .text import (
     street_said,
     unit_clean,
     unit_key,
+    unit_settled,
     with_spelled_name,
     words,
 )
@@ -1845,6 +1846,13 @@ def find_address(ctx: Ctx, args: FindAddressIn) -> Result:
         return from_caller
     if found.status == "unavailable":
         return _unverified(ctx, "address_lookup_down", house, street, args.borough)
+    if found.status == "none" and _numbered_without_direction(street):
+        # "199 4th Street": in Manhattan that is East 4th or West 4th, never plain 4th (Jackson's
+        # call call_046f37112cac691a50019893717 booked "199 4th Street" unverified). Asked as a
+        # choice, never spelled.
+        found = _with_direction(ctx, house, street, args.borough) or found
+        if found.status == "none":
+            return _unverified(ctx, "address_not_found", house, street, args.borough)
     if found.status == "none":
         thread = records.thread(ctx.conn, ctx.call["id"])
         misses = ctx.conn.execute(
@@ -1962,7 +1970,7 @@ def find_slots(ctx: Ctx, args: FindSlotsIn) -> Result:
         standing = _dispatched(ctx)
         if standing and standing["job_type"] == args.job_type:
             return ok(
-                "",
+                _dispatch_unheard(ctx),
                 **data,
                 dispatched=True,
                 note="A technician is already dispatched on this call; don't offer times.",
@@ -2174,6 +2182,31 @@ def _one_offer(
     return offer, f"{lead}The soonest I have is {named}, {offer['label']}. Does that work?"
 
 
+def _numbered_without_direction(street: str) -> bool:
+    """ "4th Street", "4 St": a numbered street the caller gave with no East or West."""
+    key = geocode.street_match_key(street).split()
+    return bool(key) and key[0].isdigit() and not {"e", "w", "east", "west"} & set(key)
+
+
+def _with_direction(ctx: Ctx, house: str, street: str, borough: str) -> geocode.Found | None:
+    """The numbered street looked up as East and as West. Both found: the caller is asked which,
+    in their own words. One found: that one. Neither: None."""
+    if not ctx.geocoder:
+        return None
+    hits = {}
+    for side in ("East", "West"):
+        found = ctx.geocoder.find(house, f"{side} {street}", borough)
+        if found.status in ("one", "several"):
+            hits[side] = found
+    if len(hits) == 2:
+        raise Refused(
+            "address_direction",
+            ctx.tenant.line("address_which_direction", east=f"East {street}", west=f"West {street}"),
+            need="ask East or West, then look it up again with the street the caller picks",
+        )
+    return next(iter(hits.values()), None)
+
+
 def _zip_asked_key(house: str, street: str) -> str:
     """Per house and street, so an address the caller corrects gets its own lookup (PR #139
     re-check: "Sorry, I'm actually at 248 Duffield Street" was stuck on the first one's ask)."""
@@ -2213,8 +2246,9 @@ def _unverified(ctx: Ctx, code: str, house: str, street: str, hint: str) -> Resu
         line = ctx.tenant.line("address_ask_borough")
         if zips and _hand_out_once(ctx, line):
             raise Refused(code, line, need="ask which borough, then look it up again with borough")
-        _ask_zip(ctx, code, house, street)
-    zip_code = zips.get(borough)
+    # Never the ZIP (Jackson): with no borough even after asking, the visit books on the tenant's
+    # fallback ZIP, unverified, and the office confirms the address before dispatch.
+    zip_code = zips.get(borough) or zips.get("unknown")
     if not zip_code:
         _ask_zip(ctx, code, house, street)
     with tx(ctx.conn):
@@ -2464,12 +2498,20 @@ def _readback_corrected(ctx: Ctx, asked: dict) -> str | None:
 # What a repair visit asks before booking (spec S-13). The tenant's `intake.skip_for` job types (a
 # quote for a new system) ask none of it: nothing has broken, and nobody approves a quote.
 REPAIR_INTAKE = ("since", "tried", "who_home", "approver")
+# What only a fault has: the tenant's `intake.no_fault_for` job types (a maintenance visit) skip
+# these, since nothing broke, and still ask who's home and who approves what the technician finds.
+FAULT_INTAKE = ("since", "tried")
 
 
 def _repair_intake(ctx: Ctx, job_type: str, details: dict) -> None:
-    if job_type in ctx.tenant.agent.get("intake", {}).get("skip_for", []):
+    intake = ctx.tenant.agent.get("intake", {})
+    if job_type in intake.get("skip_for", []):
         return
-    missing = [f for f in REPAIR_INTAKE if not str(details.get(f) or "").strip()]
+    asked = [
+        f for f in REPAIR_INTAKE
+        if not (f in FAULT_INTAKE and job_type in intake.get("no_fault_for", []))
+    ]
+    missing = [f for f in asked if not str(details.get(f) or "").strip()]
     if missing:
         raise Refused(
             "invalid_arguments", "", errors={f: "needed for a repair visit" for f in missing}
@@ -2503,6 +2545,13 @@ def _unit_for_building(ctx: Ctx, address: dict) -> None:
     caller is asked once for it (Jackson's call call_2fb4e053ba8b76b57c348845990, 199 East 4th
     Street, nine homes). Asked once, so a caller who says there's none isn't asked again."""
     if address["unit"]:
+        return
+    said = ctx.conn.execute(
+        "SELECT text FROM turns WHERE call_id = ? AND speaker = 'caller'", (ctx.call["id"],)
+    ).fetchall()
+    if unit_settled([r["text"] for r in said]) == "none":
+        # "No, it's just the house" already answered it (call call_51d7bc63abd9040be451a8bc596
+        # asked three times).
         return
     split = geocode.split_address(address["street"])
     if not split:
@@ -2789,6 +2838,25 @@ DISPATCH_WAITING = "dispatch waiting:"
 def _dispatch_types(ctx: Ctx) -> list[str]:
     cutoffs = ctx.tenant.after_hours_cutoffs
     return cutoffs["heating_job_types"] + cutoffs["cooling_job_types"]
+
+
+def _dispatch_unheard(ctx: Ctx) -> str:
+    """The dispatch sentence again when no agent line has said it: Retell can replace a response
+    while the dispatch is being booked, and the caller never hears it (rerun of done-bar persona
+    e). "" once it was said."""
+    row = ctx.conn.execute(
+        "SELECT say FROM tool_calls WHERE call_id = ? AND tool IN ('find_slots', 'read_back') "
+        "AND ok = 1 AND say != '' ORDER BY id DESC LIMIT 1",
+        (ctx.call["id"],),
+    ).fetchone()
+    if row is None:
+        return ""
+    # The longest sentence, since a short connector before it may have been cut.
+    said = words(max(re.split(r"(?<=[.?!])\s+", row["say"]), key=len))
+    heard = ctx.conn.execute(
+        "SELECT text FROM turns WHERE call_id = ? AND speaker = 'agent'", (ctx.call["id"],)
+    ).fetchall()
+    return "" if any(said in words(r["text"]) for r in heard) else row["say"]
 
 
 def _dispatched(ctx: Ctx) -> sqlite3.Row | None:
@@ -3382,6 +3450,12 @@ def needs_on_call_tonight(ctx: Ctx) -> bool:
     puts on a flag is never read."""
     cutoffs = ctx.tenant.after_hours_cutoffs
     if not ctx.call["after_hours"]:
+        return False
+    if ctx.conn.execute(
+        "SELECT 1 FROM dispatches WHERE call_id = ? AND replaced_at IS NULL", (ctx.call["id"],)
+    ).fetchone():
+        # The on-call technician already has this call's job, so a later flag isn't put through
+        # to them (done-bar persona e: a billing callback for tomorrow rang the on-call phone).
         return False
     job_types = cutoffs["heating_job_types"] + cutoffs["cooling_job_types"]
     rows = ctx.conn.execute(
@@ -4875,15 +4949,48 @@ def end_call(ctx: Ctx, args: EndCallIn) -> Result:
     ).fetchone()
     if (
         last
-        and args.reason != "caller_goodbye"
         and not says_goodbye(records.last_caller_line(ctx.conn, ctx.call["id"]))
-        and not records.caller_turn_after(ctx.conn, ctx.call["id"], last["turn_seq"])
+        and not _caller_finished(ctx, last["turn_seq"])
     ):
-        # Never end in the same turn as the confirmation (spec S-30).
+        # Never end in the same turn as the confirmation (spec S-30), nor before the caller was
+        # asked whether there's anything else: done-bar call o176-03 hung up on "Yes, all day",
+        # the answer to the access question after a dispatch. Not on the model's reason alone.
         raise Refused("anything_else_first", ctx.tenant.line("anything_else_first"))
     with tx(ctx.conn):
         records.update_call(ctx.conn, ctx.call["id"], end_requested=1)
     return ok(hang_up=True)
+
+
+# A question that asks whether there's more, in the model's words or the tenant's. Only a
+# question counts, so "You're all set for Thursday." isn't one.
+ASKS_ANYTHING_ELSE = (
+    "anything else", "something else", "all set", "that it", "that everything", "anything more",
+)
+# A caller who says there's nothing more without being asked.
+ALL_DONE = ("thats all", "thats it", "thats everything", "all set", "nothing else")
+
+
+def _caller_finished(ctx: Ctx, booked_seq: int) -> bool:
+    """After the booking turn the caller said goodbye or that's all, or was asked whether there's
+    anything else and answered."""
+    rows = ctx.conn.execute(
+        "SELECT speaker, text FROM turns WHERE call_id = ? AND seq > ? ORDER BY seq",
+        (ctx.call["id"], booked_seq),
+    ).fetchall()
+    own = words(ctx.tenant.line("anything_else_first"))
+    asked = False
+    for row in rows:
+        text_words = words(row["text"])
+        if row["speaker"] == "agent":
+            questions = [words(q) for q in re.findall(r"[^.!?]*\?", row["text"])]
+            asked = asked or own in text_words or any(
+                has_phrase(q, p) for q in questions for p in ASKS_ANYTHING_ELSE
+            )
+        elif asked or says_goodbye(row["text"]) or any(
+            has_phrase(text_words, p) for p in ALL_DONE
+        ):
+            return True
+    return False
 
 
 def lookup_hvac_info(ctx: Ctx, args: LookupIn) -> Result:

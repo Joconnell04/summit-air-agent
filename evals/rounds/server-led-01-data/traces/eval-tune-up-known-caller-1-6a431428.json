@@ -1,0 +1,280 @@
+{
+ "call": "eval-tune-up-known-caller-1-6a431428",
+ "events": [
+  {
+   "at": "2026-11-06T01:25:06Z",
+   "type": "tool",
+   "tool": "calls.start",
+   "args": {
+    "call_id": "eval-tune-up-known-caller-1-6a431428",
+    "caller_id": "(347) 555-0162",
+    "dialed_number": "(678) 336-6730",
+    "direction": "inbound"
+   },
+   "ok": true,
+   "refused": null,
+   "gate": null,
+   "say": "",
+   "ms": 83.9,
+   "error": null,
+   "request_id": "8382c0f955b0"
+  },
+  {
+   "at": "2026-11-06T01:25:06Z",
+   "type": "tool",
+   "tool": "calls.start",
+   "args": {
+    "call_id": "eval-tune-up-known-caller-1-6a431428",
+    "caller_id": "chat",
+    "dialed_number": "",
+    "direction": "inbound"
+   },
+   "ok": true,
+   "refused": null,
+   "gate": null,
+   "say": "",
+   "ms": 3.3,
+   "error": null,
+   "request_id": "43796ce6dad1"
+  },
+  {
+   "at": "2026-11-06T01:25:15Z",
+   "type": "tool",
+   "tool": "find_customer",
+   "args": {
+    "call_id": "eval-tune-up-known-caller-1-6a431428",
+    "phone": "(347) 555-0162",
+    "address": {
+     "street": "801 Fenimore St",
+     "unit": "1",
+     "city": "Brooklyn",
+     "zip": "11206",
+     "spelled": ""
+    }
+   },
+   "ok": true,
+   "refused": null,
+   "gate": null,
+   "say": "",
+   "ms": 89.1,
+   "error": null,
+   "request_id": "a2b7ab3fa6bd"
+  },
+  {
+   "at": "2026-11-06T01:25:18Z",
+   "type": "tool",
+   "tool": "read_back",
+   "args": {
+    "call_id": "eval-tune-up-known-caller-1-6a431428",
+    "address": {
+     "street": "801 Fenimore St",
+     "unit": "1",
+     "city": "Brooklyn",
+     "zip": "11206",
+     "spelled": ""
+    },
+    "phone": "caller_id",
+    "phone_for": "",
+    "name": "Dennis Ocasio",
+    "confirmed": false
+   },
+   "ok": true,
+   "refused": null,
+   "gate": null,
+   "say": "So that's eight oh one Fenimore St, unit one, and the number you're calling from, ending in zero one six two. That's all correct, right?",
+   "ms": 11.6,
+   "error": null,
+   "request_id": "cfec02b6a630"
+  },
+  {
+   "at": "2026-11-06T01:25:22Z",
+   "type": "tool",
+   "tool": "read_back",
+   "args": {
+    "call_id": "eval-tune-up-known-caller-1-6a431428",
+    "address": {
+     "street": "801 Fenimore St",
+     "unit": "1",
+     "city": "Brooklyn",
+     "zip": "11206",
+     "spelled": ""
+    },
+    "phone": "caller_id",
+    "phone_for": "",
+    "name": "Dennis Ocasio",
+    "confirmed": true
+   },
+   "ok": true,
+   "refused": null,
+   "gate": null,
+   "say": "Should I put this under your account?",
+   "ms": 41.8,
+   "error": null,
+   "request_id": "8b0a959fa5cb"
+  },
+  {
+   "at": "2026-11-06T01:25:26Z",
+   "type": "tool",
+   "tool": "find_slots",
+   "args": {
+    "call_id": "eval-tune-up-known-caller-1-6a431428",
+    "job_type": "tune_up",
+    "priority": null,
+    "preferred_days": [],
+    "time_of_day": null,
+    "moving_a_visit": false,
+    "window_minutes": null,
+    "day": null,
+    "arrive_after": null,
+    "arrive_before": null,
+    "facts": {
+     "issue": "",
+     "since": "",
+     "who_home": "",
+     "inside_temp_f": null,
+     "temp_falling_fast": false
+    }
+   },
+   "ok": true,
+   "refused": null,
+   "gate": null,
+   "say": "The soonest I have is tomorrow, 8 to 8:30. Does that work?",
+   "ms": 808.1,
+   "error": null,
+   "request_id": "ba3c78d1ca3e"
+  },
+  {
+   "at": "2026-11-06T01:25:30Z",
+   "type": "tool",
+   "tool": "find_slots",
+   "args": {
+    "call_id": "eval-tune-up-known-caller-1-6a431428",
+    "job_type": "tune_up",
+    "priority": null,
+    "preferred_days": [
+     "Monday",
+     "Tuesday",
+     "Wednesday",
+     "Thursday",
+     "Friday"
+    ],
+    "time_of_day": "morning",
+    "moving_a_visit": false,
+    "window_minutes": null,
+    "day": null,
+    "arrive_after": null,
+    "arrive_before": null,
+    "facts": {
+     "issue": "",
+     "since": "",
+     "who_home": "",
+     "inside_temp_f": null,
+     "temp_falling_fast": false
+    }
+   },
+   "ok": true,
+   "refused": null,
+   "gate": null,
+   "say": "Tomorrow I have 8 to 8:30. Does that work?",
+   "ms": 864.5,
+   "error": null,
+   "request_id": "00cefbb9d3e6"
+  },
+  {
+   "at": "2026-11-06T01:25:36Z",
+   "type": "tool",
+   "tool": "find_slots",
+   "args": {
+    "call_id": "eval-tune-up-known-caller-1-6a431428",
+    "job_type": "tune_up",
+    "priority": null,
+    "preferred_days": [],
+    "time_of_day": "morning",
+    "moving_a_visit": false,
+    "window_minutes": null,
+    "day": "2026-11-09",
+    "arrive_after": null,
+    "arrive_before": null,
+    "facts": {
+     "issue": "",
+     "since": "",
+     "who_home": "",
+     "inside_temp_f": null,
+     "temp_falling_fast": false
+    }
+   },
+   "ok": true,
+   "refused": null,
+   "gate": null,
+   "say": "Monday I have 8 to 8:30, 8:30 to 9, 9 to 9:30, 9:30 to 10, 10 to 10:30, 10:30 to 11, 11 to 11:30, 11:30 to 12, 12 to 12:30, 12:30 to 1, 1 to 1:30, 1:30 to 2, 2 to 2:30, 2:30 to 3, 3 to 3:30, 3:30 to 4, 4 to 4:30, 4:30 to 5, 5 to 5:30, 5:30 to 6, 6 to 6:30, 6:30 to 7, 7 to 7:30 or 7:30 to 8.",
+   "ms": 998.2,
+   "error": null,
+   "request_id": "fd7ffd156d46"
+  },
+  {
+   "at": "2026-11-06T01:25:48Z",
+   "type": "tool",
+   "tool": "book_appointment",
+   "args": {
+    "call_id": "eval-tune-up-known-caller-1-6a431428",
+    "job_type": "tune_up",
+    "slot": {
+     "date": "2026-11-09",
+     "window": "0800-0830"
+    },
+    "details": {
+     "issue": "Annual boiler tune-up",
+     "since": "Routine annual maintenance",
+     "tried": "Not applicable, routine maintenance",
+     "who_home": "Dennis Ocasio, owner, works from home",
+     "approver": "Dennis Ocasio",
+     "system_type": "Slant/Fin boiler",
+     "arrival_notes": "Ring the downstairs bell for unit 1. No gate code, no pets. For small fixes, technician may proceed; call Dennis before any large repair or price.",
+     "name": "",
+     "inside_temp_f": null
+    },
+    "priority": null,
+    "separate_problem": false,
+    "new_address_account": "caller"
+   },
+   "ok": true,
+   "refused": null,
+   "gate": null,
+   "say": "Okay, I've booked it: the technician will arrive Monday, November 9, between 8 and 8:30. Anything else?",
+   "ms": 310.7,
+   "error": null,
+   "request_id": "5374d9a632a9"
+  },
+  {
+   "at": "2026-11-06T01:25:51Z",
+   "type": "tool",
+   "tool": "end_call",
+   "args": {
+    "call_id": "eval-tune-up-known-caller-1-6a431428",
+    "reason": "resolved"
+   },
+   "ok": true,
+   "refused": null,
+   "gate": null,
+   "say": "",
+   "ms": 7.8,
+   "error": null,
+   "request_id": "2f654466e134"
+  },
+  {
+   "at": "2026-11-06T01:25:53Z",
+   "type": "tool",
+   "tool": "calls.end",
+   "args": {
+    "reason": "agent_end"
+   },
+   "ok": true,
+   "refused": null,
+   "gate": null,
+   "say": "",
+   "ms": 4.9,
+   "error": null,
+   "request_id": "d413c8ee0738"
+  }
+ ]
+}

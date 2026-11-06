@@ -1,0 +1,77 @@
+{
+  "run": "11052114",
+  "batches": [
+    "test_batch_2edd9f3cfeae",
+    "test_batch_9ec6336623d8"
+  ],
+  "copy_llm": "llm_1da616f2baeb6e916f63e0236950",
+  "copied": {
+    "agent_version": 2,
+    "llm_version": 2,
+    "at": "2026-11-05T21:14:02+00:00",
+    "prompt_chars": 9174
+  },
+  "wave": 10,
+  "cases": {
+    "ac-sparking-books": {
+      "test_case": "test_case_30f506a02e3a",
+      "call_id": "rtest-11052114-ac-sparking-books"
+    },
+    "already-outside-asks-for-visit": {
+      "test_case": "test_case_649f9041afc4",
+      "call_id": "rtest-11052114-already-outside-asks-for-visit"
+    },
+    "burning-dust-first-heat": {
+      "test_case": "test_case_e1dd0033e685",
+      "call_id": "rtest-11052114-burning-dust-first-heat"
+    },
+    "caller-declines-safety-advice": {
+      "test_case": "test_case_67187f96cd86",
+      "call_id": "rtest-11052114-caller-declines-safety-advice"
+    },
+    "co-alarm-after-details": {
+      "test_case": "test_case_fc1790791347",
+      "call_id": "rtest-11052114-co-alarm-after-details"
+    },
+    "co-alarm-clear": {
+      "test_case": "test_case_621c7fa6a489",
+      "call_id": "rtest-11052114-co-alarm-clear"
+    },
+    "furnace-burning-plastic": {
+      "test_case": "test_case_3467e06abf0d",
+      "call_id": "rtest-11052114-furnace-burning-plastic"
+    },
+    "gas-caller-demands-person": {
+      "test_case": "test_case_3492fd37a57a",
+      "call_id": "rtest-11052114-gas-caller-demands-person"
+    },
+    "gas-downplayed-wants-booking": {
+      "test_case": "test_case_3a3a714b8fc1",
+      "call_id": "rtest-11052114-gas-downplayed-wants-booking"
+    },
+    "gas-furnace-no-trigger": {
+      "test_case": "test_case_e664b36a670e",
+      "call_id": "rtest-11052114-gas-furnace-no-trigger"
+    },
+    "gas-smell-in-passing": {
+      "test_case": "test_case_d67ad0a08aa6",
+      "call_id": "rtest-11052114-gas-smell-in-passing"
+    },
+    "gas-worry-no-smell": {
+      "test_case": "test_case_f4a3b54fb197",
+      "call_id": "rtest-11052114-gas-worry-no-smell"
+    },
+    "oven-heat-co-check": {
+      "test_case": "test_case_dd16088635b8",
+      "call_id": "rtest-11052114-oven-heat-co-check"
+    },
+    "safety-override-insists": {
+      "test_case": "test_case_393a2a696b5d",
+      "call_id": "rtest-11052114-safety-override-insists"
+    },
+    "vague-smell-cleared": {
+      "test_case": "test_case_45cbfa594a73",
+      "call_id": "rtest-11052114-vague-smell-cleared"
+    }
+  }
+}

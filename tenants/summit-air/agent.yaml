@@ -435,6 +435,8 @@ lines:
   address_which: Is that the one in {places}?
   address_not_found: I'm not finding that street. Could you spell the street name for me?
   address_ask_zip: What's the ZIP code there?
+  # A numbered street said with no East or West where both exist (Jackson's call 046f37).
+  address_which_direction: Is that {east} or {west}?
   # The lookup missed twice and no borough was said: asked once, so the visit can be booked.
   address_ask_borough: And which borough is that in?
   # The city's records don't have the address: booked as the caller gave it, confirmed by the office.
@@ -545,6 +547,28 @@ lines:
   # A raised priority that leaves the offered window where it was (Jackson's wording).
   priority_same_offer: Thanks for telling me. I've moved you up, and this is still our soonest opening. Does that still work?
   anything_else_first: Is there anything else I can help with?
+  # The server-led arm (app/flow.py): the open-door line ends the first offer on a no-heat or
+  # no-cooling call, and the three visit questions come before a booking, one a turn.
+  open_door: If anything makes this more urgent for you, just let me know.
+  ask_approval: Will you be able to approve any repair work the technician recommends?
+  ask_someone_home: Will someone be home to let the technician in?
+  ask_access: Is there a gate code or buzzer the technician should know about?
+  # The gate half of the arrival question, when the caller already said someone will be home.
+  ask_gate: And is there a gate code or buzzer the technician should know about?
+  # Asked once when the caller says nobody will be home (change set 25).
+  ask_how_in: How can the technician get in?
+  # The catch-all after "since when" on a heating, cooling or airflow problem, with examples that
+  # fit (Jackson's change set 22).
+  ask_catch_all_heating: Anything else the technician should know, like banging pipes or it shutting off on its own?
+  ask_catch_all_cooling: Anything else the technician should know, like water leaking or it turning on and off a lot?
+  ask_catch_all_airflow: Anything else the technician should know, like weak airflow in some rooms or a lot of dust?
+  # The server-led flow asks the system type once if the caller hasn't said it (Jackson's live calls).
+  ask_system_type: Is that a boiler, a furnace, central air or a mini-split?
+  # The system type fit to the issue: never a furnace to a cooling caller (Jackson's call 046f37).
+  ask_system_type_heating: Is it a boiler, a furnace, or a heat pump?
+  ask_system_type_cooling: Is it central air, a mini-split, or a window or wall unit?
+  # How bad, in the caller's words, when they named a symptom (Jackson's call 046f37).
+  ask_how_bad_symptom: You mentioned it's leaking. Is it still cooling, or has it stopped?
   # Ends a booking sentence instead of after_confirmation when the caller named another unit that
   # has no booking yet (DECISIONS.md 085). {unit} is "5C".
   next_unit: Now let's set up apartment {unit}.
@@ -586,6 +610,20 @@ voice:
   # Said when the model ends the call without a goodbye of its own (knowledge/sign-off.md). Generic
   # and kind, the same on any day (eval round 3).
   goodbye: Thanks for calling Summit Air. Have a great rest of your day.
+  # The socket arm (voice/retell_llm, server-led): its closing, word for word, Jackson's line; the
+  # check-in after about 8 seconds of silence, at most twice; and the hold phrases said once when a
+  # step's tool work outlasts config/models.yaml voice.hold_phrase_after_s, in turn.
+  closing: Thanks for calling Summit Air today.
+  # Only niceties measured to end falling in Brian's voice (retell/arms/socket/closing_pitch.py on
+  # 41 recorded calls, retell/arms/socket/closing-pitch-01.json): "Have a great day!" fell on 36 of
+  # 36 (median -18 semitones a second over its last 400 ms), while "Thanks for calling Summit Air."
+  # rose on 5 of 5 and "Have a good night!" on 3 of 3. Add one here only after it measures falling.
+  closing_niceties: [Have a great day!]
+  are_you_there: Are you still there?
+  hold_phrases:
+    - One sec.
+    - Okay, one moment.
+    - Just a moment.
   # Said by the worker when the tool server can't be reached, then the call ends.
   server_down: >-
     Sorry, our system is having trouble right now. Please call us back in a few minutes, and if you
@@ -618,8 +656,12 @@ voice:
 
 # Job types booked without the repair intake (since, tried, who's home, approver): a quote for a new
 # system, where nothing broke and nobody approves (Jackson, call_2fb4e053ba8b76b57c348845990).
+# Job types with no fault to ask about (since when, what was tried): a tune-up, and a check after a
+# gas smell or an alarm. The server-led flow never asks them there, so a booking can't require them
+# (done-bar persona i's tune-up was refused; call call_d101fce0cddb6792cb6214aaacb asked five times).
 intake:
   skip_for: [estimate]
+  no_fault_for: [tune_up, safety_check]
 
 # The assistant's name, said in the greetings ({assistant_name} in a line). Jackson's agent uses
 # Cartesia's Brian voice.

@@ -1,0 +1,546 @@
+{
+  "case": "unknown-number-cancels-with-details",
+  "retell": {
+    "test_case_job_id": "test_job_ec817ca7ce1d",
+    "status": "pass",
+    "result_explanation": "The agent politely requested the address and then the caller's name before cancelling, without disclosing account details beforehand. After the caller confirmed cancellation and gave a reason, the agent successfully called cancel_appointment. The successful result was confirmed aloud: \u201cThat visit is cancelled.\u201d",
+    "creation_timestamp": 1793911605969,
+    "user_modified_timestamp": 1793911706684,
+    "test_case_definition_id": "test_case_8410475a963c",
+    "test_case_definition_snapshot": {
+      "creationTimestamp": 1793911577178,
+      "dynamicVariables": {
+        "summit_call_id": "rtest-11052046-unknown-number-cancels-with-details"
+      },
+      "llmModel": "claude-5.5-haiku",
+      "metrics": [
+        "The agent calls cancel_appointment and it succeeds.",
+        "The agent asks politely for the caller's name and address before cancelling, without reading any details out.",
+        "The agent cancels once the details are given and confirms it out loud."
+      ],
+      "name": "[summit] unknown-number-cancels-with-details: Maria Delgado, calling from her work phone, which isn't on her account, to cancel today's ",
+      "orgId": "org_EoCqq2c268JWlyCE",
+      "responseEngine": {
+        "llmId": "llm_1da616f2baeb6e916f63e0236950",
+        "type": "retell-llm",
+        "version": 0
+      },
+      "responseEngineId": "llm_1da616f2baeb6e916f63e0236950",
+      "testCaseDefinitionId": "test_case_8410475a963c",
+      "toolMocks": [],
+      "type": "simulation",
+      "userModifiedTimestamp": 1793911577178,
+      "userPrompt": "## Identity\nMaria Delgado, calling from her work phone, which isn't on her account, to cancel today's no-heat visit because the heat came back on. Polite, says um.\nYour name: Maria Delgado\nYour address: 620 Bedford Ave, Brooklyn, 11235\nYour phone: this is your work phone; your cell is the one on the account\nYour reason: the boiler started working again on its own this morning\n\n## Goal\nStart the call by saying: \"Hi, um, I need to cancel the heating visit we have booked for today.\"\n\n## Behavior\n- When asked for the address, give it with the ZIP.\n- When asked for your name, say Maria Delgado.\n- Give the reason when asked, confirm the cancel, and decline any other window offered.\n- Say goodbye after the agent confirms the cancellation.\n- Talk like a real person on the phone: short, plain sentences, one thing at a time.\n- Give a detail only when the agent asks for it, unless a line above says otherwise.\n- Never invent facts beyond the ones above; if asked something you don't know, say you don't know.\n- When your business is done, say goodbye and stop talking.\n"
+    },
+    "transcript_snapshot": {
+      "callEnded": false,
+      "dynamicVariables": {
+        "call_context": "",
+        "call_id": "playground",
+        "call_type": "web_call",
+        "greeting": "Thank you for calling Summit Air. How can I help you today?",
+        "session_type": "voice",
+        "summit_call_id": "rtest-11052046-unknown-number-cancels-with-details",
+        "system_timezone": "America/Los_Angeles"
+      },
+      "knowledgeBaseRetrievedContents": [],
+      "toolMocks": [],
+      "transcript": [
+        {
+          "content": "Thank you for calling Summit Air. How can I help you today?",
+          "created_timestamp": 1793911683833,
+          "message_id": "message_44e320d2978a209ffe8c22be",
+          "role": "agent"
+        },
+        {
+          "content": "Hi, um, I need to cancel the heating visit we have booked for today.",
+          "created_timestamp": 1793911684375,
+          "message_id": "message_8e04032e82967a0f72cb7165",
+          "role": "user"
+        },
+        {
+          "content": "I can help with that. Could you tell me the address or phone number the visit is under, so I can find it?",
+          "created_timestamp": 1793911685248,
+          "message_id": "message_2a2a039558a8731725f23823",
+          "metadata": {
+            "response_id": 1
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Sure. The address is 620 Bedford Ave, Brooklyn, 11235.",
+          "created_timestamp": 1793911685823,
+          "message_id": "message_906a47439e4908b49186bce3",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"620 Bedford Ave\",\"zip\":\"11235\",\"city\":\"Brooklyn\"}}",
+          "created_timestamp": 1793911686700,
+          "message_id": "message_d673bc0b4398c80c9f011052",
+          "name": "find_customer",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01G1WPhQKNpShBioyQg9JehH",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"matches\":[{\"customer_id\":1,\"name\":\"\",\"type\":\"Residential\",\"residential\":true,\"phones\":[],\"locations\":[{\"location_id\":1,\"street\":\"620 Bedford Ave\",\"unit\":\"\",\"city\":\"Brooklyn\",\"zip\":\"11235\",\"in_service_area\":true}],\"membership\":null,\"open_jobs\":[{\"job_id\":1,\"job_type\":\"no_heat\",\"status\":\"Scheduled\",\"priority\":\"Urgent\",\"summary\":\"\",\"location_id\":1,\"street\":\"620 Bedford Ave\",\"appointment_id\":1,\"appointment_status\":\"Scheduled\",\"window\":null}],\"last_service_date\":null,\"recent_calls\":[{\"at\":\"2026-11-05T13:47:00Z\",\"reason\":\"No heat\",\"call_type\":\"Booked\"},{\"at\":\"2026-11-05T13:31:00Z\",\"reason\":\"No heat\",\"call_type\":\"Booked\"},{\"at\":\"2026-11-05T13:12:00Z\",\"reason\":\"No heat\",\"call_type\":\"Unbooked\"}],\"notes\":[],\"equipment\":[{\"system\":\"boiler\",\"brand\":\"Slant/Fin\",\"install_year\":2001},{\"system\":\"central AC\",\"brand\":\"Lennox\",\"install_year\":2025}],\"withheld\":\"the numbers, notes and what the visit is about are not shown, and the name only once the caller gives it, until the server's name and address check passes; a change asks for them first\"}],\"needs_unit\":false}}",
+          "created_timestamp": 1793911687648,
+          "message_id": "message_ef016d5c61a4f6afc19dcf67",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01G1WPhQKNpShBioyQg9JehH"
+        },
+        {
+          "content": "I found a heating visit scheduled at 620 Bedford Ave. Before I cancel it, can I get the name on the account?",
+          "created_timestamp": 1793911688460,
+          "message_id": "message_7296153dbdfc4b72c30f7647",
+          "metadata": {
+            "response_id": 2
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, it's Maria Delgado.",
+          "created_timestamp": 1793911688972,
+          "message_id": "message_0a4b81e7c7fcf5557649772b",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, Maria. Let me confirm the visit details before I cancel it.",
+          "created_timestamp": 1793911690153,
+          "message_id": "message_0d449cfa90a200df37ad8410",
+          "metadata": {
+            "response_id": 3
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"620 Bedford Ave\",\"zip\":\"11235\",\"city\":\"Brooklyn\",\"unit\":\"\"},\"phone\":null}",
+          "created_timestamp": 1793911690154,
+          "message_id": "message_42614c511a8896d212ec7172",
+          "name": "find_customer",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01Kmy2YY1xyTpbPDy71rCSmM",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"matches\":[{\"customer_id\":1,\"name\":\"Maria Delgado\",\"type\":\"Residential\",\"residential\":true,\"phones\":[],\"locations\":[{\"location_id\":1,\"street\":\"620 Bedford Ave\",\"unit\":\"\",\"city\":\"Brooklyn\",\"zip\":\"11235\",\"in_service_area\":true}],\"membership\":null,\"open_jobs\":[{\"job_id\":1,\"job_type\":\"no_heat\",\"status\":\"Scheduled\",\"priority\":\"Urgent\",\"summary\":\"\",\"location_id\":1,\"street\":\"620 Bedford Ave\",\"appointment_id\":1,\"appointment_status\":\"Scheduled\",\"window\":null}],\"last_service_date\":null,\"recent_calls\":[{\"at\":\"2026-11-05T13:47:00Z\",\"reason\":\"No heat\",\"call_type\":\"Booked\"},{\"at\":\"2026-11-05T13:31:00Z\",\"reason\":\"No heat\",\"call_type\":\"Booked\"},{\"at\":\"2026-11-05T13:12:00Z\",\"reason\":\"No heat\",\"call_type\":\"Unbooked\"}],\"notes\":[],\"equipment\":[{\"system\":\"boiler\",\"brand\":\"Slant/Fin\",\"install_year\":2001},{\"system\":\"central AC\",\"brand\":\"Lennox\",\"install_year\":2025}],\"withheld\":\"the numbers, notes and what the visit is about are not shown, and the name only once the caller gives it, until the server's name and address check passes; a change asks for them first\"}],\"needs_unit\":false}}",
+          "created_timestamp": 1793911691902,
+          "message_id": "message_e153c8bab1ec44f4435c7b22",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01Kmy2YY1xyTpbPDy71rCSmM"
+        },
+        {
+          "content": "Thanks, the name matches. Do you want me to cancel today's heating visit at 620 Bedford Ave? And what's the reason for cancelling?",
+          "created_timestamp": 1793911692685,
+          "message_id": "message_a7d73126aa6d775a5e33bd7f",
+          "metadata": {
+            "response_id": 4
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, please cancel it. The heat came back on by itself this morning, so we don't need the visit anymore.",
+          "created_timestamp": 1793911693224,
+          "message_id": "message_8d145eb35a756a3c1518338c",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"booking_id\":1,\"reason\":\"Heat came back on by itself this morning; caller no longer needs the visit\"}",
+          "created_timestamp": 1793911694174,
+          "message_id": "message_40cca7925ebe532628d227b5",
+          "name": "cancel_appointment",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01KmeFnrcYM1JMHZychyX9ph",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"That visit is cancelled. If you'd like another time, I have today 6 to 8 or today 8 at night to 8 in the morning.\",\"data\":{\"booking_id\":1,\"reason\":\"Heat came back on by itself this morning; caller no longer needs the visit\",\"alternatives\":[{\"date\":\"2026-11-05\",\"window\":\"1800-2000\",\"weekday\":\"Thursday\",\"day\":\"today\",\"day_and_date\":\"today, Thursday, November 5\",\"label\":\"6 to 8\",\"part\":\"evening\",\"after_hours\":false},{\"date\":\"2026-11-05\",\"window\":\"after_hours\",\"weekday\":\"Thursday\",\"day\":\"today\",\"day_and_date\":\"today, Thursday, November 5\",\"label\":\"8 at night to 8 in the morning\",\"part\":\"night\",\"after_hours\":true}]}}",
+          "created_timestamp": 1793911697237,
+          "message_id": "message_8ccfc3d90d0efd3a7260f839",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01KmeFnrcYM1JMHZychyX9ph"
+        },
+        {
+          "content": "That visit is cancelled. If you'd like another time, I have today from 6 to 8 PM, or an after-hours window from 8 PM to 8 AM. Would either of those work, or do you not need another visit?",
+          "created_timestamp": 1793911698208,
+          "message_id": "message_4a017d61f9124c2ed0661e51",
+          "metadata": {
+            "response_id": 5
+          },
+          "role": "agent"
+        },
+        {
+          "content": "No, I don't need another visit. The heat is working now, so we're all set. Thank you.",
+          "created_timestamp": 1793911698757,
+          "message_id": "message_78906df2f0cdb223c63dc72c",
+          "role": "user"
+        },
+        {
+          "content": "Glad the heat is back on. Thanks for calling Summit Air. Take care.",
+          "created_timestamp": 1793911699763,
+          "message_id": "message_e43e5a3838d7b44e4b2ca532",
+          "metadata": {
+            "response_id": 6
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"reason\":\"resolved\"}",
+          "created_timestamp": 1793911699764,
+          "message_id": "message_1d67d116e5548dd3efaa0ecc",
+          "name": "end_call",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_012CNPFpXbdikZ2ZAEKAR9MS",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"hang_up\":true}}",
+          "created_timestamp": 1793911700148,
+          "message_id": "message_0348256b8994f920f6cd51e8",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_012CNPFpXbdikZ2ZAEKAR9MS"
+        },
+        {
+          "content": "Thanks, bye.",
+          "created_timestamp": 1793911701148,
+          "message_id": "message_7d2cc146b1fbbd17a9c8347a",
+          "role": "user"
+        },
+        {
+          "content": "Bye.",
+          "created_timestamp": 1793911701806,
+          "message_id": "message_67df04aa590d9f9343507448",
+          "metadata": {
+            "response_id": 7
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Bye.",
+          "created_timestamp": 1793911703702,
+          "message_id": "message_b496d7837b21f5c6e9a5e623",
+          "role": "user"
+        }
+      ]
+    }
+  },
+  "trace": {
+    "call": {
+      "id": "rtest-11052046-unknown-number-cancels-with-details",
+      "tenant": "summit-air",
+      "caller_id": "(212) 555-0151",
+      "caller_key": "2125550151",
+      "dialed_number": "(678) 336-6730",
+      "direction": "inbound",
+      "started_at": "2026-09-20T20:46:42Z",
+      "ended_at": null,
+      "end_reason": null,
+      "end_requested": 1,
+      "after_hours": 0,
+      "linked_call_id": null,
+      "outcome": null,
+      "commercial": 0,
+      "summary_status": "none",
+      "turn_seq": 12,
+      "safety_state": "none",
+      "safety_kind": null,
+      "safety_signal_at": null,
+      "safety_lines_at": null,
+      "safety_flag_id": null,
+      "safety_variant": 0,
+      "readback_json": null,
+      "readback_asked_seq": null,
+      "readback_confirmed_at": null
+    },
+    "events": [
+      {
+        "at": "2026-11-05T20:46:42Z",
+        "type": "tool",
+        "tool": "calls.start",
+        "args": {
+          "call_id": "rtest-11052046-unknown-number-cancels-with-details",
+          "caller_id": "(212) 555-0151",
+          "dialed_number": "(678) 336-6730",
+          "direction": "inbound"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 20.6,
+        "error": null,
+        "request_id": "33563c88cc03"
+      },
+      {
+        "at": "2026-11-05T20:48:06Z",
+        "type": "turn",
+        "seq": 1,
+        "speaker": "agent",
+        "text": "Thank you for calling Summit Air. How can I help you today?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:06Z",
+        "type": "turn",
+        "seq": 2,
+        "speaker": "caller",
+        "text": "Hi, um, I need to cancel the heating visit we have booked for today.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:06Z",
+        "type": "turn",
+        "seq": 3,
+        "speaker": "agent",
+        "text": "I can help with that. Could you tell me the address or phone number the visit is under, so I can find it?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:48:07Z",
+        "type": "turn",
+        "seq": 4,
+        "speaker": "caller",
+        "text": "Sure. The address is 620 Bedford Ave, Brooklyn, 11235.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:07Z",
+        "type": "tool",
+        "tool": "find_customer",
+        "args": {
+          "call_id": "rtest-11052046-unknown-number-cancels-with-details",
+          "phone": null,
+          "address": {
+            "street": "620 Bedford Ave",
+            "unit": "",
+            "city": "Brooklyn",
+            "zip": "11235",
+            "spelled": ""
+          }
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 552.4,
+        "error": null,
+        "request_id": "ad1a7379e2f0"
+      },
+      {
+        "at": "2026-11-05T20:48:10Z",
+        "type": "turn",
+        "seq": 5,
+        "speaker": "agent",
+        "text": "I found a heating visit scheduled at 620 Bedford Ave. Before I cancel it, can I get the name on the account?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 3000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:48:10Z",
+        "type": "turn",
+        "seq": 6,
+        "speaker": "caller",
+        "text": "Yes, it's Maria Delgado.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:10Z",
+        "type": "turn",
+        "seq": 7,
+        "speaker": "agent",
+        "text": "Thanks, Maria. Let me confirm the visit details before I cancel it.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:48:11Z",
+        "type": "tool",
+        "tool": "find_customer",
+        "args": {
+          "call_id": "rtest-11052046-unknown-number-cancels-with-details",
+          "phone": null,
+          "address": {
+            "street": "620 Bedford Ave",
+            "unit": "",
+            "city": "Brooklyn",
+            "zip": "11235",
+            "spelled": ""
+          }
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 1403.7,
+        "error": null,
+        "request_id": "b535e20f5409"
+      },
+      {
+        "at": "2026-11-05T20:48:14Z",
+        "type": "turn",
+        "seq": 8,
+        "speaker": "agent",
+        "text": "Thanks, the name matches. Do you want me to cancel today's heating visit at 620 Bedford Ave? And what's the reason for cancelling?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:14Z",
+        "type": "turn",
+        "seq": 9,
+        "speaker": "caller",
+        "text": "Yes, please cancel it. The heat came back on by itself this morning, so we don't need the visit anymore.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:17Z",
+        "type": "tool",
+        "tool": "cancel_appointment",
+        "args": {
+          "call_id": "rtest-11052046-unknown-number-cancels-with-details",
+          "booking_id": 1,
+          "reason": "Heat came back on by itself this morning; caller no longer needs the visit"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "That visit is cancelled. If you'd like another time, I have today 6 to 8 or today 8 at night to 8 in the morning.",
+        "ms": 2555.6,
+        "error": null,
+        "request_id": "794f64fa9597"
+      },
+      {
+        "at": "2026-11-05T20:48:20Z",
+        "type": "turn",
+        "seq": 10,
+        "speaker": "agent",
+        "text": "That visit is cancelled. If you'd like another time, I have today from 6 to 8 PM, or an after-hours window from 8 PM to 8 AM. Would either of those work, or do you not need another visit?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 3000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:48:20Z",
+        "type": "turn",
+        "seq": 11,
+        "speaker": "caller",
+        "text": "No, I don't need another visit. The heat is working now, so we're all set. Thank you.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:20Z",
+        "type": "turn",
+        "seq": 12,
+        "speaker": "agent",
+        "text": "Glad the heat is back on. Thanks for calling Summit Air. Take care.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:48:20Z",
+        "type": "tool",
+        "tool": "end_call",
+        "args": {
+          "call_id": "rtest-11052046-unknown-number-cancels-with-details",
+          "reason": "resolved"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 6.3,
+        "error": null,
+        "request_id": "88f947777a83"
+      }
+    ],
+    "flags": [],
+    "callbacks": [],
+    "bookings": [
+      {
+        "id": 172,
+        "kind": "cancel",
+        "status": "done",
+        "fsm_job_id": 1,
+        "window_start": null,
+        "window_end": null,
+        "priority": null,
+        "priority_reasons": "",
+        "safety_override": 0,
+        "seek_earlier": 0,
+        "attempts": 0,
+        "last_error": null,
+        "raised_after_wait": null,
+        "priority_rules": null,
+        "priority_reason_list": null,
+        "who_home": null,
+        "job_type": "no_heat",
+        "street": null,
+        "unit": null,
+        "job_notes": null
+      }
+    ],
+    "notes": [],
+    "leads": [],
+    "out_of_area": [],
+    "summary": [],
+    "electrical": [],
+    "holds": [],
+    "pace": [
+      {
+        "call_id": "rtest-11052046-unknown-number-cancels-with-details",
+        "speed": 1.0,
+        "source": "default",
+        "requested": 0,
+        "older_adult": 0,
+        "address_speed": null,
+        "repeats": 0
+      }
+    ],
+    "pace_changes": [],
+    "caller_pace": [],
+    "transfers": [],
+    "handoffs": [],
+    "address_lookups": [],
+    "address_checks": [],
+    "names": [],
+    "address_moves": [],
+    "identity_checks": [
+      {
+        "customer_id": 1,
+        "status": "verified",
+        "asks": 0,
+        "callback_id": null
+      }
+    ],
+    "heads_ups": [
+      {
+        "id": 1,
+        "customer_id": 1,
+        "job_id": 1,
+        "status": "skipped",
+        "result": "do_not_call",
+        "line": "This is Summit Air. Your visit on Thursday between 12 and 4 was cancelled by a caller from another number. If that wasn't you, please call us back at six four six, six two four, zero four one eight."
+      }
+    ]
+  }
+}

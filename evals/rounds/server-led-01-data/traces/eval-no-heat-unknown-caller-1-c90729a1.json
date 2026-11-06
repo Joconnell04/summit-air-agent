@@ -1,0 +1,224 @@
+{
+ "call": "eval-no-heat-unknown-caller-1-c90729a1",
+ "events": [
+  {
+   "at": "2026-11-06T01:18:48Z",
+   "type": "tool",
+   "tool": "calls.start",
+   "args": {
+    "call_id": "eval-no-heat-unknown-caller-1-c90729a1",
+    "caller_id": "(332) 555-0121",
+    "dialed_number": "(678) 336-6730",
+    "direction": "inbound"
+   },
+   "ok": true,
+   "refused": null,
+   "gate": null,
+   "say": "",
+   "ms": 26.2,
+   "error": null,
+   "request_id": "a0bc05b396f8"
+  },
+  {
+   "at": "2026-11-06T01:18:50Z",
+   "type": "tool",
+   "tool": "calls.start",
+   "args": {
+    "call_id": "eval-no-heat-unknown-caller-1-c90729a1",
+    "caller_id": "chat",
+    "dialed_number": "",
+    "direction": "inbound"
+   },
+   "ok": true,
+   "refused": null,
+   "gate": null,
+   "say": "",
+   "ms": 5.3,
+   "error": null,
+   "request_id": "d9384dac2a0c"
+  },
+  {
+   "at": "2026-11-06T01:18:57Z",
+   "type": "tool",
+   "tool": "find_address",
+   "args": {
+    "call_id": "eval-no-heat-unknown-caller-1-c90729a1",
+    "street": "2214 Avenue U",
+    "borough": "Brooklyn",
+    "spelled": ""
+   },
+   "ok": true,
+   "refused": null,
+   "gate": null,
+   "say": "",
+   "ms": 170.1,
+   "error": null,
+   "request_id": "f7828ac02abc"
+  },
+  {
+   "at": "2026-11-06T01:18:57Z",
+   "type": "tool",
+   "tool": "find_customer",
+   "args": {
+    "call_id": "eval-no-heat-unknown-caller-1-c90729a1",
+    "phone": "(332) 555-0121",
+    "address": null
+   },
+   "ok": true,
+   "refused": null,
+   "gate": null,
+   "say": "",
+   "ms": 16.0,
+   "error": null,
+   "request_id": "6a30a20ff943"
+  },
+  {
+   "at": "2026-11-06T01:19:04Z",
+   "type": "tool",
+   "tool": "read_back",
+   "args": {
+    "call_id": "eval-no-heat-unknown-caller-1-c90729a1",
+    "address": {
+     "street": "2214 Avenue U",
+     "unit": "",
+     "city": "Brooklyn",
+     "zip": "11229",
+     "spelled": ""
+    },
+    "phone": "caller_id",
+    "phone_for": "",
+    "name": "Alicia Romero",
+    "confirmed": false
+   },
+   "ok": true,
+   "refused": null,
+   "gate": null,
+   "say": "So that's twenty-two fourteen Avenue U, and the number you're calling from, ending in zero one two one. That's all correct, right?",
+   "ms": 9.8,
+   "error": null,
+   "request_id": "245dc8365362"
+  },
+  {
+   "at": "2026-11-06T01:19:07Z",
+   "type": "tool",
+   "tool": "read_back",
+   "args": {
+    "call_id": "eval-no-heat-unknown-caller-1-c90729a1",
+    "address": {
+     "street": "2214 Avenue U",
+     "unit": "",
+     "city": "Brooklyn",
+     "zip": "11229",
+     "spelled": ""
+    },
+    "phone": "caller_id",
+    "phone_for": "",
+    "name": "Alicia Romero",
+    "confirmed": true
+   },
+   "ok": true,
+   "refused": null,
+   "gate": null,
+   "say": "",
+   "ms": 11.6,
+   "error": null,
+   "request_id": "b734c1ac3609"
+  },
+  {
+   "at": "2026-11-06T01:19:09Z",
+   "type": "tool",
+   "tool": "find_slots",
+   "args": {
+    "call_id": "eval-no-heat-unknown-caller-1-c90729a1",
+    "job_type": "no_heat",
+    "priority": null,
+    "preferred_days": [],
+    "time_of_day": null,
+    "moving_a_visit": false,
+    "window_minutes": null,
+    "day": null,
+    "arrive_after": null,
+    "arrive_before": null,
+    "facts": {
+     "issue": "Furnace completely out, no heat since last night; thermostat reads 62 degrees",
+     "since": "",
+     "who_home": "",
+     "inside_temp_f": 62.0,
+     "temp_falling_fast": false
+    }
+   },
+   "ok": true,
+   "refused": null,
+   "gate": null,
+   "say": "The soonest I have is tomorrow, 8 to 8:30. If anything makes this more urgent for you, just let me know. Does that work?",
+   "ms": 1046.4,
+   "error": null,
+   "request_id": "fc5826615ff1"
+  },
+  {
+   "at": "2026-11-06T01:19:19Z",
+   "type": "tool",
+   "tool": "book_appointment",
+   "args": {
+    "call_id": "eval-no-heat-unknown-caller-1-c90729a1",
+    "job_type": "no_heat",
+    "slot": {
+     "date": "2026-11-06",
+     "window": "0800-0830"
+    },
+    "details": {
+     "issue": "Furnace completely out, no heat since last night; thermostat reads 62 degrees",
+     "since": "Last night, evening",
+     "tried": "Not specified by caller",
+     "who_home": "Two adults home all day",
+     "approver": "Alicia Romero",
+     "system_type": "",
+     "arrival_notes": "No gate code or buzzer. No pets. Enter through front door. Caller wants cost explained before approving repairs.",
+     "name": "Alicia Romero",
+     "inside_temp_f": 62.0
+    },
+    "priority": null,
+    "separate_problem": false,
+    "new_address_account": null
+   },
+   "ok": true,
+   "refused": null,
+   "gate": null,
+   "say": "Okay, I've booked it: the technician will arrive tomorrow between 8 and 8:30. Anything else?",
+   "ms": 546.9,
+   "error": null,
+   "request_id": "1020931f8c20"
+  },
+  {
+   "at": "2026-11-06T01:19:22Z",
+   "type": "tool",
+   "tool": "end_call",
+   "args": {
+    "call_id": "eval-no-heat-unknown-caller-1-c90729a1",
+    "reason": "resolved"
+   },
+   "ok": false,
+   "refused": "say_first",
+   "gate": "flow_say_first",
+   "say": "Okay, I've booked it: the technician will arrive tomorrow between 8 and 8:30. Anything else?",
+   "ms": 4.3,
+   "error": null,
+   "request_id": "069fddee99c7"
+  },
+  {
+   "at": "2026-11-06T01:19:25Z",
+   "type": "tool",
+   "tool": "calls.end",
+   "args": {
+    "reason": "caller_hangup"
+   },
+   "ok": true,
+   "refused": null,
+   "gate": null,
+   "say": "",
+   "ms": 4.7,
+   "error": null,
+   "request_id": "72471ecd1dc5"
+  }
+ ]
+}

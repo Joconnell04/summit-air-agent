@@ -528,3 +528,24 @@ def test_a_purged_call_takes_its_grade_with_it(agent):
         assert conn.execute("SELECT COUNT(*) FROM grades").fetchone()[0] == 0
     finally:
         conn.close()
+
+
+def test_a_socket_call_is_graded_with_the_servers_own_tool_calls(agent):
+    """A socket call's tools run on our server, so Retell's transcript has the words and no tools
+    (reviewer gap 6): the grader reads the server's turns with its tool calls in order."""
+    call_id = agent.start(call_id="retell_call_sock1")["data"]["call_id"]
+    agent.turn(call_id, "My heat is out. I'm at 101 Union Street, 11231.")
+    agent.tool("check_service_area", call_id, zip="11231")
+    agent.end(call_id)
+    transcripts = FakeTranscripts({"call_sock1": {"transcript_with_tool_calls": [
+        {"role": "agent", "content": "Hi there, thanks for calling Summit Air!"},
+        {"role": "user", "content": "My heat is out."},
+    ]}})
+    model = FakeModel()
+    result = grade(agent, call_id, model, transcripts=transcripts)
+    lines = model.records[0]["transcript"]
+    assert result["source"] == "server"
+    assert any(line.startswith("tool: check_service_area") for line in lines)
+    assert not any(line.startswith("tool: calls.") for line in lines)
+    assert any(line.startswith("result: ") for line in lines)
+    assert any(line.startswith("caller: ") for line in lines)
