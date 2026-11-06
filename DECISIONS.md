@@ -12,6 +12,14 @@ Discussion: docs/ai-process/transcripts/... or docs/explorations/...
 Issue: #N
 -->
 
+## 130. Equipment questions are answered from five pages by embedding search; the Sonnet hand-off is built and left off
+
+Decided: `lookup_hvac_info` searches five short pages (heating, cooling, air and ventilation, thermostats and symptoms, and the earlier basics) by meaning: the question is embedded with OpenAI's small embedding model and compared with 74 passages embedded once and committed (`tenants/summit-air/knowledge/lookup-index.json`). `KNOWLEDGE_SEARCH=keyword` rolls back to the old word-overlap search, which is also what runs when the key is missing, the request takes over 1.5 s or the index no longer matches the pages. The result is plain facts; the file names go in `data.log`, which the model never sees, and the reply rule drops any sentence about "the document", "the text", "reference text", "the knowledge base" or "ignore that". `SONNET_HANDOFF=1` makes the quality model write the reply after a lookup that found facts (twice a call at most, after a filler line, back to the live model if its first word takes over 2.5 s). It stays off.
+Why: the Retell knowledge base said "the reference text says..." out loud; facts with no framing, and a guard for the rest, remove that. Measured on 10 caller questions (evals/rounds/knowledge-rag-01.md), Sonnet's answers were no more accurate than Haiku's and its first word came about 1.4 s later (1.95 s against 0.62 s, MEASURED).
+Considered: keeping keyword search only (it found the right page on all 10 too, but returned an unrelated paragraph for a price question and cannot match a caller's own wording on a bigger library); a vector database (82 passages fit in a 200 KB file and a loop); Sonnet for every reply (adds the delay to every turn).
+Would change if: live calls show Haiku mangling lookup answers (turn the hand-off on and compare), or the library grows past a few hundred passages (move the index out of the repository).
+Discussion: evals/rounds/knowledge-rag-01.md
+
 ## 129. The gas and carbon monoxide lines offer an emergency technician, dispatched as Urgent
 
 Decided: the safety lines end with one question, "Once everyone's safe, would you like us to send a technician out right away?" A yes is dispatched at the read-back as a safety check, the same way as an urgent no-heat call: the soonest technician (the on-call technician after hours), no menu of times, the booking note that the technician works on it only once it's been checked and found safe, and the label Urgent. A no carries on as usual. The lines and the offer are said once per hazard, so neither comes back.

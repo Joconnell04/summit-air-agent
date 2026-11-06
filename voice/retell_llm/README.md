@@ -50,3 +50,7 @@ The rig creates or updates the agent "Summit Air rig test (Retell custom LLM, au
 | Recording | LiveKit egress, stopped when the caller objects | Retell's own recording; the objection line is said but nothing stops Retell's recording |
 | Warm transfer | Server-decided, the worker dials and consults | Server-decided, Retell's cold transfer, phone calls only |
 | Turn timings in the trace | Every stage | `server_ms`, `llm_first_token_ms`, `tool_ms`, and `reply_ms` from Retell's word timings |
+
+## Sonnet for the reply after a lookup (off)
+
+`SONNET_HANDOFF=1` makes the `quality` profile write the reply that follows a `lookup_hvac_info` result with facts, at most `max_per_call` times a call; every other reply stays on the live profile. The tenant's `lookup_filler` line is said first (not on two hand-offs running), and `prompts/lookup-answer.md` rides on that one request only. If the quality model's first word is not there after `first_token_timeout_s`, the live model writes the reply. All three numbers are under `voice.sonnet_handoff` in config/models.yaml. Off by default: evals/rounds/knowledge-rag-01.md measured about 1.4 s more silence for no gain in accuracy.

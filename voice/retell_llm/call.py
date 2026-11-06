@@ -18,7 +18,9 @@ import json
 import logging
 import re
 import time
-from collections.abc import Awaitable, Callable
+from collections.abc import AsyncIterator, Awaitable, Callable
+from dataclasses import dataclass
+from pathlib import Path
 
 from prompts.assemble import (
     SENTENCE_END,
@@ -62,6 +64,24 @@ SPOKEN_ACTIONS = ("speak_lines", "speak_variant", "ask_check")
 CONNECTED = "(The call has connected.)"
 
 Send = Callable[[dict], Awaitable[None]]
+
+LOOKUP_ANSWER = Path(__file__).resolve().parents[2] / "prompts" / "lookup-answer.md"
+
+
+@dataclass
+class QualityReply:
+    """SONNET_HANDOFF=1: the reply written after a lookup_hvac_info that found facts comes from a
+    stronger model, at most `max_per_call` times a call. `filler` is the tenant's line said first.
+    If the stronger model's first word isn't there after `timeout_s`, the live model writes it."""
+
+    brain: Brain
+    filler: str
+    max_per_call: int
+    timeout_s: float
+    instruction: str = ""
+
+    def __post_init__(self) -> None:
+        self.instruction = self.instruction or LOOKUP_ANSWER.read_text().strip()
 
 
 def compact(result: dict) -> str:
@@ -284,6 +304,7 @@ class LlmCall:
         hold_after_s: float = 0.7,
         hold_from: str = "caller",
         call_start_ms: int | None = None,
+        quality: QualityReply | None = None,
     ):
         self.server = server
         self.brain = brain
@@ -341,6 +362,13 @@ class LlmCall:
         self.began = 0.0
         self.closed = False
         self.tokens: dict[str, int] = {}
+        self.quality = quality
+        self.quality_used = 0
+        self.quality_outcome = ""
+        # The last hand-off said the filler line, so the next one doesn't.
+        self.filled_last = False
+        # The last hop's tool results included a lookup that found facts.
+        self.facts_found = False
 
     async def begin(self, greeting: str) -> None:
         """The first line, already built by whoever started the call on the tool server."""
@@ -498,6 +526,48 @@ class LlmCall:
             stages["hold_ms"] = out.hold_ms
         self.stages.append(stages)
 
+    def _lookup_history(self) -> list[dict]:
+        """The history with the hand-off's instruction added to the last tool result, for this
+        request only; the call's own history never holds it."""
+        *earlier, last = self.messages
+        text = {"type": "text", "text": self.quality.instruction}
+        return [*earlier, {**last, "content": [*last["content"], text]}]
+
+    async def _stream(self, reply: Reply, quality: bool) -> AsyncIterator[str]:
+        """The live model's reply, or the quality model's when `quality`, falling back to the live
+        one when the quality model's first word is slow."""
+        if quality:
+            stream = self.quality.brain.stream(
+                self.system, self._lookup_history(), self.tools, reply
+            ).__aiter__()
+            try:
+                first = await asyncio.wait_for(stream.__anext__(), self.quality.timeout_s)
+            except TimeoutError:
+                await stream.aclose()
+                reply.__dict__.update(Reply().__dict__)
+                self.quality_outcome = "fallback"
+                log.info("%s: quality reply slow, live model writes it", self.server.call_id)
+            except StopAsyncIteration:
+                self.quality_outcome = "quality"
+                return
+            else:
+                self.quality_outcome = "quality"
+                yield first
+                async for delta in stream:
+                    yield delta
+                return
+        async for delta in self.brain.stream(self.system, self.messages, self.tools, reply):
+            yield delta
+
+    async def _take_quality(self, out: Response) -> bool:
+        """The filler line (never on two hand-offs running), then True: the next reply is the
+        quality model's."""
+        self.quality_used += 1
+        if not self.filled_last:
+            await out.say(self.quality.filler)
+        self.filled_last = not self.filled_last
+        return True
+
     def _clean(self, sentence: str, out: Response) -> tuple[str, str]:
         """Server-led: a sentence of the model's as the caller will hear it, and why it was cut,
         if it was. A question is never cut, only tidied, so the filter can't take the actual
@@ -580,6 +650,7 @@ class LlmCall:
 
     async def _hops(self, out: Response, stages: dict) -> None:
         tool_ms = 0.0
+        quality = False
         for hop in range(MAX_HOPS):
             self.reply.start_reply()
             # While windows are on offer, the model's text waits for the end of its reply: a reply
@@ -593,7 +664,8 @@ class LlmCall:
             goodbyes, raw = [], []
             closing_turn = self.server_led and bool(CALLER_DONE.search(self.caller_said))
             reply = Reply()
-            async for delta in self.brain.stream(self.system, self.messages, self.tools, reply):
+            self.quality_outcome = ""
+            async for delta in self._stream(reply, quality):
                 if out.stale():
                     break
                 pending += delta
@@ -628,6 +700,9 @@ class LlmCall:
                 self.tokens[kind] = self.tokens.get(kind, 0) + count
             if hop == 0:
                 stages["llm_first_token_ms"] = round(reply.first_token_ms, 1)
+            if self.quality_outcome:
+                stages["quality_reply"] = self.quality_outcome
+                stages["quality_first_token_ms"] = round(reply.first_token_ms, 1)
             if out.stale():
                 # Replaced mid-stream: keep what was sent, as a line the caller may have heard.
                 if kept:
@@ -697,6 +772,10 @@ class LlmCall:
             self.messages.append({"role": "user", "content": results})
             if finished or out.stale():
                 break
+            quality = bool(
+                self.quality and self.facts_found and self.quality_used < self.quality.max_per_call
+                and await self._take_quality(out)
+            )
         if tool_ms:
             stages["tool_ms"] = round(tool_ms, 1)
 
@@ -704,6 +783,7 @@ class LlmCall:
         """Each call goes to the tool server; the server's own lines are said as written. True
         when the turn is over: a server line was said, the call is ending or going to a person."""
         results, finished = [], False
+        self.facts_found = False
         for use in uses:
             name = use["name"]
             if self.server_led:
@@ -712,6 +792,8 @@ class LlmCall:
                     out.tool_began = time.perf_counter()
             envelope = await self._tool(out, name, dict(use["input"]))
             self.reply.tool_done(name, envelope)
+            if name == "lookup_hvac_info" and (envelope.get("data") or {}).get("facts"):
+                self.facts_found = envelope.get("ok", False)
             if name == "find_slots" and envelope.get("ok"):
                 self.offer_open = not (envelope.get("data") or {}).get("dispatched")
             elif name == "book_appointment" and envelope.get("ok"):

@@ -30,8 +30,10 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from app.tenant import voice_lines
 from prompts.assemble import job_types, tool_specs
 from voice.archive.livekit.server import ToolServer
+from voice.archive.livekit.settings import config_path as models_config_path
+from voice.archive.livekit.settings import load_profile
 
-from .call import LlmCall
+from .call import LlmCall, QualityReply
 from .model import Brain
 
 log = logging.getLogger("voice.retell_llm")
@@ -89,7 +91,9 @@ def dead_air_checks(config_path: Path) -> int:
     return int(timings["hang_up_s"] // timings["check_in_s"])
 
 
-def create_app(brain: Brain | None = None, transport=None) -> FastAPI:
+def create_app(
+    brain: Brain | None = None, transport=None, quality_brain: Brain | None = None
+) -> FastAPI:
     # Each request and replaced turn is logged, to line up with Retell's own call logs.
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
     app = FastAPI()
@@ -114,6 +118,16 @@ def create_app(brain: Brain | None = None, transport=None) -> FastAPI:
             shared["brain"] = Brain()
         return shared["brain"]
 
+    def quality_reply(lines: dict) -> QualityReply | None:
+        """SONNET_HANDOFF=1 (config/models.yaml voice.sonnet_handoff); off unless it is set."""
+        if os.environ.get("SONNET_HANDOFF") != "1" or not lines.get("lookup_filler"):
+            return None
+        setting = yaml.safe_load(models_config_path().read_text())["voice"]["sonnet_handoff"]
+        if "quality" not in shared:
+            shared["quality"] = quality_brain or Brain(load_profile(setting["profile"]))
+        return QualityReply(shared["quality"], lines["lookup_filler"], setting["max_per_call"],
+                            setting["first_token_timeout_s"])
+
     def new_call(details: dict, send) -> tuple[LlmCall, str]:
         variables = details.get("retell_llm_dynamic_variables") or {}
         metadata = details.get("metadata") or {}
@@ -127,8 +141,9 @@ def create_app(brain: Brain | None = None, transport=None) -> FastAPI:
             system = arm_prompt(ROOT / prompt_file, variables)
         if tools_file:
             specs = arm_tools(ROOT / tools_file, specs)
+        lines = tenant_lines(tenants, slug)
         call = LlmCall(
-            server, the_brain(), send, system, specs, tenant_lines(tenants, slug),
+            server, the_brain(), send, system, specs, lines, quality=quality_reply(lines),
             phone=details.get("call_type") == "phone_call", dead_air_checks=checks,
             server_led=server_led, hold_after_s=hold_after, hold_from=hold_from,
             call_start_ms=details.get("start_timestamp"),
