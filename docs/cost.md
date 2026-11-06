@@ -19,6 +19,23 @@ Cheaper parts cut the monthly bill from about $648 to about $388, and to about $
 
 Volume used for every row (ASSUMED, high side, from `docs/explorations/003-capacity-and-cost.md`; at half the volume the usage part halves and the fixed part stays): 4,000 calls a month (150 a business day, plus about 12% after hours, SOURCE ServiceTitan for the after-hours share, plus surge days), 3.5 minutes each on average, so 14,000 minutes; 40% of calls end in a booked job, so 1,600 jobs (SOURCE: HVAC booking rates run 38% overall and 59% for shops with 25 or more technicians).
 
+## Cost per call on the socket build (MEASURED)
+
+From 65 calls to the socket agent on (516), 5 to 6 November: Retell's own `combined_cost` per call (`POST /v3/list-calls`) for the agent's leg only, and Haiku's tokens from the socket's close log. The scripted test caller's own leg is left out, since a real caller costs nothing. Haiku is priced from `config/models.yaml` ($0.10 in, $0.50 out per million), with cache reads at 0.1x and cache writes at 1.25x the input price (ASSUMED). Scripted callers answer promptly, so real calls may run a little longer.
+
+| Call | Calls | Minutes | Retell | Haiku | Total a call |
+|---|---|---|---|---|---|
+| Booking (a visit booked or dispatched) | 43 | 2.8 | $0.269 | $0.005 | **$0.27** |
+| Question, no visit wanted | 8 | 0.7 | $0.088 | $0.002 | **$0.09** |
+| Safety, callback or transfer | 14 | 2.3 | $0.204 | $0.003 | **$0.21** |
+| Caller says nothing and hangs up | 1 | 0.1 | $0.031 | $0 | **$0.03** |
+| Open line, nobody speaks, until the 8-minute hang-up | 0 | 8.0 | $0.77 | about $0 | **about $0.77** (derived: 8 min at $0.096 a minute) |
+| All 65 | 65 | 2.4 | $0.233 | $0.004 | **$0.24** |
+
+Retell bills about $0.096 a minute of call on this build (MEASURED, all 65), because the model runs on our own Anthropic key and Retell charges only its voice engine, the Cartesia voice and the phone line. Haiku is under 2% of a call. So cost scales with minutes, not with how clever the call is: a booking costs more than a question because it lasts four times as long.
+
+At scale, with the mix above: 1,000 calls a month is about $240, and 10,000 is about $2,400, plus the server (one box, about $20 a month, ASSUMED) and Retell's number rental. The one call worth capping is the open line: at 8 minutes of silence it costs three bookings. Bringing `end_call_after_silence_ms` (retell/socket/push.py) down to 3 minutes would make it about $0.29.
+
 ## Three ways to run it
 
 | | Recommended | Half budget | Managed (Retell) |
