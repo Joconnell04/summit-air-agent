@@ -88,6 +88,8 @@ def create_app(brain: Brain | None = None, transport=None) -> FastAPI:
     prompt_file = os.environ.get("RETELL_LLM_PROMPT")
     tools_file = os.environ.get("RETELL_LLM_TOOLS")
     server_led = os.environ.get("RETELL_LLM_SERVER_LED") == "1"
+    # The worker's 4 s; an arm on a busier box can allow more (a holding line covers the wait).
+    tool_timeout = float(os.environ.get("RETELL_LLM_TOOL_TIMEOUT_S") or 4.0)
     calls: dict[str, LlmCall] = {}
     closing: dict[str, asyncio.Task] = {}
     shared = {"brain": brain}
@@ -102,7 +104,7 @@ def create_app(brain: Brain | None = None, transport=None) -> FastAPI:
         metadata = details.get("metadata") or {}
         call_id = variables.get("summit_call_id") or metadata.get("summit_call_id")
         slug = metadata.get("tenant") or default_tenant
-        server = ToolServer(tool_server, call_id, transport=transport)
+        server = ToolServer(tool_server, call_id, timeout_s=tool_timeout, transport=transport)
         specs = tool_specs(job_types(tenants / slug))
         system = variables["instructions"]
         if prompt_file:

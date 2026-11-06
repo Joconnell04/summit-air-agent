@@ -26,7 +26,7 @@ case "$1" in
   socket)
     # Retell's custom-LLM socket on this world: every server sentence spoken as written, the model
     # (config/models.yaml, MODEL_PROFILE or the default) writes the rest.
-    TOOL_SERVER_URL=http://127.0.0.1:8130 RETELL_LLM_SERVER_LED=1 \
+    TOOL_SERVER_URL=http://127.0.0.1:8130 RETELL_LLM_SERVER_LED=1 RETELL_LLM_TOOL_TIMEOUT_S=9 \
       RETELL_LLM_PROMPT=retell/arms/socket/prompt.md RETELL_LLM_TOOLS=retell/arms/server-led/tools.json \
       exec uv run uvicorn --factory --host 127.0.0.1 --port 8133 voice.retell_llm.llm_socket:create_app ;;
   *) echo "unknown process $1" >&2; exit 2 ;;

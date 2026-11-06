@@ -454,3 +454,26 @@ def test_server_led_the_model_never_names_its_step(server_led):
         open_call(ws)
         events = ask(ws, 1, ["Hi.", "It's 45 Forest Avenue."])
     assert said(events) == "Thanks. What's the best number to reach you?"
+
+
+def test_server_led_a_slow_tool_gets_one_holding_line(monkeypatch):
+    monkeypatch.setenv("RETELL_API_KEY", API_KEY)
+    monkeypatch.setenv("RETELL_LLM_SERVER_LED", "1")
+    monkeypatch.setattr("voice.retell_llm.call.HOLD_AFTER_S", 0.05)
+    server = FakeToolServer()
+    offer = "The soonest I have is today, 12 to 12:30. Does that work?"
+    server.tools["find_slots"] = envelope(say=offer, data={"offer": {"window": "1200-1230"}})
+
+    async def slow(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/tools/find_slots":
+            await asyncio.sleep(0.3)
+        return server.handle(request)
+
+    slots = {"id": "t1", "name": "find_slots", "input": {"job_type": "no_heat"}}
+    brain = FakeBrain([([], [slots])])
+    app = llm_socket.create_app(brain=brain, transport=httpx.MockTransport(slow))
+    with TestClient(app).websocket_connect(path()) as ws:
+        open_call(ws)
+        events = ask(ws, 1, ["Hi.", "Yes, that's all correct."])
+    # The tenant's holding line, never one that narrates, then the offer as written.
+    assert said(events) == f"Just give me one second. {offer}"

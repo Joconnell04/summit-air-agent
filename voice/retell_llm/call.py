@@ -35,6 +35,10 @@ from .model import Brain, Reply
 log = logging.getLogger("voice.retell_llm")
 
 MAX_HOPS = 6
+# Server-led, a tool still running after this long gets one of the tenant's holding lines, so the
+# caller isn't left in silence and Retell doesn't drop the socket (a 4.2 s find_slots on a busy box
+# ended call_9cae55b8f0de04239f783dacecd with error_llm_websocket_runtime).
+HOLD_AFTER_S = 1.5
 # Turn results whose text is spoken as the server wrote it, before the model answers.
 SPOKEN_ACTIONS = ("speak_lines", "speak_variant", "ask_check")
 CONNECTED = "(The call has connected.)"
@@ -172,6 +176,9 @@ class LlmCall:
         # The server-led flow (app/flow.py, SERVER_LED=1 on the tool server): every sentence a
         # tool result carries is spoken here as written, and the model writes only the rest.
         self.server_led = server_led
+        # The tenant's holding lines without the ones that narrate ("Let me pull that up."), in turn.
+        self.holding = [h for h in lines.get("holding") or [] if not h.lower().startswith("let me")]
+        self.held = 0
         self.reminders = 0
         self.messages: list[dict] = []
         self.reply = SpokenReply()
@@ -409,7 +416,7 @@ class LlmCall:
         results, finished = [], False
         for use in uses:
             name = use["name"]
-            envelope = await self.server.tool(name, dict(use["input"]), self.writes.get(name, False))
+            envelope = await self._tool(out, name, dict(use["input"]))
             self.reply.tool_done(name, envelope)
             data = envelope.get("data") or {}
             ending = name == "end_call" and envelope.get("ok")
@@ -446,6 +453,19 @@ class LlmCall:
             results.append({"type": "tool_result", "tool_use_id": use["id"],
                             "content": compact(seen)})
         return results, finished
+
+    async def _tool(self, out: Response, name: str, args: dict) -> dict:
+        """One tool call. Server-led, one holding line if it runs long; the call itself is never
+        cut short by a newer turn (writes are idempotent)."""
+        task = asyncio.ensure_future(self.server.tool(name, args, self.writes.get(name, False)))
+        if not self.server_led or not self.holding:
+            return await task
+        try:
+            return await asyncio.wait_for(asyncio.shield(task), HOLD_AFTER_S)
+        except TimeoutError:
+            await out.say(self.holding[self.held % len(self.holding)])
+            self.held += 1
+            return await task
 
     async def _put_through(self, out: Response, flagged: dict) -> bool:
         """After a person flag the server may send the caller to a person now (app/transfer.py).
