@@ -240,10 +240,12 @@ class JobDetails(Body):
     """The intake every booking carries (spec S-13). Address and phone come from the read-back."""
 
     issue: str = Field(min_length=1, max_length=300)
-    since: str = Field(min_length=1, max_length=100)
-    tried: str = Field(min_length=1, max_length=300)
-    who_home: str = Field(min_length=1, max_length=120)
-    approver: str = Field(min_length=1, max_length=120)
+    # Needed for a repair; an estimate visit for a new system needs only the issue (Jackson's call
+    # call_2fb4e053ba8b76b57c348845990). book_appointment checks them by job type.
+    since: str = Field("", max_length=100)
+    tried: str = Field("", max_length=300)
+    who_home: str = Field("", max_length=120)
+    approver: str = Field("", max_length=120)
     system_type: str = Field("", max_length=120)
     arrival_notes: str = Field("", max_length=300)
     name: str = Field(

@@ -415,7 +415,12 @@ def start(
         # The server's own clock, shifted on a test world (app/clock.py), so the prompt's "Now:"
         # agrees with the slots it offers.
         "now": iso(now),
-        "tenant": {"slug": tenant.slug, "name": tenant.name, "timezone": str(tenant.tz)},
+        "tenant": {
+            "slug": tenant.slug,
+            "name": tenant.name,
+            "timezone": str(tenant.tz),
+            "arrival_question": tenant.arrival_question,
+        },
         "after_hours": bool(call["after_hours"]),
         "caller": {
             "phone": args.caller_id,

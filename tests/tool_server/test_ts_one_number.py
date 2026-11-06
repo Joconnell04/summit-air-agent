@@ -295,3 +295,38 @@ def test_sparks_with_a_smell_that_leaves_gas_possible_ask_the_gas_check_after(ag
     first = agent.turn(call, "There are sparks by the furnace and a weird smell in the basement.")
     question = AGENT_CFG["safety"]["vague"]["gas"]["question"]
     assert first["say"] == f"{ELECTRICAL} {question}"
+
+
+def test_the_arrival_question_asks_no_pets_for_summit_air(agent):
+    """Jackson's call call_2fb4e053ba8b76b57c348845990: "drop pets"."""
+    from prompts import assemble
+
+    start = agent.start(UNKNOWN)["data"]
+    question = "Is there a gate code or buzzer the technician should know about?"
+    assert start["tenant"]["arrival_question"] == question
+    text = assemble.instructions(start)
+    assert question in text and " pet" not in text.lower().replace("pets or the house", "")
+
+
+def test_an_estimate_visit_books_with_no_approver_or_repair_questions(agent):
+    """Jackson's call call_2fb4e053ba8b76b57c348845990: the agent is for booking a technician,
+    including a quote for a new system, not a callback bot."""
+    call = ready_to_book(agent)
+    agent.turn(call, "I'd like a quote for a new furnace.")
+    found = agent.tool("find_slots", call, job_type="estimate")
+    day = found["data"]["days"][0]
+    booked = agent.tool("book_appointment", call, job_type="estimate",
+                        slot={"date": day["date"], "window": day["windows"][0]},
+                        details={"issue": "Quote for a new furnace", "name": "Pat Rivera"})
+    assert booked["ok"], booked
+    assert booked["say"].startswith("Okay, I've booked it: the technician will arrive")
+
+
+def test_a_repair_visit_still_needs_its_intake(agent):
+    call = ready_to_book(agent)
+    slot = first_open(agent, call)
+    refused = agent.tool("book_appointment", call, job_type="tune_up", slot=slot,
+                         details={"issue": "Yearly tune-up", "name": "Pat Rivera"})
+    assert refused["refused"] == "invalid_arguments"
+    assert set(refused["data"]["errors"]) == {"since", "tried", "who_home", "approver"}
+    assert refused["say"] == ""

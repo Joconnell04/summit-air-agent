@@ -214,10 +214,14 @@ home_words:
 - basement
 - kitchen
 - attic
+intake:
+  skip_for:
+  - estimate
 lines:
   account_choice: Should I put this under your account?
   account_name: Whose name should the account for that address be under?
   account_which: I see more than one account on this number. Whose name should the visit go under?
+  address_ask_unit: And what's the apartment or unit number there?
   address_ask_zip: What's the ZIP code there?
   address_not_found: I'm not finding that street. Could you spell the street name for me?
   address_which: Is that the one in {places}?
@@ -1553,6 +1557,8 @@ transfer:
   targets:
     office: TRANSFER_OFFICE_NUMBER
     on_call: TRANSFER_ON_CALL_NUMBER
+visit_questions:
+  pets: false
 voice:
   clips:
     at_capacity: Thanks for calling Summit Air. If you smell gas, hang up and call 9-1-1 from outside.

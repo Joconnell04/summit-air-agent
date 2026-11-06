@@ -62,7 +62,8 @@ flag_person: >-
   explain the date or count the days yourself.
 record_lead: >-
   Save one lead: commercial (company, contact, need), membership sign-up interest, or an install or
-  replacement quote. A window the caller asked for goes in callback_after and callback_before, and
+  replacement quote only when an estimate visit can't be booked (book those with book_appointment,
+  job_type estimate). A window the caller asked for goes in callback_after and callback_before, and
   "tomorrow" in callback_day. Say the sentence it returns as written.
 add_note: Append a short note for the team about this customer or this call's job.
 mark_do_not_call: >-

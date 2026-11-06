@@ -1807,6 +1807,13 @@ def find_address(ctx: Ctx, args: FindAddressIn) -> Result:
         _ask_mismatch(ctx, house, street, place, said)
     _out_of_area(ctx, place.zip)
     area = _area_name(ctx, place.zip, place.borough)
+    units = ctx.geocoder.units_at(place) if ctx.geocoder else None
+    if units and units > 1:
+        with tx(ctx.conn):
+            ctx.conn.execute(
+                "INSERT OR REPLACE INTO buildings (call_id, house, street, units) VALUES (?, ?, ?, ?)",
+                (ctx.call["id"], geocode.house_key(house), geocode.street_match_key(street), units),
+            )
     return ok(
         street=place.spoken_street(),
         # How to say it, if the agent says it at all: "one ninety-nine East Fourth Street".
@@ -1816,6 +1823,8 @@ def find_address(ctx: Ctx, args: FindAddressIn) -> Result:
         neighborhood=place.area,
         in_area=True,
         area=area,
+        # A building with more than one home: ask for the apartment or unit if not given yet.
+        needs_unit=bool(units and units > 1),
     )
 
 
@@ -2298,6 +2307,45 @@ def _readback_corrected(ctx: Ctx, asked: dict) -> str | None:
     return next((f for r in rows if (f := readback_change(r["text"], asked))), None)
 
 
+# What a repair visit asks before booking (spec S-13). The tenant's `intake.skip_for` job types (a
+# quote for a new system) ask none of it: nothing has broken, and nobody approves a quote.
+REPAIR_INTAKE = ("since", "tried", "who_home", "approver")
+
+
+def _repair_intake(ctx: Ctx, job_type: str, details: dict) -> None:
+    if job_type in ctx.tenant.agent.get("intake", {}).get("skip_for", []):
+        return
+    missing = [f for f in REPAIR_INTAKE if not str(details.get(f) or "").strip()]
+    if missing:
+        raise Refused(
+            "invalid_arguments", "", errors={f: "needed for a repair visit" for f in missing}
+        )
+
+
+def _unit_for_building(ctx: Ctx, address: dict) -> None:
+    """A building find_address found with more than one home in it, read back with no unit: the
+    caller is asked once for it (Jackson's call call_2fb4e053ba8b76b57c348845990, 199 East 4th
+    Street, nine homes). Asked once, so a caller who says there's none isn't asked again."""
+    if address["unit"]:
+        return
+    split = geocode.split_address(address["street"])
+    if not split:
+        return
+    building = ctx.conn.execute(
+        "SELECT units FROM buildings WHERE call_id = ? AND house = ? AND street = ?",
+        (ctx.call["id"], geocode.house_key(split[0]), geocode.street_match_key(split[1])),
+    ).fetchone()
+    line = ctx.tenant.line("address_ask_unit")
+    if building and _hand_out_once(ctx, line):
+        raise Refused(
+            "unit_needed",
+            line,
+            need="this question was said for you; read back again with the unit the caller "
+            "gives, or with no unit if they say there isn't one",
+            units=building["units"],
+        )
+
+
 def _unit_without_zip(unit: str, zip_code: str) -> str:
     """A unit that ends in the ZIP keeps what comes before it: "Unit 2, 10009" heard as one number
     ("Unit 210009", Retell call call_1840576e622e3d729b760085142) was read back as unit 210009."""
@@ -2346,6 +2394,7 @@ def read_back(ctx: Ctx, args: ReadBackIn) -> Result:
     address["street"] = spelled_street
     address["spelled"] = ""
     address["unit"] = unit_clean(_unit_without_zip(address["unit"], address["zip"]))
+    _unit_for_building(ctx, address)
     # Shorthand: the street and the unit, and the number, with no ZIP, city or "your home"
     # (Jackson: "just shorthand like 'the 199 e 4th street and unit 2'"). The lookup already
     # checked the ZIP, and a ZIP the caller gave that disagrees with it is asked about first
@@ -2534,6 +2583,7 @@ def book_appointment(ctx: Ctx, args: BookIn) -> Result:
     account, contact_name = _new_address_account(ctx, readback, args, chosen)
     job_type = _job_type(ctx, args.job_type)
     details = args.details.model_dump()
+    _repair_intake(ctx, args.job_type, details)
     if not details["name"].strip():
         details["name"] = _booking_name(ctx)
     found = _priority(ctx, args.job_type, details["inside_temp_f"])

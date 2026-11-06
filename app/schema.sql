@@ -544,6 +544,16 @@ CREATE TABLE IF NOT EXISTS address_lookups (
 );
 CREATE INDEX IF NOT EXISTS ix_address_lookups_call ON address_lookups (call_id);
 
+-- Buildings find_address found on a call with more than one home in them (MapPLUTO's residential
+-- units), so read_back asks once for the unit when none was given.
+CREATE TABLE IF NOT EXISTS buildings (
+    call_id TEXT NOT NULL REFERENCES calls (id) ON DELETE CASCADE,
+    house TEXT NOT NULL,
+    street TEXT NOT NULL,
+    units INTEGER NOT NULL,
+    PRIMARY KEY (call_id, house, street)
+);
+
 -- A ZIP the caller gave that the lookup of their street disagrees with. The agent asked which is
 -- right after the turn numbered `asked_seq`; the caller's ZIP counts again only once they say it
 -- after that question (tools._zip_mismatch).

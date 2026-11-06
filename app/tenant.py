@@ -215,6 +215,14 @@ class Tenant:
         self.knowledge = knowledge
         # Read only by lookup_hvac_info (app/hvac_info.py), never put in the prompt.
         self.lookup_knowledge = lookup_knowledge or {}
+        # The one open question before booking (prompts/spine.md). Pets only when the tenant asks
+        # about them; Summit Air doesn't (Jackson, call_2fb4e053ba8b76b57c348845990).
+        pets = agent.get("visit_questions", {}).get("pets", False)
+        self.arrival_question = (
+            "Anything the tech should know when they get there, like a gate code, a buzzer or a pet?"
+            if pets
+            else "Is there a gate code or buzzer the technician should know about?"
+        )
         self.fsm_tenant_id: int = company["tenant_id"]
         self.name: str = company["company"]["name"]
         self.tz = ZoneInfo(company["company"]["timezone"])

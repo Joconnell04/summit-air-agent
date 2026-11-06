@@ -93,7 +93,7 @@ GATES = (
      ("zip_not_heard",), ()),
     ("booking", "Looks up a ZIP only for a street the caller said, and asks when it can't tell",
      ("address_not_heard", "address_several", "address_not_found", "address_lookup_down",
-      "zip_asked"),
+      "zip_asked", "unit_needed"),
      ("S-13a",)),
     ("booking", "Won't book on a ZIP that disagrees with the caller's street until they settle it",
      ("zip_mismatch",), ("S-13a",)),
@@ -137,6 +137,7 @@ LINE_STAGES = {
     "greeting_known": ("opening", "Greeting, known caller"),
     "greeting_unknown": ("opening", "Greeting"),
     "zip_mismatch": ("booking", "ZIP mismatch"),
+    "address_ask_unit": ("booking", "Ask for the unit"),
     "address_which": ("booking", "Which address"),
     "address_not_found": ("booking", "Street not found"),
     "address_ask_zip": ("booking", "Ask for the ZIP"),
@@ -224,7 +225,8 @@ PROMPT_STAGES = {
     "End": "closing",
 }
 # agent.yaml sections that hold no rule an owner would read: numbers, connections, plumbing.
-NOT_SHOWN = {"extends", "phone_numbers", "fsm", "weather", "owner_rules", "lookup_knowledge"}
+NOT_SHOWN = {"extends", "phone_numbers", "fsm", "weather", "owner_rules", "lookup_knowledge",
+             "visit_questions", "intake"}
 NOT_SHOWN_PROMPTS = {"tool-use.md"}
 
 

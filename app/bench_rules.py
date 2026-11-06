@@ -80,7 +80,8 @@ def sample_call(tenant, content: dict) -> dict:
     """What /calls/start returns for a new caller with no history, with the draft's rules: the
     call context the page's prompt is built on, and labelled there as a sample."""
     return {
-        "tenant": {"slug": tenant.slug, "name": tenant.name, "timezone": str(tenant.tz)},
+        "tenant": {"slug": tenant.slug, "name": tenant.name, "timezone": str(tenant.tz),
+                   "arrival_question": tenant.arrival_question},
         "now": None,  # the page's own clock
         "after_hours": False,
         "caller": {"phone": "+12125550100", "known_number": False, "do_not_call": False},
