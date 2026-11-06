@@ -345,6 +345,17 @@
           "confirmed": {
             "type": "boolean"
           },
+          "job_type": {
+            "description": "For no_heat or no_cooling, pass the job type so the server can dispatch a technician right away when the call is High or Urgent priority.",
+            "enum": [
+              "no_heat",
+              "no_cooling",
+              "tune_up",
+              "safety_check",
+              "estimate"
+            ],
+            "type": "string"
+          },
           "name": {
             "description": "The caller's name, if they gave it earlier in the call. Pass it so the server doesn't ask again.",
             "type": "string"
