@@ -1513,3 +1513,21 @@ def test_find_slots_takes_since_in_its_facts(agent):
     found = agent.tool("find_slots", call, job_type="tune_up",
                        facts={"issue": "yearly tune-up", "since": "last week"})
     assert found["ok"], found
+
+
+def test_fully_booked_says_so_and_offers_a_callback(agent, monkeypatch):
+    """All technicians booked out for the whole window: the caller hears it plainly and is offered
+    a callback for when something opens (Jackson, 2026-11-06)."""
+    from app import tools
+
+    monkeypatch.setattr(tools, "_open_windows", lambda *a, **k: [])
+    call = ready_to_book(agent)
+    found = agent.tool("find_slots", call, job_type="tune_up")
+    assert found["ok"] and found["data"]["fully_booked"]
+    assert found["say"].startswith("Unfortunately we're fully booked for the next two weeks")
+    assert found["say"].endswith("When's a good time to reach you?")
+    agent.say(call, found["say"])
+    agent.turn(call, "Tomorrow at 2 is fine.")
+    flagged = agent.tool("flag_person", call, reason="Fully booked: call back when an opening comes up",
+                         callback_time="2 PM")
+    assert flagged["ok"], flagged

@@ -309,6 +309,8 @@ lines:
   fsm_unavailable: I can't book that right now, but I've written it all down and someone will call you
     by {time} to confirm.
   fsm_unavailable_no_callback: I can't get to that right now, but I've written it all down for the team.
+  fully_booked: Unfortunately we're fully booked for the next two weeks. I can have someone call you back
+    as soon as an opening comes up. When's a good time to reach you?
   handoff_now: Got it, transferring you now.
   heads_up: This is Summit Air. {change} by a caller from another number. If that wasn't you, please call
     us back at {phone}.

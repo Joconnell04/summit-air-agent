@@ -2146,10 +2146,12 @@ def find_slots(ctx: Ctx, args: FindSlotsIn) -> Result:
         for day in dates[:SHAPE_DAYS]
     ]
     if not dates:
+        # Booked out: say so, and offer a callback for when something opens (Jackson,
+        # 2026-11-06). An Urgent call doesn't get here while the on-call technicians are free.
         _keep_second_job(ctx, data)
-        return ok(
-            urgent_said + arrival_say + "I don't have anything open in the next two weeks.", **data
-        )
+        data["fully_booked"] = True
+        data.setdefault("note", "If they want the callback, call flag_person with the time they give.")
+        return ok(urgent_said + arrival_say + ctx.tenant.line("fully_booked"), **data)
     offer, lead = _one_offer(ctx, by_day, dates, preferred, args.time_of_day)
     data["offer"] = offer
     if urgent_said and not arrival_say and _offered_already(ctx, lead):

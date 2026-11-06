@@ -566,6 +566,9 @@ lines:
   # Asked once before offering times on a High no-heat or no-cooling call (DECISIONS.md 130): a
   # caller who needs someone now gets the emergency dispatch, at Urgent.
   dispatch_question: Can this wait for a scheduled visit, or do you need someone out right away?
+  # Every technician is booked for the whole booking window (BOOKING_DAYS_AHEAD): said plainly, with
+  # a callback for when something opens.
+  fully_booked: Unfortunately we're fully booked for the next two weeks. I can have someone call you back as soon as an opening comes up. When's a good time to reach you?
   # Emergency dispatch (DECISIONS.md 123): the server books the soonest technician at the read-back
   # and this sentence is the read-back. {address} is said as read_back says it, {last_four} digit by
   # digit, {eta} is dispatch_within_hour or "by 2:30 PM today".
