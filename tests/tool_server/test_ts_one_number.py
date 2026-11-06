@@ -141,3 +141,23 @@ def test_the_commercial_lead_line_says_the_details_are_passed_on(agent):
         "Thanks for thinking of us. Unfortunately, we only service homes, but I'll pass your "
         "details to our team."
     )
+
+
+def test_a_sparks_call_asks_the_gas_check_once(agent):
+    """Retell call call_b608687ce923e70a8318a6a6f0e: the confirm question, then the plain gas
+    question while the caller was still answering "no, it's not like rotten eggs", then sparks."""
+    confirm = AGENT_CFG["safety"]["vague"]["gas"]["confirm_question"]
+    plain = AGENT_CFG["safety"]["vague"]["gas"]["question"]
+    call = ready_to_book(agent)
+    first = agent.turn(call, "There's a burning smell coming from the furnace.")
+    assert first["say"] == confirm
+    agent.say(call, confirm)
+    said = []
+    for line in ["no,", "No, it's not like rotten eggs, it's more like burning plastic.",
+                 "And I saw some sparks by the switch."]:
+        result = agent.turn(call, line)
+        if result["say"]:
+            said.append(result["say"])
+            agent.say(call, result["say"])
+    assert plain not in said and confirm not in said
+    assert said.count(ELECTRICAL) == 1

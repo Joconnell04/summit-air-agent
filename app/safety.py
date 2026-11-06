@@ -622,6 +622,11 @@ def answer_to_confirm(text: str, cfg: dict) -> str:
         w in allowed for w in text_words.split()
     ):
         return "no"
+    # An answer that opens with a plain no is a no, whatever it says the smell is instead: "no,
+    # it's not like rotten eggs, it's more like burning plastic" (Retell call
+    # call_b608687ce923e70a8318a6a6f0e). A yes in it was caught above.
+    if text_words.split()[:1] in (["no"], ["nope"], ["nah"]):
+        return "no"
     return "unclear"
 
 
@@ -735,9 +740,9 @@ def check_caller_turn(
             return SafetyAction("speak_lines", kind, lines_for(cfg, kind))
         if answer == "no":
             return SafetyAction("cleared", kind)
-        # An unclear answer to the lighter question gets the plain check question, once.
-        if answering_confirm:
-            return SafetyAction("ask_check", kind, cfg["vague"][kind]["question"])
+        # An unclear answer waits for the next line: no second question (Retell call
+        # call_b608687ce923e70a8318a6a6f0e asked the plain check question while the caller was
+        # still answering the confirm question). The gas check is asked once a call.
         return SafetyAction("none", kind)
     vague = vague_signal(text, cfg) or worry_signal(text, cfg) or _hedged_clear(text, cfg)
     # A check the caller already answered no to isn't asked again for the same kind: "nobody's
