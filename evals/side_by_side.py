@@ -787,7 +787,23 @@ def journey_pass(journey: str | None, checks: dict) -> bool | None:
     return None
 
 
-def score_run(run: Path, personas: dict) -> list[dict]:
+# The change set of Jackson's prompt that brought each later rule. A run on an older prompt is not
+# held to a rule its prompt didn't have (report <run>@<change set>).
+CHECK_SINCE = {
+    "unit_asked": 18,
+    "records_job_type": 18,
+    "no_date_with_today_or_tomorrow": 19,
+    "connectors_varied": 21,
+    "catch_all_once": 22,
+    "no_name_question_when_matched": 23,
+    "no_match_line_once": 23,
+    "closing_one_nicety": 24,
+    "no_thanks_for_waiting": 24,
+    "still_there_at_most_twice": 24,
+}
+
+
+def score_run(run: Path, personas: dict, change_set: int | None = None) -> list[dict]:
     calls = []
     for entry in manifest(run):
         retell = load_json(run / entry["log"].replace(".log", ".retell.json"))
@@ -801,6 +817,8 @@ def score_run(run: Path, personas: dict) -> list[dict]:
             if retell
             else {}
         )
+        if change_set is not None:
+            checks = {k: v for k, v in checks.items() if CHECK_SINCE.get(k, 0) <= change_set}
         calls.append(
             {
                 "run": run.name,
@@ -877,7 +895,10 @@ def report(runs: list[Path], out: Path | None = None, extra: list[Path] | None =
     caller broke its role, or one listed in excluded.yaml, is left out. Every call stays in
     `calls`, marked."""
     personas = load_personas(extra)
-    calls = [c for run in runs for c in score_run(run, personas)]
+    calls = []
+    for run in runs:
+        path, _, cs = str(run).partition("@")
+        calls += score_run(Path(path), personas, int(cs) if cs else None)
     excluded = yaml.safe_load(EXCLUDED.read_text()) or {}
     for c in calls:
         if c["call_id"] in excluded:
@@ -996,7 +1017,7 @@ def markdown(result: dict) -> str:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("action", choices=["judge", "report"])
-    parser.add_argument("runs", type=Path, nargs="+")
+    parser.add_argument("runs", nargs="+", help="run folders, each optionally <path>@<change set>")
     parser.add_argument("--out", type=Path, help="report: where to write the results JSON")
     parser.add_argument(
         "--markdown", action="store_true", help="report: print the round doc tables"
@@ -1007,7 +1028,7 @@ def main() -> None:
     args = parser.parse_args()
     if args.action == "judge":
         for run in args.runs:
-            judge(run)
+            judge(Path(run.partition("@")[0]))
     else:
         result = report(args.runs, args.out, args.personas)
         if args.markdown:

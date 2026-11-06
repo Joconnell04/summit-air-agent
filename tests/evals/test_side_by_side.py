@@ -467,3 +467,26 @@ def test_change_set_24_goodbye_waiting_and_check_ins():
     assert not sbs.check_call(PERSONA, nagging, rows(["book"], name="Jordan Lee"))[
         "still_there_at_most_twice"
     ]["ok"]
+
+
+def test_a_run_on_an_older_prompt_is_not_held_to_later_rules(tmp_path):
+    folder = tmp_path / "run"
+    (folder / "calls").mkdir(parents=True)
+    entry = {
+        "n": 1,
+        "arm": "A",
+        "persona": "d",
+        "agent_id": "x",
+        "log": "calls/1.log",
+        "rows": "calls/1.rows.json",
+    }
+    (folder / "manifest.jsonl").write_text(json.dumps(entry) + "\n")
+    call = good_call()
+    call[-1] = agent("Thanks so much for calling Summit Air today. Have a great day! Take care.", 5)
+    (folder / "calls" / "1.retell.json").write_text(
+        json.dumps({"call_id": "c1", "transcript_with_tool_calls": call})
+    )
+    (folder / "calls" / "1.rows.json").write_text(json.dumps(rows()))
+    new = sbs.report([str(folder) + "@24"])["calls"][0]["checks"]
+    old = sbs.report([str(folder) + "@18"])["calls"][0]["checks"]
+    assert "closing_one_nicety" in new and "closing_one_nicety" not in old
