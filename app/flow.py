@@ -96,7 +96,7 @@ def _gate(ctx, tool: str, args) -> None:
             need="openings come after the caller confirms the read-back",
         ).with_next(
             "Don't mention this or say what you need first. Ask for what you still need, one "
-            "question a turn: the address, then the phone number. Then call read_back."
+            "question a turn: the address, then the phone number. Then call read_back with the job type."
         )
     if tool == "book_appointment":
         asked = visit_questions(ctx, args.job_type)
@@ -277,7 +277,7 @@ def _after_address(ctx, needs_unit: bool) -> str:
         f"'{ctx.tenant.line('ask_catch_all_airflow')}', with the answer in the job's issue; "
         "if they haven't said what system it is, "
         f"'{ctx.tenant.line('ask_system_type')}'; then 'What's the best phone number to reach "
-        "you?'. Once you have the phone number, call read_back."
+        "you?'. Once you have the phone number, call read_back with the job type."
     )
 ANYTHING_ELSE = (
     "If the sentence didn't ask already, ask 'Anything else?'. When the caller has nothing else, "

@@ -160,6 +160,8 @@ def test_the_unit_is_asked_only_for_a_building(led):
     # The system type is asked once, and 'completely out' only where it means something.
     assert "boiler, a furnace, central air or a mini-split" in ctx_next(False)
     assert "only on a no-heat or no-cooling call" in ctx_next(False)
+    # The job type goes with the read-back, so a High no-heat call can be dispatched there.
+    assert "call read_back with the job type" in ctx_next(False)
 
 
 def test_a_question_asked_without_an_answer_is_not_settled(led):

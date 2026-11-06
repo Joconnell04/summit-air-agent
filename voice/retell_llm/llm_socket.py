@@ -61,18 +61,15 @@ def arm_prompt(path: Path, variables: dict) -> str:
 
 
 def arm_tools(path: Path, specs: list[dict]) -> list[dict]:
-    """The arm's tools from its Retell tools.json, in our spec shape. Whether a tool writes comes
-    from our own specs, so a write is always sent with its idempotency key."""
-    writes = {s["name"]: s.get("write", False) for s in specs}
+    """The arm's tools: the arm's own descriptions from its Retell tools.json, over the tool
+    server's own parameters and write flags (app/tools.py), so an argument the server adds (such
+    as read_back's job_type for dispatch) reaches the model without editing the arm's file."""
+    by_name = {s["name"]: s for s in specs}
     tools = json.loads(path.read_text())["general_tools"]
-    unknown = [t["name"] for t in tools if t["name"] not in writes]
+    unknown = [t["name"] for t in tools if t["name"] not in by_name]
     if unknown:
         raise ValueError(f"tools the tool server doesn't have: {', '.join(unknown)}")
-    return [
-        {"name": t["name"], "description": t["description"], "parameters": t["parameters"],
-         "write": writes[t["name"]]}
-        for t in tools
-    ]
+    return [{**by_name[t["name"]], "description": t["description"]} for t in tools]
 
 
 def hold_phrase_after_s(config_path: Path) -> float:

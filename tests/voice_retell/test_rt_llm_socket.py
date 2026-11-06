@@ -426,6 +426,9 @@ def test_an_arm_tool_writes_as_our_spec_says():
     writes = {t["name"]: t["write"] for t in tools}
     assert writes["book_appointment"] is True
     assert writes["find_slots"] is False
+    # The server's own parameters: read_back takes the job type, which dispatch needs.
+    read_back = next(t for t in tools if t["name"] == "read_back")
+    assert "job_type" in read_back["parameters"]["properties"]
 
 
 def test_server_led_the_sentence_before_a_spoken_result_is_never_said(server_led):
