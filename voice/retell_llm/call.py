@@ -47,6 +47,9 @@ MAX_HOPS = 6
 # no hold phrase (the read-back, the area check, the customer lookups), nor does the goodbye.
 NO_HOLD_TOOLS = (
     "end_call", "read_back", "check_service_area", "find_customer", "get_customer_history",
+    # A note is saved in milliseconds; "Just a moment." before "Anything else?" sounded like a
+    # stall (Jackson's call call_9e278a30dcdb1ff084f39a279c8).
+    "add_note",
 )
 # Server-led, a sentence of the model's that narrates its own step ("I'm booking that now.",
 # "Confirming the address and phone now.", "Let me check.") is never said.

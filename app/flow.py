@@ -19,7 +19,7 @@ from collections.abc import Callable
 from . import records
 from .db import iso, tx
 from .envelope import Refused, Result
-from .text import unit_settled
+from .text import unit_settled, words
 
 # The visit questions, the patterns that find each one in an agent line (said in any words), and
 # the patterns that find a caller who answered it before being asked.
@@ -304,6 +304,20 @@ def _safety_call(ctx) -> bool:
     return bool("safety_signal_at" in keys and call["safety_signal_at"])
 
 
+def _corrected_address(ctx, needs_unit: bool) -> str:
+    """The caller corrected the address after a read-back: everything else was already asked, so
+    only the unit (when this building needs one) and the read-back again (Jackson's call
+    call_9e278a30dcdb1ff084f39a279c8 heard the heat, since-when, anything-else and phone questions
+    all over again)."""
+    said_unit = _unit_said(ctx)
+    unit = f"{UNIT_QUESTION}, unless they said it's a house; then " if (
+        needs_unit and not said_unit) else ""
+    return (
+        f"The caller corrected the address. Don't ask anything you already asked. {unit}call "
+        "read_back with the corrected address, the same phone and the job type."
+    )
+
+
 def _after_address(ctx, needs_unit: bool) -> str:
     """The questions between the address and the read-back, built from what the caller already
     said (Jackson's call call_046f37112cac691a50019893717): the unit only for a building with more
@@ -326,7 +340,12 @@ def _after_address(ctx, needs_unit: bool) -> str:
             f"yet, one a turn: {unit}'What's the best phone number to reach you?'. Once you have "
             "the phone number, call read_back with the job type."
         )
-    line = ctx.tenant.line
+    said = words(records.caller_text(ctx.conn, ctx.call["id"])) if getattr(ctx, "call", None) else ""
+
+    def line(key: str) -> str:
+        text = ctx.tenant.line(key)
+        return _without_said_examples(text, said) if key.startswith("ask_catch_all") else text
+
     return (
         "Ask the next of these you don't have yet, one a turn, built from what the caller already "
         "said and never asking for anything they told you: "
@@ -361,6 +380,10 @@ def _next(ctx, tool: str, args, result: Result) -> str:
         # An address booked unverified says so and goes on; only a question waits for the answer.
         if result.say and (not result.ok or result.say.rstrip().endswith("?")):
             return "Wait for the caller's answer."
+        call = getattr(ctx, "call", None)
+        # keys(), since `in` on a sqlite3.Row looks at its values.
+        if call is not None and "readback_json" in call.keys() and call["readback_json"]:  # noqa: SIM118
+            return _corrected_address(ctx, bool(data.get("needs_unit")))
         return _after_address(ctx, bool(data.get("needs_unit")))
     if tool == "read_back":
         if data.get("confirmed"):
@@ -415,3 +438,18 @@ def _record(ctx, tool: str, result: Result) -> None:
             (ctx.call["id"], tool, int(result.ok), result.say, records.get_call(
                 ctx.conn, ctx.call["id"])["turn_seq"], iso(ctx.now)),
         )
+
+
+def _without_said_examples(question: str, said: str) -> str:
+    """The catch-all question without an example the caller already gave ("I said it was
+    banging", Jackson's call call_9e278a30dcdb1ff084f39a279c8): an example goes when one of its
+    words, cut to its first four letters, is in what the caller said."""
+    match = re.match(r"(.*?), like (.*)\?$", question)
+    if not match:
+        return question
+    lead, examples = match[1], [e.strip() for e in match[2].split(" or ")]
+    heard = {w[:4] for w in said.split() if len(w) > 3}
+    kept = [e for e in examples if not any(w[:4] in heard for w in words(e).split() if len(w) > 3)]
+    if not kept:
+        return f"{lead}?"
+    return f"{lead}, like {' or '.join(kept)}?"

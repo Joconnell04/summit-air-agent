@@ -408,3 +408,26 @@ def test_the_fault_questions_are_never_for_a_tune_up(led):
         source = f.read()
     assert "never a tune-up, maintenance visit or quote" in source
     assert "still only on a" in source
+
+
+def test_a_corrected_address_asks_only_for_the_unit_and_the_read_back_again():
+    """Jackson's call call_9e278a30dcdb1ff084f39a279c8: after he corrected 109 to 199 East 4th, the
+    heat, since-when, anything-else and phone questions were all asked again."""
+    from app import flow
+
+    text = flow._corrected_address(type("C", (), {"call": None, "conn": None})(), True)
+    assert "Don't ask anything you already asked" in text and "read_back" in text
+    assert "Since when" not in text and "phone number" not in text
+
+
+def test_the_catch_all_drops_an_example_the_caller_already_gave():
+    from app import flow
+
+    q = "Anything else the technician should know, like banging pipes or it shutting off on its own?"
+    said = " my boiler is making this banging noise and its leaking "
+    assert flow._without_said_examples(q, said) == (
+        "Anything else the technician should know, like it shutting off on its own?"
+    )
+    assert flow._without_said_examples(q, " banging and it keeps shutting off ") == (
+        "Anything else the technician should know?"
+    )

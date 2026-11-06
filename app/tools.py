@@ -1927,7 +1927,9 @@ def find_address(ctx: Ctx, args: FindAddressIn) -> Result:
         in_area=True,
         area=area,
         # A building with more than one home: ask for the apartment or unit if not given yet.
-        needs_unit=bool(units and units > 1),
+        # Unknown counts as maybe: most NYC homes are in buildings, and a caller in a house says so
+        # (Jackson's call call_9e278a30dcdb1ff084f39a279c8 at 109 East 4th wasn't asked).
+        needs_unit=not units or units > 1,
     )
 
 
@@ -2128,7 +2130,11 @@ def find_slots(ctx: Ctx, args: FindSlotsIn) -> Result:
         on_day = [
             _describe(ctx, w) for w in _tiled(windows) if w["date"] == args.day.isoformat()
         ]
-        data["windows"] = on_day
+        # Only the windows said: with the whole day in hand, "the last one" became the day's last
+        # window, 7:30 PM, instead of the second one offered (phone checks b1 and b1s, 6 November).
+        # A caller who wants later asks again, and find_slots looks with time_of_day.
+        data["windows"] = on_day[:DAY_OFFERS]
+        data["more_that_day"] = max(0, len(on_day) - DAY_OFFERS)
         if not on_day:
             _keep_second_job(ctx, data)
             return ok(urgent_said + arrival_say + "Nothing's open that day.", **data)
@@ -3151,7 +3157,8 @@ def _after_dispatch(ctx: Ctx) -> str:
         "Wait for the caller. A yes, or no answer, confirms it. Then ask only "
         f'"{ctx.tenant.arrival_question}" A plain yes means someone is home and there is no '
         "code; if no one will be home, ask how the technician can get in. Save what they say with "
-        'add_note (attach_to job), and ask "Anything else?". If they correct the unit or the number, call read_back with the '
+        'add_note (attach_to job), then say "Okay, you\'re all set. Anything else I can help with?". '
+        "If they correct the unit or the number, call read_back with the "
         "corrected details and the job type: the visit moves with them and its sentence is said "
         "for you. Don't offer times, read back again or ask who approves the work."
     )

@@ -772,11 +772,13 @@ def test_a_caller_who_says_there_is_no_unit_isnt_asked_again(building):
     assert again["ok"], again
 
 
-def test_a_house_needs_no_unit(located, answers):
+def test_an_unknown_unit_count_asks_for_the_unit(located, answers):
+    """Jackson's call call_9e278a30dcdb1ff084f39a279c8: 109 East 4th wasn't asked for a unit.
+    With no unit count in the city directory, the agent asks, unless the caller said it's a house."""
     call = located.start(UNKNOWN)["data"]["call_id"]
     located.turn(call, "It's 248 Duffield St.")
     found = located.tool("find_address", call, street="248 Duffield St")
-    assert found["ok"] and found["data"]["needs_unit"] is False
+    assert found["ok"] and found["data"]["needs_unit"] is True
 
 
 def test_the_units_come_from_the_lot_in_the_city_directory():

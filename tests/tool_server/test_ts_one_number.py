@@ -128,7 +128,8 @@ def test_a_whole_day_offers_two_windows_not_all_of_them(agent):
     call = ready_to_book(agent)
     found = agent.tool("find_slots", call, job_type="tune_up", day="saturday")
     assert found["ok"], found
-    assert len(found["data"]["windows"]) > 2
+    # The model gets only the two said, and how many more there are (phone check b1s).
+    assert len(found["data"]["windows"]) == 2 and found["data"]["more_that_day"] > 0
     assert found["say"].count(" to ") == 2 and found["say"].count(" or ") == 1, found["say"]
 
 

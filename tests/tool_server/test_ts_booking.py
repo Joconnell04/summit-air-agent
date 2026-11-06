@@ -1544,3 +1544,11 @@ def test_a_window_that_fills_while_the_caller_decides_offers_the_next_one(agent,
     assert taken["refused"] == "slot_taken"
     assert taken["say"].startswith("That window just filled up. The next one I have is ")
     assert taken["say"].endswith("Does that work?")
+
+
+def test_a_day_offer_hands_the_model_only_the_windows_said(agent):
+    """Phone checks b1 and b1s, 6 November: "the last one" became the day's last window."""
+    call = ready_to_book(agent)
+    first = first_open(agent, call)
+    found = agent.tool("find_slots", call, job_type="tune_up", day=first["date"])
+    assert len(found["data"]["windows"]) <= 2
