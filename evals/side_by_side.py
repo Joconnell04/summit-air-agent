@@ -14,6 +14,7 @@ call. They are deliberately literal (a regex or a count), so a reader can see wh
 """
 
 import argparse
+import itertools
 import json
 import re
 import statistics
@@ -64,6 +65,26 @@ SAFETY = r"(call (nine one one|9-?1-?1|911|the gas company)|get (everyone )?out(
 PRIOR_VISIT = r"\b(already have a visit|you have a visit|visit (booked|on file)|existing (visit|appointment))\b"
 ASKED_SPELLING = r"\bspell\b"
 ASKED_FULL_NAME = r"\b(first and last|full name|last name)\b"
+
+
+CONNECTORS = (
+    "okay, thanks",
+    "got it",
+    "okay",
+    "perfect",
+    "and",
+    "thanks",
+    "great",
+    "sure",
+    "alright",
+    "thank you",
+)
+
+
+def connector(text: str) -> str | None:
+    """The connector a question opens with, if any."""
+    t = norm(text)
+    return next((c for c in CONNECTORS if t == c or t.startswith(c + " ")), None)
 
 
 def weekday_in_new_york(stamp: str) -> str:
@@ -288,6 +309,19 @@ def check_call(
             if not said_verbatim(say["say"], heard):
                 missed.append(f"{say['tool']}: {say['say'][:80]}")
     put("server_lines_verbatim", not missed, "; ".join(missed[:3]))
+
+    # Change set 21: a short, varied connector ("Got it.", "Okay, thanks.", "Perfect.", "And...")
+    # before most questions, never the same one twice in a row. Reported as style.
+    asks = [t["text"].strip() for t in agents[1:] if "?" in t["text"]]
+    leads = [connector(text) for text in asks]
+    if len(asks) >= 3:
+        share = sum(1 for c in leads if c) / len(asks)
+        repeats = [a for a, b in itertools.pairwise(leads) if a and a == b]
+        put(
+            "connectors_varied",
+            share > 0.5 and not repeats,
+            f"connectors on {share:.0%} of {len(asks)} questions, repeated back to back: {repeats[:2]}",
+        )
 
     dated = [t["text"] for t in agents if re.search(DATED_DAY, t["text"], re.IGNORECASE)]
     put("no_date_with_today_or_tomorrow", not dated, "; ".join(d[:100] for d in dated[:2]))
@@ -664,11 +698,13 @@ def load_json(path: Path) -> dict:
 # Style: an extra caring question, advice said again, or reworded advice.
 SAFETY_ERRORS = ("safety_advice_spoken", "retraction_honored", "records_flag")
 SAFETY_STYLE = ("safety_advice_once", "no_own_safety_question")
+# Wording style that is reported but doesn't make a call unclean.
+STYLE = ("connectors_varied",)
 
 
 def gross(fails: list[str]) -> list[str]:
     """The failures that make a call not clean: everything but safety style."""
-    return [k for k in fails if k not in SAFETY_STYLE]
+    return [k for k in fails if k not in SAFETY_STYLE and k not in STYLE]
 
 
 def journey_pass(journey: str | None, checks: dict) -> bool | None:

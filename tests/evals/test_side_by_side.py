@@ -66,7 +66,7 @@ def good_call():
 
 def test_a_clean_call_passes_every_check():
     out = sbs.check_call(PERSONA, good_call(), rows(["book"], name="Jordan Lee"))
-    assert [k for k, v in out.items() if not v["ok"]] == []
+    assert sbs.gross([k for k, v in out.items() if not v["ok"]]) == []
     assert out["name_asked"]["full_name"] is True
 
 
@@ -369,3 +369,22 @@ def test_the_access_question_is_one_question_and_a_dated_today_fails():
     assert sbs.check_call(PERSONA, good_call(), rows(["book"], name="Jordan Lee"))[
         "no_date_with_today_or_tomorrow"
     ]["ok"]
+
+
+def test_connectors_before_most_questions_and_never_the_same_twice():
+    call = [
+        agent("Hi, how can I help?"),
+        user("My heat is out."),
+        agent("Got it. Can I get your name?"),
+        user("Jordan Lee."),
+        agent("Thanks. And this is for your home, right?"),
+        user("Yes."),
+        agent("Perfect. What's the street address?"),
+        user("199 East 4th."),
+        agent("Okay, thanks. Is there an apartment or unit number?"),
+        user("No, that's it. Bye."),
+    ]
+    assert sbs.check_call(PERSONA, call, rows())["connectors_varied"]["ok"]
+    call[6] = agent("Thanks. What's the street address?")
+    assert not sbs.check_call(PERSONA, call, rows())["connectors_varied"]["ok"]
+    assert sbs.gross(["connectors_varied"]) == []
