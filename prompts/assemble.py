@@ -116,7 +116,7 @@ def call_notes(start: dict) -> list[str]:
     rather than finding it in the JSON (eval run 20261104-174038: a member was never thanked, and
     a caller moving a visit was booked a second one first)."""
     customers = [c for c in start.get("customers", []) if c.get("residential")]
-    notes = []
+    notes = [caller_id_note(start, customers)]
     if len(customers) == 1:
         membership = customers[0].get("membership") or {}
         if membership.get("status") == "Active":
@@ -152,6 +152,24 @@ def call_notes(start: dict) -> list[str]:
             "the team check what happened with flag_person."
         )
     return notes
+
+
+def caller_id_note(start: dict, customers: list[dict]) -> str:
+    """Which of the caller-ID cases this call is, in one plain line, so the greeting acts on it:
+    a matched caller isn't asked their name, several matches are asked which one, no match is
+    asked for a name. First names only; nothing else from the account."""
+    caller = start.get("caller") or {}
+    if not caller.get("known_number", bool(customers)):
+        return "The caller's number is blocked or missing."
+    if start.get("fsm_available") is False:
+        return "The customer lookup is down, so the calling number couldn't be checked."
+    names = [first_name(c.get("name") or "") for c in customers]
+    names = [n for n in names if n]
+    if len(customers) == 1:
+        return f"The calling number matched one customer: {names[0] if names else 'name not on file'}."
+    if len(customers) > 1:
+        return f"The calling number matched more than one customer: {', '.join(names)}."
+    return "No customer matches the calling number."
 
 
 def house_guidance(guidance: dict[str, list[str]]) -> str:

@@ -362,7 +362,8 @@ def test_the_call_page_has_one_status_tag_and_a_technical_mode(agent):
     call = gas_call_that_booked(agent, 1)
     html = signed_in(agent).client.get(f"/owner/calls/{call}").text
     head = html[html.index('class="who"') : html.index('class="facts"')]
-    assert head.count('class="tag') == 1 and "Needs a person" in head
+    # The call's label (DECISIONS.md 121), then one tag for where it stands.
+    assert head.count('class="tag') == 2 and ">Urgent</span>" in head and "Needs a person" in head
     assert "Safety call: gas smell" in html, "the safety kind moves to the facts line"
     assert "data-tech" in html, "technical details are a mode on the same page"
     assert 'class="tech-block tech-only"' in html and 'tech-only" href="/owner/calls/' in html

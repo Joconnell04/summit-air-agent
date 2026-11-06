@@ -107,7 +107,7 @@ def test_a_safety_call_hangs_up_with_no_second_goodbye(agent):
     call = agent.start(UNKNOWN)["data"]["call_id"]
     agent.turn(call, "My carbon monoxide alarm is going off.")
     agent.say(call, CO_LINES)
-    agent.say(call, "Thanks for calling, and please stay safe. We'll follow up with you.")
+    agent.say(call, "Thanks for calling Summit Air. Please stay safe, and we'll follow up with you.")
     ended = agent.tool("end_call", call, reason="resolved")
     assert ended["ok"] and ended["say"] == "" and ended["data"]["hang_up"] is True
 

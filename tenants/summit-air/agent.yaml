@@ -21,6 +21,9 @@ fsm:
   cancel_reason_id: 401  # "Customer cancelled"
   # The ServiceTitan user the integration acts as: notes it adds carry this createdById.
   agent_user_id: 9001
+  # The tag type (config.yaml tag_types) each job gets for its call's label (app/labels.py), the
+  # way an office tags a job in ServiceTitan so the board can filter on it.
+  label_tag_ids: {Urgent: 804, Routine: 805}
   # The call reason a lead carries for each of record_lead's kinds (config.yaml call_reasons).
   lead_call_reason_ids: {commercial: 704, install: 702, membership: 705, not_offered: 706}
   # Tag types (config.yaml tag_types) that say how a callback call went. A person at the office
@@ -63,7 +66,7 @@ safety:
       question: Just to be safe, is a carbon monoxide alarm going off, or is anyone feeling sick or dizzy?
   # Said once when a safety call ends, then the call hangs up (Jackson, call
   # call_0246b91f77e01a4b18583e6ca8b: the call stayed open after "I'm done").
-  sign_off: Thanks for calling, and please stay safe. We'll follow up with you.
+  sign_off: Thanks for calling Summit Air. Please stay safe, and we'll follow up with you.
   flag_reason: "{label} reported on the call"
   # Added to the booking sentence when a visit is booked on a safety call (eval round 2, Jackson: "we'll
   # book a technician for you, but first it's important that whatever the problem is shut off").
@@ -520,6 +523,14 @@ lines:
     can't promise an exact time.
   # Said once when the server marks a call Urgent (spec S-21a). Below Urgent, no priority is named.
   urgent_priority: I've marked this call top priority, so you get our soonest opening.
+  # Emergency dispatch (DECISIONS.md 122): the server books the soonest technician at the read-back
+  # and this sentence is the read-back. {address} is said as read_back says it, {last_four} digit by
+  # digit, {eta} is dispatch_within_hour or "by 2:30 PM today".
+  dispatch_now: We'll get a technician out to you right away at {address}. Expect them {eta}, and we'll call the number ending in {last_four} if anything changes. Is that the right address?
+  dispatch_soonest: The soonest we can get a technician out to you at {address} is {eta}. We'll call the number ending in {last_four} if anything changes. Is that the right address?
+  dispatch_within_hour: within the next hour
+  # After hours, when the on-call technician goes out tonight. {minutes} is spoken, "twenty".
+  dispatch_on_call: Our on-call technician will call you within {minutes} minutes and head out to you at {address}. We'll call the number ending in {last_four} if anything changes. Is that the right address?
   # Said once when the caller's own facts raised the priority below Urgent (Jackson: "it makes them
   # feel heard").
   raised_priority: Thanks for telling me. I've moved you up so you'll get one of our earlier openings.
@@ -548,8 +559,8 @@ lines:
 voice:
   # Summit Air never ends a sentence, so the voice doesn't lift on it (Jackson, call
   # call_7727509d3289c4434b27efdad5b).
-  greeting_known: Hi {first_name}, thanks so much for calling Summit Air today! I'm {assistant_name}, the virtual assistant. How can I help?
-  greeting_unknown: Hi there, thanks so much for calling Summit Air today! I'm {assistant_name}, the virtual assistant. How can I help?
+  greeting_known: Hi {first_name}, thanks for calling Summit Air! I'm {assistant_name}, the virtual assistant. How can I help?
+  greeting_unknown: Hi there, thanks for calling Summit Air! I'm {assistant_name}, the virtual assistant. How can I help?
   # Two-party consent (the owner's Settings page, app/owner_settings.py): said just before the
   # greeting, and by the worker when a caller objects and the recording stops. Off by default:
   # New York needs only one party's consent to record.
@@ -606,10 +617,19 @@ intake:
 # Cartesia's Brian voice.
 assistant_name: Brian
 
+# A short word said before a read-back or a dispatch sentence, so "So that's ..." doesn't start
+# cold after the caller gives their number (Jackson, call call_b2302955a9c4054184c5d502e97). Taken
+# in turn, never the same one twice in a row on a call, starting from a different one per call.
+connectors: [Got it., Perfect., Okay.]
+
 # The open question before booking (prompts/spine.md): a gate code or buzzer, and pets only when
 # true. Jackson, call_2fb4e053ba8b76b57c348845990: "drop pets".
 visit_questions:
   pets: false
+  # Words of the catch-all the agent asks on a heating, cooling or airflow problem ("Anything else
+  # the technician should know, like water leaking or it turning on and off a lot?"). The caller's
+  # answer goes on the job's summary.
+  catch_all_cue: anything else the technician should know
 
 # Documents in knowledge/ that only lookup_hvac_info reads (app/hvac_info.py): kept out of the prompt,
 # and searched when the caller asks how equipment works, what a sound means, or about maintenance.

@@ -761,3 +761,35 @@ def test_the_server_lines_say_sorry_only_for_our_own_mistakes():
     lines = {**agent["lines"], **agent["voice"]}
     sorry = sorted(k for k, v in lines.items() if isinstance(v, str) and "sorry" in v.lower())
     assert sorry == ["billing_callback", "server_down"]
+
+
+CATCH_ALL = "Anything else the technician should know, like water leaking or it turning on and off a lot?"
+
+
+def test_the_catch_all_answer_goes_on_the_job(agent):
+    call = ready_to_book(agent)
+    agent.say(call, CATCH_ALL)
+    agent.turn(call, "Yeah, there's water leaking under the furnace.")
+    booked = book(agent, call, first_open(agent, call, "no_heat"), job_type="no_heat")
+    assert booked["ok"], booked
+    summary = agent.app.state.services.fsm["summit-air"].job(booked["data"]["booking_id"])["summary"]
+    assert "Caller also noted: Yeah, there's water leaking under the furnace." in summary
+
+
+def test_nothing_to_add_puts_nothing_on_the_job(agent):
+    call = ready_to_book(agent)
+    agent.say(call, CATCH_ALL)
+    agent.turn(call, "No, that's it.")
+    booked = book(agent, call, first_open(agent, call, "no_heat"), job_type="no_heat")
+    summary = agent.app.state.services.fsm["summit-air"].job(booked["data"]["booking_id"])["summary"]
+    assert "Caller also noted" not in summary
+
+
+def test_the_agents_own_note_of_the_answer_wins(agent):
+    call = ready_to_book(agent)
+    agent.say(call, CATCH_ALL)
+    agent.turn(call, "Um, yeah, it keeps clicking on and off.")
+    booked = book(agent, call, first_open(agent, call, "no_heat"), job_type="no_heat",
+                  also_noted="Short cycling: clicks on and off")
+    summary = agent.app.state.services.fsm["summit-air"].job(booked["data"]["booking_id"])["summary"]
+    assert "Caller also noted: Short cycling: clicks on and off" in summary

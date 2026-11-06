@@ -768,3 +768,26 @@ CREATE TABLE IF NOT EXISTS grader_schedule (
     author TEXT NOT NULL,
     created_at TEXT NOT NULL
 );
+
+-- One label per call for the owner: Urgent, Routine or No visit, with the reason in a few words
+-- (app/labels.py, DECISIONS.md 121). Booking tools keep the priority's label as the call goes; the
+-- call's end stores the one it ended with.
+CREATE TABLE IF NOT EXISTS call_labels (
+    call_id TEXT PRIMARY KEY REFERENCES calls (id) ON DELETE CASCADE,
+    label TEXT NOT NULL CHECK (label IN ('Urgent', 'Routine', 'No visit')),
+    reason TEXT NOT NULL,
+    at TEXT NOT NULL
+);
+
+-- Visits the server dispatched at the read-back (DECISIONS.md 122): no heat or no cooling at High
+-- or Urgent, booked in the soonest window with no times offered. replaced_at is set when the
+-- caller corrected the unit or number and the visit was booked again with the new details.
+CREATE TABLE IF NOT EXISTS dispatches (
+    id INTEGER PRIMARY KEY,
+    call_id TEXT NOT NULL REFERENCES calls (id) ON DELETE CASCADE,
+    booking_id INTEGER NOT NULL REFERENCES bookings (id),
+    job_type TEXT NOT NULL,
+    at TEXT NOT NULL,
+    replaced_at TEXT
+);
+CREATE INDEX IF NOT EXISTS ix_dispatches_call ON dispatches (call_id);

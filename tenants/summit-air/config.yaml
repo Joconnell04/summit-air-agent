@@ -221,6 +221,8 @@ tag_types:
   - {id: 801, name: Callback resolved, code: CB-RES, color: "#2e7d32", active: true}
   - {id: 802, name: Callback open, code: CB-OPEN, color: "#ef6c00", active: true}
   - {id: 803, name: No contact, code: CB-NONE, color: "#757575", active: true}
+  - {id: 804, name: Urgent, code: URGENT, color: "#c62828", active: true}
+  - {id: 805, name: Routine, code: ROUTINE, color: "#546e7a", active: true}
 
 # Names for the system_type values on installed equipment. A type left out is shown as its id with
 # underscores replaced by spaces.

@@ -214,7 +214,7 @@ def test_one_place_fills_the_zip_and_the_read_back_confirms_it(located):
     assert found["data"]["in_area"] is True
     asked = located.tool("read_back", call, address=_address("248 Duffield Street"), phone="caller_id")
     assert asked["ok"]
-    assert asked["say"].startswith("So that's two forty-eight Duffield Street, and ")
+    assert asked["data"]["sentence"].startswith("So that's two forty-eight Duffield Street, and ")
 
 
 def test_the_lookup_zip_passes_the_zip_gate_but_a_guess_does_not(located):

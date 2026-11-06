@@ -239,7 +239,7 @@ def test_the_read_back_sentence_is_spoken_by_the_worker_and_the_model_says_nothi
     address = {"street": "101 Union St", "unit": "", "city": "Brooklyn", "zip": "11231"}
     result = asyncio.run(tools["read_back"]({"address": address, "phone": "caller_id"}, "ctx"))
     assert no_reply(result)
-    assert len(voice.said) == 1 and voice.said[0].startswith("So that's one oh one Union St")
+    assert len(voice.said) == 1 and "So that's one oh one Union St" in voice.said[0]
 
 
 def test_a_move_is_spoken_once_by_the_worker_and_the_model_is_not_asked_to_reply(agent, connect,

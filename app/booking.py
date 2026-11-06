@@ -44,6 +44,7 @@ def job_summary(request: dict) -> str:
     lines += [
         f"System: {details.get('system_type') or 'not known'}",
         f"Tried: {details['tried']}",
+        *([f"Caller also noted: {details['also_noted']}"] if details.get("also_noted") else []),
         f"Home: {details['who_home']}",
         f"Approves: {details['approver']}",
         f"On arrival: {details.get('arrival_notes') or 'nothing noted'}",
@@ -153,6 +154,7 @@ def send(fsm: FsmAdapter, tenant: Tenant, request: dict, key: str) -> dict:
                 start,
                 end,
                 [technician],
+                _tags(tenant, request),
             )
         except FsmRejected as exc:
             # Someone else just took that technician. Look again: another may still be free, and
@@ -164,6 +166,12 @@ def send(fsm: FsmAdapter, tenant: Tenant, request: dict, key: str) -> dict:
         "job_id": job["id"],
         "appointment_id": job["firstAppointmentId"],
     }
+
+
+def _tags(tenant: Tenant, request: dict) -> list[int]:
+    """The job's label as the FSM tag type the tenant maps it to (fsm.label_tag_ids), if any."""
+    tag = (tenant.fsm.get("label_tag_ids") or {}).get(request.get("label", ""))
+    return [tag] if tag else []
 
 
 def mark_booked(conn: sqlite3.Connection, booking_id: int, sent: dict, now: datetime) -> None:

@@ -109,9 +109,30 @@ class OutboundDoneIn(Body):
 # ---- tools -------------------------------------------------------------------------------------
 
 
+class CustomerAddress(Body):
+    """An address to look a customer up by. The ZIP is optional: with none, the server uses the one
+    find_address found for that street on this call, so the model never has to guess one (#175,
+    Sonnet sent 00000 and then apologized to the caller for a placeholder)."""
+
+    street: str = Field(min_length=1, max_length=120)
+    unit: str = Field("", max_length=20)
+    city: str = Field("", max_length=60)
+    zip: str = Field(
+        "",
+        pattern=r"^(\d{5})?$",
+        description="Only a ZIP the caller said or find_address returned; otherwise leave it empty",
+    )
+    spelled: str = Field("", max_length=120)
+
+    @model_validator(mode="after")
+    def join_letters(self):
+        self.street = join_spelled(self.street)
+        return self
+
+
 class FindCustomerIn(CallRef):
     phone: str | None = Field(None, max_length=40)
-    address: Address | None = None
+    address: CustomerAddress | None = None
 
     @model_validator(mode="after")
     def one_of(self):
@@ -225,6 +246,12 @@ class ReadBackIn(CallRef):
         description="The name the visit goes under, when the caller already gave it; the server "
         "then doesn't ask for it after the read-back",
     )
+    job_type: str | None = Field(
+        None,
+        max_length=40,
+        description="The job type of the visit, when the caller has said the problem. For no heat "
+        "or no cooling the server may dispatch the soonest technician here and say so",
+    )
     confirmed: bool = False
 
 
@@ -250,6 +277,12 @@ class JobDetails(Body):
     # (prompts/spine.md); the first goes in who_home, the second in arrival_notes.
     system_type: str = Field("", max_length=120)
     arrival_notes: str = Field("", max_length=300)
+    also_noted: str = Field(
+        "",
+        max_length=300,
+        description="The caller's answer to the catch-all (\"Anything else the technician should "
+        "know, like water leaking or it turning on and off a lot?\"), as they said it",
+    )
     name: str = Field(
         "",
         max_length=80,

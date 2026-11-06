@@ -72,7 +72,7 @@ def test_the_session_has_our_prompt_and_tools_and_never_answers_on_its_own(app):
 def test_the_greeting_is_asked_for_word_for_word(app):
     _, sock, _ = opened_line(app)
     response = sock.of_type("response.create")[0]["response"]
-    assert "thanks so much for calling Summit Air today!" in response["instructions"]
+    assert "thanks for calling Summit Air!" in response["instructions"]
     assert response["tool_choice"] == "none"
 
 

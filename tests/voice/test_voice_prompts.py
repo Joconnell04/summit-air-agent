@@ -335,10 +335,35 @@ def test_a_caller_with_a_visit_booked_is_moved_not_booked_again(agent, scenarios
     assert any("call reschedule_appointment" in n and "never book_appointment" in n for n in notes)
 
 
-def test_an_unknown_caller_gets_no_caller_notes(agent):
+def test_an_unknown_caller_hears_only_that_no_customer_matches(agent):
     start = agent.start()["data"]
-    assert assemble.call_notes(start) == []
-    assert "For this caller:" not in assemble.instructions(start)
+    assert assemble.call_notes(start) == ["No customer matches the calling number."]
+
+
+def test_one_matched_customer_is_named_by_first_name_only():
+    start = {"caller": {"known_number": True}, "customers": [
+        {"residential": True, "name": "Maria Lopez", "phone": "2125550101"}]}
+    assert assemble.call_notes(start)[0] == "The calling number matched one customer: Maria."
+
+
+def test_several_matches_are_all_named():
+    start = {"caller": {"known_number": True}, "customers": [
+        {"residential": True, "name": "Maria Lopez"}, {"residential": True, "name": "Ana Lopez"},
+        {"residential": False, "name": "Lopez Deli LLC"}]}
+    assert assemble.call_notes(start)[0] == (
+        "The calling number matched more than one customer: Maria, Ana."
+    )
+
+
+def test_a_business_match_alone_counts_as_no_match():
+    start = {"caller": {"known_number": True}, "customers": [
+        {"residential": False, "name": "Lopez Deli LLC"}]}
+    assert assemble.call_notes(start)[0] == "No customer matches the calling number."
+
+
+def test_a_blocked_number_says_so(agent):
+    start = agent.start(caller_id="anonymous")["data"]
+    assert assemble.call_notes(start)[0] == "The caller's number is blocked or missing."
 
 
 def test_an_expired_member_is_not_thanked_as_a_member(agent, scenarios):

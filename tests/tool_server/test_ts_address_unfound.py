@@ -53,7 +53,7 @@ def test_the_callers_zip_then_reads_back_and_confirms(unfound):
     assert unfound.tool("check_service_area", call, zip="11412")["ok"]
     address = {"street": "118-24 197th Street", "unit": "", "city": "St. Albans", "zip": "11412"}
     asked = unfound.tool("read_back", call, address=address, phone="caller_id")
-    assert asked["ok"] and asked["say"].startswith("So that's one eighteen twenty-four One Hundred Ninety-Seventh Street, and ")
+    assert asked["ok"] and asked["data"]["sentence"].startswith("So that's one eighteen twenty-four One Hundred Ninety-Seventh Street, and ")
     unfound.say(call, asked["say"])
     unfound.turn(call, "Yes.")
     confirmed = unfound.tool("read_back", call, address=address, phone="caller_id", confirmed=True)

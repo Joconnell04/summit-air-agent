@@ -10,6 +10,7 @@ from . import (
     asks,
     cards,
     dead_air,
+    labels,
     lookup,
     owner_settings,
     pace,
@@ -1089,7 +1090,8 @@ def end(
                 "Urgent",
             )
         transfer.close_open_handoff(conn, call["id"], args.reason, now)
-        outcome = _outcome(conn, call)
+        outcome = outcome_of(conn, call)
+        labels.settle(conn, tenant, call, outcome, now)
         records.update_call(
             conn,
             call["id"],
@@ -1101,7 +1103,8 @@ def end(
     return ok(outcome=outcome)
 
 
-def _outcome(conn: sqlite3.Connection, call: sqlite3.Row) -> str:
+def outcome_of(conn: sqlite3.Connection, call: sqlite3.Row) -> str:
+    """How the call ended, or would end now. The owner's label reads it too (app/labels.py)."""
     def has(sql: str) -> bool:
         return bool(conn.execute(sql, (call["id"],)).fetchone())
 

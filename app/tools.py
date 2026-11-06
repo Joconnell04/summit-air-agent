@@ -23,6 +23,7 @@ from . import (
     geocode,
     heads_up,
     hvac_info,
+    labels,
     lookup,
     outbound,
     pace,
@@ -51,6 +52,7 @@ from .schemas import (
     FindSlotsIn,
     FlagIn,
     HistoryIn,
+    JobDetails,
     LeadIn,
     LookupIn,
     MoveIn,
@@ -72,6 +74,7 @@ from .text import (
     has_phrase,
     kidding,
     number_tokens,
+    number_words,
     phone_display,
     phone_key,
     phone_said,
@@ -1683,11 +1686,11 @@ def find_customer(ctx: Ctx, args: FindCustomerIn) -> Result:
         # A ZIP the caller never said is no part of the search: the model guessed 11211 for an old
         # address in 11235 and found nothing (Jackson's call 2 replayed in the eval). The street,
         # house number and unit must still match exactly, and the name check guards any change.
-        zip_code = address.zip
+        zip_code = address.zip or _looked_up_zip(ctx, address.street)
         try:
             _zip_known(ctx, zip_code)
         except Refused:
-            zip_code = None
+            zip_code = _looked_up_zip(ctx, address.street)
         locations = ctx.fsm.locations_by_address(address.street, zip_code, address.unit or None)
         # Only exact matches: without a unit, a building's other units are other people's records.
         exact = [
@@ -1709,6 +1712,20 @@ def find_customer(ctx: Ctx, args: FindCustomerIn) -> Result:
             )
     bundles = [lookup.customer_bundle(ctx.fsm, ctx.tenant, ctx.conn, c, ctx.now) for c in customers]
     return ok(matches=[_unsaid_withheld(ctx, b) for b in bundles], needs_unit=needs_unit)
+
+
+def _looked_up_zip(ctx: Ctx, street: str) -> str | None:
+    """The one ZIP find_address found for this house and street on the call, if it found one."""
+    split = geocode.split_address(street)
+    if not split:
+        return None
+    row = ctx.conn.execute(
+        "SELECT zips_json FROM address_lookups WHERE call_id = ? AND status = 'one' AND house = ? "
+        "AND street = ? ORDER BY rowid DESC LIMIT 1",
+        (ctx.call["id"], geocode.house_key(split[0]), geocode.street_match_key(split[1])),
+    ).fetchone()
+    zips = json.loads(row["zips_json"]) if row else []
+    return zips[0] if len(zips) == 1 else None
 
 
 def _unsaid_withheld(ctx: Ctx, bundle: dict) -> dict:
@@ -1934,6 +1951,32 @@ def find_slots(ctx: Ctx, args: FindSlotsIn) -> Result:
         "raised_after_wait": found.raised_after_wait,
     }
     data: dict = {"priority": priority}
+    if not args.moving_a_visit:
+        labels.mark(
+            ctx.conn, ctx.call["id"],
+            *labels.for_priority(ctx.tenant, decided.level, decided.reasons, job_type["name"]),
+            ctx.now,
+        )
+    if not args.moving_a_visit and args.job_type in _dispatch_types(ctx):
+        standing = _dispatched(ctx)
+        if standing and standing["job_type"] == args.job_type:
+            return ok(
+                "",
+                **data,
+                dispatched=True,
+                note="A technician is already dispatched on this call; don't offer times.",
+            )
+        # The read-back came first, below High; the caller's facts since raised it (DECISIONS.md
+        # 122), so the visit is dispatched now rather than offered.
+        readback = records.readback(ctx.call)
+        if (
+            readback
+            and decided.level in labels.URGENT_LEVELS
+            and _dispatch_waiting(ctx, args.job_type)
+        ):
+            sent = _dispatch(ctx, args.job_type, readback)
+            if sent is not None:
+                return sent
     # A caller who can only be home part of the day gets only windows inside those hours. The
     # technician may come any time in a window, so a window that runs past them is never offered
     # as if it fit ("by 9" inside 8 to 12, eval round 2, seed 7).
@@ -2036,9 +2079,9 @@ def find_slots(ctx: Ctx, args: FindSlotsIn) -> Result:
             return ok(urgent_said + arrival_say + "Nothing's open that day.", **data)
         # The first one or two, never the whole day: a Saturday read out all 16 half hours (Retell
         # call call_79af0414dc77fcabc47b36f49cd). The rest are in `windows` if the caller asks.
-        labels = _join([w["label"] for w in on_day[:DAY_OFFERS]], "or")
+        offered = _join([w["label"] for w in on_day[:DAY_OFFERS]], "or")
         return ok(
-            f"{urgent_said}{arrival_say}{on_day[0]['day'].capitalize()} I have {labels}.", **data
+            f"{urgent_said}{arrival_say}{on_day[0]['day'].capitalize()} I have {offered}.", **data
         )
 
     by_day: dict[str, list[dict]] = {}
@@ -2488,6 +2531,31 @@ def _unit_without_zip(unit: str, zip_code: str) -> str:
     return unit
 
 
+# Answers to the catch-all that say there's nothing to add.
+NOTHING_ELSE = ("no", "nope", "nah", "nothing", "no thats it", "thats it", "thats all", "not really",
+                "i dont think so", "no thank you", "no thanks", "nothing else", "no nothing")
+
+
+def _catch_all_answer(ctx: Ctx) -> str:
+    """The caller's answer to the tenant's catch-all question, when the agent asked it on this
+    call and the caller added something: it goes on the job, so the technician hears about the
+    water on the floor even when the model left it out of the booking."""
+    cue = ctx.tenant.catch_all_cue
+    if not cue:
+        return ""
+    turns = ctx.conn.execute(
+        "SELECT speaker, text FROM turns WHERE call_id = ? ORDER BY seq", (ctx.call["id"],)
+    ).fetchall()
+    for i, turn in enumerate(turns):
+        if turn["speaker"] != "agent" or not has_phrase(words(turn["text"]), cue):
+            continue
+        answer = next((t["text"] for t in turns[i + 1 :] if t["speaker"] == "caller"), "")
+        said = words(answer).strip()
+        if said and said not in NOTHING_ELSE:
+            return " ".join(answer.split())[:300]
+    return ""
+
+
 def _booking_name(ctx: Ctx) -> str:
     """The name passed to read_back for the visit, if any."""
     row = ctx.conn.execute(
@@ -2581,6 +2649,11 @@ def read_back(ctx: Ctx, args: ReadBackIn) -> Result:
             "corrected details and read the new sentence",
             changed=corrected,
         )
+    if answered and _dispatched(ctx):
+        # The dispatch sentence was the read-back, and the visit is already booked: nothing more
+        # to ask but the way in (DECISIONS.md 122).
+        return ok(confirmed=True, dispatched=True, address=address, phone=phone,
+                  next=_after_dispatch(ctx))
     if answered:
         with tx(ctx.conn):
             records.update_call(ctx.conn, ctx.call["id"], readback_confirmed_at=iso(ctx.now))
@@ -2652,6 +2725,18 @@ def read_back(ctx: Ctx, args: ReadBackIn) -> Result:
             if not args.confirmed:
                 # The caller asked for the address slower: the worker speaks these parts as given.
                 parts = pace.read_back_parts(ctx.conn, ctx.call["id"], sentence, spoken_address)
+    if not args.confirmed:
+        # No heat or no cooling at High or Urgent: the server books the soonest technician now,
+        # and its sentence is the read-back. A unit or number corrected after it books again.
+        standing = _dispatched(ctx)
+        job_type = args.job_type or (standing["job_type"] if standing else None)
+        if job_type:
+            if standing:
+                _replace_dispatch(ctx, standing)
+            ctx.reload()
+            sent = _dispatch(ctx, job_type, current)
+            if sent is not None:
+                return sent
     if args.confirmed:
         raise Refused(
             "gate_read_back",
@@ -2660,8 +2745,246 @@ def read_back(ctx: Ctx, args: ReadBackIn) -> Result:
             sentence=sentence,
         )
     if parts:
+        # Said slower, in parts, for a caller who asked: no connector before it.
         return ok(sentence, confirmed=False, sentence=sentence, parts=parts)
-    return ok(sentence, confirmed=False, sentence=sentence)
+    return ok(_connector(ctx, sentence), confirmed=False, sentence=sentence)
+
+
+CONNECTOR_TURN = "connector:"
+
+
+def _connector(ctx: Ctx, sentence: str) -> str:
+    """The sentence with a short word before it ("Perfect. So that's ..."), taken in turn from the
+    tenant's connectors: never the same one twice in a row on a call, and starting from a different
+    one call to call, so it doesn't sound scripted."""
+    options = ctx.tenant.connectors
+    if not options:
+        return sentence
+    used = ctx.conn.execute(
+        "SELECT COUNT(*) FROM lines_handed WHERE call_id = ? AND line LIKE ?",
+        (ctx.call["id"], CONNECTOR_TURN + "%"),
+    ).fetchone()[0]
+    start = int(hashlib.sha256(ctx.call["id"].encode()).hexdigest(), 16) % len(options)
+    with tx(ctx.conn):
+        ctx.conn.execute(
+            "INSERT OR IGNORE INTO lines_handed (call_id, line, at) VALUES (?, ?, ?)",
+            (ctx.call["id"], f"{CONNECTOR_TURN}{used}", iso(ctx.now)),
+        )
+    return f"{options[(start + used) % len(options)]} {sentence}"
+
+
+# ---- emergency dispatch ----------------------------------------------------------------------
+
+# Intake a dispatch doesn't ask for: no approval question, nothing tried, no since (DECISIONS.md
+# 122). The technician summary carries whatever the caller did say.
+NOT_ASKED = "not asked: emergency dispatch"
+# The window has to open within this many minutes for the caller to hear "within the next hour".
+DISPATCH_HOUR_MINUTES = 60
+# A read-back that would have dispatched but for the priority: find_slots dispatches once the
+# caller's facts raise it to High (lines_handed key; the job type follows the colon).
+DISPATCH_WAITING = "dispatch waiting:"
+
+
+def _dispatch_types(ctx: Ctx) -> list[str]:
+    cutoffs = ctx.tenant.after_hours_cutoffs
+    return cutoffs["heating_job_types"] + cutoffs["cooling_job_types"]
+
+
+def _dispatched(ctx: Ctx) -> sqlite3.Row | None:
+    """The visit this call dispatched, while it stands."""
+    return ctx.conn.execute(
+        "SELECT d.id, d.job_type, d.booking_id, b.fsm_job_id FROM dispatches d "
+        "JOIN bookings b ON b.id = d.booking_id WHERE d.call_id = ? AND d.replaced_at IS NULL "
+        "AND b.status IN ('booked', 'queued') ORDER BY d.id DESC LIMIT 1",
+        (ctx.call["id"],),
+    ).fetchone()
+
+
+def _replace_dispatch(ctx: Ctx, standing: sqlite3.Row) -> None:
+    """The caller corrected the unit or the number after the dispatch sentence: the visit booked
+    with the old details is cancelled, so the new read-back books it again with the new ones."""
+    if standing["fsm_job_id"]:
+        try:
+            ctx.fsm.cancel_job(
+                f"{ctx.call['id']}:dispatch-replaced:{standing['booking_id']}",
+                standing["fsm_job_id"],
+                ctx.tenant.fsm["cancel_reason_id"],
+                "Booked again on the same call: the caller corrected the address or number",
+            )
+        except (FsmUnavailable, FsmRejected) as exc:
+            with tx(ctx.conn):
+                records.add_flag(
+                    ctx.conn, ctx.call["id"], "person",
+                    f"Cancel job {standing['fsm_job_id']}: the caller corrected the address or "
+                    f"number and it was booked again, but the cancel failed ({exc})",
+                    ctx.now, "High",
+                )
+    ctx.cache.invalidate()
+    with tx(ctx.conn):
+        # 'done' takes it out of the call's bookings, so the new one isn't a second job.
+        ctx.conn.execute(
+            "UPDATE bookings SET status = 'done', reason = 'replaced by a corrected read-back', "
+            "updated_at = ? WHERE id = ?",
+            (iso(ctx.now), standing["booking_id"]),
+        )
+        ctx.conn.execute(
+            "UPDATE dispatches SET replaced_at = ? WHERE id = ?", (iso(ctx.now), standing["id"])
+        )
+
+
+def _dispatch(ctx: Ctx, job_type: str, current: dict) -> Result | None:
+    """Book the soonest technician for a no-heat or no-cooling call the server scores High or
+    Urgent, with no windows offered, no separate read-back and no approval question (DECISIONS.md
+    122). The sentence it returns names the address and the number, so it is also the read-back:
+    the caller's yes, or no answer at all, confirms it. A call on the safety route never dispatches;
+    its visit waits until the problem is shut off. None when the call doesn't dispatch, and
+    read_back reads its own sentence."""
+    if job_type not in _dispatch_types(ctx) or job_type not in ctx.tenant.job_types:
+        return None
+    if ctx.call["safety_state"] in ("signal", "checking", "lines_said"):
+        return None
+    found = _priority(ctx, job_type, None)
+    decided = found.priority
+    if decided.level not in labels.URGENT_LEVELS:
+        with tx(ctx.conn):
+            ctx.conn.execute(
+                "INSERT OR IGNORE INTO lines_handed (call_id, line, at) VALUES (?, ?, ?)",
+                (ctx.call["id"], DISPATCH_WAITING + job_type, iso(ctx.now)),
+            )
+        return None
+    try:
+        windows = _open_windows(ctx, ctx.tenant.job_types[job_type], decided.level)
+    except (FsmUnavailable, FsmRejected):
+        return None
+    if not windows:
+        return None
+    window = windows[0]
+    # After hours every dispatch goes to the on-call technician, who calls within the set time,
+    # even when the rules alone would leave a High call for the first morning window (Jackson's
+    # midnight call call_b2302955a9c4054184c5d502e97 heard 8 AM, then a callback). The morning
+    # window is still booked, as the visit if the on-call technician can't come tonight.
+    on_call = bool(ctx.call["after_hours"])
+    if on_call:
+        _alert_on_call(ctx, found, ctx.tenant.job_types[job_type]["name"])
+    name = _booking_name(ctx)
+    if not name and not _callers_accounts(ctx):
+        # No name given yet: the office has the number, and asking now would hold up the visit.
+        name = f"Caller ending {current['phone'][-4:]}"
+    job_name = ctx.tenant.job_types[job_type]["name"]
+    issue = job_name + (f" ({'; '.join(decided.reasons)})" if decided.reasons else "")
+    with tx(ctx.conn):
+        records.update_call(ctx.conn, ctx.call["id"], readback_confirmed_at=iso(ctx.now))
+    ctx.reload()
+    args = BookIn(
+        call_id=ctx.call["id"],
+        job_type=job_type,
+        slot=Slot(date=date.fromisoformat(window["date"]), window=window["window"]),
+        details=JobDetails(
+            issue=issue, since=NOT_ASKED, tried=NOT_ASKED, who_home=NOT_ASKED,
+            approver=NOT_ASKED, name=name,
+        ),
+    )
+    try:
+        booked = book_appointment(ctx, args)
+    except Refused:
+        # Something the booking needs first (a move to record, an account to choose, a business):
+        # the read-back goes ahead as usual, and the agent books after it.
+        with tx(ctx.conn):
+            records.update_call(ctx.conn, ctx.call["id"], readback_confirmed_at=None)
+        ctx.reload()
+        return None
+    if not booked.ok:
+        return booked  # the FSM is down: the booking is queued and a person calls back
+    row = ctx.conn.execute(
+        "SELECT id FROM bookings WHERE call_id = ? AND fsm_job_id = ?",
+        (ctx.call["id"], booked.data["booking_id"]),
+    ).fetchone()
+    with tx(ctx.conn):
+        ctx.conn.execute(
+            "INSERT INTO dispatches (call_id, booking_id, job_type, at) VALUES (?, ?, ?, ?)",
+            (ctx.call["id"], row["id"], job_type, iso(ctx.now)),
+        )
+    sentence = _dispatch_said(ctx, window, current, on_call)
+    say = _connector(ctx, sentence)
+    with tx(ctx.conn):
+        records.update_call(
+            ctx.conn, ctx.call["id"], readback_json=json.dumps({**current, "sentence": sentence})
+        )
+    ctx.reload()
+    return ok(
+        say,
+        confirmed=True,
+        dispatched=True,
+        sentence=sentence,
+        booking_id=booked.data["booking_id"],
+        appointment_id=booked.data["appointment_id"],
+        window=booked.data["window"],
+        priority=booked.data["priority"],
+        on_call=on_call,
+        next=_after_dispatch(ctx),
+    )
+
+
+def _alert_on_call(ctx: Ctx, found: Decided, job_name: str) -> None:
+    """The Urgent person flag that alerts the on-call technician and stores their call back within
+    the set time, unless the call already has one (`_on_call_first` then finds it)."""
+    thread = records.thread(ctx.conn, ctx.call["id"])
+    alerted = ctx.conn.execute(
+        f"SELECT 1 FROM flags WHERE kind = 'person' AND priority = 'Urgent' "
+        f"AND call_id IN ({','.join('?' * len(thread))})",
+        thread,
+    ).fetchone()
+    if alerted:
+        return
+    reasons = "; ".join(found.priority.reasons) or found.priority.level
+    flag_person(ctx, FlagIn(
+        call_id=ctx.call["id"],
+        reason=f"After hours, dispatched to the on-call technician: {job_name} ({reasons})",
+        priority="Urgent",
+    ))
+
+
+def _dispatch_said(ctx: Ctx, window: dict, current: dict, on_call: bool) -> str:
+    """The dispatch sentence, which is also the read-back: the address and the number as read_back
+    says them, and when the technician comes. "Within the next hour" when the window opens within
+    an hour; else by the time it closes."""
+    address = address_said(current["street"], current["unit"])
+    last_four = digits_spoken(current["phone"][-4:])
+    if on_call:
+        minutes = ctx.tenant.after_hours_cutoffs["on_call_confirms_within_minutes"]
+        return ctx.tenant.line(
+            "dispatch_on_call", minutes=number_words(minutes), address=address, last_four=last_four
+        )
+    start, end = parse_iso(window["start"]), parse_iso(window["end"])
+    if start - ctx.now <= timedelta(minutes=DISPATCH_HOUR_MINUTES):
+        eta = ctx.tenant.line("dispatch_within_hour")
+    else:
+        local_end = ctx.tenant.local(end)
+        eta = f"by {_clock_said(local_end.time())} {ctx.tenant.day_spoken(local_end.date(), ctx.now)}"
+    today = ctx.tenant.local(start).date() == ctx.tenant.local(ctx.now).date()
+    return ctx.tenant.line(
+        "dispatch_now" if today else "dispatch_soonest",
+        address=address, eta=eta, last_four=last_four,
+    )
+
+
+def _after_dispatch(ctx: Ctx) -> str:
+    return (
+        "Wait for the caller. A yes, or no answer, confirms it. Then ask only "
+        f'"{ctx.tenant.arrival_question}", save the answer with add_note (attach_to job), and ask '
+        '"Anything else?". If they correct the unit or the number, call read_back with the '
+        "corrected details and the job type: the visit moves with them and its sentence is said "
+        "for you. Don't offer times, read back again or ask who approves the work."
+    )
+
+
+def _dispatch_waiting(ctx: Ctx, job_type: str) -> bool:
+    return bool(
+        ctx.conn.execute(
+            "SELECT 1 FROM lines_handed WHERE call_id = ? AND line = ?",
+            (ctx.call["id"], DISPATCH_WAITING + job_type),
+        ).fetchone()
+    )
 
 
 def book_appointment(ctx: Ctx, args: BookIn) -> Result:
@@ -2720,6 +3043,8 @@ def book_appointment(ctx: Ctx, args: BookIn) -> Result:
     _repair_intake(ctx, args.job_type, details)
     if not details["name"].strip():
         details["name"] = _booking_name(ctx)
+    if not details["also_noted"].strip():
+        details["also_noted"] = _catch_all_answer(ctx)
     found = _priority(ctx, args.job_type, details["inside_temp_f"])
     facts, decided = found.facts, found.priority
     on_call_said = "" if override else _on_call_first(ctx, facts, decided, details)
@@ -2785,6 +3110,11 @@ def book_appointment(ctx: Ctx, args: BookIn) -> Result:
         "contact_name": contact_name,
         "window_start": iso(window_start),
         "window_end": iso(window_end),
+        # The job's tag in the FSM: Urgent at High or Urgent or on a safety call, else Routine
+        # (app/labels.py).
+        "label": labels.URGENT
+        if decided.level in labels.URGENT_LEVELS or override
+        else labels.ROUTINE,
     }
     key = _attempt_key(ctx, "book", args.model_dump(mode="json"))
     seek_earlier = decided.level == "Urgent" and args.slot.date > ctx.tenant.local(ctx.now).date()
@@ -2849,6 +3179,11 @@ def book_appointment(ctx: Ctx, args: BookIn) -> Result:
         raise Refused("fsm_rejected", _fsm_down_say(ctx, callback_id, due)) from None
 
     ctx.cache.invalidate()
+    labels.mark(
+        ctx.conn, ctx.call["id"],
+        *labels.for_priority(ctx.tenant, decided.level, decided.reasons, job_type["name"]),
+        ctx.now,
+    )
     returning = _recent_job_here(ctx, readback, job_type)
     with tx(ctx.conn):
         booking.mark_booked(ctx.conn, booking_id, sent, ctx.now)
