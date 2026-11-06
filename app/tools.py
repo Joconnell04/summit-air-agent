@@ -22,7 +22,7 @@ from . import (
     booking,
     geocode,
     heads_up,
-    hvac_info,
+    knowledge_search,
     labels,
     lookup,
     outbound,
@@ -5092,14 +5092,15 @@ def lookup_hvac_info(ctx: Ctx, args: LookupIn) -> Result:
     the one or two parts of the tenant's lookup documents that answer the caller's question, as
     facts for the agent to put in its own words. No say. Nothing relevant returns no facts, and
     the agent answers from general knowledge or offers a technician."""
-    facts = [
-        fact
-        for document in ctx.tenant.lookup_knowledge.values()
-        for fact in hvac_info.answer(
-            args.question, document, ctx.tenant.agent.get("lookup_synonyms", {})
-        )
-    ][: hvac_info.MAX_FACTS]
-    return ok(facts=facts)
+    found, method = knowledge_search.search(
+        args.question,
+        ctx.tenant.lookup_knowledge,
+        ctx.tenant.agent.get("lookup_synonyms", {}),
+        ctx.tenant.folder,
+    )
+    # `log` is for the call log: the model is never shown which file a fact came from.
+    files = list(dict.fromkeys(f.file for f in found))
+    return ok(facts=[f.text for f in found], log={"files": files, "search": method})
 
 
 # Every model tool: (handler, request body, writes). Writes take an Idempotency-Key.

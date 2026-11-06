@@ -11,6 +11,7 @@ The system prompt is these files assembled, not one file. What the model is told
 | `safety.md` | What the model does around the safety lines, which the voice layer speaks for it |
 | `house-guidance.md` | The fixed preamble over the owner's own guidance by stage (app/rules.py); added after the journeys only when there is some |
 | `guidance-check.md` | Not part of a call: the instructions for the check on an owner's saved draft (app/guidance_check.py), which refuses only a note or line that contradicts a locked rule |
+| `lookup-answer.md` | Not part of the system prompt: the one instruction added to the reply written after a `lookup_hvac_info` that found facts, when the Sonnet hand-off is on (voice/retell_llm/call.py) |
 | `tools.yaml` | One description per tool; the arguments come from the tool server's request models |
 | `side/questions.yaml` | The one question a side model answers beside the call (app/side_model.py); not part of the agent's prompt or its hash |
 | `post-call-summary.md` | Not part of the call: the system prompt for the technician's summary written after a booked call (app/summary.py) |

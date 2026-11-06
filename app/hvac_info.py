@@ -1,12 +1,13 @@
-"""lookup_hvac_info: the part of the tenant's equipment basics that answers a caller's question.
+"""lookup_hvac_info, keyword search: the part of the tenant's equipment pages that answers a caller's
+question.
 
-The document (knowledge/hvac-basics.md, listed under `lookup_knowledge` in agent.yaml) is split into
-items: each bullet, and each paragraph under a `##` heading. A question is scored against them by
-plain word overlap, after a light stem and the trade's list of words callers use for the same thing
-(`lookup_synonyms` in trades/<trade>/agent.yaml).
-No embeddings: the document is a page long, and an answer can be traced to the words that matched.
+The pages (knowledge/*.md listed under `lookup_knowledge` in agent.yaml) are split into items: each
+bullet, and each paragraph under a `##` heading; a `## Sources` section is notes for the maintainer
+and is left out. A question is scored against them by plain word overlap, after a light stem and the
+trade's list of words callers use for the same thing (`lookup_synonyms` in trades/<trade>/agent.yaml).
+This is the search that runs when embeddings are off or fail (app/knowledge_search.py).
 
-The document has no repair steps and no prices, so nothing returned can be one.
+The pages have no repair steps and no prices, so nothing returned can be one.
 """
 
 import math
@@ -22,6 +23,7 @@ STOP = {
     "means", "normal", "some", "any", "all", "get", "got", "have", "has", "had", "not", "no", "yes",
     "know", "tell", "much", "many", "often", "lot", "really", "very", "kind", "sort", "thing",
     "things", "one", "up", "out", "off", "too", "also", "usually", "home", "house", "long",
+    "send", "someone", "today",
 }
 # A question has to share this much with an item; a second item comes back only when it scores at
 # least this share of the best.
@@ -38,6 +40,7 @@ class Item:
     text: str
     terms: frozenset[str]
     heading_terms: frozenset[str]
+    file: str = ""
 
 
 def _stem(word: str) -> str:
@@ -56,7 +59,7 @@ def terms(text: str, synonyms: dict[str, str]) -> frozenset[str]:
     return frozenset(_stem(w) for w in plain.split() if w not in STOP and not w.isdigit())
 
 
-def items(document: str, synonyms: dict[str, str]) -> list[Item]:
+def passages(document: str) -> list[tuple[str, str]]:
     """Each bullet, and each paragraph, with the `##` heading it sits under."""
     found, heading = [], ""
     for block in re.split(r"\n\s*\n", document):
@@ -66,21 +69,31 @@ def items(document: str, synonyms: dict[str, str]) -> list[Item]:
         if block.startswith("## "):
             heading, _, block = block[3:].partition("\n")
             block = block.strip()
+        if heading == "Sources":
+            continue
         for part in re.split(r"\n(?=- )", block):
             text = " ".join(part.removeprefix("- ").split())
             if text:
-                found.append(Item(heading, text, terms(text, synonyms), terms(heading, synonyms)))
+                found.append((heading, text))
     return found
 
 
-def answer(question: str, document: str, synonyms: dict[str, str] | None = None) -> list[str]:
-    """The best one or two items for the question, or none when nothing shares enough with it.
-    Rare words count for more, so "filter" outweighs "heat"."""
-    synonyms = synonyms or {}
-    pool = items(document, synonyms)
+def items(document: str, synonyms: dict[str, str], file: str = "") -> list[Item]:
+    return [
+        Item(heading, text, terms(text, synonyms), terms(heading, synonyms), file)
+        for heading, text in passages(document)
+    ]
+
+
+def fact(heading: str, text: str) -> str:
+    return f"{heading}: {text}" if heading else text
+
+
+def scores(question: str, pool: list[Item], synonyms: dict[str, str]) -> list[float]:
+    """One score per item. Rare words count for more, so "filter" outweighs "heat"."""
     asked = terms(question, synonyms)
     if not pool or not asked:
-        return []
+        return [0.0] * len(pool)
     weight = {
         t: math.log(1 + len(pool) / sum(t in i.terms | i.heading_terms for i in pool))
         for t in asked
@@ -91,9 +104,24 @@ def answer(question: str, document: str, synonyms: dict[str, str] | None = None)
         body = sum(weight[t] for t in asked & item.terms)
         return body + HEADING_WEIGHT * sum(weight[t] for t in (asked & item.heading_terms) - item.terms)
 
-    scored = sorted(((score(i), n, i) for n, i in enumerate(pool)), key=lambda s: (-s[0], s[1]))
-    best = scored[0][0]
-    if best < MIN_SCORE:
+    return [score(i) for i in pool]
+
+
+def best(pool: list[Item], scored: list[float]) -> list[Item]:
+    """The best one or two items, or none when nothing shares enough with the question."""
+    order = sorted(range(len(pool)), key=lambda n: (-scored[n], n))
+    if not order or scored[order[0]] < MIN_SCORE:
         return []
-    kept = [i for score, _, i in scored[:MAX_FACTS] if score >= best * SECOND_SHARE]
-    return [f"{i.heading}: {i.text}" if i.heading else i.text for i in kept]
+    top = scored[order[0]]
+    return [pool[n] for n in order[:MAX_FACTS] if scored[n] >= top * SECOND_SHARE]
+
+
+def answer(question: str, document: str, synonyms: dict[str, str] | None = None) -> list[str]:
+    pool = items(document, synonyms or {})
+    return [fact(i.heading, i.text) for i in best(pool, scores(question, pool, synonyms or {}))]
+
+
+def find(question: str, documents: dict[str, str], synonyms: dict[str, str]) -> list[Item]:
+    """The same search over every page at once, so the best two come from anywhere."""
+    pool = [i for name, text in documents.items() for i in items(text, synonyms, f"{name}.md")]
+    return best(pool, scores(question, pool, synonyms))

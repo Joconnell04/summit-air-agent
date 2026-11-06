@@ -378,6 +378,10 @@ lines:
   zip_mismatch: I have {street} in {where} as {found}, not {said}. Which one is right?
 lookup_knowledge:
 - hvac-basics
+- heating
+- cooling
+- air-and-ventilation
+- thermostats-and-symptoms
 lookup_synonyms:
   a c: ac
   air conditioner: ac
@@ -1784,6 +1788,7 @@ voice:
   - Just give me one second.
   - Let me pull that up.
   - One moment.
+  lookup_filler: Good question, let me check on that.
   outbound_voicemail: Hi, this is Summit Air calling about your appointment. Please give us a call back
     at {phone}.
   recording_notice: This call may be recorded.

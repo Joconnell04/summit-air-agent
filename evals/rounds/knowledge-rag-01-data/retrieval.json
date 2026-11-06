@@ -1,0 +1,472 @@
+[
+ {
+  "question": "My radiator is banging every morning.",
+  "wanted": "heating: steam banging",
+  "method": "embedding",
+  "facts": [
+   {
+    "text": "Steam boilers and radiators: Banging, knocking or clanking in steam pipes usually means water is pooled somewhere in a pipe or radiator and the steam is pushing through it. A radiator that has shifted so it no longer tilts back toward its pipe is a common reason.",
+    "file": "heating.md"
+   }
+  ],
+  "keyword": [
+   "Steam boilers and radiators: Banging, knocking or clanking in steam pipes usually means water is pooled somewhere in a pipe or radiator and the steam is pushing through it. A radiator that has shifted so it no longer tilts back toward its pipe is a common reason."
+  ],
+  "top_cosines": [
+   [
+    0.618,
+    "heating.md",
+    "Banging, knocking or clanking in steam pipes usually means water is po"
+   ],
+   [
+    0.53,
+    "hvac-basics.md",
+    "Banging, knocking or clanking pipes are common with steam heat. They o"
+   ],
+   [
+    0.498,
+    "heating.md",
+    "Hissing from a radiator vent while it fills with steam is normal. Spit"
+   ],
+   [
+    0.497,
+    "hvac-basics.md",
+    "Hissing from a radiator valve is normal for steam heat in small amount"
+   ]
+  ]
+ },
+ {
+  "question": "Why is my mini split blinking?",
+  "wanted": "cooling: blinking light",
+  "method": "embedding",
+  "facts": [
+   {
+    "text": "Ductless mini-splits for cooling: A blinking light on a mini-split indoor unit usually means the unit has detected a problem and stopped to protect itself. The pattern of the blinks, or a code on the display, tells a technician what it found, and the codes differ by brand. A steady filter light is only a reminder that the filter is due.",
+    "file": "cooling.md"
+   }
+  ],
+  "keyword": [
+   "Ductless mini-splits for cooling: A blinking light on a mini-split indoor unit usually means the unit has detected a problem and stopped to protect itself. The pattern of the blinks, or a code on the display, tells a technician what it found, and the codes differ by brand. A steady filter light is only a reminder that the filter is due."
+  ],
+  "top_cosines": [
+   [
+    0.77,
+    "cooling.md",
+    "A blinking light on a mini-split indoor unit usually means the unit ha"
+   ],
+   [
+    0.559,
+    "heating.md",
+    "A mini-split in heating mode will sometimes stop blowing for several m"
+   ],
+   [
+    0.545,
+    "cooling.md",
+    "A mini-split that runs but doesn't cool well can have dirty filters, a"
+   ],
+   [
+    0.501,
+    "cooling.md",
+    "Water dripping from the indoor unit usually points to a clogged or blo"
+   ]
+  ]
+ },
+ {
+  "question": "How often should I change my filter?",
+  "wanted": "filter every one to three months",
+  "method": "embedding",
+  "facts": [
+   {
+    "text": "Air filters: A furnace or central-air filter catches dust before it reaches the blower and coil. A clogged filter cuts airflow, makes the system work harder and can cause uneven rooms or a frozen coil. Many filters are changed every one to three months; a thin one in a home with pets or heavy dust may need it sooner, and a thicker one may last longer.",
+    "file": "air-and-ventilation.md"
+   },
+   {
+    "text": "Filters and thermostats: Furnace and central-air systems have an air filter, usually where the return duct meets the unit. A clogged filter cuts airflow, makes the system work harder and can make rooms uneven. Many filters are changed every one to three months.",
+    "file": "hvac-basics.md"
+   }
+  ],
+  "keyword": [
+   "Filters and thermostats: Furnace and central-air systems have an air filter, usually where the return duct meets the unit. A clogged filter cuts airflow, makes the system work harder and can make rooms uneven. Many filters are changed every one to three months.",
+   "Air filters: A furnace or central-air filter catches dust before it reaches the blower and coil. A clogged filter cuts airflow, makes the system work harder and can cause uneven rooms or a frozen coil. Many filters are changed every one to three months; a thin one in a home with pets or heavy dust may need it sooner, and a thicker one may last longer."
+  ],
+  "top_cosines": [
+   [
+    0.52,
+    "air-and-ventilation.md",
+    "A furnace or central-air filter catches dust before it reaches the blo"
+   ],
+   [
+    0.512,
+    "hvac-basics.md",
+    "Furnace and central-air systems have an air filter, usually where the "
+   ],
+   [
+    0.365,
+    "air-and-ventilation.md",
+    "A filter's MERV number rates how fine a particle it catches. A higher "
+   ],
+   [
+    0.354,
+    "cooling.md",
+    "A central air conditioner that turns on and off every few minutes is s"
+   ]
+  ]
+ },
+ {
+  "question": "Is it normal my boiler makes the pipes clank?",
+  "wanted": "heating: steam banging",
+  "method": "embedding",
+  "facts": [
+   {
+    "text": "Steam boilers and radiators: Banging, knocking or clanking in steam pipes usually means water is pooled somewhere in a pipe or radiator and the steam is pushing through it. A radiator that has shifted so it no longer tilts back toward its pipe is a common reason.",
+    "file": "heating.md"
+   },
+   {
+    "text": "Common sounds and symptoms, in plain words: Banging, knocking or clanking pipes are common with steam heat. They often come from water trapped in the pipes, which a technician can check.",
+    "file": "hvac-basics.md"
+   }
+  ],
+  "keyword": [
+   "Steam boilers and radiators: Banging, knocking or clanking in steam pipes usually means water is pooled somewhere in a pipe or radiator and the steam is pushing through it. A radiator that has shifted so it no longer tilts back toward its pipe is a common reason.",
+   "Common sounds and symptoms, in plain words: Banging, knocking or clanking pipes are common with steam heat. They often come from water trapped in the pipes, which a technician can check."
+  ],
+  "top_cosines": [
+   [
+    0.691,
+    "heating.md",
+    "Banging, knocking or clanking in steam pipes usually means water is po"
+   ],
+   [
+    0.665,
+    "hvac-basics.md",
+    "Banging, knocking or clanking pipes are common with steam heat. They o"
+   ],
+   [
+    0.596,
+    "heating.md",
+    "Ticking or creaking from baseboard as it heats and cools is common, be"
+   ],
+   [
+    0.578,
+    "heating.md",
+    "Hissing from a radiator vent while it fills with steam is normal. Spit"
+   ]
+  ]
+ },
+ {
+  "question": "My AC runs but the air isn't cold.",
+  "wanted": "cooling: not cold",
+  "method": "embedding",
+  "facts": [
+   {
+    "text": "Common cooling symptoms: An air conditioner that runs but the air isn't cold can come from a dirty filter, a dirty outdoor coil, low refrigerant, a thermostat set wrong, or a failing outdoor unit or compressor.",
+    "file": "cooling.md"
+   }
+  ],
+  "keyword": [
+   "Common cooling symptoms: An air conditioner that runs but the air isn't cold can come from a dirty filter, a dirty outdoor coil, low refrigerant, a thermostat set wrong, or a failing outdoor unit or compressor.",
+   "Common sounds and symptoms, in plain words: Air that blows but isn't warm, or isn't cold, can come from the thermostat setting, a dirty filter, low refrigerant on an air conditioner, or a problem with the outdoor unit."
+  ],
+  "top_cosines": [
+   [
+    0.644,
+    "cooling.md",
+    "An air conditioner that runs but the air isn't cold can come from a di"
+   ],
+   [
+    0.597,
+    "cooling.md",
+    "An air conditioner does not make cold; it moves heat from inside to ou"
+   ],
+   [
+    0.565,
+    "hvac-basics.md",
+    "Air that blows but isn't warm, or isn't cold, can come from the thermo"
+   ],
+   [
+    0.562,
+    "cooling.md",
+    "Warm or humid air from the vents while the system runs can mean the ou"
+   ]
+  ]
+ },
+ {
+  "question": "What's an ERV?",
+  "wanted": "air-and-ventilation: ERV",
+  "method": "embedding",
+  "facts": [
+   {
+    "text": "ERV and HRV ventilators: Tight, modern homes need a way to bring in fresh air. An HRV, a heat recovery ventilator, pulls stale indoor air out and fresh outdoor air in, and passes the heat from the outgoing air to the incoming air so less heating energy is lost. An ERV, an energy recovery ventilator, does the same and also moves some moisture between the two air streams. ERVs are more common in places with humid summers, and HRVs in colder, drier places. The two airstreams never mix.",
+    "file": "air-and-ventilation.md"
+   }
+  ],
+  "keyword": [
+   "ERV and HRV ventilators: Tight, modern homes need a way to bring in fresh air. An HRV, a heat recovery ventilator, pulls stale indoor air out and fresh outdoor air in, and passes the heat from the outgoing air to the incoming air so less heating energy is lost. An ERV, an energy recovery ventilator, does the same and also moves some moisture between the two air streams. ERVs are more common in places with humid summers, and HRVs in colder, drier places. The two airstreams never mix."
+  ],
+  "top_cosines": [
+   [
+    0.7,
+    "air-and-ventilation.md",
+    "Tight, modern homes need a way to bring in fresh air. An HRV, a heat r"
+   ],
+   [
+    0.326,
+    "air-and-ventilation.md",
+    "A filter's MERV number rates how fine a particle it catches. A higher "
+   ],
+   [
+    0.313,
+    "air-and-ventilation.md",
+    "A portable air cleaner with a HEPA filter cleans a single room. Whole-"
+   ],
+   [
+    0.304,
+    "heating.md",
+    "A furnace has a flue that carries exhaust outside. Gas equipment needs"
+   ]
+  ]
+ },
+ {
+  "question": "There's water on the floor under my boiler.",
+  "wanted": "boiler leak",
+  "method": "embedding",
+  "facts": [
+   {
+    "text": "Boilers in general: Water on the floor around a boiler is a leak and worth a technician visit. A boiler that shuts off and restarts by itself, or that lets the radiators cool off quickly, can point to a control problem.",
+    "file": "heating.md"
+   }
+  ],
+  "keyword": [
+   "Boilers in general: Water on the floor around a boiler is a leak and worth a technician visit. A boiler that shuts off and restarts by itself, or that lets the radiators cool off quickly, can point to a control problem."
+  ],
+  "top_cosines": [
+   [
+    0.601,
+    "heating.md",
+    "Water on the floor around a boiler is a leak and worth a technician vi"
+   ],
+   [
+    0.539,
+    "heating.md",
+    "Gurgling, trickling or rushing water sounds in a hot-water system usua"
+   ],
+   [
+    0.523,
+    "heating.md",
+    "Hissing from a radiator vent while it fills with steam is normal. Spit"
+   ],
+   [
+    0.506,
+    "hvac-basics.md",
+    "Water around a boiler, a furnace or an indoor AC unit is a leak. With "
+   ]
+  ]
+ },
+ {
+  "question": "What's the difference between steam heat and hot water heat?",
+  "wanted": "heating: steam vs hot water",
+  "method": "embedding",
+  "facts": [
+   {
+    "text": "Hot-water boilers and baseboard: Many newer buildings and houses have a hot-water boiler. It heats water and pumps it through a closed loop of pipes to radiators or to fin-tube baseboard along the walls, then the water returns to the boiler. A hot-water system usually has a pressure and temperature gauge on the boiler and an expansion tank nearby that absorbs the extra volume as the water heats.",
+    "file": "heating.md"
+   },
+   {
+    "text": "Steam boilers and radiators: Steam heat can be uneven from room to room. Radiators near the boiler tend to heat first.",
+    "file": "heating.md"
+   },
+   {
+    "text": "Steam boilers and radiators: Hissing from a radiator vent while it fills with steam is normal. Spitting water from a vent is not, and a technician should look at it.",
+    "file": "heating.md"
+   }
+  ],
+  "keyword": [
+   "Heating systems in New York City homes: Most homes in New York City are heated by a boiler or a furnace. A boiler heats water, or turns it into steam, that runs through pipes to radiators or baseboard heaters in each room. A furnace heats air and blows it through ducts and vents. Older apartment buildings usually have steam heat; houses and newer buildings more often have hot-water boilers or furnaces. Many boilers and furnaces burn natural gas or oil.",
+   "Thermostats: A thermostat in a poor spot, such as in direct sun, near a vent or on a drafty wall, reads the wrong temperature and can make the system run too long or too little. Steam and hot-water boilers usually have a thermostat on a wall and a control on the boiler itself that limits the water temperature."
+  ],
+  "top_cosines": [
+   [
+    0.564,
+    "heating.md",
+    "Steam heat can be uneven from room to room. Radiators near the boiler "
+   ],
+   [
+    0.553,
+    "heating.md",
+    "Many newer buildings and houses have a hot-water boiler. It heats wate"
+   ],
+   [
+    0.503,
+    "heating.md",
+    "A steam radiator that stays cold while others heat up often has a stuc"
+   ],
+   [
+    0.502,
+    "heating.md",
+    "Hissing from a radiator vent while it fills with steam is normal. Spit"
+   ]
+  ]
+ },
+ {
+  "question": "My mini split stops blowing heat for a few minutes in the winter and there's steam outside.",
+  "wanted": "defrost",
+  "method": "embedding",
+  "facts": [
+   {
+    "text": "Heat pumps and mini-splits for heating: A mini-split in heating mode will sometimes stop blowing for several minutes and show steam or water outside. That is the outdoor unit melting frost off its coil, called defrost, and it is normal.",
+    "file": "heating.md"
+   }
+  ],
+  "keyword": [
+   "Heat pumps and mini-splits for heating: A mini-split in heating mode will sometimes stop blowing for several minutes and show steam or water outside. That is the outdoor unit melting frost off its coil, called defrost, and it is normal."
+  ],
+  "top_cosines": [
+   [
+    0.777,
+    "heating.md",
+    "A mini-split in heating mode will sometimes stop blowing for several m"
+   ],
+   [
+    0.649,
+    "cooling.md",
+    "A mini-split that runs but doesn't cool well can have dirty filters, a"
+   ],
+   [
+    0.607,
+    "cooling.md",
+    "Water dripping from the indoor unit usually points to a clogged or blo"
+   ],
+   [
+    0.591,
+    "cooling.md",
+    "A blinking light on a mini-split indoor unit usually means the unit ha"
+   ]
+  ]
+ },
+ {
+  "question": "When does the landlord have to give me heat?",
+  "wanted": "heat season dates",
+  "method": "embedding",
+  "facts": [
+   {
+    "text": "New York City heat season: In New York City, the legal heat season for apartments runs from October 1 through May 31. During those months, landlords must keep apartments at least 68 degrees between 6 AM and 10 PM when it is below 55 degrees outside, and at least 62 degrees overnight. Tenants without heat can report it to 311.",
+    "file": "heating.md"
+   }
+  ],
+  "keyword": [
+   "New York City heat season: In New York City, the legal heat season for apartments runs from October 1 through May 31. During those months, landlords must keep apartments at least 68 degrees between 6 AM and 10 PM when it is below 55 degrees outside, and at least 62 degrees overnight. Tenants without heat can report it to 311."
+  ],
+  "top_cosines": [
+   [
+    0.622,
+    "heating.md",
+    "In New York City, the legal heat season for apartments runs from Octob"
+   ],
+   [
+    0.47,
+    "heating.md",
+    "Many New York City apartment buildings have a shared building boiler r"
+   ],
+   [
+    0.418,
+    "hvac-basics.md",
+    "Most homes in New York City are heated by a boiler or a furnace. A boi"
+   ],
+   [
+    0.383,
+    "heating.md",
+    "Most older apartment buildings and many older houses in New York City "
+   ]
+  ]
+ },
+ {
+  "question": "What are your hours on Saturday?",
+  "wanted": "",
+  "method": "embedding",
+  "facts": [],
+  "keyword": [],
+  "top_cosines": [
+   [
+    0.249,
+    "hvac-basics.md",
+    "A thermostat tells the system when to run. Programmable and smart ther"
+   ],
+   [
+    0.236,
+    "thermostats-and-symptoms.md",
+    "A thermostat tells the system when to run. A basic one has a dial or a"
+   ],
+   [
+    0.198,
+    "hvac-basics.md",
+    "A tune-up is a yearly check and cleaning of equipment that still works"
+   ],
+   [
+    0.181,
+    "cooling.md",
+    "Central air conditioners and heat pumps often last 10 to 15 years, dep"
+   ]
+  ]
+ },
+ {
+  "question": "How much does a new boiler cost?",
+  "wanted": "",
+  "method": "embedding",
+  "facts": [],
+  "keyword": [
+   "Heating systems in New York City homes: Most homes in New York City are heated by a boiler or a furnace. A boiler heats water, or turns it into steam, that runs through pipes to radiators or baseboard heaters in each room. A furnace heats air and blows it through ducts and vents. Older apartment buildings usually have steam heat; houses and newer buildings more often have hot-water boilers or furnaces. Many boilers and furnaces burn natural gas or oil.",
+   "Carbon monoxide: Carbon monoxide is a gas with no color or smell, made when fuel burns. Equipment that burns gas or oil, like boilers, furnaces and water heaters, needs working vents. New York City requires carbon monoxide alarms in homes."
+  ],
+  "top_cosines": [
+   [
+    0.474,
+    "heating.md",
+    "A steam boiler usually has a glass tube on the side that shows the wat"
+   ],
+   [
+    0.465,
+    "heating.md",
+    "Hissing from a radiator vent while it fills with steam is normal. Spit"
+   ],
+   [
+    0.464,
+    "heating.md",
+    "Common brands include Weil-McLain, Burnham, Navien, Peerless and Viess"
+   ],
+   [
+    0.462,
+    "heating.md",
+    "Many newer buildings and houses have a hot-water boiler. It heats wate"
+   ]
+  ]
+ },
+ {
+  "question": "Can you send someone today?",
+  "wanted": "",
+  "method": "embedding",
+  "facts": [],
+  "keyword": [],
+  "top_cosines": [
+   [
+    0.174,
+    "cooling.md",
+    "A blinking light on a mini-split indoor unit usually means the unit ha"
+   ],
+   [
+    0.16,
+    "air-and-ventilation.md",
+    "Tight, modern homes need a way to bring in fresh air. An HRV, a heat r"
+   ],
+   [
+    0.16,
+    "thermostats-and-symptoms.md",
+    "A thermostat tells the system when to run. A basic one has a dial or a"
+   ],
+   [
+    0.159,
+    "hvac-basics.md",
+    "A thermostat tells the system when to run. Programmable and smart ther"
+   ]
+  ]
+ }
+]
