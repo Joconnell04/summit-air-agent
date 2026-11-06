@@ -12,6 +12,15 @@ Discussion: docs/ai-process/transcripts/... or docs/explorations/...
 Issue: #N
 -->
 
+## 124. Recommended, pending Jackson's call: build on the server-led arm behind the custom-LLM socket, on Haiku; demo B today
+
+Recommended (not decided; Jackson makes the call): build on arm D, the server-led tool server (PR #173), put it behind the custom-LLM socket (`voice/retell_llm/`) so code speaks the server's sentences as written, and keep Claude Haiku 5.5. For the session in front of Paul today, use arm B (Sonnet 5.5) on the fixed server, with A as the fallback. Drop arm C (the behavioral prompt). Drop the idea of promoting a call to Sonnet when a safety trigger fires.
+Why: four arms on the real line, 34 scored calls (MEASURED, evals/rounds/side-by-side-01.md). No arm made a safety error; the safety words come from the server on all four. Gross errors: A 15, B 8, C 34, D 19. What's left on every arm is the model rewording or adding to words the server owns (its sentences, the open door, names, narration), which the socket removes by construction. D already holds the order in code, is the fastest (1154 ms end-to-end p50) and is close to A's cost ($0.105 against $0.093 a minute). Sonnet halves the gross errors, but costs $0.328 a minute, adds about 0.4 s a reply, still read its tool limits aloud, and was slowest to the safety line on a real gas call.
+Considered: A as is (15 gross errors, the same classes); B as the base (best today, but the price and latency remain and its narration isn't fixed by the model); C (worst on every measure); a staged Sonnet for safety turns (buys tone, not safety).
+Would change if: the socket can't be ready before the session (then A on the fixed server), or the 10-run reliability test on D behind the socket misses the DECISIONS 119 bar.
+Discussion: evals/rounds/side-by-side-01.md
+Issue: #169
+
 ## 121. The demo runs on the socket build: our server speaks the fixed lines, Haiku writes the rest
 
 Decided: Summit Air's agent moves to the server-led flow behind Retell's custom-LLM WebSocket (issue #176). Retell keeps the phone line, listening, turn-taking, backchannels and Brian's voice; our tool server decides each turn, speaks the sentences that must be exact (read-back, slot offer, booking confirmation, safety lines, greeting and goodbye) word for word, and asks Haiku 5.5 to write the adaptive replies. A short hold phrase plays only on genuinely long waits. The single-prompt Retell agent (change set 25, archived with a Retell backup copy) stays as the fallback, one phone-number switch away.
@@ -20,15 +29,6 @@ Considered: the hosted single-prompt Haiku agent with a consolidated prompt (fal
 Would change if: the socket fails the done bar (DECISIONS 119) on something the server can't fix, or its turn latency drifts above the hosted agent's on Jackson's calls.
 Discussion: evals/rounds/side-by-side-01.md, docs/explorations/retell-exact-speech.md
 Issue: #176
-
-## 120. Recommended, pending Jackson's call: build on the server-led arm behind the custom-LLM socket, on Haiku; demo B today
-
-Recommended (not decided; Jackson makes the call): build on arm D, the server-led tool server (PR #173), put it behind the custom-LLM socket (`voice/retell_llm/`) so code speaks the server's sentences as written, and keep Claude Haiku 5.5. For the session in front of Paul today, use arm B (Sonnet 5.5) on the fixed server, with A as the fallback. Drop arm C (the behavioral prompt). Drop the idea of promoting a call to Sonnet when a safety trigger fires.
-Why: four arms on the real line, 34 scored calls (MEASURED, evals/rounds/side-by-side-01.md). No arm made a safety error; the safety words come from the server on all four. Gross errors: A 15, B 8, C 34, D 19. What's left on every arm is the model rewording or adding to words the server owns (its sentences, the open door, names, narration), which the socket removes by construction. D already holds the order in code, is the fastest (1154 ms end-to-end p50) and is close to A's cost ($0.105 against $0.093 a minute). Sonnet halves the gross errors, but costs $0.328 a minute, adds about 0.4 s a reply, still read its tool limits aloud, and was slowest to the safety line on a real gas call.
-Considered: A as is (15 gross errors, the same classes); B as the base (best today, but the price and latency remain and its narration isn't fixed by the model); C (worst on every measure); a staged Sonnet for safety turns (buys tone, not safety).
-Would change if: the socket can't be ready before the session (then A on the fixed server), or the 10-run reliability test on D behind the socket misses the DECISIONS 119 bar.
-Discussion: evals/rounds/side-by-side-01.md
-Issue: #169
 
 ## 119. V1 is done when three journeys are reliable, not when every call is clean
 
