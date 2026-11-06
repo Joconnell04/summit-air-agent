@@ -722,3 +722,59 @@ def test_any_zip_the_citys_directory_returns_is_in_the_area(tmp_path, clock, moc
 def test_11249_is_in_the_area():
     config = yaml.safe_load((TENANT_DIR / "config.yaml").read_text())
     assert "11249" in {z for zone in config["zones"] for z in zone["zips"]}
+
+
+EAST_4TH_LOT = Place("199", "EAST 4 STREET", "10009", "Manhattan", "East Village", "1004000058")
+
+
+@pytest.fixture
+def building(tmp_path, clock, mock, answers):
+    """An agent whose lookup also knows a building's homes: nine at 199 East 4th Street."""
+    answers.book[("199", geocode.street_match_key("East 4 Street"))] = [EAST_4TH_LOT]
+    geocoder = geocode.Geocoder([("book", answers)], AREA.boroughs,
+                                units=lambda bbl: {"1004000058": 9}.get(bbl))
+    return Agent(make_server(tmp_path, clock, mock[0], geocoder=geocoder), clock)
+
+
+def test_a_building_of_several_homes_needs_a_unit_and_read_back_asks_once(building):
+    """Jackson's call call_2fb4e053ba8b76b57c348845990: 199 East 4th Street came back with no
+    unit needed, and the read-back went ahead without one."""
+    call = building.start(UNKNOWN)["data"]["call_id"]
+    building.turn(call, "It's 199 East 4th Street.")
+    found = building.tool("find_address", call, street="199 East 4th Street")
+    assert found["ok"] and found["data"]["needs_unit"] is True
+    address = {"street": "199 East 4th Street", "unit": "", "city": "New York", "zip": "10009"}
+    asked = building.tool("read_back", call, address=address, phone="caller_id")
+    assert asked["refused"] == "unit_needed"
+    assert asked["say"] == "And what's the apartment or unit number there?"
+    building.say(call, asked["say"])
+    building.turn(call, "Apartment 2.")
+    with_unit = building.tool("read_back", call, address={**address, "unit": "2"},
+                              phone="caller_id")
+    assert with_unit["ok"] and "unit two" in with_unit["say"]
+
+
+def test_a_caller_who_says_there_is_no_unit_isnt_asked_again(building):
+    call = building.start(UNKNOWN)["data"]["call_id"]
+    building.turn(call, "It's 199 East 4th Street.")
+    building.tool("find_address", call, street="199 East 4th Street")
+    address = {"street": "199 East 4th Street", "unit": "", "city": "New York", "zip": "10009"}
+    asked = building.tool("read_back", call, address=address, phone="caller_id")
+    building.say(call, asked["say"])
+    building.turn(call, "There isn't one, it's the whole building.")
+    again = building.tool("read_back", call, address=address, phone="caller_id")
+    assert again["ok"], again
+
+
+def test_a_house_needs_no_unit(located, answers):
+    call = located.start(UNKNOWN)["data"]["call_id"]
+    located.turn(call, "It's 248 Duffield St.")
+    found = located.tool("find_address", call, street="248 Duffield St")
+    assert found["ok"] and found["data"]["needs_unit"] is False
+
+
+def test_the_units_come_from_the_lot_in_the_city_directory():
+    features = [{"properties": {"housenumber": "199", "street": "EAST 4 STREET",
+                                "postalcode": "10009", "borough": "Manhattan",
+                                "addendum": {"pad": {"bbl": "1004000058"}}}}]
+    assert geocode.geosearch_places(features)[0].bbl == "1004000058"

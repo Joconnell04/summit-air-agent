@@ -444,11 +444,24 @@ def unit_clean(unit: str) -> str:
     return UNIT_WORD.sub("", unit or "").strip()
 
 
+FLOOR = re.compile(r"^(\d+)\s*(?:st|nd|rd|th)?\s*(?:fl|floor)\.?$|^(?:fl|floor)\.?\s*(\d+)$",
+                   re.IGNORECASE)
+GROUND_FLOORS = {"ground floor", "basement", "garden", "garden level", "ground"}
+
+
 def unit_said(unit: str) -> str:
-    """Digits one at a time and letters as letters: 2 "two", 4B "four B", 12C "one two C"."""
+    """Digits one at a time and letters as letters: 2 "two", 4B "four B", 12C "one two C". A floor
+    is said as one: "2nd floor" is "second floor", not "two n d f l o o r" (Retell call
+    call_bbfbed1552e4f96e41400b1897f); words like "basement" stay words."""
+    unit = unit_clean(unit)
+    floor = FLOOR.match(unit)
+    if floor:
+        return f"{ordinal_said(int(floor[1] or floor[2])).lower()} floor"
+    if unit.lower() in GROUND_FLOORS:
+        return unit.lower()
     return " ".join(
         NUMBER_ONES[int(c)] if c.isdigit() else c.upper()
-        for c in unit_clean(unit)
+        for c in unit
         if c.isalnum()
     )
 
@@ -464,4 +477,9 @@ def street_said(street: str) -> str:
 
 def address_said(street: str, unit: str = "") -> str:
     """The street and unit as the read-back and other lines say them."""
-    return street_said(street) + (f", unit {unit_said(unit)}" if unit_clean(unit) else "")
+    unit = unit_clean(unit)
+    if not unit:
+        return street_said(street)
+    # A floor is said as a floor: "second floor", not "unit second floor".
+    floor = bool(FLOOR.match(unit)) or unit.lower() in GROUND_FLOORS
+    return f"{street_said(street)}, {'' if floor else 'unit '}{unit_said(unit)}"

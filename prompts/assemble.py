@@ -78,13 +78,24 @@ def sections(start: dict, now: datetime | None = None) -> list[tuple[str, str]]:
     house = house_guidance((start.get("house_rules") or {}).get("guidance") or {})
     if house:
         parts.insert(PARTS.index(HOUSE_AFTER) + 1, (HOUSE_GUIDANCE, house))
-    parts = [(name, text.replace("{company}", tenant["name"])) for name, text in parts]
+    question = tenant.get("arrival_question") or ARRIVAL_QUESTION
+    parts = [
+        (name, text.replace("{company}", tenant["name"]).replace("{arrival_question}", question))
+        for name, text in parts
+    ]
+    # The tool server's clock from /calls/start: on a test world it is shifted (app/clock.py), and
+    # a real clock here told the model 10:26 PM beside an 11:30 AM slot (Retell call
+    # call_bbfbed1552e4f96e41400b1897f).
+    if now is None and start.get("now"):
+        now = datetime.fromisoformat(start["now"])
     local = (now or datetime.now(ZoneInfo(tenant["timezone"]))).astimezone(
         ZoneInfo(tenant["timezone"])
     )
     knowledge = "\n\n".join(body.strip() for body in start.get("knowledge", {}).values())
     context = {
-        k: v for k, v in start.items() if k not in ("knowledge", "tenant", "call_id", "house_rules")
+        k: v
+        for k, v in start.items()
+        if k not in ("knowledge", "tenant", "call_id", "house_rules", "now")
     }
     notes = call_notes(start)
     noted = "".join(f"- {n}\n" for n in notes)
@@ -153,6 +164,10 @@ def house_guidance(guidance: dict[str, list[str]]) -> str:
     if not sections:
         return ""
     return "\n\n".join([(PROMPTS / HOUSE_GUIDANCE).read_text().strip(), *sections])
+
+
+# The open question before booking when the tenant names none (tenants' visit_questions).
+ARRIVAL_QUESTION = "Is there a gate code or buzzer the technician should know about?"
 
 
 def tool_specs(job_types: list[str]) -> list[dict]:

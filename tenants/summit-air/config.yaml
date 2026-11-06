@@ -50,6 +50,9 @@ auth:
 # from its ZIP. Research: docs/explorations/015-address-lookup.md.
 address_lookup:
   geosearch_url: https://geosearch.planninglabs.nyc/v2/search
+  # Residential units by tax lot (NYC Open Data MapPLUTO, unitsres), so a building of apartments
+  # asks for the unit (Jackson's call call_2fb4e053ba8b76b57c348845990: 199 East 4th Street has 9).
+  units_url: https://data.cityofnewyork.us/resource/64uk-42ks.json
   census_suffix: ", NY"
   boroughs:
     brooklyn: Brooklyn

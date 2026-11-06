@@ -424,6 +424,8 @@ lines:
   address_which: Is that the one in {places}?
   address_not_found: I'm not finding that street. Could you spell the street name for me?
   address_ask_zip: What's the ZIP code there?
+  # A building with more than one home in it, read back with no unit (MapPLUTO's unit count).
+  address_ask_unit: And what's the apartment or unit number there?
   # Asked before a number goes on the do-not-call list (Jackson's number went on it from "don't call
   # me then" said in passing).
   # A visit booked from this number that the field service system can't find.
@@ -594,6 +596,16 @@ voice:
       Thanks for calling Summit Air. If you smell gas, hang up and call 9-1-1 from outside. All our
       lines are busy right now. Please leave your name, number and what's going on after the tone,
       and we'll call you back.
+
+# Job types booked without the repair intake (since, tried, who's home, approver): a quote for a new
+# system, where nothing broke and nobody approves (Jackson, call_2fb4e053ba8b76b57c348845990).
+intake:
+  skip_for: [estimate]
+
+# The open question before booking (prompts/spine.md): a gate code or buzzer, and pets only when
+# true. Jackson, call_2fb4e053ba8b76b57c348845990: "drop pets".
+visit_questions:
+  pets: false
 
 # Documents in knowledge/ that only lookup_hvac_info reads (app/hvac_info.py): kept out of the prompt,
 # and searched when the caller asks how equipment works, what a sound means, or about maintenance.
